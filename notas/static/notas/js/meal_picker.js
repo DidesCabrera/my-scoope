@@ -110,14 +110,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function scrollPickerIntoMobileView() {
     if (!isMobileViewport()) return;
-
+  
     const targetElement = getPickerScrollTarget();
     if (!targetElement) return;
-
-    const headerOffset = 66;
+  
+    const topOffset = 0;
     const rect = targetElement.getBoundingClientRect();
-    const targetY = window.scrollY + rect.top - headerOffset;
-
+    const targetY = window.scrollY + rect.top - topOffset;
+  
     window.scrollTo({
       top: Math.max(targetY, 0),
       behavior: "smooth",
