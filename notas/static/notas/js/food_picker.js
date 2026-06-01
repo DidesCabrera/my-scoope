@@ -74,10 +74,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function openList() {
     list.style.display = "block";
+  
+    const selector = input.closest(".selector");
+    if (selector) {
+      selector.classList.add("is-picker-list-open");
+    }
+  
+    ensurePickerCloseButton();
   }
-
+  
   function closeList() {
     list.style.display = "none";
+  
+    const selector = input.closest(".selector");
+    if (selector) {
+      selector.classList.remove("is-picker-list-open");
+    }
   }
 
   function findFoodById(foodId) {
@@ -117,7 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const targetElement = getPickerScrollTarget();
     if (!targetElement) return;
   
-    const topOffset = 0;
+    const topOffset = 12;
     const rect = targetElement.getBoundingClientRect();
     const targetY = window.scrollY + rect.top - topOffset;
   
@@ -301,6 +313,36 @@ document.addEventListener("DOMContentLoaded", () => {
 
     closeList();
   }
+
+
+  function ensurePickerCloseButton() {
+    const selector = input.closest(".selector");
+    if (!selector) return null;
+  
+    let closeButton = selector.querySelector(".picker-list-close-btn");
+  
+    if (!closeButton) {
+      closeButton = document.createElement("button");
+      closeButton.type = "button";
+      closeButton.className = "picker-list-close-btn";
+      closeButton.setAttribute("aria-label", "Cerrar lista");
+      closeButton.innerHTML = `<i data-lucide="x"></i>`;
+  
+      closeButton.addEventListener("click", () => {
+        closeList();
+        input.blur();
+      });
+  
+      selector.appendChild(closeButton);
+    }
+  
+    if (window.lucide && typeof window.lucide.createIcons === "function") {
+      window.lucide.createIcons();
+    }
+  
+    return closeButton;
+  }
+
 
   // ---------------------------
   // Food list
