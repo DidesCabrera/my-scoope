@@ -191,7 +191,6 @@
 }
 
 .profile-weight-card.home {
-    background-color: var(--surface-card-muted);
     border: none;
     margin-top: 8px;
 }
@@ -405,7 +404,7 @@
     }
 
     .profile-weight-card.home {
-        margin: 6px 6px 0 6px;
+        margin: 12px 6px 0 6px;
     }
 
     .profile-weight-header {
