@@ -166,7 +166,7 @@ export function renderFoodsAggregation(container, foods) {
 
   const line = foods
       .map(food => `${food.name} (${food.grams}g)`)
-      .join(" — ");
+      .join(", ");
 
   scope.innerHTML = `<span class="foods-inline">${line}</span>`;
 }

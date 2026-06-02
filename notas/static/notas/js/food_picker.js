@@ -377,6 +377,34 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+
+  function normalizeSourceLabel(source) {
+    if (!source) return "";
+
+    const normalized = String(source).toLowerCase();
+
+    if (normalized === "usda") return "USDA";
+    if (normalized === "open_food_facts") return "Open Food Facts";
+    if (normalized === "latinfoods") return "LATINFOODS";
+    if (normalized === "inta_chile") return "INTA Chile";
+    if (normalized === "manual") return "Manual";
+    if (normalized === "global") return "Global";
+    if (normalized === "system") return "Sistema";
+    if (normalized === "user") return "Usuario";
+
+    return String(source)
+      .replaceAll("_", " ")
+      .replace(/\b\w/g, char => char.toUpperCase());
+  }
+
+  function renderSelectedFoodSource(food) {
+    const sourceNode = document.querySelector('[data-scope="food-preview"] [data-role="food-source"]');
+    if (!sourceNode) return;
+
+    const sourceLabel = normalizeSourceLabel(food?.source);
+    sourceNode.textContent = sourceLabel;
+  }
+
   // ---------------------------
   // Preview
   // ---------------------------
@@ -385,6 +413,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     preview.style.display = "block";
     document.getElementById("preview-name").textContent = getFoodDisplayName(selectedFood);
+    renderSelectedFoodSource(selectedFood);
 
     hiddenFoodId.value = selectedFood.id;
 

@@ -1,105 +1,51 @@
-<div class="picker-preview-kpi">
+<div class="picker-summary-card picker-summary-card--preview picker-summary-card--kpi-only">
+    <span hidden id="qty-kcal"></span>
+    <span hidden id="qty-protein"></span>
+    <span hidden id="qty-carbs"></span>
+    <span hidden id="qty-fat"></span>
 
-    <div class="picker-preview-kpi__tot">
-      <div class="picker-preview-kpi__tot-label">
-        Calories
+  <div class="picker-summary-kpi">
+    <div class="picker-summary-kpi__total">
+      <p>Calories</p>
+      <strong><span id="meal-prev-kcal"></span></strong>
+    </div>
+
+    <div class="picker-summary-kpi__macros">
+      <div class="picker-summary-kpi__row">
+        <div class="picker-summary-kpi__label">Protein</div>
+        <div class="picker-summary-kpi__ppk"><span data-role="meal-prev-ppk"></span></div>
+        <div class="picker-summary-kpi__grams"><span id="meal-prev-protein"></span>g</div>
+        <div class="picker-summary-kpi__alloc" id="meal-prev-alloc-protein-cell" style="--alloc:0">
+          <div class="picker-alloc-item">
+            <div class="alloc-pct micro alloc-bar-fill--protein"><p id="meal-prev-alloc-protein-text"></p></div>
+            <div class="alloc-bar-comp mini"><div class="alloc-bar-bg"></div><div class="alloc-bar-fill alloc-bar-fill--protein"></div></div>
+          </div>
+        </div>
       </div>
-      <div class="picker-preview-kpi__tot-result">
-        <span id="meal-prev-kcal"></span>
+
+      <div class="picker-summary-kpi__row">
+        <div class="picker-summary-kpi__label">Carbs</div>
+        <div class="picker-summary-kpi__ppk"></div>
+        <div class="picker-summary-kpi__grams"><span id="meal-prev-carbs"></span>g</div>
+        <div class="picker-summary-kpi__alloc" id="meal-prev-alloc-carbs-cell" style="--alloc:0">
+          <div class="picker-alloc-item">
+            <div class="alloc-pct micro alloc-bar-fill--carbs"><p id="meal-prev-alloc-carbs-text"></p></div>
+            <div class="alloc-bar-comp mini"><div class="alloc-bar-bg"></div><div class="alloc-bar-fill alloc-bar-fill--carbs"></div></div>
+          </div>
+        </div>
       </div>
-      <div class="picker-preview-kpi__tot-value impact-positive">
-        +<span id="qty-kcal"></span>
+
+      <div class="picker-summary-kpi__row">
+        <div class="picker-summary-kpi__label">Fat</div>
+        <div class="picker-summary-kpi__ppk"></div>
+        <div class="picker-summary-kpi__grams"><span id="meal-prev-fat"></span>g</div>
+        <div class="picker-summary-kpi__alloc" id="meal-prev-alloc-fat-cell" style="--alloc:0">
+          <div class="picker-alloc-item">
+            <div class="alloc-pct micro alloc-bar-fill--fat"><p id="meal-prev-alloc-fat-text"></p></div>
+            <div class="alloc-bar-comp mini"><div class="alloc-bar-bg"></div><div class="alloc-bar-fill alloc-bar-fill--fat"></div></div>
+          </div>
+        </div>
       </div>
     </div>
-  
-    <div class="picker-preview-kpi__macros">
-  
-      <div class="picker-preview-kpi__row">
-        <div class="picker-preview-kpi__label grams-col">
-          P
-        </div>
-  
-        <div class="picker-preview-kpi__value">
-          <span class="picker-preview-inline-impact impact-positive">
-            +<span id="qty-protein"></span>
-          </span>
-          <span class="picker-preview-inline-result">
-            <span id="meal-prev-protein"></span>g
-          </span>
-        </div>
-  
-        <div class="picker-preview-kpi__ppk">
-            <span class="ppk-inline" data-role="meal-prev-ppk"></span>
-        </div>
-  
-        <div
-          class="picker-preview-kpi__alloc alloc-cell"
-          id="meal-prev-alloc-protein-cell"
-        >
-          <div class="alloc-bar alloc-bar--protein"></div>
-          <span
-            class="alloc-text"
-            id="meal-prev-alloc-protein-text"
-          ></span>
-        </div>
-      </div>
-  
-      <div class="picker-preview-kpi__row">
-        <div class="picker-preview-kpi__label grams-col">
-          C
-        </div>
-  
-        <div class="picker-preview-kpi__value">
-          <span class="picker-preview-inline-impact impact-positive">
-            +<span id="qty-carbs"></span>
-          </span>
-          <span class="picker-preview-inline-result">
-            <span id="meal-prev-carbs"></span>g
-          </span>
-        </div>
-  
-        <div class="picker-preview-kpi__ppk"></div>
-  
-        <div
-          class="picker-preview-kpi__alloc alloc-cell"
-          id="meal-prev-alloc-carbs-cell"
-        >
-          <div class="alloc-bar alloc-bar--carbs"></div>
-          <span
-            class="alloc-text"
-            id="meal-prev-alloc-carbs-text"
-          ></span>
-        </div>
-      </div>
-  
-      <div class="picker-preview-kpi__row">
-        <div class="picker-preview-kpi__label grams-col">
-          F
-        </div>
-  
-        <div class="picker-preview-kpi__value">
-          <span class="picker-preview-inline-impact impact-positive">
-            +<span id="qty-fat"></span>
-          </span>
-          <span class="picker-preview-inline-result">
-            <span id="meal-prev-fat"></span>g
-          </span>
-        </div>
-  
-        <div class="picker-preview-kpi__ppk"></div>
-  
-        <div
-          class="picker-preview-kpi__alloc alloc-cell"
-          id="meal-prev-alloc-fat-cell"
-        >
-          <div class="alloc-bar alloc-bar--fat"></div>
-          <span
-            class="alloc-text"
-            id="meal-prev-alloc-fat-text"
-          ></span>
-        </div>
-      </div>
-  
-    </div>
-  
   </div>
+</div>

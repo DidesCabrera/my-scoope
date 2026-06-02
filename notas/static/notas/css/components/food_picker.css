@@ -195,9 +195,11 @@ p.h3-table2 {
 
 .qty-preview {
   margin-top: 12px;
-  padding: 4px;
+  padding: 8px 10px;
+  border-radius: 12px;
   margin-bottom: 12px;
   color: var(--text-main);
+  background-color: var(--alloc-bar-bg);
 }
 
 /* ---------------------------
@@ -427,7 +429,7 @@ p.h3-table2 {
   margin-top: 4px;
   margin-left: 18px;
   padding-left: 18px;
-  border-left: 1px solid var(--border-soft);
+  border-left: 1px solid var(--panel-row-separator);
   color: var(--text-main);
 }
 
