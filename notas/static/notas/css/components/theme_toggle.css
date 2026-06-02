@@ -65,8 +65,8 @@
     border-radius: 999px;
     border: 1px solid var(--border-soft);
   
-    background: var(--surface-card-muted);
-    color: var(--text-muted);
+    background: var(--text-main);
+    color: var(--text-inverted);
   
     font-size: 13px;
     font-weight: 500;
@@ -94,9 +94,9 @@
   }
   
   .theme-toggle-button.is-dark:hover {
-    background: var(--interactive-primary);
+    background: var(--interactive-hover);
     color: #ffffff;
-    border-color: var(--interactive-primary);
+    border-color: var(--border-default);
   }
   
   .theme-toggle-button-icon {

@@ -116,7 +116,7 @@
 .page-header-right .actions-desktop {
   display: flex !important;
   align-items: center;
-  gap: 8px;
+  gap: 18px;
 }
 
 .page-header-right .actions-mobile {

@@ -255,6 +255,8 @@
     white-space: nowrap;
 
     cursor: pointer;
+    background-color: var(--text-main);
+    color: var(--text-inverted);
 
     transition:
         background-color 0.15s ease,

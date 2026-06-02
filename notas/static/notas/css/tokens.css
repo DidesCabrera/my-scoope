@@ -141,9 +141,9 @@
    --entity-meal: var(--color-meal);
    --entity-food: var(--color-food);
    --entity-program: var(--color-program);
-   --entity-inbox: var(--color-inbox);
-   --entity-home: var(--color-home);
-   --entity-profile: var(--color-profile);
+   --entity-inbox:  #121212;
+   --entity-home:  #121212;
+   --entity-profile:  #121212;
 
    /* Breadcrumbs */
    --breadcrumb-text: #3f3f46;
