@@ -358,7 +358,9 @@ p.h3-table2 {
 
 .picker-layout {
   display: flex;
-  width: 100%;
+  border: 1px solid var(--panel-row-separator);
+  margin: 6px 12px;
+  border-radius: 12px;
 }
 
 .picker-section {
@@ -410,7 +412,7 @@ p.h3-table2 {
 }
 
 .picker-layout {
-  padding: 12px 18px;
+  padding: 16px 18px;
   background: var(--surface-card-muted);
   color: var(--text-main);
 }
@@ -426,7 +428,6 @@ p.h3-table2 {
 }
 
 .picker-impact {
-  margin-top: 4px;
   margin-left: 18px;
   padding-left: 18px;
   border-left: 1px solid var(--panel-row-separator);
@@ -438,7 +439,9 @@ p.h3-table2 {
     margin-left: 0;
     padding-left: 0;
     border-left: none;
-    margin-top: 22px;
+    border-top: 1px solid var(--panel-row-separator);
+    padding-top: 16px;
+    margin-top: 10px;
     margin-bottom: 10px;
   }
 }
@@ -528,7 +531,8 @@ p.h3-table2 {
 @media (max-width: 980px) {
   .picker-layout {
     flex-direction: column;
-    padding: 18px 10px;
+    padding: 18px 12px;
+    margin: 8px 4px 12px 4px;
   }
 
   .actions-row {
@@ -844,7 +848,7 @@ p.h3-table2 {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
   color: var(--text-main);
 }
 
