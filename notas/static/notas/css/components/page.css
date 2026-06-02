@@ -68,10 +68,6 @@
 }
 
 @media (max-width: 768px) {
-
-    .page--detail {
-      padding: 15px 15px;
-    }
   
     .card-title {
       width: 100%;
@@ -88,7 +84,7 @@
     }
 
     .page--detail{
-        padding: 14px 16px;
+        padding: 14px 16px 16px 16px;
         margin-top: 14px;
     }
   
