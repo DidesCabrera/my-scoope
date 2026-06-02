@@ -1186,7 +1186,7 @@ p.h3-table2 {
     border-radius: 999px;
     border: 1px solid var(--panel-row-separator);
 
-    background: var(--surface-app);
+    background: var(--surface-card);
     color: var(--text-main);
     box-shadow: var(--shadow-elevated);
 

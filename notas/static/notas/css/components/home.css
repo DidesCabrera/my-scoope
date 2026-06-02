@@ -21,6 +21,65 @@
 }
 
 /* =========================
+   HOME BRAND
+   ========================= */
+
+   .home-brand-strip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 8px 0 2px;
+  }
+  
+  .home-brand-logo {
+    display: block;
+    width: 45%;
+    max-width: none;
+    height: auto;
+    object-fit: contain;
+  }
+  
+  .home-brand-logo--dark {
+    display: none;
+  }
+  
+  html[data-theme="dark"] .home-brand-logo--light {
+    display: none;
+  }
+  
+  html[data-theme="dark"] .home-brand-logo--dark {
+    display: block;
+  }
+  
+  @media (max-width: 980px) {
+    body.page-home .page-header .label-entity.header,
+    body.page-home .page-header .header-title-mobile {
+      display: flex;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transform: translateY(-4px);
+      transition:
+        opacity 180ms ease,
+        transform 180ms ease,
+        visibility 180ms ease;
+    }
+  
+    body.page-home.home-header-meta-visible .page-header .label-entity.header,
+    body.page-home.home-header-meta-visible .page-header .header-title-mobile {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+  
+    .home-brand-logo {
+      width: 50%;
+    }
+  }
+
+/* =========================
    HERO
    ========================= */
 
@@ -36,7 +95,7 @@
 }
 
 .home-hero.main {
-  padding: 0;
+  padding: 0 6px;
 }
 
 .home-hero-copy {
@@ -604,8 +663,8 @@
 
 @media (max-width: 900px) {
   .home-banner-carousel {
-    height: 420px;
-    border-radius: 22px;
+    height: 250px;
+    border-radius: 42px;
   }
 
   .home-banner-overlay {

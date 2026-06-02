@@ -3,13 +3,11 @@ from typing import List, Optional
 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
-from django.urls import reverse
 
 from notas.presentation.config.viewmodel_config import PROFILE_VIEWMODE
 from notas.presentation.viewmodels.base_vm import BaseVM
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
 from notas.application.services.nutrition.weight import get_current_weight
-from notas.application.services.access.capabilities import get_capabilities
 
 
 @dataclass
@@ -20,27 +18,12 @@ class ProfileStatVM:
 
 
 @dataclass
-class ProfileWeightEntryVM:
-    date: str
-    weight: float
-
-
-@dataclass
-class ProfileActionVM:
-    label: str
-    url: str
-    icon: str
-
-
-@dataclass
 class ProfileContentVM:
     title: str
     subtitle: str
     stats: List[ProfileStatVM]
     weight_current: Optional[float]
     weight_updated_at: Optional[str]
-    weight_history: List[ProfileWeightEntryVM]
-    actions: List[ProfileActionVM]
 
 
 @login_required
@@ -49,38 +32,7 @@ def profile_detail(request):
     profile = user.profile
 
     current_weight = get_current_weight(user)
-    weight_logs = list(user.weight_logs.all()[:5])
-    last_weight_log = weight_logs[0] if weight_logs else None
-
-    capabilities = get_capabilities(user)
-    is_admin = bool(user.is_superuser or (capabilities and capabilities.is_admin()))
-
-    actions = [
-        ProfileActionVM(
-            label="Ver DailyPlans",
-            url=reverse("dailyplan_list"),
-            icon="clipboard-list",
-        ),
-        ProfileActionVM(
-            label="Ver Meals",
-            url=reverse("meal_list"),
-            icon="utensils",
-        ),
-        ProfileActionVM(
-            label="Ver Foods",
-            url=reverse("food_list"),
-            icon="carrot",
-        ),
-    ]
-
-    if is_admin:
-        actions.append(
-            ProfileActionVM(
-                label="Admin Workspace",
-                url=reverse("admin_home"),
-                icon="shield",
-            )
-        )
+    last_weight_log = user.weight_logs.first()
 
     content = ProfileContentVM(
         title=f"{user.username}",
@@ -110,14 +62,6 @@ def profile_detail(request):
             last_weight_log.date.strftime("%Y-%m-%d")
             if last_weight_log else None
         ),
-        weight_history=[
-            ProfileWeightEntryVM(
-                date=log.date.strftime("%Y-%m-%d"),
-                weight=log.weight_kg,
-            )
-            for log in weight_logs
-        ],
-        actions=actions,
     )
 
     ui = build_ui_vm(PROFILE_VIEWMODE)

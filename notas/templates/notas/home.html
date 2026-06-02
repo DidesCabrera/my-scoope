@@ -2,13 +2,23 @@
 {% load static %}
 
 {% block title %}Home{% endblock %}
+{% block body_class %}page-home{% endblock %}
 
 {% block content %}
 <div class="page home-page">
-  <div class="home-stat-top welcome">
-    <i data-lucide="thumbs-up" class="welcome-icon"></i>
-    <h1 class="welcome-title">{{ vm.content.hero.title }}</h1>
+  <div class="home-brand-strip js-home-brand-strip" aria-label="My Scoope">
+    <img
+      src="{% static 'notas/img/logo-black.png' %}"
+      alt="My Scoope"
+      class="home-brand-logo home-brand-logo--light"
+    >
+    <img
+      src="{% static 'notas/img/logo-white.png' %}"
+      alt="My Scoope"
+      class="home-brand-logo home-brand-logo--dark"
+    >
   </div>
+
   <section class="home-hero main">
     <div class="home-hero-copy">
       <div class="home-banner-carousel js-home-banner-carousel">
@@ -21,11 +31,10 @@
               class="home-banner-image"
             >
             <div class="home-banner-overlay">
-              <img
-                src="{% static 'notas/img/logo-white.png' %}"
-                alt="My Scoope"
-                class="home-banner-logo"
-              >
+              <div class="home-stat-top welcome">
+                <i data-lucide="thumbs-up" class="welcome-icon"></i>
+                <h1 class="welcome-title">{{ vm.content.hero.title }}</h1>
+              </div>
               <h1 class="home-banner-title">Gestion tu alimentacion con precisión</h1>
               <p class="home-banner-text">
                 Contisigue tus objetivos con planes claros al alcance de tu mano
@@ -40,11 +49,6 @@
               class="home-banner-image"
             >
             <div class="home-banner-overlay">
-              <img
-                src="{% static 'notas/img/logo-white.png' %}"
-                alt="My Scoope"
-                class="home-banner-logo"
-              >
               <h1 class="home-banner-title">Como funciona</h1>
               <p class="home-banner-text">
                 Construye planes diarios de alimentacion, crea comidas recurrentes y ajusta las porciones de tus alimentos segun tus objetivos
@@ -59,11 +63,6 @@
               class="home-banner-image"
             >
             <div class="home-banner-overlay">
-              <img
-                src="{% static 'notas/img/logo-white.png' %}"
-                alt="My Scoope"
-                class="home-banner-logo"
-              >
               <h1 class="home-banner-title">Recibe asistencia de tu IA</h1>
               <p class="home-banner-text">
                 Conecta tu IA de preferencia para que pueda asistirte en la creacion de planes de alimentación.
@@ -294,5 +293,61 @@
 
 <script src="{% static 'notas/js/collapse_cards.js' %}"></script>
 <script src="{% static 'notas/js/home_banner_carousel.js' %}"></script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const body = document.body;
+    const brandStrip = document.querySelector(".js-home-brand-strip");
+
+    if (!body.classList.contains("page-home") || !brandStrip) {
+      return;
+    }
+
+    function isMobile() {
+      return window.matchMedia("(max-width: 980px)").matches;
+    }
+
+    function setHeaderMetaVisibility(shouldShow) {
+      body.classList.toggle(
+        "home-header-meta-visible",
+        shouldShow && isMobile()
+      );
+    }
+
+    if ("IntersectionObserver" in window) {
+      const observer = new IntersectionObserver(
+        function (entries) {
+          const entry = entries[0];
+          setHeaderMetaVisibility(!entry.isIntersecting);
+        },
+        {
+          root: null,
+          threshold: 0,
+          rootMargin: "-54px 0px 0px 0px",
+        }
+      );
+
+      observer.observe(brandStrip);
+
+      window.addEventListener("resize", function () {
+        if (!isMobile()) {
+          body.classList.remove("home-header-meta-visible");
+        }
+      });
+
+      return;
+    }
+
+    function handleScrollFallback() {
+      setHeaderMetaVisibility(window.scrollY > 80);
+    }
+
+    handleScrollFallback();
+
+    window.addEventListener("scroll", handleScrollFallback, { passive: true });
+    window.addEventListener("resize", handleScrollFallback);
+  });
+</script>
+
 
 {% endblock %}

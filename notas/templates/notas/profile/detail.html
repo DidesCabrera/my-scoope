@@ -2,158 +2,102 @@
 {% load static %}
 
 {% block content %}
-<div class="page page--detail">
 
-  <section class="home-hero">
-    <div class="home-hero-copy">
-        <p class="home-eyebrow">Personal</p>
-        <h1>{{ vm.content.title }}</h1>
+<div class="page page--detail profile-page">
 
-        <div class="hero-meta-inline">
-            {% for stat in vm.content.stats %}
-                <div class="hero-meta-item">
-                    <div class="hero-meta-label-wrap">
-                        <i data-lucide="{{ stat.icon }}" class="hero-meta-icon"></i>
-                        <span class="hero-meta-label">{{ stat.label }}</span>
-                    </div>
+    <section class="profile-account-section">
+        <div class="profile-account-main">
+            <div class="profile-account-heading">
+                <p class="home-eyebrow">Cuenta</p>
 
-                    <div class="hero-meta-value">
-                        {{ stat.value }}
-                    </div>
+                <div class="profile-account-title-row">
+                    <i data-lucide="user" class="profile-account-title-icon"></i>
+                    <h1>{{ vm.content.title }}</h1>
                 </div>
-            {% endfor %}
-        </div>
-    </div>
-  </section>
 
-  <section class="profile-section">
-    {% include "components/theme_toggle.html" %}
-
-  </section>
-
-
-    <section class="home-section">
-        <div class="home-section-header">
-            <div>
-                <h2>Peso corporal</h2>
-                <p>
-                    Este valor se utiliza como referencia para calcular el PPK
-                    en meals y dailyplans.
+                <p class="profile-account-subtitle">
+                    Información principal de tu cuenta y referencia corporal usada en los cálculos nutricionales.
                 </p>
             </div>
 
-            <button class="home-cta home-cta--primary" type="button" onclick="openWeightModal()">
-                Actualizar peso
-            </button>
-        </div>
+            <div class="profile-account-primary-metric">
+                <span class="profile-account-primary-label">Peso actual</span>
 
-        <div class="card-father" style="padding: 20px;">
-            <div style="display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap;">
-                <div>
-                    <p class="home-eyebrow">Peso actual</p>
-                    <h2 style="margin: 0;">
-                        {% if vm.content.weight_current %}
-                            {{ vm.content.weight_current|floatformat:1 }} kg
-                        {% else %}
-                            Sin registro
-                        {% endif %}
-                    </h2>
-                </div>
-
-                <div>
-                    <p class="home-eyebrow">Última actualización</p>
-                    <p style="margin: 0;">
-                        {% if vm.content.weight_updated_at %}
-                            {{ vm.content.weight_updated_at }}
-                        {% else %}
-                            Aún no registras peso
-                        {% endif %}
-                    </p>
-                </div>
+                <strong>
+                    {% if vm.content.weight_current %}
+                        {{ vm.content.weight_current|floatformat:1 }} kg
+                    {% else %}
+                        Sin registro
+                    {% endif %}
+                </strong>
             </div>
         </div>
 
-        {% if vm.content.weight_history %}
-            <div class="card-father" style="padding: 0;">
-                <table class="table-foods">
-                    <thead>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Peso</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for item in vm.content.weight_history %}
-                            <tr>
-                                <td>{{ item.date }}</td>
-                                <td>{{ item.weight|floatformat:1 }} kg</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        <div class="profile-account-grid">
+            <div class="profile-account-info-item">
+                <span class="profile-account-info-label">Usuario</span>
+                <strong class="profile-account-info-value">{{ profile.user.username }}</strong>
             </div>
-        {% else %}
-            <p class="home-empty">Aún no tienes registros de peso.</p>
+
+            <div class="profile-account-info-item">
+                <span class="profile-account-info-label">Rol</span>
+                <strong class="profile-account-info-value">{{ profile.get_role_display }}</strong>
+            </div>
+
+            <div class="profile-account-info-item">
+                <span class="profile-account-info-label">Plan</span>
+                <strong class="profile-account-info-value">{{ profile.plan.name|default:"Sin plan" }}</strong>
+            </div>
+
+            <div class="profile-account-info-item">
+                <span class="profile-account-info-label">Miembro desde</span>
+                <strong class="profile-account-info-value">{{ profile.created_at|date:"Y-m-d" }}</strong>
+            </div>
+        </div>
+    </section>
+
+
+    <section class="profile-weight-card">
+        <div class="profile-weight-copy">
+            <div class="profile-weight-title-row">
+                <i data-lucide="scale" class="profile-weight-title-icon"></i>
+                <h3>Peso corporal</h3>
+            </div>
+    
+            <p>
+                Este valor se utiliza como referencia para calcular el PPK
+                en meals y dailyplans.
+            </p>
+        </div>
+    
+        <button
+            class="profile-weight-button"
+            type="button"
+            onclick="openWeightModal()"
+        >
+            Actualizar peso
+        </button>
+    </section>
+
+    <section class="profile-section">
+        {% include "components/theme_toggle.html" %}
+    </section>
+
+    <section class="profile-logout-card">
+        {% if user.is_authenticated %}
+            <form method="post" action="{% url 'account_logout' %}" class="profile-logout-form">
+                {% csrf_token %}
+
+                <button type="submit" class="profile-logout-button">
+                    <span class="profile-logout-copy">
+                        <i data-lucide="log-out" class="profile-logout-icon"></i>
+                        <span>Cerrar sesión</span>
+                    </span>
+                </button>
+            </form>
         {% endif %}
     </section>
 
-    <section class="home-section">
-        <div class="home-section-header">
-            <div>
-                <h2>Datos de cuenta</h2>
-                <p>Información base del perfil actual.</p>
-            </div>
-        </div>
-
-        <div class="card-father" style="padding: 20px;">
-            <div style="display: grid; gap: 12px;">
-                <p><strong>Username:</strong> {{ profile.user.username }}</p>
-                <p><strong>Role:</strong> {{ profile.get_role_display }}</p>
-                <p><strong>Plan:</strong> {{ profile.plan.name|default:"Sin plan" }}</p>
-                <p><strong>Member since:</strong> {{ profile.created_at|date:"Y-m-d" }}</p>
-            </div>
-        </div>
-    </section>
-
-    <section class="home-section">
-        <div class="home-section-header">
-            <div>
-                <h2>Accesos rápidos</h2>
-                <p>Navegación directa a tus espacios principales.</p>
-            </div>
-        </div>
-
-        <div class="home-stats">
-            {% for action in vm.content.actions %}
-                <div class="home-stat-card">
-                    <a href="{{ action.url }}" class="home-stat-card-link">
-                        <div class="home-stat-top">
-                            <i data-lucide="{{ action.icon }}" class="home-stat-icon"></i>
-                            <span class="home-stat-label">{{ action.label }}</span>
-                        </div>
-                    </a>
-                </div>
-            {% endfor %}
-
-            <div class="home-stat-card">
-                {% if user.is_authenticated %}
-                    <form method="post" action="{% url 'account_logout' %}" style="margin: 0;">
-                        {% csrf_token %}
-                        <button
-                            type="submit"
-                            class="home-stat-card-link"
-                            style="width: 100%; border: 0; background: transparent; text-align: left; cursor: pointer;"
-                        >
-                            <div class="home-stat-top">
-                                <i data-lucide="log-out" class="home-stat-icon"></i>
-                                <span class="home-stat-label">Cerrar sesión</span>
-                            </div>
-                        </button>
-                    </form>
-                {% endif %}
-            </div>
-        </div>
-    </section>
-
 </div>
+
 {% endblock %}

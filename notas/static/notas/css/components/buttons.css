@@ -1,0 +1,111 @@
+/* =========================
+   GLOBAL BUTTON / TAP STATES
+   ========================= */
+
+/*
+   Neutraliza el highlight táctil azul/celeste del navegador en mobile.
+   Esto afecta botones, links y elementos interactivos, sin cambiar
+   su diseño base.
+*/
+
+:where(
+  a,
+  button,
+  [role="button"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  .mobile-menu-btn,
+  .back-header-icon,
+  .overflow-btn,
+  .overflow-action,
+  .link-button,
+  .home-link-button,
+  .profile-weight-button,
+  .profile-logout-button,
+  .theme-toggle-button,
+  .sidebar-ai-panel__button,
+  .btn-desplegar,
+  .btn-desplegar-mobile,
+  .btn-create-picker,
+  .btn-add-picker,
+  .btn-update-picker,
+  .btn-cancel-picker,
+  .btn-cancel-picker-inline,
+  .btn-block,
+  .btn-continue,
+  .btn-cancel-create,
+  .toast-close
+) {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/*
+   Estado activo táctil personalizado.
+   En vez del celeste por defecto, aplica una micro interacción suave.
+*/
+
+@media (hover: none) and (pointer: coarse) {
+  :where(
+    button,
+    [role="button"],
+    input[type="button"],
+    input[type="submit"],
+    input[type="reset"],
+    .mobile-menu-btn,
+    .back-header-icon,
+    .overflow-btn,
+    .overflow-action,
+    .link-button,
+    .home-link-button,
+    .profile-weight-button,
+    .profile-logout-button,
+    .theme-toggle-button,
+    .sidebar-ai-panel__button,
+    .btn-desplegar,
+    .btn-desplegar-mobile,
+    .btn-create-picker,
+    .btn-add-picker,
+    .btn-update-picker,
+    .btn-cancel-picker,
+    .btn-cancel-picker-inline,
+    .btn-block,
+    .btn-continue,
+    .btn-cancel-create,
+    .toast-close
+  ):active {
+    opacity: 0.72;
+    transform: translateY(1px);
+    transition:
+      opacity 120ms ease,
+      transform 120ms ease;
+  }
+
+  :where(
+    a,
+    .home-link-button,
+    .overflow-action,
+    .sidebar-ai-panel__button
+  ):active {
+    text-decoration: none;
+  }
+}
+
+/*
+   Accesibilidad:
+   mantiene un foco visible para teclado sin provocar el highlight mobile.
+*/
+
+:where(
+  a,
+  button,
+  [role="button"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"]
+):focus-visible {
+  outline: 2px solid var(--interactive-primary);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
