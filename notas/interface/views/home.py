@@ -132,17 +132,31 @@ def _dailyplan_meals_for_home_cards():
 def home_view(request):
     user = request.user
 
-    dailyplans_qs = DailyPlan.objects.filter(created_by=user).order_by("-id")
+    dailyplans_qs = (
+        DailyPlan.objects
+        .filter(
+            created_by=user,
+            is_draft=False,
+        )
+        .order_by("-created_at")
+    )
+
     meals_qs = (
         Meal.objects
-        .filter(created_by=user)
+        .filter(
+            created_by=user,
+            is_draft=False,
+            dailyplanmeal__isnull=True,
+        )
         .annotate(
             is_dpm_instance_sql=Exists(
                 DailyPlanMeal.objects.filter(meal_id=OuterRef("pk"))
             )
         )
-        .order_by("-id")
+        .order_by("-created_at")
+        .distinct()
     )
+
     foods_qs = Food.objects.filter(created_by=user).order_by("name")
 
     dailyplans_count = dailyplans_qs.count()
