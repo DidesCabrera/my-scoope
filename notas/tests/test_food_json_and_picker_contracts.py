@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from notas.domain.models import Food, FoodAlias, FoodLocalizedName
+from notas.domain.models import Food, FoodAlias, FoodLocalizedName, Meal, MealFood
 
 
 User = get_user_model()
@@ -245,6 +245,47 @@ class FoodJsonAndPickerContractTests(TestCase):
         names = [item["name"] for item in payload]
 
         self.assertNotIn("Hidden Global Banana", names)
+
+    def test_foods_json_food_id_returns_hidden_food_used_in_owned_meal(self):
+        hidden_food = Food.objects.create(
+            name="Legacy Hidden Banana",
+            canonical_name="legacy hidden banana",
+            protein=1,
+            carbs=23,
+            fat=0.3,
+            created_by=None,
+            is_global=True,
+            is_active=True,
+            visibility=Food.VISIBILITY_HIDDEN,
+        )
+        meal = Meal.objects.create(
+            name="Breakfast",
+            created_by=self.user,
+        )
+        MealFood.objects.create(
+            meal=meal,
+            food=hidden_food,
+            quantity=100,
+        )
+
+        list_response = self.client.get(reverse("foods_json"))
+        list_payload = json.loads(list_response.content)
+        self.assertNotIn(
+            hidden_food.name,
+            [item["name"] for item in list_payload],
+        )
+
+        detail_response = self.client.get(
+            reverse("foods_json"),
+            {"food_id": str(hidden_food.id)},
+        )
+
+        self.assertEqual(detail_response.status_code, 200)
+
+        detail_payload = json.loads(detail_response.content)
+        self.assertEqual(len(detail_payload), 1)
+        self.assertEqual(detail_payload[0]["id"], hidden_food.id)
+        self.assertEqual(detail_payload[0]["name"], hidden_food.name)
 
     def test_foods_json_includes_picker_metadata(self):
         Food.objects.create(

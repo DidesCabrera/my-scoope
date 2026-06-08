@@ -7,9 +7,9 @@ My Scoope
 
 {% block content %}
 
-<div class="page page--detail has-collapsible-panels {% if foods_json and foods_json != '[]' %}edit{% endif %}" data-page="meal-detail">
+<div class="page page--detail has-collapsible-panels {% if can_edit_foods %}edit{% endif %}" data-page="meal-detail">
 
-    {% if foods_json and foods_json != "[]" %}
+    {% if can_edit_foods %}
       {% include "components/card_main_meal_edit.html" with main_card=vm.content.main_card %}
     {% else %}
       {% include "components/card_main_meal.html" with main_card=vm.content.main_card %}

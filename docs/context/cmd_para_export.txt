@@ -22,7 +22,14 @@ cd proyecto_django
 2) Crear export limpio. Desde la carpeta padre del proyecto:
 3) Exportar
 
+
 --- 
+
+./scripts/export_for_chatgpt.sh ai
+
+./scripts/export_for_chatgpt.sh full
+
+---
 
 cd desktop
 cd proyecto_django
@@ -32,12 +39,18 @@ python manage.py runserver
 
 --- 
 
+PATCH GENERATOR
+
+---
+
+
+
 git add .
-git commit -m "Mejoras menores CSS v2"
+git commit -m "Refine v2 add border preview"
 git push origin main
 
 git add .
-git commit -m "Prueba 1 resize profile card en sidebar 4"
+git commit -m "Correccion colores btns profile"
 git push origin main
 --- 
 

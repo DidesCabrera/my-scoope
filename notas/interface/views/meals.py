@@ -340,6 +340,7 @@ def meal_detail(request, pk):
     context["show_return_to_dailyplan"] = page.show_return_to_dailyplan
     context["foods_json"] = page.foods_json
     context["food_picker_context"] = page.food_picker_context_json
+    context["can_edit_foods"] = page.can_edit_foods
     context["editing_mealfood_id"] = page.editing_mealfood_id
     context["selected_food_id"] = page.selected_food_id
 

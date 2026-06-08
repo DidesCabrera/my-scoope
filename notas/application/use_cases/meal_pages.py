@@ -5,7 +5,6 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 from django.shortcuts import get_object_or_404
 
-from notas.application.queries.food_picker_queries import list_food_picker_items
 from notas.application.resolvers.meal_resolvers import (
     resolve_meal_page_actions,
 )
@@ -40,6 +39,7 @@ class MealDetailPageData:
     editing_mealfood_id: Optional[int] = None
     foods_json: str = "[]"
     food_picker_context_json: str = "{}"
+    can_edit_foods: bool = False
     show_return_to_dailyplan: bool = False
     viewmode: Any = None
 
@@ -50,15 +50,6 @@ class MealListPageData:
     list_content_data: Any
     page_actions: list
     viewmode: Any
-
-
-def _build_food_picker_items_payload(user) -> list[dict]:
-    picker_items = list_food_picker_items(user=user)
-
-    return [
-        food.as_dict()
-        for food in picker_items.foods
-    ]
 
 
 def get_meal_detail_page_data(
@@ -82,10 +73,12 @@ def get_meal_detail_page_data(
     foods_json = "[]"
     food_picker_context_json = "{}"
     show_return_to_dailyplan = False
+    can_edit_foods = False
 
     effective_viewmode = viewmode
 
     if viewmode == MEAL_VIEWMODE_PERSONAL_DETAIL and meal.created_by == user:
+        can_edit_foods = True
         edit_mf_id = request_get.get("edit_food")
         mealfood = None
 
@@ -96,8 +89,6 @@ def get_meal_detail_page_data(
                 meal=meal,
             )
 
-        foods_payload = _build_food_picker_items_payload(user)
-
         nutrition_kpis = build_nutrition_kpis_from_meal(
             meal,
             user,
@@ -107,11 +98,6 @@ def get_meal_detail_page_data(
             meal=meal,
             nutrition_kpis=nutrition_kpis,
             mealfood=mealfood,
-        )
-
-        foods_json = json.dumps(
-            foods_payload,
-            cls=DjangoJSONEncoder,
         )
 
         food_picker_context_json = json.dumps(
@@ -148,6 +134,7 @@ def get_meal_detail_page_data(
         editing_mealfood_id=editing_mealfood_id,
         foods_json=foods_json,
         food_picker_context_json=food_picker_context_json,
+        can_edit_foods=can_edit_foods,
         show_return_to_dailyplan=show_return_to_dailyplan,
         viewmode=effective_viewmode,
     )

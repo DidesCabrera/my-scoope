@@ -22,13 +22,14 @@ import { renderFoodItem } from "./food_item_list.js";
 document.addEventListener("DOMContentLoaded", () => {
 
   const ctx = window.FOOD_PICKER_CONTEXT;
-  const foods = Array.isArray(window.FOOD_PICKER_FOODS)
+  let foods = Array.isArray(window.FOOD_PICKER_FOODS)
     ? window.FOOD_PICKER_FOODS
     : [];
 
   const foodSearchCache = new Map();
   let activeSearchController = null;
   let searchDebounceTimer = null;
+  let initialFoodsLoaded = foods.length > 0;
 
   foods.forEach(food => {
     if (food?.id) {
@@ -94,6 +95,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function findFoodById(foodId) {
     return foodSearchCache.get(Number(foodId)) || null;
+  }
+
+  function cacheFoodResults(results) {
+    if (!Array.isArray(results)) return;
+
+    results.forEach(food => {
+      if (food?.id) {
+        foodSearchCache.set(Number(food.id), food);
+      }
+    });
+  }
+
+  function getCachedFoodResults() {
+    return Array.from(foodSearchCache.values());
   }
 
   function getFoodDisplayName(food) {
@@ -162,26 +177,89 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function filterFoodsBySearch(value) {
     const normalizedValue = normalizeSearchValue(value);
+    const cachedFoods = getCachedFoodResults();
 
     if (!normalizedValue) {
-      return foods;
+      return cachedFoods;
     }
 
-    return foods.filter(food => {
+    return cachedFoods.filter(food => {
       return getFoodSearchText(food).includes(normalizedValue);
     });
   }
 
-  function getInitialFoodResults() {
+  function getFoodSearchUrl(value, limit = 50) {
+    const params = new URLSearchParams();
+    params.set("search", value);
+    params.set("limit", String(limit));
+
+    return `/app/api/foods/?${params.toString()}`;
+  }
+
+  function getFoodByIdUrl(foodId) {
+    const params = new URLSearchParams();
+    params.set("food_id", String(foodId));
+    params.set("limit", "1");
+
+    return `/app/api/foods/?${params.toString()}`;
+  }
+
+  async function fetchFoods(url, signal = undefined) {
+    const response = await fetch(url, {
+      headers: {
+        "Accept": "application/json"
+      },
+      signal
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const results = await response.json();
+
+    if (!Array.isArray(results)) {
+      return [];
+    }
+
+    cacheFoodResults(results);
+
+    return results;
+  }
+
+  async function getInitialFoodResults() {
+    if (initialFoodsLoaded) {
+      return foods;
+    }
+
+    const results = await fetchFoods(getFoodSearchUrl("", 50));
+    foods = results;
+    initialFoodsLoaded = true;
+
     return foods;
   }
 
-  function getFoodSearchUrl(value) {
-    const params = new URLSearchParams();
-    params.set("search", value);
-    params.set("limit", "50");
+  async function fetchFoodById(foodId) {
+    const cachedFood = findFoodById(foodId);
 
-    return `/app/api/foods/?${params.toString()}`;
+    if (cachedFood) {
+      return cachedFood;
+    }
+
+    try {
+      const results = await fetchFoods(getFoodByIdUrl(foodId));
+      const fetchedFood = results[0] || null;
+
+      if (fetchedFood) {
+        return fetchedFood;
+      }
+    } catch (error) {
+      // Keep edit mode usable even if the single-food endpoint fails.
+    }
+
+    await getInitialFoodResults();
+
+    return findFoodById(foodId);
   }
 
   async function searchFoodsFromServer(value) {
@@ -197,30 +275,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     activeSearchController = new AbortController();
 
-    const response = await fetch(getFoodSearchUrl(value), {
-      headers: {
-        "Accept": "application/json"
-      },
-      signal: activeSearchController.signal
-    });
+    const results = await fetchFoods(
+      getFoodSearchUrl(value, 50),
+      activeSearchController.signal
+    );
 
-    if (!response.ok) {
-      return filterFoodsBySearch(value);
-    }
-
-    const results = await response.json();
-
-    if (!Array.isArray(results)) {
-      return filterFoodsBySearch(value);
-    }
-
-    results.forEach(food => {
-      if (food?.id) {
-        foodSearchCache.set(Number(food.id), food);
-      }
-    });
-
-    return results;
+    return results.length ? results : filterFoodsBySearch(value);
   }
 
   function scheduleServerSearch(value) {
@@ -440,11 +500,10 @@ document.addEventListener("DOMContentLoaded", () => {
     let baseMeal = ctx.meal.kpis;
 
     if (isEdit()) {
-      const oldPortion = portionFromFoodById(
-        foods,
-        ctx.editing.food_id,
-        ctx.editing.original_quantity
-      );
+      const originalFood = findFoodById(ctx.editing.food_id);
+      const oldPortion = originalFood
+        ? portionFromFood(originalFood, ctx.editing.original_quantity)
+        : null;
 
       baseMeal = removePortionTotals(ctx.meal.kpis, oldPortion);
     }
@@ -460,8 +519,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // ---------------------------
   // Input events
   // ---------------------------
-  input.addEventListener("focus", () => {
-    renderFoodList(foods);
+  input.addEventListener("focus", async () => {
+    renderFoodList(await getInitialFoodResults());
     openList();
     schedulePickerScrollIntoMobileView();
   });
@@ -470,8 +529,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const value = input.value;
 
     if (!normalizeSearchValue(value)) {
-      renderFoodList(getInitialFoodResults());
-      openList();
+      getInitialFoodResults().then(results => {
+        renderFoodList(results);
+        openList();
+      });
       return;
     }
 
@@ -505,12 +566,17 @@ document.addEventListener("DOMContentLoaded", () => {
         detail: { sectionId: "meal-picker-section" }
       }));
 
-      selectedFood = findFoodById(ctx.editing.food_id);
-      if (!selectedFood) return;
+      input.value = button.dataset.name || "";
+      quantityInput.value = button.dataset.qty || "100";
 
-      input.value = getFoodDisplayName(selectedFood);
-      showPreview();
-      schedulePickerScrollIntoMobileView();
+      fetchFoodById(ctx.editing.food_id).then(food => {
+        selectedFood = food;
+        if (!selectedFood) return;
+
+        input.value = getFoodDisplayName(selectedFood);
+        showPreview();
+        schedulePickerScrollIntoMobileView();
+      });
     });
   });
 

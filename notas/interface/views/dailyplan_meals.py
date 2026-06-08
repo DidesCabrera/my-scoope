@@ -129,6 +129,7 @@ def dailyplan_meal_detail(request, dailyplan_id, pk):
     context = base_vm.as_context()
     context["foods_json"] = page.foods_json
     context["food_picker_json"] = page.food_picker_context_json
+    context["can_edit_foods"] = page.can_edit_foods
     context["selected_food_id"] = page.selected_food_id
     context["editing_mealfood_id"] = page.editing_mealfood_id
 

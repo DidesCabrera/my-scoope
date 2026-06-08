@@ -8,8 +8,8 @@ from notas.application.services.nutrition.food_aggregation import (
     build_meal_foods_aggregation,
 )
 from notas.application.services.nutrition.nutrition_kpis import (
-    get_ppk_dailyplan,
-    get_ppk_meal,
+    build_nutrition_kpis_from_dailyplan,
+    build_nutrition_kpis_from_meal,
 )
 from notas.presentation.composition.viewmodel.components.builder_headers import (
     build_dailyplan_meal_header,
@@ -39,6 +39,8 @@ def build_dpm_detail_content_data(
     meal_foods,
     user,
     viewmode,
+    dailyplan_kpis=None,
+    meal_kpis=None,
 ):
     header = build_dailyplan_meal_header(
         dpm=dpm,
@@ -46,35 +48,38 @@ def build_dpm_detail_content_data(
         viewmode=viewmode,
     )
 
-    dp_total_kcal = dailyplan.total_kcal
-    dp_protein = dailyplan.protein
-    dp_carbs = dailyplan.carbs
-    dp_fat = dailyplan.fat
+    dailyplan_kpis = dailyplan_kpis or build_nutrition_kpis_from_dailyplan(
+        dailyplan,
+        user,
+    )
+    meal_kpis = meal_kpis or build_nutrition_kpis_from_meal(
+        meal,
+        user,
+    )
 
-    dp_kcal_protein = dailyplan.kcal_protein
-    dp_kcal_carbs = dailyplan.kcal_carbs
-    dp_kcal_fat = dailyplan.kcal_fat
+    dp_total_kcal = dailyplan_kpis["total_kcal"]
+    dp_protein = dailyplan_kpis["protein"]
+    dp_carbs = dailyplan_kpis["carbs"]
+    dp_fat = dailyplan_kpis["fat"]
 
-    dp_alloc = dailyplan.alloc
+    dp_kcal_protein = dailyplan_kpis.get("kcal_protein", dp_protein * 4)
+    dp_kcal_carbs = dailyplan_kpis.get("kcal_carbs", dp_carbs * 4)
+    dp_kcal_fat = dailyplan_kpis.get("kcal_fat", dp_fat * 9)
 
-    father_ppk = get_ppk_dailyplan(dailyplan, user)
+    dp_alloc = dailyplan_kpis["alloc"]
+    father_ppk = dailyplan_kpis["ppk"]
 
-    meal_total_kcal = meal.total_kcal_cached or meal.total_kcal
-    meal_protein = meal.protein_cached or meal.protein
-    meal_carbs = meal.carbs_cached or meal.carbs
-    meal_fat = meal.fat_cached or meal.fat
+    meal_total_kcal = meal_kpis["total_kcal"]
+    meal_protein = meal_kpis["protein"]
+    meal_carbs = meal_kpis["carbs"]
+    meal_fat = meal_kpis["fat"]
 
-    meal_kcal_protein = meal.kcal_protein_cached or meal.kcal_protein
-    meal_kcal_carbs = meal.kcal_carbs_cached or meal.kcal_carbs
-    meal_kcal_fat = meal.kcal_fat_cached or meal.kcal_fat
+    meal_kcal_protein = meal_kpis.get("kcal_protein", meal_protein * 4)
+    meal_kcal_carbs = meal_kpis.get("kcal_carbs", meal_carbs * 4)
+    meal_kcal_fat = meal_kpis.get("kcal_fat", meal_fat * 9)
 
-    meal_alloc = {
-        "protein": meal.alloc_protein_cached or meal.alloc["protein"],
-        "carbs": meal.alloc_carbs_cached or meal.alloc["carbs"],
-        "fat": meal.alloc_fat_cached or meal.alloc["fat"],
-    }
-
-    meal_ppk = get_ppk_meal(meal, user)
+    meal_alloc = meal_kpis["alloc"]
+    meal_ppk = meal_kpis["ppk"]
 
     meal_foods_table_items = [
         build_mealfood_table_item(mf)

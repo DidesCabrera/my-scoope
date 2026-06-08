@@ -1,11 +1,12 @@
 from dataclasses import asdict, dataclass
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Case, IntegerField, Q, QuerySet, Value, When
 
 from notas.application.services.food_imports.localized_names import (
     resolve_food_display_name,
 )
-from notas.domain.models import Food
+from notas.domain.models import Food, MealFood
 
 
 PICKER_SOURCE_USER = "user"
@@ -96,6 +97,7 @@ def get_food_picker_queryset(user) -> QuerySet:
                 visibility__in=visible_global_values,
             )
         )
+        .select_related("source_metadata")
         .prefetch_related(
             "aliases",
             "localized_names",
@@ -182,6 +184,62 @@ def search_food_picker_items(
     )
 
     return result.foods
+
+
+def get_food_picker_item_by_id(
+    *,
+    user,
+    food_id: int,
+) -> FoodPickerItemDTO | None:
+    """
+    Return one food item for picker edit flows.
+
+    The normal picker queryset intentionally excludes hidden/inactive/rejected
+    global foods. However, a user may already have one of those foods inside a
+    meal created before the catalog visibility changed. In that case, editing
+    the existing MealFood still needs a complete DTO to render the picker
+    preview.
+    """
+
+    food = (
+        get_food_picker_queryset(user)
+        .filter(id=food_id)
+        .first()
+    )
+
+    if food is None and _user_uses_food_in_owned_meal(
+        user=user,
+        food_id=food_id,
+    ):
+        food = (
+            Food.objects
+            .filter(id=food_id)
+            .select_related("source_metadata")
+            .prefetch_related(
+                "aliases",
+                "localized_names",
+            )
+            .first()
+        )
+
+    if food is None:
+        return None
+
+    return build_food_picker_item_dto(
+        food=food,
+        user=user,
+    )
+
+
+def _user_uses_food_in_owned_meal(
+    *,
+    user,
+    food_id: int,
+) -> bool:
+    return MealFood.objects.filter(
+        food_id=food_id,
+        meal__created_by=user,
+    ).exists()
 
 
 def build_food_picker_item_dto(
@@ -312,8 +370,13 @@ def _apply_food_picker_search(
 
 
 def _resolve_source(food: Food) -> str:
-    if hasattr(food, "source_metadata"):
-        return food.source_metadata.source
+    try:
+        metadata = food.source_metadata
+    except ObjectDoesNotExist:
+        metadata = None
+
+    if metadata is not None:
+        return metadata.source
 
     if food.is_global:
         return PICKER_SOURCE_GLOBAL

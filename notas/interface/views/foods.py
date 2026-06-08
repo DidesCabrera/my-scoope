@@ -6,7 +6,10 @@ from openpyxl import Workbook
 from django.contrib import messages
 from notas.application.services.access.capabilities import get_capabilities
 from notas.domain.models import Food
-from notas.application.queries.food_picker_queries import list_food_picker_items
+from notas.application.queries.food_picker_queries import (
+    get_food_picker_item_by_id,
+    list_food_picker_items,
+)
 from notas.presentation.config.viewmodel_config import (
     FOOD_VIEWMODE_PERSONAL_LIST, 
     FOOD_VIEWMODE_PERSONAL_DETAIL,
@@ -268,21 +271,39 @@ def download_food_template(request):
 def foods_json(request):
     search = request.GET.get("search")
     raw_limit = request.GET.get("limit")
+    raw_food_id = request.GET.get("food_id")
 
     try:
         limit = int(raw_limit) if raw_limit else 80
     except (TypeError, ValueError):
         limit = 80
 
-    picker_items = list_food_picker_items(
-        user=request.user,
-        search=search,
-        limit=limit,
-    )
+    if raw_food_id:
+        try:
+            food_id = int(raw_food_id)
+        except (TypeError, ValueError):
+            return JsonResponse([], safe=False)
+
+        item = get_food_picker_item_by_id(
+            user=request.user,
+            food_id=food_id,
+        )
+
+        if item is None:
+            return JsonResponse([], safe=False)
+
+        picker_foods = [item]
+    else:
+        picker_items = list_food_picker_items(
+            user=request.user,
+            search=search,
+            limit=limit,
+        )
+        picker_foods = picker_items.foods
 
     foods = []
 
-    for item in picker_items.foods:
+    for item in picker_foods:
         foods.append({
             "id": item.id,
             "name": item.name,
