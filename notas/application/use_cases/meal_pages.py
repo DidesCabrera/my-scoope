@@ -3,7 +3,7 @@ from typing import Any, List, Optional
 import json
 
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db.models import Prefetch
+from django.db.models import BooleanField, Prefetch, Value
 from django.shortcuts import get_object_or_404
 
 from notas.application.resolvers.meal_resolvers import (
@@ -31,6 +31,12 @@ from notas.presentation.config.viewmodel_config import (
 )
 
 
+
+
+def _standalone_meals_queryset():
+    return Meal.objects.annotate(
+        is_dpm_instance_sql=Value(False, output_field=BooleanField()),
+    )
 
 
 def _meal_foods_for_card_rendering():
@@ -179,7 +185,7 @@ def get_meal_detail_page_data(
 
 def get_meal_list_page_data(user) -> MealListPageData:
     meals = (
-        Meal.objects
+        _standalone_meals_queryset()
         .filter(
             created_by=user,
             is_draft=False,
@@ -219,7 +225,7 @@ def get_meal_list_page_data(user) -> MealListPageData:
 
 def get_meal_explore_list_page_data(user) -> MealListPageData:
     meals = (
-        Meal.objects
+        _standalone_meals_queryset()
         .filter(
             is_public=True,
             is_draft=False,
@@ -259,7 +265,7 @@ def get_meal_explore_list_page_data(user) -> MealListPageData:
 
 def get_meal_shared_list_page_data(user) -> MealListPageData:
     meals = (
-        Meal.objects
+        _standalone_meals_queryset()
         .filter(
             shares__accepted_by=user,
             shares__removed=False,
@@ -300,7 +306,7 @@ def get_meal_shared_list_page_data(user) -> MealListPageData:
 
 def get_meal_draft_list_page_data(user) -> MealListPageData:
     meals = (
-        Meal.objects
+        _standalone_meals_queryset()
         .filter(
             created_by=user,
             is_draft=True,

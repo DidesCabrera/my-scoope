@@ -7,8 +7,9 @@ from django.shortcuts import get_object_or_404
 
 from notas.domain.models import DailyPlanMeal, Meal
 from notas.application.services.queries.dailyplan_queries import (
-    get_dailyplan_for_edit,
     dailyplans_with_kcal,
+    get_dailyplan_for_edit,
+    get_dailyplan_meals_with_foods,
 )
 from notas.application.services.queries.meal_queries import meals_with_kcal
 from notas.application.services.nutrition.nutrition_kpis import (
@@ -110,7 +111,7 @@ def get_dailyplan_detail_page_data(
 
     if viewmode == DAILYPLAN_VIEWMODE_PERSONAL_DETAIL:
         dailyplan = get_dailyplan_for_edit(user, dailyplan_id)
-        dailyplan_meals = list(dailyplan.meals_with_foods())
+        dailyplan_meals = get_dailyplan_meals_with_foods(dailyplan)
 
         edit_dpm_id = request_get.get("edit_meal")
         selected_meal_id = request_get.get("select_meal")
@@ -177,7 +178,7 @@ def get_dailyplan_detail_page_data(
 
     else:
         dailyplan = get_dailyplan_for_user(user, dailyplan_id)
-        dailyplan_meals = list(dailyplan.meals_with_foods())
+        dailyplan_meals = get_dailyplan_meals_with_foods(dailyplan)
 
     detail_content_data = build_dailyplan_detail_content_data(
         dailyplan=dailyplan,

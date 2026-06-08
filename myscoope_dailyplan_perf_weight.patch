@@ -1,0 +1,498 @@
+diff -ruN proyecto_django_export_full_orig/notas/application/services/nutrition/weight.py proyecto_django_export_full/notas/application/services/nutrition/weight.py
+--- proyecto_django_export_full_orig/notas/application/services/nutrition/weight.py	2026-06-08 19:40:10.000000000 +0000
++++ proyecto_django_export_full/notas/application/services/nutrition/weight.py	2026-06-08 21:16:54.573550208 +0000
+@@ -1,10 +1,18 @@
+ from notas.domain.models import WeightLog
+ 
+ 
++DEFAULT_CURRENT_WEIGHT_KG = 75
++_WEIGHT_LOG_NOT_QUERIED = object()
++
++
+ def get_current_weight_log(user):
+-    cached_log = getattr(user, "_myscoope_current_weight_log", None)
++    cached_log = getattr(
++        user,
++        "_myscoope_current_weight_log",
++        _WEIGHT_LOG_NOT_QUERIED,
++    )
+ 
+-    if cached_log is not None:
++    if cached_log is not _WEIGHT_LOG_NOT_QUERIED:
+         return cached_log
+ 
+     last = user.weight_logs.first()
+@@ -14,4 +22,4 @@
+ 
+ def get_current_weight(user):
+     last = get_current_weight_log(user)
+-    return last.weight_kg if last else None
++    return last.weight_kg if last else DEFAULT_CURRENT_WEIGHT_KG
+diff -ruN proyecto_django_export_full_orig/notas/application/services/queries/dailyplan_queries.py proyecto_django_export_full/notas/application/services/queries/dailyplan_queries.py
+--- proyecto_django_export_full_orig/notas/application/services/queries/dailyplan_queries.py	2026-04-05 05:30:41.000000000 +0000
++++ proyecto_django_export_full/notas/application/services/queries/dailyplan_queries.py	2026-06-08 21:16:54.571803804 +0000
+@@ -1,5 +1,11 @@
+-from notas.domain.models import DailyPlan
+-from django.db.models import Sum, F, ExpressionWrapper, FloatField
++from django.db.models import Prefetch, Sum, F, ExpressionWrapper, FloatField
++
++from notas.domain.models import (
++    DailyPlan,
++    DailyPlanMeal,
++    FoodLocalizedName,
++    MealFood,
++)
+ from notas.domain.constants.nutrition import (
+     PROTEIN_KCAL_PER_GRAM,
+     CARBS_KCAL_PER_GRAM,
+@@ -7,11 +13,90 @@
+ )
+ 
+ 
++def primary_display_names_queryset():
++    return (
++        FoodLocalizedName.objects
++        .filter(
++            language="es",
++            country__in=["CL", ""],
++            is_primary=True,
++        )
++        .order_by("country", "name")
++    )
++
++
++def meal_foods_with_display_names():
++    return (
++        MealFood.objects
++        .select_related("food")
++        .prefetch_related(
++            Prefetch(
++                "food__localized_names",
++                queryset=primary_display_names_queryset(),
++                to_attr="_prefetched_primary_display_names",
++            )
++        )
++        .order_by("order", "id")
++    )
++
++
++def dailyplan_meals_with_display_names():
++    return (
++        DailyPlanMeal.objects
++        .select_related(
++            "dailyplan",
++            "meal",
++            "meal__created_by",
++            "meal__original_author",
++            "meal__forked_from",
++        )
++        .prefetch_related(
++            Prefetch(
++                "meal__meal_food_set",
++                queryset=meal_foods_with_display_names(),
++            )
++        )
++        .order_by("order", "id")
++    )
++
++
++def get_dailyplan_meals_with_foods(dailyplan):
++    prefetched = getattr(dailyplan, "_prefetched_objects_cache", {}).get(
++        "dailyplan_meals"
++    )
++
++    if prefetched is not None:
++        return list(prefetched)
++
++    return list(
++        dailyplan.dailyplan_meals
++        .select_related(
++            "dailyplan",
++            "meal",
++            "meal__created_by",
++            "meal__original_author",
++            "meal__forked_from",
++        )
++        .prefetch_related(
++            Prefetch(
++                "meal__meal_food_set",
++                queryset=meal_foods_with_display_names(),
++            )
++        )
++        .order_by("order", "id")
++    )
++
++
+ def dailyplans_with_kcal():
+     return (
+         DailyPlan.objects
++        .select_related("created_by", "original_author", "forked_from")
+         .prefetch_related(
+-            "dailyplan_meals__meal__meal_food_set__food"
++            "shares",
++            Prefetch(
++                "dailyplan_meals",
++                queryset=dailyplan_meals_with_display_names(),
++            ),
+         )
+         .annotate(
+             total_kcal_sql=Sum(
+@@ -33,9 +118,10 @@
+         .filter(pk=pk, created_by=user)
+         .select_related("created_by", "original_author")
+         .prefetch_related(
+-            "dailyplan_meals__meal",
+-            "dailyplan_meals__meal__meal_food_set",
+-            "dailyplan_meals__meal__meal_food_set__food",
++            Prefetch(
++                "dailyplan_meals",
++                queryset=dailyplan_meals_with_display_names(),
++            ),
+         )
+         .get()
+     )
+diff -ruN proyecto_django_export_full_orig/notas/application/use_cases/dailyplan_pages.py proyecto_django_export_full/notas/application/use_cases/dailyplan_pages.py
+--- proyecto_django_export_full_orig/notas/application/use_cases/dailyplan_pages.py	2026-05-28 00:16:26.000000000 +0000
++++ proyecto_django_export_full/notas/application/use_cases/dailyplan_pages.py	2026-06-08 21:16:54.572489595 +0000
+@@ -7,8 +7,9 @@
+ 
+ from notas.domain.models import DailyPlanMeal, Meal
+ from notas.application.services.queries.dailyplan_queries import (
+-    get_dailyplan_for_edit,
+     dailyplans_with_kcal,
++    get_dailyplan_for_edit,
++    get_dailyplan_meals_with_foods,
+ )
+ from notas.application.services.queries.meal_queries import meals_with_kcal
+ from notas.application.services.nutrition.nutrition_kpis import (
+@@ -110,7 +111,7 @@
+ 
+     if viewmode == DAILYPLAN_VIEWMODE_PERSONAL_DETAIL:
+         dailyplan = get_dailyplan_for_edit(user, dailyplan_id)
+-        dailyplan_meals = list(dailyplan.meals_with_foods())
++        dailyplan_meals = get_dailyplan_meals_with_foods(dailyplan)
+ 
+         edit_dpm_id = request_get.get("edit_meal")
+         selected_meal_id = request_get.get("select_meal")
+@@ -177,7 +178,7 @@
+ 
+     else:
+         dailyplan = get_dailyplan_for_user(user, dailyplan_id)
+-        dailyplan_meals = list(dailyplan.meals_with_foods())
++        dailyplan_meals = get_dailyplan_meals_with_foods(dailyplan)
+ 
+     detail_content_data = build_dailyplan_detail_content_data(
+         dailyplan=dailyplan,
+diff -ruN proyecto_django_export_full_orig/notas/application/use_cases/meal_pages.py proyecto_django_export_full/notas/application/use_cases/meal_pages.py
+--- proyecto_django_export_full_orig/notas/application/use_cases/meal_pages.py	2026-06-08 19:40:10.000000000 +0000
++++ proyecto_django_export_full/notas/application/use_cases/meal_pages.py	2026-06-08 21:16:54.575633245 +0000
+@@ -3,7 +3,7 @@
+ import json
+ 
+ from django.core.serializers.json import DjangoJSONEncoder
+-from django.db.models import Prefetch
++from django.db.models import BooleanField, Prefetch, Value
+ from django.shortcuts import get_object_or_404
+ 
+ from notas.application.resolvers.meal_resolvers import (
+@@ -33,6 +33,12 @@
+ 
+ 
+ 
++def _standalone_meals_queryset():
++    return Meal.objects.annotate(
++        is_dpm_instance_sql=Value(False, output_field=BooleanField()),
++    )
++
++
+ def _meal_foods_for_card_rendering():
+     """
+     Lightweight prefetch queryset for list/detail cards.
+@@ -179,7 +185,7 @@
+ 
+ def get_meal_list_page_data(user) -> MealListPageData:
+     meals = (
+-        Meal.objects
++        _standalone_meals_queryset()
+         .filter(
+             created_by=user,
+             is_draft=False,
+@@ -219,7 +225,7 @@
+ 
+ def get_meal_explore_list_page_data(user) -> MealListPageData:
+     meals = (
+-        Meal.objects
++        _standalone_meals_queryset()
+         .filter(
+             is_public=True,
+             is_draft=False,
+@@ -259,7 +265,7 @@
+ 
+ def get_meal_shared_list_page_data(user) -> MealListPageData:
+     meals = (
+-        Meal.objects
++        _standalone_meals_queryset()
+         .filter(
+             shares__accepted_by=user,
+             shares__removed=False,
+@@ -300,7 +306,7 @@
+ 
+ def get_meal_draft_list_page_data(user) -> MealListPageData:
+     meals = (
+-        Meal.objects
++        _standalone_meals_queryset()
+         .filter(
+             created_by=user,
+             is_draft=True,
+diff -ruN proyecto_django_export_full_orig/notas/domain/models.py proyecto_django_export_full/notas/domain/models.py
+--- proyecto_django_export_full_orig/notas/domain/models.py	2026-05-26 20:47:15.000000000 +0000
++++ proyecto_django_export_full/notas/domain/models.py	2026-06-08 21:16:54.575002914 +0000
+@@ -726,6 +726,16 @@
+     @property
+     def is_dpm_instance(self):
+         """Meal que vive dentro de un DailyPlanMeal."""
++        annotated_value = getattr(self, "is_dpm_instance_sql", None)
++
++        if annotated_value is not None:
++            return bool(annotated_value)
++
++        cached_value = getattr(self, "_is_dpm_instance", None)
++
++        if cached_value is not None:
++            return bool(cached_value)
++
+         return self.dailyplanmeal_set.exists()
+ 
+ 
+diff -ruN proyecto_django_export_full_orig/notas/interface/views/home.py proyecto_django_export_full/notas/interface/views/home.py
+--- proyecto_django_export_full_orig/notas/interface/views/home.py	2026-06-08 20:09:22.000000000 +0000
++++ proyecto_django_export_full/notas/interface/views/home.py	2026-06-08 21:23:35.350890231 +0000
+@@ -2,7 +2,7 @@
+ from typing import Any, List
+ 
+ from django.contrib.auth.decorators import login_required
+-from django.db.models import Prefetch
++from django.db.models import Exists, OuterRef, Prefetch
+ from django.shortcuts import render
+ from django.urls import reverse
+ 
+@@ -133,7 +133,16 @@
+     user = request.user
+ 
+     dailyplans_qs = DailyPlan.objects.filter(created_by=user).order_by("-id")
+-    meals_qs = Meal.objects.filter(created_by=user).order_by("-id")
++    meals_qs = (
++        Meal.objects
++        .filter(created_by=user)
++        .annotate(
++            is_dpm_instance_sql=Exists(
++                DailyPlanMeal.objects.filter(meal_id=OuterRef("pk"))
++            )
++        )
++        .order_by("-id")
++    )
+     foods_qs = Food.objects.filter(created_by=user).order_by("name")
+ 
+     dailyplans_count = dailyplans_qs.count()
+diff -ruN proyecto_django_export_full_orig/notas/presentation/composition/viewmodel/dailyplan/dailyplan_content.py proyecto_django_export_full/notas/presentation/composition/viewmodel/dailyplan/dailyplan_content.py
+--- proyecto_django_export_full_orig/notas/presentation/composition/viewmodel/dailyplan/dailyplan_content.py	2026-06-08 20:47:43.000000000 +0000
++++ proyecto_django_export_full/notas/presentation/composition/viewmodel/dailyplan/dailyplan_content.py	2026-06-08 21:19:35.287135875 +0000
+@@ -15,7 +15,6 @@
+     build_meal_foods_aggregation,
+ )
+ from notas.application.services.nutrition.nutrition_kpis import (
+-    get_ppk_dailyplan,
+     get_ppk_meal,
+ )
+ from notas.application.services.nutrition.weight import get_current_weight
+@@ -143,11 +142,19 @@
+         viewmode=viewmode,
+     )
+ 
+-    dp_total_kcal = dailyplan.total_kcal
+-    dp_protein = dailyplan.protein
+-    dp_carbs = dailyplan.carbs
+-    dp_fat = dailyplan.fat
+-    dp_alloc = dailyplan.alloc
++    nutrition_snapshot = _dailyplan_list_nutrition_snapshot(
++        dailyplan,
++        dailyplan_meals,
++    )
++
++    dp_total_kcal = nutrition_snapshot["total_kcal"]
++    dp_protein = nutrition_snapshot["protein"]
++    dp_carbs = nutrition_snapshot["carbs"]
++    dp_fat = nutrition_snapshot["fat"]
++    dp_kcal_protein = nutrition_snapshot["kcal_protein"]
++    dp_kcal_carbs = nutrition_snapshot["kcal_carbs"]
++    dp_kcal_fat = nutrition_snapshot["kcal_fat"]
++    dp_alloc = nutrition_snapshot["alloc"]
+ 
+     foods_aggregation = build_dailyplan_foods_aggregation(dailyplan_meals)
+ 
+@@ -156,10 +163,18 @@
+         "foods_count": len(foods_aggregation),
+     }
+ 
+-    ppk_dailyplan = get_ppk_dailyplan(dailyplan, user)
++    current_weight = get_current_weight(user)
++    ppk_dailyplan = {
++        "ppk": (dp_protein / current_weight)
++        if (current_weight and dp_protein)
++        else None,
++    }
+ 
+     dailyplan_meals_table_items = [
+-        build_dailyplanmeal_table_item(dpm)
++        build_dailyplanmeal_table_item(
++            dpm,
++            dailyplan_snapshot=nutrition_snapshot,
++        )
+         for dpm in dailyplan_meals
+     ]
+ 
+@@ -183,9 +198,9 @@
+             "g_protein": dp_protein,
+             "g_carbs": dp_carbs,
+             "g_fat": dp_fat,
+-            "kcal_protein": dailyplan.kcal_protein,
+-            "kcal_carbs": dailyplan.kcal_carbs,
+-            "kcal_fat": dailyplan.kcal_fat,
++            "kcal_protein": dp_kcal_protein,
++            "kcal_carbs": dp_kcal_carbs,
++            "kcal_fat": dp_kcal_fat,
+             "alloc_protein": dp_alloc["protein"],
+             "alloc_carbs": dp_alloc["carbs"],
+             "alloc_fat": dp_alloc["fat"],
+@@ -244,8 +259,8 @@
+                     "name": meal.name,
+                     "label": "Meal",
+                     "icon": CONTENT_ICON_REGISTRY.get("meal"),
+-                    "category": meal.category,
+-                    "category_badge": resolve_category_badge(meal.category),
++                    "category": "en plan",
++                    "category_badge": resolve_category_badge("en plan"),
+                     "foods_count": len(meal_foods_aggregation),
+                 },
+                 "kpis": {
+diff -ruN proyecto_django_export_full_orig/notas/tests/test_performance_query_patterns.py proyecto_django_export_full/notas/tests/test_performance_query_patterns.py
+--- proyecto_django_export_full_orig/notas/tests/test_performance_query_patterns.py	1970-01-01 00:00:00.000000000 +0000
++++ proyecto_django_export_full/notas/tests/test_performance_query_patterns.py	2026-06-08 21:26:29.868956107 +0000
+@@ -0,0 +1,117 @@
++from datetime import date
++
++from django.contrib.auth import get_user_model
++from django.test import TestCase
++
++from notas.application.services.nutrition.weight import get_current_weight
++from notas.application.services.queries.dailyplan_queries import (
++    dailyplans_with_kcal,
++    get_dailyplan_meals_with_foods,
++)
++from notas.domain.models import (
++    DailyPlan,
++    DailyPlanMeal,
++    Food,
++    FoodLocalizedName,
++    Meal,
++    MealFood,
++    WeightLog,
++)
++from notas.presentation.composition.viewmodel.components.builder_table_items import (
++    build_mealfood_table_item,
++)
++
++
++User = get_user_model()
++
++
++class WeightDefaultsTests(TestCase):
++    def test_get_current_weight_uses_default_when_user_has_no_weight_log(self):
++        user = User.objects.create_user(
++            username="no_weight",
++            email="no_weight@test.com",
++            password="12345678",
++        )
++
++        self.assertEqual(get_current_weight(user), 75)
++
++        with self.assertNumQueries(0):
++            self.assertEqual(get_current_weight(user), 75)
++
++    def test_get_current_weight_prefers_latest_weight_log(self):
++        user = User.objects.create_user(
++            username="with_weight",
++            email="with_weight@test.com",
++            password="12345678",
++        )
++        WeightLog.objects.create(
++            user=user,
++            date=date(2026, 1, 1),
++            weight_kg=88,
++        )
++
++        self.assertEqual(get_current_weight(user), 88)
++
++
++class DailyPlanQueryPatternTests(TestCase):
++    def test_dailyplan_query_prefetches_food_display_names_for_card_rendering(self):
++        user = User.objects.create_user(
++            username="dailyplan_prefetch",
++            email="dailyplan_prefetch@test.com",
++            password="12345678",
++        )
++        dailyplan = DailyPlan.objects.create(
++            name="Training day",
++            created_by=user,
++            is_draft=False,
++        )
++
++        meal = Meal.objects.create(
++            name="Lunch",
++            created_by=user,
++            is_draft=False,
++        )
++
++        for index in range(3):
++            food = Food.objects.create(
++                name=f"Food {index}",
++                protein=10,
++                carbs=20,
++                fat=5,
++                created_by=user,
++            )
++            FoodLocalizedName.objects.create(
++                food=food,
++                name=f"Alimento {index}",
++                normalized_name=f"alimento {index}",
++                language="es",
++                country="CL",
++                is_primary=True,
++            )
++            MealFood.objects.create(
++                meal=meal,
++                food=food,
++                quantity=100,
++                order=index,
++            )
++
++        DailyPlanMeal.objects.create(
++            dailyplan=dailyplan,
++            meal=meal,
++            order=1,
++        )
++
++        dailyplan = dailyplans_with_kcal().get(pk=dailyplan.pk)
++        dailyplan_meals = get_dailyplan_meals_with_foods(dailyplan)
++        meal_foods = list(dailyplan_meals[0].meal.meal_food_set.all())
++
++        with self.assertNumQueries(0):
++            table_items = [
++                build_mealfood_table_item(meal_food)
++                for meal_food in meal_foods
++            ]
++
++        self.assertEqual(
++            [item["rel"]["name"] for item in table_items],
++            ["Alimento 0", "Alimento 1", "Alimento 2"],
++        )

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Any, List
 
 from django.contrib.auth.decorators import login_required
-from django.db.models import Prefetch
+from django.db.models import Exists, OuterRef, Prefetch
 from django.shortcuts import render
 from django.urls import reverse
 
@@ -133,7 +133,16 @@ def home_view(request):
     user = request.user
 
     dailyplans_qs = DailyPlan.objects.filter(created_by=user).order_by("-id")
-    meals_qs = Meal.objects.filter(created_by=user).order_by("-id")
+    meals_qs = (
+        Meal.objects
+        .filter(created_by=user)
+        .annotate(
+            is_dpm_instance_sql=Exists(
+                DailyPlanMeal.objects.filter(meal_id=OuterRef("pk"))
+            )
+        )
+        .order_by("-id")
+    )
     foods_qs = Food.objects.filter(created_by=user).order_by("name")
 
     dailyplans_count = dailyplans_qs.count()

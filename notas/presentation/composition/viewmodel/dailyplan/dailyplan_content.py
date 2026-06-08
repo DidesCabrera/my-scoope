@@ -15,7 +15,6 @@ from notas.application.services.nutrition.food_aggregation import (
     build_meal_foods_aggregation,
 )
 from notas.application.services.nutrition.nutrition_kpis import (
-    get_ppk_dailyplan,
     get_ppk_meal,
 )
 from notas.application.services.nutrition.weight import get_current_weight
@@ -143,11 +142,19 @@ def build_dailyplan_detail_content_data(
         viewmode=viewmode,
     )
 
-    dp_total_kcal = dailyplan.total_kcal
-    dp_protein = dailyplan.protein
-    dp_carbs = dailyplan.carbs
-    dp_fat = dailyplan.fat
-    dp_alloc = dailyplan.alloc
+    nutrition_snapshot = _dailyplan_list_nutrition_snapshot(
+        dailyplan,
+        dailyplan_meals,
+    )
+
+    dp_total_kcal = nutrition_snapshot["total_kcal"]
+    dp_protein = nutrition_snapshot["protein"]
+    dp_carbs = nutrition_snapshot["carbs"]
+    dp_fat = nutrition_snapshot["fat"]
+    dp_kcal_protein = nutrition_snapshot["kcal_protein"]
+    dp_kcal_carbs = nutrition_snapshot["kcal_carbs"]
+    dp_kcal_fat = nutrition_snapshot["kcal_fat"]
+    dp_alloc = nutrition_snapshot["alloc"]
 
     foods_aggregation = build_dailyplan_foods_aggregation(dailyplan_meals)
 
@@ -156,10 +163,18 @@ def build_dailyplan_detail_content_data(
         "foods_count": len(foods_aggregation),
     }
 
-    ppk_dailyplan = get_ppk_dailyplan(dailyplan, user)
+    current_weight = get_current_weight(user)
+    ppk_dailyplan = {
+        "ppk": (dp_protein / current_weight)
+        if (current_weight and dp_protein)
+        else None,
+    }
 
     dailyplan_meals_table_items = [
-        build_dailyplanmeal_table_item(dpm)
+        build_dailyplanmeal_table_item(
+            dpm,
+            dailyplan_snapshot=nutrition_snapshot,
+        )
         for dpm in dailyplan_meals
     ]
 
@@ -183,9 +198,9 @@ def build_dailyplan_detail_content_data(
             "g_protein": dp_protein,
             "g_carbs": dp_carbs,
             "g_fat": dp_fat,
-            "kcal_protein": dailyplan.kcal_protein,
-            "kcal_carbs": dailyplan.kcal_carbs,
-            "kcal_fat": dailyplan.kcal_fat,
+            "kcal_protein": dp_kcal_protein,
+            "kcal_carbs": dp_kcal_carbs,
+            "kcal_fat": dp_kcal_fat,
             "alloc_protein": dp_alloc["protein"],
             "alloc_carbs": dp_alloc["carbs"],
             "alloc_fat": dp_alloc["fat"],
@@ -244,8 +259,8 @@ def build_dailyplan_detail_content_data(
                     "name": meal.name,
                     "label": "Meal",
                     "icon": CONTENT_ICON_REGISTRY.get("meal"),
-                    "category": meal.category,
-                    "category_badge": resolve_category_badge(meal.category),
+                    "category": "en plan",
+                    "category_badge": resolve_category_badge("en plan"),
                     "foods_count": len(meal_foods_aggregation),
                 },
                 "kpis": {

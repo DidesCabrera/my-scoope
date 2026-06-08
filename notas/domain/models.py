@@ -726,6 +726,16 @@ class Meal(models.Model):
     @property
     def is_dpm_instance(self):
         """Meal que vive dentro de un DailyPlanMeal."""
+        annotated_value = getattr(self, "is_dpm_instance_sql", None)
+
+        if annotated_value is not None:
+            return bool(annotated_value)
+
+        cached_value = getattr(self, "_is_dpm_instance", None)
+
+        if cached_value is not None:
+            return bool(cached_value)
+
         return self.dailyplanmeal_set.exists()
 
 
