@@ -7,7 +7,7 @@ from django.shortcuts import render
 from notas.presentation.config.viewmodel_config import PROFILE_VIEWMODE
 from notas.presentation.viewmodels.base_vm import BaseVM
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
-from notas.application.services.nutrition.weight import get_current_weight
+from notas.application.services.nutrition.weight import get_current_weight_log
 
 
 @dataclass
@@ -31,8 +31,8 @@ def profile_detail(request):
     user = request.user
     profile = user.profile
 
-    current_weight = get_current_weight(user)
-    last_weight_log = user.weight_logs.first()
+    last_weight_log = get_current_weight_log(user)
+    current_weight = last_weight_log.weight_kg if last_weight_log else None
 
     content = ProfileContentVM(
         title=f"{user.username}",

@@ -103,10 +103,37 @@ def get_primary_food_localized_name(
     1. exact language + country primary name
     2. language-only primary name
     3. empty string
+
+    When a caller prefetched the lightweight display-name subset into
+    ``_prefetched_primary_display_names``, resolve from memory to avoid one
+    localized-name query per food in list/detail render loops.
     """
 
     normalized_language = _clean_language(language)
     normalized_country = _clean_country(country)
+
+    prefetched_names = getattr(food, "_prefetched_primary_display_names", None)
+
+    if prefetched_names is not None:
+        exact_match = _find_prefetched_primary_name(
+            prefetched_names,
+            language=normalized_language,
+            country=normalized_country,
+        )
+
+        if exact_match:
+            return exact_match
+
+        language_match = _find_prefetched_primary_name(
+            prefetched_names,
+            language=normalized_language,
+            country="",
+        )
+
+        if language_match:
+            return language_match
+
+        return ""
 
     exact_match = (
         food.localized_names
@@ -161,6 +188,25 @@ def resolve_food_display_name(
     )
 
     return localized_name or food.name
+
+
+def _find_prefetched_primary_name(
+    localized_names,
+    *,
+    language: str,
+    country: str,
+) -> str:
+    matches = [
+        localized_name.name
+        for localized_name in localized_names
+        if (
+            localized_name.language == language
+            and localized_name.country == country
+            and localized_name.is_primary
+        )
+    ]
+
+    return sorted(matches)[0] if matches else ""
 
 
 def _clean_display_name(value: str | None) -> str:

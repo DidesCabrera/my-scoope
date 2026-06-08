@@ -66,7 +66,10 @@ def build_meal_detail_content_data(
 
     ppk = get_ppk_meal(meal, user)
 
-    meal_foods = list(meal.meal_food_set.select_related("food").all())
+    # Use the page-level prefetch cache when available. Calling
+    # select_related() here would create a new queryset and bypass the
+    # prefetched MealFood/Food/localized-name data.
+    meal_foods = list(meal.meal_food_set.all())
 
     table_items = [
         build_mealfood_table_item(mf)

@@ -3,6 +3,7 @@ from typing import Any, List, Optional
 import json
 
 from django.core.serializers.json import DjangoJSONEncoder
+from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404
 
 from notas.application.resolvers.meal_resolvers import (
@@ -12,7 +13,7 @@ from notas.application.services.access.access import get_meal_for_user
 from notas.application.services.nutrition.nutrition_kpis import (
     build_nutrition_kpis_from_meal,
 )
-from notas.domain.models import Meal, MealFood
+from notas.domain.models import FoodLocalizedName, Meal, MealFood
 from notas.presentation.composition.js.food_picker_builder import (
     build_food_picker_context_payload,
 )
@@ -29,6 +30,37 @@ from notas.presentation.config.viewmodel_config import (
     MEAL_VIEWMODE_SHARED_LIST,
 )
 
+
+
+
+def _meal_foods_for_card_rendering():
+    """
+    Lightweight prefetch queryset for list/detail cards.
+
+    It keeps the useful MealFood -> Food join, but only prefetches the
+    localized display-name rows that the UI can actually use. This avoids
+    both extremes: N+1 localized-name queries and loading every localized
+    name for every food in broad list pages.
+    """
+
+    primary_display_names = FoodLocalizedName.objects.filter(
+        language="es",
+        country__in=["CL", ""],
+        is_primary=True,
+    ).order_by("country", "name")
+
+    return (
+        MealFood.objects
+        .select_related("food")
+        .prefetch_related(
+            Prefetch(
+                "food__localized_names",
+                queryset=primary_display_names,
+                to_attr="_prefetched_primary_display_names",
+            ),
+        )
+        .order_by("order", "id")
+    )
 
 @dataclass
 class MealDetailPageData:
@@ -62,7 +94,12 @@ def get_meal_detail_page_data(
 
     meal = (
         Meal.objects
-        .prefetch_related("meal_food_set", "meal_food_set__food")
+        .prefetch_related(
+            Prefetch(
+                "meal_food_set",
+                queryset=_meal_foods_for_card_rendering(),
+            ),
+        )
         .get(pk=meal_id)
     )
 
@@ -148,6 +185,13 @@ def get_meal_list_page_data(user) -> MealListPageData:
             is_draft=False,
             dailyplanmeal__isnull=True,
         )
+        .select_related("created_by", "original_author", "forked_from")
+        .prefetch_related(
+            Prefetch(
+                "meal_food_set",
+                queryset=_meal_foods_for_card_rendering(),
+            ),
+        )
         .order_by("-created_at")
         .distinct()
     )
@@ -180,6 +224,13 @@ def get_meal_explore_list_page_data(user) -> MealListPageData:
             is_public=True,
             is_draft=False,
             dailyplanmeal__isnull=True,
+        )
+        .select_related("created_by", "original_author", "forked_from")
+        .prefetch_related(
+            Prefetch(
+                "meal_food_set",
+                queryset=_meal_foods_for_card_rendering(),
+            ),
         )
         .order_by("-created_at")
         .distinct()
@@ -215,7 +266,14 @@ def get_meal_shared_list_page_data(user) -> MealListPageData:
             is_draft=False,
             dailyplanmeal__isnull=True,
         )
-        .prefetch_related("shares")
+        .select_related("created_by", "original_author", "forked_from")
+        .prefetch_related(
+            "shares",
+            Prefetch(
+                "meal_food_set",
+                queryset=_meal_foods_for_card_rendering(),
+            ),
+        )
         .distinct()
     )
 
@@ -247,6 +305,13 @@ def get_meal_draft_list_page_data(user) -> MealListPageData:
             created_by=user,
             is_draft=True,
             dailyplanmeal__isnull=True,
+        )
+        .select_related("created_by", "original_author", "forked_from")
+        .prefetch_related(
+            Prefetch(
+                "meal_food_set",
+                queryset=_meal_foods_for_card_rendering(),
+            ),
         )
         .order_by("-created_at")
         .distinct()

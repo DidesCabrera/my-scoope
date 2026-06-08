@@ -1,0 +1,11 @@
+--- a/notas/interface/views/home.py
++++ b/notas/interface/views/home.py
+@@ -162,7 +162,7 @@ def home_view(request):
+     )
+     recent_foods = list(
+         foods_qs
+-        .select_related("created_by", "original_author", "forked_from")[:8]
++        .select_related("created_by")[:8]
+     )
+ 
+     dailyplan_content_data = build_dailyplan_list_content_data(

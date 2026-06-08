@@ -18,6 +18,7 @@ from notas.application.services.nutrition.nutrition_kpis import (
     get_ppk_dailyplan,
     get_ppk_meal,
 )
+from notas.application.services.nutrition.weight import get_current_weight
 from notas.presentation.composition.viewmodel.components.builder_headers import (
     build_dailyplan_header,
 )
@@ -30,6 +31,90 @@ from notas.presentation.composition.viewmodel.components.builder_table_items imp
 )
 from notas.presentation.config.icons import CONTENT_ICON_REGISTRY
 from notas.presentation.resolvers.title_resolvers import resolve_category_badge
+
+
+def _cached_or_live(obj, cached_attr, live_attr):
+    cached_value = getattr(obj, cached_attr, None)
+    return cached_value if cached_value is not None else getattr(obj, live_attr)
+
+
+def _dailyplan_meals_for_list_card(dailyplan):
+    """
+    Reuse a page-level prefetch when available. dailyplan.meals_with_foods()
+    creates a new queryset, so calling it after Home already prefetched recent
+    cards would do the same work again.
+    """
+
+    prefetched = getattr(dailyplan, "_prefetched_objects_cache", {}).get(
+        "dailyplan_meals"
+    )
+
+    if prefetched is not None:
+        return list(prefetched)
+
+    return list(dailyplan.meals_with_foods())
+
+
+def _dailyplan_list_nutrition_snapshot(dailyplan, dailyplan_meals):
+    """
+    Build list-card totals in one pass over the meals.
+
+    The DailyPlan model properties are correct, but each property walks the
+    relation again. Home and list cards need the full KPI group, so a single
+    snapshot avoids repeated iteration and falls back to live values only when
+    a meal cache is missing.
+    """
+
+    totals = {
+        "protein": 0,
+        "carbs": 0,
+        "fat": 0,
+        "kcal_protein": 0,
+        "kcal_carbs": 0,
+        "kcal_fat": 0,
+    }
+
+    for dpm in dailyplan_meals:
+        meal = dpm.meal
+        totals["protein"] += _cached_or_live(meal, "protein_cached", "protein")
+        totals["carbs"] += _cached_or_live(meal, "carbs_cached", "carbs")
+        totals["fat"] += _cached_or_live(meal, "fat_cached", "fat")
+        totals["kcal_protein"] += _cached_or_live(
+            meal,
+            "kcal_protein_cached",
+            "kcal_protein",
+        )
+        totals["kcal_carbs"] += _cached_or_live(
+            meal,
+            "kcal_carbs_cached",
+            "kcal_carbs",
+        )
+        totals["kcal_fat"] += _cached_or_live(
+            meal,
+            "kcal_fat_cached",
+            "kcal_fat",
+        )
+
+    total_kcal = (
+        totals["kcal_protein"]
+        + totals["kcal_carbs"]
+        + totals["kcal_fat"]
+    )
+
+    if total_kcal > 0:
+        alloc = {
+            "protein": totals["kcal_protein"] / total_kcal * 100,
+            "carbs": totals["kcal_carbs"] / total_kcal * 100,
+            "fat": totals["kcal_fat"] / total_kcal * 100,
+        }
+    else:
+        alloc = {"protein": 0, "carbs": 0, "fat": 0}
+
+    return {
+        **totals,
+        "total_kcal": total_kcal,
+        "alloc": alloc,
+    }
 
 
 @dataclass
@@ -203,23 +288,35 @@ def build_dailyplan_list_content_data(dailyplans, user, viewmode):
     child_cards_data = []
 
     for dailyplan in dailyplans:
-        dp_total_kcal = dailyplan.total_kcal
-        dp_protein = dailyplan.protein
-        dp_carbs = dailyplan.carbs
-        dp_fat = dailyplan.fat
+        dailyplan_meals = _dailyplan_meals_for_list_card(dailyplan)
+        nutrition_snapshot = _dailyplan_list_nutrition_snapshot(
+            dailyplan,
+            dailyplan_meals,
+        )
 
-        dp_kcal_protein = dailyplan.kcal_protein
-        dp_kcal_carbs = dailyplan.kcal_carbs
-        dp_kcal_fat = dailyplan.kcal_fat
+        dp_total_kcal = nutrition_snapshot["total_kcal"]
+        dp_protein = nutrition_snapshot["protein"]
+        dp_carbs = nutrition_snapshot["carbs"]
+        dp_fat = nutrition_snapshot["fat"]
 
-        dp_alloc = dailyplan.alloc
+        dp_kcal_protein = nutrition_snapshot["kcal_protein"]
+        dp_kcal_carbs = nutrition_snapshot["kcal_carbs"]
+        dp_kcal_fat = nutrition_snapshot["kcal_fat"]
 
-        ppk = get_ppk_dailyplan(dailyplan, user)
+        dp_alloc = nutrition_snapshot["alloc"]
 
-        dailyplan_meals = list(dailyplan.meals_with_foods())
+        current_weight = get_current_weight(user)
+        ppk = {
+            "ppk": (dp_protein / current_weight)
+            if (current_weight and dp_protein)
+            else None,
+        }
 
         dailyplan_meals_table_items = [
-            build_dailyplanmeal_table_item(dpm)
+            build_dailyplanmeal_table_item(
+                dpm,
+                dailyplan_snapshot=nutrition_snapshot,
+            )
             for dpm in dailyplan_meals
         ]
 

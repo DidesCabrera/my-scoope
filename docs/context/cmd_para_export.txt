@@ -25,9 +25,18 @@ cd proyecto_django
 
 --- 
 
+FULL
+(Sin USDA - img)
+./scripts/export_for_chatgpt.sh full
+
+AI
+(Sin USDA - img - test)
 ./scripts/export_for_chatgpt.sh ai
 
-./scripts/export_for_chatgpt.sh full
+COMPLETO
+(Sin img)
+./scripts/export_for_chatgpt.sh usda
+
 
 ---
 

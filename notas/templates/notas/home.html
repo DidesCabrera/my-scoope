@@ -29,6 +29,9 @@
               src="{% static 'notas/img/home-banner-1.jpg' %}"
               alt="Banner 1"
               class="home-banner-image"
+              loading="eager"
+              decoding="async"
+              fetchpriority="high"
             >
             <div class="home-banner-overlay">
               <div class="home-stat-top welcome">
@@ -47,6 +50,8 @@
               src="{% static 'notas/img/home-banner-2.jpg' %}"
               alt="Banner 2"
               class="home-banner-image"
+              loading="lazy"
+              decoding="async"
             >
             <div class="home-banner-overlay">
               <h1 class="home-banner-title">Como funciona</h1>
@@ -61,6 +66,8 @@
               src="{% static 'notas/img/home-banner-3.jpg' %}"
               alt="Banner 3"
               class="home-banner-image"
+              loading="lazy"
+              decoding="async"
             >
             <div class="home-banner-overlay">
               <h1 class="home-banner-title">Recibe asistencia de tu IA</h1>
@@ -317,8 +324,8 @@
   
 </div>
 
-<script src="{% static 'notas/js/collapse_cards.js' %}"></script>
-<script src="{% static 'notas/js/home_banner_carousel.js' %}"></script>
+<script src="{% static 'notas/js/collapse_cards.js' %}" defer></script>
+<script src="{% static 'notas/js/home_banner_carousel.js' %}" defer></script>
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {

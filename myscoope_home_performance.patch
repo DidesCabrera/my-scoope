@@ -1,0 +1,322 @@
+--- a/notas/interface/views/home.py
++++ b/notas/interface/views/home.py
+@@ -2,10 +2,18 @@
+ from typing import Any, List
+ 
+ from django.contrib.auth.decorators import login_required
++from django.db.models import Prefetch
+ from django.shortcuts import render
+ from django.urls import reverse
+ 
+-from notas.domain.models import DailyPlan, Meal, Food
++from notas.domain.models import (
++    DailyPlan,
++    DailyPlanMeal,
++    Food,
++    FoodLocalizedName,
++    Meal,
++    MealFood,
++)
+ from notas.presentation.viewmodels.base_vm import BaseVM
+ from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
+ from notas.presentation.config.viewmodel_config import (
+@@ -26,7 +34,7 @@
+ from notas.presentation.composition.viewmodel.dailyplan.list_dailyplan_builder import build_dailyplan_list_vm
+ from notas.presentation.composition.viewmodel.meal.list_meal_builder import build_meal_list_vm
+ from notas.presentation.composition.viewmodel.food.list_foods_builder import build_food_list_vm
+-from notas.presentation.viewmodels.components.header_vm import HeaderVM, HeaderActionVM
++from notas.presentation.viewmodels.components.header_vm import HeaderVM
+ 
+ from notas.presentation.composition.viewmodel.components.builder_headers import build_page_header
+ 
+@@ -65,6 +73,61 @@
+     foods: HomeSectionVM
+ 
+ 
++def _primary_display_names_for_home_cards():
++    """
++    Home renders only a small summary, but the reused card templates need food
++    display names. Prefetch only the primary Spanish names to avoid one query
++    per food without loading every localized-name row.
++    """
++
++    return FoodLocalizedName.objects.filter(
++        language="es",
++        country__in=["CL", ""],
++        is_primary=True,
++    ).order_by("country", "name")
++
++
++def _meal_foods_for_home_cards():
++    """
++    Keep Home card rendering bounded: MealFood -> Food is useful for the
++    embedded summary grids, but localized names are narrowed to the exact rows
++    used by resolve_food_display_name().
++    """
++
++    return (
++        MealFood.objects
++        .select_related("food")
++        .prefetch_related(
++            Prefetch(
++                "food__localized_names",
++                queryset=_primary_display_names_for_home_cards(),
++                to_attr="_prefetched_primary_display_names",
++            )
++        )
++        .order_by("order", "id")
++    )
++
++
++def _dailyplan_meals_for_home_cards():
++    return (
++        DailyPlanMeal.objects
++        .select_related(
++            "dailyplan",
++            "meal",
++            "meal__created_by",
++            "meal__original_author",
++            "meal__forked_from",
++        )
++        .prefetch_related(
++            Prefetch(
++                "meal__meal_food_set",
++                queryset=_meal_foods_for_home_cards(),
++            )
++        )
++        .order_by("order", "id")
++    )
++
++
+ @login_required
+ def home_view(request):
+     user = request.user
+@@ -77,9 +140,31 @@
+     meals_count = meals_qs.count()
+     foods_count = foods_qs.count()
+ 
+-    recent_dailyplans = list(dailyplans_qs[:3])
+-    recent_meals = list(meals_qs[:3])
+-    recent_foods = list(foods_qs[:8])
++    recent_dailyplans = list(
++        dailyplans_qs
++        .select_related("created_by", "original_author", "forked_from")
++        .prefetch_related(
++            "shares",
++            Prefetch(
++                "dailyplan_meals",
++                queryset=_dailyplan_meals_for_home_cards(),
++            ),
++        )[:3]
++    )
++    recent_meals = list(
++        meals_qs
++        .select_related("created_by", "original_author", "forked_from")
++        .prefetch_related(
++            Prefetch(
++                "meal_food_set",
++                queryset=_meal_foods_for_home_cards(),
++            ),
++        )[:3]
++    )
++    recent_foods = list(
++        foods_qs
++        .select_related("created_by", "original_author", "forked_from")[:8]
++    )
+ 
+     dailyplan_content_data = build_dailyplan_list_content_data(
+         recent_dailyplans,
+@@ -181,4 +266,4 @@
+         request,
+         "notas/home.html",
+         base_vm.as_context(),
+-    )
+\ No newline at end of file
++    )
+--- a/notas/presentation/composition/viewmodel/dailyplan/dailyplan_content.py
++++ b/notas/presentation/composition/viewmodel/dailyplan/dailyplan_content.py
+@@ -18,6 +18,7 @@
+     get_ppk_dailyplan,
+     get_ppk_meal,
+ )
++from notas.application.services.nutrition.weight import get_current_weight
+ from notas.presentation.composition.viewmodel.components.builder_headers import (
+     build_dailyplan_header,
+ )
+@@ -32,6 +33,92 @@
+ from notas.presentation.resolvers.title_resolvers import resolve_category_badge
+ 
+ 
++
++
++def _cached_or_live(obj, cached_attr, live_attr):
++    cached_value = getattr(obj, cached_attr, None)
++    return cached_value if cached_value is not None else getattr(obj, live_attr)
++
++
++def _dailyplan_meals_for_list_card(dailyplan):
++    """
++    Reuse a page-level prefetch when available. dailyplan.meals_with_foods()
++    creates a new queryset, so calling it after Home already prefetched recent
++    cards would do the same work again.
++    """
++
++    prefetched = getattr(dailyplan, "_prefetched_objects_cache", {}).get(
++        "dailyplan_meals"
++    )
++
++    if prefetched is not None:
++        return list(prefetched)
++
++    return list(dailyplan.meals_with_foods())
++
++
++def _dailyplan_list_nutrition_snapshot(dailyplan, dailyplan_meals):
++    """
++    Build list-card totals in one pass over the meals.
++
++    The DailyPlan model properties are correct, but each property walks the
++    relation again. Home and list cards need the full KPI group, so a single
++    snapshot avoids repeated iteration and falls back to live values only when
++    a meal cache is missing.
++    """
++
++    totals = {
++        "protein": 0,
++        "carbs": 0,
++        "fat": 0,
++        "kcal_protein": 0,
++        "kcal_carbs": 0,
++        "kcal_fat": 0,
++    }
++
++    for dpm in dailyplan_meals:
++        meal = dpm.meal
++        totals["protein"] += _cached_or_live(meal, "protein_cached", "protein")
++        totals["carbs"] += _cached_or_live(meal, "carbs_cached", "carbs")
++        totals["fat"] += _cached_or_live(meal, "fat_cached", "fat")
++        totals["kcal_protein"] += _cached_or_live(
++            meal,
++            "kcal_protein_cached",
++            "kcal_protein",
++        )
++        totals["kcal_carbs"] += _cached_or_live(
++            meal,
++            "kcal_carbs_cached",
++            "kcal_carbs",
++        )
++        totals["kcal_fat"] += _cached_or_live(
++            meal,
++            "kcal_fat_cached",
++            "kcal_fat",
++        )
++
++    total_kcal = (
++        totals["kcal_protein"]
++        + totals["kcal_carbs"]
++        + totals["kcal_fat"]
++    )
++
++    if total_kcal > 0:
++        alloc = {
++            "protein": totals["kcal_protein"] / total_kcal * 100,
++            "carbs": totals["kcal_carbs"] / total_kcal * 100,
++            "fat": totals["kcal_fat"] / total_kcal * 100,
++        }
++    else:
++        alloc = {"protein": 0, "carbs": 0, "fat": 0}
++
++    return {
++        **totals,
++        "total_kcal": total_kcal,
++        "alloc": alloc,
++    }
++
++
+ @dataclass
+ class DailyPlanDetailContentData:
+     header: Any
+@@ -203,20 +290,29 @@
+     child_cards_data = []
+ 
+     for dailyplan in dailyplans:
+-        dp_total_kcal = dailyplan.total_kcal
+-        dp_protein = dailyplan.protein
+-        dp_carbs = dailyplan.carbs
+-        dp_fat = dailyplan.fat
+-
+-        dp_kcal_protein = dailyplan.kcal_protein
+-        dp_kcal_carbs = dailyplan.kcal_carbs
+-        dp_kcal_fat = dailyplan.kcal_fat
+-
+-        dp_alloc = dailyplan.alloc
+-
+-        ppk = get_ppk_dailyplan(dailyplan, user)
++        dailyplan_meals = _dailyplan_meals_for_list_card(dailyplan)
++        nutrition_snapshot = _dailyplan_list_nutrition_snapshot(
++            dailyplan,
++            dailyplan_meals,
++        )
+ 
+-        dailyplan_meals = list(dailyplan.meals_with_foods())
++        dp_total_kcal = nutrition_snapshot["total_kcal"]
++        dp_protein = nutrition_snapshot["protein"]
++        dp_carbs = nutrition_snapshot["carbs"]
++        dp_fat = nutrition_snapshot["fat"]
++
++        dp_kcal_protein = nutrition_snapshot["kcal_protein"]
++        dp_kcal_carbs = nutrition_snapshot["kcal_carbs"]
++        dp_kcal_fat = nutrition_snapshot["kcal_fat"]
++
++        dp_alloc = nutrition_snapshot["alloc"]
++
++        current_weight = get_current_weight(user)
++        ppk = {
++            "ppk": (dp_protein / current_weight)
++            if (current_weight and dp_protein)
++            else None,
++        }
+ 
+         dailyplan_meals_table_items = [
+             build_dailyplanmeal_table_item(dpm)
+--- a/notas/templates/notas/home.html
++++ b/notas/templates/notas/home.html
+@@ -29,6 +29,9 @@
+               src="{% static 'notas/img/home-banner-1.jpg' %}"
+               alt="Banner 1"
+               class="home-banner-image"
++              loading="eager"
++              decoding="async"
++              fetchpriority="high"
+             >
+             <div class="home-banner-overlay">
+               <div class="home-stat-top welcome">
+@@ -47,6 +50,8 @@
+               src="{% static 'notas/img/home-banner-2.jpg' %}"
+               alt="Banner 2"
+               class="home-banner-image"
++              loading="lazy"
++              decoding="async"
+             >
+             <div class="home-banner-overlay">
+               <h1 class="home-banner-title">Como funciona</h1>
+@@ -61,6 +66,8 @@
+               src="{% static 'notas/img/home-banner-3.jpg' %}"
+               alt="Banner 3"
+               class="home-banner-image"
++              loading="lazy"
++              decoding="async"
+             >
+             <div class="home-banner-overlay">
+               <h1 class="home-banner-title">Recibe asistencia de tu IA</h1>
+@@ -317,8 +324,8 @@
+   
+ </div>
+ 
+-<script src="{% static 'notas/js/collapse_cards.js' %}"></script>
+-<script src="{% static 'notas/js/home_banner_carousel.js' %}"></script>
++<script src="{% static 'notas/js/collapse_cards.js' %}" defer></script>
++<script src="{% static 'notas/js/home_banner_carousel.js' %}" defer></script>
+ 
+ <script>
+   document.addEventListener("DOMContentLoaded", function () {

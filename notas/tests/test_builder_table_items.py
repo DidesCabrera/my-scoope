@@ -1,8 +1,16 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from notas.domain.models import Food, FoodLocalizedName, Meal, MealFood
+from notas.domain.models import (
+    DailyPlan,
+    DailyPlanMeal,
+    Food,
+    FoodLocalizedName,
+    Meal,
+    MealFood,
+)
 from notas.presentation.composition.viewmodel.components.builder_table_items import (
+    build_dailyplanmeal_table_item,
     build_mealfood_table_item,
 )
 
@@ -55,3 +63,69 @@ class BuilderTableItemsTests(TestCase):
 
         self.assertEqual(item["rel"]["name"], "Avena")
         self.assertEqual(item["rel"]["quantity_unit"], "g")
+
+
+class DailyPlanMealTableItemSnapshotTests(TestCase):
+    def test_build_dailyplanmeal_table_item_uses_dailyplan_snapshot_without_queries(self):
+        user = User.objects.create_user(
+            username="snapshot_user",
+            email="snapshot@test.com",
+            password="12345678",
+        )
+
+        food = Food.objects.create(
+            name="Chicken",
+            protein=20,
+            carbs=10,
+            fat=5,
+            created_by=user,
+        )
+
+        meal = Meal.objects.create(
+            name="Lunch",
+            created_by=user,
+        )
+
+        MealFood.objects.create(
+            meal=meal,
+            food=food,
+            quantity=100,
+        )
+
+        meal.refresh_from_db()
+
+        dailyplan = DailyPlan.objects.create(
+            name="Training day",
+            created_by=user,
+        )
+
+        dpm = DailyPlanMeal.objects.create(
+            dailyplan=dailyplan,
+            meal=meal,
+            order=1,
+        )
+
+        dpm = DailyPlanMeal.objects.select_related(
+            "dailyplan",
+            "meal",
+        ).get(pk=dpm.pk)
+
+        dailyplan_snapshot = {
+            "kcal_protein": meal.kcal_protein_cached,
+            "kcal_carbs": meal.kcal_carbs_cached,
+            "kcal_fat": meal.kcal_fat_cached,
+            "total_kcal": meal.total_kcal_cached,
+        }
+
+        with self.assertNumQueries(0):
+            item = build_dailyplanmeal_table_item(
+                dpm,
+                dailyplan_snapshot=dailyplan_snapshot,
+            )
+
+        self.assertEqual(item["main_id"], dailyplan.id)
+        self.assertEqual(item["child_id"], meal.id)
+        self.assertEqual(item["rel"]["kcal_share"], 100)
+        self.assertEqual(item["rel"]["alloc_protein"], 100)
+        self.assertEqual(item["rel"]["alloc_carbs"], 100)
+        self.assertEqual(item["rel"]["alloc_fat"], 100)
