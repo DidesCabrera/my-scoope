@@ -88,7 +88,7 @@
             <div class="data-grid-cell data-grid-cell--action">
                 <form method="post" action="{% url 'mealfood_remove' row.rel.id %}">
                     {% csrf_token %}
-                    <input type="hidden" name="return_to" value="{{ request.path }}">
+                    <input type="hidden" name="return_to" value="{{ request.path }}?panel=edit">
                     <button type="submit" aria-label="Eliminar alimento">
                         <i data-lucide="trash" class="table-icon"></i>
                     </button>
@@ -101,5 +101,26 @@
             No foods added yet.
         </div>
     {% endfor %}
+
+    {% if items %}
+        <div class="data-grid-edit-actions js-sortable-actions" data-state="clean">
+            <div class="data-grid-edit-actions__buttons">
+                <button
+                    type="button"
+                    class="data-grid-edit-actions__button data-grid-edit-actions__button--secondary js-mealfood-sortable-cancel"
+                    disabled
+                >
+                    Descartar
+                </button>
+                <button
+                    type="button"
+                    class="data-grid-edit-actions__button data-grid-edit-actions__button--primary js-mealfood-sortable-save"
+                    disabled
+                >
+                    Guardar orden
+                </button>
+            </div>
+        </div>
+    {% endif %}
 
 </div>

@@ -300,11 +300,19 @@ def dailyplanmeal_remove(request, dailyplan_id, dailyplanmeal_id):
         dailyplan__created_by=request.user,
     )
 
+    return_to = (
+        request.POST.get("return_to")
+        or request.GET.get("return_to")
+    )
+
     result = remove_dailyplan_meal(
         dailyplan_meal=dpm,
     )
 
     messages.success(request, "Meal eliminada del daily plan")
+
+    if return_to:
+        return redirect(return_to)
 
     return redirect("dailyplan_detail", result.dailyplan.pk)
 

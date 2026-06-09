@@ -1,0 +1,119 @@
+--- a/notas/static/notas/css/components/data_grid.css
++++ b/notas/static/notas/css/components/data_grid.css
+@@ -623,19 +623,18 @@
+ }
+ /* =========================================================
+    Edit panel order actions
++
++   Mantiene los botones de confirmación del tab Edit con el
++   mismo patrón visual que `.actions-row` en los pickers.
++   El estado textual es opcional: el JS no depende de que exista.
+    ========================================================= */
+ 
+ .data-grid-edit-actions {
+-    display: flex;
+-    align-items: center;
+-    justify-content: space-between;
+-    gap: 12px;
+     margin-top: 10px;
+-    padding: 10px 0 2px;
+ }
+ 
+ .data-grid-edit-actions__status {
+-    margin: 0;
++    margin: 0 0 8px;
+     font-size: 12px;
+     line-height: 1.35;
+     color: var(--text-muted);
+@@ -647,45 +646,46 @@
+ }
+ 
+ .data-grid-edit-actions__buttons {
+-    display: inline-flex;
+-    align-items: center;
++    display: flex;
+     justify-content: flex-end;
++    align-items: center;
++    padding: 12px 20px 20px 20px;
+     gap: 8px;
+-    flex-shrink: 0;
+ }
+ 
+ .data-grid-edit-actions__button {
+-    min-height: 28px;
+-    display: inline-flex;
+-    align-items: center;
+-    justify-content: center;
+-    padding: 0 10px;
+-    border-radius: 999px;
+-    border: 1px solid var(--panel-tab-border);
+-    font-size: 12px;
+-    font-weight: 550;
++    font-size: 13px;
++    padding: 6px 12px;
++    border-radius: 10px;
++    border: 1px solid transparent;
+     cursor: pointer;
+     transition:
+-        background-color 0.16s ease,
+-        border-color 0.16s ease,
+-        color 0.16s ease,
+-        opacity 0.16s ease;
++        background-color 0.15s ease,
++        border-color 0.15s ease,
++        color 0.15s ease,
++        opacity 0.15s ease;
+ }
+ 
+ .data-grid-edit-actions__button--primary {
+-    background: var(--panel-tab-active-bg);
+-    border-color: var(--panel-tab-active-border);
+-    color: var(--panel-tab-active-text);
++    background-color: var(--text-main);
++    color: var(--text-inverted);
++}
++
++.data-grid-edit-actions__button--primary:not(:disabled):hover {
++    background-color: var(--interactive-primary);
++    color: #ffffff;
+ }
+ 
+ .data-grid-edit-actions__button--secondary {
+-    background: var(--panel-tab-bg);
+-    border-color: var(--panel-tab-border);
+-    color: var(--panel-tab-text);
++    background-color: transparent;
++    color: var(--text-muted);
++    border: none;
++    margin-left: 4px;
+ }
+ 
+-.data-grid-edit-actions__button:not(:disabled):hover {
+-    opacity: 0.82;
++.data-grid-edit-actions__button--secondary:not(:disabled):hover {
++    background-color: var(--interactive-hover);
++    color: var(--text-main);
+ }
+ 
+ .data-grid-edit-actions__button:disabled {
+@@ -694,19 +694,7 @@
+ }
+ 
+ @media (max-width: 980px) {
+-    .data-grid-edit-actions {
+-        align-items: stretch;
+-        flex-direction: column;
+-        gap: 8px;
+-        padding-top: 12px;
+-    }
+-
+     .data-grid-edit-actions__buttons {
+-        width: 100%;
+-    }
+-
+-    .data-grid-edit-actions__button {
+-        flex: 1;
+-        min-height: 32px;
++        padding: 8px 12px 20px 12px;
+     }
+ }

@@ -115,4 +115,25 @@
         </div>
     {% endfor %}
 
+    {% if items %}
+        <div class="data-grid-edit-actions js-sortable-actions" data-state="clean">
+            <div class="data-grid-edit-actions__buttons">
+                <button
+                    type="button"
+                    class="data-grid-edit-actions__button data-grid-edit-actions__button--secondary js-dpm-sortable-cancel"
+                    disabled
+                >
+                    Descartar
+                </button>
+                <button
+                    type="button"
+                    class="data-grid-edit-actions__button data-grid-edit-actions__button--primary js-dpm-sortable-save"
+                    disabled
+                >
+                    Guardar orden
+                </button>
+            </div>
+        </div>
+    {% endif %}
+
 </div>

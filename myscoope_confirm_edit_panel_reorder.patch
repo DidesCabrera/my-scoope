@@ -1,0 +1,616 @@
+diff -ruN orig/notas/static/notas/css/components/buttons.css work/notas/static/notas/css/components/buttons.css
+--- orig/notas/static/notas/css/components/buttons.css	2026-06-02 00:44:53.000000000 +0000
++++ work/notas/static/notas/css/components/buttons.css	2026-06-09 04:56:01.182051528 +0000
+@@ -35,7 +35,8 @@
+   .btn-block,
+   .btn-continue,
+   .btn-cancel-create,
+-  .toast-close
++  .toast-close,
++  .data-grid-edit-actions__button
+ ) {
+   -webkit-tap-highlight-color: transparent;
+   touch-action: manipulation;
+@@ -73,7 +74,8 @@
+     .btn-block,
+     .btn-continue,
+     .btn-cancel-create,
+-    .toast-close
++    .toast-close,
++    .data-grid-edit-actions__button
+   ):active {
+     opacity: 0.72;
+     transform: translateY(1px);
+diff -ruN orig/notas/static/notas/css/components/data_grid.css work/notas/static/notas/css/components/data_grid.css
+--- orig/notas/static/notas/css/components/data_grid.css	2026-06-09 04:32:34.000000000 +0000
++++ work/notas/static/notas/css/components/data_grid.css	2026-06-09 04:56:00.080883180 +0000
+@@ -620,4 +620,93 @@
+   font-weight: 600;
+   color: var(--text-main);
+   white-space: nowrap;
+-}
+\ No newline at end of file
++}
++/* =========================================================
++   Edit panel order actions
++   ========================================================= */
++
++.data-grid-edit-actions {
++    display: flex;
++    align-items: center;
++    justify-content: space-between;
++    gap: 12px;
++    margin-top: 10px;
++    padding: 10px 0 2px;
++}
++
++.data-grid-edit-actions__status {
++    margin: 0;
++    font-size: 12px;
++    line-height: 1.35;
++    color: var(--text-muted);
++}
++
++.data-grid-edit-actions[data-state="dirty"] .data-grid-edit-actions__status {
++    color: var(--text-main);
++    font-weight: 500;
++}
++
++.data-grid-edit-actions__buttons {
++    display: inline-flex;
++    align-items: center;
++    justify-content: flex-end;
++    gap: 8px;
++    flex-shrink: 0;
++}
++
++.data-grid-edit-actions__button {
++    min-height: 28px;
++    display: inline-flex;
++    align-items: center;
++    justify-content: center;
++    padding: 0 10px;
++    border-radius: 999px;
++    border: 1px solid var(--panel-tab-border);
++    font-size: 12px;
++    font-weight: 550;
++    cursor: pointer;
++    transition:
++        background-color 0.16s ease,
++        border-color 0.16s ease,
++        color 0.16s ease,
++        opacity 0.16s ease;
++}
++
++.data-grid-edit-actions__button--primary {
++    background: var(--panel-tab-active-bg);
++    border-color: var(--panel-tab-active-border);
++    color: var(--panel-tab-active-text);
++}
++
++.data-grid-edit-actions__button--secondary {
++    background: var(--panel-tab-bg);
++    border-color: var(--panel-tab-border);
++    color: var(--panel-tab-text);
++}
++
++.data-grid-edit-actions__button:not(:disabled):hover {
++    opacity: 0.82;
++}
++
++.data-grid-edit-actions__button:disabled {
++    cursor: default;
++    opacity: 0.42;
++}
++
++@media (max-width: 980px) {
++    .data-grid-edit-actions {
++        align-items: stretch;
++        flex-direction: column;
++        gap: 8px;
++        padding-top: 12px;
++    }
++
++    .data-grid-edit-actions__buttons {
++        width: 100%;
++    }
++
++    .data-grid-edit-actions__button {
++        flex: 1;
++        min-height: 32px;
++    }
++}
+diff -ruN orig/notas/static/notas/js/dpm_sortable.js work/notas/static/notas/js/dpm_sortable.js
+--- orig/notas/static/notas/js/dpm_sortable.js	2026-04-28 02:11:27.000000000 +0000
++++ work/notas/static/notas/js/dpm_sortable.js	2026-06-09 04:56:17.595281494 +0000
+@@ -11,7 +11,70 @@
+     function getRows(grid) {
+       return Array.from(grid.querySelectorAll(".js-dpm-sortable-row"));
+     }
++
++    function getActions(grid) {
++      return grid.querySelector(".js-sortable-actions");
++    }
++
++    function getStatus(grid) {
++      return grid.querySelector(".js-sortable-status");
++    }
++
++    function getSaveButton(grid) {
++      return grid.querySelector(".js-dpm-sortable-save");
++    }
++
++    function getCancelButton(grid) {
++      return grid.querySelector(".js-dpm-sortable-cancel");
++    }
++
++    function setEditPanelUrl() {
++      const url = new URL(window.location.href);
++      url.searchParams.set("panel", "edit");
++      return url.toString();
++    }
++
++    function reloadEditPanel() {
++      window.location.href = setEditPanelUrl();
++    }
++
++    function setDirtyState(grid, isDirty) {
++      const actions = getActions(grid);
++      const saveButton = getSaveButton(grid);
++      const cancelButton = getCancelButton(grid);
++      const status = getStatus(grid);
++
++      if (actions) {
++        actions.dataset.state = isDirty ? "dirty" : "clean";
++      }
++
++      if (saveButton) {
++        saveButton.disabled = !isDirty;
++      }
++
++      if (cancelButton) {
++        cancelButton.disabled = !isDirty;
++      }
++
++      if (status) {
++        status.textContent = isDirty
++          ? "Orden modificado. Guarda para aplicar los cambios."
++          : "Arrastra las comidas para definir el orden.";
++      }
++    }
+   
++
++    function moveRowToEnd(grid, row) {
++      const actions = getActions(grid);
++
++      if (actions) {
++        grid.insertBefore(row, actions);
++        return;
++      }
++
++      grid.appendChild(row);
++    }
++
+     function getRowAfterPointer(grid, y, draggingRow) {
+       const rows = getRows(grid).filter((row) => row !== draggingRow);
+   
+@@ -32,12 +95,12 @@
+   
+     async function persistOrder(grid) {
+       const reorderUrl = grid.dataset.reorderUrl;
+-      if (!reorderUrl) return;
++      if (!reorderUrl) return false;
+   
+       const formData = new FormData();
+   
+       getRows(grid).forEach((row) => {
+-        formData.append("dpm_order[]", row.dataset.dpmId);
++        formData.append("order[]", row.dataset.dpmId);
+       });
+   
+       const response = await fetch(reorderUrl, {
+@@ -50,7 +113,10 @@
+   
+       if (!response.ok) {
+         console.error("No se pudo guardar el nuevo orden de meals.");
++        return false;
+       }
++
++      return true;
+     }
+   
+     grids.forEach((grid) => {
+@@ -58,6 +124,44 @@
+       let pointerId = null;
+       let startY = 0;
+       let hasMoved = false;
++
++      setDirtyState(grid, false);
++
++      const saveButton = getSaveButton(grid);
++      const cancelButton = getCancelButton(grid);
++
++      if (saveButton) {
++        saveButton.addEventListener("click", async () => {
++          if (saveButton.disabled) return;
++
++          saveButton.disabled = true;
++          const status = getStatus(grid);
++
++          if (status) {
++            status.textContent = "Guardando orden...";
++          }
++
++          const saved = await persistOrder(grid);
++
++          if (saved) {
++            reloadEditPanel();
++            return;
++          }
++
++          saveButton.disabled = false;
++
++          if (status) {
++            status.textContent = "No se pudo guardar. Intenta nuevamente.";
++          }
++        });
++      }
++
++      if (cancelButton) {
++        cancelButton.addEventListener("click", () => {
++          if (cancelButton.disabled) return;
++          reloadEditPanel();
++        });
++      }
+   
+       grid.addEventListener("pointerdown", (event) => {
+         const handle = event.target.closest(".drag-handle");
+@@ -90,7 +194,7 @@
+         const afterElement = getRowAfterPointer(grid, event.clientY, draggingRow);
+   
+         if (afterElement == null) {
+-            grid.appendChild(draggingRow);
++            moveRowToEnd(grid, draggingRow);
+         } else {
+             grid.insertBefore(draggingRow, afterElement);
+         }
+@@ -98,7 +202,7 @@
+         event.preventDefault();
+       });
+   
+-      grid.addEventListener("pointerup", async (event) => {
++      grid.addEventListener("pointerup", (event) => {
+         if (!draggingRow || event.pointerId !== pointerId) return;
+   
+         const finishedRow = draggingRow;
+@@ -120,7 +224,7 @@
+         pointerId = null;
+   
+         if (hasMoved) {
+-          await persistOrder(grid);
++          setDirtyState(grid, true);
+         }
+       });
+   
+@@ -140,4 +244,4 @@
+         hasMoved = false;
+       });
+     });
+-  });
+\ No newline at end of file
++  });
+diff -ruN orig/notas/static/notas/js/mealfood_sortable.js work/notas/static/notas/js/mealfood_sortable.js
+--- orig/notas/static/notas/js/mealfood_sortable.js	2026-04-28 02:37:09.000000000 +0000
++++ work/notas/static/notas/js/mealfood_sortable.js	2026-06-09 04:56:17.594856522 +0000
+@@ -11,7 +11,70 @@
+     function getRows(grid) {
+       return Array.from(grid.querySelectorAll(".js-mealfood-sortable-row"));
+     }
++
++    function getActions(grid) {
++      return grid.querySelector(".js-sortable-actions");
++    }
++
++    function getStatus(grid) {
++      return grid.querySelector(".js-sortable-status");
++    }
++
++    function getSaveButton(grid) {
++      return grid.querySelector(".js-mealfood-sortable-save");
++    }
++
++    function getCancelButton(grid) {
++      return grid.querySelector(".js-mealfood-sortable-cancel");
++    }
++
++    function setEditPanelUrl() {
++      const url = new URL(window.location.href);
++      url.searchParams.set("panel", "edit");
++      return url.toString();
++    }
++
++    function reloadEditPanel() {
++      window.location.href = setEditPanelUrl();
++    }
++
++    function setDirtyState(grid, isDirty) {
++      const actions = getActions(grid);
++      const saveButton = getSaveButton(grid);
++      const cancelButton = getCancelButton(grid);
++      const status = getStatus(grid);
++
++      if (actions) {
++        actions.dataset.state = isDirty ? "dirty" : "clean";
++      }
++
++      if (saveButton) {
++        saveButton.disabled = !isDirty;
++      }
++
++      if (cancelButton) {
++        cancelButton.disabled = !isDirty;
++      }
++
++      if (status) {
++        status.textContent = isDirty
++          ? "Orden modificado. Guarda para aplicar los cambios."
++          : "Arrastra los alimentos para definir el orden.";
++      }
++    }
+   
++
++    function moveRowToEnd(grid, row) {
++      const actions = getActions(grid);
++
++      if (actions) {
++        grid.insertBefore(row, actions);
++        return;
++      }
++
++      grid.appendChild(row);
++    }
++
+     function getRowAfterPointer(grid, y, draggingRow) {
+       const rows = getRows(grid).filter((row) => row !== draggingRow);
+   
+@@ -32,7 +95,7 @@
+   
+     async function persistOrder(grid) {
+       const reorderUrl = grid.dataset.reorderUrl;
+-      if (!reorderUrl) return;
++      if (!reorderUrl) return false;
+   
+       const formData = new FormData();
+   
+@@ -50,7 +113,10 @@
+   
+       if (!response.ok) {
+         console.error("No se pudo guardar el nuevo orden de alimentos.");
++        return false;
+       }
++
++      return true;
+     }
+   
+     grids.forEach((grid) => {
+@@ -58,6 +124,44 @@
+       let pointerId = null;
+       let startY = 0;
+       let hasMoved = false;
++
++      setDirtyState(grid, false);
++
++      const saveButton = getSaveButton(grid);
++      const cancelButton = getCancelButton(grid);
++
++      if (saveButton) {
++        saveButton.addEventListener("click", async () => {
++          if (saveButton.disabled) return;
++
++          saveButton.disabled = true;
++          const status = getStatus(grid);
++
++          if (status) {
++            status.textContent = "Guardando orden...";
++          }
++
++          const saved = await persistOrder(grid);
++
++          if (saved) {
++            reloadEditPanel();
++            return;
++          }
++
++          saveButton.disabled = false;
++
++          if (status) {
++            status.textContent = "No se pudo guardar. Intenta nuevamente.";
++          }
++        });
++      }
++
++      if (cancelButton) {
++        cancelButton.addEventListener("click", () => {
++          if (cancelButton.disabled) return;
++          reloadEditPanel();
++        });
++      }
+   
+       grid.addEventListener("pointerdown", (event) => {
+         const handle = event.target.closest(".mealfood-drag-handle");
+@@ -90,7 +194,7 @@
+         const afterElement = getRowAfterPointer(grid, event.clientY, draggingRow);
+   
+         if (afterElement == null) {
+-          grid.appendChild(draggingRow);
++          moveRowToEnd(grid, draggingRow);
+         } else {
+           grid.insertBefore(draggingRow, afterElement);
+         }
+@@ -98,7 +202,7 @@
+         event.preventDefault();
+       });
+   
+-      grid.addEventListener("pointerup", async (event) => {
++      grid.addEventListener("pointerup", (event) => {
+         if (!draggingRow || event.pointerId !== pointerId) return;
+   
+         const finishedRow = draggingRow;
+@@ -115,7 +219,7 @@
+         pointerId = null;
+   
+         if (hasMoved) {
+-          await persistOrder(grid);
++          setDirtyState(grid, true);
+         }
+       });
+   
+@@ -130,4 +234,4 @@
+         hasMoved = false;
+       });
+     });
+-  });
+\ No newline at end of file
++  });
+diff -ruN orig/notas/templates/components/grid_foods_edit.html work/notas/templates/components/grid_foods_edit.html
+--- orig/notas/templates/components/grid_foods_edit.html	2026-05-26 20:52:59.000000000 +0000
++++ work/notas/templates/components/grid_foods_edit.html	2026-06-09 04:55:42.125515610 +0000
+@@ -88,7 +88,7 @@
+             <div class="data-grid-cell data-grid-cell--action">
+                 <form method="post" action="{% url 'mealfood_remove' row.rel.id %}">
+                     {% csrf_token %}
+-                    <input type="hidden" name="return_to" value="{{ request.path }}">
++                    <input type="hidden" name="return_to" value="{{ request.path }}?panel=edit">
+                     <button type="submit" aria-label="Eliminar alimento">
+                         <i data-lucide="trash" class="table-icon"></i>
+                     </button>
+@@ -102,4 +102,26 @@
+         </div>
+     {% endfor %}
+ 
++    {% if items %}
++        <div class="data-grid-edit-actions js-sortable-actions" data-state="clean">
++            <p class="data-grid-edit-actions__status js-sortable-status">Arrastra los alimentos para definir el orden.</p>
++            <div class="data-grid-edit-actions__buttons">
++                <button
++                    type="button"
++                    class="data-grid-edit-actions__button data-grid-edit-actions__button--secondary js-mealfood-sortable-cancel"
++                    disabled
++                >
++                    Descartar
++                </button>
++                <button
++                    type="button"
++                    class="data-grid-edit-actions__button data-grid-edit-actions__button--primary js-mealfood-sortable-save"
++                    disabled
++                >
++                    Guardar orden
++                </button>
++            </div>
++        </div>
++    {% endif %}
++
+ </div>
+\ No newline at end of file
+diff -ruN orig/notas/templates/components/grid_foods_mobile_edit.html work/notas/templates/components/grid_foods_mobile_edit.html
+--- orig/notas/templates/components/grid_foods_mobile_edit.html	2026-04-28 02:36:37.000000000 +0000
++++ work/notas/templates/components/grid_foods_mobile_edit.html	2026-06-09 04:55:42.125688050 +0000
+@@ -48,7 +48,7 @@
+             <div class="data-grid-cell data-grid-cell--delete">
+                 <form method="post" action="{% url 'mealfood_remove' row.rel.id %}">
+                     {% csrf_token %}
+-                    <input type="hidden" name="return_to" value="{{ request.path }}">
++                    <input type="hidden" name="return_to" value="{{ request.path }}?panel=edit">
+                     <button type="submit" aria-label="Eliminar alimento">
+                         <i data-lucide="trash" class="table-icon"></i>
+                     </button>
+@@ -62,4 +62,26 @@
+         </div>
+     {% endfor %}
+ 
++    {% if items %}
++        <div class="data-grid-edit-actions js-sortable-actions" data-state="clean">
++            <p class="data-grid-edit-actions__status js-sortable-status">Arrastra los alimentos para definir el orden.</p>
++            <div class="data-grid-edit-actions__buttons">
++                <button
++                    type="button"
++                    class="data-grid-edit-actions__button data-grid-edit-actions__button--secondary js-mealfood-sortable-cancel"
++                    disabled
++                >
++                    Descartar
++                </button>
++                <button
++                    type="button"
++                    class="data-grid-edit-actions__button data-grid-edit-actions__button--primary js-mealfood-sortable-save"
++                    disabled
++                >
++                    Guardar orden
++                </button>
++            </div>
++        </div>
++    {% endif %}
++
+ </div>
+\ No newline at end of file
+diff -ruN orig/notas/templates/components/grid_meals_edit.html work/notas/templates/components/grid_meals_edit.html
+--- orig/notas/templates/components/grid_meals_edit.html	2026-05-26 20:55:06.000000000 +0000
++++ work/notas/templates/components/grid_meals_edit.html	2026-06-09 04:55:42.125136917 +0000
+@@ -115,4 +115,26 @@
+         </div>
+     {% endfor %}
+ 
++    {% if items %}
++        <div class="data-grid-edit-actions js-sortable-actions" data-state="clean">
++            <p class="data-grid-edit-actions__status js-sortable-status">Arrastra las comidas para definir el orden.</p>
++            <div class="data-grid-edit-actions__buttons">
++                <button
++                    type="button"
++                    class="data-grid-edit-actions__button data-grid-edit-actions__button--secondary js-dpm-sortable-cancel"
++                    disabled
++                >
++                    Descartar
++                </button>
++                <button
++                    type="button"
++                    class="data-grid-edit-actions__button data-grid-edit-actions__button--primary js-dpm-sortable-save"
++                    disabled
++                >
++                    Guardar orden
++                </button>
++            </div>
++        </div>
++    {% endif %}
++
+ </div>
+\ No newline at end of file
+diff -ruN orig/notas/templates/components/grid_meals_mobile_edit.html work/notas/templates/components/grid_meals_mobile_edit.html
+--- orig/notas/templates/components/grid_meals_mobile_edit.html	2026-05-12 04:29:47.000000000 +0000
++++ work/notas/templates/components/grid_meals_mobile_edit.html	2026-06-09 04:55:42.125333678 +0000
+@@ -80,4 +80,26 @@
+         </div>
+     {% endfor %}
+ 
++    {% if items %}
++        <div class="data-grid-edit-actions js-sortable-actions" data-state="clean">
++            <p class="data-grid-edit-actions__status js-sortable-status">Arrastra las comidas para definir el orden.</p>
++            <div class="data-grid-edit-actions__buttons">
++                <button
++                    type="button"
++                    class="data-grid-edit-actions__button data-grid-edit-actions__button--secondary js-dpm-sortable-cancel"
++                    disabled
++                >
++                    Descartar
++                </button>
++                <button
++                    type="button"
++                    class="data-grid-edit-actions__button data-grid-edit-actions__button--primary js-dpm-sortable-save"
++                    disabled
++                >
++                    Guardar orden
++                </button>
++            </div>
++        </div>
++    {% endif %}
++
+ </div>
+\ No newline at end of file

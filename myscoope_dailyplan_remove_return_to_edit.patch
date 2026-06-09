@@ -1,0 +1,24 @@
+diff -ruN a/notas/interface/views/dailyplan_meals.py b/notas/interface/views/dailyplan_meals.py
+--- a/notas/interface/views/dailyplan_meals.py	2026-06-09 05:59:34.311083704 +0000
++++ b/notas/interface/views/dailyplan_meals.py	2026-06-09 05:59:34.322542424 +0000
+@@ -300,12 +300,20 @@
+         dailyplan__created_by=request.user,
+     )
+ 
++    return_to = (
++        request.POST.get("return_to")
++        or request.GET.get("return_to")
++    )
++
+     result = remove_dailyplan_meal(
+         dailyplan_meal=dpm,
+     )
+ 
+     messages.success(request, "Meal eliminada del daily plan")
+ 
++    if return_to:
++        return redirect(return_to)
++
+     return redirect("dailyplan_detail", result.dailyplan.pk)
+ 
+ 

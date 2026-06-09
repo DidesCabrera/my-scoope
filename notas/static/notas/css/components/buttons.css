@@ -35,7 +35,8 @@
   .btn-block,
   .btn-continue,
   .btn-cancel-create,
-  .toast-close
+  .toast-close,
+  .data-grid-edit-actions__button
 ) {
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
@@ -73,7 +74,8 @@
     .btn-block,
     .btn-continue,
     .btn-cancel-create,
-    .toast-close
+    .toast-close,
+    .data-grid-edit-actions__button
   ):active {
     opacity: 0.72;
     transform: translateY(1px);
