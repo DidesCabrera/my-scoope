@@ -80,6 +80,19 @@ DAILYPLAN_ENTITY_ACTION_DEFINITIONS = {
         "capability": "can_fork",
     },
 
+    "list_fork": {
+        "label": "Duplicar",
+        "method": "post",
+        "icon": "copy",
+        "order": 80,
+        "desktop_position": "menu",
+        "mobile_position": "menu",
+        "get_url": lambda dp, context=None: reverse(
+            "dailyplan_fork", args=[dp.id]
+        ),
+        "capability": "can_fork",
+    },
+
     "fork_explore": {
         "label": "Guardar en Personal",
         "method": "post",
@@ -163,6 +176,18 @@ DAILYPLAN_ENTITY_ACTION_DEFINITIONS = {
         "icon": "trash-2",
         "order": 90,
         "desktop_position": "inline",
+        "mobile_position": "menu",
+        "get_url": lambda dp, context=None: reverse(
+            "dailyplan_remove", args=[dp.id]
+        ),
+    },
+
+    "list_remove": {
+        "label": "Eliminar",
+        "method": "post",
+        "icon": "trash-2",
+        "order": 90,
+        "desktop_position": "menu",
         "mobile_position": "menu",
         "get_url": lambda dp, context=None: reverse(
             "dailyplan_remove", args=[dp.id]
@@ -280,6 +305,8 @@ DAILYPLAN_ENTITY_ACTION_DEFINITIONS = {
 
 DAILYPLAN_ENTITY_ACTIONS_BY_VIEWMODE = {
     DAILYPLAN_VIEWMODE_PERSONAL_LIST: [
+        "list_fork",
+        "list_remove",
         "detail",
         # "share",
     ],

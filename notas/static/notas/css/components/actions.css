@@ -64,3 +64,55 @@
 
 
 
+
+/* =========================
+   CARD ACTIONS OVERFLOW
+   ========================= */
+
+.card-actions-comp .card-actions-row {
+  gap: 10px;
+}
+
+.card-actions-comp .card-actions-row--desktop {
+  display: flex;
+}
+
+.card-actions-comp .card-actions-row--mobile {
+  display: none;
+}
+
+.card-actions-comp .card-overflow-menu:not(:has(.overflow-action)) {
+  display: none;
+}
+
+.card-actions-comp .overflow-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: var(--text-muted);
+}
+
+.card-actions-comp .overflow-btn:hover {
+  color: var(--text-main);
+  text-decoration: none;
+}
+
+.card-actions-comp .card-overflow-dropdown {
+  min-width: 170px;
+  z-index: 510;
+}
+
+.card-actions-comp .overflow-action {
+  text-decoration: none;
+}
+
+@media (max-width: 768px) {
+  .card-actions-comp .card-actions-row--desktop {
+    display: none;
+  }
+
+  .card-actions-comp .card-actions-row--mobile {
+    display: flex;
+  }
+}

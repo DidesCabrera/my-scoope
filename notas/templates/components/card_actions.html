@@ -1,45 +1,137 @@
-{# components/actions.html #}
+{# components/card_actions.html #}
 
-<div class="actions-comp">
-
+<div class="actions-comp card-actions-comp">
   {% if actions %}
-    <div class="actions">
+    {# DESKTOP #}
+    <div class="actions card-actions-row card-actions-row--desktop">
+      <div class="overflow-menu card-overflow-menu card-overflow-menu--desktop">
+        <button class="overflow-btn" type="button" aria-label="Más acciones" title="Más acciones">
+          <i data-lucide="more-horizontal" class="more-horizontal-icon"></i>
+        </button>
+
+        <div class="overflow-dropdown card-overflow-dropdown">
+          {% for action in actions %}
+            {% if action.desktop_position == "menu" %}
+              {% if action.method == "get" %}
+                <a href="{{ action.url }}" class="overflow-action">
+                  <i data-lucide="{{ action.icon }}" class="overflow-dropdown-icons"></i>
+                  <span>{{ action.label }}</span>
+                </a>
+              {% elif action.method == "post" %}
+                <form action="{{ action.url }}" method="post">
+                  {% csrf_token %}
+                  <button
+                    type="submit"
+                    name="{{ action.key }}"
+                    value="1"
+                    class="overflow-action"
+                  >
+                    <i data-lucide="{{ action.icon }}" class="overflow-dropdown-icons"></i>
+                    <span>{{ action.label }}</span>
+                  </button>
+                </form>
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
 
       {% for action in actions %}
-
-        {% if action.method == "get" %}
-        <a href="{{ action.url }}" class="action-icon-btn tooltip" title="{{ action.label }}">
-            <i data-lucide="{{ action.icon }}"  class="action-card-icon"></i>
-            <span class="tooltip-text">
-                {{ action.label }}
-            </span>
-        </a>
-
-        {% elif action.method == "post" %}
-          <form action="{{ action.url }}" method="post" style="display:inline;">
-            {% csrf_token %}
-
-          <button
-            type="submit"
-            name="{{ action.key }}"
-            value="1"
-            class="action-icon-btn tooltip"
-            title="{{ action.label }}">
-          
-            <i data-lucide="{{ action.icon }}" class="action-card-icon"></i>
-          
-            <span class="tooltip-text">
-                {{ action.label }}
-            </span>
-          
-          </button>
-
-          </form>
+        {% if action.desktop_position == "inline" %}
+          {% if action.method == "get" %}
+            <a
+              href="{{ action.url }}"
+              class="action-icon-btn tooltip"
+              title="{{ action.label }}"
+              aria-label="{{ action.label }}"
+            >
+              <i data-lucide="{{ action.icon }}" class="action-card-icon"></i>
+              <span class="tooltip-text">{{ action.label }}</span>
+            </a>
+          {% elif action.method == "post" %}
+            <form action="{{ action.url }}" method="post" style="display:inline;">
+              {% csrf_token %}
+              <button
+                type="submit"
+                name="{{ action.key }}"
+                value="1"
+                class="action-icon-btn tooltip"
+                title="{{ action.label }}"
+                aria-label="{{ action.label }}"
+              >
+                <i data-lucide="{{ action.icon }}" class="action-card-icon"></i>
+                <span class="tooltip-text">{{ action.label }}</span>
+              </button>
+            </form>
+          {% endif %}
         {% endif %}
-
       {% endfor %}
+    </div>
 
+    {# MOBILE #}
+    <div class="actions card-actions-row card-actions-row--mobile">
+      <div class="overflow-menu card-overflow-menu card-overflow-menu--mobile">
+        <button class="overflow-btn" type="button" aria-label="Más acciones" title="Más acciones">
+          <i data-lucide="more-horizontal" class="more-horizontal-icon"></i>
+        </button>
+
+        <div class="overflow-dropdown card-overflow-dropdown">
+          {% for action in actions %}
+            {% if action.mobile_position == "menu" %}
+              {% if action.method == "get" %}
+                <a href="{{ action.url }}" class="overflow-action">
+                  <i data-lucide="{{ action.icon }}" class="overflow-dropdown-icons"></i>
+                  <span>{{ action.label }}</span>
+                </a>
+              {% elif action.method == "post" %}
+                <form action="{{ action.url }}" method="post">
+                  {% csrf_token %}
+                  <button
+                    type="submit"
+                    name="{{ action.key }}"
+                    value="1"
+                    class="overflow-action"
+                  >
+                    <i data-lucide="{{ action.icon }}" class="overflow-dropdown-icons"></i>
+                    <span>{{ action.label }}</span>
+                  </button>
+                </form>
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+
+      {% for action in actions %}
+        {% if action.mobile_position == "inline" %}
+          {% if action.method == "get" %}
+            <a
+              href="{{ action.url }}"
+              class="action-icon-btn tooltip"
+              title="{{ action.label }}"
+              aria-label="{{ action.label }}"
+            >
+              <i data-lucide="{{ action.icon }}" class="action-card-icon"></i>
+              <span class="tooltip-text">{{ action.label }}</span>
+            </a>
+          {% elif action.method == "post" %}
+            <form action="{{ action.url }}" method="post" style="display:inline;">
+              {% csrf_token %}
+              <button
+                type="submit"
+                name="{{ action.key }}"
+                value="1"
+                class="action-icon-btn tooltip"
+                title="{{ action.label }}"
+                aria-label="{{ action.label }}"
+              >
+                <i data-lucide="{{ action.icon }}" class="action-card-icon"></i>
+                <span class="tooltip-text">{{ action.label }}</span>
+              </button>
+            </form>
+          {% endif %}
+        {% endif %}
+      {% endfor %}
     </div>
   {% endif %}
-
 </div>

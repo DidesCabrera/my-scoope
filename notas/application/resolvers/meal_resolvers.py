@@ -66,6 +66,19 @@ MEAL_ENTITY_ACTION_DEFINITIONS = {
         "capability": "can_fork",
     },
 
+    "list_fork": {
+        "label": "Duplicar",
+        "method": "post",
+        "icon": "copy",
+        "order": 80,
+        "desktop_position": "menu",
+        "mobile_position": "menu",
+        "get_url": lambda meal, context=None: reverse(
+            "meal_fork", args=[meal.id]
+        ),
+        "capability": "can_fork",
+    },
+
     "save": {
         "label": "Guardar",
         "method": "post",
@@ -199,6 +212,18 @@ MEAL_ENTITY_ACTION_DEFINITIONS = {
         ),
     },
 
+    "list_remove": {
+        "label": "Eliminar",
+        "method": "post",
+        "icon": "trash-2",
+        "order": 90,
+        "desktop_position": "menu",
+        "mobile_position": "menu",
+        "get_url": lambda meal, context=None: reverse(
+            "meal_remove", args=[meal.id]
+        ),
+    },
+
     "delete_draft": {
         "label": "Eliminar",
         "method": "post",
@@ -243,6 +268,8 @@ MEAL_ENTITY_ACTION_DEFINITIONS = {
 
 MEAL_ENTITY_ACTIONS_BY_VIEWMODE = {
     MEAL_VIEWMODE_PERSONAL_LIST: [
+        "list_fork",
+        "list_remove",
         "detail",
         # "share",
     ],

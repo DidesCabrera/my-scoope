@@ -1,0 +1,341 @@
+diff --git a/notas/application/resolvers/dailyplan_resolvers.py b/notas/application/resolvers/dailyplan_resolvers.py
+index d7e475b..4f2117f 100644
+--- a/notas/application/resolvers/dailyplan_resolvers.py
++++ b/notas/application/resolvers/dailyplan_resolvers.py
+@@ -80,6 +80,19 @@ DAILYPLAN_ENTITY_ACTION_DEFINITIONS = {
+         "capability": "can_fork",
+     },
+ 
++    "list_fork": {
++        "label": "Duplicar",
++        "method": "post",
++        "icon": "copy",
++        "order": 80,
++        "desktop_position": "menu",
++        "mobile_position": "menu",
++        "get_url": lambda dp, context=None: reverse(
++            "dailyplan_fork", args=[dp.id]
++        ),
++        "capability": "can_fork",
++    },
++
+     "fork_explore": {
+         "label": "Guardar en Personal",
+         "method": "post",
+@@ -169,6 +182,18 @@ DAILYPLAN_ENTITY_ACTION_DEFINITIONS = {
+         ),
+     },
+ 
++    "list_remove": {
++        "label": "Eliminar",
++        "method": "post",
++        "icon": "trash-2",
++        "order": 90,
++        "desktop_position": "menu",
++        "mobile_position": "menu",
++        "get_url": lambda dp, context=None: reverse(
++            "dailyplan_remove", args=[dp.id]
++        ),
++    },
++
+     "unshare": {
+         "label": "Quitar",
+         "method": "post",
+@@ -280,6 +305,8 @@ DAILYPLAN_ENTITY_ACTION_DEFINITIONS = {
+ 
+ DAILYPLAN_ENTITY_ACTIONS_BY_VIEWMODE = {
+     DAILYPLAN_VIEWMODE_PERSONAL_LIST: [
++        "list_fork",
++        "list_remove",
+         "detail",
+         # "share",
+     ],
+diff --git a/notas/application/resolvers/meal_resolvers.py b/notas/application/resolvers/meal_resolvers.py
+index ee25650..eb96436 100644
+--- a/notas/application/resolvers/meal_resolvers.py
++++ b/notas/application/resolvers/meal_resolvers.py
+@@ -66,6 +66,19 @@ MEAL_ENTITY_ACTION_DEFINITIONS = {
+         "capability": "can_fork",
+     },
+ 
++    "list_fork": {
++        "label": "Duplicar",
++        "method": "post",
++        "icon": "copy",
++        "order": 80,
++        "desktop_position": "menu",
++        "mobile_position": "menu",
++        "get_url": lambda meal, context=None: reverse(
++            "meal_fork", args=[meal.id]
++        ),
++        "capability": "can_fork",
++    },
++
+     "save": {
+         "label": "Guardar",
+         "method": "post",
+@@ -199,6 +212,18 @@ MEAL_ENTITY_ACTION_DEFINITIONS = {
+         ),
+     },
+ 
++    "list_remove": {
++        "label": "Eliminar",
++        "method": "post",
++        "icon": "trash-2",
++        "order": 90,
++        "desktop_position": "menu",
++        "mobile_position": "menu",
++        "get_url": lambda meal, context=None: reverse(
++            "meal_remove", args=[meal.id]
++        ),
++    },
++
+     "delete_draft": {
+         "label": "Eliminar",
+         "method": "post",
+@@ -243,6 +268,8 @@ MEAL_ENTITY_ACTION_DEFINITIONS = {
+ 
+ MEAL_ENTITY_ACTIONS_BY_VIEWMODE = {
+     MEAL_VIEWMODE_PERSONAL_LIST: [
++        "list_fork",
++        "list_remove",
+         "detail",
+         # "share",
+     ],
+diff --git a/notas/static/notas/css/components/actions.css b/notas/static/notas/css/components/actions.css
+index 89a6b5a..48198f5 100644
+--- a/notas/static/notas/css/components/actions.css
++++ b/notas/static/notas/css/components/actions.css
+@@ -64,3 +64,55 @@
+ 
+ 
+ 
++
++/* =========================
++   CARD ACTIONS OVERFLOW
++   ========================= */
++
++.card-actions-comp .card-actions-row {
++  gap: 10px;
++}
++
++.card-actions-comp .card-actions-row--desktop {
++  display: flex;
++}
++
++.card-actions-comp .card-actions-row--mobile {
++  display: none;
++}
++
++.card-actions-comp .card-overflow-menu:not(:has(.overflow-action)) {
++  display: none;
++}
++
++.card-actions-comp .overflow-btn {
++  display: inline-flex;
++  align-items: center;
++  justify-content: center;
++  padding: 0;
++  color: var(--text-muted);
++}
++
++.card-actions-comp .overflow-btn:hover {
++  color: var(--text-main);
++  text-decoration: none;
++}
++
++.card-actions-comp .card-overflow-dropdown {
++  min-width: 170px;
++  z-index: 510;
++}
++
++.card-actions-comp .overflow-action {
++  text-decoration: none;
++}
++
++@media (max-width: 768px) {
++  .card-actions-comp .card-actions-row--desktop {
++    display: none;
++  }
++
++  .card-actions-comp .card-actions-row--mobile {
++    display: flex;
++  }
++}
+diff --git a/notas/templates/components/card_actions.html b/notas/templates/components/card_actions.html
+index bfac093..22c94ff 100644
+--- a/notas/templates/components/card_actions.html
++++ b/notas/templates/components/card_actions.html
+@@ -1,45 +1,137 @@
+-{# components/actions.html #}
+-
+-<div class="actions-comp">
++{# components/card_actions.html #}
+ 
++<div class="actions-comp card-actions-comp">
+   {% if actions %}
+-    <div class="actions">
++    {# DESKTOP #}
++    <div class="actions card-actions-row card-actions-row--desktop">
++      <div class="overflow-menu card-overflow-menu card-overflow-menu--desktop">
++        <button class="overflow-btn" type="button" aria-label="Más acciones" title="Más acciones">
++          <i data-lucide="more-horizontal" class="more-horizontal-icon"></i>
++        </button>
+ 
+-      {% for action in actions %}
++        <div class="overflow-dropdown card-overflow-dropdown">
++          {% for action in actions %}
++            {% if action.desktop_position == "menu" %}
++              {% if action.method == "get" %}
++                <a href="{{ action.url }}" class="overflow-action">
++                  <i data-lucide="{{ action.icon }}" class="overflow-dropdown-icons"></i>
++                  <span>{{ action.label }}</span>
++                </a>
++              {% elif action.method == "post" %}
++                <form action="{{ action.url }}" method="post">
++                  {% csrf_token %}
++                  <button
++                    type="submit"
++                    name="{{ action.key }}"
++                    value="1"
++                    class="overflow-action"
++                  >
++                    <i data-lucide="{{ action.icon }}" class="overflow-dropdown-icons"></i>
++                    <span>{{ action.label }}</span>
++                  </button>
++                </form>
++              {% endif %}
++            {% endif %}
++          {% endfor %}
++        </div>
++      </div>
+ 
+-        {% if action.method == "get" %}
+-        <a href="{{ action.url }}" class="action-icon-btn tooltip" title="{{ action.label }}">
+-            <i data-lucide="{{ action.icon }}"  class="action-card-icon"></i>
+-            <span class="tooltip-text">
+-                {{ action.label }}
+-            </span>
+-        </a>
++      {% for action in actions %}
++        {% if action.desktop_position == "inline" %}
++          {% if action.method == "get" %}
++            <a
++              href="{{ action.url }}"
++              class="action-icon-btn tooltip"
++              title="{{ action.label }}"
++              aria-label="{{ action.label }}"
++            >
++              <i data-lucide="{{ action.icon }}" class="action-card-icon"></i>
++              <span class="tooltip-text">{{ action.label }}</span>
++            </a>
++          {% elif action.method == "post" %}
++            <form action="{{ action.url }}" method="post" style="display:inline;">
++              {% csrf_token %}
++              <button
++                type="submit"
++                name="{{ action.key }}"
++                value="1"
++                class="action-icon-btn tooltip"
++                title="{{ action.label }}"
++                aria-label="{{ action.label }}"
++              >
++                <i data-lucide="{{ action.icon }}" class="action-card-icon"></i>
++                <span class="tooltip-text">{{ action.label }}</span>
++              </button>
++            </form>
++          {% endif %}
++        {% endif %}
++      {% endfor %}
++    </div>
+ 
+-        {% elif action.method == "post" %}
+-          <form action="{{ action.url }}" method="post" style="display:inline;">
+-            {% csrf_token %}
++    {# MOBILE #}
++    <div class="actions card-actions-row card-actions-row--mobile">
++      <div class="overflow-menu card-overflow-menu card-overflow-menu--mobile">
++        <button class="overflow-btn" type="button" aria-label="Más acciones" title="Más acciones">
++          <i data-lucide="more-horizontal" class="more-horizontal-icon"></i>
++        </button>
+ 
+-          <button
+-            type="submit"
+-            name="{{ action.key }}"
+-            value="1"
+-            class="action-icon-btn tooltip"
+-            title="{{ action.label }}">
+-          
+-            <i data-lucide="{{ action.icon }}" class="action-card-icon"></i>
+-          
+-            <span class="tooltip-text">
+-                {{ action.label }}
+-            </span>
+-          
+-          </button>
++        <div class="overflow-dropdown card-overflow-dropdown">
++          {% for action in actions %}
++            {% if action.mobile_position == "menu" %}
++              {% if action.method == "get" %}
++                <a href="{{ action.url }}" class="overflow-action">
++                  <i data-lucide="{{ action.icon }}" class="overflow-dropdown-icons"></i>
++                  <span>{{ action.label }}</span>
++                </a>
++              {% elif action.method == "post" %}
++                <form action="{{ action.url }}" method="post">
++                  {% csrf_token %}
++                  <button
++                    type="submit"
++                    name="{{ action.key }}"
++                    value="1"
++                    class="overflow-action"
++                  >
++                    <i data-lucide="{{ action.icon }}" class="overflow-dropdown-icons"></i>
++                    <span>{{ action.label }}</span>
++                  </button>
++                </form>
++              {% endif %}
++            {% endif %}
++          {% endfor %}
++        </div>
++      </div>
+ 
+-          </form>
++      {% for action in actions %}
++        {% if action.mobile_position == "inline" %}
++          {% if action.method == "get" %}
++            <a
++              href="{{ action.url }}"
++              class="action-icon-btn tooltip"
++              title="{{ action.label }}"
++              aria-label="{{ action.label }}"
++            >
++              <i data-lucide="{{ action.icon }}" class="action-card-icon"></i>
++              <span class="tooltip-text">{{ action.label }}</span>
++            </a>
++          {% elif action.method == "post" %}
++            <form action="{{ action.url }}" method="post" style="display:inline;">
++              {% csrf_token %}
++              <button
++                type="submit"
++                name="{{ action.key }}"
++                value="1"
++                class="action-icon-btn tooltip"
++                title="{{ action.label }}"
++                aria-label="{{ action.label }}"
++              >
++                <i data-lucide="{{ action.icon }}" class="action-card-icon"></i>
++                <span class="tooltip-text">{{ action.label }}</span>
++              </button>
++            </form>
++          {% endif %}
+         {% endif %}
+-
+       {% endfor %}
+-
+     </div>
+   {% endif %}
+-
+-</div>
+\ No newline at end of file
++</div>
