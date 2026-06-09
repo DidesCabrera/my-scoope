@@ -50,7 +50,7 @@ PATCH GENERATOR
 
 
 git add .
-git commit -m "Filter home recent items by library scope"
+git commit -m "CAjuste altura rows paneles mobile y font-size paneles"
 git push origin main
 
 
