@@ -18,11 +18,6 @@ cd ..
 zip -r proyecto_django_export.zip proyecto_django_export -x "*.DS_Store" "__MACOSX/*"
 cd proyecto_django
 
-1) Limpiar basura del proyecto original. Desde la raíz del proyecto:
-2) Crear export limpio. Desde la carpeta padre del proyecto:
-3) Exportar
-
-
 --- 
 
 FULL
@@ -55,8 +50,9 @@ PATCH GENERATOR
 
 
 git add .
-git commit -m "Refine v2 add border preview"
+git commit -m "Filter home recent items by library scope"
 git push origin main
+
 
 git add .
 git commit -m "Correccion colores btns profile"

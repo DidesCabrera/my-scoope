@@ -1,0 +1,80 @@
+--- a/notas/static/notas/css/components/data_grid.css
++++ b/notas/static/notas/css/components/data_grid.css
+@@ -1,6 +1,7 @@
+ .data-grid {
+     width: 100%;
+     padding: 6px 10px;
++    --data-grid-row-min-height: 40px;
+ }
+ 
+ .data-grid-header,
+@@ -10,6 +11,10 @@
+     gap: 0px;
+ }
+ 
++.data-grid-row {
++    min-height: var(--data-grid-row-min-height);
++}
++
+ .data-grid-row:last-of-type {
+     border-bottom: none;
+ }
+@@ -99,13 +104,16 @@
+ 
+ .data-grid-cell {
+     min-width: 0;
++    display: flex;
++    align-items: center;
++    min-height: 0;
+     font-size: 14px;
+     font-weight: 400;
+     color: rgb(27, 27, 27);
+-    min-height: 40px;
+ }
+ 
+ .data-grid-cell--name {
++    justify-content: flex-start;
+     font-weight: 600;
+     padding: 8px 4px;
+ }
+@@ -118,6 +126,7 @@
+ .data-grid-cell--qty,
+ .data-grid-cell--kcal,
+ .data-grid-cell--macro {
++    justify-content: center;
+     white-space: nowrap;
+ }
+ 
+@@ -135,6 +144,7 @@
+ 
+ .data-grid-cell--alloc {
+     min-width: 0;
++    justify-content: center;
+     margin-right: 4px;
+     margin-left: 4px;
+ }
+@@ -166,7 +176,6 @@
+ .data-grid-cell--replace,
+ .data-grid-cell--delete,
+ .data-grid-cell--edit {
+-    display: flex;
+     align-items: center;
+     justify-content: center;
+ }
+@@ -449,6 +458,8 @@
+ }
+ 
+ .data-grid--menu .data-grid-cell--meal {
++    align-self: start;
++    align-items: flex-start;
+     font-weight: 600;
+     padding: 9px 0px 9px 4px;
+ }
+@@ -472,6 +483,7 @@
+ }
+ 
+ .data-grid-cell--foods {
++    align-items: center;
+     padding: 8px 0;
+ }
+ 
