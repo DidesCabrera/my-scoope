@@ -309,7 +309,6 @@ body.is-mealfood-sorting .js-mealfood-sortable-row {
 
     .data-grid {
         padding: 6px 8px 12px 8px;
-        --data-grid-row-min-height: 48px;
     }
 
     .data-grid-cell {

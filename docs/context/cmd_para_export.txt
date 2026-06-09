@@ -1,24 +1,3 @@
-find . -type d -name "__pycache__" -exec rm -rf {} +
-find . -type f -name "*.pyc" -delete
-find . -name ".DS_Store" -delete
-find . -name "__MACOSX" -type d -exec rm -rf {} +
-rsync -av \
-  --exclude '.git' \
-  --exclude '__pycache__' \
-  --exclude '*.pyc' \
-  --exclude '.DS_Store' \
-  --exclude '__MACOSX' \
-  --exclude 'db.sqlite3' \
-  --exclude 'venv' \
-  --exclude '.venv' \
-  --exclude 'staticfiles' \
-  --exclude '*.zip' \
-  ./ ../proyecto_django_export/
-cd ..
-zip -r proyecto_django_export.zip proyecto_django_export -x "*.DS_Store" "__MACOSX/*"
-cd proyecto_django
-
---- 
 
 FULL
 (Sin USDA - img)
@@ -50,7 +29,7 @@ PATCH GENERATOR
 
 
 git add .
-git commit -m "CAjuste altura rows paneles mobile y font-size paneles"
+git commit -m "Ajuste altura rows paneles mobile y font-size paneles"
 git push origin main
 
 
@@ -91,10 +70,6 @@ python manage.py export_foods_full --output foods_full_export.csv
 python manage.py export_foods_full --output /tmp/foods_full_export.csv
 
 
-
-git add .
-git commit -m "Create Home v1"
-git push origin HEAD
 
 dides dides@gmail.com True True
 
@@ -299,3 +274,29 @@ If it still shows “not verified,” tell me: are you submitting via platform.o
 test_core_food_seed_service.py
 
 test_apply_core_food_seed_command.py
+
+
+-----
+ZIP antiguo
+
+find . -type d -name "__pycache__" -exec rm -rf {} +
+find . -type f -name "*.pyc" -delete
+find . -name ".DS_Store" -delete
+find . -name "__MACOSX" -type d -exec rm -rf {} +
+rsync -av \
+  --exclude '.git' \
+  --exclude '__pycache__' \
+  --exclude '*.pyc' \
+  --exclude '.DS_Store' \
+  --exclude '__MACOSX' \
+  --exclude 'db.sqlite3' \
+  --exclude 'venv' \
+  --exclude '.venv' \
+  --exclude 'staticfiles' \
+  --exclude '*.zip' \
+  ./ ../proyecto_django_export/
+cd ..
+zip -r proyecto_django_export.zip proyecto_django_export -x "*.DS_Store" "__MACOSX/*"
+cd proyecto_django
+
+--- 
