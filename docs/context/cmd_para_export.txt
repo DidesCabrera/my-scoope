@@ -29,7 +29,7 @@ PATCH GENERATOR
 
 
 git add .
-git commit -m "Ajuste altura rows paneles mobile y font-size paneles"
+git commit -m "Ajuste altura rows paneles mobile y font-weight v3"
 git push origin main
 
 
