@@ -1,3 +1,6 @@
+-------------
+GENERACION ZIP 
+-------------
 
 FULL
 (Sin USDA - img)
@@ -12,7 +15,9 @@ COMPLETO
 ./scripts/export_for_chatgpt.sh usda
 
 
----
+-------------
+***COMANDOS VENV - RUNSERVER
+-------------
 
 cd desktop
 cd proyecto_django
@@ -20,23 +25,22 @@ source /Users/felipedides/Desktop/proyecto_django/venv/bin/activate
 
 python manage.py runserver
 
---- 
 
-PATCH GENERATOR
-
----
-
-
+-------------
+***AUX COMMITS
+-------------
 
 git add .
-git commit -m "Ajuste altura rows paneles mobile y font-weight v3"
+git commit -m "Cambios menores CSS. font-size title cards v2"
 git push origin main
 
 
 git add .
 git commit -m "Correccion colores btns profile"
 git push origin main
---- 
+
+
+-------------
 
 
 git branch --show-current
