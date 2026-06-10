@@ -2,7 +2,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
+    margin-bottom: 12px;
 }
 
 .brand-logo {
@@ -17,7 +17,7 @@
 @media (max-width: 768px) {
 
     .brand-logo {
-        width: 140px;
+        width: 130px;
         padding-top: 2px;
     }
 
