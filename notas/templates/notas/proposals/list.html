@@ -2,49 +2,97 @@
 {% block title %}Propuestas{% endblock %}
 {% block content %}
 
-<div class="page list">
+<div class="page list proposal-list-page">
 
   <div class="list-page-title">
     <i data-lucide="{{ vm.ui.page_icon }}" class="page-icon"></i>
     <h2>{{ vm.ui.title }}</h2>
   </div>
 
-  {% for proposal in vm.content.proposals %}
-    <div class="card">
+  <div class="proposal-list-intro">
+    <p>
+      Revisa, aprueba y aplica las propuestas generadas con asistencia de IA antes de convertirlas en objetos reales de tu librería.
+    </p>
+  </div>
 
-      <div class="card-main-title">
-        <div>
-          <p class="title-card">{{ proposal.title }}</p>
-          <p class="subtitle">
-            {{ proposal.dailyplan_name }}
-          </p>
+  {% for proposal in vm.content.proposals %}
+    <article class="card proposal-list-card proposal-list-card--{{ proposal.status }}">
+      <div class="proposal-list-card__main">
+        <div class="proposal-list-card__title-block">
+          <span class="label-entity label-entity--proposal" aria-hidden="true">
+            <i data-lucide="sparkles" class="card-icon main"></i>
+          </span>
+
+          <div class="proposal-list-card__copy">
+            <p class="proposal-list-card__eyebrow">Propuesta AI</p>
+            <h3 class="proposal-list-card__title">{{ proposal.title }}</h3>
+
+            {% if proposal.dailyplan_name %}
+              <p class="subtitle proposal-list-card__subtitle">
+                Asociada a {{ proposal.dailyplan_name }}
+              </p>
+            {% endif %}
+          </div>
         </div>
+
+        <span class="proposal-status-badge proposal-status-badge--{{ proposal.status }}">
+          {{ proposal.status }}
+        </span>
       </div>
 
-      <div class="metadata-row">
-        <span>Estado: <strong>{{ proposal.status }}</strong></span>
-        <span>Fuente: <strong>{{ proposal.source }}</strong></span>
-        <span>Creador: <strong>{{ proposal.created_by_username }}</strong></span>
+      <div class="proposal-list-card__metadata">
+        <span>
+          <i data-lucide="bot" class="metadata-icon"></i>
+          Fuente: <strong>{{ proposal.source }}</strong>
+        </span>
+        <span>
+          <i data-lucide="user-round" class="metadata-icon"></i>
+          Creador: <strong>{{ proposal.created_by_username }}</strong>
+        </span>
+        {% if proposal.reviewed_by_username %}
+          <span>
+            <i data-lucide="badge-check" class="metadata-icon"></i>
+            Revisor: <strong>{{ proposal.reviewed_by_username }}</strong>
+          </span>
+        {% endif %}
       </div>
 
       {% if proposal.summary %}
-        <p>{{ proposal.summary }}</p>
+        <p class="proposal-list-card__summary">{{ proposal.summary }}</p>
       {% endif %}
 
-      <div class="card-actions">
-        <a href="{% url 'proposal_detail' proposal.id %}">
-          Ver propuesta
-        </a>
-      </div>
+      <div class="card-bottom proposal-list-card__bottom">
+        <div class="proposal-list-card__status-note">
+          {% if proposal.is_reviewable %}
+            Pendiente de revisión humana.
+          {% elif proposal.is_final %}
+            Revisión cerrada.
+          {% else %}
+            Disponible para seguimiento.
+          {% endif %}
+        </div>
 
-    </div>
+        <div class="card-actions proposal-list-card__actions">
+          <a class="proposal-link-action" href="{% url 'proposal_detail' proposal.id %}">
+            Ver propuesta
+            <i data-lucide="arrow-right" class="proposal-link-action__icon"></i>
+          </a>
+        </div>
+      </div>
+    </article>
   {% empty %}
-    <div class="card">
-      <p>No tienes propuestas todavía.</p>
-      <p>
-        Más adelante, las propuestas creadas por IA/MCP aparecerán aquí para que puedas revisarlas.
-      </p>
-    </div>
+    <section class="card proposal-empty-card">
+      <span class="label-entity label-entity--proposal" aria-hidden="true">
+        <i data-lucide="sparkles" class="card-icon main"></i>
+      </span>
+
+      <div>
+        <h3>No tienes propuestas todavía.</h3>
+        <p>
+          Las propuestas creadas por IA/MCP aparecerán aquí para que puedas revisarlas antes de aprobarlas o aplicarlas.
+        </p>
+      </div>
+    </section>
   {% endfor %}
 
 </div>

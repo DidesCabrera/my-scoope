@@ -3,49 +3,57 @@
 
 {% block content %}
 
-<div class="page page--detail">
+<div class="page page--detail proposal-detail-page">
 
   {% if vm.content.proposal_review %}
     <section class="proposal-review-shell">
-      <div class="proposal-review-header">
-        <p class="proposal-review-eyebrow">Propuesta IA</p>
+      <header class="proposal-review-hero proposal-review-hero--{{ vm.content.proposal_review.status.status }}">
+        <div class="proposal-review-hero__main">
+          <span class="label-entity label-entity--proposal proposal-review-hero__icon" aria-hidden="true">
+            <i data-lucide="sparkles" class="card-icon main"></i>
+          </span>
 
-        <h2 class="proposal-review-title">
-          {{ vm.content.proposal_review.title }}
-        </h2>
+          <div class="proposal-review-hero__copy">
+            <p class="proposal-review-eyebrow">Propuesta AI</p>
 
-        <p class="proposal-review-status">
-          Estado: {{ vm.content.proposal_review.status.status }}
-        </p>
+            <h2 class="proposal-review-title">
+              {{ vm.content.proposal_review.title }}
+            </h2>
 
-        {% if vm.content.proposal_review.payload.is_create_meal %}
-          <p class="proposal-review-type">
-            Tipo: nueva comida propuesta
-          </p>
-        {% elif vm.content.proposal_review.payload.is_create_dailyplan %}
-          <p class="proposal-review-type">
-            Tipo: nuevo DailyPlan propuesto
-          </p>
-        {% else %}
-          <p class="proposal-review-type">
-            Tipo: propuesta aprobada sin aplicación automática
-          </p>
-        {% endif %}
+            <div class="proposal-review-pills">
+              <span class="proposal-status-badge proposal-status-badge--{{ vm.content.proposal_review.status.status }}">
+                {{ vm.content.proposal_review.status.status }}
+              </span>
 
-        {% if vm.content.proposal_review.summary %}
-          <p class="proposal-review-summary">
-            {{ vm.content.proposal_review.summary }}
-          </p>
-        {% endif %}
-      </div>
+              {% if vm.content.proposal_review.payload.is_create_meal %}
+                <span class="proposal-type-badge">Nueva comida</span>
+              {% elif vm.content.proposal_review.payload.is_create_dailyplan %}
+                <span class="proposal-type-badge">Nuevo DailyPlan</span>
+              {% else %}
+                <span class="proposal-type-badge">Sin aplicación automática</span>
+              {% endif %}
+            </div>
 
-      <section class="proposal-review-context">
+            {% if vm.content.proposal_review.summary %}
+              <p class="proposal-review-summary">
+                {{ vm.content.proposal_review.summary }}
+              </p>
+            {% endif %}
+          </div>
+        </div>
+      </header>
+
+      <section class="proposal-review-context" aria-label="Contexto de la propuesta">
         <div class="proposal-review-context-item">
           <span>Plan asociado</span>
           <strong>
-            <a href="{% url 'dailyplan_detail' vm.content.proposal_review.dailyplan_id %}">
-              {{ vm.content.proposal_review.dailyplan_name }}
-            </a>
+            {% if vm.content.proposal_review.dailyplan_id %}
+              <a href="{% url 'dailyplan_detail' vm.content.proposal_review.dailyplan_id %}">
+                {{ vm.content.proposal_review.dailyplan_name }}
+              </a>
+            {% else %}
+              {{ vm.content.proposal_review.dailyplan_name|default:"Sin plan asociado" }}
+            {% endif %}
           </strong>
         </div>
 
@@ -108,31 +116,43 @@
 
   {% else %}
     <section class="proposal-review-shell">
-      <div class="proposal-review-header">
-        <p class="proposal-review-eyebrow">Propuesta</p>
+      <header class="proposal-review-hero proposal-review-hero--{{ vm.content.proposal.status }}">
+        <div class="proposal-review-hero__main">
+          <span class="label-entity label-entity--proposal proposal-review-hero__icon" aria-hidden="true">
+            <i data-lucide="sparkles" class="card-icon main"></i>
+          </span>
 
-        <h2 class="proposal-review-title">
-          {{ vm.content.proposal.title }}
-        </h2>
+          <div class="proposal-review-hero__copy">
+            <p class="proposal-review-eyebrow">Propuesta</p>
 
-        <p class="proposal-review-status">
-          Estado: {{ vm.content.proposal.status }}
-        </p>
+            <h2 class="proposal-review-title">
+              {{ vm.content.proposal.title }}
+            </h2>
 
-        {% if vm.content.proposal.summary %}
-          <p class="proposal-review-summary">
-            {{ vm.content.proposal.summary }}
-          </p>
-        {% endif %}
-      </div>
+            <span class="proposal-status-badge proposal-status-badge--{{ vm.content.proposal.status }}">
+              {{ vm.content.proposal.status }}
+            </span>
 
-      <section class="proposal-review-context">
+            {% if vm.content.proposal.summary %}
+              <p class="proposal-review-summary">
+                {{ vm.content.proposal.summary }}
+              </p>
+            {% endif %}
+          </div>
+        </div>
+      </header>
+
+      <section class="proposal-review-context" aria-label="Contexto de la propuesta">
         <div class="proposal-review-context-item">
           <span>Plan asociado</span>
           <strong>
-            <a href="{% url 'dailyplan_detail' vm.content.proposal.dailyplan_id %}">
-              {{ vm.content.proposal.dailyplan_name }}
-            </a>
+            {% if vm.content.proposal.dailyplan_id %}
+              <a href="{% url 'dailyplan_detail' vm.content.proposal.dailyplan_id %}">
+                {{ vm.content.proposal.dailyplan_name }}
+              </a>
+            {% else %}
+              {{ vm.content.proposal.dailyplan_name|default:"Sin plan asociado" }}
+            {% endif %}
           </strong>
         </div>
 
@@ -148,10 +168,12 @@
       </section>
 
       <section class="proposal-review-actions proposal-review-actions--final">
-        <p class="proposal-review-eyebrow">Sin vista de revisión enriquecida</p>
-        <p class="proposal-review-actions-text">
-          Esta propuesta no tiene datos suficientes para mostrar una revisión enriquecida.
-        </p>
+        <div class="proposal-review-actions-copy">
+          <p class="proposal-review-eyebrow">Sin vista enriquecida</p>
+          <p class="proposal-review-actions-text">
+            Esta propuesta no tiene datos suficientes para mostrar una revisión enriquecida.
+          </p>
+        </div>
       </section>
     </section>
   {% endif %}

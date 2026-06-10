@@ -56,11 +56,11 @@
             <span class="proposal-review-food-name">
               {{ food.food_name }}
             </span>
-            <span>{{ food.quantity|floatformat:1 }} {{ food.unit }}</span>
-            <span>{{ food.protein|floatformat:1 }} g</span>
-            <span>{{ food.carbs|floatformat:1 }} g</span>
-            <span>{{ food.fat|floatformat:1 }} g</span>
-            <span>{{ food.total_kcal|floatformat:1 }}</span>
+            <span data-label="Cantidad">{{ food.quantity|floatformat:1 }} {{ food.unit }}</span>
+            <span data-label="Proteína">{{ food.protein|floatformat:1 }} g</span>
+            <span data-label="Carbs">{{ food.carbs|floatformat:1 }} g</span>
+            <span data-label="Fat">{{ food.fat|floatformat:1 }} g</span>
+            <span data-label="Kcal">{{ food.total_kcal|floatformat:1 }}</span>
           </div>
         {% empty %}
           <p class="proposal-review-empty">

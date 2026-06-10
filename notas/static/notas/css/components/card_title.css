@@ -102,6 +102,7 @@ margin-bottom: 10px;
 .label-entity--meal { background-color: var(--entity-meal); }
 .label-entity--dailyplan { background-color: var(--entity-dailyplan); }
 .label-entity--program { background-color: var(--entity-program); }
+.label-entity--proposal { background-color: var(--entity-proposal); }
 .label-entity--home { background-color: var(--entity-home); }
 .label-entity--profile { background-color: var(--entity-profile); }
 
@@ -109,6 +110,7 @@ margin-bottom: 10px;
 .label-entity.header.label-entity--meal { background-color: var(--entity-meal); }
 .label-entity.header.label-entity--dailyplan { background-color: var(--entity-dailyplan); }
 .label-entity.header.label-entity--program { background-color: var(--entity-program); }
+.label-entity.header.label-entity--proposal { background-color: var(--entity-proposal); }
 .label-entity.header.label-entity--home { background-color: var(--entity-home); }
 .label-entity.header.label-entity--profile { background-color: var(--entity-profile); }
 

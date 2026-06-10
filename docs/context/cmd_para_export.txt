@@ -31,7 +31,7 @@ python manage.py runserver
 -------------
 
 git add .
-git commit -m "Cambios menores CSS. font-size title cards v2"
+git commit -m "Ajuste ancho block panel, y mini refactor padding title card"
 git push origin main
 
 
