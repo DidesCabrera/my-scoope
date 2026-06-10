@@ -1,0 +1,82 @@
+{% extends "notas/base.html" %}
+{% load static %}
+
+{% block title %}Entidad propuesta{% endblock %}
+
+{% block content %}
+
+<div class="page page--detail has-collapsible-panels proposal-entity-detail-page" data-page="proposal-entity-detail">
+
+  {% if vm.content.entity_kind == "meal" %}
+    {% include "components/card_main_meal.html" with main_card=vm.content.main_card %}
+  {% elif vm.content.entity_kind == "dailyplan" %}
+    {% include "components/card_main_dailyplan.html" with main_card=vm.content.main_card %}
+
+    <hr>
+
+    <div class="page-list dailyplan-detail__children-bleed">
+      {% if vm.content.child_cards %}
+        <div class="dailyplan-detail__children-header">
+          <div class="home-section-title detail-dp">
+            <i data-lucide="utensils" class="home-section-header-icon meal"></i>
+            <h2>Detalle de cada Comida</h2>
+          </div>
+          <div class="structural-indicators">
+            <span class="structural-item">
+              <span class="structural-value">{{ vm.content.structural_indicators.meals_count }}</span>
+              <i data-lucide="utensils" class="structural-icon main"></i>
+            </span>
+          </div>
+        </div>
+
+        <div class="dailyplan-detail__children-list">
+          {% for child in vm.content.child_cards %}
+            <div class="dailyplan-detail__meal-step">
+              <div class="dailyplan-detail__meal-step-marker" aria-hidden="true">
+                <span class="dailyplan-detail__meal-step-line"></span>
+                <span class="dailyplan-detail__meal-step-number">{{ forloop.counter }}</span>
+              </div>
+
+              <div class="dailyplan-detail__child-card">
+                {% include "components/card_child_meal.html" with child_card=child dpm_meal="dpm_meal" default_nutrition=True %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+
+    <hr>
+
+    <div class="page-list dailyplan-detail__children-bleed">
+      {% if vm.content.foods_aggregation %}
+        <div class="dailyplan-detail__children-header">
+          <div class="home-section-title detail-dp">
+            <i data-lucide="carrot" class="home-section-header-icon food"></i>
+            <h2>Información de Alimentos</h2>
+          </div>
+          <div class="structural-indicators">
+            <span class="structural-item">
+              <span class="structural-value">{{ vm.content.structural_indicators.foods_count }}</span>
+              <i data-lucide="carrot" class="structural-icon main"></i>
+            </span>
+          </div>
+
+          <div class="dailyplan-detail__foods-aggregation">
+            {% include "components/grid_foods_aggregation.html" with foods=vm.content.foods_aggregation %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  {% else %}
+    <section class="card proposal-empty-card">
+      <div>
+        <h3>Entidad no disponible</h3>
+        <p>Esta propuesta no tiene una entidad enriquecida para revisar.</p>
+      </div>
+    </section>
+  {% endif %}
+
+</div>
+
+{% endblock %}

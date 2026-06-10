@@ -1239,6 +1239,7 @@ class NutritionProposal(models.Model):
 
     title = models.CharField(max_length=160)
     summary = models.TextField(blank=True)
+    list_order = models.PositiveIntegerField(default=0)
 
     targets = models.JSONField(default=dict, blank=True)
     current_snapshot = models.JSONField(default=dict, blank=True)

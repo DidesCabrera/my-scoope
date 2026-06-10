@@ -1,73 +1,7 @@
 {% if vm.content.proposal_review.payload.meal %}
-  {% with meal=vm.content.proposal_review.payload.meal %}
-    <section class="proposal-review-card">
-      <div class="proposal-review-card-header">
-        <div>
-          <p class="proposal-review-eyebrow">Comida propuesta</p>
-          <h3 class="proposal-review-section-title">
-            {{ meal.name }}
-          </h3>
-        </div>
-      </div>
-
-      {% if meal.kpis %}
-        <div class="proposal-review-kpis">
-          <div class="proposal-review-kpi">
-            <span class="proposal-review-kpi-label">Kcal</span>
-            <strong>{{ meal.kpis.total_kcal|floatformat:1 }}</strong>
-          </div>
-
-          <div class="proposal-review-kpi">
-            <span class="proposal-review-kpi-label">Proteína</span>
-            <strong>{{ meal.kpis.protein|floatformat:1 }} g</strong>
-          </div>
-
-          <div class="proposal-review-kpi">
-            <span class="proposal-review-kpi-label">Carbs</span>
-            <strong>{{ meal.kpis.carbs|floatformat:1 }} g</strong>
-          </div>
-
-          <div class="proposal-review-kpi">
-            <span class="proposal-review-kpi-label">Fat</span>
-            <strong>{{ meal.kpis.fat|floatformat:1 }} g</strong>
-          </div>
-
-          {% if meal.kpis.ppk %}
-            <div class="proposal-review-kpi">
-              <span class="proposal-review-kpi-label">PPK</span>
-              <strong>{{ meal.kpis.ppk|floatformat:2 }}</strong>
-            </div>
-          {% endif %}
-        </div>
-      {% endif %}
-
-      <div class="proposal-review-food-list">
-        <div class="proposal-review-food-row proposal-review-food-row--header">
-          <span>Alimento</span>
-          <span>Cantidad</span>
-          <span>Proteína</span>
-          <span>Carbs</span>
-          <span>Fat</span>
-          <span>Kcal</span>
-        </div>
-
-        {% for food in meal.foods %}
-          <div class="proposal-review-food-row">
-            <span class="proposal-review-food-name">
-              {{ food.food_name }}
-            </span>
-            <span data-label="Cantidad">{{ food.quantity|floatformat:1 }} {{ food.unit }}</span>
-            <span data-label="Proteína">{{ food.protein|floatformat:1 }} g</span>
-            <span data-label="Carbs">{{ food.carbs|floatformat:1 }} g</span>
-            <span data-label="Fat">{{ food.fat|floatformat:1 }} g</span>
-            <span data-label="Kcal">{{ food.total_kcal|floatformat:1 }}</span>
-          </div>
-        {% empty %}
-          <p class="proposal-review-empty">
-            Esta propuesta no contiene alimentos simulados.
-          </p>
-        {% endfor %}
-      </div>
+  {% with child_card=vm.content.proposal_review.payload.meal.card %}
+    <section class="proposal-review-entity-section proposal-review-entity-section--meal" aria-label="Comida propuesta">
+      {% include "components/card_child_meal.html" with child_card=child_card dpm_meal="dpm_meal proposal-child-card" default_nutrition=True %}
     </section>
   {% endwith %}
 {% endif %}

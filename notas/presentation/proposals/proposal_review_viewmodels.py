@@ -58,6 +58,7 @@ class ProposalReviewMealVM:
     name: str
     foods: list[ProposalReviewFoodVM]
     kpis: ProposalReviewKpisVM | None
+    card: dict[str, Any]
 
     def as_dict(self) -> dict:
         return {
@@ -67,6 +68,7 @@ class ProposalReviewMealVM:
                 for food in self.foods
             ],
             "kpis": self.kpis.as_dict() if self.kpis else None,
+            "card": self.card,
         }
 
 
@@ -89,6 +91,7 @@ class ProposalReviewDailyPlanVM:
     name: str
     meals: list[ProposalReviewDailyPlanMealVM]
     kpis: ProposalReviewKpisVM | None
+    card: dict[str, Any]
 
     def as_dict(self) -> dict:
         return {
@@ -98,6 +101,7 @@ class ProposalReviewDailyPlanVM:
                 for meal in self.meals
             ],
             "kpis": self.kpis.as_dict() if self.kpis else None,
+            "card": self.card,
         }
 
 
@@ -219,10 +223,12 @@ def build_proposal_review_vm(
             meal=_build_meal_review_vm(
                 intent=intent,
                 simulation=simulation,
+                proposal_id=proposal.get("id"),
             ),
             dailyplan=_build_dailyplan_review_vm(
                 intent=intent,
                 simulation=simulation,
+                proposal_id=proposal.get("id"),
             ),
         ),
         can_apply=can_apply,
@@ -303,6 +309,7 @@ def _extract_applied_metadata(
 def _build_meal_review_vm(
     intent: str | None,
     simulation: dict[str, Any] | None,
+    proposal_id: int | None,
 ) -> ProposalReviewMealVM | None:
     if intent != CREATE_MEAL_INTENT:
         return None
@@ -315,12 +322,16 @@ def _build_meal_review_vm(
     if not isinstance(meal, dict):
         return None
 
-    return _build_meal_from_simulation(meal)
+    return _build_meal_from_simulation(
+        meal,
+        proposal_id=proposal_id,
+    )
 
 
 def _build_dailyplan_review_vm(
     intent: str | None,
     simulation: dict[str, Any] | None,
+    proposal_id: int | None,
 ) -> ProposalReviewDailyPlanVM | None:
     if intent != CREATE_DAILYPLAN_INTENT:
         return None
@@ -333,43 +344,67 @@ def _build_dailyplan_review_vm(
     if not isinstance(dailyplan, dict):
         return None
 
+    meals = [
+        _build_dailyplan_meal_review_vm(
+            meal_payload,
+            proposal_id=proposal_id,
+        )
+        for meal_payload in _safe_list(dailyplan.get("meals"))
+        if isinstance(meal_payload, dict)
+    ]
+    kpis = _build_kpis_review_vm(
+        _safe_dict(dailyplan.get("kpis")),
+    )
+
     return ProposalReviewDailyPlanVM(
         name=_safe_str(dailyplan.get("name")),
-        meals=[
-            _build_dailyplan_meal_review_vm(meal_payload)
-            for meal_payload in _safe_list(dailyplan.get("meals"))
-            if isinstance(meal_payload, dict)
-        ],
-        kpis=_build_kpis_review_vm(
-            _safe_dict(dailyplan.get("kpis")),
+        meals=meals,
+        kpis=kpis,
+        card=_build_dailyplan_card_payload(
+            name=_safe_str(dailyplan.get("name")),
+            meals=meals,
+            kpis=kpis,
+            proposal_id=proposal_id,
         ),
     )
 
 
 def _build_dailyplan_meal_review_vm(
     payload: dict[str, Any],
+    proposal_id: int | None,
 ) -> ProposalReviewDailyPlanMealVM:
     return ProposalReviewDailyPlanMealVM(
         hour=_safe_optional_str(payload.get("hour")),
         note=_safe_str(payload.get("note")),
         meal=_build_meal_from_simulation(
             _safe_dict(payload.get("meal")),
+            proposal_id=proposal_id,
         ),
     )
 
 
 def _build_meal_from_simulation(
     meal: dict[str, Any],
+    proposal_id: int | None,
 ) -> ProposalReviewMealVM:
+    foods = [
+        _build_food_review_vm(food)
+        for food in _safe_list(meal.get("foods"))
+        if isinstance(food, dict)
+    ]
+    kpis = _build_kpis_review_vm(
+        _safe_dict(meal.get("kpis")),
+    )
+
     return ProposalReviewMealVM(
         name=_safe_str(meal.get("name")),
-        foods=[
-            _build_food_review_vm(food)
-            for food in _safe_list(meal.get("foods"))
-            if isinstance(food, dict)
-        ],
-        kpis=_build_kpis_review_vm(
-            _safe_dict(meal.get("kpis")),
+        foods=foods,
+        kpis=kpis,
+        card=_build_meal_card_payload(
+            name=_safe_str(meal.get("name")),
+            foods=foods,
+            kpis=kpis,
+            proposal_id=proposal_id,
         ),
     )
 
@@ -405,6 +440,249 @@ def _build_kpis_review_vm(
         alloc_carbs=_safe_float_or_none(kpis.get("alloc_carbs")),
         alloc_fat=_safe_float_or_none(kpis.get("alloc_fat")),
     )
+
+
+def _build_dailyplan_card_payload(
+    *,
+    name: str,
+    meals: list[ProposalReviewDailyPlanMealVM],
+    kpis: ProposalReviewKpisVM | None,
+    proposal_id: int | None,
+) -> dict[str, Any]:
+    total_kcal = _kpi_total_kcal(kpis)
+
+    return {
+        "id": f"proposal-dailyplan-{proposal_id or 'new'}",
+        "main_id": f"proposal-dailyplan-{proposal_id or 'new'}",
+        "titulo": {
+            "name": name,
+            "label": "DailyPlan",
+            "icon": "clipboard-list",
+            "category_badge": None,
+            "classes": [],
+            "structural_indicators": {
+                "meals_count": len(meals),
+                "foods_count": sum(len(meal.meal.foods) for meal in meals),
+            },
+        },
+        "kpis": _build_card_kpis(kpis),
+        "menu": {
+            "meals": [
+                {
+                    "meal_name": dailyplan_meal.meal.name,
+                    "hour": dailyplan_meal.hour,
+                    "foods": [
+                        food.food_name
+                        for food in dailyplan_meal.meal.foods
+                    ],
+                }
+                for dailyplan_meal in meals
+            ],
+        },
+        "table": {
+            "items": [
+                _build_meal_table_row(
+                    dailyplan_meal.meal,
+                    parent_total_kcal=total_kcal,
+                )
+                for dailyplan_meal in meals
+            ],
+        },
+        "metadata": {
+            "owner": "AI",
+            "author": "AI",
+            "fork_from": None,
+        },
+        "actions": _build_proposal_entity_actions(proposal_id),
+    }
+
+
+def _build_meal_card_payload(
+    *,
+    name: str,
+    foods: list[ProposalReviewFoodVM],
+    kpis: ProposalReviewKpisVM | None,
+    proposal_id: int | None,
+) -> dict[str, Any]:
+    total_kcal = _kpi_total_kcal(kpis)
+
+    return {
+        "id": f"proposal-meal-{proposal_id or 'new'}",
+        "main_id": f"proposal-meal-{proposal_id or 'new'}",
+        "titulo": {
+            "name": name,
+            "label": "Meal",
+            "icon": "utensils",
+            "category_badge": None,
+            "classes": [],
+            "structural_indicators": {
+                "foods_count": len(foods),
+            },
+        },
+        "kpis": _build_card_kpis(kpis),
+        "foods_aggregation": [
+            {
+                "display_name": food.food_name,
+            }
+            for food in foods
+        ],
+        "table": {
+            "items": [
+                _build_food_table_row(
+                    food,
+                    parent_total_kcal=total_kcal,
+                )
+                for food in foods
+            ],
+        },
+        "metadata": {
+            "owner": "AI",
+            "author": "AI",
+            "fork_from": None,
+        },
+        "actions": _build_proposal_entity_actions(proposal_id),
+    }
+
+
+def _build_proposal_entity_actions(proposal_id: int | None) -> list[dict[str, Any]]:
+    if not proposal_id:
+        return []
+
+    return [
+        {
+            "key": "proposal_entity_detail",
+            "label": "Ver entidad propuesta",
+            "icon": "arrow-right",
+            "url": f"/app/proposals/{proposal_id}/entity/",
+            "method": "get",
+            "desktop_position": "inline",
+            "mobile_position": "inline",
+        },
+    ]
+
+
+def _build_meal_table_row(
+    meal: ProposalReviewMealVM,
+    *,
+    parent_total_kcal: float,
+) -> dict[str, Any]:
+    meal_total_kcal = _kpi_total_kcal(meal.kpis)
+
+    return {
+        "rel": {
+            "name": meal.name,
+            "total_kcal": meal_total_kcal,
+            "kcal_share": _percentage(meal_total_kcal, parent_total_kcal),
+            "g_protein": _kpi_value(meal.kpis, "protein"),
+            "g_carbs": _kpi_value(meal.kpis, "carbs"),
+            "g_fat": _kpi_value(meal.kpis, "fat"),
+            "alloc_protein": _macro_alloc(meal.kpis, "protein"),
+            "alloc_carbs": _macro_alloc(meal.kpis, "carbs"),
+            "alloc_fat": _macro_alloc(meal.kpis, "fat"),
+        },
+    }
+
+
+def _build_food_table_row(
+    food: ProposalReviewFoodVM,
+    *,
+    parent_total_kcal: float,
+) -> dict[str, Any]:
+    total_kcal = _safe_number(food.total_kcal)
+    protein = _safe_number(food.protein)
+    carbs = _safe_number(food.carbs)
+    fat = _safe_number(food.fat)
+
+    return {
+        "rel": {
+            "name": food.food_name,
+            "quantity": _safe_number(food.quantity),
+            "quantity_unit": food.unit or "g",
+            "total_kcal": total_kcal,
+            "kcal_share": _percentage(total_kcal, parent_total_kcal),
+            "g_protein": protein,
+            "g_carbs": carbs,
+            "g_fat": fat,
+            "alloc_protein": _percentage(protein * 4, total_kcal),
+            "alloc_carbs": _percentage(carbs * 4, total_kcal),
+            "alloc_fat": _percentage(fat * 9, total_kcal),
+        },
+    }
+
+
+def _build_card_kpis(
+    kpis: ProposalReviewKpisVM | None,
+) -> dict[str, Any]:
+    protein = _kpi_value(kpis, "protein")
+    carbs = _kpi_value(kpis, "carbs")
+    fat = _kpi_value(kpis, "fat")
+
+    return {
+        "ppk": _kpi_value(kpis, "ppk"),
+        "tot_kcal": _kpi_total_kcal(kpis),
+        "g_protein": protein,
+        "g_carbs": carbs,
+        "g_fat": fat,
+        "kcal_protein": protein * 4,
+        "kcal_carbs": carbs * 4,
+        "kcal_fat": fat * 9,
+        "alloc_protein": _macro_alloc(kpis, "protein"),
+        "alloc_carbs": _macro_alloc(kpis, "carbs"),
+        "alloc_fat": _macro_alloc(kpis, "fat"),
+    }
+
+
+def _kpi_total_kcal(kpis: ProposalReviewKpisVM | None) -> float:
+    if not kpis:
+        return 0.0
+
+    return _safe_number(kpis.total_kcal)
+
+
+def _kpi_value(
+    kpis: ProposalReviewKpisVM | None,
+    key: str,
+) -> float:
+    if not kpis:
+        return 0.0
+
+    return _safe_number(getattr(kpis, key, None))
+
+
+def _macro_alloc(
+    kpis: ProposalReviewKpisVM | None,
+    key: str,
+) -> float:
+    if not kpis:
+        return 0.0
+
+    explicit_value = getattr(kpis, f"alloc_{key}", None)
+
+    if explicit_value is not None:
+        return _safe_number(explicit_value)
+
+    grams = _kpi_value(kpis, key)
+    total_kcal = _kpi_total_kcal(kpis)
+    kcal_factor = 9 if key == "fat" else 4
+
+    return _percentage(grams * kcal_factor, total_kcal)
+
+
+def _percentage(value: float, total: float) -> float:
+    if not total:
+        return 0.0
+
+    return round((value / total) * 100, 2)
+
+
+def _safe_number(value: Any) -> float:
+    if isinstance(value, bool) or value is None:
+        return 0.0
+
+    if isinstance(value, int | float):
+        return float(value)
+
+    return 0.0
 
 
 def _extract_intent(

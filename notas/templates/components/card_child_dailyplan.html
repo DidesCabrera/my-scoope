@@ -1,4 +1,4 @@
-<div class="card">
+<div class="card {{ dailyplan_card_class }}">
 
   <!-- HEADER CARD ========================================= -->
   <!-- ===================================================== -->
@@ -13,12 +13,33 @@
   </div>
 
   <!-- BLOCK DETAIL ======================================== -->
-  {% with panel_id=child_card.id|default:forloop.counter %}
-    <div class="card-detail-block">
-      {% include "components/detail_tabs_meals.html" with panel_id=panel_id show_hide_tab=True %}
-      {% include "components/detail_panels_meals.html" with panel_id=panel_id menu=child_card.menu items=child_card.table.items %}
-    </div>
-  {% endwith %}
+  {% if child_card.id %}
+    {% with panel_id=child_card.id %}
+      <div
+        class="card-detail-block"
+        {% if default_nutrition %}
+          data-default-desktop="#card-grid-meals-{{ panel_id }}"
+          data-default-mobile="#card-grid-macros-{{ panel_id }}"
+        {% endif %}
+      >
+        {% include "components/detail_tabs_meals.html" with panel_id=panel_id show_hide_tab=True %}
+        {% include "components/detail_panels_meals.html" with panel_id=panel_id menu=child_card.menu items=child_card.table.items %}
+      </div>
+    {% endwith %}
+  {% else %}
+    {% with panel_id=forloop.counter %}
+      <div
+        class="card-detail-block"
+        {% if default_nutrition %}
+          data-default-desktop="#card-grid-meals-{{ panel_id }}"
+          data-default-mobile="#card-grid-macros-{{ panel_id }}"
+        {% endif %}
+      >
+        {% include "components/detail_tabs_meals.html" with panel_id=panel_id show_hide_tab=True %}
+        {% include "components/detail_panels_meals.html" with panel_id=panel_id menu=child_card.menu items=child_card.table.items %}
+      </div>
+    {% endwith %}
+  {% endif %}
 
   <!-- BOTTOM SECTION ====================================== -->
   <!-- ===================================================== -->

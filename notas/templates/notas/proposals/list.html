@@ -9,92 +9,67 @@
     <h2>{{ vm.ui.title }}</h2>
   </div>
 
-  <div class="proposal-list-intro">
-    <p>
-      Revisa, aprueba y aplica las propuestas generadas con asistencia de IA antes de convertirlas en objetos reales de tu librería.
-    </p>
-  </div>
+  {% if vm.content.list_mode == "reorder" %}
+    {% include "components/list_panel_proposals_reorder.html" with proposals=vm.content.proposals %}
+  {% elif vm.content.list_mode == "delete" %}
+    {% include "components/list_panel_proposals_delete.html" with proposals=vm.content.proposals %}
+  {% else %}
+    {% for proposal in vm.content.proposals %}
+      <article class="card proposal-list-card proposal-list-card--{{ proposal.status }}">
+        <div class="proposal-list-card__main">
+          <div class="proposal-list-card__title-block">
+            <div class="proposal-list-card__copy">
+              <h3 class="proposal-list-card__title">{{ proposal.title }}</h3>
+            </div>
+          </div>
 
-  {% for proposal in vm.content.proposals %}
-    <article class="card proposal-list-card proposal-list-card--{{ proposal.status }}">
-      <div class="proposal-list-card__main">
-        <div class="proposal-list-card__title-block">
-          <span class="label-entity label-entity--proposal" aria-hidden="true">
-            <i data-lucide="sparkles" class="card-icon main"></i>
-          </span>
-
-          <div class="proposal-list-card__copy">
-            <p class="proposal-list-card__eyebrow">Propuesta AI</p>
-            <h3 class="proposal-list-card__title">{{ proposal.title }}</h3>
-
-            {% if proposal.dailyplan_name %}
-              <p class="subtitle proposal-list-card__subtitle">
-                Asociada a {{ proposal.dailyplan_name }}
-              </p>
-            {% endif %}
+          <div class="proposal-list-card__icons-title" aria-hidden="true">
+            <i data-lucide="sparkles" class="home-section-header-icon proposal"></i>
           </div>
         </div>
 
         <span class="proposal-status-badge proposal-status-badge--{{ proposal.status }}">
           {{ proposal.status }}
         </span>
-      </div>
 
-      <div class="proposal-list-card__metadata">
-        <span>
-          <i data-lucide="bot" class="metadata-icon"></i>
-          Fuente: <strong>{{ proposal.source }}</strong>
-        </span>
-        <span>
-          <i data-lucide="user-round" class="metadata-icon"></i>
-          Creador: <strong>{{ proposal.created_by_username }}</strong>
-        </span>
-        {% if proposal.reviewed_by_username %}
-          <span>
-            <i data-lucide="badge-check" class="metadata-icon"></i>
-            Revisor: <strong>{{ proposal.reviewed_by_username }}</strong>
-          </span>
+
+        {% if proposal.summary %}
+          <div class="proposal-list-card__summary-block">
+            <span class="proposal-list-card__summary-label">Requerimiento</span>
+            <p class="proposal-list-card__summary">{{ proposal.summary }}</p>
+          </div>
         {% endif %}
-      </div>
 
-      {% if proposal.summary %}
-        <p class="proposal-list-card__summary">{{ proposal.summary }}</p>
-      {% endif %}
+        <div class="card-bottom proposal-list-card__bottom">
+          <div class="proposal-attachment proposal-attachment--{{ proposal.attachment_kind }}">
+            <span class="proposal-attachment__icon" aria-hidden="true">
+              <i data-lucide="{{ proposal.attachment_icon }}" class="proposal-attachment__svg"></i>
+            </span>
+            <span class="proposal-attachment__copy">
+              <strong class="proposal-attachment__name">{{ proposal.attachment_name }}</strong>
+            </span>
+          </div>
 
-      <div class="card-bottom proposal-list-card__bottom">
-        <div class="proposal-list-card__status-note">
-          {% if proposal.is_reviewable %}
-            Pendiente de revisión humana.
-          {% elif proposal.is_final %}
-            Revisión cerrada.
-          {% else %}
-            Disponible para seguimiento.
-          {% endif %}
+          <div class="card-actions proposal-list-card__actions">
+            {% include "components/card_actions.html" with actions=proposal.actions %}
+          </div>
         </div>
-
-        <div class="card-actions proposal-list-card__actions">
-          <a class="proposal-link-action" href="{% url 'proposal_detail' proposal.id %}">
-            Ver propuesta
-            <i data-lucide="arrow-right" class="proposal-link-action__icon"></i>
-          </a>
+      </article>
+    {% empty %}
+      <section class="card proposal-empty-card">
+        <div>
+          <h3>No tienes propuestas todavía.</h3>
+          <p>
+            Las propuestas creadas por IA/MCP aparecerán aquí para que puedas revisarlas antes de aprobarlas o aplicarlas.
+          </p>
         </div>
-      </div>
-    </article>
-  {% empty %}
-    <section class="card proposal-empty-card">
-      <span class="label-entity label-entity--proposal" aria-hidden="true">
-        <i data-lucide="sparkles" class="card-icon main"></i>
-      </span>
-
-      <div>
-        <h3>No tienes propuestas todavía.</h3>
-        <p>
-          Las propuestas creadas por IA/MCP aparecerán aquí para que puedas revisarlas antes de aprobarlas o aplicarlas.
-        </p>
-      </div>
-    </section>
-  {% endfor %}
+      </section>
+    {% endfor %}
+  {% endif %}
 
 </div>
+
+{% load static %}
+<script src="{% static 'notas/js/list_panel_modes.js' %}"></script>
 
 {% endblock %}

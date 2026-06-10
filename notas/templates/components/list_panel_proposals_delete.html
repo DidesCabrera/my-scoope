@@ -1,0 +1,42 @@
+<div class="data-grid data-grid--list-panel data-grid--list-panel-delete js-list-delete-panel">
+    <h3 class="data-grid-list-panel-title">Eliminar Propuestas</h3>
+
+    {% for proposal in proposals %}
+        <div
+            class="data-grid-row data-grid-row--list-panel-delete js-list-delete-row"
+            data-item-id="{{ proposal.id }}"
+        >
+            <div class="data-grid-cell data-grid-cell--select">
+                <label class="list-panel-select" aria-label="Seleccionar propuesta">
+                    <input
+                        type="checkbox"
+                        class="js-list-delete-checkbox"
+                        value="{{ proposal.id }}"
+                    >
+                    <span class="list-panel-select__control"></span>
+                </label>
+            </div>
+
+            <div class="data-grid-cell data-grid-cell--name">
+                <div class="list-panel-title-row">
+                    <i data-lucide="sparkles" class="picker-summary-card__icon proposal list-panel-title-icon"></i>
+                    <div class="truncate">{{ proposal.title }}</div>
+                </div>
+            </div>
+
+            <div class="data-grid-cell data-grid-cell--action">
+                <form method="post" action="{% url 'proposal_delete' proposal.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="{{ request.GET.status }}">
+                    <button type="submit" aria-label="Eliminar propuesta">
+                        <i data-lucide="trash" class="table-icon"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    {% empty %}
+        <div class="data-grid-empty">
+            No tienes propuestas para eliminar.
+        </div>
+    {% endfor %}
+</div>

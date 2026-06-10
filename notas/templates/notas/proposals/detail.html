@@ -3,19 +3,13 @@
 
 {% block content %}
 
-<div class="page page--detail proposal-detail-page">
+<div class="page page--detail has-collapsible-panels proposal-detail-page">
 
   {% if vm.content.proposal_review %}
     <section class="proposal-review-shell">
       <header class="proposal-review-hero proposal-review-hero--{{ vm.content.proposal_review.status.status }}">
         <div class="proposal-review-hero__main">
-          <span class="label-entity label-entity--proposal proposal-review-hero__icon" aria-hidden="true">
-            <i data-lucide="sparkles" class="card-icon main"></i>
-          </span>
-
           <div class="proposal-review-hero__copy">
-            <p class="proposal-review-eyebrow">Propuesta AI</p>
-
             <h2 class="proposal-review-title">
               {{ vm.content.proposal_review.title }}
             </h2>
@@ -33,48 +27,57 @@
                 <span class="proposal-type-badge">Sin aplicación automática</span>
               {% endif %}
             </div>
+          </div>
 
-            {% if vm.content.proposal_review.summary %}
-              <p class="proposal-review-summary">
-                {{ vm.content.proposal_review.summary }}
-              </p>
-            {% endif %}
+          <div class="proposal-review-hero__icons-title" aria-hidden="true">
+            <i data-lucide="sparkles" class="home-section-header-icon proposal"></i>
           </div>
         </div>
+
+        {% if vm.content.proposal_review.summary %}
+          <div class="proposal-review-summary-block">
+            <span class="proposal-review-summary-label">Requerimiento</span>
+            <p class="proposal-review-summary">
+              {{ vm.content.proposal_review.summary }}
+            </p>
+          </div>
+        {% endif %}
       </header>
 
-      <section class="proposal-review-context" aria-label="Contexto de la propuesta">
-        <div class="proposal-review-context-item">
-          <span>Plan asociado</span>
-          <strong>
-            {% if vm.content.proposal_review.dailyplan_id %}
-              <a href="{% url 'dailyplan_detail' vm.content.proposal_review.dailyplan_id %}">
-                {{ vm.content.proposal_review.dailyplan_name }}
-              </a>
-            {% else %}
-              {{ vm.content.proposal_review.dailyplan_name|default:"Sin plan asociado" }}
-            {% endif %}
-          </strong>
-        </div>
-
-        {% if vm.content.proposal_review.created_by_username %}
-          <div class="proposal-review-context-item">
-            <span>Creador</span>
-            <strong>{{ vm.content.proposal_review.created_by_username }}</strong>
-          </div>
-        {% endif %}
-
-        {% if vm.content.proposal_review.reviewed_by_username %}
-          <div class="proposal-review-context-item">
-            <span>Revisado por</span>
-            <strong>{{ vm.content.proposal_review.reviewed_by_username }}</strong>
-          </div>
-        {% endif %}
-
+      <section class="proposal-review-context-strip" aria-label="Entidad involucrada">
         {% if vm.content.proposal_review.payload.intent %}
-          <div class="proposal-review-context-item">
-            <span>Intent</span>
-            <strong>{{ vm.content.proposal_review.payload.intent }}</strong>
+          <div class="proposal-review-intent-line">
+            <i data-lucide="route" class="metadata-icon"></i>
+            Intent: <strong>{{ vm.content.proposal_review.payload.intent }}</strong>
+          </div>
+        {% endif %}
+
+        {% if vm.content.proposal_review.payload.is_create_meal and vm.content.proposal_review.payload.meal %}
+          <div class="proposal-attachment proposal-attachment--meal proposal-review-attachment">
+            <span class="proposal-attachment__icon" aria-hidden="true">
+              <i data-lucide="utensils" class="proposal-attachment__svg"></i>
+            </span>
+            <span class="proposal-attachment__copy">
+              <strong class="proposal-attachment__name">{{ vm.content.proposal_review.payload.meal.name }}</strong>
+            </span>
+          </div>
+        {% elif vm.content.proposal_review.payload.is_create_dailyplan and vm.content.proposal_review.payload.dailyplan %}
+          <div class="proposal-attachment proposal-attachment--dailyplan proposal-review-attachment">
+            <span class="proposal-attachment__icon" aria-hidden="true">
+              <i data-lucide="clipboard-list" class="proposal-attachment__svg"></i>
+            </span>
+            <span class="proposal-attachment__copy">
+              <strong class="proposal-attachment__name">{{ vm.content.proposal_review.payload.dailyplan.name }}</strong>
+            </span>
+          </div>
+        {% else %}
+          <div class="proposal-attachment proposal-attachment--dailyplan proposal-review-attachment">
+            <span class="proposal-attachment__icon" aria-hidden="true">
+              <i data-lucide="clipboard-list" class="proposal-attachment__svg"></i>
+            </span>
+            <span class="proposal-attachment__copy">
+              <strong class="proposal-attachment__name">{{ vm.content.proposal_review.dailyplan_name|default:"Sin entidad asociada" }}</strong>
+            </span>
           </div>
         {% endif %}
       </section>
@@ -118,13 +121,7 @@
     <section class="proposal-review-shell">
       <header class="proposal-review-hero proposal-review-hero--{{ vm.content.proposal.status }}">
         <div class="proposal-review-hero__main">
-          <span class="label-entity label-entity--proposal proposal-review-hero__icon" aria-hidden="true">
-            <i data-lucide="sparkles" class="card-icon main"></i>
-          </span>
-
           <div class="proposal-review-hero__copy">
-            <p class="proposal-review-eyebrow">Propuesta</p>
-
             <h2 class="proposal-review-title">
               {{ vm.content.proposal.title }}
             </h2>
@@ -132,38 +129,36 @@
             <span class="proposal-status-badge proposal-status-badge--{{ vm.content.proposal.status }}">
               {{ vm.content.proposal.status }}
             </span>
+          </div>
 
-            {% if vm.content.proposal.summary %}
-              <p class="proposal-review-summary">
-                {{ vm.content.proposal.summary }}
-              </p>
-            {% endif %}
+          <div class="proposal-review-hero__icons-title" aria-hidden="true">
+            <i data-lucide="sparkles" class="home-section-header-icon proposal"></i>
           </div>
         </div>
+
+        {% if vm.content.proposal.summary %}
+          <div class="proposal-review-summary-block">
+            <span class="proposal-review-summary-label">Requerimiento</span>
+            <p class="proposal-review-summary">
+              {{ vm.content.proposal.summary }}
+            </p>
+          </div>
+        {% endif %}
       </header>
 
-      <section class="proposal-review-context" aria-label="Contexto de la propuesta">
-        <div class="proposal-review-context-item">
-          <span>Plan asociado</span>
-          <strong>
-            {% if vm.content.proposal.dailyplan_id %}
-              <a href="{% url 'dailyplan_detail' vm.content.proposal.dailyplan_id %}">
-                {{ vm.content.proposal.dailyplan_name }}
-              </a>
-            {% else %}
-              {{ vm.content.proposal.dailyplan_name|default:"Sin plan asociado" }}
-            {% endif %}
-          </strong>
+      <section class="proposal-review-context-strip" aria-label="Entidad involucrada">
+        <div class="proposal-review-intent-line">
+          <i data-lucide="route" class="metadata-icon"></i>
+          Intent: <strong>{{ vm.content.proposal.proposed_payload.intent|default:"Sin intent" }}</strong>
         </div>
 
-        <div class="proposal-review-context-item">
-          <span>Fuente</span>
-          <strong>{{ vm.content.proposal.source }}</strong>
-        </div>
-
-        <div class="proposal-review-context-item">
-          <span>Creador</span>
-          <strong>{{ vm.content.proposal.created_by_username }}</strong>
+        <div class="proposal-attachment proposal-attachment--dailyplan proposal-review-attachment">
+          <span class="proposal-attachment__icon" aria-hidden="true">
+            <i data-lucide="clipboard-list" class="proposal-attachment__svg"></i>
+          </span>
+          <span class="proposal-attachment__copy">
+            <strong class="proposal-attachment__name">{{ vm.content.proposal.dailyplan_name|default:"Sin entidad asociada" }}</strong>
+          </span>
         </div>
       </section>
 

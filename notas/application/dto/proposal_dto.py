@@ -14,6 +14,11 @@ class NutritionProposalListItemDTO:
     source: str
     title: str
     summary: str
+    attachment_kind: str
+    attachment_label: str
+    attachment_name: str
+    attachment_icon: str
+    actions: list[dict]
     is_reviewable: bool
     is_final: bool
     created_at: str | None

@@ -1,5 +1,6 @@
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
 
 from notas.application.dto.proposal_dto import (
     NutritionProposalDTO,
@@ -43,13 +44,90 @@ def get_available_proposal_queryset(user):
             | Q(dailyplan__created_by=user)
         )
         .distinct()
-        .order_by("-created_at", "-id")
+        .order_by("list_order", "-created_at", "-id")
     )
+
+
+def _get_proposal_intent(proposal: NutritionProposal) -> str:
+    payload = proposal.proposed_payload or {}
+
+    if not isinstance(payload, dict):
+        return ""
+
+    return str(payload.get("intent") or "")
+
+
+def _get_proposal_attachment(proposal: NutritionProposal) -> dict[str, str]:
+    """
+    Adjuntos visibles en la lista de propuestas.
+
+    La propuesta todavía no necesariamente creó una entidad real, por eso
+    preferimos describir el entregable propuesto antes que enlazarlo.
+    """
+    payload = proposal.proposed_payload or {}
+
+    if not isinstance(payload, dict):
+        payload = {}
+
+    intent = _get_proposal_intent(proposal)
+
+    if intent == "create_meal":
+        meal = payload.get("meal") or {}
+        return {
+            "kind": "meal",
+            "label": "Comida propuesta",
+            "name": meal.get("name") or proposal.title,
+            "icon": "utensils",
+        }
+
+    if intent == "create_dailyplan":
+        dailyplan = payload.get("dailyplan") or {}
+        return {
+            "kind": "dailyplan",
+            "label": "DailyPlan propuesto",
+            "name": dailyplan.get("name") or proposal.dailyplan.name,
+            "icon": "clipboard-list",
+        }
+
+    return {
+        "kind": "dailyplan",
+        "label": "DailyPlan asociado",
+        "name": proposal.dailyplan.name,
+        "icon": "clipboard-list",
+    }
+
+
+def _build_proposal_list_actions(proposal: NutritionProposal) -> list[dict]:
+    detail_url = reverse("proposal_detail", args=[proposal.id])
+    delete_url = reverse("proposal_delete", args=[proposal.id])
+
+    return [
+        {
+            "key": "detail",
+            "label": "Ver propuesta",
+            "icon": "arrow-right",
+            "url": detail_url,
+            "method": "get",
+            "desktop_position": "inline",
+            "mobile_position": "inline",
+        },
+        {
+            "key": "delete",
+            "label": "Eliminar propuesta",
+            "icon": "trash-2",
+            "url": delete_url,
+            "method": "post",
+            "desktop_position": "menu",
+            "mobile_position": "menu",
+        },
+    ]
 
 
 def build_proposal_list_item_dto(
     proposal: NutritionProposal,
 ) -> NutritionProposalListItemDTO:
+    attachment = _get_proposal_attachment(proposal)
+
     return NutritionProposalListItemDTO(
         id=proposal.id,
         dailyplan_id=proposal.dailyplan_id,
@@ -66,6 +144,11 @@ def build_proposal_list_item_dto(
         source=proposal.source,
         title=proposal.title,
         summary=proposal.summary,
+        attachment_kind=attachment["kind"],
+        attachment_label=attachment["label"],
+        attachment_name=attachment["name"],
+        attachment_icon=attachment["icon"],
+        actions=_build_proposal_list_actions(proposal),
         is_reviewable=proposal.is_reviewable,
         is_final=proposal.is_final,
         created_at=_serialize_datetime(proposal.created_at),
@@ -137,8 +220,21 @@ def build_proposal_dto(
     )
 
 
-def list_user_proposals(user) -> list[NutritionProposalListItemDTO]:
+def list_user_proposals(
+    user,
+    *,
+    status_filter: str | None = None,
+) -> list[NutritionProposalListItemDTO]:
     proposals = get_available_proposal_queryset(user)
+
+    if status_filter == NutritionProposal.STATUS_PENDING_REVIEW:
+        proposals = proposals.filter(
+            status=NutritionProposal.STATUS_PENDING_REVIEW,
+        )
+    elif status_filter == NutritionProposal.STATUS_APPROVED:
+        proposals = proposals.filter(
+            status=NutritionProposal.STATUS_APPROVED,
+        )
 
     return [
         build_proposal_list_item_dto(proposal)

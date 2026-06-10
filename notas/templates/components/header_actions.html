@@ -52,7 +52,7 @@
               <div class="overflow-dropdown">
                   {% for action in header.desktop_menu_actions %}
                       {% if action.method == "get" %}
-                          <a href="{{ action.url }}" class="overflow-action">
+                          <a href="{{ action.url }}" class="overflow-action {{ action.extra_class }}">
                               <i data-lucide="{{ action.icon }}" class="overflow-dropdown-icons"></i>
                               <span>{{ action.label }}</span>
                           </a>
@@ -140,7 +140,7 @@
               <div class="overflow-dropdown">
                   {% for action in header.mobile_menu_actions %}
                       {% if action.method == "get" %}
-                          <a href="{{ action.url }}" class="overflow-action">
+                          <a href="{{ action.url }}" class="overflow-action {{ action.extra_class }}">
                               <i data-lucide="{{ action.icon }}"  class="overflow-dropdown-icons"></i>
                               <span>{{ action.label }}</span>
                           </a>
