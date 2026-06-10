@@ -11,6 +11,9 @@
   padding: 12px 15px 14px 15px;
 }
 
+.card.dpm_meal .card-detail-block{
+  margin: 10px 0px;
+}
 /* =========================
    MAIN
    ========================= */
@@ -59,12 +62,12 @@
   background: var(--surface-card-muted);
   border: 1px solid var(--border-soft);
   border-radius: 18px;
-  margin: 10px 0px;
+  margin: 10px -4px;
 }
 
 
 .card-detail-block.main {
-  margin: 10px 0px;
+  margin: 10px -6px;
 }
 /* =========================
    MOBILE BASE
@@ -102,6 +105,11 @@
   .card-detail-block.main {
     margin: 10px -8px;
   }
+
+  .card.dpm_meal .card-detail-block{
+    margin: 10px -6px;
+  }
+
 }
 
 
