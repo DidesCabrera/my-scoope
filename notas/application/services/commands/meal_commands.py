@@ -231,6 +231,17 @@ def save_meal(original: Meal, user) -> Meal:
     return fork_meal_for_library(original, user)
 
 
+def save_dailyplan_meal_to_library(dailyplan_meal, user) -> Meal:
+    """
+    Guarda en la biblioteca personal una copia independiente de la Meal
+    que vive dentro de un DailyPlanMeal.
+
+    El DPM conserva su Meal interna; la nueva Meal queda libre para usarse
+    en otros planes desde Mi librería.
+    """
+    return fork_meal_for_library(dailyplan_meal.meal, user)
+
+
 
 @dataclass(frozen=True)
 class FinishMealForDailyPlanResult:

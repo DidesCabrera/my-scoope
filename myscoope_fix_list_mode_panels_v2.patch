@@ -1,0 +1,18 @@
+--- a/notas/presentation/composition/viewmodel/meal/list_meal_builder.py
++++ b/notas/presentation/composition/viewmodel/meal/list_meal_builder.py
+@@ -62,4 +62,5 @@
+     return ListVM(
+         header=build_page_header(actions=page_actions or []),
+         child_cards=children,
++        list_mode=list_mode,
+     )
+\ No newline at end of file
+--- a/notas/presentation/composition/viewmodel/dailyplan/list_dailyplan_builder.py
++++ b/notas/presentation/composition/viewmodel/dailyplan/list_dailyplan_builder.py
+@@ -74,4 +74,5 @@
+     return ListVM(
+         header=build_page_header(actions=page_actions or []),
+         child_cards=children,
++        list_mode=list_mode,
+     )
+\ No newline at end of file

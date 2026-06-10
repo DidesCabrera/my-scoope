@@ -705,3 +705,180 @@ html[data-theme="dark"] .js-mealfood-sortable-row.is-dragging {
         padding: 8px 4px 8px 4px;
     }
 }
+
+/* =========================================================
+   List mode panels: reorder/delete dailyplans and meals
+   ========================================================= */
+
+.data-grid--list-panel {
+    margin-top: 14px;
+    padding: 6px 10px;
+    border-radius: 16px;
+    background: var(--surface-card);
+}
+
+.data-grid-list-panel-title {
+    margin: 10px;
+    color: var(--text-main);
+    font-size: 0.70rem;
+    font-weight: 500;
+    line-height: 1.2;
+    opacity: 0.45;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.data-grid-header--list-panel-reorder,
+.data-grid-row--list-panel-reorder {
+    grid-template-columns: 34px minmax(140px, 1fr);
+}
+
+.data-grid-header--list-panel-delete,
+.data-grid-row--list-panel-delete {
+    grid-template-columns: 40px minmax(140px, 1fr) 40px;
+}
+
+.data-grid-row--list-panel-reorder,
+.data-grid-row--list-panel-delete {
+    min-height: 44px;
+}
+
+.list-panel-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.list-panel-title-icon {
+    width: 18px;
+    height: 18px;
+    margin-top: 0;
+    padding: 4px;
+    border-radius: 5px;
+}
+
+.list-panel-title-row .truncate {
+    min-width: 0;
+}
+
+.list-panel-drag-handle,
+.list-panel-drag-handle *,
+.js-list-reorder-row,
+.js-list-reorder-row * {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
+.list-panel-drag-handle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: inherit;
+    cursor: grab;
+    touch-action: none;
+}
+
+.list-panel-drag-handle:hover,
+.data-grid-row--list-panel-delete .data-grid-cell--action button:hover {
+    opacity: 0.75;
+}
+
+.list-panel-drag-handle:active,
+body.is-list-panel-sorting,
+body.is-list-panel-sorting *,
+body.is-list-panel-sorting .list-panel-drag-handle,
+body.is-list-panel-sorting .js-list-reorder-row {
+    cursor: grabbing !important;
+}
+
+.js-list-reorder-row.is-dragging {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.065);
+}
+
+.list-panel-select {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.list-panel-select input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.list-panel-select__control {
+    width: 16px;
+    height: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 1.5px solid var(--text-muted);
+    background: transparent;
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.list-panel-select input:checked + .list-panel-select__control {
+    background: var(--text-main);
+    border-color: var(--text-main);
+    box-shadow: inset 0 0 0 4px var(--surface-card);
+}
+
+.data-grid-row--list-panel-delete .data-grid-cell--action form,
+.data-grid-row--list-panel-delete .data-grid-cell--action button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.data-grid-row--list-panel-delete .data-grid-cell--action button {
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: inherit;
+    cursor: pointer;
+}
+
+.js-list-reorder-save:disabled,
+.js-list-bulk-delete-submit:disabled {
+    cursor: default;
+    opacity: 0.42;
+}
+
+@media (max-width: 768px) {
+    .data-grid--list-panel {
+        border-radius: 14px;
+    }
+
+    .data-grid-row--list-panel-reorder,
+    .data-grid-row--list-panel-delete {
+        min-height: 48px;
+    }
+    .list-panel-select__control {
+        width: 18px;
+        height: 18px;
+    }
+    
+}
+
+.data-grid-cell--select {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-inline: 0;
+  }
+  
+  .data-grid-cell--select > * {
+    margin: 0;
+  }

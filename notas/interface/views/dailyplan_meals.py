@@ -21,6 +21,7 @@ from notas.presentation.viewmodels.base_vm import BaseVM
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
 from notas.application.services.commands.meal_commands import (
     fork_meal_for_dailyplan,
+    save_dailyplan_meal_to_library,
     save_food_in_meal,
 )
 
@@ -339,6 +340,26 @@ def dailyplanmeal_update(request, dailyplan_id, dailyplanmeal_id):
 
     return redirect("dailyplan_detail", result.dailyplan.pk)
 
+
+
+@login_required
+@require_POST
+def dailyplanmeal_save_to_library(request, dailyplan_id, dailyplanmeal_id):
+    dpm = get_object_or_404(
+        DailyPlanMeal.objects.select_related("dailyplan", "meal"),
+        pk=dailyplanmeal_id,
+        dailyplan_id=dailyplan_id,
+        dailyplan__created_by=request.user,
+    )
+
+    saved_meal = save_dailyplan_meal_to_library(
+        dailyplan_meal=dpm,
+        user=request.user,
+    )
+
+    messages.success(request, "Comida guardada en Mi librería.")
+
+    return redirect("meal_detail", pk=saved_meal.pk)
 
 
 @login_required

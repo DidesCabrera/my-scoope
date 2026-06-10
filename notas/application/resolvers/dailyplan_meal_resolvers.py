@@ -111,6 +111,20 @@ DAILYPLAN_MEAL_ACTION_DEFINITIONS = {
         "capability": "can_edit_own_content",
     },
 
+    "save_to_library": {
+        "label": "Guardar en Mi librería",
+        "method": "post",
+        "icon": "bookmark-plus",
+        "order": 50,
+        "desktop_position": "menu",
+        "mobile_position": "menu",
+        "get_url": lambda dpm, context=None: reverse(
+            "dailyplanmeal_save_to_library",
+            args=[dpm.dailyplan.id, dpm.id],
+        ),
+        "capability": "can_edit_own_content",
+    },
+
 }
 
 # ==================================================
@@ -125,6 +139,7 @@ DAILYPLAN_MEAL_ACTIONS_BY_VIEWMODE = {
     DAILYPLAN_MEAL_VIEWMODE_DETAIL: [
         "back_dp_detail",
         "rename",
+        "save_to_library",
         "replace",
         "edit",
         "remove",

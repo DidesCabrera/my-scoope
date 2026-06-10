@@ -73,6 +73,7 @@ class ChildCardUI:
 class ListVM:
     header: HeaderVM = field(default_factory=HeaderVM)
     child_cards: List[ChildCardUI] = field(default_factory=list)
+    list_mode: str = "list"
 
     def as_context(self):
         return {

@@ -88,6 +88,7 @@ class MealListPageData:
     list_content_data: Any
     page_actions: list
     viewmode: Any
+    list_mode: str = "list"
 
 
 def get_meal_detail_page_data(
@@ -183,7 +184,14 @@ def get_meal_detail_page_data(
     )
 
 
-def get_meal_list_page_data(user) -> MealListPageData:
+def _normalize_list_mode(request_get=None):
+    mode = (request_get or {}).get("mode", "list")
+    return mode if mode in {"list", "reorder", "delete"} else "list"
+
+
+def get_meal_list_page_data(user, request_get=None) -> MealListPageData:
+    list_mode = _normalize_list_mode(request_get)
+
     meals = (
         _standalone_meals_queryset()
         .filter(
@@ -198,7 +206,7 @@ def get_meal_list_page_data(user) -> MealListPageData:
                 queryset=_meal_foods_for_card_rendering(),
             ),
         )
-        .order_by("-created_at")
+        .order_by("list_order", "-created_at", "-id")
         .distinct()
     )
 
@@ -213,6 +221,7 @@ def get_meal_list_page_data(user) -> MealListPageData:
     page_actions = resolve_meal_page_actions(
         user,
         viewmode,
+        list_mode=list_mode,
     )
 
     return MealListPageData(
@@ -220,6 +229,7 @@ def get_meal_list_page_data(user) -> MealListPageData:
         list_content_data=list_content_data,
         page_actions=page_actions,
         viewmode=viewmode,
+        list_mode=list_mode,
     )
 
 

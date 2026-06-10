@@ -1,0 +1,215 @@
+--- a/notas/static/notas/css/components/data_grid.css
++++ b/notas/static/notas/css/components/data_grid.css
+@@ -732,6 +732,25 @@
+     min-height: 44px;
+ }
+ 
++.list-panel-title-row {
++    display: flex;
++    align-items: center;
++    gap: 8px;
++    min-width: 0;
++}
++
++.list-panel-title-icon {
++    width: 18px;
++    height: 18px;
++    margin-top: 0;
++    padding: 4px;
++    border-radius: 5px;
++}
++
++.list-panel-title-row .truncate {
++    min-width: 0;
++}
++
+ .list-panel-drag-handle,
+ .list-panel-drag-handle *,
+ .js-list-reorder-row,
+--- a/notas/static/notas/css/components/header.css
++++ b/notas/static/notas/css/components/header.css
+@@ -158,8 +158,6 @@
+   z-index: 500;
+ }
+ 
+-.overflow-menu:hover .overflow-dropdown,
+-.overflow-menu:focus-within .overflow-dropdown,
+ .overflow-menu.is-open .overflow-dropdown {
+   display: block;
+ }
+--- a/notas/static/notas/js/list_panel_modes.js
++++ b/notas/static/notas/js/list_panel_modes.js
+@@ -46,7 +46,8 @@
+     function setDirtyState(nextDirty) {
+       isDirty = nextDirty;
+       saveButtons.forEach((button) => {
+-        button.disabled = !isDirty;
++        button.disabled = false;
++        button.dataset.dirty = isDirty ? "true" : "false";
+       });
+     }
+ 
+@@ -74,7 +75,12 @@
+ 
+     saveButtons.forEach((button) => {
+       button.addEventListener("click", async () => {
+-        if (button.disabled) return;
++        const returnUrl = panel.dataset.returnUrl || window.location.pathname;
++
++        if (!isDirty) {
++          window.location.href = returnUrl;
++          return;
++        }
+ 
+         saveButtons.forEach((btn) => {
+           btn.disabled = true;
+@@ -83,7 +89,7 @@
+         const saved = await persistOrder();
+ 
+         if (saved) {
+-          window.location.href = panel.dataset.returnUrl || window.location.pathname;
++          window.location.href = returnUrl;
+           return;
+         }
+ 
+--- a/notas/static/notas/js/overflow_menus.js
++++ b/notas/static/notas/js/overflow_menus.js
+@@ -0,0 +1,71 @@
++document.addEventListener("DOMContentLoaded", () => {
++  const menus = Array.from(document.querySelectorAll(".overflow-menu"));
++
++  if (!menus.length) return;
++
++  function closeMenu(menu) {
++    menu.classList.remove("is-open");
++    const button = menu.querySelector(".overflow-btn");
++    if (button) {
++      button.setAttribute("aria-expanded", "false");
++    }
++  }
++
++  function closeOtherMenus(currentMenu) {
++    menus.forEach((menu) => {
++      if (menu !== currentMenu) {
++        closeMenu(menu);
++      }
++    });
++  }
++
++  function toggleMenu(menu) {
++    const isOpen = menu.classList.contains("is-open");
++    closeOtherMenus(menu);
++
++    if (isOpen) {
++      closeMenu(menu);
++      return;
++    }
++
++    menu.classList.add("is-open");
++    const button = menu.querySelector(".overflow-btn");
++    if (button) {
++      button.setAttribute("aria-expanded", "true");
++    }
++  }
++
++  menus.forEach((menu) => {
++    const button = menu.querySelector(".overflow-btn");
++    if (!button) return;
++
++    button.setAttribute("aria-haspopup", "true");
++    button.setAttribute("aria-expanded", "false");
++
++    button.addEventListener("click", (event) => {
++      event.preventDefault();
++      event.stopPropagation();
++      toggleMenu(menu);
++    });
++
++    menu.addEventListener("click", (event) => {
++      const action = event.target.closest(".overflow-action");
++      if (action) {
++        closeMenu(menu);
++        return;
++      }
++
++      event.stopPropagation();
++    });
++  });
++
++  document.addEventListener("click", () => {
++    menus.forEach(closeMenu);
++  });
++
++  document.addEventListener("keydown", (event) => {
++    if (event.key === "Escape") {
++      menus.forEach(closeMenu);
++    }
++  });
++});
+--- a/notas/templates/components/list_panel_dailyplans_delete.html
++++ b/notas/templates/components/list_panel_dailyplans_delete.html
+@@ -22,7 +22,10 @@
+             </div>
+ 
+             <div class="data-grid-cell data-grid-cell--name">
+-                <div class="truncate">{{ child.titulo.name }}</div>
++                <div class="list-panel-title-row">
++                    <i data-lucide="clipboard-list" class="picker-summary-card__icon dailyplan list-panel-title-icon"></i>
++                    <div class="truncate">{{ child.titulo.name }}</div>
++                </div>
+             </div>
+ 
+             <div class="data-grid-cell data-grid-cell--action">
+--- a/notas/templates/components/list_panel_dailyplans_reorder.html
++++ b/notas/templates/components/list_panel_dailyplans_reorder.html
+@@ -24,7 +24,10 @@
+             </div>
+ 
+             <div class="data-grid-cell data-grid-cell--name">
+-                <div class="truncate">{{ child.titulo.name }}</div>
++                <div class="list-panel-title-row">
++                    <i data-lucide="clipboard-list" class="picker-summary-card__icon dailyplan list-panel-title-icon"></i>
++                    <div class="truncate">{{ child.titulo.name }}</div>
++                </div>
+             </div>
+         </div>
+     {% empty %}
+--- a/notas/templates/components/list_panel_meals_delete.html
++++ b/notas/templates/components/list_panel_meals_delete.html
+@@ -22,7 +22,10 @@
+             </div>
+ 
+             <div class="data-grid-cell data-grid-cell--name">
+-                <div class="truncate">{{ child.titulo.name }}</div>
++                <div class="list-panel-title-row">
++                    <i data-lucide="utensils" class="picker-summary-card__icon meal list-panel-title-icon"></i>
++                    <div class="truncate">{{ child.titulo.name }}</div>
++                </div>
+             </div>
+ 
+             <div class="data-grid-cell data-grid-cell--action">
+--- a/notas/templates/components/list_panel_meals_reorder.html
++++ b/notas/templates/components/list_panel_meals_reorder.html
+@@ -24,7 +24,10 @@
+             </div>
+ 
+             <div class="data-grid-cell data-grid-cell--name">
+-                <div class="truncate">{{ child.titulo.name }}</div>
++                <div class="list-panel-title-row">
++                    <i data-lucide="utensils" class="picker-summary-card__icon meal list-panel-title-icon"></i>
++                    <div class="truncate">{{ child.titulo.name }}</div>
++                </div>
+             </div>
+         </div>
+     {% empty %}
+--- a/notas/templates/notas/base.html
++++ b/notas/templates/notas/base.html
+@@ -328,6 +328,8 @@
+ 
+ <script src="{% static 'notas/js/sidebar_ai_assistant.js' %}" defer></script>
+ 
++<script src="{% static 'notas/js/overflow_menus.js' %}" defer></script>
++
+ </body>
+ </html>
+ 

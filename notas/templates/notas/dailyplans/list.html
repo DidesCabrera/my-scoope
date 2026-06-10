@@ -3,28 +3,28 @@
 {% block content %}
 
 <div class="page list">
-  
   <div class="list-page-title">
     <i data-lucide="{{ vm.ui.page_icon }}" class="page-icon"></i>
     <h2>{{ vm.ui.title }}</h2>
   </div>
-      {% for child in vm.content.child_cards %}
-        {% include "components//card_child_dailyplan.html" with child_card=child %}
-      {% empty %}
+
+  {% if vm.content.list_mode == "reorder" %}
+    {% include "components/list_panel_dailyplans_reorder.html" with children=vm.content.child_cards %}
+  {% elif vm.content.list_mode == "delete" %}
+    {% include "components/list_panel_dailyplans_delete.html" with children=vm.content.child_cards %}
+  {% else %}
+    {% for child in vm.content.child_cards %}
+      {% include "components//card_child_dailyplan.html" with child_card=child %}
+    {% empty %}
       <div>
         <p>No tienes planes diarios aun, puedes explorar Planes de otros usuarios, o crear un nuevo Plan Diario </p>
       </div>
-      {% endfor %}
+    {% endfor %}
+  {% endif %}
 </div>
 
-
-<!-- STATIC ============================================== -->
 {% load static %}
-
 <script src="{% static 'notas/js/collapse_cards.js' %}"></script>
-
-
+<script src="{% static 'notas/js/list_panel_modes.js' %}"></script>
 
 {% endblock %}
-
-

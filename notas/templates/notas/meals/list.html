@@ -2,26 +2,27 @@
 {% block title %}Meals{% endblock %}
 {% block content %}
 
-
-
 <div class="page list">
-
   <div class="list-page-title">
     <i data-lucide="{{ vm.ui.page_icon }}" class="page-icon"></i>
     <h2>{{ vm.ui.title }}</h2>
   </div>
-  
-  {% for child in vm.content.child_cards %}
-    {% include "components//card_child_meal.html" with child_card=child %}
-  {% empty %}
-    <p>No meals yet.</p>
-  {% endfor %}
 
+  {% if vm.content.list_mode == "reorder" %}
+    {% include "components/list_panel_meals_reorder.html" with children=vm.content.child_cards %}
+  {% elif vm.content.list_mode == "delete" %}
+    {% include "components/list_panel_meals_delete.html" with children=vm.content.child_cards %}
+  {% else %}
+    {% for child in vm.content.child_cards %}
+      {% include "components//card_child_meal.html" with child_card=child %}
+    {% empty %}
+      <p>No meals yet.</p>
+    {% endfor %}
+  {% endif %}
 </div>
 
 {% load static %}
-
 <script src="{% static 'notas/js/collapse_cards.js' %}"></script>
-
+<script src="{% static 'notas/js/list_panel_modes.js' %}"></script>
 
 {% endblock %}

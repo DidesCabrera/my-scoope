@@ -15,6 +15,8 @@ from notas.interface.views.meals import (
     meal_copy,
     meal_detail,
     meal_list,
+    meal_list_reorder,
+    meal_list_bulk_delete,
     meal_create,
     meal_configure,
     meal_rename,
@@ -43,6 +45,8 @@ from notas.interface.views.dailyplans import (
     dailyplan_copy,
     dailyplan_detail,
     dailyplan_list,
+    dailyplan_list_reorder,
+    dailyplan_list_bulk_delete,
     dailyplan_create,
     add_meal_from_list,
     dailyplan_configure,
@@ -73,6 +77,7 @@ from notas.interface.views.dailyplan_meals import (
     dailyplanmeal_update,
     dailyplanmeal_create_meal,
     dailyplanmeal_reorder,
+    dailyplanmeal_save_to_library,
 )
 
 from notas.interface.views.programs import (
@@ -185,6 +190,8 @@ urlpatterns = [
 
     #MEALS
     path("meals/", meal_list, name="meal_list"),
+    path("meals/reorder/", meal_list_reorder, name="meal_list_reorder"),
+    path("meals/bulk-delete/", meal_list_bulk_delete, name="meal_list_bulk_delete"),
     path("meals/explore/", meal_explore_list, name="meal_explore_list"),
     path("meals/<int:pk>/", meal_detail, name="meal_detail"),
     path("meals/explore/<int:pk>/", meal_explore_detail, name="meal_explore_detail"),
@@ -212,6 +219,8 @@ urlpatterns = [
 
     #DAILY PLANS
     path("dailyplans/", dailyplan_list, name="dailyplan_list"),
+    path("dailyplans/reorder/", dailyplan_list_reorder, name="dailyplan_list_reorder"),
+    path("dailyplans/bulk-delete/", dailyplan_list_bulk_delete, name="dailyplan_list_bulk_delete"),
     path("dailyplans/<int:pk>/", dailyplan_detail, name="dailyplan_detail"),
     path("dailyplans/explore/", dailyplan_explore_list, name="dailyplan_explore_list"),
     path("dailyplans/explore/<int:pk>/", dailyplan_explore_detail, name="dailyplan_explore_detail"),
@@ -263,6 +272,12 @@ urlpatterns = [
         "dailyplans/<int:dailyplan_id>/meals/<int:dailyplanmeal_id>/create/",
         dailyplanmeal_create_meal,
         name="dailyplanmeal_create_meal"
+    ),
+
+    path(
+        "dailyplans/<int:dailyplan_id>/meals/<int:dailyplanmeal_id>/save-to-library/",
+        dailyplanmeal_save_to_library,
+        name="dailyplanmeal_save_to_library",
     ),
 
     path(

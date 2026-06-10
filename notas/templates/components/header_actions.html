@@ -7,7 +7,7 @@
           {% if action.method == "get" %}
               <a
                   href="{{ action.url }}"
-                  class="action-icon-btn primary-action {% if action.is_back %}action-back{% endif %}"
+                  class="action-icon-btn primary-action {% if action.is_back %}action-back{% endif %} {{ action.extra_class }}"
                   title="{{ action.label }}"
                   aria-label="{{ action.label }}"
               >
@@ -21,13 +21,24 @@
                       type="submit"
                       name="{{ action.key }}"
                       value="1"
-                      class="action-icon-btn primary-action {% if action.is_back %}action-back{% endif %}"
+                      class="action-icon-btn primary-action {% if action.is_back %}action-back{% endif %} {{ action.extra_class }}"
                       title="{{ action.label }}"
                       aria-label="{{ action.label }}"
+                      {% if action.disabled %}disabled{% endif %}
                   >
                       <i data-lucide="{{ action.icon }}" class="header-action-icon"></i>
                   </button>
               </form>
+          {% elif action.method == "button" %}
+              <button
+                  type="button"
+                  class="action-icon-btn primary-action {% if action.is_back %}action-back{% endif %} {{ action.extra_class }}"
+                  title="{{ action.label }}"
+                  aria-label="{{ action.label }}"
+                  {% if action.disabled %}disabled{% endif %}
+              >
+                  <i data-lucide="{{ action.icon }}" class="header-action-icon"></i>
+              </button>
           {% endif %}
       {% endfor %}
 
@@ -58,6 +69,15 @@
                                   <span>{{ action.label }}</span>
                               </button>
                           </form>
+                      {% elif action.method == "button" %}
+                          <button
+                              type="button"
+                              class="overflow-action {{ action.extra_class }}"
+                              {% if action.disabled %}disabled{% endif %}
+                          >
+                              <i data-lucide="{{ action.icon }}" class="overflow-dropdown-icons"></i>
+                              <span>{{ action.label }}</span>
+                          </button>
                       {% endif %}
                   {% endfor %}
               </div>
@@ -75,7 +95,7 @@
           {% if action.method == "get" %}
               <a
                   href="{{ action.url }}"
-                  class="action-icon-btn primary-action {% if action.is_back %}action-back{% endif %}"
+                  class="action-icon-btn primary-action {% if action.is_back %}action-back{% endif %} {{ action.extra_class }}"
                   title="{{ action.label }}"
                   aria-label="{{ action.label }}"
               >
@@ -89,13 +109,24 @@
                       type="submit"
                       name="{{ action.key }}"
                       value="1"
-                      class="action-icon-btn primary-action {% if action.is_back %}action-back{% endif %}"
+                      class="action-icon-btn primary-action {% if action.is_back %}action-back{% endif %} {{ action.extra_class }}"
                       title="{{ action.label }}"
                       aria-label="{{ action.label }}"
+                      {% if action.disabled %}disabled{% endif %}
                   >
                       <i data-lucide="{{ action.icon }}" class="header-action-icon"></i>
                   </button>
               </form>
+          {% elif action.method == "button" %}
+              <button
+                  type="button"
+                  class="action-icon-btn primary-action {% if action.is_back %}action-back{% endif %} {{ action.extra_class }}"
+                  title="{{ action.label }}"
+                  aria-label="{{ action.label }}"
+                  {% if action.disabled %}disabled{% endif %}
+              >
+                  <i data-lucide="{{ action.icon }}" class="header-action-icon"></i>
+              </button>
           {% endif %}
       {% endfor %}
 
@@ -126,6 +157,15 @@
                                   <span>{{ action.label }}</span>
                               </button>
                           </form>
+                      {% elif action.method == "button" %}
+                          <button
+                              type="button"
+                              class="overflow-action {{ action.extra_class }}"
+                              {% if action.disabled %}disabled{% endif %}
+                          >
+                              <i data-lucide="{{ action.icon }}" class="overflow-dropdown-icons"></i>
+                              <span>{{ action.label }}</span>
+                          </button>
                       {% endif %}
                   {% endfor %}
               </div>

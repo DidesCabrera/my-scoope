@@ -93,6 +93,7 @@ class DailyPlanListPageData:
     list_content_data: Any
     page_actions: list
     viewmode: Any
+    list_mode: str = "list"
 
 
 def get_dailyplan_detail_page_data(
@@ -199,14 +200,21 @@ def get_dailyplan_detail_page_data(
     )
 
 
-def get_dailyplan_list_page_data(user) -> DailyPlanListPageData:
+def _normalize_list_mode(request_get=None):
+    mode = (request_get or {}).get("mode", "list")
+    return mode if mode in {"list", "reorder", "delete"} else "list"
+
+
+def get_dailyplan_list_page_data(user, request_get=None) -> DailyPlanListPageData:
+    list_mode = _normalize_list_mode(request_get)
+
     dailyplans = (
         dailyplans_with_kcal()
         .filter(
             created_by=user,
             is_draft=False,
         )
-        .order_by("-created_at")
+        .order_by("list_order", "-created_at", "-id")
     )
 
     viewmode = DAILYPLAN_VIEWMODE_PERSONAL_LIST
@@ -220,6 +228,7 @@ def get_dailyplan_list_page_data(user) -> DailyPlanListPageData:
     page_actions = resolve_dailyplan_page_actions(
         user,
         viewmode,
+        list_mode=list_mode,
     )
 
     return DailyPlanListPageData(
@@ -227,6 +236,7 @@ def get_dailyplan_list_page_data(user) -> DailyPlanListPageData:
         list_content_data=list_content_data,
         page_actions=page_actions,
         viewmode=viewmode,
+        list_mode=list_mode,
     )
 
 

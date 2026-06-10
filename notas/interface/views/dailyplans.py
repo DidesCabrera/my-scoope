@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from notas.domain.models import DailyPlan, DailyPlanMeal, Meal, DailyPlanShare
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -23,6 +23,7 @@ from notas.interface.forms.forms import DailyPlanShareForm
 from django.core.mail import send_mail
 from django.conf import settings
 from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from notas.presentation.viewmodels.base_vm import BaseVM
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
@@ -163,17 +164,102 @@ def dailyplan_unshare(request, share_id):
 
 
 
+
+def _safe_return_to(request, fallback_name, mode=None):
+    fallback_url = reverse(fallback_name)
+    if mode:
+        fallback_url = f"{fallback_url}?mode={mode}"
+
+    return_to = request.POST.get("return_to") or request.GET.get("return_to") or ""
+
+    if return_to and url_has_allowed_host_and_scheme(
+        url=return_to,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return return_to
+
+    return fallback_url
+
+
+@login_required
+@require_POST
+def dailyplan_list_reorder(request):
+    ordered_ids = request.POST.getlist("order[]")
+
+    if not ordered_ids:
+        return HttpResponseBadRequest("No order received.")
+
+    dailyplans = {
+        dailyplan.id: dailyplan
+        for dailyplan in DailyPlan.objects.filter(
+            created_by=request.user,
+            is_draft=False,
+            id__in=ordered_ids,
+        )
+    }
+
+    for index, raw_id in enumerate(ordered_ids):
+        try:
+            dailyplan_id = int(raw_id)
+        except (TypeError, ValueError):
+            continue
+
+        dailyplan = dailyplans.get(dailyplan_id)
+        if not dailyplan:
+            continue
+
+        if dailyplan.list_order != index:
+            dailyplan.list_order = index
+            dailyplan.save(update_fields=["list_order"])
+
+    return HttpResponse(status=204)
+
+
+@login_required
+@require_POST
+def dailyplan_list_bulk_delete(request):
+    selected_ids = request.POST.getlist("selected_ids[]")
+
+    if not selected_ids:
+        messages.info(request, "No seleccionaste planes para eliminar.")
+        return redirect(_safe_return_to(request, "dailyplan_list", mode="delete"))
+
+    dailyplans = DailyPlan.objects.filter(
+        created_by=request.user,
+        is_draft=False,
+        id__in=selected_ids,
+    )
+
+    deleted_count = 0
+
+    for dailyplan in dailyplans:
+        try:
+            delete_dailyplan(dailyplan=dailyplan)
+            deleted_count += 1
+        except ValueError:
+            continue
+
+    if deleted_count:
+        messages.success(request, f"{deleted_count} plan(es) eliminado(s).")
+    else:
+        messages.info(request, "No se eliminaron planes.")
+
+    return redirect(_safe_return_to(request, "dailyplan_list", mode="delete"))
+
 #************ RENDER COMPLEJOS *********************
 
 @login_required
 def dailyplan_list(request):
     page = get_dailyplan_list_page_data(
         user=request.user,
+        request_get=request.GET,
     )
 
     content_vm = build_dailyplan_list_vm(
         page.list_content_data,
         page_actions=page.page_actions,
+        list_mode=page.list_mode,
     )
 
     ui_vm = build_ui_vm(page.viewmode)
@@ -700,7 +786,7 @@ def dailyplan_remove(request, pk):
 
     messages.success(request, "Plan eliminado definitivamente.")
 
-    return redirect("dailyplan_list")
+    return redirect(_safe_return_to(request, "dailyplan_list", mode="delete"))
 
 
 

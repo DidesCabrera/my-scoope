@@ -20,6 +20,8 @@ def _build_header_actions(actions_data):
             order=action.get("order", 0),
             desktop_position=action.get("desktop_position", "inline"),
             mobile_position=action.get("mobile_position", "inline"),
+            disabled=action.get("disabled", False),
+            extra_class=action.get("extra_class", ""),
         )
         for action in actions_data
     ]

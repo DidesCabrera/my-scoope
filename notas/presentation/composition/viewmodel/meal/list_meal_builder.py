@@ -3,7 +3,7 @@ from notas.presentation.config.viewmodel_config import ALLOC_PCT_OUTSIDE_THRESHO
 from notas.presentation.composition.viewmodel.components.builder_headers import build_page_header
 
 
-def build_meal_list_vm(content_data, page_actions=None):
+def build_meal_list_vm(content_data, page_actions=None, list_mode="list"):
     children = []
 
     for child_data in content_data.child_cards_data:
@@ -62,4 +62,5 @@ def build_meal_list_vm(content_data, page_actions=None):
     return ListVM(
         header=build_page_header(actions=page_actions or []),
         child_cards=children,
+        list_mode=list_mode,
     )

@@ -13,6 +13,8 @@ class HeaderActionVM:
     order: int = 0
     desktop_position: str = "inline"
     mobile_position: str = "inline"
+    disabled: bool = False
+    extra_class: str = ""
 
 
 @dataclass

@@ -340,6 +340,59 @@ MEAL_PAGE_ACTION_DEFINITIONS = {
         "mobile_position": "inline",
         "get_url": lambda user, context=None: reverse("meal_create"),
     },
+
+    "enter_reorder_mode": {
+        "label": "Reordenar Comidas",
+        "method": "get",
+        "icon": "list-ordered",
+        "order": 20,
+        "desktop_position": "menu",
+        "mobile_position": "menu",
+        "get_url": lambda user, context=None: reverse("meal_list") + "?mode=reorder",
+    },
+
+    "enter_delete_mode": {
+        "label": "Eliminar Comidas",
+        "method": "get",
+        "icon": "trash-2",
+        "order": 30,
+        "desktop_position": "menu",
+        "mobile_position": "menu",
+        "get_url": lambda user, context=None: reverse("meal_list") + "?mode=delete",
+    },
+
+    "save_list_order": {
+        "label": "Guardar Orden",
+        "method": "button",
+        "icon": "check",
+        "order": 10,
+        "desktop_position": "inline",
+        "mobile_position": "inline",
+        "extra_class": "js-list-reorder-save",
+        "get_url": lambda user, context=None: reverse("meal_list_reorder"),
+    },
+
+    "exit_delete_mode": {
+        "label": "Cerrar",
+        "method": "get",
+        "icon": "check",
+        "order": 10,
+        "desktop_position": "inline",
+        "mobile_position": "inline",
+        "get_url": lambda user, context=None: reverse("meal_list"),
+    },
+
+    "bulk_delete": {
+        "label": "Eliminar seleccionadas",
+        "method": "post",
+        "icon": "trash-2",
+        "order": 20,
+        "desktop_position": "inline",
+        "mobile_position": "inline",
+        "disabled": True,
+        "extra_class": "js-list-bulk-delete-submit",
+        "get_url": lambda user, context=None: reverse("meal_list_bulk_delete"),
+    },
 }
 
 
@@ -350,6 +403,8 @@ MEAL_PAGE_ACTION_DEFINITIONS = {
 MEAL_PAGE_ACTIONS_BY_VIEWMODE = {
     MEAL_VIEWMODE_PERSONAL_LIST: [
         "create",
+        "enter_reorder_mode",
+        "enter_delete_mode",
     ],
     MEAL_VIEWMODE_EXPLORE_LIST: [],
     MEAL_VIEWMODE_SHARED_LIST: [],
@@ -404,6 +459,8 @@ def _build_actions_from_definitions(
                 "is_back": definition.get("is_back", False),
                 "desktop_position": definition.get("desktop_position", "inline"),
                 "mobile_position": definition.get("mobile_position", "inline"),
+                "disabled": definition.get("disabled", False),
+                "extra_class": definition.get("extra_class", ""),
             }
         )
 
@@ -430,8 +487,13 @@ def resolve_meal_entity_actions(meal, user, viewmode):
 # 7. PAGE RESOLVER
 # ==================================================
 
-def resolve_meal_page_actions(user, viewmode):
-    allowed_keys = MEAL_PAGE_ACTIONS_BY_VIEWMODE.get(viewmode, [])
+def resolve_meal_page_actions(user, viewmode, list_mode="list"):
+    if viewmode == MEAL_VIEWMODE_PERSONAL_LIST and list_mode == "reorder":
+        allowed_keys = ["save_list_order"]
+    elif viewmode == MEAL_VIEWMODE_PERSONAL_LIST and list_mode == "delete":
+        allowed_keys = ["exit_delete_mode", "bulk_delete"]
+    else:
+        allowed_keys = MEAL_PAGE_ACTIONS_BY_VIEWMODE.get(viewmode, [])
 
     return _build_actions_from_definitions(
         definitions=MEAL_PAGE_ACTION_DEFINITIONS,

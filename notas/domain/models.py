@@ -712,6 +712,7 @@ class Meal(models.Model):
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
+    list_order = models.PositiveIntegerField(default=0)
 
     def kind(self):
         return "Meal"
@@ -980,6 +981,7 @@ class DailyPlan(models.Model):
     is_draft = models.BooleanField(default=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
+    list_order = models.PositiveIntegerField(default=0)
 
     def kind(self):
         return "Daily Plan"

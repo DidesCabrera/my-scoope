@@ -158,8 +158,6 @@
   z-index: 500;
 }
 
-.overflow-menu:hover .overflow-dropdown,
-.overflow-menu:focus-within .overflow-dropdown,
 .overflow-menu.is-open .overflow-dropdown {
   display: block;
 }
