@@ -7,21 +7,37 @@
         <span class="class-tag">{{ class }}</span>
       {% endfor %}
     </div>
-    <div class="structural-indicators">
-        {% if titulo.structural_indicators.meals_count %}
+    {% if titulo.badges %}
+      <div class="card-title-badges" aria-label="Características">
+        {% for badge in titulo.badges %}
+          <span class="picker-result-badge picker-result-badge--{{ badge.modifier }}">
+            {{ badge.label }}
+          </span>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% if titulo.structural_indicators.meals_count or titulo.structural_indicators.foods_count %}
+      <div class="structural-indicators">
+          {% if titulo.structural_indicators.meals_count %}
+              <span class="structural-item">
+                  <span class="structural-value">{{ titulo.structural_indicators.meals_count }}</span>
+                  <i data-lucide="utensils" class="card-icon main"></i>
+              </span>
+      
+              {% if titulo.structural_indicators.foods_count %}
+                <span class="structural-divider"></span>
+              {% endif %}
+          {% endif %}
+      
+          {% if titulo.structural_indicators.foods_count %}
             <span class="structural-item">
-                <span class="structural-value">{{ titulo.structural_indicators.meals_count }}</span>
-                <i data-lucide="utensils" class="card-icon main"></i>
+                <span class="structural-value">{{ titulo.structural_indicators.foods_count }}</span>
+                <i data-lucide="carrot" class="card-icon main"></i>
             </span>
-    
-            <span class="structural-divider"></span>
-        {% endif %}
-    
-        <span class="structural-item">
-            <span class="structural-value">{{ titulo.structural_indicators.foods_count }}</span>
-            <i data-lucide="carrot" class="card-icon main"></i>
-        </span>
-    </div>
+          {% endif %}
+      </div>
+    {% endif %}
   </div> 
 
   <div class="icons-title">

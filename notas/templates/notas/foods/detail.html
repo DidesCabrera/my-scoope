@@ -1,4 +1,5 @@
 {% extends "notas/base.html" %}
+{% load static %}
 {% block title %}
 Food – {{ food.name }}
 {% endblock %}
@@ -6,10 +7,12 @@ Food – {{ food.name }}
 
 
 <!-- ======== PAGE BODY ===================================== -->           
-<div class="page page--detail" data-page="meal-detail">
+<div class="page page--detail" data-page="food-detail">
 
   {% include "components/card_main_food.html" with main_card=vm.content.main_card %}
 
 </div>
+
+<script type="module" src="{% static 'notas/js/food_detail_portion.js' %}"></script>
 
 {% endblock %}

@@ -12,6 +12,12 @@ class StructuralIndicatorsUI:
 
 
 @dataclass
+class FoodBadgeUI:
+    label: str
+    modifier: str = "default"
+
+
+@dataclass
 class TitleUI:
     name: str
     label: Optional[str] = None
@@ -19,6 +25,7 @@ class TitleUI:
     category: Optional[str] = None
     category_badge: Optional[CategoryBadgeUI] = None
     structural_indicators: Optional[StructuralIndicatorsUI] = None
+    badges: List[FoodBadgeUI] = field(default_factory=list)
 
 
 @dataclass
@@ -47,7 +54,7 @@ class MetadataUI:
 
 
 @dataclass
-class ItemUI:
+class ChildCardUI:
     child_id: float
     titulo: TitleUI
     kpis: KPIUI
@@ -58,7 +65,8 @@ class ItemUI:
 @dataclass
 class FoodListVM:
     header: HeaderVM = field(default_factory=HeaderVM)
-    items: List[ItemUI] = field(default_factory=list)
+    child_cards: List[ChildCardUI] = field(default_factory=list)
+    list_mode: str = "list"
 
     def as_context(self):
         return {

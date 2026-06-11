@@ -1,4 +1,12 @@
-<div data-page="food-detail">
+<div
+  data-page="food-detail"
+  data-food-detail-portion
+  data-base-kcal="{{ main_card.kpis.tot_kcal }}"
+  data-base-protein="{{ main_card.kpis.g_protein }}"
+  data-base-carbs="{{ main_card.kpis.g_carbs }}"
+  data-base-fat="{{ main_card.kpis.g_fat }}"
+  data-current-weight="{{ main_card.kpis.body_weight|default:0 }}"
+>
  
     <div class="card-title main">
         {% include "components/card_main_title.html" with titulo=main_card.titulo %}
@@ -7,11 +15,30 @@
     <!-- KPI ========================================= -->
     <div class="page-kpi">
         
-        <h3>Información Nutricional (100g)</h3>
+        <div class="food-detail-portion-control">
+          <h3>Información Nutricional</h3>
+        </div>
     
         <!-- KPI ======================== -->
         <div class="card-kpi main">
             {% include "components/dash_kpi.html" with kpis=main_card.kpis %}
+        </div>
+
+        <div class="food-detail-portion-control__row">
+          <label class="food-detail-portion-control__label" for="food-detail-quantity">
+            <i data-lucide="scale" class="food-detail-portion-control__icon"></i>
+            Ajusta la Porción:
+            <input
+              type="number"
+              id="food-detail-quantity"
+              class="food-detail-portion-control__input"
+              value="100"
+              min="0"
+              step="1"
+              inputmode="decimal"
+            >
+            <span class="food-detail-portion-control__unit">g|ml</span>
+          </label>
         </div>
     
     </div>

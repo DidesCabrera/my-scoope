@@ -1213,3 +1213,86 @@ p.h3-table2 {
     stroke: currentColor;
   }
 }
+
+/* =========================================================
+   Food detail portion control
+   ========================================================= */
+
+.food-detail-portion-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.food-detail-portion-control__row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-top: 10px;
+}
+
+.food-detail-portion-control h3 {
+  margin: 0;
+}
+
+.food-detail-portion-control__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background-color: var(--alloc-bar-bg);
+  color: var(--text-main);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.food-detail-portion-control__icon {
+  width: 16px;
+  height: 16px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.food-detail-portion-control__input {
+  background-color: var(--input-bg);
+  color: var(--input-text);
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  text-align: center;
+  width: 58px;
+  line-height: 20px;
+  padding: 2px 8px;
+  font-weight: 600;
+}
+
+.food-detail-portion-control__input:focus {
+  outline: none;
+  border-color: var(--input-focus-border);
+  box-shadow: 0 0 0 3px var(--input-focus-shadow);
+}
+
+.food-detail-portion-control__unit {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .food-detail-portion-control {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .food-detail-portion-control__row {
+    width: 100%;
+  }
+
+  .food-detail-portion-control__label {
+    width: 100%;
+    justify-content: flex-start;
+    box-sizing: border-box;
+  }
+}

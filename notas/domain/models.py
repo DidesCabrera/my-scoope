@@ -234,6 +234,7 @@ class Food(models.Model):
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
+    list_order = models.PositiveIntegerField(default=0)
 
     canonical_name = models.CharField(
         max_length=255,

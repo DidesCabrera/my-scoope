@@ -2,6 +2,10 @@ from notas.presentation.viewmodels.content.food.detail_food_vm import *
 from notas.presentation.composition.viewmodel.components.builder_headers import build_food_header
 
 from notas.presentation.config.icons import CONTENT_ICON_REGISTRY
+from notas.presentation.resolvers.title_resolvers import resolve_category_badge
+from notas.application.services.food_imports.localized_names import resolve_food_display_name
+from notas.presentation.composition.viewmodel.food.list_foods_builder import _build_food_badges
+from notas.application.services.nutrition.weight import get_current_weight
 
 
 def build_food_detail_vm(food, user, viewmode):
@@ -38,6 +42,13 @@ def build_food_detail_vm(food, user, viewmode):
         "fat": food.alloc["fat"],
     }
 
+    current_weight = get_current_weight(user)
+    food_ppk = (
+        float(food_protein) / float(current_weight)
+        if current_weight and food_protein
+        else 0
+    )
+
     # ==================================================
     # MAIN CARD
     # ==================================================
@@ -47,12 +58,17 @@ def build_food_detail_vm(food, user, viewmode):
         main_id=food.id,
 
         titulo=TitleUI(
-            name=food.name,
-            label= main_entity_label,
-            icon= main_entity_icon,
+            name=resolve_food_display_name(food),
+            label=main_entity_label,
+            icon=main_entity_icon,
+            category=getattr(food, "category", None),
+            category_badge=resolve_category_badge(getattr(food, "category", None)),
+            badges=_build_food_badges(food, user, include_unit=False),
         ),
 
         kpis=KPIUI(
+            ppk=food_ppk,
+            body_weight=float(current_weight or 0),
             tot_kcal=food_total_kcal,
 
             g_protein=food_protein,

@@ -1,0 +1,254 @@
+diff --git a/notas/application/use_cases/food_pages.py b/notas/application/use_cases/food_pages.py
+index 8f903d1..7119a9e 100644
+--- a/notas/application/use_cases/food_pages.py
++++ b/notas/application/use_cases/food_pages.py
+@@ -16,8 +16,17 @@ class FoodListPageData:
+ def get_food_list_page_data(user) -> FoodListPageData:
+     foods = (
+         Food.objects
+-        .filter(created_by=user)
+-        .order_by("name")
++        .filter(
++            created_by=user,
++            is_active=True,
++        )
++        .select_related(
++            "created_by",
++        )
++        .prefetch_related(
++            "localized_names",
++        )
++        .order_by("name", "id")
+     )
+ 
+     viewmode = FOOD_VIEWMODE_PERSONAL_LIST
+diff --git a/notas/presentation/composition/viewmodel/food/list_foods_builder.py b/notas/presentation/composition/viewmodel/food/list_foods_builder.py
+index 2196a61..a592c8a 100644
+--- a/notas/presentation/composition/viewmodel/food/list_foods_builder.py
++++ b/notas/presentation/composition/viewmodel/food/list_foods_builder.py
+@@ -4,21 +4,22 @@ from notas.presentation.composition.viewmodel.components.builder_headers import
+ from notas.application.resolvers.food_resolvers import resolve_food_entity_actions
+ from notas.presentation.config.icons import CONTENT_ICON_REGISTRY
+ from notas.presentation.resolvers.title_resolvers import resolve_category_badge
++from notas.application.services.food_imports.localized_names import resolve_food_display_name
+ 
+ 
+ def build_food_list_vm(foods, user, viewmode, page_actions=None):
+-    items = []
++    child_cards = []
+ 
+     for food in foods:
+         ppk = 0
+ 
+         alloc = food.alloc
+ 
+-        item = ItemUI(
++        child_card = ChildCardUI(
+             child_id=food.id,
+ 
+             titulo=TitleUI(
+-                name=food.name,
++                name=resolve_food_display_name(food),
+                 label="Food",
+                 icon=CONTENT_ICON_REGISTRY.get("food"),
+                 category=getattr(food, "category", None),
+@@ -61,9 +62,9 @@ def build_food_list_vm(foods, user, viewmode, page_actions=None):
+             ),
+         )
+ 
+-        items.append(item)
++        child_cards.append(child_card)
+ 
+     return FoodListVM(
+         header=build_page_header(actions=page_actions or []),
+-        items=items,
+-    )
+\ No newline at end of file
++        child_cards=child_cards,
++    )
+diff --git a/notas/presentation/viewmodels/content/food/list_food_vm.py b/notas/presentation/viewmodels/content/food/list_food_vm.py
+index 134ea7c..a1fb8f3 100644
+--- a/notas/presentation/viewmodels/content/food/list_food_vm.py
++++ b/notas/presentation/viewmodels/content/food/list_food_vm.py
+@@ -47,7 +47,7 @@ class MetadataUI:
+ 
+ 
+ @dataclass
+-class ItemUI:
++class ChildCardUI:
+     child_id: float
+     titulo: TitleUI
+     kpis: KPIUI
+@@ -58,7 +58,7 @@ class ItemUI:
+ @dataclass
+ class FoodListVM:
+     header: HeaderVM = field(default_factory=HeaderVM)
+-    items: List[ItemUI] = field(default_factory=list)
++    child_cards: List[ChildCardUI] = field(default_factory=list)
+ 
+     def as_context(self):
+         return {
+diff --git a/notas/templates/components/card_child_food.html b/notas/templates/components/card_child_food.html
+new file mode 100644
+index 0000000..8ce387b
+--- /dev/null
++++ b/notas/templates/components/card_child_food.html
+@@ -0,0 +1,21 @@
++<div class="card food-child-card">
++  <div class="card-main">
++    <div class="card-title">
++      {% include "components/card_child_title.html" with titulo=child_card.titulo %}
++    </div>
++
++    <div class="card-kpi">
++      {% include "components/dash_kpi.html" with kpis=child_card.kpis %}
++    </div>
++  </div>
++
++  <div class="card-bottom">
++    <div class="card-metadata">
++      {% include "components/card_child_metadata.html" with metadata=child_card.metadata %}
++    </div>
++
++    <div class="card-actions">
++      {% include "components/card_actions.html" with actions=child_card.actions %}
++    </div>
++  </div>
++</div>
+diff --git a/notas/templates/components/card_child_title.html b/notas/templates/components/card_child_title.html
+index 1037703..d9e0a6f 100644
+--- a/notas/templates/components/card_child_title.html
++++ b/notas/templates/components/card_child_title.html
+@@ -7,21 +7,27 @@
+         <span class="class-tag">{{ class }}</span>
+       {% endfor %}
+     </div>
+-    <div class="structural-indicators">
+-        {% if titulo.structural_indicators.meals_count %}
++    {% if titulo.structural_indicators.meals_count or titulo.structural_indicators.foods_count %}
++      <div class="structural-indicators">
++          {% if titulo.structural_indicators.meals_count %}
++              <span class="structural-item">
++                  <span class="structural-value">{{ titulo.structural_indicators.meals_count }}</span>
++                  <i data-lucide="utensils" class="card-icon main"></i>
++              </span>
++      
++              {% if titulo.structural_indicators.foods_count %}
++                <span class="structural-divider"></span>
++              {% endif %}
++          {% endif %}
++      
++          {% if titulo.structural_indicators.foods_count %}
+             <span class="structural-item">
+-                <span class="structural-value">{{ titulo.structural_indicators.meals_count }}</span>
+-                <i data-lucide="utensils" class="card-icon main"></i>
++                <span class="structural-value">{{ titulo.structural_indicators.foods_count }}</span>
++                <i data-lucide="carrot" class="card-icon main"></i>
+             </span>
+-    
+-            <span class="structural-divider"></span>
+-        {% endif %}
+-    
+-        <span class="structural-item">
+-            <span class="structural-value">{{ titulo.structural_indicators.foods_count }}</span>
+-            <i data-lucide="carrot" class="card-icon main"></i>
+-        </span>
+-    </div>
++          {% endif %}
++      </div>
++    {% endif %}
+   </div> 
+ 
+   <div class="icons-title">
+diff --git a/notas/templates/notas/foods/list.html b/notas/templates/notas/foods/list.html
+index 34b6239..70d1364 100644
+--- a/notas/templates/notas/foods/list.html
++++ b/notas/templates/notas/foods/list.html
+@@ -2,74 +2,19 @@
+ {% block title %}Foods{% endblock %}
+ {% block content %}
+ 
+-
+-
+-<div class="page page--detail">
+-  <h1 class="title-plane-page">Tabla de Alimentos General</h1>
+-
+-  <div class="table-items">
+-  
+-    <table class="table-foods">
+-  
+-      <!-- WIDTH -->
+-      <colgroup>
+-        <col style="width: 200px"><!-- Food -->
+-        <col style="width: 50px"><!-- Qty -->
+-        <col style="width: 52px"><!-- Kcal -->
+-        <col style="width: 63px"><!-- Protein g -->
+-        <col style="width: 60px"><!-- Carbs g -->
+-        <col style="width: 57px"><!-- Fat g -->
+-        <col style="width: 67px"><!-- Protein Alloc -->
+-        <col style="width: 67px"><!-- Carbs Alloc -->
+-        <col style="width: 67px"><!-- Fat Alloc -->
+-      </colgroup>
+-  
+-  
+-      <!-- HEAD -->
+-      <thead>
+-        <tr>
+-          <th>Food</th>
+-          <th>Qty<br>(g)</th>
+-          <th>Kcal</th>
+-          <th>Protein<br>g</th>
+-          <th>Carbs<br>g</th>
+-          <th>Fat<br>g</th>
+-          <th class="alloc-col">Protein<br>%cal</th>
+-          <th class="alloc-col">Carbs<br>%cal</th>
+-          <th class="alloc-col">Fat<br>%cal</th>
+-        </tr>
+-      </thead>
+-  
+-  
+-      <!-- BODY -->
+-      <tbody>
+-        {% for item in vm.content.items %}
+-        <tr>
+-          <td>
+-            <a href="{% url 'food_detail' item.child_id %}">
+-              {{ item.titulo.name }}
+-            </a>
+-          </td>
+-          <td>100</td>
+-          <td>{{ item.kpis.tot_kcal|floatformat:0 }}</td>
+-          <td>{{ item.kpis.g_protein|floatformat:1 }}</td>
+-          <td>{{ item.kpis.g_carbs|floatformat:1 }}</td>
+-          <td>{{ item.kpis.g_fat|floatformat:1 }}</td>
+-          {% include "components/alloc_cell_protein.html" with value=item.kpis.alloc_protein bar_class="alloc-bar--protein" %}
+-          {% include "components/alloc_cell_carbs.html" with value=item.kpis.alloc_carbs bar_class="alloc-bar--carbs" %}
+-          {% include "components/alloc_cell_fat.html" with value=item.kpis.alloc_fat bar_class="alloc-bar--fat" %}
+-        </tr>
+-        {% empty %}
+-        <tr>
+-            <td colspan="9">No foods yet.</td>
+-        </tr>
+-        {% endfor %}
+-      </tbody>
+-  
+-    </table>
+-    
++<div class="page list">
++  <div class="list-page-title">
++    <i data-lucide="{{ vm.ui.page_icon }}" class="page-icon"></i>
++    <h2>{{ vm.ui.title }}</h2>
+   </div>
+ 
++  {% for child in vm.content.child_cards %}
++    {% include "components/card_child_food.html" with child_card=child %}
++  {% empty %}
++    <div>
++      <p>No tienes alimentos creados todavía. Puedes crear uno nuevo desde las acciones de esta vista.</p>
++    </div>
++  {% endfor %}
+ </div>
+ 
+-{% endblock %}
+\ No newline at end of file
++{% endblock %}

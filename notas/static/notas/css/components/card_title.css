@@ -279,3 +279,19 @@ margin: 0;
 }
   
 }
+/* Food badges inside child-card titles */
+.card-title-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+  margin-left: -4px;
+}
+
+.card-title-badges .picker-result-badge--unit {
+  order: -1;
+  border-color: color-mix(in srgb, var(--entity-food) 42%, var(--border-default));
+  background: color-mix(in srgb, var(--entity-food) 18%, var(--surface-card));
+  color: var(--text-main);
+  font-weight: 800;
+}

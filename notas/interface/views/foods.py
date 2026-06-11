@@ -1,7 +1,10 @@
 import pandas as pd
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, JsonResponse
+from django.views.decorators.http import require_POST
+from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from openpyxl import Workbook
 from django.contrib import messages
 from notas.application.services.access.capabilities import get_capabilities
@@ -26,6 +29,7 @@ from notas.interface.forms.forms import FoodEditForm
 from notas.application.services.commands.food_commands import (
     bulk_create_foods,
     create_food,
+    delete_food,
     update_food,
 )
 
@@ -36,11 +40,109 @@ from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
 from notas.application.use_cases.food_pages import get_food_list_page_data
 
 
+
+
+def _safe_return_to(request, fallback_name, mode=None):
+    fallback_url = reverse(fallback_name)
+    if mode:
+        fallback_url = f"{fallback_url}?mode={mode}"
+
+    return_to = request.POST.get("return_to") or request.GET.get("return_to") or ""
+
+    if return_to and url_has_allowed_host_and_scheme(
+        url=return_to,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return return_to
+
+    return fallback_url
+
+
+@login_required
+@require_POST
+def food_list_reorder(request):
+    ordered_ids = request.POST.getlist("order[]")
+
+    if not ordered_ids:
+        return HttpResponseBadRequest("No order received.")
+
+    foods = {
+        food.id: food
+        for food in Food.objects.filter(
+            created_by=request.user,
+            is_active=True,
+            id__in=ordered_ids,
+        )
+    }
+
+    for index, raw_id in enumerate(ordered_ids):
+        try:
+            food_id = int(raw_id)
+        except (TypeError, ValueError):
+            continue
+
+        food = foods.get(food_id)
+        if not food:
+            continue
+
+        if food.list_order != index:
+            food.list_order = index
+            food.save(update_fields=["list_order"])
+
+    return HttpResponse(status=204)
+
+
+@login_required
+@require_POST
+def food_list_bulk_delete(request):
+    selected_ids = request.POST.getlist("selected_ids[]")
+
+    if not selected_ids:
+        messages.info(request, "No seleccionaste alimentos para eliminar.")
+        return redirect(_safe_return_to(request, "food_list", mode="delete"))
+
+    foods = Food.objects.filter(
+        created_by=request.user,
+        is_active=True,
+        id__in=selected_ids,
+    )
+
+    deleted_count = 0
+
+    for food in foods:
+        delete_food(food=food)
+        deleted_count += 1
+
+    if deleted_count:
+        messages.success(request, f"{deleted_count} alimento(s) eliminados.")
+    else:
+        messages.info(request, "No se eliminaron alimentos.")
+
+    return redirect(_safe_return_to(request, "food_list", mode="delete"))
+
+
+@login_required
+@require_POST
+def food_delete(request, pk):
+    food = get_object_or_404(
+        Food,
+        pk=pk,
+        created_by=request.user,
+        is_active=True,
+    )
+
+    delete_food(food=food)
+    messages.success(request, "Alimento eliminado.")
+
+    return redirect(_safe_return_to(request, "food_list", mode="delete"))
+
 #************ RENDER COMPLEJOS *********************
 @login_required
 def food_list(request):
     page = get_food_list_page_data(
         user=request.user,
+        request_get=request.GET,
     )
 
     ui_vm = build_ui_vm(page.viewmode)
@@ -50,6 +152,7 @@ def food_list(request):
         request.user,
         page.viewmode,
         page_actions=page.page_actions,
+        list_mode=page.list_mode,
     )
 
     base_vm = BaseVM(

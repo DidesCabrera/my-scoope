@@ -38,7 +38,7 @@ FOOD_ENTITY_ACTION_DEFINITIONS = {
     "delete": {
         "label": "Delete",
         "method": "post",
-        "icon": "chevron-right",
+        "icon": "trash-2",
         "order": 90,
         "desktop_position": "menu",
         "mobile_position": "menu",
@@ -112,6 +112,59 @@ FOOD_PAGE_ACTION_DEFINITIONS = {
         "mobile_position": "inline",
         "get_url": lambda user, context=None: reverse("food_create"),
     },
+
+    "enter_reorder_mode": {
+        "label": "Reordenar Alimentos",
+        "method": "get",
+        "icon": "list-ordered",
+        "order": 20,
+        "desktop_position": "menu",
+        "mobile_position": "menu",
+        "get_url": lambda user, context=None: reverse("food_list") + "?mode=reorder",
+    },
+
+    "enter_delete_mode": {
+        "label": "Eliminar Alimentos",
+        "method": "get",
+        "icon": "trash-2",
+        "order": 30,
+        "desktop_position": "menu",
+        "mobile_position": "menu",
+        "get_url": lambda user, context=None: reverse("food_list") + "?mode=delete",
+    },
+
+    "save_list_order": {
+        "label": "Guardar Orden",
+        "method": "button",
+        "icon": "check",
+        "order": 10,
+        "desktop_position": "inline",
+        "mobile_position": "inline",
+        "extra_class": "js-list-reorder-save",
+        "get_url": lambda user, context=None: reverse("food_list_reorder"),
+    },
+
+    "exit_delete_mode": {
+        "label": "Cerrar",
+        "method": "get",
+        "icon": "check",
+        "order": 10,
+        "desktop_position": "inline",
+        "mobile_position": "inline",
+        "get_url": lambda user, context=None: reverse("food_list"),
+    },
+
+    "bulk_delete": {
+        "label": "Eliminar seleccionados",
+        "method": "post",
+        "icon": "trash-2",
+        "order": 20,
+        "desktop_position": "inline",
+        "mobile_position": "inline",
+        "disabled": True,
+        "extra_class": "js-list-bulk-delete-submit",
+        "get_url": lambda user, context=None: reverse("food_list_bulk_delete"),
+    },
 }
 
 
@@ -122,6 +175,8 @@ FOOD_PAGE_ACTION_DEFINITIONS = {
 FOOD_PAGE_ACTIONS_BY_VIEWMODE = {
     FOOD_VIEWMODE_PERSONAL_LIST: [
         "create",
+        "enter_reorder_mode",
+        "enter_delete_mode",
     ],
 }
 
@@ -173,6 +228,8 @@ def _build_actions_from_definitions(
                 "is_back": definition.get("is_back", False),
                 "desktop_position": definition.get("desktop_position", "inline"),
                 "mobile_position": definition.get("mobile_position", "inline"),
+                "extra_class": definition.get("extra_class", ""),
+                "disabled": definition.get("disabled", False),
             }
         )
 
@@ -199,8 +256,13 @@ def resolve_food_entity_actions(food, user, viewmode):
 # 7. PAGE RESOLVER
 # ==================================================
 
-def resolve_food_page_actions(user, viewmode):
-    allowed_keys = FOOD_PAGE_ACTIONS_BY_VIEWMODE.get(viewmode, [])
+def resolve_food_page_actions(user, viewmode, list_mode="list"):
+    if viewmode == FOOD_VIEWMODE_PERSONAL_LIST and list_mode == "reorder":
+        allowed_keys = ["save_list_order"]
+    elif viewmode == FOOD_VIEWMODE_PERSONAL_LIST and list_mode == "delete":
+        allowed_keys = ["exit_delete_mode", "bulk_delete"]
+    else:
+        allowed_keys = FOOD_PAGE_ACTIONS_BY_VIEWMODE.get(viewmode, [])
 
     return _build_actions_from_definitions(
         definitions=FOOD_PAGE_ACTION_DEFINITIONS,

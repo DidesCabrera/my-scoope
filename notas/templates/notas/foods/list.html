@@ -2,74 +2,28 @@
 {% block title %}Foods{% endblock %}
 {% block content %}
 
-
-
-<div class="page page--detail">
-  <h1 class="title-plane-page">Tabla de Alimentos General</h1>
-
-  <div class="table-items">
-  
-    <table class="table-foods">
-  
-      <!-- WIDTH -->
-      <colgroup>
-        <col style="width: 200px"><!-- Food -->
-        <col style="width: 50px"><!-- Qty -->
-        <col style="width: 52px"><!-- Kcal -->
-        <col style="width: 63px"><!-- Protein g -->
-        <col style="width: 60px"><!-- Carbs g -->
-        <col style="width: 57px"><!-- Fat g -->
-        <col style="width: 67px"><!-- Protein Alloc -->
-        <col style="width: 67px"><!-- Carbs Alloc -->
-        <col style="width: 67px"><!-- Fat Alloc -->
-      </colgroup>
-  
-  
-      <!-- HEAD -->
-      <thead>
-        <tr>
-          <th>Food</th>
-          <th>Qty<br>(g)</th>
-          <th>Kcal</th>
-          <th>Protein<br>g</th>
-          <th>Carbs<br>g</th>
-          <th>Fat<br>g</th>
-          <th class="alloc-col">Protein<br>%cal</th>
-          <th class="alloc-col">Carbs<br>%cal</th>
-          <th class="alloc-col">Fat<br>%cal</th>
-        </tr>
-      </thead>
-  
-  
-      <!-- BODY -->
-      <tbody>
-        {% for item in vm.content.items %}
-        <tr>
-          <td>
-            <a href="{% url 'food_detail' item.child_id %}">
-              {{ item.titulo.name }}
-            </a>
-          </td>
-          <td>100</td>
-          <td>{{ item.kpis.tot_kcal|floatformat:0 }}</td>
-          <td>{{ item.kpis.g_protein|floatformat:1 }}</td>
-          <td>{{ item.kpis.g_carbs|floatformat:1 }}</td>
-          <td>{{ item.kpis.g_fat|floatformat:1 }}</td>
-          {% include "components/alloc_cell_protein.html" with value=item.kpis.alloc_protein bar_class="alloc-bar--protein" %}
-          {% include "components/alloc_cell_carbs.html" with value=item.kpis.alloc_carbs bar_class="alloc-bar--carbs" %}
-          {% include "components/alloc_cell_fat.html" with value=item.kpis.alloc_fat bar_class="alloc-bar--fat" %}
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="9">No foods yet.</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-  
-    </table>
-    
+<div class="page list">
+  <div class="list-page-title">
+    <i data-lucide="{{ vm.ui.page_icon }}" class="page-icon"></i>
+    <h2>{{ vm.ui.title }}</h2>
   </div>
 
+  {% if vm.content.list_mode == "reorder" %}
+    {% include "components/list_panel_foods_reorder.html" with children=vm.content.child_cards %}
+  {% elif vm.content.list_mode == "delete" %}
+    {% include "components/list_panel_foods_delete.html" with children=vm.content.child_cards %}
+  {% else %}
+    {% for child in vm.content.child_cards %}
+      {% include "components/card_child_food.html" with child_card=child %}
+    {% empty %}
+      <div>
+        <p>No tienes alimentos creados todavía. Puedes crear uno nuevo desde las acciones de esta vista.</p>
+      </div>
+    {% endfor %}
+  {% endif %}
 </div>
+
+{% load static %}
+<script src="{% static 'notas/js/list_panel_modes.js' %}"></script>
 
 {% endblock %}

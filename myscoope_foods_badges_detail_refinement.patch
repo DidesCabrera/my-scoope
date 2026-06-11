@@ -1,0 +1,126 @@
+diff -ruN a/notas/presentation/composition/viewmodel/food/detail_food_builder.py b/notas/presentation/composition/viewmodel/food/detail_food_builder.py
+--- a/notas/presentation/composition/viewmodel/food/detail_food_builder.py	2026-04-02 05:07:36.000000000 +0000
++++ b/notas/presentation/composition/viewmodel/food/detail_food_builder.py	2026-06-11 21:48:04.067714947 +0000
+@@ -2,6 +2,9 @@
+ from notas.presentation.composition.viewmodel.components.builder_headers import build_food_header
+ 
+ from notas.presentation.config.icons import CONTENT_ICON_REGISTRY
++from notas.presentation.resolvers.title_resolvers import resolve_category_badge
++from notas.application.services.food_imports.localized_names import resolve_food_display_name
++from notas.presentation.composition.viewmodel.food.list_foods_builder import _build_food_badges
+ 
+ 
+ def build_food_detail_vm(food, user, viewmode):
+@@ -47,9 +50,12 @@
+         main_id=food.id,
+ 
+         titulo=TitleUI(
+-            name=food.name,
+-            label= main_entity_label,
+-            icon= main_entity_icon,
++            name=resolve_food_display_name(food),
++            label=main_entity_label,
++            icon=main_entity_icon,
++            category=getattr(food, "category", None),
++            category_badge=resolve_category_badge(getattr(food, "category", None)),
++            badges=_build_food_badges(food, user),
+         ),
+ 
+         kpis=KPIUI(
+diff -ruN a/notas/presentation/composition/viewmodel/food/list_foods_builder.py b/notas/presentation/composition/viewmodel/food/list_foods_builder.py
+--- a/notas/presentation/composition/viewmodel/food/list_foods_builder.py	2026-06-11 21:37:07.000000000 +0000
++++ b/notas/presentation/composition/viewmodel/food/list_foods_builder.py	2026-06-11 21:48:04.066203071 +0000
+@@ -32,7 +32,7 @@
+ 
+ 
+ def _build_food_badges(food, user):
+-    badges = []
++    badges = [FoodBadgeUI(label="100g", modifier="unit")]
+ 
+     if food.created_by_id == getattr(user, "id", None):
+         badges.append(FoodBadgeUI(label="Tu alimento", modifier="user"))
+@@ -51,8 +51,6 @@
+     if food.visibility == "core":
+         badges.append(FoodBadgeUI(label="Core", modifier="core"))
+ 
+-    badges.append(FoodBadgeUI(label="100g", modifier="unit"))
+-
+     return badges
+ 
+ 
+diff -ruN a/notas/presentation/viewmodels/content/food/detail_food_vm.py b/notas/presentation/viewmodels/content/food/detail_food_vm.py
+--- a/notas/presentation/viewmodels/content/food/detail_food_vm.py	2026-04-08 04:02:43.000000000 +0000
++++ b/notas/presentation/viewmodels/content/food/detail_food_vm.py	2026-06-11 21:48:04.066966463 +0000
+@@ -1,5 +1,5 @@
+-from dataclasses import dataclass, asdict
+-from typing import Optional
++from dataclasses import dataclass, asdict, field
++from typing import List, Optional
+ from notas.presentation.resolvers.title_resolvers import CategoryBadgeUI
+ 
+ # =========================
+@@ -13,6 +13,12 @@
+     
+ 
+ @dataclass
++class FoodBadgeUI:
++    label: str
++    modifier: str
++
++
++@dataclass
+ class TitleUI:
+     name: str
+     label: Optional[str] = None
+@@ -20,6 +26,7 @@
+     category: Optional[str] = None
+     category_badge: Optional[CategoryBadgeUI] = None
+     structural_indicators: Optional[StructuralIndicatorsUI] = None
++    badges: List[FoodBadgeUI] = field(default_factory=list)
+ 
+ 
+ @dataclass
+diff -ruN a/notas/static/notas/css/components/card_title.css b/notas/static/notas/css/components/card_title.css
+--- a/notas/static/notas/css/components/card_title.css	2026-06-11 21:37:07.000000000 +0000
++++ b/notas/static/notas/css/components/card_title.css	2026-06-11 21:48:17.245767467 +0000
+@@ -287,3 +287,11 @@
+   margin-top: 2px;
+   margin-left: -4px;
+ }
++
++.card-title-badges .picker-result-badge--unit {
++  order: -1;
++  border-color: color-mix(in srgb, var(--entity-food) 42%, var(--border-default));
++  background: color-mix(in srgb, var(--entity-food) 18%, var(--surface-card));
++  color: var(--text-main);
++  font-weight: 800;
++}
+diff -ruN a/notas/templates/components/card_main_title.html b/notas/templates/components/card_main_title.html
+--- a/notas/templates/components/card_main_title.html	2026-05-27 17:54:21.000000000 +0000
++++ b/notas/templates/components/card_main_title.html	2026-06-11 21:48:04.068699387 +0000
+@@ -10,6 +10,17 @@
+       {% endfor %}
+     </div>
+ 
++    {% if titulo.badges %}
++      <div class="card-title-badges" aria-label="Características">
++        {% for badge in titulo.badges %}
++          <span class="picker-result-badge picker-result-badge--{{ badge.modifier }}">
++            {{ badge.label }}
++          </span>
++        {% endfor %}
++      </div>
++    {% endif %}
++
++    {% if titulo.structural_indicators %}
+     <div class="structural-indicators">
+         {% if titulo.structural_indicators.meals_count %}
+             <span class="structural-item">
+@@ -25,6 +36,7 @@
+             <i data-lucide="carrot" class="structural-icon main"></i>
+         </span>
+     </div>
++    {% endif %}
+   </div>
+ 
+   <div class="icons-title">

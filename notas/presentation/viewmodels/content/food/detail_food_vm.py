@@ -1,5 +1,5 @@
-from dataclasses import dataclass, asdict
-from typing import Optional
+from dataclasses import dataclass, asdict, field
+from typing import List, Optional
 from notas.presentation.resolvers.title_resolvers import CategoryBadgeUI
 
 # =========================
@@ -13,6 +13,12 @@ class StructuralIndicatorsUI:
     
 
 @dataclass
+class FoodBadgeUI:
+    label: str
+    modifier: str
+
+
+@dataclass
 class TitleUI:
     name: str
     label: Optional[str] = None
@@ -20,10 +26,13 @@ class TitleUI:
     category: Optional[str] = None
     category_badge: Optional[CategoryBadgeUI] = None
     structural_indicators: Optional[StructuralIndicatorsUI] = None
+    badges: List[FoodBadgeUI] = field(default_factory=list)
 
 
 @dataclass
 class KPIUI:
+    ppk: float
+    body_weight: float
     tot_kcal: float
     g_protein: float
     g_carbs: float

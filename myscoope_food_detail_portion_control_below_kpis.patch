@@ -1,0 +1,58 @@
+diff --git a/notas/static/notas/css/components/food_picker.css b/notas/static/notas/css/components/food_picker.css
+--- a/notas/static/notas/css/components/food_picker.css
++++ b/notas/static/notas/css/components/food_picker.css
+@@ -1226,6 +1226,13 @@
+   margin-bottom: 10px;
+ }
+ 
++.food-detail-portion-control__row {
++  display: flex;
++  align-items: center;
++  justify-content: flex-start;
++  margin-top: 10px;
++}
++
+ .food-detail-portion-control h3 {
+   margin: 0;
+ }
+@@ -1279,6 +1286,10 @@
+     flex-direction: column;
+   }
+ 
++  .food-detail-portion-control__row {
++    width: 100%;
++  }
++
+   .food-detail-portion-control__label {
+     width: 100%;
+     justify-content: flex-start;
+diff --git a/notas/templates/components/card_main_food.html b/notas/templates/components/card_main_food.html
+--- a/notas/templates/components/card_main_food.html
++++ b/notas/templates/components/card_main_food.html
+@@ -17,7 +17,14 @@
+         
+         <div class="food-detail-portion-control">
+           <h3>Información Nutricional</h3>
++        </div>
++    
++        <!-- KPI ======================== -->
++        <div class="card-kpi main">
++            {% include "components/dash_kpi.html" with kpis=main_card.kpis %}
++        </div>
+ 
++        <div class="food-detail-portion-control__row">
+           <label class="food-detail-portion-control__label" for="food-detail-quantity">
+             <i data-lucide="scale" class="food-detail-portion-control__icon"></i>
+             Ajusta la Porción:
+@@ -34,11 +41,6 @@
+           </label>
+         </div>
+     
+-        <!-- KPI ======================== -->
+-        <div class="card-kpi main">
+-            {% include "components/dash_kpi.html" with kpis=main_card.kpis %}
+-        </div>
+-    
+     </div>
+ 
+ </div>

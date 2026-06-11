@@ -10,6 +10,17 @@
       {% endfor %}
     </div>
 
+    {% if titulo.badges %}
+      <div class="card-title-badges" aria-label="Características">
+        {% for badge in titulo.badges %}
+          <span class="picker-result-badge picker-result-badge--{{ badge.modifier }}">
+            {{ badge.label }}
+          </span>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% if titulo.structural_indicators %}
     <div class="structural-indicators">
         {% if titulo.structural_indicators.meals_count %}
             <span class="structural-item">
@@ -25,6 +36,7 @@
             <i data-lucide="carrot" class="structural-icon main"></i>
         </span>
     </div>
+    {% endif %}
   </div>
 
   <div class="icons-title">
