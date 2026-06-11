@@ -119,6 +119,8 @@ class ProposalAppliedResultVM:
 @dataclass(frozen=True)
 class ProposalReviewPayloadVM:
     intent: str | None
+    entity_title: str
+    attachments: list[dict[str, str]]
     is_create_meal: bool
     is_create_dailyplan: bool
     is_apply_supported: bool
@@ -131,6 +133,8 @@ class ProposalReviewPayloadVM:
     def as_dict(self) -> dict:
         return {
             "intent": self.intent,
+            "entity_title": self.entity_title,
+            "attachments": self.attachments,
             "is_create_meal": self.is_create_meal,
             "is_create_dailyplan": self.is_create_dailyplan,
             "is_apply_supported": self.is_apply_supported,
@@ -151,6 +155,7 @@ class ProposalReviewVM:
     dailyplan_name: str
     created_by_username: str | None
     reviewed_by_username: str | None
+    received_at_label: str
     status: ProposalReviewStatusVM
     payload: ProposalReviewPayloadVM
     can_apply: bool
@@ -165,6 +170,7 @@ class ProposalReviewVM:
             "dailyplan_name": self.dailyplan_name,
             "created_by_username": self.created_by_username,
             "reviewed_by_username": self.reviewed_by_username,
+            "received_at_label": self.received_at_label,
             "status": self.status.as_dict(),
             "payload": self.payload.as_dict(),
             "can_apply": self.can_apply,
@@ -205,6 +211,7 @@ def build_proposal_review_vm(
         dailyplan_name=proposal.get("dailyplan_name", ""),
         created_by_username=proposal.get("created_by_username"),
         reviewed_by_username=proposal.get("reviewed_by_username"),
+        received_at_label=proposal.get("received_at_label", ""),
         status=ProposalReviewStatusVM(
             status=status,
             is_reviewable=bool(proposal.get("is_reviewable")),
@@ -214,6 +221,12 @@ def build_proposal_review_vm(
         ),
         payload=ProposalReviewPayloadVM(
             intent=intent,
+            entity_title=_build_entity_title(intent),
+            attachments=_build_review_attachments(
+                intent=intent,
+                proposed_payload=proposed_payload,
+                proposal=proposal,
+            ),
             is_create_meal=intent == CREATE_MEAL_INTENT,
             is_create_dailyplan=intent == CREATE_DAILYPLAN_INTENT,
             is_apply_supported=is_apply_supported,
@@ -239,6 +252,58 @@ def build_proposal_review_vm(
         ),
     )
 
+
+
+def _build_entity_title(intent: str | None) -> str:
+    if intent == CREATE_MEAL_INTENT:
+        return "Comida en la propuesta"
+
+    if intent == CREATE_DAILYPLAN_INTENT:
+        return "DailyPlan en la propuesta"
+
+    return "Entidad en la propuesta"
+
+
+def _build_review_attachments(
+    *,
+    intent: str | None,
+    proposed_payload: dict[str, Any],
+    proposal: dict[str, Any],
+) -> list[dict[str, str]]:
+    if intent == CREATE_MEAL_INTENT:
+        meal = _safe_dict(proposed_payload.get("meal"))
+        return [
+            {
+                "kind": "meal",
+                "label": "Comida propuesta",
+                "name": _safe_str(meal.get("name")) or proposal.get("title", ""),
+                "icon": "utensils",
+            },
+        ]
+
+    if intent == CREATE_DAILYPLAN_INTENT:
+        dailyplan = _safe_dict(proposed_payload.get("dailyplan"))
+        return [
+            {
+                "kind": "dailyplan",
+                "label": "DailyPlan propuesto",
+                "name": (
+                    _safe_str(dailyplan.get("name"))
+                    or proposal.get("dailyplan_name", "")
+                    or proposal.get("title", "")
+                ),
+                "icon": "clipboard-list",
+            },
+        ]
+
+    return [
+        {
+            "kind": "dailyplan",
+            "label": "DailyPlan asociado",
+            "name": proposal.get("dailyplan_name", "") or "Sin entidad asociada",
+            "icon": "clipboard-list",
+        },
+    ]
 
 def _can_apply_proposal(
     *,

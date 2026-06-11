@@ -1,18 +1,15 @@
-Necesito realizar los siguientes ajustes:
+Necesito que corrijas algo que modificaste, pero no quedo bien. En relacion al elemento con la clase "proposal-attachment__paperclip".
 
-List:
--Quitar proposal-list-card__eyebrow-row
--En dektop poner el proposal-status-badge entre proposal-list-card__main y proposal-list-card__metadata (cono esta en mobile)
--Poner el icono de proposal AI arriba a la derecha. (Basarse en como se dispone el icono de la entidad dentro de card-title-comp)
--Estilizar la accion de Ver propuesta como se ve la ccion de ir a detail desde una child card.
+1- Eliminar el icono proposal-attachment__paperclip de dentro de "proposal-attachment" (en list y detail)
 
+2- Solo en LIST, poner el icono de paperclip a la izquierda del elemento "proposal-attachment" (por fuera) ...dentro de "proposal-list-card__bottom"
 
-En detail:
--Quitar proposal-list-card__eyebrow-row
--Poner el icono de proposal AI arriba a la derecha. (Basarse en como se dispone el icono de la entidad dentro de card-title-comp)
--al igual que en la vista, orientar proposal-review-summary al requerimiento y dejarlo dentro de un bloque.
-- Borraría el contexto como esta (proposal-review-context), y Pondria en una linea primero el nombre de la entidad (junto a su icono) y debajo pondria la metadata.
--Me gustaría que lo que apareciera como entidad fuera solo la child card del elemento "padre y que al igual que otras child cards tuviera la accion de "entrar" al detalle. El cual, para nuevas comidas o dailyplan; debería verse igual (el caso de proponer diferencias o cambios sobre existentes lo trabajaremos posteriormente).
+3- En list y detail, el color de "proposal-list-card__summary" debe ser text-main
+
+4- en list y detail la fecha debe solo tener este formato dd/mm/yyyy (sin "Recibida el", ni la hora)
 
 
-Favor Revisar el ZIP actualizado y entregarme un patch para aplicar los cambios necesario para conseguir el resultado deseado.
+
+
+
+Por favor revisa la ultima version del codigo y genera un patch para modificar el codigo como se desea.

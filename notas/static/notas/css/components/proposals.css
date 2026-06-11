@@ -19,14 +19,15 @@
 .proposal-list-card {
   position: relative;
   display: grid;
-  gap: 14px;
+  gap: 10px;
 }
 
 .proposal-list-card__main {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
+  position: relative;
+  display: grid;
+  gap: 6px;
   min-width: 0;
+  padding-left: 4px;
   padding-right: 34px;
 }
 
@@ -50,7 +51,7 @@
 }
 
 .proposal-list-card__title {
-  margin: 4px 0 0;
+  margin: 0;
   color: var(--text-main);
   font-size: 1.18rem;
   font-weight: 700;
@@ -60,8 +61,8 @@
 .proposal-list-card__icons-title,
 .proposal-review-hero__icons-title {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 0px;
+  right: 0px;
   z-index: 1;
   display: flex;
   align-items: flex-start;
@@ -70,10 +71,6 @@
   color: var(--text-muted);
 }
 
-.proposal-review-hero__icons-title {
-  top: 0px;
-  right: 0px;
-}
 
 .proposal-list-card__icons-title .home-section-header-icon,
 .proposal-review-hero__icons-title .home-section-header-icon {
@@ -115,6 +112,22 @@
   font-weight: 650;
 }
 
+.proposal-received-date {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.25;
+  letter-spacing: 0.035em;
+}
+
+.proposal-list-card__received-date {
+  max-width: 100%;
+}
+
 .proposal-list-card__summary-block,
 .proposal-review-summary-block {
   display: grid;
@@ -139,22 +152,33 @@
 .proposal-list-card__summary,
 .proposal-review-summary {
   margin: 0;
-  color: var(--text-muted);
+  color: var(--text-main);
   font-size: 0.94rem;
   line-height: 1.5;
 }
 
 .proposal-list-card__bottom {
-  gap: 16px;
+  margin-top: 6px;
+  gap: 10px;
+}
+
+.proposal-list-card__attachment-paperclip {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  color: var(--text-soft);
+  stroke-width: 2.25;
 }
 
 .proposal-attachment {
   display: inline-flex;
   align-items: center;
+  flex: 0 1 auto;
   gap: 9px;
+  width: fit-content;
   min-width: 0;
   max-width: 100%;
-  padding: 7px 15px 7px 12px;
+  padding: 7px 12px;
   border: 1px solid var(--border-soft);
   border-radius: 999px;
   background: var(--surface-card-muted);
@@ -188,9 +212,11 @@
 
 .proposal-attachment__copy {
   display: grid;
+  flex: 1 1 auto;
   min-width: 0;
   gap: 1px;
 }
+
 
 .proposal-attachment__name {
   overflow: hidden;
@@ -339,11 +365,15 @@ html[data-theme="dark"] .proposal-status-badge--canceled {
 }
 
 .proposal-review-title {
-  margin: 4px 0 10px;
+  margin: 4px 0 6px;
   color: var(--text-main);
   font-size: clamp(1.32rem, 2vw, 1.75rem);
   font-weight: 750;
   line-height: 1.16;
+}
+
+.proposal-review-received-date {
+  margin-bottom: 12px;
 }
 
 .proposal-review-pills {
@@ -378,6 +408,45 @@ html[data-theme="dark"] .proposal-status-badge--canceled {
 .proposal-review-intent-line strong {
   color: var(--text-main);
   font-weight: 750;
+}
+
+.proposal-review-attachments-section {
+  border-top: 1px solid var(--panel-row-separator);
+  margin-top: 24px;
+  padding-top: 20px;
+  display: grid;
+  gap: 12px;
+}
+
+.proposal-review-attachments-heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+  color: var(--text-main);
+}
+
+.proposal-review-attachments-heading__icon {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  color: var(--text-muted);
+  stroke-width: 2.4;
+}
+
+.proposal-review-attachments-heading h3 {
+  margin: 0;
+  color: var(--text-main);
+  font-size: clamp(1.08rem, 1.55vw, 1.32rem);
+  font-weight: 780;
+  line-height: 1.15;
+}
+
+.proposal-review-attachments-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
 }
 
 .proposal-review-attachment {
@@ -475,8 +544,8 @@ html[data-theme="dark"] .proposal-status-badge--canceled {
    ========================================================= */
 
 .proposal-review-card {
-  padding-top: 18px;
-  border: 1px solid var(--border-soft);
+  padding: 18px;
+  border: 1px solid var(--panel-row-separator);
   border-radius: 22px;
   background: var(--surface-card);
   color: var(--text-main);
@@ -549,7 +618,7 @@ html[data-theme="dark"] .proposal-status-badge--canceled {
 }
 
 .proposal-review-entity-section > .card {
-  margin-bottom: 0;
+  margin: 0px;
 }
 
 .proposal-review-entity-section > .card.proposal-child-card {
@@ -557,7 +626,7 @@ html[data-theme="dark"] .proposal-status-badge--canceled {
 }
 
 .proposal-review-entity-section > .card.proposal-child-card.dpm_meal {
-  padding: 12px 15px 14px;
+  padding: 12px 15px 14px 15px;
 }
 
 .proposal-review-meal-header {
@@ -759,14 +828,10 @@ html[data-theme="dark"] .proposal-review-action--reject {
 @media (max-width: 760px) {
   .proposal-list-card__main,
   .proposal-review-hero__main {
-    padding: 4px 30px 0 4px;
+    padding: 4px 30px 0 6px;
   }
 
-  .proposal-list-card__icons-title {
-    top: 18px;
-    right: 16px;
-  }
-
+  .proposal-list-card__icons-title,
   .proposal-review-hero__icons-title {
     top: 4px;
     right: 0px;
@@ -783,11 +848,12 @@ html[data-theme="dark"] .proposal-review-action--reject {
     align-items: center;
     flex-direction: row;
     gap: 10px;
+    margin-top: 10px;
   }
 
   .proposal-list-card__bottom .proposal-attachment {
-    flex: 1 1 auto;
-    width: auto;
+    flex: 0 1 auto;
+    width: fit-content;
     max-width: calc(100% - 48px);
     justify-content: flex-start;
   }
@@ -814,7 +880,8 @@ html[data-theme="dark"] .proposal-review-action--reject {
   }
 
   .proposal-review-card {
-    padding: 16px 0;
+    padding: 16px;
+    margin: 0 -6px;
   }
 
   .proposal-review-hero__main {
@@ -868,5 +935,26 @@ html[data-theme="dark"] .proposal-review-action--reject {
   .proposal-review-actions-buttons form,
   .proposal-review-action {
     width: 100%;
+  }
+
+  .proposal-review-entity-section > .card {
+    margin: 0 -12px;
+  }
+
+  .proposal-review-entity-section > .card.proposal-child-card {
+    padding: 14px 15px 20px 15px;
+  }
+
+  .proposal-review-entity-section > .card.proposal-child-card.dpm_meal {
+    padding: 14px 15px 20px 15px;
+  }
+  
+
+  .proposal-list-card__summary-block {
+    margin: 6px -4px 0;
+  }
+
+  .proposal-review-summary-block {
+    margin: 20px -4px 0;
   }
 }

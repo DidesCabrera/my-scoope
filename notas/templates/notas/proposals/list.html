@@ -23,6 +23,10 @@
             </div>
           </div>
 
+          <p class="proposal-received-date proposal-list-card__received-date">
+            {{ proposal.received_at_label }}
+          </p>
+
           <div class="proposal-list-card__icons-title" aria-hidden="true">
             <i data-lucide="sparkles" class="home-section-header-icon proposal"></i>
           </div>
@@ -41,6 +45,8 @@
         {% endif %}
 
         <div class="card-bottom proposal-list-card__bottom">
+          <i data-lucide="paperclip" class="proposal-list-card__attachment-paperclip" aria-hidden="true"></i>
+
           <div class="proposal-attachment proposal-attachment--{{ proposal.attachment_kind }}">
             <span class="proposal-attachment__icon" aria-hidden="true">
               <i data-lucide="{{ proposal.attachment_icon }}" class="proposal-attachment__svg"></i>

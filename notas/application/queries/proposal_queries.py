@@ -1,4 +1,5 @@
 from django.db.models import Q
+from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 
@@ -14,6 +15,18 @@ def _serialize_datetime(value):
         return None
 
     return value.isoformat()
+
+
+def _format_received_at(value) -> str:
+    if value is None:
+        return "Sin fecha de recepción"
+
+    if timezone.is_naive(value):
+        received_at = value
+    else:
+        received_at = timezone.localtime(value)
+
+    return received_at.strftime("%d-%m-%Y")
 
 
 def get_available_proposal_queryset(user):
@@ -152,6 +165,7 @@ def build_proposal_list_item_dto(
         is_reviewable=proposal.is_reviewable,
         is_final=proposal.is_final,
         created_at=_serialize_datetime(proposal.created_at),
+        received_at_label=_format_received_at(proposal.created_at),
         reviewed_at=_serialize_datetime(proposal.reviewed_at),
     )
 
@@ -215,6 +229,7 @@ def build_proposal_dto(
         is_reviewable=proposal.is_reviewable,
         is_final=proposal.is_final,
         created_at=_serialize_datetime(proposal.created_at),
+        received_at_label=_format_received_at(proposal.created_at),
         reviewed_at=_serialize_datetime(proposal.reviewed_at),
         applied_at=_serialize_datetime(proposal.applied_at),
     )
