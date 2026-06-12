@@ -25,6 +25,7 @@ from notas.presentation.composition.viewmodel.components.builder_menu import (
     build_dailyplan_menu,
 )
 from notas.presentation.composition.viewmodel.components.builder_table_items import (
+    build_dailyplan_food_aggregation_table_item,
     build_dailyplanmeal_table_item,
     build_mealfood_table_item,
 )
@@ -122,6 +123,7 @@ class DailyPlanDetailContentData:
     main_card_data: dict
     child_cards_data: list
     foods_aggregation: Any
+    foods_aggregation_table: list
     structural_indicators: dict
 
 
@@ -157,6 +159,13 @@ def build_dailyplan_detail_content_data(
     dp_alloc = nutrition_snapshot["alloc"]
 
     foods_aggregation = build_dailyplan_foods_aggregation(dailyplan_meals)
+    foods_aggregation_table = [
+        build_dailyplan_food_aggregation_table_item(
+            food_aggregation,
+            dailyplan_snapshot=nutrition_snapshot,
+        )
+        for food_aggregation in foods_aggregation
+    ]
 
     structural_indicators = {
         "meals_count": len(dailyplan_meals),
@@ -295,6 +304,7 @@ def build_dailyplan_detail_content_data(
         main_card_data=main_card_data,
         child_cards_data=child_cards_data,
         foods_aggregation=foods_aggregation,
+        foods_aggregation_table=foods_aggregation_table,
         structural_indicators=structural_indicators,
     )
 

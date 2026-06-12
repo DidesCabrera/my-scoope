@@ -58,6 +58,7 @@
   
     min-height: 28px;
     width: 100%;
+    scroll-margin-top: calc(var(--header-height, 40px) + 16px);
   }
   
   .dailyplan-detail__meal-step-line {
@@ -116,3 +117,4 @@
       margin-left: 4px;
     }
   }
+

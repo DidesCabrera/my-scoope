@@ -937,3 +937,21 @@ body.is-list-panel-sorting .js-list-reorder-row {
         opacity: 0.7;
     }
 }
+
+.data-grid--menu .data-grid-meal-title--action {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+}
+
+.data-grid--menu .data-grid-meal-title--action:hover .data-grid-meal-name {
+    color: var(--text-main);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}

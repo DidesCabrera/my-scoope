@@ -18,6 +18,7 @@ class FoodsAggregationUI:
 class MenuMealUI:
     meal_name: str
     foods: List[str]
+    target_id: Optional[str] = None
 
 
 @dataclass

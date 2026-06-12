@@ -35,7 +35,11 @@
       <div class="dailyplan-detail__children-list">
         {% for child in vm.content.child_cards %}
           <div class="dailyplan-detail__meal-step">
-            <div class="dailyplan-detail__meal-step-marker" aria-hidden="true">
+            <div
+              id="dailyplan-meal-step-{{ child.related_data.rel_id }}"
+              class="dailyplan-detail__meal-step-marker"
+              aria-hidden="true"
+            >
               <span class="dailyplan-detail__meal-step-line"></span>
               <span class="dailyplan-detail__meal-step-number">{{ forloop.counter }}</span>
             </div>
@@ -65,8 +69,9 @@
           </span>
         </div>
   
-        <div class="dailyplan-detail__foods-aggregation">
-          {% include "components/grid_foods_aggregation.html" with foods=vm.content.foods_aggregation %}
+        <div class="dailyplan-detail__foods-aggregation card-detail-block main" data-default-desktop="#card-grid-dailyplan-foods-table-dailyplan-foods" data-default-mobile="#card-grid-dailyplan-foods-qty-dailyplan-foods">
+          {% include "components/detail_tabs_dailyplan_foods_aggregation.html" with panel_id="dailyplan-foods" %}
+          {% include "components/detail_panels_dailyplan_foods_aggregation.html" with panel_id="dailyplan-foods" items=vm.content.foods_aggregation_table %}
         </div>
       </div>
     {% endif %}
@@ -75,5 +80,6 @@
 </div>
 
 <script src="{% static 'notas/js/dpm_sortable.js' %}"></script>
+<script src="{% static 'notas/js/dailyplan_menu_scroll.js' %}"></script>
 
 {% endblock %}

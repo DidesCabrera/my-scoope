@@ -32,7 +32,8 @@ def build_dailyplan_menu(dailyplan_meals):
         meals_menu.append(
             MenuMealUI(
                 meal_name=meal.name,
-                foods=foods
+                foods=foods,
+                target_id=f"dailyplan-meal-step-{dpm.id}",
             )
         )
 

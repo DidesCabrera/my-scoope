@@ -155,3 +155,53 @@ def build_mealfood_table_item(mf):
             "alloc_fat": mf_alloc["fat"],
         }
     }
+
+def build_dailyplan_food_aggregation_table_item(food_aggregation, dailyplan_snapshot=None):
+    food = food_aggregation["food"]
+    total_grams = food_aggregation["total_grams"] or 0
+    factor = total_grams / 100
+
+    g_protein = food.protein * factor
+    g_carbs = food.carbs * factor
+    g_fat = food.fat * factor
+
+    kcal_protein = food.kcal_protein * factor
+    kcal_carbs = food.kcal_carbs * factor
+    kcal_fat = food.kcal_fat * factor
+    total_kcal = kcal_protein + kcal_carbs + kcal_fat
+
+    dailyplan_snapshot = dailyplan_snapshot or {}
+    dailyplan_total_kcal = dailyplan_snapshot.get("total_kcal", 0)
+    dailyplan_kcal_protein = dailyplan_snapshot.get("kcal_protein", 0)
+    dailyplan_kcal_carbs = dailyplan_snapshot.get("kcal_carbs", 0)
+    dailyplan_kcal_fat = dailyplan_snapshot.get("kcal_fat", 0)
+
+    return {
+        "child": food,
+        "rel": {
+            "id": food.id,
+            "quantity": total_grams,
+            "quantity_unit": "g",
+            "name": food_aggregation["display_name"],
+            "total_kcal": total_kcal,
+            "kcal_share": _safe_percentage(
+                total_kcal,
+                dailyplan_total_kcal,
+            ),
+            "g_protein": g_protein,
+            "g_carbs": g_carbs,
+            "g_fat": g_fat,
+            "alloc_protein": _safe_percentage(
+                kcal_protein,
+                dailyplan_kcal_protein,
+            ),
+            "alloc_carbs": _safe_percentage(
+                kcal_carbs,
+                dailyplan_kcal_carbs,
+            ),
+            "alloc_fat": _safe_percentage(
+                kcal_fat,
+                dailyplan_kcal_fat,
+            ),
+        },
+    }

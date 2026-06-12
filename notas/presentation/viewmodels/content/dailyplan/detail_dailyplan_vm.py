@@ -97,6 +97,7 @@ class DailyPlanDetailVM:
     main_card: MainCardUI
     structural_indicators: Optional[StructuralIndicatorsUI]
     foods_aggregation: FoodsAggregationUI
+    foods_aggregation_table: list
     child_cards: List[ChildCardUI]
 
     def as_context(self):

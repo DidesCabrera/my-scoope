@@ -92,6 +92,7 @@ def build_dailyplan_detail_vm(content_data):
         main_card=main,
         child_cards=children,
         foods_aggregation=content_data.foods_aggregation,
+        foods_aggregation_table=content_data.foods_aggregation_table,
         structural_indicators=StructuralIndicatorsUI(
             meals_count=content_data.structural_indicators["meals_count"],
             foods_count=content_data.structural_indicators["foods_count"],

@@ -1,0 +1,82 @@
+diff --git a/notas/static/notas/css/components/list.css b/notas/static/notas/css/components/list.css
+index 26dc5b2..31699e2 100644
+--- a/notas/static/notas/css/components/list.css
++++ b/notas/static/notas/css/components/list.css
+@@ -58,6 +58,7 @@
+   
+     min-height: 28px;
+     width: 100%;
++    scroll-margin-top: calc(var(--header-height, 40px) + 16px);
+   }
+   
+   .dailyplan-detail__meal-step-line {
+diff --git a/notas/static/notas/js/dailyplan_menu_scroll.js b/notas/static/notas/js/dailyplan_menu_scroll.js
+index 42841a1..7e45186 100644
+--- a/notas/static/notas/js/dailyplan_menu_scroll.js
++++ b/notas/static/notas/js/dailyplan_menu_scroll.js
+@@ -13,7 +13,7 @@
+       event.preventDefault();
+       target.scrollIntoView({
+         behavior: "smooth",
+-        block: "center",
++        block: "start",
+         inline: "nearest",
+       });
+     });
+diff --git a/notas/templates/components/detail_panels_dailyplan_foods_aggregation.html b/notas/templates/components/detail_panels_dailyplan_foods_aggregation.html
+index 6ea231b..2afc7ba 100644
+--- a/notas/templates/components/detail_panels_dailyplan_foods_aggregation.html
++++ b/notas/templates/components/detail_panels_dailyplan_foods_aggregation.html
+@@ -1,11 +1,15 @@
+-<div id="card-grid-dailyplan-foods-qty-{{ panel_id }}" class="card-table-dailyplan-foods">
++<div id="card-grid-dailyplan-foods-table-{{ panel_id }}" class="card-table-dailyplan-foods card-table-dailyplan-foods--desktop">
++    {% include "components/grid_foods.html" with items=items %}
++</div>
++
++<div id="card-grid-dailyplan-foods-qty-{{ panel_id }}" class="card-table-dailyplan-foods card-table-dailyplan-foods--mobile">
+     {% include "components/grid_foods_mobile_qty.html" with items=items %}
+ </div>
+ 
+-<div id="card-grid-dailyplan-foods-macros-{{ panel_id }}" class="card-table-dailyplan-foods">
++<div id="card-grid-dailyplan-foods-macros-{{ panel_id }}" class="card-table-dailyplan-foods card-table-dailyplan-foods--mobile">
+     {% include "components/grid_foods_mobile_macros.html" with items=items %}
+ </div>
+ 
+-<div id="card-grid-dailyplan-foods-alloc-{{ panel_id }}" class="card-table-dailyplan-foods">
++<div id="card-grid-dailyplan-foods-alloc-{{ panel_id }}" class="card-table-dailyplan-foods card-table-dailyplan-foods--mobile">
+     {% include "components/grid_foods_mobile_alloc.html" with items=items %}
+ </div>
+diff --git a/notas/templates/components/detail_tabs_dailyplan_foods_aggregation.html b/notas/templates/components/detail_tabs_dailyplan_foods_aggregation.html
+index e7700d6..c77149d 100644
+--- a/notas/templates/components/detail_tabs_dailyplan_foods_aggregation.html
++++ b/notas/templates/components/detail_tabs_dailyplan_foods_aggregation.html
+@@ -1,14 +1,6 @@
+ <div class="card-detail-tabs card-detail-tabs--desktop block-desplegar-tabla block-card-desplegar">
+-    <div class="btn-desplegar is-active" data-target="#card-grid-dailyplan-foods-qty-{{ panel_id }}">
+-        <p>Alimentos</p>
+-    </div>
+-
+-    <div class="btn-desplegar" data-target="#card-grid-dailyplan-foods-macros-{{ panel_id }}">
+-        <p>Macros</p>
+-    </div>
+-
+-    <div class="btn-desplegar" data-target="#card-grid-dailyplan-foods-alloc-{{ panel_id }}">
+-        <p>Alloc</p>
++    <div class="btn-desplegar is-active" data-target="#card-grid-dailyplan-foods-table-{{ panel_id }}">
++        <p>Tabla Alimentos</p>
+     </div>
+ </div>
+ 
+diff --git a/notas/templates/notas/dailyplans/detail.html b/notas/templates/notas/dailyplans/detail.html
+index 836ddbd..7913936 100644
+--- a/notas/templates/notas/dailyplans/detail.html
++++ b/notas/templates/notas/dailyplans/detail.html
+@@ -69,7 +69,7 @@
+           </span>
+         </div>
+   
+-        <div class="dailyplan-detail__foods-aggregation card-detail-block main" data-default-desktop="#card-grid-dailyplan-foods-qty-dailyplan-foods" data-default-mobile="#card-grid-dailyplan-foods-qty-dailyplan-foods">
++        <div class="dailyplan-detail__foods-aggregation card-detail-block main" data-default-desktop="#card-grid-dailyplan-foods-table-dailyplan-foods" data-default-mobile="#card-grid-dailyplan-foods-qty-dailyplan-foods">
+           {% include "components/detail_tabs_dailyplan_foods_aggregation.html" with panel_id="dailyplan-foods" %}
+           {% include "components/detail_panels_dailyplan_foods_aggregation.html" with panel_id="dailyplan-foods" items=vm.content.foods_aggregation_table %}
+         </div>

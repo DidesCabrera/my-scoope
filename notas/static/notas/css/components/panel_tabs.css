@@ -136,6 +136,7 @@
    ========================= */
 
 .card-table-foods,
+.card-table-dailyplan-foods,
 .card-foods-aggregation,
 .card-menu,
 .card-table-meals,
@@ -146,6 +147,7 @@
 }
 
 .card-table-foods.is-visible,
+.card-table-dailyplan-foods.is-visible,
 .card-foods-aggregation.is-visible,
 .card-menu.is-visible,
 .card-table-meals.is-visible,

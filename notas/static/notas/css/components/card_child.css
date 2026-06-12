@@ -67,7 +67,7 @@
 
 
 .card-detail-block.main {
-  margin: 10px -6px;
+  margin: 10px 0px;
 }
 /* =========================
    MOBILE BASE
@@ -100,10 +100,6 @@
 
   .card-detail-block {
     margin: 10px -6px;
-  }
-
-  .card-detail-block.main {
-    margin: 10px -8px;
   }
 
   .card.dpm_meal .card-detail-block{
