@@ -1,19 +1,19 @@
 .dailyplan-detail__children-header {
     padding-left: 0;
     padding-right: 0;
-    margin: 12px 0px 24px 0px;
+    margin: 12px 0px 4px 0px;
 }
 
 .dailyplan-detail__foods-aggregation{
     padding-left: 0;
     padding-right: 0;
-    margin: 12px 0px 24px 0px;
+    margin: 4px 0px 0px 0px;
 }
 
 .dailyplan-detail__children-list {
     display: flex;
     flex-direction: column;
-    margin-top: 30px;
+    margin-top: 12px;
 }
 
 @media (max-width: 980px) {
@@ -23,7 +23,7 @@
     }
 
     .dailyplan-detail__children-header {
-        margin: 12px 12px 24px 12px;
+        margin: 12px;
     }
 
     .dailyplan-detail__child-card {
@@ -47,7 +47,7 @@
   }
   
   .dailyplan-detail__meal-step + .dailyplan-detail__meal-step {
-    margin-top: 22px;
+    margin-top: -10px;
   }
   
   .dailyplan-detail__meal-step-marker {
@@ -101,7 +101,7 @@
   /* Mobile: un poco más compacto */
   @media (max-width: 768px) {
     .dailyplan-detail__meal-step + .dailyplan-detail__meal-step {
-      margin-top: 18px;
+      margin-top: -10px;
     }
   
     .dailyplan-detail__meal-step-marker {

@@ -3,7 +3,7 @@ hr {
   width: 100%;
   border-top: 1px solid var(--panel-row-separator);
   margin-top: 20px;
-  margin-bottom: 24px
+  margin-bottom: 20px
 }
 
 ul { padding-left: 20px; }
