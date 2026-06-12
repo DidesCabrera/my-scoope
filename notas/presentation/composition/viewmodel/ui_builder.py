@@ -19,13 +19,14 @@ def build_ui_vm(viewmode, instance=None, parents=None, back_config=None):
 
     title = breadcrumb[-1].label if breadcrumb else meta["default_title"]
 
+    is_inside = viewmode.mode != "list"
+
     root = ""
     if len(breadcrumb) >= 2:
         root = breadcrumb[-2].label
-    else:
+    elif is_inside:
         root = meta["default_root"]
 
-    is_inside = viewmode.mode != "list"
 
     back_url = build_back_url(
         viewmode,

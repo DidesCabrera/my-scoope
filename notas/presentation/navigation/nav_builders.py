@@ -167,12 +167,13 @@ def build_breadcrumb_vm(viewmode, parents=None, instance=None):
         item = active["item"]
 
         if item is not None:
-            breadcrumb.append(
-                BreadcrumbItem(
-                    label=group.label,
-                    url=None,
+            if item.scope != "explore":
+                breadcrumb.append(
+                    BreadcrumbItem(
+                        label=group.label,
+                        url=None,
+                    )
                 )
-            )
             breadcrumb.append(
                 BreadcrumbItem(
                     label=item.label,
@@ -226,9 +227,11 @@ def build_navigation_meta(viewmode):
     item = active["item"]
 
     if item is not None:
+        header_icon = item.page_icon if item.scope == "explore" and item.page_icon else item.icon
+
         return {
             "nav_root": nav_root,
-            "icon": item.icon,
+            "icon": header_icon,
             "page_icon": item.page_icon or item.icon,
             "section_label": section.label,
             "default_title": item.label,

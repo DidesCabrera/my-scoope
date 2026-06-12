@@ -18,7 +18,9 @@
     
         <div class="header-title-mobile truncate">
             <p>{{ vm.ui.title }}</p>
-            <p class="subtitle">{{ vm.ui.root }}</p>
+            {% if vm.ui.root %}
+                <p class="subtitle">{{ vm.ui.root }}</p>
+            {% endif %}
         </div>
     
         <div class="header-breadcrumbs">

@@ -1,0 +1,102 @@
+diff --git a/notas/interface/views/proposals.py b/notas/interface/views/proposals.py
+index f93be05..95d8ed3 100644
+--- a/notas/interface/views/proposals.py
++++ b/notas/interface/views/proposals.py
+@@ -564,12 +564,9 @@ def proposal_detail(request, proposal_id):
+ 
+     ui_vm = build_ui_vm(
+         PROPOSAL_VIEWMODE_DETAIL,
+-        parents=[
+-            _proposal_list_parent(),
+-        ],
+         instance=proposal["title"],
+         back_config={
+-            "type": "parent",
++            "type": "nav_item",
+         },
+     )
+ 
+@@ -629,7 +626,6 @@ def proposal_entity_detail(request, proposal_id):
+     ui_vm = build_ui_vm(
+         PROPOSAL_VIEWMODE_DETAIL,
+         parents=[
+-            _proposal_list_parent(),
+             _proposal_detail_parent(proposal),
+         ],
+         instance=entity_content["entity_name"],
+diff --git a/notas/presentation/composition/viewmodel/ui_builder.py b/notas/presentation/composition/viewmodel/ui_builder.py
+index 31c0953..0199347 100644
+--- a/notas/presentation/composition/viewmodel/ui_builder.py
++++ b/notas/presentation/composition/viewmodel/ui_builder.py
+@@ -19,13 +19,14 @@ def build_ui_vm(viewmode, instance=None, parents=None, back_config=None):
+ 
+     title = breadcrumb[-1].label if breadcrumb else meta["default_title"]
+ 
++    is_inside = viewmode.mode != "list"
++
+     root = ""
+     if len(breadcrumb) >= 2:
+         root = breadcrumb[-2].label
+-    else:
++    elif is_inside:
+         root = meta["default_root"]
+ 
+-    is_inside = viewmode.mode != "list"
+ 
+     back_url = build_back_url(
+         viewmode,
+diff --git a/notas/presentation/navigation/nav_builders.py b/notas/presentation/navigation/nav_builders.py
+index 92fa252..a79bc00 100644
+--- a/notas/presentation/navigation/nav_builders.py
++++ b/notas/presentation/navigation/nav_builders.py
+@@ -167,12 +167,13 @@ def build_breadcrumb_vm(viewmode, parents=None, instance=None):
+         item = active["item"]
+ 
+         if item is not None:
+-            breadcrumb.append(
+-                BreadcrumbItem(
+-                    label=group.label,
+-                    url=None,
++            if item.scope != "explore":
++                breadcrumb.append(
++                    BreadcrumbItem(
++                        label=group.label,
++                        url=None,
++                    )
+                 )
+-            )
+             breadcrumb.append(
+                 BreadcrumbItem(
+                     label=item.label,
+diff --git a/notas/static/notas/css/components/header.css b/notas/static/notas/css/components/header.css
+index af94130..02091b1 100644
+--- a/notas/static/notas/css/components/header.css
++++ b/notas/static/notas/css/components/header.css
+@@ -362,7 +362,11 @@ body.page-header-meta-deferred.page-header-meta-visible .page-header .label-enti
+   }
+ 
+   .header-title-mobile p.subtitle {
+-    display: none;
++    display: block;
++    color: var(--text-muted);
++    font-size: 11px;
++    font-weight: 500;
++    line-height: 1.1;
+   }
+ 
+   .header-breadcrumbs {
+diff --git a/notas/templates/components/header.html b/notas/templates/components/header.html
+index 3a30ce4..a2367a4 100644
+--- a/notas/templates/components/header.html
++++ b/notas/templates/components/header.html
+@@ -18,7 +18,9 @@
+     
+         <div class="header-title-mobile truncate">
+             <p>{{ vm.ui.title }}</p>
+-            <p class="subtitle">{{ vm.ui.root }}</p>
++            {% if vm.ui.root %}
++                <p class="subtitle">{{ vm.ui.root }}</p>
++            {% endif %}
+         </div>
+     
+         <div class="header-breadcrumbs">

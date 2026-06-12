@@ -317,106 +317,106 @@
    ========================= */
 
 @media (min-width: 981px) {
-    body.sidebar-collapsed .block-logo-sidebar {
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .block-logo-sidebar {
         flex-direction: column;
         justify-content: flex-start;
         gap: 8px;
         margin-bottom: 16px;
     }
 
-    body.sidebar-collapsed .collapse-sidebar-btn {
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .collapse-sidebar-btn {
         order: 1;
     }
 
-    body.sidebar-collapsed .sidebar-brand-link {
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-brand-link {
         order: 2;
     }
 
-    body.sidebar-collapsed .brand-logo,
-    body.sidebar-collapsed .sidebar-label,
-    body.sidebar-collapsed .group-name-sidebar,
-    body.sidebar-collapsed .sidebar-group-action,
-    body.sidebar-collapsed .sidebar .nav-tab .nav-text,
-    body.sidebar-collapsed .sidebar .nav-tab .nav-item-dot,
-    body.sidebar-collapsed .user-block {
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .brand-logo,
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-label,
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .group-name-sidebar,
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-group-action,
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar .nav-tab .nav-text,
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar .nav-tab .nav-item-dot,
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .user-block {
         display: none;
     }
 
-    body.sidebar-collapsed .sidebar-brand-link {
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-brand-link {
         justify-content: center;
         width: 100%;
     }
 
-    body.sidebar-collapsed .sidebar-brand-home-icon {
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-brand-home-icon {
         width: 32px;
         height: 32px;
     }
 
-    body.sidebar-collapsed .collapse-sidebar-btn {
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .collapse-sidebar-btn {
         width: 32px;
         height: 32px;
     }
 
-    body.sidebar-collapsed .collapse-sidebar-icon {
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .collapse-sidebar-icon {
         transform: rotate(180deg);
     }
 
-    body.sidebar-collapsed .sidebar-nav {
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-nav {
         align-items: center;
         gap: 6px;
         padding-top: 12px;
         border-top: 1px solid var(--sidebar-border);
     }
 
-    body.sidebar-collapsed .sidebar-section {
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-section {
         width: 100%;
         padding-top: 10px;
         border-top: 1px solid var(--sidebar-border);
     }
 
-    body.sidebar-collapsed .sidebar-section:first-child {
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-section:first-child {
         padding-top: 0;
         border-top: none;
     }
 
-    body.sidebar-collapsed .sidebar-group,
-    body.sidebar-collapsed .sidebar-group-head,
-    body.sidebar-collapsed .sidebar-main,
-    body.sidebar-collapsed .sidebar-main--link {
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-group,
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-group-head,
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-main,
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-main--link {
         width: 100%;
     }
 
-    body.sidebar-collapsed .sidebar-group {
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-group {
         margin-bottom: 2px;
     }
 
-    body.sidebar-collapsed .sidebar-group-head {
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-group-head {
         justify-content: center;
         gap: 0;
     }
 
-    body.sidebar-collapsed .sidebar-main,
-    body.sidebar-collapsed .sidebar-main--link {
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-main,
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-main--link {
         justify-content: center;
         padding: 8px 0;
     }
 
-    body.sidebar-collapsed .sidebar-left {
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-left {
         justify-content: center;
         gap: 0;
         width: 100%;
     }
 
-    body.sidebar-collapsed .sidebar-sub {
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-sub {
         display: none !important;
     }
 
-    body.sidebar-collapsed .sidebar .nav-tab {
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar .nav-tab {
         justify-content: center;
         padding: 8px 0;
     }
 
-    body.sidebar-collapsed .nav-item-leading {
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .nav-item-leading {
         justify-content: center;
         min-width: 0;
         gap: 0;
@@ -516,7 +516,7 @@
     line-height: 1.2;
 }
 
-body.sidebar-collapsed .sidebar-ai-panel {
+:where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-ai-panel {
     display: none;
 }
 

@@ -1,0 +1,50 @@
+diff --git a/notas/static/notas/css/components/header.css b/notas/static/notas/css/components/header.css
+index 02091b1..887a459 100644
+--- a/notas/static/notas/css/components/header.css
++++ b/notas/static/notas/css/components/header.css
+@@ -64,7 +64,8 @@
+ /* Deferred header metadata: shown after the page/list hero leaves the viewport */
+ body.page-home .page-header .label-entity.header,
+ body.page-home .page-header .header-title-mobile,
+-body.page-header-meta-deferred .page-header .label-entity.header {
++body.page-header-meta-deferred .page-header .label-entity.header,
++body.page-header-meta-deferred .page-header .header-title-mobile {
+   display: flex;
+   opacity: 0;
+   visibility: hidden;
+@@ -78,7 +79,8 @@ body.page-header-meta-deferred .page-header .label-entity.header {
+ 
+ body.page-home.home-header-meta-visible .page-header .label-entity.header,
+ body.page-home.home-header-meta-visible .page-header .header-title-mobile,
+-body.page-header-meta-deferred.page-header-meta-visible .page-header .label-entity.header {
++body.page-header-meta-deferred.page-header-meta-visible .page-header .label-entity.header,
++body.page-header-meta-deferred.page-header-meta-visible .page-header .header-title-mobile {
+   opacity: 1;
+   visibility: visible;
+   pointer-events: auto;
+@@ -346,10 +348,10 @@ body.page-header-meta-deferred.page-header-meta-visible .page-header .label-enti
+     min-width: 0;
+     max-width: none;
+     flex-direction: column;
+-    align-items: center;
++    align-items: flex-start;
+     justify-content: center;
+     margin-left: 2px;
+-    text-align: center;
++    text-align: left;
+   }
+ 
+   .header-title-mobile > * {
+@@ -364,9 +366,9 @@ body.page-header-meta-deferred.page-header-meta-visible .page-header .label-enti
+   .header-title-mobile p.subtitle {
+     display: block;
+     color: var(--text-muted);
+-    font-size: 11px;
+-    font-weight: 500;
+-    line-height: 1.1;
++    font-size: 13px;
++    font-weight: 600;
++    line-height: 1.15;
+   }
+ 
+   .header-breadcrumbs {

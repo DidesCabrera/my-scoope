@@ -16,6 +16,17 @@
             document.documentElement.dataset.theme = theme;
         })();
     </script>
+    <script>
+        (function () {
+            const storageKey = "myscoope.sidebar.desktopCollapsed";
+            const isDesktop = window.matchMedia &&
+                window.matchMedia("(min-width: 981px)").matches;
+
+            if (isDesktop && localStorage.getItem(storageKey) === "true") {
+                document.documentElement.classList.add("sidebar-collapsed");
+            }
+        })();
+    </script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -86,7 +97,7 @@
 <!-- =============================== -->
 <!-- =============================== -->
 
-<body class="{% block body_class %}{% endblock %}">
+<body class="{% block body_class %}{% endblock %}{% if vm.ui.mode == 'list' %} page-header-meta-deferred{% endif %}">
     <div class="app">
 
 
@@ -262,6 +273,45 @@
                     clearAllSavedGroups();
                 });
             });
+
+    function setupHeaderMetaSentinel() {
+        const sentinel = document.querySelector(".js-header-meta-sentinel");
+        const body = document.body;
+
+        if (!sentinel || !body.classList.contains("page-header-meta-deferred")) {
+            return;
+        }
+
+        function setHeaderMetaVisibility(shouldShow) {
+            body.classList.toggle("page-header-meta-visible", shouldShow);
+        }
+
+        if ("IntersectionObserver" in window) {
+            const observer = new IntersectionObserver(
+                function (entries) {
+                    const entry = entries[0];
+                    setHeaderMetaVisibility(!entry.isIntersecting);
+                },
+                {
+                    root: null,
+                    threshold: 0,
+                    rootMargin: "-54px 0px 0px 0px",
+                }
+            );
+
+            observer.observe(sentinel);
+            return;
+        }
+
+        function handleScrollFallback() {
+            setHeaderMetaVisibility(window.scrollY > 80);
+        }
+
+        handleScrollFallback();
+        window.addEventListener("scroll", handleScrollFallback, { passive: true });
+    }
+
+    setupHeaderMetaSentinel();
         });
     </script>
 
@@ -276,18 +326,22 @@
     }
 
     function setDesktopSidebarCollapsed(isCollapsed) {
+        document.documentElement.classList.toggle("sidebar-collapsed", isCollapsed);
         document.body.classList.toggle("sidebar-collapsed", isCollapsed);
         localStorage.setItem(SIDEBAR_DESKTOP_COLLAPSED_KEY, isCollapsed ? "true" : "false");
     }
 
     function restoreDesktopSidebarState() {
         if (!isDesktopSidebar()) {
+            document.documentElement.classList.remove("sidebar-collapsed");
             document.body.classList.remove("sidebar-collapsed");
             return;
         }
 
         const savedState = localStorage.getItem(SIDEBAR_DESKTOP_COLLAPSED_KEY);
-        document.body.classList.toggle("sidebar-collapsed", savedState === "true");
+        const isCollapsed = savedState === "true";
+        document.documentElement.classList.toggle("sidebar-collapsed", isCollapsed);
+        document.body.classList.toggle("sidebar-collapsed", isCollapsed);
     }
 
     function toggleSidebar() {
@@ -303,15 +357,12 @@
 
     window.addEventListener("resize", restoreDesktopSidebarState);
 
-    /* cerrar sidebar mobile y dejar la siguiente vista desktop desplegada sin animar la vista actual */
+    /* cerrar sidebar mobile; en desktop se conserva el estado colapsado/desplegado */
     document.querySelectorAll(".sidebar a").forEach(link => {
         link.addEventListener("click", () => {
-            if (isDesktopSidebar()) {
-                localStorage.setItem(SIDEBAR_DESKTOP_COLLAPSED_KEY, "false");
-                return;
+            if (!isDesktopSidebar()) {
+                document.body.classList.remove("sidebar-open");
             }
-
-            document.body.classList.remove("sidebar-open");
         });
     });
 

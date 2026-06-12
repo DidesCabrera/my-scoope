@@ -157,7 +157,14 @@ def home_view(request):
         .distinct()
     )
 
-    foods_qs = Food.objects.filter(created_by=user).order_by("name")
+    foods_qs = (
+        Food.objects
+        .filter(
+            created_by=user,
+            is_active=True,
+        )
+        .order_by("list_order", "name", "id")
+    )
 
     dailyplans_count = dailyplans_qs.count()
     meals_count = meals_qs.count()
@@ -186,7 +193,8 @@ def home_view(request):
     )
     recent_foods = list(
         foods_qs
-        .select_related("created_by")[:8]
+        .select_related("created_by")
+        .prefetch_related("localized_names")[:3]
     )
 
     dailyplan_content_data = build_dailyplan_list_content_data(
@@ -274,7 +282,7 @@ def home_view(request):
             empty_message="Aún no tienes foods creados.",
             cta_label="Ver todos los alimentos",
             cta_url=reverse("food_list"),
-            items=foods_vm.items,
+            items=foods_vm.child_cards,
         ),
     )
 

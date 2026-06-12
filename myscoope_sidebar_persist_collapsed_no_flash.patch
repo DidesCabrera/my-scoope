@@ -1,0 +1,249 @@
+diff --git a/notas/static/notas/css/components/header.css b/notas/static/notas/css/components/header.css
+index f7f24bd..cc6fb81 100644
+--- a/notas/static/notas/css/components/header.css
++++ b/notas/static/notas/css/components/header.css
+@@ -102,8 +102,8 @@
+ }
+ 
+ @media (min-width: 981px) {
+-  body.sidebar-collapsed .page-header,
+-  body.sidebar-collapsed .header-mini-edit {
++  :where(body.sidebar-collapsed, html.sidebar-collapsed body) .page-header,
++  :where(body.sidebar-collapsed, html.sidebar-collapsed body) .header-mini-edit {
+     left: var(--sidebar-collapsed-width);
+   }
+ }
+diff --git a/notas/static/notas/css/components/sidebar.css b/notas/static/notas/css/components/sidebar.css
+index 62f8524..ebb467c 100644
+--- a/notas/static/notas/css/components/sidebar.css
++++ b/notas/static/notas/css/components/sidebar.css
+@@ -317,106 +317,106 @@
+    ========================= */
+ 
+ @media (min-width: 981px) {
+-    body.sidebar-collapsed .block-logo-sidebar {
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .block-logo-sidebar {
+         flex-direction: column;
+         justify-content: flex-start;
+         gap: 8px;
+         margin-bottom: 16px;
+     }
+ 
+-    body.sidebar-collapsed .collapse-sidebar-btn {
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .collapse-sidebar-btn {
+         order: 1;
+     }
+ 
+-    body.sidebar-collapsed .sidebar-brand-link {
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-brand-link {
+         order: 2;
+     }
+ 
+-    body.sidebar-collapsed .brand-logo,
+-    body.sidebar-collapsed .sidebar-label,
+-    body.sidebar-collapsed .group-name-sidebar,
+-    body.sidebar-collapsed .sidebar-group-action,
+-    body.sidebar-collapsed .sidebar .nav-tab .nav-text,
+-    body.sidebar-collapsed .sidebar .nav-tab .nav-item-dot,
+-    body.sidebar-collapsed .user-block {
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .brand-logo,
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-label,
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .group-name-sidebar,
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-group-action,
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar .nav-tab .nav-text,
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar .nav-tab .nav-item-dot,
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .user-block {
+         display: none;
+     }
+ 
+-    body.sidebar-collapsed .sidebar-brand-link {
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-brand-link {
+         justify-content: center;
+         width: 100%;
+     }
+ 
+-    body.sidebar-collapsed .sidebar-brand-home-icon {
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-brand-home-icon {
+         width: 32px;
+         height: 32px;
+     }
+ 
+-    body.sidebar-collapsed .collapse-sidebar-btn {
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .collapse-sidebar-btn {
+         width: 32px;
+         height: 32px;
+     }
+ 
+-    body.sidebar-collapsed .collapse-sidebar-icon {
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .collapse-sidebar-icon {
+         transform: rotate(180deg);
+     }
+ 
+-    body.sidebar-collapsed .sidebar-nav {
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-nav {
+         align-items: center;
+         gap: 6px;
+         padding-top: 12px;
+         border-top: 1px solid var(--sidebar-border);
+     }
+ 
+-    body.sidebar-collapsed .sidebar-section {
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-section {
+         width: 100%;
+         padding-top: 10px;
+         border-top: 1px solid var(--sidebar-border);
+     }
+ 
+-    body.sidebar-collapsed .sidebar-section:first-child {
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-section:first-child {
+         padding-top: 0;
+         border-top: none;
+     }
+ 
+-    body.sidebar-collapsed .sidebar-group,
+-    body.sidebar-collapsed .sidebar-group-head,
+-    body.sidebar-collapsed .sidebar-main,
+-    body.sidebar-collapsed .sidebar-main--link {
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-group,
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-group-head,
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-main,
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-main--link {
+         width: 100%;
+     }
+ 
+-    body.sidebar-collapsed .sidebar-group {
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-group {
+         margin-bottom: 2px;
+     }
+ 
+-    body.sidebar-collapsed .sidebar-group-head {
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-group-head {
+         justify-content: center;
+         gap: 0;
+     }
+ 
+-    body.sidebar-collapsed .sidebar-main,
+-    body.sidebar-collapsed .sidebar-main--link {
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-main,
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-main--link {
+         justify-content: center;
+         padding: 8px 0;
+     }
+ 
+-    body.sidebar-collapsed .sidebar-left {
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-left {
+         justify-content: center;
+         gap: 0;
+         width: 100%;
+     }
+ 
+-    body.sidebar-collapsed .sidebar-sub {
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-sub {
+         display: none !important;
+     }
+ 
+-    body.sidebar-collapsed .sidebar .nav-tab {
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar .nav-tab {
+         justify-content: center;
+         padding: 8px 0;
+     }
+ 
+-    body.sidebar-collapsed .nav-item-leading {
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .nav-item-leading {
+         justify-content: center;
+         min-width: 0;
+         gap: 0;
+@@ -516,7 +516,7 @@
+     line-height: 1.2;
+ }
+ 
+-body.sidebar-collapsed .sidebar-ai-panel {
++:where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-ai-panel {
+     display: none;
+ }
+ 
+diff --git a/notas/static/notas/css/layout.css b/notas/static/notas/css/layout.css
+index 673519c..5f6229b 100644
+--- a/notas/static/notas/css/layout.css
++++ b/notas/static/notas/css/layout.css
+@@ -72,13 +72,13 @@ header {
+ }
+ 
+ @media (min-width: 981px) {
+-  body.sidebar-collapsed .sidebar {
++  :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar {
+     width: var(--sidebar-collapsed-width);
+     padding-left: 14px;
+     padding-right: 14px;
+   }
+ 
+-  body.sidebar-collapsed .app-content {
++  :where(body.sidebar-collapsed, html.sidebar-collapsed body) .app-content {
+     margin-left: var(--sidebar-collapsed-width);
+   }
+ }
+diff --git a/notas/templates/notas/base.html b/notas/templates/notas/base.html
+index 6eb853f..f2a9574 100644
+--- a/notas/templates/notas/base.html
++++ b/notas/templates/notas/base.html
+@@ -16,6 +16,17 @@
+             document.documentElement.dataset.theme = theme;
+         })();
+     </script>
++    <script>
++        (function () {
++            const storageKey = "myscoope.sidebar.desktopCollapsed";
++            const isDesktop = window.matchMedia &&
++                window.matchMedia("(min-width: 981px)").matches;
++
++            if (isDesktop && localStorage.getItem(storageKey) === "true") {
++                document.documentElement.classList.add("sidebar-collapsed");
++            }
++        })();
++    </script>
+ 
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1">
+@@ -276,18 +287,22 @@
+     }
+ 
+     function setDesktopSidebarCollapsed(isCollapsed) {
++        document.documentElement.classList.toggle("sidebar-collapsed", isCollapsed);
+         document.body.classList.toggle("sidebar-collapsed", isCollapsed);
+         localStorage.setItem(SIDEBAR_DESKTOP_COLLAPSED_KEY, isCollapsed ? "true" : "false");
+     }
+ 
+     function restoreDesktopSidebarState() {
+         if (!isDesktopSidebar()) {
++            document.documentElement.classList.remove("sidebar-collapsed");
+             document.body.classList.remove("sidebar-collapsed");
+             return;
+         }
+ 
+         const savedState = localStorage.getItem(SIDEBAR_DESKTOP_COLLAPSED_KEY);
+-        document.body.classList.toggle("sidebar-collapsed", savedState === "true");
++        const isCollapsed = savedState === "true";
++        document.documentElement.classList.toggle("sidebar-collapsed", isCollapsed);
++        document.body.classList.toggle("sidebar-collapsed", isCollapsed);
+     }
+ 
+     function toggleSidebar() {
+@@ -303,15 +318,12 @@
+ 
+     window.addEventListener("resize", restoreDesktopSidebarState);
+ 
+-    /* cerrar sidebar mobile y dejar la siguiente vista desktop desplegada sin animar la vista actual */
++    /* cerrar sidebar mobile; en desktop se conserva el estado colapsado/desplegado */
+     document.querySelectorAll(".sidebar a").forEach(link => {
+         link.addEventListener("click", () => {
+-            if (isDesktopSidebar()) {
+-                localStorage.setItem(SIDEBAR_DESKTOP_COLLAPSED_KEY, "false");
+-                return;
++            if (!isDesktopSidebar()) {
++                document.body.classList.remove("sidebar-open");
+             }
+-
+-            document.body.classList.remove("sidebar-open");
+         });
+     });
+ 

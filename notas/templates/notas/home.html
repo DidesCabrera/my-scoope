@@ -299,22 +299,9 @@
     </div>
 
     {% if vm.content.foods.items %}
-      <div class="home-food-list">
-        {% for item in vm.content.foods.items %}
-          <a href="{{ item.url }}" class="home-food-row">
-            <div class="home-food-main">
-              <strong>{{ item.name }}</strong>
-              <span>{{ item.total_kcal|floatformat:0 }} kcal</span>
-            </div>
-
-            <div class="home-food-macros">
-              <span>P {{ item.protein|floatformat:1 }}</span>
-              <span>C {{ item.carbs|floatformat:1 }}</span>
-              <span>F {{ item.fat|floatformat:1 }}</span>
-            </div>
-          </a>
-        {% endfor %}
-      </div>
+      {% for child in vm.content.foods.items %}
+        {% include "components/card_child_food.html" with child_card=child %}
+      {% endfor %}
     {% else %}
       <p class="home-empty">{{ vm.content.foods.empty_message }}</p>
     {% endif %}
@@ -336,15 +323,8 @@
       return;
     }
 
-    function isMobile() {
-      return window.matchMedia("(max-width: 980px)").matches;
-    }
-
     function setHeaderMetaVisibility(shouldShow) {
-      body.classList.toggle(
-        "home-header-meta-visible",
-        shouldShow && isMobile()
-      );
+      body.classList.toggle("home-header-meta-visible", shouldShow);
     }
 
     if ("IntersectionObserver" in window) {
@@ -361,12 +341,6 @@
       );
 
       observer.observe(brandStrip);
-
-      window.addEventListener("resize", function () {
-        if (!isMobile()) {
-          body.classList.remove("home-header-meta-visible");
-        }
-      });
 
       return;
     }

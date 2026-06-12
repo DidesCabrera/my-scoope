@@ -1,0 +1,25 @@
+--- a/notas/static/notas/css/layout.css
++++ b/notas/static/notas/css/layout.css
+@@ -78,9 +78,6 @@
+     padding-right: 14px;
+   }
+ 
+-  :where(body.sidebar-collapsed, html.sidebar-collapsed body) .app-content {
+-    margin-left: var(--sidebar-collapsed-width);
+-  }
+ }
+ 
+ 
+@@ -154,6 +151,12 @@
+   color: var(--text-main);
+ }
+ 
++@media (min-width: 981px) {
++  :where(body.sidebar-collapsed, html.sidebar-collapsed body) .app-content {
++    margin-left: var(--sidebar-collapsed-width);
++  }
++}
++
+ /* ===== SIDEBAR GROUPS ===== */
+ 
+ .sidebar-group {

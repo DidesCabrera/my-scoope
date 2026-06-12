@@ -49,7 +49,7 @@ APP_NAVIGATION = (
         groups=(
             NavGroupSpec(
                 key="dailyplan",
-                label="Planes Diarios",
+                label="Mis Planes Diarios",
                 icon="clipboard-list",
                 url_name="dailyplan_list",
                 nav_root="dailyplan",
@@ -61,7 +61,7 @@ APP_NAVIGATION = (
             ),
             NavGroupSpec(
                 key="meal",
-                label="Comidas",
+                label="Mis Comidas",
                 icon="utensils",
                 url_name="meal_list",
                 nav_root="meal",
@@ -73,7 +73,7 @@ APP_NAVIGATION = (
             ),
             NavGroupSpec(
                 key="food",
-                label="Alimentos",
+                label="Mis Alimentos",
                 icon="carrot",
                 url_name="food_list",
                 nav_root="food",

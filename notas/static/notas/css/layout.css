@@ -72,15 +72,12 @@ header {
 }
 
 @media (min-width: 981px) {
-  body.sidebar-collapsed .sidebar {
+  :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar {
     width: var(--sidebar-collapsed-width);
     padding-left: 14px;
     padding-right: 14px;
   }
 
-  body.sidebar-collapsed .app-content {
-    margin-left: var(--sidebar-collapsed-width);
-  }
 }
 
 
@@ -152,6 +149,12 @@ header {
 
   background-color: var(--surface-app);
   color: var(--text-main);
+}
+
+@media (min-width: 981px) {
+  :where(body.sidebar-collapsed, html.sidebar-collapsed body) .app-content {
+    margin-left: var(--sidebar-collapsed-width);
+  }
 }
 
 /* ===== SIDEBAR GROUPS ===== */

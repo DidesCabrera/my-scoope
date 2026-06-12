@@ -1,0 +1,212 @@
+diff --git a/notas/presentation/navigation/app_registry.py b/notas/presentation/navigation/app_registry.py
+--- a/notas/presentation/navigation/app_registry.py	2026-06-12 03:12:30.000000000 +0000
++++ b/notas/presentation/navigation/app_registry.py	2026-06-12 04:40:27.212340372 +0000
+@@ -49,7 +49,7 @@
+         groups=(
+             NavGroupSpec(
+                 key="dailyplan",
+-                label="Planes Diarios",
++                label="Mis Planes Diarios",
+                 icon="clipboard-list",
+                 url_name="dailyplan_list",
+                 nav_root="dailyplan",
+@@ -61,7 +61,7 @@
+             ),
+             NavGroupSpec(
+                 key="meal",
+-                label="Comidas",
++                label="Mis Comidas",
+                 icon="utensils",
+                 url_name="meal_list",
+                 nav_root="meal",
+@@ -73,7 +73,7 @@
+             ),
+             NavGroupSpec(
+                 key="food",
+-                label="Alimentos",
++                label="Mis Alimentos",
+                 icon="carrot",
+                 url_name="food_list",
+                 nav_root="food",
+diff --git a/notas/presentation/navigation/nav_builders.py b/notas/presentation/navigation/nav_builders.py
+--- a/notas/presentation/navigation/nav_builders.py	2026-06-12 01:41:24.000000000 +0000
++++ b/notas/presentation/navigation/nav_builders.py	2026-06-12 04:40:27.213163405 +0000
+@@ -226,9 +226,11 @@
+     item = active["item"]
+ 
+     if item is not None:
++        header_icon = item.page_icon if item.scope == "explore" and item.page_icon else item.icon
++
+         return {
+             "nav_root": nav_root,
+-            "icon": item.icon,
++            "icon": header_icon,
+             "page_icon": item.page_icon or item.icon,
+             "section_label": section.label,
+             "default_title": item.label,
+diff --git a/notas/static/notas/css/components/header.css b/notas/static/notas/css/components/header.css
+--- a/notas/static/notas/css/components/header.css	2026-06-12 03:57:59.000000000 +0000
++++ b/notas/static/notas/css/components/header.css	2026-06-12 04:41:07.989481757 +0000
+@@ -61,6 +61,44 @@
+   display: block;
+ }
+ 
++/* Deferred header metadata: shown after the page/list hero leaves the viewport */
++body.page-home .page-header .label-entity.header,
++body.page-home .page-header .header-title-mobile,
++body.page-header-meta-deferred .page-header .label-entity.header,
++body.page-header-meta-deferred .page-header .header-title-mobile {
++  display: flex;
++  opacity: 0;
++  visibility: hidden;
++  pointer-events: none;
++  transform: translateY(-4px);
++  transition:
++    opacity 180ms ease,
++    transform 180ms ease,
++    visibility 180ms ease;
++}
++
++body.page-home.home-header-meta-visible .page-header .label-entity.header,
++body.page-home.home-header-meta-visible .page-header .header-title-mobile,
++body.page-header-meta-deferred.page-header-meta-visible .page-header .label-entity.header,
++body.page-header-meta-deferred.page-header-meta-visible .page-header .header-title-mobile {
++  opacity: 1;
++  visibility: visible;
++  pointer-events: auto;
++  transform: translateY(0);
++}
++
++@media (min-width: 981px) {
++  body.page-home .page-header .header-breadcrumbs,
++  body.page-header-meta-deferred .page-header .header-breadcrumbs {
++    display: none;
++  }
++
++  body.page-home .page-header .header-title-mobile,
++  body.page-header-meta-deferred .page-header .header-title-mobile {
++    margin-left: 8px;
++  }
++}
++
+ .btn-list-header {
+   height: 22px;
+ }
+diff --git a/notas/static/notas/css/components/page.css b/notas/static/notas/css/components/page.css
+--- a/notas/static/notas/css/components/page.css	2026-06-12 04:38:27.000000000 +0000
++++ b/notas/static/notas/css/components/page.css	2026-06-12 04:40:37.829716364 +0000
+@@ -224,6 +224,10 @@
+     background: var(--entity-proposal, var(--entity-home));
+ }
+ 
++.list-page-header__icon--explore {
++    background: var(--entity-home);
++}
++
+ .list-page-header__title {
+     margin: 0;
+     color: var(--text-main);
+diff --git a/notas/templates/components/list_page_header.html b/notas/templates/components/list_page_header.html
+--- a/notas/templates/components/list_page_header.html	2026-06-12 04:19:12.000000000 +0000
++++ b/notas/templates/components/list_page_header.html	2026-06-12 04:40:27.213927810 +0000
+@@ -1,7 +1,7 @@
+-<div class="list-page-header list-page-header--{{ vm.ui.entity }} list-page-header--scope-{{ vm.ui.scope }}">
++<div class="list-page-header list-page-header--{{ vm.ui.entity }} list-page-header--scope-{{ vm.ui.scope }} js-header-meta-sentinel">
+   <i
+     data-lucide="{% if vm.ui.page_icon %}{{ vm.ui.page_icon }}{% else %}{{ vm.ui.icon }}{% endif %}"
+-    class="list-page-header__icon list-page-header__icon--{{ vm.ui.entity }}"
++    class="list-page-header__icon list-page-header__icon--{{ vm.ui.entity }}{% if vm.ui.scope == 'explore' %} list-page-header__icon--explore{% endif %}"
+   ></i>
+   <h2 class="list-page-header__title">{{ vm.ui.title }}</h2>
+ </div>
+diff --git a/notas/templates/notas/base.html b/notas/templates/notas/base.html
+--- a/notas/templates/notas/base.html	2026-06-12 03:57:59.000000000 +0000
++++ b/notas/templates/notas/base.html	2026-06-12 04:41:07.988656794 +0000
+@@ -97,7 +97,7 @@
+ <!-- =============================== -->
+ <!-- =============================== -->
+ 
+-<body class="{% block body_class %}{% endblock %}">
++<body class="{% block body_class %}{% endblock %}{% if vm.ui.mode == 'list' %} page-header-meta-deferred{% endif %}">
+     <div class="app">
+ 
+ 
+@@ -273,6 +273,45 @@
+                     clearAllSavedGroups();
+                 });
+             });
++
++    function setupHeaderMetaSentinel() {
++        const sentinel = document.querySelector(".js-header-meta-sentinel");
++        const body = document.body;
++
++        if (!sentinel || !body.classList.contains("page-header-meta-deferred")) {
++            return;
++        }
++
++        function setHeaderMetaVisibility(shouldShow) {
++            body.classList.toggle("page-header-meta-visible", shouldShow);
++        }
++
++        if ("IntersectionObserver" in window) {
++            const observer = new IntersectionObserver(
++                function (entries) {
++                    const entry = entries[0];
++                    setHeaderMetaVisibility(!entry.isIntersecting);
++                },
++                {
++                    root: null,
++                    threshold: 0,
++                    rootMargin: "-54px 0px 0px 0px",
++                }
++            );
++
++            observer.observe(sentinel);
++            return;
++        }
++
++        function handleScrollFallback() {
++            setHeaderMetaVisibility(window.scrollY > 80);
++        }
++
++        handleScrollFallback();
++        window.addEventListener("scroll", handleScrollFallback, { passive: true });
++    }
++
++    setupHeaderMetaSentinel();
+         });
+     </script>
+ 
+diff --git a/notas/templates/notas/home.html b/notas/templates/notas/home.html
+--- a/notas/templates/notas/home.html	2026-06-12 04:12:48.000000000 +0000
++++ b/notas/templates/notas/home.html	2026-06-12 04:41:07.990297346 +0000
+@@ -323,15 +323,8 @@
+       return;
+     }
+ 
+-    function isMobile() {
+-      return window.matchMedia("(max-width: 980px)").matches;
+-    }
+-
+     function setHeaderMetaVisibility(shouldShow) {
+-      body.classList.toggle(
+-        "home-header-meta-visible",
+-        shouldShow && isMobile()
+-      );
++      body.classList.toggle("home-header-meta-visible", shouldShow);
+     }
+ 
+     if ("IntersectionObserver" in window) {
+@@ -349,12 +342,6 @@
+ 
+       observer.observe(brandStrip);
+ 
+-      window.addEventListener("resize", function () {
+-        if (!isMobile()) {
+-          body.classList.remove("home-header-meta-visible");
+-        }
+-      });
+-
+       return;
+     }
+ 

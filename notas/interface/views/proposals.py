@@ -564,12 +564,9 @@ def proposal_detail(request, proposal_id):
 
     ui_vm = build_ui_vm(
         PROPOSAL_VIEWMODE_DETAIL,
-        parents=[
-            _proposal_list_parent(),
-        ],
         instance=proposal["title"],
         back_config={
-            "type": "parent",
+            "type": "nav_item",
         },
     )
 
@@ -629,7 +626,6 @@ def proposal_entity_detail(request, proposal_id):
     ui_vm = build_ui_vm(
         PROPOSAL_VIEWMODE_DETAIL,
         parents=[
-            _proposal_list_parent(),
             _proposal_detail_parent(proposal),
         ],
         instance=entity_content["entity_name"],

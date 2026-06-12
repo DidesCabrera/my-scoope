@@ -1,0 +1,7 @@
+<div class="list-page-header list-page-header--{{ vm.ui.entity }} list-page-header--scope-{{ vm.ui.scope }} js-header-meta-sentinel">
+  <i
+    data-lucide="{% if vm.ui.page_icon %}{{ vm.ui.page_icon }}{% else %}{{ vm.ui.icon }}{% endif %}"
+    class="list-page-header__icon list-page-header__icon--{{ vm.ui.entity }}{% if vm.ui.scope == 'explore' %} list-page-header__icon--explore{% endif %}"
+  ></i>
+  <h2 class="list-page-header__title">{{ vm.ui.title }}</h2>
+</div>

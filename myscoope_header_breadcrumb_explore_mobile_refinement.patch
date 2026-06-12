@@ -1,0 +1,104 @@
+--- a/notas/static/notas/css/components/header.css
++++ b/notas/static/notas/css/components/header.css
+@@ -64,8 +64,7 @@
+ /* Deferred header metadata: shown after the page/list hero leaves the viewport */
+ body.page-home .page-header .label-entity.header,
+ body.page-home .page-header .header-title-mobile,
+-body.page-header-meta-deferred .page-header .label-entity.header,
+-body.page-header-meta-deferred .page-header .header-title-mobile {
++body.page-header-meta-deferred .page-header .label-entity.header {
+   display: flex;
+   opacity: 0;
+   visibility: hidden;
+@@ -79,8 +78,7 @@
+ 
+ body.page-home.home-header-meta-visible .page-header .label-entity.header,
+ body.page-home.home-header-meta-visible .page-header .header-title-mobile,
+-body.page-header-meta-deferred.page-header-meta-visible .page-header .label-entity.header,
+-body.page-header-meta-deferred.page-header-meta-visible .page-header .header-title-mobile {
++body.page-header-meta-deferred.page-header-meta-visible .page-header .label-entity.header {
+   opacity: 1;
+   visibility: visible;
+   pointer-events: auto;
+@@ -88,13 +86,34 @@
+ }
+ 
+ @media (min-width: 981px) {
+-  body.page-home .page-header .header-breadcrumbs,
+   body.page-header-meta-deferred .page-header .header-breadcrumbs {
+-    display: none;
++    display: block;
++    opacity: 0;
++    visibility: hidden;
++    pointer-events: none;
++    transform: translateY(-4px);
++    transition:
++      opacity 180ms ease,
++      transform 180ms ease,
++      visibility 180ms ease;
++  }
++
++  body.page-header-meta-deferred.page-header-meta-visible .page-header .header-breadcrumbs {
++    opacity: 1;
++    visibility: visible;
++    pointer-events: auto;
++    transform: translateY(0);
+   }
+ 
+-  body.page-home .page-header .header-title-mobile,
+   body.page-header-meta-deferred .page-header .header-title-mobile {
++    display: none;
++  }
++
++  body.page-home .page-header .header-breadcrumbs {
++    display: none;
++  }
++
++  body.page-home .page-header .header-title-mobile {
+     margin-left: 8px;
+   }
+ }
+@@ -323,20 +342,27 @@
+ 
+   .header-title-mobile {
+     display: flex;
++    flex: 1 1 auto;
++    min-width: 0;
++    max-width: none;
+     flex-direction: column;
+-    align-items: flex-start;
++    align-items: center;
++    justify-content: center;
+     margin-left: 2px;
++    text-align: center;
+   }
+ 
+   .header-title-mobile > * {
+     padding: 1px;
+-    height: 22px;
++    height: auto;
++  }
++
++  .header-title-mobile p {
++    width: 100%;
+   }
+ 
+   .header-title-mobile p.subtitle {
+-    font-size: 13px;
+-    color: var(--text-muted);
+-    font-weight: 400;
++    display: none;
+   }
+ 
+   .header-breadcrumbs {
+--- a/notas/static/notas/css/components/page.css
++++ b/notas/static/notas/css/components/page.css
+@@ -225,7 +225,7 @@
+ }
+ 
+ .list-page-header__icon--explore {
+-    background: var(--entity-home);
++    /* Explore keeps the search glyph but inherits the explored entity color. */
+ }
+ 
+ .list-page-header__title {

@@ -1,0 +1,155 @@
+diff --git a/notas/static/notas/css/components/page.css b/notas/static/notas/css/components/page.css
+index 453af08..ced97d5 100644
+--- a/notas/static/notas/css/components/page.css
++++ b/notas/static/notas/css/components/page.css
+@@ -181,4 +181,71 @@
+   .app-content {
+     min-height: calc(100svh + 64px);
+   }
+-}
+\ No newline at end of file
++}
++/* =========================================================
++   List page header
++   ========================================================= */
++
++.list-page-header {
++    width: 100%;
++    margin: 0 0 18px 0;
++    display: flex;
++    flex-direction: column;
++    align-items: center;
++    justify-content: center;
++    gap: 12px;
++    text-align: center;
++}
++
++.list-page-header__icon {
++    width: 48px;
++    height: 48px;
++    flex-shrink: 0;
++    padding: 9px;
++    border-radius: 13px;
++    color: #ffffff;
++    stroke-width: 1.7;
++    background: var(--entity-home);
++}
++
++.list-page-header__icon--dailyplan {
++    background: var(--entity-dailyplan);
++}
++
++.list-page-header__icon--meal {
++    background: var(--entity-meal);
++}
++
++.list-page-header__icon--food {
++    background: var(--entity-food);
++}
++
++.list-page-header__icon--proposal {
++    background: var(--entity-proposal, var(--entity-home));
++}
++
++.list-page-header__title {
++    margin: 0;
++    color: var(--text-main);
++    font-size: 28px;
++    font-weight: 600;
++    line-height: 1.12;
++}
++
++@media (max-width: 768px) {
++    .list-page-header {
++        margin-bottom: 14px;
++        gap: 10px;
++    }
++
++    .list-page-header__icon {
++        width: 42px;
++        height: 42px;
++        padding: 8px;
++        border-radius: 12px;
++    }
++
++    .list-page-header__title {
++        font-size: 24px;
++    }
++}
+diff --git a/notas/templates/components/list_page_header.html b/notas/templates/components/list_page_header.html
+new file mode 100644
+index 0000000..9a883fc
+--- /dev/null
++++ b/notas/templates/components/list_page_header.html
+@@ -0,0 +1,7 @@
++<div class="list-page-header list-page-header--{{ vm.ui.entity }} list-page-header--scope-{{ vm.ui.scope }}">
++  <i
++    data-lucide="{% if vm.ui.page_icon %}{{ vm.ui.page_icon }}{% else %}{{ vm.ui.icon }}{% endif %}"
++    class="list-page-header__icon list-page-header__icon--{{ vm.ui.entity }}"
++  ></i>
++  <h2 class="list-page-header__title">{{ vm.ui.title }}</h2>
++</div>
+diff --git a/notas/templates/notas/dailyplans/list.html b/notas/templates/notas/dailyplans/list.html
+index 9051def..1df9246 100644
+--- a/notas/templates/notas/dailyplans/list.html
++++ b/notas/templates/notas/dailyplans/list.html
+@@ -3,10 +3,7 @@
+ {% block content %}
+ 
+ <div class="page list">
+-  <div class="list-page-title">
+-    <i data-lucide="{{ vm.ui.page_icon }}" class="page-icon"></i>
+-    <h2>{{ vm.ui.title }}</h2>
+-  </div>
++  {% include "components/list_page_header.html" %}
+ 
+   {% if vm.content.list_mode == "reorder" %}
+     {% include "components/list_panel_dailyplans_reorder.html" with children=vm.content.child_cards %}
+diff --git a/notas/templates/notas/foods/list.html b/notas/templates/notas/foods/list.html
+index 8899de0..7fd5ab0 100644
+--- a/notas/templates/notas/foods/list.html
++++ b/notas/templates/notas/foods/list.html
+@@ -3,10 +3,7 @@
+ {% block content %}
+ 
+ <div class="page list">
+-  <div class="list-page-title">
+-    <i data-lucide="{{ vm.ui.page_icon }}" class="page-icon"></i>
+-    <h2>{{ vm.ui.title }}</h2>
+-  </div>
++  {% include "components/list_page_header.html" %}
+ 
+   {% if vm.content.list_mode == "reorder" %}
+     {% include "components/list_panel_foods_reorder.html" with children=vm.content.child_cards %}
+diff --git a/notas/templates/notas/meals/list.html b/notas/templates/notas/meals/list.html
+index fe638da..7f6375e 100644
+--- a/notas/templates/notas/meals/list.html
++++ b/notas/templates/notas/meals/list.html
+@@ -3,10 +3,7 @@
+ {% block content %}
+ 
+ <div class="page list">
+-  <div class="list-page-title">
+-    <i data-lucide="{{ vm.ui.page_icon }}" class="page-icon"></i>
+-    <h2>{{ vm.ui.title }}</h2>
+-  </div>
++  {% include "components/list_page_header.html" %}
+ 
+   {% if vm.content.list_mode == "reorder" %}
+     {% include "components/list_panel_meals_reorder.html" with children=vm.content.child_cards %}
+diff --git a/notas/templates/notas/proposals/list.html b/notas/templates/notas/proposals/list.html
+index ed8e79a..872e858 100644
+--- a/notas/templates/notas/proposals/list.html
++++ b/notas/templates/notas/proposals/list.html
+@@ -4,10 +4,7 @@
+ 
+ <div class="page list proposal-list-page">
+ 
+-  <div class="list-page-title">
+-    <i data-lucide="{{ vm.ui.page_icon }}" class="page-icon"></i>
+-    <h2>{{ vm.ui.title }}</h2>
+-  </div>
++  {% include "components/list_page_header.html" %}
+ 
+   {% if vm.content.list_mode == "reorder" %}
+     {% include "components/list_panel_proposals_reorder.html" with proposals=vm.content.proposals %}

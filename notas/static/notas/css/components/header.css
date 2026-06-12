@@ -31,6 +31,7 @@
   display: flex;
   align-items: center;
   min-width: 0;
+  padding-right: 16px;
 }
 
 .page-header-right {
@@ -59,6 +60,65 @@
 
 .header-breadcrumbs {
   display: block;
+}
+
+/* Deferred header metadata: shown after the page/list hero leaves the viewport */
+body.page-home .page-header .label-entity.header,
+body.page-home .page-header .header-title-mobile,
+body.page-header-meta-deferred .page-header .label-entity.header,
+body.page-header-meta-deferred .page-header .header-title-mobile {
+  display: flex;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-4px);
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease,
+    visibility 180ms ease;
+}
+
+body.page-home.home-header-meta-visible .page-header .label-entity.header,
+body.page-home.home-header-meta-visible .page-header .header-title-mobile,
+body.page-header-meta-deferred.page-header-meta-visible .page-header .label-entity.header,
+body.page-header-meta-deferred.page-header-meta-visible .page-header .header-title-mobile {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+@media (min-width: 981px) {
+  body.page-header-meta-deferred .page-header .header-breadcrumbs {
+    display: block;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-4px);
+    transition:
+      opacity 180ms ease,
+      transform 180ms ease,
+      visibility 180ms ease;
+  }
+
+  body.page-header-meta-deferred.page-header-meta-visible .page-header .header-breadcrumbs {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+
+  body.page-header-meta-deferred .page-header .header-title-mobile {
+    display: none;
+  }
+
+  body.page-home .page-header .header-breadcrumbs {
+    display: none;
+  }
+
+  body.page-home .page-header .header-title-mobile {
+    margin-left: 8px;
+  }
 }
 
 .btn-list-header {
@@ -102,8 +162,8 @@
 }
 
 @media (min-width: 981px) {
-  body.sidebar-collapsed .page-header,
-  body.sidebar-collapsed .header-mini-edit {
+  :where(body.sidebar-collapsed, html.sidebar-collapsed body) .page-header,
+  :where(body.sidebar-collapsed, html.sidebar-collapsed body) .header-mini-edit {
     left: var(--sidebar-collapsed-width);
   }
 }
@@ -285,20 +345,30 @@
 
   .header-title-mobile {
     display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: none;
     flex-direction: column;
     align-items: flex-start;
+    justify-content: center;
     margin-left: 2px;
+    text-align: left;
   }
 
   .header-title-mobile > * {
-    padding: 1px;
-    height: 22px;
+    height: auto;
+  }
+
+  .header-title-mobile p {
+    width: 100%;
   }
 
   .header-title-mobile p.subtitle {
-    font-size: 13px;
+    display: block;
     color: var(--text-muted);
+    font-size: 13px;
     font-weight: 400;
+    line-height: 1.15;
   }
 
   .header-breadcrumbs {

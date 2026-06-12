@@ -3,10 +3,7 @@
 {% block content %}
 
 <div class="page list">
-  <div class="list-page-title">
-    <i data-lucide="{{ vm.ui.page_icon }}" class="page-icon"></i>
-    <h2>{{ vm.ui.title }}</h2>
-  </div>
+  {% include "components/list_page_header.html" %}
 
   {% if vm.content.list_mode == "reorder" %}
     {% include "components/list_panel_foods_reorder.html" with children=vm.content.child_cards %}
