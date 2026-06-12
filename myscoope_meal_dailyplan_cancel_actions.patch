@@ -1,0 +1,44 @@
+--- a/notas/templates/notas/dailyplans/create.html
++++ b/notas/templates/notas/dailyplans/create.html
+@@ -32,6 +32,7 @@
+       </section>
+ 
+       <div class="entity-form__actions">
++        <a href="{% url 'dailyplan_list' %}" class="btn-cancel-create entity-form__cancel">Cancelar</a>
+         <button type="submit" class="btn-continue entity-form__submit">Continuar</button>
+       </div>
+     </form>
+--- a/notas/templates/notas/dailyplans/rename.html
++++ b/notas/templates/notas/dailyplans/rename.html
+@@ -32,6 +32,7 @@
+       </section>
+ 
+       <div class="entity-form__actions">
++        <a href="{% url 'dailyplan_detail' dailyplan.id %}" class="btn-cancel-create entity-form__cancel">Cancelar</a>
+         <button type="submit" class="btn-continue entity-form__submit">Guardar</button>
+       </div>
+     </form>
+--- a/notas/templates/notas/meals/create.html
++++ b/notas/templates/notas/meals/create.html
+@@ -32,6 +32,7 @@
+       </section>
+ 
+       <div class="entity-form__actions">
++        <a href="{% url 'meal_list' %}" class="btn-cancel-create entity-form__cancel">Cancelar</a>
+         <button type="submit" class="btn-continue entity-form__submit">Continuar</button>
+       </div>
+     </form>
+--- a/notas/templates/notas/meals/rename.html
++++ b/notas/templates/notas/meals/rename.html
+@@ -36,6 +36,11 @@
+       </section>
+ 
+       <div class="entity-form__actions">
++        {% if return_to %}
++          <a href="{{ return_to }}" class="btn-cancel-create entity-form__cancel">Cancelar</a>
++        {% else %}
++          <a href="{% url 'meal_detail' meal.id %}" class="btn-cancel-create entity-form__cancel">Cancelar</a>
++        {% endif %}
+         <button type="submit" class="btn-continue entity-form__submit">Guardar</button>
+       </div>
+     </form>

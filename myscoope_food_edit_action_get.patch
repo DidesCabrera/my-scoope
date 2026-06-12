@@ -1,0 +1,11 @@
+--- a/notas/application/resolvers/food_resolvers.py	2026-06-11 21:37:07.000000000 +0000
++++ b/notas/application/resolvers/food_resolvers.py	2026-06-11 23:26:10.520516598 +0000
+@@ -49,7 +49,7 @@
+ 
+     "edit": {
+         "label": "Edit",
+-        "method": "post",
++        "method": "get",
+         "icon": "pencil",
+         "order": 90,
+         "desktop_position": "inline",

@@ -1,38 +1,88 @@
 {% extends "notas/base.html" %}
-{% block title %}Create Meal{% endblock %}
+{% block title %}Crear alimento{% endblock %}
 {% block content %}
 
+<div class="page page--detail page-modal page-modal--food-edit">
 
-<div class="page page--detail page-modal">
+  <div class="wrap-page-modal food-edit-form">
 
-  <div class="wrap-page-modal">
-
-    <h2>Create Food</h2>
-
-    <form method="POST">
+    <form method="POST" class="food-edit-form__form" novalidate>
       {% csrf_token %}
-    
-      <label>Name</label>
-      <input type="text" name="name" required>
-    
-      <label>Protein (per 100g)</label>
-      <input type="number" step="0.01" name="protein" required>
-    
-      <label>Carbs (per 100g)</label>
-      <input type="number" step="0.01" name="carbs" required>
-    
-      <label>Fat (per 100g)</label>
-      <input type="number" step="0.01" name="fat" required>
-    
-      <button type="submit">Create Food</button>
-    
+
+      <div class="main-modal food-edit-form__main-modal">
+        <i data-lucide="carrot" class="main-modal-icon food"></i>
+        <h2 class="title-create">Crear Alimento</h2>
+      </div>
+
+      {% if form.non_field_errors %}
+        <div class="food-edit-form__errors">
+          {{ form.non_field_errors }}
+        </div>
+      {% endif %}
+
+      <section class="food-edit-form__section food-edit-form__section--name" aria-labelledby="food-create-name-title">
+        <div class="food-edit-form__section-header">
+          <h3 id="food-create-name-title">1. Ingresa el nombre del alimento</h3>
+        </div>
+
+        <div class="food-edit-form__field">
+          <label for="{{ form.name.id_for_label }}" class="food-edit-form__label food-edit-form__label--hidden">{{ form.name.label }}</label>
+          {{ form.name }}
+          {% if form.name.errors %}
+            <div class="food-edit-form__field-errors">{{ form.name.errors }}</div>
+          {% endif %}
+        </div>
+      </section>
+
+      <section class="food-edit-form__section food-edit-form__section--macros" aria-labelledby="food-create-macros-title">
+        <div class="food-edit-form__section-header">
+          <h3 id="food-create-macros-title">2. Ingresa los Macros por cada 100g</h3>
+        </div>
+
+        <div class="food-edit-form__macro-card" aria-label="Macros por 100g">
+          <div class="food-edit-form__macro-row food-edit-form__macro-row--protein">
+            <label for="{{ form.protein.id_for_label }}" class="food-edit-form__macro-label">{{ form.protein.label }}</label>
+            <div class="food-edit-form__macro-control">
+              {{ form.protein }}
+              <span>g</span>
+            </div>
+          </div>
+          {% if form.protein.errors %}
+            <div class="food-edit-form__field-errors food-edit-form__field-errors--macro">{{ form.protein.errors }}</div>
+          {% endif %}
+
+          <div class="food-edit-form__macro-row food-edit-form__macro-row--carbs">
+            <label for="{{ form.carbs.id_for_label }}" class="food-edit-form__macro-label">{{ form.carbs.label }}</label>
+            <div class="food-edit-form__macro-control">
+              {{ form.carbs }}
+              <span>g</span>
+            </div>
+          </div>
+          {% if form.carbs.errors %}
+            <div class="food-edit-form__field-errors food-edit-form__field-errors--macro">{{ form.carbs.errors }}</div>
+          {% endif %}
+
+          <div class="food-edit-form__macro-row food-edit-form__macro-row--fat">
+            <label for="{{ form.fat.id_for_label }}" class="food-edit-form__macro-label">{{ form.fat.label }}</label>
+            <div class="food-edit-form__macro-control">
+              {{ form.fat }}
+              <span>g</span>
+            </div>
+          </div>
+          {% if form.fat.errors %}
+            <div class="food-edit-form__field-errors food-edit-form__field-errors--macro">{{ form.fat.errors }}</div>
+          {% endif %}
+        </div>
+      </section>
+
+      <div class="food-edit-form__actions">
+        <a href="{% url 'food_list' %}" class="btn-cancel-create food-edit-form__cancel">Cancelar</a>
+        <button type="submit" class="btn-continue food-edit-form__submit">Crear</button>
+      </div>
     </form>
 
   </div>
-  
+
 </div>
 
 {% endblock %}
-
-
-

@@ -49,7 +49,7 @@ FOOD_ENTITY_ACTION_DEFINITIONS = {
 
     "edit": {
         "label": "Edit",
-        "method": "post",
+        "method": "get",
         "icon": "pencil",
         "order": 90,
         "desktop_position": "inline",

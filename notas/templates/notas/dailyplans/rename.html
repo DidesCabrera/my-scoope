@@ -1,28 +1,44 @@
 {% extends "notas/base.html" %}
-{% block title %}Create DailyPlan{% endblock %}
+{% block title %}Rename DailyPlan{% endblock %}
 {% block content %}
 
-<div class="page page--detail page-modal">
+<div class="page page--detail page-modal page-modal--entity-form">
 
-  <div class="wrap-page-modal">
+  <div class="wrap-page-modal entity-form">
 
-
-    <form method="post">
+    <form method="post" class="entity-form__form" novalidate>
       {% csrf_token %}
-      <div class="main-modal">
-        <i data-lucide="utensils" class="main-modal-icon dailyplan"></i>
+
+      <div class="main-modal entity-form__main-modal">
+        <i data-lucide="clipboard-list" class="main-modal-icon dailyplan"></i>
         <h2 class="title-create">Renombra tu Plan Diario</h2>
-        <label>Elige un nuevo Nombre</label>
-        <input type="text" name="name" value="{{ dailyplan.name }}"  class="input-create">
       </div>
 
-      <div class="btn-block">
-        <button type="submit"  class="btn-continue">Guardar</button>
+      <section class="entity-form__section entity-form__section--name" aria-labelledby="dailyplan-rename-name-title">
+        <div class="entity-form__section-header">
+          <h3 id="dailyplan-rename-name-title">Elige un nuevo nombre</h3>
+        </div>
+
+        <div class="entity-form__field">
+          <label for="dailyplan-rename-name" class="entity-form__label entity-form__label--hidden">Nombre</label>
+          <input
+            id="dailyplan-rename-name"
+            type="text"
+            name="name"
+            value="{{ dailyplan.name }}"
+            class="input-create entity-form__input"
+          >
+        </div>
+      </section>
+
+      <div class="entity-form__actions">
+        <a href="{% url 'dailyplan_detail' dailyplan.id %}" class="btn-cancel-create entity-form__cancel">Cancelar</a>
+        <button type="submit" class="btn-continue entity-form__submit">Guardar</button>
       </div>
     </form>
 
   </div>
-  
+
 </div>
 
 {% endblock %}

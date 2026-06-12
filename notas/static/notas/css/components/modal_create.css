@@ -118,3 +118,380 @@
     border: 1px solid var(--input-border);
     transition: background-color 9999s ease-in-out 0s;
   }
+
+/* =========================================================
+   Food edit form
+   ========================================================= */
+
+.page-modal--food-edit {
+  max-width: 720px;
+}
+
+.food-edit-form {
+  color: var(--text-main);
+}
+
+.food-edit-form__main-modal {
+  margin-bottom: 2px;
+}
+
+.food-edit-form__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.food-edit-form__section {
+  padding: 18px;
+  background: var(--surface-card-muted);
+  border: 0;
+  border-radius: 22px;
+  box-shadow: none;
+}
+
+.food-edit-form__section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.food-edit-form__section-header h3 {
+  margin: 0;
+  color: var(--text-main);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.food-edit-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.food-edit-form__label,
+.food-edit-form__macro-label {
+  color: var(--text-main);
+  font-size: 0.92rem;
+  font-weight: 650;
+}
+
+.food-edit-form__label--hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.food-edit-form__input,
+.food-edit-form__macro-input {
+  width: 100%;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--input-text);
+  caret-color: var(--input-text);
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    background-color 140ms ease;
+}
+
+.food-edit-form__input {
+  min-height: 46px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 1rem;
+}
+
+.food-edit-form__input:focus,
+.food-edit-form__macro-input:focus {
+  outline: none;
+  border-color: var(--input-focus-border);
+  box-shadow: 0 0 0 3px var(--input-focus-shadow);
+}
+
+.food-edit-form__input::placeholder {
+  color: var(--input-placeholder);
+}
+
+.food-edit-form__macro-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  padding: 2px 0;
+}
+
+.food-edit-form__macro-row {
+  display: grid;
+  grid-template-columns: minmax(80px, 1fr) minmax(120px, 170px);
+  align-items: center;
+  gap: 14px;
+  min-height: 48px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--kpi-row-separator);
+}
+
+.food-edit-form__macro-row:last-of-type {
+  border-bottom: none;
+}
+
+.food-edit-form__macro-label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.food-edit-form__macro-label::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--text-soft);
+}
+
+.food-edit-form__macro-row--protein .food-edit-form__macro-label::before {
+  background: var(--nutrition-protein);
+}
+
+.food-edit-form__macro-row--carbs .food-edit-form__macro-label::before {
+  background: var(--nutrition-carbs);
+}
+
+.food-edit-form__macro-row--fat .food-edit-form__macro-label::before {
+  background: var(--nutrition-fat);
+}
+
+.food-edit-form__macro-control {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.food-edit-form__macro-input {
+  min-height: 38px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  text-align: right;
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.food-edit-form__macro-input::-webkit-outer-spin-button,
+.food-edit-form__macro-input::-webkit-inner-spin-button {
+  margin: 0;
+}
+
+.food-edit-form__errors,
+.food-edit-form__field-errors {
+  color: #b42318;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.food-edit-form__errors ul,
+.food-edit-form__field-errors ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.food-edit-form__field-errors--macro {
+  margin-top: -2px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--kpi-row-separator);
+}
+
+.food-edit-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  padding-top: 2px;
+}
+
+.food-edit-form__cancel,
+.food-edit-form__submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.food-edit-form__submit {
+  font-weight: 650;
+}
+
+@media (max-width: 768px) {
+  .page-modal--food-edit {
+    max-width: none;
+  }
+
+  .food-edit-form__section {
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .food-edit-form__macro-row {
+    grid-template-columns: 1fr minmax(108px, 135px);
+    gap: 10px;
+  }
+
+  .food-edit-form__actions {
+    justify-content: stretch;
+  }
+
+  .food-edit-form__cancel,
+  .food-edit-form__submit {
+    flex: 1 1 0;
+    width: auto;
+  }
+}
+
+/* =========================================================
+   Shared create / rename entity form
+   ========================================================= */
+
+.page-modal--entity-form {
+  max-width: 720px;
+}
+
+.entity-form {
+  color: var(--text-main);
+}
+
+.entity-form__main-modal {
+  margin-bottom: 2px;
+}
+
+.entity-form__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.entity-form__section {
+  padding: 18px;
+  background: var(--surface-card-muted);
+  border: 0;
+  border-radius: 22px;
+  box-shadow: none;
+}
+
+.entity-form__section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.entity-form__section-header h3 {
+  margin: 0;
+  color: var(--text-main);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.entity-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.entity-form__label {
+  color: var(--text-main);
+  font-size: 0.92rem;
+  font-weight: 650;
+}
+
+.entity-form__label--hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.entity-form__input {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 1px solid var(--input-border);
+  border-radius: 12px;
+  background: var(--input-bg);
+  color: var(--input-text);
+  caret-color: var(--input-text);
+  font-size: 1rem;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    background-color 140ms ease;
+}
+
+.entity-form__input:focus {
+  outline: none;
+  border-color: var(--input-focus-border);
+  box-shadow: 0 0 0 3px var(--input-focus-shadow);
+}
+
+.entity-form__input::placeholder {
+  color: var(--input-placeholder);
+}
+
+.entity-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  padding-top: 2px;
+}
+
+.entity-form__cancel,
+.entity-form__submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.entity-form__submit {
+  font-weight: 650;
+}
+
+@media (max-width: 768px) {
+  .page-modal--entity-form {
+    max-width: none;
+  }
+
+  .entity-form__section {
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .entity-form__actions {
+    justify-content: stretch;
+  }
+
+  .entity-form__cancel,
+  .entity-form__submit {
+    flex: 1 1 0;
+    width: auto;
+  }
+}

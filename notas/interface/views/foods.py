@@ -239,6 +239,7 @@ def food_edit(request, pk):
 #************ RENDER BÁSICOS *********************
 # ---------- CREATE - *FALTA_RENAME - CONFIGURE ----------
 
+@login_required
 def food_create(request):
 
     viewmode = FOOD_VIEWMODE_CREATE
@@ -250,26 +251,28 @@ def food_create(request):
     )
 
     if request.method == "POST":
+        form = FoodEditForm(request.POST)
 
-        name = request.POST.get("name")
-        protein = float(request.POST.get("protein"))
-        carbs = float(request.POST.get("carbs"))
-        fat = float(request.POST.get("fat"))
+        if form.is_valid():
+            create_food(
+                user=request.user,
+                name=form.cleaned_data["name"],
+                protein=form.cleaned_data["protein"],
+                carbs=form.cleaned_data["carbs"],
+                fat=form.cleaned_data["fat"],
+            )
 
-        create_food(
-            user=request.user,
-            name=name,
-            protein=protein,
-            carbs=carbs,
-            fat=fat,
-        )
-
-        return redirect("food_list")
+            return redirect("food_list")
+    else:
+        form = FoodEditForm()
 
     return render(
         request,
         "notas/foods/create.html",
-        base_vm.as_context(),
+        {
+            **base_vm.as_context(),
+            "form": form,
+        },
     )
 
 
