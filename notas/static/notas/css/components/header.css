@@ -19,6 +19,8 @@
 
   z-index: var(--z-header);
 
+  transition: left 0.2s ease;
+
   transform: translateZ(0);
   will-change: transform;
   backface-visibility: hidden;
@@ -95,7 +97,17 @@
   align-items: center;
 
   border-bottom: 1px solid var(--border-default);
+
+  transition: left 0.2s ease;
 }
+
+@media (min-width: 981px) {
+  body.sidebar-collapsed .page-header,
+  body.sidebar-collapsed .header-mini-edit {
+    left: var(--sidebar-collapsed-width);
+  }
+}
+
 
 .header-mini-edit p {
   line-height: 1.2;

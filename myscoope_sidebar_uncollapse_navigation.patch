@@ -1,0 +1,44 @@
+diff --git a/notas/templates/notas/base.html b/notas/templates/notas/base.html
+index df64030..30f2cda 100644
+--- a/notas/templates/notas/base.html
++++ b/notas/templates/notas/base.html
+@@ -216,6 +216,19 @@
+                 toggle.addEventListener("click", function () {
+                     const isCurrent = group.classList.contains("is-current");
+                     const isOpen = group.classList.contains("is-open");
++
++                    if (isDesktopSidebar() && document.body.classList.contains("sidebar-collapsed")) {
++                        setDesktopSidebarCollapsed(false);
++
++                        const extraOpenGroup = getExtraOpenGroup();
++                        if (extraOpenGroup && extraOpenGroup !== group) {
++                            closeGroup(extraOpenGroup);
++                        }
++
++                        openGroup(group);
++                        ensureCurrentGroupOpen();
++                        return;
++                    }
+     
+                     if (isCurrent) {
+                         ensureCurrentGroupOpen();
+@@ -290,12 +303,15 @@
+ 
+     window.addEventListener("resize", restoreDesktopSidebarState);
+ 
+-    /* cerrar al hacer click en links del sidebar en mobile */
+-    document.querySelectorAll(".sidebar-nav a").forEach(link => {
++    /* cerrar al hacer click en links del sidebar en mobile y desplegar sidebar desktop al navegar */
++    document.querySelectorAll(".sidebar a").forEach(link => {
+         link.addEventListener("click", () => {
+-            if (!isDesktopSidebar()) {
+-                document.body.classList.remove("sidebar-open");
++            if (isDesktopSidebar()) {
++                setDesktopSidebarCollapsed(false);
++                return;
+             }
++
++            document.body.classList.remove("sidebar-open");
+         });
+     });
+ 

@@ -1,5 +1,6 @@
 :root {
   --sidebar-width: 300px;
+  --sidebar-collapsed-width: 64px;
   --header-height: 40px;
 
   --z-picker-dropdown: 500;
@@ -66,7 +67,22 @@ header {
   gap: 12px;
 
   overflow: hidden;
+
+  transition: width 0.2s ease, padding 0.2s ease;
 }
+
+@media (min-width: 981px) {
+  body.sidebar-collapsed .sidebar {
+    width: var(--sidebar-collapsed-width);
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  body.sidebar-collapsed .app-content {
+    margin-left: var(--sidebar-collapsed-width);
+  }
+}
+
 
 .sidebar-scroll-region {
   flex: 1 1 auto;
@@ -122,6 +138,8 @@ header {
   min-width: 0;
 
   margin-left: var(--sidebar-width);
+
+  transition: margin-left 0.2s ease;
 
   /*
     El contenido principal usa scroll nativo del documento.

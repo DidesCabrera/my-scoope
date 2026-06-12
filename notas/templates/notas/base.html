@@ -216,6 +216,19 @@
                 toggle.addEventListener("click", function () {
                     const isCurrent = group.classList.contains("is-current");
                     const isOpen = group.classList.contains("is-open");
+
+                    if (isDesktopSidebar() && document.body.classList.contains("sidebar-collapsed")) {
+                        setDesktopSidebarCollapsed(false);
+
+                        const extraOpenGroup = getExtraOpenGroup();
+                        if (extraOpenGroup && extraOpenGroup !== group) {
+                            closeGroup(extraOpenGroup);
+                        }
+
+                        openGroup(group);
+                        ensureCurrentGroupOpen();
+                        return;
+                    }
     
                     if (isCurrent) {
                         ensureCurrentGroupOpen();
@@ -256,27 +269,51 @@
     
 <script>
 
+    const SIDEBAR_DESKTOP_COLLAPSED_KEY = "myscoope.sidebar.desktopCollapsed";
+
+    function isDesktopSidebar() {
+        return window.matchMedia("(min-width: 981px)").matches;
+    }
+
+    function setDesktopSidebarCollapsed(isCollapsed) {
+        document.body.classList.toggle("sidebar-collapsed", isCollapsed);
+        localStorage.setItem(SIDEBAR_DESKTOP_COLLAPSED_KEY, isCollapsed ? "true" : "false");
+    }
+
+    function restoreDesktopSidebarState() {
+        if (!isDesktopSidebar()) {
+            document.body.classList.remove("sidebar-collapsed");
+            return;
+        }
+
+        const savedState = localStorage.getItem(SIDEBAR_DESKTOP_COLLAPSED_KEY);
+        document.body.classList.toggle("sidebar-collapsed", savedState === "true");
+    }
+
     function toggleSidebar() {
+        if (isDesktopSidebar()) {
+            setDesktopSidebarCollapsed(!document.body.classList.contains("sidebar-collapsed"));
+            return;
+        }
+
         document.body.classList.toggle("sidebar-open");
     }
 
-    /* cerrar al hacer click en links del sidebar en mobile */
-    document.querySelectorAll(".sidebar-nav a").forEach(link => {
+    restoreDesktopSidebarState();
+
+    window.addEventListener("resize", restoreDesktopSidebarState);
+
+    /* cerrar sidebar mobile y dejar la siguiente vista desktop desplegada sin animar la vista actual */
+    document.querySelectorAll(".sidebar a").forEach(link => {
         link.addEventListener("click", () => {
-            if (window.innerWidth <= 768) {
-                document.body.classList.remove("sidebar-open");
+            if (isDesktopSidebar()) {
+                localStorage.setItem(SIDEBAR_DESKTOP_COLLAPSED_KEY, "false");
+                return;
             }
-        });
-    });
 
-    /* cerrar al presionar el icono collapse */
-    const collapseIcon = document.querySelector(".collapse-sidebar-icon");
-
-    if (collapseIcon) {
-        collapseIcon.addEventListener("click", () => {
             document.body.classList.remove("sidebar-open");
         });
-    }
+    });
 
 </script>
 

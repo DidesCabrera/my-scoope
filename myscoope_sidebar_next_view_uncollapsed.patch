@@ -1,0 +1,17 @@
+diff --git a/notas/templates/notas/base.html b/notas/templates/notas/base.html
+--- a/notas/templates/notas/base.html
++++ b/notas/templates/notas/base.html
+@@ -303,11 +303,11 @@
+ 
+     window.addEventListener("resize", restoreDesktopSidebarState);
+ 
+-    /* cerrar al hacer click en links del sidebar en mobile y desplegar sidebar desktop al navegar */
++    /* cerrar sidebar mobile y dejar la siguiente vista desktop desplegada sin animar la vista actual */
+     document.querySelectorAll(".sidebar a").forEach(link => {
+         link.addEventListener("click", () => {
+             if (isDesktopSidebar()) {
+-                setDesktopSidebarCollapsed(false);
++                localStorage.setItem(SIDEBAR_DESKTOP_COLLAPSED_KEY, "false");
+                 return;
+             }
+ 

@@ -9,39 +9,38 @@
                 <i data-lucide="house" class="sidebar-brand-home-icon"></i>
                 <img src="{% static 'img/logo-white.png' %}" alt="Logo" class="brand-logo">
             </a>
-            <button class="collapse-sidebar-btn" onclick="toggleSidebar()">
+            <button class="collapse-sidebar-btn" type="button" onclick="toggleSidebar()" aria-label="Contraer o expandir sidebar" title="Contraer o expandir sidebar">
                 <i data-lucide="panel-right" class="collapse-sidebar-icon"></i>
             </button>
         </div>
 
-        <div class="user-block">
-            {% if request.user.is_authenticated %}
+        {% if request.user.is_authenticated %}
+            <a href="{% url 'profile_detail' %}" class="user-block user-block--link" aria-label="Ir a mi perfil">
                 <div class="user">
-                    <a href="{% url 'profile_detail' %}" class="user">
-                        <i data-lucide="circle-user-round" class="profile-icon"></i>
-                        <h2>{{ request.user.username }}</h2>
-                        <div class="label-rol">
-                            {% if request.user.profile.role == "member" %}Member{% endif %}
-                            {% if request.user.profile.role == "nutritionist" %}Nutri{% endif %}
-                        </div>
-                        <i data-lucide="chevron-right" class="enter-user-icon"></i>
-                    </a>
+                    <i data-lucide="circle-user-round" class="profile-icon"></i>
+                    <h2>{{ request.user.username }}</h2>
+                    <div class="label-rol">
+                        {% if request.user.profile.role == "member" %}Member{% endif %}
+                        {% if request.user.profile.role == "nutritionist" %}Nutri{% endif %}
+                    </div>
+                    <i data-lucide="chevron-right" class="enter-user-icon"></i>
                 </div>
-            {% endif %}
 
-            <div class="personal-metrics">
-                <i data-lucide="scale" class="sidebar-weight-icon"></i>
-                <span class="weight-sidebar">{{ current_weight }}kg</span>
-            </div>
-        </div>
+                <div class="personal-metrics">
+                    <i data-lucide="scale" class="sidebar-weight-icon"></i>
+                    <span class="weight-sidebar">{{ current_weight }}kg</span>
+                </div>
+            </a>
+        {% endif %}
 
         <nav class="sidebar-nav">
             {% for section in vm.ui.sidebar_sections %}
                 {% if section.key != "admin" or request.user.is_staff or request.user.is_superuser %}
-                    <p class="group-name-sidebar">{{ section.label }}</p>
+                    <div class="sidebar-section sidebar-section--{{ section.key }}">
+                        <p class="group-name-sidebar">{{ section.label }}</p>
 
-                    {% for group in section.groups %}
-                        <div class="sidebar-group sidebar-group--{{ group.key }} {% if group.is_open %}is-open{% endif %} {% if group.is_link %}sidebar-group--link{% endif %} {% if group.is_active and not group.is_link %}is-current{% endif %}">
+                        {% for group in section.groups %}
+                            <div class="sidebar-group sidebar-group--{{ group.key }} {% if group.is_open %}is-open{% endif %} {% if group.is_link %}sidebar-group--link{% endif %} {% if group.is_active and not group.is_link %}is-current{% endif %}">
 
                             {% if group.is_link %}
                                 {% if group.action_url %}
@@ -102,8 +101,9 @@
                                     {% endfor %}
                                 </div>
                             {% endif %}
-                        </div>
-                    {% endfor %}
+                            </div>
+                        {% endfor %}
+                    </div>
                 {% endif %}
             {% endfor %}
         </nav>

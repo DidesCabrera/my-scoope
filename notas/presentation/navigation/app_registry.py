@@ -88,7 +88,7 @@ APP_NAVIGATION = (
 
     NavSectionSpec(
         key="account",
-        label="Main",
+        label="Tools",
         groups=(
             NavGroupSpec(
                 key="home",

@@ -10,7 +10,20 @@
 }
 
 .collapse-sidebar-btn {
-    display: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0px 0px 1px 0px;
+    background: none;
+    border: none;
+    color: var(--sidebar-text-active);
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.collapse-sidebar-btn:hover {
+    background-color: var(--sidebar-hover);
 }
 
 /* =========================
@@ -46,8 +59,8 @@
   }
   
   .collapse-sidebar-icon {
-    height: 22px;
-    width: 22px;
+    height: 20px;
+    width: 20px;
     flex-shrink: 0;
     color: rgb(176, 176, 176);
     stroke-width: 1.5;
@@ -57,18 +70,18 @@
 
 @media (max-width: 768px) {
 
+    .collapse-sidebar-icon {
+        height: 22px;
+        width: 22px;
+    }
+
     .brand-logo {
         width: 125px;
     }
 
     .collapse-sidebar-btn {
-        background: none;
-        border: none;
-        color: var(--sidebar-text-active);
-        cursor: pointer;
-        padding: 4px;
         display: flex;
-        align-items: center;
+        padding: 4px;
     }
 
     .mobile-menu-btn {
@@ -122,6 +135,21 @@
     background: rgba(255, 255, 255, 0.06);
 }
 
+
+/* Clickable profile block */
+.user-block--link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.user-block--link:hover {
+    color: inherit;
+    text-decoration: none;
+    background-color: var(--surface-card-profile-sidebar);
+}
 
 /* Sidebar brand/home link */
 .sidebar-brand-link {
@@ -283,6 +311,118 @@
 .nav-text {
     color: inherit;
 }
+
+/* =========================
+   Desktop collapsed sidebar
+   ========================= */
+
+@media (min-width: 981px) {
+    body.sidebar-collapsed .block-logo-sidebar {
+        flex-direction: column;
+        justify-content: flex-start;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+
+    body.sidebar-collapsed .collapse-sidebar-btn {
+        order: 1;
+    }
+
+    body.sidebar-collapsed .sidebar-brand-link {
+        order: 2;
+    }
+
+    body.sidebar-collapsed .brand-logo,
+    body.sidebar-collapsed .sidebar-label,
+    body.sidebar-collapsed .group-name-sidebar,
+    body.sidebar-collapsed .sidebar-group-action,
+    body.sidebar-collapsed .sidebar .nav-tab .nav-text,
+    body.sidebar-collapsed .sidebar .nav-tab .nav-item-dot,
+    body.sidebar-collapsed .user-block {
+        display: none;
+    }
+
+    body.sidebar-collapsed .sidebar-brand-link {
+        justify-content: center;
+        width: 100%;
+    }
+
+    body.sidebar-collapsed .sidebar-brand-home-icon {
+        width: 32px;
+        height: 32px;
+    }
+
+    body.sidebar-collapsed .collapse-sidebar-btn {
+        width: 32px;
+        height: 32px;
+    }
+
+    body.sidebar-collapsed .collapse-sidebar-icon {
+        transform: rotate(180deg);
+    }
+
+    body.sidebar-collapsed .sidebar-nav {
+        align-items: center;
+        gap: 6px;
+        padding-top: 12px;
+        border-top: 1px solid var(--sidebar-border);
+    }
+
+    body.sidebar-collapsed .sidebar-section {
+        width: 100%;
+        padding-top: 10px;
+        border-top: 1px solid var(--sidebar-border);
+    }
+
+    body.sidebar-collapsed .sidebar-section:first-child {
+        padding-top: 0;
+        border-top: none;
+    }
+
+    body.sidebar-collapsed .sidebar-group,
+    body.sidebar-collapsed .sidebar-group-head,
+    body.sidebar-collapsed .sidebar-main,
+    body.sidebar-collapsed .sidebar-main--link {
+        width: 100%;
+    }
+
+    body.sidebar-collapsed .sidebar-group {
+        margin-bottom: 2px;
+    }
+
+    body.sidebar-collapsed .sidebar-group-head {
+        justify-content: center;
+        gap: 0;
+    }
+
+    body.sidebar-collapsed .sidebar-main,
+    body.sidebar-collapsed .sidebar-main--link {
+        justify-content: center;
+        padding: 8px 0;
+    }
+
+    body.sidebar-collapsed .sidebar-left {
+        justify-content: center;
+        gap: 0;
+        width: 100%;
+    }
+
+    body.sidebar-collapsed .sidebar-sub {
+        display: none !important;
+    }
+
+    body.sidebar-collapsed .sidebar .nav-tab {
+        justify-content: center;
+        padding: 8px 0;
+    }
+
+    body.sidebar-collapsed .nav-item-leading {
+        justify-content: center;
+        min-width: 0;
+        gap: 0;
+    }
+}
+
 
 
 
