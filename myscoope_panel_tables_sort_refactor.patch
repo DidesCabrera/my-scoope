@@ -1,0 +1,385 @@
+--- a/notas/templates/components/card_child_meal.html	2026-06-10 20:56:21.000000000 +0000
++++ b/notas/templates/components/card_child_meal.html	2026-06-12 20:45:52.277499146 +0000
+@@ -23,8 +23,8 @@
+                     {% endif %}
+                 {% endif %}
+             >
+-                {% include "components/detail_tabs_foods.html" with panel_id=panel_id foods_nutrition_only_desktop=dpm_meal show_hide_tab=True %}
+-                {% include "components/detail_panels_foods.html" with panel_id=panel_id foods=child_card.foods_aggregation items=child_card.table.items nutrition_grid_template="components/grid_foods.html" foods_nutrition_only_desktop=dpm_meal %}
++                {% include "components/detail_tabs_foods.html" with panel_id=panel_id foods_nutrition_only_desktop=dpm_meal hide_desktop_foods_aggregation_tab=hide_desktop_foods_aggregation_tab show_hide_tab=True %}
++                {% include "components/detail_panels_foods.html" with panel_id=panel_id foods=child_card.foods_aggregation items=child_card.table.items nutrition_grid_template="components/grid_foods.html" foods_nutrition_only_desktop=dpm_meal hide_desktop_foods_aggregation_tab=hide_desktop_foods_aggregation_tab %}
+             </div>
+         {% endwith %}
+     {% else %}
+@@ -40,8 +40,8 @@
+                     {% endif %}
+                 {% endif %}
+             >
+-                {% include "components/detail_tabs_foods.html" with panel_id=panel_id foods_nutrition_only_desktop=dpm_meal show_hide_tab=True %}
+-                {% include "components/detail_panels_foods.html" with panel_id=panel_id foods=child_card.foods_aggregation items=child_card.table.items nutrition_grid_template="components/grid_foods.html" foods_nutrition_only_desktop=dpm_meal %}
++                {% include "components/detail_tabs_foods.html" with panel_id=panel_id foods_nutrition_only_desktop=dpm_meal hide_desktop_foods_aggregation_tab=hide_desktop_foods_aggregation_tab show_hide_tab=True %}
++                {% include "components/detail_panels_foods.html" with panel_id=panel_id foods=child_card.foods_aggregation items=child_card.table.items nutrition_grid_template="components/grid_foods.html" foods_nutrition_only_desktop=dpm_meal hide_desktop_foods_aggregation_tab=hide_desktop_foods_aggregation_tab %}
+             </div>
+         {% endwith %}
+     {% endif %}
+--- a/notas/templates/notas/meals/list.html	2026-06-12 04:19:12.000000000 +0000
++++ b/notas/templates/notas/meals/list.html	2026-06-12 20:45:52.276924352 +0000
+@@ -11,7 +11,7 @@
+     {% include "components/list_panel_meals_delete.html" with children=vm.content.child_cards %}
+   {% else %}
+     {% for child in vm.content.child_cards %}
+-      {% include "components//card_child_meal.html" with child_card=child %}
++      {% include "components//card_child_meal.html" with child_card=child hide_desktop_foods_aggregation_tab=True %}
+     {% empty %}
+       <p>No meals yet.</p>
+     {% endfor %}
+--- a/notas/templates/components/detail_tabs_foods.html	2026-06-12 18:55:11.000000000 +0000
++++ b/notas/templates/components/detail_tabs_foods.html	2026-06-12 20:46:02.983826185 +0000
+@@ -1,16 +1,16 @@
+ <div class="card-detail-tabs card-detail-tabs--desktop block-desplegar-tabla block-card-desplegar">
+ 
+-    {% if not foods_nutrition_only_desktop %}
++    {% if not foods_nutrition_only_desktop and not hide_desktop_foods_aggregation_tab %}
+     <div class="btn-desplegar {% if not show_hide_tab %}is-active{% endif %}" data-target="#card-menu-{{ panel_id }}">
+         <p>Alimentos</p>
+     </div>
+ 
+     <div class="btn-desplegar" data-target="#card-grid-foods-{{ panel_id }}">
+-        <p>Tabla Nutricional</p>
++        <p>Tabla Alimentos</p>
+     </div>
+     {% else %}
+     <div class="btn-desplegar {% if not show_hide_tab %}is-active{% endif %}" data-target="#card-grid-foods-{{ panel_id }}">
+-        <p>Tabla Nutricional</p>
++        <p>Tabla Alimentos</p>
+     </div>
+     {% endif %}
+ 
+@@ -51,4 +51,4 @@
+         <i data-lucide="pencil" class="tab-icon-edit"></i>
+     </button>
+     {% endif %}
+-</div>
+\ No newline at end of file
++</div>
+--- a/notas/templates/components/detail_panels_foods.html	2026-04-19 14:13:53.000000000 +0000
++++ b/notas/templates/components/detail_panels_foods.html	2026-06-12 20:46:04.840770813 +0000
+@@ -1,4 +1,4 @@
+-{% if not foods_nutrition_only_desktop %}
++{% if not foods_nutrition_only_desktop and not hide_desktop_foods_aggregation_tab %}
+ <div id="card-menu-{{ panel_id }}" class="card-table-foods">
+     {% include "components/grid_foods_aggregation.html" with foods=foods %}
+ </div>
+--- a/notas/templates/components/detail_tabs_foods_main_detail.html	2026-04-25 00:05:58.000000000 +0000
++++ b/notas/templates/components/detail_tabs_foods_main_detail.html	2026-06-12 20:46:04.840002807 +0000
+@@ -1,7 +1,7 @@
+ <div class="card-detail-tabs card-detail-tabs--desktop block-desplegar-tabla block-card-desplegar">
+ 
+     <div class="btn-desplegar is-active" data-target="#card-grid-foods-{{ panel_id }}">
+-        <p>Tabla Nutricional</p>
++        <p>Tabla Alimentos</p>
+     </div>
+ 
+     {% if show_desktop_edit_tab %}
+--- a/notas/static/notas/js/sortable_data_grids.js	1970-01-01 00:00:00.000000000 +0000
++++ b/notas/static/notas/js/sortable_data_grids.js	2026-06-12 20:46:21.176553329 +0000
+@@ -0,0 +1,221 @@
++(function () {
++  if (window.__myscoopeSortableDataGridsInitialized) {
++    return;
++  }
++
++  window.__myscoopeSortableDataGridsInitialized = true;
++
++  const GRID_SELECTOR = ".data-grid";
++  const HEADER_SELECTOR = ".data-grid-header";
++  const HEADER_CELL_SELECTOR = ".data-grid-col";
++  const ROW_SELECTOR = ".data-grid-row";
++  const EMPTY_SELECTOR = ".data-grid-empty";
++
++  const EXCLUDED_GRID_SELECTORS = [
++    ".data-grid--menu",
++    ".data-grid--list-panel",
++    ".data-grid--foods-edit",
++    ".data-grid--meals-edit",
++    ".data-grid--mobile-foods-edit",
++    ".data-grid--mobile-meals-edit",
++    ".js-dpm-sortable",
++    ".js-mealfood-sortable",
++    ".js-list-reorder-panel",
++    ".js-list-delete-panel",
++  ];
++
++  function isExcludedGrid(grid) {
++    return EXCLUDED_GRID_SELECTORS.some((selector) => grid.matches(selector));
++  }
++
++  function getHeader(grid) {
++    return grid.querySelector(HEADER_SELECTOR);
++  }
++
++  function getHeaderCells(grid) {
++    const header = getHeader(grid);
++    if (!header) return [];
++    return Array.from(header.children).filter((child) =>
++      child.matches(HEADER_CELL_SELECTOR)
++    );
++  }
++
++  function getRows(grid) {
++    return Array.from(grid.children).filter((child) =>
++      child.matches(ROW_SELECTOR)
++    );
++  }
++
++  function getSortableRows(grid) {
++    return getRows(grid).filter((row) => !row.matches(EMPTY_SELECTOR));
++  }
++
++  function parseSortableValue(text) {
++    const normalized = (text || "")
++      .trim()
++      .replace(/,/g, ".")
++      .replace(/−/g, "-");
++
++    const numberMatch = normalized.match(/-?\d+(?:\.\d+)?/);
++
++    if (numberMatch) {
++      return {
++        type: "number",
++        value: Number(numberMatch[0]),
++      };
++    }
++
++    return {
++      type: "text",
++      value: normalized.toLocaleLowerCase(),
++    };
++  }
++
++  function getCellValue(row, columnIndex) {
++    const cell = row.children[columnIndex];
++    return parseSortableValue(cell ? cell.textContent : "");
++  }
++
++  function compareValues(a, b) {
++    if (a.type === "number" && b.type === "number") {
++      return a.value - b.value;
++    }
++
++    return String(a.value).localeCompare(String(b.value), undefined, {
++      numeric: true,
++      sensitivity: "base",
++    });
++  }
++
++  function resetHeaderCells(grid) {
++    getHeaderCells(grid).forEach((cell) => {
++      cell.classList.remove(
++        "is-grid-sorted",
++        "is-grid-sorted-desc",
++        "is-grid-sorted-asc"
++      );
++      cell.removeAttribute("aria-sort");
++    });
++  }
++
++  function markHeaderCell(headerCell, direction) {
++    headerCell.classList.add("is-grid-sorted", `is-grid-sorted-${direction}`);
++    headerCell.setAttribute(
++      "aria-sort",
++      direction === "desc" ? "descending" : "ascending"
++    );
++  }
++
++  function restoreOriginalOrder(grid) {
++    const rows = getSortableRows(grid).sort((a, b) => {
++      return Number(a.dataset.originalIndex || 0) - Number(b.dataset.originalIndex || 0);
++    });
++
++    rows.forEach((row) => grid.appendChild(row));
++    resetHeaderCells(grid);
++    grid.dataset.sortColumn = "";
++    grid.dataset.sortDirection = "";
++  }
++
++  function sortGrid(grid, columnIndex, direction) {
++    const rows = getSortableRows(grid);
++
++    rows.sort((rowA, rowB) => {
++      const comparison = compareValues(
++        getCellValue(rowA, columnIndex),
++        getCellValue(rowB, columnIndex)
++      );
++
++      if (comparison === 0) {
++        return Number(rowA.dataset.originalIndex || 0) - Number(rowB.dataset.originalIndex || 0);
++      }
++
++      return direction === "desc" ? comparison * -1 : comparison;
++    });
++
++    rows.forEach((row) => grid.appendChild(row));
++  }
++
++  function getNextDirection(grid, columnIndex) {
++    const currentColumn = grid.dataset.sortColumn;
++    const currentDirection = grid.dataset.sortDirection;
++
++    if (currentColumn !== String(columnIndex)) {
++      return "desc";
++    }
++
++    if (!currentDirection) {
++      return "desc";
++    }
++
++    if (currentDirection === "desc") {
++      return "asc";
++    }
++
++    return "original";
++  }
++
++  function applySort(grid, headerCell, columnIndex) {
++    const nextDirection = getNextDirection(grid, columnIndex);
++
++    if (nextDirection === "original") {
++      restoreOriginalOrder(grid);
++      return;
++    }
++
++    sortGrid(grid, columnIndex, nextDirection);
++    resetHeaderCells(grid);
++    markHeaderCell(headerCell, nextDirection);
++
++    grid.dataset.sortColumn = String(columnIndex);
++    grid.dataset.sortDirection = nextDirection;
++  }
++
++  function prepareGrid(grid) {
++    if (!grid || grid.dataset.sortableReady === "true" || isExcludedGrid(grid)) {
++      return;
++    }
++
++    const headerCells = getHeaderCells(grid);
++    const rows = getSortableRows(grid);
++
++    if (!headerCells.length || rows.length < 2) {
++      return;
++    }
++
++    rows.forEach((row, index) => {
++      row.dataset.originalIndex = String(index);
++    });
++
++    headerCells.forEach((cell, columnIndex) => {
++      cell.classList.add("is-grid-sortable");
++      cell.setAttribute("role", "button");
++      cell.setAttribute("tabindex", "0");
++
++      cell.addEventListener("click", function () {
++        applySort(grid, cell, columnIndex);
++      });
++
++      cell.addEventListener("keydown", function (event) {
++        if (event.key !== "Enter" && event.key !== " ") {
++          return;
++        }
++
++        event.preventDefault();
++        applySort(grid, cell, columnIndex);
++      });
++    });
++
++    grid.dataset.sortableReady = "true";
++  }
++
++  function bootSortableDataGrids() {
++    document.querySelectorAll(GRID_SELECTOR).forEach(prepareGrid);
++  }
++
++  if (document.readyState === "loading") {
++    document.addEventListener("DOMContentLoaded", bootSortableDataGrids);
++  } else {
++    bootSortableDataGrids();
++  }
++})();
+--- a/notas/static/notas/css/components/data_grid.css	2026-06-12 19:20:13.000000000 +0000
++++ b/notas/static/notas/css/components/data_grid.css	2026-06-12 20:46:28.175637286 +0000
+@@ -955,3 +955,64 @@
+     text-decoration: underline;
+     text-underline-offset: 3px;
+ }
++
++/* =========================================================
++   Temporary analysis sorting for panel tables
++   ========================================================= */
++
++.data-grid-col.is-grid-sortable {
++    display: inline-flex;
++    align-items: center;
++    gap: 4px;
++    min-width: 0;
++    cursor: pointer;
++    user-select: none;
++    transition:
++        color 0.15s ease,
++        opacity 0.15s ease;
++}
++
++.data-grid-col.is-grid-sortable:hover,
++.data-grid-col.is-grid-sortable:focus-visible {
++    color: var(--text-main);
++    opacity: 1;
++    outline: none;
++}
++
++.data-grid-col.is-grid-sortable::after {
++    content: "";
++    display: inline-flex;
++    width: 12px;
++    flex: 0 0 12px;
++    justify-content: center;
++    font-size: 11px;
++    line-height: 1;
++    color: currentColor;
++    opacity: 0;
++}
++
++.data-grid-col.is-grid-sorted::after {
++    opacity: 1;
++}
++
++.data-grid-col.is-grid-sorted-desc::after {
++    content: "▾";
++}
++
++.data-grid-col.is-grid-sorted-asc::after {
++    content: "▴";
++}
++
++.data-grid-col--name.is-grid-sortable,
++.data-grid-col--meal.is-grid-sortable,
++.data-grid-col--foods.is-grid-sortable {
++    justify-content: flex-start;
++}
++
++.data-grid-col--qty.is-grid-sortable,
++.data-grid-col--kcal.is-grid-sortable,
++.data-grid-col--macro.is-grid-sortable,
++.data-grid-col--alloc.is-grid-sortable,
++.data-grid-col--time.is-grid-sortable {
++    justify-content: center;
++}
+--- a/notas/templates/notas/base.html	2026-06-12 04:43:20.000000000 +0000
++++ b/notas/templates/notas/base.html	2026-06-12 20:46:29.945729396 +0000
+@@ -408,6 +408,8 @@
+ 
+ <script src="{% static 'notas/js/mobile_grid_tabs.js' %}"></script>
+ 
++<script src="{% static 'notas/js/sortable_data_grids.js' %}" defer></script>
++
+ <script src="{% static 'notas/js/collapse_cards.js' %}"></script>
+ 
+ <script type="module" src="{% static 'notas/js/picker_toggle.js' %}"></script>

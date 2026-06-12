@@ -1,16 +1,16 @@
 <div class="card-detail-tabs card-detail-tabs--desktop block-desplegar-tabla block-card-desplegar">
 
-    {% if not foods_nutrition_only_desktop %}
+    {% if not foods_nutrition_only_desktop and not hide_desktop_foods_aggregation_tab %}
     <div class="btn-desplegar {% if not show_hide_tab %}is-active{% endif %}" data-target="#card-menu-{{ panel_id }}">
         <p>Alimentos</p>
     </div>
 
     <div class="btn-desplegar" data-target="#card-grid-foods-{{ panel_id }}">
-        <p>Tabla Nutricional</p>
+        <p>Tabla Alimentos</p>
     </div>
     {% else %}
     <div class="btn-desplegar {% if not show_hide_tab %}is-active{% endif %}" data-target="#card-grid-foods-{{ panel_id }}">
-        <p>Tabla Nutricional</p>
+        <p>Tabla Alimentos</p>
     </div>
     {% endif %}
 

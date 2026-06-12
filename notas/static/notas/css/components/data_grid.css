@@ -955,3 +955,64 @@ body.is-list-panel-sorting .js-list-reorder-row {
     text-decoration: underline;
     text-underline-offset: 3px;
 }
+
+/* =========================================================
+   Temporary analysis sorting for panel tables
+   ========================================================= */
+
+.data-grid-col.is-grid-sortable {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    cursor: pointer;
+    user-select: none;
+    border-radius: 999px;
+    transition:
+        background-color 0.15s ease,
+        box-shadow 0.15s ease,
+        color 0.15s ease,
+        opacity 0.15s ease;
+}
+
+.data-grid-col.is-grid-sortable:hover,
+.data-grid-col.is-grid-sortable:focus-visible {
+    color: var(--text-main);
+    opacity: 1;
+    outline: none;
+}
+
+.data-grid-col.is-grid-sorted {
+    color: var(--text-main);
+    background: var(--alloc-cell-bg);
+    padding: 4px 0px;
+    margin: -4px 0 4px;
+    font-weight: 750;
+}
+
+.data-grid-sort-icon {
+    width: 14px;
+    height: 14px;
+    flex: 0 0 14px;
+    stroke-width: 2.5;
+    color: currentColor;
+}
+
+.data-grid-col.is-grid-sorted-desc .data-grid-sort-icon,
+.data-grid-col.is-grid-sorted-asc .data-grid-sort-icon {
+    opacity: 1;
+}
+
+.data-grid-col--name.is-grid-sortable,
+.data-grid-col--meal.is-grid-sortable,
+.data-grid-col--foods.is-grid-sortable {
+    justify-content: flex-start;
+}
+
+.data-grid-col--qty.is-grid-sortable,
+.data-grid-col--kcal.is-grid-sortable,
+.data-grid-col--macro.is-grid-sortable,
+.data-grid-col--alloc.is-grid-sortable,
+.data-grid-col--time.is-grid-sortable {
+    justify-content: center;
+}

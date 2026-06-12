@@ -23,8 +23,8 @@
                     {% endif %}
                 {% endif %}
             >
-                {% include "components/detail_tabs_foods.html" with panel_id=panel_id foods_nutrition_only_desktop=dpm_meal show_hide_tab=True %}
-                {% include "components/detail_panels_foods.html" with panel_id=panel_id foods=child_card.foods_aggregation items=child_card.table.items nutrition_grid_template="components/grid_foods.html" foods_nutrition_only_desktop=dpm_meal %}
+                {% include "components/detail_tabs_foods.html" with panel_id=panel_id foods_nutrition_only_desktop=dpm_meal hide_desktop_foods_aggregation_tab=hide_desktop_foods_aggregation_tab show_hide_tab=True %}
+                {% include "components/detail_panels_foods.html" with panel_id=panel_id foods=child_card.foods_aggregation items=child_card.table.items nutrition_grid_template="components/grid_foods.html" foods_nutrition_only_desktop=dpm_meal hide_desktop_foods_aggregation_tab=hide_desktop_foods_aggregation_tab %}
             </div>
         {% endwith %}
     {% else %}
@@ -40,8 +40,8 @@
                     {% endif %}
                 {% endif %}
             >
-                {% include "components/detail_tabs_foods.html" with panel_id=panel_id foods_nutrition_only_desktop=dpm_meal show_hide_tab=True %}
-                {% include "components/detail_panels_foods.html" with panel_id=panel_id foods=child_card.foods_aggregation items=child_card.table.items nutrition_grid_template="components/grid_foods.html" foods_nutrition_only_desktop=dpm_meal %}
+                {% include "components/detail_tabs_foods.html" with panel_id=panel_id foods_nutrition_only_desktop=dpm_meal hide_desktop_foods_aggregation_tab=hide_desktop_foods_aggregation_tab show_hide_tab=True %}
+                {% include "components/detail_panels_foods.html" with panel_id=panel_id foods=child_card.foods_aggregation items=child_card.table.items nutrition_grid_template="components/grid_foods.html" foods_nutrition_only_desktop=dpm_meal hide_desktop_foods_aggregation_tab=hide_desktop_foods_aggregation_tab %}
             </div>
         {% endwith %}
     {% endif %}
