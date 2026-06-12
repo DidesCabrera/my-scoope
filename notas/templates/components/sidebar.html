@@ -5,7 +5,8 @@
     <div class="sidebar-scroll-region">
 
         <div class="block-logo-sidebar">
-            <a href="{% url 'home_view' %}">
+            <a href="{% url 'home_view' %}" class="sidebar-brand-link" aria-label="Ir a inicio">
+                <i data-lucide="house" class="sidebar-brand-home-icon"></i>
                 <img src="{% static 'img/logo-white.png' %}" alt="Logo" class="brand-logo">
             </a>
             <button class="collapse-sidebar-btn" onclick="toggleSidebar()">
@@ -40,23 +41,40 @@
                     <p class="group-name-sidebar">{{ section.label }}</p>
 
                     {% for group in section.groups %}
-                        <div class="sidebar-group {% if group.is_open %}is-open{% endif %} {% if group.is_link %}sidebar-group--link{% endif %} {% if group.is_active and not group.is_link %}is-current{% endif %}">
+                        <div class="sidebar-group sidebar-group--{{ group.key }} {% if group.is_open %}is-open{% endif %} {% if group.is_link %}sidebar-group--link{% endif %} {% if group.is_active and not group.is_link %}is-current{% endif %}">
 
                             {% if group.is_link %}
-                                <a href="{{ group.url }}"
-                                   class="sidebar-main sidebar-main--link {% if group.is_active %}is-active{% endif %}">
-                                    <span class="sidebar-left">
-                                        <i data-lucide="chevron-right" class="sidebar-icon"></i>
-                                        <i data-lucide="{{ group.icon }}" class="sidebar-main-icon"></i>
-                                        <span class="sidebar-label">{{ group.label }}</span>
-                                    </span>
-                                </a>
+                                {% if group.action_url %}
+                                    <div class="sidebar-group-head">
+                                        <a href="{{ group.url }}"
+                                           class="sidebar-main sidebar-main--link {% if group.is_active %}is-active{% endif %}">
+                                            <span class="sidebar-left">
+                                                <i data-lucide="{{ group.icon }}" class="sidebar-main-icon sidebar-main-icon--{{ group.nav_root }}"></i>
+                                                <span class="sidebar-label">{{ group.label }}</span>
+                                            </span>
+                                        </a>
+
+                                        <a href="{{ group.action_url }}"
+                                           class="sidebar-group-action"
+                                           aria-label="{{ group.action_label|default:'Crear' }}"
+                                           title="{{ group.action_label|default:'Crear' }}">
+                                            <i data-lucide="{{ group.action_icon|default:'plus' }}" class="sidebar-group-action-icon"></i>
+                                        </a>
+                                    </div>
+                                {% else %}
+                                    <a href="{{ group.url }}"
+                                       class="sidebar-main sidebar-main--link {% if group.is_active %}is-active{% endif %}">
+                                        <span class="sidebar-left">
+                                            <i data-lucide="{{ group.icon }}" class="sidebar-main-icon sidebar-main-icon--{{ group.nav_root }}"></i>
+                                            <span class="sidebar-label">{{ group.label }}</span>
+                                        </span>
+                                    </a>
+                                {% endif %}
                             {% else %}
                                 <div class="sidebar-group-head">
                                     <button type="button" class="sidebar-main">
                                         <span class="sidebar-left">
-                                            <i data-lucide="chevron-right" class="sidebar-icon"></i>
-                                            <i data-lucide="{{ group.icon }}" class="sidebar-main-icon"></i>
+                                            <i data-lucide="{{ group.icon }}" class="sidebar-main-icon sidebar-main-icon--{{ group.nav_root|default:group.key }}"></i>
                                             <span class="sidebar-label">{{ group.label }}</span>
                                         </span>
                                     </button>

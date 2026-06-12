@@ -43,6 +43,48 @@ class NavSectionSpec:
 
 
 APP_NAVIGATION = (
+    NavSectionSpec(
+        key="workspace",
+        label="Mis Librerías",
+        groups=(
+            NavGroupSpec(
+                key="dailyplan",
+                label="Planes Diarios",
+                icon="clipboard-list",
+                url_name="dailyplan_list",
+                nav_root="dailyplan",
+                scope="personal",
+                page_icon="bookmark",
+                action_url_name="dailyplan_create",
+                action_icon="plus",
+                action_label="Nuevo plan diario",
+            ),
+            NavGroupSpec(
+                key="meal",
+                label="Comidas",
+                icon="utensils",
+                url_name="meal_list",
+                nav_root="meal",
+                scope="personal",
+                page_icon="bookmark",
+                action_url_name="meal_create",
+                action_icon="plus",
+                action_label="Nueva comida",
+            ),
+            NavGroupSpec(
+                key="food",
+                label="Alimentos",
+                icon="carrot",
+                url_name="food_list",
+                nav_root="food",
+                scope="personal",
+                page_icon="bookmark",
+                action_url_name="food_create",
+                action_icon="plus",
+                action_label="Nuevo alimento",
+            ),
+        ),
+    ),
 
     NavSectionSpec(
         key="account",
@@ -56,6 +98,7 @@ APP_NAVIGATION = (
                 url_name="home_view",
                 nav_root="home",
                 scope="personal",
+                show_in_sidebar=False,
             ),
             NavGroupSpec(
                 key="profile",
@@ -92,7 +135,7 @@ APP_NAVIGATION = (
                     ),
                 ),
             ),
-                        NavGroupSpec(
+            NavGroupSpec(
                 key="proposal",
                 label="Propuestas AI",
                 icon="sparkles",
@@ -101,7 +144,6 @@ APP_NAVIGATION = (
                 nav_root="proposal",
                 scope="personal",
             ),
-
             NavGroupSpec(
                 key="create",
                 label="Crear",
@@ -148,75 +190,11 @@ APP_NAVIGATION = (
             ),
         ),
     ),
-    
-    NavSectionSpec(
-        key="workspace",
-        label="Workspace",
-        groups=(
-            NavGroupSpec(
-                key="dailyplan",
-                label="Planes Diarios",
-                icon="clipboard-list",
-                action_url_name="dailyplan_create",
-                action_icon="plus",
-                action_label="Nuevo plan diario",
-                items=(
-                    NavItemSpec(
-                        key="dailyplan_personal",
-                        label="Mi Librería",
-                        icon="bookmark",
-                        page_icon="bookmark",
-                        url_name="dailyplan_list",
-                        nav_root="dailyplan",
-                        scope="personal",
-                    ),
-                ),
-            ),
-            NavGroupSpec(
-                key="meal",
-                label="Comidas",
-                icon="utensils",
-                action_url_name="meal_create",
-                action_icon="plus",
-                action_label="Nueva comida",
-                items=(
-                    NavItemSpec(
-                        key="meal_personal",
-                        label="Mi Librería",
-                        icon="bookmark",
-                        page_icon="bookmark",
-                        url_name="meal_list",
-                        nav_root="meal",
-                        scope="personal",
-                    ),
-                ),
-            ),
-            NavGroupSpec(
-                key="food",
-                label="Alimentos",
-                icon="carrot",
-                action_url_name="food_create",
-                action_icon="plus",
-                action_label="Nuevo alimento",
-                items=(
-                    NavItemSpec(
-                        key="food_personal",
-                        label="Mi Librería",
-                        icon="bookmark",
-                        page_icon="bookmark",
-                        url_name="food_list",
-                        nav_root="food",
-                        scope="personal",
-                    ),
-                ),
-            ),
-        ),
-    ),
 
     NavSectionSpec(
         key="admin",
         label="Admin Workspace",
-        groups=(     
+        groups=(
             NavGroupSpec(
                 key="admin",
                 label="Admin",
@@ -247,7 +225,4 @@ APP_NAVIGATION = (
             ),
         ),
     ),
- 
 )
-
-

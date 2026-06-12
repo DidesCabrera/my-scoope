@@ -1,0 +1,319 @@
+--- a/notas/presentation/navigation/app_registry.py
++++ b/notas/presentation/navigation/app_registry.py
+@@ -43,6 +43,48 @@
+ 
+ 
+ APP_NAVIGATION = (
++    NavSectionSpec(
++        key="workspace",
++        label="Mis Librerías",
++        groups=(
++            NavGroupSpec(
++                key="dailyplan",
++                label="Planes Diarios",
++                icon="clipboard-list",
++                url_name="dailyplan_list",
++                nav_root="dailyplan",
++                scope="personal",
++                page_icon="bookmark",
++                action_url_name="dailyplan_create",
++                action_icon="plus",
++                action_label="Nuevo plan diario",
++            ),
++            NavGroupSpec(
++                key="meal",
++                label="Comidas",
++                icon="utensils",
++                url_name="meal_list",
++                nav_root="meal",
++                scope="personal",
++                page_icon="bookmark",
++                action_url_name="meal_create",
++                action_icon="plus",
++                action_label="Nueva comida",
++            ),
++            NavGroupSpec(
++                key="food",
++                label="Alimentos",
++                icon="carrot",
++                url_name="food_list",
++                nav_root="food",
++                scope="personal",
++                page_icon="bookmark",
++                action_url_name="food_create",
++                action_icon="plus",
++                action_label="Nuevo alimento",
++            ),
++        ),
++    ),
+ 
+     NavSectionSpec(
+         key="account",
+@@ -56,6 +98,7 @@
+                 url_name="home_view",
+                 nav_root="home",
+                 scope="personal",
++                show_in_sidebar=False,
+             ),
+             NavGroupSpec(
+                 key="profile",
+@@ -92,7 +135,7 @@
+                     ),
+                 ),
+             ),
+-                        NavGroupSpec(
++            NavGroupSpec(
+                 key="proposal",
+                 label="Propuestas AI",
+                 icon="sparkles",
+@@ -101,7 +144,6 @@
+                 nav_root="proposal",
+                 scope="personal",
+             ),
+-
+             NavGroupSpec(
+                 key="create",
+                 label="Crear",
+@@ -148,75 +190,11 @@
+             ),
+         ),
+     ),
+-    
+-    NavSectionSpec(
+-        key="workspace",
+-        label="Workspace",
+-        groups=(
+-            NavGroupSpec(
+-                key="dailyplan",
+-                label="Planes Diarios",
+-                icon="clipboard-list",
+-                action_url_name="dailyplan_create",
+-                action_icon="plus",
+-                action_label="Nuevo plan diario",
+-                items=(
+-                    NavItemSpec(
+-                        key="dailyplan_personal",
+-                        label="Mi Librería",
+-                        icon="bookmark",
+-                        page_icon="bookmark",
+-                        url_name="dailyplan_list",
+-                        nav_root="dailyplan",
+-                        scope="personal",
+-                    ),
+-                ),
+-            ),
+-            NavGroupSpec(
+-                key="meal",
+-                label="Comidas",
+-                icon="utensils",
+-                action_url_name="meal_create",
+-                action_icon="plus",
+-                action_label="Nueva comida",
+-                items=(
+-                    NavItemSpec(
+-                        key="meal_personal",
+-                        label="Mi Librería",
+-                        icon="bookmark",
+-                        page_icon="bookmark",
+-                        url_name="meal_list",
+-                        nav_root="meal",
+-                        scope="personal",
+-                    ),
+-                ),
+-            ),
+-            NavGroupSpec(
+-                key="food",
+-                label="Alimentos",
+-                icon="carrot",
+-                action_url_name="food_create",
+-                action_icon="plus",
+-                action_label="Nuevo alimento",
+-                items=(
+-                    NavItemSpec(
+-                        key="food_personal",
+-                        label="Mi Librería",
+-                        icon="bookmark",
+-                        page_icon="bookmark",
+-                        url_name="food_list",
+-                        nav_root="food",
+-                        scope="personal",
+-                    ),
+-                ),
+-            ),
+-        ),
+-    ),
+ 
+     NavSectionSpec(
+         key="admin",
+         label="Admin Workspace",
+-        groups=(     
++        groups=(
+             NavGroupSpec(
+                 key="admin",
+                 label="Admin",
+@@ -247,7 +225,4 @@
+             ),
+         ),
+     ),
+- 
+ )
+-
+-
+--- a/notas/presentation/navigation/nav_builders.py
++++ b/notas/presentation/navigation/nav_builders.py
+@@ -264,7 +264,13 @@
+         if back_type == "nav_item":
+             active = find_active_nav_item(viewmode)
+             if active:
+-                return safe_reverse(active["item"].url_name)
++                item = active.get("item")
++                if item is not None:
++                    return safe_reverse(item.url_name)
++
++                group = active.get("group")
++                if group and group.is_link:
++                    return safe_reverse(group.url_name)
+             return None
+ 
+         if back_type == "url":
+--- a/notas/static/notas/css/components/sidebar.css
++++ b/notas/static/notas/css/components/sidebar.css
+@@ -80,6 +80,74 @@
+ 
+ .sidebar-group-action:hover {
+     background: rgba(255, 255, 255, 0.06);
++}
++
++
++/* Sidebar brand/home link */
++.sidebar-brand-link {
++    display: inline-flex;
++    align-items: center;
++    gap: 10px;
++    min-width: 0;
++    color: var(--sidebar-text-active);
++    text-decoration: none;
++}
++
++.sidebar-brand-link:hover {
++    color: var(--sidebar-text-active);
++    text-decoration: none;
++}
++
++.sidebar-brand-home-icon {
++    width: 28px;
++    height: 28px;
++    flex-shrink: 0;
++    padding: 6px;
++    border-radius: 9px;
++    color: var(--sidebar-text-active);
++    background-color: var(--sidebar-hover);
++    stroke-width: 1.8;
++}
++
++.sidebar-brand-link:hover .sidebar-brand-home-icon {
++    background-color: rgba(255, 255, 255, 0.12);
++}
++
++/* Direct library groups */
++.sidebar-group-head .sidebar-main--link {
++    flex: 1;
++    min-width: 0;
++}
++
++.sidebar-main-icon--dailyplan,
++.sidebar-main-icon--meal,
++.sidebar-main-icon--food {
++    width: 24px;
++    height: 24px;
++    padding: 5px;
++    border-radius: 7px;
++    color: #ffffff !important;
++    stroke: #ffffff !important;
++    stroke-width: 1.8;
++}
++
++.sidebar-main-icon--dailyplan {
++    background-color: var(--color-dailyplan);
++}
++
++.sidebar-main-icon--meal {
++    background-color: var(--color-meal);
++}
++
++.sidebar-main-icon--food {
++    background-color: var(--color-food);
++}
++
++.sidebar-main--link.is-active .sidebar-main-icon--dailyplan,
++.sidebar-main--link.is-active .sidebar-main-icon--meal,
++.sidebar-main--link.is-active .sidebar-main-icon--food {
++    color: #ffffff !important;
++    stroke: #ffffff !important;
+ }
+ 
+ .sidebar .nav-tab .sidebar-leading-icon,
+--- a/notas/templates/components/sidebar.html
++++ b/notas/templates/components/sidebar.html
+@@ -5,7 +5,8 @@
+     <div class="sidebar-scroll-region">
+ 
+         <div class="block-logo-sidebar">
+-            <a href="{% url 'home_view' %}">
++            <a href="{% url 'home_view' %}" class="sidebar-brand-link" aria-label="Ir a inicio">
++                <i data-lucide="house" class="sidebar-brand-home-icon"></i>
+                 <img src="{% static 'img/logo-white.png' %}" alt="Logo" class="brand-logo">
+             </a>
+             <button class="collapse-sidebar-btn" onclick="toggleSidebar()">
+@@ -40,23 +41,40 @@
+                     <p class="group-name-sidebar">{{ section.label }}</p>
+ 
+                     {% for group in section.groups %}
+-                        <div class="sidebar-group {% if group.is_open %}is-open{% endif %} {% if group.is_link %}sidebar-group--link{% endif %} {% if group.is_active and not group.is_link %}is-current{% endif %}">
++                        <div class="sidebar-group sidebar-group--{{ group.key }} {% if group.is_open %}is-open{% endif %} {% if group.is_link %}sidebar-group--link{% endif %} {% if group.is_active and not group.is_link %}is-current{% endif %}">
+ 
+                             {% if group.is_link %}
+-                                <a href="{{ group.url }}"
+-                                   class="sidebar-main sidebar-main--link {% if group.is_active %}is-active{% endif %}">
+-                                    <span class="sidebar-left">
+-                                        <i data-lucide="chevron-right" class="sidebar-icon"></i>
+-                                        <i data-lucide="{{ group.icon }}" class="sidebar-main-icon"></i>
+-                                        <span class="sidebar-label">{{ group.label }}</span>
+-                                    </span>
+-                                </a>
++                                {% if group.action_url %}
++                                    <div class="sidebar-group-head">
++                                        <a href="{{ group.url }}"
++                                           class="sidebar-main sidebar-main--link {% if group.is_active %}is-active{% endif %}">
++                                            <span class="sidebar-left">
++                                                <i data-lucide="{{ group.icon }}" class="sidebar-main-icon sidebar-main-icon--{{ group.nav_root }}"></i>
++                                                <span class="sidebar-label">{{ group.label }}</span>
++                                            </span>
++                                        </a>
++
++                                        <a href="{{ group.action_url }}"
++                                           class="sidebar-group-action"
++                                           aria-label="{{ group.action_label|default:'Crear' }}"
++                                           title="{{ group.action_label|default:'Crear' }}">
++                                            <i data-lucide="{{ group.action_icon|default:'plus' }}" class="sidebar-group-action-icon"></i>
++                                        </a>
++                                    </div>
++                                {% else %}
++                                    <a href="{{ group.url }}"
++                                       class="sidebar-main sidebar-main--link {% if group.is_active %}is-active{% endif %}">
++                                        <span class="sidebar-left">
++                                            <i data-lucide="{{ group.icon }}" class="sidebar-main-icon sidebar-main-icon--{{ group.nav_root }}"></i>
++                                            <span class="sidebar-label">{{ group.label }}</span>
++                                        </span>
++                                    </a>
++                                {% endif %}
+                             {% else %}
+                                 <div class="sidebar-group-head">
+                                     <button type="button" class="sidebar-main">
+                                         <span class="sidebar-left">
+-                                            <i data-lucide="chevron-right" class="sidebar-icon"></i>
+-                                            <i data-lucide="{{ group.icon }}" class="sidebar-main-icon"></i>
++                                            <i data-lucide="{{ group.icon }}" class="sidebar-main-icon sidebar-main-icon--{{ group.nav_root|default:group.key }}"></i>
+                                             <span class="sidebar-label">{{ group.label }}</span>
+                                         </span>
+                                     </button>

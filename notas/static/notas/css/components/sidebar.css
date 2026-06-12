@@ -82,6 +82,74 @@
     background: rgba(255, 255, 255, 0.06);
 }
 
+
+/* Sidebar brand/home link */
+.sidebar-brand-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    color: var(--sidebar-text-active);
+    text-decoration: none;
+}
+
+.sidebar-brand-link:hover {
+    color: var(--sidebar-text-active);
+    text-decoration: none;
+}
+
+.sidebar-brand-home-icon {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    padding: 6px;
+    border-radius: 9px;
+    color: var(--sidebar-text-active);
+    background-color: var(--sidebar-hover);
+    stroke-width: 1.8;
+}
+
+.sidebar-brand-link:hover .sidebar-brand-home-icon {
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Direct library groups */
+.sidebar-group-head .sidebar-main--link {
+    flex: 1;
+    min-width: 0;
+}
+
+.sidebar-main-icon--dailyplan,
+.sidebar-main-icon--meal,
+.sidebar-main-icon--food {
+    width: 24px;
+    height: 24px;
+    padding: 5px;
+    border-radius: 7px;
+    color: #ffffff !important;
+    stroke: #ffffff !important;
+    stroke-width: 1.8;
+}
+
+.sidebar-main-icon--dailyplan {
+    background-color: var(--color-dailyplan);
+}
+
+.sidebar-main-icon--meal {
+    background-color: var(--color-meal);
+}
+
+.sidebar-main-icon--food {
+    background-color: var(--color-food);
+}
+
+.sidebar-main--link.is-active .sidebar-main-icon--dailyplan,
+.sidebar-main--link.is-active .sidebar-main-icon--meal,
+.sidebar-main--link.is-active .sidebar-main-icon--food {
+    color: #ffffff !important;
+    stroke: #ffffff !important;
+}
+
 .sidebar .nav-tab .sidebar-leading-icon,
 .sidebar .nav-tab .nav-text {
   color: inherit;

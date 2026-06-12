@@ -264,7 +264,13 @@ def build_back_url(viewmode, parents=None, breadcrumb=None, back_config=None):
         if back_type == "nav_item":
             active = find_active_nav_item(viewmode)
             if active:
-                return safe_reverse(active["item"].url_name)
+                item = active.get("item")
+                if item is not None:
+                    return safe_reverse(item.url_name)
+
+                group = active.get("group")
+                if group and group.is_link:
+                    return safe_reverse(group.url_name)
             return None
 
         if back_type == "url":
