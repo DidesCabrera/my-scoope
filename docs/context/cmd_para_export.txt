@@ -1,6 +1,17 @@
--------------
-GENERACION ZIP 
--------------
+--------------------------
+***COMANDOS VENV - RUNSERVER
+--------------------------
+
+cd desktop
+cd proyecto_django
+source /Users/felipedides/Desktop/proyecto_django/venv/bin/activate
+
+python manage.py runserver
+
+
+--------------------------
+***GENERACION ZIP 
+--------------------------
 
 FULL
 (Sin USDA - img)
@@ -15,23 +26,12 @@ COMPLETO
 ./scripts/export_for_chatgpt.sh usda
 
 
--------------
-***COMANDOS VENV - RUNSERVER
--------------
-
-cd desktop
-cd proyecto_django
-source /Users/felipedides/Desktop/proyecto_django/venv/bin/activate
-
-python manage.py runserver
-
-
--------------
+--------------------------
 ***AUX COMMITS
--------------
+--------------------------
 
 git add .
-git commit -m "Ajuste ancho block panel, y mini refactor padding title card"
+git commit -m "Ajuste menor en margin"
 git push origin main
 
 
@@ -39,6 +39,10 @@ git add .
 git commit -m "Correccion colores btns profile"
 git push origin main
 
+-------------
+
+REVERSE PATCH
+patch -p1 -R < archivo.patch
 
 -------------
 
