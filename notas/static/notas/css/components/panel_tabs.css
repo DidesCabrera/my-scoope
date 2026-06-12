@@ -130,21 +130,6 @@
   flex-shrink: 0;
 }
 
-/* Hide buttons */
-.btn-desplegar--hide,
-.btn-desplegar-mobile--hide {
-  justify-content: center;
-  align-items: center;
-}
-
-.btn-desplegar--hide {
-  min-width: 36px;
-  padding-inline: 8px;
-}
-
-.btn-desplegar-mobile--hide {
-  min-width: 36px;
-}
 
 /* =========================
    PANEL VISIBILITY

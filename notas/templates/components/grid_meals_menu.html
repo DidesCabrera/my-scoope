@@ -8,8 +8,9 @@
     {% for meal in menu.meals %}
         <div class="data-grid-row data-grid-row--menu">
             <div class="data-grid-cell data-grid-cell--meal">
-                <div class="data-grid-meal-name">
-                    {{ meal.meal_name }}
+                <div class="data-grid-meal-title">
+                    <i data-lucide="utensils" class="data-grid-meal-icon meal"></i>
+                    <span class="data-grid-meal-name">{{ meal.meal_name }}</span>
                 </div>
 
                 {% if meal.hour %}

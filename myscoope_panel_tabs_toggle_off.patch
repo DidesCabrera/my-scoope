@@ -1,0 +1,268 @@
+diff -ruN ./notas/static/notas/css/components/panel_tabs.css /mnt/data/work_ai45/notas/static/notas/css/components/panel_tabs.css
+--- ./notas/static/notas/css/components/panel_tabs.css	2026-06-12 18:52:39.826325525 +0000
++++ /mnt/data/work_ai45/notas/static/notas/css/components/panel_tabs.css	2026-06-12 18:54:06.516810840 +0000
+@@ -130,21 +130,6 @@
+   flex-shrink: 0;
+ }
+ 
+-/* Hide buttons */
+-.btn-desplegar--hide,
+-.btn-desplegar-mobile--hide {
+-  justify-content: center;
+-  align-items: center;
+-}
+-
+-.btn-desplegar--hide {
+-  min-width: 36px;
+-  padding-inline: 8px;
+-}
+-
+-.btn-desplegar-mobile--hide {
+-  min-width: 36px;
+-}
+ 
+ /* =========================
+    PANEL VISIBILITY
+diff -ruN ./notas/static/notas/js/collapse_cards.js /mnt/data/work_ai45/notas/static/notas/js/collapse_cards.js
+--- ./notas/static/notas/js/collapse_cards.js	2026-06-12 18:52:39.834649305 +0000
++++ /mnt/data/work_ai45/notas/static/notas/js/collapse_cards.js	2026-06-12 18:54:06.515195151 +0000
+@@ -9,29 +9,18 @@
+     const FADE_OUT_DURATION = 100;
+     const FADE_IN_DURATION = 180;
+     const MOBILE_BREAKPOINT = 980;
+-    const HIDDEN_PANEL_KEY = "__hidden__";
+     const PANEL_PAGE_SELECTOR = ".page--detail.has-collapsible-panels";
+ 
+     const TAB_SELECTOR = [
+       ".card-detail-tabs--desktop [data-target]",
+       ".card-detail-tabs-mobile [data-target]",
+-      ".card-detail-tabs--desktop [data-panel-action='hide']",
+-      ".card-detail-tabs-mobile [data-panel-action='hide']",
+     ].join(", ");
+ 
+     function isMobileViewport() {
+       return window.innerWidth <= MOBILE_BREAKPOINT;
+     }
+ 
+-    function isHideButton(button) {
+-      return button.dataset.panelAction === "hide";
+-    }
+-
+     function getButtonKey(button) {
+-      if (isHideButton(button)) {
+-        return HIDDEN_PANEL_KEY;
+-      }
+-
+       return button.dataset.target || null;
+     }
+ 
+@@ -42,16 +31,12 @@
+     function getButtonsForViewport(detailBlock) {
+       if (isMobileViewport()) {
+         return Array.from(
+-          detailBlock.querySelectorAll(
+-            ".card-detail-tabs-mobile [data-target], .card-detail-tabs-mobile [data-panel-action='hide']"
+-          )
++          detailBlock.querySelectorAll(".card-detail-tabs-mobile [data-target]")
+         );
+       }
+ 
+       return Array.from(
+-        detailBlock.querySelectorAll(
+-          ".card-detail-tabs--desktop [data-target], .card-detail-tabs--desktop [data-panel-action='hide']"
+-        )
++        detailBlock.querySelectorAll(".card-detail-tabs--desktop [data-target]")
+       );
+     }
+ 
+@@ -119,47 +104,10 @@
+       }, FADE_OUT_DURATION);
+     }
+ 
+-    function syncHideButtonIcon(detailBlock, activeKey) {
+-      const hideButtons = Array.from(
+-        detailBlock.querySelectorAll("[data-panel-action='hide']")
+-      );
+-
+-      const isHiddenState = activeKey === HIDDEN_PANEL_KEY;
+-      const iconName = isHiddenState ? "chevron-right" : "chevron-down";
+-
+-      hideButtons.forEach((button) => {
+-        const icon = button.querySelector("[data-lucide]");
+-
+-        if (!icon) return;
+-
+-        icon.setAttribute("data-lucide", iconName);
+-      });
+-
+-      if (window.lucide) {
+-        window.lucide.createIcons();
+-      }
+-    }
+-
+     function syncButtons(detailBlock, activeKey) {
+       getButtons(detailBlock).forEach((button) => {
+         button.classList.toggle("is-active", getButtonKey(button) === activeKey);
+       });
+-
+-      syncHideButtonIcon(detailBlock, activeKey);
+-    }
+-
+-    function activateHiddenState(detailBlock) {
+-      if (!detailBlock) return;
+-      if (detailBlock.dataset.switching === "true") return;
+-
+-      const currentPanel = getVisiblePanel(detailBlock);
+-
+-      syncButtons(detailBlock, HIDDEN_PANEL_KEY);
+-      detailBlock.dataset.switching = "true";
+-
+-      hidePanel(currentPanel, () => {
+-        detailBlock.dataset.switching = "false";
+-      });
+     }
+ 
+     function activatePanel(detailBlock, selector) {
+@@ -172,7 +120,12 @@
+       const currentPanel = getVisiblePanel(detailBlock);
+ 
+       if (currentPanel === nextPanel) {
+-        syncButtons(detailBlock, selector);
++        syncButtons(detailBlock, null);
++        detailBlock.dataset.switching = "true";
++
++        hidePanel(currentPanel, () => {
++          detailBlock.dataset.switching = "false";
++        });
+         return;
+       }
+ 
+@@ -249,9 +202,9 @@
+         return getButtonKey(configuredDefaultButton);
+       }
+ 
+-      const activeButton =
+-        viewportButtons.find((button) => button.classList.contains("is-active")) ||
+-        viewportButtons[0];
++      const activeButton = viewportButtons.find((button) =>
++        button.classList.contains("is-active")
++      );
+ 
+       return activeButton ? getButtonKey(activeButton) : null;
+     }
+@@ -265,18 +218,21 @@
+       });
+ 
+       const defaultKey = getDefaultKey(detailBlock);
+-      if (!defaultKey) return;
++
++      if (!defaultKey) {
++        syncButtons(detailBlock, null);
++        detailBlock.dataset.switching = "false";
++        return;
++      }
+ 
+       syncButtons(detailBlock, defaultKey);
+ 
+-      if (defaultKey !== HIDDEN_PANEL_KEY) {
+-        const defaultPanel = detailBlock.querySelector(defaultKey);
++      const defaultPanel = detailBlock.querySelector(defaultKey);
+ 
+-        if (defaultPanel) {
+-          defaultPanel.style.display = "block";
+-          defaultPanel.style.opacity = "1";
+-          defaultPanel.classList.add("is-visible");
+-        }
++      if (defaultPanel) {
++        defaultPanel.style.display = "block";
++        defaultPanel.style.opacity = "1";
++        defaultPanel.classList.add("is-visible");
+       }
+ 
+       detailBlock.dataset.switching = "false";
+@@ -313,11 +269,6 @@
+       const detailBlock = button.closest(".card-detail-block");
+       if (!detailBlock) return;
+ 
+-      if (isHideButton(button)) {
+-        activateHiddenState(detailBlock);
+-        return;
+-      }
+-
+       activatePanel(detailBlock, button.dataset.target);
+     });
+ 
+diff -ruN ./notas/templates/components/detail_tabs_foods.html /mnt/data/work_ai45/notas/templates/components/detail_tabs_foods.html
+--- ./notas/templates/components/detail_tabs_foods.html	2026-06-12 18:52:39.852133958 +0000
++++ /mnt/data/work_ai45/notas/templates/components/detail_tabs_foods.html	2026-06-12 18:53:49.086367750 +0000
+@@ -1,15 +1,5 @@
+ <div class="card-detail-tabs card-detail-tabs--desktop block-desplegar-tabla block-card-desplegar">
+ 
+-    {% if show_hide_tab %}
+-    <div
+-        class="btn-desplegar btn-desplegar--hide is-active"
+-        data-panel-action="hide"
+-        aria-label="Ocultar panel"
+-    >
+-        <i data-lucide="chevron-right" class="tab-icon tab-icon-hide"></i>
+-    </div>
+-    {% endif %}
+-
+     {% if not foods_nutrition_only_desktop %}
+     <div class="btn-desplegar {% if not show_hide_tab %}is-active{% endif %}" data-target="#card-menu-{{ panel_id }}">
+         <p>Alimentos</p>
+@@ -28,17 +18,6 @@
+ 
+ <div class="card-detail-tabs-mobile">
+ 
+-    {% if show_hide_tab %}
+-    <button
+-        type="button"
+-        class="btn-desplegar-mobile btn-desplegar-mobile--hide is-active"
+-        data-panel-action="hide"
+-        aria-label="Ocultar panel"
+-    >
+-        <i data-lucide="chevron-right" class="tab-icon tab-icon-hide"></i>
+-    </button>
+-    {% endif %}
+-
+     <button
+         type="button"
+         class="btn-desplegar-mobile {% if not show_hide_tab %}is-active{% endif %}"
+diff -ruN ./notas/templates/components/detail_tabs_meals.html /mnt/data/work_ai45/notas/templates/components/detail_tabs_meals.html
+--- ./notas/templates/components/detail_tabs_meals.html	2026-06-12 18:52:39.843257808 +0000
++++ /mnt/data/work_ai45/notas/templates/components/detail_tabs_meals.html	2026-06-12 18:53:49.085562397 +0000
+@@ -1,15 +1,5 @@
+ <div class="card-detail-tabs card-detail-tabs--desktop block-desplegar-tabla block-card-desplegar">
+ 
+-    {% if show_hide_tab %}
+-    <div
+-        class="btn-desplegar btn-desplegar--hide is-active"
+-        data-panel-action="hide"
+-        aria-label="Ocultar panel"
+-    >
+-        <i data-lucide="chevron-right" class="tab-icon tab-icon-hide"></i>
+-    </div>
+-    {% endif %}
+-
+     <div class="btn-desplegar {% if not show_hide_tab %}is-active{% endif %}" data-target="#card-menu-{{ panel_id }}">
+         <p>Menú</p>
+     </div>
+@@ -28,17 +18,6 @@
+ 
+ <div class="card-detail-tabs-mobile">
+ 
+-    {% if show_hide_tab %}
+-    <button
+-        type="button"
+-        class="btn-desplegar-mobile btn-desplegar-mobile--hide is-active"
+-        data-panel-action="hide"
+-        aria-label="Ocultar panel"
+-    >
+-        <i data-lucide="chevron-right" class="tab-icon tab-icon-hide"></i>
+-    </button>
+-    {% endif %}
+-
+     <button
+         type="button"
+         class="btn-desplegar-mobile {% if not show_hide_tab %}is-active{% endif %}"

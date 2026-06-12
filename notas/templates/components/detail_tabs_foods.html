@@ -1,15 +1,5 @@
 <div class="card-detail-tabs card-detail-tabs--desktop block-desplegar-tabla block-card-desplegar">
 
-    {% if show_hide_tab %}
-    <div
-        class="btn-desplegar btn-desplegar--hide is-active"
-        data-panel-action="hide"
-        aria-label="Ocultar panel"
-    >
-        <i data-lucide="chevron-right" class="tab-icon tab-icon-hide"></i>
-    </div>
-    {% endif %}
-
     {% if not foods_nutrition_only_desktop %}
     <div class="btn-desplegar {% if not show_hide_tab %}is-active{% endif %}" data-target="#card-menu-{{ panel_id }}">
         <p>Alimentos</p>
@@ -27,17 +17,6 @@
 </div>
 
 <div class="card-detail-tabs-mobile">
-
-    {% if show_hide_tab %}
-    <button
-        type="button"
-        class="btn-desplegar-mobile btn-desplegar-mobile--hide is-active"
-        data-panel-action="hide"
-        aria-label="Ocultar panel"
-    >
-        <i data-lucide="chevron-right" class="tab-icon tab-icon-hide"></i>
-    </button>
-    {% endif %}
 
     <button
         type="button"

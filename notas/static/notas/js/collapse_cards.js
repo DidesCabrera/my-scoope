@@ -9,29 +9,18 @@
     const FADE_OUT_DURATION = 100;
     const FADE_IN_DURATION = 180;
     const MOBILE_BREAKPOINT = 980;
-    const HIDDEN_PANEL_KEY = "__hidden__";
     const PANEL_PAGE_SELECTOR = ".page--detail.has-collapsible-panels";
 
     const TAB_SELECTOR = [
       ".card-detail-tabs--desktop [data-target]",
       ".card-detail-tabs-mobile [data-target]",
-      ".card-detail-tabs--desktop [data-panel-action='hide']",
-      ".card-detail-tabs-mobile [data-panel-action='hide']",
     ].join(", ");
 
     function isMobileViewport() {
       return window.innerWidth <= MOBILE_BREAKPOINT;
     }
 
-    function isHideButton(button) {
-      return button.dataset.panelAction === "hide";
-    }
-
     function getButtonKey(button) {
-      if (isHideButton(button)) {
-        return HIDDEN_PANEL_KEY;
-      }
-
       return button.dataset.target || null;
     }
 
@@ -42,16 +31,12 @@
     function getButtonsForViewport(detailBlock) {
       if (isMobileViewport()) {
         return Array.from(
-          detailBlock.querySelectorAll(
-            ".card-detail-tabs-mobile [data-target], .card-detail-tabs-mobile [data-panel-action='hide']"
-          )
+          detailBlock.querySelectorAll(".card-detail-tabs-mobile [data-target]")
         );
       }
 
       return Array.from(
-        detailBlock.querySelectorAll(
-          ".card-detail-tabs--desktop [data-target], .card-detail-tabs--desktop [data-panel-action='hide']"
-        )
+        detailBlock.querySelectorAll(".card-detail-tabs--desktop [data-target]")
       );
     }
 
@@ -119,46 +104,9 @@
       }, FADE_OUT_DURATION);
     }
 
-    function syncHideButtonIcon(detailBlock, activeKey) {
-      const hideButtons = Array.from(
-        detailBlock.querySelectorAll("[data-panel-action='hide']")
-      );
-
-      const isHiddenState = activeKey === HIDDEN_PANEL_KEY;
-      const iconName = isHiddenState ? "chevron-right" : "chevron-down";
-
-      hideButtons.forEach((button) => {
-        const icon = button.querySelector("[data-lucide]");
-
-        if (!icon) return;
-
-        icon.setAttribute("data-lucide", iconName);
-      });
-
-      if (window.lucide) {
-        window.lucide.createIcons();
-      }
-    }
-
     function syncButtons(detailBlock, activeKey) {
       getButtons(detailBlock).forEach((button) => {
         button.classList.toggle("is-active", getButtonKey(button) === activeKey);
-      });
-
-      syncHideButtonIcon(detailBlock, activeKey);
-    }
-
-    function activateHiddenState(detailBlock) {
-      if (!detailBlock) return;
-      if (detailBlock.dataset.switching === "true") return;
-
-      const currentPanel = getVisiblePanel(detailBlock);
-
-      syncButtons(detailBlock, HIDDEN_PANEL_KEY);
-      detailBlock.dataset.switching = "true";
-
-      hidePanel(currentPanel, () => {
-        detailBlock.dataset.switching = "false";
       });
     }
 
@@ -172,7 +120,12 @@
       const currentPanel = getVisiblePanel(detailBlock);
 
       if (currentPanel === nextPanel) {
-        syncButtons(detailBlock, selector);
+        syncButtons(detailBlock, null);
+        detailBlock.dataset.switching = "true";
+
+        hidePanel(currentPanel, () => {
+          detailBlock.dataset.switching = "false";
+        });
         return;
       }
 
@@ -249,9 +202,9 @@
         return getButtonKey(configuredDefaultButton);
       }
 
-      const activeButton =
-        viewportButtons.find((button) => button.classList.contains("is-active")) ||
-        viewportButtons[0];
+      const activeButton = viewportButtons.find((button) =>
+        button.classList.contains("is-active")
+      );
 
       return activeButton ? getButtonKey(activeButton) : null;
     }
@@ -265,18 +218,21 @@
       });
 
       const defaultKey = getDefaultKey(detailBlock);
-      if (!defaultKey) return;
+
+      if (!defaultKey) {
+        syncButtons(detailBlock, null);
+        detailBlock.dataset.switching = "false";
+        return;
+      }
 
       syncButtons(detailBlock, defaultKey);
 
-      if (defaultKey !== HIDDEN_PANEL_KEY) {
-        const defaultPanel = detailBlock.querySelector(defaultKey);
+      const defaultPanel = detailBlock.querySelector(defaultKey);
 
-        if (defaultPanel) {
-          defaultPanel.style.display = "block";
-          defaultPanel.style.opacity = "1";
-          defaultPanel.classList.add("is-visible");
-        }
+      if (defaultPanel) {
+        defaultPanel.style.display = "block";
+        defaultPanel.style.opacity = "1";
+        defaultPanel.classList.add("is-visible");
       }
 
       detailBlock.dataset.switching = "false";
@@ -312,11 +268,6 @@
 
       const detailBlock = button.closest(".card-detail-block");
       if (!detailBlock) return;
-
-      if (isHideButton(button)) {
-        activateHiddenState(detailBlock);
-        return;
-      }
 
       activatePanel(detailBlock, button.dataset.target);
     });

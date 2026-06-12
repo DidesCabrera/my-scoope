@@ -502,7 +502,7 @@ body.is-mealfood-sorting .js-mealfood-sortable-row {
 
 .data-grid--menu .data-grid-meal-name {
     font-weight: 600;
-    line-height: 1.2;
+    line-height: 1.35;
 }
 
 .data-grid--menu .data-grid-meal-hour {
@@ -882,3 +882,58 @@ body.is-list-panel-sorting .js-list-reorder-row {
   .data-grid-cell--select > * {
     margin: 0;
   }
+/* =========================================================
+   DailyPlan menu panel refinements
+   ========================================================= */
+
+.data-grid--menu .data-grid-meal-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.data-grid--menu .data-grid-meal-icon {
+    width: 16px;
+    height: 16px;
+    padding: 3px;
+    margin-bottom: 1px;
+    border-radius: 5px;
+    flex-shrink: 0;
+    stroke-width: 2.15;
+}
+
+.data-grid--menu .data-grid-meal-icon.meal {
+    background-color: var(--color-meal);
+}
+
+@media (max-width: 980px) {
+    .data-grid-header--menu {
+        display: none;
+    }
+
+    .data-grid--menu .data-grid-meal-icon {
+        width: 18px;
+        height: 18px;
+        border-radius: 5px;
+    }
+
+    .data-grid-row--menu {
+        grid-template-columns: 1fr;
+        gap: 5px;
+        align-items: stretch;
+        padding: 13px 0;
+    }
+
+    .data-grid--menu .data-grid-cell--meal {
+        padding: 0 4px;
+    }
+
+    .data-grid--menu .data-grid-cell--foods {
+        padding: 0 4px;
+        font-size: 14px;
+        line-height: 1.35;
+        opacity: 0.7;
+    }
+}
