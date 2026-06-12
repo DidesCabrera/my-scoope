@@ -1,5 +1,5 @@
 :root {
-  --sidebar-width: 260px;
+  --sidebar-width: 300px;
   --header-height: 40px;
 
   --z-picker-dropdown: 500;
@@ -52,7 +52,7 @@ header {
   border-right: 1px solid var(--panel-row-separator);
   color: var(--sidebar-text-active);
 
-  padding: 4px 12px 12px 12px;
+  padding: 5px 18px 12px 18px;
   box-sizing: border-box;
 
   position: fixed;
@@ -75,7 +75,7 @@ header {
   overflow-y: auto;
   overflow-x: hidden;
 
-  padding-right: 2px;
+  padding-right: 0px;
 
   -webkit-overflow-scrolling: touch;
 }
@@ -289,13 +289,13 @@ header {
       top: 0;
       left: 0;
       bottom: 0;
+      padding-top: 8px;
   
       transform: translate3d(-100%, 0, 0);
       transition: transform 0.25s ease;
   
       width: 320px;
       max-width: calc(100vw - 32px);
-      padding-top: 2px;
   
       z-index: var(--z-sidebar);
   
@@ -316,7 +316,7 @@ header {
   
     .nav-tab.tab-list .nav-text,
     .sidebar-label {
-      font-size: 16px;
+      font-size: 17px;
     }
   
     .sidebar-sub a {

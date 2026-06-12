@@ -1,42 +1,4 @@
-/* =========================
-   Sidebar icons
-   ========================= */
 
-   .sidebar-icon {
-    width: 16px;
-    height: 16px;
-    display: block;
-    flex-shrink: 0;
-    transition: transform 0.18s ease;
-    stroke-width: 2;
-  }
-  
-  .sidebar-group.is-open .sidebar-icon {
-    transform: rotate(90deg);
-  }
-  
-  .sidebar-main-icon {
-    width: 16px;
-    height: 16px;
-    margin-right: 0;
-    stroke-width: 1.5;
-    flex-shrink: 0;
-  }
-  
-  .sidebar-leading-icon {
-    width: 16px;
-    height: 16px;
-    stroke-width: 1.5;
-    flex-shrink: 0;
-  }
-  
-  .collapse-sidebar-icon {
-    height: 22px;
-    width: 22px;
-    flex-shrink: 0;
-    color: rgb(176, 176, 176);
-    stroke-width: 1.5;
-  }
   
   /* =========================
      Entity label icons
@@ -545,14 +507,6 @@
       width: 18px;
       padding: 3px;
       border-radius: 5px;
-    }
-
-    .profile-icon {
-      height: 22px;
-      width: 22px;
-      flex-shrink: 0;
-      color: #ffffff;
-      stroke-width: 1.5;
     }
 
   }

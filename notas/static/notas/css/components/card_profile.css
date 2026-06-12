@@ -1,6 +1,6 @@
   
 .user-block {
-    height: 102px;
+    height: 99px;
     padding: 14px 14px;
     padding-bottom: 15px;
     background-color: var(--surface-card-profile-sidebar);
@@ -17,7 +17,7 @@
 
 .user h2 {
     margin: 0;
-    font-size: 20px;
+    font-size: 17px;
     font-weight: 400;
     color: var(--sidebar-text-active);
 }
@@ -58,10 +58,10 @@
      ========================= */
   
      .profile-icon {
-        height: 20px;
-        width: 20px;
+        height: 17px;
+        width: 17px;
         flex-shrink: 0;
-        color: #ffffff;
+        color: var(--text-muted);
         stroke-width: 1.5;
       }
     
@@ -96,7 +96,7 @@
         stroke-width: 1.5;
       
         position: absolute;
-        bottom: 14px;
+        bottom: 17px;
         right: 12px;
       }
 
@@ -105,12 +105,12 @@
 @media (max-width: 768px) {
 
     .user-block {
-        height: 118px;
+        height: 106px;
     }
 
 
     .user h2 {
-        font-size: 22px;
+        font-size: 20px;
     }
 
     .weight-sidebar{
@@ -120,5 +120,12 @@
     .personal-metrics {
         height: 38px;
         width: 90px;
+    }
+    
+    .profile-icon {
+        height: 20px;
+        width: 20px;
+        flex-shrink: 0;
+        stroke-width: 1.5;
     }
 }

@@ -6,19 +6,59 @@
 }
 
 .brand-logo {
-    width: 110px;
-    padding-top: 1px;
+    width: 100px;
 }
 
 .collapse-sidebar-btn {
     display: none;
 }
 
+/* =========================
+   Sidebar icons
+   ========================= */
+
+   .sidebar-icon {
+    width: 16px;
+    height: 16px;
+    display: block;
+    flex-shrink: 0;
+    transition: transform 0.18s ease;
+    stroke-width: 2;
+  }
+  
+  .sidebar-group.is-open .sidebar-icon {
+    transform: rotate(90deg);
+  }
+  
+  .sidebar-main-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 0;
+    stroke-width: 1.5;
+    flex-shrink: 0;
+  }
+  
+  .sidebar-leading-icon {
+    width: 16px;
+    height: 16px;
+    stroke-width: 1.5;
+    flex-shrink: 0;
+  }
+  
+  .collapse-sidebar-icon {
+    height: 22px;
+    width: 22px;
+    flex-shrink: 0;
+    color: rgb(176, 176, 176);
+    stroke-width: 1.5;
+  }
+
+  
+
 @media (max-width: 768px) {
 
     .brand-logo {
-        width: 130px;
-        padding-top: 2px;
+        width: 125px;
     }
 
     .collapse-sidebar-btn {
@@ -87,7 +127,7 @@
 .sidebar-brand-link {
     display: inline-flex;
     align-items: center;
-    gap: 10px;
+    gap: 0px;
     min-width: 0;
     color: var(--sidebar-text-active);
     text-decoration: none;
@@ -99,10 +139,11 @@
 }
 
 .sidebar-brand-home-icon {
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
     flex-shrink: 0;
     padding: 6px;
+    margin-bottom: 1px;
     border-radius: 9px;
     color: var(--sidebar-text-active);
     background-color: var(--sidebar-hover);
@@ -129,6 +170,11 @@
     color: #ffffff !important;
     stroke: #ffffff !important;
     stroke-width: 1.8;
+}
+
+.sidebar-main-icon--library {
+    width: 26px;
+    height: 26px;
 }
 
 .sidebar-main-icon--dailyplan {
@@ -185,7 +231,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 12px;
+    padding: 7px 12px;
     border-radius: 6px;
     color: var(--sidebar-text);
     background-color: transparent;
@@ -342,5 +388,15 @@ body.sidebar-collapsed .sidebar-ai-panel {
 
     .sidebar-ai-panel__title {
         font-size: 14px;
+    }
+
+    .sidebar-brand-home-icon {
+        width: 32px;
+        height: 32px;
+    }
+
+
+    .sidebar .nav-tab {
+        padding: 10px 12px;
     }
 }
