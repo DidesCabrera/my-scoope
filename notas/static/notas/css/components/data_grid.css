@@ -469,7 +469,7 @@ body.is-mealfood-sorting .js-mealfood-sortable-row {
     align-self: start;
     align-items: flex-start;
     font-weight: 600;
-    padding: 9px 0px 9px 4px;
+    padding: 9px 4px 9px 8px;
 }
 
 .data-grid--menu .data-grid-col--meal {
@@ -492,7 +492,7 @@ body.is-mealfood-sorting .js-mealfood-sortable-row {
 
 .data-grid-cell--foods {
     align-items: center;
-    padding: 8px 0;
+    padding: 8px 8px 8px 0;
 }
 
 .data-grid--menu .data-grid-cell--meal {
@@ -924,7 +924,7 @@ body.is-list-panel-sorting .js-list-reorder-row {
         grid-template-columns: 1fr;
         gap: 5px;
         align-items: stretch;
-        padding: 13px 0;
+        padding: 16px 4px;
     }
 
     .data-grid--menu .data-grid-cell--meal {
@@ -934,7 +934,7 @@ body.is-list-panel-sorting .js-list-reorder-row {
     .data-grid--menu .data-grid-cell--foods {
         padding: 0 4px;
         font-size: 14px;
-        line-height: 1.35;
+        line-height: 1.50;
         opacity: 0.7;
     }
 }
