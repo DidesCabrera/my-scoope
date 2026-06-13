@@ -166,7 +166,6 @@ header {
   */
   padding-top: var(--app-header-height);
   padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
-  border-top: 1px solid var(--sidebar-border);
   overflow: visible;
 
   background-color: var(--surface-app);

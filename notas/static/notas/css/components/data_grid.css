@@ -469,7 +469,8 @@ body.is-mealfood-sorting .js-mealfood-sortable-row {
     align-self: start;
     align-items: flex-start;
     font-weight: 600;
-    padding: 9px 4px 9px 8px;
+    padding: 10px 4px 10px 8px;
+    min-height: 1.5em;
 }
 
 .data-grid--menu .data-grid-col--meal {
@@ -478,7 +479,8 @@ body.is-mealfood-sorting .js-mealfood-sortable-row {
 }
 
 .data-grid--menu .data-grid-cell--foods {
-    line-height: 1.35;
+    line-height: 1.50;
+    opacity: 0.9;
 }
 
 .data-grid-header--foods-aggregation,
