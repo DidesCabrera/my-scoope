@@ -3,6 +3,7 @@
     height: 90px;
     padding: 14px 14px;
     padding-bottom: 15px;
+    margin-bottom: 16px;
     background-color: var(--surface-card-profile-sidebar);
     border-radius: 18px;
     position: relative;
