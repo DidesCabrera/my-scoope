@@ -1,0 +1,89 @@
+diff -ruN proyecto_django_export_ai/notas/static/notas/css/components/header.css proyecto_django_export_ai/notas/static/notas/css/components/header.css
+--- proyecto_django_export_ai/notas/static/notas/css/components/header.css	2026-06-12 05:23:20.000000000 +0000
++++ proyecto_django_export_ai/notas/static/notas/css/components/header.css	2026-06-13 21:46:53.631260983 +0000
+@@ -320,8 +320,8 @@
+     left: 0;
+     right: 0;
+ 
+-    height: 54px;
+-    padding: 0 10px;
++    height: var(--pwa-header-height);
++    padding: var(--pwa-safe-area-top) 10px 0;
+ 
+     z-index: var(--z-header);
+   }
+@@ -333,7 +333,7 @@
+   }
+ 
+   .header-mini-edit {
+-    top: 54px;
++    top: var(--pwa-header-height);
+     left: 0;
+     height: 18px;
+     z-index: var(--z-header-mini);
+diff -ruN proyecto_django_export_ai/notas/static/notas/css/layout.css proyecto_django_export_ai/notas/static/notas/css/layout.css
+--- proyecto_django_export_ai/notas/static/notas/css/layout.css	2026-06-13 20:14:51.000000000 +0000
++++ proyecto_django_export_ai/notas/static/notas/css/layout.css	2026-06-13 21:46:53.631109268 +0000
+@@ -2,6 +2,9 @@
+   --sidebar-width: 300px;
+   --sidebar-collapsed-width: 64px;
+   --header-height: 40px;
++  --mobile-header-height: 54px;
++  --pwa-safe-area-top: 0px;
++  --pwa-header-height: var(--mobile-header-height);
+ 
+   --z-picker-dropdown: 500;
+   --z-header-mini: 790;
+@@ -18,6 +21,13 @@
+   --sidebar-edge-border: rgba(255, 255, 255, 0.08);
+ }
+ 
++@supports (padding-top: env(safe-area-inset-top)) {
++  html.pwa-standalone {
++    --pwa-safe-area-top: env(safe-area-inset-top, 0px);
++    --pwa-header-height: calc(var(--mobile-header-height) + var(--pwa-safe-area-top));
++  }
++}
++
+ html[data-theme="dark"] {
+   --sidebar-edge-border: rgba(255, 255, 255, 0.06);
+ }
+@@ -310,7 +320,7 @@
+       top: 0;
+       left: 0;
+       bottom: 0;
+-      padding-top: 8px;
++      padding-top: calc(8px + var(--pwa-safe-area-top));
+   
+       transform: translate3d(-100%, 0, 0);
+       transition: transform 0.25s ease;
+@@ -331,7 +341,7 @@
+   
+     .app-content {
+       margin-left: 0;
+-      padding-top: 54px;
++      padding-top: var(--pwa-header-height);
+       padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+       border-top: none;
+     }
+diff -ruN proyecto_django_export_ai/notas/templates/notas/base.html proyecto_django_export_ai/notas/templates/notas/base.html
+--- proyecto_django_export_ai/notas/templates/notas/base.html	2026-06-13 21:31:46.000000000 +0000
++++ proyecto_django_export_ai/notas/templates/notas/base.html	2026-06-13 21:46:53.630740085 +0000
+@@ -27,6 +27,17 @@
+             }
+         })();
+     </script>
++    <script>
++        (function () {
++            const isStandalone =
++                (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
++                window.navigator.standalone === true;
++
++            if (isStandalone) {
++                document.documentElement.classList.add("pwa-standalone");
++            }
++        })();
++    </script>
+ 
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">

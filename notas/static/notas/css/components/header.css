@@ -320,8 +320,8 @@ body.page-header-meta-deferred.page-header-meta-visible .page-header .header-tit
     left: 0;
     right: 0;
 
-    height: 54px;
-    padding: 0 10px;
+    height: var(--pwa-header-height);
+    padding: var(--pwa-safe-area-top) 10px 0;
 
     z-index: var(--z-header);
   }
@@ -333,7 +333,7 @@ body.page-header-meta-deferred.page-header-meta-visible .page-header .header-tit
   }
 
   .header-mini-edit {
-    top: 54px;
+    top: var(--pwa-header-height);
     left: 0;
     height: 18px;
     z-index: var(--z-header-mini);

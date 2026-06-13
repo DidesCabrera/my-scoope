@@ -2,6 +2,9 @@
   --sidebar-width: 300px;
   --sidebar-collapsed-width: 64px;
   --header-height: 40px;
+  --mobile-header-height: 54px;
+  --pwa-safe-area-top: 0px;
+  --pwa-header-height: var(--mobile-header-height);
 
   --z-picker-dropdown: 500;
   --z-header-mini: 790;
@@ -16,6 +19,13 @@
   --sidebar-card-bg: rgb(30, 30, 30);
   --sidebar-card-border: rgb(36, 36, 36);
   --sidebar-edge-border: rgba(255, 255, 255, 0.08);
+}
+
+@supports (padding-top: env(safe-area-inset-top)) {
+  html.pwa-standalone {
+    --pwa-safe-area-top: env(safe-area-inset-top, 0px);
+    --pwa-header-height: calc(var(--mobile-header-height) + var(--pwa-safe-area-top));
+  }
 }
 
 html[data-theme="dark"] {
@@ -310,7 +320,7 @@ header {
       top: 0;
       left: 0;
       bottom: 0;
-      padding-top: 8px;
+      padding-top: calc(8px + var(--pwa-safe-area-top));
   
       transform: translate3d(-100%, 0, 0);
       transition: transform 0.25s ease;
@@ -331,7 +341,7 @@ header {
   
     .app-content {
       margin-left: 0;
-      padding-top: 54px;
+      padding-top: var(--pwa-header-height);
       padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
       border-top: none;
     }

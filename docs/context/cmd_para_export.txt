@@ -13,13 +13,13 @@ python manage.py runserver
 ***GENERACION ZIP 
 --------------------------
 
-FULL
-(Sin USDA - img)
-./scripts/export_for_chatgpt.sh full
-
 AI
 (Sin USDA - img - test)
 ./scripts/export_for_chatgpt.sh ai
+
+FULL
+(Sin USDA - img)
+./scripts/export_for_chatgpt.sh full
 
 COMPLETO
 (Sin img)
@@ -31,7 +31,7 @@ COMPLETO
 --------------------------
 
 git add .
-git commit -m "Mejora significativa - reordenamiento temporal paneles"
+git commit -m "Implementacion PWA instalable"
 git push origin main
 
 
