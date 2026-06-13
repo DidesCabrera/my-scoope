@@ -6,9 +6,9 @@
   left: var(--sidebar-width);
   right: 0;
 
-  height: var(--header-height);
+  height: var(--app-header-height);
 
-  padding: 0 20px;
+  padding: var(--pwa-safe-area-top) 20px 0;
 
   display: flex;
   justify-content: space-between;
@@ -144,7 +144,7 @@ body.page-header-meta-deferred.page-header-meta-visible .page-header .header-tit
 .header-mini-edit {
   position: fixed;
   display: flex;
-  top: var(--header-height);
+  top: var(--app-header-height);
   left: var(--sidebar-width);
   right: 0;
 
@@ -320,7 +320,7 @@ body.page-header-meta-deferred.page-header-meta-visible .page-header .header-tit
     left: 0;
     right: 0;
 
-    height: var(--pwa-header-height);
+    height: var(--app-header-height);
     padding: var(--pwa-safe-area-top) 10px 0;
 
     z-index: var(--z-header);
@@ -333,7 +333,7 @@ body.page-header-meta-deferred.page-header-meta-visible .page-header .header-tit
   }
 
   .header-mini-edit {
-    top: var(--pwa-header-height);
+    top: var(--app-header-height);
     left: 0;
     height: 18px;
     z-index: var(--z-header-mini);

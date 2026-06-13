@@ -206,8 +206,8 @@ def pwa_manifest(request):
         "display": "standalone",
         "display_override": ["standalone", "minimal-ui"],
         "orientation": "portrait-primary",
-        "background_color": "#0f172a",
-        "theme_color": "#0f172a",
+        "background_color": "#000000",
+        "theme_color": "#000000",
         "categories": ["health", "fitness", "productivity"],
         "icons": [
             {

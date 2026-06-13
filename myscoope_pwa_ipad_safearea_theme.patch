@@ -1,0 +1,132 @@
+diff --git a/notas/interface/views/pwa.py b/notas/interface/views/pwa.py
+index 3adac7d..9369705 100644
+--- a/notas/interface/views/pwa.py
++++ b/notas/interface/views/pwa.py
+@@ -206,8 +206,8 @@ def pwa_manifest(request):
+         "display": "standalone",
+         "display_override": ["standalone", "minimal-ui"],
+         "orientation": "portrait-primary",
+-        "background_color": "#0f172a",
+-        "theme_color": "#0f172a",
++        "background_color": "#000000",
++        "theme_color": "#000000",
+         "categories": ["health", "fitness", "productivity"],
+         "icons": [
+             {
+diff --git a/notas/static/notas/css/components/header.css b/notas/static/notas/css/components/header.css
+index 5409294..986eaf5 100644
+--- a/notas/static/notas/css/components/header.css
++++ b/notas/static/notas/css/components/header.css
+@@ -6,9 +6,9 @@
+   left: var(--sidebar-width);
+   right: 0;
+ 
+-  height: var(--header-height);
++  height: var(--app-header-height);
+ 
+-  padding: 0 20px;
++  padding: var(--pwa-safe-area-top) 20px 0;
+ 
+   display: flex;
+   justify-content: space-between;
+@@ -144,7 +144,7 @@ body.page-header-meta-deferred.page-header-meta-visible .page-header .header-tit
+ .header-mini-edit {
+   position: fixed;
+   display: flex;
+-  top: var(--header-height);
++  top: var(--app-header-height);
+   left: var(--sidebar-width);
+   right: 0;
+ 
+@@ -320,7 +320,7 @@ body.page-header-meta-deferred.page-header-meta-visible .page-header .header-tit
+     left: 0;
+     right: 0;
+ 
+-    height: var(--pwa-header-height);
++    height: var(--app-header-height);
+     padding: var(--pwa-safe-area-top) 10px 0;
+ 
+     z-index: var(--z-header);
+@@ -333,7 +333,7 @@ body.page-header-meta-deferred.page-header-meta-visible .page-header .header-tit
+   }
+ 
+   .header-mini-edit {
+-    top: var(--pwa-header-height);
++    top: var(--app-header-height);
+     left: 0;
+     height: 18px;
+     z-index: var(--z-header-mini);
+diff --git a/notas/static/notas/css/layout.css b/notas/static/notas/css/layout.css
+index 52ef37b..b9a5174 100644
+--- a/notas/static/notas/css/layout.css
++++ b/notas/static/notas/css/layout.css
+@@ -4,7 +4,7 @@
+   --header-height: 40px;
+   --mobile-header-height: 54px;
+   --pwa-safe-area-top: 0px;
+-  --pwa-header-height: var(--mobile-header-height);
++  --app-header-height: var(--header-height);
+ 
+   --z-picker-dropdown: 500;
+   --z-header-mini: 790;
+@@ -24,7 +24,19 @@
+ @supports (padding-top: env(safe-area-inset-top)) {
+   html.pwa-standalone {
+     --pwa-safe-area-top: env(safe-area-inset-top, 0px);
+-    --pwa-header-height: calc(var(--mobile-header-height) + var(--pwa-safe-area-top));
++    --app-header-height: calc(var(--header-height) + var(--pwa-safe-area-top));
++  }
++}
++
++@media (max-width: 980px) {
++  :root {
++    --app-header-height: var(--mobile-header-height);
++  }
++
++  @supports (padding-top: env(safe-area-inset-top)) {
++    html.pwa-standalone {
++      --app-header-height: calc(var(--mobile-header-height) + var(--pwa-safe-area-top));
++    }
+   }
+ }
+ 
+@@ -63,7 +75,7 @@ header {
+   border-right: 1px solid var(--panel-row-separator);
+   color: var(--sidebar-text-active);
+ 
+-  padding: 5px 18px 12px 18px;
++  padding: calc(5px + var(--pwa-safe-area-top)) 18px 12px 18px;
+   box-sizing: border-box;
+ 
+   position: fixed;
+@@ -152,7 +164,7 @@ header {
+     El contenido principal usa scroll nativo del documento.
+     No usar overflow-y:auto aquí.
+   */
+-  padding-top: var(--header-height);
++  padding-top: var(--app-header-height);
+   padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+   border-top: 1px solid var(--sidebar-border);
+   overflow: visible;
+@@ -341,7 +353,7 @@ header {
+   
+     .app-content {
+       margin-left: 0;
+-      padding-top: var(--pwa-header-height);
++      padding-top: var(--app-header-height);
+       padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+       border-top: none;
+     }
+diff --git a/notas/templates/notas/base.html b/notas/templates/notas/base.html
+index 0117eb8..66acdbc 100644
+--- a/notas/templates/notas/base.html
++++ b/notas/templates/notas/base.html
+@@ -42,7 +42,7 @@
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+     <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
+-    <meta name="theme-color" content="#0f172a">
++    <meta name="theme-color" content="#000000">
+     <meta name="mobile-web-app-capable" content="yes">
+     <meta name="apple-mobile-web-app-capable" content="yes">
+     <meta name="apple-mobile-web-app-title" content="MyScoope">
