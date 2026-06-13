@@ -31,7 +31,7 @@ COMPLETO
 --------------------------
 
 git add .
-git commit -m "Ajuste menor en margin"
+git commit -m "Mejora significativa - reordenamiento temporal paneles"
 git push origin main
 
 

@@ -90,6 +90,7 @@
 
 .data-grid-col {
     font-size: 11px;
+    height: 20px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -400,7 +401,7 @@ body.is-mealfood-sorting .js-mealfood-sortable-row {
 .data-grid-row--mobile-foods-qty {
     grid-template-columns:
         minmax(150px, 1.8fr)
-        44px;
+        64px;
 }
 
 .data-grid-header--mobile-foods-macros,
@@ -961,12 +962,18 @@ body.is-list-panel-sorting .js-list-reorder-row {
    ========================================================= */
 
 .data-grid-col.is-grid-sortable {
+    cursor: pointer;
+    user-select: none;
+    outline: none;
+}
+
+.data-grid-sort-content {
     display: inline-flex;
     align-items: center;
     gap: 4px;
     min-width: 0;
-    cursor: pointer;
-    user-select: none;
+    width: fit-content;
+    max-width: 100%;
     border-radius: 999px;
     transition:
         background-color 0.15s ease,
@@ -975,18 +982,17 @@ body.is-list-panel-sorting .js-list-reorder-row {
         opacity 0.15s ease;
 }
 
-.data-grid-col.is-grid-sortable:hover,
-.data-grid-col.is-grid-sortable:focus-visible {
+.data-grid-col.is-grid-sortable:hover .data-grid-sort-content,
+.data-grid-col.is-grid-sortable:focus-visible .data-grid-sort-content {
     color: var(--text-main);
     opacity: 1;
-    outline: none;
 }
 
-.data-grid-col.is-grid-sorted {
+.data-grid-col.is-grid-sorted .data-grid-sort-content {
     color: var(--text-main);
     background: var(--alloc-cell-bg);
-    padding: 4px 0px;
-    margin: -4px 0 4px;
+    padding: 4px 8px;
+    margin: -6px 0 0;
     font-weight: 750;
 }
 
@@ -1006,7 +1012,7 @@ body.is-list-panel-sorting .js-list-reorder-row {
 .data-grid-col--name.is-grid-sortable,
 .data-grid-col--meal.is-grid-sortable,
 .data-grid-col--foods.is-grid-sortable {
-    justify-content: flex-start;
+    text-align: left;
 }
 
 .data-grid-col--qty.is-grid-sortable,
@@ -1014,5 +1020,13 @@ body.is-list-panel-sorting .js-list-reorder-row {
 .data-grid-col--macro.is-grid-sortable,
 .data-grid-col--alloc.is-grid-sortable,
 .data-grid-col--time.is-grid-sortable {
+    text-align: center;
+}
+
+.data-grid-col--qty.is-grid-sortable .data-grid-sort-content,
+.data-grid-col--kcal.is-grid-sortable .data-grid-sort-content,
+.data-grid-col--macro.is-grid-sortable .data-grid-sort-content,
+.data-grid-col--alloc.is-grid-sortable .data-grid-sort-content,
+.data-grid-col--time.is-grid-sortable .data-grid-sort-content {
     justify-content: center;
 }

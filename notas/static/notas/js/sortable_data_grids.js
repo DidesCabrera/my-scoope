@@ -11,6 +11,7 @@
   const ROW_SELECTOR = ".data-grid-row";
   const EMPTY_SELECTOR = ".data-grid-empty";
   const SORT_ICON_CLASS = "data-grid-sort-icon";
+  const SORT_CONTENT_CLASS = "data-grid-sort-content";
 
   const EXCLUDED_GRID_SELECTORS = [
     ".data-grid--menu",
@@ -94,6 +95,10 @@
     }
   }
 
+  function getSortContent(headerCell) {
+    return headerCell.querySelector(`.${SORT_CONTENT_CLASS}`) || headerCell;
+  }
+
   function removeSortIcon(headerCell) {
     const existingIcon = headerCell.querySelector(`.${SORT_ICON_CLASS}`);
 
@@ -127,7 +132,7 @@
       "aria-sort",
       direction === "desc" ? "descending" : "ascending"
     );
-    headerCell.appendChild(icon);
+    getSortContent(headerCell).appendChild(icon);
     refreshLucideIcons();
   }
 
@@ -196,6 +201,21 @@
     grid.dataset.sortDirection = nextDirection;
   }
 
+  function wrapHeaderContent(cell) {
+    if (cell.querySelector(`.${SORT_CONTENT_CLASS}`)) {
+      return;
+    }
+
+    const wrapper = document.createElement("span");
+    wrapper.className = SORT_CONTENT_CLASS;
+
+    while (cell.firstChild) {
+      wrapper.appendChild(cell.firstChild);
+    }
+
+    cell.appendChild(wrapper);
+  }
+
   function prepareGrid(grid) {
     if (!grid || grid.dataset.sortableReady === "true" || isExcludedGrid(grid)) {
       return;
@@ -213,6 +233,7 @@
     });
 
     headerCells.forEach((cell, columnIndex) => {
+      wrapHeaderContent(cell);
       cell.classList.add("is-grid-sortable");
       cell.setAttribute("role", "button");
       cell.setAttribute("tabindex", "0");

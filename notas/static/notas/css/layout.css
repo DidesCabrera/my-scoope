@@ -144,7 +144,7 @@ header {
   */
   padding-top: var(--header-height);
   padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
-
+  border-top: 1px solid var(--sidebar-border);
   overflow: visible;
 
   background-color: var(--surface-app);
@@ -333,6 +333,7 @@ header {
       margin-left: 0;
       padding-top: 54px;
       padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+      border-top: none;
     }
   
     .nav-tab.tab-list .nav-text,

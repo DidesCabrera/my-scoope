@@ -1,0 +1,321 @@
+diff --git a/notas/static/notas/css/components/data_grid.css b/notas/static/notas/css/components/data_grid.css
+index 6fd6645..3f3a9d0 100644
+--- a/notas/static/notas/css/components/data_grid.css
++++ b/notas/static/notas/css/components/data_grid.css
+@@ -961,12 +961,18 @@ body.is-list-panel-sorting .js-list-reorder-row {
+    ========================================================= */
+ 
+ .data-grid-col.is-grid-sortable {
++    cursor: pointer;
++    user-select: none;
++    outline: none;
++}
++
++.data-grid-sort-content {
+     display: inline-flex;
+     align-items: center;
+     gap: 4px;
+     min-width: 0;
+-    cursor: pointer;
+-    user-select: none;
++    width: fit-content;
++    max-width: 100%;
+     border-radius: 999px;
+     transition:
+         background-color 0.15s ease,
+@@ -975,14 +981,13 @@ body.is-list-panel-sorting .js-list-reorder-row {
+         opacity 0.15s ease;
+ }
+ 
+-.data-grid-col.is-grid-sortable:hover,
+-.data-grid-col.is-grid-sortable:focus-visible {
++.data-grid-col.is-grid-sortable:hover .data-grid-sort-content,
++.data-grid-col.is-grid-sortable:focus-visible .data-grid-sort-content {
+     color: var(--text-main);
+     opacity: 1;
+-    outline: none;
+ }
+ 
+-.data-grid-col.is-grid-sorted {
++.data-grid-col.is-grid-sorted .data-grid-sort-content {
+     color: var(--text-main);
+     background: var(--alloc-cell-bg);
+     padding: 4px 8px;
+@@ -1006,7 +1011,7 @@ body.is-list-panel-sorting .js-list-reorder-row {
+ .data-grid-col--name.is-grid-sortable,
+ .data-grid-col--meal.is-grid-sortable,
+ .data-grid-col--foods.is-grid-sortable {
+-    justify-content: flex-start;
++    text-align: left;
+ }
+ 
+ .data-grid-col--qty.is-grid-sortable,
+@@ -1014,5 +1019,13 @@ body.is-list-panel-sorting .js-list-reorder-row {
+ .data-grid-col--macro.is-grid-sortable,
+ .data-grid-col--alloc.is-grid-sortable,
+ .data-grid-col--time.is-grid-sortable {
++    text-align: center;
++}
++
++.data-grid-col--qty.is-grid-sortable .data-grid-sort-content,
++.data-grid-col--kcal.is-grid-sortable .data-grid-sort-content,
++.data-grid-col--macro.is-grid-sortable .data-grid-sort-content,
++.data-grid-col--alloc.is-grid-sortable .data-grid-sort-content,
++.data-grid-col--time.is-grid-sortable .data-grid-sort-content {
+     justify-content: center;
+ }
+diff --git a/notas/static/notas/css/components/page.css b/notas/static/notas/css/components/page.css
+index 18113a6..759e4d8 100644
+--- a/notas/static/notas/css/components/page.css
++++ b/notas/static/notas/css/components/page.css
+@@ -228,6 +228,13 @@
+     background: var(--entity-home);
+ }
+ 
++.list-page-header__copy {
++    display: inline-flex;
++    flex-direction: column;
++    align-items: center;
++    gap: 8px;
++}
++
+ .list-page-header__title {
+     margin: 0;
+     color: var(--text-main);
+@@ -236,6 +243,34 @@
+     line-height: 1.12;
+ }
+ 
++.list-page-header__indicator {
++    display: inline-flex;
++    align-items: center;
++    width: fit-content;
++    background-color: var(--surface-card-muted);
++    color: var(--text-muted);
++    border: 1px solid var(--border-soft);
++    font-size: 12px;
++    font-weight: 600;
++    border-radius: 5px;
++    padding: 4px 6px;
++    gap: 6px;
++}
++
++.list-page-header__indicator strong {
++    color: var(--text-main);
++    font-weight: 750;
++    line-height: 1;
++}
++
++.list-page-header__indicator .structural-icon.main {
++    width: 12px;
++    height: 12px;
++    display: block;
++    color: var(--text-muted);
++    stroke-width: 2.4;
++}
++
+ @media (max-width: 768px) {
+     .list-page-header {
+         gap: 10px;
+@@ -248,7 +283,16 @@
+         border-radius: 12px;
+     }
+ 
++    .list-page-header__copy {
++        gap: 7px;
++    }
++
+     .list-page-header__title {
+         font-size: 24px;
+     }
++
++    .list-page-header__indicator {
++        font-size: 14px;
++        border-radius: 8px;
++    }
+ }
+diff --git a/notas/static/notas/js/sortable_data_grids.js b/notas/static/notas/js/sortable_data_grids.js
+index db9aa53..1d9c8a8 100644
+--- a/notas/static/notas/js/sortable_data_grids.js
++++ b/notas/static/notas/js/sortable_data_grids.js
+@@ -11,6 +11,7 @@
+   const ROW_SELECTOR = ".data-grid-row";
+   const EMPTY_SELECTOR = ".data-grid-empty";
+   const SORT_ICON_CLASS = "data-grid-sort-icon";
++  const SORT_CONTENT_CLASS = "data-grid-sort-content";
+ 
+   const EXCLUDED_GRID_SELECTORS = [
+     ".data-grid--menu",
+@@ -94,6 +95,10 @@
+     }
+   }
+ 
++  function getSortContent(headerCell) {
++    return headerCell.querySelector(`.${SORT_CONTENT_CLASS}`) || headerCell;
++  }
++
+   function removeSortIcon(headerCell) {
+     const existingIcon = headerCell.querySelector(`.${SORT_ICON_CLASS}`);
+ 
+@@ -127,7 +132,7 @@
+       "aria-sort",
+       direction === "desc" ? "descending" : "ascending"
+     );
+-    headerCell.appendChild(icon);
++    getSortContent(headerCell).appendChild(icon);
+     refreshLucideIcons();
+   }
+ 
+@@ -196,6 +201,21 @@
+     grid.dataset.sortDirection = nextDirection;
+   }
+ 
++  function wrapHeaderContent(cell) {
++    if (cell.querySelector(`.${SORT_CONTENT_CLASS}`)) {
++      return;
++    }
++
++    const wrapper = document.createElement("span");
++    wrapper.className = SORT_CONTENT_CLASS;
++
++    while (cell.firstChild) {
++      wrapper.appendChild(cell.firstChild);
++    }
++
++    cell.appendChild(wrapper);
++  }
++
+   function prepareGrid(grid) {
+     if (!grid || grid.dataset.sortableReady === "true" || isExcludedGrid(grid)) {
+       return;
+@@ -213,6 +233,7 @@
+     });
+ 
+     headerCells.forEach((cell, columnIndex) => {
++      wrapHeaderContent(cell);
+       cell.classList.add("is-grid-sortable");
+       cell.setAttribute("role", "button");
+       cell.setAttribute("tabindex", "0");
+diff --git a/notas/templates/components/grid_foods.html b/notas/templates/components/grid_foods.html
+index 60b9964..fa3088c 100644
+--- a/notas/templates/components/grid_foods.html
++++ b/notas/templates/components/grid_foods.html
+@@ -7,9 +7,9 @@
+         <div class="data-grid-col data-grid-col--macro">P</div>
+         <div class="data-grid-col data-grid-col--macro">C</div>
+         <div class="data-grid-col data-grid-col--macro">F</div>
+-        <div class="data-grid-col data-grid-col--alloc">P kcal%</div>
+-        <div class="data-grid-col data-grid-col--alloc">C kcal%</div>
+-        <div class="data-grid-col data-grid-col--alloc">F kcal%</div>
++        <div class="data-grid-col data-grid-col--alloc">P%</div>
++        <div class="data-grid-col data-grid-col--alloc">C%</div>
++        <div class="data-grid-col data-grid-col--alloc">F%</div>
+     </div>
+ 
+     {% for row in items %}
+diff --git a/notas/templates/components/grid_foods_edit.html b/notas/templates/components/grid_foods_edit.html
+index 30f6a7e..3d77fb4 100644
+--- a/notas/templates/components/grid_foods_edit.html
++++ b/notas/templates/components/grid_foods_edit.html
+@@ -11,9 +11,9 @@
+         <div class="data-grid-col data-grid-col--macro">P</div>
+         <div class="data-grid-col data-grid-col--macro">C</div>
+         <div class="data-grid-col data-grid-col--macro">F</div>
+-        <div class="data-grid-col data-grid-col--alloc">P kcal%</div>
+-        <div class="data-grid-col data-grid-col--alloc">C kcal%</div>
+-        <div class="data-grid-col data-grid-col--alloc">F kcal%</div>
++        <div class="data-grid-col data-grid-col--alloc">P%</div>
++        <div class="data-grid-col data-grid-col--alloc">C%</div>
++        <div class="data-grid-col data-grid-col--alloc">F%</div>
+         <div class="data-grid-col data-grid-col--action"></div>
+         <div class="data-grid-col data-grid-col--action"></div>
+     </div>
+diff --git a/notas/templates/components/grid_foods_mobile_alloc.html b/notas/templates/components/grid_foods_mobile_alloc.html
+index 0dab79a..f7b1ad0 100644
+--- a/notas/templates/components/grid_foods_mobile_alloc.html
++++ b/notas/templates/components/grid_foods_mobile_alloc.html
+@@ -2,9 +2,9 @@
+ 
+     <div class="data-grid-header data-grid-header--mobile-foods-alloc">
+         <div class="data-grid-col data-grid-col--name">Alimentos</div>
+-        <div class="data-grid-col data-grid-col--alloc">P kcal%</div>
+-        <div class="data-grid-col data-grid-col--alloc">C kcal%</div>
+-        <div class="data-grid-col data-grid-col--alloc">F kcal%</div>
++        <div class="data-grid-col data-grid-col--alloc">P%</div>
++        <div class="data-grid-col data-grid-col--alloc">C%</div>
++        <div class="data-grid-col data-grid-col--alloc">F%</div>
+     </div>
+ 
+     {% for row in items %}
+diff --git a/notas/templates/components/grid_meals.html b/notas/templates/components/grid_meals.html
+index c74fdac..d727e59 100644
+--- a/notas/templates/components/grid_meals.html
++++ b/notas/templates/components/grid_meals.html
+@@ -6,9 +6,9 @@
+         <div class="data-grid-col data-grid-col--macro">P</div>
+         <div class="data-grid-col data-grid-col--macro">C</div>
+         <div class="data-grid-col data-grid-col--macro">F</div>
+-        <div class="data-grid-col data-grid-col--alloc">P kcal%</div>
+-        <div class="data-grid-col data-grid-col--alloc">C kcal%</div>
+-        <div class="data-grid-col data-grid-col--alloc">F kcal%</div>
++        <div class="data-grid-col data-grid-col--alloc">P%</div>
++        <div class="data-grid-col data-grid-col--alloc">C%</div>
++        <div class="data-grid-col data-grid-col--alloc">F%</div>
+     </div>
+ 
+     {% for row in items %}
+diff --git a/notas/templates/components/grid_meals_edit.html b/notas/templates/components/grid_meals_edit.html
+index 88eb441..03abbfd 100644
+--- a/notas/templates/components/grid_meals_edit.html
++++ b/notas/templates/components/grid_meals_edit.html
+@@ -12,9 +12,9 @@
+         <div class="data-grid-col data-grid-col--macro">P</div>
+         <div class="data-grid-col data-grid-col--macro">C</div>
+         <div class="data-grid-col data-grid-col--macro">F</div>
+-        <div class="data-grid-col data-grid-col--alloc">P kcal%</div>
+-        <div class="data-grid-col data-grid-col--alloc">C kcal%</div>
+-        <div class="data-grid-col data-grid-col--alloc">F kcal%</div>
++        <div class="data-grid-col data-grid-col--alloc">P%</div>
++        <div class="data-grid-col data-grid-col--alloc">C%</div>
++        <div class="data-grid-col data-grid-col--alloc">F%</div>
+         <div class="data-grid-col data-grid-col--action"></div>
+         <div class="data-grid-col data-grid-col--action"></div>
+         <div class="data-grid-col data-grid-col--action"></div>
+diff --git a/notas/templates/components/grid_meals_mobile_alloc.html b/notas/templates/components/grid_meals_mobile_alloc.html
+index f75aad7..73b3f43 100644
+--- a/notas/templates/components/grid_meals_mobile_alloc.html
++++ b/notas/templates/components/grid_meals_mobile_alloc.html
+@@ -2,9 +2,9 @@
+ 
+     <div class="data-grid-header data-grid-header--mobile-alloc">
+         <div class="data-grid-col data-grid-col--name">Comidas</div>
+-        <div class="data-grid-col data-grid-col--alloc">P kcal%</div>
+-        <div class="data-grid-col data-grid-col--alloc">C kcal%</div>
+-        <div class="data-grid-col data-grid-col--alloc">F kcal%</div>
++        <div class="data-grid-col data-grid-col--alloc">P%</div>
++        <div class="data-grid-col data-grid-col--alloc">C%</div>
++        <div class="data-grid-col data-grid-col--alloc">F%</div>
+     </div>
+ 
+     {% for row in items %}
+diff --git a/notas/templates/components/list_page_header.html b/notas/templates/components/list_page_header.html
+index 6b389a5..dc016d9 100644
+--- a/notas/templates/components/list_page_header.html
++++ b/notas/templates/components/list_page_header.html
+@@ -3,5 +3,15 @@
+     data-lucide="{% if vm.ui.page_icon %}{{ vm.ui.page_icon }}{% else %}{{ vm.ui.icon }}{% endif %}"
+     class="list-page-header__icon list-page-header__icon--{{ vm.ui.entity }}{% if vm.ui.scope == 'explore' %} list-page-header__icon--explore{% endif %}"
+   ></i>
+-  <h2 class="list-page-header__title">{{ vm.ui.title }}</h2>
++
++  <div class="list-page-header__copy">
++    <h2 class="list-page-header__title">{{ vm.ui.title }}</h2>
++
++    <div class="list-page-header__indicator" aria-label="Total de elementos">
++      <span class="structural-item">
++        <strong>{% if vm.content.child_cards %}{{ vm.content.child_cards|length }}{% elif vm.content.proposals %}{{ vm.content.proposals|length }}{% else %}0{% endif %}</strong>
++        <i data-lucide="{{ vm.ui.icon }}" class="structural-icon main" aria-hidden="true"></i>
++      </span>
++    </div>
++  </div>
+ </div>
