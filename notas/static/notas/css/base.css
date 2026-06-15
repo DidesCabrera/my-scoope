@@ -113,3 +113,54 @@ button {
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+/* --- PWA polish --- */
+
+html.pwa-standalone,
+html.pwa-standalone body {
+  overscroll-behavior-y: none;
+}
+
+html.pwa-standalone {
+  scrollbar-width: none;
+}
+
+html.pwa-standalone::-webkit-scrollbar,
+html.pwa-standalone body::-webkit-scrollbar,
+html.pwa-standalone *::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.pwa-splash {
+  display: none;
+}
+
+html.pwa-standalone .pwa-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #000000;
+  opacity: 1;
+  visibility: visible;
+
+  transition: opacity 220ms ease, visibility 220ms ease;
+  pointer-events: none;
+}
+
+html.pwa-standalone .pwa-splash__logo {
+  display: block;
+  width: min(42vw, 220px);
+  height: auto;
+  border-radius: 24%;
+}
+
+html.pwa-standalone.pwa-ready .pwa-splash {
+  opacity: 0;
+  visibility: hidden;
+}

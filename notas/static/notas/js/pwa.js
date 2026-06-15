@@ -4,6 +4,25 @@
 
   document.documentElement.classList.toggle("pwa-standalone", isStandalone);
 
+  function markPwaReady() {
+    document.documentElement.classList.add("pwa-ready");
+
+    const splash = document.querySelector(".js-pwa-splash");
+    if (!splash) {
+      return;
+    }
+
+    window.setTimeout(function () {
+      splash.remove();
+    }, 280);
+  }
+
+  if (document.readyState === "complete") {
+    markPwaReady();
+  } else {
+    window.addEventListener("load", markPwaReady, { once: true });
+  }
+
   if (!("serviceWorker" in navigator)) {
     return;
   }

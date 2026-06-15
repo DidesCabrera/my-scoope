@@ -51,7 +51,7 @@
 
     {% load static %}
     <link rel="manifest" href="{% url 'pwa_manifest' %}">
-    <link rel="icon" href="{% static 'notas/icons/myscoope-icon.svg' %}" type="image/svg+xml">
+    <link rel="icon" sizes="192x192" href="{% url 'pwa_icon' 192 %}" type="image/png">
     <link rel="apple-touch-icon" sizes="180x180" href="{% url 'pwa_icon' 180 %}">
     <link rel="stylesheet" href="{% static 'notas/css/tokens.css' %}">
     <link rel="stylesheet" href="{% static 'notas/css/base.css' %}">
@@ -117,6 +117,10 @@
 <!-- =============================== -->
 
 <body class="{% block body_class %}{% endblock %}{% if vm.ui.mode == 'list' %} page-header-meta-deferred{% endif %}">
+    <div class="pwa-splash js-pwa-splash" aria-hidden="true">
+        <img class="pwa-splash__logo" src="{% url 'pwa_icon' 512 %}" alt="">
+    </div>
+
     <div class="app">
 
 

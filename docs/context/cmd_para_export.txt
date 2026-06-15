@@ -31,7 +31,7 @@ COMPLETO
 --------------------------
 
 git add .
-git commit -m "Implementacion PWA instalable v3"
+git commit -m "Correccion menor apariencia tabla"
 git push origin main
 
 
