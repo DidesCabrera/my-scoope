@@ -159,3 +159,154 @@ html.pwa-standalone.pwa-ready .pwa-splash {
   opacity: 0;
   visibility: hidden;
 }
+
+/* --- PWA navigation placeholders --- */
+
+.pwa-navigation-placeholder {
+  display: none;
+}
+
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+
+  background: #000000;
+  opacity: 1;
+  pointer-events: none;
+}
+
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__chrome {
+  width: 100%;
+  min-height: 100%;
+  padding: calc(var(--pwa-safe-area-top, 0px) + 22px) clamp(18px, 6vw, 52px) 28px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__icon,
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__title,
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__line,
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__card {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  background: #151515;
+}
+
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__icon::after,
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__title::after,
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__line::after,
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.06),
+    transparent
+  );
+  animation: pwa-placeholder-shimmer 1050ms ease-in-out infinite;
+}
+
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+}
+
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__title {
+  width: min(42vw, 220px);
+  height: 20px;
+  border-radius: 999px;
+}
+
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__body {
+  width: min(100%, 760px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__line {
+  width: min(72vw, 420px);
+  height: 13px;
+  border-radius: 999px;
+}
+
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__line--wide {
+  width: min(86vw, 560px);
+}
+
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__line--short {
+  width: min(48vw, 260px);
+}
+
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__card {
+  min-height: 112px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--dailyplan .pwa-navigation-placeholder__icon {
+  background: var(--entity-dailyplan);
+}
+
+html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--meal .pwa-navigation-placeholder__icon {
+  background: var(--entity-meal);
+}
+
+html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--food .pwa-navigation-placeholder__icon {
+  background: var(--entity-food);
+}
+
+html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--proposal .pwa-navigation-placeholder__icon {
+  background: var(--entity-proposal);
+}
+
+html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--profile .pwa-navigation-placeholder__grid,
+html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--home .pwa-navigation-placeholder__grid {
+  grid-template-columns: 1fr;
+}
+
+html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--profile .pwa-navigation-placeholder__card,
+html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--home .pwa-navigation-placeholder__card {
+  min-height: 82px;
+}
+
+@keyframes pwa-placeholder-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (max-width: 760px) {
+  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__chrome {
+    padding: calc(var(--pwa-safe-area-top, 0px) + 18px) 18px 24px;
+  }
+
+  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__grid {
+    grid-template-columns: 1fr;
+  }
+}

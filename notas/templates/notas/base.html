@@ -42,7 +42,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
-    <meta name="theme-color" content="#121212">
+    <meta name="theme-color" content="#000000">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="MyScoope">
@@ -151,6 +151,25 @@
 <body class="{% block body_class %}{% endblock %}{% if vm.ui.mode == 'list' %} page-header-meta-deferred{% endif %}">
     <div class="pwa-splash js-pwa-splash" aria-hidden="true">
         <img class="pwa-splash__logo" src="{% url 'pwa_icon' 512 %}" alt="">
+    </div>
+
+    <div class="pwa-navigation-placeholder js-pwa-navigation-placeholder" aria-hidden="true">
+        <div class="pwa-navigation-placeholder__chrome">
+            <div class="pwa-navigation-placeholder__header">
+                <span class="pwa-navigation-placeholder__icon"></span>
+                <span class="pwa-navigation-placeholder__title"></span>
+            </div>
+            <div class="pwa-navigation-placeholder__body">
+                <span class="pwa-navigation-placeholder__line pwa-navigation-placeholder__line--wide"></span>
+                <span class="pwa-navigation-placeholder__line"></span>
+                <span class="pwa-navigation-placeholder__line pwa-navigation-placeholder__line--short"></span>
+                <div class="pwa-navigation-placeholder__grid" aria-hidden="true">
+                    <span class="pwa-navigation-placeholder__card"></span>
+                    <span class="pwa-navigation-placeholder__card"></span>
+                    <span class="pwa-navigation-placeholder__card"></span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="app">
