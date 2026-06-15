@@ -115,11 +115,6 @@ button {
 }
 /* --- PWA polish --- */
 
-html.pwa-standalone,
-html.pwa-standalone body {
-  overscroll-behavior-y: none;
-}
-
 html.pwa-standalone {
   scrollbar-width: none;
 }
@@ -145,7 +140,7 @@ html.pwa-standalone .pwa-splash {
   align-items: center;
   justify-content: center;
 
-  background: #000000;
+  background: #121212;
   opacity: 1;
   visibility: visible;
 

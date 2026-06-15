@@ -109,7 +109,7 @@ from notas.interface.views.project import project_view
 from notas.interface.views.nutrition import elemental_context, elemental_nutrition, elemental_platform
 
 from notas.interface.views.home import home_view
-from notas.interface.views.pwa import pwa_icon, pwa_manifest, pwa_service_worker
+from notas.interface.views.pwa import pwa_icon, pwa_manifest, pwa_service_worker, pwa_startup_image
     
 from notas.interface.views.admin_tools import (
     admin_home,
@@ -153,6 +153,7 @@ urlpatterns = [
     path("", home_view, name="home_view"),
     path("manifest.webmanifest", pwa_manifest, name="pwa_manifest"),
     path("icons/<int:size>.png", pwa_icon, name="pwa_icon"),
+    path("startup/<slug:image_key>.png", pwa_startup_image, name="pwa_startup_image"),
     path("service-worker.js", pwa_service_worker, name="pwa_service_worker"),
 
     path("inbox/", inbox_list, name="inbox_list"),

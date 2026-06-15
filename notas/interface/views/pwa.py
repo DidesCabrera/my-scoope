@@ -5,6 +5,11 @@ from django.http import Http404, HttpResponse, JsonResponse
 from django.urls import reverse
 from django.views.decorators.http import require_GET
 
+from notas.interface.views.pwa_startup_images import (
+    PWA_STARTUP_IMAGE_PNG_BASE64,
+    PWA_STARTUP_IMAGE_SPECS,
+)
+
 
 PWA_ICON_PNG_BASE64 = {
     180: """
@@ -39,8 +44,8 @@ def pwa_manifest(request):
         "display": "standalone",
         "display_override": ["standalone", "minimal-ui"],
         "orientation": "portrait-primary",
-        "background_color": "#000000",
-        "theme_color": "#000000",
+        "background_color": "#121212",
+        "theme_color": "#121212",
         "categories": ["health", "fitness", "productivity"],
         "icons": [
             {
@@ -94,6 +99,24 @@ def pwa_icon(request, size):
     response = HttpResponse(base64.b64decode(icon_base64), content_type="image/png")
     response["Cache-Control"] = "public, max-age=86400"
     return response
+
+
+@require_GET
+def pwa_startup_image(request, image_key):
+    """Return a pre-rendered iOS/iPadOS startup image for the PWA splash screen."""
+    startup_base64 = PWA_STARTUP_IMAGE_PNG_BASE64.get(image_key)
+
+    if not startup_base64:
+        raise Http404("PWA startup image not available")
+
+    response = HttpResponse(base64.b64decode(startup_base64), content_type="image/png")
+    response["Cache-Control"] = "public, max-age=604800"
+    return response
+
+
+def pwa_startup_image_specs():
+    """Expose the supported startup image metadata for templates and documentation."""
+    return PWA_STARTUP_IMAGE_SPECS
 
 
 @require_GET

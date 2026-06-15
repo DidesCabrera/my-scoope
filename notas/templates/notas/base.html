@@ -42,7 +42,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
-    <meta name="theme-color" content="#000000">
+    <meta name="theme-color" content="#121212">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="MyScoope">
@@ -53,6 +53,38 @@
     <link rel="manifest" href="{% url 'pwa_manifest' %}">
     <link rel="icon" sizes="192x192" href="{% url 'pwa_icon' 192 %}" type="image/png">
     <link rel="apple-touch-icon" sizes="180x180" href="{% url 'pwa_icon' 180 %}">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'iphone-se-1st-portrait' %}" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'iphone-se-1st-landscape' %}" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'iphone-678-se-portrait' %}" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'iphone-678-se-landscape' %}" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'iphone-678-plus-portrait' %}" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'iphone-678-plus-landscape' %}" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'iphone-x-xs-11pro-portrait' %}" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'iphone-x-xs-11pro-landscape' %}" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'iphone-xr-11-portrait' %}" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'iphone-xr-11-landscape' %}" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'iphone-xsmax-11promax-portrait' %}" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'iphone-xsmax-11promax-landscape' %}" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'iphone-12-13-mini-portrait' %}" media="(device-width: 360px) and (device-height: 780px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'iphone-12-13-mini-landscape' %}" media="(device-width: 360px) and (device-height: 780px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'iphone-12-13-14-15-portrait' %}" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'iphone-12-13-14-15-landscape' %}" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'iphone-12-13-14-plus-promax-portrait' %}" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'iphone-12-13-14-plus-promax-landscape' %}" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'iphone-14-15-pro-portrait' %}" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'iphone-14-15-pro-landscape' %}" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'iphone-14-15-promax-portrait' %}" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'iphone-14-15-promax-landscape' %}" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'ipad-9-7-portrait' %}" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'ipad-9-7-landscape' %}" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'ipad-10-2-portrait' %}" media="(device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'ipad-10-2-landscape' %}" media="(device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'ipad-10-5-air-portrait' %}" media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'ipad-10-5-air-landscape' %}" media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'ipad-11-pro-portrait' %}" media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'ipad-11-pro-landscape' %}" media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'ipad-12-9-pro-portrait' %}" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'ipad-12-9-pro-landscape' %}" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
     <link rel="stylesheet" href="{% static 'notas/css/tokens.css' %}">
     <link rel="stylesheet" href="{% static 'notas/css/base.css' %}">
     <link rel="stylesheet" href="{% static 'notas/css/layout.css' %}">
