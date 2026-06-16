@@ -127,39 +127,6 @@ html.pwa-standalone *::-webkit-scrollbar {
   display: none;
 }
 
-.pwa-splash {
-  display: none;
-}
-
-html.pwa-standalone.pwa-splash-enabled .pwa-splash {
-  position: fixed;
-  inset: 0;
-  z-index: 10000;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  background: #121212;
-  opacity: 1;
-  visibility: visible;
-
-  transition: opacity 220ms ease, visibility 220ms ease;
-  pointer-events: none;
-}
-
-html.pwa-standalone.pwa-splash-enabled .pwa-splash__logo {
-  display: block;
-  width: min(42vw, 220px);
-  height: auto;
-  border-radius: 24%;
-}
-
-html.pwa-standalone.pwa-ready .pwa-splash {
-  opacity: 0;
-  visibility: hidden;
-}
-
 /* --- PWA navigation placeholders --- */
 
 .pwa-navigation-placeholder {

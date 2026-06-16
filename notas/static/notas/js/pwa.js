@@ -18,15 +18,6 @@
 
   root.classList.toggle("pwa-standalone", isStandalone);
 
-  function rememberLaunchSplashSeen() {
-    try {
-      sessionStorage.setItem("myscoope.pwa.launchSplashSeen", "1");
-      sessionStorage.removeItem("myscoope.pwa.internalNavigation");
-    } catch (error) {
-      // sessionStorage can be unavailable in private/restricted contexts.
-    }
-  }
-
   function rememberInternalNavigation() {
     try {
       sessionStorage.setItem("myscoope.pwa.internalNavigation", "1");
@@ -37,17 +28,6 @@
 
   function markPwaReady() {
     root.classList.add("pwa-ready");
-    rememberLaunchSplashSeen();
-
-    const splash = document.querySelector(".js-pwa-splash");
-    if (!splash) {
-      return;
-    }
-
-    window.setTimeout(function () {
-      splash.remove();
-      root.classList.remove("pwa-splash-enabled");
-    }, 280);
   }
 
   function getInternalUrlFromAnchor(anchor) {
@@ -134,7 +114,6 @@
       root.classList.remove(className);
     });
 
-    root.classList.remove("pwa-splash-enabled");
     root.classList.add("pwa-is-navigating");
     root.classList.add("pwa-navigation-placeholder--" + variant);
   }
