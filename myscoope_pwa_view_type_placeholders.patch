@@ -1,0 +1,929 @@
+diff --git a/docs/PWA_NAVIGATION_PLACEHOLDERS.md b/docs/PWA_NAVIGATION_PLACEHOLDERS.md
+index 142b53a..8d48cbc 100644
+--- a/docs/PWA_NAVIGATION_PLACEHOLDERS.md
++++ b/docs/PWA_NAVIGATION_PLACEHOLDERS.md
+@@ -2,27 +2,73 @@
+ 
+ La splash inicial de iOS/iPadOS se controla con los `apple-touch-startup-image` definidos en `notas/templates/notas/base.html`. Esa imagen la muestra el sistema al abrir la PWA desde el ícono de inicio. No debe reutilizarse para navegación interna.
+ 
+-La carga entre páginas se resuelve con un placeholder HTML/CSS ubicado en `notas/templates/notas/base.html`:
++La carga entre páginas se resuelve con un placeholder HTML/CSS ubicado como componente reutilizable en:
+ 
+-```html
+-<div class="pwa-navigation-placeholder js-pwa-navigation-placeholder" aria-hidden="true">
++```text
++notas/templates/components/pwa_navigation_placeholder.html
+ ```
+ 
+-El comportamiento está en `notas/static/notas/js/pwa.js`. Al hacer click en un link interno de `/app/`, el script detecta la URL de destino, agrega `pwa-is-navigating` al `<html>` y también agrega una clase de variante según la vista destino.
++Ese componente se incluye desde `notas/templates/notas/base.html`.
++
++El comportamiento está en `notas/static/notas/js/pwa.js`. Al hacer click en un link interno de `/app/`, el script detecta la URL de destino, agrega `pwa-is-navigating` al `<html>` y también agrega una variante según el **tipo de vista destino**, no según la entidad.
+ 
+ ## Variantes disponibles
+ 
+-- `pwa-navigation-placeholder--dailyplan-list`
+-- `pwa-navigation-placeholder--dailyplan-detail`
+-- `pwa-navigation-placeholder--meal-list`
+-- `pwa-navigation-placeholder--meal-detail`
+-- `pwa-navigation-placeholder--food-list`
+-- `pwa-navigation-placeholder--food-detail`
+-- `pwa-navigation-placeholder--proposal-list`
+-- `pwa-navigation-placeholder--proposal-detail`
+-- `pwa-navigation-placeholder--profile`
++- `pwa-navigation-placeholder--list`
++- `pwa-navigation-placeholder--detail`
+ - `pwa-navigation-placeholder--home`
+-- `pwa-navigation-placeholder--generic`
++- `pwa-navigation-placeholder--profile`
++
++## Reglas de clasificación
++
++- `/app` → `home`
++- `/app/profile...` y `/app/authors...` → `profile`
++- `/app/dailyplans`, `/app/meals`, `/app/foods`, `/app/proposals`, `/app/ai-tools` → `list`
++- Cualquier otra ruta interna de `/app/` → `detail`
++
++## Estructura visual
++
++### Vista lista
++
++- Componente inicial:
++  - logo genérico
++  - título de página
++  - structural indicator
++- Cards:
++  - header de card
++  - título
++  - structural indicator
++  - dash KPI
++  - panel
++
++### Vista detail
++
++- Header global:
++  - ícono genérico
++  - título
++  - acciones
++- Page detail:
++  - título
++  - structural indicator
++  - dash KPI
++  - panel
++
++### Home
++
++- Header global:
++  - ícono genérico
++  - acciones
++- Sección banners
++- Home cards:
++  - ícono
++  - título
++  - indicadores
++
++### Profile
++
++- Header global
++- Card de perfil
++- Panel inferior
+ 
+ ## Dónde ajustar estilos manualmente
+ 
+@@ -32,23 +78,45 @@ Los estilos están en `notas/static/notas/css/base.css`, dentro del bloque:
+ /* --- PWA navigation placeholders --- */
+ ```
+ 
+-Para modificar una vista específica, usa la clase de variante. Ejemplo:
++Para modificar una variante completa, usa la clase de tipo de vista. Ejemplo:
+ 
+ ```css
+-html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--meal-detail .pwa-navigation-placeholder__kpis {
+-  display: grid;
++html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--detail .pwa-navigation-placeholder__detail-page {
++  gap: 16px;
+ }
+ ```
+ 
+-## Tiempo de visualización
++Para revisar el placeholder en desktop, abre DevTools y agrega clases al `<html>` desde la consola:
+ 
+-No hay un tiempo fijo. El placeholder aparece cuando el usuario inicia una navegación interna y desaparece naturalmente cuando el navegador pinta la página destino. Si la vista carga muy rápido, se verá poco tiempo; si tarda más, se mantiene durante la transición.
++```js
++document.documentElement.classList.add(
++  "pwa-standalone",
++  "pwa-is-navigating",
++  "pwa-navigation-placeholder--detail"
++);
++```
+ 
+-## Elementos del placeholder
++Para cambiar de variante:
++
++```js
++document.documentElement.className = document.documentElement.className
++  .split(" ")
++  .filter((className) => !className.startsWith("pwa-navigation-placeholder--"))
++  .join(" ");
++
++document.documentElement.classList.add(
++  "pwa-standalone",
++  "pwa-is-navigating",
++  "pwa-navigation-placeholder--list"
++);
++```
+ 
+-- `pwa-navigation-placeholder__topbar`: header visual de destino.
+-- `pwa-navigation-placeholder__summary`: líneas introductorias.
+-- `pwa-navigation-placeholder__tabs`: tabs simuladas.
+-- `pwa-navigation-placeholder__kpis`: bloques KPI.
+-- `pwa-navigation-placeholder__cards`: cards de listas.
+-- `pwa-navigation-placeholder__table`: panel/tabla para vistas tipo detalle.
++Para ocultarlo:
++
++```js
++document.documentElement.classList.remove("pwa-is-navigating");
++```
++
++## Tiempo de visualización
++
++No hay un tiempo fijo. El placeholder aparece cuando el usuario inicia una navegación interna y desaparece naturalmente cuando el navegador pinta la página destino. Si la vista carga muy rápido, se verá poco tiempo; si tarda más, se mantiene durante la transición.
+diff --git a/notas/static/notas/css/base.css b/notas/static/notas/css/base.css
+index 746b1bf..3e0d8f9 100644
+--- a/notas/static/notas/css/base.css
++++ b/notas/static/notas/css/base.css
+@@ -145,46 +145,74 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder {
+   pointer-events: none;
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__shell {
+-  width: min(100% - 24px, 900px);
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__viewport {
++  width: min(100% - 24px, 920px);
+   min-height: calc(100% - var(--app-header-height, 54px) - 24px);
+   margin: calc(var(--app-header-height, 54px) + 12px) auto 12px;
+-  padding: 0 6px 22px;
+-
+-  display: flex;
+-  flex-direction: column;
+-  gap: 14px;
++  padding: 0 6px 24px;
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__topbar {
+-  min-height: 44px;
+-  display: flex;
+-  align-items: center;
+-  gap: 12px;
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__layout {
++  display: none;
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__icon,
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__title,
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__action,
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__line,
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__tab,
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__kpi,
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__card,
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__row {
++html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--list .pwa-navigation-placeholder__layout--list,
++html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--detail .pwa-navigation-placeholder__layout--detail,
++html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--home .pwa-navigation-placeholder__layout--home,
++html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--profile .pwa-navigation-placeholder__layout--profile {
++  display: flex;
++  flex-direction: column;
++  gap: 16px;
++}
++
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__logo,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__page-title,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__structural-indicator,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__card-icon,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__card-title,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__card-action,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__card-indicator,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__dash-total,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__dash-lines span,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__panel span,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__header-icon,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__header-title,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__header-action,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__detail-title,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-banners span,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-icon,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-title,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-indicators,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-avatar,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-title,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-line {
+   display: block;
+   position: relative;
+   overflow: hidden;
+   background: #151515;
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__icon::after,
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__title::after,
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__action::after,
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__line::after,
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__tab::after,
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__kpi::after,
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__card::after,
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__row::after {
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__logo::after,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__page-title::after,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__structural-indicator::after,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__card-icon::after,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__card-title::after,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__card-action::after,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__card-indicator::after,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__dash-total::after,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__dash-lines span::after,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__panel span::after,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__header-icon::after,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__header-title::after,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__header-action::after,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__detail-title::after,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-banners span::after,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-icon::after,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-title::after,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-indicators::after,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-avatar::after,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-title::after,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-line::after {
+   content: "";
+   position: absolute;
+   inset: 0;
+@@ -198,86 +226,140 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__row::after {
+   animation: pwa-placeholder-shimmer 1050ms ease-in-out infinite;
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__icon {
+-  width: 34px;
+-  height: 34px;
+-  border-radius: 10px;
+-  flex: 0 0 auto;
+-}
++/* List destination */
+ 
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__title {
+-  width: min(46vw, 260px);
+-  height: 20px;
+-  border-radius: 999px;
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__list-intro {
++  width: 100%;
++  margin: 0 0 16px;
++  display: flex;
++  flex-direction: column;
++  align-items: center;
++  justify-content: center;
++  gap: 12px;
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__action {
+-  width: 34px;
+-  height: 34px;
+-  margin-left: auto;
+-  border-radius: 999px;
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__logo {
++  width: 48px;
++  height: 48px;
++  border-radius: 15px;
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__summary {
+-  width: min(100%, 840px);
+-  display: flex;
+-  flex-direction: column;
+-  gap: 10px;
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__page-title {
++  width: min(54vw, 280px);
++  height: 31px;
++  border-radius: 999px;
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__line {
+-  width: min(72vw, 420px);
+-  height: 13px;
+-  border-radius: 999px;
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__structural-indicator {
++  width: 68px;
++  height: 28px;
++  border: 1px solid rgba(255, 255, 255, 0.06);
++  border-radius: 9px;
++  background: #121212;
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__line--wide {
+-  width: min(86vw, 560px);
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__list-cards {
++  display: grid;
++  grid-template-columns: 1fr;
++  gap: 12px;
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__line--short {
+-  width: min(48vw, 260px);
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__card-shell,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__detail-page,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-card {
++  display: flex;
++  flex-direction: column;
++  gap: 14px;
++  padding: 16px;
++  border: 1px solid rgba(255, 255, 255, 0.06);
++  border-radius: 24px;
++  background: rgba(255, 255, 255, 0.02);
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__tabs {
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__card-header,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__global-header {
++  min-height: 42px;
+   display: flex;
+   align-items: center;
+-  gap: 8px;
+-  margin-top: 2px;
++  gap: 12px;
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__tab {
+-  width: 118px;
+-  height: 30px;
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__card-icon,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__header-icon,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-icon {
++  width: 34px;
++  height: 34px;
++  flex: 0 0 auto;
++  border-radius: 10px;
++}
++
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__card-title,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__header-title,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__detail-title {
++  width: min(48vw, 320px);
++  height: 21px;
+   border-radius: 999px;
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__kpis {
+-  display: none;
+-  grid-template-columns: repeat(3, minmax(0, 1fr));
+-  gap: 10px;
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__card-action,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__header-action {
++  width: 32px;
++  height: 32px;
++  margin-left: auto;
++  flex: 0 0 auto;
++  border-radius: 999px;
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__kpi {
+-  min-height: 78px;
+-  border-radius: 18px;
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__header-action + .pwa-navigation-placeholder__header-action {
++  margin-left: 0;
++}
++
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__card-indicator {
++  width: 76px;
++  height: 24px;
++  border-radius: 8px;
++  background: #121212;
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__cards {
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__dash-kpi {
++  width: 100%;
++  min-height: 92px;
+   display: grid;
+-  grid-template-columns: 1fr;
++  grid-template-columns: 96px minmax(0, 1fr);
++  align-items: stretch;
+   gap: 10px;
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__card {
+-  min-height: 116px;
+-  height: 406px;
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__dash-total {
++  min-height: 86px;
++  border: 2px solid rgba(255, 255, 255, 0.04);
+   border-radius: 22px;
+-  border: 1px solid rgba(255, 255, 255, 0.06);
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__table {
+-  display: none;
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__dash-lines {
++  display: flex;
++  flex-direction: column;
++  justify-content: center;
++  gap: 12px;
++  min-width: 0;
++}
++
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__dash-lines span {
++  width: 100%;
++  height: 14px;
++  border-radius: 999px;
++}
++
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__dash-lines span:nth-child(2) {
++  width: 86%;
++}
++
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__dash-lines span:nth-child(3) {
++  width: 72%;
++}
++
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__panel {
++  display: flex;
+   flex-direction: column;
+   gap: 8px;
+   padding: 10px;
+@@ -286,68 +368,106 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__table {
+   background: rgba(255, 255, 255, 0.02);
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__row {
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__panel span {
+   height: 34px;
+   border-radius: 10px;
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--dailyplan-list .pwa-navigation-placeholder__icon,
+-html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--dailyplan-detail .pwa-navigation-placeholder__icon {
+-  background: var(--entity-dailyplan);
++/* Detail destination */
++
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__detail-page {
++  gap: 16px;
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--meal-list .pwa-navigation-placeholder__icon,
+-html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--meal-detail .pwa-navigation-placeholder__icon {
+-  background: var(--entity-meal);
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__panel--large span {
++  height: 38px;
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--food-list .pwa-navigation-placeholder__icon,
+-html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--food-detail .pwa-navigation-placeholder__icon {
+-  background: var(--entity-food);
++/* Home destination */
++
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__header-spacer {
++  flex: 1 1 auto;
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--proposal-list .pwa-navigation-placeholder__icon,
+-html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--proposal-detail .pwa-navigation-placeholder__icon {
+-  background: var(--entity-proposal);
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-banners {
++  display: grid;
++  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
++  gap: 12px;
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--dailyplan-detail .pwa-navigation-placeholder__kpis,
+-html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--meal-detail .pwa-navigation-placeholder__kpis,
+-html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--food-detail .pwa-navigation-placeholder__kpis {
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-banners span {
++  min-height: 118px;
++  border-radius: 24px;
++}
++
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-cards {
+   display: grid;
++  grid-template-columns: repeat(2, minmax(0, 1fr));
++  gap: 12px;
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--dailyplan-detail .pwa-navigation-placeholder__table,
+-html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--meal-detail .pwa-navigation-placeholder__table,
+-html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--food-list .pwa-navigation-placeholder__table,
+-html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--food-detail .pwa-navigation-placeholder__table,
+-html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--proposal-detail .pwa-navigation-placeholder__table {
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-card {
++  min-height: 96px;
+   display: flex;
++  align-items: center;
++  gap: 12px;
++  padding: 14px;
++  border: 1px solid rgba(255, 255, 255, 0.06);
++  border-radius: 22px;
++  background: rgba(255, 255, 255, 0.02);
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--food-list .pwa-navigation-placeholder__cards,
+-html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--food-detail .pwa-navigation-placeholder__cards,
+-html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--proposal-detail .pwa-navigation-placeholder__cards {
+-  display: none;
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-copy {
++  min-width: 0;
++  flex: 1 1 auto;
++  display: flex;
++  flex-direction: column;
++  gap: 10px;
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--profile .pwa-navigation-placeholder__cards,
+-html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--home .pwa-navigation-placeholder__cards {
+-  gap: 12px;
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-title {
++  width: 70%;
++  height: 18px;
++  border-radius: 999px;
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--profile .pwa-navigation-placeholder__card,
+-html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--home .pwa-navigation-placeholder__card {
+-  min-height: 86px;
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-indicators {
++  width: 92%;
++  height: 28px;
++  border-radius: 9px;
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--home .pwa-navigation-placeholder__kpis {
+-  display: grid;
++/* Profile destination */
++
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__header-title--short {
++  width: min(34vw, 190px);
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--home .pwa-navigation-placeholder__tabs,
+-html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--profile .pwa-navigation-placeholder__tabs {
+-  display: none;
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-card {
++  align-items: center;
++  text-align: center;
++}
++
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-avatar {
++  width: 76px;
++  height: 76px;
++  border-radius: 24px;
++}
++
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-title {
++  width: min(54vw, 260px);
++  height: 24px;
++  border-radius: 999px;
++}
++
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-line {
++  width: min(70vw, 420px);
++  height: 14px;
++  border-radius: 999px;
++}
++
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-line--short {
++  width: min(42vw, 220px);
+ }
+ 
+ @keyframes pwa-placeholder-shimmer {
+@@ -357,51 +477,71 @@ html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--profile .pwa-n
+ }
+ 
+ @media (min-width: 981px) {
+-  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__shell {
++  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__viewport {
+     margin-left: calc(var(--sidebar-width, 300px) + 24px);
+     margin-right: 24px;
+     width: calc(100% - var(--sidebar-width, 300px) - 48px);
+-    max-width: 900px;
++    max-width: 920px;
+   }
+ 
+-  html.sidebar-collapsed.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__shell {
++  html.sidebar-collapsed.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__viewport {
+     margin-left: calc(var(--sidebar-collapsed-width, 64px) + 24px);
+     width: calc(100% - var(--sidebar-collapsed-width, 64px) - 48px);
+   }
+ 
+-  html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--dailyplan-list .pwa-navigation-placeholder__cards,
+-  html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--meal-list .pwa-navigation-placeholder__cards,
+-  html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--proposal-list .pwa-navigation-placeholder__cards {
++  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__list-cards {
+     grid-template-columns: repeat(2, minmax(0, 1fr));
+   }
+ }
+ 
+ @media (max-width: 760px) {
+-  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__shell {
++  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__viewport {
+     width: calc(100% - 24px);
+     margin: calc(var(--app-header-height, 54px) + 10px) 12px 12px;
+     padding: 0 0 20px;
+-    gap: 12px;
+   }
+ 
+-  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__summary {
+-    gap: 9px;
++  html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--list .pwa-navigation-placeholder__viewport {
++    margin-top: 22px;
++  }
++
++  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__list-intro {
++    margin-bottom: 12px;
++  }
++
++  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__page-title {
++    height: 31px;
++    width: min(70vw, 300px);
++  }
++
++  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__card-shell {
++    padding: 14px;
++    border-radius: 22px;
++  }
++
++  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__dash-kpi {
++    grid-template-columns: 82px minmax(0, 1fr);
++    min-height: 78px;
++  }
++
++  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__dash-total {
++    min-height: 72px;
+   }
+ 
+-  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__tab {
+-    width: 31%;
+-    height: 28px;
++  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__panel--large span {
++    height: 34px;
+   }
+ 
+-  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__kpis {
++  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-banners,
++  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-cards {
+     grid-template-columns: 1fr;
+   }
+ 
+-  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__kpi {
+-    min-height: 58px;
++  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-banners span {
++    min-height: 112px;
+   }
+ 
+-  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__card {
+-    min-height: 104px;
++  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-card {
++    min-height: 88px;
+   }
+ }
+diff --git a/notas/static/notas/js/pwa.js b/notas/static/notas/js/pwa.js
+index 5cc322a..482d33b 100644
+--- a/notas/static/notas/js/pwa.js
++++ b/notas/static/notas/js/pwa.js
+@@ -3,17 +3,10 @@
+   const isStandalone = window.matchMedia("(display-mode: standalone)").matches ||
+     window.navigator.standalone === true;
+   const navigationPlaceholderClasses = [
+-    "pwa-navigation-placeholder--dailyplan-list",
+-    "pwa-navigation-placeholder--dailyplan-detail",
+-    "pwa-navigation-placeholder--meal-list",
+-    "pwa-navigation-placeholder--meal-detail",
+-    "pwa-navigation-placeholder--food-list",
+-    "pwa-navigation-placeholder--food-detail",
+-    "pwa-navigation-placeholder--proposal-list",
+-    "pwa-navigation-placeholder--proposal-detail",
+-    "pwa-navigation-placeholder--profile",
++    "pwa-navigation-placeholder--list",
++    "pwa-navigation-placeholder--detail",
+     "pwa-navigation-placeholder--home",
+-    "pwa-navigation-placeholder--generic",
++    "pwa-navigation-placeholder--profile",
+   ];
+ 
+   root.classList.toggle("pwa-standalone", isStandalone);
+@@ -68,43 +61,23 @@
+       return "home";
+     }
+ 
+-    if (path === "/app/dailyplans") {
+-      return "dailyplan-list";
+-    }
+-
+-    if (path.startsWith("/app/dailyplans/")) {
+-      return "dailyplan-detail";
+-    }
+-
+-    if (path === "/app/meals") {
+-      return "meal-list";
+-    }
+-
+-    if (path.startsWith("/app/meals/")) {
+-      return "meal-detail";
+-    }
+-
+-    if (path === "/app/foods") {
+-      return "food-list";
+-    }
+-
+-    if (path.startsWith("/app/foods/")) {
+-      return "food-detail";
+-    }
+-
+-    if (path === "/app/proposals" || path === "/app/ai-tools") {
+-      return "proposal-list";
++    if (path.startsWith("/app/profile") || path.startsWith("/app/authors")) {
++      return "profile";
+     }
+ 
+-    if (path.startsWith("/app/proposals/") || path.startsWith("/app/ai-tools/")) {
+-      return "proposal-detail";
+-    }
++    const listPaths = new Set([
++      "/app/dailyplans",
++      "/app/meals",
++      "/app/foods",
++      "/app/proposals",
++      "/app/ai-tools",
++    ]);
+ 
+-    if (path.startsWith("/app/profile") || path.startsWith("/app/authors")) {
+-      return "profile";
++    if (listPaths.has(path)) {
++      return "list";
+     }
+ 
+-    return "generic";
++    return "detail";
+   }
+ 
+   function showNavigationPlaceholder(variant) {
+diff --git a/notas/templates/components/pwa_navigation_placeholder.html b/notas/templates/components/pwa_navigation_placeholder.html
+new file mode 100644
+index 0000000..d96fcc6
+--- /dev/null
++++ b/notas/templates/components/pwa_navigation_placeholder.html
+@@ -0,0 +1,114 @@
++<div class="pwa-navigation-placeholder js-pwa-navigation-placeholder" aria-hidden="true">
++    <div class="pwa-navigation-placeholder__viewport">
++        <section class="pwa-navigation-placeholder__layout pwa-navigation-placeholder__layout--list">
++            <div class="pwa-navigation-placeholder__list-intro">
++                <span class="pwa-navigation-placeholder__logo"></span>
++                <span class="pwa-navigation-placeholder__page-title"></span>
++                <span class="pwa-navigation-placeholder__structural-indicator"></span>
++            </div>
++
++            <div class="pwa-navigation-placeholder__list-cards">
++                {% for item in "123" %}
++                    <article class="pwa-navigation-placeholder__card-shell">
++                        <div class="pwa-navigation-placeholder__card-header">
++                            <span class="pwa-navigation-placeholder__card-icon"></span>
++                            <span class="pwa-navigation-placeholder__card-title"></span>
++                            <span class="pwa-navigation-placeholder__card-action"></span>
++                        </div>
++                        <span class="pwa-navigation-placeholder__card-indicator"></span>
++                        <div class="pwa-navigation-placeholder__dash-kpi">
++                            <span class="pwa-navigation-placeholder__dash-total"></span>
++                            <div class="pwa-navigation-placeholder__dash-lines">
++                                <span></span>
++                                <span></span>
++                                <span></span>
++                            </div>
++                        </div>
++                        <div class="pwa-navigation-placeholder__panel">
++                            <span></span>
++                            <span></span>
++                            <span></span>
++                        </div>
++                    </article>
++                {% endfor %}
++            </div>
++        </section>
++
++        <section class="pwa-navigation-placeholder__layout pwa-navigation-placeholder__layout--detail">
++            <div class="pwa-navigation-placeholder__global-header">
++                <span class="pwa-navigation-placeholder__header-icon"></span>
++                <span class="pwa-navigation-placeholder__header-title"></span>
++                <span class="pwa-navigation-placeholder__header-action"></span>
++                <span class="pwa-navigation-placeholder__header-action"></span>
++            </div>
++
++            <article class="pwa-navigation-placeholder__detail-page">
++                <span class="pwa-navigation-placeholder__detail-title"></span>
++                <span class="pwa-navigation-placeholder__structural-indicator"></span>
++                <div class="pwa-navigation-placeholder__dash-kpi">
++                    <span class="pwa-navigation-placeholder__dash-total"></span>
++                    <div class="pwa-navigation-placeholder__dash-lines">
++                        <span></span>
++                        <span></span>
++                        <span></span>
++                    </div>
++                </div>
++                <div class="pwa-navigation-placeholder__panel pwa-navigation-placeholder__panel--large">
++                    <span></span>
++                    <span></span>
++                    <span></span>
++                    <span></span>
++                    <span></span>
++                </div>
++            </article>
++        </section>
++
++        <section class="pwa-navigation-placeholder__layout pwa-navigation-placeholder__layout--home">
++            <div class="pwa-navigation-placeholder__global-header">
++                <span class="pwa-navigation-placeholder__header-icon"></span>
++                <span class="pwa-navigation-placeholder__header-spacer"></span>
++                <span class="pwa-navigation-placeholder__header-action"></span>
++                <span class="pwa-navigation-placeholder__header-action"></span>
++            </div>
++
++            <div class="pwa-navigation-placeholder__home-banners">
++                <span></span>
++                <span></span>
++            </div>
++
++            <div class="pwa-navigation-placeholder__home-cards">
++                {% for item in "123" %}
++                    <article class="pwa-navigation-placeholder__home-card">
++                        <span class="pwa-navigation-placeholder__home-icon"></span>
++                        <div class="pwa-navigation-placeholder__home-copy">
++                            <span class="pwa-navigation-placeholder__home-title"></span>
++                            <span class="pwa-navigation-placeholder__home-indicators"></span>
++                        </div>
++                    </article>
++                {% endfor %}
++            </div>
++        </section>
++
++        <section class="pwa-navigation-placeholder__layout pwa-navigation-placeholder__layout--profile">
++            <div class="pwa-navigation-placeholder__global-header">
++                <span class="pwa-navigation-placeholder__header-icon"></span>
++                <span class="pwa-navigation-placeholder__header-title pwa-navigation-placeholder__header-title--short"></span>
++                <span class="pwa-navigation-placeholder__header-action"></span>
++            </div>
++
++            <article class="pwa-navigation-placeholder__profile-card">
++                <span class="pwa-navigation-placeholder__profile-avatar"></span>
++                <span class="pwa-navigation-placeholder__profile-title"></span>
++                <span class="pwa-navigation-placeholder__profile-line"></span>
++                <span class="pwa-navigation-placeholder__profile-line pwa-navigation-placeholder__profile-line--short"></span>
++            </article>
++
++            <div class="pwa-navigation-placeholder__panel pwa-navigation-placeholder__panel--large">
++                <span></span>
++                <span></span>
++                <span></span>
++                <span></span>
++            </div>
++        </section>
++    </div>
++</div>
+diff --git a/notas/templates/notas/base.html b/notas/templates/notas/base.html
+index 6357770..6640d79 100644
+--- a/notas/templates/notas/base.html
++++ b/notas/templates/notas/base.html
+@@ -149,42 +149,7 @@
+ <!-- =============================== -->
+ 
+ <body class="{% block body_class %}{% endblock %}{% if vm.ui.mode == 'list' %} page-header-meta-deferred{% endif %}">
+-    <div class="pwa-navigation-placeholder js-pwa-navigation-placeholder" aria-hidden="true">
+-        <div class="pwa-navigation-placeholder__shell">
+-            <div class="pwa-navigation-placeholder__topbar">
+-                <span class="pwa-navigation-placeholder__icon"></span>
+-                <span class="pwa-navigation-placeholder__title"></span>
+-                <span class="pwa-navigation-placeholder__action"></span>
+-            </div>
+-            <div class="pwa-navigation-placeholder__summary">
+-                <span class="pwa-navigation-placeholder__line pwa-navigation-placeholder__line--wide"></span>
+-                <span class="pwa-navigation-placeholder__line"></span>
+-                <span class="pwa-navigation-placeholder__line pwa-navigation-placeholder__line--short"></span>
+-            </div>
+-            <div class="pwa-navigation-placeholder__tabs" aria-hidden="true">
+-                <span class="pwa-navigation-placeholder__tab"></span>
+-                <span class="pwa-navigation-placeholder__tab"></span>
+-                <span class="pwa-navigation-placeholder__tab"></span>
+-            </div>
+-            <div class="pwa-navigation-placeholder__kpis" aria-hidden="true">
+-                <span class="pwa-navigation-placeholder__kpi"></span>
+-                <span class="pwa-navigation-placeholder__kpi"></span>
+-                <span class="pwa-navigation-placeholder__kpi"></span>
+-            </div>
+-            <div class="pwa-navigation-placeholder__cards" aria-hidden="true">
+-                <span class="pwa-navigation-placeholder__card"></span>
+-                <span class="pwa-navigation-placeholder__card"></span>
+-                <span class="pwa-navigation-placeholder__card"></span>
+-                <span class="pwa-navigation-placeholder__card"></span>
+-            </div>
+-            <div class="pwa-navigation-placeholder__table" aria-hidden="true">
+-                <span class="pwa-navigation-placeholder__row"></span>
+-                <span class="pwa-navigation-placeholder__row"></span>
+-                <span class="pwa-navigation-placeholder__row"></span>
+-                <span class="pwa-navigation-placeholder__row"></span>
+-            </div>
+-        </div>
+-    </div>
++    {% include "components/pwa_navigation_placeholder.html" %}
+ 
+     <div class="app">
+ 

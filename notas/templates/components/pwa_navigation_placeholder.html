@@ -1,0 +1,141 @@
+{% load static %}
+<div class="pwa-navigation-placeholder js-pwa-navigation-placeholder" aria-hidden="true">
+    <div class="pwa-navigation-placeholder__viewport">
+        <section class="pwa-navigation-placeholder__layout pwa-navigation-placeholder__layout--list">
+            <div class="pwa-navigation-placeholder__global-header pwa-navigation-placeholder__global-header--actions-only">
+                <span class="pwa-navigation-placeholder__header-spacer"></span>
+            </div>
+
+            <div class="pwa-navigation-placeholder__list-intro">
+                <span class="pwa-navigation-placeholder__logo"></span>
+                <span class="pwa-navigation-placeholder__page-title"></span>
+                <span class="pwa-navigation-placeholder__structural-indicator"></span>
+            </div>
+
+            <div class="pwa-navigation-placeholder__list-cards">
+                {% for item in "123" %}
+                    <article class="pwa-navigation-placeholder__card-shell">
+                        <div class="pwa-navigation-placeholder__card-header">
+                            <span class="pwa-navigation-placeholder__card-icon"></span>
+                            <span class="pwa-navigation-placeholder__card-title"></span>
+                        </div>
+                        <span class="pwa-navigation-placeholder__card-indicator"></span>
+                        <div class="pwa-navigation-placeholder__dash-kpi">
+                            <span class="pwa-navigation-placeholder__dash-total"></span>
+                            <div class="pwa-navigation-placeholder__dash-lines">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        </div>
+                        <span class="pwa-navigation-placeholder__panel"></span>
+                    </article>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="pwa-navigation-placeholder__layout pwa-navigation-placeholder__layout--detail">
+            <div class="pwa-navigation-placeholder__global-header">
+                <span class="pwa-navigation-placeholder__header-icon"></span>
+                <span class="pwa-navigation-placeholder__header-title"></span>
+            </div>
+
+            <article class="pwa-navigation-placeholder__detail-page">
+                <span class="pwa-navigation-placeholder__detail-title"></span>
+                <span class="pwa-navigation-placeholder__structural-indicator"></span>
+                <div class="pwa-navigation-placeholder__dash-kpi">
+                    <span class="pwa-navigation-placeholder__dash-total"></span>
+                    <div class="pwa-navigation-placeholder__dash-lines">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+                <span class="pwa-navigation-placeholder__panel pwa-navigation-placeholder__panel--large"></span>
+            </article>
+        </section>
+
+        <section class="pwa-navigation-placeholder__layout pwa-navigation-placeholder__layout--home">
+            <div class="pwa-navigation-placeholder__global-header pwa-navigation-placeholder__global-header--home">
+                <span class="pwa-navigation-placeholder__header-icon"></span>
+                <span class="pwa-navigation-placeholder__header-spacer"></span>
+            </div>
+
+            <div class="pwa-navigation-placeholder__home-brand" aria-hidden="true">
+                <img src="{% static 'notas/img/logo-white.png' %}" alt="" class="pwa-navigation-placeholder__home-logo">
+            </div>
+
+            <div class="pwa-navigation-placeholder__home-banners">
+                <span></span>
+            </div>
+
+            <div class="pwa-navigation-placeholder__home-cards">
+                {% for item in "1234" %}
+                    <article class="pwa-navigation-placeholder__home-card">
+                        <div class="pwa-navigation-placeholder__home-card-top">
+                            <span class="pwa-navigation-placeholder__home-icon"></span>
+                            <span class="pwa-navigation-placeholder__home-title"></span>
+                        </div>
+                        <span class="pwa-navigation-placeholder__home-indicators"></span>
+                        <span class="pwa-navigation-placeholder__home-action"></span>
+                    </article>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="pwa-navigation-placeholder__layout pwa-navigation-placeholder__layout--profile">
+            <div class="pwa-navigation-placeholder__global-header">
+                <span class="pwa-navigation-placeholder__header-icon"></span>
+                <span class="pwa-navigation-placeholder__header-title pwa-navigation-placeholder__header-title--short"></span>
+            </div>
+
+            <section class="pwa-navigation-placeholder__profile-account">
+                <div class="pwa-navigation-placeholder__profile-account-main">
+                    <div class="pwa-navigation-placeholder__profile-heading">
+                        <div class="pwa-navigation-placeholder__profile-title-row">
+                            <span class="pwa-navigation-placeholder__profile-title-icon"></span>
+                            <span class="pwa-navigation-placeholder__profile-title"></span>
+                        </div>
+                        <span class="pwa-navigation-placeholder__profile-line"></span>
+                        <span class="pwa-navigation-placeholder__profile-line pwa-navigation-placeholder__profile-line--short"></span>
+                    </div>
+                    <article class="pwa-navigation-placeholder__profile-primary-metric">
+                        <span></span>
+                        <strong></strong>
+                    </article>
+                </div>
+
+                <div class="pwa-navigation-placeholder__profile-grid">
+                    {% for item in "1234" %}
+                        <article class="pwa-navigation-placeholder__profile-info-item">
+                            <span></span>
+                            <strong></strong>
+                        </article>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <article class="pwa-navigation-placeholder__profile-setting-card">
+                <div class="pwa-navigation-placeholder__profile-setting-copy">
+                    <div class="pwa-navigation-placeholder__profile-setting-title-row">
+                        <span class="pwa-navigation-placeholder__profile-setting-icon"></span>
+                        <span class="pwa-navigation-placeholder__profile-setting-title"></span>
+                    </div>
+                    <span class="pwa-navigation-placeholder__profile-line"></span>
+                </div>
+                <span class="pwa-navigation-placeholder__profile-setting-action"></span>
+            </article>
+
+            <article class="pwa-navigation-placeholder__profile-setting-card">
+                <div class="pwa-navigation-placeholder__profile-setting-copy">
+                    <div class="pwa-navigation-placeholder__profile-setting-title-row">
+                        <span class="pwa-navigation-placeholder__profile-setting-icon"></span>
+                        <span class="pwa-navigation-placeholder__profile-setting-title"></span>
+                    </div>
+                    <span class="pwa-navigation-placeholder__profile-line"></span>
+                </div>
+                <span class="pwa-navigation-placeholder__profile-setting-action"></span>
+            </article>
+        </section>
+    </div>
+</div>

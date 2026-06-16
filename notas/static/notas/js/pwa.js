@@ -3,17 +3,10 @@
   const isStandalone = window.matchMedia("(display-mode: standalone)").matches ||
     window.navigator.standalone === true;
   const navigationPlaceholderClasses = [
-    "pwa-navigation-placeholder--dailyplan-list",
-    "pwa-navigation-placeholder--dailyplan-detail",
-    "pwa-navigation-placeholder--meal-list",
-    "pwa-navigation-placeholder--meal-detail",
-    "pwa-navigation-placeholder--food-list",
-    "pwa-navigation-placeholder--food-detail",
-    "pwa-navigation-placeholder--proposal-list",
-    "pwa-navigation-placeholder--proposal-detail",
-    "pwa-navigation-placeholder--profile",
+    "pwa-navigation-placeholder--list",
+    "pwa-navigation-placeholder--detail",
     "pwa-navigation-placeholder--home",
-    "pwa-navigation-placeholder--generic",
+    "pwa-navigation-placeholder--profile",
   ];
 
   root.classList.toggle("pwa-standalone", isStandalone);
@@ -68,43 +61,23 @@
       return "home";
     }
 
-    if (path === "/app/dailyplans") {
-      return "dailyplan-list";
-    }
-
-    if (path.startsWith("/app/dailyplans/")) {
-      return "dailyplan-detail";
-    }
-
-    if (path === "/app/meals") {
-      return "meal-list";
-    }
-
-    if (path.startsWith("/app/meals/")) {
-      return "meal-detail";
-    }
-
-    if (path === "/app/foods") {
-      return "food-list";
-    }
-
-    if (path.startsWith("/app/foods/")) {
-      return "food-detail";
-    }
-
-    if (path === "/app/proposals" || path === "/app/ai-tools") {
-      return "proposal-list";
-    }
-
-    if (path.startsWith("/app/proposals/") || path.startsWith("/app/ai-tools/")) {
-      return "proposal-detail";
-    }
-
     if (path.startsWith("/app/profile") || path.startsWith("/app/authors")) {
       return "profile";
     }
 
-    return "generic";
+    const listPaths = new Set([
+      "/app/dailyplans",
+      "/app/meals",
+      "/app/foods",
+      "/app/proposals",
+      "/app/ai-tools",
+    ]);
+
+    if (listPaths.has(path)) {
+      return "list";
+    }
+
+    return "detail";
   }
 
   function showNavigationPlaceholder(variant) {
