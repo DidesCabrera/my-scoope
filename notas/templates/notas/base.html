@@ -33,8 +33,21 @@
                 (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
                 window.navigator.standalone === true;
 
-            if (isStandalone) {
-                document.documentElement.classList.add("pwa-standalone");
+            if (!isStandalone) {
+                return;
+            }
+
+            document.documentElement.classList.add("pwa-standalone");
+
+            try {
+                const internalNavigation = sessionStorage.getItem("myscoope.pwa.internalNavigation") === "1";
+                const launchSplashSeen = sessionStorage.getItem("myscoope.pwa.launchSplashSeen") === "1";
+
+                if (!internalNavigation && !launchSplashSeen) {
+                    document.documentElement.classList.add("pwa-splash-enabled");
+                }
+            } catch (error) {
+                document.documentElement.classList.add("pwa-splash-enabled");
             }
         })();
     </script>
@@ -154,20 +167,38 @@
     </div>
 
     <div class="pwa-navigation-placeholder js-pwa-navigation-placeholder" aria-hidden="true">
-        <div class="pwa-navigation-placeholder__chrome">
-            <div class="pwa-navigation-placeholder__header">
+        <div class="pwa-navigation-placeholder__shell">
+            <div class="pwa-navigation-placeholder__topbar">
                 <span class="pwa-navigation-placeholder__icon"></span>
                 <span class="pwa-navigation-placeholder__title"></span>
+                <span class="pwa-navigation-placeholder__action"></span>
             </div>
-            <div class="pwa-navigation-placeholder__body">
+            <div class="pwa-navigation-placeholder__summary">
                 <span class="pwa-navigation-placeholder__line pwa-navigation-placeholder__line--wide"></span>
                 <span class="pwa-navigation-placeholder__line"></span>
                 <span class="pwa-navigation-placeholder__line pwa-navigation-placeholder__line--short"></span>
-                <div class="pwa-navigation-placeholder__grid" aria-hidden="true">
-                    <span class="pwa-navigation-placeholder__card"></span>
-                    <span class="pwa-navigation-placeholder__card"></span>
-                    <span class="pwa-navigation-placeholder__card"></span>
-                </div>
+            </div>
+            <div class="pwa-navigation-placeholder__tabs" aria-hidden="true">
+                <span class="pwa-navigation-placeholder__tab"></span>
+                <span class="pwa-navigation-placeholder__tab"></span>
+                <span class="pwa-navigation-placeholder__tab"></span>
+            </div>
+            <div class="pwa-navigation-placeholder__kpis" aria-hidden="true">
+                <span class="pwa-navigation-placeholder__kpi"></span>
+                <span class="pwa-navigation-placeholder__kpi"></span>
+                <span class="pwa-navigation-placeholder__kpi"></span>
+            </div>
+            <div class="pwa-navigation-placeholder__cards" aria-hidden="true">
+                <span class="pwa-navigation-placeholder__card"></span>
+                <span class="pwa-navigation-placeholder__card"></span>
+                <span class="pwa-navigation-placeholder__card"></span>
+                <span class="pwa-navigation-placeholder__card"></span>
+            </div>
+            <div class="pwa-navigation-placeholder__table" aria-hidden="true">
+                <span class="pwa-navigation-placeholder__row"></span>
+                <span class="pwa-navigation-placeholder__row"></span>
+                <span class="pwa-navigation-placeholder__row"></span>
+                <span class="pwa-navigation-placeholder__row"></span>
             </div>
         </div>
     </div>

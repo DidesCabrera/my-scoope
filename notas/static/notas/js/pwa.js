@@ -3,10 +3,14 @@
   const isStandalone = window.matchMedia("(display-mode: standalone)").matches ||
     window.navigator.standalone === true;
   const navigationPlaceholderClasses = [
-    "pwa-navigation-placeholder--dailyplan",
-    "pwa-navigation-placeholder--meal",
-    "pwa-navigation-placeholder--food",
-    "pwa-navigation-placeholder--proposal",
+    "pwa-navigation-placeholder--dailyplan-list",
+    "pwa-navigation-placeholder--dailyplan-detail",
+    "pwa-navigation-placeholder--meal-list",
+    "pwa-navigation-placeholder--meal-detail",
+    "pwa-navigation-placeholder--food-list",
+    "pwa-navigation-placeholder--food-detail",
+    "pwa-navigation-placeholder--proposal-list",
+    "pwa-navigation-placeholder--proposal-detail",
     "pwa-navigation-placeholder--profile",
     "pwa-navigation-placeholder--home",
     "pwa-navigation-placeholder--generic",
@@ -14,8 +18,26 @@
 
   root.classList.toggle("pwa-standalone", isStandalone);
 
+  function rememberLaunchSplashSeen() {
+    try {
+      sessionStorage.setItem("myscoope.pwa.launchSplashSeen", "1");
+      sessionStorage.removeItem("myscoope.pwa.internalNavigation");
+    } catch (error) {
+      // sessionStorage can be unavailable in private/restricted contexts.
+    }
+  }
+
+  function rememberInternalNavigation() {
+    try {
+      sessionStorage.setItem("myscoope.pwa.internalNavigation", "1");
+    } catch (error) {
+      // The placeholder should still be shown even if storage is unavailable.
+    }
+  }
+
   function markPwaReady() {
     root.classList.add("pwa-ready");
+    rememberLaunchSplashSeen();
 
     const splash = document.querySelector(".js-pwa-splash");
     if (!splash) {
@@ -24,6 +46,7 @@
 
     window.setTimeout(function () {
       splash.remove();
+      root.classList.remove("pwa-splash-enabled");
     }, 280);
   }
 
@@ -59,29 +82,45 @@
   }
 
   function getPlaceholderVariant(url) {
-    const path = url.pathname;
+    const path = url.pathname.replace(/\/+$/, "");
 
-    if (path === "/app/" || path === "/app") {
+    if (path === "/app") {
       return "home";
     }
 
+    if (path === "/app/dailyplans") {
+      return "dailyplan-list";
+    }
+
     if (path.startsWith("/app/dailyplans/")) {
-      return "dailyplan";
+      return "dailyplan-detail";
+    }
+
+    if (path === "/app/meals") {
+      return "meal-list";
     }
 
     if (path.startsWith("/app/meals/")) {
-      return "meal";
+      return "meal-detail";
+    }
+
+    if (path === "/app/foods") {
+      return "food-list";
     }
 
     if (path.startsWith("/app/foods/")) {
-      return "food";
+      return "food-detail";
+    }
+
+    if (path === "/app/proposals" || path === "/app/ai-tools") {
+      return "proposal-list";
     }
 
     if (path.startsWith("/app/proposals/") || path.startsWith("/app/ai-tools/")) {
-      return "proposal";
+      return "proposal-detail";
     }
 
-    if (path.startsWith("/app/profile/") || path.startsWith("/app/authors/")) {
+    if (path.startsWith("/app/profile") || path.startsWith("/app/authors")) {
       return "profile";
     }
 
@@ -89,12 +128,28 @@
   }
 
   function showNavigationPlaceholder(variant) {
+    rememberInternalNavigation();
+
     navigationPlaceholderClasses.forEach(function (className) {
       root.classList.remove(className);
     });
 
+    root.classList.remove("pwa-splash-enabled");
     root.classList.add("pwa-is-navigating");
     root.classList.add("pwa-navigation-placeholder--" + variant);
+  }
+
+  function resetNavigationPlaceholder() {
+    root.classList.remove("pwa-is-navigating");
+    navigationPlaceholderClasses.forEach(function (className) {
+      root.classList.remove(className);
+    });
+
+    try {
+      sessionStorage.removeItem("myscoope.pwa.internalNavigation");
+    } catch (error) {
+      // No-op.
+    }
   }
 
   function setupNavigationPlaceholders() {
@@ -121,12 +176,7 @@
       showNavigationPlaceholder(getPlaceholderVariant(url));
     }, true);
 
-    window.addEventListener("pageshow", function () {
-      root.classList.remove("pwa-is-navigating");
-      navigationPlaceholderClasses.forEach(function (className) {
-        root.classList.remove(className);
-      });
-    });
+    window.addEventListener("pageshow", resetNavigationPlaceholder);
   }
 
   if (document.readyState === "complete") {
