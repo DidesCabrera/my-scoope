@@ -657,6 +657,10 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-setti
     padding: 0 0 48px;
   }
 
+  html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--list .pwa-navigation-placeholder__viewport {
+    margin-top: 22px;
+  }
+
   html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__list-intro {
     margin-bottom: 12px;
   }
