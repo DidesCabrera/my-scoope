@@ -164,6 +164,11 @@ html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--profile .pwa-n
   gap: 14px;
 }
 
+html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--detail .pwa-navigation-placeholder__layout--detail{
+  gap: 24px;
+}
+
+
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__logo,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__page-title,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__structural-indicator,
@@ -256,20 +261,20 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__header-spacer
 }
 
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__header-icon,
-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__card-icon,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-icon {
   width: 34px;
   height: 34px;
   flex: 0 0 auto;
-  border-radius: 10px;
+  border-radius: 8px;
+  margin-left: 22px;
 }
 
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__header-title,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__card-title,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__detail-title {
   width: min(48vw, 320px);
-  height: 21px;
-  border-radius: 999px;
+  height: 26px;
+  border-radius: 6px;
 }
 
 /* List destination */
@@ -291,21 +296,21 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__logo {
 }
 
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__page-title {
-  width: min(54vw, 280px);
+  width: min(54vw, 220px);
   height: 31px;
-  border-radius: 999px;
+  border-radius: 8px;
 }
 
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__structural-indicator {
-  width: 68px;
-  height: 28px;
-  border-radius: 9px;
+  width: 48px;
+  height: 25px;
+  border-radius: 6px;
 }
 
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__list-cards {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 12px;
+  gap: 22px;
   padding-bottom: 48px;
 }
 
@@ -313,7 +318,7 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__card-shell,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__detail-page {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
   padding: 16px;
   border-radius: 22px;
   background: var(--surface-card, #121212);
@@ -351,7 +356,7 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__dash-lines {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 12px;
+  gap: 20px;
   min-width: 0;
 }
 
@@ -652,39 +657,48 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-setti
 
 @media (max-width: 760px) {
   html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__viewport {
-    width: calc(100% - 24px);
-    margin: calc(var(--app-header-height, 54px) + 10px) 12px 12px;
+    width: calc(100% - 12px);
+    margin: calc(var(--app-header-height, 54px) + 10px) 6px 12px;
     padding: 0 0 48px;
   }
 
   html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--list .pwa-navigation-placeholder__viewport {
-    margin-top: 22px;
+    margin-top: 14px;
+  }
+  html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--detail .pwa-navigation-placeholder__viewport {
+    margin-top: 6px;
   }
 
   html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__list-intro {
-    margin-bottom: 12px;
+    margin-bottom: 18px;
   }
 
   html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__page-title {
-    width: min(70vw, 300px);
+    width: min(70vw, 240px);
   }
 
   html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__card-shell,
   html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__detail-page {
-    padding: 14px 12px 20px;
+    padding: 20px 22px 64px;
   }
 
   html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__dash-kpi {
-    grid-template-columns: 82px minmax(0, 1fr);
-    min-height: 78px;
+    grid-template-columns: 104px minmax(0, 1fr);
+    min-height: 104px;
+    width: auto;
+    margin: 0 -8px;
   }
 
   html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__dash-total {
-    min-height: 72px;
+    height: 96px;
+    width: 96px;
+    margin: 4px 0;
   }
 
   html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__panel {
-    min-height: 86px;
+    min-height: 44px;
+    width: auto;
+    margin: 0 -14px;
   }
 
   html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__panel--large {
