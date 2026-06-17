@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 from typing import Any
 
+from django.urls import reverse
+
 from notas.application.resolvers.dailyplan_meal_resolvers import (
     resolve_dailyplan_meal_actions,
 )
@@ -30,6 +32,7 @@ from notas.presentation.composition.viewmodel.components.builder_table_items imp
     build_mealfood_table_item,
 )
 from notas.presentation.config.icons import CONTENT_ICON_REGISTRY
+from notas.presentation.config.viewmodel_config import DAILYPLAN_VIEWMODE_PERSONAL_DETAIL
 from notas.presentation.resolvers.title_resolvers import resolve_category_badge
 
 
@@ -271,6 +274,11 @@ def build_dailyplan_detail_content_data(
                     "category": "en plan",
                     "category_badge": resolve_category_badge("en plan"),
                     "foods_count": len(meal_foods_aggregation),
+                    "url": (
+                        reverse("dailyplan_meal_detail", args=[dailyplan.id, dpm.id])
+                        if viewmode == DAILYPLAN_VIEWMODE_PERSONAL_DETAIL
+                        else None
+                    ),
                 },
                 "kpis": {
                     "ppk": ppk_meal["ppk"],

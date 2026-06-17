@@ -127,6 +127,22 @@ html.pwa-standalone *::-webkit-scrollbar {
   display: none;
 }
 
+
+/* --- PWA initial launch mask --- */
+
+.pwa-launch-solid-cover {
+  display: none;
+}
+
+html.pwa-standalone:not(.pwa-ready):not(.pwa-internal-navigation-boot) .pwa-launch-solid-cover {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  display: block;
+  background: #000000;
+  pointer-events: none;
+}
+
 /* --- PWA navigation placeholders --- */
 
 .pwa-navigation-placeholder {

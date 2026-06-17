@@ -40,6 +40,7 @@ class TitleUI:
     category: Optional[str] = None
     category_badge: Optional[CategoryBadgeUI] = None
     structural_indicators: Optional[StructuralIndicatorsUI] = None
+    url: Optional[str] = None
 
 
 @dataclass

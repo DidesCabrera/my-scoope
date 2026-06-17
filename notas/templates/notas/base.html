@@ -43,6 +43,14 @@
 
             if (isStandalone) {
                 document.documentElement.classList.add("pwa-standalone");
+
+                try {
+                    if (sessionStorage.getItem("myscoope.pwa.internalNavigation") === "1") {
+                        document.documentElement.classList.add("pwa-internal-navigation-boot");
+                    }
+                } catch (error) {
+                    // If storage is unavailable, keep the normal launch mask behavior.
+                }
             }
         })();
     </script>
@@ -163,6 +171,7 @@
 
 <body class="{% block body_class %}{% endblock %}{% if vm.ui.mode == 'list' %} page-header-meta-deferred{% endif %}">
     {% include "components/pwa_navigation_placeholder.html" %}
+    <div class="pwa-launch-solid-cover" aria-hidden="true"></div>
 
     <div class="app">
 

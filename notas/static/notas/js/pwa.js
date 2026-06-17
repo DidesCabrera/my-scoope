@@ -104,6 +104,7 @@
 
   function resetNavigationPlaceholder() {
     root.classList.remove("pwa-is-navigating");
+    root.classList.remove("pwa-internal-navigation-boot");
     navigationPlaceholderClasses.forEach(function (className) {
       root.classList.remove(className);
     });

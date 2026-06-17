@@ -1,7 +1,13 @@
 <div class="card-title-comp">
 
   <div class="main-title">
-    <h3>{{ titulo.name }}</h3>
+    {% if titulo.url %}
+      <a href="{{ titulo.url }}" class="card-title-link" aria-label="Ver detalle de {{ titulo.name }}">
+        <h3>{{ titulo.name }}</h3>
+      </a>
+    {% else %}
+      <h3>{{ titulo.name }}</h3>
+    {% endif %}
     <div class="label-class">
       {% for class in titulo.classes %}
         <span class="class-tag">{{ class }}</span>

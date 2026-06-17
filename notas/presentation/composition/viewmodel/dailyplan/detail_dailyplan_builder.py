@@ -63,6 +63,7 @@ def build_dailyplan_detail_vm(content_data):
                 structural_indicators=StructuralIndicatorsUI(
                     foods_count=child_data["title"]["foods_count"],
                 ),
+                url=child_data["title"].get("url"),
             ),
             kpis=KPIUI(
                 ppk=child_data["kpis"]["ppk"],

@@ -3,10 +3,20 @@ from notas.presentation.config.viewmodel_config import ALLOC_PCT_OUTSIDE_THRESHO
 from notas.presentation.composition.viewmodel.components.builder_headers import build_page_header
 
 
+def _resolve_title_url(actions):
+    for action in actions:
+        if action.get("key") in {"detail", "explore_detail", "shared_detail", "draft_detail"}:
+            if action.get("method") == "get" and action.get("url"):
+                return action["url"]
+    return None
+
+
 def build_dailyplan_list_vm(content_data, page_actions=None, list_mode="list"):
     children = []
 
     for child_data in content_data.child_cards_data:
+        title_url = _resolve_title_url(child_data["actions"])
+
         child = ChildCardUI(
             child_id=child_data["child_id"],
 
@@ -20,6 +30,7 @@ def build_dailyplan_list_vm(content_data, page_actions=None, list_mode="list"):
                     meals_count=child_data["title"]["meals_count"],
                     foods_count=child_data["title"]["foods_count"],
                 ),
+                url=title_url,
             ),
 
             kpis=KPIUI(

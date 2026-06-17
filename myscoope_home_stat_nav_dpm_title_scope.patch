@@ -1,0 +1,155 @@
+--- a/notas/presentation/composition/viewmodel/dailyplan/dailyplan_content.py	2026-06-12 19:20:13.000000000 +0000
++++ b/notas/presentation/composition/viewmodel/dailyplan/dailyplan_content.py	2026-06-17 04:51:55.796549240 +0000
+@@ -3,6 +3,8 @@
+ from dataclasses import dataclass
+ from typing import Any
+ 
++from django.urls import reverse
++
+ from notas.application.resolvers.dailyplan_meal_resolvers import (
+     resolve_dailyplan_meal_actions,
+ )
+@@ -30,6 +32,7 @@
+     build_mealfood_table_item,
+ )
+ from notas.presentation.config.icons import CONTENT_ICON_REGISTRY
++from notas.presentation.config.viewmodel_config import DAILYPLAN_VIEWMODE_PERSONAL_DETAIL
+ from notas.presentation.resolvers.title_resolvers import resolve_category_badge
+ 
+ 
+@@ -271,6 +274,11 @@
+                     "category": "en plan",
+                     "category_badge": resolve_category_badge("en plan"),
+                     "foods_count": len(meal_foods_aggregation),
++                    "url": (
++                        reverse("dailyplan_meal_detail", args=[dailyplan.id, dpm.id])
++                        if viewmode == DAILYPLAN_VIEWMODE_PERSONAL_DETAIL
++                        else None
++                    ),
+                 },
+                 "kpis": {
+                     "ppk": ppk_meal["ppk"],
+--- a/notas/presentation/composition/viewmodel/dailyplan/detail_dailyplan_builder.py	2026-06-17 04:38:15.000000000 +0000
++++ b/notas/presentation/composition/viewmodel/dailyplan/detail_dailyplan_builder.py	2026-06-17 04:51:38.935874707 +0000
+@@ -1,4 +1,3 @@
+-from django.urls import reverse
+ from notas.presentation.viewmodels.content.dailyplan.detail_dailyplan_vm import *
+ 
+ 
+@@ -64,10 +63,7 @@
+                 structural_indicators=StructuralIndicatorsUI(
+                     foods_count=child_data["title"]["foods_count"],
+                 ),
+-                url=reverse(
+-                    "dailyplan_meal_detail",
+-                    args=[child_data["main_id"], child_data["related_data"]["rel_id"]],
+-                ),
++                url=child_data["title"].get("url"),
+             ),
+             kpis=KPIUI(
+                 ppk=child_data["kpis"]["ppk"],
+--- a/notas/static/notas/css/components/home.css	2026-06-02 01:39:52.000000000 +0000
++++ b/notas/static/notas/css/components/home.css	2026-06-17 04:51:38.934478899 +0000
+@@ -257,10 +257,32 @@
+   text-decoration: none;
+ }
+ 
++.home-cta--icon {
++  min-width: 32px;
++  padding-inline: 8px;
++}
++
+ .home-cta .btn-card-home-icon {
+   color: currentColor;
+ }
+ 
++.home-footer {
++  display: flex;
++  justify-content: center;
++  align-items: center;
++  gap: 8px;
++  padding: 28px 0 44px;
++  color: var(--text-muted);
++  font-size: 12px;
++  font-weight: 500;
++}
++
++.home-footer span + span::before {
++  content: "•";
++  margin-right: 8px;
++  color: var(--text-muted);
++}
++
+ /* =========================
+    SECTIONS
+    ========================= */
+--- a/notas/templates/notas/home.html	2026-06-17 04:38:15.000000000 +0000
++++ b/notas/templates/notas/home.html	2026-06-17 04:51:38.933798002 +0000
+@@ -127,14 +127,13 @@
+         </a>
+ 
+         <div class="home-stat-actions">
+-          <a href="{% url 'dailyplan_explore_list' %}" class="home-cta">
+-            <i data-lucide="search" class="btn-card-home-icon black"></i>
+-            <span class="home-cta-text">Explorar</span>
+-          </a>
+           <a href="{% url 'dailyplan_create' %}" class="home-cta home-cta--primary">
+             <i data-lucide="plus" class="btn-card-home-icon white"></i>
+             <span class="home-cta-text">Crear</span>
+           </a>
++          <a href="{% url 'dailyplan_list' %}" class="home-cta home-cta--icon" aria-label="Ir a Mis planes diarios">
++            <i data-lucide="chevron-right" class="btn-card-home-icon black"></i>
++          </a>
+         </div>
+ 
+     </div>
+@@ -154,14 +153,13 @@
+       </a>
+   
+       <div class="home-stat-actions">
+-        <a href="{% url 'meal_explore_list' %}" class="home-cta">
+-          <i data-lucide="search" class="btn-card-home-icon black"></i>
+-          <span class="home-cta-text">Explorar</span>
+-        </a>
+         <a href="{% url 'meal_create' %}" class="home-cta home-cta--primary">
+           <i data-lucide="plus" class="btn-card-home-icon white"></i>
+           <span class="home-cta-text">Crear</span>
+         </a>
++        <a href="{% url 'meal_list' %}" class="home-cta home-cta--icon" aria-label="Ir a Mis comidas">
++          <i data-lucide="chevron-right" class="btn-card-home-icon black"></i>
++        </a>
+       </div>
+     
+     </div>
+@@ -180,14 +178,13 @@
+       </a>
+   
+       <div class="home-stat-actions">
+-        <a href="{% url 'food_list' %}" class="home-cta">
+-          <i data-lucide="search" class="btn-card-home-icon black"></i>
+-          <span class="home-cta-text">Explorar</span>
+-        </a>
+         <a href="{% url 'food_create' %}" class="home-cta home-cta--primary">
+           <i data-lucide="plus" class="btn-card-home-icon white"></i>
+           <span class="home-cta-text">Crear</span>
+         </a>
++        <a href="{% url 'food_list' %}" class="home-cta home-cta--icon" aria-label="Ir a Mis alimentos">
++          <i data-lucide="chevron-right" class="btn-card-home-icon black"></i>
++        </a>
+       </div>
+   
+     </div>
+@@ -237,9 +234,11 @@
+     </button>
+   </section>
+ 
++  <footer class="home-footer" aria-label="Pie de página de My Scoope">
++    <span>My Scoope</span>
++    <span>2026</span>
++  </footer>
+ 
+-
+-  
+ </div>
+ 
+ <script src="{% static 'notas/js/collapse_cards.js' %}" defer></script>
