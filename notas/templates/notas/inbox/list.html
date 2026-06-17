@@ -1,5 +1,5 @@
 {% extends "notas/base.html" %}
-{% block title %}Compartir / Inbox{% endblock %}
+{% block title %}Inbox{% endblock %}
 {% block content %}
 
 <div class="page list inbox-list-page proposal-list-page">
@@ -17,7 +17,7 @@
     {% endif %}
 
     {% for item in vm.content.inbox_items %}
-      <article class="card proposal-list-card inbox-list-card inbox-list-card--{{ item.kind }}{% if item.is_favorite %} is-favorite{% endif %}">
+      <article class="card proposal-list-card inbox-list-card inbox-list-card--{{ item.kind }}{% if item.is_favorite %} is-favorite{% endif %}{% if not item.is_read %} is-unread{% endif %}">
         <div class="proposal-list-card__main">
           <div class="proposal-list-card__title-block">
             <div class="proposal-list-card__copy">

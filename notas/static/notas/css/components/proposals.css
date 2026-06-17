@@ -1048,8 +1048,17 @@ html[data-theme="dark"] .proposal-review-action--reject {
 }
 
 .inbox-list-page .overflow-action.is-active,
-.inbox-detail-page .primary-action.is-active {
-  color: var(--interactive-primary);
+.inbox-detail-page .primary-action.is-active,
+.inbox-detail-page .overflow-action.is-active,
+.inbox-child-card .action-icon-btn.is-active {
+  color: #d9a441;
+}
+
+.inbox-list-page .overflow-action.is-active svg,
+.inbox-detail-page .primary-action.is-active svg,
+.inbox-detail-page .overflow-action.is-active svg,
+.inbox-child-card .action-icon-btn.is-active svg {
+  fill: currentColor;
 }
 
 @media (max-width: 760px) {
@@ -1058,4 +1067,16 @@ html[data-theme="dark"] .proposal-review-action--reject {
   .inbox-attachment-actions .proposal-review-action {
     width: 100%;
   }
+}
+
+.inbox-list-card.is-unread {
+  box-shadow: none;
+}
+
+.inbox-review-entity-section {
+  margin-top: 2px;
+}
+
+.inbox-child-card .card-actions:empty {
+  display: none;
 }

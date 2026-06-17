@@ -495,3 +495,52 @@
     width: auto;
   }
 }
+
+/* =========================================================
+   Share entity form
+   ========================================================= */
+
+.share-form__form {
+  gap: 14px;
+}
+
+.entity-form__textarea {
+  min-height: 116px;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.entity-form__error {
+  margin: 2px 0 0;
+  color: var(--color-danger, #ff5c5c);
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.share-form__attachment {
+  margin: 0;
+  gap: 10px;
+}
+
+.share-form__attachment-chip {
+  max-width: 100%;
+}
+
+.share-form__attachment .proposal-attachment__copy,
+.share-form__attachment .proposal-attachment__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .share-form__attachment {
+    width: 100%;
+  }
+
+  .share-form__attachment-chip {
+    flex: 1 1 auto;
+    width: auto;
+  }
+}

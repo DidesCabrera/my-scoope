@@ -43,38 +43,35 @@
         <h3>Adjuntos</h3>
       </div>
 
-      <div class="proposal-review-attachments-list inbox-review-attachments-list">
-        <a href="{{ vm.content.inbox.attachment.open_url }}" class="proposal-attachment proposal-attachment--{{ vm.content.inbox.attachment.kind }} proposal-review-attachment inbox-attachment-link">
+      <div class="proposal-review-attachments-list">
+        <div class="proposal-attachment proposal-attachment--{{ vm.content.inbox.attachment.kind }} proposal-review-attachment">
           <span class="proposal-attachment__icon" aria-hidden="true">
             <i data-lucide="{{ vm.content.inbox.attachment.icon }}" class="proposal-attachment__svg"></i>
           </span>
           <span class="proposal-attachment__copy">
             <strong class="proposal-attachment__name">{{ vm.content.inbox.attachment.name }}</strong>
           </span>
-        </a>
-      </div>
-    </section>
-
-    <section class="proposal-review-actions inbox-attachment-actions">
-      <div class="proposal-review-actions-copy">
-        <p class="proposal-review-eyebrow">Adjunto recibido</p>
-        <p class="proposal-review-actions-text">
-          Puedes abrir el detalle del adjunto o guardar una copia independiente en Mi librería.
-        </p>
+        </div>
       </div>
 
-      <div class="proposal-review-actions-buttons">
-        <a href="{{ vm.content.inbox.attachment.open_url }}" class="proposal-review-action proposal-review-action--cancel">
-          Ver detalle
-        </a>
-
-        <form method="post" action="{{ vm.content.inbox.attachment.save_url }}">
-          {% csrf_token %}
-          <button type="submit" class="proposal-review-action proposal-review-action--apply">
-            Guardar en Mi librería
-          </button>
-        </form>
-      </div>
+      <section class="proposal-review-entity-section inbox-review-entity-section inbox-review-entity-section--{{ vm.content.inbox.kind }}">
+        {% for child_card in vm.content.inbox.attachment_cards %}
+          {% if vm.content.inbox.kind == "dailyplan" %}
+            {% include "components/card_child_dailyplan.html" with child_card=child_card dailyplan_card_class="proposal-child-card inbox-child-card inbox-child-card--dailyplan" default_nutrition=True %}
+          {% elif vm.content.inbox.kind == "meal" %}
+            {% include "components/card_child_meal.html" with child_card=child_card dpm_meal="dpm_meal proposal-child-card inbox-child-card inbox-child-card--meal" default_nutrition=True %}
+          {% endif %}
+        {% empty %}
+          <a href="{{ vm.content.inbox.attachment.open_url }}" class="proposal-attachment proposal-attachment--{{ vm.content.inbox.attachment.kind }} proposal-review-attachment inbox-attachment-link">
+            <span class="proposal-attachment__icon" aria-hidden="true">
+              <i data-lucide="{{ vm.content.inbox.attachment.icon }}" class="proposal-attachment__svg"></i>
+            </span>
+            <span class="proposal-attachment__copy">
+              <strong class="proposal-attachment__name">{{ vm.content.inbox.attachment.name }}</strong>
+            </span>
+          </a>
+        {% endfor %}
+      </section>
     </section>
   </section>
 </div>

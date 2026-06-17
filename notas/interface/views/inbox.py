@@ -175,7 +175,7 @@ def _build_inbox_detail_actions(inbox: dict):
 
 def _inbox_parent():
     return BreadcrumbParent(
-        label="Compartir / Inbox",
+        label="Inbox",
         url=reverse("inbox_list"),
     )
 
@@ -191,10 +191,13 @@ def inbox_list(request):
             favorites_only=favorites_only,
         )
     ]
+    request.session["inbox_notification_seen_count"] = sum(
+        1 for item in items if not item.get("is_read")
+    )
 
     content_vm = InboxListContentVM(
         header=build_page_header(
-            title="Compartir / Inbox",
+            title="Inbox",
             actions=_build_inbox_list_actions(
                 list_mode=list_mode,
                 favorites_only=favorites_only,
@@ -221,6 +224,19 @@ def inbox_list(request):
 
 @login_required
 def inbox_detail(request, kind, share_id):
+    try:
+        share = get_inbox_share_or_404(
+            request.user,
+            kind=kind,
+            share_id=share_id,
+        )
+    except ValueError:
+        return HttpResponseBadRequest("Tipo de inbox no soportado.")
+
+    if not share.is_read:
+        share.is_read = True
+        share.save(update_fields=["is_read"])
+
     try:
         item = get_inbox_item_or_404(
             request.user,

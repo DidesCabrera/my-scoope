@@ -1241,6 +1241,7 @@ class NutritionProposal(models.Model):
     title = models.CharField(max_length=160)
     summary = models.TextField(blank=True)
     list_order = models.PositiveIntegerField(default=0)
+    is_read = models.BooleanField(default=False)
 
     targets = models.JSONField(default=dict, blank=True)
     current_snapshot = models.JSONField(default=dict, blank=True)
@@ -1496,6 +1497,9 @@ class DailyPlanShare(models.Model):
     dismissed = models.BooleanField(default=False)      # inbox
     removed = models.BooleanField(default=False)        # librería
     is_favorite = models.BooleanField(default=False)    # inbox
+    is_read = models.BooleanField(default=False)        # inbox
+    message = models.TextField(blank=True)              # inbox / email
+    subject = models.CharField(max_length=160, blank=True)  # inbox title / email subject
 
     class Meta:
         unique_together = ("recipient_email", "dailyplan")
@@ -1534,6 +1538,9 @@ class MealShare(models.Model):
     dismissed = models.BooleanField(default=False)      # inbox
     removed = models.BooleanField(default=False)        # librería
     is_favorite = models.BooleanField(default=False)    # inbox
+    is_read = models.BooleanField(default=False)        # inbox
+    message = models.TextField(blank=True)              # inbox / email
+    subject = models.CharField(max_length=160, blank=True)  # inbox title / email subject
 
     class Meta:
         unique_together = ("recipient_email", "meal")

@@ -13,7 +13,7 @@
           {% for action in actions %}
             {% if action.desktop_position == "menu" %}
               {% if action.method == "get" %}
-                <a href="{{ action.url }}" class="overflow-action">
+                <a href="{{ action.url }}" class="overflow-action {{ action.extra_class }}">
                   <i data-lucide="{{ action.icon }}" class="overflow-dropdown-icons"></i>
                   <span>{{ action.label }}</span>
                 </a>
@@ -24,7 +24,7 @@
                     type="submit"
                     name="{{ action.key }}"
                     value="1"
-                    class="overflow-action"
+                    class="overflow-action {{ action.extra_class }}"
                   >
                     <i data-lucide="{{ action.icon }}" class="overflow-dropdown-icons"></i>
                     <span>{{ action.label }}</span>
@@ -41,7 +41,7 @@
           {% if action.method == "get" %}
             <a
               href="{{ action.url }}"
-              class="action-icon-btn tooltip"
+              class="action-icon-btn tooltip {{ action.extra_class }}"
               title="{{ action.label }}"
               aria-label="{{ action.label }}"
             >
@@ -55,7 +55,7 @@
                 type="submit"
                 name="{{ action.key }}"
                 value="1"
-                class="action-icon-btn tooltip"
+                class="action-icon-btn tooltip {{ action.extra_class }}"
                 title="{{ action.label }}"
                 aria-label="{{ action.label }}"
               >
@@ -79,7 +79,7 @@
           {% for action in actions %}
             {% if action.mobile_position == "menu" %}
               {% if action.method == "get" %}
-                <a href="{{ action.url }}" class="overflow-action">
+                <a href="{{ action.url }}" class="overflow-action {{ action.extra_class }}">
                   <i data-lucide="{{ action.icon }}" class="overflow-dropdown-icons"></i>
                   <span>{{ action.label }}</span>
                 </a>
@@ -90,7 +90,7 @@
                     type="submit"
                     name="{{ action.key }}"
                     value="1"
-                    class="overflow-action"
+                    class="overflow-action {{ action.extra_class }}"
                   >
                     <i data-lucide="{{ action.icon }}" class="overflow-dropdown-icons"></i>
                     <span>{{ action.label }}</span>
@@ -107,7 +107,7 @@
           {% if action.method == "get" %}
             <a
               href="{{ action.url }}"
-              class="action-icon-btn tooltip"
+              class="action-icon-btn tooltip {{ action.extra_class }}"
               title="{{ action.label }}"
               aria-label="{{ action.label }}"
             >
@@ -121,7 +121,7 @@
                 type="submit"
                 name="{{ action.key }}"
                 value="1"
-                class="action-icon-btn tooltip"
+                class="action-icon-btn tooltip {{ action.extra_class }}"
                 title="{{ action.label }}"
                 aria-label="{{ action.label }}"
               >

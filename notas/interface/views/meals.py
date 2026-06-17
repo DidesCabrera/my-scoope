@@ -88,15 +88,19 @@ def meal_share(request, pk):
     if meal.created_by != request.user:
         return HttpResponseForbidden()
 
-    form = MealShareForm(request.POST or None)
+    form = MealShareForm(request.POST or None, initial={"subject": meal.name})
 
     if request.method == "POST" and form.is_valid():
         email = form.cleaned_data["recipient_email"]
+        share_subject = form.cleaned_data.get("subject", meal.name)
+        message = form.cleaned_data.get("message", "")
 
         result = create_meal_share(
             sender=request.user,
             recipient_email=email,
             meal=meal,
+            subject=share_subject,
+            message=message,
         )
 
         share = result.share
@@ -106,6 +110,8 @@ def meal_share(request, pk):
             share=share,
             kind="meal",
             item_name=meal.name,
+            custom_subject=share_subject,
+            custom_message=message,
         )
 
         email_sent = False

@@ -1,0 +1,336 @@
+diff -ruN proyecto_django_export_ai/notas/context_processors.py proyecto_django_export_ai_mod/notas/context_processors.py
+--- proyecto_django_export_ai/notas/context_processors.py	2026-06-17 18:19:20.000000000 +0000
++++ proyecto_django_export_ai_mod/notas/context_processors.py	2026-06-17 19:30:22.249192789 +0000
+@@ -30,16 +30,23 @@
+             .count()
+         )
+ 
++        inbox_seen_count = int(request.session.get("inbox_notification_seen_count", 0) or 0)
++        proposal_seen_count = int(request.session.get("proposal_notification_seen_count", 0) or 0)
++
+         return {
+             "current_weight": get_current_weight(user),
+             "inbox_unread_count": inbox_unread_count,
+             "proposal_unread_count": proposal_unread_count,
++            "inbox_notification_seen": bool(inbox_unread_count and inbox_unread_count <= inbox_seen_count),
++            "proposal_notification_seen": bool(proposal_unread_count and proposal_unread_count <= proposal_seen_count),
+         }
+ 
+     return {
+         "current_weight": None,
+         "inbox_unread_count": 0,
+         "proposal_unread_count": 0,
++        "inbox_notification_seen": False,
++        "proposal_notification_seen": False,
+     }
+ 
+ 
+diff -ruN proyecto_django_export_ai/notas/interface/views/inbox.py proyecto_django_export_ai_mod/notas/interface/views/inbox.py
+--- proyecto_django_export_ai/notas/interface/views/inbox.py	2026-06-17 18:58:10.000000000 +0000
++++ proyecto_django_export_ai_mod/notas/interface/views/inbox.py	2026-06-17 19:31:33.329377905 +0000
+@@ -191,6 +191,9 @@
+             favorites_only=favorites_only,
+         )
+     ]
++    request.session["inbox_notification_seen_count"] = sum(
++        1 for item in items if not item.get("is_read")
++    )
+ 
+     content_vm = InboxListContentVM(
+         header=build_page_header(
+diff -ruN proyecto_django_export_ai/notas/interface/views/proposals.py proyecto_django_export_ai_mod/notas/interface/views/proposals.py
+--- proyecto_django_export_ai/notas/interface/views/proposals.py	2026-06-17 18:19:20.000000000 +0000
++++ proyecto_django_export_ai_mod/notas/interface/views/proposals.py	2026-06-17 19:33:07.507992033 +0000
+@@ -435,6 +435,9 @@
+             status_filter=status_filter,
+         )
+     ]
++    request.session["proposal_notification_seen_count"] = get_available_proposal_queryset(
++        request.user,
++    ).filter(is_read=False).count()
+ 
+     content_vm = ProposalListContentVM(
+         header=build_page_header(
+diff -ruN proyecto_django_export_ai/notas/static/notas/css/components/modal_create.css proyecto_django_export_ai_mod/notas/static/notas/css/components/modal_create.css
+--- proyecto_django_export_ai/notas/static/notas/css/components/modal_create.css	2026-06-17 18:19:20.000000000 +0000
++++ proyecto_django_export_ai_mod/notas/static/notas/css/components/modal_create.css	2026-06-17 19:32:07.534235629 +0000
+@@ -518,20 +518,17 @@
+ }
+ 
+ .share-form__attachment {
+-  display: inline-flex;
+-  align-items: center;
+-  gap: 8px;
+-  width: fit-content;
++  margin: 0;
++  gap: 10px;
++}
++
++.share-form__attachment-chip {
+   max-width: 100%;
+-  padding: 9px 12px;
+-  border-radius: 999px;
+-  background: var(--surface-card-muted);
+-  color: var(--text-muted);
+-  font-size: 0.86rem;
+-  font-weight: 750;
+ }
+ 
+-.share-form__attachment span {
++.share-form__attachment .proposal-attachment__copy,
++.share-form__attachment .proposal-attachment__name {
++  min-width: 0;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+@@ -541,4 +538,9 @@
+   .share-form__attachment {
+     width: 100%;
+   }
++
++  .share-form__attachment-chip {
++    flex: 1 1 auto;
++    width: auto;
++  }
+ }
+diff -ruN proyecto_django_export_ai/notas/static/notas/css/components/proposals.css proyecto_django_export_ai_mod/notas/static/notas/css/components/proposals.css
+--- proyecto_django_export_ai/notas/static/notas/css/components/proposals.css	2026-06-17 18:32:09.000000000 +0000
++++ proyecto_django_export_ai_mod/notas/static/notas/css/components/proposals.css	2026-06-17 19:32:27.262328593 +0000
+@@ -1048,8 +1048,17 @@
+ }
+ 
+ .inbox-list-page .overflow-action.is-active,
+-.inbox-detail-page .primary-action.is-active {
+-  color: var(--interactive-primary);
++.inbox-detail-page .primary-action.is-active,
++.inbox-detail-page .overflow-action.is-active,
++.inbox-child-card .action-icon-btn.is-active {
++  color: #d9a441;
++}
++
++.inbox-list-page .overflow-action.is-active svg,
++.inbox-detail-page .primary-action.is-active svg,
++.inbox-detail-page .overflow-action.is-active svg,
++.inbox-child-card .action-icon-btn.is-active svg {
++  fill: currentColor;
+ }
+ 
+ @media (max-width: 760px) {
+diff -ruN proyecto_django_export_ai/notas/static/notas/css/components/sidebar.css proyecto_django_export_ai_mod/notas/static/notas/css/components/sidebar.css
+--- proyecto_django_export_ai/notas/static/notas/css/components/sidebar.css	2026-06-17 19:14:50.000000000 +0000
++++ proyecto_django_export_ai_mod/notas/static/notas/css/components/sidebar.css	2026-06-17 19:31:06.538788845 +0000
+@@ -546,6 +546,8 @@
+ }
+ 
+ .sidebar-main .sidebar-left {
++    display: flex;
++    align-items: center;
+     flex: 1 1 auto;
+     min-width: 0;
+ }
+@@ -555,26 +557,34 @@
+     display: inline-flex;
+     align-items: center;
+     justify-content: center;
+-    min-width: 16px;
+-    height: 16px;
++    flex: 0 0 auto;
++    min-width: 18px;
++    height: 18px;
+     padding: 0 5px;
+     margin-left: auto;
+     border-radius: 999px;
+     background: var(--color-inbox, #ff4343);
+     color: #ffffff;
+     font-size: 10px;
+-    font-weight: 700;
+-    line-height: 1;
++    font-weight: 800;
++    line-height: 18px;
++    text-align: center;
+     pointer-events: none;
+ }
+ 
++.sidebar-notification-dot--seen {
++    background: var(--surface-card-muted, #343434);
++    color: #ffffff;
++}
++
+ :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-notification-dot {
+     position: absolute;
+-    top: 6px;
+-    right: 8px;
+-    min-width: 14px;
+-    height: 14px;
++    top: 5px;
++    right: 6px;
++    min-width: 16px;
++    height: 16px;
+     padding: 0 4px;
+     margin-left: 0;
+     font-size: 9px;
++    line-height: 16px;
+ }
+diff -ruN proyecto_django_export_ai/notas/templates/components/card_actions.html proyecto_django_export_ai_mod/notas/templates/components/card_actions.html
+--- proyecto_django_export_ai/notas/templates/components/card_actions.html	2026-06-09 23:21:01.000000000 +0000
++++ proyecto_django_export_ai_mod/notas/templates/components/card_actions.html	2026-06-17 19:32:16.150970255 +0000
+@@ -13,7 +13,7 @@
+           {% for action in actions %}
+             {% if action.desktop_position == "menu" %}
+               {% if action.method == "get" %}
+-                <a href="{{ action.url }}" class="overflow-action">
++                <a href="{{ action.url }}" class="overflow-action {{ action.extra_class }}">
+                   <i data-lucide="{{ action.icon }}" class="overflow-dropdown-icons"></i>
+                   <span>{{ action.label }}</span>
+                 </a>
+@@ -24,7 +24,7 @@
+                     type="submit"
+                     name="{{ action.key }}"
+                     value="1"
+-                    class="overflow-action"
++                    class="overflow-action {{ action.extra_class }}"
+                   >
+                     <i data-lucide="{{ action.icon }}" class="overflow-dropdown-icons"></i>
+                     <span>{{ action.label }}</span>
+@@ -41,7 +41,7 @@
+           {% if action.method == "get" %}
+             <a
+               href="{{ action.url }}"
+-              class="action-icon-btn tooltip"
++              class="action-icon-btn tooltip {{ action.extra_class }}"
+               title="{{ action.label }}"
+               aria-label="{{ action.label }}"
+             >
+@@ -55,7 +55,7 @@
+                 type="submit"
+                 name="{{ action.key }}"
+                 value="1"
+-                class="action-icon-btn tooltip"
++                class="action-icon-btn tooltip {{ action.extra_class }}"
+                 title="{{ action.label }}"
+                 aria-label="{{ action.label }}"
+               >
+@@ -79,7 +79,7 @@
+           {% for action in actions %}
+             {% if action.mobile_position == "menu" %}
+               {% if action.method == "get" %}
+-                <a href="{{ action.url }}" class="overflow-action">
++                <a href="{{ action.url }}" class="overflow-action {{ action.extra_class }}">
+                   <i data-lucide="{{ action.icon }}" class="overflow-dropdown-icons"></i>
+                   <span>{{ action.label }}</span>
+                 </a>
+@@ -90,7 +90,7 @@
+                     type="submit"
+                     name="{{ action.key }}"
+                     value="1"
+-                    class="overflow-action"
++                    class="overflow-action {{ action.extra_class }}"
+                   >
+                     <i data-lucide="{{ action.icon }}" class="overflow-dropdown-icons"></i>
+                     <span>{{ action.label }}</span>
+@@ -107,7 +107,7 @@
+           {% if action.method == "get" %}
+             <a
+               href="{{ action.url }}"
+-              class="action-icon-btn tooltip"
++              class="action-icon-btn tooltip {{ action.extra_class }}"
+               title="{{ action.label }}"
+               aria-label="{{ action.label }}"
+             >
+@@ -121,7 +121,7 @@
+                 type="submit"
+                 name="{{ action.key }}"
+                 value="1"
+-                class="action-icon-btn tooltip"
++                class="action-icon-btn tooltip {{ action.extra_class }}"
+                 title="{{ action.label }}"
+                 aria-label="{{ action.label }}"
+               >
+diff -ruN proyecto_django_export_ai/notas/templates/components/sidebar.html proyecto_django_export_ai_mod/notas/templates/components/sidebar.html
+--- proyecto_django_export_ai/notas/templates/components/sidebar.html	2026-06-17 19:14:50.000000000 +0000
++++ proyecto_django_export_ai_mod/notas/templates/components/sidebar.html	2026-06-17 19:30:31.021213588 +0000
+@@ -51,10 +51,10 @@
+                                                 <i data-lucide="{{ group.icon }}" class="sidebar-main-icon sidebar-main-icon--{{ group.nav_root }}{% if section.key == 'workspace' %} sidebar-main-icon--library{% endif %}"></i>
+                                                 <span class="sidebar-label">{{ group.label }}</span>
+                                                 {% if group.key == "proposal" and proposal_unread_count %}
+-                                                    <span class="sidebar-notification-dot" aria-label="{{ proposal_unread_count }} propuesta(s) sin leer">{{ proposal_unread_count }}</span>
++                                                    <span class="sidebar-notification-dot{% if proposal_notification_seen %} sidebar-notification-dot--seen{% endif %}" aria-label="{{ proposal_unread_count }} propuesta(s) sin leer">{{ proposal_unread_count }}</span>
+                                                 {% endif %}
+                                                 {% if group.key == "inbox" and inbox_unread_count %}
+-                                                    <span class="sidebar-notification-dot" aria-label="{{ inbox_unread_count }} inbox sin leer">{{ inbox_unread_count }}</span>
++                                                    <span class="sidebar-notification-dot{% if inbox_notification_seen %} sidebar-notification-dot--seen{% endif %}" aria-label="{{ inbox_unread_count }} inbox sin leer">{{ inbox_unread_count }}</span>
+                                                 {% endif %}
+                                             </span>
+                                         </a>
+@@ -73,10 +73,10 @@
+                                             <i data-lucide="{{ group.icon }}" class="sidebar-main-icon sidebar-main-icon--{{ group.nav_root }}{% if section.key == 'workspace' %} sidebar-main-icon--library{% endif %}"></i>
+                                             <span class="sidebar-label">{{ group.label }}</span>
+                                             {% if group.key == "proposal" and proposal_unread_count %}
+-                                                <span class="sidebar-notification-dot" aria-label="{{ proposal_unread_count }} propuesta(s) sin leer">{{ proposal_unread_count }}</span>
++                                                <span class="sidebar-notification-dot{% if proposal_notification_seen %} sidebar-notification-dot--seen{% endif %}" aria-label="{{ proposal_unread_count }} propuesta(s) sin leer">{{ proposal_unread_count }}</span>
+                                             {% endif %}
+                                             {% if group.key == "inbox" and inbox_unread_count %}
+-                                                <span class="sidebar-notification-dot" aria-label="{{ inbox_unread_count }} inbox sin leer">{{ inbox_unread_count }}</span>
++                                                <span class="sidebar-notification-dot{% if inbox_notification_seen %} sidebar-notification-dot--seen{% endif %}" aria-label="{{ inbox_unread_count }} inbox sin leer">{{ inbox_unread_count }}</span>
+                                             {% endif %}
+                                         </span>
+                                     </a>
+@@ -88,10 +88,10 @@
+                                             <i data-lucide="{{ group.icon }}" class="sidebar-main-icon sidebar-main-icon--{{ group.nav_root|default:group.key }}{% if section.key == 'workspace' %} sidebar-main-icon--library{% endif %}"></i>
+                                             <span class="sidebar-label">{{ group.label }}</span>
+                                             {% if group.key == "proposal" and proposal_unread_count %}
+-                                                <span class="sidebar-notification-dot" aria-label="{{ proposal_unread_count }} propuesta(s) sin leer">{{ proposal_unread_count }}</span>
++                                                <span class="sidebar-notification-dot{% if proposal_notification_seen %} sidebar-notification-dot--seen{% endif %}" aria-label="{{ proposal_unread_count }} propuesta(s) sin leer">{{ proposal_unread_count }}</span>
+                                             {% endif %}
+                                             {% if group.key == "inbox" and inbox_unread_count %}
+-                                                <span class="sidebar-notification-dot" aria-label="{{ inbox_unread_count }} inbox sin leer">{{ inbox_unread_count }}</span>
++                                                <span class="sidebar-notification-dot{% if inbox_notification_seen %} sidebar-notification-dot--seen{% endif %}" aria-label="{{ inbox_unread_count }} inbox sin leer">{{ inbox_unread_count }}</span>
+                                             {% endif %}
+                                         </span>
+                                     </button>
+diff -ruN proyecto_django_export_ai/notas/templates/notas/dailyplans/share.html proyecto_django_export_ai_mod/notas/templates/notas/dailyplans/share.html
+--- proyecto_django_export_ai/notas/templates/notas/dailyplans/share.html	2026-06-17 19:14:50.000000000 +0000
++++ proyecto_django_export_ai_mod/notas/templates/notas/dailyplans/share.html	2026-06-17 19:31:45.036008605 +0000
+@@ -56,9 +56,16 @@
+         </div>
+       </section>
+ 
+-      <div class="share-form__attachment" aria-label="Elemento a compartir">
+-        <i data-lucide="clipboard-list" class="metadata-icon"></i>
+-        <span>{{ dailyplan.name }}</span>
++      <div class="card-bottom proposal-list-card__bottom share-form__attachment" aria-label="Elemento a compartir">
++        <i data-lucide="paperclip" class="proposal-list-card__attachment-paperclip"></i>
++        <div class="proposal-attachment proposal-attachment--dailyplan share-form__attachment-chip">
++          <span class="proposal-attachment__icon" aria-hidden="true">
++            <i data-lucide="clipboard-list" class="proposal-attachment__svg"></i>
++          </span>
++          <span class="proposal-attachment__copy">
++            <strong class="proposal-attachment__name">{{ dailyplan.name }}</strong>
++          </span>
++        </div>
+       </div>
+ 
+       <div class="entity-form__actions">
+diff -ruN proyecto_django_export_ai/notas/templates/notas/meals/share.html proyecto_django_export_ai_mod/notas/templates/notas/meals/share.html
+--- proyecto_django_export_ai/notas/templates/notas/meals/share.html	2026-06-17 19:14:50.000000000 +0000
++++ proyecto_django_export_ai_mod/notas/templates/notas/meals/share.html	2026-06-17 19:31:45.035335869 +0000
+@@ -56,9 +56,16 @@
+         </div>
+       </section>
+ 
+-      <div class="share-form__attachment" aria-label="Elemento a compartir">
+-        <i data-lucide="utensils" class="metadata-icon"></i>
+-        <span>{{ meal.name }}</span>
++      <div class="card-bottom proposal-list-card__bottom share-form__attachment" aria-label="Elemento a compartir">
++        <i data-lucide="paperclip" class="proposal-list-card__attachment-paperclip"></i>
++        <div class="proposal-attachment proposal-attachment--meal share-form__attachment-chip">
++          <span class="proposal-attachment__icon" aria-hidden="true">
++            <i data-lucide="utensils" class="proposal-attachment__svg"></i>
++          </span>
++          <span class="proposal-attachment__copy">
++            <strong class="proposal-attachment__name">{{ meal.name }}</strong>
++          </span>
++        </div>
+       </div>
+ 
+       <div class="entity-form__actions">

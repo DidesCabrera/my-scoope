@@ -540,3 +540,51 @@
         padding: 10px 12px;
     }
 }
+/* Sidebar unread notifications */
+.sidebar-main {
+    position: relative;
+}
+
+.sidebar-main .sidebar-left {
+    display: flex;
+    align-items: center;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.sidebar-notification-dot {
+    position: static;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    margin-left: auto;
+    border-radius: 999px;
+    background: var(--color-inbox, #ff4343);
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 18px;
+    text-align: center;
+    pointer-events: none;
+}
+
+.sidebar-notification-dot--seen {
+    background: var(--surface-card-muted, #343434);
+    color: #ffffff;
+}
+
+:where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-notification-dot {
+    position: absolute;
+    top: 5px;
+    right: 6px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    margin-left: 0;
+    font-size: 9px;
+    line-height: 16px;
+}

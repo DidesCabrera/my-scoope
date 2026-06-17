@@ -435,6 +435,9 @@ def proposal_list(request):
             status_filter=status_filter,
         )
     ]
+    request.session["proposal_notification_seen_count"] = get_available_proposal_queryset(
+        request.user,
+    ).filter(is_read=False).count()
 
     content_vm = ProposalListContentVM(
         header=build_page_header(
@@ -549,6 +552,11 @@ def proposal_detail(request, proposal_id):
         proposal_id,
     ).as_dict()
 
+    get_available_proposal_queryset(request.user).filter(
+        pk=proposal_id,
+        is_read=False,
+    ).update(is_read=True)
+
     proposal_review = build_proposal_review_vm(
         proposal,
     ).as_dict()
@@ -588,6 +596,11 @@ def proposal_entity_detail(request, proposal_id):
         request.user,
         proposal_id,
     ).as_dict()
+
+    get_available_proposal_queryset(request.user).filter(
+        pk=proposal_id,
+        is_read=False,
+    ).update(is_read=True)
 
     proposal_review = build_proposal_review_vm(
         proposal,

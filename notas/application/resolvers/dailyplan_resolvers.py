@@ -307,7 +307,6 @@ DAILYPLAN_ENTITY_ACTIONS_BY_VIEWMODE = {
     DAILYPLAN_VIEWMODE_PERSONAL_LIST: [
         "list_fork",
         "list_remove",
-        "share",
         "detail",
     ],
 

@@ -1,35 +1,81 @@
 {% extends "notas/base.html" %}
-{% block title %}Create Meal{% endblock %}
+{% block title %}Compartir comida{% endblock %}
 {% block content %}
 
+<div class="page page--detail page-modal page-modal--entity-form share-form-page share-form-page--meal">
 
-<!-- ======== PAGE HEADER ===================================== -->           
+  <div class="wrap-page-modal entity-form share-form">
 
-
-<div class="page page--detail page-modal">
-
-  <div class="wrap-page-modal">
-
-    <div class="label-entity label-entity--meal page-modal }}">
-      Meal
-    </div>
-
-    <div class="label-fork">#variante</div>
-
-    <h2>Comparte: {{ meal.name }}</h2>
-
-    <form method="post" action="{% url 'meal_share' meal.pk %}">
+    <form method="post" action="{% url 'meal_share' meal.pk %}" class="entity-form__form share-form__form" novalidate>
       {% csrf_token %}
-      {{ form.as_p }}
-      <div class="btn-block">
-        <a href="{% url 'meal_detail' meal.pk %}" class="btn-cancel-create">Cancelar</a>
-        <button type="submit"  class="btn-continue">Compartir</button>
+
+      <div class="main-modal entity-form__main-modal">
+        <i data-lucide="send" class="main-modal-icon meal"></i>
+        <h2 class="title-create">Compartir Comida</h2>
+      </div>
+
+      <section class="entity-form__section share-form__section" aria-labelledby="meal-share-recipient-title">
+        <div class="entity-form__section-header">
+          <h3 id="meal-share-recipient-title">Destinatario</h3>
+        </div>
+
+        <div class="entity-form__field">
+          <label for="{{ form.recipient_email.id_for_label }}" class="entity-form__label">Email</label>
+          {{ form.recipient_email }}
+          {% if form.recipient_email.errors %}
+            <p class="entity-form__error">{{ form.recipient_email.errors|striptags }}</p>
+          {% endif %}
+        </div>
+      </section>
+
+      <section class="entity-form__section share-form__section" aria-labelledby="meal-share-subject-title">
+        <div class="entity-form__section-header">
+          <h3 id="meal-share-subject-title">Asunto</h3>
+        </div>
+
+        <div class="entity-form__field">
+          <label for="{{ form.subject.id_for_label }}" class="entity-form__label entity-form__label--hidden">Asunto</label>
+          {{ form.subject }}
+          {% if form.subject.errors %}
+            <p class="entity-form__error">{{ form.subject.errors|striptags }}</p>
+          {% endif %}
+        </div>
+      </section>
+
+      <section class="entity-form__section share-form__section" aria-labelledby="meal-share-message-title">
+        <div class="entity-form__section-header">
+          <h3 id="meal-share-message-title">Mensaje</h3>
+        </div>
+
+        <div class="entity-form__field">
+          <label for="{{ form.message.id_for_label }}" class="entity-form__label entity-form__label--hidden">Mensaje</label>
+          {{ form.message }}
+          {% if form.message.errors %}
+            <p class="entity-form__error">{{ form.message.errors|striptags }}</p>
+          {% endif %}
+        </div>
+      </section>
+
+      <div class="card-bottom proposal-list-card__bottom share-form__attachment" aria-label="Elemento a compartir">
+        <i data-lucide="paperclip" class="proposal-list-card__attachment-paperclip"></i>
+        <div class="proposal-attachment proposal-attachment--meal share-form__attachment-chip">
+          <span class="proposal-attachment__icon" aria-hidden="true">
+            <i data-lucide="utensils" class="proposal-attachment__svg"></i>
+          </span>
+          <span class="proposal-attachment__copy">
+            <strong class="proposal-attachment__name">{{ meal.name }}</strong>
+          </span>
+        </div>
+      </div>
+
+      <div class="entity-form__actions">
+        <a href="{% url 'meal_detail' meal.pk %}" class="btn-cancel-create entity-form__cancel">Cancelar</a>
+        <button type="submit" class="btn-continue entity-form__submit">Compartir</button>
       </div>
     </form>
 
   </div>
-  
+
 </div>
-<!-- FIN ============================================== -->
 
 {% endblock %}

@@ -146,7 +146,7 @@ APP_NAVIGATION = (
             ),
             NavGroupSpec(
                 key="inbox",
-                label="Compartir / Inbox",
+                label="Inbox",
                 icon="inbox",
                 page_icon="inbox",
                 url_name="inbox_list",

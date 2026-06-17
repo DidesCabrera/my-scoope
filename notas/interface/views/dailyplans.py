@@ -84,15 +84,19 @@ def dailyplan_share(request, pk):
     if dailyplan.created_by != request.user:
         return HttpResponseForbidden()
 
-    form = DailyPlanShareForm(request.POST or None)
+    form = DailyPlanShareForm(request.POST or None, initial={"subject": dailyplan.name})
 
     if request.method == "POST" and form.is_valid():
         email = form.cleaned_data["recipient_email"]
+        share_subject = form.cleaned_data.get("subject", dailyplan.name)
+        message = form.cleaned_data.get("message", "")
 
         result = create_dailyplan_share(
             sender=request.user,
             recipient_email=email,
             dailyplan=dailyplan,
+            subject=share_subject,
+            message=message,
         )
 
         share = result.share
@@ -102,6 +106,8 @@ def dailyplan_share(request, pk):
             share=share,
             kind="dailyplan",
             item_name=dailyplan.name,
+            custom_subject=share_subject,
+            custom_message=message,
         )
 
         email_sent = False

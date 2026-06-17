@@ -50,6 +50,12 @@
                                             <span class="sidebar-left">
                                                 <i data-lucide="{{ group.icon }}" class="sidebar-main-icon sidebar-main-icon--{{ group.nav_root }}{% if section.key == 'workspace' %} sidebar-main-icon--library{% endif %}"></i>
                                                 <span class="sidebar-label">{{ group.label }}</span>
+                                                {% if group.key == "proposal" and proposal_unread_count %}
+                                                    <span class="sidebar-notification-dot{% if proposal_notification_seen %} sidebar-notification-dot--seen{% endif %}" aria-label="{{ proposal_unread_count }} propuesta(s) sin leer">{{ proposal_unread_count }}</span>
+                                                {% endif %}
+                                                {% if group.key == "inbox" and inbox_unread_count %}
+                                                    <span class="sidebar-notification-dot{% if inbox_notification_seen %} sidebar-notification-dot--seen{% endif %}" aria-label="{{ inbox_unread_count }} inbox sin leer">{{ inbox_unread_count }}</span>
+                                                {% endif %}
                                             </span>
                                         </a>
 
@@ -66,6 +72,12 @@
                                         <span class="sidebar-left">
                                             <i data-lucide="{{ group.icon }}" class="sidebar-main-icon sidebar-main-icon--{{ group.nav_root }}{% if section.key == 'workspace' %} sidebar-main-icon--library{% endif %}"></i>
                                             <span class="sidebar-label">{{ group.label }}</span>
+                                            {% if group.key == "proposal" and proposal_unread_count %}
+                                                <span class="sidebar-notification-dot{% if proposal_notification_seen %} sidebar-notification-dot--seen{% endif %}" aria-label="{{ proposal_unread_count }} propuesta(s) sin leer">{{ proposal_unread_count }}</span>
+                                            {% endif %}
+                                            {% if group.key == "inbox" and inbox_unread_count %}
+                                                <span class="sidebar-notification-dot{% if inbox_notification_seen %} sidebar-notification-dot--seen{% endif %}" aria-label="{{ inbox_unread_count }} inbox sin leer">{{ inbox_unread_count }}</span>
+                                            {% endif %}
                                         </span>
                                     </a>
                                 {% endif %}
@@ -75,6 +87,12 @@
                                         <span class="sidebar-left">
                                             <i data-lucide="{{ group.icon }}" class="sidebar-main-icon sidebar-main-icon--{{ group.nav_root|default:group.key }}{% if section.key == 'workspace' %} sidebar-main-icon--library{% endif %}"></i>
                                             <span class="sidebar-label">{{ group.label }}</span>
+                                            {% if group.key == "proposal" and proposal_unread_count %}
+                                                <span class="sidebar-notification-dot{% if proposal_notification_seen %} sidebar-notification-dot--seen{% endif %}" aria-label="{{ proposal_unread_count }} propuesta(s) sin leer">{{ proposal_unread_count }}</span>
+                                            {% endif %}
+                                            {% if group.key == "inbox" and inbox_unread_count %}
+                                                <span class="sidebar-notification-dot{% if inbox_notification_seen %} sidebar-notification-dot--seen{% endif %}" aria-label="{{ inbox_unread_count }} inbox sin leer">{{ inbox_unread_count }}</span>
+                                            {% endif %}
                                         </span>
                                     </button>
 
