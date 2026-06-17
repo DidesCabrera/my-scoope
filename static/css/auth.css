@@ -2,210 +2,311 @@
    BASE
    ========================= */
 
-   *,
-   *::before,
-   *::after{
-   box-sizing:border-box;
-   }
-   
-   body{
-   margin:0;
-   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-   }
-   
-   
-   /* =========================
-      AUTH LAYOUT
-      ========================= */
-   
-   .auth-body{
-   background:#0f0f10;
-   display:flex;
-   align-items:center;
-   justify-content:center;
-   min-height:100vh;
-   padding:24px;
-   color:#fff;
-   }
-   
-   
-   /* =========================
-      CARD
-      ========================= */
-   
-   .auth-card{
-   width:100%;
-   max-width:420px;
-   background:#1a1a1b;
-   padding:40px;
-   border-radius:16px;
-   border:1px solid #2a2a2a;
-   box-shadow:0 20px 40px rgba(0,0,0,0.6);
-   transition:box-shadow 0.2s;
-   }
-   
-   .auth-card:hover{
-   box-shadow:0 25px 50px rgba(0,0,0,0.8);
-   }
-   
-   
-   /* =========================
-      BRAND
-      ========================= */
-   
-   .auth-logo{
-   display:block;
-   margin:0 auto 18px auto;
-   height:36px;
-   }
-   
-   .auth-title{
-   margin:0 0 26px 0;
-   font-size:22px;
-   font-weight:600;
-   text-align:center;
-   }
-   
-   
-   /* =========================
-      GOOGLE BUTTON
-      ========================= */
-   
-   .btn-google{
-   display:block;
-   width:100%;
-   text-align:center;
-   padding:12px;
-   border-radius:10px;
-   border:1px solid #2a2a2a;
-   background:#111;
-   text-decoration:none;
-   color:#fff;
-   font-weight:500;
-   margin-bottom:22px;
-   transition:background 0.15s;
-   }
-   
-   .btn-google:hover{
-   background:#1f1f1f;
-   }
-   
-   
-   /* =========================
-      DIVIDER
-      ========================= */
-   
-   .divider{
-   display:flex;
-   align-items:center;
-   margin:20px 0;
-   color:#777;
-   font-size:13px;
-   }
-   
-   .divider::before,
-   .divider::after{
-   content:"";
-   flex:1;
-   border-bottom:1px solid #2a2a2a;
-   }
-   
-   .divider span{
-   padding:0 12px;
-   }
-   
-   
-   /* =========================
-      FORM
-      ========================= */
-   
-   .auth-form{
-   display:flex;
-   flex-direction:column;
-   gap:14px;
-   }
-   
-   .auth-form input{
-   width:100%;
-   padding:12px 14px;
-   border-radius:10px;
-   border:1px solid #2a2a2a;
-   background:#111;
-   color:#fff;
-   font-size:14px;
-   }
-   
-   .auth-form input::placeholder{
-   color:#777;
-   }
-   
-   .auth-form input:focus{
-   outline:none;
-   border-color:#444;
-   }
-   
-   .auth-form button{
-   width:100%;
-   padding:12px;
-   border:none;
-   border-radius:10px;
-   background:#fff;
-   color:#000;
-   font-weight:600;
-   cursor:pointer;
-   transition:opacity 0.15s;
-   }
-   
-   .auth-form button:hover{
-   opacity:0.9;
-   }
-   
-   
-   /* =========================
-      LINKS
-      ========================= */
-   
-   .auth-links{
-   text-align:center;
-   font-size:13px;
-   margin-top:16px;
-   color:#999;
-   }
-   
-   .auth-links a{
-   color:#fff;
-   text-decoration:none;
-   }
-   
-   .auth-links a:hover{
-   text-decoration:underline;
-   }
-   
-   
-   /* =========================
-      MOBILE
-      ========================= */
-   
-   @media (max-width:480px){
-   
-   .auth-body{
-   padding:18px;
-   }
-   
-   .auth-card{
-   padding:28px 22px;
-   border-radius:14px;
-   max-width: 1000px;
-   }
+*,
+*::before,
+*::after{
+box-sizing:border-box;
+}
 
-   
-   
-   .auth-title{
-   font-size:20px;
-   }
-   
-   .auth-form input{
-   padding:12px;
-   }
-   
-   }
+:root{
+--auth-surface-app:#000000;
+--auth-surface-card:#121212;
+--auth-surface-card-muted:#202020;
+--auth-text-main:#f5f5f5;
+--auth-text-muted:#b5b5b5;
+--auth-text-soft:#8f8f8f;
+--auth-border-soft:#2424240e;
+--auth-border-default:#343434;
+--auth-input-bg:#181818;
+--auth-input-border:#343434;
+--auth-input-text:#f5f5f5;
+--auth-input-placeholder:#737373;
+--auth-focus:#8ab4ff;
+}
+
+html,
+body{
+height:100%;
+min-height:100%;
+margin:0;
+overflow:hidden;
+background:var(--auth-surface-app);
+font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+
+body{
+position:fixed;
+inset:0;
+width:100%;
+}
+
+/* =========================
+   AUTH LAYOUT
+   ========================= */
+
+.auth-body{
+background:var(--auth-surface-app);
+display:flex;
+align-items:center;
+justify-content:center;
+height:100dvh;
+min-height:100dvh;
+max-height:100dvh;
+padding:24px;
+color:var(--auth-text-main);
+overflow:hidden;
+}
+
+/* =========================
+   CARD
+   ========================= */
+
+.auth-card{
+width:100%;
+max-width:420px;
+max-height:calc(100dvh - 48px);
+background:var(--auth-surface-card);
+padding:clamp(22px,4.2vh,40px);
+border-radius:22px;
+border:0;
+box-shadow:none;
+overflow:hidden;
+}
+
+/* =========================
+   BRAND
+   ========================= */
+
+.auth-logo{
+display:block;
+margin:0 auto clamp(12px,2vh,18px) auto;
+height:clamp(28px,4.8vh,40px);
+max-width:78%;
+object-fit:contain;
+}
+
+.auth-title{
+margin:0 0 clamp(16px,3vh,26px) 0;
+font-size:clamp(19px,3vh,22px);
+font-weight:600;
+line-height:1.15;
+text-align:center;
+}
+
+/* =========================
+   GOOGLE BUTTON
+   ========================= */
+
+.btn-google{
+display:flex;
+width:100%;
+align-items:center;
+justify-content:center;
+gap:10px;
+text-align:center;
+padding:12px;
+border-radius:14px;
+border:0;
+background:var(--auth-surface-card-muted);
+text-decoration:none;
+color:var(--auth-text-main);
+font-size:16px;
+font-weight:600;
+line-height:1.15;
+margin-bottom:clamp(14px,2.4vh,22px);
+transition:background 0.15s;
+}
+
+.btn-google:hover{
+background:#262626;
+}
+
+.btn-google__icon{
+width:26px;
+height:26px;
+flex:0 0 auto;
+}
+
+/* =========================
+   DIVIDER
+   ========================= */
+
+.divider{
+display:flex;
+align-items:center;
+margin:clamp(14px,2.3vh,20px) 0;
+color:var(--auth-text-soft);
+font-size:13px;
+}
+
+.divider::before,
+.divider::after{
+content:"";
+flex:1;
+border-bottom:1px solid var(--auth-border-default);
+}
+
+.divider span{
+padding:0 12px;
+}
+
+/* =========================
+   FORM
+   ========================= */
+
+.auth-form{
+display:flex;
+flex-direction:column;
+gap:clamp(10px,1.8vh,14px);
+}
+
+.auth-field{
+display:flex;
+flex-direction:column;
+gap:6px;
+}
+
+.auth-form input{
+width:100%;
+padding:12px 14px;
+border-radius:14px;
+border:1px solid var(--auth-input-border);
+background:var(--auth-input-bg);
+color:var(--auth-input-text);
+font-size:15px;
+}
+
+.auth-form input::placeholder{
+color:var(--auth-input-placeholder);
+}
+
+.auth-form input:focus{
+outline:none;
+border-color:var(--auth-focus);
+box-shadow:0 0 0 3px rgba(138,180,255,0.14);
+}
+
+.auth-form button{
+width:100%;
+padding:12px;
+border:none;
+border-radius:14px;
+background:var(--auth-text-main);
+color:#000;
+font-size: 15px;
+font-weight:700;
+cursor:pointer;
+transition:opacity 0.15s;
+}
+
+.auth-form button:hover{
+opacity:0.92;
+}
+
+/* =========================
+   ERRORS
+   ========================= */
+
+.auth-errors,
+.auth-field-errors{
+margin:0;
+padding:0;
+list-style:none;
+}
+
+.auth-errors{
+background:rgba(255,67,67,0.10);
+color:#ffb4b4;
+border-radius:14px;
+padding:10px 12px;
+font-size:13px;
+line-height:1.35;
+}
+
+.auth-field-errors{
+color:#ffb4b4;
+font-size:12px;
+line-height:1.35;
+}
+
+.auth-errors li + li,
+.auth-field-errors li + li{
+margin-top:4px;
+}
+
+/* =========================
+   LINKS
+   ========================= */
+
+.auth-links{
+text-align:center;
+font-size:14px;
+line-height:1.35;
+margin:clamp(11px,1.9vh,16px) 0 0 0;
+color:var(--auth-text-soft);
+}
+
+.auth-links a{
+color:var(--auth-text-main);
+text-decoration:none;
+font-weight:600;
+}
+
+.auth-links a:hover{
+text-decoration:underline;
+}
+
+/* =========================
+   MOBILE
+   ========================= */
+
+@media (max-width:480px){
+
+.auth-body{
+padding:16px;
+}
+
+.auth-card{
+max-width:100%;
+max-height:calc(100dvh - 32px);
+padding:clamp(18px,3.2vh,28px) 22px;
+border-radius:20px;
+}
+
+.auth-title{
+font-size:20px;
+}
+
+.auth-form input,
+.auth-form button,
+.btn-google{
+padding:11px 12px;
+}
+
+}
+
+@media (max-height:680px){
+
+.auth-card{
+padding-top:18px;
+padding-bottom:18px;
+}
+
+.auth-logo{
+height:28px;
+margin-bottom:10px;
+}
+
+.auth-title{
+margin-bottom:14px;
+}
+
+.divider{
+margin:12px 0;
+}
+
+.auth-links{
+margin-top:10px;
+}
+
+}
