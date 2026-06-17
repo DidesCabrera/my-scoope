@@ -1495,6 +1495,7 @@ class DailyPlanShare(models.Model):
     
     dismissed = models.BooleanField(default=False)      # inbox
     removed = models.BooleanField(default=False)        # librería
+    is_favorite = models.BooleanField(default=False)    # inbox
 
     class Meta:
         unique_together = ("recipient_email", "dailyplan")
@@ -1532,6 +1533,7 @@ class MealShare(models.Model):
     
     dismissed = models.BooleanField(default=False)      # inbox
     removed = models.BooleanField(default=False)        # librería
+    is_favorite = models.BooleanField(default=False)    # inbox
 
     class Meta:
         unique_together = ("recipient_email", "meal")

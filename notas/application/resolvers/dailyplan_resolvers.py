@@ -160,10 +160,10 @@ DAILYPLAN_ENTITY_ACTION_DEFINITIONS = {
 
     "share": {
         "label": "Compartir",
-        "method": "post",
+        "method": "get",
         "icon": "send",
         "order": 90,
-        "desktop_position": "menu",
+        "desktop_position": "inline",
         "mobile_position": "menu",
         "get_url": lambda dp, context=None: reverse(
             "dailyplan_share", args=[dp.id]
@@ -307,8 +307,8 @@ DAILYPLAN_ENTITY_ACTIONS_BY_VIEWMODE = {
     DAILYPLAN_VIEWMODE_PERSONAL_LIST: [
         "list_fork",
         "list_remove",
+        "share",
         "detail",
-        # "share",
     ],
 
     DAILYPLAN_VIEWMODE_PERSONAL_DETAIL: [
@@ -316,6 +316,7 @@ DAILYPLAN_ENTITY_ACTIONS_BY_VIEWMODE = {
         "rename",
         "configure",
         "fork",
+        "share",
         "remove",
     ],
 

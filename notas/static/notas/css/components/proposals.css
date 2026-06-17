@@ -958,3 +958,104 @@ html[data-theme="dark"] .proposal-review-action--reject {
     margin: 20px -4px 0;
   }
 }
+
+/* =========================================================
+   Inbox / sharing
+   ========================================================= */
+
+.label-entity--inbox,
+.label-entity.header.label-entity--inbox {
+  background: var(--entity-inbox, var(--entity-home));
+}
+
+.sidebar-main-icon--inbox,
+.list-page-header__icon--inbox,
+.picker-summary-card__icon.inbox,
+.home-section-header-icon.inbox {
+  background: var(--entity-inbox, var(--entity-home));
+  color: #ffffff;
+  stroke: #ffffff;
+}
+
+.inbox-list-page,
+.inbox-detail-page {
+  color: var(--text-main);
+}
+
+.inbox-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  margin: 0 0 2px;
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: var(--surface-card-muted);
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+}
+
+.proposal-list-card__icons-title .home-section-header-icon.inbox,
+.proposal-review-hero__icons-title .home-section-header-icon.inbox {
+  width: 22px;
+  height: 22px;
+  padding: 4px;
+  border-radius: 6px;
+  background: var(--entity-inbox, var(--entity-home));
+  color: #ffffff;
+  stroke: #ffffff;
+}
+
+.inbox-list-card__summary-block {
+  margin-top: 2px;
+}
+
+.inbox-status-badge--favorite {
+  border-color: color-mix(in srgb, var(--interactive-primary) 28%, transparent);
+  background: color-mix(in srgb, var(--interactive-primary) 10%, var(--surface-card));
+  color: var(--interactive-primary);
+}
+
+.inbox-attachment-link {
+  text-decoration: none;
+}
+
+.inbox-attachment-link:hover .proposal-attachment__name {
+  color: var(--interactive-primary);
+}
+
+.inbox-review-shell {
+  gap: 18px;
+}
+
+.inbox-review-summary-block {
+  margin-top: 16px;
+}
+
+.inbox-review-attachments-list {
+  align-items: center;
+}
+
+.inbox-attachment-actions .proposal-review-actions-buttons form {
+  display: inline-flex;
+}
+
+.inbox-empty-card {
+  min-height: 120px;
+}
+
+.inbox-list-page .overflow-action.is-active,
+.inbox-detail-page .primary-action.is-active {
+  color: var(--interactive-primary);
+}
+
+@media (max-width: 760px) {
+  .inbox-attachment-actions .proposal-review-actions-buttons,
+  .inbox-attachment-actions .proposal-review-actions-buttons form,
+  .inbox-attachment-actions .proposal-review-action {
+    width: 100%;
+  }
+}

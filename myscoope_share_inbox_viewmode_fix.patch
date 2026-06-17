@@ -1,0 +1,14 @@
+--- a/notas/presentation/config/viewmodel_config.py
++++ b/notas/presentation/config/viewmodel_config.py
+@@ -84,4 +84,9 @@
+ 
+ # PROPOSAL ---------------------------------------------
+ PROPOSAL_VIEWMODE_LIST = vm("proposal", "list", "personal")
+-PROPOSAL_VIEWMODE_DETAIL = vm("proposal", "detail", "personal")
+\ No newline at end of file
++PROPOSAL_VIEWMODE_DETAIL = vm("proposal", "detail", "personal")
++
++
++# INBOX / SHARING ---------------------------------------------
++INBOX_VIEWMODE_LIST = vm("inbox", "list", "personal")
++INBOX_VIEWMODE_DETAIL = vm("inbox", "detail", "personal")

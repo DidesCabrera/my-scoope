@@ -23,6 +23,7 @@ from notas.interface.forms.forms import DailyPlanShareForm
 from django.core.mail import send_mail
 from django.conf import settings
 from django.urls import reverse
+from notas.application.services.notifications.share_emails import build_share_invitation_email
 from django.utils.http import url_has_allowed_host_and_scheme
 
 from notas.presentation.viewmodels.base_vm import BaseVM
@@ -96,13 +97,16 @@ def dailyplan_share(request, pk):
 
         share = result.share
 
-        link = request.build_absolute_uri(
-            reverse("dailyplan_share_accept", args=[share.token])
+        subject, message = build_share_invitation_email(
+            request=request,
+            share=share,
+            kind="dailyplan",
+            item_name=dailyplan.name,
         )
 
         send_mail(
-            subject=f"{request.user.username} compartió un DailyPlan contigo",
-            message=f"Te compartieron este plan:\n\n{link}",
+            subject=subject,
+            message=message,
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[email],
         )

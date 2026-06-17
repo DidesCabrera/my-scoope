@@ -145,6 +145,15 @@ APP_NAVIGATION = (
                 scope="personal",
             ),
             NavGroupSpec(
+                key="inbox",
+                label="Compartir / Inbox",
+                icon="inbox",
+                page_icon="inbox",
+                url_name="inbox_list",
+                nav_root="inbox",
+                scope="personal",
+            ),
+            NavGroupSpec(
                 key="create",
                 label="Crear",
                 icon="circle-fading-plus",

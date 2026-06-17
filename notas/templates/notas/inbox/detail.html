@@ -1,0 +1,82 @@
+{% extends "notas/base.html" %}
+{% block title %}Inbox{% endblock %}
+{% block content %}
+
+<div class="page page--detail inbox-detail-page proposal-detail-page">
+  <section class="proposal-review-shell inbox-review-shell">
+    <header class="proposal-review-hero inbox-review-hero">
+      <div class="proposal-review-hero__main">
+        <div class="proposal-review-hero__copy">
+          <h2 class="proposal-review-title">
+            {{ vm.content.inbox.title }}
+          </h2>
+
+          <p class="proposal-received-date proposal-review-received-date">
+            {{ vm.content.inbox.received_at_label }} · enviado por {{ vm.content.inbox.sender }}
+          </p>
+
+          <div class="proposal-review-pills">
+            <span class="proposal-status-badge inbox-status-badge{% if vm.content.inbox.is_favorite %} inbox-status-badge--favorite{% endif %}">
+              {% if vm.content.inbox.is_favorite %}Favorito{% else %}Recibido{% endif %}
+            </span>
+
+            <span class="proposal-type-badge">{{ vm.content.inbox.kind_label }}</span>
+          </div>
+        </div>
+
+        <div class="proposal-review-hero__icons-title" aria-hidden="true">
+          <i data-lucide="inbox" class="home-section-header-icon inbox"></i>
+        </div>
+      </div>
+
+      <div class="proposal-review-summary-block inbox-review-summary-block">
+        <span class="proposal-review-summary-label">Mensaje</span>
+        <p class="proposal-review-summary">
+          {{ vm.content.inbox.summary }}
+        </p>
+      </div>
+    </header>
+
+    <section class="proposal-review-attachments-section inbox-attachments-section" aria-label="Adjuntos del inbox">
+      <div class="proposal-review-attachments-heading">
+        <i data-lucide="paperclip" class="proposal-review-attachments-heading__icon"></i>
+        <h3>Adjuntos</h3>
+      </div>
+
+      <div class="proposal-review-attachments-list inbox-review-attachments-list">
+        <a href="{{ vm.content.inbox.attachment.open_url }}" class="proposal-attachment proposal-attachment--{{ vm.content.inbox.attachment.kind }} proposal-review-attachment inbox-attachment-link">
+          <span class="proposal-attachment__icon" aria-hidden="true">
+            <i data-lucide="{{ vm.content.inbox.attachment.icon }}" class="proposal-attachment__svg"></i>
+          </span>
+          <span class="proposal-attachment__copy">
+            <strong class="proposal-attachment__name">{{ vm.content.inbox.attachment.name }}</strong>
+          </span>
+        </a>
+      </div>
+    </section>
+
+    <section class="proposal-review-actions inbox-attachment-actions">
+      <div class="proposal-review-actions-copy">
+        <p class="proposal-review-eyebrow">Adjunto recibido</p>
+        <p class="proposal-review-actions-text">
+          Puedes abrir el detalle del adjunto o guardar una copia independiente en Mi librería.
+        </p>
+      </div>
+
+      <div class="proposal-review-actions-buttons">
+        <a href="{{ vm.content.inbox.attachment.open_url }}" class="proposal-review-action proposal-review-action--cancel">
+          Ver detalle
+        </a>
+
+        <form method="post" action="{{ vm.content.inbox.attachment.save_url }}">
+          {% csrf_token %}
+          <button type="submit" class="proposal-review-action proposal-review-action--apply">
+            Guardar en Mi librería
+          </button>
+        </form>
+      </div>
+    </section>
+  </section>
+</div>
+
+{% endblock %}

@@ -1,0 +1,41 @@
+<div class="data-grid data-grid--list-panel data-grid--list-panel-delete js-list-delete-panel">
+    <h3 class="data-grid-list-panel-title">Eliminar Inbox</h3>
+
+    {% for item in inbox_items %}
+        <div
+            class="data-grid-row data-grid-row--list-panel-delete js-list-delete-row"
+            data-item-id="{{ item.id }}"
+        >
+            <div class="data-grid-cell data-grid-cell--select">
+                <label class="list-panel-select" aria-label="Seleccionar inbox">
+                    <input
+                        type="checkbox"
+                        class="js-list-delete-checkbox"
+                        value="{{ item.id }}"
+                    >
+                    <span class="list-panel-select__control"></span>
+                </label>
+            </div>
+
+            <div class="data-grid-cell data-grid-cell--name">
+                <div class="list-panel-title-row">
+                    <i data-lucide="{{ item.icon }}" class="picker-summary-card__icon inbox list-panel-title-icon"></i>
+                    <div class="truncate">{{ item.title }}</div>
+                </div>
+            </div>
+
+            <div class="data-grid-cell data-grid-cell--action">
+                <form method="post" action="{{ item.dismiss_url }}">
+                    {% csrf_token %}
+                    <button type="submit" aria-label="Eliminar inbox">
+                        <i data-lucide="trash" class="table-icon"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    {% empty %}
+        <div class="data-grid-empty">
+            No tienes inbox para eliminar.
+        </div>
+    {% endfor %}
+</div>

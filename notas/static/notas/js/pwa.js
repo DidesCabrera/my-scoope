@@ -81,6 +81,7 @@
       "/app/meals/draft",
       "/app/foods",
       "/app/proposals",
+      "/app/inbox",
       "/app/ai-tools",
     ]);
 

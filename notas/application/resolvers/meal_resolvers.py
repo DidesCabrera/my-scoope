@@ -238,10 +238,10 @@ MEAL_ENTITY_ACTION_DEFINITIONS = {
 
     "share": {
         "label": "Compartir",
-        "method": "post",
+        "method": "get",
         "icon": "send",
         "order": 90,
-        "desktop_position": "menu",
+        "desktop_position": "inline",
         "mobile_position": "menu",
         "get_url": lambda meal, context=None: reverse(
             "meal_share", args=[meal.id]
@@ -270,8 +270,8 @@ MEAL_ENTITY_ACTIONS_BY_VIEWMODE = {
     MEAL_VIEWMODE_PERSONAL_LIST: [
         "list_fork",
         "list_remove",
+        "share",
         "detail",
-        # "share",
     ],
 
     MEAL_VIEWMODE_PERSONAL_DETAIL: [
@@ -280,6 +280,7 @@ MEAL_ENTITY_ACTIONS_BY_VIEWMODE = {
         "configure",
         "fork",
         "add_to_dailyplan",
+        "share",
         "remove",
     ],
 

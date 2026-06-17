@@ -20,6 +20,7 @@ from notas.interface.forms.forms import MealShareForm
 from django.core.mail import send_mail
 from django.conf import settings
 from django.urls import reverse
+from notas.application.services.notifications.share_emails import build_share_invitation_email
 
 from notas.presentation.viewmodels.base_vm import BaseVM
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
@@ -100,13 +101,16 @@ def meal_share(request, pk):
 
         share = result.share
 
-        link = request.build_absolute_uri(
-            reverse("meal_share_accept", args=[share.token])
+        subject, message = build_share_invitation_email(
+            request=request,
+            share=share,
+            kind="meal",
+            item_name=meal.name,
         )
 
         send_mail(
-            subject=f"{request.user.username} compartió una Meal contigo",
-            message=f"Te compartieron este plan:\n\n{link}",
+            subject=subject,
+            message=message,
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[email],
         )
@@ -132,7 +136,7 @@ def meal_share_accept(request, token):
         user=request.user,
     )
 
-    return redirect("meal_shared_list")
+    return redirect("inbox_list")
 
 
 @login_required

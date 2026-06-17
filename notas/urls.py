@@ -104,7 +104,14 @@ from notas.interface.views.authors import (
 )
 
 from notas.interface.views.weight import register_weight
-from notas.interface.views.inbox import inbox_list
+from notas.interface.views.inbox import (
+    inbox_bulk_delete,
+    inbox_delete,
+    inbox_detail,
+    inbox_list,
+    inbox_save_attachment,
+    inbox_toggle_favorite,
+)
 from notas.interface.views.project import project_view
 from notas.interface.views.nutrition import elemental_context, elemental_nutrition, elemental_platform
 
@@ -157,6 +164,11 @@ urlpatterns = [
     path("service-worker.js", pwa_service_worker, name="pwa_service_worker"),
 
     path("inbox/", inbox_list, name="inbox_list"),
+    path("inbox/bulk-delete/", inbox_bulk_delete, name="inbox_bulk_delete"),
+    path("inbox/<str:kind>/<int:share_id>/", inbox_detail, name="inbox_detail"),
+    path("inbox/<str:kind>/<int:share_id>/delete/", inbox_delete, name="inbox_delete"),
+    path("inbox/<str:kind>/<int:share_id>/favorite/", inbox_toggle_favorite, name="inbox_toggle_favorite"),
+    path("inbox/<str:kind>/<int:share_id>/save/", inbox_save_attachment, name="inbox_save_attachment"),
     path("project/", project_view, name="project_view"),
 
     path("elemental/context/", elemental_context, name="elemental_context"),

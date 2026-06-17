@@ -1,0 +1,1255 @@
+diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' proyecto_django_export_ai/notas/application/services/notifications/share_emails.py proyecto_django_export_ai_mod/notas/application/services/notifications/share_emails.py
+--- proyecto_django_export_ai/notas/application/services/notifications/share_emails.py	1970-01-01 00:00:00.000000000 +0000
++++ proyecto_django_export_ai_mod/notas/application/services/notifications/share_emails.py	2026-06-17 16:42:38.544082270 +0000
+@@ -0,0 +1,45 @@
++from urllib.parse import urlencode
++
++from django.urls import reverse
++
++
++SHARE_KIND_LABELS = {
++    "dailyplan": "plan diario",
++    "meal": "comida",
++}
++
++
++def build_share_invitation_email(*, request, share, kind: str, item_name: str):
++    sender_name = share.sender.username
++    kind_label = SHARE_KIND_LABELS.get(kind, "elemento")
++    accept_url_name = (
++        "dailyplan_share_accept"
++        if kind == "dailyplan"
++        else "meal_share_accept"
++    )
++
++    accept_path = reverse(accept_url_name, args=[share.token])
++    accept_url = request.build_absolute_uri(accept_path)
++    signup_url = request.build_absolute_uri(
++        reverse("account_signup") + "?" + urlencode({"next": accept_path})
++    )
++    login_url = request.build_absolute_uri(
++        reverse("account_login") + "?" + urlencode({"next": accept_path})
++    )
++
++    subject = f"{sender_name} compartió un {kind_label} contigo en My Scoope"
++    message = (
++        f"Hola,\n\n"
++        f"{sender_name} compartió este {kind_label} contigo en My Scoope:\n"
++        f"{item_name}\n\n"
++        f"Para recibirlo en tu Inbox, abre este enlace:\n"
++        f"{accept_url}\n\n"
++        f"Si todavía no tienes cuenta, puedes crearla aquí y volverás al enlace compartido:\n"
++        f"{signup_url}\n\n"
++        f"Si ya tienes cuenta, puedes iniciar sesión aquí:\n"
++        f"{login_url}\n\n"
++        f"Una vez aceptado, lo verás en Compartir / Inbox y podrás guardarlo en Mi librería.\n\n"
++        f"My Scoope"
++    )
++
++    return subject, message
+diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' proyecto_django_export_ai/notas/application/use_cases/inbox_pages.py proyecto_django_export_ai_mod/notas/application/use_cases/inbox_pages.py
+--- proyecto_django_export_ai/notas/application/use_cases/inbox_pages.py	2026-04-05 03:51:08.000000000 +0000
++++ proyecto_django_export_ai_mod/notas/application/use_cases/inbox_pages.py	2026-06-17 16:41:19.557840421 +0000
+@@ -1,86 +1,245 @@
+ from dataclasses import dataclass
+ from datetime import datetime
++
+ from django.urls import reverse
++from django.utils import timezone
++
+ from notas.domain.models import DailyPlanShare, MealShare
+ 
+-# ----------------------------
+-# CONTRATO
+-# ----------------------------
+ 
+-@dataclass
++@dataclass(frozen=True)
++class InboxAttachment:
++    kind: str
++    label: str
++    name: str
++    icon: str
++    open_url: str
++    save_url: str
++
++
++@dataclass(frozen=True)
+ class InboxItem:
+-    kind: str # "dailyplan" | "meal"
++    id: str
++    share_id: int
++    kind: str
++    kind_label: str
++    icon: str
+     created_at: datetime
++    received_at_label: str
+     sender: str
+     title: str
+-    open_url: str
++    summary: str
++    is_favorite: bool
++    detail_url: str
+     dismiss_url: str
++    favorite_url: str
++    attachment: InboxAttachment
++    actions: list[dict]
++
++
++def _format_received_at(value) -> str:
++    if value is None:
++        return "Sin fecha"
++
++    received_at = timezone.localtime(value) if timezone.is_aware(value) else value
++    return received_at.strftime("%d-%m-%Y")
++
++
++def _favorite_label(is_favorite: bool) -> str:
++    return "Quitar favorito" if is_favorite else "Marcar como favorito"
++
++
++def _build_actions(*, item_id: str, detail_url: str, dismiss_url: str, favorite_url: str, is_favorite: bool):
++    return [
++        {
++            "key": "detail",
++            "label": "Ver inbox",
++            "icon": "arrow-right",
++            "url": detail_url,
++            "method": "get",
++            "desktop_position": "inline",
++            "mobile_position": "inline",
++        },
++        {
++            "key": "favorite",
++            "label": _favorite_label(is_favorite),
++            "icon": "star",
++            "url": favorite_url,
++            "method": "post",
++            "desktop_position": "menu",
++            "mobile_position": "menu",
++            "extra_class": "is-active" if is_favorite else "",
++        },
++        {
++            "key": "delete",
++            "label": "Eliminar inbox",
++            "icon": "trash-2",
++            "url": dismiss_url,
++            "method": "post",
++            "desktop_position": "menu",
++            "mobile_position": "menu",
++        },
++    ]
++
++
++def _build_dailyplan_item(share: DailyPlanShare) -> InboxItem:
++    detail_url = reverse("inbox_detail", args=["dailyplan", share.id])
++    dismiss_url = reverse("inbox_delete", args=["dailyplan", share.id])
++    favorite_url = reverse("inbox_toggle_favorite", args=["dailyplan", share.id])
++    attachment = InboxAttachment(
++        kind="dailyplan",
++        label="Plan diario compartido",
++        name=share.dailyplan.name,
++        icon="clipboard-list",
++        open_url=reverse("dailyplan_shared_detail", args=[share.dailyplan_id]),
++        save_url=reverse("inbox_save_attachment", args=["dailyplan", share.id]),
++    )
++
++    return InboxItem(
++        id=f"dailyplan-{share.id}",
++        share_id=share.id,
++        kind="dailyplan",
++        kind_label="Plan diario",
++        icon="clipboard-list",
++        created_at=share.created_at,
++        received_at_label=_format_received_at(share.created_at),
++        sender=share.sender.username,
++        title=share.dailyplan.name,
++        summary=f"{share.sender.username} compartió un plan diario contigo.",
++        is_favorite=share.is_favorite,
++        detail_url=detail_url,
++        dismiss_url=dismiss_url,
++        favorite_url=favorite_url,
++        attachment=attachment,
++        actions=_build_actions(
++            item_id=f"dailyplan-{share.id}",
++            detail_url=detail_url,
++            dismiss_url=dismiss_url,
++            favorite_url=favorite_url,
++            is_favorite=share.is_favorite,
++        ),
++    )
++
++
++def _build_meal_item(share: MealShare) -> InboxItem:
++    detail_url = reverse("inbox_detail", args=["meal", share.id])
++    dismiss_url = reverse("inbox_delete", args=["meal", share.id])
++    favorite_url = reverse("inbox_toggle_favorite", args=["meal", share.id])
++    attachment = InboxAttachment(
++        kind="meal",
++        label="Comida compartida",
++        name=share.meal.name,
++        icon="utensils",
++        open_url=reverse("meal_share_detail", args=[share.meal_id]),
++        save_url=reverse("inbox_save_attachment", args=["meal", share.id]),
++    )
++
++    return InboxItem(
++        id=f"meal-{share.id}",
++        share_id=share.id,
++        kind="meal",
++        kind_label="Comida",
++        icon="utensils",
++        created_at=share.created_at,
++        received_at_label=_format_received_at(share.created_at),
++        sender=share.sender.username,
++        title=share.meal.name,
++        summary=f"{share.sender.username} compartió una comida contigo.",
++        is_favorite=share.is_favorite,
++        detail_url=detail_url,
++        dismiss_url=dismiss_url,
++        favorite_url=favorite_url,
++        attachment=attachment,
++        actions=_build_actions(
++            item_id=f"meal-{share.id}",
++            detail_url=detail_url,
++            dismiss_url=dismiss_url,
++            favorite_url=favorite_url,
++            is_favorite=share.is_favorite,
++        ),
++    )
++
++
++def _dailyplan_share_queryset(user):
++    return (
++        DailyPlanShare.objects
++        .filter(
++            accepted_by=user,
++            dismissed=False,
++            removed=False,
++        )
++        .select_related("dailyplan", "sender")
++    )
++
++
++def _meal_share_queryset(user):
++    return (
++        MealShare.objects
++        .filter(
++            accepted_by=user,
++            dismissed=False,
++            removed=False,
++        )
++        .select_related("meal", "sender")
++    )
+ 
+ 
+-# ----------------------------
+-# BUILDER
+-# ----------------------------
+-
+-
+-def build_inbox_items(user):
+-
+-    items = []
+-
+-    # ----------------------------
+-    # DailyPlan Shares
+-    # ----------------------------
+-    shares_dp = DailyPlanShare.objects.filter(
+-        accepted_by=user,
+-        dismissed=False,
+-    ).select_related("dailyplan", "sender")
+-
+-    for share in shares_dp:
+-        items.append(
+-            InboxItem(
+-                kind="dailyplan",
+-                created_at=share.created_at,
+-                sender=share.sender.username,
+-                title=share.dailyplan.name,
+-                open_url=reverse(
+-                    "dailyplan_shared_detail",
+-                    args=[share.dailyplan.id]
+-                ),
+-                dismiss_url=reverse(
+-                    "dailyplan_share_dismiss",
+-                    args=[share.id]
+-                )
+-            )
+-        )
+-
+-    # ----------------------------
+-    # Meal Shares
+-    # ----------------------------
+-    shares_meal = MealShare.objects.filter(
+-        accepted_by=user,
+-        dismissed=False,
+-    ).select_related("meal", "sender")
+-
+-    for share in shares_meal:
+-        items.append(
+-            InboxItem(
+-                kind="meal",
+-                created_at=share.created_at,
+-                sender=share.sender.username,
+-                title=share.meal.name,
+-                open_url=reverse(
+-                    "meal_share_detail",
+-                    args=[share.meal.id]
+-                ),
+-                dismiss_url=reverse(
+-                    "meal_share_dismiss",
+-                    args=[share.id]
+-                )
+-            )
+-        )
+-
+-    # ----------------------------
+-    # Orden global por fecha
+-    # ----------------------------
+-    items.sort(key=lambda x: x.created_at, reverse=True)
++def build_inbox_items(user, *, favorites_only: bool = False):
++    dailyplan_shares = _dailyplan_share_queryset(user)
++    meal_shares = _meal_share_queryset(user)
++
++    if favorites_only:
++        dailyplan_shares = dailyplan_shares.filter(is_favorite=True)
++        meal_shares = meal_shares.filter(is_favorite=True)
++
++    items = [
++        *[
++            _build_dailyplan_item(share)
++            for share in dailyplan_shares
++        ],
++        *[
++            _build_meal_item(share)
++            for share in meal_shares
++        ],
++    ]
+ 
++    items.sort(key=lambda item: item.created_at, reverse=True)
+     return items
++
++
++def get_inbox_item_or_404(user, *, kind: str, share_id: int):
++    from django.shortcuts import get_object_or_404
++
++    if kind == "dailyplan":
++        share = get_object_or_404(
++            _dailyplan_share_queryset(user),
++            id=share_id,
++        )
++        return _build_dailyplan_item(share)
++
++    if kind == "meal":
++        share = get_object_or_404(
++            _meal_share_queryset(user),
++            id=share_id,
++        )
++        return _build_meal_item(share)
++
++    raise ValueError("unsupported_inbox_kind")
++
++
++def get_inbox_share_or_404(user, *, kind: str, share_id: int):
++    from django.shortcuts import get_object_or_404
++
++    if kind == "dailyplan":
++        return get_object_or_404(
++            _dailyplan_share_queryset(user),
++            id=share_id,
++        )
++
++    if kind == "meal":
++        return get_object_or_404(
++            _meal_share_queryset(user),
++            id=share_id,
++        )
++
++    raise ValueError("unsupported_inbox_kind")
+diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' proyecto_django_export_ai/notas/domain/models.py proyecto_django_export_ai_mod/notas/domain/models.py
+--- proyecto_django_export_ai/notas/domain/models.py	2026-06-11 21:37:07.000000000 +0000
++++ proyecto_django_export_ai_mod/notas/domain/models.py	2026-06-17 16:43:35.210324908 +0000
+@@ -1495,6 +1495,7 @@
+     
+     dismissed = models.BooleanField(default=False)      # inbox
+     removed = models.BooleanField(default=False)        # librería
++    is_favorite = models.BooleanField(default=False)    # inbox
+ 
+     class Meta:
+         unique_together = ("recipient_email", "dailyplan")
+@@ -1532,6 +1533,7 @@
+     
+     dismissed = models.BooleanField(default=False)      # inbox
+     removed = models.BooleanField(default=False)        # librería
++    is_favorite = models.BooleanField(default=False)    # inbox
+ 
+     class Meta:
+         unique_together = ("recipient_email", "meal")
+diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' proyecto_django_export_ai/notas/interface/views/dailyplans.py proyecto_django_export_ai_mod/notas/interface/views/dailyplans.py
+--- proyecto_django_export_ai/notas/interface/views/dailyplans.py	2026-06-09 23:51:09.000000000 +0000
++++ proyecto_django_export_ai_mod/notas/interface/views/dailyplans.py	2026-06-17 16:42:40.570313690 +0000
+@@ -23,6 +23,7 @@
+ from django.core.mail import send_mail
+ from django.conf import settings
+ from django.urls import reverse
++from notas.application.services.notifications.share_emails import build_share_invitation_email
+ from django.utils.http import url_has_allowed_host_and_scheme
+ 
+ from notas.presentation.viewmodels.base_vm import BaseVM
+@@ -96,13 +97,16 @@
+ 
+         share = result.share
+ 
+-        link = request.build_absolute_uri(
+-            reverse("dailyplan_share_accept", args=[share.token])
++        subject, message = build_share_invitation_email(
++            request=request,
++            share=share,
++            kind="dailyplan",
++            item_name=dailyplan.name,
+         )
+ 
+         send_mail(
+-            subject=f"{request.user.username} compartió un DailyPlan contigo",
+-            message=f"Te compartieron este plan:\n\n{link}",
++            subject=subject,
++            message=message,
+             from_email=settings.DEFAULT_FROM_EMAIL,
+             recipient_list=[email],
+         )
+diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' proyecto_django_export_ai/notas/interface/views/inbox.py proyecto_django_export_ai_mod/notas/interface/views/inbox.py
+--- proyecto_django_export_ai/notas/interface/views/inbox.py	2026-04-05 03:51:25.000000000 +0000
++++ proyecto_django_export_ai_mod/notas/interface/views/inbox.py	2026-06-17 16:43:43.482276137 +0000
+@@ -1,23 +1,356 @@
+-from django.shortcuts import render
++from dataclasses import asdict, dataclass
++
++from django.contrib import messages
+ from django.contrib.auth.decorators import login_required
+-from notas.application.use_cases.inbox_pages import build_inbox_items
+-from notas.presentation.composition.viewmodel.inbox.inbox_list_builder import build_inbox_list_vm
++from django.http import HttpResponseBadRequest
++from django.shortcuts import redirect, render
++from django.urls import reverse
++from django.views.decorators.http import require_POST
++
++from notas.application.services.commands.dailyplan_commands import save_dailyplan
++from notas.application.services.commands.meal_commands import save_meal
++from notas.application.use_cases.inbox_pages import (
++    build_inbox_items,
++    get_inbox_item_or_404,
++    get_inbox_share_or_404,
++)
++from notas.presentation.composition.viewmodel.components.builder_headers import (
++    build_page_header,
++)
++from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
++from notas.presentation.config.viewmodel_config import (
++    INBOX_VIEWMODE_DETAIL,
++    INBOX_VIEWMODE_LIST,
++)
++from notas.presentation.viewmodels.base_vm import BaseVM
++
++
++@dataclass
++class InboxListContentVM:
++    header: object
++    inbox_items: list[dict]
++    list_mode: str = "list"
++    favorites_only: bool = False
++
++
++@dataclass
++class InboxDetailContentVM:
++    header: object
++    inbox: dict
++
++
++@dataclass(frozen=True)
++class BreadcrumbParent:
++    label: str
++    url: str
++
++    def __str__(self):
++        return self.label
++
++    def get_absolute_url(self):
++        return self.url
++
++
++def _normalize_inbox_list_mode(request):
++    mode = (request.GET.get("mode") or "list").strip()
++    return mode if mode in {"list", "delete"} else "list"
++
++
++def _get_favorites_only(request) -> bool:
++    value = (request.GET.get("favorites") or request.POST.get("favorites") or "").strip()
++    return value in {"1", "true", "yes"}
++
++
++def _inbox_list_url(*, mode: str | None = None, favorites_only: bool = False):
++    base_url = reverse("inbox_list")
++    params = []
++
++    if mode and mode != "list":
++        params.append(f"mode={mode}")
++
++    if favorites_only:
++        params.append("favorites=1")
++
++    if not params:
++        return base_url
++
++    return f"{base_url}?{'&'.join(params)}"
++
++
++def _build_inbox_list_actions(*, list_mode: str, favorites_only: bool):
++    if list_mode == "delete":
++        return [
++            {
++                "key": "exit_delete_mode",
++                "label": "Cerrar",
++                "url": _inbox_list_url(favorites_only=favorites_only),
++                "method": "get",
++                "icon": "check",
++                "order": 10,
++                "desktop_position": "inline",
++                "mobile_position": "inline",
++            },
++            {
++                "key": "bulk_delete",
++                "label": "Eliminar seleccionados",
++                "url": (
++                    reverse("inbox_bulk_delete")
++                    + ("?favorites=1" if favorites_only else "")
++                ),
++                "method": "post",
++                "icon": "trash-2",
++                "order": 20,
++                "desktop_position": "inline",
++                "mobile_position": "inline",
++                "disabled": True,
++                "extra_class": "js-list-bulk-delete-submit",
++            },
++        ]
++
++    filter_action = (
++        {
++            "key": "show_all",
++            "label": "Mostrar todos",
++            "url": reverse("inbox_list"),
++            "method": "get",
++            "icon": "list",
++            "order": 20,
++            "desktop_position": "menu",
++            "mobile_position": "menu",
++            "extra_class": "is-active",
++        }
++        if favorites_only
++        else {
++            "key": "show_favorites",
++            "label": "Mostrar favoritos",
++            "url": _inbox_list_url(favorites_only=True),
++            "method": "get",
++            "icon": "star",
++            "order": 20,
++            "desktop_position": "menu",
++            "mobile_position": "menu",
++        }
++    )
++
++    return [
++        {
++            "key": "enter_delete_mode",
++            "label": "Eliminar Inbox",
++            "url": _inbox_list_url(mode="delete", favorites_only=favorites_only),
++            "method": "get",
++            "icon": "trash-2",
++            "order": 10,
++            "desktop_position": "menu",
++            "mobile_position": "menu",
++        },
++        filter_action,
++    ]
++
++
++def _build_inbox_detail_actions(inbox: dict):
++    return [
++        {
++            "key": "favorite",
++            "label": "Quitar favorito" if inbox["is_favorite"] else "Marcar como favorito",
++            "url": inbox["favorite_url"],
++            "method": "post",
++            "icon": "star",
++            "order": 10,
++            "desktop_position": "inline",
++            "mobile_position": "inline",
++            "extra_class": "is-active" if inbox["is_favorite"] else "",
++        },
++        {
++            "key": "delete",
++            "label": "Eliminar inbox",
++            "url": inbox["dismiss_url"],
++            "method": "post",
++            "icon": "trash-2",
++            "order": 20,
++            "desktop_position": "menu",
++            "mobile_position": "menu",
++        },
++    ]
++
++
++def _inbox_parent():
++    return BreadcrumbParent(
++        label="Compartir / Inbox",
++        url=reverse("inbox_list"),
++    )
+ 
+ 
+ @login_required
+ def inbox_list(request):
++    list_mode = _normalize_inbox_list_mode(request)
++    favorites_only = _get_favorites_only(request)
++    items = [
++        asdict(item)
++        for item in build_inbox_items(
++            request.user,
++            favorites_only=favorites_only,
++        )
++    ]
+ 
+-    vm = build_inbox_list_vm(
+-        request.user,
++    content_vm = InboxListContentVM(
++        header=build_page_header(
++            title="Compartir / Inbox",
++            actions=_build_inbox_list_actions(
++                list_mode=list_mode,
++                favorites_only=favorites_only,
++            ),
++        ),
++        inbox_items=items,
++        list_mode=list_mode,
++        favorites_only=favorites_only,
+     )
+ 
+-    items = build_inbox_items(request.user)
++    ui_vm = build_ui_vm(INBOX_VIEWMODE_LIST)
++
++    base_vm = BaseVM(
++        ui=ui_vm,
++        content=content_vm,
++    )
+ 
+     return render(
+         request,
+-        "notas/inbox.html",
+-        {
+-            "items": items,
+-            "vm": vm
+-        }
++        "notas/inbox/list.html",
++        base_vm.as_context(),
+     )
++
++
++@login_required
++def inbox_detail(request, kind, share_id):
++    try:
++        item = get_inbox_item_or_404(
++            request.user,
++            kind=kind,
++            share_id=share_id,
++        )
++    except ValueError:
++        return HttpResponseBadRequest("Tipo de inbox no soportado.")
++
++    inbox = asdict(item)
++
++    content_vm = InboxDetailContentVM(
++        header=build_page_header(
++            title=inbox["title"],
++            actions=_build_inbox_detail_actions(inbox),
++        ),
++        inbox=inbox,
++    )
++
++    ui_vm = build_ui_vm(
++        INBOX_VIEWMODE_DETAIL,
++        parents=[_inbox_parent()],
++        instance=inbox["title"],
++        back_config={"type": "parent"},
++    )
++
++    base_vm = BaseVM(
++        ui=ui_vm,
++        content=content_vm,
++    )
++
++    return render(
++        request,
++        "notas/inbox/detail.html",
++        base_vm.as_context(),
++    )
++
++
++@login_required
++@require_POST
++def inbox_toggle_favorite(request, kind, share_id):
++    try:
++        share = get_inbox_share_or_404(
++            request.user,
++            kind=kind,
++            share_id=share_id,
++        )
++    except ValueError:
++        return HttpResponseBadRequest("Tipo de inbox no soportado.")
++
++    share.is_favorite = not share.is_favorite
++    share.save(update_fields=["is_favorite"])
++
++    return redirect(request.META.get("HTTP_REFERER") or reverse("inbox_list"))
++
++
++@login_required
++@require_POST
++def inbox_delete(request, kind, share_id):
++    try:
++        share = get_inbox_share_or_404(
++            request.user,
++            kind=kind,
++            share_id=share_id,
++        )
++    except ValueError:
++        return HttpResponseBadRequest("Tipo de inbox no soportado.")
++
++    share.dismissed = True
++    share.save(update_fields=["dismissed"])
++
++    messages.success(request, "Inbox eliminado.")
++    return redirect("inbox_list")
++
++
++@login_required
++@require_POST
++def inbox_bulk_delete(request):
++    selected_ids = request.POST.getlist("selected_ids[]")
++
++    if not selected_ids:
++        messages.info(request, "No seleccionaste inbox para eliminar.")
++        return redirect(_inbox_list_url(mode="delete", favorites_only=_get_favorites_only(request)))
++
++    deleted_count = 0
++
++    for item_id in selected_ids:
++        try:
++            kind, raw_share_id = item_id.split("-", 1)
++            share_id = int(raw_share_id)
++            share = get_inbox_share_or_404(
++                request.user,
++                kind=kind,
++                share_id=share_id,
++            )
++        except (ValueError, TypeError):
++            continue
++
++        share.dismissed = True
++        share.save(update_fields=["dismissed"])
++        deleted_count += 1
++
++    if deleted_count:
++        messages.success(request, f"{deleted_count} inbox eliminado(s).")
++    else:
++        messages.info(request, "No se eliminaron inbox.")
++
++    return redirect(_inbox_list_url(mode="delete", favorites_only=_get_favorites_only(request)))
++
++
++@login_required
++@require_POST
++def inbox_save_attachment(request, kind, share_id):
++    try:
++        share = get_inbox_share_or_404(
++            request.user,
++            kind=kind,
++            share_id=share_id,
++        )
++    except ValueError:
++        return HttpResponseBadRequest("Tipo de inbox no soportado.")
++
++    if kind == "dailyplan":
++        saved = save_dailyplan(share.dailyplan, request.user)
++        messages.success(request, "Plan diario guardado en Mi librería.")
++        return redirect("dailyplan_detail", pk=saved.pk)
++
++    if kind == "meal":
++        saved = save_meal(share.meal, request.user)
++        messages.success(request, "Comida guardada en Mi librería.")
++        return redirect("meal_detail", pk=saved.pk)
++
++    return HttpResponseBadRequest("Tipo de inbox no soportado.")
+diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' proyecto_django_export_ai/notas/interface/views/meals.py proyecto_django_export_ai_mod/notas/interface/views/meals.py
+--- proyecto_django_export_ai/notas/interface/views/meals.py	2026-06-09 23:51:09.000000000 +0000
++++ proyecto_django_export_ai_mod/notas/interface/views/meals.py	2026-06-17 16:42:40.570966754 +0000
+@@ -20,6 +20,7 @@
+ from django.core.mail import send_mail
+ from django.conf import settings
+ from django.urls import reverse
++from notas.application.services.notifications.share_emails import build_share_invitation_email
+ 
+ from notas.presentation.viewmodels.base_vm import BaseVM
+ from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
+@@ -100,13 +101,16 @@
+ 
+         share = result.share
+ 
+-        link = request.build_absolute_uri(
+-            reverse("meal_share_accept", args=[share.token])
++        subject, message = build_share_invitation_email(
++            request=request,
++            share=share,
++            kind="meal",
++            item_name=meal.name,
+         )
+ 
+         send_mail(
+-            subject=f"{request.user.username} compartió una Meal contigo",
+-            message=f"Te compartieron este plan:\n\n{link}",
++            subject=subject,
++            message=message,
+             from_email=settings.DEFAULT_FROM_EMAIL,
+             recipient_list=[email],
+         )
+@@ -132,7 +136,7 @@
+         user=request.user,
+     )
+ 
+-    return redirect("meal_shared_list")
++    return redirect("inbox_list")
+ 
+ 
+ @login_required
+diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' proyecto_django_export_ai/notas/migrations/0028_share_favorites.py proyecto_django_export_ai_mod/notas/migrations/0028_share_favorites.py
+--- proyecto_django_export_ai/notas/migrations/0028_share_favorites.py	1970-01-01 00:00:00.000000000 +0000
++++ proyecto_django_export_ai_mod/notas/migrations/0028_share_favorites.py	2026-06-17 16:40:51.158475111 +0000
+@@ -0,0 +1,23 @@
++# Generated by ChatGPT patch for inbox favorites.
++
++from django.db import migrations, models
++
++
++class Migration(migrations.Migration):
++
++    dependencies = [
++        ("notas", "0027_food_list_order"),
++    ]
++
++    operations = [
++        migrations.AddField(
++            model_name="dailyplanshare",
++            name="is_favorite",
++            field=models.BooleanField(default=False),
++        ),
++        migrations.AddField(
++            model_name="mealshare",
++            name="is_favorite",
++            field=models.BooleanField(default=False),
++        ),
++    ]
+diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' proyecto_django_export_ai/notas/presentation/navigation/app_registry.py proyecto_django_export_ai_mod/notas/presentation/navigation/app_registry.py
+--- proyecto_django_export_ai/notas/presentation/navigation/app_registry.py	2026-06-12 04:43:20.000000000 +0000
++++ proyecto_django_export_ai_mod/notas/presentation/navigation/app_registry.py	2026-06-17 16:41:00.496874256 +0000
+@@ -145,6 +145,15 @@
+                 scope="personal",
+             ),
+             NavGroupSpec(
++                key="inbox",
++                label="Compartir / Inbox",
++                icon="inbox",
++                page_icon="inbox",
++                url_name="inbox_list",
++                nav_root="inbox",
++                scope="personal",
++            ),
++            NavGroupSpec(
+                 key="create",
+                 label="Crear",
+                 icon="circle-fading-plus",
+diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' proyecto_django_export_ai/notas/static/notas/css/components/proposals.css proyecto_django_export_ai_mod/notas/static/notas/css/components/proposals.css
+--- proyecto_django_export_ai/notas/static/notas/css/components/proposals.css	2026-06-11 20:48:58.000000000 +0000
++++ proyecto_django_export_ai_mod/notas/static/notas/css/components/proposals.css	2026-06-17 16:42:56.179177629 +0000
+@@ -958,3 +958,104 @@
+     margin: 20px -4px 0;
+   }
+ }
++
++/* =========================================================
++   Inbox / sharing
++   ========================================================= */
++
++.label-entity--inbox,
++.label-entity.header.label-entity--inbox {
++  background: var(--entity-inbox, var(--entity-home));
++}
++
++.sidebar-main-icon--inbox,
++.list-page-header__icon--inbox,
++.picker-summary-card__icon.inbox,
++.home-section-header-icon.inbox {
++  background: var(--entity-inbox, var(--entity-home));
++  color: #ffffff;
++  stroke: #ffffff;
++}
++
++.inbox-list-page,
++.inbox-detail-page {
++  color: var(--text-main);
++}
++
++.inbox-filter-chip {
++  display: inline-flex;
++  align-items: center;
++  gap: 7px;
++  width: fit-content;
++  margin: 0 0 2px;
++  padding: 7px 11px;
++  border-radius: 999px;
++  background: var(--surface-card-muted);
++  color: var(--text-muted);
++  font-size: 0.78rem;
++  font-weight: 800;
++  letter-spacing: 0.035em;
++  text-transform: uppercase;
++}
++
++.proposal-list-card__icons-title .home-section-header-icon.inbox,
++.proposal-review-hero__icons-title .home-section-header-icon.inbox {
++  width: 22px;
++  height: 22px;
++  padding: 4px;
++  border-radius: 6px;
++  background: var(--entity-inbox, var(--entity-home));
++  color: #ffffff;
++  stroke: #ffffff;
++}
++
++.inbox-list-card__summary-block {
++  margin-top: 2px;
++}
++
++.inbox-status-badge--favorite {
++  border-color: color-mix(in srgb, var(--interactive-primary) 28%, transparent);
++  background: color-mix(in srgb, var(--interactive-primary) 10%, var(--surface-card));
++  color: var(--interactive-primary);
++}
++
++.inbox-attachment-link {
++  text-decoration: none;
++}
++
++.inbox-attachment-link:hover .proposal-attachment__name {
++  color: var(--interactive-primary);
++}
++
++.inbox-review-shell {
++  gap: 18px;
++}
++
++.inbox-review-summary-block {
++  margin-top: 16px;
++}
++
++.inbox-review-attachments-list {
++  align-items: center;
++}
++
++.inbox-attachment-actions .proposal-review-actions-buttons form {
++  display: inline-flex;
++}
++
++.inbox-empty-card {
++  min-height: 120px;
++}
++
++.inbox-list-page .overflow-action.is-active,
++.inbox-detail-page .primary-action.is-active {
++  color: var(--interactive-primary);
++}
++
++@media (max-width: 760px) {
++  .inbox-attachment-actions .proposal-review-actions-buttons,
++  .inbox-attachment-actions .proposal-review-actions-buttons form,
++  .inbox-attachment-actions .proposal-review-action {
++    width: 100%;
++  }
++}
+diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' proyecto_django_export_ai/notas/static/notas/js/pwa.js proyecto_django_export_ai_mod/notas/static/notas/js/pwa.js
+--- proyecto_django_export_ai/notas/static/notas/js/pwa.js	2026-06-17 04:38:15.000000000 +0000
++++ proyecto_django_export_ai_mod/notas/static/notas/js/pwa.js	2026-06-17 16:43:10.856303723 +0000
+@@ -81,6 +81,7 @@
+       "/app/meals/draft",
+       "/app/foods",
+       "/app/proposals",
++      "/app/inbox",
+       "/app/ai-tools",
+     ]);
+ 
+diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' proyecto_django_export_ai/notas/templates/components/list_page_header.html proyecto_django_export_ai_mod/notas/templates/components/list_page_header.html
+--- proyecto_django_export_ai/notas/templates/components/list_page_header.html	2026-06-13 19:46:04.000000000 +0000
++++ proyecto_django_export_ai_mod/notas/templates/components/list_page_header.html	2026-06-17 16:42:24.199737010 +0000
+@@ -9,7 +9,7 @@
+ 
+     <div class="list-page-header__indicator" aria-label="Total de elementos">
+       <span class="structural-item">
+-        <strong>{% if vm.content.child_cards %}{{ vm.content.child_cards|length }}{% elif vm.content.proposals %}{{ vm.content.proposals|length }}{% else %}0{% endif %}</strong>
++        <strong>{% if vm.content.child_cards %}{{ vm.content.child_cards|length }}{% elif vm.content.proposals %}{{ vm.content.proposals|length }}{% elif vm.content.inbox_items %}{{ vm.content.inbox_items|length }}{% else %}0{% endif %}</strong>
+         <i data-lucide="{{ vm.ui.icon }}" class="structural-icon main" aria-hidden="true"></i>
+       </span>
+     </div>
+diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' proyecto_django_export_ai/notas/templates/components/list_panel_inbox_delete.html proyecto_django_export_ai_mod/notas/templates/components/list_panel_inbox_delete.html
+--- proyecto_django_export_ai/notas/templates/components/list_panel_inbox_delete.html	1970-01-01 00:00:00.000000000 +0000
++++ proyecto_django_export_ai_mod/notas/templates/components/list_panel_inbox_delete.html	2026-06-17 16:42:06.325830860 +0000
+@@ -0,0 +1,41 @@
++<div class="data-grid data-grid--list-panel data-grid--list-panel-delete js-list-delete-panel">
++    <h3 class="data-grid-list-panel-title">Eliminar Inbox</h3>
++
++    {% for item in inbox_items %}
++        <div
++            class="data-grid-row data-grid-row--list-panel-delete js-list-delete-row"
++            data-item-id="{{ item.id }}"
++        >
++            <div class="data-grid-cell data-grid-cell--select">
++                <label class="list-panel-select" aria-label="Seleccionar inbox">
++                    <input
++                        type="checkbox"
++                        class="js-list-delete-checkbox"
++                        value="{{ item.id }}"
++                    >
++                    <span class="list-panel-select__control"></span>
++                </label>
++            </div>
++
++            <div class="data-grid-cell data-grid-cell--name">
++                <div class="list-panel-title-row">
++                    <i data-lucide="{{ item.icon }}" class="picker-summary-card__icon inbox list-panel-title-icon"></i>
++                    <div class="truncate">{{ item.title }}</div>
++                </div>
++            </div>
++
++            <div class="data-grid-cell data-grid-cell--action">
++                <form method="post" action="{{ item.dismiss_url }}">
++                    {% csrf_token %}
++                    <button type="submit" aria-label="Eliminar inbox">
++                        <i data-lucide="trash" class="table-icon"></i>
++                    </button>
++                </form>
++            </div>
++        </div>
++    {% empty %}
++        <div class="data-grid-empty">
++            No tienes inbox para eliminar.
++        </div>
++    {% endfor %}
++</div>
+diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' proyecto_django_export_ai/notas/templates/notas/inbox/detail.html proyecto_django_export_ai_mod/notas/templates/notas/inbox/detail.html
+--- proyecto_django_export_ai/notas/templates/notas/inbox/detail.html	1970-01-01 00:00:00.000000000 +0000
++++ proyecto_django_export_ai_mod/notas/templates/notas/inbox/detail.html	2026-06-17 16:42:06.312019583 +0000
+@@ -0,0 +1,82 @@
++{% extends "notas/base.html" %}
++{% block title %}Inbox{% endblock %}
++{% block content %}
++
++<div class="page page--detail inbox-detail-page proposal-detail-page">
++  <section class="proposal-review-shell inbox-review-shell">
++    <header class="proposal-review-hero inbox-review-hero">
++      <div class="proposal-review-hero__main">
++        <div class="proposal-review-hero__copy">
++          <h2 class="proposal-review-title">
++            {{ vm.content.inbox.title }}
++          </h2>
++
++          <p class="proposal-received-date proposal-review-received-date">
++            {{ vm.content.inbox.received_at_label }} · enviado por {{ vm.content.inbox.sender }}
++          </p>
++
++          <div class="proposal-review-pills">
++            <span class="proposal-status-badge inbox-status-badge{% if vm.content.inbox.is_favorite %} inbox-status-badge--favorite{% endif %}">
++              {% if vm.content.inbox.is_favorite %}Favorito{% else %}Recibido{% endif %}
++            </span>
++
++            <span class="proposal-type-badge">{{ vm.content.inbox.kind_label }}</span>
++          </div>
++        </div>
++
++        <div class="proposal-review-hero__icons-title" aria-hidden="true">
++          <i data-lucide="inbox" class="home-section-header-icon inbox"></i>
++        </div>
++      </div>
++
++      <div class="proposal-review-summary-block inbox-review-summary-block">
++        <span class="proposal-review-summary-label">Mensaje</span>
++        <p class="proposal-review-summary">
++          {{ vm.content.inbox.summary }}
++        </p>
++      </div>
++    </header>
++
++    <section class="proposal-review-attachments-section inbox-attachments-section" aria-label="Adjuntos del inbox">
++      <div class="proposal-review-attachments-heading">
++        <i data-lucide="paperclip" class="proposal-review-attachments-heading__icon"></i>
++        <h3>Adjuntos</h3>
++      </div>
++
++      <div class="proposal-review-attachments-list inbox-review-attachments-list">
++        <a href="{{ vm.content.inbox.attachment.open_url }}" class="proposal-attachment proposal-attachment--{{ vm.content.inbox.attachment.kind }} proposal-review-attachment inbox-attachment-link">
++          <span class="proposal-attachment__icon" aria-hidden="true">
++            <i data-lucide="{{ vm.content.inbox.attachment.icon }}" class="proposal-attachment__svg"></i>
++          </span>
++          <span class="proposal-attachment__copy">
++            <strong class="proposal-attachment__name">{{ vm.content.inbox.attachment.name }}</strong>
++          </span>
++        </a>
++      </div>
++    </section>
++
++    <section class="proposal-review-actions inbox-attachment-actions">
++      <div class="proposal-review-actions-copy">
++        <p class="proposal-review-eyebrow">Adjunto recibido</p>
++        <p class="proposal-review-actions-text">
++          Puedes abrir el detalle del adjunto o guardar una copia independiente en Mi librería.
++        </p>
++      </div>
++
++      <div class="proposal-review-actions-buttons">
++        <a href="{{ vm.content.inbox.attachment.open_url }}" class="proposal-review-action proposal-review-action--cancel">
++          Ver detalle
++        </a>
++
++        <form method="post" action="{{ vm.content.inbox.attachment.save_url }}">
++          {% csrf_token %}
++          <button type="submit" class="proposal-review-action proposal-review-action--apply">
++            Guardar en Mi librería
++          </button>
++        </form>
++      </div>
++    </section>
++  </section>
++</div>
++
++{% endblock %}
+diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' proyecto_django_export_ai/notas/templates/notas/inbox/list.html proyecto_django_export_ai_mod/notas/templates/notas/inbox/list.html
+--- proyecto_django_export_ai/notas/templates/notas/inbox/list.html	1970-01-01 00:00:00.000000000 +0000
++++ proyecto_django_export_ai_mod/notas/templates/notas/inbox/list.html	2026-06-17 16:42:06.297592015 +0000
+@@ -0,0 +1,80 @@
++{% extends "notas/base.html" %}
++{% block title %}Compartir / Inbox{% endblock %}
++{% block content %}
++
++<div class="page list inbox-list-page proposal-list-page">
++
++  {% include "components/list_page_header.html" %}
++
++  {% if vm.content.list_mode == "delete" %}
++    {% include "components/list_panel_inbox_delete.html" with inbox_items=vm.content.inbox_items %}
++  {% else %}
++    {% if vm.content.favorites_only %}
++      <div class="inbox-filter-chip">
++        <i data-lucide="star" class="metadata-icon"></i>
++        Mostrando favoritos
++      </div>
++    {% endif %}
++
++    {% for item in vm.content.inbox_items %}
++      <article class="card proposal-list-card inbox-list-card inbox-list-card--{{ item.kind }}{% if item.is_favorite %} is-favorite{% endif %}">
++        <div class="proposal-list-card__main">
++          <div class="proposal-list-card__title-block">
++            <div class="proposal-list-card__copy">
++              <h3 class="proposal-list-card__title inbox-list-card__title">{{ item.title }}</h3>
++            </div>
++          </div>
++
++          <p class="proposal-received-date proposal-list-card__received-date">
++            {{ item.received_at_label }} · {{ item.sender }}
++          </p>
++
++          <div class="proposal-list-card__icons-title" aria-hidden="true">
++            <i data-lucide="inbox" class="home-section-header-icon inbox"></i>
++          </div>
++        </div>
++
++        <span class="proposal-status-badge inbox-status-badge{% if item.is_favorite %} inbox-status-badge--favorite{% endif %}">
++          {% if item.is_favorite %}Favorito{% else %}Recibido{% endif %}
++        </span>
++
++        <div class="proposal-list-card__summary-block inbox-list-card__summary-block">
++          <span class="proposal-list-card__summary-label">Mensaje</span>
++          <p class="proposal-list-card__summary">{{ item.summary }}</p>
++        </div>
++
++        <div class="card-bottom proposal-list-card__bottom">
++          <i data-lucide="paperclip" class="proposal-list-card__attachment-paperclip" aria-hidden="true"></i>
++
++          <a href="{{ item.attachment.open_url }}" class="proposal-attachment proposal-attachment--{{ item.attachment.kind }} proposal-review-attachment inbox-attachment-link">
++            <span class="proposal-attachment__icon" aria-hidden="true">
++              <i data-lucide="{{ item.attachment.icon }}" class="proposal-attachment__svg"></i>
++            </span>
++            <span class="proposal-attachment__copy">
++              <strong class="proposal-attachment__name">{{ item.attachment.name }}</strong>
++            </span>
++          </a>
++
++          <div class="card-actions proposal-list-card__actions">
++            {% include "components/card_actions.html" with actions=item.actions %}
++          </div>
++        </div>
++      </article>
++    {% empty %}
++      <section class="card proposal-empty-card inbox-empty-card">
++        <div>
++          <h3>No tienes inbox recibidos.</h3>
++          <p>
++            Los elementos que otras personas compartan contigo aparecerán aquí después de abrir el enlace de invitación.
++          </p>
++        </div>
++      </section>
++    {% endfor %}
++  {% endif %}
++
++</div>
++
++{% load static %}
++<script src="{% static 'notas/js/list_panel_modes.js' %}"></script>
++
++{% endblock %}
+diff -ruN '--exclude=__pycache__' '--exclude=*.pyc' proyecto_django_export_ai/notas/urls.py proyecto_django_export_ai_mod/notas/urls.py
+--- proyecto_django_export_ai/notas/urls.py	2026-06-15 21:52:59.000000000 +0000
++++ proyecto_django_export_ai_mod/notas/urls.py	2026-06-17 16:42:16.539593223 +0000
+@@ -104,7 +104,14 @@
+ )
+ 
+ from notas.interface.views.weight import register_weight
+-from notas.interface.views.inbox import inbox_list
++from notas.interface.views.inbox import (
++    inbox_bulk_delete,
++    inbox_delete,
++    inbox_detail,
++    inbox_list,
++    inbox_save_attachment,
++    inbox_toggle_favorite,
++)
+ from notas.interface.views.project import project_view
+ from notas.interface.views.nutrition import elemental_context, elemental_nutrition, elemental_platform
+ 
+@@ -157,6 +164,11 @@
+     path("service-worker.js", pwa_service_worker, name="pwa_service_worker"),
+ 
+     path("inbox/", inbox_list, name="inbox_list"),
++    path("inbox/bulk-delete/", inbox_bulk_delete, name="inbox_bulk_delete"),
++    path("inbox/<str:kind>/<int:share_id>/", inbox_detail, name="inbox_detail"),
++    path("inbox/<str:kind>/<int:share_id>/delete/", inbox_delete, name="inbox_delete"),
++    path("inbox/<str:kind>/<int:share_id>/favorite/", inbox_toggle_favorite, name="inbox_toggle_favorite"),
++    path("inbox/<str:kind>/<int:share_id>/save/", inbox_save_attachment, name="inbox_save_attachment"),
+     path("project/", project_view, name="project_view"),
+ 
+     path("elemental/context/", elemental_context, name="elemental_context"),

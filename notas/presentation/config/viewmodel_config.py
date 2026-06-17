@@ -85,3 +85,8 @@ ADMIN_FOOD_CATALOG_VIEWMODE = vm("admin", "list", "foods")
 # PROPOSAL ---------------------------------------------
 PROPOSAL_VIEWMODE_LIST = vm("proposal", "list", "personal")
 PROPOSAL_VIEWMODE_DETAIL = vm("proposal", "detail", "personal")
+
+
+# INBOX / SHARING ---------------------------------------------
+INBOX_VIEWMODE_LIST = vm("inbox", "list", "personal")
+INBOX_VIEWMODE_DETAIL = vm("inbox", "detail", "personal")
