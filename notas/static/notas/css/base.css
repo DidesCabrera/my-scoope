@@ -207,12 +207,11 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-info-
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-setting-icon,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-setting-title,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-setting-action,
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-weight-block,
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-data-block,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-icon,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-title,
-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-section-title,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-input,
-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-macro-label,
-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-macro-input,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-actions span {
   display: block;
   position: relative;
@@ -245,12 +244,11 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-info-
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-setting-icon::after,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-setting-title::after,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-setting-action::after,
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-weight-block::after,
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-data-block::after,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-icon::after,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-title::after,
-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-section-title::after,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-input::after,
-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-macro-label::after,
-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-macro-input::after,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-actions span::after {
   content: "";
   position: absolute;
@@ -483,6 +481,51 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-indicato
 
 /* Profile destination */
 
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__layout--profile {
+  gap: 24px;
+}
+
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-page-detail {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 26px 40px;
+  border: none;
+  border-radius: 22px;
+  background: var(--surface-card, #121212);
+  color: var(--text-main);
+}
+
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-page-detail > .pwa-navigation-placeholder__profile-title {
+  width: min(58vw, 320px);
+  height: 33px;
+  border-radius: 999px;
+}
+
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-weight-block {
+  align-self: flex-start;
+  width: min(100%, 220px);
+  height: 76px;
+  border: none;
+  border-radius: 16px;
+  background: var(--surface-card-muted, #202020);
+}
+
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-data-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-data-block {
+  min-width: 0;
+  height: 72px;
+  border: none;
+  border-radius: 14px;
+  background: var(--surface-card-muted, #202020);
+}
+
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__header-title--short {
   width: min(34vw, 190px);
 }
@@ -638,7 +681,7 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-wrap {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding-top: 10px;
+  padding-top: 8px;
 }
 
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-main-modal {
@@ -647,74 +690,50 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-main-mod
   align-items: center;
   justify-content: center;
   gap: 12px;
+  margin-top: 8px;
   margin-bottom: 2px;
 }
 
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-icon {
-  width: 54px;
-  height: 54px;
-  border-radius: 16px;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
 }
 
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-title {
-  width: min(62vw, 260px);
+  width: min(62vw, 210px);
   height: 30px;
-  border-radius: 999px;
+  border-radius: 8px;
 }
 
-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-section {
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-card {
   display: flex;
   flex-direction: column;
   gap: 16px;
   padding: 18px;
   border-radius: 22px;
+  background: var(--surface-card, #121212);
+}
+
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-name-section {
+  width: 100%;
+  height: 138px;
+  padding: 18px;
+  border-radius: 20px;
   background: var(--surface-card-muted, #202020);
 }
 
-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-section-title {
-  width: min(58vw, 260px);
-  height: 20px;
-  border-radius: 999px;
-}
-
-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-section-title--wide {
-  width: min(70vw, 340px);
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
 }
 
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-input {
   width: 100%;
-  min-height: 46px;
+  min-height: 44px;
+  margin-top: 35px;
   border-radius: 12px;
-  background: var(--input-bg, #181818);
-}
-
-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-macro-card {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  width: 100%;
-  padding: 2px 0;
-}
-
-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-macro-row {
-  display: grid;
-  grid-template-columns: minmax(80px, 1fr) minmax(120px, 170px);
-  align-items: center;
-  gap: 14px;
-  min-height: 48px;
-  padding: 7px 0;
-}
-
-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-macro-label {
-  width: min(38vw, 160px);
-  height: 16px;
-  border-radius: 999px;
-}
-
-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-macro-input {
-  width: 100%;
-  min-height: 38px;
-  border-radius: 10px;
   background: var(--input-bg, #181818);
 }
 
@@ -727,7 +746,7 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-actions 
 }
 
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-actions span {
-  width: 100px;
+  width: 190px;
   min-height: 38px;
   border-radius: 10px;
 }
@@ -770,6 +789,9 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-actions 
   html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-data-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 
@@ -805,6 +827,9 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-actions 
   html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-data-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 760px) {
@@ -821,7 +846,8 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-actions 
   html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--list .pwa-navigation-placeholder {
     --pwa-navigation-placeholder-offset-top: calc(var(--pwa-safe-area-top, 0px) + 14px);
   }
-  html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--detail .pwa-navigation-placeholder {
+  html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--detail .pwa-navigation-placeholder,
+  html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--profile .pwa-navigation-placeholder {
     --pwa-navigation-placeholder-offset-top: calc(var(--pwa-safe-area-top, 0px) + 6px);
   }
 
@@ -877,6 +903,18 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-actions 
     min-height: 136px;
   }
 
+  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-page-detail {
+    padding: 22px 22px 44px;
+  }
+
+  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-weight-block {
+    width: 100%;
+  }
+
+  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-data-grid {
+    grid-template-columns: 1fr;
+  }
+
   html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-grid {
     grid-template-columns: 1fr;
   }
@@ -893,26 +931,13 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-actions 
   }
 
   html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-wrap {
-    width: auto;
-    margin: 0 10px;
+    margin: 0 14px;
   }
 
-  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-section {
-    padding: 16px;
-    border-radius: 18px;
+  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-card {
+    padding: 18px;
+    border-radius: 24px;
+    margin: 0 3px;
   }
 
-  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-macro-row {
-    grid-template-columns: 1fr minmax(108px, 135px);
-    gap: 10px;
-  }
-
-  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-actions {
-    justify-content: stretch;
-  }
-
-  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-actions span {
-    flex: 1 1 0;
-    width: auto;
-  }
 }

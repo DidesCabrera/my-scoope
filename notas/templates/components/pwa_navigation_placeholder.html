@@ -80,86 +80,40 @@
         <section class="pwa-navigation-placeholder__layout pwa-navigation-placeholder__layout--profile">
             <div class="pwa-navigation-placeholder__global-header">
                 <span class="pwa-navigation-placeholder__header-icon"></span>
-                <span class="pwa-navigation-placeholder__header-title pwa-navigation-placeholder__header-title--short"></span>
+                <span class="pwa-navigation-placeholder__header-title"></span>
             </div>
 
-            <section class="pwa-navigation-placeholder__profile-account">
-                <div class="pwa-navigation-placeholder__profile-account-main">
-                    <div class="pwa-navigation-placeholder__profile-heading">
-                        <div class="pwa-navigation-placeholder__profile-title-row">
-                            <span class="pwa-navigation-placeholder__profile-title-icon"></span>
-                            <span class="pwa-navigation-placeholder__profile-title"></span>
-                        </div>
-                        <span class="pwa-navigation-placeholder__profile-line"></span>
-                        <span class="pwa-navigation-placeholder__profile-line pwa-navigation-placeholder__profile-line--short"></span>
-                    </div>
-                    <article class="pwa-navigation-placeholder__profile-primary-metric">
-                        <span></span>
-                        <strong></strong>
-                    </article>
-                </div>
+            <section class="pwa-navigation-placeholder__profile-page-detail">
+                <span class="pwa-navigation-placeholder__profile-title"></span>
 
-                <div class="pwa-navigation-placeholder__profile-grid">
+                <article class="pwa-navigation-placeholder__profile-weight-block"></article>
+
+                <div class="pwa-navigation-placeholder__profile-data-grid">
                     {% for item in "1234" %}
-                        <article class="pwa-navigation-placeholder__profile-info-item">
-                            <span></span>
-                            <strong></strong>
-                        </article>
+                        <article class="pwa-navigation-placeholder__profile-data-block"></article>
                     {% endfor %}
                 </div>
             </section>
-
-            <article class="pwa-navigation-placeholder__profile-setting-card">
-                <div class="pwa-navigation-placeholder__profile-setting-copy">
-                    <div class="pwa-navigation-placeholder__profile-setting-title-row">
-                        <span class="pwa-navigation-placeholder__profile-setting-icon"></span>
-                        <span class="pwa-navigation-placeholder__profile-setting-title"></span>
-                    </div>
-                    <span class="pwa-navigation-placeholder__profile-line"></span>
-                </div>
-                <span class="pwa-navigation-placeholder__profile-setting-action"></span>
-            </article>
-
-            <article class="pwa-navigation-placeholder__profile-setting-card">
-                <div class="pwa-navigation-placeholder__profile-setting-copy">
-                    <div class="pwa-navigation-placeholder__profile-setting-title-row">
-                        <span class="pwa-navigation-placeholder__profile-setting-icon"></span>
-                        <span class="pwa-navigation-placeholder__profile-setting-title"></span>
-                    </div>
-                    <span class="pwa-navigation-placeholder__profile-line"></span>
-                </div>
-                <span class="pwa-navigation-placeholder__profile-setting-action"></span>
-            </article>
         </section>
 
         <section class="pwa-navigation-placeholder__layout pwa-navigation-placeholder__layout--form">
             <div class="pwa-navigation-placeholder__form-wrap">
-                <div class="pwa-navigation-placeholder__form-main-modal">
-                    <span class="pwa-navigation-placeholder__form-icon"></span>
-                    <span class="pwa-navigation-placeholder__form-title"></span>
-                </div>
-
-                <section class="pwa-navigation-placeholder__form-section pwa-navigation-placeholder__form-section--name">
-                    <span class="pwa-navigation-placeholder__form-section-title"></span>
-                    <span class="pwa-navigation-placeholder__form-input"></span>
-                </section>
-
-                <section class="pwa-navigation-placeholder__form-section pwa-navigation-placeholder__form-section--macros">
-                    <span class="pwa-navigation-placeholder__form-section-title pwa-navigation-placeholder__form-section-title--wide"></span>
-                    <div class="pwa-navigation-placeholder__form-macro-card">
-                        {% for item in "123" %}
-                            <div class="pwa-navigation-placeholder__form-macro-row">
-                                <span class="pwa-navigation-placeholder__form-macro-label"></span>
-                                <span class="pwa-navigation-placeholder__form-macro-input"></span>
-                            </div>
-                        {% endfor %}
+                <article class="pwa-navigation-placeholder__form-card">
+                    <div class="pwa-navigation-placeholder__form-main-modal">
+                        <span class="pwa-navigation-placeholder__form-icon"></span>
+                        <span class="pwa-navigation-placeholder__form-title"></span>
                     </div>
-                </section>
 
-                <div class="pwa-navigation-placeholder__form-actions">
-                    <span></span>
-                    <span></span>
-                </div>
+                    <section class="pwa-navigation-placeholder__form-name-section">
+                        <div class="pwa-navigation-placeholder__form-field">
+                            <span class="pwa-navigation-placeholder__form-input"></span>
+                        </div>
+                    </section>
+
+                    <div class="pwa-navigation-placeholder__form-actions">
+                        <span></span>
+                    </div>
+                </article>
             </div>
         </section>
     </div>

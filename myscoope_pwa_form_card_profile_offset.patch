@@ -1,0 +1,117 @@
+diff --git a/notas/static/notas/css/base.css b/notas/static/notas/css/base.css
+index 5ee5fd1..e424c00 100644
+--- a/notas/static/notas/css/base.css
++++ b/notas/static/notas/css/base.css
+@@ -211,7 +211,7 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-weigh
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-data-block,
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-icon,
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-title,
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-section-title,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-card-title,
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-input,
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-macro-label,
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-macro-input,
+@@ -251,7 +251,7 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-weigh
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-data-block::after,
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-icon::after,
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-title::after,
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-section-title::after,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-card-title::after,
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-input::after,
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-macro-label::after,
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-macro-input::after,
+@@ -711,25 +711,21 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-title {
+   border-radius: 999px;
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-section {
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-card {
+   display: flex;
+   flex-direction: column;
+   gap: 16px;
+   padding: 18px;
+   border-radius: 22px;
+-  background: var(--surface-card-muted, #202020);
++  background: var(--surface-card, #121212);
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-section-title {
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-card-title {
+   width: min(58vw, 260px);
+   height: 20px;
+   border-radius: 999px;
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-section-title--wide {
+-  width: min(70vw, 340px);
+-}
+-
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-input {
+   width: 100%;
+   min-height: 46px;
+@@ -876,7 +872,8 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-actions
+   html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--list .pwa-navigation-placeholder {
+     --pwa-navigation-placeholder-offset-top: calc(var(--pwa-safe-area-top, 0px) + 14px);
+   }
+-  html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--detail .pwa-navigation-placeholder {
++  html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--detail .pwa-navigation-placeholder,
++  html.pwa-standalone.pwa-is-navigating.pwa-navigation-placeholder--profile .pwa-navigation-placeholder {
+     --pwa-navigation-placeholder-offset-top: calc(var(--pwa-safe-area-top, 0px) + 6px);
+   }
+ 
+@@ -964,7 +961,7 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-actions
+     margin: 0 10px;
+   }
+ 
+-  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-section {
++  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-card {
+     padding: 16px;
+     border-radius: 18px;
+   }
+diff --git a/notas/templates/components/pwa_navigation_placeholder.html b/notas/templates/components/pwa_navigation_placeholder.html
+index 151b30f..c02e41b 100644
+--- a/notas/templates/components/pwa_navigation_placeholder.html
++++ b/notas/templates/components/pwa_navigation_placeholder.html
+@@ -98,18 +98,15 @@
+ 
+         <section class="pwa-navigation-placeholder__layout pwa-navigation-placeholder__layout--form">
+             <div class="pwa-navigation-placeholder__form-wrap">
+-                <div class="pwa-navigation-placeholder__form-main-modal">
+-                    <span class="pwa-navigation-placeholder__form-icon"></span>
+-                    <span class="pwa-navigation-placeholder__form-title"></span>
+-                </div>
++                <article class="pwa-navigation-placeholder__form-card">
++                    <div class="pwa-navigation-placeholder__form-main-modal">
++                        <span class="pwa-navigation-placeholder__form-icon"></span>
++                        <span class="pwa-navigation-placeholder__form-title"></span>
++                    </div>
+ 
+-                <section class="pwa-navigation-placeholder__form-section pwa-navigation-placeholder__form-section--name">
+-                    <span class="pwa-navigation-placeholder__form-section-title"></span>
++                    <span class="pwa-navigation-placeholder__form-card-title"></span>
+                     <span class="pwa-navigation-placeholder__form-input"></span>
+-                </section>
+ 
+-                <section class="pwa-navigation-placeholder__form-section pwa-navigation-placeholder__form-section--macros">
+-                    <span class="pwa-navigation-placeholder__form-section-title pwa-navigation-placeholder__form-section-title--wide"></span>
+                     <div class="pwa-navigation-placeholder__form-macro-card">
+                         {% for item in "123" %}
+                             <div class="pwa-navigation-placeholder__form-macro-row">
+@@ -118,12 +115,12 @@
+                             </div>
+                         {% endfor %}
+                     </div>
+-                </section>
+ 
+-                <div class="pwa-navigation-placeholder__form-actions">
+-                    <span></span>
+-                    <span></span>
+-                </div>
++                    <div class="pwa-navigation-placeholder__form-actions">
++                        <span></span>
++                        <span></span>
++                    </div>
++                </article>
+             </div>
+         </section>
+     </div>

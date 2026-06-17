@@ -1,0 +1,131 @@
+diff --git a/notas/static/notas/css/base.css b/notas/static/notas/css/base.css
+index e424c00..7a81e81 100644
+--- a/notas/static/notas/css/base.css
++++ b/notas/static/notas/css/base.css
+@@ -211,10 +211,7 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-weigh
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-data-block,
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-icon,
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-title,
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-card-title,
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-input,
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-macro-label,
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-macro-input,
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-actions span {
+   display: block;
+   position: relative;
+@@ -251,10 +248,7 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-weigh
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-data-block::after,
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-icon::after,
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-title::after,
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-card-title::after,
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-input::after,
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-macro-label::after,
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-macro-input::after,
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-actions span::after {
+   content: "";
+   position: absolute;
+@@ -720,46 +714,23 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-card {
+   background: var(--surface-card, #121212);
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-card-title {
+-  width: min(58vw, 260px);
+-  height: 20px;
+-  border-radius: 999px;
+-}
+-
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-input {
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-name-section {
+   width: 100%;
+-  min-height: 46px;
+-  border-radius: 12px;
+-  background: var(--input-bg, #181818);
++  padding: 18px;
++  border-radius: 22px;
++  background: var(--surface-card-muted, #202020);
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-macro-card {
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-field {
+   display: flex;
+   flex-direction: column;
+-  gap: 0;
+-  width: 100%;
+-  padding: 2px 0;
+-}
+-
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-macro-row {
+-  display: grid;
+-  grid-template-columns: minmax(80px, 1fr) minmax(120px, 170px);
+-  align-items: center;
+-  gap: 14px;
+-  min-height: 48px;
+-  padding: 7px 0;
+-}
+-
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-macro-label {
+-  width: min(38vw, 160px);
+-  height: 16px;
+-  border-radius: 999px;
++  gap: 7px;
+ }
+ 
+-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-macro-input {
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-input {
+   width: 100%;
+-  min-height: 38px;
+-  border-radius: 10px;
++  min-height: 46px;
++  border-radius: 12px;
+   background: var(--input-bg, #181818);
+ }
+ 
+@@ -966,17 +937,4 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-actions
+     border-radius: 18px;
+   }
+ 
+-  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-macro-row {
+-    grid-template-columns: 1fr minmax(108px, 135px);
+-    gap: 10px;
+-  }
+-
+-  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-actions {
+-    justify-content: stretch;
+-  }
+-
+-  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-actions span {
+-    flex: 1 1 0;
+-    width: auto;
+-  }
+ }
+diff --git a/notas/templates/components/pwa_navigation_placeholder.html b/notas/templates/components/pwa_navigation_placeholder.html
+index c02e41b..c905141 100644
+--- a/notas/templates/components/pwa_navigation_placeholder.html
++++ b/notas/templates/components/pwa_navigation_placeholder.html
+@@ -104,21 +104,14 @@
+                         <span class="pwa-navigation-placeholder__form-title"></span>
+                     </div>
+ 
+-                    <span class="pwa-navigation-placeholder__form-card-title"></span>
+-                    <span class="pwa-navigation-placeholder__form-input"></span>
+-
+-                    <div class="pwa-navigation-placeholder__form-macro-card">
+-                        {% for item in "123" %}
+-                            <div class="pwa-navigation-placeholder__form-macro-row">
+-                                <span class="pwa-navigation-placeholder__form-macro-label"></span>
+-                                <span class="pwa-navigation-placeholder__form-macro-input"></span>
+-                            </div>
+-                        {% endfor %}
+-                    </div>
++                    <section class="pwa-navigation-placeholder__form-name-section">
++                        <div class="pwa-navigation-placeholder__form-field">
++                            <span class="pwa-navigation-placeholder__form-input"></span>
++                        </div>
++                    </section>
+ 
+                     <div class="pwa-navigation-placeholder__form-actions">
+                         <span></span>
+-                        <span></span>
+                     </div>
+                 </article>
+             </div>

@@ -1,0 +1,216 @@
+diff -ruN orig63/notas/static/notas/css/base.css mod63/notas/static/notas/css/base.css
+--- orig63/notas/static/notas/css/base.css	2026-06-17 01:57:53.000000000 +0000
++++ mod63/notas/static/notas/css/base.css	2026-06-17 02:02:07.541428645 +0000
+@@ -207,6 +207,10 @@
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-setting-icon,
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-setting-title,
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-setting-action,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-weight-block span,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-weight-block strong,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-data-block span,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-data-block strong,
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-icon,
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-title,
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-section-title,
+@@ -245,6 +249,10 @@
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-setting-icon::after,
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-setting-title::after,
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-setting-action::after,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-weight-block span::after,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-weight-block strong::after,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-data-block span::after,
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-data-block strong::after,
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-icon::after,
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-title::after,
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-section-title::after,
+@@ -483,6 +491,81 @@
+ 
+ /* Profile destination */
+ 
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__layout--profile {
++  gap: 0;
++}
++
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-page-detail {
++  width: 100%;
++  display: flex;
++  flex-direction: column;
++  gap: 18px;
++  padding: 26px 40px;
++  border: none;
++  border-radius: 22px;
++  background: var(--surface-card, #121212);
++  color: var(--text-main);
++}
++
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-page-detail > .pwa-navigation-placeholder__profile-title {
++  width: min(58vw, 320px);
++  height: 33px;
++  border-radius: 999px;
++}
++
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-weight-block {
++  align-self: flex-start;
++  min-width: 140px;
++  padding: 14px 16px;
++  display: flex;
++  flex-direction: column;
++  gap: 8px;
++  border: none;
++  border-radius: 16px;
++  background: var(--surface-card-muted, #202020);
++}
++
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-weight-block span {
++  width: 76px;
++  height: 12px;
++  border-radius: 999px;
++}
++
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-weight-block strong {
++  width: 92px;
++  height: 22px;
++  border-radius: 999px;
++}
++
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-data-grid {
++  display: grid;
++  grid-template-columns: repeat(4, minmax(0, 1fr));
++  gap: 10px;
++}
++
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-data-block {
++  min-width: 0;
++  padding: 14px 16px;
++  display: flex;
++  flex-direction: column;
++  gap: 8px;
++  border: none;
++  border-radius: 14px;
++  background: var(--surface-card-muted, #202020);
++}
++
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-data-block span {
++  width: 70%;
++  height: 11px;
++  border-radius: 999px;
++}
++
++html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-data-block strong {
++  width: 92%;
++  height: 14px;
++  border-radius: 999px;
++}
++
+ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__header-title--short {
+   width: min(34vw, 190px);
+ }
+@@ -770,6 +853,9 @@
+   html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-grid {
+     grid-template-columns: repeat(2, minmax(0, 1fr));
+   }
++  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-data-grid {
++    grid-template-columns: repeat(2, minmax(0, 1fr));
++  }
+ }
+ 
+ 
+@@ -805,6 +891,9 @@
+   html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-grid {
+     grid-template-columns: repeat(2, minmax(0, 1fr));
+   }
++  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-data-grid {
++    grid-template-columns: repeat(2, minmax(0, 1fr));
++  }
+ }
+ 
+ @media (max-width: 760px) {
+@@ -877,6 +966,18 @@
+     min-height: 136px;
+   }
+ 
++  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-page-detail {
++    padding: 22px 22px 44px;
++  }
++
++  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-weight-block {
++    width: 100%;
++  }
++
++  html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-data-grid {
++    grid-template-columns: 1fr;
++  }
++
+   html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-grid {
+     grid-template-columns: 1fr;
+   }
+diff -ruN orig63/notas/templates/components/pwa_navigation_placeholder.html mod63/notas/templates/components/pwa_navigation_placeholder.html
+--- orig63/notas/templates/components/pwa_navigation_placeholder.html	2026-06-17 01:39:40.000000000 +0000
++++ mod63/notas/templates/components/pwa_navigation_placeholder.html	2026-06-17 02:02:06.379656981 +0000
+@@ -78,58 +78,23 @@
+         </section>
+ 
+         <section class="pwa-navigation-placeholder__layout pwa-navigation-placeholder__layout--profile">
+-            <div class="pwa-navigation-placeholder__global-header">
+-                <span class="pwa-navigation-placeholder__header-icon"></span>
+-                <span class="pwa-navigation-placeholder__header-title pwa-navigation-placeholder__header-title--short"></span>
+-            </div>
++            <section class="pwa-navigation-placeholder__profile-page-detail">
++                <span class="pwa-navigation-placeholder__profile-title"></span>
+ 
+-            <section class="pwa-navigation-placeholder__profile-account">
+-                <div class="pwa-navigation-placeholder__profile-account-main">
+-                    <div class="pwa-navigation-placeholder__profile-heading">
+-                        <div class="pwa-navigation-placeholder__profile-title-row">
+-                            <span class="pwa-navigation-placeholder__profile-title-icon"></span>
+-                            <span class="pwa-navigation-placeholder__profile-title"></span>
+-                        </div>
+-                        <span class="pwa-navigation-placeholder__profile-line"></span>
+-                        <span class="pwa-navigation-placeholder__profile-line pwa-navigation-placeholder__profile-line--short"></span>
+-                    </div>
+-                    <article class="pwa-navigation-placeholder__profile-primary-metric">
+-                        <span></span>
+-                        <strong></strong>
+-                    </article>
+-                </div>
++                <article class="pwa-navigation-placeholder__profile-weight-block">
++                    <span></span>
++                    <strong></strong>
++                </article>
+ 
+-                <div class="pwa-navigation-placeholder__profile-grid">
++                <div class="pwa-navigation-placeholder__profile-data-grid">
+                     {% for item in "1234" %}
+-                        <article class="pwa-navigation-placeholder__profile-info-item">
++                        <article class="pwa-navigation-placeholder__profile-data-block">
+                             <span></span>
+                             <strong></strong>
+                         </article>
+                     {% endfor %}
+                 </div>
+             </section>
+-
+-            <article class="pwa-navigation-placeholder__profile-setting-card">
+-                <div class="pwa-navigation-placeholder__profile-setting-copy">
+-                    <div class="pwa-navigation-placeholder__profile-setting-title-row">
+-                        <span class="pwa-navigation-placeholder__profile-setting-icon"></span>
+-                        <span class="pwa-navigation-placeholder__profile-setting-title"></span>
+-                    </div>
+-                    <span class="pwa-navigation-placeholder__profile-line"></span>
+-                </div>
+-                <span class="pwa-navigation-placeholder__profile-setting-action"></span>
+-            </article>
+-
+-            <article class="pwa-navigation-placeholder__profile-setting-card">
+-                <div class="pwa-navigation-placeholder__profile-setting-copy">
+-                    <div class="pwa-navigation-placeholder__profile-setting-title-row">
+-                        <span class="pwa-navigation-placeholder__profile-setting-icon"></span>
+-                        <span class="pwa-navigation-placeholder__profile-setting-title"></span>
+-                    </div>
+-                    <span class="pwa-navigation-placeholder__profile-line"></span>
+-                </div>
+-                <span class="pwa-navigation-placeholder__profile-setting-action"></span>
+-            </article>
+         </section>
+ 
+         <section class="pwa-navigation-placeholder__layout pwa-navigation-placeholder__layout--form">

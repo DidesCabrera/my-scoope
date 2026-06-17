@@ -31,7 +31,7 @@ COMPLETO
 --------------------------
 
 git add .
-git commit -m "Correcciones splash img v10"
+git commit -m "Correcciones splash img v13 - Correcciones manuales home"
 git push origin main
 
 
