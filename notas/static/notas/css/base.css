@@ -195,10 +195,8 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__header-icon,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__header-title,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__detail-title,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-banners span,
-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-icon,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-title,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-indicators,
-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-action,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-title-icon,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-title,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-line,
@@ -235,10 +233,8 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__header-icon::
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__header-title::after,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__detail-title::after,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-banners span::after,
-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-icon::after,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-title::after,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-indicators::after,
-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-action::after,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-title-icon::after,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-title::after,
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-line::after,
@@ -287,8 +283,7 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__header-spacer
   flex: 1 1 auto;
 }
 
-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__header-icon,
-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-icon {
+html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__header-icon {
   width: 34px;
   height: 34px;
   flex: 0 0 auto;
@@ -430,6 +425,7 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-brand {
   align-items: center;
   width: 100%;
   padding: 8px 0 2px;
+  margin-top: 10px;
 }
 
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-logo {
@@ -447,9 +443,9 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-banners 
 }
 
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-banners span {
-  width: 100%;
-  min-height: 350px;
-  border-radius: 18px 18px 0 0;
+  margin: 0 6px;
+  min-height: 250px;
+  border-radius: 40px;
   background: var(--surface-card-muted, #202020);
 }
 
@@ -457,8 +453,7 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-cards {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
-  margin: 0 6px;
-  padding-bottom: 48px;
+  margin: 30px 6px 48px 6px;
 }
 
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-card {
@@ -470,13 +465,6 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-card {
   padding: 14px;
   border-radius: 14px;
   background: var(--surface-card, #121212);
-}
-
-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-card-top {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
 }
 
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-title {
@@ -491,12 +479,7 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-indicato
   border-radius: 9px;
 }
 
-html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-action {
-  width: 32px;
-  height: 28px;
-  align-self: flex-end;
-  border-radius: 999px;
-}
+
 
 /* Profile destination */
 
@@ -817,7 +800,6 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-actions 
   html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-cards {
     max-width: 640px;
     width: 100%;
-    margin: 0 auto;
   }
 
   html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-grid {
@@ -888,7 +870,7 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-actions 
   }
 
   html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-banners span {
-    min-height: 350px;
+    min-height: 250px;
   }
 
   html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-card {
