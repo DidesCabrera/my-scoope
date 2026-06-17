@@ -499,14 +499,15 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-page-
 
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-page-detail > .pwa-navigation-placeholder__profile-title {
   width: min(58vw, 320px);
+  margin-bottom: 43px;
   height: 33px;
-  border-radius: 999px;
+  border-radius: 8px;
 }
 
 html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-weight-block {
   align-self: flex-start;
   width: min(100%, 220px);
-  height: 76px;
+  height: 82px;
   border: none;
   border-radius: 16px;
   background: var(--surface-card-muted, #202020);
@@ -904,7 +905,9 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-actions 
   }
 
   html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-page-detail {
-    padding: 22px 22px 44px;
+    margin: 10px -6px 0px;
+    padding: 44px 16px 44px;
+    width: auto;
   }
 
   html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-weight-block {
