@@ -7,6 +7,7 @@
     "pwa-navigation-placeholder--detail",
     "pwa-navigation-placeholder--home",
     "pwa-navigation-placeholder--profile",
+    "pwa-navigation-placeholder--form",
   ];
 
   root.classList.toggle("pwa-standalone", isStandalone);
@@ -65,9 +66,19 @@
       return "profile";
     }
 
+    const formPathPattern = /\/(create|rename|configure|edit|import)$/;
+
+    if (formPathPattern.test(path)) {
+      return "form";
+    }
+
     const listPaths = new Set([
       "/app/dailyplans",
+      "/app/dailyplans/explore",
+      "/app/dailyplans/draft",
       "/app/meals",
+      "/app/meals/explore",
+      "/app/meals/draft",
       "/app/foods",
       "/app/proposals",
       "/app/ai-tools",
@@ -125,7 +136,20 @@
         return;
       }
 
+      event.preventDefault();
       showNavigationPlaceholder(getPlaceholderVariant(url));
+
+      const navigate = function () {
+        window.location.assign(url.href);
+      };
+
+      if (window.requestAnimationFrame) {
+        window.requestAnimationFrame(function () {
+          window.setTimeout(navigate, 45);
+        });
+      } else {
+        window.setTimeout(navigate, 45);
+      }
     }, true);
 
     window.addEventListener("pageshow", resetNavigationPlaceholder);

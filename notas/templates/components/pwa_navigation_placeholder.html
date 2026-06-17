@@ -136,5 +136,36 @@
                 <span class="pwa-navigation-placeholder__profile-setting-action"></span>
             </article>
         </section>
+
+        <section class="pwa-navigation-placeholder__layout pwa-navigation-placeholder__layout--form">
+            <div class="pwa-navigation-placeholder__form-wrap">
+                <div class="pwa-navigation-placeholder__form-main-modal">
+                    <span class="pwa-navigation-placeholder__form-icon"></span>
+                    <span class="pwa-navigation-placeholder__form-title"></span>
+                </div>
+
+                <section class="pwa-navigation-placeholder__form-section pwa-navigation-placeholder__form-section--name">
+                    <span class="pwa-navigation-placeholder__form-section-title"></span>
+                    <span class="pwa-navigation-placeholder__form-input"></span>
+                </section>
+
+                <section class="pwa-navigation-placeholder__form-section pwa-navigation-placeholder__form-section--macros">
+                    <span class="pwa-navigation-placeholder__form-section-title pwa-navigation-placeholder__form-section-title--wide"></span>
+                    <div class="pwa-navigation-placeholder__form-macro-card">
+                        {% for item in "123" %}
+                            <div class="pwa-navigation-placeholder__form-macro-row">
+                                <span class="pwa-navigation-placeholder__form-macro-label"></span>
+                                <span class="pwa-navigation-placeholder__form-macro-input"></span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <div class="pwa-navigation-placeholder__form-actions">
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </section>
     </div>
 </div>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
     <script>
         (function () {
@@ -10,12 +10,20 @@
             const prefersDark = window.matchMedia &&
                 window.matchMedia("(prefers-color-scheme: dark)").matches;
 
-            const fallbackTheme = prefersDark ? "dark" : "light";
+            const fallbackTheme = "dark";
             const theme = validThemes.includes(savedTheme) ? savedTheme : fallbackTheme;
 
             document.documentElement.dataset.theme = theme;
         })();
     </script>
+    <style>
+        html, body {
+            background: #000000;
+        }
+        html[data-theme="dark"] {
+            color-scheme: dark;
+        }
+    </style>
     <script>
         (function () {
             const storageKey = "myscoope.sidebar.desktopCollapsed";
@@ -85,6 +93,11 @@
     <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'ipad-11-pro-landscape' %}" media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
     <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'ipad-12-9-pro-portrait' %}" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
     <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'ipad-12-9-pro-landscape' %}" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'ipad-9-7-landscape' %}" media="(device-width: 1024px) and (device-height: 768px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'ipad-10-2-landscape' %}" media="(device-width: 1080px) and (device-height: 810px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'ipad-10-5-air-landscape' %}" media="(device-width: 1112px) and (device-height: 834px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'ipad-11-pro-landscape' %}" media="(device-width: 1194px) and (device-height: 834px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="{% url 'pwa_startup_image' 'ipad-12-9-pro-landscape' %}" media="(device-width: 1366px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
     <link rel="stylesheet" href="{% static 'notas/css/tokens.css' %}">
     <link rel="stylesheet" href="{% static 'notas/css/base.css' %}">
     <link rel="stylesheet" href="{% static 'notas/css/layout.css' %}">
