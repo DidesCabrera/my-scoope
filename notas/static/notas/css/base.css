@@ -874,7 +874,7 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__form-actions 
   }
 
   html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__home-card {
-    min-height: 122px;
+    min-height: 136px;
   }
 
   html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder__profile-grid {
