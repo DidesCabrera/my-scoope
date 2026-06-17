@@ -18,11 +18,11 @@
 
     <h2>Comparte: {{ dailyplan.name }}</h2>
 
-    <form method="post">
+    <form method="post" action="{% url 'dailyplan_share' dailyplan.pk %}">
       {% csrf_token %}
       {{ form.as_p }}
       <div class="btn-block">
-        <button  type="submit" class="btn-cancel-create">Cancelar</button>
+        <a href="{% url 'dailyplan_detail' dailyplan.pk %}" class="btn-cancel-create">Cancelar</a>
         <button type="submit"  class="btn-continue">Compartir</button>
       </div>
     </form>

@@ -1,0 +1,276 @@
+diff --git a/miapp/settings/base.py b/miapp/settings/base.py
+index 5648672..989b6f5 100644
+--- a/miapp/settings/base.py
++++ b/miapp/settings/base.py
+@@ -151,8 +151,22 @@ LOGOUT_REDIRECT_URL = "/accounts/login/"
+ # EMAIL
+ # ==============================
+ 
+-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+-DEFAULT_FROM_EMAIL = "noreply@notas.com"
++EMAIL_HOST = os.environ.get("EMAIL_HOST", "")
++EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND") or (
++    "django.core.mail.backends.smtp.EmailBackend"
++    if EMAIL_HOST
++    else "django.core.mail.backends.console.EmailBackend"
++)
++DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@notas.com")
++EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
++EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
++EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
++EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "false").lower() in {"1", "true", "yes", "on"}
++EMAIL_USE_TLS = (
++    os.environ.get("EMAIL_USE_TLS", "true").lower() in {"1", "true", "yes", "on"}
++    and not EMAIL_USE_SSL
++)
++EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", "10"))
+ 
+ 
+ # ==============================
+diff --git a/notas/application/services/commands/share_commands.py b/notas/application/services/commands/share_commands.py
+index faba410..9d6732e 100644
+--- a/notas/application/services/commands/share_commands.py
++++ b/notas/application/services/commands/share_commands.py
+@@ -1,5 +1,6 @@
+ from dataclasses import dataclass
+ 
++from django.contrib.auth import get_user_model
+ from django.db import transaction
+ 
+ from notas.domain.models import DailyPlan, DailyPlanShare, Meal, MealShare
+@@ -49,7 +50,29 @@ class MealShareRemoveResult:
+ 
+ 
+ 
++def _find_recipient_user_by_email(email: str):
++    if not email:
++        return None
+ 
++    User = get_user_model()
++    return (
++        User.objects
++        .filter(email__iexact=email.strip())
++        .order_by("id")
++        .first()
++    )
++
++
++def _share_delivery_fields_for_email(email: str):
++    recipient_user = _find_recipient_user_by_email(email)
++    if recipient_user is None:
++        return {}
++
++    return {
++        "accepted_by": recipient_user,
++        "dismissed": False,
++        "removed": False,
++    }
+ 
+ 
+ @transaction.atomic
+@@ -64,16 +87,32 @@ def create_dailyplan_share(
+     if not clean_email:
+         raise ValueError("recipient_email_required")
+ 
++    delivery_defaults = _share_delivery_fields_for_email(clean_email)
++
+     share, created = DailyPlanShare.objects.get_or_create(
+         sender=sender,
+         recipient_email=clean_email,
+         dailyplan=dailyplan,
++        defaults=delivery_defaults,
+     )
+ 
+-    if share.removed or share.dismissed:
++    update_fields = []
++
++    recipient_user = delivery_defaults.get("accepted_by")
++    if recipient_user is not None and share.accepted_by_id != recipient_user.id:
++        share.accepted_by = recipient_user
++        update_fields.append("accepted_by")
++
++    if share.removed:
+         share.removed = False
++        update_fields.append("removed")
++
++    if share.dismissed:
+         share.dismissed = False
+-        share.save(update_fields=["removed", "dismissed"])
++        update_fields.append("dismissed")
++
++    if update_fields:
++        share.save(update_fields=update_fields)
+ 
+     return DailyPlanShareCreateResult(
+         share=share,
+@@ -142,16 +181,32 @@ def create_meal_share(
+     if not clean_email:
+         raise ValueError("recipient_email_required")
+ 
++    delivery_defaults = _share_delivery_fields_for_email(clean_email)
++
+     share, created = MealShare.objects.get_or_create(
+         sender=sender,
+         recipient_email=clean_email,
+         meal=meal,
++        defaults=delivery_defaults,
+     )
+ 
+-    if share.removed or share.dismissed:
++    update_fields = []
++
++    recipient_user = delivery_defaults.get("accepted_by")
++    if recipient_user is not None and share.accepted_by_id != recipient_user.id:
++        share.accepted_by = recipient_user
++        update_fields.append("accepted_by")
++
++    if share.removed:
+         share.removed = False
++        update_fields.append("removed")
++
++    if share.dismissed:
+         share.dismissed = False
+-        share.save(update_fields=["removed", "dismissed"])
++        update_fields.append("dismissed")
++
++    if update_fields:
++        share.save(update_fields=update_fields)
+ 
+     return MealShareCreateResult(
+         share=share,
+diff --git a/notas/interface/views/dailyplans.py b/notas/interface/views/dailyplans.py
+index 8016c57..f314c5a 100644
+--- a/notas/interface/views/dailyplans.py
++++ b/notas/interface/views/dailyplans.py
+@@ -104,15 +104,39 @@ def dailyplan_share(request, pk):
+             item_name=dailyplan.name,
+         )
+ 
+-        send_mail(
+-            subject=subject,
+-            message=message,
+-            from_email=settings.DEFAULT_FROM_EMAIL,
+-            recipient_list=[email],
+-        )
++        email_sent = False
++        try:
++            email_sent = bool(send_mail(
++                subject=subject,
++                message=message,
++                from_email=settings.DEFAULT_FROM_EMAIL,
++                recipient_list=[email],
++                fail_silently=False,
++            ))
++        except Exception:
++            email_sent = False
++
++        if share.accepted_by_id:
++            messages.success(
++                request,
++                "Compartiste este plan diario. Como el correo pertenece a una cuenta existente, ya está disponible en su Inbox.",
++            )
++        elif email_sent:
++            messages.success(
++                request,
++                "Compartiste este plan diario. Enviamos el correo de invitación al destinatario.",
++            )
++        else:
++            messages.warning(
++                request,
++                "Se creó la invitación, pero no se pudo enviar el correo. Revisa la configuración de email.",
++            )
+ 
+         return redirect("dailyplan_detail", pk=dailyplan.pk)
+ 
++    if request.method == "POST":
++        messages.error(request, "No se pudo compartir. Revisa el correo ingresado.")
++
+     return render(
+         request,
+         "notas/dailyplans/share.html",
+diff --git a/notas/interface/views/meals.py b/notas/interface/views/meals.py
+index 8d12296..6b49346 100644
+--- a/notas/interface/views/meals.py
++++ b/notas/interface/views/meals.py
+@@ -108,15 +108,39 @@ def meal_share(request, pk):
+             item_name=meal.name,
+         )
+ 
+-        send_mail(
+-            subject=subject,
+-            message=message,
+-            from_email=settings.DEFAULT_FROM_EMAIL,
+-            recipient_list=[email],
+-        )
++        email_sent = False
++        try:
++            email_sent = bool(send_mail(
++                subject=subject,
++                message=message,
++                from_email=settings.DEFAULT_FROM_EMAIL,
++                recipient_list=[email],
++                fail_silently=False,
++            ))
++        except Exception:
++            email_sent = False
++
++        if share.accepted_by_id:
++            messages.success(
++                request,
++                "Compartiste esta comida. Como el correo pertenece a una cuenta existente, ya está disponible en su Inbox.",
++            )
++        elif email_sent:
++            messages.success(
++                request,
++                "Compartiste esta comida. Enviamos el correo de invitación al destinatario.",
++            )
++        else:
++            messages.warning(
++                request,
++                "Se creó la invitación, pero no se pudo enviar el correo. Revisa la configuración de email.",
++            )
+ 
+         return redirect("meal_detail", pk=meal.pk)
+ 
++    if request.method == "POST":
++        messages.error(request, "No se pudo compartir. Revisa el correo ingresado.")
++
+     return render(
+         request,
+         "notas/meals/share.html",
+diff --git a/notas/templates/notas/dailyplans/share.html b/notas/templates/notas/dailyplans/share.html
+index 20f6118..d2f1794 100644
+--- a/notas/templates/notas/dailyplans/share.html
++++ b/notas/templates/notas/dailyplans/share.html
+@@ -18,11 +18,11 @@
+ 
+     <h2>Comparte: {{ dailyplan.name }}</h2>
+ 
+-    <form method="post">
++    <form method="post" action="{% url 'dailyplan_share' dailyplan.pk %}">
+       {% csrf_token %}
+       {{ form.as_p }}
+       <div class="btn-block">
+-        <button  type="submit" class="btn-cancel-create">Cancelar</button>
++        <a href="{% url 'dailyplan_detail' dailyplan.pk %}" class="btn-cancel-create">Cancelar</a>
+         <button type="submit"  class="btn-continue">Compartir</button>
+       </div>
+     </form>
+diff --git a/notas/templates/notas/meals/share.html b/notas/templates/notas/meals/share.html
+index ce2480c..1f95cf4 100644
+--- a/notas/templates/notas/meals/share.html
++++ b/notas/templates/notas/meals/share.html
+@@ -18,11 +18,11 @@
+ 
+     <h2>Comparte: {{ meal.name }}</h2>
+ 
+-    <form method="post">
++    <form method="post" action="{% url 'meal_share' meal.pk %}">
+       {% csrf_token %}
+       {{ form.as_p }}
+       <div class="btn-block">
+-        <button  type="submit" class="btn-cancel-create">Cancelar</button>
++        <a href="{% url 'meal_detail' meal.pk %}" class="btn-cancel-create">Cancelar</a>
+         <button type="submit"  class="btn-continue">Compartir</button>
+       </div>
+     </form>

@@ -108,14 +108,38 @@ def meal_share(request, pk):
             item_name=meal.name,
         )
 
-        send_mail(
-            subject=subject,
-            message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[email],
-        )
+        email_sent = False
+        try:
+            email_sent = bool(send_mail(
+                subject=subject,
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[email],
+                fail_silently=False,
+            ))
+        except Exception:
+            email_sent = False
+
+        if share.accepted_by_id:
+            messages.success(
+                request,
+                "Compartiste esta comida. Como el correo pertenece a una cuenta existente, ya está disponible en su Inbox.",
+            )
+        elif email_sent:
+            messages.success(
+                request,
+                "Compartiste esta comida. Enviamos el correo de invitación al destinatario.",
+            )
+        else:
+            messages.warning(
+                request,
+                "Se creó la invitación, pero no se pudo enviar el correo. Revisa la configuración de email.",
+            )
 
         return redirect("meal_detail", pk=meal.pk)
+
+    if request.method == "POST":
+        messages.error(request, "No se pudo compartir. Revisa el correo ingresado.")
 
     return render(
         request,

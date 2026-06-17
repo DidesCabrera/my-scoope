@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from django.contrib.auth import get_user_model
 from django.db import transaction
 
 from notas.domain.models import DailyPlan, DailyPlanShare, Meal, MealShare
@@ -49,7 +50,29 @@ class MealShareRemoveResult:
 
 
 
+def _find_recipient_user_by_email(email: str):
+    if not email:
+        return None
 
+    User = get_user_model()
+    return (
+        User.objects
+        .filter(email__iexact=email.strip())
+        .order_by("id")
+        .first()
+    )
+
+
+def _share_delivery_fields_for_email(email: str):
+    recipient_user = _find_recipient_user_by_email(email)
+    if recipient_user is None:
+        return {}
+
+    return {
+        "accepted_by": recipient_user,
+        "dismissed": False,
+        "removed": False,
+    }
 
 
 @transaction.atomic
@@ -64,16 +87,32 @@ def create_dailyplan_share(
     if not clean_email:
         raise ValueError("recipient_email_required")
 
+    delivery_defaults = _share_delivery_fields_for_email(clean_email)
+
     share, created = DailyPlanShare.objects.get_or_create(
         sender=sender,
         recipient_email=clean_email,
         dailyplan=dailyplan,
+        defaults=delivery_defaults,
     )
 
-    if share.removed or share.dismissed:
+    update_fields = []
+
+    recipient_user = delivery_defaults.get("accepted_by")
+    if recipient_user is not None and share.accepted_by_id != recipient_user.id:
+        share.accepted_by = recipient_user
+        update_fields.append("accepted_by")
+
+    if share.removed:
         share.removed = False
+        update_fields.append("removed")
+
+    if share.dismissed:
         share.dismissed = False
-        share.save(update_fields=["removed", "dismissed"])
+        update_fields.append("dismissed")
+
+    if update_fields:
+        share.save(update_fields=update_fields)
 
     return DailyPlanShareCreateResult(
         share=share,
@@ -142,16 +181,32 @@ def create_meal_share(
     if not clean_email:
         raise ValueError("recipient_email_required")
 
+    delivery_defaults = _share_delivery_fields_for_email(clean_email)
+
     share, created = MealShare.objects.get_or_create(
         sender=sender,
         recipient_email=clean_email,
         meal=meal,
+        defaults=delivery_defaults,
     )
 
-    if share.removed or share.dismissed:
+    update_fields = []
+
+    recipient_user = delivery_defaults.get("accepted_by")
+    if recipient_user is not None and share.accepted_by_id != recipient_user.id:
+        share.accepted_by = recipient_user
+        update_fields.append("accepted_by")
+
+    if share.removed:
         share.removed = False
+        update_fields.append("removed")
+
+    if share.dismissed:
         share.dismissed = False
-        share.save(update_fields=["removed", "dismissed"])
+        update_fields.append("dismissed")
+
+    if update_fields:
+        share.save(update_fields=update_fields)
 
     return MealShareCreateResult(
         share=share,
