@@ -1,0 +1,44 @@
+--- a/miapp/settings/base.py
++++ b/miapp/settings/base.py
+@@ -151,23 +151,34 @@
+ # EMAIL
+ # ==============================
+ 
+-EMAIL_HOST = os.environ.get("EMAIL_HOST", "")
++def _env_bool(name: str, default: bool = False) -> bool:
++    value = os.environ.get(name)
++    if value is None:
++        return default
++    return value.strip().lower() in {"1", "true", "yes", "on"}
++
++
++EMAIL_HOST = os.environ.get("EMAIL_HOST", "").strip()
+ EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND") or (
+     "django.core.mail.backends.smtp.EmailBackend"
+     if EMAIL_HOST
+     else "django.core.mail.backends.console.EmailBackend"
+ )
+-DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@notas.com")
+ EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+ EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+ EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+-EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "false").lower() in {"1", "true", "yes", "on"}
+-EMAIL_USE_TLS = (
+-    os.environ.get("EMAIL_USE_TLS", "true").lower() in {"1", "true", "yes", "on"}
+-    and not EMAIL_USE_SSL
+-)
++
++# Resend SMTP on port 465 uses SSL. If SSL is enabled, TLS must stay off.
++EMAIL_USE_SSL = _env_bool("EMAIL_USE_SSL", False)
++EMAIL_USE_TLS = _env_bool("EMAIL_USE_TLS", bool(EMAIL_HOST) and not EMAIL_USE_SSL) and not EMAIL_USE_SSL
+ EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", "10"))
+ 
++DEFAULT_FROM_EMAIL = os.environ.get(
++    "DEFAULT_FROM_EMAIL",
++    "My Scoope <no-reply@myscoope.com>",
++)
++SERVER_EMAIL = os.environ.get("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
++
+ 
+ # ==============================
+ # SITES
