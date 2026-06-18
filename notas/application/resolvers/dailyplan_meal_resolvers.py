@@ -125,6 +125,20 @@ DAILYPLAN_MEAL_ACTION_DEFINITIONS = {
         "capability": "can_edit_own_content",
     },
 
+    "share": {
+        "label": "Compartir",
+        "method": "get",
+        "icon": "send",
+        "order": 55,
+        "desktop_position": "inline",
+        "mobile_position": "menu",
+        "get_url": lambda dpm, context=None: reverse(
+            "dailyplanmeal_share",
+            args=[dpm.dailyplan.id, dpm.id],
+        ),
+        "capability": "can_edit_own_content",
+    },
+
 }
 
 # ==================================================
@@ -139,6 +153,7 @@ DAILYPLAN_MEAL_ACTIONS_BY_VIEWMODE = {
     DAILYPLAN_MEAL_VIEWMODE_DETAIL: [
         "back_dp_detail",
         "rename",
+        "share",
         "save_to_library",
         "replace",
         "edit",

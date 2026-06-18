@@ -9,7 +9,12 @@
   {% if vm.content.list_mode == "delete" %}
     {% include "components/list_panel_inbox_delete.html" with inbox_items=vm.content.inbox_items %}
   {% else %}
-    {% if vm.content.favorites_only %}
+    {% if vm.content.scope == "sent" %}
+      <div class="inbox-filter-chip">
+        <i data-lucide="send" class="metadata-icon"></i>
+        Mostrando enviados
+      </div>
+    {% elif vm.content.favorites_only %}
       <div class="inbox-filter-chip">
         <i data-lucide="star" class="metadata-icon"></i>
         Mostrando favoritos
@@ -17,7 +22,7 @@
     {% endif %}
 
     {% for item in vm.content.inbox_items %}
-      <article class="card proposal-list-card inbox-list-card inbox-list-card--{{ item.kind }}{% if item.is_favorite %} is-favorite{% endif %}{% if not item.is_read %} is-unread{% endif %}">
+      <article class="card proposal-list-card inbox-list-card inbox-list-card--{{ item.kind }} inbox-list-card--{{ item.direction }}{% if item.is_favorite %} is-favorite{% endif %}{% if item.direction == "received" and not item.is_read %} is-unread{% endif %}">
         <div class="proposal-list-card__main">
           <div class="proposal-list-card__title-block">
             <div class="proposal-list-card__copy">
@@ -25,18 +30,32 @@
             </div>
           </div>
 
-          <p class="proposal-received-date proposal-list-card__received-date">
-            {{ item.received_at_label }} · {{ item.sender }}
-          </p>
+          <div class="proposal-received-date-row proposal-list-card__received-date-row">
+            {% if item.direction == "received" %}
+              <span class="proposal-read-badge{% if item.is_read %} proposal-read-badge--open{% else %} proposal-read-badge--closed{% endif %}" aria-label="{% if item.is_read %}Inbox abierto{% else %}Inbox no abierto{% endif %}">
+                <i data-lucide="{% if item.is_read %}mail-open{% else %}mail{% endif %}" class="proposal-read-badge__icon"></i>
+              </span>
+            {% else %}
+              <span class="proposal-read-badge proposal-read-badge--open" aria-label="Inbox enviado">
+                <i data-lucide="send" class="proposal-read-badge__icon"></i>
+              </span>
+            {% endif %}
+            <p class="proposal-received-date proposal-list-card__received-date">
+              {{ item.received_at_label }}
+            </p>
+            <span class="proposal-shared-by proposal-list-card__shared-by">
+              <i data-lucide="send" class="proposal-shared-by__icon" aria-hidden="true"></i>
+              <span class="proposal-shared-by__label">
+                {% if item.sender_label %}<span class="proposal-shared-by__prefix">{{ item.sender_label }}</span>{% endif %}
+                <span class="proposal-shared-by__name">{{ item.sender }}</span>
+              </span>
+            </span>
+          </div>
 
           <div class="proposal-list-card__icons-title" aria-hidden="true">
             <i data-lucide="inbox" class="home-section-header-icon inbox"></i>
           </div>
         </div>
-
-        <span class="proposal-status-badge inbox-status-badge{% if item.is_favorite %} inbox-status-badge--favorite{% endif %}">
-          {% if item.is_favorite %}Favorito{% else %}Recibido{% endif %}
-        </span>
 
         <div class="proposal-list-card__summary-block inbox-list-card__summary-block">
           <span class="proposal-list-card__summary-label">Mensaje</span>
@@ -63,10 +82,17 @@
     {% empty %}
       <section class="card proposal-empty-card inbox-empty-card">
         <div>
-          <h3>No tienes inbox recibidos.</h3>
-          <p>
-            Los elementos que otras personas compartan contigo aparecerán aquí después de abrir el enlace de invitación.
-          </p>
+          {% if vm.content.scope == "sent" %}
+            <h3>No tienes inbox enviados.</h3>
+            <p>
+              Los elementos que compartas desde el detail de tus planes o comidas aparecerán aquí.
+            </p>
+          {% else %}
+            <h3>No tienes inbox recibidos.</h3>
+            <p>
+              Los elementos que otras personas compartan contigo aparecerán aquí después de abrir el enlace de invitación.
+            </p>
+          {% endif %}
         </div>
       </section>
     {% endfor %}

@@ -2,6 +2,8 @@ from django.urls import path
 from notas.interface.views.foods import (
     food_list,
     food_detail,
+    food_share,
+    food_share_accept,
     food_create,
     food_edit,
     food_delete,
@@ -81,6 +83,9 @@ from notas.interface.views.dailyplan_meals import (
     dailyplanmeal_create_meal,
     dailyplanmeal_reorder,
     dailyplanmeal_save_to_library,
+    dailyplanmeal_share,
+    dailyplanmeal_share_accept,
+    dailyplanmeal_share_detail,
 )
 
 from notas.interface.views.programs import (
@@ -105,9 +110,12 @@ from notas.interface.views.authors import (
 
 from notas.interface.views.weight import register_weight
 from notas.interface.views.inbox import (
+    inbox_attachment_detail,
+    inbox_sent_attachment_detail,
     inbox_bulk_delete,
     inbox_delete,
     inbox_detail,
+    inbox_sent_detail,
     inbox_list,
     inbox_save_attachment,
     inbox_toggle_favorite,
@@ -166,6 +174,9 @@ urlpatterns = [
     path("inbox/", inbox_list, name="inbox_list"),
     path("inbox/bulk-delete/", inbox_bulk_delete, name="inbox_bulk_delete"),
     path("inbox/<str:kind>/<int:share_id>/", inbox_detail, name="inbox_detail"),
+    path("inbox/<str:kind>/<int:share_id>/attachment/", inbox_attachment_detail, name="inbox_attachment_detail"),
+    path("inbox/sent/<str:kind>/<int:share_id>/", inbox_sent_detail, name="inbox_sent_detail"),
+    path("inbox/sent/<str:kind>/<int:share_id>/attachment/", inbox_sent_attachment_detail, name="inbox_sent_attachment_detail"),
     path("inbox/<str:kind>/<int:share_id>/delete/", inbox_delete, name="inbox_delete"),
     path("inbox/<str:kind>/<int:share_id>/favorite/", inbox_toggle_favorite, name="inbox_toggle_favorite"),
     path("inbox/<str:kind>/<int:share_id>/save/", inbox_save_attachment, name="inbox_save_attachment"),
@@ -188,6 +199,9 @@ urlpatterns = [
 
 
     path("meals/<int:pk>/share/", meal_share, name="meal_share"),
+    # Compatibility route for legacy/contextual shared meal links that may include
+    # a second segment such as an origin dailyplan id. The detail view ignores it.
+    path("meals/shared/<int:pk>/<str:dailyplan_id>/", meal_share_detail, name="meal_share_detail_context"),
     path("meals/shared/<int:pk>/", meal_share_detail, name="meal_share_detail"),
     path("meals/shared/<uuid:token>/", meal_share_accept, name="meal_share_accept"),
     path("meals/shared/<int:share_id>/dismiss/", meal_share_dismiss, name="meal_share_dismiss"),
@@ -210,6 +224,8 @@ urlpatterns = [
     path("foods/", food_list, name="food_list"),
     path("foods/reorder/", food_list_reorder, name="food_list_reorder"),
     path("foods/bulk-delete/", food_list_bulk_delete, name="food_list_bulk_delete"),
+    path("foods/<int:pk>/share/", food_share, name="food_share"),
+    path("foods/shared/<uuid:token>/", food_share_accept, name="food_share_accept"),
     path("foods/<int:pk>/", food_detail, name="food_detail"),
     path("foods/create/", food_create, name="food_create"),
     path("foods/<int:pk>/edit/", food_edit, name="food_edit"),
@@ -301,6 +317,21 @@ urlpatterns = [
         name="dailyplanmeal_create_meal"
     ),
 
+    path(
+        "dailyplans/<int:dailyplan_id>/meals/<int:pk>/share/",
+        dailyplanmeal_share,
+        name="dailyplanmeal_share",
+    ),
+    path(
+        "dailyplans/meals/shared/<uuid:token>/",
+        dailyplanmeal_share_accept,
+        name="dailyplanmeal_share_accept",
+    ),
+    path(
+        "dailyplans/meals/shared/<int:share_id>/",
+        dailyplanmeal_share_detail,
+        name="dailyplanmeal_share_detail",
+    ),
     path(
         "dailyplans/<int:dailyplan_id>/meals/<int:dailyplanmeal_id>/save-to-library/",
         dailyplanmeal_save_to_library,

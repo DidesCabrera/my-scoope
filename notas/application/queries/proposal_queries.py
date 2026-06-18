@@ -29,6 +29,15 @@ def _format_received_at(value) -> str:
     return received_at.strftime("%d-%m-%Y")
 
 
+def _proposal_status_label(status: str) -> str:
+    labels = {
+        NutritionProposal.STATUS_PENDING_REVIEW: "Pendiente",
+        NutritionProposal.STATUS_REJECTED: "Rechazada",
+        NutritionProposal.STATUS_APPLIED: "Aplicada",
+    }
+    return labels.get(status, status or "")
+
+
 def get_available_proposal_queryset(user):
     """
     Propuestas visibles para el usuario.
@@ -154,6 +163,7 @@ def build_proposal_list_item_dto(
             else None
         ),
         status=proposal.status,
+        status_label=_proposal_status_label(proposal.status),
         source=proposal.source,
         title=proposal.title,
         summary=proposal.summary,
@@ -163,6 +173,7 @@ def build_proposal_list_item_dto(
         attachment_icon=attachment["icon"],
         actions=_build_proposal_list_actions(proposal),
         is_reviewable=proposal.is_reviewable,
+        is_read=proposal.is_read,
         is_final=proposal.is_final,
         created_at=_serialize_datetime(proposal.created_at),
         received_at_label=_format_received_at(proposal.created_at),
@@ -218,6 +229,7 @@ def build_proposal_dto(
             else None
         ),
         status=proposal.status,
+        status_label=_proposal_status_label(proposal.status),
         source=proposal.source,
         title=proposal.title,
         summary=proposal.summary,
@@ -227,6 +239,7 @@ def build_proposal_dto(
         validation_summary=proposal.validation_summary or {},
         audit_events=build_proposal_audit_events_dto(proposal),
         is_reviewable=proposal.is_reviewable,
+        is_read=proposal.is_read,
         is_final=proposal.is_final,
         created_at=_serialize_datetime(proposal.created_at),
         received_at_label=_format_received_at(proposal.created_at),
@@ -246,9 +259,13 @@ def list_user_proposals(
         proposals = proposals.filter(
             status=NutritionProposal.STATUS_PENDING_REVIEW,
         )
-    elif status_filter == NutritionProposal.STATUS_APPROVED:
+    elif status_filter == NutritionProposal.STATUS_REJECTED:
         proposals = proposals.filter(
-            status=NutritionProposal.STATUS_APPROVED,
+            status=NutritionProposal.STATUS_REJECTED,
+        )
+    elif status_filter == NutritionProposal.STATUS_APPLIED:
+        proposals = proposals.filter(
+            status=NutritionProposal.STATUS_APPLIED,
         )
 
     return [

@@ -1,0 +1,96 @@
+diff --git a/notas/application/use_cases/inbox_pages.py b/notas/application/use_cases/inbox_pages.py
+index 18ad5bd..0bcdbfb 100644
+--- a/notas/application/use_cases/inbox_pages.py
++++ b/notas/application/use_cases/inbox_pages.py
+@@ -211,7 +211,7 @@ def _build_dailyplan_item(share: DailyPlanShare) -> InboxItem:
+         created_at=share.created_at,
+         received_at_label=_format_received_at(share.created_at),
+         sender=share.sender.username,
+-        sender_label="Compartido por",
++        sender_label="",
+         direction="received",
+         title=(share.subject or share.dailyplan.name),
+         summary=summary,
+@@ -262,7 +262,7 @@ def _build_meal_item(share: MealShare) -> InboxItem:
+         created_at=share.created_at,
+         received_at_label=_format_received_at(share.created_at),
+         sender=share.sender.username,
+-        sender_label="Compartido por",
++        sender_label="",
+         direction="received",
+         title=(share.subject or share.meal.name),
+         summary=summary,
+@@ -313,7 +313,7 @@ def _build_sent_dailyplan_item(share: DailyPlanShare) -> InboxItem:
+         created_at=share.created_at,
+         received_at_label=_format_received_at(share.created_at),
+         sender=share.recipient_email,
+-        sender_label="Enviado a",
++        sender_label="Para",
+         direction="sent",
+         title=(share.subject or share.dailyplan.name),
+         summary=summary,
+@@ -358,7 +358,7 @@ def _build_sent_meal_item(share: MealShare) -> InboxItem:
+         created_at=share.created_at,
+         received_at_label=_format_received_at(share.created_at),
+         sender=share.recipient_email,
+-        sender_label="Enviado a",
++        sender_label="Para",
+         direction="sent",
+         title=(share.subject or share.meal.name),
+         summary=summary,
+diff --git a/notas/interface/views/inbox.py b/notas/interface/views/inbox.py
+index a1e7d15..c56b835 100644
+--- a/notas/interface/views/inbox.py
++++ b/notas/interface/views/inbox.py
+@@ -107,7 +107,7 @@ def _build_inbox_scope_actions(*, scope: str):
+             "url": _inbox_list_url(scope="sent"),
+             "method": "get",
+             "icon": "send",
+-            "order": 20,
++            "order": 40,
+             "desktop_position": "menu",
+             "mobile_position": "menu",
+             "extra_class": "is-active" if scope == "sent" else "",
+@@ -155,7 +155,7 @@ def _build_inbox_list_actions(*, list_mode: str, favorites_only: bool, scope: st
+             "url": _inbox_list_url(scope="received"),
+             "method": "get",
+             "icon": "list",
+-            "order": 20,
++            "order": 30,
+             "desktop_position": "menu",
+             "mobile_position": "menu",
+             "extra_class": "is-active",
+@@ -167,7 +167,7 @@ def _build_inbox_list_actions(*, list_mode: str, favorites_only: bool, scope: st
+             "url": _inbox_list_url(favorites_only=True, scope=scope),
+             "method": "get",
+             "icon": "star",
+-            "order": 20,
++            "order": 30,
+             "desktop_position": "menu",
+             "mobile_position": "menu",
+         }
+@@ -181,7 +181,7 @@ def _build_inbox_list_actions(*, list_mode: str, favorites_only: bool, scope: st
+             "url": _inbox_list_url(mode="delete", favorites_only=favorites_only, scope=scope),
+             "method": "get",
+             "icon": "trash-2",
+-            "order": 10,
++            "order": 20,
+             "desktop_position": "menu",
+             "mobile_position": "menu",
+         },
+diff --git a/notas/templates/notas/inbox/list.html b/notas/templates/notas/inbox/list.html
+index 0d317f0..15418ca 100644
+--- a/notas/templates/notas/inbox/list.html
++++ b/notas/templates/notas/inbox/list.html
+@@ -45,7 +45,10 @@
+             </p>
+             <span class="proposal-shared-by proposal-list-card__shared-by">
+               <i data-lucide="send" class="proposal-shared-by__icon" aria-hidden="true"></i>
+-              <span class="proposal-shared-by__label"><span class="sr-only">{{ item.sender_label }} </span>{{ item.sender }}</span>
++              <span class="proposal-shared-by__label">
++                {% if item.sender_label %}<span class="proposal-shared-by__prefix">{{ item.sender_label }}</span>{% endif %}
++                <span class="proposal-shared-by__name">{{ item.sender }}</span>
++              </span>
+             </span>
+           </div>
+ 

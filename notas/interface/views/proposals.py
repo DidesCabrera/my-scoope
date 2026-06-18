@@ -85,7 +85,7 @@ def _get_proposal_list_status_filter(request):
         or "all"
     ).strip()
 
-    if status in {"pending_review", "approved"}:
+    if status in {"pending_review", "rejected", "applied"}:
         return status
 
     return None
@@ -202,12 +202,20 @@ def _build_proposal_list_filter_actions(active_filter: str | None):
             "order": 100,
         },
         {
-            "key": "filter_approved",
-            "label": "Ver solo aprobadas",
-            "url": _proposal_list_url(status_filter="approved"),
+            "key": "filter_applied",
+            "label": "Ver solo aplicadas",
+            "url": _proposal_list_url(status_filter="applied"),
             "icon": "check",
-            "status_filter": "approved",
+            "status_filter": "applied",
             "order": 110,
+        },
+        {
+            "key": "filter_rejected",
+            "label": "Ver solo rechazadas",
+            "url": _proposal_list_url(status_filter="rejected"),
+            "icon": "x",
+            "status_filter": "rejected",
+            "order": 115,
         },
         {
             "key": "filter_all",
@@ -373,36 +381,13 @@ def _get_proposal_model_for_action(user, proposal_id: int):
 
 
 def _build_detail_actions(proposal: dict):
-    if not proposal["is_reviewable"]:
-        return []
-
     return [
         {
-            "key": "approve",
-            "label": "Aprobar propuesta",
-            "url": reverse("proposal_approve", args=[proposal["id"]]),
+            "key": "delete",
+            "label": "Eliminar propuesta",
+            "url": reverse("proposal_delete", args=[proposal["id"]]),
             "method": "post",
-            "icon": "check",
-            "order": 10,
-            "desktop_position": "inline",
-            "mobile_position": "inline",
-        },
-        {
-            "key": "reject",
-            "label": "Rechazar propuesta",
-            "url": reverse("proposal_reject", args=[proposal["id"]]),
-            "method": "post",
-            "icon": "x",
-            "order": 20,
-            "desktop_position": "inline",
-            "mobile_position": "inline",
-        },
-        {
-            "key": "cancel",
-            "label": "Cancelar propuesta",
-            "url": reverse("proposal_cancel", args=[proposal["id"]]),
-            "method": "post",
-            "icon": "ban",
+            "icon": "trash-2",
             "order": 30,
             "desktop_position": "menu",
             "mobile_position": "menu",
@@ -547,15 +532,15 @@ def proposal_delete(request, proposal_id):
 
 @login_required
 def proposal_detail(request, proposal_id):
-    proposal = get_proposal_detail(
-        request.user,
-        proposal_id,
-    ).as_dict()
-
     get_available_proposal_queryset(request.user).filter(
         pk=proposal_id,
         is_read=False,
     ).update(is_read=True)
+
+    proposal = get_proposal_detail(
+        request.user,
+        proposal_id,
+    ).as_dict()
 
     proposal_review = build_proposal_review_vm(
         proposal,
@@ -592,15 +577,15 @@ def proposal_detail(request, proposal_id):
 
 @login_required
 def proposal_entity_detail(request, proposal_id):
-    proposal = get_proposal_detail(
-        request.user,
-        proposal_id,
-    ).as_dict()
-
     get_available_proposal_queryset(request.user).filter(
         pk=proposal_id,
         is_read=False,
     ).update(is_read=True)
+
+    proposal = get_proposal_detail(
+        request.user,
+        proposal_id,
+    ).as_dict()
 
     proposal_review = build_proposal_review_vm(
         proposal,

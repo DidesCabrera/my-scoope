@@ -1,7 +1,13 @@
 from django.db.models import Q
 
 from notas.application.services.nutrition.weight import get_current_weight
-from notas.domain.models import DailyPlanShare, MealShare, NutritionProposal
+from notas.domain.models import (
+    DailyPlanMealShare,
+    DailyPlanShare,
+    FoodShare,
+    MealShare,
+    NutritionProposal,
+)
 
 
 def user_weight(request):
@@ -15,6 +21,18 @@ def user_weight(request):
                 is_read=False,
             ).count()
             + MealShare.objects.filter(
+                accepted_by=user,
+                dismissed=False,
+                removed=False,
+                is_read=False,
+            ).count()
+            + FoodShare.objects.filter(
+                accepted_by=user,
+                dismissed=False,
+                removed=False,
+                is_read=False,
+            ).count()
+            + DailyPlanMealShare.objects.filter(
                 accepted_by=user,
                 dismissed=False,
                 removed=False,

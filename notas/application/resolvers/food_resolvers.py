@@ -70,6 +70,18 @@ FOOD_ENTITY_ACTION_DEFINITIONS = {
             "food_detail", args=[food.id]
         ),
     },
+
+    "share": {
+        "label": "Compartir",
+        "method": "get",
+        "icon": "send",
+        "order": 60,
+        "desktop_position": "inline",
+        "mobile_position": "menu",
+        "get_url": lambda food, context=None: reverse(
+            "food_share", args=[food.id]
+        ),
+    },
 }
 
 
@@ -83,6 +95,7 @@ FOOD_ENTITY_ACTIONS_BY_VIEWMODE = {
     ],
 
     FOOD_VIEWMODE_PERSONAL_DETAIL: [
+        "share",
         "edit",
         "delete",
     ],

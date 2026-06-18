@@ -1,0 +1,189 @@
+diff --git a/notas/presentation/navigation/app_registry.py b/notas/presentation/navigation/app_registry.py
+index b89a37e..7ab0f5e 100644
+--- a/notas/presentation/navigation/app_registry.py
++++ b/notas/presentation/navigation/app_registry.py
+@@ -110,6 +110,24 @@ APP_NAVIGATION = (
+                 page_icon="circle-user-round",
+                 show_in_sidebar=False,
+             ),
++            NavGroupSpec(
++                key="inbox",
++                label="Inbox",
++                icon="inbox",
++                page_icon="inbox",
++                url_name="inbox_list",
++                nav_root="inbox",
++                scope="personal",
++            ),
++            NavGroupSpec(
++                key="proposal",
++                label="Propuestas AI",
++                icon="sparkles",
++                page_icon="sparkles",
++                url_name="proposal_list",
++                nav_root="proposal",
++                scope="personal",
++            ),
+             NavGroupSpec(
+                 key="explore",
+                 label="Explorar",
+@@ -135,24 +153,6 @@ APP_NAVIGATION = (
+                     ),
+                 ),
+             ),
+-            NavGroupSpec(
+-                key="proposal",
+-                label="Propuestas AI",
+-                icon="sparkles",
+-                page_icon="sparkles",
+-                url_name="proposal_list",
+-                nav_root="proposal",
+-                scope="personal",
+-            ),
+-            NavGroupSpec(
+-                key="inbox",
+-                label="Inbox",
+-                icon="inbox",
+-                page_icon="inbox",
+-                url_name="inbox_list",
+-                nav_root="inbox",
+-                scope="personal",
+-            ),
+             NavGroupSpec(
+                 key="create",
+                 label="Crear",
+diff --git a/notas/static/notas/css/components/proposals.css b/notas/static/notas/css/components/proposals.css
+index 41df0da..c1a08ae 100644
+--- a/notas/static/notas/css/components/proposals.css
++++ b/notas/static/notas/css/components/proposals.css
+@@ -798,8 +798,8 @@ html[data-theme="dark"] .proposal-status-badge--canceled {
+ }
+ 
+ .proposal-review-action--apply {
+-  background: var(--interactive-primary);
+-  color: var(--text-inverted);
++  background: rgba(34, 197, 94, 0.14);
++  color: rgb(21, 128, 61);
+ }
+ 
+ .proposal-review-actions--final {
+@@ -811,6 +811,11 @@ html[data-theme="dark"] .proposal-review-result-link {
+   color: rgb(134, 239, 172);
+ }
+ 
++html[data-theme="dark"] .proposal-review-action--apply {
++  background: rgba(34, 197, 94, 0.16);
++  color: rgb(134, 239, 172);
++}
++
+ html[data-theme="dark"] .proposal-review-action--reject {
+   color: rgb(252, 165, 165);
+ }
+@@ -1082,6 +1087,37 @@ html[data-theme="dark"] .proposal-review-action--reject {
+   display: none;
+ }
+ 
++/* =========================================================
++   Shared by metadata for inbox
++   ========================================================= */
++
++.proposal-shared-by {
++  display: inline-flex;
++  align-items: center;
++  gap: 7px;
++  width: fit-content;
++  max-width: 100%;
++  color: var(--text-main);
++  font-size: 0.86rem;
++  font-weight: 750;
++  line-height: 1.2;
++}
++
++.proposal-shared-by__icon {
++  width: 15px;
++  height: 15px;
++  flex: 0 0 auto;
++  color: var(--interactive-primary);
++  stroke-width: 2.2;
++}
++
++.proposal-shared-by__label {
++  overflow: hidden;
++  min-width: 0;
++  text-overflow: ellipsis;
++  white-space: nowrap;
++}
++
+ /* =========================================================
+    Read state badge for proposals and inbox
+    ========================================================= */
+@@ -1105,18 +1141,18 @@ html[data-theme="dark"] .proposal-review-action--reject {
+   flex: 0 0 auto;
+   width: 28px;
+   height: 28px;
++  border: 0;
+   border-radius: 999px;
+-  background: var(--surface-card-muted);
+-  color: var(--text-muted);
+ }
+ 
+ .proposal-read-badge--closed {
+-  color: var(--text-main);
++  background: rgba(127, 29, 29, 0.46);
++  color: rgb(248, 113, 113);
+ }
+ 
+ .proposal-read-badge--open {
+-  color: var(--text-muted);
+-  opacity: 0.78;
++  background: rgba(20, 83, 45, 0.46);
++  color: rgb(134, 239, 172);
+ }
+ 
+ .proposal-read-badge__icon {
+diff --git a/notas/templates/notas/inbox/detail.html b/notas/templates/notas/inbox/detail.html
+index a074cb6..ec563ee 100644
+--- a/notas/templates/notas/inbox/detail.html
++++ b/notas/templates/notas/inbox/detail.html
+@@ -11,12 +11,17 @@
+             {{ vm.content.inbox.title }}
+           </h2>
+ 
++          <div class="proposal-shared-by proposal-review-shared-by">
++            <i data-lucide="share-2" class="proposal-shared-by__icon" aria-hidden="true"></i>
++            <span class="proposal-shared-by__label">{{ vm.content.inbox.sender }}</span>
++          </div>
++
+           <div class="proposal-received-date-row proposal-review-received-date-row">
+             <span class="proposal-read-badge{% if vm.content.inbox.is_read %} proposal-read-badge--open{% else %} proposal-read-badge--closed{% endif %}" aria-label="{% if vm.content.inbox.is_read %}Inbox abierto{% else %}Inbox no abierto{% endif %}">
+               <i data-lucide="{% if vm.content.inbox.is_read %}mail-open{% else %}mail{% endif %}" class="proposal-read-badge__icon"></i>
+             </span>
+             <p class="proposal-received-date proposal-review-received-date">
+-              {{ vm.content.inbox.received_at_label }} · enviado por {{ vm.content.inbox.sender }}
++              {{ vm.content.inbox.received_at_label }}
+             </p>
+           </div>
+ 
+diff --git a/notas/templates/notas/inbox/list.html b/notas/templates/notas/inbox/list.html
+index b003af3..d6bc9f8 100644
+--- a/notas/templates/notas/inbox/list.html
++++ b/notas/templates/notas/inbox/list.html
+@@ -25,12 +25,17 @@
+             </div>
+           </div>
+ 
++          <div class="proposal-shared-by proposal-list-card__shared-by">
++            <i data-lucide="share-2" class="proposal-shared-by__icon" aria-hidden="true"></i>
++            <span class="proposal-shared-by__label">{{ item.sender }}</span>
++          </div>
++
+           <div class="proposal-received-date-row proposal-list-card__received-date-row">
+             <span class="proposal-read-badge{% if item.is_read %} proposal-read-badge--open{% else %} proposal-read-badge--closed{% endif %}" aria-label="{% if item.is_read %}Inbox abierto{% else %}Inbox no abierto{% endif %}">
+               <i data-lucide="{% if item.is_read %}mail-open{% else %}mail{% endif %}" class="proposal-read-badge__icon"></i>
+             </span>
+             <p class="proposal-received-date proposal-list-card__received-date">
+-              {{ item.received_at_label }} · {{ item.sender }}
++              {{ item.received_at_label }}
+             </p>
+           </div>
+ 

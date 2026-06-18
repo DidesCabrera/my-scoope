@@ -1,0 +1,463 @@
+diff --git a/notas/application/use_cases/inbox_pages.py b/notas/application/use_cases/inbox_pages.py
+index e5959c0..18ad5bd 100644
+--- a/notas/application/use_cases/inbox_pages.py
++++ b/notas/application/use_cases/inbox_pages.py
+@@ -43,6 +43,8 @@ class InboxItem:
+     created_at: datetime
+     received_at_label: str
+     sender: str
++    sender_label: str
++    direction: str
+     title: str
+     summary: str
+     message: str
+@@ -102,6 +104,20 @@ def _build_actions(*, item_id: str, detail_url: str, dismiss_url: str, favorite_
+     ]
+ 
+ 
++def _build_sent_actions(*, open_url: str):
++    return [
++        {
++            "key": "attachment_detail",
++            "label": "Ver adjunto",
++            "icon": "chevron-right",
++            "url": open_url,
++            "method": "get",
++            "desktop_position": "inline",
++            "mobile_position": "inline",
++        },
++    ]
++
++
+ def _build_attachment_actions(*, open_url: str, save_url: str):
+     return [
+         {
+@@ -195,6 +211,8 @@ def _build_dailyplan_item(share: DailyPlanShare) -> InboxItem:
+         created_at=share.created_at,
+         received_at_label=_format_received_at(share.created_at),
+         sender=share.sender.username,
++        sender_label="Compartido por",
++        direction="received",
+         title=(share.subject or share.dailyplan.name),
+         summary=summary,
+         message=summary,
+@@ -244,6 +262,8 @@ def _build_meal_item(share: MealShare) -> InboxItem:
+         created_at=share.created_at,
+         received_at_label=_format_received_at(share.created_at),
+         sender=share.sender.username,
++        sender_label="Compartido por",
++        direction="received",
+         title=(share.subject or share.meal.name),
+         summary=summary,
+         message=summary,
+@@ -265,6 +285,96 @@ def _build_meal_item(share: MealShare) -> InboxItem:
+     )
+ 
+ 
++def _build_sent_dailyplan_item(share: DailyPlanShare) -> InboxItem:
++    open_url = reverse("dailyplan_shared_detail", args=[share.dailyplan_id])
++    attachment = InboxAttachment(
++        kind="dailyplan",
++        label="Plan diario enviado",
++        name=share.dailyplan.name,
++        icon="clipboard-list",
++        open_url=open_url,
++        save_url="",
++    )
++
++    summary = _share_message(
++        share,
++        f"Compartiste un plan diario con {share.recipient_email}.",
++    )
++    attachment_card = _build_dailyplan_attachment_card(share)
++    if attachment_card:
++        attachment_card.actions = _build_sent_actions(open_url=open_url)
++
++    return InboxItem(
++        id=f"sent-dailyplan-{share.id}",
++        share_id=share.id,
++        kind="dailyplan",
++        kind_label="Plan diario",
++        icon="clipboard-list",
++        created_at=share.created_at,
++        received_at_label=_format_received_at(share.created_at),
++        sender=share.recipient_email,
++        sender_label="Enviado a",
++        direction="sent",
++        title=(share.subject or share.dailyplan.name),
++        summary=summary,
++        message=summary,
++        is_favorite=False,
++        is_read=True,
++        detail_url=open_url,
++        dismiss_url="",
++        favorite_url="",
++        attachment=attachment,
++        attachment_card=attachment_card,
++        attachment_cards=[attachment_card] if attachment_card else [],
++        actions=_build_sent_actions(open_url=open_url),
++    )
++
++
++def _build_sent_meal_item(share: MealShare) -> InboxItem:
++    open_url = reverse("meal_share_detail", args=[share.meal_id])
++    attachment = InboxAttachment(
++        kind="meal",
++        label="Comida enviada",
++        name=share.meal.name,
++        icon="utensils",
++        open_url=open_url,
++        save_url="",
++    )
++
++    summary = _share_message(
++        share,
++        f"Compartiste una comida con {share.recipient_email}.",
++    )
++    attachment_card = _build_meal_attachment_card(share)
++    if attachment_card:
++        attachment_card.actions = _build_sent_actions(open_url=open_url)
++
++    return InboxItem(
++        id=f"sent-meal-{share.id}",
++        share_id=share.id,
++        kind="meal",
++        kind_label="Comida",
++        icon="utensils",
++        created_at=share.created_at,
++        received_at_label=_format_received_at(share.created_at),
++        sender=share.recipient_email,
++        sender_label="Enviado a",
++        direction="sent",
++        title=(share.subject or share.meal.name),
++        summary=summary,
++        message=summary,
++        is_favorite=False,
++        is_read=True,
++        detail_url=open_url,
++        dismiss_url="",
++        favorite_url="",
++        attachment=attachment,
++        attachment_card=attachment_card,
++        attachment_cards=[attachment_card] if attachment_card else [],
++        actions=_build_sent_actions(open_url=open_url),
++    )
++
++
+ def _dailyplan_share_queryset(user):
+     return (
+         DailyPlanShare.objects
+@@ -291,24 +401,54 @@ def _meal_share_queryset(user):
+     )
+ 
+ 
+-def build_inbox_items(user, *, favorites_only: bool = False):
+-    dailyplan_shares = _dailyplan_share_queryset(user)
+-    meal_shares = _meal_share_queryset(user)
++def _dailyplan_share_sent_queryset(user):
++    return (
++        DailyPlanShare.objects
++        .filter(sender=user, removed=False)
++        .select_related("dailyplan", "dailyplan__created_by", "dailyplan__original_author", "sender", "accepted_by")
++        .prefetch_related("dailyplan__dailyplan_meals__meal__meal_food_set__food")
++    )
++
++
++def _meal_share_sent_queryset(user):
++    return (
++        MealShare.objects
++        .filter(sender=user, removed=False)
++        .select_related("meal", "meal__created_by", "meal__original_author", "sender", "accepted_by")
++        .prefetch_related("meal__meal_food_set__food")
++    )
+ 
+-    if favorites_only:
+-        dailyplan_shares = dailyplan_shares.filter(is_favorite=True)
+-        meal_shares = meal_shares.filter(is_favorite=True)
+ 
+-    items = [
+-        *[
+-            _build_dailyplan_item(share)
+-            for share in dailyplan_shares
+-        ],
+-        *[
+-            _build_meal_item(share)
+-            for share in meal_shares
+-        ],
+-    ]
++def build_inbox_items(user, *, favorites_only: bool = False, scope: str = "received"):
++    if scope == "sent":
++        items = [
++            *[
++                _build_sent_dailyplan_item(share)
++                for share in _dailyplan_share_sent_queryset(user)
++            ],
++            *[
++                _build_sent_meal_item(share)
++                for share in _meal_share_sent_queryset(user)
++            ],
++        ]
++    else:
++        dailyplan_shares = _dailyplan_share_queryset(user)
++        meal_shares = _meal_share_queryset(user)
++
++        if favorites_only:
++            dailyplan_shares = dailyplan_shares.filter(is_favorite=True)
++            meal_shares = meal_shares.filter(is_favorite=True)
++
++        items = [
++            *[
++                _build_dailyplan_item(share)
++                for share in dailyplan_shares
++            ],
++            *[
++                _build_meal_item(share)
++                for share in meal_shares
++            ],
++        ]
+ 
+     items.sort(key=lambda item: item.created_at, reverse=True)
+     return items
+diff --git a/notas/interface/views/inbox.py b/notas/interface/views/inbox.py
+index 491a9c5..a1e7d15 100644
+--- a/notas/interface/views/inbox.py
++++ b/notas/interface/views/inbox.py
+@@ -31,6 +31,7 @@ class InboxListContentVM:
+     inbox_items: list[dict]
+     list_mode: str = "list"
+     favorites_only: bool = False
++    scope: str = "received"
+ 
+ 
+ @dataclass
+@@ -51,8 +52,15 @@ class BreadcrumbParent:
+         return self.url
+ 
+ 
+-def _normalize_inbox_list_mode(request):
++def _normalize_inbox_scope(request):
++    scope = (request.GET.get("scope") or "received").strip()
++    return scope if scope in {"received", "sent"} else "received"
++
++
++def _normalize_inbox_list_mode(request, *, scope: str = "received"):
+     mode = (request.GET.get("mode") or "list").strip()
++    if scope == "sent":
++        return "list"
+     return mode if mode in {"list", "delete"} else "list"
+ 
+ 
+@@ -61,14 +69,17 @@ def _get_favorites_only(request) -> bool:
+     return value in {"1", "true", "yes"}
+ 
+ 
+-def _inbox_list_url(*, mode: str | None = None, favorites_only: bool = False):
++def _inbox_list_url(*, mode: str | None = None, favorites_only: bool = False, scope: str = "received"):
+     base_url = reverse("inbox_list")
+     params = []
+ 
+-    if mode and mode != "list":
++    if scope == "sent":
++        params.append("scope=sent")
++
++    if mode and mode != "list" and scope != "sent":
+         params.append(f"mode={mode}")
+ 
+-    if favorites_only:
++    if favorites_only and scope != "sent":
+         params.append("favorites=1")
+ 
+     if not params:
+@@ -77,13 +88,43 @@ def _inbox_list_url(*, mode: str | None = None, favorites_only: bool = False):
+     return f"{base_url}?{'&'.join(params)}"
+ 
+ 
+-def _build_inbox_list_actions(*, list_mode: str, favorites_only: bool):
++def _build_inbox_scope_actions(*, scope: str):
++    return [
++        {
++            "key": "received",
++            "label": "Recibidos",
++            "url": _inbox_list_url(),
++            "method": "get",
++            "icon": "inbox",
++            "order": 10,
++            "desktop_position": "menu",
++            "mobile_position": "menu",
++            "extra_class": "is-active" if scope == "received" else "",
++        },
++        {
++            "key": "sent",
++            "label": "Enviados",
++            "url": _inbox_list_url(scope="sent"),
++            "method": "get",
++            "icon": "send",
++            "order": 20,
++            "desktop_position": "menu",
++            "mobile_position": "menu",
++            "extra_class": "is-active" if scope == "sent" else "",
++        },
++    ]
++
++
++def _build_inbox_list_actions(*, list_mode: str, favorites_only: bool, scope: str):
++    if scope == "sent":
++        return _build_inbox_scope_actions(scope=scope)
++
+     if list_mode == "delete":
+         return [
+             {
+                 "key": "exit_delete_mode",
+                 "label": "Cerrar",
+-                "url": _inbox_list_url(favorites_only=favorites_only),
++                "url": _inbox_list_url(favorites_only=favorites_only, scope=scope),
+                 "method": "get",
+                 "icon": "check",
+                 "order": 10,
+@@ -111,7 +152,7 @@ def _build_inbox_list_actions(*, list_mode: str, favorites_only: bool):
+         {
+             "key": "show_all",
+             "label": "Mostrar todos",
+-            "url": reverse("inbox_list"),
++            "url": _inbox_list_url(scope="received"),
+             "method": "get",
+             "icon": "list",
+             "order": 20,
+@@ -123,7 +164,7 @@ def _build_inbox_list_actions(*, list_mode: str, favorites_only: bool):
+         else {
+             "key": "show_favorites",
+             "label": "Mostrar favoritos",
+-            "url": _inbox_list_url(favorites_only=True),
++            "url": _inbox_list_url(favorites_only=True, scope=scope),
+             "method": "get",
+             "icon": "star",
+             "order": 20,
+@@ -133,10 +174,11 @@ def _build_inbox_list_actions(*, list_mode: str, favorites_only: bool):
+     )
+ 
+     return [
++        *_build_inbox_scope_actions(scope=scope),
+         {
+             "key": "enter_delete_mode",
+             "label": "Eliminar Inbox",
+-            "url": _inbox_list_url(mode="delete", favorites_only=favorites_only),
++            "url": _inbox_list_url(mode="delete", favorites_only=favorites_only, scope=scope),
+             "method": "get",
+             "icon": "trash-2",
+             "order": 10,
+@@ -182,18 +224,21 @@ def _inbox_parent():
+ 
+ @login_required
+ def inbox_list(request):
+-    list_mode = _normalize_inbox_list_mode(request)
+-    favorites_only = _get_favorites_only(request)
++    scope = _normalize_inbox_scope(request)
++    list_mode = _normalize_inbox_list_mode(request, scope=scope)
++    favorites_only = _get_favorites_only(request) if scope == "received" else False
+     items = [
+         asdict(item)
+         for item in build_inbox_items(
+             request.user,
+             favorites_only=favorites_only,
++            scope=scope,
+         )
+     ]
+-    request.session["inbox_notification_seen_count"] = sum(
+-        1 for item in items if not item.get("is_read")
+-    )
++    if scope == "received":
++        request.session["inbox_notification_seen_count"] = sum(
++            1 for item in items if not item.get("is_read")
++        )
+ 
+     content_vm = InboxListContentVM(
+         header=build_page_header(
+@@ -201,11 +246,13 @@ def inbox_list(request):
+             actions=_build_inbox_list_actions(
+                 list_mode=list_mode,
+                 favorites_only=favorites_only,
++                scope=scope,
+             ),
+         ),
+         inbox_items=items,
+         list_mode=list_mode,
+         favorites_only=favorites_only,
++        scope=scope,
+     )
+ 
+     ui_vm = build_ui_vm(INBOX_VIEWMODE_LIST)
+diff --git a/notas/templates/notas/inbox/list.html b/notas/templates/notas/inbox/list.html
+index b2ee580..0d317f0 100644
+--- a/notas/templates/notas/inbox/list.html
++++ b/notas/templates/notas/inbox/list.html
+@@ -9,7 +9,12 @@
+   {% if vm.content.list_mode == "delete" %}
+     {% include "components/list_panel_inbox_delete.html" with inbox_items=vm.content.inbox_items %}
+   {% else %}
+-    {% if vm.content.favorites_only %}
++    {% if vm.content.scope == "sent" %}
++      <div class="inbox-filter-chip">
++        <i data-lucide="send" class="metadata-icon"></i>
++        Mostrando enviados
++      </div>
++    {% elif vm.content.favorites_only %}
+       <div class="inbox-filter-chip">
+         <i data-lucide="star" class="metadata-icon"></i>
+         Mostrando favoritos
+@@ -17,7 +22,7 @@
+     {% endif %}
+ 
+     {% for item in vm.content.inbox_items %}
+-      <article class="card proposal-list-card inbox-list-card inbox-list-card--{{ item.kind }}{% if item.is_favorite %} is-favorite{% endif %}{% if not item.is_read %} is-unread{% endif %}">
++      <article class="card proposal-list-card inbox-list-card inbox-list-card--{{ item.kind }} inbox-list-card--{{ item.direction }}{% if item.is_favorite %} is-favorite{% endif %}{% if item.direction == "received" and not item.is_read %} is-unread{% endif %}">
+         <div class="proposal-list-card__main">
+           <div class="proposal-list-card__title-block">
+             <div class="proposal-list-card__copy">
+@@ -26,15 +31,21 @@
+           </div>
+ 
+           <div class="proposal-received-date-row proposal-list-card__received-date-row">
+-            <span class="proposal-read-badge{% if item.is_read %} proposal-read-badge--open{% else %} proposal-read-badge--closed{% endif %}" aria-label="{% if item.is_read %}Inbox abierto{% else %}Inbox no abierto{% endif %}">
+-              <i data-lucide="{% if item.is_read %}mail-open{% else %}mail{% endif %}" class="proposal-read-badge__icon"></i>
+-            </span>
++            {% if item.direction == "received" %}
++              <span class="proposal-read-badge{% if item.is_read %} proposal-read-badge--open{% else %} proposal-read-badge--closed{% endif %}" aria-label="{% if item.is_read %}Inbox abierto{% else %}Inbox no abierto{% endif %}">
++                <i data-lucide="{% if item.is_read %}mail-open{% else %}mail{% endif %}" class="proposal-read-badge__icon"></i>
++              </span>
++            {% else %}
++              <span class="proposal-read-badge proposal-read-badge--open" aria-label="Inbox enviado">
++                <i data-lucide="send" class="proposal-read-badge__icon"></i>
++              </span>
++            {% endif %}
+             <p class="proposal-received-date proposal-list-card__received-date">
+               {{ item.received_at_label }}
+             </p>
+             <span class="proposal-shared-by proposal-list-card__shared-by">
+               <i data-lucide="send" class="proposal-shared-by__icon" aria-hidden="true"></i>
+-              <span class="proposal-shared-by__label">{{ item.sender }}</span>
++              <span class="proposal-shared-by__label"><span class="sr-only">{{ item.sender_label }} </span>{{ item.sender }}</span>
+             </span>
+           </div>
+ 
+@@ -68,10 +79,17 @@
+     {% empty %}
+       <section class="card proposal-empty-card inbox-empty-card">
+         <div>
+-          <h3>No tienes inbox recibidos.</h3>
+-          <p>
+-            Los elementos que otras personas compartan contigo aparecerán aquí después de abrir el enlace de invitación.
+-          </p>
++          {% if vm.content.scope == "sent" %}
++            <h3>No tienes inbox enviados.</h3>
++            <p>
++              Los elementos que compartas desde el detail de tus planes o comidas aparecerán aquí.
++            </p>
++          {% else %}
++            <h3>No tienes inbox recibidos.</h3>
++            <p>
++              Los elementos que otras personas compartan contigo aparecerán aquí después de abrir el enlace de invitación.
++            </p>
++          {% endif %}
+         </div>
+       </section>
+     {% endfor %}

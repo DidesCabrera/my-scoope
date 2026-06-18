@@ -1,38 +1,30 @@
 {% if vm.content.proposal_review.status.is_reviewable %}
   <section class="proposal-review-actions">
     <div class="proposal-review-actions-copy">
-      <p class="proposal-review-eyebrow">Revisión humana</p>
+      <p class="proposal-review-eyebrow">Decisión de propuesta</p>
       <p class="proposal-review-actions-text">
-        Puedes aprobar o rechazar esta propuesta. Aprobar todavía no aplica cambios reales.
+        Puedes aplicar esta propuesta para guardarla en tu librería o rechazarla.
       </p>
     </div>
 
     <div class="proposal-review-actions-buttons">
-      <form method="post" action="{% url 'proposal_approve' vm.content.proposal_review.proposal_id %}">
-        {% csrf_token %}
-        <button type="submit" class="proposal-review-action proposal-review-action--approve">
-          Aprobar propuesta
-        </button>
-      </form>
+      {% if vm.content.proposal_review.can_apply %}
+        <form method="post" action="{% url 'proposal_apply' vm.content.proposal_review.proposal_id %}">
+          {% csrf_token %}
+          <button type="submit" class="proposal-review-action proposal-review-action--apply">
+            Aplicar
+          </button>
+        </form>
+      {% endif %}
 
       <form method="post" action="{% url 'proposal_reject' vm.content.proposal_review.proposal_id %}">
         {% csrf_token %}
         <button type="submit" class="proposal-review-action proposal-review-action--reject">
-          Rechazar propuesta
-        </button>
-      </form>
-
-      <form method="post" action="{% url 'proposal_cancel' vm.content.proposal_review.proposal_id %}">
-        {% csrf_token %}
-        <button type="submit" class="proposal-review-action proposal-review-action--cancel">
-          Cancelar propuesta
+          Rechazar
         </button>
       </form>
     </div>
   </section>
-
-{% elif vm.content.proposal_review.can_apply %}
-  {# El botón de aplicación vive en review_apply_action.html. #}
 
 {% elif vm.content.proposal_review.status.is_applied %}
   {% if not vm.content.proposal_review.applied_result %}
@@ -43,14 +35,6 @@
       </p>
     </section>
   {% endif %}
-
-{% elif vm.content.proposal_review.status.is_approved and not vm.content.proposal_review.payload.is_apply_supported %}
-  <section class="proposal-review-actions proposal-review-actions--final">
-    <p class="proposal-review-eyebrow">Propuesta aprobada</p>
-    <p class="proposal-review-actions-text">
-      Esta propuesta fue aprobada, pero su tipo todavía no tiene aplicación automática desde la interfaz.
-    </p>
-  </section>
 
 {% else %}
   <section class="proposal-review-actions proposal-review-actions--final">

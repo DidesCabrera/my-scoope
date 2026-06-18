@@ -558,14 +558,14 @@
     align-items: center;
     justify-content: center;
     flex: 0 0 auto;
-    min-width: 18px;
-    height: 18px;
+    min-width: 22px;
+    height: 22px;
     padding: 0 5px;
     margin-left: auto;
     border-radius: 999px;
     background: var(--color-inbox, #ff4343);
     color: #ffffff;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 800;
     line-height: 18px;
     text-align: center;
@@ -581,10 +581,10 @@
     position: absolute;
     top: 5px;
     right: 6px;
-    min-width: 16px;
-    height: 16px;
+    min-width: 24px;
+    height: 24px;
     padding: 0 4px;
     margin-left: 0;
-    font-size: 9px;
+    font-size: 12px;
     line-height: 16px;
 }

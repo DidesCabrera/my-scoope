@@ -14,6 +14,7 @@ APPLY_SUPPORTED_INTENTS = {
 @dataclass(frozen=True)
 class ProposalReviewStatusVM:
     status: str
+    label: str
     is_reviewable: bool
     is_final: bool
     is_approved: bool
@@ -156,6 +157,7 @@ class ProposalReviewVM:
     created_by_username: str | None
     reviewed_by_username: str | None
     received_at_label: str
+    is_read: bool
     status: ProposalReviewStatusVM
     payload: ProposalReviewPayloadVM
     can_apply: bool
@@ -171,6 +173,7 @@ class ProposalReviewVM:
             "created_by_username": self.created_by_username,
             "reviewed_by_username": self.reviewed_by_username,
             "received_at_label": self.received_at_label,
+            "is_read": self.is_read,
             "status": self.status.as_dict(),
             "payload": self.payload.as_dict(),
             "can_apply": self.can_apply,
@@ -212,8 +215,10 @@ def build_proposal_review_vm(
         created_by_username=proposal.get("created_by_username"),
         reviewed_by_username=proposal.get("reviewed_by_username"),
         received_at_label=proposal.get("received_at_label", ""),
+        is_read=bool(proposal.get("is_read")),
         status=ProposalReviewStatusVM(
             status=status,
+            label=_status_label(status),
             is_reviewable=bool(proposal.get("is_reviewable")),
             is_final=bool(proposal.get("is_final")),
             is_approved=status == "approved",
@@ -305,6 +310,16 @@ def _build_review_attachments(
         },
     ]
 
+def _status_label(status: str) -> str:
+    labels = {
+        "pending_review": "Pendiente",
+        "rejected": "Rechazada",
+        "applied": "Aplicada",
+        "approved": "Pendiente",
+        "cancelled": "Rechazada",
+    }
+    return labels.get(status, status or "")
+
 def _can_apply_proposal(
     *,
     status: str,
@@ -312,7 +327,7 @@ def _can_apply_proposal(
     applied_at: Any,
 ) -> bool:
     return (
-        status == "approved"
+        status in {"pending_review", "approved"}
         and is_apply_supported
         and not applied_at
     )

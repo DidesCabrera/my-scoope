@@ -1,0 +1,1365 @@
+diff --git a/notas/application/resolvers/dailyplan_meal_resolvers.py b/notas/application/resolvers/dailyplan_meal_resolvers.py
+index dbe2bea..190d29b 100644
+--- a/notas/application/resolvers/dailyplan_meal_resolvers.py
++++ b/notas/application/resolvers/dailyplan_meal_resolvers.py
+@@ -125,6 +125,20 @@ DAILYPLAN_MEAL_ACTION_DEFINITIONS = {
+         "capability": "can_edit_own_content",
+     },
+ 
++    "share": {
++        "label": "Compartir",
++        "method": "get",
++        "icon": "send",
++        "order": 55,
++        "desktop_position": "inline",
++        "mobile_position": "menu",
++        "get_url": lambda dpm, context=None: reverse(
++            "dailyplanmeal_share",
++            args=[dpm.dailyplan.id, dpm.id],
++        ),
++        "capability": "can_edit_own_content",
++    },
++
+ }
+ 
+ # ==================================================
+@@ -139,6 +153,7 @@ DAILYPLAN_MEAL_ACTIONS_BY_VIEWMODE = {
+     DAILYPLAN_MEAL_VIEWMODE_DETAIL: [
+         "back_dp_detail",
+         "rename",
++        "share",
+         "save_to_library",
+         "replace",
+         "edit",
+diff --git a/notas/application/resolvers/food_resolvers.py b/notas/application/resolvers/food_resolvers.py
+index 8712b18..17d54c8 100644
+--- a/notas/application/resolvers/food_resolvers.py
++++ b/notas/application/resolvers/food_resolvers.py
+@@ -70,6 +70,18 @@ FOOD_ENTITY_ACTION_DEFINITIONS = {
+             "food_detail", args=[food.id]
+         ),
+     },
++
++    "share": {
++        "label": "Compartir",
++        "method": "get",
++        "icon": "send",
++        "order": 60,
++        "desktop_position": "inline",
++        "mobile_position": "menu",
++        "get_url": lambda food, context=None: reverse(
++            "food_share", args=[food.id]
++        ),
++    },
+ }
+ 
+ 
+@@ -83,6 +95,7 @@ FOOD_ENTITY_ACTIONS_BY_VIEWMODE = {
+     ],
+ 
+     FOOD_VIEWMODE_PERSONAL_DETAIL: [
++        "share",
+         "edit",
+         "delete",
+     ],
+diff --git a/notas/application/services/commands/share_commands.py b/notas/application/services/commands/share_commands.py
+index c57adcb..1f3474f 100644
+--- a/notas/application/services/commands/share_commands.py
++++ b/notas/application/services/commands/share_commands.py
+@@ -3,7 +3,16 @@ from dataclasses import dataclass
+ from django.contrib.auth import get_user_model
+ from django.db import transaction
+ 
+-from notas.domain.models import DailyPlan, DailyPlanShare, Meal, MealShare
++from notas.domain.models import (
++    DailyPlan,
++    DailyPlanMeal,
++    DailyPlanMealShare,
++    DailyPlanShare,
++    Food,
++    FoodShare,
++    Meal,
++    MealShare,
++)
+ 
+ 
+ @dataclass(frozen=True)
+@@ -27,6 +36,30 @@ class DailyPlanShareRemoveResult:
+     share: DailyPlanShare
+ 
+ 
++
++
++@dataclass(frozen=True)
++class FoodShareCreateResult:
++    share: FoodShare
++    created: bool
++
++
++@dataclass(frozen=True)
++class FoodShareAcceptResult:
++    share: FoodShare
++
++
++@dataclass(frozen=True)
++class DailyPlanMealShareCreateResult:
++    share: DailyPlanMealShare
++    created: bool
++
++
++@dataclass(frozen=True)
++class DailyPlanMealShareAcceptResult:
++    share: DailyPlanMealShare
++
++
+ @dataclass(frozen=True)
+ class MealShareCreateResult:
+     share: MealShare
+@@ -314,3 +347,148 @@ def remove_meal_share(
+     return MealShareRemoveResult(
+         share=share,
+     )
++
++@transaction.atomic
++def create_food_share(
++    *,
++    sender,
++    food: Food,
++    recipient_email: str,
++    subject: str | None = None,
++    message: str | None = None,
++) -> FoodShareCreateResult:
++    clean_email = (recipient_email or "").strip().lower()
++    clean_message = _clean_share_message(message)
++    clean_subject = _clean_share_subject(subject, food.name)
++
++    if not clean_email:
++        raise ValueError("recipient_email_required")
++
++    delivery_defaults = _share_delivery_fields_for_email(clean_email)
++    defaults = {
++        **delivery_defaults,
++        "message": clean_message,
++        "subject": clean_subject,
++        "is_read": False,
++    }
++
++    share, created = FoodShare.objects.get_or_create(
++        sender=sender,
++        recipient_email=clean_email,
++        food=food,
++        defaults=defaults,
++    )
++
++    update_fields = []
++    recipient_user = delivery_defaults.get("accepted_by")
++    if recipient_user is not None and share.accepted_by_id != recipient_user.id:
++        share.accepted_by = recipient_user
++        update_fields.append("accepted_by")
++
++    if share.message != clean_message:
++        share.message = clean_message
++        update_fields.append("message")
++
++    if share.subject != clean_subject:
++        share.subject = clean_subject
++        update_fields.append("subject")
++
++    if share.is_read:
++        share.is_read = False
++        update_fields.append("is_read")
++
++    if share.removed:
++        share.removed = False
++        update_fields.append("removed")
++
++    if share.dismissed:
++        share.dismissed = False
++        update_fields.append("dismissed")
++
++    if update_fields:
++        share.save(update_fields=update_fields)
++
++    return FoodShareCreateResult(share=share, created=created)
++
++
++@transaction.atomic
++def accept_food_share(*, share: FoodShare, user) -> FoodShareAcceptResult:
++    share.accepted_by = user
++    share.dismissed = False
++    share.removed = False
++    share.is_read = False
++    share.save(update_fields=["accepted_by", "dismissed", "removed", "is_read"])
++    return FoodShareAcceptResult(share=share)
++
++
++@transaction.atomic
++def create_dailyplanmeal_share(
++    *,
++    sender,
++    dailyplan_meal: DailyPlanMeal,
++    recipient_email: str,
++    subject: str | None = None,
++    message: str | None = None,
++) -> DailyPlanMealShareCreateResult:
++    clean_email = (recipient_email or "").strip().lower()
++    clean_message = _clean_share_message(message)
++    clean_subject = _clean_share_subject(subject, dailyplan_meal.meal.name)
++
++    if not clean_email:
++        raise ValueError("recipient_email_required")
++
++    delivery_defaults = _share_delivery_fields_for_email(clean_email)
++    defaults = {
++        **delivery_defaults,
++        "message": clean_message,
++        "subject": clean_subject,
++        "is_read": False,
++    }
++
++    share, created = DailyPlanMealShare.objects.get_or_create(
++        sender=sender,
++        recipient_email=clean_email,
++        dailyplan_meal=dailyplan_meal,
++        defaults=defaults,
++    )
++
++    update_fields = []
++    recipient_user = delivery_defaults.get("accepted_by")
++    if recipient_user is not None and share.accepted_by_id != recipient_user.id:
++        share.accepted_by = recipient_user
++        update_fields.append("accepted_by")
++
++    if share.message != clean_message:
++        share.message = clean_message
++        update_fields.append("message")
++
++    if share.subject != clean_subject:
++        share.subject = clean_subject
++        update_fields.append("subject")
++
++    if share.is_read:
++        share.is_read = False
++        update_fields.append("is_read")
++
++    if share.removed:
++        share.removed = False
++        update_fields.append("removed")
++
++    if share.dismissed:
++        share.dismissed = False
++        update_fields.append("dismissed")
++
++    if update_fields:
++        share.save(update_fields=update_fields)
++
++    return DailyPlanMealShareCreateResult(share=share, created=created)
++
++
++@transaction.atomic
++def accept_dailyplanmeal_share(*, share: DailyPlanMealShare, user) -> DailyPlanMealShareAcceptResult:
++    share.accepted_by = user
++    share.dismissed = False
++    share.removed = False
++    share.is_read = False
++    share.save(update_fields=["accepted_by", "dismissed", "removed", "is_read"])
++    return DailyPlanMealShareAcceptResult(share=share)
+diff --git a/notas/application/services/notifications/share_emails.py b/notas/application/services/notifications/share_emails.py
+index c5a968d..a955b4f 100644
+--- a/notas/application/services/notifications/share_emails.py
++++ b/notas/application/services/notifications/share_emails.py
+@@ -6,6 +6,8 @@ from django.urls import reverse
+ SHARE_KIND_LABELS = {
+     "dailyplan": "plan diario",
+     "meal": "comida",
++    "food": "alimento",
++    "dpm": "comida de plan",
+ }
+ 
+ 
+@@ -20,11 +22,12 @@ def build_share_invitation_email(
+ ):
+     sender_name = share.sender.username
+     kind_label = SHARE_KIND_LABELS.get(kind, "elemento")
+-    accept_url_name = (
+-        "dailyplan_share_accept"
+-        if kind == "dailyplan"
+-        else "meal_share_accept"
+-    )
++    accept_url_name = {
++        "dailyplan": "dailyplan_share_accept",
++        "meal": "meal_share_accept",
++        "food": "food_share_accept",
++        "dpm": "dailyplanmeal_share_accept",
++    }.get(kind, "meal_share_accept")
+ 
+     clean_subject = (custom_subject or getattr(share, "subject", "") or item_name).strip()
+     clean_message = (custom_message or getattr(share, "message", "") or "").strip()
+diff --git a/notas/application/use_cases/inbox_pages.py b/notas/application/use_cases/inbox_pages.py
+index 0bcdbfb..3ffe5d0 100644
+--- a/notas/application/use_cases/inbox_pages.py
++++ b/notas/application/use_cases/inbox_pages.py
+@@ -4,7 +4,12 @@ from datetime import datetime
+ from django.urls import reverse
+ from django.utils import timezone
+ 
+-from notas.domain.models import DailyPlanShare, MealShare
++from notas.domain.models import (
++    DailyPlanMealShare,
++    DailyPlanShare,
++    FoodShare,
++    MealShare,
++)
+ from notas.presentation.composition.viewmodel.dailyplan.dailyplan_content import (
+     build_dailyplan_list_content_data,
+ )
+@@ -17,8 +22,10 @@ from notas.presentation.composition.viewmodel.meal.meal_content import (
+ from notas.presentation.composition.viewmodel.meal.list_meal_builder import (
+     build_meal_list_vm,
+ )
++from notas.presentation.composition.viewmodel.food.list_foods_builder import build_food_list_vm
+ from notas.presentation.config.viewmodel_config import (
+     DAILYPLAN_VIEWMODE_SHARED_LIST,
++    FOOD_VIEWMODE_PERSONAL_LIST,
+     MEAL_VIEWMODE_SHARED_LIST,
+ )
+ 
+@@ -183,6 +190,43 @@ def _build_meal_attachment_card(share: MealShare):
+     return card
+ 
+ 
++def _build_food_attachment_card(share: FoodShare):
++    list_vm = build_food_list_vm(
++        [share.food],
++        share.accepted_by or share.sender,
++        FOOD_VIEWMODE_PERSONAL_LIST,
++    )
++    if not list_vm.child_cards:
++        return None
++
++    open_url = reverse("food_detail", args=[share.food_id])
++    save_url = reverse("inbox_save_attachment", args=["food", share.id])
++    card = list_vm.child_cards[0]
++    card.actions = _build_attachment_actions(open_url=open_url, save_url=save_url)
++    if card.titulo:
++        card.titulo.url = open_url
++    return card
++
++
++def _build_dpm_attachment_card(share: DailyPlanMealShare):
++    content_data = build_meal_list_content_data(
++        [share.dailyplan_meal.meal],
++        share.accepted_by or share.sender,
++        MEAL_VIEWMODE_SHARED_LIST,
++    )
++    list_vm = build_meal_list_vm(content_data)
++    if not list_vm.child_cards:
++        return None
++
++    open_url = reverse("dailyplanmeal_share_detail", args=[share.id])
++    save_url = reverse("inbox_save_attachment", args=["dpm", share.id])
++    card = list_vm.child_cards[0]
++    card.actions = _build_attachment_actions(open_url=open_url, save_url=save_url)
++    if card.titulo:
++        card.titulo.url = open_url
++    return card
++
++
+ def _build_dailyplan_item(share: DailyPlanShare) -> InboxItem:
+     detail_url = reverse("inbox_detail", args=["dailyplan", share.id])
+     dismiss_url = reverse("inbox_delete", args=["dailyplan", share.id])
+@@ -285,6 +329,88 @@ def _build_meal_item(share: MealShare) -> InboxItem:
+     )
+ 
+ 
++
++def _build_food_item(share: FoodShare) -> InboxItem:
++    detail_url = reverse("inbox_detail", args=["food", share.id])
++    dismiss_url = reverse("inbox_delete", args=["food", share.id])
++    favorite_url = reverse("inbox_toggle_favorite", args=["food", share.id])
++    attachment = InboxAttachment(
++        kind="food",
++        label="Alimento compartido",
++        name=share.food.name,
++        icon="apple",
++        open_url=reverse("food_detail", args=[share.food_id]),
++        save_url=reverse("inbox_save_attachment", args=["food", share.id]),
++    )
++    summary = _share_message(share, f"{share.sender.username} compartió un alimento contigo.")
++    attachment_card = _build_food_attachment_card(share)
++    return InboxItem(
++        id=f"food-{share.id}",
++        share_id=share.id,
++        kind="food",
++        kind_label="Alimento",
++        icon="apple",
++        created_at=share.created_at,
++        received_at_label=_format_received_at(share.created_at),
++        sender=share.sender.username,
++        sender_label="",
++        direction="received",
++        title=(share.subject or share.food.name),
++        summary=summary,
++        message=summary,
++        is_favorite=share.is_favorite,
++        is_read=share.is_read,
++        detail_url=detail_url,
++        dismiss_url=dismiss_url,
++        favorite_url=favorite_url,
++        attachment=attachment,
++        attachment_card=attachment_card,
++        attachment_cards=[attachment_card] if attachment_card else [],
++        actions=_build_actions(item_id=f"food-{share.id}", detail_url=detail_url, dismiss_url=dismiss_url, favorite_url=favorite_url, is_favorite=share.is_favorite),
++    )
++
++
++def _build_dpm_item(share: DailyPlanMealShare) -> InboxItem:
++    dpm = share.dailyplan_meal
++    detail_url = reverse("inbox_detail", args=["dpm", share.id])
++    dismiss_url = reverse("inbox_delete", args=["dpm", share.id])
++    favorite_url = reverse("inbox_toggle_favorite", args=["dpm", share.id])
++    open_url = reverse("dailyplanmeal_share_detail", args=[share.id])
++    attachment = InboxAttachment(
++        kind="dpm",
++        label="Comida de plan compartida",
++        name=dpm.meal.name,
++        icon="utensils",
++        open_url=open_url,
++        save_url=reverse("inbox_save_attachment", args=["dpm", share.id]),
++    )
++    summary = _share_message(share, f"{share.sender.username} compartió una comida de plan contigo.")
++    attachment_card = _build_dpm_attachment_card(share)
++    return InboxItem(
++        id=f"dpm-{share.id}",
++        share_id=share.id,
++        kind="dpm",
++        kind_label="Comida de plan",
++        icon="utensils",
++        created_at=share.created_at,
++        received_at_label=_format_received_at(share.created_at),
++        sender=share.sender.username,
++        sender_label="",
++        direction="received",
++        title=(share.subject or dpm.meal.name),
++        summary=summary,
++        message=summary,
++        is_favorite=share.is_favorite,
++        is_read=share.is_read,
++        detail_url=detail_url,
++        dismiss_url=dismiss_url,
++        favorite_url=favorite_url,
++        attachment=attachment,
++        attachment_card=attachment_card,
++        attachment_cards=[attachment_card] if attachment_card else [],
++        actions=_build_actions(item_id=f"dpm-{share.id}", detail_url=detail_url, dismiss_url=dismiss_url, favorite_url=favorite_url, is_favorite=share.is_favorite),
++    )
++
+ def _build_sent_dailyplan_item(share: DailyPlanShare) -> InboxItem:
+     open_url = reverse("dailyplan_shared_detail", args=[share.dailyplan_id])
+     attachment = InboxAttachment(
+@@ -375,6 +501,39 @@ def _build_sent_meal_item(share: MealShare) -> InboxItem:
+     )
+ 
+ 
++
++def _build_sent_food_item(share: FoodShare) -> InboxItem:
++    open_url = reverse("food_detail", args=[share.food_id])
++    attachment = InboxAttachment(kind="food", label="Alimento enviado", name=share.food.name, icon="apple", open_url=open_url, save_url="")
++    summary = _share_message(share, f"Compartiste un alimento con {share.recipient_email}.")
++    attachment_card = _build_food_attachment_card(share)
++    if attachment_card:
++        attachment_card.actions = _build_sent_actions(open_url=open_url)
++    return InboxItem(
++        id=f"sent-food-{share.id}", share_id=share.id, kind="food", kind_label="Alimento", icon="apple", created_at=share.created_at,
++        received_at_label=_format_received_at(share.created_at), sender=share.recipient_email, sender_label="Para", direction="sent",
++        title=(share.subject or share.food.name), summary=summary, message=summary, is_favorite=False, is_read=True, detail_url=open_url,
++        dismiss_url="", favorite_url="", attachment=attachment, attachment_card=attachment_card, attachment_cards=[attachment_card] if attachment_card else [],
++        actions=_build_sent_actions(open_url=open_url),
++    )
++
++
++def _build_sent_dpm_item(share: DailyPlanMealShare) -> InboxItem:
++    dpm = share.dailyplan_meal
++    open_url = reverse("dailyplanmeal_share_detail", args=[share.id])
++    attachment = InboxAttachment(kind="dpm", label="Comida de plan enviada", name=dpm.meal.name, icon="utensils", open_url=open_url, save_url="")
++    summary = _share_message(share, f"Compartiste una comida de plan con {share.recipient_email}.")
++    attachment_card = _build_dpm_attachment_card(share)
++    if attachment_card:
++        attachment_card.actions = _build_sent_actions(open_url=open_url)
++    return InboxItem(
++        id=f"sent-dpm-{share.id}", share_id=share.id, kind="dpm", kind_label="Comida de plan", icon="utensils", created_at=share.created_at,
++        received_at_label=_format_received_at(share.created_at), sender=share.recipient_email, sender_label="Para", direction="sent",
++        title=(share.subject or dpm.meal.name), summary=summary, message=summary, is_favorite=False, is_read=True, detail_url=open_url,
++        dismiss_url="", favorite_url="", attachment=attachment, attachment_card=attachment_card, attachment_cards=[attachment_card] if attachment_card else [],
++        actions=_build_sent_actions(open_url=open_url),
++    )
++
+ def _dailyplan_share_queryset(user):
+     return (
+         DailyPlanShare.objects
+@@ -401,6 +560,40 @@ def _meal_share_queryset(user):
+     )
+ 
+ 
++
++def _food_share_queryset(user):
++    return (
++        FoodShare.objects
++        .filter(accepted_by=user, dismissed=False, removed=False)
++        .select_related("food", "food__created_by", "sender", "accepted_by")
++    )
++
++
++def _dpm_share_queryset(user):
++    return (
++        DailyPlanMealShare.objects
++        .filter(accepted_by=user, dismissed=False, removed=False)
++        .select_related("dailyplan_meal", "dailyplan_meal__meal", "dailyplan_meal__dailyplan", "dailyplan_meal__meal__created_by", "sender", "accepted_by")
++        .prefetch_related("dailyplan_meal__meal__meal_food_set__food")
++    )
++
++
++def _food_share_sent_queryset(user):
++    return (
++        FoodShare.objects
++        .filter(sender=user, removed=False)
++        .select_related("food", "food__created_by", "sender", "accepted_by")
++    )
++
++
++def _dpm_share_sent_queryset(user):
++    return (
++        DailyPlanMealShare.objects
++        .filter(sender=user, removed=False)
++        .select_related("dailyplan_meal", "dailyplan_meal__meal", "dailyplan_meal__dailyplan", "dailyplan_meal__meal__created_by", "sender", "accepted_by")
++        .prefetch_related("dailyplan_meal__meal__meal_food_set__food")
++    )
++
+ def _dailyplan_share_sent_queryset(user):
+     return (
+         DailyPlanShare.objects
+@@ -430,14 +623,26 @@ def build_inbox_items(user, *, favorites_only: bool = False, scope: str = "recei
+                 _build_sent_meal_item(share)
+                 for share in _meal_share_sent_queryset(user)
+             ],
++            *[
++                _build_sent_food_item(share)
++                for share in _food_share_sent_queryset(user)
++            ],
++            *[
++                _build_sent_dpm_item(share)
++                for share in _dpm_share_sent_queryset(user)
++            ],
+         ]
+     else:
+         dailyplan_shares = _dailyplan_share_queryset(user)
+         meal_shares = _meal_share_queryset(user)
++        food_shares = _food_share_queryset(user)
++        dpm_shares = _dpm_share_queryset(user)
+ 
+         if favorites_only:
+             dailyplan_shares = dailyplan_shares.filter(is_favorite=True)
+             meal_shares = meal_shares.filter(is_favorite=True)
++            food_shares = food_shares.filter(is_favorite=True)
++            dpm_shares = dpm_shares.filter(is_favorite=True)
+ 
+         items = [
+             *[
+@@ -448,6 +653,14 @@ def build_inbox_items(user, *, favorites_only: bool = False, scope: str = "recei
+                 _build_meal_item(share)
+                 for share in meal_shares
+             ],
++            *[
++                _build_food_item(share)
++                for share in food_shares
++            ],
++            *[
++                _build_dpm_item(share)
++                for share in dpm_shares
++            ],
+         ]
+ 
+     items.sort(key=lambda item: item.created_at, reverse=True)
+@@ -471,6 +684,20 @@ def get_inbox_item_or_404(user, *, kind: str, share_id: int):
+         )
+         return _build_meal_item(share)
+ 
++    if kind == "food":
++        share = get_object_or_404(
++            _food_share_queryset(user),
++            id=share_id,
++        )
++        return _build_food_item(share)
++
++    if kind == "dpm":
++        share = get_object_or_404(
++            _dpm_share_queryset(user),
++            id=share_id,
++        )
++        return _build_dpm_item(share)
++
+     raise ValueError("unsupported_inbox_kind")
+ 
+ 
+@@ -489,4 +716,16 @@ def get_inbox_share_or_404(user, *, kind: str, share_id: int):
+             id=share_id,
+         )
+ 
++    if kind == "food":
++        return get_object_or_404(
++            _food_share_queryset(user),
++            id=share_id,
++        )
++
++    if kind == "dpm":
++        return get_object_or_404(
++            _dpm_share_queryset(user),
++            id=share_id,
++        )
++
+     raise ValueError("unsupported_inbox_kind")
+diff --git a/notas/context_processors.py b/notas/context_processors.py
+index a0cd797..ff46c6e 100644
+--- a/notas/context_processors.py
++++ b/notas/context_processors.py
+@@ -1,7 +1,13 @@
+ from django.db.models import Q
+ 
+ from notas.application.services.nutrition.weight import get_current_weight
+-from notas.domain.models import DailyPlanShare, MealShare, NutritionProposal
++from notas.domain.models import (
++    DailyPlanMealShare,
++    DailyPlanShare,
++    FoodShare,
++    MealShare,
++    NutritionProposal,
++)
+ 
+ 
+ def user_weight(request):
+@@ -20,6 +26,18 @@ def user_weight(request):
+                 removed=False,
+                 is_read=False,
+             ).count()
++            + FoodShare.objects.filter(
++                accepted_by=user,
++                dismissed=False,
++                removed=False,
++                is_read=False,
++            ).count()
++            + DailyPlanMealShare.objects.filter(
++                accepted_by=user,
++                dismissed=False,
++                removed=False,
++                is_read=False,
++            ).count()
+         )
+         proposal_unread_count = (
+             NutritionProposal.objects.filter(
+diff --git a/notas/domain/models.py b/notas/domain/models.py
+index ad2df32..9b05aef 100644
+--- a/notas/domain/models.py
++++ b/notas/domain/models.py
+@@ -1542,3 +1542,84 @@ class MealShare(models.Model):
+ 
+     def __str__(self):
+         return f"{self.sender} shared {self.meal} → {self.recipient_email}"
++
++class FoodShare(models.Model):
++    sender = models.ForeignKey(
++        User,
++        on_delete=models.CASCADE,
++        related_name="food_shares_sent"
++    )
++
++    recipient_email = models.EmailField()
++
++    food = models.ForeignKey(
++        Food,
++        on_delete=models.CASCADE,
++        related_name="shares"
++    )
++
++    token = models.UUIDField(default=uuid.uuid4, unique=True)
++
++    accepted_by = models.ForeignKey(
++        User,
++        null=True,
++        blank=True,
++        on_delete=models.SET_NULL,
++        related_name="food_shares_received"
++    )
++
++    created_at = models.DateTimeField(auto_now_add=True)
++
++    dismissed = models.BooleanField(default=False)
++    removed = models.BooleanField(default=False)
++    is_favorite = models.BooleanField(default=False)
++    is_read = models.BooleanField(default=False)
++    message = models.TextField(blank=True)
++    subject = models.CharField(max_length=160, blank=True)
++
++    class Meta:
++        unique_together = ("recipient_email", "food")
++
++    def __str__(self):
++        return f"{self.sender} shared {self.food} → {self.recipient_email}"
++
++
++class DailyPlanMealShare(models.Model):
++    sender = models.ForeignKey(
++        User,
++        on_delete=models.CASCADE,
++        related_name="dailyplanmeal_shares_sent"
++    )
++
++    recipient_email = models.EmailField()
++
++    dailyplan_meal = models.ForeignKey(
++        DailyPlanMeal,
++        on_delete=models.CASCADE,
++        related_name="shares"
++    )
++
++    token = models.UUIDField(default=uuid.uuid4, unique=True)
++
++    accepted_by = models.ForeignKey(
++        User,
++        null=True,
++        blank=True,
++        on_delete=models.SET_NULL,
++        related_name="dailyplanmeal_shares_received"
++    )
++
++    created_at = models.DateTimeField(auto_now_add=True)
++
++    dismissed = models.BooleanField(default=False)
++    removed = models.BooleanField(default=False)
++    is_favorite = models.BooleanField(default=False)
++    is_read = models.BooleanField(default=False)
++    message = models.TextField(blank=True)
++    subject = models.CharField(max_length=160, blank=True)
++
++    class Meta:
++        unique_together = ("recipient_email", "dailyplan_meal")
++
++    def __str__(self):
++        return f"{self.sender} shared {self.dailyplan_meal} → {self.recipient_email}"
+diff --git a/notas/interface/forms/forms.py b/notas/interface/forms/forms.py
+index 8172729..3e42788 100644
+--- a/notas/interface/forms/forms.py
++++ b/notas/interface/forms/forms.py
+@@ -58,6 +58,64 @@ class MealShareForm(forms.Form):
+     )
+ 
+ 
++class FoodShareForm(forms.Form):
++    recipient_email = forms.EmailField(
++        label="Email del destinatario",
++        widget=forms.EmailInput(attrs={
++            "class": "input-create entity-form__input",
++            "placeholder": "correo@ejemplo.com",
++            "autocomplete": "email",
++        }),
++    )
++    subject = forms.CharField(
++        label="Asunto",
++        max_length=160,
++        widget=forms.TextInput(attrs={
++            "class": "input-create entity-form__input",
++            "placeholder": "Asunto del mensaje",
++            "autocomplete": "off",
++        }),
++    )
++    message = forms.CharField(
++        label="Mensaje",
++        required=False,
++        widget=forms.Textarea(attrs={
++            "class": "input-create entity-form__input entity-form__textarea",
++            "placeholder": "Escribe un mensaje breve para acompañar el elemento compartido...",
++            "rows": 4,
++        }),
++    )
++
++
++class DailyPlanMealShareForm(forms.Form):
++    recipient_email = forms.EmailField(
++        label="Email del destinatario",
++        widget=forms.EmailInput(attrs={
++            "class": "input-create entity-form__input",
++            "placeholder": "correo@ejemplo.com",
++            "autocomplete": "email",
++        }),
++    )
++    subject = forms.CharField(
++        label="Asunto",
++        max_length=160,
++        widget=forms.TextInput(attrs={
++            "class": "input-create entity-form__input",
++            "placeholder": "Asunto del mensaje",
++            "autocomplete": "off",
++        }),
++    )
++    message = forms.CharField(
++        label="Mensaje",
++        required=False,
++        widget=forms.Textarea(attrs={
++            "class": "input-create entity-form__input entity-form__textarea",
++            "placeholder": "Escribe un mensaje breve para acompañar el elemento compartido...",
++            "rows": 4,
++        }),
++    )
++
++
+ from notas.domain.models import Food
+ 
+ class FoodEditForm(forms.ModelForm):
+diff --git a/notas/interface/views/dailyplan_meals.py b/notas/interface/views/dailyplan_meals.py
+index cb38333..d6f9844 100644
+--- a/notas/interface/views/dailyplan_meals.py
++++ b/notas/interface/views/dailyplan_meals.py
+@@ -4,7 +4,7 @@ from django.views.decorators.http import require_POST
+ from django.http import Http404, HttpResponseForbidden, JsonResponse
+ from django.contrib import messages
+ from notas.application.services.access.capabilities import get_capabilities
+-from notas.domain.models import Meal, MealFood, DailyPlan, DailyPlanMeal, Food
++from notas.domain.models import Meal, MealFood, DailyPlan, DailyPlanMeal, Food, DailyPlanMealShare
+ from notas.presentation.config.viewmodel_config import (
+     DAILYPLAN_MEAL_VIEWMODE_EDIT,
+     DAILYPLAN_MEAL_VIEWMODE_DRAFT_DEEP_EDIT,
+@@ -19,6 +19,7 @@ from django.core.serializers.json import DjangoJSONEncoder
+ 
+ from notas.presentation.viewmodels.base_vm import BaseVM
+ from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
++from notas.presentation.composition.viewmodel.components.builder_headers import build_page_header
+ from notas.application.services.commands.meal_commands import (
+     fork_meal_for_dailyplan,
+     save_dailyplan_meal_to_library,
+@@ -26,6 +27,14 @@ from notas.application.services.commands.meal_commands import (
+ )
+ 
+ from django.urls import reverse
++from notas.interface.forms.forms import DailyPlanMealShareForm
++from notas.application.services.commands.share_commands import (
++    accept_dailyplanmeal_share,
++    create_dailyplanmeal_share,
++)
++from django.core.mail import send_mail
++from django.conf import settings
++from notas.application.services.notifications.share_emails import build_share_invitation_email
+ 
+ from notas.application.use_cases.dpm_pages import (
+     get_dpm_detail_page_data,
+@@ -385,3 +394,111 @@ def dailyplanmeal_create_meal(request, dailyplan_id, dailyplanmeal_id):
+         dailyplan_id=result.dailyplan.id,
+         pk=result.dailyplan_meal.id,
+     )
++
++
++@login_required
++def dailyplanmeal_share(request, dailyplan_id, pk):
++    dpm = get_object_or_404(
++        DailyPlanMeal.objects.select_related("dailyplan", "meal"),
++        pk=pk,
++        dailyplan_id=dailyplan_id,
++        dailyplan__created_by=request.user,
++    )
++
++    form = DailyPlanMealShareForm(request.POST or None, initial={"subject": dpm.meal.name})
++
++    if request.method == "POST" and form.is_valid():
++        email = form.cleaned_data["recipient_email"]
++        share_subject = form.cleaned_data.get("subject", dpm.meal.name)
++        message = form.cleaned_data.get("message", "")
++
++        result = create_dailyplanmeal_share(
++            sender=request.user,
++            recipient_email=email,
++            dailyplan_meal=dpm,
++            subject=share_subject,
++            message=message,
++        )
++        share = result.share
++
++        email_subject, email_message = build_share_invitation_email(
++            request=request,
++            share=share,
++            kind="dpm",
++            item_name=dpm.meal.name,
++            custom_subject=share_subject,
++            custom_message=message,
++        )
++
++        email_sent = False
++        try:
++            email_sent = bool(send_mail(
++                subject=email_subject,
++                message=email_message,
++                from_email=settings.DEFAULT_FROM_EMAIL,
++                recipient_list=[email],
++                fail_silently=False,
++            ))
++        except Exception:
++            email_sent = False
++
++        if share.accepted_by_id:
++            messages.success(request, "Compartiste esta comida de plan. Como el correo pertenece a una cuenta existente, ya está disponible en su Inbox.")
++        elif email_sent:
++            messages.success(request, "Compartiste esta comida de plan. Enviamos el correo de invitación al destinatario.")
++        else:
++            messages.warning(request, "Se creó la invitación, pero no se pudo enviar el correo. Revisa la configuración de email.")
++
++        return redirect("dailyplan_meal_detail", dailyplan_id=dpm.dailyplan_id, pk=dpm.pk)
++
++    if request.method == "POST":
++        messages.error(request, "No se pudo compartir. Revisa el correo ingresado.")
++
++    return render(request, "notas/dailyplan_meals/share.html", {"dpm": dpm, "form": form})
++
++
++@login_required
++def dailyplanmeal_share_accept(request, token):
++    share = get_object_or_404(DailyPlanMealShare, token=token)
++    accept_dailyplanmeal_share(share=share, user=request.user)
++    return redirect("inbox_list")
++
++
++@login_required
++def dailyplanmeal_share_detail(request, share_id):
++    share = get_object_or_404(
++        DailyPlanMealShare.objects.select_related("sender", "accepted_by", "dailyplan_meal", "dailyplan_meal__dailyplan", "dailyplan_meal__meal"),
++        pk=share_id,
++        removed=False,
++    )
++
++    if share.sender_id != request.user.id and share.accepted_by_id != request.user.id:
++        return HttpResponseForbidden()
++
++    dpm = share.dailyplan_meal
++    page = get_dpm_detail_page_data(
++        user=share.sender,
++        dailyplan_id=dpm.dailyplan_id,
++        dpm_id=dpm.id,
++        viewmode=DAILYPLAN_MEAL_VIEWMODE_DETAIL,
++        request_get=request.GET,
++    )
++
++    content_vm = build_dpm_detail_vm(page.detail_content_data)
++    content_vm.header = build_page_header(actions=[])
++
++    ui_vm = build_ui_vm(
++        DAILYPLAN_MEAL_VIEWMODE_DETAIL,
++        instance=page.meal,
++        back_config={"type": "url", "value": reverse("inbox_list")},
++    )
++
++    base_vm = BaseVM(ui=ui_vm, content=content_vm)
++    context = base_vm.as_context()
++    context["foods_json"] = "[]"
++    context["food_picker_json"] = "{}"
++    context["can_edit_foods"] = False
++    context["selected_food_id"] = None
++    context["editing_mealfood_id"] = None
++
++    return render(request, "notas/dailyplan_meals/detail.html", context)
+diff --git a/notas/interface/views/foods.py b/notas/interface/views/foods.py
+index 69123c8..cebe04c 100644
+--- a/notas/interface/views/foods.py
++++ b/notas/interface/views/foods.py
+@@ -4,11 +4,11 @@ from django.contrib.auth.decorators import login_required
+ from django.views.decorators.http import require_POST
+ from django.urls import reverse
+ from django.utils.http import url_has_allowed_host_and_scheme
+-from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
++from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, JsonResponse
+ from openpyxl import Workbook
+ from django.contrib import messages
+ from notas.application.services.access.capabilities import get_capabilities
+-from notas.domain.models import Food
++from notas.domain.models import Food, FoodShare
+ from notas.application.queries.food_picker_queries import (
+     get_food_picker_item_by_id,
+     list_food_picker_items,
+@@ -24,7 +24,7 @@ from notas.interface.routing.food import food_url
+ from notas.presentation.composition.viewmodel.food.list_foods_builder import build_food_list_vm
+ from notas.presentation.composition.viewmodel.food.detail_food_builder import build_food_detail_vm
+ from notas.presentation.composition.viewmodel.food.edit_food_builder import build_edit_food_vm
+-from notas.interface.forms.forms import FoodEditForm
++from notas.interface.forms.forms import FoodEditForm, FoodShareForm
+ 
+ from notas.application.services.commands.food_commands import (
+     bulk_create_foods,
+@@ -32,6 +32,13 @@ from notas.application.services.commands.food_commands import (
+     delete_food,
+     update_food,
+ )
++from notas.application.services.commands.share_commands import (
++    accept_food_share,
++    create_food_share,
++)
++from django.core.mail import send_mail
++from django.conf import settings
++from notas.application.services.notifications.share_emails import build_share_invitation_email
+ 
+ 
+ from notas.presentation.viewmodels.base_vm import BaseVM
+@@ -435,3 +442,69 @@ def foods_json(request):
+ 
+ 
+ 
++
++
++@login_required
++def food_share(request, pk):
++    food = get_object_or_404(Food, pk=pk, created_by=request.user, is_active=True)
++
++    if food.created_by != request.user:
++        return HttpResponseForbidden()
++
++    form = FoodShareForm(request.POST or None, initial={"subject": food.name})
++
++    if request.method == "POST" and form.is_valid():
++        email = form.cleaned_data["recipient_email"]
++        share_subject = form.cleaned_data.get("subject", food.name)
++        message = form.cleaned_data.get("message", "")
++
++        result = create_food_share(
++            sender=request.user,
++            recipient_email=email,
++            food=food,
++            subject=share_subject,
++            message=message,
++        )
++        share = result.share
++
++        email_subject, email_message = build_share_invitation_email(
++            request=request,
++            share=share,
++            kind="food",
++            item_name=food.name,
++            custom_subject=share_subject,
++            custom_message=message,
++        )
++
++        email_sent = False
++        try:
++            email_sent = bool(send_mail(
++                subject=email_subject,
++                message=email_message,
++                from_email=settings.DEFAULT_FROM_EMAIL,
++                recipient_list=[email],
++                fail_silently=False,
++            ))
++        except Exception:
++            email_sent = False
++
++        if share.accepted_by_id:
++            messages.success(request, "Compartiste este alimento. Como el correo pertenece a una cuenta existente, ya está disponible en su Inbox.")
++        elif email_sent:
++            messages.success(request, "Compartiste este alimento. Enviamos el correo de invitación al destinatario.")
++        else:
++            messages.warning(request, "Se creó la invitación, pero no se pudo enviar el correo. Revisa la configuración de email.")
++
++        return redirect("food_detail", pk=food.pk)
++
++    if request.method == "POST":
++        messages.error(request, "No se pudo compartir. Revisa el correo ingresado.")
++
++    return render(request, "notas/foods/share.html", {"food": food, "form": form})
++
++
++@login_required
++def food_share_accept(request, token):
++    share = get_object_or_404(FoodShare, token=token)
++    accept_food_share(share=share, user=request.user)
++    return redirect("inbox_list")
+diff --git a/notas/interface/views/inbox.py b/notas/interface/views/inbox.py
+index c56b835..01ea69d 100644
+--- a/notas/interface/views/inbox.py
++++ b/notas/interface/views/inbox.py
+@@ -8,7 +8,8 @@ from django.urls import reverse
+ from django.views.decorators.http import require_POST
+ 
+ from notas.application.services.commands.dailyplan_commands import save_dailyplan
+-from notas.application.services.commands.meal_commands import save_meal
++from notas.application.services.commands.food_commands import create_food
++from notas.application.services.commands.meal_commands import save_dailyplan_meal_to_library, save_meal
+ from notas.application.use_cases.inbox_pages import (
+     build_inbox_items,
+     get_inbox_item_or_404,
+@@ -309,6 +310,7 @@ def inbox_detail(request, kind, share_id):
+         instance=inbox["title"],
+         back_config={"type": "parent"},
+     )
++    ui_vm.icon = inbox["attachment"]["icon"]
+ 
+     base_vm = BaseVM(
+         ui=ui_vm,
+@@ -416,4 +418,20 @@ def inbox_save_attachment(request, kind, share_id):
+         messages.success(request, "Comida guardada en Mi librería.")
+         return redirect("meal_detail", pk=saved.pk)
+ 
++    if kind == "food":
++        result = create_food(
++            user=request.user,
++            name=share.food.name,
++            protein=share.food.protein,
++            carbs=share.food.carbs,
++            fat=share.food.fat,
++        )
++        messages.success(request, "Alimento guardado en Mi librería.")
++        return redirect("food_detail", pk=result.food.pk)
++
++    if kind == "dpm":
++        saved = save_dailyplan_meal_to_library(share.dailyplan_meal, request.user)
++        messages.success(request, "Comida guardada en Mi librería.")
++        return redirect("meal_detail", pk=saved.pk)
++
+     return HttpResponseBadRequest("Tipo de inbox no soportado.")
+diff --git a/notas/migrations/0032_food_dpm_shares.py b/notas/migrations/0032_food_dpm_shares.py
+new file mode 100644
+index 0000000..eba92d5
+--- /dev/null
++++ b/notas/migrations/0032_food_dpm_shares.py
+@@ -0,0 +1,59 @@
++# Generated by ChatGPT
++
++import uuid
++from django.conf import settings
++from django.db import migrations, models
++import django.db.models.deletion
++
++
++class Migration(migrations.Migration):
++
++    dependencies = [
++        ("notas", "0031_simplify_proposal_statuses"),
++        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
++    ]
++
++    operations = [
++        migrations.CreateModel(
++            name="FoodShare",
++            fields=[
++                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
++                ("recipient_email", models.EmailField(max_length=254)),
++                ("token", models.UUIDField(default=uuid.uuid4, unique=True)),
++                ("created_at", models.DateTimeField(auto_now_add=True)),
++                ("dismissed", models.BooleanField(default=False)),
++                ("removed", models.BooleanField(default=False)),
++                ("is_favorite", models.BooleanField(default=False)),
++                ("is_read", models.BooleanField(default=False)),
++                ("message", models.TextField(blank=True)),
++                ("subject", models.CharField(blank=True, max_length=160)),
++                ("accepted_by", models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name="food_shares_received", to=settings.AUTH_USER_MODEL)),
++                ("food", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="shares", to="notas.food")),
++                ("sender", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="food_shares_sent", to=settings.AUTH_USER_MODEL)),
++            ],
++            options={
++                "unique_together": {("recipient_email", "food")},
++            },
++        ),
++        migrations.CreateModel(
++            name="DailyPlanMealShare",
++            fields=[
++                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
++                ("recipient_email", models.EmailField(max_length=254)),
++                ("token", models.UUIDField(default=uuid.uuid4, unique=True)),
++                ("created_at", models.DateTimeField(auto_now_add=True)),
++                ("dismissed", models.BooleanField(default=False)),
++                ("removed", models.BooleanField(default=False)),
++                ("is_favorite", models.BooleanField(default=False)),
++                ("is_read", models.BooleanField(default=False)),
++                ("message", models.TextField(blank=True)),
++                ("subject", models.CharField(blank=True, max_length=160)),
++                ("accepted_by", models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name="dailyplanmeal_shares_received", to=settings.AUTH_USER_MODEL)),
++                ("dailyplan_meal", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="shares", to="notas.dailyplanmeal")),
++                ("sender", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="dailyplanmeal_shares_sent", to=settings.AUTH_USER_MODEL)),
++            ],
++            options={
++                "unique_together": {("recipient_email", "dailyplan_meal")},
++            },
++        ),
++    ]
+diff --git a/notas/templates/notas/dailyplan_meals/share.html b/notas/templates/notas/dailyplan_meals/share.html
+new file mode 100644
+index 0000000..b738f19
+--- /dev/null
++++ b/notas/templates/notas/dailyplan_meals/share.html
+@@ -0,0 +1,58 @@
++{% extends "notas/base.html" %}
++{% block title %}Compartir comida de plan{% endblock %}
++{% block content %}
++
++<div class="page page--detail page-modal page-modal--entity-form share-form-page share-form-page--dpm">
++  <div class="wrap-page-modal entity-form share-form">
++    <form method="post" action="{% url 'dailyplanmeal_share' dpm.dailyplan_id dpm.pk %}" class="entity-form__form share-form__form" novalidate>
++      {% csrf_token %}
++
++      <div class="main-modal entity-form__main-modal">
++        <i data-lucide="send" class="main-modal-icon meal"></i>
++        <h2 class="title-create">Compartir Comida de Plan</h2>
++      </div>
++
++      <section class="entity-form__section share-form__section" aria-labelledby="dpm-share-recipient-title">
++        <div class="entity-form__section-header"><h3 id="dpm-share-recipient-title">Destinatario</h3></div>
++        <div class="entity-form__field">
++          <label for="{{ form.recipient_email.id_for_label }}" class="entity-form__label">Email</label>
++          {{ form.recipient_email }}
++          {% if form.recipient_email.errors %}<p class="entity-form__error">{{ form.recipient_email.errors|striptags }}</p>{% endif %}
++        </div>
++      </section>
++
++      <section class="entity-form__section share-form__section" aria-labelledby="dpm-share-subject-title">
++        <div class="entity-form__section-header"><h3 id="dpm-share-subject-title">Asunto</h3></div>
++        <div class="entity-form__field">
++          <label for="{{ form.subject.id_for_label }}" class="entity-form__label entity-form__label--hidden">Asunto</label>
++          {{ form.subject }}
++          {% if form.subject.errors %}<p class="entity-form__error">{{ form.subject.errors|striptags }}</p>{% endif %}
++        </div>
++      </section>
++
++      <section class="entity-form__section share-form__section" aria-labelledby="dpm-share-message-title">
++        <div class="entity-form__section-header"><h3 id="dpm-share-message-title">Mensaje</h3></div>
++        <div class="entity-form__field">
++          <label for="{{ form.message.id_for_label }}" class="entity-form__label entity-form__label--hidden">Mensaje</label>
++          {{ form.message }}
++          {% if form.message.errors %}<p class="entity-form__error">{{ form.message.errors|striptags }}</p>{% endif %}
++        </div>
++      </section>
++
++      <div class="card-bottom proposal-list-card__bottom share-form__attachment" aria-label="Elemento a compartir">
++        <i data-lucide="paperclip" class="proposal-list-card__attachment-paperclip"></i>
++        <div class="proposal-attachment proposal-attachment--dpm share-form__attachment-chip">
++          <span class="proposal-attachment__icon" aria-hidden="true"><i data-lucide="utensils" class="proposal-attachment__svg"></i></span>
++          <span class="proposal-attachment__copy"><strong class="proposal-attachment__name">{{ dpm.meal.name }}</strong></span>
++        </div>
++      </div>
++
++      <div class="entity-form__actions">
++        <a href="{% url 'dailyplan_meal_detail' dpm.dailyplan_id dpm.pk %}" class="btn-cancel-create entity-form__cancel">Cancelar</a>
++        <button type="submit" class="btn-continue entity-form__submit">Compartir</button>
++      </div>
++    </form>
++  </div>
++</div>
++
++{% endblock %}
+diff --git a/notas/templates/notas/foods/share.html b/notas/templates/notas/foods/share.html
+new file mode 100644
+index 0000000..b6d6541
+--- /dev/null
++++ b/notas/templates/notas/foods/share.html
+@@ -0,0 +1,58 @@
++{% extends "notas/base.html" %}
++{% block title %}Compartir alimento{% endblock %}
++{% block content %}
++
++<div class="page page--detail page-modal page-modal--entity-form share-form-page share-form-page--food">
++  <div class="wrap-page-modal entity-form share-form">
++    <form method="post" action="{% url 'food_share' food.pk %}" class="entity-form__form share-form__form" novalidate>
++      {% csrf_token %}
++
++      <div class="main-modal entity-form__main-modal">
++        <i data-lucide="send" class="main-modal-icon food"></i>
++        <h2 class="title-create">Compartir Alimento</h2>
++      </div>
++
++      <section class="entity-form__section share-form__section" aria-labelledby="food-share-recipient-title">
++        <div class="entity-form__section-header"><h3 id="food-share-recipient-title">Destinatario</h3></div>
++        <div class="entity-form__field">
++          <label for="{{ form.recipient_email.id_for_label }}" class="entity-form__label">Email</label>
++          {{ form.recipient_email }}
++          {% if form.recipient_email.errors %}<p class="entity-form__error">{{ form.recipient_email.errors|striptags }}</p>{% endif %}
++        </div>
++      </section>
++
++      <section class="entity-form__section share-form__section" aria-labelledby="food-share-subject-title">
++        <div class="entity-form__section-header"><h3 id="food-share-subject-title">Asunto</h3></div>
++        <div class="entity-form__field">
++          <label for="{{ form.subject.id_for_label }}" class="entity-form__label entity-form__label--hidden">Asunto</label>
++          {{ form.subject }}
++          {% if form.subject.errors %}<p class="entity-form__error">{{ form.subject.errors|striptags }}</p>{% endif %}
++        </div>
++      </section>
++
++      <section class="entity-form__section share-form__section" aria-labelledby="food-share-message-title">
++        <div class="entity-form__section-header"><h3 id="food-share-message-title">Mensaje</h3></div>
++        <div class="entity-form__field">
++          <label for="{{ form.message.id_for_label }}" class="entity-form__label entity-form__label--hidden">Mensaje</label>
++          {{ form.message }}
++          {% if form.message.errors %}<p class="entity-form__error">{{ form.message.errors|striptags }}</p>{% endif %}
++        </div>
++      </section>
++
++      <div class="card-bottom proposal-list-card__bottom share-form__attachment" aria-label="Elemento a compartir">
++        <i data-lucide="paperclip" class="proposal-list-card__attachment-paperclip"></i>
++        <div class="proposal-attachment proposal-attachment--food share-form__attachment-chip">
++          <span class="proposal-attachment__icon" aria-hidden="true"><i data-lucide="apple" class="proposal-attachment__svg"></i></span>
++          <span class="proposal-attachment__copy"><strong class="proposal-attachment__name">{{ food.name }}</strong></span>
++        </div>
++      </div>
++
++      <div class="entity-form__actions">
++        <a href="{% url 'food_detail' food.pk %}" class="btn-cancel-create entity-form__cancel">Cancelar</a>
++        <button type="submit" class="btn-continue entity-form__submit">Compartir</button>
++      </div>
++    </form>
++  </div>
++</div>
++
++{% endblock %}
+diff --git a/notas/urls.py b/notas/urls.py
+index 5cbe61d..0f22f0b 100644
+--- a/notas/urls.py
++++ b/notas/urls.py
+@@ -2,6 +2,8 @@ from django.urls import path
+ from notas.interface.views.foods import (
+     food_list,
+     food_detail,
++    food_share,
++    food_share_accept,
+     food_create,
+     food_edit,
+     food_delete,
+@@ -81,6 +83,9 @@ from notas.interface.views.dailyplan_meals import (
+     dailyplanmeal_create_meal,
+     dailyplanmeal_reorder,
+     dailyplanmeal_save_to_library,
++    dailyplanmeal_share,
++    dailyplanmeal_share_accept,
++    dailyplanmeal_share_detail,
+ )
+ 
+ from notas.interface.views.programs import (
+@@ -213,6 +218,8 @@ urlpatterns = [
+     path("foods/", food_list, name="food_list"),
+     path("foods/reorder/", food_list_reorder, name="food_list_reorder"),
+     path("foods/bulk-delete/", food_list_bulk_delete, name="food_list_bulk_delete"),
++    path("foods/<int:pk>/share/", food_share, name="food_share"),
++    path("foods/shared/<uuid:token>/", food_share_accept, name="food_share_accept"),
+     path("foods/<int:pk>/", food_detail, name="food_detail"),
+     path("foods/create/", food_create, name="food_create"),
+     path("foods/<int:pk>/edit/", food_edit, name="food_edit"),
+@@ -304,6 +311,21 @@ urlpatterns = [
+         name="dailyplanmeal_create_meal"
+     ),
+ 
++    path(
++        "dailyplans/<int:dailyplan_id>/meals/<int:pk>/share/",
++        dailyplanmeal_share,
++        name="dailyplanmeal_share",
++    ),
++    path(
++        "dailyplans/meals/shared/<uuid:token>/",
++        dailyplanmeal_share_accept,
++        name="dailyplanmeal_share_accept",
++    ),
++    path(
++        "dailyplans/meals/shared/<int:share_id>/",
++        dailyplanmeal_share_detail,
++        name="dailyplanmeal_share_detail",
++    ),
+     path(
+         "dailyplans/<int:dailyplan_id>/meals/<int:dailyplanmeal_id>/save-to-library/",
+         dailyplanmeal_save_to_library,

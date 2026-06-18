@@ -4,11 +4,11 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, JsonResponse
 from openpyxl import Workbook
 from django.contrib import messages
 from notas.application.services.access.capabilities import get_capabilities
-from notas.domain.models import Food
+from notas.domain.models import Food, FoodShare
 from notas.application.queries.food_picker_queries import (
     get_food_picker_item_by_id,
     list_food_picker_items,
@@ -24,7 +24,7 @@ from notas.interface.routing.food import food_url
 from notas.presentation.composition.viewmodel.food.list_foods_builder import build_food_list_vm
 from notas.presentation.composition.viewmodel.food.detail_food_builder import build_food_detail_vm
 from notas.presentation.composition.viewmodel.food.edit_food_builder import build_edit_food_vm
-from notas.interface.forms.forms import FoodEditForm
+from notas.interface.forms.forms import FoodEditForm, FoodShareForm
 
 from notas.application.services.commands.food_commands import (
     bulk_create_foods,
@@ -32,6 +32,13 @@ from notas.application.services.commands.food_commands import (
     delete_food,
     update_food,
 )
+from notas.application.services.commands.share_commands import (
+    accept_food_share,
+    create_food_share,
+)
+from django.core.mail import send_mail
+from django.conf import settings
+from notas.application.services.notifications.share_emails import build_share_invitation_email
 
 
 from notas.presentation.viewmodels.base_vm import BaseVM
@@ -435,3 +442,69 @@ def foods_json(request):
 
 
 
+
+
+@login_required
+def food_share(request, pk):
+    food = get_object_or_404(Food, pk=pk, created_by=request.user, is_active=True)
+
+    if food.created_by != request.user:
+        return HttpResponseForbidden()
+
+    form = FoodShareForm(request.POST or None, initial={"subject": food.name})
+
+    if request.method == "POST" and form.is_valid():
+        email = form.cleaned_data["recipient_email"]
+        share_subject = form.cleaned_data.get("subject", food.name)
+        message = form.cleaned_data.get("message", "")
+
+        result = create_food_share(
+            sender=request.user,
+            recipient_email=email,
+            food=food,
+            subject=share_subject,
+            message=message,
+        )
+        share = result.share
+
+        email_subject, email_message = build_share_invitation_email(
+            request=request,
+            share=share,
+            kind="food",
+            item_name=food.name,
+            custom_subject=share_subject,
+            custom_message=message,
+        )
+
+        email_sent = False
+        try:
+            email_sent = bool(send_mail(
+                subject=email_subject,
+                message=email_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[email],
+                fail_silently=False,
+            ))
+        except Exception:
+            email_sent = False
+
+        if share.accepted_by_id:
+            messages.success(request, "Compartiste este alimento. Como el correo pertenece a una cuenta existente, ya está disponible en su Inbox.")
+        elif email_sent:
+            messages.success(request, "Compartiste este alimento. Enviamos el correo de invitación al destinatario.")
+        else:
+            messages.warning(request, "Se creó la invitación, pero no se pudo enviar el correo. Revisa la configuración de email.")
+
+        return redirect("food_detail", pk=food.pk)
+
+    if request.method == "POST":
+        messages.error(request, "No se pudo compartir. Revisa el correo ingresado.")
+
+    return render(request, "notas/foods/share.html", {"food": food, "form": form})
+
+
+@login_required
+def food_share_accept(request, token):
+    share = get_object_or_404(FoodShare, token=token)
+    accept_food_share(share=share, user=request.user)
+    return redirect("inbox_list")

@@ -194,8 +194,11 @@ def _ensure_proposal_is_approved_for_apply(
     *,
     proposal: NutritionProposal,
 ) -> None:
-    if proposal.status != NutritionProposal.STATUS_APPROVED:
-        raise ValueError("proposal_apply_requires_approved_status")
+    if proposal.status not in {
+        NutritionProposal.STATUS_PENDING_REVIEW,
+        NutritionProposal.STATUS_APPROVED,
+    }:
+        raise ValueError("proposal_apply_requires_applicable_status")
 
 
 def _safe_dict(value: Any) -> dict[str, Any]:

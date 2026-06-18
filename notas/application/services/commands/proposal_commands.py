@@ -170,11 +170,14 @@ def _ensure_not_final(
         raise ValueError("proposal_is_final")
 
 
-def _ensure_approved(
+def _ensure_applicable_status(
     proposal: NutritionProposal,
 ) -> None:
-    if proposal.status != NutritionProposal.STATUS_APPROVED:
-        raise ValueError("proposal_is_not_approved")
+    if proposal.status not in {
+        NutritionProposal.STATUS_PENDING_REVIEW,
+        NutritionProposal.STATUS_APPROVED,
+    }:
+        raise ValueError("proposal_is_not_applicable")
 
 
 def _ensure_not_applied(
@@ -792,7 +795,7 @@ def apply_approved_proposal(
     proposal: NutritionProposal,
 ) -> NutritionProposalApplyResult:
     """
-    Aplica una propuesta aprobada usando applicators seguros.
+    Aplica una propuesta pendiente usando applicators seguros.
 
     Este comando corresponde al flujo legacy de operaciones:
     adjust_dailyplan_to_targets / suggested_changes.
@@ -805,7 +808,7 @@ def apply_approved_proposal(
         user=user,
         proposal=proposal,
     )
-    _ensure_approved(proposal)
+    _ensure_applicable_status(proposal)
     _ensure_not_applied(proposal)
 
     status_before = proposal.status
@@ -814,13 +817,18 @@ def apply_approved_proposal(
         proposal,
     )
 
+    now = timezone.now()
     proposal.status = NutritionProposal.STATUS_APPLIED
+    proposal.reviewed_by = user
+    proposal.reviewed_at = now
     proposal.applied_by = user
-    proposal.applied_at = timezone.now()
+    proposal.applied_at = now
 
     proposal.save(
         update_fields=[
             "status",
+            "reviewed_by",
+            "reviewed_at",
             "applied_by",
             "applied_at",
         ]
@@ -849,11 +857,11 @@ def apply_approved_create_meal_proposal(
     proposal: NutritionProposal,
 ) -> NutritionProposalApplyCreateMealResult:
     """
-    Aplica una propuesta aprobada create_meal creando una Meal real independiente.
+    Aplica una propuesta pendiente create_meal creando una Meal real independiente.
 
     Reglas:
     - Solo el dueño del DailyPlan contexto puede aplicar.
-    - La propuesta debe estar approved.
+    - La propuesta debe estar pendiente o en estado legacy approved.
     - No puede aplicarse dos veces.
     - El intent debe ser create_meal.
     - Los foods deben ser legibles por el usuario.
@@ -863,7 +871,7 @@ def apply_approved_create_meal_proposal(
         user=user,
         proposal=proposal,
     )
-    _ensure_approved(proposal)
+    _ensure_applicable_status(proposal)
     _ensure_not_applied(proposal)
 
     status_before = proposal.status
@@ -877,13 +885,18 @@ def apply_approved_create_meal_proposal(
         apply_plan=apply_plan,
     )
 
+    now = timezone.now()
     proposal.status = NutritionProposal.STATUS_APPLIED
+    proposal.reviewed_by = user
+    proposal.reviewed_at = now
     proposal.applied_by = user
-    proposal.applied_at = timezone.now()
+    proposal.applied_at = now
 
     proposal.save(
         update_fields=[
             "status",
+            "reviewed_by",
+            "reviewed_at",
             "applied_by",
             "applied_at",
         ]
@@ -930,11 +943,11 @@ def apply_approved_create_dailyplan_proposal(
     proposal: NutritionProposal,
 ) -> NutritionProposalApplyCreateDailyPlanResult:
     """
-    Aplica una propuesta aprobada create_dailyplan creando un DailyPlan real.
+    Aplica una propuesta pendiente create_dailyplan creando un DailyPlan real.
 
     Reglas:
     - Solo el dueño del DailyPlan contexto puede aplicar.
-    - La propuesta debe estar approved.
+    - La propuesta debe estar pendiente o en estado legacy approved.
     - No puede aplicarse dos veces.
     - El intent debe ser create_dailyplan.
     - Los foods deben ser legibles por el usuario.
@@ -947,7 +960,7 @@ def apply_approved_create_dailyplan_proposal(
         user=user,
         proposal=proposal,
     )
-    _ensure_approved(proposal)
+    _ensure_applicable_status(proposal)
     _ensure_not_applied(proposal)
 
     status_before = proposal.status
@@ -962,13 +975,18 @@ def apply_approved_create_dailyplan_proposal(
         apply_plan=apply_plan,
     )
 
+    now = timezone.now()
     proposal.status = NutritionProposal.STATUS_APPLIED
+    proposal.reviewed_by = user
+    proposal.reviewed_at = now
     proposal.applied_by = user
-    proposal.applied_at = timezone.now()
+    proposal.applied_at = now
 
     proposal.save(
         update_fields=[
             "status",
+            "reviewed_by",
+            "reviewed_at",
             "applied_by",
             "applied_at",
         ]

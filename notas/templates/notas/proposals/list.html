@@ -20,9 +20,14 @@
             </div>
           </div>
 
-          <p class="proposal-received-date proposal-list-card__received-date">
-            {{ proposal.received_at_label }}
-          </p>
+          <div class="proposal-received-date-row proposal-list-card__received-date-row">
+            <span class="proposal-read-badge{% if proposal.is_read %} proposal-read-badge--open{% else %} proposal-read-badge--closed{% endif %}" aria-label="{% if proposal.is_read %}Propuesta abierta{% else %}Propuesta no abierta{% endif %}">
+              <i data-lucide="{% if proposal.is_read %}mail-open{% else %}mail{% endif %}" class="proposal-read-badge__icon"></i>
+            </span>
+            <p class="proposal-received-date proposal-list-card__received-date">
+              {{ proposal.received_at_label }}
+            </p>
+          </div>
 
           <div class="proposal-list-card__icons-title" aria-hidden="true">
             <i data-lucide="sparkles" class="home-section-header-icon proposal"></i>
@@ -30,7 +35,7 @@
         </div>
 
         <span class="proposal-status-badge proposal-status-badge--{{ proposal.status }}">
-          {{ proposal.status }}
+          {{ proposal.status_label }}
         </span>
 
 

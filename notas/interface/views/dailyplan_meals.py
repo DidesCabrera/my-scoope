@@ -4,7 +4,7 @@ from django.views.decorators.http import require_POST
 from django.http import Http404, HttpResponseForbidden, JsonResponse
 from django.contrib import messages
 from notas.application.services.access.capabilities import get_capabilities
-from notas.domain.models import Meal, MealFood, DailyPlan, DailyPlanMeal, Food
+from notas.domain.models import Meal, MealFood, DailyPlan, DailyPlanMeal, Food, DailyPlanMealShare
 from notas.presentation.config.viewmodel_config import (
     DAILYPLAN_MEAL_VIEWMODE_EDIT,
     DAILYPLAN_MEAL_VIEWMODE_DRAFT_DEEP_EDIT,
@@ -19,6 +19,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 
 from notas.presentation.viewmodels.base_vm import BaseVM
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
+from notas.presentation.composition.viewmodel.components.builder_headers import build_page_header
 from notas.application.services.commands.meal_commands import (
     fork_meal_for_dailyplan,
     save_dailyplan_meal_to_library,
@@ -26,6 +27,14 @@ from notas.application.services.commands.meal_commands import (
 )
 
 from django.urls import reverse
+from notas.interface.forms.forms import DailyPlanMealShareForm
+from notas.application.services.commands.share_commands import (
+    accept_dailyplanmeal_share,
+    create_dailyplanmeal_share,
+)
+from django.core.mail import send_mail
+from django.conf import settings
+from notas.application.services.notifications.share_emails import build_share_invitation_email
 
 from notas.application.use_cases.dpm_pages import (
     get_dpm_detail_page_data,
@@ -385,3 +394,114 @@ def dailyplanmeal_create_meal(request, dailyplan_id, dailyplanmeal_id):
         dailyplan_id=result.dailyplan.id,
         pk=result.dailyplan_meal.id,
     )
+
+
+@login_required
+def dailyplanmeal_share(request, dailyplan_id, pk):
+    dpm = get_object_or_404(
+        DailyPlanMeal.objects.select_related("dailyplan", "meal"),
+        pk=pk,
+        dailyplan_id=dailyplan_id,
+        dailyplan__created_by=request.user,
+    )
+
+    form = DailyPlanMealShareForm(request.POST or None, initial={"subject": dpm.meal.name})
+
+    if request.method == "POST" and form.is_valid():
+        email = form.cleaned_data["recipient_email"]
+        share_subject = form.cleaned_data.get("subject", dpm.meal.name)
+        message = form.cleaned_data.get("message", "")
+
+        result = create_dailyplanmeal_share(
+            sender=request.user,
+            recipient_email=email,
+            dailyplan_meal=dpm,
+            subject=share_subject,
+            message=message,
+        )
+        share = result.share
+
+        email_subject, email_message = build_share_invitation_email(
+            request=request,
+            share=share,
+            kind="dpm",
+            item_name=dpm.meal.name,
+            custom_subject=share_subject,
+            custom_message=message,
+        )
+
+        email_sent = False
+        try:
+            email_sent = bool(send_mail(
+                subject=email_subject,
+                message=email_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[email],
+                fail_silently=False,
+            ))
+        except Exception:
+            email_sent = False
+
+        if share.accepted_by_id:
+            messages.success(request, "Compartiste esta comida de plan. Como el correo pertenece a una cuenta existente, ya está disponible en su Inbox.")
+        elif email_sent:
+            messages.success(request, "Compartiste esta comida de plan. Enviamos el correo de invitación al destinatario.")
+        else:
+            messages.warning(request, "Se creó la invitación, pero no se pudo enviar el correo. Revisa la configuración de email.")
+
+        return redirect("dailyplan_meal_detail", dailyplan_id=dpm.dailyplan_id, pk=dpm.pk)
+
+    if request.method == "POST":
+        messages.error(request, "No se pudo compartir. Revisa el correo ingresado.")
+
+    return render(request, "notas/dailyplan_meals/share.html", {"dpm": dpm, "form": form})
+
+
+@login_required
+def dailyplanmeal_share_accept(request, token):
+    share = get_object_or_404(DailyPlanMealShare, token=token)
+    accept_dailyplanmeal_share(share=share, user=request.user)
+    return redirect("inbox_list")
+
+
+@login_required
+def dailyplanmeal_share_detail(request, share_id):
+    share = get_object_or_404(
+        DailyPlanMealShare.objects.select_related("sender", "accepted_by", "dailyplan_meal", "dailyplan_meal__dailyplan", "dailyplan_meal__meal"),
+        pk=share_id,
+        removed=False,
+    )
+
+    if share.sender_id != request.user.id and share.accepted_by_id != request.user.id:
+        return HttpResponseForbidden()
+
+    dpm = share.dailyplan_meal
+    page = get_dpm_detail_page_data(
+        user=share.sender,
+        dailyplan_id=dpm.dailyplan_id,
+        dpm_id=dpm.id,
+        viewmode=DAILYPLAN_MEAL_VIEWMODE_DETAIL,
+        request_get=request.GET,
+    )
+
+    content_vm = build_dpm_detail_vm(page.detail_content_data)
+    content_vm.header = build_page_header(actions=[])
+
+    ui_vm = build_ui_vm(
+        DAILYPLAN_MEAL_VIEWMODE_DETAIL,
+        instance=page.meal,
+        back_config={"type": "url", "value": reverse("inbox_list")},
+    )
+    ui_vm.nav_root = "meal"
+    ui_vm.icon = "utensils"
+    ui_vm.page_icon = "utensils"
+
+    base_vm = BaseVM(ui=ui_vm, content=content_vm)
+    context = base_vm.as_context()
+    context["foods_json"] = "[]"
+    context["food_picker_json"] = "{}"
+    context["can_edit_foods"] = False
+    context["selected_food_id"] = None
+    context["editing_mealfood_id"] = None
+
+    return render(request, "notas/dailyplan_meals/detail.html", context)

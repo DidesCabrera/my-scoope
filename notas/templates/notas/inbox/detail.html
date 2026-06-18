@@ -11,15 +11,29 @@
             {{ vm.content.inbox.title }}
           </h2>
 
-          <p class="proposal-received-date proposal-review-received-date">
-            {{ vm.content.inbox.received_at_label }} · enviado por {{ vm.content.inbox.sender }}
-          </p>
+          <div class="proposal-received-date-row proposal-review-received-date-row">
+            {% if vm.content.inbox.direction == "sent" %}
+              <span class="proposal-read-badge proposal-read-badge--open" aria-label="Inbox enviado">
+                <i data-lucide="send" class="proposal-read-badge__icon"></i>
+              </span>
+            {% else %}
+              <span class="proposal-read-badge{% if vm.content.inbox.is_read %} proposal-read-badge--open{% else %} proposal-read-badge--closed{% endif %}" aria-label="{% if vm.content.inbox.is_read %}Inbox abierto{% else %}Inbox no abierto{% endif %}">
+                <i data-lucide="{% if vm.content.inbox.is_read %}mail-open{% else %}mail{% endif %}" class="proposal-read-badge__icon"></i>
+              </span>
+            {% endif %}
+            <p class="proposal-received-date proposal-review-received-date">
+              {{ vm.content.inbox.received_at_label }}
+            </p>
+            <span class="proposal-shared-by proposal-review-shared-by">
+              <i data-lucide="send" class="proposal-shared-by__icon" aria-hidden="true"></i>
+              <span class="proposal-shared-by__label">
+                {% if vm.content.inbox.sender_label %}<span class="proposal-shared-by__prefix">{{ vm.content.inbox.sender_label }}</span>{% endif %}
+                <span class="proposal-shared-by__name">{{ vm.content.inbox.sender }}</span>
+              </span>
+            </span>
+          </div>
 
           <div class="proposal-review-pills">
-            <span class="proposal-status-badge inbox-status-badge{% if vm.content.inbox.is_favorite %} inbox-status-badge--favorite{% endif %}">
-              {% if vm.content.inbox.is_favorite %}Favorito{% else %}Recibido{% endif %}
-            </span>
-
             <span class="proposal-type-badge">{{ vm.content.inbox.kind_label }}</span>
           </div>
         </div>
@@ -60,6 +74,10 @@
             {% include "components/card_child_dailyplan.html" with child_card=child_card dailyplan_card_class="proposal-child-card inbox-child-card inbox-child-card--dailyplan" default_nutrition=True %}
           {% elif vm.content.inbox.kind == "meal" %}
             {% include "components/card_child_meal.html" with child_card=child_card dpm_meal="dpm_meal proposal-child-card inbox-child-card inbox-child-card--meal" default_nutrition=True %}
+          {% elif vm.content.inbox.kind == "dpm" %}
+            {% include "components/card_child_meal.html" with child_card=child_card dpm_meal="dpm_meal proposal-child-card inbox-child-card inbox-child-card--meal inbox-child-card--dpm" default_nutrition=True %}
+          {% elif vm.content.inbox.kind == "food" %}
+            {% include "components/card_child_food.html" with child_card=child_card food_card_class="proposal-child-card inbox-child-card inbox-child-card--food" %}
           {% endif %}
         {% empty %}
           <a href="{{ vm.content.inbox.attachment.open_url }}" class="proposal-attachment proposal-attachment--{{ vm.content.inbox.attachment.kind }} proposal-review-attachment inbox-attachment-link">

@@ -11,6 +11,7 @@ class NutritionProposalListItemDTO:
     reviewed_by_id: int | None
     reviewed_by_username: str | None
     status: str
+    status_label: str
     source: str
     title: str
     summary: str
@@ -20,6 +21,7 @@ class NutritionProposalListItemDTO:
     attachment_icon: str
     actions: list[dict]
     is_reviewable: bool
+    is_read: bool
     is_final: bool
     created_at: str | None
     received_at_label: str
@@ -39,6 +41,7 @@ class NutritionProposalDTO:
     reviewed_by_id: int | None
     reviewed_by_username: str | None
     status: str
+    status_label: str
     source: str
     title: str
     summary: str
@@ -47,6 +50,7 @@ class NutritionProposalDTO:
     proposed_payload: dict
     validation_summary: dict
     is_reviewable: bool
+    is_read: bool
     is_final: bool
     created_at: str | None
     received_at_label: str

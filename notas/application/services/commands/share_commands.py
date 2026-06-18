@@ -3,7 +3,16 @@ from dataclasses import dataclass
 from django.contrib.auth import get_user_model
 from django.db import transaction
 
-from notas.domain.models import DailyPlan, DailyPlanShare, Meal, MealShare
+from notas.domain.models import (
+    DailyPlan,
+    DailyPlanMeal,
+    DailyPlanMealShare,
+    DailyPlanShare,
+    Food,
+    FoodShare,
+    Meal,
+    MealShare,
+)
 
 
 @dataclass(frozen=True)
@@ -25,6 +34,30 @@ class DailyPlanShareDismissResult:
 @dataclass(frozen=True)
 class DailyPlanShareRemoveResult:
     share: DailyPlanShare
+
+
+
+
+@dataclass(frozen=True)
+class FoodShareCreateResult:
+    share: FoodShare
+    created: bool
+
+
+@dataclass(frozen=True)
+class FoodShareAcceptResult:
+    share: FoodShare
+
+
+@dataclass(frozen=True)
+class DailyPlanMealShareCreateResult:
+    share: DailyPlanMealShare
+    created: bool
+
+
+@dataclass(frozen=True)
+class DailyPlanMealShareAcceptResult:
+    share: DailyPlanMealShare
 
 
 @dataclass(frozen=True)
@@ -314,3 +347,148 @@ def remove_meal_share(
     return MealShareRemoveResult(
         share=share,
     )
+
+@transaction.atomic
+def create_food_share(
+    *,
+    sender,
+    food: Food,
+    recipient_email: str,
+    subject: str | None = None,
+    message: str | None = None,
+) -> FoodShareCreateResult:
+    clean_email = (recipient_email or "").strip().lower()
+    clean_message = _clean_share_message(message)
+    clean_subject = _clean_share_subject(subject, food.name)
+
+    if not clean_email:
+        raise ValueError("recipient_email_required")
+
+    delivery_defaults = _share_delivery_fields_for_email(clean_email)
+    defaults = {
+        **delivery_defaults,
+        "message": clean_message,
+        "subject": clean_subject,
+        "is_read": False,
+    }
+
+    share, created = FoodShare.objects.get_or_create(
+        sender=sender,
+        recipient_email=clean_email,
+        food=food,
+        defaults=defaults,
+    )
+
+    update_fields = []
+    recipient_user = delivery_defaults.get("accepted_by")
+    if recipient_user is not None and share.accepted_by_id != recipient_user.id:
+        share.accepted_by = recipient_user
+        update_fields.append("accepted_by")
+
+    if share.message != clean_message:
+        share.message = clean_message
+        update_fields.append("message")
+
+    if share.subject != clean_subject:
+        share.subject = clean_subject
+        update_fields.append("subject")
+
+    if share.is_read:
+        share.is_read = False
+        update_fields.append("is_read")
+
+    if share.removed:
+        share.removed = False
+        update_fields.append("removed")
+
+    if share.dismissed:
+        share.dismissed = False
+        update_fields.append("dismissed")
+
+    if update_fields:
+        share.save(update_fields=update_fields)
+
+    return FoodShareCreateResult(share=share, created=created)
+
+
+@transaction.atomic
+def accept_food_share(*, share: FoodShare, user) -> FoodShareAcceptResult:
+    share.accepted_by = user
+    share.dismissed = False
+    share.removed = False
+    share.is_read = False
+    share.save(update_fields=["accepted_by", "dismissed", "removed", "is_read"])
+    return FoodShareAcceptResult(share=share)
+
+
+@transaction.atomic
+def create_dailyplanmeal_share(
+    *,
+    sender,
+    dailyplan_meal: DailyPlanMeal,
+    recipient_email: str,
+    subject: str | None = None,
+    message: str | None = None,
+) -> DailyPlanMealShareCreateResult:
+    clean_email = (recipient_email or "").strip().lower()
+    clean_message = _clean_share_message(message)
+    clean_subject = _clean_share_subject(subject, dailyplan_meal.meal.name)
+
+    if not clean_email:
+        raise ValueError("recipient_email_required")
+
+    delivery_defaults = _share_delivery_fields_for_email(clean_email)
+    defaults = {
+        **delivery_defaults,
+        "message": clean_message,
+        "subject": clean_subject,
+        "is_read": False,
+    }
+
+    share, created = DailyPlanMealShare.objects.get_or_create(
+        sender=sender,
+        recipient_email=clean_email,
+        dailyplan_meal=dailyplan_meal,
+        defaults=defaults,
+    )
+
+    update_fields = []
+    recipient_user = delivery_defaults.get("accepted_by")
+    if recipient_user is not None and share.accepted_by_id != recipient_user.id:
+        share.accepted_by = recipient_user
+        update_fields.append("accepted_by")
+
+    if share.message != clean_message:
+        share.message = clean_message
+        update_fields.append("message")
+
+    if share.subject != clean_subject:
+        share.subject = clean_subject
+        update_fields.append("subject")
+
+    if share.is_read:
+        share.is_read = False
+        update_fields.append("is_read")
+
+    if share.removed:
+        share.removed = False
+        update_fields.append("removed")
+
+    if share.dismissed:
+        share.dismissed = False
+        update_fields.append("dismissed")
+
+    if update_fields:
+        share.save(update_fields=update_fields)
+
+    return DailyPlanMealShareCreateResult(share=share, created=created)
+
+
+@transaction.atomic
+def accept_dailyplanmeal_share(*, share: DailyPlanMealShare, user) -> DailyPlanMealShareAcceptResult:
+    share.accepted_by = user
+    share.dismissed = False
+    share.removed = False
+    share.is_read = False
+    share.save(update_fields=["accepted_by", "dismissed", "removed", "is_read"])
+    return DailyPlanMealShareAcceptResult(share=share)

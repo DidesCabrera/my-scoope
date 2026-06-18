@@ -14,13 +14,18 @@
               {{ vm.content.proposal_review.title }}
             </h2>
 
-            <p class="proposal-received-date proposal-review-received-date">
-              {{ vm.content.proposal_review.received_at_label }}
-            </p>
+            <div class="proposal-received-date-row proposal-review-received-date-row">
+              <span class="proposal-read-badge{% if vm.content.proposal_review.is_read %} proposal-read-badge--open{% else %} proposal-read-badge--closed{% endif %}" aria-label="{% if vm.content.proposal_review.is_read %}Propuesta abierta{% else %}Propuesta no abierta{% endif %}">
+                <i data-lucide="{% if vm.content.proposal_review.is_read %}mail-open{% else %}mail{% endif %}" class="proposal-read-badge__icon"></i>
+              </span>
+              <p class="proposal-received-date proposal-review-received-date">
+                {{ vm.content.proposal_review.received_at_label }}
+              </p>
+            </div>
 
             <div class="proposal-review-pills">
               <span class="proposal-status-badge proposal-status-badge--{{ vm.content.proposal_review.status.status }}">
-                {{ vm.content.proposal_review.status.status }}
+                {{ vm.content.proposal_review.status.label }}
               </span>
 
               {% if vm.content.proposal_review.payload.is_create_meal %}
@@ -108,7 +113,6 @@
       {% endif %}
 
       {% include "notas/proposals/partials/review_applied_result.html" %}
-      {% include "notas/proposals/partials/review_apply_action.html" %}
       {% include "notas/proposals/partials/review_actions.html" %}
     </section>
 
@@ -121,12 +125,17 @@
               {{ vm.content.proposal.title }}
             </h2>
 
-            <p class="proposal-received-date proposal-review-received-date">
-              {{ vm.content.proposal.received_at_label }}
-            </p>
+            <div class="proposal-received-date-row proposal-review-received-date-row">
+              <span class="proposal-read-badge{% if vm.content.proposal.is_read %} proposal-read-badge--open{% else %} proposal-read-badge--closed{% endif %}" aria-label="{% if vm.content.proposal.is_read %}Propuesta abierta{% else %}Propuesta no abierta{% endif %}">
+                <i data-lucide="{% if vm.content.proposal.is_read %}mail-open{% else %}mail{% endif %}" class="proposal-read-badge__icon"></i>
+              </span>
+              <p class="proposal-received-date proposal-review-received-date">
+                {{ vm.content.proposal.received_at_label }}
+              </p>
+            </div>
 
             <span class="proposal-status-badge proposal-status-badge--{{ vm.content.proposal.status }}">
-              {{ vm.content.proposal.status }}
+              {{ vm.content.proposal.status_label }}
             </span>
           </div>
 
