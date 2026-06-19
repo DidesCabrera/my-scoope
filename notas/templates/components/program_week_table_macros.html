@@ -1,0 +1,21 @@
+<div class="data-grid data-grid--program-weeks-mobile" role="table" aria-label="Macros por semana">
+  <div class="data-grid-header data-grid-header--program-weeks-mobile" role="row">
+    <div class="data-grid-col data-grid-col--program-week" role="columnheader">Semana</div>
+    <div class="data-grid-col data-grid-col--kcal" role="columnheader">Cal.</div>
+    <div class="data-grid-col data-grid-col--macro" role="columnheader">P g</div>
+    <div class="data-grid-col data-grid-col--macro" role="columnheader">C g</div>
+    <div class="data-grid-col data-grid-col--macro" role="columnheader">F g</div>
+  </div>
+
+  {% for week in weeks %}
+    <div class="data-grid-row data-grid-row--program-weeks-mobile" role="row">
+      <div class="data-grid-cell data-grid-cell--program-week" role="cell">S{{ week.week_number }}</div>
+      <div class="data-grid-cell data-grid-cell--kcal" role="cell">{{ week.totals.total_kcal|floatformat:0 }}</div>
+      <div class="data-grid-cell data-grid-cell--macro program-week-table__macro--protein" role="cell">{{ week.totals.protein|floatformat:0 }}</div>
+      <div class="data-grid-cell data-grid-cell--macro program-week-table__macro--carbs" role="cell">{{ week.totals.carbs|floatformat:0 }}</div>
+      <div class="data-grid-cell data-grid-cell--macro program-week-table__macro--fat" role="cell">{{ week.totals.fat|floatformat:0 }}</div>
+    </div>
+  {% empty %}
+    <div class="data-grid-empty">No hay semanas configuradas.</div>
+  {% endfor %}
+</div>

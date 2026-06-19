@@ -12,6 +12,8 @@ from notas.domain.models import (
     FoodShare,
     Meal,
     MealShare,
+    Program,
+    ProgramShare,
 )
 
 
@@ -34,6 +36,27 @@ class DailyPlanShareDismissResult:
 @dataclass(frozen=True)
 class DailyPlanShareRemoveResult:
     share: DailyPlanShare
+
+
+@dataclass(frozen=True)
+class ProgramShareCreateResult:
+    share: ProgramShare
+    created: bool
+
+
+@dataclass(frozen=True)
+class ProgramShareAcceptResult:
+    share: ProgramShare
+
+
+@dataclass(frozen=True)
+class ProgramShareDismissResult:
+    share: ProgramShare
+
+
+@dataclass(frozen=True)
+class ProgramShareRemoveResult:
+    share: ProgramShare
 
 
 
@@ -228,6 +251,123 @@ def remove_dailyplan_share(
     share.save(update_fields=["removed"])
 
     return DailyPlanShareRemoveResult(
+        share=share,
+    )
+
+
+@transaction.atomic
+def create_program_share(
+    *,
+    sender,
+    program: Program,
+    recipient_email: str,
+    subject: str | None = None,
+    message: str | None = None,
+) -> ProgramShareCreateResult:
+    clean_email = (recipient_email or "").strip().lower()
+    clean_message = _clean_share_message(message)
+    clean_subject = _clean_share_subject(subject, program.name)
+
+    if not clean_email:
+        raise ValueError("recipient_email_required")
+
+    delivery_defaults = _share_delivery_fields_for_email(clean_email)
+    defaults = {
+        **delivery_defaults,
+        "message": clean_message,
+        "subject": clean_subject,
+        "is_read": False,
+    }
+
+    share, created = ProgramShare.objects.get_or_create(
+        sender=sender,
+        recipient_email=clean_email,
+        program=program,
+        defaults=defaults,
+    )
+
+    update_fields = []
+
+    recipient_user = delivery_defaults.get("accepted_by")
+    if recipient_user is not None and share.accepted_by_id != recipient_user.id:
+        share.accepted_by = recipient_user
+        update_fields.append("accepted_by")
+
+    if share.message != clean_message:
+        share.message = clean_message
+        update_fields.append("message")
+
+    if share.subject != clean_subject:
+        share.subject = clean_subject
+        update_fields.append("subject")
+
+    if share.is_read:
+        share.is_read = False
+        update_fields.append("is_read")
+
+    if share.removed:
+        share.removed = False
+        update_fields.append("removed")
+
+    if share.dismissed:
+        share.dismissed = False
+        update_fields.append("dismissed")
+
+    if update_fields:
+        share.save(update_fields=update_fields)
+
+    return ProgramShareCreateResult(
+        share=share,
+        created=created,
+    )
+
+
+@transaction.atomic
+def accept_program_share(
+    *,
+    share: ProgramShare,
+    user,
+) -> ProgramShareAcceptResult:
+    share.accepted_by = user
+    share.dismissed = False
+    share.removed = False
+    share.is_read = False
+    share.save(
+        update_fields=[
+            "accepted_by",
+            "dismissed",
+            "removed",
+            "is_read",
+        ]
+    )
+
+    return ProgramShareAcceptResult(
+        share=share,
+    )
+
+
+@transaction.atomic
+def dismiss_program_share(
+    *,
+    share: ProgramShare,
+) -> ProgramShareDismissResult:
+    share.dismissed = True
+    share.save(update_fields=["dismissed"])
+
+    return ProgramShareDismissResult(
+        share=share,
+    )
+
+
+@transaction.atomic
+def remove_program_share(
+    *,
+    share: ProgramShare,
+) -> ProgramShareRemoveResult:
+    share.removed = True
+    share.save(update_fields=["removed"])
+
+    return ProgramShareRemoveResult(
         share=share,
     )
 

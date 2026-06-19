@@ -48,6 +48,18 @@ APP_NAVIGATION = (
         label="Mis Librerías",
         groups=(
             NavGroupSpec(
+                key="program",
+                label="Mis Programas Semanales",
+                icon="calendar",
+                url_name="program_list",
+                nav_root="program",
+                scope="personal",
+                page_icon="bookmark",
+                action_url_name="program_create",
+                action_icon="plus",
+                action_label="Nuevo programa semanal",
+            ),
+            NavGroupSpec(
                 key="dailyplan",
                 label="Mis Planes Diarios",
                 icon="clipboard-list",
@@ -166,6 +178,15 @@ APP_NAVIGATION = (
                         page_icon="circle-fading-plus",
                         url_name="dailyplan_create",
                         nav_root="dailyplan",
+                        scope="create",
+                    ),
+                    NavItemSpec(
+                        key="program_create",
+                        label="Nuevo Programa",
+                        icon="calendar",
+                        page_icon="circle-fading-plus",
+                        url_name="program_create",
+                        nav_root="program",
                         scope="create",
                     ),
                     NavItemSpec(

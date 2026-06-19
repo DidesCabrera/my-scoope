@@ -1,5 +1,5 @@
 :root {
-  --sidebar-width: 300px;
+  --sidebar-width: 312px;
   --sidebar-collapsed-width: 64px;
   --header-height: 40px;
   --mobile-header-height: 54px;
@@ -336,7 +336,7 @@ header {
       transform: translate3d(-100%, 0, 0);
       transition: transform 0.25s ease;
   
-      width: 320px;
+      width: 346px;
       max-width: calc(100vw - 32px);
   
       z-index: var(--z-sidebar);

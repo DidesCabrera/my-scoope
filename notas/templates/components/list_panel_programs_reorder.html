@@ -1,0 +1,29 @@
+<div
+    class="data-grid data-grid--list-panel data-grid--list-panel-reorder js-list-reorder-panel"
+    data-reorder-url="{% url 'program_list_reorder' %}"
+    data-return-url="{% url 'program_list' %}"
+>
+    <h3 class="data-grid-list-panel-title">Reordenar Programas</h3>
+
+    {% for child in children %}
+        <div
+            class="data-grid-row data-grid-row--list-panel-reorder js-list-reorder-row"
+            data-item-id="{{ child.child_id }}"
+        >
+            <div class="data-grid-cell data-grid-cell--drag">
+                <button type="button" class="list-panel-drag-handle" aria-label="Reordenar programa">
+                    <i data-lucide="grip-vertical" class="table-icon"></i>
+                </button>
+            </div>
+
+            <div class="data-grid-cell data-grid-cell--name">
+                <div class="list-panel-title-row">
+                    <i data-lucide="calendar" class="picker-summary-card__icon program list-panel-title-icon"></i>
+                    <div class="truncate">{{ child.title }}</div>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="data-grid-empty">No tienes programas para reordenar.</div>
+    {% endfor %}
+</div>

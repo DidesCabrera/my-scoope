@@ -1,0 +1,87 @@
+{% if chart and chart.metrics %}
+<section class="program-chart-panel card-detail-block {{ modifier }} js-program-chart" aria-label="{{ chart.title }}">
+  <header class="program-chart-panel__header">
+    <div class="program-chart-panel__heading">
+      <p class="program-chart-panel__eyebrow">Gráfico diario</p>
+    </div>
+  </header>
+
+  <div class="program-chart-tabs" role="tablist" aria-label="Variable del gráfico">
+    {% for metric in chart.metrics %}
+      <button
+        type="button"
+        class="program-chart-tab js-program-chart-tab {% if metric.is_active %}is-active{% endif %}"
+        data-metric="{{ metric.key }}"
+        role="tab"
+        aria-selected="{% if metric.is_active %}true{% else %}false{% endif %}"
+      >
+        {{ metric.label }}
+      </button>
+    {% endfor %}
+  </div>
+
+  <div class="program-chart-panel__body">
+    {% for metric in chart.metrics %}
+      <div
+        class="program-chart-pane js-program-chart-pane"
+        data-metric="{{ metric.key }}"
+        {% if not metric.is_active %}hidden{% endif %}
+      >
+        <p class="program-chart-range-label">{{ metric.range_label }}</p>
+
+        <div class="program-chart-layout">
+          <div class="program-chart-main-axis">
+            <div
+              class="program-chart-plot program-chart-plot--{{ metric.kind }} program-chart-plot--{{ metric.key }}"
+              style="--program-chart-days: {{ chart.days_count|default:1 }};"
+              aria-label="Gráfico de {{ metric.label }}"
+            >
+              <span class="program-chart-guide program-chart-guide--max" aria-hidden="true"></span>
+              <span class="program-chart-guide program-chart-guide--min" aria-hidden="true"></span>
+              {% for bar in metric.bars %}
+                <div
+                  class="program-chart-bar-slot {% if bar.is_week_start %}is-week-start{% endif %} {% if bar.is_empty %}is-empty{% endif %}"
+                  title="{{ bar.title }}"
+                  aria-label="{{ bar.title }}"
+                >
+                  {% if metric.kind == "stacked" %}
+                    <div class="program-chart-stacked-bar" style="height: {{ bar.height_percent|floatformat:2 }}%;">
+                      {% for segment in bar.segments %}
+                        <span
+                          class="program-chart-stacked-bar__segment program-chart-stacked-bar__segment--{{ segment.key }}"
+                          style="height: {{ segment.height_percent|floatformat:2 }}%;"
+                          aria-label="{{ segment.label }} {{ segment.height_percent|floatformat:0 }}%"
+                        ></span>
+                      {% endfor %}
+                    </div>
+                  {% else %}
+                    <div class="program-chart-bar" style="height: {{ bar.height_percent|floatformat:2 }}%;"></div>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            </div>
+
+            <div
+              class="program-chart-week-axis"
+              style="--program-chart-weeks: {{ chart.weeks_count|default:1 }};"
+              aria-label="Semanas del programa"
+            >
+              {% for week_label in chart.week_labels %}
+                <span>{{ week_label }}</span>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        {% if metric.kind == "stacked" %}
+          <div class="program-chart-legend" aria-label="Leyenda de alloc">
+            <span><i class="program-chart-legend__swatch program-chart-legend__swatch--protein"></i>P%</span>
+            <span><i class="program-chart-legend__swatch program-chart-legend__swatch--carbs"></i>C%</span>
+            <span><i class="program-chart-legend__swatch program-chart-legend__swatch--fat"></i>F%</span>
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}

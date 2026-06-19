@@ -17,6 +17,7 @@ def author_profile(request, username):
     dailyplans = (
         DailyPlan.objects
         .filter(created_by=user, is_public=True, is_draft=False)
+        .exclude(source=DailyPlan.SOURCE_PROGRAM)
         .order_by("-created_at")
     )
 
@@ -64,6 +65,7 @@ def author_dailyplans(request, username):
     dailyplans = (
         DailyPlan.objects
         .filter(created_by=user, is_public=True, is_draft=False)
+        .exclude(source=DailyPlan.SOURCE_PROGRAM)
         .order_by("-created_at")
     )
 

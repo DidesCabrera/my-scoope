@@ -188,6 +188,7 @@
     min-width: 0;
 }
 
+.sidebar-main-icon--program,
 .sidebar-main-icon--dailyplan,
 .sidebar-main-icon--meal,
 .sidebar-main-icon--food {
@@ -205,6 +206,10 @@
     height: 26px;
 }
 
+.sidebar-main-icon--program {
+    background-color: var(--color-program);
+}
+
 .sidebar-main-icon--dailyplan {
     background-color: var(--color-dailyplan);
 }
@@ -217,6 +222,7 @@
     background-color: var(--color-food);
 }
 
+.sidebar-main--link.is-active .sidebar-main-icon--program,
 .sidebar-main--link.is-active .sidebar-main-icon--dailyplan,
 .sidebar-main--link.is-active .sidebar-main-icon--meal,
 .sidebar-main--link.is-active .sidebar-main-icon--food {

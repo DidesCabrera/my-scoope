@@ -1,0 +1,339 @@
+diff --git a/notas/interface/views/programs.py b/notas/interface/views/programs.py
+index f7aeeb7..d3df2ed 100644
+--- a/notas/interface/views/programs.py
++++ b/notas/interface/views/programs.py
+@@ -596,6 +596,17 @@ def _program_chart_bar_height(value, max_value):
+     return min((value / max_value) * 100, 100)
+ 
+ 
++def _program_chart_value_label(value, unit, decimals=0):
++    number = _format_chart_number(value, decimals)
++    return f"{number} {unit}".strip()
++
++
++def _program_chart_range_label(min_value, max_value, unit, decimals=0):
++    min_label = _program_chart_value_label(min_value, unit, decimals)
++    max_label = _program_chart_value_label(max_value, unit, decimals)
++    return f"Min: {min_label} - Max: {max_label}"
++
++
+ def build_program_metric_chart(
+     weeks,
+     current_weight=None,
+@@ -646,7 +657,10 @@ def build_program_metric_chart(
+ 
+     metrics = []
+     for index, spec in enumerate(simple_metrics):
+-        max_value = max((point[spec["field"]] for point in day_points), default=0) or 1
++        values = [point[spec["field"]] for point in day_points]
++        min_value = min(values, default=0)
++        max_metric_value = max(values, default=0)
++        max_value = max_metric_value or 1
+         bars = []
+         for point in day_points:
+             value = point[spec["field"]]
+@@ -670,8 +684,9 @@ def build_program_metric_chart(
+             "kind": "bar",
+             "is_active": index == 0,
+             "bars": bars,
+-            "y_axis_ticks": _program_chart_axis_ticks(
+-                max_value,
++            "range_label": _program_chart_range_label(
++                min_value,
++                max_metric_value,
+                 spec["unit"],
+                 spec["decimals"],
+             ),
+@@ -709,11 +724,7 @@ def build_program_metric_chart(
+         "kind": "stacked",
+         "is_active": False,
+         "bars": alloc_bars,
+-        "y_axis_ticks": [
+-            {"label": "100%"},
+-            {"label": "50%"},
+-            {"label": "0%"},
+-        ],
++        "range_label": "Min: 0% - Max: 100%",
+     })
+ 
+     week_numbers = [week["week_number"] for week in weeks]
+diff --git a/notas/static/notas/css/components/programs.css b/notas/static/notas/css/components/programs.css
+index 3b2f880..a5d6425 100644
+--- a/notas/static/notas/css/components/programs.css
++++ b/notas/static/notas/css/components/programs.css
+@@ -748,18 +748,10 @@
+   text-transform: uppercase;
+ }
+ 
+-.program-chart-panel__header span,
+-.program-chart-y-axis,
+ .program-chart-week-axis {
+   color: var(--text-muted);
+ }
+ 
+-.program-chart-panel__header span {
+-  display: inline-block;
+-  font-size: 0.74rem;
+-  font-weight: 650;
+-}
+-
+ .program-chart-tabs {
+   display: flex;
+   flex-wrap: wrap;
+@@ -804,24 +796,7 @@
+ }
+ 
+ .program-chart-layout {
+-  display: grid;
+-  grid-template-columns: auto minmax(0, 1fr);
+-  gap: 0.45rem;
+-  align-items: stretch;
+-}
+-
+-.program-chart-y-axis {
+-  display: flex;
+-  flex-direction: column;
+-  justify-content: space-between;
+-  width: 3.5rem;
+-  height: 156px;
+-  padding: 0.65rem 0 0.2rem;
+-  font-size: 0.58rem;
+-  font-weight: 800;
+-  line-height: 1;
+-  text-align: right;
+-  white-space: nowrap;
++  display: block;
+ }
+ 
+ .program-chart-main-axis {
+@@ -983,16 +958,10 @@
+   font-size: 0.64rem;
+ }
+ 
+-.program-chart-panel--card .program-chart-y-axis,
+ .program-chart-panel--card .program-chart-plot {
+   height: 92px;
+ }
+ 
+-.program-chart-panel--card .program-chart-y-axis {
+-  width: 2.7rem;
+-  font-size: 0.5rem;
+-}
+-
+ .program-chart-panel--card .program-chart-plot {
+   padding-top: 0.4rem;
+ }
+@@ -1019,16 +988,10 @@
+     gap: 0.35rem;
+   }
+ 
+-  .program-chart-y-axis,
+   .program-chart-plot {
+     height: 118px;
+   }
+ 
+-  .program-chart-y-axis {
+-    width: 2.8rem;
+-    font-size: 0.5rem;
+-  }
+-
+   .program-chart-plot {
+     padding-inline: 0.12rem;
+   }
+@@ -1420,3 +1383,135 @@
+     gap: 0.75rem;
+   }
+ }
++
++/* Program chart / panels final refinements ======================= */
++.structural-indicators .program-structural-icon {
++  width: 13px !important;
++  height: 13px !important;
++  padding: 0 !important;
++  border-radius: 0 !important;
++  background: transparent !important;
++  color: var(--text-muted) !important;
++  stroke: currentColor !important;
++  stroke-width: 2 !important;
++}
++
++.program-card__title-block.card-title {
++  width: 100%;
++  margin-right: 0;
++}
++
++.program-card .card-title-link,
++.program-card .card-title-link h3,
++.program-main-title-card .main-title.main-card,
++.program-main-title-card .main-title h1 {
++  width: 100%;
++  max-width: 100%;
++}
++
++.program-card .card-title-comp .main-title,
++.program-main-title-card .card-title-comp .main-title {
++  flex: 1 1 100%;
++  min-width: 0;
++}
++
++.program-chart-panel {
++  border-radius: 8px;
++}
++
++.program-chart-panel__heading {
++  display: block;
++}
++
++.program-chart-panel__header span {
++  display: none;
++}
++
++.program-chart-range-label {
++  margin: 0 0 0.35rem;
++  color: var(--text-muted);
++  font-size: 0.66rem;
++  font-weight: 650;
++  letter-spacing: 0.02em;
++}
++
++.program-chart-layout {
++  display: block;
++}
++
++.program-chart-main-axis {
++  display: grid;
++  gap: 0.3rem;
++}
++
++.program-chart-plot {
++  position: relative;
++  isolation: isolate;
++  background: color-mix(in srgb, var(--surface-card-muted) 72%, transparent);
++}
++
++.program-chart-guide {
++  position: absolute;
++  left: 0.2rem;
++  right: 0.2rem;
++  z-index: 0;
++  display: block;
++  height: 1px;
++  pointer-events: none;
++  background: color-mix(in srgb, var(--border-default) 54%, transparent);
++}
++
++.program-chart-guide--max {
++  top: 0.65rem;
++}
++
++.program-chart-guide--min {
++  bottom: 0.2rem;
++}
++
++.program-chart-bar-slot {
++  z-index: 1;
++}
++
++.program-card-panels__desktop-tabs {
++  padding: 0 0 0.55rem;
++}
++
++.program-card-panels__desktop.card-table-programs {
++  padding: 0;
++}
++
++.data-grid--program-weeks .program-week-table__macro--protein,
++.data-grid--program-weeks .program-week-table__macro--carbs,
++.data-grid--program-weeks .program-week-table__macro--fat {
++  color: #ffffff;
++  font-weight: 450;
++}
++
++@media (min-width: 981px) {
++  .program-card-panels .card-detail-tabs-mobile,
++  .program-card-panels .card-table-programs-mobile {
++    display: none !important;
++    opacity: 0 !important;
++  }
++
++  .program-card-panels__desktop-tabs {
++    display: flex !important;
++  }
++
++  .program-card-panels__desktop {
++    display: none !important;
++    opacity: 0 !important;
++  }
++
++  .program-card-panels__desktop.is-visible {
++    display: block !important;
++    opacity: 1 !important;
++  }
++}
++
++@media (max-width: 980px) {
++  .program-card-panels__desktop-tabs {
++    display: none !important;
++  }
++}
+diff --git a/notas/templates/components/program_metric_chart.html b/notas/templates/components/program_metric_chart.html
+index 6b5fab1..085ad11 100644
+--- a/notas/templates/components/program_metric_chart.html
++++ b/notas/templates/components/program_metric_chart.html
+@@ -3,9 +3,6 @@
+   <header class="program-chart-panel__header">
+     <div class="program-chart-panel__heading">
+       <p class="program-chart-panel__eyebrow">Gráfico diario</p>
+-      {% if chart.subtitle %}
+-        <span>{{ chart.subtitle }}</span>
+-      {% endif %}
+     </div>
+   </header>
+ 
+@@ -30,19 +27,17 @@
+         data-metric="{{ metric.key }}"
+         {% if not metric.is_active %}hidden{% endif %}
+       >
+-        <div class="program-chart-layout">
+-          <div class="program-chart-y-axis" aria-hidden="true">
+-            {% for tick in metric.y_axis_ticks %}
+-              <span>{{ tick.label }}</span>
+-            {% endfor %}
+-          </div>
++        <p class="program-chart-range-label">{{ metric.range_label }}</p>
+ 
++        <div class="program-chart-layout">
+           <div class="program-chart-main-axis">
+             <div
+               class="program-chart-plot program-chart-plot--{{ metric.kind }} program-chart-plot--{{ metric.key }}"
+               style="--program-chart-days: {{ chart.days_count|default:1 }};"
+               aria-label="Gráfico de {{ metric.label }}"
+             >
++              <span class="program-chart-guide program-chart-guide--max" aria-hidden="true"></span>
++              <span class="program-chart-guide program-chart-guide--min" aria-hidden="true"></span>
+               {% for bar in metric.bars %}
+                 <div
+                   class="program-chart-bar-slot {% if bar.is_week_start %}is-week-start{% endif %} {% if bar.is_empty %}is-empty{% endif %}"
+diff --git a/notas/templates/components/program_week_panels.html b/notas/templates/components/program_week_panels.html
+index c916609..641f897 100644
+--- a/notas/templates/components/program_week_panels.html
++++ b/notas/templates/components/program_week_panels.html
+@@ -3,7 +3,17 @@
+   class="card-detail-block program-card-panels"
+   data-default-mobile="#card-grid-program-macros-mobile-{{ panel_id }}"
+ >
+-  <div class="program-card-panels__desktop">
++  <div class="card-detail-tabs--desktop program-card-panels__desktop-tabs">
++    <button
++      type="button"
++      class="btn-desplegar"
++      data-target="#card-grid-program-weeks-desktop-{{ panel_id }}"
++    >
++      Semanas
++    </button>
++  </div>
++
++  <div id="card-grid-program-weeks-desktop-{{ panel_id }}" class="program-card-panels__desktop card-table-programs program-table-panel">
+     {% include "components/program_week_table_combined.html" with weeks=weeks %}
+   </div>
+ 

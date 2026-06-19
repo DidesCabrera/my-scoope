@@ -1,0 +1,42 @@
+{% extends "notas/base.html" %}
+
+{% block title %}Compartir Programa · {{ vm.content.program.name }}{% endblock %}
+
+{% block content %}
+<div class="page page--form page--program-share">
+  <div class="entity-form-shell">
+    <div class="entity-form-header">
+      <div>
+        <p class="entity-form-eyebrow">Compartir</p>
+        <h2>{{ vm.content.program.name }}</h2>
+        <p class="entity-form-description">Comparte este programa semanal con otro usuario.</p>
+      </div>
+      <i data-lucide="send" class="entity-form-header__icon program"></i>
+    </div>
+
+    <form method="post" class="entity-form">
+      {% csrf_token %}
+
+      <div class="entity-form-section">
+        {{ vm.content.form.recipient_email.label_tag }}
+        {{ vm.content.form.recipient_email }}
+      </div>
+
+      <div class="entity-form-section">
+        {{ vm.content.form.subject.label_tag }}
+        {{ vm.content.form.subject }}
+      </div>
+
+      <div class="entity-form-section">
+        {{ vm.content.form.message.label_tag }}
+        {{ vm.content.form.message }}
+      </div>
+
+      <div class="entity-form-actions">
+        <a class="btn-secondary" href="{% url 'program_detail' vm.content.program.id %}">Cancelar</a>
+        <button class="btn-primary" type="submit">Compartir programa</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

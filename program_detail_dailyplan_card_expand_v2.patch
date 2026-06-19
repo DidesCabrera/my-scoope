@@ -1,0 +1,386 @@
+--- a/notas/interface/views/programs.py	2026-06-19 02:38:47.000000000 +0000
++++ b/notas/interface/views/programs.py	2026-06-19 02:57:26.737084908 +0000
+@@ -25,8 +25,20 @@
+     remove_program_day,
+ )
+ from notas.application.services.commands.share_commands import create_program_share
++from notas.application.services.nutrition.food_aggregation import (
++    build_dailyplan_foods_aggregation,
++)
++from notas.application.services.nutrition.weight import get_current_weight
+ from notas.domain.models import DailyPlan, Program, ProgramDay
+ from notas.interface.forms.forms import ProgramShareForm
++from notas.presentation.composition.viewmodel.components.builder_menu import (
++    build_dailyplan_menu,
++)
++from notas.presentation.composition.viewmodel.components.builder_table_items import (
++    build_dailyplanmeal_table_item,
++)
++from notas.presentation.config.icons import CONTENT_ICON_REGISTRY
++from notas.presentation.resolvers.title_resolvers import resolve_category_badge
+ from notas.presentation.composition.viewmodel.components.builder_headers import build_page_header
+ from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
+ from notas.presentation.config.viewmodel_config import (
+@@ -366,6 +378,80 @@
+     }
+ 
+ 
++def _dailyplan_meals_for_card(dailyplan):
++    prefetched = getattr(dailyplan, "_prefetched_objects_cache", {}).get(
++        "dailyplan_meals"
++    )
++
++    if prefetched is not None:
++        return list(prefetched)
++
++    return list(dailyplan.meals_with_foods())
++
++
++def _program_slot_dailyplan_card(dailyplan, user):
++    dailyplan_meals = _dailyplan_meals_for_card(dailyplan)
++    snapshot = _plan_snapshot(dailyplan)
++    current_weight = get_current_weight(user)
++    foods_aggregation = build_dailyplan_foods_aggregation(dailyplan_meals)
++
++    return {
++        "id": f"program-slot-{dailyplan.id}",
++        "child_id": dailyplan.id,
++        "titulo": {
++            "name": dailyplan.name,
++            "label": "DailyPlan",
++            "icon": CONTENT_ICON_REGISTRY.get("dailyplan"),
++            "category": dailyplan.category,
++            "category_badge": resolve_category_badge(dailyplan.category),
++            "structural_indicators": {
++                "meals_count": len(dailyplan_meals),
++                "foods_count": len(foods_aggregation),
++            },
++            "url": None,
++        },
++        "kpis": {
++            "ppk": (snapshot["protein"] / current_weight)
++            if (current_weight and snapshot["protein"])
++            else None,
++            "tot_kcal": snapshot["total_kcal"],
++            "g_protein": snapshot["protein"],
++            "g_carbs": snapshot["carbs"],
++            "g_fat": snapshot["fat"],
++            "kcal_protein": snapshot["kcal_protein"],
++            "kcal_carbs": snapshot["kcal_carbs"],
++            "kcal_fat": snapshot["kcal_fat"],
++            "alloc_protein": snapshot["alloc"]["protein"],
++            "alloc_carbs": snapshot["alloc"]["carbs"],
++            "alloc_fat": snapshot["alloc"]["fat"],
++        },
++        "table": {
++            "items": [
++                build_dailyplanmeal_table_item(
++                    dailyplan_meal,
++                    dailyplan_snapshot=snapshot,
++                )
++                for dailyplan_meal in dailyplan_meals
++            ],
++        },
++        "menu": build_dailyplan_menu(dailyplan_meals),
++        "foods_aggregation": foods_aggregation,
++        "metadata": {
++            "owner": str(dailyplan.created_by),
++            "author": str(dailyplan.original_author),
++            "fork_from": str(dailyplan.forked_from) if dailyplan.forked_from else None,
++        },
++        "actions": [
++            _action(
++                key="detail",
++                label="Ir a detalle",
++                url=reverse("dailyplan_detail", args=[dailyplan.id]),
++                icon="pencil",
++            ),
++        ],
++    }
++
++
+ def _available_dailyplans(user):
+     return (
+         DailyPlan.objects
+@@ -390,7 +476,7 @@
+     )
+ 
+ 
+-def build_weekly_grid(program, program_days):
++def build_weekly_grid(program, program_days, user=None, include_dailyplan_cards=False):
+     slots = {
+         (program_day.week_number, program_day.day_number): program_day
+         for program_day in program_days
+@@ -407,8 +493,15 @@
+             program_day = slots.get((week_number, day_number))
+             snapshot = None
+ 
++            dailyplan_card = None
++
+             if program_day:
+                 snapshot = _plan_snapshot(program_day.dailyplan)
++                if include_dailyplan_cards and user is not None:
++                    dailyplan_card = _program_slot_dailyplan_card(
++                        program_day.dailyplan,
++                        user,
++                    )
+                 _add_snapshot(week_totals, snapshot)
+                 _add_snapshot(program_totals, snapshot)
+ 
+@@ -418,6 +511,7 @@
+                 "program_day": program_day,
+                 "dailyplan": program_day.dailyplan if program_day else None,
+                 "snapshot": snapshot,
++                "dailyplan_card": dailyplan_card,
+             })
+ 
+         week_totals = _finalize_totals(week_totals)
+@@ -649,7 +743,12 @@
+         return HttpResponseForbidden()
+ 
+     program_days = list(_program_days_queryset(program))
+-    grid_data = build_weekly_grid(program, program_days)
++    grid_data = build_weekly_grid(
++        program,
++        program_days,
++        user=request.user,
++        include_dailyplan_cards=True,
++    )
+     dailyplans = list(_available_dailyplans(request.user))
+     dailyplan_options = [_plan_snapshot(dailyplan) for dailyplan in dailyplans]
+ 
+--- a/notas/templates/notas/programs/detail.html	2026-06-19 02:38:47.000000000 +0000
++++ b/notas/templates/notas/programs/detail.html	2026-06-19 02:57:04.541152527 +0000
+@@ -41,16 +41,6 @@
+     </div>
+   </section>
+ 
+-  <section class="page-kpi program-detail__kpi">
+-    <h3>Total del programa</h3>
+-    <div class="card-kpi main">
+-      {% include "components/dash_kpi.html" with kpis=vm.content.program_kpis %}
+-    </div>
+-    <p class="program-detail__kpi-note">
+-      El total completo existe como referencia, pero las decisiones operativas se muestran por semana.
+-    </p>
+-  </section>
+-
+   <section class="program-board-shell">
+     <div class="dailyplan-detail__children-header program-board-header">
+       <div class="home-section-title detail-dp">
+@@ -113,7 +103,15 @@
+                 role="listitem"
+                 data-week-number="{{ week.week_number }}"
+                 data-day-number="{{ day.day_number }}"
+-                {% if day.program_day %}aria-label="{{ day.day_label }}: {{ day.dailyplan.name }}"{% else %}aria-label="{{ day.day_label }}: sin plan diario"{% endif %}
++                {% if day.program_day %}
++                  tabindex="0"
++                  data-slot-card-target="program-week-{{ week.week_number }}-day-{{ day.day_number }}-card"
++                  aria-expanded="false"
++                  aria-controls="program-week-{{ week.week_number }}-day-{{ day.day_number }}-card"
++                  aria-label="{{ day.day_label }}: ver {{ day.dailyplan.name }}"
++                {% else %}
++                  aria-label="{{ day.day_label }}: sin plan diario"
++                {% endif %}
+               >
+                 {% if day.program_day %}
+                   <div class="program-day-cell__content">
+@@ -201,6 +199,21 @@
+               </article>
+             {% endfor %}
+           </div>
++
++          <div class="program-week-row__selected-cards js-program-week-selected-cards" aria-live="polite">
++            {% for day in week.days %}
++              {% if day.program_day and day.dailyplan_card %}
++                <div
++                  id="program-week-{{ week.week_number }}-day-{{ day.day_number }}-card"
++                  class="program-day-selected-card-wrap js-program-slot-card"
++                  data-slot-card="program-week-{{ week.week_number }}-day-{{ day.day_number }}-card"
++                  hidden
++                >
++                  {% include "components/card_child_dailyplan.html" with child_card=day.dailyplan_card dailyplan_card_class="program-day-selected-card" default_nutrition=True %}
++                </div>
++              {% endif %}
++            {% endfor %}
++          </div>
+         </section>
+       {% endfor %}
+     </div>
+--- a/notas/static/notas/css/components/programs.css	2026-06-19 02:38:47.000000000 +0000
++++ b/notas/static/notas/css/components/programs.css	2026-06-19 02:58:11.837797404 +0000
+@@ -37,8 +37,7 @@
+ .program-week-summary,
+ .program-day-cell,
+ .program-empty-state,
+-.program-hero,
+-.program-board-shell {
++.program-hero {
+   border: 1px solid var(--border-default);
+   background: var(--surface-card);
+   border-radius: 16px;
+@@ -137,17 +136,11 @@
+   grid-template-columns: repeat(3, minmax(0, 1fr));
+ }
+ 
+-.program-detail__kpi {
+-  margin-bottom: 1rem;
+-}
+-
+-.program-detail__kpi-note {
+-  margin: 0.75rem 0 0;
+-  font-size: 0.88rem;
+-}
+-
+ .program-board-shell {
+-  padding: 1rem;
++  padding: 0;
++  border: 0;
++  border-radius: 0;
++  background: transparent;
+   overflow: visible;
+ }
+ 
+@@ -311,6 +304,14 @@
+   border-right: 0;
+ }
+ 
++.program-day-cell.has-plan {
++  cursor: pointer;
++}
++
++.program-day-cell.has-plan.is-selected {
++  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--entity-dailyplan) 48%, transparent);
++}
++
+ .program-day-cell.is-empty {
+   border-style: dashed;
+   background: color-mix(in srgb, var(--surface-card) 70%, transparent);
+@@ -544,6 +545,32 @@
+   color: var(--text-muted);
+ }
+ 
++.program-week-row__selected-cards {
++  display: grid;
++  gap: 0.75rem;
++}
++
++.program-week-row__selected-cards:empty {
++  display: none;
++}
++
++.program-day-selected-card-wrap[hidden] {
++  display: none;
++}
++
++.program-day-selected-card {
++  margin: 0;
++  border-color: color-mix(in srgb, var(--entity-dailyplan) 24%, var(--border-default));
++}
++
++.program-day-selected-card .card-overflow-menu {
++  display: none;
++}
++
++.program-day-selected-card .card-actions-row {
++  justify-content: flex-end;
++}
++
+ .program-week-summary {
+   display: none;
+ }
+@@ -579,7 +606,7 @@
+   }
+ 
+   .program-board-shell {
+-    padding: 0.75rem;
++    padding: 0;
+   }
+ 
+   .program-board__header,
+--- a/notas/static/notas/js/program_slot_picker.js	2026-06-19 01:30:52.000000000 +0000
++++ b/notas/static/notas/js/program_slot_picker.js	2026-06-19 02:58:50.795942202 +0000
+@@ -10,6 +10,51 @@
+     });
+   }
+ 
++  function closeSlotCards(scope, exceptId = null) {
++    const container = scope || document;
++
++    container.querySelectorAll(".js-program-slot-card").forEach((card) => {
++      if (card.id !== exceptId) {
++        card.hidden = true;
++      }
++    });
++
++    container.querySelectorAll(".program-day-cell.has-plan").forEach((cell) => {
++      if (cell.dataset.slotCardTarget !== exceptId) {
++        cell.classList.remove("is-selected");
++        cell.setAttribute("aria-expanded", "false");
++      }
++    });
++  }
++
++  function shouldIgnoreCellToggle(event) {
++    return Boolean(
++      event.target.closest(
++        "a, button, input, select, textarea, label, form, .program-slot-picker, .card"
++      )
++    );
++  }
++
++  function toggleSlotCard(cell) {
++    const targetId = cell.dataset.slotCardTarget;
++    if (!targetId) return;
++
++    const weekRow = cell.closest(".program-week-row");
++    const card = weekRow?.querySelector(`#${CSS.escape(targetId)}`);
++    if (!card) return;
++
++    const shouldOpen = card.hidden;
++    closeSlotCards(weekRow, shouldOpen ? targetId : null);
++
++    card.hidden = !shouldOpen;
++    cell.classList.toggle("is-selected", shouldOpen);
++    cell.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
++
++    if (shouldOpen && window.lucide) {
++      window.lucide.createIcons();
++    }
++  }
++
+   function syncSearch(picker) {
+     const input = picker.querySelector(".js-program-slot-search");
+     const options = Array.from(picker.querySelectorAll(".js-program-slot-option"));
+@@ -34,6 +79,21 @@
+     preview.hidden = false;
+   }
+ 
++  document.querySelectorAll(".program-day-cell.has-plan").forEach((cell) => {
++    cell.addEventListener("click", (event) => {
++      if (shouldIgnoreCellToggle(event)) return;
++      toggleSlotCard(cell);
++    });
++
++    cell.addEventListener("keydown", (event) => {
++      if (event.key !== "Enter" && event.key !== " ") return;
++      if (shouldIgnoreCellToggle(event)) return;
++
++      event.preventDefault();
++      toggleSlotCard(cell);
++    });
++  });
++
+   document.querySelectorAll(".js-program-slot-open").forEach((button) => {
+     button.addEventListener("click", () => {
+       const cell = button.closest(".program-day-cell");
+@@ -42,6 +102,9 @@
+ 
+       const shouldOpen = picker.hidden;
+       closeAllExcept(picker);
++      if (shouldOpen) {
++        closeSlotCards(cell?.closest(".program-week-row"));
++      }
+       picker.hidden = !shouldOpen;
+       cell.classList.toggle("is-picking", shouldOpen);
+ 

@@ -1,0 +1,55 @@
+{% if items %}
+<div
+  class="card-detail-block main program-week-foods-aggregation"
+  data-default-desktop="#program-week-foods-table-{{ panel_id }}"
+  data-default-mobile="#program-week-foods-qty-{{ panel_id }}"
+>
+  <div class="card-detail-tabs card-detail-tabs--desktop block-desplegar-tabla block-card-desplegar">
+    <div class="btn-desplegar is-active" data-target="#program-week-foods-table-{{ panel_id }}">
+      <p>Tabla Alimentos</p>
+    </div>
+  </div>
+
+  <div class="card-detail-tabs-mobile">
+    <button
+      type="button"
+      class="btn-desplegar-mobile is-active"
+      data-target="#program-week-foods-qty-{{ panel_id }}"
+    >
+      Alimentos
+    </button>
+
+    <button
+      type="button"
+      class="btn-desplegar-mobile"
+      data-target="#program-week-foods-macros-{{ panel_id }}"
+    >
+      Macros
+    </button>
+
+    <button
+      type="button"
+      class="btn-desplegar-mobile"
+      data-target="#program-week-foods-alloc-{{ panel_id }}"
+    >
+      Alloc
+    </button>
+  </div>
+
+  <div id="program-week-foods-table-{{ panel_id }}" class="card-table-dailyplan-foods card-table-dailyplan-foods--desktop program-week-foods-aggregation__panel">
+    {% include "components/grid_foods.html" with items=items %}
+  </div>
+
+  <div id="program-week-foods-qty-{{ panel_id }}" class="card-table-dailyplan-foods card-table-dailyplan-foods--mobile program-week-foods-aggregation__panel">
+    {% include "components/grid_foods_mobile_qty.html" with items=items %}
+  </div>
+
+  <div id="program-week-foods-macros-{{ panel_id }}" class="card-table-dailyplan-foods card-table-dailyplan-foods--mobile program-week-foods-aggregation__panel">
+    {% include "components/grid_foods_mobile_macros.html" with items=items %}
+  </div>
+
+  <div id="program-week-foods-alloc-{{ panel_id }}" class="card-table-dailyplan-foods card-table-dailyplan-foods--mobile program-week-foods-aggregation__panel">
+    {% include "components/grid_foods_mobile_alloc.html" with items=items %}
+  </div>
+</div>
+{% endif %}

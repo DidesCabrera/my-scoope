@@ -5,7 +5,7 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 from django.shortcuts import get_object_or_404
 
-from notas.domain.models import DailyPlanMeal, Meal
+from notas.domain.models import DailyPlan, DailyPlanMeal, Meal
 from notas.application.services.queries.dailyplan_queries import (
     dailyplans_with_kcal,
     get_dailyplan_for_edit,
@@ -214,6 +214,7 @@ def get_dailyplan_list_page_data(user, request_get=None) -> DailyPlanListPageDat
             created_by=user,
             is_draft=False,
         )
+        .exclude(source=DailyPlan.SOURCE_PROGRAM)
         .order_by("list_order", "-created_at", "-id")
     )
 
@@ -247,6 +248,7 @@ def get_dailyplan_explore_list_page_data(user) -> DailyPlanListPageData:
             is_public=True,
             is_draft=False,
         )
+        .exclude(source=DailyPlan.SOURCE_PROGRAM)
         .order_by("-created_at")
     )
 
@@ -279,6 +281,7 @@ def get_dailyplan_shared_list_page_data(user) -> DailyPlanListPageData:
             shares__removed=False,
             is_draft=False,
         )
+        .exclude(source=DailyPlan.SOURCE_PROGRAM)
         .prefetch_related("shares")
         .distinct()
     )
@@ -311,6 +314,7 @@ def get_dailyplan_draft_list_page_data(user) -> DailyPlanListPageData:
             created_by=user,
             is_draft=True,
         )
+        .exclude(source=DailyPlan.SOURCE_PROGRAM)
         .order_by("-created_at")
     )
 

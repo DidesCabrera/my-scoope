@@ -1,0 +1,390 @@
+diff -ruN myscoope_101_orig/notas/interface/views/programs.py myscoope_101_mod/notas/interface/views/programs.py
+--- myscoope_101_orig/notas/interface/views/programs.py	2026-06-19 03:54:40.000000000 +0000
++++ myscoope_101_mod/notas/interface/views/programs.py	2026-06-19 04:52:04.432362358 +0000
+@@ -742,7 +742,7 @@
+     return {
+         "child_id": program.id,
+         "title": program.name,
+-        "icon": "calendar-range",
++        "icon": "calendar",
+         "weeks_count": program.normalized_duration_weeks,
+         "filled_days_count": grid_data["filled_days_count"],
+         "duration_days": program.duration_days,
+diff -ruN myscoope_101_orig/notas/presentation/config/icons.py myscoope_101_mod/notas/presentation/config/icons.py
+--- myscoope_101_orig/notas/presentation/config/icons.py	2026-06-19 01:30:52.000000000 +0000
++++ myscoope_101_mod/notas/presentation/config/icons.py	2026-06-19 04:52:04.429246268 +0000
+@@ -2,5 +2,5 @@
+     "dailyplan": "clipboard-list",
+     "meal": "utensils",
+     "food": "carrot",
+-    "program": "calendar-range",
++    "program": "calendar",
+ }
+\ No newline at end of file
+diff -ruN myscoope_101_orig/notas/presentation/navigation/app_registry.py myscoope_101_mod/notas/presentation/navigation/app_registry.py
+--- myscoope_101_orig/notas/presentation/navigation/app_registry.py	2026-06-19 01:30:52.000000000 +0000
++++ myscoope_101_mod/notas/presentation/navigation/app_registry.py	2026-06-19 04:52:04.427998173 +0000
+@@ -48,6 +48,18 @@
+         label="Mis Librerías",
+         groups=(
+             NavGroupSpec(
++                key="program",
++                label="Mis Programas Semanales",
++                icon="calendar",
++                url_name="program_list",
++                nav_root="program",
++                scope="personal",
++                page_icon="bookmark",
++                action_url_name="program_create",
++                action_icon="plus",
++                action_label="Nuevo programa semanal",
++            ),
++            NavGroupSpec(
+                 key="dailyplan",
+                 label="Mis Planes Diarios",
+                 icon="clipboard-list",
+@@ -83,18 +95,6 @@
+                 action_icon="plus",
+                 action_label="Nuevo alimento",
+             ),
+-            NavGroupSpec(
+-                key="program",
+-                label="Mis Programas Semanales",
+-                icon="calendar-range",
+-                url_name="program_list",
+-                nav_root="program",
+-                scope="personal",
+-                page_icon="bookmark",
+-                action_url_name="program_create",
+-                action_icon="plus",
+-                action_label="Nuevo programa semanal",
+-            ),
+         ),
+     ),
+ 
+@@ -183,7 +183,7 @@
+                     NavItemSpec(
+                         key="program_create",
+                         label="Nuevo Programa",
+-                        icon="calendar-range",
++                        icon="calendar",
+                         page_icon="circle-fading-plus",
+                         url_name="program_create",
+                         nav_root="program",
+diff -ruN myscoope_101_orig/notas/static/notas/css/components/programs.css myscoope_101_mod/notas/static/notas/css/components/programs.css
+--- myscoope_101_orig/notas/static/notas/css/components/programs.css	2026-06-19 04:31:50.000000000 +0000
++++ myscoope_101_mod/notas/static/notas/css/components/programs.css	2026-06-19 04:53:25.006647680 +0000
+@@ -712,11 +712,11 @@
+ /* Program metric chart ================================== */
+ .program-chart-panel {
+   display: grid;
+-  gap: 0.85rem;
+-  padding: 0.9rem;
+-  border: 1px solid var(--border-default);
+-  border-radius: 12px;
+-  background: var(--surface-card);
++  gap: 0.75rem;
++  padding: 10px;
++  border: 1px solid var(--border-soft);
++  border-radius: 18px;
++  background: var(--surface-card-muted);
+   overflow: hidden;
+ }
+ 
+@@ -729,49 +729,35 @@
+ }
+ 
+ .program-chart-panel__header {
+-  display: flex;
+-  justify-content: space-between;
+-  gap: 0.75rem;
+-  align-items: flex-start;
++  display: block;
++  min-width: 0;
+ }
+ 
+-.program-chart-panel__header h3,
+-.program-chart-panel__eyebrow {
+-  margin: 0;
++.program-chart-panel__heading {
++  display: grid;
++  gap: 0.15rem;
++  min-width: 0;
+ }
+ 
+-.program-chart-panel__header h3 {
+-  font-size: 1rem;
+-  line-height: 1.15;
++.program-chart-panel__eyebrow {
++  margin: 0;
++  color: var(--text-muted);
++  font-size: 0.68rem;
++  font-weight: 850;
++  letter-spacing: 0.08em;
++  text-transform: uppercase;
+ }
+ 
+ .program-chart-panel__header span,
+-.program-chart-panel__eyebrow,
+ .program-chart-y-axis,
+ .program-chart-week-axis {
+   color: var(--text-muted);
+ }
+ 
+-.program-chart-panel__eyebrow {
+-  margin-bottom: 0.2rem;
+-  color: var(--entity-program);
+-  font-size: 0.68rem;
+-  font-weight: 800;
+-  letter-spacing: 0.08em;
+-  text-transform: uppercase;
+-}
+-
+ .program-chart-panel__header span {
+   display: inline-block;
+-  margin-top: 0.18rem;
+-  font-size: 0.76rem;
+-}
+-
+-.program-chart-panel__icon {
+-  width: 24px;
+-  height: 24px;
+-  color: var(--entity-program);
+-  flex: 0 0 auto;
++  font-size: 0.74rem;
++  font-weight: 650;
+ }
+ 
+ .program-chart-tabs {
+@@ -781,20 +767,30 @@
+ }
+ 
+ .program-chart-tab {
+-  border: 1px solid var(--border-default);
+-  border-radius: 8px;
+-  background: var(--surface-card-muted);
+-  color: var(--text-muted);
+-  padding: 0.38rem 0.6rem;
++  min-height: 22px;
++  display: inline-flex;
++  align-items: center;
++  justify-content: center;
++  border: 1px solid var(--panel-tab-border);
++  border-radius: 12px;
++  background: var(--panel-tab-bg);
++  color: var(--panel-tab-text);
++  padding: 0 8px;
+   font-size: 0.72rem;
+-  font-weight: 800;
++  font-weight: 750;
+   cursor: pointer;
+ }
+ 
++.program-chart-tab:hover {
++  background: var(--panel-tab-hover-bg);
++  color: var(--panel-tab-hover-text);
++  border-color: var(--panel-tab-hover-border);
++}
++
+ .program-chart-tab.is-active {
+-  border-color: color-mix(in srgb, var(--entity-program) 42%, var(--border-default));
+-  background: color-mix(in srgb, var(--entity-program) 14%, var(--surface-card-muted));
+-  color: var(--text-main);
++  background: var(--panel-tab-active-bg);
++  color: var(--panel-tab-active-text);
++  border-color: var(--panel-tab-active-border);
+ }
+ 
+ .program-chart-panel__body,
+@@ -971,17 +967,13 @@
+ }
+ 
+ .program-chart-panel--card {
+-  padding: 0.75rem;
++  padding: 10px;
+ }
+ 
+ .program-chart-panel--card .program-chart-panel__header span {
+   display: none;
+ }
+ 
+-.program-chart-panel--card .program-chart-panel__header h3 {
+-  font-size: 0.88rem;
+-}
+-
+ .program-chart-panel--card .program-chart-tabs {
+   gap: 0.25rem;
+ }
+@@ -1100,7 +1092,6 @@
+ .program-empty-state__icon,
+ .program-hero__icon,
+ .program-week-row__icon,
+-.program-chart-panel__icon,
+ .program-structural-icon {
+   background: var(--entity-program);
+   color: #ffffff !important;
+@@ -1114,8 +1105,7 @@
+   border-radius: 12px;
+ }
+ 
+-.program-week-row__icon,
+-.program-chart-panel__icon {
++.program-week-row__icon {
+   padding: 4px;
+   border-radius: 7px;
+ }
+diff -ruN myscoope_101_orig/notas/static/notas/css/components/sidebar.css myscoope_101_mod/notas/static/notas/css/components/sidebar.css
+--- myscoope_101_orig/notas/static/notas/css/components/sidebar.css	2026-06-18 04:40:13.000000000 +0000
++++ myscoope_101_mod/notas/static/notas/css/components/sidebar.css	2026-06-19 04:52:40.600481234 +0000
+@@ -188,6 +188,7 @@
+     min-width: 0;
+ }
+ 
++.sidebar-main-icon--program,
+ .sidebar-main-icon--dailyplan,
+ .sidebar-main-icon--meal,
+ .sidebar-main-icon--food {
+@@ -205,6 +206,10 @@
+     height: 26px;
+ }
+ 
++.sidebar-main-icon--program {
++    background-color: var(--color-program);
++}
++
+ .sidebar-main-icon--dailyplan {
+     background-color: var(--color-dailyplan);
+ }
+@@ -217,6 +222,7 @@
+     background-color: var(--color-food);
+ }
+ 
++.sidebar-main--link.is-active .sidebar-main-icon--program,
+ .sidebar-main--link.is-active .sidebar-main-icon--dailyplan,
+ .sidebar-main--link.is-active .sidebar-main-icon--meal,
+ .sidebar-main--link.is-active .sidebar-main-icon--food {
+diff -ruN myscoope_101_orig/notas/templates/components/card_child_program.html myscoope_101_mod/notas/templates/components/card_child_program.html
+--- myscoope_101_orig/notas/templates/components/card_child_program.html	2026-06-19 04:31:50.000000000 +0000
++++ myscoope_101_mod/notas/templates/components/card_child_program.html	2026-06-19 04:52:20.371566775 +0000
+@@ -10,13 +10,13 @@
+           <div class="structural-indicators">
+             <span class="structural-item">
+               <span class="structural-value">{{ child_card.weeks_count }}</span>
+-              <i data-lucide="calendar-range" class="card-icon main program-structural-icon"></i>
++              <i data-lucide="calendar-1" class="card-icon main program-structural-icon"></i>
+             </span>
+           </div>
+         </div>
+ 
+         <div class="icons-title">
+-          <i data-lucide="calendar-range" class="home-section-header-icon program"></i>
++          <i data-lucide="calendar" class="home-section-header-icon program"></i>
+           {% if child_card.is_shared %}
+             <div class="label-fork label-fork--shared" title="Compartido" aria-label="Compartido">
+               <i data-lucide="users" class="card-icon"></i>
+diff -ruN myscoope_101_orig/notas/templates/components/list_panel_programs_delete.html myscoope_101_mod/notas/templates/components/list_panel_programs_delete.html
+--- myscoope_101_orig/notas/templates/components/list_panel_programs_delete.html	2026-06-19 01:30:52.000000000 +0000
++++ myscoope_101_mod/notas/templates/components/list_panel_programs_delete.html	2026-06-19 04:52:20.377909655 +0000
+@@ -15,7 +15,7 @@
+ 
+             <div class="data-grid-cell data-grid-cell--name">
+                 <div class="list-panel-title-row">
+-                    <i data-lucide="calendar-range" class="picker-summary-card__icon program list-panel-title-icon"></i>
++                    <i data-lucide="calendar" class="picker-summary-card__icon program list-panel-title-icon"></i>
+                     <div class="truncate">{{ child.title }}</div>
+                 </div>
+             </div>
+diff -ruN myscoope_101_orig/notas/templates/components/list_panel_programs_reorder.html myscoope_101_mod/notas/templates/components/list_panel_programs_reorder.html
+--- myscoope_101_orig/notas/templates/components/list_panel_programs_reorder.html	2026-06-19 01:30:52.000000000 +0000
++++ myscoope_101_mod/notas/templates/components/list_panel_programs_reorder.html	2026-06-19 04:52:20.375973639 +0000
+@@ -18,7 +18,7 @@
+ 
+             <div class="data-grid-cell data-grid-cell--name">
+                 <div class="list-panel-title-row">
+-                    <i data-lucide="calendar-range" class="picker-summary-card__icon program list-panel-title-icon"></i>
++                    <i data-lucide="calendar" class="picker-summary-card__icon program list-panel-title-icon"></i>
+                     <div class="truncate">{{ child.title }}</div>
+                 </div>
+             </div>
+diff -ruN myscoope_101_orig/notas/templates/components/program_metric_chart.html myscoope_101_mod/notas/templates/components/program_metric_chart.html
+--- myscoope_101_orig/notas/templates/components/program_metric_chart.html	2026-06-19 03:41:09.000000000 +0000
++++ myscoope_101_mod/notas/templates/components/program_metric_chart.html	2026-06-19 04:52:54.882372117 +0000
+@@ -1,12 +1,12 @@
+ {% if chart and chart.metrics %}
+-<section class="program-chart-panel {{ modifier }} js-program-chart" aria-label="{{ chart.title }}">
++<section class="program-chart-panel card-detail-block {{ modifier }} js-program-chart" aria-label="{{ chart.title }}">
+   <header class="program-chart-panel__header">
+-    <div>
++    <div class="program-chart-panel__heading">
+       <p class="program-chart-panel__eyebrow">Gráfico diario</p>
+-      <h3>{{ chart.title }}</h3>
+-      <span>{{ chart.subtitle }}</span>
++      {% if chart.subtitle %}
++        <span>{{ chart.subtitle }}</span>
++      {% endif %}
+     </div>
+-    <i data-lucide="bar-chart-3" class="program-chart-panel__icon"></i>
+   </header>
+ 
+   <div class="program-chart-tabs" role="tablist" aria-label="Variable del gráfico">
+diff -ruN myscoope_101_orig/notas/templates/notas/programs/create.html myscoope_101_mod/notas/templates/notas/programs/create.html
+--- myscoope_101_orig/notas/templates/notas/programs/create.html	2026-06-19 02:10:52.000000000 +0000
++++ myscoope_101_mod/notas/templates/notas/programs/create.html	2026-06-19 04:52:20.373831060 +0000
+@@ -11,7 +11,7 @@
+       {% csrf_token %}
+ 
+       <div class="main-modal entity-form__main-modal">
+-        <i data-lucide="calendar-range" class="main-modal-icon program"></i>
++        <i data-lucide="calendar" class="main-modal-icon program"></i>
+         <h2 class="title-create">Crear Programa Semanal</h2>
+       </div>
+ 
+diff -ruN myscoope_101_orig/notas/templates/notas/programs/detail.html myscoope_101_mod/notas/templates/notas/programs/detail.html
+--- myscoope_101_orig/notas/templates/notas/programs/detail.html	2026-06-19 04:31:50.000000000 +0000
++++ myscoope_101_mod/notas/templates/notas/programs/detail.html	2026-06-19 04:52:20.374959055 +0000
+@@ -19,7 +19,7 @@
+           {{ vm.content.filled_days_count }}/{{ vm.content.program.duration_days }} días asignados
+         </p>
+       </div>
+-      <i data-lucide="calendar-range" class="program-hero__icon"></i>
++      <i data-lucide="calendar" class="program-hero__icon"></i>
+     </div>
+ 
+     <div class="program-hero__metrics">
+@@ -48,13 +48,13 @@
+   <section class="program-board-shell">
+     <div class="dailyplan-detail__children-header program-board-header">
+       <div class="home-section-title detail-dp">
+-        <i data-lucide="calendar-days" class="home-section-header-icon program"></i>
++        <i data-lucide="calendar" class="home-section-header-icon program"></i>
+         <h2>Planificación por semanas</h2>
+       </div>
+       <div class="structural-indicators">
+         <span class="structural-item">
+           <span class="structural-value">{{ vm.content.program.normalized_duration_weeks }}</span>
+-          <i data-lucide="calendar-range" class="structural-icon main program-structural-icon"></i>
++          <i data-lucide="calendar-1" class="structural-icon main program-structural-icon"></i>
+         </span>
+       </div>
+     </div>
+@@ -64,7 +64,7 @@
+         <section class="program-week-row" id="week-{{ week.week_number }}" aria-labelledby="program-week-title-{{ week.week_number }}">
+           <header class="program-week-row__header">
+             <div class="program-week-row__title">
+-              <i data-lucide="calendar-range" class="program-week-row__icon"></i>
++              <i data-lucide="calendar-1" class="program-week-row__icon"></i>
+               <h3 id="program-week-title-{{ week.week_number }}">Semana {{ week.week_number }}</h3>
+             </div>
+             <span class="program-week-row__status">
+diff -ruN myscoope_101_orig/notas/templates/notas/programs/list.html myscoope_101_mod/notas/templates/notas/programs/list.html
+--- myscoope_101_orig/notas/templates/notas/programs/list.html	2026-06-19 03:23:36.000000000 +0000
++++ myscoope_101_mod/notas/templates/notas/programs/list.html	2026-06-19 04:52:20.372766605 +0000
+@@ -16,7 +16,7 @@
+       {% include "components/card_child_program.html" with child_card=child %}
+     {% empty %}
+       <div class="program-empty-state">
+-        <i data-lucide="calendar-range" class="program-empty-state__icon"></i>
++        <i data-lucide="calendar" class="program-empty-state__icon"></i>
+         <h3>No tienes programas semanales aún</h3>
+         <p>Crea un programa de 1, 2, 3 o más semanas y asigna planes diarios a cada día.</p>
+         <a class="btn-primary" href="{% url 'program_create' %}">Crear programa semanal</a>

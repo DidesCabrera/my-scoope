@@ -1,65 +1,68 @@
 {% extends "notas/base.html" %}
 
-{% block title %}
-Configure Program – {{ program.name }}
-{% endblock %}
+{% block title %}Configurar Programa · {{ vm.content.program.name }}{% endblock %}
 
 {% block content %}
+<div class="page page--form page--program-configure">
+  <div class="entity-form-shell">
+    <div class="entity-form-header">
+      <div>
+        <p class="entity-form-eyebrow">Programa semanal</p>
+        <h2>Configurar programa</h2>
+        <p class="entity-form-description">Ajusta duración, visibilidad y permisos de distribución.</p>
+      </div>
+      <i data-lucide="settings" class="entity-form-header__icon program"></i>
+    </div>
 
-<h2>Configure program</h2>
-<br>
+    <form method="post" class="entity-form">
+      {% csrf_token %}
 
-<form method="post">
-  {% csrf_token %}
+      <div class="entity-form-section">
+        <label for="program-duration-weeks">Número de semanas</label>
+        <input
+          id="program-duration-weeks"
+          class="input-create entity-form__input"
+          type="number"
+          name="duration_weeks"
+          min="1"
+          step="1"
+          value="{{ vm.content.program.normalized_duration_weeks }}"
+          required
+        >
+        <p class="entity-form-help">No puedes reducir la duración por debajo de la última semana que ya tenga un plan asignado.</p>
+      </div>
 
-  <p>
-    <label>
-      <input
-        type="checkbox"
-        name="is_public"
-        {% if not caps.can_publish %}disabled{% endif %}
-        {% if program.is_public %}checked{% endif %}
-      >
-      Make this program public
-    </label>
-  </p>
+      <div class="program-config-options">
+        <label class="program-config-option">
+          <input type="checkbox" name="is_public" {% if not vm.content.caps.can_publish %}disabled{% endif %} {% if vm.content.program.is_public %}checked{% endif %}>
+          <span>
+            <strong>Hacer público</strong>
+            <small>Permite que otros usuarios lo descubran cuando esté habilitado.</small>
+          </span>
+        </label>
 
-  <hr>
+        <label class="program-config-option">
+          <input type="checkbox" name="is_forkable" {% if vm.content.program.is_forkable %}checked{% endif %}>
+          <span>
+            <strong>Permitir duplicados</strong>
+            <small>Otros usuarios podrán guardar una variante independiente.</small>
+          </span>
+        </label>
 
-  <p>
-    <label>
-      <input
-        type="checkbox"
-        name="is_forkable"
-        {% if program.is_forkable %}checked{% endif %}
-      >
-      Allow forks
-    </label>
-  </p>
+        <label class="program-config-option">
+          <input type="checkbox" name="is_copiable" {% if not vm.content.caps.can_copy %}disabled{% endif %} {% if vm.content.program.is_copiable %}checked{% endif %}>
+          <span>
+            <strong>Permitir copia limpia</strong>
+            <small>Crea una copia sin trazabilidad hacia el programa original.</small>
+          </span>
+        </label>
+      </div>
 
-  <hr>
-
-  <p>
-    <label>
-      <input
-        type="checkbox"
-        name="is_copiable"
-        {% if not caps.can_copy %}disabled{% endif %}
-        {% if program.is_copiable %}checked{% endif %}
-      >
-      Allow copies
-    </label>
-  </p>
-
-  <hr>
-
-  <button type="submit">
-    {% if program.is_draft %}
-      Finalize program
-    {% else %}
-      Save settings
-    {% endif %}
-  </button>
-</form>
-
+      <div class="entity-form-actions">
+        <a class="btn-secondary" href="{% url 'program_detail' vm.content.program.id %}">Cancelar</a>
+        <button class="btn-primary" type="submit">Guardar configuración</button>
+      </div>
+    </form>
+  </div>
+</div>
 {% endblock %}

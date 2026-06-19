@@ -1,0 +1,25 @@
+<div class="data-grid data-grid--program-weeks-mobile data-grid--program-weeks-mobile-alloc" role="table" aria-label="Alloc por semana">
+  <div class="data-grid-header data-grid-header--program-weeks-mobile data-grid-header--program-weeks-mobile-alloc" role="row">
+    <div class="data-grid-col data-grid-col--program-week" role="columnheader">Semana</div>
+    <div class="data-grid-col data-grid-col--alloc" role="columnheader">P%</div>
+    <div class="data-grid-col data-grid-col--alloc" role="columnheader">C%</div>
+    <div class="data-grid-col data-grid-col--alloc" role="columnheader">F%</div>
+  </div>
+
+  {% for week in weeks %}
+    <div class="data-grid-row data-grid-row--program-weeks-mobile data-grid-row--program-weeks-mobile-alloc" role="row">
+      <div class="data-grid-cell data-grid-cell--program-week" role="cell">S{{ week.week_number }}</div>
+      <div class="data-grid-cell data-grid-cell--alloc" role="cell">
+        {% include "components/grid_alloc_item.html" with value=week.totals.alloc.protein kind="protein" %}
+      </div>
+      <div class="data-grid-cell data-grid-cell--alloc" role="cell">
+        {% include "components/grid_alloc_item.html" with value=week.totals.alloc.carbs kind="carbs" %}
+      </div>
+      <div class="data-grid-cell data-grid-cell--alloc" role="cell">
+        {% include "components/grid_alloc_item.html" with value=week.totals.alloc.fat kind="fat" %}
+      </div>
+    </div>
+  {% empty %}
+    <div class="data-grid-empty">No hay semanas configuradas.</div>
+  {% endfor %}
+</div>

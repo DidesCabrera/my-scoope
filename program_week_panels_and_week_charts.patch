@@ -1,0 +1,397 @@
+diff --git a/notas/interface/views/programs.py b/notas/interface/views/programs.py
+index fd91558..473f62e 100644
+--- a/notas/interface/views/programs.py
++++ b/notas/interface/views/programs.py
+@@ -565,7 +565,12 @@ def _program_chart_bar_height(value, max_value):
+     return min((value / max_value) * 100, 100)
+ 
+ 
+-def build_program_metric_chart(weeks, current_weight=None):
++def build_program_metric_chart(
++    weeks,
++    current_weight=None,
++    title="Variación diaria del programa",
++    subtitle="Eje X agrupado por semanas, con cortes visuales entre bloques de 7 días.",
++):
+     """Build a tabbed, CSS-rendered chart with one bar per program day."""
+     day_points = []
+     day_index = 0
+@@ -683,8 +688,8 @@ def build_program_metric_chart(weeks, current_weight=None):
+     week_numbers = [week["week_number"] for week in weeks]
+ 
+     return {
+-        "title": "Variación diaria del programa",
+-        "subtitle": "Eje X agrupado por semanas, con cortes visuales entre bloques de 7 días.",
++        "title": title,
++        "subtitle": subtitle,
+         "days_count": len(day_points),
+         "weeks_count": len(week_numbers),
+         "week_labels": [f"w{week_number}" for week_number in week_numbers],
+@@ -905,6 +910,14 @@ def program_detail(request, pk):
+         include_dailyplan_cards=True,
+     )
+     current_weight = get_current_weight(request.user)
++    for week in grid_data["weeks"]:
++        week["chart"] = build_program_metric_chart(
++            [week],
++            current_weight=current_weight,
++            title=f"Variación diaria · Semana {week['week_number']}",
++            subtitle="Detalle diario de calorías, macros, alloc y PPK de esta semana.",
++        )
++
+     dailyplans = list(_available_dailyplans(request.user))
+     dailyplan_options = [_plan_snapshot(dailyplan) for dailyplan in dailyplans]
+ 
+diff --git a/notas/static/notas/css/components/programs.css b/notas/static/notas/css/components/programs.css
+index ca51c05..ff5fe13 100644
+--- a/notas/static/notas/css/components/programs.css
++++ b/notas/static/notas/css/components/programs.css
+@@ -20,20 +20,18 @@
+ }
+ 
+ .program-card__summary,
+-.program-hero__metrics,
+-.program-week-strip {
++.program-hero__metrics {
+   display: grid;
+   gap: 0.75rem;
+ }
+ 
+ .program-card__summary {
+-  grid-template-columns: repeat(3, minmax(0, 1fr));
++  grid-template-columns: repeat(auto-fit, minmax(120px, max-content));
+   margin-top: 0.75rem;
+ }
+ 
+ .program-card__summary-item,
+ .program-hero__metric,
+-.program-week-chip,
+ .program-week-summary,
+ .program-day-cell,
+ .program-empty-state,
+@@ -44,14 +42,12 @@
+ }
+ 
+ .program-card__summary-item,
+-.program-hero__metric,
+-.program-week-chip {
++.program-hero__metric {
+   padding: 0.75rem;
+ }
+ 
+ .program-card__summary-item span,
+ .program-hero__metric span,
+-.program-week-chip small,
+ .program-detail__kpi-note,
+ .program-hero__title p,
+ .program-slot-picker__option small,
+@@ -60,30 +56,12 @@
+ }
+ 
+ .program-card__summary-item strong,
+-.program-hero__metric strong,
+-.program-week-chip strong {
++.program-hero__metric strong {
+   display: block;
+   margin-top: 0.25rem;
+   font-size: 1.05rem;
+ }
+ 
+-.program-week-strip {
+-  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+-  margin: 1rem 0;
+-}
+-
+-.program-week-chip {
+-  min-height: 82px;
+-}
+-
+-.program-week-chip span,
+-.program-week-chip small {
+-  display: block;
+-}
+-
+-.program-week-chip.is-empty {
+-  opacity: 0.62;
+-}
+ 
+ .program-empty-state {
+   display: grid;
+@@ -653,6 +631,84 @@
+   }
+ }
+ 
++
++/* Program panels ======================================== */
++.program-card-panels {
++  margin: 0.85rem 0 1rem;
++}
++
++.card-table-programs,
++.card-table-programs-mobile {
++  display: none;
++  opacity: 0;
++}
++
++.card-table-programs.is-visible,
++.card-table-programs-mobile.is-visible {
++  display: block;
++  opacity: 1;
++}
++
++.program-table-panel {
++  padding: 0 0.65rem 0.7rem;
++}
++
++.program-week-table {
++  display: grid;
++  gap: 0.25rem;
++  min-width: 0;
++}
++
++.program-week-table__row {
++  display: grid;
++  grid-template-columns: minmax(64px, 0.9fr) repeat(4, minmax(0, 1fr));
++  align-items: center;
++  gap: 0.35rem;
++  min-width: 0;
++  padding: 0.45rem 0.55rem;
++  border: 1px solid color-mix(in srgb, var(--border-default) 72%, transparent);
++  border-radius: 8px;
++  background: var(--surface-card);
++  color: var(--text-main);
++  font-size: 0.72rem;
++  font-weight: 750;
++}
++
++.program-week-table__row--alloc {
++  grid-template-columns: minmax(64px, 0.9fr) repeat(3, minmax(0, 1fr));
++}
++
++.program-week-table__row--header {
++  background: transparent;
++  border-color: transparent;
++  color: var(--text-muted);
++  font-size: 0.62rem;
++  font-weight: 900;
++  letter-spacing: 0.06em;
++  text-transform: uppercase;
++}
++
++.program-week-table__row span,
++.program-week-table__row strong {
++  min-width: 0;
++}
++
++.program-week-table__macro--protein {
++  color: var(--nutrition-protein);
++}
++
++.program-week-table__macro--carbs {
++  color: var(--nutrition-carbs);
++}
++
++.program-week-table__macro--fat {
++  color: var(--nutrition-fat);
++}
++
++.program-chart-panel--week {
++  margin: 0;
++}
++
+ /* Program metric chart ================================== */
+ .program-chart-panel {
+   display: grid;
+@@ -994,3 +1050,38 @@
+     font-size: 0.48rem;
+   }
+ }
++
++@media (max-width: 980px) {
++  .card-table-programs {
++    display: none !important;
++    opacity: 0 !important;
++  }
++}
++
++@media (min-width: 981px) {
++  .card-table-programs-mobile {
++    display: none !important;
++    opacity: 0 !important;
++  }
++}
++
++@media (max-width: 780px) {
++  .program-table-panel {
++    padding-inline: 0.5rem;
++  }
++
++  .program-week-table__row {
++    grid-template-columns: minmax(48px, 0.85fr) repeat(4, minmax(0, 1fr));
++    gap: 0.25rem;
++    padding: 0.4rem;
++    font-size: 0.64rem;
++  }
++
++  .program-week-table__row--alloc {
++    grid-template-columns: minmax(48px, 0.85fr) repeat(3, minmax(0, 1fr));
++  }
++
++  .program-week-table__row--header {
++    font-size: 0.54rem;
++  }
++}
+diff --git a/notas/templates/components/card_child_program.html b/notas/templates/components/card_child_program.html
+index 7684915..3bc65dd 100644
+--- a/notas/templates/components/card_child_program.html
++++ b/notas/templates/components/card_child_program.html
+@@ -36,31 +36,13 @@
+         <span>Semanas</span>
+         <strong>{{ child_card.weeks_count }}</strong>
+       </div>
+-      <div class="program-card__summary-item">
+-        <span>Días asignados</span>
+-        <strong>{{ child_card.filled_days_count }}/{{ child_card.duration_days }}</strong>
+-      </div>
+-      {% if child_card.primary_week %}
+-        <div class="program-card__summary-item">
+-          <span>Semana 1</span>
+-          <strong>{{ child_card.primary_week.totals.total_kcal|floatformat:0 }} kcal</strong>
+-        </div>
+-      {% endif %}
+     </div>
+   </div>
+ 
+-  <div class="program-week-strip" aria-label="Resumen semanal de {{ child_card.title }}">
+-    {% for week in child_card.weeks %}
+-      <div class="program-week-chip {% if week.filled_days_count == 0 %}is-empty{% endif %}">
+-        <span>S{{ week.week_number }}</span>
+-        <strong>{{ week.totals.total_kcal|floatformat:0 }}</strong>
+-        <small>{{ week.filled_days_count }}/7 días</small>
+-      </div>
+-    {% endfor %}
+-  </div>
+-
+   {% include "components/program_metric_chart.html" with chart=child_card.chart modifier="program-chart-panel--card" %}
+ 
++  {% include "components/program_week_panels.html" with panel_id=child_card.child_id weeks=child_card.weeks %}
++
+   <div class="card-bottom">
+     <div class="card-metadata">
+       <div class="metadata-comp">
+diff --git a/notas/templates/components/program_week_panels.html b/notas/templates/components/program_week_panels.html
+new file mode 100644
+index 0000000..8c81d23
+--- /dev/null
++++ b/notas/templates/components/program_week_panels.html
+@@ -0,0 +1,49 @@
++{% if weeks %}
++<div
++  class="card-detail-block program-card-panels"
++  data-default-desktop="#card-grid-program-macros-{{ panel_id }}"
++  data-default-mobile="#card-grid-program-macros-mobile-{{ panel_id }}"
++>
++  <div class="card-detail-tabs card-detail-tabs--desktop block-desplegar-tabla block-card-desplegar">
++    <div class="btn-desplegar" data-target="#card-grid-program-macros-{{ panel_id }}">
++      <p>Macros</p>
++    </div>
++    <div class="btn-desplegar" data-target="#card-grid-program-alloc-{{ panel_id }}">
++      <p>Alloc</p>
++    </div>
++  </div>
++
++  <div class="card-detail-tabs-mobile">
++    <button
++      type="button"
++      class="btn-desplegar-mobile"
++      data-target="#card-grid-program-macros-mobile-{{ panel_id }}"
++    >
++      Macros
++    </button>
++    <button
++      type="button"
++      class="btn-desplegar-mobile"
++      data-target="#card-grid-program-alloc-mobile-{{ panel_id }}"
++    >
++      Alloc
++    </button>
++  </div>
++
++  <div id="card-grid-program-macros-{{ panel_id }}" class="card-table-programs program-table-panel">
++    {% include "components/program_week_table_macros.html" with weeks=weeks %}
++  </div>
++
++  <div id="card-grid-program-alloc-{{ panel_id }}" class="card-table-programs program-table-panel">
++    {% include "components/program_week_table_alloc.html" with weeks=weeks %}
++  </div>
++
++  <div id="card-grid-program-macros-mobile-{{ panel_id }}" class="card-table-programs-mobile program-table-panel">
++    {% include "components/program_week_table_macros.html" with weeks=weeks %}
++  </div>
++
++  <div id="card-grid-program-alloc-mobile-{{ panel_id }}" class="card-table-programs-mobile program-table-panel">
++    {% include "components/program_week_table_alloc.html" with weeks=weeks %}
++  </div>
++</div>
++{% endif %}
+diff --git a/notas/templates/components/program_week_table_alloc.html b/notas/templates/components/program_week_table_alloc.html
+new file mode 100644
+index 0000000..07f7318
+--- /dev/null
++++ b/notas/templates/components/program_week_table_alloc.html
+@@ -0,0 +1,17 @@
++<div class="program-week-table" role="table" aria-label="Alloc por semana">
++  <div class="program-week-table__row program-week-table__row--header" role="row">
++    <span role="columnheader">Semana</span>
++    <span role="columnheader">P%</span>
++    <span role="columnheader">C%</span>
++    <span role="columnheader">F%</span>
++  </div>
++
++  {% for week in weeks %}
++    <div class="program-week-table__row program-week-table__row--alloc" role="row">
++      <strong role="cell">S{{ week.week_number }}</strong>
++      <span role="cell" class="program-week-table__macro program-week-table__macro--protein">{{ week.totals.alloc.protein|floatformat:0 }}%</span>
++      <span role="cell" class="program-week-table__macro program-week-table__macro--carbs">{{ week.totals.alloc.carbs|floatformat:0 }}%</span>
++      <span role="cell" class="program-week-table__macro program-week-table__macro--fat">{{ week.totals.alloc.fat|floatformat:0 }}%</span>
++    </div>
++  {% endfor %}
++</div>
+diff --git a/notas/templates/components/program_week_table_macros.html b/notas/templates/components/program_week_table_macros.html
+new file mode 100644
+index 0000000..7fbf5cb
+--- /dev/null
++++ b/notas/templates/components/program_week_table_macros.html
+@@ -0,0 +1,19 @@
++<div class="program-week-table" role="table" aria-label="Macros por semana">
++  <div class="program-week-table__row program-week-table__row--header" role="row">
++    <span role="columnheader">Semana</span>
++    <span role="columnheader">Cal.</span>
++    <span role="columnheader">P g</span>
++    <span role="columnheader">C g</span>
++    <span role="columnheader">F g</span>
++  </div>
++
++  {% for week in weeks %}
++    <div class="program-week-table__row" role="row">
++      <strong role="cell">S{{ week.week_number }}</strong>
++      <span role="cell">{{ week.totals.total_kcal|floatformat:0 }}</span>
++      <span role="cell" class="program-week-table__macro program-week-table__macro--protein">{{ week.totals.protein|floatformat:0 }}</span>
++      <span role="cell" class="program-week-table__macro program-week-table__macro--carbs">{{ week.totals.carbs|floatformat:0 }}</span>
++      <span role="cell" class="program-week-table__macro program-week-table__macro--fat">{{ week.totals.fat|floatformat:0 }}</span>
++    </div>
++  {% endfor %}
++</div>
+diff --git a/notas/templates/notas/programs/detail.html b/notas/templates/notas/programs/detail.html
+index 123ff74..cb2d8e3 100644
+--- a/notas/templates/notas/programs/detail.html
++++ b/notas/templates/notas/programs/detail.html
+@@ -98,6 +98,8 @@
+             </div>
+           </div>
+ 
++          {% include "components/program_metric_chart.html" with chart=week.chart modifier="program-chart-panel--week" %}
++
+           <div class="program-week-row__days" role="list" aria-label="Días de la semana {{ week.week_number }}">
+             {% for day in week.days %}
+               <article

@@ -1,0 +1,570 @@
+--- a/notas/static/notas/css/components/programs.css
++++ b/notas/static/notas/css/components/programs.css
+@@ -1085,3 +1085,271 @@
+     font-size: 0.54rem;
+   }
+ }
++
++/* Program refinements ===================================== */
++.home-section-header-icon.program,
++.entity-form-header__icon.program,
++.main-modal-icon.program,
++.picker-summary-card__icon.program,
++.list-page-header__icon--program {
++  background: var(--entity-program);
++  color: #ffffff !important;
++  stroke: #ffffff !important;
++}
++
++.program-empty-state__icon,
++.program-hero__icon,
++.program-week-row__icon,
++.program-chart-panel__icon,
++.program-structural-icon {
++  background: var(--entity-program);
++  color: #ffffff !important;
++  stroke: #ffffff !important;
++  flex: 0 0 auto;
++}
++
++.program-empty-state__icon,
++.program-hero__icon {
++  padding: 8px;
++  border-radius: 12px;
++}
++
++.program-week-row__icon,
++.program-chart-panel__icon {
++  padding: 4px;
++  border-radius: 7px;
++}
++
++.program-card .structural-indicators .program-structural-icon,
++.program-board-header .structural-indicators .program-structural-icon {
++  width: 18px;
++  height: 18px;
++  padding: 3px;
++  border-radius: 5px;
++  background: var(--entity-program);
++  color: #ffffff !important;
++  stroke: #ffffff !important;
++}
++
++.program-day-cell {
++  align-content: stretch;
++  grid-template-rows: auto 1fr;
++  min-height: 92px;
++}
++
++.program-day-cell__day-initial {
++  justify-self: start;
++  color: var(--text-muted);
++  font-size: 0.68rem;
++  font-weight: 900;
++  line-height: 1;
++  text-transform: uppercase;
++}
++
++.program-day-cell__content {
++  align-self: center;
++}
++
++.program-day-cell__icon {
++  width: 30px;
++  height: 30px;
++  padding: 6px;
++  border-radius: 8px;
++  background: var(--entity-dailyplan);
++  color: #ffffff !important;
++  stroke: #ffffff !important;
++}
++
++.program-day-cell__tooltip-icon {
++  padding: 3px;
++  border-radius: 5px;
++  background: var(--entity-dailyplan);
++  color: #ffffff !important;
++  stroke: #ffffff !important;
++}
++
++.program-day-cell__menu {
++  display: none;
++}
++
++.program-day-cell__menu-toggle {
++  display: inline-flex;
++  align-items: center;
++  justify-content: center;
++  width: 28px;
++  height: 28px;
++  border-radius: 9px;
++  background: var(--surface-card-muted);
++  color: var(--text-main);
++  cursor: pointer;
++  list-style: none;
++}
++
++.program-day-cell__menu-toggle::-webkit-details-marker {
++  display: none;
++}
++
++.program-day-cell__menu-list {
++  position: absolute;
++  z-index: 45;
++  top: calc(100% + 0.25rem);
++  right: 0;
++  display: grid;
++  gap: 0.2rem;
++  min-width: 144px;
++  padding: 0.35rem;
++  border: 1px solid var(--border-default);
++  border-radius: 10px;
++  background: var(--surface-elevated);
++  box-shadow: var(--shadow-elevated);
++}
++
++.program-day-cell__menu-item {
++  display: flex;
++  align-items: center;
++  gap: 0.45rem;
++  width: 100%;
++  border: 0;
++  border-radius: 8px;
++  background: transparent;
++  color: var(--text-main);
++  padding: 0.45rem 0.5rem;
++  font-size: 0.76rem;
++  font-weight: 800;
++  text-align: left;
++  cursor: pointer;
++}
++
++.program-day-cell__menu-item:hover {
++  background: var(--interactive-hover);
++}
++
++.program-day-cell__menu-item--danger {
++  color: #ff4d4d;
++}
++
++.program-card-panels {
++  overflow: hidden;
++}
++
++.program-card-panels__desktop {
++  display: block;
++}
++
++.data-grid-header--program-weeks,
++.data-grid-row--program-weeks {
++  grid-template-columns:
++    minmax(120px, 1.3fr)
++    minmax(72px, 0.8fr)
++    minmax(58px, 0.65fr)
++    minmax(58px, 0.65fr)
++    minmax(58px, 0.65fr)
++    minmax(86px, 0.9fr)
++    minmax(86px, 0.9fr)
++    minmax(86px, 0.9fr);
++}
++
++.data-grid-header--program-weeks-mobile,
++.data-grid-row--program-weeks-mobile {
++  grid-template-columns:
++    minmax(52px, 0.8fr)
++    minmax(64px, 0.8fr)
++    minmax(48px, 0.62fr)
++    minmax(48px, 0.62fr)
++    minmax(48px, 0.62fr);
++}
++
++.data-grid-header--program-weeks-mobile-alloc,
++.data-grid-row--program-weeks-mobile-alloc {
++  grid-template-columns:
++    minmax(52px, 0.75fr)
++    repeat(3, minmax(70px, 1fr));
++}
++
++.data-grid-cell--program-week,
++.data-grid-col--program-week {
++  justify-content: flex-start;
++  padding-inline: 4px;
++}
++
++.data-grid-cell--program-week {
++  font-weight: 650;
++}
++
++.program-week-table__macro--protein {
++  color: var(--nutrition-protein);
++  font-weight: 700;
++}
++
++.program-week-table__macro--carbs {
++  color: var(--nutrition-carbs);
++  font-weight: 700;
++}
++
++.program-week-table__macro--fat {
++  color: var(--nutrition-fat);
++  font-weight: 700;
++}
++
++.program-chart-plot--calories .program-chart-bar {
++  background: var(--kpi-total-border);
++}
++
++.program-chart-plot--ppk .program-chart-bar {
++  background: var(--nutrition-ppk);
++}
++
++.program-chart-stacked-bar__segment + .program-chart-stacked-bar__segment {
++  border-top: 1px solid color-mix(in srgb, var(--text-main) 34%, transparent);
++}
++
++@media (min-width: 981px) {
++  .program-card-panels .card-detail-tabs-mobile,
++  .program-card-panels .card-table-programs-mobile {
++    display: none !important;
++    opacity: 0 !important;
++  }
++
++  .program-card-panels__desktop {
++    display: block !important;
++  }
++}
++
++@media (max-width: 980px) {
++  .program-card-panels__desktop {
++    display: none !important;
++  }
++}
++
++@media (max-width: 780px) {
++  .program-day-cell {
++    min-height: 78px;
++    padding: 0.4rem 0.18rem;
++  }
++
++  .program-day-cell__icon {
++    width: 26px;
++    height: 26px;
++    padding: 5px;
++  }
++
++  .program-day-cell__actions--inline {
++    display: none;
++  }
++
++  .program-day-cell__menu {
++    position: absolute;
++    top: 0.25rem;
++    right: 0.25rem;
++    display: block;
++  }
++
++  .program-day-cell__actions {
++    opacity: 1;
++    pointer-events: auto;
++  }
++
++  .program-day-cell__tooltip {
++    display: none;
++  }
++}
+--- a/notas/static/notas/js/program_slot_picker.js
++++ b/notas/static/notas/js/program_slot_picker.js
+@@ -30,7 +30,7 @@
+   function shouldIgnoreCellToggle(event) {
+     return Boolean(
+       event.target.closest(
+-        "a, button, input, select, textarea, label, form, .program-slot-picker, .card"
++        "a, button, input, select, textarea, label, form, .program-slot-picker, .program-day-cell__actions, .program-day-cell__menu, .card"
+       )
+     );
+   }
+@@ -100,6 +100,8 @@
+       const picker = cell?.querySelector(".js-program-slot-picker");
+       if (!picker) return;
+ 
++      button.closest(".program-day-cell__menu")?.removeAttribute("open");
++
+       const shouldOpen = picker.hidden;
+       closeAllExcept(picker);
+       if (shouldOpen) {
+--- a/notas/templates/components/card_child_program.html
++++ b/notas/templates/components/card_child_program.html
+@@ -10,12 +10,7 @@
+           <div class="structural-indicators">
+             <span class="structural-item">
+               <span class="structural-value">{{ child_card.weeks_count }}</span>
+-              <i data-lucide="calendar-range" class="card-icon main"></i>
+-            </span>
+-            <span class="structural-divider"></span>
+-            <span class="structural-item">
+-              <span class="structural-value">{{ child_card.filled_days_count }}/{{ child_card.duration_days }}</span>
+-              <i data-lucide="clipboard-list" class="card-icon main"></i>
++              <i data-lucide="calendar-range" class="card-icon main program-structural-icon"></i>
+             </span>
+           </div>
+         </div>
+@@ -31,12 +26,6 @@
+       </div>
+     </div>
+ 
+-    <div class="program-card__summary">
+-      <div class="program-card__summary-item">
+-        <span>Semanas</span>
+-        <strong>{{ child_card.weeks_count }}</strong>
+-      </div>
+-    </div>
+   </div>
+ 
+   {% include "components/program_metric_chart.html" with chart=child_card.chart modifier="program-chart-panel--card" %}
+--- a/notas/templates/components/program_week_panels.html
++++ b/notas/templates/components/program_week_panels.html
+@@ -1,16 +1,10 @@
+ {% if weeks %}
+ <div
+   class="card-detail-block program-card-panels"
+-  data-default-desktop="#card-grid-program-macros-{{ panel_id }}"
+   data-default-mobile="#card-grid-program-macros-mobile-{{ panel_id }}"
+ >
+-  <div class="card-detail-tabs card-detail-tabs--desktop block-desplegar-tabla block-card-desplegar">
+-    <div class="btn-desplegar" data-target="#card-grid-program-macros-{{ panel_id }}">
+-      <p>Macros</p>
+-    </div>
+-    <div class="btn-desplegar" data-target="#card-grid-program-alloc-{{ panel_id }}">
+-      <p>Alloc</p>
+-    </div>
++  <div class="program-card-panels__desktop">
++    {% include "components/program_week_table_combined.html" with weeks=weeks %}
+   </div>
+ 
+   <div class="card-detail-tabs-mobile">
+@@ -30,14 +24,6 @@
+     </button>
+   </div>
+ 
+-  <div id="card-grid-program-macros-{{ panel_id }}" class="card-table-programs program-table-panel">
+-    {% include "components/program_week_table_macros.html" with weeks=weeks %}
+-  </div>
+-
+-  <div id="card-grid-program-alloc-{{ panel_id }}" class="card-table-programs program-table-panel">
+-    {% include "components/program_week_table_alloc.html" with weeks=weeks %}
+-  </div>
+-
+   <div id="card-grid-program-macros-mobile-{{ panel_id }}" class="card-table-programs-mobile program-table-panel">
+     {% include "components/program_week_table_macros.html" with weeks=weeks %}
+   </div>
+--- a/notas/templates/components/program_week_table_alloc.html
++++ b/notas/templates/components/program_week_table_alloc.html
+@@ -1,17 +1,25 @@
+-<div class="program-week-table" role="table" aria-label="Alloc por semana">
+-  <div class="program-week-table__row program-week-table__row--header" role="row">
+-    <span role="columnheader">Semana</span>
+-    <span role="columnheader">P%</span>
+-    <span role="columnheader">C%</span>
+-    <span role="columnheader">F%</span>
++<div class="data-grid data-grid--program-weeks-mobile data-grid--program-weeks-mobile-alloc" role="table" aria-label="Alloc por semana">
++  <div class="data-grid-header data-grid-header--program-weeks-mobile data-grid-header--program-weeks-mobile-alloc" role="row">
++    <div class="data-grid-col data-grid-col--program-week" role="columnheader">Semana</div>
++    <div class="data-grid-col data-grid-col--alloc" role="columnheader">P%</div>
++    <div class="data-grid-col data-grid-col--alloc" role="columnheader">C%</div>
++    <div class="data-grid-col data-grid-col--alloc" role="columnheader">F%</div>
+   </div>
+ 
+   {% for week in weeks %}
+-    <div class="program-week-table__row program-week-table__row--alloc" role="row">
+-      <strong role="cell">S{{ week.week_number }}</strong>
+-      <span role="cell" class="program-week-table__macro program-week-table__macro--protein">{{ week.totals.alloc.protein|floatformat:0 }}%</span>
+-      <span role="cell" class="program-week-table__macro program-week-table__macro--carbs">{{ week.totals.alloc.carbs|floatformat:0 }}%</span>
+-      <span role="cell" class="program-week-table__macro program-week-table__macro--fat">{{ week.totals.alloc.fat|floatformat:0 }}%</span>
++    <div class="data-grid-row data-grid-row--program-weeks-mobile data-grid-row--program-weeks-mobile-alloc" role="row">
++      <div class="data-grid-cell data-grid-cell--program-week" role="cell">S{{ week.week_number }}</div>
++      <div class="data-grid-cell data-grid-cell--alloc" role="cell">
++        {% include "components/grid_alloc_item.html" with value=week.totals.alloc.protein kind="protein" %}
++      </div>
++      <div class="data-grid-cell data-grid-cell--alloc" role="cell">
++        {% include "components/grid_alloc_item.html" with value=week.totals.alloc.carbs kind="carbs" %}
++      </div>
++      <div class="data-grid-cell data-grid-cell--alloc" role="cell">
++        {% include "components/grid_alloc_item.html" with value=week.totals.alloc.fat kind="fat" %}
++      </div>
+     </div>
++  {% empty %}
++    <div class="data-grid-empty">No hay semanas configuradas.</div>
+   {% endfor %}
+ </div>
+--- a/notas/templates/components/program_week_table_combined.html
++++ b/notas/templates/components/program_week_table_combined.html
+@@ -0,0 +1,43 @@
++<div class="data-grid data-grid--program-weeks" role="table" aria-label="Macros y alloc por semana">
++  <div class="data-grid-header data-grid-header--program-weeks" role="row">
++    <div class="data-grid-col data-grid-col--program-week" role="columnheader">Semana</div>
++    <div class="data-grid-col data-grid-col--kcal" role="columnheader">Cal.</div>
++    <div class="data-grid-col data-grid-col--macro" role="columnheader">P g</div>
++    <div class="data-grid-col data-grid-col--macro" role="columnheader">C g</div>
++    <div class="data-grid-col data-grid-col--macro" role="columnheader">F g</div>
++    <div class="data-grid-col data-grid-col--alloc" role="columnheader">P%</div>
++    <div class="data-grid-col data-grid-col--alloc" role="columnheader">C%</div>
++    <div class="data-grid-col data-grid-col--alloc" role="columnheader">F%</div>
++  </div>
++
++  {% for week in weeks %}
++    <div class="data-grid-row data-grid-row--program-weeks" role="row">
++      <div class="data-grid-cell data-grid-cell--program-week" role="cell">
++        <span class="truncate">Semana {{ week.week_number }}</span>
++      </div>
++      <div class="data-grid-cell data-grid-cell--kcal" role="cell">
++        <span>{{ week.totals.total_kcal|floatformat:0 }}</span>
++      </div>
++      <div class="data-grid-cell data-grid-cell--macro program-week-table__macro--protein" role="cell">
++        {{ week.totals.protein|floatformat:0 }}
++      </div>
++      <div class="data-grid-cell data-grid-cell--macro program-week-table__macro--carbs" role="cell">
++        {{ week.totals.carbs|floatformat:0 }}
++      </div>
++      <div class="data-grid-cell data-grid-cell--macro program-week-table__macro--fat" role="cell">
++        {{ week.totals.fat|floatformat:0 }}
++      </div>
++      <div class="data-grid-cell data-grid-cell--alloc" role="cell">
++        {% include "components/grid_alloc_item.html" with value=week.totals.alloc.protein kind="protein" %}
++      </div>
++      <div class="data-grid-cell data-grid-cell--alloc" role="cell">
++        {% include "components/grid_alloc_item.html" with value=week.totals.alloc.carbs kind="carbs" %}
++      </div>
++      <div class="data-grid-cell data-grid-cell--alloc" role="cell">
++        {% include "components/grid_alloc_item.html" with value=week.totals.alloc.fat kind="fat" %}
++      </div>
++    </div>
++  {% empty %}
++    <div class="data-grid-empty">No hay semanas configuradas.</div>
++  {% endfor %}
++</div>
+--- a/notas/templates/components/program_week_table_macros.html
++++ b/notas/templates/components/program_week_table_macros.html
+@@ -1,19 +1,21 @@
+-<div class="program-week-table" role="table" aria-label="Macros por semana">
+-  <div class="program-week-table__row program-week-table__row--header" role="row">
+-    <span role="columnheader">Semana</span>
+-    <span role="columnheader">Cal.</span>
+-    <span role="columnheader">P g</span>
+-    <span role="columnheader">C g</span>
+-    <span role="columnheader">F g</span>
++<div class="data-grid data-grid--program-weeks-mobile" role="table" aria-label="Macros por semana">
++  <div class="data-grid-header data-grid-header--program-weeks-mobile" role="row">
++    <div class="data-grid-col data-grid-col--program-week" role="columnheader">Semana</div>
++    <div class="data-grid-col data-grid-col--kcal" role="columnheader">Cal.</div>
++    <div class="data-grid-col data-grid-col--macro" role="columnheader">P g</div>
++    <div class="data-grid-col data-grid-col--macro" role="columnheader">C g</div>
++    <div class="data-grid-col data-grid-col--macro" role="columnheader">F g</div>
+   </div>
+ 
+   {% for week in weeks %}
+-    <div class="program-week-table__row" role="row">
+-      <strong role="cell">S{{ week.week_number }}</strong>
+-      <span role="cell">{{ week.totals.total_kcal|floatformat:0 }}</span>
+-      <span role="cell" class="program-week-table__macro program-week-table__macro--protein">{{ week.totals.protein|floatformat:0 }}</span>
+-      <span role="cell" class="program-week-table__macro program-week-table__macro--carbs">{{ week.totals.carbs|floatformat:0 }}</span>
+-      <span role="cell" class="program-week-table__macro program-week-table__macro--fat">{{ week.totals.fat|floatformat:0 }}</span>
++    <div class="data-grid-row data-grid-row--program-weeks-mobile" role="row">
++      <div class="data-grid-cell data-grid-cell--program-week" role="cell">S{{ week.week_number }}</div>
++      <div class="data-grid-cell data-grid-cell--kcal" role="cell">{{ week.totals.total_kcal|floatformat:0 }}</div>
++      <div class="data-grid-cell data-grid-cell--macro program-week-table__macro--protein" role="cell">{{ week.totals.protein|floatformat:0 }}</div>
++      <div class="data-grid-cell data-grid-cell--macro program-week-table__macro--carbs" role="cell">{{ week.totals.carbs|floatformat:0 }}</div>
++      <div class="data-grid-cell data-grid-cell--macro program-week-table__macro--fat" role="cell">{{ week.totals.fat|floatformat:0 }}</div>
+     </div>
++  {% empty %}
++    <div class="data-grid-empty">No hay semanas configuradas.</div>
+   {% endfor %}
+ </div>
+--- a/notas/templates/notas/programs/detail.html
++++ b/notas/templates/notas/programs/detail.html
+@@ -43,6 +43,8 @@
+ 
+   {% include "components/program_metric_chart.html" with chart=vm.content.program_chart modifier="program-chart-panel--detail" %}
+ 
++  {% include "components/program_week_panels.html" with panel_id=vm.content.program.id weeks=vm.content.weeks %}
++
+   <section class="program-board-shell">
+     <div class="dailyplan-detail__children-header program-board-header">
+       <div class="home-section-title detail-dp">
+@@ -52,23 +54,12 @@
+       <div class="structural-indicators">
+         <span class="structural-item">
+           <span class="structural-value">{{ vm.content.program.normalized_duration_weeks }}</span>
+-          <i data-lucide="calendar-range" class="structural-icon main"></i>
++          <i data-lucide="calendar-range" class="structural-icon main program-structural-icon"></i>
+         </span>
+-        <span class="structural-divider"></span>
+-        <span class="structural-item">
+-          <span class="structural-value">{{ vm.content.empty_days_count }}</span>
+-          <i data-lucide="plus" class="structural-icon main"></i>
+-        </span>
+       </div>
+     </div>
+ 
+     <div class="program-board" aria-label="Grilla semanal del programa">
+-      <div class="program-board__header" aria-hidden="true">
+-        {% for day_number, day_label in vm.content.day_labels %}
+-          <div class="program-board__day-label">{{ day_label }}</div>
+-        {% endfor %}
+-      </div>
+-
+       {% for week in vm.content.weeks %}
+         <section class="program-week-row" id="week-{{ week.week_number }}" aria-labelledby="program-week-title-{{ week.week_number }}">
+           <header class="program-week-row__header">
+@@ -117,15 +108,11 @@
+                   aria-label="{{ day.day_label }}: sin plan diario"
+                 {% endif %}
+               >
++                <span class="program-day-cell__day-initial" aria-hidden="true">{{ day.day_label|slice:":1" }}</span>
++
+                 {% if day.program_day %}
+                   <div class="program-day-cell__content">
+                     <i data-lucide="clipboard-list" class="program-day-cell__icon"></i>
+-                    <span class="program-day-cell__kcal">{{ day.snapshot.total_kcal|floatformat:0 }} kcal</span>
+-                    <small>
+-                      P {{ day.snapshot.protein|floatformat:0 }}g ·
+-                      C {{ day.snapshot.carbs|floatformat:0 }}g ·
+-                      F {{ day.snapshot.fat|floatformat:0 }}g
+-                    </small>
+                   </div>
+ 
+                   <div class="program-day-cell__tooltip" role="tooltip">
+@@ -133,7 +120,7 @@
+                     <span>{{ day.dailyplan.name }}</span>
+                   </div>
+ 
+-                  <div class="program-day-cell__actions">
++                  <div class="program-day-cell__actions program-day-cell__actions--inline">
+                     <button type="button" class="program-day-cell__replace js-program-slot-open" aria-label="Cambiar plan diario" title="Cambiar plan diario">
+                       <i data-lucide="refresh-cw" class="table-icon"></i>
+                     </button>
+@@ -144,6 +131,25 @@
+                       </button>
+                     </form>
+                   </div>
++
++                  <details class="program-day-cell__menu">
++                    <summary class="program-day-cell__menu-toggle" aria-label="Acciones del plan diario">
++                      <i data-lucide="more-horizontal" class="table-icon"></i>
++                    </summary>
++                    <div class="program-day-cell__menu-list">
++                      <button type="button" class="program-day-cell__menu-item js-program-slot-open">
++                        <i data-lucide="refresh-cw" class="table-icon"></i>
++                        <span>Reemplazar</span>
++                      </button>
++                      <form method="post" action="{% url 'remove_dailyplan_from_program' vm.content.program.id day.program_day.id %}">
++                        {% csrf_token %}
++                        <button type="submit" class="program-day-cell__menu-item program-day-cell__menu-item--danger">
++                          <i data-lucide="trash-2" class="table-icon"></i>
++                          <span>Eliminar</span>
++                        </button>
++                      </form>
++                    </div>
++                  </details>
+                 {% else %}
+                   <button type="button" class="program-day-cell__add js-program-slot-open" aria-label="Agregar plan diario a {{ day.day_label }}">
+                     <i data-lucide="plus" class="program-day-cell__add-icon"></i>

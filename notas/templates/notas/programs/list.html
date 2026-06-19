@@ -1,55 +1,30 @@
 {% extends "notas/base.html" %}
+{% load static %}
 
-{% block title %}Programs{% endblock %}
+{% block title %}Programas Semanales{% endblock %}
 
 {% block content %}
-<h2>My Programs</h2>
-<p>
-    <a href="{% url 'program_create' %}">+ Create Program</a>
-</p>
-<ul>
-<table>
-  <thead>
-    <tr>
-      <th align="left">Program</th>
-      <th align="right">Duration</th>
-      <th align="right">Kcal</th>
-      <th align="right">Protein (g)</th>
-      <th align="right">Carbs (g)</th>
-      <th align="right">Fat (g)</th>
-      <th align="right">Alloc %</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for program in programs %}
-      {% with program.alloc as alloc %}
-      <tr>
-        <td>
-          <a href="{% url 'program_detail' program.id %}">
-            {{ program.name }}
-          </a>
-        </td>
-        <td align="right">
-          {{ program.duration_days }} days
-        </td>
-        <td align="right">{{ program.total_kcal|floatformat:0 }}</td>
-        <td align="right">{{ program.total_protein_g|floatformat:1 }}</td>
-        <td align="right">{{ program.total_carbs_g|floatformat:1 }}</td>
-        <td align="right">{{ program.total_fat_g|floatformat:1 }}</td>
-        <td align="right">
-          {{ alloc.protein|floatformat:0 }} /
-          {{ alloc.carbs|floatformat:0 }} /
-          {{ alloc.fat|floatformat:0 }}
-        </td>
-      </tr>
-      {% endwith %}
+<div class="page list page--program-list">
+  {% include "components/list_page_header.html" %}
+
+  {% if vm.content.list_mode == "reorder" %}
+    {% include "components/list_panel_programs_reorder.html" with children=vm.content.child_cards %}
+  {% elif vm.content.list_mode == "delete" %}
+    {% include "components/list_panel_programs_delete.html" with children=vm.content.child_cards %}
+  {% else %}
+    {% for child in vm.content.child_cards %}
+      {% include "components/card_child_program.html" with child_card=child %}
     {% empty %}
-      <tr>
-        <td colspan="7">No programs yet.</td>
-      </tr>
+      <div class="program-empty-state">
+        <i data-lucide="calendar" class="program-empty-state__icon"></i>
+        <h3>No tienes programas semanales aún</h3>
+        <p>Crea un programa de 1, 2, 3 o más semanas y asigna planes diarios a cada día.</p>
+        <a class="btn-primary" href="{% url 'program_create' %}">Crear programa semanal</a>
+      </div>
     {% endfor %}
-  </tbody>
-</table>
+  {% endif %}
+</div>
 
+<script src="{% static 'notas/js/program_metric_chart.js' %}"></script>
+<script src="{% static 'notas/js/list_panel_modes.js' %}"></script>
 {% endblock %}
-

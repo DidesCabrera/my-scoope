@@ -1,0 +1,54 @@
+<div class="card card--program program-card">
+  <div class="card-main program-card__main">
+    <div class="card-title program-card__title-block">
+      <div class="card-title-comp">
+        <div class="main-title">
+          <a href="{% url 'program_detail' child_card.child_id %}" class="card-title-link" aria-label="Ver detalle de {{ child_card.title }}">
+            <h3>{{ child_card.title }}</h3>
+          </a>
+
+          <div class="structural-indicators">
+            <span class="structural-item">
+              <span class="structural-value">{{ child_card.weeks_count }}</span>
+              <i data-lucide="calendar-1" class="card-icon main program-structural-icon"></i>
+            </span>
+            <span class="structural-divider"></span>
+            <span class="structural-item">
+              <span class="structural-value">{{ child_card.foods_count }}</span>
+              <i data-lucide="carrot" class="structural-icon main"></i>
+            </span>
+          </div>
+        </div>
+
+        <div class="icons-title">
+          <i data-lucide="calendar" class="home-section-header-icon program"></i>
+          {% if child_card.is_shared %}
+            <div class="label-fork label-fork--shared" title="Compartido" aria-label="Compartido">
+              <i data-lucide="users" class="card-icon"></i>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  {% include "components/program_metric_chart.html" with chart=child_card.chart modifier="program-chart-panel--card" %}
+
+  {% include "components/program_week_panels.html" with panel_id=child_card.child_id weeks=child_card.weeks %}
+
+  <div class="card-bottom">
+    <div class="card-metadata">
+      <div class="metadata-comp">
+        <span class="metadata-item">
+          <strong>Creador</strong>
+          <span>{{ child_card.owner }}</span>
+        </span>
+      </div>
+    </div>
+
+    <div class="card-actions">
+      {% include "components/card_actions.html" with actions=child_card.actions %}
+    </div>
+  </div>
+</div>

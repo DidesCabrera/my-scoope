@@ -1,0 +1,374 @@
+diff --git a/notas/interface/views/programs.py b/notas/interface/views/programs.py
+index 569e265..f7aeeb7 100644
+--- a/notas/interface/views/programs.py
++++ b/notas/interface/views/programs.py
+@@ -35,6 +35,7 @@ from notas.presentation.composition.viewmodel.components.builder_menu import (
+     build_dailyplan_menu,
+ )
+ from notas.presentation.composition.viewmodel.components.builder_table_items import (
++    build_dailyplan_food_aggregation_table_item,
+     build_dailyplanmeal_table_item,
+ )
+ from notas.presentation.config.icons import CONTENT_ICON_REGISTRY
+@@ -484,9 +485,11 @@ def build_weekly_grid(program, program_days, user=None, include_dailyplan_cards=
+     weeks = []
+     program_totals = _empty_totals()
+     week_totals_for_variance = []
++    program_dailyplan_meals = []
+ 
+     for week_number in range(1, program.normalized_duration_weeks + 1):
+         week_totals = _empty_totals()
++        week_dailyplan_meals = []
+         days = []
+ 
+         for day_number, day_label in DAY_LABELS:
+@@ -497,6 +500,9 @@ def build_weekly_grid(program, program_days, user=None, include_dailyplan_cards=
+ 
+             if program_day:
+                 snapshot = _plan_snapshot(program_day.dailyplan)
++                dailyplan_meals = _dailyplan_meals_for_card(program_day.dailyplan)
++                week_dailyplan_meals.extend(dailyplan_meals)
++                program_dailyplan_meals.extend(dailyplan_meals)
+                 if include_dailyplan_cards and user is not None:
+                     dailyplan_card = _program_slot_dailyplan_card(
+                         program_day.dailyplan,
+@@ -517,6 +523,14 @@ def build_weekly_grid(program, program_days, user=None, include_dailyplan_cards=
+         week_totals = _finalize_totals(week_totals)
+         week_totals_for_variance.append(week_totals["total_kcal"])
+         week_averages = _average_totals(week_totals, divisor=len(DAY_LABELS))
++        week_foods_aggregation = build_dailyplan_foods_aggregation(week_dailyplan_meals)
++        week_foods_aggregation_table = [
++            build_dailyplan_food_aggregation_table_item(
++                food_aggregation,
++                dailyplan_snapshot=week_totals,
++            )
++            for food_aggregation in week_foods_aggregation
++        ]
+         weeks.append({
+             "week_number": week_number,
+             "days": days,
+@@ -525,9 +539,22 @@ def build_weekly_grid(program, program_days, user=None, include_dailyplan_cards=
+             "kpis": _kpi_from_totals(week_totals),
+             "average_kpis": _kpi_from_totals(week_averages),
+             "filled_days_count": sum(1 for day in days if day["program_day"]),
++            "meals_count": len(week_dailyplan_meals),
++            "foods_count": len(week_foods_aggregation),
++            "foods_aggregation": week_foods_aggregation,
++            "foods_aggregation_table": week_foods_aggregation_table,
++            "foods_panel_id": f"program-week-{week_number}",
+         })
+ 
+     program_totals = _finalize_totals(program_totals)
++    program_foods_aggregation = build_dailyplan_foods_aggregation(program_dailyplan_meals)
++    program_foods_aggregation_table = [
++        build_dailyplan_food_aggregation_table_item(
++            food_aggregation,
++            dailyplan_snapshot=program_totals,
++        )
++        for food_aggregation in program_foods_aggregation
++    ]
+     non_zero_weeks = [value for value in week_totals_for_variance if value > 0]
+     avg_week_kcal = (sum(non_zero_weeks) / len(non_zero_weeks)) if non_zero_weeks else 0
+ 
+@@ -540,6 +567,10 @@ def build_weekly_grid(program, program_days, user=None, include_dailyplan_cards=
+         "program_kpis": _kpi_from_totals(program_totals),
+         "average_week_kcal": avg_week_kcal,
+         "filled_days_count": sum(week["filled_days_count"] for week in weeks),
++        "program_meals_count": len(program_dailyplan_meals),
++        "program_foods_count": len(program_foods_aggregation),
++        "program_foods_aggregation": program_foods_aggregation,
++        "program_foods_aggregation_table": program_foods_aggregation_table,
+     }
+ 
+ 
+@@ -746,6 +777,7 @@ def build_program_child_card(program, user, current_weight=None):
+         "weeks_count": program.normalized_duration_weeks,
+         "filled_days_count": grid_data["filled_days_count"],
+         "duration_days": program.duration_days,
++        "foods_count": grid_data["program_foods_count"],
+         "primary_week": primary_week,
+         "weeks": grid_data["weeks"],
+         "chart": build_program_metric_chart(grid_data["weeks"], current_weight=current_weight),
+@@ -927,6 +959,9 @@ def program_detail(request, pk):
+         "weeks": grid_data["weeks"],
+         "program_kpis": grid_data["program_kpis"],
+         "program_totals": grid_data["program_totals"],
++        "program_meals_count": grid_data["program_meals_count"],
++        "program_foods_count": grid_data["program_foods_count"],
++        "program_foods_aggregation_table": grid_data["program_foods_aggregation_table"],
+         "program_chart": build_program_metric_chart(
+             grid_data["weeks"],
+             current_weight=current_weight,
+diff --git a/notas/static/notas/css/components/programs.css b/notas/static/notas/css/components/programs.css
+index fb1e734..3b2f880 100644
+--- a/notas/static/notas/css/components/programs.css
++++ b/notas/static/notas/css/components/programs.css
+@@ -1343,3 +1343,80 @@
+     display: none;
+   }
+ }
++
++/* Program weekly aggregation refinements ======================= */
++.program-main-title-card {
++  margin-bottom: 1rem;
++}
++
++.program-main-title-card .card-title-comp {
++  padding: 6px 4px;
++}
++
++.program-main-title-card .main-title h1 {
++  margin: 0 0 0.35rem;
++  color: var(--text-main);
++  font-size: clamp(1.45rem, 3vw, 2rem);
++  font-weight: 750;
++  line-height: 1.08;
++}
++
++.program-main-title-card .structural-indicators,
++.program-card .structural-indicators {
++  width: fit-content;
++}
++
++.program-main-title-card .program-structural-icon,
++.program-card .program-structural-icon,
++.program-board-header .program-structural-icon {
++  width: 18px;
++  height: 18px;
++  padding: 3px;
++  border-radius: 5px;
++}
++
++.program-week-row__meta {
++  display: inline-flex;
++  align-items: center;
++  justify-content: flex-end;
++  gap: 0.75rem;
++  min-width: 0;
++}
++
++.program-week-row__indicators {
++  flex: 0 0 auto;
++}
++
++.program-week-row__foods-row {
++  min-width: 0;
++}
++
++.program-week-foods-aggregation {
++  margin: 0;
++  overflow: hidden;
++}
++
++.program-week-foods-aggregation .card-detail-tabs,
++.program-week-foods-aggregation .card-detail-tabs-mobile {
++  margin-bottom: 0.55rem;
++}
++
++.program-week-foods-aggregation .data-grid {
++  margin: 0;
++}
++
++.program-week-foods-aggregation .data-grid-empty {
++  margin: 0;
++}
++
++@media (max-width: 780px) {
++  .program-week-row__meta {
++    align-items: flex-start;
++    flex-direction: column;
++    gap: 0.4rem;
++  }
++
++  .program-main-title-card .card-title-comp {
++    gap: 0.75rem;
++  }
++}
+diff --git a/notas/templates/components/card_child_program.html b/notas/templates/components/card_child_program.html
+index 7059935..3c5234f 100644
+--- a/notas/templates/components/card_child_program.html
++++ b/notas/templates/components/card_child_program.html
+@@ -12,6 +12,11 @@
+               <span class="structural-value">{{ child_card.weeks_count }}</span>
+               <i data-lucide="calendar-1" class="card-icon main program-structural-icon"></i>
+             </span>
++            <span class="structural-divider"></span>
++            <span class="structural-item">
++              <span class="structural-value">{{ child_card.foods_count }}</span>
++              <i data-lucide="carrot" class="structural-icon main"></i>
++            </span>
+           </div>
+         </div>
+ 
+diff --git a/b/notas/templates/components/program_week_foods_aggregation.html b/notas/templates/components/program_week_foods_aggregation.html
+new file mode 100644
+index 0000000..7e19e73
+--- /dev/null
++++ b/notas/templates/components/program_week_foods_aggregation.html
+@@ -0,0 +1,55 @@
++{% if items %}
++<div
++  class="card-detail-block main program-week-foods-aggregation"
++  data-default-desktop="#program-week-foods-table-{{ panel_id }}"
++  data-default-mobile="#program-week-foods-qty-{{ panel_id }}"
++>
++  <div class="card-detail-tabs card-detail-tabs--desktop block-desplegar-tabla block-card-desplegar">
++    <div class="btn-desplegar is-active" data-target="#program-week-foods-table-{{ panel_id }}">
++      <p>Tabla Alimentos</p>
++    </div>
++  </div>
++
++  <div class="card-detail-tabs-mobile">
++    <button
++      type="button"
++      class="btn-desplegar-mobile is-active"
++      data-target="#program-week-foods-qty-{{ panel_id }}"
++    >
++      Alimentos
++    </button>
++
++    <button
++      type="button"
++      class="btn-desplegar-mobile"
++      data-target="#program-week-foods-macros-{{ panel_id }}"
++    >
++      Macros
++    </button>
++
++    <button
++      type="button"
++      class="btn-desplegar-mobile"
++      data-target="#program-week-foods-alloc-{{ panel_id }}"
++    >
++      Alloc
++    </button>
++  </div>
++
++  <div id="program-week-foods-table-{{ panel_id }}" class="card-table-dailyplan-foods card-table-dailyplan-foods--desktop program-week-foods-aggregation__panel">
++    {% include "components/grid_foods.html" with items=items %}
++  </div>
++
++  <div id="program-week-foods-qty-{{ panel_id }}" class="card-table-dailyplan-foods card-table-dailyplan-foods--mobile program-week-foods-aggregation__panel">
++    {% include "components/grid_foods_mobile_qty.html" with items=items %}
++  </div>
++
++  <div id="program-week-foods-macros-{{ panel_id }}" class="card-table-dailyplan-foods card-table-dailyplan-foods--mobile program-week-foods-aggregation__panel">
++    {% include "components/grid_foods_mobile_macros.html" with items=items %}
++  </div>
++
++  <div id="program-week-foods-alloc-{{ panel_id }}" class="card-table-dailyplan-foods card-table-dailyplan-foods--mobile program-week-foods-aggregation__panel">
++    {% include "components/grid_foods_mobile_alloc.html" with items=items %}
++  </div>
++</div>
++{% endif %}
+diff --git a/notas/templates/notas/programs/detail.html b/notas/templates/notas/programs/detail.html
+index 9c5bd45..8c0031d 100644
+--- a/notas/templates/notas/programs/detail.html
++++ b/notas/templates/notas/programs/detail.html
+@@ -5,38 +5,30 @@
+ 
+ {% block content %}
+ <div
+-  class="page page--detail page--program-detail"
++  class="page page--detail page--program-detail has-collapsible-panels"
+   data-page="program-detail"
+   data-program-dailyplans="{{ vm.content.available_dailyplans_json|escapejs }}"
+ >
+-  <section class="program-hero">
+-    <div class="program-hero__title">
+-      <div>
+-        <p class="program-hero__eyebrow">Programa semanal</p>
+-        <h2>{{ vm.content.program.name }}</h2>
+-        <p>
+-          {{ vm.content.program.normalized_duration_weeks }} semana{{ vm.content.program.normalized_duration_weeks|pluralize }} ·
+-          {{ vm.content.filled_days_count }}/{{ vm.content.program.duration_days }} días asignados
+-        </p>
++  <section class="card-title main program-main-title-card">
++    <div class="card-title-comp">
++      <div class="main-title main-card">
++        <h1>{{ vm.content.program.name }}</h1>
++
++        <div class="structural-indicators">
++          <span class="structural-item">
++            <span class="structural-value">{{ vm.content.program.normalized_duration_weeks }}</span>
++            <i data-lucide="calendar-1" class="structural-icon main program-structural-icon"></i>
++          </span>
++          <span class="structural-divider"></span>
++          <span class="structural-item">
++            <span class="structural-value">{{ vm.content.program_foods_count }}</span>
++            <i data-lucide="carrot" class="structural-icon main"></i>
++          </span>
++        </div>
+       </div>
+-      <i data-lucide="calendar" class="program-hero__icon"></i>
+-    </div>
+ 
+-    <div class="program-hero__metrics">
+-      <div class="program-hero__metric">
+-        <span>Duración</span>
+-        <strong>{{ vm.content.program.normalized_duration_weeks }}</strong>
+-        <small>semanas</small>
+-      </div>
+-      <div class="program-hero__metric">
+-        <span>Asignados</span>
+-        <strong>{{ vm.content.filled_days_count }}</strong>
+-        <small>de {{ vm.content.program.duration_days }} días</small>
+-      </div>
+-      <div class="program-hero__metric">
+-        <span>Promedio semanal</span>
+-        <strong>{{ vm.content.average_week_kcal|floatformat:0 }}</strong>
+-        <small>kcal</small>
++      <div class="icons-title">
++        <i data-lucide="calendar" class="home-section-header-icon main program"></i>
+       </div>
+     </div>
+   </section>
+@@ -56,6 +48,11 @@
+           <span class="structural-value">{{ vm.content.program.normalized_duration_weeks }}</span>
+           <i data-lucide="calendar-1" class="structural-icon main program-structural-icon"></i>
+         </span>
++        <span class="structural-divider"></span>
++        <span class="structural-item">
++          <span class="structural-value">{{ vm.content.program_foods_count }}</span>
++          <i data-lucide="carrot" class="structural-icon main"></i>
++        </span>
+       </div>
+     </div>
+ 
+@@ -67,9 +64,22 @@
+               <i data-lucide="calendar-1" class="program-week-row__icon"></i>
+               <h3 id="program-week-title-{{ week.week_number }}">Semana {{ week.week_number }}</h3>
+             </div>
+-            <span class="program-week-row__status">
+-              {{ week.filled_days_count }}/7 planes asignados
+-            </span>
++            <div class="program-week-row__meta">
++              <div class="structural-indicators program-week-row__indicators" aria-label="Estructura de la semana {{ week.week_number }}">
++                <span class="structural-item">
++                  <span class="structural-value">{{ week.meals_count }}</span>
++                  <i data-lucide="utensils" class="structural-icon main"></i>
++                </span>
++                <span class="structural-divider"></span>
++                <span class="structural-item">
++                  <span class="structural-value">{{ week.foods_count }}</span>
++                  <i data-lucide="carrot" class="structural-icon main"></i>
++                </span>
++              </div>
++              <span class="program-week-row__status">
++                {{ week.filled_days_count }}/7 planes asignados
++              </span>
++            </div>
+           </header>
+ 
+           <div class="program-week-kpis" aria-label="Métricas de la semana {{ week.week_number }}">
+@@ -224,6 +234,10 @@
+               {% endif %}
+             {% endfor %}
+           </div>
++
++          <div class="program-week-row__foods-row">
++            {% include "components/program_week_foods_aggregation.html" with panel_id=week.foods_panel_id items=week.foods_aggregation_table %}
++          </div>
+         </section>
+       {% endfor %}
+     </div>

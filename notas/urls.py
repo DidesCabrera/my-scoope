@@ -94,8 +94,13 @@ from notas.interface.views.programs import (
     program_detail,
     program_list,
     program_create,
+    program_list_reorder,
+    program_list_bulk_delete,
+    program_remove,
+    program_share,
     add_dailyplan_to_program,
-    configure_program
+    remove_dailyplan_from_program,
+    configure_program,
 )
 
 
@@ -350,9 +355,14 @@ urlpatterns = [
 
     #PROGRAMS
     path("programs/", program_list, name="program_list"),
+    path("programs/reorder/", program_list_reorder, name="program_list_reorder"),
+    path("programs/bulk-delete/", program_list_bulk_delete, name="program_list_bulk_delete"),
     path("programs/create/", program_create, name="program_create"),
     path("programs/<int:pk>/configure/", configure_program, name="configure_program"),
+    path("programs/<int:pk>/share/", program_share, name="program_share"),
+    path("programs/<int:pk>/remove/", program_remove, name="program_remove"),
     path("programs/<int:pk>/add-dailyplan/", add_dailyplan_to_program, name="add_dailyplan_to_program"),
+    path("programs/<int:pk>/days/<int:program_day_id>/remove/", remove_dailyplan_from_program, name="remove_dailyplan_from_program"),
     path("programs/<int:pk>/", program_detail, name="program_detail"),
     path('programs/<int:program_id>/fork/', fork_program, name='fork_program'),
     path("programs/<int:pk>/copy/", copy_program, name="copy_program"),

@@ -1,0 +1,45 @@
+{% if weeks %}
+<div
+  class="card-detail-block program-card-panels"
+  data-default-mobile="#card-grid-program-macros-mobile-{{ panel_id }}"
+>
+  <div class="card-detail-tabs--desktop program-card-panels__desktop-tabs">
+    <button
+      type="button"
+      class="btn-desplegar"
+      data-target="#card-grid-program-weeks-desktop-{{ panel_id }}"
+    >
+      Semanas
+    </button>
+  </div>
+
+  <div id="card-grid-program-weeks-desktop-{{ panel_id }}" class="program-card-panels__desktop card-table-programs program-table-panel">
+    {% include "components/program_week_table_combined.html" with weeks=weeks %}
+  </div>
+
+  <div class="card-detail-tabs-mobile">
+    <button
+      type="button"
+      class="btn-desplegar-mobile"
+      data-target="#card-grid-program-macros-mobile-{{ panel_id }}"
+    >
+      Macros
+    </button>
+    <button
+      type="button"
+      class="btn-desplegar-mobile"
+      data-target="#card-grid-program-alloc-mobile-{{ panel_id }}"
+    >
+      Alloc
+    </button>
+  </div>
+
+  <div id="card-grid-program-macros-mobile-{{ panel_id }}" class="card-table-programs-mobile program-table-panel">
+    {% include "components/program_week_table_macros.html" with weeks=weeks %}
+  </div>
+
+  <div id="card-grid-program-alloc-mobile-{{ panel_id }}" class="card-table-programs-mobile program-table-panel">
+    {% include "components/program_week_table_alloc.html" with weeks=weeks %}
+  </div>
+</div>
+{% endif %}

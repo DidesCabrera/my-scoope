@@ -82,6 +82,14 @@ ADMIN_HOME_VIEWMODE = vm("admin", "list", "admin")
 ADMIN_FOOD_CATALOG_VIEWMODE = vm("admin", "list", "foods")
 
 
+# PROGRAM ---------------------------------------------
+PROGRAM_VIEWMODE_PERSONAL_LIST = vm("program", "list", "personal")
+PROGRAM_VIEWMODE_PERSONAL_DETAIL = vm("program", "detail", "personal")
+PROGRAM_VIEWMODE_CREATE = vm("program", "list", "create")
+PROGRAM_VIEWMODE_CONFIGURE = vm("program", "configure", "personal")
+PROGRAM_VIEWMODE_SHARE = vm("program", "share", "personal")
+
+
 # PROPOSAL ---------------------------------------------
 PROPOSAL_VIEWMODE_LIST = vm("proposal", "list", "personal")
 PROPOSAL_VIEWMODE_DETAIL = vm("proposal", "detail", "personal")

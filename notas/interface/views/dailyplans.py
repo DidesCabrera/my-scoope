@@ -783,9 +783,12 @@ def add_meal_from_list(request, meal_id):
     meal = get_object_or_404(Meal, pk=meal_id)
 
     # 🔹 solo MIS dailyplans (drafts por ahora)
-    dailyplans = DailyPlan.objects.filter(
-        created_by=request.user
-    ).order_by("-created_at")
+    dailyplans = (
+        DailyPlan.objects
+        .filter(created_by=request.user)
+        .exclude(source=DailyPlan.SOURCE_PROGRAM)
+        .order_by("-created_at")
+    )
 
     return render(
         request,

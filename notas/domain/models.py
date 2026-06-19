@@ -955,12 +955,14 @@ class DailyPlan(models.Model):
     SOURCE_AI = "ai"
     SOURCE_SYSTEM = "system"
     SOURCE_MCP = "mcp"
+    SOURCE_PROGRAM = "program"
 
     SOURCE_CHOICES = (
         (SOURCE_MANUAL, "Manual"),
         (SOURCE_AI, "AI"),
         (SOURCE_SYSTEM, "System"),
         (SOURCE_MCP, "MCP"),
+        (SOURCE_PROGRAM, "Program"),
     )
     name = models.CharField(max_length=100)
     source = models.CharField(
@@ -1011,11 +1013,16 @@ class DailyPlan(models.Model):
 
 
     @property
+    def is_program_instance(self):
+        """Snapshot interno usado dentro de un Programa Semanal."""
+        return self.source == self.SOURCE_PROGRAM
+
+
+    @property
     def category(self):
         """Categoría lógica del DailyPlan."""
-        # FUTURO: instancia dentro de programa
-        if hasattr(self, "programdailyplan_set") and self.programdailyplan_set.exists():
-            return "en plan"
+        if self.is_program_instance:
+            return "en programa"
 
         if self.forked_from:
             return "duplicado"
@@ -1333,7 +1340,11 @@ class NutritionProposalAuditEvent(models.Model):
 
 
 
+
 class Program(models.Model):
+    MIN_DURATION_WEEKS = 1
+    DEFAULT_DURATION_WEEKS = 1
+
     name = models.CharField(max_length=100)
 
     created_by = models.ForeignKey(
@@ -1347,8 +1358,11 @@ class Program(models.Model):
         "self", null=True, blank=True, on_delete=models.SET_NULL, related_name="variants"
     )
 
-    start_date = models.DateField()
-    end_date = models.DateField()
+    # Legacy calendar fields. Weekly programs are now duration-based and do not
+    # depend on a concrete calendar start/end date.
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    duration_weeks = models.PositiveSmallIntegerField(default=DEFAULT_DURATION_WEEKS)
 
     is_public = models.BooleanField(default=False)
     is_forkable = models.BooleanField(default=True)
@@ -1356,12 +1370,32 @@ class Program(models.Model):
     is_draft = models.BooleanField(default=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
+    list_order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["list_order", "-created_at", "-id"]
 
     def kind(self):
         return "Program"
 
     def __str__(self):
         return self.name
+
+    @property
+    def normalized_duration_weeks(self):
+        return max(self.duration_weeks or self.DEFAULT_DURATION_WEEKS, self.MIN_DURATION_WEEKS)
+
+    @property
+    def duration_days(self):
+        return self.normalized_duration_weeks * 7
+
+    @property
+    def filled_days_count(self):
+        return self.program_dailyplan.count()
+
+    @property
+    def empty_days_count(self):
+        return max(self.duration_days - self.filled_days_count, 0)
 
     @property
     def protein(self):
@@ -1374,6 +1408,18 @@ class Program(models.Model):
     @property
     def fat(self):
         return sum(day.dailyplan.fat for day in self.program_dailyplan.all())
+
+    @property
+    def total_protein_g(self):
+        return self.protein
+
+    @property
+    def total_carbs_g(self):
+        return self.carbs
+
+    @property
+    def total_fat_g(self):
+        return self.fat
 
     @property
     def kcal_protein(self):
@@ -1402,6 +1448,11 @@ class Program(models.Model):
             "fat": self.kcal_fat / self.total_kcal * 100,
         }
 
+    @property
+    def average_weekly_kcal(self):
+        if not self.normalized_duration_weeks:
+            return 0
+        return self.total_kcal / self.normalized_duration_weeks
 
 
 class ProgramDay(models.Model):
@@ -1410,16 +1461,33 @@ class ProgramDay(models.Model):
         on_delete=models.CASCADE,
         related_name="program_dailyplan"
     )
-    dailyplan = models.ForeignKey(DailyPlan, on_delete=models.CASCADE)
-    date = models.DateField()
+    dailyplan = models.ForeignKey(
+        DailyPlan,
+        on_delete=models.CASCADE,
+        related_name="program_slots",
+    )
+    # Legacy date field kept nullable for old rows / migrations.
+    date = models.DateField(null=True, blank=True)
+    week_number = models.PositiveSmallIntegerField(default=1)
+    day_number = models.PositiveSmallIntegerField(default=1)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ["date"]
+        ordering = ["week_number", "day_number", "id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["program", "week_number", "day_number"],
+                name="unique_program_week_day",
+            )
+        ]
 
     def __str__(self):
-        return f"{self.program.name} - {self.date}"
+        return f"{self.program.name} - Semana {self.week_number}, día {self.day_number}"
+
+    @property
+    def slot_label(self):
+        return f"S{self.week_number} · D{self.day_number}"
 
 
 # ==================================================
@@ -1501,6 +1569,47 @@ class DailyPlanShare(models.Model):
 
     def __str__(self):
         return f"{self.sender} shared {self.dailyplan} → {self.recipient_email}"
+
+
+class ProgramShare(models.Model):
+    sender = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="program_shares_sent"
+    )
+
+    recipient_email = models.EmailField()
+
+    program = models.ForeignKey(
+        Program,
+        on_delete=models.CASCADE,
+        related_name="shares"
+    )
+
+    token = models.UUIDField(default=uuid.uuid4, unique=True)
+
+    accepted_by = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="program_shares_received"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    dismissed = models.BooleanField(default=False)
+    removed = models.BooleanField(default=False)
+    is_favorite = models.BooleanField(default=False)
+    is_read = models.BooleanField(default=False)
+    message = models.TextField(blank=True)
+    subject = models.CharField(max_length=160, blank=True)
+
+    class Meta:
+        unique_together = ("recipient_email", "program")
+
+    def __str__(self):
+        return f"{self.sender} shared {self.program} → {self.recipient_email}"
 
 
 class MealShare(models.Model):

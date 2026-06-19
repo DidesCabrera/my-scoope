@@ -53,6 +53,7 @@ def home_view(request):
             created_by=user,
             is_draft=False,
         )
+        .exclude(source=DailyPlan.SOURCE_PROGRAM)
         .order_by("-created_at")
     )
 
