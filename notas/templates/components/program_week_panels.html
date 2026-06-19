@@ -2,20 +2,34 @@
 <div
   class="card-detail-block program-card-panels"
   data-default-mobile="#card-grid-program-macros-mobile-{{ panel_id }}"
+  {% if default_desktop %}data-default-desktop="#card-grid-program-weeks-desktop-{{ panel_id }}"{% endif %}
 >
-  <div class="card-detail-tabs--desktop program-card-panels__desktop-tabs">
-    <button
-      type="button"
+  <div class="card-detail-tabs card-detail-tabs--desktop block-desplegar-tabla block-card-desplegar program-card-panels__desktop-tabs">
+    <div
       class="btn-desplegar"
       data-target="#card-grid-program-weeks-desktop-{{ panel_id }}"
     >
-      Semanas
-    </button>
+      <p>Semanas</p>
+    </div>
+    {% if can_edit %}
+      <div
+        class="btn-desplegar"
+        data-target="#card-grid-program-edit-desktop-{{ panel_id }}"
+      >
+        <p>Edit</p>
+      </div>
+    {% endif %}
   </div>
 
   <div id="card-grid-program-weeks-desktop-{{ panel_id }}" class="program-card-panels__desktop card-table-programs program-table-panel">
     {% include "components/program_week_table_combined.html" with weeks=weeks %}
   </div>
+
+  {% if can_edit %}
+    <div id="card-grid-program-edit-desktop-{{ panel_id }}" class="program-card-panels__desktop card-table-programs program-table-panel">
+      {% include "components/program_week_table_edit.html" with program=program weeks=weeks %}
+    </div>
+  {% endif %}
 
   <div class="card-detail-tabs-mobile">
     <button

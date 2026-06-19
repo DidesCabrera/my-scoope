@@ -1,0 +1,45 @@
+{% extends "notas/base.html" %}
+{% load static %}
+
+{% block title %}Semana {{ vm.content.week.week_number }} · {{ vm.content.program.name }}{% endblock %}
+
+{% block content %}
+<div
+  class="page page--detail page--program-detail page--program-week-detail has-collapsible-panels"
+  data-page="program-week-detail"
+  data-program-dailyplans="{{ vm.content.available_dailyplans_json|escapejs }}"
+>
+  <section class="card-title main program-main-title-card">
+    <div class="card-title-comp">
+      <div class="main-title main-card">
+        <h1>{{ vm.content.program.name }} · Semana {{ vm.content.week.week_number }}</h1>
+
+        <div class="structural-indicators">
+          <span class="structural-item">
+            <span class="structural-value">{{ vm.content.week.meals_count }}</span>
+            <i data-lucide="utensils" class="structural-icon main"></i>
+          </span>
+          <span class="structural-divider"></span>
+          <span class="structural-item">
+            <span class="structural-value">{{ vm.content.week.foods_count }}</span>
+            <i data-lucide="carrot" class="structural-icon main"></i>
+          </span>
+        </div>
+      </div>
+
+      <div class="icons-title">
+        <i data-lucide="calendar-1" class="home-section-header-icon main program"></i>
+      </div>
+    </div>
+  </section>
+
+  <section class="program-board-shell program-board-shell--week-detail">
+    <div class="program-board program-board--single-week" aria-label="Detalle semanal del programa">
+      {% include "components/program_week_child_card.html" with program=vm.content.program week=vm.content.week available_dailyplans=vm.content.available_dailyplans is_week_detail=True can_edit=vm.content.can_edit %}
+    </div>
+  </section>
+</div>
+
+<script src="{% static 'notas/js/program_metric_chart.js' %}"></script>
+<script src="{% static 'notas/js/program_slot_picker.js' %}"></script>
+{% endblock %}

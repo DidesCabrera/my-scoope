@@ -1,0 +1,395 @@
+diff --git a/notas/interface/views/programs.py b/notas/interface/views/programs.py
+index c676691..108796b 100644
+--- a/notas/interface/views/programs.py
++++ b/notas/interface/views/programs.py
+@@ -793,6 +793,11 @@ def build_program_child_card(program, user, current_weight=None):
+         "weeks": grid_data["weeks"],
+         "chart": build_program_metric_chart(grid_data["weeks"], current_weight=current_weight),
+         "owner": owner_label,
++        "metadata": {
++            "owner": owner_label,
++            "author": str(program.original_author),
++            "fork_from": str(program.forked_from) if program.forked_from else None,
++        },
+         "is_shared": program.created_by_id != user.id,
+         "actions": actions,
+     }
+diff --git a/notas/static/notas/css/components/programs.css b/notas/static/notas/css/components/programs.css
+index 6a3fd69..7442c0c 100644
+--- a/notas/static/notas/css/components/programs.css
++++ b/notas/static/notas/css/components/programs.css
+@@ -1702,3 +1702,241 @@
+     transform: translateX(50%);
+   }
+ }
++
++/* Program polish: align week cards, panels and slot picker with system components === */
++.program-week-child-card {
++  border-color: var(--panel-row-separator);
++}
++
++.program-card-panels.card-detail-block {
++  margin: 10px -4px;
++  background: var(--surface-card-muted);
++  border-color: var(--border-soft);
++  border-radius: 18px;
++}
++
++.program-card-panels .card-detail-tabs,
++.program-card-panels .card-detail-tabs-mobile {
++  padding: 10px;
++}
++
++.program-card-panels__desktop-tabs {
++  width: fit-content;
++  padding: 10px !important;
++  margin: 0;
++}
++
++.program-card-panels__desktop.card-table-programs,
++.program-table-panel {
++  padding: 0 10px 10px !important;
++}
++
++.program-card-panels .btn-desplegar,
++.program-card-panels .btn-desplegar-mobile {
++  height: 22px;
++  padding: 0 8px;
++  border-radius: 12px;
++  background-color: var(--panel-tab-bg);
++  color: var(--panel-tab-text);
++  border: 1px solid var(--panel-tab-border);
++  font-size: 13px;
++  font-weight: 450;
++}
++
++.program-card-panels .btn-desplegar p {
++  margin: 0;
++  color: inherit;
++  font-size: 13px;
++  font-weight: 450;
++}
++
++.program-card-panels .btn-desplegar:hover,
++.program-card-panels .btn-desplegar-mobile:hover {
++  background-color: var(--panel-tab-hover-bg);
++  color: var(--panel-tab-hover-text);
++  border-color: var(--panel-tab-hover-border);
++}
++
++.program-card-panels .btn-desplegar.is-active,
++.program-card-panels .btn-desplegar-mobile.is-active {
++  background-color: var(--panel-tab-active-bg);
++  color: var(--panel-tab-active-text);
++  border-color: var(--panel-tab-active-border);
++}
++
++.program-card .card-bottom .metadata {
++  margin: 0;
++}
++
++.program-slot-picker.section_picker {
++  position: absolute;
++  z-index: 40;
++  top: calc(100% + 0.55rem);
++  left: 50%;
++  display: grid;
++  gap: 0;
++  width: min(520px, calc(100vw - 2rem));
++  max-width: 520px;
++  padding: 0;
++  margin: 0;
++  border: 1px solid var(--border-soft);
++  border-radius: 18px;
++  background: var(--surface-card-muted);
++  color: var(--text-main);
++  box-shadow: var(--shadow-elevated);
++  transform: translateX(-50%);
++  overflow: hidden;
++}
++
++.program-day-cell:nth-child(n + 5) .program-slot-picker.section_picker {
++  right: 0;
++  left: auto;
++  transform: none;
++}
++
++.program-day-cell:nth-child(-n + 2) .program-slot-picker.section_picker {
++  right: auto;
++  left: 0;
++  transform: none;
++}
++
++.program-slot-picker__add-row {
++  padding: 12px;
++  border-bottom: 1px solid var(--panel-row-separator);
++}
++
++.program-slot-picker__selector {
++  flex: 1 1 auto;
++}
++
++.program-slot-picker__selector .search-icon-add-row-icon {
++  flex: 0 0 auto;
++}
++
++.program-slot-picker__search {
++  flex: 1 1 auto;
++  width: auto;
++  height: 32px;
++  min-width: 0;
++  padding-left: 10px;
++  border: 1px solid var(--input-border);
++  border-radius: 8px;
++  background: var(--input-bg);
++  color: var(--input-text);
++  box-sizing: border-box;
++}
++
++.program-slot-picker__search::placeholder {
++  color: var(--input-placeholder);
++}
++
++.program-slot-picker__search:focus {
++  outline: none;
++  border-color: var(--input-focus-border);
++  box-shadow: 0 0 0 3px var(--input-focus-shadow);
++}
++
++.program-slot-picker__results {
++  display: grid;
++  gap: 0;
++  max-height: 320px;
++  padding: 0;
++  overflow-y: auto;
++}
++
++.program-slot-picker__option {
++  display: flex;
++  align-items: flex-start;
++  gap: 10px;
++  padding: 10px 12px;
++  border-radius: 0;
++  border-bottom: 1px solid var(--panel-row-separator);
++  background: transparent;
++  color: var(--text-main);
++  cursor: pointer;
++  transition: background-color 0.15s ease;
++}
++
++.program-slot-picker__option:hover,
++.program-slot-picker__option:focus-within {
++  background: var(--interactive-hover);
++}
++
++.program-slot-picker__option input[type="radio"] {
++  margin-top: 3px;
++  accent-color: var(--entity-dailyplan);
++}
++
++.program-slot-picker__option-body {
++  display: grid;
++  gap: 0;
++  min-width: 0;
++  width: 100%;
++}
++
++.program-slot-picker__preview.picker-summary-card {
++  display: grid;
++  gap: 0.35rem;
++  margin: 10px 12px 0;
++  padding: 10px;
++  border: 1px solid var(--border-soft);
++  border-radius: 14px;
++  background: var(--surface-card);
++}
++
++.program-slot-picker__preview[hidden] {
++  display: none !important;
++}
++
++.program-slot-picker__preview small {
++  color: var(--text-muted);
++  font-size: 12px;
++}
++
++.program-slot-picker__actions.actions-row {
++  justify-content: flex-end;
++  padding: 12px;
++}
++
++.program-slot-picker__empty {
++  color: var(--text-muted);
++}
++
++@media (max-width: 980px) {
++  .program-card-panels.card-detail-block {
++    margin: 10px -6px;
++  }
++
++  .program-slot-picker.section_picker {
++    position: fixed;
++    top: auto;
++    right: 12px;
++    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
++    left: 12px;
++    width: auto;
++    max-width: none;
++    max-height: min(72vh, 620px);
++    transform: none;
++  }
++
++  .program-day-cell:nth-child(n + 5) .program-slot-picker.section_picker,
++  .program-day-cell:nth-child(-n + 2) .program-slot-picker.section_picker {
++    right: 12px;
++    left: 12px;
++    transform: none;
++  }
++
++  .program-slot-picker__add-row {
++    flex-direction: column;
++    align-items: stretch;
++    gap: 10px;
++  }
++
++  .program-slot-picker__results {
++    max-height: 42vh;
++  }
++}
++
++.program-slot-picker.section_picker[hidden] {
++  display: none !important;
++}
+diff --git a/notas/templates/components/card_child_program.html b/notas/templates/components/card_child_program.html
+index 3c5234f..409f424 100644
+--- a/notas/templates/components/card_child_program.html
++++ b/notas/templates/components/card_child_program.html
+@@ -39,12 +39,7 @@
+ 
+   <div class="card-bottom">
+     <div class="card-metadata">
+-      <div class="metadata-comp">
+-        <span class="metadata-item">
+-          <strong>Creador</strong>
+-          <span>{{ child_card.owner }}</span>
+-        </span>
+-      </div>
++      {% include "components/card_child_metadata.html" with metadata=child_card.metadata %}
+     </div>
+ 
+     <div class="card-actions">
+diff --git a/notas/templates/components/program_week_child_card.html b/notas/templates/components/program_week_child_card.html
+index 94ba088..6211d09 100644
+--- a/notas/templates/components/program_week_child_card.html
++++ b/notas/templates/components/program_week_child_card.html
+@@ -105,24 +105,27 @@
+           </button>
+         {% endif %}
+ 
+-        <form class="program-slot-picker js-program-slot-picker" method="post" action="{% url 'add_dailyplan_to_program' program.id %}" hidden>
++        <form class="program-slot-picker section_picker js-program-slot-picker" method="post" action="{% url 'add_dailyplan_to_program' program.id %}" hidden>
+           {% csrf_token %}
+           <input type="hidden" name="week_number" value="{{ week.week_number }}">
+           <input type="hidden" name="day_number" value="{{ day.day_number }}">
+ 
+-          <label class="program-slot-picker__search-label">
+-            Buscar plan diario
+-            <input
+-              type="search"
+-              class="program-slot-picker__search js-program-slot-search"
+-              placeholder="Buscar por nombre..."
+-              autocomplete="off"
+-            >
+-          </label>
++          <div class="add-row program-slot-picker__add-row">
++            <div class="selector program-slot-picker__selector">
++              <i data-lucide="search" class="search-icon-add-row-icon"></i>
++              <input
++                type="search"
++                class="program-slot-picker__search js-program-slot-search"
++                placeholder="Selecciona un plan diario…"
++                autocomplete="off"
++              >
++            </div>
++            <button type="button" class="btn-cancel-picker btn-cancel-picker-inline js-program-slot-close">Cancelar</button>
++          </div>
+ 
+-          <div class="program-slot-picker__results js-program-slot-results">
++          <div class="program-slot-picker__results js-program-slot-results" role="listbox" aria-label="Planes diarios disponibles">
+             {% for dailyplan in available_dailyplans %}
+-              <label class="program-slot-picker__option js-program-slot-option" data-search="{{ dailyplan.name|lower }}">
++              <label class="program-slot-picker__option picker-item js-program-slot-option" data-search="{{ dailyplan.name|lower }}">
+                 <input
+                   type="radio"
+                   name="dailyplan_id"
+@@ -134,25 +137,37 @@
+                   data-fat="{{ dailyplan.fat|floatformat:0 }}"
+                   required
+                 >
+-                <span>
+-                  <strong>{{ dailyplan.name }}</strong>
+-                  <small>{{ dailyplan.total_kcal|floatformat:0 }} kcal · P {{ dailyplan.protein|floatformat:0 }}g · C {{ dailyplan.carbs|floatformat:0 }}g · F {{ dailyplan.fat|floatformat:0 }}g</small>
++                <span class="program-slot-picker__option-body">
++                  <span class="picker-item-header">
++                    <span class="picker-item-name">{{ dailyplan.name }}</span>
++                    <span class="picker-item-unit">{{ dailyplan.total_kcal|floatformat:0 }} kcal</span>
++                  </span>
++                  <span class="picker-item-meta">P {{ dailyplan.protein|floatformat:0 }}g · C {{ dailyplan.carbs|floatformat:0 }}g · F {{ dailyplan.fat|floatformat:0 }}g</span>
++                  <span class="picker-item-badges">
++                    <span class="picker-item-badge picker-item-badge--user">Plan diario</span>
++                  </span>
+                 </span>
+               </label>
+             {% empty %}
+-              <div class="program-slot-picker__empty">No hay planes diarios disponibles en tu librería.</div>
++              <div class="program-slot-picker__empty picker-item">No hay planes diarios disponibles en tu librería.</div>
+             {% endfor %}
+           </div>
+ 
+-          <div class="program-slot-picker__preview js-program-slot-preview" hidden>
+-            <span>Previa del plan seleccionado</span>
+-            <strong class="js-program-slot-preview-name"></strong>
++          <div class="program-slot-picker__preview picker-summary-card picker-summary-card--selected picker-summary-card--dailyplan js-program-slot-preview" hidden>
++            <div class="picker-summary-card__header">
++              <div class="picker-summary-card__title-row">
++                <i data-lucide="clipboard-list" class="picker-summary-card__icon dailyplan"></i>
++                <div class="picker-summary-card__title">
++                  <span class="js-program-slot-preview-name"></span>
++                </div>
++              </div>
++            </div>
+             <small class="js-program-slot-preview-kpis"></small>
+           </div>
+ 
+-          <div class="program-slot-picker__actions">
+-            <button type="button" class="btn-secondary js-program-slot-close">Cancelar</button>
+-            <button type="submit" class="btn-primary">Asignar</button>
++          <div class="actions-row program-slot-picker__actions">
++            <button type="button" class="btn-cancel-picker js-program-slot-close">Cancelar</button>
++            <button type="submit" class="btn-add-picker">Asignar Plan</button>
+           </div>
+         </form>
+       </article>
+diff --git a/notas/templates/components/program_week_panels.html b/notas/templates/components/program_week_panels.html
+index 641f897..fbc4d21 100644
+--- a/notas/templates/components/program_week_panels.html
++++ b/notas/templates/components/program_week_panels.html
+@@ -3,14 +3,13 @@
+   class="card-detail-block program-card-panels"
+   data-default-mobile="#card-grid-program-macros-mobile-{{ panel_id }}"
+ >
+-  <div class="card-detail-tabs--desktop program-card-panels__desktop-tabs">
+-    <button
+-      type="button"
++  <div class="card-detail-tabs card-detail-tabs--desktop block-desplegar-tabla block-card-desplegar program-card-panels__desktop-tabs">
++    <div
+       class="btn-desplegar"
+       data-target="#card-grid-program-weeks-desktop-{{ panel_id }}"
+     >
+-      Semanas
+-    </button>
++      <p>Semanas</p>
++    </div>
+   </div>
+ 
+   <div id="card-grid-program-weeks-desktop-{{ panel_id }}" class="program-card-panels__desktop card-table-programs program-table-panel">

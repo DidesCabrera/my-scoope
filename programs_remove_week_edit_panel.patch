@@ -1,0 +1,403 @@
+diff --git a/notas/application/services/commands/program_commands.py b/notas/application/services/commands/program_commands.py
+index f58338b..144bda6 100644
+--- a/notas/application/services/commands/program_commands.py
++++ b/notas/application/services/commands/program_commands.py
+@@ -3,6 +3,7 @@ from __future__ import annotations
+ from dataclasses import dataclass
+ 
+ from django.db import transaction
++from django.db.models import F
+ 
+ from notas.application.services.commands.dailyplan_commands import clone_dailyplan_meals
+ from notas.domain.models import DailyPlan, Program, ProgramDay
+@@ -28,6 +29,13 @@ class ProgramDayRemoveResult:
+     dailyplan_id: int | None = None
+ 
+ 
++@dataclass(frozen=True)
++class ProgramWeekRemoveResult:
++    program: Program
++    removed_week_number: int
++    removed_dailyplan_ids: tuple[int, ...] = ()
++
++
+ def normalize_duration_weeks(raw_value) -> int:
+     try:
+         value = int(raw_value)
+@@ -126,6 +134,53 @@ def add_week_to_program(*, program: Program) -> Program:
+     return program
+ 
+ 
++@transaction.atomic
++def remove_week_from_program(*, program: Program, week_number) -> ProgramWeekRemoveResult:
++    week, _ = validate_program_slot(
++        program=program,
++        week_number=week_number,
++        day_number=1,
++    )
++
++    if program.normalized_duration_weeks <= Program.MIN_DURATION_WEEKS:
++        raise ValueError("program_cannot_remove_last_week")
++
++    week_slots = list(
++        ProgramDay.objects
++        .select_related("dailyplan")
++        .filter(program=program, week_number=week)
++    )
++    dailyplan_snapshots = [slot.dailyplan for slot in week_slots if slot.dailyplan_id]
++    removed_dailyplan_ids = tuple(dailyplan.id for dailyplan in dailyplan_snapshots)
++
++    ProgramDay.objects.filter(program=program, week_number=week).delete()
++
++    shifted_slots = ProgramDay.objects.filter(program=program, week_number__gt=week)
++    shifted_slots.update(week_number=F("week_number") + 1000)
++    ProgramDay.objects.filter(program=program, week_number__gt=1000).update(
++        week_number=F("week_number") - 1001
++    )
++
++    program.duration_weeks = max(
++        program.normalized_duration_weeks - 1,
++        Program.MIN_DURATION_WEEKS,
++    )
++
++    if program.is_draft and program.program_dailyplan.exists():
++        program.is_draft = False
++
++    program.save(update_fields=["duration_weeks", "is_draft"])
++
++    for dailyplan in dailyplan_snapshots:
++        _safe_delete_program_dailyplan_snapshot(dailyplan)
++
++    return ProgramWeekRemoveResult(
++        program=program,
++        removed_week_number=week,
++        removed_dailyplan_ids=removed_dailyplan_ids,
++    )
++
++
+ @transaction.atomic
+ def assign_dailyplan_to_program_slot(
+     *,
+diff --git a/notas/interface/views/programs.py b/notas/interface/views/programs.py
+index a82c7a2..f818225 100644
+--- a/notas/interface/views/programs.py
++++ b/notas/interface/views/programs.py
+@@ -24,6 +24,7 @@ from notas.application.services.commands.program_commands import (
+     delete_program,
+     fork_program as fork_program_command,
+     remove_program_day,
++    remove_week_from_program,
+ )
+ from notas.application.services.commands.share_commands import create_program_share
+ from notas.application.services.nutrition.food_aggregation import (
+@@ -240,6 +241,36 @@ def _program_detail_actions(program, user):
+     return actions
+ 
+ 
++def _program_week_detail_actions(program, user, week_number):
++    actions = [
++        _action(
++            key="back_program",
++            label="Volver",
++            url=f"{reverse('program_detail', args=[program.id])}#week-{week_number}",
++            icon="chevron-left",
++            order=10,
++            is_back=True,
++        )
++    ]
++
++    if program.created_by_id == user.id and program.normalized_duration_weeks > Program.MIN_DURATION_WEEKS:
++        actions.append(
++            _action(
++                key="remove_week",
++                label="Eliminar semana",
++                url=reverse("program_remove_week", args=[program.id, week_number]),
++                method="post",
++                icon="trash-2",
++                order=20,
++                desktop_position="inline",
++                mobile_position="menu",
++            )
++        )
++
++    return actions
++
++
++
+ def _header(actions=None):
+     return asdict(build_page_header(actions=actions or []))
+ 
+@@ -1043,21 +1074,13 @@ def program_week_detail(request, pk, week_number):
+     dailyplan_options = [_plan_snapshot(dailyplan) for dailyplan in dailyplans]
+ 
+     content = {
+-        "header": _header([
+-            _action(
+-                key="back_program",
+-                label="Volver",
+-                url=f"{reverse('program_detail', args=[program.id])}#week-{week_number}",
+-                icon="chevron-left",
+-                order=10,
+-                is_back=True,
+-            )
+-        ]),
++        "header": _header(_program_week_detail_actions(program, request.user, week_number)),
+         "program": program,
+         "week": selected_week,
+         "available_dailyplans": dailyplan_options,
+         "available_dailyplans_json": json.dumps(dailyplan_options, cls=DjangoJSONEncoder),
+         "program_foods_count": grid_data["program_foods_count"],
++        "can_edit": program.created_by_id == request.user.id,
+     }
+ 
+     context = _vm_context(
+@@ -1078,6 +1101,26 @@ def program_add_week(request, pk):
+     return redirect(f"{reverse('program_detail', args=[program.pk])}#week-{program.normalized_duration_weeks}")
+ 
+ 
++@login_required
++@require_POST
++def program_remove_week(request, pk, week_number):
++    program = get_object_or_404(Program, pk=pk, created_by=request.user)
++
++    try:
++        removed_week_number = int(week_number)
++        remove_week_from_program(program=program, week_number=removed_week_number)
++    except ValueError as exc:
++        if str(exc) == "program_cannot_remove_last_week":
++            messages.error(request, "El programa debe conservar al menos una semana.")
++        else:
++            messages.error(request, "La semana seleccionada no es válida.")
++        return redirect("program_detail", pk=program.pk)
++
++    messages.success(request, f"Semana {removed_week_number} eliminada del programa.")
++    next_week = min(removed_week_number, program.normalized_duration_weeks)
++    return redirect(f"{reverse('program_detail', args=[program.pk])}#week-{next_week}")
++
++
+ @login_required
+ def configure_program(request, pk):
+     program = get_object_or_404(
+diff --git a/notas/static/notas/css/components/programs.css b/notas/static/notas/css/components/programs.css
+index 30d298d..828e856 100644
+--- a/notas/static/notas/css/components/programs.css
++++ b/notas/static/notas/css/components/programs.css
+@@ -1985,3 +1985,78 @@
+     margin-left: 0;
+   }
+ }
++
++/* Program week edit actions ===================================== */
++.data-grid-header--program-weeks-edit,
++.data-grid-row--program-weeks-edit {
++  grid-template-columns: minmax(140px, 1fr) minmax(120px, 0.55fr);
++}
++
++.data-grid-cell--program-week-actions,
++.data-grid-col--program-week-actions {
++  justify-content: flex-end;
++}
++
++.program-week-delete-form,
++.program-week-child-card__delete-form {
++  display: inline-flex;
++  align-items: center;
++  margin: 0;
++}
++
++.program-week-delete-action {
++  display: inline-flex;
++  align-items: center;
++  justify-content: center;
++  gap: 0.4rem;
++  min-height: 28px;
++  border: 1px solid color-mix(in srgb, #ff4d4d 42%, var(--border-soft));
++  border-radius: 10px;
++  background: color-mix(in srgb, #ff4d4d 8%, transparent);
++  color: #ff4d4d;
++  padding: 0 0.55rem;
++  font-size: 0.74rem;
++  font-weight: 750;
++  cursor: pointer;
++}
++
++.program-week-delete-action.is-disabled {
++  border-color: var(--border-soft);
++  background: transparent;
++  color: var(--text-muted);
++  cursor: default;
++}
++
++.program-week-child-card__footer {
++  align-items: center;
++  gap: 0.45rem;
++}
++
++.program-week-child-card__delete-link {
++  display: inline-flex;
++  align-items: center;
++  justify-content: center;
++  width: 34px;
++  height: 34px;
++  border: 1px solid color-mix(in srgb, #ff4d4d 42%, var(--border-soft));
++  border-radius: 11px;
++  background: color-mix(in srgb, #ff4d4d 8%, var(--surface-card-muted));
++  color: #ff4d4d;
++  padding: 0;
++  cursor: pointer;
++}
++
++.program-week-child-card__delete-link:hover {
++  background: color-mix(in srgb, #ff4d4d 14%, var(--surface-card-muted));
++}
++
++@media (max-width: 780px) {
++  .data-grid-header--program-weeks-edit,
++  .data-grid-row--program-weeks-edit {
++    grid-template-columns: minmax(90px, 1fr) minmax(92px, 0.75fr);
++  }
++
++  .program-week-delete-action span {
++    display: none;
++  }
++}
+diff --git a/notas/templates/components/program_week_child_card.html b/notas/templates/components/program_week_child_card.html
+index 6211d09..ff19ec9 100644
+--- a/notas/templates/components/program_week_child_card.html
++++ b/notas/templates/components/program_week_child_card.html
+@@ -195,6 +195,14 @@
+ 
+   {% if not is_week_detail %}
+     <div class="program-week-child-card__footer">
++      {% if can_edit and program.normalized_duration_weeks > 1 %}
++        <form method="post" action="{% url 'program_remove_week' program.id week.week_number %}" class="program-week-child-card__delete-form">
++          {% csrf_token %}
++          <button type="submit" class="program-week-child-card__delete-link" aria-label="Eliminar Semana {{ week.week_number }}">
++            <i data-lucide="trash-2" class="table-icon"></i>
++          </button>
++        </form>
++      {% endif %}
+       <a class="program-week-child-card__detail-link" href="{% url 'program_week_detail' program.id week.week_number %}" aria-label="Ver detalle de Semana {{ week.week_number }}">
+         <i data-lucide="chevron-right" class="table-icon"></i>
+       </a>
+diff --git a/notas/templates/components/program_week_panels.html b/notas/templates/components/program_week_panels.html
+index e6ab623..cd99ecc 100644
+--- a/notas/templates/components/program_week_panels.html
++++ b/notas/templates/components/program_week_panels.html
+@@ -11,12 +11,26 @@
+     >
+       <p>Semanas</p>
+     </div>
++    {% if can_edit %}
++      <div
++        class="btn-desplegar"
++        data-target="#card-grid-program-edit-desktop-{{ panel_id }}"
++      >
++        <p>Edit</p>
++      </div>
++    {% endif %}
+   </div>
+ 
+   <div id="card-grid-program-weeks-desktop-{{ panel_id }}" class="program-card-panels__desktop card-table-programs program-table-panel">
+     {% include "components/program_week_table_combined.html" with weeks=weeks %}
+   </div>
+ 
++  {% if can_edit %}
++    <div id="card-grid-program-edit-desktop-{{ panel_id }}" class="program-card-panels__desktop card-table-programs program-table-panel">
++      {% include "components/program_week_table_edit.html" with program=program weeks=weeks %}
++    </div>
++  {% endif %}
++
+   <div class="card-detail-tabs-mobile">
+     <button
+       type="button"
+diff --git a/notas/templates/components/program_week_table_edit.html b/notas/templates/components/program_week_table_edit.html
+new file mode 100644
+index 0000000..35c494c
+--- /dev/null
++++ b/notas/templates/components/program_week_table_edit.html
+@@ -0,0 +1,29 @@
++<div class="data-grid data-grid--program-weeks-edit" role="table" aria-label="Editar semanas del programa">
++  <div class="data-grid-header data-grid-header--program-weeks-edit" role="row">
++    <div class="data-grid-col data-grid-col--program-week" role="columnheader">Semana</div>
++    <div class="data-grid-col data-grid-col--program-week-actions" role="columnheader">Acciones</div>
++  </div>
++
++  {% for week in weeks %}
++    <div class="data-grid-row data-grid-row--program-weeks-edit" role="row">
++      <div class="data-grid-cell data-grid-cell--program-week" role="cell">
++        <span class="truncate">Semana {{ week.week_number }}</span>
++      </div>
++      <div class="data-grid-cell data-grid-cell--program-week-actions" role="cell">
++        {% if program.normalized_duration_weeks > 1 %}
++          <form method="post" action="{% url 'program_remove_week' program.id week.week_number %}" class="program-week-delete-form">
++            {% csrf_token %}
++            <button type="submit" class="program-week-delete-action" aria-label="Eliminar Semana {{ week.week_number }}">
++              <i data-lucide="trash-2" class="table-icon"></i>
++              <span>Eliminar</span>
++            </button>
++          </form>
++        {% else %}
++          <span class="program-week-delete-action is-disabled">No disponible</span>
++        {% endif %}
++      </div>
++    </div>
++  {% empty %}
++    <div class="data-grid-empty">No hay semanas configuradas.</div>
++  {% endfor %}
++</div>
+diff --git a/notas/templates/notas/programs/detail.html b/notas/templates/notas/programs/detail.html
+index af00f1d..4def839 100644
+--- a/notas/templates/notas/programs/detail.html
++++ b/notas/templates/notas/programs/detail.html
+@@ -48,7 +48,7 @@
+       </form>
+     {% endif %}
+   </div>
+-  {% include "components/program_week_panels.html" with panel_id=vm.content.program.id weeks=vm.content.weeks default_desktop=True %}
++  {% include "components/program_week_panels.html" with panel_id=vm.content.program.id program=vm.content.program weeks=vm.content.weeks default_desktop=True can_edit=vm.content.can_edit %}
+ 
+   <hr>
+   <section class="program-board-shell">
+@@ -72,7 +72,7 @@
+ 
+     <div class="program-board" aria-label="Grilla semanal del programa">
+       {% for week in vm.content.weeks %}
+-        {% include "components/program_week_child_card.html" with program=vm.content.program week=week available_dailyplans=vm.content.available_dailyplans %}
++        {% include "components/program_week_child_card.html" with program=vm.content.program week=week available_dailyplans=vm.content.available_dailyplans can_edit=vm.content.can_edit %}
+       {% endfor %}
+     </div>
+   </section>
+diff --git a/notas/templates/notas/programs/week_detail.html b/notas/templates/notas/programs/week_detail.html
+index 172103c..f8d8704 100644
+--- a/notas/templates/notas/programs/week_detail.html
++++ b/notas/templates/notas/programs/week_detail.html
+@@ -35,7 +35,7 @@
+ 
+   <section class="program-board-shell program-board-shell--week-detail">
+     <div class="program-board program-board--single-week" aria-label="Detalle semanal del programa">
+-      {% include "components/program_week_child_card.html" with program=vm.content.program week=vm.content.week available_dailyplans=vm.content.available_dailyplans is_week_detail=True %}
++      {% include "components/program_week_child_card.html" with program=vm.content.program week=vm.content.week available_dailyplans=vm.content.available_dailyplans is_week_detail=True can_edit=vm.content.can_edit %}
+     </div>
+   </section>
+ </div>
+diff --git a/notas/urls.py b/notas/urls.py
+index 1f02e86..21f1db6 100644
+--- a/notas/urls.py
++++ b/notas/urls.py
+@@ -100,6 +100,7 @@ from notas.interface.views.programs import (
+     program_remove,
+     program_share,
+     program_add_week,
++    program_remove_week,
+     add_dailyplan_to_program,
+     remove_dailyplan_from_program,
+     configure_program,
+@@ -364,6 +365,7 @@ urlpatterns = [
+     path("programs/<int:pk>/share/", program_share, name="program_share"),
+     path("programs/<int:pk>/remove/", program_remove, name="program_remove"),
+     path("programs/<int:pk>/add-week/", program_add_week, name="program_add_week"),
++    path("programs/<int:pk>/weeks/<int:week_number>/remove/", program_remove_week, name="program_remove_week"),
+     path("programs/<int:pk>/add-dailyplan/", add_dailyplan_to_program, name="add_dailyplan_to_program"),
+     path("programs/<int:pk>/days/<int:program_day_id>/remove/", remove_dailyplan_from_program, name="remove_dailyplan_from_program"),
+     path("programs/<int:pk>/weeks/<int:week_number>/", program_week_detail, name="program_week_detail"),

@@ -1,0 +1,29 @@
+<div class="data-grid data-grid--program-weeks-edit" role="table" aria-label="Editar semanas del programa">
+  <div class="data-grid-header data-grid-header--program-weeks-edit" role="row">
+    <div class="data-grid-col data-grid-col--program-week" role="columnheader">Semana</div>
+    <div class="data-grid-col data-grid-col--program-week-actions" role="columnheader">Acciones</div>
+  </div>
+
+  {% for week in weeks %}
+    <div class="data-grid-row data-grid-row--program-weeks-edit" role="row">
+      <div class="data-grid-cell data-grid-cell--program-week" role="cell">
+        <span class="truncate">Semana {{ week.week_number }}</span>
+      </div>
+      <div class="data-grid-cell data-grid-cell--program-week-actions" role="cell">
+        {% if program.normalized_duration_weeks > 1 %}
+          <form method="post" action="{% url 'program_remove_week' program.id week.week_number %}" class="program-week-delete-form">
+            {% csrf_token %}
+            <button type="submit" class="program-week-delete-action" aria-label="Eliminar Semana {{ week.week_number }}">
+              <i data-lucide="trash-2" class="table-icon"></i>
+              <span>Eliminar</span>
+            </button>
+          </form>
+        {% else %}
+          <span class="program-week-delete-action is-disabled">No disponible</span>
+        {% endif %}
+      </div>
+    </div>
+  {% empty %}
+    <div class="data-grid-empty">No hay semanas configuradas.</div>
+  {% endfor %}
+</div>

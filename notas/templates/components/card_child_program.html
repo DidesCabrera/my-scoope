@@ -39,12 +39,7 @@
 
   <div class="card-bottom">
     <div class="card-metadata">
-      <div class="metadata-comp">
-        <span class="metadata-item">
-          <strong>Creador</strong>
-          <span>{{ child_card.owner }}</span>
-        </span>
-      </div>
+      {% include "components/card_child_metadata.html" with metadata=child_card.metadata %}
     </div>
 
     <div class="card-actions">

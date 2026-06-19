@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from django.db import transaction
+from django.db.models import F
 
 from notas.application.services.commands.dailyplan_commands import clone_dailyplan_meals
 from notas.domain.models import DailyPlan, Program, ProgramDay
@@ -26,6 +27,13 @@ class ProgramDayRemoveResult:
     program: Program
     program_day_id: int
     dailyplan_id: int | None = None
+
+
+@dataclass(frozen=True)
+class ProgramWeekRemoveResult:
+    program: Program
+    removed_week_number: int
+    removed_dailyplan_ids: tuple[int, ...] = ()
 
 
 def normalize_duration_weeks(raw_value) -> int:
@@ -98,9 +106,9 @@ def clone_dailyplan_for_program(source: DailyPlan, user) -> DailyPlan:
 
 
 @transaction.atomic
-def create_weekly_program(*, user, name: str, duration_weeks) -> ProgramCreateResult:
+def create_weekly_program(*, user, name: str, duration_weeks=None) -> ProgramCreateResult:
     clean_name = (name or "").strip()
-    weeks = normalize_duration_weeks(duration_weeks)
+    weeks = normalize_duration_weeks(duration_weeks or Program.DEFAULT_DURATION_WEEKS)
 
     if not clean_name:
         raise ValueError("program_name_required")
@@ -113,6 +121,64 @@ def create_weekly_program(*, user, name: str, duration_weeks) -> ProgramCreateRe
     )
 
     return ProgramCreateResult(program=program)
+
+
+@transaction.atomic
+def add_week_to_program(*, program: Program) -> Program:
+    program.duration_weeks = program.normalized_duration_weeks + 1
+
+    if program.is_draft and program.program_dailyplan.exists():
+        program.is_draft = False
+
+    program.save(update_fields=["duration_weeks", "is_draft"])
+    return program
+
+
+@transaction.atomic
+def remove_week_from_program(*, program: Program, week_number) -> ProgramWeekRemoveResult:
+    week, _ = validate_program_slot(
+        program=program,
+        week_number=week_number,
+        day_number=1,
+    )
+
+    if program.normalized_duration_weeks <= Program.MIN_DURATION_WEEKS:
+        raise ValueError("program_cannot_remove_last_week")
+
+    week_slots = list(
+        ProgramDay.objects
+        .select_related("dailyplan")
+        .filter(program=program, week_number=week)
+    )
+    dailyplan_snapshots = [slot.dailyplan for slot in week_slots if slot.dailyplan_id]
+    removed_dailyplan_ids = tuple(dailyplan.id for dailyplan in dailyplan_snapshots)
+
+    ProgramDay.objects.filter(program=program, week_number=week).delete()
+
+    shifted_slots = ProgramDay.objects.filter(program=program, week_number__gt=week)
+    shifted_slots.update(week_number=F("week_number") + 1000)
+    ProgramDay.objects.filter(program=program, week_number__gt=1000).update(
+        week_number=F("week_number") - 1001
+    )
+
+    program.duration_weeks = max(
+        program.normalized_duration_weeks - 1,
+        Program.MIN_DURATION_WEEKS,
+    )
+
+    if program.is_draft and program.program_dailyplan.exists():
+        program.is_draft = False
+
+    program.save(update_fields=["duration_weeks", "is_draft"])
+
+    for dailyplan in dailyplan_snapshots:
+        _safe_delete_program_dailyplan_snapshot(dailyplan)
+
+    return ProgramWeekRemoveResult(
+        program=program,
+        removed_week_number=week,
+        removed_dailyplan_ids=removed_dailyplan_ids,
+    )
 
 
 @transaction.atomic

@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const targetId = cell.dataset.slotCardTarget;
     if (!targetId) return;
 
-    const weekRow = cell.closest(".program-week-row");
+    const weekRow = cell.closest(".program-week-child-card");
     const card = weekRow?.querySelector(`#${CSS.escape(targetId)}`);
     if (!card) return;
 
@@ -105,7 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const shouldOpen = picker.hidden;
       closeAllExcept(picker);
       if (shouldOpen) {
-        closeSlotCards(cell?.closest(".program-week-row"));
+        closeSlotCards(cell?.closest(".program-week-child-card"));
       }
       picker.hidden = !shouldOpen;
       cell.classList.toggle("is-picking", shouldOpen);

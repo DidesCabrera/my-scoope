@@ -1,0 +1,211 @@
+<section class="program-week-child-card{% if is_week_detail %} program-week-child-card--detail{% endif %}" id="week-{{ week.week_number }}" aria-labelledby="program-week-title-{{ week.week_number }}">
+  <header class="program-week-child-card__header">
+    <div class="card-title-comp program-week-child-card__title-comp">
+      <div class="main-title program-week-child-card__title-main">
+        <h3 id="program-week-title-{{ week.week_number }}">Semana {{ week.week_number }}</h3>
+        <div class="structural-indicators program-week-child-card__indicators" aria-label="Estructura de la semana {{ week.week_number }}">
+          <span class="structural-item">
+            <span class="structural-value">{{ week.meals_count }}</span>
+            <i data-lucide="utensils" class="structural-icon main"></i>
+          </span>
+          <span class="structural-divider"></span>
+          <span class="structural-item">
+            <span class="structural-value">{{ week.foods_count }}</span>
+            <i data-lucide="carrot" class="structural-icon main"></i>
+          </span>
+        </div>
+      </div>
+      <div class="icons-title program-week-child-card__icons-title">
+        <i data-lucide="calendar-1" class="home-section-header-icon program-week-child-card__icon"></i>
+      </div>
+    </div>
+  </header>
+
+  <div class="program-week-kpis" aria-label="Métricas de la semana {{ week.week_number }}">
+    <div class="program-week-kpis__row program-week-kpis__row--total">
+      <span class="program-week-kpis__label">Total semanal</span>
+      <strong>{{ week.totals.total_kcal|floatformat:0 }} kcal</strong>
+      <span>P {{ week.totals.protein|floatformat:0 }}g</span>
+      <span>C {{ week.totals.carbs|floatformat:0 }}g</span>
+      <span>F {{ week.totals.fat|floatformat:0 }}g</span>
+    </div>
+    <div class="program-week-kpis__row program-week-kpis__row--average">
+      <span class="program-week-kpis__label">Promedio diario</span>
+      <strong>{{ week.averages.total_kcal|floatformat:0 }} kcal</strong>
+      <span>P {{ week.averages.protein|floatformat:0 }}g</span>
+      <span>C {{ week.averages.carbs|floatformat:0 }}g</span>
+      <span>F {{ week.averages.fat|floatformat:0 }}g</span>
+    </div>
+  </div>
+
+  {% include "components/program_metric_chart.html" with chart=week.chart modifier="program-chart-panel--week" %}
+
+  <div class="program-week-child-card__days" role="list" aria-label="Días de la semana {{ week.week_number }}">
+    {% for day in week.days %}
+      <article
+        class="program-day-cell {% if day.program_day %}has-plan{% else %}is-empty{% endif %}"
+        role="listitem"
+        data-week-number="{{ week.week_number }}"
+        data-day-number="{{ day.day_number }}"
+        {% if day.program_day %}
+          tabindex="0"
+          data-slot-card-target="program-week-{{ week.week_number }}-day-{{ day.day_number }}-card"
+          aria-expanded="false"
+          aria-controls="program-week-{{ week.week_number }}-day-{{ day.day_number }}-card"
+          aria-label="{{ day.day_label }}: ver {{ day.dailyplan.name }}"
+        {% else %}
+          aria-label="{{ day.day_label }}: sin plan diario"
+        {% endif %}
+      >
+        <span class="program-day-cell__day-initial" aria-hidden="true">{{ day.day_label|slice:":1" }}</span>
+
+        {% if day.program_day %}
+          <div class="program-day-cell__content">
+            <i data-lucide="clipboard-list" class="program-day-cell__icon"></i>
+          </div>
+
+          <div class="program-day-cell__tooltip" role="tooltip">
+            <i data-lucide="clipboard-list" class="program-day-cell__tooltip-icon"></i>
+            <span>{{ day.dailyplan.name }}</span>
+          </div>
+
+          <div class="program-day-cell__actions program-day-cell__actions--inline">
+            <button type="button" class="program-day-cell__replace js-program-slot-open" aria-label="Cambiar plan diario" title="Cambiar plan diario">
+              <i data-lucide="refresh-cw" class="table-icon"></i>
+            </button>
+            <form method="post" action="{% url 'remove_dailyplan_from_program' program.id day.program_day.id %}">
+              {% csrf_token %}
+              <button type="submit" class="program-day-cell__remove" aria-label="Quitar plan diario">
+                <i data-lucide="trash-2" class="table-icon"></i>
+              </button>
+            </form>
+          </div>
+
+          <details class="program-day-cell__menu">
+            <summary class="program-day-cell__menu-toggle" aria-label="Acciones del plan diario">
+              <i data-lucide="more-horizontal" class="table-icon"></i>
+            </summary>
+            <div class="program-day-cell__menu-list">
+              <button type="button" class="program-day-cell__menu-item js-program-slot-open">
+                <i data-lucide="refresh-cw" class="table-icon"></i>
+                <span>Reemplazar</span>
+              </button>
+              <form method="post" action="{% url 'remove_dailyplan_from_program' program.id day.program_day.id %}">
+                {% csrf_token %}
+                <button type="submit" class="program-day-cell__menu-item program-day-cell__menu-item--danger">
+                  <i data-lucide="trash-2" class="table-icon"></i>
+                  <span>Eliminar</span>
+                </button>
+              </form>
+            </div>
+          </details>
+        {% else %}
+          <button type="button" class="program-day-cell__add js-program-slot-open" aria-label="Agregar plan diario a {{ day.day_label }}">
+            <i data-lucide="plus" class="program-day-cell__add-icon"></i>
+          </button>
+        {% endif %}
+
+        <form class="program-slot-picker section_picker js-program-slot-picker" method="post" action="{% url 'add_dailyplan_to_program' program.id %}" hidden>
+          {% csrf_token %}
+          <input type="hidden" name="week_number" value="{{ week.week_number }}">
+          <input type="hidden" name="day_number" value="{{ day.day_number }}">
+
+          <div class="add-row program-slot-picker__add-row">
+            <div class="selector program-slot-picker__selector">
+              <i data-lucide="search" class="search-icon-add-row-icon"></i>
+              <input
+                type="search"
+                class="program-slot-picker__search js-program-slot-search"
+                placeholder="Selecciona un plan diario…"
+                autocomplete="off"
+              >
+            </div>
+            <button type="button" class="btn-cancel-picker btn-cancel-picker-inline js-program-slot-close">Cancelar</button>
+          </div>
+
+          <div class="program-slot-picker__results js-program-slot-results" role="listbox" aria-label="Planes diarios disponibles">
+            {% for dailyplan in available_dailyplans %}
+              <label class="program-slot-picker__option picker-item js-program-slot-option" data-search="{{ dailyplan.name|lower }}">
+                <input
+                  type="radio"
+                  name="dailyplan_id"
+                  value="{{ dailyplan.id }}"
+                  data-name="{{ dailyplan.name }}"
+                  data-kcal="{{ dailyplan.total_kcal|floatformat:0 }}"
+                  data-protein="{{ dailyplan.protein|floatformat:0 }}"
+                  data-carbs="{{ dailyplan.carbs|floatformat:0 }}"
+                  data-fat="{{ dailyplan.fat|floatformat:0 }}"
+                  required
+                >
+                <span class="program-slot-picker__option-body">
+                  <span class="picker-item-header">
+                    <span class="picker-item-name">{{ dailyplan.name }}</span>
+                    <span class="picker-item-unit">{{ dailyplan.total_kcal|floatformat:0 }} kcal</span>
+                  </span>
+                  <span class="picker-item-meta">P {{ dailyplan.protein|floatformat:0 }}g · C {{ dailyplan.carbs|floatformat:0 }}g · F {{ dailyplan.fat|floatformat:0 }}g</span>
+                  <span class="picker-item-badges">
+                    <span class="picker-item-badge picker-item-badge--user">Plan diario</span>
+                  </span>
+                </span>
+              </label>
+            {% empty %}
+              <div class="program-slot-picker__empty picker-item">No hay planes diarios disponibles en tu librería.</div>
+            {% endfor %}
+          </div>
+
+          <div class="program-slot-picker__preview picker-summary-card picker-summary-card--selected picker-summary-card--dailyplan js-program-slot-preview" hidden>
+            <div class="picker-summary-card__header">
+              <div class="picker-summary-card__title-row">
+                <i data-lucide="clipboard-list" class="picker-summary-card__icon dailyplan"></i>
+                <div class="picker-summary-card__title">
+                  <span class="js-program-slot-preview-name"></span>
+                </div>
+              </div>
+            </div>
+            <small class="js-program-slot-preview-kpis"></small>
+          </div>
+
+          <div class="actions-row program-slot-picker__actions">
+            <button type="button" class="btn-cancel-picker js-program-slot-close">Cancelar</button>
+            <button type="submit" class="btn-add-picker">Asignar Plan</button>
+          </div>
+        </form>
+      </article>
+    {% endfor %}
+  </div>
+
+  <div class="program-week-child-card__selected-cards js-program-week-selected-cards" aria-live="polite">
+    {% for day in week.days %}
+      {% if day.program_day and day.dailyplan_card %}
+        <div
+          id="program-week-{{ week.week_number }}-day-{{ day.day_number }}-card"
+          class="program-day-selected-card-wrap js-program-slot-card"
+          data-slot-card="program-week-{{ week.week_number }}-day-{{ day.day_number }}-card"
+          hidden
+        >
+          {% include "components/card_child_dailyplan.html" with child_card=day.dailyplan_card dailyplan_card_class="program-day-selected-card" default_nutrition=True %}
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+
+  <div class="program-week-child-card__foods-row">
+    {% include "components/program_week_foods_aggregation.html" with panel_id=week.foods_panel_id items=week.foods_aggregation_table collapsed=True %}
+  </div>
+
+  {% if not is_week_detail %}
+    <div class="program-week-child-card__footer">
+      {% if can_edit and program.normalized_duration_weeks > 1 %}
+        <form method="post" action="{% url 'program_remove_week' program.id week.week_number %}" class="program-week-child-card__delete-form">
+          {% csrf_token %}
+          <button type="submit" class="program-week-child-card__delete-link" aria-label="Eliminar Semana {{ week.week_number }}">
+            <i data-lucide="trash-2" class="table-icon"></i>
+          </button>
+        </form>
+      {% endif %}
+      <a class="program-week-child-card__detail-link" href="{% url 'program_week_detail' program.id week.week_number %}" aria-label="Ver detalle de Semana {{ week.week_number }}">
+        <i data-lucide="chevron-right" class="table-icon"></i>
+      </a>
+    </div>
+  {% endif %}
+</section>

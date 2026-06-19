@@ -17,12 +17,14 @@ from django.views.decorators.http import require_POST
 
 from notas.application.services.access.capabilities import get_capabilities
 from notas.application.services.commands.program_commands import (
+    add_week_to_program,
     assign_dailyplan_to_program_slot,
     copy_program as copy_program_command,
     create_weekly_program,
     delete_program,
     fork_program as fork_program_command,
     remove_program_day,
+    remove_week_from_program,
 )
 from notas.application.services.commands.share_commands import create_program_share
 from notas.application.services.nutrition.food_aggregation import (
@@ -237,6 +239,36 @@ def _program_detail_actions(program, user):
         )
 
     return actions
+
+
+def _program_week_detail_actions(program, user, week_number):
+    actions = [
+        _action(
+            key="back_program",
+            label="Volver",
+            url=f"{reverse('program_detail', args=[program.id])}#week-{week_number}",
+            icon="chevron-left",
+            order=10,
+            is_back=True,
+        )
+    ]
+
+    if program.created_by_id == user.id and program.normalized_duration_weeks > Program.MIN_DURATION_WEEKS:
+        actions.append(
+            _action(
+                key="remove_week",
+                label="Eliminar semana",
+                url=reverse("program_remove_week", args=[program.id, week_number]),
+                method="post",
+                icon="trash-2",
+                order=20,
+                desktop_position="inline",
+                mobile_position="menu",
+            )
+        )
+
+    return actions
+
 
 
 def _header(actions=None):
@@ -793,6 +825,11 @@ def build_program_child_card(program, user, current_weight=None):
         "weeks": grid_data["weeks"],
         "chart": build_program_metric_chart(grid_data["weeks"], current_weight=current_weight),
         "owner": owner_label,
+        "metadata": {
+            "owner": owner_label,
+            "author": str(program.original_author),
+            "fork_from": str(program.forked_from) if program.forked_from else None,
+        },
         "is_shared": program.created_by_id != user.id,
         "actions": actions,
     }
@@ -911,19 +948,14 @@ def program_create(request):
 
     if request.method == "POST":
         name = request.POST.get("name")
-        duration_weeks = request.POST.get("duration_weeks")
 
         try:
             result = create_weekly_program(
                 user=request.user,
                 name=name,
-                duration_weeks=duration_weeks,
             )
-        except ValueError as exc:
-            if str(exc) == "program_name_required":
-                messages.error(request, "El nombre es obligatorio.")
-            else:
-                messages.error(request, "El número de semanas debe ser 1 o superior.")
+        except ValueError:
+            messages.error(request, "El nombre es obligatorio.")
             return redirect("program_create")
 
         return redirect("program_detail", pk=result.program.pk)
@@ -983,6 +1015,7 @@ def program_detail(request, pk):
         "available_dailyplans": dailyplan_options,
         "available_dailyplans_json": json.dumps(dailyplan_options, cls=DjangoJSONEncoder),
         "day_labels": DAY_LABELS,
+        "can_edit": program.created_by_id == request.user.id,
     }
 
     context = _vm_context(
@@ -992,6 +1025,100 @@ def program_detail(request, pk):
     )
 
     return render(request, "notas/programs/detail.html", context)
+
+
+@login_required
+def program_week_detail(request, pk, week_number):
+    program = get_object_or_404(
+        Program.objects.select_related("created_by", "original_author", "forked_from"),
+        pk=pk,
+    )
+
+    if program.created_by_id != request.user.id and not program.shares.filter(
+        accepted_by=request.user,
+        removed=False,
+    ).exists():
+        return HttpResponseForbidden()
+
+    try:
+        week_number = int(week_number)
+    except (TypeError, ValueError):
+        return HttpResponseBadRequest("Invalid week number.")
+
+    if week_number < 1 or week_number > program.normalized_duration_weeks:
+        return HttpResponseBadRequest("Invalid week number.")
+
+    program_days = list(_program_days_queryset(program))
+    grid_data = build_weekly_grid(
+        program,
+        program_days,
+        user=request.user,
+        include_dailyplan_cards=True,
+    )
+    current_weight = get_current_weight(request.user)
+    selected_week = next(
+        (week for week in grid_data["weeks"] if week["week_number"] == week_number),
+        None,
+    )
+    if selected_week is None:
+        return HttpResponseBadRequest("Invalid week number.")
+
+    selected_week["chart"] = build_program_metric_chart(
+        [selected_week],
+        current_weight=current_weight,
+        title=f"Variación diaria · Semana {selected_week['week_number']}",
+        subtitle="Detalle diario de calorías, macros, alloc y PPK de esta semana.",
+    )
+
+    dailyplans = list(_available_dailyplans(request.user))
+    dailyplan_options = [_plan_snapshot(dailyplan) for dailyplan in dailyplans]
+
+    content = {
+        "header": _header(_program_week_detail_actions(program, request.user, week_number)),
+        "program": program,
+        "week": selected_week,
+        "available_dailyplans": dailyplan_options,
+        "available_dailyplans_json": json.dumps(dailyplan_options, cls=DjangoJSONEncoder),
+        "program_foods_count": grid_data["program_foods_count"],
+        "can_edit": program.created_by_id == request.user.id,
+    }
+
+    context = _vm_context(
+        PROGRAM_VIEWMODE_PERSONAL_DETAIL,
+        content=content,
+        instance=program,
+    )
+
+    return render(request, "notas/programs/week_detail.html", context)
+
+
+@login_required
+@require_POST
+def program_add_week(request, pk):
+    program = get_object_or_404(Program, pk=pk, created_by=request.user)
+    add_week_to_program(program=program)
+    messages.success(request, f"Semana {program.normalized_duration_weeks} agregada al programa.")
+    return redirect(f"{reverse('program_detail', args=[program.pk])}#week-{program.normalized_duration_weeks}")
+
+
+@login_required
+@require_POST
+def program_remove_week(request, pk, week_number):
+    program = get_object_or_404(Program, pk=pk, created_by=request.user)
+
+    try:
+        removed_week_number = int(week_number)
+        remove_week_from_program(program=program, week_number=removed_week_number)
+    except ValueError as exc:
+        if str(exc) == "program_cannot_remove_last_week":
+            messages.error(request, "El programa debe conservar al menos una semana.")
+        else:
+            messages.error(request, "La semana seleccionada no es válida.")
+        return redirect("program_detail", pk=program.pk)
+
+    messages.success(request, f"Semana {removed_week_number} eliminada del programa.")
+    next_week = min(removed_week_number, program.normalized_duration_weeks)
+    return redirect(f"{reverse('program_detail', args=[program.pk])}#week-{next_week}")
 
 
 @login_required

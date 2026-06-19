@@ -27,34 +27,13 @@
             class="input-create entity-form__input"
             type="text"
             name="name"
-            placeholder="Ej: Volumen controlado · 8 semanas"
+            placeholder="Ej: Volumen controlado"
             autocomplete="off"
             required
           >
         </div>
       </section>
 
-      <section class="entity-form__section entity-form__section--duration" aria-labelledby="program-create-duration-title">
-        <div class="entity-form__section-header">
-          <h3 id="program-create-duration-title">2. Define la duración</h3>
-        </div>
-
-        <div class="entity-form__field">
-          <label for="program-duration-weeks" class="entity-form__label entity-form__label--hidden">Número de semanas</label>
-          <input
-            id="program-duration-weeks"
-            class="input-create entity-form__input"
-            type="number"
-            name="duration_weeks"
-            min="1"
-            step="1"
-            value="4"
-            inputmode="numeric"
-            required
-          >
-          <p class="entity-form__help">1 semana equivale a 7 días. Luego podrás asignar planes diarios en la grilla semanal.</p>
-        </div>
-      </section>
 
       <div class="entity-form__actions">
         <a href="{% url 'program_list' %}" class="btn-cancel-create entity-form__cancel">Cancelar</a>

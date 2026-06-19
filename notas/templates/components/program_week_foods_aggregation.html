@@ -1,11 +1,13 @@
 {% if items %}
 <div
   class="card-detail-block main program-week-foods-aggregation"
-  data-default-desktop="#program-week-foods-table-{{ panel_id }}"
-  data-default-mobile="#program-week-foods-qty-{{ panel_id }}"
+  {% if not collapsed %}
+    data-default-desktop="#program-week-foods-table-{{ panel_id }}"
+    data-default-mobile="#program-week-foods-qty-{{ panel_id }}"
+  {% endif %}
 >
   <div class="card-detail-tabs card-detail-tabs--desktop block-desplegar-tabla block-card-desplegar">
-    <div class="btn-desplegar is-active" data-target="#program-week-foods-table-{{ panel_id }}">
+    <div class="btn-desplegar{% if not collapsed %} is-active{% endif %}" data-target="#program-week-foods-table-{{ panel_id }}">
       <p>Tabla Alimentos</p>
     </div>
   </div>
@@ -13,7 +15,7 @@
   <div class="card-detail-tabs-mobile">
     <button
       type="button"
-      class="btn-desplegar-mobile is-active"
+      class="btn-desplegar-mobile{% if not collapsed %} is-active{% endif %}"
       data-target="#program-week-foods-qty-{{ panel_id }}"
     >
       Alimentos
