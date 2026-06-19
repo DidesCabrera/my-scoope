@@ -195,16 +195,37 @@
 
   {% if not is_week_detail %}
     <div class="program-week-child-card__footer">
-      {% if can_edit and program.normalized_duration_weeks > 1 %}
-        <form method="post" action="{% url 'program_remove_week' program.id week.week_number %}" class="program-week-child-card__delete-form">
-          {% csrf_token %}
-          <button type="submit" class="program-week-child-card__delete-link" aria-label="Eliminar Semana {{ week.week_number }}">
-            <i data-lucide="trash-2" class="table-icon"></i>
+      {% if can_edit %}
+        <div class="overflow-menu card-overflow-menu program-week-child-card__menu">
+          <button class="overflow-btn" type="button" aria-label="Más acciones para Semana {{ week.week_number }}" title="Más acciones">
+            <i data-lucide="more-horizontal" class="more-horizontal-icon"></i>
           </button>
-        </form>
+
+          <div class="overflow-dropdown card-overflow-dropdown program-week-child-card__dropdown">
+            <form method="post" action="{% url 'program_duplicate_week' program.id week.week_number %}">
+              {% csrf_token %}
+              <button type="submit" class="overflow-action">
+                <i data-lucide="copy" class="overflow-dropdown-icons"></i>
+                <span>Duplicar semana</span>
+              </button>
+            </form>
+
+            {% if program.normalized_duration_weeks > 1 %}
+              <form method="post" action="{% url 'program_remove_week' program.id week.week_number %}">
+                {% csrf_token %}
+                <button type="submit" class="overflow-action program-week-child-card__danger-action">
+                  <i data-lucide="trash-2" class="overflow-dropdown-icons"></i>
+                  <span>Eliminar semana</span>
+                </button>
+              </form>
+            {% endif %}
+          </div>
+        </div>
       {% endif %}
-      <a class="program-week-child-card__detail-link" href="{% url 'program_week_detail' program.id week.week_number %}" aria-label="Ver detalle de Semana {{ week.week_number }}">
-        <i data-lucide="chevron-right" class="table-icon"></i>
+
+      <a class="action-icon-btn tooltip program-week-child-card__detail-link" href="{% url 'program_week_detail' program.id week.week_number %}" aria-label="Ver detalle de Semana {{ week.week_number }}" title="Ver detalle">
+        <i data-lucide="chevron-right" class="action-card-icon"></i>
+        <span class="tooltip-text">Ver detalle</span>
       </a>
     </div>
   {% endif %}

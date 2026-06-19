@@ -36,6 +36,19 @@ class ProgramWeekRemoveResult:
     removed_dailyplan_ids: tuple[int, ...] = ()
 
 
+@dataclass(frozen=True)
+class ProgramWeekDuplicateResult:
+    program: Program
+    source_week_number: int
+    new_week_number: int
+
+
+@dataclass(frozen=True)
+class ProgramWeekReorderResult:
+    program: Program
+    ordered_week_numbers: tuple[int, ...]
+
+
 def normalize_duration_weeks(raw_value) -> int:
     try:
         value = int(raw_value)
@@ -132,6 +145,81 @@ def add_week_to_program(*, program: Program) -> Program:
 
     program.save(update_fields=["duration_weeks", "is_draft"])
     return program
+
+
+@transaction.atomic
+def duplicate_week_in_program(*, program: Program, week_number, user) -> ProgramWeekDuplicateResult:
+    week, _ = validate_program_slot(
+        program=program,
+        week_number=week_number,
+        day_number=1,
+    )
+
+    source_slots = list(
+        ProgramDay.objects
+        .select_related("dailyplan")
+        .filter(program=program, week_number=week)
+        .order_by("day_number", "id")
+    )
+
+    shifted_slots = ProgramDay.objects.filter(program=program, week_number__gt=week)
+    shifted_slots.update(week_number=F("week_number") + 1000)
+    ProgramDay.objects.filter(program=program, week_number__gt=1000).update(
+        week_number=F("week_number") - 999
+    )
+
+    new_week_number = week + 1
+    for source_slot in source_slots:
+        if not source_slot.dailyplan_id:
+            continue
+
+        cloned_dailyplan = clone_dailyplan_for_program(source_slot.dailyplan, user)
+        ProgramDay.objects.create(
+            program=program,
+            dailyplan=cloned_dailyplan,
+            week_number=new_week_number,
+            day_number=source_slot.day_number,
+        )
+
+    program.duration_weeks = program.normalized_duration_weeks + 1
+    if program.is_draft and program.program_dailyplan.exists():
+        program.is_draft = False
+    program.save(update_fields=["duration_weeks", "is_draft"])
+
+    return ProgramWeekDuplicateResult(
+        program=program,
+        source_week_number=week,
+        new_week_number=new_week_number,
+    )
+
+
+@transaction.atomic
+def reorder_program_weeks(*, program: Program, ordered_week_numbers) -> ProgramWeekReorderResult:
+    try:
+        ordered = [int(value) for value in ordered_week_numbers]
+    except (TypeError, ValueError):
+        raise ValueError("program_week_order_invalid")
+
+    expected = list(range(1, program.normalized_duration_weeks + 1))
+    if sorted(ordered) != expected:
+        raise ValueError("program_week_order_invalid")
+
+    ProgramDay.objects.filter(program=program).update(week_number=F("week_number") + 1000)
+
+    for new_index, old_week_number in enumerate(ordered, start=1):
+        ProgramDay.objects.filter(
+            program=program,
+            week_number=old_week_number + 1000,
+        ).update(week_number=new_index)
+
+    if program.is_draft and program.program_dailyplan.exists():
+        program.is_draft = False
+        program.save(update_fields=["is_draft"])
+
+    return ProgramWeekReorderResult(
+        program=program,
+        ordered_week_numbers=tuple(ordered),
+    )
 
 
 @transaction.atomic

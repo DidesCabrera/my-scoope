@@ -22,9 +22,11 @@ from notas.application.services.commands.program_commands import (
     copy_program as copy_program_command,
     create_weekly_program,
     delete_program,
+    duplicate_week_in_program,
     fork_program as fork_program_command,
     remove_program_day,
     remove_week_from_program,
+    reorder_program_weeks,
 )
 from notas.application.services.commands.share_commands import create_program_share
 from notas.application.services.nutrition.food_aggregation import (
@@ -253,19 +255,33 @@ def _program_week_detail_actions(program, user, week_number):
         )
     ]
 
-    if program.created_by_id == user.id and program.normalized_duration_weeks > Program.MIN_DURATION_WEEKS:
+    if program.created_by_id == user.id:
         actions.append(
             _action(
-                key="remove_week",
-                label="Eliminar semana",
-                url=reverse("program_remove_week", args=[program.id, week_number]),
+                key="duplicate_week",
+                label="Duplicar semana",
+                url=reverse("program_duplicate_week", args=[program.id, week_number]),
                 method="post",
-                icon="trash-2",
+                icon="copy",
                 order=20,
                 desktop_position="inline",
                 mobile_position="menu",
             )
         )
+
+        if program.normalized_duration_weeks > Program.MIN_DURATION_WEEKS:
+            actions.append(
+                _action(
+                    key="remove_week",
+                    label="Eliminar semana",
+                    url=reverse("program_remove_week", args=[program.id, week_number]),
+                    method="post",
+                    icon="trash-2",
+                    order=30,
+                    desktop_position="inline",
+                    mobile_position="menu",
+                )
+            )
 
     return actions
 
@@ -1119,6 +1135,42 @@ def program_remove_week(request, pk, week_number):
     messages.success(request, f"Semana {removed_week_number} eliminada del programa.")
     next_week = min(removed_week_number, program.normalized_duration_weeks)
     return redirect(f"{reverse('program_detail', args=[program.pk])}#week-{next_week}")
+
+
+@login_required
+@require_POST
+def program_duplicate_week(request, pk, week_number):
+    program = get_object_or_404(Program, pk=pk, created_by=request.user)
+
+    try:
+        result = duplicate_week_in_program(
+            program=program,
+            week_number=week_number,
+            user=request.user,
+        )
+    except ValueError:
+        messages.error(request, "La semana seleccionada no es válida.")
+        return redirect("program_detail", pk=program.pk)
+
+    messages.success(request, f"Semana {result.source_week_number} duplicada.")
+    return redirect(f"{reverse('program_detail', args=[program.pk])}#week-{result.new_week_number}")
+
+
+@login_required
+@require_POST
+def program_reorder_weeks(request, pk):
+    program = get_object_or_404(Program, pk=pk, created_by=request.user)
+    ordered_weeks = request.POST.getlist("order[]")
+
+    if not ordered_weeks:
+        return HttpResponseBadRequest("No order received.")
+
+    try:
+        reorder_program_weeks(program=program, ordered_week_numbers=ordered_weeks)
+    except ValueError:
+        return HttpResponseBadRequest("Invalid week order.")
+
+    return HttpResponse(status=204)
 
 
 @login_required
