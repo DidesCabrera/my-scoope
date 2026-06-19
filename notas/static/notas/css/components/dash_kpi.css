@@ -213,3 +213,147 @@ padding: 0 4px;
   font-size: 30px;
 }
 }
+/* == KPI RANGE DASH ========================= */
+
+.dash-kpi-comp.dash-kpi-range {
+  min-width: 0;
+}
+
+.dash-kpi-range .dash-kpi-range__tot {
+  justify-content: center;
+}
+
+.dash-kpi-range .dash-kpi-range__tot h2 {
+  line-height: 1;
+}
+
+.dash-kpi-range__min {
+  line-height: 1;
+  opacity: 0.86;
+}
+
+.dash-kpi-range__row {
+  grid-template-columns: 60px minmax(74px, 92px) minmax(76px, 92px) 1fr;
+}
+
+.dash-kpi-range__ppk {
+  color: #111111;
+  white-space: nowrap;
+}
+
+.dash-kpi-range__grams {
+  color: var(--text-main);
+  font-variant-numeric: tabular-nums;
+  font-weight: 520;
+  white-space: nowrap;
+}
+
+.dash-kpi-range__alloc {
+  min-width: 0;
+}
+
+.dash-kpi-range__alloc-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  height: 24px;
+  padding: 0 0.45rem;
+  border-radius: 5px;
+  color: var(--text-inverted);
+  font-size: 0.82rem;
+  font-weight: 620;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.dash-kpi-range__alloc-pill--protein {
+  background: var(--nutrition-protein);
+}
+
+.dash-kpi-range__alloc-pill--carbs {
+  background: var(--nutrition-carbs);
+}
+
+.dash-kpi-range__alloc-pill--fat {
+  background: var(--nutrition-fat);
+}
+
+.dash-kpi-range--card .dash-kpi-range__row {
+  grid-template-columns: 58px minmax(74px, 88px) minmax(74px, 88px) minmax(82px, 1fr);
+}
+
+.dash-kpi-range--card .tot {
+  flex-basis: 88px;
+}
+
+.dash-kpi-range--card .tot h2 {
+  font-size: 1.65rem;
+}
+
+.dash-kpi-range--card .tot p {
+  font-size: 0.72rem;
+}
+
+.dash-kpi-range--card .kpi-label,
+.dash-kpi-range--card .dash-kpi-range__grams,
+.dash-kpi-range--card .dash-kpi-range__ppk,
+.dash-kpi-range--card .dash-kpi-range__alloc-pill {
+  font-size: 0.78rem;
+}
+
+@media (max-width: 768px) {
+  .dash-kpi-range__row,
+  .dash-kpi-range--card .dash-kpi-range__row {
+    grid-template-columns: 56px minmax(70px, 84px) minmax(70px, 84px) minmax(78px, 1fr);
+  }
+
+  .dash-kpi-range--card .tot {
+    flex-basis: 82px;
+  }
+}
+
+/* Program KPI range alloc bars ========================= */
+.dash-kpi-range__alloc-bar {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr);
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  height: 24px;
+}
+
+.dash-kpi-range__alloc-bar .alloc-pct {
+  width: auto;
+  min-width: 0;
+  padding: 0 4px;
+  font-size: 0.76rem;
+  font-weight: 620;
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-kpi-range__alloc-bar .alloc-pct p {
+  margin: 0;
+  line-height: 1;
+}
+
+.dash-kpi-range__alloc-bar .alloc-bar-comp {
+  height: 24px;
+}
+
+.dash-kpi-range--card .dash-kpi-range__alloc-bar {
+  grid-template-columns: 58px minmax(0, 1fr);
+}
+
+.dash-kpi-range--card .dash-kpi-range__alloc-bar .alloc-pct {
+  font-size: 0.68rem;
+}
+
+@media (max-width: 768px) {
+  .dash-kpi-range__alloc-bar,
+  .dash-kpi-range--card .dash-kpi-range__alloc-bar {
+    grid-template-columns: 58px minmax(0, 1fr);
+  }
+}

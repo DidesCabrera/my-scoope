@@ -1,0 +1,85 @@
+<div class="dash-kpi-comp dash-kpi-range {{ modifier }}">
+
+  <!-- TOTAL CAL RANGE -->
+  <div class="tot dash-kpi-range__tot">
+    <p>Calories</p>
+    <h2>{{ ranges.tot_kcal.max }}</h2>
+    <p class="dash-kpi-range__min">{{ ranges.tot_kcal.min }}</p>
+  </div>
+
+  <!-- MACRO RANGES -->
+  <div class="macros dash-kpi-range__macros">
+
+    <!-- Protein -->
+    <div class="kpi-row dash-kpi-range__row">
+      <div class="kpi-label">Protein</div>
+
+      <div class="kpi-ppk dash-kpi-range__ppk">
+        <span class="proteins_per_kilo">{{ ranges.ppk.label }}</span>
+      </div>
+
+      <div class="kpi-grams dash-kpi-range__grams dash-kpi-range__grams--protein">
+        {{ ranges.protein.label }}
+      </div>
+
+      <div class="kpi-alloc dash-kpi-range__alloc">
+        <div class="dash-kpi-range__alloc-bar">
+          <div class="alloc-pct alloc-bar-fill--protein">
+            <p>{{ ranges.alloc_protein.label }}</p>
+          </div>
+          <div class="alloc-bar-comp" style="--alloc: {{ ranges.alloc_protein.bar_value|default:0 }};">
+            <div class="alloc-bar-bg"></div>
+            <div class="alloc-bar-fill alloc-bar-fill--protein"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Carbs -->
+    <div class="kpi-row dash-kpi-range__row">
+      <div class="kpi-label">Carbs</div>
+
+      <div></div>
+
+      <div class="kpi-grams dash-kpi-range__grams dash-kpi-range__grams--carbs">
+        {{ ranges.carbs.label }}
+      </div>
+
+      <div class="kpi-alloc dash-kpi-range__alloc">
+        <div class="dash-kpi-range__alloc-bar">
+          <div class="alloc-pct alloc-bar-fill--carbs">
+            <p>{{ ranges.alloc_carbs.label }}</p>
+          </div>
+          <div class="alloc-bar-comp" style="--alloc: {{ ranges.alloc_carbs.bar_value|default:0 }};">
+            <div class="alloc-bar-bg"></div>
+            <div class="alloc-bar-fill alloc-bar-fill--carbs"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fat -->
+    <div class="kpi-row dash-kpi-range__row">
+      <div class="kpi-label">Fat</div>
+
+      <div></div>
+
+      <div class="kpi-grams dash-kpi-range__grams dash-kpi-range__grams--fat">
+        {{ ranges.fat.label }}
+      </div>
+
+      <div class="kpi-alloc dash-kpi-range__alloc">
+        <div class="dash-kpi-range__alloc-bar">
+          <div class="alloc-pct alloc-bar-fill--fat">
+            <p>{{ ranges.alloc_fat.label }}</p>
+          </div>
+          <div class="alloc-bar-comp" style="--alloc: {{ ranges.alloc_fat.bar_value|default:0 }};">
+            <div class="alloc-bar-bg"></div>
+            <div class="alloc-bar-fill alloc-bar-fill--fat"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

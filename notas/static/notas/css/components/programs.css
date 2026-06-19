@@ -739,15 +739,6 @@
   min-width: 0;
 }
 
-.program-chart-panel__eyebrow {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 0.68rem;
-  font-weight: 850;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
 .program-chart-week-axis {
   color: var(--text-muted);
 }
@@ -1420,14 +1411,6 @@
 
 .program-chart-panel__header span {
   display: none;
-}
-
-.program-chart-range-label {
-  margin: 0 0 0.35rem;
-  color: var(--text-muted);
-  font-size: 0.66rem;
-  font-weight: 650;
-  letter-spacing: 0.02em;
 }
 
 .program-chart-layout {
@@ -2179,5 +2162,96 @@
   .program-week-child-card__dropdown {
     right: 0;
     left: auto;
+  }
+}
+
+/* == Program KPI range dash ========================= */
+
+.program-card__main {
+  align-items: flex-start;
+}
+
+.program-card__kpi-range {
+  flex: 0 1 0px;
+  min-width: min(100%, 440px);
+  max-width: 620px;
+}
+
+.program-main-kpi-range {
+  margin: 0 0 1rem;
+  width: min(100%, 720px);
+}
+
+@media (max-width: 980px) {
+  .program-card__main {
+    flex-direction: column;
+  }
+
+  .program-card__kpi-range,
+  .program-main-kpi-range {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+}
+
+/* Program chart compact refinements ======================= */
+.program-chart-panel {
+  gap: 0.55rem;
+}
+
+.program-chart-panel__header {
+  display: none !important;
+}
+
+.program-chart-main-axis {
+  --program-chart-days: 7;
+  --program-chart-weeks: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+
+.program-chart-plot {
+  grid-template-columns: repeat(var(--program-chart-days), minmax(12px, 1fr));
+  gap: 2px;
+  min-width: max(100%, calc(var(--program-chart-days) * 14px));
+  padding-inline: 0.35rem;
+}
+
+.program-chart-week-axis {
+  min-width: max(100%, calc(var(--program-chart-days) * 14px));
+}
+
+.program-chart-bar,
+.program-chart-stacked-bar,
+.program-chart-panel--card .program-chart-bar,
+.program-chart-panel--card .program-chart-stacked-bar {
+  width: 80%;
+  max-width: none;
+}
+
+.program-chart-bar-slot {
+  padding-inline: 0;
+}
+
+.program-chart-guide {
+  left: 0.35rem;
+  right: 0.35rem;
+  background: color-mix(in srgb, var(--border-default) 42%, transparent);
+}
+
+@media (max-width: 780px) {
+  .page--program-detail .program-main-kpi-range {
+    margin-bottom: 0.25rem;
+  }
+
+  .page--program-detail .program-main-kpi-range + h2 {
+    margin-top: 0.35rem;
+    margin-bottom: 0.45rem;
+  }
+
+  .program-chart-panel--detail {
+    margin-top: 0;
   }
 }

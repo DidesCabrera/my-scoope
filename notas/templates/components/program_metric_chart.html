@@ -1,11 +1,5 @@
 {% if chart and chart.metrics %}
 <section class="program-chart-panel card-detail-block {{ modifier }} js-program-chart" aria-label="{{ chart.title }}">
-  <header class="program-chart-panel__header">
-    <div class="program-chart-panel__heading">
-      <p class="program-chart-panel__eyebrow">Gráfico diario</p>
-    </div>
-  </header>
-
   <div class="program-chart-tabs" role="tablist" aria-label="Variable del gráfico">
     {% for metric in chart.metrics %}
       <button
@@ -27,10 +21,11 @@
         data-metric="{{ metric.key }}"
         {% if not metric.is_active %}hidden{% endif %}
       >
-        <p class="program-chart-range-label">{{ metric.range_label }}</p>
-
         <div class="program-chart-layout">
-          <div class="program-chart-main-axis">
+          <div
+            class="program-chart-main-axis"
+            style="--program-chart-days: {{ chart.days_count|default:1 }}; --program-chart-weeks: {{ chart.weeks_count|default:1 }};"
+          >
             <div
               class="program-chart-plot program-chart-plot--{{ metric.kind }} program-chart-plot--{{ metric.key }}"
               style="--program-chart-days: {{ chart.days_count|default:1 }};"

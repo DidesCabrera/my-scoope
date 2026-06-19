@@ -33,6 +33,10 @@
     </div>
   </section>
 
+  <section class="card-kpi program-main-kpi-range">
+    {% include "components/dash_kpi_range.html" with ranges=vm.content.program_kpi_ranges modifier="dash-kpi-range--main" %}
+  </section>
+
   <h2>Gráfico diario por Indicador</h2>
   {% include "components/program_metric_chart.html" with chart=vm.content.program_chart modifier="program-chart-panel--detail" %}
   

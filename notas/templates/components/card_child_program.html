@@ -31,6 +31,9 @@
       </div>
     </div>
 
+    <div class="card-kpi program-card__kpi-range">
+      {% include "components/dash_kpi_range.html" with ranges=child_card.kpi_ranges modifier="dash-kpi-range--card" %}
+    </div>
   </div>
 
   {% include "components/program_metric_chart.html" with chart=child_card.chart modifier="program-chart-panel--card" %}

@@ -629,6 +629,90 @@ def _format_chart_number(value, decimals=0):
     return f"{value:.0f}"
 
 
+
+
+def _range_values(values):
+    values = [float(value or 0) for value in values if value is not None]
+    if not values:
+        return 0, 0
+    return min(values), max(values)
+
+
+def _format_range_value(value, decimals=0):
+    value = float(value or 0)
+    if decimals:
+        return f"{value:.{decimals}f}"
+    return f"{value:.0f}"
+
+
+def _format_range_label(min_value, max_value, *, unit="", decimals=0, suffix=""):
+    min_label = _format_range_value(min_value, decimals)
+    max_label = _format_range_value(max_value, decimals)
+    return f"{min_label}-{max_label}{unit}{suffix}"
+
+
+def build_program_kpi_ranges(weeks, current_weight=None):
+    """Build min/max KPI values across assigned daily plans in a program."""
+    snapshots = [
+        day["snapshot"]
+        for week in weeks
+        for day in week["days"]
+        if day.get("snapshot")
+    ]
+
+    kcal_min, kcal_max = _range_values(snapshot["total_kcal"] for snapshot in snapshots)
+    protein_min, protein_max = _range_values(snapshot["protein"] for snapshot in snapshots)
+    carbs_min, carbs_max = _range_values(snapshot["carbs"] for snapshot in snapshots)
+    fat_min, fat_max = _range_values(snapshot["fat"] for snapshot in snapshots)
+
+    if current_weight:
+        ppk_values = [snapshot["protein"] / current_weight for snapshot in snapshots]
+    else:
+        ppk_values = []
+    ppk_min, ppk_max = _range_values(ppk_values)
+
+    alloc_protein_min, alloc_protein_max = _range_values(
+        snapshot["alloc"].get("protein", 0) for snapshot in snapshots
+    )
+    alloc_carbs_min, alloc_carbs_max = _range_values(
+        snapshot["alloc"].get("carbs", 0) for snapshot in snapshots
+    )
+    alloc_fat_min, alloc_fat_max = _range_values(
+        snapshot["alloc"].get("fat", 0) for snapshot in snapshots
+    )
+
+    return {
+        "tot_kcal": {
+            "min": _format_range_value(kcal_min),
+            "max": _format_range_value(kcal_max),
+        },
+        "ppk": {
+            "label": _format_range_label(ppk_min, ppk_max, unit="g/kg", decimals=1),
+        },
+        "protein": {
+            "label": _format_range_label(protein_min, protein_max, unit="g"),
+        },
+        "carbs": {
+            "label": _format_range_label(carbs_min, carbs_max, unit="g"),
+        },
+        "fat": {
+            "label": _format_range_label(fat_min, fat_max, unit="g"),
+        },
+        "alloc_protein": {
+            "label": _format_range_label(alloc_protein_min, alloc_protein_max, unit="%"),
+            "bar_value": alloc_protein_max,
+        },
+        "alloc_carbs": {
+            "label": _format_range_label(alloc_carbs_min, alloc_carbs_max, unit="%"),
+            "bar_value": alloc_carbs_max,
+        },
+        "alloc_fat": {
+            "label": _format_range_label(alloc_fat_min, alloc_fat_max, unit="%"),
+            "bar_value": alloc_fat_max,
+        },
+    }
+
+
 def _program_chart_axis_ticks(max_value, unit, decimals=0):
     max_value = max(float(max_value or 0), 1)
     ticks = (max_value, max_value / 2, 0)
@@ -840,6 +924,7 @@ def build_program_child_card(program, user, current_weight=None):
         "primary_week": primary_week,
         "weeks": grid_data["weeks"],
         "chart": build_program_metric_chart(grid_data["weeks"], current_weight=current_weight),
+        "kpi_ranges": build_program_kpi_ranges(grid_data["weeks"], current_weight=current_weight),
         "owner": owner_label,
         "metadata": {
             "owner": owner_label,
@@ -1022,6 +1107,10 @@ def program_detail(request, pk):
         "program_foods_count": grid_data["program_foods_count"],
         "program_foods_aggregation_table": grid_data["program_foods_aggregation_table"],
         "program_chart": build_program_metric_chart(
+            grid_data["weeks"],
+            current_weight=current_weight,
+        ),
+        "program_kpi_ranges": build_program_kpi_ranges(
             grid_data["weeks"],
             current_weight=current_weight,
         ),

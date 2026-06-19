@@ -1,0 +1,272 @@
+diff --git a/notas/interface/views/programs.py b/notas/interface/views/programs.py
+index 3825fc8..24d4cf6 100644
+--- a/notas/interface/views/programs.py
++++ b/notas/interface/views/programs.py
+@@ -687,7 +687,7 @@ def build_program_kpi_ranges(weeks, current_weight=None):
+             "max": _format_range_value(kcal_max),
+         },
+         "ppk": {
+-            "label": _format_range_label(ppk_min, ppk_max, unit="g/ppk", decimals=1),
++            "label": _format_range_label(ppk_min, ppk_max, unit="g/kg", decimals=1),
+         },
+         "protein": {
+             "label": _format_range_label(protein_min, protein_max, unit="g"),
+@@ -700,12 +700,15 @@ def build_program_kpi_ranges(weeks, current_weight=None):
+         },
+         "alloc_protein": {
+             "label": _format_range_label(alloc_protein_min, alloc_protein_max, unit="%"),
++            "bar_value": alloc_protein_max,
+         },
+         "alloc_carbs": {
+             "label": _format_range_label(alloc_carbs_min, alloc_carbs_max, unit="%"),
++            "bar_value": alloc_carbs_max,
+         },
+         "alloc_fat": {
+             "label": _format_range_label(alloc_fat_min, alloc_fat_max, unit="%"),
++            "bar_value": alloc_fat_max,
+         },
+     }
+ 
+diff --git a/notas/static/notas/css/components/dash_kpi.css b/notas/static/notas/css/components/dash_kpi.css
+index 5f85c74..595841b 100644
+--- a/notas/static/notas/css/components/dash_kpi.css
++++ b/notas/static/notas/css/components/dash_kpi.css
+@@ -314,3 +314,46 @@ padding: 0 4px;
+     flex-basis: 82px;
+   }
+ }
++
++/* Program KPI range alloc bars ========================= */
++.dash-kpi-range__alloc-bar {
++  display: grid;
++  grid-template-columns: 62px minmax(0, 1fr);
++  align-items: stretch;
++  width: 100%;
++  min-width: 0;
++  height: 24px;
++}
++
++.dash-kpi-range__alloc-bar .alloc-pct {
++  width: auto;
++  min-width: 0;
++  padding: 0 4px;
++  font-size: 0.76rem;
++  font-weight: 620;
++  font-variant-numeric: tabular-nums;
++}
++
++.dash-kpi-range__alloc-bar .alloc-pct p {
++  margin: 0;
++  line-height: 1;
++}
++
++.dash-kpi-range__alloc-bar .alloc-bar-comp {
++  height: 24px;
++}
++
++.dash-kpi-range--card .dash-kpi-range__alloc-bar {
++  grid-template-columns: 58px minmax(0, 1fr);
++}
++
++.dash-kpi-range--card .dash-kpi-range__alloc-bar .alloc-pct {
++  font-size: 0.68rem;
++}
++
++@media (max-width: 768px) {
++  .dash-kpi-range__alloc-bar,
++  .dash-kpi-range--card .dash-kpi-range__alloc-bar {
++    grid-template-columns: 58px minmax(0, 1fr);
++  }
++}
+diff --git a/notas/static/notas/css/components/programs.css b/notas/static/notas/css/components/programs.css
+index 59bac43..dc2fa72 100644
+--- a/notas/static/notas/css/components/programs.css
++++ b/notas/static/notas/css/components/programs.css
+@@ -739,15 +739,6 @@
+   min-width: 0;
+ }
+ 
+-.program-chart-panel__eyebrow {
+-  margin: 0;
+-  color: var(--text-muted);
+-  font-size: 0.68rem;
+-  font-weight: 850;
+-  letter-spacing: 0.08em;
+-  text-transform: uppercase;
+-}
+-
+ .program-chart-week-axis {
+   color: var(--text-muted);
+ }
+@@ -1422,14 +1413,6 @@
+   display: none;
+ }
+ 
+-.program-chart-range-label {
+-  margin: 0 0 0.35rem;
+-  color: var(--text-muted);
+-  font-size: 0.66rem;
+-  font-weight: 650;
+-  letter-spacing: 0.02em;
+-}
+-
+ .program-chart-layout {
+   display: block;
+ }
+@@ -2211,3 +2194,64 @@
+     min-width: 0;
+   }
+ }
++
++/* Program chart compact refinements ======================= */
++.program-chart-panel {
++  gap: 0.55rem;
++}
++
++.program-chart-panel__header {
++  display: none !important;
++}
++
++.program-chart-main-axis {
++  --program-chart-days: 7;
++  --program-chart-weeks: 1;
++  overflow-x: auto;
++  overflow-y: hidden;
++  scrollbar-width: thin;
++}
++
++.program-chart-plot {
++  grid-template-columns: repeat(var(--program-chart-days), minmax(12px, 1fr));
++  gap: 2px;
++  min-width: max(100%, calc(var(--program-chart-days) * 14px));
++  padding-inline: 0.35rem;
++}
++
++.program-chart-week-axis {
++  min-width: max(100%, calc(var(--program-chart-days) * 14px));
++}
++
++.program-chart-bar,
++.program-chart-stacked-bar,
++.program-chart-panel--card .program-chart-bar,
++.program-chart-panel--card .program-chart-stacked-bar {
++  width: 80%;
++  max-width: none;
++}
++
++.program-chart-bar-slot {
++  padding-inline: 0;
++}
++
++.program-chart-guide {
++  left: 0.35rem;
++  right: 0.35rem;
++  background: color-mix(in srgb, var(--border-default) 42%, transparent);
++}
++
++@media (max-width: 780px) {
++  .page--program-detail .program-main-kpi-range {
++    margin-bottom: 0.25rem;
++  }
++
++  .page--program-detail .program-main-kpi-range + h2 {
++    margin-top: 0.35rem;
++    margin-bottom: 0.45rem;
++  }
++
++  .program-chart-panel--detail {
++    margin-top: 0;
++  }
++}
+diff --git a/notas/templates/components/dash_kpi_range.html b/notas/templates/components/dash_kpi_range.html
+index 1e3f95d..433aabb 100644
+--- a/notas/templates/components/dash_kpi_range.html
++++ b/notas/templates/components/dash_kpi_range.html
+@@ -23,9 +23,15 @@
+       </div>
+ 
+       <div class="kpi-alloc dash-kpi-range__alloc">
+-        <span class="dash-kpi-range__alloc-pill dash-kpi-range__alloc-pill--protein">
+-          {{ ranges.alloc_protein.label }}
+-        </span>
++        <div class="dash-kpi-range__alloc-bar">
++          <div class="alloc-pct alloc-bar-fill--protein">
++            <p>{{ ranges.alloc_protein.label }}</p>
++          </div>
++          <div class="alloc-bar-comp" style="--alloc: {{ ranges.alloc_protein.bar_value|default:0 }};">
++            <div class="alloc-bar-bg"></div>
++            <div class="alloc-bar-fill alloc-bar-fill--protein"></div>
++          </div>
++        </div>
+       </div>
+     </div>
+ 
+@@ -40,9 +46,15 @@
+       </div>
+ 
+       <div class="kpi-alloc dash-kpi-range__alloc">
+-        <span class="dash-kpi-range__alloc-pill dash-kpi-range__alloc-pill--carbs">
+-          {{ ranges.alloc_carbs.label }}
+-        </span>
++        <div class="dash-kpi-range__alloc-bar">
++          <div class="alloc-pct alloc-bar-fill--carbs">
++            <p>{{ ranges.alloc_carbs.label }}</p>
++          </div>
++          <div class="alloc-bar-comp" style="--alloc: {{ ranges.alloc_carbs.bar_value|default:0 }};">
++            <div class="alloc-bar-bg"></div>
++            <div class="alloc-bar-fill alloc-bar-fill--carbs"></div>
++          </div>
++        </div>
+       </div>
+     </div>
+ 
+@@ -57,9 +69,15 @@
+       </div>
+ 
+       <div class="kpi-alloc dash-kpi-range__alloc">
+-        <span class="dash-kpi-range__alloc-pill dash-kpi-range__alloc-pill--fat">
+-          {{ ranges.alloc_fat.label }}
+-        </span>
++        <div class="dash-kpi-range__alloc-bar">
++          <div class="alloc-pct alloc-bar-fill--fat">
++            <p>{{ ranges.alloc_fat.label }}</p>
++          </div>
++          <div class="alloc-bar-comp" style="--alloc: {{ ranges.alloc_fat.bar_value|default:0 }};">
++            <div class="alloc-bar-bg"></div>
++            <div class="alloc-bar-fill alloc-bar-fill--fat"></div>
++          </div>
++        </div>
+       </div>
+     </div>
+ 
+diff --git a/notas/templates/components/program_metric_chart.html b/notas/templates/components/program_metric_chart.html
+index 085ad11..ac53b23 100644
+--- a/notas/templates/components/program_metric_chart.html
++++ b/notas/templates/components/program_metric_chart.html
+@@ -1,11 +1,5 @@
+ {% if chart and chart.metrics %}
+ <section class="program-chart-panel card-detail-block {{ modifier }} js-program-chart" aria-label="{{ chart.title }}">
+-  <header class="program-chart-panel__header">
+-    <div class="program-chart-panel__heading">
+-      <p class="program-chart-panel__eyebrow">Gráfico diario</p>
+-    </div>
+-  </header>
+-
+   <div class="program-chart-tabs" role="tablist" aria-label="Variable del gráfico">
+     {% for metric in chart.metrics %}
+       <button
+@@ -27,10 +21,11 @@
+         data-metric="{{ metric.key }}"
+         {% if not metric.is_active %}hidden{% endif %}
+       >
+-        <p class="program-chart-range-label">{{ metric.range_label }}</p>
+-
+         <div class="program-chart-layout">
+-          <div class="program-chart-main-axis">
++          <div
++            class="program-chart-main-axis"
++            style="--program-chart-days: {{ chart.days_count|default:1 }}; --program-chart-weeks: {{ chart.weeks_count|default:1 }};"
++          >
+             <div
+               class="program-chart-plot program-chart-plot--{{ metric.kind }} program-chart-plot--{{ metric.key }}"
+               style="--program-chart-days: {{ chart.days_count|default:1 }};"
