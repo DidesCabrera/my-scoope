@@ -1,7 +1,7 @@
 {% if weeks %}
 <div
   class="card-detail-block program-card-panels"
-  data-default-mobile="#card-grid-program-macros-mobile-{{ panel_id }}"
+  {% if default_mobile %}data-default-mobile="#card-grid-program-macros-mobile-{{ panel_id }}"{% endif %}
   {% if default_desktop %}data-default-desktop="#card-grid-program-weeks-desktop-{{ panel_id }}"{% endif %}
 >
   <div class="card-detail-tabs card-detail-tabs--desktop block-desplegar-tabla block-card-desplegar program-card-panels__desktop-tabs">

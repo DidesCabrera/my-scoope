@@ -120,6 +120,50 @@ def _empty_totals():
     }
 
 
+def _chart_day_value(point, field):
+    if field == "total_kcal":
+        return point.get("total_kcal", 0)
+    if field == "protein":
+        return point.get("protein", 0)
+    if field == "carbs":
+        return point.get("carbs", 0)
+    if field == "fat":
+        return point.get("fat", 0)
+    if field == "ppk":
+        return point.get("ppk", 0)
+    return 0
+
+
+def _chart_metric_range(values, unit, decimals=0):
+    if not values:
+        return _program_chart_range_label(0, 0, unit, decimals)
+    return _program_chart_range_label(min(values), max(values), unit, decimals)
+
+
+def _chart_bar_payload(point, *, value=None, decimals=0, unit="", title_value=None, segments=None, stack_total=None):
+    raw_value = float(value or 0)
+    visible_label = _format_chart_number(raw_value, decimals)
+    title_value = title_value if title_value is not None else f"{visible_label} {unit}".strip()
+    payload = {
+        "weekNumber": point["week_number"],
+        "dayNumber": point["day_number"],
+        "dayLabel": point["day_label"],
+        "xLabel": point["x_label"],
+        "mobileLabel": point.get("mobile_label") or point["day_label"][:1],
+        "isWeekStart": point["is_week_start"],
+        "isEmpty": point["is_empty"],
+        "dailyplanName": point["dailyplan_name"],
+        "value": raw_value,
+        "valueLabel": visible_label,
+        "unit": unit,
+        "title": f"Semana {point['week_number']} · {point['day_label']} · {point['dailyplan_name']} · {title_value}".strip(),
+    }
+    if segments is not None:
+        payload["segments"] = segments
+        payload["stackTotal"] = float(stack_total if stack_total is not None else raw_value)
+    return payload
+
+
 def build_program_metric_chart(
     weeks,
     current_weight=None,
@@ -127,6 +171,13 @@ def build_program_metric_chart(
     subtitle="Eje X agrupado por semanas, con cortes visuales entre bloques de 7 días.",
     axis_mode="weeks",
 ):
+    """Build a normalized JSON contract for the custom Program chart component.
+
+    The template only mounts the component. The JS renderer owns tabs, bars,
+    stacked segments, labels and responsive axis behavior. Keeping this contract
+    stable lets program/week charts share one engine without adding a charting
+    dependency.
+    """
     day_points = []
     day_index = 0
 
@@ -141,13 +192,15 @@ def build_program_metric_chart(
             ppk = (protein / current_weight) if (current_weight and protein) else 0
             alloc = snapshot.get("alloc") or {"protein": 0, "carbs": 0, "fat": 0}
             dailyplan = day.get("dailyplan") or {}
+            day_label = FULL_DAY_LABELS.get(day["day_number"], day.get("day_label") or "")
 
             day_points.append({
                 "day_index": day_index,
                 "x_label": f"w{week['week_number']}",
                 "week_number": week["week_number"],
                 "day_number": day["day_number"],
-                "day_label": day["day_label"],
+                "day_label": day_label,
+                "mobile_label": (day.get("day_label") or day_label or "")[:1],
                 "is_week_start": day_index > 1 and day["day_number"] == 1,
                 "is_empty": not day.get("program_day"),
                 "dailyplan_name": dailyplan.get("name") or "Sin plan diario",
@@ -164,7 +217,7 @@ def build_program_metric_chart(
                 "alloc_fat": alloc.get("fat", 0),
             })
 
-    simple_metrics = [
+    simple_specs = [
         {"key": "calories", "label": "Calorías", "unit": "kcal", "field": "total_kcal", "decimals": 0},
         {"key": "ppk", "label": "PPK", "unit": "g/kg", "field": "ppk", "decimals": 2},
         {"key": "protein", "label": "Proteínas", "unit": "g", "field": "protein", "decimals": 0},
@@ -173,119 +226,95 @@ def build_program_metric_chart(
     ]
 
     metrics = []
-    for index, spec in enumerate(simple_metrics):
-        values = [point[spec["field"]] for point in day_points]
-        min_value = min(values, default=0)
-        max_metric_value = max(values, default=0)
-        max_value = max_metric_value or 1
-        bars = []
-        for point in day_points:
-            value = point[spec["field"]]
-            value_label = _format_chart_number(value, spec["decimals"])
-            bars.append({
-                "x_label": point["x_label"],
-                "week_number": point["week_number"],
-                "day_number": point["day_number"],
-                "day_label": point["day_label"],
-                "is_week_start": point["is_week_start"],
-                "is_empty": point["is_empty"],
-                "height_percent": _program_chart_bar_height(value, max_value),
-                "value_label": value_label,
-                "title": f"Semana {point['week_number']} · {point['day_label']} · {point['dailyplan_name']} · {value_label} {spec['unit']}",
-            })
-
+    for index, spec in enumerate(simple_specs):
+        values = [_chart_day_value(point, spec["field"]) for point in day_points]
         metrics.append({
             "key": spec["key"],
             "label": spec["label"],
             "unit": spec["unit"],
             "kind": "bar",
-            "is_active": index == 0,
-            "bars": bars,
-            "range_label": _program_chart_range_label(min_value, max_metric_value, spec["unit"], spec["decimals"]),
+            "decimals": spec["decimals"],
+            "isActive": index == 0,
+            "rangeLabel": _chart_metric_range(values, spec["unit"], spec["decimals"]),
+            "bars": [
+                _chart_bar_payload(
+                    point,
+                    value=_chart_day_value(point, spec["field"]),
+                    decimals=spec["decimals"],
+                    unit=spec["unit"],
+                )
+                for point in day_points
+            ],
         })
 
     alloc_bars = []
     for point in day_points:
-        total_alloc = point["alloc_protein"] + point["alloc_carbs"] + point["alloc_fat"]
-        alloc_label = (
-            f"P {_format_chart_number(point['alloc_protein'])}% · "
-            f"C {_format_chart_number(point['alloc_carbs'])}% · "
-            f"F {_format_chart_number(point['alloc_fat'])}%"
-        )
-        alloc_bars.append({
-            "x_label": point["x_label"],
-            "week_number": point["week_number"],
-            "day_number": point["day_number"],
-            "day_label": point["day_label"],
-            "is_week_start": point["is_week_start"],
-            "is_empty": point["is_empty"],
-            "height_percent": 100 if total_alloc else 0,
-            "value_label": alloc_label,
-            "title": f"Semana {point['week_number']} · {point['day_label']} · {point['dailyplan_name']} · {alloc_label}",
-            "segments": [
-                {"key": "protein", "label": "P%", "height_percent": point["alloc_protein"], "value_label": _format_chart_number(point["alloc_protein"])},
-                {"key": "carbs", "label": "C%", "height_percent": point["alloc_carbs"], "value_label": _format_chart_number(point["alloc_carbs"])},
-                {"key": "fat", "label": "F%", "height_percent": point["alloc_fat"], "value_label": _format_chart_number(point["alloc_fat"])},
-            ],
-        })
+        alloc_segments = [
+            {"key": "protein", "label": "P%", "value": float(point["alloc_protein"] or 0), "valueLabel": _format_chart_number(point["alloc_protein"])},
+            {"key": "carbs", "label": "C%", "value": float(point["alloc_carbs"] or 0), "valueLabel": _format_chart_number(point["alloc_carbs"])},
+            {"key": "fat", "label": "F%", "value": float(point["alloc_fat"] or 0), "valueLabel": _format_chart_number(point["alloc_fat"])},
+        ]
+        alloc_label = " · ".join(f"{segment['label']} {segment['valueLabel']}" for segment in alloc_segments)
+        alloc_bars.append(_chart_bar_payload(
+            point,
+            value=100 if any(segment["value"] for segment in alloc_segments) else 0,
+            unit="%",
+            title_value=alloc_label,
+            segments=alloc_segments,
+            stack_total=100,
+        ))
 
-    alloc_cal_max = max((point["total_kcal"] for point in day_points), default=0) or 1
-    alloc_cal_bars = []
-    for point in day_points:
-        total_kcal = point["total_kcal"] or 0
-        alloc_cal_label = _format_chart_number(total_kcal)
-        alloc_cal_bars.append({
-            "x_label": point["x_label"],
-            "week_number": point["week_number"],
-            "day_number": point["day_number"],
-            "day_label": point["day_label"],
-            "is_week_start": point["is_week_start"],
-            "is_empty": point["is_empty"],
-            "height_percent": _program_chart_bar_height(total_kcal, alloc_cal_max),
-            "value_label": alloc_cal_label,
-            "title": (
-                f"Semana {point['week_number']} · {point['day_label']} · {point['dailyplan_name']} · "
-                f"P {_format_chart_number(point['kcal_protein'])} kcal · "
-                f"C {_format_chart_number(point['kcal_carbs'])} kcal · "
-                f"F {_format_chart_number(point['kcal_fat'])} kcal"
-            ),
-            "segments": [
-                {"key": "protein", "label": "P kcal", "height_percent": _safe_percentage(point["kcal_protein"], total_kcal), "value_label": _format_chart_number(point["kcal_protein"])},
-                {"key": "carbs", "label": "C kcal", "height_percent": _safe_percentage(point["kcal_carbs"], total_kcal), "value_label": _format_chart_number(point["kcal_carbs"])},
-                {"key": "fat", "label": "F kcal", "height_percent": _safe_percentage(point["kcal_fat"], total_kcal), "value_label": _format_chart_number(point["kcal_fat"])},
-            ],
-        })
-
-    metrics.insert(5, {
+    metrics.append({
         "key": "alloc",
         "label": "Alloc",
         "unit": "%",
         "kind": "stacked",
-        "is_active": False,
-        "bars": alloc_bars,
-        "range_label": "Min: 0% - Max: 100%",
-        "legend_label": "Leyenda de alloc",
-        "legend_items": [
+        "decimals": 0,
+        "isActive": False,
+        "rangeLabel": "Min: 0% - Max: 100%",
+        "legendLabel": "Leyenda de alloc",
+        "legendItems": [
             {"key": "protein", "label": "P%"},
             {"key": "carbs", "label": "C%"},
             {"key": "fat", "label": "F%"},
         ],
+        "bars": alloc_bars,
     })
 
-    metrics.insert(6, {
+    alloc_cal_values = [point["total_kcal"] for point in day_points]
+    alloc_cal_bars = []
+    for point in day_points:
+        total_kcal = float(point["total_kcal"] or 0)
+        segments = [
+            {"key": "protein", "label": "P kcal", "value": float(point["kcal_protein"] or 0), "valueLabel": _format_chart_number(point["kcal_protein"])},
+            {"key": "carbs", "label": "C kcal", "value": float(point["kcal_carbs"] or 0), "valueLabel": _format_chart_number(point["kcal_carbs"])},
+            {"key": "fat", "label": "F kcal", "value": float(point["kcal_fat"] or 0), "valueLabel": _format_chart_number(point["kcal_fat"])},
+        ]
+        title_value = " · ".join(f"{segment['label']} {segment['valueLabel']}" for segment in segments)
+        alloc_cal_bars.append(_chart_bar_payload(
+            point,
+            value=total_kcal,
+            unit="kcal",
+            title_value=title_value,
+            segments=segments,
+            stack_total=total_kcal,
+        ))
+
+    metrics.append({
         "key": "alloc-cal",
         "label": "Alloc cal",
         "unit": "kcal",
         "kind": "stacked",
-        "is_active": False,
-        "bars": alloc_cal_bars,
-        "range_label": _program_chart_range_label(0, alloc_cal_max, "kcal"),
-        "legend_label": "Leyenda de calorías por macro",
-        "legend_items": [
+        "decimals": 0,
+        "isActive": False,
+        "rangeLabel": _chart_metric_range(alloc_cal_values, "kcal", 0),
+        "legendLabel": "Leyenda de calorías por macro",
+        "legendItems": [
             {"key": "protein", "label": "P kcal"},
             {"key": "carbs", "label": "C kcal"},
             {"key": "fat", "label": "F kcal"},
         ],
+        "bars": alloc_cal_bars,
     })
 
     week_numbers = [week["week_number"] for week in weeks]
@@ -293,27 +322,40 @@ def build_program_metric_chart(
         axis_labels = [
             {
                 "label": FULL_DAY_LABELS.get(point["day_number"], point["day_label"]),
-                "mobile_label": point["day_label"][:1],
+                "mobileLabel": point.get("mobile_label") or point["day_label"][:1],
             }
             for point in day_points
         ]
         axis_count = len(axis_labels)
     else:
         axis_labels = [
-            {"label": f"w{week_number}", "mobile_label": f"w{week_number}"}
+            {"label": f"S{week_number}", "mobileLabel": f"S{week_number}"}
             for week_number in week_numbers
         ]
         axis_count = len(axis_labels)
 
+    scope = "week" if axis_mode == "days" else "program"
+    payload = {
+        "scope": scope,
+        "title": title,
+        "subtitle": subtitle,
+        "daysCount": len(day_points),
+        "weeksCount": len(week_numbers),
+        "axisCount": axis_count,
+        "axisLabels": axis_labels,
+        "metrics": metrics,
+    }
+
     return {
+        "scope": scope,
         "title": title,
         "subtitle": subtitle,
         "days_count": len(day_points),
         "weeks_count": len(week_numbers),
         "axis_count": axis_count,
         "axis_labels": axis_labels,
-        "week_labels": [f"w{week_number}" for week_number in week_numbers],
         "metrics": metrics,
+        "data_json": json.dumps(payload, cls=DjangoJSONEncoder),
     }
 
 

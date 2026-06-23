@@ -12,6 +12,8 @@ python manage.py runserver
 --------------------------
 ***GENERACION ZIP 
 --------------------------
+cooking-pot
+pill
 
 AI
 (Sin USDA - img - test)
@@ -31,7 +33,7 @@ COMPLETO
 --------------------------
 
 git add .
-git commit -m "Mejoras Programas semanales v3 80%"
+git commit -m "Mejoras Programas semanales v5 85%"
 git push origin main
 
 

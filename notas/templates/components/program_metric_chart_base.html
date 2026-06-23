@@ -1,97 +1,14 @@
-{% if chart and chart.metrics %}
-<section class="program-chart-panel card-detail-block {{ modifier }} js-program-chart" aria-label="{{ chart.title }}">
-  <div class="program-chart-tabs" role="tablist" aria-label="Variable del gráfico">
-    {% for metric in chart.metrics %}
-      <button
-        type="button"
-        class="program-chart-tab js-program-chart-tab {% if metric.is_active %}is-active{% endif %}"
-        data-metric="{{ metric.key }}"
-        role="tab"
-        aria-selected="{% if metric.is_active %}true{% else %}false{% endif %}"
-      >
-        {{ metric.label }}
-      </button>
-    {% endfor %}
-  </div>
+{% if chart and chart.data_json %}
+<section
+  class="program-chart-panel card-detail-block {{ modifier }} js-program-chart"
+  data-chart-scope="{{ chart.scope|default:'program' }}"
+  data-show-bar-values="{% if show_bar_values %}true{% else %}false{% endif %}"
+  aria-label="{{ chart.title }}"
+>
+  <script type="application/json" class="js-program-chart-data">{{ chart.data_json|safe }}</script>
 
-  <div class="program-chart-panel__body">
-    {% for metric in chart.metrics %}
-      <div
-        class="program-chart-pane js-program-chart-pane"
-        data-metric="{{ metric.key }}"
-        {% if not metric.is_active %}hidden{% endif %}
-      >
-        <div class="program-chart-layout">
-          <div
-            class="program-chart-main-axis"
-            style="--program-chart-days: {{ chart.days_count|default:1 }}; --program-chart-weeks: {{ chart.weeks_count|default:1 }};"
-          >
-            <div
-              class="program-chart-plot program-chart-plot--{{ metric.kind }} program-chart-plot--{{ metric.key }}"
-              style="--program-chart-days: {{ chart.days_count|default:1 }};"
-              aria-label="Gráfico de {{ metric.label }}"
-            >
-              <span class="program-chart-guide program-chart-guide--max" aria-hidden="true"></span>
-              <span class="program-chart-guide program-chart-guide--min" aria-hidden="true"></span>
-              {% for bar in metric.bars %}
-                <div
-                  class="program-chart-bar-slot {% if bar.is_week_start %}is-week-start{% endif %} {% if bar.is_empty %}is-empty{% endif %}"
-                  title="{{ bar.title }}"
-                  aria-label="{{ bar.title }}"
-                >
-                  {% if metric.kind == "stacked" %}
-                    <div class="program-chart-stacked-bar" style="height: {{ bar.height_percent|floatformat:2 }}%;">
-                      {% for segment in bar.segments %}
-                        <span
-                          class="program-chart-stacked-bar__segment program-chart-stacked-bar__segment--{{ segment.key }}"
-                          style="height: {{ segment.height_percent|floatformat:2 }}%;"
-                          aria-label="{{ segment.label }} {{ segment.value_label }}"
-                        >
-                          {% if segment.value_label and not bar.is_empty %}
-                            <span class="program-chart-segment-value">{{ segment.value_label }}</span>
-                          {% endif %}
-                        </span>
-                      {% endfor %}
-                      {% if show_bar_values and not bar.is_empty %}
-                        <span class="program-chart-bar-value">{{ bar.value_label }}</span>
-                      {% endif %}
-                    </div>
-                  {% else %}
-                    <div class="program-chart-bar" style="height: {{ bar.height_percent|floatformat:2 }}%;">
-                      {% if show_bar_values and not bar.is_empty %}
-                        <span class="program-chart-bar-value">{{ bar.value_label }}</span>
-                      {% endif %}
-                    </div>
-                  {% endif %}
-                </div>
-              {% endfor %}
-            </div>
+  <div class="program-chart-tabs js-program-chart-tabs" role="tablist" aria-label="Variable del gráfico"></div>
 
-            <div
-              class="program-chart-week-axis"
-              style="--program-chart-weeks: {{ chart.axis_count|default:chart.weeks_count|default:1 }};"
-              aria-label="Etiquetas del gráfico"
-            >
-              {% for axis_label in chart.axis_labels %}
-                <span data-mobile-label="{{ axis_label.mobile_label|default:axis_label.label }}">{{ axis_label.label|default:axis_label }}</span>
-              {% endfor %}
-            </div>
-          </div>
-        </div>
-
-        {% if metric.kind == "stacked" %}
-          <div class="program-chart-legend" aria-label="{{ metric.legend_label|default:'Leyenda' }}">
-            {% for item in metric.legend_items %}
-              <span><i class="program-chart-legend__swatch program-chart-legend__swatch--{{ item.key }}"></i>{{ item.label }}</span>
-            {% empty %}
-              <span><i class="program-chart-legend__swatch program-chart-legend__swatch--protein"></i>P%</span>
-              <span><i class="program-chart-legend__swatch program-chart-legend__swatch--carbs"></i>C%</span>
-              <span><i class="program-chart-legend__swatch program-chart-legend__swatch--fat"></i>F%</span>
-            {% endfor %}
-          </div>
-        {% endif %}
-      </div>
-    {% endfor %}
-  </div>
+  <div class="program-chart-panel__body js-program-chart-body"></div>
 </section>
 {% endif %}
