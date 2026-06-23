@@ -12,6 +12,7 @@ from notas.application.resolvers.dailyplan_resolvers import (
     resolve_dailyplan_entity_actions,
 )
 from notas.application.resolvers.share_resolvers import resolve_share_actions
+from notas.application.services.cache.dailyplan_summary import get_dailyplan_summary
 from notas.application.services.nutrition.food_aggregation import (
     build_dailyplan_foods_aggregation,
     build_meal_foods_aggregation,
@@ -147,32 +148,24 @@ def build_dailyplan_detail_content_data(
         viewmode=viewmode,
     )
 
-    nutrition_snapshot = _dailyplan_list_nutrition_snapshot(
-        dailyplan,
-        dailyplan_meals,
-    )
+    summary = get_dailyplan_summary(dailyplan)
+    nutrition_snapshot = summary.get("totals", {})
 
-    dp_total_kcal = nutrition_snapshot["total_kcal"]
-    dp_protein = nutrition_snapshot["protein"]
-    dp_carbs = nutrition_snapshot["carbs"]
-    dp_fat = nutrition_snapshot["fat"]
-    dp_kcal_protein = nutrition_snapshot["kcal_protein"]
-    dp_kcal_carbs = nutrition_snapshot["kcal_carbs"]
-    dp_kcal_fat = nutrition_snapshot["kcal_fat"]
-    dp_alloc = nutrition_snapshot["alloc"]
+    dp_total_kcal = nutrition_snapshot.get("total_kcal", 0)
+    dp_protein = nutrition_snapshot.get("protein", 0)
+    dp_carbs = nutrition_snapshot.get("carbs", 0)
+    dp_fat = nutrition_snapshot.get("fat", 0)
+    dp_kcal_protein = nutrition_snapshot.get("kcal_protein", 0)
+    dp_kcal_carbs = nutrition_snapshot.get("kcal_carbs", 0)
+    dp_kcal_fat = nutrition_snapshot.get("kcal_fat", 0)
+    dp_alloc = nutrition_snapshot.get("alloc", {"protein": 0, "carbs": 0, "fat": 0})
 
     foods_aggregation = build_dailyplan_foods_aggregation(dailyplan_meals)
-    foods_aggregation_table = [
-        build_dailyplan_food_aggregation_table_item(
-            food_aggregation,
-            dailyplan_snapshot=nutrition_snapshot,
-        )
-        for food_aggregation in foods_aggregation
-    ]
+    foods_aggregation_table = summary.get("foods_aggregation_table", [])
 
     structural_indicators = {
-        "meals_count": len(dailyplan_meals),
-        "foods_count": len(foods_aggregation),
+        "meals_count": summary.get("meals_count", len(dailyplan_meals)),
+        "foods_count": summary.get("foods_count", len(foods_aggregation)),
     }
 
     current_weight = get_current_weight(user)
@@ -317,44 +310,42 @@ def build_dailyplan_detail_content_data(
     )
 
 
-def build_dailyplan_list_content_data(dailyplans, user, viewmode):
+def build_dailyplan_list_content_data(dailyplans, user, viewmode, list_mode="list"):
     child_cards_data = []
 
-    for dailyplan in dailyplans:
-        dailyplan_meals = _dailyplan_meals_for_list_card(dailyplan)
-        nutrition_snapshot = _dailyplan_list_nutrition_snapshot(
-            dailyplan,
-            dailyplan_meals,
+    if list_mode in {"reorder", "delete"}:
+        return DailyPlanListContentData(
+            child_cards_data=[
+                {
+                    "child_id": dailyplan.id,
+                    "title": {"name": dailyplan.name},
+                }
+                for dailyplan in dailyplans
+            ]
         )
 
-        dp_total_kcal = nutrition_snapshot["total_kcal"]
-        dp_protein = nutrition_snapshot["protein"]
-        dp_carbs = nutrition_snapshot["carbs"]
-        dp_fat = nutrition_snapshot["fat"]
+    current_weight = get_current_weight(user)
 
-        dp_kcal_protein = nutrition_snapshot["kcal_protein"]
-        dp_kcal_carbs = nutrition_snapshot["kcal_carbs"]
-        dp_kcal_fat = nutrition_snapshot["kcal_fat"]
+    for dailyplan in dailyplans:
+        summary = get_dailyplan_summary(dailyplan)
+        nutrition_snapshot = summary.get("totals", {})
 
-        dp_alloc = nutrition_snapshot["alloc"]
+        dp_total_kcal = nutrition_snapshot.get("total_kcal", 0)
+        dp_protein = nutrition_snapshot.get("protein", 0)
+        dp_carbs = nutrition_snapshot.get("carbs", 0)
+        dp_fat = nutrition_snapshot.get("fat", 0)
 
-        current_weight = get_current_weight(user)
+        dp_kcal_protein = nutrition_snapshot.get("kcal_protein", 0)
+        dp_kcal_carbs = nutrition_snapshot.get("kcal_carbs", 0)
+        dp_kcal_fat = nutrition_snapshot.get("kcal_fat", 0)
+
+        dp_alloc = nutrition_snapshot.get("alloc", {"protein": 0, "carbs": 0, "fat": 0})
+
         ppk = {
             "ppk": (dp_protein / current_weight)
             if (current_weight and dp_protein)
             else None,
         }
-
-        dailyplan_meals_table_items = [
-            build_dailyplanmeal_table_item(
-                dpm,
-                dailyplan_snapshot=nutrition_snapshot,
-            )
-            for dpm in dailyplan_meals
-        ]
-
-        menu = build_dailyplan_menu(dailyplan_meals)
-        foods_aggregation = build_dailyplan_foods_aggregation(dailyplan_meals)
 
         share = next(
             (
@@ -392,8 +383,8 @@ def build_dailyplan_list_content_data(dailyplans, user, viewmode):
                     "icon": CONTENT_ICON_REGISTRY.get("dailyplan"),
                     "category": dailyplan.category,
                     "category_badge": resolve_category_badge(dailyplan.category),
-                    "meals_count": len(dailyplan_meals),
-                    "foods_count": len(foods_aggregation),
+                    "meals_count": summary.get("meals_count", 0),
+                    "foods_count": summary.get("foods_count", 0),
                 },
                 "kpis": {
                     "ppk": ppk["ppk"],
@@ -404,13 +395,13 @@ def build_dailyplan_list_content_data(dailyplans, user, viewmode):
                     "kcal_protein": dp_kcal_protein,
                     "kcal_carbs": dp_kcal_carbs,
                     "kcal_fat": dp_kcal_fat,
-                    "alloc_protein": dp_alloc["protein"],
-                    "alloc_carbs": dp_alloc["carbs"],
-                    "alloc_fat": dp_alloc["fat"],
+                    "alloc_protein": dp_alloc.get("protein", 0),
+                    "alloc_carbs": dp_alloc.get("carbs", 0),
+                    "alloc_fat": dp_alloc.get("fat", 0),
                 },
-                "table_items": dailyplan_meals_table_items,
-                "menu": menu,
-                "foods_aggregation": foods_aggregation,
+                "table_items": [item.get("table_item") for item in summary.get("meals", []) if item.get("table_item")],
+                "menu": {"meals": summary.get("menu", [])},
+                "foods_aggregation": summary.get("foods_aggregation_table", []),
                 "metadata": {
                     "owner": str(dailyplan.created_by),
                     "author": str(dailyplan.original_author),

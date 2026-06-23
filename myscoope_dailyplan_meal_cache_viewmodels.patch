@@ -1,0 +1,1050 @@
+--- a/notas/domain/models.py	2026-06-23 00:58:28.000000000 +0000
++++ b/notas/domain/models.py	2026-06-23 01:12:20.150760097 +0000
+@@ -1006,6 +1006,9 @@
+     created_at = models.DateTimeField(auto_now_add=True)
+     list_order = models.PositiveIntegerField(default=0)
+ 
++    summary_cache = models.JSONField(default=dict, blank=True)
++    summary_cache_updated_at = models.DateTimeField(null=True, blank=True)
++
+     def kind(self):
+         return "Daily Plan"
+ 
+@@ -1050,43 +1053,79 @@
+         return "original"
+ 
+ 
++    def _summary_metric(self, key):
++        cached = (self.summary_cache or {}).get("totals", {}).get(key)
++        if cached is not None:
++            return cached
++        return None
++
+     @property
+     def protein(self):
++        cached = self._summary_metric("protein")
++        if cached is not None:
++            return cached
+         return sum(dpm.meal.protein for dpm in self.dailyplan_meals.all())
+ 
+     @property
+     def carbs(self):
++        cached = self._summary_metric("carbs")
++        if cached is not None:
++            return cached
+         return sum(dpm.meal.carbs for dpm in self.dailyplan_meals.all())
+ 
+     @property
+     def fat(self):
++        cached = self._summary_metric("fat")
++        if cached is not None:
++            return cached
+         return sum(dpm.meal.fat for dpm in self.dailyplan_meals.all())
+ 
+     @property
+     def kcal_protein(self):
++        cached = self._summary_metric("kcal_protein")
++        if cached is not None:
++            return cached
+         return sum(dpm.meal.kcal_protein for dpm in self.dailyplan_meals.all())
+ 
+     @property
+     def kcal_carbs(self):
++        cached = self._summary_metric("kcal_carbs")
++        if cached is not None:
++            return cached
+         return sum(dpm.meal.kcal_carbs for dpm in self.dailyplan_meals.all())
+ 
+     @property
+     def kcal_fat(self):
++        cached = self._summary_metric("kcal_fat")
++        if cached is not None:
++            return cached
+         return sum(dpm.meal.kcal_fat for dpm in self.dailyplan_meals.all())
+ 
+     @property
+     def total_kcal(self):
++        cached = self._summary_metric("total_kcal")
++        if cached is not None:
++            return cached
+         return self.kcal_protein + self.kcal_carbs + self.kcal_fat
+ 
+     @property
+     def alloc(self):
+-        if self.total_kcal == 0:
++        cached = (self.summary_cache or {}).get("totals", {}).get("alloc")
++        if cached is not None:
++            return {
++                "protein": cached.get("protein", 0),
++                "carbs": cached.get("carbs", 0),
++                "fat": cached.get("fat", 0),
++            }
++
++        total_kcal = self.total_kcal
++        if total_kcal == 0:
+             return {"protein": 0, "carbs": 0, "fat": 0}
+ 
+         return {
+-            "protein": self.kcal_protein / self.total_kcal * 100,
+-            "carbs": self.kcal_carbs / self.total_kcal * 100,
+-            "fat": self.kcal_fat / self.total_kcal * 100,
++            "protein": self.kcal_protein / total_kcal * 100,
++            "carbs": self.kcal_carbs / total_kcal * 100,
++            "fat": self.kcal_fat / total_kcal * 100,
+         }
+     
+     def meals_with_foods(self):
+--- a/notas/migrations/0035_dailyplan_summary_cache.py	1970-01-01 00:00:00.000000000 +0000
++++ b/notas/migrations/0035_dailyplan_summary_cache.py	2026-06-23 01:12:20.151145361 +0000
+@@ -0,0 +1,23 @@
++# Generated for DailyPlan persistent summary cache.
++
++from django.db import migrations, models
++
++
++class Migration(migrations.Migration):
++
++    dependencies = [
++        ("notas", "0034_program_summary_cache"),
++    ]
++
++    operations = [
++        migrations.AddField(
++            model_name="dailyplan",
++            name="summary_cache",
++            field=models.JSONField(blank=True, default=dict),
++        ),
++        migrations.AddField(
++            model_name="dailyplan",
++            name="summary_cache_updated_at",
++            field=models.DateTimeField(blank=True, null=True),
++        ),
++    ]
+--- a/notas/application/services/cache/dailyplan_summary.py	1970-01-01 00:00:00.000000000 +0000
++++ b/notas/application/services/cache/dailyplan_summary.py	2026-06-23 01:12:20.151466769 +0000
+@@ -0,0 +1,269 @@
++from __future__ import annotations
++
++from collections import defaultdict
++from copy import deepcopy
++
++from django.db.models import Prefetch
++from django.utils import timezone
++
++from notas.application.services.food_imports.localized_names import resolve_food_display_name
++from notas.domain.models import DailyPlan, DailyPlanMeal, MealFood, Program
++
++DAILYPLAN_SUMMARY_CACHE_VERSION = 1
++
++
++def _safe_percentage(part, total):
++    if not total or total <= 0:
++        return 0.0
++    return part / total * 100
++
++
++def _cached_or_live(obj, cached_attr, live_attr):
++    cached_value = getattr(obj, cached_attr, None)
++    return cached_value if cached_value is not None else getattr(obj, live_attr)
++
++
++def _dailyplan_meals_base_queryset():
++    return (
++        DailyPlanMeal.objects.select_related(
++            "dailyplan",
++            "meal",
++            "meal__created_by",
++            "meal__original_author",
++            "meal__forked_from",
++        )
++        .prefetch_related(
++            Prefetch(
++                "meal__meal_food_set",
++                queryset=MealFood.objects.select_related("food").order_by("order", "id"),
++            )
++        )
++        .order_by("order", "id")
++    )
++
++
++def dailyplan_meals_for_summary(dailyplan: DailyPlan):
++    prefetched = getattr(dailyplan, "_prefetched_objects_cache", {}).get("dailyplan_meals")
++    if prefetched is not None:
++        return sorted(prefetched, key=lambda dpm: (dpm.order, dpm.id))
++    return list(_dailyplan_meals_base_queryset().filter(dailyplan=dailyplan))
++
++
++def _meal_snapshot(meal) -> dict:
++    kcal_protein = _cached_or_live(meal, "kcal_protein_cached", "kcal_protein")
++    kcal_carbs = _cached_or_live(meal, "kcal_carbs_cached", "kcal_carbs")
++    kcal_fat = _cached_or_live(meal, "kcal_fat_cached", "kcal_fat")
++    total_kcal = _cached_or_live(meal, "total_kcal_cached", "total_kcal")
++    protein = _cached_or_live(meal, "protein_cached", "protein")
++    carbs = _cached_or_live(meal, "carbs_cached", "carbs")
++    fat = _cached_or_live(meal, "fat_cached", "fat")
++    alloc = getattr(meal, "alloc", {})
++    meal_foods = list(meal.meal_food_set.all())
++    return {
++        "id": meal.id,
++        "name": meal.name,
++        "protein": protein,
++        "carbs": carbs,
++        "fat": fat,
++        "kcal_protein": kcal_protein,
++        "kcal_carbs": kcal_carbs,
++        "kcal_fat": kcal_fat,
++        "total_kcal": total_kcal,
++        "alloc": {
++            "protein": alloc.get("protein", 0),
++            "carbs": alloc.get("carbs", 0),
++            "fat": alloc.get("fat", 0),
++        },
++        "foods_count": len(meal.foods_aggregation_cached or meal_foods),
++    }
++
++
++def _empty_totals():
++    return {
++        "protein": 0,
++        "carbs": 0,
++        "fat": 0,
++        "kcal_protein": 0,
++        "kcal_carbs": 0,
++        "kcal_fat": 0,
++        "total_kcal": 0,
++        "alloc": {"protein": 0, "carbs": 0, "fat": 0},
++    }
++
++
++def _finalize_totals(totals):
++    totals["total_kcal"] = totals["kcal_protein"] + totals["kcal_carbs"] + totals["kcal_fat"]
++    totals["alloc"] = {
++        "protein": _safe_percentage(totals["kcal_protein"], totals["total_kcal"]),
++        "carbs": _safe_percentage(totals["kcal_carbs"], totals["total_kcal"]),
++        "fat": _safe_percentage(totals["kcal_fat"], totals["total_kcal"]),
++    }
++    return totals
++
++
++def _format_quantity(value):
++    if value is None:
++        return "0"
++    numeric_value = float(value)
++    if numeric_value.is_integer():
++        return str(int(numeric_value))
++    return f"{numeric_value:.1f}".rstrip("0").rstrip(".")
++
++
++def _food_table_row(food, display_name, total_grams, dailyplan_totals):
++    factor = (total_grams or 0) / 100
++    g_protein = food.protein * factor
++    g_carbs = food.carbs * factor
++    g_fat = food.fat * factor
++    kcal_protein = food.kcal_protein * factor
++    kcal_carbs = food.kcal_carbs * factor
++    kcal_fat = food.kcal_fat * factor
++    total_kcal = kcal_protein + kcal_carbs + kcal_fat
++    return {
++        "child": {"id": food.id, "name": display_name},
++        "rel": {
++            "id": food.id,
++            "quantity": total_grams,
++            "quantity_unit": "g",
++            "name": display_name,
++            "total_kcal": total_kcal,
++            "kcal_share": _safe_percentage(total_kcal, dailyplan_totals["total_kcal"]),
++            "g_protein": g_protein,
++            "g_carbs": g_carbs,
++            "g_fat": g_fat,
++            "alloc_protein": _safe_percentage(kcal_protein, dailyplan_totals["kcal_protein"]),
++            "alloc_carbs": _safe_percentage(kcal_carbs, dailyplan_totals["kcal_carbs"]),
++            "alloc_fat": _safe_percentage(kcal_fat, dailyplan_totals["kcal_fat"]),
++        },
++    }
++
++
++def build_dailyplan_summary(dailyplan: DailyPlan) -> dict:
++    dailyplan_meals = dailyplan_meals_for_summary(dailyplan)
++    totals = _empty_totals()
++    meals = []
++    foods_aggregation = defaultdict(lambda: {"food": None, "display_name": "", "total_grams": 0})
++
++    for dpm in dailyplan_meals:
++        meal = dpm.meal
++        snapshot = _meal_snapshot(meal)
++        for key in ("protein", "carbs", "fat", "kcal_protein", "kcal_carbs", "kcal_fat"):
++            totals[key] += float(snapshot.get(key) or 0)
++
++        meal_foods = list(meal.meal_food_set.all())
++        menu_foods = []
++        meal_item = {
++            "dpm_id": dpm.id,
++            "meal_id": meal.id,
++            "meal_name": meal.name,
++            "hour": str(dpm.hour) if dpm.hour else None,
++            "note": dpm.note,
++            "order": dpm.order,
++            "snapshot": snapshot,
++            "foods_count": snapshot["foods_count"],
++            "menu_foods": menu_foods,
++        }
++        meals.append(meal_item)
++
++        for meal_food in meal_foods:
++            food = meal_food.food
++            display_name = resolve_food_display_name(food)
++            foods_aggregation[food.id]["food"] = food
++            foods_aggregation[food.id]["display_name"] = display_name
++            foods_aggregation[food.id]["total_grams"] += meal_food.quantity
++            menu_foods.append(f"{display_name} ({_format_quantity(meal_food.quantity)}g)")
++
++    totals = _finalize_totals(totals)
++
++    for meal_item in meals:
++        snapshot = meal_item["snapshot"]
++        meal_item["table_item"] = {
++            "main_id": dailyplan.id,
++            "child_id": meal_item["meal_id"],
++            "rel": {
++                "id": meal_item["dpm_id"],
++                "hour": meal_item["hour"],
++                "note": meal_item["note"],
++                "name": meal_item["meal_name"],
++                "total_kcal": snapshot["total_kcal"],
++                "kcal_share": _safe_percentage(snapshot["total_kcal"], totals["total_kcal"]),
++                "g_protein": snapshot["protein"],
++                "g_carbs": snapshot["carbs"],
++                "g_fat": snapshot["fat"],
++                "alloc_protein": _safe_percentage(snapshot["kcal_protein"], totals["kcal_protein"]),
++                "alloc_carbs": _safe_percentage(snapshot["kcal_carbs"], totals["kcal_carbs"]),
++                "alloc_fat": _safe_percentage(snapshot["kcal_fat"], totals["kcal_fat"]),
++            },
++        }
++
++    ordered_foods = sorted(
++        foods_aggregation.values(),
++        key=lambda item: (-item["total_grams"], item["display_name"]),
++    )
++    foods_aggregation_table = [
++        _food_table_row(item["food"], item["display_name"], item["total_grams"], totals)
++        for item in ordered_foods
++    ]
++
++    return {
++        "version": DAILYPLAN_SUMMARY_CACHE_VERSION,
++        "totals": totals,
++        "meals": meals,
++        "meals_count": len(meals),
++        "foods_count": len(foods_aggregation_table),
++        "foods_aggregation_table": foods_aggregation_table,
++        "menu": [
++            {
++                "meal_name": item["meal_name"],
++                "foods": item.get("menu_foods", []),
++                "target_id": f"dailyplan-meal-step-{item['dpm_id']}",
++            }
++            for item in meals
++        ],
++    }
++
++
++def refresh_dailyplan_summary_cache(dailyplan: DailyPlan) -> dict:
++    hydrated = (
++        DailyPlan.objects.select_related("created_by", "original_author", "forked_from")
++        .prefetch_related(
++            Prefetch("dailyplan_meals", queryset=_dailyplan_meals_base_queryset())
++        )
++        .get(pk=dailyplan.pk)
++    )
++    summary = build_dailyplan_summary(hydrated)
++    updated_at = timezone.now()
++    DailyPlan.objects.filter(pk=dailyplan.pk).update(
++        summary_cache=summary,
++        summary_cache_updated_at=updated_at,
++    )
++    dailyplan.summary_cache = summary
++    dailyplan.summary_cache_updated_at = updated_at
++    return summary
++
++
++def get_dailyplan_summary(dailyplan: DailyPlan) -> dict:
++    cached = getattr(dailyplan, "summary_cache", None) or {}
++    if cached.get("version") == DAILYPLAN_SUMMARY_CACHE_VERSION:
++        return deepcopy(cached)
++    return refresh_dailyplan_summary_cache(dailyplan)
++
++
++def refresh_program_caches_for_dailyplan(dailyplan: DailyPlan) -> None:
++    from notas.application.services.cache.program_summary import refresh_program_summary_cache
++
++    programs = Program.objects.filter(program_dailyplan__dailyplan=dailyplan).distinct()
++    for program in programs:
++        refresh_program_summary_cache(program)
++
++
++def refresh_dailyplan_and_related_program_caches(dailyplan: DailyPlan) -> dict:
++    summary = refresh_dailyplan_summary_cache(dailyplan)
++    refresh_program_caches_for_dailyplan(dailyplan)
++    return summary
++
++
++def refresh_dailyplans_for_meal(meal) -> None:
++    dailyplans = DailyPlan.objects.filter(dailyplan_meals__meal=meal).distinct()
++    for dailyplan in dailyplans:
++        refresh_dailyplan_and_related_program_caches(dailyplan)
+--- a/notas/application/services/commands/dailyplan_commands.py	2026-06-23 00:31:13.000000000 +0000
++++ b/notas/application/services/commands/dailyplan_commands.py	2026-06-23 01:12:50.810275765 +0000
+@@ -3,6 +3,10 @@
+ from django.db import transaction
+ 
+ from notas.domain.models import DailyPlan, DailyPlanMeal, Meal
++from notas.application.services.cache.dailyplan_summary import (
++    refresh_dailyplan_and_related_program_caches,
++    refresh_dailyplan_summary_cache,
++)
+ 
+ @dataclass(frozen=True)
+ class DailyPlanCreateResult:
+@@ -79,6 +83,15 @@
+ # DAILYPLAN HELPERS
+ # ==================================================
+ 
++
++def _refresh_dailyplan_cache(dailyplan: DailyPlan) -> None:
++    refresh_dailyplan_and_related_program_caches(dailyplan)
++
++
++def _refresh_new_dailyplan_cache(dailyplan: DailyPlan) -> None:
++    refresh_dailyplan_summary_cache(dailyplan)
++
++
+ def get_dailyplan_origin(dp: DailyPlan) -> DailyPlan:
+     """
+     Retorna el DailyPlan raíz.
+@@ -235,6 +248,7 @@
+     )
+ 
+     clone_dailyplan_meals(original, forked)
++    _refresh_new_dailyplan_cache(forked)
+ 
+     return forked
+ 
+@@ -262,6 +276,7 @@
+     )
+ 
+     clone_dailyplan_meals(original, copy)
++    _refresh_new_dailyplan_cache(copy)
+ 
+     return copy
+ 
+@@ -307,6 +322,7 @@
+     )
+ 
+     dailyplan.update_draft_status()
++    _refresh_dailyplan_cache(dailyplan)
+ 
+     return DailyPlanMealCreateResult(
+         dailyplan=dailyplan,
+@@ -328,6 +344,7 @@
+ 
+     dailyplan_meal.delete()
+     meal.delete()
++    _refresh_dailyplan_cache(dailyplan)
+ 
+     return DailyPlanMealDeleteResult(
+         dailyplan=dailyplan,
+@@ -376,6 +393,7 @@
+ 
+     dailyplan = dailyplan_meal.dailyplan
+     dailyplan.update_draft_status()
++    _refresh_dailyplan_cache(dailyplan)
+ 
+     return DailyPlanMealUpdateResult(
+         dailyplan_meal=dailyplan_meal,
+@@ -402,6 +420,8 @@
+ 
+         updated_count += updated
+ 
++    _refresh_dailyplan_cache(dailyplan)
++
+     return DailyPlanMealReorderResult(
+         dailyplan=dailyplan,
+         updated_count=updated_count,
+@@ -425,6 +445,7 @@
+     if source_meal.id == old_meal_id:
+         dailyplan = dailyplan_meal.dailyplan
+         dailyplan.update_draft_status()
++        _refresh_dailyplan_cache(dailyplan)
+ 
+         return DailyPlanMealSnapshotReplaceResult(
+             dailyplan_meal=dailyplan_meal,
+@@ -446,6 +467,7 @@
+ 
+     dailyplan = dailyplan_meal.dailyplan
+     dailyplan.update_draft_status()
++    _refresh_dailyplan_cache(dailyplan)
+ 
+     return DailyPlanMealSnapshotReplaceResult(
+         dailyplan_meal=dailyplan_meal,
+@@ -477,6 +499,7 @@
+ 
+     dailyplan = dailyplan_meal.dailyplan
+     dailyplan.update_draft_status()
++    _refresh_dailyplan_cache(dailyplan)
+ 
+     return DailyPlanMealCreateEmptyMealResult(
+         dailyplan_meal=dailyplan_meal,
+--- a/notas/signals.py	2026-04-05 03:39:44.000000000 +0000
++++ b/notas/signals.py	2026-06-23 01:12:50.810919831 +0000
+@@ -4,6 +4,7 @@
+ from django.contrib.auth.models import User
+ from notas.domain.models import Profile, Plan, MealFood
+ from notas.application.services.nutrition.meal_nutrition import rebuild_meal_cached_state
++from notas.application.services.cache.dailyplan_summary import refresh_dailyplans_for_meal
+ 
+ 
+ @receiver(post_save, sender=User)
+@@ -25,6 +26,7 @@
+ @receiver(post_save, sender=MealFood)
+ def recompute_meal_on_food_save(sender, instance, **kwargs):
+     rebuild_meal_cached_state(instance.meal)
++    refresh_dailyplans_for_meal(instance.meal)
+ 
+ 
+ @receiver(post_delete, sender=MealFood)
+--- a/notas/presentation/composition/viewmodel/dailyplan/dailyplan_content.py	2026-06-17 04:55:30.000000000 +0000
++++ b/notas/presentation/composition/viewmodel/dailyplan/dailyplan_content.py	2026-06-23 01:12:20.152193753 +0000
+@@ -12,6 +12,7 @@
+     resolve_dailyplan_entity_actions,
+ )
+ from notas.application.resolvers.share_resolvers import resolve_share_actions
++from notas.application.services.cache.dailyplan_summary import get_dailyplan_summary
+ from notas.application.services.nutrition.food_aggregation import (
+     build_dailyplan_foods_aggregation,
+     build_meal_foods_aggregation,
+@@ -147,32 +148,24 @@
+         viewmode=viewmode,
+     )
+ 
+-    nutrition_snapshot = _dailyplan_list_nutrition_snapshot(
+-        dailyplan,
+-        dailyplan_meals,
+-    )
++    summary = get_dailyplan_summary(dailyplan)
++    nutrition_snapshot = summary.get("totals", {})
+ 
+-    dp_total_kcal = nutrition_snapshot["total_kcal"]
+-    dp_protein = nutrition_snapshot["protein"]
+-    dp_carbs = nutrition_snapshot["carbs"]
+-    dp_fat = nutrition_snapshot["fat"]
+-    dp_kcal_protein = nutrition_snapshot["kcal_protein"]
+-    dp_kcal_carbs = nutrition_snapshot["kcal_carbs"]
+-    dp_kcal_fat = nutrition_snapshot["kcal_fat"]
+-    dp_alloc = nutrition_snapshot["alloc"]
++    dp_total_kcal = nutrition_snapshot.get("total_kcal", 0)
++    dp_protein = nutrition_snapshot.get("protein", 0)
++    dp_carbs = nutrition_snapshot.get("carbs", 0)
++    dp_fat = nutrition_snapshot.get("fat", 0)
++    dp_kcal_protein = nutrition_snapshot.get("kcal_protein", 0)
++    dp_kcal_carbs = nutrition_snapshot.get("kcal_carbs", 0)
++    dp_kcal_fat = nutrition_snapshot.get("kcal_fat", 0)
++    dp_alloc = nutrition_snapshot.get("alloc", {"protein": 0, "carbs": 0, "fat": 0})
+ 
+     foods_aggregation = build_dailyplan_foods_aggregation(dailyplan_meals)
+-    foods_aggregation_table = [
+-        build_dailyplan_food_aggregation_table_item(
+-            food_aggregation,
+-            dailyplan_snapshot=nutrition_snapshot,
+-        )
+-        for food_aggregation in foods_aggregation
+-    ]
++    foods_aggregation_table = summary.get("foods_aggregation_table", [])
+ 
+     structural_indicators = {
+-        "meals_count": len(dailyplan_meals),
+-        "foods_count": len(foods_aggregation),
++        "meals_count": summary.get("meals_count", len(dailyplan_meals)),
++        "foods_count": summary.get("foods_count", len(foods_aggregation)),
+     }
+ 
+     current_weight = get_current_weight(user)
+@@ -317,45 +310,43 @@
+     )
+ 
+ 
+-def build_dailyplan_list_content_data(dailyplans, user, viewmode):
++def build_dailyplan_list_content_data(dailyplans, user, viewmode, list_mode="list"):
+     child_cards_data = []
+ 
+-    for dailyplan in dailyplans:
+-        dailyplan_meals = _dailyplan_meals_for_list_card(dailyplan)
+-        nutrition_snapshot = _dailyplan_list_nutrition_snapshot(
+-            dailyplan,
+-            dailyplan_meals,
++    if list_mode in {"reorder", "delete"}:
++        return DailyPlanListContentData(
++            child_cards_data=[
++                {
++                    "child_id": dailyplan.id,
++                    "title": {"name": dailyplan.name},
++                }
++                for dailyplan in dailyplans
++            ]
+         )
+ 
+-        dp_total_kcal = nutrition_snapshot["total_kcal"]
+-        dp_protein = nutrition_snapshot["protein"]
+-        dp_carbs = nutrition_snapshot["carbs"]
+-        dp_fat = nutrition_snapshot["fat"]
+-
+-        dp_kcal_protein = nutrition_snapshot["kcal_protein"]
+-        dp_kcal_carbs = nutrition_snapshot["kcal_carbs"]
+-        dp_kcal_fat = nutrition_snapshot["kcal_fat"]
++    current_weight = get_current_weight(user)
+ 
+-        dp_alloc = nutrition_snapshot["alloc"]
++    for dailyplan in dailyplans:
++        summary = get_dailyplan_summary(dailyplan)
++        nutrition_snapshot = summary.get("totals", {})
++
++        dp_total_kcal = nutrition_snapshot.get("total_kcal", 0)
++        dp_protein = nutrition_snapshot.get("protein", 0)
++        dp_carbs = nutrition_snapshot.get("carbs", 0)
++        dp_fat = nutrition_snapshot.get("fat", 0)
++
++        dp_kcal_protein = nutrition_snapshot.get("kcal_protein", 0)
++        dp_kcal_carbs = nutrition_snapshot.get("kcal_carbs", 0)
++        dp_kcal_fat = nutrition_snapshot.get("kcal_fat", 0)
++
++        dp_alloc = nutrition_snapshot.get("alloc", {"protein": 0, "carbs": 0, "fat": 0})
+ 
+-        current_weight = get_current_weight(user)
+         ppk = {
+             "ppk": (dp_protein / current_weight)
+             if (current_weight and dp_protein)
+             else None,
+         }
+ 
+-        dailyplan_meals_table_items = [
+-            build_dailyplanmeal_table_item(
+-                dpm,
+-                dailyplan_snapshot=nutrition_snapshot,
+-            )
+-            for dpm in dailyplan_meals
+-        ]
+-
+-        menu = build_dailyplan_menu(dailyplan_meals)
+-        foods_aggregation = build_dailyplan_foods_aggregation(dailyplan_meals)
+-
+         share = next(
+             (
+                 s for s in dailyplan.shares.all()
+@@ -392,8 +383,8 @@
+                     "icon": CONTENT_ICON_REGISTRY.get("dailyplan"),
+                     "category": dailyplan.category,
+                     "category_badge": resolve_category_badge(dailyplan.category),
+-                    "meals_count": len(dailyplan_meals),
+-                    "foods_count": len(foods_aggregation),
++                    "meals_count": summary.get("meals_count", 0),
++                    "foods_count": summary.get("foods_count", 0),
+                 },
+                 "kpis": {
+                     "ppk": ppk["ppk"],
+@@ -404,13 +395,13 @@
+                     "kcal_protein": dp_kcal_protein,
+                     "kcal_carbs": dp_kcal_carbs,
+                     "kcal_fat": dp_kcal_fat,
+-                    "alloc_protein": dp_alloc["protein"],
+-                    "alloc_carbs": dp_alloc["carbs"],
+-                    "alloc_fat": dp_alloc["fat"],
++                    "alloc_protein": dp_alloc.get("protein", 0),
++                    "alloc_carbs": dp_alloc.get("carbs", 0),
++                    "alloc_fat": dp_alloc.get("fat", 0),
+                 },
+-                "table_items": dailyplan_meals_table_items,
+-                "menu": menu,
+-                "foods_aggregation": foods_aggregation,
++                "table_items": [item.get("table_item") for item in summary.get("meals", []) if item.get("table_item")],
++                "menu": {"meals": summary.get("menu", [])},
++                "foods_aggregation": summary.get("foods_aggregation_table", []),
+                 "metadata": {
+                     "owner": str(dailyplan.created_by),
+                     "author": str(dailyplan.original_author),
+@@ -426,4 +417,4 @@
+ 
+     return DailyPlanListContentData(
+         child_cards_data=child_cards_data,
+-    )
+\ No newline at end of file
++    )
+--- a/notas/presentation/composition/viewmodel/dailyplan/list_dailyplan_builder.py	2026-06-17 04:38:15.000000000 +0000
++++ b/notas/presentation/composition/viewmodel/dailyplan/list_dailyplan_builder.py	2026-06-23 01:12:20.152723739 +0000
+@@ -14,6 +14,18 @@
+ def build_dailyplan_list_vm(content_data, page_actions=None, list_mode="list"):
+     children = []
+ 
++    if list_mode in {"reorder", "delete"}:
++        for child_data in content_data.child_cards_data:
++            children.append({
++                "child_id": child_data["child_id"],
++                "titulo": {"name": child_data["title"]["name"]},
++            })
++        return ListVM(
++            header=build_page_header(actions=page_actions or []),
++            child_cards=children,
++            list_mode=list_mode,
++        )
++
+     for child_data in content_data.child_cards_data:
+         title_url = _resolve_title_url(child_data["actions"])
+ 
+--- a/notas/presentation/composition/viewmodel/meal/meal_content.py	2026-06-08 19:40:10.000000000 +0000
++++ b/notas/presentation/composition/viewmodel/meal/meal_content.py	2026-06-23 01:12:20.153181439 +0000
+@@ -178,9 +178,20 @@
+     )
+ 
+ 
+-def build_meal_list_content_data(meals, user, viewmode):
++def build_meal_list_content_data(meals, user, viewmode, list_mode="list"):
+     child_cards_data = []
+ 
++    if list_mode in {"reorder", "delete"}:
++        return MealListContentData(
++            child_cards_data=[
++                {
++                    "child_id": meal.id,
++                    "title": {"name": meal.name},
++                }
++                for meal in meals
++            ]
++        )
++
+     for meal in meals:
+         meal_total_kcal = meal.total_kcal_cached or meal.total_kcal
+         meal_protein = meal.protein_cached or meal.protein
+@@ -202,7 +213,7 @@
+             for mf in meal_foods
+         ]
+ 
+-        foods_aggregation = build_meal_foods_aggregation(meal)
++        foods_count = len(meal.foods_aggregation_cached or meal_foods)
+ 
+         actions = resolve_meal_entity_actions(
+             meal,
+@@ -219,7 +230,7 @@
+                     "icon": CONTENT_ICON_REGISTRY.get("meal"),
+                     "category": meal.category,
+                     "category_badge": resolve_category_badge(meal.category),
+-                    "foods_count": len(foods_aggregation),
++                    "foods_count": foods_count,
+                 },
+                 "kpis": {
+                     "ppk": ppk["ppk"],
+@@ -235,7 +246,7 @@
+                     "alloc_fat": meal_alloc["fat"],
+                 },
+                 "table_items": table_items,
+-                "foods_aggregation": foods_aggregation,
++                "foods_aggregation": [],
+                 "metadata": {
+                     "owner": str(meal.created_by),
+                     "author": str(meal.original_author),
+--- a/notas/presentation/composition/viewmodel/meal/list_meal_builder.py	2026-06-17 04:38:15.000000000 +0000
++++ b/notas/presentation/composition/viewmodel/meal/list_meal_builder.py	2026-06-23 01:12:20.153741348 +0000
+@@ -14,6 +14,18 @@
+ def build_meal_list_vm(content_data, page_actions=None, list_mode="list"):
+     children = []
+ 
++    if list_mode in {"reorder", "delete"}:
++        for child_data in content_data.child_cards_data:
++            children.append({
++                "child_id": child_data["child_id"],
++                "titulo": {"name": child_data["title"]["name"]},
++            })
++        return ListVM(
++            header=build_page_header(actions=page_actions or []),
++            child_cards=children,
++            list_mode=list_mode,
++        )
++
+     for child_data in content_data.child_cards_data:
+         title_url = _resolve_title_url(child_data["actions"])
+ 
+--- a/notas/application/use_cases/dailyplan_pages.py	2026-06-19 01:30:52.000000000 +0000
++++ b/notas/application/use_cases/dailyplan_pages.py	2026-06-23 01:12:50.811488339 +0000
+@@ -33,7 +33,7 @@
+     resolve_dailyplan_page_actions,
+ )
+ 
+-from notas.presentation.composition.viewmodel.dailyplan.dailyplan_content import (
++from notas.presentation.viewmodels.dailyplans import (
+     build_dailyplan_detail_content_data,
+     build_dailyplan_list_content_data,
+ )
+@@ -208,15 +208,29 @@
+ def get_dailyplan_list_page_data(user, request_get=None) -> DailyPlanListPageData:
+     list_mode = _normalize_list_mode(request_get)
+ 
+-    dailyplans = (
+-        dailyplans_with_kcal()
+-        .filter(
+-            created_by=user,
+-            is_draft=False,
++    if list_mode in {"reorder", "delete"}:
++        dailyplans = (
++            DailyPlan.objects
++            .filter(
++                created_by=user,
++                is_draft=False,
++            )
++            .exclude(source=DailyPlan.SOURCE_PROGRAM)
++            .only("id", "name", "list_order", "created_at")
++            .order_by("list_order", "-created_at", "-id")
++        )
++    else:
++        dailyplans = (
++            DailyPlan.objects
++            .filter(
++                created_by=user,
++                is_draft=False,
++            )
++            .exclude(source=DailyPlan.SOURCE_PROGRAM)
++            .select_related("created_by", "original_author", "forked_from")
++            .prefetch_related("shares")
++            .order_by("list_order", "-created_at", "-id")
+         )
+-        .exclude(source=DailyPlan.SOURCE_PROGRAM)
+-        .order_by("list_order", "-created_at", "-id")
+-    )
+ 
+     viewmode = DAILYPLAN_VIEWMODE_PERSONAL_LIST
+ 
+@@ -224,6 +238,7 @@
+         dailyplans=dailyplans,
+         user=user,
+         viewmode=viewmode,
++        list_mode=list_mode,
+     )
+ 
+     page_actions = resolve_dailyplan_page_actions(
+@@ -243,12 +258,14 @@
+ 
+ def get_dailyplan_explore_list_page_data(user) -> DailyPlanListPageData:
+     dailyplans = (
+-        dailyplans_with_kcal()
++        DailyPlan.objects
+         .filter(
+             is_public=True,
+             is_draft=False,
+         )
+         .exclude(source=DailyPlan.SOURCE_PROGRAM)
++        .select_related("created_by", "original_author", "forked_from")
++        .prefetch_related("shares")
+         .order_by("-created_at")
+     )
+ 
+@@ -275,13 +292,14 @@
+ 
+ def get_dailyplan_shared_list_page_data(user) -> DailyPlanListPageData:
+     dailyplans = (
+-        dailyplans_with_kcal()
++        DailyPlan.objects
+         .filter(
+             shares__accepted_by=user,
+             shares__removed=False,
+             is_draft=False,
+         )
+         .exclude(source=DailyPlan.SOURCE_PROGRAM)
++        .select_related("created_by", "original_author", "forked_from")
+         .prefetch_related("shares")
+         .distinct()
+     )
+@@ -309,12 +327,14 @@
+ 
+ def get_dailyplan_draft_list_page_data(user) -> DailyPlanListPageData:
+     dailyplans = (
+-        dailyplans_with_kcal()
++        DailyPlan.objects
+         .filter(
+             created_by=user,
+             is_draft=True,
+         )
+         .exclude(source=DailyPlan.SOURCE_PROGRAM)
++        .select_related("created_by", "original_author", "forked_from")
++        .prefetch_related("shares")
+         .order_by("-created_at")
+     )
+ 
+--- a/notas/application/use_cases/meal_pages.py	2026-06-09 23:51:09.000000000 +0000
++++ b/notas/application/use_cases/meal_pages.py	2026-06-23 01:12:50.812447069 +0000
+@@ -17,7 +17,7 @@
+ from notas.presentation.composition.js.food_picker_builder import (
+     build_food_picker_context_payload,
+ )
+-from notas.presentation.composition.viewmodel.meal.meal_content import (
++from notas.presentation.viewmodels.meals import (
+     build_meal_detail_content_data,
+     build_meal_list_content_data,
+ )
+@@ -192,23 +192,36 @@
+ def get_meal_list_page_data(user, request_get=None) -> MealListPageData:
+     list_mode = _normalize_list_mode(request_get)
+ 
+-    meals = (
+-        _standalone_meals_queryset()
+-        .filter(
+-            created_by=user,
+-            is_draft=False,
+-            dailyplanmeal__isnull=True,
++    if list_mode in {"reorder", "delete"}:
++        meals = (
++            _standalone_meals_queryset()
++            .filter(
++                created_by=user,
++                is_draft=False,
++                dailyplanmeal__isnull=True,
++            )
++            .only("id", "name", "list_order", "created_at")
++            .order_by("list_order", "-created_at", "-id")
++            .distinct()
+         )
+-        .select_related("created_by", "original_author", "forked_from")
+-        .prefetch_related(
+-            Prefetch(
+-                "meal_food_set",
+-                queryset=_meal_foods_for_card_rendering(),
+-            ),
++    else:
++        meals = (
++            _standalone_meals_queryset()
++            .filter(
++                created_by=user,
++                is_draft=False,
++                dailyplanmeal__isnull=True,
++            )
++            .select_related("created_by", "original_author", "forked_from")
++            .prefetch_related(
++                Prefetch(
++                    "meal_food_set",
++                    queryset=_meal_foods_for_card_rendering(),
++                ),
++            )
++            .order_by("list_order", "-created_at", "-id")
++            .distinct()
+         )
+-        .order_by("list_order", "-created_at", "-id")
+-        .distinct()
+-    )
+ 
+     viewmode = MEAL_VIEWMODE_PERSONAL_LIST
+ 
+@@ -216,6 +229,7 @@
+         meals=meals,
+         user=user,
+         viewmode=viewmode,
++        list_mode=list_mode,
+     )
+ 
+     page_actions = resolve_meal_page_actions(
+--- a/notas/interface/views/dailyplans.py	2026-06-19 01:30:52.000000000 +0000
++++ b/notas/interface/views/dailyplans.py	2026-06-23 01:12:50.813650527 +0000
+@@ -11,9 +11,11 @@
+ 
+ import json
+ from django.core.serializers.json import DjangoJSONEncoder
+-from notas.presentation.composition.viewmodel.dailyplan.detail_dailyplan_builder import build_dailyplan_detail_vm
+-from notas.presentation.composition.viewmodel.dailyplan.list_dailyplan_builder import build_dailyplan_list_vm
+-from notas.presentation.composition.viewmodel.dailyplan.configure_dailyplan_builder import build_dailyplan_configure_vm
++from notas.presentation.viewmodels.dailyplans import (
++    build_dailyplan_configure_vm,
++    build_dailyplan_detail_vm,
++    build_dailyplan_list_vm,
++)
+ from notas.application.services.queries.dailyplan_queries import dailyplans_with_kcal, get_dailyplan_for_edit
+ from notas.application.services.queries.meal_queries import meals_with_kcal
+ 
+--- a/notas/interface/views/meals.py	2026-06-17 19:14:50.000000000 +0000
++++ b/notas/interface/views/meals.py	2026-06-23 01:12:50.814342264 +0000
+@@ -10,9 +10,11 @@
+ import json
+ from django.core.serializers.json import DjangoJSONEncoder
+ from notas.application.services.nutrition.nutrition_kpis import build_nutrition_kpis_from_meal
+-from notas.presentation.composition.viewmodel.meal.detail_meal_builder import build_meal_detail_vm
+-from notas.presentation.composition.viewmodel.meal.list_meal_builder import build_meal_list_vm
+-from notas.presentation.composition.viewmodel.meal.configure_meal_builder import build_meal_configure_vm
++from notas.presentation.viewmodels.meals import (
++    build_meal_configure_vm,
++    build_meal_detail_vm,
++    build_meal_list_vm,
++)
+ from notas.presentation.composition.js.food_picker_builder import build_food_picker_foods_payload, build_food_picker_context_payload
+ from notas.application.services.queries.meal_queries import meals_with_kcal
+ 
+--- a/notas/presentation/viewmodels/dailyplans.py	1970-01-01 00:00:00.000000000 +0000
++++ b/notas/presentation/viewmodels/dailyplans.py	2026-06-23 01:12:20.154050650 +0000
+@@ -0,0 +1,31 @@
++"""Public DailyPlan viewmodel boundary.
++
++Views and use cases should import DailyPlan presentation builders from here,
++so composition modules stay as implementation details.
++"""
++
++from notas.presentation.composition.viewmodel.dailyplan.configure_dailyplan_builder import (
++    build_dailyplan_configure_vm,
++)
++from notas.presentation.composition.viewmodel.dailyplan.dailyplan_content import (
++    DailyPlanDetailContentData,
++    DailyPlanListContentData,
++    build_dailyplan_detail_content_data,
++    build_dailyplan_list_content_data,
++)
++from notas.presentation.composition.viewmodel.dailyplan.detail_dailyplan_builder import (
++    build_dailyplan_detail_vm,
++)
++from notas.presentation.composition.viewmodel.dailyplan.list_dailyplan_builder import (
++    build_dailyplan_list_vm,
++)
++
++__all__ = [
++    "DailyPlanDetailContentData",
++    "DailyPlanListContentData",
++    "build_dailyplan_configure_vm",
++    "build_dailyplan_detail_content_data",
++    "build_dailyplan_detail_vm",
++    "build_dailyplan_list_content_data",
++    "build_dailyplan_list_vm",
++]
+--- a/notas/presentation/viewmodels/meals.py	1970-01-01 00:00:00.000000000 +0000
++++ b/notas/presentation/viewmodels/meals.py	2026-06-23 01:12:20.154238727 +0000
+@@ -0,0 +1,31 @@
++"""Public Meal viewmodel boundary.
++
++Views and use cases should import Meal presentation builders from here instead
++of depending directly on composition implementation modules.
++"""
++
++from notas.presentation.composition.viewmodel.meal.configure_meal_builder import (
++    build_meal_configure_vm,
++)
++from notas.presentation.composition.viewmodel.meal.detail_meal_builder import (
++    build_meal_detail_vm,
++)
++from notas.presentation.composition.viewmodel.meal.list_meal_builder import (
++    build_meal_list_vm,
++)
++from notas.presentation.composition.viewmodel.meal.meal_content import (
++    MealDetailContentData,
++    MealListContentData,
++    build_meal_detail_content_data,
++    build_meal_list_content_data,
++)
++
++__all__ = [
++    "MealDetailContentData",
++    "MealListContentData",
++    "build_meal_configure_vm",
++    "build_meal_detail_content_data",
++    "build_meal_detail_vm",
++    "build_meal_list_content_data",
++    "build_meal_list_vm",
++]

@@ -794,29 +794,49 @@ class Meal(models.Model):
     # ---- kcal ----
     @property
     def kcal_protein(self):
+        if self.kcal_protein_cached is not None:
+            return self.kcal_protein_cached
         return sum(mf.kcal_protein for mf in self.meal_food_set.all())
 
     @property
     def kcal_carbs(self):
+        if self.kcal_carbs_cached is not None:
+            return self.kcal_carbs_cached
         return sum(mf.kcal_carbs for mf in self.meal_food_set.all())
 
     @property
     def kcal_fat(self):
+        if self.kcal_fat_cached is not None:
+            return self.kcal_fat_cached
         return sum(mf.kcal_fat for mf in self.meal_food_set.all())
 
     @property
     def total_kcal(self):
+        if self.total_kcal_cached is not None:
+            return self.total_kcal_cached
         return self.kcal_protein + self.kcal_carbs + self.kcal_fat
 
     @property
     def alloc(self):
-        if self.total_kcal == 0:
+        if (
+            self.alloc_protein_cached is not None
+            and self.alloc_carbs_cached is not None
+            and self.alloc_fat_cached is not None
+        ):
+            return {
+                "protein": self.alloc_protein_cached,
+                "carbs": self.alloc_carbs_cached,
+                "fat": self.alloc_fat_cached,
+            }
+
+        total_kcal = self.total_kcal
+        if total_kcal == 0:
             return {"protein": 0, "carbs": 0, "fat": 0}
 
         return {
-            "protein": self.kcal_protein / self.total_kcal * 100,
-            "carbs": self.kcal_carbs / self.total_kcal * 100,
-            "fat": self.kcal_fat / self.total_kcal * 100,
+            "protein": self.kcal_protein / total_kcal * 100,
+            "carbs": self.kcal_carbs / total_kcal * 100,
+            "fat": self.kcal_fat / total_kcal * 100,
         }
 
     # ==================================================
@@ -986,6 +1006,9 @@ class DailyPlan(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     list_order = models.PositiveIntegerField(default=0)
 
+    summary_cache = models.JSONField(default=dict, blank=True)
+    summary_cache_updated_at = models.DateTimeField(null=True, blank=True)
+
     def kind(self):
         return "Daily Plan"
 
@@ -1030,43 +1053,79 @@ class DailyPlan(models.Model):
         return "original"
 
 
+    def _summary_metric(self, key):
+        cached = (self.summary_cache or {}).get("totals", {}).get(key)
+        if cached is not None:
+            return cached
+        return None
+
     @property
     def protein(self):
+        cached = self._summary_metric("protein")
+        if cached is not None:
+            return cached
         return sum(dpm.meal.protein for dpm in self.dailyplan_meals.all())
 
     @property
     def carbs(self):
+        cached = self._summary_metric("carbs")
+        if cached is not None:
+            return cached
         return sum(dpm.meal.carbs for dpm in self.dailyplan_meals.all())
 
     @property
     def fat(self):
+        cached = self._summary_metric("fat")
+        if cached is not None:
+            return cached
         return sum(dpm.meal.fat for dpm in self.dailyplan_meals.all())
 
     @property
     def kcal_protein(self):
+        cached = self._summary_metric("kcal_protein")
+        if cached is not None:
+            return cached
         return sum(dpm.meal.kcal_protein for dpm in self.dailyplan_meals.all())
 
     @property
     def kcal_carbs(self):
+        cached = self._summary_metric("kcal_carbs")
+        if cached is not None:
+            return cached
         return sum(dpm.meal.kcal_carbs for dpm in self.dailyplan_meals.all())
 
     @property
     def kcal_fat(self):
+        cached = self._summary_metric("kcal_fat")
+        if cached is not None:
+            return cached
         return sum(dpm.meal.kcal_fat for dpm in self.dailyplan_meals.all())
 
     @property
     def total_kcal(self):
+        cached = self._summary_metric("total_kcal")
+        if cached is not None:
+            return cached
         return self.kcal_protein + self.kcal_carbs + self.kcal_fat
 
     @property
     def alloc(self):
-        if self.total_kcal == 0:
+        cached = (self.summary_cache or {}).get("totals", {}).get("alloc")
+        if cached is not None:
+            return {
+                "protein": cached.get("protein", 0),
+                "carbs": cached.get("carbs", 0),
+                "fat": cached.get("fat", 0),
+            }
+
+        total_kcal = self.total_kcal
+        if total_kcal == 0:
             return {"protein": 0, "carbs": 0, "fat": 0}
 
         return {
-            "protein": self.kcal_protein / self.total_kcal * 100,
-            "carbs": self.kcal_carbs / self.total_kcal * 100,
-            "fat": self.kcal_fat / self.total_kcal * 100,
+            "protein": self.kcal_protein / total_kcal * 100,
+            "carbs": self.kcal_carbs / total_kcal * 100,
+            "fat": self.kcal_fat / total_kcal * 100,
         }
     
     def meals_with_foods(self):
@@ -1372,6 +1431,9 @@ class Program(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     list_order = models.PositiveIntegerField(default=0)
 
+    summary_cache = models.JSONField(default=dict, blank=True)
+    summary_cache_updated_at = models.DateTimeField(null=True, blank=True)
+
     class Meta:
         ordering = ["list_order", "-created_at", "-id"]
 
@@ -1391,6 +1453,9 @@ class Program(models.Model):
 
     @property
     def filled_days_count(self):
+        cached = (self.summary_cache or {}).get("filled_days_count")
+        if cached is not None:
+            return cached
         return self.program_dailyplan.count()
 
     @property
@@ -1399,14 +1464,23 @@ class Program(models.Model):
 
     @property
     def protein(self):
+        cached = (self.summary_cache or {}).get("program_totals", {}).get("protein")
+        if cached is not None:
+            return cached
         return sum(day.dailyplan.protein for day in self.program_dailyplan.all())
 
     @property
     def carbs(self):
+        cached = (self.summary_cache or {}).get("program_totals", {}).get("carbs")
+        if cached is not None:
+            return cached
         return sum(day.dailyplan.carbs for day in self.program_dailyplan.all())
 
     @property
     def fat(self):
+        cached = (self.summary_cache or {}).get("program_totals", {}).get("fat")
+        if cached is not None:
+            return cached
         return sum(day.dailyplan.fat for day in self.program_dailyplan.all())
 
     @property
@@ -1423,14 +1497,23 @@ class Program(models.Model):
 
     @property
     def kcal_protein(self):
+        cached = (self.summary_cache or {}).get("program_totals", {}).get("kcal_protein")
+        if cached is not None:
+            return cached
         return sum(day.dailyplan.kcal_protein for day in self.program_dailyplan.all())
 
     @property
     def kcal_carbs(self):
+        cached = (self.summary_cache or {}).get("program_totals", {}).get("kcal_carbs")
+        if cached is not None:
+            return cached
         return sum(day.dailyplan.kcal_carbs for day in self.program_dailyplan.all())
 
     @property
     def kcal_fat(self):
+        cached = (self.summary_cache or {}).get("program_totals", {}).get("kcal_fat")
+        if cached is not None:
+            return cached
         return sum(day.dailyplan.kcal_fat for day in self.program_dailyplan.all())
 
     @property

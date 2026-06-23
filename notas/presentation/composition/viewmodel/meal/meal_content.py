@@ -178,8 +178,19 @@ def build_meal_detail_content_data(
     )
 
 
-def build_meal_list_content_data(meals, user, viewmode):
+def build_meal_list_content_data(meals, user, viewmode, list_mode="list"):
     child_cards_data = []
+
+    if list_mode in {"reorder", "delete"}:
+        return MealListContentData(
+            child_cards_data=[
+                {
+                    "child_id": meal.id,
+                    "title": {"name": meal.name},
+                }
+                for meal in meals
+            ]
+        )
 
     for meal in meals:
         meal_total_kcal = meal.total_kcal_cached or meal.total_kcal
@@ -202,7 +213,7 @@ def build_meal_list_content_data(meals, user, viewmode):
             for mf in meal_foods
         ]
 
-        foods_aggregation = build_meal_foods_aggregation(meal)
+        foods_count = len(meal.foods_aggregation_cached or meal_foods)
 
         actions = resolve_meal_entity_actions(
             meal,
@@ -219,7 +230,7 @@ def build_meal_list_content_data(meals, user, viewmode):
                     "icon": CONTENT_ICON_REGISTRY.get("meal"),
                     "category": meal.category,
                     "category_badge": resolve_category_badge(meal.category),
-                    "foods_count": len(foods_aggregation),
+                    "foods_count": foods_count,
                 },
                 "kpis": {
                     "ppk": ppk["ppk"],
@@ -235,7 +246,7 @@ def build_meal_list_content_data(meals, user, viewmode):
                     "alloc_fat": meal_alloc["fat"],
                 },
                 "table_items": table_items,
-                "foods_aggregation": foods_aggregation,
+                "foods_aggregation": [],
                 "metadata": {
                     "owner": str(meal.created_by),
                     "author": str(meal.original_author),

@@ -33,7 +33,7 @@ from notas.application.resolvers.dailyplan_resolvers import (
     resolve_dailyplan_page_actions,
 )
 
-from notas.presentation.composition.viewmodel.dailyplan.dailyplan_content import (
+from notas.presentation.viewmodels.dailyplans import (
     build_dailyplan_detail_content_data,
     build_dailyplan_list_content_data,
 )
@@ -208,15 +208,29 @@ def _normalize_list_mode(request_get=None):
 def get_dailyplan_list_page_data(user, request_get=None) -> DailyPlanListPageData:
     list_mode = _normalize_list_mode(request_get)
 
-    dailyplans = (
-        dailyplans_with_kcal()
-        .filter(
-            created_by=user,
-            is_draft=False,
+    if list_mode in {"reorder", "delete"}:
+        dailyplans = (
+            DailyPlan.objects
+            .filter(
+                created_by=user,
+                is_draft=False,
+            )
+            .exclude(source=DailyPlan.SOURCE_PROGRAM)
+            .only("id", "name", "list_order", "created_at")
+            .order_by("list_order", "-created_at", "-id")
         )
-        .exclude(source=DailyPlan.SOURCE_PROGRAM)
-        .order_by("list_order", "-created_at", "-id")
-    )
+    else:
+        dailyplans = (
+            DailyPlan.objects
+            .filter(
+                created_by=user,
+                is_draft=False,
+            )
+            .exclude(source=DailyPlan.SOURCE_PROGRAM)
+            .select_related("created_by", "original_author", "forked_from")
+            .prefetch_related("shares")
+            .order_by("list_order", "-created_at", "-id")
+        )
 
     viewmode = DAILYPLAN_VIEWMODE_PERSONAL_LIST
 
@@ -224,6 +238,7 @@ def get_dailyplan_list_page_data(user, request_get=None) -> DailyPlanListPageDat
         dailyplans=dailyplans,
         user=user,
         viewmode=viewmode,
+        list_mode=list_mode,
     )
 
     page_actions = resolve_dailyplan_page_actions(
@@ -243,12 +258,14 @@ def get_dailyplan_list_page_data(user, request_get=None) -> DailyPlanListPageDat
 
 def get_dailyplan_explore_list_page_data(user) -> DailyPlanListPageData:
     dailyplans = (
-        dailyplans_with_kcal()
+        DailyPlan.objects
         .filter(
             is_public=True,
             is_draft=False,
         )
         .exclude(source=DailyPlan.SOURCE_PROGRAM)
+        .select_related("created_by", "original_author", "forked_from")
+        .prefetch_related("shares")
         .order_by("-created_at")
     )
 
@@ -275,13 +292,14 @@ def get_dailyplan_explore_list_page_data(user) -> DailyPlanListPageData:
 
 def get_dailyplan_shared_list_page_data(user) -> DailyPlanListPageData:
     dailyplans = (
-        dailyplans_with_kcal()
+        DailyPlan.objects
         .filter(
             shares__accepted_by=user,
             shares__removed=False,
             is_draft=False,
         )
         .exclude(source=DailyPlan.SOURCE_PROGRAM)
+        .select_related("created_by", "original_author", "forked_from")
         .prefetch_related("shares")
         .distinct()
     )
@@ -309,12 +327,14 @@ def get_dailyplan_shared_list_page_data(user) -> DailyPlanListPageData:
 
 def get_dailyplan_draft_list_page_data(user) -> DailyPlanListPageData:
     dailyplans = (
-        dailyplans_with_kcal()
+        DailyPlan.objects
         .filter(
             created_by=user,
             is_draft=True,
         )
         .exclude(source=DailyPlan.SOURCE_PROGRAM)
+        .select_related("created_by", "original_author", "forked_from")
+        .prefetch_related("shares")
         .order_by("-created_at")
     )
 

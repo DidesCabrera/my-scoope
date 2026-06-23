@@ -4,6 +4,7 @@ from django.dispatch import receiver
 from django.contrib.auth.models import User
 from notas.domain.models import Profile, Plan, MealFood
 from notas.application.services.nutrition.meal_nutrition import rebuild_meal_cached_state
+from notas.application.services.cache.dailyplan_summary import refresh_dailyplans_for_meal
 
 
 @receiver(post_save, sender=User)
@@ -25,6 +26,7 @@ def create_profile_for_new_user(sender, instance, created, **kwargs):
 @receiver(post_save, sender=MealFood)
 def recompute_meal_on_food_save(sender, instance, **kwargs):
     rebuild_meal_cached_state(instance.meal)
+    refresh_dailyplans_for_meal(instance.meal)
 
 
 @receiver(post_delete, sender=MealFood)

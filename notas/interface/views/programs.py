@@ -9,8 +9,9 @@ from django.core.mail import send_mail
 from django.core.serializers.json import DjangoJSONEncoder
 from django.conf import settings
 from django.db.models import Q
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
@@ -53,6 +54,14 @@ from notas.presentation.config.viewmodel_config import (
     PROGRAM_VIEWMODE_PERSONAL_LIST,
     PROGRAM_VIEWMODE_SHARE,
 )
+from notas.presentation.viewmodels.programs import (
+    available_dailyplans as program_available_dailyplans,
+    build_program_day_child_card as build_program_day_child_card_vm,
+    build_program_detail_content as build_program_detail_content_vm,
+    build_program_list_cards as build_program_list_cards_vm,
+    build_program_week_detail_content as build_program_week_detail_content_vm,
+)
+from notas.application.services.cache.program_summary import refresh_program_summary_cache
 
 DAY_LABELS = (
     (1, "Lun"),
@@ -355,7 +364,7 @@ def _plan_snapshot(dailyplan):
         "kcal_carbs": kcal_carbs,
         "kcal_fat": kcal_fat,
         "alloc": alloc,
-        "meals_count": dailyplan.dailyplan_meals.count(),
+        "meals_count": len(_dailyplan_meals_for_card(dailyplan)),
     }
 
 
@@ -525,7 +534,36 @@ def _program_days_queryset(program):
     )
 
 
-def build_weekly_grid(program, program_days, user=None, include_dailyplan_cards=False):
+def _program_days_for_program(program):
+    prefetched = getattr(program, "_prefetched_objects_cache", {}).get("program_dailyplan")
+
+    if prefetched is not None:
+        return sorted(
+            list(prefetched),
+            key=lambda program_day: (
+                program_day.week_number,
+                program_day.day_number,
+                program_day.id,
+            ),
+        )
+
+    return list(_program_days_queryset(program))
+
+
+def _minimal_program_list_item(program):
+    return {
+        "child_id": program.id,
+        "title": program.name,
+    }
+
+
+def build_weekly_grid(
+    program,
+    program_days,
+    user=None,
+    include_dailyplan_cards=False,
+    include_food_tables=True,
+):
     slots = {
         (program_day.week_number, program_day.day_number): program_day
         for program_day in program_days
@@ -534,6 +572,7 @@ def build_weekly_grid(program, program_days, user=None, include_dailyplan_cards=
     program_totals = _empty_totals()
     week_totals_for_variance = []
     program_dailyplan_meals = []
+    snapshot_cache = {}
 
     for week_number in range(1, program.normalized_duration_weeks + 1):
         week_totals = _empty_totals()
@@ -547,7 +586,10 @@ def build_weekly_grid(program, program_days, user=None, include_dailyplan_cards=
             dailyplan_card = None
 
             if program_day:
-                snapshot = _plan_snapshot(program_day.dailyplan)
+                snapshot = snapshot_cache.setdefault(
+                    program_day.dailyplan_id,
+                    _plan_snapshot(program_day.dailyplan),
+                )
                 dailyplan_meals = _dailyplan_meals_for_card(program_day.dailyplan)
                 week_dailyplan_meals.extend(dailyplan_meals)
                 program_dailyplan_meals.extend(dailyplan_meals)
@@ -578,7 +620,7 @@ def build_weekly_grid(program, program_days, user=None, include_dailyplan_cards=
                 dailyplan_snapshot=week_totals,
             )
             for food_aggregation in week_foods_aggregation
-        ]
+        ] if include_food_tables else []
         weeks.append({
             "week_number": week_number,
             "days": days,
@@ -602,7 +644,7 @@ def build_weekly_grid(program, program_days, user=None, include_dailyplan_cards=
             dailyplan_snapshot=program_totals,
         )
         for food_aggregation in program_foods_aggregation
-    ]
+    ] if include_food_tables else []
     non_zero_weeks = [value for value in week_totals_for_variance if value > 0]
     avg_week_kcal = (sum(non_zero_weeks) / len(non_zero_weeks)) if non_zero_weeks else 0
 
@@ -872,8 +914,12 @@ def build_program_metric_chart(
 
 
 def build_program_child_card(program, user, current_weight=None):
-    program_days = list(_program_days_queryset(program))
-    grid_data = build_weekly_grid(program, program_days)
+    program_days = _program_days_for_program(program)
+    grid_data = build_weekly_grid(
+        program,
+        program_days,
+        include_food_tables=False,
+    )
     current_weight = current_weight or get_current_weight(user)
     primary_week = grid_data["weeks"][0] if grid_data["weeks"] else None
     owner_label = "Tú" if program.created_by_id == user.id else str(program.created_by)
@@ -944,26 +990,31 @@ def build_program_child_card(program, user, current_weight=None):
 def program_list(request):
     list_mode = _normalize_list_mode(request.GET)
 
-    programs = (
+    base_programs = (
         Program.objects
         .filter(
             Q(created_by=request.user)
             | Q(shares__accepted_by=request.user, shares__removed=False)
         )
-        .select_related("created_by", "original_author", "forked_from")
-        .prefetch_related(
-            "shares",
-            "program_dailyplan__dailyplan__dailyplan_meals__meal__meal_food_set__food",
-        )
         .distinct()
         .order_by("list_order", "-created_at", "-id")
     )
 
-    current_weight = get_current_weight(request.user)
-    child_cards = [
-        build_program_child_card(program, request.user, current_weight=current_weight)
-        for program in programs
-    ]
+    if list_mode in {"reorder", "delete"}:
+        programs = base_programs.only("id", "name", "list_order", "created_at")
+    else:
+        programs = (
+            base_programs
+            .select_related("created_by", "original_author", "forked_from")
+            .prefetch_related("shares")
+        )
+
+    child_cards = build_program_list_cards_vm(
+        programs,
+        request.user,
+        list_mode=list_mode,
+        current_weight=get_current_weight(request.user),
+    )
     content = {
         "header": _header(_program_list_actions(list_mode)),
         "child_cards": child_cards,
@@ -1078,50 +1129,11 @@ def program_detail(request, pk):
     ).exists():
         return HttpResponseForbidden()
 
-    program_days = list(_program_days_queryset(program))
-    grid_data = build_weekly_grid(
-        program,
-        program_days,
+    content = build_program_detail_content_vm(
+        program=program,
         user=request.user,
-        include_dailyplan_cards=True,
+        header=_header(_program_detail_actions(program, request.user)),
     )
-    current_weight = get_current_weight(request.user)
-    for week in grid_data["weeks"]:
-        week["chart"] = build_program_metric_chart(
-            [week],
-            current_weight=current_weight,
-            title=f"Variación diaria · Semana {week['week_number']}",
-            subtitle="Detalle diario de calorías, macros, alloc y PPK de esta semana.",
-        )
-
-    dailyplans = list(_available_dailyplans(request.user))
-    dailyplan_options = [_plan_snapshot(dailyplan) for dailyplan in dailyplans]
-
-    content = {
-        "header": _header(_program_detail_actions(program, request.user)),
-        "program": program,
-        "weeks": grid_data["weeks"],
-        "program_kpis": grid_data["program_kpis"],
-        "program_totals": grid_data["program_totals"],
-        "program_meals_count": grid_data["program_meals_count"],
-        "program_foods_count": grid_data["program_foods_count"],
-        "program_foods_aggregation_table": grid_data["program_foods_aggregation_table"],
-        "program_chart": build_program_metric_chart(
-            grid_data["weeks"],
-            current_weight=current_weight,
-        ),
-        "program_kpi_ranges": build_program_kpi_ranges(
-            grid_data["weeks"],
-            current_weight=current_weight,
-        ),
-        "average_week_kcal": grid_data["average_week_kcal"],
-        "filled_days_count": grid_data["filled_days_count"],
-        "empty_days_count": max(program.duration_days - grid_data["filled_days_count"], 0),
-        "available_dailyplans": dailyplan_options,
-        "available_dailyplans_json": json.dumps(dailyplan_options, cls=DjangoJSONEncoder),
-        "day_labels": DAY_LABELS,
-        "can_edit": program.created_by_id == request.user.id,
-    }
 
     context = _vm_context(
         PROGRAM_VIEWMODE_PERSONAL_DETAIL,
@@ -1153,40 +1165,14 @@ def program_week_detail(request, pk, week_number):
     if week_number < 1 or week_number > program.normalized_duration_weeks:
         return HttpResponseBadRequest("Invalid week number.")
 
-    program_days = list(_program_days_queryset(program))
-    grid_data = build_weekly_grid(
-        program,
-        program_days,
+    content = build_program_week_detail_content_vm(
+        program=program,
         user=request.user,
-        include_dailyplan_cards=True,
+        week_number=week_number,
+        header=_header(_program_week_detail_actions(program, request.user, week_number)),
     )
-    current_weight = get_current_weight(request.user)
-    selected_week = next(
-        (week for week in grid_data["weeks"] if week["week_number"] == week_number),
-        None,
-    )
-    if selected_week is None:
+    if content is None:
         return HttpResponseBadRequest("Invalid week number.")
-
-    selected_week["chart"] = build_program_metric_chart(
-        [selected_week],
-        current_weight=current_weight,
-        title=f"Variación diaria · Semana {selected_week['week_number']}",
-        subtitle="Detalle diario de calorías, macros, alloc y PPK de esta semana.",
-    )
-
-    dailyplans = list(_available_dailyplans(request.user))
-    dailyplan_options = [_plan_snapshot(dailyplan) for dailyplan in dailyplans]
-
-    content = {
-        "header": _header(_program_week_detail_actions(program, request.user, week_number)),
-        "program": program,
-        "week": selected_week,
-        "available_dailyplans": dailyplan_options,
-        "available_dailyplans_json": json.dumps(dailyplan_options, cls=DjangoJSONEncoder),
-        "program_foods_count": grid_data["program_foods_count"],
-        "can_edit": program.created_by_id == request.user.id,
-    }
 
     context = _vm_context(
         PROGRAM_VIEWMODE_PERSONAL_DETAIL,
@@ -1321,6 +1307,7 @@ def configure_program(request, pk):
                 "duration_weeks",
             ]
         )
+        refresh_program_summary_cache(program)
         messages.success(request, "Programa guardado.")
         return redirect("program_detail", pk=pk)
 
@@ -1360,7 +1347,7 @@ def add_dailyplan_to_program(request, pk):
     day_number = request.POST.get("day_number")
 
     source_dailyplan = get_object_or_404(
-        _available_dailyplans(request.user),
+        program_available_dailyplans(request.user),
         pk=dailyplan_id,
     )
 
@@ -1395,6 +1382,45 @@ def remove_dailyplan_from_program(request, pk, program_day_id):
     remove_program_day(program_day=program_day)
     messages.success(request, "Día removido del programa.")
     return redirect(f"{reverse('program_detail', args=[program.pk])}#week-{week_number}")
+
+
+@login_required
+def program_day_card(request, pk, program_day_id):
+    program_day = get_object_or_404(
+        ProgramDay.objects
+        .select_related(
+            "program",
+            "program__created_by",
+            "program__original_author",
+            "program__forked_from",
+            "dailyplan",
+            "dailyplan__created_by",
+            "dailyplan__original_author",
+            "dailyplan__forked_from",
+        )
+        .prefetch_related("dailyplan__dailyplan_meals__meal__meal_food_set__food"),
+        pk=program_day_id,
+        program_id=pk,
+    )
+    program = program_day.program
+
+    if program.created_by_id != request.user.id and not program.shares.filter(
+        accepted_by=request.user,
+        removed=False,
+    ).exists():
+        return HttpResponseForbidden()
+
+    card = build_program_day_child_card_vm(program_day.dailyplan, request.user)
+    html = render_to_string(
+        "components/program_day_selected_card.html",
+        {
+            "child_card": card,
+            "week_number": program_day.week_number,
+            "day_number": program_day.day_number,
+        },
+        request=request,
+    )
+    return JsonResponse({"html": html})
 
 
 # ==================================================

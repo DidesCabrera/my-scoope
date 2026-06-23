@@ -3,6 +3,10 @@ from dataclasses import dataclass
 from django.db import transaction
 
 from notas.domain.models import DailyPlan, DailyPlanMeal, Meal
+from notas.application.services.cache.dailyplan_summary import (
+    refresh_dailyplan_and_related_program_caches,
+    refresh_dailyplan_summary_cache,
+)
 
 @dataclass(frozen=True)
 class DailyPlanCreateResult:
@@ -79,6 +83,15 @@ class DailyPlanPendingMealCreateResult:
 # DAILYPLAN HELPERS
 # ==================================================
 
+
+def _refresh_dailyplan_cache(dailyplan: DailyPlan) -> None:
+    refresh_dailyplan_and_related_program_caches(dailyplan)
+
+
+def _refresh_new_dailyplan_cache(dailyplan: DailyPlan) -> None:
+    refresh_dailyplan_summary_cache(dailyplan)
+
+
 def get_dailyplan_origin(dp: DailyPlan) -> DailyPlan:
     """
     Retorna el DailyPlan raíz.
@@ -98,19 +111,30 @@ def clone_dailyplan_meals(source: DailyPlan, target: DailyPlan) -> None:
         fork_meal_for_dailyplan,
     )
 
-    for dpm in source.dailyplan_meals.all().order_by("order", "id"):
+    prefetched = getattr(source, "_prefetched_objects_cache", {}).get("dailyplan_meals")
+    source_meals = (
+        sorted(prefetched, key=lambda dpm: (dpm.order, dpm.id))
+        if prefetched is not None
+        else source.dailyplan_meals.all().order_by("order", "id")
+    )
+
+    dailyplan_meals_to_create = []
+    for dpm in source_meals:
         forked_meal = fork_meal_for_dailyplan(
             dpm.meal,
             target.created_by,
         )
 
-        DailyPlanMeal.objects.create(
+        dailyplan_meals_to_create.append(DailyPlanMeal(
             dailyplan=target,
             meal=forked_meal,
             note=dpm.note,
             hour=dpm.hour,
             order=dpm.order,
-        )
+        ))
+
+    if dailyplan_meals_to_create:
+        DailyPlanMeal.objects.bulk_create(dailyplan_meals_to_create)
 
 # ==================================================
 # DAILYPLAN ACTIONS
@@ -224,6 +248,7 @@ def fork_dailyplan(original: DailyPlan, user) -> DailyPlan:
     )
 
     clone_dailyplan_meals(original, forked)
+    _refresh_new_dailyplan_cache(forked)
 
     return forked
 
@@ -251,6 +276,7 @@ def copy_dailyplan(original: DailyPlan, user) -> DailyPlan:
     )
 
     clone_dailyplan_meals(original, copy)
+    _refresh_new_dailyplan_cache(copy)
 
     return copy
 
@@ -296,6 +322,7 @@ def add_existing_meal_to_dailyplan(
     )
 
     dailyplan.update_draft_status()
+    _refresh_dailyplan_cache(dailyplan)
 
     return DailyPlanMealCreateResult(
         dailyplan=dailyplan,
@@ -317,6 +344,7 @@ def remove_dailyplan_meal(
 
     dailyplan_meal.delete()
     meal.delete()
+    _refresh_dailyplan_cache(dailyplan)
 
     return DailyPlanMealDeleteResult(
         dailyplan=dailyplan,
@@ -365,6 +393,7 @@ def update_dailyplan_meal(
 
     dailyplan = dailyplan_meal.dailyplan
     dailyplan.update_draft_status()
+    _refresh_dailyplan_cache(dailyplan)
 
     return DailyPlanMealUpdateResult(
         dailyplan_meal=dailyplan_meal,
@@ -391,6 +420,8 @@ def reorder_dailyplan_meals(
 
         updated_count += updated
 
+    _refresh_dailyplan_cache(dailyplan)
+
     return DailyPlanMealReorderResult(
         dailyplan=dailyplan,
         updated_count=updated_count,
@@ -414,6 +445,7 @@ def replace_dailyplan_meal_snapshot(
     if source_meal.id == old_meal_id:
         dailyplan = dailyplan_meal.dailyplan
         dailyplan.update_draft_status()
+        _refresh_dailyplan_cache(dailyplan)
 
         return DailyPlanMealSnapshotReplaceResult(
             dailyplan_meal=dailyplan_meal,
@@ -435,6 +467,7 @@ def replace_dailyplan_meal_snapshot(
 
     dailyplan = dailyplan_meal.dailyplan
     dailyplan.update_draft_status()
+    _refresh_dailyplan_cache(dailyplan)
 
     return DailyPlanMealSnapshotReplaceResult(
         dailyplan_meal=dailyplan_meal,
@@ -466,6 +499,7 @@ def create_empty_meal_for_dailyplan_meal(
 
     dailyplan = dailyplan_meal.dailyplan
     dailyplan.update_draft_status()
+    _refresh_dailyplan_cache(dailyplan)
 
     return DailyPlanMealCreateEmptyMealResult(
         dailyplan_meal=dailyplan_meal,

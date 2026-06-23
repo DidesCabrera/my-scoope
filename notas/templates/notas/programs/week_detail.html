@@ -7,7 +7,7 @@
 <div
   class="page page--detail page--program-detail page--program-week-detail has-collapsible-panels"
   data-page="program-week-detail"
-  data-program-dailyplans="{{ vm.content.available_dailyplans_json|escapejs }}"
+  data-program-dailyplans="{{ vm.content.available_dailyplans_json|escape }}"
 >
   <section class="card-title main program-main-title-card">
     <div class="card-title-comp">
@@ -35,9 +35,10 @@
 
   <section class="program-board-shell program-board-shell--week-detail">
     <div class="program-board program-board--single-week" aria-label="Detalle semanal del programa">
-      {% include "components/program_week_child_card.html" with program=vm.content.program week=vm.content.week available_dailyplans=vm.content.available_dailyplans is_week_detail=True can_edit=vm.content.can_edit %}
+      {% include "components/program_week_child_card.html" with program=vm.content.program week=vm.content.week is_week_detail=True can_edit=vm.content.can_edit %}
     </div>
   </section>
+{% include "components/program_slot_global_picker.html" with program=vm.content.program %}
 </div>
 
 <script src="{% static 'notas/js/program_metric_chart.js' %}"></script>

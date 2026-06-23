@@ -1,0 +1,42 @@
+<form
+  class="program-slot-picker section_picker js-program-slot-picker js-program-slot-picker-global"
+  method="post"
+  action="{% url 'add_dailyplan_to_program' program.id %}"
+  hidden
+>
+  {% csrf_token %}
+  <input type="hidden" name="week_number" value="">
+  <input type="hidden" name="day_number" value="">
+
+  <div class="add-row program-slot-picker__add-row">
+    <div class="selector program-slot-picker__selector">
+      <i data-lucide="search" class="search-icon-add-row-icon"></i>
+      <input
+        type="search"
+        class="program-slot-picker__search js-program-slot-search"
+        placeholder="Selecciona un plan diario…"
+        autocomplete="off"
+      >
+    </div>
+    <button type="button" class="btn-cancel-picker btn-cancel-picker-inline js-program-slot-close">Cancelar</button>
+  </div>
+
+  <div class="program-slot-picker__results js-program-slot-results" role="listbox" aria-label="Planes diarios disponibles"></div>
+
+  <div class="program-slot-picker__preview picker-summary-card picker-summary-card--selected picker-summary-card--dailyplan js-program-slot-preview" hidden>
+    <div class="picker-summary-card__header">
+      <div class="picker-summary-card__title-row">
+        <i data-lucide="clipboard-list" class="picker-summary-card__icon dailyplan"></i>
+        <div class="picker-summary-card__title">
+          <span class="js-program-slot-preview-name"></span>
+        </div>
+      </div>
+    </div>
+    <small class="js-program-slot-preview-kpis"></small>
+  </div>
+
+  <div class="actions-row program-slot-picker__actions">
+    <button type="button" class="btn-cancel-picker js-program-slot-close">Cancelar</button>
+    <button type="submit" class="btn-add-picker">Asignar Plan</button>
+  </div>
+</form>

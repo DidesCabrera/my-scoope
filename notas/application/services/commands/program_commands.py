@@ -3,10 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from django.db import transaction
-from django.db.models import F
+from django.db.models import F, Prefetch
 
 from notas.application.services.commands.dailyplan_commands import clone_dailyplan_meals
-from notas.domain.models import DailyPlan, Program, ProgramDay
+from notas.application.services.cache.program_summary import refresh_program_summary_cache
+from notas.domain.models import DailyPlan, DailyPlanMeal, MealFood, Program, ProgramDay
 
 
 @dataclass(frozen=True)
@@ -94,11 +95,36 @@ def _safe_delete_program_dailyplan_snapshot(dailyplan: DailyPlan | None) -> None
     dailyplan.delete()
 
 
+def _dailyplan_clone_prefetch_queryset():
+    return DailyPlan.objects.prefetch_related(
+        Prefetch(
+            "dailyplan_meals",
+            queryset=DailyPlanMeal.objects
+            .select_related("meal")
+            .prefetch_related(
+                Prefetch(
+                    "meal__meal_food_set",
+                    queryset=MealFood.objects.select_related("food"),
+                )
+            )
+            .order_by("order", "id"),
+        )
+    )
+
+
+def _ensure_dailyplan_clone_prefetched(dailyplan: DailyPlan) -> DailyPlan:
+    if "dailyplan_meals" in getattr(dailyplan, "_prefetched_objects_cache", {}):
+        return dailyplan
+
+    return _dailyplan_clone_prefetch_queryset().get(pk=dailyplan.pk)
+
+
 def clone_dailyplan_for_program(source: DailyPlan, user) -> DailyPlan:
     """
     Crea un snapshot completo del DailyPlan para usarlo dentro de un programa.
     No queda como elemento normal de la librería porque source='program'.
     """
+    source = _ensure_dailyplan_clone_prefetched(source)
     origin = source.forked_from or source
 
     clone = DailyPlan.objects.create(
@@ -133,6 +159,7 @@ def create_weekly_program(*, user, name: str, duration_weeks=None) -> ProgramCre
         is_draft=True,
     )
 
+    refresh_program_summary_cache(program)
     return ProgramCreateResult(program=program)
 
 
@@ -144,6 +171,7 @@ def add_week_to_program(*, program: Program) -> Program:
         program.is_draft = False
 
     program.save(update_fields=["duration_weeks", "is_draft"])
+    refresh_program_summary_cache(program)
     return program
 
 
@@ -158,6 +186,9 @@ def duplicate_week_in_program(*, program: Program, week_number, user) -> Program
     source_slots = list(
         ProgramDay.objects
         .select_related("dailyplan")
+        .prefetch_related(
+            "dailyplan__dailyplan_meals__meal__meal_food_set__food",
+        )
         .filter(program=program, week_number=week)
         .order_by("day_number", "id")
     )
@@ -185,6 +216,7 @@ def duplicate_week_in_program(*, program: Program, week_number, user) -> Program
     if program.is_draft and program.program_dailyplan.exists():
         program.is_draft = False
     program.save(update_fields=["duration_weeks", "is_draft"])
+    refresh_program_summary_cache(program)
 
     return ProgramWeekDuplicateResult(
         program=program,
@@ -215,6 +247,8 @@ def reorder_program_weeks(*, program: Program, ordered_week_numbers) -> ProgramW
     if program.is_draft and program.program_dailyplan.exists():
         program.is_draft = False
         program.save(update_fields=["is_draft"])
+
+    refresh_program_summary_cache(program)
 
     return ProgramWeekReorderResult(
         program=program,
@@ -261,6 +295,8 @@ def remove_week_from_program(*, program: Program, week_number) -> ProgramWeekRem
 
     for dailyplan in dailyplan_snapshots:
         _safe_delete_program_dailyplan_snapshot(dailyplan)
+
+    refresh_program_summary_cache(program)
 
     return ProgramWeekRemoveResult(
         program=program,
@@ -310,6 +346,8 @@ def assign_dailyplan_to_program_slot(
     if replaced_dailyplan:
         _safe_delete_program_dailyplan_snapshot(replaced_dailyplan)
 
+    refresh_program_summary_cache(program)
+
     return ProgramDayAssignResult(
         program=program,
         program_day=program_day,
@@ -327,6 +365,7 @@ def remove_program_day(*, program_day: ProgramDay) -> ProgramDayRemoveResult:
 
     program_day.delete()
     _safe_delete_program_dailyplan_snapshot(dailyplan)
+    refresh_program_summary_cache(program)
 
     return ProgramDayRemoveResult(
         program=program,
@@ -365,7 +404,11 @@ def fork_program(original: Program, user) -> Program:
         is_draft=False,
     )
 
-    for program_day in original.program_dailyplan.select_related("dailyplan"):
+    for program_day in (
+        original.program_dailyplan
+        .select_related("dailyplan")
+        .prefetch_related("dailyplan__dailyplan_meals__meal__meal_food_set__food")
+    ):
         cloned_dailyplan = clone_dailyplan_for_program(program_day.dailyplan, user)
         ProgramDay.objects.create(
             program=forked,
@@ -374,6 +417,7 @@ def fork_program(original: Program, user) -> Program:
             day_number=program_day.day_number,
         )
 
+    refresh_program_summary_cache(forked)
     return forked
 
 
@@ -389,7 +433,11 @@ def copy_program(original: Program, user) -> Program:
         is_draft=False,
     )
 
-    for program_day in original.program_dailyplan.select_related("dailyplan"):
+    for program_day in (
+        original.program_dailyplan
+        .select_related("dailyplan")
+        .prefetch_related("dailyplan__dailyplan_meals__meal__meal_food_set__food")
+    ):
         cloned_dailyplan = clone_dailyplan_for_program(program_day.dailyplan, user)
         ProgramDay.objects.create(
             program=copied,
@@ -398,4 +446,5 @@ def copy_program(original: Program, user) -> Program:
             day_number=program_day.day_number,
         )
 
+    refresh_program_summary_cache(copied)
     return copied

@@ -14,6 +14,18 @@ def _resolve_title_url(actions):
 def build_meal_list_vm(content_data, page_actions=None, list_mode="list"):
     children = []
 
+    if list_mode in {"reorder", "delete"}:
+        for child_data in content_data.child_cards_data:
+            children.append({
+                "child_id": child_data["child_id"],
+                "titulo": {"name": child_data["title"]["name"]},
+            })
+        return ListVM(
+            header=build_page_header(actions=page_actions or []),
+            child_cards=children,
+            list_mode=list_mode,
+        )
+
     for child_data in content_data.child_cards_data:
         title_url = _resolve_title_url(child_data["actions"])
 

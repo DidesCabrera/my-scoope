@@ -10,9 +10,11 @@ from notas.presentation.config.viewmodel_config import *
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from notas.application.services.nutrition.nutrition_kpis import build_nutrition_kpis_from_meal
-from notas.presentation.composition.viewmodel.meal.detail_meal_builder import build_meal_detail_vm
-from notas.presentation.composition.viewmodel.meal.list_meal_builder import build_meal_list_vm
-from notas.presentation.composition.viewmodel.meal.configure_meal_builder import build_meal_configure_vm
+from notas.presentation.viewmodels.meals import (
+    build_meal_configure_vm,
+    build_meal_detail_vm,
+    build_meal_list_vm,
+)
 from notas.presentation.composition.js.food_picker_builder import build_food_picker_foods_payload, build_food_picker_context_payload
 from notas.application.services.queries.meal_queries import meals_with_kcal
 

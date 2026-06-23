@@ -7,7 +7,7 @@
 <div
   class="page page--detail page--program-detail has-collapsible-panels"
   data-page="program-detail"
-  data-program-dailyplans="{{ vm.content.available_dailyplans_json|escapejs }}"
+  data-program-dailyplans="{{ vm.content.available_dailyplans_json|escape }}"
 >
   <section class="card-title main program-main-title-card">
     <div class="card-title-comp">
@@ -33,15 +33,15 @@
     </div>
   </section>
 
+  <h3>Información Nutricional</h3>
   <section class="card-kpi program-main-kpi-range">
     {% include "components/dash_kpi_range.html" with ranges=vm.content.program_kpi_ranges modifier="dash-kpi-range--main" %}
   </section>
 
-  <h2>Gráfico diario por Indicador</h2>
-  {% include "components/program_metric_chart.html" with chart=vm.content.program_chart modifier="program-chart-panel--detail" %}
+  {% include "components/program_metric_chart_program.html" with chart=vm.content.program_chart modifier="program-chart-panel--detail" %}
   
   <div class="title-section-panels program-weeks-title-section">
-    <h2>Semanas en este Programa</h2>
+    <h3>Semanas en este Programa</h3>
     {% if vm.content.can_edit %}
       <form method="post" action="{% url 'program_add_week' vm.content.program.id %}" class="program-add-week-form">
         {% csrf_token %}
@@ -76,10 +76,11 @@
 
     <div class="program-board" aria-label="Grilla semanal del programa">
       {% for week in vm.content.weeks %}
-        {% include "components/program_week_child_card.html" with program=vm.content.program week=week available_dailyplans=vm.content.available_dailyplans can_edit=vm.content.can_edit %}
+        {% include "components/program_week_child_card.html" with program=vm.content.program week=week can_edit=vm.content.can_edit %}
       {% endfor %}
     </div>
   </section>
+{% include "components/program_slot_global_picker.html" with program=vm.content.program %}
 </div>
 
 <script src="{% static 'notas/js/program_metric_chart.js' %}"></script>

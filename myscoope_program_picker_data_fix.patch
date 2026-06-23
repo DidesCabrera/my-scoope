@@ -1,0 +1,26 @@
+diff --git a/notas/templates/notas/programs/detail.html b/notas/templates/notas/programs/detail.html
+index d238c6f..864e2da 100644
+--- a/notas/templates/notas/programs/detail.html
++++ b/notas/templates/notas/programs/detail.html
+@@ -7,7 +7,7 @@
+ <div
+   class="page page--detail page--program-detail has-collapsible-panels"
+   data-page="program-detail"
+-  data-program-dailyplans="{{ vm.content.available_dailyplans_json|escapejs }}"
++  data-program-dailyplans="{{ vm.content.available_dailyplans_json|escape }}"
+ >
+   <section class="card-title main program-main-title-card">
+     <div class="card-title-comp">
+diff --git a/notas/templates/notas/programs/week_detail.html b/notas/templates/notas/programs/week_detail.html
+index acd5ce4..d30ca7f 100644
+--- a/notas/templates/notas/programs/week_detail.html
++++ b/notas/templates/notas/programs/week_detail.html
+@@ -7,7 +7,7 @@
+ <div
+   class="page page--detail page--program-detail page--program-week-detail has-collapsible-panels"
+   data-page="program-week-detail"
+-  data-program-dailyplans="{{ vm.content.available_dailyplans_json|escapejs }}"
++  data-program-dailyplans="{{ vm.content.available_dailyplans_json|escape }}"
+ >
+   <section class="card-title main program-main-title-card">
+     <div class="card-title-comp">

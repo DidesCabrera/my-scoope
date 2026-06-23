@@ -31,7 +31,7 @@ COMPLETO
 --------------------------
 
 git add .
-git commit -m "Correcciones splash img v13 - Correcciones manuales home"
+git commit -m "Mejoras Programas semanales v3 80%"
 git push origin main
 
 
@@ -42,7 +42,7 @@ git push origin main
 -------------
 
 REVERSE PATCH
-patch -p1 -R < archivo.patch
+patch -p1 -R < myscoope_home_stat_actions_split.patch
 
 -------------
 
@@ -274,14 +274,6 @@ Refresh, log out/in, and confirm you’re on the correct organization in Platfor
 
 If it still shows “not verified,” tell me: are you submitting via platform.openai.com (API) or publishing a GPT in ChatGPT, and what exact error text do you see?
 
-
-
-
-
-
-test_core_food_seed_service.py
-
-test_apply_core_food_seed_command.py
 
 
 -----

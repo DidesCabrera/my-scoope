@@ -17,7 +17,7 @@ from notas.domain.models import FoodLocalizedName, Meal, MealFood
 from notas.presentation.composition.js.food_picker_builder import (
     build_food_picker_context_payload,
 )
-from notas.presentation.composition.viewmodel.meal.meal_content import (
+from notas.presentation.viewmodels.meals import (
     build_meal_detail_content_data,
     build_meal_list_content_data,
 )
@@ -192,23 +192,36 @@ def _normalize_list_mode(request_get=None):
 def get_meal_list_page_data(user, request_get=None) -> MealListPageData:
     list_mode = _normalize_list_mode(request_get)
 
-    meals = (
-        _standalone_meals_queryset()
-        .filter(
-            created_by=user,
-            is_draft=False,
-            dailyplanmeal__isnull=True,
+    if list_mode in {"reorder", "delete"}:
+        meals = (
+            _standalone_meals_queryset()
+            .filter(
+                created_by=user,
+                is_draft=False,
+                dailyplanmeal__isnull=True,
+            )
+            .only("id", "name", "list_order", "created_at")
+            .order_by("list_order", "-created_at", "-id")
+            .distinct()
         )
-        .select_related("created_by", "original_author", "forked_from")
-        .prefetch_related(
-            Prefetch(
-                "meal_food_set",
-                queryset=_meal_foods_for_card_rendering(),
-            ),
+    else:
+        meals = (
+            _standalone_meals_queryset()
+            .filter(
+                created_by=user,
+                is_draft=False,
+                dailyplanmeal__isnull=True,
+            )
+            .select_related("created_by", "original_author", "forked_from")
+            .prefetch_related(
+                Prefetch(
+                    "meal_food_set",
+                    queryset=_meal_foods_for_card_rendering(),
+                ),
+            )
+            .order_by("list_order", "-created_at", "-id")
+            .distinct()
         )
-        .order_by("list_order", "-created_at", "-id")
-        .distinct()
-    )
 
     viewmode = MEAL_VIEWMODE_PERSONAL_LIST
 
@@ -216,6 +229,7 @@ def get_meal_list_page_data(user, request_get=None) -> MealListPageData:
         meals=meals,
         user=user,
         viewmode=viewmode,
+        list_mode=list_mode,
     )
 
     page_actions = resolve_meal_page_actions(
