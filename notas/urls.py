@@ -96,6 +96,7 @@ from notas.interface.views.programs import (
     program_day_card,
     program_list,
     program_create,
+    program_rename,
     program_list_reorder,
     program_list_bulk_delete,
     program_remove,
@@ -142,6 +143,13 @@ from notas.interface.views.admin_tools import (
     admin_food_catalog,
     admin_foods_export_csv,
     admin_foods_template,
+)
+
+from notas.interface.views.comparators import (
+    comparator_index,
+    dailyplan_comparator,
+    food_comparator,
+    meal_comparator,
 )
 
 from notas.interface.views.proposals import (
@@ -192,6 +200,13 @@ urlpatterns = [
     path("inbox/<str:kind>/<int:share_id>/favorite/", inbox_toggle_favorite, name="inbox_toggle_favorite"),
     path("inbox/<str:kind>/<int:share_id>/save/", inbox_save_attachment, name="inbox_save_attachment"),
     path("project/", project_view, name="project_view"),
+
+    # COMPARATORS
+    path("comparators/", comparator_index, name="comparator_index"),
+    path("comparators/foods/", food_comparator, name="food_comparator"),
+    path("comparators/meals/", meal_comparator, name="meal_comparator"),
+    path("comparators/dailyplans/", dailyplan_comparator, name="dailyplan_comparator"),
+
 
     path("elemental/context/", elemental_context, name="elemental_context"),
     path("elemental/nutrition/", elemental_nutrition, name="elemental_nutrition"),
@@ -364,6 +379,7 @@ urlpatterns = [
     path("programs/reorder/", program_list_reorder, name="program_list_reorder"),
     path("programs/bulk-delete/", program_list_bulk_delete, name="program_list_bulk_delete"),
     path("programs/create/", program_create, name="program_create"),
+    path("programs/<int:pk>/rename/", program_rename, name="program_rename"),
     path("programs/<int:pk>/configure/", configure_program, name="configure_program"),
     path("programs/<int:pk>/share/", program_share, name="program_share"),
     path("programs/<int:pk>/remove/", program_remove, name="program_remove"),

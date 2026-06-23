@@ -387,6 +387,16 @@ DAILYPLAN_PAGE_ACTION_DEFINITIONS = {
         "get_url": lambda user, context=None: reverse("dailyplan_list") + "?mode=reorder",
     },
 
+    "compare": {
+        "label": "Comparar Planes",
+        "method": "get",
+        "icon": "columns-3",
+        "order": 25,
+        "desktop_position": "menu",
+        "mobile_position": "menu",
+        "get_url": lambda user, context=None: reverse("dailyplan_comparator"),
+    },
+
     "enter_delete_mode": {
         "label": "Eliminar Planes",
         "method": "get",
@@ -440,6 +450,7 @@ DAILYPLAN_PAGE_ACTIONS_BY_VIEWMODE = {
     DAILYPLAN_VIEWMODE_PERSONAL_LIST: [
         "create",
         "enter_reorder_mode",
+        "compare",
         "enter_delete_mode",
     ],
     DAILYPLAN_VIEWMODE_EXPLORE_LIST: [],

@@ -137,6 +137,11 @@
     background-color: var(--color-dailyplan);
     color: #ffffff;
   }
+
+  .home-stat-icon.program {
+    background-color: var(--entity-program);
+    color: #ffffff;
+  }
   
   .home-stat-icon.weight {
     padding: 0;

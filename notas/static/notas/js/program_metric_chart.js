@@ -81,16 +81,19 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function renderAxis(data) {
-    const axisCount = data.axisCount || data.weeksCount || 1;
-    const axis = makeElement("div", `program-chart-week-axis program-chart-week-axis--${data.scope || "program"}`, {
+    const scope = data.scope || "program";
+    const labels = Array.isArray(data.axisLabels) ? data.axisLabels : [];
+    const axisCount = data.axisCount || (scope === "week" ? labels.length || data.daysCount : data.weeksCount) || 1;
+    const axis = makeElement("div", `program-chart-week-axis program-chart-week-axis--${scope}`, {
       style: `--program-chart-axis-count: ${axisCount}; --program-chart-weeks: ${data.weeksCount || 1};`,
       "aria-label": "Etiquetas del gráfico",
     });
 
-    (data.axisLabels || []).forEach((label) => {
+    labels.forEach((label) => {
+      const mobileLabel = label.mobileLabel || label.label;
       axis.appendChild(makeElement("span", "", {
-        "data-mobile-label": label.mobileLabel || label.label,
-        text: label.label,
+        "data-mobile-label": mobileLabel,
+        text: scope === "week" ? mobileLabel : label.label,
       }));
     });
 

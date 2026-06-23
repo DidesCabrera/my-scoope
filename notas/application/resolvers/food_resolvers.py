@@ -136,6 +136,16 @@ FOOD_PAGE_ACTION_DEFINITIONS = {
         "get_url": lambda user, context=None: reverse("food_list") + "?mode=reorder",
     },
 
+    "compare": {
+        "label": "Comparar Alimentos",
+        "method": "get",
+        "icon": "columns-3",
+        "order": 25,
+        "desktop_position": "menu",
+        "mobile_position": "menu",
+        "get_url": lambda user, context=None: reverse("food_comparator"),
+    },
+
     "enter_delete_mode": {
         "label": "Eliminar Alimentos",
         "method": "get",
@@ -189,6 +199,7 @@ FOOD_PAGE_ACTIONS_BY_VIEWMODE = {
     FOOD_VIEWMODE_PERSONAL_LIST: [
         "create",
         "enter_reorder_mode",
+        "compare",
         "enter_delete_mode",
     ],
 }

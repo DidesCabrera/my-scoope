@@ -1,0 +1,92 @@
+diff -ruN a/notas/static/notas/css/components/home.css b/notas/static/notas/css/components/home.css
+--- a/notas/static/notas/css/components/home.css	2026-06-23 17:21:18.000000000 +0000
++++ b/notas/static/notas/css/components/home.css	2026-06-23 17:45:51.526239012 +0000
+@@ -126,7 +126,7 @@
+ 
+ .home-stats {
+   display: grid;
+-  grid-template-columns: repeat(4, minmax(0, 1fr));
++  grid-template-columns: repeat(2, minmax(0, 1fr));
+   gap: 16px;
+ }
+ 
+diff -ruN a/notas/static/notas/css/components/sidebar.css b/notas/static/notas/css/components/sidebar.css
+--- a/notas/static/notas/css/components/sidebar.css	2026-06-19 04:58:32.000000000 +0000
++++ b/notas/static/notas/css/components/sidebar.css	2026-06-23 17:45:51.534347448 +0000
+@@ -182,6 +182,32 @@
+     background-color: rgba(255, 255, 255, 0.12);
+ }
+ 
++
++/* Collapsed profile shortcut */
++.sidebar-profile-shortcut {
++    display: none;
++    align-items: center;
++    justify-content: center;
++    color: var(--sidebar-text-active);
++    text-decoration: none;
++}
++
++.sidebar-profile-shortcut-icon {
++    width: 30px;
++    height: 30px;
++    flex-shrink: 0;
++    padding: 6px;
++    border-radius: 9px;
++    color: var(--sidebar-text-active);
++    background-color: transparent;
++    stroke-width: 1.8;
++}
++
++.sidebar-profile-shortcut:hover .sidebar-profile-shortcut-icon,
++.sidebar-profile-shortcut.is-active .sidebar-profile-shortcut-icon {
++    background-color: rgba(255, 255, 255, 0.12);
++}
++
+ /* Direct library groups */
+ .sidebar-group-head .sidebar-main--link {
+     flex: 1;
+@@ -338,6 +364,13 @@
+         order: 2;
+     }
+ 
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-profile-shortcut {
++        order: 3;
++        display: inline-flex;
++        justify-content: center;
++        width: 100%;
++    }
++
+     :where(body.sidebar-collapsed, html.sidebar-collapsed body) .brand-logo,
+     :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-label,
+     :where(body.sidebar-collapsed, html.sidebar-collapsed body) .group-name-sidebar,
+@@ -353,7 +386,8 @@
+         width: 100%;
+     }
+ 
+-    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-brand-home-icon {
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-brand-home-icon,
++    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-profile-shortcut-icon {
+         width: 32px;
+         height: 32px;
+     }
+diff -ruN a/notas/templates/components/sidebar.html b/notas/templates/components/sidebar.html
+--- a/notas/templates/components/sidebar.html	2026-06-17 19:35:11.000000000 +0000
++++ b/notas/templates/components/sidebar.html	2026-06-23 17:45:51.525296657 +0000
+@@ -9,6 +9,16 @@
+                 <i data-lucide="house" class="sidebar-brand-home-icon"></i>
+                 <img src="{% static 'img/logo-white.png' %}" alt="Logo" class="brand-logo">
+             </a>
++            {% if request.user.is_authenticated %}
++                <a
++                    href="{% url 'profile_detail' %}"
++                    class="sidebar-profile-shortcut {% if request.resolver_match.url_name == 'profile_detail' %}is-active{% endif %}"
++                    aria-label="Ir a mi perfil"
++                    title="Mi perfil"
++                >
++                    <i data-lucide="circle-user-round" class="sidebar-profile-shortcut-icon"></i>
++                </a>
++            {% endif %}
+             <button class="collapse-sidebar-btn" type="button" onclick="toggleSidebar()" aria-label="Contraer o expandir sidebar" title="Contraer o expandir sidebar">
+                 <i data-lucide="panel-right" class="collapse-sidebar-icon"></i>
+             </button>

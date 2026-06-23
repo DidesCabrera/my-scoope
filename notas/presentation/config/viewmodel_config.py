@@ -95,6 +95,12 @@ PROPOSAL_VIEWMODE_LIST = vm("proposal", "list", "personal")
 PROPOSAL_VIEWMODE_DETAIL = vm("proposal", "detail", "personal")
 
 
+# COMPARATORS ---------------------------------------------
+COMPARATOR_VIEWMODE_FOODS = vm("comparator", "list", "foods")
+COMPARATOR_VIEWMODE_MEALS = vm("comparator", "list", "meals")
+COMPARATOR_VIEWMODE_DAILYPLANS = vm("comparator", "list", "dailyplans")
+
+
 # INBOX / SHARING ---------------------------------------------
 INBOX_VIEWMODE_LIST = vm("inbox", "list", "personal")
 INBOX_VIEWMODE_DETAIL = vm("inbox", "detail", "personal")

@@ -182,6 +182,32 @@
     background-color: rgba(255, 255, 255, 0.12);
 }
 
+
+/* Collapsed profile shortcut */
+.sidebar-profile-shortcut {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: var(--sidebar-text-active);
+    text-decoration: none;
+}
+
+.sidebar-profile-shortcut-icon {
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    padding: 6px;
+    border-radius: 9px;
+    color: var(--sidebar-text-active);
+    background-color: transparent;
+    stroke-width: 1.8;
+}
+
+.sidebar-profile-shortcut:hover .sidebar-profile-shortcut-icon,
+.sidebar-profile-shortcut.is-active .sidebar-profile-shortcut-icon {
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
 /* Direct library groups */
 .sidebar-group-head .sidebar-main--link {
     flex: 1;
@@ -338,6 +364,13 @@
         order: 2;
     }
 
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-profile-shortcut {
+        order: 3;
+        display: inline-flex;
+        justify-content: center;
+        width: 100%;
+    }
+
     :where(body.sidebar-collapsed, html.sidebar-collapsed body) .brand-logo,
     :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-label,
     :where(body.sidebar-collapsed, html.sidebar-collapsed body) .group-name-sidebar,
@@ -353,7 +386,8 @@
         width: 100%;
     }
 
-    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-brand-home-icon {
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-brand-home-icon,
+    :where(body.sidebar-collapsed, html.sidebar-collapsed body) .sidebar-profile-shortcut-icon {
         width: 32px;
         height: 32px;
     }

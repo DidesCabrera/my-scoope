@@ -9,7 +9,7 @@
 
     <div class="list-page-header__indicator" aria-label="Total de elementos">
       <span class="structural-item">
-        <strong>{% if vm.content.child_cards %}{{ vm.content.child_cards|length }}{% elif vm.content.proposals %}{{ vm.content.proposals|length }}{% elif vm.content.inbox_items %}{{ vm.content.inbox_items|length }}{% else %}0{% endif %}</strong>
+        <strong>{% if vm.content.child_cards %}{{ vm.content.child_cards|length }}{% elif vm.content.proposals %}{{ vm.content.proposals|length }}{% elif vm.content.inbox_items %}{{ vm.content.inbox_items|length }}{% elif vm.content.item_count %}{{ vm.content.item_count }}{% else %}0{% endif %}</strong>
         <i data-lucide="{{ vm.ui.icon }}" class="structural-icon main" aria-hidden="true"></i>
       </span>
     </div>

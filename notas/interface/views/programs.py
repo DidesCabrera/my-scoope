@@ -27,6 +27,7 @@ from notas.application.services.commands.program_commands import (
     fork_program as fork_program_command,
     remove_program_day,
     remove_week_from_program,
+    rename_program,
     reorder_program_weeks,
 )
 from notas.application.services.commands.share_commands import create_program_share
@@ -190,11 +191,20 @@ def _program_detail_actions(program, user):
     if is_owner:
         actions.extend([
             _action(
+                key="rename",
+                label="Renombrar",
+                url=reverse("program_rename", args=[program.id]),
+                icon="pencil",
+                order=30,
+                desktop_position="menu",
+                mobile_position="menu",
+            ),
+            _action(
                 key="configure",
                 label="Configurar",
                 url=reverse("configure_program", args=[program.id]),
                 icon="settings",
-                order=30,
+                order=40,
                 mobile_position="menu",
             ),
             _action(
@@ -202,7 +212,7 @@ def _program_detail_actions(program, user):
                 label="Compartir",
                 url=reverse("program_share", args=[program.id]),
                 icon="send",
-                order=40,
+                order=50,
                 mobile_position="menu",
             ),
         ])
@@ -215,7 +225,7 @@ def _program_detail_actions(program, user):
                 url=reverse("fork_program", args=[program.id]),
                 method="post",
                 icon="copy",
-                order=50,
+                order=60,
                 desktop_position="menu",
                 mobile_position="menu",
             )
@@ -229,7 +239,7 @@ def _program_detail_actions(program, user):
                 url=reverse("copy_program", args=[program.id]),
                 method="post",
                 icon="copy-plus",
-                order=60,
+                order=70,
                 desktop_position="menu",
                 mobile_position="menu",
             )
@@ -243,7 +253,7 @@ def _program_detail_actions(program, user):
                 url=reverse("program_remove", args=[program.id]),
                 method="post",
                 icon="trash-2",
-                order=70,
+                order=80,
                 desktop_position="menu",
                 mobile_position="menu",
             )
@@ -1114,6 +1124,71 @@ def program_create(request):
 
     context = _vm_context(viewmode, content=content)
     return render(request, "notas/programs/create.html", context)
+
+
+@login_required
+def program_rename(request, pk):
+    program = get_object_or_404(
+        Program,
+        pk=pk,
+        created_by=request.user,
+    )
+
+    return_to = (
+        request.POST.get("return_to")
+        or request.GET.get("return_to")
+        or ""
+    )
+    fallback_url = reverse("program_detail", kwargs={"pk": program.pk})
+
+    if return_to and not url_has_allowed_host_and_scheme(
+        url=return_to,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return_to = ""
+
+    redirect_url = return_to or fallback_url
+
+    if request.method == "POST":
+        name = request.POST.get("name", "")
+
+        try:
+            rename_program(
+                program=program,
+                name=name,
+            )
+        except ValueError:
+            messages.error(request, "El nombre no puede estar vacío.")
+            rename_url = reverse("program_rename", kwargs={"pk": program.pk})
+            if return_to:
+                rename_url = f"{rename_url}?return_to={return_to}"
+            return redirect(rename_url)
+
+        messages.success(request, "Nombre actualizado correctamente.")
+        return redirect(redirect_url)
+
+    content = {
+        "header": _header([
+            _action(
+                key="back_detail",
+                label="Volver",
+                url=redirect_url,
+                icon="chevron-left",
+                order=10,
+                is_back=True,
+            )
+        ]),
+        "program": program,
+        "return_to": return_to,
+    }
+
+    context = _vm_context(
+        PROGRAM_VIEWMODE_CREATE,
+        content=content,
+        instance=program,
+    )
+    return render(request, "notas/programs/rename.html", context)
 
 
 @login_required

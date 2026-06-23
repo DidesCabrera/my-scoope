@@ -42,6 +42,7 @@
    --color-dailyplan-light: #ffffff;
    --color-program: #054cc0;
    --color-inbox: #ff4343;
+   --color-comparator: #3057ff;
    --color-home: black;
    --color-profile: black;
 
@@ -143,6 +144,7 @@
    --entity-program: var(--color-program);
    --entity-proposal: var(--entity-home);
    --entity-inbox:  #121212;
+   --entity-comparator: var(--color-comparator);
    --entity-home:  #121212;
    --entity-profile:  #121212;
 

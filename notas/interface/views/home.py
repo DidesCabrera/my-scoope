@@ -9,6 +9,7 @@ from notas.domain.models import (
     DailyPlan,
     Food,
     Meal,
+    Program,
 )
 from notas.presentation.viewmodels.base_vm import BaseVM
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
@@ -76,6 +77,7 @@ def home_view(request):
         .order_by("list_order", "name", "id")
     )
 
+    programs_count = Program.objects.filter(created_by=user).count()
     dailyplans_count = dailyplans_qs.count()
     meals_count = meals_qs.count()
     foods_count = foods_qs.count()
@@ -104,6 +106,12 @@ def home_view(request):
             ),
         ),
         stats=[
+            HomeStatVM(
+                label="Programas Semanales",
+                value=programs_count,
+                icon="calendar-days",
+                url=reverse("program_list"),
+            ),
             HomeStatVM(
                 label="Planes Diarios",
                 value=dailyplans_count,

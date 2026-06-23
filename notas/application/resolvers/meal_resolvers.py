@@ -351,6 +351,16 @@ MEAL_PAGE_ACTION_DEFINITIONS = {
         "get_url": lambda user, context=None: reverse("meal_list") + "?mode=reorder",
     },
 
+    "compare": {
+        "label": "Comparar Comidas",
+        "method": "get",
+        "icon": "columns-3",
+        "order": 25,
+        "desktop_position": "menu",
+        "mobile_position": "menu",
+        "get_url": lambda user, context=None: reverse("meal_comparator"),
+    },
+
     "enter_delete_mode": {
         "label": "Eliminar Comidas",
         "method": "get",
@@ -404,6 +414,7 @@ MEAL_PAGE_ACTIONS_BY_VIEWMODE = {
     MEAL_VIEWMODE_PERSONAL_LIST: [
         "create",
         "enter_reorder_mode",
+        "compare",
         "enter_delete_mode",
     ],
     MEAL_VIEWMODE_EXPLORE_LIST: [],

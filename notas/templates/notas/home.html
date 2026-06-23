@@ -115,14 +115,39 @@
 
     <div class="home-stat-card">
       <div class="home-stat-top">
+        <i data-lucide="calendar-days" class="home-stat-icon program"></i>
+        <span class="home-stat-label">Mis Programas Semanales</span>
+      </div>
+
+        <a href="{% url 'program_list' %}" class="home-stat-card-link">
+          <div class="home-stat-value-row">
+            <i data-lucide="bookmark" class="home-stat-kpi-icon"></i>
+            <div class="home-stat-value">{{ vm.content.stats.0.value }}</div>
+          </div>
+        </a>
+
+        <div class="home-stat-actions">
+          <a href="{% url 'program_create' %}" class="home-cta home-cta--primary">
+            <i data-lucide="plus" class="btn-card-home-icon white"></i>
+            <span class="home-cta-text">Crear</span>
+          </a>
+          <a href="{% url 'program_list' %}" class="home-cta home-cta--icon" aria-label="Ir a Mis programas semanales">
+            <i data-lucide="chevron-right" class="btn-card-home-icon black"></i>
+          </a>
+        </div>
+
+    </div>
+
+    <div class="home-stat-card">
+      <div class="home-stat-top">
         <i data-lucide="clipboard-list" class="home-stat-icon dailyplan"></i>
-        <span class="home-stat-label">Planes Diarios</span>
+        <span class="home-stat-label">Mis Planes Diarios</span>
       </div>
 
         <a href="{% url 'dailyplan_list' %}" class="home-stat-card-link">
           <div class="home-stat-value-row">
             <i data-lucide="bookmark" class="home-stat-kpi-icon"></i>
-            <div class="home-stat-value">{{ vm.content.stats.0.value }}</div>
+            <div class="home-stat-value">{{ vm.content.stats.1.value }}</div>
           </div>
         </a>
 
@@ -141,14 +166,14 @@
     <div class="home-stat-card">
       <div class="home-stat-top">
         <i data-lucide="utensils" class="home-stat-icon meal"></i>
-        <span class="home-stat-label">Comidas</span>
+        <span class="home-stat-label">Mis Comidas</span>
       </div>
     
       
       <a href="{% url 'meal_list' %}" class="home-stat-card-link">
         <div class="home-stat-value-row">
           <i data-lucide="bookmark" class="home-stat-kpi-icon"></i>
-          <div class="home-stat-value">{{ vm.content.stats.1.value }}</div>
+          <div class="home-stat-value">{{ vm.content.stats.2.value }}</div>
         </div>
       </a>
   
@@ -167,13 +192,13 @@
     <div class="home-stat-card">
       <div class="home-stat-top">
         <i data-lucide="carrot" class="home-stat-icon food"></i>
-        <span class="home-stat-label">Alimentos</span>
+        <span class="home-stat-label">Mis Alimentos</span>
       </div>
     
       <a href="{% url 'food_list' %}" class="home-stat-card-link">
         <div class="home-stat-value-row">
           <i data-lucide="bookmark" class="home-stat-kpi-icon"></i>
-          <div class="home-stat-value">{{ vm.content.stats.2.value }}</div>
+          <div class="home-stat-value">{{ vm.content.stats.3.value }}</div>
         </div>
       </a>
   
@@ -189,25 +214,6 @@
   
     </div>
 
-    <div class="home-stat-card hidden">
-      <div class="home-stat-top">
-        <i data-lucide="scale" class="home-stat-icon weight"></i>
-        <span class="home-stat-label">Peso Corporal</span>
-      </div>
-
-      <a class="home-stat-card-link">
-        <div class="home-stat-value-row">
-          <div class="home-stat-value weight">84 kg</div>
-        </div>
-      </a>
-    
-      <div class="home-stat-actions">
-        <a href="{% url 'food_create' %}" class="home-cta home-cta--primary">
-          <i data-lucide="plus" class="btn-card-home-icon white"></i>
-          <span class="home-cta-text">Registrar</span>
-        </a>
-      </div>
-    </div>
 
 
   </section>

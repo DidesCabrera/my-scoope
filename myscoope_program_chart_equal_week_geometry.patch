@@ -1,0 +1,123 @@
+diff --git a/notas/static/notas/css/components/programs.css b/notas/static/notas/css/components/programs.css
+index 5aea203..483b631 100644
+--- a/notas/static/notas/css/components/programs.css
++++ b/notas/static/notas/css/components/programs.css
+@@ -2679,3 +2679,118 @@
+     padding-inline: 0.04rem;
+   }
+ }
++
++/* Program chart geometry correction: fixed day tracks and structural week gaps ===== */
++.program-chart-panel {
++  --program-chart-week-gap: clamp(0.28rem, 1.2vw, 0.7rem);
++  --program-chart-day-min: 3px;
++}
++
++.program-chart-main-axis--program {
++  overflow-x: auto;
++  overflow-y: hidden;
++}
++
++.program-chart-main-axis--program .program-chart-plot,
++.program-chart-main-axis--program .program-chart-week-axis {
++  box-sizing: border-box;
++  width: var(--program-chart-min-width, 100%);
++  min-width: var(--program-chart-min-width, 100%);
++  padding-inline: 0.35rem;
++}
++
++.program-chart-main-axis--program .program-chart-plot {
++  display: grid;
++  grid-template-columns: repeat(var(--program-chart-weeks), minmax(0, 1fr));
++  column-gap: var(--program-chart-week-gap);
++  align-items: stretch;
++  background:
++    linear-gradient(to top, color-mix(in srgb, var(--border-default) 42%, transparent) 1px, transparent 1px) 0 0 / 100% 25%,
++    var(--surface-app);
++}
++
++.program-chart-main-axis--program .program-chart-week-column {
++  display: grid;
++  grid-template-columns: repeat(7, minmax(var(--program-chart-day-min), 1fr));
++  column-gap: 0;
++  align-items: end;
++  height: 100%;
++  min-width: 0;
++  padding-inline: 0;
++  border-left: 0;
++}
++
++.program-chart-main-axis--program .program-chart-week-column:first-of-type {
++  border-left: 0;
++}
++
++.program-chart-main-axis--program .program-chart-bar-slot {
++  padding-inline: 0;
++  border-left: 0;
++}
++
++.program-chart-main-axis--program .program-chart-bar-slot.is-week-start {
++  border-left: 0;
++}
++
++.program-chart-main-axis--program .program-chart-bar,
++.program-chart-main-axis--program .program-chart-stacked-bar,
++.program-chart-main-axis--program[data-weeks-count="1"] .program-chart-bar,
++.program-chart-main-axis--program[data-weeks-count="1"] .program-chart-stacked-bar,
++.program-chart-main-axis--program[data-weeks-count="2"] .program-chart-bar,
++.program-chart-main-axis--program[data-weeks-count="2"] .program-chart-stacked-bar,
++.program-chart-main-axis--program[data-weeks-count="3"] .program-chart-bar,
++.program-chart-main-axis--program[data-weeks-count="3"] .program-chart-stacked-bar,
++.program-chart-main-axis--program[data-weeks-count="4"] .program-chart-bar,
++.program-chart-main-axis--program[data-weeks-count="4"] .program-chart-stacked-bar {
++  width: 80%;
++  max-width: none;
++}
++
++.program-chart-main-axis--program .program-chart-week-axis {
++  display: grid;
++  grid-template-columns: repeat(var(--program-chart-weeks), minmax(0, 1fr));
++  column-gap: var(--program-chart-week-gap);
++}
++
++.program-chart-main-axis--program .program-chart-week-axis span,
++.program-chart-main-axis--program .program-chart-week-axis span:first-child {
++  display: block;
++  min-width: 0;
++  padding-top: 0.18rem;
++  border-left: 0;
++  text-align: center;
++}
++
++.program-chart-main-axis--program[data-weeks-count="1"] .program-chart-week-column,
++.program-chart-main-axis--program[data-weeks-count="2"] .program-chart-week-column,
++.program-chart-main-axis--program[data-weeks-count="3"] .program-chart-week-column,
++.program-chart-main-axis--program[data-weeks-count="4"] .program-chart-week-column,
++.program-chart-main-axis--program[data-weeks-count="5"] .program-chart-week-column,
++.program-chart-main-axis--program[data-weeks-count="6"] .program-chart-week-column,
++.program-chart-main-axis--program[data-weeks-count="7"] .program-chart-week-column,
++.program-chart-main-axis--program[data-weeks-count="8"] .program-chart-week-column,
++.program-chart-main-axis--program[data-weeks-count="9"] .program-chart-week-column,
++.program-chart-main-axis--program[data-weeks-count="10"] .program-chart-week-column,
++.program-chart-main-axis--program[data-weeks-count="11"] .program-chart-week-column,
++.program-chart-main-axis--program[data-weeks-count="12"] .program-chart-week-column {
++  padding-inline: 0;
++}
++
++@media (max-width: 780px) {
++  .program-chart-panel {
++    --program-chart-week-gap: clamp(0.22rem, 1.4vw, 0.48rem);
++  }
++
++  .program-chart-main-axis--program .program-chart-plot,
++  .program-chart-main-axis--program .program-chart-week-axis {
++    padding-inline: 0.28rem;
++  }
++
++  .program-chart-main-axis--program[data-weeks-count="1"] .program-chart-week-column,
++  .program-chart-main-axis--program[data-weeks-count="2"] .program-chart-week-column,
++  .program-chart-main-axis--program[data-weeks-count="3"] .program-chart-week-column,
++  .program-chart-main-axis--program[data-weeks-count="4"] .program-chart-week-column {
++    padding-inline: 0;
++  }
++}

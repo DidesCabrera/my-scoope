@@ -82,6 +82,10 @@
       "/app/foods",
       "/app/proposals",
       "/app/inbox",
+      "/app/comparators",
+      "/app/comparators/foods",
+      "/app/comparators/meals",
+      "/app/comparators/dailyplans",
       "/app/ai-tools",
     ]);
 

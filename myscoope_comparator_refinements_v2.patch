@@ -1,0 +1,429 @@
+diff -ruN orig134/notas/application/resolvers/dailyplan_resolvers.py mod134/notas/application/resolvers/dailyplan_resolvers.py
+--- orig134/notas/application/resolvers/dailyplan_resolvers.py	2026-06-17 19:14:50.000000000 +0000
++++ mod134/notas/application/resolvers/dailyplan_resolvers.py	2026-06-23 19:16:55.812788998 +0000
+@@ -387,6 +387,16 @@
+         "get_url": lambda user, context=None: reverse("dailyplan_list") + "?mode=reorder",
+     },
+ 
++    "compare": {
++        "label": "Comparar Planes",
++        "method": "get",
++        "icon": "columns-3",
++        "order": 25,
++        "desktop_position": "menu",
++        "mobile_position": "menu",
++        "get_url": lambda user, context=None: reverse("dailyplan_comparator"),
++    },
++
+     "enter_delete_mode": {
+         "label": "Eliminar Planes",
+         "method": "get",
+@@ -440,6 +450,7 @@
+     DAILYPLAN_VIEWMODE_PERSONAL_LIST: [
+         "create",
+         "enter_reorder_mode",
++        "compare",
+         "enter_delete_mode",
+     ],
+     DAILYPLAN_VIEWMODE_EXPLORE_LIST: [],
+diff -ruN orig134/notas/application/resolvers/food_resolvers.py mod134/notas/application/resolvers/food_resolvers.py
+--- orig134/notas/application/resolvers/food_resolvers.py	2026-06-18 03:40:21.000000000 +0000
++++ mod134/notas/application/resolvers/food_resolvers.py	2026-06-23 19:16:55.811152203 +0000
+@@ -136,6 +136,16 @@
+         "get_url": lambda user, context=None: reverse("food_list") + "?mode=reorder",
+     },
+ 
++    "compare": {
++        "label": "Comparar Alimentos",
++        "method": "get",
++        "icon": "columns-3",
++        "order": 25,
++        "desktop_position": "menu",
++        "mobile_position": "menu",
++        "get_url": lambda user, context=None: reverse("food_comparator"),
++    },
++
+     "enter_delete_mode": {
+         "label": "Eliminar Alimentos",
+         "method": "get",
+@@ -189,6 +199,7 @@
+     FOOD_VIEWMODE_PERSONAL_LIST: [
+         "create",
+         "enter_reorder_mode",
++        "compare",
+         "enter_delete_mode",
+     ],
+ }
+diff -ruN orig134/notas/application/resolvers/meal_resolvers.py mod134/notas/application/resolvers/meal_resolvers.py
+--- orig134/notas/application/resolvers/meal_resolvers.py	2026-06-17 19:14:50.000000000 +0000
++++ mod134/notas/application/resolvers/meal_resolvers.py	2026-06-23 19:16:55.811808894 +0000
+@@ -351,6 +351,16 @@
+         "get_url": lambda user, context=None: reverse("meal_list") + "?mode=reorder",
+     },
+ 
++    "compare": {
++        "label": "Comparar Comidas",
++        "method": "get",
++        "icon": "columns-3",
++        "order": 25,
++        "desktop_position": "menu",
++        "mobile_position": "menu",
++        "get_url": lambda user, context=None: reverse("meal_comparator"),
++    },
++
+     "enter_delete_mode": {
+         "label": "Eliminar Comidas",
+         "method": "get",
+@@ -404,6 +414,7 @@
+     MEAL_VIEWMODE_PERSONAL_LIST: [
+         "create",
+         "enter_reorder_mode",
++        "compare",
+         "enter_delete_mode",
+     ],
+     MEAL_VIEWMODE_EXPLORE_LIST: [],
+diff -ruN orig134/notas/interface/views/comparators.py mod134/notas/interface/views/comparators.py
+--- orig134/notas/interface/views/comparators.py	2026-06-23 19:03:21.000000000 +0000
++++ mod134/notas/interface/views/comparators.py	2026-06-23 19:15:39.714863435 +0000
+@@ -5,6 +5,7 @@
+ from django.shortcuts import redirect, render
+ from django.urls import reverse
+ 
++from notas.application.services.nutrition.weight import get_current_weight
+ from notas.domain.models import DailyPlan, Food, Meal
+ from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
+ from notas.presentation.config.viewmodel_config import (
+@@ -103,7 +104,13 @@
+ 
+ 
+ def _format_metric_value(value: float, unit: str) -> str:
+-    decimals = 1 if unit in {"g", "%"} else 0
++    if unit == "g/kg":
++        decimals = 2
++    elif unit in {"g", "%"}:
++        decimals = 1
++    else:
++        decimals = 0
++
+     return f"{_format_number(value, decimals)} {unit}"
+ 
+ 
+@@ -167,12 +174,14 @@
+     }
+ 
+ 
+-def _entity_values(entity) -> dict[str, float]:
++def _entity_values(entity, current_weight: float | None = None) -> dict[str, float]:
+     alloc = entity.alloc
++    protein = entity.protein
+ 
+     return {
+         "total_kcal": entity.total_kcal,
+-        "protein": entity.protein,
++        "ppk": (protein / current_weight) if (current_weight and protein) else 0,
++        "protein": protein,
+         "carbs": entity.carbs,
+         "fat": entity.fat,
+         "alloc_protein": alloc.get("protein", 0),
+@@ -181,16 +190,27 @@
+     }
+ 
+ 
+-def _build_metrics(values_a: dict[str, float], values_b: dict[str, float]) -> list[ComparatorMetric]:
++def _build_metrics(
++    values_a: dict[str, float],
++    values_b: dict[str, float],
++    *,
++    include_ppk: bool = False,
++) -> list[ComparatorMetric]:
+     metric_specs = [
+         ("total_kcal", "Calorías", "kcal"),
++    ]
++
++    if include_ppk:
++        metric_specs.append(("ppk", "PPK", "g/kg"))
++
++    metric_specs.extend([
+         ("protein", "Proteínas", "g"),
+         ("carbs", "Carbohidratos", "g"),
+         ("fat", "Grasas", "g"),
+         ("alloc_protein", "P%", "%"),
+         ("alloc_carbs", "C%", "%"),
+         ("alloc_fat", "F%", "%"),
+-    ]
++    ])
+ 
+     return [
+         _build_metric(
+@@ -320,8 +340,14 @@
+     selected_b = _find_selected(meals, selected_b_id)
+ 
+     metrics = []
++    current_weight = get_current_weight(request.user)
++
+     if selected_a and selected_b:
+-        metrics = _build_metrics(_entity_values(selected_a), _entity_values(selected_b))
++        metrics = _build_metrics(
++            _entity_values(selected_a, current_weight=current_weight),
++            _entity_values(selected_b, current_weight=current_weight),
++            include_ppk=True,
++        )
+ 
+     content_vm = ComparatorContentVM(
+         entity_label="comida",
+@@ -371,8 +397,14 @@
+     selected_b = _find_selected(dailyplans, selected_b_id)
+ 
+     metrics = []
++    current_weight = get_current_weight(request.user)
++
+     if selected_a and selected_b:
+-        metrics = _build_metrics(_entity_values(selected_a), _entity_values(selected_b))
++        metrics = _build_metrics(
++            _entity_values(selected_a, current_weight=current_weight),
++            _entity_values(selected_b, current_weight=current_weight),
++            include_ppk=True,
++        )
+ 
+     content_vm = ComparatorContentVM(
+         entity_label="plan diario",
+diff -ruN orig134/notas/presentation/navigation/app_registry.py mod134/notas/presentation/navigation/app_registry.py
+--- orig134/notas/presentation/navigation/app_registry.py	2026-06-23 18:40:53.000000000 +0000
++++ mod134/notas/presentation/navigation/app_registry.py	2026-06-23 19:16:40.650954831 +0000
+@@ -132,15 +132,6 @@
+                 scope="personal",
+             ),
+             NavGroupSpec(
+-                key="proposal",
+-                label="Propuestas AI",
+-                icon="sparkles",
+-                page_icon="sparkles",
+-                url_name="proposal_list",
+-                nav_root="proposal",
+-                scope="personal",
+-            ),
+-            NavGroupSpec(
+                 key="comparators",
+                 label="Comparadores",
+                 icon="columns-3",
+@@ -175,6 +166,15 @@
+                 ),
+             ),
+             NavGroupSpec(
++                key="proposal",
++                label="Propuestas AI",
++                icon="sparkles",
++                page_icon="sparkles",
++                url_name="proposal_list",
++                nav_root="proposal",
++                scope="personal",
++            ),
++            NavGroupSpec(
+                 key="explore",
+                 label="Explorar",
+                 icon="search",
+diff -ruN orig134/notas/static/notas/css/components/comparators.css mod134/notas/static/notas/css/components/comparators.css
+--- orig134/notas/static/notas/css/components/comparators.css	2026-06-23 19:03:21.000000000 +0000
++++ mod134/notas/static/notas/css/components/comparators.css	2026-06-23 19:16:25.505656404 +0000
+@@ -134,6 +134,12 @@
+   font-size: 14px;
+ }
+ 
++.comparator-field select option {
++  color: var(--input-text);
++  background: var(--input-bg);
++  font-size: 15px;
++}
++
+ .comparator-field select:focus,
+ .comparator-field input:focus {
+   outline: none;
+@@ -169,6 +175,20 @@
+   margin-top: 14px;
+ }
+ 
++.comparator-submit {
++  display: inline-flex;
++  align-items: center;
++  justify-content: center;
++  gap: 7px;
++  min-height: 36px;
++}
++
++.comparator-submit__icon {
++  width: 15px;
++  height: 15px;
++  stroke-width: 2;
++}
++
+ .comparator-results {
+   display: grid;
+   grid-template-columns: minmax(0, 1fr);
+@@ -223,12 +243,19 @@
+ 
+ .comparator-bar-row__meta {
+   display: grid;
+-  grid-template-columns: minmax(0, 1fr) auto;
++  grid-template-columns: auto minmax(0, 1fr) auto;
+   align-items: center;
+-  gap: 10px;
++  gap: 8px;
+   min-width: 0;
+ }
+ 
++.comparator-bar-row__entity-icon {
++  width: 16px;
++  height: 16px;
++  color: var(--text-muted);
++  stroke-width: 1.8;
++}
++
+ .comparator-bar-row__meta strong {
+   min-width: 0;
+   overflow: hidden;
+@@ -262,6 +289,29 @@
+   background: var(--text-main);
+ }
+ 
++.comparator-metric--total_kcal .comparator-bar {
++  background: #7b5b39;
++}
++
++.comparator-metric--ppk .comparator-bar {
++  background: var(--nutrition-ppk);
++}
++
++.comparator-metric--protein .comparator-bar,
++.comparator-metric--alloc_protein .comparator-bar {
++  background: var(--nutrition-protein);
++}
++
++.comparator-metric--carbs .comparator-bar,
++.comparator-metric--alloc_carbs .comparator-bar {
++  background: var(--nutrition-carbs);
++}
++
++.comparator-metric--fat .comparator-bar,
++.comparator-metric--alloc_fat .comparator-bar {
++  background: var(--nutrition-fat);
++}
++
+ .comparator-bar--b {
+   opacity: 0.55;
+ }
+@@ -295,6 +345,18 @@
+   background: var(--entity-comparator, var(--entity-home));
+ }
+ 
++.list-page-header--scope-foods .list-page-header__icon--comparator {
++  background: var(--entity-food);
++}
++
++.list-page-header--scope-meals .list-page-header__icon--comparator {
++  background: var(--entity-meal);
++}
++
++.list-page-header--scope-dailyplans .list-page-header__icon--comparator {
++  background: var(--entity-dailyplan);
++}
++
+ .sidebar-main-icon--comparator {
+   color: var(--entity-comparator, var(--text-main));
+ }
+@@ -322,6 +384,30 @@
+     margin-left: 0;
+     margin-right: 0;
+     padding: 12px;
++    font-size: 14px;
++  }
++
++  .comparator-selector__heading p,
++  .comparator-field,
++  .comparator-field--quantity em {
++    font-size: 14px;
++  }
++
++  .comparator-field select,
++  .comparator-field input {
++    min-height: 46px;
++    padding: 10px 12px;
++    font-size: 16px;
++    line-height: 1.35;
++  }
++
++  .comparator-field select option {
++    font-size: 16px;
++  }
++
++  .comparator-submit {
++    width: 100%;
++    min-height: 42px;
+   }
+ 
+   .comparator-selectors {
+@@ -338,7 +424,7 @@
+   }
+ 
+   .comparator-bar-row__meta {
+-    grid-template-columns: minmax(0, 1fr) auto;
++    grid-template-columns: auto minmax(0, 1fr) auto;
+   }
+ 
+   .comparator-metric {
+diff -ruN orig134/notas/templates/notas/comparators/detail.html mod134/notas/templates/notas/comparators/detail.html
+--- orig134/notas/templates/notas/comparators/detail.html	2026-06-23 19:03:21.000000000 +0000
++++ mod134/notas/templates/notas/comparators/detail.html	2026-06-23 19:16:04.687225721 +0000
+@@ -15,6 +15,13 @@
+     {% endfor %}
+   </nav>
+ 
++  {% if not vm.content.is_ready %}
++    <section class="comparator-empty card-detail-block">
++      <i data-lucide="columns-3" class="comparator-empty__icon"></i>
++      <p>{{ vm.content.empty_message }}</p>
++    </section>
++  {% endif %}
++
+   <form method="get" class="comparator-form card-detail-block" data-comparator-form>
+     <div class="comparator-selectors">
+       <section class="comparator-selector" data-comparator-selector>
+@@ -75,7 +82,10 @@
+     </div>
+ 
+     <div class="comparator-form__actions">
+-      <button type="submit" class="btn-primary">Comparar</button>
++      <button type="submit" class="data-grid-edit-actions__button data-grid-edit-actions__button--primary comparator-submit">
++        <i data-lucide="columns-3" class="comparator-submit__icon" aria-hidden="true"></i>
++        <span>Comparar</span>
++      </button>
+     </div>
+   </form>
+ 
+@@ -91,6 +101,7 @@
+           <div class="comparator-bars">
+             <div class="comparator-bar-row comparator-bar-row--a">
+               <div class="comparator-bar-row__meta">
++                <i data-lucide="{{ vm.content.entity_icon }}" class="comparator-bar-row__entity-icon" aria-hidden="true"></i>
+                 <strong>{{ vm.content.selection_a.name }}</strong>
+                 <span>{{ metric.a.formatted_value }}</span>
+               </div>
+@@ -101,6 +112,7 @@
+ 
+             <div class="comparator-bar-row comparator-bar-row--b">
+               <div class="comparator-bar-row__meta">
++                <i data-lucide="{{ vm.content.entity_icon }}" class="comparator-bar-row__entity-icon" aria-hidden="true"></i>
+                 <strong>{{ vm.content.selection_b.name }}</strong>
+                 <span>{{ metric.b.formatted_value }}</span>
+               </div>
+@@ -112,11 +124,6 @@
+         </article>
+       {% endfor %}
+     </section>
+-  {% else %}
+-    <section class="comparator-empty card-detail-block">
+-      <i data-lucide="columns-3" class="comparator-empty__icon"></i>
+-      <p>{{ vm.content.empty_message }}</p>
+-    </section>
+   {% endif %}
+ </div>
+ 

@@ -1,0 +1,108 @@
+{% extends "notas/base.html" %}
+{% load static l10n %}
+{% block title %}Comparadores{% endblock %}
+{% block content %}
+
+<div class="page list comparator-page">
+  {% include "components/list_page_header.html" %}
+
+  <nav class="comparator-tabs" aria-label="Tipo de comparador">
+    {% for tab in vm.content.tabs %}
+      <a href="{{ tab.url }}" class="comparator-tab {% if tab.is_active %}is-active{% endif %}">
+        <i data-lucide="{{ tab.icon }}" class="comparator-tab__icon"></i>
+        <span>{{ tab.label }}</span>
+      </a>
+    {% endfor %}
+  </nav>
+
+  {% if not vm.content.is_ready %}
+    <section class="comparator-empty card-detail-block">
+      <i data-lucide="columns-3" class="comparator-empty__icon"></i>
+      <p>{{ vm.content.empty_message }}</p>
+    </section>
+  {% endif %}
+
+  <form method="get" class="comparator-form card-detail-block" data-comparator-form>
+    <div class="comparator-selectors">
+      {% for selection in vm.content.selections %}
+        <section class="comparator-selector" data-comparator-selector>
+          <div class="comparator-selector__heading">
+            <span class="comparator-selector__badge">{{ forloop.counter }}</span>
+            <div>
+              <p>{{ vm.content.selector_label }} {{ forloop.counter }}</p>
+              {% if selection.name %}<strong>{{ selection.name }}</strong>{% endif %}
+            </div>
+          </div>
+
+          <label class="comparator-field">
+            <span>{{ vm.content.selector_label }}</span>
+            <select name="item_{{ forloop.counter }}" data-comparator-select>
+              <option value="">Seleccionar {{ vm.content.entity_label }}</option>
+              {% for choice in vm.content.choices %}
+                <option value="{{ choice.id }}" {% if choice.id == selection.id %}selected{% endif %}>{{ choice.name }}</option>
+              {% endfor %}
+            </select>
+          </label>
+
+          {% if vm.content.show_quantity_inputs %}
+            <label class="comparator-field comparator-field--quantity {% if not selection.id %}is-hidden{% endif %}" data-comparator-quantity>
+              <span>Cantidad</span>
+              <input type="number" name="qty_{{ forloop.counter }}" min="1" step="1" value="{{ selection.quantity|floatformat:0 }}">
+              <em>{{ vm.content.quantity_unit }}</em>
+            </label>
+          {% endif %}
+
+          {% if vm.content.can_remove_selection %}
+            <button type="submit" name="remove_index" value="{{ forloop.counter0 }}" class="data-grid-edit-actions__button data-grid-edit-actions__button--secondary comparator-remove">
+              <i data-lucide="x" class="comparator-remove__icon" aria-hidden="true"></i>
+              <span>Eliminar de la comparación</span>
+            </button>
+          {% endif %}
+        </section>
+      {% endfor %}
+    </div>
+
+    <div class="comparator-form__actions">
+      <button type="submit" name="comparator_action" value="add" class="data-grid-edit-actions__button data-grid-edit-actions__button--secondary comparator-add">
+        <i data-lucide="plus" class="comparator-add__icon" aria-hidden="true"></i>
+        <span>{{ vm.content.add_action_label }}</span>
+      </button>
+
+      <button type="submit" class="data-grid-edit-actions__button data-grid-edit-actions__button--primary comparator-submit">
+        <i data-lucide="columns-3" class="comparator-submit__icon" aria-hidden="true"></i>
+        <span>Comparar</span>
+      </button>
+    </div>
+  </form>
+
+  {% if vm.content.is_ready %}
+    <section class="comparator-results" aria-label="Resultados comparativos">
+      {% for metric in vm.content.metrics %}
+        <article class="comparator-metric comparator-metric--{{ metric.key }} card-detail-block">
+          <header class="comparator-metric__header">
+            <h3>{{ metric.label }}</h3>
+            <span>{{ metric.unit }}</span>
+          </header>
+
+          <div class="comparator-bars">
+            {% for bar in metric.bars %}
+              <div class="comparator-bar-row">
+                <div class="comparator-bar-row__meta">
+                  <i data-lucide="{{ vm.content.entity_icon }}" class="comparator-bar-row__entity-icon comparator-bar-row__entity-icon--{{ vm.content.entity_scope }}" aria-hidden="true"></i>
+                  <strong>{{ bar.label }}</strong>
+                  <span>{{ bar.formatted_value }}</span>
+                </div>
+                <div class="comparator-bar-track">
+                  <span class="comparator-bar" style="width: {{ bar.width|unlocalize }}%;"></span>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </article>
+      {% endfor %}
+    </section>
+  {% endif %}
+</div>
+
+<script src="{% static 'notas/js/comparators.js' %}"></script>
+{% endblock %}

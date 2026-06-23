@@ -164,6 +164,21 @@ def create_weekly_program(*, user, name: str, duration_weeks=None) -> ProgramCre
 
 
 @transaction.atomic
+def rename_program(*, program: Program, name: str) -> Program:
+    clean_name = (name or "").strip()
+
+    if not clean_name:
+        raise ValueError("program_name_required")
+
+    if program.name == clean_name:
+        return program
+
+    program.name = clean_name
+    program.save(update_fields=["name"])
+    return program
+
+
+@transaction.atomic
 def add_week_to_program(*, program: Program) -> Program:
     program.duration_weeks = program.normalized_duration_weeks + 1
 
