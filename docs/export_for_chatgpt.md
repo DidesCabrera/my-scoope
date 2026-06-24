@@ -12,11 +12,12 @@ El script principal está ubicado en:
 scripts/export_for_chatgpt.sh
 ```
 
-Soporta dos modos:
+Soporta tres modos:
 
 ```bash
 ./scripts/export_for_chatgpt.sh ai
 ./scripts/export_for_chatgpt.sh full
+./scripts/export_for_chatgpt.sh usda
 ```
 
 ## Modo `ai`
@@ -119,6 +120,10 @@ build/
 *.patch
 *.bak
 *.tmp
+*.orig
+*.rej
+*.swp
+*.swo
 tmp/
 temp/
 ```
@@ -191,11 +196,14 @@ El modo `ai` excluye tests para reducir tamaño y ruido cuando el análisis es p
 
 El modo `full` mantiene tests para casos donde el comportamiento esperado del sistema es importante.
 
+El modo `usda` mantiene tests e incluye `data/food_sources/`. Debe usarse solo cuando el problema dependa directamente de datos USDA.
+
 Regla práctica:
 
 ```text
 ai   → uso normal
 full → cuando los tests importan
+usda → cuando el dataset USDA es parte directa del problema
 ```
 
 ## Recomendación de uso
@@ -213,3 +221,11 @@ Para revisiones delicadas o cambios que deberían validarse con tests:
 ```
 
 Si el problema está relacionado específicamente con USDA, imágenes o archivos excluidos, se debe compartir ese archivo puntual además del ZIP.
+
+## Nota sobre PWA startup images
+
+Las imágenes de arranque de la PWA para iOS/iPadOS no deben guardarse como bloques base64 dentro de archivos Python. Ese patrón aumenta artificialmente el tamaño de los ZIP y dificulta las revisiones de IA.
+
+La app conserva las mismas rutas y dimensiones declaradas en `apple-touch-startup-image`, pero genera los PNG de startup de forma dinámica desde `notas/interface/views/pwa_startup_images.py` usando solo la librería estándar de Python. Así se mantiene la compatibilidad de la PWA sin incluir binarios pesados ni texto base64 extenso en los exports.
+
+Si más adelante se necesita revisar un problema visual específico del splash, conviene compartir una captura de pantalla del dispositivo y no incluir todos los PNG generados en el ZIP.

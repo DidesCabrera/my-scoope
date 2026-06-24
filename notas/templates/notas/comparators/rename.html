@@ -1,0 +1,53 @@
+{% extends "notas/base.html" %}
+{% block title %}Renombrar comparación · {{ vm.content.comparison.name }}{% endblock %}
+{% block content %}
+
+<div class="page page--detail page-modal page-modal--entity-form">
+
+  <div class="wrap-page-modal entity-form">
+
+    <form method="post" class="entity-form__form" novalidate>
+      {% csrf_token %}
+
+      {% if vm.content.return_to %}
+        <input type="hidden" name="return_to" value="{{ vm.content.return_to }}">
+      {% endif %}
+
+      <div class="main-modal entity-form__main-modal">
+        <i data-lucide="pin" class="main-modal-icon {{ vm.content.entity_scope }}"></i>
+        <h2 class="title-create">Renombra tu Comparación</h2>
+      </div>
+
+      <section class="entity-form__section entity-form__section--name" aria-labelledby="saved-comparison-rename-name-title">
+        <div class="entity-form__section-header">
+          <h3 id="saved-comparison-rename-name-title">Elige un nuevo nombre</h3>
+        </div>
+
+        <div class="entity-form__field">
+          <label for="saved-comparison-rename-name" class="entity-form__label entity-form__label--hidden">Nombre</label>
+          <input
+            id="saved-comparison-rename-name"
+            type="text"
+            name="name"
+            value="{{ vm.content.comparison.name }}"
+            class="input-create entity-form__input"
+            autocomplete="off"
+            required
+          >
+        </div>
+      </section>
+
+      <div class="entity-form__actions">
+        {% if vm.content.return_to %}
+          <a href="{{ vm.content.return_to }}" class="btn-cancel-create entity-form__cancel">Cancelar</a>
+        {% else %}
+          <a href="{{ vm.content.fallback_url }}" class="btn-cancel-create entity-form__cancel">Cancelar</a>
+        {% endif %}
+        <button type="submit" class="btn-continue entity-form__submit">Guardar</button>
+      </div>
+    </form>
+
+  </div>
+
+</div>
+{% endblock %}

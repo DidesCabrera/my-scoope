@@ -70,18 +70,12 @@ Revisa la ultima version del codigo dentro del ZIP y genera un patch que modifiq
 
 APLICANDO
 
-La implementacion ha sido un exito. Aspectos por mejorar:
-1. la lista de opciones no se ve bien en mobile. aparece en miniatura. Adaptarla para un buen funcionamiento en mobile.
-2. Mejorar la estetica del boton comparar Similar a la otros btnes del sistema (no usar colores de entidad aqui ni en botones de tabs).
-3. poner "comparator-empty card-detail-block" debajo de comparator-tabs.
-4. Que el color del fondo del Icono de list-page-header__icon--comparator este alineado con lo que esta comparando (foods, meals, o plans)
-5. para los tamaños de letra en comparator-form usar un tamaño minimo de 14px en mobile.
-6. Agregar a la comparación entre comidas y plan el PPK. y ponerlo en segunda posición.
-7. Para las comparaciones que las barras usen los mismos colores que se usan en los graficos de programs.
-8. En comparator-bar-row__meta poner al lado izquierdo del nombre del elemento comparado, el icono de la entidad respectiva.
-9. Poner la seccion de comparadores en la segunda posicion en la seccion de tools (debajo de Inbox)
-10. En cada vista de list de (foods, meals, y plans) poner dentro del menu de acciones en el header global la opcion de comparar. la cual dirija a la seccion de comparador respectiva.
+Aspectos por mejorar en la seccion de Comparacion:
+1. poner btn Editar Comparacion a la derecha.
+2. Para los botones "Guardar comparacion" y "Guardar cambios" ese texto respectivamente.
+3. para los alimentos que recientemente se les agrego los gramos (ej: "Atún (100g)") que los (100g) tengan un font-weight mas ligero (entre 100-150 menos en el nombre del alimento)
+4. corregir el color del icono del header global, debe ser coherente con el color de la entidad que se esta comparando.
 
-No hacer cambios adicionales en el CSS
+He hecho cambios en el css, favor conservar
 
-Revisa la ultima version del codigo dentro del ZIP y genera un patch que modifique el codigo para conseguir el resultado que se desea.
+Adjunto la ultima version del codigo dentro del ZIP, revisala y genera un patch que modifique el codigo para conseguir el resultado que se desea.

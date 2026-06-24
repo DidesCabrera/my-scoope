@@ -46,6 +46,14 @@ staticfiles/
 *.log
 *.tmp
 *.zip
+*.tar
+*.tar.gz
+*.patch
+*.bak
+*.orig
+*.rej
+*.swp
+*.swo
 
 
 e2e/auth/state.json

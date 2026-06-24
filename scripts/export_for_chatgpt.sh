@@ -3,7 +3,7 @@ set -euo pipefail
 
 MODE="${1:-ai}"
 
-PROJECT_DIR="$(pwd)"
+PROJECT_DIR="$(pwd -P)"
 PARENT_DIR="$(dirname "$PROJECT_DIR")"
 
 EXPORT_BASE_NAME="proyecto_django_export"
@@ -23,6 +23,12 @@ if [[ "$MODE" != "ai" && "$MODE" != "full" && "$MODE" != "usda" ]]; then
   echo "  ./scripts/export_for_chatgpt.sh ai"
   echo "  ./scripts/export_for_chatgpt.sh full"
   echo "  ./scripts/export_for_chatgpt.sh usda"
+  exit 1
+fi
+
+if [[ "$(basename "$PROJECT_DIR")" == "$EXPORT_NAME" ]]; then
+  echo "Error: este script no debe ejecutarse desde una carpeta exportada llamada $EXPORT_NAME"
+  echo "Ejecuta el script desde la raíz real del repo, no desde un ZIP descomprimido de exportación."
   exit 1
 fi
 
@@ -80,6 +86,10 @@ COMMON_EXCLUDES=(
   --exclude '*.patch'
   --exclude '*.bak'
   --exclude '*.tmp'
+  --exclude '*.orig'
+  --exclude '*.rej'
+  --exclude '*.swp'
+  --exclude '*.swo'
 
   --exclude 'tmp/'
   --exclude 'temp/'
@@ -141,11 +151,15 @@ cd "$PARENT_DIR"
 find "$EXPORT_NAME" -name ".DS_Store" -delete
 find "$EXPORT_NAME" -name "__pycache__" -type d -exec rm -rf {} +
 find "$EXPORT_NAME" -name "*.pyc" -delete
+find "$EXPORT_NAME" -name "*.orig" -delete
+find "$EXPORT_NAME" -name "*.rej" -delete
 
 zip -r -q "$ZIP_PATH" "$EXPORT_NAME" \
   -x "*.DS_Store" \
   -x "__MACOSX/*" \
-  -x "*/__pycache__/*"
+  -x "*/__pycache__/*" \
+  -x "*.orig" \
+  -x "*.rej"
 
 echo ""
 echo "ZIP generado correctamente:"
@@ -156,6 +170,9 @@ du -h "$ZIP_PATH"
 echo ""
 echo "Archivos incluidos:"
 find "$EXPORT_DIR" -type f | wc -l
+echo ""
+echo "Archivos más grandes incluidos:"
+find "$EXPORT_DIR" -type f -exec du -h {} + | sort -hr | head -10
 echo ""
 echo "Modo generado:"
 case "$MODE" in

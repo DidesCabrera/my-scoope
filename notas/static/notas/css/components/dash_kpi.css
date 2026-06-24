@@ -348,7 +348,7 @@ padding: 0 4px;
 }
 
 .dash-kpi-range--card .dash-kpi-range__alloc-bar .alloc-pct {
-  font-size: 0.68rem;
+  font-size: 13.5px;
 }
 
 @media (max-width: 768px) {
