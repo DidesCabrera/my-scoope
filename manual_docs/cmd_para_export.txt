@@ -32,7 +32,7 @@ COMPLETO
 --------------------------
 
 git add .
-git commit -m "Integracion comparadores"
+git commit -m "Avance importante definiciones e implementacion de graficos"
 git push origin main
 
 

@@ -342,7 +342,7 @@ padding: 0 4px;
 }
 
 .dash-kpi-range--card .dash-kpi-range__alloc-bar {
-  grid-template-columns: 58px minmax(0, 1fr);
+  grid-template-columns: 70px minmax(0, 1fr);
 }
 
 .dash-kpi-range--card .dash-kpi-range__alloc-bar .alloc-pct {
@@ -352,7 +352,7 @@ padding: 0 4px;
 @media (max-width: 768px) {
   .dash-kpi-range__alloc-bar,
   .dash-kpi-range--card .dash-kpi-range__alloc-bar {
-    grid-template-columns: 58px minmax(0, 1fr);
+    grid-template-columns: 68px minmax(0, 1fr);
   }
 }
 
@@ -365,3 +365,13 @@ padding: 0 4px;
 .dash-kpi-range--week-card .tot .dash-kpi-range__min {
   font-size: 1.35rem;
 }
+
+/* KPI range total: max/min descriptor ====================================== */
+.dash-kpi-range p.dash-kpi-range__spread,
+.dash-kpi-range--week-card p.dash-kpi-range__spread {
+  font-size: 10px;
+  font-weight: 350;
+  line-height: 1;
+  opacity: 0.9;
+}
+

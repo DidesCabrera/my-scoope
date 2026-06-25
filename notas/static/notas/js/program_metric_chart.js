@@ -53,12 +53,35 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function getMetricMax(metric) {
+  function getMetricValues(metric) {
     const bars = Array.isArray(metric.bars) ? metric.bars : [];
-    if (metric.kind === "stacked") {
-      return Math.max(...bars.map((bar) => toNumber(bar.value)), 1);
-    }
-    return Math.max(...bars.map((bar) => toNumber(bar.value)), 1);
+    const values = bars
+      .filter((bar) => !bar.isEmpty)
+      .map((bar) => toNumber(bar.value));
+    return values.length ? values : bars.map((bar) => toNumber(bar.value));
+  }
+
+  function getMetricMax(metric) {
+    const values = getMetricValues(metric);
+    if (metric.key === "alloc") return 100;
+    return Math.max(...values, 1);
+  }
+
+  function getMetricMin(metric) {
+    const values = getMetricValues(metric).filter((value) => value > 0);
+    if (metric.key === "alloc") return 0;
+    return values.length ? Math.min(...values) : 0;
+  }
+
+  function getGuideStyle(metric, metricMax) {
+    const maxPercent = heightPercent(metricMax, metricMax);
+    const minPercent = heightPercent(getMetricMin(metric), metricMax);
+    const maxTop = Math.min(Math.max(100 - maxPercent, 0), 100);
+    const minTop = Math.min(Math.max(100 - minPercent, 0), 100);
+    return {
+      max: `top: ${maxTop.toFixed(2)}%;`,
+      min: `top: ${minTop.toFixed(2)}%;`,
+    };
   }
 
   function renderTabs(chart, data, activeKey) {
@@ -103,14 +126,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function renderAxisHeader(metric) {
     const header = makeElement("div", "program-chart-axis-header");
+    const heading = makeElement("div", "program-chart-axis-header__heading");
     const title = makeElement("h3", "program-chart-axis-header__title", {
       text: metric.label || "Gráfico",
+    });
+    const unit = makeElement("span", "program-chart-axis-header__unit", {
+      text: metric.unit || "",
     });
     const range = makeElement("span", "program-chart-axis-header__range", {
       text: metric.rangeLabel || "",
     });
 
-    header.appendChild(title);
+    heading.appendChild(title);
+    if (metric.unit) heading.appendChild(unit);
+    header.appendChild(heading);
     if (metric.rangeLabel) header.appendChild(range);
     return header;
   }
@@ -296,7 +325,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return element;
   }
 
-  function renderBar(metric, bar, metricMax, showBarValues, silhouette = {}) {
+  function renderBar(metric, bar, metricMax, showBarValues, silhouette = {}, scope = "program") {
     const slotClasses = ["program-chart-bar-slot"];
     if (bar.isWeekStart) slotClasses.push("is-week-start");
     if (bar.isEmpty) slotClasses.push("is-empty");
@@ -337,9 +366,16 @@ document.addEventListener("DOMContentLoaded", () => {
       style: `height: ${outerHeight.toFixed(2)}%; ${getSilhouetteStyle(outerHeight, silhouette.leftHeight, silhouette.rightHeight)}`,
     });
     if (showBarValues && !bar.isEmpty) {
-      singleBar.appendChild(makeElement("span", "program-chart-bar-value", {
+      const valueLabel = makeElement("span", "program-chart-bar-value");
+      valueLabel.appendChild(makeElement("span", "program-chart-bar-value__number", {
         text: formatNumber(bar.value, metric.decimals || 0),
       }));
+      if (scope === "week" && metric.unit) {
+        valueLabel.appendChild(makeElement("span", "program-chart-bar-value__unit", {
+          text: metric.unit,
+        }));
+      }
+      singleBar.appendChild(valueLabel);
     }
     slot.appendChild(singleBar);
     return slot;
@@ -387,10 +423,18 @@ document.addEventListener("DOMContentLoaded", () => {
       "aria-label": `Gráfico de ${metric.label}`,
     });
 
-    plot.appendChild(makeElement("span", "program-chart-guide program-chart-guide--max", { "aria-hidden": "true" }));
-    plot.appendChild(makeElement("span", "program-chart-guide program-chart-guide--min", { "aria-hidden": "true" }));
-
     const metricMax = getMetricMax(metric);
+    const guideStyle = getGuideStyle(metric, metricMax);
+
+    plot.appendChild(makeElement("span", "program-chart-guide program-chart-guide--max", {
+      "aria-hidden": "true",
+      style: guideStyle.max,
+    }));
+    plot.appendChild(makeElement("span", "program-chart-guide program-chart-guide--min", {
+      "aria-hidden": "true",
+      style: guideStyle.min,
+    }));
+
     const bars = Array.isArray(metric.bars) ? metric.bars : [];
     const barHeights = bars.map((bar) => getBarHeightPercent(metric, bar, metricMax));
 
@@ -406,7 +450,7 @@ document.addEventListener("DOMContentLoaded", () => {
             leftHeight: barHeights[barIndex - 1] || 0,
             rightHeight: barHeights[barIndex + 1] || 0,
           };
-          weekColumn.appendChild(renderBar(metric, bar, metricMax, showBarValues, silhouette));
+          weekColumn.appendChild(renderBar(metric, bar, metricMax, showBarValues, silhouette, scope));
           barIndex += 1;
         });
         plot.appendChild(weekColumn);
@@ -417,7 +461,7 @@ document.addEventListener("DOMContentLoaded", () => {
           leftHeight: barHeights[index - 1] || 0,
           rightHeight: barHeights[index + 1] || 0,
         };
-        plot.appendChild(renderBar(metric, bar, metricMax, showBarValues, silhouette));
+        plot.appendChild(renderBar(metric, bar, metricMax, showBarValues, silhouette, scope));
       });
     }
 

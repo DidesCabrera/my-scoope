@@ -98,19 +98,19 @@ PROMPT
 BBDD ALIMENTOS
 1. Se debe trabajar como una sistema independiente, optimizable y mantenible. Responsable de proveer a la aplicacion principal de los alimentos.
 
+-------------------------------------------------------------------
 ASIGNACION DE PROGRAMA SEMANAL A GOOGLE CALENDAR.
 1. Poner alarmas a las comidas es necesario?
 
-
+-------------------------------------------------------------------
 CORRECCION GRAFICOS
 
 Ayudame con los siguientes ajuste:
 
-1. Necesito hacer un ajuste. Agrupar "program-chart-axis-header" y "program-chart-plot program-chart-plot--program" en una seccion. Y que esa seccion tenfa como fondo --surface-card y bordes redonde de 22px. Es importante que no tenga padding, pues el grafico debe llegar de extremo a extremo. 
-2. Quitar a program-chart-main-axis program-chart-main-axis--program el color de fondo. y los bordes redondeados.
-3. poner padding a "program-chart-axis-header" 
-
-Adjunto la ultima version del codigo dentro del ZIP, revisala y genera un patch que modifique el codigo para conseguir el resultado que se desea.
+1. Dejar "program-chart-axis-header" fijo, manteniendo su posición independiente del numero de semanas. El problema actual es que cuando hay scroll horizontal en el grafico, no se el min-max, y al scrollear Se oculta el titulo del grafico..
+2. Dentro de ""program-chart-axis-header"", poner a la derecha del <h3> la unidad de medida del indicador. Por ejemplo: "Calorias kcal". Pero "kcal" debe estar en italic con un tamaño de fuente menor, y del color --text-main.
+2. En "tot dash-kpi-range__tot" agregar una cuarta linea que diga "max-min", que tenga el tamaño del <p>Calories<p> pero fent-weight menor.
+4. Este elemento "alloc-pct" se ve apretado dado que su contenedor tiene un ancho fijo. Necesito  
 
 
 
