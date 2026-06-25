@@ -100,6 +100,21 @@ document.addEventListener("DOMContentLoaded", () => {
     return axis;
   }
 
+
+  function renderAxisHeader(metric) {
+    const header = makeElement("div", "program-chart-axis-header");
+    const title = makeElement("h3", "program-chart-axis-header__title", {
+      text: metric.label || "Gráfico",
+    });
+    const range = makeElement("span", "program-chart-axis-header__range", {
+      text: metric.rangeLabel || "",
+    });
+
+    header.appendChild(title);
+    if (metric.rangeLabel) header.appendChild(range);
+    return header;
+  }
+
   function groupBarsByWeek(bars, weeksCount) {
     const groups = Array.from({ length: Math.max(weeksCount, 1) }, (_, index) => ({
       weekNumber: index + 1,
@@ -126,9 +141,147 @@ document.addEventListener("DOMContentLoaded", () => {
     return `${weeks * 25}%`;
   }
 
-  function renderSegment(segment, stackTotal, barIsEmpty, showSegmentValues) {
+  function ensureOutlineSvg(plot) {
+    let svg = plot.querySelector(":scope > .program-chart-outline-svg");
+    if (svg) return svg;
+
+    svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.classList.add("program-chart-outline-svg");
+    svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("focusable", "false");
+    plot.appendChild(svg);
+    return svg;
+  }
+
+  function clearOutlineSvg(svg) {
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+  }
+
+  function makeOutlinePath(d) {
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("class", "program-chart-outline-path");
+    path.setAttribute("d", d);
+    return path;
+  }
+
+  function makeOutlineDot(x, y) {
+    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    circle.setAttribute("class", "program-chart-outline-dot");
+    circle.setAttribute("cx", x.toFixed(2));
+    circle.setAttribute("cy", y.toFixed(2));
+    circle.setAttribute("r", "3.5");
+    return circle;
+  }
+
+  function getOutlineBars(plot) {
+    return Array.from(plot.querySelectorAll(".program-chart-bar, .program-chart-stacked-bar"))
+      .filter((bar) => {
+        const rect = bar.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0;
+      });
+  }
+
+  function renderPlotOutline(plot) {
+    const svg = ensureOutlineSvg(plot);
+    const plotRect = plot.getBoundingClientRect();
+    const width = Math.max(plot.offsetWidth, plot.clientWidth, plotRect.width, 1);
+    const height = Math.max(plot.offsetHeight, plot.clientHeight, plotRect.height, 1);
+    const bars = getOutlineBars(plot);
+
+    // Keep the SVG coordinate system locked to the plot border-box. On mobile,
+    // fractional layout, horizontal overflow and late font/layout adjustments can
+    // make a CSS-sized SVG drift slightly from the DOMRect-based bar positions.
+    // Explicit width/height attributes plus the same viewBox keep the silhouette
+    // and the bars in the same coordinate space.
+    svg.setAttribute("width", width.toFixed(2));
+    svg.setAttribute("height", height.toFixed(2));
+    svg.setAttribute("viewBox", `0 0 ${width.toFixed(2)} ${height.toFixed(2)}`);
+    clearOutlineSvg(svg);
+
+    if (!bars.length) return;
+
+    const points = bars.map((bar) => {
+      const rect = bar.getBoundingClientRect();
+      const x1 = Math.min(Math.max(rect.left - plotRect.left, 0), width);
+      const x2 = Math.min(Math.max(rect.right - plotRect.left, 0), width);
+      const yTop = Math.min(Math.max(rect.top - plotRect.top, 0), height);
+      const yBottom = Math.min(Math.max(rect.bottom - plotRect.top, 0), height);
+      return { x1, x2, yTop, yBottom };
+    });
+
+    points.forEach((point, index) => {
+      const previous = points[index - 1];
+      const next = points[index + 1];
+      const isFirst = index === 0;
+      const isLast = index === points.length - 1;
+      const leftStop = previous ? Math.min(previous.yTop, point.yBottom) : point.yTop;
+      const rightStop = next ? Math.min(next.yTop, point.yBottom) : point.yTop;
+      const commands = [];
+
+      if (!isFirst && leftStop > point.yTop) {
+        commands.push(`M ${point.x1.toFixed(2)} ${leftStop.toFixed(2)}`);
+        commands.push(`L ${point.x1.toFixed(2)} ${point.yTop.toFixed(2)}`);
+      }
+
+      commands.push(`M ${point.x1.toFixed(2)} ${point.yTop.toFixed(2)}`);
+      commands.push(`L ${point.x2.toFixed(2)} ${point.yTop.toFixed(2)}`);
+
+      if (!isLast && rightStop > point.yTop) {
+        commands.push(`L ${point.x2.toFixed(2)} ${rightStop.toFixed(2)}`);
+      }
+
+      svg.appendChild(makeOutlinePath(commands.join(" ")));
+      svg.appendChild(makeOutlineDot(point.x1, point.yTop));
+      svg.appendChild(makeOutlineDot(point.x2, point.yTop));
+    });
+  }
+
+  function renderVisibleOutlines(root) {
+    const scope = root || document;
+    scope.querySelectorAll(".program-chart-plot").forEach((plot) => {
+      if (!plot.offsetParent) return;
+      renderPlotOutline(plot);
+    });
+  }
+
+  function scheduleVisibleOutlines(root) {
+    window.requestAnimationFrame(() => {
+      renderVisibleOutlines(root);
+      window.requestAnimationFrame(() => renderVisibleOutlines(root));
+    });
+  }
+
+
+  function getBarHeightPercent(metric, bar, metricMax) {
+    if (metric.kind === "stacked") {
+      const stackTotal = metric.key === "alloc" ? 100 : toNumber(bar.stackTotal || bar.value);
+      return metric.key === "alloc" ? (stackTotal ? 100 : 0) : heightPercent(bar.value, metricMax);
+    }
+    return heightPercent(bar.value, metricMax);
+  }
+
+  function getSilhouetteSideHeight(currentHeight, neighborHeight) {
+    const current = Math.max(toNumber(currentHeight), 0);
+    if (!current) return 0;
+    const neighbor = Math.max(toNumber(neighborHeight), 0);
+    if (neighbor >= current) return 0;
+    return Math.min(((current - neighbor) / current) * 100, 100);
+  }
+
+  function getSilhouetteStyle(currentHeight, leftHeight = 0, rightHeight = 0) {
+    const left = getSilhouetteSideHeight(currentHeight, leftHeight);
+    const right = getSilhouetteSideHeight(currentHeight, rightHeight);
+    return `--program-chart-outline-left-height: ${left.toFixed(2)}%; --program-chart-outline-right-height: ${right.toFixed(2)}%;`;
+  }
+
+  function renderSegment(segment, stackTotal, barIsEmpty, showSegmentValues, extraClasses = []) {
     const percent = segmentPercent(segment.value, stackTotal);
-    const element = makeElement("span", `program-chart-stacked-bar__segment program-chart-stacked-bar__segment--${segment.key}`, {
+    const segmentClasses = [
+      "program-chart-stacked-bar__segment",
+      `program-chart-stacked-bar__segment--${segment.key}`,
+      ...extraClasses,
+    ].filter(Boolean);
+    const element = makeElement("span", segmentClasses.join(" "), {
       style: `height: ${percent.toFixed(2)}%;`,
       "aria-label": `${segment.label || ""} ${segment.valueLabel || ""}`.trim(),
     });
@@ -143,7 +296,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return element;
   }
 
-  function renderBar(metric, bar, metricMax, showBarValues) {
+  function renderBar(metric, bar, metricMax, showBarValues, silhouette = {}) {
     const slotClasses = ["program-chart-bar-slot"];
     if (bar.isWeekStart) slotClasses.push("is-week-start");
     if (bar.isEmpty) slotClasses.push("is-empty");
@@ -155,21 +308,33 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (metric.kind === "stacked") {
       const stackTotal = metric.key === "alloc" ? 100 : toNumber(bar.stackTotal || bar.value);
-      const outerHeight = metric.key === "alloc" ? (stackTotal ? 100 : 0) : heightPercent(bar.value, metricMax);
+      const outerHeight = getBarHeightPercent(metric, bar, metricMax);
       const stacked = makeElement("div", "program-chart-stacked-bar", {
-        style: `height: ${outerHeight.toFixed(2)}%;`,
+        style: `height: ${outerHeight.toFixed(2)}%; ${getSilhouetteStyle(outerHeight, silhouette.leftHeight, silhouette.rightHeight)}`,
       });
 
-      (bar.segments || []).forEach((segment) => {
-        stacked.appendChild(renderSegment(segment, stackTotal, bar.isEmpty, showBarValues));
+      const segments = Array.isArray(bar.segments) ? bar.segments : [];
+      const topSegmentIndex = segments.reduce((lastIndex, segment, index) => (
+        toNumber(segment.value) > 0 ? index : lastIndex
+      ), -1);
+
+      segments.forEach((segment, index) => {
+        stacked.appendChild(renderSegment(
+          segment,
+          stackTotal,
+          bar.isEmpty,
+          showBarValues,
+          index === topSegmentIndex ? ["is-stack-top"] : [],
+        ));
       });
 
       slot.appendChild(stacked);
       return slot;
     }
 
+    const outerHeight = getBarHeightPercent(metric, bar, metricMax);
     const singleBar = makeElement("div", "program-chart-bar", {
-      style: `height: ${heightPercent(bar.value, metricMax).toFixed(2)}%;`,
+      style: `height: ${outerHeight.toFixed(2)}%; ${getSilhouetteStyle(outerHeight, silhouette.leftHeight, silhouette.rightHeight)}`,
     });
     if (showBarValues && !bar.isEmpty) {
       singleBar.appendChild(makeElement("span", "program-chart-bar-value", {
@@ -226,23 +391,37 @@ document.addEventListener("DOMContentLoaded", () => {
     plot.appendChild(makeElement("span", "program-chart-guide program-chart-guide--min", { "aria-hidden": "true" }));
 
     const metricMax = getMetricMax(metric);
+    const bars = Array.isArray(metric.bars) ? metric.bars : [];
+    const barHeights = bars.map((bar) => getBarHeightPercent(metric, bar, metricMax));
+
     if (scope === "program") {
-      groupBarsByWeek(metric.bars || [], weeksCount).forEach((week) => {
+      let barIndex = 0;
+      groupBarsByWeek(bars, weeksCount).forEach((week) => {
         const weekColumn = makeElement("div", "program-chart-week-column", {
           "data-week-number": week.weekNumber,
           "aria-label": `Semana ${week.weekNumber}`,
         });
         week.bars.forEach((bar) => {
-          weekColumn.appendChild(renderBar(metric, bar, metricMax, showBarValues));
+          const silhouette = {
+            leftHeight: barHeights[barIndex - 1] || 0,
+            rightHeight: barHeights[barIndex + 1] || 0,
+          };
+          weekColumn.appendChild(renderBar(metric, bar, metricMax, showBarValues, silhouette));
+          barIndex += 1;
         });
         plot.appendChild(weekColumn);
       });
     } else {
-      (metric.bars || []).forEach((bar) => {
-        plot.appendChild(renderBar(metric, bar, metricMax, showBarValues));
+      bars.forEach((bar, index) => {
+        const silhouette = {
+          leftHeight: barHeights[index - 1] || 0,
+          rightHeight: barHeights[index + 1] || 0,
+        };
+        plot.appendChild(renderBar(metric, bar, metricMax, showBarValues, silhouette));
       });
     }
 
+    axis.appendChild(renderAxisHeader(metric));
     axis.appendChild(plot);
     axis.appendChild(renderAxis(data));
     layout.appendChild(axis);
@@ -272,6 +451,8 @@ document.addEventListener("DOMContentLoaded", () => {
       body.appendChild(pane);
     });
 
+    scheduleVisibleOutlines(body);
+
     function activate(metricKey) {
       tabs.forEach((tab) => {
         const isActive = tab.dataset.metric === metricKey;
@@ -282,6 +463,7 @@ document.addEventListener("DOMContentLoaded", () => {
       body.querySelectorAll(".js-program-chart-pane").forEach((pane) => {
         pane.hidden = pane.dataset.metric !== metricKey;
       });
+      scheduleVisibleOutlines(body);
     }
 
     tabs.forEach((tab) => {
@@ -290,4 +472,28 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   document.querySelectorAll(".js-program-chart").forEach(renderChart);
+
+  if ("ResizeObserver" in window) {
+    const outlineResizeObserver = new ResizeObserver((entries) => {
+      const roots = new Set();
+      entries.forEach((entry) => {
+        const plot = entry.target.closest(".program-chart-plot");
+        if (plot) roots.add(plot);
+      });
+      roots.forEach((plot) => scheduleVisibleOutlines(plot.parentElement || plot));
+    });
+
+    document.querySelectorAll(".program-chart-plot").forEach((plot) => {
+      outlineResizeObserver.observe(plot);
+    });
+  }
+
+  let resizeFrame = null;
+  window.addEventListener("resize", () => {
+    if (resizeFrame) window.cancelAnimationFrame(resizeFrame);
+    resizeFrame = window.requestAnimationFrame(() => {
+      resizeFrame = null;
+      renderVisibleOutlines(document);
+    });
+  });
 });

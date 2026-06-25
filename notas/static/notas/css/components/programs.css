@@ -783,6 +783,8 @@
   min-width: 0;
 }
 
+
+
 .program-chart-pane[hidden] {
   display: none;
 }
@@ -971,6 +973,9 @@
 @media (max-width: 780px) {
   .program-chart-panel {
     padding: 0.75rem;
+  }
+  .program-chart-main-axis {
+    margin: 0 -2px;
   }
 
   .program-chart-panel--card .program-chart-plot {
@@ -2577,7 +2582,7 @@
 .program-chart-plot--program {
   grid-template-columns: repeat(var(--program-chart-weeks), minmax(0, 1fr));
   align-items: stretch;
-  padding-inline: 0.35rem;
+  padding-inline: 0;
 }
 
 .program-chart-week-column {
@@ -2662,7 +2667,8 @@
 
 @media (max-width: 780px) {
   .program-chart-week-axis--program span {
-    font-size: 0.55rem;
+    font-size: 12px;
+    font-weight: 500;
   }
 
   .program-chart-week-axis--program span::after {
@@ -3178,5 +3184,487 @@
 
   .program-card__kpi-range {
     flex: 1 1 var(--program-card-kpi-width);
+  }
+}
+
+/* Program charts: contiguous columns and stacked top contour =================
+   Keep chart columns flush while the solid outline follows the total stacked
+   bar silhouette instead of each internal macro segment. */
+.program-chart-panel {
+  --program-chart-bar-border-width: 2px;
+  --program-chart-bar-radius: 0;
+}
+
+.program-chart-plot--program .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="1"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="2"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="3"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="4"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="5"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="6"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="7"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="8"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="9"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="10"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="11"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="12"] .program-chart-week-column {
+  column-gap: 0;
+  padding-inline: 0;
+}
+
+.program-chart-plot--program .program-chart-bar-slot,
+.program-chart-plot--week .program-chart-bar-slot {
+  padding-inline: 0;
+}
+
+.program-chart-bar,
+.program-chart-stacked-bar,
+.program-chart-panel--card .program-chart-bar,
+.program-chart-panel--card .program-chart-stacked-bar,
+.program-chart-panel--week .program-chart-bar,
+.program-chart-panel--week .program-chart-stacked-bar,
+.program-chart-main-axis--program[data-weeks-count="1"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="1"] .program-chart-stacked-bar,
+.program-chart-main-axis--program[data-weeks-count="2"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="2"] .program-chart-stacked-bar,
+.program-chart-main-axis--program[data-weeks-count="3"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="3"] .program-chart-stacked-bar,
+.program-chart-main-axis--program[data-weeks-count="4"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="4"] .program-chart-stacked-bar {
+  width: 100%;
+  max-width: none;
+}
+
+.program-chart-bar,
+.program-chart-stacked-bar {
+  box-sizing: border-box;
+  opacity: 0.7;
+  border-radius: 0;
+}
+
+.program-chart-bar {
+  border-style: solid;
+  border-width: var(--program-chart-bar-border-width) var(--program-chart-bar-border-width) 0;
+}
+
+.program-chart-stacked-bar {
+  position: relative;
+  border: 0;
+  overflow: hidden;
+}
+
+.program-chart-stacked-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-style: solid;
+  border-width: var(--program-chart-bar-border-width) var(--program-chart-bar-border-width) 0;
+  border-color: color-mix(in srgb, var(--border-default) 78%, #000 22%);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.program-chart-stacked-bar__segment {
+  border-radius: 0;
+}
+
+.program-chart-stacked-bar__segment.is-stack-top {
+  border-radius: 0;
+}
+
+
+/* Program charts: skyline outline ==========================================
+   Draw only the exposed vertical border of each contiguous column. The JS
+   computes neighbor heights and stores the visible side length in CSS vars,
+   so the outline follows the upper silhouette instead of framing every bar. */
+.program-chart-bar,
+.program-chart-stacked-bar {
+  --program-chart-outline-color: color-mix(in srgb, var(--border-default) 78%, #000 22%);
+  --program-chart-outline-left-height: 100%;
+  --program-chart-outline-right-height: 100%;
+}
+
+.program-chart-bar {
+  border: 0;
+  background-image:
+    linear-gradient(var(--program-chart-outline-color), var(--program-chart-outline-color)),
+    linear-gradient(var(--program-chart-outline-color), var(--program-chart-outline-color)),
+    linear-gradient(var(--program-chart-outline-color), var(--program-chart-outline-color));
+  background-position: top left, top left, top right;
+  background-repeat: no-repeat;
+  background-size:
+    100% var(--program-chart-bar-border-width),
+    var(--program-chart-bar-border-width) var(--program-chart-outline-left-height),
+    var(--program-chart-bar-border-width) var(--program-chart-outline-right-height);
+}
+
+.program-chart-stacked-bar::after {
+  border: 0;
+  background-image:
+    linear-gradient(var(--program-chart-outline-color), var(--program-chart-outline-color)),
+    linear-gradient(var(--program-chart-outline-color), var(--program-chart-outline-color)),
+    linear-gradient(var(--program-chart-outline-color), var(--program-chart-outline-color));
+  background-position: top left, top left, top right;
+  background-repeat: no-repeat;
+  background-size:
+    100% var(--program-chart-bar-border-width),
+    var(--program-chart-bar-border-width) var(--program-chart-outline-left-height),
+    var(--program-chart-bar-border-width) var(--program-chart-outline-right-height);
+}
+
+/* Program charts: solid SVG silhouette outline =============================
+   Draw the visible border as an overlay path instead of per-bar backgrounds.
+   This keeps contiguous columns readable on mobile and lets the outline follow
+   the real skyline of neighboring bars. */
+.program-chart-panel {
+  --program-chart-bar-border-width: 2px;
+  --program-chart-outline-color: color-mix(in srgb, var(--border-default) 82%, #000 18%);
+}
+
+.program-chart-plot {
+  position: relative;
+}
+
+.program-chart-main-axis--program {
+  --program-chart-day-margin: 0px;
+  --program-chart-week-padding: 0px;
+}
+
+.program-chart-main-axis--program[data-weeks-count="1"],
+.program-chart-main-axis--program[data-weeks-count="2"],
+.program-chart-main-axis--program[data-weeks-count="3"],
+.program-chart-main-axis--program[data-weeks-count="4"],
+.program-chart-main-axis--program[data-weeks-count="5"],
+.program-chart-main-axis--program[data-weeks-count="6"],
+.program-chart-main-axis--program[data-weeks-count="7"],
+.program-chart-main-axis--program[data-weeks-count="8"],
+.program-chart-main-axis--program[data-weeks-count="9"],
+.program-chart-main-axis--program[data-weeks-count="10"],
+.program-chart-main-axis--program[data-weeks-count="11"],
+.program-chart-main-axis--program[data-weeks-count="12"] {
+  --program-chart-day-margin: 0px;
+  --program-chart-week-padding: 0px;
+}
+
+.program-chart-plot--program .program-chart-week-column,
+.program-chart-main-axis--program .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="1"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="2"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="3"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="4"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="5"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="6"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="7"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="8"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="9"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="10"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="11"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="12"] .program-chart-week-column {
+  column-gap: 0;
+  padding-inline: 0;
+}
+
+.program-chart-plot--program .program-chart-bar-slot,
+.program-chart-plot--week .program-chart-bar-slot,
+.program-chart-main-axis--program .program-chart-bar-slot {
+  padding-inline: 0;
+}
+
+.program-chart-bar,
+.program-chart-stacked-bar,
+.program-chart-panel--card .program-chart-bar,
+.program-chart-panel--card .program-chart-stacked-bar,
+.program-chart-panel--week .program-chart-bar,
+.program-chart-panel--week .program-chart-stacked-bar,
+.program-chart-main-axis--program[data-weeks-count="1"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="1"] .program-chart-stacked-bar,
+.program-chart-main-axis--program[data-weeks-count="2"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="2"] .program-chart-stacked-bar,
+.program-chart-main-axis--program[data-weeks-count="3"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="3"] .program-chart-stacked-bar,
+.program-chart-main-axis--program[data-weeks-count="4"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="4"] .program-chart-stacked-bar {
+  width: 100%;
+  max-width: none;
+}
+
+.program-chart-bar,
+.program-chart-stacked-bar {
+  border: 0;
+  background-image: none;
+  outline: 0;
+}
+
+.program-chart-stacked-bar::after {
+  display: none;
+}
+
+.program-chart-outline-svg {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.program-chart-outline-path {
+  fill: none;
+  stroke: var(--program-chart-outline-color);
+  stroke-width: var(--program-chart-bar-border-width);
+  stroke-linecap: butt;
+  stroke-linejoin: miter;
+  vector-effect: non-scaling-stroke;
+}
+
+.program-chart-outline-dot {
+  fill: var(--program-chart-outline-color);
+}
+
+.program-chart-plot--calories {
+  --program-chart-outline-color: #764d35;
+}
+
+.program-chart-plot--protein {
+  --program-chart-outline-color: #00caff;
+}
+
+.program-chart-plot--carbs {
+  --program-chart-outline-color: #4fe888;
+}
+
+.program-chart-plot--fat {
+  --program-chart-outline-color: #bbff01;
+}
+
+.program-chart-plot--ppk {
+  --program-chart-outline-color: #ffd26b;
+}
+
+.program-chart-plot--alloc,
+.program-chart-plot--macros {
+  --program-chart-outline-color: color-mix(in srgb, var(--border-default) 88%, #000 12%);
+}
+
+.program-chart-plot--program {
+  padding-inline: 0;
+}
+
+.program-chart-bar,
+.program-chart-stacked-bar,
+.program-chart-stacked-bar__segment,
+.program-chart-stacked-bar__segment.is-stack-top {
+  border-radius: 0;
+}
+
+/* Program chart final alignment fixes ======================================
+   Program plots must start and end flush for every week count. These overrides
+   intentionally use the full selector because earlier geometry blocks set
+   padding on .program-chart-main-axis--program .program-chart-plot, including
+   mobile-specific rules. */
+.program-chart-main-axis--program .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="1"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="2"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="3"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="4"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="5"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="6"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="7"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="8"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="9"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="10"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="11"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="12"] .program-chart-plot.program-chart-plot--program {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  padding-inline: 0 !important;
+}
+
+.program-chart-outline-svg {
+  left: 0;
+  top: 0;
+  right: auto;
+  bottom: auto;
+  transform: translateZ(0);
+}
+
+@media (max-width: 780px) {
+  .program-chart-main-axis--program .program-chart-plot.program-chart-plot--program,
+  .program-chart-main-axis--program[data-weeks-count="1"] .program-chart-plot.program-chart-plot--program,
+  .program-chart-main-axis--program[data-weeks-count="2"] .program-chart-plot.program-chart-plot--program,
+  .program-chart-main-axis--program[data-weeks-count="3"] .program-chart-plot.program-chart-plot--program,
+  .program-chart-main-axis--program[data-weeks-count="4"] .program-chart-plot.program-chart-plot--program,
+  .program-chart-main-axis--program[data-weeks-count="5"] .program-chart-plot.program-chart-plot--program,
+  .program-chart-main-axis--program[data-weeks-count="6"] .program-chart-plot.program-chart-plot--program,
+  .program-chart-main-axis--program[data-weeks-count="7"] .program-chart-plot.program-chart-plot--program,
+  .program-chart-main-axis--program[data-weeks-count="8"] .program-chart-plot.program-chart-plot--program,
+  .program-chart-main-axis--program[data-weeks-count="9"] .program-chart-plot.program-chart-plot--program,
+  .program-chart-main-axis--program[data-weeks-count="10"] .program-chart-plot.program-chart-plot--program,
+  .program-chart-main-axis--program[data-weeks-count="11"] .program-chart-plot.program-chart-plot--program,
+  .program-chart-main-axis--program[data-weeks-count="12"] .program-chart-plot.program-chart-plot--program {
+    padding-left: 0 !important;
+    padding-bottom: 0 !important;
+    padding-right: 0 !important;
+    padding-inline: 0 !important;
+  }
+}
+
+/* Program chart axis header and week separator alignment =====================
+   The main axis now owns a small contextual header and the week divisions are
+   drawn as background guides. This avoids border/z-index conflicts with the SVG
+   silhouette while keeping the plot and labels aligned. */
+.program-chart-main-axis {
+  background: var(--surface-card);
+  border-radius: 22px;
+  padding: 0.75rem;
+  gap: 0.55rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.program-chart-axis-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-width: var(--program-chart-min-width, 100%);
+  width: var(--program-chart-min-width, 100%);
+  padding: 3px 4px 3px 8px;
+}
+
+.program-chart-axis-header__title {
+  margin: 0;
+  min-width: 0;
+  color: var(--text-main);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.program-chart-axis-header__range {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.55rem;
+  padding: 2px 12px;
+  border-radius: 8px;
+  background: var(--text-main);
+  color: var(--text-inverted);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.program-chart-main-axis--program {
+  --program-chart-week-separator-color: color-mix(in srgb, var(--border-default) 56%, transparent);
+}
+
+.program-chart-main-axis--program .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="1"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="2"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="3"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="4"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="5"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="6"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="7"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="8"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="9"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="10"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="11"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="12"] .program-chart-plot.program-chart-plot--program {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  padding-inline: 0 !important;
+  background:
+    linear-gradient(to top, color-mix(in srgb, var(--border-default) 42%, transparent) 1px, transparent 1px) 0 0 / 100% 25%,
+    repeating-linear-gradient(
+      to right,
+      transparent 0,
+      transparent calc((100% / var(--program-chart-weeks)) - 0.5px),
+      var(--program-chart-week-separator-color) calc((100% / var(--program-chart-weeks)) - 0.5px),
+      var(--program-chart-week-separator-color) calc((100% / var(--program-chart-weeks)) + 0.5px),
+      transparent calc((100% / var(--program-chart-weeks)) + 0.5px),
+      transparent calc(100% / var(--program-chart-weeks))
+    ),
+    var(--surface-card);
+}
+
+.program-chart-main-axis--program .program-chart-week-column,
+.program-chart-main-axis--program .program-chart-week-column:first-of-type,
+.program-chart-main-axis--program .program-chart-week-column:last-of-type,
+.program-chart-main-axis--program .program-chart-week-axis span,
+.program-chart-main-axis--program .program-chart-week-axis span:first-child,
+.program-chart-main-axis--program .program-chart-week-axis span:last-child {
+  border-left: 0 !important;
+  border-right: 0 !important;
+}
+
+.program-chart-main-axis--program .program-chart-week-axis {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  padding-inline: 0 !important;
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(
+      to right,
+      transparent 0,
+      transparent calc((100% / var(--program-chart-weeks)) - 0.5px),
+      var(--program-chart-week-separator-color) calc((100% / var(--program-chart-weeks)) - 0.5px),
+      var(--program-chart-week-separator-color) calc((100% / var(--program-chart-weeks)) + 0.5px),
+      transparent calc((100% / var(--program-chart-weeks)) + 0.5px),
+      transparent calc(100% / var(--program-chart-weeks))
+    );
+}
+
+.program-chart-main-axis--program .program-chart-week-axis span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding-top: 0.25rem;
+  padding-bottom: 0.05rem;
+}
+
+.program-chart-main-axis--program .program-chart-guide {
+  left: 0;
+  right: 0;
+  z-index: 0;
+}
+
+.program-chart-main-axis--program .program-chart-bar-slot {
+  z-index: 2;
+}
+
+.program-chart-main-axis--program .program-chart-outline-svg {
+  z-index: 4;
+}
+
+@media (max-width: 780px) {
+  .program-chart-main-axis {
+    padding: 12px 10px;
+    border-radius: 20px;
+    margin: 0 -6px;
+  }
+
+  .program-chart-axis-header {
+    gap: 0.5rem;
+    padding-left: 2px;
+  }
+
+  .program-chart-axis-header__title {
+    font-size: 22px;
+  }
+
+  .program-chart-axis-header__range {
+    min-height: 1.42rem;
+    padding-inline: 0.48rem;
+    font-size: 13px;
   }
 }
