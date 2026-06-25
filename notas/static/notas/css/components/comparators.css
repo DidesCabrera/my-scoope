@@ -18,8 +18,8 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  min-height: 34px;
-  padding: 7px 11px;
+  min-height: 28px;
+  padding: 7px 13px;
   border-radius: 999px;
   border: 1px solid var(--border-soft);
   background: var(--surface-card-muted);
@@ -180,14 +180,6 @@
 
 .comparator-submit {
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  min-height: 36px;
-}
-
-.comparator-edit-toggle {
-  display: none;
   align-items: center;
   justify-content: center;
   gap: 7px;
@@ -403,9 +395,7 @@
   }
 
   .comparator-tab {
-    flex: 1 1 120px;
-    justify-content: center;
-    min-height: 38px;
+    font-size: 14px;
   }
 
   .comparator-form {
@@ -418,7 +408,7 @@
   .comparator-selector__heading p,
   .comparator-field,
   .comparator-field--quantity em {
-    font-size: 14px;
+    font-size: 15px;
   }
 
   .comparator-field select,
@@ -546,18 +536,6 @@
   border-color: var(--border-soft);
 }
 
-.comparator-save--changes {
-  padding: 7px 12px;
-  border: 1px solid var(--panel-row-separator);
-  background: var(--surface-card-muted);
-  color: var(--text-main);
-}
-
-.comparator-save--changes:not(:disabled):hover {
-  background: var(--interactive-hover);
-  border-color: var(--border-soft);
-}
-
 .comparator-save__icon {
   width: 15px;
   height: 15px;
@@ -568,18 +546,6 @@
 .comparator-save[disabled] {
   opacity: 0.45;
   cursor: not-allowed;
-}
-
-.comparator-form.is-read-mode .comparator-field,
-.comparator-form.is-read-mode .comparator-selector__remove,
-.comparator-form.is-read-mode .comparator-form__actions-left,
-.comparator-form.is-read-mode .comparator-save--changes,
-.comparator-form.is-read-mode .comparator-submit {
-  display: none;
-}
-
-.comparator-form.is-read-mode .comparator-edit-toggle {
-  display: inline-flex;
 }
 
 .comparator-form.is-read-mode .comparator-field,

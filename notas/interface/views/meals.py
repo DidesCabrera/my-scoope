@@ -26,9 +26,9 @@ from notas.application.services.notifications.share_emails import build_share_in
 
 from notas.presentation.viewmodels.base_vm import BaseVM
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
-from notas.application.use_cases.meal_pages import get_meal_detail_page_data
+from notas.presentation.pages.meal_pages import get_meal_detail_page_data
 
-from notas.application.use_cases.meal_pages import (
+from notas.presentation.pages.meal_pages import (
     get_meal_detail_page_data,
     get_meal_list_page_data,
     get_meal_explore_list_page_data,

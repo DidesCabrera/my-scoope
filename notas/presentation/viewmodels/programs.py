@@ -376,7 +376,7 @@ def _format_range_value(value, decimals=0):
 def _format_range_label(min_value, max_value, *, unit="", decimals=0, suffix=""):
     min_label = _format_range_value(min_value, decimals)
     max_label = _format_range_value(max_value, decimals)
-    return f"{min_label}-{max_label}{unit}{suffix}"
+    return f"{min_label}/{max_label}{unit}{suffix}"
 
 
 def build_program_kpi_ranges(weeks, current_weight=None):

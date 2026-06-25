@@ -10,10 +10,10 @@ from django.views.decorators.http import require_POST
 from notas.application.services.commands.dailyplan_commands import save_dailyplan
 from notas.application.services.commands.food_commands import create_food
 from notas.application.services.commands.meal_commands import save_dailyplan_meal_to_library, save_meal
-from notas.application.use_cases.dailyplan_pages import get_dailyplan_detail_page_data
-from notas.application.use_cases.dpm_pages import get_dpm_detail_page_data
-from notas.application.use_cases.meal_pages import get_meal_detail_page_data
-from notas.application.use_cases.inbox_pages import (
+from notas.presentation.pages.dailyplan_pages import get_dailyplan_detail_page_data
+from notas.presentation.pages.dpm_pages import get_dpm_detail_page_data
+from notas.presentation.pages.meal_pages import get_meal_detail_page_data
+from notas.presentation.pages.inbox_pages import (
     build_inbox_items,
     get_inbox_item_or_404,
     get_inbox_share_or_404,

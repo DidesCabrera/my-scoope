@@ -46,6 +46,10 @@ COMMON_EXCLUDES=(
   --exclude '.idea/'
   --exclude '.vscode/'
 
+  # Notas personales del desarrollador humano.
+  # No forman parte de la documentación oficial ni deben alimentar análisis de IA.
+  --exclude 'manual_docs/'
+
   --exclude '__pycache__/'
   --exclude '*.pyc'
   --exclude '*.pyo'

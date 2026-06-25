@@ -4,10 +4,10 @@ from dataclasses import dataclass
 from typing import Any
 
 from notas.application.services.nutrition.nutrition_kpis import get_ppk_meal
-from notas.application.resolvers.meal_food_resolvers import (
+from notas.presentation.actions.meal_food_resolvers import (
     resolve_meal_food_actions,
 )
-from notas.application.resolvers.meal_resolvers import (
+from notas.presentation.actions.meal_resolvers import (
     resolve_meal_entity_actions,
 )
 

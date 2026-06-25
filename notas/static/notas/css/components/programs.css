@@ -16,7 +16,7 @@
 }
 
 .program-card__main {
-  gap: 1rem;
+  gap: 2px;
 }
 
 .program-card__summary,
@@ -726,7 +726,7 @@
 }
 
 .program-chart-panel--card {
-  margin: 0.85rem 0 1rem;
+  margin: 12px -6px 14px;
 }
 
 .program-chart-panel__header {
@@ -841,24 +841,17 @@
   background: var(--entity-program);
 }
 
-.program-chart-plot--calories .program-chart-bar {
-  background: var(--entity-program);
-}
 
 .program-chart-plot--protein .program-chart-bar {
-  background: var(--nutrition-protein);
+  background: #24deff7a;
 }
 
 .program-chart-plot--carbs .program-chart-bar {
-  background: var(--nutrition-carbs);
+  background: #01e88885;
 }
 
 .program-chart-plot--fat .program-chart-bar {
-  background: var(--nutrition-fat);
-}
-
-.program-chart-plot--ppk .program-chart-bar {
-  background: var(--nutrition-ppk);
+  background: #cdff437a;
 }
 
 .program-chart-stacked-bar {
@@ -874,19 +867,28 @@
   min-height: 0;
 }
 
-.program-chart-stacked-bar__segment--protein,
 .program-chart-legend__swatch--protein {
   background: var(--nutrition-protein);
 }
 
-.program-chart-stacked-bar__segment--carbs,
 .program-chart-legend__swatch--carbs {
   background: var(--nutrition-carbs);
 }
 
-.program-chart-stacked-bar__segment--fat,
 .program-chart-legend__swatch--fat {
   background: var(--nutrition-fat);
+}
+
+.program-chart-stacked-bar__segment--protein {
+  background: #24deff7a;
+}
+
+.program-chart-stacked-bar__segment--carbs {
+  background: #01e88885;
+}
+
+.program-chart-stacked-bar__segment--fat{
+  background: #cdff437a;
 }
 
 .program-chart-week-axis {
@@ -945,8 +947,8 @@
 }
 
 .program-chart-panel--card .program-chart-tab {
-  padding: 0.3rem 0.45rem;
-  font-size: 0.64rem;
+  padding: 0 8px;
+  font-size: 13px;
 }
 
 .program-chart-panel--card .program-chart-plot {
@@ -954,7 +956,7 @@
 }
 
 .program-chart-panel--card .program-chart-plot {
-  padding-top: 0.4rem;
+  padding-top: 0.8rem;
 }
 
 .program-chart-panel--card .program-chart-bar,
@@ -1239,12 +1241,9 @@
   font-weight: 700;
 }
 
-.program-chart-plot--calories .program-chart-bar {
-  background: var(--kpi-total-border);
-}
 
 .program-chart-plot--ppk .program-chart-bar {
-  background: var(--nutrition-ppk);
+  background: rgb(255 218 129 / 42%);
 }
 
 .program-chart-stacked-bar__segment + .program-chart-stacked-bar__segment {
@@ -1660,6 +1659,10 @@
   .program-week-child-card {
     padding: 0.75rem;
     margin: 0 -10px;
+  }
+
+  .program-chart-panel--card .program-chart-tab {
+    font-size: 14px;
   }
 
   .program-week-child-card__title-comp {
@@ -2453,9 +2456,6 @@
     opacity 0.2s ease;
 }
 
-.program-chart-plot--calories .program-chart-bar {
-  background: var(--program-chart-calories-color);
-}
 
 .program-chart-stacked-bar__segment {
   position: relative;
@@ -2921,9 +2921,6 @@
   border-right: 0;
 }
 
-.program-chart-plot--calories .program-chart-bar {
-  background: #7b5b39;
-}
 
 @media (max-width: 780px) {
   .program-chart-main-axis--program[data-weeks-count="1"] {
@@ -3075,7 +3072,7 @@
 }
 
 .program-chart-plot--calories .program-chart-bar {
-  background: #7b5b39;
+  background: #9e724354;
 }
 
 @media (max-width: 780px) {
@@ -3128,4 +3125,58 @@
   white-space: nowrap;
   border-left: 0;
   border-right: 0;
+}
+
+/* Program chart and card layout corrections =============================== */
+.program-chart-bar,
+.program-chart-stacked-bar {
+  box-sizing: border-box;
+  opacity: 1;
+  border-style: solid;
+  border-width: 2px 2px 0;
+}
+
+.program-chart-bar {
+  border-color: color-mix(in srgb, var(--entity-program) 72%, #000 28%);
+}
+
+.program-chart-plot--calories .program-chart-bar {
+  border-color: #764d35;
+}
+
+.program-chart-plot--protein .program-chart-bar {
+  border-color: #00caff;
+}
+
+.program-chart-plot--carbs .program-chart-bar {
+  border-color: #4fe888;
+}
+
+.program-chart-plot--fat .program-chart-bar {
+  border-color: #bbff01;
+}
+
+.program-chart-plot--ppk .program-chart-bar {
+  border-color: #ffd26b;
+}
+
+.program-chart-stacked-bar {
+  border-color: color-mix(in srgb, var(--border-default) 78%, #000 22%);
+}
+
+@media (min-width: 981px) {
+  .program-card__main {
+    --program-card-title-width: clamp(180px, 28%, 320px);
+    --program-card-kpi-width: 440px;
+  }
+
+  .program-card__title-block.card-title {
+    flex: 0 1 var(--program-card-title-width);
+    width: var(--program-card-title-width);
+    max-width: var(--program-card-title-width);
+  }
+
+  .program-card__kpi-range {
+    flex: 1 1 var(--program-card-kpi-width);
+  }
 }

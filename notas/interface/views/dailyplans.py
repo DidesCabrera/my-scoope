@@ -31,7 +31,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from notas.presentation.viewmodels.base_vm import BaseVM
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
 
-from notas.application.use_cases.dailyplan_pages import (
+from notas.presentation.pages.dailyplan_pages import (
     get_dailyplan_detail_page_data,
     get_dailyplan_list_page_data,
     get_dailyplan_explore_list_page_data,

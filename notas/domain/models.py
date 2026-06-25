@@ -1636,6 +1636,7 @@ class SavedComparison(models.Model):
     kind = models.CharField(max_length=20, choices=KIND_CHOICES)
     name = models.CharField(max_length=160)
     payload = models.JSONField(default=list, blank=True)
+    snapshot_payload = models.JSONField(default=list, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

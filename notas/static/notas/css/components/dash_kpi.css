@@ -297,11 +297,9 @@ padding: 0 4px;
   font-size: 0.72rem;
 }
 
-.dash-kpi-range--card .kpi-label,
-.dash-kpi-range--card .dash-kpi-range__grams,
-.dash-kpi-range--card .dash-kpi-range__ppk,
-.dash-kpi-range--card .dash-kpi-range__alloc-pill {
-  font-size: 0.78rem;
+
+.dash-kpi-range--card .dash-kpi-range__grams {
+  font-size: 0.85rem;
 }
 
 @media (max-width: 768px) {
@@ -356,4 +354,14 @@ padding: 0 4px;
   .dash-kpi-range--card .dash-kpi-range__alloc-bar {
     grid-template-columns: 58px minmax(0, 1fr);
   }
+}
+
+/* Program range calories should keep max/min visually equivalent. */
+.dash-kpi-range .dash-kpi-range__tot h2,
+.dash-kpi-range .dash-kpi-range__tot .dash-kpi-range__min,
+.dash-kpi-range--card .tot h2,
+.dash-kpi-range--card .tot .dash-kpi-range__min,
+.dash-kpi-range--week-card .tot h2,
+.dash-kpi-range--week-card .tot .dash-kpi-range__min {
+  font-size: 1.35rem;
 }

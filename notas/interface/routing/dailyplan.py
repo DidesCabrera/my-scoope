@@ -1,8 +1,8 @@
-from django.urls import reverse
+"""Compatibility wrappers for older imports.
 
-def dailyplan_url(dailyplan):
-    return reverse("dailyplan_detail", args=[dailyplan.id])
+New presentation code should import these helpers from notas.presentation.routing.
+"""
 
+from notas.presentation.routing.dailyplan import dailyplan_configure_url, dailyplan_url
 
-def dailyplan_configure_url(dailyplan):
-    return reverse("dailyplan_configure", args=[dailyplan.id])
+__all__ = ["dailyplan_url", "dailyplan_configure_url"]

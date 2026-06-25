@@ -5,13 +5,13 @@ from typing import Any
 
 from django.urls import reverse
 
-from notas.application.resolvers.dailyplan_meal_resolvers import (
+from notas.presentation.actions.dailyplan_meal_resolvers import (
     resolve_dailyplan_meal_actions,
 )
-from notas.application.resolvers.dailyplan_resolvers import (
+from notas.presentation.actions.dailyplan_resolvers import (
     resolve_dailyplan_entity_actions,
 )
-from notas.application.resolvers.share_resolvers import resolve_share_actions
+from notas.presentation.actions.share_resolvers import resolve_share_actions
 from notas.application.services.cache.dailyplan_summary import get_dailyplan_summary
 from notas.application.services.nutrition.food_aggregation import (
     build_dailyplan_foods_aggregation,

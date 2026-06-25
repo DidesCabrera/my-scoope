@@ -1,10 +1,8 @@
-from django.urls import reverse
+"""Compatibility wrappers for older imports.
 
+New presentation code should import these helpers from notas.presentation.routing.
+"""
 
-def food_url(food):
-    return reverse("food_detail", args=[food.id])
+from notas.presentation.routing.food import food_list_url, food_url
 
-def food_list_url():
-    return reverse("food_list")
-
-
+__all__ = ["food_url", "food_list_url"]

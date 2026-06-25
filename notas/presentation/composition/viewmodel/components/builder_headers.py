@@ -1,7 +1,7 @@
-from notas.application.resolvers.dailyplan_meal_resolvers import resolve_dailyplan_meal_actions
-from notas.application.resolvers.dailyplan_resolvers import resolve_dailyplan_entity_actions
-from notas.application.resolvers.meal_resolvers import resolve_meal_entity_actions
-from notas.application.resolvers.food_resolvers import resolve_food_entity_actions
+from notas.presentation.actions.dailyplan_meal_resolvers import resolve_dailyplan_meal_actions
+from notas.presentation.actions.dailyplan_resolvers import resolve_dailyplan_entity_actions
+from notas.presentation.actions.meal_resolvers import resolve_meal_entity_actions
+from notas.presentation.actions.food_resolvers import resolve_food_entity_actions
 from notas.presentation.viewmodels.components.header_vm import HeaderVM, HeaderActionVM
 
 

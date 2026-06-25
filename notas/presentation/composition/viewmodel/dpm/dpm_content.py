@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from notas.application.resolvers.meal_food_resolvers import (
+from notas.presentation.actions.meal_food_resolvers import (
     resolve_meal_food_actions,
 )
 from notas.application.services.nutrition.food_aggregation import (

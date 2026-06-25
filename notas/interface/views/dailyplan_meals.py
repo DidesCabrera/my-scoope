@@ -36,7 +36,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from notas.application.services.notifications.share_emails import build_share_invitation_email
 
-from notas.application.use_cases.dpm_pages import (
+from notas.presentation.pages.dpm_pages import (
     get_dpm_detail_page_data,
     get_dpm_edit_page_data,
 )
