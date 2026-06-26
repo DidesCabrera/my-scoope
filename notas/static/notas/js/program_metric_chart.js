@@ -73,15 +73,17 @@ document.addEventListener("DOMContentLoaded", () => {
     return values.length ? Math.min(...values) : 0;
   }
 
-  function getGuideStyle(metric, metricMax) {
-    const maxPercent = heightPercent(metricMax, metricMax);
-    const minPercent = heightPercent(getMetricMin(metric), metricMax);
-    const maxTop = Math.min(Math.max(100 - maxPercent, 0), 100);
-    const minTop = Math.min(Math.max(100 - minPercent, 0), 100);
+  function getGuideValues(metric, metricMax) {
     return {
-      max: `top: ${maxTop.toFixed(2)}%;`,
-      min: `top: ${minTop.toFixed(2)}%;`,
+      max: toNumber(metricMax),
+      min: getMetricMin(metric),
     };
+  }
+
+  function guideYFromValue(value, metricMax, top, bottom) {
+    const percent = heightPercent(value, metricMax);
+    const drawableHeight = Math.max(bottom - top, 1);
+    return Math.min(Math.max(bottom - ((percent / 100) * drawableHeight), top), bottom);
   }
 
   function renderTabs(chart, data, activeKey) {
@@ -186,6 +188,25 @@ document.addEventListener("DOMContentLoaded", () => {
     while (svg.firstChild) svg.removeChild(svg.firstChild);
   }
 
+  function ensureGridSvg(plot) {
+    let svg = plot.querySelector(":scope > .program-chart-grid-svg");
+    if (svg) return svg;
+
+    svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.classList.add("program-chart-grid-svg");
+    svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("focusable", "false");
+    plot.appendChild(svg);
+    return svg;
+  }
+
+  function makeGridPath(x1, x2, y) {
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("class", "program-chart-grid-path");
+    path.setAttribute("d", `M ${x1.toFixed(2)} ${y.toFixed(2)} L ${x2.toFixed(2)} ${y.toFixed(2)}`);
+    return path;
+  }
+
   function makeOutlinePath(d) {
     const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
     path.setAttribute("class", "program-chart-outline-path");
@@ -202,6 +223,34 @@ document.addEventListener("DOMContentLoaded", () => {
     return circle;
   }
 
+  function ensureGuideSvg(plot) {
+    let svg = plot.querySelector(":scope > .program-chart-guide-svg");
+    if (svg) return svg;
+
+    svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.classList.add("program-chart-guide-svg");
+    svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("focusable", "false");
+    plot.appendChild(svg);
+    return svg;
+  }
+
+  function makeGuidePath(kind, x1, x2, y) {
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("class", `program-chart-guide-path program-chart-guide-path--${kind}`);
+    path.setAttribute("d", `M ${x1.toFixed(2)} ${y.toFixed(2)} L ${x2.toFixed(2)} ${y.toFixed(2)}`);
+    return path;
+  }
+
+  function makeGuideDot(kind, x, y) {
+    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    circle.setAttribute("class", `program-chart-guide-dot program-chart-guide-dot--${kind}`);
+    circle.setAttribute("cx", x.toFixed(2));
+    circle.setAttribute("cy", y.toFixed(2));
+    circle.setAttribute("r", "3.75");
+    return circle;
+  }
+
   function getOutlineBars(plot) {
     return Array.from(plot.querySelectorAll(".program-chart-bar, .program-chart-stacked-bar"))
       .filter((bar) => {
@@ -209,6 +258,195 @@ document.addEventListener("DOMContentLoaded", () => {
         return rect.width > 0 && rect.height > 0;
       });
   }
+
+  function getChartSlots(plot) {
+    return Array.from(plot.querySelectorAll(".program-chart-bar-slot"))
+      .filter((slot) => {
+        const rect = slot.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0;
+      });
+  }
+
+  function getDrawableBounds(plot, plotRect, height) {
+    const slots = getChartSlots(plot);
+    if (!slots.length) {
+      return { top: 0, bottom: height };
+    }
+
+    const top = Math.min(...slots.map((slot) => slot.getBoundingClientRect().top - plotRect.top));
+    const bottom = Math.max(...slots.map((slot) => slot.getBoundingClientRect().bottom - plotRect.top));
+    return {
+      top: Math.min(Math.max(top, 0), height),
+      bottom: Math.min(Math.max(bottom, 0), height),
+    };
+  }
+
+  function getChartLineBounds(plot, plotRect, width) {
+    const slots = getChartSlots(plot);
+    if (!slots.length) {
+      return { x1: 0, x2: width };
+    }
+
+    const firstRect = slots[0].getBoundingClientRect();
+    const lastRect = slots[slots.length - 1].getBoundingClientRect();
+    return {
+      x1: Math.min(Math.max(firstRect.left - plotRect.left, 0), width),
+      x2: Math.min(Math.max(lastRect.right - plotRect.left, 0), width),
+    };
+  }
+
+  function prepareSvg(svg, width, height) {
+    svg.setAttribute("width", width.toFixed(2));
+    svg.setAttribute("height", height.toFixed(2));
+    svg.setAttribute("viewBox", `0 0 ${width.toFixed(2)} ${height.toFixed(2)}`);
+    clearOutlineSvg(svg);
+  }
+
+  function renderPlotGrid(plot, plotRect, width, height) {
+    const svg = ensureGridSvg(plot);
+    prepareSvg(svg, width, height);
+
+    const drawableBounds = getDrawableBounds(plot, plotRect, height);
+    const drawableHeight = Math.max(drawableBounds.bottom - drawableBounds.top, 1);
+    const { x1, x2 } = getChartLineBounds(plot, plotRect, width);
+
+    [0.25, 0.5, 0.75].forEach((ratio) => {
+      const y = drawableBounds.bottom - (drawableHeight * ratio);
+      svg.appendChild(makeGridPath(x1, x2, y));
+    });
+  }
+
+  function renderPlotGuides(plot, plotRect, width, height, bars) {
+    const svg = ensureGuideSvg(plot);
+    prepareSvg(svg, width, height);
+
+    const metricMax = toNumber(plot.dataset.metricMax);
+    if (!bars.length || metricMax <= 0) return;
+
+    const { x1, x2 } = getChartLineBounds(plot, plotRect, width);
+    const drawableBounds = getDrawableBounds(plot, plotRect, height);
+
+    ["max", "min"].forEach((kind) => {
+      const rawValue = toNumber(plot.dataset[`guide${kind.charAt(0).toUpperCase()}${kind.slice(1)}`]);
+      const y = guideYFromValue(rawValue, metricMax, drawableBounds.top, drawableBounds.bottom);
+      svg.appendChild(makeGuidePath(kind, x1, x2, y));
+      svg.appendChild(makeGuideDot(kind, x1, y));
+      svg.appendChild(makeGuideDot(kind, x2, y));
+    });
+  }
+
+
+  function alignBarTooltips(plot) {
+    plot.querySelectorAll(".program-chart-bar-slot").forEach((slot) => {
+      const tooltip = slot.querySelector(".program-chart-bar-tooltip");
+      const bar = slot.querySelector(".program-chart-bar, .program-chart-stacked-bar");
+      if (!tooltip || !bar) return;
+
+      const slotRect = slot.getBoundingClientRect();
+      const barRect = bar.getBoundingClientRect();
+      if (!slotRect.width || !barRect.width) return;
+
+      const center = (barRect.left + (barRect.width / 2)) - slotRect.left;
+      const centerPercent = Math.min(Math.max((center / slotRect.width) * 100, 0), 100);
+      slot.style.setProperty("--program-chart-tooltip-x", `${centerPercent.toFixed(2)}%`);
+    });
+  }
+
+  let activeFloatingTooltipSlot = null;
+
+  function ensureFloatingTooltip() {
+    let tooltip = document.querySelector(".js-program-chart-floating-tooltip");
+    if (tooltip) return tooltip;
+
+    tooltip = makeElement("span", "program-chart-floating-tooltip js-program-chart-floating-tooltip", {
+      role: "tooltip",
+      "aria-hidden": "true",
+    });
+    document.body.appendChild(tooltip);
+    return tooltip;
+  }
+
+  function getTooltipSource(slot) {
+    return slot ? slot.querySelector(".program-chart-bar-tooltip") : null;
+  }
+
+  function getTooltipAnchor(slot) {
+    return slot ? slot.querySelector(".program-chart-bar, .program-chart-stacked-bar") : null;
+  }
+
+  function hideFloatingTooltip() {
+    const tooltip = document.querySelector(".js-program-chart-floating-tooltip");
+    activeFloatingTooltipSlot = null;
+    if (!tooltip) return;
+    tooltip.classList.remove("is-visible");
+    tooltip.setAttribute("aria-hidden", "true");
+  }
+
+  function positionFloatingTooltip(slot) {
+    const tooltip = ensureFloatingTooltip();
+    const anchor = getTooltipAnchor(slot);
+    if (!anchor) return;
+
+    const anchorRect = anchor.getBoundingClientRect();
+    const centerX = anchorRect.left + (anchorRect.width / 2);
+    const anchorTop = anchorRect.top;
+    const viewportPadding = 8;
+
+    tooltip.style.left = `${centerX}px`;
+    tooltip.style.top = `${anchorTop}px`;
+    tooltip.style.setProperty("--program-chart-floating-tooltip-arrow-x", "50%");
+
+    const tooltipRect = tooltip.getBoundingClientRect();
+    const halfWidth = tooltipRect.width / 2;
+    const minLeft = viewportPadding + halfWidth;
+    const maxLeft = window.innerWidth - viewportPadding - halfWidth;
+    const clampedLeft = Math.min(Math.max(centerX, minLeft), maxLeft);
+    const arrowX = Math.min(
+      Math.max(centerX - (clampedLeft - halfWidth), 12),
+      Math.max(tooltipRect.width - 12, 12),
+    );
+    const minTop = viewportPadding + tooltipRect.height + 12;
+    const clampedTop = Math.max(anchorTop, minTop);
+
+    tooltip.style.left = `${clampedLeft}px`;
+    tooltip.style.top = `${clampedTop}px`;
+    tooltip.style.setProperty("--program-chart-floating-tooltip-arrow-x", `${arrowX.toFixed(2)}px`);
+  }
+
+  function showFloatingTooltip(slot) {
+    const source = getTooltipSource(slot);
+    const anchor = getTooltipAnchor(slot);
+    if (!source || !anchor) return;
+
+    const tooltip = ensureFloatingTooltip();
+    tooltip.innerHTML = source.innerHTML;
+    tooltip.setAttribute("aria-hidden", "false");
+    tooltip.classList.add("is-visible");
+    activeFloatingTooltipSlot = slot;
+    if (window.lucide && typeof window.lucide.createIcons === "function") {
+      window.lucide.createIcons();
+    }
+    positionFloatingTooltip(slot);
+  }
+
+  function bindFloatingTooltip(slot) {
+    const source = getTooltipSource(slot);
+    if (!source || slot.dataset.floatingTooltipBound === "true") return;
+
+    source.setAttribute("aria-hidden", "true");
+    slot.dataset.floatingTooltipBound = "true";
+    slot.addEventListener("pointerenter", () => showFloatingTooltip(slot));
+    slot.addEventListener("pointermove", () => {
+      if (activeFloatingTooltipSlot === slot) positionFloatingTooltip(slot);
+    });
+    slot.addEventListener("pointerleave", hideFloatingTooltip);
+    slot.addEventListener("focusin", () => showFloatingTooltip(slot));
+    slot.addEventListener("focusout", hideFloatingTooltip);
+  }
+
+  window.addEventListener("scroll", hideFloatingTooltip, true);
+  window.addEventListener("resize", hideFloatingTooltip);
+
 
   function renderPlotOutline(plot) {
     const svg = ensureOutlineSvg(plot);
@@ -226,6 +464,9 @@ document.addEventListener("DOMContentLoaded", () => {
     svg.setAttribute("height", height.toFixed(2));
     svg.setAttribute("viewBox", `0 0 ${width.toFixed(2)} ${height.toFixed(2)}`);
     clearOutlineSvg(svg);
+    alignBarTooltips(plot);
+    renderPlotGrid(plot, plotRect, width, height);
+    renderPlotGuides(plot, plotRect, width, height, bars);
 
     if (!bars.length) return;
 
@@ -303,6 +544,33 @@ document.addEventListener("DOMContentLoaded", () => {
     return `--program-chart-outline-left-height: ${left.toFixed(2)}%; --program-chart-outline-right-height: ${right.toFixed(2)}%;`;
   }
 
+  function renderBarTooltip(metric, bar) {
+    if (bar.isEmpty) return null;
+
+    const tooltip = makeElement("span", "program-chart-bar-tooltip", {
+      role: "tooltip",
+    });
+    const iconRow = makeElement("span", "program-chart-bar-tooltip__icon-row");
+    const iconShell = makeElement("span", "program-chart-bar-tooltip__icon-shell");
+    iconShell.appendChild(makeElement("i", "program-chart-bar-tooltip__icon", {
+      "data-lucide": "clipboard-list",
+      "aria-hidden": "true",
+    }));
+    iconRow.appendChild(iconShell);
+
+    const name = makeElement("span", "program-chart-bar-tooltip__name", {
+      text: bar.dailyplanName || "Plan diario",
+    });
+    const value = makeElement("span", "program-chart-bar-tooltip__value", {
+      text: bar.titleValue || `${formatNumber(bar.value, metric.decimals || 0)} ${metric.unit || ""}`.trim(),
+    });
+
+    tooltip.appendChild(iconRow);
+    tooltip.appendChild(name);
+    tooltip.appendChild(value);
+    return tooltip;
+  }
+
   function renderSegment(segment, stackTotal, barIsEmpty, showSegmentValues, extraClasses = []) {
     const percent = segmentPercent(segment.value, stackTotal);
     const segmentClasses = [
@@ -358,6 +626,11 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       slot.appendChild(stacked);
+      const tooltip = renderBarTooltip(metric, bar);
+      if (tooltip) {
+        slot.appendChild(tooltip);
+        bindFloatingTooltip(slot);
+      }
       return slot;
     }
 
@@ -378,6 +651,11 @@ document.addEventListener("DOMContentLoaded", () => {
       singleBar.appendChild(valueLabel);
     }
     slot.appendChild(singleBar);
+    const tooltip = renderBarTooltip(metric, bar);
+    if (tooltip) {
+      slot.appendChild(tooltip);
+      bindFloatingTooltip(slot);
+    }
     return slot;
   }
 
@@ -418,22 +696,15 @@ document.addEventListener("DOMContentLoaded", () => {
       style: `--program-chart-days: ${data.daysCount || 1}; --program-chart-weeks: ${weeksCount}; --program-chart-min-width: ${getChartMinWidth(data)};`,
       "data-weeks-count": Math.min(weeksCount, 12),
     });
+    const metricMax = getMetricMax(metric);
+    const guideValues = getGuideValues(metric, metricMax);
     const plot = makeElement("div", `program-chart-plot program-chart-plot--${scope} program-chart-plot--${metric.kind} program-chart-plot--${metric.key}`, {
       style: `--program-chart-days: ${data.daysCount || 1}; --program-chart-weeks: ${weeksCount};`,
       "aria-label": `Gráfico de ${metric.label}`,
+      "data-metric-max": metricMax,
+      "data-guide-max": guideValues.max,
+      "data-guide-min": guideValues.min,
     });
-
-    const metricMax = getMetricMax(metric);
-    const guideStyle = getGuideStyle(metric, metricMax);
-
-    plot.appendChild(makeElement("span", "program-chart-guide program-chart-guide--max", {
-      "aria-hidden": "true",
-      style: guideStyle.max,
-    }));
-    plot.appendChild(makeElement("span", "program-chart-guide program-chart-guide--min", {
-      "aria-hidden": "true",
-      style: guideStyle.min,
-    }));
 
     const bars = Array.isArray(metric.bars) ? metric.bars : [];
     const barHeights = bars.map((bar) => getBarHeightPercent(metric, bar, metricMax));
@@ -496,6 +767,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     scheduleVisibleOutlines(body);
+    if (window.lucide && typeof window.lucide.createIcons === "function") {
+      window.lucide.createIcons();
+    }
 
     function activate(metricKey) {
       tabs.forEach((tab) => {

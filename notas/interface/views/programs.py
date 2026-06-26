@@ -580,7 +580,7 @@ def program_day_card(request, pk, program_day_id):
     ).exists():
         return HttpResponseForbidden()
 
-    card = build_program_day_child_card_vm(program_day.dailyplan, request.user)
+    card = build_program_day_child_card_vm(program_day.dailyplan, request.user, program_day=program_day)
     html = render_to_string(
         "components/program_day_selected_card.html",
         {

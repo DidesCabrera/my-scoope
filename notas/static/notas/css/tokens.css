@@ -201,7 +201,7 @@ html[data-theme="dark"] {
    --panel-tab-hover-border: var(--panel-row-separator);
    --panel-tab-active-bg: var(--text-main);
    --panel-tab-active-text: var(--text-inverted);
-   --panel-tab-active-border: var(--text-main);
+   --panel-tab-active-border: var(--surface-card-muted);
 
    /* Interactive */
    --interactive-primary: #8ab4ff;

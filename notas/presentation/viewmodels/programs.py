@@ -34,7 +34,7 @@ def _action(
     *,
     key,
     label,
-    url,
+    url="",
     method="get",
     icon="chevron-right",
     order=90,
@@ -43,6 +43,7 @@ def _action(
     is_back=False,
     disabled=False,
     extra_class="",
+    attrs=None,
 ):
     return {
         "key": key,
@@ -56,6 +57,7 @@ def _action(
         "is_back": is_back,
         "disabled": disabled,
         "extra_class": extra_class,
+        "attrs": attrs or {},
     }
 
 
@@ -156,6 +158,7 @@ def _chart_bar_payload(point, *, value=None, decimals=0, unit="", title_value=No
         "value": raw_value,
         "valueLabel": visible_label,
         "unit": unit,
+        "titleValue": title_value,
         "title": f"Semana {point['week_number']} · {point['day_label']} · {point['dailyplan_name']} · {title_value}".strip(),
     }
     if segments is not None:
@@ -549,7 +552,7 @@ def _dailyplan_meals_for_card(dailyplan):
     return list(dailyplan.dailyplan_meals.all().order_by("order", "id"))
 
 
-def build_program_day_child_card(dailyplan, user):
+def build_program_day_child_card(dailyplan, user, program_day=None):
     snapshot = build_dailyplan_snapshot(dailyplan)
     dailyplan_meals = _dailyplan_meals_for_card(dailyplan)
     foods_aggregation = build_dailyplan_foods_aggregation(dailyplan_meals)
@@ -603,5 +606,41 @@ def build_program_day_child_card(dailyplan, user):
             "author": str(dailyplan.original_author),
             "fork_from": str(dailyplan.forked_from) if dailyplan.forked_from else None,
         },
-        "actions": [_action(key="detail", label="Ir a detalle", url=reverse("dailyplan_detail", args=[dailyplan.id]), icon="pencil")],
+        "actions": build_program_day_card_actions(dailyplan, program_day),
     }
+
+
+def build_program_day_card_actions(dailyplan, program_day=None):
+    detail_action = _action(
+        key="detail",
+        label="Ir a detalle",
+        url=reverse("dailyplan_detail", args=[dailyplan.id]),
+        icon="chevron-right",
+        extra_class="program-day-selected-card__detail",
+    )
+
+    if program_day is None:
+        return [detail_action]
+
+    return [
+        _action(
+            key="replace",
+            label="Reemplazar",
+            method="button",
+            icon="refresh-cw",
+            extra_class="program-day-selected-card__replace js-program-slot-open-from-card",
+            attrs={
+                "data-week-number": program_day.week_number,
+                "data-day-number": program_day.day_number,
+            },
+        ),
+        _action(
+            key="remove",
+            label="Quitar",
+            url=reverse("remove_dailyplan_from_program", args=[program_day.program_id, program_day.id]),
+            method="post",
+            icon="trash-2",
+            extra_class="program-day-selected-card__remove action-icon-btn--danger",
+        ),
+        detail_action,
+    ]

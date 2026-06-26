@@ -46,6 +46,16 @@
     >
       Alloc
     </button>
+    {% if can_edit %}
+      <button
+        type="button"
+        class="btn-desplegar-mobile"
+        data-target="#card-grid-program-edit-mobile-{{ panel_id }}"
+        aria-label="Editar semanas"
+      >
+        <i data-lucide="pencil" class="tab-icon-edit"></i>
+      </button>
+    {% endif %}
   </div>
 
   <div id="card-grid-program-macros-mobile-{{ panel_id }}" class="card-table-programs-mobile program-table-panel">
@@ -55,5 +65,11 @@
   <div id="card-grid-program-alloc-mobile-{{ panel_id }}" class="card-table-programs-mobile program-table-panel">
     {% include "components/program_week_table_alloc.html" with weeks=weeks %}
   </div>
+
+  {% if can_edit %}
+    <div id="card-grid-program-edit-mobile-{{ panel_id }}" class="card-table-programs-mobile program-table-panel">
+      {% include "components/program_week_table_edit.html" with program=program weeks=weeks %}
+    </div>
+  {% endif %}
 </div>
 {% endif %}

@@ -28,76 +28,49 @@
 
   {% include "components/program_metric_chart_week.html" with chart=week.chart modifier="program-chart-panel--week" %}
 
-  <div class="program-week-child-card__days" role="list" aria-label="Días de la semana {{ week.week_number }}">
-    {% for day in week.days %}
-      <article
-        class="program-day-cell {% if day.program_day %}has-plan{% else %}is-empty{% endif %}"
-        role="listitem"
-        data-week-number="{{ week.week_number }}"
-        data-day-number="{{ day.day_number }}"
-        {% if day.program_day %}
+  <section class="program-week-child-card__plan-section" aria-label="Planes diarios de Semana {{ week.week_number }}">
+    <div class="program-week-child-card__days" role="list" aria-label="Días de la semana {{ week.week_number }}">
+      {% for day in week.days %}
+        <article
+          class="program-day-cell {% if day.program_day %}has-plan{% else %}is-empty{% endif %}"
+          role="listitem"
+          data-week-number="{{ week.week_number }}"
+          data-day-number="{{ day.day_number }}"
+          data-day-label="{{ day.day_label }}"
           tabindex="0"
-          data-slot-card-target="program-week-{{ week.week_number }}-day-{{ day.day_number }}-card"
-          data-slot-card-url="{% url 'program_day_card' program.id day.program_day.id %}"
           aria-expanded="false"
-          aria-controls="program-week-{{ week.week_number }}-day-{{ day.day_number }}-card"
-          aria-label="{{ day.day_label }}: ver {{ day.dailyplan.name }}"
-        {% else %}
-          aria-label="{{ day.day_label }}: sin plan diario"
-        {% endif %}
-      >
-        <span class="program-day-cell__day-initial" aria-hidden="true">{{ day.day_label|slice:":1" }}</span>
+          {% if day.program_day %}
+            data-slot-card-target="program-week-{{ week.week_number }}-day-{{ day.day_number }}-card"
+            data-slot-card-url="{% url 'program_day_card' program.id day.program_day.id %}"
+            aria-controls="program-week-{{ week.week_number }}-day-{{ day.day_number }}-card"
+            aria-label="{{ day.day_label }}: ver {{ day.dailyplan.name }}"
+          {% else %}
+            aria-controls="program-week-{{ week.week_number }}-day-{{ day.day_number }}-empty-card"
+            aria-label="{{ day.day_label }}: sin plan diario"
+          {% endif %}
+        >
+          <span class="program-day-cell__day-initial" aria-hidden="true">{{ day.day_label|slice:":1" }}</span>
 
-        {% if day.program_day %}
-          <div class="program-day-cell__content">
-            <i data-lucide="clipboard-list" class="program-day-cell__icon"></i>
-          </div>
-
-          <div class="program-day-cell__tooltip" role="tooltip">
-            <i data-lucide="clipboard-list" class="program-day-cell__tooltip-icon"></i>
-            <span>{{ day.dailyplan.name }}</span>
-          </div>
-
-          <div class="program-day-cell__actions program-day-cell__actions--inline">
-            <button type="button" class="program-day-cell__replace js-program-slot-open" aria-label="Cambiar plan diario" title="Cambiar plan diario">
-              <i data-lucide="refresh-cw" class="table-icon"></i>
-            </button>
-            <form method="post" action="{% url 'remove_dailyplan_from_program' program.id day.program_day.id %}">
-              {% csrf_token %}
-              <button type="submit" class="program-day-cell__remove" aria-label="Quitar plan diario">
-                <i data-lucide="trash-2" class="table-icon"></i>
-              </button>
-            </form>
-          </div>
-
-          <details class="program-day-cell__menu">
-            <summary class="program-day-cell__menu-toggle" aria-label="Acciones del plan diario">
-              <i data-lucide="more-horizontal" class="table-icon"></i>
-            </summary>
-            <div class="program-day-cell__menu-list">
-              <button type="button" class="program-day-cell__menu-item js-program-slot-open">
-                <i data-lucide="refresh-cw" class="table-icon"></i>
-                <span>Reemplazar</span>
-              </button>
-              <form method="post" action="{% url 'remove_dailyplan_from_program' program.id day.program_day.id %}">
-                {% csrf_token %}
-                <button type="submit" class="program-day-cell__menu-item program-day-cell__menu-item--danger">
-                  <i data-lucide="trash-2" class="table-icon"></i>
-                  <span>Eliminar</span>
-                </button>
-              </form>
+          {% if day.program_day %}
+            <div class="program-day-cell__content">
+              <i data-lucide="clipboard-list" class="program-day-cell__icon"></i>
             </div>
-          </details>
-        {% else %}
-          <button type="button" class="program-day-cell__add js-program-slot-open" aria-label="Agregar plan diario a {{ day.day_label }}">
-            <i data-lucide="plus" class="program-day-cell__add-icon"></i>
-          </button>
-        {% endif %}
-      </article>
-    {% endfor %}
-  </div>
 
-  <div class="program-week-child-card__selected-cards js-program-week-selected-cards" aria-live="polite"></div>
+            <div class="program-day-cell__tooltip" role="tooltip">
+              <i data-lucide="clipboard-list" class="program-day-cell__tooltip-icon"></i>
+              <span>{{ day.dailyplan.name }}</span>
+            </div>
+          {% else %}
+            <button type="button" class="program-day-cell__add js-program-slot-open" aria-label="Agregar plan diario a {{ day.day_label }}">
+              <i data-lucide="plus" class="program-day-cell__add-icon"></i>
+            </button>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>
+
+    <div class="program-week-child-card__selected-cards js-program-week-selected-cards" aria-live="polite"></div>
+  </section>
 
   <div class="program-week-child-card__foods-row">
     {% include "components/program_week_foods_aggregation.html" with panel_id=week.foods_panel_id items=week.foods_aggregation_table collapsed=True %}

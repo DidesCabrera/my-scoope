@@ -66,12 +66,12 @@
 
 .btn-desplegar,
 .btn-desplegar-mobile {
-  height: 22px;
+  height: 24px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 8px;
-  border-radius: 12px;
+  padding: 0 12px;
+  border-radius: 999px;
 
   background-color: var(--panel-tab-bg);
   color: var(--panel-tab-text);
@@ -187,9 +187,9 @@
   }
 
   .btn-desplegar-mobile {
-    padding: 4px 12px;
-    border-radius: 13px;
-    height: 24px;
+    height: 30px;
+    padding: 0px 12px;
+    border-radius: 999px;
   }
 
   .card-table-foods,

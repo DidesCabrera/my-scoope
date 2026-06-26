@@ -46,7 +46,8 @@
       <form method="post" action="{% url 'program_add_week' vm.content.program.id %}" class="program-add-week-form">
         {% csrf_token %}
         <button type="submit" class="add-title program-add-week-button">
-          <i data-lucide="plus" class="table-icon"></i>
+          <i data-lucide="plus" class="table-icon program-add-week-button__icon"></i>
+          <i data-lucide="calendar-1" class="table-icon program-add-week-button__icon program-add-week-button__icon--week"></i>
           <h4>Agregar Semana</h4>
         </button>
       </form>

@@ -63,6 +63,17 @@
                 <span class="tooltip-text">{{ action.label }}</span>
               </button>
             </form>
+          {% elif action.method == "button" %}
+            <button
+              type="button"
+              class="action-icon-btn tooltip {{ action.extra_class }}"
+              title="{{ action.label }}"
+              aria-label="{{ action.label }}"
+              {% for attr, value in action.attrs.items %}{{ attr }}="{{ value }}" {% endfor %}
+            >
+              <i data-lucide="{{ action.icon }}" class="action-card-icon"></i>
+              <span class="tooltip-text">{{ action.label }}</span>
+            </button>
           {% endif %}
         {% endif %}
       {% endfor %}
@@ -129,6 +140,17 @@
                 <span class="tooltip-text">{{ action.label }}</span>
               </button>
             </form>
+          {% elif action.method == "button" %}
+            <button
+              type="button"
+              class="action-icon-btn tooltip {{ action.extra_class }}"
+              title="{{ action.label }}"
+              aria-label="{{ action.label }}"
+              {% for attr, value in action.attrs.items %}{{ attr }}="{{ value }}" {% endfor %}
+            >
+              <i data-lucide="{{ action.icon }}" class="action-card-icon"></i>
+              <span class="tooltip-text">{{ action.label }}</span>
+            </button>
           {% endif %}
         {% endif %}
       {% endfor %}

@@ -8,7 +8,8 @@
   <div class="data-grid-header data-grid-header--program-weeks-edit" role="row">
     <div class="data-grid-col data-grid-col--drag" role="columnheader"></div>
     <div class="data-grid-col data-grid-col--program-week" role="columnheader">Semana</div>
-    <div class="data-grid-col data-grid-col--program-week-actions" role="columnheader">Acciones</div>
+    <div class="data-grid-col data-grid-col--action" role="columnheader"></div>
+    <div class="data-grid-col data-grid-col--action" role="columnheader"></div>
   </div>
 
   {% for week in weeks %}
@@ -31,14 +32,16 @@
         </div>
       </div>
 
-      <div class="data-grid-cell data-grid-cell--program-week-actions" role="cell">
+      <div class="data-grid-cell data-grid-cell--action" role="cell">
         <form method="post" action="{% url 'program_duplicate_week' program.id week.week_number %}" class="program-week-action-form">
           {% csrf_token %}
           <button type="submit" class="table-action-link program-week-table-action" aria-label="Duplicar Semana {{ week.week_number }}">
             <i data-lucide="copy" class="table-icon"></i>
           </button>
         </form>
+      </div>
 
+      <div class="data-grid-cell data-grid-cell--action" role="cell">
         {% if program.normalized_duration_weeks > 1 %}
           <form method="post" action="{% url 'program_remove_week' program.id week.week_number %}" class="program-week-action-form">
             {% csrf_token %}
