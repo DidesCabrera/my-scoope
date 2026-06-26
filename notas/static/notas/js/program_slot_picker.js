@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const picker = document.querySelector(".js-program-slot-picker-global");
   let activeCell = null;
   let optionsRendered = false;
+  let overwriteConfirmed = false;
 
   function getDailyplans() {
     if (!page) return [];
@@ -27,6 +28,186 @@ document.addEventListener("DOMContentLoaded", () => {
     return Number.isFinite(number) ? number.toFixed(0) : "0";
   }
 
+  function escapeCssIdentifier(value) {
+    if (window.CSS && typeof window.CSS.escape === "function") {
+      return window.CSS.escape(String(value ?? ""));
+    }
+    return String(value ?? "").replace(/[^a-zA-Z0-9_-]/g, "\\$&");
+  }
+
+  function resetDesktopPickerSpace() {
+    const appContent = getAppContent();
+    if (!appContent) return;
+
+    if (appContent.dataset.programSlotPickerPreviousPaddingBottom !== undefined) {
+      appContent.style.paddingBottom = appContent.dataset.programSlotPickerPreviousPaddingBottom;
+      delete appContent.dataset.programSlotPickerPreviousPaddingBottom;
+    }
+    appContent.classList.remove("has-program-slot-picker-space");
+  }
+
+  function reserveDesktopPickerSpace() {
+    if (!picker || picker.hidden || isMobileViewport()) {
+      resetDesktopPickerSpace();
+      return;
+    }
+
+    const appContent = getAppContent();
+    if (!appContent) return;
+
+    if (appContent.dataset.programSlotPickerPreviousPaddingBottom === undefined) {
+      appContent.dataset.programSlotPickerPreviousPaddingBottom = appContent.style.paddingBottom || "";
+    }
+
+    window.requestAnimationFrame(() => {
+      if (!picker || picker.hidden || isMobileViewport()) return;
+      const currentPadding = appContent.dataset.programSlotPickerPreviousPaddingBottom || "0px";
+      const space = Math.ceil(picker.getBoundingClientRect().height + 64);
+      appContent.style.paddingBottom = `calc(${currentPadding || "0px"} + ${space}px)`;
+      appContent.classList.add("has-program-slot-picker-space");
+    });
+  }
+
+  function getWeekCells(cell = activeCell) {
+    const weekGrid = cell?.closest(".program-week-child-card__days");
+    return weekGrid ? Array.from(weekGrid.querySelectorAll(".program-day-cell")) : [];
+  }
+
+  function getSelectedDayNumbers() {
+    if (!picker) return [];
+    return Array.from(picker.querySelectorAll('.js-program-slot-day-checkbox:checked'))
+      .map((checkbox) => checkbox.value)
+      .filter(Boolean);
+  }
+
+  function syncDayNumberInputs() {
+    if (!picker) return [];
+    picker.querySelectorAll('input[name="day_numbers"]').forEach((input) => input.remove());
+    const selectedDays = getSelectedDayNumbers();
+
+    selectedDays.forEach((dayNumber) => {
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = "day_numbers";
+      input.value = dayNumber;
+      picker.appendChild(input);
+    });
+
+    return selectedDays;
+  }
+
+  function selectedDaysHaveOccupiedSlots() {
+    if (!picker) return false;
+    return Array.from(picker.querySelectorAll('.js-program-slot-day-checkbox:checked'))
+      .some((checkbox) => checkbox.dataset.occupied === "true");
+  }
+
+  function hideOverwriteWarning() {
+    const warning = picker?.querySelector(".js-program-slot-overwrite-warning");
+    if (warning) warning.hidden = true;
+  }
+
+  function showOverwriteWarning() {
+    const warning = picker?.querySelector(".js-program-slot-overwrite-warning");
+    if (warning) warning.hidden = false;
+  }
+
+  function syncDaySelector(cell = activeCell) {
+    if (!picker || !cell) return;
+    const container = picker.querySelector(".js-program-slot-days");
+    if (!container) return;
+
+    const activeDay = cell.dataset.dayNumber || "";
+    const cells = getWeekCells(cell);
+    if (!cells.length) {
+      container.hidden = true;
+      container.innerHTML = "";
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="program-slot-picker__days-title">Usar también en</div>
+      <div class="program-slot-picker__day-list" role="group" aria-label="Días para asignar este plan">
+        ${cells.map((dayCell) => {
+          const dayNumber = escapeHtml(dayCell.dataset.dayNumber || "");
+          const dayLabel = escapeHtml(dayCell.dataset.dayLabel || `Día ${dayNumber}`);
+          const isOccupied = dayCell.classList.contains("has-plan");
+          const isChecked = String(dayCell.dataset.dayNumber || "") === String(activeDay);
+          return `
+            <label class="program-slot-picker__day-option${isOccupied ? " is-occupied" : ""}">
+              <input
+                type="checkbox"
+                class="js-program-slot-day-checkbox"
+                value="${dayNumber}"
+                data-occupied="${isOccupied ? "true" : "false"}"
+                ${isChecked ? "checked" : ""}
+              >
+              <span>${dayLabel.slice(0, 3)}</span>
+            </label>
+          `;
+        }).join("")}
+      </div>
+    `;
+    container.hidden = false;
+  }
+
+  function renderAllocBar(value, kind) {
+    const pct = Math.max(0, Math.min(Math.round(Number(value) || 0), 100));
+    return `
+      <div class="picker-alloc-item">
+        <div class="alloc-pct micro alloc-bar-fill--${kind}">
+          <p>${pct}%</p>
+        </div>
+        <div class="alloc-bar-comp mini" style="--alloc: ${pct};">
+          <div class="alloc-bar-bg"></div>
+          <div class="alloc-bar-fill alloc-bar-fill--${kind}"></div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderKpiRow(label, grams, allocValue, kind) {
+    return `
+      <div class="picker-result-kpi__row">
+        <div class="picker-result-kpi__label">${label}</div>
+        <div class="picker-result-kpi__ppk is-empty" aria-hidden="true"></div>
+        <div class="picker-result-kpi__grams">${grams}g</div>
+        <div class="picker-result-kpi__alloc">
+          ${renderAllocBar(allocValue, kind)}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderDailyplanPickerCard({ name, kcal, protein, carbs, fat, proteinAlloc, carbsAlloc, fatAlloc }) {
+    return `
+      <div class="picker-result-title">
+        <div class="picker-result-title__main">
+          <div class="picker-result-title__name-row">
+            <i data-lucide="clipboard-list" class="picker-result-title__icon dailyplan"></i>
+            <span class="picker-result-title__name">${name}</span>
+          </div>
+          <div class="picker-result-badges" aria-label="Características">
+            <span class="picker-result-badge picker-result-badge--verified">Plan diario</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="picker-result-kpi">
+        <div class="picker-result-kpi__total">
+          <p>Calories</p>
+          <strong>${kcal}</strong>
+        </div>
+
+        <div class="picker-result-kpi__macros">
+          ${renderKpiRow("Protein", protein, proteinAlloc, "protein")}
+          ${renderKpiRow("Carbs", carbs, carbsAlloc, "carbs")}
+          ${renderKpiRow("Fat", fat, fatAlloc, "fat")}
+        </div>
+      </div>
+    `;
+  }
+
   function renderOptions() {
     if (!picker || optionsRendered) return;
 
@@ -46,9 +227,13 @@ document.addEventListener("DOMContentLoaded", () => {
       const protein = formatNumber(dailyplan.protein);
       const carbs = formatNumber(dailyplan.carbs);
       const fat = formatNumber(dailyplan.fat);
+      const alloc = dailyplan.alloc || {};
+      const proteinAlloc = Number(alloc.protein) || 0;
+      const carbsAlloc = Number(alloc.carbs) || 0;
+      const fatAlloc = Number(alloc.fat) || 0;
 
       return `
-        <label class="program-slot-picker__option picker-item js-program-slot-option" data-search="${name.toLowerCase()}">
+        <label class="program-slot-picker__option picker-item picker-result picker-result--dailyplan js-program-slot-option" data-search="${name.toLowerCase()}">
           <input
             type="radio"
             name="dailyplan_id"
@@ -58,18 +243,13 @@ document.addEventListener("DOMContentLoaded", () => {
             data-protein="${protein}"
             data-carbs="${carbs}"
             data-fat="${fat}"
+            data-protein-alloc="${proteinAlloc}"
+            data-carbs-alloc="${carbsAlloc}"
+            data-fat-alloc="${fatAlloc}"
             required
           >
-          <span class="program-slot-picker__option-body">
-            <span class="picker-item-header">
-              <span class="picker-item-name">${name}</span>
-              <span class="picker-item-unit">${kcal} kcal</span>
-            </span>
-            <span class="picker-item-meta">P ${protein}g · C ${carbs}g · F ${fat}g</span>
-            <span class="picker-item-badges">
-              <span class="picker-item-badge picker-item-badge--user">Plan diario</span>
-            </span>
-          </span>
+
+          ${renderDailyplanPickerCard({ name, kcal, protein, carbs, fat, proteinAlloc, carbsAlloc, fatAlloc })}
         </label>
       `;
     }).join("");
@@ -77,20 +257,34 @@ document.addEventListener("DOMContentLoaded", () => {
     results.querySelectorAll('input[name="dailyplan_id"]').forEach((radio) => {
       radio.addEventListener("change", () => syncPreview(radio));
     });
+    if (window.lucide && typeof window.lucide.createIcons === "function") {
+      window.lucide.createIcons();
+    }
     optionsRendered = true;
   }
 
   function closePicker() {
     if (!picker) return;
     picker.hidden = true;
-    picker.querySelector(".js-program-slot-search").value = "";
-    picker.querySelector(".js-program-slot-preview").hidden = true;
+    const search = picker.querySelector(".js-program-slot-search");
+    const preview = picker.querySelector(".js-program-slot-preview");
+    if (search) search.value = "";
+    if (preview) preview.hidden = true;
+    const days = picker.querySelector(".js-program-slot-days");
+    if (days) {
+      days.hidden = true;
+      days.innerHTML = "";
+    }
+    hideOverwriteWarning();
+    overwriteConfirmed = false;
+    picker.querySelectorAll('input[name="day_numbers"]').forEach((input) => input.remove());
     picker.querySelectorAll('input[name="dailyplan_id"]').forEach((radio) => {
       radio.checked = false;
     });
     syncSearch();
     activeCell?.classList.remove("is-picking");
     activeCell = null;
+    resetDesktopPickerSpace();
   }
 
   function closeSlotCards(scope, exceptId = null) {
@@ -120,6 +314,56 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function isMobileViewport() {
     return window.innerWidth <= 980;
+  }
+
+  function getAppContent() {
+    return document.querySelector(".app-content") || document.body;
+  }
+
+  function placePickerForCell(cell) {
+    if (!picker || !cell) return;
+
+    if (isMobileViewport()) {
+      const planSection = cell.closest(".program-week-child-card__plan-section");
+      const daysGrid = planSection?.querySelector(".program-week-child-card__days");
+      if (planSection && daysGrid) {
+        daysGrid.insertAdjacentElement("afterend", picker);
+        return;
+      }
+    }
+
+    getAppContent().appendChild(picker);
+  }
+
+  function positionDesktopPickerInAppContent(cell = activeCell) {
+    if (!picker || isMobileViewport()) return;
+
+    const appContent = getAppContent();
+    const appRect = appContent.getBoundingClientRect();
+    const appTop = appRect.top + window.scrollY;
+    const daysGrid = cell?.closest(".program-week-child-card__plan-section")
+      ?.querySelector(".program-week-child-card__days");
+    const anchor = daysGrid || cell?.closest(".program-week-child-card") || cell;
+
+    if (!anchor) return;
+
+    const anchorBottom = anchor.getBoundingClientRect().bottom + window.scrollY;
+    const nextTop = Math.max(24, anchorBottom - appTop + 12);
+
+    picker.style.setProperty("--program-slot-picker-top", `${Math.round(nextTop)}px`);
+  }
+
+  function scrollMobileWeekIntoView(cell) {
+    if (!isMobileViewport() || !cell) return;
+
+    const planSection = cell.closest(".program-week-child-card__plan-section");
+    const daysGrid = planSection?.querySelector(".program-week-child-card__days");
+    const target = daysGrid || planSection;
+    if (!target) return;
+
+    window.requestAnimationFrame(() => {
+      target.scrollIntoView({ block: "start", behavior: "smooth" });
+    });
   }
 
   function activateDefaultDetailBlock(root) {
@@ -156,7 +400,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const container = weekRow?.querySelector(".js-program-week-selected-cards");
     if (!container) return null;
 
-    let card = weekRow.querySelector(`#${CSS.escape(targetId)}`);
+    let card = weekRow.querySelector(`#${escapeCssIdentifier(targetId)}`);
     if (card) return card;
 
     const dayLabel = cell.dataset.dayLabel || "Este día";
@@ -169,11 +413,11 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
       </div>
     `);
-    return weekRow.querySelector(`#${CSS.escape(targetId)}`);
+    return weekRow.querySelector(`#${escapeCssIdentifier(targetId)}`);
   }
 
   async function ensureSlotCard(cell, weekRow, targetId) {
-    let card = weekRow?.querySelector(`#${CSS.escape(targetId)}`);
+    let card = weekRow?.querySelector(`#${escapeCssIdentifier(targetId)}`);
     if (card) return card;
 
     const container = weekRow?.querySelector(".js-program-week-selected-cards");
@@ -190,7 +434,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!response.ok) return null;
       const payload = await response.json();
       container.insertAdjacentHTML("beforeend", payload.html || "");
-      card = weekRow.querySelector(`#${CSS.escape(targetId)}`);
+      card = weekRow.querySelector(`#${escapeCssIdentifier(targetId)}`);
       if (card) {
         card.hidden = true;
         activateDefaultDetailBlock(card);
@@ -201,7 +445,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  async function toggleSlotCard(cell, forceOpen = false) {
+  async function toggleSlotCard(cell, forceOpen = false, options = {}) {
     const targetId = getSlotCardTarget(cell);
     if (!targetId) return;
 
@@ -210,7 +454,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!card) return;
 
     const shouldOpen = forceOpen || card.hidden;
-    closePicker();
+    if (!options.keepPicker) {
+      closePicker();
+    }
     closeSlotCards(weekRow, shouldOpen ? targetId : null);
 
     card.hidden = !shouldOpen;
@@ -238,18 +484,45 @@ document.addEventListener("DOMContentLoaded", () => {
   function syncPreview(radio) {
     if (!picker) return;
     const preview = picker.querySelector(".js-program-slot-preview");
-    const name = picker.querySelector(".js-program-slot-preview-name");
-    const kpis = picker.querySelector(".js-program-slot-preview-kpis");
-    if (!preview || !name || !kpis) return;
+    if (!preview) return;
 
-    name.textContent = radio.dataset.name || "Plan seleccionado";
-    kpis.textContent = `${radio.dataset.kcal || 0} kcal · P ${radio.dataset.protein || 0}g · C ${radio.dataset.carbs || 0}g · F ${radio.dataset.fat || 0}g`;
+    const name = escapeHtml(radio.dataset.name || "Plan seleccionado");
+    const kcal = formatNumber(radio.dataset.kcal);
+    const protein = formatNumber(radio.dataset.protein);
+    const carbs = formatNumber(radio.dataset.carbs);
+    const fat = formatNumber(radio.dataset.fat);
+    const proteinAlloc = Number(radio.dataset.proteinAlloc) || 0;
+    const carbsAlloc = Number(radio.dataset.carbsAlloc) || 0;
+    const fatAlloc = Number(radio.dataset.fatAlloc) || 0;
+
+    preview.classList.add("picker-result", "picker-result--dailyplan");
+    preview.innerHTML = `
+      <div class="program-slot-picker__preview-title">Plan seleccionado</div>
+      ${renderDailyplanPickerCard({
+        name,
+        kcal,
+        protein,
+        carbs,
+        fat,
+        proteinAlloc,
+        carbsAlloc,
+        fatAlloc,
+      })}
+    `;
     preview.hidden = false;
+
+    if (window.lucide && typeof window.lucide.createIcons === "function") {
+      window.lucide.createIcons();
+    }
   }
 
   document.querySelectorAll(".program-day-cell").forEach((cell) => {
     cell.addEventListener("click", (event) => {
       if (shouldIgnoreCellToggle(event)) return;
+      if (cell.classList.contains("is-empty")) {
+        openEmptySlotInteraction(cell);
+        return;
+      }
       toggleSlotCard(cell);
     });
 
@@ -258,11 +531,15 @@ document.addEventListener("DOMContentLoaded", () => {
       if (shouldIgnoreCellToggle(event)) return;
 
       event.preventDefault();
+      if (cell.classList.contains("is-empty")) {
+        openEmptySlotInteraction(cell);
+        return;
+      }
       toggleSlotCard(cell);
     });
   });
 
-  function openPickerForCell(cell) {
+  function openPickerForCell(cell, options = {}) {
     if (!picker || !cell) return;
 
     renderOptions();
@@ -277,35 +554,62 @@ document.addEventListener("DOMContentLoaded", () => {
     if (weekInput) weekInput.value = cell.dataset.weekNumber || "";
     if (dayInput) dayInput.value = cell.dataset.dayNumber || "";
 
-    cell.appendChild(picker);
+    placePickerForCell(cell);
     picker.hidden = false;
     activeCell = cell;
     cell.classList.add("is-picking");
-    closeSlotCards(cell.closest(".program-week-child-card"));
+    closeSlotCards(cell.closest(".program-week-child-card"), options.keepSlotCardTarget || null);
+    syncDaySelector(cell);
+    hideOverwriteWarning();
+    overwriteConfirmed = false;
+
+    positionDesktopPickerInAppContent(cell);
+    reserveDesktopPickerSpace();
+    scrollMobileWeekIntoView(cell);
 
     const search = picker.querySelector(".js-program-slot-search");
-    search?.focus();
+    if (isMobileViewport()) {
+      search?.blur();
+    } else {
+      search?.focus();
+    }
     if (window.lucide) window.lucide.createIcons();
   }
 
-  document.querySelectorAll(".js-program-slot-open").forEach((button) => {
-    button.addEventListener("click", () => {
-      const cell = button.closest(".program-day-cell");
-      button.closest(".program-day-cell__menu")?.removeAttribute("open");
-      openPickerForCell(cell);
-    });
-  });
+
+  async function openEmptySlotInteraction(cell) {
+    if (!cell) return;
+    const targetId = getSlotCardTarget(cell);
+    await toggleSlotCard(cell, true, { keepPicker: true });
+    openPickerForCell(cell, { keepSlotCardTarget: targetId });
+  }
 
   document.addEventListener("click", (event) => {
-    const button = event.target.closest(".js-program-slot-open-from-card");
-    if (!button) return;
+    const slotButton = event.target.closest(".js-program-slot-open");
+    if (slotButton) {
+      event.preventDefault();
+      event.stopPropagation();
+      const cell = slotButton.closest(".program-day-cell");
+      slotButton.closest(".program-day-cell__menu")?.removeAttribute("open");
+      if (cell?.classList.contains("is-empty")) {
+        openEmptySlotInteraction(cell);
+      } else {
+        openPickerForCell(cell);
+      }
+      return;
+    }
 
-    const weekRow = button.closest(".program-week-child-card");
-    const weekNumber = button.dataset.weekNumber;
-    const dayNumber = button.dataset.dayNumber;
-    const selector = `.program-day-cell[data-week-number="${CSS.escape(weekNumber || "")}"][data-day-number="${CSS.escape(dayNumber || "")}"]`;
+    const cardButton = event.target.closest(".js-program-slot-open-from-card");
+    if (!cardButton) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    const weekRow = cardButton.closest(".program-week-child-card");
+    const weekNumber = cardButton.dataset.weekNumber;
+    const dayNumber = cardButton.dataset.dayNumber;
+    const selector = `.program-day-cell[data-week-number="${escapeCssIdentifier(weekNumber || "")}"][data-day-number="${escapeCssIdentifier(dayNumber || "")}"]`;
     const cell = weekRow?.querySelector(selector);
-    openPickerForCell(cell);
+    openPickerForCell(cell, { keepSlotCardTarget: getSlotCardTarget(cell) });
   });
 
   document.querySelectorAll(".js-program-slot-close").forEach((button) => {
@@ -326,5 +630,53 @@ document.addEventListener("DOMContentLoaded", () => {
     if (search) {
       search.addEventListener("input", syncSearch);
     }
+  }
+
+  window.addEventListener("resize", () => {
+    if (!picker || picker.hidden || !activeCell) return;
+    if (isMobileViewport()) {
+      placePickerForCell(activeCell);
+      return;
+    }
+    placePickerForCell(activeCell);
+    positionDesktopPickerInAppContent(activeCell);
+    reserveDesktopPickerSpace();
+  });
+
+  if (picker) {
+    picker.addEventListener("change", (event) => {
+      if (event.target.matches(".js-program-slot-day-checkbox")) {
+        hideOverwriteWarning();
+        overwriteConfirmed = false;
+      }
+    });
+
+    picker.addEventListener("submit", (event) => {
+      const selectedDays = syncDayNumberInputs();
+      if (!selectedDays.length) {
+        event.preventDefault();
+        return;
+      }
+
+      if (selectedDaysHaveOccupiedSlots() && !overwriteConfirmed) {
+        event.preventDefault();
+        showOverwriteWarning();
+      }
+    });
+
+    picker.querySelector(".js-program-slot-overwrite-cancel")?.addEventListener("click", () => {
+      overwriteConfirmed = false;
+      hideOverwriteWarning();
+    });
+
+    picker.querySelector(".js-program-slot-overwrite-continue")?.addEventListener("click", () => {
+      overwriteConfirmed = true;
+      syncDayNumberInputs();
+      if (typeof picker.requestSubmit === "function") {
+        picker.requestSubmit();
+      } else {
+        picker.submit();
+      }
+    });
   }
 });

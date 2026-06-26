@@ -514,26 +514,37 @@ def add_dailyplan_to_program(request, pk):
 
     dailyplan_id = request.POST.get("dailyplan_id")
     week_number = request.POST.get("week_number")
-    day_number = request.POST.get("day_number")
+    day_numbers = [day for day in request.POST.getlist("day_numbers") if day]
+    if not day_numbers:
+        day_number = request.POST.get("day_number")
+        day_numbers = [day_number] if day_number else []
 
     source_dailyplan = get_object_or_404(
         program_available_dailyplans(request.user),
         pk=dailyplan_id,
     )
 
+    if not day_numbers:
+        messages.error(request, "Debes seleccionar al menos un día.")
+        return redirect("program_detail", pk=program.pk)
+
     try:
-        assign_dailyplan_to_program_slot(
-            program=program,
-            source_dailyplan=source_dailyplan,
-            user=request.user,
-            week_number=week_number,
-            day_number=day_number,
-        )
+        for day_number in day_numbers:
+            assign_dailyplan_to_program_slot(
+                program=program,
+                source_dailyplan=source_dailyplan,
+                user=request.user,
+                week_number=week_number,
+                day_number=day_number,
+            )
     except ValueError:
         messages.error(request, "La semana o el día seleccionado no es válido.")
         return redirect("program_detail", pk=program.pk)
 
-    messages.success(request, "Plan diario asignado al programa.")
+    if len(day_numbers) == 1:
+        messages.success(request, "Plan diario asignado al programa.")
+    else:
+        messages.success(request, "Plan diario asignado a los días seleccionados.")
     return redirect(f"{reverse('program_detail', args=[program.pk])}#week-{week_number}")
 
 

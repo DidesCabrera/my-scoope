@@ -6,27 +6,7 @@
     <h3 class="data-grid-list-panel-title">Reordenar Propuestas</h3>
 
     {% for proposal in proposals %}
-        <div
-            class="data-grid-row data-grid-row--list-panel-reorder js-list-reorder-row"
-            data-item-id="{{ proposal.id }}"
-        >
-            <div class="data-grid-cell data-grid-cell--drag">
-                <button
-                    type="button"
-                    class="list-panel-drag-handle"
-                    aria-label="Reordenar propuesta"
-                >
-                    <i data-lucide="grip-vertical" class="table-icon"></i>
-                </button>
-            </div>
-
-            <div class="data-grid-cell data-grid-cell--name">
-                <div class="list-panel-title-row">
-                    <i data-lucide="sparkles" class="picker-summary-card__icon proposal list-panel-title-icon"></i>
-                    <div class="truncate">{{ proposal.title }}</div>
-                </div>
-            </div>
-        </div>
+        {% include "components/list_panel_reorder_row.html" with item_id=proposal.id item_title=proposal.title icon="sparkles" entity_class="proposal" action_label="Reordenar propuesta" %}
     {% empty %}
         <div class="data-grid-empty">
             No tienes propuestas para reordenar.

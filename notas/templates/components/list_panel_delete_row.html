@@ -1,0 +1,37 @@
+<div
+    class="data-grid-row data-grid-row--list-panel-delete js-list-delete-row"
+    data-item-id="{{ item_id }}"
+>
+    <div class="data-grid-cell data-grid-cell--select">
+        <label class="list-panel-select" aria-label="{{ select_label }}">
+            <input
+                type="checkbox"
+                class="js-list-delete-checkbox"
+                value="{{ item_id }}"
+            >
+            <span class="list-panel-select__control"></span>
+        </label>
+    </div>
+
+    <div class="data-grid-cell data-grid-cell--name">
+        <div class="list-panel-title-row">
+            <i data-lucide="{{ icon }}" class="picker-summary-card__icon {{ entity_class }} list-panel-title-icon"></i>
+            <div class="truncate">{{ item_title }}</div>
+        </div>
+    </div>
+
+    <div class="data-grid-cell data-grid-cell--action">
+        <form method="post" action="{{ action_url }}">
+            {% csrf_token %}
+            {% if return_to_value %}
+                <input type="hidden" name="return_to" value="{{ return_to_value }}">
+            {% endif %}
+            {% if hidden_name %}
+                <input type="hidden" name="{{ hidden_name }}" value="{{ hidden_value }}">
+            {% endif %}
+            <button type="submit" aria-label="{{ action_label }}">
+                <i data-lucide="trash" class="table-icon"></i>
+            </button>
+        </form>
+    </div>
+</div>

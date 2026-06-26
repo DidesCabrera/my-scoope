@@ -1,8 +1,10 @@
-# UI System — Etapa 1
+# UI System
 
 Este documento declara el contrato visual vigente de My Scoope para que nuevas implementaciones mantengan coherencia entre Foods, Meals, DailyPlans, Programs, Inbox, Proposals, Comparators, Home y Profile.
 
-La Etapa 1 no rediseña la interfaz. Su objetivo es ordenar el lenguaje común, reducir decisiones improvisadas y dejar explícitas las reglas que deben seguir los próximos patches.
+La Etapa 1 no rediseña la interfaz. Su objetivo fue ordenar el lenguaje común, reducir decisiones improvisadas y dejar explícitas las reglas que deben seguir los próximos patches.
+
+La Etapa 2 inicia la consolidación real de componentes repetidos. El criterio es conservar la apariencia y el comportamiento existentes, pero mover HTML duplicado hacia parciales compartidos cuando el contrato visual es el mismo.
 
 ---
 
@@ -179,8 +181,22 @@ Reglas:
 
 El inventario vigente vive en `docs/current/architecture/component_inventory.md`.
 
+### Regla Etapa 2
+
+Cuando varias entidades comparten la misma estructura visual, crear un parcial compartido para la parte repetida y dejar en el template por entidad solo la configuración específica: URL, título, icono, clase de entidad, texto vacío y campos propios.
+
+Ejemplo vigente:
+
+```text
+components/list_panel_reorder_row.html
+components/list_panel_delete_row.html
+```
+
+Estos parciales son la base común de los paneles de reordenar/eliminar en listas.
+
 Componentes que deben reutilizarse antes de crear alternativas:
 
+- `list-panel`
 - `list-page-header`
 - `card-title-comp`
 - `structural-indicator`

@@ -22,3 +22,4 @@ Consequences
 - `0003-saved-comparisons-use-snapshots.md`: snapshots para comparaciones guardadas.
 - `0004-ai-export-modes.md`: modos de exportación para IA.
 - `0005-ui-system-stage-1.md`: contrato inicial de UI System, tokens y CSS.
+- `0006-ui-system-stage-2-component-consolidation.md`: consolidación inicial de componentes repetidos en templates.

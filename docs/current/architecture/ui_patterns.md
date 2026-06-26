@@ -75,6 +75,21 @@ Las acciones destructivas deben estar visibles solo cuando el contexto permita e
 
 Usar para representar entidades relacionadas dentro de una lista, detail o sección compuesta.
 
+## Paneles de lista
+
+### `list-panel`
+
+Usar para vistas auxiliares de listas donde el usuario reordena o elimina entidades.
+
+El wrapper puede seguir siendo específico por entidad para conservar URLs y textos, pero la fila debe reutilizar los parciales compartidos:
+
+```text
+components/list_panel_reorder_row.html
+components/list_panel_delete_row.html
+```
+
+Esto evita que Foods, Meals, DailyPlans, Programs, Proposals e Inbox tengan versiones divergentes de la misma UI.
+
 ## Tabs
 
 Usar tabs existentes cuando una sección tenga vistas hermanas del mismo nivel conceptual.

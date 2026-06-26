@@ -13,6 +13,7 @@ Antes de crear un nuevo componente, revisar si el caso puede resolverse con uno 
 | Patrón | Capa | Usar para | Variantes/Notas |
 |---|---|---|---|
 | `list-page-header` | component | encabezados de listas/secciones | no usar en details internos si corresponde `card-title-comp` |
+| `list-panel` | component | paneles de lista para reordenar/eliminar | usar parciales `list_panel_reorder_row.html` y `list_panel_delete_row.html` para filas repetidas |
 | `card-title-comp` | component | encabezado interno de details | útil para detail de comparación guardada, detail de entidad o tarjetas principales |
 | `structural-indicator` | component | conteos/resumen bajo títulos | número de alimentos, comidas, semanas, adjuntos |
 | `child-card` | component | entidades relacionadas dentro de listas/details | Meals, DailyPlans, attachments, proposals |
@@ -38,6 +39,19 @@ Antes de crear un nuevo componente, revisar si el caso puede resolverse con uno 
 | Proposals | `proposals.css` | estilos de revisión/propuestas; no redefinir cards globales |
 | Comparators | `comparators.css` | estilos de comparación y comparaciones guardadas |
 | Programs | `programs.css` | estilos exclusivos con prefijo `program-` o `program-chart-`; no agregar reglas genéricas |
+
+## Componentes consolidados
+
+### `list-panel`
+
+Los paneles de reordenar/eliminar en listas mantienen un wrapper por entidad, porque cada entidad define sus URLs y textos, pero las filas repetidas viven en parciales compartidos:
+
+| Parcial | Uso | Recibe |
+|---|---|---|
+| `components/list_panel_reorder_row.html` | fila arrastrable de reordenamiento | `item_id`, `item_title`, `icon`, `entity_class`, `action_label` |
+| `components/list_panel_delete_row.html` | fila seleccionable/eliminable | `item_id`, `item_title`, `icon`, `entity_class`, `select_label`, `action_url`, `action_label`, opcionales `return_to_value`, `hidden_name`, `hidden_value` |
+
+Regla: si se agrega una nueva entidad con panel de reordenar o eliminar, no copiar el HTML completo de la fila; crear solo el wrapper de entidad e incluir el parcial correspondiente.
 
 ## Estados oficiales
 

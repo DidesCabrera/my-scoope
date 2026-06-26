@@ -6,23 +6,7 @@
     <h3 class="data-grid-list-panel-title">Reordenar Programas</h3>
 
     {% for child in children %}
-        <div
-            class="data-grid-row data-grid-row--list-panel-reorder js-list-reorder-row"
-            data-item-id="{{ child.child_id }}"
-        >
-            <div class="data-grid-cell data-grid-cell--drag">
-                <button type="button" class="list-panel-drag-handle" aria-label="Reordenar programa">
-                    <i data-lucide="grip-vertical" class="table-icon"></i>
-                </button>
-            </div>
-
-            <div class="data-grid-cell data-grid-cell--name">
-                <div class="list-panel-title-row">
-                    <i data-lucide="calendar" class="picker-summary-card__icon program list-panel-title-icon"></i>
-                    <div class="truncate">{{ child.title }}</div>
-                </div>
-            </div>
-        </div>
+        {% include "components/list_panel_reorder_row.html" with item_id=child.child_id item_title=child.title icon="calendar" entity_class="program" action_label="Reordenar programa" %}
     {% empty %}
         <div class="data-grid-empty">No tienes programas para reordenar.</div>
     {% endfor %}

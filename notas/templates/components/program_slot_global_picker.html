@@ -35,6 +35,19 @@
     <small class="js-program-slot-preview-kpis"></small>
   </div>
 
+  <div class="program-slot-picker__days js-program-slot-days" hidden></div>
+
+  <div class="program-slot-picker__overwrite-warning js-program-slot-overwrite-warning" hidden>
+    <div class="program-slot-picker__overwrite-copy">
+      <strong>Hay días ocupados seleccionados.</strong>
+      <span>Si continúas, se sobrescribirán esos planes.</span>
+    </div>
+    <div class="program-slot-picker__overwrite-actions">
+      <button type="button" class="btn-cancel-picker js-program-slot-overwrite-cancel">Cancelar</button>
+      <button type="button" class="btn-add-picker js-program-slot-overwrite-continue">Continuar</button>
+    </div>
+  </div>
+
   <div class="actions-row program-slot-picker__actions">
     <button type="button" class="btn-cancel-picker js-program-slot-close">Cancelar</button>
     <button type="submit" class="btn-add-picker">Asignar Plan</button>

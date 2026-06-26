@@ -2,38 +2,8 @@
     <h3 class="data-grid-list-panel-title">Eliminar Alimentos</h3>
 
     {% for child in children %}
-        <div
-            class="data-grid-row data-grid-row--list-panel-delete js-list-delete-row"
-            data-item-id="{{ child.child_id }}"
-        >
-            <div class="data-grid-cell data-grid-cell--select">
-                <label class="list-panel-select" aria-label="Seleccionar alimento">
-                    <input
-                        type="checkbox"
-                        class="js-list-delete-checkbox"
-                        value="{{ child.child_id }}"
-                    >
-                    <span class="list-panel-select__control"></span>
-                </label>
-            </div>
-
-            <div class="data-grid-cell data-grid-cell--name">
-                <div class="list-panel-title-row">
-                    <i data-lucide="carrot" class="picker-summary-card__icon food list-panel-title-icon"></i>
-                    <div class="truncate">{{ child.titulo.name }}</div>
-                </div>
-            </div>
-
-            <div class="data-grid-cell data-grid-cell--action">
-                <form method="post" action="{% url 'food_delete' child.child_id %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="return_to" value="{{ request.path }}?mode=delete">
-                    <button type="submit" aria-label="Eliminar alimento">
-                        <i data-lucide="trash" class="table-icon"></i>
-                    </button>
-                </form>
-            </div>
-        </div>
+        {% url 'food_delete' child.child_id as action_url %}
+        {% include "components/list_panel_delete_row.html" with item_id=child.child_id item_title=child.titulo.name icon="carrot" entity_class="food" select_label="Seleccionar alimento" action_url=action_url action_label="Eliminar alimento" return_to_value=request.path|add:"?mode=delete" %}
     {% empty %}
         <div class="data-grid-empty">
             No tienes alimentos para eliminar.

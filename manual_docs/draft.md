@@ -102,19 +102,52 @@ BBDD ALIMENTOS
 ASIGNACION DE PROGRAMA SEMANAL A GOOGLE CALENDAR.
 1. Poner alarmas a las comidas es necesario?
 
--------------------------------------------------------------------
+-------------------------------------------------------------
 CORRECCION GRAFICOS
 
-Ayudame con los siguientes ajuste:
+Necesito ayuda con My Scoope, ayudame a hacer lo siguientes ajustes:
 
-1. Dejar "program-chart-axis-header" fijo, manteniendo su posición independiente del numero de semanas. El problema actual es que cuando hay scroll horizontal en el grafico, no se el min-max, y al scrollear Se oculta el titulo del grafico..
-2. Dentro de ""program-chart-axis-header"", poner a la derecha del <h3> la unidad de medida del indicador. Por ejemplo: "Calorias kcal". Pero "kcal" debe estar en italic con un tamaño de fuente menor, y del color --text-main.
-2. En "tot dash-kpi-range__tot" agregar una cuarta linea que diga "max-min", que tenga el tamaño del <p>Calories<p> pero fent-weight menor.
-4. Este elemento "alloc-pct" se ve apretado dado que su contenedor tiene un ancho fijo. Necesito  
+
+1. Debajo de las lineas horizontales grises, en el extremo derecho, poner el valor de la linea sin la unidad metrica el (para proteinas: 50, 100, 150 ...) Con el mismo color que el de las lineas. y que el font weight sea de 400. y tamaño de letra 10px
 
 
 
 
+ayudame a hacer lo siguientes ajustes:
 
-Adjunto la ultima version del codigo dentro del ZIP (version con test), revisala y genera un patch que modifique el proyecto para conseguir el resultado que se desea.
+1. Es posible que el pop-up del picker y "program-day-empty-card js-program-slot-card" Se rendericen al mismo momento. Actualmente el picker aparece al apretar "program-day-cell__add js-program-slot-open", y "program-day-empty-card js-program-slot-card" aparece al apretar en la grilla pero fuera de "program-day-cell__add js-program-slot-open", El funcionamiento ideal es que se desplique el picker y el mensaje al apretar cualquier parte de "program-day-cell is-empty"
+
+2. Hay dos tooltip en el sistema. Uno nativo, el cual hay que borrar. y el nuevo que hay que conservar.
+
+3. El hover sigue siendo lento, y eso que puse transision de 0.001s. Porque sucede?. corregir.
+
+Adjunto la ultima version del codigo dentro del ZIP, revisala y genera un patch que modifique el proyecto para conseguir el resultado que se desea.
+
+
+
+
+
+
+
+Grafico 1
+1. Reglas especiales de visualizacion para graficos de 1 y 2 semanas (mostrar metricas)
+
+Rediseñar el selector y asignador de días a semanas
+7. Mejorar UX de picker plan. Componer con card-child
+
+
+Tabla Semana
+9. Mejores metricas en tabla de semana (var entre semana, diseño de nueva barra alloc)
+
+Dash KPI
+10. quitar barra a alloc en mobile para comparaciones. 
+8. Hacer icono cvs para ppk y %
+
+
+Manual
+4. Ajustar dimensiones de Tot
+2. cambiar colores picker semana. mas osc a mas claro
+
+Adjunto la ultima version del codigo dentro del ZIP, revisala y genera un patch que modifique el proyecto para conseguir el resultado que se desea.
+
 

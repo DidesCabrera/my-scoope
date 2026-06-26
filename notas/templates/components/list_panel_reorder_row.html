@@ -1,0 +1,21 @@
+<div
+    class="data-grid-row data-grid-row--list-panel-reorder js-list-reorder-row"
+    data-item-id="{{ item_id }}"
+>
+    <div class="data-grid-cell data-grid-cell--drag">
+        <button
+            type="button"
+            class="list-panel-drag-handle"
+            aria-label="{{ action_label }}"
+        >
+            <i data-lucide="grip-vertical" class="table-icon"></i>
+        </button>
+    </div>
+
+    <div class="data-grid-cell data-grid-cell--name">
+        <div class="list-panel-title-row">
+            <i data-lucide="{{ icon }}" class="picker-summary-card__icon {{ entity_class }} list-panel-title-icon"></i>
+            <div class="truncate">{{ item_title }}</div>
+        </div>
+    </div>
+</div>

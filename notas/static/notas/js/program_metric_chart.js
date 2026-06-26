@@ -61,10 +61,35 @@ document.addEventListener("DOMContentLoaded", () => {
     return values.length ? values : bars.map((bar) => toNumber(bar.value));
   }
 
-  function getMetricMax(metric) {
+  function getRawMetricMax(metric) {
     const values = getMetricValues(metric);
     if (metric.key === "alloc") return 100;
     return Math.max(...values, 1);
+  }
+
+  function getMetricScaleStep(metric) {
+    if (metric.key === "alloc") return 25;
+    if (metric.key === "ppk") return 0.5;
+    if (metric.unit === "kcal" || metric.key === "calories" || metric.key === "alloc-cal") return 500;
+    return 50;
+  }
+
+  function getMetricMax(metric) {
+    if (metric.key === "alloc") return 100;
+
+    const rawMax = getRawMetricMax(metric);
+    const step = getMetricScaleStep(metric);
+    const scaleMax = Math.ceil(rawMax / step) * step;
+    return scaleMax <= rawMax ? scaleMax + step : scaleMax;
+  }
+
+  function getMetricTicks(metric, metricMax) {
+    const step = getMetricScaleStep(metric);
+    const ticks = [];
+    for (let tick = step; tick <= metricMax + (step / 1000); tick += step) {
+      ticks.push(Number(tick.toFixed(metric.key === "ppk" ? 2 : 0)));
+    }
+    return ticks;
   }
 
   function getMetricMin(metric) {
@@ -207,6 +232,20 @@ document.addEventListener("DOMContentLoaded", () => {
     return path;
   }
 
+  function makeGridLabel(x, y, label) {
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.setAttribute("class", "program-chart-grid-label");
+    text.setAttribute("x", x.toFixed(2));
+    text.setAttribute("y", y.toFixed(2));
+    text.textContent = label;
+    return text;
+  }
+
+  function getGridLabel(metricKey, value) {
+    const decimals = metricKey === "ppk" ? 2 : 0;
+    return formatNumber(value, decimals);
+  }
+
   function makeOutlinePath(d) {
     const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
     path.setAttribute("class", "program-chart-outline-path");
@@ -306,19 +345,31 @@ document.addEventListener("DOMContentLoaded", () => {
     const svg = ensureGridSvg(plot);
     prepareSvg(svg, width, height);
 
+    const metricMax = toNumber(plot.dataset.metricMax);
+    const ticks = (plot.dataset.gridTicks || "")
+      .split(",")
+      .map((value) => toNumber(value))
+      .filter((value) => value > 0 && value <= metricMax);
+    if (!ticks.length || metricMax <= 0) return;
+
     const drawableBounds = getDrawableBounds(plot, plotRect, height);
-    const drawableHeight = Math.max(drawableBounds.bottom - drawableBounds.top, 1);
     const { x1, x2 } = getChartLineBounds(plot, plotRect, width);
 
-    [0.25, 0.5, 0.75].forEach((ratio) => {
-      const y = drawableBounds.bottom - (drawableHeight * ratio);
+    ticks.forEach((tick) => {
+      const y = guideYFromValue(tick, metricMax, drawableBounds.top, drawableBounds.bottom);
       svg.appendChild(makeGridPath(x1, x2, y));
+      svg.appendChild(makeGridLabel(x1 + 4, y + 4, getGridLabel(plot.dataset.metricKey, tick)));
     });
   }
 
   function renderPlotGuides(plot, plotRect, width, height, bars) {
     const svg = ensureGuideSvg(plot);
     prepareSvg(svg, width, height);
+
+    // Alloc already represents a normalized 0-100% composition. The max/min
+    // horizontal guides add noise in this view, so only draw guides for
+    // absolute metrics such as kcal, grams and ppk.
+    if (plot.classList.contains("program-chart-plot--alloc")) return;
 
     const metricMax = toNumber(plot.dataset.metricMax);
     if (!bars.length || metricMax <= 0) return;
@@ -419,13 +470,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!source || !anchor) return;
 
     const tooltip = ensureFloatingTooltip();
-    tooltip.innerHTML = source.innerHTML;
+    const html = slot.dataset.floatingTooltipHtml || source.innerHTML;
+    slot.dataset.floatingTooltipHtml = html;
+    tooltip.innerHTML = html;
     tooltip.setAttribute("aria-hidden", "false");
     tooltip.classList.add("is-visible");
     activeFloatingTooltipSlot = slot;
-    if (window.lucide && typeof window.lucide.createIcons === "function") {
-      window.lucide.createIcons();
-    }
     positionFloatingTooltip(slot);
   }
 
@@ -599,7 +649,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (bar.isEmpty) slotClasses.push("is-empty");
 
     const slot = makeElement("div", slotClasses.join(" "), {
-      title: bar.title,
       "aria-label": bar.title,
     });
 
@@ -696,12 +745,16 @@ document.addEventListener("DOMContentLoaded", () => {
       style: `--program-chart-days: ${data.daysCount || 1}; --program-chart-weeks: ${weeksCount}; --program-chart-min-width: ${getChartMinWidth(data)};`,
       "data-weeks-count": Math.min(weeksCount, 12),
     });
+    const rawMetricMax = getRawMetricMax(metric);
     const metricMax = getMetricMax(metric);
-    const guideValues = getGuideValues(metric, metricMax);
+    const guideValues = getGuideValues(metric, rawMetricMax);
+    const gridTicks = getMetricTicks(metric, metricMax);
     const plot = makeElement("div", `program-chart-plot program-chart-plot--${scope} program-chart-plot--${metric.kind} program-chart-plot--${metric.key}`, {
       style: `--program-chart-days: ${data.daysCount || 1}; --program-chart-weeks: ${weeksCount};`,
       "aria-label": `Gráfico de ${metric.label}`,
       "data-metric-max": metricMax,
+      "data-metric-key": metric.key,
+      "data-grid-ticks": gridTicks.join(","),
       "data-guide-max": guideValues.max,
       "data-guide-min": guideValues.min,
     });

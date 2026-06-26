@@ -128,6 +128,47 @@ html.pwa-standalone *::-webkit-scrollbar {
 }
 
 
+
+/* --- Mobile / PWA interaction polish --- */
+
+@media (hover: none), (pointer: coarse) {
+  body,
+  body * {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  input,
+  textarea,
+  select,
+  option,
+  [contenteditable="true"],
+  [contenteditable=""] {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
+  }
+}
+
+html.pwa-standalone body,
+html.pwa-standalone body * {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+html.pwa-standalone input,
+html.pwa-standalone textarea,
+html.pwa-standalone select,
+html.pwa-standalone option,
+html.pwa-standalone [contenteditable="true"],
+html.pwa-standalone [contenteditable=""] {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
 /* --- PWA initial launch mask --- */
 
 .pwa-launch-solid-cover {
