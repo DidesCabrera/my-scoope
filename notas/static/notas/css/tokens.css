@@ -116,6 +116,46 @@
    --shadow-card: 0 8px 22px rgba(0, 0, 0, 0.05);
    --shadow-elevated: 0 16px 40px rgba(0, 0, 0, 0.12);
 
+   /* Layout scale */
+   --space-1: 0.25rem;
+   --space-2: 0.5rem;
+   --space-3: 0.75rem;
+   --space-4: 1rem;
+   --space-5: 1.25rem;
+   --space-6: 1.5rem;
+   --space-8: 2rem;
+
+   --radius-sm: 8px;
+   --radius-md: 12px;
+   --radius-lg: 16px;
+   --radius-xl: 22px;
+   --radius-pill: 999px;
+
+   /* Breakpoint contract values
+      Note: CSS custom properties cannot be used directly in @media
+      queries in vanilla CSS. These values document the official UI
+      contract; media queries should use the literal values. */
+   --breakpoint-mobile: 768px;
+   --breakpoint-shell-compact: 980px;
+   --breakpoint-desktop: 981px;
+
+   /* Z-index scale */
+   --z-below: -1;
+   --z-base: 0;
+   --z-raised: 1;
+   --z-local-overlay: 10;
+   --z-sticky: 100;
+   --z-dropdown: 500;
+   --z-picker-dropdown: 500;
+   --z-tooltip: 950;
+   --z-header-mini: 790;
+   --z-header: 800;
+   --z-sidebar-backdrop: 890;
+   --z-sidebar: 900;
+   --z-modal: 1000;
+   --z-toast: 1100;
+   --z-pwa-cover: 9999;
+
    /* Nutrition semantic aliases */
    --nutrition-protein: var(--color-protein);
    --nutrition-carbs: var(--color-carbs);

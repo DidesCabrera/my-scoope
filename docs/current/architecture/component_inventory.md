@@ -1,16 +1,67 @@
 # Component Inventory
 
-Inventario de patrones UI relevantes para crear o modificar secciones.
+Inventario de patrones UI vigentes para crear o modificar secciones.
 
-| Patrón | Usar para | Notas |
+Este documento complementa el contrato principal: `docs/current/design/ui_system.md`.
+
+## Regla de uso
+
+Antes de crear un nuevo componente, revisar si el caso puede resolverse con uno de estos patrones o con una variante acotada.
+
+## Componentes compartidos
+
+| Patrón | Capa | Usar para | Variantes/Notas |
+|---|---|---|---|
+| `list-page-header` | component | encabezados de listas/secciones | no usar en details internos si corresponde `card-title-comp` |
+| `card-title-comp` | component | encabezado interno de details | útil para detail de comparación guardada, detail de entidad o tarjetas principales |
+| `structural-indicator` | component | conteos/resumen bajo títulos | número de alimentos, comidas, semanas, adjuntos |
+| `child-card` | component | entidades relacionadas dentro de listas/details | Meals, DailyPlans, attachments, proposals |
+| `card-main` | component | cuerpo principal de una entidad | mantener layout y acciones consistentes entre entidades |
+| `card-bottom` | component | metadata/acciones inferiores | evitar crear footers nuevos si aplica |
+| `panel-tabs` | component | vistas hermanas del mismo nivel | no usar como navegación profunda |
+| `data-grid` | component | tablas y paneles estructurados | usar variantes para nutrición, menú, reorder, delete o edit |
+| `data-grid-edit-actions` | component | grupos de acciones de edición | mantener estilo consistente de botones internos |
+| `data-grid-edit-actions__button` | primitive/component | botones guardar/comparar/editar | preferir variantes existentes |
+| `actions-row` | primitive/component | acciones de formularios/pickers | mantener alineación y espaciado del sistema |
+| `dash-kpi` | component | KPIs de dashboards | métricas principales por entidad o detalle |
+| `dash-kpi-range` | component | rangos min/max | usado en Program detail/list/chart summaries |
+| `alloc-bar` | component | distribución P/C/F | usar tokens nutricionales |
+| `overflow-menu` | primitive | menú contextual de cards/headers | z-index mediante `--z-dropdown` |
+| `picker-list` | component | listas de selección | no mezclar reglas propias de Food Picker si el patrón es genérico |
+
+## Features con estilos propios
+
+| Feature | Archivo | Contrato |
 |---|---|---|
-| `list-page-header` | encabezados de listas/secciones | no usar en details de instancia guardada si corresponde `card-title-comp` |
-| `card-title-comp` | encabezado interno de details | útil para details sin tabs/list header |
-| `structural-indicator` | conteos/resumen bajo títulos | reutilizar antes de crear indicadores nuevos |
-| `data-grid-edit-actions` | grupos de acciones de edición | mantener estilo de botones consistente |
-| `data-grid-edit-actions__button` | botones guardar/comparar/editar | preferir variantes existentes |
-| `child-card` | cards de entidades relacionadas | meals, plans, attachments, proposals |
-| `comparator-tabs` | tabs de comparadores | usar solo para navegación entre tipos |
-| `actions-row` | acciones de formularios/pickers | mantener alineación y espaciado del sistema |
-| `dash-kpi` | KPIs de dashboards | usar para métricas principales |
-| `card-bottom` | metadata/acciones inferiores | evitar crear footer nuevo si aplica |
+| Home | `home.css` | estilos exclusivos de Home |
+| Profile | `profile.css` | estilos exclusivos de Profile |
+| Proposals | `proposals.css` | estilos de revisión/propuestas; no redefinir cards globales |
+| Comparators | `comparators.css` | estilos de comparación y comparaciones guardadas |
+| Programs | `programs.css` | estilos exclusivos con prefijo `program-` o `program-chart-`; no agregar reglas genéricas |
+
+## Estados oficiales
+
+Usar clases de estado con prefijo `is-`:
+
+```css
+.is-active
+.is-open
+.is-selected
+.is-empty
+.is-editing
+.is-disabled
+```
+
+## Clases JavaScript
+
+Las clases `js-*` son hooks de comportamiento. No deben recibir estilos visuales.
+
+## Señales de deuda
+
+Si un cambio requiere alguna de estas acciones, conviene documentarlo o reconsiderar el enfoque:
+
+- agregar `!important`;
+- agregar un z-index numérico global;
+- crear una clase genérica como `.main`, `.card`, `.header`, `.actions`;
+- copiar un bloque completo de CSS entre entidades;
+- modificar `programs.css` para resolver un problema que también existe fuera de Programs.

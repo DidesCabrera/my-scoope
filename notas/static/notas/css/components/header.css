@@ -227,7 +227,7 @@ body.page-header-meta-deferred.page-header-meta-visible .page-header .header-tit
 
   overflow: hidden;
 
-  z-index: 500;
+  z-index: var(--z-dropdown);
 }
 
 .overflow-menu.is-open .overflow-dropdown {

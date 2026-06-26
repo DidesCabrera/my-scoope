@@ -100,7 +100,7 @@
 
 .card-actions-comp .card-overflow-dropdown {
   min-width: 170px;
-  z-index: 510;
+  z-index: calc(var(--z-dropdown) + 10);
 }
 
 .card-actions-comp .overflow-action {

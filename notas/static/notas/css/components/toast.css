@@ -17,7 +17,7 @@
     padding: 18px;
   
     background: rgba(0, 0, 0, 0.45);
-    z-index: 100000000000;
+    z-index: var(--z-modal);
   }
   
   html[data-theme="dark"] .modal {
@@ -161,7 +161,7 @@
       top: 18px;
       left: 50%;
       transform: translateX(-50%);
-      z-index: 1100;
+      z-index: var(--z-toast);
       display: flex;
       flex-direction: column;
       gap: 8px;

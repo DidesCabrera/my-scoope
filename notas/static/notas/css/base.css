@@ -137,7 +137,7 @@ html.pwa-standalone *::-webkit-scrollbar {
 html.pwa-standalone:not(.pwa-ready):not(.pwa-internal-navigation-boot) .pwa-launch-solid-cover {
   position: fixed;
   inset: 0;
-  z-index: 9998;
+  z-index: calc(var(--z-pwa-cover) - 1);
   display: block;
   background: #000000;
   pointer-events: none;
@@ -155,7 +155,7 @@ html.pwa-standalone.pwa-is-navigating .pwa-navigation-placeholder {
 
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  z-index: var(--z-pwa-cover);
   display: block;
   box-sizing: border-box;
   overflow: hidden;

@@ -6,11 +6,6 @@
   --pwa-safe-area-top: 0px;
   --app-header-height: var(--header-height);
 
-  --z-picker-dropdown: 500;
-  --z-header-mini: 790;
-  --z-header: 800;
-  --z-sidebar-backdrop: 890;
-  --z-sidebar: 900;
 
   --sidebar-text: rgb(176, 176, 176);
   --sidebar-text-active: #ffffff;

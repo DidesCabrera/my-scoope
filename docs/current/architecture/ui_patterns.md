@@ -2,6 +2,13 @@
 
 Este documento describe los patrones visuales vigentes de My Scoope.
 
+
+## Contrato principal
+
+El contrato visual vigente está en `docs/current/design/ui_system.md`.
+
+Este archivo describe patrones de uso frecuentes. Si hay duda entre una solución local y el contrato del UI System, gana el contrato del UI System.
+
 ## Principio
 
 No crear un componente visual nuevo si existe un patrón reutilizable.
@@ -95,3 +102,32 @@ Preferir BEM:
 .block--variant
 .block__element--state
 ```
+
+
+## Tokens y cascada
+
+Los estilos nuevos deben usar tokens semánticos de `tokens.css`.
+
+Priorizar:
+
+- `--surface-*` para fondos;
+- `--text-*` para texto;
+- `--border-*` para bordes;
+- `--interactive-*` para hover, active y acciones;
+- `--entity-*` para colores de entidades;
+- `--nutrition-*` para métricas nutricionales;
+- `--z-*` para capas globales.
+
+Evitar agregar colores directos, z-index numéricos globales o `!important` nuevos salvo excepción justificada.
+
+## Breakpoints
+
+Usar los breakpoints oficiales:
+
+- `max-width: 768px` para contenido mobile;
+- `max-width: 980px` para shell compacto, sidebar/header y tablet/PWA;
+- `min-width: 981px` para desktop.
+
+## Programas
+
+`programs.css` es una feature con deuda conocida. Nuevos estilos dentro de ese archivo deben usar prefijos `program-` o `program-chart-` y no deben crear reglas genéricas reutilizables por otras features.
