@@ -316,7 +316,7 @@ padding: 0 4px;
 /* Program KPI range alloc bars ========================= */
 .dash-kpi-range__alloc-bar {
   display: grid;
-  grid-template-columns: 62px minmax(0, 1fr);
+  grid-template-columns: 74px minmax(0, 1fr);
   align-items: stretch;
   width: 100%;
   min-width: 0;

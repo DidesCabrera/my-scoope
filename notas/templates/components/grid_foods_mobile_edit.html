@@ -27,7 +27,14 @@
             </div>
 
             <div class="data-grid-cell data-grid-cell--name">
-                <div class="truncate">{{ row.rel.name }}</div>
+                <div class="truncate">{% if program_context_query %}
+                    <a
+                        href="{% url 'food_detail' row.child.id %}?{{ program_context_query }}&mealfood={{ row.rel.id }}"
+                        class="table-action-link table-action-link--name"
+                    >{{ row.rel.name }}</a>
+                {% else %}
+                    {{ row.rel.name }}
+                {% endif %}</div>
             </div>
 
             <div class="data-grid-cell data-grid-cell--edit">

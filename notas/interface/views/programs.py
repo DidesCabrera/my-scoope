@@ -46,6 +46,7 @@ from notas.presentation.viewmodels.programs import (
     build_program_list_cards as build_program_list_cards_vm,
     build_program_week_detail_content as build_program_week_detail_content_vm,
 )
+from notas.presentation.navigation.program_context import ProgramBreadcrumbParent
 from notas.presentation.viewmodels.program_actions import (
     action as _action,
     program_detail_actions as _program_detail_actions,
@@ -345,10 +346,24 @@ def program_week_detail(request, pk, week_number):
     if content is None:
         return HttpResponseBadRequest("Invalid week number.")
 
+    week_node = ProgramBreadcrumbParent(
+        f"Semana {week_number}",
+        None,
+    )
+    program_node = ProgramBreadcrumbParent(
+        str(program),
+        reverse("program_detail", args=[program.id]),
+    )
+
     context = _vm_context(
         PROGRAM_VIEWMODE_PERSONAL_DETAIL,
         content=content,
-        instance=program,
+        parents=[program_node],
+        instance=week_node,
+        back_config={
+            "type": "url",
+            "value": f"{reverse('program_detail', args=[program.id])}#week-{week_number}",
+        },
     )
 
     return render(request, "notas/programs/week_detail.html", context)
@@ -608,7 +623,13 @@ def program_day_card(request, pk, program_day_id):
     ).exists():
         return HttpResponseForbidden()
 
-    card = build_program_day_child_card_vm(program_day.dailyplan, request.user, program_day=program_day)
+    include_detail_action = request.GET.get("source") == "week_detail"
+    card = build_program_day_child_card_vm(
+        program_day.dailyplan,
+        request.user,
+        program_day=program_day,
+        include_detail_action=include_detail_action,
+    )
     html = render_to_string(
         "components/program_day_selected_card.html",
         {

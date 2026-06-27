@@ -5,6 +5,8 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 from django.urls import reverse
 
+from notas.presentation.navigation.program_context import append_query
+
 from notas.application.services.cache.program_summary import (
     DAY_LABELS,
     build_dailyplan_snapshot,
@@ -555,7 +557,7 @@ def _dailyplan_meals_for_card(dailyplan):
     return list(dailyplan.dailyplan_meals.all().order_by("order", "id"))
 
 
-def build_program_day_child_card(dailyplan, user, program_day=None):
+def build_program_day_child_card(dailyplan, user, program_day=None, include_detail_action=False):
     snapshot = build_dailyplan_snapshot(dailyplan)
     dailyplan_meals = _dailyplan_meals_for_card(dailyplan)
     foods_aggregation = build_dailyplan_foods_aggregation(dailyplan_meals)
@@ -609,15 +611,19 @@ def build_program_day_child_card(dailyplan, user, program_day=None):
             "author": str(dailyplan.original_author),
             "fork_from": str(dailyplan.forked_from) if dailyplan.forked_from else None,
         },
-        "actions": build_program_day_card_actions(dailyplan, program_day),
+        "actions": build_program_day_card_actions(
+            dailyplan,
+            program_day,
+            include_detail_action=include_detail_action,
+        ),
     }
 
 
-def build_program_day_card_actions(dailyplan, program_day=None):
+def build_program_day_card_actions(dailyplan, program_day=None, include_detail_action=False):
     if program_day is None:
         return []
 
-    return [
+    actions = [
         _action(
             key="replace",
             label="Reemplazar",
@@ -638,3 +644,19 @@ def build_program_day_card_actions(dailyplan, program_day=None):
             extra_class="program-day-selected-card__remove action-icon-btn--danger",
         ),
     ]
+
+    if include_detail_action:
+        actions.append(
+            _action(
+                key="detail",
+                label="Ir a detalle",
+                url=append_query(
+                    reverse("dailyplan_detail", args=[dailyplan.id]),
+                    program_day=program_day.id,
+                ),
+                icon="chevron-right",
+                extra_class="program-day-selected-card__detail",
+            )
+        )
+
+    return actions

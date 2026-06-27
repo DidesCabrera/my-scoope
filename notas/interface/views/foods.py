@@ -14,11 +14,12 @@ from notas.application.queries.food_picker_queries import (
     list_food_picker_items,
 )
 from notas.presentation.config.viewmodel_config import (
-    FOOD_VIEWMODE_PERSONAL_LIST, 
+    FOOD_VIEWMODE_PERSONAL_LIST,
     FOOD_VIEWMODE_PERSONAL_DETAIL,
     FOOD_VIEWMODE_PERSONAL_EDIT,
     FOOD_VIEWMODE_CREATE,
-    FOOD_VIEWMODE_IMPORT
+    FOOD_VIEWMODE_IMPORT,
+    PROGRAM_VIEWMODE_PERSONAL_DETAIL,
 )
 from notas.interface.routing.food import food_url
 from notas.presentation.composition.viewmodel.food.list_foods_builder import build_food_list_vm
@@ -43,6 +44,18 @@ from notas.application.services.notifications.share_emails import build_share_in
 
 from notas.presentation.viewmodels.base_vm import BaseVM
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
+from notas.presentation.navigation.program_context import (
+    compact_program_breadcrumbs,
+    dailyplan_context_url,
+    day_plan_parent,
+    dpm_context_url,
+    dpm_parent,
+    get_context_dailyplan_meal,
+    get_context_meal_food,
+    get_program_day_for_user,
+    program_parent,
+    week_parent,
+)
 
 from notas.presentation.pages.food_pages import get_food_list_page_data
 
@@ -187,7 +200,38 @@ def food_detail(request, pk):
         viewmode,
     )
 
-    ui_vm = build_ui_vm(viewmode, instance=food)
+    program_day = get_program_day_for_user(
+        request.user,
+        request.GET.get("program_day"),
+    )
+    dpm = get_context_dailyplan_meal(program_day, request.GET.get("dpm"))
+    mealfood = get_context_meal_food(dpm, request.GET.get("mealfood"))
+
+    if mealfood and mealfood.food_id == food.id:
+        ui_vm = build_ui_vm(
+            PROGRAM_VIEWMODE_PERSONAL_DETAIL,
+            parents=[
+                program_parent(program_day),
+                week_parent(program_day),
+                day_plan_parent(
+                    program_day,
+                    url=dailyplan_context_url(program_day),
+                ),
+                dpm_parent(
+                    program_day,
+                    dpm,
+                    url=dpm_context_url(program_day, dpm),
+                ),
+            ],
+            instance=food,
+            back_config={
+                "type": "url",
+                "value": dpm_context_url(program_day, dpm),
+            },
+        )
+        compact_program_breadcrumbs(ui_vm)
+    else:
+        ui_vm = build_ui_vm(viewmode, instance=food)
 
     base_vm = BaseVM(
         ui=ui_vm,

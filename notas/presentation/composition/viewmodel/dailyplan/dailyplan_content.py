@@ -5,6 +5,8 @@ from typing import Any
 
 from django.urls import reverse
 
+from notas.presentation.navigation.program_context import append_query
+
 from notas.presentation.actions.dailyplan_meal_resolvers import (
     resolve_dailyplan_meal_actions,
 )
@@ -141,6 +143,7 @@ def build_dailyplan_detail_content_data(
     dailyplan_meals,
     user,
     viewmode,
+    program_context_query="",
 ):
     header = build_dailyplan_header(
         dailyplan=dailyplan,
@@ -268,7 +271,10 @@ def build_dailyplan_detail_content_data(
                     "category_badge": resolve_category_badge("en plan"),
                     "foods_count": len(meal_foods_aggregation),
                     "url": (
-                        reverse("dailyplan_meal_detail", args=[dailyplan.id, dpm.id])
+                        append_query(
+                            reverse("dailyplan_meal_detail", args=[dailyplan.id, dpm.id]),
+                            **dict([param.split("=", 1) for param in program_context_query.split("&") if "=" in param]),
+                        )
                         if viewmode == DAILYPLAN_VIEWMODE_PERSONAL_DETAIL
                         else None
                     ),
@@ -296,6 +302,7 @@ def build_dailyplan_detail_content_data(
                     dpm,
                     user,
                     viewmode,
+                    context={"query": program_context_query} if program_context_query else None,
                 ),
             }
         )

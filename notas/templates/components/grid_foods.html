@@ -16,7 +16,14 @@
         <div class="data-grid-row data-grid-row--foods">
 
             <div class="data-grid-cell data-grid-cell--name">
-                {{ row.rel.name }}
+                {% if program_context_query %}
+                    <a
+                        href="{% url 'food_detail' row.child.id %}?{{ program_context_query }}&mealfood={{ row.rel.id }}"
+                        class="table-action-link table-action-link--name"
+                    >{{ row.rel.name }}</a>
+                {% else %}
+                    {{ row.rel.name }}
+                {% endif %}
             </div>
 
             <div class="data-grid-cell data-grid-cell--qty">

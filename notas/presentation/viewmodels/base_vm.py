@@ -6,6 +6,8 @@ from typing import Any, Optional
 class BreadcrumbItem:
     label: str
     url: Optional[str] = None
+    is_overflow: bool = False
+    overflow_items: list["BreadcrumbItem"] = field(default_factory=list)
 
 
 @dataclass

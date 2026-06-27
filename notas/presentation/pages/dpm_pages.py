@@ -74,6 +74,7 @@ class DpmDetailPageData:
     food_picker_context_json: str = "{}"
     can_edit_foods: bool = False
     viewmode: Any = None
+    program_context_query: str = ""
 
 
 def get_dpm_detail_page_data(
@@ -134,6 +135,9 @@ def get_dpm_detail_page_data(
             cls=DjangoJSONEncoder,
         )
 
+    program_day_id = request_get.get("program_day")
+    program_context_query = f"program_day={program_day_id}&dpm={dpm.id}" if program_day_id else ""
+
     detail_content_data = build_dpm_detail_content_data(
         dailyplan=dailyplan,
         dpm=dpm,
@@ -143,6 +147,7 @@ def get_dpm_detail_page_data(
         viewmode=viewmode,
         dailyplan_kpis=dailyplan_kpis if viewmode == DAILYPLAN_MEAL_VIEWMODE_DETAIL else None,
         meal_kpis=meal_kpis if viewmode == DAILYPLAN_MEAL_VIEWMODE_DETAIL else None,
+        program_context_query=program_context_query,
     )
 
     return DpmDetailPageData(
@@ -157,6 +162,7 @@ def get_dpm_detail_page_data(
         food_picker_context_json=food_picker_context_json,
         can_edit_foods=can_edit_foods,
         viewmode=viewmode,
+        program_context_query=program_context_query,
     )
 
 

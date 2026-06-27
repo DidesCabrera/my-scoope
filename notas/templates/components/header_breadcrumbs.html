@@ -1,17 +1,28 @@
 {% if breadcrumb %}
 
-<nav>
+<nav aria-label="Breadcrumb">
   <div class="breadcrumbs">
     {% for item in breadcrumb %}
-      {% if item.url %}
-        <a href="{{ item.url }}">{{ item.label }}</a>
+      {% if item.is_overflow and item.overflow_items %}
+        <details class="breadcrumb-item breadcrumb-overflow">
+          <summary aria-label="Mostrar ruta completa">...</summary>
+          <div class="breadcrumb-overflow-menu">
+            {% for hidden_item in item.overflow_items %}
+              {% if hidden_item.url %}
+                <a href="{{ hidden_item.url }}">{{ hidden_item.label }}</a>
+              {% else %}
+                <span>{{ hidden_item.label }}</span>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </details>
+      {% elif item.url %}
+        <a href="{{ item.url }}" class="breadcrumb-item">{{ item.label }}</a>
       {% else %}
-        <span>{{ item.label }}</span>
+        <span class="breadcrumb-item">{{ item.label }}</span>
       {% endif %}
     {% endfor %}
   </div>
 </nav>
 
 {% endif %}
-
-

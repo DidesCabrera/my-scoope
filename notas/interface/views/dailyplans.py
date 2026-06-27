@@ -30,6 +30,15 @@ from django.utils.http import url_has_allowed_host_and_scheme
 
 from notas.presentation.viewmodels.base_vm import BaseVM
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
+from notas.presentation.navigation.program_context import (
+    compact_program_breadcrumbs,
+    dailyplan_context_url,
+    day_plan_parent,
+    get_program_day_for_user,
+    program_parent,
+    program_context_query,
+    week_parent,
+)
 
 from notas.presentation.pages.dailyplan_pages import (
     get_dailyplan_detail_page_data,
@@ -402,10 +411,30 @@ def dailyplan_detail(request, pk):
         page.detail_content_data,
     )
 
-    ui_vm = build_ui_vm(
-        page.viewmode,
-        instance=page.dailyplan,
+    program_day = get_program_day_for_user(
+        request.user,
+        request.GET.get("program_day"),
     )
+
+    if program_day and program_day.dailyplan_id == page.dailyplan.id:
+        ui_vm = build_ui_vm(
+            PROGRAM_VIEWMODE_PERSONAL_DETAIL,
+            parents=[
+                program_parent(program_day),
+                week_parent(program_day),
+            ],
+            instance=day_plan_parent(program_day),
+            back_config={
+                "type": "url",
+                "value": week_parent(program_day).url,
+            },
+        )
+        compact_program_breadcrumbs(ui_vm)
+    else:
+        ui_vm = build_ui_vm(
+            page.viewmode,
+            instance=page.dailyplan,
+        )
 
     base_vm = BaseVM(
         ui=ui_vm,
@@ -415,6 +444,7 @@ def dailyplan_detail(request, pk):
     context = base_vm.as_context()
     context["meal_picker_data_json"] = page.meal_picker_data_json
     context["meal_picker_context"] = page.meal_picker_context_json
+    context["program_context_query"] = page.program_context_query
     context["selected_meal_id"] = page.selected_meal_id
     context["editing_dailyplanmeal_id"] = page.editing_dailyplanmeal_id
 

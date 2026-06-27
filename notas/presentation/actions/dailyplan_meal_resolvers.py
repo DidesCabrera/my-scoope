@@ -2,6 +2,30 @@ from django.urls import reverse, NoReverseMatch
 
 from notas.application.services.access.capabilities import get_capabilities
 from notas.presentation.config.viewmodel_config import *
+from notas.presentation.navigation.program_context import append_query
+
+
+
+def _context_query_dict(context):
+    query = (context or {}).get("query") if isinstance(context, dict) else ""
+    params = {}
+    for item in str(query).split("&"):
+        if "=" not in item:
+            continue
+        key, value = item.split("=", 1)
+        if key and value:
+            params[key] = value
+    return params
+
+
+def _contextual_dailyplan_meal_detail_url(dpm, context=None):
+    return append_query(
+        reverse(
+            "dailyplan_meal_detail",
+            args=[dpm.dailyplan.id, dpm.id],
+        ),
+        **_context_query_dict(context),
+    )
 
 # ==================================================
 # 1. ENTITY ACTION DEFINITIONS
@@ -15,10 +39,7 @@ DAILYPLAN_MEAL_ACTION_DEFINITIONS = {
         "order": 90,
         "desktop_position": "inline",
         "mobile_position": "inline",
-        "get_url": lambda dpm, context=None: reverse(
-            "dailyplan_meal_detail",
-            args=[dpm.dailyplan.id, dpm.id],
-        ),
+        "get_url": lambda dpm, context=None: _contextual_dailyplan_meal_detail_url(dpm, context),
     },
 
     "replace": {
@@ -73,10 +94,7 @@ DAILYPLAN_MEAL_ACTION_DEFINITIONS = {
         "order": 90,
         "desktop_position": "inline",
         "mobile_position": "inline",
-        "get_url": lambda dpm, context=None: reverse(
-            "dailyplan_meal_detail",
-            args=[dpm.dailyplan.id, dpm.id],
-        ),
+        "get_url": lambda dpm, context=None: _contextual_dailyplan_meal_detail_url(dpm, context),
     },
 
     "edit": {
@@ -186,6 +204,7 @@ def _build_actions_from_definitions(
     allowed_keys,
     subject,
     caps=None,
+    context=None,
 ):
     actions = []
 
@@ -205,7 +224,7 @@ def _build_actions_from_definitions(
             get_url = definition["get_url"]
 
             try:
-                url = get_url(subject, None)
+                url = get_url(subject, context)
             except TypeError:
                 url = get_url(subject)
 
@@ -232,7 +251,7 @@ def _build_actions_from_definitions(
 # 4. RESOLVER PRINCIPAL
 # ==================================================
 
-def resolve_dailyplan_meal_actions(dpm, user, viewmode):
+def resolve_dailyplan_meal_actions(dpm, user, viewmode, context=None):
     """
     Devuelve una lista de acciones disponibles para un DailyPlanMeal,
     según viewmode + capabilities del usuario.
@@ -245,4 +264,5 @@ def resolve_dailyplan_meal_actions(dpm, user, viewmode):
         allowed_keys=allowed_keys,
         subject=dpm,
         caps=caps,
+        context=context,
     )

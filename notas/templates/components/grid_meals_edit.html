@@ -71,7 +71,7 @@
 
             <div class="data-grid-cell data-grid-cell--action">
                 <a
-                    href="{% url 'dailyplan_meal_detail' row.main_id row.rel.id %}"
+                    href="{% url 'dailyplan_meal_detail' row.main_id row.rel.id %}{% if program_context_query %}?{{ program_context_query }}{% endif %}"
                     class="table-action-link"
                     aria-label="Ver detalle de comida"
                 >

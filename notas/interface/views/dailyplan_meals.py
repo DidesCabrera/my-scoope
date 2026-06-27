@@ -9,6 +9,7 @@ from notas.presentation.config.viewmodel_config import (
     DAILYPLAN_MEAL_VIEWMODE_EDIT,
     DAILYPLAN_MEAL_VIEWMODE_DRAFT_DEEP_EDIT,
     DAILYPLAN_MEAL_VIEWMODE_DETAIL,
+    PROGRAM_VIEWMODE_PERSONAL_DETAIL,
 )
 from notas.presentation.composition.viewmodel.dpm.detail_dpm_builder import build_dpm_detail_vm
 from notas.presentation.composition.js.dpm_food_picker_builder import build_dpm_food_picker_context_payload
@@ -19,6 +20,15 @@ from django.core.serializers.json import DjangoJSONEncoder
 
 from notas.presentation.viewmodels.base_vm import BaseVM
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
+from notas.presentation.navigation.program_context import (
+    compact_program_breadcrumbs,
+    day_plan_parent,
+    dailyplan_context_url,
+    dpm_parent,
+    get_program_day_for_user,
+    program_parent,
+    week_parent,
+)
 from notas.presentation.composition.viewmodel.components.builder_headers import build_page_header
 from notas.application.services.commands.meal_commands import (
     fork_meal_for_dailyplan,
@@ -34,6 +44,7 @@ from notas.application.services.commands.share_commands import (
 )
 from django.core.mail import send_mail
 from django.conf import settings
+from dataclasses import dataclass
 from notas.application.services.notifications.share_emails import build_share_invitation_email
 
 from notas.presentation.pages.dpm_pages import (
@@ -51,6 +62,18 @@ from notas.application.services.commands.dailyplan_commands import (
     reorder_dailyplan_meals,
     update_dailyplan_meal,
 )
+
+
+@dataclass(frozen=True)
+class BreadcrumbParent:
+    label: str
+    url: str
+
+    def __str__(self):
+        return self.label
+
+    def get_absolute_url(self):
+        return self.url
 
 
 @login_required
@@ -118,18 +141,49 @@ def dailyplan_meal_detail(request, dailyplan_id, pk):
         page.detail_content_data,
     )
 
-    ui_vm = build_ui_vm(
-        page.viewmode,
-        parents=[page.dailyplan],
-        instance=page.meal,
-        back_config={
-            "type": "url",
-            "value": reverse(
-                "dailyplan_detail",
-                args=[page.dailyplan.id],
-            ),
-        },
+    program_day = get_program_day_for_user(
+        request.user,
+        request.GET.get("program_day"),
     )
+
+    if program_day and program_day.dailyplan_id == page.dailyplan.id:
+        ui_vm = build_ui_vm(
+            PROGRAM_VIEWMODE_PERSONAL_DETAIL,
+            parents=[
+                program_parent(program_day),
+                week_parent(program_day),
+                day_plan_parent(
+                    program_day,
+                    url=dailyplan_context_url(program_day),
+                ),
+            ],
+            instance=dpm_parent(program_day, page.dpm),
+            back_config={
+                "type": "url",
+                "value": dailyplan_context_url(program_day),
+            },
+        )
+        compact_program_breadcrumbs(ui_vm)
+    else:
+        dailyplan_url = reverse(
+            "dailyplan_detail",
+            args=[page.dailyplan.id],
+        )
+
+        ui_vm = build_ui_vm(
+            page.viewmode,
+            parents=[
+                BreadcrumbParent(
+                    str(page.dailyplan),
+                    dailyplan_url,
+                ),
+            ],
+            instance=page.meal,
+            back_config={
+                "type": "url",
+                "value": dailyplan_url,
+            },
+        )
 
     base_vm = BaseVM(
         ui=ui_vm,
@@ -138,6 +192,7 @@ def dailyplan_meal_detail(request, dailyplan_id, pk):
 
     context = base_vm.as_context()
     context["foods_json"] = page.foods_json
+    context["program_context_query"] = page.program_context_query
     context["food_picker_json"] = page.food_picker_context_json
     context["can_edit_foods"] = page.can_edit_foods
     context["selected_food_id"] = page.selected_food_id

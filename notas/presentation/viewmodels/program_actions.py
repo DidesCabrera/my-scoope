@@ -239,8 +239,13 @@ def program_header(actions=None):
     return asdict(build_page_header(actions=actions or []))
 
 
-def program_vm_context(viewmode, *, content, instance=None):
-    ui_vm = build_ui_vm(viewmode, instance=instance)
+def program_vm_context(viewmode, *, content, instance=None, parents=None, back_config=None):
+    ui_vm = build_ui_vm(
+        viewmode,
+        instance=instance,
+        parents=parents,
+        back_config=back_config,
+    )
     return {
         "vm": {
             "ui": asdict(ui_vm),

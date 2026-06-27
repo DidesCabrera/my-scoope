@@ -41,6 +41,7 @@ def build_dpm_detail_content_data(
     viewmode,
     dailyplan_kpis=None,
     meal_kpis=None,
+    program_context_query="",
 ):
     header = build_dailyplan_meal_header(
         dpm=dpm,
@@ -197,6 +198,7 @@ def build_dpm_detail_content_data(
                     mf,
                     user,
                     viewmode,
+                    context={"query": program_context_query} if program_context_query else None,
                 ),
             }
         )

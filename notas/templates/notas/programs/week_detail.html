@@ -89,7 +89,7 @@
       </div>
 
       <section class="program-week-child-card__plan-section program-week-detail-plan-section" aria-label="Planes diarios de Semana {{ vm.content.week.week_number }}">
-        {% include "components/program_week_days_grid.html" with program=vm.content.program week=vm.content.week %}
+        {% include "components/program_week_days_grid.html" with program=vm.content.program week=vm.content.week include_dailyplan_detail_action=True %}
       </section>
     </section>
 

@@ -1,9 +1,19 @@
 .breadcrumbs {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  min-width: 0;
   color: var(--breadcrumb-text);
 }
 
+.breadcrumb-item {
+  min-width: 0;
+}
+
 .breadcrumbs a,
-.breadcrumbs span {
+.breadcrumbs span,
+.breadcrumb-overflow summary {
   color: var(--breadcrumb-text);
   text-decoration: none;
   font-size: 15px;
@@ -11,18 +21,59 @@
   transition: color 0.15s ease;
 }
 
-.breadcrumbs a:hover {
+.breadcrumbs a:hover,
+.breadcrumb-overflow summary:hover {
   color: var(--breadcrumb-hover);
   text-decoration: underline;
 }
 
-.breadcrumbs a + a::before,
-.breadcrumbs span + span::before,
-.breadcrumbs a + span::before,
-.breadcrumbs span + a::before {
+.breadcrumb-item + .breadcrumb-item::before {
   content: "/";
   margin-right: 6px;
   margin-left: 3px;
   color: var(--breadcrumb-separator);
   opacity: 0.9;
+}
+
+.breadcrumb-overflow {
+  position: relative;
+}
+
+.breadcrumb-overflow summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.breadcrumb-overflow summary::-webkit-details-marker {
+  display: none;
+}
+
+.breadcrumb-overflow-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 1200;
+  display: grid;
+  gap: 4px;
+  min-width: 220px;
+  padding: 8px;
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  background: var(--surface-card);
+  box-shadow: var(--shadow-soft);
+}
+
+.breadcrumb-overflow-menu a,
+.breadcrumb-overflow-menu span {
+  display: block;
+  padding: 7px 9px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.breadcrumb-overflow-menu a:hover {
+  background: var(--surface-muted);
+  text-decoration: none;
 }

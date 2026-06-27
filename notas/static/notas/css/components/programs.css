@@ -5322,3 +5322,9 @@ html[data-theme="dark"] .program-chart-guide {
     padding-inline: 8px 0;
   }
 }
+
+/* Program context selected day actions ===================================== */
+.program-day-selected-card .card-actions-row .program-day-selected-card__detail {
+  order: 20;
+  margin-left: auto;
+}
