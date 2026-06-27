@@ -33,6 +33,7 @@ from notas.presentation.actions.dailyplan_resolvers import (
     resolve_dailyplan_page_actions,
 )
 
+from notas.presentation.navigation.program_context import program_context_query
 from notas.presentation.viewmodels.dailyplans import (
     build_dailyplan_detail_content_data,
     build_dailyplan_list_content_data,
@@ -182,15 +183,16 @@ def get_dailyplan_detail_page_data(
         dailyplan = get_dailyplan_for_user(user, dailyplan_id)
         dailyplan_meals = get_dailyplan_meals_with_foods(dailyplan)
 
-    program_day_id = request_get.get("program_day")
-    program_context_query = f"program_day={program_day_id}" if program_day_id else ""
+    program_context = program_context_query(
+        program_day=request_get.get("program_day"),
+    )
 
     detail_content_data = build_dailyplan_detail_content_data(
         dailyplan=dailyplan,
         dailyplan_meals=dailyplan_meals,
         user=user,
         viewmode=effective_viewmode,
-        program_context_query=program_context_query,
+        program_context_query=program_context,
     )
 
     return DailyPlanDetailPageData(
@@ -202,7 +204,7 @@ def get_dailyplan_detail_page_data(
         meal_picker_data_json=meal_picker_data_json,
         meal_picker_context_json=meal_picker_context_json,
         viewmode=effective_viewmode,
-        program_context_query=program_context_query,
+        program_context_query=program_context,
     )
 
 

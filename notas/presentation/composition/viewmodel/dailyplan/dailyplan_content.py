@@ -5,7 +5,7 @@ from typing import Any
 
 from django.urls import reverse
 
-from notas.presentation.navigation.program_context import append_query
+from notas.presentation.navigation.program_context import contextual_url
 
 from notas.presentation.actions.dailyplan_meal_resolvers import (
     resolve_dailyplan_meal_actions,
@@ -271,9 +271,9 @@ def build_dailyplan_detail_content_data(
                     "category_badge": resolve_category_badge("en plan"),
                     "foods_count": len(meal_foods_aggregation),
                     "url": (
-                        append_query(
+                        contextual_url(
                             reverse("dailyplan_meal_detail", args=[dailyplan.id, dpm.id]),
-                            **dict([param.split("=", 1) for param in program_context_query.split("&") if "=" in param]),
+                            program_context_query,
                         )
                         if viewmode == DAILYPLAN_VIEWMODE_PERSONAL_DETAIL
                         else None

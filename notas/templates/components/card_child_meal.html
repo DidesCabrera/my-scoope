@@ -14,7 +14,10 @@
         {% with panel_id=child_card.id %}
             <div
                 class="card-detail-block"
-                {% if dpm_meal %}
+                {% if default_foods_table %}
+                    data-default-desktop="#card-grid-foods-{{ panel_id }}"
+                    data-default-mobile="#card-grid-qty-{{ panel_id }}"
+                {% elif dpm_meal %}
                     data-default-desktop="#card-grid-foods-{{ panel_id }}"
                     {% if default_nutrition %}
                         data-default-mobile="#card-grid-macros-{{ panel_id }}"
@@ -31,7 +34,10 @@
         {% with panel_id=forloop.counter %}
             <div
                 class="card-detail-block"
-                {% if dpm_meal %}
+                {% if default_foods_table %}
+                    data-default-desktop="#card-grid-foods-{{ panel_id }}"
+                    data-default-mobile="#card-grid-qty-{{ panel_id }}"
+                {% elif dpm_meal %}
                     data-default-desktop="#card-grid-foods-{{ panel_id }}"
                     {% if default_nutrition %}
                         data-default-mobile="#card-grid-macros-{{ panel_id }}"

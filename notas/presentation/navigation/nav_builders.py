@@ -194,6 +194,7 @@ def build_breadcrumb_vm(viewmode, parents=None, instance=None):
                 BreadcrumbItem(
                     label=str(parent),
                     url=resolve_object_url(parent),
+                    kind=getattr(parent, "kind", None),
                 )
             )
 

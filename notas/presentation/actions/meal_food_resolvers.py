@@ -2,7 +2,7 @@ from django.urls import NoReverseMatch, reverse
 
 from notas.application.services.access.capabilities import get_capabilities
 from notas.presentation.routing.food import food_list_url, food_url
-from notas.presentation.navigation.program_context import append_query
+from notas.presentation.navigation.program_context import contextual_url
 from notas.presentation.config.viewmodel_config import (
     MEAL_FOOD_VIEWMODE_DETAIL,
     MEAL_FOOD_VIEWMODE_DRAFT_DEEP_EDIT,
@@ -15,22 +15,10 @@ def _resolve_food_subject(subject):
     return getattr(subject, "food", subject)
 
 
-def _context_query_dict(context):
-    query = (context or {}).get("query") if isinstance(context, dict) else ""
-    params = {}
-    for item in str(query).split("&"):
-        if "=" not in item:
-            continue
-        key, value = item.split("=", 1)
-        if key and value:
-            params[key] = value
-    return params
-
-
 def _contextual_food_url(subject, context=None):
-    return append_query(
+    return contextual_url(
         food_url(_resolve_food_subject(subject)),
-        **_context_query_dict(context),
+        context,
         mealfood=getattr(subject, "id", None) if hasattr(subject, "food") else None,
     )
 

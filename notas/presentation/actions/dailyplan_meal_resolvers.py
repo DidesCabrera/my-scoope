@@ -2,30 +2,43 @@ from django.urls import reverse, NoReverseMatch
 
 from notas.application.services.access.capabilities import get_capabilities
 from notas.presentation.config.viewmodel_config import *
-from notas.presentation.navigation.program_context import append_query
+from notas.presentation.navigation.program_context import contextual_url
 
-
-
-def _context_query_dict(context):
-    query = (context or {}).get("query") if isinstance(context, dict) else ""
-    params = {}
-    for item in str(query).split("&"):
-        if "=" not in item:
-            continue
-        key, value = item.split("=", 1)
-        if key and value:
-            params[key] = value
-    return params
 
 
 def _contextual_dailyplan_meal_detail_url(dpm, context=None):
-    return append_query(
+    return contextual_url(
         reverse(
             "dailyplan_meal_detail",
             args=[dpm.dailyplan.id, dpm.id],
         ),
-        **_context_query_dict(context),
+        context,
     )
+
+
+def _contextual_dailyplan_detail_url(dpm, context=None, **params):
+    return contextual_url(
+        reverse(
+            "dailyplan_detail",
+            args=[dpm.dailyplan.id],
+        ),
+        context,
+        **params,
+    )
+
+
+def _contextual_dailyplan_meal_edit_url(dpm, context=None):
+    return contextual_url(
+        reverse(
+            "dailyplan_meal_edit",
+            args=[dpm.dailyplan.id, dpm.id],
+        ),
+        context,
+    )
+
+
+def _contextual_return_to_dailyplan_meal_url(dpm, context=None):
+    return _contextual_dailyplan_meal_detail_url(dpm, context)
 
 # ==================================================
 # 1. ENTITY ACTION DEFINITIONS
@@ -49,12 +62,11 @@ DAILYPLAN_MEAL_ACTION_DEFINITIONS = {
         "order": 90,
         "desktop_position": "inline",
         "mobile_position": "menu",
-        "get_url": lambda dpm, context=None: (
-            reverse(
-                "dailyplan_detail",
-                args=[dpm.dailyplan.id],
-            )
-            + f"?edit_meal={dpm.id}&select_meal={dpm.meal.id}"
+        "get_url": lambda dpm, context=None: _contextual_dailyplan_detail_url(
+            dpm,
+            context,
+            edit_meal=dpm.id,
+            select_meal=dpm.meal.id,
         ),
         "capability": "can_edit_own_content",
     },
@@ -81,10 +93,7 @@ DAILYPLAN_MEAL_ACTION_DEFINITIONS = {
         "is_back": True,
         "desktop_position": "inline",
         "mobile_position": "hidden",
-        "get_url": lambda dpm, context=None: reverse(
-            "dailyplan_detail",
-            args=[dpm.dailyplan.id],
-        ),
+        "get_url": lambda dpm, context=None: _contextual_dailyplan_detail_url(dpm, context),
     },
 
     "back_dpm_detail": {
@@ -104,10 +113,7 @@ DAILYPLAN_MEAL_ACTION_DEFINITIONS = {
         "order": 90,
         "desktop_position": "menu",
         "mobile_position": "menu",
-        "get_url": lambda dpm, context=None: reverse(
-            "dailyplan_meal_edit",
-            args=[dpm.dailyplan.id, dpm.id],
-        ),
+        "get_url": lambda dpm, context=None: _contextual_dailyplan_meal_edit_url(dpm, context),
         "capability": "can_edit_own_content",
     },
 
@@ -118,13 +124,10 @@ DAILYPLAN_MEAL_ACTION_DEFINITIONS = {
         "order": 40,
         "desktop_position": "menu",
         "mobile_position": "menu",
-        "get_url": lambda dpm, context=None: (
-            reverse("meal_rename", args=[dpm.meal.id])
-            + "?return_to="
-            + reverse(
-                "dailyplan_meal_detail",
-                args=[dpm.dailyplan.id, dpm.id],
-            )
+        "get_url": lambda dpm, context=None: contextual_url(
+            reverse("meal_rename", args=[dpm.meal.id]),
+            None,
+            return_to=_contextual_return_to_dailyplan_meal_url(dpm, context),
         ),
         "capability": "can_edit_own_content",
     },

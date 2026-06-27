@@ -11,7 +11,7 @@
     {% include "components/list_panel_dailyplans_delete.html" with children=vm.content.child_cards %}
   {% else %}
     {% for child in vm.content.child_cards %}
-      {% include "components//card_child_dailyplan.html" with child_card=child %}
+      {% include "components//card_child_dailyplan.html" with child_card=child default_menu=True %}
     {% empty %}
       <div>
         <p>No tienes planes diarios aun, puedes explorar Planes de otros usuarios, o crear un nuevo Plan Diario </p>

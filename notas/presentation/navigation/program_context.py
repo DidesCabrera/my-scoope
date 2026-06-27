@@ -10,10 +10,62 @@ from notas.domain.models import DailyPlanMeal, MealFood, ProgramDay
 from notas.presentation.viewmodels.base_vm import BreadcrumbItem
 
 
+PROGRAM_CONTEXT_KEYS = ("program_day", "dpm", "mealfood")
+
+
+@dataclass(frozen=True)
+class ProgramNavigationContext:
+    """Serializable navigation context for deep Program routes.
+
+    It keeps the query-string contract in one place instead of rebuilding
+    program_day/dpm/mealfood params by hand across pages and action resolvers.
+    """
+
+    program_day_id: int | str | None = None
+    dpm_id: int | str | None = None
+    mealfood_id: int | str | None = None
+
+    def as_params(self, *, include_empty: bool = False) -> dict[str, str]:
+        raw_params = {
+            "program_day": self.program_day_id,
+            "dpm": self.dpm_id,
+            "mealfood": self.mealfood_id,
+        }
+        params = {}
+        for key, value in raw_params.items():
+            if value in (None, "") and not include_empty:
+                continue
+            params[key] = "" if value is None else str(value)
+        return params
+
+    def as_query(self) -> str:
+        return urlencode(self.as_params())
+
+    def is_active(self) -> bool:
+        return bool(self.program_day_id)
+
+    def with_dpm(self, dpm: DailyPlanMeal | int | str | None) -> "ProgramNavigationContext":
+        dpm_id = getattr(dpm, "id", dpm)
+        return ProgramNavigationContext(
+            program_day_id=self.program_day_id,
+            dpm_id=dpm_id,
+            mealfood_id=self.mealfood_id,
+        )
+
+    def with_mealfood(self, mealfood: MealFood | int | str | None) -> "ProgramNavigationContext":
+        mealfood_id = getattr(mealfood, "id", mealfood)
+        return ProgramNavigationContext(
+            program_day_id=self.program_day_id,
+            dpm_id=self.dpm_id,
+            mealfood_id=mealfood_id,
+        )
+
+
 @dataclass(frozen=True)
 class ProgramBreadcrumbParent:
     label: str
     url: str | None = None
+    kind: str | None = None
 
     def __str__(self):
         return self.label
@@ -39,6 +91,61 @@ def append_query(url: str, **params) -> str:
     query = dict(parse_qsl(parts.query, keep_blank_values=True))
     query.update({key: str(value) for key, value in clean_params.items()})
     return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
+
+
+def parse_context_query(query: str | dict | None) -> dict[str, str]:
+    """Return only supported Program context params from a query string/dict."""
+    if not query:
+        return {}
+
+    if isinstance(query, dict):
+        raw_items = query.items()
+    else:
+        raw_items = parse_qsl(str(query), keep_blank_values=False)
+
+    params = {}
+    for key, value in raw_items:
+        if key in PROGRAM_CONTEXT_KEYS and value not in (None, ""):
+            params[key] = str(value)
+    return params
+
+
+def navigation_context_from_query(query: str | dict | None) -> ProgramNavigationContext:
+    params = parse_context_query(query)
+    return ProgramNavigationContext(
+        program_day_id=params.get("program_day"),
+        dpm_id=params.get("dpm"),
+        mealfood_id=params.get("mealfood"),
+    )
+
+
+def context_query_dict(context) -> dict[str, str]:
+    query = (context or {}).get("query") if isinstance(context, dict) else context
+    return parse_context_query(query)
+
+
+def context_query_string(context) -> str:
+    return urlencode(context_query_dict(context))
+
+
+def contextual_url(url: str, context=None, **params) -> str:
+    return append_query(
+        url,
+        **context_query_dict(context),
+        **{key: value for key, value in params.items() if value not in (None, "")},
+    )
+
+
+def program_context_query(
+    program_day: ProgramDay | int | str | None = None,
+    dpm: DailyPlanMeal | int | str | None = None,
+    mealfood: MealFood | int | str | None = None,
+) -> str:
+    return ProgramNavigationContext(
+        program_day_id=getattr(program_day, "id", program_day),
+        dpm_id=getattr(dpm, "id", dpm),
+        mealfood_id=getattr(mealfood, "id", mealfood),
+    ).as_query()
 
 
 def get_program_day_for_user(user, program_day_id) -> ProgramDay | None:
@@ -119,25 +226,15 @@ def dpm_context_url(program_day: ProgramDay, dpm: DailyPlanMeal) -> str:
     )
 
 
-def program_context_query(program_day: ProgramDay | None = None, dpm: DailyPlanMeal | None = None, mealfood: MealFood | None = None) -> str:
-    params = {}
-    if program_day is not None:
-        params["program_day"] = program_day.id
-    if dpm is not None:
-        params["dpm"] = dpm.id
-    if mealfood is not None:
-        params["mealfood"] = mealfood.id
-    return urlencode(params)
-
-
 def program_parent(program_day: ProgramDay) -> ProgramBreadcrumbParent:
-    return ProgramBreadcrumbParent(str(program_day.program), program_url(program_day))
+    return ProgramBreadcrumbParent(str(program_day.program), program_url(program_day), kind="program")
 
 
 def week_parent(program_day: ProgramDay) -> ProgramBreadcrumbParent:
     return ProgramBreadcrumbParent(
         f"Semana {program_day.week_number}",
         week_url(program_day),
+        kind="program_week",
     )
 
 
@@ -145,6 +242,7 @@ def day_plan_parent(program_day: ProgramDay, *, url: str | None = None) -> Progr
     return ProgramBreadcrumbParent(
         f"Día {program_day.day_number} - {program_day.dailyplan.name}",
         url,
+        kind="program_day_plan",
     )
 
 
@@ -152,16 +250,15 @@ def dpm_parent(program_day: ProgramDay, dpm: DailyPlanMeal, *, url: str | None =
     return ProgramBreadcrumbParent(
         dpm.meal.name,
         url,
+        kind="program_dpm",
     )
 
 
-def compact_program_breadcrumbs(ui_vm, *, visible_from_prefix: str = "Semana "):
-    """Collapse the program/list roots into an overflow breadcrumb.
+def compact_program_breadcrumbs(ui_vm, *, visible_from_kind: str = "program_week", visible_from_prefix: str = "Semana "):
+    """Collapse program/list roots into an overflow breadcrumb.
 
-    Program context breadcrumbs can become deep:
-    Mis Programas / Programa / Semana / Plan / Meal / Food.
-    In the header we keep the useful nested segment visible from Semana onward
-    and move the previous ancestors into a clickable ellipsis.
+    Prefer semantic item.kind markers so compacting is not coupled to labels.
+    The label prefix fallback keeps compatibility with older breadcrumb items.
     """
     breadcrumb = list(getattr(ui_vm, "breadcrumb", []) or [])
     if not breadcrumb:
@@ -169,8 +266,9 @@ def compact_program_breadcrumbs(ui_vm, *, visible_from_prefix: str = "Semana "):
 
     start_index = None
     for index, item in enumerate(breadcrumb):
+        kind = getattr(item, "kind", None)
         label = str(getattr(item, "label", ""))
-        if label.startswith(visible_from_prefix):
+        if kind == visible_from_kind or label.startswith(visible_from_prefix):
             start_index = index
             break
 
@@ -185,6 +283,7 @@ def compact_program_breadcrumbs(ui_vm, *, visible_from_prefix: str = "Semana "):
             label="...",
             is_overflow=True,
             overflow_items=hidden_items,
+            kind="overflow",
         ),
         *visible_items,
     ]

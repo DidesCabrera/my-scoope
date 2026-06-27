@@ -11,7 +11,7 @@
     {% include "components/list_panel_meals_delete.html" with children=vm.content.child_cards %}
   {% else %}
     {% for child in vm.content.child_cards %}
-      {% include "components//card_child_meal.html" with child_card=child hide_desktop_foods_aggregation_tab=True %}
+      {% include "components//card_child_meal.html" with child_card=child hide_desktop_foods_aggregation_tab=True default_foods_table=True %}
     {% empty %}
       <p>No meals yet.</p>
     {% endfor %}
