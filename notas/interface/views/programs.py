@@ -39,6 +39,7 @@ from notas.presentation.config.viewmodel_config import (
     PROGRAM_VIEWMODE_SHARE,
 )
 from notas.presentation.viewmodels.programs import (
+    FULL_DAY_LABELS,
     available_dailyplans as program_available_dailyplans,
     build_program_day_child_card as build_program_day_child_card_vm,
     build_program_detail_content as build_program_detail_content_vm,
@@ -545,6 +546,14 @@ def add_dailyplan_to_program(request, pk):
         messages.success(request, "Plan diario asignado al programa.")
     else:
         messages.success(request, "Plan diario asignado a los días seleccionados.")
+
+    return_to = request.POST.get("return_to") or ""
+    if return_to and url_has_allowed_host_and_scheme(
+        url=return_to,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return redirect(return_to)
     return redirect(f"{reverse('program_detail', args=[program.pk])}#week-{week_number}")
 
 
@@ -562,6 +571,14 @@ def remove_dailyplan_from_program(request, pk, program_day_id):
 
     remove_program_day(program_day=program_day)
     messages.success(request, "Día removido del programa.")
+
+    return_to = request.POST.get("return_to") or ""
+    if return_to and url_has_allowed_host_and_scheme(
+        url=return_to,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return redirect(return_to)
     return redirect(f"{reverse('program_detail', args=[program.pk])}#week-{week_number}")
 
 
@@ -598,6 +615,7 @@ def program_day_card(request, pk, program_day_id):
             "child_card": card,
             "week_number": program_day.week_number,
             "day_number": program_day.day_number,
+            "day_label": FULL_DAY_LABELS.get(program_day.day_number, ""),
         },
         request=request,
     )

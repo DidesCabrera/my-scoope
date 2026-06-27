@@ -1,0 +1,41 @@
+<div class="program-week-child-card__days" role="list" aria-label="Días de la semana {{ week.week_number }}">
+  {% for day in week.days %}
+    <article
+      class="program-day-cell {% if day.program_day %}has-plan{% else %}is-empty{% endif %}"
+      role="listitem"
+      data-week-number="{{ week.week_number }}"
+      data-day-number="{{ day.day_number }}"
+      data-day-label="{{ day.day_label }}"
+      tabindex="0"
+      aria-expanded="false"
+      {% if day.program_day %}
+        data-slot-card-target="program-week-{{ week.week_number }}-day-{{ day.day_number }}-card"
+        data-slot-card-url="{% url 'program_day_card' program.id day.program_day.id %}"
+        aria-controls="program-week-{{ week.week_number }}-day-{{ day.day_number }}-card"
+        aria-label="{{ day.day_label }}: ver {{ day.dailyplan.name }}"
+      {% else %}
+        aria-controls="program-week-{{ week.week_number }}-day-{{ day.day_number }}-empty-card"
+        aria-label="{{ day.day_label }}: sin plan diario"
+      {% endif %}
+    >
+      <span class="program-day-cell__day-initial" aria-hidden="true">{{ day.day_label|slice:":1" }}</span>
+
+      {% if day.program_day %}
+        <div class="program-day-cell__content">
+          <i data-lucide="clipboard-list" class="program-day-cell__icon"></i>
+        </div>
+
+        <div class="program-day-cell__tooltip" role="tooltip">
+          <i data-lucide="clipboard-list" class="program-day-cell__tooltip-icon"></i>
+          <span>{{ day.dailyplan.name }}</span>
+        </div>
+      {% else %}
+        <button type="button" class="program-day-cell__add js-program-slot-open" aria-label="Agregar plan diario a {{ day.day_label }}">
+          <i data-lucide="plus" class="program-day-cell__add-icon"></i>
+        </button>
+      {% endif %}
+    </article>
+  {% endfor %}
+</div>
+
+<div class="program-week-child-card__selected-cards js-program-week-selected-cards" aria-live="polite"></div>

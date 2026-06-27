@@ -75,9 +75,36 @@
       </div>
     </div>
 
-    <div class="program-board" aria-label="Grilla semanal del programa">
+    {% if vm.content.weeks %}
+      <div class="program-week-tabs js-program-week-tabs" role="tablist" aria-label="Semanas del programa">
+        {% for week in vm.content.weeks %}
+          <button
+            type="button"
+            id="program-week-tab-{{ week.week_number }}"
+            class="program-week-tab js-program-week-tab{% if forloop.first %} is-active{% endif %}"
+            role="tab"
+            aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
+            aria-controls="program-week-panel-{{ week.week_number }}"
+            tabindex="{% if forloop.first %}0{% else %}-1{% endif %}"
+            data-target="program-week-panel-{{ week.week_number }}"
+          >
+            {{ week.week_number }}
+          </button>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="program-board program-board--tabbed" aria-label="Grilla semanal del programa">
       {% for week in vm.content.weeks %}
-        {% include "components/program_week_child_card.html" with program=vm.content.program week=week can_edit=vm.content.can_edit %}
+        <section
+          id="program-week-panel-{{ week.week_number }}"
+          class="program-week-panel js-program-week-panel{% if forloop.first %} is-active{% endif %}"
+          role="tabpanel"
+          aria-labelledby="program-week-tab-{{ week.week_number }}"
+          {% if not forloop.first %}hidden{% endif %}
+        >
+          {% include "components/program_week_child_card.html" with program=vm.content.program week=week can_edit=vm.content.can_edit %}
+        </section>
       {% endfor %}
     </div>
   </section>
@@ -85,6 +112,7 @@
 </div>
 
 <script src="{% static 'notas/js/program_metric_chart.js' %}"></script>
+<script src="{% static 'notas/js/program_week_tabs.js' %}"></script>
 <script src="{% static 'notas/js/program_slot_picker.js' %}"></script>
 <script src="{% static 'notas/js/program_week_edit.js' %}"></script>
 {% endblock %}

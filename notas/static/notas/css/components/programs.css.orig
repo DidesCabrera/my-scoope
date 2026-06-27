@@ -1,3 +1,17 @@
+/* =========================================================
+   Programs feature CSS
+   ---------------------------------------------------------
+   UI System Stage 1 contract:
+   - This file owns Program-specific UI only.
+   - New selectors should use program-* or program-chart-* prefixes.
+   - Shared patterns should move to a reusable component file instead
+     of growing this feature stylesheet.
+   - Use semantic tokens for surfaces, text, borders, entities and
+     global z-index values.
+   - Avoid adding new !important rules unless the exception is
+     documented in the patch rationale.
+   ========================================================= */
+
 :root {
   --program-board-gap: 0.75rem;
 }
@@ -536,8 +550,18 @@
   display: none;
 }
 
+.program-day-selected-card__day-title {
+  margin: 0;
+  color: var(--text-main);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
 .program-day-selected-card {
   margin: 0;
+  padding: 0;
+  background: transparent;
   border-color: color-mix(in srgb, var(--entity-dailyplan) 24%, var(--border-default));
 }
 
@@ -882,15 +906,15 @@
 }
 
 .program-chart-stacked-bar__segment--protein {
-  background: #24deff7a;
+  background: var(--color-protein);
 }
 
 .program-chart-stacked-bar__segment--carbs {
-  background: #01e88885;
+  background: var(--color-carbs);
 }
 
 .program-chart-stacked-bar__segment--fat{
-  background: #cdff437a;
+  background: var(--color-fat);
 }
 
 .program-chart-week-axis {
@@ -1721,7 +1745,7 @@
 
 .program-card-panels__desktop.card-table-programs,
 .program-table-panel {
-  padding: 0 10px 10px !important;
+  padding-bottom: 10px !important;
 }
 
 .program-card-panels .btn-desplegar,
@@ -1772,8 +1796,8 @@
   left: 50%;
   display: grid;
   gap: 0;
-  width: min(520px, calc(100vw - 2rem));
-  max-width: 520px;
+  width: min(824px, calc(100vw - 2rem));
+  max-width: 824px;
   padding: 0;
   margin: 0;
   border: 1px solid var(--border-soft);
@@ -1841,6 +1865,11 @@
   overflow-y: auto;
 }
 
+.program-slot-picker__results[hidden],
+.program-slot-picker__results.is-hidden {
+  display: none !important;
+}
+
 .program-slot-picker__option {
   display: flex;
   align-items: flex-start;
@@ -1873,12 +1902,13 @@
 
 .program-slot-picker__preview.picker-summary-card {
   display: grid;
-  gap: 0.35rem;
-  margin: 10px 12px 0;
-  padding: 10px;
-  border: 1px solid var(--border-soft);
-  border-radius: 14px;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--panel-row-separator);
+  border-radius: 16px;
   background: var(--surface-card);
+  overflow: hidden;
 }
 
 .program-slot-picker__preview[hidden] {
@@ -1895,8 +1925,131 @@
   padding: 12px;
 }
 
+.program-slot-picker__actions[hidden] {
+  display: none !important;
+}
+
 .program-slot-picker__empty {
   color: var(--text-muted);
+}
+
+
+.program-slot-picker__days {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--panel-row-separator);
+  background: color-mix(in srgb, var(--surface-card) 78%, transparent);
+}
+
+.program-slot-picker__days[hidden] {
+  display: none !important;
+}
+
+.program-slot-picker__days-title {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.program-slot-picker__day-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.program-slot-picker__day-option {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  background: var(--surface-card);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.program-slot-picker__day-option:hover,
+.program-slot-picker__day-option:focus-within {
+  border-color: var(--panel-tab-hover-border);
+  background: var(--interactive-hover);
+  color: var(--text-main);
+}
+
+.program-slot-picker__day-option input {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.program-slot-picker__day-option:has(input:checked) {
+  border-color: color-mix(in srgb, var(--entity-dailyplan) 70%, var(--border-soft));
+  background: color-mix(in srgb, var(--entity-dailyplan) 18%, var(--surface-card));
+  color: var(--text-main);
+}
+
+.program-slot-picker__day-option.is-occupied::after {
+  content: "";
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--entity-dailyplan);
+  box-shadow: 0 0 0 2px var(--surface-card);
+}
+
+.program-slot-picker__overwrite-warning {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 12px 12px 0;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--warning, #f59e0b) 45%, var(--border-soft));
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--warning, #f59e0b) 12%, var(--surface-card));
+  color: var(--text-main);
+}
+
+.program-slot-picker__overwrite-warning[hidden] {
+  display: none !important;
+}
+
+.program-slot-picker__overwrite-copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.program-slot-picker__overwrite-copy strong {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.program-slot-picker__overwrite-copy span {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.program-slot-picker__overwrite-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
 }
 
 @media (max-width: 980px) {
@@ -1931,6 +2084,25 @@
 
   .program-slot-picker__results {
     max-height: 42vh;
+  }
+
+  .program-slot-picker__day-list {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .program-slot-picker__day-option {
+    min-width: 48px;
+  }
+
+  .program-slot-picker__overwrite-warning {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .program-slot-picker__overwrite-actions {
+    justify-content: flex-end;
   }
 }
 
@@ -3593,15 +3765,6 @@
   padding-inline: 0 !important;
   background:
     linear-gradient(to top, color-mix(in srgb, var(--border-default) 42%, transparent) 1px, transparent 1px) 0 0 / 100% 25%,
-    repeating-linear-gradient(
-      to right,
-      transparent 0,
-      transparent calc((100% / var(--program-chart-weeks)) - 0.5px),
-      var(--program-chart-week-separator-color) calc((100% / var(--program-chart-weeks)) - 0.5px),
-      var(--program-chart-week-separator-color) calc((100% / var(--program-chart-weeks)) + 0.5px),
-      transparent calc((100% / var(--program-chart-weeks)) + 0.5px),
-      transparent calc(100% / var(--program-chart-weeks))
-    ),
     var(--surface-card);
 }
 
@@ -3615,21 +3778,36 @@
   border-right: 0 !important;
 }
 
+.program-chart-main-axis--program .program-chart-week-column,
+.program-chart-main-axis--program .program-chart-week-axis span {
+  position: relative;
+}
+
+.program-chart-main-axis--program .program-chart-week-column + .program-chart-week-column::before,
+.program-chart-main-axis--program .program-chart-week-axis span + span::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 1px;
+  background: var(--program-chart-week-separator-color);
+  pointer-events: none;
+}
+
+.program-chart-main-axis--program .program-chart-week-column + .program-chart-week-column::before {
+  z-index: 3;
+}
+
+.program-chart-main-axis--program .program-chart-week-axis span + span::before {
+  z-index: 1;
+}
+
 .program-chart-main-axis--program .program-chart-week-axis {
   padding-left: 0 !important;
   padding-right: 0 !important;
   padding-inline: 0 !important;
   overflow: hidden;
-  background:
-    repeating-linear-gradient(
-      to right,
-      transparent 0,
-      transparent calc((100% / var(--program-chart-weeks)) - 0.5px),
-      var(--program-chart-week-separator-color) calc((100% / var(--program-chart-weeks)) - 0.5px),
-      var(--program-chart-week-separator-color) calc((100% / var(--program-chart-weeks)) + 0.5px),
-      transparent calc((100% / var(--program-chart-weeks)) + 0.5px),
-      transparent calc(100% / var(--program-chart-weeks))
-    );
 }
 
 .program-chart-main-axis--program .program-chart-week-axis span {
@@ -3813,8 +3991,7 @@ html[data-theme="dark"] .program-chart-guide {
   flex-direction: column;
   align-items: flex-start;
   gap: 0.24rem;
-  min-width: 148px;
-  max-width: min(220px, 74vw);
+  width: 508px;
   padding: 0.55rem 0.65rem;
   border: 1px solid color-mix(in srgb, var(--border-default) 82%, transparent);
   border-radius: 14px;
@@ -4039,8 +4216,9 @@ html[data-theme="dark"] .program-chart-guide {
   display: grid;
   gap: 0.85rem;
   padding: 0.85rem;
+  border: 1px solid var(--panel-row-separator);
   border-radius: 22px;
-  background: var(--surface-card-muted);
+  background: transparent;
 }
 
 .program-week-child-card__plan-section .program-week-child-card__days {
@@ -4048,7 +4226,8 @@ html[data-theme="dark"] .program-chart-guide {
 }
 
 .program-day-selected-card {
-  background: var(--surface-card);
+  padding: 12px;
+  background: transparent;
   border-color: var(--border-soft);
 }
 
@@ -4087,14 +4266,19 @@ html[data-theme="dark"] .program-chart-guide {
 }
 
 .program-day-empty-card {
-  display: flex;
-  align-items: center;
+  display: grid;
   gap: 0.7rem;
   padding: 0.95rem 1rem;
   border: 1px solid var(--border-soft);
   border-radius: 18px;
-  background: var(--surface-card);
+  background: transparent;
   color: var(--text-main);
+}
+
+.program-day-empty-card__content {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
 }
 
 .program-day-empty-card[hidden] {
@@ -4150,6 +4334,17 @@ html[data-theme="dark"] .program-chart-guide {
   stroke-width: 1px;
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
+}
+
+.program-chart-grid-label {
+  fill: color-mix(in srgb, var(--border-default) 42%, transparent);
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1;
+  text-anchor: end;
+  dominant-baseline: hanging;
+  pointer-events: none;
+  user-select: none;
 }
 
 .program-chart-guide-svg {
@@ -4264,7 +4459,7 @@ html[data-theme="dark"] .program-chart-guide {
 
 .program-chart-bar-tooltip {
   left: var(--program-chart-tooltip-x, 50%) !important;
-  z-index: 9999 !important;
+  z-index: var(--z-tooltip) !important;
   border: 1px solid var(--border-soft) !important;
   background: var(--surface-card-muted) !important;
   box-shadow: 0 18px 40px color-mix(in srgb, #000 34%, transparent);
@@ -4279,7 +4474,7 @@ html[data-theme="dark"] .program-chart-guide {
 
 .program-chart-bar-slot:hover,
 .program-chart-bar-slot:focus-within {
-  z-index: 9998 !important;
+  z-index: calc(var(--z-tooltip) - 1) !important;
 }
 
 .program-chart-bar-slot:hover .program-chart-bar,
@@ -4296,4 +4491,753 @@ html[data-theme="dark"] .program-chart-guide {
 
 .program-card-panels .card-table-programs-mobile .data-grid--program-weeks-edit {
   margin-top: 0;
+}
+
+/* Program chart tooltip portal ==============================================
+   The visible tooltip is rendered on body so it can escape chart stacking
+   contexts and clipping created by the scrollable card/axis containers. */
+.program-chart-bar-tooltip {
+  display: none !important;
+}
+
+.program-chart-floating-tooltip {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: var(--z-tooltip);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.24rem;
+  min-width: 148px;
+  max-width: min(220px, calc(100vw - 16px));
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  background: var(--surface-card-muted);
+  box-shadow: 0 18px 40px color-mix(in srgb, #000 34%, transparent);
+  color: var(--text-main);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - 10px));
+  transition: opacity 0.14s ease, visibility 0.14s ease;
+}
+
+.program-chart-floating-tooltip.is-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.program-chart-floating-tooltip::after {
+  content: "";
+  position: absolute;
+  left: var(--program-chart-floating-tooltip-arrow-x, 50%);
+  top: 100%;
+  width: 10px;
+  height: 10px;
+  border-right: 1px solid var(--border-soft);
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--surface-card-muted);
+  transform: translate(-50%, -5px) rotate(45deg);
+}
+
+.program-chart-floating-tooltip > * {
+  position: relative;
+  z-index: 1;
+}
+
+.program-chart-floating-tooltip .program-chart-bar-tooltip__header {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.program-chart-floating-tooltip .program-chart-bar-tooltip__icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  color: var(--entity-program);
+  stroke-width: 2.3;
+}
+
+.program-chart-floating-tooltip .program-chart-bar-tooltip__name {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-main);
+  font-size: 0.78rem;
+  font-weight: 720;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.program-chart-floating-tooltip .program-chart-bar-tooltip__value {
+  color: var(--text-main);
+  font-size: 0.72rem;
+  font-weight: 560;
+  line-height: 1.1;
+}
+
+/* Program chart floating tooltip refinement ================================ */
+.program-chart-floating-tooltip {
+  align-items: center;
+  gap: 0.42rem;
+  min-width: 156px;
+  padding: 0.72rem 0.72rem 0.68rem;
+  border: 1px solid var(--border-soft) !important;
+  outline: 1px solid var(--border-soft);
+  outline-offset: -1px;
+  background: var(--surface-card-muted);
+  box-shadow:
+    inset 0 0 0 1px var(--border-soft),
+    0 18px 40px color-mix(in srgb, #000 34%, transparent);
+  transform: translate(-50%, calc(-100% - 7px));
+}
+
+.program-chart-floating-tooltip::after {
+  border-right: 1px solid var(--border-soft) !important;
+  border-bottom: 1px solid var(--border-soft) !important;
+  background: var(--surface-card-muted);
+  box-shadow: 1px 1px 0 0 var(--border-soft);
+}
+
+.program-chart-floating-tooltip .program-chart-bar-tooltip__header {
+  display: none;
+}
+
+.program-chart-floating-tooltip .program-chart-bar-tooltip__icon-row {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.program-chart-floating-tooltip .program-chart-bar-tooltip__icon-shell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--entity-dailyplan);
+  color: #ffffff;
+}
+
+.program-chart-floating-tooltip .program-chart-bar-tooltip__icon {
+  width: 18px;
+  height: 18px;
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  stroke-width: 2.15;
+}
+
+.program-chart-floating-tooltip .program-chart-bar-tooltip__name {
+  width: 100%;
+  max-width: 100%;
+  color: var(--text-main);
+  font-size: 0.78rem;
+  font-weight: 720;
+  line-height: 1.18;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.program-chart-floating-tooltip .program-chart-bar-tooltip__value {
+  width: 100%;
+  color: var(--text-main);
+  font-size: 1rem;
+  font-weight: 850;
+  line-height: 1.05;
+  text-align: center;
+}
+
+/* Program chart corrections: scale grid, week separators and responsive hover ===== */
+.program-chart-main-axis {
+  --program-chart-grid-line-color: color-mix(in srgb, var(--border-default) 42%, transparent);
+}
+
+.program-chart-main-axis--program {
+  --program-chart-week-separator-color: var(--program-chart-grid-line-color);
+}
+
+.program-chart-grid-path {
+  stroke: var(--program-chart-grid-line-color);
+}
+
+.program-chart-grid-label {
+  fill: var(--program-chart-grid-line-color);
+}
+
+.program-chart-main-axis--program .program-chart-week-column + .program-chart-week-column::before,
+.program-chart-main-axis--program .program-chart-week-axis span + span::before {
+  background: var(--program-chart-grid-line-color);
+}
+
+.program-chart-main-axis--program .program-chart-week-axis {
+  display: grid !important;
+  grid-template-columns: repeat(var(--program-chart-weeks), minmax(0, 1fr));
+  align-items: center;
+  width: var(--program-chart-min-width, 100%);
+  min-width: var(--program-chart-min-width, 100%);
+  padding-inline: 0 !important;
+  box-sizing: border-box;
+}
+
+.program-chart-main-axis--program .program-chart-week-axis span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 0;
+  height: 100%;
+  padding: 0.25rem 0 0.05rem;
+  border: 0 !important;
+  line-height: 1;
+}
+
+.program-chart-bar,
+.program-chart-stacked-bar {
+  transition: filter 0.001s ease;
+  will-change: filter;
+}
+
+.program-chart-floating-tooltip {
+  transition: opacity 0.001s ease, visibility 0s linear 0.001s;
+  will-change: opacity, transform;
+}
+
+.program-chart-floating-tooltip.is-visible {
+  transition-delay: 0s;
+}
+
+.program-chart-bar-tooltip {
+  transition: opacity 0.001s ease, transform 0.001s ease;
+}
+
+/* Program chart tooltip responsiveness ======================================
+   Only the body-level floating tooltip is visible. Avoid delayed native title
+   tooltips and expensive visual transitions on hover. */
+.program-chart-bar-slot {
+  cursor: pointer;
+}
+
+.program-chart-bar,
+.program-chart-stacked-bar {
+  transition: none !important;
+  will-change: auto;
+}
+
+.program-chart-bar-slot:hover .program-chart-bar,
+.program-chart-bar-slot:focus-within .program-chart-bar,
+.program-chart-bar-slot:hover .program-chart-stacked-bar,
+.program-chart-bar-slot:focus-within .program-chart-stacked-bar {
+  filter: brightness(1.22) saturate(1.08);
+}
+
+.program-chart-floating-tooltip {
+  transition: none !important;
+}
+
+/* Program chart grid labels and slot picker refinement ===================== */
+.program-chart-grid-label {
+  fill: color-mix(in srgb, var(--text-main) 68%, var(--program-chart-grid-line-color));
+  font-size: 11px;
+  font-weight: 500;
+  text-anchor: start;
+}
+
+.program-day-cell.is-empty,
+.program-day-cell.is-empty .program-day-cell__day-initial,
+.program-day-cell.is-empty .program-day-cell__add,
+.program-day-cell.is-empty .program-day-cell__add-icon {
+  cursor: pointer;
+}
+
+.program-day-cell.is-empty .program-day-cell__day-initial,
+.program-day-cell.is-empty .program-day-cell__add-icon {
+  pointer-events: none;
+}
+
+.program-slot-picker__option.picker-result,
+.program-slot-picker__preview.picker-result {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(230px, 1fr) minmax(420px, 520px);
+  grid-template-areas: "title kpis";
+  align-items: center;
+  gap: 8px 14px;
+  padding: 14px 20px;
+  border-radius: 0;
+  border-bottom: 1px solid var(--panel-row-separator);
+  background: transparent;
+}
+
+.program-slot-picker__preview.picker-result {
+  border-bottom: 0;
+  cursor: default;
+}
+
+.program-slot-picker__option.picker-result:hover,
+.program-slot-picker__option.picker-result:focus-within {
+  background: var(--interactive-hover);
+}
+
+.program-slot-picker__option.picker-result input[type="radio"] {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.program-slot-picker__option.picker-result .picker-result-title,
+.program-slot-picker__option.picker-result .picker-result-kpi,
+.program-slot-picker__preview.picker-result .picker-result-title,
+.program-slot-picker__preview.picker-result .picker-result-kpi {
+  min-width: 0;
+}
+
+.program-slot-picker__option.picker-result .picker-result-kpi,
+.program-slot-picker__preview.picker-result .picker-result-kpi {
+  flex-wrap: nowrap;
+}
+
+.program-slot-picker__option.picker-result .picker-result-kpi__total,
+.program-slot-picker__preview.picker-result .picker-result-kpi__total {
+  flex: 0 0 82px;
+}
+
+.program-slot-picker__option.picker-result .picker-result-kpi__macros,
+.program-slot-picker__preview.picker-result .picker-result-kpi__macros {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.program-slot-picker__option.picker-result .picker-result-kpi__row,
+.program-slot-picker__preview.picker-result .picker-result-kpi__row {
+  grid-template-columns: 58px 0 48px minmax(90px, 1fr);
+  gap: 14px;
+}
+
+.program-slot-picker__option.picker-result .picker-result-kpi__ppk.is-empty,
+.program-slot-picker__preview.picker-result .picker-result-kpi__ppk.is-empty {
+  min-width: 0;
+  padding: 0;
+}
+
+@media (max-width: 980px) {
+  .program-slot-picker__option.picker-result,
+  .program-slot-picker__preview.picker-result {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "title"
+      "kpis";
+    gap: 8px;
+    padding: 14px 14px 18px;
+  }
+
+  .program-slot-picker__option.picker-result .picker-result-kpi__row,
+  .program-slot-picker__preview.picker-result .picker-result-kpi__row {
+    grid-template-columns: 48px 0 42px minmax(64px, 1fr);
+    gap: 14px;
+  }
+}
+
+/* Program slot picker positioning and selected preview refinement ============ */
+@media (min-width: 981px) {
+  .app-content {
+    position: relative;
+  }
+
+  .program-slot-picker.section_picker {
+    position: absolute;
+    top: var(--program-slot-picker-top, calc(var(--app-header-height, 54px) + 24px));
+    right: auto;
+    bottom: auto;
+    left: 50%;
+    width: min(824px, calc(100% - 48px));
+    max-width: 824px;
+    max-height: min(78vh, 720px);
+    transform: translateX(-50%);
+  }
+
+  .program-day-cell:nth-child(n + 5) .program-slot-picker.section_picker,
+  .program-day-cell:nth-child(-n + 2) .program-slot-picker.section_picker {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+.program-slot-picker__option.picker-result .picker-result-kpi,
+.program-slot-picker__preview.picker-result .picker-result-kpi {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 12px;
+  grid-area: kpis;
+  width: 100%;
+  min-width: 0;
+}
+
+.program-slot-picker__option.picker-result .picker-result-kpi__total,
+.program-slot-picker__preview.picker-result .picker-result-kpi__total {
+  flex: 0 0 82px;
+  width: 82px;
+  min-width: 82px;
+}
+
+.program-slot-picker__option.picker-result .picker-result-kpi__macros,
+.program-slot-picker__preview.picker-result .picker-result-kpi__macros {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.program-slot-picker__preview-title {
+  grid-column: 1 / -1;
+  margin: 0 0 10px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.program-slot-picker__preview.picker-result {
+  grid-template-areas:
+    "preview-title preview-title"
+    "title kpis";
+}
+
+.program-slot-picker__preview.picker-result .program-slot-picker__preview-title {
+  grid-area: preview-title;
+}
+
+.program-week-child-card__plan-section,
+.program-week-child-card__days {
+  scroll-margin-top: calc(var(--app-header-height, 54px) + 12px);
+}
+
+@media (max-width: 980px) {
+  .program-slot-picker.section_picker {
+    position: static;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    width: 100%;
+    max-width: none;
+    max-height: none;
+    margin: 10px 0 0;
+    transform: none;
+  }
+
+  .program-day-cell:nth-child(n + 5) .program-slot-picker.section_picker,
+  .program-day-cell:nth-child(-n + 2) .program-slot-picker.section_picker {
+    right: auto;
+    left: auto;
+    transform: none;
+  }
+
+  .program-slot-picker__results {
+    max-height: min(46vh, 420px);
+  }
+
+  .program-slot-picker__preview.picker-result {
+    grid-template-areas:
+      "preview-title"
+      "title"
+      "kpis";
+  }
+}
+
+/* Program week tabs =========================================== */
+.program-week-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 1rem;
+  padding: 10px;
+  overflow-x: auto;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  scrollbar-width: thin;
+}
+
+.program-week-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: 44px;
+  height: 24px;
+  padding: 0 12px;
+  border: 1px solid var(--panel-tab-border);
+  border-radius: 999px;
+  background-color: var(--panel-tab-bg);
+  color: var(--panel-tab-text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 450;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.program-week-tab:hover,
+.program-week-tab:focus-visible {
+  border-color: var(--panel-tab-hover-border);
+  background-color: var(--panel-tab-hover-bg);
+  color: var(--panel-tab-hover-text);
+  outline: none;
+}
+
+.program-week-tab.is-active {
+  border-color: var(--panel-tab-active-border);
+  background-color: var(--panel-tab-active-bg);
+  color: var(--panel-tab-active-text);
+}
+
+.program-week-panel[hidden] {
+  display: none !important;
+}
+
+.program-week-panel.is-active {
+  display: block;
+}
+
+.program-board--tabbed {
+  gap: 0;
+}
+
+@media (max-width: 780px) {
+  .program-week-tabs {
+    margin-inline: -4px;
+    padding: 8px 4px;
+  }
+
+  .program-week-tab {
+    min-width: 40px;
+    height: 24px;
+    padding: 0 12px;
+    font-size: 13px;
+  }
+}
+
+/* Program week detail refactor ===================================== */
+.program-week-detail-body {
+  display: block;
+  min-width: 0;
+}
+
+.program-week-detail-header,
+.program-week-detail-section__header {
+  align-items: flex-start;
+  gap: 1rem;
+  margin: 0;
+}
+
+.program-week-detail-header {
+  display: flex;
+}
+
+.program-week-detail-kpi {
+  width: 100%;
+  margin: 0;
+  padding-left: 0;
+  border-left: 0;
+}
+
+.program-week-detail-kpi .dash-kpi-range--week-card {
+  width: 100%;
+}
+
+.program-week-detail-section {
+  display: grid;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.program-week-detail-section--summary {
+  gap: 1.25rem;
+}
+
+.program-week-detail-section__header {
+  padding: 0;
+}
+
+.program-week-detail-chart {
+  min-width: 0;
+}
+
+.program-week-detail-plan-section {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.page--program-week-detail .program-day-selected-card {
+  padding: 17px 14px 20px;
+  border: 1px solid var(--panel-row-separator);
+}
+
+.program-week-detail-foods-panel .program-week-foods-aggregation {
+  margin: 0;
+}
+
+
+
+@media (max-width: 780px) {
+  .program-week-detail-header,
+  .program-week-detail-section__header {
+    gap: 0.75rem;
+  }
+}
+
+/* Program week detail day nutrition panel ================================ */
+.program-week-detail-section--day-panel {
+  margin-top: 1rem;
+}
+
+.program-week-day-panels {
+  overflow: hidden;
+}
+
+.program-week-day-panels__desktop-tabs,
+.program-week-day-panels__mobile-tabs {
+  padding-bottom: 0.55rem;
+}
+
+.program-week-day-panels__panel {
+  padding: 0;
+}
+
+.data-grid--program-week-days {
+  min-width: 760px;
+}
+
+.data-grid-header--program-week-days,
+.data-grid-row--program-week-days {
+  grid-template-columns:
+    minmax(148px, 1.35fr)
+    minmax(70px, 0.75fr)
+    minmax(62px, 0.65fr)
+    minmax(52px, 0.58fr)
+    minmax(52px, 0.58fr)
+    minmax(52px, 0.58fr)
+    minmax(78px, 0.82fr)
+    minmax(78px, 0.82fr)
+    minmax(78px, 0.82fr);
+}
+
+.data-grid-header--program-week-days-mobile-macros,
+.data-grid-row--program-week-days-mobile-macros {
+  grid-template-columns:
+    minmax(118px, 1.4fr)
+    minmax(48px, 0.62fr)
+    minmax(48px, 0.62fr)
+    minmax(34px, 0.48fr)
+    minmax(34px, 0.48fr)
+    minmax(34px, 0.48fr);
+}
+
+.data-grid-header--program-week-days-mobile-alloc,
+.data-grid-row--program-week-days-mobile-alloc {
+  grid-template-columns:
+    minmax(136px, 1.45fr)
+    minmax(54px, 0.65fr)
+    minmax(54px, 0.65fr)
+    minmax(54px, 0.65fr);
+  gap: 6px;
+}
+
+.data-grid-cell--program-day,
+.data-grid-col--program-day {
+  justify-content: flex-start;
+  padding-inline: 4px;
+}
+
+.data-grid-cell--program-day {
+  display: grid;
+  align-content: center;
+  gap: 0.12rem;
+}
+
+.program-week-day-table__day-name {
+  min-width: 0;
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.15;
+}
+
+.program-week-day-table__plan-name {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 450;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.data-grid-cell--ppk,
+.data-grid-col--ppk {
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.data-grid-row--program-week-days.is-empty .program-week-day-table__day-name,
+.data-grid-row--program-week-days.is-empty .program-week-day-table__plan-name,
+.data-grid-row--program-week-days.is-empty .data-grid-cell--kcal,
+.data-grid-row--program-week-days.is-empty .data-grid-cell--ppk,
+.data-grid-row--program-week-days.is-empty .data-grid-cell--macro,
+.data-grid-row--program-week-days-mobile-macros.is-empty .program-week-day-table__day-name,
+.data-grid-row--program-week-days-mobile-macros.is-empty .program-week-day-table__plan-name,
+.data-grid-row--program-week-days-mobile-macros.is-empty .data-grid-cell--kcal,
+.data-grid-row--program-week-days-mobile-macros.is-empty .data-grid-cell--ppk,
+.data-grid-row--program-week-days-mobile-macros.is-empty .data-grid-cell--macro,
+.data-grid-row--program-week-days-mobile-alloc.is-empty .program-week-day-table__day-name,
+.data-grid-row--program-week-days-mobile-alloc.is-empty .program-week-day-table__plan-name {
+  color: var(--text-muted);
+}
+
+@media (min-width: 981px) {
+  .program-week-day-panels .card-detail-tabs-mobile,
+  .program-week-day-panels__mobile-panel {
+    display: none !important;
+  }
+}
+
+@media (max-width: 980px) {
+  .program-week-day-panels .card-detail-tabs--desktop,
+  .program-week-day-panels__desktop-panel {
+    display: none !important;
+  }
+
+  .program-week-day-panels__panel {
+    overflow-x: visible;
+  }
+
+  .data-grid--program-week-days-mobile {
+    min-width: 0;
+  }
+
+  .data-grid-header--program-week-days-mobile-macros,
+  .data-grid-row--program-week-days-mobile-macros,
+  .data-grid-header--program-week-days-mobile-alloc,
+  .data-grid-row--program-week-days-mobile-alloc {
+    padding-inline: 8px 0;
+  }
 }

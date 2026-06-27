@@ -70,7 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function getMetricScaleStep(metric) {
     if (metric.key === "alloc") return 25;
     if (metric.key === "ppk") return 0.5;
-    if (metric.unit === "kcal" || metric.key === "calories" || metric.key === "alloc-cal") return 500;
+    if (metric.unit === "kcal" || metric.key === "calories") return 500;
     return 50;
   }
 

@@ -105,29 +105,24 @@ ASIGNACION DE PROGRAMA SEMANAL A GOOGLE CALENDAR.
 -------------------------------------------------------------
 CORRECCION GRAFICOS
 
-Necesito ayuda con My Scoope, ayudame a hacer lo siguientes ajustes:
+Necesito ayuda con My Scoope
 
+PENDIENTE:
 
-1. Debajo de las lineas horizontales grises, en el extremo derecho, poner el valor de la linea sin la unidad metrica el (para proteinas: 50, 100, 150 ...) Con el mismo color que el de las lineas. y que el font weight sea de 400. y tamaño de letra 10px
+Hay que ajustar lo siguiente:
+1. Esconder btnes hasta que no tenga un item seleccionado.
+2. Tras seleccionar eun item se debe esconder la search list ("program-slot-picker__results js-program-slot-results"), y cuando el usuario haga click en input search, se despliega la serch list nuevamente.
 
+Mejorar metricas semanas: Dias ocupados, promedio cal.
 
-
-
-ayudame a hacer lo siguientes ajustes:
-
-1. Es posible que el pop-up del picker y "program-day-empty-card js-program-slot-card" Se rendericen al mismo momento. Actualmente el picker aparece al apretar "program-day-cell__add js-program-slot-open", y "program-day-empty-card js-program-slot-card" aparece al apretar en la grilla pero fuera de "program-day-cell__add js-program-slot-open", El funcionamiento ideal es que se desplique el picker y el mensaje al apretar cualquier parte de "program-day-cell is-empty"
-
-2. Hay dos tooltip en el sistema. Uno nativo, el cual hay que borrar. y el nuevo que hay que conservar.
-
-3. El hover sigue siendo lento, y eso que puse transision de 0.001s. Porque sucede?. corregir.
+*****Desencadenar Detail semana.
 
 Adjunto la ultima version del codigo dentro del ZIP, revisala y genera un patch que modifique el proyecto para conseguir el resultado que se desea.
 
+---
 
 
-
-
-
+Agregar día completados a tabla de semanas.
 
 Grafico 1
 1. Reglas especiales de visualizacion para graficos de 1 y 2 semanas (mostrar metricas)

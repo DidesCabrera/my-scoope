@@ -32,7 +32,7 @@ COMPLETO
 --------------------------
 
 git add .
-git commit -m "Avance importante definiciones e implementacion de graficos"
+git commit -m "Mejoras Graficos y Picker de Planes 9/10"
 git push origin main
 
 

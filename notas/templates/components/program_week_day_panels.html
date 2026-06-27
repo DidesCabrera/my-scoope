@@ -1,0 +1,204 @@
+{% if rows %}
+<div
+  class="card-detail-block main program-week-day-panels"
+  data-default-desktop="#program-week-days-table-{{ panel_id }}"
+  data-default-mobile="#program-week-days-macros-{{ panel_id }}"
+>
+  <div class="card-detail-tabs card-detail-tabs--desktop block-desplegar-tabla block-card-desplegar program-week-day-panels__desktop-tabs">
+    <div class="btn-desplegar is-active" data-target="#program-week-days-table-{{ panel_id }}">
+      <p>Días</p>
+    </div>
+    {% if can_edit %}
+      <div class="btn-desplegar" data-target="#program-week-days-edit-{{ panel_id }}">
+        <p>Edit</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <div id="program-week-days-table-{{ panel_id }}" class="card-table-programs program-table-panel program-week-day-panels__panel program-week-day-panels__desktop-panel">
+    <div class="data-grid data-grid--program-week-days" role="table" aria-label="Información nutricional por día de la semana">
+      <div class="data-grid-header data-grid-header--program-week-days" role="row">
+        <div class="data-grid-col data-grid-col--program-day" role="columnheader">Día</div>
+        <div class="data-grid-col data-grid-col--kcal" role="columnheader">Cal.</div>
+        <div class="data-grid-col data-grid-col--ppk" role="columnheader">PPK</div>
+        <div class="data-grid-col data-grid-col--macro" role="columnheader">P g</div>
+        <div class="data-grid-col data-grid-col--macro" role="columnheader">C g</div>
+        <div class="data-grid-col data-grid-col--macro" role="columnheader">F g</div>
+        <div class="data-grid-col data-grid-col--alloc" role="columnheader">P%</div>
+        <div class="data-grid-col data-grid-col--alloc" role="columnheader">C%</div>
+        <div class="data-grid-col data-grid-col--alloc" role="columnheader">F%</div>
+      </div>
+
+      {% for row in rows %}
+        <div class="data-grid-row data-grid-row--program-week-days{% if row.is_empty %} is-empty{% endif %}" role="row">
+          <div class="data-grid-cell data-grid-cell--program-day" role="cell">
+            <span class="program-week-day-table__day-name">{{ row.day_name }}</span>
+            <span class="program-week-day-table__plan-name">{{ row.dailyplan_name }}</span>
+          </div>
+          <div class="data-grid-cell data-grid-cell--kcal" role="cell">{{ row.total_kcal|floatformat:0 }}</div>
+          <div class="data-grid-cell data-grid-cell--ppk" role="cell">{{ row.ppk|floatformat:1 }}</div>
+          <div class="data-grid-cell data-grid-cell--macro program-week-table__macro--protein" role="cell">{{ row.protein|floatformat:0 }}</div>
+          <div class="data-grid-cell data-grid-cell--macro program-week-table__macro--carbs" role="cell">{{ row.carbs|floatformat:0 }}</div>
+          <div class="data-grid-cell data-grid-cell--macro program-week-table__macro--fat" role="cell">{{ row.fat|floatformat:0 }}</div>
+          <div class="data-grid-cell data-grid-cell--alloc" role="cell">
+            {% include "components/grid_alloc_item.html" with value=row.alloc.protein kind="protein" %}
+          </div>
+          <div class="data-grid-cell data-grid-cell--alloc" role="cell">
+            {% include "components/grid_alloc_item.html" with value=row.alloc.carbs kind="carbs" %}
+          </div>
+          <div class="data-grid-cell data-grid-cell--alloc" role="cell">
+            {% include "components/grid_alloc_item.html" with value=row.alloc.fat kind="fat" %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card-detail-tabs-mobile program-week-day-panels__mobile-tabs">
+    <button
+      type="button"
+      class="btn-desplegar-mobile is-active"
+      data-target="#program-week-days-macros-{{ panel_id }}"
+    >
+      Macros
+    </button>
+    <button
+      type="button"
+      class="btn-desplegar-mobile"
+      data-target="#program-week-days-alloc-{{ panel_id }}"
+    >
+      Alloc
+    </button>
+    {% if can_edit %}
+      <button
+        type="button"
+        class="btn-desplegar-mobile"
+        data-target="#program-week-days-edit-{{ panel_id }}"
+        aria-label="Editar días"
+      >
+        <i data-lucide="pencil" class="tab-icon-edit"></i>
+      </button>
+    {% endif %}
+  </div>
+
+  <div id="program-week-days-macros-{{ panel_id }}" class="card-table-programs-mobile program-table-panel program-week-day-panels__panel program-week-day-panels__mobile-panel">
+    <div class="data-grid data-grid--program-week-days-mobile data-grid--program-week-days-mobile-macros" role="table" aria-label="Macros por día de la semana">
+      <div class="data-grid-header data-grid-header--program-week-days-mobile-macros" role="row">
+        <div class="data-grid-col data-grid-col--program-day" role="columnheader">Día</div>
+        <div class="data-grid-col data-grid-col--kcal" role="columnheader">Cal.</div>
+        <div class="data-grid-col data-grid-col--ppk" role="columnheader">PPK</div>
+        <div class="data-grid-col data-grid-col--macro" role="columnheader">P</div>
+        <div class="data-grid-col data-grid-col--macro" role="columnheader">C</div>
+        <div class="data-grid-col data-grid-col--macro" role="columnheader">F</div>
+      </div>
+
+      {% for row in rows %}
+        <div class="data-grid-row data-grid-row--program-week-days-mobile-macros{% if row.is_empty %} is-empty{% endif %}" role="row">
+          <div class="data-grid-cell data-grid-cell--program-day" role="cell">
+            <span class="program-week-day-table__day-name">{{ row.day_name }}</span>
+            <span class="program-week-day-table__plan-name">{{ row.dailyplan_name }}</span>
+          </div>
+          <div class="data-grid-cell data-grid-cell--kcal" role="cell">{{ row.total_kcal|floatformat:0 }}</div>
+          <div class="data-grid-cell data-grid-cell--ppk" role="cell">{{ row.ppk|floatformat:1 }}</div>
+          <div class="data-grid-cell data-grid-cell--macro program-week-table__macro--protein" role="cell">{{ row.protein|floatformat:0 }}</div>
+          <div class="data-grid-cell data-grid-cell--macro program-week-table__macro--carbs" role="cell">{{ row.carbs|floatformat:0 }}</div>
+          <div class="data-grid-cell data-grid-cell--macro program-week-table__macro--fat" role="cell">{{ row.fat|floatformat:0 }}</div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div id="program-week-days-alloc-{{ panel_id }}" class="card-table-programs-mobile program-table-panel program-week-day-panels__panel program-week-day-panels__mobile-panel">
+    <div class="data-grid data-grid--program-week-days-mobile data-grid--program-week-days-mobile-alloc" role="table" aria-label="Alloc por día de la semana">
+      <div class="data-grid-header data-grid-header--program-week-days-mobile-alloc" role="row">
+        <div class="data-grid-col data-grid-col--program-day" role="columnheader">Día</div>
+        <div class="data-grid-col data-grid-col--alloc" role="columnheader">P%</div>
+        <div class="data-grid-col data-grid-col--alloc" role="columnheader">C%</div>
+        <div class="data-grid-col data-grid-col--alloc" role="columnheader">F%</div>
+      </div>
+
+      {% for row in rows %}
+        <div class="data-grid-row data-grid-row--program-week-days-mobile-alloc{% if row.is_empty %} is-empty{% endif %}" role="row">
+          <div class="data-grid-cell data-grid-cell--program-day" role="cell">
+            <span class="program-week-day-table__day-name">{{ row.day_name }}</span>
+            <span class="program-week-day-table__plan-name">{{ row.dailyplan_name }}</span>
+          </div>
+          <div class="data-grid-cell data-grid-cell--alloc" role="cell">
+            {% include "components/grid_alloc_item.html" with value=row.alloc.protein kind="protein" %}
+          </div>
+          <div class="data-grid-cell data-grid-cell--alloc" role="cell">
+            {% include "components/grid_alloc_item.html" with value=row.alloc.carbs kind="carbs" %}
+          </div>
+          <div class="data-grid-cell data-grid-cell--alloc" role="cell">
+            {% include "components/grid_alloc_item.html" with value=row.alloc.fat kind="fat" %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% if can_edit %}
+    <div id="program-week-days-edit-{{ panel_id }}" class="card-table-programs program-table-panel program-week-day-panels__panel">
+      <div class="data-grid data-grid--program-week-days-edit" role="table" aria-label="Editar planes diarios de la semana">
+        <div class="data-grid-header data-grid-header--program-week-days-edit" role="row">
+          <div class="data-grid-col data-grid-col--program-day" role="columnheader">Día</div>
+          <div class="data-grid-col data-grid-col--program-day-plan" role="columnheader">Plan</div>
+          <div class="data-grid-col data-grid-col--program-day-actions" role="columnheader"></div>
+        </div>
+
+        {% for row in rows %}
+          <div class="data-grid-row data-grid-row--program-week-days-edit{% if row.is_empty %} is-empty{% endif %}" role="row">
+            <div class="data-grid-cell data-grid-cell--program-day" role="cell">
+              <div class="list-panel-title-row">
+                <i data-lucide="calendar-1" class="picker-summary-card__icon program list-panel-title-icon"></i>
+                <div class="truncate">{{ row.day_name }}</div>
+              </div>
+            </div>
+            <div class="data-grid-cell data-grid-cell--program-day-plan" role="cell">
+              <span class="program-week-day-table__plan-name">{{ row.dailyplan_name }}</span>
+            </div>
+            <div class="data-grid-cell data-grid-cell--program-day-actions" role="cell">
+              {% if row.has_plan %}
+                <button
+                  type="button"
+                  class="table-action-link program-week-day-table-action js-program-week-day-replace"
+                  data-week-number="{{ week.week_number }}"
+                  data-day-number="{{ row.day_number }}"
+                  data-dailyplan-id="{{ row.dailyplan_id }}"
+                  aria-label="Reemplazar plan de {{ row.day_name }}"
+                  title="Reemplazar"
+                >
+                  <i data-lucide="refresh-cw" class="table-icon"></i>
+                </button>
+                <form method="post" action="{{ row.remove_url }}" class="program-week-day-action-form">
+                  {% csrf_token %}
+                  <input type="hidden" name="return_to" value="{{ request.path }}">
+                  <button
+                    type="submit"
+                    class="table-action-link program-week-day-table-action program-week-day-table-action--danger"
+                    aria-label="Eliminar plan de {{ row.day_name }}"
+                    title="Eliminar plan"
+                  >
+                    <i data-lucide="trash-2" class="table-icon"></i>
+                  </button>
+                </form>
+              {% else %}
+                <button
+                  type="button"
+                  class="table-action-link program-week-day-table-action program-week-day-table-action--add js-program-week-day-replace"
+                  data-week-number="{{ week.week_number }}"
+                  data-day-number="{{ row.day_number }}"
+                  aria-label="Agregar plan a {{ row.day_name }}"
+                  title="Agregar plan"
+                >
+                  <i data-lucide="plus" class="table-icon"></i>
+                </button>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endif %}

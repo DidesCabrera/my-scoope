@@ -1,4 +1,4 @@
-<section class="program-week-child-card{% if is_week_detail %} program-week-child-card--detail{% endif %}" id="week-{{ week.week_number }}" aria-labelledby="program-week-title-{{ week.week_number }}">
+<section class="program-week-child-card js-program-week-scope{% if is_week_detail %} program-week-child-card--detail{% endif %}" id="week-{{ week.week_number }}" aria-labelledby="program-week-title-{{ week.week_number }}">
   <header class="program-week-child-card__header">
     <div class="card-title-comp program-week-child-card__title-comp">
       <div class="main-title program-week-child-card__title-main">
@@ -29,84 +29,40 @@
   {% include "components/program_metric_chart_week.html" with chart=week.chart modifier="program-chart-panel--week" %}
 
   <section class="program-week-child-card__plan-section" aria-label="Planes diarios de Semana {{ week.week_number }}">
-    <div class="program-week-child-card__days" role="list" aria-label="Días de la semana {{ week.week_number }}">
-      {% for day in week.days %}
-        <article
-          class="program-day-cell {% if day.program_day %}has-plan{% else %}is-empty{% endif %}"
-          role="listitem"
-          data-week-number="{{ week.week_number }}"
-          data-day-number="{{ day.day_number }}"
-          data-day-label="{{ day.day_label }}"
-          tabindex="0"
-          aria-expanded="false"
-          {% if day.program_day %}
-            data-slot-card-target="program-week-{{ week.week_number }}-day-{{ day.day_number }}-card"
-            data-slot-card-url="{% url 'program_day_card' program.id day.program_day.id %}"
-            aria-controls="program-week-{{ week.week_number }}-day-{{ day.day_number }}-card"
-            aria-label="{{ day.day_label }}: ver {{ day.dailyplan.name }}"
-          {% else %}
-            aria-controls="program-week-{{ week.week_number }}-day-{{ day.day_number }}-empty-card"
-            aria-label="{{ day.day_label }}: sin plan diario"
-          {% endif %}
-        >
-          <span class="program-day-cell__day-initial" aria-hidden="true">{{ day.day_label|slice:":1" }}</span>
-
-          {% if day.program_day %}
-            <div class="program-day-cell__content">
-              <i data-lucide="clipboard-list" class="program-day-cell__icon"></i>
-            </div>
-
-            <div class="program-day-cell__tooltip" role="tooltip">
-              <i data-lucide="clipboard-list" class="program-day-cell__tooltip-icon"></i>
-              <span>{{ day.dailyplan.name }}</span>
-            </div>
-          {% else %}
-            <button type="button" class="program-day-cell__add js-program-slot-open" aria-label="Agregar plan diario a {{ day.day_label }}">
-              <i data-lucide="plus" class="program-day-cell__add-icon"></i>
-            </button>
-          {% endif %}
-        </article>
-      {% endfor %}
-    </div>
-
-    <div class="program-week-child-card__selected-cards js-program-week-selected-cards" aria-live="polite"></div>
+    {% include "components/program_week_days_grid.html" with program=program week=week %}
   </section>
 
-  <div class="program-week-child-card__foods-row">
-    {% include "components/program_week_foods_aggregation.html" with panel_id=week.foods_panel_id items=week.foods_aggregation_table collapsed=True %}
-  </div>
-
-  {% if not is_week_detail %}
+  {% if not is_week_detail and week.detail_url %}
     <div class="program-week-child-card__footer">
       {% if can_edit %}
         <div class="overflow-menu card-overflow-menu program-week-child-card__menu">
-          <button class="overflow-btn" type="button" aria-label="Más acciones para Semana {{ week.week_number }}" title="Más acciones">
-            <i data-lucide="more-horizontal" class="more-horizontal-icon"></i>
-          </button>
+            <button class="overflow-btn" type="button" aria-label="Más acciones para Semana {{ week.week_number }}" title="Más acciones">
+              <i data-lucide="more-horizontal" class="more-horizontal-icon"></i>
+            </button>
 
-          <div class="overflow-dropdown card-overflow-dropdown program-week-child-card__dropdown">
-            <form method="post" action="{% url 'program_duplicate_week' program.id week.week_number %}">
-              {% csrf_token %}
-              <button type="submit" class="overflow-action">
-                <i data-lucide="copy" class="overflow-dropdown-icons"></i>
-                <span>Duplicar semana</span>
-              </button>
-            </form>
-
-            {% if program.normalized_duration_weeks > 1 %}
-              <form method="post" action="{% url 'program_remove_week' program.id week.week_number %}">
+            <div class="overflow-dropdown card-overflow-dropdown program-week-child-card__dropdown">
+              <form method="post" action="{% url 'program_duplicate_week' program.id week.week_number %}">
                 {% csrf_token %}
-                <button type="submit" class="overflow-action program-week-child-card__danger-action">
-                  <i data-lucide="trash-2" class="overflow-dropdown-icons"></i>
-                  <span>Eliminar semana</span>
+                <button type="submit" class="overflow-action">
+                  <i data-lucide="copy" class="overflow-dropdown-icons"></i>
+                  <span>Duplicar semana</span>
                 </button>
               </form>
-            {% endif %}
-          </div>
+
+              {% if program.normalized_duration_weeks > 1 %}
+                <form method="post" action="{% url 'program_remove_week' program.id week.week_number %}">
+                  {% csrf_token %}
+                  <button type="submit" class="overflow-action program-week-child-card__danger-action">
+                    <i data-lucide="trash-2" class="overflow-dropdown-icons"></i>
+                    <span>Eliminar semana</span>
+                  </button>
+                </form>
+              {% endif %}
+            </div>
         </div>
       {% endif %}
 
-      <a class="action-icon-btn tooltip program-week-child-card__detail-link" href="{% url 'program_week_detail' program.id week.week_number %}" aria-label="Ver detalle de Semana {{ week.week_number }}" title="Ver detalle">
+      <a class="action-icon-btn tooltip program-week-child-card__detail-link" href="{{ week.detail_url }}" aria-label="Ver detalle de Semana {{ week.week_number }}" title="Ver detalle">
         <i data-lucide="chevron-right" class="action-card-icon"></i>
         <span class="tooltip-text">Ver detalle</span>
       </a>

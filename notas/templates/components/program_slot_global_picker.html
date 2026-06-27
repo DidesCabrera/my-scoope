@@ -7,6 +7,7 @@
   {% csrf_token %}
   <input type="hidden" name="week_number" value="">
   <input type="hidden" name="day_number" value="">
+  <input type="hidden" name="return_to" class="js-program-slot-return-to" value="">
 
   <div class="add-row program-slot-picker__add-row">
     <div class="selector program-slot-picker__selector">
@@ -48,7 +49,7 @@
     </div>
   </div>
 
-  <div class="actions-row program-slot-picker__actions">
+  <div class="actions-row program-slot-picker__actions" hidden>
     <button type="button" class="btn-cancel-picker js-program-slot-close">Cancelar</button>
     <button type="submit" class="btn-add-picker">Asignar Plan</button>
   </div>

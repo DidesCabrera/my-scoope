@@ -3,5 +3,8 @@
   class="program-day-selected-card-wrap js-program-slot-card"
   data-slot-card="program-week-{{ week_number }}-day-{{ day_number }}-card"
 >
+  {% if day_label %}
+    <h4 class="program-day-selected-card__day-title">Semana {{ week_number }} ⋅ {{ day_label }}</h4>
+  {% endif %}
   {% include "components/card_child_dailyplan.html" with child_card=child_card dailyplan_card_class="program-day-selected-card" default_menu=True %}
 </div>

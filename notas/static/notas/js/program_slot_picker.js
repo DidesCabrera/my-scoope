@@ -102,6 +102,44 @@ document.addEventListener("DOMContentLoaded", () => {
       .some((checkbox) => checkbox.dataset.occupied === "true");
   }
 
+
+  function setPickerActionsVisible(isVisible) {
+    const actions = picker?.querySelector(".program-slot-picker__actions");
+    if (actions) actions.hidden = !isVisible;
+  }
+
+  function hasSelectedDailyplan() {
+    return Boolean(picker?.querySelector('input[name="dailyplan_id"]:checked'));
+  }
+
+  function syncReturnToInput() {
+    const input = picker?.querySelector(".js-program-slot-return-to");
+    if (!input) return;
+    const isWeekDetail = page?.dataset.page === "program-week-detail";
+    input.value = isWeekDetail ? `${window.location.pathname}${window.location.search}` : "";
+  }
+
+  function preselectDailyplan(dailyplanId, options = {}) {
+    if (!picker || !dailyplanId) return false;
+    const radio = Array.from(picker.querySelectorAll('input[name="dailyplan_id"]'))
+      .find((input) => String(input.value) === String(dailyplanId));
+    if (!radio) return false;
+
+    radio.checked = true;
+    syncPreview(radio);
+    syncDaySelector(activeCell);
+    setPickerActionsVisible(true);
+    hideOverwriteWarning();
+    overwriteConfirmed = false;
+
+    if (options.keepSearchResults) {
+      showSearchResults();
+    } else {
+      hideSearchResults();
+    }
+    return true;
+  }
+
   function hideOverwriteWarning() {
     const warning = picker?.querySelector(".js-program-slot-overwrite-warning");
     if (warning) warning.hidden = true;
@@ -255,7 +293,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }).join("");
 
     results.querySelectorAll('input[name="dailyplan_id"]').forEach((radio) => {
-      radio.addEventListener("change", () => syncPreview(radio));
+      radio.addEventListener("change", () => syncSelectedPlanFlow(radio));
+    });
+
+    results.querySelectorAll(".js-program-slot-option").forEach((option) => {
+      option.addEventListener("click", () => {
+        const radio = option.querySelector('input[name="dailyplan_id"]');
+        window.requestAnimationFrame(() => {
+          if (radio?.checked) syncSelectedPlanFlow(radio);
+        });
+      });
     });
     if (window.lucide && typeof window.lucide.createIcons === "function") {
       window.lucide.createIcons();
@@ -269,7 +316,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const search = picker.querySelector(".js-program-slot-search");
     const preview = picker.querySelector(".js-program-slot-preview");
     if (search) search.value = "";
+    const returnTo = picker.querySelector(".js-program-slot-return-to");
+    if (returnTo) returnTo.value = "";
     if (preview) preview.hidden = true;
+    setPickerActionsVisible(false);
     const days = picker.querySelector(".js-program-slot-days");
     if (days) {
       days.hidden = true;
@@ -282,6 +332,7 @@ document.addEventListener("DOMContentLoaded", () => {
       radio.checked = false;
     });
     syncSearch();
+    showSearchResults();
     activeCell?.classList.remove("is-picking");
     activeCell = null;
     resetDesktopPickerSpace();
@@ -343,7 +394,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const appTop = appRect.top + window.scrollY;
     const daysGrid = cell?.closest(".program-week-child-card__plan-section")
       ?.querySelector(".program-week-child-card__days");
-    const anchor = daysGrid || cell?.closest(".program-week-child-card") || cell;
+    const anchor = daysGrid || cell?.closest(".js-program-week-scope") || cell;
 
     if (!anchor) return;
 
@@ -389,6 +440,31 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  const FULL_DAY_LABELS = {
+    1: "Lunes",
+    2: "Martes",
+    3: "Miércoles",
+    4: "Jueves",
+    5: "Viernes",
+    6: "Sábado",
+    7: "Domingo",
+  };
+
+  function getFullDayLabel(cell) {
+    const dayNumber = Number(cell?.dataset.dayNumber || 0);
+    return FULL_DAY_LABELS[dayNumber] || cell?.dataset.dayLabel || "Día seleccionado";
+  }
+
+  function shouldAutoOpenInitialSlotCards() {
+    return page?.dataset.page !== "program-detail";
+  }
+
+  function getWeekDayTitle(cell) {
+    const weekNumber = cell?.dataset.weekNumber || "";
+    const dayLabel = getFullDayLabel(cell);
+    return weekNumber ? `Semana ${weekNumber} ⋅ ${dayLabel}` : dayLabel;
+  }
+
   function getSlotCardTarget(cell) {
     if (cell.dataset.slotCardTarget) return cell.dataset.slotCardTarget;
     const weekNumber = cell.dataset.weekNumber || "0";
@@ -403,13 +479,17 @@ document.addEventListener("DOMContentLoaded", () => {
     let card = weekRow.querySelector(`#${escapeCssIdentifier(targetId)}`);
     if (card) return card;
 
-    const dayLabel = cell.dataset.dayLabel || "Este día";
+    const dayLabel = getFullDayLabel(cell);
+    const dayTitle = getWeekDayTitle(cell);
     container.insertAdjacentHTML("beforeend", `
       <div id="${escapeHtml(targetId)}" class="program-day-empty-card js-program-slot-card" hidden>
-        <i data-lucide="clipboard-list" class="program-day-empty-card__icon" aria-hidden="true"></i>
-        <div class="program-day-empty-card__body">
-          <strong>${escapeHtml(dayLabel)} no tiene plan asignado.</strong>
-          <span>Elije un plan para este día.</span>
+        <h4 class="program-day-selected-card__day-title">${escapeHtml(dayTitle)}</h4>
+        <div class="program-day-empty-card__content">
+          <i data-lucide="clipboard-list" class="program-day-empty-card__icon" aria-hidden="true"></i>
+          <div class="program-day-empty-card__body">
+            <strong>${escapeHtml(dayLabel)} no tiene plan asignado.</strong>
+            <span>Elije un plan para este día.</span>
+          </div>
         </div>
       </div>
     `);
@@ -449,7 +529,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const targetId = getSlotCardTarget(cell);
     if (!targetId) return;
 
-    const weekRow = cell.closest(".program-week-child-card");
+    const weekRow = cell.closest(".js-program-week-scope");
     const card = await ensureSlotCard(cell, weekRow, targetId);
     if (!card) return;
 
@@ -479,6 +559,30 @@ document.addEventListener("DOMContentLoaded", () => {
       const haystack = option.dataset.search || "";
       option.hidden = query && !haystack.includes(query);
     });
+  }
+
+  function showSearchResults() {
+    const results = picker?.querySelector(".js-program-slot-results");
+    if (!results) return;
+    results.hidden = false;
+    results.classList.remove("is-hidden");
+    syncSearch();
+  }
+
+  function hideSearchResults() {
+    const results = picker?.querySelector(".js-program-slot-results");
+    if (!results) return;
+    results.hidden = true;
+    results.classList.add("is-hidden");
+  }
+
+  function syncSelectedPlanFlow(radio) {
+    syncPreview(radio);
+    syncDaySelector(activeCell);
+    hideSearchResults();
+    setPickerActionsVisible(true);
+    hideOverwriteWarning();
+    overwriteConfirmed = false;
   }
 
   function syncPreview(radio) {
@@ -544,7 +648,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     renderOptions();
 
-    const shouldOpen = picker.hidden || activeCell !== cell;
+    const shouldOpen = options.forceOpen || picker.hidden || activeCell !== cell;
     closePicker();
 
     if (!shouldOpen) return;
@@ -553,15 +657,23 @@ document.addEventListener("DOMContentLoaded", () => {
     const dayInput = picker.querySelector('input[name="day_number"]');
     if (weekInput) weekInput.value = cell.dataset.weekNumber || "";
     if (dayInput) dayInput.value = cell.dataset.dayNumber || "";
+    syncReturnToInput();
 
     placePickerForCell(cell);
     picker.hidden = false;
     activeCell = cell;
     cell.classList.add("is-picking");
-    closeSlotCards(cell.closest(".program-week-child-card"), options.keepSlotCardTarget || null);
-    syncDaySelector(cell);
+    closeSlotCards(cell.closest(".js-program-week-scope"), options.keepSlotCardTarget || null);
+    showSearchResults();
+    setPickerActionsVisible(false);
     hideOverwriteWarning();
     overwriteConfirmed = false;
+
+    if (options.preselectDailyplanId) {
+      preselectDailyplan(options.preselectDailyplanId, {
+        keepSearchResults: Boolean(options.keepSearchResults),
+      });
+    }
 
     positionDesktopPickerInAppContent(cell);
     reserveDesktopPickerSpace();
@@ -604,7 +716,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     event.preventDefault();
     event.stopPropagation();
-    const weekRow = cardButton.closest(".program-week-child-card");
+    const weekRow = cardButton.closest(".js-program-week-scope");
     const weekNumber = cardButton.dataset.weekNumber;
     const dayNumber = cardButton.dataset.dayNumber;
     const selector = `.program-day-cell[data-week-number="${escapeCssIdentifier(weekNumber || "")}"][data-day-number="${escapeCssIdentifier(dayNumber || "")}"]`;
@@ -612,15 +724,56 @@ document.addEventListener("DOMContentLoaded", () => {
     openPickerForCell(cell, { keepSlotCardTarget: getSlotCardTarget(cell) });
   });
 
+  document.addEventListener("click", (event) => {
+    const replaceButton = event.target.closest(".js-program-week-day-replace");
+    if (!replaceButton) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const weekRow = replaceButton.closest(".js-program-week-scope") || document;
+    const weekNumber = replaceButton.dataset.weekNumber;
+    const dayNumber = replaceButton.dataset.dayNumber;
+    const selector = `.program-day-cell[data-week-number="${escapeCssIdentifier(weekNumber || "")}"][data-day-number="${escapeCssIdentifier(dayNumber || "")}"]`;
+    const cell = weekRow.querySelector(selector);
+    if (!cell) return;
+
+    openPickerForCell(cell, {
+      keepSlotCardTarget: getSlotCardTarget(cell),
+      preselectDailyplanId: replaceButton.dataset.dailyplanId,
+      keepSearchResults: true,
+      forceOpen: true,
+    });
+  });
+
   document.querySelectorAll(".js-program-slot-close").forEach((button) => {
     button.addEventListener("click", closePicker);
   });
 
+  function openMondayCardInScope(scope) {
+    const mondayCell = scope?.querySelector('.program-day-cell[data-day-number="1"]');
+    if (mondayCell) toggleSlotCard(mondayCell, true);
+  }
+
+  document.addEventListener("program-week-tab:changed", (event) => {
+    closePicker();
+    if (!shouldAutoOpenInitialSlotCards()) return;
+    const panel = event.detail?.targetId ? document.getElementById(event.detail.targetId) : null;
+    openMondayCardInScope(panel);
+  });
+
   function openInitialMondayCards() {
-    document.querySelectorAll(".program-week-child-card").forEach((weekRow) => {
-      const mondayCell = weekRow.querySelector('.program-day-cell[data-day-number="1"]');
-      if (mondayCell) toggleSlotCard(mondayCell, true);
-    });
+    if (!shouldAutoOpenInitialSlotCards()) return;
+
+    const tabbedPanels = Array.from(document.querySelectorAll(".js-program-week-panel"));
+    if (tabbedPanels.length) {
+      tabbedPanels
+        .filter((panel) => panel.classList.contains("is-active") && !panel.hidden)
+        .forEach(openMondayCardInScope);
+      return;
+    }
+
+    document.querySelectorAll(".js-program-week-scope").forEach(openMondayCardInScope);
   }
 
   openInitialMondayCards();
@@ -628,7 +781,11 @@ document.addEventListener("DOMContentLoaded", () => {
   if (picker) {
     const search = picker.querySelector(".js-program-slot-search");
     if (search) {
-      search.addEventListener("input", syncSearch);
+      search.addEventListener("input", () => {
+        showSearchResults();
+      });
+      search.addEventListener("focus", showSearchResults);
+      search.addEventListener("click", showSearchResults);
     }
   }
 
@@ -652,6 +809,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     picker.addEventListener("submit", (event) => {
+      if (!hasSelectedDailyplan()) {
+        event.preventDefault();
+        setPickerActionsVisible(false);
+        return;
+      }
+
       const selectedDays = syncDayNumberInputs();
       if (!selectedDays.length) {
         event.preventDefault();

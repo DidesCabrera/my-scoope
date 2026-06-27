@@ -284,41 +284,6 @@ def build_program_metric_chart(
         "bars": alloc_bars,
     })
 
-    alloc_cal_values = [point["total_kcal"] for point in day_points]
-    alloc_cal_bars = []
-    for point in day_points:
-        total_kcal = float(point["total_kcal"] or 0)
-        segments = [
-            {"key": "protein", "label": "P kcal", "value": float(point["kcal_protein"] or 0), "valueLabel": _format_chart_number(point["kcal_protein"])},
-            {"key": "carbs", "label": "C kcal", "value": float(point["kcal_carbs"] or 0), "valueLabel": _format_chart_number(point["kcal_carbs"])},
-            {"key": "fat", "label": "F kcal", "value": float(point["kcal_fat"] or 0), "valueLabel": _format_chart_number(point["kcal_fat"])},
-        ]
-        title_value = " · ".join(f"{segment['label']} {segment['valueLabel']}" for segment in segments)
-        alloc_cal_bars.append(_chart_bar_payload(
-            point,
-            value=total_kcal,
-            unit="kcal",
-            title_value=title_value,
-            segments=segments,
-            stack_total=total_kcal,
-        ))
-
-    metrics.append({
-        "key": "alloc-cal",
-        "label": "Alloc cal",
-        "unit": "kcal",
-        "kind": "stacked",
-        "decimals": 0,
-        "isActive": False,
-        "rangeLabel": _chart_metric_range(alloc_cal_values, "kcal", 0),
-        "legendLabel": "Leyenda de calorías por macro",
-        "legendItems": [
-            {"key": "protein", "label": "P kcal"},
-            {"key": "carbs", "label": "C kcal"},
-            {"key": "fat", "label": "F kcal"},
-        ],
-        "bars": alloc_cal_bars,
-    })
 
     week_numbers = [week["week_number"] for week in weeks]
     if axis_mode == "days":
@@ -437,6 +402,42 @@ def build_week_kpi_ranges(week, current_weight=None):
     }
 
 
+def build_week_day_nutrition_rows(week, current_weight=None, program=None):
+    rows = []
+    for day in week.get("days", []):
+        snapshot = day.get("snapshot") or _empty_totals()
+        protein = float(snapshot.get("protein") or 0)
+        alloc = snapshot.get("alloc") or {"protein": 0, "carbs": 0, "fat": 0}
+        dailyplan = day.get("dailyplan") or {}
+        program_day = day.get("program_day") or {}
+        day_name = FULL_DAY_LABELS.get(day["day_number"], day.get("day_label") or "")
+        has_plan = bool(program_day)
+        remove_url = ""
+        if has_plan and program is not None:
+            remove_url = reverse("remove_dailyplan_from_program", args=[program.id, program_day["id"]])
+        rows.append({
+            "day_number": day["day_number"],
+            "day_name": day_name,
+            "dailyplan_id": dailyplan.get("id"),
+            "dailyplan_name": dailyplan.get("name") or "Sin plan asignado",
+            "program_day_id": program_day.get("id"),
+            "has_plan": has_plan,
+            "remove_url": remove_url,
+            "is_empty": not has_plan,
+            "total_kcal": snapshot.get("total_kcal", 0),
+            "ppk": (protein / current_weight) if (current_weight and protein) else 0,
+            "protein": protein,
+            "carbs": snapshot.get("carbs", 0),
+            "fat": snapshot.get("fat", 0),
+            "alloc": {
+                "protein": alloc.get("protein", 0),
+                "carbs": alloc.get("carbs", 0),
+                "fat": alloc.get("fat", 0),
+            },
+        })
+    return rows
+
+
 def build_program_child_card(program: Program, user, current_weight=None):
     summary = get_program_summary(program)
     weeks = summary["weeks"]
@@ -497,6 +498,7 @@ def build_program_detail_content(*, program: Program, user, header):
             axis_mode="days",
         )
         week["kpi_ranges"] = build_week_kpi_ranges(week, current_weight=current_weight)
+        week["detail_url"] = reverse("program_week_detail", args=[program.id, week["week_number"]])
     dailyplan_options = _dailyplan_options(user)
     return {
         "header": header,
@@ -533,6 +535,7 @@ def build_program_week_detail_content(*, program: Program, user, week_number: in
         axis_mode="days",
     )
     selected_week["kpi_ranges"] = build_week_kpi_ranges(selected_week, current_weight=current_weight)
+    selected_week["day_nutrition_rows"] = build_week_day_nutrition_rows(selected_week, current_weight=current_weight, program=program)
     dailyplan_options = _dailyplan_options(user)
     return {
         "header": header,
@@ -611,16 +614,8 @@ def build_program_day_child_card(dailyplan, user, program_day=None):
 
 
 def build_program_day_card_actions(dailyplan, program_day=None):
-    detail_action = _action(
-        key="detail",
-        label="Ir a detalle",
-        url=reverse("dailyplan_detail", args=[dailyplan.id]),
-        icon="chevron-right",
-        extra_class="program-day-selected-card__detail",
-    )
-
     if program_day is None:
-        return [detail_action]
+        return []
 
     return [
         _action(
@@ -642,5 +637,4 @@ def build_program_day_card_actions(dailyplan, program_day=None):
             icon="trash-2",
             extra_class="program-day-selected-card__remove action-icon-btn--danger",
         ),
-        detail_action,
     ]

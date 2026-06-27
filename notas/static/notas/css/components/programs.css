@@ -301,7 +301,7 @@
 }
 
 .program-day-cell.has-plan.is-selected {
-  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--entity-dailyplan) 48%, transparent);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--text-main) 48%, transparent);
 }
 
 .program-day-cell.is-empty {
@@ -310,8 +310,8 @@
 }
 
 .program-day-cell.is-picking {
-  border-color: var(--entity-program);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--entity-program) 35%, transparent);
+  border-color: var(--text-main);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--text-main) 35%, transparent);
   z-index: 25;
 }
 
@@ -550,8 +550,18 @@
   display: none;
 }
 
+.program-day-selected-card__day-title {
+  margin: 10px 0 6px 10px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
 .program-day-selected-card {
   margin: 0;
+  padding: 0;
+  background: transparent;
   border-color: color-mix(in srgb, var(--entity-dailyplan) 24%, var(--border-default));
 }
 
@@ -1735,7 +1745,7 @@
 
 .program-card-panels__desktop.card-table-programs,
 .program-table-panel {
-  padding: 0 10px 10px !important;
+  padding-bottom: 10px !important;
 }
 
 .program-card-panels .btn-desplegar,
@@ -1855,6 +1865,11 @@
   overflow-y: auto;
 }
 
+.program-slot-picker__results[hidden],
+.program-slot-picker__results.is-hidden {
+  display: none !important;
+}
+
 .program-slot-picker__option {
   display: flex;
   align-items: flex-start;
@@ -1888,7 +1903,7 @@
 .program-slot-picker__preview.picker-summary-card {
   display: grid;
   gap: 0;
-  margin: 10px 12px 0;
+  margin: 0;
   padding: 0;
   border: 1px solid var(--panel-row-separator);
   border-radius: 16px;
@@ -1908,6 +1923,10 @@
 .program-slot-picker__actions.actions-row {
   justify-content: flex-end;
   padding: 12px;
+}
+
+.program-slot-picker__actions[hidden] {
+  display: none !important;
 }
 
 .program-slot-picker__empty {
@@ -4197,8 +4216,9 @@ html[data-theme="dark"] .program-chart-guide {
   display: grid;
   gap: 0.85rem;
   padding: 0.85rem;
+  border: 1px solid var(--panel-row-separator);
   border-radius: 22px;
-  background: var(--surface-card-muted);
+  background: transparent;
 }
 
 .program-week-child-card__plan-section .program-week-child-card__days {
@@ -4206,7 +4226,8 @@ html[data-theme="dark"] .program-chart-guide {
 }
 
 .program-day-selected-card {
-  background: var(--surface-card);
+  padding: 12px;
+  background: transparent;
   border-color: var(--border-soft);
 }
 
@@ -4245,14 +4266,19 @@ html[data-theme="dark"] .program-chart-guide {
 }
 
 .program-day-empty-card {
-  display: flex;
-  align-items: center;
+  display: grid;
   gap: 0.7rem;
   padding: 0.95rem 1rem;
   border: 1px solid var(--border-soft);
   border-radius: 18px;
-  background: var(--surface-card);
+  background: transparent;
   color: var(--text-main);
+}
+
+.program-day-empty-card__content {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
 }
 
 .program-day-empty-card[hidden] {
@@ -4925,5 +4951,374 @@ html[data-theme="dark"] .program-chart-guide {
       "preview-title"
       "title"
       "kpis";
+  }
+}
+
+/* Program week tabs =========================================== */
+.program-week-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 1rem;
+  padding: 10px;
+  overflow-x: auto;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  scrollbar-width: thin;
+}
+
+.program-week-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: 44px;
+  height: 24px;
+  padding: 0 12px;
+  border: 1px solid var(--panel-tab-border);
+  border-radius: 999px;
+  background-color: var(--panel-tab-bg);
+  color: var(--panel-tab-text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 450;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.program-week-tab:hover,
+.program-week-tab:focus-visible {
+  border-color: var(--panel-tab-hover-border);
+  background-color: var(--panel-tab-hover-bg);
+  color: var(--panel-tab-hover-text);
+  outline: none;
+}
+
+.program-week-tab.is-active {
+  border-color: var(--panel-tab-active-border);
+  background-color: var(--panel-tab-active-bg);
+  color: var(--panel-tab-active-text);
+}
+
+.program-week-panel[hidden] {
+  display: none !important;
+}
+
+.program-week-panel.is-active {
+  display: block;
+}
+
+.program-board--tabbed {
+  gap: 0;
+}
+
+@media (max-width: 780px) {
+  .program-week-tabs {
+    margin-inline: -4px;
+    padding: 8px 4px;
+  }
+
+  .program-week-tab {
+    min-width: 40px;
+    height: 24px;
+    padding: 0 12px;
+    font-size: 13px;
+  }
+}
+
+/* Program detail selected day card refinements ============================= */
+.page--program-detail:not(.page--program-week-detail) .program-week-child-card__plan-section {
+  padding: 0;
+  border: 0;
+}
+
+.page--program-detail:not(.page--program-week-detail) .program-day-selected-card {
+  padding: 17px 14px 20px;
+  border: 1px solid var(--panel-row-separator);
+}
+
+/* Program week detail refactor ===================================== */
+.program-week-detail-body {
+  display: block;
+  min-width: 0;
+}
+
+.program-week-detail-header,
+.program-week-detail-section__header {
+  align-items: flex-start;
+  gap: 1rem;
+  margin: 0;
+}
+
+.program-week-detail-header {
+  display: flex;
+}
+
+.program-week-detail-kpi {
+  width: 100%;
+  margin: 0;
+  padding-left: 0;
+  border-left: 0;
+}
+
+.program-week-detail-kpi .dash-kpi-range--week-card {
+  width: 100%;
+}
+
+.program-week-detail-section {
+  display: grid;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.program-week-detail-section--summary {
+  gap: 1.25rem;
+}
+
+.program-week-detail-section__header {
+  padding: 0;
+}
+
+.program-week-detail-chart {
+  min-width: 0;
+}
+
+.program-week-detail-plan-section {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.page--program-week-detail .program-day-selected-card {
+  padding: 17px 14px 20px;
+  border: 1px solid var(--panel-row-separator);
+}
+
+.program-week-detail-foods-panel .program-week-foods-aggregation {
+  margin: 0;
+}
+
+
+
+@media (max-width: 780px) {
+  .program-week-detail-header,
+  .program-week-detail-section__header {
+    gap: 0.75rem;
+  }
+}
+
+/* Program week detail day nutrition panel ================================ */
+.program-week-detail-section--day-panel {
+  margin-top: 1rem;
+}
+
+.program-week-day-panels {
+  overflow: hidden;
+}
+
+.program-week-day-panels__desktop-tabs,
+.program-week-day-panels__mobile-tabs {
+  padding-bottom: 0.55rem;
+}
+
+.program-week-day-panels__panel {
+  padding: 0;
+}
+
+.data-grid--program-week-days {
+  min-width: 760px;
+}
+
+.data-grid-header--program-week-days,
+.data-grid-row--program-week-days {
+  grid-template-columns:
+    minmax(148px, 1.35fr)
+    minmax(70px, 0.75fr)
+    minmax(62px, 0.65fr)
+    minmax(52px, 0.58fr)
+    minmax(52px, 0.58fr)
+    minmax(52px, 0.58fr)
+    minmax(78px, 0.82fr)
+    minmax(78px, 0.82fr)
+    minmax(78px, 0.82fr);
+}
+
+.data-grid-header--program-week-days-mobile-macros,
+.data-grid-row--program-week-days-mobile-macros {
+  grid-template-columns:
+    minmax(118px, 1.4fr)
+    minmax(48px, 0.62fr)
+    minmax(48px, 0.62fr)
+    minmax(34px, 0.48fr)
+    minmax(34px, 0.48fr)
+    minmax(34px, 0.48fr);
+}
+
+.data-grid-header--program-week-days-mobile-alloc,
+.data-grid-row--program-week-days-mobile-alloc {
+  grid-template-columns:
+    minmax(136px, 1.45fr)
+    minmax(54px, 0.65fr)
+    minmax(54px, 0.65fr)
+    minmax(54px, 0.65fr);
+  gap: 6px;
+}
+
+.data-grid-cell--program-day,
+.data-grid-col--program-day {
+  justify-content: flex-start;
+  padding-inline: 4px;
+}
+
+.data-grid-cell--program-day {
+  display: grid;
+  align-content: center;
+  gap: 0.12rem;
+}
+
+.program-week-day-table__day-name {
+  min-width: 0;
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.15;
+}
+
+.program-week-day-table__plan-name {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 450;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.data-grid-cell--ppk,
+.data-grid-col--ppk {
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.data-grid-row--program-week-days.is-empty .program-week-day-table__day-name,
+.data-grid-row--program-week-days.is-empty .program-week-day-table__plan-name,
+.data-grid-row--program-week-days.is-empty .data-grid-cell--kcal,
+.data-grid-row--program-week-days.is-empty .data-grid-cell--ppk,
+.data-grid-row--program-week-days.is-empty .data-grid-cell--macro,
+.data-grid-row--program-week-days-mobile-macros.is-empty .program-week-day-table__day-name,
+.data-grid-row--program-week-days-mobile-macros.is-empty .program-week-day-table__plan-name,
+.data-grid-row--program-week-days-mobile-macros.is-empty .data-grid-cell--kcal,
+.data-grid-row--program-week-days-mobile-macros.is-empty .data-grid-cell--ppk,
+.data-grid-row--program-week-days-mobile-macros.is-empty .data-grid-cell--macro,
+.data-grid-row--program-week-days-mobile-alloc.is-empty .program-week-day-table__day-name,
+.data-grid-row--program-week-days-mobile-alloc.is-empty .program-week-day-table__plan-name {
+  color: var(--text-muted);
+}
+
+
+.data-grid--program-week-days-edit {
+  min-width: 560px;
+}
+
+.data-grid-header--program-week-days-edit,
+.data-grid-row--program-week-days-edit {
+  grid-template-columns: minmax(128px, 0.9fr) minmax(180px, 1.35fr) minmax(104px, auto);
+}
+
+.data-grid-cell--program-day-plan,
+.data-grid-col--program-day-plan {
+  justify-content: flex-start;
+  min-width: 0;
+}
+
+.data-grid-cell--program-day-actions,
+.data-grid-col--program-day-actions {
+  justify-content: flex-end;
+}
+
+.data-grid-cell--program-day-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.program-week-day-action-form {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+}
+
+.program-week-day-table-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+}
+
+
+.program-week-day-table-action--add {
+  color: var(--entity-dailyplan);
+}
+
+.program-week-day-table-action--add:hover,
+.program-week-day-table-action--add:focus-visible {
+  border-color: color-mix(in srgb, var(--entity-dailyplan) 42%, var(--border-soft));
+  background: color-mix(in srgb, var(--entity-dailyplan) 10%, transparent);
+}
+
+.program-week-day-table-action--danger {
+  color: #ff4d4d;
+}
+
+.program-week-day-table-action--danger:hover,
+.program-week-day-table-action--danger:focus-visible {
+  border-color: color-mix(in srgb, #ff4d4d 42%, var(--border-soft));
+  background: color-mix(in srgb, #ff4d4d 10%, transparent);
+}
+
+.program-week-day-table-action.is-disabled {
+  border-color: var(--border-soft);
+  color: var(--text-muted);
+  cursor: default;
+  opacity: 0.58;
+}
+
+@media (min-width: 981px) {
+  .program-week-day-panels .card-detail-tabs-mobile,
+  .program-week-day-panels__mobile-panel {
+    display: none !important;
+  }
+}
+
+@media (max-width: 980px) {
+  .program-week-day-panels .card-detail-tabs--desktop,
+  .program-week-day-panels__desktop-panel {
+    display: none !important;
+  }
+
+  .program-week-day-panels__panel {
+    overflow-x: visible;
+  }
+
+  .data-grid--program-week-days-mobile {
+    min-width: 0;
+  }
+
+  .data-grid-header--program-week-days-mobile-macros,
+  .data-grid-row--program-week-days-mobile-macros,
+  .data-grid-header--program-week-days-mobile-alloc,
+  .data-grid-row--program-week-days-mobile-alloc {
+    padding-inline: 8px 0;
   }
 }
