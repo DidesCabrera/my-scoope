@@ -11,6 +11,8 @@ Esta carpeta contiene documentación vigente. Una IA o desarrollador debe prefer
 5. `architecture/ui_patterns.md`
 6. `architecture/component_inventory.md`
 7. `architecture/ai_implementation_guide.md`
+8. `features/food_catalog.md`
+9. `features/ai_nutrition_onboarding/ai_nutrition_onboarding.md`
 
 ## Criterio
 

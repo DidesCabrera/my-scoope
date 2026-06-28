@@ -19,7 +19,7 @@
     >
   </div>
 
-  <section class="home-hero main">
+  <section class="home-hero main" hidden>
     <div class="home-hero-copy">
       <div class="home-banner-carousel js-home-banner-carousel">
         <div class="home-banner-track">
@@ -109,6 +109,25 @@
   </section>
 
 
+
+  <section class="home-ai-intake home-ai-intake--composer" aria-labelledby="home-ai-intake-title">
+    <h2 id="home-ai-intake-title" class="home-ai-intake__title">¿En qué puedo ayudarte?</h2>
+
+    <form method="post" action="{% url 'ai_nutrition_intake' %}" class="home-ai-intake__form" aria-label="Iniciar chat nutricional">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="analyze_prompt">
+      <textarea
+        id="home-ai-intake-prompt"
+        name="prompt"
+        rows="1"
+        placeholder="Quiero una dieta para..."
+        required
+      ></textarea>
+      <button type="submit" class="home-ai-intake__submit" aria-label="Enviar solicitud">
+        <i data-lucide="arrow-up" class="ai-chat-send__icon"></i>
+      </button>
+    </form>
+  </section>
 
   <!-- STATS ================================================= -->
   <section class="home-stats">

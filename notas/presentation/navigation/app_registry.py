@@ -123,6 +123,15 @@ APP_NAVIGATION = (
                 show_in_sidebar=False,
             ),
             NavGroupSpec(
+                key="chat",
+                label="Chats",
+                icon="messages-square",
+                page_icon="messages-square",
+                url_name="ai_nutrition_chat_list",
+                nav_root="chat",
+                scope="personal",
+            ),
+            NavGroupSpec(
                 key="inbox",
                 label="Inbox",
                 icon="inbox",

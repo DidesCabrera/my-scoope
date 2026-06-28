@@ -3,7 +3,11 @@
     <div class="proposal-review-actions-copy">
       <p class="proposal-review-eyebrow">Decisión de propuesta</p>
       <p class="proposal-review-actions-text">
-        Puedes aplicar esta propuesta para guardarla en tu librería o rechazarla.
+        {% if vm.content.proposal_review.can_apply %}
+          Puedes aplicar esta propuesta para guardarla en tu librería o rechazarla.
+        {% else %}
+          Esta propuesta queda como artefacto revisable. Aún no contiene cambios aplicables automáticamente.
+        {% endif %}
       </p>
     </div>
 

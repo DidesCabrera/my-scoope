@@ -1,0 +1,53 @@
+<div class="ai-chat-thread__inner">
+  {% for message in vm.content.conversation.messages %}
+    <article class="ai-chat-message ai-chat-message--{{ message.role }}">
+      <div class="ai-chat-bubble">
+        <p>{{ message.text }}</p>
+      </div>
+    </article>
+  {% endfor %}
+
+  {% if vm.content.result and vm.content.result.is_ready_for_proposal %}
+    <article class="ai-chat-message ai-chat-message--assistant ai-chat-message--brief-card">
+      <div class="ai-chat-brief-card">
+        <div class="ai-chat-brief-card__header">
+          <div>
+            <span>Brief listo</span>
+            <h2>Ya tengo suficiente para crear una propuesta</h2>
+          </div>
+          <i data-lucide="sparkles" class="ai-chat-brief-card__icon"></i>
+        </div>
+
+        <div class="ai-chat-summary-list ai-chat-summary-list--card">
+          {% for item in vm.content.result.completed_summary_items %}
+            <article class="ai-chat-summary-item">
+              <span>{{ item.label }}</span>
+              <strong>{{ item.value }}</strong>
+            </article>
+          {% endfor %}
+        </div>
+
+        {% if vm.content.result.visible_follow_up_questions %}
+          <div class="ai-chat-brief-card__optional">
+            <h3>Para afinar la propuesta</h3>
+            <p>Puedes responder alguna de estas preguntas antes de crearla:</p>
+            <ol class="ai-chat-question-list">
+              {% for question in vm.content.result.visible_follow_up_questions %}
+                <li>{{ question }}</li>
+              {% endfor %}
+            </ol>
+          </div>
+        {% endif %}
+
+        <form method="post" action="{% url 'ai_nutrition_intake' %}" class="ai-chat-brief-card__action">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="create_proposal">
+          <button type="submit" class="home-cta home-cta--primary">
+            <i data-lucide="sparkles" class="btn-card-home-icon white"></i>
+            <span>Crear propuesta</span>
+          </button>
+        </form>
+      </div>
+    </article>
+  {% endif %}
+</div>

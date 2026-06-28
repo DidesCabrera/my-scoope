@@ -4,6 +4,7 @@ from typing import Any
 
 CREATE_MEAL_INTENT = "create_meal"
 CREATE_DAILYPLAN_INTENT = "create_dailyplan"
+AI_NUTRITION_BRIEF_INTENT = "ai_nutrition_brief"
 
 APPLY_SUPPORTED_INTENTS = {
     CREATE_MEAL_INTENT,
@@ -266,6 +267,9 @@ def _build_entity_title(intent: str | None) -> str:
     if intent == CREATE_DAILYPLAN_INTENT:
         return "DailyPlan en la propuesta"
 
+    if intent == AI_NUTRITION_BRIEF_INTENT:
+        return "Brief nutricional en la propuesta"
+
     return "Entidad en la propuesta"
 
 
@@ -297,6 +301,19 @@ def _build_review_attachments(
                     or proposal.get("dailyplan_name", "")
                     or proposal.get("title", "")
                 ),
+                "icon": "clipboard-list",
+            },
+        ]
+
+    if intent == AI_NUTRITION_BRIEF_INTENT:
+        brief = _safe_dict(proposed_payload.get("nutrition_brief"))
+        requested_entity = _safe_str(brief.get("requested_entity"), default="daily_plan")
+        entity_label = "Programa semanal" if requested_entity == "program" else "Plan diario"
+        return [
+            {
+                "kind": "brief",
+                "label": "Brief nutricional",
+                "name": f"Brief para {entity_label}",
                 "icon": "clipboard-list",
             },
         ]

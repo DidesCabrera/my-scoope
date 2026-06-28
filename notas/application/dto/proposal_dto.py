@@ -4,7 +4,7 @@ from dataclasses import asdict, dataclass
 @dataclass(frozen=True)
 class NutritionProposalListItemDTO:
     id: int
-    dailyplan_id: int
+    dailyplan_id: int | None
     dailyplan_name: str
     created_by_id: int
     created_by_username: str
@@ -34,7 +34,7 @@ class NutritionProposalListItemDTO:
 @dataclass(frozen=True)
 class NutritionProposalDTO:
     id: int
-    dailyplan_id: int
+    dailyplan_id: int | None
     dailyplan_name: str
     created_by_id: int
     created_by_username: str

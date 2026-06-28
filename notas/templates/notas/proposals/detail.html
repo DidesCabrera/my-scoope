@@ -104,6 +104,49 @@
         </div>
       </section>
 
+      {% if vm.content.proposal_review.payload.intent == "ai_nutrition_brief" %}
+        <section class="proposal-review-card">
+          <div class="proposal-review-card-header">
+            <div>
+              <p class="proposal-review-eyebrow">Brief nutricional</p>
+              <h3 class="proposal-review-section-title">
+                Información lista para generar un primer DailyPlan
+              </h3>
+            </div>
+          </div>
+
+          <div class="proposal-review-kpis">
+            {% for item in vm.content.proposal.validation_summary.summary_items %}
+              <div class="proposal-review-kpi{% if item.is_pending %} is-pending{% endif %}">
+                <span class="proposal-review-kpi-label">{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+              </div>
+            {% endfor %}
+          </div>
+        </section>
+
+        {% if vm.content.proposal_review.status.is_reviewable %}
+          <section class="proposal-review-actions">
+            <div class="proposal-review-actions-copy">
+              <p class="proposal-review-eyebrow">Generador inicial</p>
+              <p class="proposal-review-actions-text">
+                Puedes convertir este brief en una propuesta concreta de DailyPlan.
+                El generador usa reglas simples y alimentos disponibles; todavía no aplica solver avanzado.
+              </p>
+            </div>
+
+            <div class="proposal-review-actions-buttons">
+              <form method="post" action="{% url 'proposal_generate_dailyplan' vm.content.proposal_review.proposal_id %}">
+                {% csrf_token %}
+                <button type="submit" class="proposal-review-action proposal-review-action--apply">
+                  Generar DailyPlan
+                </button>
+              </form>
+            </div>
+          </section>
+        {% endif %}
+      {% endif %}
+
       {% if vm.content.proposal_review.payload.is_create_meal %}
         {% include "notas/proposals/partials/review_create_meal.html" %}
       {% endif %}

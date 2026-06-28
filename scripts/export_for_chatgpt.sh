@@ -16,13 +16,14 @@ if [ ! -f "$PROJECT_DIR/manage.py" ]; then
   exit 1
 fi
 
-if [[ "$MODE" != "ai" && "$MODE" != "full" && "$MODE" != "usda" ]]; then
+if [[ "$MODE" != "ai" && "$MODE" != "full" && "$MODE" != "usda" && "$MODE" != "foodcatalog" ]]; then
   echo "Error: modo inválido: $MODE"
   echo ""
   echo "Uso:"
   echo "  ./scripts/export_for_chatgpt.sh ai"
   echo "  ./scripts/export_for_chatgpt.sh full"
   echo "  ./scripts/export_for_chatgpt.sh usda"
+  echo "  ./scripts/export_for_chatgpt.sh foodcatalog"
   exit 1
 fi
 
@@ -134,6 +135,97 @@ USDA_EXCLUDES=(
   # Se mantienen excluidas las imágenes/assets pesados.
 )
 
+FOODCATALOG_INCLUDES=(
+  # Modo focalizado para trabajar en Food Catalog App como subsistema separado.
+  # Usa allowlist: se incluyen solo rutas relevantes para catálogo, fuentes,
+  # importación, curaduría, normalización y contrato hacia el core nutricional.
+  --include '*/'
+
+  # Contexto mínimo del proyecto Django.
+  --include '/manage.py'
+  --include '/requirements.txt'
+  --include '/miapp/__init__.py'
+  --include '/miapp/settings.py'
+  --include '/miapp/urls.py'
+  --include '/miapp/asgi.py'
+  --include '/miapp/wsgi.py'
+
+  # Script de exportación y documentación vigente.
+  --include '/scripts/export_for_chatgpt.sh'
+  --include '/docs/README.md'
+  --include '/docs/current/README.md'
+  --include '/docs/current/features/food_catalog.md'
+  --include '/docs/current/features/food_catalog/***'
+  --include '/docs/current/operations/export_for_chatgpt.md'
+  --include '/docs/decisions/README.md'
+  --include '/docs/decisions/*food*'
+  --include '/docs/archive/food_catalog_history/***'
+
+  # No incluye datasets externos completos. Para depurar un registro o fuente
+  # puntual, adjuntar ese archivo específico o usar el modo usda.
+
+  # Núcleo del app notas necesario para entender modelos y wiring.
+  --include '/notas/__init__.py'
+  --include '/notas/apps.py'
+  --include '/notas/models.py'
+  --include '/notas/admin.py'
+  --include '/notas/admin_food_actions.py'
+  --include '/notas/urls.py'
+
+  # Capas de aplicación relacionadas con Food Catalog.
+  --include '/notas/application/dto/food_dto.py'
+  --include '/notas/application/dto/imported_food_dto.py'
+  --include '/notas/application/queries/*food*.py'
+  --include '/notas/application/queries/global_food_queries.py'
+  --include '/notas/application/services/commands/*food*.py'
+  --include '/notas/application/services/commands/import_usda_food_payloads.py'
+  --include '/notas/application/services/food_imports/***'
+  --include '/notas/application/services/nutrition/food_aggregation.py'
+
+  # Commands internos de importación, exportación y curaduría.
+  --include '/notas/management/__init__.py'
+  --include '/notas/management/commands/__init__.py'
+  --include '/notas/management/commands/*food*.py'
+  --include '/notas/management/commands/*usda*.py'
+  --include '/notas/management/commands/apply_core_food_seed.py'
+  --include '/notas/management/commands/promote_initial_core_foods.py'
+
+  # Migraciones: se conservan todas porque los modelos están en un único app
+  # Django y varias relaciones históricas alimentan el estado real de Food.
+  --include '/notas/migrations/***'
+
+  # Interfaz actual relacionada con Food. Útil para comprender el contrato
+  # que Food Catalog entrega al entorno de gestión nutricional.
+  --include '/notas/interface/routing/food.py'
+  --include '/notas/interface/urls/foods.py'
+  --include '/notas/interface/views/foods.py'
+  --include '/notas/interface/views/meal_foods.py'
+  --include '/notas/presentation/actions/*food*.py'
+  --include '/notas/presentation/composition/forms/form_food_builder.py'
+  --include '/notas/presentation/composition/js/*food*.py'
+  --include '/notas/presentation/composition/viewmodel/food/***'
+  --include '/notas/presentation/frontend/jscontext/*food*.py'
+  --include '/notas/presentation/pages/food_pages.py'
+  --include '/notas/presentation/routing/food.py'
+  --include '/notas/presentation/viewmodels/content/food/***'
+  --include '/notas/templates/components/*food*.html'
+  --include '/notas/templates/components/*foods*.html'
+  --include '/notas/templates/notas/foods/***'
+  --include '/notas/templates/notas/admin/food_catalog.html'
+  --include '/notas/static/notas/js/*food*.js'
+
+  # Tests y fixtures alimentarios.
+  --include '/notas/tests/fixtures/food_imports/***'
+  --include '/notas/tests/test_*food*.py'
+  --include '/notas/tests/test_*usda*.py'
+  --include '/notas/tests/test_apply_core_food_seed_command.py'
+  --include '/notas/tests/test_core_food_seed_catalog.py'
+  --include '/notas/tests/test_core_food_seed_service.py'
+  --include '/notas/tests/test_global_food_queries.py'
+
+  --exclude '*'
+)
+
 case "$MODE" in
   ai)
     RSYNC_EXCLUDES=("${COMMON_EXCLUDES[@]}" "${AI_EXCLUDES[@]}")
@@ -143,6 +235,9 @@ case "$MODE" in
     ;;
   usda)
     RSYNC_EXCLUDES=("${COMMON_EXCLUDES[@]}" "${USDA_EXCLUDES[@]}")
+    ;;
+  foodcatalog)
+    RSYNC_EXCLUDES=("${COMMON_EXCLUDES[@]}" "${FOODCATALOG_INCLUDES[@]}")
     ;;
 esac
 
@@ -188,6 +283,9 @@ case "$MODE" in
     ;;
   usda)
     echo "usda: incluye USDA y tests. Excluye imágenes."
+    ;;
+  foodcatalog)
+    echo "foodcatalog: export focalizado para Food Catalog App. Incluye importadores, curaduría, docs y tests relacionados. Excluye datasets externos completos."
     ;;
 esac
 echo ""

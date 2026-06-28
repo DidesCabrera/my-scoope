@@ -126,7 +126,14 @@ def _ensure_can_review_proposal(
     user,
     proposal: NutritionProposal,
 ) -> None:
-    if proposal.dailyplan.created_by_id != user.id:
+    is_creator = proposal.created_by_id == user.id
+    is_dailyplan_owner = (
+        proposal.dailyplan_id
+        and proposal.dailyplan
+        and proposal.dailyplan.created_by_id == user.id
+    )
+
+    if not is_creator and not is_dailyplan_owner:
         raise ValueError("proposal_review_not_allowed")
 
 
@@ -136,7 +143,11 @@ def _ensure_can_cancel_proposal(
     proposal: NutritionProposal,
 ) -> None:
     is_creator = proposal.created_by_id == user.id
-    is_dailyplan_owner = proposal.dailyplan.created_by_id == user.id
+    is_dailyplan_owner = (
+        proposal.dailyplan_id
+        and proposal.dailyplan
+        and proposal.dailyplan.created_by_id == user.id
+    )
 
     if not is_creator and not is_dailyplan_owner:
         raise ValueError("proposal_cancel_not_allowed")
@@ -148,7 +159,11 @@ def _ensure_can_delete_proposal(
     proposal: NutritionProposal,
 ) -> None:
     is_creator = proposal.created_by_id == user.id
-    is_dailyplan_owner = proposal.dailyplan.created_by_id == user.id
+    is_dailyplan_owner = (
+        proposal.dailyplan_id
+        and proposal.dailyplan
+        and proposal.dailyplan.created_by_id == user.id
+    )
 
     if not is_creator and not is_dailyplan_owner:
         raise ValueError("proposal_delete_not_allowed")

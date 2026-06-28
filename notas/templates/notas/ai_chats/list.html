@@ -1,0 +1,51 @@
+{% extends "notas/base.html" %}
+{% block title %}Chats{% endblock %}
+{% block content %}
+
+<div class="page list ai-chat-history-page proposal-list-page">
+  {% include "components/list_page_header.html" %}
+
+  <section class="ai-chat-history-list" aria-label="Chats históricos">
+    {% for chat in vm.content.chats %}
+      <article class="card proposal-list-card ai-chat-history-card">
+        <a href="{{ chat.url }}" class="ai-chat-history-card__link">
+          <div class="proposal-list-card__main ai-chat-history-card__main">
+            <div class="proposal-list-card__title-block">
+              <div class="proposal-list-card__copy">
+                <h3 class="proposal-list-card__title ai-chat-history-card__title">{{ chat.title }}</h3>
+                <p class="proposal-list-card__summary ai-chat-history-card__subtitle">{{ chat.subtitle }}</p>
+              </div>
+            </div>
+
+            <div class="proposal-list-card__icons-title" aria-hidden="true">
+              <i data-lucide="messages-square" class="home-section-header-icon proposal"></i>
+            </div>
+          </div>
+
+          <div class="proposal-list-card__summary-block ai-chat-history-card__summary-block">
+            <span class="proposal-list-card__summary-label">Último mensaje</span>
+            <p class="proposal-list-card__summary">{{ chat.preview }}</p>
+          </div>
+
+          <div class="card-bottom proposal-list-card__bottom ai-chat-history-card__bottom">
+            <span class="proposal-status-badge proposal-status-badge--pending_review">
+              {{ chat.status_label }}
+            </span>
+            <i data-lucide="chevron-right" class="ai-chat-history-card__chevron" aria-hidden="true"></i>
+          </div>
+        </a>
+      </article>
+    {% empty %}
+      <section class="card proposal-empty-card ai-chat-history-empty-card">
+        <div>
+          <h3>No tienes chats todavía.</h3>
+          <p>
+            Los chats iniciados desde Home aparecerán aquí para que puedas retomarlos o revisar el brief conversacional.
+          </p>
+        </div>
+      </section>
+    {% endfor %}
+  </section>
+</div>
+
+{% endblock %}

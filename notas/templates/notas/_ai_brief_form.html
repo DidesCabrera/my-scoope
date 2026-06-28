@@ -1,0 +1,109 @@
+      <form method="post" action="{{ brief_form_action_url }}" class="ai-brief-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="update_brief">
+        <input type="hidden" name="raw_prompt" value="{{ vm.content.result.brief.raw_prompt }}">
+
+        <div class="ai-brief-grid">
+          <label class="ai-brief-field">
+            <span>Objetivo</span>
+            <select name="goal">
+              {% for value, label in vm.content.result.form.goal_choices %}
+                <option value="{{ value }}"{% if vm.content.result.brief.goal == value %} selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </label>
+
+          <label class="ai-brief-field">
+            <span>Tipo de solución</span>
+            <select name="requested_entity">
+              {% for value, label in vm.content.result.form.requested_entity_choices %}
+                <option value="{{ value }}"{% if vm.content.result.brief.requested_entity == value %} selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </label>
+
+          <label class="ai-brief-field">
+            <span>Comidas por día</span>
+            <input type="number" name="meals_per_day" min="1" max="8" value="{{ vm.content.result.brief.meals_per_day|default_if_none:'' }}" placeholder="Ej: 4">
+          </label>
+
+          <label class="ai-brief-field">
+            <span>Entrenamiento semanal</span>
+            <input type="number" name="training_frequency" min="0" max="7" value="{{ vm.content.result.brief.training_frequency|default_if_none:'' }}" placeholder="Ej: 3">
+          </label>
+
+          <label class="ai-brief-field">
+            <span>Kcal objetivo</span>
+            <input type="number" name="calorie_target" min="800" max="6000" value="{{ vm.content.result.brief.calorie_target|default_if_none:'' }}" placeholder="Opcional">
+          </label>
+
+          <label class="ai-brief-field">
+            <span>Proteína objetivo</span>
+            <input type="number" name="protein_target" min="0" max="500" value="{{ vm.content.result.brief.protein_target|default_if_none:'' }}" placeholder="g/día">
+          </label>
+
+          <label class="ai-brief-field">
+            <span>Carbohidratos objetivo</span>
+            <input type="number" name="carb_target" min="0" max="800" value="{{ vm.content.result.brief.carb_target|default_if_none:'' }}" placeholder="g/día">
+          </label>
+
+          <label class="ai-brief-field">
+            <span>Grasas objetivo</span>
+            <input type="number" name="fat_target" min="0" max="300" value="{{ vm.content.result.brief.fat_target|default_if_none:'' }}" placeholder="g/día">
+          </label>
+
+          <label class="ai-brief-field">
+            <span>Complejidad</span>
+            <select name="complexity_level">
+              {% for value, label in vm.content.result.form.complexity_choices %}
+                <option value="{{ value }}"{% if vm.content.result.brief.complexity_level == value %} selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </label>
+
+          <label class="ai-brief-field">
+            <span>Presupuesto</span>
+            <select name="budget_level">
+              {% for value, label in vm.content.result.form.budget_choices %}
+                <option value="{{ value }}"{% if vm.content.result.brief.budget_level == value %} selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </label>
+        </div>
+
+        <fieldset class="ai-brief-fieldset">
+          <legend>Preferencias de estilo</legend>
+          <div class="ai-brief-checks">
+            {% for value, label in vm.content.result.form.style_choices %}
+              <label class="ai-brief-check">
+                <input type="checkbox" name="style_preferences" value="{{ value }}"{% if value in vm.content.result.brief.style_preferences %} checked{% endif %}>
+                <span>{{ label }}</span>
+              </label>
+            {% endfor %}
+          </div>
+        </fieldset>
+
+        <div class="ai-brief-grid ai-brief-grid--text">
+          <label class="ai-brief-field">
+            <span>Alimentos preferidos</span>
+            <input type="text" name="preferred_foods" value="{{ vm.content.result.brief.preferred_foods_text }}" placeholder="pollo, arroz, huevos">
+          </label>
+
+          <label class="ai-brief-field">
+            <span>Alimentos excluidos</span>
+            <input type="text" name="excluded_foods" value="{{ vm.content.result.brief.excluded_foods_text }}" placeholder="pescado, atún">
+          </label>
+
+          <label class="ai-brief-field ai-brief-field--wide">
+            <span>Notas</span>
+            <textarea name="notes" rows="2" placeholder="Contexto adicional para el futuro generador">{{ vm.content.result.brief.notes_text }}</textarea>
+          </label>
+        </div>
+
+        <div class="ai-brief-actions">
+          <button type="submit" class="home-cta home-cta--primary">
+            <i data-lucide="save" class="btn-card-home-icon white"></i>
+            <span>Guardar brief</span>
+          </button>
+        </div>
+      </form>

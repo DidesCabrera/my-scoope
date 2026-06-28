@@ -38,6 +38,13 @@ def _proposal_status_label(status: str) -> str:
     return labels.get(status, status or "")
 
 
+def _proposal_dailyplan_name(proposal: NutritionProposal) -> str:
+    if proposal.dailyplan_id and proposal.dailyplan:
+        return proposal.dailyplan.name
+
+    return "Sin DailyPlan asociado"
+
+
 def get_available_proposal_queryset(user):
     """
     Propuestas visibles para el usuario.
@@ -107,14 +114,25 @@ def _get_proposal_attachment(proposal: NutritionProposal) -> dict[str, str]:
         return {
             "kind": "dailyplan",
             "label": "DailyPlan propuesto",
-            "name": dailyplan.get("name") or proposal.dailyplan.name,
+            "name": dailyplan.get("name") or _proposal_dailyplan_name(proposal),
+            "icon": "clipboard-list",
+        }
+
+    if intent == "ai_nutrition_brief":
+        brief = payload.get("nutrition_brief") or {}
+        requested_entity = brief.get("requested_entity") or "daily_plan"
+        entity_label = "Programa semanal" if requested_entity == "program" else "Plan diario"
+        return {
+            "kind": "brief",
+            "label": "Brief nutricional",
+            "name": f"Brief para {entity_label}",
             "icon": "clipboard-list",
         }
 
     return {
         "kind": "dailyplan",
         "label": "DailyPlan asociado",
-        "name": proposal.dailyplan.name,
+        "name": _proposal_dailyplan_name(proposal),
         "icon": "clipboard-list",
     }
 
@@ -153,7 +171,7 @@ def build_proposal_list_item_dto(
     return NutritionProposalListItemDTO(
         id=proposal.id,
         dailyplan_id=proposal.dailyplan_id,
-        dailyplan_name=proposal.dailyplan.name,
+        dailyplan_name=_proposal_dailyplan_name(proposal),
         created_by_id=proposal.created_by_id,
         created_by_username=proposal.created_by.username,
         reviewed_by_id=proposal.reviewed_by_id,
@@ -219,7 +237,7 @@ def build_proposal_dto(
     return NutritionProposalDTO(
         id=proposal.id,
         dailyplan_id=proposal.dailyplan_id,
-        dailyplan_name=proposal.dailyplan.name,
+        dailyplan_name=_proposal_dailyplan_name(proposal),
         created_by_id=proposal.created_by_id,
         created_by_username=proposal.created_by.username,
         reviewed_by_id=proposal.reviewed_by_id,

@@ -23,3 +23,5 @@ Consequences
 - `0004-ai-export-modes.md`: modos de exportación para IA.
 - `0005-ui-system-stage-1.md`: contrato inicial de UI System, tokens y CSS.
 - `0006-ui-system-stage-2-component-consolidation.md`: consolidación inicial de componentes repetidos en templates.
+- `0007-food-catalog-app-boundary.md`: Food Catalog App como sistema separado.
+- `0008-ai-assisted-onboarding-to-first-plan.md`: onboarding nutricional asistido por IA hacia el primer plan útil.

@@ -101,6 +101,11 @@ COMPARATOR_VIEWMODE_MEALS = vm("comparator", "list", "meals")
 COMPARATOR_VIEWMODE_DAILYPLANS = vm("comparator", "list", "dailyplans")
 
 
+# AI CHATS ---------------------------------------------
+CHAT_VIEWMODE_LIST = vm("chat", "list", "personal")
+CHAT_VIEWMODE_DETAIL = vm("chat", "detail", "personal")
+
+
 # INBOX / SHARING ---------------------------------------------
 INBOX_VIEWMODE_LIST = vm("inbox", "list", "personal")
 INBOX_VIEWMODE_DETAIL = vm("inbox", "detail", "personal")

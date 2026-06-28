@@ -1,0 +1,22 @@
+{% extends "notas/base.html" %}
+
+{% block title %}Editar Brief Nutricional{% endblock %}
+{% block body_class %}page-home page-ai-intake page-ai-intake-brief-edit{% endblock %}
+
+{% block content %}
+<div class="page home-page ai-intake-page">
+  <section class="ai-intake-result ai-intake-editable-brief ai-intake-editable-brief--standalone">
+    <div class="ai-intake-section-heading">
+      <i data-lucide="sliders-horizontal" class="ai-intake-section-heading__icon"></i>
+      <div>
+        <p class="ai-intake-card__eyebrow">Corrección manual avanzada</p>
+        <h1>Editar Brief Nutricional Manualmente</h1>
+        <p>Ajusta los campos detectados por la conversación antes de crear una propuesta revisable.</p>
+      </div>
+    </div>
+
+    {% url 'ai_nutrition_brief_edit' as brief_form_action_url %}
+    {% include "notas/_ai_brief_form.html" %}
+  </section>
+</div>
+{% endblock %}

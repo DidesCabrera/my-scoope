@@ -6,6 +6,7 @@ urlpatterns = [
     path("", home_view, name="home_view"),
     path("", include("notas.interface.urls.pwa")),
     path("", include("notas.interface.urls.inbox")),
+    path("", include("notas.interface.urls.ai_intake")),
     path("", include("notas.interface.urls.comparators")),
     path("", include("notas.interface.urls.elemental")),
     path("", include("notas.interface.urls.dailyplans")),

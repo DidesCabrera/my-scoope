@@ -38,6 +38,24 @@ manual_docs/
 - No dividir `domain/models.py` sin una tarea dedicada.
 - Agregar tests cuando se toque parsing, payloads, commands o rutas críticas.
 
+## AI nutricional y generación asistida
+
+Para flujos de onboarding nutricional, generación de planes o asistentes internos, leer además:
+
+```text
+docs/current/features/ai_nutrition_onboarding/ai_nutrition_onboarding.md
+docs/current/features/proposals.md
+docs/current/features/food_catalog/food_catalog_app.md
+```
+
+Regla principal:
+
+```text
+La IA conversa. MyScoope calcula, valida y optimiza. El usuario revisa y aprueba.
+```
+
+La IA no debe crear entidades productivas directamente. Debe producir briefs, preguntas, explicaciones o propuestas revisables que pasen por validación de aplicación.
+
 ## Cuando haya duda
 
 Buscar una sección similar vigente y seguir su estructura actual, no documentos archivados.

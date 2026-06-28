@@ -7,6 +7,10 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
+from notas.application.ai_intake.dailyplan_generator import (
+    DailyPlanGeneratorError,
+    generate_dailyplan_proposal_from_brief_proposal,
+)
 from notas.application.queries.proposal_queries import (
     get_available_proposal_queryset,
     get_proposal_detail,
@@ -528,6 +532,56 @@ def proposal_delete(request, proposal_id):
     messages.success(request, "Propuesta eliminada.")
 
     return redirect(_proposal_safe_return_to(request))
+
+
+@login_required
+@require_POST
+def proposal_generate_dailyplan(request, proposal_id):
+    source_proposal = _get_proposal_model_for_action(
+        request.user,
+        proposal_id,
+    )
+
+    try:
+        result = generate_dailyplan_proposal_from_brief_proposal(
+            user=request.user,
+            source_proposal=source_proposal,
+        )
+    except DailyPlanGeneratorError as exc:
+        messages.error(
+            request,
+            _dailyplan_generator_error_message(str(exc)),
+        )
+        return redirect(
+            "proposal_detail",
+            proposal_id=proposal_id,
+        )
+
+    messages.success(
+        request,
+        "Propuesta de DailyPlan creada desde el brief nutricional.",
+    )
+    return redirect(
+        "proposal_detail",
+        proposal_id=result.proposal.id,
+    )
+
+
+def _dailyplan_generator_error_message(error_code: str) -> str:
+    messages_by_code = {
+        "dailyplan_generator_not_allowed": "No tienes permisos para generar un plan desde esta propuesta.",
+        "dailyplan_generator_source_payload_invalid": "La propuesta no contiene un payload válido para generar un plan.",
+        "dailyplan_generator_source_must_be_nutrition_brief": "Solo se puede generar un DailyPlan desde propuestas de tipo NutritionBrief.",
+        "dailyplan_generator_source_not_active": "La propuesta base ya no está activa para generar un plan.",
+        "dailyplan_generator_brief_not_found": "No se encontró el NutritionBrief dentro de la propuesta.",
+        "dailyplan_generator_only_supports_daily_plan_briefs": "Este generador inicial solo soporta briefs de Plan diario; Programas quedan para un patch posterior.",
+        "dailyplan_generator_requires_at_least_three_readable_foods": "Necesitas al menos tres alimentos disponibles para generar una propuesta inicial.",
+        "dailyplan_generator_food_candidates_not_found": "No se encontraron alimentos suficientes que respeten las exclusiones del brief.",
+    }
+    return messages_by_code.get(
+        error_code,
+        f"No se pudo generar la propuesta de DailyPlan: {error_code}",
+    )
 
 
 @login_required

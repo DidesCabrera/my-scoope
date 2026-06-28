@@ -12,13 +12,16 @@ El script principal está ubicado en:
 scripts/export_for_chatgpt.sh
 ```
 
-Soporta tres modos:
+Soporta cuatro modos:
 
 ```bash
 ./scripts/export_for_chatgpt.sh ai
 ./scripts/export_for_chatgpt.sh full
 ./scripts/export_for_chatgpt.sh usda
+./scripts/export_for_chatgpt.sh foodcatalog
 ```
+
+Importante: el script debe ejecutarse desde la raíz real del proyecto, es decir, desde la carpeta donde existe `manage.py`. El ZIP se genera en la carpeta padre del proyecto, no dentro de la raíz del repo. Por ejemplo, al ejecutar `./scripts/export_for_chatgpt.sh usda`, el resultado esperado es `../proyecto_django_export_usda.zip`.
 
 ## Modo `ai`
 
@@ -80,6 +83,56 @@ Uso recomendado:
 * actions;
 * resolvers;
 * refactors donde los tests ayudan a entender el comportamiento esperado.
+
+
+## Modo `foodcatalog`
+
+El modo `foodcatalog` es el modo recomendado para trabajar en **Food Catalog App** como sistema separado del entorno de gestión nutricional.
+
+Genera:
+
+```text
+../proyecto_django_export_foodcatalog.zip
+```
+
+Este modo usa una allowlist: en vez de exportar todo el proyecto y excluir algunas carpetas, incluye solo las rutas necesarias para comprender y modificar el subsistema de catálogo alimentario.
+
+Incluye principalmente:
+
+* documentación vigente de Food Catalog;
+* decisiones arquitectónicas relacionadas;
+* historial archivado específico de food catalog;
+* modelos necesarios para entender `Food`, importaciones, aliases y estados;
+* servicios de importación, normalización, calidad y curaduría;
+* commands de importación/exportación/promoción de alimentos;
+* queries y DTOs relacionados con Food;
+* interfaz actual de Foods como contrato de consumo desde Nutrition Management;
+* templates, JS y viewmodels de Foods cuando ayudan a entender el contrato;
+* tests y fixtures relacionados con alimentos, USDA e importadores.
+
+Excluye por defecto:
+
+* el resto de entidades no alimentarias cuando no son necesarias;
+* imágenes/assets pesados;
+* datasets externos completos en `data/food_sources/`;
+* patches temporales, bases locales, cachés y archivos generados.
+
+La intención es que una IA pueda leer el estado de Food Catalog App con menos ruido, sin mezclar innecesariamente Programas, Proposals, Comparators, Inbox u otros flujos del producto.
+
+Uso recomendado:
+
+* rediseño de Food Catalog App;
+* separación entre catálogo alimentario y gestión nutricional;
+* importadores de alimentos;
+* normalización de fuentes;
+* Food candidates;
+* marcas verificadas;
+* alimentos naturales verificados;
+* aliases/nombres regionales;
+* estados de revisión y curaduría;
+* contrato entre Food Catalog y Meals/DailyPlans/Programs.
+
+Si el problema depende de un registro real del dataset USDA o de una fuente externa completa, se debe adjuntar ese archivo puntual o usar el modo `usda`.
 
 ## Archivos excluidos en ambos modos
 
@@ -198,12 +251,15 @@ El modo `full` mantiene tests para casos donde el comportamiento esperado del si
 
 El modo `usda` mantiene tests e incluye `data/food_sources/`. Debe usarse solo cuando el problema dependa directamente de datos USDA.
 
+El modo `foodcatalog` mantiene solo el contexto necesario para Food Catalog App y excluye datasets externos completos para evitar ruido, salvo fixtures pequeñas de tests.
+
 Regla práctica:
 
 ```text
-ai   → uso normal
-full → cuando los tests importan
-usda → cuando el dataset USDA es parte directa del problema
+ai         → uso normal
+full       → cuando los tests importan
+usda       → cuando el dataset USDA completo es parte directa del problema
+foodcatalog→ cuando el trabajo se concentra en Food Catalog App
 ```
 
 ## Recomendación de uso
@@ -218,6 +274,12 @@ Para revisiones delicadas o cambios que deberían validarse con tests:
 
 ```bash
 ./scripts/export_for_chatgpt.sh full
+```
+
+Para trabajo focalizado en Food Catalog App:
+
+```bash
+./scripts/export_for_chatgpt.sh foodcatalog
 ```
 
 Si el problema está relacionado específicamente con USDA, imágenes o archivos excluidos, se debe compartir ese archivo puntual además del ZIP.

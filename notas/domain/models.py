@@ -1232,6 +1232,54 @@ class DailyPlanMeal(models.Model):
 
 
 # ==================================================
+# AI NUTRITION CHATS
+# ==================================================
+
+class AiNutritionChat(models.Model):
+    STATUS_ACTIVE = "active"
+    STATUS_PROPOSAL_CREATED = "proposal_created"
+
+    STATUS_CHOICES = (
+        (STATUS_ACTIVE, "Activo"),
+        (STATUS_PROPOSAL_CREATED, "Propuesta creada"),
+    )
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="ai_nutrition_chats",
+    )
+
+    title = models.CharField(max_length=140)
+    status = models.CharField(
+        max_length=30,
+        choices=STATUS_CHOICES,
+        default=STATUS_ACTIVE,
+    )
+
+    brief_payload = models.JSONField(default=dict, blank=True)
+    conversation_payload = models.JSONField(default=dict, blank=True)
+    last_message_preview = models.CharField(max_length=220, blank=True)
+
+    proposal = models.ForeignKey(
+        "NutritionProposal",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="source_ai_chats",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at", "-id"]
+
+    def __str__(self):
+        return self.title
+
+
+# ==================================================
 # NUTRITION PROPOSALS
 # ==================================================
 
@@ -1263,6 +1311,8 @@ class NutritionProposal(models.Model):
 
     dailyplan = models.ForeignKey(
         DailyPlan,
+        null=True,
+        blank=True,
         on_delete=models.CASCADE,
         related_name="nutrition_proposals",
     )
