@@ -4,7 +4,7 @@ import json
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Prefetch
-from django.shortcuts import get_object_or_404
+from notas.presentation.pages.object_lookup import get_page_object_or_404
 
 from notas.application.services.nutrition.nutrition_kpis import (
     build_nutrition_kpis_from_dailyplan,
@@ -24,7 +24,7 @@ from notas.presentation.navigation.program_context import program_context_query
 
 
 def _get_dpm_for_user(user, dailyplan_id: int, dpm_id: int):
-    return get_object_or_404(
+    return get_page_object_or_404(
         DailyPlanMeal.objects
         .select_related("meal", "dailyplan")
         .prefetch_related(
@@ -53,7 +53,7 @@ def _get_optional_editing_mealfood(request_get, meal):
     mealfood = None
 
     if edit_mf_id:
-        mealfood = get_object_or_404(
+        mealfood = get_page_object_or_404(
             MealFood,
             pk=edit_mf_id,
             meal=meal,

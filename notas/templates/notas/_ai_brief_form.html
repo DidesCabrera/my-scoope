@@ -33,6 +33,48 @@
           </label>
 
           <label class="ai-brief-field">
+            <span>Peso</span>
+            <input type="number" name="weight_kg" min="25" max="350" step="0.1" value="{{ vm.content.result.brief.weight_kg|default_if_none:'' }}" placeholder="kg">
+          </label>
+
+          <label class="ai-brief-field">
+            <span>Altura</span>
+            <input type="number" name="height_cm" min="100" max="250" value="{{ vm.content.result.brief.height_cm|default_if_none:'' }}" placeholder="cm">
+          </label>
+
+          <label class="ai-brief-field">
+            <span>Edad</span>
+            <input type="number" name="age_years" min="10" max="100" value="{{ vm.content.result.brief.age_years|default_if_none:'' }}" placeholder="años">
+          </label>
+
+          <label class="ai-brief-field">
+            <span>Sexo</span>
+            <select name="sex">
+              {% for value, label in vm.content.result.form.sex_choices %}
+                <option value="{{ value }}"{% if vm.content.result.brief.sex == value %} selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </label>
+
+          <label class="ai-brief-field">
+            <span>Nivel de actividad</span>
+            <select name="activity_level">
+              {% for value, label in vm.content.result.form.activity_level_choices %}
+                <option value="{{ value }}"{% if vm.content.result.brief.activity_level == value %} selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </label>
+
+          <label class="ai-brief-field">
+            <span>Ajuste energético</span>
+            <select name="energy_adjustment">
+              {% for value, label in vm.content.result.form.energy_adjustment_choices %}
+                <option value="{{ value }}"{% if vm.content.result.brief.energy_adjustment == value %} selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </label>
+
+          <label class="ai-brief-field">
             <span>Kcal objetivo</span>
             <input type="number" name="calorie_target" min="800" max="6000" value="{{ vm.content.result.brief.calorie_target|default_if_none:'' }}" placeholder="Opcional">
           </label>

@@ -1,4 +1,4 @@
-from django.db.models import Sum, F, ExpressionWrapper, FloatField
+from django.db.models import ExpressionWrapper, F, FloatField, Sum
 from notas.domain.models import Meal
 from notas.domain.constants.nutrition import (
     PROTEIN_KCAL_PER_GRAM,
@@ -14,10 +14,14 @@ def meals_with_kcal():
         .annotate(
             total_kcal_sql=Sum(
                 ExpressionWrapper(
-                    (F("meal_food_set__quantity") / 100.0) * (
-                        F("meal_food_set__food__protein") * PROTEIN_KCAL_PER_GRAM +
-                        F("meal_food_set__food__carbs")   * CARBS_KCAL_PER_GRAM +
-                        F("meal_food_set__food__fat")     * FAT_KCAL_PER_GRAM
+                    (F("meal_food_set__quantity") / 100.0)
+                    * (
+                        F("meal_food_set__food__protein")
+                        * PROTEIN_KCAL_PER_GRAM
+                        + F("meal_food_set__food__carbs")
+                        * CARBS_KCAL_PER_GRAM
+                        + F("meal_food_set__food__fat")
+                        * FAT_KCAL_PER_GRAM
                     ),
                     output_field=FloatField(),
                 )

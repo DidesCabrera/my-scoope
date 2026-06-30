@@ -1,10 +1,10 @@
 from __future__ import annotations
 
+import unicodedata
 from dataclasses import dataclass
 from typing import Iterable
 
 from django.db import transaction
-from django.db.models import Q
 
 from notas.application.ai_intake.nutrition_brief import (
     NutritionBrief,
@@ -26,6 +26,7 @@ from notas.application.queries.proposal_simulation_queries import (
     simulate_proposal_payload,
 )
 from notas.application.queries.read_boundaries import get_readable_food_queryset
+from notas.application.services.nutrition.weight import get_current_weight
 from notas.application.validation.proposal_payload_validators import (
     validate_proposal_payload_or_raise,
 )
@@ -34,6 +35,33 @@ from notas.domain.constants.nutrition import (
     FAT_KCAL_PER_GRAM,
     PROTEIN_KCAL_PER_GRAM,
 )
+from notas.application.nutrition_engine.candidate_selector import (
+    CandidateSelectionError,
+    NutritionFoodCandidate,
+    select_meal_food_candidates,
+)
+from notas.application.nutrition_engine.meal_templates import (
+    MealRoleTemplate,
+    MealTemplate,
+    build_dailyplan_meal_templates,
+    normalize_meals_per_day as normalize_template_meals_per_day,
+)
+from notas.application.nutrition_engine.models import (
+    MacroTarget,
+    PortionBounds,
+    SolverFood,
+)
+from notas.application.nutrition_engine.portion_solver import solve_meal_portions
+from notas.application.nutrition_engine.target_estimator import (
+    DailyNutritionTargetPlan,
+    TargetEstimationProfile,
+    estimate_daily_targets,
+)
+from notas.application.nutrition_engine.validators import (
+    PortionValidationInput,
+    compare_macro_targets,
+    validate_generated_dailyplan,
+)
 from notas.domain.models import (
     NutritionProposal,
     NutritionProposalAuditEvent,
@@ -41,10 +69,8 @@ from notas.domain.models import (
 
 
 DAILYPLAN_GENERATOR_INTENT = CREATE_DAILYPLAN_INTENT
-DAILYPLAN_GENERATOR_VERSION = "rules_v1"
+DAILYPLAN_GENERATOR_VERSION = "nutrition_engine_v6_strict_validator"
 
-DEFAULT_CALORIE_TARGET = 2200
-DEFAULT_PROTEIN_TARGET = 140
 DEFAULT_MEALS_PER_DAY = 4
 
 MEAL_HOURS = {
@@ -65,6 +91,15 @@ MEAL_LABELS = {
     6: ["Desayuno", "Media mañana", "Almuerzo", "Snack", "Cena", "Colación"],
 }
 
+MEAL_KCAL_ALLOCATION = {
+    1: [1.0],
+    2: [0.48, 0.52],
+    3: [0.28, 0.38, 0.34],
+    4: [0.24, 0.34, 0.16, 0.26],
+    5: [0.22, 0.12, 0.32, 0.14, 0.20],
+    6: [0.20, 0.10, 0.30, 0.12, 0.20, 0.08],
+}
+
 PROTEIN_KEYWORDS = (
     "pollo",
     "huevo",
@@ -73,10 +108,15 @@ PROTEIN_KEYWORDS = (
     "atún",
     "pescado",
     "carne",
+    "vacuno",
     "pavo",
+    "cerdo",
     "yogur",
     "yogurt",
     "quesillo",
+    "queso cottage",
+    "proteina",
+    "proteína",
 )
 
 CARB_KEYWORDS = (
@@ -87,11 +127,17 @@ CARB_KEYWORDS = (
     "camote",
     "pan",
     "pasta",
+    "fideos",
     "lentejas",
     "porotos",
     "garbanzos",
     "platano",
     "plátano",
+    "fruta",
+    "manzana",
+    "berries",
+    "arandanos",
+    "arándanos",
 )
 
 FAT_KEYWORDS = (
@@ -102,6 +148,9 @@ FAT_KEYWORDS = (
     "maní",
     "aceite",
     "almendra",
+    "almendras",
+    "mantequilla de mani",
+    "mantequilla de maní",
 )
 
 VEG_KEYWORDS = (
@@ -112,6 +161,57 @@ VEG_KEYWORDS = (
     "brócoli",
     "espinaca",
     "pepino",
+    "zapallo italiano",
+    "verdura",
+    "vegetal",
+)
+
+PROTEIN_GROUP_KEYWORDS = (
+    "meat",
+    "poultry",
+    "fish",
+    "seafood",
+    "egg",
+    "dairy",
+    "proteins",
+    "carnes",
+    "aves",
+    "pescados",
+    "huevos",
+    "lacteos",
+    "lácteos",
+)
+
+CARB_GROUP_KEYWORDS = (
+    "grain",
+    "cereal",
+    "starch",
+    "legume",
+    "fruit",
+    "granos",
+    "cereales",
+    "tuberculos",
+    "tubérculos",
+    "legumbres",
+    "frutas",
+)
+
+FAT_GROUP_KEYWORDS = (
+    "fat",
+    "oil",
+    "nuts",
+    "seed",
+    "grasas",
+    "aceites",
+    "frutos secos",
+    "semillas",
+)
+
+VEG_GROUP_KEYWORDS = (
+    "vegetable",
+    "vegetables",
+    "verduras",
+    "hortalizas",
 )
 
 
@@ -123,12 +223,39 @@ class DailyPlanGeneratorFood:
     carbs: float
     fat: float
     kcal_per_100g: float
+    food_group: str = ""
+    food_subgroup: str = ""
+    default_portion_g: float | None = None
+    min_portion_g: float | None = None
+    max_portion_g: float | None = None
+    portion_step_g: float | None = None
+    data_quality_score: int = 0
+    is_verified: bool = False
 
 
 @dataclass(frozen=True)
 class GeneratedDailyPlanProposalResult:
     source_proposal: NutritionProposal
     proposal: NutritionProposal
+
+
+DailyPlanTargetPlan = DailyNutritionTargetPlan
+
+
+@dataclass(frozen=True)
+class MealTarget:
+    kcal: float
+    protein: float
+    carbs: float
+    fat: float
+
+    def as_macro_target(self) -> MacroTarget:
+        return MacroTarget(
+            kcal=self.kcal,
+            protein=self.protein,
+            carbs=self.carbs,
+            fat=self.fat,
+        )
 
 
 class DailyPlanGeneratorError(ValueError):
@@ -139,13 +266,15 @@ def generate_dailyplan_proposal_from_brief_proposal(
     *,
     user,
     source_proposal: NutritionProposal,
+    source: str = NutritionProposal.SOURCE_AI,
 ) -> GeneratedDailyPlanProposalResult:
     """Create a concrete create_dailyplan proposal from an AI NutritionBrief.
 
-    Patch 4 intentionally keeps the generator deterministic and conservative:
-    it uses readable foods, simple meal templates and validation/simulation, but
-    it does not create DailyPlans, Meals or MealFoods. The generated artifact is
-    still a reviewable NutritionProposal that the user can inspect and apply.
+    Patch 5 keeps the generator deterministic and conservative, but improves
+    the quality of the first concrete proposal: targets are estimated when the
+    brief is incomplete, food matching uses category/quality signals, portions
+    are tied to meal-level macro targets, and validation stores an explicit
+    target comparison for review.
     """
     _ensure_can_generate_from_source(
         user=user,
@@ -157,9 +286,14 @@ def generate_dailyplan_proposal_from_brief_proposal(
     if brief.requested_entity != "daily_plan":
         raise DailyPlanGeneratorError("dailyplan_generator_only_supports_daily_plan_briefs")
 
+    target_plan = build_dailyplan_target_plan(
+        user=user,
+        brief=brief,
+    )
     payload = build_dailyplan_payload_from_brief(
         user=user,
         brief=brief,
+        target_plan=target_plan,
     )
 
     validate_proposal_payload_or_raise(payload)
@@ -168,20 +302,24 @@ def generate_dailyplan_proposal_from_brief_proposal(
         payload=payload,
     )
 
-    targets = _build_targets(brief)
+    targets = _build_targets(target_plan)
     validation_summary = _build_validation_summary(
         brief=brief,
+        target_plan=target_plan,
         simulation=simulation.as_dict(),
     )
     title = _build_generated_proposal_title(brief)
-    summary = _build_generated_proposal_summary(brief)
+    summary = _build_generated_proposal_summary(
+        brief=brief,
+        target_plan=target_plan,
+    )
 
     with transaction.atomic():
         proposal = NutritionProposal.objects.create(
             dailyplan=None,
             created_by=user,
             status=NutritionProposal.STATUS_PENDING_REVIEW,
-            source=NutritionProposal.SOURCE_AI,
+            source=source,
             title=title,
             summary=summary,
             targets=targets,
@@ -189,7 +327,9 @@ def generate_dailyplan_proposal_from_brief_proposal(
                 "source": AI_INTAKE_SOURCE,
                 "kind": "generated_dailyplan_from_nutrition_brief",
                 "source_proposal_id": source_proposal.id,
+                "proposal_source": source,
                 "generator_version": DAILYPLAN_GENERATOR_VERSION,
+                "target_plan": target_plan.as_targets_dict(),
             },
             proposed_payload=payload,
             validation_summary=validation_summary,
@@ -204,7 +344,9 @@ def generate_dailyplan_proposal_from_brief_proposal(
             message="Create DailyPlan proposal generated from AI NutritionBrief.",
             metadata={
                 "source": AI_INTAKE_SOURCE,
+                "proposal_source": source,
                 "source_proposal_id": source_proposal.id,
+                "proposal_source": source,
                 "generator_version": DAILYPLAN_GENERATOR_VERSION,
                 "intent": CREATE_DAILYPLAN_INTENT,
             },
@@ -220,44 +362,45 @@ def build_dailyplan_payload_from_brief(
     *,
     user,
     brief: NutritionBrief,
+    target_plan: DailyPlanTargetPlan | None = None,
 ) -> dict:
     foods = _load_foods_for_generation(user)
 
     if len(foods) < 3:
         raise DailyPlanGeneratorError("dailyplan_generator_requires_at_least_three_readable_foods")
 
+    target_plan = target_plan or build_dailyplan_target_plan(user=user, brief=brief)
     excluded_terms = _normalize_terms(brief.excluded_foods)
     preferred_terms = _normalize_terms(brief.preferred_foods)
     meals_per_day = _normalize_meals_per_day(brief.meals_per_day)
-    target_kcal = brief.calorie_target or DEFAULT_CALORIE_TARGET
-    target_protein = brief.protein_target or DEFAULT_PROTEIN_TARGET
 
-    labels = MEAL_LABELS.get(meals_per_day, MEAL_LABELS[DEFAULT_MEALS_PER_DAY])
-    hours = MEAL_HOURS.get(meals_per_day, MEAL_HOURS[DEFAULT_MEALS_PER_DAY])
+    templates = build_dailyplan_meal_templates(meals_per_day)
 
     generated_meals = []
+    soft_avoid_ids: set[int] = set()
 
-    for index in range(meals_per_day):
-        label = labels[index]
-        is_snack = _is_snack_label(label)
-        meal_target_kcal = target_kcal / meals_per_day
-        meal_target_protein = target_protein / meals_per_day
+    for template in templates:
+        meal_target = MealTarget(
+            kcal=target_plan.total_kcal * template.kcal_allocation,
+            protein=target_plan.protein * template.kcal_allocation,
+            carbs=target_plan.carbs * template.kcal_allocation,
+            fat=target_plan.fat * template.kcal_allocation,
+        )
         meal = _build_meal(
-            index=index,
-            label=label,
+            template=template,
             foods=foods,
             excluded_terms=excluded_terms,
             preferred_terms=preferred_terms,
-            meal_target_kcal=meal_target_kcal,
-            meal_target_protein=meal_target_protein,
-            is_snack=is_snack,
+            meal_target=meal_target,
+            soft_avoid_ids=soft_avoid_ids,
         )
+        soft_avoid_ids.update(food.food_id for food in meal.foods)
         generated_meals.append(
             ProposedDailyPlanMealDTO(
-                hour=hours[index],
+                hour=template.hour,
                 note=_build_meal_note(
-                    label=label,
-                    is_snack=is_snack,
+                    template=template,
+                    target_plan=target_plan,
                 ),
                 meal=meal,
             )
@@ -272,6 +415,28 @@ def build_dailyplan_payload_from_brief(
         intent=CREATE_DAILYPLAN_INTENT,
         dailyplan=dailyplan,
     ).as_dict()
+
+
+def build_dailyplan_target_plan(
+    *,
+    user,
+    brief: NutritionBrief,
+) -> DailyPlanTargetPlan:
+    current_weight = brief.weight_kg if brief.weight_kg is not None else get_current_weight(user)
+    profile = TargetEstimationProfile(
+        goal=brief.goal,
+        weight_kg=current_weight,
+        height_cm=brief.height_cm,
+        age_years=brief.age_years,
+        sex=brief.sex,
+        activity_level=brief.activity_level,
+        energy_adjustment=brief.energy_adjustment,
+        calorie_target=brief.calorie_target,
+        protein_target=brief.protein_target,
+        carb_target=brief.carb_target,
+        fat_target=brief.fat_target,
+    )
+    return estimate_daily_targets(profile)
 
 
 def _ensure_can_generate_from_source(
@@ -315,7 +480,7 @@ def _load_foods_for_generation(user) -> list[DailyPlanGeneratorFood]:
     queryset = (
         get_readable_food_queryset(user)
         .filter(is_active=True)
-        .order_by("-is_verified", "name", "id")
+        .order_by("-is_verified", "-data_quality_score", "name", "id")
     )
 
     foods = []
@@ -341,6 +506,14 @@ def _load_foods_for_generation(user) -> list[DailyPlanGeneratorFood]:
                 carbs=carbs,
                 fat=fat,
                 kcal_per_100g=kcal,
+                food_group=food.food_group or "",
+                food_subgroup=food.food_subgroup or "",
+                default_portion_g=_clean_optional_float(food.default_portion_g),
+                min_portion_g=_clean_optional_float(food.min_portion_g),
+                max_portion_g=_clean_optional_float(food.max_portion_g),
+                portion_step_g=_clean_optional_float(food.portion_step_g),
+                data_quality_score=int(food.data_quality_score or 0),
+                is_verified=bool(food.is_verified),
             )
         )
 
@@ -349,173 +522,352 @@ def _load_foods_for_generation(user) -> list[DailyPlanGeneratorFood]:
 
 def _build_meal(
     *,
-    index: int,
-    label: str,
+    template: MealTemplate,
     foods: list[DailyPlanGeneratorFood],
     excluded_terms: list[str],
     preferred_terms: list[str],
-    meal_target_kcal: float,
-    meal_target_protein: float,
-    is_snack: bool,
+    meal_target: MealTarget,
+    soft_avoid_ids: set[int],
 ) -> ProposedMealDTO:
-    protein_food = _pick_food(
+    selection = _select_foods_for_meal(
         foods=foods,
+        excluded_terms=excluded_terms,
         preferred_terms=preferred_terms,
-        excluded_terms=excluded_terms,
-        keywords=PROTEIN_KEYWORDS,
-        sort_key=lambda food: (food.protein, food.kcal_per_100g),
+        soft_avoid_ids=soft_avoid_ids,
+        template=template,
     )
-    carb_food = _pick_food(
-        foods=foods,
-        preferred_terms=preferred_terms,
-        excluded_terms=excluded_terms,
-        keywords=CARB_KEYWORDS,
-        sort_key=lambda food: (food.carbs, food.kcal_per_100g),
-        avoid_ids={protein_food.food_id},
-    )
-    fat_food = _pick_food(
-        foods=foods,
-        preferred_terms=preferred_terms,
-        excluded_terms=excluded_terms,
-        keywords=FAT_KEYWORDS,
-        sort_key=lambda food: (food.fat, food.kcal_per_100g),
-        avoid_ids={protein_food.food_id, carb_food.food_id},
-        required=False,
-    )
-    veg_food = _pick_food(
-        foods=foods,
-        preferred_terms=[],
-        excluded_terms=excluded_terms,
-        keywords=VEG_KEYWORDS,
-        sort_key=lambda food: (-(food.kcal_per_100g), food.carbs),
-        avoid_ids={protein_food.food_id, carb_food.food_id, fat_food.food_id if fat_food else 0},
-        required=False,
-    )
+    foods_by_id = {food.food_id: food for food in foods}
 
-    proposed_foods = []
-    protein_quantity = _protein_quantity(
-        protein_food=protein_food,
-        meal_target_protein=meal_target_protein,
-        is_snack=is_snack,
-    )
-    carb_quantity = _carb_quantity(
-        carb_food=carb_food,
-        meal_target_kcal=meal_target_kcal,
-        is_snack=is_snack,
-    )
+    solver_foods = []
+    for role_template in template.roles:
+        food_id = selection.selected_roles.get(role_template.role)
+        if food_id is None:
+            if role_template.required:
+                raise DailyPlanGeneratorError(f"dailyplan_generator_missing_required_{role_template.role}")
+            continue
 
-    proposed_foods.append(
-        ProposedFoodItemDTO(
-            food_id=protein_food.food_id,
-            quantity=protein_quantity,
-        )
-    )
-    proposed_foods.append(
-        ProposedFoodItemDTO(
-            food_id=carb_food.food_id,
-            quantity=carb_quantity,
-        )
-    )
-
-    if fat_food:
-        proposed_foods.append(
-            ProposedFoodItemDTO(
-                food_id=fat_food.food_id,
-                quantity=15 if is_snack else 25,
+        solver_foods.append(
+            _to_solver_food(
+                food=foods_by_id[food_id],
+                role_template=role_template,
             )
         )
 
-    if veg_food and not is_snack:
-        proposed_foods.append(
-            ProposedFoodItemDTO(
-                food_id=veg_food.food_id,
-                quantity=100,
-            )
+    solver_result = solve_meal_portions(
+        foods=solver_foods,
+        target=meal_target.as_macro_target(),
+    )
+    proposed_foods = [
+        ProposedFoodItemDTO(
+            food_id=portion.food_id,
+            quantity=portion.quantity_g,
         )
+        for portion in solver_result.portions
+    ]
 
     return ProposedMealDTO(
-        name=f"{label} IA {index + 1}",
+        name=f"{template.label} IA {template.index + 1}",
         foods=proposed_foods,
+    )
+
+
+def _select_foods_for_meal(
+    *,
+    foods: list[DailyPlanGeneratorFood],
+    excluded_terms: list[str],
+    preferred_terms: list[str],
+    soft_avoid_ids: set[int],
+    template: MealTemplate,
+):
+    selector_foods = [_to_selector_food(food) for food in foods]
+    try:
+        return select_meal_food_candidates(
+            foods=selector_foods,
+            excluded_terms=excluded_terms,
+            preferred_terms=preferred_terms,
+            soft_avoid_ids=soft_avoid_ids,
+            is_snack=template.is_snack,
+            include_vegetable=template.include_vegetable,
+        )
+    except CandidateSelectionError as exc:
+        raise DailyPlanGeneratorError(str(exc)) from exc
+
+
+def _to_selector_food(food: DailyPlanGeneratorFood) -> NutritionFoodCandidate:
+    return NutritionFoodCandidate(
+        food_id=food.food_id,
+        name=food.name,
+        protein=food.protein,
+        carbs=food.carbs,
+        fat=food.fat,
+        kcal_per_100g=food.kcal_per_100g,
+        food_group=food.food_group,
+        food_subgroup=food.food_subgroup,
+        data_quality_score=food.data_quality_score,
+        is_verified=food.is_verified,
+    )
+
+
+def _to_solver_food(
+    *,
+    food: DailyPlanGeneratorFood,
+    role_template: MealRoleTemplate,
+) -> SolverFood:
+    return SolverFood(
+        food_id=food.food_id,
+        name=food.name,
+        role=role_template.role,
+        protein_per_100g=food.protein,
+        carbs_per_100g=food.carbs,
+        fat_per_100g=food.fat,
+        kcal_per_100g=food.kcal_per_100g,
+        bounds=_solver_bounds_for_food(
+            food=food,
+            role_template=role_template,
+        ),
+        required=role_template.required,
+    )
+
+
+def _solver_bounds_for_food(
+    *,
+    food: DailyPlanGeneratorFood,
+    role_template: MealRoleTemplate,
+) -> PortionBounds:
+    minimum = role_template.minimum_g
+    maximum = role_template.maximum_g
+
+    if food.min_portion_g is not None:
+        minimum = max(minimum, food.min_portion_g)
+
+    if food.max_portion_g is not None:
+        maximum = min(maximum, food.max_portion_g)
+
+    if maximum < minimum:
+        maximum = minimum
+
+    return PortionBounds(
+        minimum_g=minimum,
+        maximum_g=maximum,
+        step_g=food.portion_step_g or role_template.step_g or 5,
     )
 
 
 def _pick_food(
     *,
     foods: list[DailyPlanGeneratorFood],
+    category: str,
     preferred_terms: list[str],
     excluded_terms: list[str],
-    keywords: Iterable[str],
-    sort_key,
     avoid_ids: set[int] | None = None,
+    soft_avoid_ids: set[int] | None = None,
     required: bool = True,
 ) -> DailyPlanGeneratorFood | None:
     avoid_ids = avoid_ids or set()
-    candidate_groups = [
-        preferred_terms,
-        list(keywords),
-        [],
+    soft_avoid_ids = soft_avoid_ids or set()
+    candidates = [
+        food
+        for food in foods
+        if food.food_id not in avoid_ids
+        and not _matches_any(_food_search_text(food), excluded_terms)
+        and _category_score(food, category) > 0
     ]
 
-    for terms in candidate_groups:
+    if not candidates and category == "vegetable":
         candidates = [
             food
             for food in foods
             if food.food_id not in avoid_ids
-            and not _matches_any(food.name, excluded_terms)
-            and (not terms or _matches_any(food.name, terms))
+            and not _matches_any(_food_search_text(food), excluded_terms)
+            and food.kcal_per_100g <= 80
+            and food.fat <= 2
         ]
 
-        if not candidates:
-            continue
+    if not candidates:
+        if required:
+            raise DailyPlanGeneratorError("dailyplan_generator_food_candidates_not_found")
+        return None
 
-        candidates.sort(
-            key=sort_key,
-            reverse=True,
+    candidates.sort(
+        key=lambda food: _food_score(
+            food=food,
+            category=category,
+            preferred_terms=preferred_terms,
+            soft_avoid_ids=soft_avoid_ids,
+        ),
+        reverse=True,
+    )
+    return candidates[0]
+
+
+def _food_score(
+    *,
+    food: DailyPlanGeneratorFood,
+    category: str,
+    preferred_terms: list[str],
+    soft_avoid_ids: set[int],
+) -> float:
+    score = _category_score(food, category) * 1000
+    search_text = _food_search_text(food)
+
+    if _matches_any(search_text, preferred_terms):
+        score += 180
+
+    if food.food_id in soft_avoid_ids:
+        score -= 45
+
+    if food.is_verified:
+        score += 25
+
+    score += min(food.data_quality_score, 100) / 5
+    score += _macro_density_score(food, category)
+    return score
+
+
+def _category_score(food: DailyPlanGeneratorFood, category: str) -> float:
+    search_text = _food_search_text(food)
+    total_kcal = max(food.kcal_per_100g, 1)
+    protein_alloc = food.protein * PROTEIN_KCAL_PER_GRAM / total_kcal
+    carb_alloc = food.carbs * CARBS_KCAL_PER_GRAM / total_kcal
+    fat_alloc = food.fat * FAT_KCAL_PER_GRAM / total_kcal
+
+    if category == "protein":
+        keyword_score = 1.0 if _matches_any(search_text, PROTEIN_KEYWORDS + PROTEIN_GROUP_KEYWORDS) else 0.0
+        macro_score = protein_alloc if food.protein >= 6 else 0.0
+        return max(keyword_score, macro_score)
+
+    if category == "carb":
+        keyword_score = 1.0 if _matches_any(search_text, CARB_KEYWORDS + CARB_GROUP_KEYWORDS) else 0.0
+        macro_score = carb_alloc if food.carbs >= 8 else 0.0
+        return max(keyword_score, macro_score)
+
+    if category == "fat":
+        keyword_score = 1.0 if _matches_any(search_text, FAT_KEYWORDS + FAT_GROUP_KEYWORDS) else 0.0
+        macro_score = fat_alloc if food.fat >= 5 else 0.0
+        return max(keyword_score, macro_score)
+
+    if category == "vegetable":
+        keyword_score = 1.0 if _matches_any(search_text, VEG_KEYWORDS + VEG_GROUP_KEYWORDS) else 0.0
+        macro_score = 0.55 if food.kcal_per_100g <= 70 and food.fat <= 2 and food.protein <= 6 else 0.0
+        return max(keyword_score, macro_score)
+
+    return 0.0
+
+
+def _macro_density_score(food: DailyPlanGeneratorFood, category: str) -> float:
+    if category == "protein":
+        return food.protein
+    if category == "carb":
+        return food.carbs / 2
+    if category == "fat":
+        return food.fat
+    if category == "vegetable":
+        return max(0, 80 - food.kcal_per_100g) / 4
+    return 0.0
+
+
+def _quantity_for_macro_target(
+    *,
+    food: DailyPlanGeneratorFood,
+    macro: str,
+    target_g: float,
+    is_snack: bool,
+) -> float:
+    grams_per_100 = getattr(food, macro, 0.0)
+    if grams_per_100 <= 0:
+        return _portion_for_category(food=food, category=macro, is_snack=is_snack)
+
+    quantity = (max(target_g, 0) / grams_per_100) * 100
+    return _normalize_quantity(
+        food=food,
+        quantity=quantity,
+        category=macro,
+        is_snack=is_snack,
+    )
+
+
+def _quantity_for_energy_target(
+    *,
+    food: DailyPlanGeneratorFood,
+    target_kcal: float,
+    is_snack: bool,
+) -> float:
+    if food.kcal_per_100g <= 0:
+        return _portion_for_category(food=food, category="carb", is_snack=is_snack)
+
+    quantity = (max(target_kcal, 0) / food.kcal_per_100g) * 100
+    return _normalize_quantity(
+        food=food,
+        quantity=quantity,
+        category="carb",
+        is_snack=is_snack,
+    )
+
+
+def _portion_for_category(
+    *,
+    food: DailyPlanGeneratorFood,
+    category: str,
+    is_snack: bool,
+) -> float:
+    if food.default_portion_g is not None:
+        return _normalize_quantity(
+            food=food,
+            quantity=food.default_portion_g,
+            category=category,
+            is_snack=is_snack,
         )
-        return candidates[0]
 
-    if required:
-        raise DailyPlanGeneratorError("dailyplan_generator_food_candidates_not_found")
+    defaults = {
+        "protein": 110 if is_snack else 170,
+        "carb": 60 if is_snack else 140,
+        "fat": 12 if is_snack else 20,
+        "vegetable": 100,
+    }
+    return _normalize_quantity(
+        food=food,
+        quantity=defaults.get(category, 100),
+        category=category,
+        is_snack=is_snack,
+    )
 
-    return None
 
-
-def _protein_quantity(
+def _normalize_quantity(
     *,
-    protein_food: DailyPlanGeneratorFood,
-    meal_target_protein: float,
+    food: DailyPlanGeneratorFood,
+    quantity: float,
+    category: str,
     is_snack: bool,
 ) -> float:
-    if protein_food.protein <= 0:
-        return 120.0 if is_snack else 160.0
+    default_bounds = {
+        "protein": (70 if is_snack else 90, 220 if is_snack else 280),
+        "carb": (25 if is_snack else 45, 140 if is_snack else 240),
+        "fat": (5, 25 if is_snack else 35),
+        "vegetable": (50, 180),
+    }
+    minimum, maximum = default_bounds.get(category, (20, 300))
 
-    quantity = (meal_target_protein / protein_food.protein) * 100
-    minimum = 80 if is_snack else 100
-    maximum = 220 if is_snack else 260
-    return _round_to_five(_clamp(quantity, minimum, maximum))
+    if food.min_portion_g is not None:
+        minimum = max(minimum, food.min_portion_g)
+
+    if food.max_portion_g is not None:
+        maximum = min(maximum, food.max_portion_g)
+
+    if maximum < minimum:
+        maximum = minimum
+
+    step = food.portion_step_g or 5
+    return _round_to_step(_clamp(quantity, minimum, maximum), step)
 
 
-def _carb_quantity(
-    *,
-    carb_food: DailyPlanGeneratorFood,
-    meal_target_kcal: float,
-    is_snack: bool,
-) -> float:
-    if carb_food.kcal_per_100g <= 0:
-        return 60.0 if is_snack else 120.0
-
-    kcal_share = meal_target_kcal * (0.35 if is_snack else 0.45)
-    quantity = (kcal_share / carb_food.kcal_per_100g) * 100
-    minimum = 30 if is_snack else 60
-    maximum = 120 if is_snack else 220
-    return _round_to_five(_clamp(quantity, minimum, maximum))
+def _food_kcal(food: DailyPlanGeneratorFood | None, quantity: float) -> float:
+    if food is None:
+        return 0.0
+    return food.kcal_per_100g * quantity / 100
 
 
 def _normalize_meals_per_day(value: int | None) -> int:
-    if value is None:
-        return DEFAULT_MEALS_PER_DAY
-
-    return max(1, min(int(value), 6))
+    return normalize_template_meals_per_day(value)
 
 
 def _build_dailyplan_name(brief: NutritionBrief) -> str:
@@ -525,36 +877,24 @@ def _build_dailyplan_name(brief: NutritionBrief) -> str:
 
 def _build_meal_note(
     *,
-    label: str,
-    is_snack: bool,
+    template: MealTemplate,
+    target_plan: DailyPlanTargetPlan,
 ) -> str:
-    if is_snack:
-        return "Propuesta simple generada desde brief; ajustar por preferencias antes de aplicar."
+    estimate_note = "targets estimados" if any(target_plan.estimated_targets.values()) else "targets definidos en brief"
+    if template.is_snack:
+        return f"{template.label} generado con template de snack y {estimate_note}; ajustar por preferencias antes de aplicar."
 
-    return f"{label} generado desde brief; validar porciones antes de aplicar."
+    return f"{template.label} generado con template {template.kind} y {estimate_note}; validar porciones antes de aplicar."
 
 
-def _build_targets(brief: NutritionBrief) -> dict:
-    targets = {}
-
-    if brief.calorie_target is not None:
-        targets["total_kcal"] = brief.calorie_target
-
-    if brief.protein_target is not None:
-        targets["protein"] = brief.protein_target
-
-    if brief.carb_target is not None:
-        targets["carbs"] = brief.carb_target
-
-    if brief.fat_target is not None:
-        targets["fat"] = brief.fat_target
-
-    return targets
+def _build_targets(target_plan: DailyPlanTargetPlan) -> dict:
+    return target_plan.as_targets_dict()
 
 
 def _build_validation_summary(
     *,
     brief: NutritionBrief,
+    target_plan: DailyPlanTargetPlan,
     simulation: dict,
 ) -> dict:
     dailyplan = simulation.get("dailyplan") or {}
@@ -568,19 +908,136 @@ def _build_validation_summary(
         "simulation": simulation,
         "generator": {
             "version": DAILYPLAN_GENERATOR_VERSION,
-            "strategy": "simple_rules_without_solver",
+            "strategy": "nutrition_engine_meal_templates_candidate_selector_solver",
             "source_intent": AI_NUTRITION_BRIEF_INTENT,
+            "target_plan": target_plan.as_targets_dict(),
+            "meal_templates": [
+                template.as_dict()
+                for template in build_dailyplan_meal_templates(
+                    _normalize_meals_per_day(brief.meals_per_day)
+                )
+            ],
             "notes": [
-                "Generador heurístico inicial: selecciona alimentos legibles y porciones razonables.",
-                "No usa solver de optimización avanzada todavía.",
+                "Generador heurístico inicial: estima targets si el brief no los trae completos.",
+                "Estructura comidas con templates por tipo antes de seleccionar alimentos.",
+                "Selecciona candidatos por rol nutricional, calidad, preferencias, exclusiones y repetición suave.",
+                "Estima targets con Target Estimator formal y calcula porciones con solver v2 multi-start.",
                 "La propuesta debe revisarse antes de aplicar el DailyPlan final.",
             ],
         },
         "target_comparison": _build_target_comparison(
-            targets=_build_targets(brief),
+            targets=_build_targets(target_plan),
             kpis=kpis,
         ),
+        "engine_validation": _build_engine_validation_summary(
+            target_plan=target_plan,
+            kpis=kpis,
+            brief=brief,
+            simulation=simulation,
+        ),
+        "brief": {
+            "goal": brief.goal,
+            "requested_entity": brief.requested_entity,
+            "meals_per_day": brief.meals_per_day,
+            "training_frequency": brief.training_frequency,
+            "style_preferences": list(brief.style_preferences),
+            "excluded_foods": list(brief.excluded_foods),
+            "preferred_foods": list(brief.preferred_foods),
+        },
     }
+
+
+def _build_engine_validation_summary(
+    *,
+    target_plan: DailyPlanTargetPlan,
+    kpis: dict,
+    brief: NutritionBrief,
+    simulation: dict,
+) -> dict:
+    target = MacroTarget(
+        kcal=target_plan.total_kcal,
+        protein=target_plan.protein,
+        carbs=target_plan.carbs,
+        fat=target_plan.fat,
+    )
+    actual = MacroTarget(
+        kcal=float(kpis.get("total_kcal") or 0),
+        protein=float(kpis.get("protein") or 0),
+        carbs=float(kpis.get("carbs") or 0),
+        fat=float(kpis.get("fat") or 0),
+    )
+    legacy_validation = compare_macro_targets(
+        target=target,
+        actual=actual,
+    ).as_dict()
+    strict_validation = validate_generated_dailyplan(
+        target=target,
+        actual=actual,
+        expected_meals_count=_normalize_meals_per_day(brief.meals_per_day),
+        actual_meals_count=_simulation_meal_count(simulation),
+        excluded_terms=brief.excluded_foods,
+        portions=_extract_simulation_portions(simulation),
+    ).as_dict()
+
+    return {
+        **legacy_validation,
+        "kind": "strict_dailyplan_nutrition_validation",
+        "status": strict_validation["status"],
+        "is_valid": strict_validation["is_valid"],
+        "has_warnings": strict_validation["has_warnings"],
+        "has_errors": strict_validation["has_errors"],
+        "issues": strict_validation["issues"],
+        "summary": strict_validation["summary"],
+        "strict": strict_validation,
+    }
+
+
+def _simulation_meal_count(simulation: dict) -> int | None:
+    dailyplan = simulation.get("dailyplan") or {}
+    meals = dailyplan.get("meals")
+    if isinstance(meals, list):
+        return len(meals)
+    return None
+
+
+def _extract_simulation_portions(simulation: dict) -> list[PortionValidationInput]:
+    dailyplan = simulation.get("dailyplan") or {}
+    meals = dailyplan.get("meals") or []
+    portions: list[PortionValidationInput] = []
+
+    for meal in meals:
+        meal_payload = meal.get("meal") or {}
+        for food in meal_payload.get("foods") or []:
+            portions.append(
+                PortionValidationInput(
+                    food_id=int(food.get("food_id") or 0),
+                    food_name=str(food.get("food_name") or "Alimento"),
+                    quantity_g=float(food.get("quantity") or 0),
+                    role=_infer_role_from_simulated_food(food),
+                )
+            )
+
+    return portions
+
+
+def _infer_role_from_simulated_food(food: dict) -> str:
+    quantity = float(food.get("quantity") or 0)
+    total_kcal = float(food.get("total_kcal") or 0)
+    kcal_per_100g = total_kcal / quantity * 100 if quantity > 0 else 0
+
+    if kcal_per_100g <= 80 and float(food.get("fat") or 0) <= 3:
+        return "vegetable"
+
+    macro_kcal = {
+        "protein": float(food.get("kcal_protein") or 0),
+        "carb": float(food.get("kcal_carbs") or 0),
+        "fat": float(food.get("kcal_fat") or 0),
+    }
+
+    role, value = max(macro_kcal.items(), key=lambda item: item[1])
+    if value <= 0:
+        return "unknown"
+    return role
 
 
 def _build_target_comparison(
@@ -605,10 +1062,11 @@ def _build_target_comparison(
 
         diff = float(actual) - float(target)
         comparison[target_key] = {
-            "target": float(target),
+            "target": round(float(target), 2),
             "actual": round(float(actual), 2),
             "diff": round(diff, 2),
             "diff_percent": round((diff / float(target)) * 100, 2) if float(target) else None,
+            "is_estimated_target": bool((targets.get("estimated_targets") or {}).get(target_key)),
         }
 
     return comparison
@@ -618,12 +1076,20 @@ def _build_generated_proposal_title(brief: NutritionBrief) -> str:
     return f"DailyPlan IA - {brief.goal_label if brief.goal else 'Primer plan'}"
 
 
-def _build_generated_proposal_summary(brief: NutritionBrief) -> str:
+def _build_generated_proposal_summary(
+    *,
+    brief: NutritionBrief,
+    target_plan: DailyPlanTargetPlan,
+) -> str:
     pieces = [
         "Propuesta concreta generada desde NutritionBrief.",
         f"Objetivo: {brief.goal_label}.",
         f"Comidas: {_normalize_meals_per_day(brief.meals_per_day)}.",
+        f"Targets usados: {round(target_plan.total_kcal)} kcal, {round(target_plan.protein)} g proteína, {round(target_plan.carbs)} g carbohidratos, {round(target_plan.fat)} g grasa.",
     ]
+
+    if any(target_plan.estimated_targets.values()):
+        pieces.append("Algunos targets fueron estimados provisionalmente por MyScoope.")
 
     if brief.style_preferences:
         pieces.append(f"Estilo: {', '.join(brief.style_preferences)}.")
@@ -631,7 +1097,7 @@ def _build_generated_proposal_summary(brief: NutritionBrief) -> str:
     if brief.excluded_foods:
         pieces.append(f"Excluye: {', '.join(brief.excluded_foods)}.")
 
-    pieces.append("Generador inicial por reglas; no usa solver avanzado todavía.")
+    pieces.append("Generador conectado al motor nutricional con Target Estimator formal y solver de porciones v2.")
     return " ".join(pieces)
 
 
@@ -644,22 +1110,44 @@ def _normalize_terms(values: Iterable[str]) -> list[str]:
 
 
 def _normalize_text(value: str) -> str:
-    return " ".join(str(value or "").strip().lower().split())
+    text = " ".join(str(value or "").strip().lower().split())
+    return "".join(
+        char
+        for char in unicodedata.normalize("NFD", text)
+        if unicodedata.category(char) != "Mn"
+    )
 
 
 def _matches_any(text: str, terms: Iterable[str]) -> bool:
     normalized = _normalize_text(text)
-    return any(term and term in normalized for term in terms)
+    return any(term and _normalize_text(term) in normalized for term in terms)
+
+
+def _food_search_text(food: DailyPlanGeneratorFood) -> str:
+    return _normalize_text(" ".join((food.name, food.food_group, food.food_subgroup)))
 
 
 def _is_snack_label(label: str) -> bool:
     normalized = _normalize_text(label)
-    return normalized in {"snack", "media mañana", "colación", "colacion"}
+    return normalized in {"snack", "media manana", "colacion"}
+
+
+def _clean_optional_float(value) -> float | None:
+    if value is None:
+        return None
+
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+
+    return number if number > 0 else None
 
 
 def _clamp(value: float, minimum: float, maximum: float) -> float:
     return max(minimum, min(float(value), maximum))
 
 
-def _round_to_five(value: float) -> float:
-    return float(round(value / 5) * 5)
+def _round_to_step(value: float, step: float) -> float:
+    step = step or 5
+    return float(round(float(value) / step) * step)

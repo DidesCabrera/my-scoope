@@ -4,9 +4,11 @@ from myscoope_mcp.client import MyscoopeAPIClient
 from myscoope_mcp.contracts import MCPToolCallResult
 from myscoope_mcp.tools import (
     TOOL_COMPARE_DAILYPLAN_TO_TARGETS,
+    TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
     TOOL_CREATE_VALIDATED_DAILYPLAN_PROPOSAL,
     TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL,
     TOOL_CREATE_VALIDATED_MEAL_PROPOSAL,
+    TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
     TOOL_LIST_FOOD_CATALOG,
     TOOL_LIST_USER_PROPOSALS,
     TOOL_READ_DAILYPLAN,
@@ -180,6 +182,39 @@ def create_validated_meal_proposal(
     )
 
 
+
+def create_nutrition_engine_dailyplan_proposal(
+    client: MyscoopeAPIClient,
+    nutrition_brief: dict[str, Any],
+) -> MCPToolCallResult:
+    spec = get_tool_spec(TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL)
+
+    return client.call_ai_tool_api(
+        spec.api_path,
+        {
+            "nutrition_brief": nutrition_brief,
+        },
+    )
+
+
+def iterate_nutrition_engine_dailyplan_proposal(
+    client: MyscoopeAPIClient,
+    previous_proposal_id: int,
+    nutrition_brief: dict[str, Any],
+    user_message: str,
+) -> MCPToolCallResult:
+    spec = get_tool_spec(TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL)
+
+    return client.call_ai_tool_api(
+        spec.api_path,
+        {
+            "previous_proposal_id": previous_proposal_id,
+            "nutrition_brief": nutrition_brief,
+            "user_message": user_message,
+        },
+    )
+
+
 READ_TOOL_HANDLERS = {
     TOOL_READ_DAILYPLAN: read_dailyplan,
     TOOL_READ_PROPOSAL: read_proposal,
@@ -198,6 +233,12 @@ PROPOSAL_TOOL_HANDLERS = {
     TOOL_CREATE_VALIDATED_MEAL_PROPOSAL: create_validated_meal_proposal,
     TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL: (
         create_validated_dailyplan_build_proposal
+    ),
+    TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL: (
+        create_nutrition_engine_dailyplan_proposal
+    ),
+    TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL: (
+        iterate_nutrition_engine_dailyplan_proposal
     ),
 }
 
@@ -357,6 +398,33 @@ def call_proposal_tool(
             proposed_payload=arguments["proposed_payload"],
             targets=arguments.get("targets"),
             summary=arguments.get("summary", ""),
+        )
+
+
+    if tool_name == TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL:
+        if "nutrition_brief" not in arguments:
+            return _missing_required_argument("nutrition_brief")
+
+        return create_nutrition_engine_dailyplan_proposal(
+            client=client,
+            nutrition_brief=arguments["nutrition_brief"],
+        )
+
+    if tool_name == TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL:
+        if "previous_proposal_id" not in arguments:
+            return _missing_required_argument("previous_proposal_id")
+
+        if "nutrition_brief" not in arguments:
+            return _missing_required_argument("nutrition_brief")
+
+        if "user_message" not in arguments:
+            return _missing_required_argument("user_message")
+
+        return iterate_nutrition_engine_dailyplan_proposal(
+            client=client,
+            previous_proposal_id=arguments["previous_proposal_id"],
+            nutrition_brief=arguments["nutrition_brief"],
+            user_message=arguments["user_message"],
         )
 
     return MCPToolCallResult(

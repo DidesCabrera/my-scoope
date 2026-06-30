@@ -24,9 +24,10 @@ from notas.application.services.commands.proposal_commands import (
     apply_approved_create_dailyplan_proposal,
     apply_approved_create_meal_proposal,
 )
-from notas.application.dto.proposal_payloads import (
+from notas.application.proposals.contracts import (
     CREATE_DAILYPLAN_INTENT,
     CREATE_MEAL_INTENT,
+    resolve_proposal_intent,
 )
 from notas.presentation.composition.viewmodel.components.builder_headers import (
     build_page_header,
@@ -38,15 +39,20 @@ from notas.presentation.config.viewmodel_config import (
 )
 from notas.presentation.viewmodels.base_vm import BaseVM
 
+from notas.presentation.proposals.entity_page import (
+    ProposalEntityDetailContentVM,
+    build_proposal_entity_content,
+)
+from notas.presentation.proposals.list_page import (
+    ProposalListContentVM,
+    build_proposal_list_actions,
+    normalize_proposal_list_mode,
+    proposal_safe_return_to,
+    resolve_proposal_list_status_filter,
+)
 from notas.presentation.proposals.proposal_review_viewmodels import (
     build_proposal_review_vm,
 )
-
-@dataclass
-class ProposalListContentVM:
-    header: object
-    proposals: list[dict]
-    list_mode: str = "list"
 
 
 @dataclass
@@ -54,19 +60,6 @@ class ProposalDetailContentVM:
     header: object
     proposal: dict
     proposal_review: dict
-
-
-@dataclass
-class ProposalEntityDetailContentVM:
-    header: object
-    proposal: dict
-    proposal_review: dict
-    entity_kind: str
-    entity_name: str
-    main_card: dict
-    child_cards: list
-    structural_indicators: dict
-    foods_aggregation: list
 
 
 @dataclass(frozen=True)
@@ -81,179 +74,17 @@ class BreadcrumbParent:
         return self.url
 
 
-
-def _get_proposal_list_status_filter(request):
-    status = (
-        request.GET.get("status")
-        or request.POST.get("status")
-        or "all"
-    ).strip()
-
-    if status in {"pending_review", "rejected", "applied"}:
-        return status
-
-    return None
+def _proposal_request_status_filter(request):
+    return resolve_proposal_list_status_filter(
+        get_status=request.GET.get("status"),
+        post_status=request.POST.get("status"),
+    )
 
 
-def _normalize_proposal_list_mode(request):
-    mode = (request.GET.get("mode") or "list").strip()
-    return mode if mode in {"list", "reorder", "delete"} else "list"
-
-
-def _proposal_list_url(*, mode: str | None = None, status_filter: str | None = None):
-    base_url = reverse("proposal_list")
-    params = []
-
-    if mode and mode != "list":
-        params.append(f"mode={mode}")
-
-    if status_filter:
-        params.append(f"status={status_filter}")
-
-    if not params:
-        return base_url
-
-    return f"{base_url}?{'&'.join(params)}"
-
-
-def _proposal_safe_return_to(request, *, mode: str | None = None):
-    status_filter = _get_proposal_list_status_filter(request)
-    return _proposal_list_url(mode=mode, status_filter=status_filter)
-
-
-def _build_proposal_list_actions(active_filter: str | None, list_mode: str):
-    if list_mode == "reorder":
-        return [
-            {
-                "key": "save_list_order",
-                "label": "Guardar Orden",
-                "url": reverse("proposal_list_reorder"),
-                "method": "button",
-                "icon": "check",
-                "order": 10,
-                "desktop_position": "inline",
-                "mobile_position": "inline",
-                "extra_class": "js-list-reorder-save",
-            },
-        ]
-
-    if list_mode == "delete":
-        return [
-            {
-                "key": "exit_delete_mode",
-                "label": "Cerrar",
-                "url": _proposal_list_url(status_filter=active_filter),
-                "method": "get",
-                "icon": "check",
-                "order": 10,
-                "desktop_position": "inline",
-                "mobile_position": "inline",
-            },
-            {
-                "key": "bulk_delete",
-                "label": "Eliminar seleccionadas",
-                "url": (
-                    reverse("proposal_list_bulk_delete")
-                    + (f"?status={active_filter}" if active_filter else "")
-                ),
-                "method": "post",
-                "icon": "trash-2",
-                "order": 20,
-                "desktop_position": "inline",
-                "mobile_position": "inline",
-                "disabled": True,
-                "extra_class": "js-list-bulk-delete-submit",
-            },
-        ]
-
-    actions = [
-        {
-            "key": "enter_reorder_mode",
-            "label": "Reordenar Propuestas",
-            "url": _proposal_list_url(mode="reorder", status_filter=active_filter),
-            "method": "get",
-            "icon": "list-ordered",
-            "order": 10,
-            "desktop_position": "menu",
-            "mobile_position": "menu",
-        },
-        {
-            "key": "enter_delete_mode",
-            "label": "Eliminar Propuestas",
-            "url": _proposal_list_url(mode="delete", status_filter=active_filter),
-            "method": "get",
-            "icon": "trash-2",
-            "order": 20,
-            "desktop_position": "menu",
-            "mobile_position": "menu",
-        },
-    ]
-
-    actions.extend(_build_proposal_list_filter_actions(active_filter))
-    return actions
-
-
-def _build_proposal_list_filter_actions(active_filter: str | None):
-    base_url = reverse("proposal_list")
-
-    filters = [
-        {
-            "key": "filter_pending_review",
-            "label": "Ver solo pendientes de revisión",
-            "url": _proposal_list_url(status_filter="pending_review"),
-            "icon": "clock",
-            "status_filter": "pending_review",
-            "order": 100,
-        },
-        {
-            "key": "filter_applied",
-            "label": "Ver solo aplicadas",
-            "url": _proposal_list_url(status_filter="applied"),
-            "icon": "check",
-            "status_filter": "applied",
-            "order": 110,
-        },
-        {
-            "key": "filter_rejected",
-            "label": "Ver solo rechazadas",
-            "url": _proposal_list_url(status_filter="rejected"),
-            "icon": "x",
-            "status_filter": "rejected",
-            "order": 115,
-        },
-        {
-            "key": "filter_all",
-            "label": "Ver todas",
-            "url": base_url,
-            "icon": "list",
-            "status_filter": None,
-            "order": 120,
-        },
-    ]
-
-    return [
-        {
-            "key": item["key"],
-            "label": item["label"],
-            "url": item["url"],
-            "method": "get",
-            "icon": item["icon"],
-            "order": item["order"],
-            "desktop_position": "menu",
-            "mobile_position": "menu",
-            "extra_class": (
-                "is-active"
-                if item["status_filter"] == active_filter
-                else ""
-            ),
-        }
-        for item in filters
-    ]
-
-def _proposal_list_parent():
-    return BreadcrumbParent(
-        label="Propuestas",
-        url=reverse("proposal_list"),
+def _proposal_return_to(request, *, mode: str | None = None) -> str:
+    return proposal_safe_return_to(
+        status_filter=_proposal_request_status_filter(request),
+        mode=mode,
     )
 
 
@@ -262,119 +93,6 @@ def _proposal_detail_parent(proposal: dict):
         label=proposal.get("title") or "Propuesta",
         url=reverse("proposal_detail", args=[proposal["id"]]),
     )
-
-
-def _proposal_entity_name(proposal_review: dict) -> str:
-    payload = proposal_review.get("payload") or {}
-
-    if payload.get("is_create_meal") and payload.get("meal"):
-        return payload["meal"].get("name") or "Comida propuesta"
-
-    if payload.get("is_create_dailyplan") and payload.get("dailyplan"):
-        return payload["dailyplan"].get("name") or "DailyPlan propuesto"
-
-    return "Entidad propuesta"
-
-
-def _proposal_entity_kind(proposal_review: dict) -> str:
-    payload = proposal_review.get("payload") or {}
-
-    if payload.get("is_create_meal") and payload.get("meal"):
-        return "meal"
-
-    if payload.get("is_create_dailyplan") and payload.get("dailyplan"):
-        return "dailyplan"
-
-    return "unsupported"
-
-
-def _strip_proposal_entity_actions(card: dict | None) -> dict:
-    if not isinstance(card, dict):
-        return {}
-
-    clean_card = dict(card)
-    clean_card["actions"] = []
-    return clean_card
-
-
-def _build_dailyplan_child_cards_for_proposal_entity(proposal_review: dict) -> list[dict]:
-    payload = proposal_review.get("payload") or {}
-    dailyplan = payload.get("dailyplan") or {}
-    child_cards = []
-
-    for index, item in enumerate(dailyplan.get("meals") or [], start=1):
-        meal = item.get("meal") or {}
-        card = _strip_proposal_entity_actions(meal.get("card"))
-
-        if not card:
-            continue
-
-        card.setdefault("id", f"proposal-dailyplan-meal-{index}")
-        card.setdefault("main_id", card["id"])
-        child_cards.append(card)
-
-    return child_cards
-
-
-def _build_proposal_entity_content(proposal: dict, proposal_review: dict):
-    payload = proposal_review.get("payload") or {}
-    entity_kind = _proposal_entity_kind(proposal_review)
-    entity_name = _proposal_entity_name(proposal_review)
-
-    if entity_kind == "meal":
-        meal = payload.get("meal") or {}
-        main_card = _strip_proposal_entity_actions(meal.get("card"))
-        return {
-            "entity_kind": entity_kind,
-            "entity_name": entity_name,
-            "main_card": main_card,
-            "child_cards": [],
-            "structural_indicators": {},
-            "foods_aggregation": [],
-        }
-
-    if entity_kind == "dailyplan":
-        dailyplan = payload.get("dailyplan") or {}
-        main_card = _strip_proposal_entity_actions(dailyplan.get("card"))
-        child_cards = _build_dailyplan_child_cards_for_proposal_entity(
-            proposal_review,
-        )
-        structural_indicators = {
-            "meals_count": len(child_cards),
-            "foods_count": (
-                main_card.get("titulo", {})
-                .get("structural_indicators", {})
-                .get("foods_count", 0)
-            ),
-        }
-
-        foods = []
-        seen = set()
-        for child in child_cards:
-            for food in child.get("foods_aggregation") or []:
-                name = food.get("display_name")
-                if not name or name in seen:
-                    continue
-                seen.add(name)
-                foods.append(food)
-
-        return {
-            "entity_kind": entity_kind,
-            "entity_name": entity_name,
-            "main_card": main_card,
-            "child_cards": child_cards,
-            "structural_indicators": structural_indicators,
-            "foods_aggregation": foods,
-        }
-
-    return {
-        "entity_kind": entity_kind,
-        "entity_name": entity_name,
-        "main_card": {},
-        "child_cards": [],
-        "structural_indicators": {},
-        "foods_aggregation": [],
-    }
 
 
 def _get_proposal_model_for_action(user, proposal_id: int):
@@ -399,24 +117,10 @@ def _build_detail_actions(proposal: dict):
     ]
 
 
-def _get_proposal_intent(proposal):
-    payload = proposal.proposed_payload
-
-    if not isinstance(payload, dict):
-        return None
-
-    intent = payload.get("intent")
-
-    if isinstance(intent, str) and intent.strip():
-        return intent.strip()
-
-    return None
-
-
 @login_required
 def proposal_list(request):
-    status_filter = _get_proposal_list_status_filter(request)
-    list_mode = _normalize_proposal_list_mode(request)
+    status_filter = _proposal_request_status_filter(request)
+    list_mode = normalize_proposal_list_mode(request.GET.get("mode"))
     proposals = [
         proposal.as_dict()
         for proposal in list_user_proposals(
@@ -431,7 +135,7 @@ def proposal_list(request):
     content_vm = ProposalListContentVM(
         header=build_page_header(
             title="Propuestas",
-            actions=_build_proposal_list_actions(status_filter, list_mode),
+            actions=build_proposal_list_actions(status_filter, list_mode),
         ),
         proposals=proposals,
         list_mode=list_mode,
@@ -490,7 +194,7 @@ def proposal_list_bulk_delete(request):
 
     if not selected_ids:
         messages.info(request, "No seleccionaste propuestas para eliminar.")
-        return redirect(_proposal_safe_return_to(request, mode="delete"))
+        return redirect(_proposal_return_to(request, mode="delete"))
 
     proposals = get_available_proposal_queryset(request.user).filter(
         id__in=selected_ids,
@@ -513,7 +217,7 @@ def proposal_list_bulk_delete(request):
     else:
         messages.info(request, "No se eliminaron propuestas.")
 
-    return redirect(_proposal_safe_return_to(request, mode="delete"))
+    return redirect(_proposal_return_to(request, mode="delete"))
 
 
 @login_required
@@ -531,7 +235,7 @@ def proposal_delete(request, proposal_id):
 
     messages.success(request, "Propuesta eliminada.")
 
-    return redirect(_proposal_safe_return_to(request))
+    return redirect(_proposal_return_to(request))
 
 
 @login_required
@@ -645,8 +349,7 @@ def proposal_entity_detail(request, proposal_id):
         proposal,
     ).as_dict()
 
-    entity_content = _build_proposal_entity_content(
-        proposal,
+    entity_content = build_proposal_entity_content(
         proposal_review,
     )
 
@@ -774,7 +477,7 @@ def proposal_apply(request, proposal_id):
         proposal_id,
     )
 
-    intent = _get_proposal_intent(proposal)
+    intent = resolve_proposal_intent(proposal.proposed_payload)
 
     try:
         if intent == CREATE_MEAL_INTENT:

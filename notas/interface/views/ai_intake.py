@@ -1,17 +1,18 @@
-from dataclasses import dataclass
-
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
-from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 
 from notas.application.ai_intake.chat_history import (
     AI_NUTRITION_CHAT_SESSION_KEY,
     mark_chat_proposal_created,
     sync_chat_from_conversation,
+)
+from notas.application.ai_intake.dailyplan_generator import (
+    DailyPlanGeneratorError,
+    generate_dailyplan_proposal_from_brief_proposal,
 )
 from notas.application.ai_intake.nutrition_brief import (
     AI_NUTRITION_BRIEF_SESSION_KEY,
@@ -29,8 +30,18 @@ from notas.application.ai_intake.nutrition_brief import (
 from notas.application.ai_intake.proposal_from_brief import (
     create_nutrition_brief_proposal,
 )
+from notas.application.ai_intake.plan_iteration import (
+    create_iterated_dailyplan_proposal,
+    should_iterate_generated_plan,
+)
 from notas.domain.models import AiNutritionChat
-from notas.presentation.composition.viewmodel.components.builder_headers import build_page_header
+from notas.presentation.pages.ai_intake_page import (
+    append_generated_plan_message,
+    append_iterated_plan_message,
+    build_brief_edit_content,
+    build_chat_list_content,
+    build_intake_content,
+)
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
 from notas.presentation.config.viewmodel_config import (
     CHAT_VIEWMODE_DETAIL,
@@ -38,38 +49,6 @@ from notas.presentation.config.viewmodel_config import (
     HOME_VIEWMODE,
 )
 from notas.presentation.viewmodels.base_vm import BaseVM
-
-
-@dataclass
-class AiNutritionIntakeContentVM:
-    header: object
-    result: object | None
-    conversation: object | None
-    prompt: str = ""
-
-
-@dataclass
-class AiNutritionBriefEditContentVM:
-    header: object
-    result: object
-    conversation: object | None
-    prompt: str = ""
-
-
-@dataclass(frozen=True)
-class AiNutritionChatListItemVM:
-    title: str
-    subtitle: str
-    preview: str
-    status_label: str
-    url: str
-
-
-@dataclass(frozen=True)
-class AiNutritionChatListContentVM:
-    header: object
-    chats: list[AiNutritionChatListItemVM]
-    item_count: int
 
 
 def _is_async_request(request) -> bool:
@@ -80,20 +59,12 @@ def _is_async_request(request) -> bool:
     )
 
 
-def _build_intake_content(*, result, conversation, prompt: str = "") -> AiNutritionIntakeContentVM:
-    return AiNutritionIntakeContentVM(
-        header=_build_intake_header(has_result=result is not None),
-        result=result,
-        conversation=conversation,
-        prompt=prompt,
-    )
-
-
 def _render_chat_thread_json(request, *, result, conversation, prompt: str = "") -> JsonResponse:
-    content_vm = _build_intake_content(
+    content_vm = build_intake_content(
         result=result,
         conversation=conversation,
         prompt=prompt,
+        active_chat=_get_active_chat(request),
     )
     base_vm = BaseVM(
         ui=build_ui_vm(CHAT_VIEWMODE_DETAIL),
@@ -143,24 +114,21 @@ def _clear_active_chat_session(request) -> None:
     request.session.modified = True
 
 
-def _build_intake_header(*, has_result: bool):
-    actions = []
+def _get_active_chat(request) -> AiNutritionChat | None:
+    if request is None or not getattr(request, "user", None) or not request.user.is_authenticated:
+        return None
 
-    if has_result:
-        actions.append(
-            {
-                "key": "edit_nutrition_brief",
-                "label": "Editar Brief Nutricional Manualmente",
-                "url": reverse("ai_nutrition_brief_edit"),
-                "method": "get",
-                "icon": "sliders-horizontal",
-                "order": 20,
-                "desktop_position": "menu",
-                "mobile_position": "menu",
-            }
+    chat_id = request.session.get(AI_NUTRITION_CHAT_SESSION_KEY)
+    if not chat_id:
+        return None
+
+    try:
+        return AiNutritionChat.objects.select_related("proposal").get(
+            id=chat_id,
+            user=request.user,
         )
-
-    return build_page_header(title="Asistente nutricional", actions=actions)
+    except (AiNutritionChat.DoesNotExist, TypeError, ValueError):
+        return None
 
 
 @require_http_methods(["GET", "POST"])
@@ -210,11 +178,39 @@ def ai_nutrition_intake(request):
                 messages.error(request, "Escribe una respuesta para continuar el asistente nutricional.")
                 return redirect("ai_nutrition_intake")
 
-            _sync_session_from_conversation(
+            chat = _sync_session_from_conversation(
                 request,
                 conversation,
                 existing_chat_id=existing_chat_id,
             )
+
+            if should_iterate_generated_plan(chat=chat, message=message):
+                try:
+                    iteration_result = create_iterated_dailyplan_proposal(
+                        user=request.user,
+                        brief=conversation.result.brief,
+                        previous_proposal=chat.proposal,
+                        user_message=message,
+                    )
+                    conversation = append_iterated_plan_message(
+                        conversation,
+                        user_message=message,
+                        previous_proposal=chat.proposal,
+                        proposal=iteration_result.proposal,
+                    )
+                    _sync_session_from_conversation(
+                        request,
+                        conversation,
+                        existing_chat_id=chat.id,
+                    )
+                    mark_chat_proposal_created(
+                        user=request.user,
+                        chat_id=chat.id,
+                        proposal=iteration_result.proposal,
+                    )
+                except DailyPlanGeneratorError as exc:
+                    messages.error(request, f"No se pudo actualizar la propuesta: {exc}")
+
             if _is_async_request(request):
                 return _render_chat_thread_json(
                     request,
@@ -240,6 +236,13 @@ def ai_nutrition_intake(request):
                     user=request.user,
                     brief=brief,
                 )
+                generated_result = generate_dailyplan_proposal_from_brief_proposal(
+                    user=request.user,
+                    source_proposal=proposal_result.proposal,
+                )
+            except DailyPlanGeneratorError as exc:
+                messages.error(request, f"No se pudo generar el DailyPlan inicial: {exc}")
+                return redirect("ai_nutrition_intake")
             except ValueError as exc:
                 if str(exc) == "nutrition_brief_has_pending_questions":
                     messages.error(
@@ -250,14 +253,25 @@ def ai_nutrition_intake(request):
                     messages.error(request, f"No se pudo crear la propuesta: {exc}")
                 return redirect("ai_nutrition_intake")
 
+            conversation = deserialize_conversation(
+                request.session.get(AI_NUTRITION_CONVERSATION_SESSION_KEY)
+            ) or build_conversation_from_brief(brief=brief)
+            conversation = append_generated_plan_message(
+                conversation,
+                proposal=generated_result.proposal,
+            )
+            _sync_session_from_conversation(
+                request,
+                conversation,
+                existing_chat_id=request.session.get(AI_NUTRITION_CHAT_SESSION_KEY),
+            )
             mark_chat_proposal_created(
                 user=request.user,
                 chat_id=request.session.get(AI_NUTRITION_CHAT_SESSION_KEY),
-                proposal=proposal_result.proposal,
+                proposal=generated_result.proposal,
             )
-            _clear_active_chat_session(request)
-            messages.success(request, "Propuesta creada desde el brief nutricional.")
-            return redirect("proposal_detail", proposal_id=proposal_result.proposal.id)
+            messages.success(request, "Propuesta de DailyPlan creada en el chat.")
+            return redirect("ai_nutrition_intake")
 
     else:
         prompt = (request.GET.get("prompt") or "").strip()
@@ -292,10 +306,11 @@ def ai_nutrition_intake(request):
     elif not result and prompt:
         result = build_intake_result(prompt)
 
-    content_vm = _build_intake_content(
+    content_vm = build_intake_content(
         result=result,
         conversation=conversation,
         prompt=prompt,
+        active_chat=_get_active_chat(request),
     )
 
     base_vm = BaseVM(
@@ -342,22 +357,7 @@ def ai_nutrition_brief_edit(request):
             return redirect("ai_nutrition_intake")
 
     result = build_intake_result_from_brief(brief)
-    content_vm = AiNutritionBriefEditContentVM(
-        header=build_page_header(
-            title="Editar Brief Nutricional",
-            actions=[
-                {
-                    "key": "back_ai_intake",
-                    "label": "Volver al chat",
-                    "url": reverse("ai_nutrition_intake"),
-                    "method": "get",
-                    "icon": "arrow-left",
-                    "order": 10,
-                    "desktop_position": "inline",
-                    "mobile_position": "inline",
-                }
-            ],
-        ),
+    content_vm = build_brief_edit_content(
         result=result,
         conversation=conversation,
         prompt=brief.raw_prompt,
@@ -377,21 +377,8 @@ def ai_nutrition_brief_edit(request):
 
 @login_required
 def ai_nutrition_chat_list(request):
-    chats = [
-        AiNutritionChatListItemVM(
-            title=chat.title,
-            subtitle=chat.updated_at.strftime("%d/%m/%Y %H:%M"),
-            preview=chat.last_message_preview or "Sin mensajes guardados.",
-            status_label=chat.get_status_display(),
-            url=reverse("ai_nutrition_chat_detail", args=[chat.id]),
-        )
-        for chat in AiNutritionChat.objects.filter(user=request.user).order_by("-updated_at", "-id")
-    ]
-
-    content_vm = AiNutritionChatListContentVM(
-        header=build_page_header(title="Chats"),
-        chats=chats,
-        item_count=len(chats),
+    content_vm = build_chat_list_content(
+        AiNutritionChat.objects.filter(user=request.user).order_by("-updated_at", "-id")
     )
 
     base_vm = BaseVM(
@@ -408,10 +395,11 @@ def ai_nutrition_chat_detail(request, chat_id):
     conversation = _load_chat_into_session(request, chat)
     result = conversation.result
 
-    content_vm = _build_intake_content(
+    content_vm = build_intake_content(
         result=result,
         conversation=conversation,
         prompt=result.prompt,
+        active_chat=_get_active_chat(request),
     )
 
     base_vm = BaseVM(

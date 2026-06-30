@@ -2,8 +2,13 @@ from __future__ import annotations
 
 import re
 import unicodedata
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Iterable
+
+from notas.application.ai_intake.iteration_commands import (
+    PlanIterationCommandSet,
+    parse_dailyplan_iteration_commands,
+)
 
 
 AI_NUTRITION_BRIEF_SESSION_KEY = "ai_nutrition_brief"
@@ -44,6 +49,34 @@ BUDGET_CHOICES = (
     ("high", "Flexible"),
 )
 
+SEX_CHOICES = (
+    ("", "Pendiente"),
+    ("male", "Hombre"),
+    ("female", "Mujer"),
+)
+
+ACTIVITY_LEVEL_CHOICES = (
+    ("", "Pendiente"),
+    ("sedentary", "Sedentario"),
+    ("light", "Actividad ligera"),
+    ("moderate", "Actividad moderada"),
+    ("high", "Actividad alta"),
+    ("very_high", "Actividad muy alta"),
+)
+
+DEFAULT_MEALS_FOR_ADJUSTMENT = 4
+
+ENERGY_ADJUSTMENT_CHOICES = (
+    ("", "Según objetivo"),
+    ("deficit_mild", "Déficit leve"),
+    ("deficit_moderate", "Déficit moderado"),
+    ("deficit_large", "Déficit grande"),
+    ("surplus_mild", "Superávit leve"),
+    ("surplus_moderate", "Superávit moderado"),
+    ("surplus_large", "Superávit grande"),
+    ("maintenance", "Mantención"),
+)
+
 
 @dataclass(frozen=True)
 class NutritionBrief:
@@ -64,6 +97,12 @@ class NutritionBrief:
     protein_target: int | None = None
     carb_target: int | None = None
     fat_target: int | None = None
+    weight_kg: float | None = None
+    height_cm: int | None = None
+    age_years: int | None = None
+    sex: str | None = None
+    activity_level: str | None = None
+    energy_adjustment: str | None = None
     style_preferences: list[str] = field(default_factory=list)
     excluded_foods: list[str] = field(default_factory=list)
     preferred_foods: list[str] = field(default_factory=list)
@@ -88,6 +127,22 @@ class NutritionBrief:
         return _choice_label(BUDGET_CHOICES, self.budget_level or "", "Pendiente")
 
     @property
+    def sex_label(self) -> str:
+        return _choice_label(SEX_CHOICES, self.sex or "", "Pendiente")
+
+    @property
+    def activity_level_label(self) -> str:
+        return _choice_label(ACTIVITY_LEVEL_CHOICES, self.activity_level or "", "Pendiente")
+
+    @property
+    def energy_adjustment_label(self) -> str:
+        return _choice_label(ENERGY_ADJUSTMENT_CHOICES, self.energy_adjustment or "", "Según objetivo")
+
+    @property
+    def can_estimate_energy_expenditure(self) -> bool:
+        return can_estimate_energy_expenditure(self)
+
+    @property
     def excluded_foods_text(self) -> str:
         return ", ".join(self.excluded_foods)
 
@@ -108,6 +163,7 @@ class NutritionBrief:
 class NutritionConversationMessage:
     role: str
     text: str
+    generated_plan_card: dict | None = None
 
 
 @dataclass(frozen=True)
@@ -149,6 +205,9 @@ class NutritionBriefFormVM:
     style_choices: tuple[tuple[str, str], ...] = STYLE_CHOICES
     complexity_choices: tuple[tuple[str, str], ...] = COMPLEXITY_CHOICES
     budget_choices: tuple[tuple[str, str], ...] = BUDGET_CHOICES
+    sex_choices: tuple[tuple[str, str], ...] = SEX_CHOICES
+    activity_level_choices: tuple[tuple[str, str], ...] = ACTIVITY_LEVEL_CHOICES
+    energy_adjustment_choices: tuple[tuple[str, str], ...] = ENERGY_ADJUSTMENT_CHOICES
 
 
 @dataclass(frozen=True)
@@ -225,6 +284,24 @@ _STYLE_KEYWORDS = {
     "low_prep": ("sin cocinar", "poco tiempo", "meal prep", "preparacion", "preparación", "preparar rapido"),
 }
 
+_ACTIVITY_KEYWORDS = {
+    "sedentary": ("sedentario", "sedentaria", "actividad baja", "poco activo", "poco activa"),
+    "light": ("actividad ligera", "ligera", "camino", "activo leve"),
+    "moderate": ("actividad moderada", "moderada", "moderado", "entreno 3", "entreno tres"),
+    "high": ("actividad alta", "alta actividad", "muy activo", "muy activa", "entreno 5", "entreno cinco"),
+    "very_high": ("actividad muy alta", "muy alta", "doble turno"),
+}
+
+_ENERGY_ADJUSTMENT_KEYWORDS = {
+    "deficit_mild": ("deficit leve", "déficit leve", "deficit pequeno", "deficit pequeño", "baja lenta"),
+    "deficit_moderate": ("deficit moderado", "déficit moderado", "deficit normal"),
+    "deficit_large": ("deficit grande", "déficit grande", "deficit agresivo", "agresivo"),
+    "surplus_mild": ("superavit leve", "superávit leve", "subida lenta"),
+    "surplus_moderate": ("superavit moderado", "superávit moderado"),
+    "surplus_large": ("superavit grande", "superávit grande"),
+    "maintenance": ("sin deficit", "sin déficit", "mantencion", "mantención", "mantener"),
+}
+
 _FOOD_HINTS = (
     "atun",
     "atún",
@@ -254,6 +331,12 @@ def build_intake_result(prompt: str) -> NutritionIntakeResult:
         protein_target=_detect_numeric_target(normalized_prompt, ("proteina", "proteína", "p ")),
         carb_target=_detect_numeric_target(normalized_prompt, ("carbohidratos", "carbos", "carbo", "c ")),
         fat_target=_detect_numeric_target(normalized_prompt, ("grasa", "grasas", "f ")),
+        weight_kg=_detect_weight_kg(normalized_prompt),
+        height_cm=_detect_height_cm(normalized_prompt),
+        age_years=_detect_age_years(normalized_prompt),
+        sex=_detect_sex(normalized_prompt),
+        activity_level=_detect_activity_level(normalized_prompt),
+        energy_adjustment=_detect_energy_adjustment(normalized_prompt),
         style_preferences=_detect_styles(normalized_prompt),
         excluded_foods=_detect_excluded_foods(normalized_prompt),
         preferred_foods=_detect_preferred_foods(normalized_prompt),
@@ -301,6 +384,7 @@ def start_or_continue_conversation(
     existing_state = deserialize_conversation(existing_payload)
     parsed_brief = build_intake_result(user_message).brief
     brief = _merge_briefs(existing_state.result.brief if existing_state else None, parsed_brief)
+    brief = apply_conversation_adjustments(brief, user_message)
     result = build_intake_result_from_brief(brief)
 
     messages = list(existing_state.messages) if existing_state else []
@@ -380,14 +464,98 @@ def build_conversation_reply(
     return "Excelente. Con esto ya puedo crear una propuesta revisable: " + ", ".join(pieces) + ". Te dejo el brief abajo."
 
 
+
+def apply_conversation_adjustments(brief: NutritionBrief, message: str) -> NutritionBrief:
+    """Apply structured chat feedback to the accumulated NutritionBrief.
+
+    Patch 13 promotes common post-generation feedback into deterministic
+    commands (macros, food exclusions/preferences, replacements and style). The
+    brief is updated before creating a new reviewable proposal revision.
+    """
+    command_set = parse_dailyplan_iteration_commands(message)
+    return apply_iteration_command_set(brief, command_set)
+
+
+def apply_iteration_command_set(
+    brief: NutritionBrief,
+    command_set: PlanIterationCommandSet,
+) -> NutritionBrief:
+    if not command_set.has_commands:
+        return brief
+
+    updates = {}
+    style_preferences = list(brief.style_preferences)
+    excluded_foods = list(brief.excluded_foods)
+    preferred_foods = list(brief.preferred_foods)
+    complexity_level = brief.complexity_level
+    budget_level = brief.budget_level
+
+    for command in command_set.commands:
+        kind = command.kind
+        payload = command.payload
+
+        if kind == "decrease_meals_per_day":
+            current = brief.meals_per_day or DEFAULT_MEALS_FOR_ADJUSTMENT
+            updates["meals_per_day"] = max(1, current - 1)
+        elif kind == "increase_meals_per_day":
+            current = brief.meals_per_day or DEFAULT_MEALS_FOR_ADJUSTMENT
+            updates["meals_per_day"] = min(6, current + 1)
+        elif kind == "increase_protein_target":
+            updates["protein_target"] = min(500, int((brief.protein_target or 140) + 20))
+        elif kind == "decrease_protein_target":
+            updates["protein_target"] = max(0, int((brief.protein_target or 140) - 20))
+        elif kind == "decrease_calorie_target":
+            updates["calorie_target"] = max(800, int((brief.calorie_target or 2200) - 200))
+        elif kind == "increase_calorie_target":
+            updates["calorie_target"] = min(6000, int((brief.calorie_target or 2200) + 200))
+        elif kind == "set_simple_style":
+            _append_unique(style_preferences, "simple")
+            complexity_level = str(payload.get("complexity_level") or "low")
+        elif kind == "set_budget_style":
+            _append_unique(style_preferences, "budget")
+            budget_level = str(payload.get("budget_level") or "low")
+        elif kind == "set_varied_style":
+            _append_unique(style_preferences, "varied")
+            complexity_level = str(payload.get("complexity_level") or "high")
+        elif kind == "avoid_food":
+            _append_unique(excluded_foods, str(payload.get("term") or ""))
+        elif kind == "prefer_food":
+            _append_unique(preferred_foods, str(payload.get("term") or ""))
+        elif kind == "replace_food_preference":
+            _append_unique(excluded_foods, str(payload.get("exclude") or ""))
+            _append_unique(preferred_foods, str(payload.get("prefer") or ""))
+
+    updates["style_preferences"] = style_preferences
+    updates["excluded_foods"] = excluded_foods
+    updates["preferred_foods"] = preferred_foods
+    updates["complexity_level"] = complexity_level
+    updates["budget_level"] = budget_level
+
+    return replace(brief, **updates)
+
+
+def _append_unique(values: list[str], value: str) -> None:
+    cleaned = " ".join(str(value or "").strip().split())
+    if not cleaned:
+        return
+    normalized = _normalize_prompt(cleaned)
+    if normalized and normalized not in {_normalize_prompt(item) for item in values}:
+        values.append(cleaned)
+
+
 def serialize_conversation(state: NutritionConversationState) -> dict:
+    serialized_messages = []
+    for message in state.messages:
+        if not message.text and not message.generated_plan_card:
+            continue
+        item = {"role": message.role, "text": message.text}
+        if message.generated_plan_card:
+            item["generated_plan_card"] = message.generated_plan_card
+        serialized_messages.append(item)
+
     return {
         "brief": serialize_brief(state.result.brief),
-        "messages": [
-            {"role": message.role, "text": message.text}
-            for message in state.messages
-            if message.text
-        ],
+        "messages": serialized_messages,
     }
 
 
@@ -403,8 +571,17 @@ def deserialize_conversation(payload: dict | None) -> NutritionConversationState
     for item in payload.get("messages") or []:
         role = str(item.get("role") or "").strip()
         text = str(item.get("text") or "").strip()
-        if role in {"user", "assistant"} and text:
-            messages.append(NutritionConversationMessage(role=role, text=text))
+        generated_plan_card = item.get("generated_plan_card")
+        if not isinstance(generated_plan_card, dict):
+            generated_plan_card = None
+        if role in {"user", "assistant"} and (text or generated_plan_card):
+            messages.append(
+                NutritionConversationMessage(
+                    role=role,
+                    text=text,
+                    generated_plan_card=generated_plan_card,
+                )
+            )
 
     return NutritionConversationState(
         messages=messages[-12:],
@@ -423,6 +600,12 @@ def build_brief_from_form(data) -> NutritionBrief:
         protein_target=_clean_int(data.get("protein_target"), min_value=0, max_value=500),
         carb_target=_clean_int(data.get("carb_target"), min_value=0, max_value=800),
         fat_target=_clean_int(data.get("fat_target"), min_value=0, max_value=300),
+        weight_kg=_clean_float(data.get("weight_kg"), min_value=25, max_value=350),
+        height_cm=_clean_int(data.get("height_cm"), min_value=100, max_value=250),
+        age_years=_clean_int(data.get("age_years"), min_value=10, max_value=100),
+        sex=_clean_choice(data.get("sex"), SEX_CHOICES),
+        activity_level=_clean_choice(data.get("activity_level"), ACTIVITY_LEVEL_CHOICES),
+        energy_adjustment=_clean_choice(data.get("energy_adjustment"), ENERGY_ADJUSTMENT_CHOICES),
         style_preferences=_clean_multi_choice(data.getlist("style_preferences"), STYLE_CHOICES),
         excluded_foods=_split_free_text_list(data.get("excluded_foods")),
         preferred_foods=_split_free_text_list(data.get("preferred_foods")),
@@ -443,6 +626,12 @@ def serialize_brief(brief: NutritionBrief) -> dict:
         "protein_target": brief.protein_target,
         "carb_target": brief.carb_target,
         "fat_target": brief.fat_target,
+        "weight_kg": brief.weight_kg,
+        "height_cm": brief.height_cm,
+        "age_years": brief.age_years,
+        "sex": brief.sex,
+        "activity_level": brief.activity_level,
+        "energy_adjustment": brief.energy_adjustment,
         "style_preferences": list(brief.style_preferences),
         "excluded_foods": list(brief.excluded_foods),
         "preferred_foods": list(brief.preferred_foods),
@@ -466,6 +655,12 @@ def deserialize_brief(payload: dict | None) -> NutritionBrief | None:
         protein_target=_clean_int(payload.get("protein_target"), min_value=0, max_value=500),
         carb_target=_clean_int(payload.get("carb_target"), min_value=0, max_value=800),
         fat_target=_clean_int(payload.get("fat_target"), min_value=0, max_value=300),
+        weight_kg=_clean_float(payload.get("weight_kg"), min_value=25, max_value=350),
+        height_cm=_clean_int(payload.get("height_cm"), min_value=100, max_value=250),
+        age_years=_clean_int(payload.get("age_years"), min_value=10, max_value=100),
+        sex=_clean_choice(payload.get("sex"), SEX_CHOICES),
+        activity_level=_clean_choice(payload.get("activity_level"), ACTIVITY_LEVEL_CHOICES),
+        energy_adjustment=_clean_choice(payload.get("energy_adjustment"), ENERGY_ADJUSTMENT_CHOICES),
         style_preferences=_clean_multi_choice(payload.get("style_preferences") or [], STYLE_CHOICES),
         excluded_foods=_clean_text_list(payload.get("excluded_foods") or []),
         preferred_foods=_clean_text_list(payload.get("preferred_foods") or []),
@@ -504,6 +699,12 @@ def _merge_briefs(existing: NutritionBrief | None, incoming: NutritionBrief) -> 
         protein_target=incoming.protein_target or existing.protein_target or inferred.protein_target,
         carb_target=incoming.carb_target or existing.carb_target or inferred.carb_target,
         fat_target=incoming.fat_target or existing.fat_target or inferred.fat_target,
+        weight_kg=incoming.weight_kg or existing.weight_kg or inferred.weight_kg,
+        height_cm=incoming.height_cm or existing.height_cm or inferred.height_cm,
+        age_years=incoming.age_years or existing.age_years or inferred.age_years,
+        sex=incoming.sex or existing.sex or inferred.sex,
+        activity_level=incoming.activity_level or existing.activity_level or inferred.activity_level,
+        energy_adjustment=incoming.energy_adjustment or existing.energy_adjustment or inferred.energy_adjustment,
         style_preferences=_merge_unique(existing.style_preferences, inferred.style_preferences, incoming.style_preferences),
         excluded_foods=_merge_unique(existing.excluded_foods, inferred.excluded_foods, incoming.excluded_foods),
         preferred_foods=_merge_unique(existing.preferred_foods, inferred.preferred_foods, incoming.preferred_foods),
@@ -569,15 +770,90 @@ def _detect_training_frequency(prompt: str) -> int | None:
 
 def _detect_numeric_target(prompt: str, keywords: Iterable[str]) -> int | None:
     for keyword in keywords:
-        escaped_keyword = re.escape(keyword.strip())
+        cleaned_keyword = keyword.strip()
+        if len(cleaned_keyword) <= 1:
+            continue
+        escaped_keyword = re.escape(cleaned_keyword)
         patterns = (
             rf"\b(\d{{2,4}})\s*(?:g\s*)?{escaped_keyword}\b",
-            rf"\b{escaped_keyword}\D{{0,12}}(\d{{2,4}})\b",
+            rf"\b{escaped_keyword}\D{{0,12}}(\d{{2,4}})\s*(?:g|kcal|calorias|calorías)\b",
         )
         for pattern in patterns:
             match = re.search(pattern, prompt)
             if match:
                 return int(match.group(1))
+    return None
+
+
+def _detect_weight_kg(prompt: str) -> float | None:
+    patterns = (
+        r"\b(?:peso|peso actual|peso corporal)\D{0,12}(\d{2,3}(?:[\.,]\d{1,2})?)\s*(?:kg|kilos)?\b",
+        r"\b(\d{2,3}(?:[\.,]\d{1,2})?)\s*(?:kg|kilos)\b",
+    )
+    for pattern in patterns:
+        match = re.search(pattern, prompt)
+        if match:
+            value = _parse_float(match.group(1))
+            if value and 25 <= value <= 350:
+                return value
+    return None
+
+
+def _detect_height_cm(prompt: str) -> int | None:
+    patterns = (
+        r"\b(?:mido|altura|estatura)\D{0,12}(\d(?:[\.,]\d{1,2}))\s*(?:m|metros)?\b",
+        r"\b(?:mido|altura|estatura)\D{0,12}(\d{3})\s*(?:cm|centimetros|centímetros)?\b",
+        r"\b(\d(?:[\.,]\d{1,2}))\s*(?:m|metros)\b",
+        r"\b(\d{3})\s*(?:cm|centimetros|centímetros)\b",
+    )
+    for pattern in patterns:
+        match = re.search(pattern, prompt)
+        if match:
+            raw = match.group(1)
+            if "." in raw or "," in raw:
+                value = _parse_float(raw)
+                if value and 1.0 <= value <= 2.5:
+                    return int(round(value * 100))
+            elif raw.isdigit():
+                value = int(raw)
+                if 100 <= value <= 250:
+                    return value
+    return None
+
+
+def _detect_age_years(prompt: str) -> int | None:
+    patterns = (
+        r"\b(?:tengo|edad)\D{0,10}(\d{2})\s*(?:anos|años)?\b",
+        r"\b(\d{2})\s*(?:anos|años)\b",
+    )
+    for pattern in patterns:
+        match = re.search(pattern, prompt)
+        if match:
+            value = int(match.group(1))
+            if 10 <= value <= 100:
+                return value
+    return None
+
+
+def _detect_sex(prompt: str) -> str | None:
+    if _contains_any(prompt, ("hombre", "masculino", "varon", "varón")):
+        return "male"
+    if _contains_any(prompt, ("mujer", "femenino")):
+        return "female"
+    return None
+
+
+def _detect_activity_level(prompt: str) -> str | None:
+    for level, keywords in _ACTIVITY_KEYWORDS.items():
+        if _contains_any(prompt, keywords):
+            return level
+    return None
+
+
+def _detect_energy_adjustment(prompt: str) -> str | None:
+    for adjustment, keywords in _ENERGY_ADJUSTMENT_KEYWORDS.items():
+        if _contains_any(prompt, keywords):
+            return adjustment
     return None
 
 
@@ -676,6 +952,36 @@ def build_summary_items(brief: NutritionBrief) -> list[NutritionBriefSummaryItem
             brief.fat_target is None,
         ),
         NutritionBriefSummaryItem(
+            "Peso",
+            f"{_format_number(brief.weight_kg)} kg" if brief.weight_kg else "Pendiente",
+            brief.weight_kg is None,
+        ),
+        NutritionBriefSummaryItem(
+            "Altura",
+            f"{brief.height_cm} cm" if brief.height_cm else "Pendiente",
+            brief.height_cm is None,
+        ),
+        NutritionBriefSummaryItem(
+            "Edad",
+            f"{brief.age_years} años" if brief.age_years else "Pendiente",
+            brief.age_years is None,
+        ),
+        NutritionBriefSummaryItem(
+            "Sexo",
+            brief.sex_label,
+            brief.sex is None,
+        ),
+        NutritionBriefSummaryItem(
+            "Actividad",
+            brief.activity_level_label,
+            brief.activity_level is None,
+        ),
+        NutritionBriefSummaryItem(
+            "Ajuste energético",
+            brief.energy_adjustment_label,
+            brief.energy_adjustment is None,
+        ),
+        NutritionBriefSummaryItem(
             "Complejidad",
             brief.complexity_label,
             brief.complexity_level is None,
@@ -711,6 +1017,31 @@ def is_brief_ready_for_proposal(brief: NutritionBrief) -> bool:
     return not build_required_follow_up_questions(brief)
 
 
+def can_estimate_energy_expenditure(brief: NutritionBrief) -> bool:
+    return all((
+        brief.weight_kg,
+        brief.height_cm,
+        brief.age_years,
+        brief.sex,
+        brief.activity_level,
+    ))
+
+
+def _missing_energy_inputs(brief: NutritionBrief) -> list[str]:
+    missing = []
+    if not brief.weight_kg:
+        missing.append("peso")
+    if not brief.height_cm:
+        missing.append("altura")
+    if not brief.age_years:
+        missing.append("edad")
+    if not brief.sex:
+        missing.append("sexo")
+    if not brief.activity_level:
+        missing.append("nivel de actividad")
+    return missing
+
+
 def build_required_follow_up_questions(brief: NutritionBrief) -> list[str]:
     questions = []
 
@@ -723,6 +1054,14 @@ def build_required_follow_up_questions(brief: NutritionBrief) -> list[str]:
     if not brief.style_preferences and brief.complexity_level is None and brief.budget_level is None:
         questions.append("¿Prefieres algo simple, económico, variado o con poco tiempo de preparación?")
 
+    if brief.calorie_target is None and not can_estimate_energy_expenditure(brief):
+        missing = _missing_energy_inputs(brief)
+        questions.append(
+            "Para estimar tu gasto calórico y definir un objetivo calórico necesito "
+            + ", ".join(missing)
+            + ". Puedes responder todo junto, por ejemplo: peso 80 kg, altura 175 cm, 30 años, hombre, actividad moderada."
+        )
+
     return questions
 
 
@@ -731,9 +1070,6 @@ def build_follow_up_questions(brief: NutritionBrief) -> list[str]:
 
     if brief.training_frequency is None:
         questions.append("¿Entrenas actualmente? ¿Cuántos días por semana?")
-
-    if brief.calorie_target is None:
-        questions.append("¿Quieres definir calorías objetivo o prefieres que MyScoope las estime más adelante?")
 
     if brief.protein_target is None:
         questions.append("¿Tienes una meta de proteína diaria o prefieres que MyScoope la estime más adelante?")
@@ -833,6 +1169,28 @@ def _clean_multi_choice(values: Iterable[object], choices: Iterable[tuple[str, s
         if value in allowed_values and value not in cleaned:
             cleaned.append(value)
     return cleaned
+
+
+def _parse_float(value) -> float | None:
+    try:
+        return float(str(value).replace(",", "."))
+    except (TypeError, ValueError):
+        return None
+
+
+def _clean_float(value, *, min_value: float, max_value: float) -> float | None:
+    parsed = _parse_float(value)
+    if parsed is None or parsed < min_value or parsed > max_value:
+        return None
+    return round(parsed, 2)
+
+
+def _format_number(value: float | None) -> str:
+    if value is None:
+        return ""
+    if float(value).is_integer():
+        return str(int(value))
+    return f"{value:.1f}"
 
 
 def _clean_int(value: object, *, min_value: int, max_value: int) -> int | None:

@@ -1,15 +1,18 @@
 from dataclasses import asdict, dataclass
 from typing import Any
 
+from django.urls import reverse
 
-CREATE_MEAL_INTENT = "create_meal"
-CREATE_DAILYPLAN_INTENT = "create_dailyplan"
-AI_NUTRITION_BRIEF_INTENT = "ai_nutrition_brief"
-
-APPLY_SUPPORTED_INTENTS = {
-    CREATE_MEAL_INTENT,
+from notas.application.dto.proposal_iteration_trace import extract_plan_iteration_trace
+from notas.application.proposals.contracts import (
+    AI_NUTRITION_BRIEF_INTENT,
     CREATE_DAILYPLAN_INTENT,
-}
+    CREATE_MEAL_INTENT,
+    can_apply_proposal,
+    get_proposal_intent_contract,
+    proposal_status_label,
+    resolve_proposal_intent,
+)
 
 
 @dataclass(frozen=True)
@@ -119,6 +122,19 @@ class ProposalAppliedResultVM:
 
 
 @dataclass(frozen=True)
+class ProposalIterationTraceVM:
+    previous_proposal_id: int | None
+    previous_proposal_url: str | None
+    user_message: str
+    command_labels: list[str]
+    command_count: int
+    short_label: str
+
+    def as_dict(self) -> dict:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
 class ProposalReviewPayloadVM:
     intent: str | None
     entity_title: str
@@ -163,6 +179,7 @@ class ProposalReviewVM:
     payload: ProposalReviewPayloadVM
     can_apply: bool
     applied_result: ProposalAppliedResultVM | None
+    iteration_trace: ProposalIterationTraceVM | None
 
     def as_dict(self) -> dict:
         return {
@@ -183,6 +200,11 @@ class ProposalReviewVM:
                 if self.applied_result
                 else None
             ),
+            "iteration_trace": (
+                self.iteration_trace.as_dict()
+                if self.iteration_trace
+                else None
+            ),
         }
 
 
@@ -196,14 +218,14 @@ def build_proposal_review_vm(
         proposal.get("validation_summary"),
     )
 
-    intent = _extract_intent(proposed_payload)
+    intent = resolve_proposal_intent(proposed_payload)
     simulation = _extract_simulation(validation_summary)
 
     status = _safe_str(proposal.get("status"))
-    is_apply_supported = intent in APPLY_SUPPORTED_INTENTS
-    can_apply = _can_apply_proposal(
+    intent_contract = get_proposal_intent_contract(intent)
+    can_apply = can_apply_proposal(
         status=status,
-        is_apply_supported=is_apply_supported,
+        intent=intent,
         applied_at=proposal.get("applied_at"),
     )
 
@@ -219,7 +241,7 @@ def build_proposal_review_vm(
         is_read=bool(proposal.get("is_read")),
         status=ProposalReviewStatusVM(
             status=status,
-            label=_status_label(status),
+            label=proposal_status_label(status),
             is_reviewable=bool(proposal.get("is_reviewable")),
             is_final=bool(proposal.get("is_final")),
             is_approved=status == "approved",
@@ -227,15 +249,15 @@ def build_proposal_review_vm(
         ),
         payload=ProposalReviewPayloadVM(
             intent=intent,
-            entity_title=_build_entity_title(intent),
+            entity_title=intent_contract.entity_title,
             attachments=_build_review_attachments(
                 intent=intent,
                 proposed_payload=proposed_payload,
                 proposal=proposal,
             ),
-            is_create_meal=intent == CREATE_MEAL_INTENT,
-            is_create_dailyplan=intent == CREATE_DAILYPLAN_INTENT,
-            is_apply_supported=is_apply_supported,
+            is_create_meal=intent_contract.is_create_meal,
+            is_create_dailyplan=intent_contract.is_create_dailyplan,
+            is_apply_supported=intent_contract.is_apply_supported,
             proposed_payload=proposed_payload,
             simulation=simulation,
             targets=_safe_dict(proposal.get("targets")),
@@ -256,21 +278,31 @@ def build_proposal_review_vm(
             intent=intent,
             status=status,
         ),
+        iteration_trace=_build_iteration_trace_vm(proposal),
     )
 
 
+def _build_iteration_trace_vm(
+    proposal: dict[str, Any],
+) -> ProposalIterationTraceVM | None:
+    trace = extract_plan_iteration_trace(proposal)
+    if trace is None:
+        return None
 
-def _build_entity_title(intent: str | None) -> str:
-    if intent == CREATE_MEAL_INTENT:
-        return "Comida en la propuesta"
+    previous_proposal_id = trace.previous_proposal_id
 
-    if intent == CREATE_DAILYPLAN_INTENT:
-        return "DailyPlan en la propuesta"
-
-    if intent == AI_NUTRITION_BRIEF_INTENT:
-        return "Brief nutricional en la propuesta"
-
-    return "Entidad en la propuesta"
+    return ProposalIterationTraceVM(
+        previous_proposal_id=previous_proposal_id,
+        previous_proposal_url=(
+            reverse("proposal_detail", args=[previous_proposal_id])
+            if previous_proposal_id
+            else None
+        ),
+        user_message=trace.user_message,
+        command_labels=trace.command_labels,
+        command_count=trace.command_count,
+        short_label=trace.short_label,
+    )
 
 
 def _build_review_attachments(
@@ -279,14 +311,16 @@ def _build_review_attachments(
     proposed_payload: dict[str, Any],
     proposal: dict[str, Any],
 ) -> list[dict[str, str]]:
+    intent_contract = get_proposal_intent_contract(intent)
+
     if intent == CREATE_MEAL_INTENT:
         meal = _safe_dict(proposed_payload.get("meal"))
         return [
             {
-                "kind": "meal",
-                "label": "Comida propuesta",
+                "kind": intent_contract.attachment_kind,
+                "label": intent_contract.attachment_label,
                 "name": _safe_str(meal.get("name")) or proposal.get("title", ""),
-                "icon": "utensils",
+                "icon": intent_contract.attachment_icon,
             },
         ]
 
@@ -294,14 +328,14 @@ def _build_review_attachments(
         dailyplan = _safe_dict(proposed_payload.get("dailyplan"))
         return [
             {
-                "kind": "dailyplan",
-                "label": "DailyPlan propuesto",
+                "kind": intent_contract.attachment_kind,
+                "label": intent_contract.attachment_label,
                 "name": (
                     _safe_str(dailyplan.get("name"))
                     or proposal.get("dailyplan_name", "")
                     or proposal.get("title", "")
                 ),
-                "icon": "clipboard-list",
+                "icon": intent_contract.attachment_icon,
             },
         ]
 
@@ -311,10 +345,10 @@ def _build_review_attachments(
         entity_label = "Programa semanal" if requested_entity == "program" else "Plan diario"
         return [
             {
-                "kind": "brief",
-                "label": "Brief nutricional",
+                "kind": intent_contract.attachment_kind,
+                "label": intent_contract.attachment_label,
                 "name": f"Brief para {entity_label}",
-                "icon": "clipboard-list",
+                "icon": intent_contract.attachment_icon,
             },
         ]
 
@@ -326,29 +360,6 @@ def _build_review_attachments(
             "icon": "clipboard-list",
         },
     ]
-
-def _status_label(status: str) -> str:
-    labels = {
-        "pending_review": "Pendiente",
-        "rejected": "Rechazada",
-        "applied": "Aplicada",
-        "approved": "Pendiente",
-        "cancelled": "Rechazada",
-    }
-    return labels.get(status, status or "")
-
-def _can_apply_proposal(
-    *,
-    status: str,
-    is_apply_supported: bool,
-    applied_at: Any,
-) -> bool:
-    return (
-        status in {"pending_review", "approved"}
-        and is_apply_supported
-        and not applied_at
-    )
-
 
 def _build_applied_result_vm(
     *,
@@ -780,17 +791,6 @@ def _safe_number(value: Any) -> float:
         return float(value)
 
     return 0.0
-
-
-def _extract_intent(
-    proposed_payload: dict[str, Any],
-) -> str | None:
-    intent = proposed_payload.get("intent")
-
-    if isinstance(intent, str) and intent.strip():
-        return intent.strip()
-
-    return None
 
 
 def _extract_simulation(

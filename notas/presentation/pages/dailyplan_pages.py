@@ -3,15 +3,15 @@ from typing import Optional, List, Any
 import json
 
 from django.core.serializers.json import DjangoJSONEncoder
-from django.shortcuts import get_object_or_404
+from notas.presentation.pages.object_lookup import get_page_object_or_404
 
 from notas.domain.models import DailyPlan, DailyPlanMeal, Meal
-from notas.application.services.queries.dailyplan_queries import (
+from notas.application.queries.performance.dailyplan_queries import (
     dailyplans_with_kcal,
     get_dailyplan_for_edit,
     get_dailyplan_meals_with_foods,
 )
-from notas.application.services.queries.meal_queries import meals_with_kcal
+from notas.application.queries.performance.meal_queries import meals_with_kcal
 from notas.application.services.nutrition.nutrition_kpis import (
     build_nutrition_kpis_from_dailyplan,
 )
@@ -121,7 +121,7 @@ def get_dailyplan_detail_page_data(
 
         dpm = None
         if edit_dpm_id:
-            dpm = get_object_or_404(
+            dpm = get_page_object_or_404(
                 DailyPlanMeal.objects.select_related("meal"),
                 pk=edit_dpm_id,
                 dailyplan=dailyplan,

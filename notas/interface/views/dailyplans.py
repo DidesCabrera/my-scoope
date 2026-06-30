@@ -1,24 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
-from notas.domain.models import DailyPlan, DailyPlanMeal, Meal, DailyPlanShare
+from notas.domain.models import DailyPlan, Meal, DailyPlanShare
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from notas.presentation.config.viewmodel_config import *
 
 from notas.application.services.access.capabilities import get_capabilities
-from notas.application.services.nutrition.nutrition_kpis import build_nutrition_kpis_from_dailyplan
-
-import json
-from django.core.serializers.json import DjangoJSONEncoder
-from notas.presentation.viewmodels.dailyplans import (
-    build_dailyplan_configure_vm,
-    build_dailyplan_detail_vm,
-    build_dailyplan_list_vm,
-)
-from notas.application.services.queries.dailyplan_queries import dailyplans_with_kcal, get_dailyplan_for_edit
-from notas.application.services.queries.meal_queries import meals_with_kcal
-
 from notas.application.services.access.access import get_dailyplan_for_user
 
 from notas.interface.forms.forms import DailyPlanShareForm
@@ -28,18 +16,12 @@ from django.urls import reverse
 from notas.application.services.notifications.share_emails import build_share_invitation_email
 from django.utils.http import url_has_allowed_host_and_scheme
 
-from notas.presentation.viewmodels.base_vm import BaseVM
-from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
-from notas.presentation.navigation.program_context import (
-    compact_program_breadcrumbs,
-    dailyplan_context_url,
-    day_plan_parent,
-    get_program_day_for_user,
-    program_parent,
-    program_context_query,
-    week_parent,
+from notas.presentation.pages.dailyplan_contexts import (
+    build_dailyplan_configure_context,
+    build_dailyplan_create_context,
+    build_dailyplan_detail_context,
+    build_dailyplan_list_context,
 )
-
 from notas.presentation.pages.dailyplan_pages import (
     get_dailyplan_detail_page_data,
     get_dailyplan_list_page_data,
@@ -65,20 +47,6 @@ from notas.application.services.commands.share_commands import (
     dismiss_dailyplan_share,
     remove_dailyplan_share,
 )
-
-from dataclasses import dataclass
-
-
-@dataclass(frozen=True)
-class BreadcrumbParent:
-    label: str
-    url: str
-
-    def __str__(self):
-        return self.label
-
-    def get_absolute_url(self):
-        return self.url
 
 #************ VIEW DE INBOX *********************
 
@@ -301,23 +269,10 @@ def dailyplan_list(request):
         request_get=request.GET,
     )
 
-    content_vm = build_dailyplan_list_vm(
-        page.list_content_data,
-        page_actions=page.page_actions,
-        list_mode=page.list_mode,
-    )
-
-    ui_vm = build_ui_vm(page.viewmode)
-
-    base_vm = BaseVM(
-        ui=ui_vm,
-        content=content_vm,
-    )
-
     return render(
         request,
         "notas/dailyplans/list.html",
-        base_vm.as_context(),
+        build_dailyplan_list_context(page),
     )
 
 
@@ -327,22 +282,10 @@ def dailyplan_explore_list(request):
         user=request.user,
     )
 
-    content_vm = build_dailyplan_list_vm(
-        page.list_content_data,
-        page_actions=page.page_actions,
-    )
-
-    ui_vm = build_ui_vm(page.viewmode)
-
-    base_vm = BaseVM(
-        ui=ui_vm,
-        content=content_vm,
-    )
-
     return render(
         request,
         "notas/dailyplans/list.html",
-        base_vm.as_context(),
+        build_dailyplan_list_context(page),
     )
 
 
@@ -352,22 +295,10 @@ def dailyplan_shared_list(request):
         user=request.user,
     )
 
-    content_vm = build_dailyplan_list_vm(
-        page.list_content_data,
-        page_actions=page.page_actions,
-    )
-
-    ui_vm = build_ui_vm(page.viewmode)
-
-    base_vm = BaseVM(
-        ui=ui_vm,
-        content=content_vm,
-    )
-
     return render(
         request,
         "notas/dailyplans/list.html",
-        base_vm.as_context(),
+        build_dailyplan_list_context(page),
     )
 
 
@@ -377,22 +308,10 @@ def dailyplan_draft_list(request):
         user=request.user,
     )
 
-    content_vm = build_dailyplan_list_vm(
-        page.list_content_data,
-        page_actions=page.page_actions,
-    )
-
-    ui_vm = build_ui_vm(page.viewmode)
-
-    base_vm = BaseVM(
-        ui=ui_vm,
-        content=content_vm,
-    )
-
     return render(
         request,
         "notas/dailyplans/list.html",
-        base_vm.as_context(),
+        build_dailyplan_list_context(page),
     )
 
 # DETAIL VIEWS ···················
@@ -407,51 +326,15 @@ def dailyplan_detail(request, pk):
         request_get=request.GET,
     )
 
-    content_vm = build_dailyplan_detail_vm(
-        page.detail_content_data,
-    )
-
-    program_day = get_program_day_for_user(
-        request.user,
-        request.GET.get("program_day"),
-    )
-
-    if program_day and program_day.dailyplan_id == page.dailyplan.id:
-        ui_vm = build_ui_vm(
-            PROGRAM_VIEWMODE_PERSONAL_DETAIL,
-            parents=[
-                program_parent(program_day),
-                week_parent(program_day),
-            ],
-            instance=day_plan_parent(program_day),
-            back_config={
-                "type": "url",
-                "value": week_parent(program_day).url,
-            },
-        )
-        compact_program_breadcrumbs(ui_vm)
-    else:
-        ui_vm = build_ui_vm(
-            page.viewmode,
-            instance=page.dailyplan,
-        )
-
-    base_vm = BaseVM(
-        ui=ui_vm,
-        content=content_vm,
-    )
-
-    context = base_vm.as_context()
-    context["meal_picker_data_json"] = page.meal_picker_data_json
-    context["meal_picker_context"] = page.meal_picker_context_json
-    context["program_context_query"] = page.program_context_query
-    context["selected_meal_id"] = page.selected_meal_id
-    context["editing_dailyplanmeal_id"] = page.editing_dailyplanmeal_id
-
     return render(
         request,
         "notas/dailyplans/detail.html",
-        context,
+        build_dailyplan_detail_context(
+            page=page,
+            user=request.user,
+            program_day_id=request.GET.get("program_day"),
+            include_picker=True,
+        ),
     )
 
 
@@ -464,24 +347,13 @@ def dailyplan_explore_detail(request, pk):
         viewmode=DAILYPLAN_VIEWMODE_EXPLORE_DETAIL,
     )
 
-    content_vm = build_dailyplan_detail_vm(
-        page.detail_content_data,
-    )
-
-    ui_vm = build_ui_vm(
-        page.viewmode,
-        instance=page.dailyplan,
-    )
-
-    base_vm = BaseVM(
-        ui=ui_vm,
-        content=content_vm,
-    )
-
     return render(
         request,
         "notas/dailyplans/detail.html",
-        base_vm.as_context(),
+        build_dailyplan_detail_context(
+            page=page,
+            user=request.user,
+        ),
     )
 
 @login_required
@@ -493,24 +365,13 @@ def dailyplan_shared_detail(request, pk):
         viewmode=DAILYPLAN_VIEWMODE_SHARED_DETAIL,
     )
 
-    content_vm = build_dailyplan_detail_vm(
-        page.detail_content_data,
-    )
-
-    ui_vm = build_ui_vm(
-        page.viewmode,
-        instance=page.dailyplan,
-    )
-
-    base_vm = BaseVM(
-        ui=ui_vm,
-        content=content_vm,
-    )
-
     return render(
         request,
         "notas/dailyplans/detail.html",
-        base_vm.as_context(),
+        build_dailyplan_detail_context(
+            page=page,
+            user=request.user,
+        ),
     )
 
 @login_required
@@ -522,24 +383,13 @@ def dailyplan_draft_detail(request, pk):
         viewmode=DAILYPLAN_VIEWMODE_DRAFT_DETAIL,
     )
 
-    content_vm = build_dailyplan_detail_vm(
-        page.detail_content_data,
-    )
-
-    ui_vm = build_ui_vm(
-        page.viewmode,
-        instance=page.dailyplan,
-    )
-
-    base_vm = BaseVM(
-        ui=ui_vm,
-        content=content_vm,
-    )
-
     return render(
         request,
         "notas/dailyplans/detail.html",
-        base_vm.as_context(),
+        build_dailyplan_detail_context(
+            page=page,
+            user=request.user,
+        ),
     )
 
 
@@ -557,30 +407,14 @@ def dailyplan_draft_edit(request, pk):
         is_draft=True,
     )
 
-    content_vm = build_dailyplan_detail_vm(
-        page.detail_content_data,
-    )
-
-    ui_vm = build_ui_vm(
-        page.viewmode,
-        instance=page.dailyplan,
-    )
-
-    base_vm = BaseVM(
-        ui=ui_vm,
-        content=content_vm,
-    )
-
-    context = base_vm.as_context()
-    context["meal_picker_data_json"] = page.meal_picker_data_json
-    context["meal_picker_context"] = page.meal_picker_context_json
-    context["selected_meal_id"] = page.selected_meal_id
-    context["editing_dailyplanmeal_id"] = page.editing_dailyplanmeal_id
-
     return render(
         request,
         "notas/dailyplans/edit.html",
-        context,
+        build_dailyplan_detail_context(
+            page=page,
+            user=request.user,
+            include_picker=True,
+        ),
     )
 
 
@@ -590,15 +424,6 @@ def dailyplan_draft_edit(request, pk):
 
 @login_required
 def dailyplan_create(request):
-    viewmode = DAILYPLAN_VIEWMODE_CREATE
-
-    ui_vm = build_ui_vm(viewmode)
-
-    base_vm = BaseVM(
-        ui=ui_vm,
-        content=None,
-    )
-
     if request.method == "POST":
         name = request.POST.get("name")
 
@@ -616,7 +441,7 @@ def dailyplan_create(request):
     return render(
         request,
         "notas/dailyplans/create.html",
-        base_vm.as_context(),
+        build_dailyplan_create_context(),
     )
 
 @login_required
@@ -693,32 +518,13 @@ def dailyplan_configure(request, pk):
 
         return redirect("dailyplan_detail", pk=result.dailyplan.pk)
 
-    # =====================
-    # VIEWMODEL
-    # =====================
-
-    viewmode = DAILYPLAN_VIEWMODE_CONFIGURE
-
-    content_vm = build_dailyplan_configure_vm(
-        dailyplan,
-        user,
-        viewmode,
-    )
-
-    ui_vm = build_ui_vm(
-        viewmode,
-        instance=dailyplan,
-    )
-
-    base_vm = BaseVM(
-        ui=ui_vm,
-        content=content_vm,
-    )
-
     return render(
         request,
         "notas/dailyplans/configure.html",
-        base_vm.as_context(),
+        build_dailyplan_configure_context(
+            dailyplan=dailyplan,
+            user=user,
+        ),
     )
 
 

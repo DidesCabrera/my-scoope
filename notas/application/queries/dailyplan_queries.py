@@ -1,5 +1,3 @@
-from django.shortcuts import get_object_or_404
-
 from notas.application.queries.read_boundaries import (
     get_owned_dailyplan_queryset,
     get_readable_dailyplan_or_404,
@@ -266,11 +264,12 @@ def get_dailyplan_detail(user, dailyplan_id: int) -> DailyPlanDTO:
         dailyplan_id,
     )
 
-    dailyplan = get_object_or_404(
-        DailyPlan.objects.prefetch_related(
+    dailyplan = (
+        DailyPlan.objects
+        .prefetch_related(
             "dailyplan_meals__meal__meal_food_set__food",
-        ),
-        pk=dailyplan.id,
+        )
+        .get(pk=dailyplan.id)
     )
 
     return build_dailyplan_dto(

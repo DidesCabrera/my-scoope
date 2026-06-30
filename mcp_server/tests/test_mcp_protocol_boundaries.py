@@ -23,6 +23,8 @@ REQUIRED_TOOL_FUNCTIONS = {
     "create_validated_meal_proposal",
     "create_validated_dailyplan_proposal",
     "create_validated_dailyplan_build_proposal",
+    "create_nutrition_engine_dailyplan_proposal",
+    "iterate_nutrition_engine_dailyplan_proposal",
     "list_food_catalog",
 }
 
@@ -35,6 +37,8 @@ REQUIRED_TOOL_CONSTANTS = {
     "TOOL_CREATE_VALIDATED_MEAL_PROPOSAL",
     "TOOL_CREATE_VALIDATED_DAILYPLAN_PROPOSAL",
     "TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL",
+    "TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL",
+    "TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL",
     "TOOL_LIST_FOOD_CATALOG",
 }
 

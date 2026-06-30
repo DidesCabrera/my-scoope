@@ -7,7 +7,7 @@ from notas.application.ai_intake.nutrition_brief import (
     AI_NUTRITION_BRIEF_SESSION_KEY,
     AI_NUTRITION_CONVERSATION_SESSION_KEY,
 )
-from notas.domain.models import AiNutritionChat
+from notas.domain.models import AiNutritionChat, Food, NutritionProposal
 
 
 class AiNutritionChatHistoryTests(TestCase):
@@ -24,7 +24,7 @@ class AiNutritionChatHistoryTests(TestCase):
         self.assertIn('class="home-hero main" hidden', html)
         self.assertIn('class="home-ai-intake home-ai-intake--composer"', html)
         self.assertIn('class="home-ai-intake__form"', html)
-        self.assertIn('placeholder="¿En qué puedo ayudarte?"', html)
+        self.assertIn('placeholder="Quiero una dieta para baja mi grasa corporal..."', html)
         self.assertIn('name="action" value="analyze_prompt"', html)
 
     def test_analyze_prompt_persists_chat_history(self):
@@ -92,3 +92,99 @@ class AiNutritionChatHistoryTests(TestCase):
         self.assertEqual(detail_response.status_code, 200)
         self.assertContains(detail_response, "Quiero bajar grasa")
         self.assertEqual(self.client.session[AI_NUTRITION_CHAT_SESSION_KEY], chat.id)
+
+    def test_create_proposal_generates_dailyplan_card_inside_chat(self):
+        self._create_minimal_food_catalog()
+        self.client.post(
+            reverse("ai_nutrition_intake"),
+            {
+                "action": "analyze_prompt",
+                "prompt": (
+                    "Quiero bajar grasa con 4 comidas y algo simple. "
+                    "Peso 80 kg, altura 175 cm, tengo 30 años, hombre, actividad moderada."
+                ),
+            },
+        )
+
+        response = self.client.post(
+            reverse("ai_nutrition_intake"),
+            {"action": "create_proposal"},
+        )
+
+        self.assertRedirects(response, reverse("ai_nutrition_intake"))
+        chat = AiNutritionChat.objects.get(user=self.user)
+        self.assertEqual(chat.status, AiNutritionChat.STATUS_PROPOSAL_CREATED)
+        self.assertIsNotNone(chat.proposal)
+        self.assertEqual(chat.proposal.proposed_payload["intent"], "create_dailyplan")
+        self.assertEqual(NutritionProposal.objects.filter(created_by=self.user).count(), 2)
+        self.assertIn(AI_NUTRITION_CONVERSATION_SESSION_KEY, self.client.session)
+
+        page_response = self.client.get(reverse("ai_nutrition_intake"))
+        html = page_response.content.decode()
+        self.assertIn("ai-generated-plan-card--current", html)
+        self.assertIn("Propuesta actual", html)
+        self.assertIn("Propuesta concreta generada", html)
+        self.assertIn("Ver detalle de la propuesta", html)
+        self.assertIn(reverse("proposal_detail", args=[chat.proposal.id]), html)
+
+    def _create_minimal_food_catalog(self):
+        Food.objects.create(
+            name="Pechuga de pollo",
+            protein=31,
+            carbs=0,
+            fat=3,
+            created_by=None,
+            is_global=True,
+            is_verified=True,
+            food_group="carnes",
+            data_quality_score=95,
+            default_portion_g=170,
+            min_portion_g=90,
+            max_portion_g=260,
+            portion_step_g=5,
+        )
+        Food.objects.create(
+            name="Arroz cocido",
+            protein=2.7,
+            carbs=28,
+            fat=0.3,
+            created_by=None,
+            is_global=True,
+            is_verified=True,
+            food_group="cereales",
+            data_quality_score=90,
+            default_portion_g=150,
+            min_portion_g=45,
+            max_portion_g=240,
+            portion_step_g=5,
+        )
+        Food.objects.create(
+            name="Palta",
+            protein=2,
+            carbs=9,
+            fat=15,
+            created_by=None,
+            is_global=True,
+            is_verified=True,
+            food_group="grasas",
+            data_quality_score=80,
+            default_portion_g=30,
+            min_portion_g=10,
+            max_portion_g=40,
+            portion_step_g=5,
+        )
+        Food.objects.create(
+            name="Tomate",
+            protein=1,
+            carbs=4,
+            fat=0.2,
+            created_by=None,
+            is_global=True,
+            is_verified=True,
+            food_group="verduras",
+            data_quality_score=80,
+            default_portion_g=100,
+            min_portion_g=50,
+            max_portion_g=180,
+            portion_step_g=5,
+        )

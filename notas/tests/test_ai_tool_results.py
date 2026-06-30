@@ -1,5 +1,6 @@
 import json
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
 from django.test import SimpleTestCase
 
@@ -98,6 +99,25 @@ class AIToolResultTests(SimpleTestCase):
     def test_map_http404_to_tool_error(self):
         result = map_exception_to_tool_error(
             Http404("Not found"),
+        )
+
+        data = result.as_dict()
+
+        self.assertFalse(data["ok"])
+        self.assertEqual(data["error"]["code"], "not_found")
+        self.assertEqual(
+            data["error"]["message"],
+            "The requested resource was not found or is not available for this user.",
+        )
+
+        assert_json_serializable(
+            self,
+            data,
+        )
+
+    def test_map_object_does_not_exist_to_tool_error(self):
+        result = map_exception_to_tool_error(
+            ObjectDoesNotExist("Object not found"),
         )
 
         data = result.as_dict()

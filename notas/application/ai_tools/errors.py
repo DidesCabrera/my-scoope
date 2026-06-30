@@ -1,3 +1,4 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
 
 from notas.application.ai_tools.results import (
@@ -13,7 +14,7 @@ def map_exception_to_tool_error(exc: Exception) -> AIToolResult:
     Esta función evita exponer excepciones crudas de Django hacia futuras
     capas API/MCP/IA.
     """
-    if isinstance(exc, Http404):
+    if isinstance(exc, (Http404, ObjectDoesNotExist)):
         return tool_error(
             code="not_found",
             message="The requested resource was not found or is not available for this user.",

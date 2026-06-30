@@ -28,6 +28,7 @@ def create_nutrition_brief_proposal(
     *,
     user,
     brief: NutritionBrief,
+    source: str = NutritionProposal.SOURCE_AI,
 ) -> AiNutritionBriefProposalResult:
     """Create a reviewable NutritionProposal from the editable intake brief.
 
@@ -53,7 +54,7 @@ def create_nutrition_brief_proposal(
             dailyplan=None,
             created_by=user,
             status=NutritionProposal.STATUS_PENDING_REVIEW,
-            source=NutritionProposal.SOURCE_AI,
+            source=source,
             title=title,
             summary=summary,
             targets=targets,
@@ -75,6 +76,7 @@ def create_nutrition_brief_proposal(
             message="Nutrition brief proposal created from Home AI Intake.",
             metadata={
                 "source": AI_INTAKE_SOURCE,
+                "proposal_source": source,
                 "intent": AI_NUTRITION_BRIEF_INTENT,
                 "requested_entity": brief.requested_entity,
             },

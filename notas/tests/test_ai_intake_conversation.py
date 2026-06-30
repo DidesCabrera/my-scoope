@@ -31,7 +31,7 @@ class NutritionConversationStateTests(TestCase):
     def test_conversation_accumulates_goal_meals_and_style(self):
         state = start_or_continue_conversation(message="bajar grasa")
         state = start_or_continue_conversation(
-            message="4 comidas simple",
+            message="4 comidas simple peso 80 kg altura 175 cm tengo 30 años hombre actividad moderada",
             existing_payload={
                 "brief": {
                     "raw_prompt": state.result.brief.raw_prompt,
@@ -84,7 +84,7 @@ class NutritionConversationStateTests(TestCase):
         }
 
         state = start_or_continue_conversation(
-            message="4 comidas simple",
+            message="4 comidas simple peso 80 kg altura 175 cm tengo 30 años hombre actividad moderada",
             existing_payload=corrupted_existing_payload,
         )
 
@@ -129,7 +129,7 @@ class AiNutritionIntakeViewTests(TestCase):
             {
                 "action": "continue_conversation",
                 "is_async": "1",
-                "message": "4 comidas simple",
+                "message": "4 comidas simple peso 80 kg altura 175 cm tengo 30 años hombre actividad moderada",
             },
             HTTP_X_REQUESTED_WITH="XMLHttpRequest",
             HTTP_ACCEPT="application/json",
@@ -149,7 +149,7 @@ class AiNutritionIntakeViewTests(TestCase):
 
 class NutritionBriefReadyCardTests(TestCase):
     def test_completed_summary_items_exclude_pending_or_empty_fields(self):
-        result = build_intake_result("bajar grasa 4 comidas simple")
+        result = build_intake_result("bajar grasa 4 comidas simple peso 80 kg altura 175 cm tengo 30 años hombre actividad moderada")
 
         labels = [item.label for item in result.completed_summary_items]
         values = [item.value for item in result.completed_summary_items]
@@ -169,7 +169,7 @@ class NutritionBriefReadyCardTests(TestCase):
     def test_explicit_brief_request_keeps_ready_brief_and_reply_mentions_card(self):
         state = start_or_continue_conversation(message="bajar grasa")
         state = start_or_continue_conversation(
-            message="4 comidas simple",
+            message="4 comidas simple peso 80 kg altura 175 cm tengo 30 años hombre actividad moderada",
             existing_payload={
                 "brief": {
                     "raw_prompt": state.result.brief.raw_prompt,
@@ -249,7 +249,7 @@ class AiNutritionIntakeBriefCardViewTests(TestCase):
             {
                 "action": "continue_conversation",
                 "is_async": "1",
-                "message": "4 comidas simple",
+                "message": "4 comidas simple peso 80 kg altura 175 cm tengo 30 años hombre actividad moderada",
             },
             HTTP_X_REQUESTED_WITH="XMLHttpRequest",
             HTTP_ACCEPT="application/json",
@@ -262,6 +262,7 @@ class AiNutritionIntakeBriefCardViewTests(TestCase):
         self.assertTrue(payload["is_ready_for_proposal"])
         self.assertIn("Brief listo", html)
         self.assertIn("Crear propuesta", html)
+        self.assertNotIn("ai-chat-brief-card__optional", html)
         self.assertIn("Bajar grasa", html)
         self.assertIn("Comidas por día", html)
         self.assertIn("Simple", html)
@@ -279,7 +280,7 @@ class AiNutritionIntakeBriefCardViewTests(TestCase):
             {
                 "action": "continue_conversation",
                 "is_async": "1",
-                "message": "4 comidas simple",
+                "message": "4 comidas simple peso 80 kg altura 175 cm tengo 30 años hombre actividad moderada",
             },
             HTTP_X_REQUESTED_WITH="XMLHttpRequest",
             HTTP_ACCEPT="application/json",

@@ -126,6 +126,7 @@ class ProposalQueryTests(TestCase):
                 "reviewed_by_id",
                 "reviewed_by_username",
                 "status",
+                "status_label",
                 "source",
                 "title",
                 "summary",
@@ -134,9 +135,14 @@ class ProposalQueryTests(TestCase):
                 "proposed_payload",
                 "validation_summary",
                 "is_reviewable",
+                "is_read",
                 "is_final",
                 "created_at",
+                "received_at_label",
                 "reviewed_at",
+                "audit_events",
+                "applied_at",
+                "iteration_trace",
             },
         )
 
@@ -154,6 +160,7 @@ class ProposalQueryTests(TestCase):
         self.assertFalse(data["validation_summary"]["within_tolerance"])
         self.assertIsInstance(data["created_at"], str)
         self.assertIsNone(data["reviewed_at"])
+        self.assertIsNone(data["iteration_trace"])
 
         assert_json_serializable(self, data)
 

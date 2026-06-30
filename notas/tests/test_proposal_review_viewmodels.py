@@ -179,8 +179,11 @@ class ProposalReviewViewModelTests(SimpleTestCase):
                 "dailyplan_name": "Menú Dia Entrenamiento",
                 "created_by_username": "felipe",
                 "reviewed_by_username": None,
+                "received_at_label": "",
+                "is_read": False,
                 "status": {
                     "status": "pending_review",
+                    "label": "Pendiente",
                     "is_reviewable": True,
                     "is_final": False,
                     "is_approved": False,
@@ -188,6 +191,15 @@ class ProposalReviewViewModelTests(SimpleTestCase):
                 },
                 "payload": {
                     "intent": "create_meal",
+                    "entity_title": "Comida en la propuesta",
+                    "attachments": [
+                        {
+                            "kind": "meal",
+                            "label": "Comida propuesta",
+                            "name": "Propuesta comida IA",
+                            "icon": "utensils",
+                        }
+                    ],
                     "is_create_meal": True,
                     "is_create_dailyplan": False,
                     "is_apply_supported": True,
@@ -203,7 +215,8 @@ class ProposalReviewViewModelTests(SimpleTestCase):
                 },
                 "can_apply": False,
                 "applied_result": None,
-            }   
+                "iteration_trace": None,
+            }
         )
     
     def test_build_review_vm_includes_create_meal_render_data(self):
@@ -566,3 +579,47 @@ class ProposalReviewViewModelTests(SimpleTestCase):
         self.assertEqual(vm.applied_result.object_name, "Día entrenamiento IA")
         self.assertEqual(vm.applied_result.detail_url_name, "dailyplan_detail")
         self.assertFalse(vm.can_apply)
+
+    def test_build_review_vm_includes_iteration_trace(self):
+        proposal = {
+            "id": 90,
+            "title": "Plan IA v2",
+            "summary": "Propuesta actualizada.",
+            "status": "pending_review",
+            "is_reviewable": True,
+            "is_final": False,
+            "proposed_payload": {
+                "intent": "create_dailyplan",
+                "dailyplan": {
+                    "name": "Plan IA v2",
+                    "meals": [],
+                },
+            },
+            "current_snapshot": {
+                "iteration": {
+                    "previous_proposal_id": 89,
+                    "user_message": "sin arroz y más proteína",
+                    "command_labels": ["Evitar arroz", "Subir proteína objetivo"],
+                    "command_set": {
+                        "commands": [
+                            {"kind": "avoid_food", "value": "arroz"},
+                            {"kind": "adjust_target", "metric": "protein", "direction": "increase"},
+                        ],
+                    },
+                },
+            },
+            "validation_summary": {},
+        }
+
+        vm = build_proposal_review_vm(proposal)
+
+        self.assertIsNotNone(vm.iteration_trace)
+        self.assertEqual(vm.iteration_trace.previous_proposal_id, 89)
+        self.assertEqual(vm.iteration_trace.user_message, "sin arroz y más proteína")
+        self.assertEqual(vm.iteration_trace.command_count, 2)
+        self.assertEqual(
+            vm.iteration_trace.command_labels,
+            ["Evitar arroz", "Subir proteína objetivo"],
+        )
+        self.assertEqual(vm.iteration_trace.previous_proposal_url, "/app/proposals/89/")
+        self.assertEqual(vm.iteration_trace.short_label, "Evitar arroz · Subir proteína objetivo")

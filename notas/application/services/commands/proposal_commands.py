@@ -186,10 +186,7 @@ def _ensure_not_final(
 def _ensure_applicable_status(
     proposal: NutritionProposal,
 ) -> None:
-    if proposal.status not in {
-        NutritionProposal.STATUS_PENDING_REVIEW,
-        NutritionProposal.STATUS_APPROVED,
-    }:
+    if proposal.status != NutritionProposal.STATUS_APPROVED:
         raise ValueError("proposal_is_not_applicable")
 
 
@@ -713,11 +710,11 @@ def apply_approved_create_meal_proposal(
     proposal: NutritionProposal,
 ) -> NutritionProposalApplyCreateMealResult:
     """
-    Aplica una propuesta pendiente create_meal creando una Meal real independiente.
+    Aplica una propuesta aprobada create_meal creando una Meal real independiente.
 
     Reglas:
     - Solo el dueño del DailyPlan contexto puede aplicar.
-    - La propuesta debe estar pendiente o en estado legacy approved.
+    - La propuesta debe estar aprobada.
     - No puede aplicarse dos veces.
     - El intent debe ser create_meal.
     - Los foods deben ser legibles por el usuario.
@@ -784,11 +781,11 @@ def apply_approved_create_dailyplan_proposal(
     proposal: NutritionProposal,
 ) -> NutritionProposalApplyCreateDailyPlanResult:
     """
-    Aplica una propuesta pendiente create_dailyplan creando un DailyPlan real.
+    Aplica una propuesta aprobada create_dailyplan creando un DailyPlan real.
 
     Reglas:
     - Solo el dueño del DailyPlan contexto puede aplicar.
-    - La propuesta debe estar pendiente o en estado legacy approved.
+    - La propuesta debe estar aprobada.
     - No puede aplicarse dos veces.
     - El intent debe ser create_dailyplan.
     - Los foods deben ser legibles por el usuario.

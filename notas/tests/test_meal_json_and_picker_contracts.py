@@ -3,7 +3,7 @@ import json
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 
-from notas.application.services.queries.meal_queries import meals_with_kcal
+from notas.application.queries.performance.meal_queries import meals_with_kcal
 from notas.presentation.composition.js.meal_picker_builder import (
     build_meal_picker_meals_payload,
 )

@@ -3,8 +3,6 @@ from notas.application.queries.read_boundaries import (
     get_readable_meal_or_404,
     get_readable_meal_queryset,
 )
-from django.shortcuts import get_object_or_404
-
 from notas.application.dto.meal_dto import (
     MealDTO,
     MealFoodDTO,
@@ -230,11 +228,12 @@ def get_meal_detail(user, meal_id: int) -> MealDTO:
         meal_id,
     )
 
-    meal = get_object_or_404(
-        Meal.objects.prefetch_related(
+    meal = (
+        Meal.objects
+        .prefetch_related(
             "meal_food_set__food",
-        ),
-        pk=meal.id,
+        )
+        .get(pk=meal.id)
     )
 
     return build_meal_dto(

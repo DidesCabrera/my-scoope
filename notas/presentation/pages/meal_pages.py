@@ -4,7 +4,7 @@ import json
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import BooleanField, Prefetch, Value
-from django.shortcuts import get_object_or_404
+from notas.presentation.pages.object_lookup import get_page_object_or_404
 
 from notas.presentation.actions.meal_resolvers import (
     resolve_meal_page_actions,
@@ -127,7 +127,7 @@ def get_meal_detail_page_data(
         mealfood = None
 
         if edit_mf_id:
-            mealfood = get_object_or_404(
+            mealfood = get_page_object_or_404(
                 MealFood,
                 pk=edit_mf_id,
                 meal=meal,

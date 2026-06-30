@@ -6,6 +6,8 @@ from myscoope_mcp.tools import (
     TOOL_CREATE_VALIDATED_MEAL_PROPOSAL,
     TOOL_CREATE_VALIDATED_DAILYPLAN_PROPOSAL,
     TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL,
+    TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
+    TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
     TOOL_LIST_USER_PROPOSALS,
     TOOL_LIST_FOOD_CATALOG,
     TOOL_READ_DAILYPLAN,
@@ -36,6 +38,8 @@ class MCPToolRegistryTests(unittest.TestCase):
                 TOOL_CREATE_VALIDATED_MEAL_PROPOSAL,
                 TOOL_CREATE_VALIDATED_DAILYPLAN_PROPOSAL,
                 TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL,
+                TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
+                TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
             },
         )
 
@@ -49,6 +53,8 @@ class MCPToolRegistryTests(unittest.TestCase):
             TOOL_CREATE_VALIDATED_MEAL_PROPOSAL: "/ai-tools/create-validated-meal-proposal/",
             TOOL_CREATE_VALIDATED_DAILYPLAN_PROPOSAL: "/ai-tools/create-validated-dailyplan-proposal/",
             TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL: "/ai-tools/create-validated-dailyplan-build-proposal/",
+            TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL: "/ai-tools/create-nutrition-engine-dailyplan-proposal/",
+            TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL: "/ai-tools/iterate-nutrition-engine-dailyplan-proposal/",
         }
 
         for tool_name, expected_path in checks.items():

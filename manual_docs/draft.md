@@ -81,3 +81,9 @@ Manual
 Adjunto la ultima version del codigo dentro del ZIP, revisala y genera un patch que modifique el proyecto para conseguir el resultado que se desea.
 
 
+---------
+ASISTENTE INTERNO
+
+TABS de inicio de conversacion: "Perder grasa", "Aumentar masa muscular", 
+Mejorar el formato de respuesta. Por ejemplo enumerar.
+

@@ -3,6 +3,7 @@ from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 
+from notas.application.dto.proposal_iteration_trace import extract_plan_iteration_trace
 from notas.application.dto.proposal_dto import (
     NutritionProposalDTO,
     NutritionProposalListItemDTO,
@@ -76,6 +77,14 @@ def get_available_proposal_queryset(user):
         .order_by("list_order", "-created_at", "-id")
     )
 
+
+
+def _proposal_iteration_trace(proposal: NutritionProposal) -> dict | None:
+    trace = extract_plan_iteration_trace(proposal)
+    if trace is None:
+        return None
+
+    return trace.as_dict()
 
 def _get_proposal_intent(proposal: NutritionProposal) -> str:
     payload = proposal.proposed_payload or {}
@@ -196,6 +205,7 @@ def build_proposal_list_item_dto(
         created_at=_serialize_datetime(proposal.created_at),
         received_at_label=_format_received_at(proposal.created_at),
         reviewed_at=_serialize_datetime(proposal.reviewed_at),
+        iteration_trace=_proposal_iteration_trace(proposal),
     )
 
 
@@ -263,6 +273,7 @@ def build_proposal_dto(
         received_at_label=_format_received_at(proposal.created_at),
         reviewed_at=_serialize_datetime(proposal.reviewed_at),
         applied_at=_serialize_datetime(proposal.applied_at),
+        iteration_trace=_proposal_iteration_trace(proposal),
     )
 
 

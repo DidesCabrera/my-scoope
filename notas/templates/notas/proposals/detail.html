@@ -62,6 +62,40 @@
         </section>
       {% endif %}
 
+      {% if vm.content.proposal_review.iteration_trace %}
+        <section class="proposal-review-card proposal-review-iteration-card" aria-label="Trazabilidad de iteración">
+          <div class="proposal-review-card-header">
+            <div>
+              <p class="proposal-review-eyebrow">Trazabilidad IA</p>
+              <h3 class="proposal-review-section-title">
+                Ajustes aplicados en esta revisión
+              </h3>
+            </div>
+            <i data-lucide="git-compare-arrows" class="proposal-review-iteration-card__icon"></i>
+          </div>
+
+          {% if vm.content.proposal_review.iteration_trace.user_message %}
+            <p class="proposal-review-iteration-card__message">
+              “{{ vm.content.proposal_review.iteration_trace.user_message }}”
+            </p>
+          {% endif %}
+
+          {% if vm.content.proposal_review.iteration_trace.command_labels %}
+            <div class="proposal-review-iteration-pills">
+              {% for label in vm.content.proposal_review.iteration_trace.command_labels %}
+                <span>{{ label }}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          {% if vm.content.proposal_review.iteration_trace.previous_proposal_url %}
+            <a href="{{ vm.content.proposal_review.iteration_trace.previous_proposal_url }}" class="proposal-review-iteration-card__link">
+              Ver propuesta anterior
+            </a>
+          {% endif %}
+        </section>
+      {% endif %}
+
       {% if vm.content.proposal_review.payload.targets %}
         <section class="proposal-review-card">
           <div class="proposal-review-card-header">

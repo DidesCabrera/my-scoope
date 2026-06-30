@@ -1921,6 +1921,31 @@
   white-space: pre-line;
 }
 
+
+.page-ai-intake .ai-chat-message--thinking {
+  opacity: 0.72;
+}
+
+.page-ai-intake .ai-chat-message--thinking .ai-chat-bubble p {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.page-ai-intake .ai-chat-message--thinking .ai-chat-bubble p::after {
+  content: "";
+  display: inline-block;
+  width: 1.2em;
+  text-align: left;
+  animation: ai-chat-thinking-dots 1.1s steps(4, end) infinite;
+}
+
+@keyframes ai-chat-thinking-dots {
+  0% { content: ""; }
+  25% { content: "."; }
+  50% { content: ".."; }
+  75%, 100% { content: "..."; }
+}
+
 .page-ai-intake .ai-chat-message--brief-card {
   align-self: stretch;
   max-width: min(760px, 100%);
@@ -2205,4 +2230,186 @@
     width: 44px;
     height: 44px;
   }
+}
+
+/* AI Intake: generated DailyPlan proposal card */
+.page-ai-intake .ai-chat-message--generated-plan {
+  align-self: stretch;
+  max-width: min(820px, 100%);
+}
+
+.ai-generated-plan-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  padding: 16px;
+  border-radius: 22px;
+  border: 1px solid var(--border-soft);
+  background: var(--surface-card);
+  color: var(--text-main);
+  text-decoration: none;
+  box-shadow: var(--shadow-card-soft, 0 12px 32px rgba(0, 0, 0, 0.12));
+  transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.ai-generated-plan-card:hover {
+  transform: translateY(-1px);
+  border-color: var(--interactive-primary-soft, var(--border-strong));
+  box-shadow: var(--shadow-card, 0 16px 42px rgba(0, 0, 0, 0.18));
+}
+
+.ai-generated-plan-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ai-generated-plan-card__header span,
+.ai-generated-plan-card__targets span,
+.ai-generated-plan-card__meal span,
+.ai-generated-plan-card__meal em {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ai-generated-plan-card__header h2 {
+  margin: 0;
+  color: var(--text-main);
+  font-size: 18px;
+  line-height: 1.18;
+}
+
+.ai-generated-plan-card__summary {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.ai-generated-plan-card__targets {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.ai-generated-plan-card__targets article,
+.ai-generated-plan-card__meal {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 11px 12px;
+  border-radius: 16px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border-soft);
+}
+
+.ai-generated-plan-card__targets strong,
+.ai-generated-plan-card__meal strong {
+  color: var(--text-main);
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.ai-generated-plan-card__meals {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.ai-generated-plan-card__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 999px;
+  background: var(--interactive-primary);
+  color: var(--text-inverse, #fff);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+@media (max-width: 620px) {
+  .ai-generated-plan-card__targets,
+  .ai-generated-plan-card__meals {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ai-generated-plan-card:not(.ai-generated-plan-card--current) {
+  opacity: 0.82;
+}
+
+.ai-generated-plan-card--current {
+  border-color: var(--interactive-primary-soft, var(--border-strong));
+}
+
+/* AI Intake: generated plan cards stack below the assistant message text */
+.page-ai-intake .ai-chat-message--generated-plan {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.page-ai-intake .ai-chat-message--generated-plan .ai-chat-bubble {
+  align-self: flex-start;
+}
+
+.page-ai-intake .ai-chat-message--generated-plan .ai-generated-plan-card {
+  margin-top: 0;
+}
+
+.page-ai-intake .ai-chat-message--pending {
+  opacity: 0.82;
+}
+
+.ai-generated-plan-card__iteration {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--interactive-primary-soft, var(--border-soft));
+  border-radius: 18px;
+  background: var(--surface-muted);
+}
+
+.ai-generated-plan-card__iteration-heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ai-generated-plan-card__iteration-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ai-generated-plan-card__iteration-pills span {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-soft);
+  color: var(--text-main);
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.ai-generated-plan-card__iteration-link {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
 }

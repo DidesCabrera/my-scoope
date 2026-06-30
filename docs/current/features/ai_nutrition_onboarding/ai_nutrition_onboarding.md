@@ -324,3 +324,163 @@ Métricas complementarias:
 No intentar implementar toda la visión en un solo cambio.
 
 La primera versión exitosa es aquella donde un usuario puede escribir una solicitud simple, responder pocas preguntas, revisar un brief y terminar con una propuesta de DailyPlan suficientemente buena para aprobar o editar.
+
+## Estado de implementación del motor nutricional
+
+### Patch 12 — Validator nutricional estricto
+
+Patch 12 consolida el paso de validación independiente del generador de DailyPlan.
+
+El motor ahora distingue entre:
+
+```text
+ok       → propuesta dentro de tolerancias y restricciones esperadas
+warning  → propuesta revisable, pero con desviaciones o porciones que requieren ajuste fino
+error    → propuesta con incumplimientos duros que no deberían considerarse estables
+```
+
+La validación estricta queda ubicada en `notas/application/nutrition_engine/validators.py` y puede reutilizarse desde UI, logs, tests, MCP/API interna o futuros generadores. No depende de views, templates ni modelos Django.
+
+Responsabilidades cubiertas:
+
+- comparar kcal, proteína, carbohidratos y grasa contra targets diarios;
+- medir diferencias absolutas y porcentuales;
+- clasificar cada métrica como `ok`, `warning` o `error`;
+- detectar cantidad de comidas distinta al brief;
+- detectar uso de alimentos excluidos por el usuario;
+- detectar porciones fuera de mínimos/máximos o porciones poco razonables;
+- producir un resumen serializable para `NutritionProposal.validation_summary`.
+
+El generador de DailyPlan conserva el flujo seguro:
+
+```text
+NutritionBrief
+  ↓
+Target Estimator
+  ↓
+Meal Templates
+  ↓
+Candidate Selector
+  ↓
+Portion Solver
+  ↓
+Payload create_dailyplan
+  ↓
+Simulation read-only
+  ↓
+Strict Nutrition Validator
+  ↓
+NutritionProposal pendiente de revisión
+```
+
+La propuesta sigue sin aplicarse automáticamente. La validación estricta solo informa el estado técnico/nutricional de la propuesta para revisión humana y para futuras herramientas IA/MCP.
+
+### Patch 13 — Iteración estructurada de propuestas generadas
+
+Patch 13 agrega una capa determinística de comandos de iteración para que el chat pueda pedir ajustes sobre una propuesta de DailyPlan ya generada sin mutar la versión anterior.
+
+El flujo queda así:
+
+```text
+Mensaje del usuario
+  ↓
+Parser de comandos de iteración
+  ↓
+Actualización del NutritionBrief acumulado
+  ↓
+Nueva propuesta DailyPlan
+  ↓
+Validación nutricional estricta
+  ↓
+Nueva revisión trazable en NutritionProposal
+```
+
+Los comandos iniciales soportados cubren:
+
+- subir o bajar proteína objetivo;
+- subir o bajar calorías objetivo;
+- aumentar o reducir cantidad de comidas;
+- evitar alimentos mencionados (`sin arroz`, `menos arroz`, `no quiero atún`);
+- preferir alimentos mencionados (`prefiero pollo`, `más quinoa`);
+- reemplazos simples (`cambiar pescado por pollo`);
+- estilo simple, económico o más variado.
+
+La implementación queda separada en:
+
+- `notas/application/ai_intake/iteration_commands.py`: parser y contrato serializable de comandos;
+- `notas/application/ai_intake/nutrition_brief.py`: aplicación de comandos sobre el brief acumulado;
+- `notas/application/ai_intake/plan_iteration.py`: creación de una nueva revisión de propuesta y metadata trazable.
+
+Cada revisión guarda en `current_snapshot["iteration"]` y `validation_summary["chat_iteration"]`:
+
+- `previous_proposal_id`;
+- mensaje original del usuario;
+- comandos estructurados;
+- etiquetas humanas de comandos.
+
+La propuesta anterior permanece intacta. El chat marca la nueva card como versión actual y conserva la versión anterior en historial.
+
+### Patch 14 — Trazabilidad visible de iteraciones IA
+
+Patch 14 expone la metadata generada por Patch 13 en superficies de revisión humana.
+
+La trazabilidad deja de quedar solo como JSON técnico en `current_snapshot["iteration"]` / `validation_summary["chat_iteration"]` y pasa a tener una representación normalizada mediante `notas/application/ai_intake/iteration_trace.py`.
+
+Superficies cubiertas:
+
+- card de propuesta generada dentro del chat AI Nutrition;
+- detalle enriquecido de `NutritionProposal`;
+- viewmodels serializables para tests y futuras superficies API/MCP.
+
+La UI muestra:
+
+- mensaje original del usuario que gatilló la iteración;
+- etiquetas humanas de comandos aplicados;
+- referencia a la propuesta anterior cuando existe `previous_proposal_id`.
+
+Esto mantiene la regla de seguridad central: cada ajuste crea una nueva propuesta revisable, sin mutar ni aplicar automáticamente versiones anteriores.
+
+### Patch 15 — Preparar MCP/API del motor nutricional
+
+Patch 15 integra el motor nutricional en el sistema MCP existente sin crear un servidor paralelo ni permitir mutaciones directas. La frontera se mantiene así:
+
+```text
+MCP protocol tool
+  ↓
+MCP dispatcher
+  ↓
+Myscoope API client
+  ↓
+/ai-tools/... API adapter interno
+  ↓
+Application tool
+  ↓
+NutritionBrief / DailyPlan Generator / Strict Validator
+  ↓
+NutritionProposal pendiente de revisión
+```
+
+Se agregan dos herramientas seguras:
+
+- `create_nutrition_engine_dailyplan_proposal`: recibe un `NutritionBrief` estructurado y crea una propuesta de DailyPlan generada por el motor.
+- `iterate_nutrition_engine_dailyplan_proposal`: recibe una propuesta anterior, un `NutritionBrief` actualizado y el mensaje original del usuario; crea una nueva revisión trazable sin mutar ni aplicar la anterior.
+
+Ambas herramientas crean únicamente `NutritionProposal` revisables con `source=mcp`; no crean `DailyPlan` finales, no aprueban propuestas y no aplican cambios. Las herramientas de aplicación siguen explícitamente fuera del MCP.
+
+El contrato API también expone campos útiles para clientes externos:
+
+- `engine_validation`;
+- `target_comparison`;
+- `source_proposal`;
+- `nutrition_brief`;
+- `iteration_trace`.
+
+Además, `read_proposal` y las listas de propuestas incorporan `iteration_trace` normalizado cuando la propuesta corresponde a una revisión de chat/feedback.
+
+### Próximo patch recomendado
+
+Patch 16 debería enfocarse en una de estas direcciones:
+
+- comparación visual/API entre propuesta anterior y nueva revisión;
+- contrato MCP para leer el estado completo de una cadena de revisiones;
+- pruebas end-to-end MCP real contra el adapter interno con token de usuario.

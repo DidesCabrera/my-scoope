@@ -16,7 +16,7 @@ from notas.presentation.viewmodels.meals import (
     build_meal_list_vm,
 )
 from notas.presentation.composition.js.food_picker_builder import build_food_picker_foods_payload, build_food_picker_context_payload
-from notas.application.services.queries.meal_queries import meals_with_kcal
+from notas.application.queries.performance.meal_queries import meals_with_kcal
 
 from notas.interface.forms.forms import MealShareForm
 from django.core.mail import send_mail

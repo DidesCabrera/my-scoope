@@ -1,11 +1,21 @@
 from notas.application.ai_tools.runtime import run_ai_tool
+from notas.application.ai_intake.dailyplan_generator import (
+    generate_dailyplan_proposal_from_brief_proposal,
+)
+from notas.application.dto.proposal_iteration_trace import extract_plan_iteration_trace
+from notas.application.ai_intake.nutrition_brief import (
+    NutritionBrief,
+    deserialize_brief,
+    serialize_brief,
+)
+from notas.application.ai_intake.plan_iteration import create_iterated_dailyplan_proposal
+from notas.application.ai_intake.proposal_from_brief import create_nutrition_brief_proposal
 from notas.application.queries.proposal_queries import (
     get_proposal_detail,
     list_dailyplan_proposals,
     list_user_proposals,
     search_proposals,
 )
-
 from notas.application.services.commands.proposal_commands import (
     create_validated_dailyplan_build_proposal,
     create_validated_dailyplan_proposal,
@@ -13,8 +23,6 @@ from notas.application.services.commands.proposal_commands import (
 )
 
 from notas.domain.models import NutritionProposal
-
-
 
 
 def _serialize_dto_list(items) -> list[dict]:
@@ -122,7 +130,7 @@ def _create_validated_meal_proposal_data(
     return {
         "proposal": proposal,
     }
-    
+
 
 def _create_validated_dailyplan_build_proposal_data(
     user,
@@ -154,6 +162,146 @@ def _create_validated_dailyplan_build_proposal_data(
         "proposal": proposal,
     }
 
+
+def _ensure_nutrition_brief_payload_is_valid_for_tool(
+    nutrition_brief: dict,
+) -> NutritionBrief:
+    if not isinstance(nutrition_brief, dict):
+        raise ValueError("tool_nutrition_brief_must_be_object")
+
+    brief = deserialize_brief(nutrition_brief)
+    if brief is None:
+        raise ValueError("tool_nutrition_brief_required")
+
+    return brief
+
+
+def _ensure_user_message_is_valid_for_tool(
+    user_message: str,
+) -> None:
+    if not isinstance(user_message, str):
+        raise ValueError("tool_user_message_must_be_string")
+
+    if not user_message.strip():
+        raise ValueError("tool_user_message_required")
+
+
+def _serialize_iteration_trace(proposal) -> dict | None:
+    trace = extract_plan_iteration_trace(proposal)
+    if trace is None:
+        return None
+
+    return trace.as_dict()
+
+
+def _generated_dailyplan_response_payload(
+    *,
+    user,
+    source_proposal,
+    proposal,
+    brief: NutritionBrief,
+) -> dict:
+    generated_proposal = get_proposal_detail(
+        user,
+        proposal.id,
+    ).as_dict()
+    source_proposal_data = get_proposal_detail(
+        user,
+        source_proposal.id,
+    ).as_dict()
+    validation_summary = generated_proposal.get("validation_summary") or {}
+
+    return {
+        "proposal": generated_proposal,
+        "source_proposal": source_proposal_data,
+        "nutrition_brief": serialize_brief(brief),
+        "engine_validation": validation_summary.get("engine_validation") or {},
+        "target_comparison": validation_summary.get("target_comparison") or {},
+        "iteration_trace": _serialize_iteration_trace(proposal),
+    }
+
+
+def _create_nutrition_engine_dailyplan_proposal_data(
+    user,
+    nutrition_brief: dict,
+) -> dict:
+    brief = _ensure_nutrition_brief_payload_is_valid_for_tool(nutrition_brief)
+
+    source_result = create_nutrition_brief_proposal(
+        user=user,
+        brief=brief,
+        source=NutritionProposal.SOURCE_MCP,
+    )
+    generated_result = generate_dailyplan_proposal_from_brief_proposal(
+        user=user,
+        source_proposal=source_result.proposal,
+        source=NutritionProposal.SOURCE_MCP,
+    )
+
+    return _generated_dailyplan_response_payload(
+        user=user,
+        source_proposal=source_result.proposal,
+        proposal=generated_result.proposal,
+        brief=brief,
+    )
+
+
+def create_nutrition_engine_dailyplan_proposal_tool(
+    user,
+    nutrition_brief: dict,
+):
+    return run_ai_tool(
+        _create_nutrition_engine_dailyplan_proposal_data,
+        user,
+        nutrition_brief,
+        user=user,
+    )
+
+
+def _iterate_nutrition_engine_dailyplan_proposal_data(
+    user,
+    previous_proposal_id: int,
+    nutrition_brief: dict,
+    user_message: str,
+) -> dict:
+    brief = _ensure_nutrition_brief_payload_is_valid_for_tool(nutrition_brief)
+    _ensure_user_message_is_valid_for_tool(user_message)
+
+    previous_proposal = (
+        NutritionProposal.objects
+        .filter(created_by=user)
+        .get(pk=previous_proposal_id)
+    )
+    iteration_result = create_iterated_dailyplan_proposal(
+        user=user,
+        brief=brief,
+        previous_proposal=previous_proposal,
+        user_message=user_message,
+        source=NutritionProposal.SOURCE_MCP,
+    )
+
+    return _generated_dailyplan_response_payload(
+        user=user,
+        source_proposal=iteration_result.source_proposal,
+        proposal=iteration_result.proposal,
+        brief=brief,
+    )
+
+
+def iterate_nutrition_engine_dailyplan_proposal_tool(
+    user,
+    previous_proposal_id: int,
+    nutrition_brief: dict,
+    user_message: str,
+):
+    return run_ai_tool(
+        _iterate_nutrition_engine_dailyplan_proposal_data,
+        user,
+        previous_proposal_id,
+        nutrition_brief,
+        user_message,
+        user=user,
+    )
 
 
 def create_validated_meal_proposal_tool(
@@ -194,7 +342,6 @@ def create_validated_dailyplan_build_proposal_tool(
         summary,
         user=user,
     )
-
 
 
 def create_validated_dailyplan_proposal_tool(

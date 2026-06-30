@@ -26,6 +26,7 @@ class NutritionProposalListItemDTO:
     created_at: str | None
     received_at_label: str
     reviewed_at: str | None
+    iteration_trace: dict | None = None
 
     def as_dict(self) -> dict:
         return asdict(self)
@@ -57,6 +58,7 @@ class NutritionProposalDTO:
     reviewed_at: str | None
     audit_events: list[dict]
     applied_at: str | None
+    iteration_trace: dict | None = None
 
     def as_dict(self) -> dict:
         return asdict(self)

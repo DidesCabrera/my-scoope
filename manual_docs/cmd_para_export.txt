@@ -14,25 +14,24 @@ python manage.py runserver
 cooking-pot
 pill
 
-AI
-(Sin USDA - img - test)
+AI (Sin USDA - img - test)
 ./scripts/export_for_chatgpt.sh ai
 
-FULL
-(Sin USDA - img)
+FULL (Sin USDA - img)
 ./scripts/export_for_chatgpt.sh full
 
-COMPLETO
-(Sin img)
+COMPLETO (Sin img)
 ./scripts/export_for_chatgpt.sh usda
 
+FOOD CATALOG
+./scripts/export_for_chatgpt.sh foodcatalog
 
 --------------------------
 ***AUX COMMITS
 --------------------------
 
 git add .
-git commit -m "Mejoras Graficos y Picker de Planes 9/10"
+git commit -m "Implementacion Asistente interno de creacion de planes parte 1"
 git push origin main
 
 

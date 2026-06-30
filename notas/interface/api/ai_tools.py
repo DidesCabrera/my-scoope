@@ -1,3 +1,10 @@
+from notas.application.ai_tools.proposal_tools import (
+    create_nutrition_engine_dailyplan_proposal_tool,
+    create_validated_dailyplan_build_proposal_tool,
+    create_validated_dailyplan_proposal_tool,
+    create_validated_meal_proposal_tool,
+    iterate_nutrition_engine_dailyplan_proposal_tool,
+)
 from notas.application.ai_tools.read_tools import (
     list_user_proposals_tool,
     read_dailyplan_tool,
@@ -21,12 +28,6 @@ from notas.application.services.mcp_user_tokens import (
 )
 from notas.interface.api.decorators import ai_tool_api_view
 from notas.interface.api.responses import ai_tool_json_response
-
-from notas.application.ai_tools.proposal_tools import (
-    create_validated_dailyplan_build_proposal_tool,
-    create_validated_dailyplan_proposal_tool,
-    create_validated_meal_proposal_tool,
-)
 
 
 def _missing_required_field_response(field_name: str):
@@ -224,6 +225,44 @@ def ai_tools_create_validated_dailyplan_build_proposal(request):
         proposed_payload=payload["proposed_payload"],
         targets=payload.get("targets"),
         summary=payload.get("summary", ""),
+    )
+
+    return ai_tool_json_response(result)
+
+
+@ai_tool_api_view(required_scopes=[MCP_SCOPE_PROPOSALS_CREATE])
+def ai_tools_create_nutrition_engine_dailyplan_proposal(request):
+    payload = request.ai_tool_payload
+
+    if "nutrition_brief" not in payload:
+        return _missing_required_field_response("nutrition_brief")
+
+    result = create_nutrition_engine_dailyplan_proposal_tool(
+        user=request.user,
+        nutrition_brief=payload["nutrition_brief"],
+    )
+
+    return ai_tool_json_response(result)
+
+
+@ai_tool_api_view(required_scopes=[MCP_SCOPE_PROPOSALS_CREATE])
+def ai_tools_iterate_nutrition_engine_dailyplan_proposal(request):
+    payload = request.ai_tool_payload
+
+    if "previous_proposal_id" not in payload:
+        return _missing_required_field_response("previous_proposal_id")
+
+    if "nutrition_brief" not in payload:
+        return _missing_required_field_response("nutrition_brief")
+
+    if "user_message" not in payload:
+        return _missing_required_field_response("user_message")
+
+    result = iterate_nutrition_engine_dailyplan_proposal_tool(
+        user=request.user,
+        previous_proposal_id=payload["previous_proposal_id"],
+        nutrition_brief=payload["nutrition_brief"],
+        user_message=payload["user_message"],
     )
 
     return ai_tool_json_response(result)

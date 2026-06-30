@@ -1,4 +1,4 @@
-from django.db.models import Prefetch, Sum, F, ExpressionWrapper, FloatField
+from django.db.models import ExpressionWrapper, F, FloatField, Prefetch, Sum
 
 from notas.domain.models import (
     DailyPlan,
@@ -101,16 +101,21 @@ def dailyplans_with_kcal():
         .annotate(
             total_kcal_sql=Sum(
                 ExpressionWrapper(
-                    (F("dailyplan_meals__meal__meal_food_set__quantity") / 100.0) * (
-                        F("dailyplan_meals__meal__meal_food_set__food__protein") * PROTEIN_KCAL_PER_GRAM +
-                        F("dailyplan_meals__meal__meal_food_set__food__carbs")   * CARBS_KCAL_PER_GRAM +
-                        F("dailyplan_meals__meal__meal_food_set__food__fat")     * FAT_KCAL_PER_GRAM
+                    (F("dailyplan_meals__meal__meal_food_set__quantity") / 100.0)
+                    * (
+                        F("dailyplan_meals__meal__meal_food_set__food__protein")
+                        * PROTEIN_KCAL_PER_GRAM
+                        + F("dailyplan_meals__meal__meal_food_set__food__carbs")
+                        * CARBS_KCAL_PER_GRAM
+                        + F("dailyplan_meals__meal__meal_food_set__food__fat")
+                        * FAT_KCAL_PER_GRAM
                     ),
                     output_field=FloatField(),
                 )
             )
         )
     )
+
 
 def get_dailyplan_for_edit(user, pk):
     return (

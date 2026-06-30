@@ -9,6 +9,8 @@ TOOL_CREATE_VALIDATED_DAILYPLAN_PROPOSAL = "create_validated_dailyplan_proposal"
 TOOL_LIST_FOOD_CATALOG = "list_food_catalog"
 TOOL_CREATE_VALIDATED_MEAL_PROPOSAL = "create_validated_meal_proposal"
 TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL = "create_validated_dailyplan_build_proposal"
+TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL = "create_nutrition_engine_dailyplan_proposal"
+TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL = "iterate_nutrition_engine_dailyplan_proposal"
 
 
 FORBIDDEN_TOOL_NAMES = {
@@ -340,6 +342,104 @@ ALLOWED_TOOL_SPECS = {
                             },
                         },
                     },
+                },
+            },
+        },
+    ),
+
+    TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL: MCPToolSpec(
+        name=TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
+        description=(
+            "Create a reviewable DailyPlan proposal by running the internal "
+            "My Scoope nutrition engine from a structured NutritionBrief. "
+            "This tool does not create or apply the final DailyPlan."
+        ),
+        api_path="/ai-tools/create-nutrition-engine-dailyplan-proposal/",
+        input_schema={
+            "type": "object",
+            "required": ["nutrition_brief"],
+            "properties": {
+                "nutrition_brief": {
+                    "type": "object",
+                    "description": "Structured NutritionBrief consumed by the nutrition engine.",
+                    "required": [
+                        "raw_prompt",
+                        "goal",
+                        "requested_entity",
+                        "meals_per_day",
+                    ],
+                    "properties": {
+                        "raw_prompt": {"type": "string"},
+                        "goal": {
+                            "type": "string",
+                            "description": "fat_loss, muscle_gain, maintenance, performance or healthy_eating.",
+                        },
+                        "requested_entity": {
+                            "type": "string",
+                            "const": "daily_plan",
+                        },
+                        "meals_per_day": {"type": "integer"},
+                        "training_frequency": {"type": "integer"},
+                        "calorie_target": {"type": "integer"},
+                        "protein_target": {"type": "integer"},
+                        "carb_target": {"type": "integer"},
+                        "fat_target": {"type": "integer"},
+                        "weight_kg": {"type": "number"},
+                        "height_cm": {"type": "integer"},
+                        "age_years": {"type": "integer"},
+                        "sex": {"type": "string"},
+                        "activity_level": {"type": "string"},
+                        "energy_adjustment": {"type": "string"},
+                        "style_preferences": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                        },
+                        "excluded_foods": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                        },
+                        "preferred_foods": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                        },
+                        "complexity_level": {"type": "string"},
+                        "budget_level": {"type": "string"},
+                        "notes": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                        },
+                    },
+                },
+            },
+        },
+    ),
+    TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL: MCPToolSpec(
+        name=TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
+        description=(
+            "Create a new reviewable DailyPlan proposal revision by applying "
+            "structured chat feedback commands over a NutritionBrief. This tool "
+            "does not mutate or apply the previous proposal."
+        ),
+        api_path="/ai-tools/iterate-nutrition-engine-dailyplan-proposal/",
+        input_schema={
+            "type": "object",
+            "required": [
+                "previous_proposal_id",
+                "nutrition_brief",
+                "user_message",
+            ],
+            "properties": {
+                "previous_proposal_id": {
+                    "type": "integer",
+                    "description": "Previous generated DailyPlan proposal to keep as immutable revision history.",
+                },
+                "nutrition_brief": {
+                    "type": "object",
+                    "description": "Structured NutritionBrief after applying/accumulating the user's requested adjustments.",
+                },
+                "user_message": {
+                    "type": "string",
+                    "description": "Original chat feedback, such as 'más proteína' or 'sin arroz'.",
                 },
             },
         },

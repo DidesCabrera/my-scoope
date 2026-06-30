@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from django.urls import reverse
+
+from notas.presentation.pages.object_lookup import get_page_object_or_404
 from django.utils import timezone
 
 from notas.domain.models import (
@@ -691,31 +693,29 @@ def build_inbox_items(user, *, favorites_only: bool = False, scope: str = "recei
 
 
 def get_inbox_item_or_404(user, *, kind: str, share_id: int):
-    from django.shortcuts import get_object_or_404
-
     if kind == "dailyplan":
-        share = get_object_or_404(
+        share = get_page_object_or_404(
             _dailyplan_share_queryset(user),
             id=share_id,
         )
         return _build_dailyplan_item(share)
 
     if kind == "meal":
-        share = get_object_or_404(
+        share = get_page_object_or_404(
             _meal_share_queryset(user),
             id=share_id,
         )
         return _build_meal_item(share)
 
     if kind == "food":
-        share = get_object_or_404(
+        share = get_page_object_or_404(
             _food_share_queryset(user),
             id=share_id,
         )
         return _build_food_item(share)
 
     if kind == "dpm":
-        share = get_object_or_404(
+        share = get_page_object_or_404(
             _dpm_share_queryset(user),
             id=share_id,
         )
@@ -725,31 +725,29 @@ def get_inbox_item_or_404(user, *, kind: str, share_id: int):
 
 
 def get_sent_inbox_item_or_404(user, *, kind: str, share_id: int):
-    from django.shortcuts import get_object_or_404
-
     if kind == "dailyplan":
-        share = get_object_or_404(
+        share = get_page_object_or_404(
             _dailyplan_share_sent_queryset(user),
             id=share_id,
         )
         return _build_sent_dailyplan_item(share)
 
     if kind == "meal":
-        share = get_object_or_404(
+        share = get_page_object_or_404(
             _meal_share_sent_queryset(user),
             id=share_id,
         )
         return _build_sent_meal_item(share)
 
     if kind == "food":
-        share = get_object_or_404(
+        share = get_page_object_or_404(
             _food_share_sent_queryset(user),
             id=share_id,
         )
         return _build_sent_food_item(share)
 
     if kind == "dpm":
-        share = get_object_or_404(
+        share = get_page_object_or_404(
             _dpm_share_sent_queryset(user),
             id=share_id,
         )
@@ -759,28 +757,26 @@ def get_sent_inbox_item_or_404(user, *, kind: str, share_id: int):
 
 
 def get_inbox_share_or_404(user, *, kind: str, share_id: int):
-    from django.shortcuts import get_object_or_404
-
     if kind == "dailyplan":
-        return get_object_or_404(
+        return get_page_object_or_404(
             _dailyplan_share_queryset(user),
             id=share_id,
         )
 
     if kind == "meal":
-        return get_object_or_404(
+        return get_page_object_or_404(
             _meal_share_queryset(user),
             id=share_id,
         )
 
     if kind == "food":
-        return get_object_or_404(
+        return get_page_object_or_404(
             _food_share_queryset(user),
             id=share_id,
         )
 
     if kind == "dpm":
-        return get_object_or_404(
+        return get_page_object_or_404(
             _dpm_share_queryset(user),
             id=share_id,
         )
@@ -788,28 +784,26 @@ def get_inbox_share_or_404(user, *, kind: str, share_id: int):
     raise ValueError("unsupported_inbox_kind")
 
 def get_sent_inbox_share_or_404(user, *, kind: str, share_id: int):
-    from django.shortcuts import get_object_or_404
-
     if kind == "dailyplan":
-        return get_object_or_404(
+        return get_page_object_or_404(
             _dailyplan_share_sent_queryset(user),
             id=share_id,
         )
 
     if kind == "meal":
-        return get_object_or_404(
+        return get_page_object_or_404(
             _meal_share_sent_queryset(user),
             id=share_id,
         )
 
     if kind == "food":
-        return get_object_or_404(
+        return get_page_object_or_404(
             _food_share_sent_queryset(user),
             id=share_id,
         )
 
     if kind == "dpm":
-        return get_object_or_404(
+        return get_page_object_or_404(
             _dpm_share_sent_queryset(user),
             id=share_id,
         )

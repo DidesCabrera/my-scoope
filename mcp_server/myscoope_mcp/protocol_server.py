@@ -15,8 +15,10 @@ from myscoope_mcp.tools import (
     FORBIDDEN_TOOL_NAMES,
     TOOL_COMPARE_DAILYPLAN_TO_TARGETS,
     TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL,
+    TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
     TOOL_CREATE_VALIDATED_DAILYPLAN_PROPOSAL,
     TOOL_CREATE_VALIDATED_MEAL_PROPOSAL,
+    TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
     TOOL_LIST_FOOD_CATALOG,
     TOOL_LIST_USER_PROPOSALS,
     TOOL_READ_DAILYPLAN,
@@ -49,6 +51,8 @@ def get_protocol_tool_annotations() -> dict[str, ToolAnnotations]:
         TOOL_CREATE_VALIDATED_MEAL_PROPOSAL: PROPOSAL_CREATE_TOOL_ANNOTATIONS,
         TOOL_CREATE_VALIDATED_DAILYPLAN_PROPOSAL: PROPOSAL_CREATE_TOOL_ANNOTATIONS,
         TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL: PROPOSAL_CREATE_TOOL_ANNOTATIONS,
+        TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL: PROPOSAL_CREATE_TOOL_ANNOTATIONS,
+        TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL: PROPOSAL_CREATE_TOOL_ANNOTATIONS,
     }
 
 
@@ -379,6 +383,58 @@ def register_mcp_tools(server: FastMCP) -> None:
         return serialize_tool_result(result)
 
 
+    @server.tool(
+        annotations=annotations[TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL],
+    )
+    def create_nutrition_engine_dailyplan_proposal(
+        nutrition_brief: dict[str, Any],
+    ) -> dict[str, Any]:
+        """
+        Create a reviewable DailyPlan proposal using the internal nutrition engine.
+
+        This tool creates NutritionProposal artifacts only.
+        It does not apply a final DailyPlan.
+        """
+        client = create_api_client()
+
+        result = dispatch_tool_call(
+            client=client,
+            tool_name=TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
+            arguments={
+                "nutrition_brief": nutrition_brief,
+            },
+        )
+
+        return serialize_tool_result(result)
+
+    @server.tool(
+        annotations=annotations[TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL],
+    )
+    def iterate_nutrition_engine_dailyplan_proposal(
+        previous_proposal_id: int,
+        nutrition_brief: dict[str, Any],
+        user_message: str,
+    ) -> dict[str, Any]:
+        """
+        Create a new reviewable DailyPlan proposal revision from chat feedback.
+
+        This tool keeps the previous proposal immutable and stores iteration trace.
+        """
+        client = create_api_client()
+
+        result = dispatch_tool_call(
+            client=client,
+            tool_name=TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
+            arguments={
+                "previous_proposal_id": previous_proposal_id,
+                "nutrition_brief": nutrition_brief,
+                "user_message": user_message,
+            },
+        )
+
+        return serialize_tool_result(result)
+
+
 def get_protocol_allowed_tool_names() -> set[str]:
     """
     Tool names allowed to be exposed by the real MCP protocol wrapper.
@@ -392,6 +448,8 @@ def get_protocol_allowed_tool_names() -> set[str]:
         TOOL_CREATE_VALIDATED_MEAL_PROPOSAL,
         TOOL_CREATE_VALIDATED_DAILYPLAN_PROPOSAL,
         TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL,
+        TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
+        TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
     }
 
 

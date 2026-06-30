@@ -3,9 +3,15 @@ import unittest
 from myscoope_mcp.contracts import MCPToolCallResult
 from myscoope_mcp.tool_handlers import (
     call_proposal_tool,
+    create_nutrition_engine_dailyplan_proposal,
     create_validated_dailyplan_proposal,
+    iterate_nutrition_engine_dailyplan_proposal,
 )
-from myscoope_mcp.tools import TOOL_CREATE_VALIDATED_DAILYPLAN_PROPOSAL
+from myscoope_mcp.tools import (
+    TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
+    TOOL_CREATE_VALIDATED_DAILYPLAN_PROPOSAL,
+    TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
+)
 
 
 class FakeMyscoopeAPIClient:
@@ -33,6 +39,67 @@ class FakeMyscoopeAPIClient:
 class MCPProposalToolHandlerTests(unittest.TestCase):
     def setUp(self):
         self.client = FakeMyscoopeAPIClient()
+
+
+    def test_create_nutrition_engine_dailyplan_proposal_calls_api_adapter(self):
+        brief = {
+            "raw_prompt": "quiero bajar grasa, simple",
+            "goal": "fat_loss",
+            "requested_entity": "daily_plan",
+            "meals_per_day": 4,
+        }
+
+        result = create_nutrition_engine_dailyplan_proposal(
+            client=self.client,
+            nutrition_brief=brief,
+        )
+
+        data = result.as_dict()
+
+        self.assertTrue(data["ok"])
+        self.assertEqual(
+            self.client.calls,
+            [
+                {
+                    "api_path": "/ai-tools/create-nutrition-engine-dailyplan-proposal/",
+                    "payload": {
+                        "nutrition_brief": brief,
+                    },
+                }
+            ],
+        )
+
+    def test_iterate_nutrition_engine_dailyplan_proposal_calls_api_adapter(self):
+        brief = {
+            "raw_prompt": "quiero bajar grasa, simple",
+            "goal": "fat_loss",
+            "requested_entity": "daily_plan",
+            "meals_per_day": 4,
+        }
+
+        result = iterate_nutrition_engine_dailyplan_proposal(
+            client=self.client,
+            previous_proposal_id=321,
+            nutrition_brief=brief,
+            user_message="más proteína",
+        )
+
+        data = result.as_dict()
+
+        self.assertTrue(data["ok"])
+        self.assertEqual(
+            self.client.calls,
+            [
+                {
+                    "api_path": "/ai-tools/iterate-nutrition-engine-dailyplan-proposal/",
+                    "payload": {
+                        "previous_proposal_id": 321,
+                        "nutrition_brief": brief,
+                        "user_message": "más proteína",
+                    },
+                }
+            ],
+        )
 
     def test_create_validated_dailyplan_proposal_calls_api_adapter(self):
         result = create_validated_dailyplan_proposal(
@@ -145,6 +212,98 @@ class MCPProposalToolHandlerTests(unittest.TestCase):
         self.assertEqual(
             self.client.calls[0]["api_path"],
             "/ai-tools/create-validated-dailyplan-proposal/",
+        )
+
+
+    def test_call_proposal_tool_dispatches_create_nutrition_engine_dailyplan_proposal(self):
+        brief = {
+            "raw_prompt": "quiero bajar grasa, simple",
+            "goal": "fat_loss",
+            "requested_entity": "daily_plan",
+            "meals_per_day": 4,
+        }
+
+        result = call_proposal_tool(
+            self.client,
+            TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
+            {
+                "nutrition_brief": brief,
+            },
+        )
+
+        data = result.as_dict()
+
+        self.assertTrue(data["ok"])
+        self.assertEqual(
+            self.client.calls[0]["api_path"],
+            "/ai-tools/create-nutrition-engine-dailyplan-proposal/",
+        )
+
+    def test_call_proposal_tool_dispatches_iterate_nutrition_engine_dailyplan_proposal(self):
+        brief = {
+            "raw_prompt": "quiero bajar grasa, simple",
+            "goal": "fat_loss",
+            "requested_entity": "daily_plan",
+            "meals_per_day": 4,
+        }
+
+        result = call_proposal_tool(
+            self.client,
+            TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
+            {
+                "previous_proposal_id": 321,
+                "nutrition_brief": brief,
+                "user_message": "sin arroz",
+            },
+        )
+
+        data = result.as_dict()
+
+        self.assertTrue(data["ok"])
+        self.assertEqual(
+            self.client.calls[0]["api_path"],
+            "/ai-tools/iterate-nutrition-engine-dailyplan-proposal/",
+        )
+
+    def test_call_proposal_tool_requires_nutrition_brief_for_engine_generation(self):
+        result = call_proposal_tool(
+            self.client,
+            TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
+            {},
+        )
+
+        data = result.as_dict()
+
+        self.assertFalse(data["ok"])
+        self.assertEqual(
+            data["error"]["code"],
+            "missing_required_argument:nutrition_brief",
+        )
+        self.assertEqual(
+            self.client.calls,
+            [],
+        )
+
+    def test_call_proposal_tool_requires_iteration_arguments(self):
+        result = call_proposal_tool(
+            self.client,
+            TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
+            {
+                "previous_proposal_id": 321,
+                "nutrition_brief": {},
+            },
+        )
+
+        data = result.as_dict()
+
+        self.assertFalse(data["ok"])
+        self.assertEqual(
+            data["error"]["code"],
+            "missing_required_argument:user_message",
+        )
+        self.assertEqual(
+            self.client.calls,
+            [],
         )
 
     def test_call_proposal_tool_requires_dailyplan_id(self):

@@ -98,10 +98,10 @@
       composer.classList.toggle("is-sending", isBusy);
     }
 
-    function appendLocalSystemMessage(text) {
+    function appendLocalMessage(role, text, extraClass) {
       var inner = thread.querySelector(".ai-chat-thread__inner") || thread;
       var message = document.createElement("article");
-      message.className = "ai-chat-message ai-chat-message--assistant ai-chat-message--system";
+      message.className = "ai-chat-message ai-chat-message--" + role + (extraClass ? " " + extraClass : "");
       var bubble = document.createElement("div");
       bubble.className = "ai-chat-bubble";
       var paragraph = document.createElement("p");
@@ -110,6 +110,21 @@
       message.appendChild(bubble);
       inner.appendChild(message);
       requestAnimationFrame(scrollToBottom);
+      return message;
+    }
+
+    function removeLocalMessage(message) {
+      if (message && message.parentNode) {
+        message.parentNode.removeChild(message);
+      }
+    }
+
+    function appendLocalSystemMessage(text) {
+      return appendLocalMessage("assistant", text, "ai-chat-message--system");
+    }
+
+    function appendLocalUserMessage(text) {
+      return appendLocalMessage("user", text, "ai-chat-message--pending");
     }
 
     function getCsrfToken() {
@@ -137,6 +152,11 @@
         return;
       }
 
+      appendLocalUserMessage(value);
+      var thinkingMessage = appendLocalSystemMessage("thinking...");
+      thinkingMessage.classList.add("ai-chat-message--thinking");
+      textarea.value = "";
+      resizeTextarea();
       setComposerBusy(true);
 
       fetch(composer.getAttribute("action") || window.location.href, {
@@ -167,15 +187,16 @@
           if (!payload.thread_html) {
             throw new Error("missing_thread_html");
           }
+          removeLocalMessage(thinkingMessage);
           thread.innerHTML = payload.thread_html;
           if (window.lucide && typeof window.lucide.createIcons === "function") {
             window.lucide.createIcons();
           }
-          textarea.value = "";
           resizeTextarea();
           requestAnimationFrame(scrollToBottom);
         })
         .catch(function () {
+          removeLocalMessage(thinkingMessage);
           appendLocalSystemMessage("No pude enviar tu respuesta. Recarga la página e inténtalo nuevamente.");
         })
         .finally(function () {
