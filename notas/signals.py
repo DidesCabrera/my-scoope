@@ -5,6 +5,8 @@ from django.contrib.auth.models import User
 from notas.domain.models import Profile, Plan, MealFood
 from notas.application.services.nutrition.meal_nutrition import rebuild_meal_cached_state
 from notas.application.services.cache.dailyplan_summary import refresh_dailyplans_for_meal
+from accounts.models import AccountSubscription
+from accounts.services.subscriptions import ensure_account_subscription_for_user
 
 
 @receiver(post_save, sender=User)
@@ -21,6 +23,7 @@ def create_profile_for_new_user(sender, instance, created, **kwargs):
         plan=default_plan,
         is_verified=False,
     )
+    ensure_account_subscription_for_user(instance, source=AccountSubscription.Source.SEED)
 
 
 @receiver(post_save, sender=MealFood)

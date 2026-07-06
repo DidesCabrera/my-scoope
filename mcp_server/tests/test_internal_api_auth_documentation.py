@@ -2,7 +2,7 @@ from pathlib import Path
 import unittest
 
 
-DOC_PATH = Path("docs/architecture/internal_api_auth_for_mcp.md")
+DOC_PATH = Path("docs/archive/mcp_stage_logs/internal_api_auth_for_mcp.md")
 
 
 class InternalAPIAuthDocumentationTests(unittest.TestCase):

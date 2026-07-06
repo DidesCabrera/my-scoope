@@ -55,7 +55,10 @@ def list_food_catalog_for_planning(
     limit: int = DEFAULT_FOOD_CATALOG_LIMIT,
 ) -> FoodCatalogDTO:
     """
-    Returns a read-only catalog of foods available for AI/MCP planning.
+    Returns a read-only catalog of operational foods available for AI/MCP planning.
+
+    Despite the historical function name, this query reads only ``notas.Food``.
+    It must not import or expose ``food_catalog.CatalogFood``.
 
     Visibility follows the existing read boundary:
     - system foods;

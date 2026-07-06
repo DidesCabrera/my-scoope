@@ -13,9 +13,15 @@ from notas.application.ai_intake.dailyplan_generator import (
 )
 from notas.application.ai_intake.nutrition_brief import NutritionBrief
 from notas.application.ai_intake.proposal_from_brief import create_nutrition_brief_proposal
+from notas.application.dto.nutrition_subject_context_dto import (
+    PPK_WEIGHT_SOURCE_EXTERNAL,
+    PPK_WEIGHT_SOURCE_PROFILE,
+    SUBJECT_SOURCE_EXTERNAL_CHAT_DATA,
+    SUBJECT_SOURCE_SELF_PROFILE,
+)
 from notas.application.dto.proposal_payloads import CREATE_DAILYPLAN_INTENT
 from notas.application.queries.proposal_simulation_queries import simulate_proposal_payload
-from notas.domain.models import Food, NutritionProposal, WeightLog
+from notas.domain.models import Food, NutritionProposal, Profile, WeightLog
 
 
 class AiIntakeDailyPlanGeneratorTests(TestCase):
@@ -156,9 +162,61 @@ class AiIntakeDailyPlanGeneratorTests(TestCase):
         self.assertTrue(target_plan.estimated_targets["protein"])
         self.assertFalse(target_plan.explicit_targets["total_kcal"])
 
+
+    def test_target_plan_uses_self_profile_subject_context_when_selected(self):
+        profile = self.user.profile
+        profile.birth_date = date(1988, 1, 17)
+        profile.sex = Profile.SEX_MALE
+        profile.height_cm = 188
+        profile.save()
+        WeightLog.objects.create(user=self.user, date=date(2026, 7, 1), weight_kg=88)
+
+        brief = NutritionBrief(
+            raw_prompt="usa mi ficha para bajar grasa",
+            subject_source=SUBJECT_SOURCE_SELF_PROFILE,
+            goal="fat_loss",
+            meals_per_day=4,
+            activity_level="moderate",
+            style_preferences=["simple"],
+        )
+
+        target_plan = build_dailyplan_target_plan(user=self.user, brief=brief)
+        subject_context = target_plan.as_targets_dict()["subject_context"]
+
+        self.assertEqual(target_plan.weight_kg, 88)
+        self.assertGreater(target_plan.estimated_tdee, 2800)
+        self.assertEqual(subject_context["source"], SUBJECT_SOURCE_SELF_PROFILE)
+        self.assertEqual(subject_context["ppk_weight_source"], PPK_WEIGHT_SOURCE_PROFILE)
+        self.assertFalse(subject_context["requires_library_ppk_warning"])
+
+    def test_target_plan_uses_external_subject_weight_for_ppk_and_estimation(self):
+        WeightLog.objects.create(user=self.user, date=date(2026, 7, 1), weight_kg=88)
+        brief = NutritionBrief(
+            raw_prompt="es para una clienta",
+            subject_source=SUBJECT_SOURCE_EXTERNAL_CHAT_DATA,
+            goal="fat_loss",
+            meals_per_day=4,
+            weight_kg=70,
+            height_cm=174,
+            age_years=30,
+            sex="female",
+            activity_level="light",
+            style_preferences=["simple"],
+        )
+
+        target_plan = build_dailyplan_target_plan(user=self.user, brief=brief)
+        subject_context = target_plan.as_targets_dict()["subject_context"]
+
+        self.assertEqual(target_plan.weight_kg, 70)
+        self.assertEqual(subject_context["source"], SUBJECT_SOURCE_EXTERNAL_CHAT_DATA)
+        self.assertEqual(subject_context["ppk_weight_source"], PPK_WEIGHT_SOURCE_EXTERNAL)
+        self.assertTrue(subject_context["requires_library_ppk_warning"])
+        self.assertEqual(subject_context["calculation_weight_kg"], 70)
+
     def test_builds_valid_payload_with_meal_targets_and_respects_excluded_foods(self):
         brief = NutritionBrief(
             raw_prompt="quiero bajar grasa, 4 comidas, simple, sin pescado",
+            subject_source=SUBJECT_SOURCE_EXTERNAL_CHAT_DATA,
             goal="fat_loss",
             meals_per_day=4,
             weight_kg=80,
@@ -210,6 +268,7 @@ class AiIntakeDailyPlanGeneratorTests(TestCase):
     def test_generated_proposal_stores_targets_generator_metadata_and_target_comparison(self):
         brief = NutritionBrief(
             raw_prompt="quiero bajar grasa, 4 comidas, simple, sin pescado",
+            subject_source=SUBJECT_SOURCE_EXTERNAL_CHAT_DATA,
             goal="fat_loss",
             meals_per_day=4,
             weight_kg=80,
@@ -235,6 +294,10 @@ class AiIntakeDailyPlanGeneratorTests(TestCase):
         self.assertTrue(proposal.targets["estimated_targets"]["total_kcal"])
         self.assertIn("estimated_tdee", proposal.targets)
         self.assertGreater(proposal.targets["estimated_tdee"], proposal.targets["total_kcal"])
+        self.assertIn("subject_context", proposal.targets)
+        self.assertEqual(proposal.targets["subject_context"]["calculation_weight_kg"], 80)
+        self.assertIn("subject_context", proposal.current_snapshot)
+        self.assertIn("subject_context", proposal.validation_summary["generator"])
         self.assertIn("total_kcal", proposal.validation_summary["target_comparison"])
         self.assertEqual(
             proposal.validation_summary["target_comparison"]["total_kcal"]["is_estimated_target"],

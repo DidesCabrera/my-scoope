@@ -1,3 +1,5 @@
+import uuid
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import Http404, JsonResponse
@@ -5,6 +7,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.views.decorators.http import require_http_methods
 
+from ai_assistant.application.chat_engines import ChatEngineRequest
+from notas.application.ai_intake.chat_engine import get_nutrition_intake_chat_engine
 from notas.application.ai_intake.chat_history import (
     AI_NUTRITION_CHAT_SESSION_KEY,
     mark_chat_proposal_created,
@@ -25,7 +29,6 @@ from notas.application.ai_intake.nutrition_brief import (
     deserialize_conversation,
     serialize_brief,
     serialize_conversation,
-    start_or_continue_conversation,
 )
 from notas.application.ai_intake.proposal_from_brief import (
     create_nutrition_brief_proposal,
@@ -49,6 +52,24 @@ from notas.presentation.config.viewmodel_config import (
     HOME_VIEWMODE,
 )
 from notas.presentation.viewmodels.base_vm import BaseVM
+
+
+def _continue_chat_with_active_engine(*, request, message: str, existing_payload=None, existing_chat_id=None):
+    turn_result = get_nutrition_intake_chat_engine().continue_chat(
+        ChatEngineRequest(
+            message=message,
+            existing_payload=existing_payload,
+            user_id=getattr(request.user, "id", None),
+            metadata={
+                "surface": "ai_nutrition_intake",
+                "tool_user": request.user,
+                "conversation_id": str(existing_chat_id or ""),
+                "turn_id": uuid.uuid4().hex,
+                "action_type": "assistant.ai_nutrition_intake.preview",
+            },
+        )
+    )
+    return turn_result.state
 
 
 def _is_async_request(request) -> bool:
@@ -78,6 +99,7 @@ def _render_chat_thread_json(request, *, result, conversation, prompt: str = "")
                 request=request,
             ),
             "is_ready_for_proposal": bool(result and result.is_ready_for_proposal),
+            "engine_status": content_vm.engine_status or {},
         }
     )
 
@@ -165,9 +187,11 @@ def ai_nutrition_intake(request):
                 existing_chat_id = request.session.get(AI_NUTRITION_CHAT_SESSION_KEY)
 
             try:
-                conversation = start_or_continue_conversation(
+                conversation = _continue_chat_with_active_engine(
+                    request=request,
                     message=message,
                     existing_payload=existing_payload,
+                    existing_chat_id=existing_chat_id,
                 )
             except ValueError:
                 if _is_async_request(request):
@@ -276,9 +300,11 @@ def ai_nutrition_intake(request):
     else:
         prompt = (request.GET.get("prompt") or "").strip()
         if prompt:
-            conversation = start_or_continue_conversation(
+            conversation = _continue_chat_with_active_engine(
+                request=request,
                 message=prompt,
                 existing_payload=None,
+                existing_chat_id=None,
             )
             _sync_session_from_conversation(request, conversation, existing_chat_id=None)
             return redirect("ai_nutrition_intake")
@@ -377,8 +403,12 @@ def ai_nutrition_brief_edit(request):
 
 @login_required
 def ai_nutrition_chat_list(request):
+    active_chat_id = request.session.get(AI_NUTRITION_CHAT_SESSION_KEY)
     content_vm = build_chat_list_content(
-        AiNutritionChat.objects.filter(user=request.user).order_by("-updated_at", "-id")
+        AiNutritionChat.objects.filter(user=request.user)
+        .select_related("proposal")
+        .order_by("-updated_at", "-id"),
+        active_chat_id=active_chat_id,
     )
 
     base_vm = BaseVM(
@@ -387,6 +417,12 @@ def ai_nutrition_chat_list(request):
     )
 
     return render(request, "notas/ai_chats/list.html", base_vm.as_context())
+
+
+@login_required
+def ai_nutrition_chat_new(request):
+    _clear_active_chat_session(request)
+    return redirect("ai_nutrition_intake")
 
 
 @login_required

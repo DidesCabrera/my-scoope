@@ -193,3 +193,67 @@ Regla operativa:
 - las áreas de servicio tienen una matriz de dependencias propia;
 - `commands` puede coordinar servicios de menor nivel, pero áreas como `food_catalog`, `comparisons`, `notifications` y `auth_integration` no deben empezar a importar commands;
 - carpetas legacy vacías preservadas por ZIP no cuentan como entradas activas, pero cualquier módulo Python nuevo sí debe ser asignado.
+
+### Estado Patch 28
+
+El Patch 28 declara fronteras ejecutables para los modelos del dominio en:
+
+- `notas/domain/model_boundaries.py`
+- `docs/current/architecture/domain_model_boundaries.md`
+
+Regla operativa:
+
+- `notas/domain/models.py` puede seguir siendo un archivo único por compatibilidad Django, pero cada modelo debe pertenecer a una frontera explícita;
+- las relaciones ORM entre fronteras deben estar permitidas por `DOMAIN_MODEL_DEPENDENCY_POLICIES`;
+- antes de dividir físicamente `models.py`, los tests deben asegurar que no se pierda propiedad ni se creen dependencias accidentales;
+- cualquier modelo nuevo debe agregarse a `DOMAIN_MODEL_BOUNDARIES` en el mismo patch que lo introduce.
+
+### Estado Patch 29
+
+El Patch 29 inicia la modularización física de `notas.domain.models` con grupos de bajo riesgo:
+
+- `notas/domain/model_modules/auth_integration.py`
+- `notas/domain/model_modules/comparisons.py`
+
+Regla operativa:
+
+- `notas.domain.models` sigue siendo el contrato público de importación para todos los modelos;
+- cualquier frontera movida físicamente debe declararse en `DOMAIN_MODEL_MODULE_BY_BOUNDARY_SLUG`;
+- los tests de dominio deben leer tanto el módulo legacy de compatibilidad como los módulos extraídos;
+- antes de mover fronteras centrales como `food_catalog`, `meals`, `dailyplans` o `programs`, se debe validar que no se generen migraciones nuevas por el cambio de ubicación física.
+
+### Estado Patch 30
+
+El Patch 30 continúa la modularización física de `notas.domain.models` moviendo
+fronteras adicionales de bajo/medio riesgo a módulos propios:
+
+- `notas/domain/model_modules/identity.py`
+- `notas/domain/model_modules/sharing.py`
+
+Regla operativa:
+
+- `notas.domain.models` sigue siendo el contrato público de importación;
+- cualquier split físico debe actualizar `DOMAIN_MODEL_MODULE_BY_BOUNDARY_SLUG`;
+- si un módulo extraído necesita referenciar modelos de otra frontera, debe usar
+  referencias ORM diferidas por nombre cuando eso evite imports circulares;
+- cada split debe validar `makemigrations --check --dry-run` para confirmar que
+  mover clases no genera cambios de esquema.
+
+### Estado Patch 31
+
+El Patch 31 continúa la modularización física de `notas.domain.models` moviendo
+la frontera de propuestas IA a:
+
+- `notas/domain/model_modules/proposals.py`
+
+Regla operativa:
+
+- `notas.domain.models` sigue siendo el contrato público de importación para
+  `AiNutritionChat`, `NutritionProposal` y `NutritionProposalAuditEvent`;
+- las relaciones desde propuestas hacia otros modelos deben usar referencias ORM
+  diferidas por nombre si eso evita imports circulares;
+- cada frontera movida físicamente debe quedar declarada en
+  `DOMAIN_MODEL_MODULE_BY_BOUNDARY_SLUG`;
+- el split de propuestas debe validar contratos de proposals, queries, viewmodels
+  e intake, porque es una frontera usada por IA, MCP/API y revisión humana.
+

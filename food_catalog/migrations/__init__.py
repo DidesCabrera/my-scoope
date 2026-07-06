@@ -1,0 +1,1 @@
+"""Food Catalog migrations package."""

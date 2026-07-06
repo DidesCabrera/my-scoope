@@ -122,6 +122,41 @@ class FoodCatalogQueryTests(TestCase):
 
         self.assertAlmostEqual(food["kcal_per_100g"], expected_kcal)
 
+    def test_list_food_catalog_does_not_expose_catalog_snapshot_trace_fields(self):
+        self.chicken.catalog_food_id = 12345
+        self.chicken.catalog_food_ref = "11111111-1111-4111-8111-111111111111"
+        self.chicken.catalog_snapshot_version = "v9"
+        self.chicken.catalog_sync_status = Food.CATALOG_SYNC_SNAPSHOT
+        self.chicken.catalog_snapshot_payload = {
+            "source": "food_catalog",
+            "catalog_food_id": 12345,
+            "catalog_food_ref": "11111111-1111-4111-8111-111111111111",
+        }
+        self.chicken.save(
+            update_fields=[
+                "catalog_food_id",
+                "catalog_food_ref",
+                "catalog_snapshot_version",
+                "catalog_sync_status",
+                "catalog_snapshot_payload",
+            ]
+        )
+
+        catalog = list_food_catalog_for_planning(
+            user=self.user,
+            search="Pechuga",
+        )
+
+        data = catalog.as_dict()
+        food = data["foods"][0]
+
+        self.assertEqual(food["food_id"], self.chicken.id)
+        self.assertNotIn("catalog_food_id", food)
+        self.assertNotIn("catalog_food_ref", food)
+        self.assertNotIn("catalog_snapshot_version", food)
+        self.assertNotIn("catalog_snapshot_payload", food)
+        self.assertNotIn("catalog_sync_status", food)
+
     def test_list_food_catalog_filters_by_search(self):
         catalog = list_food_catalog_for_planning(
             user=self.user,

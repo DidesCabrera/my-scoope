@@ -4,6 +4,9 @@ from typing import Any
 from django.urls import reverse
 
 from notas.application.dto.proposal_iteration_trace import extract_plan_iteration_trace
+from notas.application.proposals.subject_context_warnings import (
+    build_proposal_subject_context_warning,
+)
 from notas.application.proposals.contracts import (
     AI_NUTRITION_BRIEF_INTENT,
     CREATE_DAILYPLAN_INTENT,
@@ -135,6 +138,22 @@ class ProposalIterationTraceVM:
 
 
 @dataclass(frozen=True)
+class ProposalSubjectContextWarningVM:
+    requires_warning: bool
+    source: str
+    source_label: str
+    ppk_weight_source: str
+    ppk_weight_source_label: str
+    calculation_weight_kg: float | None
+    calculation_weight_label: str
+    title: str
+    message: str
+
+    def as_dict(self) -> dict:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
 class ProposalReviewPayloadVM:
     intent: str | None
     entity_title: str
@@ -178,6 +197,7 @@ class ProposalReviewVM:
     status: ProposalReviewStatusVM
     payload: ProposalReviewPayloadVM
     can_apply: bool
+    subject_context_warning: ProposalSubjectContextWarningVM
     applied_result: ProposalAppliedResultVM | None
     iteration_trace: ProposalIterationTraceVM | None
 
@@ -195,6 +215,7 @@ class ProposalReviewVM:
             "status": self.status.as_dict(),
             "payload": self.payload.as_dict(),
             "can_apply": self.can_apply,
+            "subject_context_warning": self.subject_context_warning.as_dict(),
             "applied_result": (
                 self.applied_result.as_dict()
                 if self.applied_result
@@ -273,6 +294,7 @@ def build_proposal_review_vm(
             ),
         ),
         can_apply=can_apply,
+        subject_context_warning=_build_subject_context_warning_vm(proposal),
         applied_result=_build_applied_result_vm(
             proposal=proposal,
             intent=intent,
@@ -281,6 +303,24 @@ def build_proposal_review_vm(
         iteration_trace=_build_iteration_trace_vm(proposal),
     )
 
+
+
+def _build_subject_context_warning_vm(
+    proposal: dict[str, Any],
+) -> ProposalSubjectContextWarningVM:
+    warning = build_proposal_subject_context_warning(proposal).as_dict()
+
+    return ProposalSubjectContextWarningVM(
+        requires_warning=bool(warning.get("requires_warning")),
+        source=_safe_str(warning.get("source")),
+        source_label=_safe_str(warning.get("source_label")),
+        ppk_weight_source=_safe_str(warning.get("ppk_weight_source")),
+        ppk_weight_source_label=_safe_str(warning.get("ppk_weight_source_label")),
+        calculation_weight_kg=warning.get("calculation_weight_kg"),
+        calculation_weight_label=_safe_str(warning.get("calculation_weight_label")),
+        title=_safe_str(warning.get("title")),
+        message=_safe_str(warning.get("message")),
+    )
 
 def _build_iteration_trace_vm(
     proposal: dict[str, Any],

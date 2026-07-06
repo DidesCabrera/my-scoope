@@ -1,0 +1,67 @@
+{% extends "admin_operations/base.html" %}
+{% block title %}Candidate Review{% endblock %}
+{% block content %}
+<div class="page admin-analytics-page admin-operations-page">
+  <section class="card-detail-block admin-operations-candidate-detail">
+    <div class="admin-operations-candidate-summary">
+      <div>
+        <p class="section-eyebrow">Identidad</p>
+        <h3>{{ vm.content.candidate.title }}</h3>
+        {% if vm.content.candidate.brand_name %}<p class="muted-text">{{ vm.content.candidate.brand_name }}</p>{% endif %}
+      </div>
+      <div class="admin-operations-candidate-facts">
+        <span><strong>Provider</strong>{{ vm.content.candidate.provider }}</span>
+        <span><strong>Status</strong>{{ vm.content.candidate.status }}</span>
+        <span><strong>Priority</strong>{{ vm.content.candidate.priority }}</span>
+        <span><strong>Demand</strong>{{ vm.content.candidate.demand_label }}</span>
+        <span><strong>Review</strong>{{ vm.content.candidate.reviewed_label }}</span>
+      </div>
+      {% if vm.content.candidate.source_url %}
+        <a class="btn-secondary btn-secondary--compact" href="{{ vm.content.candidate.source_url }}" target="_blank" rel="noopener noreferrer">Ver fuente externa</a>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Acción operacional</p>
+        <h3>Resolver candidato</h3>
+        <p class="muted-text">La razón queda registrada en las notas del candidato hasta que OPS06 introduzca audit log formal.</p>
+      </div>
+    </div>
+    <form method="post" action="{% url 'admin_operations_food_catalog_candidate_action' vm.content.candidate.pk %}" class="admin-operations-action-form" data-admin-operations-confirm data-confirm-message="Confirmar cambio de estado del candidato Food Catalog?">
+      {% csrf_token %}
+      <label>
+        <span>Razón obligatoria</span>
+        <textarea name="reason" rows="4" placeholder="Ej: Alta demanda y fuente suficiente / Falta etiqueta nutricional / Duplicado probable" required></textarea>
+      </label>
+      <div class="admin-operations-action-grid">
+        {% for action, label in vm.content.allowed_actions %}
+          <button class="btn-secondary" type="submit" name="action" value="{{ action }}">{{ label }}</button>
+        {% endfor %}
+      </div>
+    </form>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Notas operacionales</p>
+        <h3>Contexto acumulado</h3>
+      </div>
+    </div>
+    {% if vm.content.candidate.notes %}
+      <pre class="admin-operations-notes">{{ vm.content.candidate.notes }}</pre>
+    {% else %}
+      <div class="admin-operations-empty-state">
+        <i data-lucide="clipboard" class="home-stat-icon"></i>
+        <div>
+          <h4>Sin notas todavía</h4>
+          <p class="muted-text">La primera acción de OPS03 agregará una nota con actor, transición y razón.</p>
+        </div>
+      </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

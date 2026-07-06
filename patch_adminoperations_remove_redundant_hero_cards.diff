@@ -1,0 +1,288 @@
+diff --git a/admin_operations/templates/admin_operations/account_detail.html b/admin_operations/templates/admin_operations/account_detail.html
+index 4137efb..dd273c9 100644
+--- a/admin_operations/templates/admin_operations/account_detail.html
++++ b/admin_operations/templates/admin_operations/account_detail.html
+@@ -2,15 +2,6 @@
+ {% block title %}Account Credits Operations{% endblock %}
+ {% block content %}
+ <div class="page admin-analytics-page admin-operations-page">
+-  <section class="card-detail-block admin-operations-hero">
+-    <div>
+-      <p class="section-eyebrow">{{ vm.content.period_label }}</p>
+-      <h2>{{ vm.content.title }}</h2>
+-      <p class="muted-text">{{ vm.content.subtitle }}</p>
+-    </div>
+-    <div class="detail-actions"><a class="btn-secondary" href="{% url 'admin_operations_accounts' %}">Volver a Accounts</a><a class="btn-secondary" href="{{ vm.content.wallet.admin_url }}">Django Admin wallet</a></div>
+-  </section>
+-
+   {% if messages %}<div class="admin-operations-messages" aria-live="polite">{% for message in messages %}<div class="admin-operations-message admin-operations-message--{{ message.tags|default:'info' }}">{{ message }}</div>{% endfor %}</div>{% endif %}
+ 
+   <section class="card-detail-block admin-operations-wallet-summary">
+diff --git a/admin_operations/templates/admin_operations/accounts.html b/admin_operations/templates/admin_operations/accounts.html
+index 2dd41a7..e180c27 100644
+--- a/admin_operations/templates/admin_operations/accounts.html
++++ b/admin_operations/templates/admin_operations/accounts.html
+@@ -2,18 +2,6 @@
+ {% block title %}Accounts & Credits Operations{% endblock %}
+ {% block content %}
+ <div class="page admin-analytics-page admin-operations-page">
+-  <section class="card-detail-block admin-operations-hero">
+-    <div>
+-      <p class="section-eyebrow">{{ vm.content.period_label }}</p>
+-      <h2>Operaciones de cuentas y créditos</h2>
+-      <p class="muted-text">Revisión staff-only de wallets, reservas abiertas y contexto comercial antes de ajustes manuales.</p>
+-    </div>
+-    <div class="detail-actions">
+-      <a class="btn-secondary" href="{% url 'admin_operations_overview' %}">Volver al overview</a>
+-      <a class="btn-secondary" href="/admin/accounts/creditwallet/">Django Admin wallets</a>
+-    </div>
+-  </section>
+-
+   {% if messages %}
+     <div class="admin-operations-messages" aria-live="polite">
+       {% for message in messages %}<div class="admin-operations-message admin-operations-message--{{ message.tags|default:'info' }}">{{ message }}</div>{% endfor %}
+diff --git a/admin_operations/templates/admin_operations/ai_assistant.html b/admin_operations/templates/admin_operations/ai_assistant.html
+index 4baeaf9..051a486 100644
+--- a/admin_operations/templates/admin_operations/ai_assistant.html
++++ b/admin_operations/templates/admin_operations/ai_assistant.html
+@@ -2,18 +2,6 @@
+ {% block title %}AI Assistant Operations{% endblock %}
+ {% block content %}
+ <div class="page admin-analytics-page admin-operations-page">
+-  <section class="card-detail-block admin-operations-hero">
+-    <div>
+-      <p class="section-eyebrow">{{ vm.content.period_label }}</p>
+-      <h2>Operaciones de AI Assistant</h2>
+-      <p class="muted-text">Revisión staff-only de errores, bloqueos, propuestas AI/MCP pendientes y cuotas que pueden explicar restricciones de acceso.</p>
+-    </div>
+-    <div class="detail-actions">
+-      <a class="btn-secondary" href="{% url 'admin_operations_overview' %}">Volver al overview</a>
+-      <a class="btn-secondary" href="/admin/ai_assistant/aiusageevent/usage-dashboard/">Usage dashboard</a>
+-    </div>
+-  </section>
+-
+   {% if messages %}
+     <div class="admin-operations-messages" aria-live="polite">
+       {% for message in messages %}
+diff --git a/admin_operations/templates/admin_operations/ai_proposal_detail.html b/admin_operations/templates/admin_operations/ai_proposal_detail.html
+index 4400135..5818c31 100644
+--- a/admin_operations/templates/admin_operations/ai_proposal_detail.html
++++ b/admin_operations/templates/admin_operations/ai_proposal_detail.html
+@@ -2,18 +2,6 @@
+ {% block title %}AI Proposal Operations{% endblock %}
+ {% block content %}
+ <div class="page admin-analytics-page admin-operations-page">
+-  <section class="card-detail-block admin-operations-hero">
+-    <div>
+-      <p class="section-eyebrow">OPS05 · AI proposal review</p>
+-      <h2>{{ vm.content.title }}</h2>
+-      <p class="muted-text">{{ vm.content.source }} · {{ vm.content.status }} · {{ vm.content.created_by_label }} · {{ vm.content.created_label }}</p>
+-    </div>
+-    <div class="detail-actions">
+-      <a class="btn-secondary" href="{% url 'admin_operations_ai_assistant' %}">Volver a AI Operations</a>
+-      <a class="btn-secondary" href="{{ vm.content.admin_url }}">Django Admin</a>
+-    </div>
+-  </section>
+-
+   {% if messages %}
+     <div class="admin-operations-messages" aria-live="polite">
+       {% for message in messages %}<div class="admin-operations-message admin-operations-message--{{ message.tags|default:'info' }}">{{ message }}</div>{% endfor %}
+diff --git a/admin_operations/templates/admin_operations/audit_log.html b/admin_operations/templates/admin_operations/audit_log.html
+index 10f8e44..4030bb9 100644
+--- a/admin_operations/templates/admin_operations/audit_log.html
++++ b/admin_operations/templates/admin_operations/audit_log.html
+@@ -2,18 +2,6 @@
+ {% block title %}Audit Log Operations{% endblock %}
+ {% block content %}
+ <div class="page admin-analytics-page admin-operations-page">
+-  <section class="card-detail-block admin-operations-hero">
+-    <div>
+-      <p class="section-eyebrow">{{ vm.content.period_label }}</p>
+-      <h2>Audit log operacional</h2>
+-      <p class="muted-text">Registro append-only de acciones staff ejecutadas desde Admin Operations. Este log no reemplaza los ledger/audit propios de cada dominio: los consolida como trazabilidad operacional transversal.</p>
+-    </div>
+-    <div class="detail-actions">
+-      <a class="btn-secondary" href="{% url 'admin_operations_overview' %}">Volver al overview</a>
+-      <a class="btn-secondary" href="/admin/admin_operations/adminoperationauditevent/">Django Admin</a>
+-    </div>
+-  </section>
+-
+   <section class="home-stats admin-analytics-kpi-grid admin-operations-kpi-grid" aria-label="Resumen audit OPS06">
+     {% for metric in vm.content.metrics %}
+       <article class="home-stat-card admin-operations-metric-card">
+diff --git a/admin_operations/templates/admin_operations/food_catalog.html b/admin_operations/templates/admin_operations/food_catalog.html
+index 741dd62..9e7bd03 100644
+--- a/admin_operations/templates/admin_operations/food_catalog.html
++++ b/admin_operations/templates/admin_operations/food_catalog.html
+@@ -2,21 +2,6 @@
+ {% block title %}Food Catalog Operations{% endblock %}
+ {% block content %}
+ <div class="page admin-analytics-page admin-operations-page">
+-  <section class="card-detail-block admin-operations-hero">
+-    <div>
+-      <p class="section-eyebrow">OPS03 · Food Catalog operations</p>
+-      <h2>Curación operacional del Food Catalog</h2>
+-      <p class="muted-text">
+-        Primer workflow accionable de Admin Operations. Permite revisar candidatos externos,
+-        aprobarlos para curación, pedir evidencia o rechazarlos con razón obligatoria.
+-      </p>
+-    </div>
+-    <div class="detail-actions">
+-      <a class="btn-secondary" href="{% url 'admin_operations_overview' %}">Volver al overview</a>
+-      <a class="btn-secondary" href="{% url 'admin_analytics_food_catalog' %}">Ver Analytics Food Catalog</a>
+-    </div>
+-  </section>
+-
+   <section class="home-stats admin-analytics-kpi-grid admin-operations-kpi-grid" aria-label="Resumen operacional Food Catalog">
+     {% for metric in vm.content.metrics %}
+       <article class="home-stat-card admin-operations-metric-card">
+diff --git a/admin_operations/templates/admin_operations/food_catalog_candidate_detail.html b/admin_operations/templates/admin_operations/food_catalog_candidate_detail.html
+index 91d7c25..80098b0 100644
+--- a/admin_operations/templates/admin_operations/food_catalog_candidate_detail.html
++++ b/admin_operations/templates/admin_operations/food_catalog_candidate_detail.html
+@@ -2,21 +2,6 @@
+ {% block title %}Candidate Review{% endblock %}
+ {% block content %}
+ <div class="page admin-analytics-page admin-operations-page">
+-  <section class="card-detail-block admin-operations-hero">
+-    <div>
+-      <p class="section-eyebrow">OPS03 · Candidate review</p>
+-      <h2>{{ vm.content.candidate.title }}</h2>
+-      <p class="muted-text">
+-        Revisión guiada del candidato. Aprobar no crea un CatalogFood ni escribe alimentos operacionales:
+-        solo deja el work item listo para curación posterior.
+-      </p>
+-    </div>
+-    <div class="detail-actions">
+-      <a class="btn-secondary" href="{% url 'admin_operations_food_catalog' %}">Volver a Food Catalog</a>
+-      <a class="btn-secondary" href="{{ vm.content.candidate.admin_url }}">Abrir en Django Admin</a>
+-    </div>
+-  </section>
+-
+   <section class="card-detail-block admin-operations-candidate-detail">
+     <div class="admin-operations-candidate-summary">
+       <div>
+diff --git a/admin_operations/templates/admin_operations/overview.html b/admin_operations/templates/admin_operations/overview.html
+index d649bf9..af33d81 100644
+--- a/admin_operations/templates/admin_operations/overview.html
++++ b/admin_operations/templates/admin_operations/overview.html
+@@ -2,21 +2,6 @@
+ {% block title %}Admin Operations{% endblock %}
+ {% block content %}
+ <div class="page admin-analytics-page admin-operations-page">
+-  <section class="card-detail-block admin-operations-hero">
+-    <div>
+-      <p class="section-eyebrow">OPS02 · Operational overview</p>
+-      <h2>Colas accionables para operar My Scoope</h2>
+-      <p class="muted-text">
+-        Este overview convierte señales internas en colas de trabajo staff-only. Food Catalog, Accounts y AI Assistant ya abren workflows guiados; el audit log formal queda para OPS06.
+-      </p>
+-    </div>
+-    <div class="detail-actions">
+-      <a class="btn-secondary" href="{% url 'admin_analytics_alerts' %}">Ver alertas Analytics</a>
+-      <a class="btn-secondary" href="/admin/">Django Admin legacy</a>
+-    </div>
+-  </section>
+-
+-
+ 
+   <section class="card-detail-block admin-operations-closure-card" aria-label="OPS08 V1 closure">
+     <div>
+diff --git a/admin_operations/tests/test_access.py b/admin_operations/tests/test_access.py
+index 603ab56..d122b1c 100644
+--- a/admin_operations/tests/test_access.py
++++ b/admin_operations/tests/test_access.py
+@@ -42,6 +42,7 @@ class AdminOperationsAccessTests(TestCase):
+         self.assertContains(response, "Admin Operations")
+         self.assertContains(response, "Operational Console")
+         self.assertContains(response, "Colas accionables para operar My Scoope")
++        self.assertNotContains(response, "admin-operations-hero")
+ 
+     def test_overview_uses_independent_operations_shell(self):
+         User = get_user_model()
+diff --git a/admin_operations/tests/test_overview_queues.py b/admin_operations/tests/test_overview_queues.py
+index c853e32..727856a 100644
+--- a/admin_operations/tests/test_overview_queues.py
++++ b/admin_operations/tests/test_overview_queues.py
+@@ -84,6 +84,7 @@ class AdminOperationsOverviewQueueTests(TestCase):
+         self.assertEqual(response.status_code, 200)
+         self.assertContains(response, "OPS02 · Operational overview")
+         self.assertContains(response, "Colas accionables para operar My Scoope")
++        self.assertNotContains(response, "admin-operations-hero")
+         self.assertContains(response, "Trabajo operacional")
+         self.assertContains(response, "Action queues")
+         self.assertContains(response, "Warnings operacionales")
+diff --git a/admin_operations/viewmodels.py b/admin_operations/viewmodels.py
+index 4df6eba..b35a15f 100644
+--- a/admin_operations/viewmodels.py
++++ b/admin_operations/viewmodels.py
+@@ -44,10 +44,10 @@ class AdminOperationsWarningVM:
+ 
+ @dataclass(frozen=True)
+ class AdminOperationsOverviewVM:
+-    title: str = "Operational Console"
++    title: str = "Colas accionables para operar My Scoope"
+     subtitle: str = (
+-        "Consola staff-only para revisar colas, resolver incidencias y ejecutar acciones "
+-        "guiadas sin mezclar intervención con analítica estratégica."
++        "Este overview convierte señales internas en colas de trabajo staff-only. "
++        "Food Catalog, Accounts, AI Assistant y Audit Log abren workflows guiados."
+     )
+     period_label: str = "OPS02 · Action queues"
+     current_period: str = "Admin Operations V1"
+@@ -89,10 +89,10 @@ class AdminOperationsCatalogFoodVM:
+ 
+ @dataclass(frozen=True)
+ class AdminOperationsFoodCatalogVM:
+-    title: str = "Food Catalog Operations"
++    title: str = "Curación operacional del Food Catalog"
+     subtitle: str = (
+-        "Cola staff-only para revisar candidatos externos y alimentos master antes de "
+-        "publicación, solver readiness o descarte."
++        "Permite revisar candidatos externos, aprobarlos para curación, pedir evidencia "
++        "o rechazarlos con razón obligatoria."
+     )
+     period_label: str = "OPS03 · Food Catalog operations"
+     current_period: str = "OPS03 · Food Catalog"
+@@ -157,10 +157,10 @@ class AdminOperationsCreditReservationVM:
+ 
+ @dataclass(frozen=True)
+ class AdminOperationsAccountsVM:
+-    title: str = "Accounts & Credits Operations"
++    title: str = "Operaciones de cuentas y créditos"
+     subtitle: str = (
+-        "Consola staff-only para revisar wallets, reservas activas y ajustes manuales "
+-        "con razón obligatoria y ledger append-only."
++        "Revisión staff-only de wallets, reservas abiertas y contexto comercial antes "
++        "de ajustes manuales."
+     )
+     period_label: str = "OPS04 · Accounts and credits operations"
+     current_period: str = "OPS04 · Accounts & Credits"
+@@ -226,10 +226,10 @@ class AdminOperationsAIQuotaVM:
+ 
+ @dataclass(frozen=True)
+ class AdminOperationsAIVM:
+-    title: str = "AI Assistant Operations"
++    title: str = "Operaciones de AI Assistant"
+     subtitle: str = (
+-        "Consola staff-only para revisar errores/bloqueos IA, propuestas AI/MCP "
+-        "pendientes y cuotas que explican restricciones de acceso."
++        "Revisión staff-only de errores, bloqueos, propuestas AI/MCP pendientes y "
++        "cuotas que pueden explicar restricciones de acceso."
+     )
+     period_label: str = "OPS05 · AI Assistant operations"
+     current_period: str = "OPS05 · AI Assistant"
+@@ -258,10 +258,10 @@ class AdminOperationsAuditEventVM:
+ 
+ @dataclass(frozen=True)
+ class AdminOperationsAuditLogVM:
+-    title: str = "Audit Log Operations"
++    title: str = "Audit log operacional"
+     subtitle: str = (
+-        "Registro staff-only append-only de acciones ejecutadas desde Admin Operations, "
+-        "con actor, target, razón, estado anterior y estado nuevo."
++        "Registro append-only de acciones staff ejecutadas desde Admin Operations. "
++        "Consolida trazabilidad operacional transversal sin reemplazar los ledgers de dominio."
+     )
+     period_label: str = "OPS06 · Operational audit log"
+     current_period: str = "OPS06 · Audit Log"

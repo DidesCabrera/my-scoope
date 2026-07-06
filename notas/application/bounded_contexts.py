@@ -158,8 +158,11 @@ APPLICATION_SERVICE_AREAS: tuple[ApplicationServiceArea, ...] = (
     ApplicationServiceArea(
         slug="food_catalog",
         label="Food Catalog",
-        entries=("food_imports",),
-        responsibility="Core-food catalog, import normalization, USDA mapping and visibility policy.",
+        entries=("food_imports", "food_catalog_snapshots"),
+        responsibility=(
+            "Core-food catalog, import normalization, USDA mapping, "
+            "snapshot publication helpers and visibility policy."
+        ),
     ),
     ApplicationServiceArea(
         slug="notifications",
@@ -259,7 +262,7 @@ APPLICATION_CONTEXT_DEPENDENCY_POLICIES: tuple[ApplicationContextDependencyPolic
     ),
     ApplicationContextDependencyPolicy(
         source_slug="read_models",
-        allowed_dependency_slugs=("shared_kernel", "domain_services"),
+        allowed_dependency_slugs=("shared_kernel", "read_models", "domain_services"),
         rationale=(
             "Read models may use DTOs/validators and existing nutrition/food "
             "helpers, but should not depend on feature orchestrators such as "
@@ -303,18 +306,19 @@ APPLICATION_CONTEXT_DEPENDENCY_POLICIES: tuple[ApplicationContextDependencyPolic
             "read_models",
             "domain_services",
             "ai_nutrition_flow",
+            "proposal_review",
         ),
         rationale=(
             "API/MCP application tools orchestrate safe read/write/use-case "
-            "entrypoints without being imported by business contexts."
+            "entrypoints, including reviewable proposal creation, without being imported by business contexts."
         ),
     ),
     ApplicationContextDependencyPolicy(
         source_slug="proposal_review",
-        allowed_dependency_slugs=("shared_kernel", "domain_services"),
+        allowed_dependency_slugs=("shared_kernel", "read_models", "domain_services"),
         rationale=(
-            "Proposal review can reuse stable payload contracts and entity "
-            "creation commands while staying independent from AI chat/tools."
+            "Proposal review can reuse stable payload contracts, read models and entity "
+            "creation commands while staying independent from AI chat orchestration."
         ),
     ),
 )

@@ -2,7 +2,7 @@ from pathlib import Path
 import unittest
 
 
-DOC_PATH = Path("docs/architecture/mcp_list_user_proposals_test.md")
+DOC_PATH = Path("docs/archive/mcp_stage_logs/mcp_list_user_proposals_test.md")
 
 
 class MCPListUserProposalsDocumentationTests(unittest.TestCase):

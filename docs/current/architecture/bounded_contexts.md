@@ -74,7 +74,7 @@ Ejemplo aplicado:
 | Cache Builders | `cache` | Proyecciones derivadas y summaries cacheados. |
 | Entity Commands | `commands` | Operaciones write-side de foods, meals, daily plans, programs, sharing y proposals. |
 | Comparisons | `comparisons` | Payloads, snapshots y helpers de comparaciones guardadas. |
-| Food Catalog | `food_imports` | Normalización, importación, catálogo base y mapeo USDA. |
+| Food Catalog Services | `food_imports` | Normalización/importación legacy dentro de `notas`; debe evolucionar hacia Food Catalog App como fuente maestra que alimenta snapshots operativos `notas.Food`. |
 | Notifications | `notifications` | Builders de contenido saliente. |
 | Nutrition Services | `nutrition` | Agregación nutricional, totales, KPIs y helpers de peso. |
 | Auth Integration | `mcp_user_tokens`, `oauth_authorization_codes` | Servicios de tokens MCP y códigos OAuth. |
@@ -87,7 +87,7 @@ Ejemplo aplicado:
 | Cache Builders | Food Catalog | Reutiliza normalización de nombres/display de alimentos. |
 | Entity Commands | Cache Builders, Comparisons, Food Catalog, Nutrition Services | Coordina servicios de menor nivel como entrypoint de escritura. |
 | Comparisons | — | Mantiene helpers de comparación autocontenidos. |
-| Food Catalog | — | Área base de importación/normalización. |
+| Food Catalog Services | — | Área base de importación/normalización legacy; no debe hacer depender Meals/DailyPlans directamente de fuentes externas. |
 | Notifications | — | No coordina reglas de negocio ni commands. |
 | Nutrition Services | Food Catalog | Agregaciones nutricionales reutilizan normalización de alimentos. |
 | Auth Integration | — | OAuth/MCP token services se mantienen aislados de features. |

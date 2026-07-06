@@ -455,3 +455,266 @@
         white-space: normal;
     }
 }
+/* =========================================
+   ONB04 — PROFILE SECTIONS
+   ========================================= */
+
+.profile-section-card {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+
+    width: 100%;
+    padding: 16px;
+
+    background: var(--surface-card);
+    color: var(--text-main);
+
+    border: 1px solid var(--panel-row-separator);
+    border-radius: 18px;
+    box-shadow: none;
+}
+
+.profile-section-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.profile-section-card__header--with-action {
+    align-items: center;
+}
+
+.profile-section-card__title-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+
+    min-width: 0;
+}
+
+.profile-section-card__eyebrow {
+    margin: 0;
+
+    color: var(--text-muted);
+
+    font-size: 11px;
+    line-height: 1.2;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.profile-section-card__title-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    min-width: 0;
+}
+
+.profile-section-card__title-row h2 {
+    margin: 0;
+
+    color: var(--text-main);
+
+    font-size: 18px;
+    line-height: 1.2;
+    font-weight: 650;
+}
+
+.profile-section-card__icon {
+    width: 18px;
+    height: 18px;
+
+    color: var(--text-muted);
+    stroke-width: 2;
+
+    flex-shrink: 0;
+}
+
+.profile-section-card__title-wrap p:not(.profile-section-card__eyebrow) {
+    max-width: 760px;
+    margin: 0;
+
+    color: var(--text-muted);
+
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.profile-section-card__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.profile-section-card__grid--nutrition {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.profile-section-card__item {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+
+    min-width: 0;
+    padding: 13px 14px;
+
+    background: var(--surface-card-muted);
+    border: 1px solid var(--panel-row-separator);
+    border-radius: 14px;
+}
+
+.profile-section-card__item span {
+    color: var(--text-muted);
+
+    font-size: 11px;
+    line-height: 1.2;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.profile-section-card__item strong {
+    color: var(--text-main);
+
+    font-size: 14px;
+    line-height: 1.35;
+    font-weight: 620;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.profile-section-card__item small {
+    color: var(--text-muted);
+
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+.profile-edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+
+    padding: 14px;
+
+    background: var(--surface-card-muted);
+    border: 1px solid var(--panel-row-separator);
+    border-radius: 16px;
+}
+
+.profile-edit-form__header {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.profile-edit-form__header h3 {
+    margin: 0;
+
+    color: var(--text-main);
+
+    font-size: 15px;
+    line-height: 1.2;
+    font-weight: 650;
+}
+
+.profile-edit-form__header p {
+    margin: 0;
+
+    color: var(--text-muted);
+
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.profile-edit-form__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.profile-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    min-width: 0;
+}
+
+.profile-form-field label {
+    color: var(--text-muted);
+
+    font-size: 12px;
+    line-height: 1.2;
+    font-weight: 600;
+}
+
+.profile-form-field label span {
+    font-weight: 500;
+}
+
+.profile-form-input {
+    min-height: 38px;
+    width: 100%;
+    padding: 8px 10px;
+
+    background: var(--surface-card);
+    color: var(--text-main);
+
+    border: 1px solid var(--panel-row-separator);
+    border-radius: 12px;
+
+    font: inherit;
+    font-size: 13px;
+}
+
+.profile-form-input:focus {
+    outline: 2px solid var(--interactive-primary);
+    outline-offset: 1px;
+}
+
+.profile-form-errors {
+    margin: 0;
+    padding-left: 18px;
+
+    color: var(--danger, #d44848);
+
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.profile-edit-form__button {
+    align-self: flex-start;
+}
+
+@media (max-width: 980px) {
+    .profile-section-card,
+    .profile-edit-form {
+        padding: 14px;
+    }
+
+    .profile-section-card__header,
+    .profile-section-card__header--with-action {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .profile-section-card__grid,
+    .profile-section-card__grid--nutrition,
+    .profile-edit-form__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-section-card__item strong {
+        white-space: normal;
+    }
+
+    .profile-edit-form__button {
+        align-self: stretch;
+    }
+}

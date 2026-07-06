@@ -1,0 +1,401 @@
+{% extends "admin_analytics/base.html" %}
+{% block title %}Food Catalog Analytics{% endblock %}
+{% block content %}
+<div class="page admin-analytics-page">
+  {% include "admin_analytics/_operations_bridge.html" with title="Curar candidatos y alimentos del catálogo" message="Cuando Analytics detecte candidatos, falta de evidencia o alimentos pendientes, resuelve la cola desde Food Catalog Operations." href="/staff/operations/food-catalog/" cta="Operar Food Catalog" icon="database" %}
+  <section class="home-stats admin-analytics-kpi-grid" aria-label="Señales de salud de Food Catalog">
+    {% for signal in vm.content.health_signals %}
+      <article class="home-stat-card admin-analytics-health admin-analytics-health--{{ signal.status }}">
+        <div class="home-stat-top">
+          <i data-lucide="activity" class="home-stat-icon"></i>
+          <span class="home-stat-label">{{ signal.label }}</span>
+        </div>
+        <h3>{{ signal.value }}</h3>
+        <p class="muted-text">{{ signal.description }}</p>
+      </article>
+    {% endfor %}
+  </section>
+
+  {% for section in vm.content.sections %}
+    <section class="card-detail-block">
+      <div class="card-title-row">
+        <div>
+          <p class="section-eyebrow">Food Catalog</p>
+          <h3>{{ section.title }}</h3>
+          <p class="muted-text">{{ section.description }}</p>
+        </div>
+      </div>
+      <div class="home-stats admin-analytics-kpi-grid" aria-label="{{ section.title }}">
+        {% for kpi in section.kpis %}
+          <article class="home-stat-card">
+            <div class="home-stat-top">
+              <i data-lucide="database" class="home-stat-icon"></i>
+              <span class="home-stat-label">{{ kpi.label }}</span>
+            </div>
+            <h3>{{ kpi.value }}</h3>
+            {% if kpi.helper %}
+              <p class="muted-text">{{ kpi.helper }}</p>
+            {% endif %}
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  {% endfor %}
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">CatalogFood</p>
+        <h3>Estados de curaduría</h3>
+        <p class="muted-text">Volumen, creación reciente, calidad promedio y habilitación solver por status.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Total</th>
+            <th>7d</th>
+            <th>Quality avg</th>
+            <th>Solver enabled</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in vm.content.status_rows %}
+            <tr>
+              <td><strong>{{ row.status }}</strong></td>
+              <td>{{ row.total }}</td>
+              <td>{{ row.created_7d }}</td>
+              <td>{{ row.avg_quality }}</td>
+              <td>{{ row.solver_enabled }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="5">No hay alimentos maestros registrados.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Origen</p>
+        <h3>Fuentes del catálogo maestro</h3>
+        <p class="muted-text">Distribución por source_type, calidad promedio y alimentos publicados.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead>
+          <tr>
+            <th>Source type</th>
+            <th>Total</th>
+            <th>7d</th>
+            <th>Quality avg</th>
+            <th>Published</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in vm.content.source_rows %}
+            <tr>
+              <td><strong>{{ row.source_type }}</strong></td>
+              <td>{{ row.total }}</td>
+              <td>{{ row.created_7d }}</td>
+              <td>{{ row.avg_quality }}</td>
+              <td>{{ row.published }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="5">No hay source_type para mostrar.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Evidencia</p>
+        <h3>Completitud de portions, aliases y sources</h3>
+        <p class="muted-text">Filas auxiliares y CatalogFoods que aún no tienen esa pieza de evidencia.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead>
+          <tr>
+            <th>Tipo</th>
+            <th>Total</th>
+            <th>Foods sin dato</th>
+            <th>7d</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in vm.content.evidence_rows %}
+            <tr>
+              <td><strong>{{ row.label }}</strong></td>
+              <td>{{ row.total }}</td>
+              <td>{{ row.foods_missing }}</td>
+              <td>{{ row.created_7d }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="4">No hay evidencia registrada.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Licencias</p>
+        <h3>Estado legal de fuentes</h3>
+        <p class="muted-text">Conteo de fuentes trazables por license_status.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead>
+          <tr>
+            <th>License status</th>
+            <th>Sources</th>
+            <th>Foods</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in vm.content.license_rows %}
+            <tr>
+              <td><strong>{{ row.license_status }}</strong></td>
+              <td>{{ row.total }}</td>
+              <td>{{ row.foods }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="3">No hay fuentes con licencia registrada.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Imports</p>
+        <h3>Batches por status</h3>
+        <p class="muted-text">Filas procesadas, importadas, omitidas y fallidas por estado de batch.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Batches</th>
+            <th>Rows</th>
+            <th>Imported</th>
+            <th>Skipped</th>
+            <th>Failed</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in vm.content.import_status_rows %}
+            <tr>
+              <td><strong>{{ row.status }}</strong></td>
+              <td>{{ row.total }}</td>
+              <td>{{ row.rows }}</td>
+              <td>{{ row.imported }}</td>
+              <td>{{ row.skipped }}</td>
+              <td>{{ row.failed }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="6">No hay batches de importación.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Imports</p>
+        <h3>Batches por source_type</h3>
+        <p class="muted-text">Lectura de rendimiento por origen de importación.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead>
+          <tr>
+            <th>Source type</th>
+            <th>Batches</th>
+            <th>Completed</th>
+            <th>Failed</th>
+            <th>Imported rows</th>
+            <th>Failed rows</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in vm.content.import_source_rows %}
+            <tr>
+              <td><strong>{{ row.source_type }}</strong></td>
+              <td>{{ row.total }}</td>
+              <td>{{ row.completed }}</td>
+              <td>{{ row.failed }}</td>
+              <td>{{ row.imported }}</td>
+              <td>{{ row.failed_rows }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="6">No hay source_type de imports para mostrar.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">External providers</p>
+        <h3>Referencias externas por proveedor</h3>
+        <p class="muted-text">Referencias vistas/seleccionadas, activas y expiradas.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead>
+          <tr>
+            <th>Provider</th>
+            <th>Refs</th>
+            <th>Active</th>
+            <th>Selected</th>
+            <th>Seen</th>
+            <th>Expired</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in vm.content.provider_reference_rows %}
+            <tr>
+              <td><strong>{{ row.provider }}</strong></td>
+              <td>{{ row.references }}</td>
+              <td>{{ row.active }}</td>
+              <td>{{ row.selected }}</td>
+              <td>{{ row.seen }}</td>
+              <td>{{ row.expired }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="6">No hay referencias externas.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">External providers</p>
+        <h3>Fetch logs recientes</h3>
+        <p class="muted-text">Éxitos, fallos y tasa de éxito de búsquedas externas de los últimos 7 días.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead>
+          <tr>
+            <th>Provider</th>
+            <th>Lookup</th>
+            <th>Total</th>
+            <th>Success</th>
+            <th>Failed</th>
+            <th>Success rate</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in vm.content.provider_fetch_rows %}
+            <tr>
+              <td><strong>{{ row.provider }}</strong></td>
+              <td>{{ row.lookup_type }}</td>
+              <td>{{ row.total }}</td>
+              <td>{{ row.success }}</td>
+              <td>{{ row.failed }}</td>
+              <td>{{ row.success_rate }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="6">No hay fetch logs recientes.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Curation queue</p>
+        <h3>Candidatos por status</h3>
+        <p class="muted-text">Estado y prioridad promedio de la cola de curaduría externa.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Total</th>
+            <th>Priority avg</th>
+            <th>7d</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in vm.content.candidate_status_rows %}
+            <tr>
+              <td><strong>{{ row.status }}</strong></td>
+              <td>{{ row.total }}</td>
+              <td>{{ row.avg_priority }}</td>
+              <td>{{ row.created_7d }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="4">No hay candidatos de curaduría.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Curation queue</p>
+        <h3>Candidatos por razón</h3>
+        <p class="muted-text">Origen de la demanda de curaduría.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead>
+          <tr>
+            <th>Reason</th>
+            <th>Total</th>
+            <th>Priority avg</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in vm.content.candidate_reason_rows %}
+            <tr>
+              <td><strong>{{ row.reason }}</strong></td>
+              <td>{{ row.total }}</td>
+              <td>{{ row.avg_priority }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="3">No hay razones de curaduría para mostrar.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}

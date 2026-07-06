@@ -38,7 +38,14 @@ urlpatterns = [
     path("", include("core.urls")),
 
     # Auth system
+    path("accounts/", include("accounts.urls")),
     path("accounts/", include("allauth.urls")),
+
+    # Internal product intelligence
+    path("staff/analytics/", include("admin_analytics.urls")),
+
+    # Internal product operations
+    path("staff/operations/", include("admin_operations.urls")),
 
     # Main app
     path("app/", include("notas.urls")),

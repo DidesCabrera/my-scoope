@@ -26,6 +26,7 @@ docs/
     operations/
     design/
   decisions/
+  planning/
   archive/
 ```
 
@@ -36,6 +37,10 @@ Contiene documentación vigente. Es la fuente de verdad para implementar nuevas 
 ### `docs/decisions/`
 
 Contiene decisiones arquitectónicas e históricas importantes. Estos documentos explican por qué el sistema llegó a su forma actual.
+
+### `docs/planning/`
+
+Contiene planificación de ciclos futuros o próximos proyectos. Es documentación oficial, pero no representa por sí misma un contrato vigente de implementación. Sirve para conservar contexto estratégico, ordenar prioridades y preparar ciclos de patches antes de mover decisiones estables a `docs/decisions/`.
 
 ### `docs/archive/`
 
@@ -49,15 +54,18 @@ Esa carpeta **no forma parte de la documentación oficial del proyecto** y no de
 
 Las exportaciones para IA deben excluir `manual_docs/`.
 
-## Roadmaps
+## Planificación
 
-Los roadmaps fueron eliminados de `docs/` porque pertenecen a otro contexto de planificación. Esta documentación debe concentrarse en:
+Los planes futuros viven en `docs/planning/`. Deben entenderse como planificación oficial, pero no como contrato vigente de implementación hasta que se traduzcan en cambios de `docs/current/`, decisiones aceptadas o código.
+
+La documentación vigente debe seguir concentrándose en:
 
 - axiomas actuales del sistema;
 - contratos de arquitectura;
 - patrones UI vigentes;
 - decisiones ya tomadas;
-- historia técnica relevante.
+- historia técnica relevante;
+- planes próximos cuando ayuden a orientar ciclos de patches.
 
 ## Cómo usar esta documentación
 
@@ -68,4 +76,6 @@ Antes de agregar una sección nueva:
 3. Leer `docs/current/architecture/section_creation_guide.md`.
 4. Revisar `docs/current/architecture/ui_patterns.md`.
 5. Revisar si existe una doc de feature similar en `docs/current/features/`.
-6. Agregar o actualizar tests cuando la sección incorpore lógica reusable.
+6. Para AI Assistant / LLM externo, leer `docs/current/features/ai_assistant/README.md` antes de tocar chat, prompts, tools u orquestación.
+7. Para ciclos futuros o proyectos próximos, revisar `docs/planning/` y actualizar el plan correspondiente antes de generar patches.
+8. Agregar o actualizar tests cuando la sección incorpore lógica reusable.

@@ -1,0 +1,142 @@
+{% extends "admin_operations/base.html" %}
+{% block title %}AI Assistant Operations{% endblock %}
+{% block content %}
+<div class="page admin-analytics-page admin-operations-page">
+  {% if messages %}
+    <div class="admin-operations-messages" aria-live="polite">
+      {% for message in messages %}
+        <div class="admin-operations-message admin-operations-message--{{ message.tags|default:'info' }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <section class="home-stats admin-analytics-kpi-grid admin-operations-kpi-grid" aria-label="Resumen operacional AI OPS05">
+    {% for metric in vm.content.metrics %}
+      <article class="home-stat-card admin-operations-metric-card">
+        <div class="home-stat-top">
+          <i data-lucide="{{ metric.icon }}" class="home-stat-icon"></i>
+          <span class="home-stat-label">{{ metric.label }}</span>
+        </div>
+        <h3>{{ metric.value }}</h3>
+        {% if metric.helper %}<p class="muted-text">{{ metric.helper }}</p>{% endif %}
+      </article>
+    {% endfor %}
+  </section>
+
+  <section class="card-detail-block">
+    <form class="admin-operations-search-form" method="get">
+      <label>
+        Buscar señales IA
+        <input type="search" name="q" value="{{ vm.content.query }}" placeholder="usuario, acción, error, provider, propuesta...">
+      </label>
+      <button class="btn-secondary" type="submit">Filtrar</button>
+      {% if vm.content.query %}<a class="btn-secondary" href="{% url 'admin_operations_ai_assistant' %}">Limpiar</a>{% endif %}
+    </form>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">AIUsageEvent</p>
+        <h3>Errores y bloqueos recientes</h3>
+        <p class="muted-text">Las acciones reconocen o escalan el evento en metadata; no alteran el estado económico ni el historial de uso.</p>
+      </div>
+    </div>
+    {% if vm.content.events %}
+      <div class="admin-operations-card-list">
+        {% for event in vm.content.events %}
+          <article class="admin-operations-ai-card">
+            <div>
+              <p class="section-eyebrow">{{ event.created_label }} · {{ event.status }}</p>
+              <h4>{{ event.action_type }}</h4>
+              <p class="muted-text">{{ event.user_label }} · {{ event.email }}</p>
+              <p class="admin-operations-queue-card__helper">{{ event.provider_label }} · {{ event.model_name }} · {{ event.error_type }} · {{ event.tokens_label }} tokens · {{ event.credits_label }} créditos</p>
+              <span class="admin-operations-status-pill">{{ event.metadata_state }}</span>
+            </div>
+            <form class="admin-operations-action-form" method="post" action="{% url 'admin_operations_ai_event_action' event.pk %}" data-admin-operations-confirm data-confirm-message="Confirmar revisión del evento IA?">
+              {% csrf_token %}
+              <label>Razón obligatoria<textarea name="reason" required placeholder="Contexto de revisión, causa probable o decisión operacional..."></textarea></label>
+              <div class="admin-operations-inline-actions">
+                <button class="btn-secondary btn-secondary--compact" type="submit" name="action" value="acknowledge">Reconocer</button>
+                <button class="btn-secondary btn-secondary--compact" type="submit" name="action" value="escalate">Escalar</button>
+                <a class="btn-secondary btn-secondary--compact" href="{{ event.admin_url }}">Django Admin</a>
+              </div>
+            </form>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="admin-operations-empty-state"><i data-lucide="circle-check" class="home-stat-icon"></i><div><h4>Sin eventos IA accionables</h4><p class="muted-text">No hay errores o bloqueos recientes para el filtro actual.</p></div></div>
+    {% endif %}
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">NutritionProposal</p>
+        <h3>Propuestas AI/MCP pendientes</h3>
+        <p class="muted-text">Review operacional de propuestas generadas por IA antes de aprobarlas o rechazarlas.</p>
+      </div>
+    </div>
+    {% if vm.content.proposals %}
+      <div class="admin-operations-table-card">
+        <table class="admin-operations-table">
+          <thead><tr><th>Propuesta</th><th>Origen</th><th>Usuario</th><th>Contexto</th><th>Acción</th></tr></thead>
+          <tbody>
+            {% for proposal in vm.content.proposals %}
+              <tr>
+                <td data-label="Propuesta"><strong>{{ proposal.title }}</strong><small>{{ proposal.created_label }}</small>{% if proposal.summary %}<small>{{ proposal.summary }}</small>{% endif %}</td>
+                <td data-label="Origen"><span class="admin-operations-status-pill">{{ proposal.source }}</span></td>
+                <td data-label="Usuario"><span>{{ proposal.created_by_label }}</span></td>
+                <td data-label="Contexto"><span>{{ proposal.dailyplan_label }}</span><small>{{ proposal.status }}</small></td>
+                <td data-label="Acción"><a class="btn-secondary btn-secondary--compact" href="{{ proposal.detail_url }}">Revisar</a></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="admin-operations-empty-state"><i data-lucide="clipboard-check" class="home-stat-icon"></i><div><h4>Sin propuestas IA pendientes</h4><p class="muted-text">No hay propuestas AI/MCP pendientes para el filtro actual.</p></div></div>
+    {% endif %}
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">AI credits</p>
+        <h3>Cuotas con bloqueo o saturación</h3>
+        <p class="muted-text">Permite bloquear/desbloquear acceso IA cuando el modelo de cuotas existente lo soporta.</p>
+      </div>
+    </div>
+    {% if vm.content.quotas %}
+      <div class="admin-operations-card-list">
+        {% for quota in vm.content.quotas %}
+          <article class="admin-operations-ai-card">
+            <div>
+              <p class="section-eyebrow">{{ quota.period }} · {{ quota.plan_code }}</p>
+              <h4>{{ quota.user_label }}</h4>
+              <p class="muted-text">{{ quota.email }}</p>
+              <p class="admin-operations-queue-card__helper">Uso mensual {{ quota.usage_label }} · límite diario {{ quota.daily_limit }}</p>
+              <span class="admin-operations-status-pill">{% if quota.hard_blocked %}hard-blocked{% else %}sobre límite{% endif %}</span>
+            </div>
+            <form class="admin-operations-action-form" method="post" action="{% url 'admin_operations_ai_quota_action' quota.pk %}" data-admin-operations-confirm data-confirm-message="Confirmar cambio de bloqueo de acceso IA?">
+              {% csrf_token %}
+              <label>Razón obligatoria<textarea name="reason" required placeholder="Motivo de bloqueo/desbloqueo..."></textarea></label>
+              <div class="admin-operations-inline-actions">
+                {% if quota.hard_blocked %}
+                  <button class="btn-secondary btn-secondary--compact" type="submit" name="action" value="unblock">Desbloquear IA</button>
+                {% else %}
+                  <button class="btn-secondary btn-secondary--compact" type="submit" name="action" value="block">Bloquear IA</button>
+                {% endif %}
+                <a class="btn-secondary btn-secondary--compact" href="{{ quota.admin_url }}">Django Admin</a>
+              </div>
+            </form>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="admin-operations-empty-state"><i data-lucide="shield-check" class="home-stat-icon"></i><div><h4>Sin cuotas críticas</h4><p class="muted-text">No hay cuotas hard-blocked o saturadas para el filtro actual.</p></div></div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

@@ -6,197 +6,27 @@ from notas.domain.constants.nutrition import (
     CARBS_KCAL_PER_GRAM,
     FAT_KCAL_PER_GRAM,
 )
-import uuid
 from notas.domain.services.nutrition import compute_meal_nutrition
+from notas.domain.model_modules.auth_integration import (
+    MCPUserToken,
+    OAuthAuthorizationCode,
+    OAuthClient,
+)
+from notas.domain.model_modules.comparisons import SavedComparison
+from notas.domain.model_modules.identity import Plan, Profile, Subscription, WeightLog
+from notas.domain.model_modules.sharing import (
+    DailyPlanMealShare,
+    DailyPlanShare,
+    FoodShare,
+    MealShare,
+    ProgramShare,
+)
+from notas.domain.model_modules.proposals import (
+    AiNutritionChat,
+    NutritionProposal,
+    NutritionProposalAuditEvent,
+)
 
-
-
-# ==================================================
-# PLANS / PROFILES / SUBSCRIPTIONS
-# ==================================================
-
-class Plan(models.Model):
-    ROLE_CHOICES = (
-        ("member", "Member"),
-        ("nutritionist", "Nutritionist"),
-    )
-
-    name = models.CharField(max_length=50)
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
-
-    can_create_meal = models.BooleanField(default=False)
-    can_create_dailyplan = models.BooleanField(default=False)
-    can_create_program = models.BooleanField(default=False)
-    can_publish = models.BooleanField(default=False)
-
-    can_fork = models.BooleanField(default=True)
-    can_copy = models.BooleanField(default=False)
-
-
-
-    max_program_duration_days = models.PositiveIntegerField(null=True, blank=True)
-    max_active_subscriptions = models.PositiveIntegerField(null=True, blank=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.name} ({self.role})"
-
-
-class Profile(models.Model):
-    ROLE_CHOICES = (
-        ("member", "Member"),
-        ("nutritionist", "Nutritionist"),
-    )
-
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
-    plan = models.ForeignKey(Plan,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="profiles")
-    is_verified = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.user.username} ({self.role})"
-
-
-class Subscription(models.Model):
-    nutritionist = models.ForeignKey(
-        User, related_name="subscriptions_received", on_delete=models.CASCADE
-    )
-    member = models.ForeignKey(
-        User, related_name="subscriptions_made", on_delete=models.CASCADE
-    )
-
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ("nutritionist", "member")
-
-    def __str__(self):
-        return f"{self.member} → {self.nutritionist}"
-
-
-class MCPUserToken(models.Model):
-    user = models.ForeignKey(
-        User,
-        related_name="mcp_user_tokens",
-        on_delete=models.CASCADE,
-    )
-    name = models.CharField(max_length=120)
-    token_hash = models.CharField(
-        max_length=64,
-        unique=True,
-    )
-    scopes = models.JSONField(default=list)
-    is_active = models.BooleanField(default=True)
-    expires_at = models.DateTimeField(
-        null=True,
-        blank=True,
-    )
-    revoked_at = models.DateTimeField(
-        null=True,
-        blank=True,
-    )
-    last_used_at = models.DateTimeField(
-        null=True,
-        blank=True,
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = [
-            "-created_at",
-            "-id",
-        ]
-
-    def __str__(self):
-        return f"{self.name} ({self.user.username})"
-
-    @property
-    def is_revoked(self):
-        return self.revoked_at is not None
-
-    def has_scope(self, scope: str) -> bool:
-        return scope in self.scopes
-
-
-class OAuthClient(models.Model):
-    client_id = models.CharField(
-        max_length=120,
-        unique=True,
-    )
-    client_name = models.CharField(max_length=160)
-    redirect_uris = models.JSONField(default=list)
-    allowed_scopes = models.JSONField(default=list)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = [
-            "client_name",
-            "id",
-        ]
-
-    def __str__(self):
-        return self.client_name
-
-    def allows_redirect_uri(self, redirect_uri: str) -> bool:
-        return redirect_uri in self.redirect_uris
-
-    def allows_scope(self, scope: str) -> bool:
-        return scope in self.allowed_scopes
-
-    def allows_scopes(self, scopes: list[str]) -> bool:
-        return all(
-            self.allows_scope(scope)
-            for scope in scopes
-        )
-
-
-class OAuthAuthorizationCode(models.Model):
-    client = models.ForeignKey(
-        OAuthClient,
-        related_name="authorization_codes",
-        on_delete=models.CASCADE,
-    )
-    user = models.ForeignKey(
-        User,
-        related_name="oauth_authorization_codes",
-        on_delete=models.CASCADE,
-    )
-    code_hash = models.CharField(
-        max_length=64,
-        unique=True,
-    )
-    redirect_uri = models.URLField(max_length=500)
-    scopes = models.JSONField(default=list)
-    code_challenge = models.CharField(max_length=160)
-    code_challenge_method = models.CharField(max_length=20)
-    expires_at = models.DateTimeField()
-    used_at = models.DateTimeField(
-        null=True,
-        blank=True,
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = [
-            "-created_at",
-            "-id",
-        ]
-
-    def __str__(self):
-        return f"OAuth code for {self.user.username} / {self.client.client_id}"
-
-    @property
-    def is_used(self):
-        return self.used_at is not None
 
 
 # ==================================================
@@ -204,6 +34,18 @@ class OAuthAuthorizationCode(models.Model):
 # ==================================================
 
 class Food(models.Model):
+    CATALOG_SYNC_NONE = "none"
+    CATALOG_SYNC_SNAPSHOT = "snapshot"
+    CATALOG_SYNC_STALE = "stale"
+    CATALOG_SYNC_UNLINKED = "unlinked"
+
+    CATALOG_SYNC_CHOICES = [
+        (CATALOG_SYNC_NONE, "None"),
+        (CATALOG_SYNC_SNAPSHOT, "Snapshot"),
+        (CATALOG_SYNC_STALE, "Stale"),
+        (CATALOG_SYNC_UNLINKED, "Unlinked"),
+    ]
+
     VISIBILITY_CORE = "core"
     VISIBILITY_EXTENDED = "extended"
     VISIBILITY_HIDDEN = "hidden"
@@ -214,6 +56,22 @@ class Food(models.Model):
         (VISIBILITY_EXTENDED, "Extended"),
         (VISIBILITY_HIDDEN, "Hidden"),
         (VISIBILITY_REJECTED, "Rejected"),
+    ]
+
+    PREPARATION_UNKNOWN = "unknown"
+    PREPARATION_RAW = "raw"
+    PREPARATION_COOKED = "cooked"
+    PREPARATION_DRY = "dry"
+    PREPARATION_HYDRATED = "hydrated"
+    PREPARATION_READY_TO_EAT = "ready_to_eat"
+
+    PREPARATION_STATE_CHOICES = [
+        (PREPARATION_UNKNOWN, "Unknown"),
+        (PREPARATION_RAW, "Raw"),
+        (PREPARATION_COOKED, "Cooked"),
+        (PREPARATION_DRY, "Dry"),
+        (PREPARATION_HYDRATED, "Hydrated"),
+        (PREPARATION_READY_TO_EAT, "Ready to eat"),
     ]
 
     name = models.CharField(max_length=100)
@@ -262,6 +120,21 @@ class Food(models.Model):
         max_length=120,
         blank=True,
         help_text="Optional nutritional/category subgroup.",
+    )
+
+    preparation_state = models.CharField(
+        max_length=30,
+        choices=PREPARATION_STATE_CHOICES,
+        default=PREPARATION_UNKNOWN,
+        help_text=(
+            "Copied semantic state from Food Catalog when available. Used to avoid "
+            "mixing raw/cooked/dry/hydrated foods in future optimization flows."
+        ),
+    )
+
+    solver_enabled = models.BooleanField(
+        default=False,
+        help_text="Whether this operational food may be used by future nutrition solver candidates.",
     )
 
     fiber_g_per_100g = models.DecimalField(
@@ -338,6 +211,48 @@ class Food(models.Model):
         choices=VISIBILITY_CHOICES,
         default=VISIBILITY_EXTENDED,
         help_text="Food visibility level in search and catalogs.",
+    )
+
+    catalog_food_id = models.PositiveBigIntegerField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text=(
+            "Optional trace to food_catalog.CatalogFood. This is not a ForeignKey "
+            "and is never an operational food ID for Meals, Solver or MCP."
+        ),
+    )
+
+    catalog_food_ref = models.UUIDField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text="Stable Food Catalog reference copied when this Food is created/refreshed from a catalog snapshot.",
+    )
+
+    catalog_snapshot_version = models.CharField(
+        max_length=64,
+        blank=True,
+        help_text="Food Catalog version label used to create or refresh this operational snapshot.",
+    )
+
+    catalog_snapshot_payload = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Auditable payload copied from Food Catalog at snapshot time.",
+    )
+
+    catalog_snapshot_created_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Date/time when the Food Catalog snapshot was materialized into notas.Food.",
+    )
+
+    catalog_sync_status = models.CharField(
+        max_length=24,
+        choices=CATALOG_SYNC_CHOICES,
+        default=CATALOG_SYNC_NONE,
+        help_text="Internal sync state for the optional Food Catalog trace.",
     )
 
     def __str__(self):
@@ -1230,226 +1145,6 @@ class DailyPlanMeal(models.Model):
         return self.total_kcal / total * 100
 
 
-
-# ==================================================
-# AI NUTRITION CHATS
-# ==================================================
-
-class AiNutritionChat(models.Model):
-    STATUS_ACTIVE = "active"
-    STATUS_PROPOSAL_CREATED = "proposal_created"
-
-    STATUS_CHOICES = (
-        (STATUS_ACTIVE, "Activo"),
-        (STATUS_PROPOSAL_CREATED, "Propuesta creada"),
-    )
-
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name="ai_nutrition_chats",
-    )
-
-    title = models.CharField(max_length=140)
-    status = models.CharField(
-        max_length=30,
-        choices=STATUS_CHOICES,
-        default=STATUS_ACTIVE,
-    )
-
-    brief_payload = models.JSONField(default=dict, blank=True)
-    conversation_payload = models.JSONField(default=dict, blank=True)
-    last_message_preview = models.CharField(max_length=220, blank=True)
-
-    proposal = models.ForeignKey(
-        "NutritionProposal",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="source_ai_chats",
-    )
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ["-updated_at", "-id"]
-
-    def __str__(self):
-        return self.title
-
-
-# ==================================================
-# NUTRITION PROPOSALS
-# ==================================================
-
-class NutritionProposal(models.Model):
-    STATUS_DRAFT = "draft"
-    STATUS_PENDING_REVIEW = "pending_review"
-    STATUS_APPROVED = "approved"
-    STATUS_REJECTED = "rejected"
-    STATUS_CANCELLED = "cancelled"
-    STATUS_APPLIED = "applied"
-
-    STATUS_CHOICES = (
-        (STATUS_PENDING_REVIEW, "Pendiente"),
-        (STATUS_REJECTED, "Rechazada"),
-        (STATUS_APPLIED, "Aplicada"),
-    )
-
-    SOURCE_MANUAL = "manual"
-    SOURCE_AI = "ai"
-    SOURCE_SYSTEM = "system"
-    SOURCE_MCP = "mcp"
-
-    SOURCE_CHOICES = (
-        (SOURCE_MANUAL, "Manual"),
-        (SOURCE_AI, "AI"),
-        (SOURCE_SYSTEM, "System"),
-        (SOURCE_MCP, "MCP"),
-    )
-
-    dailyplan = models.ForeignKey(
-        DailyPlan,
-        null=True,
-        blank=True,
-        on_delete=models.CASCADE,
-        related_name="nutrition_proposals",
-    )
-
-    created_by = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name="nutrition_proposals_created",
-    )
-
-    reviewed_by = models.ForeignKey(
-        User,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="nutrition_proposals_reviewed",
-    )
-
-    applied_by = models.ForeignKey(
-        User,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="nutrition_proposals_applied",
-    )
-
-    status = models.CharField(
-        max_length=30,
-        choices=STATUS_CHOICES,
-        default=STATUS_PENDING_REVIEW,
-    )
-
-    source = models.CharField(
-        max_length=20,
-        choices=SOURCE_CHOICES,
-        default=SOURCE_MANUAL,
-    )
-
-    title = models.CharField(max_length=160)
-    summary = models.TextField(blank=True)
-    list_order = models.PositiveIntegerField(default=0)
-    is_read = models.BooleanField(default=False)
-
-    targets = models.JSONField(default=dict, blank=True)
-    current_snapshot = models.JSONField(default=dict, blank=True)
-    proposed_payload = models.JSONField(default=dict, blank=True)
-    validation_summary = models.JSONField(default=dict, blank=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    reviewed_at = models.DateTimeField(null=True, blank=True)
-    applied_at = models.DateTimeField(null=True, blank=True)
-
-    class Meta:
-        ordering = ["-created_at", "-id"]
-
-    def __str__(self):
-        return f"{self.title} ({self.status})"
-
-    @property
-    def is_reviewable(self):
-        return self.status == self.STATUS_PENDING_REVIEW
-
-    @property
-    def is_final(self):
-        return self.status in {
-            self.STATUS_REJECTED,
-            self.STATUS_APPLIED,
-        }
-
-
-
-class NutritionProposalAuditEvent(models.Model):
-    ACTION_CREATED = "created"
-    ACTION_SUBMITTED_FOR_REVIEW = "submitted_for_review"
-    ACTION_APPROVED = "approved"
-    ACTION_REJECTED = "rejected"
-    ACTION_CANCELLED = "cancelled"
-    ACTION_APPLIED = "applied"
-
-    ACTION_CHOICES = (
-        (ACTION_CREATED, "Created"),
-        (ACTION_SUBMITTED_FOR_REVIEW, "Submitted for review"),
-        (ACTION_APPROVED, "Approved"),
-        (ACTION_REJECTED, "Rejected"),
-        (ACTION_CANCELLED, "Cancelled"),
-        (ACTION_APPLIED, "Applied"),
-    )
-
-    proposal = models.ForeignKey(
-        NutritionProposal,
-        on_delete=models.CASCADE,
-        related_name="audit_events",
-    )
-
-    actor = models.ForeignKey(
-        User,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="nutrition_proposal_audit_events",
-    )
-
-    action = models.CharField(
-        max_length=40,
-        choices=ACTION_CHOICES,
-    )
-
-    status_before = models.CharField(
-        max_length=30,
-        blank=True,
-    )
-
-    status_after = models.CharField(
-        max_length=30,
-        blank=True,
-    )
-
-    message = models.TextField(blank=True)
-
-    metadata = models.JSONField(
-        default=dict,
-        blank=True,
-    )
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ["created_at", "id"]
-
-    def __str__(self):
-        return f"{self.proposal_id} - {self.action}"
-    
-
-
-
-
-
 class Program(models.Model):
     MIN_DURATION_WEEKS = 1
     DEFAULT_DURATION_WEEKS = 1
@@ -1634,271 +1329,3 @@ class MealAccess(models.Model):
         User, on_delete=models.SET_NULL, null=True, related_name="+"
     )
     created_at = models.DateTimeField(auto_now_add=True)
-
-
-# ==================================================
-# WEIGHT TRACKING (PROGRESS)
-# ==================================================
-
-
-class WeightLog(models.Model):
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name="weight_logs"
-    )
-
-    date = models.DateField()
-    weight_kg = models.FloatField()
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ["-date", "-created_at"]
-        unique_together = ("user", "date")   # opcional: un registro por día
-
-    def __str__(self):
-        return f"{self.user.username} - {self.weight_kg} kg ({self.date})"
-
-
-
-
-# ==================================================
-# SAVED COMPARISONS
-# ==================================================
-
-class SavedComparison(models.Model):
-    KIND_FOODS = "foods"
-    KIND_MEALS = "meals"
-    KIND_DAILYPLANS = "dailyplans"
-
-    KIND_CHOICES = (
-        (KIND_FOODS, "Alimentos"),
-        (KIND_MEALS, "Comidas"),
-        (KIND_DAILYPLANS, "Planes diarios"),
-    )
-
-    owner = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name="saved_comparisons",
-    )
-    kind = models.CharField(max_length=20, choices=KIND_CHOICES)
-    name = models.CharField(max_length=160)
-    payload = models.JSONField(default=list, blank=True)
-    snapshot_payload = models.JSONField(default=list, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ["-updated_at", "-id"]
-        indexes = [
-            models.Index(fields=["owner", "kind", "-updated_at"], name="savedcomp_owner_kind_idx"),
-        ]
-
-    def __str__(self):
-        return self.name
-
-
-class DailyPlanShare(models.Model):
-    sender = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name="dailyplan_shares_sent"
-    )
-
-    recipient_email = models.EmailField()
-
-    dailyplan = models.ForeignKey(
-        DailyPlan,
-        on_delete=models.CASCADE,
-        related_name="shares"
-    )
-
-    token = models.UUIDField(default=uuid.uuid4, unique=True)
-
-    accepted_by = models.ForeignKey(
-        User,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="dailyplan_shares_received"
-    )
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    dismissed = models.BooleanField(default=False)      # inbox
-    removed = models.BooleanField(default=False)        # librería
-    is_favorite = models.BooleanField(default=False)    # inbox
-    is_read = models.BooleanField(default=False)        # inbox
-    message = models.TextField(blank=True)              # inbox / email
-    subject = models.CharField(max_length=160, blank=True)  # inbox title / email subject
-
-    class Meta:
-        unique_together = ("recipient_email", "dailyplan")
-
-    def __str__(self):
-        return f"{self.sender} shared {self.dailyplan} → {self.recipient_email}"
-
-
-class ProgramShare(models.Model):
-    sender = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name="program_shares_sent"
-    )
-
-    recipient_email = models.EmailField()
-
-    program = models.ForeignKey(
-        Program,
-        on_delete=models.CASCADE,
-        related_name="shares"
-    )
-
-    token = models.UUIDField(default=uuid.uuid4, unique=True)
-
-    accepted_by = models.ForeignKey(
-        User,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="program_shares_received"
-    )
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    dismissed = models.BooleanField(default=False)
-    removed = models.BooleanField(default=False)
-    is_favorite = models.BooleanField(default=False)
-    is_read = models.BooleanField(default=False)
-    message = models.TextField(blank=True)
-    subject = models.CharField(max_length=160, blank=True)
-
-    class Meta:
-        unique_together = ("recipient_email", "program")
-
-    def __str__(self):
-        return f"{self.sender} shared {self.program} → {self.recipient_email}"
-
-
-class MealShare(models.Model):
-    sender = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name="meal_shares_sent"
-    )
-
-    recipient_email = models.EmailField()
-
-    meal = models.ForeignKey(
-        Meal,
-        on_delete=models.CASCADE,
-        related_name="shares"
-    )
-
-    token = models.UUIDField(default=uuid.uuid4, unique=True)
-
-    accepted_by = models.ForeignKey(
-        User,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="meal_shares_received"
-    )
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    dismissed = models.BooleanField(default=False)      # inbox
-    removed = models.BooleanField(default=False)        # librería
-    is_favorite = models.BooleanField(default=False)    # inbox
-    is_read = models.BooleanField(default=False)        # inbox
-    message = models.TextField(blank=True)              # inbox / email
-    subject = models.CharField(max_length=160, blank=True)  # inbox title / email subject
-
-    class Meta:
-        unique_together = ("recipient_email", "meal")
-
-    def __str__(self):
-        return f"{self.sender} shared {self.meal} → {self.recipient_email}"
-
-class FoodShare(models.Model):
-    sender = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name="food_shares_sent"
-    )
-
-    recipient_email = models.EmailField()
-
-    food = models.ForeignKey(
-        Food,
-        on_delete=models.CASCADE,
-        related_name="shares"
-    )
-
-    token = models.UUIDField(default=uuid.uuid4, unique=True)
-
-    accepted_by = models.ForeignKey(
-        User,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="food_shares_received"
-    )
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    dismissed = models.BooleanField(default=False)
-    removed = models.BooleanField(default=False)
-    is_favorite = models.BooleanField(default=False)
-    is_read = models.BooleanField(default=False)
-    message = models.TextField(blank=True)
-    subject = models.CharField(max_length=160, blank=True)
-
-    class Meta:
-        unique_together = ("recipient_email", "food")
-
-    def __str__(self):
-        return f"{self.sender} shared {self.food} → {self.recipient_email}"
-
-
-class DailyPlanMealShare(models.Model):
-    sender = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name="dailyplanmeal_shares_sent"
-    )
-
-    recipient_email = models.EmailField()
-
-    dailyplan_meal = models.ForeignKey(
-        DailyPlanMeal,
-        on_delete=models.CASCADE,
-        related_name="shares"
-    )
-
-    token = models.UUIDField(default=uuid.uuid4, unique=True)
-
-    accepted_by = models.ForeignKey(
-        User,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="dailyplanmeal_shares_received"
-    )
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    dismissed = models.BooleanField(default=False)
-    removed = models.BooleanField(default=False)
-    is_favorite = models.BooleanField(default=False)
-    is_read = models.BooleanField(default=False)
-    message = models.TextField(blank=True)
-    subject = models.CharField(max_length=160, blank=True)
-
-    class Meta:
-        unique_together = ("recipient_email", "dailyplan_meal")
-
-    def __str__(self):
-        return f"{self.sender} shared {self.dailyplan_meal} → {self.recipient_email}"

@@ -1229,3 +1229,120 @@ html[data-theme="dark"] .proposal-review-action--reject {
 .proposal-review-iteration-card__link:hover {
   text-decoration: underline;
 }
+
+/* =========================================================
+   External subject warning
+   ========================================================= */
+
+.proposal-review-apply-form {
+  display: grid;
+  justify-items: end;
+  gap: 12px;
+}
+
+.proposal-review-warning {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  width: min(100%, 640px);
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, rgb(245, 158, 11) 32%, var(--border-soft));
+  border-radius: 18px;
+  background: color-mix(in srgb, rgb(245, 158, 11) 9%, var(--surface-card));
+  color: var(--text-main);
+}
+
+.proposal-review-warning__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: color-mix(in srgb, rgb(245, 158, 11) 18%, var(--surface-card));
+  color: rgb(180, 83, 9);
+}
+
+.proposal-review-warning__icon svg,
+.proposal-review-warning__icon i {
+  width: 18px;
+  height: 18px;
+}
+
+.proposal-review-warning__copy {
+  display: grid;
+  gap: 8px;
+}
+
+.proposal-review-warning__title,
+.proposal-review-warning__text {
+  margin: 0;
+}
+
+.proposal-review-warning__title {
+  font-size: 0.92rem;
+  font-weight: 850;
+}
+
+.proposal-review-warning__text {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.proposal-review-warning__meta {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.proposal-review-warning__meta div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+
+.proposal-review-warning__meta dt,
+.proposal-review-warning__meta dd {
+  margin: 0;
+  font-size: 0.82rem;
+}
+
+.proposal-review-warning__meta dt {
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.proposal-review-warning__meta dd {
+  color: var(--text-main);
+  font-weight: 850;
+}
+
+.proposal-review-warning__ack {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--text-main);
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.proposal-review-warning__ack input {
+  margin-top: 2px;
+}
+
+html[data-theme="dark"] .proposal-review-warning__icon {
+  color: rgb(251, 191, 36);
+}
+
+@media (max-width: 720px) {
+  .proposal-review-apply-form {
+    width: 100%;
+    justify-items: stretch;
+  }
+
+  .proposal-review-warning {
+    width: 100%;
+  }
+}

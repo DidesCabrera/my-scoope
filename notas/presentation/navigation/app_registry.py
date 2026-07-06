@@ -285,6 +285,16 @@ APP_NAVIGATION = (
                         show_in_sidebar=True,
                     ),
                     NavItemSpec(
+                        key="admin_analytics",
+                        label="Admin Analytics",
+                        icon="layout-dashboard",
+                        page_icon="layout-dashboard",
+                        url_name="admin_analytics_overview",
+                        nav_root="admin_analytics",
+                        scope="overview",
+                        show_in_sidebar=True,
+                    ),
+                    NavItemSpec(
                         key="admin_food_catalog",
                         label="Foods Catalog",
                         icon="database",

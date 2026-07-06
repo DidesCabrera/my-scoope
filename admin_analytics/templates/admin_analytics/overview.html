@@ -1,0 +1,79 @@
+{% extends "admin_analytics/base.html" %}
+{% block title %}Admin Analytics{% endblock %}
+{% block content %}
+<div class="page admin-analytics-page">
+  {% include "admin_analytics/_operations_bridge.html" with title="De señales estratégicas a resolución operacional" message="Usa Admin Operations para revisar colas accionables, ejecutar acciones staff y consultar el audit log sin convertir Analytics en una consola mutante." href="/staff/operations/" cta="Ir a Operations" icon="wrench" %}
+  <section class="card-detail-block">
+    <div class="home-stat-top">
+      <i data-lucide="north-star" class="home-stat-icon"></i>
+      <span class="home-stat-label">Métrica norte inicial</span>
+    </div>
+    <h3>{{ vm.content.north_star_value }}</h3>
+    <p><strong>{{ vm.content.north_star_metric }}</strong></p>
+    <p class="muted-text">{{ vm.content.north_star_description }}</p>
+  </section>
+
+  <section class="home-stats admin-analytics-kpi-grid" aria-label="Señales de salud de Admin Analytics">
+    {% for signal in vm.content.health_signals %}
+      <article class="home-stat-card admin-analytics-health admin-analytics-health--{{ signal.status }}">
+        <div class="home-stat-top">
+          <i data-lucide="activity" class="home-stat-icon"></i>
+          <span class="home-stat-label">{{ signal.label }}</span>
+        </div>
+        <h3>{{ signal.value }}</h3>
+        <p class="muted-text">{{ signal.description }}</p>
+      </article>
+    {% endfor %}
+  </section>
+
+  {% for section in vm.content.sections %}
+    <section class="card-detail-block">
+      <div class="card-title-row">
+        <div>
+          <p class="section-eyebrow">Overview ejecutivo</p>
+          <h3>{{ section.title }}</h3>
+          <p class="muted-text">{{ section.description }}</p>
+        </div>
+      </div>
+      <div class="home-stats admin-analytics-kpi-grid" aria-label="{{ section.title }}">
+        {% for kpi in section.kpis %}
+          <article class="home-stat-card">
+            <div class="home-stat-top">
+              <i data-lucide="bar-chart-3" class="home-stat-icon"></i>
+              <span class="home-stat-label">{{ kpi.label }}</span>
+            </div>
+            <h3>{{ kpi.value }}</h3>
+            {% if kpi.helper %}
+              <p class="muted-text">{{ kpi.helper }}</p>
+            {% endif %}
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  {% endfor %}
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Ciclo ADM00–ADM10</p>
+        <h3>Mapa de módulos implementados</h3>
+        <p class="muted-text">Resumen de las pantallas que quedaron disponibles en el cierre del ciclo Admin Analytics.</p>
+      </div>
+    </div>
+    <div class="admin-analytics-section-grid" aria-label="Módulos de Admin Analytics">
+      {% for module in vm.content.modules %}
+        <article class="home-stat-card admin-analytics-module-card">
+          <div class="home-stat-top">
+            <span class="home-stat-label">{{ module.title }}</span>
+            <i data-lucide="{{ module.icon }}" class="home-stat-icon"></i>
+          </div>
+          <p class="muted-text">{{ module.description }}</p>
+          <span class="admin-analytics-module-card__status">{{ module.status }}</span>
+        </article>
+      {% empty %}
+        {% include "admin_analytics/_empty_state.html" with title="Sin módulos registrados" message="El overview aún no recibió el mapa de módulos del ciclo." %}
+      {% endfor %}
+    </div>
+  </section>
+
+</div>
+{% endblock %}

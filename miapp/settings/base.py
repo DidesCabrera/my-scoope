@@ -25,6 +25,11 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.sites",
 
+    "food_catalog.apps.FoodCatalogConfig",
+    "ai_assistant.apps.AiAssistantConfig",
+    "nutrition_solver.apps.NutritionSolverConfig",
+    "admin_analytics.apps.AdminAnalyticsConfig",
+    "admin_operations.apps.AdminOperationsConfig",
     "notas.apps.NotasConfig",
     "accounts",
     "core",
@@ -48,6 +53,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "accounts.middleware.NutritionOnboardingRequiredMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -146,6 +152,125 @@ LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/app/"
 LOGOUT_REDIRECT_URL = "/accounts/login/"
 
+# ==============================
+# ONBOARDING
+# ==============================
+
+NUTRITION_ONBOARDING_GATE_ENABLED = os.environ.get(
+    "NUTRITION_ONBOARDING_GATE_ENABLED",
+    "true",
+).strip().lower() in {"1", "true", "yes", "on"}
+
+NUTRITION_ONBOARDING_ALLOWED_PREFIXES = (
+    "/accounts/",
+    "/admin/",
+    "/staff/",
+    "/static/",
+    "/media/",
+    "/favicon.ico",
+    "/manifest.json",
+    "/serviceworker.js",
+    "/.well-known/",
+    "/oauth/",
+)
+
+
+# ==============================
+# AI ASSISTANT / EXTERNAL LLM
+# ==============================
+
+AI_ASSISTANT_CHAT_ENGINE_MODE = os.environ.get("AI_ASSISTANT_CHAT_ENGINE_MODE", "deterministic").strip()
+AI_ASSISTANT_LLM_PROVIDER = os.environ.get("AI_ASSISTANT_LLM_PROVIDER", "fake").strip()
+AI_ASSISTANT_OPENAI_API_KEY = os.environ.get("AI_ASSISTANT_OPENAI_API_KEY", "").strip()
+AI_ASSISTANT_OPENAI_MODEL = os.environ.get("AI_ASSISTANT_OPENAI_MODEL", "gpt-5.4-mini").strip()
+AI_ASSISTANT_OPENAI_BASE_URL = os.environ.get(
+    "AI_ASSISTANT_OPENAI_BASE_URL",
+    "https://api.openai.com/v1",
+).strip()
+AI_ASSISTANT_OPENAI_TIMEOUT_SECONDS = int(
+    os.environ.get("AI_ASSISTANT_OPENAI_TIMEOUT_SECONDS", "30")
+)
+AI_ASSISTANT_USAGE_OBSERVABILITY_ENABLED = os.environ.get(
+    "AI_ASSISTANT_USAGE_OBSERVABILITY_ENABLED",
+    "true",
+).strip().lower() in {"1", "true", "yes", "on"}
+AI_ASSISTANT_LLM_PRICING_USD_PER_1M_TOKENS = {}
+
+# Technical per-turn guardrails for the external LLM cycle. These are not
+# commercial credits; they prevent accidental runaway context while real usage
+# data is collected.
+AI_ASSISTANT_MAX_HISTORY_MESSAGES = int(os.environ.get("AI_ASSISTANT_MAX_HISTORY_MESSAGES", "8"))
+AI_ASSISTANT_MAX_OUTPUT_TOKENS = int(os.environ.get("AI_ASSISTANT_MAX_OUTPUT_TOKENS", "900"))
+AI_ASSISTANT_MAX_TOOL_LOOP_ITERATIONS = int(os.environ.get("AI_ASSISTANT_MAX_TOOL_LOOP_ITERATIONS", "1"))
+AI_ASSISTANT_MAX_INPUT_TOKENS = int(os.environ.get("AI_ASSISTANT_MAX_INPUT_TOKENS", "6000"))
+AI_ASSISTANT_MAX_CONTEXT_CHARS = int(os.environ.get("AI_ASSISTANT_MAX_CONTEXT_CHARS", "8000"))
+AI_ASSISTANT_MAX_MESSAGE_CHARS = int(os.environ.get("AI_ASSISTANT_MAX_MESSAGE_CHARS", "2000"))
+AI_ASSISTANT_MAX_TOOL_REQUESTS_PER_TURN = int(os.environ.get("AI_ASSISTANT_MAX_TOOL_REQUESTS_PER_TURN", "3"))
+AI_ASSISTANT_ENABLE_REVIEWABLE_PROPOSAL_TOOLS = os.environ.get(
+    "AI_ASSISTANT_ENABLE_REVIEWABLE_PROPOSAL_TOOLS",
+    "false",
+).lower() in {"1", "true", "yes", "on"}
+
+# Patch 59: AI credits are the commercial usage unit. Disabled by default so
+# staging can keep measuring real usage before enforcing membership quotas.
+AI_ASSISTANT_CREDITS_ENABLED = os.environ.get(
+    "AI_ASSISTANT_CREDITS_ENABLED",
+    "false",
+).lower() in {"1", "true", "yes", "on"}
+AI_ASSISTANT_USD_PER_AI_CREDIT = os.environ.get("AI_ASSISTANT_USD_PER_AI_CREDIT", "0.001")
+AI_ASSISTANT_DEFAULT_CREDITS_PER_TURN = int(os.environ.get("AI_ASSISTANT_DEFAULT_CREDITS_PER_TURN", "1"))
+AI_ASSISTANT_CREDIT_PLANS = {
+    "free": {
+        "monthly_credit_limit": 25,
+        "daily_credit_limit": 5,
+        "block_on_exhaustion": True,
+    },
+    "basic": {
+        "monthly_credit_limit": 150,
+        "daily_credit_limit": 30,
+        "block_on_exhaustion": True,
+    },
+    "pro": {
+        "monthly_credit_limit": 1000,
+        "daily_credit_limit": 150,
+        "block_on_exhaustion": True,
+    },
+}
+AI_ASSISTANT_CREDIT_PLAN_ALIASES = {
+    "default": "free",
+    "member": "basic",
+    "nutritionist": "pro",
+}
+AI_ASSISTANT_ACTION_CREDIT_MULTIPLIERS = {}
+
+# Patch 61: optional cost optimization route table. Keep only a default route
+# out of the box so behavior remains unchanged until production config chooses
+# cheaper/stronger models per action_type. Example action-specific routes can be
+# added in deployment settings without exposing tokens to end users.
+AI_ASSISTANT_LLM_MODEL_ROUTES = {
+    "default": {
+        "provider": AI_ASSISTANT_LLM_PROVIDER,
+        "model": AI_ASSISTANT_OPENAI_MODEL if AI_ASSISTANT_LLM_PROVIDER == "openai" else "",
+        "max_output_tokens": AI_ASSISTANT_MAX_OUTPUT_TOKENS,
+        "reason": "default_external_llm_route",
+    },
+}
+
+# Patch 62: production rollout gate. LLM production mode requires both
+# AI_ASSISTANT_CHAT_ENGINE_MODE=llm_production and this rollout flag enabled.
+# This keeps rollback to deterministic explicit and immediate.
+AI_ASSISTANT_LLM_ROLLOUT_ENABLED = os.environ.get(
+    "AI_ASSISTANT_LLM_ROLLOUT_ENABLED",
+    "false",
+).lower() in {"1", "true", "yes", "on"}
+AI_ASSISTANT_LLM_ROLLOUT_MODE = os.environ.get("AI_ASSISTANT_LLM_ROLLOUT_MODE", "off")
+AI_ASSISTANT_LLM_ROLLOUT_USER_IDS = os.environ.get("AI_ASSISTANT_LLM_ROLLOUT_USER_IDS", "")
+AI_ASSISTANT_LLM_ROLLOUT_PERCENT = int(os.environ.get("AI_ASSISTANT_LLM_ROLLOUT_PERCENT", "0"))
+AI_ASSISTANT_LLM_ROLLOUT_STICKY_SALT = os.environ.get(
+    "AI_ASSISTANT_LLM_ROLLOUT_STICKY_SALT",
+    "ai-assistant-rollout-v1",
+)
+
 
 # ==============================
 # EMAIL
@@ -178,6 +303,39 @@ DEFAULT_FROM_EMAIL = os.environ.get(
     "My Scoope <no-reply@myscoope.com>",
 )
 SERVER_EMAIL = os.environ.get("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
+
+
+# ==============================
+# FOOD CATALOG / EXTERNAL PROVIDERS
+# ==============================
+
+FOOD_CATALOG_FATSECRET_ENABLED = _env_bool("FOOD_CATALOG_FATSECRET_ENABLED", False)
+FOOD_CATALOG_FATSECRET_CLIENT_ID = os.environ.get("FOOD_CATALOG_FATSECRET_CLIENT_ID", "").strip()
+FOOD_CATALOG_FATSECRET_CLIENT_SECRET = os.environ.get("FOOD_CATALOG_FATSECRET_CLIENT_SECRET", "").strip()
+FOOD_CATALOG_FATSECRET_TOKEN_URL = os.environ.get(
+    "FOOD_CATALOG_FATSECRET_TOKEN_URL",
+    "https://oauth.fatsecret.com/connect/token",
+).strip()
+FOOD_CATALOG_FATSECRET_API_BASE_URL = os.environ.get(
+    "FOOD_CATALOG_FATSECRET_API_BASE_URL",
+    "https://platform.fatsecret.com/rest/server.api",
+).strip()
+FOOD_CATALOG_FATSECRET_TIMEOUT_SECONDS = int(
+    os.environ.get("FOOD_CATALOG_FATSECRET_TIMEOUT_SECONDS", "15")
+)
+
+FOOD_CATALOG_OPEN_FOOD_FACTS_ENABLED = _env_bool("FOOD_CATALOG_OPEN_FOOD_FACTS_ENABLED", False)
+FOOD_CATALOG_OPEN_FOOD_FACTS_API_BASE_URL = os.environ.get(
+    "FOOD_CATALOG_OPEN_FOOD_FACTS_API_BASE_URL",
+    "https://world.openfoodfacts.org",
+).strip()
+FOOD_CATALOG_OPEN_FOOD_FACTS_TIMEOUT_SECONDS = int(
+    os.environ.get("FOOD_CATALOG_OPEN_FOOD_FACTS_TIMEOUT_SECONDS", "15")
+)
+FOOD_CATALOG_OPEN_FOOD_FACTS_USER_AGENT = os.environ.get(
+    "FOOD_CATALOG_OPEN_FOOD_FACTS_USER_AGENT",
+    "MyScoope FoodCatalog/1.0 (contact: support@myscoope.com)",
+).strip()
 
 
 # ==============================

@@ -1,7 +1,9 @@
 --------------------------
 ***COMANDOS VENV - RUNSERVER
 --------------------------
-
+cooking-pot
+pill
+ 
 cd desktop
 cd proyecto_django
 source /Users/felipedides/Desktop/proyecto_django/venv/bin/activate
@@ -11,14 +13,21 @@ python manage.py runserver
 --------------------------
 ***GENERACION ZIP 
 --------------------------
-cooking-pot
-pill
 
 AI (Sin USDA - img - test)
 ./scripts/export_for_chatgpt.sh ai
 
 FULL (Sin USDA - img)
 ./scripts/export_for_chatgpt.sh full
+
+PLANNING (solo /Docs)
+./scripts/export_for_chatgpt.sh planning
+
+ADMIN ANALYTICS
+./scripts/export_for_chatgpt.sh adminanalytics
+
+ADMIN OPERATIONS
+./scripts/export_for_chatgpt.sh adminoperations
 
 COMPLETO (Sin img)
 ./scripts/export_for_chatgpt.sh usda
@@ -31,7 +40,7 @@ FOOD CATALOG
 --------------------------
 
 git add .
-git commit -m "Implementacion Asistente interno de creacion de planes parte 1"
+git commit -m "Mejoras transversales: ACCOUNT (ON-BOARDING V1 - PLANES - BILLING)"
 git push origin main
 
 
@@ -146,10 +155,6 @@ MYSCOOPE_API_BASE_URL=http://127.0.0.1:8000/app
 
 
 
-
-
-
-
 ## Probar entorno local para MCP
 
 cd desktop
@@ -258,21 +263,6 @@ MYSCOOPE_MCP_AUTH_ISSUER_URL
 https://www.myscoope.com
 
 
-
-
-
-
-This usually means your organization verification status hasn’t propagated to the API/app submission flow yet or you’re submitting under a different org/key.
-
-Please try:
-
-Wait up to 30 minutes for the status to update
-
-Generate a new API key (old keys can keep the “not verified” state)
-
-Refresh, log out/in, and confirm you’re on the correct organization in Platform settings
-
-If it still shows “not verified,” tell me: are you submitting via platform.openai.com (API) or publishing a GPT in ChatGPT, and what exact error text do you see?
 
 
 

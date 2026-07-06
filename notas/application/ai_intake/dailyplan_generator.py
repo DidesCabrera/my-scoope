@@ -8,6 +8,7 @@ from django.db import transaction
 
 from notas.application.ai_intake.nutrition_brief import (
     NutritionBrief,
+    apply_subject_context,
     deserialize_brief,
 )
 from notas.application.ai_intake.proposal_from_brief import (
@@ -286,6 +287,7 @@ def generate_dailyplan_proposal_from_brief_proposal(
     if brief.requested_entity != "daily_plan":
         raise DailyPlanGeneratorError("dailyplan_generator_only_supports_daily_plan_briefs")
 
+    brief = apply_subject_context(brief, user=user)
     target_plan = build_dailyplan_target_plan(
         user=user,
         brief=brief,
@@ -330,6 +332,7 @@ def generate_dailyplan_proposal_from_brief_proposal(
                 "proposal_source": source,
                 "generator_version": DAILYPLAN_GENERATOR_VERSION,
                 "target_plan": target_plan.as_targets_dict(),
+                "subject_context": _build_subject_context_snapshot(brief=brief, target_plan=target_plan),
             },
             proposed_payload=payload,
             validation_summary=validation_summary,
@@ -422,6 +425,7 @@ def build_dailyplan_target_plan(
     user,
     brief: NutritionBrief,
 ) -> DailyPlanTargetPlan:
+    brief = apply_subject_context(brief, user=user)
     current_weight = brief.weight_kg if brief.weight_kg is not None else get_current_weight(user)
     profile = TargetEstimationProfile(
         goal=brief.goal,
@@ -435,6 +439,9 @@ def build_dailyplan_target_plan(
         protein_target=brief.protein_target,
         carb_target=brief.carb_target,
         fat_target=brief.fat_target,
+        subject_source=brief.subject_source,
+        ppk_weight_source=brief.ppk_weight_source,
+        requires_library_ppk_warning=brief.requires_library_ppk_warning,
     )
     return estimate_daily_targets(profile)
 
@@ -911,6 +918,7 @@ def _build_validation_summary(
             "strategy": "nutrition_engine_meal_templates_candidate_selector_solver",
             "source_intent": AI_NUTRITION_BRIEF_INTENT,
             "target_plan": target_plan.as_targets_dict(),
+            "subject_context": _build_subject_context_snapshot(brief=brief, target_plan=target_plan),
             "meal_templates": [
                 template.as_dict()
                 for template in build_dailyplan_meal_templates(
@@ -943,7 +951,28 @@ def _build_validation_summary(
             "style_preferences": list(brief.style_preferences),
             "excluded_foods": list(brief.excluded_foods),
             "preferred_foods": list(brief.preferred_foods),
+            "subject_source": brief.subject_source,
+            "ppk_weight_source": brief.ppk_weight_source,
+            "requires_library_ppk_warning": brief.requires_library_ppk_warning,
         },
+    }
+
+
+def _build_subject_context_snapshot(
+    *,
+    brief: NutritionBrief,
+    target_plan: DailyPlanTargetPlan,
+) -> dict:
+    return {
+        "source": brief.subject_source,
+        "ppk_weight_source": brief.ppk_weight_source,
+        "requires_library_ppk_warning": brief.requires_library_ppk_warning,
+        "calculation_weight_kg": round(float(target_plan.weight_kg), 2),
+        "calculation_height_cm": brief.height_cm,
+        "calculation_age_years": brief.age_years,
+        "calculation_sex": brief.sex,
+        "calculation_activity_level": brief.activity_level,
+        "calculation_training_frequency": brief.training_frequency,
     }
 
 
@@ -1086,6 +1115,7 @@ def _build_generated_proposal_summary(
         f"Objetivo: {brief.goal_label}.",
         f"Comidas: {_normalize_meals_per_day(brief.meals_per_day)}.",
         f"Targets usados: {round(target_plan.total_kcal)} kcal, {round(target_plan.protein)} g proteína, {round(target_plan.carbs)} g carbohidratos, {round(target_plan.fat)} g grasa.",
+        f"Sujeto de cálculo: {brief.subject_source_label}.",
     ]
 
     if any(target_plan.estimated_targets.values()):
@@ -1096,6 +1126,9 @@ def _build_generated_proposal_summary(
 
     if brief.excluded_foods:
         pieces.append(f"Excluye: {', '.join(brief.excluded_foods)}.")
+
+    if brief.requires_library_ppk_warning:
+        pieces.append("Advertencia: el PPK de librería puede recalcularse con la ficha personal del usuario si esta propuesta externa se guarda.")
 
     pieces.append("Generador conectado al motor nutricional con Target Estimator formal y solver de porciones v2.")
     return " ".join(pieces)

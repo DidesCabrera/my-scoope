@@ -1,0 +1,27 @@
+{% extends "admin_operations/base.html" %}
+{% block title %}AI Proposal Operations{% endblock %}
+{% block content %}
+<div class="page admin-analytics-page admin-operations-page">
+  {% if messages %}
+    <div class="admin-operations-messages" aria-live="polite">
+      {% for message in messages %}<div class="admin-operations-message admin-operations-message--{{ message.tags|default:'info' }}">{{ message }}</div>{% endfor %}
+    </div>
+  {% endif %}
+
+  <section class="card-detail-block admin-operations-candidate-summary">
+    <div>
+      <p class="section-eyebrow">Contexto</p>
+      <h3>{{ vm.content.dailyplan_label }}</h3>
+      <p class="muted-text">{{ vm.content.summary|default:"Sin resumen disponible." }}</p>
+    </div>
+    <form class="admin-operations-action-form" method="post" action="{% url 'admin_operations_ai_proposal_action' vm.content.pk %}" data-admin-operations-confirm data-confirm-message="Confirmar decisión sobre esta propuesta IA?">
+      {% csrf_token %}
+      <label>Razón obligatoria<textarea name="reason" required placeholder="Motivo de aprobación o rechazo operacional..."></textarea></label>
+      <div class="admin-operations-action-grid">
+        <button class="btn-secondary" type="submit" name="action" value="approve">Aprobar propuesta</button>
+        <button class="btn-secondary" type="submit" name="action" value="reject">Rechazar propuesta</button>
+      </div>
+    </form>
+  </section>
+</div>
+{% endblock %}

@@ -133,7 +133,10 @@ ALLOWED_TOOL_SPECS = {
     ),
     TOOL_LIST_FOOD_CATALOG: MCPToolSpec(
         name=TOOL_LIST_FOOD_CATALOG,
-        description="List readable foods available for AI/MCP nutrition planning.",
+        description=(
+            "List operational foods available for AI/MCP nutrition planning. "
+            "Returned food IDs are only operational My Scoope Food IDs."
+        ),
         api_path="/ai-tools/list-food-catalog/",
         input_schema={
             "type": "object",
@@ -141,7 +144,7 @@ ALLOWED_TOOL_SPECS = {
             "properties": {
                 "search": {
                     "type": "string",
-                    "description": "Optional case-insensitive food name search.",
+                    "description": "Optional case-insensitive operational food name search.",
                 },
                 "limit": {
                     "type": "integer",
@@ -153,7 +156,7 @@ ALLOWED_TOOL_SPECS = {
     TOOL_CREATE_VALIDATED_MEAL_PROPOSAL: MCPToolSpec(
         name=TOOL_CREATE_VALIDATED_MEAL_PROPOSAL,
         description=(
-            "Create a reviewable meal proposal using real food IDs and quantities. "
+            "Create a reviewable meal proposal using operational food IDs and quantities. "
             "This tool does not create a final Meal."
         ),
         api_path="/ai-tools/create-validated-meal-proposal/",
@@ -214,6 +217,10 @@ ALLOWED_TOOL_SPECS = {
                                         "properties": {
                                             "food_id": {
                                                 "type": "integer",
+                                                "description": (
+                                                    "Operational My Scoope Food ID. "
+                                                    "Catalog/master-food IDs are not accepted."
+                                                ),
                                             },
                                             "quantity": {
                                                 "type": "number",
@@ -235,7 +242,7 @@ ALLOWED_TOOL_SPECS = {
         name=TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL,
         description=(
             "Create a reviewable DailyPlan build proposal using proposed meals, "
-            "real food IDs and quantities. This tool does not create a final DailyPlan."
+            "operational food IDs and quantities. This tool does not create a final DailyPlan."
         ),
         api_path="/ai-tools/create-validated-dailyplan-build-proposal/",
         input_schema={
@@ -324,6 +331,10 @@ ALLOWED_TOOL_SPECS = {
                                                             "properties": {
                                                                 "food_id": {
                                                                     "type": "integer",
+                                                                    "description": (
+                                                                        "Operational My Scoope Food ID. "
+                                                                        "Catalog/master-food IDs are not accepted."
+                                                                    ),
                                                                 },
                                                                 "quantity": {
                                                                     "type": "number",

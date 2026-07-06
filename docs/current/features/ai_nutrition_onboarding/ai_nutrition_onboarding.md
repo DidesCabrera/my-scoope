@@ -2,7 +2,7 @@
 
 ## Estado
 
-Decisión vigente de producto/arquitectura. No implementado todavía.
+Implementación v1 completada en el ciclo ONB00–ONB09. ONB08 muestra y exige confirmar la advertencia de PPK antes de aplicar en la librería personal una propuesta calculada con datos externos/manuales. ONB09 agrega cierre QA y smoke coverage del flujo onboarding → ficha → sujeto nutricional → solver → warning.
 
 Este documento define la dirección para convertir el inicio de MyScoope en una experiencia asistida por IA que lleve al usuario regular a su primer plan útil sin exigirle construir manualmente Meals, DailyPlans o Programs desde cero.
 
@@ -106,6 +106,62 @@ Motivos:
 - Resolver bien un DailyPlan permite reutilizar el motor para Programs más adelante.
 - El objetivo inicial es reducir el tiempo hasta el primer plan útil, no resolver todo el journey nutricional en una sola versión.
 
+## UserNutritionProfile y NutritionSubjectContext
+
+La ficha personal y el sujeto de cálculo no son equivalentes.
+
+```text
+UserNutritionProfileDTO
+  = datos persistidos de la ficha personal del usuario autenticado
+
+NutritionSubjectContextDTO
+  = persona/contexto concreto usado para calcular una propuesta
+```
+
+Reglas vigentes:
+
+- `self_profile` usa ficha personal + actividad/frecuencia completada en chat.
+- `external_chat_data` usa datos entregados para otra persona.
+- `manual_chat_data` usa datos temporales de cálculo.
+- Los sujetos externos no deben completar datos faltantes con la ficha del dueño de la cuenta.
+- `requires_library_ppk_warning=True` cuando el sujeto no es `self_profile`.
+
+Esto permite calcular kcal, macros y PPK con el sujeto correcto durante la propuesta, y advertir antes de guardar en la librería personal si el PPK visible será recalculado con el peso personal del dueño.
+
+ONB06 aplica estas reglas en el intake determinístico:
+
+- si el usuario dice que se use su ficha, se prefillean peso, altura, edad y sexo desde `UserNutritionProfile`;
+- si el usuario entrega datos de otra persona, el brief queda marcado como `external_chat_data`;
+- si el usuario entrega datos corporales sin asociarlos a la ficha, el brief queda como `manual_chat_data`;
+- los datos externos/manuales activan `requires_library_ppk_warning`;
+- los datos explícitos de chat ganan sobre defaults de la ficha para esa propuesta.
+
+ONB07 aplica estas reglas al motor nutricional:
+
+- `build_dailyplan_target_plan` vuelve a normalizar el brief contra el sujeto explícito antes de estimar targets;
+- si el sujeto es `self_profile`, el solver usa la ficha persistida y el último `WeightLog`;
+- si el sujeto es externo/manual, el solver usa el peso/altura/edad/sexo/actividad del chat;
+- el PPK/proteína por kg se calcula con el peso del sujeto de cálculo;
+- `targets`, `current_snapshot` y `validation_summary.generator` guardan un `subject_context` de auditoría.
+
+ONB08 usa ese `subject_context` en la revisión de propuestas:
+
+- si `requires_library_ppk_warning=True`, la UI muestra una advertencia explícita antes de aplicar;
+- la advertencia explica que kcal y gramos de macros se conservan;
+- la advertencia explica que PPK y otros indicadores dependientes de perfil se mostrarán con el peso actual de la ficha personal;
+- el endpoint de aplicación exige una confirmación explícita para propuestas externas/manuales.
+
+
+## QA closure
+
+El cierre operativo de ONB v1 queda registrado en:
+
+```text
+docs/current/qa/onboarding_nutrition_v1_qa.md
+```
+
+Ese documento resume los contratos estables, comandos de validación y cobertura de regresión mínima para futuros cambios en onboarding, Profile, AI Intake, NutritionSubjectContext, Solver o Proposal Review.
+
 ## NutritionBrief
 
 El flujo debe construir un brief nutricional explícito antes de generar entidades.
@@ -115,6 +171,9 @@ Puede comenzar como DTO/JSON interno antes de convertirse en modelo persistente.
 Campos sugeridos:
 
 ```text
+subject_source                # self_profile | external_chat_data | manual_chat_data
+ppk_weight_source
+requires_library_ppk_warning
 goal
 requested_entity              # daily_plan | program
 meals_per_day
@@ -213,19 +272,23 @@ proponer → validar → revisar → aprobar → aplicar
 
 ## Relación con Food Catalog
 
-El generador solo debe usar alimentos canónicos publicados o alimentos privados del usuario bajo contrato estable.
+El generador y el futuro LLM externo no deben consultar `food_catalog` directamente.
 
-No debe consultar ni persistir datos externos directamente desde el flujo de generación.
+La generación asistida solo puede usar alimentos operacionales disponibles como `notas.Food`. Si un alimento maestro de Food Catalog todavía no fue materializado como snapshot operativo, entonces no existe para AI/MCP/Solver.
 
 Relación esperada:
 
 ```text
-Food Catalog App publica alimentos confiables
+Food Catalog App cura/publica alimentos maestros
   ↓
-AI Nutrition Onboarding selecciona candidatos compatibles
+Protocolos internos materializan o actualizan notas.Food
   ↓
-Nutrition Management App genera Meals/DailyPlans/Programs
+AI Nutrition Onboarding usa notas.Food mediante tools/servicios permitidos
+  ↓
+Nutrition Management App genera NutritionProposal revisable
 ```
+
+No debe consultar ni persistir datos externos directamente desde el flujo de generación.
 
 ## Arquitectura sugerida
 
@@ -300,7 +363,7 @@ Métricas complementarias:
 ### Etapa 3 — DailyPlan Proposal Generator
 
 - Generar primera propuesta de DailyPlan.
-- Usar Food Catalog / foods existentes bajo contrato estable.
+- Usar alimentos operacionales existentes (`notas.Food`) bajo contrato estable.
 - Validar kcal/macros/tolerancias.
 - Crear `NutritionProposal`.
 - Reutilizar la vista segura de revisión/aprobación.
@@ -484,3 +547,182 @@ Patch 16 debería enfocarse en una de estas direcciones:
 - comparación visual/API entre propuesta anterior y nueva revisión;
 - contrato MCP para leer el estado completo de una cadena de revisiones;
 - pruebas end-to-end MCP real contra el adapter interno con token de usuario.
+
+## Patch 41 · External LLM sobre chat existente
+
+La integración LLM externa debe evolucionar sobre la estructura actual de chat de My Scoope, no como una pantalla paralela.
+
+Contrato de UI:
+
+```text
+AiNutritionChat
+notas/templates/notas/ai_intake.html
+notas/templates/notas/_ai_chat_thread.html
+notas/templates/notas/ai_chats/list.html
+```
+
+Contrato de arquitectura:
+
+```text
+Chat UI existente
+  -> ai_assistant.ChatEngine / AI Assistant Orchestrator
+  -> LLM externo
+  -> tools permitidas
+  -> servicios internos
+  -> NutritionProposal
+```
+
+El LLM puede interpretar, preguntar y explicar. No puede escribir entidades productivas directamente, calcular macros finales como fuente de verdad, acceder a Food Catalog ni aplicar cambios sin aprobación humana.
+
+Ver:
+
+```text
+docs/current/features/ai_assistant/README.md
+docs/decisions/0019-external-llm-over-existing-chat.md
+docs/decisions/0020-ai-assistant-django-app-and-chat-engine.md
+```
+
+
+## Patch 42 · app AI Assistant y ChatEngine
+
+El flujo actual de AI Intake sigue siendo el motor activo, pero desde Patch 42 se adapta al contrato `ChatEngine` definido en la app Django `ai_assistant`.
+
+```text
+notas/interface/views/ai_intake.py
+  -> ai_assistant.application.chat_engines.ChatEngineRequest
+  -> notas.application.ai_intake.chat_engine.DeterministicNutritionIntakeChatEngine
+  -> notas.application.ai_intake.nutrition_brief.start_or_continue_conversation
+```
+
+Esto permite que un futuro motor LLM externo entre por la misma superficie de chat sin duplicar templates ni historial.
+
+## Patch 43 · LLM provider gateway
+
+Desde Patch 43 existe una capa de proveedor LLM dentro de `ai_assistant.infrastructure.providers`.
+
+```text
+LLMProviderRequest
+  -> FakeLLMClient / OpenAIResponsesClient
+  -> LLMProviderResponse
+```
+
+Este gateway prepara la integración externa, pero no cambia todavía el motor activo del chat de onboarding nutricional. La view sigue entrando por `DeterministicNutritionIntakeChatEngine` hasta que un patch posterior incorpore el orquestador LLM.
+
+Reglas vigentes:
+
+- el provider gateway no importa `food_catalog`;
+- no escribe entidades operacionales;
+- no crea ni aplica propuestas;
+- no reenvía metadata interna al proveedor externo;
+- falla de forma controlada si falta configuración.
+
+Ver:
+
+```text
+docs/decisions/0021-llm-provider-gateway.md
+docs/current/features/ai_assistant/README.md
+```
+
+## Actualización ONB00 — ficha personal y sujeto nutricional
+
+El onboarding nutricional asistido debe distinguir entre dos momentos:
+
+```text
+onboarding inicial
+  captura datos personales básicos
+
+primer chat nutricional
+  completa contexto operativo de la propuesta
+```
+
+### Datos capturados en onboarding
+
+El onboarding inicial, conducido por `accounts`, debe capturar solo:
+
+```text
+birth_date
+sex
+height_cm
+weight
+```
+
+La persistencia vive en `notas`:
+
+- `Profile` conserva `birth_date`, `sex`, `height_cm`, `onboarding_completed_at` y `onboarding_version`;
+- `WeightLog` conserva el peso inicial como métrica histórica;
+- futuras queries/services de Body Metrics deben evitar que AI/Solver dependan directamente del modelo histórico de peso.
+
+### Datos completados en el primer chat
+
+El primer chat nutricional debe completar:
+
+```text
+activity_level
+training_frequency
+```
+
+Las preferencias siguientes no se guardan como defaults persistentes en v1:
+
+```text
+goal
+meals_per_day
+complexity_level
+budget_level
+```
+
+Deben mantenerse como contexto del chat o de la propuesta revisable.
+
+### Sujeto nutricional explícito
+
+Antes de calcular una propuesta, el Assistant debe preguntar o resolver si el plan se calcula con la ficha personal del usuario o con datos nuevos.
+
+Tipos conceptuales:
+
+```text
+self_profile
+external_chat_data
+manual_chat_data
+```
+
+El solver debe calcular kcal, macros y PPK usando el sujeto nutricional de la propuesta, no el usuario autenticado de forma implícita.
+
+### Propuestas para otra persona
+
+Si el usuario entrega datos de otra persona, la propuesta se calcula con esos datos. Eso incluye PPK.
+
+Si luego el usuario guarda la propuesta en su librería personal, My Scoope debe advertir que los indicadores dependientes del perfil, como PPK, se recalcularán usando el peso registrado en su ficha personal.
+
+La advertencia debe dejar claro que las calorías y gramos de macros del plan no cambian.
+
+Documento operativo del ciclo:
+
+```text
+docs/planning/onboarding_nutrition_profile_cycle.md
+```
+
+Decisión registrada:
+
+```text
+docs/decisions/0050-onboarding-nutrition-profile-and-subject-context.md
+```
+
+
+## Onboarding nutricional mínimo y Profile
+
+El ciclo ONB00-ONB04 activa una base previa al primer chat:
+
+```text
+accounts conduce el onboarding obligatorio.
+notas.Profile guarda birth_date, sex, height_cm y estado de onboarding.
+WeightLog guarda el peso como métrica corporal histórica.
+Profile muestra la ficha por secciones para no mezclar cuenta, nutrición, métricas y contexto AI/Solver.
+```
+
+La vista Profile debe mantener separadas estas áreas:
+
+- Cuenta: usuario, email, rol, plan y fecha de alta.
+- Perfil nutricional: fecha de nacimiento, edad calculada, sexo nutricional, altura y versión de onboarding.
+- Body Metrics: peso actual, fecha y origen del último registro.
+- AI / Solver: datos que se completan en chat y regla de propuestas para terceros.
+
+En v1, actualizar `birth_date`, `sex` y `height_cm` se hace desde la ficha nutricional. Actualizar peso sigue el flujo de Body Metrics y escribe `WeightLog`; no debe sobrescribir silenciosamente historial corporal.

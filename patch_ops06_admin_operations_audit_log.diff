@@ -1,0 +1,1142 @@
+diff --git a/admin_operations/admin.py b/admin_operations/admin.py
+new file mode 100644
+index 0000000..4e9110a
+--- /dev/null
++++ b/admin_operations/admin.py
+@@ -0,0 +1,35 @@
++from django.contrib import admin
++
++from admin_operations.models import AdminOperationAuditEvent
++
++
++@admin.register(AdminOperationAuditEvent)
++class AdminOperationAuditEventAdmin(admin.ModelAdmin):
++    list_display = ("created_at", "action", "actor_label", "target_app", "target_model", "target_id", "status_before", "status_after")
++    list_filter = ("target_app", "target_model", "action", "source", "created_at")
++    search_fields = ("actor_label", "action", "target_label", "target_id", "reason")
++    readonly_fields = (
++        "actor",
++        "actor_label",
++        "action",
++        "source",
++        "target_app",
++        "target_model",
++        "target_id",
++        "target_label",
++        "status_before",
++        "status_after",
++        "reason",
++        "metadata",
++        "created_at",
++    )
++    ordering = ("-created_at", "-id")
++
++    def has_add_permission(self, request):
++        return False
++
++    def has_change_permission(self, request, obj=None):
++        return False
++
++    def has_delete_permission(self, request, obj=None):
++        return False
+diff --git a/admin_operations/migrations/0001_initial.py b/admin_operations/migrations/0001_initial.py
+new file mode 100644
+index 0000000..edba2b0
+--- /dev/null
++++ b/admin_operations/migrations/0001_initial.py
+@@ -0,0 +1,44 @@
++# Generated for OPS06 Admin Operations audit foundation.
++
++from django.conf import settings
++from django.db import migrations, models
++import django.db.models.deletion
++
++
++class Migration(migrations.Migration):
++
++    initial = True
++
++    dependencies = [
++        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
++    ]
++
++    operations = [
++        migrations.CreateModel(
++            name="AdminOperationAuditEvent",
++            fields=[
++                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
++                ("actor_label", models.CharField(blank=True, max_length=160)),
++                ("action", models.CharField(db_index=True, max_length=120)),
++                ("source", models.CharField(db_index=True, default="OPS06", max_length=20)),
++                ("target_app", models.CharField(db_index=True, max_length=80)),
++                ("target_model", models.CharField(db_index=True, max_length=120)),
++                ("target_id", models.CharField(db_index=True, max_length=120)),
++                ("target_label", models.CharField(blank=True, max_length=220)),
++                ("status_before", models.CharField(blank=True, max_length=120)),
++                ("status_after", models.CharField(blank=True, max_length=120)),
++                ("reason", models.TextField(blank=True)),
++                ("metadata", models.JSONField(blank=True, default=dict)),
++                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
++                ("actor", models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name="admin_operation_audit_events", to=settings.AUTH_USER_MODEL)),
++            ],
++            options={
++                "ordering": ["-created_at", "-id"],
++                "indexes": [
++                    models.Index(fields=["target_app", "target_model", "target_id"], name="adm_ops_audit_target_idx"),
++                    models.Index(fields=["actor", "created_at"], name="adm_ops_audit_actor_idx"),
++                    models.Index(fields=["action", "created_at"], name="adm_ops_audit_action_idx"),
++                ],
++            },
++        ),
++    ]
+diff --git a/admin_operations/migrations/__init__.py b/admin_operations/migrations/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/admin_operations/models.py b/admin_operations/models.py
+new file mode 100644
+index 0000000..f3508e1
+--- /dev/null
++++ b/admin_operations/models.py
+@@ -0,0 +1,59 @@
++from __future__ import annotations
++
++from django.conf import settings
++from django.db import models
++
++
++class AdminOperationAuditEvent(models.Model):
++    """Append-only audit event for staff actions executed from Admin Operations.
++
++    The model intentionally stores target identifiers as plain fields instead of
++    using a generic relation. Admin Operations spans several domains and the
++    audit trail must survive future model moves or app-boundary refactors.
++    """
++
++    actor = models.ForeignKey(
++        settings.AUTH_USER_MODEL,
++        null=True,
++        blank=True,
++        on_delete=models.SET_NULL,
++        related_name="admin_operation_audit_events",
++    )
++    actor_label = models.CharField(max_length=160, blank=True)
++    action = models.CharField(max_length=120, db_index=True)
++    source = models.CharField(max_length=20, default="OPS06", db_index=True)
++
++    target_app = models.CharField(max_length=80, db_index=True)
++    target_model = models.CharField(max_length=120, db_index=True)
++    target_id = models.CharField(max_length=120, db_index=True)
++    target_label = models.CharField(max_length=220, blank=True)
++
++    status_before = models.CharField(max_length=120, blank=True)
++    status_after = models.CharField(max_length=120, blank=True)
++    reason = models.TextField(blank=True)
++    metadata = models.JSONField(default=dict, blank=True)
++
++    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
++
++    class Meta:
++        ordering = ["-created_at", "-id"]
++        indexes = [
++            models.Index(fields=["target_app", "target_model", "target_id"], name="adm_ops_audit_target_idx"),
++            models.Index(fields=["actor", "created_at"], name="adm_ops_audit_actor_idx"),
++            models.Index(fields=["action", "created_at"], name="adm_ops_audit_action_idx"),
++        ]
++
++    def __str__(self) -> str:
++        return f"{self.action} · {self.target_app}.{self.target_model}#{self.target_id}"
++
++    def save(self, *args, **kwargs):
++        if self.pk and AdminOperationAuditEvent.objects.filter(pk=self.pk).exists():
++            from django.core.exceptions import ValidationError
++
++            raise ValidationError("AdminOperationAuditEvent entries are append-only and cannot be updated.")
++        return super().save(*args, **kwargs)
++
++    def delete(self, *args, **kwargs):
++        from django.core.exceptions import ValidationError
++
++        raise ValidationError("AdminOperationAuditEvent entries are append-only and cannot be deleted.")
+diff --git a/admin_operations/selectors.py b/admin_operations/selectors.py
+index d5269c3..dbaffcb 100644
+--- a/admin_operations/selectors.py
++++ b/admin_operations/selectors.py
+@@ -11,6 +11,7 @@ from accounts.models import AccountSubscription, CreditLedger, CreditWallet
+ from ai_assistant.models import AIUsageEvent, AIUserCreditQuota
+ from food_catalog.models import CatalogCurationCandidate, CatalogFood
+ from notas.domain.model_modules.proposals import NutritionProposal
++from admin_operations.models import AdminOperationAuditEvent
+ 
+ CATALOG_CANDIDATE_ACTION_STATUSES = [
+     CatalogCurationCandidate.STATUS_QUEUED,
+@@ -368,3 +369,36 @@ def _subscriptions_by_user(wallets) -> dict[int, AccountSubscription]:
+     for subscription in subscriptions:
+         result.setdefault(subscription.user_id, subscription)
+     return result
++
++
++def get_audit_log_payload(*, query: str = "", limit: int = 50) -> dict:
++    """Return recent Admin Operations audit events for OPS06."""
++
++    normalized_query = (query or "").strip()
++    events_qs = AdminOperationAuditEvent.objects.select_related("actor").order_by("-created_at", "-id")
++    if normalized_query:
++        events_qs = events_qs.filter(
++            Q(actor_label__icontains=normalized_query)
++            | Q(action__icontains=normalized_query)
++            | Q(target_app__icontains=normalized_query)
++            | Q(target_model__icontains=normalized_query)
++            | Q(target_id__icontains=normalized_query)
++            | Q(target_label__icontains=normalized_query)
++            | Q(reason__icontains=normalized_query)
++        )
++
++    total = events_qs.count()
++    recent_24h = events_qs.filter(created_at__gte=timezone.now() - timedelta(days=1)).count()
++    financial = events_qs.filter(target_app="accounts").count()
++    ai = events_qs.filter(target_app="ai_assistant").count() + events_qs.filter(target_app="notas").count()
++
++    return {
++        "query": normalized_query,
++        "events": list(events_qs[:limit]),
++        "counts": {
++            "total": total,
++            "recent_24h": recent_24h,
++            "financial": financial,
++            "ai": ai,
++        },
++    }
+diff --git a/admin_operations/services.py b/admin_operations/services.py
+index 356f315..695a748 100644
+--- a/admin_operations/services.py
++++ b/admin_operations/services.py
+@@ -14,6 +14,7 @@ from django.utils import timezone
+ from admin_operations.selectors import (
+     get_account_detail_payload,
+     get_accounts_operations_payload,
++    get_audit_log_payload,
+     get_ai_operations_payload,
+     get_food_catalog_operations_payload,
+     get_operations_overview_metrics,
+@@ -23,6 +24,8 @@ from admin_operations.viewmodels import (
+     AdminOperationsAIProposalVM,
+     AdminOperationsAIQuotaVM,
+     AdminOperationsAIVM,
++    AdminOperationsAuditEventVM,
++    AdminOperationsAuditLogVM,
+     AdminOperationsCandidateDetailVM,
+     AdminOperationsCandidateVM,
+     AdminOperationsAccountDetailVM,
+@@ -44,6 +47,7 @@ from accounts.services.credits import current_account_credit_period, release_acc
+ from food_catalog.application.curation import transition_catalog_food_status
+ from food_catalog.models import CatalogCurationCandidate, CatalogFood
+ from notas.domain.model_modules.proposals import NutritionProposal, NutritionProposalAuditEvent
++from admin_operations.models import AdminOperationAuditEvent
+ 
+ 
+ PRIORITY_ORDER = {"warning": 0, "watch": 1, "info": 2, "healthy": 3}
+@@ -86,6 +90,38 @@ class AdminOperationResult:
+     message: str
+ 
+ 
++def _actor_label(actor) -> str:
++    return getattr(actor, "email", "") or getattr(actor, "username", "staff") or "staff"
++
++
++def record_admin_operation_audit_event(
++    *,
++    actor,
++    action: str,
++    target,
++    reason: str,
++    status_before: str = "",
++    status_after: str = "",
++    metadata: dict | None = None,
++) -> AdminOperationAuditEvent:
++    target_meta = getattr(target, "_meta", None)
++    target_label = str(target)[:220] if target is not None else ""
++    return AdminOperationAuditEvent.objects.create(
++        actor=actor if getattr(actor, "is_authenticated", False) else None,
++        actor_label=_actor_label(actor),
++        action=action,
++        source="OPS06",
++        target_app=getattr(target_meta, "app_label", "unknown"),
++        target_model=getattr(target_meta, "model_name", target.__class__.__name__ if target is not None else "unknown"),
++        target_id=str(getattr(target, "pk", "")),
++        target_label=target_label,
++        status_before=str(status_before or ""),
++        status_after=str(status_after or ""),
++        reason=(reason or "").strip(),
++        metadata=metadata or {},
++    )
++
++
+ def _format_int(value) -> str:
+     return f"{int(value or 0):,}".replace(",", ".")
+ 
+@@ -167,13 +203,15 @@ def build_operations_overview_vm() -> AdminOperationsOverviewVM:
+         ),
+         AdminOperationsQueueVM(
+             title="Audit Log",
+-            description="Fundamento futuro para registrar acciones staff con actor, target, razón, estado previo y estado nuevo.",
++            description="Registro append-only de acciones staff ejecutadas desde Admin Operations con actor, target, razón y transición.",
+             icon="scroll-text",
+-            status="OPS06 pendiente",
+-            count="—",
+-            priority="info",
+-            helper="Sin mutaciones operacionales todavía",
+-            primary_action_label="Diseñar auditoría",
++            status="OPS06 workflow activo",
++            href=reverse("admin_operations_audit_log"),
++            count=_format_int(AdminOperationAuditEvent.objects.count()),
++            priority="healthy",
++            helper="Auditoría formal para Food Catalog, Accounts y AI.",
++            primary_action_label="Ver auditoría",
++            is_enabled=True,
+         ),
+     ]
+ 
+@@ -186,7 +224,7 @@ def build_operations_overview_vm() -> AdminOperationsOverviewVM:
+         title="Operational Console",
+         subtitle="Overview staff-only de colas accionables para convertir señales internas en flujos de resolución seguros.",
+         period_label=metrics["period_label"],
+-        current_period="OPS05 · AI activo",
++        current_period="OPS06 · Audit activo",
+         metrics=[
+             AdminOperationsMetricVM(
+                 label="Trabajo operacional",
+@@ -228,7 +266,7 @@ def build_operations_overview_vm() -> AdminOperationsOverviewVM:
+             ),
+             AdminOperationsPrincipleVM(
+                 title="Audit-first",
+-                description="Las mutaciones futuras deberán dejar trazabilidad antes de abrir flujos financieros o destructivos.",
++                description="Las mutaciones operacionales dejan trazabilidad append-only con actor, target, razón y transición.",
+                 icon="clipboard-check",
+             ),
+         ],
+@@ -363,6 +401,15 @@ def perform_candidate_operation(*, candidate_id: int, action: str, actor, reason
+         candidate.reviewed_by = actor
+     candidate.notes = f"{candidate.notes}\n{note_line}".strip()
+     candidate.save(update_fields=["status", "reviewed_at", "reviewed_by", "notes", "updated_at"])
++    record_admin_operation_audit_event(
++        actor=actor,
++        action=f"food_catalog.candidate.{action}",
++        target=candidate,
++        reason=reason,
++        status_before=old_status,
++        status_after=target_status,
++        metadata={"source_patch": "OPS03", "candidate_provider": candidate.provider},
++    )
+ 
+     return AdminOperationResult(ok=True, message=success_message)
+ 
+@@ -376,6 +423,7 @@ def perform_catalog_food_operation(*, catalog_food_id: int, action: str, actor,
+         raise ValidationError(f"Unknown catalog food operation: {action}")
+ 
+     catalog_food = get_object_or_404(CatalogFood.objects.prefetch_related("sources", "portions"), pk=catalog_food_id)
++    old_status = catalog_food.status
+     target_status, label = CATALOG_FOOD_ACTIONS[action]
+     result = transition_catalog_food_status(catalog_food, target_status, user=actor)
+ 
+@@ -383,6 +431,16 @@ def perform_catalog_food_operation(*, catalog_food_id: int, action: str, actor,
+         return AdminOperationResult(ok=False, message="; ".join(result.errors))
+     if not result.changed:
+         return AdminOperationResult(ok=False, message="El alimento master ya está en ese estado.")
++    catalog_food.refresh_from_db(fields=["status", "updated_at"])
++    record_admin_operation_audit_event(
++        actor=actor,
++        action=f"food_catalog.catalog_food.{action}",
++        target=catalog_food,
++        reason=reason,
++        status_before=old_status,
++        status_after=catalog_food.status,
++        metadata={"source_patch": "OPS03", "target_status": target_status},
++    )
+ 
+     return AdminOperationResult(ok=True, message=f"{label}: {catalog_food.display_name}")
+ 
+@@ -541,7 +599,9 @@ def perform_credit_adjustment(*, user_id: int, actor, credits_delta: str, reason
+             user=target_user,
+             defaults={"balance": 0, "reserved_balance": 0, "period": current_account_credit_period()},
+         )
+-        new_balance = int(wallet.balance or 0) + delta
++        old_balance = int(wallet.balance or 0)
++        old_reserved_balance = int(wallet.reserved_balance or 0)
++        new_balance = old_balance + delta
+         if new_balance < 0:
+             return AdminOperationResult(ok=False, message="El ajuste no puede dejar balance negativo.")
+         if new_balance < int(wallet.reserved_balance or 0):
+@@ -563,6 +623,15 @@ def perform_credit_adjustment(*, user_id: int, actor, credits_delta: str, reason
+             reason=reason,
+             metadata={"actor": actor_label, "source": "OPS04"},
+         )
++        record_admin_operation_audit_event(
++            actor=actor,
++            action="accounts.credit.adjustment",
++            target=wallet,
++            reason=reason,
++            status_before=f"balance={old_balance};reserved={old_reserved_balance}",
++            status_after=f"balance={wallet.balance};reserved={wallet.reserved_balance}",
++            metadata={"source_patch": "OPS04", "ledger_id": ledger.pk, "credits_delta": delta, "target_user_id": target_user.pk},
++        )
+     return AdminOperationResult(ok=True, message=f"Ajuste registrado en ledger #{ledger.pk} ({delta:+d} créditos).")
+ 
+ 
+@@ -595,6 +664,22 @@ def perform_credit_reservation_release(*, reservation_id: int, actor, reason: st
+     )
+     if not result.get("released"):
+         return AdminOperationResult(ok=False, message=f"No se pudo liberar la reserva: {result.get('reason', 'unknown')}.")
++    reservation.wallet.refresh_from_db(fields=["balance", "reserved_balance", "updated_at"])
++    record_admin_operation_audit_event(
++        actor=actor,
++        action="accounts.credit.reservation_release",
++        target=reservation,
++        reason=reason,
++        status_before=f"reserved_delta={reservation.reserved_delta}",
++        status_after=f"released={result.get('released')};wallet_reserved={reservation.wallet.reserved_balance}",
++        metadata={
++            "source_patch": "OPS04",
++            "released_credits": result.get("credits"),
++            "reference_type": reservation.reference_type,
++            "reference_id": reservation.reference_id,
++            "wallet_id": reservation.wallet_id,
++        },
++    )
+     return AdminOperationResult(ok=True, message=f"Reserva liberada: {_format_int(result.get('credits'))} créditos.")
+ 
+ 
+@@ -706,6 +791,7 @@ def perform_ai_usage_event_operation(*, event_id: int, action: str, actor, reaso
+     event = get_object_or_404(AIUsageEvent, pk=event_id)
+     actor_label = getattr(actor, "email", "") or getattr(actor, "username", "staff") or "staff"
+     metadata = dict(event.metadata or {})
++    ops_meta = metadata.get("admin_operations") if isinstance(metadata, dict) else None
+     metadata["admin_operations"] = {
+         "source": "OPS05",
+         "state": "acknowledged" if action == "acknowledge" else "escalated",
+@@ -714,8 +800,19 @@ def perform_ai_usage_event_operation(*, event_id: int, action: str, actor, reaso
+         "actor_id": getattr(actor, "pk", None),
+         "reviewed_at": timezone.now().isoformat(),
+     }
++    old_state = ops_meta.get("state") if isinstance(ops_meta, dict) else "unreviewed"
++    new_state = metadata["admin_operations"]["state"]
+     event.metadata = metadata
+     event.save(update_fields=["metadata"])
++    record_admin_operation_audit_event(
++        actor=actor,
++        action=f"ai_assistant.usage_event.{action}",
++        target=event,
++        reason=reason,
++        status_before=old_state or "unreviewed",
++        status_after=new_state,
++        metadata={"source_patch": "OPS05", "event_status": event.status, "action_type": event.action_type},
++    )
+     label = "Evento IA reconocido" if action == "acknowledge" else "Evento IA escalado"
+     return AdminOperationResult(ok=True, message=f"{label}: {event.action_type}.")
+ 
+@@ -734,9 +831,10 @@ def perform_ai_quota_operation(*, quota_id: int, action: str, actor, reason: str
+         return AdminOperationResult(ok=False, message=f"La cuota ya está {state}.")
+ 
+     actor_label = getattr(actor, "email", "") or getattr(actor, "username", "staff") or "staff"
++    old_blocked = quota.hard_blocked
+     quota.hard_blocked = target_blocked
+     quota.save(update_fields=["hard_blocked", "updated_at"])
+-    AICreditLedger.objects.create(
++    ledger = AICreditLedger.objects.create(
+         user=quota.user,
+         period=quota.period,
+         plan_code=quota.plan_code,
+@@ -746,6 +844,15 @@ def perform_ai_quota_operation(*, quota_id: int, action: str, actor, reason: str
+         reason=reason,
+         metadata={"actor": actor_label, "actor_id": getattr(actor, "pk", None), "source": "OPS05"},
+     )
++    record_admin_operation_audit_event(
++        actor=actor,
++        action="ai_assistant.quota.block" if target_blocked else "ai_assistant.quota.unblock",
++        target=quota,
++        reason=reason,
++        status_before=f"hard_blocked={old_blocked}",
++        status_after=f"hard_blocked={quota.hard_blocked}",
++        metadata={"source_patch": "OPS05", "ledger_id": ledger.pk, "period": quota.period, "plan_code": quota.plan_code},
++    )
+     return AdminOperationResult(ok=True, message="Acceso IA bloqueado." if target_blocked else "Acceso IA desbloqueado.")
+ 
+ 
+@@ -784,7 +891,7 @@ def perform_ai_proposal_operation(*, proposal_id: int, action: str, actor, reaso
+         if action == "approve"
+         else NutritionProposalAuditEvent.ACTION_REJECTED
+     )
+-    NutritionProposalAuditEvent.objects.create(
++    proposal_audit = NutritionProposalAuditEvent.objects.create(
+         proposal=proposal,
+         actor=actor if getattr(actor, "is_authenticated", False) else None,
+         action=audit_action,
+@@ -793,7 +900,72 @@ def perform_ai_proposal_operation(*, proposal_id: int, action: str, actor, reaso
+         message=f"Admin Operations OPS05: {reason}",
+         metadata={"source": "OPS05", "reason": reason},
+     )
++    record_admin_operation_audit_event(
++        actor=actor,
++        action="notas.nutrition_proposal.approve" if action == "approve" else "notas.nutrition_proposal.reject",
++        target=proposal,
++        reason=reason,
++        status_before=status_before,
++        status_after=proposal.status,
++        metadata={"source_patch": "OPS05", "proposal_audit_event_id": proposal_audit.pk, "proposal_source": proposal.source},
++    )
+     return AdminOperationResult(
+         ok=True,
+         message="Propuesta IA aprobada." if action == "approve" else "Propuesta IA rechazada.",
+     )
++
++
++def _audit_event_to_vm(event: AdminOperationAuditEvent) -> AdminOperationsAuditEventVM:
++    target_type = f"{event.target_app}.{event.target_model}"
++    metadata_summary = "—"
++    if isinstance(event.metadata, dict) and event.metadata:
++        visible_keys = [key for key in sorted(event.metadata.keys()) if key not in {"reason"}][:4]
++        metadata_summary = " · ".join(f"{key}={event.metadata.get(key)}" for key in visible_keys)
++    return AdminOperationsAuditEventVM(
++        pk=event.pk,
++        created_label=f"{event.created_at:%Y-%m-%d %H:%M}",
++        actor_label=event.actor_label or "staff",
++        action=event.action,
++        target_label=event.target_label or f"#{event.target_id}",
++        target_type=target_type,
++        target_id=event.target_id,
++        status_before=event.status_before or "—",
++        status_after=event.status_after or "—",
++        reason=event.reason or "—",
++        metadata_summary=metadata_summary,
++    )
++
++
++def build_audit_log_vm(*, query: str = "") -> AdminOperationsAuditLogVM:
++    payload = get_audit_log_payload(query=query)
++    counts = payload["counts"]
++    return AdminOperationsAuditLogVM(
++        query=payload["query"],
++        metrics=[
++            AdminOperationsMetricVM(
++                label="Eventos auditados",
++                value=_format_int(counts.get("total")),
++                helper="Acciones staff registradas por Admin Operations.",
++                icon="scroll-text",
++            ),
++            AdminOperationsMetricVM(
++                label="Últimas 24h",
++                value=_format_int(counts.get("recent_24h")),
++                helper="Eventos recientes en el audit log operacional.",
++                icon="clock",
++            ),
++            AdminOperationsMetricVM(
++                label="Accounts",
++                value=_format_int(counts.get("financial")),
++                helper="Ajustes o releases de créditos auditados.",
++                icon="credit-card",
++            ),
++            AdminOperationsMetricVM(
++                label="AI / Propuestas",
++                value=_format_int(counts.get("ai")),
++                helper="Eventos IA, cuotas y propuestas auditadas.",
++                icon="bot",
++            ),
++        ],
++        events=[_audit_event_to_vm(event) for event in payload["events"]],
++    )
+diff --git a/admin_operations/templates/admin_operations/_nav.html b/admin_operations/templates/admin_operations/_nav.html
+index 874500c..681a6ac 100644
+--- a/admin_operations/templates/admin_operations/_nav.html
++++ b/admin_operations/templates/admin_operations/_nav.html
+@@ -12,7 +12,7 @@
+   <a class="admin-analytics-nav__link" href="{% url 'admin_operations_ai_assistant' %}"{% if request.resolver_match.url_name == 'admin_operations_ai_assistant' or request.resolver_match.url_name == 'admin_operations_ai_proposal' %} aria-current="page"{% endif %}>
+     <i data-lucide="bot" class="admin-analytics-nav__icon"></i> AI Assistant
+   </a>
+-  <a class="admin-analytics-nav__link admin-operations-nav__link--disabled" href="#" aria-disabled="true">
++  <a class="admin-analytics-nav__link" href="{% url 'admin_operations_audit_log' %}"{% if request.resolver_match.url_name == 'admin_operations_audit_log' %} aria-current="page"{% endif %}>
+     <i data-lucide="scroll-text" class="admin-analytics-nav__icon"></i> Audit Log
+   </a>
+ </nav>
+diff --git a/admin_operations/templates/admin_operations/audit_log.html b/admin_operations/templates/admin_operations/audit_log.html
+new file mode 100644
+index 0000000..1289e28
+--- /dev/null
++++ b/admin_operations/templates/admin_operations/audit_log.html
+@@ -0,0 +1,87 @@
++{% extends "admin_operations/base.html" %}
++{% block title %}Audit Log Operations{% endblock %}
++{% block content %}
++<div class="page admin-analytics-page admin-operations-page">
++  <section class="card-detail-block admin-operations-hero">
++    <div>
++      <p class="section-eyebrow">{{ vm.content.period_label }}</p>
++      <h2>Audit log operacional</h2>
++      <p class="muted-text">Registro append-only de acciones staff ejecutadas desde Admin Operations. Este log no reemplaza los ledger/audit propios de cada dominio: los consolida como trazabilidad operacional transversal.</p>
++    </div>
++    <div class="detail-actions">
++      <a class="btn-secondary" href="{% url 'admin_operations_overview' %}">Volver al overview</a>
++      <a class="btn-secondary" href="/admin/admin_operations/adminoperationauditevent/">Django Admin</a>
++    </div>
++  </section>
++
++  <section class="home-stats admin-analytics-kpi-grid admin-operations-kpi-grid" aria-label="Resumen audit OPS06">
++    {% for metric in vm.content.metrics %}
++      <article class="home-stat-card admin-operations-metric-card">
++        <div class="home-stat-top">
++          <i data-lucide="{{ metric.icon }}" class="home-stat-icon"></i>
++          <span class="home-stat-label">{{ metric.label }}</span>
++        </div>
++        <h3>{{ metric.value }}</h3>
++        {% if metric.helper %}<p class="muted-text">{{ metric.helper }}</p>{% endif %}
++      </article>
++    {% endfor %}
++  </section>
++
++  <section class="card-detail-block">
++    <form class="admin-operations-search-form" method="get">
++      <label>
++        Buscar audit events
++        <input type="search" name="q" value="{{ vm.content.query }}" placeholder="actor, acción, target, razón...">
++      </label>
++      <button class="btn-secondary" type="submit">Filtrar</button>
++      {% if vm.content.query %}<a class="btn-secondary" href="{% url 'admin_operations_audit_log' %}">Limpiar</a>{% endif %}
++    </form>
++  </section>
++
++  <section class="card-detail-block">
++    <div class="card-title-row">
++      <div>
++        <p class="section-eyebrow">OPS06 · Append-only</p>
++        <h3>Eventos auditados</h3>
++        <p class="muted-text">Cada fila debe responder quién actuó, sobre qué entidad, qué cambió y por qué.</p>
++      </div>
++    </div>
++    {% if vm.content.events %}
++      <div class="admin-operations-table-card">
++        <table class="admin-operations-table admin-operations-table--audit">
++          <thead>
++            <tr>
++              <th>Fecha / Actor</th>
++              <th>Acción</th>
++              <th>Target</th>
++              <th>Transición</th>
++              <th>Razón</th>
++              <th>Metadata</th>
++            </tr>
++          </thead>
++          <tbody>
++            {% for event in vm.content.events %}
++              <tr>
++                <td><strong>{{ event.created_label }}</strong><small>{{ event.actor_label }}</small></td>
++                <td><span class="admin-operations-status-pill">{{ event.action }}</span></td>
++                <td><strong>{{ event.target_label }}</strong><small>{{ event.target_type }} #{{ event.target_id }}</small></td>
++                <td><span>{{ event.status_before }}</span><small>→ {{ event.status_after }}</small></td>
++                <td><span>{{ event.reason }}</span></td>
++                <td><small>{{ event.metadata_summary }}</small></td>
++              </tr>
++            {% endfor %}
++          </tbody>
++        </table>
++      </div>
++    {% else %}
++      <div class="admin-operations-empty-state">
++        <i data-lucide="scroll-text" class="home-stat-icon"></i>
++        <div>
++          <h4>Sin eventos auditados</h4>
++          <p class="muted-text">Todavía no hay acciones staff registradas para el filtro actual.</p>
++        </div>
++      </div>
++    {% endif %}
++  </section>
++</div>
++{% endblock %}
+diff --git a/admin_operations/tests/test_audit_operations.py b/admin_operations/tests/test_audit_operations.py
+new file mode 100644
+index 0000000..ba9ed2e
+--- /dev/null
++++ b/admin_operations/tests/test_audit_operations.py
+@@ -0,0 +1,224 @@
++from __future__ import annotations
++
++from decimal import Decimal
++
++from django.contrib.auth import get_user_model
++from django.core.exceptions import ValidationError
++from django.test import TestCase, override_settings
++from django.urls import reverse
++
++from accounts.models import CreditWallet
++from admin_operations.models import AdminOperationAuditEvent
++from admin_operations.services import build_audit_log_vm
++from ai_assistant.models import AIUsageEvent, AIUserCreditQuota
++from food_catalog.models import CatalogCurationCandidate, CatalogFood
++from notas.domain.model_modules.proposals import NutritionProposal
++
++
++@override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
++class AdminOperationsAuditLogTests(TestCase):
++    def setUp(self):
++        User = get_user_model()
++        self.staff = User.objects.create_user(
++            username="ops06-staff@example.com",
++            email="ops06-staff@example.com",
++            password="password123",
++            is_staff=True,
++        )
++        self.member = User.objects.create_user(
++            username="ops06-member@example.com",
++            email="ops06-member@example.com",
++            password="password123",
++        )
++
++    def test_audit_log_page_requires_staff(self):
++        response = self.client.get(reverse("admin_operations_audit_log"))
++        self.assertEqual(response.status_code, 302)
++        self.assertIn("/admin/login/", response["Location"])
++
++        self.client.force_login(self.member)
++        response = self.client.get(reverse("admin_operations_audit_log"))
++        self.assertEqual(response.status_code, 302)
++        self.assertIn("/admin/login/", response["Location"])
++
++    def test_audit_log_page_renders_events(self):
++        AdminOperationAuditEvent.objects.create(
++            actor=self.staff,
++            actor_label=self.staff.email,
++            action="food_catalog.candidate.approve",
++            target_app="food_catalog",
++            target_model="catalogcurationcandidate",
++            target_id="10",
++            target_label="Avena externa",
++            status_before="queued",
++            status_after="approved_for_curation",
++            reason="Fuente suficiente.",
++            metadata={"source_patch": "OPS03"},
++        )
++        self.client.force_login(self.staff)
++
++        response = self.client.get(reverse("admin_operations_audit_log"))
++
++        self.assertEqual(response.status_code, 200)
++        self.assertContains(response, "OPS06 · Operational audit log")
++        self.assertContains(response, "Audit log operacional")
++        self.assertContains(response, "food_catalog.candidate.approve")
++        self.assertContains(response, "Fuente suficiente")
++
++    def test_build_audit_log_vm_counts_events(self):
++        AdminOperationAuditEvent.objects.create(
++            actor=self.staff,
++            actor_label=self.staff.email,
++            action="accounts.credit.adjustment",
++            target_app="accounts",
++            target_model="creditwallet",
++            target_id="1",
++            target_label="wallet",
++            status_before="balance=0",
++            status_after="balance=10",
++            reason="Compensación.",
++        )
++
++        vm = build_audit_log_vm()
++
++        metric_by_label = {metric.label: metric for metric in vm.metrics}
++        self.assertEqual(metric_by_label["Eventos auditados"].value, "1")
++        self.assertEqual(metric_by_label["Accounts"].value, "1")
++        self.assertEqual(len(vm.events), 1)
++        self.assertEqual(vm.events[0].action, "accounts.credit.adjustment")
++
++    def test_audit_events_are_append_only(self):
++        event = AdminOperationAuditEvent.objects.create(
++            actor=self.staff,
++            actor_label=self.staff.email,
++            action="test.action",
++            target_app="admin_operations",
++            target_model="fixture",
++            target_id="1",
++            reason="Fixture.",
++        )
++        event.reason = "Changed"
++
++        with self.assertRaises(ValidationError):
++            event.save()
++        with self.assertRaises(ValidationError):
++            event.delete()
++
++    def test_candidate_action_writes_admin_operation_audit(self):
++        candidate = CatalogCurationCandidate.objects.create(
++            provider=CatalogFood.SOURCE_FATSECRET,
++            display_name="Candidato audit",
++            status=CatalogCurationCandidate.STATUS_QUEUED,
++        )
++        self.client.force_login(self.staff)
++
++        self.client.post(
++            reverse("admin_operations_food_catalog_candidate_action", args=[candidate.pk]),
++            {"action": "approve", "reason": "Fuente suficiente."},
++            follow=True,
++        )
++
++        audit = AdminOperationAuditEvent.objects.get(target_app="food_catalog", target_id=str(candidate.pk))
++        self.assertEqual(audit.action, "food_catalog.candidate.approve")
++        self.assertEqual(audit.status_before, CatalogCurationCandidate.STATUS_QUEUED)
++        self.assertEqual(audit.status_after, CatalogCurationCandidate.STATUS_APPROVED_FOR_CURATION)
++        self.assertEqual(audit.reason, "Fuente suficiente.")
++
++    def test_catalog_food_action_writes_admin_operation_audit(self):
++        catalog_food = CatalogFood.objects.create(
++            display_name="Avena audit",
++            canonical_name="avena-audit",
++            protein_g_per_100g=Decimal("13.0"),
++            carbs_g_per_100g=Decimal("60.0"),
++            fat_g_per_100g=Decimal("7.0"),
++            status=CatalogFood.STATUS_PENDING_REVIEW,
++        )
++        self.client.force_login(self.staff)
++
++        self.client.post(
++            reverse("admin_operations_food_catalog_food_action", args=[catalog_food.pk]),
++            {"action": "reviewed", "reason": "Macros coherentes."},
++            follow=True,
++        )
++
++        audit = AdminOperationAuditEvent.objects.get(target_app="food_catalog", target_model="catalogfood")
++        self.assertEqual(audit.action, "food_catalog.catalog_food.reviewed")
++        self.assertEqual(audit.status_before, CatalogFood.STATUS_PENDING_REVIEW)
++        self.assertEqual(audit.status_after, CatalogFood.STATUS_REVIEWED)
++
++    def test_credit_adjustment_writes_admin_operation_audit(self):
++        CreditWallet.objects.create(user=self.member, balance=10, reserved_balance=0, period="2026-07")
++        self.client.force_login(self.staff)
++
++        self.client.post(
++            reverse("admin_operations_account_credit_adjustment", args=[self.member.pk]),
++            {"credits_delta": "5", "reason": "Compensación soporte."},
++            follow=True,
++        )
++
++        audit = AdminOperationAuditEvent.objects.get(action="accounts.credit.adjustment")
++        self.assertEqual(audit.target_app, "accounts")
++        self.assertIn("balance=10", audit.status_before)
++        self.assertIn("balance=15", audit.status_after)
++        self.assertEqual(audit.metadata["credits_delta"], 5)
++
++    def test_ai_event_action_writes_admin_operation_audit(self):
++        event = AIUsageEvent.objects.create(
++            user=self.member,
++            period="2026-07",
++            action_type="chat_turn",
++            status=AIUsageEvent.Status.ERROR,
++        )
++        self.client.force_login(self.staff)
++
++        self.client.post(
++            reverse("admin_operations_ai_event_action", args=[event.pk]),
++            {"action": "acknowledge", "reason": "Error aislado."},
++            follow=True,
++        )
++
++        audit = AdminOperationAuditEvent.objects.get(target_app="ai_assistant", target_model="aiusageevent")
++        self.assertEqual(audit.action, "ai_assistant.usage_event.acknowledge")
++        self.assertEqual(audit.status_after, "acknowledged")
++
++    def test_ai_quota_action_writes_admin_operation_audit(self):
++        quota = AIUserCreditQuota.objects.create(
++            user=self.member,
++            period="2026-07",
++            plan_code="starter",
++            monthly_credit_limit=10,
++            daily_credit_limit=3,
++            credits_used=8,
++        )
++        self.client.force_login(self.staff)
++
++        self.client.post(
++            reverse("admin_operations_ai_quota_action", args=[quota.pk]),
++            {"action": "block", "reason": "Uso anómalo."},
++            follow=True,
++        )
++
++        audit = AdminOperationAuditEvent.objects.get(target_app="ai_assistant", target_model="aiusercreditquota")
++        self.assertEqual(audit.action, "ai_assistant.quota.block")
++        self.assertIn("hard_blocked=False", audit.status_before)
++        self.assertIn("hard_blocked=True", audit.status_after)
++
++    def test_ai_proposal_action_writes_admin_operation_audit(self):
++        proposal = NutritionProposal.objects.create(
++            created_by=self.member,
++            title="Propuesta audit",
++            status=NutritionProposal.STATUS_PENDING_REVIEW,
++            source=NutritionProposal.SOURCE_AI,
++        )
++        self.client.force_login(self.staff)
++
++        self.client.post(
++            reverse("admin_operations_ai_proposal_action", args=[proposal.pk]),
++            {"action": "reject", "reason": "No respeta restricciones."},
++            follow=True,
++        )
++
++        audit = AdminOperationAuditEvent.objects.get(target_app="notas", target_model="nutritionproposal")
++        self.assertEqual(audit.action, "notas.nutrition_proposal.reject")
++        self.assertEqual(audit.status_before, NutritionProposal.STATUS_PENDING_REVIEW)
++        self.assertEqual(audit.status_after, NutritionProposal.STATUS_REJECTED)
+diff --git a/admin_operations/tests/test_overview_queues.py b/admin_operations/tests/test_overview_queues.py
+index 6bb7cc5..c853e32 100644
+--- a/admin_operations/tests/test_overview_queues.py
++++ b/admin_operations/tests/test_overview_queues.py
+@@ -91,7 +91,7 @@ class AdminOperationsOverviewQueueTests(TestCase):
+         self.assertContains(response, "OPS03 workflow activo")
+         self.assertContains(response, "OPS04 workflow activo")
+         self.assertContains(response, "OPS05 workflow activo")
+-        self.assertContains(response, "OPS06 pendiente")
++        self.assertContains(response, "OPS06 workflow activo")
+ 
+     def test_overview_page_renders_live_warning_values(self):
+         CatalogCurationCandidate.objects.create(
+diff --git a/admin_operations/urls.py b/admin_operations/urls.py
+index dbe910e..98c692d 100644
+--- a/admin_operations/urls.py
++++ b/admin_operations/urls.py
+@@ -2,6 +2,7 @@ from django.urls import path
+ 
+ from admin_operations.views import (
+     account_credit_adjustment,
++    audit_log,
+     ai_assistant,
+     ai_proposal_action,
+     ai_proposal_detail,
+@@ -20,6 +21,7 @@ from admin_operations.views import (
+ 
+ urlpatterns = [
+     path("", overview, name="admin_operations_overview"),
++    path("audit-log/", audit_log, name="admin_operations_audit_log"),
+     path("ai-assistant/", ai_assistant, name="admin_operations_ai_assistant"),
+     path("ai-assistant/events/<int:event_id>/action/", ai_usage_event_action, name="admin_operations_ai_event_action"),
+     path("ai-assistant/quotas/<int:quota_id>/action/", ai_quota_action, name="admin_operations_ai_quota_action"),
+diff --git a/admin_operations/viewmodels.py b/admin_operations/viewmodels.py
+index 8e21fe8..4df6eba 100644
+--- a/admin_operations/viewmodels.py
++++ b/admin_operations/viewmodels.py
+@@ -239,3 +239,32 @@ class AdminOperationsAIVM:
+     proposals: list[AdminOperationsAIProposalVM] = field(default_factory=list)
+     quotas: list[AdminOperationsAIQuotaVM] = field(default_factory=list)
+ 
++
++
++@dataclass(frozen=True)
++class AdminOperationsAuditEventVM:
++    pk: int
++    created_label: str
++    actor_label: str
++    action: str
++    target_label: str
++    target_type: str
++    target_id: str
++    status_before: str
++    status_after: str
++    reason: str
++    metadata_summary: str
++
++
++@dataclass(frozen=True)
++class AdminOperationsAuditLogVM:
++    title: str = "Audit Log Operations"
++    subtitle: str = (
++        "Registro staff-only append-only de acciones ejecutadas desde Admin Operations, "
++        "con actor, target, razón, estado anterior y estado nuevo."
++    )
++    period_label: str = "OPS06 · Operational audit log"
++    current_period: str = "OPS06 · Audit Log"
++    query: str = ""
++    metrics: list[AdminOperationsMetricVM] = field(default_factory=list)
++    events: list[AdminOperationsAuditEventVM] = field(default_factory=list)
+diff --git a/admin_operations/views.py b/admin_operations/views.py
+index 2990976..5045cd8 100644
+--- a/admin_operations/views.py
++++ b/admin_operations/views.py
+@@ -5,6 +5,7 @@ from django.views.decorators.http import require_POST
+ from admin_operations.services import (
+     build_account_detail_vm,
+     build_accounts_operations_vm,
++    build_audit_log_vm,
+     build_ai_operations_vm,
+     build_ai_proposal_detail_vm,
+     build_candidate_detail_vm,
+@@ -33,6 +34,13 @@ def overview(request):
+ 
+ 
+ 
++@staff_member_required
++def audit_log(request):
++    ui_vm = build_ui_vm(ADMIN_OPERATIONS_OVERVIEW_VIEWMODE)
++    content = build_audit_log_vm(query=request.GET.get("q", ""))
++    base_vm = BaseVM(ui=ui_vm, content=content)
++    return render(request, "admin_operations/audit_log.html", base_vm.as_context())
++
+ 
+ @staff_member_required
+ def ai_assistant(request):
+diff --git a/docs/decisions/0076-admin-operations-audit-log-foundation.md b/docs/decisions/0076-admin-operations-audit-log-foundation.md
+new file mode 100644
+index 0000000..f663d59
+--- /dev/null
++++ b/docs/decisions/0076-admin-operations-audit-log-foundation.md
+@@ -0,0 +1,82 @@
++# 0076 · Admin Operations audit log foundation
++
++Status: accepted
++Date: 2026-07-04
++Cycle: Admin Operations Console · OPS06
++
++## Context
++
++OPS03, OPS04 and OPS05 introduced real staff-only mutations in `admin_operations`:
++Food Catalog curation actions, account credit interventions and AI/proposal operations.
++Each workflow wrote useful local traces, but the operational console still lacked one
++cross-domain audit surface.
++
++The product boundary requires a formal answer to:
++
++```text
++Who acted, on what entity, what changed, why, and when?
++```
++
++## Decision
++
++Create a dedicated append-only model in `admin_operations`:
++
++```text
++AdminOperationAuditEvent
++```
++
++The model stores:
++
++```text
++actor
++actor_label
++action
++source
++target_app
++target_model
++target_id
++target_label
++status_before
++status_after
++reason
++metadata
++created_at
++```
++
++Targets are stored as plain app/model/id fields instead of a generic foreign key. This is
++intentional: Admin Operations crosses domain boundaries and the audit trail should remain
++readable even if a target model moves, is renamed or is deleted in a future refactor.
++
++## Consequences
++
++- OPS06 requires a migration.
++- The audit event is append-only: updates and deletes are blocked at model level.
++- Existing domain logs remain valid:
++  - `CreditLedger` continues to be the financial ledger.
++  - `NutritionProposalAuditEvent` continues to be the proposal-domain audit trail.
++  - `AIUsageEvent.metadata.admin_operations` continues to carry event review state.
++- `AdminOperationAuditEvent` becomes the transversal staff-action log.
++- `/staff/operations/audit-log/` is enabled as a staff-only screen.
++
++## Implementation notes
++
++OPS06 wires audit writes into the mutations introduced in OPS03-OPS05:
++
++```text
++- Food Catalog candidate actions
++- CatalogFood status transitions
++- Credit wallet manual adjustments
++- Credit reservation releases
++- AI usage event acknowledge/escalate
++- AI quota block/unblock
++- AI/MCP proposal approve/reject
++```
++
++Every audit write includes the required reason and a status transition or state summary.
++
++## Non-goals
++
++OPS06 does not add fine-grained staff roles. The console remains protected by `is_staff`.
++
++OPS06 does not replace Django Admin history, financial ledgers, AI usage records or proposal
++audit events. It consolidates operational staff actions in one product-facing internal log.
+diff --git a/docs/decisions/README.md b/docs/decisions/README.md
+index 4cc0227..aad3999 100644
+--- a/docs/decisions/README.md
++++ b/docs/decisions/README.md
+@@ -98,3 +98,4 @@ Consequences
+ - [0073 · Admin Operations Food Catalog workflow](0073-admin-operations-food-catalog-workflow.md)
+ - [0074 · Admin Operations Accounts & Credits workflow](0074-admin-operations-accounts-credits-workflow.md)
+ - [0075 · Admin Operations AI Assistant workflow](0075-admin-operations-ai-assistant-workflow.md)
++- [0076 · Admin Operations audit log foundation](0076-admin-operations-audit-log-foundation.md)
+diff --git a/docs/planning/admin_operations_console_cycle.md b/docs/planning/admin_operations_console_cycle.md
+index 9fa374e..c96f1fb 100644
+--- a/docs/planning/admin_operations_console_cycle.md
++++ b/docs/planning/admin_operations_console_cycle.md
+@@ -253,18 +253,29 @@ Implementation note:
+ 
+ ### OPS06 — Operations audit log foundation
+ 
+-Introduce or consolidate auditability for operational actions.
++Status: implemented in `docs/decisions/0076-admin-operations-audit-log-foundation.md`.
++
++Introduce consolidated auditability for operational actions.
+ 
+ Scope:
+ 
+ ```text
+-- Define audit entry model if no existing model is adequate.
++- Create `AdminOperationAuditEvent` in `admin_operations`.
+ - Record actor, action, target app/model/id, previous state, new state, reason and metadata.
+-- Expose audit log screen in `/staff/operations/audit-log/`.
++- Expose `/staff/operations/audit-log/` as a staff-only audit screen.
++- Wire audit writes into Food Catalog, Accounts/Credits and AI Assistant mutations.
+ - Add tests proving state-changing actions write audit entries.
+ ```
+ 
+-Migration expectation: yes, if a new `AdminOperationAuditEvent` model is created.
++Migration expectation: yes. OPS06 creates `AdminOperationAuditEvent`.
++
++Implementation note:
++
++```text
++- The audit model is append-only and blocks update/delete at model level.
++- Domain-specific ledgers/audit records remain authoritative inside their own domains.
++- AdminOperationAuditEvent is the transversal staff-action log for Admin Operations.
++```
+ 
+ ### OPS07 — Cross-links from Admin Analytics
+ 
+@@ -334,7 +345,7 @@ the audit and confirmation pattern is solid.
+ ```text
+ - Staff users have a separate operational console at `/staff/operations/`.
+ - The console is not a raw Django Admin replacement.
+-- At least one real operational queue can be resolved from the UI.
++- Multiple real operational queues can be resolved from the UI.
+ - State-changing actions are guided, confirmed and auditable.
+ - Admin Analytics remains read-first and links to Operations when intervention is needed.
+ ```
+diff --git a/notas/static/notas/css/components/admin_operations.css b/notas/static/notas/css/components/admin_operations.css
+index a452f39..c02b78d 100644
+--- a/notas/static/notas/css/components/admin_operations.css
++++ b/notas/static/notas/css/components/admin_operations.css
+@@ -560,3 +560,16 @@
+     grid-template-columns: 1fr;
+   }
+ }
++
++/* =========================
++   OPS06 operational audit log
++   ========================= */
++
++.admin-operations-table--audit {
++  min-width: 1040px;
++}
++
++.admin-operations-table--audit td:nth-child(5) span {
++  max-width: 340px;
++  white-space: normal;
++}

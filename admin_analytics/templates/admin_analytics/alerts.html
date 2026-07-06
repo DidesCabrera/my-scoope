@@ -1,0 +1,89 @@
+{% extends "admin_analytics/base.html" %}
+{% block title %}Admin Analytics Alerts{% endblock %}
+{% block content %}
+<div class="page admin-analytics-page">
+  {% include "admin_analytics/_operations_bridge.html" with title="Trazar resolución de alertas" message="Usa el audit log operacional para revisar qué acciones staff se ejecutaron después de una señal de riesgo." href="/staff/operations/audit-log/" cta="Ver audit log" icon="scroll-text" %}
+  <section class="home-stats admin-analytics-kpi-grid" aria-label="Señales de salud de alertas internas">
+    {% for signal in vm.content.health_signals %}
+      <article class="home-stat-card admin-analytics-health admin-analytics-health--{{ signal.status }}">
+        <div class="home-stat-top">
+          <i data-lucide="siren" class="home-stat-icon"></i>
+          <span class="home-stat-label">{{ signal.label }}</span>
+        </div>
+        <h3>{{ signal.value }}</h3>
+        <p class="muted-text">{{ signal.description }}</p>
+      </article>
+    {% endfor %}
+  </section>
+
+  {% for section in vm.content.sections %}
+    <section class="card-detail-block">
+      <div class="card-title-row">
+        <div>
+          <p class="section-eyebrow">Alertas internas</p>
+          <h3>{{ section.title }}</h3>
+          <p class="muted-text">{{ section.description }}</p>
+        </div>
+      </div>
+      <div class="home-stats admin-analytics-kpi-grid" aria-label="{{ section.title }}">
+        {% for kpi in section.kpis %}
+          <article class="home-stat-card">
+            <div class="home-stat-top">
+              <i data-lucide="shield-alert" class="home-stat-icon"></i>
+              <span class="home-stat-label">{{ kpi.label }}</span>
+            </div>
+            <h3>{{ kpi.value }}</h3>
+            {% if kpi.helper %}
+              <p class="muted-text">{{ kpi.helper }}</p>
+            {% endif %}
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  {% endfor %}
+
+  {% if vm.content.alert_groups %}
+    {% for group in vm.content.alert_groups %}
+      <section class="card-detail-block">
+        <div class="card-title-row">
+          <div>
+            <p class="section-eyebrow">Health signals</p>
+            <h3>{{ group.title }}</h3>
+            <p class="muted-text">{{ group.description }}</p>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="panel-table">
+            <thead>
+              <tr>
+                <th>Dominio</th>
+                <th>Alerta</th>
+                <th>Valor</th>
+                <th>Descripción</th>
+                <th>Recomendación</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for alert in group.alerts %}
+                <tr>
+                  <td><strong>{{ alert.domain }}</strong><br><span class="muted-text">{{ alert.severity }}</span></td>
+                  <td><strong>{{ alert.title }}</strong></td>
+                  <td>{{ alert.value }}</td>
+                  <td>{{ alert.description }}</td>
+                  <td>{{ alert.recommendation }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    {% endfor %}
+  {% else %}
+    <section class="card-detail-block">
+      <p class="section-eyebrow">Health signals</p>
+      <h3>Sin alertas activas</h3>
+      <p class="muted-text">No se detectaron señales de riesgo para el período y segmento seleccionados.</p>
+    </section>
+  {% endif %}
+</div>
+{% endblock %}

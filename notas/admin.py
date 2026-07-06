@@ -43,6 +43,10 @@ class ProfileAdmin(admin.ModelAdmin):
         "role",
         "plan",
         "is_verified",
+        "sex",
+        "height_cm",
+        "onboarding_version",
+        "onboarding_completed_at",
         "created_at",
     )
 
@@ -50,6 +54,9 @@ class ProfileAdmin(admin.ModelAdmin):
         "role",
         "plan",
         "is_verified",
+        "sex",
+        "onboarding_version",
+        "onboarding_completed_at",
         "created_at",
     )
 
@@ -60,6 +67,29 @@ class ProfileAdmin(admin.ModelAdmin):
 
     readonly_fields = (
         "created_at",
+    )
+
+    fieldsets = (
+        (None, {
+            "fields": (
+                "user",
+                "role",
+                "plan",
+                "is_verified",
+            )
+        }),
+        ("Nutrition profile", {
+            "fields": (
+                "birth_date",
+                "sex",
+                "height_cm",
+                "onboarding_completed_at",
+                "onboarding_version",
+            )
+        }),
+        ("System", {
+            "fields": ("created_at",)
+        }),
     )
 
 
@@ -196,6 +226,8 @@ class FoodAdmin(admin.ModelAdmin):
         "category",
         "food_group",
         "food_subgroup",
+        "preparation_state",
+        "solver_enabled",
         "protein",
         "carbs",
         "fat",
@@ -205,6 +237,8 @@ class FoodAdmin(admin.ModelAdmin):
         "is_active",
         "visibility",
         "data_quality_score",
+        "catalog_sync_status",
+        "catalog_food_id",
         "created_at",
     )
 
@@ -213,6 +247,9 @@ class FoodAdmin(admin.ModelAdmin):
         "is_verified",
         "is_active",
         "visibility",
+        "catalog_sync_status",
+        "solver_enabled",
+        "preparation_state",
         "food_group",
         "food_subgroup",
         "created_at",
@@ -226,11 +263,14 @@ class FoodAdmin(admin.ModelAdmin):
         "aliases__name",
         "aliases__normalized_name",
         "source_metadata__source_food_id",
+        "=catalog_food_id",
+        "=catalog_food_ref",
     )
 
     readonly_fields = (
         "created_at",
         "total_kcal_display",
+        "catalog_snapshot_created_at",
     )
 
     fieldsets = (
@@ -256,6 +296,8 @@ class FoodAdmin(admin.ModelAdmin):
                 "fields": (
                     "food_group",
                     "food_subgroup",
+                    "preparation_state",
+                    "solver_enabled",
                 )
             },
         ),
@@ -290,6 +332,24 @@ class FoodAdmin(admin.ModelAdmin):
                     "max_portion_g",
                     "portion_step_g",
                 )
+            },
+        ),
+        (
+            "Trazabilidad Food Catalog",
+            {
+                "fields": (
+                    "catalog_sync_status",
+                    "catalog_food_id",
+                    "catalog_food_ref",
+                    "catalog_snapshot_version",
+                    "catalog_snapshot_created_at",
+                    "catalog_snapshot_payload",
+                ),
+                "classes": ("collapse",),
+                "description": (
+                    "Referencia opcional a food_catalog. Estos campos no son "
+                    "identificadores operativos para Meals, Solver ni MCP."
+                ),
             },
         ),
     )
@@ -716,10 +776,12 @@ class WeightLogAdmin(admin.ModelAdmin):
         "user",
         "date",
         "weight_kg",
+        "source",
         "created_at",
     )
 
     list_filter = (
+        "source",
         "date",
         "created_at",
     )

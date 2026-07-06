@@ -24,6 +24,9 @@ from notas.application.services.commands.proposal_commands import (
     apply_approved_create_dailyplan_proposal,
     apply_approved_create_meal_proposal,
 )
+from notas.application.proposals.subject_context_warnings import (
+    proposal_requires_external_subject_ack,
+)
 from notas.application.proposals.contracts import (
     CREATE_DAILYPLAN_INTENT,
     CREATE_MEAL_INTENT,
@@ -478,6 +481,19 @@ def proposal_apply(request, proposal_id):
     )
 
     intent = resolve_proposal_intent(proposal.proposed_payload)
+
+    if (
+        proposal_requires_external_subject_ack(proposal)
+        and request.POST.get("ack_external_subject_ppk_warning") != "1"
+    ):
+        messages.error(
+            request,
+            "Antes de aplicar esta propuesta externa debes confirmar que entiendes que el PPK se recalculará con tu ficha personal.",
+        )
+        return redirect(
+            "proposal_detail",
+            proposal_id=proposal_id,
+        )
 
     try:
         if intent == CREATE_MEAL_INTENT:

@@ -1,0 +1,102 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+  &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+  &rsaquo; <a href="{% url 'admin:ai_assistant_aiusageevent_changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+  &rsaquo; AI usage dashboard
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <h1>AI Assistant usage dashboard</h1>
+  <p class="help">
+    Internal operational view for tokens, estimated provider cost, credits, blocked turns and high-usage users.
+    Tokens and USD cost are not user-facing pricing units.
+  </p>
+
+  <form method="get" style="margin: 1em 0;">
+    <label for="period">Period</label>
+    <input id="period" name="period" value="{{ period }}" placeholder="YYYY-MM" pattern="\d{4}-\d{2}">
+    <input type="submit" value="Filter">
+  </form>
+
+  <h2>Period {{ report.period }}</h2>
+  <table>
+    <tbody>
+      <tr><th scope="row">Total events</th><td>{{ report.kpis.total_events }}</td></tr>
+      <tr><th scope="row">Completed / blocked / errors</th><td>{{ report.kpis.completed_events }} / {{ report.kpis.blocked_events }} / {{ report.kpis.error_events }}</td></tr>
+      <tr><th scope="row">Active users</th><td>{{ report.kpis.active_users }}</td></tr>
+      <tr><th scope="row">Total tokens</th><td>{{ report.kpis.total_tokens }}</td></tr>
+      <tr><th scope="row">Input / cached / output tokens</th><td>{{ report.kpis.input_tokens }} / {{ report.kpis.cached_input_tokens }} / {{ report.kpis.output_tokens }}</td></tr>
+      <tr><th scope="row">Estimated cost USD</th><td>{{ report.kpis.estimated_cost_usd }}</td></tr>
+      <tr><th scope="row">Charged credits</th><td>{{ report.kpis.charged_credits }}</td></tr>
+    </tbody>
+  </table>
+
+  <h2>By action type</h2>
+  <table>
+    <thead><tr><th>Action</th><th>Events</th><th>Tokens</th><th>Cost USD</th><th>Credits</th><th>Blocked</th><th>Errors</th></tr></thead>
+    <tbody>
+    {% for row in report.by_action_type %}
+      <tr><td>{{ row.action_type|default:"(blank)" }}</td><td>{{ row.events_count }}</td><td>{{ row.total_tokens }}</td><td>{{ row.estimated_cost_usd }}</td><td>{{ row.charged_credits }}</td><td>{{ row.blocked_events }}</td><td>{{ row.error_events }}</td></tr>
+    {% empty %}
+      <tr><td colspan="7">No usage for this period.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>By provider/model</h2>
+  <table>
+    <thead><tr><th>Provider</th><th>Model</th><th>Events</th><th>Tokens</th><th>Cost USD</th><th>Credits</th></tr></thead>
+    <tbody>
+    {% for row in report.by_model %}
+      <tr><td>{{ row.provider|default:"(blank)" }}</td><td>{{ row.model_name|default:"(blank)" }}</td><td>{{ row.events_count }}</td><td>{{ row.total_tokens }}</td><td>{{ row.estimated_cost_usd }}</td><td>{{ row.charged_credits }}</td></tr>
+    {% empty %}
+      <tr><td colspan="6">No model usage for this period.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Top users</h2>
+  <table>
+    <thead><tr><th>User</th><th>Email</th><th>Events</th><th>Tokens</th><th>Cost USD</th><th>Credits</th><th>Blocked</th><th>Errors</th></tr></thead>
+    <tbody>
+    {% for row in report.top_users %}
+      <tr><td>{{ row.user__username }}</td><td>{{ row.user__email }}</td><td>{{ row.events_count }}</td><td>{{ row.total_tokens }}</td><td>{{ row.estimated_cost_usd }}</td><td>{{ row.charged_credits }}</td><td>{{ row.blocked_events }}</td><td>{{ row.error_events }}</td></tr>
+    {% empty %}
+      <tr><td colspan="8">No metered users for this period.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Quota pressure</h2>
+  <table>
+    <thead><tr><th>User</th><th>Plan</th><th>Credits</th><th>Monthly limit</th><th>Daily limit</th><th>Hard blocked</th></tr></thead>
+    <tbody>
+    {% for row in report.quota_pressure %}
+      <tr><td>{{ row.username }}</td><td>{{ row.plan_code }}</td><td>{{ row.credits_used }}</td><td>{{ row.monthly_credit_limit }}</td><td>{{ row.daily_credit_limit }}</td><td>{{ row.hard_blocked }}</td></tr>
+    {% empty %}
+      <tr><td colspan="6">No limited quotas for this period.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Recent events</h2>
+  <table>
+    <thead><tr><th>Created</th><th>User</th><th>Action</th><th>Status</th><th>Model</th><th>Tokens</th><th>Credits</th></tr></thead>
+    <tbody>
+    {% for event in report.recent_events %}
+      <tr><td>{{ event.created_at }}</td><td>{{ event.user }}</td><td>{{ event.action_type }}</td><td>{{ event.status }}</td><td>{{ event.provider }} / {{ event.model_name }}</td><td>{{ event.total_tokens }}</td><td>{{ event.charged_credits }}</td></tr>
+    {% empty %}
+      <tr><td colspan="7">No recent events.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <p style="margin-top: 2em;"><a href="{% url 'admin:ai_assistant_aiusageevent_changelist' %}">Back to usage events</a></p>
+</div>
+{% endblock %}

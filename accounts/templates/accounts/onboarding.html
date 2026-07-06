@@ -1,0 +1,140 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bienvenida a My Scoope</title>
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+    <link rel="stylesheet" href="{% static 'css/onboarding.css' %}">
+</head>
+<body class="auth-body onboarding-body">
+
+    <main class="onboarding-shell" data-onboarding-shell data-initial-step="{% if has_form_errors %}3{% else %}0{% endif %}">
+        <section class="onboarding-card" aria-label="Onboarding nutricional My Scoope">
+            <div class="onboarding-brand">
+                <img class="auth-logo onboarding-logo" src="{% static 'img/logo-white.png' %}" alt="My Scoope">
+                <p class="onboarding-kicker">Onboarding nutricional · v{{ onboarding_version }}</p>
+            </div>
+
+            <div class="onboarding-slider" data-onboarding-slider>
+                <article class="onboarding-slide is-active" data-onboarding-step="0">
+                    <div class="onboarding-slide__icon" aria-hidden="true">✨</div>
+                    <h1>Bienvenido a My Scoope</h1>
+                    <p>
+                        Construye, organiza y mejora tus planes nutricionales con una estructura clara para alimentos,
+                        comidas, días y programas.
+                    </p>
+                </article>
+
+                <article class="onboarding-slide" data-onboarding-step="1">
+                    <div class="onboarding-slide__icon" aria-hidden="true">📚</div>
+                    <h1>Tus librerías son reutilizables</h1>
+                    <p>
+                        Tus alimentos, comidas y planes pueden copiarse, compararse y evolucionar sin perder control
+                        sobre la información nutricional.
+                    </p>
+                </article>
+
+                <article class="onboarding-slide" data-onboarding-step="2">
+                    <div class="onboarding-slide__icon" aria-hidden="true">🤖</div>
+                    <h1>La AI propone, tú apruebas</h1>
+                    <p>
+                        El asistente puede ayudarte a crear propuestas, pero los cambios importantes quedan sujetos a
+                        revisión antes de guardarse en tu librería.
+                    </p>
+                </article>
+
+                <article class="onboarding-slide onboarding-slide--form" data-onboarding-step="3">
+                    <div class="onboarding-form-heading">
+                        <p class="onboarding-kicker">Ficha personal básica</p>
+                        <h1>Completa tus datos iniciales</h1>
+                        <p>
+                            Estos datos permiten estimar edad, peso y contexto corporal base. Actividad y entrenamiento
+                            se completarán en el primer chat nutricional.
+                        </p>
+                    </div>
+
+                    <form method="post" class="auth-form onboarding-form" novalidate>
+                        {% csrf_token %}
+
+                        {% if form.non_field_errors %}
+                            <ul class="auth-errors">
+                                {% for error in form.non_field_errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+
+                        <div class="auth-field onboarding-field">
+                            <label for="{{ form.birth_date.id_for_label }}">{{ form.birth_date.label }}</label>
+                            {{ form.birth_date }}
+                            {% if form.birth_date.errors %}
+                                <ul class="auth-field-errors">
+                                    {% for error in form.birth_date.errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+
+                        <div class="auth-field onboarding-field">
+                            <label for="{{ form.sex.id_for_label }}">{{ form.sex.label }}</label>
+                            {{ form.sex }}
+                            {% if form.sex.errors %}
+                                <ul class="auth-field-errors">
+                                    {% for error in form.sex.errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+
+                        <div class="onboarding-form-grid">
+                            <div class="auth-field onboarding-field">
+                                <label for="{{ form.height_cm.id_for_label }}">{{ form.height_cm.label }} <span>cm</span></label>
+                                {{ form.height_cm }}
+                                {% if form.height_cm.errors %}
+                                    <ul class="auth-field-errors">
+                                        {% for error in form.height_cm.errors %}
+                                            <li>{{ error }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            </div>
+
+                            <div class="auth-field onboarding-field">
+                                <label for="{{ form.weight_kg.id_for_label }}">{{ form.weight_kg.label }} <span>kg</span></label>
+                                {{ form.weight_kg }}
+                                {% if form.weight_kg.errors %}
+                                    <ul class="auth-field-errors">
+                                        {% for error in form.weight_kg.errors %}
+                                            <li>{{ error }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <button type="submit">Finalizar onboarding</button>
+                    </form>
+                </article>
+            </div>
+
+            <div class="onboarding-controls" aria-label="Controles del onboarding">
+                <button class="onboarding-nav" type="button" data-onboarding-prev>Anterior</button>
+                <div class="onboarding-dots" aria-hidden="true">
+                    <span class="is-active" data-onboarding-dot="0"></span>
+                    <span data-onboarding-dot="1"></span>
+                    <span data-onboarding-dot="2"></span>
+                    <span data-onboarding-dot="3"></span>
+                </div>
+                <button class="onboarding-nav onboarding-nav--primary" type="button" data-onboarding-next>Siguiente</button>
+            </div>
+        </section>
+    </main>
+
+    <script src="{% static 'js/onboarding.js' %}"></script>
+</body>
+</html>

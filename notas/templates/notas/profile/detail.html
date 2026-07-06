@@ -8,7 +8,7 @@
     <section class="profile-account-section">
         <div class="profile-account-main">
             <div class="profile-account-heading">
-                <p class="home-eyebrow">Cuenta</p>
+                <p class="home-eyebrow">Profile</p>
 
                 <div class="profile-account-title-row">
                     <i data-lucide="user" class="profile-account-title-icon"></i>
@@ -16,7 +16,7 @@
                 </div>
 
                 <p class="profile-account-subtitle">
-                    Información principal de tu cuenta y referencia corporal usada en los cálculos nutricionales.
+                    {{ vm.content.subtitle }}
                 </p>
             </div>
 
@@ -34,49 +34,193 @@
         </div>
 
         <div class="profile-account-grid">
-            <div class="profile-account-info-item">
-                <span class="profile-account-info-label">Usuario</span>
-                <strong class="profile-account-info-value">{{ profile.user.username }}</strong>
-            </div>
-
-            <div class="profile-account-info-item">
-                <span class="profile-account-info-label">Rol</span>
-                <strong class="profile-account-info-value">{{ profile.get_role_display }}</strong>
-            </div>
-
-            <div class="profile-account-info-item">
-                <span class="profile-account-info-label">Plan</span>
-                <strong class="profile-account-info-value">{{ profile.plan.name|default:"Sin plan" }}</strong>
-            </div>
-
-            <div class="profile-account-info-item">
-                <span class="profile-account-info-label">Miembro desde</span>
-                <strong class="profile-account-info-value">{{ profile.created_at|date:"Y-m-d" }}</strong>
-            </div>
+            {% for stat in vm.content.stats %}
+                <div class="profile-account-info-item">
+                    <span class="profile-account-info-label">{{ stat.label }}</span>
+                    <strong class="profile-account-info-value">{{ stat.value }}</strong>
+                </div>
+            {% endfor %}
         </div>
     </section>
 
-
-    <section class="profile-weight-card">
-        <div class="profile-weight-copy">
-            <div class="profile-weight-title-row">
-                <i data-lucide="scale" class="profile-weight-title-icon"></i>
-                <h3>Peso corporal</h3>
+    <section class="profile-section-card profile-section-card--account">
+        <header class="profile-section-card__header">
+            <div class="profile-section-card__title-wrap">
+                <p class="profile-section-card__eyebrow">{{ vm.content.account_section.eyebrow }}</p>
+                <div class="profile-section-card__title-row">
+                    <i data-lucide="{{ vm.content.account_section.icon }}" class="profile-section-card__icon"></i>
+                    <h2>{{ vm.content.account_section.title }}</h2>
+                </div>
+                <p>{{ vm.content.account_section.description }}</p>
             </div>
-    
-            <p>
-                Este valor se utiliza calcular los gramos de proteina / peso
-                en meals y dailyplans.
-            </p>
+        </header>
+
+        <div class="profile-section-card__grid">
+            {% for field in vm.content.account_section.fields %}
+                <article class="profile-section-card__item">
+                    <span>{{ field.label }}</span>
+                    <strong>{{ field.value }}</strong>
+                    {% if field.hint %}<small>{{ field.hint }}</small>{% endif %}
+                </article>
+            {% endfor %}
         </div>
-    
-        <button
-            class="profile-weight-button"
-            type="button"
-            onclick="openWeightModal()"
-        >
-            Actualizar peso
-        </button>
+    </section>
+
+    <section class="profile-section-card profile-section-card--billing">
+        <header class="profile-section-card__header">
+            <div class="profile-section-card__title-wrap">
+                <p class="profile-section-card__eyebrow">{{ vm.content.billing_section.eyebrow }}</p>
+                <div class="profile-section-card__title-row">
+                    <i data-lucide="{{ vm.content.billing_section.icon }}" class="profile-section-card__icon"></i>
+                    <h2>{{ vm.content.billing_section.title }}</h2>
+                </div>
+                <p>{{ vm.content.billing_section.description }}</p>
+            </div>
+        </header>
+
+        <div class="profile-section-card__grid">
+            {% for field in vm.content.billing_section.fields %}
+                <article class="profile-section-card__item">
+                    <span>{{ field.label }}</span>
+                    <strong>{{ field.value }}</strong>
+                    {% if field.hint %}<small>{{ field.hint }}</small>{% endif %}
+                </article>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="profile-section-card profile-section-card--nutrition">
+        <header class="profile-section-card__header">
+            <div class="profile-section-card__title-wrap">
+                <p class="profile-section-card__eyebrow">{{ vm.content.nutrition_section.eyebrow }}</p>
+                <div class="profile-section-card__title-row">
+                    <i data-lucide="{{ vm.content.nutrition_section.icon }}" class="profile-section-card__icon"></i>
+                    <h2>{{ vm.content.nutrition_section.title }}</h2>
+                </div>
+                <p>{{ vm.content.nutrition_section.description }}</p>
+            </div>
+        </header>
+
+        <div class="profile-section-card__grid profile-section-card__grid--nutrition">
+            {% for field in vm.content.nutrition_section.fields %}
+                <article class="profile-section-card__item">
+                    <span>{{ field.label }}</span>
+                    <strong>{{ field.value }}</strong>
+                    {% if field.hint %}<small>{{ field.hint }}</small>{% endif %}
+                </article>
+            {% endfor %}
+        </div>
+
+        <form method="post" action="{% url 'profile_nutrition_update' %}" class="profile-edit-form" novalidate>
+            {% csrf_token %}
+
+            <div class="profile-edit-form__header">
+                <h3>Editar ficha nutricional</h3>
+                <p>Actualiza solo datos estables. El peso se registra desde la sección Body Metrics.</p>
+            </div>
+
+            {% if vm.content.nutrition_form.non_field_errors %}
+                <ul class="profile-form-errors">
+                    {% for error in vm.content.nutrition_form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            <div class="profile-edit-form__grid">
+                <div class="profile-form-field">
+                    <label for="{{ vm.content.nutrition_form.birth_date.id_for_label }}">{{ vm.content.nutrition_form.birth_date.label }}</label>
+                    {{ vm.content.nutrition_form.birth_date }}
+                    {% if vm.content.nutrition_form.birth_date.errors %}
+                        <ul class="profile-form-errors">
+                            {% for error in vm.content.nutrition_form.birth_date.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+
+                <div class="profile-form-field">
+                    <label for="{{ vm.content.nutrition_form.sex.id_for_label }}">{{ vm.content.nutrition_form.sex.label }}</label>
+                    {{ vm.content.nutrition_form.sex }}
+                    {% if vm.content.nutrition_form.sex.errors %}
+                        <ul class="profile-form-errors">
+                            {% for error in vm.content.nutrition_form.sex.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+
+                <div class="profile-form-field">
+                    <label for="{{ vm.content.nutrition_form.height_cm.id_for_label }}">{{ vm.content.nutrition_form.height_cm.label }} <span>cm</span></label>
+                    {{ vm.content.nutrition_form.height_cm }}
+                    {% if vm.content.nutrition_form.height_cm.errors %}
+                        <ul class="profile-form-errors">
+                            {% for error in vm.content.nutrition_form.height_cm.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            </div>
+
+            <button type="submit" class="profile-weight-button profile-edit-form__button">Guardar ficha</button>
+        </form>
+    </section>
+
+    <section class="profile-section-card profile-section-card--metrics">
+        <header class="profile-section-card__header profile-section-card__header--with-action">
+            <div class="profile-section-card__title-wrap">
+                <p class="profile-section-card__eyebrow">{{ vm.content.metrics_section.eyebrow }}</p>
+                <div class="profile-section-card__title-row">
+                    <i data-lucide="{{ vm.content.metrics_section.icon }}" class="profile-section-card__icon"></i>
+                    <h2>{{ vm.content.metrics_section.title }}</h2>
+                </div>
+                <p>{{ vm.content.metrics_section.description }}</p>
+            </div>
+
+            <button
+                class="profile-weight-button"
+                type="button"
+                onclick="openWeightModal()"
+            >
+                Registrar nuevo peso
+            </button>
+        </header>
+
+        <div class="profile-section-card__grid">
+            {% for field in vm.content.metrics_section.fields %}
+                <article class="profile-section-card__item">
+                    <span>{{ field.label }}</span>
+                    <strong>{{ field.value }}</strong>
+                    {% if field.hint %}<small>{{ field.hint }}</small>{% endif %}
+                </article>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="profile-section-card profile-section-card--ai-context">
+        <header class="profile-section-card__header">
+            <div class="profile-section-card__title-wrap">
+                <p class="profile-section-card__eyebrow">{{ vm.content.ai_context_section.eyebrow }}</p>
+                <div class="profile-section-card__title-row">
+                    <i data-lucide="{{ vm.content.ai_context_section.icon }}" class="profile-section-card__icon"></i>
+                    <h2>{{ vm.content.ai_context_section.title }}</h2>
+                </div>
+                <p>{{ vm.content.ai_context_section.description }}</p>
+            </div>
+        </header>
+
+        <div class="profile-section-card__grid">
+            {% for field in vm.content.ai_context_section.fields %}
+                <article class="profile-section-card__item">
+                    <span>{{ field.label }}</span>
+                    <strong>{{ field.value }}</strong>
+                    {% if field.hint %}<small>{{ field.hint }}</small>{% endif %}
+                </article>
+            {% endfor %}
+        </div>
     </section>
 
     <section class="profile-section">

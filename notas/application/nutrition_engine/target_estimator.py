@@ -75,6 +75,9 @@ class TargetEstimationProfile:
     protein_target: int | None = None
     carb_target: int | None = None
     fat_target: int | None = None
+    subject_source: str | None = None
+    ppk_weight_source: str | None = None
+    requires_library_ppk_warning: bool = False
 
 
 @dataclass(frozen=True)
@@ -114,6 +117,9 @@ class DailyNutritionTargetPlan:
     target_kcal_before_rounding: float | None
     estimation_method: str
     energy_expenditure: EnergyExpenditureEstimate
+    subject_source: str | None = None
+    ppk_weight_source: str | None = None
+    requires_library_ppk_warning: bool = False
 
     def as_targets_dict(self) -> dict:
         return {
@@ -137,6 +143,12 @@ class DailyNutritionTargetPlan:
             "explicit_targets": dict(self.explicit_targets),
             "estimated_targets": dict(self.estimated_targets),
             "energy_expenditure": self.energy_expenditure.as_dict(),
+            "subject_context": {
+                "source": self.subject_source,
+                "ppk_weight_source": self.ppk_weight_source,
+                "requires_library_ppk_warning": self.requires_library_ppk_warning,
+                "calculation_weight_kg": round(self.weight_kg, 2),
+            },
             "notes": list(self.notes),
         }
 
@@ -250,6 +262,9 @@ def estimate_daily_targets(profile: TargetEstimationProfile) -> DailyNutritionTa
         ),
         estimation_method=estimation_method,
         energy_expenditure=expenditure,
+        subject_source=profile.subject_source,
+        ppk_weight_source=profile.ppk_weight_source,
+        requires_library_ppk_warning=bool(profile.requires_library_ppk_warning),
     )
 
 

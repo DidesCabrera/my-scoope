@@ -1,3 +1,6 @@
+from accounts.services.entitlements import resolve_account_entitlements
+
+
 def get_capabilities(user):
     if not user or not user.is_authenticated:
         return None
@@ -5,47 +8,59 @@ def get_capabilities(user):
     if not hasattr(user, "profile"):
         return None
 
-    return Capabilities(user.profile)
+    return Capabilities(user)
 
 
 class Capabilities:
-    def __init__(self, profile):
-        self.profile = profile
-        self.plan = profile.plan
-        self.role = profile.role
+    def __init__(self, user):
+        self.user = user
+        self.profile = user.profile
+        self.plan = self.profile.plan  # legacy compatibility during ACC migration
+        self.role = self.profile.role
+        self.account_entitlements = resolve_account_entitlements(user)
 
     # -----------------
     # CREATION
     # -----------------
 
     def can_create_food(self):
-        return bool(self.plan and self.plan.can_create_food)
+        return self._enabled("can_create_food")
 
     def can_create_meal(self):
-        return bool(self.plan and self.plan.can_create_meal)
+        return self._enabled("can_create_meal")
 
     def can_create_dailyplan(self):
-        return bool(self.plan and self.plan.can_create_dailyplan)
+        return self._enabled("can_create_dailyplan")
 
     def can_create_program(self):
-        return bool(self.plan and self.plan.can_create_program)
+        return self._enabled("can_create_program")
 
     # -----------------
     # VISIBILITY
     # -----------------
 
     def can_publish(self):
-        return bool(self.plan and self.plan.can_publish)
+        return self._enabled("can_publish")
 
     # -----------------
     # FORK / COPY
     # -----------------
 
     def can_fork(self):
-        return bool(self.plan and self.plan.can_fork)
+        return self._enabled("can_fork", default=True)
 
     def can_copy(self):
-        return bool(self.plan and self.plan.can_copy)
+        return self._enabled("can_copy")
+
+    # -----------------
+    # LIMITS
+    # -----------------
+
+    def max_program_duration_days(self):
+        return self._limit("max_program_duration_days")
+
+    def max_active_subscriptions(self):
+        return self._limit("max_active_subscriptions")
 
     # -----------------
     # EDITING
@@ -66,3 +81,19 @@ class Capabilities:
 
     def is_admin(self):
         return self.role == "admin"
+
+    # -----------------
+    # INTERNALS
+    # -----------------
+
+    def _enabled(self, key, *, default=False):
+        if self.account_entitlements is not None:
+            return self.account_entitlements.enabled(key, default=default)
+        return bool(self.plan and getattr(self.plan, key, default))
+
+    def _limit(self, key):
+        if self.account_entitlements is not None:
+            return self.account_entitlements.limit(key)
+        if self.plan is None:
+            return None
+        return getattr(self.plan, key, None)

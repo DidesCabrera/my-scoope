@@ -33,10 +33,13 @@ from notas.interface.views.dailyplans import add_meal_from_list
 
 urlpatterns = [
     path("meals/<int:pk>/share/", meal_share, name="meal_share"),
+    # Specific share actions must stay before the shared-detail context route.
+    # Otherwise /meals/shared/<share_id>/dismiss/ is interpreted as
+    # meal_share_detail_context(pk=<share_id>, dailyplan_id="dismiss").
+    path("meals/shared/<int:share_id>/dismiss/", meal_share_dismiss, name="meal_share_dismiss"),
+    path("meals/shared/<uuid:token>/", meal_share_accept, name="meal_share_accept"),
     path("meals/shared/<int:pk>/<str:dailyplan_id>/", meal_share_detail, name="meal_share_detail_context"),
     path("meals/shared/<int:pk>/", meal_share_detail, name="meal_share_detail"),
-    path("meals/shared/<uuid:token>/", meal_share_accept, name="meal_share_accept"),
-    path("meals/shared/<int:share_id>/dismiss/", meal_share_dismiss, name="meal_share_dismiss"),
     path("meals/draft/<int:pk>/delete/", meal_draft_delete, name="meal_draft_delete"),
     path("meals/draft/", meal_draft_list, name="meal_draft_list"),
     path("meals/shared/", meal_shared_list, name="meal_shared_list"),

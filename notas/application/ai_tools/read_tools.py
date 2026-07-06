@@ -23,6 +23,9 @@ from notas.application.queries.proposal_queries import (
     list_user_proposals,
     search_proposals,
 )
+from notas.application.queries.solver_food_candidates import (
+    list_solver_food_candidates,
+)
 
 from notas.application.queries.food_catalog_queries import (
     list_food_catalog_for_planning,
@@ -131,6 +134,46 @@ def list_food_catalog_tool(
         user,
         search=search,
         limit=limit,
+        user=user,
+    )
+
+
+def _preview_nutrition_solver_candidates_data(
+    user,
+    search: str | None = None,
+    limit: int = 20,
+    include_extended: bool = True,
+) -> dict:
+    preview = list_solver_food_candidates(
+        user,
+        search=search,
+        limit=limit,
+        include_extended=include_extended,
+    ).as_dict()
+    return {
+        "solver_candidate_preview": preview,
+        "source_boundary": {
+            "source": "notas.Food",
+            "candidate_contract": "nutrition_solver.domain.models.SolverFood",
+            "catalog_fields_exposed": False,
+            "external_payloads_exposed": False,
+            "writes_allowed": False,
+        },
+    }
+
+
+def preview_nutrition_solver_candidates_tool(
+    user,
+    search: str | None = None,
+    limit: int = 20,
+    include_extended: bool = True,
+):
+    return run_ai_tool(
+        _preview_nutrition_solver_candidates_data,
+        user,
+        search=search,
+        limit=limit,
+        include_extended=include_extended,
         user=user,
     )
 

@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from notas.domain.models import (
     DailyPlan,
@@ -24,6 +25,10 @@ class ProposalViewTests(TestCase):
             email="other@example.com",
             password="pass123",
         )
+        for user in (self.user, self.other_user):
+            user.profile.onboarding_completed_at = timezone.now()
+            user.profile.onboarding_version = user.profile.ONBOARDING_VERSION_NUTRITION_V1
+            user.profile.save(update_fields=["onboarding_completed_at", "onboarding_version"])
 
         self.dailyplan = DailyPlan.objects.create(
             name="Training Day",
@@ -966,6 +971,128 @@ class ProposalViewTests(TestCase):
         self.assertEqual(proposal.status, NutritionProposal.STATUS_APPLIED)
         self.assertContains(response, "Propuesta aplicada")
         self.assertContains(response, "Día entrenamiento IA")
+
+
+    def test_proposal_apply_external_subject_requires_ppk_warning_ack(self):
+        self.client.force_login(self.user)
+
+        proposal = NutritionProposal.objects.create(
+            dailyplan=self.dailyplan,
+            created_by=self.user,
+            source=NutritionProposal.SOURCE_AI,
+            status=NutritionProposal.STATUS_APPROVED,
+            title="Plan externo",
+            targets={
+                "subject_context": {
+                    "source": "external_chat_data",
+                    "ppk_weight_source": "external_subject_weight",
+                    "requires_library_ppk_warning": True,
+                    "calculation_weight_kg": 70,
+                },
+            },
+            proposed_payload={
+                "intent": "create_dailyplan",
+                "dailyplan": {
+                    "name": "Día externo IA",
+                    "meals": [
+                        {
+                            "hour": "09:00",
+                            "note": "Desayuno",
+                            "meal": {
+                                "name": "Desayuno externo",
+                                "foods": [
+                                    {
+                                        "food_id": self.rice.id,
+                                        "quantity": 100,
+                                        "unit": "g",
+                                    },
+                                ],
+                            },
+                        },
+                    ],
+                },
+            },
+        )
+
+        before_dailyplan_count = DailyPlan.objects.count()
+
+        response = self.client.post(
+            reverse(
+                "proposal_apply",
+                args=[proposal.id],
+            ),
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(DailyPlan.objects.count(), before_dailyplan_count)
+
+        proposal.refresh_from_db()
+
+        self.assertEqual(proposal.status, NutritionProposal.STATUS_APPROVED)
+        self.assertContains(response, "debes confirmar")
+
+    def test_proposal_apply_external_subject_with_ack_creates_real_dailyplan(self):
+        self.client.force_login(self.user)
+
+        proposal = NutritionProposal.objects.create(
+            dailyplan=self.dailyplan,
+            created_by=self.user,
+            source=NutritionProposal.SOURCE_AI,
+            status=NutritionProposal.STATUS_APPROVED,
+            title="Plan externo",
+            targets={
+                "subject_context": {
+                    "source": "external_chat_data",
+                    "ppk_weight_source": "external_subject_weight",
+                    "requires_library_ppk_warning": True,
+                    "calculation_weight_kg": 70,
+                },
+            },
+            proposed_payload={
+                "intent": "create_dailyplan",
+                "dailyplan": {
+                    "name": "Día externo IA",
+                    "meals": [
+                        {
+                            "hour": "09:00",
+                            "note": "Desayuno",
+                            "meal": {
+                                "name": "Desayuno externo",
+                                "foods": [
+                                    {
+                                        "food_id": self.rice.id,
+                                        "quantity": 100,
+                                        "unit": "g",
+                                    },
+                                ],
+                            },
+                        },
+                    ],
+                },
+            },
+        )
+
+        before_dailyplan_count = DailyPlan.objects.count()
+
+        response = self.client.post(
+            reverse(
+                "proposal_apply",
+                args=[proposal.id],
+            ),
+            {
+                "ack_external_subject_ppk_warning": "1",
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(DailyPlan.objects.count(), before_dailyplan_count + 1)
+
+        proposal.refresh_from_db()
+
+        self.assertEqual(proposal.status, NutritionProposal.STATUS_APPLIED)
+        self.assertContains(response, "Propuesta aplicada")
 
     def test_proposal_apply_requires_approved_status(self):
         self.client.force_login(self.user)

@@ -1,0 +1,263 @@
+{% extends "admin_analytics/base.html" %}
+{% block title %}Nutrition Solver Analytics{% endblock %}
+{% block content %}
+<div class="page admin-analytics-page">
+  {% include "admin_analytics/_operations_bridge.html" with title="Escalar señales del solver a revisión operacional" message="El solver sigue siendo read-first en Analytics; si la señal requiere intervención, continúa desde el overview operacional o AI Assistant según el caso." href="/staff/operations/" cta="Ir a Operations" icon="wrench" %}
+  <section class="home-stats admin-analytics-kpi-grid" aria-label="Señales de salud de Nutrition Solver">
+    {% for signal in vm.content.health_signals %}
+      <article class="home-stat-card admin-analytics-health admin-analytics-health--{{ signal.status }}">
+        <div class="home-stat-top">
+          <i data-lucide="activity" class="home-stat-icon"></i>
+          <span class="home-stat-label">{{ signal.label }}</span>
+        </div>
+        <h3>{{ signal.value }}</h3>
+        <p class="muted-text">{{ signal.description }}</p>
+      </article>
+    {% endfor %}
+  </section>
+
+  {% for section in vm.content.sections %}
+    <section class="card-detail-block">
+      <div class="card-title-row">
+        <div>
+          <p class="section-eyebrow">Nutrition Solver</p>
+          <h3>{{ section.title }}</h3>
+          <p class="muted-text">{{ section.description }}</p>
+        </div>
+      </div>
+      <div class="home-stats admin-analytics-kpi-grid" aria-label="{{ section.title }}">
+        {% for kpi in section.kpis %}
+          <article class="home-stat-card">
+            <div class="home-stat-top">
+              <i data-lucide="gauge" class="home-stat-icon"></i>
+              <span class="home-stat-label">{{ kpi.label }}</span>
+            </div>
+            <h3>{{ kpi.value }}</h3>
+            {% if kpi.helper %}
+              <p class="muted-text">{{ kpi.helper }}</p>
+            {% endif %}
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  {% endfor %}
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Solver result</p>
+        <h3>Status de optimización</h3>
+        <p class="muted-text">Distribución de estados persistidos en validation_summary.nutrition_solver.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead>
+          <tr><th>Status</th><th>Total</th></tr>
+        </thead>
+        <tbody>
+          {% for row in vm.content.solver_status_rows %}
+            <tr><td><strong>{{ row.status }}</strong></td><td>{{ row.total }}</td></tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="2">No hay summaries del solver registrados.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Solver diagnostics</p>
+        <h3>Motivos y macro más desviada</h3>
+        <p class="muted-text">Reason codes y worst_macro desde diagnostics.assessment.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead>
+          <tr><th>Reason code</th><th>Total</th></tr>
+        </thead>
+        <tbody>
+          {% for row in vm.content.solver_reason_rows %}
+            <tr><td><strong>{{ row.reason_code }}</strong></td><td>{{ row.total }}</td></tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="2">No hay reason codes disponibles.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead>
+          <tr><th>Worst macro</th><th>Total</th></tr>
+        </thead>
+        <tbody>
+          {% for row in vm.content.solver_worst_macro_rows %}
+            <tr><td><strong>{{ row.macro }}</strong></td><td>{{ row.total }}</td></tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="2">No hay worst_macro disponible.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Source</p>
+        <h3>Resultados por fuente de propuesta</h3>
+        <p class="muted-text">Permite comparar calidad del solver entre AI, MCP, system y flujos manuales.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead>
+          <tr>
+            <th>Source</th><th>Total</th><th>Optimal</th><th>Acceptable</th><th>Partial</th><th>Impossible</th><th>Avg score</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in vm.content.solver_source_rows %}
+            <tr>
+              <td><strong>{{ row.source }}</strong></td>
+              <td>{{ row.total }}</td>
+              <td>{{ row.optimal }}</td>
+              <td>{{ row.acceptable }}</td>
+              <td>{{ row.partial }}</td>
+              <td>{{ row.impossible }}</td>
+              <td>{{ row.avg_score }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="7">No hay resultados por fuente.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Engine validation</p>
+        <h3>Status e issues frecuentes</h3>
+        <p class="muted-text">Validación estricta de propuestas generadas para DailyPlan.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead><tr><th>Status</th><th>Total</th></tr></thead>
+        <tbody>
+          {% for row in vm.content.engine_status_rows %}
+            <tr><td><strong>{{ row.status }}</strong></td><td>{{ row.total }}</td></tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="2">No hay engine_validation registrado.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead><tr><th>Severity</th><th>Code</th><th>Metric</th><th>Total</th></tr></thead>
+        <tbody>
+          {% for row in vm.content.issue_rows %}
+            <tr>
+              <td><strong>{{ row.severity }}</strong></td>
+              <td>{{ row.code }}</td>
+              <td>{{ row.metric }}</td>
+              <td>{{ row.total }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="4">No hay issues registrados.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Targets</p>
+        <h3>Desviación macro absoluta</h3>
+        <p class="muted-text">Promedio y máximo de abs(diff_percent) cuando target_comparison está disponible.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead><tr><th>Metric</th><th>Samples</th><th>Avg abs diff</th><th>Max abs diff</th></tr></thead>
+        <tbody>
+          {% for row in vm.content.target_metric_rows %}
+            <tr>
+              <td><strong>{{ row.metric }}</strong></td>
+              <td>{{ row.samples }}</td>
+              <td>{{ row.avg_abs_diff_percent }}</td>
+              <td>{{ row.max_abs_diff_percent }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="4">No hay target_comparison disponible.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Candidate readiness</p>
+        <h3>Alimentos disponibles para optimización</h3>
+        <p class="muted-text">Lectura cruzada de notas.Food operacional y Food Catalog maestro.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead><tr><th>Catalog status</th><th>Solver enabled</th><th>High quality</th></tr></thead>
+        <tbody>
+          {% for row in vm.content.catalog_status_rows %}
+            <tr><td><strong>{{ row.status }}</strong></td><td>{{ row.total }}</td><td>{{ row.high_quality }}</td></tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="3">No hay candidatos de catálogo habilitados para solver.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead><tr><th>Food group</th><th>Operational solver foods</th><th>Verified</th></tr></thead>
+        <tbody>
+          {% for row in vm.content.operational_group_rows %}
+            <tr><td><strong>{{ row.food_group }}</strong></td><td>{{ row.total }}</td><td>{{ row.verified }}</td></tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="3">No hay alimentos operacionales solver_enabled.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Config</p>
+        <h3>Contratos y tolerancias actuales</h3>
+        <p class="muted-text">Valores de configuración del solver y validadores puros. Esta sección no modifica configuración.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead><tr><th>Grupo</th><th>Clave</th><th>Valor</th></tr></thead>
+        <tbody>
+          {% for row in vm.content.config_rows %}
+            <tr><td><strong>{{ row.group }}</strong></td><td>{{ row.key }}</td><td>{{ row.value }}</td></tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="3">No hay configuración expuesta.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}

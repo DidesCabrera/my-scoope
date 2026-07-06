@@ -1,0 +1,50 @@
+from django.urls import path
+
+from admin_operations.views import (
+    account_credit_adjustment,
+    audit_log,
+    ai_assistant,
+    ai_proposal_action,
+    ai_proposal_detail,
+    ai_quota_action,
+    ai_usage_event_action,
+    account_detail,
+    account_reservation_release,
+    accounts,
+    food_catalog,
+    food_catalog_candidate_action,
+    food_catalog_candidate_detail,
+    food_catalog_food_action,
+    overview,
+)
+
+
+urlpatterns = [
+    path("", overview, name="admin_operations_overview"),
+    path("audit-log/", audit_log, name="admin_operations_audit_log"),
+    path("ai-assistant/", ai_assistant, name="admin_operations_ai_assistant"),
+    path("ai-assistant/events/<int:event_id>/action/", ai_usage_event_action, name="admin_operations_ai_event_action"),
+    path("ai-assistant/quotas/<int:quota_id>/action/", ai_quota_action, name="admin_operations_ai_quota_action"),
+    path("ai-assistant/proposals/<int:proposal_id>/", ai_proposal_detail, name="admin_operations_ai_proposal"),
+    path("ai-assistant/proposals/<int:proposal_id>/action/", ai_proposal_action, name="admin_operations_ai_proposal_action"),
+    path("accounts/", accounts, name="admin_operations_accounts"),
+    path("accounts/users/<int:user_id>/", account_detail, name="admin_operations_account_detail"),
+    path("accounts/users/<int:user_id>/adjust/", account_credit_adjustment, name="admin_operations_account_credit_adjustment"),
+    path("accounts/users/<int:user_id>/reservations/<int:reservation_id>/release/", account_reservation_release, name="admin_operations_account_reservation_release"),
+    path("food-catalog/", food_catalog, name="admin_operations_food_catalog"),
+    path(
+        "food-catalog/candidates/<int:candidate_id>/",
+        food_catalog_candidate_detail,
+        name="admin_operations_food_catalog_candidate",
+    ),
+    path(
+        "food-catalog/candidates/<int:candidate_id>/action/",
+        food_catalog_candidate_action,
+        name="admin_operations_food_catalog_candidate_action",
+    ),
+    path(
+        "food-catalog/foods/<int:catalog_food_id>/action/",
+        food_catalog_food_action,
+        name="admin_operations_food_catalog_food_action",
+    ),
+]

@@ -1,0 +1,269 @@
+{% extends "admin_analytics/base.html" %}
+{% block title %}Product Activity Analytics{% endblock %}
+{% block content %}
+<div class="page admin-analytics-page">
+  {% include "admin_analytics/_operations_bridge.html" with title="Convertir actividad de producto en follow-up operacional" message="Si el uso del producto revela casos que requieren soporte o revisión interna, continúa desde Admin Operations sin mezclar acciones en Analytics." href="/staff/operations/" cta="Ir a Operations" icon="wrench" %}
+  <section class="home-stats admin-analytics-kpi-grid" aria-label="Señales de salud de Product Activity">
+    {% for signal in vm.content.health_signals %}
+      <article class="home-stat-card admin-analytics-health admin-analytics-health--{{ signal.status }}">
+        <div class="home-stat-top">
+          <i data-lucide="activity" class="home-stat-icon"></i>
+          <span class="home-stat-label">{{ signal.label }}</span>
+        </div>
+        <h3>{{ signal.value }}</h3>
+        <p class="muted-text">{{ signal.description }}</p>
+      </article>
+    {% endfor %}
+  </section>
+
+  {% for section in vm.content.sections %}
+    <section class="card-detail-block">
+      <div class="card-title-row">
+        <div>
+          <p class="section-eyebrow">Product Activity</p>
+          <h3>{{ section.title }}</h3>
+          <p class="muted-text">{{ section.description }}</p>
+        </div>
+      </div>
+      <div class="home-stats admin-analytics-kpi-grid" aria-label="{{ section.title }}">
+        {% for kpi in section.kpis %}
+          <article class="home-stat-card">
+            <div class="home-stat-top">
+              <i data-lucide="bar-chart-3" class="home-stat-icon"></i>
+              <span class="home-stat-label">{{ kpi.label }}</span>
+            </div>
+            <h3>{{ kpi.value }}</h3>
+            {% if kpi.helper %}
+              <p class="muted-text">{{ kpi.helper }}</p>
+            {% endif %}
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  {% endfor %}
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Entidades</p>
+        <h3>Volumen y estado operacional</h3>
+        <p class="muted-text">Creados 7/30 días, draft/public/fork y señales de uso por entidad.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead>
+          <tr>
+            <th>Entidad</th>
+            <th>Total</th>
+            <th>7d</th>
+            <th>30d</th>
+            <th>Draft</th>
+            <th>Public</th>
+            <th>Forks</th>
+            <th>Uso</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in vm.content.entity_rows %}
+            <tr>
+              <td><strong>{{ row.entity }}</strong></td>
+              <td>{{ row.total }}</td>
+              <td>{{ row.created_7d }}</td>
+              <td>{{ row.created_30d }}</td>
+              <td>{{ row.draft }}</td>
+              <td>{{ row.public }}</td>
+              <td>{{ row.forked }}</td>
+              <td>{{ row.usage }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="8">No hay entidades para mostrar.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Builders</p>
+        <h3>Top usuarios por actividad nutricional</h3>
+        <p class="muted-text">Score simple ponderado por creación de objetos, shares, comparaciones y propuestas aplicadas.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Score</th>
+            <th>Meals</th>
+            <th>DailyPlans</th>
+            <th>Programs</th>
+            <th>Shares</th>
+            <th>Comparaciones</th>
+            <th>Propuestas aplicadas</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in vm.content.builder_rows %}
+            <tr>
+              <td><strong>{{ row.email }}</strong><br><span class="muted-text">{{ row.username }}</span></td>
+              <td>{{ row.score }}</td>
+              <td>{{ row.meals }}</td>
+              <td>{{ row.dailyplans }}</td>
+              <td>{{ row.programs }}</td>
+              <td>{{ row.shares }}</td>
+              <td>{{ row.comparisons }}</td>
+              <td>{{ row.applied_proposals }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="8">No hay builders activos en los últimos 7 días.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">DailyPlans</p>
+        <h3>Origen de planes diarios</h3>
+        <p class="muted-text">Distribución por `source`: manual, ai, system, mcp o program.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead>
+          <tr>
+            <th>Source</th>
+            <th>Total</th>
+            <th>Creados 7d</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in vm.content.source_rows %}
+            <tr>
+              <td><strong>{{ row.source }}</strong></td>
+              <td>{{ row.total }}</td>
+              <td>{{ row.created_7d }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="3">No hay DailyPlans para agrupar por source.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Programs</p>
+        <h3>Distribución por semana</h3>
+        <p class="muted-text">Cantidad de ProgramDay por week_number para ver profundidad real de programas.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead>
+          <tr>
+            <th>Semana</th>
+            <th>Slots</th>
+            <th>Programas</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in vm.content.program_week_rows %}
+            <tr>
+              <td>Semana {{ row.week_number }}</td>
+              <td>{{ row.slots }}</td>
+              <td>{{ row.programs }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="3">No hay ProgramDays registrados.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Comparaciones</p>
+        <h3>Comparaciones guardadas</h3>
+        <p class="muted-text">Uso de SavedComparison por tipo de entidad.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead>
+          <tr>
+            <th>Tipo</th>
+            <th>Total</th>
+            <th>Actualizadas 7d</th>
+            <th>Owners</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in vm.content.comparison_rows %}
+            <tr>
+              <td><strong>{{ row.kind }}</strong></td>
+              <td>{{ row.total }}</td>
+              <td>{{ row.updated_7d }}</td>
+              <td>{{ row.owners }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="4">No hay comparaciones guardadas.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Shares</p>
+        <h3>Intercambio nutricional</h3>
+        <p class="muted-text">Shares enviados, aceptados, favoritos y pendientes por tipo.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead>
+          <tr>
+            <th>Tipo</th>
+            <th>Total</th>
+            <th>7d</th>
+            <th>30d</th>
+            <th>Aceptados</th>
+            <th>Unread</th>
+            <th>Favoritos</th>
+            <th>Removed</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in vm.content.share_rows %}
+            <tr>
+              <td><strong>{{ row.label }}</strong></td>
+              <td>{{ row.sent_total }}</td>
+              <td>{{ row.sent_7d }}</td>
+              <td>{{ row.sent_30d }}</td>
+              <td>{{ row.accepted_total }}</td>
+              <td>{{ row.unread_total }}</td>
+              <td>{{ row.favorite_total }}</td>
+              <td>{{ row.removed_total }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="8">No hay shares registrados.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,166 @@
+{% extends "admin_analytics/base.html" %}
+{% block title %}Accounts Analytics{% endblock %}
+{% block content %}
+<div class="page admin-analytics-page">
+  {% include "admin_analytics/_operations_bridge.html" with title="Resolver wallets, reservas y ajustes de créditos" message="Cuando esta lectura muestre presión de créditos o reservas abiertas, opera el caso desde Accounts & Credits con razón obligatoria y auditoría." href="/staff/operations/accounts/" cta="Operar Accounts & Credits" icon="credit-card" %}
+  {% for section in vm.content.sections %}
+    <section class="card-detail-block">
+      <div class="card-title-row">
+        <div>
+          <p class="section-eyebrow">Accounts</p>
+          <h3>{{ section.title }}</h3>
+          <p class="muted-text">{{ section.description }}</p>
+        </div>
+      </div>
+      <div class="home-stats admin-analytics-kpi-grid" aria-label="{{ section.title }}">
+        {% for kpi in section.kpis %}
+          <article class="home-stat-card">
+            <div class="home-stat-top">
+              <i data-lucide="credit-card" class="home-stat-icon"></i>
+              <span class="home-stat-label">{{ kpi.label }}</span>
+            </div>
+            <h3>{{ kpi.value }}</h3>
+            {% if kpi.helper %}
+              <p class="muted-text">{{ kpi.helper }}</p>
+            {% endif %}
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  {% endfor %}
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Planes</p>
+        <h3>Configuración comercial</h3>
+        <p class="muted-text">Créditos incluidos, límites y suscripciones activas por AccountPlan.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead>
+          <tr>
+            <th>Plan</th>
+            <th>Status</th>
+            <th>Créditos mes</th>
+            <th>Límite diario</th>
+            <th>Límite mensual</th>
+            <th>Subs activas</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in vm.content.plan_rows %}
+            <tr>
+              <td><strong>{{ row.name }}</strong><br><span class="muted-text">{{ row.slug }}</span></td>
+              <td>{{ row.status }}</td>
+              <td>{{ row.included_monthly_credits }}</td>
+              <td>{{ row.daily_credit_limit }}</td>
+              <td>{{ row.monthly_credit_limit }}</td>
+              <td>{{ row.active_subscriptions }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="6">No hay planes comerciales registrados.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Suscripciones</p>
+        <h3>Activas por plan</h3>
+        <p class="muted-text">Distribución inicial de trialing + active.</p>
+      </div>
+    </div>
+    <div class="home-stats admin-analytics-kpi-grid" aria-label="Suscripciones activas por plan">
+      {% for kpi in vm.content.active_subscriptions_by_plan %}
+        <article class="home-stat-card">
+          <div class="home-stat-top">
+            <i data-lucide="users" class="home-stat-icon"></i>
+            <span class="home-stat-label">{{ kpi.label }}</span>
+          </div>
+          <h3>{{ kpi.value }}</h3>
+          <p class="muted-text">{{ kpi.helper }}</p>
+        </article>
+      {% empty %}
+        <p class="muted-text">No hay suscripciones activas para mostrar.</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Wallets</p>
+        <h3>Mayores balances</h3>
+        <p class="muted-text">Top wallets por balance para detectar concentración de créditos.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Balance</th>
+            <th>Reservado</th>
+            <th>Disponible</th>
+            <th>Periodo</th>
+            <th>Plan snapshot</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in vm.content.wallet_rows %}
+            <tr>
+              <td><strong>{{ row.email }}</strong><br><span class="muted-text">{{ row.username }}</span></td>
+              <td>{{ row.balance }}</td>
+              <td>{{ row.reserved_balance }}</td>
+              <td>{{ row.available_credits }}</td>
+              <td>{{ row.period }}</td>
+              <td>{{ row.plan_snapshot_code }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="6">No hay wallets registradas.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Ledger</p>
+        <h3>Movimientos por tipo</h3>
+        <p class="muted-text">Agrupación de movimientos de créditos durante los últimos 7 días.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead>
+          <tr>
+            <th>Tipo</th>
+            <th>Entradas</th>
+            <th>Δ créditos</th>
+            <th>Δ reservado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in vm.content.ledger_kind_rows %}
+            <tr>
+              <td>{{ row.kind }}</td>
+              <td>{{ row.entries }}</td>
+              <td>{{ row.credits_delta }}</td>
+              <td>{{ row.reserved_delta }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="4">No hay movimientos de ledger en los últimos 7 días.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "admin_operations/base.html" %}
+{% block title %}Accounts & Credits Operations{% endblock %}
+{% block content %}
+<div class="page admin-analytics-page admin-operations-page">
+  {% if messages %}
+    <div class="admin-operations-messages" aria-live="polite">
+      {% for message in messages %}<div class="admin-operations-message admin-operations-message--{{ message.tags|default:'info' }}">{{ message }}</div>{% endfor %}
+    </div>
+  {% endif %}
+
+  <section class="home-stats admin-analytics-kpi-grid admin-operations-kpi-grid" aria-label="Resumen operacional Accounts OPS04">
+    {% for metric in vm.content.metrics %}
+      <article class="home-stat-card admin-operations-metric-card">
+        <div class="home-stat-top"><i data-lucide="{{ metric.icon }}" class="home-stat-icon"></i><span class="home-stat-label">{{ metric.label }}</span></div>
+        <h3>{{ metric.value }}</h3>
+        {% if metric.helper %}<p class="muted-text">{{ metric.helper }}</p>{% endif %}
+      </article>
+    {% endfor %}
+  </section>
+
+  <section class="card-detail-block">
+    <form class="admin-operations-search-form" method="get">
+      <label>Buscar cuentas<input type="search" name="q" value="{{ vm.content.query }}" placeholder="email, username, referencia..."></label>
+      <button class="btn-secondary" type="submit">Filtrar</button>
+      {% if vm.content.query %}<a class="btn-secondary" href="{% url 'admin_operations_accounts' %}">Limpiar</a>{% endif %}
+    </form>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row"><div><p class="section-eyebrow">Wallets</p><h3>Cuentas con wallet</h3><p class="muted-text">Accede al detalle para ajustar créditos o liberar reservas con razón obligatoria.</p></div></div>
+    {% if vm.content.wallets %}
+      <div class="admin-operations-table-card"><table class="admin-operations-table"><thead><tr><th>Usuario</th><th>Balance</th><th>Reservado</th><th>Disponible</th><th>Plan</th><th>Acción</th></tr></thead><tbody>
+        {% for wallet in vm.content.wallets %}
+          <tr><td data-label="Usuario"><strong>{{ wallet.user_label }}</strong><small>{{ wallet.email }}</small></td><td data-label="Balance">{{ wallet.balance }}</td><td data-label="Reservado">{{ wallet.reserved_balance }}</td><td data-label="Disponible">{{ wallet.available_credits }}</td><td data-label="Plan"><span>{{ wallet.plan_snapshot_code }}</span><small>{{ wallet.subscription_label }}</small></td><td data-label="Acción"><a class="btn-secondary btn-secondary--compact" href="{{ wallet.detail_url }}">Revisar</a></td></tr>
+        {% endfor %}
+      </tbody></table></div>
+    {% else %}
+      <div class="admin-operations-empty-state"><i data-lucide="wallet-cards" class="home-stat-icon"></i><div><h4>Sin wallets para mostrar</h4><p class="muted-text">No se encontraron wallets con el filtro actual.</p></div></div>
+    {% endif %}
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row"><div><p class="section-eyebrow">Reservas abiertas</p><h3>Créditos retenidos</h3><p class="muted-text">Reservas sin consume/release asociado.</p></div></div>
+    {% if vm.content.reservations %}
+      <div class="admin-operations-card-list">
+        {% for reservation in vm.content.reservations %}
+          <article class="admin-operations-reservation-card"><div><h4>{{ reservation.user_label }}</h4><p class="muted-text">{{ reservation.email }} · {{ reservation.reference_label }}</p><small>{{ reservation.created_label }} · {{ reservation.reason }}</small></div><div class="admin-operations-reservation-card__aside"><strong>{{ reservation.credits }}</strong><span>créditos reservados</span><a class="btn-secondary btn-secondary--compact" href="{{ reservation.detail_url }}">Revisar usuario</a></div></article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="admin-operations-empty-state"><i data-lucide="circle-check" class="home-stat-icon"></i><div><h4>Sin reservas abiertas</h4><p class="muted-text">No hay reservas accionables para el filtro actual.</p></div></div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

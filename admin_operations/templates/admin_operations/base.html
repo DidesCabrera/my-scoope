@@ -1,0 +1,111 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <script>
+    (function () {
+      const storageKey = "myscoope-theme";
+      const validThemes = ["light", "dark"];
+      const savedTheme = localStorage.getItem(storageKey);
+      const theme = validThemes.includes(savedTheme) ? savedTheme : "dark";
+      document.documentElement.dataset.theme = theme;
+    })();
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
+  <meta name="theme-color" content="#080808">
+  <title>{% block title %}Admin Operations{% endblock %} · My Scoope</title>
+  <link rel="stylesheet" href="{% static 'notas/css/components/admin_analytics.css' %}">
+  <link rel="stylesheet" href="{% static 'notas/css/components/admin_operations.css' %}">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="admin-analytics-shell admin-operations-shell">
+  <input class="admin-analytics-mobile-toggle" type="checkbox" id="admin-operations-menu-toggle" aria-hidden="true">
+
+  <div class="admin-analytics-app admin-operations-app">
+    <label class="admin-analytics-mobile-scrim admin-analytics-mobile-scrim--menu" for="admin-operations-menu-toggle" aria-label="Cerrar navegación"></label>
+
+    <aside class="admin-analytics-sidebar admin-operations-sidebar" aria-label="Admin Operations navigation">
+      <div class="admin-analytics-sidebar__mobile-header">
+        <span class="admin-analytics-sidebar__mobile-title">Admin Operations</span>
+        <label class="admin-analytics-icon-button" for="admin-operations-menu-toggle" aria-label="Cerrar navegación">
+          <i data-lucide="x"></i>
+        </label>
+      </div>
+      <a class="admin-analytics-brand admin-operations-brand" href="{% url 'admin_operations_overview' %}" aria-label="Admin Operations overview">
+        <span class="admin-analytics-brand__mark admin-operations-brand__mark"><i data-lucide="wrench"></i></span>
+        <span>
+          <strong>Admin Operations</strong>
+          <small>Operational Console</small>
+        </span>
+      </a>
+      {% include "admin_operations/_nav.html" %}
+      <div class="admin-analytics-sidebar__footer">
+        <a href="{% url 'admin_analytics_overview' %}" class="admin-analytics-sidebar__utility"><i data-lucide="chart-no-axes-combined"></i> Ir a Analytics</a>
+        <a href="/" class="admin-analytics-sidebar__utility"><i data-lucide="arrow-left"></i> Volver a My Scoope</a>
+        <a href="/admin/" class="admin-analytics-sidebar__utility"><i data-lucide="settings"></i> Django admin legacy</a>
+      </div>
+    </aside>
+
+    <div class="admin-analytics-main-shell">
+      <header class="admin-analytics-topbar admin-operations-topbar">
+        <div class="admin-analytics-topbar__mobile-actions admin-analytics-topbar__mobile-actions--menu" aria-label="Controles móviles">
+          <label class="admin-analytics-icon-button" for="admin-operations-menu-toggle" aria-label="Abrir navegación">
+            <i data-lucide="menu"></i>
+          </label>
+        </div>
+        <div class="admin-analytics-page-heading">
+          <p class="section-eyebrow">Staff-only · Action-first · {{ vm.content.period_label|default:"OPS" }}</p>
+          <h1>{% block console_title %}{{ vm.content.title|default:"Operational Console" }}{% endblock %}</h1>
+          {% if vm.content.subtitle %}
+            <p class="admin-analytics-page-heading__subtitle">{{ vm.content.subtitle }}</p>
+          {% endif %}
+        </div>
+        <div class="admin-analytics-topbar__meta" aria-label="Metadata de la página">
+          {% if vm.content.current_period %}
+            <span>{{ vm.content.current_period }}</span>
+          {% endif %}
+          <span>{{ request.user.email|default:request.user.username }}</span>
+        </div>
+      </header>
+
+      <main class="admin-analytics-content admin-operations-content" id="main-content">
+        {% if messages %}
+          <div class="admin-operations-messages" role="status" aria-live="polite">
+            {% for message in messages %}
+              <div class="admin-operations-message admin-operations-message--{{ message.tags|default:'info' }}">{{ message }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      document.addEventListener("submit", function (event) {
+        const form = event.target;
+        if (!form.matches("[data-admin-operations-confirm]")) {
+          return;
+        }
+        const reasonField = form.querySelector("[name='reason']");
+        if (reasonField && !reasonField.value.trim()) {
+          event.preventDefault();
+          reasonField.focus();
+          return;
+        }
+        const message = form.getAttribute("data-confirm-message") || "Confirmar acción operacional en Admin Operations?";
+        if (!window.confirm(message)) {
+          event.preventDefault();
+        }
+      });
+    })();
+
+    if (window.lucide) {
+      window.lucide.createIcons();
+    }
+  </script>
+</body>
+</html>

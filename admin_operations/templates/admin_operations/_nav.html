@@ -1,0 +1,18 @@
+<nav class="admin-analytics-nav admin-operations-nav" aria-label="Admin Operations sections">
+  <p class="admin-analytics-nav__label">Operaciones</p>
+  <a class="admin-analytics-nav__link" href="{% url 'admin_operations_overview' %}"{% if request.resolver_match.url_name == 'admin_operations_overview' %} aria-current="page"{% endif %}>
+    <i data-lucide="layout-dashboard" class="admin-analytics-nav__icon"></i> Overview
+  </a>
+  <a class="admin-analytics-nav__link" href="{% url 'admin_operations_food_catalog' %}"{% if request.resolver_match.url_name == 'admin_operations_food_catalog' or request.resolver_match.url_name == 'admin_operations_food_catalog_candidate' %} aria-current="page"{% endif %}>
+    <i data-lucide="database" class="admin-analytics-nav__icon"></i> Food Catalog
+  </a>
+  <a class="admin-analytics-nav__link" href="{% url 'admin_operations_accounts' %}"{% if request.resolver_match.url_name == 'admin_operations_accounts' or request.resolver_match.url_name == 'admin_operations_account_detail' %} aria-current="page"{% endif %}>
+    <i data-lucide="credit-card" class="admin-analytics-nav__icon"></i> Accounts & Credits
+  </a>
+  <a class="admin-analytics-nav__link" href="{% url 'admin_operations_ai_assistant' %}"{% if request.resolver_match.url_name == 'admin_operations_ai_assistant' or request.resolver_match.url_name == 'admin_operations_ai_proposal' %} aria-current="page"{% endif %}>
+    <i data-lucide="bot" class="admin-analytics-nav__icon"></i> AI Assistant
+  </a>
+  <a class="admin-analytics-nav__link" href="{% url 'admin_operations_audit_log' %}"{% if request.resolver_match.url_name == 'admin_operations_audit_log' %} aria-current="page"{% endif %}>
+    <i data-lucide="scroll-text" class="admin-analytics-nav__icon"></i> Audit Log
+  </a>
+</nav>

@@ -121,3 +121,21 @@ Responsibilities:
 - Consume already-prepared contracts.
 
 Templates and JavaScript should not duplicate business rules when those rules belong to commands or services.
+
+### AI Assistant App
+
+Path examples:
+
+- `ai_assistant/application/`
+- `ai_assistant/domain/`
+- `ai_assistant/infrastructure/`
+
+Responsibilities:
+
+- Define chat engine contracts.
+- Host future LLM provider gateways.
+- Version prompts and structured AI contracts.
+- Register controlled tools for AI orchestration.
+- Keep AI safety/audit concerns outside operational domain models.
+
+`ai_assistant` does not own `Food`, `Meal`, `DailyPlan`, `Program`, `NutritionProposal` or the current `AiNutritionChat` persistence. It orchestrates through explicit application services and must not access `food_catalog` directly.
