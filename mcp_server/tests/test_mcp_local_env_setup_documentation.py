@@ -2,8 +2,8 @@ from pathlib import Path
 import unittest
 
 
-AUTH_DOC_PATH = Path("docs/architecture/internal_api_auth_for_mcp.md")
-ENV_DOC_PATH = Path("docs/architecture/mcp_local_env_setup.md")
+AUTH_DOC_PATH = Path("docs/archive/mcp_stage_logs/internal_api_auth_for_mcp.md")
+ENV_DOC_PATH = Path("docs/archive/mcp_stage_logs/mcp_local_env_setup.md")
 
 
 class MCPLocalEnvSetupDocumentationTests(unittest.TestCase):

@@ -1,0 +1,75 @@
+{% extends "admin_operations/base.html" %}
+{% block title %}Audit Log Operations{% endblock %}
+{% block content %}
+<div class="page admin-analytics-page admin-operations-page">
+  <section class="home-stats admin-analytics-kpi-grid admin-operations-kpi-grid" aria-label="Resumen audit OPS06">
+    {% for metric in vm.content.metrics %}
+      <article class="home-stat-card admin-operations-metric-card">
+        <div class="home-stat-top">
+          <i data-lucide="{{ metric.icon }}" class="home-stat-icon"></i>
+          <span class="home-stat-label">{{ metric.label }}</span>
+        </div>
+        <h3>{{ metric.value }}</h3>
+        {% if metric.helper %}<p class="muted-text">{{ metric.helper }}</p>{% endif %}
+      </article>
+    {% endfor %}
+  </section>
+
+  <section class="card-detail-block">
+    <form class="admin-operations-search-form" method="get">
+      <label>
+        Buscar audit events
+        <input type="search" name="q" value="{{ vm.content.query }}" placeholder="actor, acción, target, razón...">
+      </label>
+      <button class="btn-secondary" type="submit">Filtrar</button>
+      {% if vm.content.query %}<a class="btn-secondary" href="{% url 'admin_operations_audit_log' %}">Limpiar</a>{% endif %}
+    </form>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">OPS06 · Append-only</p>
+        <h3>Eventos auditados</h3>
+        <p class="muted-text">Cada fila debe responder quién actuó, sobre qué entidad, qué cambió y por qué.</p>
+      </div>
+    </div>
+    {% if vm.content.events %}
+      <div class="admin-operations-table-card">
+        <table class="admin-operations-table admin-operations-table--audit">
+          <thead>
+            <tr>
+              <th>Fecha / Actor</th>
+              <th>Acción</th>
+              <th>Target</th>
+              <th>Transición</th>
+              <th>Razón</th>
+              <th>Metadata</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for event in vm.content.events %}
+              <tr>
+                <td data-label="Fecha / Actor"><strong>{{ event.created_label }}</strong><small>{{ event.actor_label }}</small></td>
+                <td data-label="Acción"><span class="admin-operations-status-pill">{{ event.action }}</span></td>
+                <td data-label="Target"><strong>{{ event.target_label }}</strong><small>{{ event.target_type }} #{{ event.target_id }}</small></td>
+                <td data-label="Transición"><span>{{ event.status_before }}</span><small>→ {{ event.status_after }}</small></td>
+                <td data-label="Razón"><span>{{ event.reason }}</span></td>
+                <td data-label="Metadata"><small>{{ event.metadata_summary }}</small></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="admin-operations-empty-state">
+        <i data-lucide="scroll-text" class="home-stat-icon"></i>
+        <div>
+          <h4>Sin eventos auditados</h4>
+          <p class="muted-text">Todavía no hay acciones staff registradas para el filtro actual.</p>
+        </div>
+      </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

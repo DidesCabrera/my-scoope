@@ -10,6 +10,9 @@ from notas.application.ai_intake.nutrition_brief import (
 )
 from notas.application.ai_intake.plan_iteration import create_iterated_dailyplan_proposal
 from notas.application.ai_intake.proposal_from_brief import create_nutrition_brief_proposal
+from notas.application.proposals.solver_meal_proposals import (
+    create_solver_generated_meal_proposal,
+)
 from notas.application.queries.proposal_queries import (
     get_proposal_detail,
     list_dailyplan_proposals,
@@ -257,6 +260,75 @@ def create_nutrition_engine_dailyplan_proposal_tool(
         user=user,
     )
 
+
+
+def _create_nutrition_solver_meal_proposal_data(
+    user,
+    dailyplan_id: int,
+    title: str,
+    target: dict,
+    search: str | None = None,
+    limit: int = 40,
+    include_extended: bool = True,
+    meal_slot: str = "Solver meal",
+    summary: str = "",
+) -> dict:
+    _ensure_title_is_valid_for_tool(title)
+    _ensure_targets_are_valid_for_tool(target)
+
+    result = create_solver_generated_meal_proposal(
+        user=user,
+        dailyplan_id=dailyplan_id,
+        title=title,
+        target=target,
+        search=search,
+        limit=limit,
+        include_extended=include_extended,
+        meal_slot=meal_slot,
+        summary=summary,
+        source=NutritionProposal.SOURCE_MCP,
+    )
+
+    proposal = get_proposal_detail(
+        user,
+        result.proposal.id,
+    ).as_dict()
+
+    return {
+        "proposal": proposal,
+        "nutrition_solver": {
+            "candidate_count": result.candidate_count,
+            "optimization_result": result.optimization_result.as_dict(),
+            "applies_changes": False,
+            "requires_human_review": True,
+        },
+    }
+
+
+def create_nutrition_solver_meal_proposal_tool(
+    user,
+    dailyplan_id: int,
+    title: str,
+    target: dict,
+    search: str | None = None,
+    limit: int = 40,
+    include_extended: bool = True,
+    meal_slot: str = "Solver meal",
+    summary: str = "",
+):
+    return run_ai_tool(
+        _create_nutrition_solver_meal_proposal_data,
+        user,
+        dailyplan_id,
+        title,
+        target,
+        search,
+        limit,
+        include_extended,
+        meal_slot,
+        summary,
+        user=user,
+    )
 
 def _iterate_nutrition_engine_dailyplan_proposal_data(
     user,

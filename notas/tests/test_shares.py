@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
-from django.urls import reverse
+from django.urls import resolve, reverse
 
 from notas.domain.models import Meal, MealShare
 
@@ -38,6 +38,12 @@ class MealShareTests(TestCase):
         )
 
         self.client = Client()
+
+
+    def test_meal_share_dismiss_url_resolves_to_dismiss_view(self):
+        match = resolve(reverse("meal_share_dismiss", args=[self.share.id]))
+
+        self.assertEqual(match.url_name, "meal_share_dismiss")
 
     def test_meal_share_accept_sets_accepted_by(self):
         self.client.login(

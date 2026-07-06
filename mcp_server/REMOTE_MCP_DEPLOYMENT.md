@@ -60,6 +60,11 @@ El MCP server no toca la base de datos directamente.
 
 El MCP server solo llama al API Adapter de Django usando un token interno.
 
+## Frontera de alimentos
+
+`list_food_catalog` es un nombre histórico de tool. En el contrato vigente lista alimentos operativos expuestos por Django desde la capa nutricional operacional. No debe leer directamente la app maestra Food Catalog ni exponer trazas internas del catálogo como IDs de alimentos para MCP.
+
+
 ---
 
 ## Servicios en Render

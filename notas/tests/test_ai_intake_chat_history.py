@@ -93,6 +93,52 @@ class AiNutritionChatHistoryTests(TestCase):
         self.assertContains(detail_response, "Quiero bajar grasa")
         self.assertEqual(self.client.session[AI_NUTRITION_CHAT_SESSION_KEY], chat.id)
 
+
+    def test_chat_list_renders_history_metadata_and_new_chat_action(self):
+        self.client.post(
+            reverse("ai_nutrition_intake"),
+            {
+                "action": "analyze_prompt",
+                "prompt": (
+                    "Quiero bajar grasa con 4 comidas simple. "
+                    "Peso 80 kg, altura 175 cm, tengo 30 años, hombre, actividad moderada."
+                ),
+            },
+        )
+        chat = AiNutritionChat.objects.get(user=self.user)
+
+        response = self.client.get(reverse("ai_nutrition_chat_list"))
+
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn(reverse("ai_nutrition_chat_new"), html)
+        self.assertIn("Nuevo chat", html)
+        self.assertIn("ai-chat-history-card--active", html)
+        self.assertIn(chat.title, html)
+        self.assertIn("Bajar grasa", html)
+        self.assertIn("4 comidas/día", html)
+        self.assertIn("2 mensajes", html)
+        self.assertIn("Brief listo", html)
+
+    def test_new_chat_action_clears_only_active_session(self):
+        self.client.post(
+            reverse("ai_nutrition_intake"),
+            {
+                "action": "analyze_prompt",
+                "prompt": "Quiero bajar grasa con 4 comidas y algo simple.",
+            },
+        )
+        chat = AiNutritionChat.objects.get(user=self.user)
+        self.assertEqual(self.client.session[AI_NUTRITION_CHAT_SESSION_KEY], chat.id)
+
+        response = self.client.get(reverse("ai_nutrition_chat_new"))
+
+        self.assertRedirects(response, reverse("ai_nutrition_intake"))
+        self.assertEqual(AiNutritionChat.objects.filter(user=self.user).count(), 1)
+        self.assertNotIn(AI_NUTRITION_CHAT_SESSION_KEY, self.client.session)
+        self.assertNotIn(AI_NUTRITION_CONVERSATION_SESSION_KEY, self.client.session)
+        self.assertNotIn(AI_NUTRITION_BRIEF_SESSION_KEY, self.client.session)
+
     def test_create_proposal_generates_dailyplan_card_inside_chat(self):
         self._create_minimal_food_catalog()
         self.client.post(
@@ -126,6 +172,12 @@ class AiNutritionChatHistoryTests(TestCase):
         self.assertIn("Propuesta concreta generada", html)
         self.assertIn("Ver detalle de la propuesta", html)
         self.assertIn(reverse("proposal_detail", args=[chat.proposal.id]), html)
+
+        list_response = self.client.get(reverse("ai_nutrition_chat_list"))
+        list_html = list_response.content.decode()
+        self.assertIn("Ver propuesta asociada", list_html)
+        self.assertIn(reverse("proposal_detail", args=[chat.proposal.id]), list_html)
+        self.assertIn("Propuesta creada", list_html)
 
     def _create_minimal_food_catalog(self):
         Food.objects.create(

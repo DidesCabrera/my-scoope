@@ -53,7 +53,7 @@ Programs deben venir después, como composición de DailyPlans aprobados o gener
 - La IA debe usarse para interpretar, preguntar y explicar; no como autoridad final de cálculo.
 - Las reglas de macros, porciones, restricciones y validación deben vivir en servicios internos.
 - La primera generación debe priorizar `DailyPlan`; `Program` queda para una etapa posterior.
-- Food Catalog debe ser la fuente de alimentos confiables para generación; el flujo de IA no debe consumir fuentes externas directamente.
+- El flujo de IA debe usar alimentos operacionales disponibles como `notas.Food`; Food Catalog puede enriquecer esa disponibilidad solo mediante protocolos internos de snapshot/publicación previos.
 
 ## Roadmap aceptado
 
@@ -63,6 +63,21 @@ Programs deben venir después, como composición de DailyPlans aprobados o gener
 3. DailyPlan Proposal Generator
 4. Portion Solver / optimización
 5. Program Generator
+```
+
+## Actualización Patch 41
+
+El AI-assisted onboarding debe evolucionar dentro de la estructura de chat existente de My Scoope.
+
+La integración con LLM externo no crea una UI paralela. Debe reutilizar `AiNutritionChat`, `ai_intake.html`, `_ai_chat_thread.html` y la lista de chats actual.
+
+El LLM externo aporta naturalidad y comprensión, pero solo puede operar mediante tools permitidas. No accede a `food_catalog`, no escribe entidades directamente y no aplica cambios sin revisión/aprobación.
+
+Ver también:
+
+```text
+docs/decisions/0019-external-llm-over-existing-chat.md
+docs/current/features/ai_assistant/README.md
 ```
 
 ## Documento operativo

@@ -1,0 +1,30 @@
+{% extends "admin_operations/base.html" %}
+{% block title %}Account Credits Operations{% endblock %}
+{% block content %}
+<div class="page admin-analytics-page admin-operations-page">
+  {% if messages %}<div class="admin-operations-messages" aria-live="polite">{% for message in messages %}<div class="admin-operations-message admin-operations-message--{{ message.tags|default:'info' }}">{{ message }}</div>{% endfor %}</div>{% endif %}
+
+  <section class="card-detail-block admin-operations-wallet-summary">
+    <div>
+      <p class="section-eyebrow">Wallet</p><h3>{{ vm.content.wallet.user_label }}</h3><p class="muted-text">{{ vm.content.wallet.email }} · {{ vm.content.wallet.subscription_label }}</p>
+      <div class="admin-operations-wallet-facts"><span><strong>Balance</strong>{{ vm.content.wallet.balance }}</span><span><strong>Reservado</strong>{{ vm.content.wallet.reserved_balance }}</span><span><strong>Disponible</strong>{{ vm.content.wallet.available_credits }}</span></div>
+    </div>
+    <form class="admin-operations-adjustment-form" method="post" action="{% url 'admin_operations_account_credit_adjustment' vm.content.wallet.user_id %}" data-admin-operations-confirm data-confirm-message="Confirmar ajuste manual de créditos?">
+      {% csrf_token %}
+      <label>Ajuste de créditos<input type="number" name="credits_delta" required placeholder="Ej: 10 o -5"></label>
+      <label>Razón obligatoria<input type="text" name="reason" required placeholder="Motivo del ajuste..."></label>
+      <button class="btn-secondary" type="submit">Registrar ajuste</button>
+    </form>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row"><div><p class="section-eyebrow">Reservas abiertas</p><h3>Release operacional</h3></div></div>
+    {% if vm.content.reservations %}<div class="admin-operations-card-list">{% for reservation in vm.content.reservations %}<article class="admin-operations-reservation-card"><div><h4>{{ reservation.reference_label }}</h4><p class="muted-text">{{ reservation.created_label }} · {{ reservation.reason }}</p></div><form class="admin-operations-adjustment-form" method="post" action="{% url 'admin_operations_account_reservation_release' vm.content.wallet.user_id reservation.pk %}" data-admin-operations-confirm data-confirm-message="Confirmar liberación de reserva de créditos?">{% csrf_token %}<label>Razón obligatoria<input type="text" name="reason" required placeholder="Motivo del release..."></label><button class="btn-secondary btn-secondary--compact" type="submit">Liberar {{ reservation.credits }} créditos</button></form></article>{% endfor %}</div>{% else %}<div class="admin-operations-empty-state"><i data-lucide="circle-check" class="home-stat-icon"></i><div><h4>Sin reservas abiertas</h4><p class="muted-text">No hay créditos reservados para liberar.</p></div></div>{% endif %}
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row"><div><p class="section-eyebrow">Ledger</p><h3>Últimos movimientos</h3></div></div>
+    {% if vm.content.ledger_entries %}<div class="admin-operations-table-card"><table class="admin-operations-table"><thead><tr><th>Fecha</th><th>Tipo</th><th>Créditos</th><th>Reservado</th><th>Balance</th><th>Razón</th></tr></thead><tbody>{% for entry in vm.content.ledger_entries %}<tr><td data-label="Fecha">{{ entry.created_label }}</td><td data-label="Tipo">{{ entry.kind }}</td><td data-label="Créditos">{{ entry.credits_delta }}</td><td data-label="Reservado">{{ entry.reserved_delta }}</td><td data-label="Balance">{{ entry.balance_after }} / {{ entry.reserved_balance_after }}</td><td data-label="Razón">{{ entry.reason }}</td></tr>{% endfor %}</tbody></table></div>{% else %}<div class="admin-operations-empty-state"><i data-lucide="scroll-text" class="home-stat-icon"></i><div><h4>Sin movimientos</h4><p class="muted-text">La wallet todavía no tiene ledger entries.</p></div></div>{% endif %}
+  </section>
+</div>
+{% endblock %}

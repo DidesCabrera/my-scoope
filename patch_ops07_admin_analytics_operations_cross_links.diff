@@ -1,0 +1,224 @@
+diff --git a/admin_analytics/services/accounts.py b/admin_analytics/services/accounts.py
+index 3ce5a5f..c911791 100644
+--- a/admin_analytics/services/accounts.py
++++ b/admin_analytics/services/accounts.py
+@@ -124,7 +124,7 @@ def build_accounts_vm(analytics_filters: AdminAnalyticsFilters | None = None) ->
+ 
+     return AdminAnalyticsAccountsVM(
+         title="Accounts Analytics",
+-        subtitle="Métricas comerciales read-only para planes, suscripciones, wallets y ledger de créditos.",
++        subtitle="Planes, suscripciones, wallets y ledger de créditos.",
+         generated_at=metrics["generated_at"],
+         period_label=metrics["period_label"],
+         filters=analytics_filters.as_template_context(),
+diff --git a/admin_analytics/templates/admin_analytics/accounts.html b/admin_analytics/templates/admin_analytics/accounts.html
+index 5facf3c..d0dfc27 100644
+--- a/admin_analytics/templates/admin_analytics/accounts.html
++++ b/admin_analytics/templates/admin_analytics/accounts.html
+@@ -2,6 +2,7 @@
+ {% block title %}Accounts Analytics{% endblock %}
+ {% block content %}
+ <div class="page admin-analytics-page">
++  {% include "admin_analytics/_operations_bridge.html" with title="Resolver wallets, reservas y ajustes de créditos" message="Cuando esta lectura muestre presión de créditos o reservas abiertas, opera el caso desde Accounts & Credits con razón obligatoria y auditoría." href="/staff/operations/accounts/" cta="Operar Accounts & Credits" icon="credit-card" %}
+   {% for section in vm.content.sections %}
+     <section class="card-detail-block">
+       <div class="card-title-row">
+diff --git a/admin_analytics/templates/admin_analytics/ai_assistant.html b/admin_analytics/templates/admin_analytics/ai_assistant.html
+index ddf06ee..be040f9 100644
+--- a/admin_analytics/templates/admin_analytics/ai_assistant.html
++++ b/admin_analytics/templates/admin_analytics/ai_assistant.html
+@@ -2,6 +2,7 @@
+ {% block title %}AI Assistant Analytics{% endblock %}
+ {% block content %}
+ <div class="page admin-analytics-page">
++  {% include "admin_analytics/_operations_bridge.html" with title="Revisar eventos IA, cuotas y propuestas" message="Cuando los indicadores muestren errores, bloqueos o propuestas pendientes, usa el workflow AI Assistant de Operations para reconocer, escalar, aprobar o rechazar con trazabilidad." href="/staff/operations/ai-assistant/" cta="Operar AI Assistant" icon="bot" %}
+   <section class="home-stats admin-analytics-kpi-grid" aria-label="Señales de salud de AI Assistant">
+     {% for signal in vm.content.health_signals %}
+       <article class="home-stat-card admin-analytics-health admin-analytics-health--{{ signal.status }}">
+diff --git a/admin_analytics/templates/admin_analytics/alerts.html b/admin_analytics/templates/admin_analytics/alerts.html
+index a4e31cd..4650403 100644
+--- a/admin_analytics/templates/admin_analytics/alerts.html
++++ b/admin_analytics/templates/admin_analytics/alerts.html
+@@ -2,6 +2,7 @@
+ {% block title %}Admin Analytics Alerts{% endblock %}
+ {% block content %}
+ <div class="page admin-analytics-page">
++  {% include "admin_analytics/_operations_bridge.html" with title="Trazar resolución de alertas" message="Usa el audit log operacional para revisar qué acciones staff se ejecutaron después de una señal de riesgo." href="/staff/operations/audit-log/" cta="Ver audit log" icon="scroll-text" %}
+   <section class="home-stats admin-analytics-kpi-grid" aria-label="Señales de salud de alertas internas">
+     {% for signal in vm.content.health_signals %}
+       <article class="home-stat-card admin-analytics-health admin-analytics-health--{{ signal.status }}">
+diff --git a/admin_analytics/templates/admin_analytics/base.html b/admin_analytics/templates/admin_analytics/base.html
+index 1515ac9..070836f 100644
+--- a/admin_analytics/templates/admin_analytics/base.html
++++ b/admin_analytics/templates/admin_analytics/base.html
+@@ -42,6 +42,7 @@
+       </a>
+       {% include "admin_analytics/_nav.html" %}
+       <div class="admin-analytics-sidebar__footer">
++        <a href="{% url 'admin_operations_overview' %}" class="admin-analytics-sidebar__utility"><i data-lucide="wrench"></i> Ir a Admin Operations</a>
+         <a href="/" class="admin-analytics-sidebar__utility"><i data-lucide="arrow-left"></i> Volver a My Scoope</a>
+         <a href="/admin/" class="admin-analytics-sidebar__utility"><i data-lucide="settings"></i> Django admin legacy</a>
+       </div>
+diff --git a/admin_analytics/templates/admin_analytics/food_catalog.html b/admin_analytics/templates/admin_analytics/food_catalog.html
+index beeae49..b04eb16 100644
+--- a/admin_analytics/templates/admin_analytics/food_catalog.html
++++ b/admin_analytics/templates/admin_analytics/food_catalog.html
+@@ -2,6 +2,7 @@
+ {% block title %}Food Catalog Analytics{% endblock %}
+ {% block content %}
+ <div class="page admin-analytics-page">
++  {% include "admin_analytics/_operations_bridge.html" with title="Curar candidatos y alimentos del catálogo" message="Cuando Analytics detecte candidatos, falta de evidencia o alimentos pendientes, resuelve la cola desde Food Catalog Operations." href="/staff/operations/food-catalog/" cta="Operar Food Catalog" icon="database" %}
+   <section class="home-stats admin-analytics-kpi-grid" aria-label="Señales de salud de Food Catalog">
+     {% for signal in vm.content.health_signals %}
+       <article class="home-stat-card admin-analytics-health admin-analytics-health--{{ signal.status }}">
+diff --git a/admin_analytics/templates/admin_analytics/nutrition_solver.html b/admin_analytics/templates/admin_analytics/nutrition_solver.html
+index 81a92a0..b01dc7a 100644
+--- a/admin_analytics/templates/admin_analytics/nutrition_solver.html
++++ b/admin_analytics/templates/admin_analytics/nutrition_solver.html
+@@ -2,6 +2,7 @@
+ {% block title %}Nutrition Solver Analytics{% endblock %}
+ {% block content %}
+ <div class="page admin-analytics-page">
++  {% include "admin_analytics/_operations_bridge.html" with title="Escalar señales del solver a revisión operacional" message="El solver sigue siendo read-first en Analytics; si la señal requiere intervención, continúa desde el overview operacional o AI Assistant según el caso." href="/staff/operations/" cta="Ir a Operations" icon="wrench" %}
+   <section class="home-stats admin-analytics-kpi-grid" aria-label="Señales de salud de Nutrition Solver">
+     {% for signal in vm.content.health_signals %}
+       <article class="home-stat-card admin-analytics-health admin-analytics-health--{{ signal.status }}">
+diff --git a/admin_analytics/templates/admin_analytics/overview.html b/admin_analytics/templates/admin_analytics/overview.html
+index 2c246c4..9d32401 100644
+--- a/admin_analytics/templates/admin_analytics/overview.html
++++ b/admin_analytics/templates/admin_analytics/overview.html
+@@ -2,6 +2,7 @@
+ {% block title %}Admin Analytics{% endblock %}
+ {% block content %}
+ <div class="page admin-analytics-page">
++  {% include "admin_analytics/_operations_bridge.html" with title="De señales estratégicas a resolución operacional" message="Usa Admin Operations para revisar colas accionables, ejecutar acciones staff y consultar el audit log sin convertir Analytics en una consola mutante." href="/staff/operations/" cta="Ir a Operations" icon="wrench" %}
+   <section class="card-detail-block">
+     <div class="home-stat-top">
+       <i data-lucide="north-star" class="home-stat-icon"></i>
+diff --git a/admin_analytics/templates/admin_analytics/product_activity.html b/admin_analytics/templates/admin_analytics/product_activity.html
+index 830b9ac..3d27c46 100644
+--- a/admin_analytics/templates/admin_analytics/product_activity.html
++++ b/admin_analytics/templates/admin_analytics/product_activity.html
+@@ -2,6 +2,7 @@
+ {% block title %}Product Activity Analytics{% endblock %}
+ {% block content %}
+ <div class="page admin-analytics-page">
++  {% include "admin_analytics/_operations_bridge.html" with title="Convertir actividad de producto en follow-up operacional" message="Si el uso del producto revela casos que requieren soporte o revisión interna, continúa desde Admin Operations sin mezclar acciones en Analytics." href="/staff/operations/" cta="Ir a Operations" icon="wrench" %}
+   <section class="home-stats admin-analytics-kpi-grid" aria-label="Señales de salud de Product Activity">
+     {% for signal in vm.content.health_signals %}
+       <article class="home-stat-card admin-analytics-health admin-analytics-health--{{ signal.status }}">
+diff --git a/docs/decisions/README.md b/docs/decisions/README.md
+index aad3999..24de975 100644
+--- a/docs/decisions/README.md
++++ b/docs/decisions/README.md
+@@ -99,3 +99,4 @@ Consequences
+ - [0074 · Admin Operations Accounts & Credits workflow](0074-admin-operations-accounts-credits-workflow.md)
+ - [0075 · Admin Operations AI Assistant workflow](0075-admin-operations-ai-assistant-workflow.md)
+ - [0076 · Admin Operations audit log foundation](0076-admin-operations-audit-log-foundation.md)
++- [0077 · Admin Analytics to Admin Operations cross-links](0077-admin-analytics-operations-cross-links.md)
+diff --git a/docs/planning/admin_operations_console_cycle.md b/docs/planning/admin_operations_console_cycle.md
+index c96f1fb..147ae10 100644
+--- a/docs/planning/admin_operations_console_cycle.md
++++ b/docs/planning/admin_operations_console_cycle.md
+@@ -279,6 +279,8 @@ Implementation note:
+ 
+ ### OPS07 — Cross-links from Admin Analytics
+ 
++Status: implemented in `docs/decisions/0077-admin-analytics-operations-cross-links.md`.
++
+ Connect signals to actions without mixing responsibilities.
+ 
+ Scope:
+@@ -291,6 +293,14 @@ Scope:
+ 
+ Migration expectation: no migration.
+ 
++Implementation note:
++
++```text
++- Analytics pages now render a bridge card to the matching Operations workflow.
++- The Analytics sidebar includes an Admin Operations shortcut.
++- The links are GET-only navigation; all mutations remain in admin_operations.
++```
++
+ ### OPS08 — UI polish and V1 closure
+ 
+ Close the first operational console cycle.
+diff --git a/notas/static/notas/css/components/admin_analytics.css b/notas/static/notas/css/components/admin_analytics.css
+index d1c8ba1..4a18b18 100644
+--- a/notas/static/notas/css/components/admin_analytics.css
++++ b/notas/static/notas/css/components/admin_analytics.css
+@@ -828,3 +828,73 @@ h3 {
+     border-radius: 18px;
+   }
+ }
++
++/* =========================
++   OPS07 Admin Analytics → Operations bridge
++   ========================= */
++
++.admin-analytics-operations-bridge {
++  display: flex;
++  align-items: center;
++  justify-content: space-between;
++  gap: 18px;
++  border-style: dashed;
++  background:
++    radial-gradient(circle at 0% 0%, rgba(229, 229, 229, 0.08), transparent 34%),
++    var(--surface-card);
++}
++
++.admin-analytics-operations-bridge__main {
++  display: flex;
++  align-items: flex-start;
++  gap: 14px;
++  min-width: 0;
++}
++
++.admin-analytics-operations-bridge__icon {
++  display: inline-grid;
++  place-items: center;
++  flex: 0 0 auto;
++  width: 44px;
++  height: 44px;
++  border: 1px solid var(--border-soft);
++  border-radius: 16px;
++  background: var(--surface-card-strong);
++  color: var(--interactive-primary);
++}
++
++.admin-analytics-operations-bridge__icon svg,
++.admin-analytics-operations-bridge .btn-primary svg {
++  width: 18px;
++  height: 18px;
++}
++
++.admin-analytics-operations-bridge h3 {
++  margin-bottom: 6px;
++}
++
++.admin-analytics-operations-bridge .muted-text {
++  max-width: 820px;
++  margin-bottom: 0;
++}
++
++.admin-analytics-operations-bridge .btn-primary {
++  gap: 8px;
++  white-space: nowrap;
++}
++
++@media (max-width: 720px) {
++  .admin-analytics-operations-bridge {
++    align-items: stretch;
++    flex-direction: column;
++  }
++
++  .admin-analytics-operations-bridge__main {
++    flex-direction: column;
++  }
++
++  .admin-analytics-operations-bridge .detail-actions,
++  .admin-analytics-operations-bridge .btn-primary {
++    width: 100%;
++  }
++}

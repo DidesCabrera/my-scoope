@@ -52,8 +52,44 @@
         {% endif %}
       </div>
 
-      <form method="post" action="{% url 'proposal_apply' vm.content.proposal_review.proposal_id %}">
+      <form method="post" action="{% url 'proposal_apply' vm.content.proposal_review.proposal_id %}" class="proposal-review-apply-form">
         {% csrf_token %}
+
+        {% if vm.content.proposal_review.subject_context_warning.requires_warning %}
+          <div class="proposal-review-warning proposal-review-warning--subject-context" role="alert">
+            <div class="proposal-review-warning__icon" aria-hidden="true">
+              <i data-lucide="triangle-alert"></i>
+            </div>
+            <div class="proposal-review-warning__copy">
+              <p class="proposal-review-warning__title">
+                {{ vm.content.proposal_review.subject_context_warning.title }}
+              </p>
+              <p class="proposal-review-warning__text">
+                {{ vm.content.proposal_review.subject_context_warning.message }}
+              </p>
+              <dl class="proposal-review-warning__meta">
+                <div>
+                  <dt>Sujeto de cálculo</dt>
+                  <dd>{{ vm.content.proposal_review.subject_context_warning.source_label }}</dd>
+                </div>
+                <div>
+                  <dt>Peso usado para PPK de la propuesta</dt>
+                  <dd>{{ vm.content.proposal_review.subject_context_warning.calculation_weight_label }}</dd>
+                </div>
+              </dl>
+              <label class="proposal-review-warning__ack">
+                <input
+                  type="checkbox"
+                  name="ack_external_subject_ppk_warning"
+                  value="1"
+                  required
+                >
+                Entiendo que al guardar/aplicar esta propuesta en mi librería el PPK visible usará el peso de mi ficha personal.
+              </label>
+            </div>
+          </div>
+        {% endif %}
+
         <button type="submit" class="proposal-review-action proposal-review-action--apply">
           Aplicar propuesta
         </button>

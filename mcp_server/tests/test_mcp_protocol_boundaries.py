@@ -7,13 +7,23 @@ PROTOCOL_SERVER_PATH = Path(
     "mcp_server/myscoope_mcp/protocol_server.py"
 )
 
+MCP_PACKAGE_ROOT = Path("mcp_server/myscoope_mcp")
 
 FORBIDDEN_IMPORT_PREFIXES = {
+    "food_catalog",
     "notas.domain",
     "notas.application.queries",
     "notas.application.services.commands",
 }
 
+FORBIDDEN_FOOD_CATALOG_IDENTIFIERS = {
+    "CatalogFood",
+    "catalog_food_id",
+    "catalog_food_ref",
+    "create_food_snapshot_from_catalog",
+    "create_operational_food_snapshot_from_catalog",
+    "refresh_operational_food_snapshot_from_catalog",
+}
 
 REQUIRED_TOOL_FUNCTIONS = {
     "list_user_proposals",
@@ -27,7 +37,6 @@ REQUIRED_TOOL_FUNCTIONS = {
     "iterate_nutrition_engine_dailyplan_proposal",
     "list_food_catalog",
 }
-
 
 REQUIRED_TOOL_CONSTANTS = {
     "TOOL_LIST_USER_PROPOSALS",
@@ -72,6 +81,24 @@ class MCPProtocolBoundaryTests(unittest.TestCase):
                         f"{imported_module}"
                     ),
                 )
+
+    def test_mcp_package_does_not_reference_master_catalog_identifiers(self):
+        offenders = []
+
+        for path in sorted(MCP_PACKAGE_ROOT.rglob("*.py")):
+            source = path.read_text()
+            for identifier in sorted(FORBIDDEN_FOOD_CATALOG_IDENTIFIERS):
+                if identifier in source:
+                    offenders.append(f"{path}: {identifier}")
+
+        self.assertEqual(
+            offenders,
+            [],
+            msg=(
+                "MCP must only expose operational Food IDs. Master catalog "
+                "identifiers and snapshot commands belong to internal Django protocols."
+            ),
+        )
 
     def test_protocol_server_uses_dispatcher_boundary(self):
         source = PROTOCOL_SERVER_PATH.read_text()
@@ -148,6 +175,18 @@ class MCPProtocolBoundaryTests(unittest.TestCase):
 
         self.assertIn(
             "It does not apply final changes.",
+            source,
+        )
+
+    def test_protocol_server_documents_food_tools_as_operational_only(self):
+        source = PROTOCOL_SERVER_PATH.read_text()
+
+        self.assertIn(
+            "operational foods available for AI/MCP nutrition planning",
+            source,
+        )
+        self.assertIn(
+            "operational My Scoope Food IDs only",
             source,
         )
 

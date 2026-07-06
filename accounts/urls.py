@@ -1,9 +1,10 @@
 from django.urls import path
-from . import views
-from .views import google_login
 
+from .views import nutrition_onboarding
+
+
+app_name = "accounts"
 
 urlpatterns = [
-    path("signup/", views.signup_view, name="signup"),
-    path("google/", google_login, name="google_login"),
+    path("onboarding/", nutrition_onboarding, name="nutrition_onboarding"),
 ]

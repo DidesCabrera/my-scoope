@@ -9,6 +9,16 @@
   {% if vm.content.conversation %}
     <section class="ai-chat-shell" aria-label="Asistente nutricional conversacional">
       <div class="ai-chat-main">
+      {% if vm.content.engine_status %}
+        <div class="ai-chat-preview-status{% if vm.content.engine_status.is_llm_preview %} is-preview{% endif %}" aria-label="Estado del motor AI Assistant">
+          <span class="ai-chat-preview-status__label">{{ vm.content.engine_status.label }}</span>
+          {% if vm.content.engine_status.is_llm_preview %}
+            <span>medición activa</span>
+            <span>guardrails activos</span>
+          {% endif %}
+        </div>
+      {% endif %}
+
         <div class="ai-chat-thread" data-ai-chat-thread aria-live="polite">
           {% include "notas/_ai_chat_thread.html" %}
         </div>
@@ -46,6 +56,16 @@
           </p>
         </div>
       </div>
+
+      {% if vm.content.engine_status %}
+        <div class="ai-chat-preview-status ai-chat-preview-status--welcome{% if vm.content.engine_status.is_llm_preview %} is-preview{% endif %}" aria-label="Estado del motor AI Assistant">
+          <span class="ai-chat-preview-status__label">{{ vm.content.engine_status.label }}</span>
+          {% if vm.content.engine_status.is_llm_preview %}
+            <span>medición activa</span>
+            <span>guardrails activos</span>
+          {% endif %}
+        </div>
+      {% endif %}
 
       <form method="post" action="{% url 'ai_nutrition_intake' %}" class="ai-intake-form ai-intake-form--welcome">
         {% csrf_token %}

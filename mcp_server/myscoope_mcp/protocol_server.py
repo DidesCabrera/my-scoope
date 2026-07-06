@@ -110,6 +110,7 @@ def create_mcp_server(
     - This module may import the MCP dispatcher.
     - This module may create MyscoopeAPIClient.
     - This module must not import Django models, queries or commands.
+    - Food tools may expose operational My Scoope Food IDs only.
     """
     assert_protocol_tool_surface_is_safe()
 
@@ -175,8 +176,9 @@ def register_mcp_tools(server: FastMCP) -> None:
         limit: int = 50,
     ) -> dict[str, Any]:
         """
-        List readable foods available for AI/MCP nutrition planning.
+        List operational foods available for AI/MCP nutrition planning.
 
+        Returned IDs are operational My Scoope Food IDs only.
         This tool is read-only.
         It does not create foods, meals or dailyplans.
         """

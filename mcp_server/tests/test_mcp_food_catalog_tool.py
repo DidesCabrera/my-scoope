@@ -6,7 +6,7 @@ from myscoope_mcp.tool_handlers import (
     call_read_tool,
     list_food_catalog,
 )
-from myscoope_mcp.tools import TOOL_LIST_FOOD_CATALOG
+from myscoope_mcp.tools import TOOL_LIST_FOOD_CATALOG, get_tool_spec
 
 
 class FakeMyscoopeAPIClient:
@@ -84,6 +84,42 @@ class MCPFoodCatalogToolTests(unittest.TestCase):
             ],
         )
 
+    def test_list_food_catalog_does_not_forward_catalog_trace_arguments(self):
+        result = call_read_tool(
+            self.client,
+            TOOL_LIST_FOOD_CATALOG,
+            {
+                "search": "pollo",
+                "limit": 10,
+                "catalog_food_id": 999,
+                "catalog_food_ref": "cat:999",
+            },
+        )
+
+        data = result.as_dict()
+
+        self.assertTrue(data["ok"])
+        self.assertEqual(
+            self.client.calls,
+            [
+                {
+                    "api_path": "/ai-tools/list-food-catalog/",
+                    "payload": {
+                        "limit": 10,
+                        "search": "pollo",
+                    },
+                }
+            ],
+        )
+
+    def test_list_food_catalog_spec_documents_operational_food_ids_only(self):
+        spec = get_tool_spec(TOOL_LIST_FOOD_CATALOG)
+
+        self.assertIn("operational foods", spec.description)
+        self.assertIn("operational My Scoope Food IDs", spec.description)
+        self.assertNotIn("catalog_food_id", str(spec.input_schema))
+        self.assertNotIn("catalog_food_ref", str(spec.input_schema))
+
     def test_dispatch_tool_call_routes_list_food_catalog(self):
         result = dispatch_tool_call(
             client=self.client,
@@ -109,7 +145,6 @@ class MCPFoodCatalogToolTests(unittest.TestCase):
                 }
             ],
         )
-
 
 if __name__ == "__main__":
     unittest.main()

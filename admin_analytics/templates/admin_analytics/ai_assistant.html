@@ -1,0 +1,277 @@
+{% extends "admin_analytics/base.html" %}
+{% block title %}AI Assistant Analytics{% endblock %}
+{% block content %}
+<div class="page admin-analytics-page">
+  {% include "admin_analytics/_operations_bridge.html" with title="Revisar eventos IA, cuotas y propuestas" message="Cuando los indicadores muestren errores, bloqueos o propuestas pendientes, usa el workflow AI Assistant de Operations para reconocer, escalar, aprobar o rechazar con trazabilidad." href="/staff/operations/ai-assistant/" cta="Operar AI Assistant" icon="bot" %}
+  <section class="home-stats admin-analytics-kpi-grid" aria-label="Señales de salud de AI Assistant">
+    {% for signal in vm.content.health_signals %}
+      <article class="home-stat-card admin-analytics-health admin-analytics-health--{{ signal.status }}">
+        <div class="home-stat-top">
+          <i data-lucide="activity" class="home-stat-icon"></i>
+          <span class="home-stat-label">{{ signal.label }}</span>
+        </div>
+        <h3>{{ signal.value }}</h3>
+        <p class="muted-text">{{ signal.description }}</p>
+      </article>
+    {% endfor %}
+  </section>
+
+  {% for section in vm.content.sections %}
+    <section class="card-detail-block">
+      <div class="card-title-row">
+        <div>
+          <p class="section-eyebrow">AI Assistant</p>
+          <h3>{{ section.title }}</h3>
+          <p class="muted-text">{{ section.description }}</p>
+        </div>
+      </div>
+      <div class="home-stats admin-analytics-kpi-grid" aria-label="{{ section.title }}">
+        {% for kpi in section.kpis %}
+          <article class="home-stat-card">
+            <div class="home-stat-top">
+              <i data-lucide="bot" class="home-stat-icon"></i>
+              <span class="home-stat-label">{{ kpi.label }}</span>
+            </div>
+            <h3>{{ kpi.value }}</h3>
+            {% if kpi.helper %}
+              <p class="muted-text">{{ kpi.helper }}</p>
+            {% endif %}
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  {% endfor %}
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Usage</p>
+        <h3>Action types</h3>
+        <p class="muted-text">Ranking operacional por action_type, costo, tokens, créditos y tool calls.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead>
+          <tr>
+            <th>Action type</th>
+            <th>Eventos</th>
+            <th>Completed</th>
+            <th>Error</th>
+            <th>Blocked</th>
+            <th>Tokens</th>
+            <th>Costo</th>
+            <th>Créditos</th>
+            <th>Tools</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in vm.content.action_rows %}
+            <tr>
+              <td><strong>{{ row.action_type }}</strong></td>
+              <td>{{ row.events }}</td>
+              <td>{{ row.completed }}</td>
+              <td>{{ row.errors }}</td>
+              <td>{{ row.blocked }}</td>
+              <td>{{ row.total_tokens }}</td>
+              <td>{{ row.estimated_cost_usd }}</td>
+              <td>{{ row.charged_credits }}</td>
+              <td>{{ row.tool_calls }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="9">No hay usage events en los últimos 7 días.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Provider / model</p>
+        <h3>Costos por modelo</h3>
+        <p class="muted-text">Lectura interna de proveedor, modelo, tokens, costo estimado y latencia.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead>
+          <tr>
+            <th>Proveedor</th>
+            <th>Modelo</th>
+            <th>Eventos</th>
+            <th>Tokens</th>
+            <th>Costo</th>
+            <th>Créditos</th>
+            <th>Latencia prom.</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in vm.content.model_rows %}
+            <tr>
+              <td>{{ row.provider }}</td>
+              <td><strong>{{ row.model_name }}</strong></td>
+              <td>{{ row.events }}</td>
+              <td>{{ row.total_tokens }}</td>
+              <td>{{ row.estimated_cost_usd }}</td>
+              <td>{{ row.charged_credits }}</td>
+              <td>{{ row.avg_latency_ms }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="7">No hay modelos registrados en los últimos 7 días.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Créditos IA</p>
+        <h3>Consumo por plan</h3>
+        <p class="muted-text">Agrupación por credit_plan_code guardado en AIUsageEvent.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead>
+          <tr>
+            <th>Plan</th>
+            <th>Eventos</th>
+            <th>Usuarios</th>
+            <th>Créditos</th>
+            <th>Costo</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in vm.content.credit_plan_rows %}
+            <tr>
+              <td><strong>{{ row.credit_plan_code }}</strong></td>
+              <td>{{ row.events }}</td>
+              <td>{{ row.active_users }}</td>
+              <td>{{ row.charged_credits }}</td>
+              <td>{{ row.estimated_cost_usd }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="5">No hay consumo agrupado por plan en los últimos 7 días.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Usuarios</p>
+        <h3>Top usuarios por costo IA</h3>
+        <p class="muted-text">Usuarios con mayor costo/tokens/créditos en el período.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Eventos</th>
+            <th>Tokens</th>
+            <th>Costo</th>
+            <th>Créditos</th>
+            <th>Blocked</th>
+            <th>Error</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in vm.content.user_rows %}
+            <tr>
+              <td><strong>{{ row.email }}</strong><br><span class="muted-text">{{ row.username }}</span></td>
+              <td>{{ row.events }}</td>
+              <td>{{ row.total_tokens }}</td>
+              <td>{{ row.estimated_cost_usd }}</td>
+              <td>{{ row.charged_credits }}</td>
+              <td>{{ row.blocked }}</td>
+              <td>{{ row.errors }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="7">No hay usuarios con usage events recientes.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Cuotas</p>
+        <h3>Presión de créditos IA</h3>
+        <p class="muted-text">Cuotas transicionales de AIUserCreditQuota para el periodo actual.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Plan</th>
+            <th>Usado</th>
+            <th>Límite mensual</th>
+            <th>Límite diario</th>
+            <th>Uso</th>
+            <th>Blocked</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in vm.content.quota_rows %}
+            <tr>
+              <td><strong>{{ row.email }}</strong><br><span class="muted-text">{{ row.username }}</span></td>
+              <td>{{ row.plan_code }}</td>
+              <td>{{ row.credits_used }}</td>
+              <td>{{ row.monthly_credit_limit }}</td>
+              <td>{{ row.daily_credit_limit }}</td>
+              <td>{{ row.usage_ratio }}</td>
+              <td>{{ row.hard_blocked }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="7">No hay cuotas IA con límite mensual en el periodo actual.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Ledger IA</p>
+        <h3>Movimientos por tipo</h3>
+        <p class="muted-text">Agrupación inicial de AICreditLedger durante los últimos 7 días.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="panel-table">
+        <thead>
+          <tr>
+            <th>Tipo</th>
+            <th>Entradas</th>
+            <th>Créditos</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in vm.content.ledger_kind_rows %}
+            <tr>
+              <td>{{ row.kind }}</td>
+              <td>{{ row.entries }}</td>
+              <td>{{ row.credits_delta }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="admin-analytics-table-empty" colspan="3">No hay ledger IA en los últimos 7 días.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}

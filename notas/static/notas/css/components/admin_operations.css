@@ -1,0 +1,733 @@
+/* =========================
+   ADMIN OPERATIONS CONSOLE
+   OPS01 shell. Reuses Admin Analytics primitives, then applies operational accents.
+   ========================= */
+
+.admin-operations-shell .admin-operations-brand__mark {
+  background: linear-gradient(135deg, rgba(229, 229, 229, 0.22), rgba(229, 229, 229, 0.05));
+}
+
+.admin-operations-topbar {
+  min-height: 102px;
+}
+
+.admin-operations-content {
+  padding-top: 26px;
+}
+
+.admin-operations-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.admin-operations-hero h2 {
+  max-width: 780px;
+}
+
+.admin-operations-hero .muted-text {
+  max-width: 860px;
+  margin-bottom: 0;
+}
+
+.admin-operations-principle-card,
+.admin-operations-queue-card {
+  min-height: 148px;
+}
+
+.admin-operations-principle-card .muted-text,
+.admin-operations-queue-card .muted-text {
+  margin-bottom: 0;
+}
+
+.admin-operations-nav__link--disabled {
+  cursor: default;
+  opacity: 0.62;
+}
+
+.admin-operations-nav__link--disabled:hover {
+  border-color: transparent;
+  background: transparent;
+  color: var(--text-soft);
+}
+
+@media (max-width: 1180px) {
+  #admin-operations-menu-toggle:checked ~ .admin-operations-app .admin-analytics-sidebar {
+    transform: translateX(0);
+  }
+
+  #admin-operations-menu-toggle:checked ~ .admin-operations-app .admin-analytics-mobile-scrim--menu {
+    display: block;
+  }
+}
+
+@media (max-width: 720px) {
+  .admin-operations-topbar {
+    min-height: 74px;
+  }
+
+  .admin-operations-hero {
+    flex-direction: column;
+  }
+
+  .admin-operations-hero .detail-actions {
+    width: 100%;
+  }
+
+  .admin-operations-hero .btn-secondary {
+    flex: 1 1 100%;
+  }
+}
+
+/* =========================
+   OPS02 operational queues
+   ========================= */
+
+.admin-operations-kpi-grid .admin-operations-metric-card h3 {
+  margin: 12px 0 6px;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+}
+
+.admin-operations-queue-grid {
+  align-items: stretch;
+}
+
+.admin-operations-queue-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.admin-operations-queue-card::before,
+.admin-operations-warning::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.34);
+}
+
+.admin-operations-queue-card--warning::before,
+.admin-operations-warning--warning::before {
+  background: rgba(245, 158, 11, 0.78);
+}
+
+.admin-operations-queue-card--watch::before,
+.admin-operations-warning--watch::before {
+  background: rgba(59, 130, 246, 0.74);
+}
+
+.admin-operations-queue-card--healthy::before,
+.admin-operations-warning--healthy::before {
+  background: rgba(34, 197, 94, 0.7);
+}
+
+.admin-operations-queue-card__count {
+  font-size: clamp(2.4rem, 5vw, 3.8rem);
+  line-height: 0.95;
+  font-weight: 760;
+  letter-spacing: -0.06em;
+}
+
+.admin-operations-queue-card__helper {
+  margin: -2px 0 0;
+  color: var(--text-soft);
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+
+.admin-operations-queue-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.admin-operations-disabled-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px dashed var(--border-subtle);
+  color: var(--text-soft);
+  font-size: 0.82rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.admin-operations-warning-list {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-operations-warning,
+.admin-operations-empty-state {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px 18px 18px 22px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  background: var(--surface-card-muted, rgba(255, 255, 255, 0.03));
+}
+
+.admin-operations-warning h4,
+.admin-operations-empty-state h4 {
+  margin: 0 0 6px;
+}
+
+.admin-operations-warning .muted-text,
+.admin-operations-empty-state .muted-text {
+  margin: 0;
+}
+
+.admin-operations-warning strong {
+  flex: 0 0 auto;
+  font-size: clamp(1.55rem, 3vw, 2.35rem);
+  letter-spacing: -0.05em;
+}
+
+.admin-operations-empty-state {
+  justify-content: flex-start;
+}
+
+@media (max-width: 720px) {
+  .admin-operations-queue-card__footer,
+  .admin-operations-warning {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-operations-disabled-action {
+    width: 100%;
+  }
+}
+
+/* =========================
+   OPS03 Food Catalog operations
+   ========================= */
+
+.admin-operations-messages {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.admin-operations-message {
+  padding: 12px 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  background: var(--surface-card-muted, rgba(255, 255, 255, 0.04));
+  color: var(--text-main);
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.admin-operations-message--success {
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
+.admin-operations-message--warning,
+.admin-operations-message--error {
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.admin-operations-table-card {
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  background: var(--surface-card-muted, rgba(255, 255, 255, 0.03));
+}
+
+.admin-operations-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+}
+
+.admin-operations-table th,
+.admin-operations-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  text-align: left;
+  vertical-align: top;
+}
+
+.admin-operations-table th {
+  color: var(--text-soft);
+  font-size: 0.72rem;
+  font-weight: 760;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admin-operations-table td strong,
+.admin-operations-table td span,
+.admin-operations-table td small {
+  display: block;
+}
+
+.admin-operations-table td small {
+  margin-top: 4px;
+  color: var(--text-soft);
+}
+
+.admin-operations-status-pill {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  color: var(--text-soft);
+  font-size: 0.78rem;
+  font-weight: 720;
+}
+
+.admin-operations-card-list {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-operations-food-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+  gap: 18px;
+  padding: 18px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  background: var(--surface-card-muted, rgba(255, 255, 255, 0.03));
+}
+
+.admin-operations-food-card h4,
+.admin-operations-candidate-summary h3 {
+  margin: 0 0 6px;
+}
+
+.admin-operations-inline-form,
+.admin-operations-action-form {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-operations-inline-form label,
+.admin-operations-action-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--text-soft);
+  font-size: 0.78rem;
+  font-weight: 720;
+}
+
+.admin-operations-inline-form input,
+.admin-operations-action-form textarea {
+  width: 100%;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  background: var(--surface-card, rgba(255, 255, 255, 0.04));
+  color: var(--text-main);
+  font: inherit;
+}
+
+.admin-operations-inline-form input {
+  min-height: 38px;
+  padding: 0 12px;
+}
+
+.admin-operations-action-form textarea {
+  min-height: 110px;
+  padding: 12px;
+  resize: vertical;
+}
+
+.admin-operations-inline-actions,
+.admin-operations-action-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-operations-candidate-summary {
+  display: grid;
+  gap: 18px;
+}
+
+.admin-operations-candidate-facts {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.admin-operations-candidate-facts span {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  color: var(--text-main);
+  background: var(--surface-card-muted, rgba(255, 255, 255, 0.03));
+  font-size: 0.88rem;
+}
+
+.admin-operations-candidate-facts strong {
+  color: var(--text-soft);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.admin-operations-notes {
+  white-space: pre-wrap;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 18px;
+  background: var(--surface-card-muted, rgba(255, 255, 255, 0.03));
+  color: var(--text-main);
+  font: inherit;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 920px) {
+  .admin-operations-food-card,
+  .admin-operations-candidate-facts {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .admin-operations-inline-actions .btn-secondary,
+  .admin-operations-action-grid .btn-secondary {
+    flex: 1 1 100%;
+  }
+}
+
+/* =========================
+   OPS04 Accounts & Credits operations
+   ========================= */
+
+.admin-operations-search-form {
+  display: flex;
+  align-items: end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-operations-search-form label,
+.admin-operations-adjustment-form label {
+  display: grid;
+  gap: 6px;
+  min-width: min(100%, 340px);
+  color: var(--text-soft);
+  font-size: 0.78rem;
+  font-weight: 720;
+}
+
+.admin-operations-search-form input,
+.admin-operations-adjustment-form input {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  background: var(--surface-card, rgba(255, 255, 255, 0.04));
+  color: var(--text-main);
+  font: inherit;
+}
+
+.admin-operations-wallet-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.75fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.admin-operations-wallet-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.admin-operations-wallet-facts span {
+  display: grid;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  background: var(--surface-card-muted, rgba(255, 255, 255, 0.03));
+  color: var(--text-main);
+  font-size: clamp(1.25rem, 2.5vw, 1.8rem);
+  font-weight: 760;
+  letter-spacing: -0.04em;
+}
+
+.admin-operations-wallet-facts strong {
+  color: var(--text-soft);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.admin-operations-reservation-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 380px);
+  gap: 18px;
+  padding: 18px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  background: var(--surface-card-muted, rgba(255, 255, 255, 0.03));
+}
+
+.admin-operations-reservation-card h4 {
+  margin: 0 0 6px;
+}
+
+.admin-operations-reservation-card__aside {
+  display: grid;
+  justify-items: end;
+  align-content: center;
+  gap: 4px;
+  text-align: right;
+}
+
+.admin-operations-reservation-card__aside strong {
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 0.95;
+  letter-spacing: -0.06em;
+}
+
+.admin-operations-reservation-card__aside span {
+  color: var(--text-soft);
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+@media (max-width: 920px) {
+  .admin-operations-wallet-summary,
+  .admin-operations-reservation-card {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-operations-reservation-card__aside {
+    justify-items: start;
+    text-align: left;
+  }
+}
+
+@media (max-width: 720px) {
+  .admin-operations-search-form .btn-secondary,
+  .admin-operations-wallet-facts {
+    width: 100%;
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================
+   OPS05 AI Assistant operations
+   ========================= */
+
+.admin-operations-ai-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 440px);
+  gap: 18px;
+  padding: 18px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  background: var(--surface-card-muted, rgba(255, 255, 255, 0.03));
+}
+
+.admin-operations-ai-card h4 {
+  margin: 0 0 6px;
+}
+
+.admin-operations-ai-card .admin-operations-status-pill {
+  margin-top: 10px;
+}
+
+@media (max-width: 920px) {
+  .admin-operations-ai-card {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================
+   OPS06 operational audit log
+   ========================= */
+
+.admin-operations-table--audit {
+  min-width: 1040px;
+}
+
+.admin-operations-table--audit td:nth-child(5) span {
+  max-width: 340px;
+  white-space: normal;
+}
+
+/* =========================
+   OPS08 V1 closure polish
+   ========================= */
+
+.admin-operations-closure-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 420px);
+  gap: 18px;
+  align-items: center;
+  border-style: solid;
+}
+
+.admin-operations-closure-card__checks {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-operations-closure-card__checks span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  background: var(--surface-card-muted, rgba(255, 255, 255, 0.03));
+  color: var(--text-main);
+  font-size: 0.84rem;
+  font-weight: 720;
+}
+
+.admin-operations-closure-card__checks svg {
+  width: 16px;
+  height: 16px;
+  color: var(--text-soft);
+}
+
+.admin-operations-action-form[data-admin-operations-confirm],
+.admin-operations-inline-form[data-admin-operations-confirm],
+.admin-operations-adjustment-form[data-admin-operations-confirm] {
+  position: relative;
+}
+
+.admin-operations-action-form[data-admin-operations-confirm]::before,
+.admin-operations-inline-form[data-admin-operations-confirm]::before,
+.admin-operations-adjustment-form[data-admin-operations-confirm]::before {
+  content: "Confirmación requerida";
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-bottom: 8px;
+  padding: 5px 9px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  color: var(--text-soft);
+  font-size: 0.72rem;
+  font-weight: 760;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 920px) {
+  .admin-operations-closure-card {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .admin-operations-content {
+    padding: 16px max(12px, env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  }
+
+  .admin-operations-page .card-detail-block,
+  .admin-operations-page .home-stat-card,
+  .admin-operations-warning,
+  .admin-operations-empty-state,
+  .admin-operations-food-card,
+  .admin-operations-ai-card,
+  .admin-operations-reservation-card {
+    border-radius: 18px;
+  }
+
+  .admin-operations-page .detail-actions,
+  .admin-operations-inline-actions,
+  .admin-operations-action-grid,
+  .admin-operations-search-form,
+  .admin-operations-adjustment-form {
+    width: 100%;
+  }
+
+  .admin-operations-page .detail-actions,
+  .admin-operations-inline-actions,
+  .admin-operations-action-grid,
+  .admin-operations-search-form {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .admin-operations-page .btn-secondary,
+  .admin-operations-search-form label,
+  .admin-operations-adjustment-form label,
+  .admin-operations-action-form label,
+  .admin-operations-inline-form label {
+    width: 100%;
+  }
+
+  .admin-operations-table-card {
+    overflow: visible;
+    border: 0;
+    background: transparent;
+  }
+
+  .admin-operations-table,
+  .admin-operations-table--audit {
+    min-width: 0;
+    border-collapse: separate;
+    border-spacing: 0 10px;
+  }
+
+  .admin-operations-table thead {
+    display: none;
+  }
+
+  .admin-operations-table tbody,
+  .admin-operations-table tr,
+  .admin-operations-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .admin-operations-table tr {
+    padding: 14px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 18px;
+    background: var(--surface-card-muted, rgba(255, 255, 255, 0.03));
+  }
+
+  .admin-operations-table td {
+    padding: 10px 0;
+    border: 0;
+  }
+
+  .admin-operations-table td + td {
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .admin-operations-table td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 4px;
+    color: var(--text-soft);
+    font-size: 0.68rem;
+    font-weight: 760;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+}

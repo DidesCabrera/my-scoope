@@ -1,0 +1,84 @@
+from pathlib import Path
+
+from django.core.management.base import BaseCommand, CommandError
+
+from food_catalog.application.imports.usda.foundation_foods_reader import (
+    FoundationFoodsReaderError,
+    read_foundation_food_payloads_from_json,
+)
+from food_catalog.infrastructure.imports.catalog_import import CATALOG_SOURCE_NAME_USDA
+from food_catalog.infrastructure.imports.usda_catalog_import import (
+    import_usda_catalog_food_payloads,
+)
+
+
+class Command(BaseCommand):
+    help = "Import USDA JSON payloads as Food Catalog master candidates."
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "path",
+            type=str,
+            help=(
+                "Path to a JSON file containing USDA Foundation Foods payloads. "
+                "Supports either a direct list or a FoundationFoods root object."
+            ),
+        )
+        parser.add_argument(
+            "--source-version",
+            required=True,
+            help="Source dataset version. Example: 2026-04.",
+        )
+        parser.add_argument(
+            "--source-dataset",
+            default="foundation_foods",
+            help="Source dataset name. Example: foundation_foods.",
+        )
+        parser.add_argument(
+            "--source-name",
+            default=CATALOG_SOURCE_NAME_USDA,
+            help="Human-readable source name stored in CatalogFoodSource.",
+        )
+        parser.add_argument(
+            "--notes",
+            default="",
+            help="Optional notes stored in CatalogImportBatch.",
+        )
+
+    def handle(self, *args, **options):
+        path = Path(options["path"])
+
+        if not path.exists():
+            raise CommandError(f"File does not exist: {path}")
+
+        if not path.is_file():
+            raise CommandError(f"Path is not a file: {path}")
+
+        try:
+            payloads = read_foundation_food_payloads_from_json(path)
+        except FoundationFoodsReaderError as exc:
+            raise CommandError(str(exc)) from exc
+
+        result = import_usda_catalog_food_payloads(
+            payloads=payloads,
+            source_version=options["source_version"],
+            source_dataset=options["source_dataset"],
+            source_name=options["source_name"],
+            notes=options["notes"],
+        )
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                "Food Catalog USDA import completed: "
+                f"batch_id={result.batch.id}, "
+                f"total={result.total_rows}, "
+                f"imported={result.imported_rows}, "
+                f"skipped={result.skipped_rows}, "
+                f"failed={result.failed_rows}"
+            )
+        )
+
+        if result.reason_counts:
+            self.stdout.write("reasons:")
+            for reason, count in sorted(result.reason_counts.items()):
+                self.stdout.write(f"- {reason}: {count}")

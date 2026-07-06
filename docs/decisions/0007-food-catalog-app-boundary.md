@@ -40,6 +40,40 @@ Las entidades de gestión nutricional no deben depender directamente de fuentes 
 - Los alimentos naturales deben priorizar fuentes públicas/oficiales y curaduría propia.
 - Los agentes de IA pueden investigar y normalizar candidatos, pero no publicar alimentos automáticamente.
 
+
+## Actualización posterior
+
+La decisión `0009-food-catalog-hybrid-source-snapshot.md` precisa la integración inicial entre Food Catalog App y el sistema operativo actual:
+
+```text
+Food Catalog App = fuente maestra/canónica, versionada y trazable
+notas.Food = snapshot operativo usado por Meals, DailyPlans, Programs y Proposals
+```
+
+Por lo tanto, Food Catalog App no reemplaza inicialmente a `notas.Food`. La extracción debe avanzar mediante contratos explícitos que permitan crear, sugerir o refrescar alimentos operativos desde alimentos maestros del catálogo, preservando la estabilidad de planes históricos.
+
+## Actualización Patch 32
+
+La app Django `food_catalog` existe físicamente dentro del monolito y queda registrada como frontera de sistema independiente.
+
+Esta creación es estructural: no mueve `notas.Food`, no crea modelos maestros todavía y no cambia el flujo operativo de Meals, DailyPlans, Programs, Proposals, Comparators, Solver ni MCP.
+
+Regla vigente:
+
+```text
+food_catalog = sistema maestro interno de curaduría/publicación
+notas.Food = única verdad nutricional operacional
+MCP = solo consume notas.Food
+```
+
+Food Catalog podrá alimentar a `notas.Food` mediante protocolos internos explícitos, auditables y revisables. No debe ser consultado directamente por MCP ni por entidades operativas de `notas`.
+
+Ver también:
+
+```text
+docs/decisions/0010-mcp-operational-food-boundary.md
+```
+
 ## Documento operativo
 
 Ver:

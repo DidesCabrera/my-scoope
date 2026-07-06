@@ -5,6 +5,20 @@ import unicodedata
 from dataclasses import dataclass, field, replace
 from typing import Iterable
 
+from notas.application.dto.nutrition_subject_context_dto import (
+    PPK_WEIGHT_SOURCE_EXTERNAL,
+    PPK_WEIGHT_SOURCE_MANUAL,
+    PPK_WEIGHT_SOURCE_PROFILE,
+    PPK_WEIGHT_SOURCE_UNKNOWN,
+    SUBJECT_SOURCE_EXTERNAL_CHAT_DATA,
+    SUBJECT_SOURCE_MANUAL_CHAT_DATA,
+    SUBJECT_SOURCE_SELF_PROFILE,
+)
+from notas.application.queries.user_nutrition_profile import (
+    NutritionSubjectContextError,
+    build_nutrition_subject_context,
+)
+
 from notas.application.ai_intake.iteration_commands import (
     PlanIterationCommandSet,
     parse_dailyplan_iteration_commands,
@@ -64,6 +78,20 @@ ACTIVITY_LEVEL_CHOICES = (
     ("very_high", "Actividad muy alta"),
 )
 
+SUBJECT_SOURCE_CHOICES = (
+    ("", "Pendiente"),
+    (SUBJECT_SOURCE_SELF_PROFILE, "Ficha personal"),
+    (SUBJECT_SOURCE_EXTERNAL_CHAT_DATA, "Datos externos"),
+    (SUBJECT_SOURCE_MANUAL_CHAT_DATA, "Datos temporales"),
+)
+
+PPK_WEIGHT_SOURCE_CHOICES = (
+    (PPK_WEIGHT_SOURCE_PROFILE, "Peso de ficha personal"),
+    (PPK_WEIGHT_SOURCE_EXTERNAL, "Peso externo"),
+    (PPK_WEIGHT_SOURCE_MANUAL, "Peso temporal"),
+    (PPK_WEIGHT_SOURCE_UNKNOWN, "Peso pendiente"),
+)
+
 DEFAULT_MEALS_FOR_ADJUSTMENT = 4
 
 ENERGY_ADJUSTMENT_CHOICES = (
@@ -89,6 +117,9 @@ class NutritionBrief:
     """
 
     raw_prompt: str
+    subject_source: str | None = None
+    ppk_weight_source: str = PPK_WEIGHT_SOURCE_UNKNOWN
+    requires_library_ppk_warning: bool = False
     goal: str | None = None
     requested_entity: str = "daily_plan"
     meals_per_day: int | None = None
@@ -113,6 +144,21 @@ class NutritionBrief:
     @property
     def requested_entity_label(self) -> str:
         return _choice_label(REQUESTED_ENTITY_CHOICES, self.requested_entity, "Plan diario")
+
+    @property
+    def subject_source_label(self) -> str:
+        return _choice_label(SUBJECT_SOURCE_CHOICES, self.subject_source or "", "Pendiente")
+
+    @property
+    def ppk_weight_source_label(self) -> str:
+        return _choice_label(PPK_WEIGHT_SOURCE_CHOICES, self.ppk_weight_source or "", "Peso pendiente")
+
+    @property
+    def is_external_subject(self) -> bool:
+        return self.subject_source in {
+            SUBJECT_SOURCE_EXTERNAL_CHAT_DATA,
+            SUBJECT_SOURCE_MANUAL_CHAT_DATA,
+        }
 
     @property
     def goal_label(self) -> str:
@@ -208,6 +254,7 @@ class NutritionBriefFormVM:
     sex_choices: tuple[tuple[str, str], ...] = SEX_CHOICES
     activity_level_choices: tuple[tuple[str, str], ...] = ACTIVITY_LEVEL_CHOICES
     energy_adjustment_choices: tuple[tuple[str, str], ...] = ENERGY_ADJUSTMENT_CHOICES
+    subject_source_choices: tuple[tuple[str, str], ...] = SUBJECT_SOURCE_CHOICES
 
 
 @dataclass(frozen=True)
@@ -323,6 +370,7 @@ def build_intake_result(prompt: str) -> NutritionIntakeResult:
     normalized_prompt = _normalize_prompt(prompt)
     brief = NutritionBrief(
         raw_prompt=prompt.strip(),
+        subject_source=_detect_subject_source(normalized_prompt),
         goal=_detect_goal(normalized_prompt),
         requested_entity=_detect_requested_entity(normalized_prompt),
         meals_per_day=_detect_meals_per_day(normalized_prompt),
@@ -344,6 +392,7 @@ def build_intake_result(prompt: str) -> NutritionIntakeResult:
         budget_level=_detect_budget(normalized_prompt),
         notes=_build_notes(normalized_prompt),
     )
+    brief = apply_subject_context(brief)
     return build_intake_result_from_brief(brief)
 
 
@@ -376,6 +425,7 @@ def start_or_continue_conversation(
     *,
     message: str,
     existing_payload: dict | None = None,
+    user=None,
 ) -> NutritionConversationState:
     user_message = (message or "").strip()
     if not user_message:
@@ -385,6 +435,7 @@ def start_or_continue_conversation(
     parsed_brief = build_intake_result(user_message).brief
     brief = _merge_briefs(existing_state.result.brief if existing_state else None, parsed_brief)
     brief = apply_conversation_adjustments(brief, user_message)
+    brief = apply_subject_context(brief, user=user)
     result = build_intake_result_from_brief(brief)
 
     messages = list(existing_state.messages) if existing_state else []
@@ -618,6 +669,9 @@ def build_brief_from_form(data) -> NutritionBrief:
 def serialize_brief(brief: NutritionBrief) -> dict:
     return {
         "raw_prompt": brief.raw_prompt,
+        "subject_source": brief.subject_source,
+        "ppk_weight_source": brief.ppk_weight_source,
+        "requires_library_ppk_warning": brief.requires_library_ppk_warning,
         "goal": brief.goal,
         "requested_entity": brief.requested_entity,
         "meals_per_day": brief.meals_per_day,
@@ -647,6 +701,9 @@ def deserialize_brief(payload: dict | None) -> NutritionBrief | None:
 
     return NutritionBrief(
         raw_prompt=str(payload.get("raw_prompt") or ""),
+        subject_source=_clean_choice(payload.get("subject_source"), SUBJECT_SOURCE_CHOICES),
+        ppk_weight_source=_clean_ppk_weight_source(payload.get("ppk_weight_source")),
+        requires_library_ppk_warning=bool(payload.get("requires_library_ppk_warning")),
         goal=_clean_choice(payload.get("goal"), GOAL_CHOICES),
         requested_entity=_clean_choice(payload.get("requested_entity"), REQUESTED_ENTITY_CHOICES) or "daily_plan",
         meals_per_day=_clean_int(payload.get("meals_per_day"), min_value=1, max_value=8),
@@ -683,8 +740,24 @@ def _merge_briefs(existing: NutritionBrief | None, incoming: NutritionBrief) -> 
     if incoming.requested_entity == "program" or inferred.requested_entity == "program" or existing.requested_entity not in {"daily_plan", "program"}:
         requested_entity = incoming.requested_entity if incoming.requested_entity == "program" else inferred.requested_entity
 
+    subject_source = incoming.subject_source or existing.subject_source or inferred.subject_source
+    ppk_weight_source = (
+        incoming.ppk_weight_source
+        if incoming.ppk_weight_source != PPK_WEIGHT_SOURCE_UNKNOWN
+        else existing.ppk_weight_source
+        if existing.ppk_weight_source != PPK_WEIGHT_SOURCE_UNKNOWN
+        else inferred.ppk_weight_source
+    )
+
     return NutritionBrief(
         raw_prompt=raw_prompt,
+        subject_source=subject_source,
+        ppk_weight_source=ppk_weight_source,
+        requires_library_ppk_warning=(
+            incoming.requires_library_ppk_warning
+            or existing.requires_library_ppk_warning
+            or inferred.requires_library_ppk_warning
+        ),
         goal=incoming.goal or existing.goal or inferred.goal,
         requested_entity=requested_entity or "daily_plan",
         meals_per_day=incoming.meals_per_day or existing.meals_per_day or inferred.meals_per_day,
@@ -747,6 +820,47 @@ def _detect_requested_entity(prompt: str) -> str:
     if _contains_any(prompt, ("semana", "semanal", "programa", "7 dias", "7 días")):
         return "program"
     return "daily_plan"
+
+
+def _detect_subject_source(prompt: str) -> str | None:
+    if _contains_any(
+        prompt,
+        (
+            "mi ficha",
+            "mis datos",
+            "datos de mi ficha",
+            "usa mi perfil",
+            "usar mi perfil",
+            "usa mi ficha",
+            "usar mi ficha",
+            "para mi",
+            "para mí",
+        ),
+    ):
+        return SUBJECT_SOURCE_SELF_PROFILE
+
+    if _contains_any(
+        prompt,
+        (
+            "otra persona",
+            "alguien mas",
+            "alguien más",
+            "un cliente",
+            "una clienta",
+            "mi cliente",
+            "mi clienta",
+            "para el",
+            "para él",
+            "para ella",
+            "mi hermano",
+            "mi hermana",
+            "mi amigo",
+            "mi amiga",
+        ),
+    ):
+        return SUBJECT_SOURCE_EXTERNAL_CHAT_DATA
+
+    return None
 
 
 def _detect_meals_per_day(prompt: str) -> int | None:
@@ -919,6 +1033,16 @@ def _build_notes(prompt: str) -> list[str]:
 
 def build_summary_items(brief: NutritionBrief) -> list[NutritionBriefSummaryItem]:
     return [
+        NutritionBriefSummaryItem(
+            "Sujeto nutricional",
+            brief.subject_source_label,
+            brief.subject_source is None,
+        ),
+        NutritionBriefSummaryItem(
+            "Peso para PPK",
+            brief.ppk_weight_source_label,
+            brief.ppk_weight_source == PPK_WEIGHT_SOURCE_UNKNOWN,
+        ),
         NutritionBriefSummaryItem("Objetivo", brief.goal_label, brief.goal is None),
         NutritionBriefSummaryItem("Tipo de solución", brief.requested_entity_label),
         NutritionBriefSummaryItem(
@@ -1045,6 +1169,11 @@ def _missing_energy_inputs(brief: NutritionBrief) -> list[str]:
 def build_required_follow_up_questions(brief: NutritionBrief) -> list[str]:
     questions = []
 
+    if brief.subject_source is None:
+        questions.append(
+            "¿Usamos los datos de tu ficha personal para calcular esta propuesta o quieres entregar datos nuevos para otra persona?"
+        )
+
     if brief.goal is None:
         questions.append("¿Cuál es tu objetivo principal: bajar grasa, ganar masa, mantenerte o mejorar rendimiento?")
 
@@ -1093,6 +1222,12 @@ def _format_style_and_foods(brief: NutritionBrief) -> str:
 
 def _build_acknowledgements(brief: NutritionBrief) -> list[str]:
     acknowledgements = []
+    if brief.subject_source == SUBJECT_SOURCE_SELF_PROFILE:
+        acknowledgements.append("Usaré tu ficha personal como base de cálculo.")
+    elif brief.subject_source == SUBJECT_SOURCE_EXTERNAL_CHAT_DATA:
+        acknowledgements.append("Usaré datos externos para esta propuesta.")
+    elif brief.subject_source == SUBJECT_SOURCE_MANUAL_CHAT_DATA:
+        acknowledgements.append("Usaré datos temporales entregados en el chat para esta propuesta.")
     if brief.goal:
         acknowledgements.append(f"Tomé como objetivo: {brief.goal_label.lower()}.")
     if brief.meals_per_day:
@@ -1154,6 +1289,70 @@ def _choice_label(choices: Iterable[tuple[str, str]], value: str | None, fallbac
             return label
     return fallback
 
+
+
+def _clean_ppk_weight_source(value: str | None) -> str:
+    value = str(value or "").strip()
+    allowed = {key for key, _label in PPK_WEIGHT_SOURCE_CHOICES}
+    return value if value in allowed else PPK_WEIGHT_SOURCE_UNKNOWN
+
+
+def apply_subject_context(brief: NutritionBrief, *, user=None) -> NutritionBrief:
+    """Attach the explicit nutrition subject used by AI Intake.
+
+    The user's ficha is only used when the conversation selects it. If the
+    prompt includes body data but no explicit subject, the values are treated as
+    temporary chat data for this proposal instead of silently falling back to the
+    authenticated user's profile.
+    """
+
+    source = brief.subject_source or _infer_subject_source_from_brief(brief)
+    if not source:
+        return brief
+
+    chat_context = _chat_context_from_brief(brief)
+    try:
+        subject = build_nutrition_subject_context(
+            user=user,
+            source=source,
+            chat_context=chat_context,
+        )
+    except (AttributeError, NutritionSubjectContextError):
+        return replace(brief, subject_source=source)
+
+    return replace(
+        brief,
+        subject_source=subject.source,
+        ppk_weight_source=subject.ppk_weight_source,
+        requires_library_ppk_warning=subject.requires_library_ppk_warning,
+        weight_kg=brief.weight_kg if brief.weight_kg is not None else subject.weight_kg,
+        height_cm=brief.height_cm if brief.height_cm is not None else subject.height_cm,
+        age_years=brief.age_years if brief.age_years is not None else subject.age_years,
+        sex=brief.sex or subject.sex,
+        activity_level=brief.activity_level or subject.activity_level,
+        training_frequency=(
+            brief.training_frequency
+            if brief.training_frequency is not None
+            else subject.training_frequency
+        ),
+    )
+
+
+def _infer_subject_source_from_brief(brief: NutritionBrief) -> str | None:
+    if any((brief.weight_kg, brief.height_cm, brief.age_years, brief.sex)):
+        return SUBJECT_SOURCE_MANUAL_CHAT_DATA
+    return None
+
+
+def _chat_context_from_brief(brief: NutritionBrief) -> dict:
+    return {
+        "weight_kg": brief.weight_kg,
+        "height_cm": brief.height_cm,
+        "age_years": brief.age_years,
+        "sex": brief.sex,
+        "activity_level": brief.activity_level,
+        "training_frequency": brief.training_frequency,
+    }
 
 def _clean_choice(value: object, choices: Iterable[tuple[str, str]]) -> str | None:
     value = str(value or "").strip()

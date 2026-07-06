@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from notas.application.ai_intake.nutrition_brief import (
     AI_NUTRITION_BRIEF_SESSION_KEY,
@@ -8,6 +9,14 @@ from notas.application.ai_intake.nutrition_brief import (
     build_intake_result,
     start_or_continue_conversation,
 )
+from notas.domain.models import Profile
+
+
+def complete_onboarding_for_test_user(user):
+    profile = user.profile
+    profile.onboarding_completed_at = timezone.now()
+    profile.onboarding_version = Profile.ONBOARDING_VERSION_NUTRITION_V1
+    profile.save(update_fields=["onboarding_completed_at", "onboarding_version"])
 
 
 class NutritionBriefParsingTests(TestCase):
@@ -101,6 +110,7 @@ class AiNutritionIntakeViewTests(TestCase):
             email="felipe@example.com",
             password="pass123",
         )
+        complete_onboarding_for_test_user(self.user)
         self.client.force_login(self.user)
         self.url = reverse("ai_nutrition_intake")
 
@@ -235,6 +245,7 @@ class AiNutritionIntakeBriefCardViewTests(TestCase):
             email="briefcard@example.com",
             password="pass123",
         )
+        complete_onboarding_for_test_user(self.user)
         self.client.force_login(self.user)
         self.url = reverse("ai_nutrition_intake")
 

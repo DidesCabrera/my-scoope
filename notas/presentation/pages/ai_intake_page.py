@@ -1,11 +1,16 @@
 from dataclasses import asdict, dataclass, replace
+from typing import Iterable
 
 from django.urls import reverse
+from django.utils import timezone
 
+from ai_assistant.domain import AssistantStructuredResponse
+from notas.application.ai_intake.chat_engine import build_ai_nutrition_intake_engine_status
 from notas.application.dto.proposal_iteration_trace import extract_plan_iteration_trace
 from notas.application.ai_intake.nutrition_brief import (
     NutritionConversationMessage,
     NutritionConversationState,
+    deserialize_conversation,
 )
 from notas.presentation.composition.viewmodel.components.builder_headers import build_page_header
 
@@ -36,6 +41,7 @@ class AiNutritionIntakeContentVM:
     generated_proposal_card: AiGeneratedPlanCardVM | None = None
     has_historical_generated_plan_cards: bool = False
     prompt: str = ""
+    engine_status: dict | None = None
 
 
 @dataclass
@@ -52,7 +58,17 @@ class AiNutritionChatListItemVM:
     subtitle: str
     preview: str
     status_label: str
+    status_key: str
     url: str
+    is_active: bool = False
+    message_count: int = 0
+    generated_plan_count: int = 0
+    readiness_label: str = "Brief en progreso"
+    goal_label: str = "Pendiente"
+    meals_label: str = "Comidas pendientes"
+    proposal_url: str | None = None
+    proposal_status_label: str = ""
+    proposal_status_key: str = ""
 
 
 @dataclass(frozen=True)
@@ -60,6 +76,7 @@ class AiNutritionChatListContentVM:
     header: object
     chats: list[AiNutritionChatListItemVM]
     item_count: int
+    active_chat_id: int | None = None
 
 
 def build_intake_content(
@@ -81,6 +98,7 @@ def build_intake_content(
         ),
         has_historical_generated_plan_cards=conversation_has_generated_plan_cards(conversation),
         prompt=prompt,
+        engine_status=build_ai_nutrition_intake_engine_status(),
     )
 
 
@@ -107,22 +125,70 @@ def build_brief_edit_content(*, result, conversation, prompt: str) -> AiNutritio
     )
 
 
-def build_chat_list_content(chats) -> AiNutritionChatListContentVM:
+def build_chat_list_content(chats, *, active_chat_id: int | None = None) -> AiNutritionChatListContentVM:
     chat_items = [
-        AiNutritionChatListItemVM(
-            title=chat.title,
-            subtitle=chat.updated_at.strftime("%d/%m/%Y %H:%M"),
-            preview=chat.last_message_preview or "Sin mensajes guardados.",
-            status_label=chat.get_status_display(),
-            url=reverse("ai_nutrition_chat_detail", args=[chat.id]),
-        )
+        build_chat_list_item(chat, active_chat_id=active_chat_id)
         for chat in chats
     ]
     return AiNutritionChatListContentVM(
-        header=build_page_header(title="Chats"),
+        header=build_page_header(
+            title="Chats",
+            actions=[
+                {
+                    "key": "new_ai_chat",
+                    "label": "Nuevo chat",
+                    "url": reverse("ai_nutrition_chat_new"),
+                    "method": "get",
+                    "icon": "plus",
+                    "order": 10,
+                    "desktop_position": "inline",
+                    "mobile_position": "inline",
+                }
+            ],
+        ),
         chats=chat_items,
         item_count=len(chat_items),
+        active_chat_id=active_chat_id,
     )
+
+
+def build_chat_list_item(chat, *, active_chat_id: int | None = None) -> AiNutritionChatListItemVM:
+    conversation = deserialize_conversation(chat.conversation_payload)
+    brief = conversation.result.brief if conversation else None
+    messages = conversation.messages if conversation else []
+    generated_plan_count = sum(1 for message in messages if message.generated_plan_card)
+
+    proposal = getattr(chat, "proposal", None)
+    proposal_url = reverse("proposal_detail", args=[proposal.id]) if proposal else None
+    proposal_status_key = getattr(proposal, "status", "") or ""
+    proposal_status_label = proposal.get_status_display() if proposal else ""
+
+    return AiNutritionChatListItemVM(
+        title=chat.title or "Chat nutricional",
+        subtitle=f"Actualizado {timezone.localtime(chat.updated_at).strftime('%d/%m/%Y %H:%M')}",
+        preview=chat.last_message_preview or "Sin mensajes guardados.",
+        status_label=chat.get_status_display(),
+        status_key=(chat.status or "active").replace("_", "-"),
+        url=reverse("ai_nutrition_chat_detail", args=[chat.id]),
+        is_active=bool(active_chat_id and int(chat.id) == int(active_chat_id)),
+        message_count=len(messages),
+        generated_plan_count=generated_plan_count,
+        readiness_label="Brief listo" if conversation and conversation.is_ready_for_proposal else "Brief en progreso",
+        goal_label=(brief.goal_label if brief else "Pendiente"),
+        meals_label=build_chat_meals_label(brief),
+        proposal_url=proposal_url,
+        proposal_status_label=proposal_status_label,
+        proposal_status_key=proposal_status_key,
+    )
+
+
+def build_chat_meals_label(brief) -> str:
+    meals_per_day = getattr(brief, "meals_per_day", None)
+    if not meals_per_day:
+        return "Comidas pendientes"
+    if int(meals_per_day) == 1:
+        return "1 comida/día"
+    return f"{int(meals_per_day)} comidas/día"
 
 
 def append_generated_plan_message(
@@ -179,6 +245,78 @@ def append_iterated_plan_message(
             + " Dejo la versión anterior en el historial y marco esta nueva card como versión actual."
         ),
     )
+
+
+def append_ai_assistant_structured_response(
+    conversation,
+    *,
+    structured_response: AssistantStructuredResponse,
+    visible_proposals: Iterable = (),
+) -> NutritionConversationState:
+    """Append an AI Assistant turn and safe proposal cards to the chat history.
+
+    The structured response may contain proposal ids only after My Scoope tools
+    have created real `NutritionProposal` records. This renderer does not fetch
+    by ids and does not trust provider-supplied ids; callers must pass proposal
+    objects already scoped to the authenticated user.
+    """
+
+    cards = build_generated_plan_cards_for_ai_response(
+        structured_response=structured_response,
+        visible_proposals=visible_proposals,
+    )
+    messages = deactivate_generated_plan_cards(conversation.messages) if cards else list(conversation.messages)
+
+    assistant_text = " ".join((structured_response.assistant_text or "").split())
+    if assistant_text:
+        messages.append(
+            NutritionConversationMessage(
+                role="assistant",
+                text=assistant_text,
+            )
+        )
+
+    for index, card in enumerate(cards):
+        messages.append(
+            NutritionConversationMessage(
+                role="assistant",
+                text="",
+                generated_plan_card=serialize_generated_plan_card(
+                    card,
+                    is_current=index == len(cards) - 1,
+                ),
+            )
+        )
+
+    return NutritionConversationState(messages=messages[-16:], result=conversation.result)
+
+
+def build_generated_plan_cards_for_ai_response(
+    *,
+    structured_response: AssistantStructuredResponse,
+    visible_proposals: Iterable = (),
+) -> list[AiGeneratedPlanCardVM]:
+    """Build chat cards for proposal ids that were created by My Scoope.
+
+    The function is deliberately conservative: ids in the structured response are
+    only used to match the already-visible proposal objects supplied by the
+    caller. A provider cannot make a card appear by returning an arbitrary id.
+    """
+
+    requested_ids = [int(proposal_id) for proposal_id in structured_response.proposal_ids or ()]
+    if not requested_ids:
+        return []
+
+    proposals_by_id = {int(proposal.id): proposal for proposal in visible_proposals if getattr(proposal, "id", None)}
+    cards: list[AiGeneratedPlanCardVM] = []
+    for proposal_id in requested_ids:
+        proposal = proposals_by_id.get(proposal_id)
+        if proposal is None:
+            continue
+        card = build_generated_plan_card(proposal)
+        if card is not None:
+            cards.append(card)
+    return cards
 
 
 def deactivate_generated_plan_cards(messages):

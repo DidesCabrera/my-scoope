@@ -6,6 +6,20 @@ Decisión vigente: Food Catalog debe evolucionar como una aplicación/sistema in
 
 No debe ser tratado como una extensión menor del entorno de gestión alimentaria ni como un importador de `Food`.
 
+Desde Patch 32 existe la app física `food_catalog`. Desde Patch 33 existe su primer contrato interno ejecutable:
+
+```text
+food_catalog/application/contracts.py
+```
+
+Desde Patch 34 existen los primeros modelos maestros persistentes:
+
+```text
+food_catalog/models.py
+```
+
+El contrato define candidatos, evidencia, nutrientes normalizados, snapshots publicados y payloads preparados para protocolos internos hacia `notas.Food`. Los modelos maestros persisten alimentos canónicos, porciones, aliases, fuentes/evidencia e import batches. Desde Patch 35 existe el primer protocolo de snapshot operacional hacia `notas.Food`. Desde Patch 36 los adaptadores puros de importación viven en `food_catalog/application/imports/`. Desde Patch 37 existen comandos propios y acciones admin iniciales para importar candidatos maestros en `food_catalog` sin escribir `notas.Food`. Desde Patch 39 existe un backfill interno desde alimentos operativos confiables de `notas.Food` hacia candidatos maestros de `food_catalog`. Desde Patch 40 el ciclo queda cerrado con tests de frontera adicionales y export focalizado reforzado. Nada de esto se expone a MCP.
+
 ## Decisión
 
 MyScoope separa conceptualmente dos sistemas:
@@ -18,7 +32,9 @@ Nutrition Management App
     Responsable de usar alimentos ya publicados para construir Meals, DailyPlans, Programs, Comparators, Proposals y Explore.
 ```
 
-El entorno de gestión nutricional consume alimentos a través de un contrato definido. No conoce ni depende de fuentes externas, procesos de importación, agentes de investigación, acuerdos con marcas ni reglas de licenciamiento.
+El entorno de gestión nutricional consume alimentos a través de `notas.Food`. No conoce ni depende de fuentes externas, procesos de importación, agentes de investigación, acuerdos con marcas ni reglas de licenciamiento.
+
+MCP sigue la misma regla operacional: no accede a Food Catalog directamente y solo puede usar alimentos disponibles como `notas.Food`.
 
 ## Motivación
 
@@ -33,9 +49,45 @@ Por lo tanto, MyScoope debe construir una base alimentaria propia, curada, traza
 ## Principio central
 
 ```text
-Food Catalog App produce alimentos canónicos.
-Nutrition Management App consume alimentos canónicos.
+Food Catalog App produce alimentos maestros/canónicos.
+Protocolos internos materializan o actualizan notas.Food.
+Nutrition Management App y MCP consumen únicamente notas.Food.
 ```
+
+## Decisión híbrida: fuente maestra y snapshot operativo
+
+Food Catalog App no reemplaza inicialmente a `notas.Food`.
+
+MyScoope separa dos responsabilidades:
+
+```text
+food_catalog.CatalogFood
+    fuente maestra del catálogo; curada, versionada, trazable y publicable
+
+notas.Food
+    snapshot operativo; usado por MealFood, Meals, DailyPlans, Programs, Comparators y Proposals
+```
+
+La relación deseada es:
+
+```text
+CatalogFood publicado
+    ↓ crea / sugiere / refresca explícitamente
+notas.Food snapshot
+    ↓ usado por el core nutricional
+MealFood / Meal / DailyPlan / Program / Proposal
+```
+
+Regla dura:
+
+```text
+Meals, DailyPlans, Programs, Proposals, Comparators, Solver y MCP no deben depender directamente de CatalogFood.
+Deben depender de notas.Food para preservar estabilidad operativa e histórica.
+```
+
+Esta decisión evita que una actualización del catálogo maestro cambie automáticamente los cálculos de planes ya creados. Cuando un `Food` operativo se origine desde Food Catalog, debe conservar los valores nutricionales necesarios como snapshot y, opcionalmente, una referencia trazable al alimento maestro.
+
+Si un alimento existe solo como `CatalogFood` y todavía no fue materializado como `notas.Food`, no existe para MCP ni para los flujos operativos de planificación.
 
 Ninguna entidad de gestión nutricional debe alimentarse directamente desde:
 
@@ -81,9 +133,10 @@ Toda fuente debe entrar primero como candidato y pasar por reglas explícitas.
 - propuestas IA sobre planes/comidas;
 - Explore;
 - sharing/inbox;
-- cálculo de KPIs de planes.
+- cálculo de KPIs de planes;
+- herramientas MCP y AI tools operativas.
 
-Estos sistemas solo deben usar alimentos ya publicados o alimentos privados creados por el usuario bajo contrato estable.
+Estos sistemas solo deben usar alimentos disponibles como `notas.Food`, ya sea porque fueron creados por el usuario, importados, publicados como globales o materializados desde Food Catalog mediante protocolos internos.
 
 ## Tipos de alimentos/candidatos
 
@@ -148,6 +201,8 @@ archived
 
 El contrato de consumo debe ser estable y simple.
 
+Food Catalog publica alimentos maestros. La gestión nutricional y MCP deben recibir o usar snapshots operativos en `notas.Food`, no depender del detalle interno de importación o curaduría.
+
 El entorno de gestión nutricional necesita alimentos con:
 
 ```text
@@ -172,54 +227,123 @@ si vino de tabla pública
 si fue deduplicado
 ```
 
-Esa información queda disponible para auditoría, administración y curaduría, pero no contamina el core de Meals/DailyPlans/Programs.
+Esa información queda disponible para auditoría, administración y curaduría, pero no contamina el core de Meals/DailyPlans/Programs ni el contrato MCP.
 
-## Contrato mínimo sugerido
+## Contratos internos ejecutables
 
-```python
-@dataclass(frozen=True)
-class PublishedFoodSnapshot:
-    food_id: int
-    display_name: str
-    category: str | None
-    country: str | None
-    serving_basis: str
-    calories_kcal_per_100g: Decimal
-    protein_g_per_100g: Decimal
-    carbs_g_per_100g: Decimal
-    fat_g_per_100g: Decimal
-    fiber_g_per_100g: Decimal | None
-    sugar_g_per_100g: Decimal | None
-    sodium_mg_per_100g: Decimal | None
-    verification_status: str
-    version: str
+Desde Patch 33, el contrato interno vive en:
+
+```text
+food_catalog/application/contracts.py
 ```
+
+Desde Patch 36, los contratos y adaptadores puros de importación viven en:
+
+```text
+food_catalog/application/imports/
+```
+
+Esta carpeta contiene DTOs de importación, normalizadores, validaciones defensivas y adaptadores USDA. Son piezas de adquisición/curaduría, no herramientas MCP y no escriben directamente Meals, DailyPlans, Programs ni Proposals.
+
+Desde Patch 37, la persistencia de importación catalog-first vive fuera de la capa pura de aplicación:
+
+```text
+food_catalog/infrastructure/imports/
+```
+
+Esta capa puede usar Django y `food_catalog.models` para crear `CatalogFood`, `CatalogFoodSource` y `CatalogImportBatch`, pero no importa `notas` ni MCP. Los comandos iniciales son:
+
+```text
+python manage.py dry_run_catalog_usda_foods_json <path> --source-version <version>
+python manage.py import_catalog_usda_foods_json <path> --source-version <version>
+```
+
+Desde Patch 39, el backfill desde alimentos operativos confiables vive deliberadamente en `notas`, porque lee `notas.Food`:
+
+```text
+notas/application/services/commands/food_catalog_backfill.py
+python manage.py backfill_catalog_from_operational_foods --dry-run
+python manage.py backfill_catalog_from_operational_foods
+```
+
+Este bridge crea candidatos maestros y evidencia en `food_catalog`, pero no actualiza el alimento operativo de origen, no publica automáticamente el catálogo y no cambia el contrato MCP.
+
+Estos comandos importan candidatos maestros, no alimentos operacionales. Para que un candidato publicado esté disponible en Meals o MCP, sigue siendo obligatorio materializarlo como `notas.Food` mediante el protocolo de snapshot.
+
+Este contrato no es una herramienta MCP ni una API pública para planificación. Es una capa de payloads puros para que Food Catalog pueda construir datos curados antes de que un protocolo backend futuro los materialice como `notas.Food`.
+
+Contratos principales:
+
+```text
+NutrientProfilePer100g
+CatalogServingOption
+CatalogEvidenceItem
+CatalogFoodCandidate
+PublishedFoodSnapshot
+OperationalFoodSnapshotPayload
+```
+
+Reglas de estos contratos:
+
+```text
+no importan django
+no importan notas
+no importan mcp_server
+no crean registros en base de datos
+no reemplazan a notas.Food
+```
+
+`PublishedFoodSnapshot` representa una publicación estable de Food Catalog. Su salida hacia gestión nutricional es `OperationalFoodSnapshotPayload`, que usa nombres compatibles con `notas.Food`, pero sigue siendo solo un payload interno.
+
+El protocolo real que escribe o refresca `notas.Food` vive en `notas/application/services/food_catalog_snapshots.py` desde Patch 35.
+
+## Modelos maestros persistentes
+
+Desde Patch 34, Food Catalog posee tablas propias para persistir la curaduría del catálogo maestro:
+
+```text
+CatalogFood
+CatalogFoodPortion
+CatalogFoodAlias
+CatalogFoodSource
+CatalogImportBatch
+```
+
+Estos modelos viven en `food_catalog.models` y representan el estado maestro de investigación, normalización, evidencia, revisión y publicación. Sus IDs pertenecen al catálogo maestro y no son IDs operacionales de alimentos.
+
+Regla dura:
+
+```text
+CatalogFood.id o CatalogFood.catalog_ref no son food_id válidos para Meals, DailyPlans, Programs, Proposals, Solver ni MCP.
+```
+
+La única forma de hacer disponible un alimento maestro para planificación es mediante un protocolo backend explícito que cree o refresque un `notas.Food` snapshot. Desde Patch 35, ese protocolo inicial vive en `notas/application/services/food_catalog_snapshots.py`.
 
 ## Contrato de entrada para candidatos
 
-Todo flujo de ingreso debe producir candidatos estructurados.
+Todo flujo de ingreso debe producir candidatos estructurados mediante `CatalogFoodCandidate`. Un candidato puede contener:
 
-```python
-@dataclass(frozen=True)
-class FoodCandidate:
-    candidate_id: str
-    source_type: str
-    source_name: str
-    source_license_status: str
-    display_name: str
-    canonical_name: str | None
-    brand_name: str | None
-    country: str | None
-    language: str
-    is_branded: bool
-    nutrients_per_100g: dict
-    serving_options: list
-    aliases: list[str]
-    evidence: list
-    confidence_score: Decimal | None
-    warnings: list[str]
-    review_status: str
+```text
+candidate_ref
+source_type
+source_name
+source_license_status
+display_name
+canonical_name
+brand_name
+country
+language
+is_branded
+nutrients_per_100g
+serving_options
+aliases
+evidence
+confidence_score
+warnings
+review_status
 ```
+
+Un candidato no es operacional. Debe ser revisado, publicado y luego materializado internamente como `notas.Food` antes de estar disponible para Meals, DailyPlans, Programs, Proposals, Solver o MCP.
 
 ## Fuentes prioritarias
 
@@ -298,32 +422,46 @@ Un alimento no debe publicarse si:
 - no se sabe si corresponde a alimento crudo/cocido;
 - no se sabe si incluye piel, aceite, salsa, líquido u otra preparación relevante.
 
-## Implicancias para implementación futura
+## Implicancias para implementación
 
-El sistema puede iniciar dentro del monolito Django, pero con frontera explícita.
+El sistema inicia dentro del monolito Django, pero con frontera explícita.
 
-Estructura futura sugerida:
+Desde Patch 32 existe la app física:
 
 ```text
 food_catalog/
-  domain/
   application/
+  domain/
   infrastructure/
-    providers/
-    importers/
-  presentation/
   management/commands/
+  migrations/
+  tests/
 ```
 
-Mientras siga dentro de `notas`, debe respetar la frontera conceptual:
+Modelos futuros recomendados dentro de esa app:
 
 ```text
-notas/food_catalog/...
+CatalogFood
+CatalogFoodPortion
+CatalogFoodAlias
+CatalogFoodSource
+CatalogImportBatch
+CatalogFoodVersion
 ```
 
-o servicios equivalentes claramente separados.
+`notas.Food` debe mantenerse como entidad operativa del producto nutricional. En una etapa futura puede recibir campos trazables, por ejemplo una referencia opcional al alimento maestro y metadata de snapshot, pero no debe convertirse en un proxy obligatorio de `CatalogFood`.
+
+La app `food_catalog` creada en Patch 32 no define modelos todavía. Los modelos maestros deben introducirse en patches posteriores y no deben ser consumidos directamente por MCP ni por entidades operativas de `notas`.
+
+Aunque Food Catalog siga dentro del monolito, debe respetar la frontera conceptual:
+
+```text
+food_catalog/...
+```
 
 No se deben seguir agregando importadores o reglas de catálogo dentro de views, formularios o flujos de gestión nutricional.
+
+No se deben agregar herramientas MCP que consulten `food_catalog`. Las herramientas MCP pueden conservar nombres históricos como `list_food_catalog`, pero deben leer `notas.Food` y devolver IDs operativos de `notas.Food`.
 
 ## Roadmap sugerido
 
@@ -333,14 +471,17 @@ No se deben seguir agregando importadores o reglas de catálogo dentro de views,
 - definir contrato `FoodCandidate`;
 - definir contrato `PublishedFoodSnapshot`;
 - documentar fuentes permitidas/no permitidas;
-- documentar estados de revisión.
+- documentar estados de revisión;
+- documentar que `notas.Food` es snapshot operativo y `CatalogFood` será fuente maestra.
 
 ### Etapa 2 — Reestructuración interna mínima
 
 - aislar importadores existentes;
 - revisar y reparar import USDA como fuente secundaria;
-- crear capa de candidatos antes de crear `Food`;
-- registrar fuente/licencia/confianza.
+- crear capa de candidatos antes de crear/actualizar snapshots operativos `Food`;
+- registrar fuente/licencia/confianza;
+- definir protocolos internos para `create_operational_food_snapshot` y `refresh_operational_food_snapshot`;
+- asegurar que esos protocolos creen/actualicen `notas.Food` y no expongan `CatalogFood` al MCP.
 
 ### Etapa 3 — Natural Verified Seed
 
@@ -365,8 +506,52 @@ No se deben seguir agregando importadores o reglas de catálogo dentro de views,
 - QA automático;
 - revisión humana antes de publicar.
 
+
+
+## Estado Patch 40 · cierre del ciclo 32-40
+
+Patch 40 cierra el ciclo de separación de Food Catalog.
+
+El estado vigente queda definido así:
+
+```text
+food_catalog.CatalogFood
+    fuente maestra interna de curaduría
+
+notas.Food
+    snapshot operacional y única verdad nutricional de planificación
+
+MCP
+    consumidor de herramientas operativas; solo ve notas.Food
+```
+
+Guardas ejecutables agregadas o reforzadas:
+
+- `food_catalog.application` no importa Django, `notas` ni MCP;
+- `food_catalog.infrastructure` no importa `notas` ni MCP;
+- comandos de `food_catalog` no importan `notas` ni MCP;
+- modelos maestros no referencian entidades operacionales como Meals, DailyPlans, Programs o Proposals;
+- DTOs de alimentos para AI/MCP exponen `food_id` operacional, no `catalog_food_id`;
+- campos de trazabilidad en `notas.Food` siguen siendo metadata primitiva, no `ForeignKey` a `CatalogFood`;
+- el modo de exportación `foodcatalog` incluye tests de frontera para futuras iteraciones.
+
+A partir de este punto, nuevos trabajos deberían tratar Food Catalog como una app separada ya establecida. La siguiente etapa natural es construir capacidades de curaduría, versionado y publicación controlada sobre esta frontera, no volver a mezclar el catálogo maestro con los flujos operativos.
+
 ## Decisión operativa actual
 
 La prioridad ya no es integrar una gran BBDD externa como fuente principal.
 
 La prioridad es construir Food Catalog App como sistema propio, con una base inicial pequeña pero confiable, natural para LATAM/España y defendible legalmente.
+
+## Estado Patch 38 · frontera MCP endurecida
+
+MCP no es consumidor de Food Catalog.
+
+El nombre `list_food_catalog` existe solo por compatibilidad histórica con el protocolo MCP/API. Su significado vigente es:
+
+```text
+listar alimentos operativos disponibles desde notas.Food
+```
+
+No significa buscar en `food_catalog.CatalogFood`, no expone `catalog_food_id` y no puede crear snapshots. La disponibilidad de alimentos para IA/MCP depende de procesos internos que materializan o actualizan `notas.Food`.
+

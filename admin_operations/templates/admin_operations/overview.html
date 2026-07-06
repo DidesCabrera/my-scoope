@@ -1,0 +1,111 @@
+{% extends "admin_operations/base.html" %}
+{% block title %}Admin Operations{% endblock %}
+{% block content %}
+<div class="page admin-analytics-page admin-operations-page">
+
+  <section class="card-detail-block admin-operations-closure-card" aria-label="OPS08 V1 closure">
+    <div>
+      <p class="section-eyebrow">OPS08 · V1 closure</p>
+      <h3>Consola operacional V1 cerrada</h3>
+      <p class="muted-text">Food Catalog, Accounts & Credits, AI Assistant y Audit Log quedan conectados como workflows staff-only, con razón obligatoria, confirmación antes de mutar y auditoría transversal.</p>
+    </div>
+    <div class="admin-operations-closure-card__checks" aria-label="Criterios de cierre OPS08">
+      <span><i data-lucide="shield-check"></i> Staff-only</span>
+      <span><i data-lucide="mouse-pointer-click"></i> Confirmación antes de mutar</span>
+      <span><i data-lucide="scroll-text"></i> Audit log activo</span>
+    </div>
+  </section>
+
+  <section class="home-stats admin-analytics-kpi-grid admin-operations-kpi-grid" aria-label="Resumen operacional OPS02">
+    {% for metric in vm.content.metrics %}
+      <article class="home-stat-card admin-operations-metric-card">
+        <div class="home-stat-top">
+          <i data-lucide="{{ metric.icon }}" class="home-stat-icon"></i>
+          <span class="home-stat-label">{{ metric.label }}</span>
+        </div>
+        <h3>{{ metric.value }}</h3>
+        {% if metric.helper %}
+          <p class="muted-text">{{ metric.helper }}</p>
+        {% endif %}
+      </article>
+    {% endfor %}
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Action queues</p>
+        <h3>Colas operacionales detectables</h3>
+        <p class="muted-text">Cada cola muestra volumen real cuando el dominio ya tiene modelos suficientes. Las acciones habilitadas abren workflows staff-only y las pendientes permanecen bloqueadas hasta su patch específico.</p>
+      </div>
+    </div>
+    <div class="admin-analytics-section-grid admin-operations-queue-grid" aria-label="Colas operacionales de Admin Operations">
+      {% for queue in vm.content.queues %}
+        <article class="home-stat-card admin-analytics-module-card admin-operations-queue-card admin-operations-queue-card--{{ queue.priority }}">
+          <div class="home-stat-top">
+            <span class="home-stat-label">{{ queue.title }}</span>
+            <i data-lucide="{{ queue.icon }}" class="home-stat-icon"></i>
+          </div>
+          <div class="admin-operations-queue-card__count">{{ queue.count }}</div>
+          <p class="muted-text">{{ queue.description }}</p>
+          {% if queue.helper %}
+            <p class="admin-operations-queue-card__helper">{{ queue.helper }}</p>
+          {% endif %}
+          <div class="admin-operations-queue-card__footer">
+            <span class="admin-analytics-module-card__status">{{ queue.status }}</span>
+            {% if queue.is_enabled %}
+              <a class="btn-secondary btn-secondary--compact" href="{{ queue.href }}">{{ queue.primary_action_label }}</a>
+            {% else %}
+              <span class="admin-operations-disabled-action" aria-disabled="true">{{ queue.primary_action_label }}</span>
+            {% endif %}
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Warnings operacionales</p>
+        <h3>Señales para priorizar al staff</h3>
+        <p class="muted-text">La lista agrupa los riesgos accionables que ya se pueden inferir desde Food Catalog, AI Assistant y Accounts.</p>
+      </div>
+    </div>
+    {% if vm.content.warnings %}
+      <div class="admin-operations-warning-list" aria-label="Warnings operacionales activos">
+        {% for warning in vm.content.warnings %}
+          <article class="admin-operations-warning admin-operations-warning--{{ warning.severity }}">
+            <div>
+              <p class="section-eyebrow">{{ warning.domain }}</p>
+              <h4>{{ warning.title }}</h4>
+              <p class="muted-text">{{ warning.description }}</p>
+            </div>
+            <strong>{{ warning.value }}</strong>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="admin-operations-empty-state">
+        <i data-lucide="circle-check" class="home-stat-icon"></i>
+        <div>
+          <h4>Sin warnings operacionales activos</h4>
+          <p class="muted-text">No se detectaron colas críticas con la información disponible para OPS05.</p>
+        </div>
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="home-stats admin-analytics-section-grid" aria-label="Principios de Admin Operations">
+    {% for principle in vm.content.principles %}
+      <article class="home-stat-card admin-operations-principle-card">
+        <div class="home-stat-top">
+          <i data-lucide="{{ principle.icon }}" class="home-stat-icon"></i>
+          <span class="home-stat-label">{{ principle.title }}</span>
+        </div>
+        <p class="muted-text">{{ principle.description }}</p>
+      </article>
+    {% endfor %}
+  </section>
+</div>
+{% endblock %}

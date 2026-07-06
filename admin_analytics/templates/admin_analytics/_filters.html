@@ -1,0 +1,29 @@
+<form class="admin-analytics-filterbar" method="get" aria-label="Filtros de Admin Analytics">
+  <div class="admin-analytics-filterbar__summary">
+    <i data-lucide="sliders-horizontal" aria-hidden="true"></i>
+    <span>Filtros</span>
+  </div>
+
+  <label class="admin-analytics-filterbar__field">
+    <span>Período</span>
+    <select name="period">
+      {% for option in vm.content.filters.period_options %}
+        <option value="{{ option.value }}"{% if option.is_active %} selected{% endif %}>{{ option.label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+
+  <label class="admin-analytics-filterbar__field">
+    <span>Segmento</span>
+    <select name="user_segment">
+      {% for option in vm.content.filters.user_segment_options %}
+        <option value="{{ option.value }}"{% if option.is_active %} selected{% endif %}>{{ option.label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+
+  <div class="admin-analytics-filterbar__actions">
+    <button type="submit" class="btn-primary admin-analytics-filterbar__submit">Aplicar</button>
+    <a class="btn-secondary admin-analytics-filterbar__reset" href=".">Limpiar</a>
+  </div>
+</form>

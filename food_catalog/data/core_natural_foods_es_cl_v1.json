@@ -1,0 +1,949 @@
+[
+  {
+    "id": "core-oats-rolled",
+    "display_name": "Avena tradicional",
+    "canonical_name": "avena tradicional",
+    "food_group": "cereals",
+    "food_subgroup": "oats",
+    "protein_g_per_100g": "13.150",
+    "carbs_g_per_100g": "67.700",
+    "fat_g_per_100g": "6.520",
+    "calories_kcal_per_100g": "379.000",
+    "fiber_g_per_100g": "10.100",
+    "sugar_g_per_100g": "0.990",
+    "sodium_mg_per_100g": "6.000",
+    "default_portion_g": "40.000",
+    "portions": [
+      [
+        "40 g",
+        "40.000",
+        true
+      ],
+      [
+        "1 taza",
+        "80.000",
+        false
+      ]
+    ],
+    "aliases": [
+      "oats",
+      "avena integral",
+      "rolled oats"
+    ],
+    "preparation_state": "dry"
+  },
+  {
+    "id": "core-rice-white-cooked",
+    "display_name": "Arroz blanco cocido",
+    "canonical_name": "arroz blanco cocido",
+    "food_group": "cereals",
+    "food_subgroup": "rice",
+    "protein_g_per_100g": "2.690",
+    "carbs_g_per_100g": "28.170",
+    "fat_g_per_100g": "0.280",
+    "calories_kcal_per_100g": "130.000",
+    "fiber_g_per_100g": "0.400",
+    "sugar_g_per_100g": "0.050",
+    "sodium_mg_per_100g": "1.000",
+    "default_portion_g": "150.000",
+    "portions": [
+      [
+        "150 g",
+        "150.000",
+        true
+      ],
+      [
+        "1 taza cocida",
+        "158.000",
+        false
+      ]
+    ],
+    "aliases": [
+      "white rice cooked",
+      "arroz cocido"
+    ],
+    "preparation_state": "cooked"
+  },
+  {
+    "id": "core-rice-brown-cooked",
+    "display_name": "Arroz integral cocido",
+    "canonical_name": "arroz integral cocido",
+    "food_group": "cereals",
+    "food_subgroup": "rice",
+    "protein_g_per_100g": "2.600",
+    "carbs_g_per_100g": "23.000",
+    "fat_g_per_100g": "0.900",
+    "calories_kcal_per_100g": "112.000",
+    "fiber_g_per_100g": "1.800",
+    "sugar_g_per_100g": "0.350",
+    "sodium_mg_per_100g": "1.000",
+    "default_portion_g": "150.000",
+    "portions": [
+      [
+        "150 g",
+        "150.000",
+        true
+      ],
+      [
+        "1 taza cocida",
+        "195.000",
+        false
+      ]
+    ],
+    "aliases": [
+      "brown rice cooked",
+      "arroz integral"
+    ],
+    "preparation_state": "cooked"
+  },
+  {
+    "id": "core-quinoa-cooked",
+    "display_name": "Quinoa cocida",
+    "canonical_name": "quinoa cocida",
+    "food_group": "cereals",
+    "food_subgroup": "quinoa",
+    "protein_g_per_100g": "4.400",
+    "carbs_g_per_100g": "21.300",
+    "fat_g_per_100g": "1.920",
+    "calories_kcal_per_100g": "120.000",
+    "fiber_g_per_100g": "2.800",
+    "sugar_g_per_100g": "0.870",
+    "sodium_mg_per_100g": "7.000",
+    "default_portion_g": "150.000",
+    "portions": [
+      [
+        "150 g",
+        "150.000",
+        true
+      ],
+      [
+        "1 taza cocida",
+        "185.000",
+        false
+      ]
+    ],
+    "aliases": [
+      "quinua cocida",
+      "cooked quinoa"
+    ],
+    "preparation_state": "cooked"
+  },
+  {
+    "id": "core-potato-boiled",
+    "display_name": "Papa cocida sin piel",
+    "canonical_name": "papa cocida sin piel",
+    "food_group": "tubers",
+    "food_subgroup": "potato",
+    "protein_g_per_100g": "1.870",
+    "carbs_g_per_100g": "20.130",
+    "fat_g_per_100g": "0.100",
+    "calories_kcal_per_100g": "87.000",
+    "fiber_g_per_100g": "1.800",
+    "sugar_g_per_100g": "0.870",
+    "sodium_mg_per_100g": "4.000",
+    "default_portion_g": "200.000",
+    "portions": [
+      [
+        "200 g",
+        "200.000",
+        true
+      ],
+      [
+        "1 papa mediana",
+        "170.000",
+        false
+      ]
+    ],
+    "aliases": [
+      "potato boiled",
+      "patata cocida"
+    ],
+    "preparation_state": "cooked"
+  },
+  {
+    "id": "core-sweet-potato-cooked",
+    "display_name": "Camote cocido",
+    "canonical_name": "camote cocido",
+    "food_group": "tubers",
+    "food_subgroup": "sweet_potato",
+    "protein_g_per_100g": "1.370",
+    "carbs_g_per_100g": "17.720",
+    "fat_g_per_100g": "0.140",
+    "calories_kcal_per_100g": "76.000",
+    "fiber_g_per_100g": "2.500",
+    "sugar_g_per_100g": "5.740",
+    "sodium_mg_per_100g": "27.000",
+    "default_portion_g": "200.000",
+    "portions": [
+      [
+        "200 g",
+        "200.000",
+        true
+      ],
+      [
+        "1 unidad mediana",
+        "130.000",
+        false
+      ]
+    ],
+    "aliases": [
+      "batata cocida",
+      "sweet potato cooked"
+    ],
+    "preparation_state": "cooked"
+  },
+  {
+    "id": "core-lentils-cooked",
+    "display_name": "Lentejas cocidas",
+    "canonical_name": "lentejas cocidas",
+    "food_group": "legumes",
+    "food_subgroup": "lentils",
+    "protein_g_per_100g": "9.020",
+    "carbs_g_per_100g": "20.130",
+    "fat_g_per_100g": "0.380",
+    "calories_kcal_per_100g": "116.000",
+    "fiber_g_per_100g": "7.900",
+    "sugar_g_per_100g": "1.800",
+    "sodium_mg_per_100g": "2.000",
+    "default_portion_g": "180.000",
+    "portions": [
+      [
+        "180 g",
+        "180.000",
+        true
+      ],
+      [
+        "1 taza cocida",
+        "198.000",
+        false
+      ]
+    ],
+    "aliases": [
+      "lentils cooked"
+    ],
+    "preparation_state": "cooked"
+  },
+  {
+    "id": "core-chickpeas-cooked",
+    "display_name": "Garbanzos cocidos",
+    "canonical_name": "garbanzos cocidos",
+    "food_group": "legumes",
+    "food_subgroup": "chickpeas",
+    "protein_g_per_100g": "8.860",
+    "carbs_g_per_100g": "27.420",
+    "fat_g_per_100g": "2.590",
+    "calories_kcal_per_100g": "164.000",
+    "fiber_g_per_100g": "7.600",
+    "sugar_g_per_100g": "4.800",
+    "sodium_mg_per_100g": "7.000",
+    "default_portion_g": "150.000",
+    "portions": [
+      [
+        "150 g",
+        "150.000",
+        true
+      ],
+      [
+        "1 taza cocida",
+        "164.000",
+        false
+      ]
+    ],
+    "aliases": [
+      "chickpeas cooked"
+    ],
+    "preparation_state": "cooked"
+  },
+  {
+    "id": "core-black-beans-cooked",
+    "display_name": "Porotos negros cocidos",
+    "canonical_name": "porotos negros cocidos",
+    "food_group": "legumes",
+    "food_subgroup": "beans",
+    "protein_g_per_100g": "8.860",
+    "carbs_g_per_100g": "23.710",
+    "fat_g_per_100g": "0.540",
+    "calories_kcal_per_100g": "132.000",
+    "fiber_g_per_100g": "8.700",
+    "sugar_g_per_100g": "0.320",
+    "sodium_mg_per_100g": "1.000",
+    "default_portion_g": "170.000",
+    "portions": [
+      [
+        "170 g",
+        "170.000",
+        true
+      ],
+      [
+        "1 taza cocida",
+        "172.000",
+        false
+      ]
+    ],
+    "aliases": [
+      "frijoles negros cocidos",
+      "black beans cooked"
+    ],
+    "preparation_state": "cooked"
+  },
+  {
+    "id": "core-chicken-breast-cooked",
+    "display_name": "Pechuga de pollo cocida",
+    "canonical_name": "pechuga de pollo cocida",
+    "food_group": "protein",
+    "food_subgroup": "poultry",
+    "protein_g_per_100g": "31.020",
+    "carbs_g_per_100g": "0.000",
+    "fat_g_per_100g": "3.570",
+    "calories_kcal_per_100g": "165.000",
+    "fiber_g_per_100g": "0.000",
+    "sugar_g_per_100g": "0.000",
+    "sodium_mg_per_100g": "74.000",
+    "default_portion_g": "150.000",
+    "portions": [
+      [
+        "150 g",
+        "150.000",
+        true
+      ],
+      [
+        "100 g",
+        "100.000",
+        false
+      ]
+    ],
+    "aliases": [
+      "chicken breast cooked",
+      "pollo cocido"
+    ],
+    "preparation_state": "cooked"
+  },
+  {
+    "id": "core-turkey-breast-cooked",
+    "display_name": "Pechuga de pavo cocida",
+    "canonical_name": "pechuga de pavo cocida",
+    "food_group": "protein",
+    "food_subgroup": "poultry",
+    "protein_g_per_100g": "29.000",
+    "carbs_g_per_100g": "0.000",
+    "fat_g_per_100g": "1.600",
+    "calories_kcal_per_100g": "135.000",
+    "fiber_g_per_100g": "0.000",
+    "sugar_g_per_100g": "0.000",
+    "sodium_mg_per_100g": "64.000",
+    "default_portion_g": "150.000",
+    "portions": [
+      [
+        "150 g",
+        "150.000",
+        true
+      ],
+      [
+        "100 g",
+        "100.000",
+        false
+      ]
+    ],
+    "aliases": [
+      "turkey breast cooked",
+      "pavo cocido"
+    ],
+    "preparation_state": "cooked"
+  },
+  {
+    "id": "core-egg-whole",
+    "display_name": "Huevo entero",
+    "canonical_name": "huevo entero",
+    "food_group": "protein",
+    "food_subgroup": "eggs",
+    "protein_g_per_100g": "12.560",
+    "carbs_g_per_100g": "0.720",
+    "fat_g_per_100g": "9.510",
+    "calories_kcal_per_100g": "143.000",
+    "fiber_g_per_100g": "0.000",
+    "sugar_g_per_100g": "0.370",
+    "sodium_mg_per_100g": "142.000",
+    "default_portion_g": "50.000",
+    "portions": [
+      [
+        "1 unidad",
+        "50.000",
+        true
+      ],
+      [
+        "100 g",
+        "100.000",
+        false
+      ]
+    ],
+    "aliases": [
+      "egg whole",
+      "huevo"
+    ],
+    "preparation_state": "ready_to_eat"
+  },
+  {
+    "id": "core-egg-white",
+    "display_name": "Clara de huevo",
+    "canonical_name": "clara de huevo",
+    "food_group": "protein",
+    "food_subgroup": "eggs",
+    "protein_g_per_100g": "10.900",
+    "carbs_g_per_100g": "0.730",
+    "fat_g_per_100g": "0.170",
+    "calories_kcal_per_100g": "52.000",
+    "fiber_g_per_100g": "0.000",
+    "sugar_g_per_100g": "0.710",
+    "sodium_mg_per_100g": "166.000",
+    "default_portion_g": "33.000",
+    "portions": [
+      [
+        "1 clara",
+        "33.000",
+        true
+      ],
+      [
+        "100 g",
+        "100.000",
+        false
+      ]
+    ],
+    "aliases": [
+      "egg white"
+    ],
+    "preparation_state": "ready_to_eat"
+  },
+  {
+    "id": "core-tuna-water-drained",
+    "display_name": "Atún en agua drenado",
+    "canonical_name": "atun en agua drenado",
+    "food_group": "protein",
+    "food_subgroup": "fish",
+    "protein_g_per_100g": "25.510",
+    "carbs_g_per_100g": "0.000",
+    "fat_g_per_100g": "0.820",
+    "calories_kcal_per_100g": "116.000",
+    "fiber_g_per_100g": "0.000",
+    "sugar_g_per_100g": "0.000",
+    "sodium_mg_per_100g": "338.000",
+    "default_portion_g": "120.000",
+    "portions": [
+      [
+        "1 lata drenada",
+        "120.000",
+        true
+      ],
+      [
+        "100 g",
+        "100.000",
+        false
+      ]
+    ],
+    "aliases": [
+      "tuna water drained",
+      "atun al agua"
+    ],
+    "preparation_state": "ready_to_eat"
+  },
+  {
+    "id": "core-salmon-cooked",
+    "display_name": "Salmón cocido",
+    "canonical_name": "salmon cocido",
+    "food_group": "protein",
+    "food_subgroup": "fish",
+    "protein_g_per_100g": "25.440",
+    "carbs_g_per_100g": "0.000",
+    "fat_g_per_100g": "8.130",
+    "calories_kcal_per_100g": "182.000",
+    "fiber_g_per_100g": "0.000",
+    "sugar_g_per_100g": "0.000",
+    "sodium_mg_per_100g": "56.000",
+    "default_portion_g": "150.000",
+    "portions": [
+      [
+        "150 g",
+        "150.000",
+        true
+      ],
+      [
+        "100 g",
+        "100.000",
+        false
+      ]
+    ],
+    "aliases": [
+      "salmon cooked"
+    ],
+    "preparation_state": "cooked"
+  },
+  {
+    "id": "core-beef-lean-cooked",
+    "display_name": "Carne magra cocida",
+    "canonical_name": "carne magra cocida",
+    "food_group": "protein",
+    "food_subgroup": "beef",
+    "protein_g_per_100g": "26.100",
+    "carbs_g_per_100g": "0.000",
+    "fat_g_per_100g": "8.000",
+    "calories_kcal_per_100g": "180.000",
+    "fiber_g_per_100g": "0.000",
+    "sugar_g_per_100g": "0.000",
+    "sodium_mg_per_100g": "65.000",
+    "default_portion_g": "150.000",
+    "portions": [
+      [
+        "150 g",
+        "150.000",
+        true
+      ],
+      [
+        "100 g",
+        "100.000",
+        false
+      ]
+    ],
+    "aliases": [
+      "lean beef cooked",
+      "vacuno magro"
+    ],
+    "preparation_state": "cooked"
+  },
+  {
+    "id": "core-greek-yogurt-plain",
+    "display_name": "Yogur griego natural sin azúcar",
+    "canonical_name": "yogur griego natural sin azucar",
+    "food_group": "dairy",
+    "food_subgroup": "yogurt",
+    "protein_g_per_100g": "10.300",
+    "carbs_g_per_100g": "3.600",
+    "fat_g_per_100g": "0.400",
+    "calories_kcal_per_100g": "59.000",
+    "fiber_g_per_100g": "0.000",
+    "sugar_g_per_100g": "3.200",
+    "sodium_mg_per_100g": "36.000",
+    "default_portion_g": "170.000",
+    "portions": [
+      [
+        "170 g",
+        "170.000",
+        true
+      ],
+      [
+        "100 g",
+        "100.000",
+        false
+      ]
+    ],
+    "aliases": [
+      "greek yogurt plain",
+      "yoghurt griego"
+    ],
+    "preparation_state": "ready_to_eat"
+  },
+  {
+    "id": "core-milk-skim",
+    "display_name": "Leche descremada",
+    "canonical_name": "leche descremada",
+    "food_group": "dairy",
+    "food_subgroup": "milk",
+    "protein_g_per_100g": "3.400",
+    "carbs_g_per_100g": "5.000",
+    "fat_g_per_100g": "0.100",
+    "calories_kcal_per_100g": "34.000",
+    "fiber_g_per_100g": "0.000",
+    "sugar_g_per_100g": "5.000",
+    "sodium_mg_per_100g": "42.000",
+    "default_portion_g": "200.000",
+    "portions": [
+      [
+        "200 ml",
+        "200.000",
+        true
+      ],
+      [
+        "1 taza",
+        "245.000",
+        false
+      ]
+    ],
+    "aliases": [
+      "skim milk",
+      "leche sin grasa"
+    ],
+    "preparation_state": "ready_to_eat"
+  },
+  {
+    "id": "core-olive-oil",
+    "display_name": "Aceite de oliva",
+    "canonical_name": "aceite de oliva",
+    "food_group": "fats",
+    "food_subgroup": "oil",
+    "protein_g_per_100g": "0.000",
+    "carbs_g_per_100g": "0.000",
+    "fat_g_per_100g": "100.000",
+    "calories_kcal_per_100g": "884.000",
+    "fiber_g_per_100g": "0.000",
+    "sugar_g_per_100g": "0.000",
+    "sodium_mg_per_100g": "2.000",
+    "default_portion_g": "10.000",
+    "portions": [
+      [
+        "1 cucharada",
+        "13.500",
+        true
+      ],
+      [
+        "1 cucharadita",
+        "4.500",
+        false
+      ]
+    ],
+    "aliases": [
+      "olive oil"
+    ],
+    "preparation_state": "ready_to_eat"
+  },
+  {
+    "id": "core-avocado",
+    "display_name": "Palta",
+    "canonical_name": "palta",
+    "food_group": "fats",
+    "food_subgroup": "fruit_fat",
+    "protein_g_per_100g": "2.000",
+    "carbs_g_per_100g": "8.530",
+    "fat_g_per_100g": "14.660",
+    "calories_kcal_per_100g": "160.000",
+    "fiber_g_per_100g": "6.700",
+    "sugar_g_per_100g": "0.660",
+    "sodium_mg_per_100g": "7.000",
+    "default_portion_g": "50.000",
+    "portions": [
+      [
+        "50 g",
+        "50.000",
+        true
+      ],
+      [
+        "1/2 unidad",
+        "68.000",
+        false
+      ]
+    ],
+    "aliases": [
+      "aguacate",
+      "avocado"
+    ],
+    "preparation_state": "ready_to_eat"
+  },
+  {
+    "id": "core-almonds",
+    "display_name": "Almendras",
+    "canonical_name": "almendras",
+    "food_group": "fats",
+    "food_subgroup": "nuts",
+    "protein_g_per_100g": "21.150",
+    "carbs_g_per_100g": "21.550",
+    "fat_g_per_100g": "49.930",
+    "calories_kcal_per_100g": "579.000",
+    "fiber_g_per_100g": "12.500",
+    "sugar_g_per_100g": "4.350",
+    "sodium_mg_per_100g": "1.000",
+    "default_portion_g": "30.000",
+    "portions": [
+      [
+        "30 g",
+        "30.000",
+        true
+      ],
+      [
+        "1 puñado",
+        "28.000",
+        false
+      ]
+    ],
+    "aliases": [
+      "almonds"
+    ],
+    "preparation_state": "dry"
+  },
+  {
+    "id": "core-walnuts",
+    "display_name": "Nueces",
+    "canonical_name": "nueces",
+    "food_group": "fats",
+    "food_subgroup": "nuts",
+    "protein_g_per_100g": "15.230",
+    "carbs_g_per_100g": "13.710",
+    "fat_g_per_100g": "65.210",
+    "calories_kcal_per_100g": "654.000",
+    "fiber_g_per_100g": "6.700",
+    "sugar_g_per_100g": "2.610",
+    "sodium_mg_per_100g": "2.000",
+    "default_portion_g": "30.000",
+    "portions": [
+      [
+        "30 g",
+        "30.000",
+        true
+      ],
+      [
+        "1 puñado",
+        "28.000",
+        false
+      ]
+    ],
+    "aliases": [
+      "walnuts"
+    ],
+    "preparation_state": "dry"
+  },
+  {
+    "id": "core-peanut-butter",
+    "display_name": "Mantequilla de maní natural",
+    "canonical_name": "mantequilla de mani natural",
+    "food_group": "fats",
+    "food_subgroup": "nut_butter",
+    "protein_g_per_100g": "25.090",
+    "carbs_g_per_100g": "20.000",
+    "fat_g_per_100g": "50.390",
+    "calories_kcal_per_100g": "588.000",
+    "fiber_g_per_100g": "6.000",
+    "sugar_g_per_100g": "9.220",
+    "sodium_mg_per_100g": "17.000",
+    "default_portion_g": "20.000",
+    "portions": [
+      [
+        "1 cucharada",
+        "16.000",
+        true
+      ],
+      [
+        "20 g",
+        "20.000",
+        false
+      ]
+    ],
+    "aliases": [
+      "peanut butter natural",
+      "manteca de mani"
+    ],
+    "preparation_state": "ready_to_eat"
+  },
+  {
+    "id": "core-banana",
+    "display_name": "Plátano",
+    "canonical_name": "platano",
+    "food_group": "fruit",
+    "food_subgroup": "banana",
+    "protein_g_per_100g": "1.090",
+    "carbs_g_per_100g": "22.840",
+    "fat_g_per_100g": "0.330",
+    "calories_kcal_per_100g": "89.000",
+    "fiber_g_per_100g": "2.600",
+    "sugar_g_per_100g": "12.230",
+    "sodium_mg_per_100g": "1.000",
+    "default_portion_g": "120.000",
+    "portions": [
+      [
+        "1 unidad mediana",
+        "118.000",
+        true
+      ],
+      [
+        "100 g",
+        "100.000",
+        false
+      ]
+    ],
+    "aliases": [
+      "banana"
+    ],
+    "preparation_state": "ready_to_eat"
+  },
+  {
+    "id": "core-apple",
+    "display_name": "Manzana",
+    "canonical_name": "manzana",
+    "food_group": "fruit",
+    "food_subgroup": "apple",
+    "protein_g_per_100g": "0.260",
+    "carbs_g_per_100g": "13.810",
+    "fat_g_per_100g": "0.170",
+    "calories_kcal_per_100g": "52.000",
+    "fiber_g_per_100g": "2.400",
+    "sugar_g_per_100g": "10.390",
+    "sodium_mg_per_100g": "1.000",
+    "default_portion_g": "180.000",
+    "portions": [
+      [
+        "1 unidad mediana",
+        "182.000",
+        true
+      ],
+      [
+        "100 g",
+        "100.000",
+        false
+      ]
+    ],
+    "aliases": [
+      "apple"
+    ],
+    "preparation_state": "ready_to_eat"
+  },
+  {
+    "id": "core-blueberries",
+    "display_name": "Arándanos",
+    "canonical_name": "arandanos",
+    "food_group": "fruit",
+    "food_subgroup": "berries",
+    "protein_g_per_100g": "0.740",
+    "carbs_g_per_100g": "14.490",
+    "fat_g_per_100g": "0.330",
+    "calories_kcal_per_100g": "57.000",
+    "fiber_g_per_100g": "2.400",
+    "sugar_g_per_100g": "9.960",
+    "sodium_mg_per_100g": "1.000",
+    "default_portion_g": "80.000",
+    "portions": [
+      [
+        "80 g",
+        "80.000",
+        true
+      ],
+      [
+        "1 taza",
+        "148.000",
+        false
+      ]
+    ],
+    "aliases": [
+      "blueberries"
+    ],
+    "preparation_state": "ready_to_eat"
+  },
+  {
+    "id": "core-tomato",
+    "display_name": "Tomate",
+    "canonical_name": "tomate",
+    "food_group": "vegetables",
+    "food_subgroup": "tomato",
+    "protein_g_per_100g": "0.880",
+    "carbs_g_per_100g": "3.890",
+    "fat_g_per_100g": "0.200",
+    "calories_kcal_per_100g": "18.000",
+    "fiber_g_per_100g": "1.200",
+    "sugar_g_per_100g": "2.630",
+    "sodium_mg_per_100g": "5.000",
+    "default_portion_g": "120.000",
+    "portions": [
+      [
+        "1 unidad mediana",
+        "123.000",
+        true
+      ],
+      [
+        "100 g",
+        "100.000",
+        false
+      ]
+    ],
+    "aliases": [
+      "tomato"
+    ],
+    "preparation_state": "ready_to_eat"
+  },
+  {
+    "id": "core-broccoli-cooked",
+    "display_name": "Brócoli cocido",
+    "canonical_name": "brocoli cocido",
+    "food_group": "vegetables",
+    "food_subgroup": "cruciferous",
+    "protein_g_per_100g": "2.380",
+    "carbs_g_per_100g": "7.180",
+    "fat_g_per_100g": "0.410",
+    "calories_kcal_per_100g": "35.000",
+    "fiber_g_per_100g": "3.300",
+    "sugar_g_per_100g": "1.390",
+    "sodium_mg_per_100g": "41.000",
+    "default_portion_g": "100.000",
+    "portions": [
+      [
+        "100 g",
+        "100.000",
+        true
+      ],
+      [
+        "1 taza",
+        "156.000",
+        false
+      ]
+    ],
+    "aliases": [
+      "broccoli cooked"
+    ],
+    "preparation_state": "cooked"
+  },
+  {
+    "id": "core-spinach-raw",
+    "display_name": "Espinaca cruda",
+    "canonical_name": "espinaca cruda",
+    "food_group": "vegetables",
+    "food_subgroup": "leafy_greens",
+    "protein_g_per_100g": "2.860",
+    "carbs_g_per_100g": "3.630",
+    "fat_g_per_100g": "0.390",
+    "calories_kcal_per_100g": "23.000",
+    "fiber_g_per_100g": "2.200",
+    "sugar_g_per_100g": "0.420",
+    "sodium_mg_per_100g": "79.000",
+    "default_portion_g": "50.000",
+    "portions": [
+      [
+        "50 g",
+        "50.000",
+        true
+      ],
+      [
+        "1 taza",
+        "30.000",
+        false
+      ]
+    ],
+    "aliases": [
+      "spinach raw"
+    ],
+    "preparation_state": "raw"
+  },
+  {
+    "id": "core-carrot-raw",
+    "display_name": "Zanahoria cruda",
+    "canonical_name": "zanahoria cruda",
+    "food_group": "vegetables",
+    "food_subgroup": "root_vegetables",
+    "protein_g_per_100g": "0.930",
+    "carbs_g_per_100g": "9.580",
+    "fat_g_per_100g": "0.240",
+    "calories_kcal_per_100g": "41.000",
+    "fiber_g_per_100g": "2.800",
+    "sugar_g_per_100g": "4.740",
+    "sodium_mg_per_100g": "69.000",
+    "default_portion_g": "80.000",
+    "portions": [
+      [
+        "1 unidad mediana",
+        "61.000",
+        true
+      ],
+      [
+        "100 g",
+        "100.000",
+        false
+      ]
+    ],
+    "aliases": [
+      "carrot raw"
+    ],
+    "preparation_state": "raw"
+  }
+]

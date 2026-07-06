@@ -1,0 +1,59 @@
+<a href="{{ card.url }}" class="ai-generated-plan-card{% if card.is_current %} ai-generated-plan-card--current{% endif %}">
+  <div class="ai-generated-plan-card__header">
+    <div>
+      <span>{% if card.is_current %}Propuesta actual{% else %}Propuesta anterior{% endif %}</span>
+      <h2>{{ card.title }}</h2>
+    </div>
+    <i data-lucide="clipboard-list" class="ai-chat-brief-card__icon"></i>
+  </div>
+
+  {% if card.summary %}
+    <p class="ai-generated-plan-card__summary">
+      {{ card.summary }}
+    </p>
+  {% endif %}
+
+  {% if card.iteration_trace %}
+    <div class="ai-generated-plan-card__iteration">
+      <div class="ai-generated-plan-card__iteration-heading">
+        <i data-lucide="git-compare-arrows" class="metadata-icon"></i>
+        <span>Ajustes aplicados</span>
+      </div>
+      {% if card.iteration_trace.command_labels %}
+        <div class="ai-generated-plan-card__iteration-pills">
+          {% for label in card.iteration_trace.command_labels %}
+            <span>{{ label }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+      {% if card.previous_proposal_url %}
+        <span class="ai-generated-plan-card__iteration-link">Versión anterior disponible en historial</span>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  {% if card.target_items %}
+    <div class="ai-generated-plan-card__targets">
+      {% for item in card.target_items %}
+        <article>
+          <span>{{ item.label }}</span>
+          <strong>{{ item.value }}</strong>
+        </article>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if card.meals %}
+    <div class="ai-generated-plan-card__meals">
+      {% for meal in card.meals %}
+        <div class="ai-generated-plan-card__meal">
+          <span>{{ meal.hour }}</span>
+          <strong>{{ meal.name }}</strong>
+          <em>{{ meal.food_count }} alimento{{ meal.food_count|pluralize }}</em>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <span class="ai-generated-plan-card__cta">Ver detalle de la propuesta</span>
+</a>

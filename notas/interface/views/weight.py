@@ -1,10 +1,8 @@
-from datetime import date
-
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect
 
-from notas.domain.models import WeightLog
+from notas.application.services.nutrition.weight import record_weight
 
 
 @login_required
@@ -24,11 +22,7 @@ def register_weight(request):
         messages.error(request, "El peso debe ser mayor a 0.")
         return redirect(back_url)
 
-    WeightLog.objects.update_or_create(
-        user=request.user,
-        date=date.today(),
-        defaults={"weight_kg": weight},
-    )
+    record_weight(request.user, weight)
 
     messages.success(request, "Peso registrado correctamente.")
     return redirect(back_url)

@@ -1,0 +1,24 @@
+<nav class="admin-analytics-nav" aria-label="Admin Analytics sections">
+  <p class="admin-analytics-nav__label">Módulos</p>
+  <a class="admin-analytics-nav__link" href="{% url 'admin_analytics_overview' %}"{% if request.resolver_match.url_name == 'admin_analytics_overview' %} aria-current="page"{% endif %}>
+    <i data-lucide="layout-dashboard" class="admin-analytics-nav__icon"></i> Overview
+  </a>
+  <a class="admin-analytics-nav__link" href="{% url 'admin_analytics_accounts' %}"{% if request.resolver_match.url_name == 'admin_analytics_accounts' %} aria-current="page"{% endif %}>
+    <i data-lucide="credit-card" class="admin-analytics-nav__icon"></i> Accounts
+  </a>
+  <a class="admin-analytics-nav__link" href="{% url 'admin_analytics_ai_assistant' %}"{% if request.resolver_match.url_name == 'admin_analytics_ai_assistant' %} aria-current="page"{% endif %}>
+    <i data-lucide="bot" class="admin-analytics-nav__icon"></i> AI Assistant
+  </a>
+  <a class="admin-analytics-nav__link" href="{% url 'admin_analytics_product_activity' %}"{% if request.resolver_match.url_name == 'admin_analytics_product_activity' %} aria-current="page"{% endif %}>
+    <i data-lucide="activity" class="admin-analytics-nav__icon"></i> Product Activity
+  </a>
+  <a class="admin-analytics-nav__link" href="{% url 'admin_analytics_food_catalog' %}"{% if request.resolver_match.url_name == 'admin_analytics_food_catalog' %} aria-current="page"{% endif %}>
+    <i data-lucide="database" class="admin-analytics-nav__icon"></i> Food Catalog
+  </a>
+  <a class="admin-analytics-nav__link" href="{% url 'admin_analytics_nutrition_solver' %}"{% if request.resolver_match.url_name == 'admin_analytics_nutrition_solver' %} aria-current="page"{% endif %}>
+    <i data-lucide="calculator" class="admin-analytics-nav__icon"></i> Nutrition Solver
+  </a>
+  <a class="admin-analytics-nav__link" href="{% url 'admin_analytics_alerts' %}"{% if request.resolver_match.url_name == 'admin_analytics_alerts' %} aria-current="page"{% endif %}>
+    <i data-lucide="badge-alert" class="admin-analytics-nav__icon"></i> Alerts
+  </a>
+</nav>

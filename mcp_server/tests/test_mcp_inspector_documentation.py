@@ -3,7 +3,7 @@ import unittest
 
 
 INSPECTOR_DOC_PATH = Path(
-    "docs/architecture/mcp_inspector_connection.md"
+    "docs/archive/mcp_stage_logs/mcp_inspector_connection.md"
 )
 
 

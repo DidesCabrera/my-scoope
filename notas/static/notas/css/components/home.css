@@ -2198,10 +2198,75 @@
   text-decoration: none;
 }
 
+.ai-chat-history-card--active {
+  border-color: var(--interactive-primary-soft, var(--border-strong));
+}
+
 .ai-chat-history-card__subtitle {
   margin: 4px 0 0;
   color: var(--text-muted);
   font-size: 13px;
+}
+
+.ai-chat-history-card__title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ai-chat-history-card__active-badge,
+.ai-chat-history-card__readiness-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 5px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--interactive-primary-soft, var(--border-soft));
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ai-chat-history-card__active-badge {
+  color: var(--interactive-primary);
+}
+
+.ai-chat-history-card__meta {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.ai-chat-history-card__meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 14px;
+  border: 1px solid var(--border-soft);
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.ai-chat-history-card__meta i {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  color: currentColor;
+}
+
+.ai-chat-history-card__badges {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .ai-chat-history-card__bottom {
@@ -2214,7 +2279,66 @@
   color: var(--text-muted);
 }
 
+.ai-chat-history-card__proposal-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  background: var(--surface-muted);
+  color: var(--text-main);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.ai-chat-history-card__proposal-link i {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  color: var(--interactive-primary);
+}
+
+.ai-chat-history-card__proposal-link span {
+  flex: 1 1 auto;
+}
+
+.proposal-status-badge--active,
+.proposal-status-badge--proposal-created {
+  color: var(--interactive-primary);
+  background: var(--surface-muted);
+  border-color: var(--interactive-primary-soft, var(--border-soft));
+}
+
+.ai-chat-history-empty-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.ai-chat-history-empty-card__action {
+  flex: 0 0 auto;
+  text-decoration: none;
+}
+
 @media (max-width: 620px) {
+  .ai-chat-history-card__meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ai-chat-history-card__proposal-link,
+  .ai-chat-history-empty-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .ai-chat-history-empty-card__action {
+    width: 100%;
+  }
+
   .home-ai-intake--composer {
     margin-top: 70px;
     margin-bottom: 90px;
@@ -2412,4 +2536,51 @@
   color: var(--text-muted);
   font-size: 12px;
   font-weight: 700;
+}
+
+/* AI Assistant preview status */
+.ai-chat-preview-status {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  max-width: calc(100% - 40px);
+  margin: 12px 20px 0;
+  padding: 7px 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.ai-chat-preview-status span + span::before {
+  content: "•";
+  margin-right: 6px;
+  color: var(--text-muted);
+}
+
+.ai-chat-preview-status__label {
+  color: var(--text-main);
+}
+
+.ai-chat-preview-status.is-preview {
+  border-style: dashed;
+}
+
+.ai-chat-preview-status--welcome {
+  margin: 0 0 16px;
+}
+
+@media (max-width: 620px) {
+  .ai-chat-preview-status {
+    max-width: calc(100% - 24px);
+    margin-inline: 12px;
+  }
+
+  .ai-chat-preview-status--welcome {
+    margin-inline: 0;
+  }
 }

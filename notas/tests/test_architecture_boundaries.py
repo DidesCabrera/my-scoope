@@ -12,6 +12,8 @@ INTERFACE_ROOT = NOTAS_ROOT / "interface"
 ROOT_URLCONF = NOTAS_ROOT / "urls.py"
 FEATURE_URLS_ROOT = INTERFACE_ROOT / "urls"
 MCP_PACKAGE_ROOT = PROJECT_ROOT / "mcp_server" / "myscoope_mcp"
+FOOD_CATALOG_ROOT = PROJECT_ROOT / "food_catalog"
+SETTINGS_BASE = PROJECT_ROOT / "miapp" / "settings" / "base.py"
 
 APPLICATION_DJANGO_HTTP_IMPORT_ALLOWLIST = {
     "notas/application/ai_tools/errors.py imports django.http",
@@ -24,6 +26,17 @@ APPLICATION_DJANGO_HTTP_IMPORT_ALLOWLIST = {
 
 PRESENTATION_DJANGO_HTTP_IMPORT_ALLOWLIST = {
     "notas/presentation/pages/object_lookup.py imports django.shortcuts",
+}
+
+APPLICATION_FOOD_CATALOG_IMPORT_ALLOWLIST = {
+    "notas/application/dto/imported_food_dto.py imports food_catalog.application.imports.contracts",
+    "notas/application/services/commands/food_catalog_backfill.py imports food_catalog.models",
+    "notas/application/services/food_catalog_snapshots.py imports food_catalog.application.contracts",
+    "notas/application/services/food_catalog_snapshots.py imports food_catalog.models",
+    "notas/application/services/food_imports/normalization.py imports food_catalog.application.imports.normalization",
+    "notas/application/services/food_imports/quality.py imports food_catalog.application.imports.quality",
+    "notas/application/services/food_imports/usda/foundation_foods_reader.py imports food_catalog.application.imports.usda.foundation_foods_reader",
+    "notas/application/services/food_imports/usda/mapper.py imports food_catalog.application.imports.usda.mapper",
 }
 
 
@@ -144,9 +157,36 @@ class ArchitectureBoundaryTests(TestCase):
                     "accounts",
                     "core",
                     "miapp",
+                    "food_catalog",
                 ),
             ),
             [],
+        )
+
+    def test_application_food_catalog_imports_are_limited_to_snapshot_protocol(self):
+        new_offenders, resolved_allowlist_items = _assert_no_new_imports(
+            _import_offenders(
+                APPLICATION_ROOT,
+                ("food_catalog",),
+            ),
+            APPLICATION_FOOD_CATALOG_IMPORT_ALLOWLIST,
+        )
+
+        self.assertEqual(
+            new_offenders,
+            [],
+            msg=(
+                "Application imports from food_catalog must stay limited to explicit "
+                "compatibility bridges: operational snapshots, trusted backfill and legacy import wrappers."
+            ),
+        )
+        self.assertEqual(
+            resolved_allowlist_items,
+            [],
+            msg=(
+                "A tolerated food_catalog import disappeared. Remove it from "
+                "APPLICATION_FOOD_CATALOG_IMPORT_ALLOWLIST."
+            ),
         )
 
     def test_application_django_http_imports_do_not_expand(self):
@@ -212,6 +252,40 @@ class ArchitectureBoundaryTests(TestCase):
                     "mcp_server",
                     "notas.migrations",
                     "notas.tests",
+                ),
+            ),
+            [],
+        )
+
+    def test_food_catalog_app_boundary_exists_with_master_models(self):
+        self.assertTrue((FOOD_CATALOG_ROOT / "apps.py").exists())
+        self.assertTrue((FOOD_CATALOG_ROOT / "models.py").exists())
+        self.assertTrue((FOOD_CATALOG_ROOT / "migrations" / "__init__.py").exists())
+
+        settings_text = SETTINGS_BASE.read_text()
+        self.assertIn(
+            '"food_catalog.apps.FoodCatalogConfig"',
+            settings_text,
+        )
+
+        models_text = (FOOD_CATALOG_ROOT / "models.py").read_text()
+        self.assertIn("class CatalogFood(models.Model):", models_text)
+        self.assertIn("class CatalogFoodPortion(models.Model):", models_text)
+        self.assertIn("class CatalogFoodAlias(models.Model):", models_text)
+        self.assertIn("class CatalogFoodSource(models.Model):", models_text)
+        self.assertIn("class CatalogImportBatch(models.Model):", models_text)
+        self.assertNotIn("from notas", models_text)
+        self.assertNotIn("import notas", models_text)
+        self.assertNotIn("mcp_server", models_text)
+
+
+    def test_food_catalog_app_does_not_import_operational_layers_or_mcp(self):
+        self.assertEqual(
+            _import_offenders(
+                FOOD_CATALOG_ROOT,
+                (
+                    "notas",
+                    "mcp_server",
                 ),
             ),
             [],

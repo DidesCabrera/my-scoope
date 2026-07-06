@@ -214,6 +214,22 @@ class ProposalReviewViewModelTests(SimpleTestCase):
                     "dailyplan": None,
                 },
                 "can_apply": False,
+                "subject_context_warning": {
+                    "requires_warning": False,
+                    "source": "",
+                    "source_label": "Contexto no especificado",
+                    "ppk_weight_source": "",
+                    "ppk_weight_source_label": "Peso no especificado",
+                    "calculation_weight_kg": None,
+                    "calculation_weight_label": "Peso externo no especificado",
+                    "title": "Propuesta calculada con datos externos",
+                    "message": (
+                        "Esta propuesta fue calculada con datos distintos a tu ficha personal. "
+                        "Si la guardas en tu librería, My Scoope conservará las calorías y gramos "
+                        "de macros propuestos, pero los indicadores dependientes de tu perfil, "
+                        "como PPK, se mostrarán usando el peso registrado en tu ficha personal."
+                    ),
+                },
                 "applied_result": None,
                 "iteration_trace": None,
             }
@@ -623,3 +639,39 @@ class ProposalReviewViewModelTests(SimpleTestCase):
         )
         self.assertEqual(vm.iteration_trace.previous_proposal_url, "/app/proposals/89/")
         self.assertEqual(vm.iteration_trace.short_label, "Evitar arroz · Subir proteína objetivo")
+
+    def test_build_review_vm_exposes_external_subject_warning(self):
+        proposal = {
+            "id": 73,
+            "title": "Plan externo",
+            "summary": "Plan calculado para otra persona.",
+            "dailyplan_id": 128,
+            "dailyplan_name": "Menú Dia Entrenamiento",
+            "created_by_username": "felipe",
+            "reviewed_by_username": "felipe",
+            "status": "approved",
+            "is_reviewable": False,
+            "is_final": True,
+            "applied_at": None,
+            "targets": {
+                "subject_context": {
+                    "source": "external_chat_data",
+                    "ppk_weight_source": "external_subject_weight",
+                    "requires_library_ppk_warning": True,
+                    "calculation_weight_kg": 70,
+                },
+            },
+            "proposed_payload": {
+                "intent": "create_dailyplan",
+            },
+            "validation_summary": {},
+        }
+
+        vm = build_proposal_review_vm(proposal)
+
+        self.assertTrue(vm.subject_context_warning.requires_warning)
+        self.assertEqual(
+            vm.subject_context_warning.source_label,
+            "Datos externos del chat",
+        )
+        self.assertEqual(vm.subject_context_warning.calculation_weight_label, "70 kg")
