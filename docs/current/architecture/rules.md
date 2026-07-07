@@ -230,9 +230,37 @@ This document should guide future refactors.
 
 ---
 
+## Layer Strictness by App Tier
+
+See ADR [0079](../../decisions/0079-layer-strictness-by-app-tier.md) for full context.
+
+The full `domain -> application -> presentation -> interface` split above is required
+for **Tier 1** apps: `notas`, `ai_assistant`, `nutrition_solver`. These expose write
+logic reused across multiple entry points (web, API, MCP, internal AI), and
+`notas/tests/test_bounded_contexts.py` enforces the boundary for `notas`.
+
+**Tier 2** apps — `food_catalog`, `admin_analytics`, `admin_operations`, `accounts`,
+`core` — do not need the four-layer split. A `services`/`selectors` pattern is fine.
+What still applies to them without exception:
+
+- writes live in an identifiable services/commands module, never inline in a view or
+  template-facing selector;
+- read-building code never writes to the database;
+- application-equivalent code does not depend on `request`, `messages`, `redirect`, or
+  templates.
+
+This is a deliberate simplification for those apps, not a gap to close by retrofitting
+`domain`/`presentation`/`interface` folders. If a Tier 2 app grows write logic that
+needs reuse from another entry point, promote it to Tier 1 explicitly instead of
+letting the split creep in undocumented.
+
+---
+
 ## Known Current Gaps
 
-The project is currently moving toward these rules, but some legacy areas still violate them.
+The project is currently moving toward these rules **within Tier 1 apps**
+(`notas`, `ai_assistant`, `nutrition_solver`), but some legacy areas still violate them.
+This section does not apply to Tier 2 apps — see above.
 
 Known areas under refactor:
 

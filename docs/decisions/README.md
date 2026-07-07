@@ -101,3 +101,4 @@ Consequences
 - [0076 · Admin Operations audit log foundation](0076-admin-operations-audit-log-foundation.md)
 - [0077 · Admin Analytics to Admin Operations cross-links](0077-admin-analytics-operations-cross-links.md)
 - [0078 · Admin Operations V1 closure](0078-admin-operations-v1-closure.md)
+- [0079 · Layer strictness by app tier](0079-layer-strictness-by-app-tier.md)

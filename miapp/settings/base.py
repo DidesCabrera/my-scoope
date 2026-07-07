@@ -374,3 +374,15 @@ ACCOUNT_LOGOUT_REDIRECT_URL = "/accounts/login/"
 
 SOCIALACCOUNT_LOGIN_ON_GET = True
 SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_ADAPTER = "accounts.adapters.MyScoopeSocialAccountAdapter"
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        # Google returns verified email ownership. This lets social login reuse
+        # an existing local account without showing the intermediate signup form.
+        "VERIFIED_EMAIL": True,
+        "EMAIL_AUTHENTICATION": True,
+        "EMAIL_AUTHENTICATION_AUTO_CONNECT": True,
+    },
+}
