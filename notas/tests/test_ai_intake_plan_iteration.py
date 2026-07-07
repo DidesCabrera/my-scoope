@@ -13,7 +13,11 @@ from notas.application.ai_intake.plan_iteration import should_iterate_generated_
 from notas.domain.models import AiNutritionChat, Food, NutritionProposal
 
 
-@override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
+@override_settings(
+    NUTRITION_ONBOARDING_GATE_ENABLED=False,
+    RATE_LIMIT_AI_ASSISTANT_TURN_USER="10000/h",
+    RATE_LIMIT_AI_ASSISTANT_TURN_IP="10000/h",
+)
 class AiIntakePlanIterationTests(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
