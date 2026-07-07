@@ -11,5 +11,5 @@ class UIBuildersTests(TestCase):
 
         self.assertEqual(ui.nav_root, "profile")
         self.assertEqual(ui.icon, "circle-user-round")
-        self.assertEqual(ui.section_label, "Cuenta")
+        self.assertEqual(ui.section_label, "Tools")
         self.assertEqual(ui.page_icon, "circle-user-round")

@@ -98,7 +98,7 @@ class ProposalApplyDTOTests(TestCase):
 
         with self.assertRaisesMessage(
             ValueError,
-            "proposal_apply_requires_approved_status",
+            "proposal_apply_requires_applicable_status",
         ):
             build_create_meal_apply_plan(
                 proposal=proposal,
@@ -127,7 +127,7 @@ class ProposalApplyDTOTests(TestCase):
 
         with self.assertRaisesMessage(
             ValueError,
-            "proposal_apply_requires_approved_status",
+            "proposal_apply_requires_applicable_status",
         ):
             build_create_meal_apply_plan(
                 proposal=proposal,
@@ -156,7 +156,7 @@ class ProposalApplyDTOTests(TestCase):
 
         with self.assertRaisesMessage(
             ValueError,
-            "proposal_apply_requires_approved_status",
+            "proposal_apply_requires_applicable_status",
         ):
             build_create_meal_apply_plan(
                 proposal=proposal,
@@ -183,7 +183,7 @@ class ProposalApplyDTOTests(TestCase):
             },
         )
 
-        self.assertTrue(proposal.is_final)
+        self.assertFalse(proposal.is_final)
 
         apply_plan = build_create_meal_apply_plan(
             proposal=proposal,
@@ -375,7 +375,7 @@ class ProposalApplyDTOTests(TestCase):
 
         with self.assertRaisesMessage(
             ValueError,
-            "proposal_apply_requires_approved_status",
+            "proposal_apply_requires_applicable_status",
         ):
             build_create_dailyplan_apply_plan(
                 proposal=proposal,

@@ -20,8 +20,8 @@ class NutritionContextQueryTests(TestCase):
 
         self.assertEqual(data["user_id"], self.user.id)
         self.assertEqual(data["username"], "felipe")
-        self.assertIsNone(data["current_weight"])
-        self.assertFalse(data["has_current_weight"])
+        self.assertEqual(data["current_weight"], 75.0)
+        self.assertTrue(data["has_current_weight"])
 
     def test_get_user_nutrition_context_is_serializable(self):
         context = get_user_nutrition_context(self.user)

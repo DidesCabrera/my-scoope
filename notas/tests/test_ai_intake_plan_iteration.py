@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from notas.application.ai_intake.nutrition_brief import (
@@ -13,6 +13,7 @@ from notas.application.ai_intake.plan_iteration import should_iterate_generated_
 from notas.domain.models import AiNutritionChat, Food
 
 
+@override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
 class AiIntakePlanIterationTests(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
@@ -102,7 +103,7 @@ class AiIntakePlanIterationTests(TestCase):
 
     def _create_generated_plan_chat(self):
         prompt = (
-            "Quiero bajar grasa, 4 comidas, simple, peso 80 kg, "
+            "Quiero bajar grasa para mí, 4 comidas, simple, peso 80 kg, "
             "mido 180 cm, tengo 30 años, hombre, actividad moderada"
         )
         self.client.post(reverse("ai_nutrition_intake"), {"action": "analyze_prompt", "prompt": prompt})

@@ -150,6 +150,7 @@ class NutritionProposal(models.Model):
     def is_final(self):
         return self.status in {
             self.STATUS_REJECTED,
+            self.STATUS_CANCELLED,
             self.STATUS_APPLIED,
         }
 

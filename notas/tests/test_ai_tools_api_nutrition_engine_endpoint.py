@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from notas.application.ai_intake.nutrition_brief import NutritionBrief, serialize_brief
@@ -19,6 +19,7 @@ def json_post(client, url_name: str, payload: dict | None = None):
     )
 
 
+@override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
 class AIToolsNutritionEngineEndpointTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="felipe", password="test")
@@ -135,6 +136,7 @@ class AIToolsNutritionEngineEndpointTests(TestCase):
     def _brief_payload(self, **overrides):
         values = {
             "raw_prompt": "quiero bajar grasa, 4 comidas, simple",
+            "subject_source": "external_chat_data",
             "goal": "fat_loss",
             "requested_entity": "daily_plan",
             "meals_per_day": 4,

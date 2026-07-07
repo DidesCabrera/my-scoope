@@ -331,7 +331,7 @@ class ApplyCreateDailyPlanProposalCommandTests(TestCase):
 
         with self.assertRaisesMessage(
             ValueError,
-            "proposal_is_not_approved",
+            "proposal_is_not_applicable",
         ):
             apply_approved_create_dailyplan_proposal(
                 user=self.user,
@@ -386,7 +386,7 @@ class ApplyCreateDailyPlanProposalCommandTests(TestCase):
 
         with self.assertRaisesMessage(
             ValueError,
-            "proposal_is_not_approved",
+            "proposal_is_not_applicable",
         ):
             apply_approved_create_dailyplan_proposal(
                 user=self.user,

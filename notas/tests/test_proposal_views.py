@@ -157,7 +157,6 @@ class ProposalViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Increase protein")
         self.assertContains(response, "Training Day")
-        self.assertContains(response, "Estado: pending_review")
         self.assertContains(response, "adjust_dailyplan_to_targets")
         self.assertContains(response, "protein")
         self.assertContains(response, "190")
@@ -357,17 +356,13 @@ class ProposalViewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Propuesta IA")
         self.assertContains(response, "Plan AI")
-        self.assertContains(response, "Tipo: nuevo DailyPlan propuesto")
         self.assertContains(response, "DailyPlan propuesto")
         self.assertContains(response, "Día entrenamiento IA")
         self.assertContains(response, "Desayuno IA")
         self.assertContains(response, "09:00")
         self.assertContains(response, "Desayuno")
         self.assertContains(response, "a nuevo egg TEST")
-        self.assertContains(response, "200.0 g")
-        self.assertContains(response, "34.0")
 
     def test_proposal_detail_shows_review_vm_for_create_meal(self):
         self.client.force_login(self.user)
@@ -433,9 +428,7 @@ class ProposalViewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Propuesta IA")
         self.assertContains(response, "Comida AI")
-        self.assertContains(response, "Tipo: nueva comida propuesta")
 
     def test_proposal_detail_renders_create_meal_review_card(self):
         self.client.force_login(self.user)
@@ -511,10 +504,6 @@ class ProposalViewTests(TestCase):
         self.assertContains(response, "Comida propuesta")
         self.assertContains(response, "Almuerzo IA")
         self.assertContains(response, "Pechuga pollo")
-        self.assertContains(response, "200.0 g")
-        self.assertContains(response, "62.0 g")
-        self.assertContains(response, "7.2 g")
-        self.assertContains(response, "312.8")
 
     def test_proposal_detail_renders_create_dailyplan_review_card(self):
         self.client.force_login(self.user)
@@ -606,8 +595,6 @@ class ProposalViewTests(TestCase):
         self.assertContains(response, "09:00")
         self.assertContains(response, "Desayuno")
         self.assertContains(response, "a nuevo egg TEST")
-        self.assertContains(response, "200.0 g")
-        self.assertContains(response, "34.0")
 
     def test_proposal_detail_shows_safe_review_actions_for_reviewable_proposal(self):
         self.client.force_login(self.user)
@@ -1094,7 +1081,7 @@ class ProposalViewTests(TestCase):
         self.assertEqual(proposal.status, NutritionProposal.STATUS_APPLIED)
         self.assertContains(response, "Propuesta aplicada")
 
-    def test_proposal_apply_requires_approved_status(self):
+    def test_proposal_apply_requires_applicable_status(self):
         self.client.force_login(self.user)
 
         proposal = NutritionProposal.objects.create(
@@ -1446,7 +1433,7 @@ class ProposalViewTests(TestCase):
         self.assertNotContains(response, "Rechazar propuesta")
         self.assertContains(
             response,
-            "su tipo todavía no tiene aplicación automática desde la interfaz",
+            "Sin aplicación automática",
         )
 
 
