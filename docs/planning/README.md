@@ -42,3 +42,15 @@ Cuando un ciclo planificado empiece a implementarse, el documento puede permanec
 - `food_catalog_launch_readiness_cycle.md`: ciclo completado para madurar la app existente `food_catalog` desde fundación técnica hacia capacidad operacional de lanzamiento: curación, seed natural, FatSecret, Open Food Facts, marcas y bridge solver-ready. FC-12 de métricas se difiere al ciclo transversal de Product Intelligence/Admin Analytics.
 - `product_intelligence_admin_analytics_cycle.md`: ciclo completado ADM00-ADM10.6 para crear `admin_analytics` como dashboard estratégico staff-only, transversal y read-first, con overview ejecutivo, métricas de cuentas/créditos, AI Assistant, actividad nutricional, Food Catalog, Nutrition Solver, filtros, alertas internas, shell independiente y refinamientos mobile.
 - `admin_operations_console_cycle.md`: ciclo completado OPS00-OPS08 para crear `admin_operations` como consola operacional staff-only, action-oriented y auditable, separada de `admin_analytics` y del Django Admin legacy/raw.
+
+## Relación con CI y test hygiene
+
+El ciclo CI00-CI05 ya está cerrado y documentado como QA/operación vigente en:
+
+```text
+docs/current/qa/ci_stabilization_qa.md
+docs/current/operations/testing_and_ci_policy.md
+docs/decisions/0080-ci-stabilization-and-test-hygiene.md
+```
+
+Los ciclos futuros deben considerar esta política antes de cambiar contratos, workflows, tests o settings de CI.

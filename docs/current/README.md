@@ -20,7 +20,9 @@ Esta carpeta contiene documentación vigente. Una IA o desarrollador debe prefer
 14. `../planning/onboarding_nutrition_profile_cycle.md` para historia y alcance cerrado del ciclo ONB00-ONB09.
 15. `qa/onboarding_nutrition_v1_qa.md` cuando se modifique onboarding, ficha nutricional, subject context, solver o warning de propuestas externas.
 16. `architecture/nutrition_solver_extraction_map.md` cuando el trabajo sea Nutrition Solver.
-17. `../planning/README.md` cuando el trabajo sea planificación de ciclos futuros.
+17. `qa/ci_stabilization_qa.md` cuando el trabajo toque GitHub Actions, CI, tests desfasados o estabilización de `staging`.
+18. `operations/testing_and_ci_policy.md` antes de abrir/reabrir PRs, cambiar workflows o ajustar tests.
+19. `../planning/README.md` cuando el trabajo sea planificación de ciclos futuros.
 
 ## Criterio
 

@@ -24,6 +24,7 @@ docs/
     architecture/
     features/
     operations/
+    qa/
     design/
   decisions/
   planning/
@@ -33,6 +34,14 @@ docs/
 ### `docs/current/`
 
 Contiene documentación vigente. Es la fuente de verdad para implementar nuevas secciones, corregir arquitectura y mantener consistencia UI/UX.
+
+### `docs/current/qa/`
+
+Contiene cierres de QA vigentes y evidencia de estabilización de ciclos. Debe usarse para entender qué validaciones ya quedaron cerradas y qué regresiones deben protegerse.
+
+### `docs/current/operations/`
+
+Contiene políticas operacionales vigentes, incluyendo exportaciones para IA y uso de CI/testing.
 
 ### `docs/decisions/`
 
