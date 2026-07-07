@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.urls import include, path
+from allauth.account import views as allauth_account_views
 
+from core.rate_limits import limit_login, limit_signup
 from notas.interface.views.oauth import (
     oauth_authorization_server_metadata,
     oauth_authorize,
@@ -39,6 +41,16 @@ urlpatterns = [
 
     # Auth system
     path("accounts/", include("accounts.urls")),
+    path(
+        "accounts/login/",
+        limit_login(allauth_account_views.login),
+        name="account_login",
+    ),
+    path(
+        "accounts/signup/",
+        limit_signup(allauth_account_views.signup),
+        name="account_signup",
+    ),
     path("accounts/", include("allauth.urls")),
 
     # Internal product intelligence

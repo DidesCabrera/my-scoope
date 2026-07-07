@@ -206,7 +206,21 @@ ai_assistant.models.AIUsageEvent
 ai_assistant.application.usage.DjangoAIUsageRecorder
 ```
 
-El registro agrega usage de una o más llamadas al provider en el turno, infiere o respeta `action_type`, estima costo solo si existe pricing configurado y guarda metadata segura. Los tokens quedan como métrica interna; créditos IA quedan materializados desde Patch 59 como capa comercial configurable y desactivada por defecto hasta rollout.
+El registro agrega usage de una o más llamadas al provider en el turno, infiere o respeta `action_type`, estima costo con pricing por modelo y guarda metadata segura. Los tokens quedan como métrica interna; créditos IA quedan materializados desde Patch 59 como capa comercial configurable y desactivada por defecto hasta rollout.
+
+Desde el patch de pricing operacional, `settings` incluye precios default por 1M tokens para modelos OpenAI usados por My Scoope y permite override por variable de entorno:
+
+```text
+AI_ASSISTANT_LLM_PRICING_USD_PER_1M_TOKENS_JSON
+```
+
+Ejemplo para Render:
+
+```json
+{"openai":{"gpt-5.4-mini":{"input":"0.75","cached_input":"0.075","output":"4.50"},"default":{"input":"0.75","cached_input":"0.075","output":"4.50"}}}
+```
+
+El costo estimado se guarda en `AIUsageEvent.estimated_cost_usd`; los créditos se calculan desde ese costo cuando existe pricing, usando `AI_ASSISTANT_USD_PER_AI_CREDIT`.
 
 Desde Patch 57, antes de llamar al proveedor, el orquestador valida límites técnicos configurables:
 

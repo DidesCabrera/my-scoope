@@ -8,6 +8,7 @@ from django.template.loader import render_to_string
 from django.views.decorators.http import require_http_methods
 
 from ai_assistant.application.chat_engines import ChatEngineRequest
+from core.rate_limits import limit_ai_assistant_turn
 from notas.application.ai_intake.chat_engine import get_nutrition_intake_chat_engine
 from notas.application.ai_intake.chat_history import (
     AI_NUTRITION_CHAT_SESSION_KEY,
@@ -154,6 +155,7 @@ def _get_active_chat(request) -> AiNutritionChat | None:
 
 
 @require_http_methods(["GET", "POST"])
+@limit_ai_assistant_turn
 @login_required
 def ai_nutrition_intake(request):
     prompt = ""

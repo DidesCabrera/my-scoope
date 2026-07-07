@@ -215,3 +215,66 @@ Que tremendo cierre de ciclo. Con esta app si creo que hemos cerrado un ciclo de
 ----
 Genial, me gustaría ajustar lo siguiente:
 En cada pagina las cards "card-detail-block admin-operations-hero" Muestra lo mismo que el header. Es mejor quitarlas.
+
+
+
+
+----
+AI_ASSISTANT_CHAT_ENGINE_MODE=llm_preview
+AI_ASSISTANT_LLM_PROVIDER=openai
+AI_ASSISTANT_OPENAI_API_KEY=tu_api_key
+AI_ASSISTANT_OPENAI_MODEL=gpt-5.4-mini
+AI_ASSISTANT_OPENAI_BASE_URL=https://api.openai.com/v1
+
+AI_ASSISTANT_CHAT_ENGINE_MODE=llm_production
+AI_ASSISTANT_LLM_PROVIDER=openai
+AI_ASSISTANT_OPENAI_API_KEY=tu_api_key
+AI_ASSISTANT_OPENAI_MODEL=gpt-5.4-mini
+AI_ASSISTANT_LLM_ROLLOUT_ENABLED=true
+AI_ASSISTANT_LLM_ROLLOUT_MODE=all
+
+
+
+AI_ASSISTANT_MAX_INPUT_TOKENS=6000
+AI_ASSISTANT_MAX_OUTPUT_TOKENS=900
+AI_ASSISTANT_MAX_TOOL_LOOP_ITERATIONS=1
+AI_ASSISTANT_MAX_TOOL_REQUESTS_PER_TURN=3
+AI_ASSISTANT_MAX_CONTEXT_CHARS=8000
+AI_ASSISTANT_MAX_MESSAGE_CHARS=2000
+
+**
+AI_ASSISTANT_CREDITS_ENABLED=true
+AI_ASSISTANT_USD_PER_AI_CREDIT=0.0001
+AI_ASSISTANT_MAX_OUTPUT_TOKENS=900
+AI_ASSISTANT_MAX_TOOL_LOOP_ITERATIONS=1
+AI_ASSISTANT_MAX_TOOL_REQUESTS_PER_TURN=3
+**
+
+
+
+AI_ASSISTANT_CREDITS_ENABLED=true
+
+| Plan  | Mensual | Diario |
+| ----- | ------: | -----: |
+| free  |      25 |      5 |
+| basic |     150 |     30 |
+| pro   |    1000 |    150 |
+
+AI_ASSISTANT_DEFAULT_CREDITS_PER_TURN=1
+
+monthly_credit_limit = 1
+daily_credit_limit = 1
+included_monthly_credits = 1
+
+entitlements.ai_assistant
+
+{
+  "enabled": true,
+  "monthly_credit_limit": 1,
+  "daily_credit_limit": 1,
+  "block_on_exhaustion": true
+}
+
+
+
+AI_ASSISTANT_LLM_PRICING_USD_PER_1M_TOKENS_JSON={"openai":{"gpt-5.4-mini":{"input":"0.75","cached_input":"0.075","output":"4.50"},"default":{"input":"0.75","cached_input":"0.075","output":"4.50"}}}
