@@ -430,11 +430,15 @@ El workflow fija:
 ```text
 DJANGO_SETTINGS_MODULE=miapp.settings.dev
 SENTRY_DSN=""
+NUTRITION_ONBOARDING_GATE_ENABLED=false
 ```
 
 Esto evita que CI dependa de variables productivas o envie errores a Sentry. El
-tramo e2e/Playwright queda documentado como frontera pendiente porque requiere
-definir servidor activo, navegador y estado de autenticacion estable.
+gate global de onboarding queda desactivado para no redirigir la suite historica
+de vistas y APIs; sus tests dedicados lo activan explicitamente con
+`override_settings`. El tramo e2e/Playwright queda documentado como frontera
+pendiente porque requiere definir servidor activo, navegador y estado de
+autenticacion estable.
 
 ## LR07 expected direction
 

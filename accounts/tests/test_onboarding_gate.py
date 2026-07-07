@@ -11,6 +11,7 @@ from notas.domain.models import Profile
 User = get_user_model()
 
 
+@override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=True)
 class NutritionOnboardingGateTests(TestCase):
     def _user(self, username="gate_user", *, staff=False, superuser=False):
         user = User.objects.create_user(
