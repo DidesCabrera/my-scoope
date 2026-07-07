@@ -75,6 +75,7 @@ class AIUsageObservabilityTests(SimpleTestCase):
 
         self.assertEqual(cost, Decimal("0.004100"))
 
+    @override_settings(AI_ASSISTANT_LLM_PRICING_USD_PER_1M_TOKENS={})
     def test_returns_none_when_pricing_is_not_configured(self):
         cost = estimate_cost_usd(
             provider="openai",

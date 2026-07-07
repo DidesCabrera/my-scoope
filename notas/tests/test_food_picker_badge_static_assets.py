@@ -15,8 +15,8 @@ class FoodPickerBadgeStaticAssetsTests(SimpleTestCase):
 
         content = path.read_text(encoding="utf-8")
 
-        self.assertIn("picker-item-badges", content)
-        self.assertIn("picker-item-badge--", content)
+        self.assertIn("renderPickerResultBadges", content)
+        self.assertIn("renderPickerResultTitle", content)
         self.assertIn("is_user_food", content)
         self.assertIn("is_global_food", content)
         self.assertIn("is_verified", content)

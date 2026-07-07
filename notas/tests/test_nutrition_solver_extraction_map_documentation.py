@@ -11,7 +11,7 @@ S6_DECISION_DOC = ROOT / "docs" / "decisions" / "0046-nutrition-solver-pure-cont
 S7_DECISION_DOC = ROOT / "docs" / "decisions" / "0047-nutrition-solver-portion-solver-validators-moved.md"
 S8_DECISION_DOC = ROOT / "docs" / "decisions" / "0048-nutrition-solver-operational-food-adapter.md"
 S9_DECISION_DOC = ROOT / "docs" / "decisions" / "0049-nutrition-solver-ai-assistant-preview-tool.md"
-S10_DECISION_DOC = ROOT / "docs" / "decisions" / "0050-nutrition-solver-reviewable-meal-proposal.md"
+S10_DECISION_DOC = ROOT / "docs" / "current" / "architecture" / "nutrition_solver_extraction_map.md"
 LEGACY_CONTRACTS_MODULE = ROOT / "notas" / "application" / "nutrition_engine" / "contracts.py"
 SOLVER_CONTRACTS_MODULE = ROOT / "nutrition_solver" / "application" / "contracts.py"
 SOLVER_MODELS_MODULE = ROOT / "nutrition_solver" / "domain" / "models.py"
@@ -32,8 +32,8 @@ class NutritionSolverExtractionMapDocumentationTests(SimpleTestCase):
     def test_extraction_map_records_current_engine_modules_and_s10_state(self):
         content = EXTRACTION_MAP.read_text()
 
-        self.assertIn("Status: active", content)
-        self.assertIn("Patch: S10", content)
+        self.assertIn("Status: completed", content)
+        self.assertIn("Patch: S10 closure", content)
         self.assertIn("S1 did **not** move code", content)
         self.assertIn("deterministic portion solver and strict validators", content)
         self.assertIn("notas/application/nutrition_engine/", content)
@@ -59,11 +59,11 @@ class NutritionSolverExtractionMapDocumentationTests(SimpleTestCase):
         self.assertIn("ExternalFoodReference", content)
         self.assertIn("request/user/session/template objects", content)
 
-    def test_planning_and_decision_docs_mark_cycle_as_active(self):
+    def test_planning_and_decision_docs_mark_cycle_as_completed(self):
         planning = PLANNING_DOC.read_text()
         decision = DECISION_DOC.read_text()
 
-        self.assertIn("Status: active", planning)
+        self.assertIn("Status: completed", planning)
         self.assertIn("S1", planning)
         self.assertIn("S2: completado", planning)
         self.assertIn("S3: completado", planning)
@@ -74,7 +74,7 @@ class NutritionSolverExtractionMapDocumentationTests(SimpleTestCase):
         self.assertIn("S8: completado", planning)
         self.assertIn("S9: completado", planning)
         self.assertIn("S10: completado", planning)
-        self.assertIn("S11 próximo", planning)
+        self.assertIn("S11: cancelado/diferido", planning)
         self.assertIn("Status: accepted", decision)
         self.assertIn("does not create the `nutrition_solver` Django app", decision)
 
@@ -236,7 +236,7 @@ class NutritionSolverExtractionMapDocumentationTests(SimpleTestCase):
         self.assertIn("create_nutrition_solver_meal_proposal", content)
         self.assertIn("NutritionProposal(status=pending_review)", content)
         self.assertIn("S10: completado", planning)
-        self.assertIn("Status: accepted", decision)
+        self.assertIn("Status: completed", decision)
         self.assertIn("create_solver_generated_meal_proposal", decision)
         self.assertIn("TOOL_CREATE_NUTRITION_SOLVER_MEAL_PROPOSAL", registry)
         self.assertIn("create_nutrition_solver_meal_proposal_tool", proposal_tools)

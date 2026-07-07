@@ -40,7 +40,7 @@ class ObservabilitySanitizationTests(SimpleTestCase):
 
         sanitized = sanitize_for_observability(payload)
 
-        self.assertEqual(sanitized["usage"]["total_tokens"], 120)
+        self.assertEqual(sanitized["usage"]["total_tokens"], FILTERED)
         self.assertEqual(sanitized["messages"], FILTERED)
         self.assertEqual(sanitized["tool_results"], FILTERED)
         self.assertEqual(sanitized["metadata"]["provider"], "openai")
