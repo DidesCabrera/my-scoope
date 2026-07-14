@@ -18,7 +18,11 @@ from notas.application.ai_intake.nutrition_brief import (
     deserialize_conversation,
 )
 from notas.application.ai_intake.real_provider_validation import (
+    RealProviderValidationScenario,
     RealProviderValidationTurn,
+    _behavioral_surface_check,
+    _response_repetition_check,
+    built_in_real_provider_scenarios,
     _post_tool_fallback_pacing_check,
     _structured_provider_contract_check,
     _tool_result_grounding_check,
@@ -190,6 +194,75 @@ class RealProviderValidationTests(TestCase):
         )
         self.assertIn("saludo_y_descubrimiento", output.getvalue())
         self.assertIn("error_de_tool_y_recuperacion", output.getvalue())
+    def test_ba06_catalog_contains_targeted_behavioral_scenarios(self):
+        catalog = built_in_real_provider_scenarios()
+        self.assertIn("tema_externo_breve", catalog)
+        self.assertIn("capacidades_en_lenguaje_de_producto", catalog)
+        self.assertIn("referencia_ambigua_sin_tools", catalog)
+        self.assertEqual(catalog["referencia_ambigua_sin_tools"].max_tool_calls, 0)
+
+    def test_behavioral_surface_blocks_unjustified_tools_and_internal_names(self):
+        scenario = RealProviderValidationScenario(
+            key="ba06-test",
+            description="test",
+            user_messages=("¿Qué pasó con eso?",),
+            max_tool_calls=0,
+            forbidden_visible_fragments=("read_proposal",),
+        )
+        turn = RealProviderValidationTurn(
+            index=1,
+            turn_id="ba06-test-1",
+            user_message="¿Qué pasó con eso?",
+            assistant_message="Voy a usar read_proposal.",
+            engine_name="test",
+            brief_snapshot={},
+            semantic_intent="clarify_reference",
+            semantic_missing_slots=(),
+            tool_results=({"tool_name": "read_proposal", "status": "ok"},),
+            card_counts={"profile": 0, "preference": 0, "proposal_preferences": 0},
+            card_deltas={"profile": 0, "preference": 0, "proposal_preferences": 0},
+            fallback=False,
+            fallback_reason="",
+            deterministic_runtime_invoked=False,
+            provider="openai",
+            model="test-real-model",
+            usage_observability={"recorded": True},
+        )
+        check = _behavioral_surface_check(scenario, (turn,))
+        self.assertFalse(check.passed)
+        self.assertIn("exceeded maximum", check.detail)
+        self.assertIn("forbidden visible fragments", check.detail)
+
+    def test_response_repetition_check_rejects_repeated_mechanical_openings(self):
+        scenario = RealProviderValidationScenario(
+            key="ba06-repeat",
+            description="test",
+            user_messages=("uno", "dos"),
+            max_repeated_opening_count=1,
+        )
+        base = dict(
+            engine_name="test",
+            brief_snapshot={},
+            semantic_intent="capture_nutrition_brief",
+            semantic_missing_slots=(),
+            tool_results=(),
+            card_counts={"profile": 0, "preference": 0, "proposal_preferences": 0},
+            card_deltas={"profile": 0, "preference": 0, "proposal_preferences": 0},
+            fallback=False,
+            fallback_reason="",
+            deterministic_runtime_invoked=False,
+            provider="openai",
+            model="test-real-model",
+            usage_observability={"recorded": True},
+        )
+        turns = (
+            RealProviderValidationTurn(index=1, turn_id="r1", user_message="uno", assistant_message="Perfecto. Quedó registrado.", **base),
+            RealProviderValidationTurn(index=2, turn_id="r2", user_message="dos", assistant_message="Perfecto. Sigamos.", **base),
+        )
+        check = _response_repetition_check(scenario, turns)
+        self.assertFalse(check.passed)
+        self.assertIn("x2", check.detail)
+
     def test_structured_provider_contract_reports_parse_and_incomplete_diagnostics(self):
         turn = RealProviderValidationTurn(
             index=1,

@@ -1,7 +1,7 @@
 # AI README - My Scoope
 
 Status: current
-Last updated: 2026-07-13
+Last updated: 2026-07-14
 Audience: AI assistants and developers working from exported project context
 
 ## Purpose
@@ -115,6 +115,23 @@ Prefer focused exports before `full` when the task is narrow:
 - `accounts` for plans, subscriptions, credits and onboarding.
 - `auth` for login, signup, Google OAuth, allauth and rate limits.
 - `testing` for CI, regressions and workflows.
+- `ai_behavior` for domain anchoring, tool governance, initiative, repetition control, replays and conversational UX.
+
+## AI Assistant behavioral alignment posture
+
+The CM00-CM24 runtime and LLM-native alignment baseline is completed. Current behavior work belongs to the BA cycle. Direct the assistant with a clear My Scoope purpose, the current task/state, available product capabilities and safety boundaries; do not recreate a fixed conversational script.
+
+The assistant may reciprocate greetings and answer casual off-domain remarks briefly, but should not open broad unrelated branches. Explain product capabilities in user language rather than exposing internal tool names, schemas or MCP contracts. Tool availability alone is never sufficient reason to execute a tool: ambiguous references should be answered from visible context or clarified before reading, updating or sharing product objects.
+
+When the active task is sufficiently grounded, the assistant should choose the next useful action instead of repeatedly confirming state or collecting optional details. Replays should measure domain anchoring, justified tool use, progress, repetition and card restraint as behavioral invariants rather than exact phrases.
+
+The focused working export for this cycle is:
+
+```bash
+./scripts/export_for_chatgpt.sh ai_behavior
+```
+
+Use `full` for cross-app imports, settings/migrations or whole-project regression confidence.
 
 ## AI Assistant implementation posture
 

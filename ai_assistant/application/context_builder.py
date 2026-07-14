@@ -140,7 +140,15 @@ def build_safe_llm_context(
         conversation_state=conversation_state,
     )
     reviewable_proposal_tools_enabled = _reviewable_proposal_tools_enabled()
-    tool_oriented_intake = _tool_oriented_intake_context(nutrition_brief) if surface == "ai_nutrition_intake" else {}
+    tool_oriented_intake = (
+        _tool_oriented_intake_context(
+            nutrition_brief,
+            conversation_state=conversation_state,
+            proposal_creation_enabled=reviewable_proposal_tools_enabled,
+        )
+        if surface == "ai_nutrition_intake"
+        else {}
+    )
     provider_nutrition_brief = {} if tool_oriented_intake else nutrition_brief
     return SafeLLMContext(
         surface=_bounded_text(surface),
@@ -191,7 +199,12 @@ def _reviewable_proposal_tools_enabled() -> bool:
     return bool(getattr(settings, "AI_ASSISTANT_ENABLE_REVIEWABLE_PROPOSAL_TOOLS", False))
 
 
-def _tool_oriented_intake_context(nutrition_brief: Mapping[str, Any]) -> dict[str, Any]:
+def _tool_oriented_intake_context(
+    nutrition_brief: Mapping[str, Any],
+    *,
+    conversation_state: Any | None = None,
+    proposal_creation_enabled: bool = False,
+) -> dict[str, Any]:
     """Expose current intake objects without reconstructing an interviewer.
 
     CM20 keeps only state and a small interpretation contract in provider
@@ -213,15 +226,55 @@ def _tool_oriented_intake_context(nutrition_brief: Mapping[str, Any]) -> dict[st
         ("subject_source", "requires_library_ppk_warning"),
     )
     return {
-        "version": "ai_assistant_tool_oriented_intake.v8",
+        "version": "ai_assistant_tool_oriented_intake.v9",
         "assistant_role": "operator_assistant",
         "current_drafts": current_drafts,
+        "work_progress": _work_progress_context(
+            conversation_state,
+            proposal_creation_enabled=proposal_creation_enabled,
+        ),
         **({"work_context": work_context} if work_context else {}),
         "context_semantics": {
             "present_values_are_known_for_this_conversation": True,
             "absent_values_are_not_automatically_required": True,
             "new_facts_are_recorded_through_typed_tools": True,
+            "readiness_is_product_state_not_a_question_order": True,
         },
+    }
+
+
+def _work_progress_context(
+    conversation_state: Any | None,
+    *,
+    proposal_creation_enabled: bool,
+) -> dict[str, Any]:
+    """Expose product-computed readiness without selecting the next conversation step.
+
+    The state builder already knows whether the minimum proposal contract is
+    complete. BA04 makes that bounded state visible to the provider so the LLM
+    can choose a useful next action. It does not provide question wording, a
+    recommended sequence or a backend interpretation of the latest message.
+    """
+
+    result = getattr(conversation_state, "result", None)
+    ready_for_proposal = bool(getattr(result, "is_ready_for_proposal", False))
+    required_information_missing = bool(
+        getattr(result, "has_required_pending_questions", False)
+    )
+    if ready_for_proposal:
+        proposal_readiness = "ready_for_reviewable_proposal"
+    elif required_information_missing:
+        proposal_readiness = "requires_blocking_information"
+    else:
+        proposal_readiness = "not_established"
+
+    return {
+        "surface_objective": "reach_a_useful_my_scoope_outcome",
+        "proposal_readiness": proposal_readiness,
+        "reviewable_proposal_creation_available": bool(proposal_creation_enabled),
+        "required_information_still_missing": required_information_missing,
+        "optional_refinement_is_not_required": True,
+        "next_action_is_selected_by_the_assistant": True,
     }
 
 

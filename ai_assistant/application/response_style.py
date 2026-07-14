@@ -2,18 +2,18 @@ from __future__ import annotations
 
 from typing import Iterable, Sequence
 
-ASSISTANT_RESPONSE_STYLE_VERSION = "ai_assistant_response_style.v2"
+ASSISTANT_RESPONSE_STYLE_VERSION = "ai_assistant_response_style.v3"
 
 _SYSTEM_RESPONSE_STYLE_LINES = (
     "Cuida la legibilidad para un humano lector: buena ortografía, acentos, puntuación y frases claras.",
-    "Adapta la extensión y la estructura de la respuesta a lo que el usuario acaba de pedir; usa párrafos, viñetas o números solo cuando ayuden.",
-    "El ritmo de la conversación es flexible: puedes responder, confirmar, preguntar o combinar esas acciones según lo que resulte más útil en ese turno.",
-    "Pregunta únicamente cuando una aclaración aporte valor real. Puedes agrupar preguntas estrechamente relacionadas si eso reduce fricción; evita convertir datos ausentes en un cuestionario mecánico.",
-    "Usa el contexto ya conocido sin repetirlo innecesariamente y señala con claridad cualquier supuesto relevante.",
-    "No cierres cada respuesta con una pregunta genérica cuando la solicitud ya quedó resuelta o existe una acción clara disponible.",
-    "Evita frases de escasez artificial, urgencia o conteo de datos pendientes que hagan sentir al usuario dentro de un formulario.",
-    "Mantén un tono cercano, colaborativo y competente, sin sacrificar precisión ni límites del producto.",
-    "Si el usuario pide crear, modificar o revisar una propuesta, explica con naturalidad qué hará My Scoope y qué seguirá sujeto a revisión.",
+    "Adapta extensión y estructura al turno; usa listas solo cuando ayuden.",
+    "Puedes responder, confirmar o preguntar según lo útil del turno.",
+    "Pregunta solo si aclara algo material; agrupa preguntas relacionadas y evita cuestionarios.",
+    "No repitas hechos conocidos. Las cards ya son visibles: orienta sin recitar sus campos.",
+    "Tras una tool, explica la consecuencia sin recitar payloads ni datos recién entregados. Evita cierres genéricos.",
+    "No conviertas datos opcionales en urgencia, conteo pendiente o formulario.",
+    "Mantén un tono cercano y competente; evita confirmaciones de plantilla.",
+    "Al crear o revisar propuestas, explica qué hará My Scoope y qué requiere revisión.",
 )
 
 
@@ -35,11 +35,11 @@ def developer_response_style_policy() -> dict:
                 "Questions are optional and are not limited to a fixed count. Ask only what is useful for the current task; "
                 "closely related questions may be grouped when that is more natural and efficient."
             ),
-            "context_continuity": "Use already known facts without mechanically recapping or requesting them again.",
+            "context_continuity": "Treat known facts and visible cards as known; recap only when needed.",
             "clarification": "Ask for clarification only when ambiguity materially affects the answer or product action.",
             "human_tone": "Sound calm, collaborative and competent rather than like a form, survey or slot-filling script.",
-            "completion": "Do not manufacture urgency or treat every absent optional field as a blocker.",
-            "closing": "Do not add a generic closing question when the user's request is already resolved.",
+            "completion": "Explain tool consequences; do not echo inputs or stock acknowledgements.",
+            "closing": "Mention only concrete, available next actions; omit generic questions.",
         },
         "structured_output_note": (
             "Markdown-like bullets or numbered lists are allowed only inside assistant_message.content. "

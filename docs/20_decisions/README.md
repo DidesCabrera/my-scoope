@@ -145,3 +145,5 @@ Consequences
 - `0115-ai-assistant-capability-scoped-tools-and-strict-nullable-proposal-arguments.md`: alinea el catálogo provider-facing con las capacidades realmente habilitadas y convierte `update_proposal_preferences` en una función estricta con campos anulables, evitando omisiones silenciosas sin parsers locales ni aumento de límites.
 - `0116-ai-assistant-proposal-complexity-state-sync-completeness.md`: corrige la proyección local de `proposal_preferences.complexity_level` hacia `NutritionBrief` y preserva su procedencia, sin cambiar prompts, schemas ni límites.
 - `0117-ai-assistant-post-tool-local-ack-state-only.md`: limita el fallback local posterior a tools a confirmar estado validado, sin elegir la siguiente pregunta ni reconstruir un entrevistador determinístico.
+- `0118-ai-assistant-behavioral-alignment-cycle.md`: inicia BA00-BA07 para alinear identidad, dominio, iniciativa, tool governance y calidad conversacional sin restaurar un guion determinístico.
+- `0119-ai-behavior-export-mode.md`: agrega el modo focalizado `ai_behavior` y consolida una única definición canónica por modo en el script de exportación.

@@ -83,6 +83,43 @@ class AiAssistantConversationReplayTests(TestCase):
         self.assertEqual(result.final_brief.meals_per_day, 3)
         self.assertEqual(result.final_card_counts["proposal_preferences"], 0)
 
+    def test_ba06_off_domain_capability_and_ambiguity_replays_stay_tool_free(self):
+        for scenario_key in (
+            "tema_externo_breve",
+            "capacidades_sin_internals",
+            "referencia_ambigua_sin_tools",
+        ):
+            with self.subTest(scenario=scenario_key):
+                result = run_replay_scenario(get_replay_scenario(scenario_key))
+                self.assert_replay_invariants(result)
+                self.assertEqual(result.all_tool_names, ())
+                self.assertEqual(result.final_card_counts, {
+                    "profile": 0,
+                    "preference": 0,
+                    "proposal_preferences": 0,
+                })
+
+    def test_replay_reports_invalid_provider_intent_as_contract_failure(self):
+        scenario = ConversationReplayScenario(
+            key="provider_contract_failure",
+            description="Malformed fake-provider semantics fail through the provider contract invariant.",
+            user_messages=("¿Qué puedes hacer?",),
+            provider_responses=(
+                assistant_envelope(
+                    "Puedo ayudarte dentro de My Scoope.",
+                    intent="unsupported_replay_intent",
+                ),
+            ),
+            max_tool_calls=0,
+        )
+
+        result = run_replay_scenario(scenario, assert_clean=False)
+        outcomes = {outcome.key: outcome for outcome in result.invariant_outcomes()}
+
+        self.assertFalse(outcomes["provider_contract"].passed)
+        self.assertIn("Invalid name", outcomes["provider_contract"].detail)
+        self.assertEqual(result.all_tool_names, ())
+
     def test_reviewable_proposal_replay_uses_real_tool_without_applying_final_objects(self):
         user = ensure_replay_user("ai_replay_proposal_user")
         dailyplan = DailyPlan.objects.create(name="Día base replay", created_by=user)

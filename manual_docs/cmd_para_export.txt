@@ -10,6 +10,10 @@ source /Users/felipedides/Desktop/proyecto_django/venv/bin/activate
 
 python manage.py runserver
 
+source venv/bin/activate
+pip install -r requirements.txt
+python manage.py check
+python manage.py test core.tests.regressions
 
 --------------------------
 ***GENERACION ZIP 
@@ -60,19 +64,13 @@ python manage.py debug_ai_assistant_conversation \
   --show-state
 
 
---
-
-rm -rf wheelhouse
-docker run --rm -v "$PWD:/app" -w /app python:3.12-slim bash -lc \
-  "python -m pip download -r requirements.txt -d wheelhouse"
-zip -r wheelhouse-linux-py312.zip wheelhouse
 
 --------------------------
 ***AUX COMMITS
 --------------------------
 
 git add .
-git commit -m "Mejoras transversales: ACCOUNT (ON-BOARDING V1 - PLANES - BILLING)"
+git commit -m "Improve AI assistant conversational intake + Landing"
 git push origin main
 
 
@@ -106,74 +104,6 @@ git merge refactor-header-actions-2
 git switch -c refactor-header-actions-2 (crea y cambia de branch)
 
 
-
-
-#LOCAL
-python manage.py export_foods --output foods_export.csv
-#PROD
-python manage.py export_foods --output /tmp/foods_export.csv
-
-#LOCAL
-python manage.py export_foods_full --output foods_full_export.csv
-#PROD
-python manage.py export_foods_full --output /tmp/foods_full_export.csv
-
-
-
-dides dides@gmail.com True True
-
-from django.contrib.auth import get_user_model
-User = get_user_model()
-
-user = User.objects.get(email="dides@gmail.com")
-user.set_password("CabrerA1988")
-user.is_staff = True
-user.is_superuser = True
-user.save()
-
-
-
-LIMPIEZA DE BRANCHS
-
-git branch -D codex-experiments
-git branch -D feature/improve-create-meal-from-dailyplan
-git branch -D feature/mejora-interfaz
-git branch -D feature/mejora-navegacion
-git branch -D feature/mejora-viewmodel
-git branch -D feature/sidebar-layout
-git branch -D feature/ux-improvements
-git branch -D refactor-header-actions-2
-git branch -D rescue-72f8e48
-
-git branch -r
-
-#MALO
-git push origin --delete origin/codex-experiments
-
-CORRECTO!
-git push origin --delete codex-experiments
-git push origin --delete feature/sidebar-layout
-git push origin --delete feature/ux-improvements
-git push origin --delete refactor-header-actions-2
-git push origin --delete rescue-72f8e48
-
-LIMPIAR REFERENCIAS REMOTAS
-git fetch --prune
-
-Y VERIFICAR
-git branch -r
-
-
-
-git add docs/architecture/internal_ai_tools_layer.md
-git commit -m "Todo ok previo a MCP server MVP"
-
-Exponer read tools por protocolo MCP,
-Exponer validation tool por protocolo MCP,
-Exponer proposal tool por protocolo MCP
-
-
-PYTHONPATH=mcp_server python -m unittest discover -s mcp_server/tests
 
 
 
@@ -217,14 +147,6 @@ MYSCOOPE_API_AUTH_TOKEN=dev-mcp-token
 
 
 
-
-git add .
-git commit -m "Add proposal payload validators"
-
-
-
-
-
 PYTHONPATH
 mcp_server
 
@@ -233,67 +155,6 @@ http://127.0.0.1:8000/app
 
 MYSCOOPE_API_AUTH_TOKEN
 dev-mcp-token
-
-
-
-MYSCOOPE_MCP_TRANSPORT=streamable-http
-MYSCOOPE_MCP_HOST=0.0.0.0
-MYSCOOPE_API_BASE_URL=https://www.myscoope.com/app
-MYSCOOPE_API_AUTH_TOKEN=<token-interno-mcp-a-django>
-
-
-
-
-MYSCOOPE_MCP_TRANSPORT
-streamable-http
-
-MYSCOOPE_MCP_HOST
-0.0.0.0
-
-MYSCOOPE_MCP_PUBLIC_URL
-https://<url-del-servicio-mcp>.onrender.com
-
-MYSCOOPE_MCP_EXTERNAL_AUTH_TOKEN
-<token-externo-largo>
-
-MYSCOOPE_API_BASE_URL
-https://www.myscoope.com/app
-
-MYSCOOPE_API_AUTH_TOKEN
-<token-interno-mcp-a-django>
-
-PYTHON_VERSION
-3.13.5
-
----
-
-
-python - <<'PY'
-import secrets
-
-print(secrets.token_urlsafe(48))
-PY
-
-git add .
-git commit -m "Document remote MCP deployment and safety checklist"
-git push origin main
-
-
-python scripts/openai_remote_mcp_smoke.py
-
-
-
-
-
-MYSCOOPE_MCP_RESOURCE_URL
-https://myscoope-mcp.onrender.com
-
-MYSCOOPE_OAUTH_ISSUER_URL
-https://www.myscoope.com
-
-MYSCOOPE_MCP_AUTH_ISSUER_URL
-https://www.myscoope.com
-
 
 
 
@@ -322,10 +183,3 @@ zip -r proyecto_django_export.zip proyecto_django_export -x "*.DS_Store" "__MACO
 cd proyecto_django
 
 --- 
-
-
-SENTRY_DSN
-SENTRY_ENVIRONMENT
-SENTRY_RELEASE
-SENTRY_TRACES_SAMPLE_RATE
-SENTRY_PROFILES_SAMPLE_RATE

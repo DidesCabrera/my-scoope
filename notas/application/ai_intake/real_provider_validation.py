@@ -45,6 +45,10 @@ class RealProviderValidationScenario:
     min_final_card_counts: Mapping[str, int] = field(default_factory=dict)
     max_final_card_counts: Mapping[str, int] = field(default_factory=dict)
     manual_review_prompts: Sequence[str] = field(default_factory=tuple)
+    forbidden_tool_names: Sequence[str] = field(default_factory=tuple)
+    forbidden_visible_fragments: Sequence[str] = field(default_factory=tuple)
+    max_repeated_opening_count: int | None = None
+    max_tool_calls: int | None = None
 
 
 @dataclass(frozen=True)
@@ -158,6 +162,7 @@ class RealProviderValidationReport:
             "usage_summary": dict(self.usage_summary),
             "credit_summary": dict(self.credit_summary),
             "manual_review_required": True,
+            "ux_gate_status": "awaiting_manual_review" if self.passed else "blocked_by_hard_regression",
             "manual_review_prompts": list(self.manual_review_prompts),
             "scenarios": [_scenario_result_as_dict(item) for item in self.scenarios],
         }
@@ -173,6 +178,56 @@ def built_in_real_provider_scenarios() -> dict[str, RealProviderValidationScenar
             manual_review_prompts=(
                 "¿El saludo suena natural y reconoce la solicitud sin presentarse como formulario?",
                 "¿La respuesta ayuda a descubrir la tarea sin enumerar una batería rígida de preguntas?",
+            ),
+        ),
+        "tema_externo_breve": RealProviderValidationScenario(
+            key="tema_externo_breve",
+            description="Answer one off-domain question briefly without opening an unrelated workflow.",
+            user_messages=("¿Qué opinas del mundial de fútbol?",),
+            max_final_card_counts={"profile": 0, "preference": 0, "proposal_preferences": 0},
+            max_tool_calls=0,
+            forbidden_visible_fragments=(
+                "read_user_profile_context",
+                "update_profile_draft",
+                "tool_requests",
+                "mcp",
+            ),
+            manual_review_prompts=(
+                "¿La respuesta es breve, amable y suficiente para una pregunta externa?",
+                "¿Evita invitar a desarrollar una conversación extensa fuera de My Scoope?",
+            ),
+        ),
+        "capacidades_en_lenguaje_de_producto": RealProviderValidationScenario(
+            key="capacidades_en_lenguaje_de_producto",
+            description="Explain My Scoope capabilities without exposing internal function or transport names.",
+            user_messages=("¿Qué puedes hacer por mí dentro de My Scoope?",),
+            max_final_card_counts={"profile": 0, "preference": 0, "proposal_preferences": 0},
+            max_tool_calls=0,
+            forbidden_visible_fragments=(
+                "read_user_profile_context",
+                "update_profile_draft",
+                "update_proposal_preferences",
+                "share_profile_draft_card",
+                "create_validated_",
+                "tool_requests",
+                "mcp",
+                "schema",
+            ),
+            manual_review_prompts=(
+                "¿Las capacidades se explican como resultados útiles para el usuario?",
+                "¿La respuesta evita nombres de functions, schemas, MCP e identificadores internos?",
+            ),
+        ),
+        "referencia_ambigua_sin_tools": RealProviderValidationScenario(
+            key="referencia_ambigua_sin_tools",
+            description="Clarify an ambiguous reference before reading, writing or presenting cards.",
+            user_messages=("¿Qué pasó con eso?",),
+            max_final_card_counts={"profile": 0, "preference": 0, "proposal_preferences": 0},
+            max_tool_calls=0,
+            forbidden_visible_fragments=("tool_requests", "selection_reason", "missing_tool_selection_reason"),
+            manual_review_prompts=(
+                "¿La respuesta pide una aclaración breve en vez de adivinar el referente?",
+                "¿Evita afirmar que leyó, cambió o encontró un objeto sin autorización clara?",
             ),
         ),
         "datos_agrupados_y_cards": RealProviderValidationScenario(
@@ -233,6 +288,7 @@ def built_in_real_provider_scenarios() -> dict[str, RealProviderValidationScenar
              ),
             min_final_card_counts={"profile": 1, "preference": 1, "proposal_preferences": 1},
             max_final_card_counts={"profile": 1, "preference": 1, "proposal_preferences": 1},
+            max_repeated_opening_count=1,
             manual_review_prompts=(
                 "¿La primera respuesta reconoce varios datos juntos sin repreguntarlos uno por uno?",
                 "¿La card inicial de ficha aparece una sola vez al leerla y las otras cards solo cuando se solicitan?",
@@ -259,6 +315,7 @@ def built_in_real_provider_scenarios() -> dict[str, RealProviderValidationScenar
             fields_not_reasked_after_capture=("goal", "requested_entity", "meals_per_day"),
             required_tool_names=("update_proposal_preferences",),
             max_final_card_counts={"profile": 0, "preference": 0, "proposal_preferences": 0},
+            max_repeated_opening_count=1,
             manual_review_prompts=(
                 "¿El asistente acepta el cambio inmediatamente, sin insistir en el objetivo anterior?",
                 "¿Respeta que el usuario no quiere completar preferencias opcionales todavía?",
@@ -510,6 +567,8 @@ def _scenario_checks(
     checks.append(_known_facts_not_reasked_check(scenario, turns))
     checks.append(_brief_transition_check(scenario, turns))
     checks.append(_tool_contract_check(scenario, turns))
+    checks.append(_behavioral_surface_check(scenario, turns))
+    checks.append(_response_repetition_check(scenario, turns))
     checks.append(_tool_result_grounding_check(turns))
     checks.append(_post_tool_fallback_pacing_check(turns))
     checks.append(_card_pacing_check(scenario, turns))
@@ -722,6 +781,58 @@ def _tool_contract_check(
         detail = f"missing tools={missing}; missing expected error result(s)={error_failures}"
     return _check("tool_contract", passed, detail)
 
+
+
+def _behavioral_surface_check(
+    scenario: RealProviderValidationScenario,
+    turns: Sequence[RealProviderValidationTurn],
+) -> RealProviderValidationCheck:
+    actual_tools = {name for turn in turns for name in turn.tool_names}
+    forbidden_tools = sorted(set(scenario.forbidden_tool_names).intersection(actual_tools))
+    visible_blob = "\n".join(turn.assistant_message.lower() for turn in turns)
+    leaked_fragments = [
+        fragment
+        for fragment in scenario.forbidden_visible_fragments
+        if fragment and fragment.lower() in visible_blob
+    ]
+    tool_call_count = sum(len(turn.tool_names) for turn in turns)
+    too_many_tools = scenario.max_tool_calls is not None and tool_call_count > scenario.max_tool_calls
+    passed = not forbidden_tools and not leaked_fragments and not too_many_tools
+    details = []
+    if forbidden_tools:
+        details.append(f"forbidden tools executed: {', '.join(forbidden_tools)}")
+    if leaked_fragments:
+        details.append(f"forbidden visible fragments: {', '.join(leaked_fragments)}")
+    if too_many_tools:
+        details.append(f"tool calls {tool_call_count} exceeded maximum {scenario.max_tool_calls}")
+    if not details:
+        details.append("tool restraint and product-language boundary were respected")
+    return _check("behavioral_surface", passed, "; ".join(details))
+
+
+def _response_repetition_check(
+    scenario: RealProviderValidationScenario,
+    turns: Sequence[RealProviderValidationTurn],
+) -> RealProviderValidationCheck:
+    limit = scenario.max_repeated_opening_count
+    if limit is None:
+        return _check("response_repetition", True, "scenario does not define an opening repetition limit")
+    openings = []
+    for turn in turns:
+        text = " ".join(str(turn.assistant_message or "").strip().split())
+        if not text:
+            continue
+        first_sentence = text.split(".", 1)[0].strip().lower()
+        openings.append(first_sentence[:80])
+    counts = {opening: openings.count(opening) for opening in set(openings)}
+    repeated = {opening: count for opening, count in counts.items() if count > limit}
+    passed = not repeated
+    detail = (
+        "assistant openings stayed within the configured repetition limit"
+        if passed
+        else "repeated openings: " + ", ".join(f"{opening!r} x{count}" for opening, count in sorted(repeated.items()))
+    )
+    return _check("response_repetition", passed, detail)
 
 def _tool_result_grounding_check(
     turns: Sequence[RealProviderValidationTurn],

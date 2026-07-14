@@ -262,7 +262,7 @@ class ExternalLLMToolLoopTests(SimpleTestCase):
         response = ExternalLLMOrchestrator(
             llm_client=client,
             profile_draft_tool_executor=profile_executor,
-            config=AssistantOrchestratorConfig(max_input_tokens=4250),
+            config=AssistantOrchestratorConfig(max_input_tokens=4650),
         ).continue_turn(self._request("Quiero aumennter de muscilo"))
 
         self.assertEqual(response.assistant_text, "Perfecto, lo orientamos a ganar masa muscular.")

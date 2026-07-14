@@ -1,7 +1,7 @@
 # Project State - My Scoope
 
 Status: current
-Last updated: 2026-07-13
+Last updated: 2026-07-14
 Audience: developers and AI assistants
 
 ## What My Scoope is
@@ -40,6 +40,7 @@ My Scoope is past the first architecture-expansion phase. The current priority i
 - Treat app boundaries by maturity: mature apps should be stricter; transitional legacy areas can use pragmatic bridges.
 - AI tools should be allowlisted, observable and proposal-first for writes.
 - AI Assistant behavior should favor LLM freedom through typed tool contracts over prompt over-structuring or deterministic conversational guards.
+- Behavioral alignment should direct the assistant through product purpose, current state, capabilities and boundaries rather than fixed dialogue scripts.
 - User-visible credits are product/account concepts; provider tokens and costs are internal observability concepts.
 - Food Catalog is the master/curation layer; operational `notas.Food` remains the runtime snapshot consumed by existing flows.
 - Nutrition Solver should provide reusable calculation/validation capability, mainly through AI Assistant and backend integrations.
@@ -78,11 +79,11 @@ When a plan becomes real, durable outcomes should be promoted into `docs/00_curr
 - Nutrition Solver separation baseline.
 - Food Catalog launch-readiness cycle.
 - AI Assistant activation/observability/credits guardrails.
-- AI Assistant Client Memory & Profile Objects baseline CM00-CM13, followed by the active LLM-native alignment extension. CM19 separates silent draft updates from explicit card sharing; CM20 simplifies provider context; CM21 removes fixed intake order and numeric question caps; CM22 protects the LLM-native experience through state/tool/card/persistence invariants; CM23 isolates the legacy deterministic runtime; CM24 adds the controlled real-provider UX validation gate.
+- AI Assistant Client Memory & Profile Objects and LLM-native alignment cycle CM00-CM24. The final real-provider gate and targeted UX rerun passed automated and human review, consolidating native function calling, grounded state transitions, explicit cards and state-only technical fallbacks.
 
 ## Planned near-term cycles
 
-- AI Assistant LLM-native alignment remains at the final CM24 human-UX closure step. The eighth complete live report passed every automated invariant, including grouped state, proposal readiness, native tools, cards, direction changes, error recovery and usage observability. Human review found one local fallback defect: when the provider failed only after successful tools, My Scoope repeated a backend-selected profile-source question. Decision 0117 makes post-tool local acknowledgements state-only and adds `post_tool_fallback_pacing`; a targeted `cambio_de_direccion` live rerun and transcript disposition are the remaining closure evidence. Persistent preference memory and richer body-state history remain later product cycles. See `docs/40_technical/qa/ai_assistant_real_provider_validation.md`.
+- AI Assistant Behavioral Alignment BA00-BA07 is active. BA00 closes the CM predecessor and defines the cycle; BA01 adds the focused `ai_behavior` export. BA02-BA07 will address domain anchoring, capability abstraction, ambiguous-intent restraint, goal-directed agency, response quality and behavioral validation without restoring a deterministic questionnaire.
 
 ## Current work style
 

@@ -120,6 +120,7 @@ class ConversationReplayScenario:
     forbidden_tool_names: Sequence[str] = field(default_factory=tuple)
     expected_final_card_counts: Mapping[str, int] = field(default_factory=dict)
     expected_reviewable_proposal_delta: int = 0
+    max_tool_calls: int | None = None
 
 
 @dataclass(frozen=True)
@@ -205,6 +206,7 @@ class ConversationReplayResult:
     def invariant_outcomes(self) -> list[ReplayInvariantOutcome]:
         checks = (
             ("visible_boundary", self._assert_visible_boundary),
+            ("provider_contract", self._assert_provider_contract),
             ("expected_brief", self._assert_expected_brief),
             ("stable_captured_facts", self._assert_stable_captured_facts),
             ("known_facts_not_reasked", self._assert_known_facts_not_reasked),
@@ -252,6 +254,20 @@ class ConversationReplayResult:
             if fragment and fragment not in visible_blob:
                 raise AssertionError(f"required visible fragment was not shown: {fragment!r}")
         return "visible text contains no provider envelope or internal state markers"
+
+    def _assert_provider_contract(self) -> str:
+        parse_errors = [
+            (turn.index, str(turn.metadata.get("llm_provider_parse_error") or "").strip())
+            for turn in self.turns
+            if str(turn.metadata.get("llm_provider_parse_error") or "").strip()
+        ]
+        if parse_errors:
+            details = "; ".join(
+                f"turn {turn_index}: {parse_error}"
+                for turn_index, parse_error in parse_errors
+            )
+            raise AssertionError(f"provider response violated the semantic contract: {details}")
+        return "provider responses satisfied the structured semantic contract"
 
     def _assert_expected_brief(self) -> str:
         for field_name, expected_value in dict(self.scenario.expected_brief or {}).items():
@@ -333,6 +349,10 @@ class ConversationReplayResult:
         used_forbidden = actual.intersection(forbidden)
         if used_forbidden:
             raise AssertionError(f"forbidden apply tool(s) were requested: {sorted(used_forbidden)}")
+        if self.scenario.max_tool_calls is not None and len(self.all_tool_names) > self.scenario.max_tool_calls:
+            raise AssertionError(
+                f"expected at most {self.scenario.max_tool_calls} tool call(s), got {len(self.all_tool_names)}"
+            )
         return f"{len(actual)} distinct tool(s) respected the scenario contract"
 
     def _assert_brief_transitions(self) -> str:
@@ -372,6 +392,9 @@ def built_in_replay_scenarios() -> dict[str, ConversationReplayScenario]:
         "datos_agrupados_orden_libre": _grouped_facts_free_order_scenario(),
         "cambio_direccion": _change_direction_scenario(),
         "json_visible_boundary": _json_visible_boundary_scenario(),
+        "tema_externo_breve": _off_domain_brief_scenario(),
+        "capacidades_sin_internals": _capabilities_product_language_scenario(),
+        "referencia_ambigua_sin_tools": _ambiguous_reference_scenario(),
     }
 
 
@@ -1117,4 +1140,65 @@ def _json_visible_boundary_scenario() -> ConversationReplayScenario:
             "preference": 0,
             "proposal_preferences": 0,
         },
+    )
+
+
+def _off_domain_brief_scenario() -> ConversationReplayScenario:
+    return ConversationReplayScenario(
+        key="tema_externo_breve",
+        description="Off-domain conversation stays brief, polite and tool-free.",
+        user_messages=("¿Qué opinas del mundial de fútbol?",),
+        provider_responses=(
+            assistant_envelope(
+                "Es un evento enorme y suele generar momentos memorables. En My Scoope puedo ayudarte con tu alimentación, planes y propuestas nutricionales.",
+                intent="small_talk",
+            ),
+        ),
+        required_visible_fragments=("My Scoope",),
+        forbidden_visible_fragments=("read_user_profile_context", "tool_requests", "MCP"),
+        max_tool_calls=0,
+        expected_final_card_counts={"profile": 0, "preference": 0, "proposal_preferences": 0},
+    )
+
+
+def _capabilities_product_language_scenario() -> ConversationReplayScenario:
+    return ConversationReplayScenario(
+        key="capacidades_sin_internals",
+        description="Capabilities are explained as product outcomes, not internal functions.",
+        user_messages=("¿Qué puedes hacer por mí dentro de My Scoope?",),
+        provider_responses=(
+            assistant_envelope(
+                "Puedo revisar tu ficha nutricional, ayudarte a organizar comidas y planes, comparar propuestas con tus objetivos y preparar alternativas para que las revises antes de aplicarlas.",
+                intent="answer_question",
+            ),
+        ),
+        required_visible_fragments=("ficha nutricional", "revises"),
+        forbidden_visible_fragments=(
+            "read_user_profile_context",
+            "update_profile_draft",
+            "create_validated_",
+            "tool_requests",
+            "MCP",
+            "schema",
+        ),
+        max_tool_calls=0,
+        expected_final_card_counts={"profile": 0, "preference": 0, "proposal_preferences": 0},
+    )
+
+
+def _ambiguous_reference_scenario() -> ConversationReplayScenario:
+    return ConversationReplayScenario(
+        key="referencia_ambigua_sin_tools",
+        description="An ambiguous reference triggers one clarification and no product operation.",
+        user_messages=("¿Qué pasó con eso?",),
+        provider_responses=(
+            assistant_envelope(
+                "¿Te refieres a una propuesta, a tu ficha o a un plan que revisamos?",
+                intent="ask_clarification",
+            ),
+        ),
+        required_visible_fragments=("¿Te refieres",),
+        forbidden_visible_fragments=("tool_requests", "selection_reason", "missing_tool_selection_reason"),
+        max_tool_calls=0,
+        expected_final_card_counts={"profile": 0, "preference": 0, "proposal_preferences": 0},
     )

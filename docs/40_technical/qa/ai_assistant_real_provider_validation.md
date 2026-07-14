@@ -258,3 +258,28 @@ Perfecto. La propuesta queda como un programa semanal para bajar grasa, con 3 co
 
 The transcript must not repeat `Para seguir`, ask again whether to use the personal profile, or contradict “avancemos”. A passing targeted report plus explicit human approval closes CM24; another complete suite is not required because the preceding eighth report already passed every automated scenario.
 
+
+## BA06 targeted behavioral gate
+
+BA06 extends the existing live harness instead of introducing a second validation path.
+Run the targeted behavioral scenarios on staging with one explicit test user:
+
+```bash
+python manage.py validate_ai_assistant_real_provider \
+  --live \
+  --user-email user@example.com \
+  --scenario tema_externo_breve \
+  --scenario capacidades_en_lenguaje_de_producto \
+  --scenario referencia_ambigua_sin_tools \
+  --scenario datos_agrupados_y_cards \
+  --scenario cambio_de_direccion \
+  --output ba06_real_provider_report.json \
+  --fail-on-hard-regression
+```
+
+The JSON report exposes one of these gate states:
+
+- `blocked_by_hard_regression`: at least one automated invariant failed;
+- `awaiting_manual_review`: automated invariants passed, but transcript review is still required.
+
+For manual disposition, review every prompt emitted in `manual_review_prompts` and record, outside the report, the reviewer, date, scenario and `approved` or `changes_requested`. Do not copy API keys, environment variables or provider credentials into the evidence.

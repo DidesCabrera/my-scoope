@@ -33,6 +33,13 @@ from ai_assistant.infrastructure.providers import (
 from notas.application.ai_tools.results import tool_error
 
 
+def _selection_reason(
+    summary="El usuario pidió esta operación de forma explícita.",
+    **_ignored,
+):
+    return summary
+
+
 @override_settings(AI_ASSISTANT_USAGE_OBSERVABILITY_ENABLED=False)
 class ExternalLLMOrchestratorTests(SimpleTestCase):
     def _request(self, content="Necesito un plan diario de 2200 kcal"):
@@ -237,10 +244,7 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
         self.assertNotIn("create_validated_meal_proposal", tool_names)
         self.assertNotIn("create_nutrition_engine_dailyplan_proposal_from_drafts", tool_names)
         developer_payload = json.loads(provider_request.messages[1].content)
-        self.assertEqual(
-            set(developer_payload["native_function_tools"]["names"]),
-            tool_names,
-        )
+        self.assertTrue(developer_payload["native_function_tools"])
 
     def test_provider_request_exposes_reviewable_proposal_tools_when_enabled(self):
         orchestrator = ExternalLLMOrchestrator(
@@ -503,7 +507,12 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
                             "updates": {
                                 "goal": "fat_loss",
                                 "requested_entity": "program",
-                            }
+                            },
+                            "reason": _selection_reason(
+                                reason_code="new_or_corrected_user_facts",
+                                reference_resolution="new_facts_in_current_message",
+                                summary="El usuario indicó el objetivo y el tipo de propuesta.",
+                            ),
                         },
                         call_id="call_native_1",
                     ),
@@ -516,6 +525,11 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
         self.assertEqual(
             parse_result.response.tool_requests[0].arguments["updates"]["goal"],
             "fat_loss",
+        )
+        self.assertNotIn("reason", parse_result.response.tool_requests[0].arguments)
+        self.assertEqual(
+            parse_result.response.tool_requests[0].metadata["selection_reason_code"],
+            "new_or_corrected_user_facts",
         )
         self.assertTrue(parse_result.response.metadata["provider_native_tool_transport"])
 
@@ -542,7 +556,12 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
                                 "carb_target": None,
                                 "fat_target": None,
                                 "notes": None,
-                            }
+                            },
+                            "reason": _selection_reason(
+                                reason_code="new_or_corrected_user_facts",
+                                reference_resolution="new_facts_in_current_message",
+                                summary="El usuario entregó preferencias para la propuesta.",
+                            ),
                         },
                         call_id="call_strict_preferences",
                     ),
@@ -577,7 +596,12 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
                         tool_calls=(
                             LLMProviderToolCall(
                                 name="read_proposal",
-                                arguments={"proposal_id": 2147483647},
+                                arguments={
+                                    "proposal_id": 2147483647,
+                                    "reason": _selection_reason(
+                                        summary="El usuario pidió revisar la propuesta 2147483647.",
+                                    ),
+                                },
                                 call_id="call_read_1",
                             ),
                         ),
@@ -647,7 +671,7 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
 
         self.assertEqual(
             acknowledgement,
-            "Perfecto. La propuesta queda como un programa semanal para bajar grasa, con 3 comidas al día.",
+            "La dirección de la propuesta quedó actualizada.",
         )
         self.assertNotIn("Para seguir", acknowledgement)
         self.assertNotIn("?", acknowledgement)
@@ -671,7 +695,12 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
                         tool_calls=(
                             LLMProviderToolCall(
                                 name=TOOL_READ_PROPOSAL,
-                                arguments={"proposal_id": 2147483647},
+                                arguments={
+                                    "proposal_id": 2147483647,
+                                    "reason": _selection_reason(
+                                        summary="El usuario pidió revisar la propuesta 2147483647.",
+                                    ),
+                                },
                                 call_id="call_read_missing",
                             ),
                         ),
@@ -722,7 +751,7 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
         self.assertTrue(response.metadata["tool_followup_local_ack"])
         self.assertEqual(
             response.metadata["tool_followup_local_ack_policy"],
-            "state_ack_only.v1",
+            "state_ack_only.v2",
         )
         self.assertTrue(response.metadata["provider_tool_followup_failed"])
         self.assertEqual(

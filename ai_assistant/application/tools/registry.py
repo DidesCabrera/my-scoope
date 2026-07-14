@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Iterable
 
+from ai_assistant.application.tool_governance import add_provider_tool_selection_reason
 from ai_assistant.application.tools.contracts import (
     AssistantToolCategory,
     AssistantToolRegistryError,
@@ -781,7 +782,7 @@ def list_provider_tool_specs() -> list[dict[str, Any]]:
                 "parameters": _strict_proposal_preferences_provider_schema(),
                 "strict": True,
             }
-        provider_specs.append(provider_spec)
+        provider_specs.append(add_provider_tool_selection_reason(provider_spec))
     return provider_specs
 
 

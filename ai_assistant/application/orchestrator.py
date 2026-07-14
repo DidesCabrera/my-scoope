@@ -9,6 +9,7 @@ from django.conf import settings
 
 from ai_assistant.application.audit import build_audit_snapshot, sanitize_audit_value
 from ai_assistant.application.context_builder import sanitize_provider_context
+from ai_assistant.application.conversational_agency import developer_goal_directed_agency_policy
 from ai_assistant.application.credits import AICreditCheck, DjangoAICreditService
 from ai_assistant.application.limits import (
     AILimitViolation,
@@ -21,6 +22,17 @@ from ai_assistant.application.model_routing import (
     AIModelRoute,
     resolve_model_route_for_turn,
     route_max_output_tokens,
+)
+from ai_assistant.application.product_context import (
+    developer_product_capability_policy,
+    system_domain_anchor_lines,
+)
+from ai_assistant.application.tool_governance import (
+    developer_tool_governance_policy,
+    extract_provider_tool_selection_reason,
+    safe_tool_selection_observability,
+    system_tool_restraint_lines,
+    tool_selection_reason_error,
 )
 from ai_assistant.application.response_style import (
     developer_response_style_policy,
@@ -622,7 +634,7 @@ class ExternalLLMOrchestrator:
             ),
             LLMMessage(
                 role="developer",
-                content=self._tool_results_prompt(tool_results, remaining_tool_iterations=0),
+                content=self._compact_tool_results_prompt(tool_results),
             ),
             LLMMessage(
                 role="user",
@@ -925,6 +937,15 @@ class ExternalLLMOrchestrator:
                     if request.metadata.get("provider_transport") == "native_function_call.v1"
                 ]
             ),
+            "tool_selection_reasons": [
+                {
+                    "tool_name": request.tool_name,
+                    "request_id": request.request_id,
+                    **safe_tool_selection_observability(request.metadata),
+                }
+                for request in effective_tool_requests
+                if request.metadata.get("provider_transport") == "native_function_call.v1"
+            ],
         }
         if first_provider_response_id:
             metadata["first_provider_response_id"] = first_provider_response_id
@@ -1174,7 +1195,7 @@ class ExternalLLMOrchestrator:
                 metadata={
                     "provider_response_was_json": True,
                     "tool_followup_local_ack": True,
-                    "tool_followup_local_ack_policy": "state_ack_only.v1",
+                    "tool_followup_local_ack_policy": "state_ack_only.v2",
                     "technical_limit_blocked_after_tools": True,
                     "technical_limit_error_code": violation.error_code,
                     "technical_limit_details": dict(violation.details or {}),
@@ -1224,7 +1245,7 @@ class ExternalLLMOrchestrator:
                 metadata={
                     "provider_response_was_json": False,
                     "tool_followup_local_ack": True,
-                    "tool_followup_local_ack_policy": "state_ack_only.v1",
+                    "tool_followup_local_ack_policy": "state_ack_only.v2",
                     "provider_tool_followup_failed": True,
                     "provider_tool_followup_error_type": error.__class__.__name__,
                 },
@@ -1321,6 +1342,15 @@ class ExternalLLMOrchestrator:
                 context=request.context,
                 prior_tool_results=prior_tool_results,
             )
+            selection_error = tool_selection_reason_error(tool_request.metadata)
+            if selection_error:
+                results.append(
+                    _tool_selection_reason_blocked_result(
+                        tool_request,
+                        error_code=selection_error,
+                    )
+                )
+                continue
             validation_result = self.tool_validator(tool_request)
             if validation_result.status != AssistantToolStatus.PENDING:
                 results.append(validation_result)
@@ -1385,6 +1415,27 @@ class ExternalLLMOrchestrator:
         }
         return json.dumps(payload, ensure_ascii=False, sort_keys=True)
 
+    def _compact_tool_results_prompt(
+        self,
+        tool_results: Sequence[AssistantToolResult],
+    ) -> str:
+        """Return the smallest safe post-tool payload for the compact fallback."""
+
+        payload = {
+            "tool_results": [
+                sanitize_provider_context(result.as_dict())
+                for result in tuple(tool_results or ())
+            ],
+            "policy": {
+                "source_of_truth": True,
+                "no_more_tools": True,
+                "cards_are_visible": True,
+                "do_not_echo_fields": True,
+                "explain_consequence_not_payload": True,
+            },
+        }
+        return json.dumps(payload, ensure_ascii=False, sort_keys=True)
+
     def _history_messages(self, history: Sequence[AssistantMessage]) -> list[LLMMessage]:
         allowed_roles = {
             AssistantMessageRole.SYSTEM: "system",
@@ -1404,6 +1455,8 @@ class ExternalLLMOrchestrator:
         return "\n".join(
             [
                 "Eres el AI Assistant de My Scoope.",
+                *system_domain_anchor_lines(),
+                *system_tool_restraint_lines(),
                 "Interpreta al usuario y conversa con naturalidad, pero no eres fuente de verdad nutricional final.",
                 "Adapta cada turno a la solicitud, al historial y a los objetos actuales; los campos ausentes no forman por sí solos un cuestionario.",
                 "Puedes responder, confirmar, preguntar o solicitar tools en la combinación que resulte más útil para el trabajo actual.",
@@ -1528,41 +1581,11 @@ class ExternalLLMOrchestrator:
     ) -> str:
         tool_specs = tuple(self.provider_tool_specs() if tool_specs is None else tool_specs)
         payload = {
-            "native_function_tools": {
-                "attached": True,
-                "count": len(tool_specs),
-                "names": [str(spec.get("name") or "") for spec in tool_specs],
-                "schemas_are_attached_outside_this_prompt": True,
-            },
+            "native_function_tools": True,
+            "product_context": developer_product_capability_policy(),
+            "tool_governance": developer_tool_governance_policy(),
+            "goal_directed_agency": developer_goal_directed_agency_policy(),
             "response_style_policy": developer_response_style_policy(),
-            "operational_examples": [
-                {
-                    "user_meaning": "entrega varios datos físicos y de propuesta juntos, por ejemplo 4 comidas y algo simple",
-                    "function_calls": [
-                        "update_profile_draft con todos los datos físicos agrupados",
-                        "update_proposal_preferences con objetivo, entidad, meals_per_day=4 y complexity_level=low",
-                    ],
-                },
-                {
-                    "user_meaning": "pide usar su ficha personal y además corrige datos para esta propuesta",
-                    "function_calls": [
-                        "read_user_profile_context",
-                        "update_profile_draft con las correcciones de este turno",
-                    ],
-                },
-                {
-                    "user_meaning": "cambia objetivo, tipo de propuesta o número de comidas",
-                    "function_calls": [
-                        "update_proposal_preferences con todos los cambios del turno",
-                    ],
-                },
-                {
-                    "user_meaning": "pide ver una ficha o preferencias como objeto",
-                    "function_calls": [
-                        "la function tool share_*_card correspondiente",
-                    ],
-                },
-            ],
             "policy": {
                 "reviewable_proposal_tools_enabled": self.config.enable_reviewable_proposal_tools,
                 "proposal_preferences_are_not_personal_profile_memory": True,
@@ -1577,6 +1600,8 @@ class ExternalLLMOrchestrator:
                 "assistant_message_before_tool_results_must_not_claim_the_operation_already_happened": True,
                 "explicit_read_and_card_requests_require_matching_tools": True,
                 "do_not_claim_attached_tools_are_unavailable": True,
+                "explain_capabilities_in_product_language_not_function_names": True,
+                "internal_tool_names_and_schemas_are_not_user_facing_copy": True,
                 "tool_descriptions_and_schemas_define_field_meaning_and_normalization": True,
                 "do_not_encode_tool_calls_inside_the_text_json": True,
                 "my_scoope_renders_cards_from_tool_results_not_from_plain_text": True,
@@ -1622,13 +1647,20 @@ def _coerce_provider_tool_calls(
             return (), f"native_tool_call_{index}:{call.parse_error}"
         if not call.name:
             return (), f"native_tool_call_{index}:missing_function_name"
+        local_arguments, selection_reason, selection_metadata = extract_provider_tool_selection_reason(
+            _without_none_values(call.arguments),
+            tool_name=call.name,
+        )
         requests.append(
             AssistantToolRequest(
                 tool_name=call.name,
-                arguments=_without_none_values(call.arguments),
+                arguments=local_arguments,
                 request_id=call.call_id or f"native_tool_call_{index}",
-                reason="Provider-native function call.",
-                metadata={"provider_transport": "native_function_call.v1"},
+                reason=selection_reason,
+                metadata={
+                    "provider_transport": "native_function_call.v1",
+                    **selection_metadata,
+                },
             )
         )
     return tuple(requests), ""
@@ -1764,37 +1796,48 @@ def _has_ok_tool_results(tool_results: Sequence[AssistantToolResult]) -> bool:
 
 
 def _local_acknowledgement_from_tool_results(tool_results: Sequence[AssistantToolResult]) -> str:
-    """Acknowledge validated tool state without choosing the next conversation step.
+    """Acknowledge validated state without echoing fields or planning the dialogue.
 
-    This path is used only when the provider-native function call already ran
-    but the post-tool wording request failed or exceeded a technical limit. It
-    may summarize controlled tool results, but it must not become a local
-    interviewer, infer a missing-field agenda or append a follow-up question.
+    This path exists only when the provider cannot word the post-tool response.
+    It reports a bounded product consequence, never recites card contents, never
+    lists values the user just supplied and never selects the next question.
     """
 
     successful = [result for result in tuple(tool_results or ()) if result.ok]
     errors = [result for result in tuple(tool_results or ()) if not result.ok]
+    successful_names = {result.tool_name for result in successful}
 
     statements: list[str] = []
-    successful_names = {result.tool_name for result in successful}
     if TOOL_UPDATE_PROFILE_DRAFT in successful_names:
-        statements.append("Registré los datos físicos entregados para esta conversación.")
+        statements.append("Los datos físicos quedaron actualizados para esta conversación.")
     if TOOL_UPDATE_PREFERENCE_DRAFT in successful_names:
-        statements.append("Actualicé las preferencias alimentarias de esta propuesta.")
+        statements.append("Las preferencias alimentarias quedaron actualizadas para esta propuesta.")
+    if TOOL_UPDATE_PROPOSAL_PREFERENCES in successful_names:
+        statements.append("La dirección de la propuesta quedó actualizada.")
 
-    proposal_summary = _proposal_state_summary_from_tool_results(successful)
-    if proposal_summary:
-        statements.append(f"{proposal_summary}.")
+    if successful_names.intersection(
+        {
+            TOOL_SHARE_PROFILE_DRAFT_CARD,
+            TOOL_SHARE_PREFERENCE_DRAFT_CARD,
+            TOOL_SHARE_PROPOSAL_PREFERENCES_CARD,
+        }
+    ):
+        statements.append("La información está disponible en la card para revisión.")
+
+    if any(name.startswith("create_") for name in successful_names):
+        statements.append("La propuesta quedó creada y disponible para revisión.")
+    elif any(name.startswith("iterate_") for name in successful_names):
+        statements.append("La propuesta quedó actualizada y disponible para revisión.")
+    elif any(name.startswith(("compare_", "validate_", "preview_")) for name in successful_names):
+        statements.append("El resultado quedó listo para revisión.")
+    elif any(name.startswith(("read_", "list_", "search_")) for name in successful_names):
+        statements.append("La información solicitada quedó disponible.")
+    elif any(name.startswith(("commit_", "save_", "apply_")) for name in successful_names):
+        statements.append("El cambio autorizado quedó guardado.")
 
     if statements:
-        return f"Perfecto. {' '.join(statements)}"
+        return " ".join(dict.fromkeys(statements))
 
-    captured = _captured_labels_from_tool_results(successful)
-    if captured:
-        visible = ", ".join(captured[:3])
-        if len(captured) > 3:
-            visible = f"{visible} y otros datos"
-        return f"Perfecto. Dejé registrado {visible}."
     if errors:
         for result in errors:
             if result.tool_name == TOOL_READ_PROPOSAL and result.error_code == "not_found":
@@ -1803,159 +1846,11 @@ def _local_acknowledgement_from_tool_results(tool_results: Sequence[AssistantToo
                     "Puede que no exista o que no esté visible para tu cuenta. No hice ningún cambio."
                 )
         if all(result.tool_name.startswith(("read_", "list_", "search_")) for result in errors):
-            return "No pude encontrar esa información con los datos disponibles. No hice ningún cambio."
-        return "No pude completar esa operación con los datos disponibles, pero no apliqué ningún cambio."
-    return "Perfecto. Dejé esa información registrada para esta conversación."
+            return "No encontré esa información con los datos disponibles. No hice ningún cambio."
+        return "No pude completar la operación con los datos disponibles. No apliqué ningún cambio."
 
+    return "La información quedó actualizada para esta conversación."
 
-def _proposal_state_summary_from_tool_results(
-    tool_results: Sequence[AssistantToolResult],
-) -> str:
-    """Describe the latest validated proposal draft without asking what comes next."""
-
-    proposal_preferences: Mapping[str, Any] | None = None
-    for result in tuple(tool_results or ()):
-        if not result.ok or result.tool_name != TOOL_UPDATE_PROPOSAL_PREFERENCES:
-            continue
-        candidate = dict(result.data or {}).get("proposal_preferences")
-        if isinstance(candidate, Mapping):
-            proposal_preferences = candidate
-
-    if not proposal_preferences:
-        return ""
-
-    entity_labels = {
-        "daily_plan": "un plan diario",
-        "program": "un programa semanal",
-    }
-    complexity_labels = {
-        "low": "en una versión simple",
-        "medium": "con complejidad intermedia",
-        "high": "en una versión más elaborada",
-    }
-
-    entity = entity_labels.get(str(proposal_preferences.get("requested_entity") or "").strip())
-    goal_value = str(proposal_preferences.get("goal") or "").strip()
-    goal = _proposal_goal_label(goal_value) if goal_value else ""
-    meals = proposal_preferences.get("meals_per_day")
-    complexity = complexity_labels.get(
-        str(proposal_preferences.get("complexity_level") or "").strip()
-    )
-
-    if entity and goal:
-        summary = f"La propuesta queda como {entity} para {goal}"
-    elif entity:
-        summary = f"La propuesta queda como {entity}"
-    elif goal:
-        summary = f"La propuesta queda orientada a {goal}"
-    else:
-        summary = "Actualicé las preferencias de esta propuesta"
-
-    modifiers: list[str] = []
-    if meals:
-        modifiers.append(f"con {meals} comidas al día")
-    if complexity:
-        modifiers.append(complexity)
-    if modifiers:
-        summary = f"{summary}, {', '.join(modifiers)}"
-    return summary
-
-
-def _captured_labels_from_tool_results(tool_results: Sequence[AssistantToolResult]) -> list[str]:
-    labels: list[str] = []
-    seen: set[str] = set()
-
-    def add(label: str) -> None:
-        clean = " ".join(str(label or "").split())
-        key = clean.lower()
-        if clean and key not in seen:
-            seen.add(key)
-            labels.append(clean)
-
-    for result in tuple(tool_results or ()):  # local fallback only reads controlled tool data
-        if not result.ok:
-            continue
-        data = dict(result.data or {})
-
-        proposal_preferences = data.get("proposal_preferences")
-        if isinstance(proposal_preferences, Mapping):
-            goal = str(proposal_preferences.get("goal") or "").strip()
-            if goal:
-                add(f"objetivo: {_proposal_goal_label(goal)}")
-            meals = proposal_preferences.get("meals_per_day")
-            if meals:
-                add(f"comidas: {meals} al día")
-
-        profile_draft = data.get("profile_draft")
-        if isinstance(profile_draft, Mapping):
-            if profile_draft.get("weight_kg"):
-                add(f"peso: {profile_draft.get('weight_kg')} kg")
-            if profile_draft.get("height_cm"):
-                add(f"altura: {profile_draft.get('height_cm')} cm")
-            if profile_draft.get("age_years"):
-                add(f"edad: {profile_draft.get('age_years')} años")
-            if profile_draft.get("sex"):
-                add(f"sexo: {_sex_label(profile_draft.get('sex'))}")
-            if profile_draft.get("activity_level"):
-                add(f"actividad: {_activity_label(profile_draft.get('activity_level'))}")
-            if profile_draft.get("training_frequency") is not None:
-                add(f"entrenamiento: {profile_draft.get('training_frequency')} veces por semana")
-
-        preference_draft = data.get("preference_draft")
-        if isinstance(preference_draft, Mapping):
-            avoided = _list_preview(preference_draft.get("avoided_foods"))
-            if avoided:
-                add(f"alimentos evitados: {avoided}")
-            preferred = _list_preview(preference_draft.get("preferred_foods"))
-            if preferred:
-                add(f"alimentos preferidos: {preferred}")
-
-        patch = data.get("nutrition_brief_patch")
-        if isinstance(patch, Mapping):
-            if patch.get("goal"):
-                add(f"objetivo: {_proposal_goal_label(patch.get('goal'))}")
-            if patch.get("meals_per_day"):
-                add(f"comidas: {patch.get('meals_per_day')} al día")
-    return labels
-
-
-def _proposal_goal_label(value: object) -> str:
-    labels = {
-        "fat_loss": "bajar grasa",
-        "muscle_gain": "ganar masa muscular",
-        "maintenance": "mantener",
-        "performance": "rendimiento",
-        "healthy_eating": "comer mejor",
-    }
-    return labels.get(str(value or "").strip(), str(value or "").strip())
-
-
-def _sex_label(value: object) -> str:
-    labels = {"male": "hombre", "female": "mujer"}
-    return labels.get(str(value or "").strip(), str(value or "").strip())
-
-
-def _activity_label(value: object) -> str:
-    labels = {
-        "sedentary": "sedentaria",
-        "light": "ligera",
-        "moderate": "moderada",
-        "high": "alta",
-        "very_high": "muy alta",
-    }
-    return labels.get(str(value or "").strip(), str(value or "").strip())
-
-
-def _list_preview(value: object) -> str:
-    if value is None:
-        return ""
-    if isinstance(value, str):
-        items = [part.strip() for part in value.replace(";", ",").split(",") if part.strip()]
-    elif isinstance(value, (list, tuple, set)):
-        items = [str(item).strip() for item in value if str(item).strip()]
-    else:
-        items = [str(value).strip()]
-    return ", ".join(items[:3])
 
 
 
@@ -2038,6 +1933,30 @@ def _context_current_draft(context: Mapping[str, Any], draft_key: str) -> dict[s
     current_drafts = dict(tool_oriented.get("current_drafts") or {})
     draft = current_drafts.get(draft_key)
     return dict(draft) if isinstance(draft, Mapping) else {}
+
+
+def _tool_selection_reason_blocked_result(
+    request: AssistantToolRequest,
+    *,
+    error_code: str,
+) -> AssistantToolResult:
+    return AssistantToolResult(
+        tool_name=request.tool_name,
+        status=AssistantToolStatus.BLOCKED,
+        request_id=request.request_id,
+        error_code=error_code,
+        error_message=(
+            "Provider-native tool execution requires a clear, observable selection basis. "
+            "The assistant should clarify the user's intent instead of guessing."
+        ),
+        metadata={
+            "executor": "controlled_tool_loop.v1",
+            "tool_governance": "ambiguous_intent_restraint.v1",
+            "writes_allowed": False,
+            "applies_changes": False,
+            **safe_tool_selection_observability(request.metadata),
+        },
+    )
 
 
 def _tool_requests_limit_result(request: AssistantToolRequest, *, max_tool_requests: int) -> AssistantToolResult:

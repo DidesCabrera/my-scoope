@@ -35,7 +35,7 @@ class AssistantResponseStylePolicyTests(SimpleTestCase):
         serialized = json.dumps(policy, ensure_ascii=False)
 
         self.assertEqual(policy["version"], ASSISTANT_RESPONSE_STYLE_VERSION)
-        self.assertEqual(ASSISTANT_RESPONSE_STYLE_VERSION, "ai_assistant_response_style.v2")
+        self.assertEqual(ASSISTANT_RESPONSE_STYLE_VERSION, "ai_assistant_response_style.v3")
         self.assertIn("Questions are optional and are not limited to a fixed count", serialized)
         self.assertNotIn("question_dosing", serialized)
         self.assertNotIn("profile_completion_pace", serialized)
@@ -66,19 +66,19 @@ class AssistantResponseStylePolicyTests(SimpleTestCase):
         self.assertIn("training_frequency", updates_description)
         self.assertNotIn("use_proposal_preferences_tools_for_goal_meals_and_targets", developer_payload["policy"])
 
-    def test_grouped_proposal_example_keeps_complexity_in_the_function_call(self):
+    def test_proposal_complexity_guidance_lives_in_the_typed_tool_schema(self):
         developer_payload = json.loads(self.orchestrator._developer_prompt())
-        grouped_example = next(
-            item for item in developer_payload["operational_examples"]
-            if "algo simple" in item["user_meaning"]
+        proposal_tool = next(
+            spec for spec in self.orchestrator.provider_tool_specs()
+            if spec["name"] == TOOL_UPDATE_PROPOSAL_PREFERENCES
         )
-        proposal_call = next(
-            item for item in grouped_example["function_calls"]
-            if TOOL_UPDATE_PROPOSAL_PREFERENCES in item
+        complexity = (
+            proposal_tool["parameters"]["properties"]["updates"]["properties"]["complexity_level"]
         )
 
-        self.assertIn("meals_per_day=4", proposal_call)
-        self.assertIn("complexity_level=low", proposal_call)
+        self.assertNotIn("operational_examples", developer_payload)
+        self.assertIn("algo simple", complexity["description"])
+        self.assertIn("low", complexity["enum"])
 
     def test_deterministic_question_policy_is_outside_provider_runtime_package(self):
         self.assertEqual(

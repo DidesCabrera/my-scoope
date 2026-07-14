@@ -1,8 +1,8 @@
 # AI Assistant Client Memory & Profile Objects Cycle
 
-Status: active alignment extension (CM00-CM13 baseline completed)
+Status: completed (CM00-CM24)
 Date: 2026-07-09
-Completed: 2026-07-10
+Completed: 2026-07-14
 Owner: Product / AI Assistant / Nutrition UX
 App targets: `ai_assistant`, `notas`, future profile/preference services
 Related areas: onboarding nutrition profile, proposals, comparators, nutrition solver
@@ -710,8 +710,9 @@ Future AI Assistant behavior patches should pass these scenario replays before b
 
 ## LLM-native alignment extension
 
-Status: active
+Status: completed
 Started: 2026-07-13
+Completed: 2026-07-14
 
 The CM00-CM13 baseline established the correct product architecture, and CM17-CM18 added diagnostic coverage. Real conversations and replay inspection then showed that parts of the implementation still encoded the previous questionnaire mindset.
 
@@ -848,7 +849,7 @@ LLM mode           -> LLM + tools + typed state/readiness; no backend-owned next
 
 Decision: `docs/20_decisions/0108-ai-assistant-legacy-deterministic-boundary-isolation.md`.
 
-### CM24 — Real-provider UX validation and alignment closure — harness implemented, live gate pending
+### CM24 — Real-provider UX validation and alignment closure — completed
 
 CM24 adds `validate_ai_assistant_real_provider`, an explicit staging command that runs synthetic scenarios through the configured non-fake provider and produces a JSON evidence report. The command requires `--live`, one existing staging user and usage observability. It uses the LLM preview runtime directly and disables reviewable proposal tools, so validation can exercise drafts, reads, cards, readiness and tool-error recovery without creating proposals or final nutrition entities.
 
@@ -994,6 +995,28 @@ CM24 now treats post-tool local acknowledgements as state-only. They summarize v
 Perfecto. La propuesta queda como un programa semanal para bajar grasa, con 3 comidas al día.
 ```
 
-The CM24 report exposes the local-ack policy and adds the hard invariant `post_tool_fallback_pacing`. A targeted live rerun of `cambio_de_direccion` plus human disposition is the remaining closure evidence.
+The CM24 report exposes the local-ack policy and adds the hard invariant `post_tool_fallback_pacing`. The targeted `cambio_de_direccion` rerun and human disposition later passed; final closure evidence is recorded below.
 
 Decision: `docs/20_decisions/0117-ai-assistant-post-tool-local-ack-state-only.md`.
+
+
+### CM24 final closure evidence — completed
+
+The targeted real-provider rerun of `cambio_de_direccion` completed with run id `231a3f3aee1a480bb706a585b6bb8c72` against `openai/gpt-5.4-mini-2026-03-17`. All hard checks passed, including native function transport, state transitions, tool grounding, provider/usage observability and the new `post_tool_fallback_pacing` invariant.
+
+Human review accepted both remaining qualitative questions:
+
+```text
+- the assistant accepted the change immediately without insisting on the previous objective;
+- “avancemos sin más preferencias” was respected without another profile-source or optional-preference question.
+```
+
+The final transcript confirmed state-only acknowledgements:
+
+```text
+plan diario / ganar masa muscular
+-> programa semanal / bajar grasa
+-> programa semanal / bajar grasa / 3 comidas
+```
+
+CM24 and the CM19-CM24 alignment extension are therefore completed. Further work on domain identity, off-domain behavior, tool disclosure, ambiguous intent, initiative and response quality belongs to the separate Behavioral Alignment cycle.

@@ -14,7 +14,7 @@ from notas.application.ai_intake.real_provider_validation import (
 
 class Command(BaseCommand):
     help = (
-        "Run the controlled CM24 AI Assistant UX validation against the configured real provider. "
+        "Run the controlled BA06 AI Assistant UX validation against the configured real provider. "
         "This command consumes provider usage and, when enabled, AI credits."
     )
 
@@ -63,7 +63,7 @@ class Command(BaseCommand):
 
         if not options["live"]:
             raise CommandError(
-                "CM24 validation makes real provider calls. Re-run with --live after reviewing the selected scenarios."
+                "BA06 validation makes real provider calls. Re-run with --live after reviewing the selected scenarios."
             )
 
         try:
@@ -85,7 +85,7 @@ class Command(BaseCommand):
             path = Path(output_path)
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(serialized + "\n", encoding="utf-8")
-            self.stdout.write(self.style.SUCCESS(f"CM24 report written: {path}"))
+            self.stdout.write(self.style.SUCCESS(f"BA06 report written: {path}"))
 
         if options["json"]:
             self.stdout.write(serialized)
@@ -93,11 +93,11 @@ class Command(BaseCommand):
             self._write_summary(report)
 
         if options["fail_on_hard_regression"] and not report.passed:
-            raise CommandError(f"CM24 detected {len(report.hard_failures)} hard regression(s).")
+            raise CommandError(f"BA06 detected {len(report.hard_failures)} hard regression(s).")
 
     def _write_summary(self, report):
         marker = self.style.SUCCESS("AUTOMATED CHECKS PASSED") if report.passed else self.style.ERROR("HARD REGRESSION")
-        self.stdout.write("AI Assistant CM24 real-provider UX validation")
+        self.stdout.write("AI Assistant BA06 real-provider UX validation")
         self.stdout.write(f"run_id: {report.run_id}")
         self.stdout.write(f"provider/model: {report.provider}/{report.model}")
         self.stdout.write(f"status: {marker}")
@@ -115,6 +115,7 @@ class Command(BaseCommand):
                 self.stdout.write(f"    USER: {turn.user_message}")
                 self.stdout.write(f"    ASSISTANT: {turn.assistant_message}")
         self.stdout.write("")
+        self.stdout.write("ux_gate: awaiting_manual_review" if report.passed else "ux_gate: blocked_by_hard_regression")
         self.stdout.write(f"usage: {json.dumps(dict(report.usage_summary), ensure_ascii=False)}")
         self.stdout.write(f"credits: {json.dumps(dict(report.credit_summary), ensure_ascii=False)}")
         self.stdout.write("")

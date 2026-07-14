@@ -1,7 +1,7 @@
 # Export para ChatGPT / IA
 
 Status: current
-Last updated: 2026-07-08
+Last updated: 2026-07-14
 Audience: developers and AI assistants working with exported My Scoope context
 
 ## Purpose
@@ -50,6 +50,7 @@ No ejecutar el script desde una carpeta exportada, por ejemplo `proyecto_django_
 | `adminoperations` | El foco es backoffice operacional, usuarios, créditos, límites IA o auditoría | El cambio toca edición nutricional profunda |
 | `accounts` | El foco es Account, planes, suscripciones, créditos, entitlements u onboarding | El cambio es auth puro, AI Assistant profundo o UI nutricional amplia |
 | `aiassistant` | El foco es chat, tools, propuestas, usage, provider gateway, créditos IA o MCP | El cambio requiere todo el repo o solo documentación |
+| `ai_behavior` | El foco es identidad, anclaje de dominio, tool governance, iniciativa, respuestas, cards, replays o UX conversacional | El cambio es infraestructura IA amplia, billing o regresión transversal |
 | `auth` | El foco es login/signup, Google OAuth, allauth, rate limits, redirects o seguridad de acceso | El cambio toca reglas comerciales de Account sin auth |
 | `solver` | El foco es Nutrition Solver, contratos puros, validadores o frontera nutricional | El cambio es Food Catalog profundo o UI de usuario amplia |
 | `testing` | El foco es CI, regresiones, workflows, estructura de tests o salud de checks | El cambio es producto/UI sin impacto en tests |
@@ -294,6 +295,30 @@ Usar para:
 
 Preferir `full` si el cambio combina AI Assistant con muchas apps de producto o si se necesita una revisión amplia de regresiones.
 
+### `ai_behavior`
+
+Genera:
+
+```text
+../proyecto_django_export_ai_behavior.zip
+```
+
+Es el modo focalizado para **AI Assistant Behavioral Alignment & Tool Governance**.
+
+Usar para:
+
+- identidad y anclaje de dominio de My Scoope;
+- respuestas breves ante temas externos y retorno natural al producto;
+- abstracción de capacidades sin revelar nombres internos de tools;
+- cautela ante mensajes ambiguos;
+- iniciativa orientada a resultados;
+- calidad de respuestas posteriores a tools;
+- cards, replays y validación UX con proveedor real.
+
+Incluye el núcleo completo de `ai_assistant`, runtime `ai_intake`, AI tools, UI focalizada del chat, comandos de replay/live validation, tests conductuales y contratos mínimos con Account, Solver, Food Catalog y MCP.
+
+Preferir `aiassistant` cuando el foco sea infraestructura amplia del provider, créditos, ejecución de propuestas o integración MCP. Preferir `full` cuando el cambio cruce muchas apps, settings, migraciones o imports no cubiertos por la allowlist.
+
 ### `auth`
 
 Genera:
@@ -472,3 +497,38 @@ Evitar:
 El export debe ser parte de la arquitectura de colaboración con IA.
 
 No es solo una herramienta de compresión. Es una forma de decidir qué contexto merece atención para que My Scoope pueda evolucionar con más velocidad, menos ruido y menor riesgo.
+
+## Cycle-aware executable workspaces (EXP02)
+
+A focused export may now declare an executable validation contract.
+
+Use strict validation when a failed gate must prevent artifact creation:
+
+```bash
+./scripts/export_for_chatgpt.sh ai_behavior --validate
+```
+
+Use diagnostic validation when the workspace must still be shared to correct a
+failure:
+
+```bash
+./scripts/export_for_chatgpt.sh ai_behavior --validate-warn
+```
+
+`--validate-warn` creates the ZIP even when tests fail, marks the result in
+`EXPORT_MANIFEST.md` and includes `EXPORT_VALIDATION.log`. The default `auto`
+policy behaves the same way for executable workspaces, so a broken focused
+export remains inspectable. CI or release gates should keep using the explicit
+strict `--validate` option.
+
+Use `--no-validate` only when dependencies are unavailable and no executable
+evidence can be collected. `EXPORT_VALIDATE=always|warn|never|auto` provides the
+equivalent environment-level control.
+
+Every generated ZIP contains `EXPORT_MANIFEST.md` with its workspace type,
+purpose, fallback and validation commands. `ai_behavior` is the first fully
+migrated cycle workspace; other modes keep their previous behavior until their
+next architecture or cycle update.
+
+A new development cycle should document its primary export, fallback and test
+boundary before implementation patches begin.

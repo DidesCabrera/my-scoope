@@ -152,7 +152,7 @@ class ToolOrientedContextBuilderTests(SimpleTestCase):
         context = build_safe_llm_context(request, conversation_state=state).as_dict()
 
         tool_context = context["metadata"]["tool_oriented_intake"]
-        self.assertEqual(tool_context["version"], "ai_assistant_tool_oriented_intake.v8")
+        self.assertEqual(tool_context["version"], "ai_assistant_tool_oriented_intake.v9")
         self.assertEqual(tool_context["assistant_role"], "operator_assistant")
         self.assertEqual(tool_context["current_drafts"]["profile_draft"]["height_cm"], 188)
         self.assertEqual(tool_context["current_drafts"]["profile_draft"]["weight_kg"], 85.0)
@@ -217,7 +217,7 @@ class ToolOrientedContextBuilderTests(SimpleTestCase):
         context_text = str(context)
         tool_context = context["metadata"]["tool_oriented_intake"]
 
-        self.assertEqual(tool_context["version"], "ai_assistant_tool_oriented_intake.v8")
+        self.assertEqual(tool_context["version"], "ai_assistant_tool_oriented_intake.v9")
         self.assertEqual(tool_context["current_drafts"]["profile_draft"]["weight_kg"], 85.0)
         self.assertNotIn("nutrition_brief", context)
         self.assertNotIn("ppk_weight_source", context_text)
