@@ -10,4 +10,5 @@ export RATE_LIMIT_AI_ASSISTANT_TURN_USER="${RATE_LIMIT_AI_ASSISTANT_TURN_USER:-1
 export RATE_LIMIT_AI_ASSISTANT_TURN_IP="${RATE_LIMIT_AI_ASSISTANT_TURN_IP:-10000/h}"
 
 python manage.py check
+python manage.py test core.tests.regressions
 python manage.py test

@@ -19,7 +19,12 @@
         </div>
       {% endif %}
 
-        <div class="ai-chat-thread" data-ai-chat-thread aria-live="polite">
+        <div class="ai-chat-scroll-actions" aria-label="Navegación del chat">
+          <button type="button" class="ai-chat-scroll-action" data-ai-chat-scroll-top>Inicio</button>
+          <button type="button" class="ai-chat-scroll-action" data-ai-chat-scroll-bottom>Último</button>
+        </div>
+
+        <div class="ai-chat-thread" data-ai-chat-thread aria-live="polite" tabindex="0">
           {% include "notas/_ai_chat_thread.html" %}
         </div>
 
@@ -97,10 +102,17 @@
 
     var textarea = composer.querySelector("textarea[name='message']");
     var sendButton = composer.querySelector("button[type='submit']");
+    var scrollTopButton = document.querySelector("[data-ai-chat-scroll-top]");
+    var scrollBottomButton = document.querySelector("[data-ai-chat-scroll-bottom]");
     if (!textarea) return;
 
     function scrollToBottom() {
       thread.scrollTop = thread.scrollHeight;
+    }
+
+    function scrollToTop() {
+      thread.scrollTop = 0;
+      thread.focus({ preventScroll: true });
     }
 
     function resizeTextarea() {
@@ -109,6 +121,8 @@
     }
 
     textarea.addEventListener("input", resizeTextarea);
+    if (scrollTopButton) scrollTopButton.addEventListener("click", scrollToTop);
+    if (scrollBottomButton) scrollBottomButton.addEventListener("click", scrollToBottom);
     resizeTextarea();
     scrollToBottom();
 

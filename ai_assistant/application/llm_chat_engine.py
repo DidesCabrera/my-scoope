@@ -47,11 +47,15 @@ class ExternalLLMChatEngine:
                 "mode": "external_llm",
                 "requires_human_review": structured_response.requires_human_review,
                 "context_builder": safe_context.get("metadata", {}).get("context_builder", ""),
+                "semantic_intent": structured_response.intent.name.value,
+                "semantic_missing_slots": list(structured_response.intent.missing_slots),
                 "tool_requests": len(structured_response.tool_requests),
                 "tools_executed": structured_response.metadata.get("tools_executed", False),
                 "tool_loop_iterations": structured_response.metadata.get("tool_loop_iterations", 0),
+                "tool_results": _safe_tool_results_for_chat_metadata(structured_response.tool_results),
                 "audit_version": structured_response.metadata.get("audit_version", ""),
                 "audit": structured_response.metadata.get("audit", {}),
+                **_operational_metadata_for_chat_surface(structured_response.metadata),
             },
         )
 
@@ -87,3 +91,64 @@ def _assistant_turn_metadata(request: ChatEngineRequest, *, engine_name: str) ->
         if key in request_metadata:
             metadata[key] = request_metadata[key]
     return metadata
+
+
+def _safe_tool_results_for_chat_metadata(tool_results) -> list[dict]:
+    """Expose bounded local tool results to chat-surface adapters.
+
+    This metadata is not sent back to the provider. It lets My Scoope render
+    controlled tool outputs, such as profile cards, as real chat objects instead
+    of depending on the LLM to describe them in text.
+    """
+
+    safe_results: list[dict] = []
+    for result in tuple(tool_results or ()):  # provider-agnostic AssistantToolResult
+        payload = result.as_dict()
+        safe_results.append(
+            {
+                "tool_name": payload.get("tool_name", ""),
+                "status": payload.get("status", ""),
+                "request_id": payload.get("request_id", ""),
+                "error_code": payload.get("error_code", ""),
+                "data": dict(payload.get("data") or {}),
+                "metadata": dict(payload.get("metadata") or {}),
+            }
+        )
+    return safe_results
+
+
+def _operational_metadata_for_chat_surface(metadata: dict) -> dict:
+    """Forward safe provider/usage metadata plus explicit debug traces.
+
+    Provider/model/usage are operational facts already persisted by the usage
+    recorder. Keeping them on the ChatEngine result lets the nutrition surface
+    and CM24 validator distinguish a real provider turn from a technical
+    fallback without exposing prompts, tool arguments or raw provider payloads.
+    """
+
+    usage = dict(metadata.get("usage_observability") or {})
+    payload = {
+        "provider": str(usage.get("provider") or metadata.get("provider") or ""),
+        "provider_model": str(usage.get("model") or metadata.get("provider_model") or ""),
+        "usage_observability": usage,
+    }
+    debug_keys = (
+        "debug_provider_responses",
+        "debug_status",
+        "debug_error_type",
+        "provider_parse_error",
+        "provider_contract_repair_attempted",
+        "provider_incomplete_reasons",
+        "provider_final_incomplete_reason",
+        "provider_response_was_json",
+        "provider_response_jsonish_content_extracted",
+        "provider_native_tool_transport",
+        "provider_native_tool_calls",
+        "provider_text_parse_ignored_due_to_native_tools",
+        "tool_followup_local_ack",
+        "tool_followup_local_ack_policy",
+        "provider_tool_followup_failed",
+        "provider_tool_followup_error_type",
+    )
+    payload.update({key: metadata[key] for key in debug_keys if key in metadata})
+    return payload

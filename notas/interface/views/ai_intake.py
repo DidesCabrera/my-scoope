@@ -8,6 +8,11 @@ from django.template.loader import render_to_string
 from django.views.decorators.http import require_http_methods
 
 from ai_assistant.application.chat_engines import ChatEngineRequest
+from ai_assistant.application.tools import (
+    TOOL_COMMIT_PROFILE_UPDATE,
+    execute_profile_commit_tool,
+)
+from ai_assistant.domain import AssistantToolRequest, AssistantToolStatus
 from core.rate_limits import limit_ai_assistant_turn
 from notas.application.ai_intake.chat_engine import get_nutrition_intake_chat_engine
 from notas.application.ai_intake.chat_history import (
@@ -25,11 +30,17 @@ from notas.application.ai_intake.nutrition_brief import (
     build_brief_from_form,
     build_conversation_from_brief,
     build_intake_result,
+    append_profile_update_confirmation_message,
     build_intake_result_from_brief,
     deserialize_brief,
     deserialize_conversation,
     serialize_brief,
     serialize_conversation,
+)
+from notas.application.ai_intake.profile_draft_update import (
+    apply_profile_update_result_to_brief,
+    build_profile_draft_payload_from_brief,
+    profile_update_result_from_tool_data,
 )
 from notas.application.ai_intake.proposal_from_brief import (
     create_nutrition_brief_proposal,
@@ -250,6 +261,53 @@ def ai_nutrition_intake(request):
             _clear_active_chat_session(request)
             messages.success(request, "Brief nutricional reiniciado.")
             return redirect("home_view")
+
+        if action == "update_profile_from_draft":
+            brief = deserialize_brief(request.session.get(AI_NUTRITION_BRIEF_SESSION_KEY))
+            conversation = deserialize_conversation(
+                request.session.get(AI_NUTRITION_CONVERSATION_SESSION_KEY)
+            )
+            if not brief or not conversation:
+                messages.error(request, "Primero completa una ficha en el chat.")
+                return redirect("ai_nutrition_intake")
+
+            tool_result = execute_profile_commit_tool(
+                AssistantToolRequest(
+                    tool_name=TOOL_COMMIT_PROFILE_UPDATE,
+                    arguments={
+                        "profile_draft": build_profile_draft_payload_from_brief(brief),
+                    },
+                    request_id="profile_card_approval",
+                    reason="User clicked the profile card approval button in the chat UI.",
+                    metadata={
+                        "approved_by_user": True,
+                        "approval_source": "profile_card_button",
+                        "surface": "ai_nutrition_intake",
+                    },
+                ),
+                user=request.user,
+            )
+            if tool_result.status != AssistantToolStatus.OK:
+                messages.error(request, "No pude actualizar la ficha personal desde este chat.")
+                return redirect("ai_nutrition_intake")
+
+            update_result = profile_update_result_from_tool_data(tool_result.data)
+            updated_brief = apply_profile_update_result_to_brief(brief, update_result)
+            conversation = append_profile_update_confirmation_message(
+                conversation,
+                brief=updated_brief,
+                assistant_text=update_result.user_message,
+            )
+            _sync_session_from_conversation(
+                request,
+                conversation,
+                existing_chat_id=request.session.get(AI_NUTRITION_CHAT_SESSION_KEY),
+            )
+            if update_result.has_updates:
+                messages.success(request, "Ficha personal actualizada.")
+            else:
+                messages.info(request, "No había cambios nuevos para guardar en tu ficha personal.")
+            return redirect("ai_nutrition_intake")
 
         if action == "create_proposal":
             brief = deserialize_brief(request.session.get(AI_NUTRITION_BRIEF_SESSION_KEY))

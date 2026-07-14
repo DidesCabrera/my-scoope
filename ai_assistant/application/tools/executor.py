@@ -7,8 +7,11 @@ from typing import Any
 from ai_assistant.application.tools.contracts import AssistantToolCategory
 from ai_assistant.application.tools.registry import (
     TOOL_LIST_OPERATIONAL_FOODS,
+    TOOL_LIST_SAVED_COMPARISONS,
     TOOL_LIST_USER_PROPOSALS,
     TOOL_READ_DAILYPLAN,
+    TOOL_READ_SAVED_COMPARISON,
+    TOOL_READ_USER_PROFILE_CONTEXT,
     TOOL_READ_PROPOSAL,
     TOOL_SEARCH_OPERATIONAL_FOODS,
     TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES,
@@ -139,6 +142,7 @@ class ReadOnlyToolExecutor:
 
         if tool_name in {
             TOOL_LIST_OPERATIONAL_FOODS,
+            TOOL_LIST_SAVED_COMPARISONS,
             TOOL_SEARCH_OPERATIONAL_FOODS,
             TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES,
         }:
@@ -146,6 +150,9 @@ class ReadOnlyToolExecutor:
 
         if tool_name == TOOL_SEARCH_OPERATIONAL_FOODS:
             payload["query"] = str(payload.get("query") or "").strip()
+
+        if tool_name == TOOL_LIST_SAVED_COMPARISONS:
+            payload["kind"] = str(payload.get("kind") or "").strip().lower() or None
 
         if tool_name == TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES:
             payload["search"] = str(payload.get("search") or "").strip() or None
@@ -165,6 +172,11 @@ def build_default_read_only_tool_dispatch_table() -> dict[str, ReadOnlyToolCalla
     application-service dependency.
     """
 
+    from notas.application.ai_tools.comparison_tools import (
+        list_saved_comparisons_tool,
+        read_saved_comparison_tool,
+    )
+    from notas.application.ai_tools.profile_tools import read_user_profile_context_tool
     from notas.application.ai_tools.read_tools import (
         list_available_foods_tool,
         list_user_proposals_tool,
@@ -177,7 +189,10 @@ def build_default_read_only_tool_dispatch_table() -> dict[str, ReadOnlyToolCalla
     return {
         TOOL_READ_DAILYPLAN: read_dailyplan_tool,
         TOOL_READ_PROPOSAL: read_proposal_tool,
+        TOOL_LIST_SAVED_COMPARISONS: list_saved_comparisons_tool,
+        TOOL_READ_SAVED_COMPARISON: read_saved_comparison_tool,
         TOOL_LIST_USER_PROPOSALS: list_user_proposals_tool,
+        TOOL_READ_USER_PROFILE_CONTEXT: read_user_profile_context_tool,
         TOOL_SEARCH_OPERATIONAL_FOODS: _search_operational_foods_adapter(search_foods_tool),
         TOOL_LIST_OPERATIONAL_FOODS: _list_operational_foods_adapter(list_available_foods_tool),
         TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES: preview_nutrition_solver_candidates_tool,

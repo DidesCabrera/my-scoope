@@ -7,6 +7,7 @@ from ai_assistant.application.orchestrator import AssistantOrchestratorConfig
 from ai_assistant.application.tools import (
     ReviewableProposalToolExecutor,
     TOOL_CREATE_VALIDATED_MEAL_PROPOSAL,
+    TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
 )
 from ai_assistant.domain import (
     AssistantMessage,
@@ -52,7 +53,17 @@ class ExternalLLMReviewableProposalToolExecutionTests(SimpleTestCase):
                             }
                         ],
                     }
-                )
+                ),
+                json.dumps(
+                    {
+                        "assistant_message": {
+                            "content": "La creación de propuestas revisables no está habilitada en este entorno."
+                        },
+                        "intent": {"name": "create_meal_proposal", "confidence": 0.9},
+                        "tool_requests": [],
+                        "requires_human_review": True,
+                    }
+                ),
             ]
         )
         executor = ReviewableProposalToolExecutor(
@@ -64,7 +75,9 @@ class ExternalLLMReviewableProposalToolExecutionTests(SimpleTestCase):
             reviewable_proposal_tool_executor=executor,
         ).continue_turn(self._request())
 
-        self.assertEqual(len(client.requests), 1)
+        self.assertEqual(len(client.requests), 2)
+        self.assertEqual(len(client.requests[1].tool_outputs), 1)
+        self.assertEqual(client.requests[1].tool_outputs[0].output["status"], "blocked")
         self.assertEqual(calls, [])
         self.assertEqual(response.tool_results[0].status, AssistantToolStatus.BLOCKED)
         self.assertEqual(response.tool_results[0].error_code, "reviewable_proposal_tools_disabled")
@@ -133,9 +146,10 @@ class ExternalLLMReviewableProposalToolExecutionTests(SimpleTestCase):
         self.assertEqual(calls[0][0], "user-1")
         self.assertEqual(calls[0][1], 12)
         self.assertEqual(len(client.requests), 2)
-        followup_payload = "\n".join(message.content for message in client.requests[1].messages)
-        self.assertIn("reviewable_proposal_tools_may_create_proposals", followup_payload)
-        self.assertIn("101", followup_payload)
+        self.assertEqual(len(client.requests[1].tool_outputs), 1)
+        followup_output = client.requests[1].tool_outputs[0].output
+        self.assertEqual(followup_output["status"], "ok")
+        self.assertEqual(followup_output["data"]["proposal"]["id"], 101)
         self.assertEqual(response.tool_results[0].status, AssistantToolStatus.OK)
         self.assertEqual(response.proposal_ids, (101,))
         self.assertEqual(response.metadata["created_reviewable_proposal_ids"], [101])
@@ -143,3 +157,83 @@ class ExternalLLMReviewableProposalToolExecutionTests(SimpleTestCase):
         self.assertTrue(response.metadata["tools_executed"])
         self.assertTrue(response.requires_human_review)
         self.assertEqual(response.metadata["audit"]["proposal_ids"], [101])
+
+    def test_executes_draft_based_dailyplan_proposal_tool_when_enabled(self):
+        calls = []
+
+        def create_dailyplan_from_drafts(user, *, profile_draft, proposal_preferences, preference_draft=None, current_nutrition_brief=None, raw_prompt=""):
+            calls.append((user, profile_draft, proposal_preferences, preference_draft, current_nutrition_brief, raw_prompt))
+            return tool_success(
+                {
+                    "proposal": {
+                        "id": 202,
+                        "title": "DailyPlan desde drafts",
+                        "status": "pending_review",
+                        "proposal_type": "dailyplan",
+                    },
+                    "nutrition_brief": {"goal": "muscle_gain", "meals_per_day": 4},
+                    "draft_sources": {"profile_draft_used": True, "proposal_preferences_used": True},
+                }
+            )
+
+        client = FakeLLMClient(
+            responses=[
+                json.dumps(
+                    {
+                        "assistant_message": {"content": "Crearé la propuesta desde los datos ordenados."},
+                        "intent": {"name": "create_dailyplan_proposal", "confidence": 0.9},
+                        "tool_requests": [
+                            {
+                                "tool_name": TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
+                                "arguments": {
+                                    "profile_draft": {
+                                        "weight_kg": 85,
+                                        "height_cm": 188,
+                                        "age_years": 38,
+                                        "sex": "male",
+                                        "activity_level": "moderate",
+                                    },
+                                    "proposal_preferences": {"goal": "muscle_gain", "meals_per_day": 4},
+                                    "preference_draft": {"avoided_foods": ["atún"]},
+                                },
+                                "request_id": "proposal_from_drafts_1",
+                            }
+                        ],
+                    }
+                ),
+                json.dumps(
+                    {
+                        "assistant_message": {
+                            "content": "Listo, creé una propuesta revisable desde tu ficha y preferencias."
+                        },
+                        "intent": {"name": "create_dailyplan_proposal", "confidence": 0.9},
+                        "tool_requests": [],
+                        "requires_human_review": True,
+                    }
+                ),
+            ]
+        )
+        executor = ReviewableProposalToolExecutor(
+            dispatch_table={
+                TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS: create_dailyplan_from_drafts
+            }
+        )
+
+        response = ExternalLLMOrchestrator(
+            llm_client=client,
+            reviewable_proposal_tool_executor=executor,
+            config=AssistantOrchestratorConfig(enable_reviewable_proposal_tools=True),
+        ).continue_turn(self._request("Crea la propuesta"))
+
+        self.assertEqual(response.assistant_text, "Listo, creé una propuesta revisable desde tu ficha y preferencias.")
+        self.assertEqual(calls[0][0], "user-1")
+        self.assertEqual(calls[0][1]["height_cm"], 188)
+        self.assertEqual(calls[0][2]["goal"], "muscle_gain")
+        self.assertEqual(response.proposal_ids, (202,))
+        self.assertEqual(response.metadata["created_reviewable_proposal_ids"], [202])
+        self.assertTrue(response.requires_human_review)
+        self.assertEqual(len(client.requests[1].tool_outputs), 1)
+        followup_output = client.requests[1].tool_outputs[0].output
+        self.assertEqual(followup_output["status"], "ok")
+        self.assertEqual(followup_output["data"]["proposal"]["id"], 202)
+        self.assertTrue(followup_output["data"]["draft_sources"]["profile_draft_used"])

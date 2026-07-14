@@ -4,6 +4,7 @@ from ai_assistant.application.tools import (
     ReviewableProposalToolExecutor,
     TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL,
     TOOL_CREATE_NUTRITION_SOLVER_MEAL_PROPOSAL,
+    TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
     TOOL_CREATE_VALIDATED_MEAL_PROPOSAL,
     TOOL_READ_DAILYPLAN,
     execute_reviewable_proposal_tool,
@@ -59,6 +60,53 @@ class ReviewableProposalToolExecutorTests(SimpleTestCase):
         self.assertFalse(result.metadata["writes_allowed"])
         self.assertEqual(result.metadata["proposal_ids"], [77])
         self.assertEqual(calls[0][0], "user-1")
+
+    def test_executes_draft_based_dailyplan_proposal_tool_through_dispatch_table(self):
+        calls = []
+
+        def create_dailyplan_from_drafts(user, *, profile_draft, proposal_preferences, preference_draft=None, current_nutrition_brief=None, raw_prompt=""):
+            calls.append((user, profile_draft, proposal_preferences, preference_draft, current_nutrition_brief, raw_prompt))
+            return tool_success(
+                {
+                    "proposal": {
+                        "id": 202,
+                        "title": "DailyPlan desde drafts",
+                        "status": "pending_review",
+                        "proposal_type": "dailyplan",
+                    },
+                    "nutrition_brief": {"goal": "muscle_gain", "meals_per_day": 4},
+                    "draft_sources": {"profile_draft_used": True, "proposal_preferences_used": True},
+                }
+            )
+
+        executor = ReviewableProposalToolExecutor(
+            dispatch_table={
+                TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS: create_dailyplan_from_drafts
+            }
+        )
+
+        result = executor.execute(
+            AssistantToolRequest(
+                tool_name=TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
+                arguments={
+                    "profile_draft": {"weight_kg": 85, "height_cm": 188, "age_years": 38, "sex": "male", "activity_level": "moderate"},
+                    "proposal_preferences": {"goal": "muscle_gain", "meals_per_day": 4},
+                    "preference_draft": {"avoided_foods": ["atún"]},
+                    "raw_prompt": "crear dieta para ganar masa",
+                },
+                request_id="proposal_from_drafts_1",
+            ),
+            user="user-1",
+        )
+
+        self.assertEqual(result.status, AssistantToolStatus.OK)
+        self.assertEqual(result.data["proposal"]["id"], 202)
+        self.assertEqual(result.metadata["proposal_ids"], [202])
+        self.assertTrue(result.metadata["requires_human_review"])
+        self.assertFalse(result.metadata["applies_changes"])
+        self.assertEqual(calls[0][0], "user-1")
+        self.assertEqual(calls[0][1]["height_cm"], 188)
+        self.assertEqual(calls[0][2]["goal"], "muscle_gain")
 
     def test_blocks_non_proposal_tool(self):
         executor = ReviewableProposalToolExecutor(
@@ -144,6 +192,7 @@ class ReviewableProposalToolExecutorTests(SimpleTestCase):
 
         self.assertIn(TOOL_CREATE_VALIDATED_MEAL_PROPOSAL, table)
         self.assertIn(TOOL_CREATE_NUTRITION_SOLVER_MEAL_PROPOSAL, table)
+        self.assertIn(TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS, table)
         self.assertIn(TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL, table)
         self.assertNotIn(TOOL_READ_DAILYPLAN, table)
         self.assertNotIn("apply_proposal", table)

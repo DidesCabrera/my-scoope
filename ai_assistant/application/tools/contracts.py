@@ -13,8 +13,10 @@ class AssistantToolCategory(str, Enum):
     """Stable categories for AI Assistant tools."""
 
     READ = "read"
+    DRAFT = "draft"
     VALIDATION = "validation"
     PROPOSAL = "proposal"
+    COMMIT = "commit"
 
 
 class AssistantToolRiskLevel(str, Enum):
@@ -42,6 +44,7 @@ class AssistantToolSpec:
     requires_auth: bool = True
     requires_human_review: bool = True
     allowed_intents: Sequence[str] = field(default_factory=tuple)
+    provider_exposed: bool = True
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "name", _normalize_identifier(self.name))
@@ -69,14 +72,26 @@ class AssistantToolSpec:
             raise AssistantToolRegistryError("AssistantToolSpec requires a description.")
         if self.category == AssistantToolCategory.PROPOSAL and not self.requires_human_review:
             raise AssistantToolRegistryError("Proposal tools must require human review.")
+        if self.category == AssistantToolCategory.DRAFT and self.requires_human_review:
+            raise AssistantToolRegistryError("Draft tools must not require human review; persistence approval is handled by commit tools.")
+        if self.category == AssistantToolCategory.COMMIT and not self.requires_human_review:
+            raise AssistantToolRegistryError("Commit tools must require human review.")
 
     @property
     def is_read_only(self) -> bool:
         return self.category == AssistantToolCategory.READ
 
     @property
+    def is_draft_tool(self) -> bool:
+        return self.category == AssistantToolCategory.DRAFT
+
+    @property
     def is_proposal_tool(self) -> bool:
         return self.category == AssistantToolCategory.PROPOSAL
+
+    @property
+    def is_commit_tool(self) -> bool:
+        return self.category == AssistantToolCategory.COMMIT
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -88,6 +103,7 @@ class AssistantToolSpec:
             "requires_auth": self.requires_auth,
             "requires_human_review": self.requires_human_review,
             "allowed_intents": list(self.allowed_intents),
+            "provider_exposed": bool(self.provider_exposed),
         }
 
     def as_provider_tool(self) -> dict[str, Any]:

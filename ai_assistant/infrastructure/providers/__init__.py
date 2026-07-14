@@ -8,6 +8,8 @@ from ai_assistant.infrastructure.providers.contracts import (
     LLMProviderRequest,
     LLMProviderRequestError,
     LLMProviderResponse,
+    LLMProviderToolCall,
+    LLMProviderToolOutput,
 )
 from ai_assistant.infrastructure.providers.factory import get_llm_client
 from ai_assistant.infrastructure.providers.fake_client import FakeLLMClient
@@ -23,5 +25,7 @@ __all__ = [
     "LLMProviderRequest",
     "LLMProviderRequestError",
     "LLMProviderResponse",
+    "LLMProviderToolCall",
+    "LLMProviderToolOutput",
     "OpenAIResponsesClient",
 ]

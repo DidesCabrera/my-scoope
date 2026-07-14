@@ -10,6 +10,7 @@ source /Users/felipedides/Desktop/proyecto_django/venv/bin/activate
 
 python manage.py runserver
 
+
 --------------------------
 ***GENERACION ZIP 
 --------------------------
@@ -35,6 +36,37 @@ COMPLETO (Sin img)
 FOOD CATALOG
 ./scripts/export_for_chatgpt.sh foodcatalog
 
+EXPORTE TEST
+./scripts/test_regressions.sh
+
+
+
+./scripts/export_for_chatgpt.sh ai
+./scripts/export_for_chatgpt.sh full
+./scripts/export_for_chatgpt.sh usda
+./scripts/export_for_chatgpt.sh foodcatalog
+./scripts/export_for_chatgpt.sh planning
+./scripts/export_for_chatgpt.sh adminanalytics
+./scripts/export_for_chatgpt.sh adminoperations
+
+
+
+
+python manage.py debug_ai_assistant_conversation \
+  --scenario dieta_basica \
+  --mode llm_preview \
+  --show-raw \
+  --show-tools \
+  --show-state
+
+
+--
+
+rm -rf wheelhouse
+docker run --rm -v "$PWD:/app" -w /app python:3.12-slim bash -lc \
+  "python -m pip download -r requirements.txt -d wheelhouse"
+zip -r wheelhouse-linux-py312.zip wheelhouse
+
 --------------------------
 ***AUX COMMITS
 --------------------------
@@ -45,8 +77,8 @@ git push origin main
 
 
 git add .
-git commit -m "Correccion colores btns profile"
-git push origin main
+git commit -m "Correccion CI en Github y Test desfasados"
+git push origin staging
 
 -------------
 
@@ -290,3 +322,10 @@ zip -r proyecto_django_export.zip proyecto_django_export -x "*.DS_Store" "__MACO
 cd proyecto_django
 
 --- 
+
+
+SENTRY_DSN
+SENTRY_ENVIRONMENT
+SENTRY_RELEASE
+SENTRY_TRACES_SAMPLE_RATE
+SENTRY_PROFILES_SAMPLE_RATE

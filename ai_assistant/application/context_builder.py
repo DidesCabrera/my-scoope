@@ -3,11 +3,14 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Sequence
 
+from django.conf import settings
+
 from ai_assistant.application.chat_engines import ChatEngineRequest
 
 MAX_TEXT_LENGTH = 240
+MAX_RECENT_MESSAGE_TEXT_LENGTH = 1000
 MAX_LIST_ITEMS = 8
-MAX_CONTEXT_DEPTH = 3
+MAX_CONTEXT_DEPTH = 6
 
 SENSITIVE_KEY_FRAGMENTS = (
     "api_key",
@@ -23,7 +26,41 @@ SENSITIVE_KEY_FRAGMENTS = (
     "token",
 )
 
+PROFILE_DRAFT_FIELDS = (
+    "weight_kg",
+    "height_cm",
+    "age_years",
+    "sex",
+    "activity_level",
+    "training_frequency",
+)
+
+PREFERENCE_DRAFT_FIELDS = (
+    "excluded_foods",
+    "preferred_foods",
+    "style_preferences",
+    "complexity_level",
+    "budget_level",
+    "meals_per_day",
+    "notes",
+)
+
+PROPOSAL_PREFERENCE_FIELDS = (
+    "goal",
+    "requested_entity",
+    "meals_per_day",
+    "energy_adjustment",
+    "calorie_target",
+    "protein_target",
+    "carb_target",
+    "fat_target",
+    "notes",
+)
+
 NUTRITION_BRIEF_FIELDS = (
+    "subject_source",
+    "ppk_weight_source",
+    "requires_library_ppk_warning",
     "goal",
     "requested_entity",
     "meals_per_day",
@@ -44,7 +81,17 @@ NUTRITION_BRIEF_FIELDS = (
     "complexity_level",
     "budget_level",
     "notes",
+    "field_sources",
 )
+
+# Internal bookkeeping fields that remain in NutritionBrief but should not be
+# framed as user-facing facts for the LLM. In particular, weight source/date
+# questions made the assistant over-structure the flow; a weight provided in
+# chat should be assumed current for the current proposal unless the user says
+# otherwise.
+PROVIDER_OMITTED_NUTRITION_BRIEF_FIELDS = {
+    "ppk_weight_source",
+}
 
 
 @dataclass(frozen=True)
@@ -92,6 +139,9 @@ def build_safe_llm_context(
         request=request,
         conversation_state=conversation_state,
     )
+    reviewable_proposal_tools_enabled = _reviewable_proposal_tools_enabled()
+    tool_oriented_intake = _tool_oriented_intake_context(nutrition_brief) if surface == "ai_nutrition_intake" else {}
+    provider_nutrition_brief = {} if tool_oriented_intake else nutrition_brief
     return SafeLLMContext(
         surface=_bounded_text(surface),
         user={
@@ -99,15 +149,19 @@ def build_safe_llm_context(
             "id_present": request.user_id is not None,
         },
         conversation=conversation_context,
-        nutrition_brief=nutrition_brief,
+        nutrition_brief=provider_nutrition_brief,
         runtime={
-            "tools_enabled": False,
-            "tool_execution_stage": "none",
-            "proposal_creation_enabled": False,
-            "human_review_required": True,
+            "tools_enabled": True,
+            "tool_execution_stage": "controlled_llm_tool_loop",
+            "assistant_role": "tool_oriented_operator",
+            "draft_state_scope": "conversation",
+            "card_presentation": "explicit_tool_only",
+            "proposal_creation_enabled": reviewable_proposal_tools_enabled,
+            "persistent_writes_require_approval": True,
         },
         metadata={
             "context_builder": "safe_llm_context.v1",
+            **({"tool_oriented_intake": tool_oriented_intake} if tool_oriented_intake else {}),
             "extra_context_keys": sorted(safe_extra.keys()),
             **safe_extra,
         },
@@ -132,21 +186,154 @@ def merge_safe_context_into_request(
     )
 
 
+
+def _reviewable_proposal_tools_enabled() -> bool:
+    return bool(getattr(settings, "AI_ASSISTANT_ENABLE_REVIEWABLE_PROPOSAL_TOOLS", False))
+
+
+def _tool_oriented_intake_context(nutrition_brief: Mapping[str, Any]) -> dict[str, Any]:
+    """Expose current intake objects without reconstructing an interviewer.
+
+    CM20 keeps only state and a small interpretation contract in provider
+    context. Field meaning, normalization and tool selection live in the typed
+    provider tool declarations instead of duplicated completeness policies or
+    recommended conversational sequences.
+    """
+
+    current_drafts = {
+        "profile_draft": _draft_payload_from_fields(nutrition_brief, PROFILE_DRAFT_FIELDS),
+        "preference_draft": _preference_draft_payload(nutrition_brief),
+        "proposal_preferences": _draft_payload_from_fields(
+            nutrition_brief,
+            PROPOSAL_PREFERENCE_FIELDS,
+        ),
+    }
+    work_context = _draft_payload_from_fields(
+        nutrition_brief,
+        ("subject_source", "requires_library_ppk_warning"),
+    )
+    return {
+        "version": "ai_assistant_tool_oriented_intake.v8",
+        "assistant_role": "operator_assistant",
+        "current_drafts": current_drafts,
+        **({"work_context": work_context} if work_context else {}),
+        "context_semantics": {
+            "present_values_are_known_for_this_conversation": True,
+            "absent_values_are_not_automatically_required": True,
+            "new_facts_are_recorded_through_typed_tools": True,
+        },
+    }
+
+
+def _draft_payload_from_fields(source: Mapping[str, Any], fields: Sequence[str]) -> dict[str, Any]:
+    draft: dict[str, Any] = {}
+    source_map = source.get("field_sources") if isinstance(source.get("field_sources"), Mapping) else {}
+    draft_source_map: dict[str, Any] = {}
+    for field_name in fields:
+        value = source.get(field_name)
+        if _has_value(value):
+            draft[field_name] = _sanitize_value(value)
+            if source_map.get(field_name):
+                draft_source_map[field_name] = _sanitize_value(source_map.get(field_name))
+    if draft_source_map:
+        draft["field_sources"] = draft_source_map
+    return draft
+
+
+def _preference_draft_payload(nutrition_brief: Mapping[str, Any]) -> dict[str, Any]:
+    draft: dict[str, Any] = {}
+    if _has_value(nutrition_brief.get("excluded_foods")):
+        draft["avoided_foods"] = _sanitize_value(nutrition_brief.get("excluded_foods"))
+    if _has_value(nutrition_brief.get("preferred_foods")):
+        draft["preferred_foods"] = _sanitize_value(nutrition_brief.get("preferred_foods"))
+    for field_name in ("style_preferences", "complexity_level", "budget_level", "meals_per_day", "notes"):
+        value = nutrition_brief.get(field_name)
+        if _has_value(value):
+            draft[field_name] = _sanitize_value(value)
+    return draft
+
+
 def _conversation_context(
     *,
     request: ChatEngineRequest,
     conversation_state: Any | None,
 ) -> dict[str, Any]:
     messages = list(getattr(conversation_state, "messages", []) or [])
-    required_questions = list(getattr(conversation_state, "required_follow_up_questions", []) or [])
-    visible_questions = list(getattr(conversation_state, "visible_follow_up_questions", []) or [])
-    return {
+    recent_objects = _recent_chat_objects(messages)
+    context = {
         "existing_payload_present": request.existing_payload is not None,
         "message_count": len(messages),
         "last_assistant_present": bool(getattr(conversation_state, "last_assistant_message", "")),
-        "is_ready_for_proposal": bool(getattr(conversation_state, "is_ready_for_proposal", False)),
-        "required_follow_up_questions_count": len(required_questions),
-        "visible_follow_up_questions": [_bounded_text(item) for item in visible_questions[:MAX_LIST_ITEMS]],
+        "recent_messages": _recent_conversation_messages(messages),
+        "recent_chat_objects": recent_objects,
+        "last_shared_object": recent_objects[-1] if recent_objects else {},
+    }
+    return context
+
+
+def _recent_conversation_messages(messages: Sequence[Any]) -> list[dict[str, str]]:
+    recent = []
+    for message in list(messages or ())[-12:]:
+        role = _bounded_text(getattr(message, "role", ""))
+        text = _bounded_text(
+            getattr(message, "text", ""),
+            max_chars=MAX_RECENT_MESSAGE_TEXT_LENGTH,
+        )
+        if role and text:
+            recent.append({"role": role, "text": text})
+    return recent
+
+
+def _recent_chat_objects(messages: Sequence[Any]) -> list[dict[str, Any]]:
+    """Summarize user-visible cards so the LLM can resolve references to them.
+
+    Cards are stored as assistant messages with empty text, so they used to be
+    invisible to the provider-facing recent message history. That made replies
+    like "completemoslos" ambiguous even though the user was clearly referring
+    to the last shared ficha/preference card. This is context, not a second
+    intake brain: it exposes the objects that were actually rendered in chat.
+    """
+
+    objects: list[dict[str, Any]] = []
+    for message in list(messages or ())[-12:]:
+        profile_card = getattr(message, "profile_draft_card", None)
+        if isinstance(profile_card, Mapping):
+            objects.append(_profile_card_context(profile_card))
+            continue
+        preference_card = getattr(message, "preference_draft_card", None)
+        if isinstance(preference_card, Mapping):
+            objects.append(_generic_card_context("preference_draft_card", preference_card))
+            continue
+        proposal_card = getattr(message, "proposal_preferences_card", None)
+        if isinstance(proposal_card, Mapping):
+            objects.append(_generic_card_context("proposal_preferences_card", proposal_card))
+            continue
+        generated_card = getattr(message, "generated_plan_card", None)
+        if isinstance(generated_card, Mapping):
+            objects.append(_generic_card_context("generated_plan_card", generated_card))
+    return objects[-6:]
+
+
+def _profile_card_context(card: Mapping[str, Any]) -> dict[str, Any]:
+    items = [item for item in card.get("items", []) or [] if isinstance(item, Mapping)]
+    pending = [str(item.get("key") or "") for item in items if item.get("is_pending") and item.get("key")]
+    known = [str(item.get("key") or "") for item in items if not item.get("is_pending") and item.get("key")]
+    return {
+        "type": "profile_draft_card",
+        "title": _bounded_text(card.get("title") or "Ficha para esta propuesta"),
+        "status": _bounded_text(card.get("status") or ""),
+        "pending_count": int(card.get("pending_count") or len(pending)),
+        "pending_fields": pending[:8],
+        "known_fields": known[:8],
+    }
+
+
+def _generic_card_context(card_type: str, card: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "type": card_type,
+        "title": _bounded_text(card.get("title") or card_type),
+        "status": _bounded_text(card.get("status") or ""),
+        "known_count": int(card.get("known_count") or 0),
     }
 
 
@@ -158,12 +345,11 @@ def _extract_nutrition_brief(conversation_state: Any | None) -> dict[str, Any]:
 
     payload: dict[str, Any] = {}
     for field_name in NUTRITION_BRIEF_FIELDS:
+        if field_name in PROVIDER_OMITTED_NUTRITION_BRIEF_FIELDS:
+            continue
         value = getattr(brief, field_name, None)
         if _has_value(value):
             payload[field_name] = _sanitize_value(value)
-    payload["is_ready_for_proposal"] = bool(getattr(result, "is_ready_for_proposal", False))
-    payload["has_pending_questions"] = bool(getattr(result, "has_pending_questions", False))
-    payload["has_required_pending_questions"] = bool(getattr(result, "has_required_pending_questions", False))
     return payload
 
 
@@ -206,11 +392,11 @@ def _is_sensitive_key(key: str) -> bool:
     return any(fragment in key for fragment in SENSITIVE_KEY_FRAGMENTS)
 
 
-def _bounded_text(value: Any) -> str:
+def _bounded_text(value: Any, *, max_chars: int = MAX_TEXT_LENGTH) -> str:
     text = " ".join(str(value or "").split())
-    if len(text) <= MAX_TEXT_LENGTH:
+    if len(text) <= max_chars:
         return text
-    return f"{text[:MAX_TEXT_LENGTH]}…"
+    return f"{text[:max_chars]}…"
 
 
 def _has_value(value: Any) -> bool:

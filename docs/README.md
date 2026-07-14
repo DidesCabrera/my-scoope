@@ -1,57 +1,84 @@
 # My Scoope Docs
 
-La carpeta `docs/` es una parte crítica de la salud del proyecto. Su objetivo no es solo registrar información: debe funcionar como la **fuente de verdad operacional** para construir, refactorizar y extender My Scoope de forma consistente.
+La carpeta `docs/` es una parte crítica de la salud del proyecto. Su objetivo no es solo registrar información: debe funcionar como una **arquitectura de conocimiento** para construir, refactorizar y extender My Scoope de forma consistente.
 
-En el largo plazo, esta sección debe actuar como el motor documental de la autoprogramación del sistema: los documentos vigentes deben contener los **axiomas** del proyecto, y las decisiones deben registrar las **migraciones/historia** del proceso.
+La documentación oficial no debe crecer como un archivo plano. Debe ordenar la atención de humanos e IA: primero lo vigente, luego los ciclos, después las decisiones, manuales, notas técnicas y finalmente el archivo histórico.
 
 ## Regla principal
 
 Para crear o modificar código, una persona o una IA debe leer primero:
 
 ```text
-docs/current/
-docs/decisions/
+docs/00_current/AI_README.md
+docs/00_current/PROJECT_STATE.md
+docs/00_current/
+docs/20_decisions/
 ```
 
-Los documentos en `docs/archive/` son históricos. Pueden ayudar a entender contexto, pero **no deben usarse como patrón para código nuevo**.
+Si `PROJECT_STATE.md` aún no existe en un export, usar `docs/00_current/README.md` como entrada secundaria.
 
-## Estructura
+Los documentos en `docs/90_archive/` son históricos. Pueden ayudar a entender contexto, pero **no deben usarse como patrón para código nuevo**.
+
+## Estructura oficial
 
 ```text
 docs/
   README.md
-  current/
+  00_current/
+    AI_README.md
+    PROJECT_STATE.md
     architecture/
+    design/
     features/
+  10_active_cycles/
+  20_decisions/
+  30_manuals/
+  40_technical/
     operations/
     qa/
-    design/
-  decisions/
-  planning/
-  archive/
+  90_archive/
 ```
 
-### `docs/current/`
+## Jerarquía de atención
+
+| Carpeta | Rol | Autoridad |
+| --- | --- | --- |
+| `00_current/` | Fuente vigente de arquitectura, producto, features y diseño | Alta |
+| `10_active_cycles/` | Ciclos planificados, activos, pausados o completados | Media hasta implementación |
+| `20_decisions/` | Decisiones aceptadas y memoria técnica | Alta para racionalidad histórica |
+| `30_manuals/` | Manuales oficiales de uso u operación humana | Media/alta según alcance |
+| `40_technical/` | Políticas operacionales, QA, CI, testing y exportaciones | Alta para operación técnica |
+| `90_archive/` | Contexto histórico o superado | Baja |
+
+## `docs/00_current/`
 
 Contiene documentación vigente. Es la fuente de verdad para implementar nuevas secciones, corregir arquitectura y mantener consistencia UI/UX.
 
-### `docs/current/qa/`
+`docs/00_current/AI_README.md` es el punto de entrada recomendado para trabajo asistido por IA.
 
-Contiene cierres de QA vigentes y evidencia de estabilización de ciclos. Debe usarse para entender qué validaciones ya quedaron cerradas y qué regresiones deben protegerse.
+## `docs/10_active_cycles/`
 
-### `docs/current/operations/`
+Contiene planificación de ciclos futuros, activos, pausados, completados o superados. Es documentación oficial, pero no representa por sí misma un contrato vigente de implementación.
 
-Contiene políticas operacionales vigentes, incluyendo exportaciones para IA y uso de CI/testing.
+Un plan se vuelve contrato cuando sus resultados quedan reflejados en código, en `docs/00_current/` o en `docs/20_decisions/`.
 
-### `docs/decisions/`
+## `docs/20_decisions/`
 
 Contiene decisiones arquitectónicas e históricas importantes. Estos documentos explican por qué el sistema llegó a su forma actual.
 
-### `docs/planning/`
+## `docs/30_manuals/`
 
-Contiene planificación de ciclos futuros o próximos proyectos. Es documentación oficial, pero no representa por sí misma un contrato vigente de implementación. Sirve para conservar contexto estratégico, ordenar prioridades y preparar ciclos de patches antes de mover decisiones estables a `docs/decisions/`.
+Contiene manuales oficiales para uso humano u operación estable del sistema. No debe confundirse con `manual_docs/`, que son notas personales fuera de la documentación oficial.
 
-### `docs/archive/`
+## `docs/40_technical/`
+
+Contiene documentación técnica operacional, como exportaciones para IA, testing, CI, QA y políticas que no son necesariamente arquitectura de producto, pero sí afectan cómo se trabaja el sistema.
+
+`docs/40_technical/operations/docs_information_architecture.md` define la jerarquía de atención documental y cómo evitar que la documentación crezca como ruido.
+
+`docs/40_technical/operations/export_for_chatgpt.md` define qué modo de export usar según el tipo de trabajo, cómo evitar exports demasiado grandes y cómo mantener los ZIP alineados con la arquitectura vigente.
+
+## `docs/90_archive/`
 
 Contiene documentación antigua, bitácoras, pruebas, contexto histórico y documentos superados. No debe guiar implementaciones nuevas.
 
@@ -63,28 +90,31 @@ Esa carpeta **no forma parte de la documentación oficial del proyecto** y no de
 
 Las exportaciones para IA deben excluir `manual_docs/`.
 
-## Planificación
-
-Los planes futuros viven en `docs/planning/`. Deben entenderse como planificación oficial, pero no como contrato vigente de implementación hasta que se traduzcan en cambios de `docs/current/`, decisiones aceptadas o código.
-
-La documentación vigente debe seguir concentrándose en:
-
-- axiomas actuales del sistema;
-- contratos de arquitectura;
-- patrones UI vigentes;
-- decisiones ya tomadas;
-- historia técnica relevante;
-- planes próximos cuando ayuden a orientar ciclos de patches.
-
 ## Cómo usar esta documentación
 
 Antes de agregar una sección nueva:
 
-1. Leer `docs/current/architecture/layers.md`.
-2. Leer `docs/current/architecture/rules.md`.
-3. Leer `docs/current/architecture/section_creation_guide.md`.
-4. Revisar `docs/current/architecture/ui_patterns.md`.
-5. Revisar si existe una doc de feature similar en `docs/current/features/`.
-6. Para AI Assistant / LLM externo, leer `docs/current/features/ai_assistant/README.md` antes de tocar chat, prompts, tools u orquestación.
-7. Para ciclos futuros o proyectos próximos, revisar `docs/planning/` y actualizar el plan correspondiente antes de generar patches.
-8. Agregar o actualizar tests cuando la sección incorpore lógica reusable.
+1. Leer `docs/00_current/AI_README.md`.
+2. Leer `docs/00_current/PROJECT_STATE.md` si está presente.
+3. Leer `docs/00_current/architecture/layers.md`.
+4. Leer `docs/00_current/architecture/rules.md`.
+5. Leer `docs/00_current/architecture/section_creation_guide.md`.
+6. Revisar `docs/00_current/architecture/ui_patterns.md`.
+7. Revisar si existe una doc de feature similar en `docs/00_current/features/`.
+8. Para AI Assistant / LLM externo, leer `docs/00_current/features/ai_assistant/README.md` antes de tocar chat, prompts, tools u orquestación.
+9. Para ciclos futuros o proyectos próximos, revisar `docs/10_active_cycles/` y actualizar el plan correspondiente antes de generar patches.
+10. Revisar `docs/40_technical/operations/testing_and_ci_policy.md` cuando el cambio toque CI, testing o staging.
+11. Agregar o actualizar tests cuando la sección incorpore lógica reusable.
+
+## Regla editorial
+
+La documentación debe aportar valor por jerarquía, no por volumen.
+
+Agregar o actualizar un documento solo cuando ayude a responder una de estas preguntas:
+
+- ¿Qué es verdad hoy?
+- ¿Qué ciclo está planificado o activo?
+- ¿Qué decisión se aceptó y por qué?
+- ¿Cómo se usa u opera el sistema?
+- ¿Qué regla técnica evita errores futuros?
+- ¿Qué contexto histórico explica una restricción actual?

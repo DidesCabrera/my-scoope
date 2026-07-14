@@ -1,6 +1,6 @@
 <div class="ai-chat-thread__inner">
   {% for message in vm.content.conversation.messages %}
-    <article class="ai-chat-message ai-chat-message--{{ message.role }}{% if message.generated_plan_card %} ai-chat-message--generated-plan{% endif %}">
+    <article class="ai-chat-message ai-chat-message--{{ message.role }}{% if message.generated_plan_card %} ai-chat-message--generated-plan{% endif %}{% if message.profile_draft_card %} ai-chat-message--profile-draft-card{% endif %}{% if message.preference_draft_card %} ai-chat-message--preference-draft-card{% endif %}{% if message.proposal_preferences_card %} ai-chat-message--proposal-preferences-card{% endif %}">
       {% if message.text %}
         <div class="ai-chat-bubble">
           <p>{{ message.text }}</p>
@@ -10,6 +10,124 @@
       {% if message.generated_plan_card %}
         {% include "notas/_ai_generated_plan_card.html" with card=message.generated_plan_card %}
       {% endif %}
+
+      {% if message.profile_draft_card %}
+        <div class="ai-chat-profile-card">
+          <div class="ai-chat-profile-card__header">
+            <div>
+              <span>Ficha personal</span>
+              <h2>{{ message.profile_draft_card.title }}</h2>
+              <p>{{ message.profile_draft_card.subtitle }}</p>
+            </div>
+            <i data-lucide="id-card" class="ai-chat-profile-card__icon"></i>
+          </div>
+
+          <div class="ai-chat-profile-card__grid">
+            {% for item in message.profile_draft_card.items %}
+              <article class="ai-chat-profile-card__item{% if item.is_pending %} is-pending{% endif %}">
+                <span>{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+                <small>{{ item.source_label }}</small>
+              </article>
+            {% endfor %}
+          </div>
+
+          <div class="ai-chat-profile-card__footer">
+            {% if message.profile_draft_card.pending_count %}
+              <span>{{ message.profile_draft_card.pending_count }} dato{{ message.profile_draft_card.pending_count|pluralize }} pendiente{{ message.profile_draft_card.pending_count|pluralize }}</span>
+            {% else %}
+              <span>Ficha lista para revisar.</span>
+              {% if message.profile_draft_card.can_update_personal_profile %}
+                <form method="post" action="{% url 'ai_nutrition_intake' %}" class="ai-chat-profile-card__form">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="update_profile_from_draft">
+                  <button type="submit" class="ai-chat-profile-card__action">
+                    Actualizar ficha personal
+                  </button>
+                </form>
+              {% else %}
+                <button type="button" class="ai-chat-profile-card__action" disabled>
+                  Ficha ya actualizada
+                </button>
+              {% endif %}
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+
+      {% if message.preference_draft_card %}
+        <div class="ai-chat-profile-card ai-chat-preference-card">
+          <div class="ai-chat-profile-card__header">
+            <div>
+              <span>Preferencias</span>
+              <h2>{{ message.preference_draft_card.title }}</h2>
+              <p>{{ message.preference_draft_card.subtitle }}</p>
+            </div>
+            <i data-lucide="utensils" class="ai-chat-profile-card__icon"></i>
+          </div>
+
+          {% for section in message.preference_draft_card.sections %}
+            <section class="ai-chat-preference-card__section">
+              <h3>{{ section.title }}</h3>
+              <div class="ai-chat-profile-card__grid">
+                {% for item in section.items %}
+                  <article class="ai-chat-profile-card__item{% if item.is_pending %} is-pending{% endif %}">
+                    <span>{{ item.label }}</span>
+                    <strong>{{ item.value }}</strong>
+                    <small>{{ item.source_label }}</small>
+                  </article>
+                {% endfor %}
+              </div>
+            </section>
+          {% endfor %}
+
+          <div class="ai-chat-profile-card__footer">
+            {% if message.preference_draft_card.known_count %}
+              <span>{{ message.preference_draft_card.known_count }} dato{{ message.preference_draft_card.known_count|pluralize }} de preferencia registrado{{ message.preference_draft_card.known_count|pluralize }} para esta conversación.</span>
+            {% else %}
+              <span>Sin preferencias registradas todavía.</span>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+
+
+      {% if message.proposal_preferences_card %}
+        <div class="ai-chat-profile-card ai-chat-proposal-preferences-card">
+          <div class="ai-chat-profile-card__header">
+            <div>
+              <span>Propuesta</span>
+              <h2>{{ message.proposal_preferences_card.title }}</h2>
+              <p>{{ message.proposal_preferences_card.subtitle }}</p>
+            </div>
+            <i data-lucide="clipboard-list" class="ai-chat-profile-card__icon"></i>
+          </div>
+
+          {% for section in message.proposal_preferences_card.sections %}
+            <section class="ai-chat-preference-card__section">
+              <h3>{{ section.title }}</h3>
+              <div class="ai-chat-profile-card__grid">
+                {% for item in section.items %}
+                  <article class="ai-chat-profile-card__item{% if item.is_pending %} is-pending{% endif %}">
+                    <span>{{ item.label }}</span>
+                    <strong>{{ item.value }}</strong>
+                    <small>{{ item.source_label }}</small>
+                  </article>
+                {% endfor %}
+              </div>
+            </section>
+          {% endfor %}
+
+          <div class="ai-chat-profile-card__footer">
+            {% if message.proposal_preferences_card.known_count %}
+              <span>{{ message.proposal_preferences_card.known_count }} parámetro{{ message.proposal_preferences_card.known_count|pluralize }} de propuesta registrado{{ message.proposal_preferences_card.known_count|pluralize }} para esta conversación.</span>
+            {% else %}
+              <span>Sin parámetros de propuesta registrados todavía.</span>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+
     </article>
   {% endfor %}
 

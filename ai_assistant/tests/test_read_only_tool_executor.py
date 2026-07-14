@@ -6,10 +6,12 @@ from ai_assistant.application.tools import (
     TOOL_COMPARE_DAILYPLAN_TO_TARGETS,
     TOOL_CREATE_VALIDATED_MEAL_PROPOSAL,
     TOOL_LIST_OPERATIONAL_FOODS,
+    TOOL_LIST_SAVED_COMPARISONS,
     TOOL_LIST_USER_PROPOSALS,
     TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES,
     TOOL_READ_DAILYPLAN,
     TOOL_READ_PROPOSAL,
+    TOOL_READ_SAVED_COMPARISON,
     TOOL_SEARCH_OPERATIONAL_FOODS,
     execute_read_only_tool,
 )
@@ -145,6 +147,51 @@ class ReadOnlyToolExecutorTests(SimpleTestCase):
         self.assertEqual(calls, [("arroz", 2)])
         self.assertEqual(len(result.data["foods"]), 2)
 
+    def test_list_saved_comparisons_normalizes_kind_and_limit(self):
+        calls = []
+
+        def list_comparisons(user, *, kind=None, limit=20):
+            calls.append((kind, limit))
+            return tool_success({"saved_comparisons": [{"id": 1}, {"id": 2}, {"id": 3}]})
+
+        executor = ReadOnlyToolExecutor(
+            dispatch_table={TOOL_LIST_SAVED_COMPARISONS: list_comparisons},
+            config=ReadOnlyToolExecutorConfig(default_limit=2, max_limit=5),
+        )
+
+        result = executor.execute(
+            AssistantToolRequest(
+                tool_name=TOOL_LIST_SAVED_COMPARISONS,
+                arguments={"kind": "  DailyPlans  ", "limit": "2"},
+            ),
+            user="user-1",
+        )
+
+        self.assertEqual(result.status, AssistantToolStatus.OK)
+        self.assertEqual(calls, [("dailyplans", 2)])
+        self.assertEqual(len(result.data["saved_comparisons"]), 2)
+
+    def test_dispatches_read_saved_comparison(self):
+        calls = []
+
+        def read_comparison(user, *, comparison_id):
+            calls.append((user, comparison_id))
+            return tool_success({"saved_comparison": {"id": comparison_id, "name": "Comparación"}})
+
+        executor = ReadOnlyToolExecutor(dispatch_table={TOOL_READ_SAVED_COMPARISON: read_comparison})
+
+        result = executor.execute(
+            AssistantToolRequest(
+                tool_name=TOOL_READ_SAVED_COMPARISON,
+                arguments={"comparison_id": 12},
+            ),
+            user="user-1",
+        )
+
+        self.assertEqual(result.status, AssistantToolStatus.OK)
+        self.assertEqual(result.data["saved_comparison"]["id"], 12)
+        self.assertEqual(calls, [("user-1", 12)])
+
 
     def test_preview_solver_candidates_normalizes_arguments(self):
         calls = []
@@ -218,5 +265,7 @@ class ReadOnlyToolExecutorTests(SimpleTestCase):
         self.assertIn(TOOL_READ_DAILYPLAN, table)
         self.assertIn(TOOL_SEARCH_OPERATIONAL_FOODS, table)
         self.assertIn(TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES, table)
+        self.assertIn(TOOL_LIST_SAVED_COMPARISONS, table)
+        self.assertIn(TOOL_READ_SAVED_COMPARISON, table)
         self.assertNotIn("list_food_catalog", table)
         self.assertNotIn("search_food_catalog", table)

@@ -6,6 +6,7 @@ from ai_assistant.infrastructure.providers import (
     LLMProviderConfigurationError,
     LLMProviderRequest,
     LLMProviderRequestError,
+    LLMProviderToolOutput,
     OpenAIResponsesClient,
     get_llm_client,
 )
@@ -128,6 +129,7 @@ class LLMProviderGatewayTests(SimpleTestCase):
         self.assertEqual(call["headers"]["Authorization"], "Bearer sk-test")
         self.assertEqual(call["json"]["model"], "gpt-test")
         self.assertEqual(call["json"]["store"], False)
+        self.assertEqual(call["json"]["include"], ["reasoning.encrypted_content"])
         self.assertEqual(call["json"]["max_output_tokens"], 120)
         self.assertEqual(
             call["json"]["input"],
@@ -140,6 +142,174 @@ class LLMProviderGatewayTests(SimpleTestCase):
         self.assertEqual(response.text, "Hola desde OpenAI")
         self.assertEqual(response.response_id, "resp_123")
         self.assertEqual(response.usage["input_tokens"], 10)
+
+
+    @override_settings(
+        AI_ASSISTANT_OPENAI_API_KEY="sk-test",
+        AI_ASSISTANT_OPENAI_MODEL="gpt-test",
+        AI_ASSISTANT_OPENAI_BASE_URL="https://api.openai.com/v1",
+    )
+    def test_openai_client_uses_strict_json_schema_and_reasoning_whitelist(self):
+        session = StubSession(
+            StubResponse(
+                payload={
+                    "id": "resp_structured",
+                    "model": "gpt-test",
+                    "output_text": '{"format":"ai_assistant_structured_response.v2"}',
+                }
+            )
+        )
+        client = OpenAIResponsesClient(session=session)
+        schema = {
+            "type": "object",
+            "properties": {"format": {"type": "string"}},
+            "required": ["format"],
+            "additionalProperties": False,
+        }
+
+        client.generate(
+            LLMProviderRequest(
+                messages=[LLMMessage(role="user", content="Hola")],
+                max_output_tokens=1400,
+                metadata={
+                    "format": "ai_assistant_structured_response.v2",
+                    "response_json_schema": schema,
+                    "response_schema_name": "ai_assistant_structured_response",
+                    "response_schema_strict": True,
+                    "reasoning_effort": "low",
+                    "private_debug_value": "must-not-leak",
+                },
+            )
+        )
+
+        payload = session.calls[0]["json"]
+        self.assertEqual(payload["text"]["format"]["type"], "json_schema")
+        self.assertEqual(payload["text"]["format"]["name"], "ai_assistant_structured_response")
+        self.assertEqual(payload["text"]["format"]["schema"], schema)
+        self.assertTrue(payload["text"]["format"]["strict"])
+        self.assertEqual(payload["text"]["verbosity"], "low")
+        self.assertEqual(payload["reasoning"], {"effort": "low"})
+        self.assertNotIn("private_debug_value", payload)
+
+    @override_settings(
+        AI_ASSISTANT_OPENAI_API_KEY="sk-test",
+        AI_ASSISTANT_OPENAI_MODEL="gpt-test",
+        AI_ASSISTANT_OPENAI_BASE_URL="https://api.openai.com/v1",
+    )
+    def test_openai_client_uses_native_function_tools_and_extracts_calls(self):
+        session = StubSession(
+            StubResponse(
+                payload={
+                    "id": "resp_tool_1",
+                    "model": "gpt-test",
+                    "output": [
+                        {
+                            "type": "reasoning",
+                            "id": "rs_1",
+                            "encrypted_content": "encrypted-reasoning",
+                            "summary": [],
+                            "status": "completed",
+                        },
+                        {
+                            "type": "function_call",
+                            "id": "fc_1",
+                            "call_id": "call_1",
+                            "name": "update_proposal_preferences",
+                            "arguments": '{"updates":{"goal":"fat_loss"}}',
+                            "status": "completed",
+                        },
+                    ],
+                }
+            )
+        )
+        client = OpenAIResponsesClient(session=session)
+
+        response = client.generate(
+            LLMProviderRequest(
+                messages=[LLMMessage(role="user", content="Quiero bajar grasa")],
+                tools=(
+                    {
+                        "name": "update_proposal_preferences",
+                        "description": "Update proposal preferences.",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {"updates": {"type": "object"}},
+                            "required": ["updates"],
+                        },
+                    },
+                ),
+                tool_choice="auto",
+                parallel_tool_calls=True,
+                max_tool_calls=3,
+            )
+        )
+
+        payload = session.calls[0]["json"]
+        self.assertEqual(payload["tools"][0]["type"], "function")
+        self.assertEqual(payload["tools"][0]["name"], "update_proposal_preferences")
+        self.assertFalse(payload["tools"][0]["strict"])
+        self.assertEqual(payload["tool_choice"], "auto")
+        self.assertTrue(payload["parallel_tool_calls"])
+        self.assertNotIn("max_tool_calls", payload)
+        self.assertEqual(response.text, "")
+        self.assertEqual(response.tool_calls[0].call_id, "call_1")
+        self.assertEqual(response.tool_calls[0].arguments["updates"]["goal"], "fat_loss")
+        self.assertEqual(response.continuation_items[0]["type"], "reasoning")
+        self.assertEqual(response.continuation_items[1]["type"], "function_call")
+
+    @override_settings(
+        AI_ASSISTANT_OPENAI_API_KEY="sk-test",
+        AI_ASSISTANT_OPENAI_MODEL="gpt-test",
+        AI_ASSISTANT_OPENAI_BASE_URL="https://api.openai.com/v1",
+    )
+    def test_openai_client_returns_function_outputs_in_stateless_continuation(self):
+        session = StubSession(
+            StubResponse(
+                payload={
+                    "id": "resp_final_2",
+                    "model": "gpt-test",
+                    "output_text": '{"assistant_message":{"content":"Listo"}}',
+                }
+            )
+        )
+        client = OpenAIResponsesClient(session=session)
+
+        client.generate(
+            LLMProviderRequest(
+                messages=[LLMMessage(role="user", content="Quiero bajar grasa")],
+                continuation_items=(
+                    {
+                        "type": "reasoning",
+                        "id": "rs_1",
+                        "encrypted_content": "encrypted-reasoning",
+                        "summary": [],
+                        "status": "completed",
+                    },
+                    {
+                        "type": "function_call",
+                        "id": "fc_1",
+                        "call_id": "call_1",
+                        "name": "update_proposal_preferences",
+                        "arguments": '{"updates":{"goal":"fat_loss"}}',
+                        "status": "completed",
+                    },
+                ),
+                tool_outputs=(
+                    LLMProviderToolOutput(
+                        call_id="call_1",
+                        output={"status": "ok", "data": {"goal": "fat_loss"}},
+                    ),
+                ),
+            )
+        )
+
+        input_items = session.calls[0]["json"]["input"]
+        self.assertEqual(input_items[0]["role"], "user")
+        self.assertEqual(input_items[1]["type"], "reasoning")
+        self.assertEqual(input_items[2]["type"], "function_call")
+        self.assertEqual(input_items[3]["type"], "function_call_output")
+        self.assertEqual(input_items[3]["call_id"], "call_1")
+        self.assertIn('"status": "ok"', input_items[3]["output"])
 
     @override_settings(
         AI_ASSISTANT_OPENAI_API_KEY="sk-test",

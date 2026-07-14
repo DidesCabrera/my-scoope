@@ -82,12 +82,24 @@
      ========================================================= */
   
   .header {
-    position: sticky;
+    position: fixed;
     top: 0;
+    right: 0;
+    left: 0;
     z-index: 50;
     border-bottom: 1px solid var(--border);
     background: rgba(5, 5, 5, 0.82);
     backdrop-filter: blur(18px);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-100%);
+    transition: opacity 220ms ease, transform 220ms ease;
+  }
+
+  .header.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
   }
   
   .header-inner {
@@ -108,19 +120,9 @@
     text-decoration: none;
   }
   
-  .logo-mark {
-    width: 36px;
-    height: 36px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid var(--border-strong);
-    border-radius: 13px;
-    background: rgba(255, 255, 255, 0.06);
-    color: var(--text);
-    font-size: 0.78rem;
-    font-weight: 900;
-    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+  .header-logo {
+    width: clamp(118px, 14vw, 158px);
+    height: auto;
   }
   
   .nav {
@@ -300,28 +302,53 @@
      ========================================================= */
   
   .hero {
-      position: relative;
-      isolation: isolate;
-      overflow: hidden;
-      padding: 250px 0 100px;
-      background:
-        linear-gradient(
-          90deg,
-          rgba(5, 5, 5, 0.0) 0%,
-          rgba(5, 5, 5, 0.1) 40%,
-          rgba(5, 5, 5, 0.0) 100%
-        ),
-        url("../img/landing/home-banner-2.jpg");
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    min-height: 100vh;
+    padding: 48px 0 100px;
+    background: #000;
+  }
+
+  .hero::before {
+    content: "";
+    position: absolute;
+    z-index: -2;
+    inset: 0;
+    background-image: url("../img/landing/home-banner-2.jpg");
+    background-position: center 45%;
+    background-size: min(85vw, 500px) auto;
+    background-repeat: no-repeat;
+  }
+
+  .hero::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.58);
   }
   
   .hero-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1.02fr) minmax(360px, 0.98fr);
+    min-height: calc(100vh - 148px);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  .hero-copy {
+    width: min(100%, 760px);
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: clamp(40px, 7vw, 84px);
+    text-align: center;
+  }
+
+  .hero-logo {
+    width: clamp(160px, 22vw, 260px);
+    height: auto;
+    margin-top: 100px;
+    margin-bottom: clamp(150px, 36vh, 400px);
   }
   
   .hero-lead {
@@ -334,6 +361,7 @@
   .hero-actions {
     display: flex;
     flex-wrap: wrap;
+    justify-content: center;
     gap: 14px;
     margin-top: 34px;
   }
@@ -353,10 +381,6 @@
     color: var(--text-muted);
     font-size: 0.88rem;
     font-weight: 650;
-  }
-  
-  .hero-visual {
-    position: relative;
   }
   
   /* =========================================================
@@ -795,7 +819,7 @@
   .system-node span {
     width: fit-content;
     margin-bottom: auto;
-    border-radius: 999px;
+    border-radius: 22px;
     background: rgba(255, 255, 255, 0.08);
     color: var(--text);
     padding: 7px 10px;
@@ -952,6 +976,15 @@
     background:
       radial-gradient(circle at 12% 20%, rgba(255, 255, 255, 0.94), transparent 28%),
       linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.98));
+  }
+
+  .section-dark > .container > .section-copy h2,
+  .section-dark > .container > .section-copy h3,
+  .section-dark > .container > .section-copy p,
+  .section-dark > .container > .section-heading h2,
+  .section-dark > .container > .section-heading h3,
+  .section-dark > .container > .section-heading p {
+    color: #050505;
   }
 
   .section-light-circle {
@@ -1351,10 +1384,6 @@
   }
   
   @media (max-width: 940px) {
-    .hero-grid {
-      grid-template-columns: 1fr;
-    }
-  
     /*
       Mobile behavior:
       in every split section, text appears first and image/visual block below,
@@ -1378,14 +1407,6 @@
     .split-section-reverse > .ai-proposal {
       order: 2;
       width: 100%;
-    }
-  
-    .hero-copy {
-      max-width: 760px;
-    }
-  
-    .hero-visual {
-      display: none;
     }
   
     .value-grid {
@@ -1414,14 +1435,22 @@
       display: none;
     }
   
-    .logo-mark {
-      width: 34px;
-      height: 34px;
+    .header-logo {
+      width: 124px;
     }
   
     .hero {
-      padding-top: 300px;
-      padding-bottom: 100px;
+      min-height: 100vh;
+      padding: 34px 0 72px;
+    }
+
+    .hero-grid {
+      min-height: calc(100vh - 106px);
+    }
+
+    .hero-logo {
+      margin-top: 80px;
+      margin-bottom: clamp(120px, 30vh, 400px);
     }
   
     h1 {
@@ -1516,3 +1545,452 @@
       min-height: 190px;
     }
   }
+/* =========================================================
+   Landing refinements: slider, system, benefits and billing
+   ========================================================= */
+
+.landing-section--how-intro {
+  background: #ffffff;
+  border-color: rgba(5, 5, 5, 0.1);
+}
+
+.landing-section--how-intro h2,
+.landing-section--how-intro h3,
+.landing-section--how-intro p {
+  color: #050505;
+}
+
+.landing-slider {
+  position: relative;
+  overflow: hidden;
+  margin-top: 42px;
+}
+
+.landing-slider-track {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 50px;
+}
+
+.landing-slide {
+  min-width: 0;
+  border: 1px solid rgba(5, 5, 5, 0.12);
+  border-radius: var(--radius-lg);
+  background: #f7f7f7;
+  padding: 14px 14px 22px;
+  box-shadow: 0 14px 34px rgba(5, 5, 5, 0.08);
+}
+
+.landing-slide-placeholder {
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  background:
+    linear-gradient(135deg, rgba(5, 5, 5, 0.05), rgba(5, 5, 5, 0.12)),
+    repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(5, 5, 5, 0.04) 10px, rgba(5, 5, 5, 0.04) 20px);
+}
+
+.landing-slide-placeholder span {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.86);
+  padding: 8px 12px;
+  color: #050505;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.landing-slide h3 {
+  margin: 20px 8px 8px;
+  color: #050505;
+}
+
+.landing-slide p {
+  margin: 0 8px;
+  color: #454545;
+}
+
+.landing-slider-dots {
+  display: none;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.landing-slider-dots button {
+  width: 9px;
+  height: 9px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(5, 5, 5, 0.22);
+  cursor: pointer;
+}
+
+.landing-slider-dots button.is-active {
+  width: 28px;
+  background: #050505;
+}
+
+.landing-section--system .section-heading,
+.landing-section--system .section-heading p {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+.system-node {
+  justify-content: flex-start;
+}
+
+.system-node-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: auto;
+}
+
+.system-node .system-node-number {
+  margin: 0;
+}
+
+.system-node-icon {
+  width: 80px;
+  height: 80px;
+  display: inline-flex;
+  flex: 0 0 80px;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  border-radius: 24px;
+  color: #ffffff;
+}
+
+.system-node-icon svg {
+  width: 42px;
+  height: 42px;
+  fill: currentColor;
+}
+
+.system-node--food .system-node-icon {
+  background: #ea5b4d;
+}
+
+.system-node--meal .system-node-icon {
+  background: #f29f3d;
+}
+
+.system-node--dailyplan .system-node-icon {
+  background: #3f9e74;
+}
+
+.system-node--program .system-node-icon {
+  background: #5d65d8;
+}
+
+.system-node strong {
+  margin-top: 10px;
+}
+
+.landing-section--precision {
+  background:
+    radial-gradient(circle at 18% 20%, rgba(255, 101, 91, 0.95), transparent 34%),
+    radial-gradient(circle at 82% 18%, rgba(128, 72, 255, 0.9), transparent 36%),
+    radial-gradient(circle at 78% 84%, rgba(55, 198, 157, 0.85), transparent 36%),
+    linear-gradient(135deg, #f08d3c 0%, #df3f74 38%, #6c4de6 70%, #2da985 100%);
+}
+
+.landing-section--precision .section-copy h2,
+.landing-section--precision .section-copy h3,
+.landing-section--precision .section-copy p,
+.landing-section--precision .eyebrow {
+  color: #ffffff;
+}
+
+.landing-section--precision .image-panel {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(14px);
+}
+
+.landing-section--benefits {
+  background: #ffffff;
+}
+
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.benefit-card {
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(5, 5, 5, 0.1);
+  border-radius: var(--radius-lg);
+  background: #f7f7f7;
+  padding: 24px;
+  box-shadow: 0 14px 34px rgba(5, 5, 5, 0.08);
+}
+
+.benefit-icon {
+  width: 58px;
+  height: 58px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: auto;
+  border-radius: 18px;
+  background: #050505;
+  color: #ffffff;
+}
+
+.benefit-icon svg {
+  width: 30px;
+  height: 30px;
+  fill: currentColor;
+}
+
+.benefit-card h3 {
+  margin-top: 26px;
+  margin-bottom: 10px;
+  color: #050505;
+}
+
+.benefit-card p {
+  color: #4a4a4a;
+}
+
+.billing-toggle {
+  width: fit-content;
+  display: inline-grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+  margin-top: 24px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 4px;
+}
+
+.billing-toggle button {
+  min-width: 88px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-soft);
+  padding: 9px 18px;
+  cursor: pointer;
+  font-weight: 850;
+}
+
+.billing-toggle button.is-active {
+  background: #f5f5f5;
+  color: #050505;
+}
+
+.plans-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  max-width: none;
+}
+
+.final-cta-logo {
+  width: clamp(150px, 20vw, 230px);
+  height: auto;
+  margin-bottom: 30px;
+}
+
+.footer-inner {
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+
+.footer-links {
+  justify-content: center;
+}
+
+@media (max-width: 940px) {
+  .benefits-grid,
+  .plans-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .plan-card:first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .landing-slider {
+    overflow: visible;
+    margin-right: -18px;
+  }
+
+  .landing-slider-track {
+    display: flex;
+    gap: 35px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-left: 0;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    margin-right: 36px;
+    margin-left: 18px;
+  }
+
+  .landing-slider-track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .landing-slide {
+    flex: 0 0 min(84vw, 360px);
+    scroll-snap-align: start;
+  }
+
+  .landing-slider-dots {
+    display: flex;
+    margin-right: 18px;
+  }
+
+  .benefits-grid,
+  .plans-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .plan-card:first-child {
+    grid-column: auto;
+  }
+
+  .system-node-icon {
+    width: 70px;
+    height: 70px;
+    flex-basis: 70px;
+  }
+}
+
+
+/* =========================================================
+   Landing visual corrections
+   ========================================================= */
+
+.landing-slider-track {
+  background: transparent;
+}
+
+.landing-slide {
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+
+.landing-slide img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border: 0;
+  border-radius: 0;
+}
+
+.system-node-icon .system-node-glyph,
+.system-node-icon svg.system-node-glyph {
+  width: 42px;
+  height: 42px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+}
+
+.image-panel.image-panel-product {
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.image-panel.image-panel-product img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 0;
+}
+
+#precision-impact,
+#precision-impact .section-copy,
+#precision-impact .section-copy h2,
+#precision-impact .section-copy h3,
+#precision-impact .section-copy p,
+#precision-impact .eyebrow {
+  color: #ffffff;
+}
+
+.benefits-heading {
+  margin-bottom: 42px;
+  text-align: center;
+}
+
+.benefits-heading h2 {
+  color: #050505;
+}
+
+.footer {
+  border: 0;
+  background: #000000;
+}
+
+
+/* =========================================================
+   Landing refinements: header trigger, entity colors, metrics
+   ========================================================= */
+
+.system-node-icon {
+  border-radius: 22px;
+}
+
+.system-node--food .system-node-icon {
+  background: #ff8800;
+}
+
+.system-node--meal .system-node-icon {
+  background: #cf34b0;
+}
+
+.system-node--dailyplan .system-node-icon {
+  background: rgb(98, 41, 206);
+}
+
+.system-node--program .system-node-icon {
+  background: #054cc0;
+}
+
+.image-panel.image-panel-metrics {
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.image-panel.image-panel-metrics img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 0;
+}
+
+@media (max-width: 700px) {
+  .system-node-icon {
+    border-radius: 24px;
+  }
+}

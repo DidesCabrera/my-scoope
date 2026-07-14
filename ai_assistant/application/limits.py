@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import math
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Sequence
@@ -58,7 +59,29 @@ def estimate_text_tokens(text: Any) -> int:
 
 
 def estimate_provider_request_tokens(request: LLMProviderRequest) -> int:
-    return sum(estimate_text_tokens(message.content) for message in request.normalized_messages)
+    """Estimate all explicit provider input surfaces, including native tools.
+
+    Function declarations and stateless continuation items consume provider
+    context even though they are not chat messages. Counting them prevents the
+    native function-call transport from bypassing My Scoope's technical input
+    guardrail. Provider usage remains the post-call source of truth.
+    """
+
+    total = sum(estimate_text_tokens(message.content) for message in request.normalized_messages)
+    for payload in (
+        tuple(request.tools or ()),
+        tuple(request.continuation_items or ()),
+        tuple(
+            {"call_id": item.call_id, "output": item.output}
+            for item in request.tool_outputs or ()
+        ),
+    ):
+        if not payload:
+            continue
+        total += estimate_text_tokens(
+            json.dumps(payload, ensure_ascii=False, sort_keys=True, default=str)
+        )
+    return total
 
 
 def validate_provider_request_limits(
