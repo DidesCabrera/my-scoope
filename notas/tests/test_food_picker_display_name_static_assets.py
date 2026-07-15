@@ -17,8 +17,9 @@ class FoodPickerDisplayNameStaticAssetsTests(SimpleTestCase):
 
         self.assertIn("display_name", content)
         self.assertIn("getFoodDisplayName", content)
-        self.assertIn("picker-item-original-name", content)
-        self.assertIn("renderFoodBadges", content)
+        self.assertIn("shouldShowOriginalName", content)
+        self.assertIn("renderPickerResultTitle", content)
+        self.assertIn("renderPickerResultBadges", content)
 
     def test_food_picker_js_uses_display_name_for_selected_food(self):
         path = (

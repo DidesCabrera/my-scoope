@@ -2,7 +2,7 @@ import json
 from datetime import date
 
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from notas.domain.models import (
     DailyPlan,
@@ -32,6 +32,7 @@ def json_post(
     )
 
 
+@override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
 class AIToolsAPIInternalAuthIntegrationTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(

@@ -13,6 +13,7 @@ class AIUsageEvent(models.Model):
 
     class Status(models.TextChoices):
         COMPLETED = "completed", "Completed"
+        DEGRADED = "degraded", "Degraded"
         ERROR = "error", "Error"
         BLOCKED = "blocked", "Blocked"
 

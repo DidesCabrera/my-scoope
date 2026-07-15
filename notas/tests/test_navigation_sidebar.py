@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from notas.presentation.config.viewmodel_config import (
@@ -34,12 +34,14 @@ class SidebarBuilderTests(TestCase):
 
         for section in sidebar:
             for group in section["groups"]:
+                if group["is_active"]:
+                    active_items.append(group)
                 for item in group["items"]:
                     if item["is_active"]:
                         active_items.append(item)
 
         self.assertEqual(len(active_items), 1)
-        self.assertEqual(active_items[0]["key"], "food_personal")
+        self.assertEqual(active_items[0]["key"], "food")
         self.assertEqual(active_items[0]["nav_root"], "food")
         self.assertEqual(active_items[0]["scope"], "personal")
 
@@ -50,12 +52,14 @@ class SidebarBuilderTests(TestCase):
 
         for section in sidebar:
             for group in section["groups"]:
+                if group["is_active"]:
+                    active_items.append(group)
                 for item in group["items"]:
                     if item["is_active"]:
                         active_items.append(item)
 
         self.assertEqual(len(active_items), 1)
-        self.assertEqual(active_items[0]["key"], "dailyplan_personal")
+        self.assertEqual(active_items[0]["key"], "dailyplan")
         self.assertEqual(active_items[0]["nav_root"], "dailyplan")
         self.assertEqual(active_items[0]["scope"], "personal")
 
@@ -75,7 +79,7 @@ class SidebarBuilderTests(TestCase):
 
         self.assertEqual(ui.nav_root, "profile")
         self.assertEqual(ui.icon, "circle-user-round")
-        self.assertEqual(ui.section_label, "Cuenta")
+        self.assertEqual(ui.section_label, "Tools")
         self.assertEqual(ui.page_icon, "circle-user-round")
 
 
@@ -95,11 +99,12 @@ class SidebarBuilderTests(TestCase):
 
         self.assertEqual(ui.nav_root, "profile")
         self.assertEqual(ui.icon, "circle-user-round")
-        self.assertEqual(ui.section_label, "Cuenta")
+        self.assertEqual(ui.section_label, "Tools")
         self.assertEqual(ui.page_icon, "circle-user-round")
 
 
 
+@override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
 class SidebarIntegrationTests(TestCase):
 
     def setUp(self):

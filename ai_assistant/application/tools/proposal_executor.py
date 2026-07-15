@@ -7,6 +7,7 @@ from typing import Any
 from ai_assistant.application.tools.contracts import AssistantToolCategory
 from ai_assistant.application.tools.registry import (
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
+    TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
     TOOL_CREATE_NUTRITION_SOLVER_MEAL_PROPOSAL,
     TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL,
     TOOL_CREATE_VALIDATED_MEAL_PROPOSAL,
@@ -124,6 +125,7 @@ def build_default_reviewable_proposal_tool_dispatch_table() -> dict[str, Reviewa
 
     from notas.application.ai_tools.proposal_tools import (
         create_nutrition_engine_dailyplan_proposal_tool,
+        create_nutrition_engine_dailyplan_proposal_from_drafts_tool,
         create_nutrition_solver_meal_proposal_tool,
         create_validated_dailyplan_build_proposal_tool,
         create_validated_meal_proposal_tool,
@@ -135,6 +137,7 @@ def build_default_reviewable_proposal_tool_dispatch_table() -> dict[str, Reviewa
         TOOL_CREATE_NUTRITION_SOLVER_MEAL_PROPOSAL: create_nutrition_solver_meal_proposal_tool,
         TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL: create_validated_dailyplan_build_proposal_tool,
         TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL: create_nutrition_engine_dailyplan_proposal_tool,
+        TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS: create_nutrition_engine_dailyplan_proposal_from_drafts_tool,
         TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL: iterate_nutrition_engine_dailyplan_proposal_tool,
     }
 

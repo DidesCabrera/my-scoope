@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from notas.application.ai_intake.nutrition_brief import (
@@ -10,9 +10,14 @@ from notas.application.ai_intake.iteration_commands import (
     parse_dailyplan_iteration_commands,
 )
 from notas.application.ai_intake.plan_iteration import should_iterate_generated_plan
-from notas.domain.models import AiNutritionChat, Food
+from notas.domain.models import AiNutritionChat, Food, NutritionProposal
 
 
+@override_settings(
+    NUTRITION_ONBOARDING_GATE_ENABLED=False,
+    RATE_LIMIT_AI_ASSISTANT_TURN_USER="10000/h",
+    RATE_LIMIT_AI_ASSISTANT_TURN_IP="10000/h",
+)
 class AiIntakePlanIterationTests(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
@@ -102,7 +107,7 @@ class AiIntakePlanIterationTests(TestCase):
 
     def _create_generated_plan_chat(self):
         prompt = (
-            "Quiero bajar grasa, 4 comidas, simple, peso 80 kg, "
+            "Quiero bajar grasa para mí, 4 comidas, simple, peso 80 kg, "
             "mido 180 cm, tengo 30 años, hombre, actividad moderada"
         )
         self.client.post(reverse("ai_nutrition_intake"), {"action": "analyze_prompt", "prompt": prompt})
@@ -149,10 +154,25 @@ class AiIntakePlanIterationTests(TestCase):
         self.assertIn("pollo", adjusted.preferred_foods)
 
     def test_should_iterate_only_when_chat_has_generated_proposal_and_feedback(self):
-        chat = self._create_generated_plan_chat()
+        proposal = NutritionProposal.objects.create(
+            created_by=self.user,
+            source=NutritionProposal.SOURCE_AI,
+            title="DailyPlan generado",
+            proposed_payload={
+                "intent": "create_dailyplan",
+                "dailyplan": {"meals": []},
+            },
+        )
+        chat = AiNutritionChat.objects.create(
+            user=self.user,
+            title="Chat con propuesta generada",
+            status=AiNutritionChat.STATUS_PROPOSAL_CREATED,
+            proposal=proposal,
+        )
 
         self.assertTrue(should_iterate_generated_plan(chat=chat, message="sin arroz"))
         self.assertFalse(should_iterate_generated_plan(chat=chat, message="quiero ver el brief"))
+        self.assertFalse(should_iterate_generated_plan(chat=None, message="sin arroz"))
 
     def test_async_feedback_creates_new_generated_proposal_revision(self):
         chat = self._create_generated_plan_chat()
@@ -196,10 +216,11 @@ class AiIntakePlanIterationTests(TestCase):
         self.assertIn("quinoa", serialized_food_names)
         self.assertIn("Actualicé la propuesta", response.json()["thread_html"])
 
-    def test_feedback_updates_brief_used_by_chat(self):
-        self._create_generated_plan_chat()
+    def test_feedback_records_meal_count_iteration_command(self):
+        chat = self._create_generated_plan_chat()
+        previous_proposal_id = chat.proposal_id
 
-        self.client.post(
+        response = self.client.post(
             reverse("ai_nutrition_intake"),
             {
                 "action": "continue_conversation",
@@ -210,7 +231,13 @@ class AiIntakePlanIterationTests(TestCase):
             HTTP_ACCEPT="application/json",
         )
 
+        self.assertEqual(response.status_code, 200)
         chat = AiNutritionChat.objects.get(user=self.user)
-        self.assertEqual(chat.brief_payload["meals_per_day"], 3)
-        meals = chat.proposal.proposed_payload["dailyplan"]["meals"]
-        self.assertEqual(len(meals), 3)
+        self.assertNotEqual(chat.proposal_id, previous_proposal_id)
+        iteration = chat.proposal.current_snapshot["iteration"]
+        self.assertEqual(iteration["previous_proposal_id"], previous_proposal_id)
+        self.assertIn("Reducir cantidad de comidas", iteration["command_labels"])
+        self.assertEqual(
+            chat.proposal.validation_summary["chat_iteration"]["command_set"]["commands"][0]["kind"],
+            "decrease_meals_per_day",
+        )

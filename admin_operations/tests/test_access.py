@@ -41,7 +41,7 @@ class AdminOperationsAccessTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Admin Operations")
         self.assertContains(response, "Operational Console")
-        self.assertContains(response, "Colas accionables para operar My Scoope")
+        self.assertContains(response, "Overview staff-only de colas accionables")
         self.assertNotContains(response, "admin-operations-hero")
 
     def test_overview_uses_independent_operations_shell(self):
@@ -61,7 +61,7 @@ class AdminOperationsAccessTests(TestCase):
         self.assertIn('class="admin-analytics-shell admin-operations-shell"', html)
         self.assertIn('class="admin-analytics-app admin-operations-app"', html)
         self.assertIn("Ir a Analytics", html)
-        self.assertIn("Django Admin legacy", html)
+        self.assertIn("Django admin legacy", html)
         self.assertNotIn('class="app-body"', html)
         self.assertNotIn('components/sidebar.html', html)
 

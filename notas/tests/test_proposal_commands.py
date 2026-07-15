@@ -354,7 +354,7 @@ class ProposalCommandTests(TestCase):
         )
         self.assertEqual(proposal.reviewed_by, self.user)
         self.assertIsNotNone(proposal.reviewed_at)
-        self.assertTrue(proposal.is_final)
+        self.assertFalse(proposal.is_final)
 
         # Importante: por ahora aprobar solo cambia el estado de la propuesta.
         # La aplicación real del proposed_payload vendrá en una etapa posterior.

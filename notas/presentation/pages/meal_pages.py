@@ -16,7 +16,9 @@ from notas.application.services.nutrition.nutrition_kpis import (
 from notas.domain.models import FoodLocalizedName, Meal, MealFood
 from notas.presentation.composition.js.food_picker_builder import (
     build_food_picker_context_payload,
+    build_food_picker_foods_payload,
 )
+from notas.application.queries.food_picker_queries import list_food_picker_items
 from notas.presentation.viewmodels.meals import (
     build_meal_detail_content_data,
     build_meal_list_content_data,
@@ -146,6 +148,12 @@ def get_meal_detail_page_data(
 
         food_picker_context_json = json.dumps(
             food_picker_ctx.as_dict(),
+            cls=DjangoJSONEncoder,
+        )
+        foods_json = json.dumps(
+            build_food_picker_foods_payload(
+                list_food_picker_items(user=user).foods,
+            ),
             cls=DjangoJSONEncoder,
         )
 

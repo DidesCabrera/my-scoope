@@ -90,11 +90,12 @@ class NutritionIntakeChatEngineSelectorTests(SimpleTestCase):
         self.assertEqual(result.state.messages[-2].role, "user")
         self.assertEqual(result.state.messages[-1].role, "assistant")
         self.assertEqual(result.state.last_assistant_message, "Respuesta preview desde LLM.")
-        self.assertEqual(result.state.result.brief.calorie_target, 2100)
+        self.assertIsNone(result.state.result.brief.calorie_target)
+        self.assertTrue(result.metadata["deterministic_coauthor_disabled"])
         safe_context = stub_llm_engine.requests[0].metadata["safe_llm_context"]
         self.assertEqual(safe_context["metadata"]["context_builder"], "safe_llm_context.v1")
-        self.assertEqual(safe_context["nutrition_brief"]["calorie_target"], 2100)
-        self.assertFalse(safe_context["runtime"]["tools_enabled"])
+        self.assertNotIn("calorie_target", safe_context.get("nutrition_brief", {}))
+        self.assertTrue(safe_context["runtime"]["tools_enabled"])
 
 class NutritionIntakeLLMPreviewPatch58Tests(SimpleTestCase):
     def test_llm_preview_marks_usage_action_type_for_observability(self):
@@ -138,6 +139,86 @@ class NutritionIntakeLLMPreviewPatch58Tests(SimpleTestCase):
         self.assertEqual(preview_metadata["conversation_id"], "15")
         self.assertEqual(preview_metadata["turn_id"], "turn-1")
         self.assertEqual(preview_metadata["safe_llm_context"]["metadata"]["preview_mode"], True)
+
+    def test_llm_preview_forwards_structured_provider_contract_diagnostics(self):
+        class StubLLMEngine:
+            engine_name = "stub_llm"
+
+            def continue_chat(self, request):
+                return ChatEngineTurnResult(
+                    state={"external": True},
+                    assistant_text="Respuesta reparada.",
+                    engine_name=self.engine_name,
+                    metadata={
+                        "provider": "openai",
+                        "provider_model": "gpt-test",
+                        "provider_parse_error": "",
+                        "provider_contract_repair_attempted": True,
+                        "provider_incomplete_reasons": ["max_output_tokens"],
+                        "provider_final_incomplete_reason": "",
+                        "usage_observability": {"recorded": True},
+                    },
+                )
+
+        result = LLMPreviewNutritionIntakeChatEngine(llm_engine=StubLLMEngine()).continue_chat(
+            ChatEngineRequest(message="hola", user_id=1)
+        )
+
+        self.assertTrue(result.metadata["llm_provider_contract_repair_attempted"])
+        self.assertEqual(
+            result.metadata["llm_provider_incomplete_reasons"],
+            ["max_output_tokens"],
+        )
+        self.assertEqual(result.metadata["llm_provider_final_incomplete_reason"], "")
+
+    def test_llm_preview_exposes_safe_semantic_and_tool_result_summaries(self):
+        class StubLLMEngine:
+            engine_name = "stub_llm"
+
+            def continue_chat(self, request):
+                return ChatEngineTurnResult(
+                    state={"external": True},
+                    assistant_text="Registré tu ficha temporal.",
+                    engine_name=self.engine_name,
+                    metadata={
+                        "semantic_intent": "capture_nutrition_brief",
+                        "semantic_missing_slots": ["goal", "goal", "meals_per_day"],
+                        "tool_results": [
+                            {
+                                "tool_name": "update_profile_draft",
+                                "status": "ok",
+                                "data": {"profile_draft": {"weight_kg": 85}},
+                            },
+                            {
+                                "tool_name": "read_proposal",
+                                "status": "error",
+                                "error_code": "proposal_not_found",
+                                "error_message": "Internal detail must not be forwarded.",
+                            },
+                        ],
+                        "tools_executed": True,
+                    },
+                )
+
+        result = LLMPreviewNutritionIntakeChatEngine(llm_engine=StubLLMEngine()).continue_chat(
+            ChatEngineRequest(message="Usa estos datos", user_id=1)
+        )
+
+        self.assertEqual(result.metadata["llm_semantic_intent"], "capture_nutrition_brief")
+        self.assertEqual(result.metadata["llm_semantic_missing_slots"], ["goal", "meals_per_day"])
+        self.assertEqual(
+            result.metadata["llm_tool_results"],
+            [
+                {"tool_name": "update_profile_draft", "status": "ok"},
+                {
+                    "tool_name": "read_proposal",
+                    "status": "error",
+                    "error_code": "proposal_not_found",
+                },
+            ],
+        )
+        self.assertNotIn("data", result.metadata["llm_tool_results"][0])
+        self.assertNotIn("error_message", result.metadata["llm_tool_results"][1])
 
     def test_llm_preview_falls_back_to_baseline_text_on_unexpected_error(self):
         class BrokenLLMEngine:
@@ -271,3 +352,57 @@ class NutritionIntakeLLMProductionPatch62Tests(SimpleTestCase):
         self.assertTrue(status["is_llm_production"])
         self.assertTrue(status["rollout_enabled"])
         self.assertEqual(status["rollout_mode"], "all")
+
+
+class NutritionIntakeVisibleBoundaryTests(SimpleTestCase):
+    def test_llm_preview_never_persists_raw_structured_json_as_visible_text(self):
+        class StubLLMEngine:
+            engine_name = "stub_llm"
+
+            def continue_chat(self, request):
+                return ChatEngineTurnResult(
+                    state={"external": True},
+                    assistant_text=(
+                        '{"intent":{"name":"capture_nutrition_brief"},'
+                        '"assistant_message":{"content":"Puedo ayudarte con una propuesta inicial.\\n\\n¿Qué objetivo quieres?"},'
+                        '"requires_human_review":true,'
+                        '"tool_requests":[{"tool_name":"update_proposal_preferences","arguments":{"updates":{"requested_entity":"daily_plan"}}}]}'
+                    ),
+                    engine_name=self.engine_name,
+                    metadata={"tools_executed": False},
+                )
+
+        result = LLMPreviewNutritionIntakeChatEngine(llm_engine=StubLLMEngine()).continue_chat(
+            ChatEngineRequest(message="Quiero una dieta", user_id=1)
+        )
+
+        self.assertEqual(
+            result.assistant_text,
+            "Puedo ayudarte con una propuesta inicial.\n\n¿Qué objetivo quieres?",
+        )
+        self.assertEqual(result.state.last_assistant_message, result.assistant_text)
+        self.assertNotIn('"intent"', result.state.last_assistant_message)
+        self.assertNotIn('"tool_requests"', result.state.last_assistant_message)
+        self.assertTrue(result.metadata["llm_visible_text_extracted"])
+
+    def test_llm_preview_extracts_embedded_structured_json(self):
+        class StubLLMEngine:
+            engine_name = "stub_llm"
+
+            def continue_chat(self, request):
+                return ChatEngineTurnResult(
+                    state={"external": True},
+                    assistant_text=(
+                        'debug envelope: {"assistant_message":{"content":"Texto humano."},'
+                        '"tool_requests":[]} trailing text'
+                    ),
+                    engine_name=self.engine_name,
+                    metadata={"tools_executed": False},
+                )
+
+        result = LLMPreviewNutritionIntakeChatEngine(llm_engine=StubLLMEngine()).continue_chat(
+            ChatEngineRequest(message="Hola", user_id=1)
+        )
+
+        self.assertEqual(result.assistant_text, "Texto humano.")
+        self.assertEqual(result.state.last_assistant_message, "Texto humano.")

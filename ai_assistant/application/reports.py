@@ -17,6 +17,7 @@ class AIUsageKpis:
     period: str
     total_events: int = 0
     completed_events: int = 0
+    degraded_events: int = 0
     blocked_events: int = 0
     error_events: int = 0
     total_tokens: int = 0
@@ -80,6 +81,7 @@ def _build_kpis(*, period: str, events: QuerySet[AIUsageEvent]) -> AIUsageKpis:
         period=period,
         total_events=int(aggregates["total_events"] or 0),
         completed_events=events.filter(status=AIUsageEvent.Status.COMPLETED).count(),
+        degraded_events=events.filter(status=AIUsageEvent.Status.DEGRADED).count(),
         blocked_events=events.filter(status=AIUsageEvent.Status.BLOCKED).count(),
         error_events=events.filter(status=AIUsageEvent.Status.ERROR).count(),
         total_tokens=int(aggregates["total_tokens"] or 0),
@@ -107,6 +109,7 @@ def _usage_breakdown(
             total_tokens=Coalesce(Sum("total_tokens"), 0),
             estimated_cost_usd=Coalesce(Sum("estimated_cost_usd"), Decimal("0")),
             charged_credits=Coalesce(Sum("charged_credits"), 0),
+            degraded_events=Count("id", filter=Q(status=AIUsageEvent.Status.DEGRADED)),
             blocked_events=Count("id", filter=Q(status=AIUsageEvent.Status.BLOCKED)),
             error_events=Count("id", filter=Q(status=AIUsageEvent.Status.ERROR)),
         )
@@ -124,6 +127,7 @@ def _top_users(events: QuerySet[AIUsageEvent], *, limit: int = 10) -> list[dict[
             total_tokens=Coalesce(Sum("total_tokens"), 0),
             estimated_cost_usd=Coalesce(Sum("estimated_cost_usd"), Decimal("0")),
             charged_credits=Coalesce(Sum("charged_credits"), 0),
+            degraded_events=Count("id", filter=Q(status=AIUsageEvent.Status.DEGRADED)),
             blocked_events=Count("id", filter=Q(status=AIUsageEvent.Status.BLOCKED)),
             error_events=Count("id", filter=Q(status=AIUsageEvent.Status.ERROR)),
         )

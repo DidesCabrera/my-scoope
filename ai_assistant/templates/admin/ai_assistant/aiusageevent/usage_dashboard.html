@@ -28,7 +28,7 @@
   <table>
     <tbody>
       <tr><th scope="row">Total events</th><td>{{ report.kpis.total_events }}</td></tr>
-      <tr><th scope="row">Completed / blocked / errors</th><td>{{ report.kpis.completed_events }} / {{ report.kpis.blocked_events }} / {{ report.kpis.error_events }}</td></tr>
+      <tr><th scope="row">Completed / degraded / blocked / errors</th><td>{{ report.kpis.completed_events }} / {{ report.kpis.degraded_events }} / {{ report.kpis.blocked_events }} / {{ report.kpis.error_events }}</td></tr>
       <tr><th scope="row">Active users</th><td>{{ report.kpis.active_users }}</td></tr>
       <tr><th scope="row">Total tokens</th><td>{{ report.kpis.total_tokens }}</td></tr>
       <tr><th scope="row">Input / cached / output tokens</th><td>{{ report.kpis.input_tokens }} / {{ report.kpis.cached_input_tokens }} / {{ report.kpis.output_tokens }}</td></tr>
@@ -39,10 +39,10 @@
 
   <h2>By action type</h2>
   <table>
-    <thead><tr><th>Action</th><th>Events</th><th>Tokens</th><th>Cost USD</th><th>Credits</th><th>Blocked</th><th>Errors</th></tr></thead>
+    <thead><tr><th>Action</th><th>Events</th><th>Tokens</th><th>Cost USD</th><th>Credits</th><th>Degraded</th><th>Blocked</th><th>Errors</th></tr></thead>
     <tbody>
     {% for row in report.by_action_type %}
-      <tr><td>{{ row.action_type|default:"(blank)" }}</td><td>{{ row.events_count }}</td><td>{{ row.total_tokens }}</td><td>{{ row.estimated_cost_usd }}</td><td>{{ row.charged_credits }}</td><td>{{ row.blocked_events }}</td><td>{{ row.error_events }}</td></tr>
+      <tr><td>{{ row.action_type|default:"(blank)" }}</td><td>{{ row.events_count }}</td><td>{{ row.total_tokens }}</td><td>{{ row.estimated_cost_usd }}</td><td>{{ row.charged_credits }}</td><td>{{ row.degraded_events }}</td><td>{{ row.blocked_events }}</td><td>{{ row.error_events }}</td></tr>
     {% empty %}
       <tr><td colspan="7">No usage for this period.</td></tr>
     {% endfor %}
@@ -63,10 +63,10 @@
 
   <h2>Top users</h2>
   <table>
-    <thead><tr><th>User</th><th>Email</th><th>Events</th><th>Tokens</th><th>Cost USD</th><th>Credits</th><th>Blocked</th><th>Errors</th></tr></thead>
+    <thead><tr><th>User</th><th>Email</th><th>Events</th><th>Tokens</th><th>Cost USD</th><th>Credits</th><th>Degraded</th><th>Blocked</th><th>Errors</th></tr></thead>
     <tbody>
     {% for row in report.top_users %}
-      <tr><td>{{ row.user__username }}</td><td>{{ row.user__email }}</td><td>{{ row.events_count }}</td><td>{{ row.total_tokens }}</td><td>{{ row.estimated_cost_usd }}</td><td>{{ row.charged_credits }}</td><td>{{ row.blocked_events }}</td><td>{{ row.error_events }}</td></tr>
+      <tr><td>{{ row.user__username }}</td><td>{{ row.user__email }}</td><td>{{ row.events_count }}</td><td>{{ row.total_tokens }}</td><td>{{ row.estimated_cost_usd }}</td><td>{{ row.charged_credits }}</td><td>{{ row.degraded_events }}</td><td>{{ row.blocked_events }}</td><td>{{ row.error_events }}</td></tr>
     {% empty %}
       <tr><td colspan="8">No metered users for this period.</td></tr>
     {% endfor %}

@@ -260,7 +260,7 @@ class ApplyProposalAuditTrailTests(TestCase):
 
         with self.assertRaisesMessage(
             ValueError,
-            "proposal_is_not_approved",
+            "proposal_is_not_applicable",
         ):
             apply_approved_proposal(
                 user=self.user,

@@ -82,18 +82,19 @@ class AssistantStructuredContractsTests(SimpleTestCase):
         tool_request = AssistantToolRequest(
             tool_name="  Create DailyPlan Proposal  ",
             arguments={"brief_id": 99},
-            request_id="  Tool Call 1  ",
+            request_id="  call_AbC123  ",
             reason="  Crear propuesta revisable  ",
         )
         tool_result = AssistantToolResult(
             tool_name="create_dailyplan_proposal",
             status="ok",
             data={"proposal_id": 123},
-            request_id="tool_call_1",
+            request_id="call_AbC123",
         )
 
         self.assertEqual(tool_request.tool_name, "create_dailyplan_proposal")
-        self.assertEqual(tool_request.request_id, "tool_call_1")
+        self.assertEqual(tool_request.request_id, "call_AbC123")
+        self.assertEqual(tool_result.request_id, "call_AbC123")
         self.assertEqual(tool_request.as_dict()["arguments"], {"brief_id": 99})
         self.assertEqual(tool_result.status, AssistantToolStatus.OK)
         self.assertTrue(tool_result.ok)

@@ -215,3 +215,129 @@ Que tremendo cierre de ciclo. Con esta app si creo que hemos cerrado un ciclo de
 ----
 Genial, me gustaría ajustar lo siguiente:
 En cada pagina las cards "card-detail-block admin-operations-hero" Muestra lo mismo que el header. Es mejor quitarlas.
+
+
+
+
+----
+AI_ASSISTANT_CHAT_ENGINE_MODE=llm_preview
+AI_ASSISTANT_LLM_PROVIDER=openai
+AI_ASSISTANT_OPENAI_API_KEY=tu_api_key
+AI_ASSISTANT_OPENAI_MODEL=gpt-5.4-mini
+AI_ASSISTANT_OPENAI_BASE_URL=https://api.openai.com/v1
+
+AI_ASSISTANT_CHAT_ENGINE_MODE=llm_production
+AI_ASSISTANT_LLM_PROVIDER=openai
+AI_ASSISTANT_OPENAI_API_KEY=tu_api_key
+AI_ASSISTANT_OPENAI_MODEL=gpt-5.4-mini
+AI_ASSISTANT_LLM_ROLLOUT_ENABLED=true
+AI_ASSISTANT_LLM_ROLLOUT_MODE=all
+
+
+
+AI_ASSISTANT_MAX_INPUT_TOKENS=6000
+AI_ASSISTANT_MAX_OUTPUT_TOKENS=900
+AI_ASSISTANT_MAX_TOOL_LOOP_ITERATIONS=1
+AI_ASSISTANT_MAX_TOOL_REQUESTS_PER_TURN=3
+AI_ASSISTANT_MAX_CONTEXT_CHARS=8000
+AI_ASSISTANT_MAX_MESSAGE_CHARS=2000
+
+**
+AI_ASSISTANT_CREDITS_ENABLED=true
+AI_ASSISTANT_USD_PER_AI_CREDIT=0.0001
+AI_ASSISTANT_MAX_OUTPUT_TOKENS=900
+AI_ASSISTANT_MAX_TOOL_LOOP_ITERATIONS=1
+AI_ASSISTANT_MAX_TOOL_REQUESTS_PER_TURN=3
+**
+
+
+
+AI_ASSISTANT_CREDITS_ENABLED=true
+
+| Plan  | Mensual | Diario |
+| ----- | ------: | -----: |
+| free  |      25 |      5 |
+| basic |     150 |     30 |
+| pro   |    1000 |    150 |
+
+AI_ASSISTANT_DEFAULT_CREDITS_PER_TURN=1
+
+monthly_credit_limit = 1
+daily_credit_limit = 1
+included_monthly_credits = 1
+
+entitlements.ai_assistant
+
+{
+  "enabled": true,
+  "monthly_credit_limit": 1,
+  "daily_credit_limit": 1,
+  "block_on_exhaustion": true
+}
+
+
+
+
+
+Esta fue la conversacion:
+
+... (no pude retroceder hasta el inicio)
+Quiero aumentar mi masa
+
+Perfecto, vamos a enfocarlo a ganancia de masa.
+
+Cuéntame: ¿prefieres usar tu ficha personal como base o quieres darme datos nuevos?
+
+Usemos los datos de mi ficha
+
+Perfecto, tomamos los datos de tu ficha como base.
+
+Cuéntame tu altura.
+
+188
+
+Perfecto, ya tengo tu altura: 188 cm.
+
+Cuéntame tu nivel de actividad semanal, más o menos: ¿sedentario, ligero, moderado, alto o muy alto?
+
+entreno 3 veces por semana intesamente, fuerza en el gym
+
+Perfecto, me queda claro: entrenas 3 veces por semana, con fuerza en el gym y a buena intensidad.
+
+Asi es
+
+Perfecto, gracias. Entonces seguimos con tu perfil actual y el objetivo de ganar masa.
+
+Cuéntame tu altura.
+
+188
+
+Perfecto, apunto 188. Para seguir con el contexto físico, cuéntame tu altura.
+
+---
+
+Mejoró mucho en el trato. Pero perdio consistencia al preguntar la altura. Creo que al indicar que use mi ficha, pero no tener altura, retorna sobre esa variable, ya que se guarda momentaneamente en el chat, pero no completa la ficha personal. 
+
+Creo que:
+1. La ficha personal es un objeto en si mismo, por lo que la AI debería tener una tool que permita actualizar los datos de la ficha si el cliente asi lo desea. Tambien debería existir un Componente UI que represente la ficha, la cual pueda ser compartida en el chat, para que el cliente la vea, y eventualmente la apruebe luego que el chat la haya comletado. Es importante reconocer los objetos de información delimitados.
+
+2. Otro detalle, me gustaría poder volver al inicio de la conversacion, actualmente no puedo regresar en el chat
+
+Te entrego Zip actualizado para hacer un patch correctivo
+
+
+
+---
+Separando las etapas de una conversacion lo veo asi:
+1. Espacio de saludo
+2. Indicacion de trabajo. Aqui puede ser propuesta, o comparacion o consulta, etc.
+3. Si es propuesta preguntar si usa los datos de su ficha personal. (La cual no incluye numero de comidas).
+4. Si el usuario dice, quiero usar mi ficha el Asistente debe decirle, (en caso de faltar datos), daltan "X" datos, y compartir en el chat, una componente_UI de la ficha personal, con lo datos que hay y que no hay.
+5. El usuario responde en el chat los datos que falta, y el Asistente debe completar la ficha_draft, y enviar el componente_UI de la ficha, con el btn "actualizar ficha personal". Y luego continuar con la conversacion.
+
+
+
+xs
+
+HOME
+Necesito que abajo del input de texto de AI assitant, poner un fila con 3 botones, que digan: Crear un dieta, Consultar Comida, Comparar Alimentos. Y que al apretar cada btn, se inicie la converasacion con el LLM con un mensaje predefinido correspondiente: "Hola! me gustaría construir una dieta!, "Hola! Me gustaría consultar una comida", y "Hola! Me gustaría hacer una comparacion". Luego el LLM responde y continua la conversacion.

@@ -136,7 +136,7 @@ class AIToolResultTests(SimpleTestCase):
 
     def test_map_value_error_to_tool_error(self):
         result = map_exception_to_tool_error(
-            ValueError("proposal_is_not_approved"),
+            ValueError("proposal_is_not_applicable"),
         )
 
         data = result.as_dict()
@@ -144,7 +144,7 @@ class AIToolResultTests(SimpleTestCase):
         self.assertFalse(data["ok"])
         self.assertEqual(
             data["error"]["code"],
-            "proposal_is_not_approved",
+            "proposal_is_not_applicable",
         )
         self.assertEqual(
             data["error"]["message"],

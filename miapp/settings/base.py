@@ -1,14 +1,34 @@
+import json
 import os
 from pathlib import Path
 import dj_database_url
 
+from core.observability import configure_sentry
+
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-SECRET_KEY = os.environ.get("SECRET_KEY")
+def _env_csv(name: str, default: list[str] | tuple[str, ...] | None = None) -> list[str]:
+    raw_value = os.environ.get(name, "")
+    if raw_value.strip():
+        return [item.strip() for item in raw_value.split(",") if item.strip()]
+    return list(default or [])
+
+
+def _env_float(name: str, default: float = 0.0) -> float:
+    raw_value = os.environ.get(name, "").strip()
+    if not raw_value:
+        return default
+    try:
+        return float(raw_value)
+    except ValueError:
+        return default
+
+
+SECRET_KEY = os.environ.get("SECRET_KEY", "")
 
 DEBUG = False
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = _env_csv("ALLOWED_HOSTS")
 
 
 
@@ -106,7 +126,20 @@ DATABASES = {
 # PASSWORD VALIDATION
 # ==============================
 
-AUTH_PASSWORD_VALIDATORS = []
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+    },
+]
 
 
 # ==============================
@@ -190,11 +223,37 @@ AI_ASSISTANT_OPENAI_BASE_URL = os.environ.get(
 AI_ASSISTANT_OPENAI_TIMEOUT_SECONDS = int(
     os.environ.get("AI_ASSISTANT_OPENAI_TIMEOUT_SECONDS", "30")
 )
+AI_ASSISTANT_OPENAI_REASONING_EFFORT = os.environ.get(
+    "AI_ASSISTANT_OPENAI_REASONING_EFFORT",
+    "low",
+).strip().lower()
 AI_ASSISTANT_USAGE_OBSERVABILITY_ENABLED = os.environ.get(
     "AI_ASSISTANT_USAGE_OBSERVABILITY_ENABLED",
     "true",
 ).strip().lower() in {"1", "true", "yes", "on"}
-AI_ASSISTANT_LLM_PRICING_USD_PER_1M_TOKENS = {}
+AI_ASSISTANT_LLM_DEFAULT_PRICING_USD_PER_1M_TOKENS = {
+    "openai": {
+        "gpt-5.4-mini": {"input": "0.75", "cached_input": "0.075", "output": "4.50"},
+        "gpt-5.4-nano": {"input": "0.20", "cached_input": "0.02", "output": "1.25"},
+        "gpt-5.4": {"input": "2.50", "cached_input": "0.25", "output": "15.00"},
+        "gpt-5.5": {"input": "5.00", "cached_input": "0.50", "output": "30.00"},
+        "default": {"input": "0.75", "cached_input": "0.075", "output": "4.50"},
+    },
+}
+
+
+def _llm_pricing_from_env():
+    raw_value = os.environ.get("AI_ASSISTANT_LLM_PRICING_USD_PER_1M_TOKENS_JSON", "").strip()
+    if not raw_value:
+        return AI_ASSISTANT_LLM_DEFAULT_PRICING_USD_PER_1M_TOKENS
+    try:
+        parsed = json.loads(raw_value)
+    except json.JSONDecodeError:
+        return AI_ASSISTANT_LLM_DEFAULT_PRICING_USD_PER_1M_TOKENS
+    return parsed if isinstance(parsed, dict) else AI_ASSISTANT_LLM_DEFAULT_PRICING_USD_PER_1M_TOKENS
+
+
+AI_ASSISTANT_LLM_PRICING_USD_PER_1M_TOKENS = _llm_pricing_from_env()
 
 # Technical per-turn guardrails for the external LLM cycle. These are not
 # commercial credits; they prevent accidental runaway context while real usage
@@ -273,6 +332,22 @@ AI_ASSISTANT_LLM_ROLLOUT_STICKY_SALT = os.environ.get(
 
 
 # ==============================
+# RATE LIMITING
+# ==============================
+
+RATE_LIMIT_LOGIN = os.environ.get("RATE_LIMIT_LOGIN", "10/m").strip()
+RATE_LIMIT_SIGNUP = os.environ.get("RATE_LIMIT_SIGNUP", "5/m").strip()
+RATE_LIMIT_AI_ASSISTANT_TURN_USER = os.environ.get(
+    "RATE_LIMIT_AI_ASSISTANT_TURN_USER",
+    "20/h",
+).strip()
+RATE_LIMIT_AI_ASSISTANT_TURN_IP = os.environ.get(
+    "RATE_LIMIT_AI_ASSISTANT_TURN_IP",
+    "5/h",
+).strip()
+
+
+# ==============================
 # EMAIL
 # ==============================
 
@@ -303,6 +378,36 @@ DEFAULT_FROM_EMAIL = os.environ.get(
     "My Scoope <no-reply@myscoope.com>",
 )
 SERVER_EMAIL = os.environ.get("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
+
+
+# ==============================
+# ERROR OBSERVABILITY
+# ==============================
+
+_DEFAULT_SENTRY_ENVIRONMENT = (
+    "development"
+    if os.environ.get("DJANGO_SETTINGS_MODULE", "").endswith(".dev")
+    else "production"
+)
+
+SENTRY_DSN = os.environ.get("SENTRY_DSN", "").strip()
+SENTRY_ENVIRONMENT = os.environ.get(
+    "SENTRY_ENVIRONMENT",
+    os.environ.get("RENDER_SERVICE_NAME", _DEFAULT_SENTRY_ENVIRONMENT),
+).strip()
+SENTRY_RELEASE = os.environ.get(
+    "SENTRY_RELEASE",
+    os.environ.get("RENDER_GIT_COMMIT", ""),
+).strip()
+SENTRY_TRACES_SAMPLE_RATE = _env_float("SENTRY_TRACES_SAMPLE_RATE", 0.0)
+SENTRY_PROFILES_SAMPLE_RATE = _env_float("SENTRY_PROFILES_SAMPLE_RATE", 0.0)
+SENTRY_ENABLED = configure_sentry(
+    dsn=SENTRY_DSN,
+    environment=SENTRY_ENVIRONMENT,
+    release=SENTRY_RELEASE,
+    traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
+    profiles_sample_rate=SENTRY_PROFILES_SAMPLE_RATE,
+)
 
 
 # ==============================
@@ -367,10 +472,22 @@ ACCOUNT_SIGNUP_FIELDS = [
     "password2*",
 ]
 
-ACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_EMAIL_VERIFICATION = os.environ.get("ACCOUNT_EMAIL_VERIFICATION", "none").strip()
 ACCOUNT_UNIQUE_EMAIL = True
 
 ACCOUNT_LOGOUT_REDIRECT_URL = "/accounts/login/"
 
 SOCIALACCOUNT_LOGIN_ON_GET = True
 SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_ADAPTER = "accounts.adapters.MyScoopeSocialAccountAdapter"
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        # Google returns verified email ownership. This lets social login reuse
+        # an existing local account without showing the intermediate signup form.
+        "VERIFIED_EMAIL": True,
+        "EMAIL_AUTHENTICATION": True,
+        "EMAIL_AUTHENTICATION_AUTO_CONNECT": True,
+    },
+}

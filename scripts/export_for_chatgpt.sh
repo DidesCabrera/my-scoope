@@ -2,6 +2,18 @@
 set -euo pipefail
 
 MODE="${1:-ai}"
+VALIDATE_EXPORT="${EXPORT_VALIDATE:-auto}"
+
+if [[ "${2:-}" == "--validate" ]]; then
+  VALIDATE_EXPORT="always"
+elif [[ "${2:-}" == "--validate-warn" ]]; then
+  VALIDATE_EXPORT="warn"
+elif [[ "${2:-}" == "--no-validate" ]]; then
+  VALIDATE_EXPORT="never"
+elif [[ -n "${2:-}" ]]; then
+  echo "Error: opción desconocida: ${2}"
+  exit 1
+fi
 
 PROJECT_DIR="$(pwd -P)"
 PARENT_DIR="$(dirname "$PROJECT_DIR")"
@@ -11,24 +23,266 @@ EXPORT_NAME="${EXPORT_BASE_NAME}_${MODE}"
 EXPORT_DIR="$PARENT_DIR/$EXPORT_NAME"
 ZIP_PATH="$PARENT_DIR/$EXPORT_NAME.zip"
 
+VALID_MODES=(
+  ai
+  full
+  usda
+  foodcatalog
+  planning
+  adminanalytics
+  adminoperations
+  accounts
+  aiassistant
+  ai_behavior
+  auth
+  solver
+  testing
+)
+
+print_usage() {
+  cat <<'EOF'
+Uso:
+  ./scripts/export_for_chatgpt.sh ai
+  ./scripts/export_for_chatgpt.sh full
+  ./scripts/export_for_chatgpt.sh usda
+  ./scripts/export_for_chatgpt.sh foodcatalog
+  ./scripts/export_for_chatgpt.sh planning
+  ./scripts/export_for_chatgpt.sh adminanalytics
+  ./scripts/export_for_chatgpt.sh adminoperations
+  ./scripts/export_for_chatgpt.sh accounts
+  ./scripts/export_for_chatgpt.sh aiassistant
+  ./scripts/export_for_chatgpt.sh ai_behavior
+  ./scripts/export_for_chatgpt.sh auth
+  ./scripts/export_for_chatgpt.sh solver
+  ./scripts/export_for_chatgpt.sh testing
+  ./scripts/export_for_chatgpt.sh ai_behavior --validate
+
+Modos:
+  ai              Contexto general para desarrollo asistido por IA; excluye tests, USDA e imágenes.
+  full            Contexto amplio con tests; excluye USDA e imágenes.
+  usda            Contexto amplio con datasets USDA cuando el problema depende de datos externos.
+  foodcatalog     Contexto focalizado para Food Catalog App, importadores, curaduría y frontera nutricional.
+  planning        Contexto documental para planificación, decisiones y estado vigente.
+  adminanalytics  Contexto focalizado para la consola estratégica.
+  adminoperations Contexto focalizado para la consola operacional, cuentas, créditos y límites IA.
+  accounts        Contexto focalizado para Account, planes, suscripciones, créditos y onboarding.
+  aiassistant     Contexto focalizado para AI Assistant, tools, propuestas, usage y provider gateway.
+  ai_behavior     Contexto focalizado para alineación conductual, tool governance, replays y UX conversacional.
+  auth            Contexto focalizado para login/signup, Google OAuth, allauth, rate limits y seguridad de acceso.
+  solver          Contexto focalizado para Nutrition Solver, contratos puros, validadores y frontera nutricional.
+  testing         Contexto focalizado para tests, regresiones, CI, workflows y salud de checks.
+
+Opciones:
+  --validate       Ejecuta validación estricta; no crea el ZIP si falla.
+  --validate-warn  Ejecuta validación, conserva el log y crea el ZIP con advertencia si falla.
+  --no-validate    Omite la validación, incluso si el modo la recomienda por defecto.
+
+Documentación:
+  docs/40_technical/operations/export_for_chatgpt.md
+EOF
+}
+
+is_valid_mode() {
+  local candidate="$1"
+  local mode
+  for mode in "${VALID_MODES[@]}"; do
+    if [[ "$candidate" == "$mode" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+if [[ "$MODE" == "-h" || "$MODE" == "--help" || "$MODE" == "help" ]]; then
+  print_usage
+  exit 0
+fi
+
 if [ ! -f "$PROJECT_DIR/manage.py" ]; then
   echo "Error: ejecuta este script desde la raíz del proyecto Django, donde está manage.py"
   exit 1
 fi
 
-if [[ "$MODE" != "ai" && "$MODE" != "full" && "$MODE" != "usda" && "$MODE" != "foodcatalog" && "$MODE" != "planning" && "$MODE" != "adminanalytics" && "$MODE" != "adminoperations" ]]; then
+if ! is_valid_mode "$MODE"; then
   echo "Error: modo inválido: $MODE"
   echo ""
-  echo "Uso:"
-  echo "  ./scripts/export_for_chatgpt.sh ai"
-  echo "  ./scripts/export_for_chatgpt.sh full"
-  echo "  ./scripts/export_for_chatgpt.sh usda"
-  echo "  ./scripts/export_for_chatgpt.sh foodcatalog"
-  echo "  ./scripts/export_for_chatgpt.sh planning"
-  echo "  ./scripts/export_for_chatgpt.sh adminanalytics"
-  echo "  ./scripts/export_for_chatgpt.sh adminoperations"
+  print_usage
   exit 1
 fi
+
+mode_workspace_type() {
+  case "$1" in
+    full|usda) echo "repository" ;;
+    planning) echo "documentation" ;;
+    ai_behavior) echo "cycle" ;;
+    *) echo "domain" ;;
+  esac
+}
+
+mode_purpose() {
+  case "$1" in
+    ai_behavior) echo "Desarrollar y validar alineación conductual, iniciativa, tool governance, cards y replays del AI Assistant." ;;
+    planning) echo "Planificar ciclos, decisiones y estado vigente sin arrastrar código productivo innecesario." ;;
+    full) echo "Diagnosticar o validar cambios transversales con la frontera amplia del repositorio." ;;
+    *) echo "Workspace focalizado para el modo $1." ;;
+  esac
+}
+
+mode_fallback() {
+  case "$1" in
+    full|usda) echo "none" ;;
+    *) echo "full" ;;
+  esac
+}
+
+mode_validation_profile() {
+  case "$1" in
+    ai_behavior) echo "django-ai-behavior-smoke" ;;
+    *) echo "none" ;;
+  esac
+}
+
+mode_validation_commands() {
+  case "$1" in
+    ai_behavior)
+      cat <<'EOF'
+python -m compileall -q .
+python manage.py check --settings=miapp.settings.export_ai_behavior
+python manage.py test --settings=miapp.settings.export_ai_behavior \
+  ai_assistant.tests.test_product_context \
+  ai_assistant.tests.test_tool_governance \
+  ai_assistant.tests.test_goal_directed_agency \
+  ai_assistant.tests.test_response_quality \
+  ai_assistant.tests.test_context_builder \
+  ai_assistant.tests.test_tool_registry \
+  ai_assistant.tests.test_provider_error_capture \
+  ai_assistant.tests.test_post_tool_diagnostics \
+  ai_assistant.tests.test_post_tool_health_monitoring \
+  notas.tests.test_ai_assistant_conversation_replay \
+  notas.tests.test_ai_assistant_real_provider_validation
+EOF
+      ;;
+    *) echo "No executable validation profile declared yet." ;;
+  esac
+}
+
+VALIDATION_STATUS="not_run"
+VALIDATION_EXIT_CODE=""
+VALIDATION_LOG_NAME="EXPORT_VALIDATION.log"
+
+validation_policy_label() {
+  case "$VALIDATE_EXPORT" in
+    always|1|true|yes|on) echo "strict" ;;
+    warn|warning|soft) echo "warn_and_export" ;;
+    auto) echo "auto_warn_and_export" ;;
+    never|0|false|no|off) echo "skip" ;;
+    *) echo "$VALIDATE_EXPORT" ;;
+  esac
+}
+
+write_export_manifest() {
+  local manifest_path="$EXPORT_DIR/EXPORT_MANIFEST.md"
+  {
+    echo "# Export workspace manifest"
+    echo
+    echo "- Mode: \`$MODE\`"
+    echo "- Workspace type: \`$(mode_workspace_type "$MODE")\`"
+    echo "- Purpose: $(mode_purpose "$MODE")"
+    echo "- Fallback mode: \`$(mode_fallback "$MODE")\`"
+    echo "- Validation profile: \`$(mode_validation_profile "$MODE")\`"
+    echo "- Validation policy: \`$(validation_policy_label)\`"
+    echo "- Validation result: \`$VALIDATION_STATUS\`"
+    if [[ -n "$VALIDATION_EXIT_CODE" ]]; then
+      echo "- Validation exit code: \`$VALIDATION_EXIT_CODE\`"
+    fi
+    if [[ "$VALIDATION_STATUS" == "failed" ]]; then
+      echo "- Validation log: \`$VALIDATION_LOG_NAME\`"
+    fi
+    echo
+    echo "## Validation commands"
+    echo
+    echo '```bash'
+    mode_validation_commands "$MODE"
+    echo '```'
+    echo
+    echo "This manifest is generated by \`scripts/export_for_chatgpt.sh\`."
+  } > "$manifest_path"
+}
+
+should_validate_export() {
+  case "$VALIDATE_EXPORT" in
+    always|1|true|yes|on|warn|warning|soft) return 0 ;;
+    never|0|false|no|off) return 1 ;;
+    auto)
+      [[ "$(mode_validation_profile "$MODE")" != "none" ]]
+      ;;
+    *)
+      echo "Error: EXPORT_VALIDATE debe ser auto, always, warn o never. Valor: $VALIDATE_EXPORT"
+      exit 1
+      ;;
+  esac
+}
+
+validation_is_strict() {
+  case "$VALIDATE_EXPORT" in
+    always|1|true|yes|on) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+validate_export_workspace() {
+  local profile
+  local log_path="$EXPORT_DIR/$VALIDATION_LOG_NAME"
+  profile="$(mode_validation_profile "$MODE")"
+  if [[ "$profile" == "none" ]]; then
+    echo "Validación: el modo $MODE todavía no declara un perfil ejecutable."
+    return 0
+  fi
+
+  echo
+  echo "Validando workspace exportado"
+  echo "Perfil: $profile"
+  rm -f "$log_path"
+
+  if (
+    set -euo pipefail
+    cd "$EXPORT_DIR"
+    case "$profile" in
+      django-ai-behavior-smoke)
+        python -m compileall -q .
+        SECRET_KEY=export-validation \
+        ALLOWED_HOSTS=localhost,127.0.0.1 \
+        python manage.py check --settings=miapp.settings.export_ai_behavior
+        SECRET_KEY=export-validation \
+        ALLOWED_HOSTS=localhost,127.0.0.1 \
+        python manage.py test --settings=miapp.settings.export_ai_behavior \
+          ai_assistant.tests.test_product_context \
+          ai_assistant.tests.test_tool_governance \
+          ai_assistant.tests.test_goal_directed_agency \
+          ai_assistant.tests.test_response_quality \
+          ai_assistant.tests.test_context_builder \
+          ai_assistant.tests.test_tool_registry \
+          ai_assistant.tests.test_provider_error_capture \
+          ai_assistant.tests.test_post_tool_diagnostics \
+          ai_assistant.tests.test_post_tool_health_monitoring \
+          notas.tests.test_ai_assistant_conversation_replay \
+          notas.tests.test_ai_assistant_real_provider_validation
+        ;;
+      *)
+        echo "Error: perfil de validación desconocido: $profile"
+        exit 1
+        ;;
+    esac
+  ) > >(tee "$log_path") 2>&1; then
+    rm -f "$log_path"
+    echo "Validación del workspace: PASS"
+    return 0
+  else
+    local status=$?
+    echo "Validación del workspace: FAILED (exit $status)"
+    return "$status"
+  fi
+}
 
 if [[ "$(basename "$PROJECT_DIR")" == "$EXPORT_NAME" ]]; then
   echo "Error: este script no debe ejecutarse desde una carpeta exportada llamada $EXPORT_NAME"
@@ -165,15 +419,16 @@ FOODCATALOG_INCLUDES=(
 
   # Script de exportación y documentación vigente.
   --include '/scripts/export_for_chatgpt.sh'
+  --include '/scripts/export/***'
   --include '/docs/README.md'
-  --include '/docs/current/README.md'
-  --include '/docs/current/features/food_catalog.md'
-  --include '/docs/current/features/food_catalog/***'
-  --include '/docs/current/operations/export_for_chatgpt.md'
-  --include '/docs/planning/***'
-  --include '/docs/decisions/README.md'
-  --include '/docs/decisions/*food*'
-  --include '/docs/archive/food_catalog_history/***'
+  --include '/docs/00_current/README.md'
+  --include '/docs/00_current/features/food_catalog.md'
+  --include '/docs/00_current/features/food_catalog/***'
+  --include '/docs/40_technical/operations/export_for_chatgpt.md'
+  --include '/docs/10_active_cycles/***'
+  --include '/docs/20_decisions/README.md'
+  --include '/docs/20_decisions/*food*'
+  --include '/docs/90_archive/food_catalog_history/***'
 
   # No incluye datasets externos completos. Para depurar un registro o fuente
   # puntual, adjuntar ese archivo específico o usar el modo usda.
@@ -279,9 +534,11 @@ PLANNING_INCLUDES=(
   # Script de exportación y documentación oficial completa.
   --include '/scripts/export_for_chatgpt.sh'
   --include '/docs/README.md'
-  --include '/docs/current/***'
-  --include '/docs/decisions/***'
-  --include '/docs/planning/***'
+  --include '/docs/00_current/***'
+  --include '/docs/20_decisions/***'
+  --include '/docs/10_active_cycles/***'
+  --include '/docs/40_technical/operations/docs_information_architecture.md'
+  --include '/docs/40_technical/operations/export_for_chatgpt.md'
 
   --exclude '*'
 )
@@ -305,14 +562,14 @@ ADMINANALYTICS_INCLUDES=(
   # Script de exportación y documentación vigente.
   --include '/scripts/export_for_chatgpt.sh'
   --include '/docs/README.md'
-  --include '/docs/current/README.md'
-  --include '/docs/current/architecture/ui_patterns.md'
-  --include '/docs/current/design/ui_system.md'
-  --include '/docs/current/operations/export_for_chatgpt.md'
-  --include '/docs/planning/README.md'
-  --include '/docs/planning/product_intelligence_admin_analytics_cycle.md'
-  --include '/docs/decisions/README.md'
-  --include '/docs/decisions/*admin-analytics*'
+  --include '/docs/00_current/README.md'
+  --include '/docs/00_current/architecture/ui_patterns.md'
+  --include '/docs/00_current/design/ui_system.md'
+  --include '/docs/40_technical/operations/export_for_chatgpt.md'
+  --include '/docs/10_active_cycles/README.md'
+  --include '/docs/10_active_cycles/product_intelligence_admin_analytics_cycle.md'
+  --include '/docs/20_decisions/README.md'
+  --include '/docs/20_decisions/*admin-analytics*'
 
   # App objetivo completa: views, urls, filtros, viewmodels, selectors,
   # services, templates y tests específicos de la consola estratégica.
@@ -377,20 +634,20 @@ ADMINOPERATIONS_INCLUDES=(
   # Script de exportación y documentación vigente.
   --include '/scripts/export_for_chatgpt.sh'
   --include '/docs/README.md'
-  --include '/docs/current/README.md'
-  --include '/docs/current/architecture/ui_patterns.md'
-  --include '/docs/current/design/ui_system.md'
-  --include '/docs/current/operations/export_for_chatgpt.md'
-  --include '/docs/planning/README.md'
-  --include '/docs/planning/admin_operations_console_cycle.md'
-  --include '/docs/decisions/README.md'
-  --include '/docs/decisions/*admin-operations*'
-  --include '/docs/decisions/*admin-analytics*'
-  --include '/docs/decisions/*account*'
-  --include '/docs/decisions/*credit*'
-  --include '/docs/decisions/*ai-credit*'
-  --include '/docs/decisions/*usage*'
-  --include '/docs/decisions/*subscription*'
+  --include '/docs/00_current/README.md'
+  --include '/docs/00_current/architecture/ui_patterns.md'
+  --include '/docs/00_current/design/ui_system.md'
+  --include '/docs/40_technical/operations/export_for_chatgpt.md'
+  --include '/docs/10_active_cycles/README.md'
+  --include '/docs/10_active_cycles/admin_operations_console_cycle.md'
+  --include '/docs/20_decisions/README.md'
+  --include '/docs/20_decisions/*admin-operations*'
+  --include '/docs/20_decisions/*admin-analytics*'
+  --include '/docs/20_decisions/*account*'
+  --include '/docs/20_decisions/*credit*'
+  --include '/docs/20_decisions/*ai-credit*'
+  --include '/docs/20_decisions/*usage*'
+  --include '/docs/20_decisions/*subscription*'
 
   # App objetivo completa: shell, workflows, audit log, templates, CSS indirecto,
   # tests y migraciones propias de Admin Operations.
@@ -488,6 +745,525 @@ ADMINOPERATIONS_INCLUDES=(
   --exclude '*'
 )
 
+
+ACCOUNTS_INCLUDES=(
+  # Modo focalizado para Account como dominio comercial y de usuario.
+  # Incluye planes, suscripciones, créditos, entitlements, onboarding y
+  # contratos mínimos con AI Assistant/Admin Operations.
+  --include '*/'
+
+  # Contexto mínimo del proyecto Django.
+  --include '/manage.py'
+  --include '/requirements.txt'
+  --include '/miapp/__init__.py'
+  --include '/miapp/settings/***'
+  --include '/miapp/urls.py'
+  --include '/miapp/asgi.py'
+  --include '/miapp/wsgi.py'
+
+  # Script de exportación y documentación vigente.
+  --include '/scripts/export_for_chatgpt.sh'
+  --include '/docs/README.md'
+  --include '/docs/00_current/README.md'
+  --include '/docs/00_current/AI_README.md'
+  --include '/docs/00_current/PROJECT_STATE.md'
+  --include '/docs/00_current/architecture/bounded_contexts.md'
+  --include '/docs/00_current/architecture/layers.md'
+  --include '/docs/00_current/architecture/rules.md'
+  --include '/docs/40_technical/operations/export_for_chatgpt.md'
+  --include '/docs/10_active_cycles/README.md'
+  --include '/docs/10_active_cycles/account_plans_credits_cycle.md'
+  --include '/docs/10_active_cycles/onboarding_nutrition_profile_cycle.md'
+  --include '/docs/20_decisions/README.md'
+  --include '/docs/20_decisions/*account*'
+  --include '/docs/20_decisions/*credit*'
+  --include '/docs/20_decisions/*subscription*'
+  --include '/docs/20_decisions/*onboarding*'
+  --include '/docs/20_decisions/*export*'
+
+  # App objetivo.
+  --include '/accounts/***'
+
+  # Dependencias operacionales cercanas.
+  --include '/admin_operations/__init__.py'
+  --include '/admin_operations/apps.py'
+  --include '/admin_operations/urls.py'
+  --include '/admin_operations/views.py'
+  --include '/admin_operations/viewmodels.py'
+  --include '/admin_operations/services/***'
+  --include '/admin_operations/tests/***'
+
+  # AI Assistant mínimo para créditos, límites y consumo comercial.
+  --include '/ai_assistant/__init__.py'
+  --include '/ai_assistant/apps.py'
+  --include '/ai_assistant/models.py'
+  --include '/ai_assistant/application/credits.py'
+  --include '/ai_assistant/application/limits.py'
+  --include '/ai_assistant/application/usage.py'
+  --include '/ai_assistant/tests/test_account_credit_integration.py'
+  --include '/ai_assistant/tests/test_ai_credits.py'
+
+  # Core y contexto de usuario mínimo.
+  --include '/core/__init__.py'
+  --include '/core/apps.py'
+  --include '/core/models.py'
+  --include '/core/urls.py'
+  --include '/core/views.py'
+  --include '/core/rate_limits.py'
+  --include '/notas/__init__.py'
+  --include '/notas/apps.py'
+  --include '/notas/models.py'
+  --include '/notas/context_processors.py'
+  --include '/notas/signals.py'
+  --include '/notas/migrations/***'
+
+  --exclude '*'
+)
+
+AIASSISTANT_INCLUDES=(
+  # Modo focalizado para AI Assistant como dominio de conversación, tools,
+  # propuestas, usage, créditos, provider gateway y orquestación LLM.
+  --include '*/'
+
+  # Contexto mínimo del proyecto Django.
+  --include '/manage.py'
+  --include '/requirements.txt'
+  --include '/miapp/__init__.py'
+  --include '/miapp/settings/***'
+  --include '/miapp/urls.py'
+  --include '/miapp/asgi.py'
+  --include '/miapp/wsgi.py'
+
+  # Script de exportación y documentación vigente.
+  --include '/scripts/export_for_chatgpt.sh'
+  --include '/docs/README.md'
+  --include '/docs/00_current/README.md'
+  --include '/docs/00_current/AI_README.md'
+  --include '/docs/00_current/PROJECT_STATE.md'
+  --include '/docs/00_current/architecture/ai_implementation_guide.md'
+  --include '/docs/00_current/architecture/layers.md'
+  --include '/docs/00_current/architecture/rules.md'
+  --include '/docs/00_current/features/proposals.md'
+  --include '/docs/40_technical/operations/export_for_chatgpt.md'
+  --include '/docs/40_technical/qa/***'
+  --include '/docs/10_active_cycles/README.md'
+  --include '/docs/20_decisions/README.md'
+  --include '/docs/20_decisions/*ai-assistant*'
+  --include '/docs/20_decisions/*llm*'
+  --include '/docs/20_decisions/*tool*'
+  --include '/docs/20_decisions/*credit*'
+  --include '/docs/20_decisions/*usage*'
+  --include '/docs/20_decisions/*export*'
+
+  # App objetivo.
+  --include '/ai_assistant/***'
+
+  # Contratos comerciales y de crédito.
+  --include '/accounts/__init__.py'
+  --include '/accounts/apps.py'
+  --include '/accounts/models.py'
+  --include '/accounts/services/***'
+  --include '/accounts/migrations/***'
+  --include '/accounts/tests/test_account_credit_models.py'
+  --include '/accounts/tests/test_account_entitlements.py'
+
+  # Nutrition Solver como frontera de cálculo y validación nutricional.
+  --include '/nutrition_solver/__init__.py'
+  --include '/nutrition_solver/apps.py'
+  --include '/nutrition_solver/models.py'
+  --include '/nutrition_solver/domain/***'
+  --include '/nutrition_solver/application/***'
+  --include '/nutrition_solver/tests/***'
+
+  # Modelos operativos y propuestas existentes.
+  --include '/notas/__init__.py'
+  --include '/notas/apps.py'
+  --include '/notas/models.py'
+  --include '/notas/urls.py'
+  --include '/notas/context_processors.py'
+  --include '/notas/signals.py'
+  --include '/notas/migrations/***'
+  --include '/notas/application/services/mcp_user_tokens.py'
+  --include '/notas/application/services/oauth*.py'
+  --include '/notas/application/services/nutrition/***'
+  --include '/notas/tests/test_*proposal*.py'
+  --include '/notas/tests/test_*mcp*.py'
+
+  # MCP Server cuando la conversación toque tools o protocolo.
+  --include '/mcp_server/***'
+
+  # Core mínimo.
+  --include '/core/__init__.py'
+  --include '/core/apps.py'
+  --include '/core/models.py'
+  --include '/core/urls.py'
+  --include '/core/views.py'
+
+  --exclude '*'
+)
+
+
+AI_BEHAVIOR_INCLUDES=(
+  # Modo focalizado para alineación conductual del AI Assistant.
+  # Incluye identidad, anclaje de dominio, iniciativa, tool governance,
+  # contexto conversacional, fallbacks, cards, replays y validación UX.
+  --include '*/'
+
+  # Contexto mínimo del proyecto Django.
+  --include '/manage.py'
+  --include '/requirements.txt'
+  --include '/miapp/__init__.py'
+  --include '/miapp/settings/***'
+  --include '/miapp/urls.py'
+  --include '/miapp/urls_export_ai_behavior.py'
+  --include '/miapp/asgi.py'
+  --include '/miapp/wsgi.py'
+
+  # Script de exportación y documentación vigente del comportamiento.
+  --include '/scripts/export_for_chatgpt.sh'
+  --include '/scripts/export/***'
+  --include '/docs/README.md'
+  --include '/docs/00_current/README.md'
+  --include '/docs/00_current/AI_README.md'
+  --include '/docs/00_current/PROJECT_STATE.md'
+  --include '/docs/00_current/architecture/ai_implementation_guide.md'
+  --include '/docs/00_current/architecture/layers.md'
+  --include '/docs/00_current/architecture/rules.md'
+  --include '/docs/00_current/features/ai_assistant/***'
+  --include '/docs/40_technical/operations/export_for_chatgpt.md'
+  --include '/docs/40_technical/qa/ai_assistant*'
+  --include '/docs/10_active_cycles/README.md'
+  --include '/docs/10_active_cycles/ai_assistant_client_memory_profile_objects_cycle.md'
+  --include '/docs/10_active_cycles/ai_assistant_behavioral_alignment_cycle.md'
+  --include '/docs/10_active_cycles/ai_assistant_post_tool_followup_transport_cycle.md'
+  --include '/docs/20_decisions/README.md'
+  --include '/docs/20_decisions/0127-profile-aware-real-provider-validation-fixtures.md'
+  --include '/docs/20_decisions/*ai-assistant*'
+  --include '/docs/20_decisions/*llm*'
+  --include '/docs/20_decisions/*tool*'
+  --include '/docs/20_decisions/*mcp*'
+  --include '/docs/20_decisions/*export*'
+
+  # Núcleo completo del AI Assistant: provider, prompts/contexto, orquestación,
+  # function calling, metadata, límites, tools y tests propios. El test HTTP del
+  # dashboard admin pertenece a la frontera administrativa y requiere un URLConf
+  # que este workspace elimina intencionalmente.
+  --exclude '/ai_assistant/tests/test_usage_dashboard_admin.py'
+  --include '/ai_assistant/***'
+
+  # Runtime conversacional, estado temporal, cards, harness y tools del producto.
+  --include '/notas/__init__.py'
+  --include '/notas/apps.py'
+  --include '/notas/models.py'
+  --include '/notas/urls.py'
+  --include '/notas/context_processors.py'
+  --include '/notas/signals.py'
+  --include '/notas/migrations/***'
+  --include '/notas/domain/***'
+  --include '/notas/application/ai_intake/***'
+  --include '/notas/application/nutrition_engine/***'
+  --include '/notas/application/ai_tools/***'
+  --include '/notas/application/dto/***'
+  --include '/notas/application/proposals/***'
+  --include '/notas/application/queries/***'
+  --include '/notas/application/services/comparisons/***'
+  --include '/notas/application/services/nutrition/***'
+  --include '/notas/application/services/cache/***'
+  --include '/notas/application/services/food_imports/localized_names.py'
+  --include '/notas/application/services/food_imports/normalization.py'
+  --include '/notas/application/services/commands/*proposal*.py'
+  --include '/notas/application/services/commands/meal_commands.py'
+  --include '/notas/application/services/commands/*comparison*.py'
+  --include '/notas/application/services/mcp_user_tokens.py'
+  --include '/notas/application/validation/proposal_payload_validators.py'
+
+  # Superficie HTTP/UI del chat y objetos visibles asociados.
+  --include '/notas/interface/api/ai_tools.py'
+  --include '/notas/interface/urls/ai_intake.py'
+  --include '/notas/interface/urls/ai_tools.py'
+  --include '/notas/interface/views/ai_intake.py'
+  --include '/notas/presentation/pages/ai_intake_page.py'
+  --include '/notas/templates/notas/ai_intake.html'
+  --include '/notas/templates/notas/ai_intake_brief_edit.html'
+  --include '/notas/templates/notas/_ai_brief_form.html'
+  --include '/notas/templates/notas/_ai_chat_thread.html'
+  --include '/notas/templates/notas/_ai_generated_plan_card.html'
+  --include '/notas/templates/notas/ai_chats/***'
+  --include '/notas/static/notas/js/sidebar_ai_assistant.js'
+  --include '/notas/static/notas/css/components/card_profile.css'
+  --include '/notas/static/notas/css/components/proposals.css'
+
+  # Comandos y pruebas de comportamiento, tools, cards y proveedor real/fake.
+  --include '/notas/management/__init__.py'
+  --include '/notas/management/commands/__init__.py'
+  --include '/notas/management/commands/debug_ai_assistant_conversation.py'
+  --include '/notas/management/commands/validate_ai_assistant_real_provider.py'
+  --include '/notas/tests/test_ai*.py'
+  --include '/notas/tests/test_*proposal*.py'
+  --include '/notas/tests/test_*comparison*.py'
+  --include '/notas/tests/test_*nutrition_profile*.py'
+
+  # Contratos cercanos necesarios para interpretar ficha, catálogo, solver y MCP
+  # sin exportar importadores, dashboards ni el producto completo.
+  --include '/accounts/__init__.py'
+  --include '/accounts/apps.py'
+  --include '/accounts/models.py'
+  --include '/accounts/seed_plans.py'
+  --include '/accounts/services/***'
+  --include '/accounts/migrations/***'
+  --include '/core/__init__.py'
+  --include '/core/apps.py'
+  --include '/core/models.py'
+  --include '/core/observability.py'
+  --include '/core/urls.py'
+  --include '/core/views.py'
+  --include '/food_catalog/__init__.py'
+  --include '/food_catalog/apps.py'
+  --include '/food_catalog/models.py'
+  --include '/food_catalog/application/imports/***'
+  --include '/nutrition_solver/__init__.py'
+  --include '/nutrition_solver/apps.py'
+  --include '/nutrition_solver/models.py'
+  --include '/nutrition_solver/domain/***'
+  --include '/nutrition_solver/application/***'
+  --include '/mcp_server/***'
+
+  --exclude '*'
+)
+
+AUTH_INCLUDES=(
+  # Modo focalizado para login/signup, Google OAuth, allauth, rate limits,
+  # sesiones, redirects y seguridad de acceso. No reemplaza `full` para cambios
+  # amplios de seguridad, pero reduce ruido para bugs de autenticación.
+  --include '*/'
+
+  # Contexto mínimo del proyecto Django.
+  --include '/manage.py'
+  --include '/requirements.txt'
+  --include '/miapp/__init__.py'
+  --include '/miapp/settings/***'
+  --include '/miapp/urls.py'
+  --include '/miapp/asgi.py'
+  --include '/miapp/wsgi.py'
+
+  # Script de exportación y documentación vigente.
+  --include '/scripts/export_for_chatgpt.sh'
+  --include '/docs/README.md'
+  --include '/docs/00_current/README.md'
+  --include '/docs/00_current/AI_README.md'
+  --include '/docs/00_current/PROJECT_STATE.md'
+  --include '/docs/00_current/architecture/rules.md'
+  --include '/docs/40_technical/operations/export_for_chatgpt.md'
+  --include '/docs/40_technical/qa/***'
+  --include '/docs/20_decisions/README.md'
+  --include '/docs/20_decisions/*auth*'
+  --include '/docs/20_decisions/*allauth*'
+  --include '/docs/20_decisions/*google*'
+  --include '/docs/20_decisions/*signup*'
+  --include '/docs/20_decisions/*login*'
+  --include '/docs/20_decisions/*security*'
+  --include '/docs/20_decisions/*rate*'
+
+  # Rate limits y URLConf: fuente frecuente de fallos de arranque local/staging.
+  --include '/core/__init__.py'
+  --include '/core/apps.py'
+  --include '/core/urls.py'
+  --include '/core/views.py'
+  --include '/core/rate_limits.py'
+  --include '/core/tests/***'
+
+  # Account como superficie principal de auth/onboarding.
+  --include '/accounts/__init__.py'
+  --include '/accounts/apps.py'
+  --include '/accounts/admin.py'
+  --include '/accounts/forms.py'
+  --include '/accounts/models.py'
+  --include '/accounts/urls.py'
+  --include '/accounts/views.py'
+  --include '/accounts/middleware.py'
+  --include '/accounts/services/***'
+  --include '/accounts/migrations/***'
+  --include '/accounts/tests/***'
+
+  # Templates de autenticación y adapters allauth/socialaccount si existen.
+  --include '/templates/account/***'
+  --include '/templates/accounts/***'
+  --include '/templates/allauth/***'
+  --include '/templates/socialaccount/***'
+  --include '/accounts/templates/***'
+  --include '/notas/templates/account/***'
+  --include '/notas/templates/accounts/***'
+  --include '/notas/templates/allauth/***'
+  --include '/notas/templates/socialaccount/***'
+  --include '/**/*allauth*.py'
+  --include '/**/*oauth*.py'
+  --include '/**/*google*.py'
+
+  # Contexto de app shell necesario para redirects post-login.
+  --include '/notas/__init__.py'
+  --include '/notas/apps.py'
+  --include '/notas/models.py'
+  --include '/notas/urls.py'
+  --include '/notas/context_processors.py'
+  --include '/notas/signals.py'
+  --include '/notas/migrations/***'
+
+  --exclude '*'
+)
+
+SOLVER_INCLUDES=(
+  # Modo focalizado para Nutrition Solver como motor de cálculo, contratos puros,
+  # validadores, adapters y frontera con AI Assistant/Food Catalog.
+  --include '*/'
+
+  # Contexto mínimo del proyecto Django.
+  --include '/manage.py'
+  --include '/requirements.txt'
+  --include '/miapp/__init__.py'
+  --include '/miapp/settings/***'
+  --include '/miapp/urls.py'
+  --include '/miapp/asgi.py'
+  --include '/miapp/wsgi.py'
+
+  # Script de exportación y documentación vigente.
+  --include '/scripts/export_for_chatgpt.sh'
+  --include '/docs/README.md'
+  --include '/docs/00_current/README.md'
+  --include '/docs/00_current/AI_README.md'
+  --include '/docs/00_current/PROJECT_STATE.md'
+  --include '/docs/00_current/architecture/nutrition_solver_extraction_map.md'
+  --include '/docs/00_current/architecture/layers.md'
+  --include '/docs/00_current/architecture/rules.md'
+  --include '/docs/00_current/features/food_catalog.md'
+  --include '/docs/40_technical/operations/export_for_chatgpt.md'
+  --include '/docs/40_technical/qa/***'
+  --include '/docs/10_active_cycles/nutrition_solver_app_cycle.md'
+  --include '/docs/20_decisions/README.md'
+  --include '/docs/20_decisions/*nutrition-solver*'
+  --include '/docs/20_decisions/*solver*'
+  --include '/docs/20_decisions/*food-catalog*'
+  --include '/docs/20_decisions/*ai-assistant*'
+
+  # App objetivo.
+  --include '/nutrition_solver/***'
+
+  # Food Catalog como fuente normalizada y frontera alimentaria.
+  --include '/food_catalog/__init__.py'
+  --include '/food_catalog/apps.py'
+  --include '/food_catalog/models.py'
+  --include '/food_catalog/migrations/***'
+  --include '/food_catalog/tests/test_boundary_contracts.py'
+
+  # AI Assistant mínimo para tools/preview de solver.
+  --include '/ai_assistant/__init__.py'
+  --include '/ai_assistant/apps.py'
+  --include '/ai_assistant/models.py'
+  --include '/ai_assistant/application/***'
+  --include '/ai_assistant/tests/test_*solver*.py'
+  --include '/ai_assistant/tests/test_*tool*.py'
+
+  # Modelos operativos nutricionales existentes.
+  --include '/notas/__init__.py'
+  --include '/notas/apps.py'
+  --include '/notas/models.py'
+  --include '/notas/migrations/***'
+  --include '/notas/application/services/nutrition/***'
+  --include '/notas/tests/test_*nutrition*.py'
+  --include '/notas/tests/test_*solver*.py'
+  --include '/notas/tests/test_*food*.py'
+
+  --exclude '*'
+)
+
+TESTING_INCLUDES=(
+  # Modo focalizado para CI, regresiones, workflows y salud de tests.
+  # Usa allowlist propia para permitir .github/workflows, que está excluido
+  # por los excludes comunes de otros modos.
+  --include '*/'
+
+  # Contexto mínimo del proyecto Django.
+  --include '/manage.py'
+  --include '/requirements.txt'
+  --include '/pytest.ini'
+  --include '/pyproject.toml'
+  --include '/setup.cfg'
+  --include '/tox.ini'
+  --include '/miapp/__init__.py'
+  --include '/miapp/settings/***'
+  --include '/miapp/urls.py'
+  --include '/miapp/asgi.py'
+  --include '/miapp/wsgi.py'
+
+  # CI, scripts y documentación técnica de QA/export.
+  --include '/.github/***'
+  --include '/scripts/***'
+  --include '/docs/README.md'
+  --include '/docs/00_current/README.md'
+  --include '/docs/00_current/AI_README.md'
+  --include '/docs/00_current/PROJECT_STATE.md'
+  --include '/docs/00_current/architecture/testing_strategy.md'
+  --include '/docs/40_technical/operations/export_for_chatgpt.md'
+  --include '/docs/40_technical/operations/testing_and_ci_policy.md'
+  --include '/docs/40_technical/qa/***'
+  --include '/docs/20_decisions/README.md'
+  --include '/docs/20_decisions/*testing*'
+  --include '/docs/20_decisions/*ci*'
+  --include '/docs/20_decisions/*staging*'
+  --include '/docs/20_decisions/*export*'
+
+  # Tests transversales y paquetes mínimos para cargar Django.
+  --include '/core/***'
+  --include '/accounts/__init__.py'
+  --include '/accounts/apps.py'
+  --include '/accounts/models.py'
+  --include '/accounts/tests/***'
+  --include '/ai_assistant/__init__.py'
+  --include '/ai_assistant/apps.py'
+  --include '/ai_assistant/models.py'
+  --include '/ai_assistant/tests/***'
+  --include '/food_catalog/__init__.py'
+  --include '/food_catalog/apps.py'
+  --include '/food_catalog/models.py'
+  --include '/food_catalog/tests/***'
+  --include '/nutrition_solver/__init__.py'
+  --include '/nutrition_solver/apps.py'
+  --include '/nutrition_solver/models.py'
+  --include '/nutrition_solver/tests/***'
+  --include '/admin_analytics/__init__.py'
+  --include '/admin_analytics/apps.py'
+  --include '/admin_analytics/tests/***'
+  --include '/admin_operations/__init__.py'
+  --include '/admin_operations/apps.py'
+  --include '/admin_operations/tests/***'
+  --include '/notas/__init__.py'
+  --include '/notas/apps.py'
+  --include '/notas/models.py'
+  --include '/notas/tests/***'
+  --include '/mcp_server/tests/***'
+
+  # Excludes defensivos para no arrastrar entornos, bases, assets ni exports.
+  --exclude 'venv/***'
+  --exclude '.venv/***'
+  --exclude 'env/***'
+  --exclude 'node_modules/***'
+  --exclude 'staticfiles/***'
+  --exclude 'media/***'
+  --exclude 'data/food_sources/***'
+  --exclude '*.zip'
+  --exclude '*.tar'
+  --exclude '*.tar.gz'
+  --exclude '*.sqlite3'
+  --exclude '*.db'
+  --exclude '*.jpg'
+  --exclude '*.jpeg'
+  --exclude '*.png'
+  --exclude '*.webp'
+  --exclude '*.gif'
+  --exclude '*.ico'
+  --exclude '*.svg'
+  --exclude '*'
+)
+
 case "$MODE" in
   ai)
     RSYNC_EXCLUDES=("${COMMON_EXCLUDES[@]}" "${AI_EXCLUDES[@]}")
@@ -510,6 +1286,24 @@ case "$MODE" in
   adminoperations)
     RSYNC_EXCLUDES=("${COMMON_EXCLUDES[@]}" "${ADMINOPERATIONS_INCLUDES[@]}")
     ;;
+  accounts)
+    RSYNC_EXCLUDES=("${COMMON_EXCLUDES[@]}" "${ACCOUNTS_INCLUDES[@]}")
+    ;;
+  aiassistant)
+    RSYNC_EXCLUDES=("${COMMON_EXCLUDES[@]}" "${AIASSISTANT_INCLUDES[@]}")
+    ;;
+  ai_behavior)
+    RSYNC_EXCLUDES=("${COMMON_EXCLUDES[@]}" "${AI_BEHAVIOR_INCLUDES[@]}")
+    ;;
+  auth)
+    RSYNC_EXCLUDES=("${COMMON_EXCLUDES[@]}" "${AUTH_INCLUDES[@]}")
+    ;;
+  solver)
+    RSYNC_EXCLUDES=("${COMMON_EXCLUDES[@]}" "${SOLVER_INCLUDES[@]}")
+    ;;
+  testing)
+    RSYNC_EXCLUDES=("${TESTING_INCLUDES[@]}")
+    ;;
 esac
 
 rsync -av \
@@ -518,21 +1312,58 @@ rsync -av \
 
 cd "$PARENT_DIR"
 
-find "$EXPORT_NAME" -name ".DS_Store" -delete
-find "$EXPORT_NAME" -name "__pycache__" -type d -exec rm -rf {} +
-find "$EXPORT_NAME" -name "*.pyc" -delete
-find "$EXPORT_NAME" -name "*.orig" -delete
-find "$EXPORT_NAME" -name "*.rej" -delete
+clean_export_residues() {
+  find "$EXPORT_DIR" -name ".DS_Store" -delete
+  find "$EXPORT_DIR" -name "__pycache__" -type d -prune -exec rm -rf {} +
+  find "$EXPORT_DIR" -type f \( -name "*.pyc" -o -name "*.pyo" -o -name "*.orig" -o -name "*.rej" \) -delete
+}
+
+clean_export_residues
+
+if should_validate_export; then
+  if validate_export_workspace; then
+    VALIDATION_STATUS="passed"
+    VALIDATION_EXIT_CODE="0"
+  else
+    VALIDATION_EXIT_CODE="$?"
+    VALIDATION_STATUS="failed"
+    if validation_is_strict; then
+      write_export_manifest
+      echo
+      echo "Error: la validación estricta falló. El ZIP no fue generado."
+      echo "Log conservado en: $EXPORT_DIR/$VALIDATION_LOG_NAME"
+      exit "$VALIDATION_EXIT_CODE"
+    fi
+    echo
+    echo "ADVERTENCIA: la validación falló, pero el workspace será empaquetado para diagnóstico."
+    echo "El ZIP incluirá $VALIDATION_LOG_NAME y el estado quedará registrado en EXPORT_MANIFEST.md."
+  fi
+else
+  VALIDATION_STATUS="skipped"
+  echo "Validación del workspace: omitida"
+fi
+
+write_export_manifest
+
+# compileall y la carga de Django pueden recrear bytecode durante la validación.
+# Limpiamos nuevamente antes de empaquetar para que el ZIP sea solo código fuente.
+clean_export_residues
 
 zip -r -q "$ZIP_PATH" "$EXPORT_NAME" \
   -x "*.DS_Store" \
   -x "__MACOSX/*" \
   -x "*/__pycache__/*" \
+  -x "*.pyc" \
+  -x "*.pyo" \
   -x "*.orig" \
   -x "*.rej"
 
 echo ""
-echo "ZIP generado correctamente:"
+if [[ "$VALIDATION_STATUS" == "failed" ]]; then
+  echo "ZIP generado con advertencias de validación:"
+else
+  echo "ZIP generado correctamente:"
+fi
 echo "$ZIP_PATH"
 echo ""
 echo "Tamaño:"
@@ -542,11 +1373,9 @@ echo "Archivos incluidos:"
 find "$EXPORT_DIR" -type f | wc -l
 echo ""
 echo "Archivos más grandes incluidos:"
-find "$EXPORT_DIR" -type f -exec du -h {} + | sort -hr | head -10
+find "$EXPORT_DIR" -type f -exec du -h {} + | sort -hr | head -10 || true
 echo ""
 echo "Modo generado:"
-
-
 case "$MODE" in
   ai)
     echo "ai: uso normal para compartir código conmigo. Excluye USDA, imágenes y tests."
@@ -561,13 +1390,31 @@ case "$MODE" in
     echo "foodcatalog: export focalizado para Food Catalog App. Incluye importadores, curaduría, docs y tests relacionados. Excluye datasets externos completos."
     ;;
   planning)
-    echo "planning: export focalizado para planificación estratégica. Incluye docs/current, docs/decisions, docs/planning y contexto mínimo del proyecto."
+    echo "planning: export focalizado para planificación estratégica. Incluye docs vigentes, decisiones y contexto mínimo."
     ;;
   adminanalytics)
-    echo "adminanalytics: export focalizado para Admin Analytics. Incluye la consola estratégica, CSS propio, docs del ciclo y modelos fuente mínimos."
+    echo "adminanalytics: export focalizado para Admin Analytics. Incluye la consola estratégica, docs y modelos fuente mínimos."
     ;;
   adminoperations)
-    echo "adminoperations: export focalizado para Admin Operations. Incluye la nueva consola operacional, auditoría, cuentas, planes comerciales, créditos, límites IA y dependencias mínimas."
+    echo "adminoperations: export focalizado para Admin Operations. Incluye consola operacional, auditoría, cuentas, créditos y límites IA."
+    ;;
+  accounts)
+    echo "accounts: export focalizado para Account. Incluye planes, suscripciones, créditos, onboarding y dependencias comerciales mínimas."
+    ;;
+  aiassistant)
+    echo "aiassistant: export focalizado para AI Assistant. Incluye chat, tools, propuestas, usage, provider gateway, créditos y frontera Solver/MCP."
+    ;;
+  ai_behavior)
+    echo "ai_behavior: export focalizado para alineación conductual. Incluye runtime conversacional, tool governance, cards, replays, validación live y documentación del ciclo BA."
+    ;;
+  auth)
+    echo "auth: export focalizado para login/signup, Google OAuth, allauth, rate limits, redirects y seguridad de acceso."
+    ;;
+  solver)
+    echo "solver: export focalizado para Nutrition Solver. Incluye contratos puros, validadores, adapters y frontera nutricional."
+    ;;
+  testing)
+    echo "testing: export focalizado para tests, regresiones, CI, workflows, scripts de validación y documentación QA."
     ;;
 esac
 echo ""

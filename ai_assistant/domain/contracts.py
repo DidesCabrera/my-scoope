@@ -65,7 +65,7 @@ class AssistantMessage:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "role", _coerce_enum(AssistantMessageRole, self.role, field_name="role"))
-        object.__setattr__(self, "content", _normalize_text(self.content))
+        object.__setattr__(self, "content", _normalize_message_content(self.content))
         object.__setattr__(self, "name", _normalize_identifier(self.name))
         object.__setattr__(self, "metadata", dict(self.metadata or {}))
         if not self.content:
@@ -148,7 +148,7 @@ class AssistantToolRequest:
     def __post_init__(self) -> None:
         object.__setattr__(self, "tool_name", _normalize_identifier(self.tool_name))
         object.__setattr__(self, "arguments", dict(self.arguments or {}))
-        object.__setattr__(self, "request_id", _normalize_identifier(self.request_id))
+        object.__setattr__(self, "request_id", _normalize_correlation_id(self.request_id))
         object.__setattr__(self, "reason", _normalize_text(self.reason))
         object.__setattr__(self, "metadata", dict(self.metadata or {}))
         if not self.tool_name:
@@ -184,7 +184,7 @@ class AssistantToolResult:
         object.__setattr__(self, "tool_name", _normalize_identifier(self.tool_name))
         object.__setattr__(self, "status", _coerce_enum(AssistantToolStatus, self.status, field_name="status"))
         object.__setattr__(self, "data", dict(self.data or {}))
-        object.__setattr__(self, "request_id", _normalize_identifier(self.request_id))
+        object.__setattr__(self, "request_id", _normalize_correlation_id(self.request_id))
         object.__setattr__(self, "error_code", _normalize_identifier(self.error_code))
         object.__setattr__(self, "error_message", _normalize_text(self.error_message))
         object.__setattr__(self, "metadata", dict(self.metadata or {}))
@@ -299,8 +299,39 @@ def _normalize_text(value: Any) -> str:
     return " ".join(str(value or "").split())
 
 
+def _normalize_message_content(value: Any) -> str:
+    """Normalize visible chat text without destroying readable line breaks."""
+
+    raw_text = str(value or "").replace("\r\n", "\n").replace("\r", "\n")
+    lines = [" ".join(line.strip().split()) for line in raw_text.split("\n")]
+
+    normalized_lines: list[str] = []
+    previous_blank = False
+    for line in lines:
+        if not line:
+            if normalized_lines and not previous_blank:
+                normalized_lines.append("")
+            previous_blank = True
+            continue
+        normalized_lines.append(line)
+        previous_blank = False
+
+    return "\n".join(normalized_lines).strip()
+
+
 def _normalize_identifier(value: Any) -> str:
     return _normalize_text(value).replace(" ", "_").lower()
+
+
+def _normalize_correlation_id(value: Any) -> str:
+    """Preserve opaque provider correlation IDs byte-for-byte apart from edge whitespace.
+
+    Responses API ``call_id`` values are case-sensitive. They must never pass
+    through identifier normalization, which lowercases and rewrites spaces for
+    My Scoope-owned semantic names such as tool names and error codes.
+    """
+
+    return str(value or "").strip()
 
 
 def _coerce_confidence(value: Any) -> float:

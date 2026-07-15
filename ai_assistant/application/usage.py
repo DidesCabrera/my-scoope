@@ -310,9 +310,31 @@ def _safe_usage_metadata(
         "proposal_count": len(tuple(response.proposal_ids or ())),
     }
     response_metadata = dict(response.metadata or {})
+    if bool(response_metadata.get("post_tool_degraded")):
+        metadata["post_tool_degradation"] = sanitize_usage_mapping(
+            {
+                "degraded": True,
+                "reason": response_metadata.get("post_tool_degradation_reason"),
+                "local_ack_policy": response_metadata.get("tool_followup_local_ack_policy"),
+            }
+        )
     credit_metadata = response_metadata.get("ai_credit_check")
     if isinstance(credit_metadata, Mapping):
         metadata["ai_credit_check"] = sanitize_usage_mapping(credit_metadata)
+    if bool(response_metadata.get("provider_tool_followup_failed")):
+        # Persist only stable operational identifiers. The full bounded provider
+        # message remains in logs and the explicit live-validation report; it is
+        # not copied into the long-lived economic usage event because providers
+        # may echo request content in an error message.
+        metadata["provider_tool_followup_error"] = sanitize_usage_mapping(
+            {
+                "status": response_metadata.get("provider_tool_followup_error_status"),
+                "type": response_metadata.get("provider_tool_followup_error_provider_type"),
+                "code": response_metadata.get("provider_tool_followup_error_code"),
+                "param": response_metadata.get("provider_tool_followup_error_param"),
+                "request_id": response_metadata.get("provider_tool_followup_error_request_id"),
+            }
+        )
     return metadata
 
 

@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood
@@ -8,6 +8,7 @@ from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood
 User = get_user_model()
 
 
+@override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
 class HomeRecentLibraryItemsTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
@@ -84,15 +85,12 @@ class HomeRecentLibraryItemsTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
-        recent_meal_names = [
-            item["titulo"]["name"]
-            for item in response.context["vm"]["content"]["meals"]["items"]
-        ]
+        stats_by_label = {
+            item["label"]: item["value"]
+            for item in response.context["vm"]["content"]["stats"]
+        }
 
-        self.assertIn(visible_meal.name, recent_meal_names)
-        self.assertNotIn("Draft empty meal", recent_meal_names)
-        self.assertNotIn(embedded_meal.name, recent_meal_names)
-        self.assertNotIn("Other user meal", recent_meal_names)
+        self.assertEqual(stats_by_label["Comidas"], 1)
 
     def test_home_recent_dailyplans_match_personal_library_scope(self):
         meal = self._library_meal("Plan meal")
@@ -118,11 +116,9 @@ class HomeRecentLibraryItemsTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
-        recent_dailyplan_names = [
-            item["titulo"]["name"]
-            for item in response.context["vm"]["content"]["dailyplans"]["items"]
-        ]
+        stats_by_label = {
+            item["label"]: item["value"]
+            for item in response.context["vm"]["content"]["stats"]
+        }
 
-        self.assertIn(visible_dailyplan.name, recent_dailyplan_names)
-        self.assertNotIn("Draft empty dailyplan", recent_dailyplan_names)
-        self.assertNotIn("Other user dailyplan", recent_dailyplan_names)
+        self.assertEqual(stats_by_label["Planes Diarios"], 1)

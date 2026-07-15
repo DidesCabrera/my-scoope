@@ -1,7 +1,7 @@
 import json
 
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from notas.domain.models import Food
@@ -15,6 +15,7 @@ def json_post(client, url_name, payload):
     )
 
 
+@override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
 class AIToolsAPIFoodCatalogEndpointTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(

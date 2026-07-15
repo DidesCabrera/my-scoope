@@ -1,0 +1,458 @@
+{
+  "version": "cm24.real_provider_ux.v2",
+  "run_id": "e4d738689a98406d804ddbb35cb193e0",
+  "status": "automated_checks_passed",
+  "provider": "openai",
+  "model": "gpt-5.4-mini-2026-03-17",
+  "user_id": 1,
+  "configured_chat_mode": "llm_preview",
+  "validation_engine": "llm_preview_direct",
+  "reviewable_proposal_tools_enabled": false,
+  "usage_observability_enabled": true,
+  "credits_enabled": false,
+  "usage_summary": {
+    "event_count": 3,
+    "completed_count": 3,
+    "error_count": 0,
+    "blocked_count": 0,
+    "input_tokens": 15524,
+    "cached_input_tokens": 8192,
+    "output_tokens": 1042,
+    "total_tokens": 16566,
+    "estimated_cost_usd": "0.010802"
+  },
+  "credit_summary": {
+    "charged_credits": 0,
+    "ledger_entries": 0,
+    "quota_credits_used_delta": 0,
+    "quota_period": "",
+    "quota_plan_code": ""
+  },
+  "manual_review_required": true,
+  "ux_gate_status": "awaiting_manual_review",
+  "manual_review_prompts": [
+    "¿El asistente acepta el cambio inmediatamente, sin insistir en el objetivo anterior?",
+    "¿Respeta que el usuario no quiere completar preferencias opcionales todavía?"
+  ],
+  "scenarios": [
+    {
+      "key": "cambio_de_direccion",
+      "description": "Accept an explicit change of goal and requested entity without defending the earlier path.",
+      "status": "automated_checks_passed",
+      "conversation_id": "cm24-e4d738689a98406d804d-cambio_de_direccion",
+      "checks": [
+        {
+          "key": "visible_boundary",
+          "severity": "hard",
+          "passed": true,
+          "detail": "visible responses are non-empty and contain no internal envelope markers"
+        },
+        {
+          "key": "llm_only_runtime",
+          "severity": "hard",
+          "passed": true,
+          "detail": "deterministic runtime was not invoked"
+        },
+        {
+          "key": "provider_health",
+          "severity": "hard",
+          "passed": true,
+          "detail": "real provider confirmed for all 3 turn(s) (metadata=3, usage_events=3)"
+        },
+        {
+          "key": "structured_provider_contract",
+          "severity": "hard",
+          "passed": true,
+          "detail": "all 3 provider turn(s) validated; native function calls=3; repair retries=0"
+        },
+        {
+          "key": "expected_brief",
+          "severity": "hard",
+          "passed": true,
+          "detail": "3 expected brief field(s) matched"
+        },
+        {
+          "key": "stable_captured_facts",
+          "severity": "hard",
+          "passed": true,
+          "detail": "1 captured fact(s) remained stable"
+        },
+        {
+          "key": "known_facts_not_reasked",
+          "severity": "hard",
+          "passed": true,
+          "detail": "3 watched field(s) were not marked missing again"
+        },
+        {
+          "key": "brief_transitions",
+          "severity": "hard",
+          "passed": true,
+          "detail": "2 intentional transition(s) matched"
+        },
+        {
+          "key": "tool_contract",
+          "severity": "hard",
+          "passed": true,
+          "detail": "1 distinct tool(s) satisfied the scenario contract"
+        },
+        {
+          "key": "behavioral_surface",
+          "severity": "hard",
+          "passed": true,
+          "detail": "tool restraint and product-language boundary were respected"
+        },
+        {
+          "key": "response_repetition",
+          "severity": "hard",
+          "passed": true,
+          "detail": "assistant openings stayed within the configured repetition limit"
+        },
+        {
+          "key": "tool_result_grounding",
+          "severity": "hard",
+          "passed": true,
+          "detail": "assistant text remained grounded in available tool results"
+        },
+        {
+          "key": "provider_followup_health",
+          "severity": "hard",
+          "passed": true,
+          "detail": "all tool turns received provider-written follow-up responses"
+        },
+        {
+          "key": "post_tool_fallback_pacing",
+          "severity": "hard",
+          "passed": true,
+          "detail": "0 post-tool local acknowledgement(s) remained state-only"
+        },
+        {
+          "key": "card_pacing",
+          "severity": "hard",
+          "passed": true,
+          "detail": "silent updates and explicit shares respected card pacing"
+        },
+        {
+          "key": "usage_observability",
+          "severity": "hard",
+          "passed": true,
+          "detail": "database usage recorded for all 3 turn(s); safe metadata available on 3/3"
+        },
+        {
+          "key": "manual_ux_review",
+          "severity": "manual",
+          "passed": true,
+          "detail": "2 qualitative prompt(s) require human review"
+        }
+      ],
+      "manual_review_prompts": [
+        "¿El asistente acepta el cambio inmediatamente, sin insistir en el objetivo anterior?",
+        "¿Respeta que el usuario no quiere completar preferencias opcionales todavía?"
+      ],
+      "turns": [
+        {
+          "index": 1,
+          "user": "Quiero un plan diario para ganar masa muscular.",
+          "assistant": "Perfecto, ya quedó orientado a un plan diario enfocado en ganar masa muscular.",
+          "semantic_intent": "create_dailyplan_proposal",
+          "semantic_missing_slots": [],
+          "tools": [
+            {
+              "tool_name": "update_proposal_preferences",
+              "status": "ok"
+            }
+          ],
+          "cards": {
+            "profile": 0,
+            "preference": 0,
+            "proposal_preferences": 0
+          },
+          "card_deltas": {
+            "profile": 0,
+            "preference": 0,
+            "proposal_preferences": 0
+          },
+          "brief": {
+            "goal": "muscle_gain",
+            "requested_entity": "daily_plan",
+            "subject_source": null,
+            "weight_kg": null,
+            "height_cm": null,
+            "age_years": null,
+            "sex": null,
+            "activity_level": null,
+            "training_frequency": null,
+            "meals_per_day": null,
+            "complexity_level": null,
+            "budget_level": null,
+            "style_preferences": [],
+            "excluded_foods": [],
+            "preferred_foods": [],
+            "field_sources": {
+              "goal": "chat_draft",
+              "requested_entity": "chat_draft",
+              "notes": "chat_draft"
+            },
+            "is_ready_for_proposal": false
+          },
+          "provider": "openai",
+          "model": "gpt-5.4-mini-2026-03-17",
+          "fallback": false,
+          "fallback_reason": "",
+          "deterministic_runtime_invoked": false,
+          "usage_observability": {
+            "recorded": true,
+            "action_type": "assistant.ai_nutrition_intake.cm24_validation",
+            "provider": "openai",
+            "model": "gpt-5.4-mini-2026-03-17",
+            "status": "completed",
+            "error_type": "",
+            "estimated_cost_usd": "0.003842",
+            "input_tokens": 5062,
+            "cached_input_tokens": 3072,
+            "output_tokens": 471,
+            "total_tokens": 5533,
+            "credits": {
+              "charged": false,
+              "disabled": true
+            },
+            "event_id": 223
+          },
+          "provider_contract": {
+            "parse_error": false,
+            "contract_repair_attempted": false,
+            "native_tool_transport": true,
+            "native_tool_calls": 1,
+            "text_parse_ignored_due_to_native_tools": false,
+            "incomplete_reasons": [],
+            "final_incomplete_reason": ""
+          },
+          "post_tool_fallback": {
+            "local_ack": false,
+            "policy": "",
+            "provider_followup_failed": false,
+            "provider_error": {}
+          }
+        },
+        {
+          "index": 2,
+          "user": "Mejor hagamos un programa semanal para bajar grasa.",
+          "assistant": "Perfecto, preparo un programa semanal enfocado en bajar grasa.",
+          "semantic_intent": "create_program_proposal",
+          "semantic_missing_slots": [],
+          "tools": [
+            {
+              "tool_name": "update_proposal_preferences",
+              "status": "ok"
+            }
+          ],
+          "cards": {
+            "profile": 0,
+            "preference": 0,
+            "proposal_preferences": 0
+          },
+          "card_deltas": {
+            "profile": 0,
+            "preference": 0,
+            "proposal_preferences": 0
+          },
+          "brief": {
+            "goal": "fat_loss",
+            "requested_entity": "program",
+            "subject_source": null,
+            "weight_kg": null,
+            "height_cm": null,
+            "age_years": null,
+            "sex": null,
+            "activity_level": null,
+            "training_frequency": null,
+            "meals_per_day": null,
+            "complexity_level": null,
+            "budget_level": null,
+            "style_preferences": [],
+            "excluded_foods": [],
+            "preferred_foods": [],
+            "field_sources": {
+              "goal": "chat_draft",
+              "requested_entity": "chat_draft",
+              "notes": "chat_draft"
+            },
+            "is_ready_for_proposal": false
+          },
+          "provider": "openai",
+          "model": "gpt-5.4-mini-2026-03-17",
+          "fallback": false,
+          "fallback_reason": "",
+          "deterministic_runtime_invoked": false,
+          "usage_observability": {
+            "recorded": true,
+            "action_type": "assistant.ai_nutrition_intake.cm24_validation",
+            "provider": "openai",
+            "model": "gpt-5.4-mini-2026-03-17",
+            "status": "completed",
+            "error_type": "",
+            "estimated_cost_usd": "0.003527",
+            "input_tokens": 5171,
+            "cached_input_tokens": 2560,
+            "output_tokens": 306,
+            "total_tokens": 5477,
+            "credits": {
+              "charged": false,
+              "disabled": true
+            },
+            "event_id": 224
+          },
+          "provider_contract": {
+            "parse_error": false,
+            "contract_repair_attempted": false,
+            "native_tool_transport": true,
+            "native_tool_calls": 1,
+            "text_parse_ignored_due_to_native_tools": false,
+            "incomplete_reasons": [],
+            "final_incomplete_reason": ""
+          },
+          "post_tool_fallback": {
+            "local_ack": false,
+            "policy": "",
+            "provider_followup_failed": false,
+            "provider_error": {}
+          }
+        },
+        {
+          "index": 3,
+          "user": "Déjalo en 3 comidas al día y avancemos sin más preferencias por ahora.",
+          "assistant": "Perfecto, seguimos con 3 comidas al día y sin más preferencias por ahora. Te preparo el siguiente paso.",
+          "semantic_intent": "iterate_proposal",
+          "semantic_missing_slots": [],
+          "tools": [
+            {
+              "tool_name": "update_proposal_preferences",
+              "status": "ok"
+            }
+          ],
+          "cards": {
+            "profile": 0,
+            "preference": 0,
+            "proposal_preferences": 0
+          },
+          "card_deltas": {
+            "profile": 0,
+            "preference": 0,
+            "proposal_preferences": 0
+          },
+          "brief": {
+            "goal": "fat_loss",
+            "requested_entity": "program",
+            "subject_source": null,
+            "weight_kg": null,
+            "height_cm": null,
+            "age_years": null,
+            "sex": null,
+            "activity_level": null,
+            "training_frequency": null,
+            "meals_per_day": 3,
+            "complexity_level": null,
+            "budget_level": null,
+            "style_preferences": [],
+            "excluded_foods": [],
+            "preferred_foods": [],
+            "field_sources": {
+              "goal": "chat_draft",
+              "requested_entity": "chat_draft",
+              "notes": "chat_draft",
+              "meals_per_day": "chat_draft"
+            },
+            "is_ready_for_proposal": false
+          },
+          "provider": "openai",
+          "model": "gpt-5.4-mini-2026-03-17",
+          "fallback": false,
+          "fallback_reason": "",
+          "deterministic_runtime_invoked": false,
+          "usage_observability": {
+            "recorded": true,
+            "action_type": "assistant.ai_nutrition_intake.cm24_validation",
+            "provider": "openai",
+            "model": "gpt-5.4-mini-2026-03-17",
+            "status": "completed",
+            "error_type": "",
+            "estimated_cost_usd": "0.003433",
+            "input_tokens": 5291,
+            "cached_input_tokens": 2560,
+            "output_tokens": 265,
+            "total_tokens": 5556,
+            "credits": {
+              "charged": false,
+              "disabled": true
+            },
+            "event_id": 225
+          },
+          "provider_contract": {
+            "parse_error": false,
+            "contract_repair_attempted": false,
+            "native_tool_transport": true,
+            "native_tool_calls": 1,
+            "text_parse_ignored_due_to_native_tools": false,
+            "incomplete_reasons": [],
+            "final_incomplete_reason": ""
+          },
+          "post_tool_fallback": {
+            "local_ack": false,
+            "policy": "",
+            "provider_followup_failed": false,
+            "provider_error": {}
+          }
+        }
+      ],
+      "usage_events": [
+        {
+          "id": 223,
+          "turn_id": "cm24-e4d738689a98406d804d-cambio_de_direccion-1",
+          "status": "completed",
+          "provider": "openai",
+          "model": "gpt-5.4-mini-2026-03-17",
+          "input_tokens": 5062,
+          "cached_input_tokens": 3072,
+          "output_tokens": 471,
+          "total_tokens": 5533,
+          "estimated_cost_usd": "0.003842",
+          "charged_credits": 0,
+          "tool_calls_count": 1,
+          "latency_ms": 5727,
+          "error_type": ""
+        },
+        {
+          "id": 224,
+          "turn_id": "cm24-e4d738689a98406d804d-cambio_de_direccion-2",
+          "status": "completed",
+          "provider": "openai",
+          "model": "gpt-5.4-mini-2026-03-17",
+          "input_tokens": 5171,
+          "cached_input_tokens": 2560,
+          "output_tokens": 306,
+          "total_tokens": 5477,
+          "estimated_cost_usd": "0.003527",
+          "charged_credits": 0,
+          "tool_calls_count": 1,
+          "latency_ms": 4780,
+          "error_type": ""
+        },
+        {
+          "id": 225,
+          "turn_id": "cm24-e4d738689a98406d804d-cambio_de_direccion-3",
+          "status": "completed",
+          "provider": "openai",
+          "model": "gpt-5.4-mini-2026-03-17",
+          "input_tokens": 5291,
+          "cached_input_tokens": 2560,
+          "output_tokens": 265,
+          "total_tokens": 5556,
+          "estimated_cost_usd": "0.003433",
+          "charged_credits": 0,
+          "tool_calls_count": 1,
+          "latency_ms": 5354,
+          "error_type": ""
+        }
+      ]
+    }
+  ]
+}

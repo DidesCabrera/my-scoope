@@ -6,7 +6,7 @@ from django.db import transaction
 
 from notas.application.ai_intake.nutrition_brief import (
     NutritionBrief,
-    build_required_follow_up_questions,
+    required_proposal_fields,
     build_summary_items,
     serialize_brief,
 )
@@ -38,9 +38,9 @@ def create_nutrition_brief_proposal(
     generator can consume this proposal/brief and replace it with a concrete
     create_dailyplan proposal later.
     """
-    follow_up_questions = build_required_follow_up_questions(brief)
+    required_fields = required_proposal_fields(brief)
 
-    if follow_up_questions:
+    if required_fields:
         raise ValueError("nutrition_brief_has_pending_questions")
 
     title = _build_proposal_title(brief)

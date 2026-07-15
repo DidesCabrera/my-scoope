@@ -14,6 +14,8 @@ from notas.domain.models import DailyPlanMeal, MealFood
 from notas.presentation.composition.js.dpm_food_picker_builder import (
     build_dpm_food_picker_context_payload,
 )
+from notas.presentation.composition.js.food_picker_builder import build_food_picker_foods_payload
+from notas.application.queries.food_picker_queries import list_food_picker_items
 from notas.presentation.composition.viewmodel.dpm.dpm_content import (
     build_dpm_detail_content_data,
 )
@@ -133,6 +135,12 @@ def get_dpm_detail_page_data(
 
         food_picker_context_json = json.dumps(
             food_picker_ctx.as_dict(),
+            cls=DjangoJSONEncoder,
+        )
+        foods_json = json.dumps(
+            build_food_picker_foods_payload(
+                list_food_picker_items(user=user).foods,
+            ),
             cls=DjangoJSONEncoder,
         )
 

@@ -82,8 +82,8 @@ class AdminOperationsOverviewQueueTests(TestCase):
         response = self.client.get(reverse("admin_operations_overview"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "OPS02 · Operational overview")
-        self.assertContains(response, "Colas accionables para operar My Scoope")
+        self.assertContains(response, "OPS08 · V1 closure")
+        self.assertContains(response, "Colas operacionales detectables")
         self.assertNotContains(response, "admin-operations-hero")
         self.assertContains(response, "Trabajo operacional")
         self.assertContains(response, "Action queues")

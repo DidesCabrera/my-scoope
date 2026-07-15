@@ -48,6 +48,8 @@ class AssistantToolAuditItem:
     category: str = ""
     risk_level: str = ""
     requires_human_review: bool | None = None
+    selection_reason_code: str = ""
+    selection_reason_summary: str = ""
 
     def as_dict(self) -> dict[str, Any]:
         payload: dict[str, Any] = {
@@ -64,6 +66,10 @@ class AssistantToolAuditItem:
             payload["risk_level"] = self.risk_level
         if self.requires_human_review is not None:
             payload["requires_human_review"] = self.requires_human_review
+        if self.selection_reason_code:
+            payload["selection_reason_code"] = self.selection_reason_code
+        if self.selection_reason_summary:
+            payload["selection_reason_summary"] = self.selection_reason_summary
         return payload
 
 
@@ -240,6 +246,8 @@ def _build_tool_audit_items(
                     tool_name=request.tool_name,
                     status="requested",
                     request_id=request.request_id,
+                    selection_reason_code=str(request.metadata.get("selection_reason_code") or ""),
+                    selection_reason_summary=_truncate_audit_text(request.reason),
                 )
             )
             continue
@@ -253,6 +261,8 @@ def _build_tool_audit_items(
                 category=str(data.get("category") or ""),
                 risk_level=str(data.get("risk_level") or ""),
                 requires_human_review=data.get("requires_human_review") if "requires_human_review" in data else None,
+                selection_reason_code=str(request.metadata.get("selection_reason_code") or ""),
+                selection_reason_summary=_truncate_audit_text(request.reason),
             )
         )
     return items

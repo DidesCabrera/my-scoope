@@ -8,6 +8,7 @@ from ai_assistant.domain import AssistantStructuredResponse
 from notas.application.ai_intake.chat_engine import build_ai_nutrition_intake_engine_status
 from notas.application.dto.proposal_iteration_trace import extract_plan_iteration_trace
 from notas.application.ai_intake.nutrition_brief import (
+    AI_NUTRITION_CONVERSATION_MESSAGE_LIMIT,
     NutritionConversationMessage,
     NutritionConversationState,
     deserialize_conversation,
@@ -211,7 +212,7 @@ def append_generated_plan_message(
         )
     )
     return NutritionConversationState(
-        messages=messages[-16:],
+        messages=messages[-AI_NUTRITION_CONVERSATION_MESSAGE_LIMIT:],
         result=conversation.result,
     )
 
@@ -234,7 +235,7 @@ def append_iterated_plan_message(
                 generated_plan_card=serialize_generated_plan_card(previous_card, is_current=False),
             )
         )
-        conversation = NutritionConversationState(messages=messages[-16:], result=conversation.result)
+        conversation = NutritionConversationState(messages=messages[-AI_NUTRITION_CONVERSATION_MESSAGE_LIMIT:], result=conversation.result)
 
     return append_generated_plan_message(
         conversation,
@@ -267,7 +268,7 @@ def append_ai_assistant_structured_response(
     )
     messages = deactivate_generated_plan_cards(conversation.messages) if cards else list(conversation.messages)
 
-    assistant_text = " ".join((structured_response.assistant_text or "").split())
+    assistant_text = (structured_response.assistant_text or "").strip()
     if assistant_text:
         messages.append(
             NutritionConversationMessage(
@@ -288,7 +289,7 @@ def append_ai_assistant_structured_response(
             )
         )
 
-    return NutritionConversationState(messages=messages[-16:], result=conversation.result)
+    return NutritionConversationState(messages=messages[-AI_NUTRITION_CONVERSATION_MESSAGE_LIMIT:], result=conversation.result)
 
 
 def build_generated_plan_cards_for_ai_response(
