@@ -146,6 +146,14 @@ RATE_LIMIT_AI_ASSISTANT_TURN_USER=10000/h for full CI suite determinism.
 
 Production must keep the protective defaults.
 
+For a whole-project local boundary, the authoritative command is:
+
+```bash
+scripts/ci_django_checks.sh
+```
+
+Do not classify redirects from a raw `python manage.py test` invocation as CI regressions until the repository's explicit test environment has been applied. The script preserves production defaults in production while making the historical suite deterministic.
+
 ### 4. Avoid invisible dependencies on test order
 
 A test should not pass only when another test ran first. Shared state through cache,

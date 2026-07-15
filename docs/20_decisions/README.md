@@ -147,3 +147,8 @@ Consequences
 - `0117-ai-assistant-post-tool-local-ack-state-only.md`: limita el fallback local posterior a tools a confirmar estado validado, sin elegir la siguiente pregunta ni reconstruir un entrevistador determinístico.
 - `0118-ai-assistant-behavioral-alignment-cycle.md`: inicia BA00-BA07 para alinear identidad, dominio, iniciativa, tool governance y calidad conversacional sin restaurar un guion determinístico.
 - `0119-ai-behavior-export-mode.md`: agrega el modo focalizado `ai_behavior` y consolida una única definición canónica por modo en el script de exportación.
+- `0125-contract-faithful-post-tool-test-double.md`: hace que el provider fake valide correlación nativa y continuidad de razonamiento con el mismo contrato del transporte real, y bloquea acknowledgements locales camuflados como turnos saludables.
+- `0126-post-tool-behavioral-revalidation.md`: vuelve a validar repreguntas sobre datos ya conocidos y cautela ante mensajes ambiguos una vez restauradas las respuestas post-tool del proveedor.
+- `0127-profile-aware-real-provider-validation-fixtures.md`: hace que el escenario PT06 adapte sus expectativas a los datos realmente persistidos en la ficha, sin ocultar pérdidas de sincronización cuando esos datos sí existen.
+- `0128-ai-assistant-behavioral-alignment-current-contract.md`: promueve BA/PT al contrato vigente, fija la semántica de tool restraint, progreso, correlación post-tool y fallback degradado, y reserva el cierre formal para la regresión global del ZIP `full`.
+- `0129-ai-assistant-behavioral-alignment-cycle-closure.md`: cierra BA00-BA07 tras aprobar el gate live aceptado, alinear tests documentales con la arquitectura numerada y pasar `check`, 2 regresiones núcleo y 1.446 tests mediante el script oficial de CI.

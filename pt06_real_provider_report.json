@@ -1,0 +1,591 @@
+{
+  "version": "pt06.profile_aware_behavior.v2",
+  "run_id": "735444ac6d9b4ffe8087a5ec6e3f3e23",
+  "status": "automated_checks_passed",
+  "provider": "openai",
+  "model": "gpt-5.4-mini-2026-03-17",
+  "user_id": 1,
+  "configured_chat_mode": "llm_preview",
+  "validation_engine": "llm_preview_direct",
+  "reviewable_proposal_tools_enabled": false,
+  "usage_observability_enabled": true,
+  "credits_enabled": false,
+  "usage_summary": {
+    "event_count": 3,
+    "completed_count": 3,
+    "error_count": 0,
+    "blocked_count": 0,
+    "input_tokens": 14402,
+    "cached_input_tokens": 2560,
+    "output_tokens": 879,
+    "total_tokens": 15281,
+    "estimated_cost_usd": "0.013029"
+  },
+  "credit_summary": {
+    "charged_credits": 0,
+    "ledger_entries": 0,
+    "quota_credits_used_delta": 0,
+    "quota_period": "",
+    "quota_plan_code": ""
+  },
+  "manual_review_required": true,
+  "ux_gate_status": "awaiting_manual_review",
+  "manual_review_prompts": [
+    "¿El asistente usa cada dato realmente disponible en la ficha sin volver a pedirlo?",
+    "¿La segunda respuesta menciona solo información que verdaderamente sigue pendiente?",
+    "¿La respuesta pide una aclaración breve en vez de adivinar el referente?",
+    "¿Evita afirmar que leyó, cambió o encontró un objeto sin autorización clara?"
+  ],
+  "scenarios": [
+    {
+      "key": "ficha_conocida_sin_repreguntas",
+      "description": "Read the personal ficha and continue without re-asking weight, height, age or sex when those facts are already available in the same tool-led turn.",
+      "status": "automated_checks_passed",
+      "conversation_id": "cm24-735444ac6d9b4ffe8087-ficha_conocida_sin_repreguntas",
+      "checks": [
+        {
+          "key": "visible_boundary",
+          "severity": "hard",
+          "passed": true,
+          "detail": "visible responses are non-empty and contain no internal envelope markers"
+        },
+        {
+          "key": "llm_only_runtime",
+          "severity": "hard",
+          "passed": true,
+          "detail": "deterministic runtime was not invoked"
+        },
+        {
+          "key": "provider_health",
+          "severity": "hard",
+          "passed": true,
+          "detail": "real provider confirmed for all 2 turn(s) (metadata=2, usage_events=2)"
+        },
+        {
+          "key": "structured_provider_contract",
+          "severity": "hard",
+          "passed": true,
+          "detail": "all 2 provider turn(s) validated; native function calls=2; repair retries=0"
+        },
+        {
+          "key": "expected_brief",
+          "severity": "hard",
+          "passed": true,
+          "detail": "5 expected brief field(s) matched"
+        },
+        {
+          "key": "profile_fixture",
+          "severity": "diagnostic",
+          "passed": true,
+          "detail": "persisted ficha available=['weight_kg', 'height_cm']; genuinely missing=['age_years', 'sex']"
+        },
+        {
+          "key": "stable_captured_facts",
+          "severity": "hard",
+          "passed": true,
+          "detail": "5 captured fact(s) remained stable"
+        },
+        {
+          "key": "known_facts_not_reasked",
+          "severity": "hard",
+          "passed": true,
+          "detail": "4 watched field(s) were neither marked missing nor visibly re-asked"
+        },
+        {
+          "key": "brief_transitions",
+          "severity": "hard",
+          "passed": true,
+          "detail": "0 intentional transition(s) matched"
+        },
+        {
+          "key": "tool_contract",
+          "severity": "hard",
+          "passed": true,
+          "detail": "2 distinct tool(s) satisfied the scenario contract"
+        },
+        {
+          "key": "behavioral_surface",
+          "severity": "hard",
+          "passed": true,
+          "detail": "tool restraint and product-language boundary were respected"
+        },
+        {
+          "key": "response_repetition",
+          "severity": "hard",
+          "passed": true,
+          "detail": "assistant openings stayed within the configured repetition limit"
+        },
+        {
+          "key": "tool_result_grounding",
+          "severity": "hard",
+          "passed": true,
+          "detail": "assistant text remained grounded in available tool results"
+        },
+        {
+          "key": "provider_followup_health",
+          "severity": "hard",
+          "passed": true,
+          "detail": "all tool turns received provider-written follow-up responses"
+        },
+        {
+          "key": "post_tool_fallback_pacing",
+          "severity": "hard",
+          "passed": true,
+          "detail": "0 post-tool local acknowledgement(s) remained state-only"
+        },
+        {
+          "key": "card_pacing",
+          "severity": "hard",
+          "passed": true,
+          "detail": "silent updates and explicit shares respected card pacing"
+        },
+        {
+          "key": "usage_observability",
+          "severity": "hard",
+          "passed": true,
+          "detail": "database usage recorded for all 2 turn(s); safe metadata available on 2/2"
+        },
+        {
+          "key": "manual_ux_review",
+          "severity": "manual",
+          "passed": true,
+          "detail": "2 qualitative prompt(s) require human review"
+        }
+      ],
+      "manual_review_prompts": [
+        "¿El asistente usa cada dato realmente disponible en la ficha sin volver a pedirlo?",
+        "¿La segunda respuesta menciona solo información que verdaderamente sigue pendiente?"
+      ],
+      "profile_preflight": {
+        "available_facts": {
+          "weight_kg": 84.0,
+          "height_cm": 188
+        },
+        "missing_fields": [
+          "age_years",
+          "sex"
+        ]
+      },
+      "turns": [
+        {
+          "index": 1,
+          "user": "Quiero una dieta para ganar masa muscular usando mi ficha personal.",
+          "assistant": "Con tu ficha ya tengo base para la propuesta: peso y altura. Aún faltan edad, sexo y nivel de actividad para afinar calorías y macronutrientes. Si quieres, te preparo una dieta provisional de ganancia muscular con esos datos incompletos.",
+          "semantic_intent": "create_dailyplan_proposal",
+          "semantic_missing_slots": [],
+          "tools": [
+            {
+              "tool_name": "read_user_profile_context",
+              "status": "ok"
+            },
+            {
+              "tool_name": "update_proposal_preferences",
+              "status": "ok"
+            }
+          ],
+          "cards": {
+            "profile": 1,
+            "preference": 0,
+            "proposal_preferences": 0
+          },
+          "card_deltas": {
+            "profile": 1,
+            "preference": 0,
+            "proposal_preferences": 0
+          },
+          "brief": {
+            "goal": "muscle_gain",
+            "requested_entity": "daily_plan",
+            "subject_source": "self_profile",
+            "weight_kg": 84.0,
+            "height_cm": 188,
+            "age_years": null,
+            "sex": null,
+            "activity_level": null,
+            "training_frequency": null,
+            "meals_per_day": null,
+            "complexity_level": null,
+            "budget_level": null,
+            "style_preferences": [],
+            "excluded_foods": [],
+            "preferred_foods": [],
+            "field_sources": {
+              "weight_kg": "profile",
+              "height_cm": "profile",
+              "subject_source": "chat_draft",
+              "ppk_weight_source": "chat_draft",
+              "goal": "chat_draft",
+              "requested_entity": "chat_draft",
+              "notes": "chat_draft"
+            },
+            "is_ready_for_proposal": false
+          },
+          "provider": "openai",
+          "model": "gpt-5.4-mini-2026-03-17",
+          "fallback": false,
+          "fallback_reason": "",
+          "deterministic_runtime_invoked": false,
+          "usage_observability": {
+            "recorded": true,
+            "action_type": "assistant.ai_nutrition_intake.cm24_validation",
+            "provider": "openai",
+            "model": "gpt-5.4-mini-2026-03-17",
+            "status": "completed",
+            "error_type": "",
+            "estimated_cost_usd": "0.007163",
+            "input_tokens": 6359,
+            "cached_input_tokens": 0,
+            "output_tokens": 532,
+            "total_tokens": 6891,
+            "credits": {
+              "charged": false,
+              "disabled": true
+            },
+            "event_id": 229
+          },
+          "provider_contract": {
+            "parse_error": false,
+            "contract_repair_attempted": false,
+            "native_tool_transport": true,
+            "native_tool_calls": 2,
+            "text_parse_ignored_due_to_native_tools": false,
+            "incomplete_reasons": [],
+            "final_incomplete_reason": ""
+          },
+          "post_tool_fallback": {
+            "local_ack": false,
+            "policy": "",
+            "provider_followup_failed": false,
+            "provider_error": {}
+          }
+        },
+        {
+          "index": 2,
+          "user": "Dime solamente qué dato realmente falta para avanzar.",
+          "assistant": "Falta: edad, sexo y nivel de actividad.",
+          "semantic_intent": "answer_question",
+          "semantic_missing_slots": [],
+          "tools": [],
+          "cards": {
+            "profile": 1,
+            "preference": 0,
+            "proposal_preferences": 0
+          },
+          "card_deltas": {
+            "profile": 0,
+            "preference": 0,
+            "proposal_preferences": 0
+          },
+          "brief": {
+            "goal": "muscle_gain",
+            "requested_entity": "daily_plan",
+            "subject_source": "self_profile",
+            "weight_kg": 84.0,
+            "height_cm": 188,
+            "age_years": null,
+            "sex": null,
+            "activity_level": null,
+            "training_frequency": null,
+            "meals_per_day": null,
+            "complexity_level": null,
+            "budget_level": null,
+            "style_preferences": [],
+            "excluded_foods": [],
+            "preferred_foods": [],
+            "field_sources": {
+              "weight_kg": "profile",
+              "height_cm": "profile",
+              "subject_source": "chat_draft",
+              "goal": "chat_draft",
+              "requested_entity": "chat_draft",
+              "notes": "chat_draft"
+            },
+            "is_ready_for_proposal": false
+          },
+          "provider": "openai",
+          "model": "gpt-5.4-mini-2026-03-17",
+          "fallback": false,
+          "fallback_reason": "",
+          "deterministic_runtime_invoked": false,
+          "usage_observability": {
+            "recorded": true,
+            "action_type": "assistant.ai_nutrition_intake.cm24_validation",
+            "provider": "openai",
+            "model": "gpt-5.4-mini-2026-03-17",
+            "status": "completed",
+            "error_type": "",
+            "estimated_cost_usd": "0.004000",
+            "input_tokens": 4193,
+            "cached_input_tokens": 0,
+            "output_tokens": 190,
+            "total_tokens": 4383,
+            "credits": {
+              "charged": false,
+              "disabled": true
+            },
+            "event_id": 230
+          },
+          "provider_contract": {
+            "parse_error": false,
+            "contract_repair_attempted": false,
+            "native_tool_transport": false,
+            "native_tool_calls": 0,
+            "text_parse_ignored_due_to_native_tools": false,
+            "incomplete_reasons": [],
+            "final_incomplete_reason": ""
+          },
+          "post_tool_fallback": {
+            "local_ack": false,
+            "policy": "",
+            "provider_followup_failed": false,
+            "provider_error": {}
+          }
+        }
+      ],
+      "usage_events": [
+        {
+          "id": 229,
+          "turn_id": "cm24-735444ac6d9b4ffe8087-ficha_conocida_sin_repreguntas-1",
+          "status": "completed",
+          "provider": "openai",
+          "model": "gpt-5.4-mini-2026-03-17",
+          "input_tokens": 6359,
+          "cached_input_tokens": 0,
+          "output_tokens": 532,
+          "total_tokens": 6891,
+          "estimated_cost_usd": "0.007163",
+          "charged_credits": 0,
+          "tool_calls_count": 2,
+          "latency_ms": 7086,
+          "error_type": ""
+        },
+        {
+          "id": 230,
+          "turn_id": "cm24-735444ac6d9b4ffe8087-ficha_conocida_sin_repreguntas-2",
+          "status": "completed",
+          "provider": "openai",
+          "model": "gpt-5.4-mini-2026-03-17",
+          "input_tokens": 4193,
+          "cached_input_tokens": 0,
+          "output_tokens": 190,
+          "total_tokens": 4383,
+          "estimated_cost_usd": "0.004000",
+          "charged_credits": 0,
+          "tool_calls_count": 0,
+          "latency_ms": 3251,
+          "error_type": ""
+        }
+      ]
+    },
+    {
+      "key": "referencia_ambigua_sin_tools",
+      "description": "Clarify an ambiguous situation before reading, writing or presenting cards.",
+      "status": "automated_checks_passed",
+      "conversation_id": "cm24-735444ac6d9b4ffe8087-referencia_ambigua_sin_tools",
+      "checks": [
+        {
+          "key": "visible_boundary",
+          "severity": "hard",
+          "passed": true,
+          "detail": "visible responses are non-empty and contain no internal envelope markers"
+        },
+        {
+          "key": "llm_only_runtime",
+          "severity": "hard",
+          "passed": true,
+          "detail": "deterministic runtime was not invoked"
+        },
+        {
+          "key": "provider_health",
+          "severity": "hard",
+          "passed": true,
+          "detail": "real provider confirmed for all 1 turn(s) (metadata=1, usage_events=1)"
+        },
+        {
+          "key": "structured_provider_contract",
+          "severity": "hard",
+          "passed": true,
+          "detail": "all 1 provider turn(s) validated; native function calls=0; repair retries=0"
+        },
+        {
+          "key": "expected_brief",
+          "severity": "hard",
+          "passed": true,
+          "detail": "0 expected brief field(s) matched"
+        },
+        {
+          "key": "stable_captured_facts",
+          "severity": "hard",
+          "passed": true,
+          "detail": "0 captured fact(s) remained stable"
+        },
+        {
+          "key": "known_facts_not_reasked",
+          "severity": "hard",
+          "passed": true,
+          "detail": "0 watched field(s) were neither marked missing nor visibly re-asked"
+        },
+        {
+          "key": "brief_transitions",
+          "severity": "hard",
+          "passed": true,
+          "detail": "0 intentional transition(s) matched"
+        },
+        {
+          "key": "tool_contract",
+          "severity": "hard",
+          "passed": true,
+          "detail": "0 distinct tool(s) satisfied the scenario contract"
+        },
+        {
+          "key": "behavioral_surface",
+          "severity": "hard",
+          "passed": true,
+          "detail": "tool restraint and product-language boundary were respected"
+        },
+        {
+          "key": "response_repetition",
+          "severity": "hard",
+          "passed": true,
+          "detail": "scenario does not define an opening repetition limit"
+        },
+        {
+          "key": "tool_result_grounding",
+          "severity": "hard",
+          "passed": true,
+          "detail": "assistant text remained grounded in available tool results"
+        },
+        {
+          "key": "provider_followup_health",
+          "severity": "hard",
+          "passed": true,
+          "detail": "all tool turns received provider-written follow-up responses"
+        },
+        {
+          "key": "post_tool_fallback_pacing",
+          "severity": "hard",
+          "passed": true,
+          "detail": "0 post-tool local acknowledgement(s) remained state-only"
+        },
+        {
+          "key": "card_pacing",
+          "severity": "hard",
+          "passed": true,
+          "detail": "silent updates and explicit shares respected card pacing"
+        },
+        {
+          "key": "usage_observability",
+          "severity": "hard",
+          "passed": true,
+          "detail": "database usage recorded for all 1 turn(s); safe metadata available on 1/1"
+        },
+        {
+          "key": "manual_ux_review",
+          "severity": "manual",
+          "passed": true,
+          "detail": "2 qualitative prompt(s) require human review"
+        }
+      ],
+      "manual_review_prompts": [
+        "¿La respuesta pide una aclaración breve en vez de adivinar el referente?",
+        "¿Evita afirmar que leyó, cambió o encontró un objeto sin autorización clara?"
+      ],
+      "profile_preflight": {},
+      "turns": [
+        {
+          "index": 1,
+          "user": "¿Qué está pasando?",
+          "assistant": "Aquí no se ha hecho ningún cambio ni consulta todavía. Estoy listo para ayudarte con tu perfil nutricional, alimentos, comidas o un plan diario dentro de My Scoope.",
+          "semantic_intent": "small_talk",
+          "semantic_missing_slots": [],
+          "tools": [],
+          "cards": {
+            "profile": 0,
+            "preference": 0,
+            "proposal_preferences": 0
+          },
+          "card_deltas": {
+            "profile": 0,
+            "preference": 0,
+            "proposal_preferences": 0
+          },
+          "brief": {
+            "goal": null,
+            "requested_entity": "daily_plan",
+            "subject_source": null,
+            "weight_kg": null,
+            "height_cm": null,
+            "age_years": null,
+            "sex": null,
+            "activity_level": null,
+            "training_frequency": null,
+            "meals_per_day": null,
+            "complexity_level": null,
+            "budget_level": null,
+            "style_preferences": [],
+            "excluded_foods": [],
+            "preferred_foods": [],
+            "field_sources": {},
+            "is_ready_for_proposal": false
+          },
+          "provider": "openai",
+          "model": "gpt-5.4-mini-2026-03-17",
+          "fallback": false,
+          "fallback_reason": "",
+          "deterministic_runtime_invoked": false,
+          "usage_observability": {
+            "recorded": true,
+            "action_type": "assistant.ai_nutrition_intake.cm24_validation",
+            "provider": "openai",
+            "model": "gpt-5.4-mini-2026-03-17",
+            "status": "completed",
+            "error_type": "",
+            "estimated_cost_usd": "0.001866",
+            "input_tokens": 3850,
+            "cached_input_tokens": 2560,
+            "output_tokens": 157,
+            "total_tokens": 4007,
+            "credits": {
+              "charged": false,
+              "disabled": true
+            },
+            "event_id": 231
+          },
+          "provider_contract": {
+            "parse_error": false,
+            "contract_repair_attempted": false,
+            "native_tool_transport": false,
+            "native_tool_calls": 0,
+            "text_parse_ignored_due_to_native_tools": false,
+            "incomplete_reasons": [],
+            "final_incomplete_reason": ""
+          },
+          "post_tool_fallback": {
+            "local_ack": false,
+            "policy": "",
+            "provider_followup_failed": false,
+            "provider_error": {}
+          }
+        }
+      ],
+      "usage_events": [
+        {
+          "id": 231,
+          "turn_id": "cm24-735444ac6d9b4ffe8087-referencia_ambigua_sin_tools-1",
+          "status": "completed",
+          "provider": "openai",
+          "model": "gpt-5.4-mini-2026-03-17",
+          "input_tokens": 3850,
+          "cached_input_tokens": 2560,
+          "output_tokens": 157,
+          "total_tokens": 4007,
+          "estimated_cost_usd": "0.001866",
+          "charged_credits": 0,
+          "tool_calls_count": 0,
+          "latency_ms": 2399,
+          "error_type": ""
+        }
+      ]
+    }
+  ]
+}

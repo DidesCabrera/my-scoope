@@ -2,7 +2,29 @@
 
 ## Estado
 
-Ciclo arquitectónico abierto desde Patch 41.
+Baseline vigente y operativa. CM00-CM24, PT00-PT06 y BA00-BA07 están cerrados. El AI Assistant usa runtime LLM-native, tools allowlisted, estado temporal sincronizado, cards explícitas, function calling nativo y validación conductual con proveedor fake y real. La frontera final pasó Django checks, 2 regresiones núcleo y 1.446 tests mediante `scripts/ci_django_checks.sh`.
+
+El contrato actual prioriza libertad del LLM guiada por propósito, estado, capacidades y límites tipados. My Scoope conserva la autoridad sobre validación, permisos, cálculo, persistencia, presentación de objetos y observabilidad.
+
+## Contrato conductual vigente
+
+- El asistente está anclado al dominio My Scoope, sin convertir saludos o conversación social breve en errores.
+- Los temas externos reciben una respuesta breve y no abren ramas generales ajenas al producto.
+- Las capacidades se explican en lenguaje de producto; nombres internos de tools, schemas y MCP no son la interfaz de usuario.
+- Una referencia ambigua no autoriza lecturas, escrituras ni cards. El asistente responde desde el contexto visible o pide una aclaración breve.
+- Cuando la tarea está suficientemente fundada, se prioriza el siguiente resultado útil sobre confirmaciones repetitivas o intake opcional indefinido.
+- Los hechos ya disponibles en ficha, drafts o cards no deben volver a pedirse ni presentarse como faltantes.
+- Toda afirmación de lectura, actualización o creación de estado debe estar respaldada por una tool allowlisted ejecutada.
+
+## Contrato post-tool vigente
+
+- Los `call_id` del proveedor son opacos y sensibles a mayúsculas; se preservan sin normalización semántica.
+- Cada `function_call` debe correlacionar uno a uno con su `function_call_output` antes de cualquier I/O remoto.
+- Las continuaciones stateless con `store=false` solo reproducen reasoning items que conservan `encrypted_content`.
+- `FakeLLMClient` valida el mismo contrato de continuación que el adapter OpenAI.
+- Un turno saludable con tools debe ser redactado por el proveedor. El fallback local `state_ack_only.v2` es raro, state-only, se registra como `degraded` y bloquea el gate live.
+
+## Historial de evolución
 
 Desde Patch 42 existe la app Django física `ai_assistant` y el chat actual pasa por una abstracción `ChatEngine`. Desde Patch 43 existe un gateway de proveedor LLM externo desacoplado, todavía no conectado al chat productivo. Desde Patch 44 existen contratos semánticos provider-agnostic para mensajes, intención, tool requests/results y respuesta estructurada. Desde Patch 45 existe un registry controlado de tools allowlist. Desde Patch 46 existe un orquestador LLM v1 testeable que valida tool requests, sin ejecutar tools ni reemplazar todavía el motor activo del chat. Desde Patch 47 existe un puente de render para mostrar proposal cards del AI Assistant dentro del hilo actual, solo cuando My Scoope entregue propuestas reales ya visibles para el usuario. Desde Patch 48, la lista histórica de chats muestra metadata útil del AI Assistant y permite iniciar un nuevo chat limpiando solo la sesión activa. Desde Patch 49 existe una capa de audit/safety sanitizada para cada turno LLM, con latencia, proveedor/modelo, uso/tokens, tools solicitadas/bloqueadas y errores seguros, sin guardar prompts, payloads crudos ni secretos. Desde Patch 50 existe diagnóstico operacional seguro del proveedor externo. Desde Patch 51 existe selector explícito de engine para `deterministic` o `llm_preview`, manteniendo determinístico como default y fallback. Desde Patch 52 existe `SafeLLMContext` para enviar contexto mínimo y sanitizado al proveedor externo. Desde Patch 53 existe un executor read-only que puede ejecutar tools reales de lectura contra servicios internos de My Scoope, sin writes ni propuestas. Desde Patch 54, el orquestador compone el loop `LLM -> read-only tools -> LLM final answer` con una segunda llamada al proveedor usando `tool_results` sanitizados. Desde Patch 55 existe `ReviewableProposalToolExecutor` para crear `NutritionProposal` revisables bajo opt-in explícito, sin aplicación automática. Desde Patch 56 existe `AIUsageEvent` y `DjangoAIUsageRecorder` para registrar uso IA, tokens, costo estimado configurable, status y errores seguros por turno. Desde Patch 57 existen guardrails técnicos por turno para input estimado, contexto, historial, output, tool loop y cantidad de tool requests. Desde Patch 58 el modo `llm_preview` queda conectado como preview operativo sobre el chat existente, con `action_type` propio, metadata segura de conversación/turno y badge de motor activo. Tras CM23, un fallo del proveedor devuelve un fallback técnico y no ejecuta el entrevistador determinístico para el mismo turno. Desde Patch 59 existe una primera capa de créditos IA por membresía: `AIUserCreditQuota`, `AICreditLedger`, campos de créditos en `AIUsageEvent` y bloqueo opcional por cuota, detrás de `AI_ASSISTANT_CREDITS_ENABLED`. Desde Patch 60 existe un dashboard interno en Django Admin para revisar consumo IA por periodo, función, modelo, usuario, créditos, costos estimados y presión de cuota. Desde Patch 61 existe un router configurable de proveedor/modelo por `action_type`, para optimizar costos por función sin exponer tokens ni modelos al usuario final.
 
@@ -13,7 +35,7 @@ El AI Assistant debe evolucionar sobre la estructura de chat existente de My Sco
 
 ## Current client-memory/tool-oriented baseline
 
-The CM00-CM13 Client Memory & Profile Objects cycle is closed. The current implementation contract for this area lives in:
+The CM00-CM24 Client Memory & Profile Objects and LLM-native alignment cycle is closed. The current implementation contract for this area lives in:
 
 ```text
 docs/00_current/features/ai_assistant/tool_oriented_client_memory.md

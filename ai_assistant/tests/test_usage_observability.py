@@ -127,3 +127,4 @@ class AIUsageEventStatusChoicesTests(TestCase):
         choices = {value for value, _label in AIUsageEvent.Status.choices}
 
         self.assertIn(AIUsageEvent.Status.BLOCKED, choices)
+        self.assertIn(AIUsageEvent.Status.DEGRADED, choices)

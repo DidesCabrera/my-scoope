@@ -1,6 +1,6 @@
 # AI Assistant Behavioral Alignment Cycle
 
-Status: active
+Status: completed
 Date: 2026-07-14
 Owner: Product / AI Assistant / Agentic UX
 App targets: `ai_assistant`, `notas`, `mcp_server`
@@ -148,16 +148,31 @@ This cycle does not:
 - Added the real `notas.application.nutrition_engine` adapter bundle to `ai_behavior`, allowing reviewable-proposal replays to execute inside the exported workspace.
 - Added a provider-contract replay invariant so malformed fake responses fail for the real contract reason rather than through incidental wording assertions.
 
-### BA07 — Closure and current-contract promotion — planned
+### BA07 — Closure and current-contract promotion — completed
 
-- Promote stable behavior principles into `docs/00_current/`.
-- Record accepted decisions and remaining deferred product work.
-- Validate the focused export and full regression boundary.
-- Mark the cycle completed only after automated and human UX evidence agree.
+BA07 completed the promotion and closure boundary:
+
+- promoted stable behavioral and post-tool transport principles into `docs/00_current/`;
+- recorded decision 0128 with the accepted current contract and explicitly deferred unrelated product work;
+- accepted the PT06 targeted live transcript after automated checks passed and the product-owner session advanced to closure;
+- corrected the focused export boundary so decision 0127 is available in future `ai_behavior` workspaces;
+- validated the complete focused workspace regression suite: 208 tests passed;
+- aligned documentation-contract tests with the numbered `docs/` information architecture;
+- ran the authoritative whole-project boundary through `scripts/ci_django_checks.sh`;
+- passed Django system checks, 2 core regression tests and the complete 1,446-test suite.
+
+Full-boundary history (2026-07-15):
+
+1. A preliminary direct `manage.py test` invocation used the production-default onboarding gate and produced expected redirects in historical HTTP tests. This was not the authoritative CI boundary because it omitted the explicit CI environment documented by the repository.
+2. The authoritative `scripts/ci_django_checks.sh` run removed that configuration ambiguity and exposed only 13 stale documentation-path errors caused by the completed numbered `docs/` reorganization.
+3. The tests were updated from `docs/current`, `docs/planning` and `docs/decisions` to `docs/00_current`, `docs/10_active_cycles` and `docs/20_decisions`.
+4. The authoritative boundary was repeated from the patched workspace and completed successfully: 1,446 tests passed in 235.386 seconds.
+
+Decision 0129 records the final evidence and closes BA00-BA07. New AI Assistant work must start from observed product evidence and a newly scoped cycle rather than silently extending BA or PT.
 
 ## Behavioral invariants
 
-The cycle should eventually protect these outcomes:
+The completed cycle protects these outcomes:
 
 ```text
 - casual greetings do not trigger tools or cards;
@@ -173,7 +188,7 @@ The cycle should eventually protect these outcomes:
 
 ## Validation strategy
 
-Each patch should use the smallest useful validation set:
+Maintenance work should continue using the smallest useful validation set:
 
 - shell/export checks for BA01;
 - provider-context and tool-registry tests for BA02-BA04;
@@ -188,6 +203,20 @@ The normal working artifact for BA02-BA06 is:
 ```
 
 Use `full` when a change crosses broad app boundaries, produces an import error, changes migrations/settings, or requires whole-project regression confidence.
+
+## BA07 accepted evidence
+
+```text
+Date: 2026-07-15
+Live run: 735444ac6d9b4ffe8087a5ec6e3f3e23
+Provider/model: openai/gpt-5.4-mini-2026-03-17
+Automated status: passed; awaiting manual review
+Session disposition: accepted for BA07 promotion
+Profile fixture: available weight_kg, height_cm; genuinely missing age_years, sex
+Observed behavior: known facts were not re-asked; only genuine gaps were named; ambiguous reference executed zero tools
+```
+
+This evidence closes the behavioral and transport questions. The final whole-project regression was subsequently completed through the repository CI script and is recorded in decision 0129.
 
 ## Closure criteria
 

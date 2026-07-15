@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
+from datetime import date
 from io import StringIO
 
 from django.contrib.auth import get_user_model
@@ -21,14 +22,23 @@ from notas.application.ai_intake.real_provider_validation import (
     RealProviderValidationScenario,
     RealProviderValidationTurn,
     _behavioral_surface_check,
+    _expected_brief_check,
+    _known_facts_not_reasked_check,
     _response_repetition_check,
+    _specialize_scenario_for_user,
     built_in_real_provider_scenarios,
     _post_tool_fallback_pacing_check,
+    _provider_followup_health_check,
     _structured_provider_contract_check,
     _tool_result_grounding_check,
     get_validation_user,
     run_real_provider_validation,
 )
+from notas.application.services.nutrition.body_metrics import (
+    calculate_age_years,
+    record_weight,
+)
+from notas.domain.models import Profile
 
 
 class ScriptedGroupedFactsValidationEngine:
@@ -199,7 +209,182 @@ class RealProviderValidationTests(TestCase):
         self.assertIn("tema_externo_breve", catalog)
         self.assertIn("capacidades_en_lenguaje_de_producto", catalog)
         self.assertIn("referencia_ambigua_sin_tools", catalog)
+        self.assertIn("ficha_conocida_sin_repreguntas", catalog)
+        self.assertEqual(
+            catalog["referencia_ambigua_sin_tools"].user_messages,
+            ("¿Qué está pasando?",),
+        )
         self.assertEqual(catalog["referencia_ambigua_sin_tools"].max_tool_calls, 0)
+
+    def test_profile_scenario_specialization_requires_only_persisted_available_facts(self):
+        profile = self.user.profile
+        profile.height_cm = 188
+        profile.birth_date = None
+        profile.sex = ""
+        profile.save(update_fields=["height_cm", "birth_date", "sex"])
+        record_weight(self.user, weight_kg=85, source="manual")
+
+        scenario = _specialize_scenario_for_user(
+            built_in_real_provider_scenarios()["ficha_conocida_sin_repreguntas"],
+            user=self.user,
+        )
+
+        self.assertEqual(
+            scenario.profile_preflight_facts,
+            {"weight_kg": 85.0, "height_cm": 188},
+        )
+        self.assertEqual(
+            scenario.profile_preflight_missing_fields,
+            ("age_years", "sex"),
+        )
+        self.assertEqual(scenario.expected_final_brief["weight_kg"], 85.0)
+        self.assertEqual(scenario.expected_final_brief["height_cm"], 188)
+        self.assertNotIn("age_years", scenario.expected_final_brief)
+        self.assertNotIn("sex", scenario.expected_final_brief)
+        self.assertIn("weight_kg", scenario.stable_brief_fields)
+        self.assertIn("height_cm", scenario.stable_brief_fields)
+        self.assertNotIn("age_years", scenario.stable_brief_fields)
+        self.assertNotIn("sex", scenario.stable_brief_fields)
+        turn = self._profile_validation_turn(
+            brief_snapshot={
+                "goal": "muscle_gain",
+                "requested_entity": "daily_plan",
+                "subject_source": "self_profile",
+                "weight_kg": 85.0,
+                "height_cm": 188,
+            }
+        )
+        self.assertTrue(_expected_brief_check(scenario, (turn,)).passed)
+
+    def test_profile_scenario_specialization_detects_sync_loss_for_complete_ficha(self):
+        profile = self.user.profile
+        profile.height_cm = 188
+        profile.birth_date = date(1988, 1, 17)
+        profile.sex = Profile.SEX_MALE
+        profile.save(update_fields=["height_cm", "birth_date", "sex"])
+        record_weight(self.user, weight_kg=85, source="manual")
+
+        scenario = _specialize_scenario_for_user(
+            built_in_real_provider_scenarios()["ficha_conocida_sin_repreguntas"],
+            user=self.user,
+        )
+
+        self.assertEqual(scenario.profile_preflight_missing_fields, ())
+        self.assertEqual(scenario.expected_final_brief["weight_kg"], 85.0)
+        self.assertEqual(scenario.expected_final_brief["height_cm"], 188)
+        self.assertEqual(
+            scenario.expected_final_brief["age_years"],
+            calculate_age_years(profile.birth_date),
+        )
+        self.assertEqual(scenario.expected_final_brief["sex"], Profile.SEX_MALE)
+        self.assertTrue(
+            {"weight_kg", "height_cm", "age_years", "sex"}.issubset(
+                set(scenario.stable_brief_fields)
+            )
+        )
+        turn = self._profile_validation_turn(
+            brief_snapshot={
+                "goal": "muscle_gain",
+                "requested_entity": "daily_plan",
+                "subject_source": "self_profile",
+                "weight_kg": 85.0,
+                "height_cm": 188,
+            }
+        )
+        check = _expected_brief_check(scenario, (turn,))
+        self.assertFalse(check.passed)
+        self.assertIn("age_years", check.detail)
+        self.assertIn("sex", check.detail)
+
+    def _profile_validation_turn(self, *, brief_snapshot):
+        return RealProviderValidationTurn(
+            index=1,
+            turn_id="profile-preflight-1",
+            user_message="Usa mi ficha.",
+            assistant_message="Revisé los datos disponibles.",
+            engine_name="test",
+            brief_snapshot=brief_snapshot,
+            semantic_intent="capture_nutrition_brief",
+            semantic_missing_slots=(),
+            tool_results=({"tool_name": "read_user_profile_context", "status": "ok"},),
+            card_counts={"profile": 1, "preference": 0, "proposal_preferences": 0},
+            card_deltas={"profile": 1, "preference": 0, "proposal_preferences": 0},
+            fallback=False,
+            fallback_reason="",
+            deterministic_runtime_invoked=False,
+            provider="openai",
+            model="test-real-model",
+            usage_observability={"recorded": True},
+        )
+
+    def test_known_fact_gate_rejects_same_turn_visible_reask_after_profile_read(self):
+        scenario = RealProviderValidationScenario(
+            key="pt06-known-profile",
+            description="test",
+            user_messages=("Usa mi ficha.",),
+            fields_not_reasked_after_capture=("weight_kg", "height_cm"),
+            visible_reask_markers={
+                "weight_kg": ("cuánto pesas",),
+                "height_cm": ("cuánto mides",),
+            },
+        )
+        turn = RealProviderValidationTurn(
+            index=1,
+            turn_id="pt06-known-profile-1",
+            user_message="Usa mi ficha.",
+            assistant_message="Ya leí tu ficha. ¿Cuánto pesas y cuánto mides?",
+            engine_name="test",
+            brief_snapshot={"weight_kg": 85.0, "height_cm": 188},
+            semantic_intent="capture_nutrition_brief",
+            semantic_missing_slots=(),
+            tool_results=({"tool_name": "read_user_profile_context", "status": "ok"},),
+            card_counts={"profile": 1, "preference": 0, "proposal_preferences": 0},
+            card_deltas={"profile": 1, "preference": 0, "proposal_preferences": 0},
+            fallback=False,
+            fallback_reason="",
+            deterministic_runtime_invoked=False,
+            provider="openai",
+            model="test-real-model",
+            usage_observability={"recorded": True},
+        )
+
+        check = _known_facts_not_reasked_check(scenario, (turn,))
+
+        self.assertFalse(check.passed)
+        self.assertIn("visibly re-asked weight_kg", check.detail)
+        self.assertIn("visibly re-asked height_cm", check.detail)
+
+    def test_known_fact_gate_rejects_same_turn_semantic_missing_slot(self):
+        scenario = RealProviderValidationScenario(
+            key="pt06-known-slot",
+            description="test",
+            user_messages=("Usa mi ficha.",),
+            fields_not_reasked_after_capture=("age_years",),
+        )
+        turn = RealProviderValidationTurn(
+            index=1,
+            turn_id="pt06-known-slot-1",
+            user_message="Usa mi ficha.",
+            assistant_message="Ya tengo tu edad desde la ficha.",
+            engine_name="test",
+            brief_snapshot={"age_years": 38},
+            semantic_intent="capture_nutrition_brief",
+            semantic_missing_slots=("age_years",),
+            tool_results=({"tool_name": "read_user_profile_context", "status": "ok"},),
+            card_counts={"profile": 1, "preference": 0, "proposal_preferences": 0},
+            card_deltas={"profile": 1, "preference": 0, "proposal_preferences": 0},
+            fallback=False,
+            fallback_reason="",
+            deterministic_runtime_invoked=False,
+            provider="openai",
+            model="test-real-model",
+            usage_observability={"recorded": True},
+        )
+
+        check = _known_facts_not_reasked_check(scenario, (turn,))
+
+        self.assertFalse(check.passed)
+        self.assertIn("semantic missing", check.detail)
 
     def test_behavioral_surface_blocks_unjustified_tools_and_internal_names(self):
         scenario = RealProviderValidationScenario(
@@ -359,6 +544,90 @@ class RealProviderValidationTests(TestCase):
 
         self.assertFalse(check.passed)
         self.assertIn("contradicted executed tool result", check.detail)
+
+    def test_provider_followup_health_is_release_blocking_and_names_error(self):
+        turn = RealProviderValidationTurn(
+            index=1,
+            turn_id="pt-followup-1",
+            user_message="Déjalo en cuatro comidas.",
+            assistant_message="La dirección de la propuesta quedó actualizada.",
+            engine_name="test",
+            brief_snapshot={"meals_per_day": 4},
+            semantic_intent="capture_nutrition_brief",
+            semantic_missing_slots=(),
+            tool_results=({"tool_name": "update_proposal_preferences", "status": "ok"},),
+            card_counts={"profile": 0, "preference": 0, "proposal_preferences": 0},
+            card_deltas={"profile": 0, "preference": 0, "proposal_preferences": 0},
+            fallback=False,
+            fallback_reason="",
+            deterministic_runtime_invoked=False,
+            provider="openai",
+            model="test-real-model",
+            usage_observability={"recorded": True},
+            tool_followup_local_ack=True,
+            tool_followup_local_ack_policy="state_ack_only.v2",
+            provider_tool_followup_failed=True,
+            provider_tool_followup_error_status=400,
+            provider_tool_followup_error_type="invalid_request_error",
+            provider_tool_followup_error_code="tool_output_missing",
+            provider_tool_followup_error_message=(
+                "No tool output found for function call call_abc123."
+            ),
+            provider_tool_followup_error_param="input",
+            provider_tool_followup_error_request_id="req_123",
+        )
+
+        check = _provider_followup_health_check((turn,))
+
+        self.assertFalse(check.passed)
+        self.assertIn("status=400", check.detail)
+        self.assertIn("tool_output_missing", check.detail)
+        self.assertIn("req_123", check.detail)
+        self.assertIn("No tool output found", check.detail)
+
+        healthy = replace(
+            turn,
+            assistant_message="Listo, quedó en cuatro comidas.",
+            tool_followup_local_ack=False,
+            provider_tool_followup_failed=False,
+            provider_tool_followup_error_status=None,
+            provider_tool_followup_error_type="",
+            provider_tool_followup_error_code="",
+            provider_tool_followup_error_message="",
+            provider_tool_followup_error_param="",
+            provider_tool_followup_error_request_id="",
+        )
+        healthy_check = _provider_followup_health_check((healthy,))
+        self.assertTrue(healthy_check.passed)
+
+    def test_provider_followup_health_rejects_local_ack_text_on_healthy_tool_turn(self):
+        turn = RealProviderValidationTurn(
+            index=1,
+            turn_id="pt05-healthy-local-copy",
+            user_message="Déjalo en cuatro comidas.",
+            assistant_message="La dirección de la propuesta quedó actualizada.",
+            engine_name="test",
+            brief_snapshot={"meals_per_day": 4},
+            semantic_intent="capture_nutrition_brief",
+            semantic_missing_slots=(),
+            tool_results=({"tool_name": "update_proposal_preferences", "status": "ok"},),
+            card_counts={"profile": 0, "preference": 0, "proposal_preferences": 0},
+            card_deltas={"profile": 0, "preference": 0, "proposal_preferences": 0},
+            fallback=False,
+            fallback_reason="",
+            deterministic_runtime_invoked=False,
+            provider="openai",
+            model="test-real-model",
+            usage_observability={"recorded": True, "status": "completed"},
+            tool_followup_local_ack=False,
+            provider_tool_followup_failed=False,
+        )
+
+        check = _provider_followup_health_check((turn,))
+
+        self.assertFalse(check.passed)
+        self.assertIn("healthy tool turn reproduced local acknowledgement", check.detail)
+
     def test_post_tool_fallback_pacing_rejects_backend_selected_next_question(self):
         turn = RealProviderValidationTurn(
             index=1,
@@ -382,7 +651,7 @@ class RealProviderValidationTests(TestCase):
             model="test-real-model",
             usage_observability={"recorded": True},
             tool_followup_local_ack=True,
-            tool_followup_local_ack_policy="state_ack_only.v1",
+            tool_followup_local_ack_policy="state_ack_only.v2",
             provider_tool_followup_failed=True,
         )
 

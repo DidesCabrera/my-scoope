@@ -10,7 +10,10 @@ from ai_assistant.infrastructure.providers import (
     OpenAIResponsesClient,
     get_llm_client,
 )
-from ai_assistant.infrastructure.providers.openai_client import OPENAI_RESPONSES_PATH
+from ai_assistant.infrastructure.providers.openai_client import (
+    OPENAI_RESPONSES_PATH,
+    build_openai_responses_payload,
+)
 
 
 class StubResponse:
@@ -69,6 +72,144 @@ class LLMProviderGatewayTests(SimpleTestCase):
         )
 
         self.assertIn("Necesito una comida alta en proteína", response.text)
+
+
+    def test_openai_payload_preserves_case_sensitive_function_call_id(self):
+        request = LLMProviderRequest(
+            messages=[LLMMessage(role="user", content="Usa la herramienta")],
+            continuation_items=(
+                {
+                    "type": "function_call",
+                    "id": "fc_1",
+                    "call_id": "call_AbC123XyZ",
+                    "name": "update_proposal_preferences",
+                    "arguments": "{}",
+                    "status": "completed",
+                },
+            ),
+            tool_outputs=(
+                LLMProviderToolOutput(
+                    call_id="call_AbC123XyZ",
+                    output={"status": "ok"},
+                ),
+            ),
+        )
+
+        payload = build_openai_responses_payload(request, model="gpt-test")
+
+        self.assertEqual(payload["input"][-1]["call_id"], "call_AbC123XyZ")
+
+    def test_openai_payload_rejects_case_mismatched_function_output_before_http(self):
+        request = LLMProviderRequest(
+            messages=[LLMMessage(role="user", content="Usa la herramienta")],
+            continuation_items=(
+                {
+                    "type": "function_call",
+                    "id": "fc_1",
+                    "call_id": "call_AbC123XyZ",
+                    "name": "update_proposal_preferences",
+                    "arguments": "{}",
+                    "status": "completed",
+                },
+            ),
+            tool_outputs=(
+                LLMProviderToolOutput(
+                    call_id="call_abc123xyz",
+                    output={"status": "ok"},
+                ),
+            ),
+        )
+
+        with self.assertRaisesMessage(
+            LLMProviderRequestError,
+            "missing outputs for ['call_AbC123XyZ']",
+        ):
+            build_openai_responses_payload(request, model="gpt-test")
+
+    def test_fake_client_rejects_case_mismatched_function_output(self):
+        client = FakeLLMClient(responses=["No debería generarse."])
+        request = LLMProviderRequest(
+            messages=[LLMMessage(role="user", content="Usa la herramienta")],
+            continuation_items=(
+                {
+                    "type": "function_call",
+                    "id": "fc_1",
+                    "call_id": "call_AbC123XyZ",
+                    "name": "update_proposal_preferences",
+                    "arguments": "{}",
+                    "status": "completed",
+                },
+            ),
+            tool_outputs=(
+                LLMProviderToolOutput(
+                    call_id="call_abc123xyz",
+                    output={"status": "ok"},
+                ),
+            ),
+        )
+
+        with self.assertRaisesMessage(
+            LLMProviderRequestError,
+            "missing outputs for ['call_AbC123XyZ']",
+        ):
+            client.generate(request)
+
+        self.assertEqual(client.requests, [])
+
+    def test_fake_client_rejects_reasoning_without_encrypted_content(self):
+        client = FakeLLMClient(responses=["No debería generarse."])
+        request = LLMProviderRequest(
+            messages=[LLMMessage(role="user", content="Usa la herramienta")],
+            continuation_items=(
+                {
+                    "type": "reasoning",
+                    "id": "rs_missing_encrypted",
+                    "summary": [],
+                    "status": "completed",
+                },
+                {
+                    "type": "function_call",
+                    "id": "fc_1",
+                    "call_id": "call_AbC123XyZ",
+                    "name": "update_proposal_preferences",
+                    "arguments": "{}",
+                    "status": "completed",
+                },
+            ),
+            tool_outputs=(
+                LLMProviderToolOutput(
+                    call_id="call_AbC123XyZ",
+                    output={"status": "ok"},
+                ),
+            ),
+        )
+
+        with self.assertRaisesMessage(
+            LLMProviderRequestError,
+            "encrypted_content is required",
+        ):
+            client.generate(request)
+
+        self.assertEqual(client.requests, [])
+
+    def test_openai_payload_rejects_reasoning_without_encrypted_content(self):
+        request = LLMProviderRequest(
+            messages=[LLMMessage(role="user", content="Continúa")],
+            continuation_items=(
+                {
+                    "type": "reasoning",
+                    "id": "rs_1",
+                    "summary": [],
+                    "status": "completed",
+                },
+            ),
+        )
+
+        with self.assertRaisesMessage(
+            LLMProviderRequestError,
+            "encrypted_content is required",
+        ):
+            build_openai_responses_payload(request, model="gpt-test")
 
     @override_settings(AI_ASSISTANT_LLM_PROVIDER="fake")
     def test_factory_returns_fake_client(self):

@@ -35,7 +35,8 @@ Cuando un ciclo planificado empiece a implementarse, el documento puede permanec
 
 ## Planes actuales
 
-- `ai_assistant_behavioral_alignment_cycle.md`: ciclo activo BA00-BA07 para alinear identidad, anclaje de dominio, abstracción de capacidades, cautela ante intención ambigua, iniciativa orientada a resultados y calidad conversacional. BA00 registra el ciclo y BA01 agrega el modo `ai_behavior`; BA02-BA07 quedan planificados.
+- `ai_assistant_post_tool_followup_transport_cycle.md`: ciclo completado PT00-PT06 para diagnosticar y corregir la correlación post-tool de Responses API, hacer visibles las degradaciones, alinear el provider fake con producción y revalidar la conducta antes oculta por acknowledgements locales.
+- `ai_assistant_behavioral_alignment_cycle.md`: ciclo completado BA00-BA07. El contrato conductual y post-tool fue promovido a `docs/00_current/` y la frontera global pasó `check`, 2 regresiones núcleo y 1.446 tests mediante `scripts/ci_django_checks.sh`.
 - `ai_assistant_client_memory_profile_objects_cycle.md`: ciclo completado CM00-CM24. La ejecución live final y el rerun dirigido de `cambio_de_direccion` aprobaron invariantes automáticas y revisión humana, consolidando function calling nativo, estado/tool grounding, cards explícitas y fallbacks state-only.
 - `launch_readiness_operational_safety_cycle.md`: ciclo planificado LR00-LR07 para preparar My Scoope para staging/produccion con seguridad de cuenta, settings productivos, rate limiting, guardas de creditos AI, observabilidad, CI y checklist operacional, apoyandose en el dominio comercial ya cerrado por ACC.
 - `account_plans_credits_cycle.md`: ciclo completado ACC00-ACC07 para mover planes comerciales, suscripciones, créditos y entitlements hacia `accounts`, manteniendo tokens/costos como observabilidad interna y migrando gradualmente desde `notas.Plan` y créditos IA transicionales.

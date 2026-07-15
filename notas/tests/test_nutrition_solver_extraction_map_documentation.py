@@ -4,14 +4,14 @@ from django.test import SimpleTestCase
 
 
 ROOT = Path(__file__).resolve().parents[2]
-EXTRACTION_MAP = ROOT / "docs" / "current" / "architecture" / "nutrition_solver_extraction_map.md"
-PLANNING_DOC = ROOT / "docs" / "planning" / "nutrition_solver_app_cycle.md"
-DECISION_DOC = ROOT / "docs" / "decisions" / "0044-nutrition-solver-extraction-start.md"
-S6_DECISION_DOC = ROOT / "docs" / "decisions" / "0046-nutrition-solver-pure-contracts-moved.md"
-S7_DECISION_DOC = ROOT / "docs" / "decisions" / "0047-nutrition-solver-portion-solver-validators-moved.md"
-S8_DECISION_DOC = ROOT / "docs" / "decisions" / "0048-nutrition-solver-operational-food-adapter.md"
-S9_DECISION_DOC = ROOT / "docs" / "decisions" / "0049-nutrition-solver-ai-assistant-preview-tool.md"
-S10_DECISION_DOC = ROOT / "docs" / "current" / "architecture" / "nutrition_solver_extraction_map.md"
+EXTRACTION_MAP = ROOT / "docs" / "00_current" / "architecture" / "nutrition_solver_extraction_map.md"
+PLANNING_DOC = ROOT / "docs" / "10_active_cycles" / "nutrition_solver_app_cycle.md"
+DECISION_DOC = ROOT / "docs" / "20_decisions" / "0044-nutrition-solver-extraction-start.md"
+S6_DECISION_DOC = ROOT / "docs" / "20_decisions" / "0046-nutrition-solver-pure-contracts-moved.md"
+S7_DECISION_DOC = ROOT / "docs" / "20_decisions" / "0047-nutrition-solver-portion-solver-validators-moved.md"
+S8_DECISION_DOC = ROOT / "docs" / "20_decisions" / "0048-nutrition-solver-operational-food-adapter.md"
+S9_DECISION_DOC = ROOT / "docs" / "20_decisions" / "0049-nutrition-solver-ai-assistant-preview-tool.md"
+S10_DECISION_DOC = ROOT / "docs" / "00_current" / "architecture" / "nutrition_solver_extraction_map.md"
 LEGACY_CONTRACTS_MODULE = ROOT / "notas" / "application" / "nutrition_engine" / "contracts.py"
 SOLVER_CONTRACTS_MODULE = ROOT / "nutrition_solver" / "application" / "contracts.py"
 SOLVER_MODELS_MODULE = ROOT / "nutrition_solver" / "domain" / "models.py"

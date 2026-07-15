@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from notas.application.ai_intake.chat_history import AI_NUTRITION_CHAT_SESSION_KEY
 from notas.application.ai_intake.nutrition_brief import (
@@ -13,6 +14,10 @@ from notas.domain.models import AiNutritionChat, Food, NutritionProposal
 class AiNutritionChatHistoryTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="felipe", password="testpass123")
+        profile = self.user.profile
+        profile.onboarding_completed_at = timezone.now()
+        profile.onboarding_version = profile.ONBOARDING_VERSION_NUTRITION_V1
+        profile.save(update_fields=["onboarding_completed_at", "onboarding_version"])
         self.client.force_login(self.user)
 
     def test_home_uses_compact_ai_composer_without_copy_or_visible_hero(self):

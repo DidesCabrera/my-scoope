@@ -4,6 +4,7 @@ from datetime import date
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import NoReverseMatch, reverse
+from django.utils import timezone
 
 from notas.domain.models import (
     DailyPlan,
@@ -36,6 +37,12 @@ class AIToolsAPIContractTests(TestCase):
             email="other@example.com",
             password="pass123",
         )
+
+        for user in (self.user, self.other_user):
+            profile = user.profile
+            profile.onboarding_completed_at = timezone.now()
+            profile.onboarding_version = profile.ONBOARDING_VERSION_NUTRITION_V1
+            profile.save(update_fields=["onboarding_completed_at", "onboarding_version"])
 
         WeightLog.objects.create(
             user=self.user,

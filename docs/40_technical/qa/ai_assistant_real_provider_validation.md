@@ -237,7 +237,7 @@ When this report has no hard regressions, complete the manual transcript questio
 
 The eighth complete report passed all automated checks. Human review found repeated profile-source prompting in `cambio_de_direccion`. The transcript metadata showed `tool_followup_LLMProviderRequestError` after each successful proposal update, so the visible copy came from the local post-tool acknowledgement rather than the normal provider response.
 
-Decision 0117 changes that fallback to `state_ack_only.v1`. It may summarize validated tool state but cannot ask a follow-up question or select the next intake field. The report adds the hard check `post_tool_fallback_pacing`.
+Decision 0117 changes that fallback to `state_ack_only.v2`. It may summarize validated tool state but cannot ask a follow-up question or select the next intake field. The report adds the hard check `post_tool_fallback_pacing`.
 
 After applying the correction, rerun only the affected scenario to limit provider usage:
 
@@ -283,3 +283,29 @@ The JSON report exposes one of these gate states:
 - `awaiting_manual_review`: automated invariants passed, but transcript review is still required.
 
 For manual disposition, review every prompt emitted in `manual_review_prompts` and record, outside the report, the reviewer, date, scenario and `approved` or `changes_requested`. Do not copy API keys, environment variables or provider credentials into the evidence.
+
+## PT06 and BA07 targeted closure evidence
+
+After the post-tool transport is healthy, revalidate the behavior that local acknowledgements previously masked:
+
+```bash
+python manage.py validate_ai_assistant_real_provider \
+  --live \
+  --user-email <staging-user-email> \
+  --scenario ficha_conocida_sin_repreguntas \
+  --scenario referencia_ambigua_sin_tools \
+  --output pt06_real_provider_report.json \
+  --fail-on-hard-regression
+```
+
+The profile scenario performs a preflight against the selected user's persisted ficha. Every available `weight_kg`, `height_cm`, `age_years` and `sex` fact becomes an exact brief and stability requirement; genuinely absent fields remain valid follow-up candidates. The report exposes both sets through `profile_fixture`, preventing a static fixture from treating missing profile data as a runtime regression.
+
+Closure requires all of the following:
+
+- `provider_followup_health` passes and no healthy tool turn uses local acknowledgement copy;
+- every available profile fact remains stable and is not visibly re-asked in the same turn;
+- the second profile answer names only information that is genuinely pending;
+- `referencia_ambigua_sin_tools` executes zero reads, writes and cards;
+- a reviewer records the manual disposition after reading both transcripts.
+
+A passing targeted report closes behavioral evidence, but BA07 still requires the whole-project regression boundary from a fresh `full` export.

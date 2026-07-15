@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping, Sequence
@@ -79,6 +80,9 @@ from ai_assistant.infrastructure.providers import (
     LLMProviderToolOutput,
     get_llm_client,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 class AssistantOrchestratorError(RuntimeError):
@@ -366,7 +370,7 @@ class ExternalLLMOrchestrator:
                         response=response,
                         provider_responses=tuple(provider_responses),
                         latency_ms=latency_ms,
-                        status="completed",
+                        status="degraded",
                         error_type="tool_followup_limit_local_ack",
                         tools_executed=True,
                     )
@@ -394,7 +398,7 @@ class ExternalLLMOrchestrator:
                     response=response,
                     provider_responses=tuple(provider_responses),
                     latency_ms=latency_ms,
-                    status="completed",
+                    status="degraded",
                     error_type=f"tool_followup_{exc.__class__.__name__}",
                     tools_executed=True,
                 )
@@ -1179,6 +1183,13 @@ class ExternalLLMOrchestrator:
         """Return a user-safe response when tool results succeeded but follow-up is too large."""
 
         acknowledgement = _local_acknowledgement_from_tool_results(tool_results)
+        logger.warning(
+            "AI Assistant post-tool follow-up degraded by technical limit: "
+            "error_code=%s tool_results=%s",
+            violation.error_code,
+            len(tuple(tool_results or ())),
+        )
+
         parse_result = AssistantProviderParseResult(
             response=AssistantStructuredResponse(
                 assistant_message=AssistantMessage(
@@ -1196,6 +1207,8 @@ class ExternalLLMOrchestrator:
                     "provider_response_was_json": True,
                     "tool_followup_local_ack": True,
                     "tool_followup_local_ack_policy": "state_ack_only.v2",
+                    "post_tool_degraded": True,
+                    "post_tool_degradation_reason": "technical_limit",
                     "technical_limit_blocked_after_tools": True,
                     "technical_limit_error_code": violation.error_code,
                     "technical_limit_details": dict(violation.details or {}),
@@ -1233,6 +1246,18 @@ class ExternalLLMOrchestrator:
         inventing new facts, questions or state transitions.
         """
 
+        logger.error(
+            "AI Assistant post-tool follow-up degraded: provider=%s error_type=%s "
+            "status=%s code=%s param=%s request_id=%s tool_results=%s",
+            getattr(self.llm_client, "provider_name", "unknown"),
+            error.__class__.__name__,
+            getattr(error, "status_code", None),
+            getattr(error, "error_code", ""),
+            getattr(error, "error_param", ""),
+            getattr(error, "request_id", ""),
+            len(tuple(tool_results or ())),
+        )
+
         parse_result = AssistantProviderParseResult(
             response=AssistantStructuredResponse(
                 assistant_message=AssistantMessage(
@@ -1246,8 +1271,11 @@ class ExternalLLMOrchestrator:
                     "provider_response_was_json": False,
                     "tool_followup_local_ack": True,
                     "tool_followup_local_ack_policy": "state_ack_only.v2",
+                    "post_tool_degraded": True,
+                    "post_tool_degradation_reason": "provider_followup_failed",
                     "provider_tool_followup_failed": True,
                     "provider_tool_followup_error_type": error.__class__.__name__,
+                    **_provider_followup_error_metadata(error),
                 },
             ),
             was_json=False,
@@ -1793,6 +1821,28 @@ def _has_tool_results(tool_results: Sequence[AssistantToolResult]) -> bool:
 
 def _has_ok_tool_results(tool_results: Sequence[AssistantToolResult]) -> bool:
     return any(result.ok for result in tuple(tool_results or ()))
+
+
+def _provider_followup_error_metadata(error: LLMProviderError) -> dict[str, Any]:
+    """Surface the preserved provider failure detail into turn metadata.
+
+    Diagnostics only. This is recorded for audit/observability and the
+    real-provider gate; it never changes the user-visible, state-only
+    acknowledgement. When the error predates PT01 (no structured detail),
+    this returns nothing and behavior is unchanged.
+    """
+
+    details = getattr(error, "provider_error_details", None)
+    if not isinstance(details, Mapping):
+        return {}
+    return {
+        "provider_tool_followup_error_status": details.get("status_code"),
+        "provider_tool_followup_error_provider_type": str(details.get("error_type") or ""),
+        "provider_tool_followup_error_code": str(details.get("error_code") or ""),
+        "provider_tool_followup_error_message": str(details.get("error_message") or "")[:600],
+        "provider_tool_followup_error_param": str(details.get("error_param") or "")[:120],
+        "provider_tool_followup_error_request_id": str(details.get("request_id") or ""),
+    }
 
 
 def _local_acknowledgement_from_tool_results(tool_results: Sequence[AssistantToolResult]) -> str:

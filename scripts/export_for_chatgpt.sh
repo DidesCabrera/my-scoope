@@ -155,6 +155,9 @@ python manage.py test --settings=miapp.settings.export_ai_behavior \
   ai_assistant.tests.test_response_quality \
   ai_assistant.tests.test_context_builder \
   ai_assistant.tests.test_tool_registry \
+  ai_assistant.tests.test_provider_error_capture \
+  ai_assistant.tests.test_post_tool_diagnostics \
+  ai_assistant.tests.test_post_tool_health_monitoring \
   notas.tests.test_ai_assistant_conversation_replay \
   notas.tests.test_ai_assistant_real_provider_validation
 EOF
@@ -259,6 +262,9 @@ validate_export_workspace() {
           ai_assistant.tests.test_response_quality \
           ai_assistant.tests.test_context_builder \
           ai_assistant.tests.test_tool_registry \
+          ai_assistant.tests.test_provider_error_capture \
+          ai_assistant.tests.test_post_tool_diagnostics \
+          ai_assistant.tests.test_post_tool_health_monitoring \
           notas.tests.test_ai_assistant_conversation_replay \
           notas.tests.test_ai_assistant_real_provider_validation
         ;;
@@ -929,7 +935,9 @@ AI_BEHAVIOR_INCLUDES=(
   --include '/docs/10_active_cycles/README.md'
   --include '/docs/10_active_cycles/ai_assistant_client_memory_profile_objects_cycle.md'
   --include '/docs/10_active_cycles/ai_assistant_behavioral_alignment_cycle.md'
+  --include '/docs/10_active_cycles/ai_assistant_post_tool_followup_transport_cycle.md'
   --include '/docs/20_decisions/README.md'
+  --include '/docs/20_decisions/0127-profile-aware-real-provider-validation-fixtures.md'
   --include '/docs/20_decisions/*ai-assistant*'
   --include '/docs/20_decisions/*llm*'
   --include '/docs/20_decisions/*tool*'
@@ -937,7 +945,10 @@ AI_BEHAVIOR_INCLUDES=(
   --include '/docs/20_decisions/*export*'
 
   # Núcleo completo del AI Assistant: provider, prompts/contexto, orquestación,
-  # function calling, metadata, límites, tools y tests propios.
+  # function calling, metadata, límites, tools y tests propios. El test HTTP del
+  # dashboard admin pertenece a la frontera administrativa y requiere un URLConf
+  # que este workspace elimina intencionalmente.
+  --exclude '/ai_assistant/tests/test_usage_dashboard_admin.py'
   --include '/ai_assistant/***'
 
   # Runtime conversacional, estado temporal, cards, harness y tools del producto.
@@ -997,6 +1008,7 @@ AI_BEHAVIOR_INCLUDES=(
   --include '/accounts/__init__.py'
   --include '/accounts/apps.py'
   --include '/accounts/models.py'
+  --include '/accounts/seed_plans.py'
   --include '/accounts/services/***'
   --include '/accounts/migrations/***'
   --include '/core/__init__.py'

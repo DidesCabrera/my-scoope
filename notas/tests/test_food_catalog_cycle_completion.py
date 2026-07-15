@@ -8,7 +8,7 @@ from notas.domain.models import Food
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 EXPORT_SCRIPT = PROJECT_ROOT / "scripts" / "export_for_chatgpt.sh"
-DECISION_PATH = PROJECT_ROOT / "docs" / "decisions" / "0018-food-catalog-cycle-closure.md"
+DECISION_PATH = PROJECT_ROOT / "docs" / "20_decisions" / "0018-food-catalog-cycle-closure.md"
 
 
 class FoodCatalogCycleCompletionTests(TestCase):

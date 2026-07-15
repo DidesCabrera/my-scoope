@@ -3,6 +3,7 @@ import json
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 
 class AIToolsAPIAdapterBaseTests(TestCase):
@@ -12,6 +13,10 @@ class AIToolsAPIAdapterBaseTests(TestCase):
             email="felipe@example.com",
             password="pass123",
         )
+        profile = self.user.profile
+        profile.onboarding_completed_at = timezone.now()
+        profile.onboarding_version = profile.ONBOARDING_VERSION_NUTRITION_V1
+        profile.save(update_fields=["onboarding_completed_at", "onboarding_version"])
 
     def test_health_endpoint_requires_login(self):
         response = self.client.post(

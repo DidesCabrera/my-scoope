@@ -147,8 +147,16 @@ def _operational_metadata_for_chat_surface(metadata: dict) -> dict:
         "provider_text_parse_ignored_due_to_native_tools",
         "tool_followup_local_ack",
         "tool_followup_local_ack_policy",
+        "post_tool_degraded",
+        "post_tool_degradation_reason",
         "provider_tool_followup_failed",
         "provider_tool_followup_error_type",
+        "provider_tool_followup_error_status",
+        "provider_tool_followup_error_provider_type",
+        "provider_tool_followup_error_code",
+        "provider_tool_followup_error_message",
+        "provider_tool_followup_error_param",
+        "provider_tool_followup_error_request_id",
     )
     payload.update({key: metadata[key] for key in debug_keys if key in metadata})
     return payload

@@ -580,6 +580,38 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
             },
         )
 
+
+    def test_provider_call_id_keeps_exact_case_through_tool_result_transport(self):
+        orchestrator = ExternalLLMOrchestrator(llm_client=FakeLLMClient())
+        request = self._request("Registra cuatro comidas.")
+        followup = orchestrator.build_tool_followup_provider_request(
+            request=request,
+            continuation_items=(
+                {
+                    "type": "function_call",
+                    "id": "fc_case_1",
+                    "call_id": "call_NdjKFTviYMyNJVQnXNGgvNuv",
+                    "name": "update_proposal_preferences",
+                    "arguments": "{}",
+                    "status": "completed",
+                },
+            ),
+            tool_results=(
+                AssistantToolResult(
+                    tool_name="update_proposal_preferences",
+                    status=AssistantToolStatus.OK,
+                    request_id="call_NdjKFTviYMyNJVQnXNGgvNuv",
+                    data={"proposal_preferences": {"meals_per_day": 4}},
+                ),
+            ),
+            remaining_tool_iterations=0,
+        )
+
+        self.assertEqual(
+            followup.tool_outputs[0].call_id,
+            "call_NdjKFTviYMyNJVQnXNGgvNuv",
+        )
+
     def test_native_function_call_results_are_returned_as_function_call_outputs(self):
         class ScriptedNativeClient:
             provider_name = "openai"
@@ -754,11 +786,16 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
             "state_ack_only.v2",
         )
         self.assertTrue(response.metadata["provider_tool_followup_failed"])
+        self.assertTrue(response.metadata["post_tool_degraded"])
+        self.assertEqual(
+            response.metadata["post_tool_degradation_reason"],
+            "provider_followup_failed",
+        )
         self.assertEqual(
             response.metadata["provider_tool_followup_error_type"],
             "LLMProviderRequestError",
         )
-        self.assertEqual(response.metadata["debug_status"], "completed")
+        self.assertEqual(response.metadata["debug_status"], "degraded")
         self.assertEqual(
             response.metadata["debug_error_type"],
             "tool_followup_LLMProviderRequestError",

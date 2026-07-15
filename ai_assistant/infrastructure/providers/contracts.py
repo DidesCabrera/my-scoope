@@ -15,7 +15,47 @@ class LLMProviderConfigurationError(LLMProviderError):
 
 
 class LLMProviderRequestError(LLMProviderError):
-    """Raised when the provider rejects or cannot process a request."""
+    """Raised when the provider rejects or cannot process a request.
+
+    Beyond the human-readable message, this error preserves the structured
+    provider failure detail (HTTP status, provider error ``type``/``code``, the
+    offending ``param`` and the provider ``request_id``). A post-tool follow-up
+    failure can then be diagnosed from turn metadata and logs without re-running
+    the turn. The detail is bounded and never carries prompts, tool arguments,
+    reasoning or secrets.
+    """
+
+    def __init__(
+        self,
+        message: str = "",
+        *,
+        status_code: int | None = None,
+        error_type: str = "",
+        error_code: str = "",
+        error_message: str = "",
+        error_param: str = "",
+        request_id: str = "",
+    ) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+        self.error_type = str(error_type or "")
+        self.error_code = str(error_code or "")
+        self.error_message = str(error_message or "")
+        self.error_param = str(error_param or "")
+        self.request_id = str(request_id or "")
+
+    @property
+    def provider_error_details(self) -> dict[str, Any]:
+        """Bounded, log/metadata-safe description of the provider failure."""
+
+        return {
+            "status_code": self.status_code,
+            "error_type": self.error_type,
+            "error_code": self.error_code,
+            "error_message": self.error_message[:600],
+            "error_param": self.error_param[:120],
+            "request_id": self.request_id,
+        }
 
 
 @dataclass(frozen=True)

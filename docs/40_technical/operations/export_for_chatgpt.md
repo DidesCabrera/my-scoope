@@ -315,7 +315,9 @@ Usar para:
 - calidad de respuestas posteriores a tools;
 - cards, replays y validación UX con proveedor real.
 
-Incluye el núcleo completo de `ai_assistant`, runtime `ai_intake`, AI tools, UI focalizada del chat, comandos de replay/live validation, tests conductuales y contratos mínimos con Account, Solver, Food Catalog y MCP.
+Incluye el núcleo completo de `ai_assistant`, runtime `ai_intake`, AI tools, UI focalizada del chat, comandos de replay/live validation, tests conductuales y contratos mínimos con Account, Solver, Food Catalog y MCP. También incorpora dependencias directas pequeñas requeridas por esos tests, como `accounts/seed_plans.py`.
+
+El workspace elimina intencionalmente `django.contrib.admin` y usa un URLConf mínimo. Por esa razón, los tests HTTP exclusivos del dashboard administrativo deben vivir en módulos separados y quedan fuera de `ai_behavior`; continúan cubiertos por `full`, `testing` y los modos administrativos correspondientes.
 
 Preferir `aiassistant` cuando el foco sea infraestructura amplia del provider, créditos, ejecución de propuestas o integración MCP. Preferir `full` cuando el cambio cruce muchas apps, settings, migraciones o imports no cubiertos por la allowlist.
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
+from typing import Any, Mapping
 
 import json
 import logging
@@ -154,6 +155,7 @@ class LLMPreviewNutritionIntakeChatEngine:
                 "llm_provider_tool_followup_failed": bool(
                     llm_metadata.get("provider_tool_followup_failed")
                 ),
+                **_provider_followup_diagnostics(llm_metadata),
                 "context_builder": "safe_llm_context.v1",
             },
         )
@@ -316,6 +318,7 @@ class LLMProductionNutritionIntakeChatEngine(LLMPreviewNutritionIntakeChatEngine
                 "llm_provider_tool_followup_failed": bool(
                     llm_metadata.get("provider_tool_followup_failed")
                 ),
+                **_provider_followup_diagnostics(llm_metadata),
                 "context_builder": "safe_llm_context.v1",
                 "rollout": decision.as_metadata(),
             },
@@ -610,6 +613,38 @@ def _with_llm_mode_metadata(
         user_id=request.user_id,
         metadata=metadata,
     )
+
+
+def _provider_followup_diagnostics(metadata: Mapping[str, Any]) -> dict[str, Any]:
+    """Forward bounded PT01 diagnostics to internal chat metadata.
+
+    These fields are never rendered in assistant text. They exist so the live
+    validation report can name the rejected request instead of reducing every
+    failure to ``provider_followup_failed=true``.
+    """
+
+    if not bool(metadata.get("provider_tool_followup_failed")):
+        return {}
+    return {
+        "llm_provider_tool_followup_error_status": metadata.get(
+            "provider_tool_followup_error_status"
+        ),
+        "llm_provider_tool_followup_error_provider_type": str(
+            metadata.get("provider_tool_followup_error_provider_type") or ""
+        )[:120],
+        "llm_provider_tool_followup_error_code": str(
+            metadata.get("provider_tool_followup_error_code") or ""
+        )[:120],
+        "llm_provider_tool_followup_error_message": str(
+            metadata.get("provider_tool_followup_error_message") or ""
+        )[:600],
+        "llm_provider_tool_followup_error_param": str(
+            metadata.get("provider_tool_followup_error_param") or ""
+        )[:120],
+        "llm_provider_tool_followup_error_request_id": str(
+            metadata.get("provider_tool_followup_error_request_id") or ""
+        )[:160],
+    }
 
 
 def _safe_identifier_list(value: object, *, limit: int = 24) -> list[str]:

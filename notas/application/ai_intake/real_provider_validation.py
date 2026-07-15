@@ -17,9 +17,40 @@ from notas.application.ai_intake.nutrition_brief import (
     NutritionConversationState,
     serialize_conversation,
 )
+from notas.application.queries.user_nutrition_profile import get_user_nutrition_profile
 
 CM24_ACTION_TYPE = "assistant.ai_nutrition_intake.cm24_validation"
-CM24_VALIDATION_VERSION = "cm24.real_provider_ux.v2"
+CM24_VALIDATION_VERSION = "pt06.profile_aware_behavior.v2"
+POST_TOOL_LOCAL_ACK_FRAGMENTS = (
+    "Los datos físicos quedaron actualizados para esta conversación.",
+    "Las preferencias alimentarias quedaron actualizadas para esta propuesta.",
+    "La dirección de la propuesta quedó actualizada.",
+    "La información está disponible en la card para revisión.",
+    "La propuesta quedó creada y disponible para revisión.",
+    "La propuesta quedó actualizada y disponible para revisión.",
+    "El resultado quedó listo para revisión.",
+    "La información solicitada quedó disponible.",
+    "El cambio autorizado quedó guardado.",
+    "No encontré una propuesta disponible con ese identificador.",
+    "No encontré esa información con los datos disponibles.",
+    "No pude completar la operación con los datos disponibles.",
+    "La información quedó actualizada para esta conversación.",
+)
+
+PROFILE_BEHAVIOR_FIELDS = (
+    "weight_kg",
+    "height_cm",
+    "age_years",
+    "sex",
+)
+
+PROFILE_DTO_FIELD_MAP = {
+    "weight_kg": "current_weight_kg",
+    "height_cm": "height_cm",
+    "age_years": "age_years",
+    "sex": "sex",
+}
+
 CM24_FORBIDDEN_VISIBLE_MARKERS = (
     "assistant_message",
     "tool_requests",
@@ -49,6 +80,9 @@ class RealProviderValidationScenario:
     forbidden_visible_fragments: Sequence[str] = field(default_factory=tuple)
     max_repeated_opening_count: int | None = None
     max_tool_calls: int | None = None
+    visible_reask_markers: Mapping[str, Sequence[str]] = field(default_factory=dict)
+    profile_preflight_facts: Mapping[str, Any] = field(default_factory=dict)
+    profile_preflight_missing_fields: Sequence[str] = field(default_factory=tuple)
 
 
 @dataclass(frozen=True)
@@ -80,6 +114,12 @@ class RealProviderValidationTurn:
     tool_followup_local_ack: bool = False
     tool_followup_local_ack_policy: str = ""
     provider_tool_followup_failed: bool = False
+    provider_tool_followup_error_status: int | None = None
+    provider_tool_followup_error_type: str = ""
+    provider_tool_followup_error_code: str = ""
+    provider_tool_followup_error_message: str = ""
+    provider_tool_followup_error_param: str = ""
+    provider_tool_followup_error_request_id: str = ""
 
     @property
     def tool_names(self) -> tuple[str, ...]:
@@ -220,14 +260,55 @@ def built_in_real_provider_scenarios() -> dict[str, RealProviderValidationScenar
         ),
         "referencia_ambigua_sin_tools": RealProviderValidationScenario(
             key="referencia_ambigua_sin_tools",
-            description="Clarify an ambiguous reference before reading, writing or presenting cards.",
-            user_messages=("¿Qué pasó con eso?",),
+            description="Clarify an ambiguous situation before reading, writing or presenting cards.",
+            user_messages=("¿Qué está pasando?",),
             max_final_card_counts={"profile": 0, "preference": 0, "proposal_preferences": 0},
             max_tool_calls=0,
             forbidden_visible_fragments=("tool_requests", "selection_reason", "missing_tool_selection_reason"),
             manual_review_prompts=(
                 "¿La respuesta pide una aclaración breve en vez de adivinar el referente?",
                 "¿Evita afirmar que leyó, cambió o encontró un objeto sin autorización clara?",
+            ),
+        ),
+        "ficha_conocida_sin_repreguntas": RealProviderValidationScenario(
+            key="ficha_conocida_sin_repreguntas",
+            description=(
+                "Read the personal ficha and continue without re-asking weight, height, age or sex "
+                "when those facts are already available in the same tool-led turn."
+            ),
+            user_messages=(
+                "Quiero una dieta para ganar masa muscular usando mi ficha personal.",
+                "Dime solamente qué dato realmente falta para avanzar.",
+            ),
+            expected_final_brief={
+                "goal": "muscle_gain",
+                "requested_entity": "daily_plan",
+                "subject_source": "self_profile",
+            },
+            stable_brief_fields=(
+                "goal",
+                "requested_entity",
+                "subject_source",
+            ),
+            fields_not_reasked_after_capture=(
+                "weight_kg",
+                "height_cm",
+                "age_years",
+                "sex",
+            ),
+            visible_reask_markers={
+                "weight_kg": ("cuánto pesas", "cuanto pesas", "tu peso", "peso actual"),
+                "height_cm": ("cuánto mides", "cuanto mides", "tu altura", "altura actual"),
+                "age_years": ("qué edad tienes", "que edad tienes", "tu edad", "edad actual"),
+                "sex": ("qué sexo", "que sexo", "sexo debo usar", "tu sexo"),
+            },
+            required_tool_names=("read_user_profile_context", "update_proposal_preferences"),
+            min_final_card_counts={"profile": 1},
+            max_final_card_counts={"profile": 1, "preference": 0, "proposal_preferences": 0},
+            max_repeated_opening_count=1,
+            manual_review_prompts=(
+                "¿El asistente usa cada dato realmente disponible en la ficha sin volver a pedirlo?",
+                "¿La segunda respuesta menciona solo información que verdaderamente sigue pendiente?",
             ),
         ),
         "datos_agrupados_y_cards": RealProviderValidationScenario(
@@ -354,7 +435,10 @@ def run_real_provider_validation(
     if not bool(getattr(settings, "AI_ASSISTANT_USAGE_OBSERVABILITY_ENABLED", False)):
         raise ValueError("CM24 live validation requires AI_ASSISTANT_USAGE_OBSERVABILITY_ENABLED=true.")
 
-    selected_scenarios = _select_scenarios(scenario_keys)
+    selected_scenarios = tuple(
+        _specialize_scenario_for_user(scenario, user=user)
+        for scenario in _select_scenarios(scenario_keys)
+    )
     validation_run_id = run_id or uuid.uuid4().hex
     validation_engine = engine or build_real_provider_validation_engine()
     usage_before = _usage_and_credit_snapshot(user=user, run_id=validation_run_id)
@@ -395,6 +479,63 @@ def run_real_provider_validation(
         usage_summary=_usage_delta(usage_before, usage_after),
         credit_summary=_credit_delta(usage_before, usage_after),
         manual_review_prompts=manual_prompts,
+    )
+
+
+def _specialize_scenario_for_user(
+    scenario: RealProviderValidationScenario,
+    *,
+    user: Any,
+) -> RealProviderValidationScenario:
+    """Bind profile-dependent assertions to the selected validation user.
+
+    Live users may have incomplete onboarding data. The gate must require every
+    fact that actually exists in the persisted ficha, while allowing the
+    assistant to ask for fields that are genuinely absent. This also keeps a
+    synchronization regression observable: any available profile fact is added
+    to the expected final brief and stable-fact contract.
+    """
+
+    if scenario.key != "ficha_conocida_sin_repreguntas":
+        return scenario
+
+    profile = get_user_nutrition_profile(user).as_dict()
+    available = {
+        brief_field: profile.get(dto_field)
+        for brief_field, dto_field in PROFILE_DTO_FIELD_MAP.items()
+        if not _is_empty(profile.get(dto_field))
+    }
+    missing = tuple(
+        field_name for field_name in PROFILE_BEHAVIOR_FIELDS if field_name not in available
+    )
+    expected_final_brief = dict(scenario.expected_final_brief)
+    expected_final_brief.update(available)
+    stable_brief_fields = tuple(
+        dict.fromkeys((*scenario.stable_brief_fields, *available.keys()))
+    )
+
+    return replace(
+        scenario,
+        expected_final_brief=expected_final_brief,
+        stable_brief_fields=stable_brief_fields,
+        profile_preflight_facts=available,
+        profile_preflight_missing_fields=missing,
+    )
+
+
+def _profile_preflight_check(
+    scenario: RealProviderValidationScenario,
+) -> RealProviderValidationCheck:
+    available = dict(scenario.profile_preflight_facts)
+    missing = tuple(scenario.profile_preflight_missing_fields)
+    return RealProviderValidationCheck(
+        key="profile_fixture",
+        passed=True,
+        detail=(
+            f"persisted ficha available={list(available)}; "
+            f"genuinely missing={list(missing)}"
+        ),
+        severity="diagnostic",
     )
 
 
@@ -518,6 +659,24 @@ def _run_scenario(
             provider_tool_followup_failed=bool(
                 metadata.get("llm_provider_tool_followup_failed")
             ),
+            provider_tool_followup_error_status=_optional_int(
+                metadata.get("llm_provider_tool_followup_error_status")
+            ),
+            provider_tool_followup_error_type=str(
+                metadata.get("llm_provider_tool_followup_error_provider_type") or ""
+            ),
+            provider_tool_followup_error_code=str(
+                metadata.get("llm_provider_tool_followup_error_code") or ""
+            ),
+            provider_tool_followup_error_message=str(
+                metadata.get("llm_provider_tool_followup_error_message") or ""
+            )[:600],
+            provider_tool_followup_error_param=str(
+                metadata.get("llm_provider_tool_followup_error_param") or ""
+            ),
+            provider_tool_followup_error_request_id=str(
+                metadata.get("llm_provider_tool_followup_error_request_id") or ""
+            ),
         )
         turns.append(turn)
         previous_cards = cards
@@ -563,6 +722,8 @@ def _scenario_checks(
     checks.append(_provider_health_check(turns, usage_events))
     checks.append(_structured_provider_contract_check(turns))
     checks.append(_expected_brief_check(scenario, turns))
+    if scenario.profile_preflight_facts or scenario.profile_preflight_missing_fields:
+        checks.append(_profile_preflight_check(scenario))
     checks.append(_stable_facts_check(scenario, turns))
     checks.append(_known_facts_not_reasked_check(scenario, turns))
     checks.append(_brief_transition_check(scenario, turns))
@@ -570,6 +731,7 @@ def _scenario_checks(
     checks.append(_behavioral_surface_check(scenario, turns))
     checks.append(_response_repetition_check(scenario, turns))
     checks.append(_tool_result_grounding_check(turns))
+    checks.append(_provider_followup_health_check(turns))
     checks.append(_post_tool_fallback_pacing_check(turns))
     checks.append(_card_pacing_check(scenario, turns))
     checks.append(_usage_observability_check(turns, usage_events))
@@ -730,18 +892,42 @@ def _known_facts_not_reasked_check(
     known: set[str] = set()
     failures: list[str] = []
     for turn in turns:
-        repeated = watched.intersection(known).intersection(turn.semantic_missing_slots)
+        known_this_turn = known.union(
+            field_name
+            for field_name in watched
+            if not _is_empty(turn.brief_snapshot.get(field_name))
+        )
+        repeated = watched.intersection(known_this_turn).intersection(turn.semantic_missing_slots)
         if repeated:
-            failures.append(f"turn {turn.index}: {sorted(repeated)}")
-        for field_name in watched:
-            if not _is_empty(turn.brief_snapshot.get(field_name)):
-                known.add(field_name)
+            failures.append(f"turn {turn.index}: semantic missing {sorted(repeated)}")
+
+        normalized_message = " ".join(turn.assistant_message.lower().split())
+        question_fragments = tuple(
+            fragment.strip()
+            for fragment in normalized_message.replace("!", "?").split("?")
+            if fragment.strip()
+        )
+        for field_name in sorted(known_this_turn):
+            markers = tuple(scenario.visible_reask_markers.get(field_name) or ())
+            matched = next(
+                (
+                    marker
+                    for marker in markers
+                    if any(marker.lower() in fragment for fragment in question_fragments)
+                ),
+                "",
+            )
+            if matched:
+                failures.append(
+                    f"turn {turn.index}: visibly re-asked {field_name} via {matched!r}"
+                )
+        known = known_this_turn
     return _check(
         "known_facts_not_reasked",
         not failures,
-        f"{len(watched)} watched field(s) were not marked missing again"
+        f"{len(watched)} watched field(s) were neither marked missing nor visibly re-asked"
         if not failures
-        else f"known fields reintroduced as missing: {failures}",
+        else f"known fields were re-requested: {failures}",
     )
 
 
@@ -864,6 +1050,84 @@ def _tool_result_grounding_check(
 
 
 
+
+def _provider_followup_health_check(
+    turns: Sequence[RealProviderValidationTurn],
+) -> RealProviderValidationCheck:
+    """Fail the live gate whenever a tool turn needs a local acknowledgement.
+
+    A local acknowledgement is a resilience path, not a healthy provider-written
+    completion. PT04 treats both provider failures and technical-limit fallbacks
+    as release-blocking degradations.
+    """
+
+    failures: list[str] = []
+    for turn in turns:
+        healthy_tool_turn = bool(turn.tool_results) and not (
+            turn.tool_followup_local_ack or turn.provider_tool_followup_failed
+        )
+        if healthy_tool_turn:
+            matched_ack = next(
+                (
+                    fragment
+                    for fragment in POST_TOOL_LOCAL_ACK_FRAGMENTS
+                    if fragment in turn.assistant_message
+                ),
+                "",
+            )
+            if matched_ack:
+                failures.append(
+                    f"turn {turn.index}: healthy tool turn reproduced local acknowledgement "
+                    f"{matched_ack!r}"
+                )
+            continue
+        if not turn.tool_followup_local_ack and not turn.provider_tool_followup_failed:
+            continue
+        detail = " ".join(
+            part
+            for part in (
+                "local_ack=true" if turn.tool_followup_local_ack else "",
+                f"policy={turn.tool_followup_local_ack_policy}"
+                if turn.tool_followup_local_ack_policy
+                else "",
+                "provider_followup_failed=true"
+                if turn.provider_tool_followup_failed
+                else "",
+                f"status={turn.provider_tool_followup_error_status}"
+                if turn.provider_tool_followup_error_status is not None
+                else "",
+                f"type={turn.provider_tool_followup_error_type}"
+                if turn.provider_tool_followup_error_type
+                else "",
+                f"code={turn.provider_tool_followup_error_code}"
+                if turn.provider_tool_followup_error_code
+                else "",
+                f"param={turn.provider_tool_followup_error_param}"
+                if turn.provider_tool_followup_error_param
+                else "",
+                f"request_id={turn.provider_tool_followup_error_request_id}"
+                if turn.provider_tool_followup_error_request_id
+                else "",
+                f"message={turn.provider_tool_followup_error_message}"
+                if turn.provider_tool_followup_error_message
+                else "",
+            )
+            if part
+        )
+        failures.append(
+            f"turn {turn.index}: post-tool response degraded"
+            + (f" ({detail})" if detail else "")
+        )
+
+    return _check(
+        "provider_followup_health",
+        not failures,
+        "all tool turns received provider-written follow-up responses"
+        if not failures
+        else f"post-tool degradations: {failures}",
+    )
+
+
 def _post_tool_fallback_pacing_check(
     turns: Sequence[RealProviderValidationTurn],
 ) -> RealProviderValidationCheck:
@@ -884,7 +1148,7 @@ def _post_tool_fallback_pacing_check(
         "prefieres entregar datos nuevos",
     )
     for turn in fallback_turns:
-        if turn.tool_followup_local_ack_policy != "state_ack_only.v1":
+        if turn.tool_followup_local_ack_policy != "state_ack_only.v2":
             failures.append(
                 f"turn {turn.index}: unexpected local-ack policy "
                 f"{turn.tool_followup_local_ack_policy or 'missing'}"
@@ -1108,6 +1372,12 @@ def _scenario_result_as_dict(result: RealProviderValidationScenarioResult) -> di
             for check in result.checks
         ],
         "manual_review_prompts": list(result.scenario.manual_review_prompts),
+        "profile_preflight": {
+            "available_facts": dict(result.scenario.profile_preflight_facts),
+            "missing_fields": list(result.scenario.profile_preflight_missing_fields),
+        }
+        if result.scenario.profile_preflight_facts or result.scenario.profile_preflight_missing_fields
+        else {},
         "turns": [
             {
                 "index": turn.index,
@@ -1140,6 +1410,16 @@ def _scenario_result_as_dict(result: RealProviderValidationScenarioResult) -> di
                     "local_ack": turn.tool_followup_local_ack,
                     "policy": turn.tool_followup_local_ack_policy,
                     "provider_followup_failed": turn.provider_tool_followup_failed,
+                    "provider_error": {
+                        "status": turn.provider_tool_followup_error_status,
+                        "type": turn.provider_tool_followup_error_type,
+                        "code": turn.provider_tool_followup_error_code,
+                        "message": turn.provider_tool_followup_error_message,
+                        "param": turn.provider_tool_followup_error_param,
+                        "request_id": turn.provider_tool_followup_error_request_id,
+                    }
+                    if turn.provider_tool_followup_failed
+                    else {},
                 },
             }
             for turn in result.turns
@@ -1150,6 +1430,14 @@ def _scenario_result_as_dict(result: RealProviderValidationScenarioResult) -> di
 
 def _check(key: str, passed: bool, detail: str) -> RealProviderValidationCheck:
     return RealProviderValidationCheck(key=key, passed=bool(passed), detail=detail, severity="hard")
+
+
+
+def _optional_int(value: Any) -> int | None:
+    try:
+        return int(value) if value is not None and str(value).strip() else None
+    except (TypeError, ValueError):
+        return None
 
 
 def _is_empty(value: Any) -> bool:

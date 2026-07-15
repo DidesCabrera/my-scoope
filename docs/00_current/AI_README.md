@@ -119,13 +119,15 @@ Prefer focused exports before `full` when the task is narrow:
 
 ## AI Assistant behavioral alignment posture
 
-The CM00-CM24 runtime and LLM-native alignment baseline is completed. Current behavior work belongs to the BA cycle. Direct the assistant with a clear My Scoope purpose, the current task/state, available product capabilities and safety boundaries; do not recreate a fixed conversational script.
+The CM00-CM24 runtime baseline, BA00-BA07 behavioral alignment and PT00-PT06 post-tool transport correction are completed. The current contract is no longer a provisional cycle prompt: direct the assistant with a clear My Scoope purpose, the current task/state, available product capabilities and safety boundaries; do not recreate a fixed conversational script.
 
 The assistant may reciprocate greetings and answer casual off-domain remarks briefly, but should not open broad unrelated branches. Explain product capabilities in user language rather than exposing internal tool names, schemas or MCP contracts. Tool availability alone is never sufficient reason to execute a tool: ambiguous references should be answered from visible context or clarified before reading, updating or sharing product objects.
 
 When the active task is sufficiently grounded, the assistant should choose the next useful action instead of repeatedly confirming state or collecting optional details. Replays should measure domain anchoring, justified tool use, progress, repetition and card restraint as behavioral invariants rather than exact phrases.
 
-The focused working export for this cycle is:
+Provider-native tool continuations preserve opaque, case-sensitive `call_id` values and replay only contract-valid encrypted reasoning items under stateless `store=false` requests. The fake provider validates the same continuation contract before answering, while the live gate rejects post-tool degradation, redundant questions about facts already available in the same turn and unjustified tools after ambiguous references.
+
+The focused maintenance export for this contract is:
 
 ```bash
 ./scripts/export_for_chatgpt.sh ai_behavior
@@ -147,13 +149,13 @@ Conversation regressions should be expressed as invariants, not exact dialogue c
 
 Deterministic intake is an explicit engine boundary, not a helper layer inside LLM turns. LLM state builders must not calculate `pending_field` or visible follow-up questions. Provider failures may return a technical error message; they must not parse the same user turn through the deterministic interviewer unless rollout explicitly selected the deterministic engine for the whole turn.
 
-Real-provider UX validation is an explicit staging gate, not an ordinary automated test. Use `python manage.py validate_ai_assistant_real_provider --list-scenarios` to inspect the synthetic suite, and add `--live` plus one staging user only when real provider usage and credits are intended. The report combines hard runtime invariants with manual transcript review; do not claim CM24 closure from fake-provider tests alone.
+Real-provider UX validation is an explicit staging gate, not an ordinary automated test. Use `python manage.py validate_ai_assistant_real_provider --list-scenarios` to inspect the synthetic suite, and add `--live` plus one staging user only when real provider usage and credits are intended. The report combines hard runtime invariants with manual transcript review; fake-provider tests alone cannot close a behavioral or transport change.
 
 Operational claims must be tool-grounded. Plain assistant text never changes My Scoope state: when the model says a profile fact, preference, proposal direction or real object was read/registered/changed, that turn must include the matching allowlisted tool request. `AIUsageEvent` is the hard provider/usage evidence for CM24; safe turn metadata is diagnostic and should agree with it.
 
 For OpenAI, operational actions use provider-native function calling. My Scoope validates and executes each allowlisted call, then returns sanitized `function_call_output` items through a stateless continuation. `ai_assistant_structured_response.v2` remains only for visible copy, semantic intent and review diagnostics. One bounded repair attempt may recover a malformed final text envelope or an operational turn that emitted no function call; this is a transport safeguard, not deterministic intake.
 
-Proposal complexity is proposal-scoped state and travels through `update_proposal_preferences` as `complexity_level=low|medium|high`. If a native function call has already been validated and executed but the provider fails only while wording the follow-up, preserve the typed result and answer with a bounded local acknowledgement. That fallback is state-only: it may summarize controlled results or typed errors, but it must not invent nutrition guidance, parse the user turn, choose the next question or append a missing-field agenda.
+Proposal complexity is proposal-scoped state and travels through `update_proposal_preferences` as `complexity_level=low|medium|high`. Healthy tool turns must receive provider-written follow-up copy. If a native function call has already been validated and executed but the provider fails only while wording the follow-up, preserve the typed result and answer with the rare degraded fallback `state_ack_only.v2`. That fallback may summarize controlled results or typed errors, but it must not invent nutrition guidance, parse the user turn, choose the next question or append a missing-field agenda. A local acknowledgement is observable as degradation and blocks the live release gate; it must never be counted as a healthy completed provider turn.
 The provider declaration for `update_proposal_preferences` must expose proposal fields as explicit schema properties, not only as prose inside a generic `updates` object. Keep that schema compact enough for existing input limits. Phrases such as “algo simple” are mapped by the LLM to `complexity_level=low` inside the native function call; My Scoope validates and normalizes the received value but does not recover it by parsing assistant text.
 For OpenAI-native proposal updates, use a strict nullable provider schema: every supported update field is present, values not stated by the user are `null`, and My Scoope strips nulls before validation/merge. Provider tools must also mirror runtime capability flags; do not advertise reviewable proposal tools while their executor is disabled, because unavailable schemas consume context and can be selected despite being locally blocked.
 

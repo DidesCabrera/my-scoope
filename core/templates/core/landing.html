@@ -50,7 +50,7 @@
 
           <h1>Consigue tu Prime</h1>
 
-          <p class="hero-lead">
+          <p class="hero-lead sub-title">
             Controla tu plan de alimentación con My Scoope
           </p>
 
@@ -73,7 +73,7 @@
 
         <div class="section-heading section-heading-centered">
           <h2>La alimentación es fundamental para un cambio corporal.</h2>
-          <p>My Scoope te ayuda a planificar tu alimentacion con facilidad y precision</p>
+          <p class="sub-title">My Scoope te ayuda a planificar tu alimentacion con facilidad y precision</p>
         </div>
 
         <div class="landing-slider" data-landing-slider aria-label="Funciones principales de My Scoope">
@@ -171,7 +171,7 @@
 
         <div class="section-copy">
           <p class="eyebrow">Preciso</p>
-          <h2>Ajusta las porciones de alimentos, viendo el impacto real en tus métricas</h2>
+          <h2>Ajusta las porciones viendo el impacto real en tus métricas</h2>
           <p>Espacio pensado para mostrar cómo cambian las calorías y macronutrientes al ajustar porciones.</p>
         </div>
 
@@ -248,13 +248,20 @@
           </div>
         </div>
 
-        <div class="plans-grid">
+        <nav class="plans-mobile-tabs" data-plan-tabs aria-label="Seleccionar plan">
+          <button type="button" class="is-active" data-plan-tab="0" aria-current="true">Free</button>
+          <button type="button" data-plan-tab="1" aria-current="false">Basic</button>
+          <button type="button" data-plan-tab="2" aria-current="false">Pro</button>
+        </nav>
+
+        <div class="plans-grid" data-plans-slider>
           <article class="plan-card">
             <div class="plan-card-header">
               <h3>Free</h3>
             </div>
 
             <p class="plan-price">$0</p>
+            <p class="plan-annual-price plan-annual-price--placeholder is-hidden" data-free-annual-placeholder aria-hidden="true">&nbsp;</p>
             <p class="plan-description">
               Para comenzar a construir y medir tu alimentación.
             </p>
@@ -269,13 +276,14 @@
             <a href="/accounts/login/" class="btn btn-primary btn-full">Comenzar gratis</a>
           </article>
 
-          <article class="plan-card plan-card-featured" data-plan-card data-monthly-price="$7.990" data-yearly-price="$79.900">
+          <article class="plan-card plan-card-featured" data-plan-card data-monthly-price="$7.990" data-yearly-monthly-price="$6.658" data-yearly-price="$79.900">
             <div class="plan-card-header">
               <h3>Basic</h3>
               <span data-billing-label>Mensual</span>
             </div>
 
-            <p class="plan-price" data-plan-price>$7.990</p>
+            <p class="plan-price"><span data-plan-price>$7.990</span><span class="plan-price-period">/mensual</span></p>
+            <p class="plan-annual-price is-hidden" data-plan-annual-price>$79.900/anual</p>
             <p class="plan-description">
               Para usuarios que quieran más asistencia, automatización y propuestas inteligentes.
             </p>
@@ -287,16 +295,17 @@
               <li>Funciones premium futuras.</li>
             </ul>
 
-            <a href="/accounts/login/" class="btn btn-secondary btn-full">Crear cuenta</a>
+            <a href="/accounts/login/" class="btn btn-secondary btn-full">Suscribirme</a>
           </article>
 
-          <article class="plan-card plan-card-featured" data-plan-card data-monthly-price="$12.990" data-yearly-price="$129.900">
+          <article class="plan-card plan-card-featured" data-plan-card data-monthly-price="$12.990" data-yearly-monthly-price="$10.825" data-yearly-price="$129.900">
             <div class="plan-card-header">
               <h3>Pro</h3>
               <span data-billing-label>Mensual</span>
             </div>
 
-            <p class="plan-price" data-plan-price>$12.990</p>
+            <p class="plan-price"><span data-plan-price>$12.990</span><span class="plan-price-period">/mensual</span></p>
+            <p class="plan-annual-price is-hidden" data-plan-annual-price>$129.900/anual</p>
             <p class="plan-description">
               Para usuarios que quieran más asistencia, automatización y propuestas inteligentes.
             </p>
@@ -308,12 +317,14 @@
               <li>Funciones premium futuras.</li>
             </ul>
 
-            <a href="/accounts/login/" class="btn btn-secondary btn-full">Crear cuenta</a>
+            <a href="/accounts/login/" class="btn btn-secondary btn-full">Suscribirme</a>
           </article>
 
         </div>
         
-        <p>*Los créditos se utilizan al hacer consultas o solicitar tareas al asistente. Al terminar tus créditos puedes seguir opcupando la aplicacion de forma manual sin restricciones</p>
+        <p class="plan-credit-note">
+          *Los créditos se utilizan al hacer consultas o solicitar tareas al asistente. Al terminar tus créditos puedes seguir ocupando la aplicación de forma manual sin restricciones.
+        </p>
       </div>
     </section>
 

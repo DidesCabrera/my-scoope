@@ -1,7 +1,7 @@
 # Project State - My Scoope
 
 Status: current
-Last updated: 2026-07-14
+Last updated: 2026-07-15
 Audience: developers and AI assistants
 
 ## What My Scoope is
@@ -79,11 +79,12 @@ When a plan becomes real, durable outcomes should be promoted into `docs/00_curr
 - Nutrition Solver separation baseline.
 - Food Catalog launch-readiness cycle.
 - AI Assistant activation/observability/credits guardrails.
-- AI Assistant Client Memory & Profile Objects and LLM-native alignment cycle CM00-CM24. The final real-provider gate and targeted UX rerun passed automated and human review, consolidating native function calling, grounded state transitions, explicit cards and state-only technical fallbacks.
+- AI Assistant Client Memory & Profile Objects and LLM-native alignment cycle CM00-CM24. The final real-provider gate and targeted UX rerun passed automated and human review, consolidating native function calling, grounded state transitions and explicit cards.
+- AI Assistant Behavioral Alignment BA00-BA07 and Post-Tool Follow-up Transport PT00-PT06 are closed. The accepted baseline covers domain anchoring, capability abstraction, ambiguous-intent restraint, goal-directed progression, response quality, exact provider call correlation, contract-faithful test doubles and rare degraded `state_ack_only.v2` fallbacks. Closure passed Django checks, 2 core regressions and the complete 1,446-test suite through `scripts/ci_django_checks.sh`.
 
 ## Planned near-term cycles
 
-- AI Assistant Behavioral Alignment BA00-BA07 is active. BA00 closes the CM predecessor and defines the cycle; BA01 adds the focused `ai_behavior` export. BA02-BA07 will address domain anchoring, capability abstraction, ambiguous-intent restraint, goal-directed agency, response quality and behavioral validation without restoring a deterministic questionnaire.
+- No continuation of BA or PT is implied. New AI Assistant work should start from observed product evidence and a newly scoped cycle, rather than extending the global prompt or reopening a deterministic questionnaire.
 
 ## Current work style
 

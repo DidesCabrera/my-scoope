@@ -216,6 +216,7 @@
   .section-heading {
     max-width: 780px;
     margin-bottom: 38px;
+    padding: 0 10px;
   }
   
   .section-heading h2 {
@@ -365,6 +366,12 @@
     margin-top: 24px;
     color: var(--text-soft);
     font-size: clamp(1.08rem, 2vw, 1.28rem);
+  }
+
+  .section-heading .sub-title,
+  .sub-title {
+    line-height: 1;
+    font-size: 26px;
   }
   
   .hero-actions {
@@ -2014,5 +2021,169 @@
 @media (max-width: 700px) {
   .system-node-icon {
     border-radius: 24px;
+  }
+}
+
+/* =========================================================
+   Landing adjustments: system nodes and mobile plans
+   ========================================================= */
+
+.system-node {
+  position: relative;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
+}
+
+.system-node .system-node-top {
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.system-node .system-node-number {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+}
+
+.system-node .system-node-icon {
+  width: 60px;
+  height: 60px;
+  flex: 0 0 60px;
+}
+
+.system-node .system-node-icon .system-node-glyph,
+.system-node .system-node-icon svg.system-node-glyph {
+  width: 32px;
+  height: 32px;
+}
+
+.system-node strong {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.system-node p {
+  margin: 0;
+}
+
+.plans-mobile-tabs {
+  display: none;
+}
+
+.plan-price {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.plan-price-period {
+  color: var(--text-soft);
+  font-size: clamp(0.86rem, 1.5vw, 1rem);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.plan-annual-price {
+  min-height: 1.18rem;
+  margin: -6px 0 0;
+  color: var(--text-soft);
+  font-size: 0.86rem;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.plan-annual-price.is-hidden {
+  display: none;
+}
+
+.plan-annual-price--placeholder {
+  visibility: hidden;
+}
+
+.plan-credit-note {
+  min-height: 82px;
+  max-width: 760px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 28px auto 0;
+  color: var(--text-soft);
+  padding: 8px 22px;
+  text-align: center;
+  line-height: 1.65;
+}
+
+@media (max-width: 760px) {
+  .plans-mobile-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    max-width: 280px;
+    margin: -20px auto 22px;
+  }
+
+  .plans-mobile-tabs button {
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.42);
+    padding: 8px 10px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 850;
+    transition: color 180ms ease, background 180ms ease, opacity 180ms ease;
+  }
+
+  .plans-mobile-tabs button.is-active {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text);
+  }
+
+  .plans-grid[data-plans-slider] {
+    display: flex;
+    grid-template-columns: none;
+    gap: 16px;
+    max-width: none;
+    margin: 0 -18px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-padding: 0 18px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .plans-grid[data-plans-slider]::-webkit-scrollbar {
+    display: none;
+  }
+
+  .plans-grid[data-plans-slider] .plan-card,
+  .plans-grid[data-plans-slider] .plan-card:first-child {
+    grid-column: auto;
+    flex: 0 0 min(84vw, 360px);
+    scroll-snap-align: center;
+  }
+
+  .plans-grid[data-plans-slider] .plan-card:first-child {
+    margin-left: 18px;
+  }
+
+  .plans-grid[data-plans-slider] .plan-card:last-child {
+    margin-right: 18px;
+  }
+
+  .plan-credit-note {
+    min-height: 0;
+    margin-top: 24px;
+    padding: 8px 18px;
+    text-align: center;
   }
 }
