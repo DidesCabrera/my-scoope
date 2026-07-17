@@ -85,6 +85,46 @@ class CatalogFood(models.Model):
         (PREPARATION_READY_TO_EAT, "Ready to eat"),
     ]
 
+    FOOD_FORM_UNKNOWN = "unknown"
+    FOOD_FORM_INGREDIENT = "ingredient"
+    FOOD_FORM_MIXED_DISH = "mixed_dish"
+    FOOD_FORM_BEVERAGE = "beverage"
+    FOOD_FORM_CONDIMENT = "condiment"
+
+    FOOD_FORM_CHOICES = [
+        (FOOD_FORM_UNKNOWN, "Unknown"),
+        (FOOD_FORM_INGREDIENT, "Ingredient"),
+        (FOOD_FORM_MIXED_DISH, "Mixed dish"),
+        (FOOD_FORM_BEVERAGE, "Beverage"),
+        (FOOD_FORM_CONDIMENT, "Condiment"),
+    ]
+
+    PREPARATION_EFFORT_UNKNOWN = "unknown"
+    PREPARATION_EFFORT_NONE = "none"
+    PREPARATION_EFFORT_LOW = "low"
+    PREPARATION_EFFORT_MEDIUM = "medium"
+    PREPARATION_EFFORT_HIGH = "high"
+
+    PREPARATION_EFFORT_CHOICES = [
+        (PREPARATION_EFFORT_UNKNOWN, "Unknown"),
+        (PREPARATION_EFFORT_NONE, "None"),
+        (PREPARATION_EFFORT_LOW, "Low"),
+        (PREPARATION_EFFORT_MEDIUM, "Medium"),
+        (PREPARATION_EFFORT_HIGH, "High"),
+    ]
+
+    COST_BAND_UNKNOWN = "unknown"
+    COST_BAND_LOW = "low"
+    COST_BAND_MEDIUM = "medium"
+    COST_BAND_HIGH = "high"
+
+    COST_BAND_CHOICES = [
+        (COST_BAND_UNKNOWN, "Unknown"),
+        (COST_BAND_LOW, "Low"),
+        (COST_BAND_MEDIUM, "Medium"),
+        (COST_BAND_HIGH, "High"),
+    ]
+
     catalog_ref = models.UUIDField(
         default=uuid.uuid4,
         unique=True,
@@ -145,6 +185,51 @@ class CatalogFood(models.Model):
             "Semantic state used for curation and solver safety. Example: raw, "
             "cooked, dry, hydrated or ready_to_eat. Avoids mixing raw/cooked data."
         ),
+    )
+
+    food_form = models.CharField(
+        max_length=30,
+        choices=FOOD_FORM_CHOICES,
+        default=FOOD_FORM_UNKNOWN,
+        help_text="Curated culinary form used by meal grammar after operational snapshot.",
+    )
+
+    functional_roles = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Versioned multi-role capability labels; no single role is treated as complete truth.",
+    )
+
+    meal_affinities = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Curated meal-kind affinities such as breakfast, snack, main or dinner.",
+    )
+
+    dietary_tags = models.JSONField(default=list, blank=True)
+    allergens = models.JSONField(default=list, blank=True)
+
+    preparation_effort = models.CharField(
+        max_length=20,
+        choices=PREPARATION_EFFORT_CHOICES,
+        default=PREPARATION_EFFORT_UNKNOWN,
+    )
+
+    cost_band = models.CharField(
+        max_length=20,
+        choices=COST_BAND_CHOICES,
+        default=COST_BAND_UNKNOWN,
+    )
+
+    solver_capabilities_version = models.CharField(
+        max_length=64,
+        default="solver_food_capabilities.v1",
+    )
+
+    solver_feature_confidence = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Per-feature confidence values from 0 to 100 for solver projections.",
     )
 
     solver_enabled = models.BooleanField(
