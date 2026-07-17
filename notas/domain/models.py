@@ -137,6 +137,18 @@ class Food(models.Model):
         help_text="Whether this operational food may be used by future nutrition solver candidates.",
     )
 
+    solver_capabilities_version = models.CharField(
+        max_length=64,
+        default="solver_food_capabilities.v1",
+        help_text="Version of the solver capability projection copied into this operational snapshot.",
+    )
+
+    solver_capabilities = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Operational, auditable capability values and confidence; never a live CatalogFood read.",
+    )
+
     fiber_g_per_100g = models.DecimalField(
         max_digits=8,
         decimal_places=3,

@@ -288,6 +288,7 @@ class PublishedFoodSnapshot:
     serving_options: tuple[CatalogServingOption, ...] = field(default_factory=tuple)
     aliases: tuple[str, ...] = field(default_factory=tuple)
     evidence: tuple[CatalogEvidenceItem, ...] = field(default_factory=tuple)
+    solver_capabilities: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         _require_text(self.catalog_ref, field_name="catalog_ref")
@@ -302,6 +303,7 @@ class PublishedFoodSnapshot:
             _require_positive(value, field_name=field_name)
             object.__setattr__(self, field_name, value)
         object.__setattr__(self, "aliases", tuple(alias.strip() for alias in self.aliases if alias.strip()))
+        object.__setattr__(self, "solver_capabilities", dict(self.solver_capabilities or {}))
 
     def to_operational_snapshot_payload(self) -> "OperationalFoodSnapshotPayload":
         """Build the payload the snapshot protocol can persist into ``notas.Food``."""
@@ -326,6 +328,7 @@ class PublishedFoodSnapshot:
             serving_options=self.serving_options,
             aliases=self.aliases,
             evidence=self.evidence,
+            solver_capabilities=self.solver_capabilities,
         )
 
 
@@ -352,6 +355,7 @@ class OperationalFoodSnapshotPayload:
     serving_options: tuple[CatalogServingOption, ...] = field(default_factory=tuple)
     aliases: tuple[str, ...] = field(default_factory=tuple)
     evidence: tuple[CatalogEvidenceItem, ...] = field(default_factory=tuple)
+    solver_capabilities: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         _require_text(self.source_catalog_ref, field_name="source_catalog_ref")
@@ -361,6 +365,7 @@ class OperationalFoodSnapshotPayload:
             raise FoodCatalogContractError("data_quality_score must be between 0 and 100.")
         object.__setattr__(self, "visibility", OperationalVisibility(self.visibility))
         object.__setattr__(self, "preparation_state", PreparationState(self.preparation_state))
+        object.__setattr__(self, "solver_capabilities", dict(self.solver_capabilities or {}))
 
     def food_defaults(self) -> dict[str, Any]:
         """Return field names compatible with ``notas.Food`` creation/update.
@@ -387,6 +392,10 @@ class OperationalFoodSnapshotPayload:
             "portion_step_g": self.portion_step_g,
             "data_quality_score": self.data_quality_score,
             "visibility": self.visibility.value,
+            "solver_capabilities_version": str(
+                self.solver_capabilities.get("schema_version") or "solver_food_capabilities.v1"
+            ),
+            "solver_capabilities": dict(self.solver_capabilities),
         }
 
     def snapshot_metadata(self) -> dict[str, Any]:
@@ -402,6 +411,7 @@ class OperationalFoodSnapshotPayload:
                 option.operational_portion_defaults() for option in self.serving_options
             ),
             "evidence": tuple(item.source_metadata_defaults() for item in self.evidence),
+            "solver_capabilities": dict(self.solver_capabilities),
         }
 
     def as_contract_payload(self) -> Mapping[str, Any]:

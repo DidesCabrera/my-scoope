@@ -152,3 +152,14 @@ Consequences
 - `0127-profile-aware-real-provider-validation-fixtures.md`: hace que el escenario PT06 adapte sus expectativas a los datos realmente persistidos en la ficha, sin ocultar pérdidas de sincronización cuando esos datos sí existen.
 - `0128-ai-assistant-behavioral-alignment-current-contract.md`: promueve BA/PT al contrato vigente, fija la semántica de tool restraint, progreso, correlación post-tool y fallback degradado, y reserva el cierre formal para la regresión global del ZIP `full`.
 - `0129-ai-assistant-behavioral-alignment-cycle-closure.md`: cierra BA00-BA07 tras aprobar el gate live aceptado, alinear tests documentales con la arquitectura numerada y pasar `check`, 2 regresiones núcleo y 1.446 tests mediante el script oficial de CI.
+- `0139-nutrition-solver-optimization-v2-baseline.md`: congela el baseline previo a NSO.
+- `0140-food-catalog-solver-capability-requirements.md`: requisitos explícitos de capacidades.
+- `0141-versioned-solver-food-profiles.md`: perfiles versionados con confianza y procedencia.
+- `0142-food-catalog-curated-solver-capabilities.md`: capacidades curadas en Food Catalog.
+- `0143-operational-solver-capability-snapshot.md`: snapshot operativo para el solver.
+- `0144-optimization-problem-v2-meal-grammar.md`: contrato V2 y gramática de comidas.
+- `0145-candidate-portfolio-combination-planning.md`: portfolios acotados de combinaciones.
+- `0146-cp-sat-optimization-backend.md`: backend CP-SAT seleccionable.
+- `0147-whole-day-optimization-and-alternatives.md`: optimización diaria y alternativas.
+- `0148-shadow-quality-and-regression-gates.md`: shadow, calidad y regresiones duras.
+- `0149-nutrition-solver-optimization-v2-closure.md`: activación controlada y cierre NSO.

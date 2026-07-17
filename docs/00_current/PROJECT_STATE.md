@@ -1,7 +1,7 @@
 # Project State - My Scoope
 
 Status: current
-Last updated: 2026-07-15
+Last updated: 2026-07-16
 Audience: developers and AI assistants
 
 ## What My Scoope is
@@ -28,7 +28,7 @@ My Scoope is past the first architecture-expansion phase. The current priority i
 | `accounts` | User/account domain, onboarding ownership, commercial plans, subscriptions, credits and entitlements. |
 | `ai_assistant` | Chat experience, LLM provider integration, tool orchestration, guarded proposal creation and AI usage observability. |
 | `food_catalog` | Master food catalog, import/curation workflows, source governance and controlled bridge toward operational foods. |
-| `nutrition_solver` | Nutrition calculation and solving contracts, validators and adapters, without being the primary direct user UI. |
+| `nutrition_solver` | Deterministic nutrition optimization, meal grammar, constraints, alternatives, quality diagnostics and backend selection, without being a direct user UI. |
 | `admin_analytics` | Strategic, read-first product intelligence dashboard for staff. |
 | `admin_operations` | Operational staff console for action-oriented workflows, separated from strategic analytics and raw Django Admin. |
 | `core` | Cross-cutting technical concerns such as rate limits, shared contracts and regression boot checks. |
@@ -44,6 +44,8 @@ My Scoope is past the first architecture-expansion phase. The current priority i
 - User-visible credits are product/account concepts; provider tokens and costs are internal observability concepts.
 - Food Catalog is the master/curation layer; operational `notas.Food` remains the runtime snapshot consumed by existing flows.
 - Nutrition Solver should provide reusable calculation/validation capability, mainly through AI Assistant and backend integrations.
+- Nutrition Solver consumes versioned capability snapshots from operational `notas.Food`; Food Catalog
+  owns curated values/provenance and is never a live solver dependency.
 
 ## Testing posture
 
@@ -81,6 +83,10 @@ When a plan becomes real, durable outcomes should be promoted into `docs/00_curr
 - AI Assistant activation/observability/credits guardrails.
 - AI Assistant Client Memory & Profile Objects and LLM-native alignment cycle CM00-CM24. The final real-provider gate and targeted UX rerun passed automated and human review, consolidating native function calling, grounded state transitions and explicit cards.
 - AI Assistant Behavioral Alignment BA00-BA07 and Post-Tool Follow-up Transport PT00-PT06 are closed. The accepted baseline covers domain anchoring, capability abstraction, ambiguous-intent restraint, goal-directed progression, response quality, exact provider call correlation, contract-faithful test doubles and rare degraded `state_ack_only.v2` fallbacks. Closure passed Django checks, 2 core regressions and the complete 1,446-test suite through `scripts/ci_django_checks.sh`.
+- Nutrition Solver Optimization V2 NSO00-NSO10 adds versioned Food Catalog capabilities, operational
+  snapshots, multi-capability meal grammar, bounded combination planning, a deterministic CP-SAT
+  backend, whole-day constraints, alternatives, shadow quality gates and controlled DailyPlan
+  proposal activation. The heuristic path remains the default rollback until rollout evidence is accepted.
 
 ## Planned near-term cycles
 

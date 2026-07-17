@@ -26,6 +26,15 @@ class CatalogSolverProfile:
     portion_step_g: Decimal | None
     preparation_state: str
     solver_enabled: bool
+    food_form: str
+    functional_roles: tuple[str, ...]
+    meal_affinities: tuple[str, ...]
+    dietary_tags: tuple[str, ...]
+    allergens: tuple[str, ...]
+    preparation_effort: str
+    cost_band: str
+    capabilities_version: str
+    feature_confidence: dict[str, float]
 
 
 @dataclass(frozen=True)
@@ -102,6 +111,11 @@ def check_catalog_food_solver_ready(catalog_food: CatalogFood) -> CatalogSolverR
             "raw/dry foods are solver-ready only if the intended edible/cooked context is explicit"
         )
 
+    if not profile.functional_roles:
+        warnings.append("functional_roles are absent; the operational adapter must derive them")
+    if not profile.meal_affinities:
+        warnings.append("meal_affinities are absent; meal grammar will use a neutral affinity")
+
     return CatalogSolverReadinessCheck(
         is_ready=not errors,
         profile=profile,
@@ -141,7 +155,33 @@ def build_catalog_solver_profile(catalog_food: CatalogFood) -> CatalogSolverProf
         portion_step_g=_quantize_or_none(portion_step),
         preparation_state=catalog_food.preparation_state,
         solver_enabled=catalog_food.solver_enabled,
+        food_form=catalog_food.food_form,
+        functional_roles=_normalized_labels(catalog_food.functional_roles),
+        meal_affinities=_normalized_labels(catalog_food.meal_affinities),
+        dietary_tags=_normalized_labels(catalog_food.dietary_tags),
+        allergens=_normalized_labels(catalog_food.allergens),
+        preparation_effort=catalog_food.preparation_effort,
+        cost_band=catalog_food.cost_band,
+        capabilities_version=catalog_food.solver_capabilities_version,
+        feature_confidence=_normalized_confidence(catalog_food.solver_feature_confidence),
     )
+
+
+def _normalized_labels(values) -> tuple[str, ...]:
+    if isinstance(values, str):
+        values = (values,)
+    return tuple(dict.fromkeys(str(value).strip().lower() for value in (values or ()) if str(value).strip()))
+
+
+def _normalized_confidence(values) -> dict[str, float]:
+    normalized = {}
+    for key, value in dict(values or {}).items():
+        try:
+            confidence = float(value)
+        except (TypeError, ValueError):
+            continue
+        normalized[str(key).strip()] = max(0.0, min(confidence, 100.0))
+    return normalized
 
 
 def _default_portion_g(catalog_food: CatalogFood) -> Decimal | None:

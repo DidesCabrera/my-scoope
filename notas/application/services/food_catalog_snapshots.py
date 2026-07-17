@@ -104,6 +104,7 @@ def build_operational_food_snapshot_payload(
         serving_options=_catalog_serving_options(catalog_food),
         aliases=_catalog_alias_names(catalog_food),
         evidence=_catalog_evidence_items(catalog_food),
+        solver_capabilities=_solver_capabilities_payload(solver_profile),
     )
 
     return snapshot.to_operational_snapshot_payload()
@@ -280,6 +281,23 @@ def _catalog_evidence_items(catalog_food: CatalogFood) -> tuple[CatalogEvidenceI
         )
 
     return tuple(evidence_items)
+
+
+def _solver_capabilities_payload(profile) -> dict[str, Any]:
+    return {
+        "schema_version": profile.capabilities_version,
+        "values": {
+            "food_form": profile.food_form,
+            "functional_roles": list(profile.functional_roles),
+            "meal_affinities": list(profile.meal_affinities),
+            "dietary_tags": list(profile.dietary_tags),
+            "allergens": list(profile.allergens),
+            "preparation_effort": profile.preparation_effort,
+            "cost_band": profile.cost_band,
+        },
+        "confidence": dict(profile.feature_confidence),
+        "source": "food_catalog_snapshot",
+    }
 
 
 def _food_catalog_trace_fields(

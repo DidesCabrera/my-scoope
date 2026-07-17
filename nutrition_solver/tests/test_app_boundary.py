@@ -37,6 +37,11 @@ class NutritionSolverAppBoundaryTests(SimpleTestCase):
             "application/contracts.py",
             "application/portion_solver.py",
             "application/validators.py",
+            "application/problem_v2.py",
+            "application/candidate_portfolio.py",
+            "application/optimizer_v2.py",
+            "application/quality.py",
+            "application/shadow.py",
         )
 
         for relative_path in expected_paths:
@@ -50,14 +55,16 @@ class NutritionSolverAppBoundaryTests(SimpleTestCase):
         self.assertTrue((current_engine / "models.py").exists())
         self.assertTrue((current_engine / "portion_solver.py").exists())
 
-    def test_readme_documents_s7_solver_logic_extraction(self):
+    def test_readme_documents_current_optimization_v2_boundary(self):
         content = README.read_text()
 
-        self.assertIn("Status: portion solver and validators moved in Patch S7", content)
+        self.assertIn("Status: Optimization V2 implementation complete in NSO00-NSO10", content)
         self.assertIn("nutrition_solver/domain/models.py", content)
         self.assertIn("nutrition_solver/application/contracts.py", content)
         self.assertIn("nutrition_solver/application/portion_solver.py", content)
         self.assertIn("nutrition_solver/application/validators.py", content)
+        self.assertIn("nutrition_solver/application/optimizer_v2.py", content)
+        self.assertIn("cp_sat_v1", content)
         self.assertIn("legacy bridges", content)
 
     def test_app_root_shell_does_not_import_product_or_ai_boundaries(self):

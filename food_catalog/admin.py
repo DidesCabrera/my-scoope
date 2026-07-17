@@ -81,6 +81,7 @@ class CatalogFoodAdmin(admin.ModelAdmin):
                     "food_group",
                     "food_subgroup",
                     "preparation_state",
+                    "food_form",
                 )
             },
         ),
@@ -92,6 +93,14 @@ class CatalogFoodAdmin(admin.ModelAdmin):
                     "solver_min_portion_g",
                     "solver_max_portion_g",
                     "solver_portion_step_g",
+                    "functional_roles",
+                    "meal_affinities",
+                    "dietary_tags",
+                    "allergens",
+                    "preparation_effort",
+                    "cost_band",
+                    "solver_capabilities_version",
+                    "solver_feature_confidence",
                 )
             },
         ),
@@ -377,4 +386,3 @@ class ExternalProviderFetchLogAdmin(admin.ModelAdmin):
     list_filter = ("provider", "lookup_type", "status")
     search_fields = ("query", "external_food_id", "external_serving_id", "error_message")
     readonly_fields = ("fetched_at", "raw_payload_hash")
-
