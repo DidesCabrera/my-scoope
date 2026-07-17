@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from decimal import Decimal
+from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth import get_user_model
@@ -16,6 +17,7 @@ from admin_operations.selectors import (
     get_accounts_operations_payload,
     get_audit_log_payload,
     get_ai_operations_payload,
+    get_food_catalog_inventory_payload,
     get_food_catalog_operations_payload,
     get_operations_overview_metrics,
 )
@@ -28,6 +30,9 @@ from admin_operations.viewmodels import (
     AdminOperationsAuditLogVM,
     AdminOperationsCandidateDetailVM,
     AdminOperationsCandidateVM,
+    AdminOperationsCatalogCoverageVM,
+    AdminOperationsCatalogInventoryFoodVM,
+    AdminOperationsCatalogInventoryVM,
     AdminOperationsAccountDetailVM,
     AdminOperationsAccountsVM,
     AdminOperationsCatalogFoodVM,
@@ -129,7 +134,8 @@ def _format_int(value) -> str:
 def _format_decimal(value: Decimal | None, *, suffix: str = "") -> str:
     if value is None:
         return "—"
-    return f"{value.normalize()}{suffix}"
+    rendered = format(Decimal(value), "f").rstrip("0").rstrip(".") or "0"
+    return f"{rendered}{suffix}"
 
 
 def _queue_priority(count: int, *, warning_threshold: int = 1) -> str:
@@ -354,6 +360,299 @@ def build_food_catalog_operations_vm() -> AdminOperationsFoodCatalogVM:
         candidates=[_candidate_to_vm(candidate) for candidate in payload["candidates"]],
         catalog_foods=[_catalog_food_to_vm(catalog_food) for catalog_food in payload["catalog_foods"]],
     )
+
+
+def build_food_catalog_inventory_vm(
+    *,
+    query: str = "",
+    status: str = "",
+    source_type: str = "",
+    food_group: str = "",
+    solver_state: str = "",
+    page: int | str = 1,
+) -> AdminOperationsCatalogInventoryVM:
+    payload = get_food_catalog_inventory_payload(
+        query=query,
+        status=status,
+        source_type=source_type,
+        food_group=food_group,
+        solver_state=solver_state,
+        page=page,
+    )
+    aggregate = payload["aggregate"]
+    total = int(aggregate["total"] or 0)
+    page_obj = payload["page_obj"]
+
+    category_coverage = [
+        AdminOperationsCatalogCoverageVM(
+            label=row["label"],
+            total=_format_int(row["total"]),
+            share_label=_format_share(row["total"], total),
+            helper=(
+                f"{_format_int(row['published'])} publicados · "
+                f"{_format_int(row['solver_enabled'])} habilitados para solver"
+                if row["key"] != "unmapped"
+                else "Requiere normalizar food_group para entrar en una categoría comparable."
+            ),
+        )
+        for row in payload["category_coverage"]
+    ]
+
+    source_labels = dict(CatalogFood.SOURCE_TYPE_CHOICES)
+    source_coverage = [
+        AdminOperationsCatalogCoverageVM(
+            label=source_labels.get(row["source_type"], row["source_type"] or "Sin fuente"),
+            total=_format_int(row["total"]),
+            share_label=_format_share(row["total"], total),
+            helper=(
+                f"{_format_int(row['published'])} publicados · "
+                f"calidad promedio {_format_average(row['average_quality'])}/100"
+            ),
+        )
+        for row in payload["source_breakdown"]
+    ]
+
+    filter_params = {
+        "q": payload["query"],
+        "status": payload["status"],
+        "source": payload["source_type"],
+        "group": payload["food_group"],
+        "solver": payload["solver_state"],
+    }
+
+    return AdminOperationsCatalogInventoryVM(
+        query=payload["query"],
+        selected_status=payload["status"],
+        selected_source=payload["source_type"],
+        selected_group=payload["food_group"],
+        selected_solver_state=payload["solver_state"],
+        metrics=[
+            AdminOperationsMetricVM(
+                label="Alimentos persistidos",
+                value=_format_int(total),
+                helper="Todos los CatalogFood, sin limitar por estado.",
+                icon="database",
+            ),
+            AdminOperationsMetricVM(
+                label="Publicados",
+                value=_format_int(aggregate["published"]),
+                helper=_format_share(aggregate["published"], total),
+                icon="badge-check",
+            ),
+            AdminOperationsMetricVM(
+                label="Habilitados para solver",
+                value=_format_int(aggregate["solver_enabled"]),
+                helper=_format_share(aggregate["solver_enabled"], total),
+                icon="calculator",
+            ),
+            AdminOperationsMetricVM(
+                label="Calidad promedio",
+                value=f"{_format_average(aggregate['average_quality'])}/100",
+                helper="Promedio del data_quality_score persistido.",
+                icon="scan-search",
+            ),
+        ],
+        nutrition_metrics=[
+            AdminOperationsMetricVM(
+                label="Proteína promedio",
+                value=f"{_format_average(aggregate['average_protein'])} g",
+                helper="Promedio descriptivo por 100 g del catálogo; no es una meta dietaria.",
+                icon="drumstick",
+            ),
+            AdminOperationsMetricVM(
+                label="Carbohidratos promedio",
+                value=f"{_format_average(aggregate['average_carbs'])} g",
+                helper="Promedio descriptivo por 100 g del catálogo.",
+                icon="wheat",
+            ),
+            AdminOperationsMetricVM(
+                label="Grasa promedio",
+                value=f"{_format_average(aggregate['average_fat'])} g",
+                helper="Promedio descriptivo por 100 g del catálogo.",
+                icon="droplets",
+            ),
+            AdminOperationsMetricVM(
+                label="Fibra promedio conocida",
+                value=f"{_format_average(aggregate['average_fiber'])} g",
+                helper="Sólo considera registros donde fiber_g_per_100g está informado.",
+                icon="sprout",
+            ),
+        ],
+        gap_metrics=[
+            AdminOperationsMetricVM(
+                label="Sin grupo alimentario",
+                value=_format_int(aggregate["missing_group"]),
+                helper=_format_share(aggregate["missing_group"], total),
+                icon="tag",
+            ),
+            AdminOperationsMetricVM(
+                label="Sin evidencia asociada",
+                value=_format_int(aggregate["without_evidence"]),
+                helper="CatalogFood sin filas CatalogFoodSource.",
+                icon="file-question",
+            ),
+            AdminOperationsMetricVM(
+                label="Nutrición extendida incompleta",
+                value=_format_int(aggregate["incomplete_extended_nutrition"]),
+                helper="Falta al menos kcal, fibra, azúcar, grasa saturada o sodio.",
+                icon="list-x",
+            ),
+            AdminOperationsMetricVM(
+                label="Semántica culinaria desconocida",
+                value=_format_int(aggregate["unknown_culinary_semantics"]),
+                helper="preparation_state o food_form permanece en unknown.",
+                icon="circle-help",
+            ),
+        ],
+        category_coverage=category_coverage,
+        source_coverage=source_coverage,
+        foods=[_catalog_inventory_food_to_vm(food) for food in page_obj.object_list],
+        status_options=list(payload["status_options"]),
+        source_options=list(payload["source_options"]),
+        group_options=list(payload["group_options"]),
+        filtered_total=_format_int(payload["filtered_total"]),
+        page_label=f"Página {page_obj.number} de {page_obj.paginator.num_pages}",
+        previous_url=_inventory_page_url(filter_params, page_obj.previous_page_number()) if page_obj.has_previous() else "",
+        next_url=_inventory_page_url(filter_params, page_obj.next_page_number()) if page_obj.has_next() else "",
+    )
+
+
+def _catalog_inventory_food_to_vm(catalog_food: CatalogFood) -> AdminOperationsCatalogInventoryFoodVM:
+    sources = list(catalog_food.sources.all())
+    portions = list(catalog_food.portions.all())
+    aliases = list(catalog_food.aliases.all())
+    source_lines = [
+        " · ".join(
+            part
+            for part in [
+                source.source_name,
+                source.source_type,
+                f"ID {source.source_food_id}" if source.source_food_id else "",
+                f"dataset {source.source_dataset}" if source.source_dataset else "",
+                f"v{source.source_version}" if source.source_version else "",
+                f"licencia {source.license_status}",
+            ]
+            if part
+        )
+        for source in sources
+    ]
+    portion_lines = [
+        f"{portion.label}: {_format_decimal(portion.grams, suffix=' g')}"
+        f"{' (default)' if portion.is_default else ''}"
+        for portion in portions
+    ]
+    alias_lines = [
+        f"{alias.name} ({alias.alias_type}, {alias.language}{f'-{alias.country}' if alias.country else ''})"
+        for alias in aliases
+    ]
+
+    quality_flags = []
+    if not catalog_food.food_group:
+        quality_flags.append("sin food_group")
+    if not sources:
+        quality_flags.append("sin evidencia")
+    if catalog_food.preparation_state == CatalogFood.PREPARATION_UNKNOWN:
+        quality_flags.append("preparación unknown")
+    if catalog_food.food_form == CatalogFood.FOOD_FORM_UNKNOWN:
+        quality_flags.append("food_form unknown")
+    if any(
+        value is None
+        for value in [
+            catalog_food.calories_kcal_per_100g,
+            catalog_food.fiber_g_per_100g,
+            catalog_food.sugar_g_per_100g,
+            catalog_food.saturated_fat_g_per_100g,
+            catalog_food.sodium_mg_per_100g,
+        ]
+    ):
+        quality_flags.append("nutrición extendida incompleta")
+
+    return AdminOperationsCatalogInventoryFoodVM(
+        pk=catalog_food.pk,
+        title=catalog_food.display_name,
+        identity_lines=[
+            f"ID {catalog_food.pk} · ref {catalog_food.catalog_ref}",
+            f"canonical: {catalog_food.canonical_name or '—'}",
+            f"marca: {catalog_food.brand_name or '—'} · branded: {'sí' if catalog_food.is_branded else 'no'}",
+            f"versión {catalog_food.catalog_version} · {catalog_food.language or '—'} · país {catalog_food.country or '—'}",
+        ],
+        classification_lines=[
+            f"grupo: {catalog_food.food_group or '—'}",
+            f"subgrupo: {catalog_food.food_subgroup or '—'}",
+            f"forma: {catalog_food.food_form} · preparación: {catalog_food.preparation_state}",
+            f"esfuerzo: {catalog_food.preparation_effort} · costo: {catalog_food.cost_band}",
+        ],
+        governance_lines=[
+            f"origen: {catalog_food.source_type}",
+            f"estado: {catalog_food.status}",
+            *(source_lines or ["evidencia: —"]),
+        ],
+        nutrition_lines=[
+            f"P {_format_decimal(catalog_food.protein_g_per_100g, suffix=' g')} · C {_format_decimal(catalog_food.carbs_g_per_100g, suffix=' g')} · F {_format_decimal(catalog_food.fat_g_per_100g, suffix=' g')}",
+            f"kcal {_format_decimal(catalog_food.calories_kcal_per_100g)} · macro-kcal {_format_decimal(catalog_food.macro_calories_kcal)}",
+            f"fibra {_format_decimal(catalog_food.fiber_g_per_100g, suffix=' g')} · azúcar {_format_decimal(catalog_food.sugar_g_per_100g, suffix=' g')}",
+            f"saturada {_format_decimal(catalog_food.saturated_fat_g_per_100g, suffix=' g')} · sodio {_format_decimal(catalog_food.sodium_mg_per_100g, suffix=' mg')}",
+        ],
+        functional_lines=[
+            f"roles: {_format_labels(catalog_food.functional_roles)}",
+            f"afinidades: {_format_labels(catalog_food.meal_affinities)}",
+            f"dietary: {_format_labels(catalog_food.dietary_tags)}",
+            f"alérgenos: {_format_labels(catalog_food.allergens)}",
+        ],
+        solver_lines=[
+            f"enabled: {'sí' if catalog_food.solver_enabled else 'no'}",
+            f"rango: {_format_decimal(catalog_food.solver_min_portion_g, suffix=' g')} – {_format_decimal(catalog_food.solver_max_portion_g, suffix=' g')} · paso {_format_decimal(catalog_food.solver_portion_step_g, suffix=' g')}",
+            f"capabilities: {catalog_food.solver_capabilities_version}",
+            f"confianza features: {_format_mapping(catalog_food.solver_feature_confidence)}",
+        ],
+        quality_lines=[
+            f"data quality: {catalog_food.data_quality_score}/100",
+            f"confidence: {_format_decimal(catalog_food.confidence_score, suffix='/100')}",
+            f"brechas: {', '.join(quality_flags) if quality_flags else 'sin brechas base detectadas'}",
+        ],
+        relation_lines=[
+            f"fuentes: {len(sources)} · porciones: {len(portions)} · aliases: {len(aliases)}",
+            *(portion_lines or ["porciones (0): —"]),
+            *(alias_lines or ["aliases (0): —"]),
+        ],
+        lifecycle_lines=[
+            f"creado: {catalog_food.created_at:%Y-%m-%d %H:%M} · {_user_label(catalog_food.created_by) if catalog_food.created_by else 'sistema'}",
+            f"revisado: {catalog_food.reviewed_at:%Y-%m-%d %H:%M} · {_user_label(catalog_food.reviewed_by) if catalog_food.reviewed_by else '—'}" if catalog_food.reviewed_at else "revisado: —",
+            f"publicado: {catalog_food.published_at:%Y-%m-%d %H:%M}" if catalog_food.published_at else "publicado: —",
+            f"actualizado: {catalog_food.updated_at:%Y-%m-%d %H:%M}",
+        ],
+        admin_url=reverse("admin:food_catalog_catalogfood_change", args=[catalog_food.pk]),
+    )
+
+
+def _format_average(value) -> str:
+    if value is None:
+        return "—"
+    return f"{Decimal(value):.1f}"
+
+
+def _format_share(value, total: int) -> str:
+    if not total:
+        return "0% del catálogo"
+    return f"{(int(value or 0) / total) * 100:.1f}% del catálogo"
+
+
+def _format_labels(values) -> str:
+    if not values:
+        return "—"
+    return ", ".join(str(value) for value in values)
+
+
+def _format_mapping(values) -> str:
+    if not values:
+        return "—"
+    return ", ".join(f"{key}={value}" for key, value in sorted(values.items()))
+
+
+def _inventory_page_url(params: dict[str, str], page: int) -> str:
+    clean_params = {key: value for key, value in params.items() if value}
+    clean_params["page"] = str(page)
+    return f"{reverse('admin_operations_food_catalog_inventory')}?{urlencode(clean_params)}"
 
 
 def build_candidate_detail_vm(candidate_id: int) -> AdminOperationsCandidateDetailVM:

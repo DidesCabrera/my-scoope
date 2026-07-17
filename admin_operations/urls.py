@@ -12,6 +12,7 @@ from admin_operations.views import (
     account_reservation_release,
     accounts,
     food_catalog,
+    food_catalog_inventory,
     food_catalog_candidate_action,
     food_catalog_candidate_detail,
     food_catalog_food_action,
@@ -32,6 +33,11 @@ urlpatterns = [
     path("accounts/users/<int:user_id>/adjust/", account_credit_adjustment, name="admin_operations_account_credit_adjustment"),
     path("accounts/users/<int:user_id>/reservations/<int:reservation_id>/release/", account_reservation_release, name="admin_operations_account_reservation_release"),
     path("food-catalog/", food_catalog, name="admin_operations_food_catalog"),
+    path(
+        "food-catalog/inventory/",
+        food_catalog_inventory,
+        name="admin_operations_food_catalog_inventory",
+    ),
     path(
         "food-catalog/candidates/<int:candidate_id>/",
         food_catalog_candidate_detail,
