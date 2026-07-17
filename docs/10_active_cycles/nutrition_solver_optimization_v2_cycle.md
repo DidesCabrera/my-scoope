@@ -59,6 +59,12 @@ NSO00 freezes the current v2 behavior:
 | NSO09 | Shadow comparison, explanations and quality telemetry. |
 | NSO10 | Activation gates, current docs, Knowledge Center and cycle closure. |
 
+## Implementation status
+
+- NSO00: completed; baseline and golden scenarios frozen.
+- NSO01: completed; versioned feature requirements distinguish required, optional, missing and
+  low-confidence capabilities without importing Food Catalog into the solver.
+
 ## Golden scenario families
 
 - feasible balanced meal;
