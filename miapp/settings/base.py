@@ -457,6 +457,18 @@ FOOD_CATALOG_FATSECRET_API_BASE_URL = os.environ.get(
     "FOOD_CATALOG_FATSECRET_API_BASE_URL",
     "https://platform.fatsecret.com/rest/server.api",
 ).strip()
+FOOD_CATALOG_FATSECRET_OAUTH_SCOPE = os.environ.get(
+    "FOOD_CATALOG_FATSECRET_OAUTH_SCOPE",
+    "basic",
+).strip()
+FOOD_CATALOG_FATSECRET_SEARCH_METHOD = os.environ.get(
+    "FOOD_CATALOG_FATSECRET_SEARCH_METHOD",
+    "foods.search",
+).strip()
+FOOD_CATALOG_FATSECRET_FOOD_GET_METHOD = os.environ.get(
+    "FOOD_CATALOG_FATSECRET_FOOD_GET_METHOD",
+    "food.get",
+).strip()
 FOOD_CATALOG_FATSECRET_TIMEOUT_SECONDS = int(
     os.environ.get("FOOD_CATALOG_FATSECRET_TIMEOUT_SECONDS", "15")
 )

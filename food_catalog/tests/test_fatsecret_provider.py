@@ -70,7 +70,12 @@ class FatSecretProviderTests(SimpleTestCase):
             }
         }
         provider = FatSecretProvider(
-            FatSecretProviderConfig(client_id="client", client_secret="secret", enabled=True),
+            FatSecretProviderConfig(
+                client_id="client",
+                client_secret="secret",
+                search_method="foods.search.v3",
+                enabled=True,
+            ),
             session=session,
         )
 
@@ -103,6 +108,8 @@ class FatSecretProviderTests(SimpleTestCase):
 
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].external_food_id, "123")
+        self.assertEqual(session.get_calls[0]["params"]["method"], "foods.search")
+        self.assertEqual(session.post_calls[0]["data"]["scope"], "basic")
 
     def test_search_raises_when_nonempty_v3_response_shape_is_unknown(self):
         session = FakeSession()
@@ -163,6 +170,27 @@ class FatSecretProviderTests(SimpleTestCase):
         self.assertEqual(detail.servings[0].external_serving_id, "456")
         self.assertEqual(detail.servings[0].grams, Decimal("100.000"))
         self.assertEqual(detail.servings[0].protein_g, Decimal("16.9"))
+        self.assertEqual(session.get_calls[0]["params"]["method"], "food.get")
+
+    def test_premier_methods_and_scope_can_be_configured(self):
+        session = FakeSession()
+        session.get_payload = {"foods_search": {"total_results": "0"}}
+        provider = FatSecretProvider(
+            FatSecretProviderConfig(
+                client_id="client",
+                client_secret="secret",
+                oauth_scope="premier",
+                search_method="foods.search.v3",
+                food_get_method="food.get.v4",
+                enabled=True,
+            ),
+            session=session,
+        )
+
+        provider.search("avena")
+
+        self.assertEqual(session.post_calls[0]["data"]["scope"], "premier")
+        self.assertEqual(session.get_calls[0]["params"]["method"], "foods.search.v3")
 
     def test_get_serving_returns_matching_serving(self):
         session = FakeSession()
@@ -223,6 +251,9 @@ class FatSecretProviderTests(SimpleTestCase):
         FOOD_CATALOG_FATSECRET_ENABLED=True,
         FOOD_CATALOG_FATSECRET_CLIENT_ID="client",
         FOOD_CATALOG_FATSECRET_CLIENT_SECRET="secret",
+        FOOD_CATALOG_FATSECRET_OAUTH_SCOPE="premier",
+        FOOD_CATALOG_FATSECRET_SEARCH_METHOD="foods.search.v3",
+        FOOD_CATALOG_FATSECRET_FOOD_GET_METHOD="food.get.v4",
         FOOD_CATALOG_FATSECRET_TIMEOUT_SECONDS=9,
     )
     def test_from_django_settings_builds_config(self):
@@ -232,3 +263,6 @@ class FatSecretProviderTests(SimpleTestCase):
 
         self.assertTrue(provider.config.is_configured)
         self.assertEqual(provider.config.timeout_seconds, 9)
+        self.assertEqual(provider.config.oauth_scope, "premier")
+        self.assertEqual(provider.config.search_method, "foods.search.v3")
+        self.assertEqual(provider.config.food_get_method, "food.get.v4")
