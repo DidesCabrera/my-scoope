@@ -148,7 +148,9 @@ class FatSecretProvider:
             headers={"Authorization": f"Bearer {access_token}"},
             timeout=self.config.timeout_seconds,
         )
-        return _decode_json_response(response, context="FatSecret API")
+        data = _decode_json_response(response, context="FatSecret API")
+        _raise_for_api_error(data)
+        return data
 
     def _map_search_result(self, payload: Mapping[str, Any]) -> ExternalFoodSearchResult:
         return ExternalFoodSearchResult(
@@ -218,6 +220,17 @@ def _nested(payload: Mapping[str, Any], *keys: str) -> Any:
             return None
         current = current.get(key)
     return current
+
+
+def _raise_for_api_error(payload: Mapping[str, Any]) -> None:
+    """Raise for FatSecret errors that are returned with a successful HTTP status."""
+
+    error = payload.get("error")
+    if not isinstance(error, Mapping):
+        return
+    code = str(error.get("code", "unknown")).strip() or "unknown"
+    message = str(error.get("message", "Unknown FatSecret API error.")).strip()
+    raise ExternalFoodProviderError(f"FatSecret API error {code}: {message}")
 
 
 def _as_list(value: Any) -> list[Mapping[str, Any]]:

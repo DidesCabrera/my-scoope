@@ -200,6 +200,25 @@ class FatSecretProviderTests(SimpleTestCase):
         with self.assertRaises(ExternalFoodProviderError):
             provider.search("avena")
 
+    def test_api_error_inside_successful_http_response_is_not_an_empty_search(self):
+        session = FakeSession()
+        session.get_payload = {
+            "error": {
+                "code": 21,
+                "message": "Invalid IP address detected.",
+            }
+        }
+        provider = FatSecretProvider(
+            FatSecretProviderConfig(client_id="client", client_secret="secret", enabled=True),
+            session=session,
+        )
+
+        with self.assertRaisesMessage(
+            ExternalFoodProviderError,
+            "FatSecret API error 21: Invalid IP address detected.",
+        ):
+            provider.search("avena")
+
     @override_settings(
         FOOD_CATALOG_FATSECRET_ENABLED=True,
         FOOD_CATALOG_FATSECRET_CLIENT_ID="client",
