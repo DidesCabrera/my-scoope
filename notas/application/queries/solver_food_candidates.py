@@ -4,6 +4,12 @@ from dataclasses import dataclass
 from decimal import Decimal
 from django.db.models import Q, QuerySet
 
+from nutrition_solver.domain.capabilities import SolverFeatureKey
+from nutrition_solver.domain.food_profiles import (
+    SolverFeatureValue,
+    SolverFoodProfile,
+    derive_macro_role_features,
+)
 from nutrition_solver.domain.models import PortionBounds, SolverFood
 
 from notas.application.queries.read_boundaries import get_readable_food_queryset
@@ -146,6 +152,89 @@ def build_solver_food_candidate(
         bounds=_build_portion_bounds(food=food, role=inferred_role),
         required=bool(required),
     )
+
+
+def build_solver_food_profile(
+    food: Food,
+    *,
+    role: str | None = None,
+    required: bool = True,
+) -> SolverFoodProfile:
+    """Build a pure profile from the stable operational snapshot only."""
+
+    candidate = build_solver_food_candidate(food, role=role, required=required)
+    payload = dict(food.solver_capabilities or {})
+    values = dict(payload.get("values") or {})
+    confidence = dict(payload.get("confidence") or {})
+    source = str(payload.get("source") or "operational_food")
+    version = str(payload.get("schema_version") or food.solver_capabilities_version)
+    quality_confidence = max(0.0, min(float(food.data_quality_score or 0), 100.0))
+
+    features = [
+        SolverFeatureValue(SolverFeatureKey.NUTRIENTS, True, quality_confidence, source, version),
+        SolverFeatureValue(
+            SolverFeatureKey.PORTION_BOUNDS,
+            {
+                "minimum_g": candidate.bounds.minimum_g,
+                "maximum_g": candidate.bounds.maximum_g,
+                "step_g": candidate.bounds.step_g,
+            },
+            _feature_confidence(confidence, "portion_bounds", quality_confidence),
+            source,
+            version,
+        ),
+    ]
+
+    if food.preparation_state != Food.PREPARATION_UNKNOWN:
+        features.append(
+            SolverFeatureValue(
+                SolverFeatureKey.PREPARATION_STATE,
+                food.preparation_state,
+                _feature_confidence(confidence, "preparation_state", quality_confidence),
+                source,
+                version,
+            )
+        )
+
+    feature_map = {
+        "food_form": SolverFeatureKey.FOOD_FORM,
+        "functional_roles": SolverFeatureKey.FUNCTIONAL_ROLES,
+        "meal_affinities": SolverFeatureKey.MEAL_AFFINITIES,
+        "dietary_tags": SolverFeatureKey.DIETARY_TAGS,
+        "allergens": SolverFeatureKey.ALLERGENS,
+        "preparation_effort": SolverFeatureKey.PREPARATION_EFFORT,
+        "cost_band": SolverFeatureKey.COST_BAND,
+    }
+    for value_key, feature_key in feature_map.items():
+        value = values.get(value_key)
+        if value in (None, "", [], ()) or value == "unknown":
+            continue
+        features.append(
+            SolverFeatureValue(
+                feature_key,
+                value,
+                _feature_confidence(confidence, value_key, quality_confidence),
+                source,
+                version,
+            )
+        )
+
+    if not any(feature.feature == SolverFeatureKey.FUNCTIONAL_ROLES for feature in features):
+        features.append(derive_macro_role_features(candidate))
+
+    return SolverFoodProfile(
+        food=candidate,
+        features=tuple(features),
+        schema_version=version,
+        metadata={"operational_food_id": food.id},
+    )
+
+
+def _feature_confidence(values: dict, key: str, default: float) -> float:
+    try:
+        return max(0.0, min(float(values.get(key, default)), 100.0))
+    except (TypeError, ValueError):
+        return default
 
 
 def _build_portion_bounds(*, food: Food, role: str) -> PortionBounds:

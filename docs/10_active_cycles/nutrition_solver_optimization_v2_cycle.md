@@ -68,6 +68,8 @@ NSO00 freezes the current v2 behavior:
   derivation status and schema version without inventing missing data.
 - NSO03: completed; Food Catalog can curate multi-role capabilities, affinities, tags, allergens,
   effort, cost and feature confidence while keeping optional data explicitly absent.
+- NSO04: completed; capabilities now cross through an explicit, versioned `notas.Food` snapshot
+  and become pure solver profiles without exposing master catalog identity.
 
 ## Golden scenario families
 
