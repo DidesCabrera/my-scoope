@@ -28,6 +28,9 @@ from food_catalog.application.imports.sources import SOURCE_FATSECRET
 FATSECRET_ATTRIBUTION_TEXT = "Nutrition data provided by FatSecret."
 DEFAULT_FATSECRET_TOKEN_URL = "https://oauth.fatsecret.com/connect/token"
 DEFAULT_FATSECRET_API_BASE_URL = "https://platform.fatsecret.com/rest/server.api"
+DEFAULT_FATSECRET_OAUTH_SCOPE = "basic"
+DEFAULT_FATSECRET_SEARCH_METHOD = "foods.search"
+DEFAULT_FATSECRET_FOOD_GET_METHOD = "food.get"
 
 
 @dataclass(frozen=True)
@@ -38,6 +41,9 @@ class FatSecretProviderConfig:
     client_secret: str = ""
     token_url: str = DEFAULT_FATSECRET_TOKEN_URL
     api_base_url: str = DEFAULT_FATSECRET_API_BASE_URL
+    oauth_scope: str = DEFAULT_FATSECRET_OAUTH_SCOPE
+    search_method: str = DEFAULT_FATSECRET_SEARCH_METHOD
+    food_get_method: str = DEFAULT_FATSECRET_FOOD_GET_METHOD
     timeout_seconds: int = 15
     enabled: bool = False
 
@@ -73,6 +79,21 @@ class FatSecretProvider:
                 "FOOD_CATALOG_FATSECRET_API_BASE_URL",
                 DEFAULT_FATSECRET_API_BASE_URL,
             ),
+            oauth_scope=getattr(
+                django_settings,
+                "FOOD_CATALOG_FATSECRET_OAUTH_SCOPE",
+                DEFAULT_FATSECRET_OAUTH_SCOPE,
+            ),
+            search_method=getattr(
+                django_settings,
+                "FOOD_CATALOG_FATSECRET_SEARCH_METHOD",
+                DEFAULT_FATSECRET_SEARCH_METHOD,
+            ),
+            food_get_method=getattr(
+                django_settings,
+                "FOOD_CATALOG_FATSECRET_FOOD_GET_METHOD",
+                DEFAULT_FATSECRET_FOOD_GET_METHOD,
+            ),
             timeout_seconds=int(getattr(django_settings, "FOOD_CATALOG_FATSECRET_TIMEOUT_SECONDS", 15)),
             enabled=bool(getattr(django_settings, "FOOD_CATALOG_FATSECRET_ENABLED", False)),
         )
@@ -86,7 +107,7 @@ class FatSecretProvider:
             raise ExternalFoodProviderError("query is required.")
         payload = self._api_get(
             {
-                "method": "foods.search.v3",
+                "method": self.config.search_method,
                 "search_expression": query,
                 "max_results": str(max_results),
                 "page_number": str(page_number),
@@ -101,7 +122,7 @@ class FatSecretProvider:
         external_food_id = external_food_id.strip()
         if not external_food_id:
             raise ExternalFoodProviderError("external_food_id is required.")
-        payload = self._api_get({"method": "food.get.v4", "food_id": external_food_id})
+        payload = self._api_get({"method": self.config.food_get_method, "food_id": external_food_id})
         food_payload = payload.get("food", payload)
         if not isinstance(food_payload, Mapping):
             raise ExternalFoodProviderError("FatSecret detail response did not include a food payload.")
@@ -129,7 +150,7 @@ class FatSecretProvider:
             return self._access_token
         response = self.session.post(
             self.config.token_url,
-            data={"grant_type": "client_credentials", "scope": "basic"},
+            data={"grant_type": "client_credentials", "scope": self.config.oauth_scope},
             auth=HTTPBasicAuth(self.config.client_id, self.config.client_secret),
             timeout=self.config.timeout_seconds,
         )
@@ -278,6 +299,9 @@ def _decimal_or_none(value: Any) -> Decimal | None:
 
 __all__ = [
     "DEFAULT_FATSECRET_API_BASE_URL",
+    "DEFAULT_FATSECRET_FOOD_GET_METHOD",
+    "DEFAULT_FATSECRET_OAUTH_SCOPE",
+    "DEFAULT_FATSECRET_SEARCH_METHOD",
     "DEFAULT_FATSECRET_TOKEN_URL",
     "FATSECRET_ATTRIBUTION_TEXT",
     "FatSecretProvider",
