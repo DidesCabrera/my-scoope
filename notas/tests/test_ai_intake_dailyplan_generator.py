@@ -288,6 +288,7 @@ class AiIntakeDailyPlanGeneratorTests(TestCase):
 
         proposal = result.proposal
         self.assertEqual(proposal.proposed_payload["intent"], CREATE_DAILYPLAN_INTENT)
+        self.assertEqual(proposal.status, NutritionProposal.STATUS_PENDING_REVIEW)
         self.assertEqual(proposal.current_snapshot["generator_version"], DAILYPLAN_GENERATOR_VERSION)
         self.assertEqual(proposal.validation_summary["generator"]["version"], DAILYPLAN_GENERATOR_VERSION)
         self.assertEqual(proposal.validation_summary["generator"]["meal_templates"][0]["kind"], "breakfast")
@@ -299,6 +300,10 @@ class AiIntakeDailyPlanGeneratorTests(TestCase):
         self.assertIn("subject_context", proposal.current_snapshot)
         self.assertIn("subject_context", proposal.validation_summary["generator"])
         self.assertIn("total_kcal", proposal.validation_summary["target_comparison"])
+        self.assertEqual(
+            proposal.validation_summary["nutrition_solver"]["active_backend"],
+            "legacy_generator_v6",
+        )
         self.assertEqual(
             proposal.validation_summary["target_comparison"]["total_kcal"]["is_estimated_target"],
             True,

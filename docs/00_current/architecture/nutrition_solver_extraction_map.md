@@ -1,12 +1,36 @@
 # Nutrition Solver Extraction Map
 
-Status: completed
-Date: 2026-07-02
-Closed: 2026-07-02
-Cycle: `docs/10_active_cycles/nutrition_solver_app_cycle.md`
-Patch: S10 closure
+Status: completed and current
+Date: 2026-07-16
+Cycle: NSO00-NSO10
+Patch: S10 closure; extended by NSO10 activation and closure
 
-## Purpose
+## Optimization V2 current contract
+
+The extracted boundary now optimizes food selection and portion steps rather than only tuning
+portions for one preselected set. `OptimizationProblemV2` can express meal slots, meal grammar,
+per-meal and daily nutrient ranges, hard constraints, preferences and a deterministic time limit.
+
+The source chain is explicit:
+
+```text
+food_catalog.CatalogFood curated capability + confidence
+  -> publication snapshot
+  -> notas.Food solver_capabilities (stable operational copy)
+  -> notas solver profile adapter
+  -> pure nutrition_solver OptimizationProblemV2
+  -> heuristic_v2 or cp_sat_v1
+  -> pending-review NutritionProposal
+```
+
+The solver never reads `CatalogFood` at runtime. Catalog facts can improve its functional quality,
+but missing optional facts remain diagnosable and can use identified, lower-confidence derivation.
+
+CP-SAT enforces portion bounds/steps, component counts, required functional role groups, explicit
+hard food constraints, daily ranges and repetition. It can also produce distinct feasible
+compositions. Quality reports expose nutritional proximity and meal-grammar coverage separately.
+
+## Purpose and extraction history
 
 This document records the completed progressive separation of the current nutrition engine into the Django app `nutrition_solver`.
 
@@ -18,13 +42,17 @@ The active deterministic solver boundary is split intentionally:
 
 ```text
 nutrition_solver/
-  -> pure contracts, models, portion solver, validators and diagnostics
+  -> pure contracts, capability profiles, grammar, candidate portfolios,
+     heuristic/CP-SAT optimization, validators, quality and diagnostics
 
 notas/application/nutrition_engine/
   -> temporary compatibility bridges plus remaining upstream helpers not yet extracted
 
 notas/application/queries/solver_food_candidates.py
-  -> ORM adapter from operational notas.Food to pure SolverFood candidates
+  -> ORM adapter from operational notas.Food to pure SolverFood/SolverFoodProfile candidates
+
+notas/application/ai_intake/optimizer_v2_adapter.py
+  -> activation adapter and reviewable DailyPlan payload conversion
 
 notas/application/proposals/solver_meal_proposals.py
   -> proposal orchestration and NutritionProposal persistence
@@ -52,13 +80,14 @@ notas/application/ai_intake/dailyplan_generator.py
 
 That flow uses the engine to turn a nutrition brief into generated daily-plan proposal payloads. It may keep orchestrating proposal creation, but the deterministic calculation should gradually move behind solver contracts.
 
-## Future app boundary
+## App boundary
 
 The future app boundary is:
 
 ```text
 nutrition_solver
-  -> owns deterministic calculation, constraints, scoring and diagnostics
+  -> owns deterministic calculation, capabilities required for optimization, constraints,
+     meal grammar, backend selection, scoring and diagnostics
 
 notas
   -> owns persisted Food, Meal, DailyPlan, Program and NutritionProposal

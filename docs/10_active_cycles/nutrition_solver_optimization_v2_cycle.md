@@ -1,6 +1,6 @@
 # Nutrition Solver Optimization V2 Cycle
 
-Status: active
+Status: implementation complete; merge gated by green CI
 Date: 2026-07-16
 Cycle: NSO00-NSO10
 Branch base: `staging@10cf38f57616ed395f285f892b31361572f1f33c`
@@ -80,6 +80,8 @@ NSO00 freezes the current v2 behavior:
   slots and can return distinct feasible compositions as ranked alternatives.
 - NSO09: completed; shadow comparison now measures nutritional and meal-grammar quality separately,
   records selection overlap and identifies hard regressions without changing the active result.
+- NSO10: completed; DailyPlan generation now has controlled CP-SAT activation, legacy-visible shadow
+  mode, proposal diagnostics, rollback settings and promoted current/admin documentation.
 
 ## Golden scenario families
 

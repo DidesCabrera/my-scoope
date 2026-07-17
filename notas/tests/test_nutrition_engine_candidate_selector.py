@@ -191,7 +191,7 @@ class NutritionEngineCandidateSelectorTests(SimpleTestCase):
 
         self.assertEqual(selection.protein_id, 10)
         self.assertEqual(selection.carb_id, 12)
-        self.assertEqual(DAILYPLAN_GENERATOR_VERSION, "nutrition_engine_v6_strict_validator")
+        self.assertEqual(DAILYPLAN_GENERATOR_VERSION, "nutrition_engine_v7_optimizer_gate")
 
     def test_missing_required_role_raises_selection_error(self):
         foods = [

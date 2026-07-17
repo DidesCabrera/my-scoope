@@ -24,6 +24,16 @@ def _env_float(name: str, default: float = 0.0) -> float:
         return default
 
 
+def _env_int(name: str, default: int = 0) -> int:
+    raw_value = os.environ.get(name, "").strip()
+    if not raw_value:
+        return default
+    try:
+        return int(raw_value)
+    except ValueError:
+        return default
+
+
 SECRET_KEY = os.environ.get("SECRET_KEY", "")
 
 DEBUG = False
@@ -226,7 +236,7 @@ NUTRITION_SOLVER_SHADOW_BACKEND = os.environ.get(
 ).strip().lower()
 NUTRITION_SOLVER_TIME_LIMIT_MS = max(
     50,
-    min(int(os.environ.get("NUTRITION_SOLVER_TIME_LIMIT_MS", "1500")), 10_000),
+    min(_env_int("NUTRITION_SOLVER_TIME_LIMIT_MS", 1500), 10_000),
 )
 
 
