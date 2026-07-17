@@ -72,6 +72,8 @@ NSO00 freezes the current v2 behavior:
   and become pure solver profiles without exposing master catalog identity.
 - NSO05: completed; Optimization Problem V2 adds nutrient ranges, slots and backend-independent
   constraints while meal grammar validates multi-capability archetypes.
+- NSO06: completed; bounded candidate portfolios now rank multiple complete meal-grammar
+  combinations using capability confidence, affinity, exclusions and explicit preferences.
 
 ## Golden scenario families
 
