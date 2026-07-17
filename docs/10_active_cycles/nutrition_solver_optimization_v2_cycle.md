@@ -74,6 +74,8 @@ NSO00 freezes the current v2 behavior:
   constraints while meal grammar validates multi-capability archetypes.
 - NSO06: completed; bounded candidate portfolios now rank multiple complete meal-grammar
   combinations using capability confidence, affinity, exclusions and explicit preferences.
+- NSO07: completed; the selectable CP-SAT backend jointly enforces meal grammar, hard nutrient
+  ranges, exclusions, portion bounds and portion steps while preserving the heuristic backend.
 
 ## Golden scenario families
 

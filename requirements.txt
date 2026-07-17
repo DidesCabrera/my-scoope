@@ -12,6 +12,7 @@ gunicorn==25.1.0
 idna==3.11
 numpy==2.3.5
 openpyxl==3.1.5
+ortools==9.15.6755
 packaging==26.0
 pandas==2.3.3
 psycopg2-binary==2.9.11
