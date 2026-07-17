@@ -35,6 +35,9 @@ Cuando un ciclo planificado empiece a implementarse, el documento puede permanec
 
 ## Planes actuales
 
+- `nutrition_solver_optimization_v2_cycle.md`: ciclo activo NSO00-NSO10 para evolucionar el
+  solver de porciones v2 hacia optimización conjunta, explicable y contractualmente integrada
+  con capacidades curadas de Food Catalog mediante snapshots operacionales.
 - `ai_assistant_post_tool_followup_transport_cycle.md`: ciclo completado PT00-PT06 para diagnosticar y corregir la correlación post-tool de Responses API, hacer visibles las degradaciones, alinear el provider fake con producción y revalidar la conducta antes oculta por acknowledgements locales.
 - `ai_assistant_behavioral_alignment_cycle.md`: ciclo completado BA00-BA07. El contrato conductual y post-tool fue promovido a `docs/00_current/` y la frontera global pasó `check`, 2 regresiones núcleo y 1.446 tests mediante `scripts/ci_django_checks.sh`.
 - `ai_assistant_client_memory_profile_objects_cycle.md`: ciclo completado CM00-CM24. La ejecución live final y el rerun dirigido de `cambio_de_direccion` aprobaron invariantes automáticas y revisión humana, consolidando function calling nativo, estado/tool grounding, cards explícitas y fallbacks state-only.
