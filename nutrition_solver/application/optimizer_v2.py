@@ -84,6 +84,20 @@ class OptimizationPlanResultV2:
         }
 
 
+@dataclass(frozen=True)
+class OptimizationAlternativesV2:
+    backend: OptimizationBackend
+    alternatives: tuple[OptimizationPlanResultV2, ...]
+    requested_count: int
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "backend": self.backend.value,
+            "requested_count": self.requested_count,
+            "alternatives": [alternative.as_dict() for alternative in self.alternatives],
+        }
+
+
 def solve_optimization_problem(
     problem: OptimizationProblemV2,
     *,
@@ -91,8 +105,34 @@ def solve_optimization_problem(
 ) -> OptimizationPlanResultV2:
     selected_backend = OptimizationBackend(backend)
     if selected_backend == OptimizationBackend.CP_SAT_V1:
-        return _solve_cp_sat(problem)
+        return _solve_cp_sat(problem, forbidden_selections=())
     return _solve_heuristic(problem)
+
+
+def solve_optimization_alternatives(
+    problem: OptimizationProblemV2,
+    *,
+    count: int = 3,
+    backend: OptimizationBackend | str = OptimizationBackend.CP_SAT_V1,
+) -> OptimizationAlternativesV2:
+    """Return distinct selected-food compositions ordered by solver objective."""
+
+    selected_backend = OptimizationBackend(backend)
+    requested = max(1, min(int(count), 10))
+    if selected_backend != OptimizationBackend.CP_SAT_V1:
+        result = solve_optimization_problem(problem, backend=selected_backend)
+        alternatives = () if result.status == OptimizationStatus.IMPOSSIBLE else (result,)
+        return OptimizationAlternativesV2(selected_backend, alternatives, requested)
+
+    alternatives: list[OptimizationPlanResultV2] = []
+    forbidden: list[tuple[tuple[str, int], ...]] = []
+    for _ in range(requested):
+        result = _solve_cp_sat(problem, forbidden_selections=tuple(forbidden))
+        if result.status == OptimizationStatus.IMPOSSIBLE:
+            break
+        alternatives.append(result)
+        forbidden.append(_selection_signature(result))
+    return OptimizationAlternativesV2(selected_backend, tuple(alternatives), requested)
 
 
 def _solve_heuristic(problem: OptimizationProblemV2) -> OptimizationPlanResultV2:
@@ -149,7 +189,11 @@ def _solve_heuristic(problem: OptimizationProblemV2) -> OptimizationPlanResultV2
     )
 
 
-def _solve_cp_sat(problem: OptimizationProblemV2) -> OptimizationPlanResultV2:
+def _solve_cp_sat(
+    problem: OptimizationProblemV2,
+    *,
+    forbidden_selections: tuple[tuple[tuple[str, int], ...], ...],
+) -> OptimizationPlanResultV2:
     from ortools.sat.python import cp_model
 
     model = cp_model.CpModel()
@@ -199,6 +243,19 @@ def _solve_cp_sat(problem: OptimizationProblemV2) -> OptimizationPlanResultV2:
             return _impossible_result(OptimizationBackend.CP_SAT_V1, "required_food_unavailable")
         model.add(sum(required_vars) >= 1)
 
+    max_repetitions = _max_food_repetitions(problem)
+    if max_repetitions is not None:
+        for profile in profiles:
+            model.add(
+                sum(selected[slot.slot_id, profile.food.food_id] for slot in problem.meal_slots)
+                <= max_repetitions
+            )
+
+    for forbidden in forbidden_selections:
+        variables = [selected[key] for key in forbidden if key in selected]
+        if variables:
+            model.add(sum(variables) <= len(variables) - 1)
+
     objective_terms = []
     for slot in problem.meal_slots:
         for nutrient_range in slot.nutrient_ranges:
@@ -211,6 +268,22 @@ def _solve_cp_sat(problem: OptimizationProblemV2) -> OptimizationPlanResultV2:
             model.add(deviation >= expression - preferred)
             model.add(deviation >= preferred - expression)
             objective_terms.append(max(1, round(nutrient_range.weight * 10)) * deviation)
+
+    for nutrient_range in problem.daily_nutrient_ranges:
+        expression = sum(
+            _nutrient_expression(profiles, slot.slot_id, nutrient_range.metric, quantity_steps)
+            for slot in problem.meal_slots
+        )
+        _add_range_constraint(model, expression, nutrient_range)
+        deviation = model.new_int_var(
+            0,
+            _range_cap(nutrient_range),
+            f"daily_dev_{nutrient_range.metric}",
+        )
+        preferred = _scaled(nutrient_range.preferred)
+        model.add(deviation >= expression - preferred)
+        model.add(deviation >= preferred - expression)
+        objective_terms.append(max(1, round(nutrient_range.weight * 10)) * deviation)
 
     preferred_ids = {int(value) for value in problem.preferences.get("preferred_food_ids", ())}
     for slot in problem.meal_slots:
@@ -334,6 +407,16 @@ def _required_food_ids(problem: OptimizationProblemV2) -> tuple[int, ...]:
     return tuple(sorted(values))
 
 
+def _max_food_repetitions(problem: OptimizationProblemV2) -> int | None:
+    values = []
+    for constraint in problem.constraints:
+        if constraint.severity.lower() != "hard" or constraint.constraint_type != "max_food_repetitions":
+            continue
+        if constraint.payload.get("count") is not None:
+            values.append(max(0, int(constraint.payload["count"])))
+    return min(values) if values else None
+
+
 def _macro_target(ranges: tuple[NutrientRange, ...]) -> MacroTarget:
     values = {item.metric: item.preferred for item in ranges}
     return MacroTarget(
@@ -353,6 +436,16 @@ def _sum_meal_totals(meals: list[MealSolutionV2]) -> dict[str, float]:
         metric: sum(float(meal.nutrient_totals.get(metric, 0)) for meal in meals)
         for metric in _nutrient_metrics()
     }
+
+
+def _selection_signature(result: OptimizationPlanResultV2) -> tuple[tuple[str, int], ...]:
+    return tuple(
+        sorted(
+            (meal.slot_id, portion.food_id)
+            for meal in result.meals
+            for portion in meal.portions
+        )
+    )
 
 
 def _impossible_result(

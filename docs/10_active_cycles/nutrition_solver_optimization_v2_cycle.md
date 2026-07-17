@@ -76,6 +76,8 @@ NSO00 freezes the current v2 behavior:
   combinations using capability confidence, affinity, exclusions and explicit preferences.
 - NSO07: completed; the selectable CP-SAT backend jointly enforces meal grammar, hard nutrient
   ranges, exclusions, portion bounds and portion steps while preserving the heuristic backend.
+- NSO08: completed; a single CP-SAT model now enforces daily ranges and repetition across meal
+  slots and can return distinct feasible compositions as ranked alternatives.
 
 ## Golden scenario families
 
