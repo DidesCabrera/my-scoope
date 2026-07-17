@@ -209,6 +209,28 @@ NUTRITION_ONBOARDING_ALLOWED_PREFIXES = (
 
 
 # ==============================
+# NUTRITION SOLVER OPTIMIZATION
+# ==============================
+
+NUTRITION_SOLVER_BACKEND = os.environ.get(
+    "NUTRITION_SOLVER_BACKEND",
+    "heuristic_v2",
+).strip().lower()
+NUTRITION_SOLVER_SHADOW_ENABLED = os.environ.get(
+    "NUTRITION_SOLVER_SHADOW_ENABLED",
+    "false",
+).strip().lower() in {"1", "true", "yes", "on"}
+NUTRITION_SOLVER_SHADOW_BACKEND = os.environ.get(
+    "NUTRITION_SOLVER_SHADOW_BACKEND",
+    "cp_sat_v1",
+).strip().lower()
+NUTRITION_SOLVER_TIME_LIMIT_MS = max(
+    50,
+    min(int(os.environ.get("NUTRITION_SOLVER_TIME_LIMIT_MS", "1500")), 10_000),
+)
+
+
+# ==============================
 # AI ASSISTANT / EXTERNAL LLM
 # ==============================
 

@@ -78,6 +78,8 @@ NSO00 freezes the current v2 behavior:
   ranges, exclusions, portion bounds and portion steps while preserving the heuristic backend.
 - NSO08: completed; a single CP-SAT model now enforces daily ranges and repetition across meal
   slots and can return distinct feasible compositions as ranked alternatives.
+- NSO09: completed; shadow comparison now measures nutritional and meal-grammar quality separately,
+  records selection overlap and identifies hard regressions without changing the active result.
 
 ## Golden scenario families
 
