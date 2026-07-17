@@ -23,8 +23,8 @@ Esta carpeta contiene documentación vigente y de alta autoridad. Una IA o desar
 17. `../10_active_cycles/onboarding_nutrition_profile_cycle.md` para historia y alcance cerrado del ciclo ONB00-ONB09.
 18. `../40_technical/qa/onboarding_nutrition_v1_qa.md` cuando se modifique onboarding, ficha nutricional, subject context, solver o warning de propuestas externas.
 19. `architecture/nutrition_solver_extraction_map.md` cuando el trabajo sea Nutrition Solver.
-20. `features/admin_knowledge/nutrition_solver.md` para operación, campos requeridos del catálogo,
-    activación, shadow mode y rollback del optimizador.
+20. `features/admin_knowledge/README.md` como Knowledge Center para operación conjunta de Food
+    Catalog, snapshots, Nutrition Solver, shadow mode y rollback.
 21. `../40_technical/qa/ci_stabilization_qa.md` cuando el trabajo toque GitHub Actions, CI, tests desfasados o estabilización de `staging`.
 22. `../40_technical/operations/testing_and_ci_policy.md` antes de abrir/reabrir PRs, cambiar workflows o ajustar tests.
 23. `../40_technical/qa/testing_hygiene_guide.md` antes de crear, relajar o corregir tests después de bugs reales en staging/CI.
