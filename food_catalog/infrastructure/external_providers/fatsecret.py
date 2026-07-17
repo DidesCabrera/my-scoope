@@ -92,7 +92,7 @@ class FatSecretProvider:
                 "page_number": str(page_number),
             }
         )
-        foods = _as_list(_nested(payload, "foods", "food"))
+        foods = _extract_search_foods(payload)
         return tuple(self._map_search_result(food) for food in foods)
 
     def get_food(self, external_food_id: str) -> ExternalFoodDetail:
@@ -227,6 +227,30 @@ def _as_list(value: Any) -> list[Mapping[str, Any]]:
         return [value]
     if isinstance(value, list):
         return [item for item in value if isinstance(item, Mapping)]
+    return []
+
+
+def _extract_search_foods(payload: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    """Extract search results from current v3 and legacy FatSecret envelopes."""
+
+    candidates = (
+        _nested(payload, "foods_search", "results", "food"),
+        _nested(payload, "foods_search", "food"),
+        _nested(payload, "foods", "food"),
+    )
+    for candidate in candidates:
+        if candidate is not None:
+            return _as_list(candidate)
+
+    total_results = _nested(payload, "foods_search", "total_results")
+    try:
+        has_results = int(str(total_results or "0")) > 0
+    except ValueError:
+        has_results = False
+    if has_results:
+        raise ExternalFoodProviderError(
+            "FatSecret search response reported results but used an unsupported payload shape."
+        )
     return []
 
 

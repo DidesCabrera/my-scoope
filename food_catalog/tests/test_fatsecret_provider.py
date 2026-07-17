@@ -51,19 +51,22 @@ class FatSecretProviderTests(SimpleTestCase):
         with self.assertRaises(ExternalFoodProviderConfigurationError):
             provider.search("avena")
 
-    def test_search_maps_fatsecret_results_without_persisting(self):
+    def test_search_maps_v3_fatsecret_results_without_persisting(self):
         session = FakeSession()
         session.get_payload = {
-            "foods": {
-                "food": [
-                    {
-                        "food_id": "123",
-                        "food_name": "Avena",
-                        "brand_name": "",
-                        "food_description": "100 g - 389 kcal",
-                        "food_url": "https://example.test/food/123",
-                    }
-                ]
+            "foods_search": {
+                "total_results": "1",
+                "results": {
+                    "food": [
+                        {
+                            "food_id": "123",
+                            "food_name": "Avena",
+                            "brand_name": "",
+                            "food_description": "100 g - 389 kcal",
+                            "food_url": "https://example.test/food/123",
+                        }
+                    ]
+                },
             }
         }
         provider = FatSecretProvider(
@@ -80,6 +83,52 @@ class FatSecretProviderTests(SimpleTestCase):
         self.assertEqual(results[0].attribution_text, FATSECRET_ATTRIBUTION_TEXT)
         self.assertEqual(session.get_calls[0]["params"]["method"], "foods.search.v3")
         self.assertEqual(session.get_calls[0]["headers"]["Authorization"], "Bearer token-123")
+
+    def test_search_keeps_legacy_response_compatibility(self):
+        session = FakeSession()
+        session.get_payload = {
+            "foods": {
+                "food": {
+                    "food_id": "123",
+                    "food_name": "Avena",
+                }
+            }
+        }
+        provider = FatSecretProvider(
+            FatSecretProviderConfig(client_id="client", client_secret="secret", enabled=True),
+            session=session,
+        )
+
+        results = provider.search("avena")
+
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].external_food_id, "123")
+
+    def test_search_raises_when_nonempty_v3_response_shape_is_unknown(self):
+        session = FakeSession()
+        session.get_payload = {
+            "foods_search": {
+                "total_results": "1",
+                "unexpected_results": {"food": {"food_id": "123"}},
+            }
+        }
+        provider = FatSecretProvider(
+            FatSecretProviderConfig(client_id="client", client_secret="secret", enabled=True),
+            session=session,
+        )
+
+        with self.assertRaisesMessage(ExternalFoodProviderError, "unsupported payload shape"):
+            provider.search("avena")
+
+    def test_search_allows_a_genuine_empty_v3_result(self):
+        session = FakeSession()
+        session.get_payload = {"foods_search": {"total_results": "0"}}
+        provider = FatSecretProvider(
+            FatSecretProviderConfig(client_id="client", client_secret="secret", enabled=True),
+            session=session,
+        )
+
+        self.assertEqual(provider.search("not-a-food"), ())
 
     def test_detail_maps_servings_and_grams(self):
         session = FakeSession()
