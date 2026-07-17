@@ -70,6 +70,8 @@ NSO00 freezes the current v2 behavior:
   effort, cost and feature confidence while keeping optional data explicitly absent.
 - NSO04: completed; capabilities now cross through an explicit, versioned `notas.Food` snapshot
   and become pure solver profiles without exposing master catalog identity.
+- NSO05: completed; Optimization Problem V2 adds nutrient ranges, slots and backend-independent
+  constraints while meal grammar validates multi-capability archetypes.
 
 ## Golden scenario families
 
