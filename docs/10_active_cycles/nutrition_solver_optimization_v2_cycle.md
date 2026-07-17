@@ -64,6 +64,8 @@ NSO00 freezes the current v2 behavior:
 - NSO00: completed; baseline and golden scenarios frozen.
 - NSO01: completed; versioned feature requirements distinguish required, optional, missing and
   low-confidence capabilities without importing Food Catalog into the solver.
+- NSO02: completed; pure food profiles now carry multi-capability values, provenance, confidence,
+  derivation status and schema version without inventing missing data.
 
 ## Golden scenario families
 
