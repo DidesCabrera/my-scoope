@@ -872,6 +872,27 @@ class CatalogImportBatch(models.Model):
 
     is_dry_run = models.BooleanField(default=False)
 
+    dry_run_batch = models.ForeignKey(
+        "self",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="applied_batches",
+        help_text="Completed equivalent dry-run that authorized this mutating batch.",
+    )
+
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="requested_catalog_import_batches",
+    )
+
+    reason = models.TextField(blank=True)
+    input_sha256 = models.CharField(max_length=64, blank=True)
+    parameters_payload = models.JSONField(default=dict, blank=True)
+
     total_rows = models.PositiveIntegerField(default=0)
     imported_rows = models.PositiveIntegerField(default=0)
     skipped_rows = models.PositiveIntegerField(default=0)
