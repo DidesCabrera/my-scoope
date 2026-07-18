@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
+import json
+import tempfile
 from decimal import Decimal
 from urllib.parse import urlencode
 
@@ -18,6 +21,7 @@ from admin_operations.selectors import (
     get_audit_log_payload,
     get_ai_operations_payload,
     get_food_catalog_inventory_payload,
+    get_food_catalog_import_batches_payload,
     get_food_catalog_operations_payload,
     get_operations_overview_metrics,
 )
@@ -33,6 +37,8 @@ from admin_operations.viewmodels import (
     AdminOperationsCatalogCoverageVM,
     AdminOperationsCatalogInventoryFoodVM,
     AdminOperationsCatalogInventoryVM,
+    AdminOperationsCatalogImportBatchVM,
+    AdminOperationsCatalogImportsVM,
     AdminOperationsAccountDetailVM,
     AdminOperationsAccountsVM,
     AdminOperationsCatalogFoodVM,
@@ -50,8 +56,50 @@ from accounts.models import AccountSubscription, CreditLedger, CreditWallet
 from ai_assistant.models import AICreditLedger, AIUsageEvent, AIUserCreditQuota
 from accounts.services.credits import current_account_credit_period, release_account_credit_reservation
 from food_catalog.application.curation import transition_catalog_food_status
-from food_catalog.models import CatalogCurationCandidate, CatalogFood
+from food_catalog.models import CatalogCurationCandidate, CatalogFood, CatalogImportBatch, CatalogImportSourcePolicy
+from food_catalog.infrastructure.core_natural_foods_seed import (
+    apply_core_natural_foods_seed,
+    core_natural_foods_seed_identity,
+    dry_run_core_natural_foods_seed,
+)
+from food_catalog.infrastructure.imports.governance import (
+    CatalogImportGovernanceError,
+    catalog_import_identity,
+    record_catalog_import_dry_run,
+)
+from food_catalog.application.imports.usda.foundation_foods_reader import (
+    FoundationFoodsReaderError,
+    extract_foundation_food_payloads,
+)
+from food_catalog.infrastructure.imports.catalog_import import CATALOG_SOURCE_NAME_USDA
+from food_catalog.infrastructure.imports.usda_catalog_import import (
+    dry_run_usda_catalog_food_payloads,
+    import_usda_catalog_food_payloads,
+)
+from food_catalog.application.brand_intake import (
+    apply_brand_food_intake_csv,
+    brand_food_intake_identity,
+    dry_run_brand_food_intake_csv,
+)
+from food_catalog.application.manual_intake import (
+    apply_manual_evidence_csv,
+    dry_run_manual_evidence_csv,
+    manual_evidence_identity,
+)
+from notas.application.services.commands.food_catalog_backfill import (
+    DEFAULT_OPERATIONAL_BACKFILL_SOURCE_VERSION,
+    OPERATIONAL_BACKFILL_SOURCE_NAME,
+    OperationalFoodCatalogBackfillError,
+    backfill_catalog_from_operational_foods,
+    dry_run_backfill_catalog_from_operational_foods,
+    operational_backfill_identity,
+)
 from notas.domain.model_modules.proposals import NutritionProposal, NutritionProposalAuditEvent
+from notas.domain.models import Food
+from notas.application.services.food_catalog_snapshots import (
+    FoodCatalogSnapshotError,
+    create_operational_food_snapshot_from_catalog,
+)
 from admin_operations.models import AdminOperationAuditEvent
 
 
@@ -86,6 +134,7 @@ CATALOG_FOOD_ACTIONS = {
     "verified": (CatalogFood.STATUS_VERIFIED, "Marcar verificado"),
     "needs_more_evidence": (CatalogFood.STATUS_NEEDS_MORE_EVIDENCE, "Pedir más evidencia"),
     "rejected": (CatalogFood.STATUS_REJECTED, "Rechazar"),
+    "published": (CatalogFood.STATUS_PUBLISHED, "Publicar"),
 }
 
 
@@ -382,6 +431,7 @@ def build_food_catalog_inventory_vm(
     aggregate = payload["aggregate"]
     total = int(aggregate["total"] or 0)
     page_obj = payload["page_obj"]
+    generic_coverage = payload["generic_coverage"]
 
     category_coverage = [
         AdminOperationsCatalogCoverageVM(
@@ -506,6 +556,25 @@ def build_food_catalog_inventory_vm(
         ],
         category_coverage=category_coverage,
         source_coverage=source_coverage,
+        target_funnel=[
+            AdminOperationsMetricVM("Definidos", _format_int(generic_coverage["total"]), "Meta versionada, no whitelist.", "list-checks"),
+            AdminOperationsMetricVM("Mapeados a fuente", _format_int(generic_coverage["source_mapped"]), _format_share(generic_coverage["source_mapped"], generic_coverage["total"]), "link"),
+            AdminOperationsMetricVM("Importados", _format_int(generic_coverage["imported"]), _format_share(generic_coverage["imported"], generic_coverage["total"]), "database"),
+            AdminOperationsMetricVM("Revisados", _format_int(generic_coverage["reviewed"]), _format_share(generic_coverage["reviewed"], generic_coverage["total"]), "badge-check"),
+            AdminOperationsMetricVM("Publicados", _format_int(generic_coverage["published"]), _format_share(generic_coverage["published"], generic_coverage["total"]), "send"),
+        ],
+        target_category_coverage=[
+            AdminOperationsCatalogCoverageVM(
+                label={"vegetable": "Verduras", "fruit": "Frutas", "meat_seafood": "Carnes y mariscos", "legume": "Legumbres", "dairy": "Lácteos"}[row["key"]],
+                total=f"{_format_int(row['imported'])} / {_format_int(row['defined'])}",
+                share_label=_format_share(row["imported"], row["defined"]),
+                helper="importados / definidos",
+            )
+            for row in generic_coverage["category_rows"]
+        ],
+        target_version_label=(
+            f"{generic_coverage['version']} · SHA {generic_coverage['sha256'][:12]}…"
+        ),
         foods=[_catalog_inventory_food_to_vm(food) for food in page_obj.object_list],
         status_options=list(payload["status_options"]),
         source_options=list(payload["source_options"]),
@@ -515,6 +584,457 @@ def build_food_catalog_inventory_vm(
         previous_url=_inventory_page_url(filter_params, page_obj.previous_page_number()) if page_obj.has_previous() else "",
         next_url=_inventory_page_url(filter_params, page_obj.next_page_number()) if page_obj.has_next() else "",
     )
+
+
+def build_food_catalog_imports_vm(*, source_type: str = "", status: str = "") -> AdminOperationsCatalogImportsVM:
+    payload = get_food_catalog_import_batches_payload(source_type=source_type, status=status)
+    aggregate = payload["aggregate"]
+    source_labels = dict(CatalogFood.SOURCE_TYPE_CHOICES)
+
+    return AdminOperationsCatalogImportsVM(
+        selected_source=payload["source_type"],
+        selected_status=payload["status"],
+        metrics=[
+            AdminOperationsMetricVM("Ejecuciones", _format_int(aggregate["total"]), "Dry-runs e imports persistidos.", "history"),
+            AdminOperationsMetricVM("Dry-runs", _format_int(aggregate["dry_runs"]), "Planes no mutantes trazables.", "scan-search"),
+            AdminOperationsMetricVM("Imports", _format_int(aggregate["imports"]), "Batches de aplicación.", "database-zap"),
+            AdminOperationsMetricVM(
+                "Applies sin dry-run",
+                _format_int(payload["orphan_applies"]),
+                "Las filas históricas pueden carecer de correlación; toda ejecución FCG nueva debe ser 0.",
+                "triangle-alert",
+            ),
+        ],
+        batches=[
+            AdminOperationsCatalogImportBatchVM(
+                pk=batch.pk,
+                run_type="Dry-run" if batch.is_dry_run else "Import",
+                source_label=f"{source_labels.get(batch.source_type, batch.source_type)} · {batch.source_name}",
+                status=batch.status,
+                version=batch.source_version or "—",
+                counts_label=(
+                    f"total {batch.total_rows} · importables/importados {batch.imported_rows} · "
+                    f"omitidos {batch.skipped_rows} · fallidos {batch.failed_rows}"
+                ),
+                operator_label=_actor_label(batch.requested_by) if batch.requested_by else "sistema/legacy",
+                reason=batch.reason or batch.notes or "—",
+                input_hash_label=f"{batch.input_sha256[:12]}…" if batch.input_sha256 else "legacy/sin hash",
+                dry_run_label=(
+                    f"dry-run #{batch.dry_run_batch_id}" if batch.dry_run_batch_id else ("plan" if batch.is_dry_run else "sin correlación")
+                ),
+                started_label=batch.started_at.strftime("%Y-%m-%d %H:%M"),
+            )
+            for batch in payload["batches"]
+        ],
+        source_options=list(payload["source_options"]),
+        status_options=list(payload["status_options"]),
+    )
+
+
+def perform_core_seed_dry_run(*, actor, reason: str) -> AdminOperationResult:
+    normalized_reason = (reason or "").strip()
+    if not normalized_reason:
+        return AdminOperationResult(False, "Debes indicar una razón operacional.")
+
+    plan = dry_run_core_natural_foods_seed()
+    if plan.validation_errors:
+        return AdminOperationResult(False, "El seed interno no superó su validación.")
+    batch = record_catalog_import_dry_run(
+        identity=core_natural_foods_seed_identity(),
+        total_rows=plan.total_rows,
+        would_import_rows=plan.to_create + plan.to_update,
+        skipped_rows=plan.invalid_rows,
+        failed_rows=0,
+        requested_by=actor,
+        reason=normalized_reason,
+        summary_payload={"to_create": plan.to_create, "to_update": plan.to_update, "invalid": plan.invalid_rows},
+    )
+    record_admin_operation_audit_event(
+        actor=actor,
+        action="food_catalog.core_seed.dry_run",
+        target=batch,
+        reason=normalized_reason,
+        status_after=batch.status,
+        metadata={"total": plan.total_rows, "to_create": plan.to_create, "to_update": plan.to_update},
+    )
+    return AdminOperationResult(
+        True,
+        f"Dry-run #{batch.pk}: total={plan.total_rows}, crear={plan.to_create}, actualizar={plan.to_update}.",
+    )
+
+
+def perform_core_seed_apply(*, actor, dry_run_batch_id: str, reason: str) -> AdminOperationResult:
+    normalized_reason = (reason or "").strip()
+    if not normalized_reason:
+        return AdminOperationResult(False, "Debes indicar una razón operacional.")
+    try:
+        dry_run_batch = CatalogImportBatch.objects.get(pk=int(dry_run_batch_id))
+        result = apply_core_natural_foods_seed(
+            dry_run_batch=dry_run_batch,
+            requested_by=actor,
+            reason=normalized_reason,
+        )
+    except (ValueError, TypeError, CatalogImportBatch.DoesNotExist, CatalogImportGovernanceError) as exc:
+        return AdminOperationResult(False, f"No se pudo aplicar el seed: {exc}")
+
+    record_admin_operation_audit_event(
+        actor=actor,
+        action="food_catalog.core_seed.apply",
+        target=result.batch,
+        reason=normalized_reason,
+        status_before=f"dry_run={dry_run_batch.pk}",
+        status_after=result.batch.status,
+        metadata={"created": result.created_rows, "updated": result.updated_rows, "published": 0},
+    )
+    return AdminOperationResult(
+        True,
+        f"Seed aplicado en batch #{result.batch.pk}: creados={result.created_rows}, actualizados={result.updated_rows}, publicados=0.",
+    )
+
+
+def perform_usda_dry_run(
+    *, actor, upload, source_version: str, source_dataset: str, limit: str, reason: str
+) -> AdminOperationResult:
+    try:
+        payloads, identity, normalized_limit = _prepare_usda_upload(
+            upload=upload,
+            source_version=source_version,
+            source_dataset=source_dataset,
+            limit=limit,
+        )
+        result = dry_run_usda_catalog_food_payloads(
+            payloads=payloads,
+            source_version=source_version,
+            source_dataset=source_dataset,
+        )
+        batch = record_catalog_import_dry_run(
+            identity=identity,
+            total_rows=result.total_rows,
+            would_import_rows=result.would_import_rows,
+            skipped_rows=result.skipped_rows,
+            failed_rows=result.failed_rows,
+            requested_by=actor,
+            reason=reason,
+            summary_payload={"reason_counts": result.reason_counts, "limit": normalized_limit},
+        )
+    except (ValueError, TypeError, json.JSONDecodeError, FoundationFoodsReaderError, CatalogImportGovernanceError) as exc:
+        return AdminOperationResult(False, f"No se pudo validar USDA: {exc}")
+
+    record_admin_operation_audit_event(
+        actor=actor,
+        action="food_catalog.usda.dry_run",
+        target=batch,
+        reason=reason,
+        status_after=batch.status,
+        metadata={"total": result.total_rows, "would_import": result.would_import_rows},
+    )
+    return AdminOperationResult(True, f"USDA dry-run #{batch.pk}: importables={result.would_import_rows}/{result.total_rows}.")
+
+
+def perform_usda_apply(
+    *, actor, upload, source_version: str, source_dataset: str, limit: str, dry_run_batch_id: str, reason: str
+) -> AdminOperationResult:
+    try:
+        payloads, identity, _normalized_limit = _prepare_usda_upload(
+            upload=upload,
+            source_version=source_version,
+            source_dataset=source_dataset,
+            limit=limit,
+        )
+        dry_run_batch = CatalogImportBatch.objects.get(pk=int(dry_run_batch_id))
+        result = import_usda_catalog_food_payloads(
+            payloads=payloads,
+            source_version=source_version,
+            source_dataset=source_dataset,
+            identity=identity,
+            dry_run_batch=dry_run_batch,
+            requested_by=actor,
+            reason=reason,
+        )
+    except (
+        ValueError,
+        TypeError,
+        json.JSONDecodeError,
+        FoundationFoodsReaderError,
+        CatalogImportGovernanceError,
+        CatalogImportBatch.DoesNotExist,
+    ) as exc:
+        return AdminOperationResult(False, f"No se pudo importar USDA: {exc}")
+
+    record_admin_operation_audit_event(
+        actor=actor,
+        action="food_catalog.usda.apply",
+        target=result.batch,
+        reason=reason,
+        status_before=f"dry_run={dry_run_batch.pk}",
+        status_after=result.batch.status,
+        metadata={"imported": result.imported_rows, "skipped": result.skipped_rows, "failed": result.failed_rows},
+    )
+    return AdminOperationResult(True, f"USDA batch #{result.batch.pk}: importados={result.imported_rows}, omitidos={result.skipped_rows}.")
+
+
+def _prepare_usda_upload(*, upload, source_version: str, source_dataset: str, limit: str):
+    if upload is None:
+        raise ValueError("Debes adjuntar un JSON USDA.")
+    normalized_version = (source_version or "").strip()
+    if not normalized_version:
+        raise ValueError("La versión USDA es obligatoria.")
+    normalized_dataset = (source_dataset or "foundation_foods").strip()
+    normalized_limit = int(limit)
+    if normalized_limit < 1 or normalized_limit > 10:
+        raise ValueError("La muestra USDA debe contener entre 1 y 10 filas.")
+    raw_bytes = upload.read()
+    decoded = json.loads(raw_bytes.decode("utf-8"))
+    payloads = extract_foundation_food_payloads(decoded)[:normalized_limit]
+    identity = catalog_import_identity(
+        source_type=CatalogFood.SOURCE_USDA,
+        source_name=CATALOG_SOURCE_NAME_USDA,
+        source_version=normalized_version,
+        input_sha256=hashlib.sha256(raw_bytes).hexdigest(),
+        parameters_payload={"source_dataset": normalized_dataset, "limit": normalized_limit},
+    )
+    return payloads, identity, normalized_limit
+
+
+def perform_brand_dry_run(*, actor, upload, limit: str, reason: str) -> AdminOperationResult:
+    try:
+        normalized_limit = _brand_limit(limit)
+        with _uploaded_temp_file(upload, suffix=".csv") as path:
+            result = dry_run_brand_food_intake_csv(path, limit=normalized_limit)
+            batch = record_catalog_import_dry_run(
+                identity=brand_food_intake_identity(path, limit=normalized_limit),
+                total_rows=result.total_rows,
+                would_import_rows=result.total_rows - result.skipped_rows,
+                skipped_rows=result.skipped_rows,
+                failed_rows=0,
+                requested_by=actor,
+                reason=reason,
+                summary_payload={"errors": result.errors},
+            )
+    except (ValueError, OSError, CatalogImportGovernanceError) as exc:
+        return AdminOperationResult(False, f"No se pudo validar marcas: {exc}")
+    if result.errors:
+        return AdminOperationResult(False, f"Dry-run #{batch.pk} bloqueado: {'; '.join(result.errors[:3])}")
+    record_admin_operation_audit_event(
+        actor=actor,
+        action="food_catalog.brand.dry_run",
+        target=batch,
+        reason=reason,
+        status_after=batch.status,
+        metadata={"total": result.total_rows},
+    )
+    return AdminOperationResult(True, f"Marcas dry-run #{batch.pk}: {result.total_rows} filas válidas.")
+
+
+def perform_brand_apply(*, actor, upload, limit: str, dry_run_batch_id: str, reason: str) -> AdminOperationResult:
+    try:
+        normalized_limit = _brand_limit(limit)
+        dry_run_batch = CatalogImportBatch.objects.get(pk=int(dry_run_batch_id))
+        with _uploaded_temp_file(upload, suffix=".csv") as path:
+            result = apply_brand_food_intake_csv(
+                path,
+                dry_run_batch=dry_run_batch,
+                reason=reason,
+                limit=normalized_limit,
+                created_by=actor,
+            )
+    except (ValueError, TypeError, OSError, CatalogImportBatch.DoesNotExist, CatalogImportGovernanceError) as exc:
+        return AdminOperationResult(False, f"No se pudo importar marcas: {exc}")
+    if result.errors:
+        return AdminOperationResult(False, f"Import bloqueado: {'; '.join(result.errors[:3])}")
+    batch = result.batch
+    assert batch is not None
+    record_admin_operation_audit_event(
+        actor=actor,
+        action="food_catalog.brand.apply",
+        target=batch,
+        reason=reason,
+        status_before=f"dry_run={dry_run_batch.pk}",
+        status_after=batch.status,
+        metadata={"created": result.created_rows, "updated": result.updated_rows},
+    )
+    return AdminOperationResult(True, f"Marcas batch #{batch.pk}: creados={result.created_rows}, actualizados={result.updated_rows}.")
+
+
+def _brand_limit(value: str) -> int:
+    normalized = int(value)
+    if normalized < 1 or normalized > 5:
+        raise ValueError("La muestra de marcas debe contener entre 1 y 5 filas.")
+    return normalized
+
+
+class _uploaded_temp_file:
+    def __init__(self, upload, *, suffix: str):
+        if upload is None:
+            raise ValueError("Debes adjuntar un archivo.")
+        self.upload = upload
+        self.suffix = suffix
+        self.file = None
+
+    def __enter__(self):
+        self.file = tempfile.NamedTemporaryFile(suffix=self.suffix)
+        self.file.write(self.upload.read())
+        self.file.flush()
+        return self.file.name
+
+    def __exit__(self, exc_type, exc, traceback):
+        self.file.close()
+
+
+def perform_manual_dry_run(*, actor, upload, limit: str, reason: str) -> AdminOperationResult:
+    try:
+        normalized_limit = _brand_limit(limit)
+        with _uploaded_temp_file(upload, suffix=".csv") as path:
+            plan = dry_run_manual_evidence_csv(path, limit=normalized_limit)
+            versions = {row.source_version for row in plan.rows}
+            if len(versions) != 1:
+                raise ValueError("La muestra debe tener una única source_version y filas válidas.")
+            batch = record_catalog_import_dry_run(
+                identity=manual_evidence_identity(path, limit=normalized_limit, source_version=next(iter(versions))),
+                total_rows=plan.total_rows,
+                would_import_rows=plan.valid_rows,
+                skipped_rows=plan.invalid_rows,
+                failed_rows=0,
+                requested_by=actor,
+                reason=reason,
+                summary_payload={"errors": plan.errors},
+            )
+    except (ValueError, OSError, CatalogImportGovernanceError) as exc:
+        return AdminOperationResult(False, f"No se pudo validar curación manual: {exc}")
+    if plan.errors:
+        return AdminOperationResult(False, f"Dry-run #{batch.pk} bloqueado: {'; '.join(plan.errors[:3])}")
+    record_admin_operation_audit_event(actor=actor, action="food_catalog.manual.dry_run", target=batch, reason=reason, status_after=batch.status)
+    return AdminOperationResult(True, f"Curación manual dry-run #{batch.pk}: {plan.valid_rows}/{plan.total_rows} válidas.")
+
+
+def perform_manual_apply(*, actor, upload, limit: str, dry_run_batch_id: str, reason: str) -> AdminOperationResult:
+    try:
+        normalized_limit = _brand_limit(limit)
+        dry_run = CatalogImportBatch.objects.get(pk=int(dry_run_batch_id))
+        with _uploaded_temp_file(upload, suffix=".csv") as path:
+            result = apply_manual_evidence_csv(
+                path,
+                limit=normalized_limit,
+                dry_run_batch=dry_run,
+                reason=reason,
+                requested_by=actor,
+            )
+    except (ValueError, TypeError, OSError, CatalogImportBatch.DoesNotExist, CatalogImportGovernanceError) as exc:
+        return AdminOperationResult(False, f"No se pudo importar curación manual: {exc}")
+    record_admin_operation_audit_event(
+        actor=actor,
+        action="food_catalog.manual.apply",
+        target=result.batch,
+        reason=reason,
+        status_before=f"dry_run={dry_run.pk}",
+        status_after=result.batch.status,
+        metadata={"created": result.created_rows, "updated": result.updated_rows},
+    )
+    return AdminOperationResult(True, f"Curación manual batch #{result.batch.pk}: creados={result.created_rows}, actualizados={result.updated_rows}.")
+
+
+def perform_backfill_dry_run(*, actor, limit: str, reason: str) -> AdminOperationResult:
+    try:
+        normalized_limit = int(limit)
+        if normalized_limit < 1 or normalized_limit > 10:
+            raise ValueError("El límite de backfill debe estar entre 1 y 10.")
+        result = dry_run_backfill_catalog_from_operational_foods(limit=normalized_limit, sample_size=5)
+        batch = record_catalog_import_dry_run(
+            identity=operational_backfill_identity(
+                source_name=OPERATIONAL_BACKFILL_SOURCE_NAME,
+                source_version=DEFAULT_OPERATIONAL_BACKFILL_SOURCE_VERSION,
+                limit=normalized_limit,
+                status=CatalogFood.STATUS_REVIEWED,
+            ),
+            total_rows=result.total_rows,
+            would_import_rows=result.created_rows,
+            skipped_rows=result.skipped_rows,
+            failed_rows=result.failed_rows,
+            requested_by=actor,
+            reason=reason,
+            summary_payload={"reason_counts": result.reason_counts},
+        )
+    except (ValueError, OperationalFoodCatalogBackfillError, CatalogImportGovernanceError) as exc:
+        return AdminOperationResult(False, f"No se pudo validar backfill: {exc}")
+    record_admin_operation_audit_event(actor=actor, action="food_catalog.backfill.dry_run", target=batch, reason=reason, status_after=batch.status)
+    return AdminOperationResult(True, f"Backfill dry-run #{batch.pk}: elegibles={result.created_rows}, inspeccionados={result.total_rows}.")
+
+
+def perform_backfill_apply(*, actor, limit: str, dry_run_batch_id: str, reason: str) -> AdminOperationResult:
+    try:
+        normalized_limit = int(limit)
+        if normalized_limit < 1 or normalized_limit > 10:
+            raise ValueError("El límite de backfill debe estar entre 1 y 10.")
+        dry_run = CatalogImportBatch.objects.get(pk=int(dry_run_batch_id))
+        result = backfill_catalog_from_operational_foods(
+            limit=normalized_limit,
+            dry_run_batch=dry_run,
+            requested_by=actor,
+            reason=reason,
+        )
+    except (ValueError, TypeError, CatalogImportBatch.DoesNotExist, OperationalFoodCatalogBackfillError, CatalogImportGovernanceError) as exc:
+        return AdminOperationResult(False, f"No se pudo ejecutar backfill: {exc}")
+    assert result.batch is not None
+    record_admin_operation_audit_event(
+        actor=actor,
+        action="food_catalog.backfill.apply",
+        target=result.batch,
+        reason=reason,
+        status_before=f"dry_run={dry_run.pk}",
+        status_after=result.batch.status,
+        metadata={"created": result.created_rows, "skipped": result.skipped_rows},
+    )
+    return AdminOperationResult(True, f"Backfill batch #{result.batch.pk}: creados={result.created_rows}, omitidos={result.skipped_rows}.")
+
+
+def perform_import_source_policy_operation(
+    *, actor, source_type: str, source_name: str, max_batch_rows: str, action: str, reason: str
+) -> AdminOperationResult:
+    normalized_reason = (reason or "").strip()
+    normalized_name = (source_name or "").strip()
+    if not normalized_reason or not normalized_name:
+        return AdminOperationResult(False, "Fuente y razón operacional son obligatorias.")
+    if source_type not in dict(CatalogFood.SOURCE_TYPE_CHOICES) or source_type in {
+        CatalogFood.SOURCE_OPEN_FOOD_FACTS,
+        CatalogFood.SOURCE_FATSECRET,
+    }:
+        return AdminOperationResult(False, "La fuente no es escalable en FCG.")
+    try:
+        maximum = int(max_batch_rows)
+    except (TypeError, ValueError):
+        return AdminOperationResult(False, "El máximo del batch debe ser numérico.")
+    if maximum < 1 or maximum > 500:
+        return AdminOperationResult(False, "El máximo debe estar entre 1 y 500.")
+
+    policy, _created = CatalogImportSourcePolicy.objects.get_or_create(
+        source_type=source_type,
+        source_name=normalized_name,
+    )
+    before = f"approved={policy.scale_approved},kill={policy.kill_switch},max={policy.max_batch_rows}"
+    if action == "approve":
+        policy.scale_approved = True
+        policy.kill_switch = False
+        policy.is_enabled = True
+        policy.max_batch_rows = maximum
+        policy.approved_by = actor
+        policy.approved_at = timezone.now()
+        policy.approval_reason = normalized_reason
+    elif action == "kill":
+        policy.kill_switch = True
+        policy.approval_reason = normalized_reason
+    else:
+        return AdminOperationResult(False, "Acción de política desconocida.")
+    policy.save()
+    after = f"approved={policy.scale_approved},kill={policy.kill_switch},max={policy.max_batch_rows}"
+    record_admin_operation_audit_event(
+        actor=actor,
+        action=f"food_catalog.import_policy.{action}",
+        target=policy,
+        reason=normalized_reason,
+        status_before=before,
+        status_after=after,
+    )
+    return AdminOperationResult(True, f"Política {normalized_name}: {after}.")
 
 
 def _catalog_inventory_food_to_vm(catalog_food: CatalogFood) -> AdminOperationsCatalogInventoryFoodVM:
@@ -742,6 +1262,29 @@ def perform_catalog_food_operation(*, catalog_food_id: int, action: str, actor, 
     )
 
     return AdminOperationResult(ok=True, message=f"{label}: {catalog_food.display_name}")
+
+
+def perform_catalog_food_snapshot(*, catalog_food_id: int, actor, reason: str) -> AdminOperationResult:
+    normalized_reason = (reason or "").strip()
+    if not normalized_reason:
+        return AdminOperationResult(False, "La razón es obligatoria para crear un snapshot operacional.")
+    catalog_food = get_object_or_404(CatalogFood, pk=catalog_food_id)
+    if Food.objects.filter(catalog_food_id=catalog_food.pk).exists():
+        return AdminOperationResult(False, "Ya existe un snapshot operacional para este CatalogFood; usa refresh explícito.")
+    try:
+        result = create_operational_food_snapshot_from_catalog(catalog_food, created_by=actor, is_global=True)
+    except FoodCatalogSnapshotError as exc:
+        return AdminOperationResult(False, str(exc))
+    record_admin_operation_audit_event(
+        actor=actor,
+        action="food_catalog.catalog_food.snapshot_create",
+        target=result.food,
+        reason=normalized_reason,
+        status_before=f"catalog_status={catalog_food.status}",
+        status_after=f"operational_food_id={result.food.pk}",
+        metadata={"catalog_food_id": catalog_food.pk, "catalog_ref": str(catalog_food.catalog_ref)},
+    )
+    return AdminOperationResult(True, f"Snapshot operacional Food #{result.food.pk} creado desde {catalog_food.display_name}.")
 
 
 def flash_operation_result(request, result: AdminOperationResult) -> None:

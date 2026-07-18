@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from notas.domain.models import DailyPlan, Food, Meal, MealFood
@@ -8,6 +8,7 @@ from notas.domain.models import DailyPlan, Food, Meal, MealFood
 User = get_user_model()
 
 
+@override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
 class MealViewTests(TestCase):
 
     def setUp(self):

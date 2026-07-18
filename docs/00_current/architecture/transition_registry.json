@@ -1,0 +1,59 @@
+{
+  "contract": "myscoope.transition_registry.v1",
+  "transitions": [
+    {
+      "id": "operational-food-snapshot-boundary",
+      "status": "intentionally_durable",
+      "owner": "food_catalog",
+      "purpose": "Keep the curated master catalog separate from the operational food snapshot used by product flows.",
+      "current_consumers": ["Picker", "Meals", "DailyPlans", "Nutrition Solver", "MCP"],
+      "exit_evidence": ["A replacement operational contract exists", "Every current consumer has migrated", "Snapshot provenance and rollback remain explicit"],
+      "decision": "docs/20_decisions/0009-food-catalog-hybrid-source-snapshot.md"
+    },
+    {
+      "id": "nutrition-solver-legacy-import-bridges",
+      "status": "transitional",
+      "owner": "nutrition_solver",
+      "purpose": "Preserve historical imports while nutrition_solver owns the pure contracts and implementations.",
+      "current_consumers": ["notas.application.nutrition_engine compatibility modules", "compatibility regression tests"],
+      "exit_evidence": ["Repository search finds no production consumers of legacy imports", "One release passes without compatibility imports", "Removal keeps solver boundary tests green"],
+      "decision": "docs/20_decisions/0047-nutrition-solver-portion-solver-validators-moved.md"
+    },
+    {
+      "id": "legacy-account-plan-fallback",
+      "status": "transitional",
+      "owner": "accounts",
+      "purpose": "Resolve commercial entitlements from accounts while preserving historical users whose capabilities still live in notas.Profile.plan.",
+      "current_consumers": ["accounts.services.entitlements", "historical profiles without an effective AccountPlan"],
+      "exit_evidence": ["All active users resolve an accounts plan", "Legacy-only entitlement usage is measured at zero", "A reversible data migration is validated in staging"],
+      "decision": "docs/20_decisions/0051-account-plans-and-credits-domain.md"
+    },
+    {
+      "id": "food-import-command-wrappers",
+      "status": "transitional",
+      "owner": "food_catalog",
+      "purpose": "Keep historical notas import entrypoints compatible while persistence and governance converge in Food Catalog.",
+      "current_consumers": ["legacy notas management commands", "historical operational runbooks"],
+      "exit_evidence": ["Admin Operations and food_catalog commands cover every supported source", "No active runbook invokes the notas wrappers", "Removal does not change the notas.Food snapshot boundary"],
+      "decision": "docs/20_decisions/0014-food-catalog-import-adapters.md"
+    },
+    {
+      "id": "deterministic-ai-engine-rollback",
+      "status": "intentionally_durable",
+      "owner": "ai_assistant",
+      "purpose": "Provide an explicit rollback engine while LLM-native behavior is validated and rolled out by evidence.",
+      "current_consumers": ["AI Assistant engine selector", "production rollback configuration", "deterministic regression scenarios"],
+      "exit_evidence": ["A future decision accepts removal based on production evidence", "A replacement degraded-mode strategy exists", "Rollback and cost controls remain available"],
+      "decision": "docs/20_decisions/0030-ai-assistant-chat-engine-selector.md"
+    },
+    {
+      "id": "django-admin-technical-fallback",
+      "status": "intentionally_durable",
+      "owner": "admin_operations",
+      "purpose": "Retain raw technical access for exceptional diagnosis while product operation belongs in audited Admin Operations workflows.",
+      "current_consumers": ["staff technical diagnosis", "exceptional model-level inspection"],
+      "exit_evidence": ["Admin Operations covers every justified technical recovery path", "An explicit security and recovery review accepts removal"],
+      "decision": "docs/20_decisions/0070-admin-operations-console-planning.md"
+    }
+  ]
+}

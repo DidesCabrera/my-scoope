@@ -33,15 +33,36 @@ Status: planned / active / paused / completed / superseded
 
 Cuando un ciclo planificado empiece a implementarse, el documento puede permanecer aquí como plan operacional, pero las decisiones estables que surjan deben registrarse también en `docs/20_decisions/`.
 
-## Planes actuales
+## En curso o pendientes de validación
 
+- `project_control_clarity_foresight_cycle.md`: ciclo PCF00-PCF10 completado localmente
+  y pendiente de validación en staging; crea
+  una capa de control transversal basada en evidencia: CI alineado con staging,
+  contrato y diagnóstico de ambientes, estado ejecutable, control plane read-only,
+  registros documentales y de transiciones, portafolio de apuestas e interfaz de
+  contexto para AI. Aporta contexto y feedback para decidir sin imponer un camino
+  rígido. El cierre local aprobó 1.524 tests.
+- `generic_food_coverage_cycle.md`: ciclo activo GFC00-GFC10 para derivar, mapear,
+  importar y medir una cobertura ambiciosa de verduras, frutas, carnes/pescados,
+  legumbres y lácteos genéricos relevantes para Chile. El manifiesto versionado es
+  un mapa de cobertura, no una whitelist; su conteo final emerge de la enumeración
+  y admite descubrimientos útiles bajo las mismas reglas de evidencia y revisión.
+- `food_catalog_growth_cycle.md`: ciclo activo FCG00-FCG10 con implementación completa y
+  validación de datos reales en staging pendiente, para poblar efectivamente
+  `CatalogFood` desde fuentes persistibles trazables, aprender su operación desde Admin
+  Operations y validar muestras pequeñas antes de escalar, manteniendo `notas.Food` como
+  snapshot operacional y dejando FatSecret fuera del alcance.
 - `nutrition_solver_optimization_v2_cycle.md`: ciclo activo NSO00-NSO10 para evolucionar el
   solver de porciones v2 hacia optimización conjunta, explicable y contractualmente integrada
   con capacidades curadas de Food Catalog mediante snapshots operacionales.
-- `ai_assistant_post_tool_followup_transport_cycle.md`: ciclo completado PT00-PT06 para diagnosticar y corregir la correlación post-tool de Responses API, hacer visibles las degradaciones, alinear el provider fake con producción y revalidar la conducta antes oculta por acknowledgements locales.
-- `ai_assistant_behavioral_alignment_cycle.md`: ciclo completado BA00-BA07. El contrato conductual y post-tool fue promovido a `docs/00_current/` y la frontera global pasó `check`, 2 regresiones núcleo y 1.446 tests mediante `scripts/ci_django_checks.sh`.
-- `ai_assistant_client_memory_profile_objects_cycle.md`: ciclo completado CM00-CM24. La ejecución live final y el rerun dirigido de `cambio_de_direccion` aprobaron invariantes automáticas y revisión humana, consolidando function calling nativo, estado/tool grounding, cards explícitas y fallbacks state-only.
 - `launch_readiness_operational_safety_cycle.md`: ciclo planificado LR00-LR07 para preparar My Scoope para staging/produccion con seguridad de cuenta, settings productivos, rate limiting, guardas de creditos AI, observabilidad, CI y checklist operacional, apoyandose en el dominio comercial ya cerrado por ACC.
+- `export_cycle_aware_workspaces_cycle.md`: ciclo activo para mantener exports focalizados y conscientes del contexto de cada ciclo.
+
+## Ciclos completados
+
+- `ai_assistant_post_tool_followup_transport_cycle.md`: PT00-PT06 completado.
+- `ai_assistant_behavioral_alignment_cycle.md`: BA00-BA07 completado.
+- `ai_assistant_client_memory_profile_objects_cycle.md`: CM00-CM24 completado.
 - `account_plans_credits_cycle.md`: ciclo completado ACC00-ACC07 para mover planes comerciales, suscripciones, créditos y entitlements hacia `accounts`, manteniendo tokens/costos como observabilidad interna y migrando gradualmente desde `notas.Plan` y créditos IA transicionales.
 - `onboarding_nutrition_profile_cycle.md`: ciclo completado ONB00-ONB09 para onboarding nutricional mínimo: `accounts` conduce el flujo, `notas` persiste ficha personal y Body Metrics, `ai_assistant` decide sujeto nutricional y `nutrition_solver` calcula sobre `NutritionSubjectContext`, incluyendo warning cuando una propuesta externa se guarda en librería personal.
 - `nutrition_solver_app_cycle.md`: ciclo completado para separar progresivamente el motor de optimización nutricional hacia una app Django `nutrition_solver`, con contratos puros, solver/validators extraídos, adapter operacional desde `notas.Food`, integración con AI Assistant y propuestas revisables. La UI directa se canceló/difirió por decisión estratégica.

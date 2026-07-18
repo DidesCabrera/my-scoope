@@ -32,9 +32,11 @@ class ImportedFoodDTO:
     protein: Decimal
     carbs: Decimal
     fat: Decimal
+    calories_kcal_per_100g: Decimal | None = None
 
     food_group: str = ""
     food_subgroup: str = ""
+    preparation_state: str = "unknown"
 
     fiber_g_per_100g: Decimal | None = None
     sugar_g_per_100g: Decimal | None = None
@@ -46,6 +48,8 @@ class ImportedFoodDTO:
     source_url: str = ""
     raw_payload_hash: str = ""
     normalized_payload_hash: str = ""
+    source_description: str = ""
+    source_data_type: str = ""
 
 
 __all__ = ["ImportedFoodDTO"]

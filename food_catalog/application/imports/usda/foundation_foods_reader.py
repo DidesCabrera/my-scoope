@@ -14,6 +14,8 @@ FOUNDATION_FOODS_ROOT_KEYS = (
     "foods",
     "FoodData",
     "foodData",
+    "SRLegacyFoods",
+    "srLegacyFoods",
 )
 
 

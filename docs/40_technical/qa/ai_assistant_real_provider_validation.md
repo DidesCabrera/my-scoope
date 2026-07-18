@@ -47,7 +47,7 @@ python manage.py validate_ai_assistant_real_provider \
 python manage.py validate_ai_assistant_real_provider \
   --live \
   --user-email <staging-user-email> \
-  --output cm24_real_provider_report.json \
+  --output artifacts/local/cm24_real_provider_report.json \
   --fail-on-hard-regression
 ```
 
@@ -176,7 +176,7 @@ Run the fifth report under a new filename and retain all previous reports as evi
 python manage.py validate_ai_assistant_real_provider \
   --live \
   --user-email <staging-user-email> \
-  --output cm24_real_provider_report_after_post_tool_resilience.json \
+  --output artifacts/local/cm24_real_provider_report_after_post_tool_resilience.json \
   --fail-on-hard-regression
 ```
 
@@ -190,7 +190,7 @@ Decision 0114 exposes the supported `update_proposal_preferences.updates` fields
 python manage.py validate_ai_assistant_real_provider \
   --live \
   --user-email <staging-user-email> \
-  --output cm24_real_provider_report_after_explicit_preference_schema.json \
+  --output artifacts/local/cm24_real_provider_report_after_explicit_preference_schema.json \
   --fail-on-hard-regression
 ```
 
@@ -214,7 +214,7 @@ Run the seventh report under a new filename:
 python manage.py validate_ai_assistant_real_provider \
   --live \
   --user-email <staging-user-email> \
-  --output cm24_real_provider_report_after_capability_scoped_strict_tools.json \
+  --output artifacts/local/cm24_real_provider_report_after_capability_scoped_strict_tools.json \
   --fail-on-hard-regression
 ```
 
@@ -228,7 +228,7 @@ Decision 0116 adds `complexity_level` to `_apply_proposal_preferences_to_brief()
 python manage.py validate_ai_assistant_real_provider \
   --live \
   --user-email <staging-user-email> \
-  --output cm24_real_provider_report_after_complexity_state_sync.json \
+  --output artifacts/local/cm24_real_provider_report_after_complexity_state_sync.json \
   --fail-on-hard-regression
 ```
 
@@ -246,7 +246,7 @@ python manage.py validate_ai_assistant_real_provider \
   --live \
   --user-email <staging-user-email> \
   --scenario cambio_de_direccion \
-  --output cm24_real_provider_report_after_state_only_local_ack.json \
+  --output artifacts/local/cm24_real_provider_report_after_state_only_local_ack.json \
   --fail-on-hard-regression
 ```
 
@@ -294,7 +294,7 @@ python manage.py validate_ai_assistant_real_provider \
   --user-email <staging-user-email> \
   --scenario ficha_conocida_sin_repreguntas \
   --scenario referencia_ambigua_sin_tools \
-  --output pt06_real_provider_report.json \
+  --output artifacts/local/pt06_real_provider_report.json \
   --fail-on-hard-regression
 ```
 

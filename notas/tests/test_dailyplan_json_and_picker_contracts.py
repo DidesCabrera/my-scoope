@@ -2,7 +2,7 @@ import json
 from datetime import time
 
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 
 from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood
 from notas.application.services.commands.dailyplan_commands import (
@@ -14,6 +14,7 @@ from notas.application.services.commands.dailyplan_commands import (
 User = get_user_model()
 
 
+@override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
 class DailyPlanJsonAndPickerContractTests(TestCase):
 
     def setUp(self):

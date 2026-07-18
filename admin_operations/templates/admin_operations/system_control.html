@@ -1,0 +1,66 @@
+{% extends "admin_operations/base.html" %}
+{% block title %}Project Control{% endblock %}
+{% block content %}
+<div class="page admin-analytics-page admin-operations-page">
+  <section class="card-detail-block admin-operations-closure-card" aria-label="Project Control read-only contract">
+    <div>
+      <p class="section-eyebrow">PCF05 · Evidence, not remote execution</p>
+      <h3>Control plane de sólo lectura</h3>
+      <p class="muted-text">Esta superficie combina el mismo contrato sanitizado que usan CLI y clientes AI. No ejecuta comandos, no muestra secretos y no modifica datos.</p>
+    </div>
+    <div class="admin-operations-closure-card__checks">
+      <span><i data-lucide="eye"></i> Read-only</span>
+      <span><i data-lucide="shield-check"></i> Staff-only</span>
+      <span><i data-lucide="refresh-cw"></i> Evidencia actual</span>
+    </div>
+  </section>
+
+  <section class="home-stats admin-analytics-kpi-grid admin-operations-kpi-grid" aria-label="Project status summary">
+    {% for metric in vm.content.metrics %}
+      <article class="home-stat-card admin-operations-metric-card">
+        <div class="home-stat-top"><i data-lucide="{{ metric.icon }}" class="home-stat-icon"></i><span class="home-stat-label">{{ metric.label }}</span></div>
+        <h3>{{ metric.value }}</h3>
+        <p class="muted-text">{{ metric.helper }}</p>
+      </article>
+    {% endfor %}
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row"><div><p class="section-eyebrow">Attention</p><h3>Señales que merecen contexto</h3><p class="muted-text">Una señal informa una decisión; no prescribe automáticamente una acción.</p></div></div>
+    {% if vm.content.findings %}
+      <div class="admin-operations-warning-list">
+        {% for finding in vm.content.findings %}
+          <article class="admin-operations-warning admin-operations-warning--{{ finding.status }}">
+            <div><p class="section-eyebrow">{{ finding.code }}</p><h4>{{ finding.summary }}</h4>{% if finding.action %}<p class="muted-text">{{ finding.action }}</p>{% endif %}</div>
+            <strong>{{ finding.status }}</strong>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="admin-operations-empty-state"><i data-lucide="circle-check" class="home-stat-icon"></i><div><h4>Sin señales activas</h4><p class="muted-text">Los probes disponibles no encontraron atención operacional.</p></div></div>
+    {% endif %}
+  </section>
+
+  <section class="admin-analytics-section-grid" aria-label="Project status probes">
+    {% for probe in vm.content.probes %}
+      <article class="home-stat-card admin-analytics-module-card">
+        <div class="home-stat-top"><span class="home-stat-label">{{ probe.code }}</span><strong>{{ probe.status }}</strong></div>
+        {% for key, value in probe.rows %}<p class="muted-text"><strong>{{ key }}:</strong> {{ value }}</p>{% endfor %}
+        {% if probe.message %}<p class="muted-text">{{ probe.message }}</p>{% endif %}
+      </article>
+    {% endfor %}
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row"><div><p class="section-eyebrow">Capabilities</p><h3>Configuración efectiva por dominio</h3><p class="muted-text">Se muestran estados y modos seguros; nunca credenciales ni valores secretos.</p></div></div>
+    <div class="admin-analytics-section-grid">
+      {% for capability in vm.content.capabilities %}
+        <article class="home-stat-card admin-analytics-module-card">
+          <div class="home-stat-top"><span class="home-stat-label">{{ capability.domain }}</span></div>
+          {% for key, value in capability.rows %}<p class="muted-text"><strong>{{ key }}:</strong> {{ value }}</p>{% endfor %}
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

@@ -8,6 +8,8 @@ from django.urls import reverse
 
 from admin_operations.services import build_food_catalog_inventory_vm, build_food_catalog_operations_vm
 from food_catalog.models import CatalogCurationCandidate, CatalogFood, CatalogFoodAlias, CatalogFoodPortion, CatalogFoodSource
+from notas.domain.models import Food
+from admin_operations.models import AdminOperationAuditEvent
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
@@ -151,6 +153,67 @@ class AdminOperationsFoodCatalogTests(TestCase):
         self.assertIsNotNone(catalog_food.reviewed_at)
         self.assertContains(response, "Marcar revisado")
 
+    def test_publication_and_snapshot_are_separate_audited_actions(self):
+        catalog_food = _create_catalog_food(
+            status=CatalogFood.STATUS_REVIEWED,
+            display_name="Avena publicable",
+            canonical_name="avena-publicable",
+            data_quality_score=90,
+        )
+        CatalogFoodSource.objects.create(
+            catalog_food=catalog_food,
+            source_type=CatalogFood.SOURCE_ADMIN_IMPORT,
+            source_name="Evidence",
+            source_food_id="E-1",
+            license_status=CatalogFoodSource.LICENSE_ALLOWED,
+        )
+        CatalogFoodPortion.objects.create(
+            catalog_food=catalog_food,
+            label="100 g",
+            grams=Decimal("100"),
+            is_default=True,
+        )
+        self.client.force_login(self.staff)
+
+        publish_response = self.client.post(
+            reverse("admin_operations_food_catalog_food_action", args=[catalog_food.pk]),
+            {"action": "published", "reason": "Evidence and macros reviewed."},
+            follow=True,
+        )
+        catalog_food.refresh_from_db()
+        self.assertEqual(publish_response.status_code, 200)
+        self.assertEqual(catalog_food.status, CatalogFood.STATUS_PUBLISHED)
+        self.assertEqual(Food.objects.count(), 0)
+
+        snapshot_response = self.client.post(
+            reverse("admin_operations_food_catalog_food_snapshot", args=[catalog_food.pk]),
+            {"reason": "Make reviewed food operational."},
+            follow=True,
+        )
+        operational = Food.objects.get()
+        self.assertEqual(snapshot_response.status_code, 200)
+        self.assertEqual(operational.catalog_food_id, catalog_food.pk)
+        self.assertEqual(
+            AdminOperationAuditEvent.objects.filter(
+                action__in=[
+                    "food_catalog.catalog_food.published",
+                    "food_catalog.catalog_food.snapshot_create",
+                ]
+            ).count(),
+            2,
+        )
+
+    def test_snapshot_rejects_unpublished_catalog_food(self):
+        catalog_food = _create_catalog_food(status=CatalogFood.STATUS_REVIEWED)
+        self.client.force_login(self.staff)
+        response = self.client.post(
+            reverse("admin_operations_food_catalog_food_snapshot", args=[catalog_food.pk]),
+            {"reason": "Attempt premature snapshot."},
+            follow=True,
+        )
+        self.assertContains(response, "Only published CatalogFood")
+        self.assertEqual(Food.objects.count(), 0)
+
     def test_inventory_page_requires_staff(self):
         response = self.client.get(reverse("admin_operations_food_catalog_inventory"))
         self.assertEqual(response.status_code, 302)
@@ -192,6 +255,31 @@ class AdminOperationsFoodCatalogTests(TestCase):
         self.assertEqual(categories["Proteínas"], "1")
         self.assertEqual(gaps["Sin evidencia asociada"], "2")
         self.assertEqual(gaps["Nutrición extendida incompleta"], "2")
+
+    def test_inventory_vm_reconciles_versioned_targets_with_persisted_sources(self):
+        food = _create_catalog_food(
+            status=CatalogFood.STATUS_VERIFIED,
+            display_name="Espinaca cruda",
+            source_type=CatalogFood.SOURCE_NATURAL_VERIFIED,
+        )
+        CatalogFoodSource.objects.create(
+            catalog_food=food,
+            source_type=CatalogFood.SOURCE_NATURAL_VERIFIED,
+            source_name="My Scoope Core Natural Foods",
+            source_food_id="core-spinach-raw",
+        )
+
+        vm = build_food_catalog_inventory_vm()
+
+        funnel = {metric.label: metric.value for metric in vm.target_funnel}
+        categories = {item.label: item.total for item in vm.target_category_coverage}
+        self.assertEqual(funnel["Definidos"], "282")
+        self.assertEqual(funnel["Mapeados a fuente"], "209")
+        self.assertEqual(funnel["Importados"], "1")
+        self.assertEqual(funnel["Revisados"], "1")
+        self.assertEqual(funnel["Publicados"], "0")
+        self.assertEqual(categories["Verduras"], "1 / 87")
+        self.assertTrue(vm.target_version_label.startswith("gfc.v1 · SHA "))
 
     def test_inventory_page_renders_all_catalog_food_fields_and_relations(self):
         food = _create_catalog_food(

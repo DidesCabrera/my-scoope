@@ -11,6 +11,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Iterable
+import hashlib
 
 from django.db import IntegrityError, transaction
 from django.utils import timezone
@@ -21,6 +22,10 @@ from food_catalog.models import (
     CatalogFoodPortion,
     CatalogFoodSource,
     CatalogImportBatch,
+)
+from food_catalog.infrastructure.imports.governance import (
+    catalog_import_identity,
+    start_catalog_import_batch,
 )
 from notas.domain.models import Food, FoodAlias, FoodLocalizedName, FoodSourceMetadata
 
@@ -86,6 +91,9 @@ def backfill_catalog_from_operational_foods(
     status: str = DEFAULT_OPERATIONAL_BACKFILL_STATUS,
     notes: str = "",
     sample_size: int = 0,
+    dry_run_batch: CatalogImportBatch | None = None,
+    requested_by=None,
+    reason: str = "",
 ) -> OperationalFoodCatalogBackfillResult:
     """Create master catalog candidates from trusted operational foods.
 
@@ -111,16 +119,19 @@ def backfill_catalog_from_operational_foods(
 
     batch = None
     if not dry_run:
-        batch = CatalogImportBatch.objects.create(
-            source_type=CatalogFood.SOURCE_ADMIN_IMPORT,
-            source_name=source_name,
-            source_version=source_version,
-            status=CatalogImportBatch.STATUS_RUNNING,
-            is_dry_run=False,
+        if dry_run_batch is None:
+            raise OperationalFoodCatalogBackfillError("A governed dry-run batch is required.")
+        batch = start_catalog_import_batch(
+            identity=operational_backfill_identity(
+                source_name=source_name,
+                source_version=source_version,
+                limit=limit,
+                status=status,
+            ),
+            dry_run_batch=dry_run_batch,
             total_rows=len(foods),
-            imported_rows=0,
-            skipped_rows=0,
-            failed_rows=0,
+            requested_by=requested_by,
+            reason=reason,
             notes=notes,
         )
 
@@ -215,6 +226,17 @@ def backfill_catalog_from_operational_foods(
         reason_counts=dict(reason_counts),
         samples=samples,
         created_catalog_food_ids=tuple(created_catalog_food_ids),
+    )
+
+
+def operational_backfill_identity(*, source_name: str, source_version: str, limit: int | None, status: str):
+    selection_contract = "notas.Food:is_global=true,is_verified=true,is_active=true:order=id:v1"
+    return catalog_import_identity(
+        source_type=CatalogFood.SOURCE_ADMIN_IMPORT,
+        source_name=source_name,
+        source_version=source_version,
+        input_sha256=hashlib.sha256(selection_contract.encode()).hexdigest(),
+        parameters_payload={"limit": limit, "status": status, "selection_contract": selection_contract},
     )
 
 

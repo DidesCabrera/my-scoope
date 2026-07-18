@@ -106,8 +106,8 @@ Esto incluye contratos de importación, normalización, validación de calidad y
 Desde Patch 37, Food Catalog cuenta con comandos propios y acciones admin iniciales para importar candidatos maestros sin escribir `notas.Food`:
 
 ```text
-python manage.py dry_run_catalog_usda_foods_json <path> --source-version <version>
-python manage.py import_catalog_usda_foods_json <path> --source-version <version>
+python manage.py dry_run_catalog_usda_foods_json <path> --source-version <version> --limit 5 --reason "Validar muestra USDA"
+python manage.py import_catalog_usda_foods_json <path> --source-version <version> --limit 5 --dry-run-batch-id <id> --reason "Aplicar muestra USDA revisada"
 ```
 
 Estos comandos escriben `CatalogFood`, `CatalogFoodSource` y `CatalogImportBatch`. No materializan alimentos operacionales ni cambian lo que MCP puede ver.
@@ -117,8 +117,8 @@ Desde Patch 38, la frontera MCP queda endurecida por contrato y tests: `list_foo
 Desde Patch 39, existe un backfill interno para sembrar Food Catalog desde alimentos operativos confiables:
 
 ```text
-python manage.py backfill_catalog_from_operational_foods --dry-run
-python manage.py backfill_catalog_from_operational_foods
+python manage.py backfill_catalog_from_operational_foods --dry-run --limit 10 --reason "Validar elegibles globales"
+python manage.py backfill_catalog_from_operational_foods --limit 10 --dry-run-batch-id <id> --reason "Aplicar backfill revisado"
 ```
 
 Este comando vive en `notas` porque lee `notas.Food`, pero escribe candidatos maestros en `food_catalog`. Solo considera alimentos globales, verificados y activos. No modifica `notas.Food`, no publica automáticamente `CatalogFood` y no cambia la disponibilidad MCP.
@@ -163,12 +163,11 @@ food_catalog/infrastructure/core_natural_foods_seed.py
 Comandos:
 
 ```text
-python manage.py dry_run_catalog_core_natural_foods
-python manage.py apply_catalog_core_natural_foods
-python manage.py apply_catalog_core_natural_foods --publish
+python manage.py dry_run_catalog_core_natural_foods --reason "Validar seed interno de 30 alimentos"
+python manage.py apply_catalog_core_natural_foods --dry-run-batch-id <id> --reason "Aplicar muestra validada"
 ```
 
-El comando `apply` crea o actualiza alimentos maestros `CatalogFood` como `natural_verified` y `verified`, con fuente trazable, porciones default y aliases. La opción `--publish` usa el workflow protegido de curación/publicación; no crea ni actualiza automáticamente `notas.Food`. La materialización operacional sigue perteneciendo al protocolo explícito de snapshot.
+El comando `apply` exige un dry-run persistido equivalente y crea o actualiza alimentos maestros `CatalogFood` como `natural_verified` y `verified`, con batch, fuente trazable, porciones default y aliases. Nunca publica ni crea o actualiza automáticamente `notas.Food`. La publicación y la materialización operacional siguen siendo acciones posteriores y separadas.
 
 El seed FC-03 es una base inicial para iterar hacia la meta de lanzamiento de 150-300 alimentos naturales curados, no una base nutricional definitiva ni una sustitución de fuentes externas como FatSecret u Open Food Facts.
 
@@ -404,9 +403,18 @@ food_catalog/data/brand_verified_intake_template.csv
 Nuevo comando:
 
 ```text
-python manage.py import_catalog_brand_foods_csv path/to/brand_foods.csv --dry-run
-python manage.py import_catalog_brand_foods_csv path/to/brand_foods.csv
+python manage.py import_catalog_brand_foods_csv path/to/brand_foods.csv --dry-run --limit 3 --reason "Validar muestra autorizada"
+python manage.py import_catalog_brand_foods_csv path/to/brand_foods.csv --limit 3 --dry-run-batch-id <id> --reason "Aplicar muestra autorizada"
 ```
+
+La curación manual basada en evidencia usa un CSV distinto y nunca acepta texto libre sin referencia, licencia y atribución:
+
+```text
+python manage.py import_catalog_manual_foods_csv path/to/manual_foods.csv --dry-run --limit 3 --reason "Validar evidencia manual"
+python manage.py import_catalog_manual_foods_csv path/to/manual_foods.csv --limit 3 --dry-run-batch-id <id> --reason "Aplicar evidencia revisada"
+```
+
+El escalamiento sobre los límites de muestra (USDA 10, marcas/manual 5, backfill 10) exige una `CatalogImportSourcePolicy` aprobada, máximo explícito, kill switch inactivo y dos applies pequeños gobernados y exitosos. Admin Operations registra aprobación y kill switch con razón obligatoria. OFF y FatSecret no pueden aprobarse dentro de FCG.
 
 ## Launch Readiness · cierre del ciclo
 

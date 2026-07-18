@@ -19,6 +19,7 @@ from food_catalog.application.imports.contracts import ImportedFoodDTO
 from food_catalog.application.imports.normalization import normalize_imported_food
 from food_catalog.application.imports.quality import evaluate_imported_food_quality
 from food_catalog.models import CatalogFood, CatalogFoodSource, CatalogImportBatch
+from food_catalog.infrastructure.imports.governance import CatalogImportIdentity, start_catalog_import_batch
 
 
 CATALOG_SOURCE_NAME_USDA = "USDA FoodData Central"
@@ -148,6 +149,10 @@ def import_catalog_food_batch(
     source_version: str,
     source_type: str = DEFAULT_CATALOG_IMPORT_SOURCE_TYPE,
     notes: str = "",
+    identity: CatalogImportIdentity,
+    dry_run_batch: CatalogImportBatch,
+    requested_by=None,
+    reason: str,
 ) -> CatalogImportResult:
     """Persist valid import DTOs as master catalog candidates.
 
@@ -162,17 +167,15 @@ def import_catalog_food_batch(
         sample_size=0,
     )
 
-    batch = CatalogImportBatch.objects.create(
-        source_type=source_type,
-        source_name=source_name,
-        source_version=source_version,
-        status=CatalogImportBatch.STATUS_RUNNING,
+    batch = start_catalog_import_batch(
+        identity=identity,
+        dry_run_batch=dry_run_batch,
         total_rows=len(food_list),
-        imported_rows=0,
-        skipped_rows=0,
-        failed_rows=failed_rows,
+        requested_by=requested_by,
+        reason=reason,
         notes=notes,
     )
+    batch.failed_rows = failed_rows
 
     imported_rows = 0
     duplicate_rows = 0
@@ -355,13 +358,14 @@ def _create_catalog_food_candidate(
             protein_g_per_100g=dto.protein,
             carbs_g_per_100g=dto.carbs,
             fat_g_per_100g=dto.fat,
-            calories_kcal_per_100g=None,
+            calories_kcal_per_100g=dto.calories_kcal_per_100g,
             fiber_g_per_100g=dto.fiber_g_per_100g,
             sugar_g_per_100g=dto.sugar_g_per_100g,
             saturated_fat_g_per_100g=dto.saturated_fat_g_per_100g,
             sodium_mg_per_100g=dto.sodium_mg_per_100g,
             food_group=dto.food_group,
             food_subgroup=dto.food_subgroup,
+            preparation_state=dto.preparation_state,
             status=DEFAULT_CATALOG_IMPORT_STATUS,
             source_type=source_type,
             data_quality_score=prepared_food.quality_score,
@@ -405,7 +409,11 @@ def _evidence_payload_for_dto(dto: ImportedFoodDTO) -> dict:
         "source_version": dto.source_version,
         "name": dto.name,
         "canonical_name": dto.canonical_name,
+        "source_description": dto.source_description,
+        "source_data_type": dto.source_data_type,
+        "preparation_state": dto.preparation_state,
         "nutrients_per_100g": {
+            "calories_kcal": _decimal_to_string(dto.calories_kcal_per_100g),
             "protein_g": _decimal_to_string(dto.protein),
             "carbs_g": _decimal_to_string(dto.carbs),
             "fat_g": _decimal_to_string(dto.fat),

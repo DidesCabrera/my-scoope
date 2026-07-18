@@ -37,27 +37,42 @@ class CatalogUSDAImportCommandTests(TestCase):
             path.write_text(json.dumps(payloads), encoding="utf-8")
 
             call_command(
+                "dry_run_catalog_usda_foods_json",
+                str(path),
+                source_version="2026-04",
+                source_dataset="foundation_foods",
+                limit=1,
+                reason="Validate USDA sample.",
+            )
+            dry_run = CatalogImportBatch.objects.get(is_dry_run=True)
+
+            call_command(
                 "import_catalog_usda_foods_json",
                 str(path),
                 source_version="2026-04",
                 source_dataset="foundation_foods",
                 notes="Catalog candidate import",
+                limit=1,
+                dry_run_batch_id=dry_run.pk,
+                reason="Apply approved USDA sample.",
             )
 
         self.assertEqual(CatalogFood.objects.count(), 1)
         self.assertEqual(CatalogFoodSource.objects.count(), 1)
-        self.assertEqual(CatalogImportBatch.objects.count(), 1)
+        self.assertEqual(CatalogImportBatch.objects.count(), 2)
 
         catalog_food = CatalogFood.objects.get(canonical_name="lentils cooked")
         source = CatalogFoodSource.objects.get(catalog_food=catalog_food)
-        batch = CatalogImportBatch.objects.get()
+        batch = CatalogImportBatch.objects.get(is_dry_run=False)
 
         self.assertEqual(catalog_food.status, CatalogFood.STATUS_EXTERNAL_CANDIDATE)
-        self.assertEqual(catalog_food.source_type, CatalogFood.SOURCE_EXTERNAL_TEMPORARY)
+        self.assertEqual(catalog_food.source_type, CatalogFood.SOURCE_USDA)
         self.assertEqual(catalog_food.protein_g_per_100g, Decimal("9.020"))
         self.assertEqual(source.source_name, CATALOG_SOURCE_NAME_USDA)
         self.assertEqual(source.source_food_id, "3001")
         self.assertEqual(source.import_batch, batch)
+        self.assertEqual(source.source_type, CatalogFood.SOURCE_USDA)
+        self.assertIsNotNone(batch.dry_run_batch)
         self.assertEqual(batch.total_rows, 1)
         self.assertEqual(batch.imported_rows, 1)
         self.assertEqual(batch.skipped_rows, 0)
@@ -89,11 +104,14 @@ class CatalogUSDAImportCommandTests(TestCase):
                 str(path),
                 source_version="2026-04",
                 source_dataset="foundation_foods",
+                limit=1,
+                reason="Validate USDA sample.",
             )
 
         self.assertEqual(CatalogFood.objects.count(), 0)
         self.assertEqual(CatalogFoodSource.objects.count(), 0)
-        self.assertEqual(CatalogImportBatch.objects.count(), 0)
+        self.assertEqual(CatalogImportBatch.objects.filter(is_dry_run=True).count(), 1)
+        self.assertEqual(CatalogImportBatch.objects.filter(is_dry_run=False).count(), 0)
 
     def test_import_catalog_usda_foods_json_skips_duplicates(self):
         payloads = [
@@ -122,13 +140,26 @@ class CatalogUSDAImportCommandTests(TestCase):
             path.write_text(json.dumps(payloads), encoding="utf-8")
 
             call_command(
+                "dry_run_catalog_usda_foods_json",
+                str(path),
+                source_version="2026-04",
+                source_dataset="foundation_foods",
+                limit=2,
+                reason="Validate duplicate sample.",
+            )
+            dry_run = CatalogImportBatch.objects.get(is_dry_run=True)
+
+            call_command(
                 "import_catalog_usda_foods_json",
                 str(path),
                 source_version="2026-04",
                 source_dataset="foundation_foods",
+                limit=2,
+                dry_run_batch_id=dry_run.pk,
+                reason="Apply duplicate sample.",
             )
 
-        batch = CatalogImportBatch.objects.get()
+        batch = CatalogImportBatch.objects.get(is_dry_run=False)
         self.assertEqual(CatalogFood.objects.count(), 1)
         self.assertEqual(CatalogFoodSource.objects.count(), 1)
         self.assertEqual(batch.imported_rows, 1)
@@ -142,4 +173,20 @@ class CatalogUSDAImportCommandTests(TestCase):
                 "import_catalog_usda_foods_json",
                 "missing-file.json",
                 source_version="2026-04",
+                limit=1,
+                dry_run_batch_id=1,
+                reason="Apply.",
             )
+
+    def test_usda_import_rejects_batch_over_global_maximum(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "sample_usda.json"
+            path.write_text("[]", encoding="utf-8")
+            with self.assertRaisesMessage(CommandError, "between 1 and 500"):
+                call_command(
+                    "dry_run_catalog_usda_foods_json",
+                    str(path),
+                    source_version="2026-04",
+                    limit=501,
+                    reason="Invalid large sample.",
+                )

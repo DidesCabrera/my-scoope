@@ -52,6 +52,7 @@ class CatalogFood(models.Model):
     ]
 
     SOURCE_NATURAL_VERIFIED = "natural_verified"
+    SOURCE_USDA = "usda"
     SOURCE_BRAND_SUBMITTED = "brand_submitted"
     SOURCE_USER_CREATED = "user_created"
     SOURCE_EXTERNAL_TEMPORARY = "external_temporary"
@@ -61,6 +62,7 @@ class CatalogFood(models.Model):
 
     SOURCE_TYPE_CHOICES = [
         (SOURCE_NATURAL_VERIFIED, "Natural verified"),
+        (SOURCE_USDA, "USDA FoodData Central"),
         (SOURCE_BRAND_SUBMITTED, "Brand submitted"),
         (SOURCE_USER_CREATED, "User created"),
         (SOURCE_EXTERNAL_TEMPORARY, "External temporary"),
@@ -872,6 +874,27 @@ class CatalogImportBatch(models.Model):
 
     is_dry_run = models.BooleanField(default=False)
 
+    dry_run_batch = models.ForeignKey(
+        "self",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="applied_batches",
+        help_text="Completed equivalent dry-run that authorized this mutating batch.",
+    )
+
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="requested_catalog_import_batches",
+    )
+
+    reason = models.TextField(blank=True)
+    input_sha256 = models.CharField(max_length=64, blank=True)
+    parameters_payload = models.JSONField(default=dict, blank=True)
+
     total_rows = models.PositiveIntegerField(default=0)
     imported_rows = models.PositiveIntegerField(default=0)
     skipped_rows = models.PositiveIntegerField(default=0)
@@ -894,3 +917,33 @@ class CatalogImportBatch(models.Model):
     def __str__(self) -> str:
         version = f" · {self.source_version}" if self.source_version else ""
         return f"{self.source_name}{version} · {self.status}"
+
+
+class CatalogImportSourcePolicy(models.Model):
+    """Explicit gate for scaling one persistent source beyond its sample size."""
+
+    source_type = models.CharField(max_length=40, choices=CatalogFood.SOURCE_TYPE_CHOICES)
+    source_name = models.CharField(max_length=160)
+    is_enabled = models.BooleanField(default=True)
+    scale_approved = models.BooleanField(default=False)
+    kill_switch = models.BooleanField(default=False)
+    max_batch_rows = models.PositiveIntegerField(default=10)
+    approval_reason = models.TextField(blank=True)
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="approved_catalog_import_source_policies",
+    )
+    approved_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["source_type", "source_name"], name="unique_catalog_import_source_policy")
+        ]
+        ordering = ["source_type", "source_name"]
+
+    def __str__(self) -> str:
+        return f"{self.source_name} · max {self.max_batch_rows}"

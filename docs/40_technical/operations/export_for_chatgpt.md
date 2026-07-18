@@ -6,6 +6,12 @@ Audience: developers and AI assistants working with exported My Scoope context
 
 ## Purpose
 
+Cuando la AI tiene acceso ejecutable al repositorio, debe preferir
+`python manage.py ai_project_context --json` para obtener estado, ciclos, decisiones,
+transiciones y apuestas actuales antes de pedir o construir un export amplio. El
+comando es una interfaz complementaria y sanitizada; los ZIP siguen siendo útiles
+cuando el código no está disponible directamente.
+
 My Scoope usa `scripts/export_for_chatgpt.sh` para generar ZIPs optimizados para conversaciones con IA.
 
 El objetivo del export **no** es copiar todo el repositorio cada vez. Su objetivo es entregar el contexto correcto para la tarea correcta, reduciendo ruido, archivos pesados y documentos históricos que puedan competir por atención.

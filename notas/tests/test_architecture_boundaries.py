@@ -31,6 +31,7 @@ PRESENTATION_DJANGO_HTTP_IMPORT_ALLOWLIST = {
 APPLICATION_FOOD_CATALOG_IMPORT_ALLOWLIST = {
     "notas/application/dto/imported_food_dto.py imports food_catalog.application.imports.contracts",
     "notas/application/services/commands/food_catalog_backfill.py imports food_catalog.models",
+    "notas/application/services/commands/food_catalog_backfill.py imports food_catalog.infrastructure.imports.governance",
     "notas/application/services/food_catalog_snapshots.py imports food_catalog.application.contracts",
     "notas/application/services/food_catalog_snapshots.py imports food_catalog.application.solver_readiness",
     "notas/application/services/food_catalog_snapshots.py imports food_catalog.models",

@@ -5,4 +5,7 @@
   <a class="admin-operations-tab{% if active_tab == 'inventory' %} admin-operations-tab--active{% endif %}" href="{% url 'admin_operations_food_catalog_inventory' %}"{% if active_tab == 'inventory' %} aria-current="page"{% endif %}>
     <i data-lucide="table-properties"></i> Inventario y calidad
   </a>
+  <a class="admin-operations-tab{% if active_tab == 'imports' %} admin-operations-tab--active{% endif %}" href="{% url 'admin_operations_food_catalog_imports' %}"{% if active_tab == 'imports' %} aria-current="page"{% endif %}>
+    <i data-lucide="database-zap"></i> Imports y dry-runs
+  </a>
 </nav>

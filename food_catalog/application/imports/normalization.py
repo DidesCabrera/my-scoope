@@ -34,8 +34,10 @@ def normalize_imported_food(dto: ImportedFoodDTO) -> ImportedFoodDTO:
         protein=_to_decimal(dto.protein),
         carbs=_to_decimal(dto.carbs),
         fat=_to_decimal(dto.fat),
+        calories_kcal_per_100g=_to_optional_decimal(dto.calories_kcal_per_100g),
         food_group=_clean_key(dto.food_group),
         food_subgroup=_clean_key(dto.food_subgroup),
+        preparation_state=_clean_key(dto.preparation_state) or "unknown",
         fiber_g_per_100g=_to_optional_decimal(dto.fiber_g_per_100g),
         sugar_g_per_100g=_to_optional_decimal(dto.sugar_g_per_100g),
         saturated_fat_g_per_100g=_to_optional_decimal(dto.saturated_fat_g_per_100g),
@@ -45,6 +47,8 @@ def normalize_imported_food(dto: ImportedFoodDTO) -> ImportedFoodDTO:
         source_url=_clean_display_text(dto.source_url),
         raw_payload_hash=_clean_display_text(dto.raw_payload_hash),
         normalized_payload_hash=_clean_display_text(dto.normalized_payload_hash),
+        source_description=_clean_display_text(dto.source_description),
+        source_data_type=_clean_display_text(dto.source_data_type),
     )
 
 

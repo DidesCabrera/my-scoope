@@ -3,6 +3,9 @@
   <a class="admin-analytics-nav__link" href="{% url 'admin_operations_overview' %}"{% if request.resolver_match.url_name == 'admin_operations_overview' %} aria-current="page"{% endif %}>
     <i data-lucide="layout-dashboard" class="admin-analytics-nav__icon"></i> Overview
   </a>
+  <a class="admin-analytics-nav__link" href="{% url 'admin_operations_system_control' %}"{% if request.resolver_match.url_name == 'admin_operations_system_control' %} aria-current="page"{% endif %}>
+    <i data-lucide="scan-search" class="admin-analytics-nav__icon"></i> Project Control
+  </a>
   <a class="admin-analytics-nav__link" href="{% url 'admin_operations_food_catalog' %}"{% if request.resolver_match.url_name == 'admin_operations_food_catalog' or request.resolver_match.url_name == 'admin_operations_food_catalog_inventory' or request.resolver_match.url_name == 'admin_operations_food_catalog_candidate' %} aria-current="page"{% endif %}>
     <i data-lucide="database" class="admin-analytics-nav__icon"></i> Food Catalog
   </a>

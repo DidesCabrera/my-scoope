@@ -10,13 +10,19 @@ from food_catalog.application.core_natural_foods import (
 )
 from food_catalog.infrastructure.core_natural_foods_seed import (
     apply_core_natural_foods_seed,
+    core_natural_foods_seed_identity,
     dry_run_core_natural_foods_seed,
+)
+from food_catalog.infrastructure.imports.governance import (
+    CatalogImportGovernanceError,
+    record_catalog_import_dry_run,
 )
 from food_catalog.models import (
     CatalogFood,
     CatalogFoodAlias,
     CatalogFoodPortion,
     CatalogFoodSource,
+    CatalogImportBatch,
 )
 
 
@@ -26,22 +32,23 @@ class CoreNaturalFoodsSeedTests(TestCase):
         validation = validate_core_natural_foods_seed(foods)
 
         self.assertTrue(validation.is_valid, validation.errors)
-        self.assertGreaterEqual(validation.foods_count, 25)
+        self.assertEqual(validation.foods_count, 30)
 
     def test_dry_run_reports_rows_to_create_without_writes(self):
         result = dry_run_core_natural_foods_seed()
 
-        self.assertGreaterEqual(result.total_rows, 25)
+        self.assertEqual(result.total_rows, 30)
         self.assertEqual(result.total_rows, result.to_create)
         self.assertEqual(result.to_update, 0)
         self.assertEqual(CatalogFood.objects.count(), 0)
 
     def test_apply_creates_verified_catalog_foods_with_sources_portions_and_aliases(self):
-        result = apply_core_natural_foods_seed()
+        dry_run = self.record_dry_run()
+        result = apply_core_natural_foods_seed(dry_run_batch=dry_run, reason="Apply seed sample.")
 
-        self.assertGreaterEqual(result.created_rows, 25)
+        self.assertEqual(result.created_rows, 30)
         self.assertEqual(result.updated_rows, 0)
-        self.assertEqual(result.published_rows, 0)
+        self.assertEqual(result.batch.dry_run_batch, dry_run)
 
         food = CatalogFood.objects.get(canonical_name="pechuga de pollo cocida")
         self.assertEqual(food.status, CatalogFood.STATUS_VERIFIED)
@@ -56,31 +63,48 @@ class CoreNaturalFoodsSeedTests(TestCase):
         source = CatalogFoodSource.objects.get(catalog_food=food)
         self.assertEqual(source.source_name, CORE_NATURAL_FOODS_SOURCE_NAME)
         self.assertEqual(source.license_status, CatalogFoodSource.LICENSE_ALLOWED)
+        self.assertEqual(source.import_batch, result.batch)
 
     def test_apply_is_idempotent_and_updates_existing_rows(self):
-        first = apply_core_natural_foods_seed()
-        second = apply_core_natural_foods_seed()
+        first = apply_core_natural_foods_seed(dry_run_batch=self.record_dry_run(), reason="First apply.")
+        second = apply_core_natural_foods_seed(dry_run_batch=self.record_dry_run(), reason="Idempotency apply.")
 
-        self.assertGreaterEqual(first.created_rows, 25)
+        self.assertEqual(first.created_rows, 30)
         self.assertEqual(second.created_rows, 0)
         self.assertEqual(second.updated_rows, first.total_rows)
         self.assertEqual(CatalogFood.objects.count(), first.total_rows)
 
-    def test_apply_with_publish_uses_publication_workflow(self):
-        result = apply_core_natural_foods_seed(publish=True)
-
-        self.assertGreaterEqual(result.published_rows, 25)
-        self.assertFalse(result.blocked_publications)
-        self.assertEqual(
-            CatalogFood.objects.filter(status=CatalogFood.STATUS_PUBLISHED).count(),
-            result.total_rows,
+    def test_apply_never_publishes_and_rejects_non_dry_run(self):
+        invalid_batch = CatalogImportBatch.objects.create(
+            source_type=CatalogFood.SOURCE_NATURAL_VERIFIED,
+            source_name=CORE_NATURAL_FOODS_SOURCE_NAME,
         )
+        with self.assertRaises(CatalogImportGovernanceError):
+            apply_core_natural_foods_seed(dry_run_batch=invalid_batch, reason="Invalid apply.")
+        self.assertEqual(CatalogFood.objects.filter(status=CatalogFood.STATUS_PUBLISHED).count(), 0)
 
     def test_management_commands_run(self):
-        call_command("dry_run_catalog_core_natural_foods")
-        call_command("apply_catalog_core_natural_foods")
+        call_command("dry_run_catalog_core_natural_foods", reason="Validate packaged seed.")
+        dry_run = CatalogImportBatch.objects.get(is_dry_run=True)
+        call_command(
+            "apply_catalog_core_natural_foods",
+            dry_run_batch_id=dry_run.pk,
+            reason="Apply validated packaged seed.",
+        )
 
-        self.assertGreaterEqual(CatalogFood.objects.count(), 25)
+        self.assertEqual(CatalogFood.objects.count(), 30)
         self.assertEqual(CatalogFoodSource.objects.count(), CatalogFood.objects.count())
         self.assertGreater(CatalogFoodPortion.objects.count(), CatalogFood.objects.count())
         self.assertGreater(CatalogFoodAlias.objects.count(), CatalogFood.objects.count())
+        self.assertFalse(CatalogFood.objects.filter(status=CatalogFood.STATUS_PUBLISHED).exists())
+
+    def record_dry_run(self):
+        plan = dry_run_core_natural_foods_seed()
+        return record_catalog_import_dry_run(
+            identity=core_natural_foods_seed_identity(),
+            total_rows=plan.total_rows,
+            would_import_rows=plan.to_create + plan.to_update,
+            skipped_rows=plan.invalid_rows,
+            failed_rows=0,
+            reason="Validate seed.",
+        )

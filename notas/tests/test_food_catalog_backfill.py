@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.core.management import call_command
 from django.test import TestCase
+from django.contrib.auth import get_user_model
 
 from food_catalog.models import (
     CatalogFood,
@@ -13,9 +14,13 @@ from food_catalog.models import (
 from notas.application.services.commands.food_catalog_backfill import (
     OPERATIONAL_BACKFILL_SOURCE_DATASET,
     OPERATIONAL_BACKFILL_SOURCE_NAME,
+    DEFAULT_OPERATIONAL_BACKFILL_SOURCE_VERSION,
+    DEFAULT_OPERATIONAL_BACKFILL_STATUS,
     backfill_catalog_from_operational_foods,
     dry_run_backfill_catalog_from_operational_foods,
+    operational_backfill_identity,
 )
+from food_catalog.infrastructure.imports.governance import record_catalog_import_dry_run
 from notas.domain.models import (
     Food,
     FoodAlias,
@@ -96,7 +101,7 @@ class FoodCatalogOperationalBackfillTests(TestCase):
             attribution="USDA FoodData Central",
         )
 
-        result = backfill_catalog_from_operational_foods(
+        result = self.governed_backfill(
             source_version="seed-2026-06",
             notes="Initial trusted foods backfill",
         )
@@ -113,7 +118,7 @@ class FoodCatalogOperationalBackfillTests(TestCase):
 
         catalog_food = CatalogFood.objects.get()
         source = CatalogFoodSource.objects.get(catalog_food=catalog_food)
-        batch = CatalogImportBatch.objects.get()
+        batch = CatalogImportBatch.objects.get(is_dry_run=False)
 
         self.assertEqual(catalog_food.display_name, "Pechuga de pollo cocida")
         self.assertEqual(catalog_food.canonical_name, "pechuga de pollo cocida")
@@ -171,7 +176,7 @@ class FoodCatalogOperationalBackfillTests(TestCase):
             catalog_food_ref=catalog_food.catalog_ref,
         )
 
-        result = backfill_catalog_from_operational_foods()
+        result = self.governed_backfill()
 
         self.assertEqual(result.created_rows, 0)
         self.assertEqual(result.skipped_rows, 1)
@@ -190,7 +195,7 @@ class FoodCatalogOperationalBackfillTests(TestCase):
         )
         _create_trusted_food(name="Avena", canonical_name="avena")
 
-        result = backfill_catalog_from_operational_foods()
+        result = self.governed_backfill()
 
         self.assertEqual(result.created_rows, 0)
         self.assertEqual(result.skipped_rows, 1)
@@ -200,25 +205,84 @@ class FoodCatalogOperationalBackfillTests(TestCase):
     def test_management_command_supports_dry_run(self):
         _create_trusted_food(name="Lentejas cocidas", canonical_name="lentejas cocidas")
 
-        call_command("backfill_catalog_from_operational_foods", dry_run=True)
+        call_command("backfill_catalog_from_operational_foods", dry_run=True, reason="Validate backfill.")
 
         self.assertEqual(CatalogFood.objects.count(), 0)
-        self.assertEqual(CatalogImportBatch.objects.count(), 0)
+        self.assertEqual(CatalogImportBatch.objects.filter(is_dry_run=True).count(), 1)
 
     def test_management_command_creates_catalog_batch(self):
         _create_trusted_food(name="Arroz blanco cocido", canonical_name="arroz blanco cocido")
 
         call_command(
             "backfill_catalog_from_operational_foods",
+            dry_run=True,
+            source_version="seed-2026-06",
+            reason="Validate command backfill.",
+        )
+        dry_run = CatalogImportBatch.objects.get(is_dry_run=True)
+        call_command(
+            "backfill_catalog_from_operational_foods",
             source_version="seed-2026-06",
             notes="Command test",
+            reason="Apply command backfill.",
+            dry_run_batch_id=dry_run.pk,
         )
 
         self.assertEqual(CatalogFood.objects.count(), 1)
-        batch = CatalogImportBatch.objects.get()
+        batch = CatalogImportBatch.objects.get(is_dry_run=False)
         self.assertEqual(batch.source_version, "seed-2026-06")
         self.assertEqual(batch.notes, "Command test")
         self.assertEqual(batch.imported_rows, 1)
+
+    def test_private_user_food_is_never_eligible_or_promoted(self):
+        owner = get_user_model().objects.create_user(username="private-food-owner")
+        Food.objects.create(
+            name="Receta privada",
+            canonical_name="receta privada",
+            protein=10,
+            carbs=20,
+            fat=5,
+            created_by=owner,
+            is_global=False,
+            is_verified=True,
+            is_active=True,
+        )
+
+        plan = dry_run_backfill_catalog_from_operational_foods()
+
+        self.assertEqual(plan.total_rows, 0)
+        self.assertEqual(plan.created_rows, 0)
+        self.assertEqual(CatalogFood.objects.count(), 0)
+
+    def governed_backfill(self, **kwargs):
+        limit = kwargs.get("limit")
+        source_name = kwargs.get("source_name", OPERATIONAL_BACKFILL_SOURCE_NAME)
+        source_version = kwargs.get("source_version", DEFAULT_OPERATIONAL_BACKFILL_SOURCE_VERSION)
+        status = kwargs.get("status", DEFAULT_OPERATIONAL_BACKFILL_STATUS)
+        plan = dry_run_backfill_catalog_from_operational_foods(
+            limit=limit,
+            source_name=source_name,
+            source_version=source_version,
+            status=status,
+        )
+        dry_run = record_catalog_import_dry_run(
+            identity=operational_backfill_identity(
+                source_name=source_name,
+                source_version=source_version,
+                limit=limit,
+                status=status,
+            ),
+            total_rows=plan.total_rows,
+            would_import_rows=plan.created_rows,
+            skipped_rows=plan.skipped_rows,
+            failed_rows=plan.failed_rows,
+            reason="Validate operational backfill.",
+        )
+        return backfill_catalog_from_operational_foods(
+            **kwargs,
+            dry_run_batch=dry_run,
+            reason="Apply operational backfill.",
+        )
 
 
 def _create_trusted_food(

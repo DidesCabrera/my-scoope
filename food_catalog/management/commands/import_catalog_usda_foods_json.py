@@ -1,4 +1,5 @@
 from pathlib import Path
+import hashlib
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -10,6 +11,8 @@ from food_catalog.infrastructure.imports.catalog_import import CATALOG_SOURCE_NA
 from food_catalog.infrastructure.imports.usda_catalog_import import (
     import_usda_catalog_food_payloads,
 )
+from food_catalog.infrastructure.imports.governance import catalog_import_identity
+from food_catalog.models import CatalogFood, CatalogImportBatch
 
 
 class Command(BaseCommand):
@@ -24,6 +27,9 @@ class Command(BaseCommand):
                 "Supports either a direct list or a FoundationFoods root object."
             ),
         )
+        parser.add_argument("--limit", type=int, required=True, help="Initial sample size (1-10).")
+        parser.add_argument("--dry-run-batch-id", type=int, required=True)
+        parser.add_argument("--reason", required=True)
         parser.add_argument(
             "--source-version",
             required=True,
@@ -59,12 +65,29 @@ class Command(BaseCommand):
         except FoundationFoodsReaderError as exc:
             raise CommandError(str(exc)) from exc
 
+        if options["limit"] < 1 or options["limit"] > 500:
+            raise CommandError("USDA batch limit must be between 1 and 500; applies above 10 require FCG09 approval.")
+        payloads = payloads[: options["limit"]]
+        try:
+            dry_run_batch = CatalogImportBatch.objects.get(pk=options["dry_run_batch_id"])
+        except CatalogImportBatch.DoesNotExist as exc:
+            raise CommandError(str(exc)) from exc
+        identity = catalog_import_identity(
+            source_type=CatalogFood.SOURCE_USDA,
+            source_name=options["source_name"],
+            source_version=options["source_version"],
+            input_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
+            parameters_payload={"source_dataset": options["source_dataset"], "limit": options["limit"]},
+        )
         result = import_usda_catalog_food_payloads(
             payloads=payloads,
             source_version=options["source_version"],
             source_dataset=options["source_dataset"],
             source_name=options["source_name"],
             notes=options["notes"],
+            identity=identity,
+            dry_run_batch=dry_run_batch,
+            reason=options["reason"],
         )
 
         self.stdout.write(
