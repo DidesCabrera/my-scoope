@@ -53,7 +53,16 @@ from accounts.models import AccountSubscription, CreditLedger, CreditWallet
 from ai_assistant.models import AICreditLedger, AIUsageEvent, AIUserCreditQuota
 from accounts.services.credits import current_account_credit_period, release_account_credit_reservation
 from food_catalog.application.curation import transition_catalog_food_status
-from food_catalog.models import CatalogCurationCandidate, CatalogFood
+from food_catalog.models import CatalogCurationCandidate, CatalogFood, CatalogImportBatch
+from food_catalog.infrastructure.core_natural_foods_seed import (
+    apply_core_natural_foods_seed,
+    core_natural_foods_seed_identity,
+    dry_run_core_natural_foods_seed,
+)
+from food_catalog.infrastructure.imports.governance import (
+    CatalogImportGovernanceError,
+    record_catalog_import_dry_run,
+)
 from notas.domain.model_modules.proposals import NutritionProposal, NutritionProposalAuditEvent
 from admin_operations.models import AdminOperationAuditEvent
 
@@ -562,6 +571,67 @@ def build_food_catalog_imports_vm(*, source_type: str = "", status: str = "") ->
         ],
         source_options=list(payload["source_options"]),
         status_options=list(payload["status_options"]),
+    )
+
+
+def perform_core_seed_dry_run(*, actor, reason: str) -> AdminOperationResult:
+    normalized_reason = (reason or "").strip()
+    if not normalized_reason:
+        return AdminOperationResult(False, "Debes indicar una razón operacional.")
+
+    plan = dry_run_core_natural_foods_seed()
+    if plan.validation_errors:
+        return AdminOperationResult(False, "El seed interno no superó su validación.")
+    batch = record_catalog_import_dry_run(
+        identity=core_natural_foods_seed_identity(),
+        total_rows=plan.total_rows,
+        would_import_rows=plan.to_create + plan.to_update,
+        skipped_rows=plan.invalid_rows,
+        failed_rows=0,
+        requested_by=actor,
+        reason=normalized_reason,
+        summary_payload={"to_create": plan.to_create, "to_update": plan.to_update, "invalid": plan.invalid_rows},
+    )
+    record_admin_operation_audit_event(
+        actor=actor,
+        action="food_catalog.core_seed.dry_run",
+        target=batch,
+        reason=normalized_reason,
+        status_after=batch.status,
+        metadata={"total": plan.total_rows, "to_create": plan.to_create, "to_update": plan.to_update},
+    )
+    return AdminOperationResult(
+        True,
+        f"Dry-run #{batch.pk}: total={plan.total_rows}, crear={plan.to_create}, actualizar={plan.to_update}.",
+    )
+
+
+def perform_core_seed_apply(*, actor, dry_run_batch_id: str, reason: str) -> AdminOperationResult:
+    normalized_reason = (reason or "").strip()
+    if not normalized_reason:
+        return AdminOperationResult(False, "Debes indicar una razón operacional.")
+    try:
+        dry_run_batch = CatalogImportBatch.objects.get(pk=int(dry_run_batch_id))
+        result = apply_core_natural_foods_seed(
+            dry_run_batch=dry_run_batch,
+            requested_by=actor,
+            reason=normalized_reason,
+        )
+    except (ValueError, TypeError, CatalogImportBatch.DoesNotExist, CatalogImportGovernanceError) as exc:
+        return AdminOperationResult(False, f"No se pudo aplicar el seed: {exc}")
+
+    record_admin_operation_audit_event(
+        actor=actor,
+        action="food_catalog.core_seed.apply",
+        target=result.batch,
+        reason=normalized_reason,
+        status_before=f"dry_run={dry_run_batch.pk}",
+        status_after=result.batch.status,
+        metadata={"created": result.created_rows, "updated": result.updated_rows, "published": 0},
+    )
+    return AdminOperationResult(
+        True,
+        f"Seed aplicado en batch #{result.batch.pk}: creados={result.created_rows}, actualizados={result.updated_rows}, publicados=0.",
     )
 
 

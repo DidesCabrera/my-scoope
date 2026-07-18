@@ -3,6 +3,8 @@ from django.test import TestCase
 from django.urls import reverse
 
 from food_catalog.models import CatalogFood, CatalogImportBatch
+from food_catalog.models import CatalogFoodSource
+from admin_operations.models import AdminOperationAuditEvent
 
 
 class FoodCatalogImportsOperationsTests(TestCase):
@@ -70,3 +72,45 @@ class FoodCatalogImportsOperationsTests(TestCase):
 
         self.assertContains(response, "Visible source")
         self.assertNotContains(response, "Hidden source")
+
+    def test_core_seed_dry_run_then_apply_is_traced_and_does_not_publish(self):
+        self.client.force_login(self.staff)
+        dry_response = self.client.post(
+            reverse("admin_operations_food_catalog_core_seed_dry_run"),
+            {"reason": "Validate the packaged 30-food sample."},
+        )
+        self.assertEqual(dry_response.status_code, 302)
+        dry_run = CatalogImportBatch.objects.get(is_dry_run=True)
+        self.assertEqual(dry_run.total_rows, 30)
+        self.assertEqual(CatalogFood.objects.count(), 0)
+
+        apply_response = self.client.post(
+            reverse("admin_operations_food_catalog_core_seed_apply"),
+            {"dry_run_batch_id": dry_run.pk, "reason": "Apply approved seed sample."},
+        )
+        self.assertEqual(apply_response.status_code, 302)
+        apply_batch = CatalogImportBatch.objects.get(is_dry_run=False)
+        self.assertEqual(apply_batch.dry_run_batch, dry_run)
+        self.assertEqual(CatalogFood.objects.count(), 30)
+        self.assertEqual(CatalogFoodSource.objects.filter(import_batch=apply_batch).count(), 30)
+        self.assertFalse(CatalogFood.objects.filter(status=CatalogFood.STATUS_PUBLISHED).exists())
+        self.assertEqual(
+            AdminOperationAuditEvent.objects.filter(
+                action__in=["food_catalog.core_seed.dry_run", "food_catalog.core_seed.apply"]
+            ).count(),
+            2,
+        )
+
+    def test_core_seed_apply_without_equivalent_dry_run_is_rejected(self):
+        self.client.force_login(self.staff)
+        invalid = CatalogImportBatch.objects.create(
+            source_type=CatalogFood.SOURCE_NATURAL_VERIFIED,
+            source_name="Not a dry-run",
+        )
+        response = self.client.post(
+            reverse("admin_operations_food_catalog_core_seed_apply"),
+            {"dry_run_batch_id": invalid.pk, "reason": "Attempt apply."},
+            follow=True,
+        )
+        self.assertContains(response, "No se pudo aplicar el seed")
+        self.assertEqual(CatalogFood.objects.count(), 0)

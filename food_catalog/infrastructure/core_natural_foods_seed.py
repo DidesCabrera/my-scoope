@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 
 from django.db import transaction
+from django.utils import timezone
 
 from food_catalog.application.core_natural_foods import (
     CORE_NATURAL_FOODS_ATTRIBUTION,
@@ -13,16 +14,21 @@ from food_catalog.application.core_natural_foods import (
     CORE_NATURAL_FOODS_SEED_VERSION,
     CORE_NATURAL_FOODS_SOURCE_NAME,
     CoreNaturalFoodSeed,
+    core_natural_foods_seed_sha256,
     load_core_natural_foods_seed,
     validate_core_natural_foods_seed,
 )
-from food_catalog.application.curation import transition_catalog_food_status
 from food_catalog.application.imports.normalization import normalize_food_name
+from food_catalog.infrastructure.imports.governance import (
+    catalog_import_identity,
+    start_catalog_import_batch,
+)
 from food_catalog.models import (
     CatalogFood,
     CatalogFoodAlias,
     CatalogFoodPortion,
     CatalogFoodSource,
+    CatalogImportBatch,
 )
 
 
@@ -38,11 +44,10 @@ class CoreNaturalFoodsSeedPlan:
 
 @dataclass(frozen=True)
 class CoreNaturalFoodsSeedApplyResult:
+    batch: CatalogImportBatch
     total_rows: int
     created_rows: int
     updated_rows: int
-    published_rows: int
-    blocked_publications: tuple[str, ...]
 
 
 def dry_run_core_natural_foods_seed() -> CoreNaturalFoodsSeedPlan:
@@ -92,21 +97,41 @@ def dry_run_core_natural_foods_seed() -> CoreNaturalFoodsSeedPlan:
     )
 
 
+def core_natural_foods_seed_identity():
+    return catalog_import_identity(
+        source_type=CatalogFood.SOURCE_NATURAL_VERIFIED,
+        source_name=CORE_NATURAL_FOODS_SOURCE_NAME,
+        source_version=CORE_NATURAL_FOODS_SEED_VERSION,
+        input_sha256=core_natural_foods_seed_sha256(),
+        parameters_payload={"dataset": CORE_NATURAL_FOODS_DATASET, "publish": False},
+    )
+
+
 @transaction.atomic
-def apply_core_natural_foods_seed(*, publish: bool = False) -> CoreNaturalFoodsSeedApplyResult:
+def apply_core_natural_foods_seed(
+    *,
+    dry_run_batch: CatalogImportBatch,
+    requested_by=None,
+    reason: str,
+) -> CoreNaturalFoodsSeedApplyResult:
     foods = load_core_natural_foods_seed()
     validation = validate_core_natural_foods_seed(foods)
     if not validation.is_valid:
         raise ValueError("Invalid core natural foods seed: " + " | ".join(validation.errors))
 
+    batch = start_catalog_import_batch(
+        identity=core_natural_foods_seed_identity(),
+        dry_run_batch=dry_run_batch,
+        total_rows=len(foods),
+        requested_by=requested_by,
+        reason=reason,
+    )
     created_rows = 0
     updated_rows = 0
-    published_rows = 0
-    blocked_publications: list[str] = []
 
     for food_seed in foods:
         catalog_food, created = _upsert_catalog_food(food_seed)
-        _upsert_source(catalog_food, food_seed)
+        _upsert_source(catalog_food, food_seed, import_batch=batch)
         _sync_portions(catalog_food, food_seed)
         _sync_aliases(catalog_food, food_seed)
 
@@ -115,24 +140,17 @@ def apply_core_natural_foods_seed(*, publish: bool = False) -> CoreNaturalFoodsS
         else:
             updated_rows += 1
 
-        if publish and catalog_food.status != CatalogFood.STATUS_PUBLISHED:
-            result = transition_catalog_food_status(
-                catalog_food,
-                CatalogFood.STATUS_PUBLISHED,
-            )
-            if result.changed:
-                published_rows += 1
-            elif result.errors:
-                blocked_publications.append(
-                    f"{catalog_food.display_name}: " + "; ".join(result.errors)
-                )
+    batch.imported_rows = created_rows + updated_rows
+    batch.status = CatalogImportBatch.STATUS_COMPLETED
+    batch.finished_at = timezone.now()
+    batch.summary_payload = {"created": created_rows, "updated": updated_rows, "published": 0}
+    batch.save(update_fields=["imported_rows", "status", "finished_at", "summary_payload"])
 
     return CoreNaturalFoodsSeedApplyResult(
+        batch=batch,
         total_rows=len(foods),
         created_rows=created_rows,
         updated_rows=updated_rows,
-        published_rows=published_rows,
-        blocked_publications=tuple(blocked_publications),
     )
 
 
@@ -187,12 +205,18 @@ def _upsert_catalog_food(food_seed: CoreNaturalFoodSeed) -> tuple[CatalogFood, b
     return catalog_food, created
 
 
-def _upsert_source(catalog_food: CatalogFood, food_seed: CoreNaturalFoodSeed) -> None:
+def _upsert_source(
+    catalog_food: CatalogFood,
+    food_seed: CoreNaturalFoodSeed,
+    *,
+    import_batch: CatalogImportBatch,
+) -> None:
     CatalogFoodSource.objects.update_or_create(
         source_name=CORE_NATURAL_FOODS_SOURCE_NAME,
         source_food_id=_source_food_id(food_seed),
         defaults={
             "catalog_food": catalog_food,
+            "import_batch": import_batch,
             "source_type": CatalogFood.SOURCE_NATURAL_VERIFIED,
             "source_dataset": CORE_NATURAL_FOODS_DATASET,
             "source_version": CORE_NATURAL_FOODS_SEED_VERSION,

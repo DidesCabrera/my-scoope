@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
@@ -61,6 +62,13 @@ def load_core_natural_foods_seed() -> tuple[CoreNaturalFoodSeed, ...]:
     )
     rows = json.loads(data_file.read_text(encoding="utf-8"))
     return tuple(_parse_seed_row(row) for row in rows)
+
+
+def core_natural_foods_seed_sha256() -> str:
+    data_file = resources.files("food_catalog.data").joinpath(
+        "core_natural_foods_es_cl_v1.json"
+    )
+    return hashlib.sha256(data_file.read_bytes()).hexdigest()
 
 
 def validate_core_natural_foods_seed(

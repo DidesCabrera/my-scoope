@@ -163,12 +163,11 @@ food_catalog/infrastructure/core_natural_foods_seed.py
 Comandos:
 
 ```text
-python manage.py dry_run_catalog_core_natural_foods
-python manage.py apply_catalog_core_natural_foods
-python manage.py apply_catalog_core_natural_foods --publish
+python manage.py dry_run_catalog_core_natural_foods --reason "Validar seed interno de 30 alimentos"
+python manage.py apply_catalog_core_natural_foods --dry-run-batch-id <id> --reason "Aplicar muestra validada"
 ```
 
-El comando `apply` crea o actualiza alimentos maestros `CatalogFood` como `natural_verified` y `verified`, con fuente trazable, porciones default y aliases. La opción `--publish` usa el workflow protegido de curación/publicación; no crea ni actualiza automáticamente `notas.Food`. La materialización operacional sigue perteneciendo al protocolo explícito de snapshot.
+El comando `apply` exige un dry-run persistido equivalente y crea o actualiza alimentos maestros `CatalogFood` como `natural_verified` y `verified`, con batch, fuente trazable, porciones default y aliases. Nunca publica ni crea o actualiza automáticamente `notas.Food`. La publicación y la materialización operacional siguen siendo acciones posteriores y separadas.
 
 El seed FC-03 es una base inicial para iterar hacia la meta de lanzamiento de 150-300 alimentos naturales curados, no una base nutricional definitiva ni una sustitución de fuentes externas como FatSecret u Open Food Facts.
 
