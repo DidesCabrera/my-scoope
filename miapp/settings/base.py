@@ -2,6 +2,7 @@ import json
 import os
 from pathlib import Path
 import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
 
 from core.observability import configure_sentry
 
@@ -21,7 +22,7 @@ def _env_float(name: str, default: float = 0.0) -> float:
     try:
         return float(raw_value)
     except ValueError:
-        return default
+        raise ImproperlyConfigured(f"{name} must be a number, received an invalid value.")
 
 
 def _env_int(name: str, default: int = 0) -> int:
@@ -31,7 +32,7 @@ def _env_int(name: str, default: int = 0) -> int:
     try:
         return int(raw_value)
     except ValueError:
-        return default
+        raise ImproperlyConfigured(f"{name} must be an integer, received an invalid value.")
 
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "")
@@ -252,9 +253,7 @@ AI_ASSISTANT_OPENAI_BASE_URL = os.environ.get(
     "AI_ASSISTANT_OPENAI_BASE_URL",
     "https://api.openai.com/v1",
 ).strip()
-AI_ASSISTANT_OPENAI_TIMEOUT_SECONDS = int(
-    os.environ.get("AI_ASSISTANT_OPENAI_TIMEOUT_SECONDS", "30")
-)
+AI_ASSISTANT_OPENAI_TIMEOUT_SECONDS = _env_int("AI_ASSISTANT_OPENAI_TIMEOUT_SECONDS", 30)
 AI_ASSISTANT_OPENAI_REASONING_EFFORT = os.environ.get(
     "AI_ASSISTANT_OPENAI_REASONING_EFFORT",
     "low",
@@ -290,13 +289,13 @@ AI_ASSISTANT_LLM_PRICING_USD_PER_1M_TOKENS = _llm_pricing_from_env()
 # Technical per-turn guardrails for the external LLM cycle. These are not
 # commercial credits; they prevent accidental runaway context while real usage
 # data is collected.
-AI_ASSISTANT_MAX_HISTORY_MESSAGES = int(os.environ.get("AI_ASSISTANT_MAX_HISTORY_MESSAGES", "8"))
-AI_ASSISTANT_MAX_OUTPUT_TOKENS = int(os.environ.get("AI_ASSISTANT_MAX_OUTPUT_TOKENS", "900"))
-AI_ASSISTANT_MAX_TOOL_LOOP_ITERATIONS = int(os.environ.get("AI_ASSISTANT_MAX_TOOL_LOOP_ITERATIONS", "1"))
-AI_ASSISTANT_MAX_INPUT_TOKENS = int(os.environ.get("AI_ASSISTANT_MAX_INPUT_TOKENS", "6000"))
-AI_ASSISTANT_MAX_CONTEXT_CHARS = int(os.environ.get("AI_ASSISTANT_MAX_CONTEXT_CHARS", "8000"))
-AI_ASSISTANT_MAX_MESSAGE_CHARS = int(os.environ.get("AI_ASSISTANT_MAX_MESSAGE_CHARS", "2000"))
-AI_ASSISTANT_MAX_TOOL_REQUESTS_PER_TURN = int(os.environ.get("AI_ASSISTANT_MAX_TOOL_REQUESTS_PER_TURN", "3"))
+AI_ASSISTANT_MAX_HISTORY_MESSAGES = _env_int("AI_ASSISTANT_MAX_HISTORY_MESSAGES", 8)
+AI_ASSISTANT_MAX_OUTPUT_TOKENS = _env_int("AI_ASSISTANT_MAX_OUTPUT_TOKENS", 900)
+AI_ASSISTANT_MAX_TOOL_LOOP_ITERATIONS = _env_int("AI_ASSISTANT_MAX_TOOL_LOOP_ITERATIONS", 1)
+AI_ASSISTANT_MAX_INPUT_TOKENS = _env_int("AI_ASSISTANT_MAX_INPUT_TOKENS", 6000)
+AI_ASSISTANT_MAX_CONTEXT_CHARS = _env_int("AI_ASSISTANT_MAX_CONTEXT_CHARS", 8000)
+AI_ASSISTANT_MAX_MESSAGE_CHARS = _env_int("AI_ASSISTANT_MAX_MESSAGE_CHARS", 2000)
+AI_ASSISTANT_MAX_TOOL_REQUESTS_PER_TURN = _env_int("AI_ASSISTANT_MAX_TOOL_REQUESTS_PER_TURN", 3)
 AI_ASSISTANT_ENABLE_REVIEWABLE_PROPOSAL_TOOLS = os.environ.get(
     "AI_ASSISTANT_ENABLE_REVIEWABLE_PROPOSAL_TOOLS",
     "false",
@@ -309,7 +308,7 @@ AI_ASSISTANT_CREDITS_ENABLED = os.environ.get(
     "false",
 ).lower() in {"1", "true", "yes", "on"}
 AI_ASSISTANT_USD_PER_AI_CREDIT = os.environ.get("AI_ASSISTANT_USD_PER_AI_CREDIT", "0.001")
-AI_ASSISTANT_DEFAULT_CREDITS_PER_TURN = int(os.environ.get("AI_ASSISTANT_DEFAULT_CREDITS_PER_TURN", "1"))
+AI_ASSISTANT_DEFAULT_CREDITS_PER_TURN = _env_int("AI_ASSISTANT_DEFAULT_CREDITS_PER_TURN", 1)
 AI_ASSISTANT_CREDIT_PLANS = {
     "free": {
         "monthly_credit_limit": 25,
@@ -356,7 +355,7 @@ AI_ASSISTANT_LLM_ROLLOUT_ENABLED = os.environ.get(
 ).lower() in {"1", "true", "yes", "on"}
 AI_ASSISTANT_LLM_ROLLOUT_MODE = os.environ.get("AI_ASSISTANT_LLM_ROLLOUT_MODE", "off")
 AI_ASSISTANT_LLM_ROLLOUT_USER_IDS = os.environ.get("AI_ASSISTANT_LLM_ROLLOUT_USER_IDS", "")
-AI_ASSISTANT_LLM_ROLLOUT_PERCENT = int(os.environ.get("AI_ASSISTANT_LLM_ROLLOUT_PERCENT", "0"))
+AI_ASSISTANT_LLM_ROLLOUT_PERCENT = _env_int("AI_ASSISTANT_LLM_ROLLOUT_PERCENT", 0)
 AI_ASSISTANT_LLM_ROLLOUT_STICKY_SALT = os.environ.get(
     "AI_ASSISTANT_LLM_ROLLOUT_STICKY_SALT",
     "ai-assistant-rollout-v1",
@@ -396,14 +395,14 @@ EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND") or (
     if EMAIL_HOST
     else "django.core.mail.backends.console.EmailBackend"
 )
-EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+EMAIL_PORT = _env_int("EMAIL_PORT", 587)
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 
 # Resend SMTP on port 465 uses SSL. If SSL is enabled, TLS must stay off.
 EMAIL_USE_SSL = _env_bool("EMAIL_USE_SSL", False)
 EMAIL_USE_TLS = _env_bool("EMAIL_USE_TLS", bool(EMAIL_HOST) and not EMAIL_USE_SSL) and not EMAIL_USE_SSL
-EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", "10"))
+EMAIL_TIMEOUT = _env_int("EMAIL_TIMEOUT", 10)
 
 DEFAULT_FROM_EMAIL = os.environ.get(
     "DEFAULT_FROM_EMAIL",
@@ -469,17 +468,15 @@ FOOD_CATALOG_FATSECRET_FOOD_GET_METHOD = os.environ.get(
     "FOOD_CATALOG_FATSECRET_FOOD_GET_METHOD",
     "food.get",
 ).strip()
-FOOD_CATALOG_FATSECRET_TIMEOUT_SECONDS = int(
-    os.environ.get("FOOD_CATALOG_FATSECRET_TIMEOUT_SECONDS", "15")
-)
+FOOD_CATALOG_FATSECRET_TIMEOUT_SECONDS = _env_int("FOOD_CATALOG_FATSECRET_TIMEOUT_SECONDS", 15)
 
 FOOD_CATALOG_OPEN_FOOD_FACTS_ENABLED = _env_bool("FOOD_CATALOG_OPEN_FOOD_FACTS_ENABLED", False)
 FOOD_CATALOG_OPEN_FOOD_FACTS_API_BASE_URL = os.environ.get(
     "FOOD_CATALOG_OPEN_FOOD_FACTS_API_BASE_URL",
     "https://world.openfoodfacts.org",
 ).strip()
-FOOD_CATALOG_OPEN_FOOD_FACTS_TIMEOUT_SECONDS = int(
-    os.environ.get("FOOD_CATALOG_OPEN_FOOD_FACTS_TIMEOUT_SECONDS", "15")
+FOOD_CATALOG_OPEN_FOOD_FACTS_TIMEOUT_SECONDS = _env_int(
+    "FOOD_CATALOG_OPEN_FOOD_FACTS_TIMEOUT_SECONDS", 15
 )
 FOOD_CATALOG_OPEN_FOOD_FACTS_USER_AGENT = os.environ.get(
     "FOOD_CATALOG_OPEN_FOOD_FACTS_USER_AGENT",
