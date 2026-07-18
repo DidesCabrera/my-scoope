@@ -35,6 +35,12 @@ Cuando un ciclo planificado empiece a implementarse, el documento puede permanec
 
 ## Planes actuales
 
+- `project_control_clarity_foresight_cycle.md`: ciclo activo PCF00-PCF10 para crear
+  una capa de control transversal basada en evidencia: CI alineado con staging,
+  contrato y diagnóstico de ambientes, estado ejecutable, control plane read-only,
+  registros documentales y de transiciones, portafolio de apuestas e interfaz de
+  contexto para AI. Aporta contexto y feedback para decidir sin imponer un camino
+  rígido.
 - `generic_food_coverage_cycle.md`: ciclo activo GFC00-GFC10 para derivar, mapear,
   importar y medir una cobertura ambiciosa de verduras, frutas, carnes/pescados,
   legumbres y lácteos genéricos relevantes para Chile. El manifiesto versionado es
