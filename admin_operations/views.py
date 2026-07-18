@@ -1,6 +1,9 @@
 from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET
+
+from admin_operations.system_control import build_system_control_vm
 
 from admin_operations.services import (
     build_account_detail_vm,
@@ -45,6 +48,15 @@ def overview(request):
     content = build_operations_overview_vm()
     base_vm = BaseVM(ui=ui_vm, content=content)
     return render(request, "admin_operations/overview.html", base_vm.as_context())
+
+
+@staff_member_required
+@require_GET
+def system_control(request):
+    ui_vm = build_ui_vm(ADMIN_OPERATIONS_OVERVIEW_VIEWMODE)
+    content = build_system_control_vm()
+    base_vm = BaseVM(ui=ui_vm, content=content)
+    return render(request, "admin_operations/system_control.html", base_vm.as_context())
 
 
 

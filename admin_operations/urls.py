@@ -30,11 +30,13 @@ from admin_operations.views import (
     food_catalog_candidate_detail,
     food_catalog_food_action,
     overview,
+    system_control,
 )
 
 
 urlpatterns = [
     path("", overview, name="admin_operations_overview"),
+    path("system-control/", system_control, name="admin_operations_system_control"),
     path("audit-log/", audit_log, name="admin_operations_audit_log"),
     path("ai-assistant/", ai_assistant, name="admin_operations_ai_assistant"),
     path("ai-assistant/events/<int:event_id>/action/", ai_usage_event_action, name="admin_operations_ai_event_action"),
