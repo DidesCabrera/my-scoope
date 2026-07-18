@@ -13,6 +13,7 @@ from admin_operations.views import (
     accounts,
     food_catalog,
     food_catalog_inventory,
+    food_catalog_imports,
     food_catalog_candidate_action,
     food_catalog_candidate_detail,
     food_catalog_food_action,
@@ -37,6 +38,11 @@ urlpatterns = [
         "food-catalog/inventory/",
         food_catalog_inventory,
         name="admin_operations_food_catalog_inventory",
+    ),
+    path(
+        "food-catalog/imports/",
+        food_catalog_imports,
+        name="admin_operations_food_catalog_imports",
     ),
     path(
         "food-catalog/candidates/<int:candidate_id>/",

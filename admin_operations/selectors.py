@@ -10,7 +10,7 @@ from django.utils import timezone
 
 from accounts.models import AccountSubscription, CreditLedger, CreditWallet
 from ai_assistant.models import AIUsageEvent, AIUserCreditQuota
-from food_catalog.models import CatalogCurationCandidate, CatalogFood
+from food_catalog.models import CatalogCurationCandidate, CatalogFood, CatalogImportBatch
 from notas.domain.model_modules.proposals import NutritionProposal
 from admin_operations.models import AdminOperationAuditEvent
 
@@ -250,6 +250,38 @@ def get_food_catalog_inventory_payload(
         "group_options": groups,
         "page_obj": page_obj,
         "filtered_total": paginator.count,
+    }
+
+
+def get_food_catalog_import_batches_payload(*, source_type: str = "", status: str = "", limit: int = 100) -> dict:
+    """Return governed dry-runs and imports without exposing source payloads."""
+
+    normalized_source = source_type if source_type in dict(CatalogFood.SOURCE_TYPE_CHOICES) else ""
+    normalized_status = status if status in dict(CatalogImportBatch.STATUS_CHOICES) else ""
+    queryset = CatalogImportBatch.objects.select_related("requested_by", "dry_run_batch").order_by("-started_at", "-id")
+    if normalized_source:
+        queryset = queryset.filter(source_type=normalized_source)
+    if normalized_status:
+        queryset = queryset.filter(status=normalized_status)
+
+    aggregate = CatalogImportBatch.objects.aggregate(
+        total=Count("id"),
+        dry_runs=Count("id", filter=Q(is_dry_run=True)),
+        imports=Count("id", filter=Q(is_dry_run=False)),
+        failed=Count(
+            "id",
+            filter=Q(status__in=[CatalogImportBatch.STATUS_FAILED, CatalogImportBatch.STATUS_COMPLETED_WITH_ERRORS]),
+        ),
+    )
+    orphan_applies = CatalogImportBatch.objects.filter(is_dry_run=False, dry_run_batch__isnull=True).count()
+    return {
+        "source_type": normalized_source,
+        "status": normalized_status,
+        "aggregate": aggregate,
+        "orphan_applies": orphan_applies,
+        "batches": list(queryset[:limit]),
+        "source_options": CatalogFood.SOURCE_TYPE_CHOICES,
+        "status_options": CatalogImportBatch.STATUS_CHOICES,
     }
 
 

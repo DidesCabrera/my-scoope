@@ -10,6 +10,7 @@ from admin_operations.services import (
     build_ai_proposal_detail_vm,
     build_candidate_detail_vm,
     build_food_catalog_inventory_vm,
+    build_food_catalog_imports_vm,
     build_food_catalog_operations_vm,
     build_operations_overview_vm,
     flash_operation_result,
@@ -160,6 +161,17 @@ def food_catalog_inventory(request):
     )
     base_vm = BaseVM(ui=ui_vm, content=content)
     return render(request, "admin_operations/food_catalog_inventory.html", base_vm.as_context())
+
+
+@staff_member_required
+def food_catalog_imports(request):
+    ui_vm = build_ui_vm(ADMIN_OPERATIONS_OVERVIEW_VIEWMODE)
+    content = build_food_catalog_imports_vm(
+        source_type=request.GET.get("source", ""),
+        status=request.GET.get("status", ""),
+    )
+    base_vm = BaseVM(ui=ui_vm, content=content)
+    return render(request, "admin_operations/food_catalog_imports.html", base_vm.as_context())
 
 
 @staff_member_required

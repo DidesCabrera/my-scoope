@@ -155,6 +155,37 @@ class AdminOperationsCatalogInventoryVM:
 
 
 @dataclass(frozen=True)
+class AdminOperationsCatalogImportBatchVM:
+    pk: int
+    run_type: str
+    source_label: str
+    status: str
+    version: str
+    counts_label: str
+    operator_label: str
+    reason: str
+    input_hash_label: str
+    dry_run_label: str
+    started_label: str
+
+
+@dataclass(frozen=True)
+class AdminOperationsCatalogImportsVM:
+    title: str = "Imports y dry-runs del Food Catalog"
+    subtitle: str = (
+        "Cockpit staff-only para verificar trazabilidad, equivalencia e idempotencia antes de operar cada fuente."
+    )
+    period_label: str = "FCG02 · Import control plane"
+    current_period: str = "Imports y dry-runs"
+    selected_source: str = ""
+    selected_status: str = ""
+    metrics: list[AdminOperationsMetricVM] = field(default_factory=list)
+    batches: list[AdminOperationsCatalogImportBatchVM] = field(default_factory=list)
+    source_options: list[tuple[str, str]] = field(default_factory=list)
+    status_options: list[tuple[str, str]] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
 class AdminOperationsCandidateDetailVM:
     title: str
     subtitle: str

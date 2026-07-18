@@ -1,0 +1,46 @@
+{% extends "admin_operations/base.html" %}
+{% block title %}Food Catalog Imports{% endblock %}
+{% block content %}
+<div class="page admin-analytics-page admin-operations-page">
+  {% include "admin_operations/_food_catalog_tabs.html" with active_tab="imports" %}
+
+  <section class="home-stats admin-analytics-kpi-grid admin-operations-kpi-grid" aria-label="Resumen de imports">
+    {% for metric in vm.content.metrics %}
+      <article class="home-stat-card admin-operations-metric-card">
+        <div class="home-stat-top"><i data-lucide="{{ metric.icon }}" class="home-stat-icon"></i><span class="home-stat-label">{{ metric.label }}</span></div>
+        <h3>{{ metric.value }}</h3><p class="muted-text">{{ metric.helper }}</p>
+      </article>
+    {% endfor %}
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row"><div><p class="section-eyebrow">Guard operacional</p><h3>Dry-run antes de toda mutación</h3><p class="muted-text">Un apply sólo es válido cuando referencia un dry-run completo, vigente y equivalente en fuente, versión, hash, parámetros y número de filas. Los controles mutantes se habilitan fuente por fuente durante FCG03–FCG08.</p></div></div>
+    <form class="admin-operations-inventory-filters" method="get">
+      <label><span>Fuente</span><select name="source"><option value="">Todas</option>{% for value, label in vm.content.source_options %}<option value="{{ value }}"{% if vm.content.selected_source == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+      <label><span>Estado</span><select name="status"><option value="">Todos</option>{% for value, label in vm.content.status_options %}<option value="{{ value }}"{% if vm.content.selected_status == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+      <div class="admin-operations-filter-actions"><button class="btn-secondary btn-secondary--compact" type="submit">Aplicar filtros</button><a class="btn-secondary btn-secondary--compact" href="{% url 'admin_operations_food_catalog_imports' %}">Limpiar</a></div>
+    </form>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row"><div><p class="section-eyebrow">Historial</p><h3>Ejecuciones correlacionables</h3></div></div>
+    {% if vm.content.batches %}
+      <div class="admin-operations-table-card" role="region" aria-label="Historial de imports y dry-runs">
+        <table class="admin-operations-table">
+          <thead><tr><th>Tipo</th><th>Fuente</th><th>Estado</th><th>Conteos</th><th>Gobierno</th><th>Inicio</th></tr></thead>
+          <tbody>{% for batch in vm.content.batches %}<tr>
+            <td data-label="Tipo"><strong>{{ batch.run_type }} #{{ batch.pk }}</strong><small>{{ batch.dry_run_label }}</small></td>
+            <td data-label="Fuente"><strong>{{ batch.source_label }}</strong><small>versión {{ batch.version }}</small></td>
+            <td data-label="Estado"><span class="admin-operations-status-pill">{{ batch.status }}</span></td>
+            <td data-label="Conteos">{{ batch.counts_label }}</td>
+            <td data-label="Gobierno"><strong>{{ batch.operator_label }}</strong><small>{{ batch.reason }}</small><small>input {{ batch.input_hash_label }}</small></td>
+            <td data-label="Inicio">{{ batch.started_label }}</td>
+          </tr>{% endfor %}</tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="admin-operations-empty-state"><i data-lucide="database" class="home-stat-icon"></i><div><h4>Sin ejecuciones</h4><p class="muted-text">Aún no existen dry-runs o imports con estos filtros.</p></div></div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
