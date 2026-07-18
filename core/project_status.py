@@ -64,6 +64,7 @@ class ProjectStatusReport:
 def build_project_status(*, include_database: bool = True) -> ProjectStatusReport:
     environment_report = build_environment_diagnostic(include_database=include_database)
     probes: list[StatusProbe] = []
+    probes.append(_safe_probe("architecture.transitions", _transition_probe))
     if include_database:
         probes.append(_safe_probe("database.migrations", _migration_probe))
         probes.append(_safe_probe("data.catalog", _catalog_probe))
@@ -123,6 +124,23 @@ def _migration_probe() -> dict[str, object]:
         "database_vendor": connection.vendor,
         "pending_count": len(pending),
         "up_to_date": not pending,
+    }
+
+
+def _transition_probe() -> dict[str, object]:
+    from collections import Counter
+
+    from core.transition_registry import load_transition_registry, validate_transition_registry
+
+    entries = load_transition_registry()
+    counts = Counter(entry.status for entry in entries)
+    errors = validate_transition_registry()
+    if errors:
+        raise ValueError("Transition registry is invalid.")
+    return {
+        "total": len(entries),
+        "transitional": counts["transitional"],
+        "intentionally_durable": counts["intentionally_durable"],
     }
 
 

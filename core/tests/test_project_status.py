@@ -50,7 +50,7 @@ class ProjectStatusTests(TestCase):
 
         self.assertEqual(payload["release"]["commit"], "pcf-test-release")
         self.assertIn("ai_assistant", payload["capabilities"])
-        self.assertEqual(payload["probes"], [])
+        self.assertEqual([probe["code"] for probe in payload["probes"]], ["architecture.transitions"])
 
     @override_settings(AI_ASSISTANT_OPENAI_API_KEY="private-key-value")
     def test_status_payload_contains_no_catalog_rows_or_private_user_data(self):

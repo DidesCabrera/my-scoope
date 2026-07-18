@@ -7,6 +7,7 @@ __pycache__/
 # Base de datos local
 db.sqlite3
 *.sqlite3
+db.sqlite3.backup-*
 
 # =========================
 # Entornos
@@ -54,6 +55,8 @@ staticfiles/
 *.rej
 *.swp
 *.swo
+artifacts/
+*_report*.json
 
 
 e2e/auth/state.json
