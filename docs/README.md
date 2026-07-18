@@ -110,6 +110,16 @@ Antes de agregar una sección nueva:
 
 La documentación debe aportar valor por jerarquía, no por volumen.
 
+El registro ejecutable de ciclos y decisiones se consulta con:
+
+```bash
+python manage.py document_registry
+python manage.py document_registry --json
+```
+
+El registro detecta estados ausentes, identificadores duplicados y divergencias entre
+el nombre y el título de una decisión sin reemplazar la lectura contextual del documento.
+
 Agregar o actualizar un documento solo cuando ayude a responder una de estas preguntas:
 
 - ¿Qué es verdad hoy?

@@ -12,5 +12,6 @@ export RATE_LIMIT_AI_ASSISTANT_TURN_IP="${RATE_LIMIT_AI_ASSISTANT_TURN_IP:-10000
 scripts/check_repository_hygiene.sh
 python manage.py check
 python manage.py makemigrations --check --dry-run
+python manage.py document_registry --strict
 python manage.py test core.tests.regressions
 python manage.py test
