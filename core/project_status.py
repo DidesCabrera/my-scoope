@@ -65,6 +65,7 @@ def build_project_status(*, include_database: bool = True) -> ProjectStatusRepor
     environment_report = build_environment_diagnostic(include_database=include_database)
     probes: list[StatusProbe] = []
     probes.append(_safe_probe("architecture.transitions", _transition_probe))
+    probes.append(_safe_probe("product.portfolio", _portfolio_probe))
     if include_database:
         probes.append(_safe_probe("database.migrations", _migration_probe))
         probes.append(_safe_probe("data.catalog", _catalog_probe))
@@ -141,6 +142,23 @@ def _transition_probe() -> dict[str, object]:
         "total": len(entries),
         "transitional": counts["transitional"],
         "intentionally_durable": counts["intentionally_durable"],
+    }
+
+
+def _portfolio_probe() -> dict[str, object]:
+    from collections import Counter
+
+    from core.product_portfolio import load_product_portfolio, validate_product_portfolio
+
+    bets = load_product_portfolio()
+    if validate_product_portfolio():
+        raise ValueError("Product portfolio is invalid.")
+    stages = Counter(bet.stage for bet in bets)
+    return {
+        "total": len(bets),
+        "build": stages["build"],
+        "validate": stages["validate"],
+        "planned": stages["planned"],
     }
 
 
