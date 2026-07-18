@@ -35,6 +35,11 @@ Cuando un ciclo planificado empiece a implementarse, el documento puede permanec
 
 ## Planes actuales
 
+- `generic_food_coverage_cycle.md`: ciclo activo GFC00-GFC10 para derivar, mapear,
+  importar y medir una cobertura ambiciosa de verduras, frutas, carnes/pescados,
+  legumbres y lácteos genéricos relevantes para Chile. El manifiesto versionado es
+  un mapa de cobertura, no una whitelist; su conteo final emerge de la enumeración
+  y admite descubrimientos útiles bajo las mismas reglas de evidencia y revisión.
 - `food_catalog_growth_cycle.md`: ciclo activo FCG00-FCG10 con implementación completa y
   validación de datos reales en staging pendiente, para poblar efectivamente
   `CatalogFood` desde fuentes persistibles trazables, aprender su operación desde Admin
