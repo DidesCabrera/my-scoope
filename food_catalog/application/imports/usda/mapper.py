@@ -1,3 +1,5 @@
+import hashlib
+import json
 from decimal import Decimal, InvalidOperation
 
 from food_catalog.application.imports.contracts import ImportedFoodDTO
@@ -13,6 +15,7 @@ USDA_NUTRIENT_FIBER = "291"
 USDA_NUTRIENT_SUGARS = "269"
 USDA_NUTRIENT_SATURATED_FAT = "606"
 USDA_NUTRIENT_SODIUM = "307"
+USDA_NUTRIENT_ENERGY = "208"
 
 
 def map_usda_food_to_imported_food_dto(
@@ -20,6 +23,9 @@ def map_usda_food_to_imported_food_dto(
     *,
     source_version: str,
     source_dataset: str = USDA_SOURCE_DATASET_DEFAULT,
+    preferred_name: str = "",
+    food_subgroup: str = "",
+    preparation_state: str = "unknown",
 ) -> ImportedFoodDTO:
     """
     Map a minimal USDA FoodData Central-like payload into ImportedFoodDTO.
@@ -52,18 +58,23 @@ def map_usda_food_to_imported_food_dto(
 
     nutrients = _extract_nutrients_by_number(payload)
 
+    source_description = str(payload.get("description", "")).strip()
+    display_name = preferred_name.strip() or source_description
+
     return ImportedFoodDTO(
         source=SOURCE_USDA,
         source_food_id=str(payload.get("fdcId", "")).strip(),
         source_dataset=source_dataset,
         source_version=source_version,
-        name=str(payload.get("description", "")).strip(),
-        canonical_name=str(payload.get("description", "")).strip(),
+        name=display_name,
+        canonical_name=display_name,
         protein=_get_nutrient_amount(nutrients, USDA_NUTRIENT_PROTEIN),
         carbs=_get_usda_required_macro_amount(nutrients, USDA_NUTRIENT_CARBS),
         fat=_get_nutrient_amount(nutrients, USDA_NUTRIENT_FAT),
+        calories_kcal_per_100g=_get_optional_nutrient_amount(nutrients, USDA_NUTRIENT_ENERGY),
         food_group=_extract_food_group(payload),
-        food_subgroup="",
+        food_subgroup=food_subgroup.strip(),
+        preparation_state=preparation_state.strip() or "unknown",
         fiber_g_per_100g=_get_optional_nutrient_amount(nutrients, USDA_NUTRIENT_FIBER),
         sugar_g_per_100g=_get_optional_nutrient_amount(nutrients, USDA_NUTRIENT_SUGARS),
         saturated_fat_g_per_100g=_get_optional_nutrient_amount(
@@ -73,9 +84,13 @@ def map_usda_food_to_imported_food_dto(
         sodium_mg_per_100g=_get_optional_nutrient_amount(nutrients, USDA_NUTRIENT_SODIUM),
         license_name="CC0",
         attribution="USDA FoodData Central",
-        source_url="",
-        raw_payload_hash="",
+        source_url=f"https://fdc.nal.usda.gov/fdc-app.html#/food-details/{payload.get('fdcId', '')}/nutrients",
+        raw_payload_hash=hashlib.sha256(
+            json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        ).hexdigest(),
         normalized_payload_hash="",
+        source_description=source_description,
+        source_data_type=str(payload.get("dataType", "")).strip(),
     )
 
 

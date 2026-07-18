@@ -221,6 +221,9 @@ Operational waves are limited independently from tier size:
 
 - Reuse the existing USDA reader/mapper/importer.
 - Add Foundation and SR Legacy mapping support for manifest targets.
+- First SR Legacy gate: 10 explicitly mapped FDC IDs across all five roots;
+  read-only validation against the official 2018-04 dataset produced 10 valid,
+  0 invalid, 0 duplicate, and 10 importable candidates.
 - Produce mapping confidence, ambiguity, duplicate, and unmapped reports.
 
 ### GFC05 · Coverage observability in Admin Operations
