@@ -20,6 +20,8 @@ from admin_operations.views import (
     food_catalog_usda_dry_run,
     food_catalog_brand_apply,
     food_catalog_brand_dry_run,
+    food_catalog_manual_apply,
+    food_catalog_manual_dry_run,
     food_catalog_candidate_action,
     food_catalog_candidate_detail,
     food_catalog_food_action,
@@ -56,6 +58,8 @@ urlpatterns = [
     path("food-catalog/imports/usda/apply/", food_catalog_usda_apply, name="admin_operations_food_catalog_usda_apply"),
     path("food-catalog/imports/brands/dry-run/", food_catalog_brand_dry_run, name="admin_operations_food_catalog_brand_dry_run"),
     path("food-catalog/imports/brands/apply/", food_catalog_brand_apply, name="admin_operations_food_catalog_brand_apply"),
+    path("food-catalog/imports/manual/dry-run/", food_catalog_manual_dry_run, name="admin_operations_food_catalog_manual_dry_run"),
+    path("food-catalog/imports/manual/apply/", food_catalog_manual_apply, name="admin_operations_food_catalog_manual_apply"),
     path(
         "food-catalog/candidates/<int:candidate_id>/",
         food_catalog_candidate_detail,

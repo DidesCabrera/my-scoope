@@ -58,6 +58,17 @@
     </article>
   </section>
 
+  <section class="admin-analytics-section-grid admin-operations-observability-grid">
+    <article class="card-detail-block">
+      <div class="card-title-row"><div><p class="section-eyebrow">FCG06 · Curación manual</p><h3>Dry-run con evidencia</h3><p class="muted-text">Requiere URL y referencia de evidencia, licencia, atribución, versión, estado de preparación y macros.</p></div></div>
+      <form method="post" enctype="multipart/form-data" action="{% url 'admin_operations_food_catalog_manual_dry_run' %}" data-admin-operations-confirm>{% csrf_token %}<label><span>CSV manual</span><input type="file" name="file" accept="text/csv" required></label><label><span>Límite</span><input name="limit" type="number" min="1" max="5" required></label><label><span>Razón</span><textarea name="reason" required></textarea></label><button class="btn-secondary" type="submit">Validar evidencia</button></form>
+    </article>
+    <article class="card-detail-block">
+      <div class="card-title-row"><div><p class="section-eyebrow">Apply manual</p><h3>Crear candidatos no publicados</h3><p class="muted-text">El creador queda registrado; la revisión/publicación permanece separada.</p></div></div>
+      <form method="post" enctype="multipart/form-data" action="{% url 'admin_operations_food_catalog_manual_apply' %}" data-admin-operations-confirm>{% csrf_token %}<label><span>CSV manual</span><input type="file" name="file" accept="text/csv" required></label><label><span>ID dry-run</span><input name="dry_run_batch_id" type="number" min="1" required></label><label><span>Límite</span><input name="limit" type="number" min="1" max="5" required></label><label><span>Razón</span><textarea name="reason" required></textarea></label><button class="btn-secondary" type="submit">Importar curación</button></form>
+    </article>
+  </section>
+
   <section class="card-detail-block">
     <div class="card-title-row"><div><p class="section-eyebrow">Guard operacional</p><h3>Dry-run antes de toda mutación</h3><p class="muted-text">Un apply sólo es válido cuando referencia un dry-run completo, vigente y equivalente en fuente, versión, hash, parámetros y número de filas. Los controles mutantes se habilitan fuente por fuente durante FCG03–FCG08.</p></div></div>
     <form class="admin-operations-inventory-filters" method="get">

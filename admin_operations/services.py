@@ -81,6 +81,11 @@ from food_catalog.application.brand_intake import (
     brand_food_intake_identity,
     dry_run_brand_food_intake_csv,
 )
+from food_catalog.application.manual_intake import (
+    apply_manual_evidence_csv,
+    dry_run_manual_evidence_csv,
+    manual_evidence_identity,
+)
 from notas.domain.model_modules.proposals import NutritionProposal, NutritionProposalAuditEvent
 from admin_operations.models import AdminOperationAuditEvent
 
@@ -840,6 +845,58 @@ class _uploaded_temp_file:
 
     def __exit__(self, exc_type, exc, traceback):
         self.file.close()
+
+
+def perform_manual_dry_run(*, actor, upload, limit: str, reason: str) -> AdminOperationResult:
+    try:
+        normalized_limit = _brand_limit(limit)
+        with _uploaded_temp_file(upload, suffix=".csv") as path:
+            plan = dry_run_manual_evidence_csv(path, limit=normalized_limit)
+            versions = {row.source_version for row in plan.rows}
+            if len(versions) != 1:
+                raise ValueError("La muestra debe tener una única source_version y filas válidas.")
+            batch = record_catalog_import_dry_run(
+                identity=manual_evidence_identity(path, limit=normalized_limit, source_version=next(iter(versions))),
+                total_rows=plan.total_rows,
+                would_import_rows=plan.valid_rows,
+                skipped_rows=plan.invalid_rows,
+                failed_rows=0,
+                requested_by=actor,
+                reason=reason,
+                summary_payload={"errors": plan.errors},
+            )
+    except (ValueError, OSError, CatalogImportGovernanceError) as exc:
+        return AdminOperationResult(False, f"No se pudo validar curación manual: {exc}")
+    if plan.errors:
+        return AdminOperationResult(False, f"Dry-run #{batch.pk} bloqueado: {'; '.join(plan.errors[:3])}")
+    record_admin_operation_audit_event(actor=actor, action="food_catalog.manual.dry_run", target=batch, reason=reason, status_after=batch.status)
+    return AdminOperationResult(True, f"Curación manual dry-run #{batch.pk}: {plan.valid_rows}/{plan.total_rows} válidas.")
+
+
+def perform_manual_apply(*, actor, upload, limit: str, dry_run_batch_id: str, reason: str) -> AdminOperationResult:
+    try:
+        normalized_limit = _brand_limit(limit)
+        dry_run = CatalogImportBatch.objects.get(pk=int(dry_run_batch_id))
+        with _uploaded_temp_file(upload, suffix=".csv") as path:
+            result = apply_manual_evidence_csv(
+                path,
+                limit=normalized_limit,
+                dry_run_batch=dry_run,
+                reason=reason,
+                requested_by=actor,
+            )
+    except (ValueError, TypeError, OSError, CatalogImportBatch.DoesNotExist, CatalogImportGovernanceError) as exc:
+        return AdminOperationResult(False, f"No se pudo importar curación manual: {exc}")
+    record_admin_operation_audit_event(
+        actor=actor,
+        action="food_catalog.manual.apply",
+        target=result.batch,
+        reason=reason,
+        status_before=f"dry_run={dry_run.pk}",
+        status_after=result.batch.status,
+        metadata={"created": result.created_rows, "updated": result.updated_rows},
+    )
+    return AdminOperationResult(True, f"Curación manual batch #{result.batch.pk}: creados={result.created_rows}, actualizados={result.updated_rows}.")
 
 
 def _catalog_inventory_food_to_vm(catalog_food: CatalogFood) -> AdminOperationsCatalogInventoryFoodVM:

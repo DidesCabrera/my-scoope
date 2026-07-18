@@ -407,6 +407,13 @@ python manage.py import_catalog_brand_foods_csv path/to/brand_foods.csv --dry-ru
 python manage.py import_catalog_brand_foods_csv path/to/brand_foods.csv --limit 3 --dry-run-batch-id <id> --reason "Aplicar muestra autorizada"
 ```
 
+La curación manual basada en evidencia usa un CSV distinto y nunca acepta texto libre sin referencia, licencia y atribución:
+
+```text
+python manage.py import_catalog_manual_foods_csv path/to/manual_foods.csv --dry-run --limit 3 --reason "Validar evidencia manual"
+python manage.py import_catalog_manual_foods_csv path/to/manual_foods.csv --limit 3 --dry-run-batch-id <id> --reason "Aplicar evidencia revisada"
+```
+
 ## Launch Readiness · cierre del ciclo
 
 El ciclo Food Catalog Launch Readiness queda cerrado después de implementar curación/publicación protegida, seed natural inicial, normalización `solver-ready`, proveedores externos lookup-only, referencias externas temporales, búsqueda unificada, cola de candidatos, bridge operacional para solver e intake mínimo de marcas.
