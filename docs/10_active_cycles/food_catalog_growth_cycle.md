@@ -1,9 +1,34 @@
 # FCG00-FCG10 · Food Catalog Growth
 
-Status: planned
+Status: active · implementation complete, staging data validation pending
 Date: 2026-07-17
 Target branch: `staging`
 Baseline inspected: `88f3006` (`Merge pull request #9 from DidesCabrera/feature/food-catalog-observatory`)
+
+## Estado de implementación · 2026-07-17
+
+FCG00-FCG10 quedó implementado en commits independientes sobre el baseline inspeccionado:
+
+- FCG00 `7609dd4` · plan y baseline;
+- FCG01 `36e995a` · gobierno común dry-run/apply;
+- FCG02 `b44a707` · cockpit de imports en Admin Operations;
+- FCG03 `2811860` · seed interno de 30 gobernado;
+- FCG04 `e215650` · USDA identificado y limitado por muestra;
+- FCG05 `70f3fa9` · marcas autorizadas con evidencia;
+- FCG06 `ebd0f68` · curación manual con evidencia;
+- FCG07 `54739a2` · backfill gobernado y prueba negativa de privacidad;
+- FCG08 `77dbf2e` · OFF bloqueado como persistencia por gate ODbL;
+- FCG09 `00bae1b` · política de escalamiento, máximo y kill switch;
+- FCG10 · publicación y snapshot separados, auditados y cubiertos por regresión.
+
+Validación local final:
+
+- suite dirigida FCG10: 64 tests verdes;
+- migraciones: `makemigrations --check --dry-run` sin cambios;
+- CI oficial: `check`, 2 regresiones núcleo y 1.497 tests verdes;
+- ninguna escritura sobre la base de staging.
+
+El ciclo permanece `active` hasta ejecutar el runbook con datos reales en staging. Siguen pendientes el despliegue de estos commits y las muestras reales de seed, USDA, marcas, manual y backfill. Open Food Facts queda cerrado como resultado negativo (`lookup/reference-only`) y no requiere una muestra persistida. No se usarán fixtures de tests como catálogo real.
 
 ## Propósito
 

@@ -8,6 +8,8 @@ from django.urls import reverse
 
 from admin_operations.services import build_food_catalog_inventory_vm, build_food_catalog_operations_vm
 from food_catalog.models import CatalogCurationCandidate, CatalogFood, CatalogFoodAlias, CatalogFoodPortion, CatalogFoodSource
+from notas.domain.models import Food
+from admin_operations.models import AdminOperationAuditEvent
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
@@ -150,6 +152,67 @@ class AdminOperationsFoodCatalogTests(TestCase):
         self.assertEqual(catalog_food.reviewed_by, self.staff)
         self.assertIsNotNone(catalog_food.reviewed_at)
         self.assertContains(response, "Marcar revisado")
+
+    def test_publication_and_snapshot_are_separate_audited_actions(self):
+        catalog_food = _create_catalog_food(
+            status=CatalogFood.STATUS_REVIEWED,
+            display_name="Avena publicable",
+            canonical_name="avena-publicable",
+            data_quality_score=90,
+        )
+        CatalogFoodSource.objects.create(
+            catalog_food=catalog_food,
+            source_type=CatalogFood.SOURCE_ADMIN_IMPORT,
+            source_name="Evidence",
+            source_food_id="E-1",
+            license_status=CatalogFoodSource.LICENSE_ALLOWED,
+        )
+        CatalogFoodPortion.objects.create(
+            catalog_food=catalog_food,
+            label="100 g",
+            grams=Decimal("100"),
+            is_default=True,
+        )
+        self.client.force_login(self.staff)
+
+        publish_response = self.client.post(
+            reverse("admin_operations_food_catalog_food_action", args=[catalog_food.pk]),
+            {"action": "published", "reason": "Evidence and macros reviewed."},
+            follow=True,
+        )
+        catalog_food.refresh_from_db()
+        self.assertEqual(publish_response.status_code, 200)
+        self.assertEqual(catalog_food.status, CatalogFood.STATUS_PUBLISHED)
+        self.assertEqual(Food.objects.count(), 0)
+
+        snapshot_response = self.client.post(
+            reverse("admin_operations_food_catalog_food_snapshot", args=[catalog_food.pk]),
+            {"reason": "Make reviewed food operational."},
+            follow=True,
+        )
+        operational = Food.objects.get()
+        self.assertEqual(snapshot_response.status_code, 200)
+        self.assertEqual(operational.catalog_food_id, catalog_food.pk)
+        self.assertEqual(
+            AdminOperationAuditEvent.objects.filter(
+                action__in=[
+                    "food_catalog.catalog_food.published",
+                    "food_catalog.catalog_food.snapshot_create",
+                ]
+            ).count(),
+            2,
+        )
+
+    def test_snapshot_rejects_unpublished_catalog_food(self):
+        catalog_food = _create_catalog_food(status=CatalogFood.STATUS_REVIEWED)
+        self.client.force_login(self.staff)
+        response = self.client.post(
+            reverse("admin_operations_food_catalog_food_snapshot", args=[catalog_food.pk]),
+            {"reason": "Attempt premature snapshot."},
+            follow=True,
+        )
+        self.assertContains(response, "Only published CatalogFood")
+        self.assertEqual(Food.objects.count(), 0)
 
     def test_inventory_page_requires_staff(self):
         response = self.client.get(reverse("admin_operations_food_catalog_inventory"))

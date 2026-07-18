@@ -25,6 +25,7 @@ from admin_operations.views import (
     food_catalog_backfill_apply,
     food_catalog_backfill_dry_run,
     food_catalog_import_policy_action,
+    food_catalog_food_snapshot,
     food_catalog_candidate_action,
     food_catalog_candidate_detail,
     food_catalog_food_action,
@@ -80,5 +81,10 @@ urlpatterns = [
         "food-catalog/foods/<int:catalog_food_id>/action/",
         food_catalog_food_action,
         name="admin_operations_food_catalog_food_action",
+    ),
+    path(
+        "food-catalog/foods/<int:catalog_food_id>/snapshot/",
+        food_catalog_food_snapshot,
+        name="admin_operations_food_catalog_food_snapshot",
     ),
 ]

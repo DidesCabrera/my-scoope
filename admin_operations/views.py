@@ -27,6 +27,7 @@ from admin_operations.services import (
     perform_backfill_apply,
     perform_backfill_dry_run,
     perform_import_source_policy_operation,
+    perform_catalog_food_snapshot,
     perform_credit_adjustment,
     perform_ai_proposal_operation,
     perform_ai_quota_operation,
@@ -337,6 +338,18 @@ def food_catalog_food_action(request, catalog_food_id):
     result = perform_catalog_food_operation(
         catalog_food_id=catalog_food_id,
         action=request.POST.get("action", ""),
+        actor=request.user,
+        reason=request.POST.get("reason", ""),
+    )
+    flash_operation_result(request, result)
+    return redirect("admin_operations_food_catalog")
+
+
+@staff_member_required
+@require_POST
+def food_catalog_food_snapshot(request, catalog_food_id):
+    result = perform_catalog_food_snapshot(
+        catalog_food_id=catalog_food_id,
         actor=request.user,
         reason=request.POST.get("reason", ""),
     )

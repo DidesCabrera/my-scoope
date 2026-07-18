@@ -90,11 +90,12 @@
                 <input type="text" name="reason" placeholder="Motivo de la intervención" required>
               </label>
               <div class="admin-operations-inline-actions">
-                <button class="btn-secondary btn-secondary--compact" type="submit" name="action" value="reviewed">Revisado</button>
+                {% if food.status == 'reviewed' or food.status == 'verified' %}<button class="btn-secondary btn-secondary--compact" type="submit" name="action" value="published">Publicar</button>{% else %}<button class="btn-secondary btn-secondary--compact" type="submit" name="action" value="reviewed">Revisado</button>{% endif %}
                 <button class="btn-secondary btn-secondary--compact" type="submit" name="action" value="needs_more_evidence">Evidencia</button>
                 <a class="btn-secondary btn-secondary--compact" href="{{ food.admin_url }}">Admin</a>
               </div>
             </form>
+            {% if food.status == 'published' %}<form method="post" action="{% url 'admin_operations_food_catalog_food_snapshot' food.pk %}" class="admin-operations-inline-form" data-admin-operations-confirm data-confirm-message="¿Crear snapshot operacional separado?">{% csrf_token %}<label><span>Razón de snapshot</span><input type="text" name="reason" required></label><button class="btn-secondary btn-secondary--compact" type="submit">Crear snapshot</button></form>{% endif %}
           </article>
         {% endfor %}
       </div>

@@ -35,7 +35,8 @@ Cuando un ciclo planificado empiece a implementarse, el documento puede permanec
 
 ## Planes actuales
 
-- `food_catalog_growth_cycle.md`: ciclo planificado FCG00-FCG10 para poblar efectivamente
+- `food_catalog_growth_cycle.md`: ciclo activo FCG00-FCG10 con implementación completa y
+  validación de datos reales en staging pendiente, para poblar efectivamente
   `CatalogFood` desde fuentes persistibles trazables, aprender su operación desde Admin
   Operations y validar muestras pequeñas antes de escalar, manteniendo `notas.Food` como
   snapshot operacional y dejando FatSecret fuera del alcance.

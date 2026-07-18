@@ -95,6 +95,11 @@ from notas.application.services.commands.food_catalog_backfill import (
     operational_backfill_identity,
 )
 from notas.domain.model_modules.proposals import NutritionProposal, NutritionProposalAuditEvent
+from notas.domain.models import Food
+from notas.application.services.food_catalog_snapshots import (
+    FoodCatalogSnapshotError,
+    create_operational_food_snapshot_from_catalog,
+)
 from admin_operations.models import AdminOperationAuditEvent
 
 
@@ -129,6 +134,7 @@ CATALOG_FOOD_ACTIONS = {
     "verified": (CatalogFood.STATUS_VERIFIED, "Marcar verificado"),
     "needs_more_evidence": (CatalogFood.STATUS_NEEDS_MORE_EVIDENCE, "Pedir más evidencia"),
     "rejected": (CatalogFood.STATUS_REJECTED, "Rechazar"),
+    "published": (CatalogFood.STATUS_PUBLISHED, "Publicar"),
 }
 
 
@@ -1236,6 +1242,29 @@ def perform_catalog_food_operation(*, catalog_food_id: int, action: str, actor, 
     )
 
     return AdminOperationResult(ok=True, message=f"{label}: {catalog_food.display_name}")
+
+
+def perform_catalog_food_snapshot(*, catalog_food_id: int, actor, reason: str) -> AdminOperationResult:
+    normalized_reason = (reason or "").strip()
+    if not normalized_reason:
+        return AdminOperationResult(False, "La razón es obligatoria para crear un snapshot operacional.")
+    catalog_food = get_object_or_404(CatalogFood, pk=catalog_food_id)
+    if Food.objects.filter(catalog_food_id=catalog_food.pk).exists():
+        return AdminOperationResult(False, "Ya existe un snapshot operacional para este CatalogFood; usa refresh explícito.")
+    try:
+        result = create_operational_food_snapshot_from_catalog(catalog_food, created_by=actor, is_global=True)
+    except FoodCatalogSnapshotError as exc:
+        return AdminOperationResult(False, str(exc))
+    record_admin_operation_audit_event(
+        actor=actor,
+        action="food_catalog.catalog_food.snapshot_create",
+        target=result.food,
+        reason=normalized_reason,
+        status_before=f"catalog_status={catalog_food.status}",
+        status_after=f"operational_food_id={result.food.pk}",
+        metadata={"catalog_food_id": catalog_food.pk, "catalog_ref": str(catalog_food.catalog_ref)},
+    )
+    return AdminOperationResult(True, f"Snapshot operacional Food #{result.food.pk} creado desde {catalog_food.display_name}.")
 
 
 def flash_operation_result(request, result: AdminOperationResult) -> None:
