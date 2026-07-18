@@ -5,14 +5,16 @@ from __future__ import annotations
 import csv
 import hashlib
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
-from django.db import transaction
-from django.utils import timezone
-
 from food_catalog.application.imports.normalization import normalize_food_name
-from food_catalog.infrastructure.imports.governance import catalog_import_identity, start_catalog_import_batch
+from food_catalog.infrastructure.imports.governance import (
+    atomic_catalog_import,
+    catalog_import_identity,
+    start_catalog_import_batch,
+)
 from food_catalog.models import CatalogFood, CatalogFoodPortion, CatalogFoodSource, CatalogImportBatch
 
 
@@ -135,7 +137,7 @@ def manual_evidence_identity(path: str | Path, *, limit: int, source_version: st
     )
 
 
-@transaction.atomic
+@atomic_catalog_import
 def apply_manual_evidence_csv(
     path: str | Path,
     *,
@@ -204,7 +206,7 @@ def apply_manual_evidence_csv(
         )
     batch.imported_rows = created + updated
     batch.status = CatalogImportBatch.STATUS_COMPLETED
-    batch.finished_at = timezone.now()
+    batch.finished_at = datetime.now(UTC)
     batch.summary_payload = {"created": created, "updated": updated, "published": 0}
     batch.save(update_fields=["imported_rows", "status", "finished_at", "summary_payload"])
     return ManualIntakeResult(batch, plan.total_rows, created, updated)

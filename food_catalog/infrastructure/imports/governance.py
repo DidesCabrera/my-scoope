@@ -15,6 +15,12 @@ from food_catalog.models import CatalogFood, CatalogImportBatch, CatalogImportSo
 DEFAULT_DRY_RUN_TTL = timedelta(hours=24)
 
 
+def atomic_catalog_import(func):
+    """Apply the persistence transaction without coupling application modules to Django."""
+
+    return transaction.atomic(func)
+
+
 class CatalogImportGovernanceError(ValueError):
     """Raised when a mutation is not backed by an equivalent valid dry-run."""
 

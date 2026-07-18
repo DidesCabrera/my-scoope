@@ -9,11 +9,11 @@ from __future__ import annotations
 
 import csv
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 import hashlib
 from typing import Iterable
-from django.utils import timezone
 
 from food_catalog.application.imports.normalization import normalize_food_name
 from food_catalog.models import (
@@ -328,7 +328,7 @@ def apply_brand_food_intake_csv(
 
     batch.imported_rows = created + updated
     batch.status = CatalogImportBatch.STATUS_COMPLETED
-    batch.finished_at = timezone.now()
+    batch.finished_at = datetime.now(UTC)
     batch.summary_payload = {"created": created, "updated": updated, "source": BRAND_INTAKE_SOURCE_NAME}
     batch.save(update_fields=["imported_rows", "status", "finished_at", "summary_payload"])
 
