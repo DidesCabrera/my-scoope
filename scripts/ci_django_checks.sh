@@ -9,6 +9,8 @@ export NUTRITION_ONBOARDING_GATE_ENABLED="${NUTRITION_ONBOARDING_GATE_ENABLED:-f
 export RATE_LIMIT_AI_ASSISTANT_TURN_USER="${RATE_LIMIT_AI_ASSISTANT_TURN_USER:-10000/h}"
 export RATE_LIMIT_AI_ASSISTANT_TURN_IP="${RATE_LIMIT_AI_ASSISTANT_TURN_IP:-10000/h}"
 
+scripts/check_repository_hygiene.sh
 python manage.py check
+python manage.py makemigrations --check --dry-run
 python manage.py test core.tests.regressions
 python manage.py test
