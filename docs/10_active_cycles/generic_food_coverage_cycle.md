@@ -215,7 +215,7 @@ Operational waves are limited independently from tier size:
 - Build the real target list in Spanish with preparation states and tiers.
 - Derive the final target count after normalization and duplicate review.
 - Result: 282 targets (84 tier A, 172 tier B, 26 tier C). The governed internal
-  seed maps 20; 53 additional targets now have explicit USDA SR Legacy mappings.
+  seed maps 20; 189 additional targets now have explicit USDA SR Legacy mappings.
 
 ### GFC04 · USDA source mapping
 

@@ -274,7 +274,7 @@ class AdminOperationsFoodCatalogTests(TestCase):
         funnel = {metric.label: metric.value for metric in vm.target_funnel}
         categories = {item.label: item.total for item in vm.target_category_coverage}
         self.assertEqual(funnel["Definidos"], "282")
-        self.assertEqual(funnel["Mapeados a fuente"], "73")
+        self.assertEqual(funnel["Mapeados a fuente"], "209")
         self.assertEqual(funnel["Importados"], "1")
         self.assertEqual(funnel["Revisados"], "1")
         self.assertEqual(funnel["Publicados"], "0")
