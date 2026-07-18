@@ -1,3 +1,4 @@
+from pathlib import Path
 from unittest import TestCase
 
 from food_catalog.application.coverage_manifest import (
@@ -14,6 +15,29 @@ HEADER = (
 
 
 class CoverageManifestTests(TestCase):
+    def test_packaged_v1_manifest_is_complete_and_valid(self):
+        manifest = parse_coverage_manifest_csv(
+            (
+                Path(__file__).resolve().parents[1]
+                / "data"
+                / "generic_food_coverage_manifest_v1.csv"
+            ).read_text(encoding="utf-8"),
+            version="gfc.v1",
+        )
+
+        self.assertEqual(manifest.total_targets, 282)
+        self.assertEqual(
+            manifest.counts_by_category(),
+            {
+                "dairy": 29,
+                "fruit": 53,
+                "legume": 36,
+                "meat_seafood": 77,
+                "vegetable": 87,
+            },
+        )
+        self.assertEqual(manifest.counts_by_status(), {"defined": 262, "source_mapped": 20})
+
     def test_parses_defined_targets_without_materializing_source_or_catalog_ids(self):
         manifest = parse_coverage_manifest_csv(
             HEADER

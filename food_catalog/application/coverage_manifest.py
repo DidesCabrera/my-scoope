@@ -22,7 +22,9 @@ CATEGORIES = frozenset({"vegetable", "fruit", "meat_seafood", "legume", "dairy"}
 PREPARATION_STATES = frozenset({"unknown", "raw", "cooked", "dry", "hydrated", "ready_to_eat"})
 PRIORITY_TIERS = frozenset({"A", "B", "C", "discovery"})
 CHILE_RELEVANCE_VALUES = frozenset({"essential", "common", "useful", "specialized"})
-EXPECTED_SOURCES = frozenset({"unmapped", "usda_foundation", "usda_sr_legacy", "manual_evidence"})
+EXPECTED_SOURCES = frozenset(
+    {"unmapped", "internal_seed", "usda_foundation", "usda_sr_legacy", "manual_evidence"}
+)
 MAPPING_STATUSES = frozenset({"unmapped", "candidate", "mapped", "ambiguous", "blocked"})
 COVERAGE_STAGES = (
     "defined",

@@ -12,10 +12,11 @@ starting with vegetables, fruits, meats and seafood, legumes, and unbranded dair
 The cycle turns catalog growth from an open-ended import exercise into a coverage
 program without making the coverage plan a whitelist.
 
-The final target count is not fixed in advance. The working range of 350-600 food
-concepts is a planning hypothesis only. The version 1 target is frozen after the
-taxonomy is enumerated, preparation variants are justified, and duplicates are
-removed.
+The final target count was not fixed in advance. The initial working range of
+350-600 food concepts was a planning hypothesis only. Enumeration, preparation
+review, and duplicate normalization produced a version 1 baseline of **282 targets**:
+87 vegetables, 53 fruits, 77 meats and seafood, 36 legumes, and 29 unbranded dairy
+foods. This is the measurable baseline, not a ceiling or whitelist.
 
 ## Product outcome
 
@@ -213,6 +214,8 @@ Operational waves are limited independently from tier size:
 - Enumerate roots and subcategories using inclusion rules.
 - Build the real target list in Spanish with preparation states and tiers.
 - Derive the final target count after normalization and duplicate review.
+- Result: 282 targets (84 tier A, 172 tier B, 26 tier C); 20 are already
+  source-mapped to the governed internal seed and 262 await external mapping.
 
 ### GFC04 · USDA source mapping
 
@@ -265,4 +268,3 @@ Stop a wave when any occurs:
 - a source mapping is ambiguous between materially different foods or preparations;
 - import causes publication or snapshot side effects;
 - focused or full CI exposes a hard regression.
-
