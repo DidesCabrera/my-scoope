@@ -7,9 +7,11 @@ from django.test import TestCase
 
 from food_catalog.application.brand_intake import (
     apply_brand_food_intake_csv,
+    brand_food_intake_identity,
     dry_run_brand_food_intake_csv,
     load_brand_food_intake_csv,
 )
+from food_catalog.infrastructure.imports.governance import record_catalog_import_dry_run
 from food_catalog.models import (
     CatalogFood,
     CatalogFoodAlias,
@@ -66,7 +68,9 @@ class BrandFoodIntakeTests(TestCase):
     def test_apply_creates_brand_submitted_catalog_food_with_source_portion_and_aliases(self):
         path = self.write_csv(self.valid_csv())
 
-        result = apply_brand_food_intake_csv(path)
+        result = apply_brand_food_intake_csv(
+            path, dry_run_batch=self.record_dry_run(path), reason="Apply brand sample.", limit=1
+        )
 
         self.assertEqual(result.total_rows, 1)
         self.assertEqual(result.created_rows, 1)
@@ -101,27 +105,43 @@ class BrandFoodIntakeTests(TestCase):
 
     def test_apply_is_idempotent_and_updates_existing_brand_food(self):
         path = self.write_csv(self.valid_csv())
-        first = apply_brand_food_intake_csv(path)
-        second = apply_brand_food_intake_csv(path)
+        first = apply_brand_food_intake_csv(
+            path, dry_run_batch=self.record_dry_run(path), reason="First brand apply.", limit=1
+        )
+        second = apply_brand_food_intake_csv(
+            path, dry_run_batch=self.record_dry_run(path), reason="Repeat brand apply.", limit=1
+        )
 
         self.assertEqual(first.created_rows, 1)
         self.assertEqual(second.created_rows, 0)
         self.assertEqual(second.updated_rows, 1)
         self.assertEqual(CatalogFood.objects.count(), 1)
         self.assertEqual(CatalogFoodSource.objects.count(), 1)
-        self.assertEqual(CatalogImportBatch.objects.count(), 2)
+        self.assertEqual(CatalogImportBatch.objects.count(), 4)
 
     def test_management_command_dry_run_does_not_write(self):
         path = self.write_csv(self.valid_csv())
 
-        call_command("import_catalog_brand_foods_csv", str(path), "--dry-run")
+        call_command(
+            "import_catalog_brand_foods_csv", str(path), "--dry-run", limit=1, reason="Validate brand sample."
+        )
 
         self.assertEqual(CatalogFood.objects.count(), 0)
 
     def test_management_command_imports_valid_csv(self):
         path = self.write_csv(self.valid_csv())
 
-        call_command("import_catalog_brand_foods_csv", str(path))
+        call_command(
+            "import_catalog_brand_foods_csv", str(path), "--dry-run", limit=1, reason="Validate brand sample."
+        )
+        dry_run = CatalogImportBatch.objects.get(is_dry_run=True)
+        call_command(
+            "import_catalog_brand_foods_csv",
+            str(path),
+            limit=1,
+            reason="Apply brand sample.",
+            dry_run_batch_id=dry_run.pk,
+        )
 
         self.assertEqual(CatalogFood.objects.count(), 1)
         self.assertEqual(CatalogFood.objects.get().status, CatalogFood.STATUS_BRAND_SUBMITTED)
@@ -132,6 +152,29 @@ class BrandFoodIntakeTests(TestCase):
         )
 
         with self.assertRaises(CommandError):
-            call_command("import_catalog_brand_foods_csv", str(path))
+                call_command(
+                    "import_catalog_brand_foods_csv",
+                    str(path),
+                    "--dry-run",
+                    limit=1,
+                    reason="Validate invalid brand sample.",
+                )
 
         self.assertEqual(CatalogFood.objects.count(), 0)
+
+    def test_missing_label_or_authorization_evidence_is_rejected(self):
+        path = self.write_csv(self.valid_csv().replace("https://example.test/label,AUTH-1", ","))
+        result = dry_run_brand_food_intake_csv(path)
+        self.assertTrue(any("label_evidence_url is required" in error for error in result.errors))
+        self.assertTrue(any("authorization_reference is required" in error for error in result.errors))
+
+    def record_dry_run(self, path: Path):
+        result = dry_run_brand_food_intake_csv(path, limit=1)
+        return record_catalog_import_dry_run(
+            identity=brand_food_intake_identity(path, limit=1),
+            total_rows=result.total_rows,
+            would_import_rows=result.total_rows - result.skipped_rows,
+            skipped_rows=result.skipped_rows,
+            failed_rows=0,
+            reason="Validate brand sample.",
+        )

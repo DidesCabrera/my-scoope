@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import json
+import tempfile
 from decimal import Decimal
 from urllib.parse import urlencode
 
@@ -74,6 +75,11 @@ from food_catalog.infrastructure.imports.catalog_import import CATALOG_SOURCE_NA
 from food_catalog.infrastructure.imports.usda_catalog_import import (
     dry_run_usda_catalog_food_payloads,
     import_usda_catalog_food_payloads,
+)
+from food_catalog.application.brand_intake import (
+    apply_brand_food_intake_csv,
+    brand_food_intake_identity,
+    dry_run_brand_food_intake_csv,
 )
 from notas.domain.model_modules.proposals import NutritionProposal, NutritionProposalAuditEvent
 from admin_operations.models import AdminOperationAuditEvent
@@ -749,6 +755,91 @@ def _prepare_usda_upload(*, upload, source_version: str, source_dataset: str, li
         parameters_payload={"source_dataset": normalized_dataset, "limit": normalized_limit},
     )
     return payloads, identity, normalized_limit
+
+
+def perform_brand_dry_run(*, actor, upload, limit: str, reason: str) -> AdminOperationResult:
+    try:
+        normalized_limit = _brand_limit(limit)
+        with _uploaded_temp_file(upload, suffix=".csv") as path:
+            result = dry_run_brand_food_intake_csv(path, limit=normalized_limit)
+            batch = record_catalog_import_dry_run(
+                identity=brand_food_intake_identity(path, limit=normalized_limit),
+                total_rows=result.total_rows,
+                would_import_rows=result.total_rows - result.skipped_rows,
+                skipped_rows=result.skipped_rows,
+                failed_rows=0,
+                requested_by=actor,
+                reason=reason,
+                summary_payload={"errors": result.errors},
+            )
+    except (ValueError, OSError, CatalogImportGovernanceError) as exc:
+        return AdminOperationResult(False, f"No se pudo validar marcas: {exc}")
+    if result.errors:
+        return AdminOperationResult(False, f"Dry-run #{batch.pk} bloqueado: {'; '.join(result.errors[:3])}")
+    record_admin_operation_audit_event(
+        actor=actor,
+        action="food_catalog.brand.dry_run",
+        target=batch,
+        reason=reason,
+        status_after=batch.status,
+        metadata={"total": result.total_rows},
+    )
+    return AdminOperationResult(True, f"Marcas dry-run #{batch.pk}: {result.total_rows} filas válidas.")
+
+
+def perform_brand_apply(*, actor, upload, limit: str, dry_run_batch_id: str, reason: str) -> AdminOperationResult:
+    try:
+        normalized_limit = _brand_limit(limit)
+        dry_run_batch = CatalogImportBatch.objects.get(pk=int(dry_run_batch_id))
+        with _uploaded_temp_file(upload, suffix=".csv") as path:
+            result = apply_brand_food_intake_csv(
+                path,
+                dry_run_batch=dry_run_batch,
+                reason=reason,
+                limit=normalized_limit,
+                created_by=actor,
+            )
+    except (ValueError, TypeError, OSError, CatalogImportBatch.DoesNotExist, CatalogImportGovernanceError) as exc:
+        return AdminOperationResult(False, f"No se pudo importar marcas: {exc}")
+    if result.errors:
+        return AdminOperationResult(False, f"Import bloqueado: {'; '.join(result.errors[:3])}")
+    batch = result.batch
+    assert batch is not None
+    record_admin_operation_audit_event(
+        actor=actor,
+        action="food_catalog.brand.apply",
+        target=batch,
+        reason=reason,
+        status_before=f"dry_run={dry_run_batch.pk}",
+        status_after=batch.status,
+        metadata={"created": result.created_rows, "updated": result.updated_rows},
+    )
+    return AdminOperationResult(True, f"Marcas batch #{batch.pk}: creados={result.created_rows}, actualizados={result.updated_rows}.")
+
+
+def _brand_limit(value: str) -> int:
+    normalized = int(value)
+    if normalized < 1 or normalized > 5:
+        raise ValueError("La muestra de marcas debe contener entre 1 y 5 filas.")
+    return normalized
+
+
+class _uploaded_temp_file:
+    def __init__(self, upload, *, suffix: str):
+        if upload is None:
+            raise ValueError("Debes adjuntar un archivo.")
+        self.upload = upload
+        self.suffix = suffix
+        self.file = None
+
+    def __enter__(self):
+        self.file = tempfile.NamedTemporaryFile(suffix=self.suffix)
+        self.file.write(self.upload.read())
+        self.file.flush()
+        return self.file.name
+
+    def __exit__(self, exc_type, exc, traceback):
+        self.file.close()
 
 
 def _catalog_inventory_food_to_vm(catalog_food: CatalogFood) -> AdminOperationsCatalogInventoryFoodVM:

@@ -403,8 +403,8 @@ food_catalog/data/brand_verified_intake_template.csv
 Nuevo comando:
 
 ```text
-python manage.py import_catalog_brand_foods_csv path/to/brand_foods.csv --dry-run
-python manage.py import_catalog_brand_foods_csv path/to/brand_foods.csv
+python manage.py import_catalog_brand_foods_csv path/to/brand_foods.csv --dry-run --limit 3 --reason "Validar muestra autorizada"
+python manage.py import_catalog_brand_foods_csv path/to/brand_foods.csv --limit 3 --dry-run-batch-id <id> --reason "Aplicar muestra autorizada"
 ```
 
 ## Launch Readiness · cierre del ciclo

@@ -43,6 +43,21 @@
     </article>
   </section>
 
+  <section class="admin-analytics-section-grid admin-operations-observability-grid">
+    <article class="card-detail-block">
+      <div class="card-title-row"><div><p class="section-eyebrow">FCG05 · Marcas</p><h3>Dry-run de CSV autorizado</h3><p class="muted-text">Cada fila exige autorización confirmada, referencia de autorización y evidencia de etiqueta. Muestra máxima: 5.</p></div></div>
+      <form method="post" enctype="multipart/form-data" action="{% url 'admin_operations_food_catalog_brand_dry_run' %}" data-admin-operations-confirm>
+        {% csrf_token %}<label><span>CSV de marca</span><input type="file" name="file" accept="text/csv" required></label><label><span>Límite</span><input name="limit" type="number" min="1" max="5" required></label><label><span>Razón</span><textarea name="reason" required></textarea></label><button class="btn-secondary" type="submit">Validar marcas</button>
+      </form>
+    </article>
+    <article class="card-detail-block">
+      <div class="card-title-row"><div><p class="section-eyebrow">Apply marcas</p><h3>Importar evidencia validada</h3><p class="muted-text">Requiere el mismo CSV, límite y dry-run. Crea brand_submitted; no publica.</p></div></div>
+      <form method="post" enctype="multipart/form-data" action="{% url 'admin_operations_food_catalog_brand_apply' %}" data-admin-operations-confirm>
+        {% csrf_token %}<label><span>CSV de marca</span><input type="file" name="file" accept="text/csv" required></label><label><span>ID dry-run</span><input name="dry_run_batch_id" type="number" min="1" required></label><label><span>Límite</span><input name="limit" type="number" min="1" max="5" required></label><label><span>Razón</span><textarea name="reason" required></textarea></label><button class="btn-secondary" type="submit">Importar marcas</button>
+      </form>
+    </article>
+  </section>
+
   <section class="card-detail-block">
     <div class="card-title-row"><div><p class="section-eyebrow">Guard operacional</p><h3>Dry-run antes de toda mutación</h3><p class="muted-text">Un apply sólo es válido cuando referencia un dry-run completo, vigente y equivalente en fuente, versión, hash, parámetros y número de filas. Los controles mutantes se habilitan fuente por fuente durante FCG03–FCG08.</p></div></div>
     <form class="admin-operations-inventory-filters" method="get">

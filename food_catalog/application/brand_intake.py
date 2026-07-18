@@ -11,7 +11,9 @@ import csv
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
+import hashlib
 from typing import Iterable
+from django.utils import timezone
 
 from food_catalog.application.imports.normalization import normalize_food_name
 from food_catalog.models import (
@@ -20,6 +22,10 @@ from food_catalog.models import (
     CatalogFoodPortion,
     CatalogFoodSource,
     CatalogImportBatch,
+)
+from food_catalog.infrastructure.imports.governance import (
+    catalog_import_identity,
+    start_catalog_import_batch,
 )
 
 BRAND_INTAKE_SOURCE_NAME = "brand_verified_intake"
@@ -114,6 +120,7 @@ class BrandFoodIntakeResult:
     updated_rows: int
     skipped_rows: int
     errors: tuple[str, ...]
+    batch: CatalogImportBatch | None = None
 
 
 def load_brand_food_intake_csv(path: str | Path) -> tuple[BrandFoodIntakeValidation, ...]:
@@ -171,6 +178,10 @@ def validate_brand_food_intake_row(raw_row: dict[str, str | None], *, row_number
         errors.append(f"preparation_state is invalid: {preparation_state}")
     if not authorization_confirmed:
         errors.append("authorization_confirmed must be true/yes/sí/1")
+    if not _clean(raw_row.get("label_evidence_url")):
+        errors.append("label_evidence_url is required")
+    if not _clean(raw_row.get("authorization_reference")):
+        errors.append("authorization_reference is required")
 
     protein = _decimal_required(raw_row.get("protein_g_per_100g"), "protein_g_per_100g", errors)
     carbs = _decimal_required(raw_row.get("carbs_g_per_100g"), "carbs_g_per_100g", errors)
@@ -251,38 +262,59 @@ def validate_brand_food_intake_row(raw_row: dict[str, str | None], *, row_number
     )
 
 
-def dry_run_brand_food_intake_csv(path: str | Path) -> BrandFoodIntakeResult:
+def dry_run_brand_food_intake_csv(path: str | Path, *, limit: int | None = None) -> BrandFoodIntakeResult:
     validations = load_brand_food_intake_csv(path)
+    if limit is not None:
+        validations = validations[:limit]
     errors = _collect_errors(validations)
+    invalid_rows = sum(1 for validation in validations if not validation.is_valid)
     return BrandFoodIntakeResult(
-        total_rows=sum(1 for validation in validations if validation.row is not None),
+        total_rows=len(validations),
         created_rows=0,
         updated_rows=0,
-        skipped_rows=len(errors),
+        skipped_rows=invalid_rows,
         errors=errors,
     )
 
 
-def apply_brand_food_intake_csv(path: str | Path, *, created_by=None) -> BrandFoodIntakeResult:
-    validations = load_brand_food_intake_csv(path)
+def brand_food_intake_identity(path: str | Path, *, limit: int):
+    path = Path(path)
+    return catalog_import_identity(
+        source_type=CatalogFood.SOURCE_BRAND_SUBMITTED,
+        source_name=BRAND_INTAKE_SOURCE_NAME,
+        source_version=BRAND_INTAKE_SOURCE_VERSION,
+        input_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
+        parameters_payload={"format": "brand_csv_intake", "limit": limit},
+    )
+
+
+def apply_brand_food_intake_csv(
+    path: str | Path,
+    *,
+    dry_run_batch: CatalogImportBatch,
+    reason: str,
+    limit: int,
+    created_by=None,
+) -> BrandFoodIntakeResult:
+    validations = load_brand_food_intake_csv(path)[:limit]
     errors = _collect_errors(validations)
     valid_rows = [validation.row for validation in validations if validation.is_valid and validation.row is not None]
 
     if errors:
         return BrandFoodIntakeResult(
-            total_rows=len(valid_rows),
+            total_rows=len(validations),
             created_rows=0,
             updated_rows=0,
-            skipped_rows=len(errors),
+            skipped_rows=sum(1 for validation in validations if not validation.is_valid),
             errors=errors,
         )
 
-    batch = CatalogImportBatch.objects.create(
-        source_type=CatalogFood.SOURCE_BRAND_SUBMITTED,
-        source_name=BRAND_INTAKE_SOURCE_NAME,
-        source_version=BRAND_INTAKE_SOURCE_VERSION,
-        status=CatalogImportBatch.STATUS_RUNNING,
+    batch = start_catalog_import_batch(
+        identity=brand_food_intake_identity(path, limit=limit),
+        dry_run_batch=dry_run_batch,
         total_rows=len(valid_rows),
+        requested_by=created_by,
+        reason=reason,
     )
 
     created = 0
@@ -296,8 +328,9 @@ def apply_brand_food_intake_csv(path: str | Path, *, created_by=None) -> BrandFo
 
     batch.imported_rows = created + updated
     batch.status = CatalogImportBatch.STATUS_COMPLETED
+    batch.finished_at = timezone.now()
     batch.summary_payload = {"created": created, "updated": updated, "source": BRAND_INTAKE_SOURCE_NAME}
-    batch.save(update_fields=["imported_rows", "status", "summary_payload"])
+    batch.save(update_fields=["imported_rows", "status", "finished_at", "summary_payload"])
 
     return BrandFoodIntakeResult(
         total_rows=len(valid_rows),
@@ -305,6 +338,7 @@ def apply_brand_food_intake_csv(path: str | Path, *, created_by=None) -> BrandFo
         updated_rows=updated,
         skipped_rows=0,
         errors=(),
+        batch=batch,
     )
 
 
