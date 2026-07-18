@@ -56,6 +56,9 @@ def build_system_control_vm() -> SystemControlVM:
     report = build_project_status().as_dict()
     release = report["release"]
     environment = report["environment"]
+    deployment_environment = (
+        release["service"] if release["service"] != "unknown" else environment["name"]
+    )
     migration_probe = next(
         (probe for probe in report["probes"] if probe["code"] == "database.migrations"),
         {"status": "error", "data": {}},
@@ -92,8 +95,8 @@ def build_system_control_vm() -> SystemControlVM:
         metrics=[
             SystemControlMetricVM(
                 label="Ambiente",
-                value=str(environment["name"]),
-                helper=str(environment["settings_module"]),
+                value=str(deployment_environment),
+                helper=f"Perfil {environment['name']} · {environment['settings_module']}",
                 icon="server-cog",
             ),
             SystemControlMetricVM(
@@ -139,4 +142,3 @@ def _display_value(value: object) -> str:
     if isinstance(value, bool):
         return "enabled" if value else "disabled"
     return str(value)
-

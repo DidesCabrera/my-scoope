@@ -54,3 +54,14 @@ class SystemControlAccessTests(TestCase):
 
         self.assertTrue(content.probes)
         self.assertLessEqual(len(queries), 20)
+
+    @override_settings(SENTRY_ENVIRONMENT="myscoope-staging")
+    def test_environment_metric_distinguishes_service_from_settings_profile(self):
+        content = build_system_control_vm()
+
+        environment_metric = next(
+            metric for metric in content.metrics if metric.label == "Ambiente"
+        )
+        self.assertEqual(environment_metric.value, "myscoope-staging")
+        self.assertIn("Perfil", environment_metric.helper)
+        self.assertIn("miapp.settings", environment_metric.helper)
