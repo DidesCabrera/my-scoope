@@ -4,6 +4,16 @@
 <div class="page admin-analytics-page admin-operations-page">
   {% include "admin_operations/_food_catalog_tabs.html" with active_tab="inventory" %}
 
+  <section class="card-detail-block">
+    <div class="card-title-row"><div><p class="section-eyebrow">Generic Food Coverage · {{ vm.content.target_version_label }}</p><h3>Avance contra la meta explícita</h3><p class="muted-text">El manifiesto mide cobertura; no impide incorporar descubrimientos útiles. Cada etapa se cuenta por evidencia persistida, sin asumir que importar publica.</p></div></div>
+    <div class="home-stats admin-analytics-kpi-grid admin-operations-kpi-grid">
+      {% for metric in vm.content.target_funnel %}<article class="home-stat-card admin-operations-metric-card admin-operations-metric-card--compact"><div class="home-stat-top"><i data-lucide="{{ metric.icon }}" class="home-stat-icon"></i><span class="home-stat-label">{{ metric.label }}</span></div><h3>{{ metric.value }}</h3><p class="muted-text">{{ metric.helper }}</p></article>{% endfor %}
+    </div>
+    <div class="admin-operations-breakdown-grid">
+      {% for item in vm.content.target_category_coverage %}<article class="admin-operations-breakdown-card"><span>{{ item.label }}</span><strong>{{ item.total }}</strong><small>{{ item.share_label }}</small><p>{{ item.helper }}</p></article>{% endfor %}
+    </div>
+  </section>
+
   <section class="home-stats admin-analytics-kpi-grid admin-operations-kpi-grid" aria-label="Estado general del catálogo">
     {% for metric in vm.content.metrics %}
       <article class="home-stat-card admin-operations-metric-card">

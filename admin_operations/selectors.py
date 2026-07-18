@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
+from pathlib import Path
 
 from django.contrib.auth import get_user_model
 from django.db import models
@@ -10,7 +11,8 @@ from django.utils import timezone
 
 from accounts.models import AccountSubscription, CreditLedger, CreditWallet
 from ai_assistant.models import AIUsageEvent, AIUserCreditQuota
-from food_catalog.models import CatalogCurationCandidate, CatalogFood, CatalogImportBatch
+from food_catalog.application.coverage_manifest import load_coverage_manifest
+from food_catalog.models import CatalogCurationCandidate, CatalogFood, CatalogFoodSource, CatalogImportBatch
 from notas.domain.model_modules.proposals import NutritionProposal
 from admin_operations.models import AdminOperationAuditEvent
 
@@ -253,6 +255,60 @@ def get_food_catalog_inventory_payload(
         "group_options": groups,
         "page_obj": page_obj,
         "filtered_total": paginator.count,
+        "generic_coverage": get_generic_food_coverage_payload(),
+    }
+
+
+def get_generic_food_coverage_payload() -> dict:
+    """Reconcile the versioned planning manifest with persisted source evidence."""
+
+    manifest = load_coverage_manifest(
+        Path(__file__).resolve().parents[1]
+        / "food_catalog"
+        / "data"
+        / "generic_food_coverage_manifest_v1.csv",
+        version="gfc.v1",
+    )
+    mapped_targets = [target for target in manifest.targets if target.mapping_status == "mapped"]
+    source_rows = CatalogFoodSource.objects.filter(
+        source_food_id__in=[target.source_food_id for target in mapped_targets]
+    ).select_related("catalog_food")
+    foods_by_source = {
+        (row.source_type, row.source_food_id): row.catalog_food
+        for row in source_rows
+    }
+
+    def persisted_food(target):
+        source_type = (
+            CatalogFood.SOURCE_NATURAL_VERIFIED
+            if target.expected_source == "internal_seed"
+            else CatalogFood.SOURCE_USDA
+        )
+        return foods_by_source.get((source_type, target.source_food_id))
+
+    imported_targets = [(target, persisted_food(target)) for target in mapped_targets]
+    imported_targets = [(target, food) for target, food in imported_targets if food is not None]
+    reviewed_statuses = {
+        CatalogFood.STATUS_REVIEWED,
+        CatalogFood.STATUS_VERIFIED,
+        CatalogFood.STATUS_PUBLISHED,
+    }
+    category_rows = []
+    for category, defined in manifest.counts_by_category().items():
+        imported = sum(1 for target, _food in imported_targets if target.category == category)
+        category_rows.append({"key": category, "defined": defined, "imported": imported})
+
+    return {
+        "version": manifest.version,
+        "sha256": manifest.sha256,
+        "total": manifest.total_targets,
+        "source_mapped": len(mapped_targets),
+        "imported": len(imported_targets),
+        "reviewed": sum(1 for _target, food in imported_targets if food.status in reviewed_statuses),
+        "published": sum(
+            1 for _target, food in imported_targets if food.status == CatalogFood.STATUS_PUBLISHED
+        ),
+        "category_rows": category_rows,
     }
 
 

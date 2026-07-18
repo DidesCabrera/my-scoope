@@ -431,6 +431,7 @@ def build_food_catalog_inventory_vm(
     aggregate = payload["aggregate"]
     total = int(aggregate["total"] or 0)
     page_obj = payload["page_obj"]
+    generic_coverage = payload["generic_coverage"]
 
     category_coverage = [
         AdminOperationsCatalogCoverageVM(
@@ -555,6 +556,25 @@ def build_food_catalog_inventory_vm(
         ],
         category_coverage=category_coverage,
         source_coverage=source_coverage,
+        target_funnel=[
+            AdminOperationsMetricVM("Definidos", _format_int(generic_coverage["total"]), "Meta versionada, no whitelist.", "list-checks"),
+            AdminOperationsMetricVM("Mapeados a fuente", _format_int(generic_coverage["source_mapped"]), _format_share(generic_coverage["source_mapped"], generic_coverage["total"]), "link"),
+            AdminOperationsMetricVM("Importados", _format_int(generic_coverage["imported"]), _format_share(generic_coverage["imported"], generic_coverage["total"]), "database"),
+            AdminOperationsMetricVM("Revisados", _format_int(generic_coverage["reviewed"]), _format_share(generic_coverage["reviewed"], generic_coverage["total"]), "badge-check"),
+            AdminOperationsMetricVM("Publicados", _format_int(generic_coverage["published"]), _format_share(generic_coverage["published"], generic_coverage["total"]), "send"),
+        ],
+        target_category_coverage=[
+            AdminOperationsCatalogCoverageVM(
+                label={"vegetable": "Verduras", "fruit": "Frutas", "meat_seafood": "Carnes y mariscos", "legume": "Legumbres", "dairy": "Lácteos"}[row["key"]],
+                total=f"{_format_int(row['imported'])} / {_format_int(row['defined'])}",
+                share_label=_format_share(row["imported"], row["defined"]),
+                helper="importados / definidos",
+            )
+            for row in generic_coverage["category_rows"]
+        ],
+        target_version_label=(
+            f"{generic_coverage['version']} · SHA {generic_coverage['sha256'][:12]}…"
+        ),
         foods=[_catalog_inventory_food_to_vm(food) for food in page_obj.object_list],
         status_options=list(payload["status_options"]),
         source_options=list(payload["source_options"]),

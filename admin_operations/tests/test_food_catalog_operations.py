@@ -256,6 +256,31 @@ class AdminOperationsFoodCatalogTests(TestCase):
         self.assertEqual(gaps["Sin evidencia asociada"], "2")
         self.assertEqual(gaps["Nutrición extendida incompleta"], "2")
 
+    def test_inventory_vm_reconciles_versioned_targets_with_persisted_sources(self):
+        food = _create_catalog_food(
+            status=CatalogFood.STATUS_VERIFIED,
+            display_name="Espinaca cruda",
+            source_type=CatalogFood.SOURCE_NATURAL_VERIFIED,
+        )
+        CatalogFoodSource.objects.create(
+            catalog_food=food,
+            source_type=CatalogFood.SOURCE_NATURAL_VERIFIED,
+            source_name="My Scoope Core Natural Foods",
+            source_food_id="core-spinach-raw",
+        )
+
+        vm = build_food_catalog_inventory_vm()
+
+        funnel = {metric.label: metric.value for metric in vm.target_funnel}
+        categories = {item.label: item.total for item in vm.target_category_coverage}
+        self.assertEqual(funnel["Definidos"], "282")
+        self.assertEqual(funnel["Mapeados a fuente"], "30")
+        self.assertEqual(funnel["Importados"], "1")
+        self.assertEqual(funnel["Revisados"], "1")
+        self.assertEqual(funnel["Publicados"], "0")
+        self.assertEqual(categories["Verduras"], "1 / 87")
+        self.assertTrue(vm.target_version_label.startswith("gfc.v1 · SHA "))
+
     def test_inventory_page_renders_all_catalog_food_fields_and_relations(self):
         food = _create_catalog_food(
             status=CatalogFood.STATUS_PUBLISHED,

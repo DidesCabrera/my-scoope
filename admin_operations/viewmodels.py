@@ -144,6 +144,9 @@ class AdminOperationsCatalogInventoryVM:
     gap_metrics: list[AdminOperationsMetricVM] = field(default_factory=list)
     category_coverage: list[AdminOperationsCatalogCoverageVM] = field(default_factory=list)
     source_coverage: list[AdminOperationsCatalogCoverageVM] = field(default_factory=list)
+    target_funnel: list[AdminOperationsMetricVM] = field(default_factory=list)
+    target_category_coverage: list[AdminOperationsCatalogCoverageVM] = field(default_factory=list)
+    target_version_label: str = ""
     foods: list[AdminOperationsCatalogInventoryFoodVM] = field(default_factory=list)
     status_options: list[tuple[str, str]] = field(default_factory=list)
     source_options: list[tuple[str, str]] = field(default_factory=list)
