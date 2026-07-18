@@ -2187,3 +2187,374 @@
     text-align: center;
   }
 }
+
+
+/* =========================================================
+   Landing additions: parallax bands and visibility section
+   ========================================================= */
+
+.landing-parallax-band {
+  position: relative;
+  min-height: clamp(180px, 26vw, 300px);
+  overflow: hidden;
+  background: #050505;
+}
+
+.landing-parallax-band__media,
+.landing-section-parallax-bg {
+  position: absolute;
+  inset: -10%;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  transform: translate3d(0, 0, 0) scale(1.08);
+  will-change: transform;
+}
+
+.landing-parallax-band::after,
+.landing-section--precision::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.landing-parallax-band::after {
+  background: linear-gradient(180deg, rgba(5, 5, 5, 0.12), rgba(5, 5, 5, 0.44));
+}
+
+.landing-parallax-band--intro .landing-parallax-band__media {
+  background-image: url("../img/landing/home-banner-1.jpg");
+}
+
+.landing-parallax-band--footer .landing-parallax-band__media {
+  background-image: url("../img/landing/home-banner-2.jpg");
+  background-position: center 35%;
+}
+
+.landing-section--visibility {
+  background: linear-gradient(180deg, #050505 0%, #101010 100%);
+}
+
+.landing-section--visibility .section-copy h2,
+.landing-section--visibility .section-copy h3,
+.landing-section--visibility .section-copy p {
+  color: #ffffff;
+}
+
+.landing-section--visibility .eyebrow {
+  color: #d4d4d4;
+}
+
+.image-panel.image-panel-visibility {
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.image-panel.image-panel-visibility img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 0;
+}
+
+.landing-section--precision {
+  position: relative;
+  overflow: hidden;
+  background: #100f17;
+}
+
+.landing-section--precision::after {
+  background: linear-gradient(135deg, rgba(16, 15, 23, 0.24), rgba(16, 15, 23, 0.12));
+}
+
+.landing-section--precision > .container {
+  position: relative;
+  z-index: 1;
+}
+
+.landing-section-parallax-bg--precision {
+  background:
+    radial-gradient(circle at 18% 20%, rgba(255, 101, 91, 0.95), transparent 34%),
+    radial-gradient(circle at 82% 18%, rgba(128, 72, 255, 0.9), transparent 36%),
+    radial-gradient(circle at 78% 84%, rgba(55, 198, 157, 0.85), transparent 36%),
+    linear-gradient(135deg, #f08d3c 0%, #df3f74 38%, #6c4de6 70%, #2da985 100%);
+}
+
+@media (max-width: 760px) {
+  .landing-parallax-band {
+    min-height: 150px;
+  }
+
+  .landing-parallax-band__media,
+  .landing-section-parallax-bg {
+    inset: -14%;
+  }
+}
+
+
+/* =========================================================
+   Landing corrections: section color, coordinated CTA parallax
+   ========================================================= */
+
+.landing-section--how-intro {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  margin-top: -32px;
+  border-top-left-radius: clamp(30px, 5vw, 64px);
+  border-top-right-radius: clamp(30px, 5vw, 64px);
+}
+
+.landing-section--visibility {
+  background: #ffffff;
+}
+
+.landing-section--visibility .section-copy h2,
+.landing-section--visibility .section-copy h3,
+.landing-section--visibility .section-copy p,
+.landing-section--visibility p {
+  color: #050505;
+}
+
+.landing-section--visibility .eyebrow {
+  color: #4a4a4a;
+}
+
+.landing-section--adjust-metrics {
+  background: #000000;
+}
+
+.landing-section--adjust-metrics .section-copy h2,
+.landing-section--adjust-metrics .section-copy h3,
+.landing-section--adjust-metrics .section-copy p,
+.landing-section--adjust-metrics p,
+.landing-section--adjust-metrics .eyebrow {
+  color: #ffffff;
+}
+
+.landing-section--plans {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  margin-bottom: -32px;
+  border-bottom-left-radius: clamp(30px, 5vw, 64px);
+  border-bottom-right-radius: clamp(30px, 5vw, 64px);
+}
+
+.landing-cta-parallax-group {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  padding-top: 32px;
+  background: #050505;
+}
+
+.landing-cta-parallax-group__media {
+  position: absolute;
+  inset: -12%;
+  z-index: -2;
+  background-image: url("../img/landing/home-banner-2.jpg");
+  background-position: center 35%;
+  background-size: cover;
+  background-repeat: no-repeat;
+  transform: translate3d(0, 0, 0) scale(1.08);
+  will-change: transform;
+}
+
+.landing-cta-parallax-group::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(5, 5, 5, 0.24), rgba(5, 5, 5, 0.62));
+  pointer-events: none;
+}
+
+.landing-cta-parallax-group .landing-parallax-band {
+  background: transparent;
+}
+
+.landing-parallax-band--cta-before,
+.landing-parallax-band--footer {
+  min-height: clamp(170px, 24vw, 280px);
+}
+
+.landing-parallax-band--footer .landing-parallax-band__media {
+  background-image: none;
+}
+
+.landing-section--final-cta {
+  position: relative;
+  background: #000000;
+}
+
+@media (max-width: 760px) {
+  .landing-section--how-intro {
+    margin-top: -24px;
+    border-top-left-radius: 34px;
+    border-top-right-radius: 34px;
+  }
+
+  .landing-section--plans {
+    margin-bottom: -24px;
+    border-bottom-left-radius: 34px;
+    border-bottom-right-radius: 34px;
+  }
+
+  .landing-cta-parallax-group {
+    padding-top: 24px;
+  }
+
+  .landing-parallax-band--cta-before,
+  .landing-parallax-band--footer {
+    min-height: 150px;
+  }
+
+  .landing-cta-parallax-group__media {
+    inset: -16%;
+  }
+}
+
+/* =========================================================
+   Landing corrections: flat sections and stable plan base
+   ========================================================= */
+
+.landing-section,
+.section-warm,
+.section-dark,
+.plans-section,
+.final-cta {
+  box-shadow: none;
+}
+
+.section-warm,
+.section-dark,
+.section-light,
+.section-light-circle,
+.plans-section,
+.landing-section--visibility,
+.landing-section--adjust-metrics,
+.landing-section--precision,
+.landing-section--final-cta {
+  background-image: none;
+}
+
+.landing-parallax-band::after,
+.landing-cta-parallax-group::after,
+.landing-section--precision::after {
+  background: none;
+}
+
+.landing-section--visibility {
+  background: #ffffff;
+}
+
+.landing-section--visibility,
+.landing-section--visibility .section-copy,
+.landing-section--visibility .section-copy h2,
+.landing-section--visibility .section-copy h3,
+.landing-section--visibility .section-copy p,
+.landing-section--visibility .eyebrow,
+.landing-section--visibility p {
+  color: #050505;
+}
+
+.landing-section--adjust-metrics {
+  background: #000000;
+}
+
+.landing-section--adjust-metrics,
+.landing-section--adjust-metrics .section-copy,
+.landing-section--adjust-metrics .section-copy h2,
+.landing-section--adjust-metrics .section-copy h3,
+.landing-section--adjust-metrics .section-copy p,
+.landing-section--adjust-metrics .eyebrow,
+.landing-section--adjust-metrics p {
+  color: #ffffff;
+}
+
+.landing-section--plans {
+  background: #050505;
+  margin-bottom: 0;
+  border-bottom-left-radius: clamp(30px, 5vw, 64px);
+  border-bottom-right-radius: clamp(30px, 5vw, 64px);
+  overflow: hidden;
+}
+
+.landing-section--plans::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: clamp(30px, 5vw, 64px);
+  z-index: -1;
+  background: #050505;
+  pointer-events: none;
+}
+
+.landing-cta-parallax-group {
+  padding-top: 0;
+}
+
+@media (max-width: 760px) {
+  .landing-section--plans {
+    margin-bottom: 0;
+    border-bottom-left-radius: 34px;
+    border-bottom-right-radius: 34px;
+  }
+
+  .landing-cta-parallax-group {
+    padding-top: 0;
+  }
+}
+
+/* =========================================================
+   Landing hotfix: authoritative colors for paired sections
+   ========================================================= */
+
+section.section-dark.landing-section--visibility {
+  background: #ffffff !important;
+  background-image: none !important;
+}
+
+section.section-dark.landing-section--visibility > .container,
+section.section-dark.landing-section--visibility > .container > .section-copy,
+section.section-dark.landing-section--visibility > .container > .section-copy h2,
+section.section-dark.landing-section--visibility > .container > .section-copy h3,
+section.section-dark.landing-section--visibility > .container > .section-copy p {
+  color: #050505 !important;
+}
+
+section.section-dark.landing-section--visibility > .container > .section-copy .eyebrow {
+  color: #4a4a4a !important;
+}
+
+section.section-dark.landing-section--adjust-metrics {
+  background: #000000 !important;
+  background-image: none !important;
+}
+
+section.section-dark.landing-section--adjust-metrics > .container,
+section.section-dark.landing-section--adjust-metrics > .container > .section-copy,
+section.section-dark.landing-section--adjust-metrics > .container > .section-copy h2,
+section.section-dark.landing-section--adjust-metrics > .container > .section-copy h3,
+section.section-dark.landing-section--adjust-metrics > .container > .section-copy p,
+section.section-dark.landing-section--adjust-metrics > .container > .section-copy .eyebrow {
+  color: #ffffff !important;
+}
+
+section.landing-section--plans {
+  background: #050505 !important;
+  background-image: none !important;
+  margin-bottom: 0 !important;
+}
+
+section.landing-section--plans::after {
+  display: none !important;
+}
