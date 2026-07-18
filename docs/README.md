@@ -54,7 +54,7 @@ docs/
 
 Contiene documentación vigente. Es la fuente de verdad para implementar nuevas secciones, corregir arquitectura y mantener consistencia UI/UX.
 
-`docs/00_current/AI_README.md` es el punto de entrada recomendado para trabajo asistido por IA.
+`docs/00_current/AI_README.md` es el punto de entrada recomendado para trabajo asistido por IA. Comienza con la bienvenida de Felipe Dides y establece que una AI es también clienta y usuaria actual de My Scoope: las herramientas y la documentación deben darle contexto y capacidades para ejercer buen juicio, no imponerle un camino rígido.
 
 ## `docs/10_active_cycles/`
 

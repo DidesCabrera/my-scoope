@@ -4,7 +4,7 @@ Esta carpeta contiene documentación vigente y de alta autoridad. Una IA o desar
 
 ## Lectura recomendada
 
-1. `AI_README.md`
+1. `AI_README.md`, comenzando por la bienvenida de Felipe Dides: una AI es también clienta y usuaria actual de My Scoope.
 2. `PROJECT_STATE.md`
 3. `../40_technical/operations/docs_information_architecture.md`
 4. `architecture/layers.md`
