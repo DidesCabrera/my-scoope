@@ -86,6 +86,14 @@ from food_catalog.application.manual_intake import (
     dry_run_manual_evidence_csv,
     manual_evidence_identity,
 )
+from notas.application.services.commands.food_catalog_backfill import (
+    DEFAULT_OPERATIONAL_BACKFILL_SOURCE_VERSION,
+    OPERATIONAL_BACKFILL_SOURCE_NAME,
+    OperationalFoodCatalogBackfillError,
+    backfill_catalog_from_operational_foods,
+    dry_run_backfill_catalog_from_operational_foods,
+    operational_backfill_identity,
+)
 from notas.domain.model_modules.proposals import NutritionProposal, NutritionProposalAuditEvent
 from admin_operations.models import AdminOperationAuditEvent
 
@@ -897,6 +905,60 @@ def perform_manual_apply(*, actor, upload, limit: str, dry_run_batch_id: str, re
         metadata={"created": result.created_rows, "updated": result.updated_rows},
     )
     return AdminOperationResult(True, f"Curación manual batch #{result.batch.pk}: creados={result.created_rows}, actualizados={result.updated_rows}.")
+
+
+def perform_backfill_dry_run(*, actor, limit: str, reason: str) -> AdminOperationResult:
+    try:
+        normalized_limit = int(limit)
+        if normalized_limit < 1 or normalized_limit > 10:
+            raise ValueError("El límite de backfill debe estar entre 1 y 10.")
+        result = dry_run_backfill_catalog_from_operational_foods(limit=normalized_limit, sample_size=5)
+        batch = record_catalog_import_dry_run(
+            identity=operational_backfill_identity(
+                source_name=OPERATIONAL_BACKFILL_SOURCE_NAME,
+                source_version=DEFAULT_OPERATIONAL_BACKFILL_SOURCE_VERSION,
+                limit=normalized_limit,
+                status=CatalogFood.STATUS_REVIEWED,
+            ),
+            total_rows=result.total_rows,
+            would_import_rows=result.created_rows,
+            skipped_rows=result.skipped_rows,
+            failed_rows=result.failed_rows,
+            requested_by=actor,
+            reason=reason,
+            summary_payload={"reason_counts": result.reason_counts},
+        )
+    except (ValueError, OperationalFoodCatalogBackfillError, CatalogImportGovernanceError) as exc:
+        return AdminOperationResult(False, f"No se pudo validar backfill: {exc}")
+    record_admin_operation_audit_event(actor=actor, action="food_catalog.backfill.dry_run", target=batch, reason=reason, status_after=batch.status)
+    return AdminOperationResult(True, f"Backfill dry-run #{batch.pk}: elegibles={result.created_rows}, inspeccionados={result.total_rows}.")
+
+
+def perform_backfill_apply(*, actor, limit: str, dry_run_batch_id: str, reason: str) -> AdminOperationResult:
+    try:
+        normalized_limit = int(limit)
+        if normalized_limit < 1 or normalized_limit > 10:
+            raise ValueError("El límite de backfill debe estar entre 1 y 10.")
+        dry_run = CatalogImportBatch.objects.get(pk=int(dry_run_batch_id))
+        result = backfill_catalog_from_operational_foods(
+            limit=normalized_limit,
+            dry_run_batch=dry_run,
+            requested_by=actor,
+            reason=reason,
+        )
+    except (ValueError, TypeError, CatalogImportBatch.DoesNotExist, OperationalFoodCatalogBackfillError, CatalogImportGovernanceError) as exc:
+        return AdminOperationResult(False, f"No se pudo ejecutar backfill: {exc}")
+    assert result.batch is not None
+    record_admin_operation_audit_event(
+        actor=actor,
+        action="food_catalog.backfill.apply",
+        target=result.batch,
+        reason=reason,
+        status_before=f"dry_run={dry_run.pk}",
+        status_after=result.batch.status,
+        metadata={"created": result.created_rows, "skipped": result.skipped_rows},
+    )
+    return AdminOperationResult(True, f"Backfill batch #{result.batch.pk}: creados={result.created_rows}, omitidos={result.skipped_rows}.")
 
 
 def _catalog_inventory_food_to_vm(catalog_food: CatalogFood) -> AdminOperationsCatalogInventoryFoodVM:

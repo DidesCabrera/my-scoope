@@ -24,6 +24,8 @@ from admin_operations.services import (
     perform_brand_dry_run,
     perform_manual_apply,
     perform_manual_dry_run,
+    perform_backfill_apply,
+    perform_backfill_dry_run,
     perform_credit_adjustment,
     perform_ai_proposal_operation,
     perform_ai_quota_operation,
@@ -272,6 +274,22 @@ def food_catalog_manual_dry_run(request):
 @require_POST
 def food_catalog_manual_apply(request):
     result = perform_manual_apply(actor=request.user, upload=request.FILES.get("file"), limit=request.POST.get("limit", ""), dry_run_batch_id=request.POST.get("dry_run_batch_id", ""), reason=request.POST.get("reason", ""))
+    flash_operation_result(request, result)
+    return redirect("admin_operations_food_catalog_imports")
+
+
+@staff_member_required
+@require_POST
+def food_catalog_backfill_dry_run(request):
+    result = perform_backfill_dry_run(actor=request.user, limit=request.POST.get("limit", ""), reason=request.POST.get("reason", ""))
+    flash_operation_result(request, result)
+    return redirect("admin_operations_food_catalog_imports")
+
+
+@staff_member_required
+@require_POST
+def food_catalog_backfill_apply(request):
+    result = perform_backfill_apply(actor=request.user, limit=request.POST.get("limit", ""), dry_run_batch_id=request.POST.get("dry_run_batch_id", ""), reason=request.POST.get("reason", ""))
     flash_operation_result(request, result)
     return redirect("admin_operations_food_catalog_imports")
 

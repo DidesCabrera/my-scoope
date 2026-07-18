@@ -6,7 +6,10 @@ from notas.application.services.commands.food_catalog_backfill import (
     OPERATIONAL_BACKFILL_SOURCE_NAME,
     OperationalFoodCatalogBackfillError,
     backfill_catalog_from_operational_foods,
+    operational_backfill_identity,
 )
+from food_catalog.infrastructure.imports.governance import record_catalog_import_dry_run
+from food_catalog.models import CatalogImportBatch
 
 
 class Command(BaseCommand):
@@ -18,6 +21,8 @@ class Command(BaseCommand):
             action="store_true",
             help="Compute the backfill plan without writing food_catalog rows.",
         )
+        parser.add_argument("--dry-run-batch-id", type=int)
+        parser.add_argument("--reason", required=True)
         parser.add_argument(
             "--limit",
             type=int,
@@ -59,6 +64,8 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        if options["limit"] is not None and (options["limit"] < 1 or options["limit"] > 10):
+            raise CommandError("FCG07 backfill sample limit must be between 1 and 10.")
         try:
             result = backfill_catalog_from_operational_foods(
                 dry_run=options["dry_run"],
@@ -68,14 +75,37 @@ class Command(BaseCommand):
                 status=options["status"],
                 notes=options["notes"],
                 sample_size=options["sample_size"],
+                dry_run_batch=(
+                    CatalogImportBatch.objects.get(pk=options["dry_run_batch_id"])
+                    if not options["dry_run"] and options["dry_run_batch_id"]
+                    else None
+                ),
+                reason=options["reason"],
             )
         except OperationalFoodCatalogBackfillError as exc:
             raise CommandError(str(exc)) from exc
 
+        if result.dry_run:
+            dry_run_record = record_catalog_import_dry_run(
+                identity=operational_backfill_identity(
+                    source_name=options["source_name"],
+                    source_version=options["source_version"],
+                    limit=options["limit"],
+                    status=options["status"],
+                ),
+                total_rows=result.total_rows,
+                would_import_rows=result.created_rows,
+                skipped_rows=result.skipped_rows,
+                failed_rows=result.failed_rows,
+                reason=options["reason"],
+                summary_payload={"reason_counts": result.reason_counts},
+            )
         prefix = "DRY RUN: " if result.dry_run else ""
         batch_info = ""
         if result.batch is not None:
             batch_info = f", batch_id={result.batch.id}, status={result.batch.status}"
+        elif result.dry_run:
+            batch_info = f", dry_run_batch_id={dry_run_record.pk}"
 
         self.stdout.write(
             self.style.SUCCESS(

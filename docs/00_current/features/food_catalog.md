@@ -117,8 +117,8 @@ Desde Patch 38, la frontera MCP queda endurecida por contrato y tests: `list_foo
 Desde Patch 39, existe un backfill interno para sembrar Food Catalog desde alimentos operativos confiables:
 
 ```text
-python manage.py backfill_catalog_from_operational_foods --dry-run
-python manage.py backfill_catalog_from_operational_foods
+python manage.py backfill_catalog_from_operational_foods --dry-run --limit 10 --reason "Validar elegibles globales"
+python manage.py backfill_catalog_from_operational_foods --limit 10 --dry-run-batch-id <id> --reason "Aplicar backfill revisado"
 ```
 
 Este comando vive en `notas` porque lee `notas.Food`, pero escribe candidatos maestros en `food_catalog`. Solo considera alimentos globales, verificados y activos. No modifica `notas.Food`, no publica automáticamente `CatalogFood` y no cambia la disponibilidad MCP.

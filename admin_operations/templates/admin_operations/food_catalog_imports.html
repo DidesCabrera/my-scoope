@@ -69,6 +69,17 @@
     </article>
   </section>
 
+  <section class="admin-analytics-section-grid admin-operations-observability-grid">
+    <article class="card-detail-block">
+      <div class="card-title-row"><div><p class="section-eyebrow">FCG07 · Backfill</p><h3>Global + verificado + activo</h3><p class="muted-text">El selector excluye por construcción alimentos privados, no verificados o inactivos. Un resultado de 0 elegibles es válido.</p></div></div>
+      <form method="post" action="{% url 'admin_operations_food_catalog_backfill_dry_run' %}" data-admin-operations-confirm>{% csrf_token %}<label><span>Límite</span><input name="limit" type="number" min="1" max="10" required></label><label><span>Razón</span><textarea name="reason" required></textarea></label><button class="btn-secondary" type="submit">Validar backfill</button></form>
+    </article>
+    <article class="card-detail-block">
+      <div class="card-title-row"><div><p class="section-eyebrow">Apply backfill</p><h3>Promover sólo elegibles</h3><p class="muted-text">Crea candidatos maestros; no modifica el Food operacional de origen.</p></div></div>
+      <form method="post" action="{% url 'admin_operations_food_catalog_backfill_apply' %}" data-admin-operations-confirm>{% csrf_token %}<label><span>ID dry-run</span><input name="dry_run_batch_id" type="number" min="1" required></label><label><span>Límite</span><input name="limit" type="number" min="1" max="10" required></label><label><span>Razón</span><textarea name="reason" required></textarea></label><button class="btn-secondary" type="submit">Ejecutar backfill</button></form>
+    </article>
+  </section>
+
   <section class="card-detail-block">
     <div class="card-title-row"><div><p class="section-eyebrow">Guard operacional</p><h3>Dry-run antes de toda mutación</h3><p class="muted-text">Un apply sólo es válido cuando referencia un dry-run completo, vigente y equivalente en fuente, versión, hash, parámetros y número de filas. Los controles mutantes se habilitan fuente por fuente durante FCG03–FCG08.</p></div></div>
     <form class="admin-operations-inventory-filters" method="get">
