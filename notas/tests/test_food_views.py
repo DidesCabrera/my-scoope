@@ -2,7 +2,7 @@ import io
 import json
 
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from openpyxl import Workbook
 
@@ -12,6 +12,7 @@ from notas.domain.models import Food
 User = get_user_model()
 
 
+@override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
 class FoodViewTests(TestCase):
 
     def setUp(self):
