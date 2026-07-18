@@ -81,6 +81,10 @@ def start_catalog_import_batch(
     normalized_reason = reason.strip()
     if not normalized_reason:
         raise CatalogImportGovernanceError("An import reason is required.")
+    if identity.source_type == CatalogFood.SOURCE_OPEN_FOOD_FACTS:
+        raise CatalogImportGovernanceError(
+            "Open Food Facts persistence is disabled: ODbL attribution/share-alike review has not approved a combined CatalogFood database."
+        )
 
     current_time = now or timezone.now()
     _validate_dry_run(

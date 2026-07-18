@@ -123,6 +123,33 @@ class CatalogImportGovernanceTests(TestCase):
                 input_sha256="short",
             )
 
+    def test_open_food_facts_cannot_start_persistent_batch_without_license_approval(self):
+        identity = catalog_import_identity(
+            source_type=CatalogFood.SOURCE_OPEN_FOOD_FACTS,
+            source_name="Open Food Facts",
+            source_version="api-v3.6",
+            input_sha256="b" * 64,
+            parameters_payload={"limit": 3},
+        )
+        dry_run = record_catalog_import_dry_run(
+            identity=identity,
+            total_rows=3,
+            would_import_rows=3,
+            skipped_rows=0,
+            failed_rows=0,
+            reason="Evaluate OFF license gate.",
+        )
+
+        with self.assertRaisesMessage(CatalogImportGovernanceError, "persistence is disabled"):
+            start_catalog_import_batch(
+                identity=identity,
+                dry_run_batch=dry_run,
+                total_rows=3,
+                reason="Attempt persistent OFF sample.",
+            )
+        self.assertEqual(CatalogImportBatch.objects.filter(is_dry_run=False).count(), 0)
+        self.assertEqual(CatalogFood.objects.filter(source_type=CatalogFood.SOURCE_OPEN_FOOD_FACTS).count(), 0)
+
         with self.assertRaisesMessage(CatalogImportGovernanceError, "reason is required"):
             record_catalog_import_dry_run(
                 identity=self.identity,

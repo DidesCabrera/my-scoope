@@ -163,3 +163,4 @@ Consequences
 - `0147-whole-day-optimization-and-alternatives.md`: optimización diaria y alternativas.
 - `0148-shadow-quality-and-regression-gates.md`: shadow, calidad y regresiones duras.
 - `0149-nutrition-solver-optimization-v2-closure.md`: activación controlada y cierre NSO.
+- `0150-open-food-facts-remains-reference-only.md`: mantiene Open Food Facts como lookup/referencia hasta aprobar explícitamente las obligaciones ODbL del catálogo combinado.
