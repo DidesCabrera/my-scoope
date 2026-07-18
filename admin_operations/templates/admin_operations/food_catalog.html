@@ -2,6 +2,7 @@
 {% block title %}Food Catalog Operations{% endblock %}
 {% block content %}
 <div class="page admin-analytics-page admin-operations-page">
+  {% include "admin_operations/_food_catalog_tabs.html" with active_tab="operations" %}
   <section class="home-stats admin-analytics-kpi-grid admin-operations-kpi-grid" aria-label="Resumen operacional Food Catalog">
     {% for metric in vm.content.metrics %}
       <article class="home-stat-card admin-operations-metric-card">

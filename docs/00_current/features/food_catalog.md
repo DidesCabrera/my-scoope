@@ -78,6 +78,11 @@ La guía operativa actual está en:
 - [Knowledge Center: Food Catalog para el Solver](admin_knowledge/food_catalog.md)
 - [Knowledge Center: Nutrition Solver](admin_knowledge/nutrition_solver.md)
 
+Admin Operations expone además una pestaña staff-only de `Inventario y calidad`. Esta vista lee
+todos los `CatalogFood` persistidos, muestra sus campos y relaciones, permite filtrar el inventario y
+calcula cobertura por grupo, origen, estado, solver y brechas de completitud. La vista es de sólo
+lectura y no altera el protocolo de publicación/snapshot.
+
 El MCP tampoco accede a Food Catalog directamente. Si un alimento maestro todavía no fue materializado como `notas.Food`, entonces no está disponible para herramientas MCP ni para propuestas operativas.
 
 Desde Patch 33, Food Catalog cuenta con contratos internos puros en `food_catalog/application/contracts.py`. Desde Patch 34, también cuenta con modelos maestros iniciales en `food_catalog/models.py`. Estos modelos persisten candidatos, alimentos maestros, porciones, aliases, fuentes/evidencia e import batches.

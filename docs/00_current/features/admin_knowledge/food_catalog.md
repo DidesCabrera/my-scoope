@@ -96,6 +96,27 @@ El snapshot copia valores, confianza, fuente y versión. El solver recibe el ID 
 | Cambio maestro no se refleja | versión/source del snapshot operativo | Ejecutar publicación/snapshot explícito y verificar trazabilidad. |
 | Resultado externo aparece como candidato | frontera de importación/curación | Detener flujo: FatSecret/OFF no son `CatalogFood` ni `notas.Food`. |
 
+## Inventario y calidad en Admin Operations
+
+La pestaña staff-only `Admin Operations > Food Catalog > Inventario y calidad` consulta directamente
+todos los registros persistidos en `CatalogFood`. Es una vista de observabilidad de sólo lectura; no
+publica, materializa ni modifica alimentos.
+
+La vista incluye:
+
+- inventario paginado con todos los campos maestros, fuentes/evidencia, porciones y aliases;
+- búsqueda y filtros por estado, fuente, grupo alimentario y habilitación del solver;
+- cobertura por familias normalizadas de `food_group`, incluyendo verduras y proteínas;
+- distribución por origen, publicación y calidad promedio;
+- promedios descriptivos de macros y fibra por 100 g;
+- brechas explícitas: grupo ausente, evidencia ausente, nutrición extendida incompleta y semántica
+  culinaria desconocida.
+
+Las familias del reporte homologan únicamente aliases conocidos de `food_group`. Los valores vacíos
+o no reconocidos permanecen visibles como `Sin taxonomía estándar`; nunca se infiere la categoría
+desde el nombre del alimento. Los promedios nutricionales describen la composición del inventario,
+no constituyen metas dietarias ni ponderan el uso real de cada alimento.
+
 ## Referencias
 
 - [Knowledge Center](README.md)

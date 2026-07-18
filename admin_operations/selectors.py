@@ -4,7 +4,8 @@ from datetime import timedelta
 
 from django.contrib.auth import get_user_model
 from django.db import models
-from django.db.models import Count, Q, Sum
+from django.core.paginator import Paginator
+from django.db.models import Avg, Count, Q, Sum
 from django.utils import timezone
 
 from accounts.models import AccountSubscription, CreditLedger, CreditWallet
@@ -27,6 +28,17 @@ CATALOG_FOOD_REVIEW_STATUSES = [
     CatalogFood.STATUS_PENDING_REVIEW,
     CatalogFood.STATUS_NEEDS_MORE_EVIDENCE,
 ]
+
+CATALOG_GROUP_FAMILIES = (
+    ("vegetables", "Verduras", {"vegetable", "vegetables", "verdura", "verduras", "hortalizas"}),
+    ("protein", "Proteínas", {"protein", "proteins", "proteina", "proteinas", "proteína", "proteínas", "meat", "meats", "carne", "carnes", "fish", "pescado", "pescados", "poultry", "aves"}),
+    ("fruit", "Frutas", {"fruit", "fruits", "fruta", "frutas"}),
+    ("cereals", "Cereales", {"cereal", "cereals", "grain", "grains", "cereal", "cereales"}),
+    ("legumes", "Legumbres", {"legume", "legumes", "legumbre", "legumbres"}),
+    ("dairy", "Lácteos", {"dairy", "dairies", "lacteo", "lacteos", "lácteo", "lácteos"}),
+    ("tubers", "Tubérculos", {"tuber", "tubers", "tuberculo", "tuberculos", "tubérculo", "tubérculos"}),
+    ("fats", "Grasas", {"fat", "fats", "oil", "oils", "grasa", "grasas", "aceite", "aceites"}),
+)
 
 AI_OPERATIONAL_STATUSES = [
     AIUsageEvent.Status.ERROR,
@@ -115,6 +127,163 @@ def get_food_catalog_operations_payload(*, limit: int = 25) -> dict:
         "candidates": list(candidate_qs[:limit]),
         "catalog_foods": list(catalog_food_qs[:limit]),
     }
+
+
+def get_food_catalog_inventory_payload(
+    *,
+    query: str = "",
+    status: str = "",
+    source_type: str = "",
+    food_group: str = "",
+    solver_state: str = "",
+    page: int | str = 1,
+    page_size: int = 50,
+) -> dict:
+    """Return the complete, read-only Food Catalog observability payload."""
+
+    normalized_query = (query or "").strip()
+    normalized_status = status if status in dict(CatalogFood.STATUS_CHOICES) else ""
+    normalized_source = source_type if source_type in dict(CatalogFood.SOURCE_TYPE_CHOICES) else ""
+    normalized_group = (food_group or "").strip()
+    normalized_solver = solver_state if solver_state in {"enabled", "disabled"} else ""
+
+    all_foods = CatalogFood.objects.all()
+    inventory_qs = (
+        all_foods.select_related("created_by", "reviewed_by")
+        .prefetch_related("sources", "portions", "aliases")
+        .order_by("display_name", "brand_name", "country", "id")
+    )
+
+    if normalized_query:
+        inventory_qs = inventory_qs.filter(
+            Q(display_name__icontains=normalized_query)
+            | Q(canonical_name__icontains=normalized_query)
+            | Q(brand_name__icontains=normalized_query)
+            | Q(food_group__icontains=normalized_query)
+            | Q(food_subgroup__icontains=normalized_query)
+            | Q(sources__source_name__icontains=normalized_query)
+            | Q(sources__source_food_id__icontains=normalized_query)
+        ).distinct()
+    if normalized_status:
+        inventory_qs = inventory_qs.filter(status=normalized_status)
+    if normalized_source:
+        inventory_qs = inventory_qs.filter(source_type=normalized_source)
+    if normalized_group:
+        inventory_qs = inventory_qs.filter(food_group=normalized_group)
+    if normalized_solver:
+        inventory_qs = inventory_qs.filter(solver_enabled=normalized_solver == "enabled")
+
+    aggregate = all_foods.aggregate(
+        total=Count("id"),
+        published=Count("id", filter=Q(status=CatalogFood.STATUS_PUBLISHED)),
+        solver_enabled=Count("id", filter=Q(solver_enabled=True)),
+        average_quality=Avg("data_quality_score"),
+        average_protein=Avg("protein_g_per_100g"),
+        average_carbs=Avg("carbs_g_per_100g"),
+        average_fat=Avg("fat_g_per_100g"),
+        average_fiber=Avg("fiber_g_per_100g"),
+        missing_group=Count("id", filter=Q(food_group="")),
+        incomplete_extended_nutrition=Count(
+            "id",
+            filter=(
+                Q(calories_kcal_per_100g__isnull=True)
+                | Q(fiber_g_per_100g__isnull=True)
+                | Q(sugar_g_per_100g__isnull=True)
+                | Q(saturated_fat_g_per_100g__isnull=True)
+                | Q(sodium_mg_per_100g__isnull=True)
+            ),
+            distinct=True,
+        ),
+        unknown_culinary_semantics=Count(
+            "id",
+            filter=(
+                Q(preparation_state=CatalogFood.PREPARATION_UNKNOWN)
+                | Q(food_form=CatalogFood.FOOD_FORM_UNKNOWN)
+            ),
+        ),
+    )
+    aggregate["without_evidence"] = all_foods.filter(sources__isnull=True).count()
+
+    group_rows = list(
+        all_foods.values("food_group")
+        .annotate(
+            total=Count("id"),
+            published=Count("id", filter=Q(status=CatalogFood.STATUS_PUBLISHED)),
+            solver_enabled=Count("id", filter=Q(solver_enabled=True)),
+            average_quality=Avg("data_quality_score"),
+        )
+        .order_by("food_group")
+    )
+    category_coverage = _catalog_category_coverage(group_rows)
+    source_breakdown = list(
+        all_foods.values("source_type")
+        .annotate(
+            total=Count("id"),
+            published=Count("id", filter=Q(status=CatalogFood.STATUS_PUBLISHED)),
+            solver_enabled=Count("id", filter=Q(solver_enabled=True)),
+            average_quality=Avg("data_quality_score"),
+        )
+        .order_by("-total", "source_type")
+    )
+
+    groups = list(
+        all_foods.exclude(food_group="")
+        .order_by("food_group")
+        .values_list("food_group", flat=True)
+        .distinct()
+    )
+    paginator = Paginator(inventory_qs, page_size)
+    page_obj = paginator.get_page(page)
+
+    return {
+        "query": normalized_query,
+        "status": normalized_status,
+        "source_type": normalized_source,
+        "food_group": normalized_group,
+        "solver_state": normalized_solver,
+        "aggregate": aggregate,
+        "category_coverage": category_coverage,
+        "source_breakdown": source_breakdown,
+        "group_rows": group_rows,
+        "status_options": CatalogFood.STATUS_CHOICES,
+        "source_options": CatalogFood.SOURCE_TYPE_CHOICES,
+        "group_options": groups,
+        "page_obj": page_obj,
+        "filtered_total": paginator.count,
+    }
+
+
+def _catalog_category_coverage(group_rows: list[dict]) -> list[dict]:
+    family_by_alias = {
+        alias.casefold(): key
+        for key, _label, aliases in CATALOG_GROUP_FAMILIES
+        for alias in aliases
+    }
+    totals = {
+        key: {"key": key, "label": label, "total": 0, "published": 0, "solver_enabled": 0}
+        for key, label, _aliases in CATALOG_GROUP_FAMILIES
+    }
+    recognized_total = 0
+
+    for row in group_rows:
+        raw_group = str(row["food_group"] or "").strip()
+        family = family_by_alias.get(raw_group.casefold())
+        if not family:
+            continue
+        recognized_total += int(row["total"] or 0)
+        totals[family]["total"] += int(row["total"] or 0)
+        totals[family]["published"] += int(row["published"] or 0)
+        totals[family]["solver_enabled"] += int(row["solver_enabled"] or 0)
+
+    result = list(totals.values())
+    result.append({
+        "key": "unmapped",
+        "label": "Sin taxonomía estándar",
+        "total": max(sum(int(row["total"] or 0) for row in group_rows) - recognized_total, 0),
+        "published": 0,
+        "solver_enabled": 0,
+    })
+    return result
 
 
 def get_ai_operations_payload(*, query: str = "", limit: int = 25) -> dict:
