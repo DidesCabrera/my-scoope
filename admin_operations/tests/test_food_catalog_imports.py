@@ -1,5 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
+import json
 from django.urls import reverse
 
 from food_catalog.models import CatalogFood, CatalogImportBatch
@@ -114,3 +116,44 @@ class FoodCatalogImportsOperationsTests(TestCase):
         )
         self.assertContains(response, "No se pudo aplicar el seed")
         self.assertEqual(CatalogFood.objects.count(), 0)
+
+    def test_usda_sample_dry_run_then_apply_uses_same_artifact(self):
+        payload = json.dumps([{
+            "fdcId": 991,
+            "description": "Beans cooked sample",
+            "foodNutrients": [
+                {"nutrient": {"number": "203"}, "amount": 8.0},
+                {"nutrient": {"number": "205"}, "amount": 22.0},
+                {"nutrient": {"number": "204"}, "amount": 0.5},
+            ],
+        }]).encode()
+        self.client.force_login(self.staff)
+        common = {
+            "source_version": "2026-04",
+            "source_dataset": "foundation_foods",
+            "limit": "1",
+        }
+        self.client.post(
+            reverse("admin_operations_food_catalog_usda_dry_run"),
+            {**common, "reason": "Validate USDA row.", "file": SimpleUploadedFile("usda.json", payload)},
+        )
+        dry_run = CatalogImportBatch.objects.get(is_dry_run=True)
+
+        self.client.post(
+            reverse("admin_operations_food_catalog_usda_apply"),
+            {
+                **common,
+                "dry_run_batch_id": str(dry_run.pk),
+                "reason": "Apply reviewed USDA row.",
+                "file": SimpleUploadedFile("usda.json", payload),
+            },
+        )
+
+        food = CatalogFood.objects.get()
+        source = CatalogFoodSource.objects.get()
+        apply_batch = CatalogImportBatch.objects.get(is_dry_run=False)
+        self.assertEqual(food.source_type, CatalogFood.SOURCE_USDA)
+        self.assertEqual(source.source_type, CatalogFood.SOURCE_USDA)
+        self.assertEqual(source.import_batch, apply_batch)
+        self.assertEqual(apply_batch.dry_run_batch, dry_run)
+        self.assertFalse(CatalogFood.objects.filter(status=CatalogFood.STATUS_PUBLISHED).exists())

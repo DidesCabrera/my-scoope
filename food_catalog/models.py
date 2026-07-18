@@ -52,6 +52,7 @@ class CatalogFood(models.Model):
     ]
 
     SOURCE_NATURAL_VERIFIED = "natural_verified"
+    SOURCE_USDA = "usda"
     SOURCE_BRAND_SUBMITTED = "brand_submitted"
     SOURCE_USER_CREATED = "user_created"
     SOURCE_EXTERNAL_TEMPORARY = "external_temporary"
@@ -61,6 +62,7 @@ class CatalogFood(models.Model):
 
     SOURCE_TYPE_CHOICES = [
         (SOURCE_NATURAL_VERIFIED, "Natural verified"),
+        (SOURCE_USDA, "USDA FoodData Central"),
         (SOURCE_BRAND_SUBMITTED, "Brand submitted"),
         (SOURCE_USER_CREATED, "User created"),
         (SOURCE_EXTERNAL_TEMPORARY, "External temporary"),

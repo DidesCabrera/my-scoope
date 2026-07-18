@@ -28,6 +28,21 @@
     </article>
   </section>
 
+  <section class="admin-analytics-section-grid admin-operations-observability-grid">
+    <article class="card-detail-block">
+      <div class="card-title-row"><div><p class="section-eyebrow">FCG04 · USDA</p><h3>Dry-run de muestra Foundation Foods</h3><p class="muted-text">Acepta entre 1 y 10 filas reales. Guarda hash, dataset, versión y conteos; no persiste alimentos.</p></div></div>
+      <form method="post" enctype="multipart/form-data" action="{% url 'admin_operations_food_catalog_usda_dry_run' %}" data-admin-operations-confirm>
+        {% csrf_token %}<label><span>JSON USDA</span><input type="file" name="file" accept="application/json" required></label><label><span>Versión</span><input name="source_version" required></label><label><span>Dataset</span><input name="source_dataset" value="foundation_foods" required></label><label><span>Límite</span><input name="limit" type="number" min="1" max="10" required></label><label><span>Razón</span><textarea name="reason" required></textarea></label><button class="btn-secondary" type="submit">Validar USDA</button>
+      </form>
+    </article>
+    <article class="card-detail-block">
+      <div class="card-title-row"><div><p class="section-eyebrow">Apply USDA</p><h3>Reenviar el mismo artefacto</h3><p class="muted-text">El hash, versión, dataset, límite y conteo deben coincidir con el dry-run indicado.</p></div></div>
+      <form method="post" enctype="multipart/form-data" action="{% url 'admin_operations_food_catalog_usda_apply' %}" data-admin-operations-confirm>
+        {% csrf_token %}<label><span>JSON USDA</span><input type="file" name="file" accept="application/json" required></label><label><span>ID dry-run</span><input name="dry_run_batch_id" type="number" min="1" required></label><label><span>Versión</span><input name="source_version" required></label><label><span>Dataset</span><input name="source_dataset" value="foundation_foods" required></label><label><span>Límite</span><input name="limit" type="number" min="1" max="10" required></label><label><span>Razón</span><textarea name="reason" required></textarea></label><button class="btn-secondary" type="submit">Importar USDA</button>
+      </form>
+    </article>
+  </section>
+
   <section class="card-detail-block">
     <div class="card-title-row"><div><p class="section-eyebrow">Guard operacional</p><h3>Dry-run antes de toda mutación</h3><p class="muted-text">Un apply sólo es válido cuando referencia un dry-run completo, vigente y equivalente en fuente, versión, hash, parámetros y número de filas. Los controles mutantes se habilitan fuente por fuente durante FCG03–FCG08.</p></div></div>
     <form class="admin-operations-inventory-filters" method="get">

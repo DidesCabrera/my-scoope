@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
+import json
 from decimal import Decimal
 from urllib.parse import urlencode
 
@@ -61,7 +63,17 @@ from food_catalog.infrastructure.core_natural_foods_seed import (
 )
 from food_catalog.infrastructure.imports.governance import (
     CatalogImportGovernanceError,
+    catalog_import_identity,
     record_catalog_import_dry_run,
+)
+from food_catalog.application.imports.usda.foundation_foods_reader import (
+    FoundationFoodsReaderError,
+    extract_foundation_food_payloads,
+)
+from food_catalog.infrastructure.imports.catalog_import import CATALOG_SOURCE_NAME_USDA
+from food_catalog.infrastructure.imports.usda_catalog_import import (
+    dry_run_usda_catalog_food_payloads,
+    import_usda_catalog_food_payloads,
 )
 from notas.domain.model_modules.proposals import NutritionProposal, NutritionProposalAuditEvent
 from admin_operations.models import AdminOperationAuditEvent
@@ -633,6 +645,110 @@ def perform_core_seed_apply(*, actor, dry_run_batch_id: str, reason: str) -> Adm
         True,
         f"Seed aplicado en batch #{result.batch.pk}: creados={result.created_rows}, actualizados={result.updated_rows}, publicados=0.",
     )
+
+
+def perform_usda_dry_run(
+    *, actor, upload, source_version: str, source_dataset: str, limit: str, reason: str
+) -> AdminOperationResult:
+    try:
+        payloads, identity, normalized_limit = _prepare_usda_upload(
+            upload=upload,
+            source_version=source_version,
+            source_dataset=source_dataset,
+            limit=limit,
+        )
+        result = dry_run_usda_catalog_food_payloads(
+            payloads=payloads,
+            source_version=source_version,
+            source_dataset=source_dataset,
+        )
+        batch = record_catalog_import_dry_run(
+            identity=identity,
+            total_rows=result.total_rows,
+            would_import_rows=result.would_import_rows,
+            skipped_rows=result.skipped_rows,
+            failed_rows=result.failed_rows,
+            requested_by=actor,
+            reason=reason,
+            summary_payload={"reason_counts": result.reason_counts, "limit": normalized_limit},
+        )
+    except (ValueError, TypeError, json.JSONDecodeError, FoundationFoodsReaderError, CatalogImportGovernanceError) as exc:
+        return AdminOperationResult(False, f"No se pudo validar USDA: {exc}")
+
+    record_admin_operation_audit_event(
+        actor=actor,
+        action="food_catalog.usda.dry_run",
+        target=batch,
+        reason=reason,
+        status_after=batch.status,
+        metadata={"total": result.total_rows, "would_import": result.would_import_rows},
+    )
+    return AdminOperationResult(True, f"USDA dry-run #{batch.pk}: importables={result.would_import_rows}/{result.total_rows}.")
+
+
+def perform_usda_apply(
+    *, actor, upload, source_version: str, source_dataset: str, limit: str, dry_run_batch_id: str, reason: str
+) -> AdminOperationResult:
+    try:
+        payloads, identity, _normalized_limit = _prepare_usda_upload(
+            upload=upload,
+            source_version=source_version,
+            source_dataset=source_dataset,
+            limit=limit,
+        )
+        dry_run_batch = CatalogImportBatch.objects.get(pk=int(dry_run_batch_id))
+        result = import_usda_catalog_food_payloads(
+            payloads=payloads,
+            source_version=source_version,
+            source_dataset=source_dataset,
+            identity=identity,
+            dry_run_batch=dry_run_batch,
+            requested_by=actor,
+            reason=reason,
+        )
+    except (
+        ValueError,
+        TypeError,
+        json.JSONDecodeError,
+        FoundationFoodsReaderError,
+        CatalogImportGovernanceError,
+        CatalogImportBatch.DoesNotExist,
+    ) as exc:
+        return AdminOperationResult(False, f"No se pudo importar USDA: {exc}")
+
+    record_admin_operation_audit_event(
+        actor=actor,
+        action="food_catalog.usda.apply",
+        target=result.batch,
+        reason=reason,
+        status_before=f"dry_run={dry_run_batch.pk}",
+        status_after=result.batch.status,
+        metadata={"imported": result.imported_rows, "skipped": result.skipped_rows, "failed": result.failed_rows},
+    )
+    return AdminOperationResult(True, f"USDA batch #{result.batch.pk}: importados={result.imported_rows}, omitidos={result.skipped_rows}.")
+
+
+def _prepare_usda_upload(*, upload, source_version: str, source_dataset: str, limit: str):
+    if upload is None:
+        raise ValueError("Debes adjuntar un JSON USDA.")
+    normalized_version = (source_version or "").strip()
+    if not normalized_version:
+        raise ValueError("La versión USDA es obligatoria.")
+    normalized_dataset = (source_dataset or "foundation_foods").strip()
+    normalized_limit = int(limit)
+    if normalized_limit < 1 or normalized_limit > 10:
+        raise ValueError("La muestra USDA debe contener entre 1 y 10 filas.")
+    raw_bytes = upload.read()
+    decoded = json.loads(raw_bytes.decode("utf-8"))
+    payloads = extract_foundation_food_payloads(decoded)[:normalized_limit]
+    identity = catalog_import_identity(
+        source_type=CatalogFood.SOURCE_USDA,
+        source_name=CATALOG_SOURCE_NAME_USDA,
+        source_version=normalized_version,
+        input_sha256=hashlib.sha256(raw_bytes).hexdigest(),
+        parameters_payload={"source_dataset": normalized_dataset, "limit": normalized_limit},
+    )
+    return payloads, identity, normalized_limit
 
 
 def _catalog_inventory_food_to_vm(catalog_food: CatalogFood) -> AdminOperationsCatalogInventoryFoodVM:

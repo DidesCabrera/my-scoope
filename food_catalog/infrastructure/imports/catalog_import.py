@@ -19,6 +19,7 @@ from food_catalog.application.imports.contracts import ImportedFoodDTO
 from food_catalog.application.imports.normalization import normalize_imported_food
 from food_catalog.application.imports.quality import evaluate_imported_food_quality
 from food_catalog.models import CatalogFood, CatalogFoodSource, CatalogImportBatch
+from food_catalog.infrastructure.imports.governance import CatalogImportIdentity, start_catalog_import_batch
 
 
 CATALOG_SOURCE_NAME_USDA = "USDA FoodData Central"
@@ -148,6 +149,10 @@ def import_catalog_food_batch(
     source_version: str,
     source_type: str = DEFAULT_CATALOG_IMPORT_SOURCE_TYPE,
     notes: str = "",
+    identity: CatalogImportIdentity,
+    dry_run_batch: CatalogImportBatch,
+    requested_by=None,
+    reason: str,
 ) -> CatalogImportResult:
     """Persist valid import DTOs as master catalog candidates.
 
@@ -162,17 +167,15 @@ def import_catalog_food_batch(
         sample_size=0,
     )
 
-    batch = CatalogImportBatch.objects.create(
-        source_type=source_type,
-        source_name=source_name,
-        source_version=source_version,
-        status=CatalogImportBatch.STATUS_RUNNING,
+    batch = start_catalog_import_batch(
+        identity=identity,
+        dry_run_batch=dry_run_batch,
         total_rows=len(food_list),
-        imported_rows=0,
-        skipped_rows=0,
-        failed_rows=failed_rows,
+        requested_by=requested_by,
+        reason=reason,
         notes=notes,
     )
+    batch.failed_rows = failed_rows
 
     imported_rows = 0
     duplicate_rows = 0

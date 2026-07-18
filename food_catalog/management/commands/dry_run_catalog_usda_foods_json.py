@@ -1,4 +1,5 @@
 from pathlib import Path
+import hashlib
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -10,6 +11,11 @@ from food_catalog.infrastructure.imports.catalog_import import CATALOG_SOURCE_NA
 from food_catalog.infrastructure.imports.usda_catalog_import import (
     dry_run_usda_catalog_food_payloads,
 )
+from food_catalog.infrastructure.imports.governance import (
+    catalog_import_identity,
+    record_catalog_import_dry_run,
+)
+from food_catalog.models import CatalogFood
 
 
 class Command(BaseCommand):
@@ -24,6 +30,8 @@ class Command(BaseCommand):
                 "Supports either a direct list or a FoundationFoods root object."
             ),
         )
+        parser.add_argument("--limit", type=int, required=True, help="Initial sample size (1-10).")
+        parser.add_argument("--reason", required=True)
         parser.add_argument(
             "--source-version",
             required=True,
@@ -65,6 +73,9 @@ class Command(BaseCommand):
         except FoundationFoodsReaderError as exc:
             raise CommandError(str(exc)) from exc
 
+        if options["limit"] < 1 or options["limit"] > 10:
+            raise CommandError("FCG04 USDA sample limit must be between 1 and 10.")
+        payloads = payloads[: options["limit"]]
         sample_size = options["sample_size"] if options["show_samples"] else 0
         result = dry_run_usda_catalog_food_payloads(
             payloads=payloads,
@@ -72,6 +83,22 @@ class Command(BaseCommand):
             source_dataset=options["source_dataset"],
             source_name=options["source_name"],
             sample_size=sample_size,
+        )
+        identity = catalog_import_identity(
+            source_type=CatalogFood.SOURCE_USDA,
+            source_name=options["source_name"],
+            source_version=options["source_version"],
+            input_sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
+            parameters_payload={"source_dataset": options["source_dataset"], "limit": options["limit"]},
+        )
+        batch = record_catalog_import_dry_run(
+            identity=identity,
+            total_rows=result.total_rows,
+            would_import_rows=result.would_import_rows,
+            skipped_rows=result.skipped_rows,
+            failed_rows=result.failed_rows,
+            reason=options["reason"],
+            summary_payload={"reason_counts": result.reason_counts, "invalid": result.invalid_rows, "duplicates": result.duplicate_rows},
         )
 
         self.stdout.write(self.style.SUCCESS("Food Catalog USDA dry-run completed."))
@@ -82,6 +109,7 @@ class Command(BaseCommand):
         self.stdout.write(f"failed={result.failed_rows}")
         self.stdout.write(f"would_import={result.would_import_rows}")
         self.stdout.write(f"would_skip={result.skipped_rows}")
+        self.stdout.write(f"dry_run_batch_id={batch.pk}")
 
         if result.reason_counts:
             self.stdout.write("reasons:")

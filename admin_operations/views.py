@@ -18,6 +18,8 @@ from admin_operations.services import (
     perform_catalog_food_operation,
     perform_core_seed_apply,
     perform_core_seed_dry_run,
+    perform_usda_apply,
+    perform_usda_dry_run,
     perform_credit_adjustment,
     perform_ai_proposal_operation,
     perform_ai_quota_operation,
@@ -189,6 +191,37 @@ def food_catalog_core_seed_dry_run(request):
 def food_catalog_core_seed_apply(request):
     result = perform_core_seed_apply(
         actor=request.user,
+        dry_run_batch_id=request.POST.get("dry_run_batch_id", ""),
+        reason=request.POST.get("reason", ""),
+    )
+    flash_operation_result(request, result)
+    return redirect("admin_operations_food_catalog_imports")
+
+
+@staff_member_required
+@require_POST
+def food_catalog_usda_dry_run(request):
+    result = perform_usda_dry_run(
+        actor=request.user,
+        upload=request.FILES.get("file"),
+        source_version=request.POST.get("source_version", ""),
+        source_dataset=request.POST.get("source_dataset", "foundation_foods"),
+        limit=request.POST.get("limit", ""),
+        reason=request.POST.get("reason", ""),
+    )
+    flash_operation_result(request, result)
+    return redirect("admin_operations_food_catalog_imports")
+
+
+@staff_member_required
+@require_POST
+def food_catalog_usda_apply(request):
+    result = perform_usda_apply(
+        actor=request.user,
+        upload=request.FILES.get("file"),
+        source_version=request.POST.get("source_version", ""),
+        source_dataset=request.POST.get("source_dataset", "foundation_foods"),
+        limit=request.POST.get("limit", ""),
         dry_run_batch_id=request.POST.get("dry_run_batch_id", ""),
         reason=request.POST.get("reason", ""),
     )

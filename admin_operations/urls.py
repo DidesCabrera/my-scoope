@@ -16,6 +16,8 @@ from admin_operations.views import (
     food_catalog_imports,
     food_catalog_core_seed_apply,
     food_catalog_core_seed_dry_run,
+    food_catalog_usda_apply,
+    food_catalog_usda_dry_run,
     food_catalog_candidate_action,
     food_catalog_candidate_detail,
     food_catalog_food_action,
@@ -48,6 +50,8 @@ urlpatterns = [
     ),
     path("food-catalog/imports/core-seed/dry-run/", food_catalog_core_seed_dry_run, name="admin_operations_food_catalog_core_seed_dry_run"),
     path("food-catalog/imports/core-seed/apply/", food_catalog_core_seed_apply, name="admin_operations_food_catalog_core_seed_apply"),
+    path("food-catalog/imports/usda/dry-run/", food_catalog_usda_dry_run, name="admin_operations_food_catalog_usda_dry_run"),
+    path("food-catalog/imports/usda/apply/", food_catalog_usda_apply, name="admin_operations_food_catalog_usda_apply"),
     path(
         "food-catalog/candidates/<int:candidate_id>/",
         food_catalog_candidate_detail,

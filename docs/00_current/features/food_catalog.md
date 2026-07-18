@@ -106,8 +106,8 @@ Esto incluye contratos de importación, normalización, validación de calidad y
 Desde Patch 37, Food Catalog cuenta con comandos propios y acciones admin iniciales para importar candidatos maestros sin escribir `notas.Food`:
 
 ```text
-python manage.py dry_run_catalog_usda_foods_json <path> --source-version <version>
-python manage.py import_catalog_usda_foods_json <path> --source-version <version>
+python manage.py dry_run_catalog_usda_foods_json <path> --source-version <version> --limit 5 --reason "Validar muestra USDA"
+python manage.py import_catalog_usda_foods_json <path> --source-version <version> --limit 5 --dry-run-batch-id <id> --reason "Aplicar muestra USDA revisada"
 ```
 
 Estos comandos escriben `CatalogFood`, `CatalogFoodSource` y `CatalogImportBatch`. No materializan alimentos operacionales ni cambian lo que MCP puede ver.
