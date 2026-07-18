@@ -36,7 +36,7 @@ class CoverageManifestTests(TestCase):
                 "vegetable": 87,
             },
         )
-        self.assertEqual(manifest.counts_by_status(), {"defined": 242, "source_mapped": 40})
+        self.assertEqual(manifest.counts_by_status(), {"defined": 209, "source_mapped": 73})
 
     def test_parses_defined_targets_without_materializing_source_or_catalog_ids(self):
         manifest = parse_coverage_manifest_csv(

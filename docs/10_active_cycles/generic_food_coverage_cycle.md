@@ -214,8 +214,8 @@ Operational waves are limited independently from tier size:
 - Enumerate roots and subcategories using inclusion rules.
 - Build the real target list in Spanish with preparation states and tiers.
 - Derive the final target count after normalization and duplicate review.
-- Result: 282 targets (84 tier A, 172 tier B, 26 tier C); 20 are already
-  source-mapped to the governed internal seed and 262 await external mapping.
+- Result: 282 targets (84 tier A, 172 tier B, 26 tier C). The governed internal
+  seed maps 20; 53 additional targets now have explicit USDA SR Legacy mappings.
 
 ### GFC04 · USDA source mapping
 
@@ -237,11 +237,17 @@ Operational waves are limited independently from tier size:
 - Execute local dry-run/apply for 5-10, then up to 25 real generic foods.
 - Review every row and replay idempotently before increasing volume.
 - Do not publish automatically.
+- Local Wave 0 result: dry-run 10/10 valid, apply 10/10, idempotency replay
+  0 importable/10 duplicate, with 0 publications and 0 snapshots.
 
 ### GFC07 · Tier A completion
 
 - Complete source mapping and imports for the enumerated essential tier.
 - Resolve Spanish aliases, portions, preparation states, and category gaps.
+- Mapping gate: all Tier A vegetables and legumes are source-mapped. Fourteen
+  Tier A targets remain deliberately unmapped: three Chilean dairy concepts,
+  one grape specificity, and ten meat/seafood concepts whose Chilean names or
+  cuts cannot be equated safely to a USDA row without additional evidence.
 
 ### GFC08 · Tier B and category breadth
 
