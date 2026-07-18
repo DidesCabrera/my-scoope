@@ -14,6 +14,7 @@ class Command(BaseCommand):
         parser.add_argument("--manifest-version", required=True)
         parser.add_argument("--expected-source", choices=["usda_foundation", "usda_sr_legacy"], required=True)
         parser.add_argument("--limit", type=int, required=True)
+        parser.add_argument("--offset", type=int, default=0)
         parser.add_argument("--reason", required=True)
 
     def handle(self, *args, **options):
@@ -25,6 +26,7 @@ class Command(BaseCommand):
                 manifest_path=options["manifest_path"],
                 manifest_version=options["manifest_version"],
                 expected_source=options["expected_source"],
+                offset=options["offset"],
                 limit=options["limit"],
             )
             result = dry_run_catalog_food_import(

@@ -29,6 +29,7 @@ class USDAManifestSelectionTests(SimpleTestCase):
             manifest=self.manifest,
             payloads=[payload],
             expected_source="usda_sr_legacy",
+            offset=0,
             limit=1,
         )
 
@@ -43,5 +44,6 @@ class USDAManifestSelectionTests(SimpleTestCase):
                 manifest=self.manifest,
                 payloads=[],
                 expected_source="usda_sr_legacy",
+                offset=0,
                 limit=1,
             )

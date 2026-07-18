@@ -43,6 +43,7 @@ class USDAManifestCommandTests(TestCase):
             "--manifest-version", "gfc.v1",
             "--expected-source", "usda_sr_legacy",
             "--limit", "1",
+            "--offset", "0",
         ]
         call_command("dry_run_catalog_usda_manifest", *common, reason="Validate official sample.")
         dry_run = CatalogImportBatch.objects.get(is_dry_run=True)

@@ -25,6 +25,7 @@ def select_usda_manifest_foods(
     manifest: CoverageManifest,
     payloads: Iterable[dict],
     expected_source: str,
+    offset: int = 0,
     limit: int | None = None,
 ) -> USDAManifestSelection:
     """Map source-controlled FDC IDs to official payloads without persistence."""
@@ -33,12 +34,15 @@ def select_usda_manifest_foods(
         raise USDAManifestSelectionError(f"Unsupported USDA manifest source: {expected_source}")
     if limit is not None and limit < 1:
         raise USDAManifestSelectionError("Selection limit must be positive.")
+    if offset < 0:
+        raise USDAManifestSelectionError("Selection offset cannot be negative.")
 
     mapped_targets = [
         target
         for target in manifest.targets
         if target.expected_source == expected_source and target.mapping_status == "mapped"
     ]
+    mapped_targets = mapped_targets[offset:]
     if limit is not None:
         mapped_targets = mapped_targets[:limit]
 

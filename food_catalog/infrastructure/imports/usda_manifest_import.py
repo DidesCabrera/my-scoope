@@ -32,6 +32,7 @@ def prepare_usda_manifest_import(
     manifest_path: str | Path,
     manifest_version: str,
     expected_source: str,
+    offset: int,
     limit: int,
     source_name: str = CATALOG_SOURCE_NAME_USDA,
 ) -> PreparedUSDAManifestImport:
@@ -42,6 +43,7 @@ def prepare_usda_manifest_import(
         manifest=manifest,
         payloads=payloads,
         expected_source=expected_source,
+        offset=offset,
         limit=limit,
     )
     if not selection.targets:
@@ -62,6 +64,7 @@ def prepare_usda_manifest_import(
             "expected_source": expected_source,
             "source_dataset": next(iter(source_datasets)),
             "limit": limit,
+            "offset": offset,
             "target_keys": [target.target_key for target in selection.targets],
         },
     )
