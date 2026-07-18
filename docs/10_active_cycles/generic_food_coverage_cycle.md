@@ -1,6 +1,6 @@
 # GFC00-GFC10 · Generic Food Coverage
 
-Status: active
+Status: completed locally; staging execution pending
 Date: 2026-07-17
 Target branch: `feature/generic-food-coverage`
 Baseline: `09cb4f9` on top of local `staging`
@@ -253,18 +253,28 @@ Operational waves are limited independently from tier size:
 
 - Expand by category using governed batches and quality gates.
 - Hold ambiguous mappings for manual evidence instead of guessing.
+- Local result: 189 USDA targets imported through governed blocks, plus 20
+  in-scope internal-seed targets. The local catalog contains 219 foods in total
+  because 10 seed foods belong to categories outside this manifest.
 
 ### GFC09 · Discovery and manual gap closure
 
 - Formalize useful out-of-manifest discovery intake.
 - Add Chile-relevant gaps with independent evidence and manifest versioning.
 - Demonstrate that discovery can expand the target count without bypassing review.
+- Closure classification: 22 Chile-specific targets require independent manual
+  evidence and 51 targets remain deferred because USDA does not provide one
+  unambiguous match for the requested species, preparation, cut, or form.
 
 ### GFC10 · Closure and operational handoff
 
 - Reconcile manifest, catalog, publications, and snapshots.
 - Run full CI and architecture/privacy/publication regressions.
 - Publish metrics, unresolved gaps, next manifest version rules, and staging runbook.
+- Local closure: 282/282 targets have a decision; 209 are source-mapped and
+  imported, 73 are explicitly deferred with reasons. There are 0 automatic
+  publications, 0 snapshots, 0 operational foods, 0 failed applies, and 0 applies
+  without a correlated dry-run.
 
 ## Go/no-go rules
 

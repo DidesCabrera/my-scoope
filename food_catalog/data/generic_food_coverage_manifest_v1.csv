@@ -3,7 +3,7 @@ vegetable-espinaca-cruda,Espinaca cruda,vegetable,leafy,raw,A,essential,internal
 vegetable-espinaca-cocida,Espinaca cocida,vegetable,leafy,cooked,B,common,usda_sr_legacy,168463,sr_legacy,2018-04,mapped,,source_mapped,,
 vegetable-acelga-cruda,Acelga cruda,vegetable,leafy,raw,A,essential,usda_sr_legacy,169991,sr_legacy,2018-04,mapped,,source_mapped,,
 vegetable-acelga-cocida,Acelga cocida,vegetable,leafy,cooked,B,common,usda_sr_legacy,170401,sr_legacy,2018-04,mapped,,source_mapped,,
-vegetable-lechuga-escarola-cruda,Lechuga escarola cruda,vegetable,leafy,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
+vegetable-lechuga-escarola-cruda,Lechuga escarola cruda,vegetable,leafy,raw,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 vegetable-lechuga-costina-cruda,Lechuga costina cruda,vegetable,leafy,raw,B,common,usda_sr_legacy,169247,sr_legacy,2018-04,mapped,,source_mapped,,
 vegetable-lechuga-francesa-cruda,Lechuga francesa cruda,vegetable,leafy,raw,B,common,usda_sr_legacy,168429,sr_legacy,2018-04,mapped,,source_mapped,,
 vegetable-lechuga-hoja-roja-cruda,Lechuga hoja roja cruda,vegetable,leafy,raw,B,common,usda_sr_legacy,168431,sr_legacy,2018-04,mapped,,source_mapped,,
@@ -17,7 +17,7 @@ vegetable-brocoli-cocido,Brócoli cocido,vegetable,cruciferous,cooked,A,essentia
 vegetable-coliflor-cruda,Coliflor cruda,vegetable,cruciferous,raw,A,essential,usda_sr_legacy,169986,sr_legacy,2018-04,mapped,,source_mapped,,
 vegetable-coliflor-cocida,Coliflor cocida,vegetable,cruciferous,cooked,B,common,usda_sr_legacy,170397,sr_legacy,2018-04,mapped,,source_mapped,,
 vegetable-repollo-blanco-crudo,Repollo blanco crudo,vegetable,cruciferous,raw,A,essential,usda_sr_legacy,169975,sr_legacy,2018-04,mapped,,source_mapped,,
-vegetable-repollo-blanco-cocido,Repollo blanco cocido,vegetable,cruciferous,cooked,B,common,usda_sr_legacy,,,,candidate,,defined,,
+vegetable-repollo-blanco-cocido,Repollo blanco cocido,vegetable,cruciferous,cooked,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 vegetable-repollo-morado-crudo,Repollo morado crudo,vegetable,cruciferous,raw,B,common,usda_sr_legacy,169977,sr_legacy,2018-04,mapped,,source_mapped,,
 vegetable-repollo-morado-cocido,Repollo morado cocido,vegetable,cruciferous,cooked,B,common,usda_sr_legacy,169978,sr_legacy,2018-04,mapped,,source_mapped,,
 vegetable-repollo-de-bruselas-crudo,Repollo de Bruselas crudo,vegetable,cruciferous,raw,B,common,usda_sr_legacy,170383,sr_legacy,2018-04,mapped,,source_mapped,,
@@ -41,12 +41,12 @@ vegetable-papa-horneada-con-piel,Papa horneada con piel,vegetable,tubers,cooked,
 vegetable-camote-crudo,Camote crudo,vegetable,tubers,raw,B,common,usda_sr_legacy,168482,sr_legacy,2018-04,mapped,,source_mapped,,
 vegetable-camote-cocido,Camote cocido,vegetable,tubers,cooked,A,essential,internal_seed,core-sweet-potato-cooked,core_natural_foods_es_cl,v1,mapped,,source_mapped,,
 vegetable-yuca-cruda,Yuca cruda,vegetable,tubers,raw,B,common,usda_sr_legacy,169985,sr_legacy,2018-04,mapped,,source_mapped,,
-vegetable-yuca-cocida,Yuca cocida,vegetable,tubers,cooked,B,common,usda_sr_legacy,,,,candidate,,defined,,
+vegetable-yuca-cocida,Yuca cocida,vegetable,tubers,cooked,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 vegetable-name-cocido,Ñame cocido,vegetable,tubers,cooked,C,specialized,usda_sr_legacy,170072,sr_legacy,2018-04,mapped,,source_mapped,,
 vegetable-taro-cocido,Taro cocido,vegetable,tubers,cooked,C,specialized,usda_sr_legacy,168486,sr_legacy,2018-04,mapped,,source_mapped,,
 vegetable-cebolla-cruda,Cebolla cruda,vegetable,bulbs,raw,A,essential,usda_sr_legacy,170000,sr_legacy,2018-04,mapped,,source_mapped,,
 vegetable-cebolla-cocida,Cebolla cocida,vegetable,bulbs,cooked,B,common,usda_sr_legacy,170001,sr_legacy,2018-04,mapped,,source_mapped,,
-vegetable-cebolla-morada-cruda,Cebolla morada cruda,vegetable,bulbs,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
+vegetable-cebolla-morada-cruda,Cebolla morada cruda,vegetable,bulbs,raw,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 vegetable-cebollin-crudo,Cebollín crudo,vegetable,bulbs,raw,B,common,usda_sr_legacy,170005,sr_legacy,2018-04,mapped,,source_mapped,,
 vegetable-puerro-crudo,Puerro crudo,vegetable,bulbs,raw,B,common,usda_sr_legacy,169246,sr_legacy,2018-04,mapped,,source_mapped,,
 vegetable-puerro-cocido,Puerro cocido,vegetable,bulbs,cooked,B,common,usda_sr_legacy,168426,sr_legacy,2018-04,mapped,,source_mapped,,
@@ -78,14 +78,14 @@ vegetable-okra-cruda,Okra cruda,vegetable,fruit_vegetables,raw,C,specialized,usd
 vegetable-champinon-blanco-crudo,Champiñón blanco crudo,vegetable,mushrooms,raw,A,essential,usda_sr_legacy,169251,sr_legacy,2018-04,mapped,,source_mapped,,
 vegetable-champinon-blanco-cocido,Champiñón blanco cocido,vegetable,mushrooms,cooked,B,common,usda_sr_legacy,169252,sr_legacy,2018-04,mapped,,source_mapped,,
 vegetable-champinon-crimini-crudo,Champiñón crimini crudo,vegetable,mushrooms,raw,B,common,usda_sr_legacy,168434,sr_legacy,2018-04,mapped,,source_mapped,,
-vegetable-champinon-portobello-cocido,Champiñón portobello cocido,vegetable,mushrooms,cooked,B,common,usda_sr_legacy,,,,candidate,,defined,,
+vegetable-champinon-portobello-cocido,Champiñón portobello cocido,vegetable,mushrooms,cooked,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 vegetable-hongo-shiitake-crudo,Hongo shiitake crudo,vegetable,mushrooms,raw,B,common,usda_sr_legacy,169242,sr_legacy,2018-04,mapped,,source_mapped,,
 vegetable-hongo-shiitake-seco,Hongo shiitake seco,vegetable,mushrooms,dry,B,common,usda_sr_legacy,168436,sr_legacy,2018-04,mapped,,source_mapped,,
 vegetable-hongo-ostra-crudo,Hongo ostra crudo,vegetable,mushrooms,raw,B,common,usda_sr_legacy,168580,sr_legacy,2018-04,mapped,,source_mapped,,
 vegetable-hongo-morchella-crudo,Hongo morchella crudo,vegetable,mushrooms,raw,C,specialized,usda_sr_legacy,168423,sr_legacy,2018-04,mapped,,source_mapped,,
-vegetable-alga-nori-seca,Alga nori seca,vegetable,sea_vegetables,dry,B,common,usda_sr_legacy,,,,candidate,,defined,,
+vegetable-alga-nori-seca,Alga nori seca,vegetable,sea_vegetables,dry,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 vegetable-alga-kelp-cruda,Alga kelp cruda,vegetable,sea_vegetables,raw,C,specialized,usda_sr_legacy,168457,sr_legacy,2018-04,mapped,,source_mapped,,
-vegetable-alga-wakame-seca,Alga wakame seca,vegetable,sea_vegetables,dry,C,specialized,usda_sr_legacy,,,,candidate,,defined,,
+vegetable-alga-wakame-seca,Alga wakame seca,vegetable,sea_vegetables,dry,C,specialized,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 fruit-manzana,Manzana,fruit,pome,ready_to_eat,A,essential,internal_seed,core-apple,core_natural_foods_es_cl,v1,mapped,,source_mapped,,
 fruit-manzana-con-piel-cruda,Manzana con piel cruda,fruit,pome,raw,B,common,usda_sr_legacy,171688,sr_legacy,2018-04,mapped,,source_mapped,,
 fruit-pera-cruda,Pera cruda,fruit,pome,raw,A,essential,usda_sr_legacy,169118,sr_legacy,2018-04,mapped,,source_mapped,,
@@ -98,15 +98,15 @@ fruit-papaya-cruda,Papaya cruda,fruit,tropical,raw,B,common,usda_sr_legacy,16992
 fruit-guayaba-cruda,Guayaba cruda,fruit,tropical,raw,B,common,usda_sr_legacy,173044,sr_legacy,2018-04,mapped,,source_mapped,,
 fruit-maracuya-cruda,Maracuyá cruda,fruit,tropical,raw,B,common,usda_sr_legacy,169108,sr_legacy,2018-04,mapped,,source_mapped,,
 fruit-kiwi-verde-crudo,Kiwi verde crudo,fruit,tropical,raw,A,essential,usda_sr_legacy,168153,sr_legacy,2018-04,mapped,,source_mapped,,
-fruit-kiwi-amarillo-crudo,Kiwi amarillo crudo,fruit,tropical,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
+fruit-kiwi-amarillo-crudo,Kiwi amarillo crudo,fruit,tropical,raw,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 fruit-granada-cruda,Granada cruda,fruit,tropical,raw,B,common,usda_sr_legacy,169134,sr_legacy,2018-04,mapped,,source_mapped,,
 fruit-caqui-crudo,Caqui crudo,fruit,tropical,raw,B,common,usda_sr_legacy,169941,sr_legacy,2018-04,mapped,,source_mapped,,
-fruit-coco-fresco,Coco fresco,fruit,tropical,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
+fruit-coco-fresco,Coco fresco,fruit,tropical,raw,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 fruit-higo-fresco,Higo fresco,fruit,tropical,raw,B,common,usda_sr_legacy,173021,sr_legacy,2018-04,mapped,,source_mapped,,
 fruit-chirimoya-cruda,Chirimoya cruda,fruit,tropical,raw,B,common,usda_sr_legacy,173953,sr_legacy,2018-04,mapped,,source_mapped,,
-fruit-lucuma-cruda,Lúcuma cruda,fruit,tropical,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
+fruit-lucuma-cruda,Lúcuma cruda,fruit,tropical,raw,B,common,manual_evidence,,,,blocked,,deferred,,Requiere evidencia nutricional chilena independiente; no existe equivalencia USDA segura.
 fruit-carambola-cruda,Carambola cruda,fruit,tropical,raw,C,specialized,usda_sr_legacy,171715,sr_legacy,2018-04,mapped,,source_mapped,,
-fruit-pitahaya-cruda,Pitahaya cruda,fruit,tropical,raw,C,specialized,usda_sr_legacy,,,,candidate,,defined,,
+fruit-pitahaya-cruda,Pitahaya cruda,fruit,tropical,raw,C,specialized,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 fruit-naranja-cruda,Naranja cruda,fruit,citrus,raw,A,essential,usda_sr_legacy,169097,sr_legacy,2018-04,mapped,,source_mapped,,
 fruit-mandarina-cruda,Mandarina cruda,fruit,citrus,raw,A,essential,usda_sr_legacy,169105,sr_legacy,2018-04,mapped,,source_mapped,,
 fruit-clementina-cruda,Clementina cruda,fruit,citrus,raw,B,common,usda_sr_legacy,168195,sr_legacy,2018-04,mapped,,source_mapped,,
@@ -118,23 +118,23 @@ fruit-arandanos,Arándanos,fruit,berries,ready_to_eat,A,essential,internal_seed,
 fruit-frambuesa-cruda,Frambuesa cruda,fruit,berries,raw,A,essential,usda_sr_legacy,167755,sr_legacy,2018-04,mapped,,source_mapped,,
 fruit-mora-cruda,Mora cruda,fruit,berries,raw,A,essential,usda_sr_legacy,173946,sr_legacy,2018-04,mapped,,source_mapped,,
 fruit-grosella-roja-cruda,Grosella roja cruda,fruit,berries,raw,B,common,usda_sr_legacy,173964,sr_legacy,2018-04,mapped,,source_mapped,,
-fruit-grosella-negra-cruda,Grosella negra cruda,fruit,berries,raw,C,specialized,usda_sr_legacy,,,,candidate,,defined,,
+fruit-grosella-negra-cruda,Grosella negra cruda,fruit,berries,raw,C,specialized,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 fruit-cranberry-crudo,Cranberry crudo,fruit,berries,raw,C,specialized,usda_sr_legacy,171722,sr_legacy,2018-04,mapped,,source_mapped,,
-fruit-maqui-fresco,Maqui fresco,fruit,berries,raw,C,specialized,usda_sr_legacy,,,,candidate,,defined,,
-fruit-murta-fresca,Murta fresca,fruit,berries,raw,C,specialized,usda_sr_legacy,,,,candidate,,defined,,
+fruit-maqui-fresco,Maqui fresco,fruit,berries,raw,C,specialized,manual_evidence,,,,blocked,,deferred,,Requiere evidencia nutricional chilena independiente; no existe equivalencia USDA segura.
+fruit-murta-fresca,Murta fresca,fruit,berries,raw,C,specialized,manual_evidence,,,,blocked,,deferred,,Requiere evidencia nutricional chilena independiente; no existe equivalencia USDA segura.
 fruit-durazno-crudo,Durazno crudo,fruit,stone,raw,A,essential,usda_sr_legacy,169928,sr_legacy,2018-04,mapped,,source_mapped,,
 fruit-nectarina-cruda,Nectarina cruda,fruit,stone,raw,B,common,usda_sr_legacy,169914,sr_legacy,2018-04,mapped,,source_mapped,,
 fruit-ciruela-cruda,Ciruela cruda,fruit,stone,raw,A,essential,usda_sr_legacy,169949,sr_legacy,2018-04,mapped,,source_mapped,,
 fruit-damasco-crudo,Damasco crudo,fruit,stone,raw,B,common,usda_sr_legacy,171697,sr_legacy,2018-04,mapped,,source_mapped,,
 fruit-cereza-cruda,Cereza cruda,fruit,stone,raw,A,essential,usda_sr_legacy,171719,sr_legacy,2018-04,mapped,,source_mapped,,
 fruit-guinda-cruda,Guinda cruda,fruit,stone,raw,B,common,usda_sr_legacy,173954,sr_legacy,2018-04,mapped,,source_mapped,,
-fruit-aceituna-madura,Aceituna madura,fruit,stone,ready_to_eat,B,common,usda_sr_legacy,,,,candidate,,defined,,
-fruit-uva-roja-cruda,Uva roja cruda,fruit,grapes,raw,A,essential,usda_sr_legacy,,,,candidate,,defined,,
-fruit-uva-verde-cruda,Uva verde cruda,fruit,grapes,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
+fruit-aceituna-madura,Aceituna madura,fruit,stone,ready_to_eat,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
+fruit-uva-roja-cruda,Uva roja cruda,fruit,grapes,raw,A,essential,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
+fruit-uva-verde-cruda,Uva verde cruda,fruit,grapes,raw,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 fruit-sandia-cruda,Sandía cruda,fruit,melons,raw,A,essential,usda_sr_legacy,167765,sr_legacy,2018-04,mapped,,source_mapped,,
 fruit-melon-calameno-crudo,Melón calameño crudo,fruit,melons,raw,A,essential,usda_sr_legacy,169092,sr_legacy,2018-04,mapped,,source_mapped,,
 fruit-melon-tuna-crudo,Melón tuna crudo,fruit,melons,raw,B,common,usda_sr_legacy,169911,sr_legacy,2018-04,mapped,,source_mapped,,
-fruit-pasas,Pasas,fruit,dried,dry,B,common,usda_sr_legacy,,,,candidate,,defined,,
+fruit-pasas,Pasas,fruit,dried,dry,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 fruit-ciruela-seca,Ciruela seca,fruit,dried,dry,B,common,usda_sr_legacy,168162,sr_legacy,2018-04,mapped,,source_mapped,,
 fruit-damasco-seco,Damasco seco,fruit,dried,dry,B,common,usda_sr_legacy,173941,sr_legacy,2018-04,mapped,,source_mapped,,
 fruit-higo-seco,Higo seco,fruit,dried,dry,B,common,usda_sr_legacy,174665,sr_legacy,2018-04,mapped,,source_mapped,,
@@ -142,7 +142,7 @@ fruit-datil-seco,Dátil seco,fruit,dried,dry,B,common,usda_sr_legacy,168191,sr_l
 legume-lentejas-secas,Lentejas secas,legume,lentils,dry,A,essential,usda_sr_legacy,172420,sr_legacy,2018-04,mapped,,source_mapped,,
 legume-lentejas-cocidas,Lentejas cocidas,legume,lentils,cooked,A,essential,internal_seed,core-lentils-cooked,core_natural_foods_es_cl,v1,mapped,,source_mapped,,
 legume-lenteja-roja-seca,Lenteja roja seca,legume,lentils,dry,B,common,usda_sr_legacy,174284,sr_legacy,2018-04,mapped,,source_mapped,,
-legume-lenteja-roja-cocida,Lenteja roja cocida,legume,lentils,cooked,B,common,usda_sr_legacy,,,,candidate,,defined,,
+legume-lenteja-roja-cocida,Lenteja roja cocida,legume,lentils,cooked,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 legume-garbanzos-secos,Garbanzos secos,legume,chickpeas,dry,A,essential,usda_sr_legacy,173756,sr_legacy,2018-04,mapped,,source_mapped,,
 legume-garbanzos-cocidos,Garbanzos cocidos,legume,chickpeas,cooked,A,essential,internal_seed,core-chickpeas-cooked,core_natural_foods_es_cl,v1,mapped,,source_mapped,,
 legume-porotos-negros-secos,Porotos negros secos,legume,beans,dry,B,common,usda_sr_legacy,173734,sr_legacy,2018-04,mapped,,source_mapped,,
@@ -159,16 +159,16 @@ legume-porotos-adzuki-secos,Porotos adzuki secos,legume,beans,dry,C,specialized,
 legume-porotos-adzuki-cocidos,Porotos adzuki cocidos,legume,beans,cooked,C,specialized,usda_sr_legacy,173728,sr_legacy,2018-04,mapped,,source_mapped,,
 legume-porotos-mung-secos,Porotos mung secos,legume,beans,dry,B,common,usda_sr_legacy,174256,sr_legacy,2018-04,mapped,,source_mapped,,
 legume-porotos-mung-cocidos,Porotos mung cocidos,legume,beans,cooked,B,common,usda_sr_legacy,174257,sr_legacy,2018-04,mapped,,source_mapped,,
-legume-arvejas-partidas-secas,Arvejas partidas secas,legume,peas,dry,B,common,usda_sr_legacy,,,,candidate,,defined,,
+legume-arvejas-partidas-secas,Arvejas partidas secas,legume,peas,dry,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 legume-arvejas-partidas-cocidas,Arvejas partidas cocidas,legume,peas,cooked,B,common,usda_sr_legacy,172429,sr_legacy,2018-04,mapped,,source_mapped,,
-legume-arvejas-verdes-crudas,Arvejas verdes crudas,legume,peas,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
+legume-arvejas-verdes-crudas,Arvejas verdes crudas,legume,peas,raw,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 legume-arvejas-verdes-cocidas,Arvejas verdes cocidas,legume,peas,cooked,A,essential,usda_sr_legacy,170420,sr_legacy,2018-04,mapped,,source_mapped,,
 legume-arvejas-de-ojo-negro-secas,Arvejas de ojo negro secas,legume,peas,dry,B,common,usda_sr_legacy,173758,sr_legacy,2018-04,mapped,,source_mapped,,
 legume-arvejas-de-ojo-negro-cocidas,Arvejas de ojo negro cocidas,legume,peas,cooked,B,common,usda_sr_legacy,173759,sr_legacy,2018-04,mapped,,source_mapped,,
 legume-soya-seca,Soya seca,legume,soy,dry,B,common,usda_sr_legacy,174270,sr_legacy,2018-04,mapped,,source_mapped,,
 legume-soya-cocida,Soya cocida,legume,soy,cooked,B,common,usda_sr_legacy,174271,sr_legacy,2018-04,mapped,,source_mapped,,
-legume-edamame-cocido,Edamame cocido,legume,soy,cooked,B,common,usda_sr_legacy,,,,candidate,,defined,,
-legume-brotes-de-soya-crudos,Brotes de soya crudos,legume,soy,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
+legume-edamame-cocido,Edamame cocido,legume,soy,cooked,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
+legume-brotes-de-soya-crudos,Brotes de soya crudos,legume,soy,raw,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 legume-tofu-firme,Tofu firme,legume,soy,ready_to_eat,B,common,usda_sr_legacy,172448,sr_legacy,2018-04,mapped,,source_mapped,,
 legume-tofu-blando,Tofu blando,legume,soy,ready_to_eat,B,common,usda_sr_legacy,172449,sr_legacy,2018-04,mapped,,source_mapped,,
 legume-tempeh-cocido,Tempeh cocido,legume,soy,cooked,B,common,usda_sr_legacy,172467,sr_legacy,2018-04,mapped,,source_mapped,,
@@ -178,20 +178,20 @@ legume-lupino-cocido,Lupino cocido,legume,lupin,cooked,C,specialized,usda_sr_leg
 dairy-leche-entera,Leche entera,dairy,milk,ready_to_eat,A,essential,usda_sr_legacy,172217,sr_legacy,2018-04,mapped,,source_mapped,,
 dairy-leche-semidescremada,Leche semidescremada,dairy,milk,ready_to_eat,A,essential,usda_sr_legacy,172205,sr_legacy,2018-04,mapped,,source_mapped,,
 dairy-leche-descremada,Leche descremada,dairy,milk,ready_to_eat,A,essential,internal_seed,core-milk-skim,core_natural_foods_es_cl,v1,mapped,,source_mapped,,
-dairy-leche-entera-en-polvo,Leche entera en polvo,dairy,milk,dry,B,common,usda_sr_legacy,,,,candidate,,defined,,
-dairy-leche-descremada-en-polvo,Leche descremada en polvo,dairy,milk,dry,B,common,usda_sr_legacy,,,,candidate,,defined,,
-dairy-leche-evaporada-entera,Leche evaporada entera,dairy,milk,ready_to_eat,B,common,usda_sr_legacy,,,,candidate,,defined,,
+dairy-leche-entera-en-polvo,Leche entera en polvo,dairy,milk,dry,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
+dairy-leche-descremada-en-polvo,Leche descremada en polvo,dairy,milk,dry,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
+dairy-leche-evaporada-entera,Leche evaporada entera,dairy,milk,ready_to_eat,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 dairy-yogur-natural-entero-sin-azucar,Yogur natural entero sin azúcar,dairy,yogurt,ready_to_eat,A,essential,usda_sr_legacy,171284,sr_legacy,2018-04,mapped,,source_mapped,,
 dairy-yogur-natural-descremado-sin-azucar,Yogur natural descremado sin azúcar,dairy,yogurt,ready_to_eat,B,common,usda_sr_legacy,170887,sr_legacy,2018-04,mapped,,source_mapped,,
 dairy-yogur-griego-natural-sin-azucar,Yogur griego natural sin azúcar,dairy,yogurt,ready_to_eat,A,essential,internal_seed,core-greek-yogurt-plain,core_natural_foods_es_cl,v1,mapped,,source_mapped,,
-dairy-kefir-natural,Kéfir natural,dairy,fermented,ready_to_eat,B,common,usda_sr_legacy,,,,candidate,,defined,,
-dairy-leche-cultivada-natural,Leche cultivada natural,dairy,fermented,ready_to_eat,B,common,usda_sr_legacy,,,,candidate,,defined,,
-dairy-quesillo,Quesillo,dairy,fresh_cheese,ready_to_eat,A,essential,usda_sr_legacy,,,,candidate,,defined,,
-dairy-queso-fresco,Queso fresco,dairy,fresh_cheese,ready_to_eat,A,essential,usda_sr_legacy,,,,candidate,,defined,,
+dairy-kefir-natural,Kéfir natural,dairy,fermented,ready_to_eat,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
+dairy-leche-cultivada-natural,Leche cultivada natural,dairy,fermented,ready_to_eat,B,common,manual_evidence,,,,blocked,,deferred,,Requiere evidencia nutricional chilena independiente; no existe equivalencia USDA segura.
+dairy-quesillo,Quesillo,dairy,fresh_cheese,ready_to_eat,A,essential,manual_evidence,,,,blocked,,deferred,,Requiere evidencia nutricional chilena independiente; no existe equivalencia USDA segura.
+dairy-queso-fresco,Queso fresco,dairy,fresh_cheese,ready_to_eat,A,essential,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 dairy-ricotta-entera,Ricotta entera,dairy,fresh_cheese,ready_to_eat,B,common,usda_sr_legacy,170851,sr_legacy,2018-04,mapped,,source_mapped,,
 dairy-requeson-bajo-en-grasa,Requesón bajo en grasa,dairy,fresh_cheese,ready_to_eat,B,common,usda_sr_legacy,173417,sr_legacy,2018-04,mapped,,source_mapped,,
 dairy-mozzarella-fresca,Mozzarella fresca,dairy,fresh_cheese,ready_to_eat,B,common,usda_sr_legacy,170845,sr_legacy,2018-04,mapped,,source_mapped,,
-dairy-queso-chanco,Queso chanco,dairy,aged_cheese,ready_to_eat,A,essential,usda_sr_legacy,,,,candidate,,defined,,
+dairy-queso-chanco,Queso chanco,dairy,aged_cheese,ready_to_eat,A,essential,manual_evidence,,,,blocked,,deferred,,Requiere evidencia nutricional chilena independiente; no existe equivalencia USDA segura.
 dairy-queso-gauda,Queso gauda,dairy,aged_cheese,ready_to_eat,A,essential,usda_sr_legacy,171241,sr_legacy,2018-04,mapped,,source_mapped,,
 dairy-queso-cheddar,Queso cheddar,dairy,aged_cheese,ready_to_eat,B,common,usda_sr_legacy,173414,sr_legacy,2018-04,mapped,,source_mapped,,
 dairy-queso-parmesano,Queso parmesano,dairy,aged_cheese,ready_to_eat,B,common,usda_sr_legacy,170848,sr_legacy,2018-04,mapped,,source_mapped,,
@@ -202,82 +202,82 @@ dairy-mantequilla-sin-sal,Mantequilla sin sal,dairy,butter,ready_to_eat,A,essent
 dairy-mantequilla-con-sal,Mantequilla con sal,dairy,butter,ready_to_eat,B,common,usda_sr_legacy,173410,sr_legacy,2018-04,mapped,,source_mapped,,
 dairy-crema-de-leche,Crema de leche,dairy,cream,ready_to_eat,B,common,usda_sr_legacy,170859,sr_legacy,2018-04,mapped,,source_mapped,,
 dairy-crema-acida,Crema ácida,dairy,cream,ready_to_eat,B,common,usda_sr_legacy,171257,sr_legacy,2018-04,mapped,,source_mapped,,
-dairy-suero-de-leche-liquido,Suero de leche líquido,dairy,whey,ready_to_eat,C,specialized,usda_sr_legacy,,,,candidate,,defined,,
-dairy-proteina-de-suero-sin-sabor,Proteína de suero sin sabor,dairy,whey,dry,C,specialized,usda_sr_legacy,,,,candidate,,defined,,
+dairy-suero-de-leche-liquido,Suero de leche líquido,dairy,whey,ready_to_eat,C,specialized,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
+dairy-proteina-de-suero-sin-sabor,Proteína de suero sin sabor,dairy,whey,dry,C,specialized,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 meat-seafood-pechuga-de-pollo-cruda-sin-piel,Pechuga de pollo cruda sin piel,meat_seafood,poultry,raw,A,essential,usda_sr_legacy,171077,sr_legacy,2018-04,mapped,,source_mapped,,
 meat-seafood-pechuga-de-pollo-cocida,Pechuga de pollo cocida,meat_seafood,poultry,cooked,A,essential,internal_seed,core-chicken-breast-cooked,core_natural_foods_es_cl,v1,mapped,,source_mapped,,
 meat-seafood-trutro-de-pollo-crudo-con-piel,Trutro de pollo crudo con piel,meat_seafood,poultry,raw,A,essential,usda_sr_legacy,172385,sr_legacy,2018-04,mapped,,source_mapped,,
 meat-seafood-trutro-de-pollo-cocido-con-piel,Trutro de pollo cocido con piel,meat_seafood,poultry,cooked,B,common,usda_sr_legacy,173626,sr_legacy,2018-04,mapped,,source_mapped,,
-meat-seafood-trutro-de-pollo-crudo-sin-piel,Trutro de pollo crudo sin piel,meat_seafood,poultry,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
+meat-seafood-trutro-de-pollo-crudo-sin-piel,Trutro de pollo crudo sin piel,meat_seafood,poultry,raw,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 meat-seafood-ala-de-pollo-cruda-con-piel,Ala de pollo cruda con piel,meat_seafood,poultry,raw,B,common,usda_sr_legacy,172390,sr_legacy,2018-04,mapped,,source_mapped,,
 meat-seafood-pollo-entero-crudo-con-piel,Pollo entero crudo con piel,meat_seafood,poultry,raw,B,common,usda_sr_legacy,171447,sr_legacy,2018-04,mapped,,source_mapped,,
 meat-seafood-pollo-molido-crudo,Pollo molido crudo,meat_seafood,poultry,raw,B,common,usda_sr_legacy,171116,sr_legacy,2018-04,mapped,,source_mapped,,
-meat-seafood-pechuga-de-pavo-cruda-sin-piel,Pechuga de pavo cruda sin piel,meat_seafood,poultry,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
+meat-seafood-pechuga-de-pavo-cruda-sin-piel,Pechuga de pavo cruda sin piel,meat_seafood,poultry,raw,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 meat-seafood-pechuga-de-pavo-cocida,Pechuga de pavo cocida,meat_seafood,poultry,cooked,A,essential,internal_seed,core-turkey-breast-cooked,core_natural_foods_es_cl,v1,mapped,,source_mapped,,
-meat-seafood-trutro-de-pavo-crudo-con-piel,Trutro de pavo crudo con piel,meat_seafood,poultry,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
+meat-seafood-trutro-de-pavo-crudo-con-piel,Trutro de pavo crudo con piel,meat_seafood,poultry,raw,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 meat-seafood-pavo-molido-crudo,Pavo molido crudo,meat_seafood,poultry,raw,B,common,usda_sr_legacy,171505,sr_legacy,2018-04,mapped,,source_mapped,,
 meat-seafood-pato-crudo-con-piel,Pato crudo con piel,meat_seafood,poultry,raw,C,specialized,usda_sr_legacy,172408,sr_legacy,2018-04,mapped,,source_mapped,,
 meat-seafood-carne-molida-de-vacuno-magra-cruda,Carne molida de vacuno magra cruda,meat_seafood,beef,raw,A,essential,usda_sr_legacy,174030,sr_legacy,2018-04,mapped,,source_mapped,,
-meat-seafood-carne-molida-de-vacuno-regular-cruda,Carne molida de vacuno regular cruda,meat_seafood,beef,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
+meat-seafood-carne-molida-de-vacuno-regular-cruda,Carne molida de vacuno regular cruda,meat_seafood,beef,raw,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 meat-seafood-carne-magra-cocida,Carne magra cocida,meat_seafood,beef,cooked,A,essential,internal_seed,core-beef-lean-cooked,core_natural_foods_es_cl,v1,mapped,,source_mapped,,
-meat-seafood-lomo-liso-de-vacuno-crudo,Lomo liso de vacuno crudo,meat_seafood,beef,raw,A,essential,usda_sr_legacy,,,,candidate,,defined,,
-meat-seafood-lomo-vetado-de-vacuno-crudo,Lomo vetado de vacuno crudo,meat_seafood,beef,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
-meat-seafood-filete-de-vacuno-crudo,Filete de vacuno crudo,meat_seafood,beef,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
-meat-seafood-asiento-de-vacuno-crudo,Asiento de vacuno crudo,meat_seafood,beef,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
-meat-seafood-posta-negra-de-vacuno-cruda,Posta negra de vacuno cruda,meat_seafood,beef,raw,A,essential,usda_sr_legacy,,,,candidate,,defined,,
-meat-seafood-posta-rosada-de-vacuno-cruda,Posta rosada de vacuno cruda,meat_seafood,beef,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
-meat-seafood-tapapecho-de-vacuno-crudo,Tapapecho de vacuno crudo,meat_seafood,beef,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
-meat-seafood-plateada-de-vacuno-cruda,Plateada de vacuno cruda,meat_seafood,beef,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
-meat-seafood-osobuco-de-vacuno-crudo,Osobuco de vacuno crudo,meat_seafood,beef,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
-meat-seafood-costilla-de-vacuno-cruda,Costilla de vacuno cruda,meat_seafood,beef,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
+meat-seafood-lomo-liso-de-vacuno-crudo,Lomo liso de vacuno crudo,meat_seafood,beef,raw,A,essential,manual_evidence,,,,blocked,,deferred,,Requiere evidencia nutricional chilena independiente; no existe equivalencia USDA segura.
+meat-seafood-lomo-vetado-de-vacuno-crudo,Lomo vetado de vacuno crudo,meat_seafood,beef,raw,B,common,manual_evidence,,,,blocked,,deferred,,Requiere evidencia nutricional chilena independiente; no existe equivalencia USDA segura.
+meat-seafood-filete-de-vacuno-crudo,Filete de vacuno crudo,meat_seafood,beef,raw,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
+meat-seafood-asiento-de-vacuno-crudo,Asiento de vacuno crudo,meat_seafood,beef,raw,B,common,manual_evidence,,,,blocked,,deferred,,Requiere evidencia nutricional chilena independiente; no existe equivalencia USDA segura.
+meat-seafood-posta-negra-de-vacuno-cruda,Posta negra de vacuno cruda,meat_seafood,beef,raw,A,essential,manual_evidence,,,,blocked,,deferred,,Requiere evidencia nutricional chilena independiente; no existe equivalencia USDA segura.
+meat-seafood-posta-rosada-de-vacuno-cruda,Posta rosada de vacuno cruda,meat_seafood,beef,raw,B,common,manual_evidence,,,,blocked,,deferred,,Requiere evidencia nutricional chilena independiente; no existe equivalencia USDA segura.
+meat-seafood-tapapecho-de-vacuno-crudo,Tapapecho de vacuno crudo,meat_seafood,beef,raw,B,common,manual_evidence,,,,blocked,,deferred,,Requiere evidencia nutricional chilena independiente; no existe equivalencia USDA segura.
+meat-seafood-plateada-de-vacuno-cruda,Plateada de vacuno cruda,meat_seafood,beef,raw,B,common,manual_evidence,,,,blocked,,deferred,,Requiere evidencia nutricional chilena independiente; no existe equivalencia USDA segura.
+meat-seafood-osobuco-de-vacuno-crudo,Osobuco de vacuno crudo,meat_seafood,beef,raw,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
+meat-seafood-costilla-de-vacuno-cruda,Costilla de vacuno cruda,meat_seafood,beef,raw,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 meat-seafood-lomo-de-cerdo-crudo,Lomo de cerdo crudo,meat_seafood,pork,raw,A,essential,usda_sr_legacy,167818,sr_legacy,2018-04,mapped,,source_mapped,,
-meat-seafood-solomillo-de-cerdo-crudo,Solomillo de cerdo crudo,meat_seafood,pork,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
-meat-seafood-chuleta-de-cerdo-cruda,Chuleta de cerdo cruda,meat_seafood,pork,raw,A,essential,usda_sr_legacy,,,,candidate,,defined,,
+meat-seafood-solomillo-de-cerdo-crudo,Solomillo de cerdo crudo,meat_seafood,pork,raw,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
+meat-seafood-chuleta-de-cerdo-cruda,Chuleta de cerdo cruda,meat_seafood,pork,raw,A,essential,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 meat-seafood-costilla-de-cerdo-cruda,Costilla de cerdo cruda,meat_seafood,pork,raw,B,common,usda_sr_legacy,167853,sr_legacy,2018-04,mapped,,source_mapped,,
 meat-seafood-paleta-de-cerdo-cruda,Paleta de cerdo cruda,meat_seafood,pork,raw,B,common,usda_sr_legacy,167843,sr_legacy,2018-04,mapped,,source_mapped,,
 meat-seafood-pernil-de-cerdo-crudo,Pernil de cerdo crudo,meat_seafood,pork,raw,B,common,usda_sr_legacy,168222,sr_legacy,2018-04,mapped,,source_mapped,,
 meat-seafood-panceta-de-cerdo-cruda,Panceta de cerdo cruda,meat_seafood,pork,raw,B,common,usda_sr_legacy,167812,sr_legacy,2018-04,mapped,,source_mapped,,
-meat-seafood-cerdo-molido-crudo,Cerdo molido crudo,meat_seafood,pork,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
-meat-seafood-pierna-de-cordero-cruda,Pierna de cordero cruda,meat_seafood,lamb,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
-meat-seafood-chuleta-de-cordero-cruda,Chuleta de cordero cruda,meat_seafood,lamb,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
-meat-seafood-paleta-de-cordero-cruda,Paleta de cordero cruda,meat_seafood,lamb,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
+meat-seafood-cerdo-molido-crudo,Cerdo molido crudo,meat_seafood,pork,raw,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
+meat-seafood-pierna-de-cordero-cruda,Pierna de cordero cruda,meat_seafood,lamb,raw,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
+meat-seafood-chuleta-de-cordero-cruda,Chuleta de cordero cruda,meat_seafood,lamb,raw,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
+meat-seafood-paleta-de-cordero-cruda,Paleta de cordero cruda,meat_seafood,lamb,raw,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 meat-seafood-cordero-molido-crudo,Cordero molido crudo,meat_seafood,lamb,raw,C,specialized,usda_sr_legacy,174370,sr_legacy,2018-04,mapped,,source_mapped,,
 meat-seafood-carne-de-cabra-cruda,Carne de cabra cruda,meat_seafood,goat,raw,C,specialized,usda_sr_legacy,175303,sr_legacy,2018-04,mapped,,source_mapped,,
 meat-seafood-carne-de-conejo-cruda,Carne de conejo cruda,meat_seafood,game,raw,C,specialized,usda_sr_legacy,172521,sr_legacy,2018-04,mapped,,source_mapped,,
 meat-seafood-higado-de-pollo-crudo,Hígado de pollo crudo,meat_seafood,organ_meats,raw,B,common,usda_sr_legacy,171060,sr_legacy,2018-04,mapped,,source_mapped,,
-meat-seafood-higado-de-vacuno-crudo,Hígado de vacuno crudo,meat_seafood,organ_meats,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
-meat-seafood-corazon-de-vacuno-crudo,Corazón de vacuno crudo,meat_seafood,organ_meats,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
-meat-seafood-lengua-de-vacuno-cruda,Lengua de vacuno cruda,meat_seafood,organ_meats,raw,C,specialized,usda_sr_legacy,,,,candidate,,defined,,
-meat-seafood-higado-de-cerdo-crudo,Hígado de cerdo crudo,meat_seafood,organ_meats,raw,C,specialized,usda_sr_legacy,,,,candidate,,defined,,
+meat-seafood-higado-de-vacuno-crudo,Hígado de vacuno crudo,meat_seafood,organ_meats,raw,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
+meat-seafood-corazon-de-vacuno-crudo,Corazón de vacuno crudo,meat_seafood,organ_meats,raw,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
+meat-seafood-lengua-de-vacuno-cruda,Lengua de vacuno cruda,meat_seafood,organ_meats,raw,C,specialized,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
+meat-seafood-higado-de-cerdo-crudo,Hígado de cerdo crudo,meat_seafood,organ_meats,raw,C,specialized,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 meat-seafood-salmon-crudo,Salmón crudo,meat_seafood,fish,raw,A,essential,usda_sr_legacy,173686,sr_legacy,2018-04,mapped,,source_mapped,,
 meat-seafood-salmon-cocido,Salmón cocido,meat_seafood,fish,cooked,A,essential,internal_seed,core-salmon-cooked,core_natural_foods_es_cl,v1,mapped,,source_mapped,,
-meat-seafood-atun-fresco-crudo,Atún fresco crudo,meat_seafood,fish,raw,A,essential,usda_sr_legacy,,,,candidate,,defined,,
+meat-seafood-atun-fresco-crudo,Atún fresco crudo,meat_seafood,fish,raw,A,essential,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 meat-seafood-atun-en-agua-drenado,Atún en agua drenado,meat_seafood,fish,ready_to_eat,A,essential,internal_seed,core-tuna-water-drained,core_natural_foods_es_cl,v1,mapped,,source_mapped,,
-meat-seafood-reineta-cruda,Reineta cruda,meat_seafood,fish,raw,A,essential,usda_sr_legacy,,,,candidate,,defined,,
-meat-seafood-merluza-cruda,Merluza cruda,meat_seafood,fish,raw,A,essential,usda_sr_legacy,,,,candidate,,defined,,
-meat-seafood-congrio-crudo,Congrio crudo,meat_seafood,fish,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
-meat-seafood-jurel-crudo,Jurel crudo,meat_seafood,fish,raw,A,essential,usda_sr_legacy,,,,candidate,,defined,,
-meat-seafood-jurel-en-conserva-drenado,Jurel en conserva drenado,meat_seafood,fish,ready_to_eat,B,common,usda_sr_legacy,,,,candidate,,defined,,
-meat-seafood-sardina-cruda,Sardina cruda,meat_seafood,fish,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
-meat-seafood-sardina-en-conserva-drenada,Sardina en conserva drenada,meat_seafood,fish,ready_to_eat,A,essential,usda_sr_legacy,,,,candidate,,defined,,
+meat-seafood-reineta-cruda,Reineta cruda,meat_seafood,fish,raw,A,essential,manual_evidence,,,,blocked,,deferred,,Requiere evidencia nutricional chilena independiente; no existe equivalencia USDA segura.
+meat-seafood-merluza-cruda,Merluza cruda,meat_seafood,fish,raw,A,essential,manual_evidence,,,,blocked,,deferred,,Requiere evidencia nutricional chilena independiente; no existe equivalencia USDA segura.
+meat-seafood-congrio-crudo,Congrio crudo,meat_seafood,fish,raw,B,common,manual_evidence,,,,blocked,,deferred,,Requiere evidencia nutricional chilena independiente; no existe equivalencia USDA segura.
+meat-seafood-jurel-crudo,Jurel crudo,meat_seafood,fish,raw,A,essential,manual_evidence,,,,blocked,,deferred,,Requiere evidencia nutricional chilena independiente; no existe equivalencia USDA segura.
+meat-seafood-jurel-en-conserva-drenado,Jurel en conserva drenado,meat_seafood,fish,ready_to_eat,B,common,manual_evidence,,,,blocked,,deferred,,Requiere evidencia nutricional chilena independiente; no existe equivalencia USDA segura.
+meat-seafood-sardina-cruda,Sardina cruda,meat_seafood,fish,raw,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
+meat-seafood-sardina-en-conserva-drenada,Sardina en conserva drenada,meat_seafood,fish,ready_to_eat,A,essential,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 meat-seafood-bacalao-crudo,Bacalao crudo,meat_seafood,fish,raw,B,common,usda_sr_legacy,171955,sr_legacy,2018-04,mapped,,source_mapped,,
 meat-seafood-tilapia-cruda,Tilapia cruda,meat_seafood,fish,raw,B,common,usda_sr_legacy,175176,sr_legacy,2018-04,mapped,,source_mapped,,
 meat-seafood-trucha-arcoiris-cruda,Trucha arcoíris cruda,meat_seafood,fish,raw,A,essential,usda_sr_legacy,173717,sr_legacy,2018-04,mapped,,source_mapped,,
-meat-seafood-corvina-cruda,Corvina cruda,meat_seafood,fish,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
+meat-seafood-corvina-cruda,Corvina cruda,meat_seafood,fish,raw,B,common,manual_evidence,,,,blocked,,deferred,,Requiere evidencia nutricional chilena independiente; no existe equivalencia USDA segura.
 meat-seafood-lenguado-crudo,Lenguado crudo,meat_seafood,fish,raw,B,common,usda_sr_legacy,174196,sr_legacy,2018-04,mapped,,source_mapped,,
-meat-seafood-albacora-cruda,Albacora cruda,meat_seafood,fish,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
+meat-seafood-albacora-cruda,Albacora cruda,meat_seafood,fish,raw,B,common,manual_evidence,,,,blocked,,deferred,,Requiere evidencia nutricional chilena independiente; no existe equivalencia USDA segura.
 meat-seafood-anchoa-cruda,Anchoa cruda,meat_seafood,fish,raw,C,specialized,usda_sr_legacy,174182,sr_legacy,2018-04,mapped,,source_mapped,,
 meat-seafood-camaron-crudo,Camarón crudo,meat_seafood,shellfish,raw,A,essential,usda_sr_legacy,174210,sr_legacy,2018-04,mapped,,source_mapped,,
 meat-seafood-camaron-cocido,Camarón cocido,meat_seafood,shellfish,cooked,B,common,usda_sr_legacy,175180,sr_legacy,2018-04,mapped,,source_mapped,,
-meat-seafood-langostino-crudo,Langostino crudo,meat_seafood,shellfish,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
-meat-seafood-jaiba-cocida,Jaiba cocida,meat_seafood,shellfish,cooked,A,essential,usda_sr_legacy,,,,candidate,,defined,,
+meat-seafood-langostino-crudo,Langostino crudo,meat_seafood,shellfish,raw,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
+meat-seafood-jaiba-cocida,Jaiba cocida,meat_seafood,shellfish,cooked,A,essential,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 meat-seafood-centolla-cocida,Centolla cocida,meat_seafood,shellfish,cooked,B,common,usda_sr_legacy,174202,sr_legacy,2018-04,mapped,,source_mapped,,
 meat-seafood-langosta-cocida,Langosta cocida,meat_seafood,shellfish,cooked,C,specialized,usda_sr_legacy,174209,sr_legacy,2018-04,mapped,,source_mapped,,
-meat-seafood-choritos-cocidos,Choritos cocidos,meat_seafood,shellfish,cooked,A,essential,usda_sr_legacy,,,,candidate,,defined,,
+meat-seafood-choritos-cocidos,Choritos cocidos,meat_seafood,shellfish,cooked,A,essential,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 meat-seafood-almejas-cocidas,Almejas cocidas,meat_seafood,shellfish,cooked,A,essential,usda_sr_legacy,171975,sr_legacy,2018-04,mapped,,source_mapped,,
-meat-seafood-ostras-crudas,Ostras crudas,meat_seafood,shellfish,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
+meat-seafood-ostras-crudas,Ostras crudas,meat_seafood,shellfish,raw,B,common,usda_sr_legacy,,,,blocked,,deferred,,"Sin coincidencia USDA única para especie, preparación o forma; se difiere para evitar un mapeo aproximado."
 meat-seafood-ostiones-cocidos,Ostiones cocidos,meat_seafood,shellfish,cooked,B,common,usda_sr_legacy,167742,sr_legacy,2018-04,mapped,,source_mapped,,
-meat-seafood-erizo-crudo,Erizo crudo,meat_seafood,shellfish,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
+meat-seafood-erizo-crudo,Erizo crudo,meat_seafood,shellfish,raw,B,common,manual_evidence,,,,blocked,,deferred,,Requiere evidencia nutricional chilena independiente; no existe equivalencia USDA segura.
 meat-seafood-pulpo-cocido,Pulpo cocido,meat_seafood,mollusks,cooked,A,essential,usda_sr_legacy,174249,sr_legacy,2018-04,mapped,,source_mapped,,
 meat-seafood-calamar-crudo,Calamar crudo,meat_seafood,mollusks,raw,B,common,usda_sr_legacy,174223,sr_legacy,2018-04,mapped,,source_mapped,,
-meat-seafood-jibia-cruda,Jibia cruda,meat_seafood,mollusks,raw,B,common,usda_sr_legacy,,,,candidate,,defined,,
+meat-seafood-jibia-cruda,Jibia cruda,meat_seafood,mollusks,raw,B,common,manual_evidence,,,,blocked,,deferred,,Requiere evidencia nutricional chilena independiente; no existe equivalencia USDA segura.
