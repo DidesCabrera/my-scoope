@@ -20,8 +20,8 @@ class Command(BaseCommand):
         parser.add_argument("--dry-run-batch-id", type=int)
 
     def handle(self, *args, **options):
-        if options["limit"] < 1 or options["limit"] > 5:
-            raise CommandError("FCG06 manual sample limit must be between 1 and 5.")
+        if options["limit"] < 1 or options["limit"] > 500:
+            raise CommandError("Manual batch limit must be between 1 and 500; applies above 5 require FCG09 approval.")
         plan = dry_run_manual_evidence_csv(options["csv_path"], limit=options["limit"])
         versions = {row.source_version for row in plan.rows}
         if len(versions) > 1:

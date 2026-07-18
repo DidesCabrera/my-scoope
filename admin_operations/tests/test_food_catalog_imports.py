@@ -4,7 +4,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 import json
 from django.urls import reverse
 
-from food_catalog.models import CatalogFood, CatalogImportBatch
+from food_catalog.models import CatalogFood, CatalogImportBatch, CatalogImportSourcePolicy
 from food_catalog.models import CatalogFoodSource
 from admin_operations.models import AdminOperationAuditEvent
 
@@ -157,3 +157,25 @@ class FoodCatalogImportsOperationsTests(TestCase):
         self.assertEqual(source.import_batch, apply_batch)
         self.assertEqual(apply_batch.dry_run_batch, dry_run)
         self.assertFalse(CatalogFood.objects.filter(status=CatalogFood.STATUS_PUBLISHED).exists())
+
+    def test_scale_policy_approval_and_kill_switch_are_audited(self):
+        self.client.force_login(self.staff)
+        url = reverse("admin_operations_food_catalog_import_policy_action")
+        common = {
+            "source_type": CatalogFood.SOURCE_USDA,
+            "source_name": "USDA governed scaling",
+            "max_batch_rows": "100",
+        }
+        self.client.post(url, {**common, "action": "approve", "reason": "Two samples reviewed."})
+        policy = CatalogImportSourcePolicy.objects.get()
+        self.assertTrue(policy.scale_approved)
+        self.assertFalse(policy.kill_switch)
+        self.assertEqual(policy.max_batch_rows, 100)
+
+        self.client.post(url, {**common, "action": "kill", "reason": "Unexpected source quality."})
+        policy.refresh_from_db()
+        self.assertTrue(policy.kill_switch)
+        self.assertEqual(
+            AdminOperationAuditEvent.objects.filter(action__startswith="food_catalog.import_policy.").count(),
+            2,
+        )

@@ -9,6 +9,7 @@ from food_catalog.models import (
     CatalogFoodPortion,
     CatalogFoodSource,
     CatalogImportBatch,
+    CatalogImportSourcePolicy,
     CatalogCurationCandidate,
     ExternalFoodReference,
     ExternalProviderFetchLog,
@@ -246,6 +247,13 @@ class CatalogImportBatchAdmin(admin.ModelAdmin):
     list_filter = ("source_type", "status", "is_dry_run")
     search_fields = ("source_name", "source_version", "notes")
     readonly_fields = ("started_at",)
+
+
+@admin.register(CatalogImportSourcePolicy)
+class CatalogImportSourcePolicyAdmin(admin.ModelAdmin):
+    list_display = ("source_name", "source_type", "is_enabled", "scale_approved", "kill_switch", "max_batch_rows", "approved_at")
+    list_filter = ("source_type", "is_enabled", "scale_approved", "kill_switch")
+    search_fields = ("source_name", "approval_reason")
 
 
 @admin.register(CatalogFoodPortion)

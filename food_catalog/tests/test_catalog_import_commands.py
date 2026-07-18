@@ -178,15 +178,15 @@ class CatalogUSDAImportCommandTests(TestCase):
                 reason="Apply.",
             )
 
-    def test_usda_import_rejects_sample_over_ten(self):
+    def test_usda_import_rejects_batch_over_global_maximum(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "sample_usda.json"
             path.write_text("[]", encoding="utf-8")
-            with self.assertRaisesMessage(CommandError, "between 1 and 10"):
+            with self.assertRaisesMessage(CommandError, "between 1 and 500"):
                 call_command(
                     "dry_run_catalog_usda_foods_json",
                     str(path),
                     source_version="2026-04",
-                    limit=11,
+                    limit=501,
                     reason="Invalid large sample.",
                 )

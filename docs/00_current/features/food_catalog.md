@@ -414,6 +414,8 @@ python manage.py import_catalog_manual_foods_csv path/to/manual_foods.csv --dry-
 python manage.py import_catalog_manual_foods_csv path/to/manual_foods.csv --limit 3 --dry-run-batch-id <id> --reason "Aplicar evidencia revisada"
 ```
 
+El escalamiento sobre los límites de muestra (USDA 10, marcas/manual 5, backfill 10) exige una `CatalogImportSourcePolicy` aprobada, máximo explícito, kill switch inactivo y dos applies pequeños gobernados y exitosos. Admin Operations registra aprobación y kill switch con razón obligatoria. OFF y FatSecret no pueden aprobarse dentro de FCG.
+
 ## Launch Readiness · cierre del ciclo
 
 El ciclo Food Catalog Launch Readiness queda cerrado después de implementar curación/publicación protegida, seed natural inicial, normalización `solver-ready`, proveedores externos lookup-only, referencias externas temporales, búsqueda unificada, cola de candidatos, bridge operacional para solver e intake mínimo de marcas.

@@ -81,6 +81,11 @@
   </section>
 
   <section class="card-detail-block">
+    <div class="card-title-row"><div><p class="section-eyebrow">FCG09 · Gate de escalamiento</p><h3>Política y kill switch por fuente</h3><p class="muted-text">Aprobar la política no basta: el backend exige además dos applies pequeños gobernados y exitosos. OFF y FatSecret no son escalables en este ciclo.</p></div></div>
+    <form method="post" action="{% url 'admin_operations_food_catalog_import_policy_action' %}" data-admin-operations-confirm>{% csrf_token %}<label><span>Tipo</span><select name="source_type" required>{% for value, label in vm.content.source_options %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></label><label><span>Nombre exacto de fuente</span><input name="source_name" required></label><label><span>Máximo por batch</span><input name="max_batch_rows" type="number" min="1" max="500" required></label><label><span>Razón</span><textarea name="reason" required></textarea></label><button class="btn-secondary" name="action" value="approve" type="submit">Aprobar escala</button><button class="btn-secondary" name="action" value="kill" type="submit">Activar kill switch</button></form>
+  </section>
+
+  <section class="card-detail-block">
     <div class="card-title-row"><div><p class="section-eyebrow">Guard operacional</p><h3>Dry-run antes de toda mutación</h3><p class="muted-text">Un apply sólo es válido cuando referencia un dry-run completo, vigente y equivalente en fuente, versión, hash, parámetros y número de filas. Los controles mutantes se habilitan fuente por fuente durante FCG03–FCG08.</p></div></div>
     <form class="admin-operations-inventory-filters" method="get">
       <label><span>Fuente</span><select name="source"><option value="">Todas</option>{% for value, label in vm.content.source_options %}<option value="{{ value }}"{% if vm.content.selected_source == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>

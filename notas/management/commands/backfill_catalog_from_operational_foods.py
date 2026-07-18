@@ -64,8 +64,8 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        if options["limit"] is not None and (options["limit"] < 1 or options["limit"] > 10):
-            raise CommandError("FCG07 backfill sample limit must be between 1 and 10.")
+        if options["limit"] is not None and (options["limit"] < 1 or options["limit"] > 500):
+            raise CommandError("Backfill batch limit must be between 1 and 500; applies above 10 require FCG09 approval.")
         try:
             result = backfill_catalog_from_operational_foods(
                 dry_run=options["dry_run"],

@@ -9,7 +9,7 @@ from typing import Any
 from django.db import transaction
 from django.utils import timezone
 
-from food_catalog.models import CatalogFood, CatalogImportBatch
+from food_catalog.models import CatalogFood, CatalogImportBatch, CatalogImportSourcePolicy
 
 
 DEFAULT_DRY_RUN_TTL = timedelta(hours=24)
@@ -85,6 +85,7 @@ def start_catalog_import_batch(
         raise CatalogImportGovernanceError(
             "Open Food Facts persistence is disabled: ODbL attribution/share-alike review has not approved a combined CatalogFood database."
         )
+    _validate_source_scale(identity=identity, total_rows=total_rows)
 
     current_time = now or timezone.now()
     _validate_dry_run(
@@ -146,6 +147,50 @@ def _validate_dry_run(
         raise CatalogImportGovernanceError(
             "The dry-run does not match the source, version, input, parameters and row count."
         )
+
+
+def _validate_source_scale(*, identity: CatalogImportIdentity, total_rows: int) -> None:
+    sample_limit = _sample_limit(identity)
+    policy = CatalogImportSourcePolicy.objects.filter(
+        source_type=identity.source_type,
+        source_name=identity.source_name,
+    ).first()
+    if policy and (not policy.is_enabled or policy.kill_switch):
+        raise CatalogImportGovernanceError("This catalog source is disabled by its kill switch policy.")
+    if total_rows <= sample_limit:
+        return
+    if policy is None or not policy.scale_approved:
+        raise CatalogImportGovernanceError(
+            f"Batch exceeds the {sample_limit}-row sample gate and scaling is not approved."
+        )
+    if total_rows > policy.max_batch_rows:
+        raise CatalogImportGovernanceError(
+            f"Batch exceeds the approved maximum of {policy.max_batch_rows} rows."
+        )
+    successful_applies = CatalogImportBatch.objects.filter(
+        source_type=identity.source_type,
+        source_name=identity.source_name,
+        is_dry_run=False,
+        dry_run_batch__isnull=False,
+        status=CatalogImportBatch.STATUS_COMPLETED,
+        failed_rows=0,
+    ).count()
+    if successful_applies < 2:
+        raise CatalogImportGovernanceError("Scaling requires two successful governed sample applies.")
+
+
+def _sample_limit(identity: CatalogImportIdentity) -> int:
+    if identity.source_type == CatalogFood.SOURCE_NATURAL_VERIFIED:
+        return 30
+    if identity.source_type == CatalogFood.SOURCE_USDA:
+        return 10
+    if identity.source_type == CatalogFood.SOURCE_BRAND_SUBMITTED:
+        return 5
+    if identity.source_name == "manual_evidence_intake":
+        return 5
+    if identity.source_name == "My Scoope operational foods":
+        return 10
+    return 10
 
 
 def _authenticated_user_or_none(user):

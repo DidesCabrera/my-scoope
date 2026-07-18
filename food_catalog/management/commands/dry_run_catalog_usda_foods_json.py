@@ -73,8 +73,8 @@ class Command(BaseCommand):
         except FoundationFoodsReaderError as exc:
             raise CommandError(str(exc)) from exc
 
-        if options["limit"] < 1 or options["limit"] > 10:
-            raise CommandError("FCG04 USDA sample limit must be between 1 and 10.")
+        if options["limit"] < 1 or options["limit"] > 500:
+            raise CommandError("USDA batch limit must be between 1 and 500; applies above 10 require FCG09 approval.")
         payloads = payloads[: options["limit"]]
         sample_size = options["sample_size"] if options["show_samples"] else 0
         result = dry_run_usda_catalog_food_payloads(

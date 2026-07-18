@@ -10,7 +10,7 @@ from food_catalog.infrastructure.imports.governance import (
     record_catalog_import_dry_run,
     start_catalog_import_batch,
 )
-from food_catalog.models import CatalogFood, CatalogImportBatch
+from food_catalog.models import CatalogFood, CatalogImportBatch, CatalogImportSourcePolicy
 
 
 class CatalogImportGovernanceTests(TestCase):
@@ -149,6 +149,62 @@ class CatalogImportGovernanceTests(TestCase):
             )
         self.assertEqual(CatalogImportBatch.objects.filter(is_dry_run=False).count(), 0)
         self.assertEqual(CatalogFood.objects.filter(source_type=CatalogFood.SOURCE_OPEN_FOOD_FACTS).count(), 0)
+
+    def test_scaling_requires_policy_two_successful_samples_and_maximum(self):
+        identity = catalog_import_identity(
+            source_type=CatalogFood.SOURCE_USDA,
+            source_name="USDA governed scaling",
+            source_version="2026-07",
+            input_sha256="c" * 64,
+            parameters_payload={"limit": 11},
+        )
+        dry_run = record_catalog_import_dry_run(
+            identity=identity,
+            total_rows=11,
+            would_import_rows=11,
+            skipped_rows=0,
+            failed_rows=0,
+            reason="Validate scaled batch.",
+        )
+        with self.assertRaisesMessage(CatalogImportGovernanceError, "scaling is not approved"):
+            start_catalog_import_batch(identity=identity, dry_run_batch=dry_run, total_rows=11, reason="Scale.")
+
+        policy = CatalogImportSourcePolicy.objects.create(
+            source_type=CatalogFood.SOURCE_USDA,
+            source_name="USDA governed scaling",
+            scale_approved=True,
+            max_batch_rows=20,
+        )
+        with self.assertRaisesMessage(CatalogImportGovernanceError, "two successful"):
+            start_catalog_import_batch(identity=identity, dry_run_batch=dry_run, total_rows=11, reason="Scale.")
+
+        for index in range(2):
+            sample_dry_run = CatalogImportBatch.objects.create(
+                source_type=identity.source_type,
+                source_name=identity.source_name,
+                source_version=identity.source_version,
+                status=CatalogImportBatch.STATUS_COMPLETED,
+                is_dry_run=True,
+                input_sha256=str(index) * 64,
+                total_rows=10,
+            )
+            CatalogImportBatch.objects.create(
+                source_type=identity.source_type,
+                source_name=identity.source_name,
+                source_version=identity.source_version,
+                status=CatalogImportBatch.STATUS_COMPLETED,
+                dry_run_batch=sample_dry_run,
+                total_rows=10,
+                imported_rows=10,
+            )
+
+        batch = start_catalog_import_batch(identity=identity, dry_run_batch=dry_run, total_rows=11, reason="Scale.")
+        self.assertEqual(batch.dry_run_batch, dry_run)
+
+        policy.kill_switch = True
+        policy.save(update_fields=["kill_switch"])
+        with self.assertRaisesMessage(CatalogImportGovernanceError, "kill switch"):
+            start_catalog_import_batch(identity=identity, dry_run_batch=dry_run, total_rows=11, reason="Scale again.")
 
         with self.assertRaisesMessage(CatalogImportGovernanceError, "reason is required"):
             record_catalog_import_dry_run(

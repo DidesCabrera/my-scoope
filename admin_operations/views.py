@@ -26,6 +26,7 @@ from admin_operations.services import (
     perform_manual_dry_run,
     perform_backfill_apply,
     perform_backfill_dry_run,
+    perform_import_source_policy_operation,
     perform_credit_adjustment,
     perform_ai_proposal_operation,
     perform_ai_quota_operation,
@@ -290,6 +291,21 @@ def food_catalog_backfill_dry_run(request):
 @require_POST
 def food_catalog_backfill_apply(request):
     result = perform_backfill_apply(actor=request.user, limit=request.POST.get("limit", ""), dry_run_batch_id=request.POST.get("dry_run_batch_id", ""), reason=request.POST.get("reason", ""))
+    flash_operation_result(request, result)
+    return redirect("admin_operations_food_catalog_imports")
+
+
+@staff_member_required
+@require_POST
+def food_catalog_import_policy_action(request):
+    result = perform_import_source_policy_operation(
+        actor=request.user,
+        source_type=request.POST.get("source_type", ""),
+        source_name=request.POST.get("source_name", ""),
+        max_batch_rows=request.POST.get("max_batch_rows", ""),
+        action=request.POST.get("action", ""),
+        reason=request.POST.get("reason", ""),
+    )
     flash_operation_result(request, result)
     return redirect("admin_operations_food_catalog_imports")
 

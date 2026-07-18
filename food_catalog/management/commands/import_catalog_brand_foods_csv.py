@@ -27,8 +27,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         csv_path = options["csv_path"]
-        if options["limit"] < 1 or options["limit"] > 5:
-            raise CommandError("FCG05 brand sample limit must be between 1 and 5.")
+        if options["limit"] < 1 or options["limit"] > 500:
+            raise CommandError("Brand batch limit must be between 1 and 500; applies above 5 require FCG09 approval.")
         if options["dry_run"]:
             result = dry_run_brand_food_intake_csv(csv_path, limit=options["limit"])
             batch = record_catalog_import_dry_run(

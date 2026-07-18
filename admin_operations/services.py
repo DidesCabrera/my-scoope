@@ -56,7 +56,7 @@ from accounts.models import AccountSubscription, CreditLedger, CreditWallet
 from ai_assistant.models import AICreditLedger, AIUsageEvent, AIUserCreditQuota
 from accounts.services.credits import current_account_credit_period, release_account_credit_reservation
 from food_catalog.application.curation import transition_catalog_food_status
-from food_catalog.models import CatalogCurationCandidate, CatalogFood, CatalogImportBatch
+from food_catalog.models import CatalogCurationCandidate, CatalogFood, CatalogImportBatch, CatalogImportSourcePolicy
 from food_catalog.infrastructure.core_natural_foods_seed import (
     apply_core_natural_foods_seed,
     core_natural_foods_seed_identity,
@@ -959,6 +959,56 @@ def perform_backfill_apply(*, actor, limit: str, dry_run_batch_id: str, reason: 
         metadata={"created": result.created_rows, "skipped": result.skipped_rows},
     )
     return AdminOperationResult(True, f"Backfill batch #{result.batch.pk}: creados={result.created_rows}, omitidos={result.skipped_rows}.")
+
+
+def perform_import_source_policy_operation(
+    *, actor, source_type: str, source_name: str, max_batch_rows: str, action: str, reason: str
+) -> AdminOperationResult:
+    normalized_reason = (reason or "").strip()
+    normalized_name = (source_name or "").strip()
+    if not normalized_reason or not normalized_name:
+        return AdminOperationResult(False, "Fuente y razón operacional son obligatorias.")
+    if source_type not in dict(CatalogFood.SOURCE_TYPE_CHOICES) or source_type in {
+        CatalogFood.SOURCE_OPEN_FOOD_FACTS,
+        CatalogFood.SOURCE_FATSECRET,
+    }:
+        return AdminOperationResult(False, "La fuente no es escalable en FCG.")
+    try:
+        maximum = int(max_batch_rows)
+    except (TypeError, ValueError):
+        return AdminOperationResult(False, "El máximo del batch debe ser numérico.")
+    if maximum < 1 or maximum > 500:
+        return AdminOperationResult(False, "El máximo debe estar entre 1 y 500.")
+
+    policy, _created = CatalogImportSourcePolicy.objects.get_or_create(
+        source_type=source_type,
+        source_name=normalized_name,
+    )
+    before = f"approved={policy.scale_approved},kill={policy.kill_switch},max={policy.max_batch_rows}"
+    if action == "approve":
+        policy.scale_approved = True
+        policy.kill_switch = False
+        policy.is_enabled = True
+        policy.max_batch_rows = maximum
+        policy.approved_by = actor
+        policy.approved_at = timezone.now()
+        policy.approval_reason = normalized_reason
+    elif action == "kill":
+        policy.kill_switch = True
+        policy.approval_reason = normalized_reason
+    else:
+        return AdminOperationResult(False, "Acción de política desconocida.")
+    policy.save()
+    after = f"approved={policy.scale_approved},kill={policy.kill_switch},max={policy.max_batch_rows}"
+    record_admin_operation_audit_event(
+        actor=actor,
+        action=f"food_catalog.import_policy.{action}",
+        target=policy,
+        reason=normalized_reason,
+        status_before=before,
+        status_after=after,
+    )
+    return AdminOperationResult(True, f"Política {normalized_name}: {after}.")
 
 
 def _catalog_inventory_food_to_vm(catalog_food: CatalogFood) -> AdminOperationsCatalogInventoryFoodVM:
