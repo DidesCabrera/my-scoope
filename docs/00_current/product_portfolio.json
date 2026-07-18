@@ -44,10 +44,10 @@
     {
       "id": "operational-confidence",
       "title": "Confianza operacional y claridad compartida",
-      "stage": "build",
+      "stage": "validate",
       "problem": "Código, configuración, datos, ciclos y evidencia pueden divergir y obligar a reconstruir manualmente el estado real.",
       "hypothesis": "Un contrato ejecutable de estado y un control plane read-only permitirán detectar drift antes, reducir diagnóstico repetido y mejorar decisiones de Felipe y las AI.",
-      "evidence": ["CI de staging alineado", "Contrato de 76 variables y diagnóstico seguro", "Project Control comparte contrato con CLI", "Registros de documentos y transiciones ejecutables"],
+      "evidence": ["CI de staging alineado", "Contrato de 76 variables y diagnóstico seguro", "Project Control comparte contrato con CLI", "Registros de documentos y transiciones ejecutables", "Cierre local con 1.524 tests"],
       "next_experiment": "Desplegar Project Control en staging y contrastar sus señales con el estado conocido, corrigiendo probes que resulten ambiguos.",
       "continue_signals": ["Menor tiempo para diagnosticar ambiente y deploy", "Staging drift visible antes de una regresión", "Felipe y AI consultan la misma evidencia"],
       "reformulate_signals": ["El dashboard duplica trabajo manual", "Las señales quedan obsoletas o sin acción posible", "El costo de mantener probes supera la ambigüedad removida"],

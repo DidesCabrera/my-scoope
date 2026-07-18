@@ -31,6 +31,5 @@ python manage.py project_portfolio --json
 | Generic food coverage for Chile | Validate | Governed staging samples and real selection quality |
 | AI-assisted first useful plan | Validate | Complete staging journeys and behavioral/product evidence |
 | Solver V2 controlled quality | Validate | Shadow comparison over real solver-ready snapshots |
-| Operational confidence | Build | Staging contrast of Project Control signals |
+| Operational confidence | Validate | Staging contrast of Project Control signals |
 | Launch readiness | Planned | Environment and operational checklist evidence |
-

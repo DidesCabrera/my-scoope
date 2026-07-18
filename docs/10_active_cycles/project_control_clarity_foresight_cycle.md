@@ -1,6 +1,6 @@
 # PCF00-PCF10 · Project Control, Clarity & Foresight
 
-Status: active
+Status: completed locally; staging validation pending
 Date: 2026-07-18
 Target branch: `feature/project-control-foresight`
 Baseline: `a674a8e` on top of the completed local Generic Food Coverage work
@@ -181,3 +181,34 @@ Stop or reformulate a patch when it duplicates domain logic, exposes a secret or
 private record, introduces a generic command executor, makes local development depend
 on external services, reports inferred state as fact, or adds more maintenance burden
 than the ambiguity it removes.
+
+## Local closure result
+
+PCF00-PCF10 completed locally on 2026-07-18.
+
+| Patch | Commit | Result |
+| --- | --- | --- |
+| PCF00 | `c37b8e3` | Cycle contract, baseline, boundaries and metrics |
+| PCF01 | `45a6b00` | Staging CI, migration drift and repository hygiene gates |
+| PCF02 | `e96b864` | Environment contract, `.env.example`, entrypoint parity and strict numeric parsing |
+| PCF03 | `a1965d9` | Sanitized environment, OAuth and integration diagnostics |
+| PCF04 | `0d24384` | Executable project-status contract and CLI |
+| PCF05 | `6e8a1eb` | Staff-only, GET-only Project Control in Admin Operations |
+| PCF06 | `652d6c6` | Executable document registry and duplicate decision correction |
+| PCF07 | `ac9b6a5` | Transition registry and operational-artifact policy |
+| PCF08 | `0bd2ff0` | Evidence-led product portfolio |
+| PCF09 | `37142c2` | Sanitized AI project-context interface |
+| PCF10 | this closure commit | Current contract, decision, regression and staging handoff |
+
+Local gates passed:
+
+- repository hygiene;
+- Django system checks;
+- no model changes pending;
+- 153 cycle/decision documents valid before the closure decision;
+- 9 core regressions;
+- complete Django suite: 1,524 tests in 237.038 seconds, 0 failures.
+
+Staging validation remains deliberately open: deploy identity, GitHub Actions execution
+on `staging`, environment/integration findings, probe accuracy, and staff-only/GET-only
+behavior must be confirmed in the deployed environment.

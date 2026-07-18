@@ -1,7 +1,7 @@
 # Project State - My Scoope
 
 Status: current
-Last updated: 2026-07-16
+Last updated: 2026-07-18
 Audience: developers and AI assistants
 
 ## What My Scoope is
@@ -69,6 +69,15 @@ CI should reduce manual testing of technical boot issues. Manual testing remains
 - `docs/10_active_cycles/` prepares cycles but does not override current contracts.
 - `docs/90_archive/` is historical context only.
 
+Project control is also executable:
+
+- `diagnose_environment` reports sanitized environment and integration readiness;
+- `project_status` reports release, migrations, capabilities and safe aggregates;
+- Admin Operations > Project Control renders the same contract as a staff-only,
+  read-only surface;
+- `ai_project_context` composes current status, live cycles, decisions, transitions and
+  product bets for AI clients without private rows or secret values.
+
 When a plan becomes real, durable outcomes should be promoted into `docs/00_current/` and decisions should be recorded in `docs/20_decisions/`.
 
 ## Recently closed baselines
@@ -87,10 +96,18 @@ When a plan becomes real, durable outcomes should be promoted into `docs/00_curr
   snapshots, multi-capability meal grammar, bounded combination planning, a deterministic CP-SAT
   backend, whole-day constraints, alternatives, shadow quality gates and controlled DailyPlan
   proposal activation. The heuristic path remains the default rollback until rollout evidence is accepted.
+- Project Control, Clarity & Foresight PCF00-PCF10 aligns staging CI, formalizes 76
+  environment variables, adds safe environment and OAuth diagnostics, exposes one
+  executable status contract through CLI/Admin Operations/AI, validates 153 cycle and
+  decision documents, tracks six architectural transitions and maintains five
+  evidence-led product bets. The local closure passed the complete 1,524-test suite;
+  deployed release identity and probe accuracy remain staging gates.
 
 ## Planned near-term cycles
 
 - No continuation of BA or PT is implied. New AI Assistant work should start from observed product evidence and a newly scoped cycle, rather than extending the global prompt or reopening a deterministic questionnaire.
+- The current product bets and next experiments live in `PRODUCT_PORTFOLIO.md`; they are
+  hypotheses to validate or reformulate, not a fixed feature sequence.
 
 ## Current work style
 
