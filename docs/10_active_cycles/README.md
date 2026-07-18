@@ -35,6 +35,10 @@ Cuando un ciclo planificado empiece a implementarse, el documento puede permanec
 
 ## Planes actuales
 
+- `food_catalog_growth_cycle.md`: ciclo planificado FCG00-FCG10 para poblar efectivamente
+  `CatalogFood` desde fuentes persistibles trazables, aprender su operación desde Admin
+  Operations y validar muestras pequeñas antes de escalar, manteniendo `notas.Food` como
+  snapshot operacional y dejando FatSecret fuera del alcance.
 - `nutrition_solver_optimization_v2_cycle.md`: ciclo activo NSO00-NSO10 para evolucionar el
   solver de porciones v2 hacia optimización conjunta, explicable y contractualmente integrada
   con capacidades curadas de Food Catalog mediante snapshots operacionales.
