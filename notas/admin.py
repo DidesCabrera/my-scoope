@@ -16,7 +16,12 @@ from .domain.models import (
     Plan,
     Profile,
     Program,
+    ProgramCalendarization,
     ProgramDay,
+    CalendarizedDay,
+    ScheduledNotificationEvent,
+    NotificationDelivery,
+    WebPushSubscription,
     Subscription,
     WeightLog,
 )
@@ -47,6 +52,7 @@ class ProfileAdmin(admin.ModelAdmin):
         "height_cm",
         "onboarding_version",
         "onboarding_completed_at",
+        "timezone_name",
         "created_at",
     )
 
@@ -85,6 +91,7 @@ class ProfileAdmin(admin.ModelAdmin):
                 "height_cm",
                 "onboarding_completed_at",
                 "onboarding_version",
+                "timezone_name",
             )
         }),
         ("System", {
@@ -768,6 +775,67 @@ class ProgramDayAdmin(admin.ModelAdmin):
     readonly_fields = (
         "created_at",
     )
+
+
+@admin.register(ProgramCalendarization)
+class ProgramCalendarizationAdmin(admin.ModelAdmin):
+    list_display = (
+        "program_name_snapshot",
+        "user",
+        "start_date",
+        "end_date",
+        "timezone_name",
+        "daily_notification_time",
+        "status",
+    )
+    list_filter = ("status", "daily_notifications_enabled", "timezone_name")
+    search_fields = ("program_name_snapshot", "user__username", "user__email")
+    readonly_fields = (
+        "program_name_snapshot",
+        "start_date",
+        "end_date",
+        "timezone_name",
+        "daily_notification_time",
+        "activated_at",
+        "paused_at",
+        "completed_at",
+        "cancelled_at",
+        "created_at",
+        "updated_at",
+    )
+
+
+@admin.register(CalendarizedDay)
+class CalendarizedDayAdmin(admin.ModelAdmin):
+    list_display = ("calendarization", "calendar_date", "week_number", "day_number", "has_plan")
+    list_filter = ("calendar_date", "week_number")
+    search_fields = ("calendarization__program_name_snapshot", "calendarization__user__username")
+    readonly_fields = tuple(field.name for field in CalendarizedDay._meta.fields)
+
+
+@admin.register(WebPushSubscription)
+class WebPushSubscriptionAdmin(admin.ModelAdmin):
+    list_display = ("user", "device_label", "endpoint_fingerprint", "is_active", "last_success_at", "last_failure_at")
+    list_filter = ("is_active", "last_success_at", "last_failure_at")
+    search_fields = ("user__username", "user__email", "endpoint_fingerprint", "device_label")
+    exclude = ("endpoint", "p256dh_key", "auth_key")
+    readonly_fields = ("endpoint_fingerprint", "created_at", "updated_at", "last_success_at", "last_failure_at")
+
+
+@admin.register(ScheduledNotificationEvent)
+class ScheduledNotificationEventAdmin(admin.ModelAdmin):
+    list_display = ("event_key", "event_type", "scheduled_for_utc", "status", "skip_reason")
+    list_filter = ("event_type", "status", "timezone_name")
+    search_fields = ("event_key", "calendarization__user__username")
+    readonly_fields = tuple(field.name for field in ScheduledNotificationEvent._meta.fields)
+
+
+@admin.register(NotificationDelivery)
+class NotificationDeliveryAdmin(admin.ModelAdmin):
+    list_display = ("event", "subscription_fingerprint", "status", "attempt_count", "sent_at")
+    list_filter = ("status", "sent_at")
+    search_fields = ("event__event_key", "subscription_fingerprint")
+    readonly_fields = tuple(field.name for field in NotificationDelivery._meta.fields)
 
 
 @admin.register(WeightLog)

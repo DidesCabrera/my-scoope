@@ -6,4 +6,4 @@ class NotasConfig(AppConfig):
 
     def ready(self):
         import notas.signals
-
+        import notas.checks

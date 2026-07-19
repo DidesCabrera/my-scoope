@@ -81,6 +81,11 @@ class Profile(models.Model):
         default=ONBOARDING_VERSION_UNSET,
         help_text="Latest onboarding version completed by the user.",
     )
+    timezone_name = models.CharField(
+        max_length=64,
+        default="UTC",
+        help_text="IANA timezone used as the default for user-local scheduling.",
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
 

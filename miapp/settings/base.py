@@ -405,6 +405,16 @@ EMAIL_USE_SSL = _env_bool("EMAIL_USE_SSL", False)
 EMAIL_USE_TLS = _env_bool("EMAIL_USE_TLS", bool(EMAIL_HOST) and not EMAIL_USE_SSL) and not EMAIL_USE_SSL
 EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", "10"))
 
+# Web Push is opt-in. Keep the dispatcher inert until all VAPID values are set.
+MYSCOOPE_WEB_PUSH_ENABLED = _env_bool("MYSCOOPE_WEB_PUSH_ENABLED", False)
+MYSCOOPE_VAPID_PUBLIC_KEY = os.environ.get("MYSCOOPE_VAPID_PUBLIC_KEY", "").strip()
+MYSCOOPE_VAPID_PRIVATE_KEY = os.environ.get("MYSCOOPE_VAPID_PRIVATE_KEY", "").strip()
+MYSCOOPE_VAPID_SUBJECT = os.environ.get(
+    "MYSCOOPE_VAPID_SUBJECT",
+    "mailto:notifications@myscoope.com",
+).strip()
+MYSCOOPE_PWA_CACHE_VERSION = os.environ.get("MYSCOOPE_PWA_CACHE_VERSION", "v2")
+
 DEFAULT_FROM_EMAIL = os.environ.get(
     "DEFAULT_FROM_EMAIL",
     "My Scoope <no-reply@myscoope.com>",

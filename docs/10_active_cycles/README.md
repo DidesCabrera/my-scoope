@@ -35,6 +35,10 @@ Cuando un ciclo planificado empiece a implementarse, el documento puede permanec
 
 ## Planes actuales
 
+- `program_calendarization_notifications_cycle.md`: ciclo activo CAL00-CAL08 con
+  implementación repository-side completa para activar programas sobre fechas reales,
+  snapshots diarios, recordatorios diarios/por comida y Web Push idempotente. Quedan
+  como gate externo las credenciales, scheduler y smoke real en staging.
 - `food_catalog_growth_cycle.md`: ciclo activo FCG00-FCG10 con implementación completa y
   validación de datos reales en staging pendiente, para poblar efectivamente
   `CatalogFood` desde fuentes persistibles trazables, aprender su operación desde Admin

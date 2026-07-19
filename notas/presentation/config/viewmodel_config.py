@@ -91,6 +91,10 @@ PROGRAM_VIEWMODE_CREATE = vm("program", "list", "create")
 PROGRAM_VIEWMODE_CONFIGURE = vm("program", "configure", "personal")
 PROGRAM_VIEWMODE_SHARE = vm("program", "share", "personal")
 
+# CALENDARIZATION -------------------------------------
+CALENDARIZATION_VIEWMODE_DASHBOARD = vm("calendarization", "list", "personal")
+CALENDARIZATION_VIEWMODE_DAY_DETAIL = vm("calendarization", "detail", "personal")
+
 
 # PROPOSAL ---------------------------------------------
 PROPOSAL_VIEWMODE_LIST = vm("proposal", "list", "personal")

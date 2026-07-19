@@ -132,6 +132,15 @@ APP_NAVIGATION = (
                 scope="personal",
             ),
             NavGroupSpec(
+                key="calendarization",
+                label="Calendarizar",
+                icon="calendar-clock",
+                page_icon="calendar-clock",
+                url_name="calendarization_dashboard",
+                nav_root="calendarization",
+                scope="personal",
+            ),
+            NavGroupSpec(
                 key="inbox",
                 label="Inbox",
                 icon="inbox",

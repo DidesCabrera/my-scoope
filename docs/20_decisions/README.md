@@ -165,3 +165,4 @@ Consequences
 - `0149-nutrition-solver-optimization-v2-closure.md`: activación controlada y cierre NSO.
 - `0150-open-food-facts-remains-reference-only.md`: mantiene Open Food Facts como lookup/referencia hasta aprobar explícitamente las obligaciones ODbL del catálogo combinado.
 - `0151-governed-food-catalog-growth-boundary.md`: hace obligatorios dry-run/batch/source, escala controlada y separación importación/publicación/snapshot.
+- `0152-calendarization-snapshots-and-idempotent-web-push.md`: separa la ejecución fechada del programa editable y el evento lógico de cada delivery Web Push por dispositivo.
