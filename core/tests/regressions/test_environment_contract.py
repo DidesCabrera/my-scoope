@@ -57,6 +57,16 @@ class EnvironmentContractTests(SimpleTestCase):
             ENVIRONMENT_VARIABLE_SPEC_BY_NAME["AI_ASSISTANT_MAX_INPUT_TOKENS"].value_type,
             "integer",
         )
+        self.assertEqual(
+            ENVIRONMENT_VARIABLE_SPEC_BY_NAME["MYSCOOPE_WEB_PUSH_ENABLED"].value_type,
+            "boolean",
+        )
+        self.assertTrue(
+            ENVIRONMENT_VARIABLE_SPEC_BY_NAME["MYSCOOPE_VAPID_PRIVATE_KEY"].secret,
+        )
+        self.assertFalse(
+            ENVIRONMENT_VARIABLE_SPEC_BY_NAME["MYSCOOPE_VAPID_PUBLIC_KEY"].secret,
+        )
 
     def test_invalid_numeric_configuration_fails_with_variable_name(self):
         with patch.dict(os.environ, {"PCF_TEST_INT": "not-a-number"}):

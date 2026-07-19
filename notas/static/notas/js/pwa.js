@@ -87,6 +87,7 @@
       "/app/comparators/meals",
       "/app/comparators/dailyplans",
       "/app/ai-tools",
+      "/app/calendarization",
     ]);
 
     if (listPaths.has(path)) {

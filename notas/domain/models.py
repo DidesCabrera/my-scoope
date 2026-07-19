@@ -26,6 +26,15 @@ from notas.domain.model_modules.proposals import (
     NutritionProposal,
     NutritionProposalAuditEvent,
 )
+from notas.domain.model_modules.calendarization import (
+    CalendarizedDay,
+    ProgramCalendarization,
+)
+from notas.domain.model_modules.notification_delivery import (
+    NotificationDelivery,
+    ScheduledNotificationEvent,
+    WebPushSubscription,
+)
 
 
 

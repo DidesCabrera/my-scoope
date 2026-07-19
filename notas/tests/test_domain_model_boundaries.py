@@ -189,6 +189,8 @@ class DomainModelBoundaryTests(TestCase):
                 "sharing": "notas.domain.model_modules.sharing",
                 "comparisons": "notas.domain.model_modules.comparisons",
                 "proposals": "notas.domain.model_modules.proposals",
+                "calendarization": "notas.domain.model_modules.calendarization",
+                "notification_delivery": "notas.domain.model_modules.notification_delivery",
             },
         )
 

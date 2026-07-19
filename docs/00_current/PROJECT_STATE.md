@@ -1,7 +1,7 @@
 # Project State - My Scoope
 
 Status: current
-Last updated: 2026-07-18
+Last updated: 2026-07-19
 Audience: developers and AI assistants
 
 ## What My Scoope is
@@ -81,6 +81,12 @@ Project control is also executable:
 When a plan becomes real, durable outcomes should be promoted into `docs/00_current/` and decisions should be recorded in `docs/20_decisions/`.
 
 ## Recently closed baselines
+
+- Calendarization repository baseline: a user-owned weekly program can be activated on
+  real dates as immutable daily snapshots, with one current schedule, IANA timezone and
+  configurable local notification time. Daily and per-meal Web Push use persisted
+  logical events and idempotent per-device deliveries behind a kill switch. Production
+  activation still requires VAPID credentials, a five-minute scheduler and staging smoke.
 
 - CI/staging stabilization and test hygiene baseline.
 - Rate-limit dependency alignment for login/signup flows.

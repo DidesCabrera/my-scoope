@@ -31,6 +31,9 @@ Esta carpeta contiene documentación vigente y de alta autoridad. Una IA o desar
 24. `../40_technical/operations/testing_and_ci_policy.md` antes de abrir/reabrir PRs, cambiar workflows o ajustar tests.
 25. `../40_technical/qa/testing_hygiene_guide.md` antes de crear, relajar o corregir tests después de bugs reales en staging/CI.
 26. `../10_active_cycles/README.md` cuando el trabajo sea planificación de ciclos futuros.
+27. `features/calendarization.md` y
+    `../40_technical/operations/calendarization_notifications_runbook.md` cuando el
+    trabajo toque agenda, zona horaria, Web Push o el worker de notificaciones.
 
 ## Criterio
 

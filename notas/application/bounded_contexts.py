@@ -147,7 +147,7 @@ APPLICATION_SERVICE_AREAS: tuple[ApplicationServiceArea, ...] = (
         slug="commands",
         label="Entity Commands",
         entries=("commands",),
-        responsibility="Write-side operations for foods, meals, daily plans, programs, sharing and proposals.",
+        responsibility="Write-side operations for foods, meals, daily plans, programs, calendarization, sharing and proposals.",
     ),
     ApplicationServiceArea(
         slug="comparisons",
@@ -169,6 +169,12 @@ APPLICATION_SERVICE_AREAS: tuple[ApplicationServiceArea, ...] = (
         label="Notifications",
         entries=("notifications",),
         responsibility="Outbound message builders and notification content.",
+    ),
+    ApplicationServiceArea(
+        slug="scheduling",
+        label="Scheduling",
+        entries=("calendarization",),
+        responsibility="Calendarization snapshots, timezone conversion and reusable scheduling rules.",
     ),
     ApplicationServiceArea(
         slug="nutrition_services",
@@ -209,7 +215,9 @@ APPLICATION_SERVICE_AREA_DEPENDENCY_POLICIES: tuple[ApplicationServiceAreaDepend
             "cache",
             "comparisons",
             "food_catalog",
+            "notifications",
             "nutrition_services",
+            "scheduling",
         ),
         rationale="Commands coordinate lower-level services while remaining the write-side entrypoint.",
     ),
@@ -227,6 +235,11 @@ APPLICATION_SERVICE_AREA_DEPENDENCY_POLICIES: tuple[ApplicationServiceAreaDepend
         source_slug="notifications",
         allowed_dependency_slugs=(),
         rationale="Notification builders should not coordinate business service areas.",
+    ),
+    ApplicationServiceAreaDependencyPolicy(
+        source_slug="scheduling",
+        allowed_dependency_slugs=(),
+        rationale="Scheduling helpers stay deterministic and are coordinated by commands.",
     ),
     ApplicationServiceAreaDependencyPolicy(
         source_slug="nutrition_services",

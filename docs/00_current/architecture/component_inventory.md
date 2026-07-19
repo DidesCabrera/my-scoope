@@ -39,6 +39,7 @@ Antes de crear un nuevo componente, revisar si el caso puede resolverse con uno 
 | Proposals | `proposals.css` | estilos de revisión/propuestas; no redefinir cards globales |
 | Comparators | `comparators.css` | estilos de comparación y comparaciones guardadas |
 | Programs | `programs.css` | estilos exclusivos con prefijo `program-` o `program-chart-`; no agregar reglas genéricas |
+| Calendarization | `calendarization.css` | dashboard, agenda fechada y detalle snapshot; usar prefijo `calendarization-` |
 
 ## Componentes consolidados
 

@@ -167,3 +167,4 @@ Consequences
 - `0150-open-food-facts-remains-reference-only.md`: mantiene Open Food Facts como lookup/referencia hasta aprobar explícitamente las obligaciones ODbL del catálogo combinado.
 - `0151-governed-food-catalog-growth-boundary.md`: hace obligatorios dry-run/batch/source, escala controlada y separación importación/publicación/snapshot.
 - `0152-executable-project-control-and-ai-context.md`: adopta un estado ejecutable y sanitizado compartido por CLI, Admin Operations y clientes AI, junto con registros de documentos, transiciones y apuestas basadas en evidencia.
+- `0153-calendarization-snapshots-and-idempotent-web-push.md`: separa la ejecución fechada del programa editable y el evento lógico de cada delivery Web Push por dispositivo.

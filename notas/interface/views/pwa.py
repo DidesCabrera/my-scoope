@@ -33,6 +33,7 @@ def pwa_manifest(request):
     shortcut_dailyplans_url = reverse("dailyplan_list")
     shortcut_meals_url = reverse("meal_list")
     shortcut_foods_url = reverse("food_list")
+    shortcut_calendarization_url = reverse("calendarization_dashboard")
 
     manifest = {
         "name": "MyScoope",
@@ -62,6 +63,12 @@ def pwa_manifest(request):
             },
         ],
         "shortcuts": [
+            {
+                "name": "Calendarizar programa",
+                "short_name": "Calendarizar",
+                "url": shortcut_calendarization_url,
+                "icons": [{"src": icon_192_url, "sizes": "192x192", "type": "image/png"}],
+            },
             {
                 "name": "Mis Planes Diarios",
                 "short_name": "Planes",
@@ -171,6 +178,41 @@ self.addEventListener("fetch", (event) => {
         return cachedResponse || networkFetch;
       })
     ))
+  );
+});
+
+self.addEventListener("push", (event) => {
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch (error) {
+    payload = { title: "MyScoope", body: event.data ? event.data.text() : "" };
+  }
+
+  const title = payload.title || "MyScoope";
+  const options = {
+    body: payload.body || "Tu plan está listo.",
+    data: { url: payload.url || "/app/calendarization/" },
+    tag: payload.tag || "myscoope-calendarization",
+    renotify: false,
+    icon: "/app/icons/192.png",
+    badge: "/app/icons/192.png",
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const targetUrl = new URL(
+    (event.notification.data && event.notification.data.url) || "/app/calendarization/",
+    self.location.origin
+  ).href;
+
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => {
+      const existing = windows.find((client) => client.url === targetUrl);
+      return existing ? existing.focus() : clients.openWindow(targetUrl);
+    })
   );
 });
 """.strip().replace("__CACHE_VERSION__", str(cache_version))

@@ -72,10 +72,11 @@ Ejemplo aplicado:
 |---|---|---|
 | Access | `access` | Helpers de ownership/capabilities usados por bordes y application. |
 | Cache Builders | `cache` | Proyecciones derivadas y summaries cacheados. |
-| Entity Commands | `commands` | Operaciones write-side de foods, meals, daily plans, programs, sharing y proposals. |
+| Entity Commands | `commands` | Operaciones write-side de foods, meals, daily plans, programs, calendarización, sharing y proposals. |
 | Comparisons | `comparisons` | Payloads, snapshots y helpers de comparaciones guardadas. |
 | Food Catalog Services | `food_imports` | Normalización/importación legacy dentro de `notas`; debe evolucionar hacia Food Catalog App como fuente maestra que alimenta snapshots operativos `notas.Food`. |
 | Notifications | `notifications` | Builders de contenido saliente. |
+| Scheduling | `calendarization` | Snapshots y cálculo timezone-aware de instantes/ventanas de agenda. |
 | Nutrition Services | `nutrition` | Agregación nutricional, totales, KPIs y helpers de peso. |
 | Auth Integration | `mcp_user_tokens`, `oauth_authorization_codes` | Servicios de tokens MCP y códigos OAuth. |
 
@@ -85,10 +86,11 @@ Ejemplo aplicado:
 |---|---|---|
 | Access | — | Puede consultar read models, pero no coordina otras áreas de service. |
 | Cache Builders | Food Catalog | Reutiliza normalización de nombres/display de alimentos. |
-| Entity Commands | Cache Builders, Comparisons, Food Catalog, Nutrition Services | Coordina servicios de menor nivel como entrypoint de escritura. |
+| Entity Commands | Cache Builders, Comparisons, Food Catalog, Notifications, Nutrition Services, Scheduling | Coordina servicios de menor nivel como entrypoint de escritura. |
 | Comparisons | — | Mantiene helpers de comparación autocontenidos. |
 | Food Catalog Services | — | Área base de importación/normalización legacy; no debe hacer depender Meals/DailyPlans directamente de fuentes externas. |
 | Notifications | — | No coordina reglas de negocio ni commands. |
+| Scheduling | — | Calcula snapshots y tiempos; no ejecuta deliveries ni depende de commands. |
 | Nutrition Services | Food Catalog | Agregaciones nutricionales reutilizan normalización de alimentos. |
 | Auth Integration | — | OAuth/MCP token services se mantienen aislados de features. |
 

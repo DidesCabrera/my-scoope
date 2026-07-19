@@ -77,6 +77,18 @@ DOMAIN_MODEL_BOUNDARIES: tuple[DomainModelBoundary, ...] = (
         responsibility="Weekly programs and their copied daily-plan days.",
     ),
     DomainModelBoundary(
+        slug="calendarization",
+        label="Calendarization",
+        models=("ProgramCalendarization", "CalendarizedDay"),
+        responsibility="Dated executions and immutable daily snapshots derived from weekly programs.",
+    ),
+    DomainModelBoundary(
+        slug="notification_delivery",
+        label="Notification Delivery",
+        models=("WebPushSubscription", "ScheduledNotificationEvent", "NotificationDelivery"),
+        responsibility="Web Push subscriptions, logical scheduled events and per-device delivery attempts.",
+    ),
+    DomainModelBoundary(
         slug="proposals",
         label="AI Proposals",
         models=("AiNutritionChat", "NutritionProposal", "NutritionProposalAuditEvent"),
@@ -135,6 +147,16 @@ DOMAIN_MODEL_DEPENDENCY_POLICIES: tuple[DomainModelDependencyPolicy, ...] = (
         rationale="Programs store copied daily plans per program day.",
     ),
     DomainModelDependencyPolicy(
+        source_slug="calendarization",
+        allowed_dependency_slugs=("programs",),
+        rationale="Calendarizations retain an optional trace to the source Program and own dated snapshots.",
+    ),
+    DomainModelDependencyPolicy(
+        source_slug="notification_delivery",
+        allowed_dependency_slugs=("calendarization",),
+        rationale="Notification events are scheduled for calendarized days and deliveries remain device-specific.",
+    ),
+    DomainModelDependencyPolicy(
         source_slug="proposals",
         allowed_dependency_slugs=("dailyplans",),
         rationale="Nutrition proposals may reference the created/applied DailyPlan snapshot.",
@@ -162,6 +184,8 @@ DOMAIN_MODEL_MODULE_BY_BOUNDARY_SLUG: dict[str, str] = {
     "sharing": "notas.domain.model_modules.sharing",
     "comparisons": "notas.domain.model_modules.comparisons",
     "proposals": "notas.domain.model_modules.proposals",
+    "calendarization": "notas.domain.model_modules.calendarization",
+    "notification_delivery": "notas.domain.model_modules.notification_delivery",
 }
 
 DOMAIN_MODEL_BOUNDARY_BY_MODEL: dict[str, DomainModelBoundary] = {
