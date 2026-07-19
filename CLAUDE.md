@@ -1,7 +1,7 @@
 # My Scoope
 
 Django 6.0 monolito modular (nutrición/planes de comida). Apps: `notas` (núcleo,
-grande), `food_catalog`, `ai_assistant`, `nutrition_solver`, `admin_analytics`,
+grande), `food_catalog`, `ai_assistant`, `nutrition_solver`, `billing`, `admin_analytics`,
 `admin_operations`, `accounts`, `core`. Settings en `miapp/settings/{base,dev,prod}.py`.
 
 Además, `mcp_server/` (paquete `myscoope_mcp`) es un **subsistema separado e
@@ -35,7 +35,7 @@ La separación completa en 4 capas **no es uniforme para todo el proyecto** — 
 tier de app. Ver ADR [0079](docs/decisions/0079-layer-strictness-by-app-tier.md).
 
 **Tier 1 — split completo obligatorio (no negociable):** `notas`, `ai_assistant`,
-`nutrition_solver`. Ahí:
+`nutrition_solver`, `billing`. Ahí:
 
 - `domain` no importa `application`, `presentation` ni `interface`.
 - `application` no importa `presentation` ni `interface` (nada de `request`,

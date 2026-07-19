@@ -34,6 +34,9 @@ Esta carpeta contiene documentación vigente y de alta autoridad. Una IA o desar
 27. `features/calendarization.md` y
     `../40_technical/operations/calendarization_notifications_runbook.md` cuando el
     trabajo toque agenda, zona horaria, Web Push o el worker de notificaciones.
+28. `features/billing.md`, `../10_active_cycles/billing_payments_tax_documents_cycle.md`
+    y `../20_decisions/0154-billing-payment-tax-boundary.md` cuando el trabajo toque
+    planes pagados, Mercado Pago, OpenFactura, webhooks, conciliación o DTE.
 
 ## Criterio
 

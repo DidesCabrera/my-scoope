@@ -47,6 +47,8 @@ class EnvironmentContractTests(SimpleTestCase):
         for secret_name in (
             "SECRET_KEY", "DATABASE_URL", "EMAIL_HOST_PASSWORD", "SENTRY_DSN",
             "AI_ASSISTANT_OPENAI_API_KEY", "FOOD_CATALOG_FATSECRET_CLIENT_SECRET",
+            "BILLING_MERCADOPAGO_ACCESS_TOKEN", "BILLING_MERCADOPAGO_WEBHOOK_SECRET",
+            "BILLING_OPENFACTURA_API_KEY",
         ):
             self.assertIn(f"{secret_name}=\n", example)
 
@@ -67,6 +69,8 @@ class EnvironmentContractTests(SimpleTestCase):
         self.assertFalse(
             ENVIRONMENT_VARIABLE_SPEC_BY_NAME["MYSCOOPE_VAPID_PUBLIC_KEY"].secret,
         )
+        self.assertTrue(ENVIRONMENT_VARIABLE_SPEC_BY_NAME["BILLING_MERCADOPAGO_ACCESS_TOKEN"].secret)
+        self.assertTrue(ENVIRONMENT_VARIABLE_SPEC_BY_NAME["BILLING_OPENFACTURA_API_KEY"].secret)
 
     def test_invalid_numeric_configuration_fails_with_variable_name(self):
         with patch.dict(os.environ, {"PCF_TEST_INT": "not-a-number"}):

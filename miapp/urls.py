@@ -53,6 +53,9 @@ urlpatterns = [
     ),
     path("accounts/", include("allauth.urls")),
 
+    # External billing callbacks (provider-authenticated, disabled by default)
+    path("billing/", include("billing.interface.urls")),
+
     # Internal product intelligence
     path("staff/analytics/", include("admin_analytics.urls")),
 

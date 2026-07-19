@@ -206,10 +206,12 @@ def build_operations_overview_vm() -> AdminOperationsOverviewVM:
     catalog = metrics["catalog"]
     ai = metrics["ai"]
     accounts = metrics["accounts"]
+    billing = metrics["billing"]
 
     pending_catalog_work = catalog["pending_candidates"] + catalog["catalog_foods_requiring_review"]
     ai_work = int(ai.get("total") or 0) + int(ai.get("pending_ai_proposals") or 0)
     account_work = int(accounts["wallets_with_reserved_credits"] or 0)
+    billing_work = sum(int(value or 0) for value in billing.values())
     warning_count = len(metrics["warnings"])
 
     queues = [
@@ -257,6 +259,23 @@ def build_operations_overview_vm() -> AdminOperationsOverviewVM:
             is_enabled=True,
         ),
         AdminOperationsQueueVM(
+            title="Billing",
+            description="Eventos fallidos, suscripciones morosas, documentos tributarios fallidos y ajustes que requieren revisión.",
+            icon="receipt-text",
+            status="BILL08 workflow activo",
+            href=reverse("admin:billing_taxdocument_changelist"),
+            count=_format_int(billing_work),
+            priority=_queue_priority(billing_work),
+            helper=(
+                f"{_format_int(billing['failed_events'])} eventos · "
+                f"{_format_int(billing['past_due_subscriptions'])} morosas · "
+                f"{_format_int(billing['failed_tax_documents'])} DTE fallidos · "
+                f"{_format_int(billing['tax_adjustments'])} ajustes"
+            ),
+            primary_action_label="Revisar Billing",
+            is_enabled=True,
+        ),
+        AdminOperationsQueueVM(
             title="Audit Log",
             description="Registro append-only de acciones staff ejecutadas desde Admin Operations con actor, target, razón y transición.",
             icon="scroll-text",
@@ -283,8 +302,8 @@ def build_operations_overview_vm() -> AdminOperationsOverviewVM:
         metrics=[
             AdminOperationsMetricVM(
                 label="Trabajo operacional",
-                value=_format_int(pending_catalog_work + ai_work + account_work),
-                helper="Suma inicial de colas detectables con workflows Food Catalog, Accounts y AI activos.",
+                value=_format_int(pending_catalog_work + ai_work + account_work + billing_work),
+                helper="Suma de colas detectables con workflows operacionales activos.",
                 icon="inbox",
             ),
             AdminOperationsMetricVM(

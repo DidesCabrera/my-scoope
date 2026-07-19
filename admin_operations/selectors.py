@@ -11,6 +11,7 @@ from django.utils import timezone
 
 from accounts.models import AccountSubscription, CreditLedger, CreditWallet
 from ai_assistant.models import AIUsageEvent, AIUserCreditQuota
+from billing.models import BillingEvent, ProviderSubscription, TaxDocument
 from food_catalog.application.coverage_manifest import load_coverage_manifest
 from food_catalog.models import CatalogCurationCandidate, CatalogFood, CatalogFoodSource, CatalogImportBatch
 from notas.domain.model_modules.proposals import NutritionProposal
@@ -63,6 +64,12 @@ def get_operations_overview_metrics() -> dict:
         status=NutritionProposal.STATUS_PENDING_REVIEW,
     )
     wallet_qs = CreditWallet.objects.filter(reserved_balance__gt=0)
+    billing = {
+        "failed_events": BillingEvent.objects.filter(status=BillingEvent.Status.FAILED).count(),
+        "past_due_subscriptions": ProviderSubscription.objects.filter(status=ProviderSubscription.Status.PAST_DUE).count(),
+        "failed_tax_documents": TaxDocument.objects.filter(status__in=[TaxDocument.Status.FAILED, TaxDocument.Status.REJECTED]).count(),
+        "tax_adjustments": TaxDocument.objects.filter(adjustment_required=True).count(),
+    }
 
     catalog = {
         "pending_candidates": candidate_qs.count(),
@@ -96,6 +103,7 @@ def get_operations_overview_metrics() -> dict:
         "catalog": catalog,
         "ai": ai,
         "accounts": accounts,
+        "billing": billing,
         "warnings": warnings,
     }
 

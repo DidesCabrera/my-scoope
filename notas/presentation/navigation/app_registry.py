@@ -123,6 +123,15 @@ APP_NAVIGATION = (
                 show_in_sidebar=False,
             ),
             NavGroupSpec(
+                key="billing",
+                label="Billing",
+                icon="credit-card",
+                page_icon="receipt-text",
+                url_name="billing:overview",
+                nav_root="billing",
+                scope="personal",
+            ),
+            NavGroupSpec(
                 key="chat",
                 label="Chats",
                 icon="messages-square",

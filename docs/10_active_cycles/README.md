@@ -35,6 +35,11 @@ Cuando un ciclo planificado empiece a implementarse, el documento puede permanec
 
 ## En curso o pendientes de validación
 
+- `billing_payments_tax_documents_cycle.md`: ciclo activo BILL00-BILL09. Mercado Pago
+  será el primer recaudador y OpenFactura el emisor tributario, con fronteras separadas,
+  verificación server-to-server, inbox/outbox idempotentes y proyección controlada hacia
+  `accounts`. BILL00-BILL09 están implementados en repositorio; checkout, webhook y
+  emisión real siguen desactivados hasta completar sandbox y aprobación contable.
 - `project_control_clarity_foresight_cycle.md`: ciclo PCF00-PCF10 completado localmente
   y pendiente de validación en staging; crea
   una capa de control transversal basada en evidencia: CI alineado con staging,

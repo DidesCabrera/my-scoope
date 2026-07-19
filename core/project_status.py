@@ -213,4 +213,13 @@ def _capability_snapshot() -> dict[str, object]:
                 getattr(settings, "NUTRITION_ONBOARDING_GATE_ENABLED", False)
             ),
         },
+        "billing": {
+            "mercado_pago_checkout_enabled": bool(
+                getattr(settings, "BILLING_MERCADOPAGO_CHECKOUT_ENABLED", False)
+            ),
+            "mercado_pago_webhook_enabled": bool(
+                getattr(settings, "BILLING_MERCADOPAGO_WEBHOOK_ENABLED", False)
+            ),
+            "openfactura_enabled": bool(getattr(settings, "BILLING_OPENFACTURA_ENABLED", False)),
+        },
     }

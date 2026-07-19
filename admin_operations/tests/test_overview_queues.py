@@ -70,6 +70,7 @@ class AdminOperationsOverviewQueueTests(TestCase):
         self.assertEqual(queue_by_title["Food Catalog"].count, "2")
         self.assertEqual(queue_by_title["AI Assistant"].count, "2")
         self.assertEqual(queue_by_title["Accounts & Credits"].count, "1")
+        self.assertEqual(queue_by_title["Billing"].count, "0")
         self.assertEqual(vm.metrics[0].label, "Trabajo operacional")
         self.assertEqual(vm.metrics[0].value, "5")
         self.assertTrue(any(warning.title == "Candidatos de alta prioridad" for warning in vm.warnings))

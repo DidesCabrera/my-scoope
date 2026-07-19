@@ -5,6 +5,7 @@ HOME_VIEWMODE = vm("home", "list", "personal")
 
 # PROFILE  -------------------------------------------
 PROFILE_VIEWMODE = vm("profile", "list", "personal")
+BILLING_VIEWMODE = vm("billing", "list", "personal")
 
 
 # FOOD  ---------------------------------------------

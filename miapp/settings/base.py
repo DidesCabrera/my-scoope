@@ -35,6 +35,19 @@ def _env_int(name: str, default: int = 0) -> int:
         raise ImproperlyConfigured(f"{name} must be an integer, received an invalid value.")
 
 
+def _env_json_object(name: str) -> dict:
+    raw_value = os.environ.get(name, "").strip()
+    if not raw_value:
+        return {}
+    try:
+        value = json.loads(raw_value)
+    except ValueError as exc:
+        raise ImproperlyConfigured(f"{name} must contain valid JSON.") from exc
+    if not isinstance(value, dict):
+        raise ImproperlyConfigured(f"{name} must contain a JSON object.")
+    return value
+
+
 SECRET_KEY = os.environ.get("SECRET_KEY", "")
 
 DEBUG = False
@@ -61,6 +74,7 @@ INSTALLED_APPS = [
     "nutrition_solver.apps.NutritionSolverConfig",
     "admin_analytics.apps.AdminAnalyticsConfig",
     "admin_operations.apps.AdminOperationsConfig",
+    "billing.apps.BillingConfig",
     "notas.apps.NotasConfig",
     "accounts",
     "core",
@@ -207,6 +221,7 @@ NUTRITION_ONBOARDING_GATE_ENABLED = os.environ.get(
 
 NUTRITION_ONBOARDING_ALLOWED_PREFIXES = (
     "/accounts/",
+    "/billing/",
     "/admin/",
     "/staff/",
     "/static/",
@@ -413,6 +428,28 @@ MYSCOOPE_VAPID_SUBJECT = os.environ.get(
     "mailto:notifications@myscoope.com",
 ).strip()
 MYSCOOPE_PWA_CACHE_VERSION = os.environ.get("MYSCOOPE_PWA_CACHE_VERSION", "v2")
+
+# Billing providers are opt-in. Webhooks stay unavailable until explicitly enabled
+# with both Mercado Pago credentials present.
+BILLING_MERCADOPAGO_WEBHOOK_ENABLED = _env_bool("BILLING_MERCADOPAGO_WEBHOOK_ENABLED", False)
+BILLING_MERCADOPAGO_CHECKOUT_ENABLED = _env_bool("BILLING_MERCADOPAGO_CHECKOUT_ENABLED", False)
+BILLING_PUBLIC_BASE_URL = os.environ.get("BILLING_PUBLIC_BASE_URL", "").strip()
+BILLING_MERCADOPAGO_ACCESS_TOKEN = os.environ.get("BILLING_MERCADOPAGO_ACCESS_TOKEN", "").strip()
+BILLING_MERCADOPAGO_WEBHOOK_SECRET = os.environ.get("BILLING_MERCADOPAGO_WEBHOOK_SECRET", "").strip()
+BILLING_MERCADOPAGO_API_BASE_URL = os.environ.get(
+    "BILLING_MERCADOPAGO_API_BASE_URL", "https://api.mercadopago.com"
+).strip()
+BILLING_MERCADOPAGO_TIMEOUT_SECONDS = _env_int("BILLING_MERCADOPAGO_TIMEOUT_SECONDS", 10)
+BILLING_MERCADOPAGO_WEBHOOK_TOLERANCE_SECONDS = _env_int(
+    "BILLING_MERCADOPAGO_WEBHOOK_TOLERANCE_SECONDS", 300
+)
+BILLING_OPENFACTURA_ENABLED = _env_bool("BILLING_OPENFACTURA_ENABLED", False)
+BILLING_OPENFACTURA_API_KEY = os.environ.get("BILLING_OPENFACTURA_API_KEY", "").strip()
+BILLING_OPENFACTURA_API_BASE_URL = os.environ.get(
+    "BILLING_OPENFACTURA_API_BASE_URL", "https://dev-api.haulmer.com"
+).strip()
+BILLING_OPENFACTURA_TIMEOUT_SECONDS = _env_int("BILLING_OPENFACTURA_TIMEOUT_SECONDS", 10)
+BILLING_OPENFACTURA_ISSUER_JSON = _env_json_object("BILLING_OPENFACTURA_ISSUER_JSON")
 
 DEFAULT_FROM_EMAIL = os.environ.get(
     "DEFAULT_FROM_EMAIL",

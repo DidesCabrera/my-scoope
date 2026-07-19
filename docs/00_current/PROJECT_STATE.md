@@ -26,6 +26,7 @@ My Scoope is past the first architecture-expansion phase. The current priority i
 | --- | --- |
 | `notas` | Legacy/product core for operational nutrition entities such as foods, meals, plans, programs and proposals while extraction continues. |
 | `accounts` | User/account domain, onboarding ownership, commercial plans, subscriptions, credits and entitlements. |
+| `billing` | Provider-neutral payment and tax-document integration boundary; projects verified commercial state into `accounts`. |
 | `ai_assistant` | Chat experience, LLM provider integration, tool orchestration, guarded proposal creation and AI usage observability. |
 | `food_catalog` | Master food catalog, import/curation workflows, source governance and controlled bridge toward operational foods. |
 | `nutrition_solver` | Deterministic nutrition optimization, meal grammar, constraints, alternatives, quality diagnostics and backend selection, without being a direct user UI. |
@@ -42,6 +43,7 @@ My Scoope is past the first architecture-expansion phase. The current priority i
 - AI Assistant behavior should favor LLM freedom through typed tool contracts over prompt over-structuring or deterministic conversational guards.
 - Behavioral alignment should direct the assistant through product purpose, current state, capabilities and boundaries rather than fixed dialogue scripts.
 - User-visible credits are product/account concepts; provider tokens and costs are internal observability concepts.
+- External payment evidence and tax-document lifecycle belong to `billing`; verified outcomes project into `accounts`, which remains the entitlement source of truth.
 - Food Catalog is the master/curation layer; operational `notas.Food` remains the runtime snapshot consumed by existing flows.
 - Nutrition Solver should provide reusable calculation/validation capability, mainly through AI Assistant and backend integrations.
 - Nutrition Solver consumes versioned capability snapshots from operational `notas.Food`; Food Catalog
@@ -93,6 +95,7 @@ When a plan becomes real, durable outcomes should be promoted into `docs/00_curr
 - Admin Operations V1 as an operational staff console.
 - Admin Analytics as a strategic staff dashboard.
 - Account plans/credits ownership moved toward `accounts`.
+- Billing BILL00-BILL09 separates Mercado Pago collection, account entitlements and OpenFactura DTEs; checkout, signed webhooks, idempotent issuance, reconciliation, reversals and operations queues are implemented while real traffic remains disabled pending sandbox and accounting gates.
 - Nutrition Solver separation baseline.
 - Food Catalog launch-readiness cycle.
 - AI Assistant activation/observability/credits guardrails.
@@ -102,7 +105,7 @@ When a plan becomes real, durable outcomes should be promoted into `docs/00_curr
   snapshots, multi-capability meal grammar, bounded combination planning, a deterministic CP-SAT
   backend, whole-day constraints, alternatives, shadow quality gates and controlled DailyPlan
   proposal activation. The heuristic path remains the default rollback until rollout evidence is accepted.
-- Project Control, Clarity & Foresight PCF00-PCF10 aligns staging CI, formalizes 76
+- Project Control, Clarity & Foresight PCF00-PCF10 aligns staging CI; the executable environment contract now formalizes 90
   environment variables, adds safe environment and OAuth diagnostics, exposes one
   executable status contract through CLI/Admin Operations/AI, validates 153 cycle and
   decision documents, tracks six architectural transitions and maintains five

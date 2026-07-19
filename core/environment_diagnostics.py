@@ -175,6 +175,53 @@ def _integration_findings(environment: str) -> list[DiagnosticFinding]:
         ),
         action="Disable FatSecret or configure both credential fields." if fatsecret_enabled and not fatsecret_ready else "",
     ))
+    mercado_pago_enabled = bool(getattr(settings, "BILLING_MERCADOPAGO_WEBHOOK_ENABLED", False))
+    mercado_pago_checkout_enabled = bool(getattr(settings, "BILLING_MERCADOPAGO_CHECKOUT_ENABLED", False))
+    mercado_pago_ready = bool(getattr(settings, "BILLING_MERCADOPAGO_ACCESS_TOKEN", "")) and bool(
+        getattr(settings, "BILLING_MERCADOPAGO_WEBHOOK_SECRET", "")
+    )
+    findings.append(DiagnosticFinding(
+        code="billing.mercado_pago",
+        status="error" if mercado_pago_enabled and not mercado_pago_ready else "ok",
+        category="billing",
+        summary=(
+            "Mercado Pago webhooks are enabled with credentials."
+            if mercado_pago_enabled and mercado_pago_ready
+            else "Mercado Pago webhooks are disabled."
+            if not mercado_pago_enabled
+            else "Mercado Pago webhooks are enabled without complete credentials."
+        ),
+        action=(
+            "Disable the webhook or configure its access token and signing secret."
+            if mercado_pago_enabled and not mercado_pago_ready
+            else ""
+        ),
+    ))
+    public_base_url = str(getattr(settings, "BILLING_PUBLIC_BASE_URL", ""))
+    findings.append(DiagnosticFinding(
+        code="billing.mercado_pago_checkout",
+        status="error" if mercado_pago_checkout_enabled and (not mercado_pago_ready or not public_base_url.startswith("https://")) else "ok",
+        category="billing",
+        summary="Mercado Pago checkout is ready." if mercado_pago_checkout_enabled and mercado_pago_ready and public_base_url.startswith("https://") else "Mercado Pago checkout is disabled." if not mercado_pago_checkout_enabled else "Mercado Pago checkout is missing credentials or a public HTTPS URL.",
+        action="Configure the access token and BILLING_PUBLIC_BASE_URL, or disable checkout." if mercado_pago_checkout_enabled and (not mercado_pago_ready or not public_base_url.startswith("https://")) else "",
+    ))
+    openfactura_enabled = bool(getattr(settings, "BILLING_OPENFACTURA_ENABLED", False))
+    openfactura_ready = bool(getattr(settings, "BILLING_OPENFACTURA_API_KEY", "")) and bool(
+        getattr(settings, "BILLING_OPENFACTURA_ISSUER_JSON", {})
+    )
+    findings.append(DiagnosticFinding(
+        code="billing.openfactura",
+        status="error" if openfactura_enabled and not openfactura_ready else "ok",
+        category="billing",
+        summary=(
+            "OpenFactura is enabled with an API key."
+            if openfactura_enabled and openfactura_ready
+            else "OpenFactura is disabled."
+            if not openfactura_enabled
+            else "OpenFactura is enabled without an API key."
+        ),
+        action="Disable OpenFactura or configure its API key and approved issuer JSON." if openfactura_enabled and not openfactura_ready else "",
+    ))
     return findings
 
 
@@ -237,4 +284,3 @@ def _configuration_summary() -> tuple[dict[str, object], ...]:
             "configured": bool(os.environ.get(spec.name, "").strip()),
         })
     return tuple(summary)
-
