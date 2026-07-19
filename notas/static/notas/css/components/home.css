@@ -2219,6 +2219,244 @@
   color: currentColor;
 }
 
+/* Home calendarization: current Monday-to-Sunday agenda */
+.home-calendar {
+  width: min(100%, 940px);
+  margin: 0 auto 72px;
+  padding: 28px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-card);
+}
+
+.home-calendar__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-5);
+}
+
+.home-calendar__eyebrow {
+  margin: 0 0 var(--space-2);
+  color: var(--entity-program);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.home-calendar__heading h2 {
+  margin: 0;
+  color: var(--text-main);
+  font-size: clamp(1.35rem, 2.2vw, 1.85rem);
+  letter-spacing: -0.025em;
+}
+
+.home-calendar__program-name,
+.home-calendar__empty-state {
+  margin: var(--space-2) 0 0;
+  color: var(--text-muted);
+}
+
+.home-calendar__program-name {
+  color: var(--text-main);
+  font-weight: 650;
+}
+
+.home-calendar__manage-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 40px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-pill);
+  color: var(--text-main);
+  text-decoration: none;
+  transition: background 0.16s ease, border-color 0.16s ease;
+}
+
+.home-calendar__manage-link:hover {
+  border-color: var(--border-strong);
+  background: var(--interactive-hover);
+}
+
+.home-calendar__manage-link svg {
+  width: 17px;
+  height: 17px;
+}
+
+.home-calendar__week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+.home-calendar__day {
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-main);
+  font: inherit;
+  cursor: pointer;
+}
+
+.home-calendar__weekday,
+.home-calendar__today-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.home-calendar__weekday {
+  color: var(--text-muted);
+}
+
+.home-calendar__today-label {
+  min-height: 0.72rem;
+  color: var(--entity-program);
+}
+
+.home-calendar__date-circle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: clamp(48px, 7vw, 64px);
+  aspect-ratio: 1;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--surface-card);
+  transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+}
+
+.home-calendar__date-circle strong {
+  font-size: clamp(1rem, 2.1vw, 1.25rem);
+  line-height: 1;
+}
+
+.home-calendar__date-circle small {
+  margin-top: 3px;
+  color: var(--text-muted);
+  font-size: 0.67rem;
+  line-height: 1;
+  text-transform: lowercase;
+}
+
+.home-calendar__day--past .home-calendar__date-circle {
+  border-color: var(--border-default);
+  background: var(--surface-card-muted);
+  color: var(--text-soft);
+  opacity: 0.68;
+}
+
+.home-calendar__day--future .home-calendar__date-circle {
+  border-style: dashed;
+  background: var(--surface-card);
+}
+
+.home-calendar__day--today .home-calendar__date-circle,
+.home-calendar__day.is-selected .home-calendar__date-circle {
+  border-color: var(--entity-program);
+  background: var(--entity-program);
+  color: var(--text-inverted);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--entity-program) 18%, transparent);
+}
+
+.home-calendar__day--today .home-calendar__date-circle small,
+.home-calendar__day.is-selected .home-calendar__date-circle small {
+  color: var(--text-inverted);
+}
+
+.home-calendar__day:hover .home-calendar__date-circle {
+  transform: translateY(-2px);
+}
+
+.home-calendar__day:focus-visible {
+  outline: 2px solid var(--interactive-primary);
+  outline-offset: 5px;
+  border-radius: var(--radius-md);
+}
+
+.home-calendar__plans {
+  margin-top: var(--space-5);
+}
+
+.home-calendar__plan-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-4);
+  min-height: 112px;
+  padding: var(--space-5);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card-muted);
+}
+
+.home-calendar__plan-card[hidden] {
+  display: none;
+}
+
+.home-calendar__plan-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--entity-dailyplan);
+  color: var(--text-inverted);
+}
+
+.home-calendar__plan-icon svg {
+  width: 21px;
+  height: 21px;
+}
+
+.home-calendar__plan-copy > span {
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  text-transform: capitalize;
+}
+
+.home-calendar__plan-copy h3 {
+  margin: 4px 0;
+  color: var(--text-main);
+  font-size: 1rem;
+}
+
+.home-calendar__plan-copy p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+}
+
+.home-calendar__plan-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--interactive-primary);
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.home-calendar__plan-link svg {
+  width: 18px;
+  height: 18px;
+}
+
+.home-calendar__plan-link:hover span {
+  text-decoration: underline;
+}
+
 /* AI chat history list */
 .ai-chat-history-list {
   display: flex;
@@ -2389,6 +2627,39 @@
   .home-ai-intake--composer .home-ai-intake__submit {
     width: 44px;
     height: 44px;
+  }
+
+  .home-calendar {
+    margin-bottom: 56px;
+    padding: 22px 16px;
+  }
+
+  .home-calendar__heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .home-calendar__manage-link {
+    align-self: flex-start;
+  }
+
+  .home-calendar__week {
+    gap: 4px;
+  }
+
+  .home-calendar__date-circle {
+    width: clamp(40px, 11vw, 48px);
+  }
+
+  .home-calendar__plan-card {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .home-calendar__plan-link {
+    grid-column: 1 / -1;
+    justify-content: space-between;
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border-default);
   }
 }
 

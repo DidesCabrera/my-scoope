@@ -18,6 +18,10 @@ from notas.presentation.config.viewmodel_config import (
 )
 
 from notas.presentation.viewmodels.components.header_vm import HeaderVM
+from notas.presentation.pages.home_calendarization import (
+    HomeCalendarizationVM,
+    build_home_calendarization_vm,
+)
 
 from notas.presentation.composition.viewmodel.components.builder_headers import build_page_header
 
@@ -41,6 +45,7 @@ class HomeContentVM:
     header: HeaderVM
     hero: HomeHeroVM
     stats: List[HomeStatVM]
+    calendarization: HomeCalendarizationVM
 
 
 
@@ -130,7 +135,8 @@ def home_view(request):
                 icon="carrot",
                 url=reverse("food_list"),
             ),
-        ]
+        ],
+        calendarization=build_home_calendarization_vm(user),
     )
 
     ui_vm = build_ui_vm(HOME_VIEWMODE)

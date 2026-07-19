@@ -129,6 +129,79 @@
     </form>
   </section>
 
+  <section class="home-calendar" aria-labelledby="home-calendar-title" data-home-calendar>
+    <div class="home-calendar__heading">
+      <div>
+        <p class="home-calendar__eyebrow">Calendarización</p>
+        <h2 id="home-calendar-title">Programa Calendarizado</h2>
+        {% if vm.content.calendarization.has_calendarization %}
+          <p class="home-calendar__program-name">{{ vm.content.calendarization.program_name }}</p>
+        {% else %}
+          <p class="home-calendar__empty-state">No tienes un programa calendarizado</p>
+        {% endif %}
+      </div>
+      <a class="home-calendar__manage-link" href="{{ vm.content.calendarization.dashboard_url }}">
+        <span>Administrar</span>
+        <i data-lucide="arrow-up-right" aria-hidden="true"></i>
+      </a>
+    </div>
+
+    <div class="home-calendar__week" role="tablist" aria-label="Semana actual, de lunes a domingo">
+      {% for day in vm.content.calendarization.days %}
+        <button
+          type="button"
+          class="home-calendar__day home-calendar__day--{{ day.temporal_state }}{% if day.is_today %} is-selected{% endif %}"
+          role="tab"
+          aria-selected="{% if day.is_today %}true{% else %}false{% endif %}"
+          aria-controls="{{ day.panel_id }}"
+          aria-label="{{ day.accessible_date }}"
+          data-home-calendar-day
+        >
+          <span class="home-calendar__weekday" aria-hidden="true">{{ day.weekday_label }}</span>
+          <span class="home-calendar__date-circle" aria-hidden="true">
+            <strong>{{ day.date_number }}</strong>
+            <small>{{ day.month_label }}</small>
+          </span>
+          <span class="home-calendar__today-label"{% if not day.is_today %} aria-hidden="true"{% endif %}>{% if day.is_today %}Hoy{% else %}&nbsp;{% endif %}</span>
+        </button>
+      {% endfor %}
+    </div>
+
+    <div class="home-calendar__plans" aria-live="polite">
+      {% for day in vm.content.calendarization.days %}
+        <article
+          id="{{ day.panel_id }}"
+          class="home-calendar__plan-card"
+          role="tabpanel"
+          {% if not day.is_today %}hidden{% endif %}
+        >
+          <div class="home-calendar__plan-icon" aria-hidden="true">
+            <i data-lucide="clipboard-list"></i>
+          </div>
+          <div class="home-calendar__plan-copy">
+            <span>{{ day.accessible_date }}</span>
+            {% if day.has_plan %}
+              <h3>{{ day.plan_name }}</h3>
+              <p>Plan diario asignado a esta fecha.</p>
+            {% elif vm.content.calendarization.has_calendarization %}
+              <h3>Sin plan diario</h3>
+              <p>El programa calendarizado no tiene un plan asignado a esta fecha.</p>
+            {% else %}
+              <h3>No hay plan para esta fecha</h3>
+              <p>Calendariza un programa para consultar aquí cada plan diario.</p>
+            {% endif %}
+          </div>
+          {% if day.detail_url %}
+            <a class="home-calendar__plan-link" href="{{ day.detail_url }}">
+              <span>Ver detalle del plan diario</span>
+              <i data-lucide="chevron-right" aria-hidden="true"></i>
+            </a>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+
   <!-- STATS ================================================= -->
   <section class="home-stats">
 
@@ -268,6 +341,7 @@
 
 <script src="{% static 'notas/js/collapse_cards.js' %}" defer></script>
 <script src="{% static 'notas/js/home_banner_carousel.js' %}" defer></script>
+<script src="{% static 'notas/js/home_calendarization.js' %}" defer></script>
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
