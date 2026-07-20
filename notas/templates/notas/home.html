@@ -120,7 +120,7 @@
         id="home-ai-intake-prompt"
         name="prompt"
         rows="1"
-        placeholder="Quiero una dieta para baja mi grasa corporal..."
+        placeholder="Pídeme lo que necesites..."
         required
       ></textarea>
       <button type="submit" class="home-ai-intake__submit" aria-label="Enviar solicitud">
@@ -171,8 +171,13 @@
       {% for day in vm.content.calendarization.days %}
         <article
           id="{{ day.panel_id }}"
-          class="home-calendar__plan-card"
+          class="home-calendar__plan-card{% if day.has_plan %} home-calendar__plan-card--expandable{% endif %}"
           role="tabpanel"
+          {% if day.has_plan %}
+            tabindex="0"
+            aria-expanded="false"
+            data-home-calendar-plan-card
+          {% endif %}
           {% if not day.is_today %}hidden{% endif %}
         >
           <div class="home-calendar__plan-icon" aria-hidden="true">
@@ -193,9 +198,64 @@
           </div>
           {% if day.detail_url %}
             <a class="home-calendar__plan-link" href="{{ day.detail_url }}">
-              <span>Ver detalle del plan diario</span>
+              <span>Ver detalle calendarizado</span>
               <i data-lucide="chevron-right" aria-hidden="true"></i>
             </a>
+          {% endif %}
+
+          {% if day.has_plan and day.plan_snapshot %}
+            <div class="home-calendar__plan-preview" hidden data-home-calendar-plan-preview>
+              <section class="card-title main home-calendar__dailyplan-card">
+                <div class="card-title-comp">
+                  <div class="main-title main-card">
+                    <h1>{{ day.plan_snapshot.name }}</h1>
+                    <div class="structural-indicators">
+                      <span class="structural-item">
+                        <span class="structural-value">{{ day.plan_snapshot.meals|length }}</span>
+                        <i data-lucide="utensils" class="structural-icon main"></i>
+                      </span>
+                    </div>
+                  </div>
+                  <div class="icons-title">
+                    <i data-lucide="clipboard-list" class="home-section-header-icon main dailyplan"></i>
+                  </div>
+                </div>
+              </section>
+
+              <div class="page-kpi home-calendar__dailyplan-kpis">
+                <h3>Información Nutricional</h3>
+                <div class="calendarization-macros">
+                  <span>{{ day.plan_snapshot.totals.total_kcal|floatformat:0 }} kcal</span>
+                  <span>P {{ day.plan_snapshot.totals.protein_g|floatformat:1 }} g</span>
+                  <span>C {{ day.plan_snapshot.totals.carbs_g|floatformat:1 }} g</span>
+                  <span>G {{ day.plan_snapshot.totals.fat_g|floatformat:1 }} g</span>
+                </div>
+              </div>
+
+              <div class="detail-section dailyplan home-calendar__dailyplan-meals">
+                <h3>Comidas en este Plan</h3>
+                <div class="calendarization-meals">
+                  {% for meal in day.plan_snapshot.meals %}
+                    <article>
+                      <div>
+                        <span>{% if meal.hour %}{{ meal.hour }}{% else %}Sin hora{% endif %}</span>
+                        <h3>{{ meal.name }}</h3>
+                        {% if meal.note %}<p>{{ meal.note }}</p>{% endif %}
+                      </div>
+                      <ul>
+                        {% for food in meal.foods %}
+                          <li>{{ food.name }} <span>{{ food.quantity_g|floatformat:0 }} g</span></li>
+                        {% empty %}
+                          <li>Sin alimentos</li>
+                        {% endfor %}
+                      </ul>
+                    </article>
+                  {% empty %}
+                    <p>Este plan no contiene comidas.</p>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
           {% endif %}
         </article>
       {% endfor %}

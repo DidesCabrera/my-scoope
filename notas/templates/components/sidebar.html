@@ -2,52 +2,38 @@
 
 <aside class="sidebar">
 
+    <div class="block-logo-sidebar">
+        <a href="{% url 'home_view' %}" class="sidebar-brand-link" aria-label="Ir a inicio">
+            <i data-lucide="house" class="sidebar-brand-home-icon"></i>
+            <img src="{% static 'img/logo-white.png' %}" alt="Logo" class="brand-logo">
+        </a>
+        {% if request.user.is_authenticated %}
+            <button
+                type="button"
+                class="sidebar-profile-shortcut {% if request.resolver_match.url_name == 'profile_detail' %}is-active{% endif %}"
+                aria-label="Abrir profile"
+                title="Profile"
+                data-profile-panel-open
+            >
+                <i data-lucide="circle-user-round" class="sidebar-profile-shortcut-icon"></i>
+            </button>
+        {% endif %}
+        <button class="collapse-sidebar-btn" type="button" onclick="toggleSidebar()" aria-label="Contraer o expandir sidebar" title="Contraer o expandir sidebar">
+            <i data-lucide="panel-right" class="collapse-sidebar-icon"></i>
+        </button>
+    </div>
+
     <div class="sidebar-scroll-region">
 
-        <div class="block-logo-sidebar">
-            <a href="{% url 'home_view' %}" class="sidebar-brand-link" aria-label="Ir a inicio">
-                <i data-lucide="house" class="sidebar-brand-home-icon"></i>
-                <img src="{% static 'img/logo-white.png' %}" alt="Logo" class="brand-logo">
-            </a>
-            {% if request.user.is_authenticated %}
-                <a
-                    href="{% url 'profile_detail' %}"
-                    class="sidebar-profile-shortcut {% if request.resolver_match.url_name == 'profile_detail' %}is-active{% endif %}"
-                    aria-label="Ir a mi perfil"
-                    title="Mi perfil"
-                >
-                    <i data-lucide="circle-user-round" class="sidebar-profile-shortcut-icon"></i>
-                </a>
-            {% endif %}
-            <button class="collapse-sidebar-btn" type="button" onclick="toggleSidebar()" aria-label="Contraer o expandir sidebar" title="Contraer o expandir sidebar">
-                <i data-lucide="panel-right" class="collapse-sidebar-icon"></i>
-            </button>
-        </div>
-
-        {% if request.user.is_authenticated %}
-            <a href="{% url 'profile_detail' %}" class="user-block user-block--link" aria-label="Ir a mi perfil">
-                <div class="user">
-                    <i data-lucide="circle-user-round" class="profile-icon"></i>
-                    <h2>{{ request.user.username }}</h2>
-                    <div class="label-rol">
-                        {% if request.user.profile.role == "member" %}Member{% endif %}
-                        {% if request.user.profile.role == "nutritionist" %}Nutri{% endif %}
-                    </div>
-                    <i data-lucide="chevron-right" class="enter-user-icon"></i>
-                </div>
-
-                <div class="personal-metrics">
-                    <i data-lucide="scale" class="sidebar-weight-icon"></i>
-                    <span class="weight-sidebar">{{ current_weight }}kg</span>
-                </div>
-            </a>
-        {% endif %}
+        <div class="sidebar-main-panel">
 
         <nav class="sidebar-nav">
             {% for section in vm.ui.sidebar_sections %}
                 {% if section.key != "admin" or request.user.is_staff or request.user.is_superuser %}
                     <div class="sidebar-section sidebar-section--{{ section.key }}">
-                        <p class="group-name-sidebar">{{ section.label }}</p>
+                        {% if section.key != "account" %}
+                            <p class="group-name-sidebar">{{ section.label }}</p>
+                        {% endif %}
 
                         {% for group in section.groups %}
                             <div class="sidebar-group sidebar-group--{{ group.key }} {% if group.is_open %}is-open{% endif %} {% if group.is_link %}sidebar-group--link{% endif %} {% if group.is_active and not group.is_link %}is-current{% endif %}">
@@ -135,47 +121,75 @@
                 {% endif %}
             {% endfor %}
         </nav>
+        </div>
+
+        {% if request.user.is_authenticated %}
+            <div class="sidebar-profile-panel" aria-hidden="true">
+                <nav class="sidebar-profile-menu" aria-label="Profile">
+                    <a href="{% url 'profile_detail' %}#profile-account"
+                       class="sidebar-profile-menu__item"
+                       data-profile-menu-item="profile-account">
+                        <i data-lucide="user-round" class="sidebar-profile-menu__icon"></i>
+                        <span>Datos de Cuenta</span>
+                    </a>
+                    <a href="{% url 'profile_detail' %}#profile-personal"
+                       class="sidebar-profile-menu__item"
+                       data-profile-menu-item="profile-personal">
+                        <i data-lucide="id-card" class="sidebar-profile-menu__icon"></i>
+                        <span>Ficha Personal</span>
+                    </a>
+                    <a href="{% url 'billing:overview' %}"
+                       class="sidebar-profile-menu__item {% if request.resolver_match.namespace == 'billing' %}is-active{% endif %}">
+                        <i data-lucide="credit-card" class="sidebar-profile-menu__icon"></i>
+                        <span>Billing</span>
+                    </a>
+                    <a href="{% url 'profile_detail' %}#profile-credits"
+                       class="sidebar-profile-menu__item"
+                       data-profile-menu-item="profile-credits">
+                        <i data-lucide="wallet-cards" class="sidebar-profile-menu__icon"></i>
+                        <span>Uso de créditos</span>
+                    </a>
+
+                    <div class="sidebar-profile-menu__divider"></div>
+
+                    <form method="post" action="{% url 'account_logout' %}" class="sidebar-profile-menu__form">
+                        {% csrf_token %}
+                        <button type="submit" class="sidebar-profile-menu__item sidebar-profile-menu__item--button">
+                            <i data-lucide="log-out" class="sidebar-profile-menu__icon"></i>
+                            <span>Cerrar sesion</span>
+                        </button>
+                    </form>
+
+                    <button type="button" class="sidebar-profile-menu__item sidebar-profile-menu__item--button sidebar-profile-menu__item--danger" disabled>
+                        <i data-lucide="trash-2" class="sidebar-profile-menu__icon"></i>
+                        <span>Eliminar cuenta</span>
+                    </button>
+                </nav>
+            </div>
+        {% endif %}
 
     </div>
 
-    <section class="sidebar-ai-panel" aria-label="Asistencia de IA">
-        <p class="sidebar-ai-panel__eyebrow">
-            <i data-lucide="sparkles" class="sidebar-ai-panel__button-icon"></i>
-            IA para My Scoope
-        </p>
-    
-        <p class="sidebar-ai-panel__title">
-            Recibe la asistencia de tu IA
-        </p>
-    
-        <button
-            type="button"
-            class="sidebar-ai-panel__button js-copy-chatgpt-prompt"
-            data-chatgpt-url="https://chatgpt.com/"
-        >
-            <i data-lucide="copy" class="sidebar-ai-panel__button-icon"></i>
-            <span>Copiar prompt e ir a ChatGPT</span>
-        </button>
-    
-        <p class="sidebar-ai-panel__feedback js-copy-chatgpt-feedback" aria-live="polite"></p>
-    
-        <template id="sidebar-ai-prompt">
-    Actúa como asistente experto de My Scoope.
-    
-    Ayúdame a usar la plataforma para construir, analizar y mejorar mis planes diarios de alimentación, comidas y alimentos.
-    
-    Contexto de My Scoope:
-    - My Scoope permite gestionar planes diarios de alimentación.
-    - Un plan diario contiene comidas.
-    - Una comida contiene alimentos y porciones.
-    - Los KPIs principales son kcal totales, proteína, carbohidratos, grasas, PPK y distribución calórica.
-    - En esta conversación no tienes acceso directo a mi cuenta ni a mis datos de My Scoope, salvo que yo te los entregue.
-    - No inventes datos: si necesitas información del plan, comida o alimento, pídemela.
-    
-    Primero pregúntame qué quiero lograr hoy dentro de My Scoope.
-    Luego guíame paso a paso con instrucciones claras.
-        </template>
-    </section>
+    {% if request.user.is_authenticated %}
+        <div class="sidebar-footer">
+            <button type="button" class="user-block user-block--link" aria-label="Abrir profile" data-profile-panel-open>
+                <div class="user">
+                    <i data-lucide="circle-user-round" class="profile-icon"></i>
+                    <h2>{{ request.user.username }}</h2>
+                    <div class="label-rol">
+                        {% if request.user.profile.role == "member" %}Member{% endif %}
+                        {% if request.user.profile.role == "nutritionist" %}Nutri{% endif %}
+                    </div>
+                    <i data-lucide="chevron-right" class="enter-user-icon"></i>
+                </div>
+
+                <div class="personal-metrics">
+                    <i data-lucide="scale" class="sidebar-weight-icon"></i>
+                    <span class="weight-sidebar">{{ current_weight }}kg</span>
+                </div>
+            </button>
+        </div>
+    {% endif %}
 
 </aside>
 

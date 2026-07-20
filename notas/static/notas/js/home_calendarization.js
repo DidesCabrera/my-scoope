@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const dayButtons = Array.from(calendar.querySelectorAll("[data-home-calendar-day]"));
   const panels = Array.from(calendar.querySelectorAll('[role="tabpanel"]'));
+  const planCards = Array.from(calendar.querySelectorAll("[data-home-calendar-plan-card]"));
 
   function selectDay(selectedButton) {
     dayButtons.forEach(function (button) {
@@ -20,9 +21,44 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  function setPlanCardExpanded(card, isExpanded) {
+    const preview = card.querySelector("[data-home-calendar-plan-preview]");
+
+    if (!preview) {
+      return;
+    }
+
+    card.classList.toggle("is-expanded", isExpanded);
+    card.setAttribute("aria-expanded", isExpanded ? "true" : "false");
+    preview.hidden = !isExpanded;
+  }
+
+  function togglePlanCard(card) {
+    setPlanCardExpanded(card, !card.classList.contains("is-expanded"));
+  }
+
   dayButtons.forEach(function (button) {
     button.addEventListener("click", function () {
       selectDay(button);
+    });
+  });
+
+  planCards.forEach(function (card) {
+    card.addEventListener("click", function (event) {
+      if (event.target.closest("a, button, input, textarea, select")) {
+        return;
+      }
+
+      togglePlanCard(card);
+    });
+
+    card.addEventListener("keydown", function (event) {
+      if (event.key !== "Enter" && event.key !== " ") {
+        return;
+      }
+
+      event.preventDefault();
+      togglePlanCard(card);
     });
   });
 });

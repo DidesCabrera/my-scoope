@@ -116,11 +116,11 @@
   
   .home-stat-icon {
     color: #ffffff;
-    height: 18px;
-    width: 18px;
+    height: 30px;
+    width: 30px;
     flex-shrink: 0;
-    padding: 3px;
-    border-radius: 5px;
+    padding: 6px;
+    border-radius: 9px;
   }
   
   .home-stat-icon.food {
@@ -507,10 +507,10 @@
     }
   
     .home-stat-icon {
-      height: 18px;
-      width: 18px;
-      padding: 3px;
-      border-radius: 5px;
+      height: 38px;
+      width: 38px;
+      padding: 8px;
+      border-radius: 12px;
     }
 
   }

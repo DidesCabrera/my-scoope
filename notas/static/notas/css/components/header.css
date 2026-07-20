@@ -19,7 +19,7 @@
 
   z-index: var(--z-header);
 
-  transition: left 0.2s ease;
+  transition: left 0.2s ease, background-color 0.18s ease;
 
   transform: translateZ(0);
   will-change: transform;
@@ -48,6 +48,10 @@
 
 .page-header-left a {
   color: var(--text-main);
+}
+
+body.page-home:not(.home-header-meta-visible) .page-header {
+  background-color: transparent;
 }
 
 .header-title-mobile {
@@ -89,6 +93,16 @@ body.page-header-meta-deferred.page-header-meta-visible .page-header .header-tit
 }
 
 @media (min-width: 981px) {
+  body.page-detail.page-header-meta-deferred .page-header .label-entity.header,
+  body.page-detail.page-header-meta-deferred .page-header .header-title-mobile,
+  body.page-detail.page-header-meta-deferred .page-header .header-breadcrumbs {
+    display: flex;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: none;
+  }
+
   body.page-header-meta-deferred .page-header .header-breadcrumbs {
     display: block;
     opacity: 0;
@@ -403,4 +417,3 @@ body.page-header-meta-deferred.page-header-meta-visible .page-header .header-tit
     padding: 4px;
   }
 }
-

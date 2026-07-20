@@ -45,6 +45,7 @@ class HomeCalendarDayVM:
     has_plan: bool
     plan_name: str
     detail_url: str | None
+    plan_snapshot: dict | None
 
 
 @dataclass(frozen=True)
@@ -107,6 +108,7 @@ def build_home_calendarization_vm(user, *, now: datetime | None = None) -> HomeC
                     if has_plan
                     else None
                 ),
+                plan_snapshot=(calendarized_day.plan_snapshot if has_plan else None),
             )
         )
 

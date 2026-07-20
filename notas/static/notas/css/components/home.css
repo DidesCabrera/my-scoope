@@ -24,59 +24,59 @@
    HOME BRAND
    ========================= */
 
-   .home-brand-strip {
+.home-brand-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.home-brand-logo {
+  display: block;
+  width: 18%;
+  max-width: none;
+  height: auto;
+  object-fit: contain;
+}
+
+.home-brand-logo--dark {
+  display: none;
+}
+
+html[data-theme="dark"] .home-brand-logo--light {
+  display: none;
+}
+
+html[data-theme="dark"] .home-brand-logo--dark {
+  display: block;
+}
+
+@media (max-width: 980px) {
+  body.page-home .page-header .label-entity.header,
+  body.page-home .page-header .header-title-mobile {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-4px);
+    transition:
+      opacity 180ms ease,
+      transform 180ms ease,
+      visibility 180ms ease;
   }
-  
+
+  body.page-home.home-header-meta-visible .page-header .label-entity.header,
+  body.page-home.home-header-meta-visible .page-header .header-title-mobile {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+
   .home-brand-logo {
-    display: block;
-    width: 18%;
-    max-width: none;
-    height: auto;
-    object-fit: contain;
+    width: 35%;
   }
-  
-  .home-brand-logo--dark {
-    display: none;
-  }
-  
-  html[data-theme="dark"] .home-brand-logo--light {
-    display: none;
-  }
-  
-  html[data-theme="dark"] .home-brand-logo--dark {
-    display: block;
-  }
-  
-  @media (max-width: 980px) {
-    body.page-home .page-header .label-entity.header,
-    body.page-home .page-header .header-title-mobile {
-      display: flex;
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-      transform: translateY(-4px);
-      transition:
-        opacity 180ms ease,
-        transform 180ms ease,
-        visibility 180ms ease;
-    }
-  
-    body.page-home.home-header-meta-visible .page-header .label-entity.header,
-    body.page-home.home-header-meta-visible .page-header .header-title-mobile {
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
-      transform: translateY(0);
-    }
-  
-    .home-brand-logo {
-      width: 35%;
-    }
-  }
+}
 
 /* =========================
    HERO
@@ -149,7 +149,7 @@
 .home-stat-top {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
 }
 
 .home-stat-top.welcome {
@@ -191,7 +191,7 @@
 .home-stat-actions {
   display: flex;
   align-items: center;
-  justify-content: right;
+  justify-content: flex-start;
   gap: 6px;
   flex-wrap: wrap;
 }
@@ -255,6 +255,18 @@
   color: #ffffff;
   border-color: var(--interactive-primary);
   text-decoration: none;
+}
+
+.home-stat-actions .home-cta--primary {
+  background: transparent;
+  color: var(--text-main);
+  border-color: transparent;
+}
+
+.home-stat-actions .home-cta--primary:hover {
+  background: var(--interactive-hover);
+  color: var(--text-main);
+  border-color: transparent;
 }
 
 .home-cta--icon {
@@ -501,7 +513,8 @@
   }
 
   .home-stat-label {
-    font-size: 16px;
+    font-size: 18px;
+    padding-right: 25px;
   }
 
   .home-cta {
@@ -2116,7 +2129,7 @@
 /* Home AI intake: compact chat composer entry point */
 .home-ai-intake--composer {
   width: min(100%, 940px);
-  margin: 60px auto 90px;
+  margin: 30px auto 40px;
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -2125,9 +2138,9 @@
 }
 
 .home-ai-intake--composer .home-ai-intake__title {
-  margin: 0 0 16px;
+  margin: 0 0 8px;
   text-align: center;
-  font-size: clamp(1.55rem, 2.8vw, 2.35rem);
+  font-size: clamp(1.35rem, 2.8vw, 2.35rem);
   font-weight: 500;
   letter-spacing: -0.035em;
   color: var(--text-main);
@@ -2400,6 +2413,22 @@
   background: var(--surface-card-muted);
 }
 
+.home-calendar__plan-card--expandable {
+  cursor: pointer;
+  transition: border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+}
+
+.home-calendar__plan-card--expandable:hover,
+.home-calendar__plan-card--expandable.is-expanded {
+  border-color: var(--border-strong);
+  background: var(--surface-card);
+}
+
+.home-calendar__plan-card--expandable:focus-visible {
+  outline: 2px solid var(--interactive-primary);
+  outline-offset: 4px;
+}
+
 .home-calendar__plan-card[hidden] {
   display: none;
 }
@@ -2455,6 +2484,34 @@
 
 .home-calendar__plan-link:hover span {
   text-decoration: underline;
+}
+
+.home-calendar__plan-preview {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border-default);
+  cursor: default;
+}
+
+.home-calendar__plan-preview[hidden] {
+  display: none;
+}
+
+.home-calendar__dailyplan-card {
+  margin: 0;
+}
+
+.home-calendar__dailyplan-kpis,
+.home-calendar__dailyplan-meals {
+  margin: 0;
+}
+
+.home-calendar__dailyplan-kpis h3,
+.home-calendar__dailyplan-meals h3 {
+  margin-top: 0;
 }
 
 /* AI chat history list */
@@ -2614,13 +2671,13 @@
   }
 
   .home-ai-intake--composer {
-    margin-top: 70px;
-    margin-bottom: 90px;
+    margin-top: 4px;
+    margin-bottom: 40px;
   }
 
   .home-ai-intake--composer .home-ai-intake__form {
     grid-template-columns: minmax(0, 1fr) 44px;
-    width: calc(100% - 8px);
+    width: calc(100% - 16px);
     padding: 8px 8px 8px 15px;
   }
 
@@ -2660,6 +2717,20 @@
     justify-content: space-between;
     padding-top: var(--space-3);
     border-top: 1px solid var(--border-default);
+  }
+
+  .home-stat-top {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .home-stat-actions {
+    justify-content: flex-start;
+  }
+
+  .home-calendar__plan-preview {
+    gap: var(--space-4);
   }
 }
 

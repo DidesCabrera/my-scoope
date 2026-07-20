@@ -80,7 +80,7 @@
 
     .page {
         padding: 0 6px;
-        margin-top: 18px;
+        margin-top: 4px;
     }
 
     .page--detail{
@@ -238,7 +238,7 @@
 .list-page-header__title {
     margin: 0;
     color: var(--text-main);
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 600;
     line-height: 1.12;
 }
@@ -288,7 +288,7 @@
     }
 
     .list-page-header__title {
-        font-size: 28px;
+        font-size: 22px;
     }
 
     .list-page-header__indicator {

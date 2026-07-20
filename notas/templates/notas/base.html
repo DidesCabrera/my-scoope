@@ -241,6 +241,82 @@
             );
             const itemTabs = document.querySelectorAll(".sidebar .nav-tab");
             const currentGroup = document.querySelector(".sidebar-group.is-current");
+            const sidebar = document.querySelector(".sidebar");
+            const profilePanel = document.querySelector(".sidebar-profile-panel");
+            const profileOpenButtons = document.querySelectorAll("[data-profile-panel-open]");
+            const profileCloseButtons = document.querySelectorAll("[data-profile-panel-close]");
+            const profileMenuItems = document.querySelectorAll("[data-profile-menu-item]");
+
+            function openProfilePanel() {
+                if (!sidebar || !profilePanel) {
+                    return;
+                }
+
+                if (isDesktopSidebar() && document.body.classList.contains("sidebar-collapsed")) {
+                    setDesktopSidebarCollapsed(false);
+                }
+
+                sidebar.classList.add("is-profile-panel-open");
+                profilePanel.setAttribute("aria-hidden", "false");
+            }
+
+            function closeProfilePanel() {
+                if (!sidebar || !profilePanel) {
+                    return;
+                }
+
+                sidebar.classList.remove("is-profile-panel-open");
+                profilePanel.setAttribute("aria-hidden", "true");
+            }
+
+            function toggleProfilePanel() {
+                if (!sidebar || !profilePanel) {
+                    return;
+                }
+
+                if (sidebar.classList.contains("is-profile-panel-open")) {
+                    closeProfilePanel();
+                    return;
+                }
+
+                openProfilePanel();
+            }
+
+            profileOpenButtons.forEach((button) => {
+                button.addEventListener("click", toggleProfilePanel);
+            });
+
+            profileCloseButtons.forEach((button) => {
+                button.addEventListener("click", closeProfilePanel);
+            });
+
+            function updateProfileMenuActiveItem() {
+                if (!profileMenuItems.length || !window.location.pathname.startsWith("/app/profile/")) {
+                    return;
+                }
+
+                const activeTarget = window.location.hash.replace("#", "") || "profile-account";
+                profileMenuItems.forEach((item) => {
+                    item.classList.toggle("is-active", item.dataset.profileMenuItem === activeTarget);
+                });
+            }
+
+            profileMenuItems.forEach((item) => {
+                item.addEventListener("click", function () {
+                    profileMenuItems.forEach((candidate) => candidate.classList.remove("is-active"));
+                    item.classList.add("is-active");
+                });
+            });
+
+            if (
+                window.location.pathname.startsWith("/app/profile/") ||
+                window.location.pathname.startsWith("/billing/")
+            ) {
+                openProfilePanel();
+                updateProfileMenuActiveItem();
+            }
+
+            window.addEventListener("hashchange", updateProfileMenuActiveItem);
     
             function groupKey(index) {
                 return "sidebar-group-" + index;
@@ -356,9 +432,11 @@
         const sentinel = document.querySelector(".js-header-meta-sentinel");
         const body = document.body;
 
-        if (!sentinel || !body.classList.contains("page-header-meta-deferred")) {
+        if (!sentinel) {
             return;
         }
+
+        body.classList.add("page-header-meta-deferred");
 
         function setHeaderMetaVisibility(shouldShow) {
             body.classList.toggle("page-header-meta-visible", shouldShow);
@@ -494,19 +572,12 @@
 
 <script src="{% static 'notas/js/theme_toggle.js' %}" defer></script>
 
-<script src="{% static 'notas/js/sidebar_ai_assistant.js' %}" defer></script>
-
 <script src="{% static 'notas/js/overflow_menus.js' %}" defer></script>
 
 <script src="{% static 'notas/js/pwa.js' %}" defer></script>
 
 </body>
 </html>
-
-
-
-
-
 
 
 
