@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
+from math import ceil
+from urllib.parse import urlencode
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.urls import reverse
@@ -36,6 +38,11 @@ MONTH_NAMES = (
     "noviembre",
     "diciembre",
 )
+STATUS_LABELS = {
+    "scheduled": "Programado",
+    "active": "Activo",
+    "paused": "Pausado",
+}
 
 
 @dataclass(frozen=True)
@@ -48,19 +55,35 @@ class HomeCalendarDayVM:
     accessible_date: str
     temporal_state: str
     is_today: bool
+    is_selected: bool
+    is_active_week: bool
     has_plan: bool
     plan_name: str
+    selection_url: str
     detail_url: str | None
     plan_snapshot: dict | None
     dailyplan_card: object | None
 
 
 @dataclass(frozen=True)
+class HomeCalendarWeekVM:
+    week_start_iso: str
+    is_active: bool
+    days: list[HomeCalendarDayVM]
+
+
+@dataclass(frozen=True)
 class HomeCalendarizationVM:
     has_calendarization: bool
     program_name: str
+    status_label: str
+    start_label: str
+    duration_label: str
     dashboard_url: str
+    previous_week_url: str
+    next_week_url: str
     days: list[HomeCalendarDayVM]
+    weeks: list[HomeCalendarWeekVM]
 
 
 def _today_for_user(user, *, now: datetime | None = None) -> date:
@@ -78,28 +101,124 @@ def _accessible_date(value: date, *, is_today: bool) -> str:
     return f"{label}, hoy" if is_today else label
 
 
-def build_home_calendarization_vm(user, *, now: datetime | None = None) -> HomeCalendarizationVM:
+def _compact_date_label(value: date) -> str:
+    return f"{value.day}{MONTH_LABELS[value.month - 1]}"
+
+
+def _week_start_from_param(value: str | None, fallback: date) -> date:
+    if value:
+        try:
+            selected_date = date.fromisoformat(value)
+        except ValueError:
+            selected_date = fallback
+    else:
+        selected_date = fallback
+    return selected_date - timedelta(days=selected_date.weekday())
+
+
+def _home_week_url(monday: date) -> str:
+    return f"{reverse('home_view')}?{urlencode({'calendar_week': monday.isoformat()})}"
+
+
+def _home_day_url(monday: date, selected_date: date) -> str:
+    query = urlencode(
+        {
+            "calendar_week": monday.isoformat(),
+            "calendar_date": selected_date.isoformat(),
+        }
+    )
+    return f"{reverse('home_view')}?{query}"
+
+
+def _duration_label(start_date: date, end_date: date) -> str:
+    weeks = max(1, ceil(((end_date - start_date).days + 1) / 7))
+    unit = "semana" if weeks == 1 else "semanas"
+    return f"{weeks} {unit}"
+
+
+def build_home_calendarization_vm(
+    user,
+    *,
+    now: datetime | None = None,
+    request_get=None,
+) -> HomeCalendarizationVM:
     calendarization = current_calendarization_for_user(user)
     today = (
         today_for_calendarization(calendarization, now=now)
         if calendarization
         else _today_for_user(user, now=now)
     )
-    monday = today - timedelta(days=today.weekday())
+    today_monday = today - timedelta(days=today.weekday())
+    monday = _week_start_from_param(
+        (request_get or {}).get("calendar_week"),
+        today_monday,
+    )
+    requested_selected_date = _date_from_param((request_get or {}).get("calendar_date"))
+    selected_date = (
+        requested_selected_date
+        if requested_selected_date and _week_start_from_param(requested_selected_date.isoformat(), monday) == monday
+        else (today if monday == today_monday else monday)
+    )
     calendarized_days = {
         day.calendar_date: day
         for day in (calendarization.days.all() if calendarization else ())
     }
     dailyplans_by_id = _dailyplan_cards_by_id(user, calendarized_days.values())
 
+    weeks = [
+        _build_week_vm(
+            week_monday=monday + timedelta(days=week_offset),
+            active_monday=monday,
+            selected_date=selected_date,
+            today=today,
+            calendarized_days=calendarized_days,
+            dailyplans_by_id=dailyplans_by_id,
+        )
+        for week_offset in (-7, 0, 7)
+    ]
+    days = weeks[1].days
+
+    return HomeCalendarizationVM(
+        has_calendarization=calendarization is not None,
+        program_name=calendarization.program_name_snapshot if calendarization else "",
+        status_label=STATUS_LABELS.get(calendarization.status, calendarization.status.title()) if calendarization else "",
+        start_label=_compact_date_label(calendarization.start_date) if calendarization else "",
+        duration_label=_duration_label(calendarization.start_date, calendarization.end_date) if calendarization else "",
+        dashboard_url=reverse("calendarization_dashboard"),
+        previous_week_url=_home_week_url(monday - timedelta(days=7)),
+        next_week_url=_home_week_url(monday + timedelta(days=7)),
+        days=days,
+        weeks=weeks,
+    )
+
+
+def _date_from_param(value: str | None) -> date | None:
+    if not value:
+        return None
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+def _build_week_vm(
+    *,
+    week_monday: date,
+    active_monday: date,
+    selected_date: date,
+    today: date,
+    calendarized_days,
+    dailyplans_by_id,
+) -> HomeCalendarWeekVM:
+    is_active_week = week_monday == active_monday
     days = []
     for offset in range(7):
-        calendar_date = monday + timedelta(days=offset)
+        calendar_date = week_monday + timedelta(days=offset)
         calendarized_day = calendarized_days.get(calendar_date)
         has_plan = bool(calendarized_day and calendarized_day.has_plan)
         dailyplan_card = (
             dailyplans_by_id.get(calendarized_day.source_dailyplan_id)
-            if has_plan and calendarized_day.source_dailyplan_id
+            if is_active_week and has_plan and calendarized_day.source_dailyplan_id
             else None
         )
         is_today = calendar_date == today
@@ -114,8 +233,11 @@ def build_home_calendarization_vm(user, *, now: datetime | None = None) -> HomeC
                 accessible_date=_accessible_date(calendar_date, is_today=is_today),
                 temporal_state=temporal_state,
                 is_today=is_today,
+                is_selected=is_active_week and calendar_date == selected_date,
+                is_active_week=is_active_week,
                 has_plan=has_plan,
                 plan_name=(calendarized_day.plan_snapshot.get("name", "") if has_plan else ""),
+                selection_url=_home_day_url(week_monday, calendar_date),
                 detail_url=(
                     reverse("calendarization_day_detail", args=[calendarized_day.id])
                     if has_plan
@@ -125,11 +247,9 @@ def build_home_calendarization_vm(user, *, now: datetime | None = None) -> HomeC
                 dailyplan_card=dailyplan_card,
             )
         )
-
-    return HomeCalendarizationVM(
-        has_calendarization=calendarization is not None,
-        program_name=calendarization.program_name_snapshot if calendarization else "",
-        dashboard_url=reverse("calendarization_dashboard"),
+    return HomeCalendarWeekVM(
+        week_start_iso=week_monday.isoformat(),
+        is_active=is_active_week,
         days=days,
     )
 

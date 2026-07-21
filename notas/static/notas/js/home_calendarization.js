@@ -8,6 +8,14 @@ document.addEventListener("DOMContentLoaded", function () {
   const dayButtons = Array.from(calendar.querySelectorAll("[data-home-calendar-day]"));
   const panels = Array.from(calendar.querySelectorAll('[role="tabpanel"]'));
   const planCards = Array.from(calendar.querySelectorAll("[data-home-calendar-plan-card]"));
+  const weekViewport = calendar.querySelector("[data-home-calendar-week-viewport]");
+  const weekTrack = calendar.querySelector("[data-home-calendar-week-track]");
+  const weekNavs = Array.from(calendar.querySelectorAll("[data-home-calendar-week-nav]"));
+  const weekSlides = Array.from(calendar.querySelectorAll("[data-home-calendar-week]"));
+  const mobileQuery = window.matchMedia("(max-width: 620px)");
+  let activeWeekIndex = Math.max(0, weekSlides.findIndex(function (week) {
+    return week.classList.contains("is-active");
+  }));
 
   function selectDay(selectedButton) {
     dayButtons.forEach(function (button) {
@@ -19,6 +27,31 @@ document.addEventListener("DOMContentLoaded", function () {
     panels.forEach(function (panel) {
       panel.hidden = panel.id !== selectedButton.getAttribute("aria-controls");
     });
+  }
+
+  function syncWeekSlider() {
+    if (!weekTrack || !weekViewport) {
+      return;
+    }
+
+    if (mobileQuery.matches) {
+      weekTrack.style.transform = "";
+      weekViewport.scrollLeft = activeWeekIndex * weekViewport.clientWidth;
+      return;
+    }
+
+    weekTrack.style.transform = "translateX(-" + (activeWeekIndex * 100) + "%)";
+  }
+
+  function slideWeek(direction) {
+    const nextIndex = activeWeekIndex + direction;
+
+    if (nextIndex < 0 || nextIndex >= weekSlides.length) {
+      return;
+    }
+
+    activeWeekIndex = nextIndex;
+    syncWeekSlider();
   }
 
   function setPlanCardExpanded(card, isExpanded) {
@@ -43,6 +76,13 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
+  weekNavs.forEach(function (nav) {
+    nav.addEventListener("click", function (event) {
+      event.preventDefault();
+      slideWeek(nav.dataset.homeCalendarWeekNav === "next" ? 1 : -1);
+    });
+  });
+
   planCards.forEach(function (card) {
     card.addEventListener("click", function (event) {
       if (event.target.closest("a, button, input, textarea, select")) {
@@ -61,4 +101,7 @@ document.addEventListener("DOMContentLoaded", function () {
       togglePlanCard(card);
     });
   });
+
+  syncWeekSlider();
+  window.addEventListener("resize", syncWeekSlider);
 });

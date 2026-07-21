@@ -141,54 +141,83 @@
           <i data-lucide="calendar"></i>
         </span>
         {% if vm.content.calendarization.has_calendarization %}
-          <h2 class="home-calendar__program-name">{{ vm.content.calendarization.program_name }}</h2>
+          <div>
+            <h2 class="home-calendar__program-name">{{ vm.content.calendarization.program_name }}</h2>
+            <p class="home-calendar__program-meta">
+              {{ vm.content.calendarization.status_label }} · inicio {{ vm.content.calendarization.start_label }} · {{ vm.content.calendarization.duration_label }}
+            </p>
+          </div>
         {% else %}
           <p class="home-calendar__empty-state">No tienes un programa calendarizado</p>
         {% endif %}
       </div>
       <a class="home-calendar__manage-link" href="{{ vm.content.calendarization.dashboard_url }}" aria-label="Administrar calendario">
-        <i data-lucide="arrow-up-right" aria-hidden="true"></i>
+        <i data-lucide="chevron-right" aria-hidden="true"></i>
       </a>
     </div>
 
-    <div class="home-calendar__week" role="tablist" aria-label="Semana actual, de lunes a domingo">
-      {% for day in vm.content.calendarization.days %}
-        <button
-          type="button"
-          class="home-calendar__day home-calendar__day--{{ day.temporal_state }}{% if day.is_today %} is-selected{% endif %}"
-          role="tab"
-          aria-selected="{% if day.is_today %}true{% else %}false{% endif %}"
-          aria-controls="{{ day.panel_id }}"
-          aria-label="{{ day.accessible_date }}"
-          data-home-calendar-day
-        >
-          <span class="home-calendar__weekday" aria-hidden="true">{{ day.weekday_label }}</span>
-          <span class="home-calendar__date-circle" aria-hidden="true">
-            <strong>{{ day.date_number }}</strong>
-            <small>{{ day.month_label }}</small>
-            {% if day.has_plan %}<span class="home-calendar__plan-dot"></span>{% endif %}
-          </span>
-          <span class="home-calendar__today-label"{% if not day.is_today %} aria-hidden="true"{% endif %}>{% if day.is_today %}Hoy{% else %}&nbsp;{% endif %}</span>
-        </button>
-      {% endfor %}
+    <div class="home-calendar__week-slider" aria-label="Navegación semanal del calendario">
+      <a class="home-calendar__week-nav" href="{{ vm.content.calendarization.previous_week_url }}" aria-label="Semana anterior" data-home-calendar-week-nav="prev">
+        <i data-lucide="chevron-left" aria-hidden="true"></i>
+      </a>
+      <div class="home-calendar__week-viewport" data-home-calendar-week-viewport>
+        <div class="home-calendar__week-track" data-home-calendar-week-track>
+          {% for week in vm.content.calendarization.weeks %}
+            <div class="home-calendar__week{% if week.is_active %} is-active{% endif %}" role="{% if week.is_active %}tablist{% else %}group{% endif %}" aria-label="Semana de {{ week.week_start_iso }}" data-home-calendar-week>
+              {% for day in week.days %}
+                {% if week.is_active %}
+                  <button
+                    type="button"
+                    class="home-calendar__day home-calendar__day--{{ day.temporal_state }}{% if day.is_selected %} is-selected{% endif %}{% if day.has_plan %} has-plan{% endif %}"
+                    role="tab"
+                    aria-selected="{% if day.is_selected %}true{% else %}false{% endif %}"
+                    aria-controls="{{ day.panel_id }}"
+                    aria-label="{{ day.accessible_date }}"
+                    data-home-calendar-day
+                  >
+                    <span class="home-calendar__weekday" aria-hidden="true">{{ day.weekday_label }}</span>
+                    <span class="home-calendar__date-circle" aria-hidden="true">
+                      <strong>{{ day.date_number }}</strong>
+                      <small>{{ day.month_label }}</small>
+                    </span>
+                    <span class="home-calendar__today-label"{% if not day.is_today %} aria-hidden="true"{% endif %}>{% if day.is_today %}Hoy{% else %}&nbsp;{% endif %}</span>
+                  </button>
+                {% else %}
+                  <a
+                    class="home-calendar__day home-calendar__day--{{ day.temporal_state }}{% if day.has_plan %} has-plan{% endif %}"
+                    href="{{ day.selection_url }}"
+                    aria-label="{{ day.accessible_date }}"
+                  >
+                    <span class="home-calendar__weekday" aria-hidden="true">{{ day.weekday_label }}</span>
+                    <span class="home-calendar__date-circle" aria-hidden="true">
+                      <strong>{{ day.date_number }}</strong>
+                      <small>{{ day.month_label }}</small>
+                    </span>
+                    <span class="home-calendar__today-label"{% if not day.is_today %} aria-hidden="true"{% endif %}>{% if day.is_today %}Hoy{% else %}&nbsp;{% endif %}</span>
+                  </a>
+                {% endif %}
+              {% endfor %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      <a class="home-calendar__week-nav" href="{{ vm.content.calendarization.next_week_url }}" aria-label="Semana siguiente" data-home-calendar-week-nav="next">
+        <i data-lucide="chevron-right" aria-hidden="true"></i>
+      </a>
     </div>
 
     <div class="home-calendar__plans" aria-live="polite">
       {% for day in vm.content.calendarization.days %}
-        {% if day.dailyplan_card %}
-          {% if day.is_today %}
-            {% include "components/card_child_dailyplan.html" with child_card=day.dailyplan_card dailyplan_card_class="home-calendar__dailyplan-card" dailyplan_card_id=day.panel_id dailyplan_card_role="tabpanel" dailyplan_card_data_home=True dailyplan_card_date_label=day.accessible_date default_menu=True %}
+        <div
+          id="{{ day.panel_id }}"
+          class="home-calendar__plan-panel"
+          role="tabpanel"
+          {% if not day.is_selected %}hidden{% endif %}
+        >
+          <div class="home-calendar__selected-date">{{ day.accessible_date }}</div>
+          {% if day.dailyplan_card %}
+            {% include "components/card_child_dailyplan.html" with child_card=day.dailyplan_card dailyplan_card_class="home-calendar__dailyplan-card" default_menu=True %}
           {% else %}
-            {% include "components/card_child_dailyplan.html" with child_card=day.dailyplan_card dailyplan_card_class="home-calendar__dailyplan-card" dailyplan_card_id=day.panel_id dailyplan_card_role="tabpanel" dailyplan_card_hidden=True dailyplan_card_data_home=True dailyplan_card_date_label=day.accessible_date default_menu=True %}
-          {% endif %}
-        {% else %}
-          <div
-            id="{{ day.panel_id }}"
-            class="home-calendar__empty-card"
-            role="tabpanel"
-            {% if not day.is_today %}hidden{% endif %}
-          >
-            <div class="home-calendar__selected-date">{{ day.accessible_date }}</div>
             <div class="home-calendar__plan-icon" aria-hidden="true">
               <i data-lucide="clipboard-list"></i>
             </div>
@@ -211,8 +240,8 @@
                 <i data-lucide="chevron-right" aria-hidden="true"></i>
               </a>
             {% endif %}
-          </div>
-        {% endif %}
+          {% endif %}
+        </div>
       {% endfor %}
     </div>
   </section>

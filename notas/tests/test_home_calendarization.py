@@ -24,12 +24,12 @@ class HomeCalendarizationTests(TestCase):
         )
         self.client.force_login(self.user)
 
-    def _get_home(self):
+    def _get_home(self, params=None):
         with patch(
             "notas.presentation.pages.home_calendarization.timezone.now",
             return_value=FIXED_NOW,
         ):
-            return self.client.get(reverse("home_view"))
+            return self.client.get(reverse("home_view"), data=params or {})
 
     def test_home_renders_empty_calendarization_and_current_monday_to_sunday(self):
         response = self._get_home()
@@ -42,6 +42,10 @@ class HomeCalendarizationTests(TestCase):
         self.assertEqual(calendarization["days"][0]["iso_date"], "2026-07-13")
         self.assertEqual(calendarization["days"][-1]["iso_date"], "2026-07-19")
         self.assertEqual([day["weekday_label"] for day in calendarization["days"]], list("LMMJVSD"))
+        self.assertEqual(calendarization["days"][2]["iso_date"], "2026-07-15")
+        self.assertTrue(calendarization["days"][2]["is_selected"])
+        self.assertIn("calendar_week=2026-07-06", calendarization["previous_week_url"])
+        self.assertIn("calendar_week=2026-07-20", calendarization["next_week_url"])
 
     def test_home_shows_program_plan_and_link_for_selected_week(self):
         calendarization = ProgramCalendarization.objects.create(
@@ -76,6 +80,7 @@ class HomeCalendarizationTests(TestCase):
         response = self._get_home()
 
         self.assertContains(response, "Programa Fuerza")
+        self.assertContains(response, "Activo · inicio 13jul · 1 semana")
         self.assertContains(response, "Plan de potencia")
         self.assertContains(response, 'class="card home-calendar__dailyplan-card"')
         calendarization_vm = response.context["vm"]["content"]["calendarization"]
@@ -87,3 +92,13 @@ class HomeCalendarizationTests(TestCase):
         self.assertEqual(today_vm["temporal_state"], "today")
         self.assertFalse(today_vm["has_plan"])
         self.assertEqual(sunday_vm["temporal_state"], "future")
+
+    def test_home_can_render_adjacent_calendar_week(self):
+        response = self._get_home({"calendar_week": "2026-07-20"})
+
+        self.assertEqual(response.status_code, 200)
+        calendarization = response.context["vm"]["content"]["calendarization"]
+        self.assertEqual(calendarization["days"][0]["iso_date"], "2026-07-20")
+        self.assertEqual(calendarization["days"][-1]["iso_date"], "2026-07-26")
+        self.assertTrue(calendarization["days"][0]["is_selected"])
+        self.assertFalse(any(day["is_today"] for day in calendarization["days"]))

@@ -2252,26 +2252,31 @@ html[data-theme="dark"] .home-brand-logo--dark {
   margin-bottom: var(--space-5);
   color: var(--text-main);
   text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
 .home-calendar__section-title h2 {
   margin: 0;
-  font-size: clamp(1.35rem, 2.2vw, 1.85rem);
-  font-weight: 750;
+  font-size: clamp(0.9rem, 1.2vw, 1.85rem);
+  font-weight: 700;
+  color: var(--text-muted);
 }
 
 .home-calendar__section-title svg {
-  width: 24px;
-  height: 24px;
-  color: var(--entity-program);
+  width: 18px;
+  height: 18px;
+  color: var(--text-muted);
 }
 
 .home-calendar__heading {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 12px;
-  text-align: center;
+  background-color: var(--surface-card);
+  padding: 12px;
+  border-radius: 12px;
 }
 
 .home-calendar__program-heading {
@@ -2279,6 +2284,7 @@ html[data-theme="dark"] .home-brand-logo--dark {
   align-items: center;
   gap: var(--space-3);
   min-width: 0;
+  text-align: left;
 }
 
 .home-calendar__program-icon {
@@ -2288,7 +2294,7 @@ html[data-theme="dark"] .home-brand-logo--dark {
   justify-content: center;
   width: 42px;
   height: 42px;
-  border-radius: 10px;
+  border-radius: 13px;
   background: var(--entity-program);
   color: #ffffff;
 }
@@ -2313,6 +2319,14 @@ html[data-theme="dark"] .home-brand-logo--dark {
   line-height: 1.2;
 }
 
+.home-calendar__program-meta {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
 .home-calendar__manage-link {
   display: inline-flex;
   flex: 0 0 auto;
@@ -2321,7 +2335,7 @@ html[data-theme="dark"] .home-brand-logo--dark {
   gap: var(--space-2);
   width: 40px;
   height: 40px;
-  border: 1px solid var(--border-default);
+  border: 0;
   border-radius: var(--radius-pill);
   color: var(--text-main);
   text-decoration: none;
@@ -2329,7 +2343,6 @@ html[data-theme="dark"] .home-brand-logo--dark {
 }
 
 .home-calendar__manage-link:hover {
-  border-color: var(--border-strong);
   background: var(--interactive-hover);
 }
 
@@ -2338,12 +2351,53 @@ html[data-theme="dark"] .home-brand-logo--dark {
   height: 17px;
 }
 
-.home-calendar__week {
+.home-calendar__week-slider {
   display: grid;
-  grid-template-columns: repeat(7, minmax(40px, 64px));
+  grid-template-columns: 40px minmax(0, auto) 40px;
+  align-items: center;
   justify-content: center;
   gap: var(--space-3);
   margin-top: var(--space-6);
+}
+
+.home-calendar__week-nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-pill);
+  color: var(--text-main);
+  text-decoration: none;
+  transition: background 0.16s ease;
+}
+
+.home-calendar__week-nav:hover {
+  background: var(--interactive-hover);
+}
+
+.home-calendar__week-nav svg {
+  width: 20px;
+  height: 20px;
+}
+
+.home-calendar__week-viewport {
+  overflow: hidden;
+  width: min(100%, 720px);
+}
+
+.home-calendar__week-track {
+  display: flex;
+  transition: transform 0.22s ease;
+  transform: translateX(-100%);
+}
+
+.home-calendar__week {
+  display: grid;
+  flex: 0 0 100%;
+  grid-template-columns: repeat(7, minmax(40px, 91px));
+  justify-content: center;
+  gap: var(--space-3);
 }
 
 
@@ -2359,6 +2413,7 @@ html[data-theme="dark"] .home-brand-logo--dark {
   color: var(--text-main);
   font: inherit;
   cursor: pointer;
+  text-decoration: none;
 }
 
 .home-calendar__weekday,
@@ -2385,6 +2440,7 @@ html[data-theme="dark"] .home-brand-logo--dark {
   width: clamp(48px, 7vw, 64px);
   aspect-ratio: 1;
   border: 1px solid var(--border-strong);
+  border-style: dashed;
   border-radius: 50%;
   background: var(--surface-card);
   color: var(--text-main);
@@ -2410,6 +2466,10 @@ html[data-theme="dark"] .home-brand-logo--dark {
   color: color-mix(in srgb, var(--text-main) 50%, transparent);
 }
 
+.home-calendar__day.has-plan .home-calendar__date-circle {
+  border-style: solid;
+}
+
 .home-calendar__day--past .home-calendar__date-circle small {
   color: color-mix(in srgb, var(--text-main) 50%, transparent);
 }
@@ -2417,6 +2477,10 @@ html[data-theme="dark"] .home-brand-logo--dark {
 .home-calendar__day--future .home-calendar__date-circle {
   border-style: dashed;
   background: var(--surface-card);
+}
+
+.home-calendar__day--future.has-plan .home-calendar__date-circle {
+  border-style: solid;
 }
 
 .home-calendar__day--today .home-calendar__date-circle {
@@ -2430,26 +2494,7 @@ html[data-theme="dark"] .home-brand-logo--dark {
 }
 
 .home-calendar__day.is-selected .home-calendar__date-circle {
-  box-shadow:
-    0 0 0 2px var(--surface-page),
-    0 0 0 5px #ffffff;
-}
-
-.home-calendar__plan-dot {
-  display: block;
-  width: 5px;
-  height: 5px;
-  margin-top: 4px;
-  border-radius: 50%;
-  background: var(--text-muted);
-}
-
-.home-calendar__day--past .home-calendar__plan-dot {
-  background: color-mix(in srgb, var(--text-main) 50%, transparent);
-}
-
-.home-calendar__day--today .home-calendar__plan-dot {
-  background: var(--text-main);
+  box-shadow: 0 0 0 5px #ffffff;
 }
 
 .home-calendar__day:hover .home-calendar__date-circle {
@@ -2464,6 +2509,10 @@ html[data-theme="dark"] .home-brand-logo--dark {
 
 .home-calendar__plans {
   margin-top: var(--space-5);
+}
+
+.home-calendar__plan-panel[hidden] {
+  display: none;
 }
 
 .home-calendar__empty-card {
@@ -2735,10 +2784,35 @@ html[data-theme="dark"] .home-brand-logo--dark {
     align-self: center;
   }
 
+  .home-calendar__week-slider {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .home-calendar__week-nav {
+    display: none;
+  }
+
+  .home-calendar__week-viewport {
+    overflow-x: auto;
+    width: 100%;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .home-calendar__week-viewport::-webkit-scrollbar {
+    display: none;
+  }
+
+  .home-calendar__week-track {
+    transform: none;
+  }
+
   .home-calendar__week {
     gap: 4px;
-    grid-template-columns: repeat(7, minmax(40px, 48px));
+    grid-template-columns: repeat(7, minmax(34px, 54px));
     justify-content: center;
+    scroll-snap-align: center;
   }
 
   .home-calendar__date-circle {

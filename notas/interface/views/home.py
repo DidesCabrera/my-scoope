@@ -136,7 +136,7 @@ def home_view(request):
                 url=reverse("food_list"),
             ),
         ],
-        calendarization=build_home_calendarization_vm(user),
+        calendarization=build_home_calendarization_vm(user, request_get=request.GET),
     )
 
     ui_vm = build_ui_vm(HOME_VIEWMODE)
