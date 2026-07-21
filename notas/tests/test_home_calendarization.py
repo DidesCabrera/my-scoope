@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
-from notas.domain.models import CalendarizedDay, ProgramCalendarization
+from notas.domain.models import CalendarizedDay, DailyPlan, ProgramCalendarization
 
 
 UTC = dt_timezone.utc
@@ -35,7 +35,7 @@ class HomeCalendarizationTests(TestCase):
         response = self._get_home()
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Programa Calendarizado")
+        self.assertContains(response, "Calendario")
         self.assertContains(response, "No tienes un programa calendarizado")
         calendarization = response.context["vm"]["content"]["calendarization"]
         self.assertEqual(len(calendarization["days"]), 7)
@@ -52,11 +52,17 @@ class HomeCalendarizationTests(TestCase):
             timezone_name="UTC",
             status=ProgramCalendarization.STATUS_ACTIVE,
         )
-        monday = CalendarizedDay.objects.create(
+        dailyplan = DailyPlan.objects.create(
+            name="Plan de potencia",
+            created_by=self.user,
+            is_draft=False,
+        )
+        CalendarizedDay.objects.create(
             calendarization=calendarization,
             calendar_date=date(2026, 7, 13),
             week_number=1,
             day_number=1,
+            source_dailyplan_id=dailyplan.id,
             plan_snapshot={"name": "Plan de potencia"},
         )
         CalendarizedDay.objects.create(
@@ -71,10 +77,7 @@ class HomeCalendarizationTests(TestCase):
 
         self.assertContains(response, "Programa Fuerza")
         self.assertContains(response, "Plan de potencia")
-        self.assertContains(
-            response,
-            reverse("calendarization_day_detail", args=[monday.id]),
-        )
+        self.assertContains(response, 'class="card home-calendar__dailyplan-card"')
         calendarization_vm = response.context["vm"]["content"]["calendarization"]
         monday_vm = calendarization_vm["days"][0]
         today_vm = calendarization_vm["days"][2]

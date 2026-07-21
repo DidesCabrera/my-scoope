@@ -133,6 +133,11 @@ html[data-theme="dark"] .home-brand-logo--dark {
   gap: 16px;
 }
 
+.home-stats__section-title {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
+}
+
 .home-stat-card {
   display: flex;
   flex-direction: column;
@@ -2236,53 +2241,86 @@ html[data-theme="dark"] .home-brand-logo--dark {
 .home-calendar {
   width: min(100%, 940px);
   margin: 0 auto 72px;
-  padding: 28px;
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-xl);
-  background: var(--surface-card);
-  box-shadow: var(--shadow-card);
+}
+
+.home-calendar__section-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  margin-bottom: var(--space-5);
+  color: var(--text-main);
+  text-align: center;
+}
+
+.home-calendar__section-title h2 {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.2vw, 1.85rem);
+  font-weight: 750;
+}
+
+.home-calendar__section-title svg {
+  width: 24px;
+  height: 24px;
+  color: var(--entity-program);
 }
 
 .home-calendar__heading {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-5);
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
 }
 
-.home-calendar__eyebrow {
-  margin: 0 0 var(--space-2);
-  color: var(--entity-program);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
+.home-calendar__program-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
 }
 
-.home-calendar__heading h2 {
-  margin: 0;
-  color: var(--text-main);
-  font-size: clamp(1.35rem, 2.2vw, 1.85rem);
-  letter-spacing: -0.025em;
+.home-calendar__program-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: var(--entity-program);
+  color: #ffffff;
+}
+
+.home-calendar__program-icon svg {
+  width: 21px;
+  height: 21px;
+  color: #ffffff;
+  stroke: currentColor;
 }
 
 .home-calendar__program-name,
 .home-calendar__empty-state {
-  margin: var(--space-2) 0 0;
+  margin: 0;
   color: var(--text-muted);
 }
 
 .home-calendar__program-name {
   color: var(--text-main);
-  font-weight: 650;
+  font-size: clamp(1.05rem, 2vw, 1.35rem);
+  font-weight: 750;
+  line-height: 1.2;
 }
 
 .home-calendar__manage-link {
   display: inline-flex;
+  flex: 0 0 auto;
   align-items: center;
+  justify-content: center;
   gap: var(--space-2);
-  min-height: 40px;
-  padding: 0 var(--space-4);
+  width: 40px;
+  height: 40px;
   border: 1px solid var(--border-default);
   border-radius: var(--radius-pill);
   color: var(--text-main);
@@ -2302,10 +2340,13 @@ html[data-theme="dark"] .home-brand-logo--dark {
 
 .home-calendar__week {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(40px, 64px));
+  justify-content: center;
   gap: var(--space-3);
   margin-top: var(--space-6);
 }
+
+
 
 .home-calendar__day {
   display: grid;
@@ -2346,7 +2387,8 @@ html[data-theme="dark"] .home-brand-logo--dark {
   border: 1px solid var(--border-strong);
   border-radius: 50%;
   background: var(--surface-card);
-  transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+  color: var(--text-main);
+  transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
 }
 
 .home-calendar__date-circle strong {
@@ -2363,10 +2405,13 @@ html[data-theme="dark"] .home-brand-logo--dark {
 }
 
 .home-calendar__day--past .home-calendar__date-circle {
-  border-color: var(--border-default);
-  background: var(--surface-card-muted);
-  color: var(--text-soft);
-  opacity: 0.68;
+  border-color: color-mix(in srgb, var(--entity-dailyplan) 50%, transparent);
+  background: color-mix(in srgb, var(--entity-dailyplan) 50%, transparent);
+  color: color-mix(in srgb, var(--text-main) 50%, transparent);
+}
+
+.home-calendar__day--past .home-calendar__date-circle small {
+  color: color-mix(in srgb, var(--text-main) 50%, transparent);
 }
 
 .home-calendar__day--future .home-calendar__date-circle {
@@ -2374,17 +2419,37 @@ html[data-theme="dark"] .home-brand-logo--dark {
   background: var(--surface-card);
 }
 
-.home-calendar__day--today .home-calendar__date-circle,
-.home-calendar__day.is-selected .home-calendar__date-circle {
-  border-color: var(--entity-program);
-  background: var(--entity-program);
-  color: var(--text-inverted);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--entity-program) 18%, transparent);
+.home-calendar__day--today .home-calendar__date-circle {
+  border-color: var(--entity-dailyplan);
+  background: var(--entity-dailyplan);
+  color: var(--text-main);
 }
 
-.home-calendar__day--today .home-calendar__date-circle small,
-.home-calendar__day.is-selected .home-calendar__date-circle small {
-  color: var(--text-inverted);
+.home-calendar__day--today .home-calendar__date-circle small {
+  color: var(--text-main);
+}
+
+.home-calendar__day.is-selected .home-calendar__date-circle {
+  box-shadow:
+    0 0 0 2px var(--surface-page),
+    0 0 0 5px #ffffff;
+}
+
+.home-calendar__plan-dot {
+  display: block;
+  width: 5px;
+  height: 5px;
+  margin-top: 4px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.home-calendar__day--past .home-calendar__plan-dot {
+  background: color-mix(in srgb, var(--text-main) 50%, transparent);
+}
+
+.home-calendar__day--today .home-calendar__plan-dot {
+  background: var(--text-main);
 }
 
 .home-calendar__day:hover .home-calendar__date-circle {
@@ -2401,7 +2466,7 @@ html[data-theme="dark"] .home-brand-logo--dark {
   margin-top: var(--space-5);
 }
 
-.home-calendar__plan-card {
+.home-calendar__empty-card {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
@@ -2413,23 +2478,18 @@ html[data-theme="dark"] .home-brand-logo--dark {
   background: var(--surface-card-muted);
 }
 
-.home-calendar__plan-card--expandable {
-  cursor: pointer;
-  transition: border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+.home-calendar__selected-date {
+  grid-column: 1 / -1;
+  margin: 0 0 var(--space-3);
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: capitalize;
 }
 
-.home-calendar__plan-card--expandable:hover,
-.home-calendar__plan-card--expandable.is-expanded {
-  border-color: var(--border-strong);
-  background: var(--surface-card);
-}
-
-.home-calendar__plan-card--expandable:focus-visible {
-  outline: 2px solid var(--interactive-primary);
-  outline-offset: 4px;
-}
-
-.home-calendar__plan-card[hidden] {
+.home-calendar__empty-card[hidden],
+.home-calendar__dailyplan-card[hidden] {
   display: none;
 }
 
@@ -2486,32 +2546,8 @@ html[data-theme="dark"] .home-brand-logo--dark {
   text-decoration: underline;
 }
 
-.home-calendar__plan-preview {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-  padding-top: var(--space-5);
-  border-top: 1px solid var(--border-default);
-  cursor: default;
-}
-
-.home-calendar__plan-preview[hidden] {
-  display: none;
-}
-
 .home-calendar__dailyplan-card {
   margin: 0;
-}
-
-.home-calendar__dailyplan-kpis,
-.home-calendar__dailyplan-meals {
-  margin: 0;
-}
-
-.home-calendar__dailyplan-kpis h3,
-.home-calendar__dailyplan-meals h3 {
-  margin-top: 0;
 }
 
 /* AI chat history list */
@@ -2687,28 +2723,29 @@ html[data-theme="dark"] .home-brand-logo--dark {
   }
 
   .home-calendar {
-    margin-bottom: 56px;
-    padding: 22px 16px;
+    margin-bottom: 36px;
+    padding: 22px 4px;
   }
 
   .home-calendar__heading {
-    align-items: stretch;
-    flex-direction: column;
+    align-items: center;
   }
 
   .home-calendar__manage-link {
-    align-self: flex-start;
+    align-self: center;
   }
 
   .home-calendar__week {
     gap: 4px;
+    grid-template-columns: repeat(7, minmax(40px, 48px));
+    justify-content: center;
   }
 
   .home-calendar__date-circle {
     width: clamp(40px, 11vw, 48px);
   }
 
-  .home-calendar__plan-card {
+  .home-calendar__empty-card {
     grid-template-columns: auto minmax(0, 1fr);
   }
 
@@ -2729,8 +2766,8 @@ html[data-theme="dark"] .home-brand-logo--dark {
     justify-content: flex-start;
   }
 
-  .home-calendar__plan-preview {
-    gap: var(--space-4);
+  .home-calendar__program-name {
+    font-size: 1rem;
   }
 }
 

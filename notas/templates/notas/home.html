@@ -129,19 +129,24 @@
     </form>
   </section>
 
-  <section class="home-calendar" aria-labelledby="home-calendar-title" data-home-calendar>
+  <section class="home-calendar" aria-labelledby="home-calendar-section-title" data-home-calendar>
+    <div class="home-calendar__section-title">
+      <i data-lucide="calendar-clock" aria-hidden="true"></i>
+      <h2 id="home-calendar-section-title">Calendario</h2>
+    </div>
+
     <div class="home-calendar__heading">
-      <div>
-        <p class="home-calendar__eyebrow">Calendarización</p>
-        <h2 id="home-calendar-title">Programa Calendarizado</h2>
+      <div class="home-calendar__program-heading">
+        <span class="home-calendar__program-icon" aria-hidden="true">
+          <i data-lucide="calendar"></i>
+        </span>
         {% if vm.content.calendarization.has_calendarization %}
-          <p class="home-calendar__program-name">{{ vm.content.calendarization.program_name }}</p>
+          <h2 class="home-calendar__program-name">{{ vm.content.calendarization.program_name }}</h2>
         {% else %}
           <p class="home-calendar__empty-state">No tienes un programa calendarizado</p>
         {% endif %}
       </div>
-      <a class="home-calendar__manage-link" href="{{ vm.content.calendarization.dashboard_url }}">
-        <span>Administrar</span>
+      <a class="home-calendar__manage-link" href="{{ vm.content.calendarization.dashboard_url }}" aria-label="Administrar calendario">
         <i data-lucide="arrow-up-right" aria-hidden="true"></i>
       </a>
     </div>
@@ -161,6 +166,7 @@
           <span class="home-calendar__date-circle" aria-hidden="true">
             <strong>{{ day.date_number }}</strong>
             <small>{{ day.month_label }}</small>
+            {% if day.has_plan %}<span class="home-calendar__plan-dot"></span>{% endif %}
           </span>
           <span class="home-calendar__today-label"{% if not day.is_today %} aria-hidden="true"{% endif %}>{% if day.is_today %}Hoy{% else %}&nbsp;{% endif %}</span>
         </button>
@@ -169,101 +175,54 @@
 
     <div class="home-calendar__plans" aria-live="polite">
       {% for day in vm.content.calendarization.days %}
-        <article
-          id="{{ day.panel_id }}"
-          class="home-calendar__plan-card{% if day.has_plan %} home-calendar__plan-card--expandable{% endif %}"
-          role="tabpanel"
-          {% if day.has_plan %}
-            tabindex="0"
-            aria-expanded="false"
-            data-home-calendar-plan-card
+        {% if day.dailyplan_card %}
+          {% if day.is_today %}
+            {% include "components/card_child_dailyplan.html" with child_card=day.dailyplan_card dailyplan_card_class="home-calendar__dailyplan-card" dailyplan_card_id=day.panel_id dailyplan_card_role="tabpanel" dailyplan_card_data_home=True dailyplan_card_date_label=day.accessible_date default_menu=True %}
+          {% else %}
+            {% include "components/card_child_dailyplan.html" with child_card=day.dailyplan_card dailyplan_card_class="home-calendar__dailyplan-card" dailyplan_card_id=day.panel_id dailyplan_card_role="tabpanel" dailyplan_card_hidden=True dailyplan_card_data_home=True dailyplan_card_date_label=day.accessible_date default_menu=True %}
           {% endif %}
-          {% if not day.is_today %}hidden{% endif %}
-        >
-          <div class="home-calendar__plan-icon" aria-hidden="true">
-            <i data-lucide="clipboard-list"></i>
-          </div>
-          <div class="home-calendar__plan-copy">
-            <span>{{ day.accessible_date }}</span>
-            {% if day.has_plan %}
-              <h3>{{ day.plan_name }}</h3>
-              <p>Plan diario asignado a esta fecha.</p>
-            {% elif vm.content.calendarization.has_calendarization %}
-              <h3>Sin plan diario</h3>
-              <p>El programa calendarizado no tiene un plan asignado a esta fecha.</p>
-            {% else %}
-              <h3>No hay plan para esta fecha</h3>
-              <p>Calendariza un programa para consultar aquí cada plan diario.</p>
+        {% else %}
+          <div
+            id="{{ day.panel_id }}"
+            class="home-calendar__empty-card"
+            role="tabpanel"
+            {% if not day.is_today %}hidden{% endif %}
+          >
+            <div class="home-calendar__selected-date">{{ day.accessible_date }}</div>
+            <div class="home-calendar__plan-icon" aria-hidden="true">
+              <i data-lucide="clipboard-list"></i>
+            </div>
+            <div class="home-calendar__plan-copy">
+              <span>{{ day.accessible_date }}</span>
+              {% if day.has_plan %}
+                <h3>{{ day.plan_name }}</h3>
+                <p>Plan diario asignado a esta fecha.</p>
+              {% elif vm.content.calendarization.has_calendarization %}
+                <h3>Sin plan diario</h3>
+                <p>El programa calendarizado no tiene un plan asignado a esta fecha.</p>
+              {% else %}
+                <h3>No hay plan para esta fecha</h3>
+                <p>Calendariza un programa para consultar aquí cada plan diario.</p>
+              {% endif %}
+            </div>
+            {% if day.detail_url %}
+              <a class="home-calendar__plan-link" href="{{ day.detail_url }}">
+                <span>Ver detalle calendarizado</span>
+                <i data-lucide="chevron-right" aria-hidden="true"></i>
+              </a>
             {% endif %}
           </div>
-          {% if day.detail_url %}
-            <a class="home-calendar__plan-link" href="{{ day.detail_url }}">
-              <span>Ver detalle calendarizado</span>
-              <i data-lucide="chevron-right" aria-hidden="true"></i>
-            </a>
-          {% endif %}
-
-          {% if day.has_plan and day.plan_snapshot %}
-            <div class="home-calendar__plan-preview" hidden data-home-calendar-plan-preview>
-              <section class="card-title main home-calendar__dailyplan-card">
-                <div class="card-title-comp">
-                  <div class="main-title main-card">
-                    <h1>{{ day.plan_snapshot.name }}</h1>
-                    <div class="structural-indicators">
-                      <span class="structural-item">
-                        <span class="structural-value">{{ day.plan_snapshot.meals|length }}</span>
-                        <i data-lucide="utensils" class="structural-icon main"></i>
-                      </span>
-                    </div>
-                  </div>
-                  <div class="icons-title">
-                    <i data-lucide="clipboard-list" class="home-section-header-icon main dailyplan"></i>
-                  </div>
-                </div>
-              </section>
-
-              <div class="page-kpi home-calendar__dailyplan-kpis">
-                <h3>Información Nutricional</h3>
-                <div class="calendarization-macros">
-                  <span>{{ day.plan_snapshot.totals.total_kcal|floatformat:0 }} kcal</span>
-                  <span>P {{ day.plan_snapshot.totals.protein_g|floatformat:1 }} g</span>
-                  <span>C {{ day.plan_snapshot.totals.carbs_g|floatformat:1 }} g</span>
-                  <span>G {{ day.plan_snapshot.totals.fat_g|floatformat:1 }} g</span>
-                </div>
-              </div>
-
-              <div class="detail-section dailyplan home-calendar__dailyplan-meals">
-                <h3>Comidas en este Plan</h3>
-                <div class="calendarization-meals">
-                  {% for meal in day.plan_snapshot.meals %}
-                    <article>
-                      <div>
-                        <span>{% if meal.hour %}{{ meal.hour }}{% else %}Sin hora{% endif %}</span>
-                        <h3>{{ meal.name }}</h3>
-                        {% if meal.note %}<p>{{ meal.note }}</p>{% endif %}
-                      </div>
-                      <ul>
-                        {% for food in meal.foods %}
-                          <li>{{ food.name }} <span>{{ food.quantity_g|floatformat:0 }} g</span></li>
-                        {% empty %}
-                          <li>Sin alimentos</li>
-                        {% endfor %}
-                      </ul>
-                    </article>
-                  {% empty %}
-                    <p>Este plan no contiene comidas.</p>
-                  {% endfor %}
-                </div>
-              </div>
-            </div>
-          {% endif %}
-        </article>
+        {% endif %}
       {% endfor %}
     </div>
   </section>
 
   <!-- STATS ================================================= -->
-  <section class="home-stats">
+  <section class="home-stats" aria-labelledby="home-stats-section-title">
+    <div class="home-calendar__section-title home-stats__section-title">
+      <i data-lucide="bookmark" aria-hidden="true"></i>
+      <h2 id="home-stats-section-title">Mis Librerias</h2>
+    </div>
 
     <div class="home-stat-card">
       <div class="home-stat-top">

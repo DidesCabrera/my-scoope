@@ -11,6 +11,12 @@ from notas.application.queries.calendarization_queries import (
     current_calendarization_for_user,
     today_for_calendarization,
 )
+from notas.domain.models import DailyPlan
+from notas.presentation.config.viewmodel_config import DAILYPLAN_VIEWMODE_PERSONAL_LIST
+from notas.presentation.viewmodels.dailyplans import (
+    build_dailyplan_list_content_data,
+    build_dailyplan_list_vm,
+)
 
 
 WEEKDAY_LABELS = ("L", "M", "M", "J", "V", "S", "D")
@@ -46,6 +52,7 @@ class HomeCalendarDayVM:
     plan_name: str
     detail_url: str | None
     plan_snapshot: dict | None
+    dailyplan_card: object | None
 
 
 @dataclass(frozen=True)
@@ -83,12 +90,18 @@ def build_home_calendarization_vm(user, *, now: datetime | None = None) -> HomeC
         day.calendar_date: day
         for day in (calendarization.days.all() if calendarization else ())
     }
+    dailyplans_by_id = _dailyplan_cards_by_id(user, calendarized_days.values())
 
     days = []
     for offset in range(7):
         calendar_date = monday + timedelta(days=offset)
         calendarized_day = calendarized_days.get(calendar_date)
         has_plan = bool(calendarized_day and calendarized_day.has_plan)
+        dailyplan_card = (
+            dailyplans_by_id.get(calendarized_day.source_dailyplan_id)
+            if has_plan and calendarized_day.source_dailyplan_id
+            else None
+        )
         is_today = calendar_date == today
         temporal_state = "today" if is_today else ("past" if calendar_date < today else "future")
         days.append(
@@ -109,6 +122,7 @@ def build_home_calendarization_vm(user, *, now: datetime | None = None) -> HomeC
                     else None
                 ),
                 plan_snapshot=(calendarized_day.plan_snapshot if has_plan else None),
+                dailyplan_card=dailyplan_card,
             )
         )
 
@@ -118,3 +132,28 @@ def build_home_calendarization_vm(user, *, now: datetime | None = None) -> HomeC
         dashboard_url=reverse("calendarization_dashboard"),
         days=days,
     )
+
+
+def _dailyplan_cards_by_id(user, calendarized_days) -> dict[int, object]:
+    dailyplan_ids = [
+        day.source_dailyplan_id
+        for day in calendarized_days
+        if day.source_dailyplan_id and day.has_plan
+    ]
+
+    if not dailyplan_ids:
+        return {}
+
+    dailyplans = (
+        DailyPlan.objects.filter(id__in=dailyplan_ids)
+        .select_related("created_by", "original_author", "forked_from")
+        .prefetch_related("shares", "dailyplan_meals__meal__meal_food_set__food")
+        .order_by("id")
+    )
+    content_data = build_dailyplan_list_content_data(
+        dailyplans=dailyplans,
+        user=user,
+        viewmode=DAILYPLAN_VIEWMODE_PERSONAL_LIST,
+    )
+    list_vm = build_dailyplan_list_vm(content_data)
+    return {card.child_id: card for card in list_vm.child_cards}

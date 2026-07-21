@@ -1,4 +1,15 @@
-<div class="card {{ dailyplan_card_class }}">
+<div
+  {% if dailyplan_card_id %}id="{{ dailyplan_card_id }}"{% endif %}
+  class="card {{ dailyplan_card_class }}"
+  {% if dailyplan_card_role %}role="{{ dailyplan_card_role }}"{% endif %}
+  {% if dailyplan_card_hidden %}hidden{% endif %}
+  {% if dailyplan_card_labelledby %}aria-labelledby="{{ dailyplan_card_labelledby }}"{% endif %}
+  {% if dailyplan_card_data_home %}data-home-calendar-plan-card{% endif %}
+>
+
+  {% if dailyplan_card_date_label %}
+    <div class="home-calendar__selected-date">{{ dailyplan_card_date_label }}</div>
+  {% endif %}
 
   <!-- HEADER CARD ========================================= -->
   <!-- ===================================================== -->
