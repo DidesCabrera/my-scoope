@@ -1,8 +1,8 @@
 :root {
   --sidebar-width: 312px;
   --sidebar-collapsed-width: 64px;
-  --header-height: 40px;
-  --mobile-header-height: 54px;
+  --header-height: 52px;
+  --mobile-header-height: 58px;
   --pwa-safe-area-top: 0px;
   --app-header-height: var(--header-height);
 
@@ -160,7 +160,7 @@ header {
     No usar overflow-y:auto aquí.
   */
   padding-top: var(--app-header-height);
-  padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(160px + env(safe-area-inset-bottom, 0px));
   overflow: visible;
 
   background-color: var(--surface-app);

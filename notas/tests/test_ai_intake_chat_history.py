@@ -29,8 +29,43 @@ class AiNutritionChatHistoryTests(TestCase):
         self.assertIn('class="home-hero main" hidden', html)
         self.assertIn('class="home-ai-intake home-ai-intake--composer"', html)
         self.assertIn('class="home-ai-intake__form"', html)
-        self.assertIn('placeholder="Quiero una dieta para baja mi grasa corporal..."', html)
+        self.assertIn('placeholder="Pídeme lo que necesites"', html)
         self.assertIn('name="action" value="analyze_prompt"', html)
+        self.assertIn("Necesito una dieta.", html)
+        self.assertIn("Comparar Alimentos", html)
+        self.assertIn("Quiero reemplazar mi comida", html)
+        self.assertIn("Necesito reducir las calorias de mi dieta", html)
+        self.assertIn("Quiero ajustar la composicion de mis comidas", html)
+        self.assertIn('data-lucide="chevron-down"', html)
+        self.assertIn("home-ai-intake__quick-form--desktop", html)
+        self.assertIn("home-ai-intake__more-form--mobile", html)
+
+    def test_home_quick_tabs_start_ai_chat_with_expected_prompts(self):
+        expected_prompts = [
+            "Hola! Necesito una dieta.",
+            "Hola! Me gustaría comparar Alimentos",
+            "Quiero reemplazar mi comida.",
+            "Necesito reducir las calorias de mi dieta.",
+            "Quiero ajustar la composicion de mis comidas.",
+        ]
+
+        for prompt in expected_prompts:
+            with self.subTest(prompt=prompt):
+                response = self.client.post(
+                    reverse("ai_nutrition_intake"),
+                    {
+                        "action": "analyze_prompt",
+                        "prompt": prompt,
+                    },
+                )
+
+                self.assertRedirects(response, reverse("ai_nutrition_intake"))
+                self.assertTrue(
+                    AiNutritionChat.objects.filter(
+                        user=self.user,
+                        conversation_payload__messages__0__text=prompt,
+                    ).exists()
+                )
 
     def test_analyze_prompt_persists_chat_history(self):
         response = self.client.post(

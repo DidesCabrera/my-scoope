@@ -341,3 +341,27 @@ xs
 
 HOME
 Necesito que abajo del input de texto de AI assitant, poner un fila con 3 botones, que digan: Crear un dieta, Consultar Comida, Comparar Alimentos. Y que al apretar cada btn, se inicie la converasacion con el LLM con un mensaje predefinido correspondiente: "Hola! me gustaría construir una dieta!, "Hola! Me gustaría consultar una comida", y "Hola! Me gustaría hacer una comparacion". Luego el LLM responde y continua la conversacion.
+
+
+
+
+
+
+
+En Home, dentro de las "home-stat-card", dentro de "home-stat-top" para mobile poner icono arriba de "home-stat-label"
+
+Tambien poner "home-cta home-cta--primary" a la Izquierda, tambien poner fondo transparente y letras --text-main
+
+Por otra parte. Me gustaría que al apretar "home-calendar__plan-card" se desplegara abajo la card del deilyplan correspondiente (Definida en UI-System para Dailyplan), y que desde esa card se pudiera acceder al detalle del PlanCalendarizado. Y que dentro del detalle el elemento "calendarization-card" fuera cambiado por una vista de page del detalle (segun UI-System), que corresponderia al detalle del plan ese día.
+
+Finalmente, en otro ambito para desktop, en las vistas de detalle, mantener los elementos permanentemente del header. No corras los test. Avisame cuando este listo y revisare manualmente
+
+
+
+
+Necesito ayuda con la realizacion de cambio en mi proyecto my-scoope,
+el cual esta ubicado en el directorio /Users/felipedides/Developer/my-scoope
+
+Necesito los siguientes cambios en Home, en "home-calendar__heading", he hecho cambios manuales:
+1. Poner alineados "home-calendar__program-heading", "home-calendar__program-progress", y "home-calendar__manage-link", en desktop. Y en mobile, debe "home-calendar__program-progress",ponerse a bajo de "home-calendar__program-heading" y "home-calendar__manage-link" (que aun estan alineados),
+2. El estado activo debe estar destacado, como lo esta este elemento en la vista de calendar "calendarization-status calendarization-status--active"
