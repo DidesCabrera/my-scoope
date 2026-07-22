@@ -35,7 +35,27 @@ class HomeCalendarizationTests(TestCase):
         response = self._get_home()
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Calendario")
+        self.assertContains(response, "Calendarización")
+        self.assertContains(response, "Consulta tu programa calendarizado por semana")
+        self.assertContains(response, "Mis Librerias")
+        self.assertContains(response, "Resume tus programas, planes diarios, comidas y alimentos")
+        self.assertContains(response, "Organiza estructuras semanales")
+        self.assertContains(response, "Revisa tus planes diarios")
+        self.assertContains(response, "home-stat-card__surface-link", count=4)
+        self.assertNotContains(response, "Actualizar peso")
+        self.assertNotContains(response, "home-footer")
+        self.assertNotContains(response, "home-calendar__today-label")
+        self.assertNotContains(response, "home-cta--icon")
+        self.assertContains(response, "Herramientas")
+        self.assertContains(response, "Accede al Comparador para revisar elementos lado a lado")
+        self.assertContains(response, "Comparador")
+        self.assertContains(response, "Explorador")
+        self.assertContains(response, "Calendarizar")
+        self.assertContains(response, reverse("comparator_index"))
+        self.assertContains(response, reverse("food_comparator"))
+        self.assertContains(response, reverse("calendarization_dashboard"))
+        self.assertNotContains(response, 'type="button" aria-label="Semana anterior"')
+        self.assertNotContains(response, 'type="button" aria-label="Semana siguiente"')
         self.assertContains(response, "No tienes un programa calendarizado")
         calendarization = response.context["vm"]["content"]["calendarization"]
         self.assertEqual(len(calendarization["days"]), 7)
@@ -44,8 +64,8 @@ class HomeCalendarizationTests(TestCase):
         self.assertEqual([day["weekday_label"] for day in calendarization["days"]], list("LMMJVSD"))
         self.assertEqual(calendarization["days"][2]["iso_date"], "2026-07-15")
         self.assertTrue(calendarization["days"][2]["is_selected"])
-        self.assertIn("calendar_week=2026-07-06", calendarization["previous_week_url"])
-        self.assertIn("calendar_week=2026-07-20", calendarization["next_week_url"])
+        self.assertEqual(len(calendarization["weeks"]), 1)
+        self.assertFalse(calendarization["has_multiple_weeks"])
 
     def test_home_shows_program_plan_and_link_for_selected_week(self):
         calendarization = ProgramCalendarization.objects.create(
@@ -80,10 +100,21 @@ class HomeCalendarizationTests(TestCase):
         response = self._get_home()
 
         self.assertContains(response, "Programa Fuerza")
-        self.assertContains(response, "Activo · inicio 13jul · 1 semana")
+        self.assertContains(response, "Programa Calendarizado")
+        self.assertContains(response, "Duración")
+        self.assertContains(response, "7 días")
+        self.assertContains(response, "3/7")
         self.assertContains(response, "Plan de potencia")
         self.assertContains(response, 'class="card home-calendar__dailyplan-card"')
         calendarization_vm = response.context["vm"]["content"]["calendarization"]
+        self.assertEqual(calendarization_vm["end_label"], "19jul")
+        self.assertEqual(calendarization_vm["progress_day"], 3)
+        self.assertEqual(calendarization_vm["progress_total_days"], 7)
+        self.assertEqual(calendarization_vm["progress_percent"], 43)
+        self.assertEqual(len(calendarization_vm["weeks"]), 1)
+        self.assertFalse(calendarization_vm["has_multiple_weeks"])
+        self.assertNotContains(response, 'type="button" aria-label="Semana anterior"')
+        self.assertNotContains(response, 'type="button" aria-label="Semana siguiente"')
         monday_vm = calendarization_vm["days"][0]
         today_vm = calendarization_vm["days"][2]
         sunday_vm = calendarization_vm["days"][6]
@@ -93,12 +124,57 @@ class HomeCalendarizationTests(TestCase):
         self.assertFalse(today_vm["has_plan"])
         self.assertEqual(sunday_vm["temporal_state"], "future")
 
-    def test_home_can_render_adjacent_calendar_week(self):
+    def test_home_clamps_unavailable_week_without_calendarization(self):
         response = self._get_home({"calendar_week": "2026-07-20"})
 
         self.assertEqual(response.status_code, 200)
         calendarization = response.context["vm"]["content"]["calendarization"]
-        self.assertEqual(calendarization["days"][0]["iso_date"], "2026-07-20")
-        self.assertEqual(calendarization["days"][-1]["iso_date"], "2026-07-26")
-        self.assertTrue(calendarization["days"][0]["is_selected"])
-        self.assertFalse(any(day["is_today"] for day in calendarization["days"]))
+        self.assertEqual(calendarization["days"][0]["iso_date"], "2026-07-13")
+        self.assertEqual(calendarization["days"][-1]["iso_date"], "2026-07-19")
+        self.assertTrue(calendarization["days"][2]["is_selected"])
+        self.assertTrue(any(day["is_today"] for day in calendarization["days"]))
+
+    def test_home_renders_only_calendarization_plan_weeks(self):
+        calendarization = ProgramCalendarization.objects.create(
+            user=self.user,
+            program_name_snapshot="Programa Extendido",
+            start_date=date(2026, 7, 19),
+            end_date=date(2026, 7, 27),
+            timezone_name="UTC",
+            status=ProgramCalendarization.STATUS_ACTIVE,
+        )
+        dailyplan = DailyPlan.objects.create(
+            name="Plan frontera",
+            created_by=self.user,
+            is_draft=False,
+        )
+        CalendarizedDay.objects.create(
+            calendarization=calendarization,
+            calendar_date=date(2026, 7, 19),
+            week_number=1,
+            day_number=1,
+            source_dailyplan_id=dailyplan.id,
+            plan_snapshot={"name": "Plan frontera"},
+        )
+        CalendarizedDay.objects.create(
+            calendarization=calendarization,
+            calendar_date=date(2026, 7, 27),
+            week_number=2,
+            day_number=2,
+            source_dailyplan_id=dailyplan.id,
+            plan_snapshot={"name": "Plan frontera"},
+        )
+
+        response = self._get_home({"calendar_week": "2026-07-20", "calendar_date": "2026-07-27"})
+
+        self.assertContains(response, 'type="button" aria-label="Semana anterior"')
+        self.assertContains(response, 'type="button" aria-label="Semana siguiente"')
+        self.assertContains(response, "data-home-calendar-day-link")
+        calendarization_vm = response.context["vm"]["content"]["calendarization"]
+        self.assertTrue(calendarization_vm["has_multiple_weeks"])
+        self.assertEqual(
+            [week["week_start_iso"] for week in calendarization_vm["weeks"]],
+            ["2026-07-13", "2026-07-20", "2026-07-27"],
+        )
+        self.assertEqual(calendarization_vm["days"][0]["iso_date"], "2026-07-20")
+        self.assertEqual(calendarization_vm["days"][-1]["iso_date"], "2026-07-26")

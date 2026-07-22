@@ -12,10 +12,44 @@ document.addEventListener("DOMContentLoaded", function () {
   const weekTrack = calendar.querySelector("[data-home-calendar-week-track]");
   const weekNavs = Array.from(calendar.querySelectorAll("[data-home-calendar-week-nav]"));
   const weekSlides = Array.from(calendar.querySelectorAll("[data-home-calendar-week]"));
+  const weekDayLinks = Array.from(calendar.querySelectorAll("[data-home-calendar-day-link]"));
   const mobileQuery = window.matchMedia("(max-width: 620px)");
+  const scrollStorageKey = "myscoope.homeCalendar.scrollY";
   let activeWeekIndex = Math.max(0, weekSlides.findIndex(function (week) {
     return week.classList.contains("is-active");
   }));
+
+  function restoreCalendarScroll() {
+    let storedScrollY = null;
+
+    try {
+      storedScrollY = sessionStorage.getItem(scrollStorageKey);
+      sessionStorage.removeItem(scrollStorageKey);
+    } catch (error) {
+      storedScrollY = null;
+    }
+
+    if (storedScrollY === null) {
+      return;
+    }
+
+    const scrollY = Number(storedScrollY);
+    if (!Number.isFinite(scrollY)) {
+      return;
+    }
+
+    requestAnimationFrame(function () {
+      window.scrollTo({ top: scrollY, left: 0, behavior: "auto" });
+    });
+  }
+
+  function storeCalendarScroll() {
+    try {
+      sessionStorage.setItem(scrollStorageKey, String(window.scrollY));
+    } catch (error) {
+      // If storage is unavailable, the link keeps its normal navigation behavior.
+    }
+  }
 
   function selectDay(selectedButton) {
     dayButtons.forEach(function (button) {
@@ -83,6 +117,10 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
+  weekDayLinks.forEach(function (link) {
+    link.addEventListener("click", storeCalendarScroll);
+  });
+
   planCards.forEach(function (card) {
     card.addEventListener("click", function (event) {
       if (event.target.closest("a, button, input, textarea, select")) {
@@ -103,5 +141,6 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   syncWeekSlider();
+  restoreCalendarScroll();
   window.addEventListener("resize", syncWeekSlider);
 });

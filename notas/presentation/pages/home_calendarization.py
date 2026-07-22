@@ -78,10 +78,16 @@ class HomeCalendarizationVM:
     program_name: str
     status_label: str
     start_label: str
+    end_label: str
     duration_label: str
+    duration_days_label: str
+    progress_day: int
+    progress_total_days: int
+    progress_percent: int
     dashboard_url: str
     previous_week_url: str
     next_week_url: str
+    has_multiple_weeks: bool
     days: list[HomeCalendarDayVM]
     weeks: list[HomeCalendarWeekVM]
 
@@ -136,6 +142,40 @@ def _duration_label(start_date: date, end_date: date) -> str:
     return f"{weeks} {unit}"
 
 
+def _duration_days_label(total_days: int) -> str:
+    unit = "día" if total_days == 1 else "días"
+    return f"{total_days} {unit}"
+
+
+def _calendarization_progress(calendarization, today: date) -> tuple[int, int, int]:
+    if not calendarization:
+        return 0, 0, 0
+
+    total_days = max(1, (calendarization.end_date - calendarization.start_date).days + 1)
+    elapsed_days = (today - calendarization.start_date).days + 1
+    progress_day = min(max(elapsed_days, 0), total_days)
+    progress_percent = round((progress_day / total_days) * 100)
+    return progress_day, total_days, progress_percent
+
+
+def _calendarization_week_starts(calendarization, fallback_monday: date) -> list[date]:
+    if not calendarization:
+        return [fallback_monday]
+
+    first_monday = calendarization.start_date - timedelta(days=calendarization.start_date.weekday())
+    last_monday = calendarization.end_date - timedelta(days=calendarization.end_date.weekday())
+    week_count = ((last_monday - first_monday).days // 7) + 1
+    return [first_monday + timedelta(days=week * 7) for week in range(week_count)]
+
+
+def _bounded_active_monday(requested_monday: date, week_starts: list[date], today_monday: date) -> date:
+    if requested_monday in week_starts:
+        return requested_monday
+    if today_monday in week_starts:
+        return today_monday
+    return week_starts[0]
+
+
 def build_home_calendarization_vm(
     user,
     *,
@@ -149,10 +189,12 @@ def build_home_calendarization_vm(
         else _today_for_user(user, now=now)
     )
     today_monday = today - timedelta(days=today.weekday())
-    monday = _week_start_from_param(
+    requested_monday = _week_start_from_param(
         (request_get or {}).get("calendar_week"),
         today_monday,
     )
+    week_starts = _calendarization_week_starts(calendarization, today_monday)
+    monday = _bounded_active_monday(requested_monday, week_starts, today_monday)
     requested_selected_date = _date_from_param((request_get or {}).get("calendar_date"))
     selected_date = (
         requested_selected_date
@@ -167,26 +209,37 @@ def build_home_calendarization_vm(
 
     weeks = [
         _build_week_vm(
-            week_monday=monday + timedelta(days=week_offset),
+            week_monday=week_monday,
             active_monday=monday,
             selected_date=selected_date,
             today=today,
             calendarized_days=calendarized_days,
             dailyplans_by_id=dailyplans_by_id,
         )
-        for week_offset in (-7, 0, 7)
+        for week_monday in week_starts
     ]
-    days = weeks[1].days
+    active_week = next((week for week in weeks if week.is_active), weeks[0])
+    days = active_week.days
+    progress_day, progress_total_days, progress_percent = _calendarization_progress(
+        calendarization,
+        today,
+    )
 
     return HomeCalendarizationVM(
         has_calendarization=calendarization is not None,
         program_name=calendarization.program_name_snapshot if calendarization else "",
         status_label=STATUS_LABELS.get(calendarization.status, calendarization.status.title()) if calendarization else "",
         start_label=_compact_date_label(calendarization.start_date) if calendarization else "",
+        end_label=_compact_date_label(calendarization.end_date) if calendarization else "",
         duration_label=_duration_label(calendarization.start_date, calendarization.end_date) if calendarization else "",
+        duration_days_label=_duration_days_label(progress_total_days) if calendarization else "",
+        progress_day=progress_day,
+        progress_total_days=progress_total_days,
+        progress_percent=progress_percent,
         dashboard_url=reverse("calendarization_dashboard"),
         previous_week_url=_home_week_url(monday - timedelta(days=7)),
         next_week_url=_home_week_url(monday + timedelta(days=7)),
+        has_multiple_weeks=len(weeks) > 1,
         days=days,
         weeks=weeks,
     )
