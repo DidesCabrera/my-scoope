@@ -2549,7 +2549,15 @@ body.page-home .page-header .header-title-mobile {
   margin: 0 auto 48px;
 }
 
-
+.home-calendar__program-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+  padding: 18px 22px;
+  border-radius: 22px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-soft);
+}
 
 .home-calendar__section-title {
   display: flex;
@@ -2583,9 +2591,6 @@ body.page-home .page-header .header-title-mobile {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  background-color: var(--surface-card);
-  padding: 18px 22px;
-  border-radius: 22px;
 }
 
 .home-calendar__heading-content {
@@ -2594,6 +2599,7 @@ body.page-home .page-header .header-title-mobile {
   align-items: center;
   gap: 18px;
   min-width: 0;
+  padding: 4px 0 4px 6px;
   text-align: left;
 }
 
@@ -2726,7 +2732,6 @@ body.page-home .page-header .header-title-mobile {
   align-items: center;
   justify-content: center;
   gap: var(--space-3);
-  margin-top: var(--space-6);
 }
 
 .home-calendar__week-slider--single {
@@ -2769,7 +2774,6 @@ body.page-home .page-header .header-title-mobile {
   display: flex;
   transition: transform 0.22s ease;
   transform: translateX(0);
-  padding-bottom: 12px;
 }
 
 .home-calendar__week {
@@ -2902,7 +2906,7 @@ body.page-home .page-header .header-title-mobile {
 }
 
 .home-calendar__plans {
-  margin-top: var(--space-5);
+  margin-top: 0;
 }
 
 .home-calendar__plan-panel[hidden] {
@@ -2914,6 +2918,7 @@ body.page-home .page-header .header-title-mobile {
   padding: var(--space-5);
   border-radius: var(--radius-lg);
   background: var(--surface-card);
+  border: 1px solid var(--border-soft);
 }
 
 .home-calendar__empty-card p {
@@ -3204,10 +3209,14 @@ body.page-home .page-header .header-title-mobile {
     padding: 22px 4px;
   }
 
+  .home-calendar__program-card {
+    gap: var(--space-5);
+    padding: 16px;
+  }
+
   .home-calendar__heading {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: start;
-    padding: 16px;
   }
 
   .home-calendar__heading-content {

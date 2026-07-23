@@ -53,10 +53,6 @@
       </a>
       {% endif %}
     </div>
-    <div class="calendarization-actions">
-      <form method="post" action="{% url 'calendarization_cancel' vm.content.current.id %}" data-confirm="¿Cancelar esta calendarización?">{% csrf_token %}<button class="btn-danger calendarization-button" type="submit">Cancelar Calendarizacion</button></form>
-    </div>
-
     <div class="home-calendar__week-slider{% if not vm.content.current_calendar.has_multiple_weeks %} home-calendar__week-slider--single{% endif %}" aria-label="Navegación semanal del calendario">
       {% if vm.content.current_calendar.has_multiple_weeks %}
         <button class="home-calendar__week-nav" type="button" aria-label="Semana anterior" data-home-calendar-week-nav="prev" data-home-calendar-week-url="{{ vm.content.current_calendar.previous_week_url }}">
@@ -128,6 +124,10 @@
           {% endif %}
         </div>
       {% endfor %}
+    </div>
+
+    <div class="calendarization-actions">
+      <form method="post" action="{% url 'calendarization_cancel' vm.content.current.id %}" data-confirm="¿Cancelar esta calendarización?">{% csrf_token %}<button class="btn-danger calendarization-button" type="submit">Cancelar Calendarizacion</button></form>
     </div>
   </section>
 

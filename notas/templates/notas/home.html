@@ -196,119 +196,121 @@
       </details>
     </div>
 
-    <div class="home-calendar__heading">
-      <div class="home-calendar__heading-content">
-        {% if vm.content.calendarization.has_calendarization %}
-          <div class="home-calendar__program-heading">
-            <p class="home-calendar__program-eyebrow">
-              <i data-lucide="calendar-clock" aria-hidden="true"></i>
-              <span>Programa Calendarizado</span>
-            </p>
-            <h2 class="home-calendar__program-name">{{ vm.content.calendarization.program_name }}</h2>
-          </div>
-          <div class="home-calendar__program-progress" aria-label="Avance del programa: {{ vm.content.calendarization.progress_day }} de {{ vm.content.calendarization.progress_total_days }} días">
-            <dl class="home-calendar__progress-details">
-              <div>
-                <dt>Duración</dt>
-                <dd>{{ vm.content.calendarization.duration_days_label }}</dd>
-              </div>
-              <div>
-                <dt>Inicio</dt>
-                <dd>{{ vm.content.calendarization.start_label }}</dd>
-              </div>
-              <div>
-                <dt>Termina</dt>
-                <dd>{{ vm.content.calendarization.end_label }}</dd>
-              </div>
-              <div>
-                <dt>Avance</dt>
-                <dd>{{ vm.content.calendarization.progress_day }}/{{ vm.content.calendarization.progress_total_days }}</dd>
-              </div>
-            </dl>
-            <div class="home-calendar__progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="{{ vm.content.calendarization.progress_total_days }}" aria-valuenow="{{ vm.content.calendarization.progress_day }}">
-              <span class="home-calendar__progress-bar" style="width: {{ vm.content.calendarization.progress_percent }}%;"></span>
+    <div class="home-calendar__program-card">
+      <div class="home-calendar__heading">
+        <div class="home-calendar__heading-content">
+          {% if vm.content.calendarization.has_calendarization %}
+            <div class="home-calendar__program-heading">
+              <p class="home-calendar__program-eyebrow">
+                <i data-lucide="calendar-clock" aria-hidden="true"></i>
+                <span>Programa Calendarizado</span>
+              </p>
+              <h2 class="home-calendar__program-name">{{ vm.content.calendarization.program_name }}</h2>
             </div>
-          </div>
-        {% else %}
-          <p class="home-calendar__empty-state">No tienes un programa calendarizado</p>
-        {% endif %}
-      </div>
-      <a class="home-calendar__manage-link" href="{{ vm.content.calendarization.dashboard_url }}" aria-label="Administrar calendario">
-        <i data-lucide="chevron-right" aria-hidden="true"></i>
-      </a>
-    </div>
-
-    <div class="home-calendar__week-slider{% if not vm.content.calendarization.has_multiple_weeks %} home-calendar__week-slider--single{% endif %}" aria-label="Navegación semanal del calendario">
-      {% if vm.content.calendarization.has_multiple_weeks %}
-        <button class="home-calendar__week-nav" type="button" aria-label="Semana anterior" data-home-calendar-week-nav="prev" data-home-calendar-week-url="{{ vm.content.calendarization.previous_week_url }}">
-          <i data-lucide="chevron-left" aria-hidden="true"></i>
-        </button>
-      {% endif %}
-      <div class="home-calendar__week-viewport" data-home-calendar-week-viewport>
-        <div class="home-calendar__week-track" data-home-calendar-week-track>
-          {% for week in vm.content.calendarization.weeks %}
-            <div class="home-calendar__week{% if week.is_active %} is-active{% endif %}" role="{% if week.is_active %}tablist{% else %}group{% endif %}" aria-label="Semana de {{ week.week_start_iso }}" data-home-calendar-week>
-              {% for day in week.days %}
-                {% if week.is_active %}
-                  <button
-                    type="button"
-                    class="home-calendar__day home-calendar__day--{{ day.temporal_state }}{% if day.is_selected %} is-selected{% endif %}{% if day.has_plan %} has-plan{% endif %}"
-                    role="tab"
-                    aria-selected="{% if day.is_selected %}true{% else %}false{% endif %}"
-                    aria-controls="{{ day.panel_id }}"
-                    aria-label="{{ day.accessible_date }}"
-                    data-home-calendar-day
-                  >
-                    <span class="home-calendar__weekday" aria-hidden="true">{{ day.weekday_label }}</span>
-                    <span class="home-calendar__date-circle" aria-hidden="true">
-                      <strong>{{ day.date_number }}</strong>
-                      <small>{{ day.month_label }}</small>
-                    </span>
-                  </button>
-                {% else %}
-                  <a
-                    class="home-calendar__day home-calendar__day--{{ day.temporal_state }}{% if day.has_plan %} has-plan{% endif %}"
-                    href="{{ day.selection_url }}"
-                    aria-label="{{ day.accessible_date }}"
-                    data-home-calendar-day-link
-                  >
-                    <span class="home-calendar__weekday" aria-hidden="true">{{ day.weekday_label }}</span>
-                    <span class="home-calendar__date-circle" aria-hidden="true">
-                      <strong>{{ day.date_number }}</strong>
-                      <small>{{ day.month_label }}</small>
-                    </span>
-                  </a>
-                {% endif %}
-              {% endfor %}
+            <div class="home-calendar__program-progress" aria-label="Avance del programa: {{ vm.content.calendarization.progress_day }} de {{ vm.content.calendarization.progress_total_days }} días">
+              <dl class="home-calendar__progress-details">
+                <div>
+                  <dt>Duración</dt>
+                  <dd>{{ vm.content.calendarization.duration_days_label }}</dd>
+                </div>
+                <div>
+                  <dt>Inicio</dt>
+                  <dd>{{ vm.content.calendarization.start_label }}</dd>
+                </div>
+                <div>
+                  <dt>Termina</dt>
+                  <dd>{{ vm.content.calendarization.end_label }}</dd>
+                </div>
+                <div>
+                  <dt>Avance</dt>
+                  <dd>{{ vm.content.calendarization.progress_day }}/{{ vm.content.calendarization.progress_total_days }}</dd>
+                </div>
+              </dl>
+              <div class="home-calendar__progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="{{ vm.content.calendarization.progress_total_days }}" aria-valuenow="{{ vm.content.calendarization.progress_day }}">
+                <span class="home-calendar__progress-bar" style="width: {{ vm.content.calendarization.progress_percent }}%;"></span>
+              </div>
             </div>
-          {% endfor %}
-        </div>
-      </div>
-      {% if vm.content.calendarization.has_multiple_weeks %}
-        <button class="home-calendar__week-nav" type="button" aria-label="Semana siguiente" data-home-calendar-week-nav="next" data-home-calendar-week-url="{{ vm.content.calendarization.next_week_url }}">
-          <i data-lucide="chevron-right" aria-hidden="true"></i>
-        </button>
-      {% endif %}
-    </div>
-
-    <div class="home-calendar__plans" aria-live="polite">
-      {% for day in vm.content.calendarization.days %}
-        <div
-          id="{{ day.panel_id }}"
-          class="home-calendar__plan-panel"
-          role="tabpanel"
-          {% if not day.is_selected %}hidden{% endif %}
-        >
-          <div class="home-calendar__selected-date">{{ day.accessible_date }}</div>
-          {% if day.dailyplan_card %}
-            {% include "components/card_child_dailyplan.html" with child_card=day.dailyplan_card dailyplan_card_class="home-calendar__dailyplan-card" default_menu=True %}
           {% else %}
-            <div class="home-calendar__empty-card">
-              <p>El programa calendarizado no tiene un plan asignado a esta fecha.</p>
-            </div>
+            <p class="home-calendar__empty-state">No tienes un programa calendarizado</p>
           {% endif %}
         </div>
-      {% endfor %}
+        <a class="home-calendar__manage-link" href="{{ vm.content.calendarization.dashboard_url }}" aria-label="Administrar calendario">
+          <i data-lucide="chevron-right" aria-hidden="true"></i>
+        </a>
+      </div>
+
+      <div class="home-calendar__week-slider{% if not vm.content.calendarization.has_multiple_weeks %} home-calendar__week-slider--single{% endif %}" aria-label="Navegación semanal del calendario">
+        {% if vm.content.calendarization.has_multiple_weeks %}
+          <button class="home-calendar__week-nav" type="button" aria-label="Semana anterior" data-home-calendar-week-nav="prev" data-home-calendar-week-url="{{ vm.content.calendarization.previous_week_url }}">
+            <i data-lucide="chevron-left" aria-hidden="true"></i>
+          </button>
+        {% endif %}
+        <div class="home-calendar__week-viewport" data-home-calendar-week-viewport>
+          <div class="home-calendar__week-track" data-home-calendar-week-track>
+            {% for week in vm.content.calendarization.weeks %}
+              <div class="home-calendar__week{% if week.is_active %} is-active{% endif %}" role="{% if week.is_active %}tablist{% else %}group{% endif %}" aria-label="Semana de {{ week.week_start_iso }}" data-home-calendar-week>
+                {% for day in week.days %}
+                  {% if week.is_active %}
+                    <button
+                      type="button"
+                      class="home-calendar__day home-calendar__day--{{ day.temporal_state }}{% if day.is_selected %} is-selected{% endif %}{% if day.has_plan %} has-plan{% endif %}"
+                      role="tab"
+                      aria-selected="{% if day.is_selected %}true{% else %}false{% endif %}"
+                      aria-controls="{{ day.panel_id }}"
+                      aria-label="{{ day.accessible_date }}"
+                      data-home-calendar-day
+                    >
+                      <span class="home-calendar__weekday" aria-hidden="true">{{ day.weekday_label }}</span>
+                      <span class="home-calendar__date-circle" aria-hidden="true">
+                        <strong>{{ day.date_number }}</strong>
+                        <small>{{ day.month_label }}</small>
+                      </span>
+                    </button>
+                  {% else %}
+                    <a
+                      class="home-calendar__day home-calendar__day--{{ day.temporal_state }}{% if day.has_plan %} has-plan{% endif %}"
+                      href="{{ day.selection_url }}"
+                      aria-label="{{ day.accessible_date }}"
+                      data-home-calendar-day-link
+                    >
+                      <span class="home-calendar__weekday" aria-hidden="true">{{ day.weekday_label }}</span>
+                      <span class="home-calendar__date-circle" aria-hidden="true">
+                        <strong>{{ day.date_number }}</strong>
+                        <small>{{ day.month_label }}</small>
+                      </span>
+                    </a>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% if vm.content.calendarization.has_multiple_weeks %}
+          <button class="home-calendar__week-nav" type="button" aria-label="Semana siguiente" data-home-calendar-week-nav="next" data-home-calendar-week-url="{{ vm.content.calendarization.next_week_url }}">
+            <i data-lucide="chevron-right" aria-hidden="true"></i>
+          </button>
+        {% endif %}
+      </div>
+
+      <div class="home-calendar__plans" aria-live="polite">
+        {% for day in vm.content.calendarization.days %}
+          <div
+            id="{{ day.panel_id }}"
+            class="home-calendar__plan-panel"
+            role="tabpanel"
+            {% if not day.is_selected %}hidden{% endif %}
+          >
+            <div class="home-calendar__selected-date">{{ day.accessible_date }}</div>
+            {% if day.dailyplan_card %}
+              {% include "components/card_child_dailyplan.html" with child_card=day.dailyplan_card dailyplan_card_class="home-calendar__dailyplan-card" default_menu=True %}
+            {% else %}
+              <div class="home-calendar__empty-card">
+                <p>El programa calendarizado no tiene un plan asignado a esta fecha.</p>
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
     </div>
   </section>
 
