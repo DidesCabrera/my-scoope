@@ -6,43 +6,16 @@
 <div class="page page--detail profile-page">
 
     <section class="profile-account-section">
-        <div class="profile-account-main">
-            <div class="profile-account-heading">
-                <p class="home-eyebrow">Profile</p>
-
-                <div class="profile-account-title-row">
-                    <i data-lucide="user" class="profile-account-title-icon"></i>
-                    <h1>{{ vm.content.title }}</h1>
-                </div>
-
-                <p class="profile-account-subtitle">
-                    {{ vm.content.subtitle }}
-                </p>
+        <div class="profile-account-heading">
+            <div class="profile-account-title-row">
+                <i data-lucide="{{ vm.content.icon }}" class="profile-account-title-icon"></i>
+                <h1>{{ vm.content.title }}</h1>
             </div>
 
-            <div class="profile-account-primary-metric">
-                <span class="profile-account-primary-label">Peso actual</span>
-
-                <strong>
-                    {% if vm.content.weight_current %}
-                        {{ vm.content.weight_current|floatformat:1 }} kg
-                    {% else %}
-                        Sin registro
-                    {% endif %}
-                </strong>
-            </div>
-        </div>
-
-        <div class="profile-account-grid">
-            {% for stat in vm.content.stats %}
-                <div class="profile-account-info-item">
-                    <span class="profile-account-info-label">{{ stat.label }}</span>
-                    <strong class="profile-account-info-value">{{ stat.value }}</strong>
-                </div>
-            {% endfor %}
         </div>
     </section>
 
+    {% if vm.content.account_section %}
     <section class="profile-section-card profile-section-card--account" id="profile-account">
         <header class="profile-section-card__header">
             <div class="profile-section-card__title-wrap">
@@ -65,7 +38,9 @@
             {% endfor %}
         </div>
     </section>
+    {% endif %}
 
+    {% if vm.content.billing_section %}
     <section class="profile-section-card profile-section-card--billing" id="profile-credits">
         <header class="profile-section-card__header">
             <div class="profile-section-card__title-wrap">
@@ -88,9 +63,11 @@
             {% endfor %}
         </div>
     </section>
+    {% endif %}
 
+    {% if vm.content.nutrition_section %}
     <section class="profile-section-card profile-section-card--nutrition" id="profile-personal">
-        <header class="profile-section-card__header">
+        <header class="profile-section-card__header profile-section-card__header--with-action">
             <div class="profile-section-card__title-wrap">
                 <p class="profile-section-card__eyebrow">{{ vm.content.nutrition_section.eyebrow }}</p>
                 <div class="profile-section-card__title-row">
@@ -99,6 +76,14 @@
                 </div>
                 <p>{{ vm.content.nutrition_section.description }}</p>
             </div>
+
+            <button
+                class="profile-weight-button"
+                type="button"
+                onclick="openProfileEditModal()"
+            >
+                Editar ficha
+            </button>
         </header>
 
         <div class="profile-section-card__grid profile-section-card__grid--nutrition">
@@ -110,7 +95,14 @@
                 </article>
             {% endfor %}
         </div>
+    </section>
 
+    <div
+        id="profileEditModal"
+        class="modal hidden profile-edit-modal"
+        {% if vm.content.nutrition_form.errors or vm.content.nutrition_form.non_field_errors %}data-open-on-load="true"{% endif %}
+    >
+        <div class="modal-content profile-edit-modal__content">
         <form method="post" action="{% url 'profile_nutrition_update' %}" class="profile-edit-form" novalidate>
             {% csrf_token %}
 
@@ -165,10 +157,16 @@
                 </div>
             </div>
 
-            <button type="submit" class="profile-weight-button profile-edit-form__button">Guardar ficha</button>
+            <div class="modal-actions profile-edit-form__actions">
+                <button type="submit" class="btn-primary">Guardar ficha</button>
+                <button type="button" onclick="closeProfileEditModal()">Cancelar</button>
+            </div>
         </form>
-    </section>
+        </div>
+    </div>
+    {% endif %}
 
+    {% if vm.content.metrics_section %}
     <section class="profile-section-card profile-section-card--metrics">
         <header class="profile-section-card__header profile-section-card__header--with-action">
             <div class="profile-section-card__title-wrap">
@@ -199,7 +197,9 @@
             {% endfor %}
         </div>
     </section>
+    {% endif %}
 
+    {% if vm.content.ai_context_section %}
     <section class="profile-section-card profile-section-card--ai-context">
         <header class="profile-section-card__header">
             <div class="profile-section-card__title-wrap">
@@ -222,26 +222,57 @@
             {% endfor %}
         </div>
     </section>
+    {% endif %}
 
+    {% if vm.content.active_section == "account" %}
     <section class="profile-section">
         {% include "components/theme_toggle.html" %}
     </section>
-
-    <section class="profile-logout-card">
-        {% if user.is_authenticated %}
-            <form method="post" action="{% url 'account_logout' %}" class="profile-logout-form">
-                {% csrf_token %}
-
-                <button type="submit" class="profile-logout-button">
-                    <span class="profile-logout-copy">
-                        <i data-lucide="log-out" class="profile-logout-icon"></i>
-                        <span>Cerrar sesión</span>
-                    </span>
-                </button>
-            </form>
-        {% endif %}
-    </section>
+    {% endif %}
 
 </div>
+
+<script>
+    function openProfileEditModal() {
+        const modal = document.getElementById("profileEditModal");
+        const firstInput = modal ? modal.querySelector("input, select, textarea") : null;
+
+        if (!modal) return;
+
+        modal.classList.remove("hidden");
+
+        if (firstInput) {
+            setTimeout(() => firstInput.focus(), 0);
+        }
+    }
+
+    function closeProfileEditModal() {
+        const modal = document.getElementById("profileEditModal");
+        if (!modal) return;
+        modal.classList.add("hidden");
+    }
+
+    document.addEventListener("click", function (event) {
+        const modal = document.getElementById("profileEditModal");
+        if (!modal || modal.classList.contains("hidden")) return;
+
+        if (event.target === modal) {
+            closeProfileEditModal();
+        }
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+            closeProfileEditModal();
+        }
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const modal = document.getElementById("profileEditModal");
+        if (modal && modal.dataset.openOnLoad === "true") {
+            openProfileEditModal();
+        }
+    });
+</script>
 
 {% endblock %}

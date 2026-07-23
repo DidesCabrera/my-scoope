@@ -5,18 +5,21 @@
   <section class="profile-account-section">
     <div class="profile-account-main">
       <div class="profile-account-heading">
-        <p class="home-eyebrow">Account</p>
         <div class="profile-account-title-row">
           <i data-lucide="receipt-text" class="profile-account-title-icon"></i>
           <h1>{{ vm.content.title }}</h1>
         </div>
-        <p class="profile-account-subtitle">{{ vm.content.subtitle }}</p>
-      </div>
-      <div class="profile-account-primary-metric">
-        <span class="profile-account-primary-label">Plan actual</span>
-        <strong>{{ vm.content.plan_name }}</strong>
       </div>
     </div>
+  </section>
+
+  <section class="profile-section-card">
+    <header class="profile-section-card__header">
+      <div class="profile-section-card__title-wrap">
+        <p class="profile-section-card__eyebrow">Plan actual</p>
+        <h2>{{ vm.content.plan_name }}</h2>
+      </div>
+    </header>
     <div class="profile-account-grid">
       <div class="profile-account-info-item"><span class="profile-account-info-label">Créditos</span><strong>{{ vm.content.available_credits }}</strong></div>
       <div class="profile-account-info-item"><span class="profile-account-info-label">Suscripción</span><strong>{{ vm.content.subscription_status }}</strong></div>

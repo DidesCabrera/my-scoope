@@ -5,66 +5,157 @@
 <div class="page list calendarization-page" data-calendarization
      data-push-enabled="{% if vm.content.push_enabled %}1{% else %}0{% endif %}"
      data-vapid-public-key="{{ vm.content.vapid_public_key }}">
-  <section class="calendarization-hero">
-    <div>
-      <p class="calendarization-eyebrow">Programa semanal</p>
-      <h1>Calendarizar</h1>
-      <p>Activa un programa en una fecha concreta y recibe cada plan diario según tu hora local.</p>
+  <div class="list-page-header list-page-header--calendarization js-header-meta-sentinel">
+    <i data-lucide="calendar-clock" class="list-page-header__icon list-page-header__icon--calendarization"></i>
+    <div class="list-page-header__copy">
+      <h1 class="list-page-header__title">Calendarizador</h1>
     </div>
-    <div class="calendarization-timezone-chip">
-      <i data-lucide="globe-2"></i>
-      <span>Zona horaria: <strong data-timezone-label>{{ vm.content.default_timezone }}</strong></span>
-    </div>
-  </section>
+  </div>
 
   {% if vm.content.current %}
-  <section class="calendarization-card calendarization-current">
-    <div class="calendarization-card__heading">
-      <div>
-        <span class="calendarization-status calendarization-status--{{ vm.content.current.status }}">{{ vm.content.current.get_status_display }}</span>
-        <h2>{{ vm.content.current.program_name_snapshot }}</h2>
-        <p>{{ vm.content.current.start_date|date:"d M Y" }} — {{ vm.content.current.end_date|date:"d M Y" }}</p>
+  <section class="home-calendar calendarization-current" aria-labelledby="calendarization-current-title" data-home-calendar>
+    <div class="home-calendar__heading">
+      <div class="home-calendar__heading-content">
+        <div class="home-calendar__program-heading">
+          <p class="home-calendar__program-eyebrow">
+            <i data-lucide="calendar-clock" aria-hidden="true"></i>
+            <span>Programa Calendarizado</span>
+          </p>
+          <h2 class="home-calendar__program-name" id="calendarization-current-title">{{ vm.content.current_calendar.program_name }}</h2>
+        </div>
+        <div class="home-calendar__program-progress" aria-label="Avance del programa: {{ vm.content.current_calendar.progress_day }} de {{ vm.content.current_calendar.progress_total_days }} días">
+          <dl class="home-calendar__progress-details">
+            <div>
+              <dt>Duración</dt>
+              <dd>{{ vm.content.current_calendar.duration_days_label }}</dd>
+            </div>
+            <div>
+              <dt>Inicio</dt>
+              <dd>{{ vm.content.current_calendar.start_label }}</dd>
+            </div>
+            <div>
+              <dt>Termina</dt>
+              <dd>{{ vm.content.current_calendar.end_label }}</dd>
+            </div>
+            <div>
+              <dt>Avance</dt>
+              <dd>{{ vm.content.current_calendar.progress_day }}/{{ vm.content.current_calendar.progress_total_days }}</dd>
+            </div>
+          </dl>
+          <div class="home-calendar__progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="{{ vm.content.current_calendar.progress_total_days }}" aria-valuenow="{{ vm.content.current_calendar.progress_day }}">
+            <span class="home-calendar__progress-bar" style="width: {{ vm.content.current_calendar.progress_percent }}%;"></span>
+          </div>
+        </div>
       </div>
-      <div class="calendarization-actions">
-        {% if vm.content.current.status == "paused" %}
-        <form method="post" action="{% url 'calendarization_resume' vm.content.current.id %}">{% csrf_token %}<button class="btn-secondary" type="submit">Reanudar</button></form>
-        {% else %}
-        <form method="post" action="{% url 'calendarization_pause' vm.content.current.id %}">{% csrf_token %}<button class="btn-secondary" type="submit">Pausar</button></form>
-        {% endif %}
-        <form method="post" action="{% url 'calendarization_cancel' vm.content.current.id %}" data-confirm="¿Cancelar esta calendarización?">{% csrf_token %}<button class="btn-danger" type="submit">Cancelar</button></form>
-      </div>
-    </div>
-
-    {% if vm.content.today_day %}
-    <div class="calendarization-today{% if not vm.content.today_day.has_plan %} is-empty{% endif %}">
-      <div><span>Hoy · {{ vm.content.today_day.calendar_date|date:"d M" }}</span>
-        {% if vm.content.today_day.has_plan %}<strong>{{ vm.content.today_day.plan_snapshot.name }}</strong>{% else %}<strong>Día sin plan</strong>{% endif %}
-      </div>
-      <a class="btn-primary" href="{% url 'calendarization_day_detail' vm.content.today_day.id %}">Ver plan de hoy</a>
-    </div>
-    {% endif %}
-
-    <form class="calendarization-preferences" method="post" action="{% url 'calendarization_preferences' vm.content.current.id %}">
-      {% csrf_token %}
-      <label>Hora del plan diario <input type="time" name="notification_time" value="{{ vm.content.current.daily_notification_time|time:'H:i' }}" required></label>
-      <label>Zona horaria <input type="text" name="timezone_name" value="{{ vm.content.current.timezone_name }}" data-timezone-input required></label>
-      <label class="calendarization-check"><input type="checkbox" name="daily_notifications_enabled" {% if vm.content.current.daily_notifications_enabled %}checked{% endif %}> Plan diario</label>
-      <label class="calendarization-check"><input type="checkbox" name="meal_notifications_enabled" {% if vm.content.current.meal_notifications_enabled %}checked{% endif %}> Avisos por comida</label>
-      <button class="btn-primary" type="submit">Guardar preferencias</button>
-    </form>
-
-    <div class="calendarization-days" aria-label="Días calendarizados">
-      {% for day in vm.content.current.days.all %}
-      <a class="calendarization-day{% if day.calendar_date == vm.content.today %} is-today{% endif %}{% if not day.has_plan %} is-empty{% endif %}" href="{% url 'calendarization_day_detail' day.id %}">
-        <span>{{ day.calendar_date|date:"D" }}</span><strong>{{ day.calendar_date|date:"d" }}</strong><small>{% if day.has_plan %}Plan{% else %}Vacío{% endif %}</small>
+      {% if vm.content.current_program_url %}
+      <a class="home-calendar__manage-link" href="{{ vm.content.current_program_url }}" aria-label="Ver detalle del programa {{ vm.content.current_calendar.program_name }}">
+        <i data-lucide="chevron-right" aria-hidden="true"></i>
       </a>
+      {% endif %}
+    </div>
+    <div class="calendarization-actions">
+      <form method="post" action="{% url 'calendarization_cancel' vm.content.current.id %}" data-confirm="¿Cancelar esta calendarización?">{% csrf_token %}<button class="btn-danger calendarization-button" type="submit">Cancelar Calendarizacion</button></form>
+    </div>
+
+    <div class="home-calendar__week-slider{% if not vm.content.current_calendar.has_multiple_weeks %} home-calendar__week-slider--single{% endif %}" aria-label="Navegación semanal del calendario">
+      {% if vm.content.current_calendar.has_multiple_weeks %}
+        <button class="home-calendar__week-nav" type="button" aria-label="Semana anterior" data-home-calendar-week-nav="prev" data-home-calendar-week-url="{{ vm.content.current_calendar.previous_week_url }}">
+          <i data-lucide="chevron-left" aria-hidden="true"></i>
+        </button>
+      {% endif %}
+      <div class="home-calendar__week-viewport" data-home-calendar-week-viewport>
+        <div class="home-calendar__week-track" data-home-calendar-week-track>
+          {% for week in vm.content.current_calendar.weeks %}
+            <div class="home-calendar__week{% if week.is_active %} is-active{% endif %}" role="{% if week.is_active %}tablist{% else %}group{% endif %}" aria-label="Semana de {{ week.week_start_iso }}" data-home-calendar-week>
+              {% for day in week.days %}
+                {% if week.is_active %}
+                  <button
+                    type="button"
+                    class="home-calendar__day home-calendar__day--{{ day.temporal_state }}{% if day.is_selected %} is-selected{% endif %}{% if day.has_plan %} has-plan{% endif %}"
+                    role="tab"
+                    aria-selected="{% if day.is_selected %}true{% else %}false{% endif %}"
+                    aria-controls="{{ day.panel_id }}"
+                    aria-label="{{ day.accessible_date }}"
+                    data-home-calendar-day
+                  >
+                    <span class="home-calendar__weekday" aria-hidden="true">{{ day.weekday_label }}</span>
+                    <span class="home-calendar__date-circle" aria-hidden="true">
+                      <strong>{{ day.date_number }}</strong>
+                      <small>{{ day.month_label }}</small>
+                    </span>
+                  </button>
+                {% else %}
+                  <a
+                    class="home-calendar__day home-calendar__day--{{ day.temporal_state }}{% if day.has_plan %} has-plan{% endif %}"
+                    href="{{ day.selection_url }}"
+                    aria-label="{{ day.accessible_date }}"
+                    data-home-calendar-day-link
+                  >
+                    <span class="home-calendar__weekday" aria-hidden="true">{{ day.weekday_label }}</span>
+                    <span class="home-calendar__date-circle" aria-hidden="true">
+                      <strong>{{ day.date_number }}</strong>
+                      <small>{{ day.month_label }}</small>
+                    </span>
+                  </a>
+                {% endif %}
+              {% endfor %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% if vm.content.current_calendar.has_multiple_weeks %}
+        <button class="home-calendar__week-nav" type="button" aria-label="Semana siguiente" data-home-calendar-week-nav="next" data-home-calendar-week-url="{{ vm.content.current_calendar.next_week_url }}">
+          <i data-lucide="chevron-right" aria-hidden="true"></i>
+        </button>
+      {% endif %}
+    </div>
+
+    <div class="home-calendar__plans" aria-live="polite">
+      {% for day in vm.content.current_calendar.days %}
+        <div
+          id="{{ day.panel_id }}"
+          class="home-calendar__plan-panel"
+          role="tabpanel"
+          {% if not day.is_selected %}hidden{% endif %}
+        >
+          <div class="home-calendar__selected-date">{{ day.accessible_date }}</div>
+          {% if day.dailyplan_card %}
+            {% include "components/card_child_dailyplan.html" with child_card=day.dailyplan_card default_menu=True %}
+          {% else %}
+            <div class="home-calendar__empty-card">
+              <p>El programa calendarizado no tiene un plan asignado a esta fecha.</p>
+            </div>
+          {% endif %}
+        </div>
       {% endfor %}
     </div>
   </section>
-  {% endif %}
 
+  <form class="calendarization-notifications" method="post" action="{% url 'calendarization_preferences' vm.content.current.id %}" aria-labelledby="current-calendarization-notifications-title">
+    {% csrf_token %}
+    <h3 id="current-calendarization-notifications-title">Notificaciones</h3>
+    <input type="hidden" name="timezone_name" value="{{ vm.content.current.timezone_name }}" data-detect-timezone>
+    <label class="calendarization-check"><input type="checkbox" name="daily_notifications_enabled" {% if vm.content.current.daily_notifications_enabled %}checked{% endif %}> Recibir una notificación al inicio de cada día</label>
+    <label>Hora de la notificación <input type="time" name="notification_time" value="{{ vm.content.current.daily_notification_time|time:'H:i' }}" required></label>
+    <label class="calendarization-check"><input type="checkbox" name="meal_notifications_enabled" {% if vm.content.current.meal_notifications_enabled %}checked{% endif %}> ¿Quieres recibir una notificación con cada comida del plan?</label>
+    <button class="btn-primary calendarization-button" type="submit">Guardar preferencias</button>
+
+    <div class="calendarization-push">
+      <div><h4>Notificaciones en este dispositivo</h4><p>Autoriza las notificaciones para recibir alertas incluso con la app cerrada. En iPhone o iPad, instala MyScoope en la pantalla de inicio primero.</p></div>
+      <div class="calendarization-push__actions">
+      {% if vm.content.push_enabled and vm.content.vapid_public_key %}
+        <button type="button" class="btn-secondary calendarization-button" data-push-button hidden>{% if vm.content.has_push_subscription %}Actualizar autorización{% else %}Activar notificaciones{% endif %}</button>
+        {% if vm.content.has_push_subscription %}<button type="button" class="btn-secondary calendarization-button" data-push-disable-button>Desactivar en este dispositivo</button>{% endif %}
+        <p class="calendarization-push-status" data-push-status></p>
+      {% else %}
+        <span class="calendarization-status">Notificaciones no configuradas en el servidor</span>
+      {% endif %}
+      </div>
+    </div>
+  </form>
+  {% else %}
   <section class="calendarization-card">
-    <h2>{% if vm.content.current %}Reemplazar calendarización{% else %}Nueva calendarización{% endif %}</h2>
+    <h2>Nueva calendarización</h2>
     {% if vm.content.programs %}
     <form method="post" action="{% url 'calendarization_activate' %}" class="calendarization-form" data-activation-form>
       {% csrf_token %}
@@ -77,48 +168,57 @@
         </select>
       </label>
       <label>Fecha de inicio <input type="date" name="start_date" required data-start-date></label>
-      <label>Hora del plan diario <input type="time" name="notification_time" value="07:00" required></label>
-      <label>Zona horaria <input type="text" name="timezone_name" value="{{ vm.content.default_timezone }}" data-timezone-input data-detect-timezone required></label>
-      <label class="calendarization-check"><input type="checkbox" name="daily_notifications_enabled" checked> Notificar el plan diario</label>
-      <label class="calendarization-check"><input type="checkbox" name="meal_notifications_enabled"> Notificar a la hora de cada comida</label>
+      <div class="calendarization-preview" data-date-preview hidden>
+        <div class="calendarization-preview__heading">
+          <p class="home-calendar__program-eyebrow">
+            <i data-lucide="calendar-clock" aria-hidden="true"></i>
+            <span>Plan seleccionado</span>
+          </p>
+          <h3 class="home-calendar__program-name" data-preview-program>—</h3>
+        </div>
+        <dl class="home-calendar__progress-details calendarization-preview__details">
+          <div><dt>Duración</dt><dd data-preview-duration>—</dd></div>
+          <div><dt>Fecha de inicio</dt><dd data-preview-start>—</dd></div>
+          <div><dt>Fecha de término</dt><dd data-preview-end>—</dd></div>
+        </dl>
+      </div>
 
+      <section class="calendarization-notifications" aria-labelledby="new-calendarization-notifications-title">
+        <h3 id="new-calendarization-notifications-title">Notificaciones</h3>
+        <input type="hidden" name="timezone_name" value="{{ vm.content.default_timezone }}" data-detect-timezone>
+        <label class="calendarization-check"><input type="checkbox" name="daily_notifications_enabled" checked> Recibir una notificación al inicio de cada día</label>
+        <label>Hora de la notificación <input type="time" name="notification_time" value="07:00" required></label>
+        <label class="calendarization-check"><input type="checkbox" name="meal_notifications_enabled"> ¿Quieres recibir una notificación con cada comida del plan?</label>
+
+        <div class="calendarization-push">
+          <div><h4>Notificaciones en este dispositivo</h4><p>Autoriza las notificaciones para recibir alertas incluso con la app cerrada. En iPhone o iPad, instala MyScoope en la pantalla de inicio primero.</p></div>
+          <div class="calendarization-push__actions">
+          {% if vm.content.push_enabled and vm.content.vapid_public_key %}
+            <button type="button" class="btn-secondary calendarization-button" data-push-button hidden>{% if vm.content.has_push_subscription %}Actualizar autorización{% else %}Activar notificaciones{% endif %}</button>
+            {% if vm.content.has_push_subscription %}<button type="button" class="btn-secondary calendarization-button" data-push-disable-button>Desactivar en este dispositivo</button>{% endif %}
+            <p class="calendarization-push-status" data-push-status></p>
+          {% else %}
+            <span class="calendarization-status">Notificaciones no configuradas en el servidor</span>
+          {% endif %}
+          </div>
+        </div>
+      </section>
+      <button class="btn-primary calendarization-button calendarization-button--primary" type="submit">Activar calendarización</button>
       <div class="calendarization-warning" data-incomplete-warning hidden>
         <i data-lucide="triangle-alert"></i>
         <div><strong>Programa incompleto</strong><p>Los días vacíos quedarán calendarizados sin plan ni notificación.</p>
-          <label class="calendarization-check"><input type="checkbox" name="confirm_incomplete"> Entiendo y deseo continuar</label>
+          <input type="hidden" name="confirm_incomplete" value="">
+          <button class="btn-secondary calendarization-button" type="button" data-confirm-incomplete>Continuar de todos modos</button>
         </div>
       </div>
-      {% if vm.content.current %}
-      <div class="calendarization-warning">
-        <i data-lucide="refresh-cw"></i><div><strong>Ya hay una calendarización vigente</strong>
-          <label class="calendarization-check"><input type="checkbox" name="replace_current" required> Cancelar la vigente y reemplazarla</label>
-        </div>
-      </div>
-      {% endif %}
-      <p class="calendarization-preview" data-date-preview>Selecciona un programa y una fecha para ver el rango.</p>
-      <button class="btn-primary" type="submit">Activar calendarización</button>
     </form>
     {% else %}
-    <div class="calendarization-empty"><p>Primero necesitas crear un programa semanal propio.</p><a class="btn-primary" href="{% url 'program_create' %}">Crear programa</a></div>
+    <div class="calendarization-empty"><p>Primero necesitas crear un programa semanal propio.</p><a class="btn-primary calendarization-button" href="{% url 'program_create' %}">Crear programa</a></div>
     {% endif %}
   </section>
-
-  <section class="calendarization-card calendarization-push">
-    <div><h2>Notificaciones en este dispositivo</h2><p>Autoriza Web Push para recibir alertas incluso con la app cerrada. En iPhone o iPad, instala MyScoope en la pantalla de inicio primero.</p></div>
-    {% if vm.content.push_enabled and vm.content.vapid_public_key %}
-      <button type="button" class="btn-primary" data-push-button hidden>{% if vm.content.has_push_subscription %}Actualizar autorización{% else %}Activar notificaciones{% endif %}</button>
-      {% if vm.content.has_push_subscription %}<button type="button" class="btn-secondary" data-push-disable-button>Desactivar en este dispositivo</button>{% endif %}
-      <p class="calendarization-push-status" data-push-status></p>
-    {% else %}
-      <span class="calendarization-status">Notificaciones no configuradas en el servidor</span>
-    {% endif %}
-  </section>
-
-  {% if vm.content.history %}
-  <section class="calendarization-card"><h2>Historial</h2><ul class="calendarization-history">
-    {% for item in vm.content.history %}<li><strong>{{ item.program_name_snapshot }}</strong><span>{{ item.start_date|date:"d M Y" }} · {{ item.get_status_display }}</span></li>{% endfor %}
-  </ul></section>
   {% endif %}
+
 </div>
+{% if vm.content.current %}<script src="{% static 'notas/js/home_calendarization.js' %}" defer></script>{% endif %}
 <script src="{% static 'notas/js/calendarization.js' %}" defer></script>
 {% endblock %}

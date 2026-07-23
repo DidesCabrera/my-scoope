@@ -303,28 +303,9 @@
           {% if day.dailyplan_card %}
             {% include "components/card_child_dailyplan.html" with child_card=day.dailyplan_card dailyplan_card_class="home-calendar__dailyplan-card" default_menu=True %}
           {% else %}
-            <div class="home-calendar__plan-icon" aria-hidden="true">
-              <i data-lucide="clipboard-list"></i>
+            <div class="home-calendar__empty-card">
+              <p>El programa calendarizado no tiene un plan asignado a esta fecha.</p>
             </div>
-            <div class="home-calendar__plan-copy">
-              <span>{{ day.accessible_date }}</span>
-              {% if day.has_plan %}
-                <h3>{{ day.plan_name }}</h3>
-                <p>Plan diario asignado a esta fecha.</p>
-              {% elif vm.content.calendarization.has_calendarization %}
-                <h3>Sin plan diario</h3>
-                <p>El programa calendarizado no tiene un plan asignado a esta fecha.</p>
-              {% else %}
-                <h3>No hay plan para esta fecha</h3>
-                <p>Calendariza un programa para consultar aquí cada plan diario.</p>
-              {% endif %}
-            </div>
-            {% if day.detail_url %}
-              <a class="home-calendar__plan-link" href="{{ day.detail_url }}">
-                <span>Ver detalle calendarizado</span>
-                <i data-lucide="chevron-right" aria-hidden="true"></i>
-              </a>
-            {% endif %}
           {% endif %}
         </div>
       {% endfor %}

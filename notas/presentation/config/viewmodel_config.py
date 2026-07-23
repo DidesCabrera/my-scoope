@@ -95,6 +95,7 @@ PROGRAM_VIEWMODE_SHARE = vm("program", "share", "personal")
 # CALENDARIZATION -------------------------------------
 CALENDARIZATION_VIEWMODE_DASHBOARD = vm("calendarization", "list", "personal")
 CALENDARIZATION_VIEWMODE_DAY_DETAIL = vm("calendarization", "detail", "personal")
+CALENDARIZATION_VIEWMODE_HISTORY = vm("calendarization", "list", "history")
 
 
 # PROPOSAL ---------------------------------------------

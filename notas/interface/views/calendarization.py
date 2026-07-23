@@ -8,6 +8,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
 
 from notas.application.queries.calendarization_queries import (
@@ -36,7 +37,9 @@ from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
 from notas.presentation.config.viewmodel_config import (
     CALENDARIZATION_VIEWMODE_DASHBOARD,
     CALENDARIZATION_VIEWMODE_DAY_DETAIL,
+    CALENDARIZATION_VIEWMODE_HISTORY,
 )
+from notas.presentation.pages.home_calendarization import build_home_calendarization_vm
 
 
 ERROR_MESSAGES = {
@@ -53,8 +56,17 @@ def _context(viewmode, content):
     return {"vm": {"ui": asdict(ui), "content": content}}
 
 
-def _header():
-    return asdict(build_page_header(actions=[]))
+def _header(*, history=False):
+    action = {
+        "key": "calendarization_dashboard" if history else "calendarization_history",
+        "label": "Calendarizador" if history else "Historial",
+        "method": "get",
+        "icon": "calendar-clock" if history else "history",
+        "desktop_position": "menu",
+        "mobile_position": "menu",
+        "url": reverse("calendarization_dashboard" if history else "calendarization_history"),
+    }
+    return asdict(build_page_header(actions=[action]))
 
 
 @login_required
@@ -73,9 +85,18 @@ def dashboard(request):
         "header": _header(),
         "programs": programs,
         "current": current,
+        "current_program_url": (
+            reverse("program_detail", args=[current.source_program_id])
+            if current and current.source_program_id
+            else ""
+        ),
+        "current_calendar": build_home_calendarization_vm(
+            request.user,
+            request_get=request.GET,
+            navigation_view_name="calendarization_dashboard",
+        ),
         "today": today,
         "today_day": today_day,
-        "history": calendarization_history_for_user(request.user),
         "default_timezone": request.user.profile.timezone_name or "UTC",
         "push_enabled": bool(getattr(settings, "MYSCOOPE_WEB_PUSH_ENABLED", False)),
         "vapid_public_key": getattr(settings, "MYSCOOPE_VAPID_PUBLIC_KEY", ""),
@@ -89,11 +110,25 @@ def dashboard(request):
 
 
 @login_required
+@require_GET
+def history(request):
+    content = {
+        "header": _header(history=True),
+        "history": calendarization_history_for_user(request.user, limit=None),
+    }
+    return render(
+        request,
+        "notas/calendarization/history.html",
+        _context(CALENDARIZATION_VIEWMODE_HISTORY, content),
+    )
+
+
+@login_required
 @require_POST
 def activate(request):
     form = CalendarizationActivationForm(request.POST)
     if not form.is_valid():
-        messages.error(request, "Revisa la fecha, hora y zona horaria seleccionadas.")
+        messages.error(request, "Revisa el programa, la fecha y la hora seleccionadas.")
         return redirect("calendarization_dashboard")
 
     program = get_object_or_404(Program, id=form.cleaned_data["program_id"], created_by=request.user)
@@ -150,7 +185,7 @@ def cancel(request, calendarization_id):
 def preferences(request, calendarization_id):
     form = CalendarizationPreferencesForm(request.POST)
     if not form.is_valid():
-        messages.error(request, "Revisa la hora y zona horaria.")
+        messages.error(request, "Revisa la hora seleccionada.")
         return redirect("calendarization_dashboard")
     try:
         update_calendarization_preferences(

@@ -106,6 +106,8 @@ class HomeCalendarizationTests(TestCase):
         self.assertContains(response, "3/7")
         self.assertContains(response, "Plan de potencia")
         self.assertContains(response, 'class="card home-calendar__dailyplan-card"')
+        self.assertContains(response, "El programa calendarizado no tiene un plan asignado a esta fecha.")
+        self.assertNotContains(response, "Sin plan diario")
         calendarization_vm = response.context["vm"]["content"]["calendarization"]
         self.assertEqual(calendarization_vm["end_label"], "19jul")
         self.assertEqual(calendarization_vm["progress_day"], 3)

@@ -7,6 +7,7 @@
     flex-direction: column;
     gap: 14px;
 
+    background: transparent;
     border: none;
 }
 
@@ -465,13 +466,13 @@
     gap: 18px;
 
     width: 100%;
-    padding: 16px;
+    padding: 22px 28px;
 
     background: var(--surface-card);
     color: var(--text-main);
 
     border: 1px solid var(--panel-row-separator);
-    border-radius: 18px;
+    border-radius: 22px;
     box-shadow: none;
 }
 
@@ -607,6 +608,18 @@
     border-radius: 16px;
 }
 
+.profile-edit-modal__content {
+    width: min(560px, 100%);
+}
+
+.profile-edit-modal .profile-edit-form {
+    padding: 0;
+
+    background: transparent;
+    border: none;
+    border-radius: 0;
+}
+
 .profile-edit-form__header {
     display: flex;
     flex-direction: column;
@@ -692,10 +705,18 @@
     align-self: flex-start;
 }
 
+.profile-edit-form__actions {
+    margin-top: 2px;
+}
+
 @media (max-width: 980px) {
     .profile-section-card,
     .profile-edit-form {
         padding: 14px;
+    }
+
+    .profile-edit-modal .profile-edit-form {
+        padding: 0;
     }
 
     .profile-section-card__header,
@@ -714,7 +735,12 @@
         white-space: normal;
     }
 
-    .profile-edit-form__button {
+    .profile-edit-form__button,
+    .profile-edit-form__actions {
         align-self: stretch;
+    }
+
+    .profile-edit-form__actions {
+        flex-direction: column;
     }
 }

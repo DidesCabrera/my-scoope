@@ -122,18 +122,18 @@ def _week_start_from_param(value: str | None, fallback: date) -> date:
     return selected_date - timedelta(days=selected_date.weekday())
 
 
-def _home_week_url(monday: date) -> str:
-    return f"{reverse('home_view')}?{urlencode({'calendar_week': monday.isoformat()})}"
+def _calendar_week_url(view_name: str, monday: date) -> str:
+    return f"{reverse(view_name)}?{urlencode({'calendar_week': monday.isoformat()})}"
 
 
-def _home_day_url(monday: date, selected_date: date) -> str:
+def _calendar_day_url(view_name: str, monday: date, selected_date: date) -> str:
     query = urlencode(
         {
             "calendar_week": monday.isoformat(),
             "calendar_date": selected_date.isoformat(),
         }
     )
-    return f"{reverse('home_view')}?{query}"
+    return f"{reverse(view_name)}?{query}"
 
 
 def _duration_label(start_date: date, end_date: date) -> str:
@@ -181,6 +181,7 @@ def build_home_calendarization_vm(
     *,
     now: datetime | None = None,
     request_get=None,
+    navigation_view_name: str = "home_view",
 ) -> HomeCalendarizationVM:
     calendarization = current_calendarization_for_user(user)
     today = (
@@ -215,6 +216,7 @@ def build_home_calendarization_vm(
             today=today,
             calendarized_days=calendarized_days,
             dailyplans_by_id=dailyplans_by_id,
+            navigation_view_name=navigation_view_name,
         )
         for week_monday in week_starts
     ]
@@ -237,8 +239,8 @@ def build_home_calendarization_vm(
         progress_total_days=progress_total_days,
         progress_percent=progress_percent,
         dashboard_url=reverse("calendarization_dashboard"),
-        previous_week_url=_home_week_url(monday - timedelta(days=7)),
-        next_week_url=_home_week_url(monday + timedelta(days=7)),
+        previous_week_url=_calendar_week_url(navigation_view_name, monday - timedelta(days=7)),
+        next_week_url=_calendar_week_url(navigation_view_name, monday + timedelta(days=7)),
         has_multiple_weeks=len(weeks) > 1,
         days=days,
         weeks=weeks,
@@ -262,6 +264,7 @@ def _build_week_vm(
     today: date,
     calendarized_days,
     dailyplans_by_id,
+    navigation_view_name: str,
 ) -> HomeCalendarWeekVM:
     is_active_week = week_monday == active_monday
     days = []
@@ -290,7 +293,7 @@ def _build_week_vm(
                 is_active_week=is_active_week,
                 has_plan=has_plan,
                 plan_name=(calendarized_day.plan_snapshot.get("name", "") if has_plan else ""),
-                selection_url=_home_day_url(week_monday, calendar_date),
+                selection_url=_calendar_day_url(navigation_view_name, week_monday, calendar_date),
                 detail_url=(
                     reverse("calendarization_day_detail", args=[calendarized_day.id])
                     if has_plan

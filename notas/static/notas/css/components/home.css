@@ -2910,23 +2910,25 @@ body.page-home .page-header .header-title-mobile {
 }
 
 .home-calendar__empty-card {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--space-4);
-  min-height: 112px;
+  display: block;
   padding: var(--space-5);
-  border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
-  background: var(--surface-card-muted);
+  background: var(--surface-card);
+}
+
+.home-calendar__empty-card p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
 }
 
 .home-calendar__selected-date {
   grid-column: 1 / -1;
-  margin: 0 0 var(--space-3);
+  margin: 0 16px var(--space-2);
   color: var(--text-muted);
-  font-size: 0.78rem;
-  font-weight: 700;
+  font-size: 0.95rem;
+  font-weight: 500;
   line-height: 1;
   text-transform: capitalize;
 }
@@ -3265,10 +3267,6 @@ body.page-home .page-header .header-title-mobile {
 
   .home-calendar__date-circle {
     width: clamp(40px, 11vw, 48px);
-  }
-
-  .home-calendar__empty-card {
-    grid-template-columns: auto minmax(0, 1fr);
   }
 
   .home-calendar__plan-link {

@@ -280,6 +280,43 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
         self.assertContains(response, self.program.name)
         self.assertNotContains(response, foreign.name)
         self.assertContains(response, 'data-empty-days="6"')
+        self.assertContains(response, "Calendarizador")
+        self.assertContains(response, "Historial")
+        self.assertNotContains(response, ">Zona horaria<")
+        self.assertContains(response, '<input type="date" name="start_date" required data-start-date>')
+        self.assertContains(response, '<div class="calendarization-warning" data-incomplete-warning hidden>')
+
+    def test_history_has_its_own_view(self):
+        result = self.activate()
+        cancel_calendarization(user=self.user, calendarization_id=result.calendarization.id)
+        response = self.client.get(reverse("calendarization_history"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.program.name)
+        self.assertContains(response, "Historial")
+        self.assertContains(response, "Calendarizador")
+
+    def test_dashboard_with_current_uses_home_calendar_layout_without_replacement_card(self):
+        self.activate()
+        response = self.client.get(
+            reverse("calendarization_dashboard"),
+            {"calendar_week": "2026-07-20", "calendar_date": "2026-07-20"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="home-calendar calendarization-current"')
+        self.assertContains(response, 'class="home-calendar__heading-content"')
+        self.assertContains(response, reverse("program_detail", args=[self.program.id]))
+        self.assertContains(response, 'class="calendarization-actions"')
+        self.assertContains(response, 'class="card "')
+        self.assertContains(response, "card-kpi")
+        self.assertContains(response, "Programa Calendarizado")
+        self.assertNotContains(response, "Reemplazar calendarización")
+        self.assertNotContains(response, "Nueva calendarización")
+        self.assertContains(response, "Notificaciones")
+        self.assertContains(response, "Guardar preferencias")
+        self.assertContains(response, "Cancelar")
+        self.assertNotContains(response, "Pausar")
+        self.assertNotContains(response, "Reanudar")
 
     def test_activation_endpoint_creates_calendarization(self):
         response = self.client.post(
@@ -310,8 +347,12 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
             now=datetime(2026, 7, 19, 6, tzinfo=UTC),
         )
         with self.settings(TIME_ZONE="UTC"):
-            response = self.client.get(reverse("calendarization_dashboard"))
-        self.assertContains(response, "Ver plan de hoy")
+            response = self.client.get(
+                reverse("calendarization_dashboard"),
+                {"calendar_week": "2026-07-13", "calendar_date": "2026-07-19"},
+            )
+        self.assertContains(response, "Día original")
+        self.assertContains(response, "card-kpi")
 
     def test_push_subscription_rejects_malformed_json_shape(self):
         response = self.client.post(

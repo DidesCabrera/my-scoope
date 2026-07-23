@@ -4,7 +4,7 @@
 
   const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
   root.querySelectorAll("[data-detect-timezone]").forEach(function (input) {
-    if (!input.value || input.value === "UTC") input.value = detectedTimezone;
+    input.value = detectedTimezone;
   });
 
   const activationForm = root.querySelector("[data-activation-form]");
@@ -12,27 +12,51 @@
     const program = activationForm.querySelector("[data-program-select]");
     const start = activationForm.querySelector("[data-start-date]");
     const preview = activationForm.querySelector("[data-date-preview]");
+    const previewProgram = activationForm.querySelector("[data-preview-program]");
+    const previewDuration = activationForm.querySelector("[data-preview-duration]");
+    const previewStart = activationForm.querySelector("[data-preview-start]");
+    const previewEnd = activationForm.querySelector("[data-preview-end]");
     const warning = activationForm.querySelector("[data-incomplete-warning]");
-    const incompleteCheckbox = warning && warning.querySelector("input[name='confirm_incomplete']");
+    const incompleteConfirmation = warning && warning.querySelector("input[name='confirm_incomplete']");
+    const continueButton = warning && warning.querySelector("[data-confirm-incomplete]");
     const today = new Date();
     const localToday = [today.getFullYear(), String(today.getMonth() + 1).padStart(2, "0"), String(today.getDate()).padStart(2, "0")].join("-");
     start.min = localToday;
-    if (!start.value) start.value = localToday;
 
     function refreshPreview() {
       const option = program.options[program.selectedIndex];
       const weeks = Number(option && option.dataset.weeks || 0);
-      const emptyDays = Number(option && option.dataset.emptyDays || 0);
-      if (warning) warning.hidden = emptyDays === 0;
-      if (incompleteCheckbox) incompleteCheckbox.required = emptyDays > 0;
-      if (!weeks || !start.value) { preview.textContent = "Selecciona un programa y una fecha para ver el rango."; return; }
+      if (warning) warning.hidden = true;
+      if (incompleteConfirmation) incompleteConfirmation.value = "";
+      if (!weeks || !start.value) { preview.hidden = true; return; }
       const end = new Date(start.value + "T12:00:00");
       end.setDate(end.getDate() + weeks * 7 - 1);
-      preview.textContent = "Semana 1 · Día 1 comienza el " + new Date(start.value + "T12:00:00").toLocaleDateString("es") + " y finaliza el " + end.toLocaleDateString("es") + "." + (emptyDays ? " Hay " + emptyDays + " día(s) vacío(s)." : "");
+      const startDate = new Date(start.value + "T12:00:00");
+      previewProgram.textContent = option.textContent.split(" · ")[0];
+      previewDuration.textContent = weeks + " semana" + (weeks === 1 ? "" : "s");
+      previewStart.textContent = startDate.toLocaleDateString("es");
+      previewEnd.textContent = end.toLocaleDateString("es");
+      preview.hidden = false;
     }
     program.addEventListener("change", refreshPreview);
     start.addEventListener("change", refreshPreview);
     refreshPreview();
+
+    function requestIncompleteConfirmation(event) {
+      const option = program.options[program.selectedIndex];
+      const hasEmptyDays = Number(option && option.dataset.emptyDays || 0) > 0;
+      if (hasEmptyDays && incompleteConfirmation && !incompleteConfirmation.value) {
+        event.preventDefault();
+        warning.hidden = false;
+        warning.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    }
+    activationForm.addEventListener("submit", requestIncompleteConfirmation);
+    if (continueButton) continueButton.addEventListener("click", function () {
+      incompleteConfirmation.value = "on";
+      warning.hidden = true;
+      activationForm.requestSubmit();
+    });
   }
 
   root.querySelectorAll("form[data-confirm]").forEach(function (form) {

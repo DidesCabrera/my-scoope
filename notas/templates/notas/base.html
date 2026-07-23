@@ -245,7 +245,6 @@
             const profilePanel = document.querySelector(".sidebar-profile-panel");
             const profileOpenButtons = document.querySelectorAll("[data-profile-panel-open]");
             const profileCloseButtons = document.querySelectorAll("[data-profile-panel-close]");
-            const profileMenuItems = document.querySelectorAll("[data-profile-menu-item]");
 
             function openProfilePanel() {
                 if (!sidebar || !profilePanel) {
@@ -290,33 +289,12 @@
                 button.addEventListener("click", closeProfilePanel);
             });
 
-            function updateProfileMenuActiveItem() {
-                if (!profileMenuItems.length || !window.location.pathname.startsWith("/app/profile/")) {
-                    return;
-                }
-
-                const activeTarget = window.location.hash.replace("#", "") || "profile-account";
-                profileMenuItems.forEach((item) => {
-                    item.classList.toggle("is-active", item.dataset.profileMenuItem === activeTarget);
-                });
-            }
-
-            profileMenuItems.forEach((item) => {
-                item.addEventListener("click", function () {
-                    profileMenuItems.forEach((candidate) => candidate.classList.remove("is-active"));
-                    item.classList.add("is-active");
-                });
-            });
-
             if (
                 window.location.pathname.startsWith("/app/profile/") ||
                 window.location.pathname.startsWith("/billing/")
             ) {
                 openProfilePanel();
-                updateProfileMenuActiveItem();
             }
-
-            window.addEventListener("hashchange", updateProfileMenuActiveItem);
     
             function groupKey(index) {
                 return "sidebar-group-" + index;
@@ -578,7 +556,6 @@
 
 </body>
 </html>
-
 
 
 

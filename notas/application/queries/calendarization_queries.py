@@ -26,9 +26,10 @@ def current_calendarization_for_user(user):
 
 
 def calendarization_history_for_user(user, *, limit=10):
-    return ProgramCalendarization.objects.filter(user=user).exclude(
+    queryset = ProgramCalendarization.objects.filter(user=user).exclude(
         status__in=ProgramCalendarization.CURRENT_STATUSES,
-    )[:limit]
+    )
+    return queryset[:limit] if limit is not None else queryset
 
 
 def calendarized_day_for_user(user, day_id):
