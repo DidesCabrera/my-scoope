@@ -80,11 +80,29 @@ def admin_home(request):
 
     content = AdminHomeContentVM(
         title="Admin Workspace",
-        subtitle="Herramientas internas de operación y catálogo.",
+        subtitle="Hub interno de Analytics, Operations y Knowledge.",
         cards=[
             AdminCardVM(
+                title="Admin Analytics",
+                description="Consulta métricas, señales de salud, actividad y alertas.",
+                url="admin_analytics_overview",
+                icon="chart-no-axes-combined",
+            ),
+            AdminCardVM(
+                title="Admin Operations",
+                description="Resuelve colas, catálogo, cuentas y acciones auditables.",
+                url="admin_operations_overview",
+                icon="wrench",
+            ),
+            AdminCardVM(
+                title="Knowledge Center",
+                description="Consulta orientación humana no normativa del sistema.",
+                url="admin_knowledge_overview",
+                icon="library-big",
+            ),
+            AdminCardVM(
                 title="Foods Catalog",
-                description="Exporta, revisa e importa cambios masivos de alimentos.",
+                description="Acceso legacy para exportar y revisar cambios masivos.",
                 url="admin_food_catalog",
                 icon="database",
             ),

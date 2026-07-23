@@ -1,0 +1,18 @@
+<nav class="admin-analytics-nav admin-knowledge-nav" aria-label="Knowledge Center sections">
+  <p class="admin-analytics-nav__label">Conocimiento</p>
+  <a class="admin-analytics-nav__link" href="{% url 'admin_knowledge_overview' %}"{% if request.resolver_match.url_name == 'admin_knowledge_overview' %} aria-current="page"{% endif %}>
+    <i data-lucide="layout-dashboard" class="admin-analytics-nav__icon"></i> Overview
+  </a>
+  <a class="admin-analytics-nav__link" href="{% url 'admin_knowledge_document' '00_current/features/admin_knowledge/README.md' %}"{% if 'features/admin_knowledge/README.md' in request.path %} aria-current="page"{% endif %}>
+    <i data-lucide="book-open" class="admin-analytics-nav__icon"></i> Guía central
+  </a>
+  <a class="admin-analytics-nav__link" href="{% url 'admin_knowledge_document' '00_current/features/admin_knowledge/ai_assistant.md' %}"{% if 'features/admin_knowledge/ai_assistant.md' in request.path %} aria-current="page"{% endif %}>
+    <i data-lucide="bot" class="admin-analytics-nav__icon"></i> AI Assistant
+  </a>
+  <a class="admin-analytics-nav__link" href="{% url 'admin_knowledge_document' '00_current/features/admin_knowledge/food_catalog.md' %}"{% if 'features/admin_knowledge/food_catalog.md' in request.path %} aria-current="page"{% endif %}>
+    <i data-lucide="database" class="admin-analytics-nav__icon"></i> Food Catalog
+  </a>
+  <a class="admin-analytics-nav__link" href="{% url 'admin_knowledge_document' '00_current/features/admin_knowledge/nutrition_solver.md' %}"{% if 'features/admin_knowledge/nutrition_solver.md' in request.path %} aria-current="page"{% endif %}>
+    <i data-lucide="calculator" class="admin-analytics-nav__icon"></i> Nutrition Solver
+  </a>
+</nav>

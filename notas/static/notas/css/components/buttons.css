@@ -24,7 +24,6 @@
   .profile-weight-button,
   .profile-logout-button,
   .theme-toggle-button,
-  .sidebar-ai-panel__button,
   .btn-desplegar,
   .btn-desplegar-mobile,
   .btn-create-picker,
@@ -63,7 +62,6 @@
     .profile-weight-button,
     .profile-logout-button,
     .theme-toggle-button,
-    .sidebar-ai-panel__button,
     .btn-desplegar,
     .btn-desplegar-mobile,
     .btn-create-picker,
@@ -87,8 +85,7 @@
   :where(
     a,
     .home-link-button,
-    .overflow-action,
-    .sidebar-ai-panel__button
+    .overflow-action
   ):active {
     text-decoration: none;
   }

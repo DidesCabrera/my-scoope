@@ -223,7 +223,7 @@ html[data-theme="dark"] {
    --text-link: #8ab4ff;
 
    /* Borders */
-   --border-soft: #2424240e;
+   --border-soft: #aaaaaa11;
    --border-default: #343434;
    --border-strong: #4a4a4a;
    --border-inverted: rgba(0, 0, 0, 0.18);

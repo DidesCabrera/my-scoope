@@ -235,7 +235,7 @@ This document should guide future refactors.
 See ADR [0079](../../20_decisions/0079-layer-strictness-by-app-tier.md) for full context.
 
 The full `domain -> application -> presentation -> interface` split above is required
-for **Tier 1** apps: `notas`, `ai_assistant`, `nutrition_solver`. These expose write
+for **Tier 1** apps: `notas`, `ai_assistant`, `nutrition_solver`, `billing`. These expose write
 logic reused across multiple entry points (web, API, MCP, internal AI), and
 `notas/tests/test_bounded_contexts.py` enforces the boundary for `notas`.
 

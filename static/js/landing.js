@@ -3,6 +3,40 @@
     window.lucide.createIcons();
   }
 
+
+  const parallaxMedia = [...document.querySelectorAll("[data-parallax-media]")];
+
+  if (parallaxMedia.length) {
+    let ticking = false;
+
+    const syncParallax = () => {
+      const viewportHeight = window.innerHeight || 0;
+
+      parallaxMedia.forEach((media) => {
+        const container = media.closest("[data-parallax-container]") || media.parentElement;
+        if (!container) return;
+
+        const bounds = container.getBoundingClientRect();
+        const speed = Number.parseFloat(media.dataset.parallaxSpeed || "0.12");
+        const offsetFromCenter = bounds.top + bounds.height / 2 - viewportHeight / 2;
+        const translateY = Math.max(-90, Math.min(90, -offsetFromCenter * speed));
+        media.style.transform = `translate3d(0, ${translateY}px, 0) scale(1.08)`;
+      });
+
+      ticking = false;
+    };
+
+    const requestParallaxSync = () => {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(syncParallax);
+    };
+
+    syncParallax();
+    window.addEventListener("scroll", requestParallaxSync, { passive: true });
+    window.addEventListener("resize", requestParallaxSync);
+  }
+
   const header = document.querySelector("[data-landing-header]");
   const heroLogo = document.querySelector("#hero .hero-logo");
 

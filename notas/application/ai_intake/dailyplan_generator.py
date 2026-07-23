@@ -4,6 +4,7 @@ import unicodedata
 from dataclasses import dataclass
 from typing import Iterable
 
+from django.conf import settings
 from django.db import transaction
 
 from notas.application.ai_intake.nutrition_brief import (
@@ -52,6 +53,11 @@ from notas.application.nutrition_engine.models import (
     PortionBounds,
     SolverFood,
 )
+from notas.application.ai_intake.optimizer_v2_adapter import (
+    DailyPlanOptimizerV2Error,
+    build_shadow_summary_for_legacy_generator,
+    run_dailyplan_optimizer_v2,
+)
 from notas.application.nutrition_engine.portion_solver import solve_meal_portions
 from notas.application.nutrition_engine.target_estimator import (
     DailyNutritionTargetPlan,
@@ -70,7 +76,7 @@ from notas.domain.models import (
 
 
 DAILYPLAN_GENERATOR_INTENT = CREATE_DAILYPLAN_INTENT
-DAILYPLAN_GENERATOR_VERSION = "nutrition_engine_v6_strict_validator"
+DAILYPLAN_GENERATOR_VERSION = "nutrition_engine_v7_optimizer_gate"
 
 DEFAULT_MEALS_PER_DAY = 4
 
@@ -292,7 +298,7 @@ def generate_dailyplan_proposal_from_brief_proposal(
         user=user,
         brief=brief,
     )
-    payload = build_dailyplan_payload_from_brief(
+    payload, solver_summary = _build_dailyplan_payload_with_solver_summary(
         user=user,
         brief=brief,
         target_plan=target_plan,
@@ -309,6 +315,7 @@ def generate_dailyplan_proposal_from_brief_proposal(
         brief=brief,
         target_plan=target_plan,
         simulation=simulation.as_dict(),
+        solver_summary=solver_summary,
     )
     title = _build_generated_proposal_title(brief)
     summary = _build_generated_proposal_summary(
@@ -333,6 +340,7 @@ def generate_dailyplan_proposal_from_brief_proposal(
                 "generator_version": DAILYPLAN_GENERATOR_VERSION,
                 "target_plan": target_plan.as_targets_dict(),
                 "subject_context": _build_subject_context_snapshot(brief=brief, target_plan=target_plan),
+                "nutrition_solver": solver_summary,
             },
             proposed_payload=payload,
             validation_summary=validation_summary,
@@ -367,12 +375,83 @@ def build_dailyplan_payload_from_brief(
     brief: NutritionBrief,
     target_plan: DailyPlanTargetPlan | None = None,
 ) -> dict:
+    payload, _solver_summary = _build_dailyplan_payload_with_solver_summary(
+        user=user,
+        brief=brief,
+        target_plan=target_plan,
+    )
+    return payload
+
+
+def _build_dailyplan_payload_with_solver_summary(
+    *,
+    user,
+    brief: NutritionBrief,
+    target_plan: DailyPlanTargetPlan | None = None,
+) -> tuple[dict, dict]:
+    target_plan = target_plan or build_dailyplan_target_plan(user=user, brief=brief)
+    meals_per_day = _normalize_meals_per_day(brief.meals_per_day)
+    backend = str(getattr(settings, "NUTRITION_SOLVER_BACKEND", "heuristic_v2")).strip().lower()
+    shadow_enabled = bool(getattr(settings, "NUTRITION_SOLVER_SHADOW_ENABLED", False))
+    shadow_backend = str(getattr(settings, "NUTRITION_SOLVER_SHADOW_BACKEND", "cp_sat_v1")).strip().lower()
+    time_limit_ms = int(getattr(settings, "NUTRITION_SOLVER_TIME_LIMIT_MS", 1500))
+
+    if backend == "cp_sat_v1":
+        try:
+            outcome = run_dailyplan_optimizer_v2(
+                user=user,
+                target_plan=target_plan,
+                meals_per_day=meals_per_day,
+                plan_name=_build_dailyplan_name(brief),
+                excluded_terms=brief.excluded_foods,
+                preferred_terms=brief.preferred_foods,
+                backend=backend,
+                shadow_enabled=shadow_enabled,
+                shadow_backend=shadow_backend,
+                time_limit_ms=time_limit_ms,
+            )
+        except DailyPlanOptimizerV2Error as exc:
+            raise DailyPlanGeneratorError(str(exc)) from exc
+        return outcome.payload, outcome.solver_summary
+
+    if backend != "heuristic_v2":
+        raise DailyPlanGeneratorError(f"dailyplan_generator_unknown_solver_backend:{backend}")
+
+    payload = _build_legacy_dailyplan_payload_from_brief(
+        user=user,
+        brief=brief,
+        target_plan=target_plan,
+    )
+    summary = {
+        "contract_version": "nutrition_solver_optimization.v2",
+        "active_backend": "legacy_generator_v6",
+        "configured_backend": backend,
+        "shadow_enabled": shadow_enabled,
+    }
+    if shadow_enabled:
+        summary = build_shadow_summary_for_legacy_generator(
+            user=user,
+            target_plan=target_plan,
+            meals_per_day=meals_per_day,
+            excluded_terms=brief.excluded_foods,
+            preferred_terms=brief.preferred_foods,
+            shadow_backend=shadow_backend,
+            time_limit_ms=time_limit_ms,
+        )
+    return payload, summary
+
+
+def _build_legacy_dailyplan_payload_from_brief(
+    *,
+    user,
+    brief: NutritionBrief,
+    target_plan: DailyPlanTargetPlan,
+) -> dict:
     foods = _load_foods_for_generation(user)
 
     if len(foods) < 3:
         raise DailyPlanGeneratorError("dailyplan_generator_requires_at_least_three_readable_foods")
 
-    target_plan = target_plan or build_dailyplan_target_plan(user=user, brief=brief)
     excluded_terms = _normalize_terms(brief.excluded_foods)
     preferred_terms = _normalize_terms(brief.preferred_foods)
     meals_per_day = _normalize_meals_per_day(brief.meals_per_day)
@@ -903,6 +982,7 @@ def _build_validation_summary(
     brief: NutritionBrief,
     target_plan: DailyPlanTargetPlan,
     simulation: dict,
+    solver_summary: dict | None = None,
 ) -> dict:
     dailyplan = simulation.get("dailyplan") or {}
     kpis = dailyplan.get("kpis") or {}
@@ -943,6 +1023,7 @@ def _build_validation_summary(
             brief=brief,
             simulation=simulation,
         ),
+        "nutrition_solver": dict(solver_summary or {}),
         "brief": {
             "goal": brief.goal,
             "requested_entity": brief.requested_entity,

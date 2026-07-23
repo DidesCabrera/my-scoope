@@ -152,3 +152,21 @@ Consequences
 - `0127-profile-aware-real-provider-validation-fixtures.md`: hace que el escenario PT06 adapte sus expectativas a los datos realmente persistidos en la ficha, sin ocultar pérdidas de sincronización cuando esos datos sí existen.
 - `0128-ai-assistant-behavioral-alignment-current-contract.md`: promueve BA/PT al contrato vigente, fija la semántica de tool restraint, progreso, correlación post-tool y fallback degradado, y reserva el cierre formal para la regresión global del ZIP `full`.
 - `0129-ai-assistant-behavioral-alignment-cycle-closure.md`: cierra BA00-BA07 tras aprobar el gate live aceptado, alinear tests documentales con la arquitectura numerada y pasar `check`, 2 regresiones núcleo y 1.446 tests mediante el script oficial de CI.
+- `0130-behavioral-replays-real-provider-ux-gate.md`: combina replays determinísticos por invariantes con revisión UX humana explícita para validaciones contra proveedor real.
+- `0139-nutrition-solver-optimization-v2-baseline.md`: congela el baseline previo a NSO.
+- `0140-food-catalog-solver-capability-requirements.md`: requisitos explícitos de capacidades.
+- `0141-versioned-solver-food-profiles.md`: perfiles versionados con confianza y procedencia.
+- `0142-food-catalog-curated-solver-capabilities.md`: capacidades curadas en Food Catalog.
+- `0143-operational-solver-capability-snapshot.md`: snapshot operativo para el solver.
+- `0144-optimization-problem-v2-meal-grammar.md`: contrato V2 y gramática de comidas.
+- `0145-candidate-portfolio-combination-planning.md`: portfolios acotados de combinaciones.
+- `0146-cp-sat-optimization-backend.md`: backend CP-SAT seleccionable.
+- `0147-whole-day-optimization-and-alternatives.md`: optimización diaria y alternativas.
+- `0148-shadow-quality-and-regression-gates.md`: shadow, calidad y regresiones duras.
+- `0149-nutrition-solver-optimization-v2-closure.md`: activación controlada y cierre NSO.
+- `0150-open-food-facts-remains-reference-only.md`: mantiene Open Food Facts como lookup/referencia hasta aprobar explícitamente las obligaciones ODbL del catálogo combinado.
+- `0151-governed-food-catalog-growth-boundary.md`: hace obligatorios dry-run/batch/source, escala controlada y separación importación/publicación/snapshot.
+- `0152-executable-project-control-and-ai-context.md`: adopta un estado ejecutable y sanitizado compartido por CLI, Admin Operations y clientes AI, junto con registros de documentos, transiciones y apuestas basadas en evidencia.
+- `0153-calendarization-snapshots-and-idempotent-web-push.md`: separa la ejecución fechada del programa editable y el evento lógico de cada delivery Web Push por dispositivo.
+- `0154-billing-payment-tax-boundary.md`: separa recaudación Mercado Pago, entitlements de `accounts` y emisión tributaria OpenFactura mediante conciliación e idempotencia.
+- `0155-ai-assistant-capability-parity-and-prepared-actions.md`: unifica el catálogo AI/MCP, amplía lecturas de producto y adopta propuestas o acciones preparadas con confirmación confiable para mutaciones.

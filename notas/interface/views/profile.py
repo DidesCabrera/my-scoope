@@ -14,13 +14,6 @@ from notas.presentation.viewmodels.base_vm import BaseVM
 
 
 @dataclass
-class ProfileStatVM:
-    label: str
-    value: str
-    icon: str
-
-
-@dataclass
 class ProfileFieldVM:
     label: str
     value: str
@@ -40,12 +33,14 @@ class ProfileSectionVM:
 class ProfileContentVM:
     title: str
     subtitle: str
-    stats: List[ProfileStatVM]
-    account_section: ProfileSectionVM
-    billing_section: ProfileSectionVM
-    nutrition_section: ProfileSectionVM
-    metrics_section: ProfileSectionVM
-    ai_context_section: ProfileSectionVM
+    eyebrow: str
+    icon: str
+    active_section: str
+    account_section: Optional[ProfileSectionVM]
+    billing_section: Optional[ProfileSectionVM]
+    nutrition_section: Optional[ProfileSectionVM]
+    metrics_section: Optional[ProfileSectionVM]
+    ai_context_section: Optional[ProfileSectionVM]
     weight_current: Optional[float]
     weight_updated_at: Optional[str]
     nutrition_form: ProfileNutritionForm
@@ -53,29 +48,43 @@ class ProfileContentVM:
 
 @login_required
 def profile_detail(request):
-    return _render_profile_detail(request)
+    return _render_profile_detail(request, active_section="account")
+
+
+@login_required
+def profile_nutrition(request):
+    return _render_profile_detail(request, active_section="personal")
+
+
+@login_required
+def profile_credits(request):
+    return _render_profile_detail(request, active_section="credits")
 
 
 @login_required
 def profile_nutrition_update(request):
     if request.method != "POST":
-        return redirect("profile_detail")
+        return redirect("profile_nutrition")
 
     profile = request.user.profile
     form = ProfileNutritionForm(request.POST)
     if not form.is_valid():
         messages.error(request, "Revisa los datos de tu ficha nutricional.")
-        return _render_profile_detail(request, nutrition_form=form)
+        return _render_profile_detail(
+            request,
+            active_section="personal",
+            nutrition_form=form,
+        )
 
     profile.birth_date = form.cleaned_data["birth_date"]
     profile.sex = form.cleaned_data["sex"]
     profile.height_cm = form.cleaned_data["height_cm"]
     profile.save(update_fields=["birth_date", "sex", "height_cm"])
     messages.success(request, "Ficha nutricional actualizada correctamente.")
-    return redirect("profile_detail")
+    return redirect("profile_nutrition")
 
 
-def _render_profile_detail(request, *, nutrition_form=None):
+def _render_profile_detail(request, *, active_section, nutrition_form=None):
     user = request.user
     profile = user.profile
     body_profile = get_basic_body_profile(user)
@@ -101,7 +110,6 @@ def _render_profile_detail(request, *, nutrition_form=None):
             ProfileFieldVM("Usuario", profile.user.username),
             ProfileFieldVM("Email", profile.user.email or "Sin email"),
             ProfileFieldVM("Rol", profile.get_role_display()),
-            ProfileFieldVM("Plan legacy", profile.plan.name if profile.plan else "Sin plan"),
             ProfileFieldVM("Miembro desde", profile.created_at.strftime("%Y-%m-%d")),
         ],
     )
@@ -174,11 +182,6 @@ def _render_profile_detail(request, *, nutrition_form=None):
                 "Altura",
                 f"{profile.height_cm} cm" if profile.height_cm else "Sin completar",
             ),
-            ProfileFieldVM(
-                "Onboarding",
-                "Completado" if profile.onboarding_completed_at else "Pendiente",
-                f"Versión {profile.onboarding_version}",
-            ),
         ],
     )
 
@@ -222,39 +225,38 @@ def _render_profile_detail(request, *, nutrition_form=None):
         ],
     )
 
+    page_metadata = {
+        "account": {
+            "eyebrow": "Cuenta",
+            "title": "Datos de cuenta",
+            "subtitle": "Consulta la identidad y configuración general asociadas a tu acceso.",
+            "icon": "user-round",
+        },
+        "personal": {
+            "eyebrow": "Ficha personal",
+            "title": "Perfil nutricional",
+            "subtitle": "Mantén al día los datos corporales que My Scoope usa como referencia personal.",
+            "icon": "id-card",
+        },
+        "credits": {
+            "eyebrow": "Plan y créditos",
+            "title": "Uso de créditos",
+            "subtitle": "Revisa tu disponibilidad y los límites aplicados al uso de AI Assistant.",
+            "icon": "wallet-cards",
+        },
+    }[active_section]
+
     content = ProfileContentVM(
-        title=f"{user.username}",
-        subtitle=(
-            "Gestiona tu cuenta, ficha nutricional y métricas corporales usadas "
-            "como referencia para cálculos personales de My Scoope."
-        ),
-        stats=[
-            ProfileStatVM(
-                label="Rol",
-                value=profile.get_role_display(),
-                icon="badge-check",
-            ),
-            ProfileStatVM(
-                label="Plan",
-                value=account_credits.plan_name,
-                icon="credit-card",
-            ),
-            ProfileStatVM(
-                label="Créditos",
-                value=str(account_credits.available_credits),
-                icon="wallet-cards",
-            ),
-            ProfileStatVM(
-                label="Peso actual",
-                value=f"{current_weight:.1f} kg" if current_weight else "Sin registro",
-                icon="scale",
-            ),
-        ],
-        account_section=account_section,
-        billing_section=billing_section,
-        nutrition_section=nutrition_section,
-        metrics_section=metrics_section,
-        ai_context_section=ai_context_section,
+        title=page_metadata["title"],
+        subtitle=page_metadata["subtitle"],
+        eyebrow=page_metadata["eyebrow"],
+        icon=page_metadata["icon"],
+        active_section=active_section,
+        account_section=account_section if active_section == "account" else None,
+        billing_section=billing_section if active_section == "credits" else None,
+        nutrition_section=nutrition_section if active_section == "personal" else None,
+        metrics_section=metrics_section if active_section == "personal" else None,
+        ai_context_section=ai_context_section if active_section == "personal" else None,
         weight_current=current_weight,
         weight_updated_at=(
             last_weight_log.date.strftime("%Y-%m-%d")

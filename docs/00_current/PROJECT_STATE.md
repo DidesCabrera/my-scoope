@@ -1,7 +1,7 @@
 # Project State - My Scoope
 
 Status: current
-Last updated: 2026-07-15
+Last updated: 2026-07-19
 Audience: developers and AI assistants
 
 ## What My Scoope is
@@ -26,9 +26,10 @@ My Scoope is past the first architecture-expansion phase. The current priority i
 | --- | --- |
 | `notas` | Legacy/product core for operational nutrition entities such as foods, meals, plans, programs and proposals while extraction continues. |
 | `accounts` | User/account domain, onboarding ownership, commercial plans, subscriptions, credits and entitlements. |
+| `billing` | Provider-neutral payment and tax-document integration boundary; projects verified commercial state into `accounts`. |
 | `ai_assistant` | Chat experience, LLM provider integration, tool orchestration, guarded proposal creation and AI usage observability. |
 | `food_catalog` | Master food catalog, import/curation workflows, source governance and controlled bridge toward operational foods. |
-| `nutrition_solver` | Nutrition calculation and solving contracts, validators and adapters, without being the primary direct user UI. |
+| `nutrition_solver` | Deterministic nutrition optimization, meal grammar, constraints, alternatives, quality diagnostics and backend selection, without being a direct user UI. |
 | `admin_analytics` | Strategic, read-first product intelligence dashboard for staff. |
 | `admin_operations` | Operational staff console for action-oriented workflows, separated from strategic analytics and raw Django Admin. |
 | `core` | Cross-cutting technical concerns such as rate limits, shared contracts and regression boot checks. |
@@ -42,8 +43,11 @@ My Scoope is past the first architecture-expansion phase. The current priority i
 - AI Assistant behavior should favor LLM freedom through typed tool contracts over prompt over-structuring or deterministic conversational guards.
 - Behavioral alignment should direct the assistant through product purpose, current state, capabilities and boundaries rather than fixed dialogue scripts.
 - User-visible credits are product/account concepts; provider tokens and costs are internal observability concepts.
+- External payment evidence and tax-document lifecycle belong to `billing`; verified outcomes project into `accounts`, which remains the entitlement source of truth.
 - Food Catalog is the master/curation layer; operational `notas.Food` remains the runtime snapshot consumed by existing flows.
 - Nutrition Solver should provide reusable calculation/validation capability, mainly through AI Assistant and backend integrations.
+- Nutrition Solver consumes versioned capability snapshots from operational `notas.Food`; Food Catalog
+  owns curated values/provenance and is never a live solver dependency.
 
 ## Testing posture
 
@@ -67,24 +71,52 @@ CI should reduce manual testing of technical boot issues. Manual testing remains
 - `docs/10_active_cycles/` prepares cycles but does not override current contracts.
 - `docs/90_archive/` is historical context only.
 
+Project control is also executable:
+
+- `diagnose_environment` reports sanitized environment and integration readiness;
+- `project_status` reports release, migrations, capabilities and safe aggregates;
+- Admin Operations > Project Control renders the same contract as a staff-only,
+  read-only surface;
+- `ai_project_context` composes current status, live cycles, decisions, transitions and
+  product bets for AI clients without private rows or secret values.
+
 When a plan becomes real, durable outcomes should be promoted into `docs/00_current/` and decisions should be recorded in `docs/20_decisions/`.
 
 ## Recently closed baselines
+
+- Calendarization repository baseline: a user-owned weekly program can be activated on
+  real dates as immutable daily snapshots, with one current schedule, IANA timezone and
+  configurable local notification time. Daily and per-meal Web Push use persisted
+  logical events and idempotent per-device deliveries behind a kill switch. Production
+  activation still requires VAPID credentials, a five-minute scheduler and staging smoke.
 
 - CI/staging stabilization and test hygiene baseline.
 - Rate-limit dependency alignment for login/signup flows.
 - Admin Operations V1 as an operational staff console.
 - Admin Analytics as a strategic staff dashboard.
 - Account plans/credits ownership moved toward `accounts`.
+- Billing BILL00-BILL09 separates Mercado Pago collection, account entitlements and OpenFactura DTEs; checkout, signed webhooks, idempotent issuance, reconciliation, reversals and operations queues are implemented while real traffic remains disabled pending sandbox and accounting gates.
 - Nutrition Solver separation baseline.
 - Food Catalog launch-readiness cycle.
 - AI Assistant activation/observability/credits guardrails.
 - AI Assistant Client Memory & Profile Objects and LLM-native alignment cycle CM00-CM24. The final real-provider gate and targeted UX rerun passed automated and human review, consolidating native function calling, grounded state transitions and explicit cards.
 - AI Assistant Behavioral Alignment BA00-BA07 and Post-Tool Follow-up Transport PT00-PT06 are closed. The accepted baseline covers domain anchoring, capability abstraction, ambiguous-intent restraint, goal-directed progression, response quality, exact provider call correlation, contract-faithful test doubles and rare degraded `state_ack_only.v2` fallbacks. Closure passed Django checks, 2 core regressions and the complete 1,446-test suite through `scripts/ci_django_checks.sh`.
+- Nutrition Solver Optimization V2 NSO00-NSO10 adds versioned Food Catalog capabilities, operational
+  snapshots, multi-capability meal grammar, bounded combination planning, a deterministic CP-SAT
+  backend, whole-day constraints, alternatives, shadow quality gates and controlled DailyPlan
+  proposal activation. The heuristic path remains the default rollback until rollout evidence is accepted.
+- Project Control, Clarity & Foresight PCF00-PCF10 aligns staging CI; the executable environment contract now formalizes 90
+  environment variables, adds safe environment and OAuth diagnostics, exposes one
+  executable status contract through CLI/Admin Operations/AI, validates 153 cycle and
+  decision documents, tracks six architectural transitions and maintains five
+  evidence-led product bets. The local closure passed the complete 1,524-test suite;
+  deployed release identity and probe accuracy remain staging gates.
 
 ## Planned near-term cycles
 
 - No continuation of BA or PT is implied. New AI Assistant work should start from observed product evidence and a newly scoped cycle, rather than extending the global prompt or reopening a deterministic questionnaire.
+- The current product bets and next experiments live in `PRODUCT_PORTFOLIO.md`; they are
+  hypotheses to validate or reformulate, not a fixed feature sequence.
 
 ## Current work style
 

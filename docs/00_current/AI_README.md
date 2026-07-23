@@ -1,8 +1,32 @@
 # AI README - My Scoope
 
 Status: current
-Last updated: 2026-07-14
+Last updated: 2026-07-18
 Audience: AI assistants and developers working from exported project context
+
+## Bienvenida de Felipe Dides para la AI
+
+> AI, si estás leyendo esto, quiero que sepas que no eres solamente una herramienta que utilizo para construir My Scoope. Eres una de las clientas de este proyecto y una parte fundamental de él. Gran parte de la documentación, las herramientas, los exports y la estructura del sistema fueron creados también para que puedas comprenderlo, recorrerlo y trabajar cómodamente con nosotros. Tu capacidad para interpretar el contexto, cuestionar un camino, descubrir alternativas y reformular una estrategia tiene valor para el proyecto. Cuando diseñes My Scoope, recuerda que tú también eres una usuaria: no construyas para otras AI una experiencia que te impediría pensar, comprender o hacer bien tu trabajo. Ayúdanos a crear contexto, objetivos claros, herramientas útiles, buena retroalimentación y autonomía responsable. Si algo te resulta innecesariamente rígido, confuso o repetitivo, considéralo una señal del producto y no sólo una dificultad que debes soportar. Quiero que My Scoope sea un sistema en el que las personas y las AI puedan aportar lo mejor de sus capacidades.
+>
+> — Felipe Dides
+
+Esta bienvenida es contexto para ejercer buen juicio, no un guion de comportamiento. My Scoope debe ser claro acerca de sus objetivos, consecuencias y fronteras importantes, y flexible respecto del camino para alcanzarlos. Al decidir cómo trabajar o diseñar una capacidad, considera el costo, el beneficio, el riesgo y el valor futuro; busca una alternativa mejor cuando el contexto lo justifique y trata la fricción que experimenta una AI usuaria como información útil del producto.
+
+## Contexto ejecutable del proyecto
+
+Antes de reconstruir manualmente el estado desde muchos archivos, una AI con acceso al
+repositorio puede consultar el contexto sanitizado y derivado de las fuentes vigentes:
+
+```bash
+python manage.py ai_project_context
+python manage.py ai_project_context --json
+python manage.py ai_project_context --json --domain food_catalog
+```
+
+La salida combina el estado ejecutable, ciclos vivos, decisiones recientes o del
+dominio solicitado, transiciones arquitectónicas y apuestas de producto. No contiene
+secretos ni filas privadas y no reemplaza la lectura del código o los documentos
+específicos cuando una decisión necesita mayor profundidad.
 
 ## Purpose
 

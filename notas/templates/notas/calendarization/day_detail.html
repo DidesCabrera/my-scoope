@@ -1,0 +1,62 @@
+{% extends "notas/base.html" %}
+{% block title %}{{ vm.content.day.calendar_date|date:"d M" }} · Calendarizar{% endblock %}
+{% block body_class %}{% if vm.content.day.plan_snapshot %}page-detail page-header-meta-deferred{% endif %}{% endblock %}
+{% block content %}
+<div class="page page--detail calendarization-page calendarization-day-detail-page">
+  <section class="calendarization-hero"><div><p class="calendarization-eyebrow">Semana {{ vm.content.day.week_number }} · Día {{ vm.content.day.day_number }}</p><h1>{{ vm.content.day.calendar_date|date:"l d \d\e F" }}</h1><p>{{ vm.content.day.calendarization.program_name_snapshot }}</p></div></section>
+  {% if vm.content.day.plan_snapshot %}
+    <section class="card-title main calendarization-day-detail__title">
+      <div class="card-title-comp js-header-meta-sentinel">
+        <div class="main-title main-card">
+          <h1>{{ vm.content.day.plan_snapshot.name }}</h1>
+          <div class="structural-indicators">
+            <span class="structural-item">
+              <span class="structural-value">{{ vm.content.day.plan_snapshot.meals|length }}</span>
+              <i data-lucide="utensils" class="structural-icon main"></i>
+            </span>
+          </div>
+        </div>
+        <div class="icons-title">
+          <i data-lucide="clipboard-list" class="home-section-header-icon main dailyplan"></i>
+        </div>
+      </div>
+    </section>
+
+    <div class="page-kpi calendarization-day-detail__kpis">
+      <h3>Información Nutricional</h3>
+      <div class="calendarization-macros">
+        <span>{{ vm.content.day.plan_snapshot.totals.total_kcal|floatformat:0 }} kcal</span>
+        <span>P {{ vm.content.day.plan_snapshot.totals.protein_g|floatformat:1 }} g</span>
+        <span>C {{ vm.content.day.plan_snapshot.totals.carbs_g|floatformat:1 }} g</span>
+        <span>G {{ vm.content.day.plan_snapshot.totals.fat_g|floatformat:1 }} g</span>
+      </div>
+    </div>
+
+    <div class="detail-section dailyplan calendarization-day-detail__meals">
+      <h3>Comidas en este Plan</h3>
+      <div class="calendarization-meals">
+        {% for meal in vm.content.day.plan_snapshot.meals %}
+          <article>
+            <div>
+              <span>{% if meal.hour %}{{ meal.hour }}{% else %}Sin hora{% endif %}</span>
+              <h3>{{ meal.name }}</h3>
+              {% if meal.note %}<p>{{ meal.note }}</p>{% endif %}
+            </div>
+            <ul>
+              {% for food in meal.foods %}
+                <li>{{ food.name }} <span>{{ food.quantity_g|floatformat:0 }} g</span></li>
+              {% empty %}
+                <li>Sin alimentos</li>
+              {% endfor %}
+            </ul>
+          </article>
+        {% empty %}
+          <p>Este plan no contiene comidas.</p>
+        {% endfor %}
+      </div>
+    </div>
+  {% else %}
+  <section class="calendarization-card calendarization-empty"><h2>Día sin plan</h2><p>El programa estaba incompleto al activarse. Este día no genera notificaciones.</p></section>
+  {% endif %}
+</div>
+{% endblock %}

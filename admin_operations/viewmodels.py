@@ -102,6 +102,93 @@ class AdminOperationsFoodCatalogVM:
 
 
 @dataclass(frozen=True)
+class AdminOperationsCatalogCoverageVM:
+    label: str
+    total: str
+    share_label: str
+    helper: str = ""
+
+
+@dataclass(frozen=True)
+class AdminOperationsCatalogInventoryFoodVM:
+    pk: int
+    title: str
+    identity_lines: list[str]
+    classification_lines: list[str]
+    governance_lines: list[str]
+    nutrition_lines: list[str]
+    functional_lines: list[str]
+    solver_lines: list[str]
+    quality_lines: list[str]
+    relation_lines: list[str]
+    lifecycle_lines: list[str]
+    admin_url: str
+
+
+@dataclass(frozen=True)
+class AdminOperationsCatalogInventoryVM:
+    title: str = "Inventario y calidad del Food Catalog"
+    subtitle: str = (
+        "Visibilidad completa y de sólo lectura sobre los alimentos master persistidos, "
+        "su cobertura nutricional, taxonomía, trazabilidad y preparación para el solver."
+    )
+    period_label: str = "Food Catalog · Observability"
+    current_period: str = "Inventario y calidad"
+    query: str = ""
+    selected_status: str = ""
+    selected_source: str = ""
+    selected_group: str = ""
+    selected_solver_state: str = ""
+    metrics: list[AdminOperationsMetricVM] = field(default_factory=list)
+    nutrition_metrics: list[AdminOperationsMetricVM] = field(default_factory=list)
+    gap_metrics: list[AdminOperationsMetricVM] = field(default_factory=list)
+    category_coverage: list[AdminOperationsCatalogCoverageVM] = field(default_factory=list)
+    source_coverage: list[AdminOperationsCatalogCoverageVM] = field(default_factory=list)
+    target_funnel: list[AdminOperationsMetricVM] = field(default_factory=list)
+    target_category_coverage: list[AdminOperationsCatalogCoverageVM] = field(default_factory=list)
+    target_version_label: str = ""
+    foods: list[AdminOperationsCatalogInventoryFoodVM] = field(default_factory=list)
+    status_options: list[tuple[str, str]] = field(default_factory=list)
+    source_options: list[tuple[str, str]] = field(default_factory=list)
+    group_options: list[str] = field(default_factory=list)
+    filtered_total: str = "0"
+    page_label: str = "Página 1 de 1"
+    previous_url: str = ""
+    next_url: str = ""
+
+
+@dataclass(frozen=True)
+class AdminOperationsCatalogImportBatchVM:
+    pk: int
+    run_type: str
+    source_label: str
+    status: str
+    version: str
+    counts_label: str
+    operator_label: str
+    reason: str
+    input_hash_label: str
+    dry_run_label: str
+    started_label: str
+
+
+@dataclass(frozen=True)
+class AdminOperationsCatalogImportsVM:
+    title: str = "Imports y dry-runs del Food Catalog"
+    subtitle: str = (
+        "Cockpit staff-only para verificar trazabilidad, equivalencia e idempotencia antes de operar cada fuente."
+    )
+    period_label: str = "FCG02 · Import control plane"
+    current_period: str = "Imports y dry-runs"
+    selected_source: str = ""
+    selected_status: str = ""
+    metrics: list[AdminOperationsMetricVM] = field(default_factory=list)
+    batches: list[AdminOperationsCatalogImportBatchVM] = field(default_factory=list)
+    source_options: list[tuple[str, str]] = field(default_factory=list)
+    status_options: list[tuple[str, str]] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
 class AdminOperationsCandidateDetailVM:
     title: str
     subtitle: str

@@ -1,0 +1,132 @@
+{% extends "admin_operations/base.html" %}
+{% block title %}Food Catalog Inventory{% endblock %}
+{% block content %}
+<div class="page admin-analytics-page admin-operations-page">
+  {% include "admin_operations/_food_catalog_tabs.html" with active_tab="inventory" %}
+
+  <section class="card-detail-block">
+    <div class="card-title-row"><div><p class="section-eyebrow">Generic Food Coverage · {{ vm.content.target_version_label }}</p><h3>Avance contra la meta explícita</h3><p class="muted-text">El manifiesto mide cobertura; no impide incorporar descubrimientos útiles. Cada etapa se cuenta por evidencia persistida, sin asumir que importar publica.</p></div></div>
+    <div class="home-stats admin-analytics-kpi-grid admin-operations-kpi-grid">
+      {% for metric in vm.content.target_funnel %}<article class="home-stat-card admin-operations-metric-card admin-operations-metric-card--compact"><div class="home-stat-top"><i data-lucide="{{ metric.icon }}" class="home-stat-icon"></i><span class="home-stat-label">{{ metric.label }}</span></div><h3>{{ metric.value }}</h3><p class="muted-text">{{ metric.helper }}</p></article>{% endfor %}
+    </div>
+    <div class="admin-operations-breakdown-grid">
+      {% for item in vm.content.target_category_coverage %}<article class="admin-operations-breakdown-card"><span>{{ item.label }}</span><strong>{{ item.total }}</strong><small>{{ item.share_label }}</small><p>{{ item.helper }}</p></article>{% endfor %}
+    </div>
+  </section>
+
+  <section class="home-stats admin-analytics-kpi-grid admin-operations-kpi-grid" aria-label="Estado general del catálogo">
+    {% for metric in vm.content.metrics %}
+      <article class="home-stat-card admin-operations-metric-card">
+        <div class="home-stat-top"><i data-lucide="{{ metric.icon }}" class="home-stat-icon"></i><span class="home-stat-label">{{ metric.label }}</span></div>
+        <h3>{{ metric.value }}</h3>
+        <p class="muted-text">{{ metric.helper }}</p>
+      </article>
+    {% endfor %}
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Composición del catálogo</p>
+        <h3>Cobertura por grupo alimentario</h3>
+        <p class="muted-text">La clasificación usa <code>food_group</code>. “Sin taxonomía estándar” hace visible cualquier valor vacío o no homologado; no se infiere desde el nombre.</p>
+      </div>
+    </div>
+    <div class="admin-operations-breakdown-grid">
+      {% for item in vm.content.category_coverage %}
+        <article class="admin-operations-breakdown-card">
+          <span>{{ item.label }}</span><strong>{{ item.total }}</strong><small>{{ item.share_label }}</small><p>{{ item.helper }}</p>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row">
+      <div>
+        <p class="section-eyebrow">Perfil nutricional descriptivo</p>
+        <h3>Promedios del inventario</h3>
+        <p class="muted-text">Sirven para entender el sesgo del catálogo. No representan una recomendación nutricional ni ponderan frecuencia de uso.</p>
+      </div>
+    </div>
+    <div class="home-stats admin-analytics-kpi-grid admin-operations-kpi-grid">
+      {% for metric in vm.content.nutrition_metrics %}
+        <article class="home-stat-card admin-operations-metric-card admin-operations-metric-card--compact">
+          <div class="home-stat-top"><i data-lucide="{{ metric.icon }}" class="home-stat-icon"></i><span class="home-stat-label">{{ metric.label }}</span></div>
+          <h3>{{ metric.value }}</h3><p class="muted-text">{{ metric.helper }}</p>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="admin-analytics-section-grid admin-operations-observability-grid">
+    <article class="card-detail-block">
+      <div class="card-title-row"><div><p class="section-eyebrow">Trazabilidad</p><h3>Origen declarado</h3></div></div>
+      <div class="admin-operations-breakdown-list">
+        {% for item in vm.content.source_coverage %}
+          <div><span><strong>{{ item.label }}</strong><small>{{ item.helper }}</small></span><span><strong>{{ item.total }}</strong><small>{{ item.share_label }}</small></span></div>
+        {% empty %}<p class="muted-text">Aún no hay fuentes que resumir.</p>{% endfor %}
+      </div>
+    </article>
+    <article class="card-detail-block">
+      <div class="card-title-row"><div><p class="section-eyebrow">Brechas observables</p><h3>Campos que reducen sensibilidad</h3></div></div>
+      <div class="admin-operations-gap-list">
+        {% for metric in vm.content.gap_metrics %}
+          <div><i data-lucide="{{ metric.icon }}"></i><span><strong>{{ metric.value }} · {{ metric.label }}</strong><small>{{ metric.helper }}</small></span></div>
+        {% endfor %}
+      </div>
+    </article>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row admin-operations-inventory-heading">
+      <div>
+        <p class="section-eyebrow">Inventario master</p>
+        <h3>Todos los alimentos persistidos</h3>
+        <p class="muted-text">{{ vm.content.filtered_total }} resultados. La tabla agrupa todos los campos de CatalogFood y sus relaciones de evidencia, porciones y aliases.</p>
+      </div>
+      <span class="admin-operations-status-pill">{{ vm.content.page_label }}</span>
+    </div>
+
+    <form class="admin-operations-inventory-filters" method="get">
+      <label><span>Buscar</span><input type="search" name="q" value="{{ vm.content.query }}" placeholder="Nombre, marca, grupo, fuente o ID externo"></label>
+      <label><span>Estado</span><select name="status"><option value="">Todos</option>{% for value, label in vm.content.status_options %}<option value="{{ value }}"{% if vm.content.selected_status == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+      <label><span>Fuente</span><select name="source"><option value="">Todas</option>{% for value, label in vm.content.source_options %}<option value="{{ value }}"{% if vm.content.selected_source == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+      <label><span>Grupo</span><select name="group"><option value="">Todos</option>{% for value in vm.content.group_options %}<option value="{{ value }}"{% if vm.content.selected_group == value %} selected{% endif %}>{{ value }}</option>{% endfor %}</select></label>
+      <label><span>Solver</span><select name="solver"><option value="">Todos</option><option value="enabled"{% if vm.content.selected_solver_state == "enabled" %} selected{% endif %}>Habilitado</option><option value="disabled"{% if vm.content.selected_solver_state == "disabled" %} selected{% endif %}>Deshabilitado</option></select></label>
+      <div class="admin-operations-filter-actions"><button class="btn-secondary btn-secondary--compact" type="submit">Aplicar filtros</button><a class="btn-secondary btn-secondary--compact" href="{% url 'admin_operations_food_catalog_inventory' %}">Limpiar</a></div>
+    </form>
+
+    {% if vm.content.foods %}
+      <div class="admin-operations-table-card admin-operations-inventory-table-card" role="region" aria-label="Inventario completo Food Catalog">
+        <table class="admin-operations-table admin-operations-inventory-table">
+          <thead><tr><th>Identidad</th><th>Clasificación</th><th>Fuente y gobierno</th><th>Nutrición / 100 g</th><th>Funcionalidad</th><th>Solver</th><th>Calidad</th><th>Relaciones</th><th>Ciclo de vida</th><th>Acción</th></tr></thead>
+          <tbody>
+            {% for food in vm.content.foods %}
+              <tr>
+                <td data-label="Identidad"><strong>{{ food.title }}</strong>{% for line in food.identity_lines %}<small>{{ line }}</small>{% endfor %}</td>
+                <td data-label="Clasificación">{% for line in food.classification_lines %}<span>{{ line }}</span>{% endfor %}</td>
+                <td data-label="Fuente y gobierno">{% for line in food.governance_lines %}<span>{{ line }}</span>{% endfor %}</td>
+                <td data-label="Nutrición / 100 g">{% for line in food.nutrition_lines %}<span>{{ line }}</span>{% endfor %}</td>
+                <td data-label="Funcionalidad">{% for line in food.functional_lines %}<span>{{ line }}</span>{% endfor %}</td>
+                <td data-label="Solver">{% for line in food.solver_lines %}<span>{{ line }}</span>{% endfor %}</td>
+                <td data-label="Calidad">{% for line in food.quality_lines %}<span>{{ line }}</span>{% endfor %}</td>
+                <td data-label="Relaciones">{% for line in food.relation_lines %}<span>{{ line }}</span>{% endfor %}</td>
+                <td data-label="Ciclo de vida">{% for line in food.lifecycle_lines %}<span>{{ line }}</span>{% endfor %}</td>
+                <td data-label="Acción"><a class="btn-secondary btn-secondary--compact" href="{{ food.admin_url }}">Abrir</a></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <nav class="admin-operations-pagination" aria-label="Paginación del inventario">
+        {% if vm.content.previous_url %}<a class="btn-secondary btn-secondary--compact" href="{{ vm.content.previous_url }}">Anterior</a>{% else %}<span></span>{% endif %}
+        <span>{{ vm.content.page_label }}</span>
+        {% if vm.content.next_url %}<a class="btn-secondary btn-secondary--compact" href="{{ vm.content.next_url }}">Siguiente</a>{% else %}<span></span>{% endif %}
+      </nav>
+    {% else %}
+      <div class="admin-operations-empty-state"><i data-lucide="search-x" class="home-stat-icon"></i><div><h4>Sin resultados</h4><p class="muted-text">No existen CatalogFood que coincidan con los filtros seleccionados.</p></div></div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

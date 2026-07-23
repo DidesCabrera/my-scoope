@@ -262,8 +262,8 @@ Desde Patch 39, el backfill desde alimentos operativos confiables vive deliberad
 
 ```text
 notas/application/services/commands/food_catalog_backfill.py
-python manage.py backfill_catalog_from_operational_foods --dry-run
-python manage.py backfill_catalog_from_operational_foods
+python manage.py backfill_catalog_from_operational_foods --dry-run --limit 10 --reason "Validar elegibles globales"
+python manage.py backfill_catalog_from_operational_foods --limit 10 --dry-run-batch-id <id> --reason "Aplicar backfill revisado"
 ```
 
 Este bridge crea candidatos maestros y evidencia en `food_catalog`, pero no actualiza el alimento operativo de origen, no publica automáticamente el catálogo y no cambia el contrato MCP.
@@ -554,4 +554,3 @@ listar alimentos operativos disponibles desde notas.Food
 ```
 
 No significa buscar en `food_catalog.CatalogFood`, no expone `catalog_food_id` y no puede crear snapshots. La disponibilidad de alimentos para IA/MCP depende de procesos internos que materializan o actualizan `notas.Food`.
-

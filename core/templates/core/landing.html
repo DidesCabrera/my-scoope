@@ -51,11 +51,11 @@
           <h1>Consigue tu Prime</h1>
 
           <p class="hero-lead sub-title">
-            Controla tu plan de alimentación con My Scoope
+            Planifica tu alimentación con My Scoope
           </p>
 
           <p class="hero-lead">
-            La aplicación ideal para elegir tus alimentos y porciones
+            Facil de entender, Mejor Visibilidad, Mayor Presición, y con Asistencia AI
           </p>
 
           <div class="hero-actions">
@@ -67,13 +67,17 @@
       </div>
     </section>
 
+    <section class="landing-parallax-band landing-parallax-band--intro" data-parallax-container aria-hidden="true">
+      <div class="landing-parallax-band__media" data-parallax-media data-parallax-speed="0.12"></div>
+    </section>
+
     <!-- INTRO -->
     <section id="how-it-works" class="section section-warm landing-section landing-section--how-intro">
       <div class="container">
 
         <div class="section-heading section-heading-centered">
           <h2>La alimentación es fundamental para un cambio corporal.</h2>
-          <p class="sub-title">My Scoope te ayuda a planificar tu alimentacion con facilidad y precision</p>
+          <p class="sub-title">Una buena planificacion te ayudara en el proceso. La claridad y comprensión son fundamentales</p>
         </div>
 
         <div class="landing-slider" data-landing-slider aria-label="Funciones principales de My Scoope">
@@ -100,15 +104,12 @@
 
         <div class="section-heading section-heading-centered">
           <p class="eyebrow">Comprensible</p>
-          <h2>Un sistema modular fácil de comprender.</h2>
-          <p>Arma comidas con tus alimentos preferidos, luego arma planes diarios y programas semanales, sin perder de vista tus indicadores clave en cada momento</p>
+          <h2>Un sistema modular fácil de entender.</h2>
+          <p>Arma comidas con tus alimentos preferidos, arma planes diarios con tus comidas, y arma programas semanales con tus planes diarios. Cada uno reutilizable y guardado en tus librerias</p>
         </div>
 
         <div class="system-diagram">
-          <!--
-            Espacio futuro para diagrama real:
-            <img src="{% static 'img/landing/system-flow.png' %}" alt="Flujo alimentos, comidas, plan diario y objetivo corporal">
-          -->
+
 
           <div class="system-node system-node--food">
             <div class="system-node-top">
@@ -118,7 +119,7 @@
               <span class="system-node-number">01</span>
             </div>
             <strong>Alimentos</strong>
-            <p>Ingredientes y datos nutricionales.</p>
+            <p>Dispón de un extenso Catalogo de Alimentos. Selecciona tus alimentos favoritos, y crea nuevos facilmente</p>
           </div>
 
           <div class="system-connector"></div>
@@ -131,7 +132,7 @@
               <span class="system-node-number">02</span>
             </div>
             <strong>Comidas</strong>
-            <p>Preparaciones reutilizables.</p>
+            <p>Arma tus comidas con tus alimentos preferidos y las porciones ideales que apunten a su objetivo específico.</p>
           </div>
 
           <div class="system-connector"></div>
@@ -144,7 +145,7 @@
               <span class="system-node-number">03</span>
             </div>
             <strong>Planes Diarios</strong>
-            <p>Tu día completo organizado.</p>
+            <p>Organiza planes diarios de alimentacion con tus comidas, puedes modificalas para ajustarlas a tu objetivo diario</p>
           </div>
 
           <div class="system-connector"></div>
@@ -157,7 +158,7 @@
               <span class="system-node-number">04</span>
             </div>
             <strong>Programas Semanales</strong>
-            <p>Calorías, macros y ajustes.</p>
+            <p>Programa semanas de alimentacion con tus planes diarios, define variaciones en tu ingesta cálorica y macros</p>
           </div>
         </div>
 
@@ -165,18 +166,34 @@
     </section>
     
 
+    <section id="visibility" class="section section-dark landing-section landing-section--visibility">
+      <div class="container split-section">
+
+        <div class="section-copy">
+          <p class="eyebrow">Visibilidad</p>
+          <h2>Entiende en pocas miradas como se compone tu Dieta</h2>
+          <p>Podras comprender la funcion y peso de alimentos dentro de comidas, o comidas dentro de planes, mejorando tu dicernimiento.</p>
+        </div>
+
+        <div class="image-panel image-panel-visibility">
+          <img src="{% static 'img/landing/home-banner-1.jpg' %}" alt="Visualización clara de la composición de una comida en My Scoope">
+        </div>
+
+      </div>
+    </section>
+
     <!-- ADJUST METRICS -->
     <section id="adjust-metrics" class="section section-dark landing-section landing-section--adjust-metrics">
       <div class="container split-section">
 
+        <div class="image-panel image-panel-product">
+          <img src="{% static 'img/landing/home-banner-1.jpg' %}" alt="Comparación del impacto calórico entre distintas porciones">
+        </div>
+
         <div class="section-copy">
           <p class="eyebrow">Preciso</p>
           <h2>Ajusta las porciones viendo el impacto real en tus métricas</h2>
-          <p>Espacio pensado para mostrar cómo cambian las calorías y macronutrientes al ajustar porciones.</p>
-        </div>
-
-        <div class="image-panel image-panel-product">
-          <img src="{% static 'img/landing/home-banner-1.jpg' %}" alt="Comparación del impacto calórico entre distintas porciones">
+          <p>No todos los alimentos contribuyen nutricionalmente de la misma manera. Ajustas las porciones de alimentos viendo su impacto en la comida y en el plan diario.</p>
         </div>
 
       </div>
@@ -184,19 +201,20 @@
     
     
     <!-- AI ASSISTANT : puede ser complejo al comienzo...-->
-    <section id="precision-impact" class="section section-dark landing-section landing-section--precision">
+    <section id="precision-impact" class="section section-dark landing-section landing-section--precision" data-parallax-container>
+      <div class="landing-section-parallax-bg landing-section-parallax-bg--precision" data-parallax-media data-parallax-speed="0.18" aria-hidden="true"></div>
       <div class="container split-section">
-
-        <div class="image-panel image-panel-metrics">
-            <img src="{% static 'img/landing/home-banner-1.jpg' %}" alt="Comparación del impacto calórico entre distintas porciones">
-        </div>
 
         <div class="section-copy">
           <p class="eyebrow">Asistencia AI</p>
-          <h2>Puede ser complejo al comienzo. Nuestro asistente AI te ayudará</h2>
+          <h2>Puede ser complejo al comienzo, pero nuestro asistente AI te ayudará</h2>
           <p>
             Pídele ayuda en la construcción de planes de alimentación, solicita alternativas a tus comidas actuales, o comparaciones entre alimentos, comidas y planes si así lo deseas
           </p>
+        </div>
+
+        <div class="image-panel image-panel-metrics">
+            <img src="{% static 'img/landing/home-banner-1.jpg' %}" alt="Comparación del impacto calórico entre distintas porciones">
         </div>
 
       </div>
@@ -239,7 +257,7 @@
       <div class="container">
 
         <div class="section-heading section-heading-centered">
-          <p class="eyebrow">Planes de Suscripción</p>
+          <p class="eyebrow">Planes</p>
           <h2>Empieza gratis sin límite de días.</h2>
           <p>Nada de periodos de prueba. Contrata planes cuando sea necesario</p>
           <div class="billing-toggle" data-billing-toggle role="group" aria-label="Frecuencia de pago">
@@ -329,19 +347,26 @@
     </section>
 
 
-    <!-- FINAL CTA -->
-    <section id="final-cta" class="final-cta landing-section landing-section--final-cta">
-      <div class="container final-cta-inner">
-        <img
-          class="final-cta-logo"
-          src="{% static 'img/logo-white.png' %}"
-          alt="My Scoope"
-        >
-        <h2>Deja de improvisar tu alimentación.</h2>
-        <p>Construye un sistema diario que puedas medir, ajustar y mejorar.</p>
-        <a href="/accounts/login/" class="btn btn-primary">Comenzar gratis</a>
-      </div>
-    </section>
+    <div class="landing-cta-parallax-group" data-parallax-container>
+      <div class="landing-cta-parallax-group__media" data-parallax-media data-parallax-speed="0.1" aria-hidden="true"></div>
+
+      <section class="landing-parallax-band landing-parallax-band--cta-before" aria-hidden="true"></section>
+
+      <!-- FINAL CTA -->
+      <section id="final-cta" class="final-cta landing-section landing-section--final-cta">
+        <div class="container final-cta-inner">
+          <img
+            class="final-cta-logo"
+            src="{% static 'img/logo-white.png' %}"
+            alt="My Scoope"
+          >
+          <h2>Deja de improvisar tu alimentación.</h2>
+          <a href="/accounts/login/" class="btn btn-primary">Comienza gratis</a>
+        </div>
+      </section>
+
+      <section class="landing-parallax-band landing-parallax-band--footer" aria-hidden="true"></section>
+    </div>
 
   </main>
 

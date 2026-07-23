@@ -1,6 +1,6 @@
 <div class="ai-chat-thread__inner">
   {% for message in vm.content.conversation.messages %}
-    <article class="ai-chat-message ai-chat-message--{{ message.role }}{% if message.generated_plan_card %} ai-chat-message--generated-plan{% endif %}{% if message.profile_draft_card %} ai-chat-message--profile-draft-card{% endif %}{% if message.preference_draft_card %} ai-chat-message--preference-draft-card{% endif %}{% if message.proposal_preferences_card %} ai-chat-message--proposal-preferences-card{% endif %}">
+    <article class="ai-chat-message ai-chat-message--{{ message.role }}{% if message.generated_plan_card %} ai-chat-message--generated-plan{% endif %}{% if message.profile_draft_card %} ai-chat-message--profile-draft-card{% endif %}{% if message.preference_draft_card %} ai-chat-message--preference-draft-card{% endif %}{% if message.proposal_preferences_card %} ai-chat-message--proposal-preferences-card{% endif %}{% if message.proposal_review_card %} ai-chat-message--proposal-review-card{% endif %}{% if message.prepared_action_card %} ai-chat-message--prepared-action-card{% endif %}">
       {% if message.text %}
         <div class="ai-chat-bubble">
           <p>{{ message.text }}</p>
@@ -123,6 +123,79 @@
               <span>{{ message.proposal_preferences_card.known_count }} parámetro{{ message.proposal_preferences_card.known_count|pluralize }} de propuesta registrado{{ message.proposal_preferences_card.known_count|pluralize }} para esta conversación.</span>
             {% else %}
               <span>Sin parámetros de propuesta registrados todavía.</span>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+
+      {% if message.proposal_review_card %}
+        <a href="{% url 'proposal_detail' message.proposal_review_card.proposal_id %}" class="ai-generated-plan-card ai-generated-plan-card--current">
+          <div class="ai-generated-plan-card__header">
+            <div>
+              <span>Lista para revisión</span>
+              <h2>{{ message.proposal_review_card.title }}</h2>
+            </div>
+            <i data-lucide="clipboard-check" class="ai-chat-brief-card__icon"></i>
+          </div>
+          {% if message.proposal_review_card.summary %}
+            <p class="ai-generated-plan-card__summary">{{ message.proposal_review_card.summary }}</p>
+          {% endif %}
+          {% if message.proposal_review_card.current_total_kcal != None %}
+            <div class="ai-generated-plan-card__targets">
+              <article>
+                <span>Actual</span>
+                <strong>{{ message.proposal_review_card.current_total_kcal }} kcal</strong>
+              </article>
+              <article>
+                <span>Objetivo</span>
+                <strong>{{ message.proposal_review_card.target_total_kcal }} kcal</strong>
+              </article>
+              <article>
+                <span>Alimentos</span>
+                <strong>{% if message.proposal_review_card.preserve_foods %}Sin cambios{% else %}Revisar{% endif %}</strong>
+              </article>
+            </div>
+          {% endif %}
+          <span class="ai-generated-plan-card__cta">Revisar, aprobar y aplicar</span>
+        </a>
+      {% endif %}
+
+      {% if message.prepared_action_card %}
+        <div class="ai-chat-profile-card{% if message.prepared_action_card.destructive %} ai-chat-prepared-action-card--destructive{% endif %}">
+          <div class="ai-chat-profile-card__header">
+            <div>
+              <span>{% if message.prepared_action_card.destructive %}Confirmación sensible{% else %}Acción preparada{% endif %}</span>
+              <h2>{{ message.prepared_action_card.title }}</h2>
+              <p>{{ message.prepared_action_card.summary }}</p>
+            </div>
+            <i data-lucide="{% if message.prepared_action_card.destructive %}triangle-alert{% else %}check-check{% endif %}" class="ai-chat-profile-card__icon"></i>
+          </div>
+          {% if message.prepared_action_card.preview.before %}
+            <div class="ai-chat-profile-card__grid">
+              <article class="ai-chat-profile-card__item">
+                <span>Antes</span>
+                <strong>{{ message.prepared_action_card.preview.before.name|default:message.prepared_action_card.preview.before.status }}</strong>
+              </article>
+              <article class="ai-chat-profile-card__item">
+                <span>Después</span>
+                <strong>{{ message.prepared_action_card.preview.after.name|default:message.prepared_action_card.preview.after.status }}</strong>
+              </article>
+            </div>
+          {% endif %}
+          <div class="ai-chat-profile-card__footer">
+            {% if message.prepared_action_card.status == "prepared" %}
+              <form method="post" action="{% url 'ai_prepared_action_commit' message.prepared_action_card.id %}">
+                {% csrf_token %}
+                <button type="submit" class="ai-chat-profile-card__action">
+                  Confirmar y aplicar
+                </button>
+              </form>
+              <form method="post" action="{% url 'ai_prepared_action_cancel' message.prepared_action_card.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-secondary">Cancelar</button>
+              </form>
+            {% else %}
+              <span>Estado: {{ message.prepared_action_card.status }}</span>
             {% endif %}
           </div>
         </div>

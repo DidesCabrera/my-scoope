@@ -52,6 +52,7 @@ class CatalogFood(models.Model):
     ]
 
     SOURCE_NATURAL_VERIFIED = "natural_verified"
+    SOURCE_USDA = "usda"
     SOURCE_BRAND_SUBMITTED = "brand_submitted"
     SOURCE_USER_CREATED = "user_created"
     SOURCE_EXTERNAL_TEMPORARY = "external_temporary"
@@ -61,6 +62,7 @@ class CatalogFood(models.Model):
 
     SOURCE_TYPE_CHOICES = [
         (SOURCE_NATURAL_VERIFIED, "Natural verified"),
+        (SOURCE_USDA, "USDA FoodData Central"),
         (SOURCE_BRAND_SUBMITTED, "Brand submitted"),
         (SOURCE_USER_CREATED, "User created"),
         (SOURCE_EXTERNAL_TEMPORARY, "External temporary"),
@@ -83,6 +85,46 @@ class CatalogFood(models.Model):
         (PREPARATION_DRY, "Dry"),
         (PREPARATION_HYDRATED, "Hydrated"),
         (PREPARATION_READY_TO_EAT, "Ready to eat"),
+    ]
+
+    FOOD_FORM_UNKNOWN = "unknown"
+    FOOD_FORM_INGREDIENT = "ingredient"
+    FOOD_FORM_MIXED_DISH = "mixed_dish"
+    FOOD_FORM_BEVERAGE = "beverage"
+    FOOD_FORM_CONDIMENT = "condiment"
+
+    FOOD_FORM_CHOICES = [
+        (FOOD_FORM_UNKNOWN, "Unknown"),
+        (FOOD_FORM_INGREDIENT, "Ingredient"),
+        (FOOD_FORM_MIXED_DISH, "Mixed dish"),
+        (FOOD_FORM_BEVERAGE, "Beverage"),
+        (FOOD_FORM_CONDIMENT, "Condiment"),
+    ]
+
+    PREPARATION_EFFORT_UNKNOWN = "unknown"
+    PREPARATION_EFFORT_NONE = "none"
+    PREPARATION_EFFORT_LOW = "low"
+    PREPARATION_EFFORT_MEDIUM = "medium"
+    PREPARATION_EFFORT_HIGH = "high"
+
+    PREPARATION_EFFORT_CHOICES = [
+        (PREPARATION_EFFORT_UNKNOWN, "Unknown"),
+        (PREPARATION_EFFORT_NONE, "None"),
+        (PREPARATION_EFFORT_LOW, "Low"),
+        (PREPARATION_EFFORT_MEDIUM, "Medium"),
+        (PREPARATION_EFFORT_HIGH, "High"),
+    ]
+
+    COST_BAND_UNKNOWN = "unknown"
+    COST_BAND_LOW = "low"
+    COST_BAND_MEDIUM = "medium"
+    COST_BAND_HIGH = "high"
+
+    COST_BAND_CHOICES = [
+        (COST_BAND_UNKNOWN, "Unknown"),
+        (COST_BAND_LOW, "Low"),
+        (COST_BAND_MEDIUM, "Medium"),
+        (COST_BAND_HIGH, "High"),
     ]
 
     catalog_ref = models.UUIDField(
@@ -145,6 +187,51 @@ class CatalogFood(models.Model):
             "Semantic state used for curation and solver safety. Example: raw, "
             "cooked, dry, hydrated or ready_to_eat. Avoids mixing raw/cooked data."
         ),
+    )
+
+    food_form = models.CharField(
+        max_length=30,
+        choices=FOOD_FORM_CHOICES,
+        default=FOOD_FORM_UNKNOWN,
+        help_text="Curated culinary form used by meal grammar after operational snapshot.",
+    )
+
+    functional_roles = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Versioned multi-role capability labels; no single role is treated as complete truth.",
+    )
+
+    meal_affinities = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Curated meal-kind affinities such as breakfast, snack, main or dinner.",
+    )
+
+    dietary_tags = models.JSONField(default=list, blank=True)
+    allergens = models.JSONField(default=list, blank=True)
+
+    preparation_effort = models.CharField(
+        max_length=20,
+        choices=PREPARATION_EFFORT_CHOICES,
+        default=PREPARATION_EFFORT_UNKNOWN,
+    )
+
+    cost_band = models.CharField(
+        max_length=20,
+        choices=COST_BAND_CHOICES,
+        default=COST_BAND_UNKNOWN,
+    )
+
+    solver_capabilities_version = models.CharField(
+        max_length=64,
+        default="solver_food_capabilities.v1",
+    )
+
+    solver_feature_confidence = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Per-feature confidence values from 0 to 100 for solver projections.",
     )
 
     solver_enabled = models.BooleanField(
@@ -787,6 +874,27 @@ class CatalogImportBatch(models.Model):
 
     is_dry_run = models.BooleanField(default=False)
 
+    dry_run_batch = models.ForeignKey(
+        "self",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="applied_batches",
+        help_text="Completed equivalent dry-run that authorized this mutating batch.",
+    )
+
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="requested_catalog_import_batches",
+    )
+
+    reason = models.TextField(blank=True)
+    input_sha256 = models.CharField(max_length=64, blank=True)
+    parameters_payload = models.JSONField(default=dict, blank=True)
+
     total_rows = models.PositiveIntegerField(default=0)
     imported_rows = models.PositiveIntegerField(default=0)
     skipped_rows = models.PositiveIntegerField(default=0)
@@ -809,3 +917,33 @@ class CatalogImportBatch(models.Model):
     def __str__(self) -> str:
         version = f" · {self.source_version}" if self.source_version else ""
         return f"{self.source_name}{version} · {self.status}"
+
+
+class CatalogImportSourcePolicy(models.Model):
+    """Explicit gate for scaling one persistent source beyond its sample size."""
+
+    source_type = models.CharField(max_length=40, choices=CatalogFood.SOURCE_TYPE_CHOICES)
+    source_name = models.CharField(max_length=160)
+    is_enabled = models.BooleanField(default=True)
+    scale_approved = models.BooleanField(default=False)
+    kill_switch = models.BooleanField(default=False)
+    max_batch_rows = models.PositiveIntegerField(default=10)
+    approval_reason = models.TextField(blank=True)
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="approved_catalog_import_source_policies",
+    )
+    approved_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["source_type", "source_name"], name="unique_catalog_import_source_policy")
+        ]
+        ordering = ["source_type", "source_name"]
+
+    def __str__(self) -> str:
+        return f"{self.source_name} · max {self.max_batch_rows}"

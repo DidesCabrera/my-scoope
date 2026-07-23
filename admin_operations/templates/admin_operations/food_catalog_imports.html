@@ -1,0 +1,118 @@
+{% extends "admin_operations/base.html" %}
+{% block title %}Food Catalog Imports{% endblock %}
+{% block content %}
+<div class="page admin-analytics-page admin-operations-page">
+  {% include "admin_operations/_food_catalog_tabs.html" with active_tab="imports" %}
+
+  <section class="home-stats admin-analytics-kpi-grid admin-operations-kpi-grid" aria-label="Resumen de imports">
+    {% for metric in vm.content.metrics %}
+      <article class="home-stat-card admin-operations-metric-card">
+        <div class="home-stat-top"><i data-lucide="{{ metric.icon }}" class="home-stat-icon"></i><span class="home-stat-label">{{ metric.label }}</span></div>
+        <h3>{{ metric.value }}</h3><p class="muted-text">{{ metric.helper }}</p>
+      </article>
+    {% endfor %}
+  </section>
+
+  <section class="admin-analytics-section-grid admin-operations-observability-grid">
+    <article class="card-detail-block">
+      <div class="card-title-row"><div><p class="section-eyebrow">FCG03 · Seed interno</p><h3>Validar los 30 alimentos empaquetados</h3><p class="muted-text">Registra un plan sin crear CatalogFood. El dataset y su hash se resuelven desde el artefacto versionado del repositorio.</p></div></div>
+      <form method="post" action="{% url 'admin_operations_food_catalog_core_seed_dry_run' %}" data-admin-operations-confirm data-confirm-message="¿Registrar dry-run del seed interno?">
+        {% csrf_token %}<label><span>Razón operacional</span><textarea name="reason" required></textarea></label><button class="btn-secondary" type="submit">Ejecutar dry-run</button>
+      </form>
+    </article>
+    <article class="card-detail-block">
+      <div class="card-title-row"><div><p class="section-eyebrow">Apply separado</p><h3>Aplicar un dry-run aprobado</h3><p class="muted-text">Exige el ID de un dry-run vigente y equivalente. Importa como verificado, pero nunca publica ni crea snapshots.</p></div></div>
+      <form method="post" action="{% url 'admin_operations_food_catalog_core_seed_apply' %}" data-admin-operations-confirm data-confirm-message="¿Aplicar el seed interno validado?">
+        {% csrf_token %}<label><span>ID dry-run</span><input name="dry_run_batch_id" type="number" min="1" required></label><label><span>Razón operacional</span><textarea name="reason" required></textarea></label><button class="btn-secondary" type="submit">Aplicar seed</button>
+      </form>
+    </article>
+  </section>
+
+  <section class="admin-analytics-section-grid admin-operations-observability-grid">
+    <article class="card-detail-block">
+      <div class="card-title-row"><div><p class="section-eyebrow">FCG04 · USDA</p><h3>Dry-run de muestra Foundation Foods</h3><p class="muted-text">Acepta entre 1 y 10 filas reales. Guarda hash, dataset, versión y conteos; no persiste alimentos.</p></div></div>
+      <form method="post" enctype="multipart/form-data" action="{% url 'admin_operations_food_catalog_usda_dry_run' %}" data-admin-operations-confirm>
+        {% csrf_token %}<label><span>JSON USDA</span><input type="file" name="file" accept="application/json" required></label><label><span>Versión</span><input name="source_version" required></label><label><span>Dataset</span><input name="source_dataset" value="foundation_foods" required></label><label><span>Límite</span><input name="limit" type="number" min="1" max="10" required></label><label><span>Razón</span><textarea name="reason" required></textarea></label><button class="btn-secondary" type="submit">Validar USDA</button>
+      </form>
+    </article>
+    <article class="card-detail-block">
+      <div class="card-title-row"><div><p class="section-eyebrow">Apply USDA</p><h3>Reenviar el mismo artefacto</h3><p class="muted-text">El hash, versión, dataset, límite y conteo deben coincidir con el dry-run indicado.</p></div></div>
+      <form method="post" enctype="multipart/form-data" action="{% url 'admin_operations_food_catalog_usda_apply' %}" data-admin-operations-confirm>
+        {% csrf_token %}<label><span>JSON USDA</span><input type="file" name="file" accept="application/json" required></label><label><span>ID dry-run</span><input name="dry_run_batch_id" type="number" min="1" required></label><label><span>Versión</span><input name="source_version" required></label><label><span>Dataset</span><input name="source_dataset" value="foundation_foods" required></label><label><span>Límite</span><input name="limit" type="number" min="1" max="10" required></label><label><span>Razón</span><textarea name="reason" required></textarea></label><button class="btn-secondary" type="submit">Importar USDA</button>
+      </form>
+    </article>
+  </section>
+
+  <section class="admin-analytics-section-grid admin-operations-observability-grid">
+    <article class="card-detail-block">
+      <div class="card-title-row"><div><p class="section-eyebrow">FCG05 · Marcas</p><h3>Dry-run de CSV autorizado</h3><p class="muted-text">Cada fila exige autorización confirmada, referencia de autorización y evidencia de etiqueta. Muestra máxima: 5.</p></div></div>
+      <form method="post" enctype="multipart/form-data" action="{% url 'admin_operations_food_catalog_brand_dry_run' %}" data-admin-operations-confirm>
+        {% csrf_token %}<label><span>CSV de marca</span><input type="file" name="file" accept="text/csv" required></label><label><span>Límite</span><input name="limit" type="number" min="1" max="5" required></label><label><span>Razón</span><textarea name="reason" required></textarea></label><button class="btn-secondary" type="submit">Validar marcas</button>
+      </form>
+    </article>
+    <article class="card-detail-block">
+      <div class="card-title-row"><div><p class="section-eyebrow">Apply marcas</p><h3>Importar evidencia validada</h3><p class="muted-text">Requiere el mismo CSV, límite y dry-run. Crea brand_submitted; no publica.</p></div></div>
+      <form method="post" enctype="multipart/form-data" action="{% url 'admin_operations_food_catalog_brand_apply' %}" data-admin-operations-confirm>
+        {% csrf_token %}<label><span>CSV de marca</span><input type="file" name="file" accept="text/csv" required></label><label><span>ID dry-run</span><input name="dry_run_batch_id" type="number" min="1" required></label><label><span>Límite</span><input name="limit" type="number" min="1" max="5" required></label><label><span>Razón</span><textarea name="reason" required></textarea></label><button class="btn-secondary" type="submit">Importar marcas</button>
+      </form>
+    </article>
+  </section>
+
+  <section class="admin-analytics-section-grid admin-operations-observability-grid">
+    <article class="card-detail-block">
+      <div class="card-title-row"><div><p class="section-eyebrow">FCG06 · Curación manual</p><h3>Dry-run con evidencia</h3><p class="muted-text">Requiere URL y referencia de evidencia, licencia, atribución, versión, estado de preparación y macros.</p></div></div>
+      <form method="post" enctype="multipart/form-data" action="{% url 'admin_operations_food_catalog_manual_dry_run' %}" data-admin-operations-confirm>{% csrf_token %}<label><span>CSV manual</span><input type="file" name="file" accept="text/csv" required></label><label><span>Límite</span><input name="limit" type="number" min="1" max="5" required></label><label><span>Razón</span><textarea name="reason" required></textarea></label><button class="btn-secondary" type="submit">Validar evidencia</button></form>
+    </article>
+    <article class="card-detail-block">
+      <div class="card-title-row"><div><p class="section-eyebrow">Apply manual</p><h3>Crear candidatos no publicados</h3><p class="muted-text">El creador queda registrado; la revisión/publicación permanece separada.</p></div></div>
+      <form method="post" enctype="multipart/form-data" action="{% url 'admin_operations_food_catalog_manual_apply' %}" data-admin-operations-confirm>{% csrf_token %}<label><span>CSV manual</span><input type="file" name="file" accept="text/csv" required></label><label><span>ID dry-run</span><input name="dry_run_batch_id" type="number" min="1" required></label><label><span>Límite</span><input name="limit" type="number" min="1" max="5" required></label><label><span>Razón</span><textarea name="reason" required></textarea></label><button class="btn-secondary" type="submit">Importar curación</button></form>
+    </article>
+  </section>
+
+  <section class="admin-analytics-section-grid admin-operations-observability-grid">
+    <article class="card-detail-block">
+      <div class="card-title-row"><div><p class="section-eyebrow">FCG07 · Backfill</p><h3>Global + verificado + activo</h3><p class="muted-text">El selector excluye por construcción alimentos privados, no verificados o inactivos. Un resultado de 0 elegibles es válido.</p></div></div>
+      <form method="post" action="{% url 'admin_operations_food_catalog_backfill_dry_run' %}" data-admin-operations-confirm>{% csrf_token %}<label><span>Límite</span><input name="limit" type="number" min="1" max="10" required></label><label><span>Razón</span><textarea name="reason" required></textarea></label><button class="btn-secondary" type="submit">Validar backfill</button></form>
+    </article>
+    <article class="card-detail-block">
+      <div class="card-title-row"><div><p class="section-eyebrow">Apply backfill</p><h3>Promover sólo elegibles</h3><p class="muted-text">Crea candidatos maestros; no modifica el Food operacional de origen.</p></div></div>
+      <form method="post" action="{% url 'admin_operations_food_catalog_backfill_apply' %}" data-admin-operations-confirm>{% csrf_token %}<label><span>ID dry-run</span><input name="dry_run_batch_id" type="number" min="1" required></label><label><span>Límite</span><input name="limit" type="number" min="1" max="10" required></label><label><span>Razón</span><textarea name="reason" required></textarea></label><button class="btn-secondary" type="submit">Ejecutar backfill</button></form>
+    </article>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row"><div><p class="section-eyebrow">FCG09 · Gate de escalamiento</p><h3>Política y kill switch por fuente</h3><p class="muted-text">Aprobar la política no basta: el backend exige además dos applies pequeños gobernados y exitosos. OFF y FatSecret no son escalables en este ciclo.</p></div></div>
+    <form method="post" action="{% url 'admin_operations_food_catalog_import_policy_action' %}" data-admin-operations-confirm>{% csrf_token %}<label><span>Tipo</span><select name="source_type" required>{% for value, label in vm.content.source_options %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></label><label><span>Nombre exacto de fuente</span><input name="source_name" required></label><label><span>Máximo por batch</span><input name="max_batch_rows" type="number" min="1" max="500" required></label><label><span>Razón</span><textarea name="reason" required></textarea></label><button class="btn-secondary" name="action" value="approve" type="submit">Aprobar escala</button><button class="btn-secondary" name="action" value="kill" type="submit">Activar kill switch</button></form>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row"><div><p class="section-eyebrow">Guard operacional</p><h3>Dry-run antes de toda mutación</h3><p class="muted-text">Un apply sólo es válido cuando referencia un dry-run completo, vigente y equivalente en fuente, versión, hash, parámetros y número de filas. Los controles mutantes se habilitan fuente por fuente durante FCG03–FCG08.</p></div></div>
+    <form class="admin-operations-inventory-filters" method="get">
+      <label><span>Fuente</span><select name="source"><option value="">Todas</option>{% for value, label in vm.content.source_options %}<option value="{{ value }}"{% if vm.content.selected_source == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+      <label><span>Estado</span><select name="status"><option value="">Todos</option>{% for value, label in vm.content.status_options %}<option value="{{ value }}"{% if vm.content.selected_status == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+      <div class="admin-operations-filter-actions"><button class="btn-secondary btn-secondary--compact" type="submit">Aplicar filtros</button><a class="btn-secondary btn-secondary--compact" href="{% url 'admin_operations_food_catalog_imports' %}">Limpiar</a></div>
+    </form>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row"><div><p class="section-eyebrow">Historial</p><h3>Ejecuciones correlacionables</h3></div></div>
+    {% if vm.content.batches %}
+      <div class="admin-operations-table-card" role="region" aria-label="Historial de imports y dry-runs">
+        <table class="admin-operations-table">
+          <thead><tr><th>Tipo</th><th>Fuente</th><th>Estado</th><th>Conteos</th><th>Gobierno</th><th>Inicio</th></tr></thead>
+          <tbody>{% for batch in vm.content.batches %}<tr>
+            <td data-label="Tipo"><strong>{{ batch.run_type }} #{{ batch.pk }}</strong><small>{{ batch.dry_run_label }}</small></td>
+            <td data-label="Fuente"><strong>{{ batch.source_label }}</strong><small>versión {{ batch.version }}</small></td>
+            <td data-label="Estado"><span class="admin-operations-status-pill">{{ batch.status }}</span></td>
+            <td data-label="Conteos">{{ batch.counts_label }}</td>
+            <td data-label="Gobierno"><strong>{{ batch.operator_label }}</strong><small>{{ batch.reason }}</small><small>input {{ batch.input_hash_label }}</small></td>
+            <td data-label="Inicio">{{ batch.started_label }}</td>
+          </tr>{% endfor %}</tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="admin-operations-empty-state"><i data-lucide="database" class="home-stat-icon"></i><div><h4>Sin ejecuciones</h4><p class="muted-text">Aún no existen dry-runs o imports con estos filtros.</p></div></div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

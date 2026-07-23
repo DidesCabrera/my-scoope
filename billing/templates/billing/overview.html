@@ -1,0 +1,62 @@
+{% extends "notas/base.html" %}
+
+{% block content %}
+<div class="page page--detail profile-page">
+  <section class="profile-account-section">
+    <div class="profile-account-main">
+      <div class="profile-account-heading">
+        <div class="profile-account-title-row">
+          <i data-lucide="receipt-text" class="profile-account-title-icon"></i>
+          <h1>{{ vm.content.title }}</h1>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="profile-section-card">
+    <header class="profile-section-card__header">
+      <div class="profile-section-card__title-wrap">
+        <p class="profile-section-card__eyebrow">Plan actual</p>
+        <h2>{{ vm.content.plan_name }}</h2>
+      </div>
+    </header>
+    <div class="profile-account-grid">
+      <div class="profile-account-info-item"><span class="profile-account-info-label">Créditos</span><strong>{{ vm.content.available_credits }}</strong></div>
+      <div class="profile-account-info-item"><span class="profile-account-info-label">Suscripción</span><strong>{{ vm.content.subscription_status }}</strong></div>
+    </div>
+  </section>
+
+  <section class="profile-section-card">
+    <header class="profile-section-card__header"><div class="profile-section-card__title-wrap"><p class="profile-section-card__eyebrow">Planes</p><h2>Planes disponibles</h2></div></header>
+    <div class="profile-section-card__grid">
+      {% for product in vm.content.products %}
+      <article class="profile-section-card__item">
+        <span>{{ product.description }}</span><strong>{{ product.name }}</strong><small>{{ product.price }} · {{ product.interval }}</small>
+        <form method="post" action="{% url 'billing:create_checkout' product.id %}">{% csrf_token %}<button class="button button--primary" type="submit" {% if not vm.content.checkout_enabled %}disabled{% endif %}>Suscribirme</button></form>
+      </article>
+      {% empty %}<p>No hay planes comerciales disponibles.</p>{% endfor %}
+    </div>
+    {% if not vm.content.checkout_enabled %}<p><small>El checkout está temporalmente deshabilitado.</small></p>{% endif %}
+  </section>
+
+  <section class="profile-section-card">
+    <header class="profile-section-card__header"><div class="profile-section-card__title-wrap"><p class="profile-section-card__eyebrow">Mercado Pago</p><h2>Suscripciones</h2></div></header>
+    <div class="profile-section-card__grid">
+      {% for subscription in vm.content.subscriptions %}
+      <article class="profile-section-card__item"><span>{{ subscription.provider }} · {{ subscription.created_at }}</span><strong>{{ subscription.plan }}</strong><small>{{ subscription.status }}</small>
+        {% if subscription.can_cancel %}<form method="post" action="{% url 'billing:cancel_subscription' subscription.id %}">{% csrf_token %}<button class="button" type="submit" {% if not vm.content.checkout_enabled %}disabled{% endif %}>Cancelar</button></form>{% endif %}
+      </article>
+      {% empty %}<p>Aún no tienes suscripciones gestionadas por Billing.</p>{% endfor %}
+    </div>
+  </section>
+
+  <section class="profile-section-card">
+    <header class="profile-section-card__header"><div class="profile-section-card__title-wrap"><p class="profile-section-card__eyebrow">Historial</p><h2>Pagos y documentos tributarios</h2></div></header>
+    <div class="profile-section-card__grid">
+      {% for payment in vm.content.payments %}
+      <article class="profile-section-card__item"><span>{{ payment.date }} · {{ payment.external_id }}</span><strong>{{ payment.amount }}</strong><small>{{ payment.status }} · {{ payment.tax_status }}{% if payment.folio %} · Folio {{ payment.folio }}{% endif %}</small></article>
+      {% empty %}<p>Aún no hay pagos registrados.</p>{% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

@@ -5,6 +5,7 @@ HOME_VIEWMODE = vm("home", "list", "personal")
 
 # PROFILE  -------------------------------------------
 PROFILE_VIEWMODE = vm("profile", "list", "personal")
+BILLING_VIEWMODE = vm("billing", "list", "personal")
 
 
 # FOOD  ---------------------------------------------
@@ -90,6 +91,11 @@ PROGRAM_VIEWMODE_PERSONAL_DETAIL = vm("program", "detail", "personal")
 PROGRAM_VIEWMODE_CREATE = vm("program", "list", "create")
 PROGRAM_VIEWMODE_CONFIGURE = vm("program", "configure", "personal")
 PROGRAM_VIEWMODE_SHARE = vm("program", "share", "personal")
+
+# CALENDARIZATION -------------------------------------
+CALENDARIZATION_VIEWMODE_DASHBOARD = vm("calendarization", "list", "personal")
+CALENDARIZATION_VIEWMODE_DAY_DETAIL = vm("calendarization", "detail", "personal")
+CALENDARIZATION_VIEWMODE_HISTORY = vm("calendarization", "list", "history")
 
 
 # PROPOSAL ---------------------------------------------

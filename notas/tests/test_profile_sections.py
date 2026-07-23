@@ -41,14 +41,30 @@ class ProfileSectionsTests(TestCase):
         )
         return user
 
-    def test_profile_detail_renders_sections_and_body_metrics(self):
+    def test_profile_detail_only_renders_account_information(self):
         user = self._completed_user("profile_sections")
         self.client.force_login(user)
 
         response = self.client.get(reverse("profile_detail"))
 
         self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "home-eyebrow")
+        self.assertNotContains(response, "profile-account-subtitle")
         self.assertContains(response, "Información de cuenta")
+        self.assertContains(response, '<section class="profile-section-card profile-section-card--account" id="profile-account">')
+        self.assertNotContains(response, "Perfil nutricional")
+        self.assertNotContains(response, "Uso comercial")
+        self.assertNotContains(response, "Métricas corporales")
+
+    def test_profile_nutrition_renders_personal_data_and_body_metrics(self):
+        user = self._completed_user("profile_nutrition_sections")
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("profile_nutrition"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "home-eyebrow")
+        self.assertNotContains(response, "profile-account-subtitle")
         self.assertContains(response, "Perfil nutricional")
         self.assertContains(response, "Métricas corporales")
         self.assertContains(response, "Contexto para propuestas")
@@ -56,7 +72,42 @@ class ProfileSectionsTests(TestCase):
         self.assertContains(response, "188 cm")
         self.assertContains(response, "Masculino")
         self.assertContains(response, "Propuestas para terceros")
+        self.assertNotContains(response, "<span>Onboarding</span>")
+        self.assertNotContains(response, "Versión 1")
+        self.assertContains(response, 'onclick="openProfileEditModal()"')
+        self.assertContains(response, 'id="profileEditModal"')
+        self.assertContains(response, 'class="modal hidden profile-edit-modal"')
         self.assertContains(response, "Editar ficha nutricional")
+        self.assertNotContains(response, "Información de cuenta")
+        self.assertNotContains(response, "Uso comercial")
+
+    def test_profile_credits_only_renders_credit_usage(self):
+        user = self._completed_user("profile_credit_sections")
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("profile_credits"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "home-eyebrow")
+        self.assertNotContains(response, "profile-account-subtitle")
+        self.assertContains(response, "Uso comercial")
+        self.assertContains(response, "Créditos disponibles")
+        self.assertContains(response, '<section class="profile-section-card profile-section-card--billing" id="profile-credits">')
+        self.assertNotContains(response, "Información de cuenta")
+        self.assertNotContains(response, "Perfil nutricional")
+        self.assertNotContains(response, "Métricas corporales")
+
+    def test_profile_sidebar_links_to_distinct_sections(self):
+        user = self._completed_user("profile_sidebar_links")
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("profile_detail"))
+
+        self.assertContains(response, f'href="{reverse("profile_detail")}"')
+        self.assertContains(response, f'href="{reverse("profile_nutrition")}"')
+        self.assertContains(response, f'href="{reverse("profile_credits")}"')
+        self.assertNotContains(response, "#profile-personal")
+        self.assertNotContains(response, "#profile-credits")
 
     def test_profile_nutrition_update_changes_stable_body_fields(self):
         user = self._completed_user("profile_update")
@@ -71,7 +122,7 @@ class ProfileSectionsTests(TestCase):
             },
         )
 
-        self.assertRedirects(response, reverse("profile_detail"))
+        self.assertRedirects(response, reverse("profile_nutrition"))
         user.profile.refresh_from_db()
         self.assertEqual(user.profile.birth_date, date(1990, 5, 10))
         self.assertEqual(user.profile.sex, Profile.SEX_FEMALE)
@@ -95,6 +146,7 @@ class ProfileSectionsTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Revisa los datos de tu ficha nutricional")
         self.assertContains(response, "Ingresa una fecha de nacimiento anterior a hoy")
+        self.assertContains(response, 'data-open-on-load="true"')
         user.profile.refresh_from_db()
         self.assertEqual(user.profile.birth_date, date(1988, 1, 17))
         self.assertEqual(user.profile.sex, Profile.SEX_MALE)

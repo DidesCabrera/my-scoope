@@ -1,0 +1,27 @@
+{% extends "notas/base.html" %}
+{% block title %}Historial de calendarizaciones · MyScoope{% endblock %}
+{% block content %}
+<div class="page list calendarization-page">
+  <div class="list-page-header list-page-header--calendarization js-header-meta-sentinel">
+    <i data-lucide="history" class="list-page-header__icon list-page-header__icon--calendarization"></i>
+    <div class="list-page-header__copy">
+      <h1 class="list-page-header__title">Historial</h1>
+    </div>
+  </div>
+
+  <section class="calendarization-card">
+    {% if vm.content.history %}
+    <ul class="calendarization-history">
+      {% for item in vm.content.history %}
+      <li>
+        <div><strong>{{ item.program_name_snapshot }}</strong><span>{{ item.start_date|date:"d M Y" }} — {{ item.end_date|date:"d M Y" }}</span></div>
+        <span class="calendarization-status calendarization-status--{{ item.status }}">{{ item.get_status_display }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="calendarization-empty"><p>Aún no tienes calendarizaciones finalizadas o canceladas.</p></div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

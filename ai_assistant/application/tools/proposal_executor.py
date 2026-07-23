@@ -6,9 +6,12 @@ from typing import Any
 
 from ai_assistant.application.tools.contracts import AssistantToolCategory
 from ai_assistant.application.tools.registry import (
+    TOOL_CREATE_PROPORTIONAL_DAILYPLAN_CALORIE_PROPOSAL,
+    TOOL_PREPARE_PRODUCT_ACTION,
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
     TOOL_CREATE_NUTRITION_SOLVER_MEAL_PROPOSAL,
+    TOOL_CREATE_VALIDATED_DAILYPLAN_PROPOSAL,
     TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL,
     TOOL_CREATE_VALIDATED_MEAL_PROPOSAL,
     TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
@@ -124,17 +127,25 @@ def build_default_reviewable_proposal_tool_dispatch_table() -> dict[str, Reviewa
     """Load the local reviewable proposal tool dispatch table lazily."""
 
     from notas.application.ai_tools.proposal_tools import (
+        create_proportional_dailyplan_calorie_proposal_tool,
         create_nutrition_engine_dailyplan_proposal_tool,
         create_nutrition_engine_dailyplan_proposal_from_drafts_tool,
         create_nutrition_solver_meal_proposal_tool,
+        create_validated_dailyplan_proposal_tool,
         create_validated_dailyplan_build_proposal_tool,
         create_validated_meal_proposal_tool,
         iterate_nutrition_engine_dailyplan_proposal_tool,
     )
+    from ai_assistant.application.tools.prepared_action_tools import (
+        prepare_product_action_tool,
+    )
 
     return {
+        TOOL_CREATE_PROPORTIONAL_DAILYPLAN_CALORIE_PROPOSAL: create_proportional_dailyplan_calorie_proposal_tool,
+        TOOL_PREPARE_PRODUCT_ACTION: prepare_product_action_tool,
         TOOL_CREATE_VALIDATED_MEAL_PROPOSAL: create_validated_meal_proposal_tool,
         TOOL_CREATE_NUTRITION_SOLVER_MEAL_PROPOSAL: create_nutrition_solver_meal_proposal_tool,
+        TOOL_CREATE_VALIDATED_DAILYPLAN_PROPOSAL: create_validated_dailyplan_proposal_tool,
         TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL: create_validated_dailyplan_build_proposal_tool,
         TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL: create_nutrition_engine_dailyplan_proposal_tool,
         TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS: create_nutrition_engine_dailyplan_proposal_from_drafts_tool,

@@ -40,7 +40,7 @@ class DailyPlanGeneratorNutritionEngineTests(TestCase):
         )
 
     def test_generator_uses_nutrition_engine_solver_version(self):
-        self.assertEqual(DAILYPLAN_GENERATOR_VERSION, "nutrition_engine_v6_strict_validator")
+        self.assertEqual(DAILYPLAN_GENERATOR_VERSION, "nutrition_engine_v7_optimizer_gate")
 
     def test_payload_uses_solver_portions_and_validates_against_targets(self):
         brief = NutritionBrief(

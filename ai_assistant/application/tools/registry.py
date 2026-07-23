@@ -16,9 +16,21 @@ from ai_assistant.domain.contracts import (
 )
 
 TOOL_READ_DAILYPLAN = "read_dailyplan"
+TOOL_READ_FOOD = "read_food"
+TOOL_READ_MEAL = "read_meal"
 TOOL_READ_PROPOSAL = "read_proposal"
+TOOL_LIST_USER_FOODS = "list_user_foods"
+TOOL_LIST_USER_MEALS = "list_user_meals"
+TOOL_SEARCH_USER_MEALS = "search_user_meals"
+TOOL_LIST_USER_DAILYPLANS = "list_user_dailyplans"
+TOOL_SEARCH_USER_DAILYPLANS = "search_user_dailyplans"
 TOOL_LIST_USER_PROPOSALS = "list_user_proposals"
 TOOL_READ_USER_PROFILE_CONTEXT = "read_user_profile_context"
+TOOL_LIST_USER_PROGRAMS = "list_user_programs"
+TOOL_READ_PROGRAM = "read_program"
+TOOL_READ_CALENDARIZATION = "read_calendarization"
+TOOL_LIST_INBOX_ITEMS = "list_inbox_items"
+TOOL_READ_ACCOUNT_BILLING_CONTEXT = "read_account_billing_context"
 TOOL_SEARCH_OPERATIONAL_FOODS = "search_operational_foods"
 TOOL_LIST_OPERATIONAL_FOODS = "list_operational_foods"
 TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES = "preview_nutrition_solver_candidates"
@@ -34,10 +46,14 @@ TOOL_UPDATE_PROPOSAL_PREFERENCES = "update_proposal_preferences"
 TOOL_SHARE_PROPOSAL_PREFERENCES_CARD = "share_proposal_preferences_card"
 TOOL_CREATE_VALIDATED_MEAL_PROPOSAL = "create_validated_meal_proposal"
 TOOL_CREATE_NUTRITION_SOLVER_MEAL_PROPOSAL = "create_nutrition_solver_meal_proposal"
+TOOL_CREATE_VALIDATED_DAILYPLAN_PROPOSAL = "create_validated_dailyplan_proposal"
+TOOL_CREATE_PROPORTIONAL_DAILYPLAN_CALORIE_PROPOSAL = "create_proportional_dailyplan_calorie_proposal"
 TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL = "create_validated_dailyplan_build_proposal"
 TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL = "create_nutrition_engine_dailyplan_proposal"
 TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS = "create_nutrition_engine_dailyplan_proposal_from_drafts"
 TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL = "iterate_nutrition_engine_dailyplan_proposal"
+TOOL_PREPARE_PRODUCT_ACTION = "prepare_product_action"
+TOOL_COMMIT_PREPARED_ACTION = "commit_prepared_action"
 
 FORBIDDEN_TOOL_NAMES = {
     "apply_approved_proposal",
@@ -69,6 +85,42 @@ FORBIDDEN_ARGUMENT_KEYS = {
 }
 
 ALLOWED_TOOL_SPECS = {
+    TOOL_READ_FOOD: AssistantToolSpec(
+        name=TOOL_READ_FOOD,
+        description="Read one operational Food visible to the authenticated user.",
+        category=AssistantToolCategory.READ,
+        risk_level=AssistantToolRiskLevel.LOW,
+        requires_human_review=False,
+        allowed_intents=("read_context", "answer_question"),
+        input_schema={
+            "type": "object",
+            "required": ["food_id"],
+            "properties": {
+                "food_id": {
+                    "type": "integer",
+                    "description": "Operational Food ID to read.",
+                },
+            },
+        },
+    ),
+    TOOL_READ_MEAL: AssistantToolSpec(
+        name=TOOL_READ_MEAL,
+        description="Read one operational Meal visible to the authenticated user, including its foods and quantities.",
+        category=AssistantToolCategory.READ,
+        risk_level=AssistantToolRiskLevel.LOW,
+        requires_human_review=False,
+        allowed_intents=("read_context", "answer_question"),
+        input_schema={
+            "type": "object",
+            "required": ["meal_id"],
+            "properties": {
+                "meal_id": {
+                    "type": "integer",
+                    "description": "Operational Meal ID to read.",
+                },
+            },
+        },
+    ),
     TOOL_READ_DAILYPLAN: AssistantToolSpec(
         name=TOOL_READ_DAILYPLAN,
         description="Read one operational DailyPlan visible to the authenticated user.",
@@ -76,6 +128,8 @@ ALLOWED_TOOL_SPECS = {
         risk_level=AssistantToolRiskLevel.LOW,
         requires_human_review=False,
         allowed_intents=("read_context", "answer_question"),
+        mcp_exposed=True,
+        mcp_api_path="/ai-tools/read-dailyplan/",
         input_schema={
             "type": "object",
             "required": ["dailyplan_id"],
@@ -84,6 +138,86 @@ ALLOWED_TOOL_SPECS = {
                     "type": "integer",
                     "description": "Operational DailyPlan ID to read.",
                 },
+            },
+        },
+    ),
+    TOOL_LIST_USER_FOODS: AssistantToolSpec(
+        name=TOOL_LIST_USER_FOODS,
+        description="List operational foods owned by the authenticated user.",
+        category=AssistantToolCategory.READ,
+        risk_level=AssistantToolRiskLevel.LOW,
+        requires_human_review=False,
+        allowed_intents=("read_context", "answer_question"),
+        input_schema={
+            "type": "object",
+            "required": [],
+            "properties": {
+                "limit": {"type": "integer", "description": "Optional maximum result count."},
+            },
+        },
+    ),
+    TOOL_LIST_USER_MEALS: AssistantToolSpec(
+        name=TOOL_LIST_USER_MEALS,
+        description="List reusable Meals owned by the authenticated user.",
+        category=AssistantToolCategory.READ,
+        risk_level=AssistantToolRiskLevel.LOW,
+        requires_human_review=False,
+        allowed_intents=("read_context", "answer_question"),
+        input_schema={
+            "type": "object",
+            "required": [],
+            "properties": {
+                "limit": {"type": "integer", "description": "Optional maximum result count."},
+            },
+        },
+    ),
+    TOOL_SEARCH_USER_MEALS: AssistantToolSpec(
+        name=TOOL_SEARCH_USER_MEALS,
+        description="Resolve a reusable Meal by name among Meals visible to the authenticated user.",
+        category=AssistantToolCategory.READ,
+        risk_level=AssistantToolRiskLevel.LOW,
+        requires_human_review=False,
+        allowed_intents=("read_context", "answer_question"),
+        input_schema={
+            "type": "object",
+            "required": ["query"],
+            "properties": {
+                "query": {"type": "string", "description": "Meal name or partial name."},
+                "limit": {"type": "integer", "description": "Optional maximum result count."},
+            },
+        },
+    ),
+    TOOL_LIST_USER_DAILYPLANS: AssistantToolSpec(
+        name=TOOL_LIST_USER_DAILYPLANS,
+        description="List DailyPlans owned by the authenticated user.",
+        category=AssistantToolCategory.READ,
+        risk_level=AssistantToolRiskLevel.LOW,
+        requires_human_review=False,
+        allowed_intents=("read_context", "answer_question", "create_dailyplan_proposal"),
+        input_schema={
+            "type": "object",
+            "required": [],
+            "properties": {
+                "limit": {"type": "integer", "description": "Optional maximum result count."},
+            },
+        },
+    ),
+    TOOL_SEARCH_USER_DAILYPLANS: AssistantToolSpec(
+        name=TOOL_SEARCH_USER_DAILYPLANS,
+        description=(
+            "Resolve a DailyPlan by name among plans visible to the authenticated user. "
+            "For a future change, only a result whose created_by_id is the current user may be targeted."
+        ),
+        category=AssistantToolCategory.READ,
+        risk_level=AssistantToolRiskLevel.LOW,
+        requires_human_review=False,
+        allowed_intents=("read_context", "answer_question", "create_dailyplan_proposal", "iterate_proposal"),
+        input_schema={
+            "type": "object",
+            "required": ["query"],
+            "properties": {
+                "query": {"type": "string", "description": "DailyPlan name or partial name."},
+                "limit": {"type": "integer", "description": "Optional maximum result count."},
             },
         },
     ),
@@ -98,6 +232,8 @@ ALLOWED_TOOL_SPECS = {
         risk_level=AssistantToolRiskLevel.LOW,
         requires_human_review=False,
         allowed_intents=("read_context", "answer_question", "iterate_proposal"),
+        mcp_exposed=True,
+        mcp_api_path="/ai-tools/read-proposal/",
         input_schema={
             "type": "object",
             "required": ["proposal_id"],
@@ -116,6 +252,8 @@ ALLOWED_TOOL_SPECS = {
         risk_level=AssistantToolRiskLevel.LOW,
         requires_human_review=False,
         allowed_intents=("read_context", "answer_question", "iterate_proposal"),
+        mcp_exposed=True,
+        mcp_api_path="/ai-tools/list-user-proposals/",
         input_schema={
             "type": "object",
             "required": [],
@@ -139,6 +277,85 @@ ALLOWED_TOOL_SPECS = {
             "required": [],
             "properties": {},
         },
+    ),
+    TOOL_LIST_USER_PROGRAMS: AssistantToolSpec(
+        name=TOOL_LIST_USER_PROGRAMS,
+        description="List or search weekly Programs owned by the authenticated user.",
+        category=AssistantToolCategory.READ,
+        risk_level=AssistantToolRiskLevel.LOW,
+        requires_human_review=False,
+        allowed_intents=("read_context", "answer_question", "create_program_proposal"),
+        input_schema={
+            "type": "object",
+            "required": [],
+            "properties": {
+                "search": {"type": "string", "description": "Optional program name search."},
+                "limit": {"type": "integer", "description": "Optional maximum result count."},
+            },
+        },
+    ),
+    TOOL_READ_PROGRAM: AssistantToolSpec(
+        name=TOOL_READ_PROGRAM,
+        description="Read one owned weekly Program, its slots and independent DailyPlan snapshots.",
+        category=AssistantToolCategory.READ,
+        risk_level=AssistantToolRiskLevel.LOW,
+        requires_human_review=False,
+        allowed_intents=("read_context", "answer_question", "create_program_proposal"),
+        input_schema={
+            "type": "object",
+            "required": ["program_id"],
+            "properties": {
+                "program_id": {"type": "integer", "description": "Owned Program ID."},
+            },
+        },
+    ),
+    TOOL_READ_CALENDARIZATION: AssistantToolSpec(
+        name=TOOL_READ_CALENDARIZATION,
+        description="Read the user's current program calendarization and recent history.",
+        category=AssistantToolCategory.READ,
+        risk_level=AssistantToolRiskLevel.LOW,
+        requires_human_review=False,
+        allowed_intents=("read_context", "answer_question"),
+        input_schema={
+            "type": "object",
+            "required": [],
+            "properties": {
+                "history_limit": {"type": "integer", "description": "Optional history count."},
+            },
+        },
+    ),
+    TOOL_LIST_INBOX_ITEMS: AssistantToolSpec(
+        name=TOOL_LIST_INBOX_ITEMS,
+        description="List received or sent My Scoope shares in the authenticated user's Inbox.",
+        category=AssistantToolCategory.READ,
+        risk_level=AssistantToolRiskLevel.LOW,
+        requires_human_review=False,
+        allowed_intents=("read_context", "answer_question"),
+        input_schema={
+            "type": "object",
+            "required": [],
+            "properties": {
+                "scope": {
+                    "type": "string",
+                    "enum": ["received", "sent"],
+                    "description": "Inbox direction.",
+                },
+                "favorites_only": {"type": "boolean"},
+                "limit": {"type": "integer", "description": "Optional maximum result count."},
+            },
+        },
+    ),
+    TOOL_READ_ACCOUNT_BILLING_CONTEXT: AssistantToolSpec(
+        name=TOOL_READ_ACCOUNT_BILLING_CONTEXT,
+        description=(
+            "Read the user's commercial plan, credits, subscription and payment summary. "
+            "Checkout and cancellation remain trusted billing UI actions."
+        ),
+        category=AssistantToolCategory.READ,
+        risk_level=AssistantToolRiskLevel.MEDIUM,
+        requires_human_review=False,
+        allowed_intents=("read_context", "answer_question"),
+        input_schema={"type": "object", "required": [], "properties": {}},
     ),
     TOOL_SEARCH_OPERATIONAL_FOODS: AssistantToolSpec(
         name=TOOL_SEARCH_OPERATIONAL_FOODS,
@@ -174,12 +391,30 @@ ALLOWED_TOOL_SPECS = {
     TOOL_LIST_OPERATIONAL_FOODS: AssistantToolSpec(
         name=TOOL_LIST_OPERATIONAL_FOODS,
         description=(
-            "List operational My Scoope foods available for planning. "
-            "Returned IDs are notas.Food IDs, never master catalog IDs."
+            "List operational foods in My Scoope that are available for planning. "
+            "Returned identifiers are operational My Scoope Food IDs (notas.Food), "
+            "never master catalog IDs."
         ),
         category=AssistantToolCategory.READ,
         risk_level=AssistantToolRiskLevel.MEDIUM,
         requires_human_review=False,
+        mcp_exposed=True,
+        mcp_name="list_food_catalog",
+        mcp_api_path="/ai-tools/list-food-catalog/",
+        mcp_input_schema={
+            "type": "object",
+            "required": [],
+            "properties": {
+                "search": {
+                    "type": "string",
+                    "description": "Optional operational food name search.",
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Optional maximum number of foods to return.",
+                },
+            },
+        },
         allowed_intents=(
             "capture_nutrition_brief",
             "create_meal_proposal",
@@ -238,6 +473,8 @@ ALLOWED_TOOL_SPECS = {
         category=AssistantToolCategory.VALIDATION,
         risk_level=AssistantToolRiskLevel.MEDIUM,
         requires_human_review=False,
+        mcp_exposed=True,
+        mcp_api_path="/ai-tools/compare-dailyplan-to-targets/",
         allowed_intents=("answer_question", "create_dailyplan_proposal", "iterate_proposal"),
         input_schema={
             "type": "object",
@@ -545,6 +782,8 @@ ALLOWED_TOOL_SPECS = {
         ),
         category=AssistantToolCategory.PROPOSAL,
         risk_level=AssistantToolRiskLevel.REVIEW_REQUIRED,
+        mcp_exposed=True,
+        mcp_api_path="/ai-tools/create-validated-meal-proposal/",
         allowed_intents=("create_meal_proposal", "iterate_proposal"),
         input_schema={
             "type": "object",
@@ -589,6 +828,139 @@ ALLOWED_TOOL_SPECS = {
             },
         },
     ),
+    TOOL_CREATE_VALIDATED_DAILYPLAN_PROPOSAL: AssistantToolSpec(
+        name=TOOL_CREATE_VALIDATED_DAILYPLAN_PROPOSAL,
+        description=(
+            "Create a reviewable proposal that adjusts an existing DailyPlan through "
+            "validated quantity operations. This never applies the changes directly."
+        ),
+        category=AssistantToolCategory.PROPOSAL,
+        risk_level=AssistantToolRiskLevel.REVIEW_REQUIRED,
+        mcp_exposed=True,
+        mcp_api_path="/ai-tools/create-validated-dailyplan-proposal/",
+        allowed_intents=("create_dailyplan_proposal", "iterate_proposal"),
+        input_schema={
+            "type": "object",
+            "required": ["dailyplan_id", "title", "targets"],
+            "properties": {
+                "dailyplan_id": {"type": "integer"},
+                "title": {"type": "string"},
+                "summary": {"type": "string"},
+                "targets": {
+                    "type": "object",
+                    "description": "Target nutrition metrics for the existing DailyPlan.",
+                },
+                "tolerances": {
+                    "type": "object",
+                    "description": "Optional target tolerances.",
+                },
+                "proposed_payload": {
+                    "type": "object",
+                    "description": (
+                        "Validated adjust_dailyplan_to_targets payload containing "
+                        "update_meal_food_quantity operations."
+                    ),
+                },
+            },
+        },
+    ),
+    TOOL_CREATE_PROPORTIONAL_DAILYPLAN_CALORIE_PROPOSAL: AssistantToolSpec(
+        name=TOOL_CREATE_PROPORTIONAL_DAILYPLAN_CALORIE_PROPOSAL,
+        description=(
+            "Prepare a reviewable calorie adjustment for an owned DailyPlan while preserving "
+            "the exact foods and meal structure. It changes only quantities in the plan's "
+            "independent Meal snapshots and never mutates reusable library Meals."
+        ),
+        category=AssistantToolCategory.PROPOSAL,
+        risk_level=AssistantToolRiskLevel.REVIEW_REQUIRED,
+        allowed_intents=("create_dailyplan_proposal", "iterate_proposal"),
+        input_schema={
+            "type": "object",
+            "required": ["dailyplan_id", "calorie_delta"],
+            "properties": {
+                "dailyplan_id": {"type": "integer", "description": "Owned DailyPlan ID."},
+                "calorie_delta": {
+                    "type": "number",
+                    "description": "Signed calorie change, for example 200 or -150.",
+                },
+                "title": {"type": "string", "description": "Optional proposal title."},
+                "summary": {"type": "string", "description": "Optional review summary."},
+            },
+        },
+    ),
+    TOOL_PREPARE_PRODUCT_ACTION: AssistantToolSpec(
+        name=TOOL_PREPARE_PRODUCT_ACTION,
+        description=(
+            "Prepare a reviewable My Scoope product action without mutating its target. "
+            "Use only after resolving an unambiguous owned target. The result contains a "
+            "before/after preview and requires a trusted user confirmation in the UI."
+        ),
+        category=AssistantToolCategory.PROPOSAL,
+        risk_level=AssistantToolRiskLevel.REVIEW_REQUIRED,
+        allowed_intents=(
+            "answer_question",
+            "create_program_proposal",
+            "iterate_proposal",
+        ),
+        input_schema={
+            "type": "object",
+            "required": ["action_key"],
+            "properties": {
+                "action_key": {
+                    "type": "string",
+                    "enum": [
+                        "food.create",
+                        "food.update",
+                        "food.delete",
+                        "meal.create",
+                        "meal.rename",
+                        "meal.delete",
+                        "dailyplan.create",
+                        "dailyplan.rename",
+                        "dailyplan.delete",
+                        "program.create",
+                        "program.rename",
+                        "program.delete",
+                        "program.add_week",
+                        "program.duplicate_week",
+                        "program.remove_week",
+                        "calendar.pause",
+                        "calendar.resume",
+                        "calendar.cancel",
+                        "comparison.rename",
+                        "proposal.approve",
+                        "proposal.reject",
+                        "proposal.cancel",
+                        "proposal.delete",
+                        "proposal.apply",
+                    ],
+                    "description": "Controlled product action to prepare.",
+                },
+                "target_id": {
+                    "type": "integer",
+                    "description": "Owned target ID; omit only for create actions.",
+                },
+                "parameters": {
+                    "type": "object",
+                    "description": "Action-specific values used to build the preview.",
+                },
+            },
+        },
+    ),
+    TOOL_COMMIT_PREPARED_ACTION: AssistantToolSpec(
+        name=TOOL_COMMIT_PREPARED_ACTION,
+        description="Commit one prepared action after a trusted server-side user confirmation.",
+        category=AssistantToolCategory.COMMIT,
+        risk_level=AssistantToolRiskLevel.REVIEW_REQUIRED,
+        provider_exposed=False,
+        input_schema={
+            "type": "object",
+            "required": ["prepared_action_id"],
+            "properties": {
+                "prepared_action_id": {"type": "string"},
+            },
+        },
+    ),
     TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL: AssistantToolSpec(
         name=TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL,
         description=(
@@ -597,6 +969,8 @@ ALLOWED_TOOL_SPECS = {
         ),
         category=AssistantToolCategory.PROPOSAL,
         risk_level=AssistantToolRiskLevel.REVIEW_REQUIRED,
+        mcp_exposed=True,
+        mcp_api_path="/ai-tools/create-validated-dailyplan-build-proposal/",
         allowed_intents=("create_dailyplan_proposal", "iterate_proposal"),
         input_schema={
             "type": "object",
@@ -622,6 +996,8 @@ ALLOWED_TOOL_SPECS = {
         ),
         category=AssistantToolCategory.PROPOSAL,
         risk_level=AssistantToolRiskLevel.REVIEW_REQUIRED,
+        mcp_exposed=True,
+        mcp_api_path="/ai-tools/create-nutrition-engine-dailyplan-proposal/",
         allowed_intents=("capture_nutrition_brief", "create_dailyplan_proposal"),
         input_schema={
             "type": "object",
@@ -680,6 +1056,8 @@ ALLOWED_TOOL_SPECS = {
         ),
         category=AssistantToolCategory.PROPOSAL,
         risk_level=AssistantToolRiskLevel.REVIEW_REQUIRED,
+        mcp_exposed=True,
+        mcp_api_path="/ai-tools/iterate-nutrition-engine-dailyplan-proposal/",
         allowed_intents=("iterate_proposal",),
         input_schema={
             "type": "object",
@@ -784,6 +1162,24 @@ def list_provider_tool_specs() -> list[dict[str, Any]]:
             }
         provider_specs.append(add_provider_tool_selection_reason(provider_spec))
     return provider_specs
+
+
+def list_mcp_tool_specs() -> list[AssistantToolSpec]:
+    """Return the MCP projection of the canonical Assistant capability catalog."""
+
+    return [
+        spec
+        for spec in list_allowed_tool_specs()
+        if spec.mcp_exposed
+    ]
+
+
+def get_mcp_tool_spec(tool_name: str) -> AssistantToolSpec:
+    normalized = normalize_tool_name(tool_name)
+    for spec in list_mcp_tool_specs():
+        if spec.mcp_name == normalized:
+            return spec
+    raise AssistantToolRegistryError(f"unsupported_mcp_tool:{normalized}")
 
 
 def get_tool_spec(tool_name: str) -> AssistantToolSpec:

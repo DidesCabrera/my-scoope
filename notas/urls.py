@@ -13,6 +13,7 @@ urlpatterns = [
     path("", include("notas.interface.urls.meals")),
     path("", include("notas.interface.urls.foods")),
     path("", include("notas.interface.urls.programs")),
+    path("", include("notas.interface.urls.calendarization")),
     path("", include("notas.interface.urls.profiles")),
     path("", include("notas.interface.urls.admin_tools")),
     path("", include("notas.interface.urls.proposals")),

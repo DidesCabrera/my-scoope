@@ -6,8 +6,10 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from admin_operations.services import build_food_catalog_operations_vm
-from food_catalog.models import CatalogCurationCandidate, CatalogFood
+from admin_operations.services import build_food_catalog_inventory_vm, build_food_catalog_operations_vm
+from food_catalog.models import CatalogCurationCandidate, CatalogFood, CatalogFoodAlias, CatalogFoodPortion, CatalogFoodSource
+from notas.domain.models import Food
+from admin_operations.models import AdminOperationAuditEvent
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
@@ -151,15 +153,246 @@ class AdminOperationsFoodCatalogTests(TestCase):
         self.assertIsNotNone(catalog_food.reviewed_at)
         self.assertContains(response, "Marcar revisado")
 
+    def test_publication_and_snapshot_are_separate_audited_actions(self):
+        catalog_food = _create_catalog_food(
+            status=CatalogFood.STATUS_REVIEWED,
+            display_name="Avena publicable",
+            canonical_name="avena-publicable",
+            data_quality_score=90,
+        )
+        CatalogFoodSource.objects.create(
+            catalog_food=catalog_food,
+            source_type=CatalogFood.SOURCE_ADMIN_IMPORT,
+            source_name="Evidence",
+            source_food_id="E-1",
+            license_status=CatalogFoodSource.LICENSE_ALLOWED,
+        )
+        CatalogFoodPortion.objects.create(
+            catalog_food=catalog_food,
+            label="100 g",
+            grams=Decimal("100"),
+            is_default=True,
+        )
+        self.client.force_login(self.staff)
 
-def _create_catalog_food(*, status: str, display_name: str = "Avena") -> CatalogFood:
-    return CatalogFood.objects.create(
-        display_name=display_name,
-        canonical_name=display_name.lower().replace(" ", "-"),
-        protein_g_per_100g=Decimal("13.000"),
-        carbs_g_per_100g=Decimal("60.000"),
-        fat_g_per_100g=Decimal("7.000"),
-        status=status,
-        source_type=CatalogFood.SOURCE_ADMIN_IMPORT,
-        data_quality_score=80,
-    )
+        publish_response = self.client.post(
+            reverse("admin_operations_food_catalog_food_action", args=[catalog_food.pk]),
+            {"action": "published", "reason": "Evidence and macros reviewed."},
+            follow=True,
+        )
+        catalog_food.refresh_from_db()
+        self.assertEqual(publish_response.status_code, 200)
+        self.assertEqual(catalog_food.status, CatalogFood.STATUS_PUBLISHED)
+        self.assertEqual(Food.objects.count(), 0)
+
+        snapshot_response = self.client.post(
+            reverse("admin_operations_food_catalog_food_snapshot", args=[catalog_food.pk]),
+            {"reason": "Make reviewed food operational."},
+            follow=True,
+        )
+        operational = Food.objects.get()
+        self.assertEqual(snapshot_response.status_code, 200)
+        self.assertEqual(operational.catalog_food_id, catalog_food.pk)
+        self.assertEqual(
+            AdminOperationAuditEvent.objects.filter(
+                action__in=[
+                    "food_catalog.catalog_food.published",
+                    "food_catalog.catalog_food.snapshot_create",
+                ]
+            ).count(),
+            2,
+        )
+
+    def test_snapshot_rejects_unpublished_catalog_food(self):
+        catalog_food = _create_catalog_food(status=CatalogFood.STATUS_REVIEWED)
+        self.client.force_login(self.staff)
+        response = self.client.post(
+            reverse("admin_operations_food_catalog_food_snapshot", args=[catalog_food.pk]),
+            {"reason": "Attempt premature snapshot."},
+            follow=True,
+        )
+        self.assertContains(response, "Only published CatalogFood")
+        self.assertEqual(Food.objects.count(), 0)
+
+    def test_inventory_page_requires_staff(self):
+        response = self.client.get(reverse("admin_operations_food_catalog_inventory"))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/admin/login/", response["Location"])
+
+        self.client.force_login(self.member)
+        response = self.client.get(reverse("admin_operations_food_catalog_inventory"))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/admin/login/", response["Location"])
+
+    def test_inventory_vm_exposes_catalog_coverage_and_quality_gaps(self):
+        _create_catalog_food(
+            status=CatalogFood.STATUS_PUBLISHED,
+            display_name="Espinaca cocida",
+            food_group="vegetables",
+            food_form=CatalogFood.FOOD_FORM_INGREDIENT,
+            preparation_state=CatalogFood.PREPARATION_COOKED,
+            solver_enabled=True,
+            data_quality_score=90,
+            fiber_g_per_100g=Decimal("2.400"),
+        )
+        _create_catalog_food(
+            status=CatalogFood.STATUS_REVIEWED,
+            display_name="Pechuga de pollo",
+            food_group="protein",
+            data_quality_score=70,
+        )
+
+        vm = build_food_catalog_inventory_vm()
+
+        metrics = {metric.label: metric.value for metric in vm.metrics}
+        gaps = {metric.label: metric.value for metric in vm.gap_metrics}
+        categories = {item.label: item.total for item in vm.category_coverage}
+        self.assertEqual(metrics["Alimentos persistidos"], "2")
+        self.assertEqual(metrics["Publicados"], "1")
+        self.assertEqual(metrics["Habilitados para solver"], "1")
+        self.assertEqual(metrics["Calidad promedio"], "80.0/100")
+        self.assertEqual(categories["Verduras"], "1")
+        self.assertEqual(categories["Proteínas"], "1")
+        self.assertEqual(gaps["Sin evidencia asociada"], "2")
+        self.assertEqual(gaps["Nutrición extendida incompleta"], "2")
+
+    def test_inventory_vm_reconciles_versioned_targets_with_persisted_sources(self):
+        food = _create_catalog_food(
+            status=CatalogFood.STATUS_VERIFIED,
+            display_name="Espinaca cruda",
+            source_type=CatalogFood.SOURCE_NATURAL_VERIFIED,
+        )
+        CatalogFoodSource.objects.create(
+            catalog_food=food,
+            source_type=CatalogFood.SOURCE_NATURAL_VERIFIED,
+            source_name="My Scoope Core Natural Foods",
+            source_food_id="core-spinach-raw",
+        )
+
+        vm = build_food_catalog_inventory_vm()
+
+        funnel = {metric.label: metric.value for metric in vm.target_funnel}
+        categories = {item.label: item.total for item in vm.target_category_coverage}
+        self.assertEqual(funnel["Definidos"], "282")
+        self.assertEqual(funnel["Mapeados a fuente"], "209")
+        self.assertEqual(funnel["Importados"], "1")
+        self.assertEqual(funnel["Revisados"], "1")
+        self.assertEqual(funnel["Publicados"], "0")
+        self.assertEqual(categories["Verduras"], "1 / 87")
+        self.assertTrue(vm.target_version_label.startswith("gfc.v1 · SHA "))
+
+    def test_inventory_page_renders_all_catalog_food_fields_and_relations(self):
+        food = _create_catalog_food(
+            status=CatalogFood.STATUS_PUBLISHED,
+            display_name="Avena integral",
+            brand_name="Marca prueba",
+            is_branded=True,
+            country="CL",
+            food_group="cereals",
+            food_subgroup="whole_grains",
+            food_form=CatalogFood.FOOD_FORM_INGREDIENT,
+            preparation_state=CatalogFood.PREPARATION_DRY,
+            functional_roles=["primary_carb"],
+            meal_affinities=["breakfast"],
+            dietary_tags=["vegetarian"],
+            allergens=["gluten"],
+            solver_enabled=True,
+            solver_min_portion_g=Decimal("20"),
+            solver_max_portion_g=Decimal("100"),
+            solver_portion_step_g=Decimal("5"),
+            calories_kcal_per_100g=Decimal("380"),
+            fiber_g_per_100g=Decimal("10"),
+            sugar_g_per_100g=Decimal("1"),
+            saturated_fat_g_per_100g=Decimal("1.2"),
+            sodium_mg_per_100g=Decimal("5"),
+            confidence_score=Decimal("92"),
+        )
+        CatalogFoodSource.objects.create(
+            catalog_food=food,
+            source_type=CatalogFood.SOURCE_ADMIN_IMPORT,
+            source_name="Dataset curado",
+            source_food_id="FOOD-001",
+            license_status=CatalogFoodSource.LICENSE_ALLOWED,
+        )
+        CatalogFoodPortion.objects.create(catalog_food=food, label="1 taza", grams=Decimal("80"), is_default=True)
+        CatalogFoodAlias.objects.create(catalog_food=food, name="Oatmeal", alias_type=CatalogFoodAlias.ALIAS_SEARCH)
+        self.client.force_login(self.staff)
+
+        response = self.client.get(reverse("admin_operations_food_catalog_inventory"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Inventario y calidad del Food Catalog")
+        self.assertContains(response, "Avena integral")
+        self.assertContains(response, "Marca prueba")
+        self.assertContains(response, "grupo: cereals")
+        self.assertContains(response, "subgrupo: whole_grains")
+        self.assertContains(response, "Dataset curado")
+        self.assertContains(response, "ID FOOD-001")
+        self.assertContains(response, "roles: primary_carb")
+        self.assertContains(response, "rango: 20 g – 100 g")
+        self.assertContains(response, "fibra 10 g")
+        self.assertContains(response, "1 taza: 80 g (default)")
+        self.assertContains(response, "Oatmeal (search, es)")
+
+    def test_inventory_filters_are_combined(self):
+        _create_catalog_food(
+            status=CatalogFood.STATUS_PUBLISHED,
+            display_name="Espinaca",
+            food_group="vegetables",
+            source_type=CatalogFood.SOURCE_NATURAL_VERIFIED,
+            solver_enabled=True,
+        )
+        _create_catalog_food(
+            status=CatalogFood.STATUS_REVIEWED,
+            display_name="Arroz",
+            food_group="cereals",
+            source_type=CatalogFood.SOURCE_ADMIN_IMPORT,
+            solver_enabled=False,
+        )
+        self.client.force_login(self.staff)
+
+        response = self.client.get(
+            reverse("admin_operations_food_catalog_inventory"),
+            {
+                "q": "espinaca",
+                "status": CatalogFood.STATUS_PUBLISHED,
+                "source": CatalogFood.SOURCE_NATURAL_VERIFIED,
+                "group": "vegetables",
+                "solver": "enabled",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Espinaca")
+        self.assertNotContains(response, "Arroz")
+        self.assertContains(response, "1 resultados")
+
+    def test_inventory_is_paginated_without_hiding_total(self):
+        for index in range(51):
+            _create_catalog_food(
+                status=CatalogFood.STATUS_REVIEWED,
+                display_name=f"Food {index:02d}",
+            )
+
+        vm = build_food_catalog_inventory_vm(page=2)
+
+        self.assertEqual(vm.filtered_total, "51")
+        self.assertEqual(vm.page_label, "Página 2 de 2")
+        self.assertEqual(len(vm.foods), 1)
+        self.assertTrue(vm.previous_url)
+        self.assertFalse(vm.next_url)
+
+
+def _create_catalog_food(*, status: str, display_name: str = "Avena", **overrides) -> CatalogFood:
+    values = {
+        "display_name": display_name,
+        "canonical_name": display_name.lower().replace(" ", "-"),
+        "protein_g_per_100g": Decimal("13.000"),
+        "carbs_g_per_100g": Decimal("60.000"),
+        "fat_g_per_100g": Decimal("7.000"),
+        "status": status,
+        "source_type": CatalogFood.SOURCE_ADMIN_IMPORT,
+        "data_quality_score": 80,
+    }
+    values.update(overrides)
+    return CatalogFood.objects.create(**values)

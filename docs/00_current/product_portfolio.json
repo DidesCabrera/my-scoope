@@ -1,0 +1,71 @@
+{
+  "contract": "myscoope.product_portfolio.v1",
+  "last_updated": "2026-07-18",
+  "bets": [
+    {
+      "id": "generic-food-coverage-cl",
+      "title": "Cobertura útil de alimentos genéricos para Chile",
+      "stage": "validate",
+      "problem": "Picker, Meals y Solver necesitan una base amplia de alimentos genéricos reconocibles, trazables y operacionalmente seguros.",
+      "hypothesis": "Una cobertura gobernada de verduras, frutas, carnes, pescados, legumbres y lácteos sin marca reducirá la fricción de planificación y mejorará la calidad de candidatos del solver.",
+      "evidence": ["282 objetivos de cobertura enumerados", "209 objetivos source-mapped e importados localmente", "73 gaps clasificados con razón", "0 publicaciones y snapshots automáticos"],
+      "next_experiment": "Ejecutar en staging las muestras gobernadas y revisar selección, nombres, porciones, duplicados y gaps antes de publicar o snapshotear.",
+      "continue_signals": ["Batches idempotentes y sin huérfanos", "Usuarios encuentran alimentos comunes con menos fricción", "Cobertura mejora candidatos válidos del solver"],
+      "reformulate_signals": ["Muchos alimentos importados no son seleccionables o comprensibles", "Duplicados o preparación ambigua superan los gates", "El costo de curación excede el uso observado"],
+      "dependencies": ["Food Catalog", "Admin Operations", "USDA evidence", "Explicit publication and snapshot"],
+      "reversibility": "high"
+    },
+    {
+      "id": "ai-assisted-first-useful-plan",
+      "title": "AI Assistant hacia un primer plan realmente útil",
+      "stage": "validate",
+      "problem": "Crear manualmente una propuesta nutricional exige demasiada estructura y puede retrasar el primer valor para el usuario.",
+      "hypothesis": "Una AI con contexto, tools tipadas, objetos visibles y aprobación explícita puede reducir la fricción sin quitar control al usuario.",
+      "evidence": ["Function calling nativo y tool grounding validados", "Replays por invariantes y gate de proveedor real", "Drafts y cards separados de persistencia durable", "Fallbacks degradados observables"],
+      "next_experiment": "Medir en staging sesiones completas desde intención hasta propuesta revisable y observar abandono, repreguntas, correcciones y aplicación.",
+      "continue_signals": ["Más usuarios llegan a una propuesta revisable", "Menos repetición y corrección de hechos conocidos", "Tools justificadas y claims respaldados"],
+      "reformulate_signals": ["La conversación agrega más fricción que la UI directa", "Correcciones reiteradas de perfil o preferencias", "Costo o degradación post-tool impiden uso confiable"],
+      "dependencies": ["Accounts profile", "AI Assistant", "Nutrition Solver", "Usage observability"],
+      "reversibility": "high"
+    },
+    {
+      "id": "solver-v2-controlled-quality",
+      "title": "Nutrition Solver V2 con calidad controlada",
+      "stage": "validate",
+      "problem": "La optimización debe producir planes nutricional y funcionalmente válidos sin ocultar imposibilidad ni relajar restricciones duras.",
+      "hypothesis": "CP-SAT con gramática de comidas, portfolios acotados y shadow comparison puede mejorar la calidad manteniendo explicabilidad y rollback.",
+      "evidence": ["Implementación NSO00-NSO10 completa", "Backend heurístico conservado como rollback", "Shadow separa resultado visible y comparación", "Regresiones duras y alternativas explícitas"],
+      "next_experiment": "Comparar en staging CP-SAT shadow versus heurístico sobre propuestas representativas con snapshots solver-ready reales.",
+      "continue_signals": ["Menos resultados parciales o imposibles evitables", "Mejora nutricional sin degradación funcional", "Tiempo de resolución dentro del límite"],
+      "reformulate_signals": ["Hard regressions o planes culinariamente incoherentes", "Mejora numérica sin utilidad perceptible", "Latencia o complejidad operacional desproporcionada"],
+      "dependencies": ["Operational Food snapshots", "Solver capability profiles", "Proposal review"],
+      "reversibility": "high"
+    },
+    {
+      "id": "operational-confidence",
+      "title": "Confianza operacional y claridad compartida",
+      "stage": "validate",
+      "problem": "Código, configuración, datos, ciclos y evidencia pueden divergir y obligar a reconstruir manualmente el estado real.",
+      "hypothesis": "Un contrato ejecutable de estado y un control plane read-only permitirán detectar drift antes, reducir diagnóstico repetido y mejorar decisiones de Felipe y las AI.",
+      "evidence": ["CI de staging alineado", "Contrato de 94 variables y diagnóstico seguro", "Project Control comparte contrato con CLI", "Registros de documentos y transiciones ejecutables", "Cierre local con 1.583 tests"],
+      "next_experiment": "Desplegar Project Control en staging y contrastar sus señales con el estado conocido, corrigiendo probes que resulten ambiguos.",
+      "continue_signals": ["Menor tiempo para diagnosticar ambiente y deploy", "Staging drift visible antes de una regresión", "Felipe y AI consultan la misma evidencia"],
+      "reformulate_signals": ["El dashboard duplica trabajo manual", "Las señales quedan obsoletas o sin acción posible", "El costo de mantener probes supera la ambigüedad removida"],
+      "dependencies": ["Admin Operations", "Deployment release identity", "CI", "Current documentation"],
+      "reversibility": "high"
+    },
+    {
+      "id": "launch-readiness",
+      "title": "Preparación segura para una beta operable",
+      "stage": "planned",
+      "problem": "Activar servicios reales sin configuración, límites, observabilidad y evidencia de deploy coherentes aumenta el riesgo de cuenta, costo y operación.",
+      "hypothesis": "Cerrar los gates de ambiente, OAuth/email, rate limits, créditos y observabilidad permitirá una beta controlada sin bloquear aprendizaje temprano.",
+      "evidence": ["Settings productivos endurecidos", "Rate limiting y Sentry configurables", "Créditos y rollout AI observables", "Ciclo LR planificado pero no cerrado operacionalmente"],
+      "next_experiment": "Usar Project Control para ejecutar el checklist de staging y clasificar los gaps restantes antes de decidir alcance de beta.",
+      "continue_signals": ["Configuración crítica completa", "Smoke de cuenta y OAuth estable", "Rollback y alertas probados"],
+      "reformulate_signals": ["La beta requiere billing o soporte aún no disponible", "Persisten fallos de identidad o entrega de email", "No existe capacidad de responder a incidentes"],
+      "dependencies": ["Project Control", "Accounts", "OAuth", "Observability", "Deployment operations"],
+      "reversibility": "medium"
+    }
+  ]
+}

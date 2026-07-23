@@ -45,6 +45,10 @@ class AssistantToolSpec:
     requires_human_review: bool = True
     allowed_intents: Sequence[str] = field(default_factory=tuple)
     provider_exposed: bool = True
+    mcp_exposed: bool = False
+    mcp_name: str = ""
+    mcp_api_path: str = ""
+    mcp_input_schema: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "name", _normalize_identifier(self.name))
@@ -65,6 +69,9 @@ class AssistantToolSpec:
             "allowed_intents",
             tuple(_normalize_identifier(intent) for intent in self.allowed_intents or ()),
         )
+        object.__setattr__(self, "mcp_name", _normalize_identifier(self.mcp_name or self.name))
+        object.__setattr__(self, "mcp_api_path", _normalize_api_path(self.mcp_api_path))
+        object.__setattr__(self, "mcp_input_schema", dict(self.mcp_input_schema or {}))
 
         if not self.name:
             raise AssistantToolRegistryError("AssistantToolSpec requires a name.")
@@ -76,6 +83,8 @@ class AssistantToolSpec:
             raise AssistantToolRegistryError("Draft tools must not require human review; persistence approval is handled by commit tools.")
         if self.category == AssistantToolCategory.COMMIT and not self.requires_human_review:
             raise AssistantToolRegistryError("Commit tools must require human review.")
+        if self.mcp_exposed and not self.mcp_api_path:
+            raise AssistantToolRegistryError("MCP-exposed tools require an API path.")
 
     @property
     def is_read_only(self) -> bool:
@@ -104,6 +113,10 @@ class AssistantToolSpec:
             "requires_human_review": self.requires_human_review,
             "allowed_intents": list(self.allowed_intents),
             "provider_exposed": bool(self.provider_exposed),
+            "mcp_exposed": bool(self.mcp_exposed),
+            "mcp_name": self.mcp_name,
+            "mcp_api_path": self.mcp_api_path,
+            "mcp_input_schema": dict(self.mcp_input_schema),
         }
 
     def as_provider_tool(self) -> dict[str, Any]:
@@ -127,6 +140,15 @@ def _normalize_text(value: Any) -> str:
 
 def _normalize_identifier(value: Any) -> str:
     return _normalize_text(value).replace("-", "_").replace(" ", "_").lower()
+
+
+def _normalize_api_path(value: Any) -> str:
+    path = str(value or "").strip()
+    if not path:
+        return ""
+    if not path.startswith("/") or not path.endswith("/"):
+        raise AssistantToolRegistryError("MCP API paths must start and end with '/'.")
+    return path
 
 
 def _coerce_enum(enum_class: type[Enum], value: Any, *, field_name: str) -> Enum:

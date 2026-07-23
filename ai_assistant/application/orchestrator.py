@@ -85,6 +85,103 @@ from ai_assistant.infrastructure.providers import (
 logger = logging.getLogger(__name__)
 
 
+_EXPANDED_PRODUCT_TOOL_DOMAINS = {
+    "read_food": ("alimento", "food"),
+    "read_meal": ("comida", "meal"),
+    "list_user_foods": ("alimento", "food"),
+    "list_user_meals": ("comida", "meal"),
+    "search_user_meals": ("comida", "meal"),
+    "list_user_dailyplans": ("plan", "dailyplan"),
+    "search_user_dailyplans": ("plan", "dailyplan"),
+    "list_user_programs": ("programa", "program", "semana"),
+    "read_program": ("programa", "program", "semana"),
+    "read_calendarization": ("calendario", "calendar", "pausar", "reanudar"),
+    "list_inbox_items": ("inbox", "compartid", "recibid", "enviad"),
+    "read_account_billing_context": (
+        "cuenta",
+        "crédito",
+        "credito",
+        "suscripción",
+        "suscripcion",
+        "pago",
+        "billing",
+        "plan comercial",
+    ),
+    "create_proportional_dailyplan_calorie_proposal": (
+        "caloría",
+        "caloria",
+        "kcal",
+        "cantidad",
+        "manteniendo los mismos alimentos",
+    ),
+    "prepare_product_action": (
+        "crear",
+        "crea",
+        "actualizar",
+        "actualiza",
+        "cambiar",
+        "cambia",
+        "renombr",
+        "elimin",
+        "borr",
+        "paus",
+        "reanud",
+        "cancel",
+        "aprobar",
+        "aprueba",
+        "rechaz",
+        "aplicar",
+        "aplica",
+        "duplic",
+    ),
+}
+
+
+def _expanded_product_tool_relevant(tool_name: str, *, user_text: str) -> bool:
+    keywords = _EXPANDED_PRODUCT_TOOL_DOMAINS.get(tool_name)
+    if keywords is None:
+        return True
+    if tool_name == "prepare_product_action" and (
+        "propuesta" in user_text or "proposal" in user_text
+    ):
+        return False
+    return any(keyword in user_text for keyword in keywords)
+
+
+_MEAL_PROPOSAL_TOOLS = {
+    "create_validated_meal_proposal",
+    "create_nutrition_solver_meal_proposal",
+}
+_DAILYPLAN_PROPOSAL_TOOLS = {
+    "create_validated_dailyplan_proposal",
+    "create_validated_dailyplan_build_proposal",
+    "create_nutrition_engine_dailyplan_proposal",
+    "create_nutrition_engine_dailyplan_proposal_from_drafts",
+    "iterate_nutrition_engine_dailyplan_proposal",
+}
+
+
+def _reviewable_proposal_tool_relevant(tool_name: str, *, user_text: str) -> bool:
+    if tool_name == "create_validated_dailyplan_proposal" and not any(
+        keyword in user_text
+        for keyword in ("objetiv", "target", "ajust", "cantidad", "calor", "kcal")
+    ):
+        return False
+    proposal_names = _MEAL_PROPOSAL_TOOLS | _DAILYPLAN_PROPOSAL_TOOLS
+    if tool_name not in proposal_names:
+        return True
+    mentions_meal = any(keyword in user_text for keyword in ("meal", "comida"))
+    mentions_plan = any(
+        keyword in f" {user_text} "
+        for keyword in ("dailyplan", "plan diario", " plan ")
+    )
+    if mentions_meal and not mentions_plan:
+        return tool_name in _MEAL_PROPOSAL_TOOLS
+    if mentions_plan and not mentions_meal:
+        return tool_name in _DAILYPLAN_PROPOSAL_TOOLS
+    return True
+
+
 class AssistantOrchestratorError(RuntimeError):
     """Raised when the LLM orchestrator cannot produce a safe response."""
 
@@ -1591,8 +1688,13 @@ class ExternalLLMOrchestrator:
         """
 
         selected: list[Mapping[str, Any]] = []
+        user_text = str(request.user_message.content or "").strip().lower()
         for provider_spec in tuple(self.provider_tool_specs()):
             name = str(provider_spec.get("name") or "")
+            if not _expanded_product_tool_relevant(name, user_text=user_text):
+                continue
+            if not _reviewable_proposal_tool_relevant(name, user_text=user_text):
+                continue
             if not self.config.enable_reviewable_proposal_tools:
                 try:
                     local_spec = get_tool_spec(name)
@@ -2271,4 +2373,3 @@ def _settings_bool(name: str, default: bool) -> bool:
 
 def _elapsed_ms(started_at: float) -> int:
     return max(0, int(round((time.perf_counter() - started_at) * 1000)))
-

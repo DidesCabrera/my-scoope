@@ -42,7 +42,9 @@
       </a>
       {% include "admin_analytics/_nav.html" %}
       <div class="admin-analytics-sidebar__footer">
-        <a href="{% url 'admin_operations_overview' %}" class="admin-analytics-sidebar__utility"><i data-lucide="wrench"></i> Ir a Admin Operations</a>
+        <a href="{% url 'admin_home' %}" class="admin-analytics-sidebar__utility"><i data-lucide="panels-top-left"></i> Admin Hub</a>
+        <a href="{% url 'admin_operations_overview' %}" class="admin-analytics-sidebar__utility"><i data-lucide="wrench"></i> Operations</a>
+        <a href="{% url 'admin_knowledge_overview' %}" class="admin-analytics-sidebar__utility"><i data-lucide="library-big"></i> Knowledge</a>
         <a href="/" class="admin-analytics-sidebar__utility"><i data-lucide="arrow-left"></i> Volver a My Scoope</a>
         <a href="/admin/" class="admin-analytics-sidebar__utility"><i data-lucide="settings"></i> Django admin legacy</a>
       </div>

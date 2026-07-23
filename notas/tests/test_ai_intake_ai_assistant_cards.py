@@ -16,6 +16,10 @@ from notas.application.ai_intake.nutrition_brief import (
     build_intake_result_from_brief,
     serialize_conversation,
 )
+from notas.application.ai_intake.chat_engine import (
+    _append_prepared_action_cards_from_llm_tools,
+    _append_proposal_review_cards_from_llm_tools,
+)
 from notas.presentation.pages.ai_intake_page import (
     append_ai_assistant_structured_response,
     append_generated_plan_message,
@@ -129,3 +133,67 @@ class AiIntakeAiAssistantProposalCardTests(SimpleTestCase):
         self.assertEqual(len(cards), 2)
         self.assertFalse(cards[0]["is_current"])
         self.assertTrue(cards[1]["is_current"])
+
+    def test_controlled_quantity_proposal_result_renders_review_card(self):
+        conversation, count = _append_proposal_review_cards_from_llm_tools(
+            _conversation(),
+            {
+                "tool_results": [
+                    {
+                        "status": "ok",
+                        "data": {
+                            "proposal": {
+                                "id": 44,
+                                "title": "Plan X +200 kcal",
+                                "summary": "Mismos alimentos, cantidades ajustadas.",
+                                "status": "pending_review",
+                                "dailyplan_name": "Plan X",
+                                "proposed_payload": {
+                                    "preserve_foods": True,
+                                    "current_total_kcal": 2000,
+                                    "target_total_kcal": 2200,
+                                    "suggested_changes": [{"mealfood_id": 1}],
+                                },
+                            }
+                        },
+                    }
+                ]
+            },
+        )
+
+        self.assertEqual(count, 1)
+        card = conversation.messages[-1].proposal_review_card
+        self.assertEqual(card["proposal_id"], 44)
+        self.assertTrue(card["preserve_foods"])
+        self.assertEqual(card["target_total_kcal"], 2200.0)
+
+    def test_controlled_prepared_action_result_renders_confirmation_card(self):
+        conversation, count = _append_prepared_action_cards_from_llm_tools(
+            _conversation(),
+            {
+                "tool_results": [
+                    {
+                        "status": "ok",
+                        "data": {
+                            "prepared_action": {
+                                "id": "4e3ed25e-4ec7-4c89-8968-744014aa9000",
+                                "title": "Renombrar comida",
+                                "summary": "No se aplicó ningún cambio todavía.",
+                                "action_key": "meal.rename",
+                                "preview": {
+                                    "before": {"name": "Antes"},
+                                    "after": {"name": "Después"},
+                                },
+                                "destructive": False,
+                                "status": "prepared",
+                            }
+                        },
+                    }
+                ]
+            },
+        )
+
+        self.assertEqual(count, 1)
+        card = conversation.messages[-1].prepared_action_card
+        self.assertEqual(card["action_key"], "meal.rename")
+        self.assertEqual(card["preview"]["after"]["name"], "Después")

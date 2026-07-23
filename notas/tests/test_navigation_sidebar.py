@@ -73,6 +73,37 @@ class SidebarBuilderTests(TestCase):
 
         self.assertIn("account", section_keys)
 
+    def test_build_sidebar_vm_uses_reorganized_section_order(self):
+        sidebar = build_sidebar_vm(PROFILE_VIEWMODE)
+
+        self.assertEqual([section["key"] for section in sidebar[:2]], ["account", "workspace"])
+        self.assertEqual(sidebar[0]["label"], "Tools")
+        self.assertEqual(sidebar[1]["label"], "Mis librerias")
+        self.assertEqual(
+            [group["label"] for group in sidebar[0]["groups"][:7]],
+            [
+                "Nuevo Chat",
+                "Chats",
+                "Propuestas",
+                "Calendarizar",
+                "Comparar",
+                "Explorar",
+                "Inbox",
+            ],
+        )
+        self.assertEqual(
+            [group["label"] for group in sidebar[1]["groups"]],
+            [
+                "Mis Programas Semanales",
+                "Mis Planes Diarios",
+                "Mis Comidas",
+                "Mis Alimentos",
+            ],
+        )
+        explore_group = sidebar[0]["groups"][5]
+        self.assertEqual(explore_group["key"], "explore")
+        self.assertEqual(explore_group["nav_root"], "explore")
+
  
     def test_build_ui_vm_for_profile_populates_navigation_metadata(self):
         ui = build_ui_vm(PROFILE_VIEWMODE)

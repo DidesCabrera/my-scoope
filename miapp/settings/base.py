@@ -2,6 +2,7 @@ import json
 import os
 from pathlib import Path
 import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
 
 from core.observability import configure_sentry
 
@@ -21,7 +22,30 @@ def _env_float(name: str, default: float = 0.0) -> float:
     try:
         return float(raw_value)
     except ValueError:
+        raise ImproperlyConfigured(f"{name} must be a number, received an invalid value.")
+
+
+def _env_int(name: str, default: int = 0) -> int:
+    raw_value = os.environ.get(name, "").strip()
+    if not raw_value:
         return default
+    try:
+        return int(raw_value)
+    except ValueError:
+        raise ImproperlyConfigured(f"{name} must be an integer, received an invalid value.")
+
+
+def _env_json_object(name: str) -> dict:
+    raw_value = os.environ.get(name, "").strip()
+    if not raw_value:
+        return {}
+    try:
+        value = json.loads(raw_value)
+    except ValueError as exc:
+        raise ImproperlyConfigured(f"{name} must contain valid JSON.") from exc
+    if not isinstance(value, dict):
+        raise ImproperlyConfigured(f"{name} must contain a JSON object.")
+    return value
 
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "")
@@ -50,6 +74,8 @@ INSTALLED_APPS = [
     "nutrition_solver.apps.NutritionSolverConfig",
     "admin_analytics.apps.AdminAnalyticsConfig",
     "admin_operations.apps.AdminOperationsConfig",
+    "admin_knowledge.apps.AdminKnowledgeConfig",
+    "billing.apps.BillingConfig",
     "notas.apps.NotasConfig",
     "accounts",
     "core",
@@ -196,6 +222,7 @@ NUTRITION_ONBOARDING_GATE_ENABLED = os.environ.get(
 
 NUTRITION_ONBOARDING_ALLOWED_PREFIXES = (
     "/accounts/",
+    "/billing/",
     "/admin/",
     "/staff/",
     "/static/",
@@ -205,6 +232,28 @@ NUTRITION_ONBOARDING_ALLOWED_PREFIXES = (
     "/serviceworker.js",
     "/.well-known/",
     "/oauth/",
+)
+
+
+# ==============================
+# NUTRITION SOLVER OPTIMIZATION
+# ==============================
+
+NUTRITION_SOLVER_BACKEND = os.environ.get(
+    "NUTRITION_SOLVER_BACKEND",
+    "heuristic_v2",
+).strip().lower()
+NUTRITION_SOLVER_SHADOW_ENABLED = os.environ.get(
+    "NUTRITION_SOLVER_SHADOW_ENABLED",
+    "false",
+).strip().lower() in {"1", "true", "yes", "on"}
+NUTRITION_SOLVER_SHADOW_BACKEND = os.environ.get(
+    "NUTRITION_SOLVER_SHADOW_BACKEND",
+    "cp_sat_v1",
+).strip().lower()
+NUTRITION_SOLVER_TIME_LIMIT_MS = max(
+    50,
+    min(_env_int("NUTRITION_SOLVER_TIME_LIMIT_MS", 1500), 10_000),
 )
 
 
@@ -220,9 +269,7 @@ AI_ASSISTANT_OPENAI_BASE_URL = os.environ.get(
     "AI_ASSISTANT_OPENAI_BASE_URL",
     "https://api.openai.com/v1",
 ).strip()
-AI_ASSISTANT_OPENAI_TIMEOUT_SECONDS = int(
-    os.environ.get("AI_ASSISTANT_OPENAI_TIMEOUT_SECONDS", "30")
-)
+AI_ASSISTANT_OPENAI_TIMEOUT_SECONDS = _env_int("AI_ASSISTANT_OPENAI_TIMEOUT_SECONDS", 30)
 AI_ASSISTANT_OPENAI_REASONING_EFFORT = os.environ.get(
     "AI_ASSISTANT_OPENAI_REASONING_EFFORT",
     "low",
@@ -258,13 +305,13 @@ AI_ASSISTANT_LLM_PRICING_USD_PER_1M_TOKENS = _llm_pricing_from_env()
 # Technical per-turn guardrails for the external LLM cycle. These are not
 # commercial credits; they prevent accidental runaway context while real usage
 # data is collected.
-AI_ASSISTANT_MAX_HISTORY_MESSAGES = int(os.environ.get("AI_ASSISTANT_MAX_HISTORY_MESSAGES", "8"))
-AI_ASSISTANT_MAX_OUTPUT_TOKENS = int(os.environ.get("AI_ASSISTANT_MAX_OUTPUT_TOKENS", "900"))
-AI_ASSISTANT_MAX_TOOL_LOOP_ITERATIONS = int(os.environ.get("AI_ASSISTANT_MAX_TOOL_LOOP_ITERATIONS", "1"))
-AI_ASSISTANT_MAX_INPUT_TOKENS = int(os.environ.get("AI_ASSISTANT_MAX_INPUT_TOKENS", "6000"))
-AI_ASSISTANT_MAX_CONTEXT_CHARS = int(os.environ.get("AI_ASSISTANT_MAX_CONTEXT_CHARS", "8000"))
-AI_ASSISTANT_MAX_MESSAGE_CHARS = int(os.environ.get("AI_ASSISTANT_MAX_MESSAGE_CHARS", "2000"))
-AI_ASSISTANT_MAX_TOOL_REQUESTS_PER_TURN = int(os.environ.get("AI_ASSISTANT_MAX_TOOL_REQUESTS_PER_TURN", "3"))
+AI_ASSISTANT_MAX_HISTORY_MESSAGES = _env_int("AI_ASSISTANT_MAX_HISTORY_MESSAGES", 8)
+AI_ASSISTANT_MAX_OUTPUT_TOKENS = _env_int("AI_ASSISTANT_MAX_OUTPUT_TOKENS", 900)
+AI_ASSISTANT_MAX_TOOL_LOOP_ITERATIONS = _env_int("AI_ASSISTANT_MAX_TOOL_LOOP_ITERATIONS", 1)
+AI_ASSISTANT_MAX_INPUT_TOKENS = _env_int("AI_ASSISTANT_MAX_INPUT_TOKENS", 6000)
+AI_ASSISTANT_MAX_CONTEXT_CHARS = _env_int("AI_ASSISTANT_MAX_CONTEXT_CHARS", 8000)
+AI_ASSISTANT_MAX_MESSAGE_CHARS = _env_int("AI_ASSISTANT_MAX_MESSAGE_CHARS", 2000)
+AI_ASSISTANT_MAX_TOOL_REQUESTS_PER_TURN = _env_int("AI_ASSISTANT_MAX_TOOL_REQUESTS_PER_TURN", 3)
 AI_ASSISTANT_ENABLE_REVIEWABLE_PROPOSAL_TOOLS = os.environ.get(
     "AI_ASSISTANT_ENABLE_REVIEWABLE_PROPOSAL_TOOLS",
     "false",
@@ -277,7 +324,7 @@ AI_ASSISTANT_CREDITS_ENABLED = os.environ.get(
     "false",
 ).lower() in {"1", "true", "yes", "on"}
 AI_ASSISTANT_USD_PER_AI_CREDIT = os.environ.get("AI_ASSISTANT_USD_PER_AI_CREDIT", "0.001")
-AI_ASSISTANT_DEFAULT_CREDITS_PER_TURN = int(os.environ.get("AI_ASSISTANT_DEFAULT_CREDITS_PER_TURN", "1"))
+AI_ASSISTANT_DEFAULT_CREDITS_PER_TURN = _env_int("AI_ASSISTANT_DEFAULT_CREDITS_PER_TURN", 1)
 AI_ASSISTANT_CREDIT_PLANS = {
     "free": {
         "monthly_credit_limit": 25,
@@ -324,7 +371,7 @@ AI_ASSISTANT_LLM_ROLLOUT_ENABLED = os.environ.get(
 ).lower() in {"1", "true", "yes", "on"}
 AI_ASSISTANT_LLM_ROLLOUT_MODE = os.environ.get("AI_ASSISTANT_LLM_ROLLOUT_MODE", "off")
 AI_ASSISTANT_LLM_ROLLOUT_USER_IDS = os.environ.get("AI_ASSISTANT_LLM_ROLLOUT_USER_IDS", "")
-AI_ASSISTANT_LLM_ROLLOUT_PERCENT = int(os.environ.get("AI_ASSISTANT_LLM_ROLLOUT_PERCENT", "0"))
+AI_ASSISTANT_LLM_ROLLOUT_PERCENT = _env_int("AI_ASSISTANT_LLM_ROLLOUT_PERCENT", 0)
 AI_ASSISTANT_LLM_ROLLOUT_STICKY_SALT = os.environ.get(
     "AI_ASSISTANT_LLM_ROLLOUT_STICKY_SALT",
     "ai-assistant-rollout-v1",
@@ -364,14 +411,46 @@ EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND") or (
     if EMAIL_HOST
     else "django.core.mail.backends.console.EmailBackend"
 )
-EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+EMAIL_PORT = _env_int("EMAIL_PORT", 587)
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 
 # Resend SMTP on port 465 uses SSL. If SSL is enabled, TLS must stay off.
 EMAIL_USE_SSL = _env_bool("EMAIL_USE_SSL", False)
 EMAIL_USE_TLS = _env_bool("EMAIL_USE_TLS", bool(EMAIL_HOST) and not EMAIL_USE_SSL) and not EMAIL_USE_SSL
-EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", "10"))
+EMAIL_TIMEOUT = _env_int("EMAIL_TIMEOUT", 10)
+
+# Web Push is opt-in. Keep the dispatcher inert until all VAPID values are set.
+MYSCOOPE_WEB_PUSH_ENABLED = _env_bool("MYSCOOPE_WEB_PUSH_ENABLED", False)
+MYSCOOPE_VAPID_PUBLIC_KEY = os.environ.get("MYSCOOPE_VAPID_PUBLIC_KEY", "").strip()
+MYSCOOPE_VAPID_PRIVATE_KEY = os.environ.get("MYSCOOPE_VAPID_PRIVATE_KEY", "").strip()
+MYSCOOPE_VAPID_SUBJECT = os.environ.get(
+    "MYSCOOPE_VAPID_SUBJECT",
+    "mailto:notifications@myscoope.com",
+).strip()
+MYSCOOPE_PWA_CACHE_VERSION = os.environ.get("MYSCOOPE_PWA_CACHE_VERSION", "v2")
+
+# Billing providers are opt-in. Webhooks stay unavailable until explicitly enabled
+# with both Mercado Pago credentials present.
+BILLING_MERCADOPAGO_WEBHOOK_ENABLED = _env_bool("BILLING_MERCADOPAGO_WEBHOOK_ENABLED", False)
+BILLING_MERCADOPAGO_CHECKOUT_ENABLED = _env_bool("BILLING_MERCADOPAGO_CHECKOUT_ENABLED", False)
+BILLING_PUBLIC_BASE_URL = os.environ.get("BILLING_PUBLIC_BASE_URL", "").strip()
+BILLING_MERCADOPAGO_ACCESS_TOKEN = os.environ.get("BILLING_MERCADOPAGO_ACCESS_TOKEN", "").strip()
+BILLING_MERCADOPAGO_WEBHOOK_SECRET = os.environ.get("BILLING_MERCADOPAGO_WEBHOOK_SECRET", "").strip()
+BILLING_MERCADOPAGO_API_BASE_URL = os.environ.get(
+    "BILLING_MERCADOPAGO_API_BASE_URL", "https://api.mercadopago.com"
+).strip()
+BILLING_MERCADOPAGO_TIMEOUT_SECONDS = _env_int("BILLING_MERCADOPAGO_TIMEOUT_SECONDS", 10)
+BILLING_MERCADOPAGO_WEBHOOK_TOLERANCE_SECONDS = _env_int(
+    "BILLING_MERCADOPAGO_WEBHOOK_TOLERANCE_SECONDS", 300
+)
+BILLING_OPENFACTURA_ENABLED = _env_bool("BILLING_OPENFACTURA_ENABLED", False)
+BILLING_OPENFACTURA_API_KEY = os.environ.get("BILLING_OPENFACTURA_API_KEY", "").strip()
+BILLING_OPENFACTURA_API_BASE_URL = os.environ.get(
+    "BILLING_OPENFACTURA_API_BASE_URL", "https://dev-api.haulmer.com"
+).strip()
+BILLING_OPENFACTURA_TIMEOUT_SECONDS = _env_int("BILLING_OPENFACTURA_TIMEOUT_SECONDS", 10)
+BILLING_OPENFACTURA_ISSUER_JSON = _env_json_object("BILLING_OPENFACTURA_ISSUER_JSON")
 
 DEFAULT_FROM_EMAIL = os.environ.get(
     "DEFAULT_FROM_EMAIL",
@@ -425,17 +504,27 @@ FOOD_CATALOG_FATSECRET_API_BASE_URL = os.environ.get(
     "FOOD_CATALOG_FATSECRET_API_BASE_URL",
     "https://platform.fatsecret.com/rest/server.api",
 ).strip()
-FOOD_CATALOG_FATSECRET_TIMEOUT_SECONDS = int(
-    os.environ.get("FOOD_CATALOG_FATSECRET_TIMEOUT_SECONDS", "15")
-)
+FOOD_CATALOG_FATSECRET_OAUTH_SCOPE = os.environ.get(
+    "FOOD_CATALOG_FATSECRET_OAUTH_SCOPE",
+    "basic",
+).strip()
+FOOD_CATALOG_FATSECRET_SEARCH_METHOD = os.environ.get(
+    "FOOD_CATALOG_FATSECRET_SEARCH_METHOD",
+    "foods.search",
+).strip()
+FOOD_CATALOG_FATSECRET_FOOD_GET_METHOD = os.environ.get(
+    "FOOD_CATALOG_FATSECRET_FOOD_GET_METHOD",
+    "food.get",
+).strip()
+FOOD_CATALOG_FATSECRET_TIMEOUT_SECONDS = _env_int("FOOD_CATALOG_FATSECRET_TIMEOUT_SECONDS", 15)
 
 FOOD_CATALOG_OPEN_FOOD_FACTS_ENABLED = _env_bool("FOOD_CATALOG_OPEN_FOOD_FACTS_ENABLED", False)
 FOOD_CATALOG_OPEN_FOOD_FACTS_API_BASE_URL = os.environ.get(
     "FOOD_CATALOG_OPEN_FOOD_FACTS_API_BASE_URL",
     "https://world.openfoodfacts.org",
 ).strip()
-FOOD_CATALOG_OPEN_FOOD_FACTS_TIMEOUT_SECONDS = int(
-    os.environ.get("FOOD_CATALOG_OPEN_FOOD_FACTS_TIMEOUT_SECONDS", "15")
+FOOD_CATALOG_OPEN_FOOD_FACTS_TIMEOUT_SECONDS = _env_int(
+    "FOOD_CATALOG_OPEN_FOOD_FACTS_TIMEOUT_SECONDS", 15
 )
 FOOD_CATALOG_OPEN_FOOD_FACTS_USER_AGENT = os.environ.get(
     "FOOD_CATALOG_OPEN_FOOD_FACTS_USER_AGENT",

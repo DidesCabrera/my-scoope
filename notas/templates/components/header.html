@@ -1,3 +1,4 @@
+{% load static %}
 <div class="page-header">
 
     <div class="page-header-left">
@@ -12,16 +13,31 @@
             </button>
         {% endif %}
     
-        <div class="label-entity header label-entity--{{ vm.ui.nav_root }}">
-            <i data-lucide="{{ vm.ui.icon }}" class="label-icon"></i>
+        <div class="header-home-brand" aria-label="My Scoope">
+            <img
+                src="{% static 'notas/img/logo-black.png' %}"
+                alt="My Scoope"
+                class="header-home-brand-logo header-home-brand-logo--light"
+            >
+            <img
+                src="{% static 'notas/img/logo-white.png' %}"
+                alt="My Scoope"
+                class="header-home-brand-logo header-home-brand-logo--dark"
+            >
         </div>
-    
-        <div class="header-title-mobile truncate">
-            <p>{{ vm.ui.title }}</p>
-            {% if vm.ui.root %}
-                <p class="subtitle">{{ vm.ui.root }}</p>
-            {% endif %}
-        </div>
+
+        {% if vm.ui.nav_root != "home" %}
+            <div class="label-entity header label-entity--{{ vm.ui.nav_root }}">
+                <i data-lucide="{{ vm.ui.icon }}" class="label-icon"></i>
+            </div>
+
+            <div class="header-title-mobile truncate">
+                <p>{{ vm.ui.title }}</p>
+                {% if vm.ui.root %}
+                    <p class="subtitle">{{ vm.ui.root }}</p>
+                {% endif %}
+            </div>
+        {% endif %}
     
         <div class="header-breadcrumbs">
             {% include "components/header_breadcrumbs.html" with breadcrumb=vm.ui.breadcrumb %}

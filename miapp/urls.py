@@ -53,11 +53,17 @@ urlpatterns = [
     ),
     path("accounts/", include("allauth.urls")),
 
+    # External billing callbacks (provider-authenticated, disabled by default)
+    path("billing/", include("billing.interface.urls")),
+
     # Internal product intelligence
     path("staff/analytics/", include("admin_analytics.urls")),
 
     # Internal product operations
     path("staff/operations/", include("admin_operations.urls")),
+
+    # Internal product knowledge
+    path("staff/knowledge/", include("admin_knowledge.urls")),
 
     # Main app
     path("app/", include("notas.urls")),

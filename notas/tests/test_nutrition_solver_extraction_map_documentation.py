@@ -32,8 +32,9 @@ class NutritionSolverExtractionMapDocumentationTests(SimpleTestCase):
     def test_extraction_map_records_current_engine_modules_and_s10_state(self):
         content = EXTRACTION_MAP.read_text()
 
-        self.assertIn("Status: completed", content)
-        self.assertIn("Patch: S10 closure", content)
+        self.assertIn("Status: completed and current", content)
+        self.assertIn("extended by NSO10 activation and closure", content)
+        self.assertIn("notas/application/ai_intake/optimizer_v2_adapter.py", content)
         self.assertIn("S1 did **not** move code", content)
         self.assertIn("deterministic portion solver and strict validators", content)
         self.assertIn("notas/application/nutrition_engine/", content)

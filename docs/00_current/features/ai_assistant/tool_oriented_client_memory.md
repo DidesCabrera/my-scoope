@@ -292,7 +292,7 @@ Fake-provider replays protect deterministic system invariants, but they do not p
 python manage.py validate_ai_assistant_real_provider \
   --live \
   --user-email <staging-user-email> \
-  --output cm24_real_provider_report.json \
+  --output artifacts/local/cm24_real_provider_report.json \
   --fail-on-hard-regression
 ```
 

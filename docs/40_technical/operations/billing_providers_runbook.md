@@ -1,0 +1,42 @@
+# Billing providers runbook
+
+Status: current
+Last updated: 2026-07-19
+
+## Safe default
+
+Keep `BILLING_MERCADOPAGO_CHECKOUT_ENABLED`, `BILLING_MERCADOPAGO_WEBHOOK_ENABLED` and
+`BILLING_OPENFACTURA_ENABLED` false. This preserves all history while stopping new traffic.
+
+## Mercado Pago activation
+
+1. Create separate test and production credentials and a recurring preapproval plan.
+2. Map its ID to an active `BillingProduct` and `accounts.AccountPlan`.
+3. Configure token, webhook secret, API base and HTTPS `BILLING_PUBLIC_BASE_URL`.
+4. Test invalid signatures, replay, duplicate delivery and unknown resources before enabling the webhook.
+5. Complete a sandbox subscription and verify the server snapshot before enabling checkout.
+
+Browser return parameters never grant access. Only verified provider state projects to `AccountSubscription`.
+
+## OpenFactura activation
+
+1. Have a Chilean tax professional approve DTE type, issuer fields, IVA treatment, service indicator, glosa and credit-note procedure.
+2. Configure the sandbox API key and approved `BILLING_OPENFACTURA_ISSUER_JSON`.
+3. Enable OpenFactura and run `.venv/bin/python manage.py issue_tax_documents --limit 1`.
+4. Confirm token, folio and SII state with `.venv/bin/python manage.py reconcile_billing --limit 10`.
+5. Test duplicate execution with the same key. Automated retries stop after 23 hours because the provider documents a 24-hour idempotency window; reconcile older uncertain outcomes manually.
+
+## Daily operations
+
+- Review Admin Operations → Billing and Django Admin filters.
+- Schedule `reconcile_billing` and alert on command failures.
+- Investigate failed events, past-due subscriptions, failed/rejected DTEs and `adjustment_required`.
+- A refund or chargeback revokes access and opens tax review; it does not automatically void a boleta or emit a credit note.
+
+## Rollback
+
+Disable the three flags. Do not delete subscriptions, payments, events or tax documents. Reconcile external state before re-enabling.
+
+## Future App Store / Google Play adapters
+
+New adapters must produce provider-neutral snapshots and use the same verified projection boundary. Store receipts and notifications must not bypass `billing` or write entitlements directly.

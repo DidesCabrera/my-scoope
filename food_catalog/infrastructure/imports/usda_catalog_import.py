@@ -15,6 +15,8 @@ from food_catalog.infrastructure.imports.catalog_import import (
     dry_run_catalog_food_import,
     import_catalog_food_batch,
 )
+from food_catalog.infrastructure.imports.governance import CatalogImportIdentity
+from food_catalog.models import CatalogFood, CatalogImportBatch
 
 
 def dry_run_usda_catalog_food_payloads(
@@ -48,6 +50,10 @@ def import_usda_catalog_food_payloads(
     source_dataset: str = USDA_SOURCE_DATASET_DEFAULT,
     source_name: str = CATALOG_SOURCE_NAME_USDA,
     notes: str = "",
+    identity: CatalogImportIdentity,
+    dry_run_batch: CatalogImportBatch,
+    requested_by=None,
+    reason: str,
 ) -> CatalogImportResult:
     dtos = [
         map_usda_food_to_imported_food_dto(
@@ -62,5 +68,10 @@ def import_usda_catalog_food_payloads(
         foods=dtos,
         source_name=source_name,
         source_version=source_version,
+        source_type=CatalogFood.SOURCE_USDA,
         notes=notes,
+        identity=identity,
+        dry_run_batch=dry_run_batch,
+        requested_by=requested_by,
+        reason=reason,
     )

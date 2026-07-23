@@ -2,6 +2,7 @@
 {% load static %}
 
 {% block title %}Semana {{ vm.content.week.week_number }} · {{ vm.content.program.name }}{% endblock %}
+{% block body_class %}page-detail page-header-meta-deferred{% endblock %}
 
 {% block content %}
 <div
@@ -10,7 +11,7 @@
   data-program-dailyplans="{{ vm.content.available_dailyplans_json|escape }}"
 >
   <section class="card-title main program-main-title-card">
-    <div class="card-title-comp">
+    <div class="card-title-comp js-header-meta-sentinel">
       <div class="main-title main-card">
         <h1>{{ vm.content.program.name }} · Semana {{ vm.content.week.week_number }}</h1>
 

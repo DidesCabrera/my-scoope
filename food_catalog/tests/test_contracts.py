@@ -150,6 +150,8 @@ class FoodCatalogContractTests(TestCase):
                 "portion_step_g": None,
                 "data_quality_score": 95,
                 "visibility": "core",
+                "solver_capabilities_version": "solver_food_capabilities.v1",
+                "solver_capabilities": {},
             },
         )
         self.assertEqual(
@@ -166,6 +168,7 @@ class FoodCatalogContractTests(TestCase):
         self.assertEqual(payload.snapshot_metadata()["aliases"], ("pollo cocido",))
         self.assertEqual(payload.snapshot_metadata()["preparation_state"], "cooked")
         self.assertTrue(payload.snapshot_metadata()["solver_enabled"])
+        self.assertEqual(payload.snapshot_metadata()["solver_capabilities"], {})
 
     def test_contract_modules_do_not_import_operational_apps_or_mcp(self):
         forbidden_prefixes = ("notas", "mcp_server", "django")
