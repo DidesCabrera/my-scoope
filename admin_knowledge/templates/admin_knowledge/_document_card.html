@@ -1,0 +1,11 @@
+<a href="{{ document.url }}" class="home-stat-card admin-knowledge-document-card{% if featured %} admin-knowledge-document-card--featured{% endif %}">
+  <div class="home-stat-top">
+    <i data-lucide="file-text" class="home-stat-icon"></i>
+    <span class="home-stat-label">{{ document.collection_label }}</span>
+  </div>
+  <h3>{{ document.title }}</h3>
+  <p class="muted-text">{{ document.excerpt }}</p>
+  <span class="admin-knowledge-document-card__meta">
+    {{ document.status }}{% if document.date %} · {{ document.date }}{% endif %}
+  </span>
+</a>

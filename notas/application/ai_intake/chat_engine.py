@@ -97,6 +97,14 @@ class LLMPreviewNutritionIntakeChatEngine:
             conversation,
             llm_metadata,
         )
+        conversation, proposal_review_card_count = _append_proposal_review_cards_from_llm_tools(
+            conversation,
+            llm_metadata,
+        )
+        conversation, prepared_action_card_count = _append_prepared_action_cards_from_llm_tools(
+            conversation,
+            llm_metadata,
+        )
         return ChatEngineTurnResult(
             state=conversation,
             assistant_text=conversation.last_assistant_message,
@@ -119,6 +127,8 @@ class LLMPreviewNutritionIntakeChatEngine:
                 "llm_profile_draft_cards_rendered": profile_card_count,
                 "llm_preference_draft_cards_rendered": preference_card_count,
                 "llm_proposal_preferences_cards_rendered": proposal_preferences_card_count,
+                "llm_proposal_review_cards_rendered": proposal_review_card_count,
+                "llm_prepared_action_cards_rendered": prepared_action_card_count,
                 "llm_preview_fallback": bool(llm_metadata.get("llm_preview_fallback")),
                 "llm_preview_fallback_reason": llm_metadata.get("llm_preview_fallback_reason", ""),
                 "llm_preview_fallback_kind": llm_metadata.get("llm_preview_fallback_kind", ""),
@@ -259,6 +269,14 @@ class LLMProductionNutritionIntakeChatEngine(LLMPreviewNutritionIntakeChatEngine
             conversation,
             llm_metadata,
         )
+        conversation, proposal_review_card_count = _append_proposal_review_cards_from_llm_tools(
+            conversation,
+            llm_metadata,
+        )
+        conversation, prepared_action_card_count = _append_prepared_action_cards_from_llm_tools(
+            conversation,
+            llm_metadata,
+        )
         return ChatEngineTurnResult(
             state=conversation,
             assistant_text=conversation.last_assistant_message,
@@ -281,6 +299,8 @@ class LLMProductionNutritionIntakeChatEngine(LLMPreviewNutritionIntakeChatEngine
                 "llm_profile_draft_cards_rendered": profile_card_count,
                 "llm_preference_draft_cards_rendered": preference_card_count,
                 "llm_proposal_preferences_cards_rendered": proposal_preferences_card_count,
+                "llm_proposal_review_cards_rendered": proposal_review_card_count,
+                "llm_prepared_action_cards_rendered": prepared_action_card_count,
                 "llm_production_enabled": True,
                 "llm_production_fallback": bool(llm_metadata.get("llm_production_fallback")),
                 "llm_production_fallback_reason": llm_metadata.get("llm_production_fallback_reason", ""),
@@ -757,6 +777,123 @@ def _apply_llm_tool_result_data_to_brief(brief: NutritionBrief, data: dict) -> N
         updated = _apply_nutrition_brief_patch(updated, patch, default_source="chat_draft")
 
     return updated
+
+
+def _append_proposal_review_cards_from_llm_tools(
+    conversation: NutritionConversationState,
+    metadata: dict,
+) -> tuple[NutritionConversationState, int]:
+    """Render proposals created by controlled tools as explicit review cards."""
+
+    messages = list(conversation.messages)
+    appended = 0
+    seen_ids = {
+        int(message.proposal_review_card.get("proposal_id"))
+        for message in messages
+        if isinstance(message.proposal_review_card, dict)
+        and message.proposal_review_card.get("proposal_id")
+    }
+    for tool_result in list((metadata or {}).get("tool_results") or []):
+        if not isinstance(tool_result, dict) or tool_result.get("status") != "ok":
+            continue
+        data = tool_result.get("data")
+        proposal = data.get("proposal") if isinstance(data, dict) else None
+        if not isinstance(proposal, dict) or not proposal.get("id"):
+            continue
+        proposal_id = int(proposal["id"])
+        if proposal_id in seen_ids:
+            continue
+        payload = proposal.get("proposed_payload")
+        payload = payload if isinstance(payload, dict) else {}
+        target_total = payload.get("target_total_kcal")
+        current_total = payload.get("current_total_kcal")
+        messages.append(
+            NutritionConversationMessage(
+                role="assistant",
+                text="",
+                proposal_review_card={
+                    "proposal_id": proposal_id,
+                    "title": str(proposal.get("title") or "Propuesta para revisar"),
+                    "summary": str(proposal.get("summary") or ""),
+                    "status": str(proposal.get("status_label") or proposal.get("status") or ""),
+                    "dailyplan_name": str(proposal.get("dailyplan_name") or ""),
+                    "preserve_foods": bool(payload.get("preserve_foods")),
+                    "changed_quantities": len(payload.get("suggested_changes") or []),
+                    "current_total_kcal": (
+                        round(float(current_total), 1)
+                        if current_total is not None
+                        else None
+                    ),
+                    "target_total_kcal": (
+                        round(float(target_total), 1)
+                        if target_total is not None
+                        else None
+                    ),
+                },
+            )
+        )
+        seen_ids.add(proposal_id)
+        appended += 1
+    if not appended:
+        return conversation, 0
+    return (
+        NutritionConversationState(
+            messages=messages[-AI_NUTRITION_CONVERSATION_MESSAGE_LIMIT:],
+            result=conversation.result,
+        ),
+        appended,
+    )
+
+
+def _append_prepared_action_cards_from_llm_tools(
+    conversation: NutritionConversationState,
+    metadata: dict,
+) -> tuple[NutritionConversationState, int]:
+    messages = list(conversation.messages)
+    appended = 0
+    seen_ids = {
+        str(message.prepared_action_card.get("id"))
+        for message in messages
+        if isinstance(message.prepared_action_card, dict)
+        and message.prepared_action_card.get("id")
+    }
+    for tool_result in list((metadata or {}).get("tool_results") or []):
+        if not isinstance(tool_result, dict) or tool_result.get("status") != "ok":
+            continue
+        data = tool_result.get("data")
+        action = data.get("prepared_action") if isinstance(data, dict) else None
+        if not isinstance(action, dict) or not action.get("id"):
+            continue
+        action_id = str(action["id"])
+        if action_id in seen_ids:
+            continue
+        messages.append(
+            NutritionConversationMessage(
+                role="assistant",
+                text="",
+                prepared_action_card={
+                    "id": action_id,
+                    "title": str(action.get("title") or "Acción preparada"),
+                    "summary": str(action.get("summary") or ""),
+                    "action_key": str(action.get("action_key") or ""),
+                    "preview": dict(action.get("preview") or {}),
+                    "destructive": bool(action.get("destructive")),
+                    "status": str(action.get("status") or "prepared"),
+                    "expires_at": str(action.get("expires_at") or ""),
+                },
+            )
+        )
+        seen_ids.add(action_id)
+        appended += 1
+    if not appended:
+        return conversation, 0
+    return (
+        NutritionConversationState(
+            messages=messages[-AI_NUTRITION_CONVERSATION_MESSAGE_LIMIT:],
+            result=conversation.result,
+        ),
+        appended,
+    )
 
 
 def _apply_profile_draft_to_brief(brief: NutritionBrief, profile_draft: dict) -> NutritionBrief:

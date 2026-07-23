@@ -3,7 +3,12 @@ from django.template.response import TemplateResponse
 from django.urls import path
 
 from ai_assistant.application.reports import build_ai_usage_dashboard_report
-from ai_assistant.models import AICreditLedger, AIUsageEvent, AIUserCreditQuota
+from ai_assistant.models import (
+    AICreditLedger,
+    AIPreparedAction,
+    AIUsageEvent,
+    AIUserCreditQuota,
+)
 
 
 @admin.register(AIUsageEvent)
@@ -125,6 +130,48 @@ class AICreditLedgerAdmin(admin.ModelAdmin):
         "credits",
         "reason",
         "metadata",
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(AIPreparedAction)
+class AIPreparedActionAdmin(admin.ModelAdmin):
+    list_display = (
+        "created_at",
+        "user",
+        "action_key",
+        "target_type",
+        "target_id",
+        "status",
+        "destructive",
+        "expires_at",
+        "committed_at",
+    )
+    list_filter = ("status", "action_key", "target_type", "destructive")
+    search_fields = ("user__username", "user__email", "title", "summary")
+    readonly_fields = (
+        "public_id",
+        "user",
+        "action_key",
+        "title",
+        "summary",
+        "target_type",
+        "target_id",
+        "target_version",
+        "arguments",
+        "preview",
+        "result",
+        "destructive",
+        "status",
+        "expires_at",
+        "committed_at",
+        "created_at",
+        "updated_at",
     )
 
     def has_add_permission(self, request):

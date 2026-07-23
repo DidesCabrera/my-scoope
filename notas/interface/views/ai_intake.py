@@ -1,4 +1,5 @@
 import uuid
+from dataclasses import replace
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -8,6 +9,10 @@ from django.template.loader import render_to_string
 from django.views.decorators.http import require_http_methods
 
 from ai_assistant.application.chat_engines import ChatEngineRequest
+from ai_assistant.application.prepared_actions import (
+    cancel_prepared_action,
+    commit_prepared_action,
+)
 from ai_assistant.application.tools import (
     TOOL_COMMIT_PROFILE_UPDATE,
     execute_profile_commit_tool,
@@ -36,6 +41,7 @@ from notas.application.ai_intake.nutrition_brief import (
     deserialize_conversation,
     serialize_brief,
     serialize_conversation,
+    NutritionConversationState,
 )
 from notas.application.ai_intake.profile_draft_update import (
     apply_profile_update_result_to_brief,
@@ -146,6 +152,42 @@ def _clear_active_chat_session(request) -> None:
     request.session.pop(AI_NUTRITION_CONVERSATION_SESSION_KEY, None)
     request.session.pop(AI_NUTRITION_CHAT_SESSION_KEY, None)
     request.session.modified = True
+
+
+def _update_prepared_action_card_status(
+    request,
+    *,
+    public_id,
+    status: str,
+) -> None:
+    conversation = deserialize_conversation(
+        request.session.get(AI_NUTRITION_CONVERSATION_SESSION_KEY)
+    )
+    if conversation is None:
+        return
+    action_id = str(public_id)
+    messages_updated = False
+    updated_messages = []
+    for message in conversation.messages:
+        card = message.prepared_action_card
+        if isinstance(card, dict) and str(card.get("id")) == action_id:
+            updated_messages.append(
+                replace(message, prepared_action_card={**card, "status": status})
+            )
+            messages_updated = True
+        else:
+            updated_messages.append(message)
+    if not messages_updated:
+        return
+    updated_conversation = NutritionConversationState(
+        messages=updated_messages,
+        result=conversation.result,
+    )
+    _sync_session_from_conversation(
+        request,
+        updated_conversation,
+        existing_chat_id=request.session.get(AI_NUTRITION_CHAT_SESSION_KEY),
+    )
 
 
 def _get_active_chat(request) -> AiNutritionChat | None:
@@ -504,3 +546,43 @@ def ai_nutrition_chat_detail(request, chat_id):
     )
 
     return render(request, "notas/ai_intake.html", base_vm.as_context())
+
+
+@login_required
+@require_http_methods(["POST"])
+def ai_prepared_action_commit(request, action_id):
+    try:
+        action = commit_prepared_action(
+            user=request.user,
+            public_id=action_id,
+        )
+    except ValueError as exc:
+        messages.error(request, f"No se pudo aplicar la acción preparada: {exc}.")
+        return redirect("ai_nutrition_intake")
+    _update_prepared_action_card_status(
+        request,
+        public_id=action.public_id,
+        status=action.status,
+    )
+    messages.success(request, "Acción confirmada y aplicada.")
+    return redirect("ai_nutrition_intake")
+
+
+@login_required
+@require_http_methods(["POST"])
+def ai_prepared_action_cancel(request, action_id):
+    try:
+        action = cancel_prepared_action(
+            user=request.user,
+            public_id=action_id,
+        )
+    except ValueError as exc:
+        messages.error(request, f"No se pudo cancelar la acción preparada: {exc}.")
+        return redirect("ai_nutrition_intake")
+    _update_prepared_action_card_status(
+        request,
+        public_id=action.public_id,
+        status=action.status,
+    )
+    messages.info(request, "Acción preparada cancelada sin realizar cambios.")
+    return redirect("ai_nutrition_intake")

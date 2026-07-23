@@ -6,6 +6,32 @@ Baseline vigente y operativa. CM00-CM24, PT00-PT06 y BA00-BA07 están cerrados. 
 
 El contrato actual prioriza libertad del LLM guiada por propósito, estado, capacidades y límites tipados. My Scoope conserva la autoridad sobre validación, permisos, cálculo, persistencia, presentación de objetos y observabilidad.
 
+## Paridad de capacidades del sistema
+
+Desde la decisión 0155, el Assistant clasifica explícitamente todas las áreas
+humanas del producto. El catálogo ejecutable vive únicamente en
+`ai_assistant.application.tools.registry`; MCP es una proyección gobernada de ese
+catálogo y no mantiene una segunda definición.
+
+La cobertura se divide por riesgo:
+
+- lectura autónoma autorizada para ficha, alimentos, comidas, planes, programas,
+  calendario, propuestas, comparaciones, Inbox y cuenta/billing;
+- `NutritionProposal` revisable para generación y ajustes nutricionales;
+- `AIPreparedAction` para operaciones generales: prepara una vista antes/después y
+  solo se ejecuta desde confirmación UI autenticada;
+- handoff a UI confiable para composición especializada, imports, sharing y pagos;
+- namespace separado y staff-only para Analytics y Operations.
+
+El ajuste “sube 200 kcal manteniendo los mismos alimentos” escala
+proporcionalmente los `MealFood` de los snapshots internos del DailyPlan. No altera
+la Meal reutilizable de biblioteca, no cambia el plan durante la preparación y usa
+el flujo existente de aprobar/aplicar propuesta.
+
+La implementación no cambia por sí sola los gates de despliegue. Un ambiente LLM
+debe habilitar explícitamente el modo de chat y las propuestas revisables; producción
+conserva además su rollout gradual.
+
 ## Contrato conductual vigente
 
 - El asistente está anclado al dominio My Scoope, sin convertir saludos o conversación social breve en errores.

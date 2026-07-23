@@ -1,0 +1,59 @@
+{% extends "admin_knowledge/base.html" %}
+{% block title %}{{ knowledge.document.title }}{% endblock %}
+{% block console_title %}{{ knowledge.document.title }}{% endblock %}
+{% block console_subtitle %}{{ knowledge.document.excerpt }}{% endblock %}
+{% block console_meta %}
+  <span>{{ knowledge.document.collection_label }}</span>
+  <span>{{ knowledge.document.status }}{% if knowledge.document.date %} · {{ knowledge.document.date }}{% endif %}</span>
+{% endblock %}
+{% block content %}
+<div class="page admin-analytics-page admin-knowledge-page">
+  <section class="admin-knowledge-policy" aria-label="Alcance del Knowledge Center">
+    <i data-lucide="circle-info"></i>
+    <div>
+      <strong>Referencia humana no normativa</strong>
+      <p>Ante cualquier diferencia, prevalecen el código, los tests y la documentación normativa aplicable.</p>
+    </div>
+  </section>
+
+  <nav class="admin-knowledge-breadcrumbs" aria-label="Ruta del documento">
+    <a href="{% url 'admin_knowledge_overview' %}">Knowledge Center</a>
+    <i data-lucide="chevron-right"></i>
+    <span>{{ knowledge.document.collection_label }}</span>
+  </nav>
+
+  <div class="admin-knowledge-detail-layout">
+    <article class="card-detail-block admin-knowledge-markdown">
+      {{ knowledge.html|safe }}
+    </article>
+
+    <aside class="admin-knowledge-detail-sidebar" aria-label="Información del documento">
+      <section class="card-detail-block">
+        <p class="section-eyebrow">Alcance</p>
+        <h3>Guía humana</h3>
+        <dl class="admin-knowledge-metadata">
+          <div><dt>Estado</dt><dd>{{ knowledge.document.status }}</dd></div>
+          {% if knowledge.document.date %}<div><dt>Fecha</dt><dd>{{ knowledge.document.date }}</dd></div>{% endif %}
+          {% if knowledge.document.audience %}<div><dt>Audiencia</dt><dd>{{ knowledge.document.audience }}</dd></div>{% endif %}
+          <div><dt>Autoridad</dt><dd>No normativa</dd></div>
+          <div><dt>Actualización</dt><dd>Solo por solicitud explícita</dd></div>
+          <div><dt>Fuente</dt><dd><code>docs/{{ knowledge.document.relative_path }}</code></dd></div>
+        </dl>
+      </section>
+
+      <section class="card-detail-block">
+        <p class="section-eyebrow">Continuar leyendo</p>
+        <h3>Relacionados</h3>
+        <div class="admin-knowledge-related">
+          {% for document in knowledge.related %}
+            <a href="{{ document.url }}">
+              <span>{{ document.title }}</span>
+              <i data-lucide="arrow-right"></i>
+            </a>
+          {% endfor %}
+        </div>
+      </section>
+    </aside>
+  </div>
+</div>
+{% endblock %}

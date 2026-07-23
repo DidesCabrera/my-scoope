@@ -5,6 +5,8 @@ from ai_assistant.application.tools import (
     TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL,
     TOOL_CREATE_NUTRITION_SOLVER_MEAL_PROPOSAL,
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
+    TOOL_CREATE_PROPORTIONAL_DAILYPLAN_CALORIE_PROPOSAL,
+    TOOL_PREPARE_PRODUCT_ACTION,
     TOOL_CREATE_VALIDATED_MEAL_PROPOSAL,
     TOOL_READ_DAILYPLAN,
     execute_reviewable_proposal_tool,
@@ -194,6 +196,8 @@ class ReviewableProposalToolExecutorTests(SimpleTestCase):
         self.assertIn(TOOL_CREATE_NUTRITION_SOLVER_MEAL_PROPOSAL, table)
         self.assertIn(TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS, table)
         self.assertIn(TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL, table)
+        self.assertIn(TOOL_CREATE_PROPORTIONAL_DAILYPLAN_CALORIE_PROPOSAL, table)
+        self.assertIn(TOOL_PREPARE_PRODUCT_ACTION, table)
         self.assertNotIn(TOOL_READ_DAILYPLAN, table)
         self.assertNotIn("apply_proposal", table)
         self.assertNotIn("create_food", table)

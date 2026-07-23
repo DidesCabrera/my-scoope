@@ -1,7 +1,14 @@
 # Nutrition Solver: optimización V2 y operación
 
-Status: current
+Status: human_reference
 Date: 2026-07-17
+Audience: usuarios staff humanos de producto, operaciones, soporte y desarrollo
+Role: human_reference
+Authority: non_authoritative
+Update-Policy: explicit_user_request_only
+
+> Orientación exclusiva para personas. No define contratos del Nutrition Solver, no forma parte del
+> contexto normativo de Codex y no se sincroniza automáticamente con ciclos o features.
 
 ## Qué optimiza actualmente
 

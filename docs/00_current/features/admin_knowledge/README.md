@@ -1,19 +1,28 @@
-# Knowledge Center: Food Catalog y Nutrition Solver
+# Knowledge Center: My Scoope
 
-Status: current
-Date: 2026-07-17
-Audience: curadores, operaciones, soporte, desarrollo y asistentes de IA
+Status: human_reference
+Date: 2026-07-23
+Audience: usuarios staff humanos de curación, operaciones, soporte y desarrollo
+Role: human_reference
+Authority: non_authoritative
+Update-Policy: explicit_user_request_only
+
+> Esta guía alimenta una interfaz para usuarios humanos. No es una fuente de verdad, no debe usarse
+> para interpretar el código y queda fuera de los ciclos normales de desarrollo. Solo se actualiza
+> cuando Felipe lo solicita explícitamente.
 
 ## Propósito
 
-Este centro explica cómo la calidad del Food Catalog condiciona la calidad del Nutrition Solver y
-qué revisar cuando una propuesta no es viable o no resulta funcionalmente coherente. Es una guía
-operativa; los ADR bajo `docs/20_decisions/` conservan el razonamiento arquitectónico completo.
+Este centro ofrece orientación humana sobre My Scoope. Explica cómo el AI Assistant
+asiste las capacidades humanas del producto y cómo la calidad del Food Catalog condiciona la
+calidad del Nutrition Solver. Ante cualquier diferencia prevalecen el código, los tests y la
+documentación normativa aplicable.
 
 ## Guías
 
 | Área | Usar para |
 | --- | --- |
+| [AI Assistant y paridad del sistema](ai_assistant.md) | Entender qué puede asistir, cómo resuelve entidades y qué acciones requieren propuesta, preview o UI confiable. |
 | [Food Catalog para el Solver](food_catalog.md) | Curar capacidades, evaluar readiness, publicar snapshots y diagnosticar datos faltantes. |
 | [Nutrition Solver](nutrition_solver.md) | Entender optimización V2, restricciones, backends, shadow mode, resultados y rollback. |
 

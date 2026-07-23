@@ -69,6 +69,9 @@ Cuando un ciclo planificado empiece a implementarse, el documento puede permanec
 
 ## Ciclos completados
 
+- `ai_assistant_system_capability_parity_cycle.md`: ASP00-ASP06 completado; catálogo
+  único AI/MCP, lecturas de sistema, propuestas nutricionales, acciones preparadas,
+  separación billing/staff y matriz ejecutable de capacidades.
 - `ai_assistant_post_tool_followup_transport_cycle.md`: PT00-PT06 completado.
 - `ai_assistant_behavioral_alignment_cycle.md`: BA00-BA07 completado.
 - `ai_assistant_client_memory_profile_objects_cycle.md`: CM00-CM24 completado.

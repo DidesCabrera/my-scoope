@@ -14,6 +14,9 @@ from notas.application.proposals.applicators import (
     ProposalOperationsApplyResult,
     validate_and_apply_proposal_operations,
 )
+from notas.application.proposals.operations import (
+    OPERATION_UPDATE_MEAL_FOOD_QUANTITY,
+)
 from notas.application.services.commands.proposal_apply_helpers import (
     build_applied_create_dailyplan_metadata,
     build_applied_create_meal_metadata,
@@ -507,6 +510,97 @@ def create_validated_dailyplan_proposal(
         current_snapshot=current_snapshot,
         proposed_payload=payload,
         validation_summary=validation_summary,
+    )
+
+
+@transaction.atomic
+def create_proportional_dailyplan_calorie_proposal(
+    *,
+    user,
+    dailyplan_id: int,
+    calorie_delta: float,
+    title: str = "",
+    summary: str = "",
+    source: str = NutritionProposal.SOURCE_AI,
+) -> NutritionProposalCreateResult:
+    """Prepare a reviewable same-food calorie adjustment for an owned plan.
+
+    Every Meal attached to a DailyPlan is an independent snapshot. Scaling its
+    MealFood quantities therefore changes only this plan when the approved
+    proposal is later applied; reusable Meals in the library stay untouched.
+    """
+
+    dailyplan = (
+        DailyPlan.objects
+        .filter(pk=dailyplan_id, created_by=user)
+        .prefetch_related("dailyplan_meals__meal__meal_food_set__food")
+        .first()
+    )
+    if dailyplan is None:
+        raise ValueError("dailyplan_not_available_for_proposal")
+
+    try:
+        delta = float(calorie_delta)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("calorie_delta_invalid") from exc
+    if abs(delta) < 0.0001:
+        raise ValueError("calorie_delta_must_not_be_zero")
+
+    current_total = float(dailyplan.total_kcal or 0)
+    target_total = current_total + delta
+    if current_total <= 0:
+        raise ValueError("dailyplan_has_no_scalable_calories")
+    if target_total <= 0:
+        raise ValueError("dailyplan_target_calories_must_be_positive")
+
+    scale_factor = target_total / current_total
+    meal_foods_by_id = {}
+    for dailyplan_meal in dailyplan.dailyplan_meals.all():
+        for meal_food in dailyplan_meal.meal.meal_food_set.all():
+            meal_foods_by_id[meal_food.id] = meal_food
+    if not meal_foods_by_id:
+        raise ValueError("dailyplan_has_no_scalable_foods")
+
+    suggested_changes = []
+    for meal_food in meal_foods_by_id.values():
+        from_quantity = float(meal_food.quantity)
+        to_quantity = round(from_quantity * scale_factor, 4)
+        if to_quantity <= 0 or abs(to_quantity - from_quantity) < 0.0001:
+            continue
+        suggested_changes.append(
+            {
+                "type": OPERATION_UPDATE_MEAL_FOOD_QUANTITY,
+                "mealfood_id": meal_food.id,
+                "from_quantity": from_quantity,
+                "to_quantity": to_quantity,
+            }
+        )
+    if not suggested_changes:
+        raise ValueError("dailyplan_calorie_adjustment_has_no_changes")
+
+    payload = {
+        "intent": "adjust_dailyplan_to_targets",
+        "strategy": "proportional_quantity_scaling",
+        "preserve_foods": True,
+        "preserve_meal_structure": True,
+        "calorie_delta": delta,
+        "scale_factor": scale_factor,
+        "current_total_kcal": current_total,
+        "target_total_kcal": target_total,
+        "suggested_changes": suggested_changes,
+    }
+    return create_validated_dailyplan_proposal(
+        user=user,
+        dailyplan_id=dailyplan.id,
+        title=title.strip() or f"Ajustar {dailyplan.name} en {delta:+g} kcal",
+        summary=summary.strip() or (
+            "Mantiene los mismos alimentos y comidas; solo escala sus cantidades "
+            f"proporcionalmente para pasar de {current_total:.1f} a {target_total:.1f} kcal."
+        ),
+        source=source,
+        targets={"total_kcal": target_total},
+        tolerances={"total_kcal": 1.0},
+        proposed_payload=payload,
     )
 
 

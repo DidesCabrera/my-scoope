@@ -25,22 +25,28 @@ Esta carpeta contiene documentación vigente y de alta autoridad. Una IA o desar
 19. `../10_active_cycles/onboarding_nutrition_profile_cycle.md` para historia y alcance cerrado del ciclo ONB00-ONB09.
 20. `../40_technical/qa/onboarding_nutrition_v1_qa.md` cuando se modifique onboarding, ficha nutricional, subject context, solver o warning de propuestas externas.
 21. `architecture/nutrition_solver_extraction_map.md` cuando el trabajo sea Nutrition Solver.
-22. `features/admin_knowledge/README.md` como Knowledge Center para operación conjunta de Food
-    Catalog, snapshots, Nutrition Solver, shadow mode y rollback.
-23. `../40_technical/qa/ci_stabilization_qa.md` cuando el trabajo toque GitHub Actions, CI, tests desfasados o estabilización de `staging`.
-24. `../40_technical/operations/testing_and_ci_policy.md` antes de abrir/reabrir PRs, cambiar workflows o ajustar tests.
-25. `../40_technical/qa/testing_hygiene_guide.md` antes de crear, relajar o corregir tests después de bugs reales en staging/CI.
-26. `../10_active_cycles/README.md` cuando el trabajo sea planificación de ciclos futuros.
-27. `features/calendarization.md` y
+22. `../40_technical/qa/ci_stabilization_qa.md` cuando el trabajo toque GitHub Actions, CI, tests desfasados o estabilización de `staging`.
+23. `../40_technical/operations/testing_and_ci_policy.md` antes de abrir/reabrir PRs, cambiar workflows o ajustar tests.
+24. `../40_technical/qa/testing_hygiene_guide.md` antes de crear, relajar o corregir tests después de bugs reales en staging/CI.
+25. `../10_active_cycles/README.md` cuando el trabajo sea planificación de ciclos futuros.
+26. `features/calendarization.md` y
     `../40_technical/operations/calendarization_notifications_runbook.md` cuando el
     trabajo toque agenda, zona horaria, Web Push o el worker de notificaciones.
-28. `features/billing.md`, `../10_active_cycles/billing_payments_tax_documents_cycle.md`
+27. `features/billing.md`, `../10_active_cycles/billing_payments_tax_documents_cycle.md`
     y `../20_decisions/0154-billing-payment-tax-boundary.md` cuando el trabajo toque
     planes pagados, Mercado Pago, OpenFactura, webhooks, conciliación o DTE.
 
 ## Criterio
 
 Si un documento en `00_current/` contradice un documento en `90_archive/`, gana `00_current/`.
+
+## Excepción: proyección humana de Knowledge Center
+
+`features/admin_knowledge/` alimenta exclusivamente la app humana Knowledge Center. Sus documentos
+son explicativos y no normativos: no deben usarse para comprender el código, decidir arquitectura
+ni implementar features. No se actualizan como parte de ciclos normales; solo cambian cuando Felipe
+solicita explícitamente una actualización del Knowledge Center. La autoridad permanece en el código,
+los tests, las decisiones y la documentación normativa aplicable.
 
 ## UI System
 

@@ -1,0 +1,81 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <script>
+    (function () {
+      const storageKey = "myscoope-theme";
+      const validThemes = ["light", "dark"];
+      const savedTheme = localStorage.getItem(storageKey);
+      document.documentElement.dataset.theme = validThemes.includes(savedTheme) ? savedTheme : "dark";
+    })();
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
+  <meta name="theme-color" content="#080808">
+  <title>{% block title %}Knowledge Center{% endblock %} · My Scoope</title>
+  <link rel="stylesheet" href="{% static 'notas/css/components/admin_analytics.css' %}">
+  <link rel="stylesheet" href="{% static 'notas/css/components/admin_knowledge.css' %}">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="admin-analytics-shell admin-knowledge-shell">
+  <input class="admin-analytics-mobile-toggle" type="checkbox" id="admin-knowledge-menu-toggle" aria-hidden="true">
+
+  <div class="admin-analytics-app admin-knowledge-app">
+    <label class="admin-analytics-mobile-scrim admin-analytics-mobile-scrim--menu" for="admin-knowledge-menu-toggle" aria-label="Cerrar navegación"></label>
+
+    <aside class="admin-analytics-sidebar admin-knowledge-sidebar" aria-label="Knowledge Center navigation">
+      <div class="admin-analytics-sidebar__mobile-header">
+        <span class="admin-analytics-sidebar__mobile-title">Knowledge Center</span>
+        <label class="admin-analytics-icon-button" for="admin-knowledge-menu-toggle" aria-label="Cerrar navegación">
+          <i data-lucide="x"></i>
+        </label>
+      </div>
+      <a class="admin-analytics-brand admin-knowledge-brand" href="{% url 'admin_knowledge_overview' %}" aria-label="Knowledge Center overview">
+        <span class="admin-analytics-brand__mark admin-knowledge-brand__mark"><i data-lucide="library-big"></i></span>
+        <span>
+          <strong>Knowledge Center</strong>
+          <small>Human Reference</small>
+        </span>
+      </a>
+      {% include "admin_knowledge/_nav.html" %}
+      <div class="admin-analytics-sidebar__footer">
+        <a href="{% url 'admin_home' %}" class="admin-analytics-sidebar__utility"><i data-lucide="panels-top-left"></i> Admin Hub</a>
+        <a href="{% url 'admin_analytics_overview' %}" class="admin-analytics-sidebar__utility"><i data-lucide="chart-no-axes-combined"></i> Analytics</a>
+        <a href="{% url 'admin_operations_overview' %}" class="admin-analytics-sidebar__utility"><i data-lucide="wrench"></i> Operations</a>
+        <a href="/" class="admin-analytics-sidebar__utility"><i data-lucide="arrow-left"></i> Volver a My Scoope</a>
+      </div>
+    </aside>
+
+    <div class="admin-analytics-main-shell">
+      <header class="admin-analytics-topbar admin-knowledge-topbar">
+        <div class="admin-analytics-topbar__mobile-actions admin-analytics-topbar__mobile-actions--menu" aria-label="Controles móviles">
+          <label class="admin-analytics-icon-button" for="admin-knowledge-menu-toggle" aria-label="Abrir navegación">
+            <i data-lucide="menu"></i>
+          </label>
+        </div>
+        <div class="admin-analytics-page-heading">
+          <p class="section-eyebrow">Staff-only · Human-oriented · Non-authoritative</p>
+          <h1>{% block console_title %}Knowledge Center{% endblock %}</h1>
+          <p class="admin-analytics-page-heading__subtitle">{% block console_subtitle %}Conocimiento operativo y arquitectónico vigente de My Scoope.{% endblock %}</p>
+        </div>
+        <div class="admin-analytics-topbar__meta" aria-label="Metadata de la página">
+          {% block console_meta %}<span>Fuente: docs/</span>{% endblock %}
+          <span>{{ request.user.email|default:request.user.username }}</span>
+        </div>
+      </header>
+
+      <main class="admin-analytics-content admin-knowledge-content" id="main-content">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+
+  <script>
+    if (window.lucide) {
+      window.lucide.createIcons();
+    }
+  </script>
+</body>
+</html>

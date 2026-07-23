@@ -1,0 +1,98 @@
+{% extends "admin_knowledge/base.html" %}
+{% block title %}Knowledge Center{% endblock %}
+{% block console_title %}{{ knowledge.title }}{% endblock %}
+{% block console_subtitle %}{{ knowledge.subtitle }}{% endblock %}
+{% block console_meta %}
+  <span>{{ knowledge.total }} guías humanas</span>
+  <span>Actualización solo por solicitud explícita</span>
+{% endblock %}
+{% block content %}
+<div class="page admin-analytics-page admin-knowledge-page">
+  <section class="admin-knowledge-policy" aria-label="Alcance del Knowledge Center">
+    <i data-lucide="circle-info"></i>
+    <div>
+      <strong>Orientación para personas, no fuente de verdad</strong>
+      <p>Esta app explica el sistema a usuarios humanos. No define comportamiento, no guía a Codex y no participa automáticamente en ciclos de features. Solo se actualiza cuando Felipe lo solicita explícitamente.</p>
+    </div>
+  </section>
+
+  <section class="card-detail-block admin-knowledge-search-card">
+    <div>
+      <p class="section-eyebrow">Búsqueda transversal</p>
+      <h2>Encuentra orientación en las guías humanas</h2>
+      <p class="muted-text">Busca únicamente en el catálogo curado del Knowledge Center.</p>
+    </div>
+    <form method="get" class="admin-knowledge-search" role="search">
+      <label for="knowledge-query">Buscar en Knowledge Center</label>
+      <div>
+        <i data-lucide="search"></i>
+        <input id="knowledge-query" type="search" name="q" value="{{ knowledge.query }}" placeholder="Ej.: ajustar calorías, prepared actions, Food Catalog…">
+        <button type="submit" class="btn-primary">Buscar</button>
+        {% if knowledge.query %}<a href="{% url 'admin_knowledge_overview' %}" class="btn-secondary">Limpiar</a>{% endif %}
+      </div>
+    </form>
+  </section>
+
+  {% if knowledge.query %}
+    <section class="card-detail-block">
+      <div class="card-title-row">
+        <div>
+          <p class="section-eyebrow">Resultados</p>
+          <h3>{{ knowledge.search_results|length }} coincidencias para “{{ knowledge.query }}”</h3>
+        </div>
+      </div>
+      <div class="admin-knowledge-document-grid">
+        {% for document in knowledge.search_results %}
+          {% include "admin_knowledge/_document_card.html" with document=document %}
+        {% empty %}
+          <div class="admin-analytics-empty">
+            <i data-lucide="search-x"></i>
+            <div><strong>Sin coincidencias</strong><span>Prueba con otro término o navega por las colecciones.</span></div>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+  {% else %}
+    <section class="card-detail-block">
+      <div class="card-title-row">
+        <div>
+          <p class="section-eyebrow">Guías operativas</p>
+          <h3>Knowledge Center curado</h3>
+          <p class="muted-text">Material explicativo que ayuda a personas sin convertirse en un contrato técnico.</p>
+        </div>
+      </div>
+      <div class="admin-knowledge-featured-grid">
+        {% for document in knowledge.featured %}
+          {% include "admin_knowledge/_document_card.html" with document=document featured=True %}
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  <section class="admin-knowledge-collection-grid" aria-label="Colecciones de Knowledge Center">
+    {% for collection in knowledge.collections %}
+      <article class="card-detail-block admin-knowledge-collection">
+        <div class="admin-knowledge-collection__heading">
+          <span class="admin-knowledge-collection__icon"><i data-lucide="{{ collection.icon }}"></i></span>
+          <div>
+            <p class="section-eyebrow">{{ collection.count }} documentos</p>
+            <h3>{{ collection.label }}</h3>
+            <p class="muted-text">{{ collection.description }}</p>
+          </div>
+        </div>
+        <div class="admin-knowledge-link-list">
+          {% for document in collection.documents %}
+            <a href="{{ document.url }}">
+              <span>
+                <strong>{{ document.title }}</strong>
+                <small>{{ document.status }}{% if document.date %} · {{ document.date }}{% endif %}</small>
+              </span>
+              <i data-lucide="arrow-up-right"></i>
+            </a>
+          {% endfor %}
+        </div>
+      </article>
+    {% endfor %}
+  </section>
+</div>
+{% endblock %}

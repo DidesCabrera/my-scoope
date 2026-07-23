@@ -14,6 +14,7 @@ INSTALLED_APPS = [  # noqa: F405
         "django.contrib.admin",
         "admin_analytics.apps.AdminAnalyticsConfig",
         "admin_operations.apps.AdminOperationsConfig",
+        "admin_knowledge.apps.AdminKnowledgeConfig",
     }
 ]
 

@@ -74,6 +74,7 @@ INSTALLED_APPS = [
     "nutrition_solver.apps.NutritionSolverConfig",
     "admin_analytics.apps.AdminAnalyticsConfig",
     "admin_operations.apps.AdminOperationsConfig",
+    "admin_knowledge.apps.AdminKnowledgeConfig",
     "billing.apps.BillingConfig",
     "notas.apps.NotasConfig",
     "accounts",

@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import uuid
+
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 
 class AIUsageEvent(models.Model):
@@ -133,3 +136,61 @@ class AICreditLedger(models.Model):
 
     def __str__(self) -> str:
         return f"{self.period} · {self.user} · {self.credits} credits"
+
+
+class AIPreparedAction(models.Model):
+    """A reviewable product action prepared by the assistant.
+
+    Preparation may persist this audit record, but it never mutates the target
+    product entity. A trusted server-side UI event is required for commit.
+    """
+
+    class Status(models.TextChoices):
+        PREPARED = "prepared", "Prepared"
+        COMMITTED = "committed", "Committed"
+        CANCELLED = "cancelled", "Cancelled"
+        EXPIRED = "expired", "Expired"
+        FAILED = "failed", "Failed"
+
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="ai_prepared_actions",
+    )
+    action_key = models.CharField(max_length=100, db_index=True)
+    title = models.CharField(max_length=180)
+    summary = models.TextField(blank=True)
+    target_type = models.CharField(max_length=60, blank=True)
+    target_id = models.PositiveBigIntegerField(null=True, blank=True)
+    target_version = models.CharField(max_length=160, blank=True)
+    arguments = models.JSONField(default=dict, blank=True)
+    preview = models.JSONField(default=dict, blank=True)
+    result = models.JSONField(default=dict, blank=True)
+    destructive = models.BooleanField(default=False)
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PREPARED,
+        db_index=True,
+    )
+    expires_at = models.DateTimeField()
+    committed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        indexes = [
+            models.Index(
+                fields=["user", "status", "created_at"],
+                name="ai_prep_user_status_idx",
+            ),
+        ]
+
+    @property
+    def is_expired(self) -> bool:
+        return self.expires_at <= timezone.now()
+
+    def __str__(self) -> str:
+        return f"{self.action_key} · {self.user} · {self.status}"

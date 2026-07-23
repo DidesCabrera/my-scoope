@@ -7,13 +7,25 @@ from typing import Any
 from ai_assistant.application.tools.contracts import AssistantToolCategory
 from ai_assistant.application.tools.registry import (
     TOOL_LIST_OPERATIONAL_FOODS,
+    TOOL_LIST_INBOX_ITEMS,
     TOOL_LIST_SAVED_COMPARISONS,
+    TOOL_LIST_USER_DAILYPLANS,
+    TOOL_LIST_USER_FOODS,
+    TOOL_LIST_USER_MEALS,
+    TOOL_LIST_USER_PROGRAMS,
     TOOL_LIST_USER_PROPOSALS,
     TOOL_READ_DAILYPLAN,
+    TOOL_READ_ACCOUNT_BILLING_CONTEXT,
+    TOOL_READ_CALENDARIZATION,
+    TOOL_READ_FOOD,
+    TOOL_READ_MEAL,
+    TOOL_READ_PROGRAM,
     TOOL_READ_SAVED_COMPARISON,
     TOOL_READ_USER_PROFILE_CONTEXT,
     TOOL_READ_PROPOSAL,
     TOOL_SEARCH_OPERATIONAL_FOODS,
+    TOOL_SEARCH_USER_DAILYPLANS,
+    TOOL_SEARCH_USER_MEALS,
     TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES,
     get_tool_spec,
     normalize_tool_name,
@@ -142,17 +154,41 @@ class ReadOnlyToolExecutor:
 
         if tool_name in {
             TOOL_LIST_OPERATIONAL_FOODS,
+            TOOL_LIST_INBOX_ITEMS,
             TOOL_LIST_SAVED_COMPARISONS,
+            TOOL_LIST_USER_DAILYPLANS,
+            TOOL_LIST_USER_FOODS,
+            TOOL_LIST_USER_MEALS,
+            TOOL_LIST_USER_PROGRAMS,
             TOOL_SEARCH_OPERATIONAL_FOODS,
+            TOOL_SEARCH_USER_DAILYPLANS,
+            TOOL_SEARCH_USER_MEALS,
             TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES,
         }:
             payload["limit"] = limit
 
-        if tool_name == TOOL_SEARCH_OPERATIONAL_FOODS:
+        if tool_name in {
+            TOOL_SEARCH_OPERATIONAL_FOODS,
+            TOOL_SEARCH_USER_DAILYPLANS,
+            TOOL_SEARCH_USER_MEALS,
+        }:
             payload["query"] = str(payload.get("query") or "").strip()
 
         if tool_name == TOOL_LIST_SAVED_COMPARISONS:
             payload["kind"] = str(payload.get("kind") or "").strip().lower() or None
+
+        if tool_name == TOOL_LIST_USER_PROGRAMS:
+            payload["search"] = str(payload.get("search") or "").strip()
+
+        if tool_name == TOOL_LIST_INBOX_ITEMS:
+            payload["scope"] = str(payload.get("scope") or "received").strip().lower()
+            payload["favorites_only"] = _coerce_bool(
+                payload.get("favorites_only", False),
+                default=False,
+            )
+
+        if tool_name == TOOL_READ_CALENDARIZATION:
+            payload["history_limit"] = limit
 
         if tool_name == TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES:
             payload["search"] = str(payload.get("search") or "").strip() or None
@@ -177,24 +213,58 @@ def build_default_read_only_tool_dispatch_table() -> dict[str, ReadOnlyToolCalla
         read_saved_comparison_tool,
     )
     from notas.application.ai_tools.profile_tools import read_user_profile_context_tool
+    from ai_assistant.application.tools.account_tools import (
+        read_account_billing_context_tool,
+    )
     from notas.application.ai_tools.read_tools import (
         list_available_foods_tool,
+        list_user_dailyplans_tool,
+        list_user_foods_tool,
+        list_user_meals_tool,
         list_user_proposals_tool,
         preview_nutrition_solver_candidates_tool,
         read_dailyplan_tool,
+        read_food_tool,
+        read_meal_tool,
         read_proposal_tool,
         search_foods_tool,
+        search_dailyplans_tool,
+        search_meals_tool,
+    )
+    from notas.application.ai_tools.workspace_tools import (
+        list_inbox_items_tool,
+        list_user_programs_tool,
+        read_calendarization_tool,
+        read_program_tool,
     )
 
     return {
         TOOL_READ_DAILYPLAN: read_dailyplan_tool,
+        TOOL_READ_ACCOUNT_BILLING_CONTEXT: read_account_billing_context_tool,
+        TOOL_READ_CALENDARIZATION: read_calendarization_tool,
+        TOOL_READ_FOOD: read_food_tool,
+        TOOL_READ_MEAL: read_meal_tool,
+        TOOL_READ_PROGRAM: read_program_tool,
         TOOL_READ_PROPOSAL: read_proposal_tool,
         TOOL_LIST_SAVED_COMPARISONS: list_saved_comparisons_tool,
         TOOL_READ_SAVED_COMPARISON: read_saved_comparison_tool,
         TOOL_LIST_USER_PROPOSALS: list_user_proposals_tool,
         TOOL_READ_USER_PROFILE_CONTEXT: read_user_profile_context_tool,
         TOOL_SEARCH_OPERATIONAL_FOODS: _search_operational_foods_adapter(search_foods_tool),
+        TOOL_SEARCH_USER_DAILYPLANS: _search_collection_adapter(
+            search_dailyplans_tool,
+            key="dailyplans",
+        ),
+        TOOL_SEARCH_USER_MEALS: _search_collection_adapter(search_meals_tool, key="meals"),
         TOOL_LIST_OPERATIONAL_FOODS: _list_operational_foods_adapter(list_available_foods_tool),
+        TOOL_LIST_USER_DAILYPLANS: _list_collection_adapter(
+            list_user_dailyplans_tool,
+            key="dailyplans",
+        ),
+        TOOL_LIST_USER_FOODS: _list_collection_adapter(list_user_foods_tool, key="foods"),
+        TOOL_LIST_USER_MEALS: _list_collection_adapter(list_user_meals_tool, key="meals"),
+        TOOL_LIST_USER_PROGRAMS: list_user_programs_tool,
+        TOOL_LIST_INBOX_ITEMS: list_inbox_items_tool,
         TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES: preview_nutrition_solver_candidates_tool,
     }
 
@@ -222,6 +292,37 @@ def _list_operational_foods_adapter(tool_fn: ReadOnlyToolCallable) -> ReadOnlyTo
     def wrapped(user: Any, *, limit: int = DEFAULT_TOOL_RESULT_LIMIT) -> AIToolResult:
         result = tool_fn(user)
         return _with_limited_collection(result, key="foods", limit=limit)
+
+    return wrapped
+
+
+def _list_collection_adapter(
+    tool_fn: ReadOnlyToolCallable,
+    *,
+    key: str,
+) -> ReadOnlyToolCallable:
+    def wrapped(user: Any, *, limit: int = DEFAULT_TOOL_RESULT_LIMIT) -> AIToolResult:
+        return _with_limited_collection(tool_fn(user), key=key, limit=limit)
+
+    return wrapped
+
+
+def _search_collection_adapter(
+    tool_fn: ReadOnlyToolCallable,
+    *,
+    key: str,
+) -> ReadOnlyToolCallable:
+    def wrapped(
+        user: Any,
+        *,
+        query: str,
+        limit: int = DEFAULT_TOOL_RESULT_LIMIT,
+    ) -> AIToolResult:
+        return _with_limited_collection(
+            tool_fn(user, query=query),
+            key=key,
+            limit=limit,
+        )
 
     return wrapped
 

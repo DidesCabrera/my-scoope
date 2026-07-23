@@ -283,6 +283,8 @@ class NutritionConversationMessage:
     profile_draft_card: dict | None = None
     preference_draft_card: dict | None = None
     proposal_preferences_card: dict | None = None
+    proposal_review_card: dict | None = None
+    prepared_action_card: dict | None = None
 
 
 @dataclass(frozen=True)
@@ -1278,7 +1280,7 @@ def _append_unique(values: list[str], value: str) -> None:
 def serialize_conversation(state: NutritionConversationState) -> dict:
     serialized_messages = []
     for message in state.messages:
-        if not message.text and not message.generated_plan_card and not message.profile_draft_card and not message.preference_draft_card and not message.proposal_preferences_card:
+        if not message.text and not message.generated_plan_card and not message.profile_draft_card and not message.preference_draft_card and not message.proposal_preferences_card and not message.proposal_review_card and not message.prepared_action_card:
             continue
         item = {"role": message.role, "text": message.text}
         if message.generated_plan_card:
@@ -1289,6 +1291,10 @@ def serialize_conversation(state: NutritionConversationState) -> dict:
             item["preference_draft_card"] = message.preference_draft_card
         if message.proposal_preferences_card:
             item["proposal_preferences_card"] = message.proposal_preferences_card
+        if message.proposal_review_card:
+            item["proposal_review_card"] = message.proposal_review_card
+        if message.prepared_action_card:
+            item["prepared_action_card"] = message.prepared_action_card
         serialized_messages.append(item)
 
     return {
@@ -1321,12 +1327,20 @@ def deserialize_conversation(payload: dict | None) -> NutritionConversationState
         proposal_preferences_card = item.get("proposal_preferences_card")
         if not isinstance(proposal_preferences_card, dict):
             proposal_preferences_card = None
+        proposal_review_card = item.get("proposal_review_card")
+        if not isinstance(proposal_review_card, dict):
+            proposal_review_card = None
+        prepared_action_card = item.get("prepared_action_card")
+        if not isinstance(prepared_action_card, dict):
+            prepared_action_card = None
         if role in {"user", "assistant"} and (
             text
             or generated_plan_card
             or profile_draft_card
             or preference_draft_card
             or proposal_preferences_card
+            or proposal_review_card
+            or prepared_action_card
         ):
             messages.append(
                 NutritionConversationMessage(
@@ -1336,6 +1350,8 @@ def deserialize_conversation(payload: dict | None) -> NutritionConversationState
                     profile_draft_card=profile_draft_card,
                     preference_draft_card=preference_draft_card,
                     proposal_preferences_card=proposal_preferences_card,
+                    proposal_review_card=proposal_review_card,
+                    prepared_action_card=prepared_action_card,
                 )
             )
 

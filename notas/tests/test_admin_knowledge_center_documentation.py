@@ -8,13 +8,38 @@ KNOWLEDGE_CENTER = ROOT / "docs" / "00_current" / "features" / "admin_knowledge"
 
 
 class AdminKnowledgeCenterDocumentationTests(SimpleTestCase):
+    def test_all_guides_are_explicitly_human_and_non_authoritative(self):
+        for path in KNOWLEDGE_CENTER.glob("*.md"):
+            content = path.read_text()
+            with self.subTest(path=path.name):
+                self.assertIn("Role: human_reference", content)
+                self.assertIn("Authority: non_authoritative", content)
+                self.assertIn("Update-Policy: explicit_user_request_only", content)
+
     def test_index_links_food_catalog_and_solver_guides(self):
         content = (KNOWLEDGE_CENTER / "README.md").read_text()
 
+        self.assertIn("AI Assistant y paridad del sistema", content)
         self.assertIn("Food Catalog para el Solver", content)
         self.assertIn("Nutrition Solver", content)
         self.assertIn("CatalogFood curado", content)
         self.assertIn("pending_review", content)
+        self.assertIn("No es una fuente de verdad", content)
+        self.assertIn("Solo se actualiza", content)
+
+    def test_ai_assistant_guide_documents_latest_parity_and_snapshot_boundary(self):
+        content = (KNOWLEDGE_CENTER / "ai_assistant.md").read_text()
+
+        for expected in (
+            "ai_assistant.application.tools.registry",
+            "ai_assistant.domain.capabilities",
+            "AIPreparedAction",
+            "snapshots independientes",
+            "AI_ASSISTANT_ENABLE_REVIEWABLE_PROPOSAL_TOOLS",
+            "staff-only",
+        ):
+            self.assertIn(expected, content)
+        self.assertIn("no modifica", content)
 
     def test_food_catalog_guide_documents_versioned_capabilities_and_snapshot_boundary(self):
         content = (KNOWLEDGE_CENTER / "food_catalog.md").read_text()

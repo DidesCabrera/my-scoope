@@ -1,7 +1,14 @@
 # Food Catalog para Nutrition Solver
 
-Status: current
+Status: human_reference
 Date: 2026-07-17
+Audience: usuarios staff humanos de curación, operaciones, soporte y desarrollo
+Role: human_reference
+Authority: non_authoritative
+Update-Policy: explicit_user_request_only
+
+> Orientación exclusiva para personas. No define contratos de Food Catalog, no forma parte del
+> contexto normativo de Codex y no se sincroniza automáticamente con ciclos o features.
 
 ## Objetivo operativo
 

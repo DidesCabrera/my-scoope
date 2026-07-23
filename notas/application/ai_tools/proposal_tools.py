@@ -29,6 +29,7 @@ from notas.application.queries.proposal_queries import (
     search_proposals,
 )
 from notas.application.services.commands.proposal_commands import (
+    create_proportional_dailyplan_calorie_proposal,
     create_validated_dailyplan_build_proposal,
     create_validated_dailyplan_proposal,
     create_validated_meal_proposal,
@@ -642,6 +643,50 @@ def create_validated_dailyplan_proposal_tool(
         targets,
         proposed_payload,
         tolerances,
+        summary,
+        user=user,
+    )
+
+
+def _create_proportional_dailyplan_calorie_proposal_data(
+    user,
+    dailyplan_id: int,
+    calorie_delta: float,
+    title: str = "",
+    summary: str = "",
+) -> dict:
+    result = create_proportional_dailyplan_calorie_proposal(
+        user=user,
+        dailyplan_id=dailyplan_id,
+        calorie_delta=calorie_delta,
+        title=title,
+        summary=summary,
+        source=NutritionProposal.SOURCE_AI,
+    )
+    return {
+        "proposal": get_proposal_detail(user, result.proposal.id).as_dict(),
+        "adjustment": {
+            "dailyplan_id": dailyplan_id,
+            "calorie_delta": float(calorie_delta),
+            "preserve_foods": True,
+            "requires_human_review": True,
+        },
+    }
+
+
+def create_proportional_dailyplan_calorie_proposal_tool(
+    user,
+    dailyplan_id: int,
+    calorie_delta: float,
+    title: str = "",
+    summary: str = "",
+):
+    return run_ai_tool(
+        _create_proportional_dailyplan_calorie_proposal_data,
+        user,
+        dailyplan_id,
+        calorie_delta,
+        title,
         summary,
         user=user,
     )
