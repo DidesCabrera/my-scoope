@@ -209,6 +209,11 @@ def _capability_snapshot() -> dict[str, object]:
         },
         "accounts": {
             "email_verification": str(getattr(settings, "ACCOUNT_EMAIL_VERIFICATION", "unknown")),
+            "turnstile_enabled": bool(getattr(settings, "TURNSTILE_ENABLED", False)),
+            "shared_rate_limit_cache": bool(getattr(settings, "CACHE_URL", "")),
+            "share_email_enabled": bool(
+                getattr(settings, "EMAIL_SHARE_DELIVERY_ENABLED", True)
+            ),
             "onboarding_gate_enabled": bool(
                 getattr(settings, "NUTRITION_ONBOARDING_GATE_ENABLED", False)
             ),

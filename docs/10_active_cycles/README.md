@@ -69,6 +69,9 @@ Cuando un ciclo planificado empiece a implementarse, el documento puede permanec
 
 ## Ciclos completados
 
+- `email_delivery_abuse_protection_cycle.md`: EAP00-EAP08 completado en repositorio;
+  quedan como gates externos la configuración de Turnstile/Render Key Value, la
+  auditoría del histórico de Resend y el smoke real en staging.
 - `ai_assistant_system_capability_parity_cycle.md`: ASP00-ASP06 completado; catálogo
   único AI/MCP, lecturas de sistema, propuestas nutricionales, acciones preparadas,
   separación billing/staff y matriz ejecutable de capacidades.

@@ -76,6 +76,7 @@ INSTALLED_APPS = [
     "admin_operations.apps.AdminOperationsConfig",
     "admin_knowledge.apps.AdminKnowledgeConfig",
     "billing.apps.BillingConfig",
+    "email_delivery.apps.EmailDeliveryConfig",
     "notas.apps.NotasConfig",
     "accounts",
     "core",
@@ -127,6 +128,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "accounts.context_processors.turnstile",
                 "notas.context_processors.user_weight",
             ],
         },
@@ -146,6 +148,26 @@ DATABASES = {
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
     )
 }
+
+CACHE_URL = os.environ.get("CACHE_URL", "").strip()
+if CACHE_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": CACHE_URL,
+            "KEY_PREFIX": "myscoope",
+            "TIMEOUT": 300,
+        }
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "myscoope-local",
+        }
+    }
+
+RATELIMIT_USE_CACHE = "default"
 
 
 # ==============================
@@ -383,7 +405,15 @@ AI_ASSISTANT_LLM_ROLLOUT_STICKY_SALT = os.environ.get(
 # ==============================
 
 RATE_LIMIT_LOGIN = os.environ.get("RATE_LIMIT_LOGIN", "10/m").strip()
-RATE_LIMIT_SIGNUP = os.environ.get("RATE_LIMIT_SIGNUP", "5/m").strip()
+RATE_LIMIT_SIGNUP = os.environ.get("RATE_LIMIT_SIGNUP", "3/10m").strip()
+RATE_LIMIT_SIGNUP_IP_DAILY = os.environ.get(
+    "RATE_LIMIT_SIGNUP_IP_DAILY",
+    "10/d",
+).strip()
+RATE_LIMIT_SIGNUP_EMAIL_DAILY = os.environ.get(
+    "RATE_LIMIT_SIGNUP_EMAIL_DAILY",
+    "3/d",
+).strip()
 RATE_LIMIT_AI_ASSISTANT_TURN_USER = os.environ.get(
     "RATE_LIMIT_AI_ASSISTANT_TURN_USER",
     "20/h",
@@ -419,6 +449,30 @@ EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 EMAIL_USE_SSL = _env_bool("EMAIL_USE_SSL", False)
 EMAIL_USE_TLS = _env_bool("EMAIL_USE_TLS", bool(EMAIL_HOST) and not EMAIL_USE_SSL) and not EMAIL_USE_SSL
 EMAIL_TIMEOUT = _env_int("EMAIL_TIMEOUT", 10)
+EMAIL_SHARE_DELIVERY_ENABLED = _env_bool("EMAIL_SHARE_DELIVERY_ENABLED", True)
+EMAIL_SHARE_DAILY_BUDGET = _env_int("EMAIL_SHARE_DAILY_BUDGET", 70)
+EMAIL_SHARE_USER_DAILY_LIMIT = _env_int("EMAIL_SHARE_USER_DAILY_LIMIT", 20)
+EMAIL_SHARE_RECIPIENT_DAILY_LIMIT = _env_int(
+    "EMAIL_SHARE_RECIPIENT_DAILY_LIMIT",
+    3,
+)
+EMAIL_SHARE_RECIPIENT_COOLDOWN_SECONDS = _env_int(
+    "EMAIL_SHARE_RECIPIENT_COOLDOWN_SECONDS",
+    600,
+)
+
+TURNSTILE_ENABLED = _env_bool("TURNSTILE_ENABLED", False)
+TURNSTILE_SITE_KEY = os.environ.get("TURNSTILE_SITE_KEY", "").strip()
+TURNSTILE_SECRET_KEY = os.environ.get("TURNSTILE_SECRET_KEY", "").strip()
+TURNSTILE_EXPECTED_ACTION = os.environ.get(
+    "TURNSTILE_EXPECTED_ACTION",
+    "signup",
+).strip()
+TURNSTILE_EXPECTED_HOSTNAME = os.environ.get(
+    "TURNSTILE_EXPECTED_HOSTNAME",
+    "",
+).strip()
+TURNSTILE_TIMEOUT_SECONDS = _env_int("TURNSTILE_TIMEOUT_SECONDS", 5)
 
 # Web Push is opt-in. Keep the dispatcher inert until all VAPID values are set.
 MYSCOOPE_WEB_PUSH_ENABLED = _env_bool("MYSCOOPE_WEB_PUSH_ENABLED", False)
@@ -563,6 +617,16 @@ ACCOUNT_SIGNUP_FIELDS = [
 
 ACCOUNT_EMAIL_VERIFICATION = os.environ.get("ACCOUNT_EMAIL_VERIFICATION", "none").strip()
 ACCOUNT_UNIQUE_EMAIL = True
+# Keep the generic password-reset response without spending an email on addresses
+# that are not registered. This preserves account-enumeration resistance.
+ACCOUNT_EMAIL_UNKNOWN_ACCOUNTS = False
+ACCOUNT_FORMS = {"signup": "accounts.forms.ProtectedSignupForm"}
+ACCOUNT_ADAPTER = "accounts.adapters.MyScoopeAccountAdapter"
+ACCOUNT_RATE_LIMITS = {
+    "signup": "10/d/ip",
+    "confirm_email": "1/3m/key,3/d/key",
+    "reset_password": "10/h/ip,3/h/key",
+}
 
 ACCOUNT_LOGOUT_REDIRECT_URL = "/accounts/login/"
 

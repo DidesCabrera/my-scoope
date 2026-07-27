@@ -8,6 +8,7 @@ SHARE_KIND_LABELS = {
     "meal": "comida",
     "food": "alimento",
     "dpm": "comida de plan",
+    "program": "programa semanal",
 }
 
 
@@ -27,12 +28,16 @@ def build_share_invitation_email(
         "meal": "meal_share_accept",
         "food": "food_share_accept",
         "dpm": "dailyplanmeal_share_accept",
-    }.get(kind, "meal_share_accept")
+    }.get(kind)
 
     clean_subject = (custom_subject or getattr(share, "subject", "") or item_name).strip()
     clean_message = (custom_message or getattr(share, "message", "") or "").strip()
 
-    accept_path = reverse(accept_url_name, args=[share.token])
+    accept_path = (
+        reverse(accept_url_name, args=[share.token])
+        if accept_url_name
+        else reverse("inbox_list")
+    )
     accept_url = request.build_absolute_uri(accept_path)
     signup_url = request.build_absolute_uri(
         reverse("account_signup") + "?" + urlencode({"next": accept_path})

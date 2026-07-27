@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.mail import send_mail
 from django.conf import settings
+from email_delivery.services import deliver_share_invitation
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -28,6 +28,7 @@ from notas.application.services.commands.program_commands import (
     reorder_program_weeks,
 )
 from notas.application.services.commands.share_commands import create_program_share
+from notas.application.services.notifications.share_emails import build_share_invitation_email
 from notas.application.services.nutrition.weight import get_current_weight
 from notas.domain.models import Program, ProgramDay
 from notas.interface.forms.forms import ProgramShareForm
@@ -706,24 +707,29 @@ def program_share(request, pk):
             message=message,
         )
 
-        email_sent = False
-        try:
-            email_sent = bool(send_mail(
-                subject=share_subject,
-                message=message or f"Te compartieron el programa semanal {program.name} en My Scoope.",
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[email],
-                fail_silently=False,
-            ))
-        except Exception:
-            email_sent = False
+        email_subject, email_message = build_share_invitation_email(
+            request=request,
+            share=result.share,
+            kind="program",
+            item_name=program.name,
+            custom_subject=share_subject,
+            custom_message=message,
+        )
+        delivery = deliver_share_invitation(
+            share=result.share,
+            subject=email_subject,
+            message=email_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+        )
 
         if result.share.accepted_by_id:
             messages.success(request, "Compartiste este programa. Ya está disponible para el usuario asociado a ese correo.")
-        elif email_sent:
+        elif delivery.sent:
             messages.success(request, "Compartiste este programa y se envió el correo de invitación.")
+        elif delivery.reason == "duplicate_share":
+            messages.success(request, "Este programa ya estaba compartido. No reenviamos el correo para evitar duplicados.")
         else:
-            messages.warning(request, "Se creó la invitación, pero no se pudo enviar el correo.")
+            messages.warning(request, "Se creó la invitación, pero la política de correo no permitió enviarla.")
 
         return redirect("program_detail", pk=program.pk)
 
