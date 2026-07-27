@@ -139,6 +139,39 @@ def _integration_findings(environment: str) -> list[DiagnosticFinding]:
         action="Configure SMTP before requiring email delivery." if environment == "production" and not email_ready else "",
     ))
 
+    turnstile_ready = (
+        bool(getattr(settings, "TURNSTILE_ENABLED", False))
+        and bool(getattr(settings, "TURNSTILE_SITE_KEY", ""))
+        and bool(getattr(settings, "TURNSTILE_SECRET_KEY", ""))
+    )
+    findings.append(DiagnosticFinding(
+        code="email.abuse.turnstile",
+        status="ok" if turnstile_ready else ("warning" if environment == "production" else "ok"),
+        category="email",
+        summary="Turnstile signup protection is configured." if turnstile_ready else "Turnstile signup protection is disabled or incomplete.",
+        action="Configure both Turnstile keys and enable it." if environment == "production" and not turnstile_ready else "",
+    ))
+
+    shared_cache_ready = bool(getattr(settings, "CACHE_URL", ""))
+    findings.append(DiagnosticFinding(
+        code="email.abuse.shared_cache",
+        status="ok" if shared_cache_ready else ("warning" if environment == "production" else "ok"),
+        category="email",
+        summary="Rate limits use a configured shared cache." if shared_cache_ready else "Rate limits use process-local cache.",
+        action="Configure CACHE_URL with Render Key Value." if environment == "production" and not shared_cache_ready else "",
+    ))
+
+    share_email_enabled = bool(
+        getattr(settings, "EMAIL_SHARE_DELIVERY_ENABLED", True)
+    )
+    findings.append(DiagnosticFinding(
+        code="email.share_delivery",
+        status="ok",
+        category="email",
+        summary="Share email delivery is enabled." if share_email_enabled else "Share email delivery is intentionally disabled.",
+        action="",
+    ))
+
     sentry_ready = bool(getattr(settings, "SENTRY_DSN", ""))
     findings.append(DiagnosticFinding(
         code="observability.sentry",

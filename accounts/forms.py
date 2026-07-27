@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from django import forms
 from django.utils import timezone
+from allauth.account.forms import SignupForm
 
 from notas.domain.models import Profile
+from accounts.turnstile import validate_signup_token
 
 
 class NutritionOnboardingForm(forms.Form):
@@ -61,3 +63,20 @@ class NutritionOnboardingForm(forms.Form):
             raise forms.ValidationError("Revisa la fecha de nacimiento ingresada.")
 
         return birth_date
+
+
+class ProtectedSignupForm(SignupForm):
+    def clean(self):
+        cleaned_data = super().clean()
+        if self.errors:
+            return cleaned_data
+
+        validation = validate_signup_token(
+            self.data.get("cf-turnstile-response", "")
+        )
+        if not validation.success:
+            raise forms.ValidationError(
+                "No pudimos validar que el registro sea legítimo. "
+                "Inténtalo nuevamente."
+            )
+        return cleaned_data

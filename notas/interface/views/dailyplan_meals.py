@@ -42,8 +42,8 @@ from notas.application.services.commands.share_commands import (
     accept_dailyplanmeal_share,
     create_dailyplanmeal_share,
 )
-from django.core.mail import send_mail
 from django.conf import settings
+from email_delivery.services import deliver_share_invitation
 from dataclasses import dataclass
 from notas.application.services.notifications.share_emails import build_share_invitation_email
 
@@ -485,24 +485,21 @@ def dailyplanmeal_share(request, dailyplan_id, pk):
             custom_message=message,
         )
 
-        email_sent = False
-        try:
-            email_sent = bool(send_mail(
-                subject=email_subject,
-                message=email_message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[email],
-                fail_silently=False,
-            ))
-        except Exception:
-            email_sent = False
+        delivery = deliver_share_invitation(
+            share=share,
+            subject=email_subject,
+            message=email_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+        )
 
         if share.accepted_by_id:
             messages.success(request, "Compartiste esta comida de plan. Como el correo pertenece a una cuenta existente, ya está disponible en su Inbox.")
-        elif email_sent:
+        elif delivery.sent:
             messages.success(request, "Compartiste esta comida de plan. Enviamos el correo de invitación al destinatario.")
+        elif delivery.reason == "duplicate_share":
+            messages.success(request, "Esta comida de plan ya estaba compartida. No reenviamos el correo para evitar duplicados.")
         else:
-            messages.warning(request, "Se creó la invitación, pero no se pudo enviar el correo. Revisa la configuración de email.")
+            messages.warning(request, "Se creó la invitación, pero la política de correo no permitió enviarla.")
 
         return redirect("dailyplan_meal_detail", dailyplan_id=dpm.dailyplan_id, pk=dpm.pk)
 

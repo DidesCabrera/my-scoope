@@ -19,8 +19,8 @@ from notas.presentation.composition.js.food_picker_builder import build_food_pic
 from notas.application.queries.performance.meal_queries import meals_with_kcal
 
 from notas.interface.forms.forms import MealShareForm
-from django.core.mail import send_mail
 from django.conf import settings
+from email_delivery.services import deliver_share_invitation
 from django.urls import reverse
 from notas.application.services.notifications.share_emails import build_share_invitation_email
 
@@ -116,32 +116,32 @@ def meal_share(request, pk):
             custom_message=message,
         )
 
-        email_sent = False
-        try:
-            email_sent = bool(send_mail(
-                subject=subject,
-                message=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[email],
-                fail_silently=False,
-            ))
-        except Exception:
-            email_sent = False
+        delivery = deliver_share_invitation(
+            share=share,
+            subject=subject,
+            message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+        )
 
         if share.accepted_by_id:
             messages.success(
                 request,
                 "Compartiste esta comida. Como el correo pertenece a una cuenta existente, ya está disponible en su Inbox.",
             )
-        elif email_sent:
+        elif delivery.sent:
             messages.success(
                 request,
                 "Compartiste esta comida. Enviamos el correo de invitación al destinatario.",
             )
+        elif delivery.reason == "duplicate_share":
+            messages.success(
+                request,
+                "Esta comida ya estaba compartida. No reenviamos el correo para evitar duplicados.",
+            )
         else:
             messages.warning(
                 request,
-                "Se creó la invitación, pero no se pudo enviar el correo. Revisa la configuración de email.",
+                "Se creó la invitación, pero la política de correo no permitió enviarla.",
             )
 
         return redirect("meal_detail", pk=meal.pk)

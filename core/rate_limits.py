@@ -13,7 +13,19 @@ def login_rate(group, request) -> str:
 
 
 def signup_rate(group, request) -> str:
-    return _rate("RATE_LIMIT_SIGNUP", "5/m")
+    return _rate("RATE_LIMIT_SIGNUP", "3/10m")
+
+
+def signup_ip_daily_rate(group, request) -> str:
+    return _rate("RATE_LIMIT_SIGNUP_IP_DAILY", "10/d")
+
+
+def signup_email_daily_rate(group, request) -> str:
+    return _rate("RATE_LIMIT_SIGNUP_EMAIL_DAILY", "3/d")
+
+
+def signup_email_key(group, request) -> str:
+    return str(request.POST.get("email", "")).strip().lower()
 
 
 def ai_assistant_turn_rate(group, request) -> str:
@@ -39,13 +51,27 @@ def limit_login(view_func):
 
 
 def limit_signup(view_func):
+    email_limited = ratelimit(
+        key=signup_email_key,
+        rate=signup_email_daily_rate,
+        method="POST",
+        block=True,
+        group="accounts.signup.email.daily",
+    )(view_func)
+    daily_limited = ratelimit(
+        key="ip",
+        rate=signup_ip_daily_rate,
+        method="POST",
+        block=True,
+        group="accounts.signup.ip.daily",
+    )(email_limited)
     return ratelimit(
         key="ip",
         rate=signup_rate,
         method="POST",
         block=True,
-        group="accounts.signup",
-    )(view_func)
+        group="accounts.signup.ip.burst",
+    )(daily_limited)
 
 
 def limit_ai_assistant_turn(view_func):

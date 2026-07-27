@@ -27,6 +27,7 @@ My Scoope is past the first architecture-expansion phase. The current priority i
 | `notas` | Legacy/product core for operational nutrition entities such as foods, meals, plans, programs and proposals while extraction continues. |
 | `accounts` | User/account domain, onboarding ownership, commercial plans, subscriptions, credits and entitlements. |
 | `billing` | Provider-neutral payment and tax-document integration boundary; projects verified commercial state into `accounts`. |
+| `email_delivery` | Durable outbound-email attempts, share-email policy, idempotency and operational consumption controls. |
 | `ai_assistant` | Chat experience, LLM provider integration, tool orchestration, guarded proposal creation and AI usage observability. |
 | `food_catalog` | Master food catalog, import/curation workflows, source governance and controlled bridge toward operational foods. |
 | `nutrition_solver` | Deterministic nutrition optimization, meal grammar, constraints, alternatives, quality diagnostics and backend selection, without being a direct user UI. |
@@ -84,6 +85,9 @@ When a plan becomes real, durable outcomes should be promoted into `docs/00_curr
 
 ## Recently closed baselines
 
+- Email delivery abuse-protection baseline: server-validated Turnstile integration,
+  multi-window signup limits, shared-cache production path, auditable account email,
+  idempotent/budgeted share invitations and a non-critical email kill switch.
 - Calendarization repository baseline: a user-owned weekly program can be activated on
   real dates as immutable daily snapshots, with one current schedule, IANA timezone and
   configurable local notification time. Daily and per-meal Web Push use persisted

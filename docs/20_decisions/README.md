@@ -170,3 +170,4 @@ Consequences
 - `0153-calendarization-snapshots-and-idempotent-web-push.md`: separa la ejecución fechada del programa editable y el evento lógico de cada delivery Web Push por dispositivo.
 - `0154-billing-payment-tax-boundary.md`: separa recaudación Mercado Pago, entitlements de `accounts` y emisión tributaria OpenFactura mediante conciliación e idempotencia.
 - `0155-ai-assistant-capability-parity-and-prepared-actions.md`: unifica el catálogo AI/MCP, amplía lecturas de producto y adopta propuestas o acciones preparadas con confirmación confiable para mutaciones.
+- `0156-email-delivery-abuse-protection.md`: adopta Turnstile server-side, límites compartidos, auditoría persistente e invitaciones idempotentes y presupuestadas.
