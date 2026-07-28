@@ -17,6 +17,12 @@
       alt="My Scoope"
       class="home-brand-logo home-brand-logo--dark"
     >
+    <div class="home-brand-entities" aria-label="Entidades de My Scoope">
+      <i data-lucide="carrot" class="home-brand-entity-icon home-brand-entity-icon--food" aria-hidden="true"></i>
+      <i data-lucide="utensils" class="home-brand-entity-icon home-brand-entity-icon--meal" aria-hidden="true"></i>
+      <i data-lucide="clipboard-list" class="home-brand-entity-icon home-brand-entity-icon--dailyplan" aria-hidden="true"></i>
+      <i data-lucide="calendar" class="home-brand-entity-icon home-brand-entity-icon--program" aria-hidden="true"></i>
+    </div>
   </div>
 
   <section class="home-hero main" hidden>
@@ -110,8 +116,28 @@
 
 
 
-  <section class="home-ai-intake home-ai-intake--composer" aria-labelledby="home-ai-intake-title">
-    <h2 id="home-ai-intake-title" class="home-ai-intake__title">¿En qué puedo ayudarte?</h2>
+  <section class="home-ai-intake home-ai-intake--composer" aria-labelledby="home-ai-intake-section-title">
+    <div class="home-calendar__section-title home-ai-intake__section-title">
+      <i data-lucide="sparkles" aria-hidden="true"></i>
+      <h2 id="home-ai-intake-section-title">Asistente IA</h2>
+      <details class="home-section-help" data-home-section-help="ai-intake" open>
+        <summary aria-label="Información sobre Asistente IA">
+          <i data-lucide="info" aria-hidden="true"></i>
+        </summary>
+        <div class="home-section-help__popup">
+          <i data-lucide="info" class="home-section-help__panel-icon" aria-hidden="true"></i>
+          <div class="home-section-help__copy">
+            <h3>Asistente IA</h3>
+            <p>Describe lo que necesitas y el asistente te ayuda a crear planes, comparar alimentos o ajustar tus comidas con contexto nutricional.</p>
+          </div>
+          <button type="button" class="home-section-help__close" data-home-section-help-close aria-label="Cerrar información">
+            <i data-lucide="x" aria-hidden="true"></i>
+          </button>
+        </div>
+      </details>
+    </div>
+
+    <h2 class="home-ai-intake__title">¿En qué puedo ayudarte?</h2>
 
     <form method="post" action="{% url 'ai_nutrition_intake' %}" class="home-ai-intake__form" aria-label="Iniciar chat nutricional">
       {% csrf_token %}
@@ -185,13 +211,19 @@
     <div class="home-calendar__section-title">
       <i data-lucide="calendar-clock" aria-hidden="true"></i>
       <h2 id="home-calendar-section-title">Calendarización</h2>
-      <details class="home-section-help">
+      <details class="home-section-help" data-home-section-help="calendarization" open>
         <summary aria-label="Información sobre Calendarización">
           <i data-lucide="info" aria-hidden="true"></i>
         </summary>
         <div class="home-section-help__popup">
-          <h3>Calendarización</h3>
-          <p>Consulta tu programa calendarizado por semana, revisa el avance del plan y abre el detalle del día seleccionado.</p>
+          <i data-lucide="info" class="home-section-help__panel-icon" aria-hidden="true"></i>
+          <div class="home-section-help__copy">
+            <h3>Calendarización</h3>
+            <p>Consulta tu programa calendarizado por semana, revisa el avance del plan y abre el detalle del día seleccionado.</p>
+          </div>
+          <button type="button" class="home-section-help__close" data-home-section-help-close aria-label="Cerrar información">
+            <i data-lucide="x" aria-hidden="true"></i>
+          </button>
         </div>
       </details>
     </div>
@@ -319,13 +351,19 @@
     <div class="home-calendar__section-title home-libraries__section-title">
       <i data-lucide="bookmark" aria-hidden="true"></i>
       <h2 id="home-libraries-section-title">Mis Librerias</h2>
-      <details class="home-section-help">
+      <details class="home-section-help" data-home-section-help="libraries" open>
         <summary aria-label="Información sobre Mis Librerías">
           <i data-lucide="info" aria-hidden="true"></i>
         </summary>
         <div class="home-section-help__popup">
-          <h3>Mis Librerías</h3>
-          <p>Resume tus programas, planes diarios, comidas y alimentos para acceder rápido a tus recursos principales.</p>
+          <i data-lucide="info" class="home-section-help__panel-icon" aria-hidden="true"></i>
+          <div class="home-section-help__copy">
+            <h3>Mis Librerías</h3>
+            <p>Resume tus programas, planes diarios, comidas y alimentos para acceder rápido a tus recursos principales.</p>
+          </div>
+          <button type="button" class="home-section-help__close" data-home-section-help-close aria-label="Cerrar información">
+            <i data-lucide="x" aria-hidden="true"></i>
+          </button>
         </div>
       </details>
     </div>
@@ -421,13 +459,19 @@
     <div class="home-calendar__section-title home-tools__section-title">
       <i data-lucide="wrench" aria-hidden="true"></i>
       <h2 id="home-tools-section-title">Herramientas</h2>
-      <details class="home-section-help">
+      <details class="home-section-help" data-home-section-help="tools" open>
         <summary aria-label="Información sobre Herramientas">
           <i data-lucide="info" aria-hidden="true"></i>
         </summary>
         <div class="home-section-help__popup">
-          <h3>Herramientas</h3>
-          <p>Accede al Comparador para revisar elementos lado a lado, al Explorador para consultar opciones nutricionales y a Calendarizar para organizar programas en fechas.</p>
+          <i data-lucide="info" class="home-section-help__panel-icon" aria-hidden="true"></i>
+          <div class="home-section-help__copy">
+            <h3>Herramientas</h3>
+            <p>Accede al Comparador para revisar elementos lado a lado, al Explorador para consultar opciones nutricionales y a Calendarizar para organizar programas en fechas.</p>
+          </div>
+          <button type="button" class="home-section-help__close" data-home-section-help-close aria-label="Cerrar información">
+            <i data-lucide="x" aria-hidden="true"></i>
+          </button>
         </div>
       </details>
     </div>
@@ -479,6 +523,32 @@
     if (!body.classList.contains("page-home") || !brandStrip) {
       return;
     }
+
+    const sectionHelpStoragePrefix = "my-scoope.home.section-help.";
+
+    document.querySelectorAll("[data-home-section-help]").forEach(function (help) {
+      const storageKey = sectionHelpStoragePrefix + help.dataset.homeSectionHelp;
+      const savedState = window.localStorage.getItem(storageKey);
+
+      if (savedState === "closed") {
+        help.open = false;
+      } else if (savedState === "open") {
+        help.open = true;
+      }
+
+      help.addEventListener("toggle", function () {
+        window.localStorage.setItem(storageKey, help.open ? "open" : "closed");
+      });
+    });
+
+    document.querySelectorAll("[data-home-section-help-close]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        const help = button.closest(".home-section-help");
+        if (help) {
+          help.open = false;
+        }
+      });
+    });
 
     function setHeaderMetaVisibility(shouldShow) {
       body.classList.toggle("home-header-meta-visible", shouldShow);

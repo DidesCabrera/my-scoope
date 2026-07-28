@@ -187,13 +187,6 @@
   line-height: 1.1;
 }
 
-.program-week-child-card__icon {
-  width: 22px;
-  height: 22px;
-  color: var(--entity-program);
-  flex: 0 0 auto;
-}
-
 .program-week-child-card__status,
 .program-week-kpis__label,
 .program-week-kpis__row span {
@@ -1080,7 +1073,6 @@
 
 .program-empty-state__icon,
 .program-hero__icon,
-.program-week-child-card__icon,
 .program-structural-icon {
   background: var(--entity-program);
   color: #ffffff !important;
@@ -1092,11 +1084,6 @@
 .program-hero__icon {
   padding: 8px;
   border-radius: 12px;
-}
-
-.program-week-child-card__icon {
-  padding: 4px;
-  border-radius: 7px;
 }
 
 .program-card .structural-indicators .program-structural-icon,
@@ -1556,20 +1543,6 @@
   color: var(--text-main);
   font-size: 1rem;
   line-height: 1.15;
-}
-
-.program-week-child-card__icons-title {
-  flex: 0 0 auto;
-}
-
-.program-week-child-card__icon {
-  width: 34px;
-  height: 34px;
-  padding: 8px;
-  border-radius: 10px;
-  background: var(--entity-program);
-  color: #ffffff !important;
-  stroke: #ffffff !important;
 }
 
 .program-week-child-card__indicators {

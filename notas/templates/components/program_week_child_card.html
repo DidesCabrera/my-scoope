@@ -2,6 +2,11 @@
   <header class="program-week-child-card__header">
     <div class="card-title-comp program-week-child-card__title-comp">
       <div class="main-title program-week-child-card__title-main">
+        <p class="card-title-eyebrow">
+          <i data-lucide="calendar-1" class="card-title-eyebrow__icon program" aria-hidden="true"></i>
+          <span>Semana</span>
+        </p>
+
         <h3 id="program-week-title-{{ week.week_number }}">Semana {{ week.week_number }}</h3>
         <div class="structural-indicators program-week-child-card__indicators" aria-label="Estructura de la semana {{ week.week_number }}">
           <span class="structural-item">
@@ -14,9 +19,6 @@
             <i data-lucide="carrot" class="structural-icon main"></i>
           </span>
         </div>
-      </div>
-      <div class="icons-title program-week-child-card__icons-title">
-        <i data-lucide="calendar-1" class="home-section-header-icon program-week-child-card__icon"></i>
       </div>
     </div>
     {% if week.kpi_ranges %}

@@ -3,6 +3,11 @@
     <div class="card-title program-card__title-block">
       <div class="card-title-comp">
         <div class="main-title">
+          <p class="card-title-eyebrow">
+            <i data-lucide="calendar" class="card-title-eyebrow__icon program" aria-hidden="true"></i>
+            <span>Programa</span>
+          </p>
+
           <a href="{% url 'program_detail' child_card.child_id %}" class="card-title-link" aria-label="Ver detalle de {{ child_card.title }}">
             <h3>{{ child_card.title }}</h3>
           </a>
@@ -20,14 +25,6 @@
           </div>
         </div>
 
-        <div class="icons-title">
-          <i data-lucide="calendar" class="home-section-header-icon program"></i>
-          {% if child_card.is_shared %}
-            <div class="label-fork label-fork--shared" title="Compartido" aria-label="Compartido">
-              <i data-lucide="users" class="card-icon"></i>
-            </div>
-          {% endif %}
-        </div>
       </div>
     </div>
 
