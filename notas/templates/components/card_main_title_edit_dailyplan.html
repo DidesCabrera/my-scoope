@@ -2,6 +2,15 @@
 
   <div class="main-title main-card">
 
+    {% with entity_class=titulo.label|lower|cut:" " %}
+      <p class="card-title-eyebrow">
+        <i data-lucide="clipboard-list" class="card-title-eyebrow__icon {{ entity_class }}" aria-hidden="true"></i>
+        <span>
+          {% if entity_class == "dailyplan" %}Plan Diario{% elif entity_class == "meal" %}Comida{% elif entity_class == "food" %}Alimento{% else %}{{ titulo.label }}{% endif %}
+        </span>
+      </p>
+    {% endwith %}
+
     <div class="block-title-card-edit">
       <h1>{{ titulo.name }}</h1>
     </div>
@@ -28,20 +37,5 @@
     </div>
   </div>
 
-
-  <div class="icons-title">
-      <i data-lucide="clipboard-list" class="home-section-header-icon {{ titulo.label|lower|cut:" " }}"></i>
-
-    {% if titulo.category_badge %}
-        <div
-            class="label-fork label-fork--{{ titulo.category_badge.css }}"
-            title="{{ titulo.category_badge.label }}"
-            aria-label="{{ titulo.category_badge.label }}"
-        >
-            <i data-lucide="{{ titulo.category_badge.icon }}" class="card-icon"></i>
-        </div>
-    {% endif %}
-
-  </div>
 
 </div>

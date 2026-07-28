@@ -26,8 +26,10 @@
 
 .home-brand-strip {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 4px;
   width: 100%;
   opacity: 1;
   transition: opacity 240ms ease;
@@ -47,6 +49,40 @@ body.page-home.home-header-meta-visible .home-brand-strip {
 
 .home-brand-logo--dark {
   display: none;
+}
+
+.home-brand-entities {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 8px 0 32px;
+}
+
+.home-brand-entity-icon {
+  width: 18px;
+  height: 18px;
+  box-sizing: content-box;
+  padding: 5px;
+  border-radius: 7px;
+  color: #ffffff;
+  stroke: currentColor;
+}
+
+.home-brand-entity-icon--food {
+  background: var(--entity-food);
+}
+
+.home-brand-entity-icon--meal {
+  background: var(--entity-meal);
+}
+
+.home-brand-entity-icon--dailyplan {
+  background: var(--entity-dailyplan);
+}
+
+.home-brand-entity-icon--program {
+  background: var(--entity-program);
 }
 
 html[data-theme="dark"] .home-brand-logo--light {
@@ -134,10 +170,7 @@ body.page-home .page-header .header-title-mobile {
 }
 
 .home-section-help {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: contents;
   letter-spacing: 0;
   text-transform: none;
 }
@@ -163,7 +196,6 @@ body.page-home .page-header .header-title-mobile {
 .home-section-help summary:hover,
 .home-section-help[open] summary {
   background: var(--interactive-hover);
-  border-color: var(--border-strong);
   color: var(--text-main);
 }
 
@@ -174,19 +206,34 @@ body.page-home .page-header .header-title-mobile {
 }
 
 .home-section-help__popup {
-  position: absolute;
-  top: calc(100% + 10px);
-  left: 50%;
-  z-index: 30;
-  width: min(280px, calc(100vw - 32px));
-  padding: 14px;
-  border: 1px solid var(--border-soft);
-  border-radius: 14px;
-  background: var(--surface-card);
-  box-shadow: var(--shadow-card);
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 32px;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 100%;
+  width: 100%;
+  margin: 6px auto 0;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 189, 89, 0.4);
+  border-radius: 22px;
+  background: rgba(255, 189, 89, 0.08);
+  box-shadow: none;
   color: var(--text-main);
   text-align: left;
-  transform: translateX(-50%);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.home-section-help__panel-icon {
+  width: 18px;
+  height: 18px;
+  justify-self: center;
+  color: #ffbd59;
+  stroke: currentColor;
+}
+
+.home-section-help__copy {
+  min-width: 0;
 }
 
 .home-section-help__popup h3 {
@@ -205,6 +252,36 @@ body.page-home .page-header .header-title-mobile {
   letter-spacing: 0;
   line-height: 1.35;
   text-transform: none;
+}
+
+.home-section-help__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: end;
+  align-self: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.16s ease, color 0.16s ease;
+}
+
+.home-section-help__close svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+}
+
+.home-section-help__close:hover,
+.home-section-help__close:focus-visible {
+  background: var(--interactive-hover);
+  color: var(--text-main);
+  outline: none;
 }
 
 .home-stat-card {
@@ -671,9 +748,14 @@ body.page-home .page-header .header-title-mobile {
   }
 
   .home-section-help__popup {
-    left: auto;
-    right: 0;
-    transform: none;
+    grid-template-columns: 28px minmax(0, 1fr) 28px;
+    gap: 10px;
+    padding-inline: 12px;
+    text-align: left;
+  }
+
+  .home-section-help__close {
+    justify-self: end;
   }
 
   .home-tools {
@@ -937,7 +1019,7 @@ body.page-home .page-header .header-title-mobile {
 .ai-intake-result {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
   padding: 18px;
   border-radius: 18px;
   background: var(--surface-card);
@@ -2561,6 +2643,7 @@ body.page-home .page-header .header-title-mobile {
 
 .home-calendar__section-title {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
@@ -2571,6 +2654,11 @@ body.page-home .page-header .header-title-mobile {
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
+
+.home-ai-intake__section-title {
+  margin-bottom: var(--space-1);
+}
+
 
 .home-calendar__section-title h2 {
   margin: 0;
@@ -2611,20 +2699,28 @@ body.page-home .page-header .header-title-mobile {
   display: flex;
   align-items: center;
   gap: 7px;
-  margin: 0 0 6px;
+  margin: 0 0 4px;
   color: var(--text-muted);
-  font-size: 0.72rem;
-  font-weight: 800;
+  font-size: 0.70rem;
+  font-weight: 700;
   letter-spacing: 0;
-  line-height: 1.2;
+  line-height: 1;
   text-transform: uppercase;
 }
 
 .home-calendar__program-eyebrow svg {
-  width: 15px;
-  height: 15px;
+  width: 12px;
+  height: 12px;
   color: currentColor;
   stroke: currentColor;
+}
+
+.home-calendar:not(.calendarization-current) .home-calendar__program-eyebrow svg {
+  box-sizing: content-box;
+  padding: 3px;
+  border-radius: 5px;
+  color: var(--text-main);
+  background-color: var(--color-program);
 }
 
 .home-calendar__program-name,

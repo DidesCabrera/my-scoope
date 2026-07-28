@@ -34,24 +34,54 @@ flex: 1 1 auto;
 min-width: 0;
 }
 
-.main-title.main-card {
-margin-bottom: 12px;
-}
-
 .main-title h3 {
 width: 100%;
 margin: 0;
 color: var(--text-main);
 }
 
-.card-title-comp .icons-title {
-flex: 0 0 20px;
-width: 22px;
+.card-title-eyebrow {
 display: flex;
-flex-direction: column;
-align-items: flex-end;
-gap: 4px;
+align-items: center;
+gap: 7px;
+margin: 0 0 4px;
 color: var(--text-muted);
+font-size: 0.72rem;
+font-weight: 800;
+letter-spacing: 0;
+line-height: 1.2;
+text-transform: uppercase;
+}
+
+.card-title-eyebrow__icon {
+box-sizing: content-box;
+width: 12px;
+height: 12px;
+padding: 3px;
+border-radius: 5px;
+color: var(--text-main);
+background-color: var(--entity-home);
+stroke: currentColor;
+}
+
+.card-title-eyebrow__icon.dailyplan {
+background-color: var(--entity-dailyplan);
+}
+
+.card-title-eyebrow__icon.dpm {
+background-color: var(--entity-dpm);
+}
+
+.card-title-eyebrow__icon.meal {
+background-color: var(--entity-meal);
+}
+
+.card-title-eyebrow__icon.food {
+background-color: var(--entity-food);
+}
+
+.card-title-eyebrow__icon.program {
+background-color: var(--entity-program);
 }
 
 .card-title-comp h3 {
@@ -253,9 +283,6 @@ margin: 0;
 
 .card-title.main {
   padding-top: 6px;
-  padding-left: 4px;
-  padding-right: 4px;
-  margin-bottom: 24px;
 }
 
 
@@ -273,10 +300,6 @@ margin: 0;
   width: 34px;
 }
 
-
-.main-title.main-card {
-  margin-bottom: 6px;
-}
   
 }
 /* Food badges inside child-card titles */
