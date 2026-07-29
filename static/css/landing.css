@@ -1923,7 +1923,7 @@
   height: auto;
   display: block;
   border: 0;
-  border-radius: 0;
+  border-radius: 18px;
 }
 
 .system-node-icon .system-node-glyph,
@@ -1948,7 +1948,7 @@
   width: 100%;
   height: auto;
   display: block;
-  border-radius: 0;
+  border-radius: 18px;
 }
 
 #precision-impact,
@@ -2015,7 +2015,7 @@
   width: 100%;
   height: auto;
   display: block;
-  border-radius: 0;
+  border-radius: 18px;
 }
 
 @media (max-width: 700px) {
@@ -2259,7 +2259,7 @@
   width: 100%;
   height: auto;
   display: block;
-  border-radius: 0;
+  border-radius: 18px;
 }
 
 .landing-section--precision {
