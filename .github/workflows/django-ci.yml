@@ -2,11 +2,19 @@ name: Django CI
 
 on:
   pull_request:
+    paths-ignore:
+      - "core/templates/core/landing.html"
+      - "static/css/landing.css"
+      - "static/img/landing/**"
   push:
     branches:
       - staging
       - main
       - master
+    paths-ignore:
+      - "core/templates/core/landing.html"
+      - "static/css/landing.css"
+      - "static/img/landing/**"
 
 permissions:
   contents: read
