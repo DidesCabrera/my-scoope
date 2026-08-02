@@ -39,4 +39,3 @@ TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS = "create_nutrition_
 TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL = "iterate_nutrition_engine_dailyplan_proposal"
 TOOL_PREPARE_PRODUCT_ACTION = "prepare_product_action"
 TOOL_COMMIT_PREPARED_ACTION = "commit_prepared_action"
-

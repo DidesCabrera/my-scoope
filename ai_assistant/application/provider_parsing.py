@@ -158,5 +158,3 @@ def _coerce_requires_human_review(payload: Mapping[str, Any]) -> bool:
     if value is None:
         return True
     return bool(value)
-
-

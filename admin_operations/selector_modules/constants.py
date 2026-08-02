@@ -39,5 +39,3 @@ AI_OPERATIONAL_STATUSES = [
     AIUsageEvent.Status.ERROR,
     AIUsageEvent.Status.BLOCKED,
 ]
-
-
