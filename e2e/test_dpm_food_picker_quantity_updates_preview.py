@@ -1,5 +1,5 @@
-def test_dpm_food_picker_quantity_updates_preview(page):
-    page.goto("http://127.0.0.1:8000/app/dailyplans/122/meals/343/deepedit/")
+def test_dpm_food_picker_quantity_updates_preview(page, dpm_deepedit_url, ui_settle):
+    page.goto(dpm_deepedit_url)
     page.wait_for_load_state("networkidle")
 
     assert "/accounts/login/" not in page.url, f"Redirigido a login: {page.url}"
@@ -10,15 +10,15 @@ def test_dpm_food_picker_quantity_updates_preview(page):
     qty_kcal = page.locator("#qty-kcal")
 
     food_search.fill("Pechuga Pollo Cocida")
-    page.wait_for_timeout(700)
+    ui_settle(page)
 
     food_list.locator("li").first.click()
-    page.wait_for_timeout(700)
+    ui_settle(page)
 
     initial_kcal = qty_kcal.text_content()
 
     quantity_input.fill("250")
-    page.wait_for_timeout(700)
+    ui_settle(page)
 
     updated_kcal = qty_kcal.text_content()
 

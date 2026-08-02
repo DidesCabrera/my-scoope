@@ -19,6 +19,8 @@ class CiIntegrationContractTests(SimpleTestCase):
         self.assertIn("scripts/ci_fast_checks.sh", aggregate_script)
         self.assertIn("scripts/ci_django_full_suite.sh", aggregate_script)
         self.assertIn("scripts/check_repository_hygiene.sh", fast_script)
+        self.assertIn("scripts/check_frontend_debt.py", fast_script)
+        self.assertIn("scripts/check_e2e_contract.py", fast_script)
         self.assertIn("manage.py makemigrations --check --dry-run", fast_script)
 
     def test_ci_exposes_django_and_mcp_as_separate_quality_surfaces(self):
@@ -27,4 +29,5 @@ class CiIntegrationContractTests(SimpleTestCase):
         self.assertIn("django-fast:", workflow)
         self.assertIn("django-full:", workflow)
         self.assertIn("mcp:", workflow)
+        self.assertIn("browser-smoke:", workflow)
         self.assertIn("scripts/test_mcp.sh", workflow)

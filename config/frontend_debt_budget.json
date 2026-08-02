@@ -1,0 +1,12 @@
+{
+  "notas/static/notas/css/components/programs.css": {"max_lines": 2327, "max_important": 44},
+  "notas/static/notas/css/components/programs_charts.css": {"max_lines": 2603, "max_important": 39},
+  "notas/static/notas/css/components/programs_week_detail.css": {"max_lines": 374, "max_important": 3},
+  "notas/static/notas/css/components/home.css": {"max_lines": 3853, "max_important": 11},
+  "notas/static/notas/css/components/admin_operations.css": {"max_lines": 1579, "max_important": 0},
+  "notas/static/notas/css/components/admin_operations_food_detail.css": {"max_lines": 656, "max_important": 0},
+  "notas/static/notas/css/components/proposals.css": {"max_lines": 1345, "max_important": 0},
+  "notas/static/notas/css/components/food_picker.css": {"max_lines": 1298, "max_important": 0},
+  "notas/static/notas/css/components/data_grid.css": {"max_lines": 1034, "max_important": 4},
+  "static/css/landing.css": {"max_lines": 2560, "max_important": 11}
+}

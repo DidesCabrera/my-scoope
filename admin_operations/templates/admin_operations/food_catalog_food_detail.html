@@ -1,6 +1,9 @@
 {% extends "admin_operations/base.html" %}
 {% load static %}
 {% block title %}{{ vm.content.display_name }}{% endblock %}
+{% block extra_styles %}
+  <link rel="stylesheet" href="{% static 'notas/css/components/admin_operations_food_detail.css' %}">
+{% endblock %}
 {% block content %}
 <div class="page admin-analytics-page admin-operations-page admin-operations-food-detail-page">
   <a class="admin-operations-back-link" href="{% url 'admin_operations_food_catalog' %}">

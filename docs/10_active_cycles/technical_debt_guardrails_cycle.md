@@ -122,12 +122,18 @@ Operations suites plus representative meal-query and proposal-validator suites,
 removing 135 net lines of repeated setup. The 77 selected tests and the 78-test fast
 gate pass; the complete suite remains an independent required surface.
 
-### TDG07 — Frontend debt containment — planned
+### TDG07 — Frontend debt containment — completed
 
 - Establish no-growth budgets for `!important` and oversized feature stylesheets.
 - Split Admin Operations and Programs styles along owned component boundaries.
 - Replace browser sleeps and persisted local auth state with observable conditions
   and deterministic setup.
+
+Repository evidence: ten critical stylesheets have executable no-growth ceilings;
+Admin Operations and Programs are split along Food detail/chart/week-detail
+boundaries. The 27 browser scenarios collect with the declared clean runtime and
+contain no fixed app IDs, sleeps or persisted auth state. The live anonymous Chromium
+smoke passes and has a dedicated CI job.
 
 ### TDG08 — Transition and closure evidence — planned
 

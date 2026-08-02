@@ -13,4 +13,7 @@ if ! "${PYTHON_BIN}" -c "import pytest, playwright" >/dev/null 2>&1; then
 fi
 
 export MYSCOOPE_E2E_BASE_URL="${MYSCOOPE_E2E_BASE_URL:-http://127.0.0.1:8000}"
-"${PYTHON_BIN}" -m pytest e2e "$@"
+if [[ "$#" -eq 0 ]]; then
+  set -- e2e
+fi
+"${PYTHON_BIN}" -m pytest "$@"

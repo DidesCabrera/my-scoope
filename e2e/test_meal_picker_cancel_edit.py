@@ -1,5 +1,5 @@
-def test_meal_picker_cancel_edit_restores_add_mode(page):
-    page.goto("http://127.0.0.1:8000/app/dailyplans/122/edit/")
+def test_meal_picker_cancel_edit_restores_add_mode(page, dailyplan_edit_url, dailyplan_id):
+    page.goto(dailyplan_edit_url)
     page.wait_for_load_state("networkidle")
 
     assert "/accounts/login/" not in page.url, f"Redirigido a login: {page.url}"
@@ -40,7 +40,7 @@ def test_meal_picker_cancel_edit_restores_add_mode(page):
 
     action_after_cancel = form_preview.get_attribute("action")
     assert action_after_cancel is not None
-    assert action_after_cancel.endswith("/app/dailyplans/122/add-meal/"), (
+    assert action_after_cancel.endswith(f"/app/dailyplans/{dailyplan_id}/add-meal/"), (
         f"El form.action no volvió al add action. "
         f"Obtenido={action_after_cancel}"
     )

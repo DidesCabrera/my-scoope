@@ -1,13 +1,21 @@
 import os
-from pathlib import Path
 
 import pytest
+from playwright.sync_api import expect
 
 
-DEFAULT_STATE_FILE = Path("e2e/auth/state.json")
+def _required_positive_int(name: str) -> int:
+    raw_value = os.environ.get(name, "").strip()
+    try:
+        value = int(raw_value)
+    except (TypeError, ValueError):
+        value = 0
+    if value <= 0:
+        pytest.skip(f"Set {name} to a deterministic fixture ID for this browser scenario.")
+    return value
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def base_url():
     return os.environ.get("MYSCOOPE_E2E_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
 
@@ -22,28 +30,63 @@ def login_credentials():
 
 
 @pytest.fixture
-def auth_state_file() -> Path:
-    configured = os.environ.get("MYSCOOPE_E2E_AUTH_STATE_FILE", "").strip()
-    return Path(configured) if configured else DEFAULT_STATE_FILE
+def meal_id():
+    return _required_positive_int("MYSCOOPE_E2E_MEAL_ID")
 
 
 @pytest.fixture
-def context(browser, request, auth_state_file):
-    test_file = str(request.node.fspath)
+def dailyplan_id():
+    return _required_positive_int("MYSCOOPE_E2E_DAILYPLAN_ID")
 
-    # El test de login debe correr sin sesión previa
-    if "test_login_and_save_state.py" in test_file:
-        context = browser.new_context()
-        yield context
-        context.close()
-        return
 
-    if not auth_state_file.exists():
-        pytest.fail(
-            f"Falta {auth_state_file}. Primero corre el test de login para guardar la sesión."
+@pytest.fixture
+def dailyplan_meal_id():
+    return _required_positive_int("MYSCOOPE_E2E_DAILYPLAN_MEAL_ID")
+
+
+@pytest.fixture
+def meal_edit_url(base_url, meal_id):
+    return f"{base_url}/app/meals/{meal_id}/edit/"
+
+
+@pytest.fixture
+def dailyplan_edit_url(base_url, dailyplan_id):
+    return f"{base_url}/app/dailyplans/{dailyplan_id}/edit/"
+
+
+@pytest.fixture
+def dpm_deepedit_url(base_url, dailyplan_id, dailyplan_meal_id):
+    return f"{base_url}/app/dailyplans/{dailyplan_id}/meals/{dailyplan_meal_id}/deepedit/"
+
+
+@pytest.fixture
+def ui_settle():
+    def settle(page):
+        page.wait_for_function(
+            "document.readyState === 'complete' && !document.querySelector('[aria-busy=true]')"
+        )
+        page.evaluate(
+            "() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))"
         )
 
-    context = browser.new_context(storage_state=str(auth_state_file))
+    return settle
+
+
+def _login(context, *, base_url, credentials):
+    login, password = credentials
+    login_page = context.new_page()
+    login_page.goto(f"{base_url}/accounts/login/")
+    login_page.locator('input[name="login"]').fill(login)
+    login_page.locator('input[name="password"]').fill(password)
+    login_page.get_by_role("button").click()
+    expect(login_page).not_to_have_url(f"{base_url}/accounts/login/")
+    login_page.close()
+
+
+@pytest.fixture
+def context(browser, base_url, login_credentials):
+    context = browser.new_context()
+    _login(context, base_url=base_url, credentials=login_credentials)
     yield context
     context.close()
 
@@ -53,3 +96,11 @@ def page(context):
     page = context.new_page()
     yield page
     page.close()
+
+
+@pytest.fixture
+def anonymous_page(browser):
+    context = browser.new_context()
+    page = context.new_page()
+    yield page
+    context.close()

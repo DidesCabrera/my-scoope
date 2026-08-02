@@ -194,9 +194,10 @@ scripts/test_mcp.sh                MCP contract and protocol suite
 scripts/test_e2e.sh                browser suite against an already running server
 ```
 
-MCP is a required GitHub Actions job. Browser automation remains manual until its
-historical fixed object IDs and auth-state assumptions are replaced with deterministic
-setup; its dependencies live in `e2e/requirements.txt`, never runtime requirements.
+MCP and the anonymous browser smoke are required GitHub Actions jobs. Seeded browser
+scenarios remain local/staging evidence and receive base URL, credentials and object
+IDs through the environment; they never persist auth state. Browser dependencies
+live in `e2e/requirements.txt`, never runtime requirements.
 
 Do not classify redirects from a raw `python manage.py test` invocation as CI regressions until the repository's explicit test environment has been applied. The script preserves production defaults in production while making the historical suite deterministic.
 

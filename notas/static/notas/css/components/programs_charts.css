@@ -1,0 +1,2603 @@
+/* == Program KPI range dash ========================= */
+
+.program-card__main {
+  align-items: flex-start;
+}
+
+.program-card__kpi-range {
+  flex: 0 1 0px;
+  min-width: min(100%, 440px);
+  max-width: 620px;
+}
+
+.program-main-kpi-range {
+  margin: 0 0 1rem;
+  width: 100%;
+}
+
+@media (max-width: 980px) {
+  .program-card__main {
+    flex-direction: column;
+  }
+
+  .program-card__kpi-range,
+  .program-main-kpi-range {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+}
+
+/* Program chart compact refinements ======================= */
+.program-chart-panel {
+  gap: 0.55rem;
+}
+
+.program-chart-panel__header {
+  display: none !important;
+}
+
+.program-chart-main-axis {
+  --program-chart-days: 7;
+  --program-chart-weeks: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+
+.program-chart-plot {
+  grid-template-columns: repeat(var(--program-chart-days), minmax(12px, 1fr));
+  gap: 0px;
+  min-width: max(100%, calc(var(--program-chart-days) * 14px));
+  padding-inline: 0.35rem;
+}
+
+.program-chart-week-axis {
+  min-width: max(100%, calc(var(--program-chart-days) * 14px));
+}
+
+.program-chart-bar,
+.program-chart-stacked-bar,
+.program-chart-panel--card .program-chart-bar,
+.program-chart-panel--card .program-chart-stacked-bar {
+  width: 80%;
+  max-width: none;
+}
+
+.program-chart-bar-slot {
+  padding-inline: 0;
+}
+
+.program-chart-guide {
+  left: 0.35rem;
+  right: 0.35rem;
+  background: color-mix(in srgb, var(--border-default) 42%, transparent);
+}
+
+@media (max-width: 780px) {
+  .page--program-detail .program-main-kpi-range {
+    margin-bottom: 0.25rem;
+  }
+
+  .page--program-detail .program-main-kpi-range + h2 {
+    margin-top: 0.35rem;
+    margin-bottom: 0.45rem;
+  }
+
+  .program-chart-panel--detail {
+    margin-top: 0;
+  }
+}
+
+/* Weekly cards: title + dash KPI ================================== */
+.program-week-child-card__dash-kpi {
+  flex: 1 1 520px;
+  max-width: 640px;
+  min-width: 360px;
+  margin-left: auto;
+}
+
+.program-week-child-card__dash-kpi .dash-kpi-range--week-card {
+  width: 100%;
+}
+
+.dash-kpi-range--week-card .tot {
+  flex-basis: 84px;
+}
+
+.dash-kpi-range--week-card .tot h2 {
+  font-size: 1.48rem;
+}
+
+.dash-kpi-range--week-card .tot p {
+  font-size: 0.68rem;
+}
+
+.dash-kpi-range--week-card .dash-kpi-range__row {
+  grid-template-columns: 52px minmax(64px, 82px) minmax(64px, 82px) minmax(92px, 1fr);
+}
+
+.dash-kpi-range--week-card .kpi-label,
+.dash-kpi-range--week-card .dash-kpi-range__grams,
+.dash-kpi-range--week-card .dash-kpi-range__ppk,
+.dash-kpi-range--week-card .dash-kpi-range__alloc-bar .alloc-pct {
+  font-size: 0.68rem;
+}
+
+.dash-kpi-range--week-card .dash-kpi-range__alloc-bar {
+  grid-template-columns: 52px minmax(0, 1fr);
+}
+
+@media (max-width: 980px) {
+  .program-week-child-card__header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .program-week-child-card__dash-kpi {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    margin-left: 0;
+  }
+}
+
+/* Weekly chart values ================================== */
+.program-chart-bar,
+.program-chart-stacked-bar {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.program-chart-stacked-bar {
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+.program-chart-bar-value {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  padding: 0 2px;
+  color: var(--text-inverted);
+  font-size: 0.8rem;
+  font-weight: 850;
+  line-height: 1;
+  text-align: center;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  pointer-events: none;
+}
+
+.program-chart-panel--week .program-chart-bar,
+.program-chart-panel--week .program-chart-stacked-bar {
+  width: min(100%, 28px);
+}
+
+.program-chart-panel--week .program-chart-plot {
+  height: 166px;
+}
+
+.program-chart-panel--week .program-chart-bar-slot.is-empty .program-chart-bar-value {
+  display: none;
+}
+
+@media (min-width: 981px) {
+  .program-chart-panel--week .program-chart-bar-value {
+    font-size: 0.62rem;
+  }
+}
+
+
+/* Program week card refinements ================================== */
+.program-week-child-card__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);
+  align-items: start;
+  gap: 0.85rem;
+}
+
+.program-week-child-card__title-comp {
+  width: auto;
+  min-width: 0;
+}
+
+.program-week-child-card__dash-kpi {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  margin-left: 0;
+}
+
+.program-chart-panel--week .program-chart-bar,
+.program-chart-panel--week .program-chart-stacked-bar {
+  width: 80%;
+  max-width: none;
+}
+
+.program-chart-panel--week .program-chart-bar-value {
+  writing-mode: horizontal-tb;
+  transform: none;
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: -0.02em;
+}
+
+.program-chart-panel--week .program-chart-week-axis {
+  grid-template-columns: repeat(var(--program-chart-weeks), minmax(0, 1fr));
+  color: var(--text-muted);
+  font-size: 0.62rem;
+  font-weight: 850;
+  text-transform: none;
+}
+
+.program-chart-panel--week .program-chart-week-axis span {
+  overflow: hidden;
+  padding-top: 0.22rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 980px) {
+  .program-week-child-card__header {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 780px) {
+  .program-chart-panel--week .program-chart-bar-value {
+    font-size: 0.70rem;
+  }
+
+  .program-chart-panel--week .program-chart-week-axis {
+    font-size: 0.54rem;
+  }
+}
+
+/* Program chart refinements: tabs, calories color, stacked values ============ */
+.program-chart-panel {
+  --program-chart-calories-color: #7b5b39;
+}
+
+.program-chart-tabs {
+  width: fit-content;
+  gap: 6px;
+  align-self: flex-start;
+}
+
+.program-chart-tab {
+  height: 24px;
+  min-height: 24px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 450;
+  line-height: 1;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+
+.program-chart-stacked-bar__segment {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.program-chart-segment-value {
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  padding: 0 2px;
+  color: var(--text-inverted);
+  font-size: 0.54rem;
+  font-weight: 850;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 1px 2px color-mix(in srgb, #000 64%, transparent);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.program-chart-panel--week .program-chart-segment-value {
+  font-size: 0.56rem;
+}
+
+@media (max-width: 780px) {
+  .program-chart-panel--week .program-chart-week-axis span {
+    font-size: 0;
+  }
+
+  .program-chart-tab {
+    height: 30px;
+    margin-bottom: 2px;
+  }
+
+  .program-chart-panel--week .program-chart-week-axis span::after {
+    content: attr(data-mobile-label);
+    font-size: 0.58rem;
+  }
+
+  .program-chart-segment-value,
+  .program-chart-panel--week .program-chart-segment-value {
+    font-size: 0.46rem;
+  }
+}
+
+/* Program chart alignment and compact week viewport ======================= */
+.program-chart-panel {
+  background: var(--surface-card-muted);
+}
+
+.program-chart-main-axis {
+  --program-chart-visible-weeks: 4;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.program-chart-plot,
+.program-chart-week-axis {
+  box-sizing: border-box;
+  min-width: max(100%, var(--program-chart-min-width, 100%));
+}
+
+.program-chart-plot {
+  padding-inline: 0.35rem;
+  background:
+    linear-gradient(to top, color-mix(in srgb, var(--border-default) 42%, transparent) 1px, transparent 1px) 0 0 / 100% 25%,
+    var(--surface-card);
+}
+
+.program-chart-week-axis {
+  padding-inline: 0.35rem;
+}
+
+.program-chart-panel--week .program-chart-plot,
+.program-chart-panel--week .program-chart-week-axis {
+  min-width: 100%;
+}
+
+.program-chart-panel--card .program-chart-main-axis,
+.program-chart-panel--detail .program-chart-main-axis {
+  --program-chart-visible-weeks: 4;
+}
+
+/* Program list cards should keep week panels collapsed by default. */
+.card--program .program-card-panels:not([data-default-desktop]):not([data-default-mobile]) .btn-desplegar,
+.card--program .program-card-panels:not([data-default-desktop]):not([data-default-mobile]) .btn-desplegar-mobile {
+  cursor: pointer;
+}
+
+/* Program week panel macro grams use the system main text color. */
+.data-grid--program-weeks .program-week-table__macro--protein,
+.data-grid--program-weeks .program-week-table__macro--carbs,
+.data-grid--program-weeks .program-week-table__macro--fat,
+.data-grid--program-weeks-mobile .program-week-table__macro--protein,
+.data-grid--program-weeks-mobile .program-week-table__macro--carbs,
+.data-grid--program-weeks-mobile .program-week-table__macro--fat {
+  color: var(--text-main);
+  font-weight: 450;
+}
+
+/* Program charts: week-oriented rendering rules =========================== */
+.program-chart-panel {
+  --program-chart-max-visible-weeks: 4;
+}
+
+.program-chart-plot,
+.program-chart-week-axis {
+  width: var(--program-chart-min-width, 100%);
+  min-width: var(--program-chart-min-width, 100%);
+}
+
+.program-chart-plot {
+  background:
+    linear-gradient(to top, color-mix(in srgb, var(--border-default) 42%, transparent) 1px, transparent 1px) 0 0 / 100% 25%,
+    var(--surface-card);
+}
+
+.program-chart-plot--program {
+  grid-template-columns: repeat(var(--program-chart-weeks), minmax(0, 1fr));
+  align-items: stretch;
+  padding-inline: 0;
+}
+
+.program-chart-week-column {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(3px, 1fr));
+  align-items: end;
+  height: 100%;
+  min-width: 0;
+  border-left: 2px solid color-mix(in srgb, var(--entity-program) 34%, transparent);
+}
+
+.program-chart-week-column:first-of-type {
+  border-left-color: transparent;
+}
+
+.program-chart-plot--program .program-chart-bar-slot.is-week-start {
+  border-left: 0;
+}
+
+.program-chart-plot--program .program-chart-bar-slot,
+.program-chart-plot--week .program-chart-bar-slot {
+  padding-inline: clamp(0.03rem, 0.3vw, 0.14rem);
+}
+
+.program-chart-week-axis {
+  grid-template-columns: repeat(var(--program-chart-axis-count, var(--program-chart-weeks)), minmax(0, 1fr));
+  width: var(--program-chart-min-width, 100%);
+  min-width: var(--program-chart-min-width, 100%);
+  padding-inline: 0.35rem;
+}
+
+.program-chart-week-axis--program span {
+  border-left: 2px solid color-mix(in srgb, var(--entity-program) 34%, transparent);
+}
+
+.program-chart-week-axis--program span:first-child {
+  border-left-color: transparent;
+}
+
+.program-chart-week-axis--week {
+  padding-inline: 0.35rem;
+}
+
+.program-chart-week-axis--week span {
+  border-left-color: transparent;
+}
+
+.program-chart-main-axis--program[data-weeks-count="1"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="1"] .program-chart-stacked-bar,
+.program-chart-main-axis--program[data-weeks-count="2"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="2"] .program-chart-stacked-bar,
+.program-chart-main-axis--program[data-weeks-count="3"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="3"] .program-chart-stacked-bar,
+.program-chart-main-axis--program[data-weeks-count="4"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="4"] .program-chart-stacked-bar {
+  width: min(80%, 22px);
+}
+
+.program-chart-main-axis--program[data-weeks-count="1"] .program-chart-week-column {
+  padding-inline: clamp(0.45rem, 4vw, 2rem);
+}
+
+.program-chart-main-axis--program[data-weeks-count="2"] .program-chart-week-column {
+  padding-inline: clamp(0.22rem, 2vw, 1rem);
+}
+
+.program-chart-main-axis--program[data-weeks-count="3"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="4"] .program-chart-week-column {
+  padding-inline: clamp(0.06rem, 0.9vw, 0.15rem);
+}
+
+.program-chart-main-axis--program[data-weeks-count="5"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="6"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="7"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="8"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="9"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="10"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="11"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="12"] .program-chart-week-column {
+  padding-inline: 0.03rem;
+}
+
+@media (max-width: 780px) {
+  .program-chart-week-axis--program span {
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .program-chart-week-axis--program span::after {
+    content: none;
+  }
+
+  .program-chart-main-axis--program[data-weeks-count="1"] .program-chart-week-column {
+    padding-inline: 0.35rem;
+  }
+
+  .program-chart-main-axis--program[data-weeks-count="2"] .program-chart-week-column,
+  .program-chart-main-axis--program[data-weeks-count="3"] .program-chart-week-column,
+  .program-chart-main-axis--program[data-weeks-count="4"] .program-chart-week-column {
+    padding-inline: 0.04rem;
+  }
+}
+
+/* Program chart geometry correction: fixed day tracks and structural week gaps ===== */
+.program-chart-panel {
+  --program-chart-week-gap: 0;
+  --program-chart-day-min: 3px;
+}
+
+.program-chart-main-axis--program {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.program-chart-main-axis--program .program-chart-plot,
+.program-chart-main-axis--program .program-chart-week-axis {
+  box-sizing: border-box;
+  width: var(--program-chart-min-width, 100%);
+  min-width: var(--program-chart-min-width, 100%);
+  padding-inline: 0.35rem;
+}
+
+.program-chart-main-axis--program .program-chart-plot {
+  display: grid;
+  grid-template-columns: repeat(var(--program-chart-weeks), minmax(0, 1fr));
+  column-gap: 0;
+  align-items: stretch;
+  background:
+    linear-gradient(to top, color-mix(in srgb, var(--border-default) 42%, transparent) 1px, transparent 1px) 0 0 / 100% 25%,
+    var(--surface-card);
+}
+
+.program-chart-main-axis--program .program-chart-week-column {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(var(--program-chart-day-min), 1fr));
+  column-gap: 0;
+  align-items: end;
+  height: 100%;
+  min-width: 0;
+  padding-inline: 0;
+  border-left: 1px solid color-mix(in srgb, var(--border-default) 62%, transparent);
+  border-right: 1px solid color-mix(in srgb, var(--border-default) 62%, transparent);
+}
+
+.program-chart-main-axis--program .program-chart-week-column:first-of-type {
+  border-left: 0;
+}
+
+.program-chart-main-axis--program .program-chart-week-column:last-of-type {
+  border-right: 0;
+}
+
+.program-chart-main-axis--program .program-chart-bar-slot {
+  padding-inline: 0;
+  border-left: 0;
+}
+
+.program-chart-main-axis--program .program-chart-bar-slot.is-week-start {
+  border-left: 0;
+}
+
+.program-chart-main-axis--program .program-chart-bar,
+.program-chart-main-axis--program .program-chart-stacked-bar,
+.program-chart-main-axis--program[data-weeks-count="1"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="1"] .program-chart-stacked-bar,
+.program-chart-main-axis--program[data-weeks-count="2"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="2"] .program-chart-stacked-bar,
+.program-chart-main-axis--program[data-weeks-count="3"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="3"] .program-chart-stacked-bar,
+.program-chart-main-axis--program[data-weeks-count="4"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="4"] .program-chart-stacked-bar {
+  width: 80%;
+  max-width: none;
+}
+
+.program-chart-main-axis--program .program-chart-week-axis {
+  display: grid;
+  grid-template-columns: repeat(var(--program-chart-weeks), minmax(0, 1fr));
+  column-gap: 0;
+}
+
+.program-chart-main-axis--program .program-chart-week-axis span {
+  display: block;
+  min-width: 0;
+  padding-top: 0.18rem;
+  border-left: 1px solid color-mix(in srgb, var(--border-default) 62%, transparent);
+  border-right: 1px solid color-mix(in srgb, var(--border-default) 62%, transparent);
+  text-align: center;
+}
+
+.program-chart-main-axis--program .program-chart-week-axis span:first-child {
+  border-left: 0;
+}
+
+.program-chart-main-axis--program .program-chart-week-axis span:last-child {
+  border-right: 0;
+}
+
+.program-chart-main-axis--program[data-weeks-count="1"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="2"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="3"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="4"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="5"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="6"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="7"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="8"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="9"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="10"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="11"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="12"] .program-chart-week-column {
+  padding-inline: 0;
+}
+
+@media (max-width: 780px) {
+  .program-chart-panel {
+    --program-chart-week-gap: 0;
+  }
+
+  .program-chart-main-axis--program .program-chart-plot,
+  .program-chart-main-axis--program .program-chart-week-axis {
+    padding-inline: 0.28rem;
+  }
+
+  .program-chart-main-axis--program[data-weeks-count="1"] .program-chart-week-column,
+  .program-chart-main-axis--program[data-weeks-count="2"] .program-chart-week-column,
+  .program-chart-main-axis--program[data-weeks-count="3"] .program-chart-week-column,
+  .program-chart-main-axis--program[data-weeks-count="4"] .program-chart-week-column {
+    padding-inline: 0;
+  }
+}
+
+/* Program chart geometry: fixed bar/margin values, flexible week padding ======= */
+.program-chart-main-axis--program {
+  --program-chart-bar-width: 18px;
+  --program-chart-day-margin: 3px;
+  --program-chart-day-space: 24px;
+  --program-chart-week-content-width: 168px;
+  --program-chart-week-padding: max(0px, calc((100% - var(--program-chart-week-content-width)) / 2));
+}
+
+.program-chart-main-axis--program[data-weeks-count="1"] {
+  --program-chart-bar-width: 24px;
+  --program-chart-day-margin: 8px;
+  --program-chart-day-space: 40px;
+  --program-chart-week-content-width: 280px;
+}
+
+.program-chart-main-axis--program[data-weeks-count="2"] {
+  --program-chart-bar-width: 22px;
+  --program-chart-day-margin: 6px;
+  --program-chart-day-space: 34px;
+  --program-chart-week-content-width: 238px;
+}
+
+.program-chart-main-axis--program[data-weeks-count="3"] {
+  --program-chart-bar-width: 20px;
+  --program-chart-day-margin: 4px;
+  --program-chart-day-space: 28px;
+  --program-chart-week-content-width: 196px;
+}
+
+.program-chart-main-axis--program[data-weeks-count="4"],
+.program-chart-main-axis--program[data-weeks-count="5"],
+.program-chart-main-axis--program[data-weeks-count="6"],
+.program-chart-main-axis--program[data-weeks-count="7"],
+.program-chart-main-axis--program[data-weeks-count="8"],
+.program-chart-main-axis--program[data-weeks-count="9"],
+.program-chart-main-axis--program[data-weeks-count="10"],
+.program-chart-main-axis--program[data-weeks-count="11"],
+.program-chart-main-axis--program[data-weeks-count="12"] {
+  --program-chart-bar-width: 18px;
+  --program-chart-day-margin: 3px;
+  --program-chart-day-space: 24px;
+  --program-chart-week-content-width: 168px;
+}
+
+.program-chart-main-axis--program .program-chart-plot {
+  column-gap: 0;
+  background:
+    linear-gradient(to top, color-mix(in srgb, var(--border-default) 42%, transparent) 1px, transparent 1px) 0 0 / 100% 25%,
+    var(--surface-card);
+}
+
+.program-chart-main-axis--program .program-chart-week-column {
+  grid-template-columns: repeat(7, var(--program-chart-day-space));
+  justify-content: start;
+  box-sizing: border-box;
+  padding-left: var(--program-chart-week-padding);
+  padding-right: var(--program-chart-week-padding);
+  column-gap: 0;
+  border-left: 1px solid color-mix(in srgb, var(--border-default) 68%, transparent);
+  border-right: 1px solid color-mix(in srgb, var(--border-default) 68%, transparent);
+}
+
+.program-chart-main-axis--program .program-chart-week-column:first-of-type {
+  border-left: 0;
+}
+
+.program-chart-main-axis--program .program-chart-week-column:last-of-type {
+  border-right: 0;
+}
+
+.program-chart-main-axis--program .program-chart-bar-slot {
+  width: var(--program-chart-day-space);
+  min-width: var(--program-chart-day-space);
+  max-width: var(--program-chart-day-space);
+  box-sizing: border-box;
+  padding-left: var(--program-chart-day-margin);
+  padding-right: var(--program-chart-day-margin);
+}
+
+.program-chart-main-axis--program .program-chart-bar,
+.program-chart-main-axis--program .program-chart-stacked-bar,
+.program-chart-main-axis--program[data-weeks-count="1"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="1"] .program-chart-stacked-bar,
+.program-chart-main-axis--program[data-weeks-count="2"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="2"] .program-chart-stacked-bar,
+.program-chart-main-axis--program[data-weeks-count="3"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="3"] .program-chart-stacked-bar,
+.program-chart-main-axis--program[data-weeks-count="4"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="4"] .program-chart-stacked-bar {
+  width: var(--program-chart-bar-width);
+  min-width: var(--program-chart-bar-width);
+  max-width: var(--program-chart-bar-width);
+}
+
+.program-chart-main-axis--program .program-chart-week-axis {
+  column-gap: 0;
+}
+
+.program-chart-main-axis--program .program-chart-week-axis span {
+  box-sizing: border-box;
+  border-left: 1px solid color-mix(in srgb, var(--border-default) 68%, transparent);
+  border-right: 1px solid color-mix(in srgb, var(--border-default) 68%, transparent);
+}
+
+.program-chart-main-axis--program .program-chart-week-axis span:first-child {
+  border-left: 0;
+}
+
+.program-chart-main-axis--program .program-chart-week-axis span:last-child {
+  border-right: 0;
+}
+
+
+@media (max-width: 780px) {
+  .program-chart-main-axis--program[data-weeks-count="1"] {
+    --program-chart-bar-width: 22px;
+    --program-chart-day-margin: 6px;
+    --program-chart-day-space: 34px;
+    --program-chart-week-content-width: 238px;
+  }
+
+  .program-chart-main-axis--program[data-weeks-count="2"] {
+    --program-chart-bar-width: 16px;
+    --program-chart-day-margin: 3px;
+    --program-chart-day-space: 22px;
+    --program-chart-week-content-width: 154px;
+  }
+
+  .program-chart-main-axis--program[data-weeks-count="3"] {
+    --program-chart-bar-width: 10px;
+    --program-chart-day-margin: 2px;
+    --program-chart-day-space: 14px;
+    --program-chart-week-content-width: 98px;
+  }
+
+  .program-chart-main-axis--program[data-weeks-count="4"],
+  .program-chart-main-axis--program[data-weeks-count="5"],
+  .program-chart-main-axis--program[data-weeks-count="6"],
+  .program-chart-main-axis--program[data-weeks-count="7"],
+  .program-chart-main-axis--program[data-weeks-count="8"],
+  .program-chart-main-axis--program[data-weeks-count="9"],
+  .program-chart-main-axis--program[data-weeks-count="10"],
+  .program-chart-main-axis--program[data-weeks-count="11"],
+  .program-chart-main-axis--program[data-weeks-count="12"] {
+    --program-chart-bar-width: 7px;
+    --program-chart-day-margin: 1.5px;
+    --program-chart-day-space: 10px;
+    --program-chart-week-content-width: 70px;
+  }
+}
+
+/* Program chart geometry correction: fill available week width =================
+   The program chart is daily, but weeks are the visual unit. For 1-4 weeks, each
+   week uses an equal fraction of the available plot width. From week 5 onward,
+   the same 4-week viewport rule applies through --program-chart-min-width.
+   Margins are controlled per visible week count, while bar width derives from
+   the actual day track so the grouped weeks occupy the available card width. */
+.program-chart-main-axis--program {
+  --program-chart-day-margin: 3px;
+  --program-chart-week-padding: clamp(0.2rem, 0.8vw, 0.45rem);
+}
+
+.program-chart-main-axis--program[data-weeks-count="1"] {
+  --program-chart-day-margin: clamp(7px, 1.3vw, 12px);
+  --program-chart-week-padding: clamp(0.45rem, 1.6vw, 1.25rem);
+}
+
+.program-chart-main-axis--program[data-weeks-count="2"] {
+  --program-chart-day-margin: clamp(5px, 0.9vw, 9px);
+  --program-chart-week-padding: clamp(0.32rem, 1.1vw, 0.85rem);
+}
+
+.program-chart-main-axis--program[data-weeks-count="3"] {
+  --program-chart-day-margin: clamp(3px, 0.65vw, 6px);
+  --program-chart-week-padding: clamp(0.22rem, 0.75vw, 0.55rem);
+}
+
+.program-chart-main-axis--program[data-weeks-count="4"],
+.program-chart-main-axis--program[data-weeks-count="5"],
+.program-chart-main-axis--program[data-weeks-count="6"],
+.program-chart-main-axis--program[data-weeks-count="7"],
+.program-chart-main-axis--program[data-weeks-count="8"],
+.program-chart-main-axis--program[data-weeks-count="9"],
+.program-chart-main-axis--program[data-weeks-count="10"],
+.program-chart-main-axis--program[data-weeks-count="11"],
+.program-chart-main-axis--program[data-weeks-count="12"] {
+  --program-chart-day-margin: clamp(2px, 0.45vw, 4px);
+  --program-chart-week-padding: clamp(0.12rem, 0.45vw, 0.35rem);
+}
+
+.program-chart-main-axis--program .program-chart-plot {
+  grid-template-columns: repeat(var(--program-chart-weeks), minmax(0, 1fr));
+  column-gap: 0;
+  background:
+    linear-gradient(to top, color-mix(in srgb, var(--border-default) 42%, transparent) 1px, transparent 1px) 0 0 / 100% 25%,
+    var(--surface-card);
+}
+
+.program-chart-main-axis--program .program-chart-week-column {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  column-gap: 0;
+  justify-content: stretch;
+  box-sizing: border-box;
+  min-width: 0;
+  padding-left: var(--program-chart-week-padding);
+  padding-right: var(--program-chart-week-padding);
+  border-left: 1px solid color-mix(in srgb, var(--border-default) 68%, transparent);
+  border-right: 1px solid color-mix(in srgb, var(--border-default) 68%, transparent);
+}
+
+.program-chart-main-axis--program .program-chart-week-column:first-of-type {
+  border-left: 0;
+}
+
+.program-chart-main-axis--program .program-chart-week-column:last-of-type {
+  border-right: 0;
+}
+
+.program-chart-main-axis--program .program-chart-bar-slot {
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  box-sizing: border-box;
+  padding-left: var(--program-chart-day-margin);
+  padding-right: var(--program-chart-day-margin);
+}
+
+.program-chart-main-axis--program .program-chart-bar,
+.program-chart-main-axis--program .program-chart-stacked-bar,
+.program-chart-main-axis--program[data-weeks-count="1"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="1"] .program-chart-stacked-bar,
+.program-chart-main-axis--program[data-weeks-count="2"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="2"] .program-chart-stacked-bar,
+.program-chart-main-axis--program[data-weeks-count="3"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="3"] .program-chart-stacked-bar,
+.program-chart-main-axis--program[data-weeks-count="4"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="4"] .program-chart-stacked-bar {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+
+.program-chart-main-axis--program .program-chart-week-axis {
+  grid-template-columns: repeat(var(--program-chart-weeks), minmax(0, 1fr));
+  column-gap: 0;
+}
+
+.program-chart-main-axis--program .program-chart-week-axis span {
+  box-sizing: border-box;
+  border-left: 1px solid color-mix(in srgb, var(--border-default) 68%, transparent);
+  border-right: 1px solid color-mix(in srgb, var(--border-default) 68%, transparent);
+}
+
+.program-chart-main-axis--program .program-chart-week-axis span:first-child {
+  border-left: 0;
+}
+
+.program-chart-main-axis--program .program-chart-week-axis span:last-child {
+  border-right: 0;
+}
+
+.program-chart-plot--calories .program-chart-bar {
+  background: #9e724354;
+}
+
+@media (max-width: 780px) {
+  .program-chart-main-axis--program[data-weeks-count="1"] {
+    --program-chart-day-margin: clamp(5px, 1.4vw, 9px);
+    --program-chart-week-padding: clamp(0.35rem, 1.4vw, 0.85rem);
+  }
+
+  .program-chart-main-axis--program[data-weeks-count="2"] {
+    --program-chart-day-margin: clamp(3px, 0.9vw, 6px);
+    --program-chart-week-padding: clamp(0.22rem, 0.9vw, 0.55rem);
+  }
+
+  .program-chart-main-axis--program[data-weeks-count="3"] {
+    --program-chart-day-margin: clamp(2px, 0.6vw, 4px);
+    --program-chart-week-padding: clamp(0.14rem, 0.55vw, 0.32rem);
+  }
+
+  .program-chart-main-axis--program[data-weeks-count="4"],
+  .program-chart-main-axis--program[data-weeks-count="5"],
+  .program-chart-main-axis--program[data-weeks-count="6"],
+  .program-chart-main-axis--program[data-weeks-count="7"],
+  .program-chart-main-axis--program[data-weeks-count="8"],
+  .program-chart-main-axis--program[data-weeks-count="9"],
+  .program-chart-main-axis--program[data-weeks-count="10"],
+  .program-chart-main-axis--program[data-weeks-count="11"],
+  .program-chart-main-axis--program[data-weeks-count="12"] {
+    --program-chart-day-margin: clamp(1px, 0.35vw, 2px);
+    --program-chart-week-padding: clamp(0.08rem, 0.35vw, 0.18rem);
+  }
+}
+
+/* Program week chart axis correction =========================================
+   Week charts show 7 daily bars, so their X axis must use the day axis count,
+   not the single-week count. Labels are initials in both desktop and mobile. */
+.program-chart-main-axis--week .program-chart-week-axis {
+  display: grid;
+  grid-template-columns: repeat(var(--program-chart-axis-count, 7), minmax(0, 1fr));
+  width: 100%;
+  min-width: 100%;
+  padding-inline: 0.35rem;
+}
+
+.program-chart-main-axis--week .program-chart-week-axis span {
+  min-width: 0;
+  padding-top: 0.22rem;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: clip;
+  white-space: nowrap;
+  border-left: 0;
+  border-right: 0;
+}
+
+/* Program chart and card layout corrections =============================== */
+.program-chart-bar,
+.program-chart-stacked-bar {
+  box-sizing: border-box;
+  opacity: 1;
+  border-style: solid;
+  border-width: 2px 2px 0;
+}
+
+.program-chart-bar {
+  border-color: color-mix(in srgb, var(--entity-program) 72%, #000 28%);
+}
+
+.program-chart-plot--calories .program-chart-bar {
+  border-color: #764d35;
+}
+
+.program-chart-plot--protein .program-chart-bar {
+  border-color: #00caff;
+}
+
+.program-chart-plot--carbs .program-chart-bar {
+  border-color: #4fe888;
+}
+
+.program-chart-plot--fat .program-chart-bar {
+  border-color: #bbff01;
+}
+
+.program-chart-plot--ppk .program-chart-bar {
+  border-color: #ffd26b;
+}
+
+.program-chart-stacked-bar {
+  border-color: color-mix(in srgb, var(--border-default) 78%, #000 22%);
+}
+
+@media (min-width: 981px) {
+  .program-card__main {
+    --program-card-title-width: clamp(180px, 28%, 320px);
+    --program-card-kpi-width: 440px;
+  }
+
+  .program-card__title-block.card-title {
+    flex: 0 1 var(--program-card-title-width);
+    width: var(--program-card-title-width);
+    max-width: var(--program-card-title-width);
+  }
+
+  .program-card__kpi-range {
+    flex: 1 1 var(--program-card-kpi-width);
+  }
+}
+
+/* Program charts: contiguous columns and stacked top contour =================
+   Keep chart columns flush while the solid outline follows the total stacked
+   bar silhouette instead of each internal macro segment. */
+.program-chart-panel {
+  --program-chart-bar-border-width: 2px;
+  --program-chart-bar-radius: 0;
+}
+
+.program-chart-plot--program .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="1"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="2"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="3"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="4"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="5"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="6"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="7"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="8"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="9"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="10"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="11"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="12"] .program-chart-week-column {
+  column-gap: 0;
+  padding-inline: 0;
+}
+
+.program-chart-plot--program .program-chart-bar-slot,
+.program-chart-plot--week .program-chart-bar-slot {
+  padding-inline: 0;
+}
+
+.program-chart-bar,
+.program-chart-stacked-bar,
+.program-chart-panel--card .program-chart-bar,
+.program-chart-panel--card .program-chart-stacked-bar,
+.program-chart-panel--week .program-chart-bar,
+.program-chart-panel--week .program-chart-stacked-bar,
+.program-chart-main-axis--program[data-weeks-count="1"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="1"] .program-chart-stacked-bar,
+.program-chart-main-axis--program[data-weeks-count="2"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="2"] .program-chart-stacked-bar,
+.program-chart-main-axis--program[data-weeks-count="3"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="3"] .program-chart-stacked-bar,
+.program-chart-main-axis--program[data-weeks-count="4"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="4"] .program-chart-stacked-bar {
+  width: 100%;
+  max-width: none;
+}
+
+.program-chart-bar,
+.program-chart-stacked-bar {
+  box-sizing: border-box;
+  opacity: 0.7;
+  border-radius: 0;
+}
+
+.program-chart-bar {
+  border-style: solid;
+  border-width: var(--program-chart-bar-border-width) var(--program-chart-bar-border-width) 0;
+}
+
+.program-chart-stacked-bar {
+  position: relative;
+  border: 0;
+  overflow: hidden;
+}
+
+.program-chart-stacked-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-style: solid;
+  border-width: var(--program-chart-bar-border-width) var(--program-chart-bar-border-width) 0;
+  border-color: color-mix(in srgb, var(--border-default) 78%, #000 22%);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.program-chart-stacked-bar__segment {
+  border-radius: 0;
+}
+
+.program-chart-stacked-bar__segment.is-stack-top {
+  border-radius: 0;
+}
+
+
+/* Program charts: skyline outline ==========================================
+   Draw only the exposed vertical border of each contiguous column. The JS
+   computes neighbor heights and stores the visible side length in CSS vars,
+   so the outline follows the upper silhouette instead of framing every bar. */
+.program-chart-bar,
+.program-chart-stacked-bar {
+  --program-chart-outline-color: color-mix(in srgb, var(--border-default) 78%, #000 22%);
+  --program-chart-outline-left-height: 100%;
+  --program-chart-outline-right-height: 100%;
+}
+
+.program-chart-bar {
+  border: 0;
+  background-image:
+    linear-gradient(var(--program-chart-outline-color), var(--program-chart-outline-color)),
+    linear-gradient(var(--program-chart-outline-color), var(--program-chart-outline-color)),
+    linear-gradient(var(--program-chart-outline-color), var(--program-chart-outline-color));
+  background-position: top left, top left, top right;
+  background-repeat: no-repeat;
+  background-size:
+    100% var(--program-chart-bar-border-width),
+    var(--program-chart-bar-border-width) var(--program-chart-outline-left-height),
+    var(--program-chart-bar-border-width) var(--program-chart-outline-right-height);
+}
+
+.program-chart-stacked-bar::after {
+  border: 0;
+  background-image:
+    linear-gradient(var(--program-chart-outline-color), var(--program-chart-outline-color)),
+    linear-gradient(var(--program-chart-outline-color), var(--program-chart-outline-color)),
+    linear-gradient(var(--program-chart-outline-color), var(--program-chart-outline-color));
+  background-position: top left, top left, top right;
+  background-repeat: no-repeat;
+  background-size:
+    100% var(--program-chart-bar-border-width),
+    var(--program-chart-bar-border-width) var(--program-chart-outline-left-height),
+    var(--program-chart-bar-border-width) var(--program-chart-outline-right-height);
+}
+
+/* Program charts: solid SVG silhouette outline =============================
+   Draw the visible border as an overlay path instead of per-bar backgrounds.
+   This keeps contiguous columns readable on mobile and lets the outline follow
+   the real skyline of neighboring bars. */
+.program-chart-panel {
+  --program-chart-bar-border-width: 2px;
+  --program-chart-outline-color: color-mix(in srgb, var(--border-default) 82%, #000 18%);
+}
+
+.program-chart-plot {
+  position: relative;
+}
+
+.program-chart-main-axis--program {
+  --program-chart-day-margin: 0px;
+  --program-chart-week-padding: 0px;
+}
+
+.program-chart-main-axis--program[data-weeks-count="1"],
+.program-chart-main-axis--program[data-weeks-count="2"],
+.program-chart-main-axis--program[data-weeks-count="3"],
+.program-chart-main-axis--program[data-weeks-count="4"],
+.program-chart-main-axis--program[data-weeks-count="5"],
+.program-chart-main-axis--program[data-weeks-count="6"],
+.program-chart-main-axis--program[data-weeks-count="7"],
+.program-chart-main-axis--program[data-weeks-count="8"],
+.program-chart-main-axis--program[data-weeks-count="9"],
+.program-chart-main-axis--program[data-weeks-count="10"],
+.program-chart-main-axis--program[data-weeks-count="11"],
+.program-chart-main-axis--program[data-weeks-count="12"] {
+  --program-chart-day-margin: 0px;
+  --program-chart-week-padding: 0px;
+}
+
+.program-chart-plot--program .program-chart-week-column,
+.program-chart-main-axis--program .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="1"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="2"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="3"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="4"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="5"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="6"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="7"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="8"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="9"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="10"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="11"] .program-chart-week-column,
+.program-chart-main-axis--program[data-weeks-count="12"] .program-chart-week-column {
+  column-gap: 0;
+  padding-inline: 0;
+}
+
+.program-chart-plot--program .program-chart-bar-slot,
+.program-chart-plot--week .program-chart-bar-slot,
+.program-chart-main-axis--program .program-chart-bar-slot {
+  padding-inline: 0;
+}
+
+.program-chart-bar,
+.program-chart-stacked-bar,
+.program-chart-panel--card .program-chart-bar,
+.program-chart-panel--card .program-chart-stacked-bar,
+.program-chart-panel--week .program-chart-bar,
+.program-chart-panel--week .program-chart-stacked-bar,
+.program-chart-main-axis--program[data-weeks-count="1"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="1"] .program-chart-stacked-bar,
+.program-chart-main-axis--program[data-weeks-count="2"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="2"] .program-chart-stacked-bar,
+.program-chart-main-axis--program[data-weeks-count="3"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="3"] .program-chart-stacked-bar,
+.program-chart-main-axis--program[data-weeks-count="4"] .program-chart-bar,
+.program-chart-main-axis--program[data-weeks-count="4"] .program-chart-stacked-bar {
+  width: 100%;
+  max-width: none;
+}
+
+.program-chart-bar,
+.program-chart-stacked-bar {
+  border: 0;
+  background-image: none;
+  outline: 0;
+}
+
+.program-chart-stacked-bar::after {
+  display: none;
+}
+
+.program-chart-outline-svg {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.program-chart-outline-path {
+  fill: none;
+  stroke: var(--program-chart-outline-color);
+  stroke-width: var(--program-chart-bar-border-width);
+  stroke-linecap: butt;
+  stroke-linejoin: miter;
+  vector-effect: non-scaling-stroke;
+}
+
+.program-chart-outline-dot {
+  fill: var(--program-chart-outline-color);
+}
+
+.program-chart-plot--calories {
+  --program-chart-outline-color: #764d35;
+}
+
+.program-chart-plot--protein {
+  --program-chart-outline-color: #00caff;
+}
+
+.program-chart-plot--carbs {
+  --program-chart-outline-color: #4fe888;
+}
+
+.program-chart-plot--fat {
+  --program-chart-outline-color: #bbff01;
+}
+
+.program-chart-plot--ppk {
+  --program-chart-outline-color: #ffd26b;
+}
+
+.program-chart-plot--alloc,
+.program-chart-plot--macros {
+  --program-chart-outline-color: color-mix(in srgb, var(--border-default) 88%, #000 12%);
+}
+
+.program-chart-plot--program {
+  padding-inline: 0;
+}
+
+.program-chart-bar,
+.program-chart-stacked-bar,
+.program-chart-stacked-bar__segment,
+.program-chart-stacked-bar__segment.is-stack-top {
+  border-radius: 0;
+}
+
+/* Program chart final alignment fixes ======================================
+   Program plots must start and end flush for every week count. These overrides
+   intentionally use the full selector because earlier geometry blocks set
+   padding on .program-chart-main-axis--program .program-chart-plot, including
+   mobile-specific rules. */
+.program-chart-main-axis--program .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="1"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="2"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="3"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="4"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="5"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="6"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="7"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="8"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="9"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="10"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="11"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="12"] .program-chart-plot.program-chart-plot--program {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  padding-inline: 0 !important;
+}
+
+.program-chart-outline-svg {
+  left: 0;
+  top: 0;
+  right: auto;
+  bottom: auto;
+  transform: translateZ(0);
+}
+
+@media (max-width: 780px) {
+  .program-chart-main-axis--program .program-chart-plot.program-chart-plot--program,
+  .program-chart-main-axis--program[data-weeks-count="1"] .program-chart-plot.program-chart-plot--program,
+  .program-chart-main-axis--program[data-weeks-count="2"] .program-chart-plot.program-chart-plot--program,
+  .program-chart-main-axis--program[data-weeks-count="3"] .program-chart-plot.program-chart-plot--program,
+  .program-chart-main-axis--program[data-weeks-count="4"] .program-chart-plot.program-chart-plot--program,
+  .program-chart-main-axis--program[data-weeks-count="5"] .program-chart-plot.program-chart-plot--program,
+  .program-chart-main-axis--program[data-weeks-count="6"] .program-chart-plot.program-chart-plot--program,
+  .program-chart-main-axis--program[data-weeks-count="7"] .program-chart-plot.program-chart-plot--program,
+  .program-chart-main-axis--program[data-weeks-count="8"] .program-chart-plot.program-chart-plot--program,
+  .program-chart-main-axis--program[data-weeks-count="9"] .program-chart-plot.program-chart-plot--program,
+  .program-chart-main-axis--program[data-weeks-count="10"] .program-chart-plot.program-chart-plot--program,
+  .program-chart-main-axis--program[data-weeks-count="11"] .program-chart-plot.program-chart-plot--program,
+  .program-chart-main-axis--program[data-weeks-count="12"] .program-chart-plot.program-chart-plot--program {
+    padding-left: 0 !important;
+    padding-bottom: 0 !important;
+    padding-right: 0 !important;
+    padding-inline: 0 !important;
+  }
+}
+
+/* Program chart axis header and week separator alignment =====================
+   The main axis now owns a small contextual header and the week divisions are
+   drawn as background guides. This avoids border/z-index conflicts with the SVG
+   silhouette while keeping the plot and labels aligned. */
+.program-chart-main-axis {
+  background: var(--surface-card);
+  border-radius: 22px;
+  padding: 0.75rem;
+  gap: 0.55rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.program-chart-axis-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-width: var(--program-chart-min-width, 100%);
+  width: var(--program-chart-min-width, 100%);
+  padding: 3px 4px 3px 8px;
+}
+
+.program-chart-axis-header__title {
+  margin: 0;
+  min-width: 0;
+  color: var(--text-main);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.program-chart-axis-header__range {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.55rem;
+  padding: 2px 12px;
+  border-radius: 8px;
+  background: var(--text-main);
+  color: var(--text-inverted);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.program-chart-main-axis--program {
+  --program-chart-week-separator-color: color-mix(in srgb, var(--border-default) 56%, transparent);
+}
+
+.program-chart-main-axis--program .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="1"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="2"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="3"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="4"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="5"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="6"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="7"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="8"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="9"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="10"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="11"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="12"] .program-chart-plot.program-chart-plot--program {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  padding-inline: 0 !important;
+  background:
+    linear-gradient(to top, color-mix(in srgb, var(--border-default) 42%, transparent) 1px, transparent 1px) 0 0 / 100% 25%,
+    var(--surface-card);
+}
+
+.program-chart-main-axis--program .program-chart-week-column,
+.program-chart-main-axis--program .program-chart-week-column:first-of-type,
+.program-chart-main-axis--program .program-chart-week-column:last-of-type,
+.program-chart-main-axis--program .program-chart-week-axis span,
+.program-chart-main-axis--program .program-chart-week-axis span:first-child,
+.program-chart-main-axis--program .program-chart-week-axis span:last-child {
+  border-left: 0 !important;
+  border-right: 0 !important;
+}
+
+.program-chart-main-axis--program .program-chart-week-column,
+.program-chart-main-axis--program .program-chart-week-axis span {
+  position: relative;
+}
+
+.program-chart-main-axis--program .program-chart-week-column + .program-chart-week-column::before,
+.program-chart-main-axis--program .program-chart-week-axis span + span::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 1px;
+  background: var(--program-chart-week-separator-color);
+  pointer-events: none;
+}
+
+.program-chart-main-axis--program .program-chart-week-column + .program-chart-week-column::before {
+  z-index: 3;
+}
+
+.program-chart-main-axis--program .program-chart-week-axis span + span::before {
+  z-index: 1;
+}
+
+.program-chart-main-axis--program .program-chart-week-axis {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  padding-inline: 0 !important;
+  overflow: hidden;
+}
+
+.program-chart-main-axis--program .program-chart-week-axis span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding-top: 0.25rem;
+  padding-bottom: 0.05rem;
+}
+
+.program-chart-main-axis--program .program-chart-guide {
+  left: 0;
+  right: 0;
+  z-index: 0;
+}
+
+.program-chart-main-axis--program .program-chart-bar-slot {
+  z-index: 2;
+}
+
+.program-chart-main-axis--program .program-chart-outline-svg {
+  z-index: 4;
+}
+
+@media (max-width: 780px) {
+  .program-chart-main-axis {
+    padding: 12px 10px;
+    border-radius: 20px;
+    margin: 0 -6px;
+  }
+
+  .program-chart-axis-header {
+    gap: 0.5rem;
+    padding-left: 2px;
+  }
+
+  .program-chart-axis-header__title {
+    font-size: 22px;
+  }
+
+  .program-chart-axis-header__range {
+    min-height: 1.42rem;
+    padding-inline: 0.48rem;
+    font-size: 13px;
+  }
+}
+
+/* Program chart: fixed contextual header and guide colors ================== */
+.program-chart-axis-header {
+  position: sticky;
+  left: 0;
+  z-index: 0;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  background: var(--surface-card);
+}
+
+.program-chart-axis-header__heading {
+  display: inline-flex;
+  align-items: baseline;
+  min-width: 0;
+  gap: 0.35rem;
+}
+
+.program-chart-axis-header__unit {
+  flex: 0 0 auto;
+  color: var(--text-main);
+  font-size: 0.92em;
+  font-style: italic;
+  font-weight: 450;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.program-chart-guide {
+  background: #d72d2d;
+}
+
+html[data-theme="dark"] .program-chart-guide {
+  background: #ffffff;
+}
+
+@media (max-width: 780px) {
+  .program-chart-axis-header {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .program-chart-axis-header__heading {
+    gap: 0.28rem;
+  }
+}
+
+/* Program chart: muted min/max guides and weekly value units ================ */
+.program-chart-guide {
+  background: var(--text-muted);
+}
+
+.program-chart-guide--max,
+.program-chart-guide--min {
+  bottom: auto;
+}
+
+html[data-theme="dark"] .program-chart-guide {
+  background: var(--text-muted);
+}
+
+.program-chart-panel--week .program-chart-bar-value {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+  color: var(--text-main);
+  line-height: 0.95;
+  text-shadow: none;
+}
+
+.program-chart-panel--week .program-chart-bar-value__number,
+.program-chart-panel--week .program-chart-bar-value__unit {
+  display: block;
+  color: var(--text-main);
+  line-height: 1;
+}
+
+.program-chart-panel--week .program-chart-bar-value__unit {
+  font-size: 0.68em;
+  font-style: italic;
+  font-weight: 450;
+  letter-spacing: 0;
+}
+
+.program-chart-panel--week .program-chart-segment-value {
+  color: var(--text-main);
+  text-shadow: none;
+}
+
+/* Program chart: SVG max/min guides and bar hover tooltip =================== */
+.program-chart-guide-svg {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.program-chart-guide-path {
+  fill: none;
+  stroke: #d72d2d;
+  stroke-width: 2px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.program-chart-guide-dot {
+  fill: #d72d2d;
+  stroke: var(--surface-card);
+  stroke-width: 1.5px;
+  vector-effect: non-scaling-stroke;
+}
+
+.program-chart-outline-svg {
+  z-index: 6;
+}
+
+.program-chart-bar-slot {
+  overflow: visible;
+}
+
+.program-chart-bar-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  z-index: 20;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.24rem;
+  width: 508px;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--border-default) 82%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface-card) 94%, transparent);
+  box-shadow: 0 16px 34px color-mix(in srgb, #000 24%, transparent);
+  color: var(--text-main);
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  pointer-events: none;
+  transition: opacity 0.14s ease, transform 0.14s ease;
+}
+
+.program-chart-bar-tooltip::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 10px;
+  height: 10px;
+  border-right: 1px solid color-mix(in srgb, var(--border-default) 82%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--border-default) 82%, transparent);
+  background: color-mix(in srgb, var(--surface-card) 94%, transparent);
+  transform: translate(-50%, -5px) rotate(45deg);
+}
+
+.program-chart-bar-slot:hover .program-chart-bar-tooltip,
+.program-chart-bar-slot:focus-within .program-chart-bar-tooltip {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.program-chart-bar-tooltip__header {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.program-chart-bar-tooltip__icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  color: var(--entity-program);
+  stroke-width: 2.3;
+}
+
+.program-chart-bar-tooltip__name {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-main);
+  font-size: 0.78rem;
+  font-weight: 720;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.program-chart-bar-tooltip__value {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 560;
+  line-height: 1.1;
+}
+
+@media (max-width: 780px) {
+  .program-add-week-form,
+  .program-add-week-button.add-title {
+    width: auto;
+  }
+
+  .program-add-week-button.add-title {
+    flex: 0 0 auto;
+    justify-content: center;
+    margin-left: auto;
+    padding-inline: 10px;
+  }
+
+  .program-add-week-button.add-title h4 {
+    display: none;
+  }
+
+  .program-add-week-button .table-icon {
+    width: 17px;
+    height: 17px;
+  }
+}
+
+/* Program chart: guide alignment, tooltip layering and add-week title row ===== */
+.program-chart-guide-path {
+  stroke: #d72d2d;
+  stroke-width: 1px;
+}
+
+.program-chart-guide-dot {
+  fill: #d72d2d;
+  stroke: none;
+  stroke-width: 0;
+}
+
+.program-chart-bar-slot:hover,
+.program-chart-bar-slot:focus-within {
+  z-index: 30;
+}
+
+.program-chart-bar-tooltip {
+  z-index: 40;
+  background: var(--surface-card);
+  border-color: var(--border-default);
+  color: var(--text-main);
+  visibility: hidden;
+}
+
+.program-chart-bar-tooltip > * {
+  position: relative;
+  z-index: 1;
+}
+
+.program-chart-bar-tooltip::after {
+  z-index: 0;
+  background: var(--surface-card);
+  border-color: var(--border-default);
+}
+
+.program-chart-bar-slot:hover .program-chart-bar-tooltip,
+.program-chart-bar-slot:focus-within .program-chart-bar-tooltip {
+  visibility: visible;
+}
+
+.program-weeks-title-section h3 {
+  margin: 0;
+  color: var(--text-main);
+  white-space: nowrap;
+}
+
+@media (max-width: 780px) {
+  .program-weeks-title-section {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .program-add-week-form,
+  .program-add-week-button.add-title {
+    width: auto;
+  }
+
+  .program-add-week-button.add-title {
+    margin-left: auto;
+  }
+}
+
+/* Program detail: chart tooltip, range badge and week plan section fixes ===== */
+.program-chart-axis-header__range {
+  background: var(--surface-card) !important;
+  border: 1px solid #d72d2d !important;
+  color: #d72d2d !important;
+}
+
+.program-chart-plot {
+  overflow: visible;
+  isolation: isolate;
+}
+
+.program-chart-guide-svg {
+  z-index: 1;
+}
+
+.program-chart-outline-svg {
+  z-index: 2;
+}
+
+.program-chart-bar-slot {
+  z-index: 3;
+}
+
+.program-chart-bar-slot:hover,
+.program-chart-bar-slot:focus-within {
+  z-index: 60;
+}
+
+.program-chart-bar-tooltip {
+  z-index: 80;
+  background: var(--surface-card-muted);
+  border-color: var(--border-soft);
+  color: var(--text-main);
+  opacity: 0;
+  visibility: hidden;
+}
+
+.program-chart-bar-tooltip::after {
+  background: var(--surface-card-muted);
+  border-color: var(--border-soft);
+}
+
+.program-chart-bar-tooltip__header,
+.program-chart-bar-tooltip__name,
+.program-chart-bar-tooltip__value {
+  color: var(--text-main);
+}
+
+.program-chart-bar-slot:hover .program-chart-bar-tooltip,
+.program-chart-bar-slot:focus-within .program-chart-bar-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+}
+
+.program-chart-main-axis--program .program-chart-outline-svg,
+.program-chart-main-axis--program .program-chart-guide-svg {
+  pointer-events: none;
+}
+
+.program-week-child-card__header {
+  --program-week-title-width: clamp(180px, 28%, 320px);
+  --program-week-kpi-width: 440px;
+  grid-template-columns: minmax(180px, var(--program-week-title-width)) minmax(var(--program-week-kpi-width), 1fr);
+  align-items: flex-start;
+}
+
+.program-week-child-card__plan-section {
+  display: grid;
+  gap: 0.85rem;
+  padding: 0.85rem;
+  border: 1px solid var(--panel-row-separator);
+  border-radius: 22px;
+  background: transparent;
+}
+
+.program-week-child-card__plan-section .program-week-child-card__days {
+  margin: 0;
+}
+
+.program-day-selected-card {
+  padding: 12px;
+  background: transparent;
+  border-color: var(--border-soft);
+}
+
+.program-day-cell.has-plan.is-selected {
+  background: color-mix(in srgb, var(--surface-card-muted) 72%, var(--surface-card) 28%);
+  border-color: color-mix(in srgb, var(--border-soft) 68%, var(--text-main) 12%);
+}
+
+.program-day-selected-card__replace,
+.program-day-selected-card__remove {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 980px) {
+  .program-week-child-card__header {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 780px) {
+  .program-week-child-card__plan-section {
+    padding: 0.7rem;
+    border-radius: 20px;
+  }
+}
+
+/* Program detail corrections: day tooltip, default empty card and SVG grid ===== */
+.program-day-cell.has-plan:focus-within .program-day-cell__tooltip {
+  opacity: 0;
+  transform: translate(-50%, 0.25rem);
+}
+
+.program-day-cell.has-plan:hover .program-day-cell__tooltip {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.program-day-empty-card {
+  display: grid;
+  gap: 0.7rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  background: transparent;
+  color: var(--text-main);
+}
+
+.program-day-empty-card__content {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.program-day-empty-card[hidden] {
+  display: none;
+}
+
+.program-day-empty-card__icon {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  color: var(--entity-dailyplan);
+}
+
+.program-day-empty-card__body {
+  display: grid;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.program-day-empty-card__body strong {
+  color: var(--text-main);
+  font-size: 0.9rem;
+  font-weight: 760;
+  line-height: 1.15;
+}
+
+.program-day-empty-card__body span {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 520;
+  line-height: 1.25;
+}
+
+.program-chart-plot,
+.program-chart-panel--week .program-chart-plot,
+.program-chart-main-axis--program .program-chart-plot {
+  background: var(--surface-card);
+}
+
+.program-chart-grid-svg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.program-chart-grid-path {
+  fill: none;
+  stroke: color-mix(in srgb, var(--border-default) 42%, transparent);
+  stroke-width: 1px;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.program-chart-grid-label {
+  fill: color-mix(in srgb, var(--border-default) 42%, transparent);
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1;
+  text-anchor: end;
+  dominant-baseline: hanging;
+  pointer-events: none;
+  user-select: none;
+}
+
+.program-chart-guide-svg {
+  z-index: 1;
+}
+
+.program-chart-outline-svg {
+  z-index: 2;
+}
+
+.program-chart-bar-slot {
+  z-index: 3;
+}
+
+
+/* Program detail corrections: chart scroll, SVG guide bounds and edit actions === */
+.program-chart-main-axis {
+  scrollbar-width: none;
+}
+
+.program-chart-main-axis::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.program-chart-main-axis--program[data-weeks-count="1"],
+.program-chart-main-axis--program[data-weeks-count="2"],
+.program-chart-main-axis--program[data-weeks-count="3"],
+.program-chart-main-axis--program[data-weeks-count="4"] {
+  overflow-x: hidden;
+}
+
+.program-chart-main-axis--program[data-weeks-count="5"],
+.program-chart-main-axis--program[data-weeks-count="6"],
+.program-chart-main-axis--program[data-weeks-count="7"],
+.program-chart-main-axis--program[data-weeks-count="8"],
+.program-chart-main-axis--program[data-weeks-count="9"],
+.program-chart-main-axis--program[data-weeks-count="10"],
+.program-chart-main-axis--program[data-weeks-count="11"],
+.program-chart-main-axis--program[data-weeks-count="12"] {
+  overflow-x: auto;
+}
+
+.program-chart-plot,
+.program-chart-panel--week .program-chart-plot,
+.program-chart-main-axis--program .program-chart-plot,
+.program-chart-main-axis--program .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="1"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="2"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="3"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="4"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="5"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="6"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="7"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="8"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="9"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="10"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="11"] .program-chart-plot.program-chart-plot--program,
+.program-chart-main-axis--program[data-weeks-count="12"] .program-chart-plot.program-chart-plot--program {
+  background: var(--surface-card) !important;
+}
+
+.program-day-cell__add,
+.program-day-cell__add-icon,
+.program-day-cell.is-empty .program-day-cell__add-icon {
+  color: #fff;
+  stroke: #fff;
+}
+
+.program-day-selected-card .card-actions-row {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.program-day-selected-card .card-actions-row .program-day-selected-card__detail {
+  margin-left: auto;
+}
+
+.data-grid-header--program-weeks-edit,
+.data-grid-row--program-weeks-edit {
+  grid-template-columns: 42px minmax(140px, 1fr) 44px 44px;
+}
+
+.data-grid--program-weeks-edit .data-grid-cell--action,
+.data-grid--program-weeks-edit .data-grid-col--action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 780px) {
+  .data-grid-header--program-weeks-edit,
+  .data-grid-row--program-weeks-edit {
+    grid-template-columns: 38px minmax(88px, 1fr) 40px 40px;
+  }
+}
+
+/* Program detail corrections: mobile edit tab and chart tooltip hover ======= */
+.program-chart-panel,
+.program-chart-panel__body,
+.program-chart-pane,
+.program-chart-layout,
+.program-chart-main-axis,
+.program-chart-plot {
+  overflow-y: visible;
+}
+
+.program-chart-bar-slot {
+  --program-chart-tooltip-x: 50%;
+}
+
+.program-chart-bar-tooltip {
+  left: var(--program-chart-tooltip-x, 50%) !important;
+  z-index: var(--z-tooltip) !important;
+  border: 1px solid var(--border-soft) !important;
+  background: var(--surface-card-muted) !important;
+  box-shadow: 0 18px 40px color-mix(in srgb, #000 34%, transparent);
+}
+
+.program-chart-bar-tooltip::after {
+  left: 50%;
+  border-right: 1px solid var(--border-soft) !important;
+  border-bottom: 1px solid var(--border-soft) !important;
+  background: var(--surface-card-muted) !important;
+}
+
+.program-chart-bar-slot:hover,
+.program-chart-bar-slot:focus-within {
+  z-index: calc(var(--z-tooltip) - 1) !important;
+}
+
+.program-chart-bar-slot:hover .program-chart-bar,
+.program-chart-bar-slot:focus-within .program-chart-bar,
+.program-chart-bar-slot:hover .program-chart-stacked-bar,
+.program-chart-bar-slot:focus-within .program-chart-stacked-bar {
+  filter: brightness(1.22) saturate(1.08);
+}
+
+.program-chart-bar,
+.program-chart-stacked-bar {
+  transition: filter 0.14s ease;
+}
+
+.program-card-panels .card-table-programs-mobile .data-grid--program-weeks-edit {
+  margin-top: 0;
+}
+
+/* Program chart tooltip portal ==============================================
+   The visible tooltip is rendered on body so it can escape chart stacking
+   contexts and clipping created by the scrollable card/axis containers. */
+.program-chart-bar-tooltip {
+  display: none !important;
+}
+
+.program-chart-floating-tooltip {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: var(--z-tooltip);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.24rem;
+  min-width: 148px;
+  max-width: min(220px, calc(100vw - 16px));
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  background: var(--surface-card-muted);
+  box-shadow: 0 18px 40px color-mix(in srgb, #000 34%, transparent);
+  color: var(--text-main);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - 10px));
+  transition: opacity 0.14s ease, visibility 0.14s ease;
+}
+
+.program-chart-floating-tooltip.is-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.program-chart-floating-tooltip::after {
+  content: "";
+  position: absolute;
+  left: var(--program-chart-floating-tooltip-arrow-x, 50%);
+  top: 100%;
+  width: 10px;
+  height: 10px;
+  border-right: 1px solid var(--border-soft);
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--surface-card-muted);
+  transform: translate(-50%, -5px) rotate(45deg);
+}
+
+.program-chart-floating-tooltip > * {
+  position: relative;
+  z-index: 1;
+}
+
+.program-chart-floating-tooltip .program-chart-bar-tooltip__header {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.program-chart-floating-tooltip .program-chart-bar-tooltip__icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  color: var(--entity-program);
+  stroke-width: 2.3;
+}
+
+.program-chart-floating-tooltip .program-chart-bar-tooltip__name {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-main);
+  font-size: 0.78rem;
+  font-weight: 720;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.program-chart-floating-tooltip .program-chart-bar-tooltip__value {
+  color: var(--text-main);
+  font-size: 0.72rem;
+  font-weight: 560;
+  line-height: 1.1;
+}
+
+/* Program chart floating tooltip refinement ================================ */
+.program-chart-floating-tooltip {
+  align-items: center;
+  gap: 0.42rem;
+  min-width: 156px;
+  padding: 0.72rem 0.72rem 0.68rem;
+  border: 1px solid var(--border-soft) !important;
+  outline: 1px solid var(--border-soft);
+  outline-offset: -1px;
+  background: var(--surface-card-muted);
+  box-shadow:
+    inset 0 0 0 1px var(--border-soft),
+    0 18px 40px color-mix(in srgb, #000 34%, transparent);
+  transform: translate(-50%, calc(-100% - 7px));
+}
+
+.program-chart-floating-tooltip::after {
+  border-right: 1px solid var(--border-soft) !important;
+  border-bottom: 1px solid var(--border-soft) !important;
+  background: var(--surface-card-muted);
+  box-shadow: 1px 1px 0 0 var(--border-soft);
+}
+
+.program-chart-floating-tooltip .program-chart-bar-tooltip__header {
+  display: none;
+}
+
+.program-chart-floating-tooltip .program-chart-bar-tooltip__icon-row {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.program-chart-floating-tooltip .program-chart-bar-tooltip__icon-shell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--entity-dailyplan);
+  color: #ffffff;
+}
+
+.program-chart-floating-tooltip .program-chart-bar-tooltip__icon {
+  width: 18px;
+  height: 18px;
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  stroke-width: 2.15;
+}
+
+.program-chart-floating-tooltip .program-chart-bar-tooltip__name {
+  width: 100%;
+  max-width: 100%;
+  color: var(--text-main);
+  font-size: 0.78rem;
+  font-weight: 720;
+  line-height: 1.18;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.program-chart-floating-tooltip .program-chart-bar-tooltip__value {
+  width: 100%;
+  color: var(--text-main);
+  font-size: 1rem;
+  font-weight: 850;
+  line-height: 1.05;
+  text-align: center;
+}
+
+/* Program chart corrections: scale grid, week separators and responsive hover ===== */
+.program-chart-main-axis {
+  --program-chart-grid-line-color: color-mix(in srgb, var(--border-default) 42%, transparent);
+}
+
+.program-chart-main-axis--program {
+  --program-chart-week-separator-color: var(--program-chart-grid-line-color);
+}
+
+.program-chart-grid-path {
+  stroke: var(--program-chart-grid-line-color);
+}
+
+.program-chart-grid-label {
+  fill: var(--program-chart-grid-line-color);
+}
+
+.program-chart-main-axis--program .program-chart-week-column + .program-chart-week-column::before,
+.program-chart-main-axis--program .program-chart-week-axis span + span::before {
+  background: var(--program-chart-grid-line-color);
+}
+
+.program-chart-main-axis--program .program-chart-week-axis {
+  display: grid !important;
+  grid-template-columns: repeat(var(--program-chart-weeks), minmax(0, 1fr));
+  align-items: center;
+  width: var(--program-chart-min-width, 100%);
+  min-width: var(--program-chart-min-width, 100%);
+  padding-inline: 0 !important;
+  box-sizing: border-box;
+}
+
+.program-chart-main-axis--program .program-chart-week-axis span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 0;
+  height: 100%;
+  padding: 0.25rem 0 0.05rem;
+  border: 0 !important;
+  line-height: 1;
+}
+
+.program-chart-bar,
+.program-chart-stacked-bar {
+  transition: filter 0.001s ease;
+  will-change: filter;
+}
+
+.program-chart-floating-tooltip {
+  transition: opacity 0.001s ease, visibility 0s linear 0.001s;
+  will-change: opacity, transform;
+}
+
+.program-chart-floating-tooltip.is-visible {
+  transition-delay: 0s;
+}
+
+.program-chart-bar-tooltip {
+  transition: opacity 0.001s ease, transform 0.001s ease;
+}
+
+/* Program chart tooltip responsiveness ======================================
+   Only the body-level floating tooltip is visible. Avoid delayed native title
+   tooltips and expensive visual transitions on hover. */
+.program-chart-bar-slot {
+  cursor: pointer;
+}
+
+.program-chart-bar,
+.program-chart-stacked-bar {
+  transition: none !important;
+  will-change: auto;
+}
+
+.program-chart-bar-slot:hover .program-chart-bar,
+.program-chart-bar-slot:focus-within .program-chart-bar,
+.program-chart-bar-slot:hover .program-chart-stacked-bar,
+.program-chart-bar-slot:focus-within .program-chart-stacked-bar {
+  filter: brightness(1.22) saturate(1.08);
+}
+
+.program-chart-floating-tooltip {
+  transition: none !important;
+}
+
+/* Program chart grid labels and slot picker refinement ===================== */
+.program-chart-grid-label {
+  fill: color-mix(in srgb, var(--text-main) 68%, var(--program-chart-grid-line-color));
+  font-size: 11px;
+  font-weight: 500;
+  text-anchor: start;
+}
+
+.program-day-cell.is-empty,
+.program-day-cell.is-empty .program-day-cell__day-initial,
+.program-day-cell.is-empty .program-day-cell__add,
+.program-day-cell.is-empty .program-day-cell__add-icon {
+  cursor: pointer;
+}
+
+.program-day-cell.is-empty .program-day-cell__day-initial,
+.program-day-cell.is-empty .program-day-cell__add-icon {
+  pointer-events: none;
+}
+
+.program-slot-picker__option.picker-result,
+.program-slot-picker__preview.picker-result {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(230px, 1fr) minmax(420px, 520px);
+  grid-template-areas: "title kpis";
+  align-items: center;
+  gap: 8px 14px;
+  padding: 14px 20px;
+  border-radius: 0;
+  border-bottom: 1px solid var(--panel-row-separator);
+  background: transparent;
+}
+
+.program-slot-picker__preview.picker-result {
+  border-bottom: 0;
+  cursor: default;
+}
+
+.program-slot-picker__option.picker-result:hover,
+.program-slot-picker__option.picker-result:focus-within {
+  background: var(--interactive-hover);
+}
+
+.program-slot-picker__option.picker-result input[type="radio"] {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.program-slot-picker__option.picker-result .picker-result-title,
+.program-slot-picker__option.picker-result .picker-result-kpi,
+.program-slot-picker__preview.picker-result .picker-result-title,
+.program-slot-picker__preview.picker-result .picker-result-kpi {
+  min-width: 0;
+}
+
+.program-slot-picker__option.picker-result .picker-result-kpi,
+.program-slot-picker__preview.picker-result .picker-result-kpi {
+  flex-wrap: nowrap;
+}
+
+.program-slot-picker__option.picker-result .picker-result-kpi__total,
+.program-slot-picker__preview.picker-result .picker-result-kpi__total {
+  flex: 0 0 82px;
+}
+
+.program-slot-picker__option.picker-result .picker-result-kpi__macros,
+.program-slot-picker__preview.picker-result .picker-result-kpi__macros {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.program-slot-picker__option.picker-result .picker-result-kpi__row,
+.program-slot-picker__preview.picker-result .picker-result-kpi__row {
+  grid-template-columns: 58px 0 48px minmax(90px, 1fr);
+  gap: 14px;
+}
+
+.program-slot-picker__option.picker-result .picker-result-kpi__ppk.is-empty,
+.program-slot-picker__preview.picker-result .picker-result-kpi__ppk.is-empty {
+  min-width: 0;
+  padding: 0;
+}
+
+@media (max-width: 980px) {
+  .program-slot-picker__option.picker-result,
+  .program-slot-picker__preview.picker-result {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "title"
+      "kpis";
+    gap: 8px;
+    padding: 14px 14px 18px;
+  }
+
+  .program-slot-picker__option.picker-result .picker-result-kpi__row,
+  .program-slot-picker__preview.picker-result .picker-result-kpi__row {
+    grid-template-columns: 48px 0 42px minmax(64px, 1fr);
+    gap: 14px;
+  }
+}
+
+/* Program slot picker positioning and selected preview refinement ============ */
+@media (min-width: 981px) {
+  .app-content {
+    position: relative;
+  }
+
+  .program-slot-picker.section_picker {
+    position: absolute;
+    top: var(--program-slot-picker-top, calc(var(--app-header-height, 54px) + 24px));
+    right: auto;
+    bottom: auto;
+    left: 50%;
+    width: min(824px, calc(100% - 48px));
+    max-width: 824px;
+    max-height: min(78vh, 720px);
+    transform: translateX(-50%);
+  }
+
+  .program-day-cell:nth-child(n + 5) .program-slot-picker.section_picker,
+  .program-day-cell:nth-child(-n + 2) .program-slot-picker.section_picker {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+.program-slot-picker__option.picker-result .picker-result-kpi,
+.program-slot-picker__preview.picker-result .picker-result-kpi {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 12px;
+  grid-area: kpis;
+  width: 100%;
+  min-width: 0;
+}
+
+.program-slot-picker__option.picker-result .picker-result-kpi__total,
+.program-slot-picker__preview.picker-result .picker-result-kpi__total {
+  flex: 0 0 82px;
+  width: 82px;
+  min-width: 82px;
+}
+
+.program-slot-picker__option.picker-result .picker-result-kpi__macros,
+.program-slot-picker__preview.picker-result .picker-result-kpi__macros {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.program-slot-picker__preview-title {
+  grid-column: 1 / -1;
+  margin: 0 0 10px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.program-slot-picker__preview.picker-result {
+  grid-template-areas:
+    "preview-title preview-title"
+    "title kpis";
+}
+
+.program-slot-picker__preview.picker-result .program-slot-picker__preview-title {
+  grid-area: preview-title;
+}
+
+.program-week-child-card__plan-section,
+.program-week-child-card__days {
+  scroll-margin-top: calc(var(--app-header-height, 54px) + 12px);
+}
+
+@media (max-width: 980px) {
+  .program-slot-picker.section_picker {
+    position: static;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    width: 100%;
+    max-width: none;
+    max-height: none;
+    margin: 10px 0 0;
+    transform: none;
+  }
+
+  .program-day-cell:nth-child(n + 5) .program-slot-picker.section_picker,
+  .program-day-cell:nth-child(-n + 2) .program-slot-picker.section_picker {
+    right: auto;
+    left: auto;
+    transform: none;
+  }
+
+  .program-slot-picker__results {
+    max-height: min(46vh, 420px);
+  }
+
+  .program-slot-picker__preview.picker-result {
+    grid-template-areas:
+      "preview-title"
+      "title"
+      "kpis";
+  }
+}
+

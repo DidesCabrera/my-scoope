@@ -13,6 +13,8 @@ export RATE_LIMIT_AI_ASSISTANT_TURN_USER="${RATE_LIMIT_AI_ASSISTANT_TURN_USER:-1
 export RATE_LIMIT_AI_ASSISTANT_TURN_IP="${RATE_LIMIT_AI_ASSISTANT_TURN_IP:-10000/h}"
 
 scripts/check_repository_hygiene.sh
+"${PYTHON_BIN}" scripts/check_frontend_debt.py
+"${PYTHON_BIN}" scripts/check_e2e_contract.py
 "${PYTHON_BIN}" manage.py check
 "${PYTHON_BIN}" manage.py makemigrations --check --dry-run
 "${PYTHON_BIN}" manage.py document_registry --strict

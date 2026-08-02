@@ -15,7 +15,7 @@ Run the smoke suite against an already running local server:
 MYSCOOPE_E2E_BASE_URL=http://127.0.0.1:8000 scripts/test_e2e.sh
 ```
 
-Authenticated scenarios additionally require credentials supplied through the
+Authenticated scenarios log in afresh and require credentials supplied through the
 environment. No real password or persisted browser state belongs in Git:
 
 ```bash
@@ -24,6 +24,15 @@ MYSCOOPE_E2E_PASSWORD=local-only-password \
 scripts/test_e2e.sh
 ```
 
-TDG07 owns the migration from historical fixed object IDs and sleeps to generated
-fixtures and observable browser conditions. Until that patch, the broad historical
-suite is local/manual evidence rather than a required CI gate.
+Object-specific scenarios additionally use deterministic fixture IDs instead of IDs
+embedded in test code:
+
+```bash
+MYSCOOPE_E2E_MEAL_ID=222 \
+MYSCOOPE_E2E_DAILYPLAN_ID=122 \
+MYSCOOPE_E2E_DAILYPLAN_MEAL_ID=343 \
+scripts/test_e2e.sh
+```
+
+The anonymous homepage smoke is the CI-owned browser gate. The broader authenticated
+suite remains explicit local/staging evidence because it needs seeded scenario data.

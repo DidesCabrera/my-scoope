@@ -1,5 +1,5 @@
-def test_dpm_food_picker_initial_state(page):
-    page.goto("http://127.0.0.1:8000/app/dailyplans/122/meals/343/deepedit/")
+def test_dpm_food_picker_initial_state(page, dpm_deepedit_url):
+    page.goto(dpm_deepedit_url)
     page.wait_for_load_state("networkidle")
 
     assert "/accounts/login/" not in page.url, f"Redirigido a login: {page.url}"

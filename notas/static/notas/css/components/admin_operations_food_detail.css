@@ -1,0 +1,656 @@
+/* Food Catalog master detail */
+
+.admin-operations-food-detail-page {
+  display: grid;
+  gap: 24px;
+}
+
+.admin-operations-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  color: var(--text-soft);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.admin-operations-back-link:hover {
+  color: var(--text-main);
+}
+
+.admin-operations-back-link svg {
+  width: 16px;
+  height: 16px;
+}
+
+.admin-operations-food-detail-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(340px, 0.75fr);
+  gap: 28px;
+  align-items: stretch;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.admin-operations-food-detail-identity {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.admin-operations-food-detail-badges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.admin-operations-detail-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 24px;
+  padding: 0 7px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  color: var(--text-soft);
+  font-size: 0.68rem;
+  font-weight: 720;
+}
+
+.admin-operations-detail-status--operational {
+  border-color: rgba(34, 197, 94, 0.34);
+  background: rgba(34, 197, 94, 0.08);
+  color: #86efac;
+}
+
+.admin-operations-detail-status svg {
+  width: 13px;
+  height: 13px;
+}
+
+.admin-operations-food-detail-identity h2 {
+  margin: 0;
+  font-size: clamp(1.8rem, 3.4vw, 3rem);
+  line-height: 1.05;
+  letter-spacing: 0;
+}
+
+.admin-operations-food-detail-identity > p {
+  margin: -3px 0 0;
+  color: var(--text-soft);
+  font-size: 0.9rem;
+}
+
+.admin-operations-food-detail-health {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  margin-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.admin-operations-food-detail-health > div {
+  display: grid;
+  align-content: center;
+  gap: 5px;
+  min-height: 104px;
+  padding: 14px 18px;
+  border-right: 1px solid var(--border-subtle);
+}
+
+.admin-operations-food-detail-health > div:first-child {
+  padding-left: 0;
+}
+
+.admin-operations-food-detail-health > div:last-child {
+  border-right: 0;
+}
+
+.admin-operations-food-detail-health span,
+.admin-operations-food-detail-health small {
+  color: var(--text-soft);
+  font-size: 0.7rem;
+}
+
+.admin-operations-food-detail-health strong {
+  font-size: 1.25rem;
+}
+
+.admin-operations-quality-track {
+  width: 100%;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.admin-operations-quality-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #22c55e;
+}
+
+.admin-operations-food-decision {
+  display: grid;
+  align-content: start;
+  gap: 13px;
+  padding: 20px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--surface-card-muted, rgba(255, 255, 255, 0.03));
+}
+
+.admin-operations-food-decision--ready {
+  border-color: rgba(34, 197, 94, 0.28);
+}
+
+.admin-operations-food-decision--blocked {
+  border-color: rgba(245, 158, 11, 0.34);
+}
+
+.admin-operations-food-decision > .section-eyebrow {
+  margin: 0;
+}
+
+.admin-operations-food-decision__heading {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 9px;
+}
+
+.admin-operations-food-decision__heading svg {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  color: #93c5fd;
+}
+
+.admin-operations-food-decision--ready .admin-operations-food-decision__heading svg {
+  color: #86efac;
+}
+
+.admin-operations-food-decision--blocked .admin-operations-food-decision__heading svg {
+  color: #fbbf24;
+}
+
+.admin-operations-food-decision__heading h3 {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.35;
+  letter-spacing: 0;
+}
+
+.admin-operations-food-decision__issues {
+  display: grid;
+  gap: 5px;
+  max-height: 142px;
+  margin: 0;
+  padding: 10px 10px 10px 28px;
+  overflow-y: auto;
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-soft);
+  font-size: 0.75rem;
+}
+
+.admin-operations-food-decision__actions {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-operations-detail-primary-action,
+.admin-operations-operational-link,
+.admin-operations-detail-edit-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 740;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.admin-operations-detail-primary-action {
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  background: rgba(34, 197, 94, 0.12);
+  color: #bbf7d0;
+}
+
+.admin-operations-detail-primary-action:hover {
+  background: rgba(34, 197, 94, 0.2);
+}
+
+.admin-operations-operational-link {
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  background: rgba(59, 130, 246, 0.08);
+  color: #bfdbfe;
+}
+
+.admin-operations-detail-edit-link {
+  min-height: 34px;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-soft);
+}
+
+.admin-operations-detail-primary-action svg,
+.admin-operations-operational-link svg,
+.admin-operations-detail-edit-link svg {
+  width: 15px;
+  height: 15px;
+}
+
+.admin-operations-detail-more-actions {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.admin-operations-detail-more-actions summary {
+  padding: 10px 0 2px;
+  color: var(--text-soft);
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+}
+
+.admin-operations-detail-more-actions form,
+.admin-operations-detail-more-actions label {
+  display: grid;
+  gap: 6px;
+}
+
+.admin-operations-detail-more-actions form {
+  margin-top: 10px;
+}
+
+.admin-operations-detail-more-actions label {
+  color: var(--text-soft);
+  font-size: 0.68rem;
+}
+
+.admin-operations-detail-more-actions input {
+  width: 100%;
+  min-height: 36px;
+  padding: 0 9px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--text-main);
+  font: inherit;
+}
+
+.admin-operations-detail-more-actions form > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.admin-operations-detail-more-actions button {
+  min-height: 32px;
+  padding: 0 9px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-main);
+  font: inherit;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+.admin-operations-detail-anchor-nav {
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+  padding: 4px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--surface-card-muted, rgba(255, 255, 255, 0.03));
+}
+
+.admin-operations-detail-anchor-nav button {
+  min-height: 32px;
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-soft);
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.admin-operations-detail-anchor-nav button:hover,
+.admin-operations-detail-anchor-nav button[aria-selected="true"] {
+  border-color: var(--border-subtle);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-main);
+}
+
+.admin-operations-detail-anchor-nav button[aria-selected="true"] {
+  background: var(--surface-card, rgba(255, 255, 255, 0.08));
+}
+
+.admin-operations-food-detail-section[hidden] {
+  display: none;
+}
+
+.admin-operations-food-detail-section {
+  display: grid;
+  gap: 18px;
+  padding: 26px 0 4px;
+  border-top: 1px solid var(--border-subtle);
+  scroll-margin-top: 24px;
+}
+
+.admin-operations-detail-section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.admin-operations-detail-section-heading h3 {
+  margin: 2px 0 0;
+  font-size: 1.2rem;
+  letter-spacing: 0;
+}
+
+.admin-operations-detail-section-heading > p {
+  max-width: 520px;
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 0.78rem;
+  text-align: right;
+}
+
+.admin-operations-detail-fact-grid,
+.admin-operations-nutrition-fact-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+  border-top: 1px solid var(--border-subtle);
+  border-left: 1px solid var(--border-subtle);
+}
+
+.admin-operations-nutrition-fact-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.admin-operations-detail-fact-grid > div,
+.admin-operations-nutrition-fact-grid > div {
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  min-height: 82px;
+  padding: 13px 14px;
+  border-right: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.admin-operations-detail-fact-grid dt,
+.admin-operations-nutrition-fact-grid dt {
+  color: var(--text-soft);
+  font-size: 0.68rem;
+  font-weight: 720;
+}
+
+.admin-operations-detail-fact-grid dd,
+.admin-operations-nutrition-fact-grid dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.admin-operations-nutrition-fact-grid dd {
+  font-size: 1.1rem;
+}
+
+.admin-operations-detail-fact-grid small,
+.admin-operations-nutrition-fact-grid small {
+  color: var(--text-soft);
+  font-size: 0.68rem;
+}
+
+.admin-operations-detail-inline-list {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-operations-detail-inline-list h4,
+.admin-operations-detail-inline-list p {
+  margin: 0;
+}
+
+.admin-operations-detail-inline-list > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.admin-operations-detail-inline-list > div > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 7px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 5px;
+  font-size: 0.74rem;
+}
+
+.admin-operations-detail-inline-list small,
+.admin-operations-detail-inline-list p {
+  color: var(--text-soft);
+  font-size: 0.7rem;
+}
+
+.admin-operations-detail-split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px;
+}
+
+.admin-operations-detail-split > div {
+  min-width: 0;
+}
+
+.admin-operations-detail-subheading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 9px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.admin-operations-detail-subheading h4 {
+  margin: 0;
+}
+
+.admin-operations-detail-subheading > span {
+  color: var(--text-soft);
+  font-size: 0.76rem;
+  font-weight: 740;
+}
+
+.admin-operations-evidence-list,
+.admin-operations-portion-list {
+  display: grid;
+}
+
+.admin-operations-evidence-list article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.admin-operations-evidence-list article > div,
+.admin-operations-portion-list div > span:first-child {
+  display: grid;
+  gap: 3px;
+}
+
+.admin-operations-evidence-list small,
+.admin-operations-portion-list small {
+  color: var(--text-soft);
+  font-size: 0.68rem;
+}
+
+.admin-operations-evidence-list article > span {
+  color: #86efac;
+  font-size: 0.68rem;
+  font-weight: 720;
+}
+
+.admin-operations-evidence-list article > a {
+  display: inline-flex;
+  color: var(--text-soft);
+}
+
+.admin-operations-evidence-list article > a svg {
+  width: 16px;
+  height: 16px;
+}
+
+.admin-operations-evidence-list article > p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 0.7rem;
+}
+
+.admin-operations-portion-list > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 58px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.admin-operations-portion-list > div > span:last-child {
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: rgba(59, 130, 246, 0.1);
+  color: #bfdbfe;
+  font-size: 0.66rem;
+  font-weight: 720;
+}
+
+.admin-operations-detail-empty {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 82px;
+  padding: 12px 0;
+  color: var(--text-soft);
+}
+
+.admin-operations-detail-empty svg {
+  width: 20px;
+  height: 20px;
+}
+
+.admin-operations-detail-empty > span {
+  display: grid;
+  gap: 3px;
+}
+
+.admin-operations-detail-empty small {
+  font-size: 0.7rem;
+}
+
+.admin-operations-food-identity strong a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.admin-operations-food-identity strong a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 980px) {
+  .admin-operations-food-detail-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-operations-detail-split {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .admin-operations-food-detail-page {
+    gap: 20px;
+  }
+
+  .admin-operations-food-detail-hero {
+    gap: 20px;
+    padding-bottom: 22px;
+  }
+
+  .admin-operations-food-detail-identity h2 {
+    font-size: 1.75rem;
+  }
+
+  .admin-operations-food-detail-health {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-operations-food-detail-health > div,
+  .admin-operations-food-detail-health > div:first-child {
+    min-height: 74px;
+    padding: 11px 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .admin-operations-food-detail-health > div:last-child {
+    border-bottom: 0;
+  }
+
+  .admin-operations-food-decision {
+    padding: 16px;
+  }
+
+  .admin-operations-detail-section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .admin-operations-detail-section-heading > p {
+    text-align: left;
+  }
+
+  .admin-operations-detail-fact-grid,
+  .admin-operations-detail-fact-grid--solver,
+  .admin-operations-detail-fact-grid--lifecycle,
+  .admin-operations-nutrition-fact-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-operations-evidence-list article {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .admin-operations-evidence-list article > a {
+    grid-column: 2;
+  }
+}

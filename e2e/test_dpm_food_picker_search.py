@@ -1,5 +1,5 @@
-def test_dpm_food_picker_shows_results_when_typing(page):
-    page.goto("http://127.0.0.1:8000/app/dailyplans/122/meals/343/deepedit/")
+def test_dpm_food_picker_shows_results_when_typing(page, dpm_deepedit_url, ui_settle):
+    page.goto(dpm_deepedit_url)
     page.wait_for_load_state("networkidle")
 
     assert "/accounts/login/" not in page.url, f"Redirigido a login: {page.url}"
@@ -13,6 +13,6 @@ def test_dpm_food_picker_shows_results_when_typing(page):
 
     food_search.fill("Pechuga Pollo Cocida")
 
-    page.wait_for_timeout(700)
+    ui_settle(page)
 
     assert food_list.is_visible(), "La lista no se mostró después de escribir en el buscador"

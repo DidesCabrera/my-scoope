@@ -18,6 +18,7 @@
   <title>{% block title %}Admin Operations{% endblock %} · My Scoope</title>
   <link rel="stylesheet" href="{% static 'notas/css/components/admin_analytics.css' %}">
   <link rel="stylesheet" href="{% static 'notas/css/components/admin_operations.css' %}">
+  {% block extra_styles %}{% endblock %}
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="admin-analytics-shell admin-operations-shell">
