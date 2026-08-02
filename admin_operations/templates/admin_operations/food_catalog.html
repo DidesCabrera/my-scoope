@@ -1,110 +1,164 @@
 {% extends "admin_operations/base.html" %}
-{% block title %}Food Catalog Operations{% endblock %}
+{% block title %}Curación del Food Catalog{% endblock %}
 {% block content %}
-<div class="page admin-analytics-page admin-operations-page">
+<div class="page admin-analytics-page admin-operations-page admin-operations-curation-page">
   {% include "admin_operations/_food_catalog_tabs.html" with active_tab="operations" %}
-  <section class="home-stats admin-analytics-kpi-grid admin-operations-kpi-grid" aria-label="Resumen operacional Food Catalog">
+
+  <section class="admin-operations-curation-summary" aria-label="Resumen de la curación">
     {% for metric in vm.content.metrics %}
-      <article class="home-stat-card admin-operations-metric-card">
-        <div class="home-stat-top">
-          <i data-lucide="{{ metric.icon }}" class="home-stat-icon"></i>
-          <span class="home-stat-label">{{ metric.label }}</span>
-        </div>
-        <h3>{{ metric.value }}</h3>
-        {% if metric.helper %}<p class="muted-text">{{ metric.helper }}</p>{% endif %}
-      </article>
+      <div class="admin-operations-curation-stat">
+        <i data-lucide="{{ metric.icon }}"></i>
+        <span>
+          <small>{{ metric.label }}</small>
+          <strong>{{ metric.value }}</strong>
+        </span>
+        <p>{{ metric.helper }}</p>
+      </div>
     {% endfor %}
   </section>
 
-  <section class="card-detail-block">
-    <div class="card-title-row">
+  <section class="admin-operations-curation-flow" aria-labelledby="curation-flow-title">
+    <div class="admin-operations-section-heading">
       <div>
-        <p class="section-eyebrow">Candidate queue</p>
-        <h3>Candidatos de curación</h3>
-        <p class="muted-text">Work items generados por demanda externa. Cada intervención exige una razón y deja nota operacional en el candidato.</p>
+        <p class="section-eyebrow">Proceso de curación</p>
+        <h2 id="curation-flow-title">Del candidato al alimento operativo</h2>
       </div>
+      <p>Cada número muestra cuánto trabajo espera en esa etapa. “Falta evidencia” reúne los casos detenidos.</p>
     </div>
-    {% if vm.content.candidates %}
-      <div class="admin-operations-table-card" role="region" aria-label="Candidatos de curación Food Catalog">
-        <table class="admin-operations-table">
+    <nav class="admin-operations-stage-nav" aria-label="Filtrar por etapa de curación">
+      {% for stage in vm.content.stages %}
+        <a class="admin-operations-stage{% if stage.is_active %} admin-operations-stage--active{% endif %}{% if stage.key == 'blocked' %} admin-operations-stage--blocked{% endif %}" href="{{ stage.url }}"{% if stage.is_active %} aria-current="page"{% endif %}>
+          <span class="admin-operations-stage__icon"><i data-lucide="{{ stage.icon }}"></i></span>
+          <span class="admin-operations-stage__copy">
+            <strong>{{ stage.label }}</strong>
+            <small>{{ stage.helper }}</small>
+          </span>
+          <span class="admin-operations-stage__count">{{ stage.count }}</span>
+        </a>
+      {% endfor %}
+    </nav>
+  </section>
+
+  <section class="admin-operations-curation-workbench" aria-labelledby="curation-work-title">
+    <div class="admin-operations-workbench-heading">
+      <div>
+        <p class="section-eyebrow">Bandeja de trabajo</p>
+        <h2 id="curation-work-title">Alimentos que requieren atención</h2>
+        <p>{{ vm.content.filtered_total }} elementos en esta vista. Las filas más urgentes aparecen primero.</p>
+      </div>
+      <form class="admin-operations-curation-search" method="get">
+        {% if vm.content.selected_stage != 'all' %}<input type="hidden" name="stage" value="{{ vm.content.selected_stage }}">{% endif %}
+        <label for="curation-search">Buscar alimento, marca u origen</label>
+        <div>
+          <i data-lucide="search"></i>
+          <input id="curation-search" type="search" name="q" value="{{ vm.content.query }}" placeholder="Ej: avena, USDA, marca...">
+          <button class="btn-secondary btn-secondary--compact" type="submit">Buscar</button>
+          {% if vm.content.query %}<a class="btn-secondary btn-secondary--compact" href="{% url 'admin_operations_food_catalog' %}{% if vm.content.selected_stage != 'all' %}?stage={{ vm.content.selected_stage }}{% endif %}">Limpiar</a>{% endif %}
+        </div>
+      </form>
+    </div>
+
+    <div class="admin-operations-work-filters" aria-label="Filtros de bandeja">
+      <a class="admin-operations-work-filter{% if vm.content.selected_stage == 'all' %} admin-operations-work-filter--active{% endif %}" href="{% url 'admin_operations_food_catalog' %}{% if vm.content.query %}?q={{ vm.content.query|urlencode }}{% endif %}">Todo pendiente</a>
+      {% for stage in vm.content.stages %}
+        <a class="admin-operations-work-filter{% if stage.is_active %} admin-operations-work-filter--active{% endif %}" href="{{ stage.url }}">{{ stage.label }} <span>{{ stage.count }}</span></a>
+      {% endfor %}
+    </div>
+
+    {% if vm.content.work_items %}
+      <div class="admin-operations-curation-table-wrap" role="region" aria-label="Bandeja de curación" tabindex="0">
+        <table class="admin-operations-curation-table">
           <thead>
             <tr>
-              <th>Candidato</th>
-              <th>Estado</th>
-              <th>Prioridad</th>
-              <th>Demanda</th>
-              <th>Acción</th>
+              <th>Alimento</th>
+              <th>Etapa y estado</th>
+              <th>Datos</th>
+              <th>Siguiente paso</th>
+              <th><span class="visually-hidden">Acciones</span></th>
             </tr>
           </thead>
           <tbody>
-            {% for candidate in vm.content.candidates %}
-              <tr>
-                <td data-label="Candidato">
-                  <strong>{{ candidate.title }}</strong>
-                  {% if candidate.brand_name %}<span>{{ candidate.brand_name }}</span>{% endif %}
-                  <small>{{ candidate.provider }} · {{ candidate.reason }}</small>
+            {% for item in vm.content.work_items %}
+              <tr class="admin-operations-curation-row admin-operations-curation-row--{{ item.readiness_state }}">
+                <td data-label="Alimento">
+                  <div class="admin-operations-food-identity">
+                    <span class="admin-operations-item-kind" title="{% if item.kind == 'candidate' %}Candidato externo{% else %}Alimento master{% endif %}">
+                      <i data-lucide="{% if item.kind == 'candidate' %}inbox{% else %}wheat{% endif %}"></i>
+                    </span>
+                    <span>
+                      <strong><a href="{{ item.detail_url }}"{% if item.kind == 'catalog_food' %} target="_blank" rel="noopener noreferrer" title="Abrir ficha en una pestaña nueva"{% endif %}>{{ item.title }}</a></strong>
+                      {% if item.brand_name %}<small>{{ item.brand_name }}</small>{% endif %}
+                      <small>{{ item.origin_label }}</small>
+                    </span>
+                  </div>
                 </td>
-                <td data-label="Estado"><span class="admin-operations-status-pill">{{ candidate.status }}</span></td>
-                <td data-label="Prioridad">{{ candidate.priority }}</td>
-                <td data-label="Demanda">{{ candidate.demand_label }}</td>
-                <td data-label="Acción"><a class="btn-secondary btn-secondary--compact" href="{{ candidate.detail_url }}">Revisar</a></td>
+                <td data-label="Etapa y estado">
+                  <span class="admin-operations-stage-label admin-operations-stage-label--{{ item.stage_key }}">{{ item.stage_label }}</span>
+                  <small>{{ item.status_label }}</small>
+                </td>
+                <td data-label="Datos">
+                  <strong class="admin-operations-table-detail">{{ item.detail_label }}</strong>
+                  <small>{{ item.context_label }}</small>
+                </td>
+                <td data-label="Siguiente paso">
+                  <span class="admin-operations-readiness admin-operations-readiness--{{ item.readiness_state }}">
+                    <i data-lucide="{% if item.readiness_state == 'ready' %}circle-check{% elif item.readiness_state == 'blocked' %}triangle-alert{% else %}circle-dot{% endif %}"></i>
+                    {{ item.readiness_label }}
+                  </span>
+                  {% if item.readiness_issues|length > 1 %}
+                    <details class="admin-operations-readiness-issues">
+                      <summary>Ver {{ item.readiness_issues|length }} requisitos pendientes</summary>
+                      <ul>{% for issue in item.readiness_issues %}<li>{{ issue }}</li>{% endfor %}</ul>
+                    </details>
+                  {% endif %}
+                </td>
+                <td data-label="Acciones">
+                  <div class="admin-operations-curation-actions">
+                    {% if item.primary_action_kind == 'post' %}
+                      <form method="post" action="{{ item.action_url }}" data-admin-operations-confirm data-confirm-message="¿Confirmar {{ item.primary_action_label|lower }} para {{ item.title }}?">
+                        {% csrf_token %}
+                        {% if item.primary_action_value %}<input type="hidden" name="action" value="{{ item.primary_action_value }}">{% endif %}
+                        <button class="admin-operations-primary-action" type="submit">
+                          <i data-lucide="{{ item.primary_action_icon }}"></i>{{ item.primary_action_label }}
+                        </button>
+                      </form>
+                    {% else %}
+                      <a class="admin-operations-primary-action" href="{{ item.detail_url|default:item.admin_url }}"{% if item.kind == 'catalog_food' %} target="_blank" rel="noopener noreferrer" title="Abrir ficha en una pestaña nueva"{% endif %}>
+                        <i data-lucide="{{ item.primary_action_icon }}"></i>{{ item.primary_action_label }}
+                      </a>
+                    {% endif %}
+
+                    {% if item.kind == 'catalog_food' and item.secondary_actions %}
+                      <details class="admin-operations-action-menu">
+                        <summary aria-label="Más acciones para {{ item.title }}" title="Más acciones"><i data-lucide="ellipsis"></i></summary>
+                        <div class="admin-operations-action-menu__panel">
+                          <a href="{{ item.admin_url }}"><i data-lucide="pencil"></i> Editar ficha</a>
+                          <form method="post" action="{{ item.action_url }}" data-admin-operations-confirm data-confirm-message="¿Confirmar cambio de etapa para {{ item.title }}?">
+                            {% csrf_token %}
+                            <label>
+                              Comentario opcional
+                              <input type="text" name="reason" placeholder="Contexto para auditoría">
+                            </label>
+                            {% for action_value, action_label in item.secondary_actions %}
+                              <button type="submit" name="action" value="{{ action_value }}">{{ action_label }}</button>
+                            {% endfor %}
+                          </form>
+                        </div>
+                      </details>
+                    {% endif %}
+                  </div>
+                </td>
               </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
     {% else %}
-      <div class="admin-operations-empty-state">
+      <div class="admin-operations-empty-state admin-operations-curation-empty">
         <i data-lucide="circle-check" class="home-stat-icon"></i>
         <div>
-          <h4>Sin candidatos pendientes</h4>
-          <p class="muted-text">No hay candidatos externos dentro de estados accionables para OPS03.</p>
-        </div>
-      </div>
-    {% endif %}
-  </section>
-
-  <section class="card-detail-block">
-    <div class="card-title-row">
-      <div>
-        <p class="section-eyebrow">Master food queue</p>
-        <h3>Alimentos master por revisar</h3>
-        <p class="muted-text">Acciones acotadas al workflow existente de Food Catalog. La razón es obligatoria aunque el audit log formal llega en OPS06.</p>
-      </div>
-    </div>
-    {% if vm.content.catalog_foods %}
-      <div class="admin-operations-card-list" aria-label="Alimentos master por revisar">
-        {% for food in vm.content.catalog_foods %}
-          <article class="admin-operations-food-card">
-            <div>
-              <p class="section-eyebrow">{{ food.source_type }} · quality {{ food.quality_score }}</p>
-              <h4>{{ food.title }}</h4>
-              {% if food.brand_name %}<p class="muted-text">{{ food.brand_name }}</p>{% endif %}
-              <p class="admin-operations-queue-card__helper">{{ food.macro_label }} · solver {% if food.solver_enabled %}enabled{% else %}off{% endif %}</p>
-              <span class="admin-operations-status-pill">{{ food.status }}</span>
-            </div>
-            <form method="post" action="{% url 'admin_operations_food_catalog_food_action' food.pk %}" class="admin-operations-inline-form" data-admin-operations-confirm data-confirm-message="Confirmar intervención sobre este alimento master?">
-              {% csrf_token %}
-              <label>
-                <span>Razón</span>
-                <input type="text" name="reason" placeholder="Motivo de la intervención" required>
-              </label>
-              <div class="admin-operations-inline-actions">
-                {% if food.status == 'reviewed' or food.status == 'verified' %}<button class="btn-secondary btn-secondary--compact" type="submit" name="action" value="published">Publicar</button>{% else %}<button class="btn-secondary btn-secondary--compact" type="submit" name="action" value="reviewed">Revisado</button>{% endif %}
-                <button class="btn-secondary btn-secondary--compact" type="submit" name="action" value="needs_more_evidence">Evidencia</button>
-                <a class="btn-secondary btn-secondary--compact" href="{{ food.admin_url }}">Admin</a>
-              </div>
-            </form>
-            {% if food.status == 'published' %}<form method="post" action="{% url 'admin_operations_food_catalog_food_snapshot' food.pk %}" class="admin-operations-inline-form" data-admin-operations-confirm data-confirm-message="¿Crear snapshot operacional separado?">{% csrf_token %}<label><span>Razón de snapshot</span><input type="text" name="reason" required></label><button class="btn-secondary btn-secondary--compact" type="submit">Crear snapshot</button></form>{% endif %}
-          </article>
-        {% endfor %}
-      </div>
-    {% else %}
-      <div class="admin-operations-empty-state">
-        <i data-lucide="circle-check" class="home-stat-icon"></i>
-        <div>
-          <h4>Sin alimentos master por revisar</h4>
-          <p class="muted-text">La cola de CatalogFood accionable está vacía.</p>
+          <h4>No hay trabajo en esta vista</h4>
+          <p class="muted-text">Prueba otra etapa o limpia la búsqueda para volver a ver la bandeja completa.</p>
         </div>
       </div>
     {% endif %}

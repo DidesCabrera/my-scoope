@@ -12,6 +12,7 @@ from admin_operations.services import (
     build_ai_operations_vm,
     build_ai_proposal_detail_vm,
     build_candidate_detail_vm,
+    build_catalog_food_detail_vm,
     build_food_catalog_inventory_vm,
     build_food_catalog_imports_vm,
     build_food_catalog_operations_vm,
@@ -167,7 +168,10 @@ def account_reservation_release(request, user_id, reservation_id):
 @staff_member_required
 def food_catalog(request):
     ui_vm = build_ui_vm(ADMIN_OPERATIONS_OVERVIEW_VIEWMODE)
-    content = build_food_catalog_operations_vm()
+    content = build_food_catalog_operations_vm(
+        query=request.GET.get("q", ""),
+        stage=request.GET.get("stage", "all"),
+    )
     base_vm = BaseVM(ui=ui_vm, content=content)
     return render(request, "admin_operations/food_catalog.html", base_vm.as_context())
 
@@ -332,6 +336,14 @@ def food_catalog_candidate_detail(request, candidate_id):
 
 
 @staff_member_required
+def food_catalog_food_detail(request, catalog_food_id):
+    ui_vm = build_ui_vm(ADMIN_OPERATIONS_OVERVIEW_VIEWMODE)
+    content = build_catalog_food_detail_vm(catalog_food_id)
+    base_vm = BaseVM(ui=ui_vm, content=content)
+    return render(request, "admin_operations/food_catalog_food_detail.html", base_vm.as_context())
+
+
+@staff_member_required
 @require_POST
 def food_catalog_candidate_action(request, candidate_id):
     result = perform_candidate_operation(
@@ -354,7 +366,7 @@ def food_catalog_food_action(request, catalog_food_id):
         reason=request.POST.get("reason", ""),
     )
     flash_operation_result(request, result)
-    return redirect("admin_operations_food_catalog")
+    return redirect("admin_operations_food_catalog_food", catalog_food_id=catalog_food_id)
 
 
 @staff_member_required
@@ -366,4 +378,4 @@ def food_catalog_food_snapshot(request, catalog_food_id):
         reason=request.POST.get("reason", ""),
     )
     flash_operation_result(request, result)
-    return redirect("admin_operations_food_catalog")
+    return redirect("admin_operations_food_catalog_food", catalog_food_id=catalog_food_id)

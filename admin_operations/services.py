@@ -34,17 +34,24 @@ from admin_operations.viewmodels import (
     AdminOperationsAuditLogVM,
     AdminOperationsCandidateDetailVM,
     AdminOperationsCandidateVM,
+    AdminOperationsCurationItemVM,
+    AdminOperationsCurationStageVM,
     AdminOperationsCatalogCoverageVM,
+    AdminOperationsCatalogAliasVM,
+    AdminOperationsCatalogEvidenceVM,
+    AdminOperationsCatalogFoodDetailVM,
     AdminOperationsCatalogInventoryFoodVM,
     AdminOperationsCatalogInventoryVM,
     AdminOperationsCatalogImportBatchVM,
     AdminOperationsCatalogImportsVM,
+    AdminOperationsCatalogPortionVM,
     AdminOperationsAccountDetailVM,
     AdminOperationsAccountsVM,
     AdminOperationsCatalogFoodVM,
     AdminOperationsCreditLedgerVM,
     AdminOperationsCreditReservationVM,
     AdminOperationsCreditWalletVM,
+    AdminOperationsDetailFactVM,
     AdminOperationsFoodCatalogVM,
     AdminOperationsMetricVM,
     AdminOperationsOverviewVM,
@@ -55,7 +62,8 @@ from admin_operations.viewmodels import (
 from accounts.models import AccountSubscription, CreditLedger, CreditWallet
 from ai_assistant.models import AICreditLedger, AIUsageEvent, AIUserCreditQuota
 from accounts.services.credits import current_account_credit_period, release_account_credit_reservation
-from food_catalog.application.curation import transition_catalog_food_status
+from food_catalog.application.curation import allowed_next_statuses, transition_catalog_food_status
+from food_catalog.application.publication import check_catalog_food_publishable
 from food_catalog.models import CatalogCurationCandidate, CatalogFood, CatalogImportBatch, CatalogImportSourcePolicy
 from food_catalog.infrastructure.core_natural_foods_seed import (
     apply_core_natural_foods_seed,
@@ -135,6 +143,120 @@ CATALOG_FOOD_ACTIONS = {
     "needs_more_evidence": (CatalogFood.STATUS_NEEDS_MORE_EVIDENCE, "Pedir más evidencia"),
     "rejected": (CatalogFood.STATUS_REJECTED, "Rechazar"),
     "published": (CatalogFood.STATUS_PUBLISHED, "Publicar"),
+}
+
+CATALOG_FOOD_STAGE_LABELS = {
+    CatalogFood.STATUS_EXTERNAL_CANDIDATE: "Entrada externa",
+    CatalogFood.STATUS_MANUAL_CANDIDATE: "Entrada manual",
+    CatalogFood.STATUS_BRAND_SUBMITTED: "Entrada marca",
+    CatalogFood.STATUS_NORMALIZED: "Normalización",
+    CatalogFood.STATUS_PENDING_REVIEW: "Revisión",
+    CatalogFood.STATUS_NEEDS_MORE_EVIDENCE: "Evidencia",
+    CatalogFood.STATUS_REVIEWED: "Aprobación",
+    CatalogFood.STATUS_VERIFIED: "Verificación",
+    CatalogFood.STATUS_PUBLISHED: "Publicado",
+    CatalogFood.STATUS_REJECTED: "Descartado",
+    CatalogFood.STATUS_DEPRECATED: "Retiro",
+    CatalogFood.STATUS_ARCHIVED: "Archivado",
+}
+
+CATALOG_FOOD_ACTION_ORDER = (
+    "pending_review",
+    "reviewed",
+    "verified",
+    "published",
+    "needs_more_evidence",
+    "rejected",
+)
+
+CANDIDATE_STATUS_LABELS = {
+    CatalogCurationCandidate.STATUS_QUEUED: "Pendiente",
+    CatalogCurationCandidate.STATUS_IN_REVIEW: "En revisión",
+    CatalogCurationCandidate.STATUS_NEEDS_MORE_EVIDENCE: "Falta evidencia",
+    CatalogCurationCandidate.STATUS_APPROVED_FOR_CURATION: "Aprobado para incorporar",
+    CatalogCurationCandidate.STATUS_REJECTED: "Descartado",
+    CatalogCurationCandidate.STATUS_ARCHIVED: "Archivado",
+}
+
+CATALOG_FOOD_STATUS_LABELS = {
+    CatalogFood.STATUS_EXTERNAL_CANDIDATE: "Entrada externa",
+    CatalogFood.STATUS_MANUAL_CANDIDATE: "Entrada manual",
+    CatalogFood.STATUS_BRAND_SUBMITTED: "Enviado por marca",
+    CatalogFood.STATUS_NORMALIZED: "Datos normalizados",
+    CatalogFood.STATUS_PENDING_REVIEW: "Pendiente de revisión",
+    CatalogFood.STATUS_NEEDS_MORE_EVIDENCE: "Falta evidencia",
+    CatalogFood.STATUS_REVIEWED: "Revisión aprobada",
+    CatalogFood.STATUS_VERIFIED: "Verificado",
+    CatalogFood.STATUS_PUBLISHED: "Publicado",
+    CatalogFood.STATUS_REJECTED: "Descartado",
+    CatalogFood.STATUS_DEPRECATED: "Retirado",
+    CatalogFood.STATUS_ARCHIVED: "Archivado",
+}
+
+CATALOG_SOURCE_LABELS = {
+    CatalogFood.SOURCE_NATURAL_VERIFIED: "Natural verificado",
+    CatalogFood.SOURCE_USDA: "USDA FoodData Central",
+    CatalogFood.SOURCE_BRAND_SUBMITTED: "Enviado por marca",
+    CatalogFood.SOURCE_USER_CREATED: "Creado por usuario",
+    CatalogFood.SOURCE_EXTERNAL_TEMPORARY: "Fuente externa temporal",
+    CatalogFood.SOURCE_FATSECRET: "FatSecret",
+    CatalogFood.SOURCE_OPEN_FOOD_FACTS: "Open Food Facts",
+    CatalogFood.SOURCE_ADMIN_IMPORT: "Importación administrativa",
+}
+
+CATALOG_PREPARATION_LABELS = {
+    CatalogFood.PREPARATION_UNKNOWN: "Sin definir",
+    CatalogFood.PREPARATION_RAW: "Crudo",
+    CatalogFood.PREPARATION_COOKED: "Cocido",
+    CatalogFood.PREPARATION_DRY: "Seco",
+    CatalogFood.PREPARATION_HYDRATED: "Hidratado",
+    CatalogFood.PREPARATION_READY_TO_EAT: "Listo para consumir",
+}
+
+CATALOG_FORM_LABELS = {
+    CatalogFood.FOOD_FORM_UNKNOWN: "Sin definir",
+    CatalogFood.FOOD_FORM_INGREDIENT: "Ingrediente",
+    CatalogFood.FOOD_FORM_MIXED_DISH: "Plato preparado",
+    CatalogFood.FOOD_FORM_BEVERAGE: "Bebida",
+    CatalogFood.FOOD_FORM_CONDIMENT: "Condimento",
+}
+
+CATALOG_GROUP_LABELS = {
+    "protein": "Proteínas",
+    "poultry": "Aves",
+    "meat": "Carnes",
+    "fish": "Pescados",
+    "vegetables": "Verduras",
+    "fruit": "Frutas",
+    "cereals": "Cereales",
+    "legumes": "Legumbres",
+    "dairy": "Lácteos",
+    "tubers": "Tubérculos",
+    "fats": "Grasas",
+}
+
+CATALOG_FUNCTIONAL_LABELS = {
+    "protein_anchor": "Base proteica",
+    "carb_base": "Base de carbohidratos",
+    "fat_source": "Fuente de grasa",
+    "fiber_source": "Fuente de fibra",
+    "breakfast": "Desayuno",
+    "main": "Comida principal",
+    "dinner": "Cena",
+    "snack": "Colación",
+    "gluten_free": "Sin gluten",
+    "lactose_free": "Sin lactosa",
+    "vegetarian": "Vegetariano",
+    "vegan": "Vegano",
+}
+
+CURATION_STAGE_ORDER = {
+    "blocked": 0,
+    "intake": 1,
+    "preparation": 2,
+    "review": 3,
+    "publication": 4,
+    "activation": 5,
 }
 
 
@@ -380,6 +502,8 @@ def _catalog_food_to_vm(catalog_food: CatalogFood) -> AdminOperationsCatalogFood
         title=catalog_food.display_name,
         brand_name=catalog_food.brand_name,
         status=catalog_food.status,
+        stage_label=CATALOG_FOOD_STAGE_LABELS.get(catalog_food.status, "Sin etapa"),
+        action_buttons=_catalog_food_action_buttons(catalog_food.status),
         source_type=catalog_food.source_type,
         quality_score=catalog_food.data_quality_score,
         solver_enabled=catalog_food.solver_enabled,
@@ -392,41 +516,607 @@ def _catalog_food_to_vm(catalog_food: CatalogFood) -> AdminOperationsCatalogFood
     )
 
 
-def build_food_catalog_operations_vm() -> AdminOperationsFoodCatalogVM:
-    payload = get_food_catalog_operations_payload()
+def _catalog_food_action_buttons(status: str) -> list[tuple[str, str]]:
+    next_statuses = set(allowed_next_statuses(status))
+    buttons: list[tuple[str, str]] = []
+    for action in CATALOG_FOOD_ACTION_ORDER:
+        target_status, label = CATALOG_FOOD_ACTIONS[action]
+        if target_status in next_statuses:
+            buttons.append((action, label))
+    return buttons
+
+
+def _candidate_stage(status: str) -> tuple[str, str]:
+    if status == CatalogCurationCandidate.STATUS_NEEDS_MORE_EVIDENCE:
+        return "blocked", "Evidencia pendiente"
+    if status == CatalogCurationCandidate.STATUS_APPROVED_FOR_CURATION:
+        return "preparation", "Preparación"
+    return "intake", "Entrada"
+
+
+def _catalog_food_stage(status: str) -> tuple[str, str]:
+    if status == CatalogFood.STATUS_NEEDS_MORE_EVIDENCE:
+        return "blocked", "Evidencia pendiente"
+    if status in {
+        CatalogFood.STATUS_EXTERNAL_CANDIDATE,
+        CatalogFood.STATUS_MANUAL_CANDIDATE,
+        CatalogFood.STATUS_BRAND_SUBMITTED,
+        CatalogFood.STATUS_NORMALIZED,
+    }:
+        return "preparation", "Preparación"
+    if status == CatalogFood.STATUS_PENDING_REVIEW:
+        return "review", "Revisión"
+    if status in {CatalogFood.STATUS_REVIEWED, CatalogFood.STATUS_VERIFIED}:
+        return "publication", "Publicación"
+    return "activation", "Activación"
+
+
+def _publication_issue_label(issue: str) -> str:
+    exact_labels = {
+        "status must be reviewed or verified before publication": "Debe aprobarse la revisión antes de publicar",
+        "display_name is required": "Falta el nombre visible",
+        "canonical_name is required": "Falta el nombre normalizado",
+        "at least one traceable source is required": "Falta una fuente trazable",
+        "at least one source with allowed or reviewed license is required": "La fuente necesita una licencia válida",
+        "at least one serving/portion option is required": "Falta una porción",
+        "one serving/portion option must be marked as default": "Falta elegir una porción predeterminada",
+        "protein + carbs + fat cannot exceed 120 g per 100 g": "La suma de macros supera el rango permitido",
+    }
+    if issue in exact_labels:
+        return exact_labels[issue]
+    if issue.startswith("data_quality_score must be at least"):
+        return "La calidad debe ser al menos 70/100"
+    if issue.startswith("solver readiness:"):
+        return "Falta completar la configuración para el solver"
+    if "_g_per_100g is required" in issue:
+        return "Faltan macronutrientes por 100 g"
+    if "cannot" in issue or "outside the accepted" in issue:
+        return "Hay un valor nutricional fuera de rango"
+    return issue
+
+
+def _candidate_to_work_item(candidate: CatalogCurationCandidate) -> AdminOperationsCurationItemVM:
+    stage_key, stage_label = _candidate_stage(candidate.status)
+    if stage_key == "blocked":
+        readiness_state = "blocked"
+        readiness_label = "Completar fuente o respaldo"
+    elif candidate.status == CatalogCurationCandidate.STATUS_APPROVED_FOR_CURATION:
+        readiness_state = "ready"
+        readiness_label = "Listo para incorporar al catálogo master"
+    else:
+        readiness_state = "attention" if candidate.priority >= 75 else "neutral"
+        readiness_label = "Revisar identidad, demanda y fuente"
+
+    return AdminOperationsCurationItemVM(
+        kind="candidate",
+        pk=candidate.pk,
+        title=candidate.display_name,
+        brand_name=candidate.brand_name,
+        origin_label=candidate.get_provider_display(),
+        stage_key=stage_key,
+        stage_label=stage_label,
+        status=candidate.status,
+        status_label=CANDIDATE_STATUS_LABELS.get(candidate.status, candidate.status),
+        detail_label=f"Prioridad {candidate.priority}/100",
+        context_label=(
+            f"{candidate.seen_count_at_creation} vistas · "
+            f"{candidate.selected_count_at_creation} selecciones"
+        ),
+        readiness_state=readiness_state,
+        readiness_label=readiness_label,
+        detail_url=reverse("admin_operations_food_catalog_candidate", args=[candidate.pk]),
+        admin_url=reverse("admin:food_catalog_catalogcurationcandidate_change", args=[candidate.pk]),
+        primary_action_label=(
+            "Resolver evidencia" if stage_key == "blocked"
+            else "Ver aprobación" if candidate.status == CatalogCurationCandidate.STATUS_APPROVED_FOR_CURATION
+            else "Continuar revisión" if candidate.status == CatalogCurationCandidate.STATUS_IN_REVIEW
+            else "Revisar entrada"
+        ),
+        primary_action_icon="arrow-right",
+        primary_action_kind="link",
+    )
+
+
+def _catalog_food_to_work_item(
+    catalog_food: CatalogFood,
+    *,
+    operational_food_ids: set[int],
+) -> AdminOperationsCurationItemVM | None:
+    if catalog_food.pk in operational_food_ids:
+        return None
+
+    stage_key, stage_label = _catalog_food_stage(catalog_food.status)
+    action_url = reverse("admin_operations_food_catalog_food_action", args=[catalog_food.pk])
+    admin_url = reverse("admin:food_catalog_catalogfood_change", args=[catalog_food.pk])
+    detail_url = reverse("admin_operations_food_catalog_food", args=[catalog_food.pk])
+    primary_action_kind = "post"
+    primary_action_value = ""
+    primary_action_label = ""
+    primary_action_icon = "arrow-right"
+    readiness_state = "neutral"
+    readiness_label = ""
+    readiness_issues: list[str] = []
+    unavailable_actions: set[str] = set()
+
+    if stage_key == "preparation":
+        primary_action_value = "pending_review"
+        primary_action_label = "Enviar a revisión"
+        readiness_state = "ready" if catalog_food.data_quality_score >= 70 else "attention"
+        readiness_label = (
+            "Datos listos para revisión"
+            if readiness_state == "ready"
+            else f"Calidad {catalog_food.data_quality_score}/100; conviene completar la ficha"
+        )
+    elif stage_key == "review":
+        primary_action_kind = "link"
+        primary_action_label = "Ver ficha"
+        primary_action_icon = "external-link"
+        readiness_state = "attention"
+        readiness_label = "Validar nombre, macros, fuente y porción"
+    elif stage_key == "blocked":
+        primary_action_kind = "link"
+        primary_action_label = "Ver ficha"
+        primary_action_icon = "external-link"
+        readiness_state = "blocked"
+        readiness_label = "La curación está detenida hasta completar el respaldo"
+    elif stage_key == "publication":
+        publication_check = check_catalog_food_publishable(catalog_food)
+        readiness_issues = [_publication_issue_label(issue) for issue in publication_check.errors]
+        if publication_check.can_publish:
+            primary_action_value = "published"
+            primary_action_label = "Publicar"
+            primary_action_icon = "badge-check"
+            readiness_state = "ready"
+            readiness_label = "Cumple todos los requisitos de publicación"
+        else:
+            primary_action_kind = "link"
+            primary_action_label = "Ver ficha"
+            primary_action_icon = "external-link"
+            readiness_state = "blocked"
+            readiness_label = readiness_issues[0]
+            unavailable_actions.add("published")
+    else:
+        action_url = reverse("admin_operations_food_catalog_food_snapshot", args=[catalog_food.pk])
+        primary_action_label = "Hacer operativo"
+        primary_action_icon = "rocket"
+        readiness_state = "ready"
+        readiness_label = "Publicado; falta crear su copia operativa"
+
+    secondary_actions = [
+        (action, label)
+        for action, label in _catalog_food_action_buttons(catalog_food.status)
+        if action != primary_action_value and action not in unavailable_actions
+    ]
+
+    return AdminOperationsCurationItemVM(
+        kind="catalog_food",
+        pk=catalog_food.pk,
+        title=catalog_food.display_name,
+        brand_name=catalog_food.brand_name,
+        origin_label=CATALOG_SOURCE_LABELS.get(catalog_food.source_type, catalog_food.get_source_type_display()),
+        stage_key=stage_key,
+        stage_label=stage_label,
+        status=catalog_food.status,
+        status_label=CATALOG_FOOD_STATUS_LABELS.get(catalog_food.status, catalog_food.status),
+        detail_label=f"Calidad {catalog_food.data_quality_score}/100",
+        context_label=(
+            f"P {_format_decimal(catalog_food.protein_g_per_100g, suffix='g')} · "
+            f"C {_format_decimal(catalog_food.carbs_g_per_100g, suffix='g')} · "
+            f"G {_format_decimal(catalog_food.fat_g_per_100g, suffix='g')}"
+        ),
+        readiness_state=readiness_state,
+        readiness_label=readiness_label,
+        readiness_issues=readiness_issues,
+        detail_url=detail_url,
+        admin_url=admin_url,
+        action_url=action_url,
+        primary_action_value=primary_action_value,
+        primary_action_label=primary_action_label,
+        primary_action_icon=primary_action_icon,
+        primary_action_kind=primary_action_kind,
+        secondary_actions=secondary_actions,
+    )
+
+
+def _catalog_food_completeness_issues(catalog_food: CatalogFood) -> list[str]:
+    issues: list[str] = []
+    if not catalog_food.canonical_name.strip():
+        issues.append("Falta el nombre normalizado")
+    if catalog_food.data_quality_score < 70:
+        issues.append("La calidad debe ser al menos 70/100")
+    if not catalog_food.sources.all():
+        issues.append("Falta una fuente trazable")
+    if not catalog_food.portions.all():
+        issues.append("Falta una porción")
+    elif not any(portion.is_default for portion in catalog_food.portions.all()):
+        issues.append("Falta elegir una porción predeterminada")
+    if catalog_food.preparation_state == CatalogFood.PREPARATION_UNKNOWN:
+        issues.append("Falta definir el estado de preparación")
+    if catalog_food.food_form == CatalogFood.FOOD_FORM_UNKNOWN:
+        issues.append("Falta definir la forma culinaria")
+    return issues
+
+
+def _catalog_food_detail_action(
+    catalog_food: CatalogFood,
+    *,
+    is_operational: bool,
+) -> dict:
+    stage_key, _stage_label = _catalog_food_stage(catalog_food.status)
+    action_url = reverse("admin_operations_food_catalog_food_action", args=[catalog_food.pk])
+    admin_url = reverse("admin:food_catalog_catalogfood_change", args=[catalog_food.pk])
+    primary_kind = "post"
+    primary_value = ""
+    primary_label = ""
+    primary_icon = "arrow-right"
+    readiness_state = "neutral"
+    readiness_label = ""
+    readiness_issues = _catalog_food_completeness_issues(catalog_food)
+    unavailable_actions: set[str] = set()
+
+    if is_operational:
+        primary_kind = "none"
+        readiness_state = "ready"
+        readiness_label = "Disponible para Meals, planes y Solver según su configuración"
+        readiness_issues = []
+    elif stage_key == "preparation":
+        primary_value = "pending_review"
+        primary_label = "Enviar a revisión"
+        readiness_state = "attention" if readiness_issues else "ready"
+        readiness_label = (
+            "Puede entrar a revisión; aún tiene datos por completar"
+            if readiness_issues
+            else "La ficha está lista para revisión humana"
+        )
+    elif stage_key == "review":
+        primary_value = "reviewed"
+        primary_label = "Aprobar revisión"
+        primary_icon = "circle-check"
+        readiness_state = "attention" if readiness_issues else "ready"
+        readiness_label = (
+            "Revisar los datos pendientes antes de aprobar"
+            if readiness_issues
+            else "La ficha está completa para aprobar la revisión"
+        )
+    elif stage_key == "blocked":
+        primary_kind = "link"
+        primary_label = "Completar datos"
+        primary_icon = "pencil"
+        readiness_state = "blocked"
+        readiness_label = "La curación está detenida hasta completar la evidencia"
+    elif stage_key == "publication":
+        publication_check = check_catalog_food_publishable(catalog_food)
+        readiness_issues = [_publication_issue_label(issue) for issue in publication_check.errors]
+        if publication_check.can_publish:
+            primary_value = "published"
+            primary_label = "Publicar alimento"
+            primary_icon = "badge-check"
+            readiness_state = "ready"
+            readiness_label = "Cumple todos los requisitos de publicación"
+        else:
+            primary_kind = "link"
+            primary_label = "Completar requisitos"
+            primary_icon = "pencil"
+            readiness_state = "blocked"
+            readiness_label = "No puede publicarse hasta resolver los requisitos pendientes"
+            unavailable_actions.add("published")
+    else:
+        action_url = reverse("admin_operations_food_catalog_food_snapshot", args=[catalog_food.pk])
+        primary_label = "Hacer operativo"
+        primary_icon = "rocket"
+        readiness_state = "ready"
+        readiness_label = "Está publicado; falta crear la copia que utiliza el sistema"
+        readiness_issues = []
+
+    secondary_actions = [
+        (action, label)
+        for action, label in _catalog_food_action_buttons(catalog_food.status)
+        if action != primary_value and action not in unavailable_actions
+    ]
+
+    return {
+        "admin_url": admin_url,
+        "action_url": action_url,
+        "primary_kind": primary_kind,
+        "primary_value": primary_value,
+        "primary_label": primary_label,
+        "primary_icon": primary_icon,
+        "readiness_state": readiness_state,
+        "readiness_label": readiness_label,
+        "readiness_issues": list(dict.fromkeys(readiness_issues)),
+        "secondary_actions": secondary_actions,
+    }
+
+
+def _format_detail_timestamp(value) -> str:
+    return value.strftime("%d-%m-%Y · %H:%M") if value else "Sin registro"
+
+
+def _format_catalog_detail_labels(values) -> str:
+    if not values:
+        return "—"
+    return ", ".join(CATALOG_FUNCTIONAL_LABELS.get(str(value), str(value)) for value in values)
+
+
+def build_catalog_food_detail_vm(catalog_food_id: int) -> AdminOperationsCatalogFoodDetailVM:
+    catalog_food = get_object_or_404(
+        CatalogFood.objects.select_related("created_by", "reviewed_by").prefetch_related(
+            "sources",
+            "portions",
+            "aliases",
+        ),
+        pk=catalog_food_id,
+    )
+    operational_food = (
+        Food.objects.filter(catalog_food_id=catalog_food.pk)
+        .order_by("-catalog_snapshot_created_at", "-id")
+        .first()
+    )
+    action = _catalog_food_detail_action(
+        catalog_food,
+        is_operational=operational_food is not None,
+    )
+    stage_key, stage_label = _catalog_food_stage(catalog_food.status)
+
+    evidence = [
+        AdminOperationsCatalogEvidenceVM(
+            name=source.source_name,
+            source_type=CATALOG_SOURCE_LABELS.get(source.source_type, source.get_source_type_display()),
+            license_label={
+                "allowed": "Licencia permitida",
+                "needs_review": "Licencia por revisar",
+                "restricted": "Licencia restringida",
+                "unknown": "Licencia desconocida",
+            }.get(source.license_status, source.get_license_status_display()),
+            reference_label=source.source_food_id or "Sin identificador externo",
+            dataset_label=" · ".join(
+                part for part in [source.source_dataset, source.source_version] if part
+            ),
+            url=source.source_url,
+            attribution=source.attribution,
+        )
+        for source in catalog_food.sources.all()
+    ]
+    portions = [
+        AdminOperationsCatalogPortionVM(
+            label=portion.label,
+            grams_label=_format_decimal(portion.grams, suffix=" g"),
+            source_label=portion.source or "Food Catalog",
+            is_default=portion.is_default,
+        )
+        for portion in catalog_food.portions.all()
+    ]
+    aliases = [
+        AdminOperationsCatalogAliasVM(
+            name=alias.name,
+            kind_label={
+                "search": "Búsqueda",
+                "common": "Nombre común",
+                "localized": "Localizado",
+            }.get(alias.alias_type, alias.get_alias_type_display()),
+            locale_label=f"{alias.language}{f'-{alias.country}' if alias.country else ''}",
+            is_primary=alias.is_primary,
+        )
+        for alias in catalog_food.aliases.all()
+    ]
+
+    operational_label = ""
+    operational_url = ""
+    if operational_food is not None:
+        operational_label = (
+            f"Food #{operational_food.pk} · {operational_food.get_catalog_sync_status_display()}"
+        )
+        operational_url = reverse("admin:notas_food_change", args=[operational_food.pk])
+
+    return AdminOperationsCatalogFoodDetailVM(
+        title=catalog_food.display_name,
+        subtitle="Ficha maestra para revisar identidad, nutrición, evidencia y preparación operativa.",
+        food_pk=catalog_food.pk,
+        display_name=catalog_food.display_name,
+        brand_name=catalog_food.brand_name,
+        stage_key=stage_key,
+        stage_label=stage_label,
+        status_label=CATALOG_FOOD_STATUS_LABELS.get(catalog_food.status, catalog_food.status),
+        source_label=CATALOG_SOURCE_LABELS.get(catalog_food.source_type, catalog_food.get_source_type_display()),
+        quality_score=catalog_food.data_quality_score,
+        confidence_label=_format_decimal(catalog_food.confidence_score, suffix="/100"),
+        readiness_state=action["readiness_state"],
+        readiness_label=action["readiness_label"],
+        readiness_issues=action["readiness_issues"],
+        identity_facts=[
+            AdminOperationsDetailFactVM("Nombre normalizado", catalog_food.canonical_name or "Pendiente"),
+            AdminOperationsDetailFactVM(
+                "Grupo",
+                CATALOG_GROUP_LABELS.get(catalog_food.food_group, catalog_food.food_group or "Sin clasificar"),
+            ),
+            AdminOperationsDetailFactVM(
+                "Subgrupo",
+                CATALOG_GROUP_LABELS.get(catalog_food.food_subgroup, catalog_food.food_subgroup or "Sin clasificar"),
+            ),
+            AdminOperationsDetailFactVM(
+                "Preparación",
+                CATALOG_PREPARATION_LABELS.get(
+                    catalog_food.preparation_state,
+                    catalog_food.get_preparation_state_display(),
+                ),
+            ),
+            AdminOperationsDetailFactVM(
+                "Forma culinaria",
+                CATALOG_FORM_LABELS.get(catalog_food.food_form, catalog_food.get_food_form_display()),
+            ),
+            AdminOperationsDetailFactVM(
+                "Idioma y país",
+                " · ".join(part for part in [catalog_food.language, catalog_food.country] if part) or "Sin definir",
+            ),
+        ],
+        nutrition_facts=[
+            AdminOperationsDetailFactVM(
+                "Energía",
+                _format_decimal(
+                    catalog_food.calories_kcal_per_100g or catalog_food.macro_calories_kcal,
+                    suffix=" kcal",
+                ),
+                "Por 100 g",
+            ),
+            AdminOperationsDetailFactVM("Proteína", _format_decimal(catalog_food.protein_g_per_100g, suffix=" g")),
+            AdminOperationsDetailFactVM("Carbohidratos", _format_decimal(catalog_food.carbs_g_per_100g, suffix=" g")),
+            AdminOperationsDetailFactVM("Grasa", _format_decimal(catalog_food.fat_g_per_100g, suffix=" g")),
+            AdminOperationsDetailFactVM("Fibra", _format_decimal(catalog_food.fiber_g_per_100g, suffix=" g")),
+            AdminOperationsDetailFactVM("Azúcar", _format_decimal(catalog_food.sugar_g_per_100g, suffix=" g")),
+            AdminOperationsDetailFactVM("Grasa saturada", _format_decimal(catalog_food.saturated_fat_g_per_100g, suffix=" g")),
+            AdminOperationsDetailFactVM("Sodio", _format_decimal(catalog_food.sodium_mg_per_100g, suffix=" mg")),
+        ],
+        solver_facts=[
+            AdminOperationsDetailFactVM("Estado", "Habilitado" if catalog_food.solver_enabled else "Deshabilitado"),
+            AdminOperationsDetailFactVM("Porción mínima", _format_decimal(catalog_food.solver_min_portion_g, suffix=" g")),
+            AdminOperationsDetailFactVM("Porción máxima", _format_decimal(catalog_food.solver_max_portion_g, suffix=" g")),
+            AdminOperationsDetailFactVM("Incremento", _format_decimal(catalog_food.solver_portion_step_g, suffix=" g")),
+            AdminOperationsDetailFactVM("Roles", _format_catalog_detail_labels(catalog_food.functional_roles)),
+            AdminOperationsDetailFactVM("Afinidades", _format_catalog_detail_labels(catalog_food.meal_affinities)),
+            AdminOperationsDetailFactVM("Etiquetas dietarias", _format_catalog_detail_labels(catalog_food.dietary_tags)),
+            AdminOperationsDetailFactVM("Alérgenos", _format_catalog_detail_labels(catalog_food.allergens)),
+            AdminOperationsDetailFactVM(
+                "Esfuerzo de preparación",
+                {
+                    "unknown": "Sin definir",
+                    "none": "Ninguno",
+                    "low": "Bajo",
+                    "medium": "Medio",
+                    "high": "Alto",
+                }.get(catalog_food.preparation_effort, catalog_food.get_preparation_effort_display()),
+            ),
+            AdminOperationsDetailFactVM(
+                "Costo relativo",
+                {
+                    "unknown": "Sin definir",
+                    "low": "Bajo",
+                    "medium": "Medio",
+                    "high": "Alto",
+                }.get(catalog_food.cost_band, catalog_food.get_cost_band_display()),
+            ),
+        ],
+        lifecycle_facts=[
+            AdminOperationsDetailFactVM("Referencia", str(catalog_food.catalog_ref)),
+            AdminOperationsDetailFactVM("Versión", catalog_food.catalog_version),
+            AdminOperationsDetailFactVM("Creado", _format_detail_timestamp(catalog_food.created_at)),
+            AdminOperationsDetailFactVM("Actualizado", _format_detail_timestamp(catalog_food.updated_at)),
+            AdminOperationsDetailFactVM(
+                "Revisado",
+                _format_detail_timestamp(catalog_food.reviewed_at),
+                _user_label(catalog_food.reviewed_by) if catalog_food.reviewed_by else "Sin revisor",
+            ),
+            AdminOperationsDetailFactVM("Publicado", _format_detail_timestamp(catalog_food.published_at)),
+        ],
+        evidence=evidence,
+        portions=portions,
+        aliases=aliases,
+        admin_url=action["admin_url"],
+        action_url=action["action_url"],
+        snapshot_url=reverse("admin_operations_food_catalog_food_snapshot", args=[catalog_food.pk]),
+        primary_action_kind=action["primary_kind"],
+        primary_action_value=action["primary_value"],
+        primary_action_label=action["primary_label"],
+        primary_action_icon=action["primary_icon"],
+        secondary_actions=action["secondary_actions"],
+        is_operational=operational_food is not None,
+        operational_label=operational_label,
+        operational_url=operational_url,
+    )
+
+
+def _curation_stage_url(*, stage: str, query: str) -> str:
+    params = {"stage": stage}
+    if query:
+        params["q"] = query
+    return f"{reverse('admin_operations_food_catalog')}?{urlencode(params)}"
+
+
+def build_food_catalog_operations_vm(*, query: str = "", stage: str = "all") -> AdminOperationsFoodCatalogVM:
+    payload = get_food_catalog_operations_payload(query=query, stage=stage)
     candidate_counts = payload["candidate_counts"]
     food_counts = payload["food_counts"]
-    total_work = int(candidate_counts["total"] or 0) + int(food_counts["total"] or 0)
+    operational_food_ids = set(
+        Food.objects.filter(catalog_food_id__in=payload["published_food_ids"])
+        .values_list("catalog_food_id", flat=True)
+        .distinct()
+    )
+    blocked_total = int(candidate_counts["needs_more_evidence"] or 0) + int(food_counts["needs_more_evidence"] or 0)
+    activation_total = max(int(food_counts["published"] or 0) - len(operational_food_ids), 0)
+    total_work = int(candidate_counts["total"] or 0) + int(food_counts["total"] or 0) - len(operational_food_ids)
+
+    work_items: list[AdminOperationsCurationItemVM] = [
+        _candidate_to_work_item(candidate) for candidate in payload["candidates"]
+    ]
+    for catalog_food in payload["catalog_foods"]:
+        item = _catalog_food_to_work_item(catalog_food, operational_food_ids=operational_food_ids)
+        if item is not None:
+            work_items.append(item)
+    work_items.sort(key=lambda item: (CURATION_STAGE_ORDER.get(item.stage_key, 99), item.title.casefold()))
+
+    stage_counts = {
+        "intake": int(candidate_counts["intake"] or 0),
+        "preparation": int(candidate_counts["preparation"] or 0) + int(food_counts["preparation"] or 0),
+        "review": int(food_counts["pending_review"] or 0),
+        "publication": int(food_counts["publication"] or 0),
+        "activation": activation_total,
+        "blocked": blocked_total,
+    }
+    stage_definitions = (
+        ("intake", "Entradas", "Revisar origen y demanda", "inbox"),
+        ("preparation", "Preparación", "Completar y normalizar datos", "file-pen-line"),
+        ("review", "Revisión", "Validar la ficha nutricional", "search-check"),
+        ("publication", "Publicación", "Confirmar requisitos", "badge-check"),
+        ("activation", "Activación", "Crear alimento operativo", "rocket"),
+        ("blocked", "Falta evidencia", "Resolver trabajo detenido", "triangle-alert"),
+    )
 
     return AdminOperationsFoodCatalogVM(
         metrics=[
             AdminOperationsMetricVM(
-                label="Trabajo Food Catalog",
+                label="Trabajo pendiente",
                 value=_format_int(total_work),
-                helper="Candidatos + alimentos master dentro de estados accionables.",
-                icon="database",
+                helper="Entradas y alimentos que todavía requieren una decisión.",
+                icon="list-todo",
             ),
             AdminOperationsMetricVM(
-                label="Candidatos",
-                value=_format_int(candidate_counts["total"]),
-                helper=f"{_format_int(candidate_counts['high_priority'])} alta prioridad · {_format_int(candidate_counts['needs_more_evidence'])} necesitan evidencia.",
-                icon="list-checks",
+                label="Necesitan evidencia",
+                value=_format_int(blocked_total),
+                helper="Casos detenidos por información o respaldo insuficiente.",
+                icon="triangle-alert",
             ),
             AdminOperationsMetricVM(
-                label="Foods por revisar",
-                value=_format_int(food_counts["total"]),
-                helper=f"{_format_int(food_counts['pending_review'])} pending review · {_format_int(food_counts['needs_more_evidence'])} necesitan evidencia.",
-                icon="wheat",
+                label="Listos para publicar",
+                value=_format_int(food_counts["publication"]),
+                helper="Con revisión aprobada o verificación completa.",
+                icon="badge-check",
             ),
             AdminOperationsMetricVM(
-                label="Mutaciones OPS03",
-                value="guiadas",
-                helper="Candidatos con razón obligatoria; foods master por workflow existente.",
+                label="Alimentos operativos",
+                value=_format_int(len(operational_food_ids)),
+                helper="Publicados y materializados para uso del sistema.",
                 icon="shield-check",
             ),
         ],
         candidates=[_candidate_to_vm(candidate) for candidate in payload["candidates"]],
         catalog_foods=[_catalog_food_to_vm(catalog_food) for catalog_food in payload["catalog_foods"]],
+        stages=[
+            AdminOperationsCurationStageVM(
+                key=key,
+                label=label,
+                helper=helper,
+                count=_format_int(stage_counts[key]),
+                icon=icon,
+                url=_curation_stage_url(stage=key, query=payload["query"]),
+                is_active=payload["stage"] == key,
+            )
+            for key, label, helper, icon in stage_definitions
+        ],
+        work_items=work_items,
+        query=payload["query"],
+        selected_stage=payload["stage"],
+        filtered_total=_format_int(len(work_items)),
+        blocked_total=_format_int(blocked_total),
+        operational_total=_format_int(len(operational_food_ids)),
     )
 
 
@@ -1254,8 +1944,6 @@ def perform_candidate_operation(*, candidate_id: int, action: str, actor, reason
 
 def perform_catalog_food_operation(*, catalog_food_id: int, action: str, actor, reason: str) -> AdminOperationResult:
     reason = (reason or "").strip()
-    if not reason:
-        return AdminOperationResult(ok=False, message="La razón es obligatoria para intervenir un alimento master.")
 
     if action not in CATALOG_FOOD_ACTIONS:
         raise ValidationError(f"Unknown catalog food operation: {action}")
@@ -1285,8 +1973,6 @@ def perform_catalog_food_operation(*, catalog_food_id: int, action: str, actor, 
 
 def perform_catalog_food_snapshot(*, catalog_food_id: int, actor, reason: str) -> AdminOperationResult:
     normalized_reason = (reason or "").strip()
-    if not normalized_reason:
-        return AdminOperationResult(False, "La razón es obligatoria para crear un snapshot operacional.")
     catalog_food = get_object_or_404(CatalogFood, pk=catalog_food_id)
     if Food.objects.filter(catalog_food_id=catalog_food.pk).exists():
         return AdminOperationResult(False, "Ya existe un snapshot operacional para este CatalogFood; usa refresh explícito.")

@@ -930,11 +930,11 @@ body.is-list-panel-sorting .js-list-reorder-row {
     }
 
     .data-grid--menu .data-grid-cell--meal {
-        padding: 0 4px;
+        padding: 0;
     }
 
     .data-grid--menu .data-grid-cell--foods {
-        padding: 0 4px;
+        padding: 0;
         font-size: 14px;
         line-height: 1.50;
         opacity: 0.7;

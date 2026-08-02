@@ -93,7 +93,8 @@
           return;
         }
         const reasonField = form.querySelector("[name='reason']");
-        if (reasonField && !reasonField.value.trim()) {
+        const reasonIsRequired = form.dataset.reasonRequired === "true";
+        if (reasonIsRequired && reasonField && !reasonField.value.trim()) {
           event.preventDefault();
           reasonField.focus();
           return;
@@ -109,5 +110,6 @@
       window.lucide.createIcons();
     }
   </script>
+  {% block extra_scripts %}{% endblock %}
 </body>
 </html>

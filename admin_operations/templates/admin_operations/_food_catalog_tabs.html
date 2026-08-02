@@ -1,11 +1,11 @@
 <nav class="admin-operations-tabs" aria-label="Vistas de Food Catalog">
   <a class="admin-operations-tab{% if active_tab == 'operations' %} admin-operations-tab--active{% endif %}" href="{% url 'admin_operations_food_catalog' %}"{% if active_tab == 'operations' %} aria-current="page"{% endif %}>
-    <i data-lucide="list-checks"></i> Operaciones
+    <i data-lucide="list-checks"></i> Curación
   </a>
   <a class="admin-operations-tab{% if active_tab == 'inventory' %} admin-operations-tab--active{% endif %}" href="{% url 'admin_operations_food_catalog_inventory' %}"{% if active_tab == 'inventory' %} aria-current="page"{% endif %}>
-    <i data-lucide="table-properties"></i> Inventario y calidad
+    <i data-lucide="table-properties"></i> Inventario
   </a>
   <a class="admin-operations-tab{% if active_tab == 'imports' %} admin-operations-tab--active{% endif %}" href="{% url 'admin_operations_food_catalog_imports' %}"{% if active_tab == 'imports' %} aria-current="page"{% endif %}>
-    <i data-lucide="database-zap"></i> Imports y dry-runs
+    <i data-lucide="database-zap"></i> Fuentes e importaciones
   </a>
 </nav>

@@ -3421,13 +3421,13 @@ body.page-ai-intake-chat::after {
 
   .home-calendar__program-card {
     gap: var(--space-5);
-    padding: 16px var(--mobil-padding-lats);
+    padding: var(--mobil-padding-top) var(--mobil-padding-lats) var(--mobil-padding-bottom);
   }
 
   .home-calendar__heading {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: start;
-    padding: var(--mobil-padding-lats);
+    padding: 0 var(--mobil-padding-lats-2);
   }
 
   .home-calendar__heading-content {

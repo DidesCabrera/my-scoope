@@ -90,7 +90,7 @@
 
   .card-kpi {
     width: 100%;
-    padding-left: 0;
+    padding: 0 var(--mobil-padding-lats);
     border: none;
   }
 

@@ -30,7 +30,7 @@
         <p class="muted-text">La razón queda registrada en las notas del candidato hasta que OPS06 introduzca audit log formal.</p>
       </div>
     </div>
-    <form method="post" action="{% url 'admin_operations_food_catalog_candidate_action' vm.content.candidate.pk %}" class="admin-operations-action-form" data-admin-operations-confirm data-confirm-message="Confirmar cambio de estado del candidato Food Catalog?">
+    <form method="post" action="{% url 'admin_operations_food_catalog_candidate_action' vm.content.candidate.pk %}" class="admin-operations-action-form" data-admin-operations-confirm data-reason-required="true" data-confirm-message="¿Confirmar cambio de estado del candidato?">
       {% csrf_token %}
       <label>
         <span>Razón obligatoria</span>

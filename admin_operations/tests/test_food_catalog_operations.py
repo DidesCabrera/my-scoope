@@ -6,7 +6,11 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from admin_operations.services import build_food_catalog_inventory_vm, build_food_catalog_operations_vm
+from admin_operations.services import (
+    build_catalog_food_detail_vm,
+    build_food_catalog_inventory_vm,
+    build_food_catalog_operations_vm,
+)
 from food_catalog.models import CatalogCurationCandidate, CatalogFood, CatalogFoodAlias, CatalogFoodPortion, CatalogFoodSource
 from notas.domain.models import Food
 from admin_operations.models import AdminOperationAuditEvent
@@ -50,11 +54,12 @@ class AdminOperationsFoodCatalogTests(TestCase):
         vm = build_food_catalog_operations_vm()
 
         metric_by_label = {metric.label: metric for metric in vm.metrics}
-        self.assertEqual(metric_by_label["Trabajo Food Catalog"].value, "2")
-        self.assertEqual(metric_by_label["Candidatos"].value, "1")
-        self.assertEqual(metric_by_label["Foods por revisar"].value, "1")
+        self.assertEqual(metric_by_label["Trabajo pendiente"].value, "2")
+        self.assertEqual(metric_by_label["Necesitan evidencia"].value, "0")
+        self.assertEqual(metric_by_label["Listos para publicar"].value, "0")
         self.assertEqual(len(vm.candidates), 1)
         self.assertEqual(len(vm.catalog_foods), 1)
+        self.assertEqual(len(vm.work_items), 2)
 
     def test_food_catalog_page_renders_queues(self):
         CatalogCurationCandidate.objects.create(
@@ -69,12 +74,159 @@ class AdminOperationsFoodCatalogTests(TestCase):
         response = self.client.get(reverse("admin_operations_food_catalog"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "OPS03 · Food Catalog operations")
-        self.assertContains(response, "Curación operacional del Food Catalog")
-        self.assertContains(response, "Candidatos de curación")
+        self.assertContains(response, "Food Catalog · Curación")
+        self.assertContains(response, "Curación del Food Catalog")
+        self.assertContains(response, "Del candidato al alimento operativo")
         self.assertContains(response, "Cereal externo")
-        self.assertContains(response, "Alimentos master por revisar")
+        self.assertContains(response, "Bandeja de trabajo")
         self.assertContains(response, "Quinoa master")
+
+    def test_food_catalog_stage_filter_separates_blocked_work(self):
+        CatalogCurationCandidate.objects.create(
+            provider=CatalogFood.SOURCE_FATSECRET,
+            display_name="Sin respaldo",
+            status=CatalogCurationCandidate.STATUS_NEEDS_MORE_EVIDENCE,
+        )
+        _create_catalog_food(status=CatalogFood.STATUS_PENDING_REVIEW, display_name="Listo para revisar")
+        self.client.force_login(self.staff)
+
+        response = self.client.get(reverse("admin_operations_food_catalog"), {"stage": "blocked"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Sin respaldo")
+        self.assertNotContains(response, "Listo para revisar")
+        self.assertContains(response, "Resolver evidencia")
+
+    def test_non_publishable_food_explains_requirements_and_hides_publish_action(self):
+        _create_catalog_food(
+            status=CatalogFood.STATUS_REVIEWED,
+            display_name="Avena incompleta",
+            canonical_name="avena-incompleta",
+        )
+        self.client.force_login(self.staff)
+
+        response = self.client.get(reverse("admin_operations_food_catalog"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Falta una fuente trazable")
+        self.assertContains(response, "Ver ficha")
+        self.assertNotContains(response, 'value="published"')
+
+    def test_food_catalog_page_renders_only_valid_food_actions(self):
+        _create_catalog_food(status=CatalogFood.STATUS_MANUAL_CANDIDATE, display_name="Manual pendiente")
+        self.client.force_login(self.staff)
+
+        response = self.client.get(reverse("admin_operations_food_catalog"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Manual pendiente")
+        self.assertContains(response, "Enviar a revisión")
+        self.assertNotContains(response, 'value="reviewed">Marcar revisado</button>')
+
+    def test_catalog_food_detail_is_the_primary_review_surface(self):
+        catalog_food = _create_catalog_food(
+            status=CatalogFood.STATUS_PENDING_REVIEW,
+            display_name="Quinoa detalle",
+            canonical_name="quinoa-detalle",
+            food_group="cereals",
+            preparation_state=CatalogFood.PREPARATION_COOKED,
+            food_form=CatalogFood.FOOD_FORM_INGREDIENT,
+        )
+        CatalogFoodSource.objects.create(
+            catalog_food=catalog_food,
+            source_type=CatalogFood.SOURCE_ADMIN_IMPORT,
+            source_name="Ficha técnica",
+            source_food_id="Q-1",
+            license_status=CatalogFoodSource.LICENSE_ALLOWED,
+        )
+        CatalogFoodPortion.objects.create(
+            catalog_food=catalog_food,
+            label="1 taza",
+            grams=Decimal("185"),
+            is_default=True,
+        )
+        CatalogFoodAlias.objects.create(
+            catalog_food=catalog_food,
+            name="Quinoa cocida",
+            normalized_name="quinoa cocida",
+            is_primary=True,
+        )
+        self.client.force_login(self.staff)
+
+        response = self.client.get(
+            reverse("admin_operations_food_catalog_food", args=[catalog_food.pk])
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Quinoa detalle")
+        self.assertContains(response, "Aprobar revisión")
+        self.assertContains(response, "Valores por 100 gramos")
+        self.assertContains(response, "Cocido")
+        self.assertContains(response, "Ingrediente")
+        self.assertContains(response, "Ficha técnica")
+        self.assertContains(response, "1 taza")
+        self.assertContains(response, "Quinoa cocida")
+        self.assertContains(response, 'role="tablist"')
+        self.assertContains(response, 'data-detail-tab="nutricion"')
+        self.assertContains(response, 'data-detail-panel="nutricion" hidden')
+        self.assertContains(response, "admin_operations_food_detail.js")
+
+    def test_catalog_food_links_open_detail_in_a_new_browser_tab(self):
+        catalog_food = _create_catalog_food(
+            status=CatalogFood.STATUS_PENDING_REVIEW,
+            display_name="Ficha en pestaña nueva",
+        )
+        self.client.force_login(self.staff)
+
+        response = self.client.get(reverse("admin_operations_food_catalog"))
+        detail_url = reverse("admin_operations_food_catalog_food", args=[catalog_food.pk])
+
+        self.assertContains(response, "Ver ficha")
+        self.assertContains(
+            response,
+            f'href="{detail_url}" target="_blank" rel="noopener noreferrer"',
+            count=2,
+        )
+
+    def test_catalog_food_detail_explains_publication_blockers(self):
+        catalog_food = _create_catalog_food(
+            status=CatalogFood.STATUS_REVIEWED,
+            display_name="Arroz sin respaldo",
+            canonical_name="arroz-sin-respaldo",
+        )
+        self.client.force_login(self.staff)
+
+        response = self.client.get(
+            reverse("admin_operations_food_catalog_food", args=[catalog_food.pk])
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Completar requisitos")
+        self.assertContains(response, "Falta una fuente trazable")
+        self.assertContains(response, "Falta una porción")
+        self.assertNotContains(response, 'value="published"')
+
+    def test_catalog_food_detail_marks_materialized_food_as_operational(self):
+        catalog_food = _create_catalog_food(
+            status=CatalogFood.STATUS_PUBLISHED,
+            display_name="Avena operativa",
+        )
+        Food.objects.create(
+            name="Avena operativa",
+            protein=Decimal("13"),
+            carbs=Decimal("60"),
+            fat=Decimal("7"),
+            catalog_food_id=catalog_food.pk,
+            catalog_food_ref=catalog_food.catalog_ref,
+            catalog_sync_status=Food.CATALOG_SYNC_SNAPSHOT,
+            is_global=True,
+        )
+
+        vm = build_catalog_food_detail_vm(catalog_food.pk)
+
+        self.assertTrue(vm.is_operational)
+        self.assertEqual(vm.primary_action_kind, "none")
+        self.assertIn("Food #", vm.operational_label)
 
     def test_candidate_detail_renders_actions(self):
         candidate = CatalogCurationCandidate.objects.create(
@@ -152,6 +304,20 @@ class AdminOperationsFoodCatalogTests(TestCase):
         self.assertEqual(catalog_food.reviewed_by, self.staff)
         self.assertIsNotNone(catalog_food.reviewed_at)
         self.assertContains(response, "Marcar revisado")
+
+    def test_catalog_food_action_allows_empty_optional_comment(self):
+        catalog_food = _create_catalog_food(status=CatalogFood.STATUS_PENDING_REVIEW)
+        self.client.force_login(self.staff)
+
+        response = self.client.post(
+            reverse("admin_operations_food_catalog_food_action", args=[catalog_food.pk]),
+            {"action": "reviewed", "reason": ""},
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        catalog_food.refresh_from_db()
+        self.assertEqual(catalog_food.status, CatalogFood.STATUS_REVIEWED)
 
     def test_publication_and_snapshot_are_separate_audited_actions(self):
         catalog_food = _create_catalog_food(

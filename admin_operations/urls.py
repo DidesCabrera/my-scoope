@@ -29,6 +29,7 @@ from admin_operations.views import (
     food_catalog_candidate_action,
     food_catalog_candidate_detail,
     food_catalog_food_action,
+    food_catalog_food_detail,
     overview,
     system_control,
 )
@@ -78,6 +79,11 @@ urlpatterns = [
         "food-catalog/candidates/<int:candidate_id>/action/",
         food_catalog_candidate_action,
         name="admin_operations_food_catalog_candidate_action",
+    ),
+    path(
+        "food-catalog/foods/<int:catalog_food_id>/",
+        food_catalog_food_detail,
+        name="admin_operations_food_catalog_food",
     ),
     path(
         "food-catalog/foods/<int:catalog_food_id>/action/",

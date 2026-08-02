@@ -21,6 +21,7 @@ CATALOG_CANDIDATE_ACTION_STATUSES = [
     CatalogCurationCandidate.STATUS_QUEUED,
     CatalogCurationCandidate.STATUS_IN_REVIEW,
     CatalogCurationCandidate.STATUS_NEEDS_MORE_EVIDENCE,
+    CatalogCurationCandidate.STATUS_APPROVED_FOR_CURATION,
 ]
 
 CATALOG_FOOD_REVIEW_STATUSES = [
@@ -108,12 +109,17 @@ def get_operations_overview_metrics() -> dict:
     }
 
 
-def get_food_catalog_operations_payload(*, limit: int = 25) -> dict:
+def get_food_catalog_operations_payload(*, query: str = "", stage: str = "all", limit: int = 50) -> dict:
     """Return actionable Food Catalog queues for OPS03.
 
     The payload is deliberately read-model oriented. Mutations are handled by
     explicit services so templates never perform direct model changes.
     """
+
+    normalized_query = (query or "").strip()
+    normalized_stage = stage if stage in {
+        "all", "intake", "preparation", "review", "publication", "activation", "blocked"
+    } else "all"
 
     candidate_qs = CatalogCurationCandidate.objects.filter(
         status__in=CATALOG_CANDIDATE_ACTION_STATUSES,
@@ -121,24 +127,89 @@ def get_food_catalog_operations_payload(*, limit: int = 25) -> dict:
 
     catalog_food_qs = CatalogFood.objects.filter(
         status__in=CATALOG_FOOD_REVIEW_STATUSES,
-    ).order_by("status", "-data_quality_score", "display_name")
+    ).prefetch_related("sources", "portions").order_by("status", "-data_quality_score", "display_name")
+
+    if normalized_query:
+        candidate_qs = candidate_qs.filter(
+            Q(display_name__icontains=normalized_query)
+            | Q(brand_name__icontains=normalized_query)
+            | Q(provider__icontains=normalized_query)
+        )
+        catalog_food_qs = catalog_food_qs.filter(
+            Q(display_name__icontains=normalized_query)
+            | Q(canonical_name__icontains=normalized_query)
+            | Q(brand_name__icontains=normalized_query)
+            | Q(source_type__icontains=normalized_query)
+        )
+
+    catalog_food_count_qs = catalog_food_qs
 
     candidate_counts = candidate_qs.aggregate(
         total=Count("id"),
         high_priority=Count("id", filter=Q(priority__gte=75)),
+        intake=Count("id", filter=Q(status__in=[
+            CatalogCurationCandidate.STATUS_QUEUED,
+            CatalogCurationCandidate.STATUS_IN_REVIEW,
+        ])),
+        preparation=Count("id", filter=Q(status=CatalogCurationCandidate.STATUS_APPROVED_FOR_CURATION)),
         needs_more_evidence=Count("id", filter=Q(status=CatalogCurationCandidate.STATUS_NEEDS_MORE_EVIDENCE)),
     )
     food_counts = catalog_food_qs.aggregate(
         total=Count("id"),
+        preparation=Count("id", filter=Q(status__in=[
+            CatalogFood.STATUS_EXTERNAL_CANDIDATE,
+            CatalogFood.STATUS_MANUAL_CANDIDATE,
+            CatalogFood.STATUS_BRAND_SUBMITTED,
+            CatalogFood.STATUS_NORMALIZED,
+        ])),
         pending_review=Count("id", filter=Q(status=CatalogFood.STATUS_PENDING_REVIEW)),
+        publication=Count("id", filter=Q(status__in=[CatalogFood.STATUS_REVIEWED, CatalogFood.STATUS_VERIFIED])),
+        published=Count("id", filter=Q(status=CatalogFood.STATUS_PUBLISHED)),
         needs_more_evidence=Count("id", filter=Q(status=CatalogFood.STATUS_NEEDS_MORE_EVIDENCE)),
     )
 
+    candidate_stage_statuses = {
+        "intake": [CatalogCurationCandidate.STATUS_QUEUED, CatalogCurationCandidate.STATUS_IN_REVIEW],
+        "preparation": [CatalogCurationCandidate.STATUS_APPROVED_FOR_CURATION],
+        "blocked": [CatalogCurationCandidate.STATUS_NEEDS_MORE_EVIDENCE],
+    }
+    catalog_food_stage_statuses = {
+        "preparation": [
+            CatalogFood.STATUS_EXTERNAL_CANDIDATE,
+            CatalogFood.STATUS_MANUAL_CANDIDATE,
+            CatalogFood.STATUS_BRAND_SUBMITTED,
+            CatalogFood.STATUS_NORMALIZED,
+        ],
+        "review": [CatalogFood.STATUS_PENDING_REVIEW],
+        "publication": [CatalogFood.STATUS_REVIEWED, CatalogFood.STATUS_VERIFIED],
+        "activation": [CatalogFood.STATUS_PUBLISHED],
+        "blocked": [CatalogFood.STATUS_NEEDS_MORE_EVIDENCE],
+    }
+
+    if normalized_stage != "all":
+        candidate_statuses = candidate_stage_statuses.get(normalized_stage)
+        catalog_food_statuses = catalog_food_stage_statuses.get(normalized_stage)
+        candidate_qs = (
+            candidate_qs.filter(status__in=candidate_statuses)
+            if candidate_statuses
+            else candidate_qs.none()
+        )
+        catalog_food_qs = (
+            catalog_food_qs.filter(status__in=catalog_food_statuses)
+            if catalog_food_statuses
+            else catalog_food_qs.none()
+        )
+
     return {
+        "query": normalized_query,
+        "stage": normalized_stage,
         "candidate_counts": candidate_counts,
         "food_counts": food_counts,
         "candidates": list(candidate_qs[:limit]),
         "catalog_foods": list(catalog_food_qs[:limit]),
+        "published_food_ids": list(
+            catalog_food_count_qs.filter(status=CatalogFood.STATUS_PUBLISHED).values_list("id", flat=True)
+        ),
     }
 
 

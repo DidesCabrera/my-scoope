@@ -80,6 +80,8 @@ class AdminOperationsCatalogFoodVM:
     title: str
     brand_name: str
     status: str
+    stage_label: str
+    action_buttons: list[tuple[str, str]]
     source_type: str
     quality_score: int
     solver_enabled: bool
@@ -88,17 +90,133 @@ class AdminOperationsCatalogFoodVM:
 
 
 @dataclass(frozen=True)
+class AdminOperationsDetailFactVM:
+    label: str
+    value: str
+    helper: str = ""
+
+
+@dataclass(frozen=True)
+class AdminOperationsCatalogEvidenceVM:
+    name: str
+    source_type: str
+    license_label: str
+    reference_label: str
+    dataset_label: str = ""
+    url: str = ""
+    attribution: str = ""
+
+
+@dataclass(frozen=True)
+class AdminOperationsCatalogPortionVM:
+    label: str
+    grams_label: str
+    source_label: str
+    is_default: bool = False
+
+
+@dataclass(frozen=True)
+class AdminOperationsCatalogAliasVM:
+    name: str
+    kind_label: str
+    locale_label: str
+    is_primary: bool = False
+
+
+@dataclass(frozen=True)
+class AdminOperationsCatalogFoodDetailVM:
+    title: str
+    subtitle: str
+    food_pk: int
+    display_name: str
+    brand_name: str
+    stage_key: str
+    stage_label: str
+    status_label: str
+    source_label: str
+    quality_score: int
+    confidence_label: str
+    readiness_state: str
+    readiness_label: str
+    period_label: str = "Food Catalog · Ficha de curación"
+    current_period: str = "Detalle de alimento"
+    readiness_issues: list[str] = field(default_factory=list)
+    identity_facts: list[AdminOperationsDetailFactVM] = field(default_factory=list)
+    nutrition_facts: list[AdminOperationsDetailFactVM] = field(default_factory=list)
+    solver_facts: list[AdminOperationsDetailFactVM] = field(default_factory=list)
+    lifecycle_facts: list[AdminOperationsDetailFactVM] = field(default_factory=list)
+    evidence: list[AdminOperationsCatalogEvidenceVM] = field(default_factory=list)
+    portions: list[AdminOperationsCatalogPortionVM] = field(default_factory=list)
+    aliases: list[AdminOperationsCatalogAliasVM] = field(default_factory=list)
+    admin_url: str = ""
+    action_url: str = ""
+    snapshot_url: str = ""
+    primary_action_kind: str = "none"
+    primary_action_value: str = ""
+    primary_action_label: str = ""
+    primary_action_icon: str = "arrow-right"
+    secondary_actions: list[tuple[str, str]] = field(default_factory=list)
+    is_operational: bool = False
+    operational_label: str = ""
+    operational_url: str = ""
+
+
+@dataclass(frozen=True)
+class AdminOperationsCurationStageVM:
+    key: str
+    label: str
+    helper: str
+    count: str
+    icon: str
+    url: str
+    is_active: bool = False
+
+
+@dataclass(frozen=True)
+class AdminOperationsCurationItemVM:
+    kind: str
+    pk: int
+    title: str
+    brand_name: str
+    origin_label: str
+    stage_key: str
+    stage_label: str
+    status: str
+    status_label: str
+    detail_label: str
+    context_label: str
+    readiness_state: str
+    readiness_label: str
+    readiness_issues: list[str] = field(default_factory=list)
+    detail_url: str = ""
+    admin_url: str = ""
+    action_url: str = ""
+    primary_action_value: str = ""
+    primary_action_label: str = ""
+    primary_action_icon: str = "arrow-right"
+    primary_action_kind: str = "link"
+    secondary_actions: list[tuple[str, str]] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
 class AdminOperationsFoodCatalogVM:
-    title: str = "Curación operacional del Food Catalog"
+    title: str = "Curación del Food Catalog"
     subtitle: str = (
-        "Permite revisar candidatos externos, aprobarlos para curación, pedir evidencia "
-        "o rechazarlos con razón obligatoria."
+        "Una sola bandeja para revisar cada entrada, resolver sus datos y convertirla "
+        "en un alimento operativo."
     )
-    period_label: str = "OPS03 · Food Catalog operations"
-    current_period: str = "OPS03 · Food Catalog"
+    period_label: str = "Food Catalog · Curación"
+    current_period: str = "Bandeja de curación"
     metrics: list[AdminOperationsMetricVM] = field(default_factory=list)
     candidates: list[AdminOperationsCandidateVM] = field(default_factory=list)
     catalog_foods: list[AdminOperationsCatalogFoodVM] = field(default_factory=list)
+    stages: list[AdminOperationsCurationStageVM] = field(default_factory=list)
+    work_items: list[AdminOperationsCurationItemVM] = field(default_factory=list)
+    query: str = ""
+    selected_stage: str = "all"
+    filtered_total: str = "0"
+    blocked_total: str = "0"
+    operational_total: str = "0"
 
 
 @dataclass(frozen=True)
