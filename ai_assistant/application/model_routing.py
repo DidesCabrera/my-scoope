@@ -64,7 +64,7 @@ def resolve_model_route(action_type: str) -> AIModelRoute:
     normalized_action = normalize_action_type(action_type) or DEFAULT_ACTION_TYPE
     routes = _routes_setting()
     selected_code, payload = _select_route_payload(routes, normalized_action)
-    provider = str(payload.get("provider") or getattr(settings, "AI_ASSISTANT_LLM_PROVIDER", "fake") or "fake").strip()
+    provider = str(payload.get("provider") or getattr(settings, "AI_ASSISTANT_LLM_PROVIDER", "openai") or "openai").strip()
     model = str(payload.get("model") or _default_model_for_provider(provider) or "").strip()
     return AIModelRoute(
         action_type=normalized_action,

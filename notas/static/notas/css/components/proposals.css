@@ -34,6 +34,7 @@
 .proposal-list-card__title-block,
 .proposal-list-card__copy {
   min-width: 0;
+  gap: 4px;
 }
 
 .proposal-review-eyebrow {
@@ -897,7 +898,7 @@ html[data-theme="dark"] .proposal-review-action--reject {
 
   .proposal-review-card {
     padding: 16px;
-    margin: 0 -6px;
+    margin: 0;
   }
 
   .proposal-review-hero__main {
@@ -953,25 +954,21 @@ html[data-theme="dark"] .proposal-review-action--reject {
     width: 100%;
   }
 
-  .proposal-review-entity-section > .card {
-    margin: 0 -12px;
-  }
-
   .proposal-review-entity-section > .card.proposal-child-card {
-    padding: 14px 15px 20px 15px;
+    padding: var(--mobil-padding-top) var(--mobil-padding-lats) var(--mobil-padding-bottom);
   }
 
   .proposal-review-entity-section > .card.proposal-child-card.dpm_meal {
-    padding: 14px 15px 20px 15px;
+    padding: var(--mobil-padding-top) var(--mobil-padding-lats) var(--mobil-padding-bottom);
   }
   
 
   .proposal-list-card__summary-block {
-    margin: 6px -4px 0;
+    margin: 6px 0 0;
   }
 
   .proposal-review-summary-block {
-    margin: 20px -4px 0;
+    margin: 20px 0 0;
   }
 }
 

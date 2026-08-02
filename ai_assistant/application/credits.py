@@ -69,8 +69,8 @@ class DjangoAICreditService:
     """Settings-driven AI credit quota service.
 
     Tokens and provider costs remain internal. This service exposes only AI
-    credits as the commercial quota unit and can be disabled entirely through
-    settings while the preview gathers real usage data.
+    credits as the commercial quota unit. Local development may disable it,
+    while the deployment guard requires enforcement for the active runtime.
     """
 
     def check_turn_allowed(
@@ -544,7 +544,7 @@ def _account_credit_plan(user: Any | None) -> Any | None:
         from accounts.services.credits import resolve_account_credit_plan_snapshot
 
         return resolve_account_credit_plan_snapshot(user)
-    except Exception:  # pragma: no cover - account integration must not break preview mode
+    except Exception:  # pragma: no cover - account integration must not break the assistant
         return None
 
 

@@ -43,7 +43,7 @@
 .page--detail{
     max-width: 900px;
     margin-top: 18px;
-    padding: 26px 40px;
+    padding: 26px var(--desktop-padding-lats-2);
     background-color: var(--surface-card);
     color: var(--text-main);
 }
@@ -84,7 +84,7 @@
     }
 
     .page--detail{
-        padding: 14px 16px 16px 16px;
+        padding: 14px var(--mobil-padding-lats) 16px;
         margin-top: 18px;
     }
   
@@ -299,5 +299,9 @@
     .list-page-header__indicator .structural-icon.main {
         width: 14px;
         height: 14px;
+    }
+
+    .main-detail{
+        padding: 0 var(--mobil-padding-lats);
     }
 }

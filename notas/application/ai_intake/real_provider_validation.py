@@ -12,15 +12,15 @@ from ai_assistant.application.chat_engines import ChatEngine, ChatEngineRequest
 from ai_assistant.application.llm_chat_engine import ExternalLLMChatEngine
 from ai_assistant.application.orchestrator import AssistantOrchestratorConfig, ExternalLLMOrchestrator
 from ai_assistant.models import AICreditLedger, AIUsageEvent, AIUserCreditQuota
-from notas.application.ai_intake.chat_engine import LLMPreviewNutritionIntakeChatEngine
+from notas.application.ai_intake.chat_engine import LLMNutritionIntakeChatEngine
 from notas.application.ai_intake.nutrition_brief import (
     NutritionConversationState,
     serialize_conversation,
 )
 from notas.application.queries.user_nutrition_profile import get_user_nutrition_profile
 
-CM24_ACTION_TYPE = "assistant.ai_nutrition_intake.cm24_validation"
-CM24_VALIDATION_VERSION = "pt06.profile_aware_behavior.v2"
+OUTCOME_FIRST_ACTION_TYPE = "assistant.ai_nutrition_intake.outcome_first_validation"
+OUTCOME_FIRST_VALIDATION_VERSION = "outcome_first.live_validation.v1"
 POST_TOOL_LOCAL_ACK_FRAGMENTS = (
     "Los datos físicos quedaron actualizados para esta conversación.",
     "Las preferencias alimentarias quedaron actualizadas para esta propuesta.",
@@ -51,7 +51,7 @@ PROFILE_DTO_FIELD_MAP = {
     "sex": "sex",
 }
 
-CM24_FORBIDDEN_VISIBLE_MARKERS = (
+OUTCOME_FIRST_FORBIDDEN_VISIBLE_MARKERS = (
     "assistant_message",
     "tool_requests",
     "missing_slots",
@@ -195,8 +195,8 @@ class RealProviderValidationReport:
             "model": self.model,
             "user_id": self.user_id,
             "configured_chat_mode": self.configured_chat_mode,
-            "validation_engine": "llm_preview_direct",
-            "reviewable_proposal_tools_enabled": False,
+            "validation_engine": "outcome_first_llm",
+            "reviewable_proposal_tools_enabled": True,
             "usage_observability_enabled": self.usage_observability_enabled,
             "credits_enabled": self.credits_enabled,
             "usage_summary": dict(self.usage_summary),
@@ -427,13 +427,22 @@ def run_real_provider_validation(
     run_id: str | None = None,
 ) -> RealProviderValidationReport:
     if not getattr(user, "pk", None):
-        raise ValueError("CM24 validation requires one persisted authenticated user.")
+        raise ValueError("Outcome-first validation requires one persisted authenticated user.")
 
     provider = str(getattr(settings, "AI_ASSISTANT_LLM_PROVIDER", "") or "").strip().lower()
-    if provider in {"", "fake"}:
-        raise ValueError("CM24 live validation requires a configured non-fake LLM provider.")
+    if provider != "openai":
+        raise ValueError("Live validation requires AI_ASSISTANT_LLM_PROVIDER=openai.")
     if not bool(getattr(settings, "AI_ASSISTANT_USAGE_OBSERVABILITY_ENABLED", False)):
-        raise ValueError("CM24 live validation requires AI_ASSISTANT_USAGE_OBSERVABILITY_ENABLED=true.")
+        raise ValueError(
+            "Outcome-first live validation requires "
+            "AI_ASSISTANT_USAGE_OBSERVABILITY_ENABLED=true."
+        )
+    if not bool(
+        getattr(settings, "AI_ASSISTANT_ENABLE_REVIEWABLE_PROPOSAL_TOOLS", False)
+    ):
+        raise ValueError(
+            "Live validation requires AI_ASSISTANT_ENABLE_REVIEWABLE_PROPOSAL_TOOLS=true."
+        )
 
     selected_scenarios = tuple(
         _specialize_scenario_for_user(scenario, user=user)
@@ -467,7 +476,7 @@ def run_real_provider_validation(
         str(getattr(settings, "AI_ASSISTANT_OPENAI_MODEL", "") or ""),
     )
     return RealProviderValidationReport(
-        version=CM24_VALIDATION_VERSION,
+        version=OUTCOME_FIRST_VALIDATION_VERSION,
         run_id=validation_run_id,
         provider=provider,
         model=model,
@@ -539,24 +548,23 @@ def _profile_preflight_check(
     )
 
 
-def build_real_provider_validation_engine() -> LLMPreviewNutritionIntakeChatEngine:
+def build_real_provider_validation_engine() -> LLMNutritionIntakeChatEngine:
     base_config = AssistantOrchestratorConfig.from_settings()
     config = replace(
         base_config,
         max_output_tokens=max(1400, int(base_config.max_output_tokens)),
-        reasoning_effort="low",
-        enable_reviewable_proposal_tools=False,
+        enable_reviewable_proposal_tools=True,
         max_tool_loop_iterations=max(
-            2,
-            int(getattr(settings, "AI_ASSISTANT_MAX_TOOL_LOOP_ITERATIONS", 1) or 1),
+            4,
+            int(getattr(settings, "AI_ASSISTANT_MAX_TOOL_LOOP_ITERATIONS", 4) or 4),
         ),
         max_tool_requests_per_turn=max(
             4,
-            int(getattr(settings, "AI_ASSISTANT_MAX_TOOL_REQUESTS_PER_TURN", 3) or 3),
+            int(getattr(settings, "AI_ASSISTANT_MAX_TOOL_REQUESTS_PER_TURN", 4) or 4),
         ),
     )
     orchestrator = ExternalLLMOrchestrator(config=config)
-    return LLMPreviewNutritionIntakeChatEngine(
+    return LLMNutritionIntakeChatEngine(
         llm_engine=ExternalLLMChatEngine(orchestrator=orchestrator)
     )
 
@@ -570,7 +578,7 @@ def get_validation_user(*, user_id: int | None = None, email: str = "") -> Any:
             raise ValueError(f"User id {user_id} does not exist.") from exc
     normalized_email = str(email or "").strip()
     if not normalized_email:
-        raise ValueError("Provide --user-id or --user-email for CM24 validation.")
+        raise ValueError("Provide --user-id or --user-email for outcome-first validation.")
     matches = User.objects.filter(email__iexact=normalized_email).order_by("pk")
     count = matches.count()
     if count != 1:
@@ -585,7 +593,7 @@ def _run_scenario(
     engine: ChatEngine,
     run_id: str,
 ) -> RealProviderValidationScenarioResult:
-    conversation_id = f"cm24-{run_id[:20]}-{scenario.key}"[:80]
+    conversation_id = f"outcome-{run_id[:20]}-{scenario.key}"[:80]
     existing_payload: Mapping[str, Any] | None = None
     turns: list[RealProviderValidationTurn] = []
     previous_cards = {"profile": 0, "preference": 0, "proposal_preferences": 0}
@@ -602,14 +610,16 @@ def _run_scenario(
                     "tool_user": user,
                     "conversation_id": conversation_id,
                     "turn_id": turn_id,
-                    "action_type": CM24_ACTION_TYPE,
-                    "chat_engine_mode": "llm_preview",
-                    "cm24_validation": True,
+                    "action_type": OUTCOME_FIRST_ACTION_TYPE,
+                    "chat_engine_mode": "llm",
+                    "outcome_first_validation": True,
                 },
             )
         )
         if not isinstance(result.state, NutritionConversationState):
-            raise RuntimeError("CM24 validation engine returned an unsupported conversation state.")
+            raise RuntimeError(
+                "Outcome-first validation engine returned an unsupported conversation state."
+            )
         existing_payload = serialize_conversation(result.state)
         cards = _card_counts(result.state)
         metadata = dict(result.metadata or {})
@@ -625,8 +635,8 @@ def _run_scenario(
             tool_results=tuple(dict(item) for item in list(metadata.get("llm_tool_results") or [])),
             card_counts=cards,
             card_deltas={key: cards[key] - previous_cards[key] for key in cards},
-            fallback=bool(metadata.get("llm_preview_fallback")),
-            fallback_reason=str(metadata.get("llm_preview_fallback_reason") or ""),
+            fallback=bool(metadata.get("llm_degraded")),
+            fallback_reason=str(metadata.get("llm_degraded_reason") or ""),
             deterministic_runtime_invoked=bool(metadata.get("deterministic_runtime_invoked")),
             provider=str(metadata.get("llm_provider") or ""),
             model=str(metadata.get("llm_model") or ""),
@@ -700,7 +710,11 @@ def _scenario_checks(
 ) -> list[RealProviderValidationCheck]:
     checks: list[RealProviderValidationCheck] = []
     visible_blob = "\n".join(turn.assistant_message for turn in turns).lower()
-    leaked = [marker for marker in CM24_FORBIDDEN_VISIBLE_MARKERS if marker in visible_blob]
+    leaked = [
+        marker
+        for marker in OUTCOME_FIRST_FORBIDDEN_VISIBLE_MARKERS
+        if marker in visible_blob
+    ]
     checks.append(
         _check(
             "visible_boundary",
@@ -720,7 +734,7 @@ def _scenario_checks(
         )
     )
     checks.append(_provider_health_check(turns, usage_events))
-    checks.append(_structured_provider_contract_check(turns))
+    checks.append(_natural_provider_contract_check(turns))
     checks.append(_expected_brief_check(scenario, turns))
     if scenario.profile_preflight_facts or scenario.profile_preflight_missing_fields:
         checks.append(_profile_preflight_check(scenario))
@@ -794,14 +808,14 @@ def _turn_id_for_validation_turn(turn: RealProviderValidationTurn) -> str:
     return str(turn.turn_id or "")
 
 
-def _structured_provider_contract_check(
+def _natural_provider_contract_check(
     turns: Sequence[RealProviderValidationTurn],
 ) -> RealProviderValidationCheck:
-    """Validate visible text plus native provider action transport.
+    """Validate natural visible text plus native provider action transport.
 
     Tool operations must arrive through provider-native function calls. The
-    smaller structured text envelope remains responsible only for the visible
-    answer and semantic diagnostics after the tool loop.
+    final visible response must be natural text; there is no JSON envelope for
+    the model to complete or the user interface to decode.
     """
 
     failures: list[str] = []
@@ -816,8 +830,14 @@ def _structured_provider_contract_check(
             failures.append(
                 f"turn {turn.index}: final incomplete={turn.provider_final_incomplete_reason}"
             )
-        if turn.assistant_message.strip() in {"{", "[", "```json", "```"}:
-            failures.append(f"turn {turn.index}: visibly truncated structured response")
+        normalized_message = turn.assistant_message.strip()
+        if normalized_message in {"{", "[", "```json", "```"}:
+            failures.append(f"turn {turn.index}: visibly truncated response")
+        if normalized_message.startswith(("{", "[")) and any(
+            marker in normalized_message
+            for marker in ('"assistant_message"', '"tool_requests"', '"missing_slots"')
+        ):
+            failures.append(f"turn {turn.index}: visible JSON response envelope")
         if turn.tool_results and not turn.provider_native_tool_transport:
             failures.append(
                 f"turn {turn.index}: tool results without native function-call transport"
@@ -825,7 +845,7 @@ def _structured_provider_contract_check(
         if turn.tool_results and turn.provider_native_tool_calls < 1:
             failures.append(f"turn {turn.index}: tool results without recorded native calls")
     return _check(
-        "structured_provider_contract",
+        "natural_provider_contract",
         not failures,
         (
             f"all {len(turns)} provider turn(s) validated; "
@@ -1263,7 +1283,7 @@ def _usage_events_for_conversation(conversation_id: str) -> list[dict[str, Any]]
 
 
 def _usage_and_credit_snapshot(*, user: Any, run_id: str) -> dict[str, Any]:
-    conversation_prefix = f"cm24-{run_id[:20]}-"
+    conversation_prefix = f"outcome-{run_id[:20]}-"
     events = AIUsageEvent.objects.filter(user=user, conversation_id__startswith=conversation_prefix)
     ledgers = AICreditLedger.objects.filter(user=user, usage_event__in=events)
     quota = AIUserCreditQuota.objects.filter(user=user).order_by("-period", "-updated_at").first()
@@ -1352,7 +1372,9 @@ def _select_scenarios(keys: Sequence[str] | None) -> tuple[RealProviderValidatio
     selected_keys = tuple(keys or catalog.keys())
     unknown = [key for key in selected_keys if key not in catalog]
     if unknown:
-        raise ValueError(f"Unknown CM24 validation scenario(s): {', '.join(unknown)}")
+        raise ValueError(
+            f"Unknown outcome-first validation scenario(s): {', '.join(unknown)}"
+        )
     return tuple(catalog[key] for key in selected_keys)
 
 

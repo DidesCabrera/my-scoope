@@ -30,8 +30,8 @@ class SafeLLMContextBuilderTests(SimpleTestCase):
         self.assertNotIn("nutrition_brief", context)
         self.assertTrue(context["runtime"]["tools_enabled"])
         self.assertEqual(context["runtime"]["draft_state_scope"], "conversation")
-        self.assertEqual(context["runtime"]["card_presentation"], "explicit_tool_only")
-        self.assertFalse(context["runtime"]["proposal_creation_enabled"])
+        self.assertEqual(context["runtime"]["card_presentation"], "automatic_from_tool_results")
+        self.assertTrue(context["runtime"]["proposal_creation_enabled"])
         self.assertTrue(context["runtime"]["persistent_writes_require_approval"])
         self.assertEqual(context["metadata"]["context_builder"], "safe_llm_context.v1")
         self.assertNotIn("conversational_intake", context["metadata"])
@@ -152,8 +152,8 @@ class ToolOrientedContextBuilderTests(SimpleTestCase):
         context = build_safe_llm_context(request, conversation_state=state).as_dict()
 
         tool_context = context["metadata"]["tool_oriented_intake"]
-        self.assertEqual(tool_context["version"], "ai_assistant_tool_oriented_intake.v9")
-        self.assertEqual(tool_context["assistant_role"], "operator_assistant")
+        self.assertEqual(tool_context["version"], "ai_assistant_workspace.v1")
+        self.assertEqual(tool_context["assistant_role"], "collaborative_product_assistant")
         self.assertEqual(tool_context["current_drafts"]["profile_draft"]["height_cm"], 188)
         self.assertEqual(tool_context["current_drafts"]["profile_draft"]["weight_kg"], 85.0)
         self.assertEqual(tool_context["current_drafts"]["profile_draft"]["age_years"], 38)
@@ -162,6 +162,21 @@ class ToolOrientedContextBuilderTests(SimpleTestCase):
         self.assertEqual(tool_context["current_drafts"]["proposal_preferences"]["meals_per_day"], 3)
         self.assertNotIn("recommended_tool_sequence", tool_context)
         self.assertNotIn("rules", tool_context)
+
+    def test_common_nutrition_goal_becomes_an_outcome_not_an_endless_intake(self):
+        request = ChatEngineRequest(message="Quiero perder grasa", user_id=123)
+        state = start_or_continue_conversation(
+            message=request.normalized_message,
+            existing_payload=None,
+        )
+
+        context = build_safe_llm_context(request, conversation_state=state).as_dict()
+        progress = context["metadata"]["tool_oriented_intake"]["work_progress"]
+
+        self.assertEqual(
+            progress["active_objective"],
+            "create_reviewable_dailyplan_proposal",
+        )
 
     def test_tool_context_omits_completeness_and_do_not_ask_policies(self):
         request = ChatEngineRequest(message="Completemoslos", user_id=123)
@@ -217,7 +232,7 @@ class ToolOrientedContextBuilderTests(SimpleTestCase):
         context_text = str(context)
         tool_context = context["metadata"]["tool_oriented_intake"]
 
-        self.assertEqual(tool_context["version"], "ai_assistant_tool_oriented_intake.v9")
+        self.assertEqual(tool_context["version"], "ai_assistant_workspace.v1")
         self.assertEqual(tool_context["current_drafts"]["profile_draft"]["weight_kg"], 85.0)
         self.assertNotIn("nutrition_brief", context)
         self.assertNotIn("ppk_weight_source", context_text)

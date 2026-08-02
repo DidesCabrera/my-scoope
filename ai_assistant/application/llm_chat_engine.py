@@ -33,6 +33,7 @@ class ExternalLLMChatEngine:
                     role=AssistantMessageRole.USER,
                     content=request.normalized_message,
                 ),
+                history=_assistant_history_from_request(request),
                 context=safe_context,
                 metadata=turn_metadata,
             )
@@ -69,6 +70,38 @@ def _safe_context_from_request(request: ChatEngineRequest) -> dict:
     return build_safe_llm_context(request, surface=surface).as_dict()
 
 
+def _assistant_history_from_request(
+    request: ChatEngineRequest,
+) -> tuple[AssistantMessage, ...]:
+    """Return the real alternating chat history stored by the product surface.
+
+    The previous runtime embedded recent messages inside a developer JSON
+    context while leaving ``AssistantTurnRequest.history`` empty. Providers
+    therefore saw state summaries, but not an actual multi-turn conversation.
+    Keep product cards in the workspace context and send only visible user and
+    assistant text here, preserving the original roles.
+    """
+
+    payload = request.existing_payload
+    if not isinstance(payload, dict):
+        return ()
+
+    history: list[AssistantMessage] = []
+    role_map = {
+        "user": AssistantMessageRole.USER,
+        "assistant": AssistantMessageRole.ASSISTANT,
+    }
+    for item in list(payload.get("messages") or ()):
+        if not isinstance(item, dict):
+            continue
+        role = role_map.get(str(item.get("role") or "").strip().lower())
+        content = str(item.get("text") or "").strip()
+        if role is None or not content:
+            continue
+        history.append(AssistantMessage(role=role, content=content))
+    return tuple(history)
+
+
 def _assistant_turn_metadata(request: ChatEngineRequest, *, engine_name: str) -> dict:
     """Forward safe operational metadata from the chat surface to the orchestrator."""
 
@@ -86,7 +119,6 @@ def _assistant_turn_metadata(request: ChatEngineRequest, *, engine_name: str) ->
         "conversation_id",
         "turn_id",
         "chat_engine_mode",
-        "rollout",
     ):
         if key in request_metadata:
             metadata[key] = request_metadata[key]

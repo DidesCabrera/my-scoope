@@ -15,6 +15,8 @@ The product is evolving from a monolithic `notas` origin toward clearer app boun
 My Scoope is past the first architecture-expansion phase. The current priority is operational confidence:
 
 - staging must stay green;
+- production changes must flow from local `staging` work to pushed `staging`, then PR
+  from `staging` to `main`, then merge and production verification;
 - patches should be small and reviewable;
 - tests should protect regressions and rules without blocking healthy UI evolution;
 - docs should guide decisions without becoming a flat context dump;
@@ -61,6 +63,11 @@ The current testing baseline is intentionally pragmatic:
 - avoid brittle tests that lock CSS classes, exact HTML structure, decorative copy or component counts.
 
 CI should reduce manual testing of technical boot issues. Manual testing remains important for product experience, mobile behavior, OAuth provider behavior and staging sanity checks.
+
+For visual-only, copy-only or docs-only changes, avoid unnecessary full-suite churn:
+keep the patch narrow, document why local full tests were skipped, use the
+`staging` -> PR -> `main` workflow, and verify production or report the deployment
+blocker before considering the task done.
 
 ## Documentation posture
 

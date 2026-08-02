@@ -125,6 +125,14 @@
    --space-6: 1.5rem;
    --space-8: 2rem;
 
+   --desktop-padding-lats: 18px;
+   --desktop-padding-lats-2: 28px;
+
+   --mobil-padding-top: 18px;
+   --mobil-padding-bottom: 20px;
+   --mobil-padding-lats: 6px;
+   --mobil-padding-lats-2: 8px;
+
    --radius-sm: 8px;
    --radius-md: 12px;
    --radius-lg: 16px;

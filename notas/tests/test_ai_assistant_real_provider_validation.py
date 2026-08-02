@@ -29,7 +29,7 @@ from notas.application.ai_intake.real_provider_validation import (
     built_in_real_provider_scenarios,
     _post_tool_fallback_pacing_check,
     _provider_followup_health_check,
-    _structured_provider_contract_check,
+    _natural_provider_contract_check,
     _tool_result_grounding_check,
     get_validation_user,
     run_real_provider_validation,
@@ -130,7 +130,7 @@ class ScriptedGroupedFactsValidationEngine:
                 "llm_tool_results": tool_results,
                 "llm_provider_native_tool_transport": bool(tool_results),
                 "llm_provider_native_tool_calls": len(tool_results),
-                "llm_preview_fallback": False,
+                "llm_degraded": False,
                 "deterministic_runtime_invoked": False,
             },
         )
@@ -179,7 +179,8 @@ class RealProviderValidationTests(TestCase):
         )
         payload = report.as_dict()
         self.assertTrue(payload["manual_review_required"])
-        self.assertFalse(payload["reviewable_proposal_tools_enabled"])
+        self.assertTrue(payload["reviewable_proposal_tools_enabled"])
+        self.assertEqual(payload["validation_engine"], "outcome_first_llm")
 
     def test_user_lookup_requires_one_explicit_existing_user(self):
         self.assertEqual(get_validation_user(user_id=self.user.id), self.user)
@@ -448,7 +449,7 @@ class RealProviderValidationTests(TestCase):
         self.assertFalse(check.passed)
         self.assertIn("x2", check.detail)
 
-    def test_structured_provider_contract_reports_parse_and_incomplete_diagnostics(self):
+    def test_natural_provider_contract_reports_parse_and_incomplete_diagnostics(self):
         turn = RealProviderValidationTurn(
             index=1,
             turn_id="cm24-contract-1",
@@ -473,7 +474,7 @@ class RealProviderValidationTests(TestCase):
             provider_final_incomplete_reason="max_output_tokens",
         )
 
-        check = _structured_provider_contract_check((turn,))
+        check = _natural_provider_contract_check((turn,))
 
         self.assertFalse(check.passed)
         self.assertIn("parse error", check.detail)
@@ -482,16 +483,16 @@ class RealProviderValidationTests(TestCase):
 
         recovered = replace(
             turn,
-            assistant_message="Respuesta estructurada completa.",
+            assistant_message="Respuesta natural completa.",
             provider_parse_error="",
             provider_final_incomplete_reason="",
         )
-        recovered_check = _structured_provider_contract_check((recovered,))
+        recovered_check = _natural_provider_contract_check((recovered,))
         self.assertTrue(recovered_check.passed)
         self.assertIn("native function calls=0", recovered_check.detail)
         self.assertIn("repair retries=1", recovered_check.detail)
 
-    def test_structured_provider_contract_accepts_native_function_transport(self):
+    def test_natural_provider_contract_accepts_native_function_transport(self):
         turn = RealProviderValidationTurn(
             index=1,
             turn_id="cm24-native-1",
@@ -514,7 +515,7 @@ class RealProviderValidationTests(TestCase):
             provider_native_tool_calls=1,
         )
 
-        check = _structured_provider_contract_check((turn,))
+        check = _natural_provider_contract_check((turn,))
 
         self.assertTrue(check.passed)
         self.assertIn("native function calls=1", check.detail)
@@ -670,4 +671,3 @@ class RealProviderValidationTests(TestCase):
         corrected_check = _post_tool_fallback_pacing_check((corrected,))
         self.assertTrue(corrected_check.passed)
         self.assertIn("remained state-only", corrected_check.detail)
-

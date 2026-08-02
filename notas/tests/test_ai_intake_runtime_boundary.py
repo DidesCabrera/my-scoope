@@ -26,7 +26,7 @@ class AiIntakeRuntimeBoundaryTests(SimpleTestCase):
         deterministic = build_intake_result_from_brief(brief)
         llm_state = build_llm_intake_result_from_brief(brief)
 
-        self.assertEqual(deterministic.brief.pending_field, "subject_source")
+        self.assertEqual(deterministic.brief.pending_field, "goal")
         self.assertTrue(deterministic.visible_follow_up_questions)
         self.assertTrue(deterministic.required_follow_up_questions)
 
@@ -39,15 +39,12 @@ class AiIntakeRuntimeBoundaryTests(SimpleTestCase):
         self.assertEqual(
             required_proposal_fields(llm_state.brief),
             [
-                "subject_source",
                 "goal",
                 "weight_kg",
                 "height_cm",
                 "age_years",
                 "sex",
                 "activity_level",
-                "meals_per_day",
-                "plan_style",
             ],
         )
 
@@ -104,8 +101,8 @@ class AiIntakeRuntimeBoundaryTests(SimpleTestCase):
             )
         )
 
-        self.assertTrue(result.metadata["llm_preview_fallback"])
-        self.assertEqual(result.metadata["llm_preview_fallback_kind"], "technical_message")
+        self.assertTrue(result.metadata["llm_degraded"])
+        self.assertEqual(result.metadata["llm_degraded_reason"], "provider_failure")
         self.assertFalse(result.metadata["deterministic_runtime_invoked"])
         self.assertEqual(result.metadata["conversation_policy"], "llm_tools")
         self.assertIsNone(result.state.result.brief.goal)
@@ -113,32 +110,29 @@ class AiIntakeRuntimeBoundaryTests(SimpleTestCase):
         self.assertIsNone(result.state.result.brief.height_cm)
         self.assertIsNone(result.state.result.brief.pending_field)
 
-    @override_settings(
-        AI_ASSISTANT_LLM_ROLLOUT_ENABLED=False,
-        AI_ASSISTANT_LLM_ROLLOUT_MODE="all",
-    )
-    def test_rollout_block_is_the_explicit_deterministic_engine_boundary(self):
-        class UnusedLLMEngine:
-            engine_name = "unused"
+    def test_legacy_production_name_uses_the_same_llm_without_rollout_boundary(self):
+        class StubLLMEngine:
+            engine_name = "stub"
 
-            def continue_chat(self, request):  # pragma: no cover - must not run
-                raise AssertionError("provider should not run")
+            def continue_chat(self, request):
+                return ChatEngineTurnResult(
+                    state={},
+                    assistant_text="Resultado del asistente único.",
+                    engine_name=self.engine_name,
+                    metadata={"tools_executed": False},
+                )
 
         result = LLMProductionNutritionIntakeChatEngine(
-            llm_engine=UnusedLLMEngine()
+            llm_engine=StubLLMEngine()
         ).continue_chat(
             ChatEngineRequest(message="Quiero bajar grasa", user_id=1)
         )
 
-        self.assertEqual(result.engine_name, "deterministic_nutrition_intake")
-        self.assertEqual(result.metadata["conversation_policy"], "deterministic_runtime")
-        self.assertEqual(
-            result.metadata["llm_production_fallback_kind"],
-            "explicit_deterministic_engine",
-        )
-        self.assertTrue(result.metadata["deterministic_runtime_invoked"])
-        self.assertEqual(result.state.result.brief.goal, "fat_loss")
-        self.assertIsNotNone(result.state.result.brief.pending_field)
+        self.assertEqual(result.engine_name, "llm_nutrition_intake")
+        self.assertEqual(result.metadata["conversation_policy"], "llm_tools")
+        self.assertFalse(result.metadata["deterministic_runtime_invoked"])
+        self.assertIsNone(result.state.result.brief.goal)
+        self.assertIsNone(result.state.result.brief.pending_field)
 
     def test_successful_llm_turn_does_not_parse_user_message_outside_tools(self):
         class EchoLLMEngine:

@@ -17,13 +17,9 @@
 }
 
 @media (max-width: 980px) {
-    .dailyplan-detail__children-bleed {
-        margin-left: -12px;
-        margin-right: -12px;
-    }
 
     .dailyplan-detail__children-header {
-        margin: 12px;
+        margin: 0 var(--mobil-padding-lats);
     }
 
     .dailyplan-detail__child-card {
@@ -115,6 +111,10 @@
       height: 36px;
       font-size: 18px;
       margin-left: 4px;
+    }
+
+    .dailyplan-detail {
+      padding: 0 var(--mobil-padding-lats);
     }
   }
 

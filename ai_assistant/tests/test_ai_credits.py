@@ -96,7 +96,7 @@ class AICreditChargingTests(TestCase):
         AI_ASSISTANT_CREDITS_ENABLED=True,
         AI_ASSISTANT_CREDIT_PLANS={
             "default": {"monthly_credit_limit": 0, "daily_credit_limit": 0, "block_on_exhaustion": False},
-            "member": {"monthly_credit_limit": 10, "daily_credit_limit": 10, "block_on_exhaustion": True},
+            "member": {"monthly_credit_limit": 100, "daily_credit_limit": 100, "block_on_exhaustion": True},
         },
         AI_ASSISTANT_DEFAULT_CREDITS_PER_TURN=1,
         AI_ASSISTANT_ACTION_CREDIT_MULTIPLIERS={},
@@ -110,9 +110,9 @@ class AICreditChargingTests(TestCase):
             slug="member",
             name="Member",
             status=AccountPlan.Status.ACTIVE,
-            included_monthly_credits=10,
-            monthly_credit_limit=10,
-            daily_credit_limit=10,
+            included_monthly_credits=100,
+            monthly_credit_limit=100,
+            daily_credit_limit=100,
             entitlements={
                 "ai_assistant": {
                     "monthly_credit_limit": 10,
@@ -123,7 +123,7 @@ class AICreditChargingTests(TestCase):
         )
         CreditWallet.objects.update_or_create(
             user=user,
-            defaults={"balance": 10, "reserved_balance": 0},
+            defaults={"balance": 100, "reserved_balance": 0},
         )
         orchestrator = ExternalLLMOrchestrator(llm_client=ScriptedCreditClient())
 

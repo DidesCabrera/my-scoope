@@ -17,7 +17,7 @@ def get_llm_client(provider_name: str | None = None, model_name: str | None = No
     orchestrator consumes this factory.
     """
 
-    resolved_provider = (provider_name or getattr(settings, "AI_ASSISTANT_LLM_PROVIDER", "fake")).strip().lower()
+    resolved_provider = (provider_name or getattr(settings, "AI_ASSISTANT_LLM_PROVIDER", "openai")).strip().lower()
     if resolved_provider == "fake":
         return FakeLLMClient(model=model_name or "fake-llm")
     if resolved_provider == "openai":

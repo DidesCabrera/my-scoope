@@ -82,11 +82,7 @@ class AIAssistantToolRegistryTests(SimpleTestCase):
         self.assertNotIn("risk_level", first_spec)
         self.assertFalse(any("catalog" in spec["name"] for spec in provider_specs))
         self.assertTrue(
-            all(
-                "reason" in spec["parameters"]["properties"]
-                and "reason" in spec["parameters"]["required"]
-                for spec in provider_specs
-            )
+            all("reason" not in spec["parameters"]["properties"] for spec in provider_specs)
         )
 
     def test_proposal_preference_provider_schema_exposes_typed_complexity(self):
@@ -100,7 +96,7 @@ class AIAssistantToolRegistryTests(SimpleTestCase):
 
         self.assertTrue(proposal_spec["strict"])
         self.assertFalse(parameters["additionalProperties"])
-        self.assertEqual(parameters["required"], ["updates", "reason"])
+        self.assertEqual(parameters["required"], ["updates"])
         self.assertFalse(updates_schema["additionalProperties"])
         self.assertEqual(
             set(updates_schema["required"]),

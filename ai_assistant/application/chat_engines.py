@@ -26,10 +26,9 @@ class ChatEngineRequest:
 class ChatEngineTurnResult:
     """Output contract for a chat engine turn.
 
-    `state` is intentionally opaque in Patch 42. The existing deterministic
-    intake engine returns a `NutritionConversationState`; a future LLM engine can
-    return a structured assistant state while the view keeps consuming the same
-    engine contract.
+    `state` stays opaque so the unified LLM runtime can return the typed
+    `NutritionConversationState` consumed by the existing view without coupling
+    this shared contract to the nutrition surface.
     """
 
     state: Any

@@ -86,7 +86,6 @@ class AiIntakeToolLedRegressionTests(SimpleTestCase):
             ],
         }
         engine = LLMPreviewNutritionIntakeChatEngine(
-            baseline_engine=_StubBaselineEngine(_conversation()),
             llm_engine=_StubLLMEngine(
                 assistant_text="Perfecto. ¿Cuál es tu objetivo principal ahora: bajar grasa, ganar masa, mantener o rendimiento?",
                 metadata=metadata,
@@ -103,7 +102,7 @@ class AiIntakeToolLedRegressionTests(SimpleTestCase):
         self.assertEqual(result.state.result.brief.goal, "muscle_gain")
         self.assertIn("objetivo principal", result.assistant_text.lower())
         self.assertFalse(result.metadata.get("llm_tool_state_visible_text_guarded", False))
-        self.assertEqual(result.metadata.get("llm_preview_fallback_reason", ""), "")
+        self.assertFalse(result.metadata.get("llm_degraded", False))
         self.assertTrue(result.metadata["deterministic_coauthor_disabled"])
 
     def test_tool_results_can_update_multiple_memory_objects_in_one_turn(self):
@@ -247,7 +246,7 @@ class AiIntakeToolLedRegressionTests(SimpleTestCase):
         self.assertFalse(metadata["tool_results"][0]["metadata"]["writes_allowed"])
         self.assertFalse(metadata["tool_results"][0]["data"]["source_boundary"]["persistent_profile_updated"])
 
-    def test_contextual_meals_answer_accepts_veces_al_dia_when_meals_are_pending(self):
+    def test_contextual_meals_answer_remains_optional_and_can_refine_default(self):
         state = start_or_continue_conversation(message="quiero una dieta")
         for message in (
             "ganar masa",
@@ -263,7 +262,8 @@ class AiIntakeToolLedRegressionTests(SimpleTestCase):
                 existing_payload=serialize_conversation(state),
             )
 
-        self.assertEqual(state.result.brief.pending_field, "meals_per_day")
+        self.assertIsNone(state.result.brief.pending_field)
+        self.assertTrue(state.result.is_ready_for_proposal)
 
         state = start_or_continue_conversation(
             message="3 veces al día",
@@ -271,7 +271,7 @@ class AiIntakeToolLedRegressionTests(SimpleTestCase):
         )
 
         self.assertEqual(state.result.brief.meals_per_day, 3)
-        self.assertNotEqual(state.result.brief.pending_field, "meals_per_day")
+        self.assertIsNone(state.result.brief.pending_field)
 
     def test_profile_update_confirmation_deactivates_previous_actionable_cards(self):
         brief = NutritionBrief(

@@ -26,11 +26,6 @@ from ai_assistant.application.tools import (
     TOOL_SHARE_PROFILE_DRAFT_CARD,
     TOOL_SHARE_PROPOSAL_PREFERENCES_CARD,
 )
-from ai_assistant.application.rollout import AIRolloutDecision, resolve_ai_llm_rollout
-from notas.application.ai_intake.deterministic_chat_engine import (
-    DETERMINISTIC_ENGINE_MODE,
-    DeterministicNutritionIntakeChatEngine,
-)
 from notas.application.ai_intake.nutrition_brief import (
     AI_NUTRITION_CONVERSATION_MESSAGE_LIMIT,
     NutritionBrief,
@@ -42,42 +37,26 @@ from notas.application.ai_intake.nutrition_brief import (
     deserialize_conversation,
 )
 
-AI_ASSISTANT_CHAT_ENGINE_DETERMINISTIC = DETERMINISTIC_ENGINE_MODE
+AI_ASSISTANT_CHAT_ENGINE_DETERMINISTIC = "deterministic"
 AI_ASSISTANT_CHAT_ENGINE_LLM_PREVIEW = "llm_preview"
 AI_ASSISTANT_CHAT_ENGINE_LLM_PRODUCTION = "llm_production"
-AI_ASSISTANT_CHAT_ENGINE_ALLOWED_MODES = (
-    AI_ASSISTANT_CHAT_ENGINE_DETERMINISTIC,
-    AI_ASSISTANT_CHAT_ENGINE_LLM_PREVIEW,
-    AI_ASSISTANT_CHAT_ENGINE_LLM_PRODUCTION,
-)
-AI_ASSISTANT_PREVIEW_ACTION_TYPE = "assistant.ai_nutrition_intake.preview"
-AI_ASSISTANT_PRODUCTION_ACTION_TYPE = "assistant.ai_nutrition_intake.production"
+AI_ASSISTANT_CHAT_ENGINE_LLM = "llm"
+AI_ASSISTANT_ACTION_TYPE = "assistant.ai_nutrition_intake"
 
 logger = logging.getLogger(__name__)
 
 
-class LLMPreviewNutritionIntakeChatEngine:
-    """LLM-led nutrition chat engine for the existing chat surface.
+class LLMNutritionIntakeChatEngine:
+    """Unified outcome-first assistant for the nutrition chat surface."""
 
-    In LLM modes the deterministic intake is not a co-author. The chat keeps
-    `NutritionConversationState`/`NutritionBrief` as the typed persistence
-    contract between turns, but the LLM leads the conversation and fills My
-    Scoope objects through controlled tools. Deterministic intake remains
-    available only as the explicit deterministic mode or an explicit rollout
-    fallback. Provider failures return a technical message without invoking the
-    deterministic interviewer.
-    """
-
-    engine_name = "llm_preview_nutrition_intake"
+    engine_name = "llm_nutrition_intake"
 
     def __init__(
         self,
         *,
         llm_engine: ChatEngine | None = None,
-        baseline_engine: DeterministicNutritionIntakeChatEngine | None = None,
     ):
         self.llm_engine = llm_engine or ExternalLLMChatEngine()
-        self.baseline_engine = baseline_engine
 
     def continue_chat(self, request: ChatEngineRequest) -> ChatEngineTurnResult:
         conversation_state = _llm_runtime_state_from_request(request)
@@ -112,8 +91,8 @@ class LLMPreviewNutritionIntakeChatEngine:
             engine_name=self.engine_name,
             metadata={
                 "surface": "ai_nutrition_intake",
-                "mode": AI_ASSISTANT_CHAT_ENGINE_LLM_PREVIEW,
-                "llm_runtime": "llm_led_tools_v1",
+                "mode": AI_ASSISTANT_CHAT_ENGINE_LLM,
+                "llm_runtime": "outcome_first_llm_v1",
                 "conversation_policy": "llm_tools",
                 "deterministic_coauthor_disabled": True,
                 "llm_tools_executed": bool(llm_metadata.get("tools_executed")),
@@ -129,9 +108,8 @@ class LLMPreviewNutritionIntakeChatEngine:
                 "llm_proposal_preferences_cards_rendered": proposal_preferences_card_count,
                 "llm_proposal_review_cards_rendered": proposal_review_card_count,
                 "llm_prepared_action_cards_rendered": prepared_action_card_count,
-                "llm_preview_fallback": bool(llm_metadata.get("llm_preview_fallback")),
-                "llm_preview_fallback_reason": llm_metadata.get("llm_preview_fallback_reason", ""),
-                "llm_preview_fallback_kind": llm_metadata.get("llm_preview_fallback_kind", ""),
+                "llm_degraded": bool(llm_metadata.get("llm_degraded")),
+                "llm_degraded_reason": llm_metadata.get("llm_degraded_reason", ""),
                 "deterministic_runtime_invoked": bool(llm_metadata.get("deterministic_runtime_invoked")),
                 "llm_visible_text_extracted": bool(llm_metadata.get("llm_visible_text_extracted")),
                 "llm_provider": llm_metadata.get("provider", ""),
@@ -178,22 +156,24 @@ class LLMPreviewNutritionIntakeChatEngine:
     ) -> tuple[str, dict]:
         try:
             turn_result = self._llm_turn_result(request, conversation_state=conversation_state)
-        except Exception as exc:  # pragma: no cover - defensive preview boundary
-            logger.warning("AI nutrition LLM preview provider failure: %s", exc)
+        except Exception as exc:  # pragma: no cover - defensive provider boundary
+            logger.warning("AI nutrition assistant provider failure: %s", exc)
             return (
-                "No pude obtener una respuesta útil del proveedor externo en modo preview.",
+                "Ahora mismo no pude completar tu solicitud. No hice ningún cambio; inténtalo nuevamente en un momento.",
                 {
-                    "llm_preview_fallback": True,
-                    "llm_preview_error_type": exc.__class__.__name__,
-                    "llm_preview_fallback_reason": "provider_failure",
-                    "llm_preview_fallback_kind": "technical_message",
+                    "llm_degraded": True,
+                    "llm_error_type": exc.__class__.__name__,
+                    "llm_degraded_reason": "provider_failure",
                     "deterministic_runtime_invoked": False,
                 },
             )
 
         assistant_text = _visible_llm_assistant_text(turn_result.assistant_text)
         metadata = dict(turn_result.metadata or {})
-        assistant_text = assistant_text or "No pude obtener una respuesta útil del proveedor externo en modo preview."
+        assistant_text = assistant_text or (
+            "Ahora mismo no pude completar tu solicitud. No hice ningún cambio; "
+            "inténtalo nuevamente en un momento."
+        )
         if assistant_text != (turn_result.assistant_text or "").strip():
             metadata["llm_visible_text_extracted"] = True
         return assistant_text, metadata
@@ -208,248 +188,61 @@ class LLMPreviewNutritionIntakeChatEngine:
             request,
             surface="ai_nutrition_intake",
             conversation_state=conversation_state,
-            extra_context={"preview_mode": True, "llm_runtime": "llm_led_tools_v1"},
+            extra_context={"llm_runtime": "outcome_first_llm_v1"},
         )
-        preview_request = merge_safe_context_into_request(request, safe_context=safe_context)
-        preview_request = _with_preview_metadata(preview_request)
-        return self.llm_engine.continue_chat(preview_request)
+        llm_request = merge_safe_context_into_request(request, safe_context=safe_context)
+        llm_request = _with_llm_metadata(llm_request)
+        return self.llm_engine.continue_chat(llm_request)
 
 
+LLMPreviewNutritionIntakeChatEngine = LLMNutritionIntakeChatEngine
 
-class LLMProductionNutritionIntakeChatEngine(LLMPreviewNutritionIntakeChatEngine):
-    """Production LLM engine guarded by rollout policy.
 
-    This mode is only reachable after explicit configuration and a positive
-    rollout decision for the request. If the decision is negative, it returns
-    the deterministic baseline for the same turn and annotates metadata so the
-    UI/admin can see the fallback reason.
-    """
-
-    engine_name = "llm_production_nutrition_intake"
-
-    def continue_chat(self, request: ChatEngineRequest) -> ChatEngineTurnResult:
-        decision = resolve_ai_llm_rollout(request)
-        if not decision.enabled:
-            baseline_engine = self.baseline_engine or DeterministicNutritionIntakeChatEngine()
-            baseline_result = baseline_engine.continue_chat(request)
-            metadata = dict(baseline_result.metadata or {})
-            metadata.update(
-                {
-                    "requested_mode": AI_ASSISTANT_CHAT_ENGINE_LLM_PRODUCTION,
-                    "llm_production_enabled": False,
-                    "llm_production_fallback": True,
-                    "llm_production_fallback_kind": "explicit_deterministic_engine",
-                    "deterministic_runtime_invoked": True,
-                    "rollout": decision.as_metadata(),
-                }
-            )
-            return ChatEngineTurnResult(
-                state=baseline_result.state,
-                assistant_text=baseline_result.assistant_text,
-                is_ready_for_proposal=baseline_result.is_ready_for_proposal,
-                engine_name=baseline_result.engine_name,
-                metadata=metadata,
-            )
-
-        conversation_state = _llm_runtime_state_from_request(request)
-        llm_text, llm_metadata = self._safe_llm_assistant_text(
-            request,
-            conversation_state=conversation_state,
-            rollout_decision=decision,
-        )
-        conversation = _append_assistant_message(
-            conversation_state,
-            assistant_text=llm_text,
-        )
-        conversation, tool_state_patch_count = _apply_llm_tool_results_to_conversation_state(
-            conversation,
-            llm_metadata,
-        )
-        conversation, profile_card_count, preference_card_count, proposal_preferences_card_count = _append_draft_cards_from_llm_tools(
-            conversation,
-            llm_metadata,
-        )
-        conversation, proposal_review_card_count = _append_proposal_review_cards_from_llm_tools(
-            conversation,
-            llm_metadata,
-        )
-        conversation, prepared_action_card_count = _append_prepared_action_cards_from_llm_tools(
-            conversation,
-            llm_metadata,
-        )
-        return ChatEngineTurnResult(
-            state=conversation,
-            assistant_text=conversation.last_assistant_message,
-            is_ready_for_proposal=conversation.is_ready_for_proposal,
-            engine_name=self.engine_name,
-            metadata={
-                "surface": "ai_nutrition_intake",
-                "mode": AI_ASSISTANT_CHAT_ENGINE_LLM_PRODUCTION,
-                "llm_runtime": "llm_led_tools_v1",
-                "conversation_policy": "llm_tools",
-                "deterministic_coauthor_disabled": True,
-                "llm_tools_executed": bool(llm_metadata.get("tools_executed")),
-                "llm_tool_requests": int(llm_metadata.get("tool_requests") or 0),
-                "llm_semantic_intent": str(llm_metadata.get("semantic_intent") or ""),
-                "llm_semantic_missing_slots": _safe_identifier_list(
-                    llm_metadata.get("semantic_missing_slots")
-                ),
-                "llm_tool_results": _safe_tool_result_summaries(llm_metadata.get("tool_results")),
-                "llm_tool_state_patches_applied": tool_state_patch_count,
-                "llm_profile_draft_cards_rendered": profile_card_count,
-                "llm_preference_draft_cards_rendered": preference_card_count,
-                "llm_proposal_preferences_cards_rendered": proposal_preferences_card_count,
-                "llm_proposal_review_cards_rendered": proposal_review_card_count,
-                "llm_prepared_action_cards_rendered": prepared_action_card_count,
-                "llm_production_enabled": True,
-                "llm_production_fallback": bool(llm_metadata.get("llm_production_fallback")),
-                "llm_production_fallback_reason": llm_metadata.get("llm_production_fallback_reason", ""),
-                "llm_production_fallback_kind": llm_metadata.get("llm_production_fallback_kind", ""),
-                "deterministic_runtime_invoked": bool(llm_metadata.get("deterministic_runtime_invoked")),
-                "llm_visible_text_extracted": bool(llm_metadata.get("llm_visible_text_extracted")),
-                "llm_provider": llm_metadata.get("provider", ""),
-                "llm_model": llm_metadata.get("provider_model", ""),
-                "usage_observability": dict(llm_metadata.get("usage_observability") or {}),
-                "llm_provider_parse_error": str(llm_metadata.get("provider_parse_error") or ""),
-                "llm_provider_contract_repair_attempted": bool(
-                    llm_metadata.get("provider_contract_repair_attempted")
-                ),
-                "llm_provider_native_tool_transport": bool(
-                    llm_metadata.get("provider_native_tool_transport")
-                ),
-                "llm_provider_native_tool_calls": int(
-                    llm_metadata.get("provider_native_tool_calls") or 0
-                ),
-                "llm_provider_text_parse_ignored_due_to_native_tools": bool(
-                    llm_metadata.get("provider_text_parse_ignored_due_to_native_tools")
-                ),
-                "llm_provider_incomplete_reasons": _safe_identifier_list(
-                    llm_metadata.get("provider_incomplete_reasons")
-                ),
-                "llm_provider_final_incomplete_reason": str(
-                    llm_metadata.get("provider_final_incomplete_reason") or ""
-                ),
-                "llm_tool_followup_local_ack": bool(
-                    llm_metadata.get("tool_followup_local_ack")
-                ),
-                "llm_tool_followup_local_ack_policy": str(
-                    llm_metadata.get("tool_followup_local_ack_policy") or ""
-                ),
-                "llm_provider_tool_followup_failed": bool(
-                    llm_metadata.get("provider_tool_followup_failed")
-                ),
-                **_provider_followup_diagnostics(llm_metadata),
-                "context_builder": "safe_llm_context.v1",
-                "rollout": decision.as_metadata(),
-            },
-        )
-
-    def _safe_llm_assistant_text(
-        self,
-        request: ChatEngineRequest,
-        *,
-        conversation_state: NutritionConversationState,
-        rollout_decision: AIRolloutDecision | None = None,
-    ) -> tuple[str, dict]:
-        try:
-            turn_result = self._llm_turn_result(
-                request,
-                conversation_state=conversation_state,
-                rollout_decision=rollout_decision,
-            )
-        except Exception as exc:  # pragma: no cover - defensive production boundary
-            logger.warning("AI nutrition LLM production provider failure: %s", exc)
-            return (
-                "No pude obtener una respuesta útil del proveedor externo en modo productivo.",
-                {
-                    "llm_production_fallback": True,
-                    "llm_production_error_type": exc.__class__.__name__,
-                    "llm_production_fallback_reason": "provider_failure",
-                    "llm_production_fallback_kind": "technical_message",
-                    "deterministic_runtime_invoked": False,
-                },
-            )
-
-        assistant_text = _visible_llm_assistant_text(turn_result.assistant_text)
-        metadata = dict(turn_result.metadata or {})
-        assistant_text = assistant_text or "No pude obtener una respuesta útil del proveedor externo en modo productivo."
-        if assistant_text != (turn_result.assistant_text or "").strip():
-            metadata["llm_visible_text_extracted"] = True
-        return assistant_text, metadata
-
-    def _llm_turn_result(
-        self,
-        request: ChatEngineRequest,
-        *,
-        conversation_state: NutritionConversationState,
-        rollout_decision: AIRolloutDecision | None = None,
-    ) -> ChatEngineTurnResult:
-        safe_context = build_safe_llm_context(
-            request,
-            surface="ai_nutrition_intake",
-            conversation_state=conversation_state,
-            extra_context={
-                "preview_mode": False,
-                "production_mode": True,
-                "llm_runtime": "llm_led_tools_v1",
-                "rollout_mode": (rollout_decision.mode if rollout_decision else "unknown"),
-            },
-        )
-        production_request = merge_safe_context_into_request(request, safe_context=safe_context)
-        production_request = _with_production_metadata(
-            production_request,
-            rollout_decision=rollout_decision,
-        )
-        return self.llm_engine.continue_chat(production_request)
+class LLMProductionNutritionIntakeChatEngine(LLMNutritionIntakeChatEngine):
+    """Deprecated import alias for the unified LLM runtime."""
 
 
 def get_nutrition_intake_chat_engine_mode() -> str:
-    """Return the configured safe chat engine mode for AI Nutrition Intake."""
+    """Return the single active AI Nutrition Intake runtime."""
     raw_mode = getattr(
         settings,
         "AI_ASSISTANT_CHAT_ENGINE_MODE",
-        AI_ASSISTANT_CHAT_ENGINE_DETERMINISTIC,
+        AI_ASSISTANT_CHAT_ENGINE_LLM,
     )
-    mode = str(raw_mode or AI_ASSISTANT_CHAT_ENGINE_DETERMINISTIC).strip().lower()
-    if mode not in AI_ASSISTANT_CHAT_ENGINE_ALLOWED_MODES:
-        return AI_ASSISTANT_CHAT_ENGINE_DETERMINISTIC
-    return mode
+    mode = str(raw_mode or AI_ASSISTANT_CHAT_ENGINE_LLM).strip().lower()
+    if mode in {
+        AI_ASSISTANT_CHAT_ENGINE_DETERMINISTIC,
+        AI_ASSISTANT_CHAT_ENGINE_LLM_PREVIEW,
+        AI_ASSISTANT_CHAT_ENGINE_LLM_PRODUCTION,
+    }:
+        logger.warning(
+            "AI_ASSISTANT_CHAT_ENGINE_MODE=%s is deprecated; using unified llm runtime.",
+            mode,
+        )
+    return AI_ASSISTANT_CHAT_ENGINE_LLM
 
 
 def get_nutrition_intake_chat_engine() -> ChatEngine:
-    """Return the active engine for the existing nutrition chat surface.
+    """Return the unified outcome-first LLM engine."""
 
-    Default is deterministic. LLM preview requires explicit opt-in via
-    `AI_ASSISTANT_CHAT_ENGINE_MODE=llm_preview`.
-    """
-    mode = get_nutrition_intake_chat_engine_mode()
-    if mode == AI_ASSISTANT_CHAT_ENGINE_LLM_PREVIEW:
-        return LLMPreviewNutritionIntakeChatEngine()
-    if mode == AI_ASSISTANT_CHAT_ENGINE_LLM_PRODUCTION:
-        return LLMProductionNutritionIntakeChatEngine()
-    return DeterministicNutritionIntakeChatEngine()
+    return LLMNutritionIntakeChatEngine()
 
 
 def build_ai_nutrition_intake_engine_status() -> dict:
     """Return safe UI/debug metadata for the active AI Intake engine."""
 
     mode = get_nutrition_intake_chat_engine_mode()
-    is_preview = mode == AI_ASSISTANT_CHAT_ENGINE_LLM_PREVIEW
-    is_production = mode == AI_ASSISTANT_CHAT_ENGINE_LLM_PRODUCTION
     return {
         "mode": mode,
-        "label": "LLM producción" if is_production else ("LLM preview" if is_preview else "Determinístico"),
-        "is_llm_preview": is_preview,
-        "is_llm_production": is_production,
-        "rollout_enabled": bool(getattr(settings, "AI_ASSISTANT_LLM_ROLLOUT_ENABLED", False)),
-        "rollout_mode": str(getattr(settings, "AI_ASSISTANT_LLM_ROLLOUT_MODE", "off") or "off"),
-        "provider": str(getattr(settings, "AI_ASSISTANT_LLM_PROVIDER", "fake") or "fake"),
+        "label": "AI activo",
+        "is_active": True,
+        "provider": str(getattr(settings, "AI_ASSISTANT_LLM_PROVIDER", "openai") or "openai"),
         "observability_enabled": bool(
             getattr(settings, "AI_ASSISTANT_USAGE_OBSERVABILITY_ENABLED", True)
         ),
         "guardrails_enabled": True,
         "proposal_tools_enabled": bool(
-            getattr(settings, "AI_ASSISTANT_ENABLE_REVIEWABLE_PROPOSAL_TOOLS", False)
+            getattr(settings, "AI_ASSISTANT_ENABLE_REVIEWABLE_PROPOSAL_TOOLS", True)
         ),
     }
 
@@ -588,31 +381,11 @@ def _extract_jsonish_assistant_content(text: str) -> str:
         return raw.replace("\\n", "\n").replace("\\\"", '"').strip()
 
 
-def _with_preview_metadata(request: ChatEngineRequest) -> ChatEngineRequest:
+def _with_llm_metadata(request: ChatEngineRequest) -> ChatEngineRequest:
     return _with_llm_mode_metadata(
         request,
-        action_type=AI_ASSISTANT_PREVIEW_ACTION_TYPE,
-        chat_engine_mode=AI_ASSISTANT_CHAT_ENGINE_LLM_PREVIEW,
-    )
-
-
-def _with_production_metadata(
-    request: ChatEngineRequest,
-    *,
-    rollout_decision: AIRolloutDecision | None = None,
-) -> ChatEngineRequest:
-    metadata = dict(request.metadata or {})
-    if rollout_decision is not None:
-        metadata["rollout"] = rollout_decision.as_metadata()
-    return _with_llm_mode_metadata(
-        ChatEngineRequest(
-            message=request.message,
-            existing_payload=request.existing_payload,
-            user_id=request.user_id,
-            metadata=metadata,
-        ),
-        action_type=AI_ASSISTANT_PRODUCTION_ACTION_TYPE,
-        chat_engine_mode=AI_ASSISTANT_CHAT_ENGINE_LLM_PRODUCTION,
+        action_type=AI_ASSISTANT_ACTION_TYPE,
+        chat_engine_mode=AI_ASSISTANT_CHAT_ENGINE_LLM,
     )
 
 

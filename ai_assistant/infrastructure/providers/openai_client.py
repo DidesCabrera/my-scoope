@@ -438,7 +438,7 @@ def _structured_text_format(request: LLMProviderRequest) -> dict[str, Any]:
 def _reasoning_config(request: LLMProviderRequest) -> dict[str, str]:
     metadata = dict(request.metadata or {})
     effort = str(metadata.get("reasoning_effort") or "").strip().lower()
-    if effort not in {"none", "minimal", "low", "medium", "high", "xhigh"}:
+    if effort not in {"none", "minimal", "low", "medium", "high", "xhigh", "max"}:
         return {}
     return {"effort": effort}
 

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Any, Iterable
 
-from ai_assistant.application.tool_governance import add_provider_tool_selection_reason
 from ai_assistant.application.tools.contracts import (
     AssistantToolCategory,
     AssistantToolRegistryError,
@@ -1160,7 +1159,23 @@ def list_provider_tool_specs() -> list[dict[str, Any]]:
                 "parameters": _strict_proposal_preferences_provider_schema(),
                 "strict": True,
             }
-        provider_specs.append(add_provider_tool_selection_reason(provider_spec))
+        if spec.name == TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS:
+            provider_spec = {
+                **provider_spec,
+                "description": (
+                    "Create the requested reviewable DailyPlan proposal from the "
+                    "current conversation workspace. My Scoope supplies all known "
+                    "drafts and defaults automatically; never fabricate them."
+                ),
+                "parameters": {
+                    "type": "object",
+                    "required": [],
+                    "properties": {},
+                    "additionalProperties": False,
+                },
+                "strict": True,
+            }
+        provider_specs.append(provider_spec)
     return provider_specs
 
 

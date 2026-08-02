@@ -21,28 +21,32 @@ SAFE_LIMITS = {
     "AI_ASSISTANT_MAX_TOOL_REQUESTS_PER_TURN": 3,
 }
 
+SAFE_PROVIDER = {
+    "AI_ASSISTANT_LLM_PROVIDER": "openai",
+    "AI_ASSISTANT_OPENAI_API_KEY": "test-key",
+    "AI_ASSISTANT_ENABLE_REVIEWABLE_PROPOSAL_TOOLS": True,
+}
+
 
 class AIProductionGuardCheckTests(SimpleTestCase):
     @override_settings(
-        AI_ASSISTANT_CHAT_ENGINE_MODE="llm_production",
-        AI_ASSISTANT_LLM_ROLLOUT_ENABLED=True,
-        AI_ASSISTANT_LLM_ROLLOUT_MODE="staff",
+        AI_ASSISTANT_CHAT_ENGINE_MODE="llm",
         AI_ASSISTANT_CREDITS_ENABLED=True,
         AI_ASSISTANT_USD_PER_AI_CREDIT="0.001",
         AI_ASSISTANT_CREDIT_PLANS=SAFE_CREDIT_PLANS,
         **SAFE_LIMITS,
+        **SAFE_PROVIDER,
     )
     def test_allows_safe_production_configuration(self):
         self.assertEqual(check_ai_assistant_production_guard(None), [])
 
     @override_settings(
         AI_ASSISTANT_CHAT_ENGINE_MODE="llm_production",
-        AI_ASSISTANT_LLM_ROLLOUT_ENABLED=False,
-        AI_ASSISTANT_LLM_ROLLOUT_MODE="off",
         AI_ASSISTANT_CREDITS_ENABLED=False,
         AI_ASSISTANT_USD_PER_AI_CREDIT="0.001",
         AI_ASSISTANT_CREDIT_PLANS=SAFE_CREDIT_PLANS,
         **SAFE_LIMITS,
+        **SAFE_PROVIDER,
     )
     def test_blocks_production_engine_without_credit_enforcement(self):
         issues = check_ai_assistant_production_guard(None)
@@ -50,13 +54,12 @@ class AIProductionGuardCheckTests(SimpleTestCase):
         self.assertIn("ai_assistant.E001", {issue.id for issue in issues})
 
     @override_settings(
-        AI_ASSISTANT_CHAT_ENGINE_MODE="deterministic",
-        AI_ASSISTANT_LLM_ROLLOUT_ENABLED=True,
-        AI_ASSISTANT_LLM_ROLLOUT_MODE="all",
+        AI_ASSISTANT_CHAT_ENGINE_MODE="llm",
         AI_ASSISTANT_CREDITS_ENABLED=True,
         AI_ASSISTANT_USD_PER_AI_CREDIT="0",
         AI_ASSISTANT_CREDIT_PLANS=SAFE_CREDIT_PLANS,
         **SAFE_LIMITS,
+        **SAFE_PROVIDER,
     )
     def test_active_rollout_requires_positive_credit_price(self):
         issues = check_ai_assistant_production_guard(None)

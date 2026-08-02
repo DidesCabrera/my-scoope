@@ -550,6 +550,24 @@
       });
     });
 
+    const aiIntakeForm = document.querySelector(".home-ai-intake__form");
+    const aiIntakePrompt = document.querySelector("#home-ai-intake-prompt");
+
+    if (aiIntakeForm && aiIntakePrompt) {
+      aiIntakePrompt.addEventListener("keydown", function (event) {
+        if (event.key !== "Enter" || event.altKey || event.shiftKey || event.isComposing) {
+          return;
+        }
+
+        event.preventDefault();
+        if (typeof aiIntakeForm.requestSubmit === "function") {
+          aiIntakeForm.requestSubmit();
+        } else {
+          aiIntakeForm.submit();
+        }
+      });
+    }
+
     function setHeaderMetaVisibility(shouldShow) {
       body.classList.toggle("home-header-meta-visible", shouldShow);
     }

@@ -74,6 +74,26 @@ When documents disagree, prefer them in this order:
 5. Historical files in `docs/90_archive/`.
 6. Personal notes outside official docs, such as `manual_docs/`, should not guide implementation.
 
+## Mandatory branch and production workflow
+
+For any change that must reach production, the workflow is mandatory:
+
+```text
+local `staging` work -> commit -> push `staging` -> PR `staging` to `main` -> merge -> verify production
+```
+
+Do not push functional corrections directly to `main`. Do not call a task complete
+when only a staging branch or staging PR changed and the user asked for production.
+The work is complete only after the production site visibly reflects the change, or
+after the deployment blocker has been identified and reported clearly.
+
+This rule matters because the full Django CI suite is expensive in time. A wrong
+branch, wrong PR target, or direct emergency correction can trigger avoidable long
+test runs, delay small CSS/image/copy fixes, and force repeated manual verification.
+For visual-only or docs-only changes, keep the patch narrow, state why the full
+suite was not run locally, and use the configured branch workflow/path filters
+instead of creating unnecessary CI churn.
+
 ## Minimum reading path by task
 
 ### Any code patch
@@ -81,10 +101,11 @@ When documents disagree, prefer them in this order:
 Read:
 
 1. `docs/00_current/PROJECT_STATE.md`
-2. `docs/00_current/architecture/layers.md`
-3. `docs/00_current/architecture/rules.md`
-4. `docs/00_current/architecture/ui_patterns.md` when templates/CSS are touched
-5. `docs/40_technical/qa/testing_hygiene_guide.md` when tests are added, relaxed or fixed
+2. `docs/40_technical/operations/testing_and_ci_policy.md`
+3. `docs/00_current/architecture/layers.md`
+4. `docs/00_current/architecture/rules.md`
+5. `docs/00_current/architecture/ui_patterns.md` when templates/CSS are touched
+6. `docs/40_technical/qa/testing_hygiene_guide.md` when tests are added, relaxed or fixed
 
 ### Planning or documentation patch
 

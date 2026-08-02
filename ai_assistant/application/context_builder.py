@@ -8,7 +8,6 @@ from django.conf import settings
 from ai_assistant.application.chat_engines import ChatEngineRequest
 
 MAX_TEXT_LENGTH = 240
-MAX_RECENT_MESSAGE_TEXT_LENGTH = 1000
 MAX_LIST_ITEMS = 8
 MAX_CONTEXT_DEPTH = 6
 
@@ -160,10 +159,10 @@ def build_safe_llm_context(
         nutrition_brief=provider_nutrition_brief,
         runtime={
             "tools_enabled": True,
-            "tool_execution_stage": "controlled_llm_tool_loop",
-            "assistant_role": "tool_oriented_operator",
+            "tool_execution_stage": "outcome_first_tool_loop",
+            "assistant_role": "collaborative_product_assistant",
             "draft_state_scope": "conversation",
-            "card_presentation": "explicit_tool_only",
+            "card_presentation": "automatic_from_tool_results",
             "proposal_creation_enabled": reviewable_proposal_tools_enabled,
             "persistent_writes_require_approval": True,
         },
@@ -196,7 +195,7 @@ def merge_safe_context_into_request(
 
 
 def _reviewable_proposal_tools_enabled() -> bool:
-    return bool(getattr(settings, "AI_ASSISTANT_ENABLE_REVIEWABLE_PROPOSAL_TOOLS", False))
+    return bool(getattr(settings, "AI_ASSISTANT_ENABLE_REVIEWABLE_PROPOSAL_TOOLS", True))
 
 
 def _tool_oriented_intake_context(
@@ -226,9 +225,10 @@ def _tool_oriented_intake_context(
         ("subject_source", "requires_library_ppk_warning"),
     )
     return {
-        "version": "ai_assistant_tool_oriented_intake.v9",
-        "assistant_role": "operator_assistant",
+        "version": "ai_assistant_workspace.v1",
+        "assistant_role": "collaborative_product_assistant",
         "current_drafts": current_drafts,
+        "current_nutrition_brief": dict(nutrition_brief),
         "work_progress": _work_progress_context(
             conversation_state,
             proposal_creation_enabled=proposal_creation_enabled,
@@ -239,6 +239,8 @@ def _tool_oriented_intake_context(
             "absent_values_are_not_automatically_required": True,
             "new_facts_are_recorded_through_typed_tools": True,
             "readiness_is_product_state_not_a_question_order": True,
+            "blocking_fields_are_exact": True,
+            "optional_fields_use_product_defaults": True,
         },
     }
 
@@ -257,10 +259,16 @@ def _work_progress_context(
     """
 
     result = getattr(conversation_state, "result", None)
+    brief = getattr(result, "brief", None)
+    blocking_fields: list[str] = []
+    if brief is not None:
+        # Import lazily to keep the context builder independent at module load
+        # time while still exposing the domain's exact readiness contract.
+        from notas.application.ai_intake.nutrition_brief import required_proposal_fields
+
+        blocking_fields = list(required_proposal_fields(brief))
     ready_for_proposal = bool(getattr(result, "is_ready_for_proposal", False))
-    required_information_missing = bool(
-        getattr(result, "has_required_pending_questions", False)
-    )
+    required_information_missing = bool(blocking_fields)
     if ready_for_proposal:
         proposal_readiness = "ready_for_reviewable_proposal"
     elif required_information_missing:
@@ -270,9 +278,15 @@ def _work_progress_context(
 
     return {
         "surface_objective": "reach_a_useful_my_scoope_outcome",
+        "active_objective": _active_objective(conversation_state),
         "proposal_readiness": proposal_readiness,
         "reviewable_proposal_creation_available": bool(proposal_creation_enabled),
         "required_information_still_missing": required_information_missing,
+        "blocking_fields": blocking_fields,
+        "product_defaults": {
+            "meals_per_day": 4,
+            "plan_style": "balanced",
+        },
         "optional_refinement_is_not_required": True,
         "next_action_is_selected_by_the_assistant": True,
     }
@@ -317,24 +331,68 @@ def _conversation_context(
         "existing_payload_present": request.existing_payload is not None,
         "message_count": len(messages),
         "last_assistant_present": bool(getattr(conversation_state, "last_assistant_message", "")),
-        "recent_messages": _recent_conversation_messages(messages),
         "recent_chat_objects": recent_objects,
         "last_shared_object": recent_objects[-1] if recent_objects else {},
     }
     return context
 
 
-def _recent_conversation_messages(messages: Sequence[Any]) -> list[dict[str, str]]:
-    recent = []
-    for message in list(messages or ())[-12:]:
-        role = _bounded_text(getattr(message, "role", ""))
-        text = _bounded_text(
-            getattr(message, "text", ""),
-            max_chars=MAX_RECENT_MESSAGE_TEXT_LENGTH,
-        )
-        if role and text:
-            recent.append({"role": role, "text": text})
-    return recent
+def _active_objective(conversation_state: Any | None) -> str:
+    """Return an unresolved product outcome, not a backend question order."""
+
+    messages = list(getattr(conversation_state, "messages", []) or [])
+    if any(
+        isinstance(getattr(message, "proposal_review_card", None), Mapping)
+        for message in messages
+    ):
+        return "respond_to_current_message"
+    if any(
+        getattr(message, "role", "") == "user"
+        and _explicit_dailyplan_proposal_request(getattr(message, "text", ""))
+        for message in messages
+    ):
+        return "create_reviewable_dailyplan_proposal"
+    return "respond_to_current_message"
+
+
+def _explicit_dailyplan_proposal_request(value: Any) -> bool:
+    """Recognize explicit plans and common nutrition outcomes as proposal work."""
+
+    text = " ".join(str(value or "").strip().lower().split())
+    if not text:
+        return False
+    proposal_nouns = ("propuesta", "plan", "dieta", "dailyplan")
+    action_phrases = (
+        "dame",
+        "haz",
+        "hace",
+        "crea",
+        "crear",
+        "genera",
+        "generar",
+        "prepara",
+        "preparar",
+        "quiero",
+        "necesito",
+        "puedes hacer",
+        "puedes crear",
+    )
+    goal_phrases = (
+        "perder grasa",
+        "bajar grasa",
+        "bajar de peso",
+        "perder peso",
+        "ganar masa",
+        "ganar musculo",
+        "ganar músculo",
+        "comer mejor",
+        "mejorar mi alimentacion",
+        "mejorar mi alimentación",
+    )
+    explicitly_requests_plan = any(noun in text for noun in proposal_nouns) and any(
+        phrase in text for phrase in action_phrases
+    )
+    return explicitly_requests_plan or any(phrase in text for phrase in goal_phrases)
 
 
 def _recent_chat_objects(messages: Sequence[Any]) -> list[dict[str, Any]]:

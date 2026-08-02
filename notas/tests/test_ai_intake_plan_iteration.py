@@ -1,7 +1,11 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from unittest.mock import patch
 
+from notas.application.ai_intake.deterministic_chat_engine import (
+    DeterministicNutritionIntakeChatEngine,
+)
 from notas.application.ai_intake.nutrition_brief import (
     NutritionBrief,
     apply_conversation_adjustments,
@@ -20,6 +24,12 @@ from notas.domain.models import AiNutritionChat, Food, NutritionProposal
 )
 class AiIntakePlanIterationTests(TestCase):
     def setUp(self):
+        self.engine_patcher = patch(
+            "notas.interface.views.ai_intake.get_nutrition_intake_chat_engine",
+            return_value=DeterministicNutritionIntakeChatEngine(),
+        )
+        self.engine_patcher.start()
+        self.addCleanup(self.engine_patcher.stop)
         self.user = get_user_model().objects.create_user(
             username="ai-iteration-user",
             email="ai-iteration@example.com",

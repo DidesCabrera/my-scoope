@@ -171,3 +171,5 @@ Consequences
 - `0154-billing-payment-tax-boundary.md`: separa recaudación Mercado Pago, entitlements de `accounts` y emisión tributaria OpenFactura mediante conciliación e idempotencia.
 - `0155-ai-assistant-capability-parity-and-prepared-actions.md`: unifica el catálogo AI/MCP, amplía lecturas de producto y adopta propuestas o acciones preparadas con confirmación confiable para mutaciones.
 - `0156-email-delivery-abuse-protection.md`: adopta Turnstile server-side, límites compartidos, auditoría persistente e invitaciones idempotentes y presupuestadas.
+- `0157-ai-assistant-outcome-first-runtime.md`: reemplaza preview, rollout y fallback determinístico por un único LLM orientado a resultados, con memoria real, propuestas en el mismo turno, texto natural y gates offline/live.
+- `0158-ai-assistant-cost-aware-model-evaluation.md`: baja el baseline del AI Assistant a Luna/low, reserva Terra como escalamiento medido y Sol como benchmark explícito, con reporte live de calidad, tokens y costo.

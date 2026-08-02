@@ -267,8 +267,8 @@ margin: 0;
 }
 
 .card-title-comp {
-  padding: 8px;
-  }
+  padding: 0 var(--mobil-padding-lats-2);
+}
 
 
 .card-title-comp h3 {
