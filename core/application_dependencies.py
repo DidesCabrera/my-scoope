@@ -38,8 +38,4 @@ TRANSITIONAL_APP_EDGES = {
     ("notas", "ai_assistant"): "Chat persistence and nutrition intake remain in notas during the runtime seam extraction.",
 }
 
-ADMIN_OPERATIONS_HTTP_IMPORT_ALLOWLIST = frozenset(
-    {
-        "admin_operations/services.py imports django.shortcuts",
-    }
-)
+ADMIN_OPERATIONS_HTTP_IMPORT_ALLOWLIST = frozenset()

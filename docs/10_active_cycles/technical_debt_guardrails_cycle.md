@@ -85,12 +85,18 @@ ratchets. Ruff's fatal correctness families pass, the complete Django suite pass
 1,642 tests against the patched dependency set, and `pip-audit` reports no known
 vulnerabilities.
 
-### TDG04 — Admin Operations modular decomposition — planned
+### TDG04 — Admin Operations modular decomposition — completed
 
 - Split services, selectors and viewmodels by `overview`, `food_catalog`, `accounts`,
   `ai_assistant` and `audit` responsibilities.
 - Move messages and HTTP object lookup to the interface.
 - Keep compatibility exports while callers migrate.
+
+Repository evidence: the former 2,500-line service module is a 12-line compatibility
+facade. Services, selectors and view models are owned by overview, Food Catalog,
+accounts, AI Assistant and audit modules; all 63 Admin Operations tests pass. The
+application-layer HTTP import allowlist is empty. Food Catalog remains the largest
+owned service surface by design and retains every workflow and route.
 
 ### TDG05 — AI Assistant runtime seam — planned
 

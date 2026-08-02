@@ -176,3 +176,4 @@ Consequences
 - `0159-technical-debt-guardrails-cycle.md`: adopta TDG00-TDG08 para completar las superficies de calidad, contener dependencias y descomponer hotspots preservando Food Catalog como dominio estratégico de Admin Operations.
 - `0160-explicit-repository-quality-surfaces.md`: separa gates reproducibles para Django fast/full, MCP y browser, y elimina la dependencia de activar manualmente `.venv`.
 - `0161-architecture-and-quality-debt-ratchets.md`: hace ejecutables los límites de dependencias, ciclos, vulnerabilidades y errores estáticos críticos sin convertir estilo histórico en un bloqueo masivo.
+- `0162-admin-operations-domain-owned-modules.md`: separa services, selectors y viewmodels de Admin Operations por dominio, preserva fachadas compatibles y mantiene Food Catalog como superficie operacional principal.
