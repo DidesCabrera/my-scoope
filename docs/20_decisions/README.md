@@ -173,3 +173,4 @@ Consequences
 - `0156-email-delivery-abuse-protection.md`: adopta Turnstile server-side, límites compartidos, auditoría persistente e invitaciones idempotentes y presupuestadas.
 - `0157-ai-assistant-outcome-first-runtime.md`: reemplaza preview, rollout y fallback determinístico por un único LLM orientado a resultados, con memoria real, propuestas en el mismo turno, texto natural y gates offline/live.
 - `0158-ai-assistant-cost-aware-model-evaluation.md`: baja el baseline del AI Assistant a Luna/low, reserva Terra como escalamiento medido y Sol como benchmark explícito, con reporte live de calidad, tokens y costo.
+- `0159-technical-debt-guardrails-cycle.md`: adopta TDG00-TDG08 para completar las superficies de calidad, contener dependencias y descomponer hotspots preservando Food Catalog como dominio estratégico de Admin Operations.

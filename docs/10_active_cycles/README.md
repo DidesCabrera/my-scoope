@@ -35,6 +35,10 @@ Cuando un ciclo planificado empiece a implementarse, el documento puede permanec
 
 ## En curso o pendientes de validación
 
+- `technical_debt_guardrails_cycle.md`: ciclo activo TDG00-TDG08 para completar las
+  superficies de calidad, contener dependencias y descomponer hotspots de Admin
+  Operations y AI Assistant sin reducir la relevancia estratégica de Food Catalog ni
+  cambiar comportamiento de producto.
 - `billing_payments_tax_documents_cycle.md`: ciclo activo BILL00-BILL09. Mercado Pago
   será el primer recaudador y OpenFactura el emisor tributario, con fronteras separadas,
   verificación server-to-server, inbox/outbox idempotentes y proyección controlada hacia
