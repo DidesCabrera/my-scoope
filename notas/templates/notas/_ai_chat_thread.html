@@ -1,9 +1,10 @@
+{% load assistant_text %}
 <div class="ai-chat-thread__inner">
   {% for message in vm.content.conversation.messages %}
     <article class="ai-chat-message ai-chat-message--{{ message.role }}{% if message.generated_plan_card %} ai-chat-message--generated-plan{% endif %}{% if message.profile_draft_card %} ai-chat-message--profile-draft-card{% endif %}{% if message.preference_draft_card %} ai-chat-message--preference-draft-card{% endif %}{% if message.proposal_preferences_card %} ai-chat-message--proposal-preferences-card{% endif %}{% if message.proposal_review_card %} ai-chat-message--proposal-review-card{% endif %}{% if message.prepared_action_card %} ai-chat-message--prepared-action-card{% endif %}">
       {% if message.text %}
         <div class="ai-chat-bubble">
-          <p>{{ message.text }}</p>
+          <div class="ai-chat-bubble__content">{{ message.text|assistant_text }}</div>
         </div>
       {% endif %}
 

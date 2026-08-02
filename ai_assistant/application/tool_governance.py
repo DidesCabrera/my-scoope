@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from copy import deepcopy
 from typing import Any, Mapping
 
 TOOL_GOVERNANCE_VERSION = "ai_assistant_tool_governance.v1"
@@ -10,35 +9,25 @@ TOOL_SELECTION_REASON_ARGUMENT = "reason"
 def system_tool_restraint_lines() -> tuple[str, ...]:
     return (
         "Usa tools solo ante intención operacional clara; ‘¿qué pasó?’, ‘¿y eso?’ o ‘¿por qué?’ no autorizan lecturas, cambios ni cards. Si hay más de un referente o acción plausible, aclara brevemente sin tools.",
-        "Cada function call debe incluir reason: una justificación operacional breve, no una cadena de pensamiento.",
     )
 
 
 def developer_tool_governance_policy() -> dict[str, Any]:
     return {
         "ambiguous": "clarify_without_tools",
-        "reason_required": True,
+        "reason_required": False,
     }
 
 
 def add_provider_tool_selection_reason(provider_spec: Mapping[str, Any]) -> dict[str, Any]:
-    """Attach a compact provider-only selection reason to one function schema."""
+    """Return the provider schema unchanged.
 
-    spec = deepcopy(dict(provider_spec or {}))
-    parameters = deepcopy(dict(spec.get("parameters") or {}))
-    if parameters.get("type") != "object":
-        return spec
+    Selection reasoning is observable from the selected tool and its validated
+    arguments. Requiring the model to repeat a synthetic ``reason`` argument
+    made valid calls fail for reasons unrelated to the requested outcome.
+    """
 
-    properties = deepcopy(dict(parameters.get("properties") or {}))
-    properties[TOOL_SELECTION_REASON_ARGUMENT] = {"type": "string"}
-    required = [str(item) for item in parameters.get("required") or ()]
-    if TOOL_SELECTION_REASON_ARGUMENT not in required:
-        required.append(TOOL_SELECTION_REASON_ARGUMENT)
-
-    parameters["properties"] = properties
-    parameters["required"] = required
-    spec["parameters"] = parameters
-    return spec
+    return dict(provider_spec or {})
 
 
 def extract_provider_tool_selection_reason(
@@ -48,32 +37,27 @@ def extract_provider_tool_selection_reason(
 ) -> tuple[dict[str, Any], str, dict[str, Any]]:
     """Remove and normalize the provider-only selection reason."""
 
-    local_arguments = deepcopy(dict(arguments or {}))
-    summary = _normalize_summary(local_arguments.pop(TOOL_SELECTION_REASON_ARGUMENT, ""))
+    local_arguments = dict(arguments or {})
+    supplied_summary = _normalize_summary(local_arguments.pop(TOOL_SELECTION_REASON_ARGUMENT, ""))
     reason_code = _reason_code_for_tool(tool_name)
+    summary = supplied_summary or reason_code.replace("_", " ")
     metadata: dict[str, Any] = {
         "tool_governance_version": TOOL_GOVERNANCE_VERSION,
-        "selection_reason_required": True,
-        "selection_reason_valid": bool(summary),
+        "selection_reason_required": False,
+        "selection_reason_valid": True,
         "selection_reason_code": reason_code,
         "selection_reason_summary": summary,
-        "selection_reason_source": "provider_native_argument",
+        "selection_reason_source": (
+            "provider_native_argument" if supplied_summary else "tool_selection_inference"
+        ),
     }
-    if not summary:
-        metadata["selection_reason_error"] = "missing_tool_selection_reason"
-        return local_arguments, "Provider-native tool selection reason was not reported.", metadata
     return local_arguments, summary, metadata
 
 
 def tool_selection_reason_error(metadata: Mapping[str, Any]) -> str:
-    """Return a stable BA03 block code for one native tool request, if any."""
+    """Selection observability never blocks an otherwise valid tool call."""
 
-    payload = dict(metadata or {})
-    if payload.get("provider_transport") != "native_function_call.v1":
-        return ""
-    if payload.get("selection_reason_valid") is True:
-        return ""
-    return str(payload.get("selection_reason_error") or "missing_tool_selection_reason")
+    return ""
 
 
 def safe_tool_selection_observability(metadata: Mapping[str, Any]) -> dict[str, str]:

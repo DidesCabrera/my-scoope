@@ -10,7 +10,7 @@
 .calendarization-preview__heading{min-width:0}
 .calendarization-preview__details{grid-template-columns:repeat(3,minmax(0,1fr))}
 
-.calendarization-notifications{display:grid;gap:14px;width:100%;padding:20px 8px;border:1px solid #2d2d2d;border-width: 1px 0px;margin: 24px 0;}
+.calendarization-notifications{display:grid;gap:14px;width:100%;padding:20px 22px;border:1px solid #2d2d2d;border-radius: var(--radius-xl) ;margin: 24px 0;}
 .calendarization-notifications h3,.calendarization-push h4{margin:0}
 .calendarization-notifications>label{display:grid;gap:7px;min-width:180px;font-size:.82rem;color:var(--text-muted,#aaa)}
 .calendarization-notifications input[type="time"]{min-height:42px;border:1px solid #353535;border-radius:10px;background:#090909;color:#f5f5f5;padding:8px 10px}
@@ -98,7 +98,9 @@
 }
 
 @media(max-width:760px){
-  .calendarization-current{padding:16px}
+  .calendarization-current{
+    padding:16px var(--mobil-padding-lats);
+  }
 
   .calendarization-current .calendarization-actions,
   .calendarization-current .calendarization-actions form{

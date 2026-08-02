@@ -3,7 +3,7 @@
   color: var(--text-main);
   border: 1px solid var(--border-soft);
   border-radius: 22px;
-  padding: 17px 22px 14px 22px;
+  padding: 17px var(--desktop-padding-lats) 14px;
   margin-bottom: 24px;
 }
 
@@ -62,12 +62,12 @@
   background: var(--surface-card-muted);
   border: 1px solid var(--border-soft);
   border-radius: 18px;
-  margin: 10px -4px;
+  margin: 10px 0px;
 }
 
 
 .card-detail-block.main {
-  margin: 10px -6px;
+  margin: 10px 0px;
 }
 /* =========================
    MOBILE BASE
@@ -75,7 +75,11 @@
 
 @media (max-width: 768px) {
   .card {
-    padding: 15px 12px 20px 12px;
+    padding: var(--mobil-padding-top) var(--mobil-padding-lats) var(--mobil-padding-bottom);
+  }
+
+  .card.dpm_meal {
+    padding: var(--mobil-padding-top) var(--mobil-padding-lats) var(--mobil-padding-bottom);
   }
 
   .card-main {
@@ -94,20 +98,16 @@
     display: none !important;
   }
 
-  .card.dpm_meal {
-    padding: 14px 15px 20px 15px;
-  }
-
   .card-detail-block {
-    margin: 20px -6px;
+    margin: 20px 0px;
   }
 
   .card-detail-block.main {
-    margin: 10px -8px;
+    margin: 10px 0px;
   }
 
   .card.dpm_meal .card-detail-block{
-    margin: 10px -6px;
+    margin: 10px 0px;
   }
 
 }

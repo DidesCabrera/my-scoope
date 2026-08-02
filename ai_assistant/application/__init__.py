@@ -52,9 +52,6 @@ _EXPORTS: Final[dict[str, tuple[str, str]]] = {
         "ai_assistant.application.model_routing",
         "route_max_output_tokens",
     ),
-    "AIRolloutDecision": ("ai_assistant.application.rollout", "AIRolloutDecision"),
-    "resolve_ai_llm_rollout": ("ai_assistant.application.rollout", "resolve_ai_llm_rollout"),
-    "stable_user_bucket": ("ai_assistant.application.rollout", "stable_user_bucket"),
     "AIUsageDashboardReport": (
         "ai_assistant.application.reports",
         "AIUsageDashboardReport",

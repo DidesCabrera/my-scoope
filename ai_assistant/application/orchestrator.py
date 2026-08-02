@@ -10,7 +10,6 @@ from django.conf import settings
 
 from ai_assistant.application.audit import build_audit_snapshot, sanitize_audit_value
 from ai_assistant.application.context_builder import sanitize_provider_context
-from ai_assistant.application.conversational_agency import developer_goal_directed_agency_policy
 from ai_assistant.application.credits import AICreditCheck, DjangoAICreditService
 from ai_assistant.application.limits import (
     AILimitViolation,
@@ -29,7 +28,6 @@ from ai_assistant.application.product_context import (
     system_domain_anchor_lines,
 )
 from ai_assistant.application.tool_governance import (
-    developer_tool_governance_policy,
     extract_provider_tool_selection_reason,
     safe_tool_selection_observability,
     system_tool_restraint_lines,
@@ -46,6 +44,7 @@ from ai_assistant.application.tools import (
     ProfileDraftToolExecutor,
     ReadOnlyToolExecutor,
     ReviewableProposalToolExecutor,
+    TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
     TOOL_SHARE_PREFERENCE_DRAFT_CARD,
     TOOL_SHARE_PROFILE_DRAFT_CARD,
     TOOL_SHARE_PROPOSAL_PREFERENCES_CARD,
@@ -160,6 +159,13 @@ _DAILYPLAN_PROPOSAL_TOOLS = {
     "iterate_nutrition_engine_dailyplan_proposal",
 }
 
+_AI_NUTRITION_INTAKE_CORE_TOOLS = {
+    TOOL_UPDATE_PROFILE_DRAFT,
+    TOOL_UPDATE_PREFERENCE_DRAFT,
+    TOOL_UPDATE_PROPOSAL_PREFERENCES,
+    TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
+}
+
 
 def _reviewable_proposal_tool_relevant(tool_name: str, *, user_text: str) -> bool:
     if tool_name == "create_validated_dailyplan_proposal" and not any(
@@ -194,23 +200,22 @@ ProviderToolSpecProvider = Callable[[], list[dict[str, Any]]]
 class AssistantOrchestratorConfig:
     """Runtime limits for the external LLM orchestrator v1.
 
-    The orchestrator sends bounded history, asks for JSON, and allows a small
-    controlled multi-step tool loop so the LLM can operate My Scoope objects as
-    an assistant instead of forcing the chat surface to run deterministic intake
-    as a co-author. Reviewable proposal tools require explicit opt-in and never
-    apply changes directly.
+    The orchestrator sends bounded history, accepts natural visible text, and
+    allows a controlled multi-step native tool loop so the model can operate My
+    Scoope objects. Reviewable proposal tools are part of the normal runtime and
+    never apply changes directly.
     """
 
-    max_history_messages: int = 8
-    max_output_tokens: int = 900
-    max_tool_loop_iterations: int = 3
-    enable_reviewable_proposal_tools: bool = False
-    max_input_tokens: int = 6000
-    max_context_chars: int = 8000
+    max_history_messages: int = 20
+    max_output_tokens: int = 2400
+    max_tool_loop_iterations: int = 4
+    enable_reviewable_proposal_tools: bool = True
+    max_input_tokens: int = 20000
+    max_context_chars: int = 16000
     max_message_chars: int = 2000
     max_tool_requests_per_turn: int = 3
     engine_name: str = "external_llm_orchestrator_v1"
-    response_format_version: str = "ai_assistant_structured_response.v2"
+    response_format_version: str = "ai_assistant_natural_response.v1"
     reasoning_effort: str = "low"
 
     @classmethod
@@ -233,7 +238,7 @@ class AssistantOrchestratorConfig:
             reasoning_effort=_settings_choice(
                 "AI_ASSISTANT_OPENAI_REASONING_EFFORT",
                 cls.reasoning_effort,
-                allowed={"none", "minimal", "low", "medium", "high", "xhigh"},
+                allowed={"none", "minimal", "low", "medium", "high", "xhigh", "max"},
             ),
         )
 
@@ -606,9 +611,6 @@ class ExternalLLMOrchestrator:
                 "local_context_keys": sorted(str(key) for key in request.context.keys()),
                 "estimated_input_tokens": estimate_provider_request_tokens(estimated_request),
                 "model_route": model_route.as_metadata(),
-                "response_json_schema": self._provider_response_json_schema(),
-                "response_schema_name": "ai_assistant_structured_response",
-                "response_schema_strict": True,
                 "reasoning_effort": self.config.reasoning_effort,
                 "technical_limits": {
                     "max_input_tokens": self.config.turn_limits.max_input_tokens,
@@ -618,8 +620,8 @@ class ExternalLLMOrchestrator:
                 },
             },
             tools=tools,
-            tool_choice="auto",
-            parallel_tool_calls=True,
+            tool_choice=self._initial_tool_choice(request, tools),
+            parallel_tool_calls=False,
             max_tool_calls=self.config.turn_limits.max_tool_requests_per_turn,
         )
 
@@ -649,6 +651,15 @@ class ExternalLLMOrchestrator:
             route=model_route,
         )
         tools = tuple(base_request.tools or ()) if remaining_tool_iterations > 0 else ()
+        tool_choice: str | None = "auto" if tools else None
+        if tools and self._proposal_ready_after_tool_results(request, tool_results):
+            proposal_tool = _provider_tool_by_name(
+                tools,
+                TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
+            )
+            if proposal_tool is not None:
+                tools = (proposal_tool,)
+                tool_choice = "required"
         tool_outputs = _provider_tool_outputs(tool_results)
         estimated_request = LLMProviderRequest(
             messages=base_request.messages,
@@ -666,15 +677,12 @@ class ExternalLLMOrchestrator:
                 "tool_loop": "native_function_calls.v1",
                 "tool_results_count": len(tuple(tool_results or ())),
                 "model_route": model_route.as_metadata(),
-                "response_json_schema": self._provider_response_json_schema(),
-                "response_schema_name": "ai_assistant_structured_response",
-                "response_schema_strict": True,
                 "reasoning_effort": self.config.reasoning_effort,
                 "estimated_input_tokens": estimate_provider_request_tokens(estimated_request),
             },
             tools=tools,
-            tool_choice="auto" if tools else None,
-            parallel_tool_calls=True if tools else None,
+            tool_choice=tool_choice,
+            parallel_tool_calls=False if tools else None,
             max_tool_calls=(
                 self.config.turn_limits.max_tool_requests_per_turn if tools else None
             ),
@@ -706,26 +714,15 @@ class ExternalLLMOrchestrator:
                 role="system",
                 content=(
                     "Eres el AI Assistant de My Scoope. Responde natural y breve. "
-                    "Usa los tool_results como fuente de verdad. Devuelve JSON válido."
+                    "Usa los resultados de My Scoope como fuente de verdad."
                 ),
             ),
             LLMMessage(
                 role="developer",
-                content=json.dumps(
-                    {
-                        "response_schema": {
-                            "assistant_message": {"content": "texto visible para el usuario"},
-                            "intent": {"name": "capture_nutrition_brief", "confidence": 0.8},
-                            "requires_human_review": False,
-                        },
-                        "policy": {
-                            "tool_results_are_source_of_truth": True,
-                            "do_not_request_more_tools_this_turn": True,
-                            "do_not_repeat_fields_present_in_tool_results": True,
-                        },
-                    },
-                    ensure_ascii=False,
-                    sort_keys=True,
+                content=(
+                    "Explica el resultado útil, sin mencionar tools ni JSON. "
+                    "No repitas datos que el usuario acaba de entregar. "
+                    "No solicites otra operación en este turno."
                 ),
             ),
             LLMMessage(role="user", content=bounded_text(request.user_message.content, max_chars=600)),
@@ -741,7 +738,7 @@ class ExternalLLMOrchestrator:
                 role="user",
                 content=(
                     "Responde al usuario usando esos tool_results. "
-                    "No pidas más tools ni repitas campos ya capturados. Devuelve JSON válido."
+                    "No repitas campos ya capturados."
                 ),
             ),
         ]
@@ -758,9 +755,6 @@ class ExternalLLMOrchestrator:
                 "tool_loop": "controlled_tools.compact_followup.v1",
                 "tool_results_count": len(tuple(tool_results or ())),
                 "model_route": model_route.as_metadata(),
-                "response_json_schema": self._provider_response_json_schema(),
-                "response_schema_name": "ai_assistant_structured_response",
-                "response_schema_strict": True,
                 "reasoning_effort": self.config.reasoning_effort,
                 "estimated_input_tokens": estimate_provider_request_tokens(
                     LLMProviderRequest(messages=messages, max_output_tokens=max_output_tokens)
@@ -775,7 +769,7 @@ class ExternalLLMOrchestrator:
         model_route: AIModelRoute | None = None,
         require_tool_call: bool = False,
     ) -> LLMProviderRequest:
-        """Retry one malformed/incomplete provider turn under the same strict schema."""
+        """Retry one incomplete provider turn without changing its tool boundary."""
 
         model_route = model_route or AIModelRoute(
             action_type="",
@@ -787,8 +781,8 @@ class ExternalLLMOrchestrator:
             LLMMessage(
                 role="developer",
                 content=(
-                    "La respuesta anterior no pudo validarse, quedó incompleta o declaró una operación sin function call. "
-                    "Procesa nuevamente la solicitud original. Devuelve el objeto breve del schema estricto. "
+                    "La respuesta anterior quedó incompleta o declaró una operación sin function call. "
+                    "Procesa nuevamente la solicitud original y responde con texto natural. "
                     "Cuando el turno requiera leer, actualizar, mostrar o crear un objeto revisable, solicita la function tool "
                     "nativa correspondiente; no sustituyas operaciones por afirmaciones en texto."
                 ),
@@ -800,10 +794,7 @@ class ExternalLLMOrchestrator:
         )
         metadata = {
             **dict(failed_request.metadata or {}),
-            "contract_repair": "structured_response_retry.v1",
-            "response_json_schema": self._provider_response_json_schema(),
-            "response_schema_name": "ai_assistant_structured_response",
-            "response_schema_strict": True,
+            "contract_repair": "incomplete_response_retry.v1",
             "reasoning_effort": self.config.reasoning_effort,
             "model_route": model_route.as_metadata(),
         }
@@ -825,13 +816,10 @@ class ExternalLLMOrchestrator:
 
 
     def parse_provider_response(self, provider_response: LLMProviderResponse) -> AssistantProviderParseResult:
-        """Normalize provider text and provider-native function calls.
+        """Normalize natural assistant text and provider-native function calls.
 
-        OpenAI function calls are transported outside the assistant JSON text.
-        My Scoope maps them directly into ``AssistantToolRequest`` objects and
-        keeps the smaller structured text envelope only for visible copy and
-        semantic diagnostics. Legacy text-embedded ``tool_requests`` remain
-        accepted for fake providers and backwards-compatible tests.
+        Natural prose is the primary visible transport. The old JSON envelope
+        remains readable only for backwards-compatible fake-provider tests.
         """
 
         native_tool_requests, native_tool_error = _coerce_provider_tool_calls(
@@ -919,21 +907,26 @@ class ExternalLLMOrchestrator:
 
         if payload is None:
             fallback_content = _extract_jsonish_assistant_content(text)
+            visible_content = fallback_content or text
             return AssistantProviderParseResult(
                 response=AssistantStructuredResponse(
                     assistant_message=AssistantMessage(
                         role=AssistantMessageRole.ASSISTANT,
-                        content=fallback_content or text or "No pude interpretar una respuesta útil del proveedor.",
+                        content=visible_content or "No pude obtener una respuesta útil en este turno.",
                     ),
-                    intent=AssistantIntent(name=AssistantIntentName.UNKNOWN, confidence=0.0),
-                    requires_human_review=True,
+                    intent=AssistantIntent(
+                        name=AssistantIntentName.ANSWER_QUESTION,
+                        confidence=0.75 if visible_content else 0.0,
+                    ),
+                    requires_human_review=False,
                     metadata={
                         "provider_response_was_json": False,
+                        "provider_response_format": self.config.response_format_version,
                         "provider_response_jsonish_content_extracted": bool(fallback_content),
                     },
                 ),
                 was_json=False,
-                parse_error=parse_error or "invalid_json:empty_provider_text",
+                parse_error="" if visible_content else (parse_error or "empty_provider_text"),
             )
 
         ignored_provider_proposal_ids = tuple(payload.get("proposal_ids") or ())
@@ -1465,7 +1458,7 @@ class ExternalLLMOrchestrator:
             tool_request = _enrich_draft_tool_request_from_context(
                 raw_tool_request,
                 context=request.context,
-                prior_tool_results=prior_tool_results,
+                prior_tool_results=(*prior_tool_results, *results),
             )
             selection_error = tool_selection_reason_error(tool_request.metadata)
             if selection_error:
@@ -1579,84 +1572,30 @@ class ExternalLLMOrchestrator:
     def _system_prompt(self) -> str:
         return "\n".join(
             [
-                "Eres el AI Assistant de My Scoope.",
+                "Eres el asistente AI de My Scoope: competente, directo, cálido y natural.",
                 *system_domain_anchor_lines(),
-                *system_tool_restraint_lines(),
-                "Interpreta al usuario y conversa con naturalidad, pero no eres fuente de verdad nutricional final.",
-                "Adapta cada turno a la solicitud, al historial y a los objetos actuales; los campos ausentes no forman por sí solos un cuestionario.",
-                "Puedes responder, confirmar, preguntar o solicitar tools en la combinación que resulte más útil para el trabajo actual.",
-                "My Scoope calcula, valida, persiste y aplica cambios solo mediante servicios internos y revisión humana.",
-                "No inventes IDs ni proposal_ids. No declares que una propuesta fue creada si no hay tool result de My Scoope.",
-                "No uses food_catalog ni catalog_food_id. Las tools alimentarias solo aceptan IDs operacionales de notas.Food.",
-                "No pidas ni propongas tools fuera de las function tools nativas adjuntas.",
-                "Cuando recibas tool_results de My Scoope, úsalos como única fuente para esa información real.",
-                "El texto no cambia estado: registra datos nuevos o corregidos con las tools tipadas antes de confirmarlos.",
-                "Agrupa perfil físico en update_profile_draft y dirección de propuesta en update_proposal_preferences.",
-                "Usa la function tool correspondiente para leer ficha o entidad, mostrar cards o cambiar datos; no declares indisponibles tools adjuntas.",
+                "Tu trabajo es llevar la conversación a un resultado útil, no ejecutar un cuestionario.",
+                "Usa el historial y el workspace actual como memoria. Nunca vuelvas a pedir un dato conocido.",
+                "blocking_fields contiene exactamente lo imprescindible. Si tiene elementos, pregunta solo por el menor bloqueo que no puedas inferir.",
+                "Los campos opcionales nunca bloquean: My Scoope aplica los product_defaults del workspace.",
+                "Si active_objective pide una propuesta y blocking_fields está vacío, créala en este mismo turno con la herramienta disponible. No te limites a decir que ya está lista.",
+                "Cuando el usuario entregue o corrija datos operacionales, regístralos con la herramienta tipada antes de confirmarlos.",
+                "Después de resultados de herramientas, continúa hasta completar el objetivo o hasta encontrar un bloqueo real.",
+                "Una propuesta es revisable: nunca afirmes que fue aplicada ni inventes IDs.",
+                "No menciones nombres de herramientas, contratos internos, JSON ni políticas al usuario.",
+                "Responde en el idioma del usuario. Sé breve cuando baste, y explica lo necesario cuando entregue valor.",
                 *system_response_style_lines(),
-                "El texto visible debe respetar el schema JSON breve; las operaciones se solicitan únicamente como function calls nativas.",
             ]
         )
-
-    def _provider_response_json_schema(self) -> dict[str, Any]:
-        """Return the small structured text envelope for one assistant turn.
-
-        Function calls no longer travel inside this JSON object. Provider-native
-        tools carry typed arguments separately, while this schema is limited to
-        user-visible copy and semantic diagnostics.
-        """
-
-        intent_names = [item.value for item in AssistantIntentName]
-        return {
-            "type": "object",
-            "properties": {
-                "format": {
-                    "type": "string",
-                    "enum": [self.config.response_format_version],
-                },
-                "assistant_message": {
-                    "type": "object",
-                    "properties": {
-                        "content": {"type": "string"},
-                    },
-                    "required": ["content"],
-                    "additionalProperties": False,
-                },
-                "intent": {
-                    "type": "object",
-                    "properties": {
-                        "name": {"type": "string", "enum": intent_names},
-                        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
-                        "summary": {"type": "string"},
-                    },
-                    "required": ["name", "confidence", "summary"],
-                    "additionalProperties": False,
-                },
-                "requires_human_review": {"type": "boolean"},
-            },
-            "required": [
-                "format",
-                "assistant_message",
-                "intent",
-                "requires_human_review",
-            ],
-            "additionalProperties": False,
-        }
-
 
     def _context_prompt(self, context: Mapping[str, Any]) -> str:
         safe_context = sanitize_provider_context(context)
         payload = {
-            "provider_context": safe_context,
-            "context_policy": {
-                "context_is_bounded": True,
-                "context_is_read_only": True,
-                "do_not_request_missing_private_data": True,
-                "read_only_tools_may_run_internally": True,
-                "validation_tools_may_run_internally": True,
-                "reviewable_proposal_tools_require_orchestrator_opt_in": True,
-                "writes_remain_disabled": True,
-            },
+            "my_scoope_workspace": safe_context,
+            "instruction": (
+                "Trata los valores presentes como conocidos, los blocking_fields "
+                "como la única carencia obligatoria y los resultados de tools como fuente de verdad."
+            ),
         }
         text = json.dumps(payload, ensure_ascii=False, sort_keys=True)
         if len(text) <= self.config.turn_limits.max_context_chars:
@@ -1666,11 +1605,8 @@ class ExternalLLMOrchestrator:
                 "context_omitted_by_limit": True,
                 "available_context_keys": sorted(str(key) for key in safe_context.keys()),
             },
-            "context_policy": {
-                **payload["context_policy"],
-                "context_was_omitted_due_to_technical_limit": True,
-                "max_context_chars": self.config.turn_limits.max_context_chars,
-            },
+            "context_was_omitted_due_to_technical_limit": True,
+            "max_context_chars": self.config.turn_limits.max_context_chars,
         }
         return json.dumps(fallback_payload, ensure_ascii=False, sort_keys=True)
 
@@ -1687,9 +1623,37 @@ class ExternalLLMOrchestrator:
         runtime capability boundary.
         """
 
-        selected: list[Mapping[str, Any]] = []
+        available = tuple(self.provider_tool_specs())
         user_text = str(request.user_message.content or "").strip().lower()
-        for provider_spec in tuple(self.provider_tool_specs()):
+        if (
+            str(request.context.get("surface") or "") == "ai_nutrition_intake"
+            and not _requests_existing_product_operation(user_text)
+        ):
+            work_progress = _intake_work_progress(request.context)
+            if (
+                self.config.enable_reviewable_proposal_tools
+                and _work_progress_has_active_proposal_objective(work_progress)
+                and not tuple(work_progress.get("blocking_fields") or ())
+            ):
+                proposal_tool = _provider_tool_by_name(
+                    available,
+                    TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
+                )
+                return (proposal_tool,) if proposal_tool is not None else ()
+
+            return tuple(
+                provider_spec
+                for provider_spec in available
+                if str(provider_spec.get("name") or "") in _AI_NUTRITION_INTAKE_CORE_TOOLS
+                and (
+                    self.config.enable_reviewable_proposal_tools
+                    or str(provider_spec.get("name") or "")
+                    != TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS
+                )
+            )
+
+        selected: list[Mapping[str, Any]] = []
+        for provider_spec in available:
             name = str(provider_spec.get("name") or "")
             if not _expanded_product_tool_relevant(name, user_text=user_text):
                 continue
@@ -1705,6 +1669,69 @@ class ExternalLLMOrchestrator:
             selected.append(provider_spec)
         return tuple(selected)
 
+    def _initial_tool_choice(
+        self,
+        request: AssistantTurnRequest,
+        tools: Sequence[Mapping[str, Any]],
+    ) -> str | None:
+        if not tools:
+            return None
+        work_progress = _intake_work_progress(request.context)
+        if (
+            _work_progress_has_active_proposal_objective(work_progress)
+            and not tuple(work_progress.get("blocking_fields") or ())
+            and _provider_tool_by_name(
+                tools,
+                TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
+            )
+            is not None
+        ):
+            return "required"
+        return "auto"
+
+    def _proposal_ready_after_tool_results(
+        self,
+        request: AssistantTurnRequest,
+        tool_results: Sequence[AssistantToolResult],
+    ) -> bool:
+        work_progress = _intake_work_progress(request.context)
+        if not _work_progress_has_active_proposal_objective(work_progress):
+            return False
+        if not self.config.enable_reviewable_proposal_tools:
+            return False
+
+        workspace = _intake_workspace(request.context)
+        try:
+            from notas.application.ai_intake.nutrition_brief import required_proposal_fields
+            from notas.application.ai_tools.proposal_tools import (
+                build_nutrition_brief_from_ai_drafts,
+            )
+
+            brief = build_nutrition_brief_from_ai_drafts(
+                profile_draft=_latest_draft_for_tool(
+                    "profile_draft",
+                    context=request.context,
+                    prior_tool_results=tool_results,
+                ),
+                preference_draft=_latest_draft_for_tool(
+                    "preference_draft",
+                    context=request.context,
+                    prior_tool_results=tool_results,
+                ),
+                proposal_preferences=_latest_draft_for_tool(
+                    "proposal_preferences",
+                    context=request.context,
+                    prior_tool_results=tool_results,
+                ),
+                current_nutrition_brief=dict(
+                    workspace.get("current_nutrition_brief") or {}
+                ),
+                raw_prompt=request.user_message.content,
+            )
+        except (TypeError, ValueError):
+            return False
+        return not required_proposal_fields(brief)
+
     def _developer_prompt(
         self,
         tool_specs: Sequence[Mapping[str, Any]] | None = None,
@@ -1713,32 +1740,98 @@ class ExternalLLMOrchestrator:
         payload = {
             "native_function_tools": True,
             "product_context": developer_product_capability_policy(),
-            "tool_governance": developer_tool_governance_policy(),
-            "goal_directed_agency": developer_goal_directed_agency_policy(),
             "response_style_policy": developer_response_style_policy(),
-            "policy": {
-                "reviewable_proposal_tools_enabled": self.config.enable_reviewable_proposal_tools,
-                "proposal_preferences_are_not_personal_profile_memory": True,
-                "current_drafts_are_conversation_memory": True,
-                "present_draft_values_are_known": True,
-                "absent_draft_values_are_not_automatically_required": True,
-                "record_new_user_facts_with_the_matching_typed_draft_tool": True,
-                "plain_text_never_mutates_my_scoope_state": True,
-                "state_change_claims_require_matching_native_function_calls": True,
-                "a_turn_with_new_or_corrected_operational_facts_requires_matching_function_calls": True,
-                "group_related_updates_into_the_fewest_matching_tools": True,
-                "assistant_message_before_tool_results_must_not_claim_the_operation_already_happened": True,
-                "explicit_read_and_card_requests_require_matching_tools": True,
-                "do_not_claim_attached_tools_are_unavailable": True,
-                "explain_capabilities_in_product_language_not_function_names": True,
-                "internal_tool_names_and_schemas_are_not_user_facing_copy": True,
-                "tool_descriptions_and_schemas_define_field_meaning_and_normalization": True,
-                "do_not_encode_tool_calls_inside_the_text_json": True,
-                "my_scoope_renders_cards_from_tool_results_not_from_plain_text": True,
-                "recent_messages_and_tool_results_must_not_be_contradicted": True,
+            "success_criteria": [
+                "answer_the_actual_request",
+                "never_repeat_known_information",
+                "use_at_most_one_blocking_question",
+                "complete_a_ready_active_objective_in_the_same_turn",
+            ],
+            "available_operations": [
+                str(spec.get("name") or "") for spec in tool_specs
+            ],
+            "rules": {
+                "tool_results_are_source_of_truth": True,
+                "new_facts_require_matching_update_call": True,
+                "proposal_cards_are_rendered_automatically": True,
+                "proposal_requires_user_review": True,
+                "visible_response_is_natural_text": True,
             },
         }
         return json.dumps(payload, ensure_ascii=False, sort_keys=True)
+
+
+def _intake_workspace(context: Mapping[str, Any]) -> dict[str, Any]:
+    metadata = dict((context or {}).get("metadata") or {})
+    workspace = metadata.get("tool_oriented_intake")
+    return dict(workspace) if isinstance(workspace, Mapping) else {}
+
+
+def _intake_work_progress(context: Mapping[str, Any]) -> dict[str, Any]:
+    progress = _intake_workspace(context).get("work_progress")
+    return dict(progress) if isinstance(progress, Mapping) else {}
+
+
+def _work_progress_has_active_proposal_objective(
+    work_progress: Mapping[str, Any],
+) -> bool:
+    return str(work_progress.get("active_objective") or "") in {
+        "create_reviewable_dailyplan_proposal",
+        "create_dailyplan_proposal",
+    }
+
+
+def _requests_existing_product_operation(user_text: str) -> bool:
+    text = f" {str(user_text or '').strip().lower()} "
+    identifies_existing_object = any(
+        marker in text
+        for marker in (
+            " mi plan ",
+            " este plan ",
+            " dailyplan ",
+            " propuesta ",
+            " programa ",
+            " calendario ",
+        )
+    )
+    requests_change_or_lookup = any(
+        marker in text
+        for marker in (
+            " cambia ",
+            " cambiar ",
+            " ajusta ",
+            " ajustar ",
+            " aumenta ",
+            " aumentar ",
+            " reduce ",
+            " reducir ",
+            " renombra ",
+            " elimina ",
+            " borra ",
+            " busca ",
+            " muestra ",
+            " revisa ",
+            " compara ",
+            " aplica ",
+            " aprueba ",
+            " rechaza ",
+        )
+    )
+    return identifies_existing_object and requests_change_or_lookup
+
+
+def _provider_tool_by_name(
+    tools: Sequence[Mapping[str, Any]],
+    tool_name: str,
+) -> Mapping[str, Any] | None:
+    return next(
+        (
+            tool
+            for tool in tuple(tools or ())
+            if str(tool.get("name") or "") == tool_name
+        ),
+        None,
+    )
 
 
 
@@ -2031,6 +2124,38 @@ def _enrich_draft_tool_request_from_context(
     from the current safe context or previous tool results. Otherwise every
     partial update rewrites the card as if all prior fields were unknown.
     """
+
+    if (
+        request.tool_name
+        == TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS
+    ):
+        workspace = _intake_workspace(context)
+        arguments = dict(request.arguments or {})
+        for draft_key in (
+            "profile_draft",
+            "preference_draft",
+            "proposal_preferences",
+        ):
+            if not isinstance(arguments.get(draft_key), Mapping):
+                arguments[draft_key] = _latest_draft_for_tool(
+                    draft_key,
+                    context=context,
+                    prior_tool_results=prior_tool_results,
+                )
+        if not isinstance(arguments.get("current_nutrition_brief"), Mapping):
+            arguments["current_nutrition_brief"] = dict(
+                workspace.get("current_nutrition_brief") or {}
+            )
+        arguments.setdefault("raw_prompt", "")
+        metadata = dict(request.metadata or {})
+        metadata["proposal_workspace_injected_from_context"] = True
+        return AssistantToolRequest(
+            tool_name=request.tool_name,
+            arguments=arguments,
+            request_id=request.request_id,
+            reason=request.reason,
+            metadata=metadata,
+        )
 
     argument_name_and_key = DRAFT_TOOL_CONTEXT_ARGUMENTS.get(request.tool_name)
     if not argument_name_and_key:

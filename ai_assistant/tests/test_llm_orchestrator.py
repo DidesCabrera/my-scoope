@@ -74,36 +74,29 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
         self.assertEqual(response.intent.name, AssistantIntentName.ANSWER_QUESTION)
         self.assertFalse(response.requires_human_review)
         self.assertEqual(provider_request.messages[0].role, "system")
-        self.assertIn("food_catalog", provider_request.messages[0].content)
-        self.assertIn("El texto no cambia estado", provider_request.messages[0].content)
-        self.assertIn("no declares indisponibles tools", provider_request.messages[0].content)
+        self.assertIn("resultado útil", provider_request.messages[0].content)
+        self.assertIn("Nunca vuelvas a pedir un dato conocido", provider_request.messages[0].content)
+        self.assertIn("blocking_fields", provider_request.messages[0].content)
         developer_payload = json.loads(provider_request.messages[1].content)
-        self.assertTrue(developer_payload["policy"]["plain_text_never_mutates_my_scoope_state"])
-        self.assertTrue(developer_payload["policy"]["state_change_claims_require_matching_native_function_calls"])
+        self.assertTrue(developer_payload["rules"]["new_facts_require_matching_update_call"])
+        self.assertTrue(developer_payload["rules"]["visible_response_is_natural_text"])
         self.assertEqual(provider_request.messages[-1].role, "user")
         provider_payload = "\n".join(message.content for message in provider_request.messages)
-        self.assertIn("provider_context", provider_payload)
+        self.assertIn("my_scoope_workspace", provider_payload)
         self.assertIn("ai_nutrition_intake", provider_payload)
         self.assertNotIn("local-only", provider_payload)
         self.assertNotIn("local-only", json.dumps(provider_request.metadata))
         self.assertEqual(provider_request.metadata["local_context_keys"], ["secret", "surface"])
-        self.assertEqual(provider_request.metadata["format"], "ai_assistant_structured_response.v2")
-        self.assertTrue(provider_request.metadata["response_schema_strict"])
+        self.assertEqual(provider_request.metadata["format"], "ai_assistant_natural_response.v1")
+        self.assertNotIn("response_json_schema", provider_request.metadata)
         self.assertEqual(provider_request.metadata["reasoning_effort"], "low")
-        response_schema = provider_request.metadata["response_json_schema"]
-        self.assertNotIn("tool_plan", response_schema["properties"])
-        self.assertNotIn("tool_requests", response_schema["properties"])
         self.assertEqual(provider_request.tool_choice, "auto")
-        self.assertTrue(provider_request.parallel_tool_calls)
+        self.assertFalse(provider_request.parallel_tool_calls)
         self.assertIn(
             "update_profile_draft",
             {str(spec.get("name") or "") for spec in provider_request.tools},
         )
-        self.assertTrue(
-            developer_payload["policy"][
-                "a_turn_with_new_or_corrected_operational_facts_requires_matching_function_calls"
-            ]
-        )
+        self.assertIn("complete_a_ready_active_objective_in_the_same_turn", developer_payload["success_criteria"])
 
     def test_orchestrator_blocks_non_read_tools_without_executing_writes(self):
         client = FakeLLMClient(
@@ -140,7 +133,10 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
             metadata={"tool_user": "user-1"},
         )
 
-        response = ExternalLLMOrchestrator(llm_client=client).continue_turn(request)
+        response = ExternalLLMOrchestrator(
+            llm_client=client,
+            config=AssistantOrchestratorConfig(enable_reviewable_proposal_tools=False),
+        ).continue_turn(request)
 
         self.assertEqual(len(response.tool_requests), 1)
         self.assertEqual(len(response.tool_results), 1)
@@ -190,9 +186,9 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
         response = ExternalLLMOrchestrator(llm_client=client).continue_turn(self._request())
 
         self.assertEqual(response.assistant_text, "Claro, puedo ayudarte con eso.")
-        self.assertEqual(response.intent.name, AssistantIntentName.UNKNOWN)
-        self.assertTrue(response.requires_human_review)
-        self.assertIn("invalid_json", response.metadata["provider_parse_error"])
+        self.assertEqual(response.intent.name, AssistantIntentName.ANSWER_QUESTION)
+        self.assertFalse(response.requires_human_review)
+        self.assertNotIn("provider_parse_error", response.metadata)
 
     def test_orchestrator_falls_back_safely_for_invalid_structured_response(self):
         client = FakeLLMClient(responses=[json.dumps({"assistant_message": {"content": ""}})])
@@ -244,7 +240,7 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
         self.assertNotIn("create_validated_meal_proposal", tool_names)
         self.assertNotIn("create_nutrition_engine_dailyplan_proposal_from_drafts", tool_names)
         developer_payload = json.loads(provider_request.messages[1].content)
-        self.assertTrue(developer_payload["native_function_tools"])
+        self.assertTrue(developer_payload["rules"]["new_facts_require_matching_update_call"])
 
     def test_provider_request_exposes_reviewable_proposal_tools_when_enabled(self):
         orchestrator = ExternalLLMOrchestrator(
@@ -255,8 +251,16 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
         provider_request = orchestrator.build_provider_request(self._request("Prepara una propuesta revisable."))
         tool_names = {str(tool.get("name") or "") for tool in provider_request.tools}
 
-        self.assertIn("create_validated_meal_proposal", tool_names)
         self.assertIn("create_nutrition_engine_dailyplan_proposal_from_drafts", tool_names)
+        self.assertEqual(
+            tool_names,
+            {
+                "update_profile_draft",
+                "update_preference_draft",
+                "update_proposal_preferences",
+                "create_nutrition_engine_dailyplan_proposal_from_drafts",
+            },
+        )
 
     def test_parser_accepts_v2_json_string_slots_and_tool_arguments(self):
         orchestrator = ExternalLLMOrchestrator(llm_client=FakeLLMClient())
@@ -486,7 +490,7 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
         response = orchestrator.continue_turn(self._request("Quiero ganar masa muscular."))
 
         self.assertEqual(len(client.requests), 3)
-        self.assertEqual(client.requests[1].metadata["contract_repair"], "structured_response_retry.v1")
+        self.assertEqual(client.requests[1].metadata["contract_repair"], "incomplete_response_retry.v1")
         self.assertTrue(response.metadata["provider_contract_repair_attempted"])
         self.assertEqual(response.metadata["provider_incomplete_reasons"], ["max_output_tokens"])
         self.assertEqual(response.metadata["provider_final_incomplete_reason"], "")
@@ -870,7 +874,7 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
 
         sent_payload = "\n".join(message.content for message in client.requests[0].messages)
         self.assertEqual(result.metadata["context_builder"], "safe_llm_context.v1")
-        self.assertIn("provider_context", sent_payload)
+        self.assertIn("my_scoope_workspace", sent_payload)
         self.assertIn("id_present", sent_payload)
         self.assertIn("existing_payload_present", sent_payload)
         self.assertNotIn("99", sent_payload)

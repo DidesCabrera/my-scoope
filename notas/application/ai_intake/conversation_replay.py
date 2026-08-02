@@ -22,8 +22,8 @@ from ai_assistant.application.tools import (
 )
 from ai_assistant.infrastructure.providers.fake_client import FakeLLMClient
 from notas.application.ai_intake.chat_engine import (
-    AI_ASSISTANT_CHAT_ENGINE_LLM_PREVIEW,
-    LLMPreviewNutritionIntakeChatEngine,
+    AI_ASSISTANT_CHAT_ENGINE_LLM,
+    LLMNutritionIntakeChatEngine,
 )
 from notas.application.ai_intake.nutrition_brief import (
     NutritionConversationState,
@@ -76,7 +76,7 @@ def assistant_envelope(
     tool_requests: Sequence[Mapping[str, Any]] | None = None,
     requires_human_review: bool = False,
 ) -> str:
-    """Build a provider-like structured response for replay scenarios."""
+    """Build a legacy fake-provider fixture for deterministic replay scenarios."""
 
     return json.dumps(
         {
@@ -267,7 +267,7 @@ class ConversationReplayResult:
                 for turn_index, parse_error in parse_errors
             )
             raise AssertionError(f"provider response violated the semantic contract: {details}")
-        return "provider responses satisfied the structured semantic contract"
+        return "provider responses satisfied the replay semantic contract"
 
     def _assert_expected_brief(self) -> str:
         for field_name, expected_value in dict(self.scenario.expected_brief or {}).items():
@@ -426,7 +426,7 @@ def run_replay_scenario(
             max_output_tokens=1200,
         ),
     )
-    engine = LLMPreviewNutritionIntakeChatEngine(
+    engine = LLMNutritionIntakeChatEngine(
         llm_engine=ExternalLLMChatEngine(orchestrator=orchestrator)
     )
 
@@ -446,7 +446,7 @@ def run_replay_scenario(
                     metadata={
                         "tool_user": user,
                         "debug_ai_assistant": True,
-                        "chat_engine_mode": AI_ASSISTANT_CHAT_ENGINE_LLM_PREVIEW,
+                        "chat_engine_mode": AI_ASSISTANT_CHAT_ENGINE_LLM,
                         "conversation_id": f"replay-{scenario.key}",
                         "turn_id": f"replay-{scenario.key}-{index}",
                     },

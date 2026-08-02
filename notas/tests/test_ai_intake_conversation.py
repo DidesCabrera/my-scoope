@@ -1,8 +1,12 @@
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
+from unittest.mock import patch
 
+from notas.application.ai_intake.deterministic_chat_engine import (
+    DeterministicNutritionIntakeChatEngine,
+)
 from notas.application.ai_intake.nutrition_brief import (
     AI_NUTRITION_BRIEF_SESSION_KEY,
     AI_NUTRITION_CONVERSATION_SESSION_KEY,
@@ -103,8 +107,18 @@ class NutritionConversationStateTests(TestCase):
         self.assertNotIn("Cuál es tu objetivo", state.messages[-1].text)
 
 
+@override_settings(
+    RATE_LIMIT_AI_ASSISTANT_TURN_USER="10000/h",
+    RATE_LIMIT_AI_ASSISTANT_TURN_IP="10000/h",
+)
 class AiNutritionIntakeViewTests(TestCase):
     def setUp(self):
+        self.engine_patcher = patch(
+            "notas.interface.views.ai_intake.get_nutrition_intake_chat_engine",
+            return_value=DeterministicNutritionIntakeChatEngine(),
+        )
+        self.engine_patcher.start()
+        self.addCleanup(self.engine_patcher.stop)
         self.user = User.objects.create_user(
             username="felipe",
             email="felipe@example.com",
@@ -238,8 +252,18 @@ class NutritionBriefReadyCardTests(TestCase):
         self.assertIn("simple", state.result.brief.style_preferences)
 
 
+@override_settings(
+    RATE_LIMIT_AI_ASSISTANT_TURN_USER="10000/h",
+    RATE_LIMIT_AI_ASSISTANT_TURN_IP="10000/h",
+)
 class AiNutritionIntakeBriefCardViewTests(TestCase):
     def setUp(self):
+        self.engine_patcher = patch(
+            "notas.interface.views.ai_intake.get_nutrition_intake_chat_engine",
+            return_value=DeterministicNutritionIntakeChatEngine(),
+        )
+        self.engine_patcher.start()
+        self.addCleanup(self.engine_patcher.stop)
         self.user = User.objects.create_user(
             username="briefcard",
             email="briefcard@example.com",

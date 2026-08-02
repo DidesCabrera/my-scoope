@@ -283,10 +283,10 @@ NUTRITION_SOLVER_TIME_LIMIT_MS = max(
 # AI ASSISTANT / EXTERNAL LLM
 # ==============================
 
-AI_ASSISTANT_CHAT_ENGINE_MODE = os.environ.get("AI_ASSISTANT_CHAT_ENGINE_MODE", "deterministic").strip()
-AI_ASSISTANT_LLM_PROVIDER = os.environ.get("AI_ASSISTANT_LLM_PROVIDER", "fake").strip()
+AI_ASSISTANT_CHAT_ENGINE_MODE = os.environ.get("AI_ASSISTANT_CHAT_ENGINE_MODE", "llm").strip()
+AI_ASSISTANT_LLM_PROVIDER = os.environ.get("AI_ASSISTANT_LLM_PROVIDER", "openai").strip()
 AI_ASSISTANT_OPENAI_API_KEY = os.environ.get("AI_ASSISTANT_OPENAI_API_KEY", "").strip()
-AI_ASSISTANT_OPENAI_MODEL = os.environ.get("AI_ASSISTANT_OPENAI_MODEL", "gpt-5.4-mini").strip()
+AI_ASSISTANT_OPENAI_MODEL = os.environ.get("AI_ASSISTANT_OPENAI_MODEL", "gpt-5.6-luna").strip()
 AI_ASSISTANT_OPENAI_BASE_URL = os.environ.get(
     "AI_ASSISTANT_OPENAI_BASE_URL",
     "https://api.openai.com/v1",
@@ -302,6 +302,9 @@ AI_ASSISTANT_USAGE_OBSERVABILITY_ENABLED = os.environ.get(
 ).strip().lower() in {"1", "true", "yes", "on"}
 AI_ASSISTANT_LLM_DEFAULT_PRICING_USD_PER_1M_TOKENS = {
     "openai": {
+        "gpt-5.6-sol": {"input": "5.00", "cached_input": "0.50", "output": "30.00"},
+        "gpt-5.6-terra": {"input": "2.00", "cached_input": "0.20", "output": "12.00"},
+        "gpt-5.6-luna": {"input": "0.20", "cached_input": "0.02", "output": "1.20"},
         "gpt-5.4-mini": {"input": "0.75", "cached_input": "0.075", "output": "4.50"},
         "gpt-5.4-nano": {"input": "0.20", "cached_input": "0.02", "output": "1.25"},
         "gpt-5.4": {"input": "2.50", "cached_input": "0.25", "output": "15.00"},
@@ -324,19 +327,52 @@ def _llm_pricing_from_env():
 
 AI_ASSISTANT_LLM_PRICING_USD_PER_1M_TOKENS = _llm_pricing_from_env()
 
+AI_ASSISTANT_MODEL_EVALUATION_CANDIDATES = _env_json_object(
+    "AI_ASSISTANT_MODEL_EVALUATION_CANDIDATES_JSON"
+) or {
+    "luna_low": {
+        "provider": "openai",
+        "model": "gpt-5.6-luna",
+        "reasoning_effort": "low",
+        "max_output_tokens": 1800,
+        "role": "baseline",
+    },
+    "terra_low": {
+        "provider": "openai",
+        "model": "gpt-5.6-terra",
+        "reasoning_effort": "low",
+        "max_output_tokens": 2000,
+        "role": "escalation",
+    },
+    "terra_medium": {
+        "provider": "openai",
+        "model": "gpt-5.6-terra",
+        "reasoning_effort": "medium",
+        "max_output_tokens": 2200,
+        "role": "quality_check",
+    },
+    "sol_medium": {
+        "provider": "openai",
+        "model": "gpt-5.6-sol",
+        "reasoning_effort": "medium",
+        "max_output_tokens": 2400,
+        "role": "benchmark",
+    },
+}
+
 # Technical per-turn guardrails for the external LLM cycle. These are not
 # commercial credits; they prevent accidental runaway context while real usage
 # data is collected.
-AI_ASSISTANT_MAX_HISTORY_MESSAGES = _env_int("AI_ASSISTANT_MAX_HISTORY_MESSAGES", 8)
-AI_ASSISTANT_MAX_OUTPUT_TOKENS = _env_int("AI_ASSISTANT_MAX_OUTPUT_TOKENS", 900)
-AI_ASSISTANT_MAX_TOOL_LOOP_ITERATIONS = _env_int("AI_ASSISTANT_MAX_TOOL_LOOP_ITERATIONS", 1)
-AI_ASSISTANT_MAX_INPUT_TOKENS = _env_int("AI_ASSISTANT_MAX_INPUT_TOKENS", 6000)
-AI_ASSISTANT_MAX_CONTEXT_CHARS = _env_int("AI_ASSISTANT_MAX_CONTEXT_CHARS", 8000)
+AI_ASSISTANT_MAX_HISTORY_MESSAGES = _env_int("AI_ASSISTANT_MAX_HISTORY_MESSAGES", 20)
+AI_ASSISTANT_MAX_OUTPUT_TOKENS = _env_int("AI_ASSISTANT_MAX_OUTPUT_TOKENS", 2400)
+AI_ASSISTANT_MAX_TOOL_LOOP_ITERATIONS = _env_int("AI_ASSISTANT_MAX_TOOL_LOOP_ITERATIONS", 4)
+AI_ASSISTANT_MAX_INPUT_TOKENS = _env_int("AI_ASSISTANT_MAX_INPUT_TOKENS", 20000)
+AI_ASSISTANT_MAX_CONTEXT_CHARS = _env_int("AI_ASSISTANT_MAX_CONTEXT_CHARS", 16000)
 AI_ASSISTANT_MAX_MESSAGE_CHARS = _env_int("AI_ASSISTANT_MAX_MESSAGE_CHARS", 2000)
 AI_ASSISTANT_MAX_TOOL_REQUESTS_PER_TURN = _env_int("AI_ASSISTANT_MAX_TOOL_REQUESTS_PER_TURN", 3)
 AI_ASSISTANT_ENABLE_REVIEWABLE_PROPOSAL_TOOLS = os.environ.get(
     "AI_ASSISTANT_ENABLE_REVIEWABLE_PROPOSAL_TOOLS",
-    "false",
+    "true",
 ).lower() in {"1", "true", "yes", "on"}
 
 # Patch 59: AI credits are the commercial usage unit. Disabled by default so
@@ -383,22 +419,6 @@ AI_ASSISTANT_LLM_MODEL_ROUTES = {
         "reason": "default_external_llm_route",
     },
 }
-
-# Patch 62: production rollout gate. LLM production mode requires both
-# AI_ASSISTANT_CHAT_ENGINE_MODE=llm_production and this rollout flag enabled.
-# This keeps rollback to deterministic explicit and immediate.
-AI_ASSISTANT_LLM_ROLLOUT_ENABLED = os.environ.get(
-    "AI_ASSISTANT_LLM_ROLLOUT_ENABLED",
-    "false",
-).lower() in {"1", "true", "yes", "on"}
-AI_ASSISTANT_LLM_ROLLOUT_MODE = os.environ.get("AI_ASSISTANT_LLM_ROLLOUT_MODE", "off")
-AI_ASSISTANT_LLM_ROLLOUT_USER_IDS = os.environ.get("AI_ASSISTANT_LLM_ROLLOUT_USER_IDS", "")
-AI_ASSISTANT_LLM_ROLLOUT_PERCENT = _env_int("AI_ASSISTANT_LLM_ROLLOUT_PERCENT", 0)
-AI_ASSISTANT_LLM_ROLLOUT_STICKY_SALT = os.environ.get(
-    "AI_ASSISTANT_LLM_ROLLOUT_STICKY_SALT",
-    "ai-assistant-rollout-v1",
-)
-
 
 # ==============================
 # RATE LIMITING

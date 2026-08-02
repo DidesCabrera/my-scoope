@@ -73,6 +73,7 @@ class ExternalLLMReviewableProposalToolExecutionTests(SimpleTestCase):
         response = ExternalLLMOrchestrator(
             llm_client=client,
             reviewable_proposal_tool_executor=executor,
+            config=AssistantOrchestratorConfig(enable_reviewable_proposal_tools=False),
         ).continue_turn(self._request())
 
         self.assertEqual(len(client.requests), 2)

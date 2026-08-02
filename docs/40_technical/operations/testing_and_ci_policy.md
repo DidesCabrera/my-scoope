@@ -23,6 +23,33 @@ request.
 
 `main` should only receive code from a green `staging` branch.
 
+### Mandatory production workflow
+
+Production work must follow this order:
+
+```text
+1. Make the change locally while working from `staging`.
+2. Commit only the intended files.
+3. Push `staging` to GitHub.
+4. Open a pull request from `staging` to `main`.
+5. Merge the pull request to `main`.
+6. Verify the deployed production site or confirm the deployment blocker.
+```
+
+Do not push feature fixes directly to `main`, and do not treat a staging PR as
+complete when the user asked for production visibility. The task is not complete
+until the production path has either visibly updated or the remaining deployment
+blocker has been identified.
+
+Skipping this order causes real cost. The full Django CI suite is intentionally
+heavy and can take a long time to complete. Opening the wrong PR, merging to the
+wrong branch, or pushing direct corrections to `main` can trigger unnecessary
+test runs, delay small visual fixes by many minutes, and force repeated manual
+verification. For CSS-only, image-only, copy-only or docs-only changes, keep the
+patch narrow and state why the full suite was not run locally; then rely on the
+branch workflow and any configured path filters instead of starting avoidable
+long-running checks.
+
 ## Workflow policy
 
 GitHub Actions is the external quality gate because it runs in a clean environment,

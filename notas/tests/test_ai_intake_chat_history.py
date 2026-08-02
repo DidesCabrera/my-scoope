@@ -2,8 +2,12 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
+from unittest.mock import patch
 
 from notas.application.ai_intake.chat_history import AI_NUTRITION_CHAT_SESSION_KEY
+from notas.application.ai_intake.deterministic_chat_engine import (
+    DeterministicNutritionIntakeChatEngine,
+)
 from notas.application.ai_intake.nutrition_brief import (
     AI_NUTRITION_BRIEF_SESSION_KEY,
     AI_NUTRITION_CONVERSATION_SESSION_KEY,
@@ -13,6 +17,12 @@ from notas.domain.models import AiNutritionChat, Food, NutritionProposal
 
 class AiNutritionChatHistoryTests(TestCase):
     def setUp(self):
+        self.engine_patcher = patch(
+            "notas.interface.views.ai_intake.get_nutrition_intake_chat_engine",
+            return_value=DeterministicNutritionIntakeChatEngine(),
+        )
+        self.engine_patcher.start()
+        self.addCleanup(self.engine_patcher.stop)
         self.user = User.objects.create_user(username="felipe", password="testpass123")
         profile = self.user.profile
         profile.onboarding_completed_at = timezone.now()

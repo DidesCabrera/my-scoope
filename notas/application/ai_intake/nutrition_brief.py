@@ -1893,14 +1893,15 @@ def build_completed_summary_items(brief: NutritionBrief) -> list[NutritionBriefS
 def required_proposal_fields(brief: NutritionBrief) -> list[str]:
     """Return domain fields still required before proposal creation.
 
-    This helper contains no visible copy and is safe to use from validators,
-    tools and LLM state builders. Conversation-specific question wording stays
-    inside the deterministic runtime boundary.
+    Only information that prevents the nutrition engine from calculating a
+    responsible proposal is blocking. Subject source can be inferred from the
+    profile draft, meal count has a product default of four, and style/budget
+    are optional refinements. Keeping those preferences out of this list
+    prevents a presentational choice from blocking the outcome the user asked
+    for.
     """
 
     required: list[str] = []
-    if brief.subject_source is None:
-        required.append("subject_source")
     if brief.goal is None:
         required.append("goal")
     if brief.calorie_target is None:
@@ -1909,10 +1910,6 @@ def required_proposal_fields(brief: NutritionBrief) -> list[str]:
             for field_name in PROFILE_DRAFT_FIELD_ORDER
             if _profile_draft_field_value(brief, field_name) in (None, "")
         )
-    if brief.meals_per_day is None:
-        required.append("meals_per_day")
-    if not brief.style_preferences and brief.complexity_level is None and brief.budget_level is None:
-        required.append("plan_style")
     return required
 
 

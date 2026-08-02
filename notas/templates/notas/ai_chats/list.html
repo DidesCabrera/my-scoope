@@ -9,46 +9,46 @@
     {% for chat in vm.content.chats %}
       <article class="card proposal-list-card ai-chat-history-card{% if chat.is_active %} ai-chat-history-card--active{% endif %}">
         <a href="{{ chat.url }}" class="ai-chat-history-card__link">
-          <div class="proposal-list-card__main ai-chat-history-card__main">
-            <div class="proposal-list-card__title-block">
-              <div class="proposal-list-card__copy">
-                <div class="ai-chat-history-card__title-row">
-                  <h3 class="proposal-list-card__title ai-chat-history-card__title">{{ chat.title }}</h3>
-                  {% if chat.is_active %}
-                    <span class="ai-chat-history-card__active-badge">Activo</span>
-                  {% endif %}
+          <div class="ai-chat-history-card__content">
+            <div class="proposal-list-card__main ai-chat-history-card__main">
+              <div class="proposal-list-card__title-block">
+                <div class="proposal-list-card__copy">
+                  <div class="ai-chat-history-card__title-row">
+                    <h3 class="proposal-list-card__title ai-chat-history-card__title">{{ chat.title }}</h3>
+                    {% if chat.is_active %}
+                      <span class="ai-chat-history-card__active-badge">Activo</span>
+                    {% endif %}
+                  </div>
+                  <p class="proposal-list-card__summary ai-chat-history-card__subtitle">
+                    <i data-lucide="clock" class="ai-chat-history-card__subtitle-icon" aria-hidden="true"></i>
+                    <span>{{ chat.subtitle|cut:"Actualizado " }}</span>
+                  </p>
                 </div>
-                <p class="proposal-list-card__summary ai-chat-history-card__subtitle">{{ chat.subtitle }}</p>
               </div>
             </div>
 
-            <div class="proposal-list-card__icons-title" aria-hidden="true">
-              <i data-lucide="messages-square" class="home-section-header-icon proposal"></i>
+            <div class="proposal-list-card__summary-block ai-chat-history-card__summary-block">
+              <p class="proposal-list-card__summary">{{ chat.preview }}</p>
             </div>
-          </div>
 
-          <div class="proposal-list-card__summary-block ai-chat-history-card__summary-block">
-            <span class="proposal-list-card__summary-label">Último mensaje</span>
-            <p class="proposal-list-card__summary">{{ chat.preview }}</p>
-          </div>
-
-          <div class="ai-chat-history-card__meta" aria-label="Resumen del chat">
-            <span>
-              <i data-lucide="target" aria-hidden="true"></i>
-              {{ chat.goal_label }}
-            </span>
-            <span>
-              <i data-lucide="utensils" aria-hidden="true"></i>
-              {{ chat.meals_label }}
-            </span>
-            <span>
-              <i data-lucide="message-circle" aria-hidden="true"></i>
-              {{ chat.message_count }} mensajes
-            </span>
-            <span>
-              <i data-lucide="sparkles" aria-hidden="true"></i>
-              {{ chat.generated_plan_count }} propuestas
-            </span>
+            <div class="ai-chat-history-card__meta" aria-label="Resumen del chat">
+              <span>
+                <i data-lucide="target" aria-hidden="true"></i>
+                {{ chat.goal_label }}
+              </span>
+              <span>
+                <i data-lucide="utensils" aria-hidden="true"></i>
+                {{ chat.meals_label }}
+              </span>
+              <span>
+                <i data-lucide="message-circle" aria-hidden="true"></i>
+                {{ chat.message_count }} mensajes
+              </span>
+              <span>
+                <i data-lucide="sparkles" aria-hidden="true"></i>
+                {{ chat.generated_plan_count }} propuestas
+              </span>
+            </div>
           </div>
 
           <div class="card-bottom proposal-list-card__bottom ai-chat-history-card__bottom">

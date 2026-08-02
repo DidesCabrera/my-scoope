@@ -7,8 +7,6 @@ from django.conf import settings
 from django.core.checks import Error, Tags, Warning, register
 
 
-PRODUCTION_ENGINE_MODE = "llm_production"
-SAFE_ROLLOUT_MODES = {"off", ""}
 REQUIRED_TECHNICAL_LIMITS = (
     "AI_ASSISTANT_MAX_HISTORY_MESSAGES",
     "AI_ASSISTANT_MAX_OUTPUT_TOKENS",
@@ -42,12 +40,9 @@ def _positive_int_setting(name: str) -> bool:
 
 
 def _production_llm_requested() -> bool:
-    engine_mode = str(getattr(settings, "AI_ASSISTANT_CHAT_ENGINE_MODE", "") or "").strip()
-    rollout_enabled = _setting_bool("AI_ASSISTANT_LLM_ROLLOUT_ENABLED", False)
-    rollout_mode = str(getattr(settings, "AI_ASSISTANT_LLM_ROLLOUT_MODE", "") or "").strip().lower()
-    return engine_mode == PRODUCTION_ENGINE_MODE or (
-        rollout_enabled and rollout_mode not in SAFE_ROLLOUT_MODES
-    )
+    """The product has one active runtime, so production checks cannot be bypassed."""
+
+    return True
 
 
 def _credit_plans_are_limited(plans: Any) -> bool:
@@ -73,14 +68,43 @@ def check_ai_assistant_production_guard(app_configs, **kwargs):
         return []
 
     issues = []
+    provider = (
+        str(getattr(settings, "AI_ASSISTANT_LLM_PROVIDER", "") or "")
+        .strip()
+        .lower()
+    )
+    if provider != "openai":
+        issues.append(
+            Error(
+                "The active AI Assistant must use the real OpenAI provider.",
+                hint="Set AI_ASSISTANT_LLM_PROVIDER=openai.",
+                id="ai_assistant.E004",
+            )
+        )
+
+    if not str(getattr(settings, "AI_ASSISTANT_OPENAI_API_KEY", "") or "").strip():
+        issues.append(
+            Error(
+                "The active AI Assistant has no OpenAI API key.",
+                hint="Set AI_ASSISTANT_OPENAI_API_KEY in the deployment secret store.",
+                id="ai_assistant.E005",
+            )
+        )
+
+    if not _setting_bool("AI_ASSISTANT_ENABLE_REVIEWABLE_PROPOSAL_TOOLS", True):
+        issues.append(
+            Error(
+                "The active AI Assistant cannot create reviewable proposals.",
+                hint="Set AI_ASSISTANT_ENABLE_REVIEWABLE_PROPOSAL_TOOLS=true.",
+                id="ai_assistant.E006",
+            )
+        )
+
     if not _setting_bool("AI_ASSISTANT_CREDITS_ENABLED", False):
         issues.append(
             Error(
                 "AI Assistant production LLM is enabled without credit enforcement.",
-                hint=(
-                    "Set AI_ASSISTANT_CREDITS_ENABLED=true before enabling "
-                    "AI_ASSISTANT_CHAT_ENGINE_MODE=llm_production or an active rollout."
-                ),
+                hint="Set AI_ASSISTANT_CREDITS_ENABLED=true before deployment.",
                 id="ai_assistant.E001",
             )
         )

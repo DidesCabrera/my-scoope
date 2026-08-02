@@ -39,5 +39,9 @@ class ProductContextTests(SimpleTestCase):
         developer_payload = json.loads(provider_request.messages[1].content)
         self.assertIn("no reveles nombres de functions", system_prompt)
         self.assertIn("product_context", developer_payload)
-        self.assertTrue(developer_payload["policy"]["explain_capabilities_in_product_language_not_function_names"])
+        self.assertTrue(
+            developer_payload["product_context"]["user_facing_explanation"][
+                "use_product_language"
+            ]
+        )
         self.assertIn("native_function_tools", developer_payload)

@@ -44,9 +44,9 @@ class ToolGovernanceTests(SimpleTestCase):
         self.assertIn("no autorizan", system_policy)
         self.assertIn("aclara brevemente", system_policy)
         self.assertEqual(developer_policy["ambiguous"], "clarify_without_tools")
-        self.assertTrue(developer_policy["reason_required"])
+        self.assertFalse(developer_policy["reason_required"])
 
-    def test_provider_request_requires_selection_reason_for_every_native_tool(self):
+    def test_provider_request_does_not_pollute_tool_schemas_with_selection_reason(self):
         client = ScriptedNativeClient(
             [
                 LLMProviderResponse(
@@ -73,14 +73,13 @@ class ToolGovernanceTests(SimpleTestCase):
 
         provider_request = client.requests[0]
         developer_payload = json.loads(provider_request.messages[1].content)
-        self.assertIn("tool_governance", developer_payload)
-        self.assertEqual(developer_payload["tool_governance"]["ambiguous"], "clarify_without_tools")
+        self.assertIn("success_criteria", developer_payload)
         for tool in provider_request.tools:
             parameters = tool["parameters"]
-            self.assertIn(TOOL_SELECTION_REASON_ARGUMENT, parameters["properties"])
-            self.assertIn(TOOL_SELECTION_REASON_ARGUMENT, parameters["required"])
+            self.assertNotIn(TOOL_SELECTION_REASON_ARGUMENT, parameters["properties"])
+            self.assertNotIn(TOOL_SELECTION_REASON_ARGUMENT, parameters["required"])
 
-    def test_native_tool_without_selection_reason_is_blocked_before_dispatch(self):
+    def test_native_tool_without_selection_reason_executes_and_remains_observable(self):
         dispatch_calls = []
 
         def read_proposal(user, *, proposal_id):
@@ -128,14 +127,13 @@ class ToolGovernanceTests(SimpleTestCase):
             ),
         ).continue_turn(self._request("¿Y eso?"))
 
-        self.assertEqual(dispatch_calls, [])
-        self.assertEqual(response.tool_results[0].status, AssistantToolStatus.BLOCKED)
-        self.assertEqual(response.tool_results[0].error_code, "missing_tool_selection_reason")
-        self.assertFalse(response.metadata["tools_executed"])
-        self.assertEqual(response.metadata["tool_selection_reasons"][0]["status"], "blocked")
+        self.assertEqual(dispatch_calls, [("user-1", 12)])
+        self.assertEqual(response.tool_results[0].status, AssistantToolStatus.OK)
+        self.assertTrue(response.metadata["tools_executed"])
+        self.assertEqual(response.metadata["tool_selection_reasons"][0]["status"], "valid")
         self.assertEqual(
             response.metadata["audit"]["tool_audit"][0]["selection_reason_summary"],
-            "Provider-native tool selection reason was not reported.",
+            "explicit read request",
         )
 
     def test_explicit_selection_reason_executes_and_is_observable_without_arguments(self):

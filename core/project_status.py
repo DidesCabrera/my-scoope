@@ -192,7 +192,7 @@ def _capability_snapshot() -> dict[str, object]:
         "ai_assistant": {
             "engine": str(getattr(settings, "AI_ASSISTANT_CHAT_ENGINE_MODE", "unknown")),
             "provider": str(getattr(settings, "AI_ASSISTANT_LLM_PROVIDER", "unknown")),
-            "rollout_enabled": bool(getattr(settings, "AI_ASSISTANT_LLM_ROLLOUT_ENABLED", False)),
+            "runtime_active": True,
             "credits_enabled": bool(getattr(settings, "AI_ASSISTANT_CREDITS_ENABLED", False)),
             "usage_observability": bool(getattr(settings, "AI_ASSISTANT_USAGE_OBSERVABILITY_ENABLED", False)),
         },

@@ -71,7 +71,7 @@ class GoalDirectedAgencyTests(SimpleTestCase):
 
         tool_context = context["metadata"]["tool_oriented_intake"]
         progress = tool_context["work_progress"]
-        self.assertEqual(tool_context["version"], "ai_assistant_tool_oriented_intake.v9")
+        self.assertEqual(tool_context["version"], "ai_assistant_workspace.v1")
         self.assertEqual(progress["proposal_readiness"], "ready_for_reviewable_proposal")
         self.assertTrue(progress["reviewable_proposal_creation_available"])
         self.assertFalse(progress["required_information_still_missing"])
@@ -97,7 +97,11 @@ class GoalDirectedAgencyTests(SimpleTestCase):
         progress = context["metadata"]["tool_oriented_intake"]["work_progress"]
         self.assertEqual(progress["proposal_readiness"], "requires_blocking_information")
         self.assertTrue(progress["required_information_still_missing"])
-        self.assertFalse(progress["reviewable_proposal_creation_available"])
+        self.assertTrue(progress["reviewable_proposal_creation_available"])
+        self.assertEqual(
+            progress["blocking_fields"],
+            ["weight_kg", "height_cm", "age_years", "sex", "activity_level"],
+        )
 
     def test_provider_prompt_carries_active_objective_and_advance_policy(self):
         client = FakeLLMClient(
@@ -119,12 +123,13 @@ class GoalDirectedAgencyTests(SimpleTestCase):
 
         provider_request = client.requests[0]
         developer_payload = json.loads(provider_request.messages[1].content)
-        self.assertIn("goal_directed_agency", developer_payload)
-        agency = developer_payload["goal_directed_agency"]
-        self.assertTrue(agency["active_objective"])
-        self.assertTrue(agency["advance_means_progress"])
-        self.assertTrue(agency["ready_work_prefers_proposal"])
-        self.assertTrue(agency["blocking_info_only"])
+        self.assertIn("success_criteria", developer_payload)
+        self.assertIn(
+            "complete_a_ready_active_objective_in_the_same_turn",
+            developer_payload["success_criteria"],
+        )
+        self.assertTrue(developer_payload["rules"]["new_facts_require_matching_update_call"])
+        self.assertTrue(developer_payload["rules"]["visible_response_is_natural_text"])
 
     def test_draft_proposal_tool_guides_same_turn_progress_after_advance(self):
         orchestrator = ExternalLLMOrchestrator(llm_client=FakeLLMClient(responses=[]))
@@ -135,6 +140,6 @@ class GoalDirectedAgencyTests(SimpleTestCase):
         )
 
         description = proposal_tool["description"]
-        self.assertIn("LLM should prefer it", description)
-        self.assertIn("draft tool results are available", description)
-        self.assertIn("never applies the proposal directly", description)
+        self.assertIn("current conversation workspace", description)
+        self.assertIn("supplies all known drafts and defaults automatically", description)
+        self.assertIn("never fabricate", description)

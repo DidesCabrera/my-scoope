@@ -23,8 +23,8 @@ class AssistantResponseStylePolicyTests(SimpleTestCase):
     def test_system_prompt_uses_adaptive_pacing_without_fixed_intake_order(self):
         system_prompt = self.orchestrator._system_prompt()
 
-        self.assertIn("los campos ausentes no forman por sí solos un cuestionario", system_prompt)
-        self.assertIn("Puedes responder, confirmar, preguntar o solicitar tools", system_prompt)
+        self.assertIn("no ejecutar un cuestionario", system_prompt)
+        self.assertIn("Pregunta solo si aclara algo material", system_prompt)
         self.assertNotIn("acompaña al usuario por etapas", system_prompt)
         self.assertNotIn("pregunta solo el siguiente bloque útil", system_prompt)
         self.assertNotIn("solo una pregunta visible por turno", system_prompt)
@@ -64,7 +64,10 @@ class AssistantResponseStylePolicyTests(SimpleTestCase):
         self.assertIn("height_cm", updates_description)
         self.assertIn("age_years", updates_description)
         self.assertIn("training_frequency", updates_description)
-        self.assertNotIn("use_proposal_preferences_tools_for_goal_meals_and_targets", developer_payload["policy"])
+        self.assertNotIn(
+            "use_proposal_preferences_tools_for_goal_meals_and_targets",
+            developer_payload["rules"],
+        )
 
     def test_proposal_complexity_guidance_lives_in_the_typed_tool_schema(self):
         developer_payload = json.loads(self.orchestrator._developer_prompt())

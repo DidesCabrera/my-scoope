@@ -54,6 +54,11 @@ body.page-home:not(.home-header-meta-visible) .page-header {
   background: transparent;
 }
 
+body.page-ai-intake-chat:not(.home-header-meta-visible) .page-header {
+  background: var(--surface-app);
+  border-bottom: 1px solid var(--border-soft);
+}
+
 .header-home-brand {
   display: flex;
   align-items: center;

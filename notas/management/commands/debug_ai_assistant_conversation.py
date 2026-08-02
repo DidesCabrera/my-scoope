@@ -78,8 +78,8 @@ def _tool_meta(metadata: dict) -> dict:
         "profile_cards": metadata.get("llm_profile_draft_cards_rendered"),
         "preference_cards": metadata.get("llm_preference_draft_cards_rendered"),
         "proposal_cards": metadata.get("llm_proposal_preferences_cards_rendered"),
-        "fallback": metadata.get("llm_preview_fallback"),
-        "fallback_reason": metadata.get("llm_preview_fallback_reason"),
+        "degraded": metadata.get("llm_degraded"),
+        "degraded_reason": metadata.get("llm_degraded_reason"),
     }
 
 

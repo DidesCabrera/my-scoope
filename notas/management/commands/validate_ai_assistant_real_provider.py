@@ -14,7 +14,7 @@ from notas.application.ai_intake.real_provider_validation import (
 
 class Command(BaseCommand):
     help = (
-        "Run the controlled BA06 AI Assistant UX validation against the configured real provider. "
+        "Run the outcome-first AI Assistant UX validation against the configured real provider. "
         "This command consumes provider usage and, when enabled, AI credits."
     )
 
@@ -37,7 +37,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--list-scenarios",
             action="store_true",
-            help="List built-in CM24 validation scenarios without making provider calls.",
+            help="List built-in outcome-first scenarios without making provider calls.",
         )
         parser.add_argument(
             "--output",
@@ -63,7 +63,8 @@ class Command(BaseCommand):
 
         if not options["live"]:
             raise CommandError(
-                "BA06 validation makes real provider calls. Re-run with --live after reviewing the selected scenarios."
+                "Outcome-first validation makes real provider calls. "
+                "Re-run with --live after reviewing the selected scenarios."
             )
 
         try:
@@ -85,7 +86,7 @@ class Command(BaseCommand):
             path = Path(output_path)
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(serialized + "\n", encoding="utf-8")
-            self.stdout.write(self.style.SUCCESS(f"BA06 report written: {path}"))
+            self.stdout.write(self.style.SUCCESS(f"Outcome-first report written: {path}"))
 
         if options["json"]:
             self.stdout.write(serialized)
@@ -93,11 +94,14 @@ class Command(BaseCommand):
             self._write_summary(report)
 
         if options["fail_on_hard_regression"] and not report.passed:
-            raise CommandError(f"BA06 detected {len(report.hard_failures)} hard regression(s).")
+            raise CommandError(
+                f"Outcome-first validation detected "
+                f"{len(report.hard_failures)} hard regression(s)."
+            )
 
     def _write_summary(self, report):
         marker = self.style.SUCCESS("AUTOMATED CHECKS PASSED") if report.passed else self.style.ERROR("HARD REGRESSION")
-        self.stdout.write("AI Assistant BA06 real-provider UX validation")
+        self.stdout.write("AI Assistant outcome-first real-provider UX validation")
         self.stdout.write(f"run_id: {report.run_id}")
         self.stdout.write(f"provider/model: {report.provider}/{report.model}")
         self.stdout.write(f"status: {marker}")

@@ -35,12 +35,13 @@ class AiIntakeSubjectContextTests(TestCase):
         profile.save()
         record_weight(self.user, weight_kg=88, source=WeightLog.SOURCE_ONBOARDING)
 
-    def test_initial_request_asks_whether_to_use_profile_or_new_subject_data(self):
+    def test_initial_request_does_not_block_on_subject_source(self):
         result = build_intake_result("quiero bajar grasa")
 
         self.assertIsNone(result.brief.subject_source)
+        self.assertNotIn("ficha personal", " ".join(result.required_follow_up_questions).lower())
         self.assertIn(
-            "ficha personal",
+            "peso actual",
             " ".join(result.required_follow_up_questions).lower(),
         )
 
