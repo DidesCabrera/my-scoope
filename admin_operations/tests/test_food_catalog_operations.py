@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
@@ -11,6 +10,7 @@ from admin_operations.services import (
     build_food_catalog_inventory_vm,
     build_food_catalog_operations_vm,
 )
+from core.tests.builders import create_staff_user, create_test_user
 from food_catalog.models import CatalogCurationCandidate, CatalogFood, CatalogFoodAlias, CatalogFoodPortion, CatalogFoodSource
 from notas.domain.models import Food
 from admin_operations.models import AdminOperationAuditEvent
@@ -19,18 +19,8 @@ from admin_operations.models import AdminOperationAuditEvent
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
 class AdminOperationsFoodCatalogTests(TestCase):
     def setUp(self):
-        User = get_user_model()
-        self.staff = User.objects.create_user(
-            username="ops03-staff@example.com",
-            email="ops03-staff@example.com",
-            password="password123",
-            is_staff=True,
-        )
-        self.member = User.objects.create_user(
-            username="ops03-member@example.com",
-            email="ops03-member@example.com",
-            password="password123",
-        )
+        self.staff = create_staff_user("ops03-staff@example.com")
+        self.member = create_test_user("ops03-member@example.com")
 
     def test_food_catalog_page_requires_staff(self):
         response = self.client.get(reverse("admin_operations_food_catalog"))

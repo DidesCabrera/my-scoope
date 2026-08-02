@@ -111,11 +111,16 @@ lines and merges capability-owned schemas. The neutral tool-result contract is o
 by the AI domain, leaving the product-facing adapter imports under an exact no-growth
 ratchet. All 220 AI Assistant tests pass.
 
-### TDG06 — Test ergonomics and feedback time — planned
+### TDG06 — Test ergonomics and feedback time — completed
 
 - Introduce focused builders for repeated account and nutrition objects.
 - Migrate the highest-duplication suites first.
 - Record a fast gate separately from the complete regression suite.
+
+Repository evidence: shared user and nutrition builders migrate four Admin
+Operations suites plus representative meal-query and proposal-validator suites,
+removing 135 net lines of repeated setup. The 77 selected tests and the 78-test fast
+gate pass; the complete suite remains an independent required surface.
 
 ### TDG07 — Frontend debt containment — planned
 

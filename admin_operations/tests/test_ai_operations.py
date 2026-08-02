@@ -1,29 +1,19 @@
 from __future__ import annotations
 
-from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from ai_assistant.models import AICreditLedger, AIUsageEvent, AIUserCreditQuota
 from admin_operations.services import build_ai_operations_vm
+from core.tests.builders import create_staff_user, create_test_user
 from notas.domain.model_modules.proposals import NutritionProposal, NutritionProposalAuditEvent
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
 class AdminOperationsAITests(TestCase):
     def setUp(self):
-        User = get_user_model()
-        self.staff = User.objects.create_user(
-            username="ops05-staff@example.com",
-            email="ops05-staff@example.com",
-            password="password123",
-            is_staff=True,
-        )
-        self.member = User.objects.create_user(
-            username="ops05-member@example.com",
-            email="ops05-member@example.com",
-            password="password123",
-        )
+        self.staff = create_staff_user("ops05-staff@example.com")
+        self.member = create_test_user("ops05-member@example.com")
 
     def test_ai_operations_page_requires_staff(self):
         response = self.client.get(reverse("admin_operations_ai_assistant"))

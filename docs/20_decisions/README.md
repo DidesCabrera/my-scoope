@@ -178,3 +178,4 @@ Consequences
 - `0161-architecture-and-quality-debt-ratchets.md`: hace ejecutables los límites de dependencias, ciclos, vulnerabilidades y errores estáticos críticos sin convertir estilo histórico en un bloqueo masivo.
 - `0162-admin-operations-domain-owned-modules.md`: separa services, selectors y viewmodels de Admin Operations por dominio, preserva fachadas compatibles y mantiene Food Catalog como superficie operacional principal.
 - `0163-ai-runtime-and-tool-capability-seams.md`: separa configuración y parsing del orquestador, divide schemas de tools por capacidad y traslada el contrato neutral de resultados al dominio IA.
+- `0164-composable-test-builders.md`: introduce builders pequeños para usuarios y grafos nutricionales, reduciendo setup repetido sin incorporar un framework de factories.
