@@ -34,11 +34,6 @@ Status: planned / active / paused / completed / superseded
 Cuando un ciclo planificado empiece a implementarse, el documento puede permanecer aquí como plan operacional, pero las decisiones estables que surjan deben registrarse también en `docs/20_decisions/`.
 
 ## En curso o pendientes de validación
-
-- `technical_debt_guardrails_cycle.md`: ciclo activo TDG00-TDG08 para completar las
-  superficies de calidad, contener dependencias y descomponer hotspots de Admin
-  Operations y AI Assistant sin reducir la relevancia estratégica de Food Catalog ni
-  cambiar comportamiento de producto.
 - `billing_payments_tax_documents_cycle.md`: ciclo activo BILL00-BILL09. Mercado Pago
   será el primer recaudador y OpenFactura el emisor tributario, con fronteras separadas,
   verificación server-to-server, inbox/outbox idempotentes y proyección controlada hacia
@@ -50,7 +45,7 @@ Cuando un ciclo planificado empiece a implementarse, el documento puede permanec
   contrato y diagnóstico de ambientes, estado ejecutable, control plane read-only,
   registros documentales y de transiciones, portafolio de apuestas e interfaz de
   contexto para AI. Aporta contexto y feedback para decidir sin imponer un camino
-  rígido. El cierre local aprobó 1.524 tests.
+  rígido. El cierre local aprobó la suite completa vigente en ese ciclo.
 - `generic_food_coverage_cycle.md`: ciclo activo GFC00-GFC10 para derivar, mapear,
   importar y medir una cobertura ambiciosa de verduras, frutas, carnes/pescados,
   legumbres y lácteos genéricos relevantes para Chile. El manifiesto versionado es
@@ -73,6 +68,10 @@ Cuando un ciclo planificado empiece a implementarse, el documento puede permanec
 
 ## Ciclos completados
 
+- `technical_debt_guardrails_cycle.md`: TDG00-TDG08 completado; superficies de calidad
+  reproducibles, límites arquitectónicos y de deuda frontend, descomposición por
+  dominios en Admin Operations y seams del runtime IA, preservando Food Catalog como
+  dominio operacional estratégico.
 - `email_delivery_abuse_protection_cycle.md`: EAP00-EAP08 completado en repositorio;
   quedan como gates externos la configuración de Turnstile/Render Key Value, la
   auditoría del histórico de Resend y el smoke real en staging.

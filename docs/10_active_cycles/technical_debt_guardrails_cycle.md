@@ -1,6 +1,6 @@
 # TDG00-TDG08 · Technical Debt Guardrails & Structural Decomposition
 
-Status: active
+Status: completed
 Owner: Architecture / Developer Experience
 Started: 2026-08-02
 Decision: `docs/20_decisions/0159-technical-debt-guardrails-cycle.md`
@@ -135,12 +135,23 @@ boundaries. The 27 browser scenarios collect with the declared clean runtime and
 contain no fixed app IDs, sleeps or persisted auth state. The live anonymous Chromium
 smoke passes and has a dedicated CI job.
 
-### TDG08 — Transition and closure evidence — planned
+### TDG08 — Transition and closure evidence — completed
 
 - Review registered transitional bridges against their explicit exit evidence.
 - Remove stale root artifact and manually duplicated test-count metadata where safe.
 - Promote durable outcomes into current architecture/testing docs.
 - Close with full repository validation and before/after evidence.
+
+Repository evidence: the obsolete deterministic-engine rollback transition was
+retired and the actual AI/product adapter boundary registered. Eleven historical
+CM/PT reports moved from the root to `docs/90_archive/reports/ai_assistant/`, removing
+the legacy hygiene allowlist. Current project metadata no longer duplicates fragile
+historical test/document/transition counts.
+
+Final validation: 78 fast Django tests, 1,647 complete Django tests in 264.636
+seconds, 169 MCP tests and the live Chromium smoke pass. All 27 browser scenarios
+collect. Ruff fatal correctness, `pip-audit`, checks, migration drift, document
+registry, repository hygiene, CSS budgets and browser contracts are green.
 
 ## Exit criteria
 

@@ -180,3 +180,4 @@ Consequences
 - `0163-ai-runtime-and-tool-capability-seams.md`: separa configuración y parsing del orquestador, divide schemas de tools por capacidad y traslada el contrato neutral de resultados al dominio IA.
 - `0164-composable-test-builders.md`: introduce builders pequeños para usuarios y grafos nutricionales, reduciendo setup repetido sin incorporar un framework de factories.
 - `0165-frontend-debt-budgets-and-deterministic-browser-contract.md`: divide CSS de Admin Operations/Programs, fija presupuestos de deuda y elimina IDs, sleeps y auth persistida de E2E.
+- `0166-technical-debt-guardrails-cycle-closure.md`: cierra TDG00-TDG08 con Django/MCP/browser/calidad verdes, transiciones revisadas y evidencia antes/después.

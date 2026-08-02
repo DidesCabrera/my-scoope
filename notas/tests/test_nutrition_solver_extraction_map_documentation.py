@@ -20,7 +20,9 @@ LEGACY_VALIDATORS_MODULE = ROOT / "notas" / "application" / "nutrition_engine" /
 SOLVER_PORTION_SOLVER_MODULE = ROOT / "nutrition_solver" / "application" / "portion_solver.py"
 SOLVER_VALIDATORS_MODULE = ROOT / "nutrition_solver" / "application" / "validators.py"
 SOLVER_CANDIDATES_QUERY = ROOT / "notas" / "application" / "queries" / "solver_food_candidates.py"
-AI_TOOL_REGISTRY = ROOT / "ai_assistant" / "application" / "tools" / "registry.py"
+AI_TOOL_NAMES = ROOT / "ai_assistant" / "application" / "tools" / "tool_names.py"
+AI_READ_TOOL_SPECS = ROOT / "ai_assistant" / "application" / "tools" / "tool_spec_modules" / "read.py"
+AI_PROPOSAL_TOOL_SPECS = ROOT / "ai_assistant" / "application" / "tools" / "tool_spec_modules" / "proposals.py"
 AI_TOOL_EXECUTOR = ROOT / "ai_assistant" / "application" / "tools" / "executor.py"
 AI_READ_TOOLS = ROOT / "notas" / "application" / "ai_tools" / "read_tools.py"
 AI_PROPOSAL_TOOLS = ROOT / "notas" / "application" / "ai_tools" / "proposal_tools.py"
@@ -212,7 +214,8 @@ class NutritionSolverExtractionMapDocumentationTests(SimpleTestCase):
         content = EXTRACTION_MAP.read_text()
         planning = PLANNING_DOC.read_text()
         decision = S9_DECISION_DOC.read_text()
-        registry = AI_TOOL_REGISTRY.read_text()
+        tool_names = AI_TOOL_NAMES.read_text()
+        read_specs = AI_READ_TOOL_SPECS.read_text()
         executor = AI_TOOL_EXECUTOR.read_text()
         read_tools = AI_READ_TOOLS.read_text()
 
@@ -220,7 +223,8 @@ class NutritionSolverExtractionMapDocumentationTests(SimpleTestCase):
         self.assertIn("preview_nutrition_solver_candidates", content)
         self.assertIn("S9: completado", planning)
         self.assertIn("Status: accepted", decision)
-        self.assertIn("TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES", registry)
+        self.assertIn("TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES", tool_names)
+        self.assertIn("TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES", read_specs)
         self.assertIn("TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES", executor)
         self.assertIn("def preview_nutrition_solver_candidates_tool", read_tools)
         self.assertIn("catalog_fields_exposed", read_tools)
@@ -229,7 +233,8 @@ class NutritionSolverExtractionMapDocumentationTests(SimpleTestCase):
         content = EXTRACTION_MAP.read_text()
         planning = PLANNING_DOC.read_text()
         decision = S10_DECISION_DOC.read_text()
-        registry = AI_TOOL_REGISTRY.read_text()
+        tool_names = AI_TOOL_NAMES.read_text()
+        proposal_specs = AI_PROPOSAL_TOOL_SPECS.read_text()
         proposal_tools = AI_PROPOSAL_TOOLS.read_text()
         service = SOLVER_MEAL_PROPOSALS.read_text()
 
@@ -239,7 +244,8 @@ class NutritionSolverExtractionMapDocumentationTests(SimpleTestCase):
         self.assertIn("S10: completado", planning)
         self.assertIn("Status: completed", decision)
         self.assertIn("create_solver_generated_meal_proposal", decision)
-        self.assertIn("TOOL_CREATE_NUTRITION_SOLVER_MEAL_PROPOSAL", registry)
+        self.assertIn("TOOL_CREATE_NUTRITION_SOLVER_MEAL_PROPOSAL", tool_names)
+        self.assertIn("TOOL_CREATE_NUTRITION_SOLVER_MEAL_PROPOSAL", proposal_specs)
         self.assertIn("create_nutrition_solver_meal_proposal_tool", proposal_tools)
         self.assertIn("def create_solver_generated_meal_proposal", service)
         self.assertIn("catalog_fields_exposed", service)

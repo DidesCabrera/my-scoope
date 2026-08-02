@@ -10,12 +10,11 @@ if [[ -n "${tracked_offenders}" ]]; then
   exit 1
 fi
 
-while IFS= read -r tracked_report; do
-  [[ -z "${tracked_report}" ]] && continue
-  if ! grep -Fxq "${tracked_report}" scripts/legacy_root_artifacts.txt; then
-    echo "Repository hygiene check failed. New root report must live under artifacts/local or reviewed docs archive: ${tracked_report}" >&2
-    exit 1
-  fi
-done < <(git ls-files '*_report*.json')
+root_reports="$(git ls-files '*_report*.json' | awk '!/\//')"
+if [[ -n "${root_reports}" ]]; then
+  echo "Repository hygiene check failed. Root reports must live under artifacts/local or reviewed docs archive:" >&2
+  echo "${root_reports}" >&2
+  exit 1
+fi
 
 echo "Repository hygiene check passed."

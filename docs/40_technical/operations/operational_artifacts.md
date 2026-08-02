@@ -1,7 +1,7 @@
 # Operational Artifacts
 
 Status: current
-Last updated: 2026-07-18
+Last updated: 2026-08-02
 
 ## Purpose
 
@@ -28,9 +28,9 @@ fixture, seed, or catalog source and must never be committed as one.
 4. Never store API keys, provider payloads, private user data, prompts, or OAuth
    credentials in an artifact.
 
-The root-level CM24/PT JSON files predate this policy. They remain an explicit legacy
-allowlist so history is preserved; new root-level `*_report*.json` files fail the
-repository hygiene gate.
+The historical CM24/PT JSON files now live under
+`docs/90_archive/reports/ai_assistant/`. Any root-level `*_report*.json` file fails
+the repository hygiene gate; no legacy root allowlist remains.
 
 Example:
 
@@ -39,4 +39,3 @@ python manage.py validate_ai_assistant_real_provider \
   --live --user-id <STAGING_USER_ID> \
   --output artifacts/local/cm24_real_provider_report.json
 ```
-
