@@ -98,12 +98,18 @@ accounts, AI Assistant and audit modules; all 63 Admin Operations tests pass. Th
 application-layer HTTP import allowlist is empty. Food Catalog remains the largest
 owned service surface by design and retains every workflow and route.
 
-### TDG05 — AI Assistant runtime seam — planned
+### TDG05 — AI Assistant runtime seam — completed
 
 - Reduce bidirectional implementation knowledge between `ai_assistant` and `notas`.
 - Split provider turn coordination, parsing, continuation and fallback policy behind
   the existing orchestrator facade.
 - Split provider tool schemas by capability while keeping the canonical registry.
+
+Repository evidence: configuration and provider parsing now sit behind the stable
+orchestrator facade; the canonical registry policy module falls from 1,312 to 297
+lines and merges capability-owned schemas. The neutral tool-result contract is owned
+by the AI domain, leaving the product-facing adapter imports under an exact no-growth
+ratchet. All 220 AI Assistant tests pass.
 
 ### TDG06 — Test ergonomics and feedback time — planned
 

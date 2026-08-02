@@ -6,6 +6,7 @@ from django.test import SimpleTestCase
 
 from core.application_dependencies import (
     ADMIN_OPERATIONS_HTTP_IMPORT_ALLOWLIST,
+    AI_ASSISTANT_NOTAS_IMPORT_ALLOWLIST,
     ALLOWED_APP_DEPENDENCIES,
     PROJECT_APPS,
     TRANSITIONAL_APP_EDGES,
@@ -131,3 +132,11 @@ class ApplicationDependencyTests(SimpleTestCase):
                 if imported.startswith(forbidden):
                     offenders.add(f"{path.relative_to(ROOT)} imports {imported}")
         self.assertEqual(offenders, set(ADMIN_OPERATIONS_HTTP_IMPORT_ALLOWLIST))
+
+    def test_ai_assistant_product_adapter_debt_does_not_grow(self):
+        imports_from_notas = set()
+        for path in _production_python_files("ai_assistant"):
+            for imported in _imports(path):
+                if imported == "notas" or imported.startswith("notas."):
+                    imports_from_notas.add(f"{path.relative_to(ROOT)} imports {imported}")
+        self.assertEqual(imports_from_notas, set(AI_ASSISTANT_NOTAS_IMPORT_ALLOWLIST))

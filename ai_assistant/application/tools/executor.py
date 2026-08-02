@@ -36,7 +36,7 @@ from ai_assistant.domain.contracts import (
     AssistantToolResult,
     AssistantToolStatus,
 )
-from notas.application.ai_tools.results import AIToolResult
+from ai_assistant.domain.tool_results import AIToolResult
 
 ReadOnlyToolCallable = Callable[..., AIToolResult]
 

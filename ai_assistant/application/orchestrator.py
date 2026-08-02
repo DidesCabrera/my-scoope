@@ -3,20 +3,26 @@ from __future__ import annotations
 import json
 import logging
 import time
-from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping, Sequence
-
-from django.conf import settings
 
 from ai_assistant.application.audit import build_audit_snapshot, sanitize_audit_value
 from ai_assistant.application.context_builder import sanitize_provider_context
 from ai_assistant.application.credits import AICreditCheck, DjangoAICreditService
 from ai_assistant.application.limits import (
     AILimitViolation,
-    AITurnLimitConfig,
     bounded_text,
     estimate_provider_request_tokens,
     validate_provider_request_limits,
+)
+from ai_assistant.application.orchestrator_runtime import AssistantOrchestratorConfig, elapsed_ms as _elapsed_ms
+from ai_assistant.application.provider_parsing import (
+    AssistantProviderParseResult,
+    _coerce_assistant_message,
+    _coerce_intent,
+    _coerce_requires_human_review,
+    _coerce_tool_requests,
+    _extract_jsonish_assistant_content,
+    _loads_json_object,
 )
 from ai_assistant.application.model_routing import (
     AIModelRoute,
@@ -30,7 +36,6 @@ from ai_assistant.application.product_context import (
 from ai_assistant.application.tool_governance import (
     extract_provider_tool_selection_reason,
     safe_tool_selection_observability,
-    system_tool_restraint_lines,
     tool_selection_reason_error,
 )
 from ai_assistant.application.response_style import (
@@ -194,73 +199,6 @@ class AssistantOrchestratorError(RuntimeError):
 
 ToolValidator = Callable[[AssistantToolRequest], AssistantToolResult]
 ProviderToolSpecProvider = Callable[[], list[dict[str, Any]]]
-
-
-@dataclass(frozen=True)
-class AssistantOrchestratorConfig:
-    """Runtime limits for the external LLM orchestrator v1.
-
-    The orchestrator sends bounded history, accepts natural visible text, and
-    allows a controlled multi-step native tool loop so the model can operate My
-    Scoope objects. Reviewable proposal tools are part of the normal runtime and
-    never apply changes directly.
-    """
-
-    max_history_messages: int = 20
-    max_output_tokens: int = 2400
-    max_tool_loop_iterations: int = 4
-    enable_reviewable_proposal_tools: bool = True
-    max_input_tokens: int = 20000
-    max_context_chars: int = 16000
-    max_message_chars: int = 2000
-    max_tool_requests_per_turn: int = 3
-    engine_name: str = "external_llm_orchestrator_v1"
-    response_format_version: str = "ai_assistant_natural_response.v1"
-    reasoning_effort: str = "low"
-
-    @classmethod
-    def from_settings(cls) -> "AssistantOrchestratorConfig":
-        return cls(
-            max_history_messages=_settings_int("AI_ASSISTANT_MAX_HISTORY_MESSAGES", cls.max_history_messages),
-            max_output_tokens=_settings_int("AI_ASSISTANT_MAX_OUTPUT_TOKENS", cls.max_output_tokens),
-            max_tool_loop_iterations=_settings_int("AI_ASSISTANT_MAX_TOOL_LOOP_ITERATIONS", cls.max_tool_loop_iterations),
-            enable_reviewable_proposal_tools=_settings_bool(
-                "AI_ASSISTANT_ENABLE_REVIEWABLE_PROPOSAL_TOOLS",
-                cls.enable_reviewable_proposal_tools,
-            ),
-            max_input_tokens=_settings_int("AI_ASSISTANT_MAX_INPUT_TOKENS", cls.max_input_tokens),
-            max_context_chars=_settings_int("AI_ASSISTANT_MAX_CONTEXT_CHARS", cls.max_context_chars),
-            max_message_chars=_settings_int("AI_ASSISTANT_MAX_MESSAGE_CHARS", cls.max_message_chars),
-            max_tool_requests_per_turn=_settings_int(
-                "AI_ASSISTANT_MAX_TOOL_REQUESTS_PER_TURN",
-                cls.max_tool_requests_per_turn,
-            ),
-            reasoning_effort=_settings_choice(
-                "AI_ASSISTANT_OPENAI_REASONING_EFFORT",
-                cls.reasoning_effort,
-                allowed={"none", "minimal", "low", "medium", "high", "xhigh", "max"},
-            ),
-        )
-
-    @property
-    def turn_limits(self) -> AITurnLimitConfig:
-        return AITurnLimitConfig(
-            max_input_tokens=self.max_input_tokens,
-            max_context_chars=self.max_context_chars,
-            max_message_chars=self.max_message_chars,
-            max_tool_requests_per_turn=self.max_tool_requests_per_turn,
-        ).normalized()
-
-
-@dataclass(frozen=True)
-class AssistantProviderParseResult:
-    """Result of normalizing provider text into an internal structured response."""
-
-    response: AssistantStructuredResponse
-    was_json: bool
-    parse_error: str = ""
-    ignored_provider_proposal_ids: Sequence[Any] = field(default_factory=tuple)
-    declared_tools_required: bool = False
 
 
 class ExternalLLMOrchestrator:
@@ -2340,161 +2278,3 @@ def _proposal_ids_from_tool_results(tool_results: Sequence[AssistantToolResult])
             if proposal_id > 0 and proposal_id not in proposal_ids:
                 proposal_ids.append(proposal_id)
     return tuple(proposal_ids)
-
-
-def _loads_json_object(text: str) -> tuple[dict[str, Any] | None, str]:
-    if not text:
-        return None, "empty_provider_response"
-    cleaned = text.strip()
-    if cleaned.startswith("```"):
-        cleaned = _strip_code_fence(cleaned)
-    try:
-        payload = json.loads(cleaned)
-    except json.JSONDecodeError as exc:
-        return None, f"invalid_json:{exc.msg}"
-    if not isinstance(payload, dict):
-        return None, "json_root_must_be_object"
-    return payload, ""
-
-
-def _strip_code_fence(text: str) -> str:
-    lines = [line for line in text.splitlines() if not line.strip().startswith("```")]
-    return "\n".join(lines).strip()
-
-
-def _extract_jsonish_assistant_content(text: str) -> str:
-    """Best-effort extraction for malformed provider JSON.
-
-    The visible chat should never show the full structured payload just because
-    the provider returned a near-JSON object with a small syntax issue, such as
-    a trailing comma. This fallback only extracts the display text and leaves the
-    turn marked as non-JSON for audit/observability.
-    """
-
-    cleaned = (text or "").strip()
-    if not cleaned:
-        return ""
-    if cleaned.startswith("```"):
-        cleaned = _strip_code_fence(cleaned)
-
-    for field_name in ("content", "assistant_text", "message"):
-        value = _extract_jsonish_string_field(cleaned, field_name)
-        if value:
-            return value
-    return ""
-
-
-def _extract_jsonish_string_field(text: str, field_name: str) -> str:
-    marker = f'"{field_name}"'
-    field_index = text.find(marker)
-    if field_index < 0:
-        return ""
-    colon_index = text.find(":", field_index + len(marker))
-    if colon_index < 0:
-        return ""
-
-    candidate = text[colon_index + 1 :].lstrip()
-    if not candidate.startswith('"'):
-        return ""
-
-    try:
-        value, _ = json.JSONDecoder().raw_decode(candidate)
-    except json.JSONDecodeError:
-        return ""
-    if not isinstance(value, str):
-        return ""
-    return value.strip()
-
-
-def _loads_json_mapping(value: Any, *, field_name: str) -> dict[str, Any]:
-    if isinstance(value, Mapping):
-        return dict(value)
-    try:
-        parsed = json.loads(str(value or "{}"))
-    except (TypeError, ValueError, json.JSONDecodeError) as exc:
-        raise AssistantContractError(f"{field_name} must contain a valid JSON object string.") from exc
-    if not isinstance(parsed, Mapping):
-        raise AssistantContractError(f"{field_name} must contain a JSON object.")
-    return dict(parsed)
-
-
-def _coerce_assistant_message(payload: Mapping[str, Any]) -> AssistantMessage:
-    assistant_message = payload.get("assistant_message")
-    if isinstance(assistant_message, Mapping):
-        content = assistant_message.get("content") or assistant_message.get("text") or ""
-    else:
-        content = assistant_message or payload.get("assistant_text") or payload.get("message") or ""
-    return AssistantMessage(role=AssistantMessageRole.ASSISTANT, content=str(content or ""))
-
-
-def _coerce_intent(value: Any) -> AssistantIntent:
-    if not isinstance(value, Mapping):
-        return AssistantIntent(name=AssistantIntentName.UNKNOWN, confidence=0.0)
-    slots = value.get("slots")
-    if slots is None and "slots_json" in value:
-        slots = _loads_json_mapping(value.get("slots_json"), field_name="intent.slots_json")
-    return AssistantIntent(
-        name=value.get("name") or AssistantIntentName.UNKNOWN,
-        confidence=value.get("confidence") or 0.0,
-        summary=value.get("summary") or "",
-        slots=slots or {},
-        missing_slots=value.get("missing_slots") or (),
-        safety_flags=value.get("safety_flags") or (),
-    )
-
-
-def _coerce_tool_requests(value: Any) -> tuple[AssistantToolRequest, ...]:
-    if not value:
-        return ()
-    if not isinstance(value, list | tuple):
-        raise AssistantContractError("tool_requests must be a list.")
-
-    requests: list[AssistantToolRequest] = []
-    for index, item in enumerate(value, start=1):
-        if not isinstance(item, Mapping):
-            raise AssistantContractError("Each tool request must be an object.")
-        arguments = item.get("arguments")
-        if arguments is None and "arguments_json" in item:
-            arguments = _loads_json_mapping(
-                item.get("arguments_json"),
-                field_name=f"tool_requests[{index}].arguments_json",
-            )
-        requests.append(
-            AssistantToolRequest(
-                tool_name=item.get("tool_name") or item.get("name") or "",
-                arguments=arguments or {},
-                request_id=item.get("request_id") or f"tool_request_{index}",
-                reason=item.get("reason") or "",
-            )
-        )
-    return tuple(requests)
-
-
-def _coerce_requires_human_review(payload: Mapping[str, Any]) -> bool:
-    value = payload.get("requires_human_review")
-    if value is None:
-        return True
-    return bool(value)
-
-
-def _settings_int(name: str, default: int) -> int:
-    try:
-        return int(getattr(settings, name, default))
-    except (TypeError, ValueError):
-        return default
-
-
-def _settings_choice(name: str, default: str, *, allowed: set[str]) -> str:
-    value = str(getattr(settings, name, default) or default).strip().lower()
-    return value if value in allowed else default
-
-
-def _settings_bool(name: str, default: bool) -> bool:
-    value = getattr(settings, name, default)
-    if isinstance(value, bool):
-        return value
-    return str(value).strip().lower() in {"1", "true", "yes", "on"}
-
-
-def _elapsed_ms(started_at: float) -> int:
-    return max(0, int(round((time.perf_counter() - started_at) * 1000)))

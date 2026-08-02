@@ -39,3 +39,30 @@ TRANSITIONAL_APP_EDGES = {
 }
 
 ADMIN_OPERATIONS_HTTP_IMPORT_ALLOWLIST = frozenset()
+
+AI_ASSISTANT_NOTAS_IMPORT_ALLOWLIST = frozenset(
+    {
+        "ai_assistant/application/context_builder.py imports notas.application.ai_intake.nutrition_brief",
+        "ai_assistant/application/orchestrator.py imports notas.application.ai_intake.nutrition_brief",
+        "ai_assistant/application/orchestrator.py imports notas.application.ai_tools.proposal_tools",
+        "ai_assistant/application/prepared_actions.py imports notas.application.services.commands.calendarization_commands",
+        "ai_assistant/application/prepared_actions.py imports notas.application.services.commands.dailyplan_commands",
+        "ai_assistant/application/prepared_actions.py imports notas.application.services.commands.food_commands",
+        "ai_assistant/application/prepared_actions.py imports notas.application.services.commands.meal_commands",
+        "ai_assistant/application/prepared_actions.py imports notas.application.services.commands.program_commands",
+        "ai_assistant/application/prepared_actions.py imports notas.application.services.commands.proposal_commands",
+        "ai_assistant/application/prepared_actions.py imports notas.application.services.commands.saved_comparison_commands",
+        "ai_assistant/application/prepared_actions.py imports notas.domain.models",
+        "ai_assistant/application/tools/executor.py imports notas.application.ai_tools.comparison_tools",
+        "ai_assistant/application/tools/executor.py imports notas.application.ai_tools.profile_tools",
+        "ai_assistant/application/tools/executor.py imports notas.application.ai_tools.read_tools",
+        "ai_assistant/application/tools/executor.py imports notas.application.ai_tools.workspace_tools",
+        "ai_assistant/application/tools/prepared_action_tools.py imports notas.application.ai_tools.runtime",
+        "ai_assistant/application/tools/profile_commit_executor.py imports notas.application.ai_tools.profile_tools",
+        "ai_assistant/application/tools/profile_executor.py imports notas.application.ai_tools.preference_tools",
+        "ai_assistant/application/tools/profile_executor.py imports notas.application.ai_tools.profile_tools",
+        "ai_assistant/application/tools/profile_executor.py imports notas.application.ai_tools.proposal_preference_tools",
+        "ai_assistant/application/tools/proposal_executor.py imports notas.application.ai_tools.proposal_tools",
+        "ai_assistant/application/tools/validation_executor.py imports notas.application.ai_tools.validation_tools",
+    }
+)
