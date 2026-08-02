@@ -104,6 +104,8 @@ def get_dpm_detail_page_data(
     foods_json = "[]"
     food_picker_context_json = "{}"
     can_edit_foods = False
+    meal_kpis = None
+    dailyplan_kpis = None
 
     if viewmode == DAILYPLAN_MEAL_VIEWMODE_DETAIL:
         can_edit_foods = True
@@ -156,8 +158,8 @@ def get_dpm_detail_page_data(
         meal_foods=meal_foods,
         user=user,
         viewmode=viewmode,
-        dailyplan_kpis=dailyplan_kpis if viewmode == DAILYPLAN_MEAL_VIEWMODE_DETAIL else None,
-        meal_kpis=meal_kpis if viewmode == DAILYPLAN_MEAL_VIEWMODE_DETAIL else None,
+        dailyplan_kpis=dailyplan_kpis,
+        meal_kpis=meal_kpis,
         program_context_query=program_context,
     )
 
@@ -210,8 +212,8 @@ def get_dpm_edit_page_data(
         meal_foods=meal_foods,
         user=user,
         viewmode=viewmode,
-        dailyplan_kpis=dailyplan_kpis if viewmode == DAILYPLAN_MEAL_VIEWMODE_DETAIL else None,
-        meal_kpis=meal_kpis if viewmode == DAILYPLAN_MEAL_VIEWMODE_DETAIL else None,
+        dailyplan_kpis=None,
+        meal_kpis=None,
     )
 
     return DpmEditPageData(

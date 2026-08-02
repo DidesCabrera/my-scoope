@@ -7,7 +7,6 @@ import tempfile
 from decimal import Decimal
 from urllib.parse import urlencode
 
-from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -1990,14 +1989,6 @@ def perform_catalog_food_snapshot(*, catalog_food_id: int, actor, reason: str) -
         metadata={"catalog_food_id": catalog_food.pk, "catalog_ref": str(catalog_food.catalog_ref)},
     )
     return AdminOperationResult(True, f"Snapshot operacional Food #{result.food.pk} creado desde {catalog_food.display_name}.")
-
-
-def flash_operation_result(request, result: AdminOperationResult) -> None:
-    if result.ok:
-        messages.success(request, result.message)
-    else:
-        messages.warning(request, result.message)
-
 
 
 def _user_label(user) -> str:

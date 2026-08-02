@@ -46,33 +46,44 @@ contract. CI should compare like-for-like runs before enforcing performance budg
 
 ## Patch sequence
 
-### TDG00 — Baseline and cycle registration — active
+### TDG00 — Baseline and cycle registration — completed
 
 - Consolidate the approved Food Catalog Admin Operations work as an independent
   checkpoint.
 - Register scope, metrics, invariants and exit criteria.
 - Preserve a clean separation between feature growth and debt reduction.
 
-### TDG01 — Reproducible toolchain and dependency boundaries — planned
+### TDG01 — Reproducible toolchain and dependency boundaries — completed
 
 - Make authoritative scripts select a project Python interpreter without requiring
   a manually activated virtual environment.
 - Separate runtime, development, MCP and browser dependency contracts.
 - Add one documented command per supported test surface.
 
-### TDG02 — Complete CI quality surfaces — planned
+### TDG02 — Complete CI quality surfaces — completed
 
 - Keep a fast Django structural gate and the complete Django gate.
 - Add an isolated MCP job with its declared dependencies.
 - Make the browser smoke suite runnable with configurable URL, generated test data
   and credentials supplied through the environment.
 
-### TDG03 — Static and architectural debt ratchets — planned
+Repository evidence: the fast structural gate passes 73 tests in approximately four
+seconds on the baseline machine, and the isolated clean MCP environment passes 169
+tests. Browser dependency/setup ownership is explicit; deterministic fixture and auth
+migration remains TDG07 scope.
+
+### TDG03 — Static and architectural debt ratchets — completed
 
 - Add incremental lint and dependency-audit configuration.
 - Declare and test cross-app dependency directions and transitional edges.
 - Remove the concrete `credits` / `usage` module cycle.
 - Prevent Tier 2 service modules from acquiring HTTP response concerns.
+
+Repository evidence: the production import graph has no module cycles; cross-app
+edges and the remaining Admin Operations object-lookup exception are executable
+ratchets. Ruff's fatal correctness families pass, the complete Django suite passes
+1,642 tests against the patched dependency set, and `pip-audit` reports no known
+vulnerabilities.
 
 ### TDG04 — Admin Operations modular decomposition — planned
 

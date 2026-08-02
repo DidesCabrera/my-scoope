@@ -12,6 +12,7 @@ from django.db.models import Sum
 from django.utils import timezone
 
 from ai_assistant.application.limits import estimate_provider_request_tokens
+from ai_assistant.application.pricing import estimate_cost_usd
 from ai_assistant.domain import AssistantTurnRequest
 from ai_assistant.infrastructure.providers import LLMProviderRequest
 
@@ -392,8 +393,6 @@ def estimate_request_credits(
     model: str = "",
 ) -> int:
     input_tokens = estimate_provider_request_tokens(provider_request)
-    from ai_assistant.application.usage import estimate_cost_usd
-
     cost = estimate_cost_usd(
         provider=provider,
         model=model,

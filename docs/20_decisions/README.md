@@ -174,3 +174,5 @@ Consequences
 - `0157-ai-assistant-outcome-first-runtime.md`: reemplaza preview, rollout y fallback determinístico por un único LLM orientado a resultados, con memoria real, propuestas en el mismo turno, texto natural y gates offline/live.
 - `0158-ai-assistant-cost-aware-model-evaluation.md`: baja el baseline del AI Assistant a Luna/low, reserva Terra como escalamiento medido y Sol como benchmark explícito, con reporte live de calidad, tokens y costo.
 - `0159-technical-debt-guardrails-cycle.md`: adopta TDG00-TDG08 para completar las superficies de calidad, contener dependencias y descomponer hotspots preservando Food Catalog como dominio estratégico de Admin Operations.
+- `0160-explicit-repository-quality-surfaces.md`: separa gates reproducibles para Django fast/full, MCP y browser, y elimina la dependencia de activar manualmente `.venv`.
+- `0161-architecture-and-quality-debt-ratchets.md`: hace ejecutables los límites de dependencias, ciclos, vulnerabilidades y errores estáticos críticos sin convertir estilo histórico en un bloqueo masivo.

@@ -1,0 +1,28 @@
+[tool.ruff]
+target-version = "py313"
+line-length = 120
+
+[tool.ruff.lint]
+# TDG03 starts with correctness/fatal rules. Broader style debt is measured but
+# cannot become a blocking 1,266-item rewrite in one patch.
+select = ["E9", "F63", "F7", "F82"]
+
+[tool.coverage.run]
+branch = true
+source = [
+  "accounts",
+  "admin_analytics",
+  "admin_operations",
+  "ai_assistant",
+  "billing",
+  "core",
+  "email_delivery",
+  "food_catalog",
+  "notas",
+  "nutrition_solver",
+]
+omit = ["*/migrations/*", "*/tests/*"]
+
+[tool.coverage.report]
+skip_covered = true
+show_missing = true

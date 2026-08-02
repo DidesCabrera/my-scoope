@@ -3,6 +3,7 @@ from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 from django.views.decorators.http import require_GET
 
+from admin_operations.interface_feedback import flash_operation_result
 from admin_operations.system_control import build_system_control_vm
 
 from admin_operations.services import (
@@ -17,7 +18,6 @@ from admin_operations.services import (
     build_food_catalog_imports_vm,
     build_food_catalog_operations_vm,
     build_operations_overview_vm,
-    flash_operation_result,
     perform_candidate_operation,
     perform_catalog_food_operation,
     perform_core_seed_apply,
