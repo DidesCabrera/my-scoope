@@ -122,7 +122,23 @@ jobs:
         run: python manage.py migrate --noinput
       - name: Run anonymous browser smoke
         run: |
-          python manage.py runserver 127.0.0.1:8000 --noreload &
+          python manage.py runserver 127.0.0.1:8000 --noreload > /tmp/my-scoope-django.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent --output /dev/null http://127.0.0.1:8000/; then
+              break
+            fi
+            if ! kill -0 "$server_pid" 2>/dev/null; then
+              cat /tmp/my-scoope-django.log
+              exit 1
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              cat /tmp/my-scoope-django.log
+              exit 1
+            fi
+            sleep 1
+          done
           scripts/test_e2e.sh e2e/test_smoke.py
 
   quality:
