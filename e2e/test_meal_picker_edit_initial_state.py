@@ -1,4 +1,10 @@
-def test_meal_picker_edit_initial_state(page, dailyplan_edit_url, ui_settle, dailyplan_id):
+def test_meal_picker_edit_initial_state(
+    page,
+    dailyplan_edit_url,
+    ui_settle,
+    dailyplan_id,
+    open_meal_edit_grid,
+):
     page.goto(dailyplan_edit_url)
     page.wait_for_load_state("networkidle")
 
@@ -17,8 +23,9 @@ def test_meal_picker_edit_initial_state(page, dailyplan_edit_url, ui_settle, dai
     assert not meal_preview.is_visible()
     assert not add_button.is_visible()
     assert not update_button.is_visible()
+    open_meal_edit_grid(page)
 
-    edit_button = page.locator(".edit-meal-btn").first
+    edit_button = page.locator('[id^="card-grid-meals-edit-"] .edit-meal-btn').first
     edit_button.wait_for()
     edit_button.click()
 

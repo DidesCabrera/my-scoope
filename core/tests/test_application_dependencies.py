@@ -140,3 +140,13 @@ class ApplicationDependencyTests(SimpleTestCase):
                 if imported == "notas" or imported.startswith("notas."):
                     imports_from_notas.add(f"{path.relative_to(ROOT)} imports {imported}")
         self.assertEqual(imports_from_notas, set(AI_ASSISTANT_NOTAS_IMPORT_ALLOWLIST))
+
+    def test_ai_assistant_has_no_product_implementation_imports(self):
+        imports_from_notas = {
+            f"{path.relative_to(ROOT)} imports {imported}"
+            for path in _production_python_files("ai_assistant")
+            for imported in _imports(path)
+            if imported == "notas" or imported.startswith("notas.")
+        }
+
+        self.assertEqual(imports_from_notas, set())

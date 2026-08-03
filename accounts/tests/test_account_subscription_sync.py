@@ -9,19 +9,16 @@ from django.test import TestCase
 from accounts.models import AccountPlan, AccountSubscription
 from accounts.seed_plans import seed_account_plans
 from accounts.services.subscriptions import ensure_account_subscription_for_user
-from notas.domain.models import Plan
 
 
 class AccountSubscriptionSyncTests(TestCase):
     def setUp(self):
         seed_account_plans()
 
-    def test_ensure_subscription_maps_legacy_nutritionist_to_pro(self):
-        legacy = Plan.objects.create(name="Legacy Pro", role="nutritionist")
+    def test_ensure_subscription_maps_nutritionist_role_to_pro(self):
         user = get_user_model().objects.create_user(username="sync-pro", password="x")
         user.profile.role = "nutritionist"
-        user.profile.plan = legacy
-        user.profile.save(update_fields=["role", "plan"])
+        user.profile.save(update_fields=["role"])
 
         subscription, created, updated = ensure_account_subscription_for_user(user, update_existing=True)
 

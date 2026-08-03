@@ -50,11 +50,6 @@ class NutritionSolverAppBoundaryTests(SimpleTestCase):
                 msg=f"Missing nutrition_solver/{relative_path}",
             )
 
-        current_engine = PROJECT_ROOT / "notas" / "application" / "nutrition_engine"
-        self.assertTrue((current_engine / "contracts.py").exists())
-        self.assertTrue((current_engine / "models.py").exists())
-        self.assertTrue((current_engine / "portion_solver.py").exists())
-
     def test_readme_documents_current_optimization_v2_boundary(self):
         content = README.read_text()
 
@@ -65,7 +60,8 @@ class NutritionSolverAppBoundaryTests(SimpleTestCase):
         self.assertIn("nutrition_solver/application/validators.py", content)
         self.assertIn("nutrition_solver/application/optimizer_v2.py", content)
         self.assertIn("cp_sat_v1", content)
-        self.assertIn("legacy bridges", content)
+        self.assertIn("temporary compatibility bridges", content)
+        self.assertIn("been retired", content)
 
     def test_app_root_shell_does_not_import_product_or_ai_boundaries(self):
         forbidden_prefixes = (

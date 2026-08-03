@@ -1,4 +1,4 @@
-def test_meal_picker_initial_state(page, dailyplan_edit_url):
+def test_meal_picker_initial_state(page, dailyplan_edit_url, open_dailyplan_meal_picker):
     page.goto(dailyplan_edit_url)
     page.wait_for_load_state("networkidle")
 
@@ -11,9 +11,8 @@ def test_meal_picker_initial_state(page, dailyplan_edit_url):
     update_button = page.locator("#btn-update-meal")
     form_title = page.locator("#meal-form-title")
 
-    meal_search.wait_for()
-
-    assert meal_search.is_visible()
+    assert meal_search.count() == 1
+    assert not meal_search.is_visible()
     assert form_title.text_content().strip() == "Agrega una Comida"
 
     assert meal_list.count() == 1
@@ -22,3 +21,6 @@ def test_meal_picker_initial_state(page, dailyplan_edit_url):
     assert not meal_preview.is_visible()
     assert not add_button.is_visible()
     assert not update_button.is_visible()
+
+    open_dailyplan_meal_picker(page)
+    assert meal_search.is_visible()

@@ -3,12 +3,10 @@ from django.test import TestCase
 
 from accounts.models import AccountPlan, AccountSubscription, CreditWallet
 from accounts.services.profile import build_account_credit_display
-from notas.domain.models import Plan
 
 
 class AccountCreditDisplayTests(TestCase):
     def setUp(self):
-        Plan.objects.create(name="Legacy Member", role="member")
         self.free = AccountPlan.objects.create(
             slug="free",
             name="Free",

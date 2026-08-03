@@ -1,4 +1,9 @@
-def test_meal_picker_cancel_edit_restores_add_mode(page, dailyplan_edit_url, dailyplan_id):
+def test_meal_picker_cancel_edit_restores_add_mode(
+    page,
+    dailyplan_edit_url,
+    dailyplan_id,
+    open_meal_edit_grid,
+):
     page.goto(dailyplan_edit_url)
     page.wait_for_load_state("networkidle")
 
@@ -18,8 +23,9 @@ def test_meal_picker_cancel_edit_restores_add_mode(page, dailyplan_edit_url, dai
     initial_action = form_preview.get_attribute("action")
     assert initial_action is not None
     assert initial_action.endswith("/add-meal/")
+    open_meal_edit_grid(page)
 
-    edit_button = page.locator(".edit-meal-btn").first
+    edit_button = page.locator('[id^="card-grid-meals-edit-"] .edit-meal-btn').first
     edit_button.wait_for()
     edit_button.click()
 

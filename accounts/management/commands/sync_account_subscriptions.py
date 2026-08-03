@@ -8,7 +8,7 @@ from accounts.services.subscriptions import ensure_account_subscription_for_user
 
 
 class Command(BaseCommand):
-    help = "Backfill AccountSubscription rows from current account/legacy plan resolution."
+    help = "Ensure AccountSubscription rows from current accounts-owned plan resolution."
 
     def add_arguments(self, parser):
         parser.add_argument("--dry-run", action="store_true", help="Report what would change without writing rows.")

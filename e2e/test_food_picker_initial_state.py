@@ -1,4 +1,4 @@
-def test_food_picker_initial_state(page, meal_edit_url):
+def test_food_picker_initial_state(page, meal_edit_url, open_meal_food_picker):
     page.goto(meal_edit_url)
     page.wait_for_load_state("networkidle")
 
@@ -9,9 +9,8 @@ def test_food_picker_initial_state(page, meal_edit_url):
     food_preview = page.locator("#food-preview")
     add_button = page.locator("#btn-add-food")
 
-    food_search.wait_for()
-
-    assert food_search.is_visible()
+    assert food_search.count() == 1
+    assert not food_search.is_visible()
 
     assert food_list.count() == 1
     assert not food_list.is_visible()
@@ -21,3 +20,6 @@ def test_food_picker_initial_state(page, meal_edit_url):
 
     assert add_button.count() == 1
     assert not add_button.is_visible()
+
+    open_meal_food_picker(page)
+    assert food_search.is_visible()

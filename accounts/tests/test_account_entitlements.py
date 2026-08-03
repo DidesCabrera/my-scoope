@@ -7,7 +7,6 @@ from accounts.models import AccountPlan, AccountSubscription
 from accounts.seed_plans import seed_account_plans
 from accounts.services.entitlements import resolve_account_entitlements
 from notas.application.services.access.capabilities import get_capabilities
-from notas.domain.models import Plan
 
 
 class AccountEntitlementResolutionTests(TestCase):
@@ -15,19 +14,7 @@ class AccountEntitlementResolutionTests(TestCase):
         seed_account_plans()
         self.user = get_user_model().objects.create_user(username="entitlements-user", password="x")
 
-    def test_account_plan_entitlements_are_preferred_over_legacy_plan(self):
-        legacy = Plan.objects.create(
-            name="Legacy locked down",
-            role="member",
-            can_create_meal=False,
-            can_create_dailyplan=False,
-            can_create_program=False,
-            can_publish=False,
-            can_copy=False,
-            can_fork=True,
-        )
-        self.user.profile.plan = legacy
-        self.user.profile.save(update_fields=["plan"])
+    def test_account_plan_entitlements_are_resolved_from_subscription(self):
         pro = AccountPlan.objects.get(slug="pro")
         AccountSubscription.objects.update_or_create(
             user=self.user,
@@ -43,20 +30,7 @@ class AccountEntitlementResolutionTests(TestCase):
         self.assertTrue(caps.can_copy())
         self.assertTrue(caps.can_create_program())
 
-    def test_legacy_profile_plan_fills_missing_account_entitlement_keys(self):
-        legacy = Plan.objects.create(
-            name="Legacy publisher",
-            role="nutritionist",
-            can_create_meal=True,
-            can_create_dailyplan=True,
-            can_create_program=True,
-            can_publish=True,
-            can_copy=True,
-            can_fork=True,
-            max_active_subscriptions=12,
-        )
-        self.user.profile.plan = legacy
-        self.user.profile.save(update_fields=["plan"])
+    def test_missing_account_entitlement_keys_use_conservative_defaults(self):
         plan = AccountPlan.objects.create(
             slug="partial",
             name="Partial",
@@ -72,10 +46,10 @@ class AccountEntitlementResolutionTests(TestCase):
         caps = get_capabilities(self.user)
 
         self.assertFalse(caps.can_publish())
-        self.assertTrue(caps.can_copy())
-        self.assertEqual(caps.max_active_subscriptions(), 12)
+        self.assertFalse(caps.can_copy())
+        self.assertIsNone(caps.max_active_subscriptions())
 
-    def test_legacy_role_still_resolves_account_plan_without_subscription(self):
+    def test_seeded_subscription_resolves_basic_member_plan(self):
         entitlements = resolve_account_entitlements(self.user)
         caps = get_capabilities(self.user)
 

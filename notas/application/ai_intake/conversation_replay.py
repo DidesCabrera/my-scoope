@@ -34,7 +34,6 @@ from notas.domain.models import (
     Food,
     Meal,
     NutritionProposal,
-    Plan,
     Profile,
     Program,
     WeightLog,
@@ -504,25 +503,15 @@ def ensure_replay_user(username: str = "ai_replay_user") -> User:
         username=username,
         defaults={"email": f"{username}@example.com"},
     )
-    plan, _ = Plan.objects.get_or_create(
-        name="Replay Plan",
-        role="member",
-        defaults={
-            "can_create_meal": True,
-            "can_create_dailyplan": True,
-            "can_create_program": True,
-        },
-    )
     profile, _ = Profile.objects.get_or_create(
         user=user,
-        defaults={"role": "member", "plan": plan, "height_cm": 188},
+        defaults={"role": "member", "height_cm": 188},
     )
     profile.role = profile.role or "member"
-    profile.plan = profile.plan or plan
     profile.height_cm = profile.height_cm or 188
     profile.sex = ""
     profile.birth_date = None
-    profile.save(update_fields=["role", "plan", "height_cm", "sex", "birth_date"])
+    profile.save(update_fields=["role", "height_cm", "sex", "birth_date"])
     WeightLog.objects.update_or_create(
         user=user,
         date=timezone.localdate(),

@@ -1,7 +1,7 @@
 from django.test import SimpleTestCase
 
-from notas.application.nutrition_engine.models import MacroTarget
-from notas.application.nutrition_engine.validators import (
+from nutrition_solver.domain.models import MacroTarget
+from nutrition_solver.application.validators import (
     STATUS_ERROR,
     STATUS_OK,
     STATUS_WARNING,

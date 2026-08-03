@@ -48,7 +48,7 @@ from notas.application.nutrition_engine.meal_templates import (
     build_dailyplan_meal_templates,
     normalize_meals_per_day as normalize_template_meals_per_day,
 )
-from notas.application.nutrition_engine.models import (
+from nutrition_solver.domain.models import (
     MacroTarget,
     PortionBounds,
     SolverFood,
@@ -58,13 +58,13 @@ from notas.application.ai_intake.optimizer_v2_adapter import (
     build_shadow_summary_for_legacy_generator,
     run_dailyplan_optimizer_v2,
 )
-from notas.application.nutrition_engine.portion_solver import solve_meal_portions
+from nutrition_solver.application.portion_solver import solve_meal_portions
 from notas.application.nutrition_engine.target_estimator import (
     DailyNutritionTargetPlan,
     TargetEstimationProfile,
     estimate_daily_targets,
 )
-from notas.application.nutrition_engine.validators import (
+from nutrition_solver.application.validators import (
     PortionValidationInput,
     compare_macro_targets,
     validate_generated_dailyplan,

@@ -46,7 +46,6 @@ class ProfileAdmin(admin.ModelAdmin):
     list_display = (
         "user",
         "role",
-        "plan",
         "is_verified",
         "sex",
         "height_cm",
@@ -58,7 +57,6 @@ class ProfileAdmin(admin.ModelAdmin):
 
     list_filter = (
         "role",
-        "plan",
         "is_verified",
         "sex",
         "onboarding_version",
@@ -80,7 +78,6 @@ class ProfileAdmin(admin.ModelAdmin):
             "fields": (
                 "user",
                 "role",
-                "plan",
                 "is_verified",
             )
         }),

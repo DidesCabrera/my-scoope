@@ -68,6 +68,9 @@ Cuando un ciclo planificado empiece a implementarse, el documento puede permanec
 
 ## Ciclos completados
 
+- `technical_debt_priority_closure_cycle.md`: TDG09-TDG14 completado; coordinación
+  AI separada, imports AI→`notas` en cero, E2E autenticado determinista, CI sin
+  duplicación y retiro reversible de los bridges del solver y `Profile.plan`.
 - `technical_debt_guardrails_cycle.md`: TDG00-TDG08 completado; superficies de calidad
   reproducibles, límites arquitectónicos y de deuda frontend, descomposición por
   dominios en Admin Operations y seams del runtime IA, preservando Food Catalog como

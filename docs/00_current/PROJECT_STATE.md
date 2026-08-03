@@ -43,9 +43,13 @@ My Scoope is past the first architecture-expansion phase. The current priority i
 - Prefer services, commands and viewmodels over growing legacy views.
 - Treat app boundaries by maturity: mature apps should be stricter; transitional legacy areas can use pragmatic bridges.
 - AI tools should be allowlisted, observable and proposal-first for writes.
+- AI orchestration owns product-facing ports and does not import `notas`; product
+  implementations register their bindings from the composition side.
 - AI Assistant behavior should favor LLM freedom through typed tool contracts over prompt over-structuring or deterministic conversational guards.
 - Behavioral alignment should direct the assistant through product purpose, current state, capabilities and boundaries rather than fixed dialogue scripts.
 - User-visible credits are product/account concepts; provider tokens and costs are internal observability concepts.
+- `accounts.AccountPlan` and `AccountSubscription` are the sole runtime authority
+  for commercial entitlements; `Profile.plan` no longer exists.
 - External payment evidence and tax-document lifecycle belong to `billing`; verified outcomes project into `accounts`, which remains the entitlement source of truth.
 - Cross-app dependencies, transitional adapters and production module cycles are
   executable quality contracts rather than informal conventions.
@@ -131,6 +135,11 @@ When a plan becomes real, durable outcomes should be promoted into `docs/00_curr
   explicit quality surfaces. Admin Operations and AI runtime hotspots are decomposed
   behind stable facades, shared test builders reduce repeated setup and browser tests
   use deterministic environment-owned fixtures.
+- Priority Technical Debt Closure TDG09-TDG14 separates the AI provider loop and
+  tool-selection policy, reduces AI→`notas` imports from 22 to zero, makes the full
+  authenticated browser suite deterministic in CI, removes duplicated staging CI,
+  retires Nutrition Solver compatibility bridges and migrates `Profile.plan`
+  capabilities reversibly into accounts-owned subscriptions.
 
 ## Planned near-term cycles
 

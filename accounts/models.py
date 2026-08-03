@@ -8,9 +8,8 @@ from django.utils import timezone
 class AccountPlan(models.Model):
     """Commercial account plan.
 
-    This model belongs to the `accounts` domain and is intentionally separate
-    from `notas.Plan`, which remains the legacy/current compatibility model for
-    older nutritional permissions while the ACC migration progresses.
+    This model is the sole commercial-plan and entitlement authority. The
+    historical ``notas.Plan`` table remains only as unreferenced legacy data.
     """
 
     class Status(models.TextChoices):
@@ -249,4 +248,3 @@ class CreditLedger(models.Model):
         from django.core.exceptions import ValidationError
 
         raise ValidationError("CreditLedger entries are append-only and cannot be deleted.")
-

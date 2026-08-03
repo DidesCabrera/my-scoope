@@ -80,7 +80,7 @@ def build_account_credit_display(user: Any) -> AccountCreditDisplay:
         included_monthly_credits = int(plan.included_monthly_credits or 0)
         monthly_credit_limit = _credit_limit_from_plan(plan, key="monthly_credit_limit")
         daily_credit_limit = _credit_limit_from_plan(plan, key="daily_credit_limit")
-        plan_source_label = "Suscripción accounts" if subscription is not None else "Plan legacy / fallback"
+        plan_source_label = "Suscripción accounts" if subscription is not None else "Plan accounts por defecto"
 
     if wallet is None:
         balance = included_monthly_credits

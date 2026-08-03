@@ -1,8 +1,9 @@
-def test_food_picker_quantity_updates_preview(page, meal_edit_url, ui_settle):
+def test_food_picker_quantity_updates_preview(page, meal_edit_url, ui_settle, open_meal_food_picker):
     page.goto(meal_edit_url)
     page.wait_for_load_state("networkidle")
 
     assert "/accounts/login/" not in page.url, f"Redirigido a login: {page.url}"
+    open_meal_food_picker(page)
 
     food_search = page.locator("#food-search")
     food_list = page.locator("#food-list")

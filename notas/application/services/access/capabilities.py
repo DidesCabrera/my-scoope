@@ -15,7 +15,6 @@ class Capabilities:
     def __init__(self, user):
         self.user = user
         self.profile = user.profile
-        self.plan = self.profile.plan  # legacy compatibility during ACC migration
         self.role = self.profile.role
         self.account_entitlements = resolve_account_entitlements(user)
 
@@ -89,11 +88,9 @@ class Capabilities:
     def _enabled(self, key, *, default=False):
         if self.account_entitlements is not None:
             return self.account_entitlements.enabled(key, default=default)
-        return bool(self.plan and getattr(self.plan, key, default))
+        return bool(default)
 
     def _limit(self, key):
         if self.account_entitlements is not None:
             return self.account_entitlements.limit(key)
-        if self.plan is None:
-            return None
-        return getattr(self.plan, key, None)
+        return None

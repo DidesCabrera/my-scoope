@@ -7,3 +7,6 @@ class NotasConfig(AppConfig):
     def ready(self):
         import notas.signals
         import notas.checks
+        from notas.application.ai_tools.bindings import register_product_ai_bindings
+
+        register_product_ai_bindings()

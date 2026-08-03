@@ -1,17 +1,15 @@
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
 from typing import Any, Mapping
 
-from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
 from accounts.models import AccountPlan, AccountSubscription, CreditLedger, CreditWallet
 
 DEFAULT_ACCOUNT_PLAN_SLUG = "free"
-LEGACY_ACCOUNT_PLAN_ALIASES = {
+ACCOUNT_PLAN_BY_PROFILE_ROLE = {
     "default": "free",
     "member": "basic",
     "nutritionist": "pro",
@@ -60,10 +58,6 @@ def resolve_account_plan_for_user(user: Any | None) -> AccountPlan | None:
     if subscription is not None:
         return subscription.plan
 
-    for candidate in _plan_candidates(user):
-        plan = _active_plan_by_slug(candidate)
-        if plan is not None:
-            return plan
     return _active_plan_by_slug(DEFAULT_ACCOUNT_PLAN_SLUG)
 
 
@@ -298,39 +292,6 @@ def _reservation_summary(wallet: CreditWallet, ledger: CreditLedger, *, already_
 
 def _active_plan_by_slug(slug: str) -> AccountPlan | None:
     return AccountPlan.objects.filter(slug=slug, status=AccountPlan.Status.ACTIVE).first()
-
-
-def _plan_candidates(user: Any | None) -> tuple[str, ...]:
-    candidates: list[str] = []
-    if user is not None and getattr(user, "pk", None):
-        profile = getattr(user, "profile", None)
-        plan = getattr(profile, "plan", None)
-        for value in (getattr(plan, "name", ""), getattr(plan, "role", ""), getattr(profile, "role", "")):
-            normalized = _normalize_plan_slug(value)
-            if normalized:
-                candidates.append(normalized)
-    candidates.append(DEFAULT_ACCOUNT_PLAN_SLUG)
-
-    aliases = {**LEGACY_ACCOUNT_PLAN_ALIASES, **_settings_aliases()}
-    normalized_candidates: list[str] = []
-    for candidate in candidates:
-        aliased = aliases.get(candidate, candidate)
-        if aliased not in normalized_candidates:
-            normalized_candidates.append(aliased)
-    return tuple(normalized_candidates)
-
-
-def _settings_aliases() -> dict[str, str]:
-    aliases = getattr(settings, "AI_ASSISTANT_CREDIT_PLAN_ALIASES", {}) or {}
-    if not isinstance(aliases, Mapping):
-        return {}
-    return {_normalize_plan_slug(key): _normalize_plan_slug(value) for key, value in aliases.items() if key and value}
-
-
-def _normalize_plan_slug(value: Any) -> str:
-    text = str(value or "").strip().lower()
-    text = re.sub(r"[^a-z0-9]+", "_", text).strip("_")
-    return text[:60]
 
 
 def _non_negative_int(value: Any) -> int:

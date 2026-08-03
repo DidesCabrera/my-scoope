@@ -619,10 +619,7 @@ def _plan_candidates(user: Any | None) -> tuple[str, ...]:
         return (DEFAULT_PLAN_CODE,)
     candidates: list[str] = []
     profile = getattr(user, "profile", None)
-    plan = getattr(profile, "plan", None)
     for value in (
-        getattr(plan, "name", ""),
-        getattr(plan, "role", ""),
         getattr(profile, "role", ""),
         DEFAULT_PLAN_CODE,
     ):

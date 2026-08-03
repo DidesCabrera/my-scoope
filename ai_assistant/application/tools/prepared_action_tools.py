@@ -1,9 +1,10 @@
-from ai_assistant.application.prepared_actions import (
-    commit_prepared_action,
-    prepare_product_action,
-    serialize_prepared_action,
+"""Compatibility tool functions backed by registered product ports."""
+
+from ai_assistant.application.product_ports import get_ai_product_bindings
+from ai_assistant.application.tools.tool_names import (
+    TOOL_COMMIT_PREPARED_ACTION,
+    TOOL_PREPARE_PRODUCT_ACTION,
 )
-from notas.application.ai_tools.runtime import run_ai_tool
 
 
 def prepare_product_action_tool(
@@ -12,29 +13,15 @@ def prepare_product_action_tool(
     target_id: int | None = None,
     parameters: dict | None = None,
 ):
-    return run_ai_tool(
-        lambda: {
-            "prepared_action": serialize_prepared_action(
-                prepare_product_action(
-                    user=user,
-                    action_key=action_key,
-                    target_id=target_id,
-                    parameters=parameters,
-                )
-            )
-        },
-        user=user,
+    tool = get_ai_product_bindings().proposal_tools[TOOL_PREPARE_PRODUCT_ACTION]
+    return tool(
+        user,
+        action_key=action_key,
+        target_id=target_id,
+        parameters=parameters,
     )
 
+
 def commit_prepared_action_tool(user, prepared_action_id: str):
-    return run_ai_tool(
-        lambda: {
-            "prepared_action": serialize_prepared_action(
-                commit_prepared_action(
-                    user=user,
-                    public_id=prepared_action_id,
-                )
-            )
-        },
-        user=user,
-    )
+    tool = get_ai_product_bindings().profile_commit_tools[TOOL_COMMIT_PREPARED_ACTION]
+    return tool(user, prepared_action_id=prepared_action_id)

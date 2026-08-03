@@ -181,3 +181,5 @@ Consequences
 - `0164-composable-test-builders.md`: introduce builders pequeños para usuarios y grafos nutricionales, reduciendo setup repetido sin incorporar un framework de factories.
 - `0165-frontend-debt-budgets-and-deterministic-browser-contract.md`: divide CSS de Admin Operations/Programs, fija presupuestos de deuda y elimina IDs, sleeps y auth persistida de E2E.
 - `0166-technical-debt-guardrails-cycle-closure.md`: cierra TDG00-TDG08 con Django/MCP/browser/calidad verdes, transiciones revisadas y evidencia antes/después.
+- `0167-priority-technical-debt-closure.md`: adopta TDG09-TDG14 para extraer coordinación AI, invertir los adapters de producto, ejecutar E2E autenticado en CI y retirar los bridges legado del solver y `Profile.plan`.
+- `0168-priority-technical-debt-closure.md`: cierra TDG09-TDG14 con 1.649 pruebas Django, MCP/calidad/E2E verdes, cero imports AI→`notas` y retiro reversible de los bridges de Nutrition Solver y `Profile.plan`.
