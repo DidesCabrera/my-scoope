@@ -1,10 +1,11 @@
-def test_food_edit_delete_food_removes_row(page, meal_edit_url):
+def test_food_edit_delete_food_removes_row(page, meal_edit_url, open_food_edit_grid):
     page.goto(meal_edit_url)
     page.wait_for_load_state("networkidle")
 
     assert "/accounts/login/" not in page.url, f"Redirigido a login: {page.url}"
+    open_food_edit_grid(page)
 
-    edit_buttons = page.locator(".edit-food-btn")
+    edit_buttons = page.locator('[id^="card-grid-foods-edit-"] .edit-food-btn')
     initial_count = edit_buttons.count()
 
     assert initial_count > 0, "No hay filas para borrar en la tabla de foods"
@@ -22,5 +23,5 @@ def test_food_edit_delete_food_removes_row(page, meal_edit_url):
 
     page.wait_for_load_state("networkidle")
 
-    new_count = page.locator(".edit-food-btn").count()
+    new_count = page.locator('[id^="card-grid-foods-edit-"] .edit-food-btn').count()
     assert new_count == initial_count - 1

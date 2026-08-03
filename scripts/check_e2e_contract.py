@@ -10,7 +10,11 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 E2E_ROOT = ROOT / "e2e"
-FORBIDDEN_TEXT = ("wait_for_timeout(", "storage_state", "e2e/auth/state.json")
+FORBIDDEN_TEXT = (
+    "wait_for_timeout(",
+    "e2e/auth/state.json",
+    "storage_state_path",
+)
 FIXED_APP_ID = re.compile(r"/app/(?:meals|dailyplans)/\d+")
 
 
@@ -33,7 +37,7 @@ def main() -> int:
             print(f"- {finding}", file=sys.stderr)
         return 1
 
-    print("Browser contract check passed: configurable IDs, no fixed sleeps or persisted auth state.")
+    print("Browser contract check passed: configurable IDs, no fixed sleeps or persisted auth files.")
     return 0
 
 

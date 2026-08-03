@@ -8,7 +8,6 @@ on:
       - "static/img/landing/**"
   push:
     branches:
-      - staging
       - main
       - master
     paths-ignore:
@@ -101,12 +100,15 @@ jobs:
         run: scripts/test_mcp.sh
 
   browser-smoke:
+    name: browser-smoke
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
       DJANGO_SETTINGS_MODULE: miapp.settings.dev
       NUTRITION_ONBOARDING_GATE_ENABLED: "false"
       MYSCOOPE_E2E_BASE_URL: http://127.0.0.1:8000
+      MYSCOOPE_E2E_LOGIN: e2e-ci@my-scoope.test
+      MYSCOOPE_E2E_PASSWORD: e2e-ci-disposable-password
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
@@ -118,9 +120,14 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt -r e2e/requirements.txt
           python -m playwright install --with-deps chromium
-      - name: Prepare smoke database
-        run: python manage.py migrate --noinput
-      - name: Run anonymous browser smoke
+      - name: Prepare deterministic browser database
+        run: |
+          python manage.py migrate --noinput
+          python manage.py seed_e2e_fixtures \
+            --login "$MYSCOOPE_E2E_LOGIN" \
+            --password "$MYSCOOPE_E2E_PASSWORD" \
+            --github-env-path "$GITHUB_ENV"
+      - name: Run anonymous and authenticated browser suite
         run: |
           python manage.py runserver 127.0.0.1:8000 --noreload > /tmp/my-scoope-django.log 2>&1 &
           server_pid=$!
@@ -139,7 +146,7 @@ jobs:
             fi
             sleep 1
           done
-          scripts/test_e2e.sh e2e/test_smoke.py
+          scripts/test_e2e.sh
 
   quality:
     name: Static correctness and dependency audit

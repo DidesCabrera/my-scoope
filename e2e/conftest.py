@@ -20,7 +20,7 @@ def base_url():
     return os.environ.get("MYSCOOPE_E2E_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def login_credentials():
     login = os.environ.get("MYSCOOPE_E2E_LOGIN", "").strip()
     password = os.environ.get("MYSCOOPE_E2E_PASSWORD", "")
@@ -46,17 +46,19 @@ def dailyplan_meal_id():
 
 @pytest.fixture
 def meal_edit_url(base_url, meal_id):
-    return f"{base_url}/app/meals/{meal_id}/edit/"
+    return f"{base_url}/app/meals/{meal_id}/"
 
 
 @pytest.fixture
 def dailyplan_edit_url(base_url, dailyplan_id):
-    return f"{base_url}/app/dailyplans/{dailyplan_id}/edit/"
+    return f"{base_url}/app/dailyplans/{dailyplan_id}/"
 
 
 @pytest.fixture
 def dpm_deepedit_url(base_url, dailyplan_id, dailyplan_meal_id):
-    return f"{base_url}/app/dailyplans/{dailyplan_id}/meals/{dailyplan_meal_id}/deepedit/"
+    # Historical tests keep the fixture name, but deep food editing now lives
+    # in the canonical DailyPlanMeal detail surface.
+    return f"{base_url}/app/dailyplans/{dailyplan_id}/meals/{dailyplan_meal_id}/"
 
 
 @pytest.fixture
@@ -72,6 +74,68 @@ def ui_settle():
     return settle
 
 
+@pytest.fixture
+def open_dpm_food_picker():
+    def open_picker(page):
+        toggle = page.locator('.js-picker-toggle[aria-controls="dpm-picker-section"]')
+        toggle.wait_for()
+        if toggle.get_attribute("aria-expanded") != "true":
+            toggle.click()
+        page.locator("#food-search").wait_for()
+
+    return open_picker
+
+
+@pytest.fixture
+def open_meal_food_picker():
+    def open_picker(page):
+        toggle = page.locator('.js-picker-toggle[aria-controls="meal-picker-section"]')
+        toggle.wait_for()
+        if toggle.get_attribute("aria-expanded") != "true":
+            toggle.click()
+        page.locator("#food-search").wait_for()
+
+    return open_picker
+
+
+@pytest.fixture
+def open_dailyplan_meal_picker():
+    def open_picker(page):
+        toggle = page.locator('.js-picker-toggle[aria-controls="dailyplan-picker-section"]')
+        toggle.wait_for()
+        if toggle.get_attribute("aria-expanded") != "true":
+            toggle.click()
+        page.locator("#meal-search").wait_for()
+
+    return open_picker
+
+
+@pytest.fixture
+def open_food_edit_grid():
+    def open_grid(page):
+        tab = page.locator(
+            '.card-detail-tabs--desktop .btn-desplegar[data-target^="#card-grid-foods-edit-"]'
+        ).first
+        tab.wait_for()
+        tab.click()
+        page.locator('[id^="card-grid-foods-edit-"] .edit-food-btn').first.wait_for()
+
+    return open_grid
+
+
+@pytest.fixture
+def open_meal_edit_grid():
+    def open_grid(page):
+        tab = page.locator(
+            '.card-detail-tabs--desktop .btn-desplegar[data-target^="#card-grid-meals-edit-"]'
+        ).first
+        tab.wait_for()
+        tab.click()
+        page.locator('[id^="card-grid-meals-edit-"] .edit-meal-btn').first.wait_for()
+
+    return open_grid
+
+
 def _login(context, *, base_url, credentials):
     login, password = credentials
     login_page = context.new_page()
@@ -83,10 +147,22 @@ def _login(context, *, base_url, credentials):
     login_page.close()
 
 
+@pytest.fixture(scope="session")
+def authenticated_storage_state(browser, base_url, login_credentials):
+    authenticated_context = browser.new_context()
+    _login(
+        authenticated_context,
+        base_url=base_url,
+        credentials=login_credentials,
+    )
+    storage_state = authenticated_context.storage_state()
+    authenticated_context.close()
+    return storage_state
+
+
 @pytest.fixture
-def context(browser, base_url, login_credentials):
-    context = browser.new_context()
-    _login(context, base_url=base_url, credentials=login_credentials)
+def context(browser, authenticated_storage_state):
+    context = browser.new_context(storage_state=authenticated_storage_state)
     yield context
     context.close()
 

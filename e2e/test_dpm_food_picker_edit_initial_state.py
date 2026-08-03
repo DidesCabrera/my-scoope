@@ -1,4 +1,4 @@
-def test_dpm_food_picker_edit_initial_state(page, dpm_deepedit_url, ui_settle):
+def test_dpm_food_picker_edit_initial_state(page, dpm_deepedit_url, ui_settle, open_food_edit_grid):
     messages = []
 
     page.on("console", lambda msg: messages.append(f"{msg.type}: {msg.text}"))
@@ -19,8 +19,9 @@ def test_dpm_food_picker_edit_initial_state(page, dpm_deepedit_url, ui_settle):
     assert not food_preview.is_visible()
     assert not add_button.is_visible()
     assert not update_button.is_visible()
+    open_food_edit_grid(page)
 
-    edit_button = page.locator(".edit-food-btn").first
+    edit_button = page.locator('[id^="card-grid-foods-edit-"] .edit-food-btn').first
     edit_button.wait_for()
     edit_button.click()
 

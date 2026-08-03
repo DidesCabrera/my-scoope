@@ -7,10 +7,12 @@ ROOT = Path(__file__).resolve().parents[3]
 
 
 class CiIntegrationContractTests(SimpleTestCase):
-    def test_workflow_runs_for_staging_pushes(self):
+    def test_proposed_changes_run_once_from_pull_requests(self):
         workflow = (ROOT / ".github/workflows/django-ci.yml").read_text()
 
-        self.assertIn("      - staging", workflow)
+        self.assertIn("  pull_request:", workflow)
+        self.assertNotIn("      - staging", workflow)
+        self.assertIn("      - main", workflow)
 
     def test_ci_checks_migration_drift_and_repository_hygiene(self):
         aggregate_script = (ROOT / "scripts/ci_django_checks.sh").read_text()
@@ -31,3 +33,10 @@ class CiIntegrationContractTests(SimpleTestCase):
         self.assertIn("mcp:", workflow)
         self.assertIn("browser-smoke:", workflow)
         self.assertIn("scripts/test_mcp.sh", workflow)
+
+    def test_browser_gate_seeds_and_runs_the_authenticated_suite(self):
+        workflow = (ROOT / ".github/workflows/django-ci.yml").read_text()
+
+        self.assertIn("manage.py seed_e2e_fixtures", workflow)
+        self.assertIn('--github-env-path "$GITHUB_ENV"', workflow)
+        self.assertIn("scripts/test_e2e.sh", workflow)

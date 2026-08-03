@@ -1,10 +1,11 @@
-def test_dpm_food_picker_edit_submit_updates_food(page, dpm_deepedit_url, ui_settle):
+def test_dpm_food_picker_edit_submit_updates_food(page, dpm_deepedit_url, ui_settle, open_food_edit_grid):
     page.goto(dpm_deepedit_url)
     page.wait_for_load_state("networkidle")
 
     assert "/accounts/login/" not in page.url, f"Redirigido a login: {page.url}"
+    open_food_edit_grid(page)
 
-    edit_button = page.locator(".edit-food-btn").first
+    edit_button = page.locator('[id^="card-grid-foods-edit-"] .edit-food-btn').first
     quantity_input = page.locator("#food-quantity")
     update_button = page.locator("#btn-update-food")
 

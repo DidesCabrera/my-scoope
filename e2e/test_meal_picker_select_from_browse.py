@@ -1,8 +1,9 @@
-def test_meal_picker_select_from_browse_shows_preview(page, dailyplan_edit_url):
+def test_meal_picker_select_from_browse_shows_preview(page, dailyplan_edit_url, open_dailyplan_meal_picker):
     page.goto(dailyplan_edit_url)
     page.wait_for_load_state("networkidle")
 
     assert "/accounts/login/" not in page.url, f"Redirigido a login: {page.url}"
+    open_dailyplan_meal_picker(page)
 
     meal_search = page.locator("#meal-search")
     meal_list = page.locator("#meal-list")
@@ -17,7 +18,7 @@ def test_meal_picker_select_from_browse_shows_preview(page, dailyplan_edit_url):
 
     assert meal_list.is_visible(), "La lista no se abrió al enfocar el input"
 
-    items = meal_list.locator("li.food-item")
+    items = meal_list.locator("li.meal-item")
     assert items.count() > 0, "No hay meals browseables en la lista"
 
     first_item = items.first
