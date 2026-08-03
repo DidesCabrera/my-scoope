@@ -1,0 +1,16 @@
+# Direct runtime dependencies. requirements.txt remains the fully pinned install
+# contract consumed by deployment and CI.
+Django==6.0.7
+dj-database-url==3.1.2
+django-allauth==65.15.0
+django-ratelimit==4.1.0
+gunicorn==25.1.0
+openpyxl==3.1.5
+ortools==9.15.6755
+pandas==2.3.3
+psycopg2-binary==2.9.11
+pywebpush==2.3.0
+redis==8.0.1
+requests==2.33.0
+sentry-sdk==2.64.0
+whitenoise==6.12.0

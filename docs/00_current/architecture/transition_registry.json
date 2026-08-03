@@ -38,13 +38,13 @@
       "decision": "docs/20_decisions/0014-food-catalog-import-adapters.md"
     },
     {
-      "id": "deterministic-ai-engine-rollback",
-      "status": "intentionally_durable",
+      "id": "ai-product-adapter-boundary",
+      "status": "transitional",
       "owner": "ai_assistant",
-      "purpose": "Provide an explicit rollback engine while LLM-native behavior is validated and rolled out by evidence.",
-      "current_consumers": ["AI Assistant engine selector", "production rollback configuration", "deterministic regression scenarios"],
-      "exit_evidence": ["A future decision accepts removal based on production evidence", "A replacement degraded-mode strategy exists", "Rollback and cost controls remain available"],
-      "decision": "docs/20_decisions/0030-ai-assistant-chat-engine-selector.md"
+      "purpose": "Keep AI orchestration contracts separate while product-owned intake, read and prepared-action implementations still live in notas.",
+      "current_consumers": ["AI context builder", "AI tool executors", "prepared product actions"],
+      "exit_evidence": ["Product-facing tool ports are owned outside notas implementation modules", "AI Assistant has no production imports from notas", "AI and notas boundary suites remain green"],
+      "decision": "docs/20_decisions/0163-ai-runtime-and-tool-capability-seams.md"
     },
     {
       "id": "django-admin-technical-fallback",

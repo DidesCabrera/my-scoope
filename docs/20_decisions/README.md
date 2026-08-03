@@ -173,3 +173,11 @@ Consequences
 - `0156-email-delivery-abuse-protection.md`: adopta Turnstile server-side, límites compartidos, auditoría persistente e invitaciones idempotentes y presupuestadas.
 - `0157-ai-assistant-outcome-first-runtime.md`: reemplaza preview, rollout y fallback determinístico por un único LLM orientado a resultados, con memoria real, propuestas en el mismo turno, texto natural y gates offline/live.
 - `0158-ai-assistant-cost-aware-model-evaluation.md`: baja el baseline del AI Assistant a Luna/low, reserva Terra como escalamiento medido y Sol como benchmark explícito, con reporte live de calidad, tokens y costo.
+- `0159-technical-debt-guardrails-cycle.md`: adopta TDG00-TDG08 para completar las superficies de calidad, contener dependencias y descomponer hotspots preservando Food Catalog como dominio estratégico de Admin Operations.
+- `0160-explicit-repository-quality-surfaces.md`: separa gates reproducibles para Django fast/full, MCP y browser, y elimina la dependencia de activar manualmente `.venv`.
+- `0161-architecture-and-quality-debt-ratchets.md`: hace ejecutables los límites de dependencias, ciclos, vulnerabilidades y errores estáticos críticos sin convertir estilo histórico en un bloqueo masivo.
+- `0162-admin-operations-domain-owned-modules.md`: separa services, selectors y viewmodels de Admin Operations por dominio, preserva fachadas compatibles y mantiene Food Catalog como superficie operacional principal.
+- `0163-ai-runtime-and-tool-capability-seams.md`: separa configuración y parsing del orquestador, divide schemas de tools por capacidad y traslada el contrato neutral de resultados al dominio IA.
+- `0164-composable-test-builders.md`: introduce builders pequeños para usuarios y grafos nutricionales, reduciendo setup repetido sin incorporar un framework de factories.
+- `0165-frontend-debt-budgets-and-deterministic-browser-contract.md`: divide CSS de Admin Operations/Programs, fija presupuestos de deuda y elimina IDs, sleeps y auth persistida de E2E.
+- `0166-technical-debt-guardrails-cycle-closure.md`: cierra TDG00-TDG08 con Django/MCP/browser/calidad verdes, transiciones revisadas y evidencia antes/después.

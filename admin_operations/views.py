@@ -3,6 +3,7 @@ from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 from django.views.decorators.http import require_GET
 
+from admin_operations.interface_feedback import flash_operation_result, operation_not_found_as_404
 from admin_operations.system_control import build_system_control_vm
 
 from admin_operations.services import (
@@ -12,11 +13,11 @@ from admin_operations.services import (
     build_ai_operations_vm,
     build_ai_proposal_detail_vm,
     build_candidate_detail_vm,
+    build_catalog_food_detail_vm,
     build_food_catalog_inventory_vm,
     build_food_catalog_imports_vm,
     build_food_catalog_operations_vm,
     build_operations_overview_vm,
-    flash_operation_result,
     perform_candidate_operation,
     perform_catalog_food_operation,
     perform_core_seed_apply,
@@ -78,6 +79,7 @@ def ai_assistant(request):
 
 @staff_member_required
 @require_POST
+@operation_not_found_as_404
 def ai_usage_event_action(request, event_id):
     result = perform_ai_usage_event_operation(
         event_id=event_id,
@@ -91,6 +93,7 @@ def ai_usage_event_action(request, event_id):
 
 @staff_member_required
 @require_POST
+@operation_not_found_as_404
 def ai_quota_action(request, quota_id):
     result = perform_ai_quota_operation(
         quota_id=quota_id,
@@ -103,6 +106,7 @@ def ai_quota_action(request, quota_id):
 
 
 @staff_member_required
+@operation_not_found_as_404
 def ai_proposal_detail(request, proposal_id):
     ui_vm = build_ui_vm(ADMIN_OPERATIONS_OVERVIEW_VIEWMODE)
     content = build_ai_proposal_detail_vm(proposal_id)
@@ -112,6 +116,7 @@ def ai_proposal_detail(request, proposal_id):
 
 @staff_member_required
 @require_POST
+@operation_not_found_as_404
 def ai_proposal_action(request, proposal_id):
     result = perform_ai_proposal_operation(
         proposal_id=proposal_id,
@@ -132,6 +137,7 @@ def accounts(request):
 
 
 @staff_member_required
+@operation_not_found_as_404
 def account_detail(request, user_id):
     ui_vm = build_ui_vm(ADMIN_OPERATIONS_OVERVIEW_VIEWMODE)
     content = build_account_detail_vm(user_id)
@@ -141,6 +147,7 @@ def account_detail(request, user_id):
 
 @staff_member_required
 @require_POST
+@operation_not_found_as_404
 def account_credit_adjustment(request, user_id):
     result = perform_credit_adjustment(
         user_id=user_id,
@@ -154,6 +161,7 @@ def account_credit_adjustment(request, user_id):
 
 @staff_member_required
 @require_POST
+@operation_not_found_as_404
 def account_reservation_release(request, user_id, reservation_id):
     result = perform_credit_reservation_release(
         reservation_id=reservation_id,
@@ -167,7 +175,10 @@ def account_reservation_release(request, user_id, reservation_id):
 @staff_member_required
 def food_catalog(request):
     ui_vm = build_ui_vm(ADMIN_OPERATIONS_OVERVIEW_VIEWMODE)
-    content = build_food_catalog_operations_vm()
+    content = build_food_catalog_operations_vm(
+        query=request.GET.get("q", ""),
+        stage=request.GET.get("stage", "all"),
+    )
     base_vm = BaseVM(ui=ui_vm, content=content)
     return render(request, "admin_operations/food_catalog.html", base_vm.as_context())
 
@@ -324,6 +335,7 @@ def food_catalog_import_policy_action(request):
 
 
 @staff_member_required
+@operation_not_found_as_404
 def food_catalog_candidate_detail(request, candidate_id):
     ui_vm = build_ui_vm(ADMIN_OPERATIONS_OVERVIEW_VIEWMODE)
     content = build_candidate_detail_vm(candidate_id)
@@ -332,7 +344,17 @@ def food_catalog_candidate_detail(request, candidate_id):
 
 
 @staff_member_required
+@operation_not_found_as_404
+def food_catalog_food_detail(request, catalog_food_id):
+    ui_vm = build_ui_vm(ADMIN_OPERATIONS_OVERVIEW_VIEWMODE)
+    content = build_catalog_food_detail_vm(catalog_food_id)
+    base_vm = BaseVM(ui=ui_vm, content=content)
+    return render(request, "admin_operations/food_catalog_food_detail.html", base_vm.as_context())
+
+
+@staff_member_required
 @require_POST
+@operation_not_found_as_404
 def food_catalog_candidate_action(request, candidate_id):
     result = perform_candidate_operation(
         candidate_id=candidate_id,
@@ -346,6 +368,7 @@ def food_catalog_candidate_action(request, candidate_id):
 
 @staff_member_required
 @require_POST
+@operation_not_found_as_404
 def food_catalog_food_action(request, catalog_food_id):
     result = perform_catalog_food_operation(
         catalog_food_id=catalog_food_id,
@@ -354,11 +377,12 @@ def food_catalog_food_action(request, catalog_food_id):
         reason=request.POST.get("reason", ""),
     )
     flash_operation_result(request, result)
-    return redirect("admin_operations_food_catalog")
+    return redirect("admin_operations_food_catalog_food", catalog_food_id=catalog_food_id)
 
 
 @staff_member_required
 @require_POST
+@operation_not_found_as_404
 def food_catalog_food_snapshot(request, catalog_food_id):
     result = perform_catalog_food_snapshot(
         catalog_food_id=catalog_food_id,
@@ -366,4 +390,4 @@ def food_catalog_food_snapshot(request, catalog_food_id):
         reason=request.POST.get("reason", ""),
     )
     flash_operation_result(request, result)
-    return redirect("admin_operations_food_catalog")
+    return redirect("admin_operations_food_catalog_food", catalog_food_id=catalog_food_id)

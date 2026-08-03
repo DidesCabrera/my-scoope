@@ -1,0 +1,5 @@
+# Browser test dependencies. Browser binaries are installed separately with
+# `python -m playwright install chromium`.
+playwright==1.62.0
+pytest==9.1.1
+pytest-playwright==0.8.0

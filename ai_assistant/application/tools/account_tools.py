@@ -2,7 +2,7 @@ from django.conf import settings
 
 from billing.application.queries import get_billing_overview_data
 from billing.models import ProviderSubscription
-from notas.application.ai_tools.results import tool_success
+from ai_assistant.domain.tool_results import tool_success
 
 
 def read_account_billing_context_tool(user):

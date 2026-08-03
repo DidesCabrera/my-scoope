@@ -1,84 +1,35 @@
-from django.contrib.auth.models import User
 from django.test import TestCase
 
+from core.tests.builders import create_test_user
 from notas.application.queries.meal_queries import (
     get_meal_detail,
     list_available_meals,
     list_user_meals,
     search_meals,
 )
-from notas.domain.models import Food, Meal, MealFood, MealShare
+from notas.domain.models import MealShare
+from notas.tests.builders import attach_food, create_food, create_meal
 
 
 class MealQueryTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(
-            username="felipe",
-            password="pass123",
-        )
-        self.other_user = User.objects.create_user(
-            username="other",
-            password="pass123",
-        )
+        self.user = create_test_user("felipe", password="pass123")
+        self.other_user = create_test_user("other", password="pass123")
 
-        self.egg = Food.objects.create(
-            name="Egg",
-            protein=13,
-            carbs=1,
-            fat=11,
-            created_by=self.user,
-        )
+        self.egg = create_food(created_by=self.user, name="Egg", protein=13, carbs=1, fat=11)
+        self.rice = create_food(created_by=self.user, name="Rice", protein=2.7, carbs=28, fat=0.3)
+        self.user_meal = create_meal(created_by=self.user, name="Breakfast")
+        attach_food(meal=self.user_meal, food=self.egg, quantity=100, order=1)
+        attach_food(meal=self.user_meal, food=self.rice, quantity=200, order=2)
 
-        self.rice = Food.objects.create(
-            name="Rice",
-            protein=2.7,
-            carbs=28,
-            fat=0.3,
-            created_by=self.user,
-        )
-
-        self.user_meal = Meal.objects.create(
-            name="Breakfast",
-            created_by=self.user,
-            is_public=False,
-            is_draft=False,
-        )
-
-        MealFood.objects.create(
-            meal=self.user_meal,
-            food=self.egg,
-            quantity=100,
-            order=1,
-        )
-
-        MealFood.objects.create(
-            meal=self.user_meal,
-            food=self.rice,
-            quantity=200,
-            order=2,
-        )
-
-        self.public_meal = Meal.objects.create(
+        self.public_meal = create_meal(
             name="Public Meal",
             created_by=self.other_user,
             is_public=True,
-            is_draft=False,
             is_forkable=True,
         )
-
-        self.private_other_meal = Meal.objects.create(
-            name="Private Other Meal",
-            created_by=self.other_user,
-            is_public=False,
-            is_draft=False,
-        )
-
-        self.shared_meal = Meal.objects.create(
-            name="Shared Meal",
-            created_by=self.other_user,
-            is_public=False,
-            is_draft=False,
-        )
+        self.private_other_meal = create_meal(created_by=self.other_user, name="Private Other Meal")
+        self.shared_meal = create_meal(created_by=self.other_user, name="Shared Meal")
 
         MealShare.objects.create(
             meal=self.shared_meal,

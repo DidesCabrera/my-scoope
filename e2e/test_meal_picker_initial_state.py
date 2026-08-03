@@ -1,5 +1,5 @@
-def test_meal_picker_initial_state(page):
-    page.goto("http://127.0.0.1:8000/app/dailyplans/122/edit/")
+def test_meal_picker_initial_state(page, dailyplan_edit_url):
+    page.goto(dailyplan_edit_url)
     page.wait_for_load_state("networkidle")
 
     assert "/accounts/login/" not in page.url, f"Redirigido a login: {page.url}"

@@ -1,7 +1,7 @@
 # Project State - My Scoope
 
 Status: current
-Last updated: 2026-07-19
+Last updated: 2026-08-02
 Audience: developers and AI assistants
 
 ## What My Scoope is
@@ -47,6 +47,10 @@ My Scoope is past the first architecture-expansion phase. The current priority i
 - Behavioral alignment should direct the assistant through product purpose, current state, capabilities and boundaries rather than fixed dialogue scripts.
 - User-visible credits are product/account concepts; provider tokens and costs are internal observability concepts.
 - External payment evidence and tax-document lifecycle belong to `billing`; verified outcomes project into `accounts`, which remains the entitlement source of truth.
+- Cross-app dependencies, transitional adapters and production module cycles are
+  executable quality contracts rather than informal conventions.
+- Admin Operations services, selectors and view models are owned by operational
+  domain. Food Catalog remains its principal and intentionally broad domain surface.
 - Food Catalog is the master/curation layer; operational `notas.Food` remains the runtime snapshot consumed by existing flows.
 - Nutrition Solver should provide reusable calculation/validation capability, mainly through AI Assistant and backend integrations.
 - Nutrition Solver consumes versioned capability snapshots from operational `notas.Food`; Food Catalog
@@ -111,17 +115,22 @@ When a plan becomes real, durable outcomes should be promoted into `docs/00_curr
 - Food Catalog launch-readiness cycle.
 - AI Assistant activation/observability/credits guardrails.
 - AI Assistant Client Memory & Profile Objects and LLM-native alignment cycle CM00-CM24. The final real-provider gate and targeted UX rerun passed automated and human review, consolidating native function calling, grounded state transitions and explicit cards.
-- AI Assistant Behavioral Alignment BA00-BA07 and Post-Tool Follow-up Transport PT00-PT06 are closed. The accepted baseline covers domain anchoring, capability abstraction, ambiguous-intent restraint, goal-directed progression, response quality, exact provider call correlation, contract-faithful test doubles and rare degraded `state_ack_only.v2` fallbacks. Closure passed Django checks, 2 core regressions and the complete 1,446-test suite through `scripts/ci_django_checks.sh`.
+- AI Assistant Behavioral Alignment BA00-BA07 and Post-Tool Follow-up Transport PT00-PT06 are closed. The accepted baseline covers domain anchoring, capability abstraction, ambiguous-intent restraint, goal-directed progression, response quality, exact provider call correlation, contract-faithful test doubles and rare degraded `state_ack_only.v2` fallbacks. Closure passed Django checks, focused core regressions and the complete suite through `scripts/ci_django_checks.sh`.
 - Nutrition Solver Optimization V2 NSO00-NSO10 adds versioned Food Catalog capabilities, operational
   snapshots, multi-capability meal grammar, bounded combination planning, a deterministic CP-SAT
   backend, whole-day constraints, alternatives, shadow quality gates and controlled DailyPlan
   proposal activation. The heuristic path remains the default rollback until rollout evidence is accepted.
 - Project Control, Clarity & Foresight PCF00-PCF10 aligns staging CI; the executable environment contract now formalizes 90
   environment variables, adds safe environment and OAuth diagnostics, exposes one
-  executable status contract through CLI/Admin Operations/AI, validates 153 cycle and
-  decision documents, tracks six architectural transitions and maintains five
-  evidence-led product bets. The local closure passed the complete 1,524-test suite;
+  executable status contract through CLI/Admin Operations/AI, validates the document
+  registry, tracks explicit architectural transitions and maintains evidence-led
+  product bets. The local closure passed the complete suite;
   deployed release identity and probe accuracy remain staging gates.
+- Technical Debt Guardrails TDG00-TDG08 makes Django, MCP, browser, static analysis,
+  dependency security, architecture boundaries, CSS debt and repository hygiene
+  explicit quality surfaces. Admin Operations and AI runtime hotspots are decomposed
+  behind stable facades, shared test builders reduce repeated setup and browser tests
+  use deterministic environment-owned fixtures.
 
 ## Planned near-term cycles
 

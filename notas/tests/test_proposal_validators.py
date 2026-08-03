@@ -1,20 +1,17 @@
 import json
 
-from django.contrib.auth.models import User
 from django.test import TestCase
 
+from core.tests.builders import create_test_user
 from notas.application.proposals.validators import (
     ValidatedUpdateMealFoodQuantityOperation,
     validate_proposal_operations,
 )
 from notas.domain.models import (
-    DailyPlan,
     DailyPlanMeal,
-    Food,
-    Meal,
-    MealFood,
     NutritionProposal,
 )
+from notas.tests.builders import attach_food, create_dailyplan, create_food, create_meal
 
 
 def assert_json_serializable(test_case, value):
@@ -26,45 +23,13 @@ def assert_json_serializable(test_case, value):
 
 class ProposalValidatorTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(
-            username="felipe",
-            email="felipe@example.com",
-            password="pass123",
-        )
-        self.other_user = User.objects.create_user(
-            username="other",
-            email="other@example.com",
-            password="pass123",
-        )
+        self.user = create_test_user("felipe", email="felipe@example.com", password="pass123")
+        self.other_user = create_test_user("other", email="other@example.com", password="pass123")
 
-        self.food = Food.objects.create(
-            name="Base Food",
-            protein=10,
-            carbs=20,
-            fat=0,
-            created_by=self.user,
-        )
-
-        self.meal = Meal.objects.create(
-            name="Base Meal",
-            created_by=self.user,
-            is_public=False,
-            is_draft=False,
-        )
-
-        self.mealfood = MealFood.objects.create(
-            meal=self.meal,
-            food=self.food,
-            quantity=100,
-            order=1,
-        )
-
-        self.dailyplan = DailyPlan.objects.create(
-            name="Training Day",
-            created_by=self.user,
-            is_public=False,
-            is_draft=False,
-        )
+        self.food = create_food(created_by=self.user, name="Base Food", fat=0)
+        self.meal = create_meal(created_by=self.user, name="Base Meal")
+        self.mealfood = attach_food(meal=self.meal, food=self.food)
+        self.dailyplan = create_dailyplan(created_by=self.user, name="Training Day")
 
         DailyPlanMeal.objects.create(
             dailyplan=self.dailyplan,
@@ -72,19 +37,8 @@ class ProposalValidatorTests(TestCase):
             order=1,
         )
 
-        self.other_meal = Meal.objects.create(
-            name="Other Meal",
-            created_by=self.user,
-            is_public=False,
-            is_draft=False,
-        )
-
-        self.other_mealfood = MealFood.objects.create(
-            meal=self.other_meal,
-            food=self.food,
-            quantity=100,
-            order=1,
-        )
+        self.other_meal = create_meal(created_by=self.user, name="Other Meal")
+        self.other_mealfood = attach_food(meal=self.other_meal, food=self.food)
 
         self.proposal = NutritionProposal.objects.create(
             dailyplan=self.dailyplan,

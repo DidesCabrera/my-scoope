@@ -179,6 +179,26 @@ For a whole-project local boundary, the authoritative command is:
 scripts/ci_django_checks.sh
 ```
 
+This aggregate command resolves the project interpreter without requiring an
+activated virtual environment and runs both Django quality layers:
+
+```text
+scripts/ci_fast_checks.sh          structural/configuration/architecture feedback
+scripts/ci_django_full_suite.sh    complete Django regression suite
+```
+
+Other repository test surfaces have independent dependency and execution contracts:
+
+```text
+scripts/test_mcp.sh                MCP contract and protocol suite
+scripts/test_e2e.sh                browser suite against an already running server
+```
+
+MCP and the anonymous browser smoke are required GitHub Actions jobs. Seeded browser
+scenarios remain local/staging evidence and receive base URL, credentials and object
+IDs through the environment; they never persist auth state. Browser dependencies
+live in `e2e/requirements.txt`, never runtime requirements.
+
 Do not classify redirects from a raw `python manage.py test` invocation as CI regressions until the repository's explicit test environment has been applied. The script preserves production defaults in production while making the historical suite deterministic.
 
 ### 4. Avoid invisible dependencies on test order

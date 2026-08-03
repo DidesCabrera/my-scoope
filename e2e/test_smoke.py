@@ -1,3 +1,3 @@
-def test_homepage_loads(page):
-    page.goto("http://127.0.0.1:8000/")
-    assert page.title() is not None
+def test_homepage_loads(anonymous_page, base_url):
+    anonymous_page.goto(f"{base_url}/")
+    assert anonymous_page.title() is not None

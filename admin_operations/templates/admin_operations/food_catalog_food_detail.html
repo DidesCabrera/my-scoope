@@ -1,0 +1,235 @@
+{% extends "admin_operations/base.html" %}
+{% load static %}
+{% block title %}{{ vm.content.display_name }}{% endblock %}
+{% block extra_styles %}
+  <link rel="stylesheet" href="{% static 'notas/css/components/admin_operations_food_detail.css' %}">
+{% endblock %}
+{% block content %}
+<div class="page admin-analytics-page admin-operations-page admin-operations-food-detail-page">
+  <a class="admin-operations-back-link" href="{% url 'admin_operations_food_catalog' %}">
+    <i data-lucide="arrow-left"></i> Volver a la bandeja
+  </a>
+
+  <section class="admin-operations-food-detail-hero">
+    <div class="admin-operations-food-detail-identity">
+      <div class="admin-operations-food-detail-badges">
+        <span class="admin-operations-stage-label admin-operations-stage-label--{{ vm.content.stage_key }}">{{ vm.content.stage_label }}</span>
+        <span class="admin-operations-detail-status">{{ vm.content.status_label }}</span>
+        {% if vm.content.is_operational %}<span class="admin-operations-detail-status admin-operations-detail-status--operational"><i data-lucide="circle-check"></i> Operativo</span>{% endif %}
+      </div>
+      <h2>{{ vm.content.display_name }}</h2>
+      <p>{% if vm.content.brand_name %}{{ vm.content.brand_name }} · {% endif %}{{ vm.content.source_label }}</p>
+
+      <div class="admin-operations-food-detail-health">
+        <div>
+          <span>Calidad de datos</span>
+          <strong>{{ vm.content.quality_score }}/100</strong>
+          <div class="admin-operations-quality-track" aria-label="Calidad {{ vm.content.quality_score }} de 100">
+            <span style="width: {{ vm.content.quality_score }}%"></span>
+          </div>
+        </div>
+        <div>
+          <span>Confianza</span>
+          <strong>{{ vm.content.confidence_label }}</strong>
+          <small>Valor informado en la ficha maestra</small>
+        </div>
+        <div>
+          <span>Catalog ID</span>
+          <strong>#{{ vm.content.food_pk }}</strong>
+          <small>Identificador interno de curación</small>
+        </div>
+      </div>
+    </div>
+
+    <aside class="admin-operations-food-decision admin-operations-food-decision--{{ vm.content.readiness_state }}" aria-label="Decisión de curación">
+      <p class="section-eyebrow">Siguiente paso</p>
+      <div class="admin-operations-food-decision__heading">
+        <i data-lucide="{% if vm.content.readiness_state == 'ready' %}circle-check{% elif vm.content.readiness_state == 'blocked' %}triangle-alert{% else %}circle-dot{% endif %}"></i>
+        <h3>{{ vm.content.readiness_label }}</h3>
+      </div>
+
+      {% if vm.content.readiness_issues %}
+        <ul class="admin-operations-food-decision__issues">
+          {% for issue in vm.content.readiness_issues %}<li>{{ issue }}</li>{% endfor %}
+        </ul>
+      {% endif %}
+
+      <div class="admin-operations-food-decision__actions">
+        {% if vm.content.primary_action_kind == 'post' %}
+          <form method="post" action="{{ vm.content.action_url }}" data-admin-operations-confirm data-confirm-message="¿Confirmar {{ vm.content.primary_action_label|lower }} para {{ vm.content.display_name }}?">
+            {% csrf_token %}
+            {% if vm.content.primary_action_value %}<input type="hidden" name="action" value="{{ vm.content.primary_action_value }}">{% endif %}
+            <button class="admin-operations-detail-primary-action" type="submit">
+              <i data-lucide="{{ vm.content.primary_action_icon }}"></i>{{ vm.content.primary_action_label }}
+            </button>
+          </form>
+        {% elif vm.content.primary_action_kind == 'link' %}
+          <a class="admin-operations-detail-primary-action" href="{{ vm.content.admin_url }}">
+            <i data-lucide="{{ vm.content.primary_action_icon }}"></i>{{ vm.content.primary_action_label }}
+          </a>
+        {% endif %}
+
+        {% if vm.content.is_operational %}
+          <a class="admin-operations-operational-link" href="{{ vm.content.operational_url }}">
+            <i data-lucide="external-link"></i>{{ vm.content.operational_label }}
+          </a>
+        {% endif %}
+
+        <a class="admin-operations-detail-edit-link" href="{{ vm.content.admin_url }}">
+          <i data-lucide="pencil"></i> Editar datos
+        </a>
+
+        {% if vm.content.secondary_actions %}
+          <details class="admin-operations-detail-more-actions">
+            <summary>Otras decisiones</summary>
+            <form method="post" action="{{ vm.content.action_url }}" data-admin-operations-confirm data-confirm-message="¿Confirmar cambio de etapa para {{ vm.content.display_name }}?">
+              {% csrf_token %}
+              <label>
+                Comentario opcional
+                <input type="text" name="reason" placeholder="Contexto para auditoría">
+              </label>
+              <div>
+                {% for action_value, action_label in vm.content.secondary_actions %}
+                  <button type="submit" name="action" value="{{ action_value }}">{{ action_label }}</button>
+                {% endfor %}
+              </div>
+            </form>
+          </details>
+        {% endif %}
+      </div>
+    </aside>
+  </section>
+
+  <div class="admin-operations-detail-anchor-nav" role="tablist" aria-label="Secciones de la ficha" data-food-detail-tabs>
+    <button id="detail-tab-identidad" type="button" role="tab" aria-selected="true" aria-controls="identidad" data-detail-tab="identidad">Identidad</button>
+    <button id="detail-tab-nutricion" type="button" role="tab" aria-selected="false" aria-controls="nutricion" tabindex="-1" data-detail-tab="nutricion">Nutrición</button>
+    <button id="detail-tab-evidencia" type="button" role="tab" aria-selected="false" aria-controls="evidencia" tabindex="-1" data-detail-tab="evidencia">Evidencia y porciones</button>
+    <button id="detail-tab-solver" type="button" role="tab" aria-selected="false" aria-controls="solver" tabindex="-1" data-detail-tab="solver">Solver</button>
+    <button id="detail-tab-trazabilidad" type="button" role="tab" aria-selected="false" aria-controls="trazabilidad" tabindex="-1" data-detail-tab="trazabilidad">Trazabilidad</button>
+  </div>
+
+  <section class="admin-operations-food-detail-section" id="identidad" role="tabpanel" aria-labelledby="detail-tab-identidad" data-detail-panel="identidad">
+    <div class="admin-operations-detail-section-heading">
+      <div>
+        <p class="section-eyebrow">Identidad</p>
+        <h3>Clasificación del alimento</h3>
+      </div>
+      <p>Nombre, categoría y semántica culinaria que distinguen este alimento dentro del catálogo.</p>
+    </div>
+    <dl class="admin-operations-detail-fact-grid">
+      {% for fact in vm.content.identity_facts %}
+        <div><dt>{{ fact.label }}</dt><dd>{{ fact.value }}</dd>{% if fact.helper %}<small>{{ fact.helper }}</small>{% endif %}</div>
+      {% endfor %}
+    </dl>
+    <div class="admin-operations-detail-inline-list">
+      <h4>Alias de búsqueda</h4>
+      {% if vm.content.aliases %}
+        <div>
+          {% for alias in vm.content.aliases %}
+            <span>{{ alias.name }} <small>{{ alias.kind_label }} · {{ alias.locale_label }}{% if alias.is_primary %} · principal{% endif %}</small></span>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p>Sin alias registrados.</p>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="admin-operations-food-detail-section" id="nutricion" role="tabpanel" aria-labelledby="detail-tab-nutricion" data-detail-panel="nutricion" hidden>
+    <div class="admin-operations-detail-section-heading">
+      <div>
+        <p class="section-eyebrow">Nutrición</p>
+        <h3>Valores por 100 gramos</h3>
+      </div>
+      <p>Base nutricional que será copiada al alimento operativo después de publicar y activar.</p>
+    </div>
+    <dl class="admin-operations-nutrition-fact-grid">
+      {% for fact in vm.content.nutrition_facts %}
+        <div><dt>{{ fact.label }}</dt><dd>{{ fact.value }}</dd>{% if fact.helper %}<small>{{ fact.helper }}</small>{% endif %}</div>
+      {% endfor %}
+    </dl>
+  </section>
+
+  <section class="admin-operations-food-detail-section" id="evidencia" role="tabpanel" aria-labelledby="detail-tab-evidencia" data-detail-panel="evidencia" hidden>
+    <div class="admin-operations-detail-section-heading">
+      <div>
+        <p class="section-eyebrow">Respaldo</p>
+        <h3>Evidencia y porciones</h3>
+      </div>
+      <p>Fuentes trazables y medidas que permiten publicar el alimento con contexto suficiente.</p>
+    </div>
+    <div class="admin-operations-detail-split">
+      <div>
+        <div class="admin-operations-detail-subheading"><h4>Fuentes</h4><span>{{ vm.content.evidence|length }}</span></div>
+        {% if vm.content.evidence %}
+          <div class="admin-operations-evidence-list">
+            {% for source in vm.content.evidence %}
+              <article>
+                <div>
+                  <strong>{{ source.name }}</strong>
+                  <small>{{ source.source_type }} · {{ source.reference_label }}</small>
+                  {% if source.dataset_label %}<small>{{ source.dataset_label }}</small>{% endif %}
+                </div>
+                <span>{{ source.license_label }}</span>
+                {% if source.url %}<a href="{{ source.url }}" target="_blank" rel="noopener noreferrer" aria-label="Abrir fuente {{ source.name }}"><i data-lucide="external-link"></i></a>{% endif %}
+                {% if source.attribution %}<p>{{ source.attribution }}</p>{% endif %}
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="admin-operations-detail-empty"><i data-lucide="file-question"></i><span><strong>Sin evidencia</strong><small>Agrega al menos una fuente trazable antes de publicar.</small></span></div>
+        {% endif %}
+      </div>
+      <div>
+        <div class="admin-operations-detail-subheading"><h4>Porciones</h4><span>{{ vm.content.portions|length }}</span></div>
+        {% if vm.content.portions %}
+          <div class="admin-operations-portion-list">
+            {% for portion in vm.content.portions %}
+              <div>
+                <span><strong>{{ portion.label }}</strong><small>{{ portion.source_label }}</small></span>
+                <strong>{{ portion.grams_label }}</strong>
+                {% if portion.is_default %}<span>Predeterminada</span>{% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="admin-operations-detail-empty"><i data-lucide="scale"></i><span><strong>Sin porciones</strong><small>Define una porción y márcala como predeterminada.</small></span></div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <section class="admin-operations-food-detail-section" id="solver" role="tabpanel" aria-labelledby="detail-tab-solver" data-detail-panel="solver" hidden>
+    <div class="admin-operations-detail-section-heading">
+      <div>
+        <p class="section-eyebrow">Uso funcional</p>
+        <h3>Preparación para Solver</h3>
+      </div>
+      <p>Restricciones, capacidades y etiquetas que determinan cómo puede usarse en planes.</p>
+    </div>
+    <dl class="admin-operations-detail-fact-grid admin-operations-detail-fact-grid--solver">
+      {% for fact in vm.content.solver_facts %}
+        <div><dt>{{ fact.label }}</dt><dd>{{ fact.value }}</dd>{% if fact.helper %}<small>{{ fact.helper }}</small>{% endif %}</div>
+      {% endfor %}
+    </dl>
+  </section>
+
+  <section class="admin-operations-food-detail-section" id="trazabilidad" role="tabpanel" aria-labelledby="detail-tab-trazabilidad" data-detail-panel="trazabilidad" hidden>
+    <div class="admin-operations-detail-section-heading">
+      <div>
+        <p class="section-eyebrow">Gobernanza</p>
+        <h3>Trazabilidad del registro</h3>
+      </div>
+      <p>Identificadores y fechas que permiten reconstruir el ciclo de vida del alimento.</p>
+    </div>
+    <dl class="admin-operations-detail-fact-grid admin-operations-detail-fact-grid--lifecycle">
+      {% for fact in vm.content.lifecycle_facts %}
+        <div><dt>{{ fact.label }}</dt><dd>{{ fact.value }}</dd>{% if fact.helper %}<small>{{ fact.helper }}</small>{% endif %}</div>
+      {% endfor %}
+    </dl>
+  </section>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+  <script src="{% static 'notas/js/admin_operations_food_detail.js' %}"></script>
+{% endblock %}

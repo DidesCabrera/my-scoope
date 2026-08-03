@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Any, Mapping, Protocol, Sequence
 
 from django.conf import settings
@@ -10,6 +9,7 @@ from django.utils import timezone
 
 from ai_assistant.domain import AssistantIntentName, AssistantStructuredResponse, AssistantTurnRequest
 from ai_assistant.application.credits import DjangoAICreditService
+from ai_assistant.application.pricing import estimate_cost_usd
 from ai_assistant.infrastructure.providers import LLMProviderResponse
 
 logger = logging.getLogger(__name__)
@@ -176,48 +176,6 @@ def aggregate_provider_usage(provider_responses: Sequence[LLMProviderResponse]) 
     )
 
 
-def estimate_cost_usd(
-    *,
-    provider: str,
-    model: str,
-    input_tokens: int | None,
-    cached_input_tokens: int | None,
-    output_tokens: int | None,
-) -> Decimal | None:
-    """Estimate cost from settings without hard-coding provider prices.
-
-    Expected optional setting shape:
-
-    AI_ASSISTANT_LLM_PRICING_USD_PER_1M_TOKENS = {
-        "openai": {
-            "model-name": {"input": "0.00", "cached_input": "0.00", "output": "0.00"}
-        }
-    }
-    """
-
-    pricing = getattr(settings, "AI_ASSISTANT_LLM_PRICING_USD_PER_1M_TOKENS", {}) or {}
-    model_pricing = _pricing_for_model(pricing, provider=provider, model=model)
-    if not model_pricing:
-        return None
-
-    try:
-        input_rate = Decimal(str(model_pricing.get("input", "0") or "0"))
-        cached_rate = Decimal(str(model_pricing.get("cached_input", model_pricing.get("input", "0")) or "0"))
-        output_rate = Decimal(str(model_pricing.get("output", "0") or "0"))
-    except (InvalidOperation, ValueError):
-        return None
-
-    billable_input_tokens = max(0, int(input_tokens or 0) - int(cached_input_tokens or 0))
-    cached_tokens = int(cached_input_tokens or 0)
-    generated_tokens = int(output_tokens or 0)
-    cost = (
-        Decimal(billable_input_tokens) * input_rate
-        + Decimal(cached_tokens) * cached_rate
-        + Decimal(generated_tokens) * output_rate
-    ) / Decimal(1_000_000)
-    return cost.quantize(Decimal("0.000001"), rounding=ROUND_HALF_UP)
-
-
 def infer_action_type(*, request: AssistantTurnRequest, response: AssistantStructuredResponse) -> str:
     metadata = dict(request.metadata or {})
     explicit = _normalize_action_type(metadata.get("action_type") or metadata.get("ai_action_type"))
@@ -280,17 +238,6 @@ def _cached_input_tokens(usage: Mapping[str, Any]) -> int | None:
             if value is not None:
                 return value
     return None
-
-
-def _pricing_for_model(pricing: Mapping[str, Any], *, provider: str, model: str) -> Mapping[str, Any]:
-    provider_pricing = pricing.get(provider) if isinstance(pricing, Mapping) else None
-    if not isinstance(provider_pricing, Mapping):
-        return {}
-    exact = provider_pricing.get(model)
-    if isinstance(exact, Mapping):
-        return exact
-    default = provider_pricing.get("default")
-    return default if isinstance(default, Mapping) else {}
 
 
 def _safe_usage_metadata(

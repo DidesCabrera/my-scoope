@@ -1,5 +1,5 @@
-def test_meal_picker_edit_initial_state(page):
-    page.goto("http://127.0.0.1:8000/app/dailyplans/122/edit/")
+def test_meal_picker_edit_initial_state(page, dailyplan_edit_url, ui_settle, dailyplan_id):
+    page.goto(dailyplan_edit_url)
     page.wait_for_load_state("networkidle")
 
     assert "/accounts/login/" not in page.url, f"Redirigido a login: {page.url}"
@@ -22,7 +22,7 @@ def test_meal_picker_edit_initial_state(page):
     edit_button.wait_for()
     edit_button.click()
 
-    page.wait_for_timeout(300)
+    ui_settle(page)
 
     title_after = form_title.text_content().strip()
     preview_visible = meal_preview.is_visible()
@@ -39,4 +39,4 @@ def test_meal_picker_edit_initial_state(page):
     assert preview_text != "", "No se cargó el nombre de la meal en el preview"
 
     assert action_after is not None
-    assert "/dailyplans/122/meals/" in action_after and action_after.endswith("/update/")
+    assert f"/dailyplans/{dailyplan_id}/meals/" in action_after and action_after.endswith("/update/")

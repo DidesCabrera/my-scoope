@@ -20,8 +20,8 @@ permissions:
   contents: read
 
 jobs:
-  django:
-    name: Django checks and tests
+  django-fast:
+    name: Django fast structural gate
     runs-on: ubuntu-latest
 
     env:
@@ -45,5 +45,121 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
-      - name: Run Django checks and tests
-        run: scripts/ci_django_checks.sh
+      - name: Run fast checks
+        run: scripts/ci_fast_checks.sh
+
+  django-full:
+    name: Django complete regression suite
+    needs: django-fast
+    runs-on: ubuntu-latest
+
+    env:
+      DJANGO_SETTINGS_MODULE: miapp.settings.dev
+      PYTHONUNBUFFERED: "1"
+      SENTRY_DSN: ""
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Run complete Django suite
+        run: scripts/ci_django_full_suite.sh
+
+  mcp:
+    name: MCP contract and protocol suite
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: mcp_server/requirements.txt
+
+      - name: Install MCP dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r mcp_server/requirements.txt
+
+      - name: Run MCP suite
+        run: scripts/test_mcp.sh
+
+  browser-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DJANGO_SETTINGS_MODULE: miapp.settings.dev
+      NUTRITION_ONBOARDING_GATE_ENABLED: "false"
+      MYSCOOPE_E2E_BASE_URL: http://127.0.0.1:8000
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install application and browser dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt -r e2e/requirements.txt
+          python -m playwright install --with-deps chromium
+      - name: Prepare smoke database
+        run: python manage.py migrate --noinput
+      - name: Run anonymous browser smoke
+        run: |
+          python manage.py runserver 127.0.0.1:8000 --noreload > /tmp/my-scoope-django.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent --output /dev/null http://127.0.0.1:8000/; then
+              break
+            fi
+            if ! kill -0 "$server_pid" 2>/dev/null; then
+              cat /tmp/my-scoope-django.log
+              exit 1
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              cat /tmp/my-scoope-django.log
+              exit 1
+            fi
+            sleep 1
+          done
+          scripts/test_e2e.sh e2e/test_smoke.py
+
+  quality:
+    name: Static correctness and dependency audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements-quality.txt
+
+      - name: Install quality dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-quality.txt
+
+      - name: Run quality gates
+        run: scripts/quality_checks.sh
