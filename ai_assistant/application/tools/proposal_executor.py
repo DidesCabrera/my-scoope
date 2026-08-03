@@ -124,33 +124,11 @@ class ReviewableProposalToolExecutor:
 
 
 def build_default_reviewable_proposal_tool_dispatch_table() -> dict[str, ReviewableProposalToolCallable]:
-    """Load the local reviewable proposal tool dispatch table lazily."""
+    """Load registered reviewable proposal tools lazily."""
 
-    from notas.application.ai_tools.proposal_tools import (
-        create_proportional_dailyplan_calorie_proposal_tool,
-        create_nutrition_engine_dailyplan_proposal_tool,
-        create_nutrition_engine_dailyplan_proposal_from_drafts_tool,
-        create_nutrition_solver_meal_proposal_tool,
-        create_validated_dailyplan_proposal_tool,
-        create_validated_dailyplan_build_proposal_tool,
-        create_validated_meal_proposal_tool,
-        iterate_nutrition_engine_dailyplan_proposal_tool,
-    )
-    from ai_assistant.application.tools.prepared_action_tools import (
-        prepare_product_action_tool,
-    )
+    from ai_assistant.application.product_ports import get_ai_product_bindings
 
-    return {
-        TOOL_CREATE_PROPORTIONAL_DAILYPLAN_CALORIE_PROPOSAL: create_proportional_dailyplan_calorie_proposal_tool,
-        TOOL_PREPARE_PRODUCT_ACTION: prepare_product_action_tool,
-        TOOL_CREATE_VALIDATED_MEAL_PROPOSAL: create_validated_meal_proposal_tool,
-        TOOL_CREATE_NUTRITION_SOLVER_MEAL_PROPOSAL: create_nutrition_solver_meal_proposal_tool,
-        TOOL_CREATE_VALIDATED_DAILYPLAN_PROPOSAL: create_validated_dailyplan_proposal_tool,
-        TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL: create_validated_dailyplan_build_proposal_tool,
-        TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL: create_nutrition_engine_dailyplan_proposal_tool,
-        TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS: create_nutrition_engine_dailyplan_proposal_from_drafts_tool,
-        TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL: iterate_nutrition_engine_dailyplan_proposal_tool,
-    }
+    return dict(get_ai_product_bindings().proposal_tools)
 
 
 def execute_reviewable_proposal_tool(

@@ -124,13 +124,11 @@ class ProfileCommitToolExecutor:
 
 
 def build_default_profile_commit_tool_dispatch_table() -> dict[str, ProfileCommitToolCallable]:
-    """Load local profile commit tools lazily."""
+    """Load registered product commit tools lazily."""
 
-    from notas.application.ai_tools.profile_tools import commit_profile_update_tool
+    from ai_assistant.application.product_ports import get_ai_product_bindings
 
-    return {
-        TOOL_COMMIT_PROFILE_UPDATE: commit_profile_update_tool,
-    }
+    return dict(get_ai_product_bindings().profile_commit_tools)
 
 
 def execute_profile_commit_tool(

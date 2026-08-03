@@ -262,11 +262,11 @@ def _work_progress_context(
     brief = getattr(result, "brief", None)
     blocking_fields: list[str] = []
     if brief is not None:
-        # Import lazily to keep the context builder independent at module load
-        # time while still exposing the domain's exact readiness contract.
-        from notas.application.ai_intake.nutrition_brief import required_proposal_fields
+        from ai_assistant.application.product_ports import get_ai_product_bindings
 
-        blocking_fields = list(required_proposal_fields(brief))
+        blocking_fields = list(
+            get_ai_product_bindings().required_proposal_fields(brief)
+        )
     ready_for_proposal = bool(getattr(result, "is_ready_for_proposal", False))
     required_information_missing = bool(blocking_fields)
     if ready_for_proposal:

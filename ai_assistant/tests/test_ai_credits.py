@@ -57,10 +57,9 @@ class AICreditPlanResolutionTests(TestCase):
     )
     def test_resolves_user_profile_role_to_credit_plan(self):
         user = User.objects.create_user(username="member-user")
-        # signals create a default profile/plan in this project; override only the stable role.
+        # The profile role remains the settings fallback when accounts has no seeded plan.
         user.profile.role = "member"
-        user.profile.plan = None
-        user.profile.save(update_fields=["role", "plan"])
+        user.profile.save(update_fields=["role"])
 
         plan = resolve_credit_plan(user)
 
@@ -104,8 +103,7 @@ class AICreditChargingTests(TestCase):
     def test_recorder_charges_completed_usage_event_as_ai_credits(self):
         user = User.objects.create_user(username="credit-charge-user")
         user.profile.role = "member"
-        user.profile.plan = None
-        user.profile.save(update_fields=["role", "plan"])
+        user.profile.save(update_fields=["role"])
         AccountPlan.objects.create(
             slug="member",
             name="Member",
@@ -150,8 +148,7 @@ class AICreditChargingTests(TestCase):
     def test_orchestrator_blocks_turn_when_monthly_credit_quota_is_exhausted(self):
         user = User.objects.create_user(username="credit-block-user")
         user.profile.role = "member"
-        user.profile.plan = None
-        user.profile.save(update_fields=["role", "plan"])
+        user.profile.save(update_fields=["role"])
         AIUserCreditQuota.objects.create(
             user=user,
             period=current_period(),

@@ -37,6 +37,7 @@ from ai_assistant.domain.contracts import (
     AssistantToolStatus,
 )
 from ai_assistant.domain.tool_results import AIToolResult
+from ai_assistant.application.product_ports import get_ai_product_bindings
 
 ReadOnlyToolCallable = Callable[..., AIToolResult]
 
@@ -201,71 +202,42 @@ class ReadOnlyToolExecutor:
 
 
 def build_default_read_only_tool_dispatch_table() -> dict[str, ReadOnlyToolCallable]:
-    """Load the local read-only tool dispatch table lazily.
+    """Compose registered product tool implementations with AI-owned tools."""
 
-    Importing `notas` happens here instead of in the registry, so the allowlist
-    remains a pure provider-agnostic contract while the executor owns the local
-    application-service dependency.
-    """
-
-    from notas.application.ai_tools.comparison_tools import (
-        list_saved_comparisons_tool,
-        read_saved_comparison_tool,
-    )
-    from notas.application.ai_tools.profile_tools import read_user_profile_context_tool
     from ai_assistant.application.tools.account_tools import (
         read_account_billing_context_tool,
     )
-    from notas.application.ai_tools.read_tools import (
-        list_available_foods_tool,
-        list_user_dailyplans_tool,
-        list_user_foods_tool,
-        list_user_meals_tool,
-        list_user_proposals_tool,
-        preview_nutrition_solver_candidates_tool,
-        read_dailyplan_tool,
-        read_food_tool,
-        read_meal_tool,
-        read_proposal_tool,
-        search_foods_tool,
-        search_dailyplans_tool,
-        search_meals_tool,
-    )
-    from notas.application.ai_tools.workspace_tools import (
-        list_inbox_items_tool,
-        list_user_programs_tool,
-        read_calendarization_tool,
-        read_program_tool,
-    )
+
+    product_tools = dict(get_ai_product_bindings().read_only_tools)
 
     return {
-        TOOL_READ_DAILYPLAN: read_dailyplan_tool,
+        TOOL_READ_DAILYPLAN: product_tools[TOOL_READ_DAILYPLAN],
         TOOL_READ_ACCOUNT_BILLING_CONTEXT: read_account_billing_context_tool,
-        TOOL_READ_CALENDARIZATION: read_calendarization_tool,
-        TOOL_READ_FOOD: read_food_tool,
-        TOOL_READ_MEAL: read_meal_tool,
-        TOOL_READ_PROGRAM: read_program_tool,
-        TOOL_READ_PROPOSAL: read_proposal_tool,
-        TOOL_LIST_SAVED_COMPARISONS: list_saved_comparisons_tool,
-        TOOL_READ_SAVED_COMPARISON: read_saved_comparison_tool,
-        TOOL_LIST_USER_PROPOSALS: list_user_proposals_tool,
-        TOOL_READ_USER_PROFILE_CONTEXT: read_user_profile_context_tool,
-        TOOL_SEARCH_OPERATIONAL_FOODS: _search_operational_foods_adapter(search_foods_tool),
+        TOOL_READ_CALENDARIZATION: product_tools[TOOL_READ_CALENDARIZATION],
+        TOOL_READ_FOOD: product_tools[TOOL_READ_FOOD],
+        TOOL_READ_MEAL: product_tools[TOOL_READ_MEAL],
+        TOOL_READ_PROGRAM: product_tools[TOOL_READ_PROGRAM],
+        TOOL_READ_PROPOSAL: product_tools[TOOL_READ_PROPOSAL],
+        TOOL_LIST_SAVED_COMPARISONS: product_tools[TOOL_LIST_SAVED_COMPARISONS],
+        TOOL_READ_SAVED_COMPARISON: product_tools[TOOL_READ_SAVED_COMPARISON],
+        TOOL_LIST_USER_PROPOSALS: product_tools[TOOL_LIST_USER_PROPOSALS],
+        TOOL_READ_USER_PROFILE_CONTEXT: product_tools[TOOL_READ_USER_PROFILE_CONTEXT],
+        TOOL_SEARCH_OPERATIONAL_FOODS: _search_operational_foods_adapter(product_tools[TOOL_SEARCH_OPERATIONAL_FOODS]),
         TOOL_SEARCH_USER_DAILYPLANS: _search_collection_adapter(
-            search_dailyplans_tool,
+            product_tools[TOOL_SEARCH_USER_DAILYPLANS],
             key="dailyplans",
         ),
-        TOOL_SEARCH_USER_MEALS: _search_collection_adapter(search_meals_tool, key="meals"),
-        TOOL_LIST_OPERATIONAL_FOODS: _list_operational_foods_adapter(list_available_foods_tool),
+        TOOL_SEARCH_USER_MEALS: _search_collection_adapter(product_tools[TOOL_SEARCH_USER_MEALS], key="meals"),
+        TOOL_LIST_OPERATIONAL_FOODS: _list_operational_foods_adapter(product_tools[TOOL_LIST_OPERATIONAL_FOODS]),
         TOOL_LIST_USER_DAILYPLANS: _list_collection_adapter(
-            list_user_dailyplans_tool,
+            product_tools[TOOL_LIST_USER_DAILYPLANS],
             key="dailyplans",
         ),
-        TOOL_LIST_USER_FOODS: _list_collection_adapter(list_user_foods_tool, key="foods"),
-        TOOL_LIST_USER_MEALS: _list_collection_adapter(list_user_meals_tool, key="meals"),
-        TOOL_LIST_USER_PROGRAMS: list_user_programs_tool,
-        TOOL_LIST_INBOX_ITEMS: list_inbox_items_tool,
-        TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES: preview_nutrition_solver_candidates_tool,
+        TOOL_LIST_USER_FOODS: _list_collection_adapter(product_tools[TOOL_LIST_USER_FOODS], key="foods"),
+        TOOL_LIST_USER_MEALS: _list_collection_adapter(product_tools[TOOL_LIST_USER_MEALS], key="meals"),
+        TOOL_LIST_USER_PROGRAMS: product_tools[TOOL_LIST_USER_PROGRAMS],
+        TOOL_LIST_INBOX_ITEMS: product_tools[TOOL_LIST_INBOX_ITEMS],
+        TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES: product_tools[TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES],
     }
 
 

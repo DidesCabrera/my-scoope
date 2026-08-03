@@ -33,10 +33,16 @@ from ai_assistant.application.product_context import (
     developer_product_capability_policy,
     system_domain_anchor_lines,
 )
+from ai_assistant.application.product_ports import get_ai_product_bindings
 from ai_assistant.application.tool_governance import (
     extract_provider_tool_selection_reason,
     safe_tool_selection_observability,
     tool_selection_reason_error,
+)
+from ai_assistant.application.tool_selection import (
+    initial_tool_choice,
+    proposal_ready_after_tool_results,
+    select_provider_tools,
 )
 from ai_assistant.application.response_style import (
     developer_response_style_policy,
@@ -89,110 +95,6 @@ from ai_assistant.infrastructure.providers import (
 logger = logging.getLogger(__name__)
 
 
-_EXPANDED_PRODUCT_TOOL_DOMAINS = {
-    "read_food": ("alimento", "food"),
-    "read_meal": ("comida", "meal"),
-    "list_user_foods": ("alimento", "food"),
-    "list_user_meals": ("comida", "meal"),
-    "search_user_meals": ("comida", "meal"),
-    "list_user_dailyplans": ("plan", "dailyplan"),
-    "search_user_dailyplans": ("plan", "dailyplan"),
-    "list_user_programs": ("programa", "program", "semana"),
-    "read_program": ("programa", "program", "semana"),
-    "read_calendarization": ("calendario", "calendar", "pausar", "reanudar"),
-    "list_inbox_items": ("inbox", "compartid", "recibid", "enviad"),
-    "read_account_billing_context": (
-        "cuenta",
-        "crédito",
-        "credito",
-        "suscripción",
-        "suscripcion",
-        "pago",
-        "billing",
-        "plan comercial",
-    ),
-    "create_proportional_dailyplan_calorie_proposal": (
-        "caloría",
-        "caloria",
-        "kcal",
-        "cantidad",
-        "manteniendo los mismos alimentos",
-    ),
-    "prepare_product_action": (
-        "crear",
-        "crea",
-        "actualizar",
-        "actualiza",
-        "cambiar",
-        "cambia",
-        "renombr",
-        "elimin",
-        "borr",
-        "paus",
-        "reanud",
-        "cancel",
-        "aprobar",
-        "aprueba",
-        "rechaz",
-        "aplicar",
-        "aplica",
-        "duplic",
-    ),
-}
-
-
-def _expanded_product_tool_relevant(tool_name: str, *, user_text: str) -> bool:
-    keywords = _EXPANDED_PRODUCT_TOOL_DOMAINS.get(tool_name)
-    if keywords is None:
-        return True
-    if tool_name == "prepare_product_action" and (
-        "propuesta" in user_text or "proposal" in user_text
-    ):
-        return False
-    return any(keyword in user_text for keyword in keywords)
-
-
-_MEAL_PROPOSAL_TOOLS = {
-    "create_validated_meal_proposal",
-    "create_nutrition_solver_meal_proposal",
-}
-_DAILYPLAN_PROPOSAL_TOOLS = {
-    "create_validated_dailyplan_proposal",
-    "create_validated_dailyplan_build_proposal",
-    "create_nutrition_engine_dailyplan_proposal",
-    "create_nutrition_engine_dailyplan_proposal_from_drafts",
-    "iterate_nutrition_engine_dailyplan_proposal",
-}
-
-_AI_NUTRITION_INTAKE_CORE_TOOLS = {
-    TOOL_UPDATE_PROFILE_DRAFT,
-    TOOL_UPDATE_PREFERENCE_DRAFT,
-    TOOL_UPDATE_PROPOSAL_PREFERENCES,
-    TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
-}
-
-
-def _reviewable_proposal_tool_relevant(tool_name: str, *, user_text: str) -> bool:
-    if tool_name == "create_validated_dailyplan_proposal" and not any(
-        keyword in user_text
-        for keyword in ("objetiv", "target", "ajust", "cantidad", "calor", "kcal")
-    ):
-        return False
-    proposal_names = _MEAL_PROPOSAL_TOOLS | _DAILYPLAN_PROPOSAL_TOOLS
-    if tool_name not in proposal_names:
-        return True
-    mentions_meal = any(keyword in user_text for keyword in ("meal", "comida"))
-    mentions_plan = any(
-        keyword in f" {user_text} "
-        for keyword in ("dailyplan", "plan diario", " plan ")
-    )
-    if mentions_meal and not mentions_plan:
-        return tool_name in _MEAL_PROPOSAL_TOOLS
-    if mentions_plan and not mentions_meal:
-        return tool_name in _DAILYPLAN_PROPOSAL_TOOLS
-    return True
-
-
 class AssistantOrchestratorError(RuntimeError):
     """Raised when the LLM orchestrator cannot produce a safe response."""
 
@@ -242,278 +144,11 @@ class ExternalLLMOrchestrator:
         self.credit_service = credit_service or DjangoAICreditService()
 
     def continue_turn(self, request: AssistantTurnRequest) -> AssistantStructuredResponse:
-        """Process one semantic assistant turn with a controlled multi-step tool loop."""
+        """Process one semantic assistant turn through the provider coordinator."""
 
-        started_at = time.perf_counter()
-        model_route = resolve_model_route_for_turn(request)
-        try:
-            turn_llm_client = self._llm_client_for_route(model_route)
-        except LLMProviderError as exc:
-            latency_ms = _elapsed_ms(started_at)
-            response = self._provider_error_response(
-                error=exc,
-                latency_ms=latency_ms,
-                provider_name=model_route.provider,
-                model_name=model_route.model,
-            )
-            return self._with_usage_observability(
-                request=request,
-                response=response,
-                provider_responses=(),
-                latency_ms=latency_ms,
-                status="error",
-                error_type=exc.__class__.__name__,
-                tools_executed=False,
-            )
+        from ai_assistant.application.orchestrator_turn import run_provider_turn
 
-        # Keep legacy helpers that inspect self.llm_client accurate for this turn.
-        self.llm_client = turn_llm_client
-        provider_request = self.build_provider_request(request, model_route=model_route)
-        limit_violation = validate_provider_request_limits(provider_request, limits=self.config.turn_limits)
-        if limit_violation is not None:
-            latency_ms = _elapsed_ms(started_at)
-            response = self._limit_blocked_response(
-                violation=limit_violation,
-                latency_ms=latency_ms,
-            )
-            return self._with_usage_observability(
-                request=request,
-                response=response,
-                provider_responses=(),
-                latency_ms=latency_ms,
-                status="blocked",
-                error_type=limit_violation.error_code,
-                tools_executed=False,
-            )
-
-        credit_check = self.credit_service.check_turn_allowed(
-            request=request,
-            provider_request=provider_request,
-            provider=getattr(self.llm_client, "provider_name", ""),
-            model=str(getattr(self.llm_client, "model", "") or ""),
-        )
-        if not credit_check.allowed:
-            latency_ms = _elapsed_ms(started_at)
-            response = self._credit_blocked_response(
-                credit_check=credit_check,
-                latency_ms=latency_ms,
-            )
-            return self._with_usage_observability(
-                request=request,
-                response=response,
-                provider_responses=(),
-                latency_ms=latency_ms,
-                status="blocked",
-                error_type=credit_check.reason or "ai_credit_quota_exceeded",
-                tools_executed=False,
-            )
-
-        try:
-            provider_response = turn_llm_client.generate(provider_request)
-        except LLMProviderError as exc:
-            latency_ms = _elapsed_ms(started_at)
-            response = self._provider_error_response(
-                error=exc,
-                latency_ms=latency_ms,
-            )
-            return self._with_usage_observability(
-                request=request,
-                response=response,
-                provider_responses=(),
-                latency_ms=latency_ms,
-                status="error",
-                error_type=exc.__class__.__name__,
-                tools_executed=False,
-            )
-
-        provider_responses: list[LLMProviderResponse] = [provider_response]
-        parse_result = self.parse_provider_response(provider_response)
-        contract_repair_attempted = False
-        incomplete_reasons: list[str] = []
-        initial_incomplete_reason = _provider_incomplete_reason(provider_response)
-        if initial_incomplete_reason:
-            incomplete_reasons.append(initial_incomplete_reason)
-        if _provider_response_needs_contract_repair(
-            parse_result,
-            provider_response,
-            allow_initial_operational_intent_repair=True,
-        ):
-            repair_request = self.build_contract_repair_provider_request(
-                failed_request=provider_request,
-                model_route=model_route,
-                require_tool_call=_provider_response_requires_tool_call_repair(parse_result),
-            )
-            try:
-                repaired_provider_response = turn_llm_client.generate(repair_request)
-            except LLMProviderError:
-                repaired_provider_response = None
-            if repaired_provider_response is not None:
-                contract_repair_attempted = True
-                provider_responses.append(repaired_provider_response)
-                repaired_incomplete_reason = _provider_incomplete_reason(repaired_provider_response)
-                if repaired_incomplete_reason:
-                    incomplete_reasons.append(repaired_incomplete_reason)
-                provider_response = repaired_provider_response
-                parse_result = self.parse_provider_response(repaired_provider_response)
-
-        all_tool_requests = list(parse_result.response.tool_requests)
-        all_ignored_provider_proposal_ids = list(parse_result.ignored_provider_proposal_ids)
-        continuation_items = list(provider_response.continuation_items)
-        all_tool_results = self._resolve_tool_results(request, parse_result.response.tool_requests)
-        current_tool_results = all_tool_results
-        tool_loop_iterations = 0
-
-        while _has_tool_results(current_tool_results) and tool_loop_iterations < self.config.max_tool_loop_iterations:
-            remaining_iterations = self.config.max_tool_loop_iterations - tool_loop_iterations - 1
-            final_provider_request = self.build_tool_followup_provider_request(
-                request=request,
-                continuation_items=continuation_items,
-                tool_results=current_tool_results,
-                model_route=model_route,
-                remaining_tool_iterations=remaining_iterations,
-            )
-            followup_limit_violation = validate_provider_request_limits(
-                final_provider_request,
-                limits=self.config.turn_limits,
-            )
-            if followup_limit_violation is not None:
-                # Tool results are already controlled My Scoope state. If the
-                # full follow-up prompt is too large, first retry with a compact
-                # no-more-tools follow-up. If that is still too large, keep the
-                # successful tool results and answer locally from them instead of
-                # showing a technical limit error in the user chat.
-                compact_provider_request = self.build_compact_tool_followup_provider_request(
-                    request=request,
-                    first_response=parse_result.response,
-                    tool_results=all_tool_results,
-                    model_route=model_route,
-                )
-                compact_limit_violation = validate_provider_request_limits(
-                    compact_provider_request,
-                    limits=self.config.turn_limits,
-                )
-                if compact_limit_violation is None:
-                    final_provider_request = compact_provider_request
-                    remaining_iterations = 0
-                else:
-                    latency_ms = _elapsed_ms(started_at)
-                    response = self._tool_results_local_ack_response(
-                        provider_response=provider_responses[-1],
-                        tool_results=all_tool_results,
-                        violation=compact_limit_violation,
-                        latency_ms=latency_ms,
-                        tool_loop_iterations=tool_loop_iterations,
-                        first_provider_response_id=provider_response.response_id,
-                    )
-                    return self._with_usage_observability(
-                        request=request,
-                        response=response,
-                        provider_responses=tuple(provider_responses),
-                        latency_ms=latency_ms,
-                        status="degraded",
-                        error_type="tool_followup_limit_local_ack",
-                        tools_executed=True,
-                    )
-
-            try:
-                final_provider_response = turn_llm_client.generate(final_provider_request)
-            except LLMProviderError as exc:
-                # The function call and its controlled result already exist. A
-                # provider failure while wording the follow-up must not erase
-                # that evidence or turn a safely resolved tool operation into a
-                # generic failed turn. Answer from the typed result, preserve
-                # native-call metadata, and record the degradation explicitly.
-                latency_ms = _elapsed_ms(started_at)
-                response = self._tool_results_provider_failure_response(
-                    provider_response=provider_responses[-1],
-                    tool_results=all_tool_results,
-                    tool_requests=all_tool_requests,
-                    error=exc,
-                    latency_ms=latency_ms,
-                    tool_loop_iterations=tool_loop_iterations,
-                    first_provider_response_id=provider_responses[0].response_id,
-                )
-                return self._with_usage_observability(
-                    request=request,
-                    response=response,
-                    provider_responses=tuple(provider_responses),
-                    latency_ms=latency_ms,
-                    status="degraded",
-                    error_type=f"tool_followup_{exc.__class__.__name__}",
-                    tools_executed=True,
-                )
-
-            provider_responses.append(final_provider_response)
-            parse_result = self.parse_provider_response(final_provider_response)
-            followup_incomplete_reason = _provider_incomplete_reason(final_provider_response)
-            if followup_incomplete_reason:
-                incomplete_reasons.append(followup_incomplete_reason)
-            if _provider_response_needs_contract_repair(parse_result, final_provider_response):
-                repair_request = self.build_contract_repair_provider_request(
-                    failed_request=final_provider_request,
-                    model_route=model_route,
-                    require_tool_call=_provider_response_requires_tool_call_repair(parse_result),
-                )
-                try:
-                    repaired_followup_response = turn_llm_client.generate(repair_request)
-                except LLMProviderError:
-                    repaired_followup_response = None
-                if repaired_followup_response is not None:
-                    contract_repair_attempted = True
-                    provider_responses.append(repaired_followup_response)
-                    repaired_incomplete_reason = _provider_incomplete_reason(repaired_followup_response)
-                    if repaired_incomplete_reason:
-                        incomplete_reasons.append(repaired_incomplete_reason)
-                    final_provider_response = repaired_followup_response
-                    parse_result = self.parse_provider_response(repaired_followup_response)
-            continuation_items.extend(_provider_tool_output_items(current_tool_results))
-            continuation_items.extend(final_provider_response.continuation_items)
-            all_tool_requests.extend(parse_result.response.tool_requests)
-            all_ignored_provider_proposal_ids.extend(parse_result.ignored_provider_proposal_ids)
-            tool_loop_iterations += 1
-
-            if not parse_result.response.tool_requests:
-                current_tool_results = ()
-                break
-            if tool_loop_iterations >= self.config.max_tool_loop_iterations:
-                blocked_results = tuple(
-                    _max_iterations_tool_result(tool_request)
-                    for tool_request in parse_result.response.tool_requests
-                )
-                all_tool_results = (*all_tool_results, *blocked_results)
-                current_tool_results = ()
-                break
-
-            current_tool_results = self._resolve_tool_results(
-                request,
-                parse_result.response.tool_requests,
-                prior_tool_results=all_tool_results,
-            )
-            all_tool_results = (*all_tool_results, *current_tool_results)
-
-        latency_ms = _elapsed_ms(started_at)
-        tools_executed = _has_ok_tool_results(all_tool_results)
-        response = self._with_policy_metadata(
-            parse_result=parse_result,
-            provider_response=provider_responses[-1],
-            tool_results=all_tool_results,
-            latency_ms=latency_ms,
-            tools_executed=tools_executed,
-            tool_loop_iterations=tool_loop_iterations,
-            first_provider_response_id=provider_responses[0].response_id if tool_loop_iterations else "",
-            contract_repair_attempted=contract_repair_attempted,
-            provider_incomplete_reasons=tuple(dict.fromkeys(incomplete_reasons)),
-            tool_requests=tuple(all_tool_requests),
-            ignored_provider_proposal_ids=tuple(dict.fromkeys(all_ignored_provider_proposal_ids)),
-        )
-        return self._with_usage_observability(
-            request=request,
-            response=response,
-            provider_responses=tuple(provider_responses),
-            latency_ms=latency_ms,
-            status="completed",
-            tools_executed=tools_executed,
-        )
+        return run_provider_turn(self, request)
 
     def build_provider_request(self, request: AssistantTurnRequest, *, model_route: AIModelRoute | None = None) -> LLMProviderRequest:
         """Map an internal semantic request to the transport-level LLM request."""
@@ -1561,114 +1196,30 @@ class ExternalLLMOrchestrator:
         runtime capability boundary.
         """
 
-        available = tuple(self.provider_tool_specs())
-        user_text = str(request.user_message.content or "").strip().lower()
-        if (
-            str(request.context.get("surface") or "") == "ai_nutrition_intake"
-            and not _requests_existing_product_operation(user_text)
-        ):
-            work_progress = _intake_work_progress(request.context)
-            if (
-                self.config.enable_reviewable_proposal_tools
-                and _work_progress_has_active_proposal_objective(work_progress)
-                and not tuple(work_progress.get("blocking_fields") or ())
-            ):
-                proposal_tool = _provider_tool_by_name(
-                    available,
-                    TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
-                )
-                return (proposal_tool,) if proposal_tool is not None else ()
-
-            return tuple(
-                provider_spec
-                for provider_spec in available
-                if str(provider_spec.get("name") or "") in _AI_NUTRITION_INTAKE_CORE_TOOLS
-                and (
-                    self.config.enable_reviewable_proposal_tools
-                    or str(provider_spec.get("name") or "")
-                    != TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS
-                )
-            )
-
-        selected: list[Mapping[str, Any]] = []
-        for provider_spec in available:
-            name = str(provider_spec.get("name") or "")
-            if not _expanded_product_tool_relevant(name, user_text=user_text):
-                continue
-            if not _reviewable_proposal_tool_relevant(name, user_text=user_text):
-                continue
-            if not self.config.enable_reviewable_proposal_tools:
-                try:
-                    local_spec = get_tool_spec(name)
-                except ValueError:
-                    local_spec = None
-                if local_spec is not None and local_spec.category == AssistantToolCategory.PROPOSAL:
-                    continue
-            selected.append(provider_spec)
-        return tuple(selected)
+        return select_provider_tools(
+            request,
+            available=self.provider_tool_specs(),
+            enable_reviewable_proposal_tools=self.config.enable_reviewable_proposal_tools,
+        )
 
     def _initial_tool_choice(
         self,
         request: AssistantTurnRequest,
         tools: Sequence[Mapping[str, Any]],
     ) -> str | None:
-        if not tools:
-            return None
-        work_progress = _intake_work_progress(request.context)
-        if (
-            _work_progress_has_active_proposal_objective(work_progress)
-            and not tuple(work_progress.get("blocking_fields") or ())
-            and _provider_tool_by_name(
-                tools,
-                TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
-            )
-            is not None
-        ):
-            return "required"
-        return "auto"
+        return initial_tool_choice(request, tools)
 
     def _proposal_ready_after_tool_results(
         self,
         request: AssistantTurnRequest,
         tool_results: Sequence[AssistantToolResult],
     ) -> bool:
-        work_progress = _intake_work_progress(request.context)
-        if not _work_progress_has_active_proposal_objective(work_progress):
-            return False
-        if not self.config.enable_reviewable_proposal_tools:
-            return False
-
-        workspace = _intake_workspace(request.context)
-        try:
-            from notas.application.ai_intake.nutrition_brief import required_proposal_fields
-            from notas.application.ai_tools.proposal_tools import (
-                build_nutrition_brief_from_ai_drafts,
-            )
-
-            brief = build_nutrition_brief_from_ai_drafts(
-                profile_draft=_latest_draft_for_tool(
-                    "profile_draft",
-                    context=request.context,
-                    prior_tool_results=tool_results,
-                ),
-                preference_draft=_latest_draft_for_tool(
-                    "preference_draft",
-                    context=request.context,
-                    prior_tool_results=tool_results,
-                ),
-                proposal_preferences=_latest_draft_for_tool(
-                    "proposal_preferences",
-                    context=request.context,
-                    prior_tool_results=tool_results,
-                ),
-                current_nutrition_brief=dict(
-                    workspace.get("current_nutrition_brief") or {}
-                ),
-                raw_prompt=request.user_message.content,
-            )
-        except (TypeError, ValueError):
-            return False
-        return not required_proposal_fields(brief)
+        return proposal_ready_after_tool_results(
+            request,
+            tool_results,
+            enable_reviewable_proposal_tools=self.config.enable_reviewable_proposal_tools,
+            product_bindings=get_ai_product_bindings(),
+        )
 
     def _developer_prompt(
         self,

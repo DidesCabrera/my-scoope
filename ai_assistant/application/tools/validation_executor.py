@@ -106,13 +106,11 @@ class ValidationToolExecutor:
 
 
 def build_default_validation_tool_dispatch_table() -> dict[str, ValidationToolCallable]:
-    """Load validation tool dispatchers lazily."""
+    """Load registered validation tool dispatchers lazily."""
 
-    from notas.application.ai_tools.validation_tools import compare_dailyplan_to_targets_tool
+    from ai_assistant.application.product_ports import get_ai_product_bindings
 
-    return {
-        TOOL_COMPARE_DAILYPLAN_TO_TARGETS: compare_dailyplan_to_targets_tool,
-    }
+    return dict(get_ai_product_bindings().validation_tools)
 
 
 def execute_validation_tool(

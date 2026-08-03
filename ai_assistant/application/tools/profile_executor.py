@@ -117,29 +117,11 @@ class ProfileDraftToolExecutor:
 
 
 def build_default_profile_draft_tool_dispatch_table() -> dict[str, ProfileDraftToolCallable]:
-    """Load local profile draft tools lazily."""
+    """Load registered product draft tools lazily."""
 
-    from notas.application.ai_tools.preference_tools import (
-        share_preference_draft_card_tool,
-        update_preference_draft_tool,
-    )
-    from notas.application.ai_tools.proposal_preference_tools import (
-        share_proposal_preferences_card_tool,
-        update_proposal_preferences_tool,
-    )
-    from notas.application.ai_tools.profile_tools import (
-        share_profile_draft_card_tool,
-        update_profile_draft_tool,
-    )
+    from ai_assistant.application.product_ports import get_ai_product_bindings
 
-    return {
-        TOOL_UPDATE_PROFILE_DRAFT: update_profile_draft_tool,
-        TOOL_SHARE_PROFILE_DRAFT_CARD: share_profile_draft_card_tool,
-        TOOL_UPDATE_PREFERENCE_DRAFT: update_preference_draft_tool,
-        TOOL_SHARE_PREFERENCE_DRAFT_CARD: share_preference_draft_card_tool,
-        TOOL_UPDATE_PROPOSAL_PREFERENCES: update_proposal_preferences_tool,
-        TOOL_SHARE_PROPOSAL_PREFERENCES_CARD: share_proposal_preferences_card_tool,
-    }
+    return dict(get_ai_product_bindings().profile_draft_tools)
 
 
 def execute_profile_draft_tool(
