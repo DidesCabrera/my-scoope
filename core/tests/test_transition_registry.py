@@ -14,7 +14,14 @@ class TransitionRegistryTests(SimpleTestCase):
         errors = validate_transition_registry(root)
 
         self.assertEqual(errors, [])
-        self.assertGreaterEqual(len(entries), 6)
+        self.assertEqual(
+            {entry.identifier for entry in entries},
+            {
+                "operational-food-snapshot-boundary",
+                "food-import-command-wrappers",
+                "django-admin-technical-fallback",
+            },
+        )
         for entry in entries:
             self.assertTrue(entry.current_consumers)
             self.assertTrue(entry.exit_evidence)

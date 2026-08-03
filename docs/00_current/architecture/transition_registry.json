@@ -11,24 +11,6 @@
       "decision": "docs/20_decisions/0009-food-catalog-hybrid-source-snapshot.md"
     },
     {
-      "id": "nutrition-solver-legacy-import-bridges",
-      "status": "transitional",
-      "owner": "nutrition_solver",
-      "purpose": "Preserve historical imports while nutrition_solver owns the pure contracts and implementations.",
-      "current_consumers": ["notas.application.nutrition_engine compatibility modules", "compatibility regression tests"],
-      "exit_evidence": ["Repository search finds no production consumers of legacy imports", "One release passes without compatibility imports", "Removal keeps solver boundary tests green"],
-      "decision": "docs/20_decisions/0047-nutrition-solver-portion-solver-validators-moved.md"
-    },
-    {
-      "id": "legacy-account-plan-fallback",
-      "status": "transitional",
-      "owner": "accounts",
-      "purpose": "Resolve commercial entitlements from accounts while preserving historical users whose capabilities still live in notas.Profile.plan.",
-      "current_consumers": ["accounts.services.entitlements", "historical profiles without an effective AccountPlan"],
-      "exit_evidence": ["All active users resolve an accounts plan", "Legacy-only entitlement usage is measured at zero", "A reversible data migration is validated in staging"],
-      "decision": "docs/20_decisions/0051-account-plans-and-credits-domain.md"
-    },
-    {
       "id": "food-import-command-wrappers",
       "status": "transitional",
       "owner": "food_catalog",
@@ -36,15 +18,6 @@
       "current_consumers": ["legacy notas management commands", "historical operational runbooks"],
       "exit_evidence": ["Admin Operations and food_catalog commands cover every supported source", "No active runbook invokes the notas wrappers", "Removal does not change the notas.Food snapshot boundary"],
       "decision": "docs/20_decisions/0014-food-catalog-import-adapters.md"
-    },
-    {
-      "id": "ai-product-adapter-boundary",
-      "status": "transitional",
-      "owner": "ai_assistant",
-      "purpose": "Keep AI orchestration contracts separate while product-owned intake, read and prepared-action implementations still live in notas.",
-      "current_consumers": ["AI context builder", "AI tool executors", "prepared product actions"],
-      "exit_evidence": ["Product-facing tool ports are owned outside notas implementation modules", "AI Assistant has no production imports from notas", "AI and notas boundary suites remain green"],
-      "decision": "docs/20_decisions/0163-ai-runtime-and-tool-capability-seams.md"
     },
     {
       "id": "django-admin-technical-fallback",
