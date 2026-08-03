@@ -19,7 +19,9 @@ nutrition_solver/application/quality.py
 nutrition_solver/application/shadow.py
 ```
 
-Legacy imports from `notas.application.nutrition_engine.models`, `contracts`, `portion_solver` and `validators` remain available as compatibility bridges while callers migrate progressively.
+The temporary compatibility bridges in `notas.application.nutrition_engine` have
+been retired. Product callers import solver-owned contracts and implementations
+directly from this app.
 
 ## Owns now
 
@@ -68,16 +70,9 @@ mode. Impossible hard constraints never fall back silently.
 
 ## Guardrail
 
-The extracted solver layers must not depend on `notas`, `food_catalog` or `ai_assistant`. `notas` can depend on `nutrition_solver` through temporary legacy bridges, but the new solver app must stay pure and deterministic.
-
-Compatibility bridges remain in:
-
-```text
-notas/application/nutrition_engine/models.py
-notas/application/nutrition_engine/contracts.py
-notas/application/nutrition_engine/portion_solver.py
-notas/application/nutrition_engine/validators.py
-```
+The extracted solver layers must not depend on `notas`, `food_catalog` or
+`ai_assistant`. Product adapters may depend directly on `nutrition_solver`, while
+the solver app stays pure and deterministic.
 
 The dependency direction remains:
 

@@ -1,6 +1,11 @@
 # Nutrition Solver Extraction Map
 
 Status: completed and current
+
+TDG13 retires those temporary import bridges after the last production consumer
+migrated to direct `nutrition_solver` imports. Historical S6/S7 sections below retain
+the extraction sequence as decision context; they no longer describe import paths
+that exist in the current tree.
 Date: 2026-07-16
 Cycle: NSO00-NSO10
 Patch: S10 closure; extended by NSO10 activation and closure
@@ -34,7 +39,7 @@ compositions. Quality reports expose nutritional proximity and meal-grammar cove
 
 This document records the completed progressive separation of the current nutrition engine into the Django app `nutrition_solver`.
 
-S1 did **not** move code into a new app. S5 created the physical Django app shell. S6 moved pure models/contracts into `nutrition_solver`. S7 moved the deterministic portion solver and strict validators into `nutrition_solver`. S8 added the operational food adapter in `notas`. S9 exposed a controlled AI Assistant preview tool on top of that adapter. S10 creates reviewable solver-generated Meal proposals without applying final changes. Compatibility bridges remain in `notas/application/nutrition_engine/`. The originally planned direct UI step was canceled/differed by decision: users should request solver-backed proposals through `ai_assistant`, not through a dedicated solver UI.
+S1 did **not** move code into a new app. S5 created the physical Django app shell. S6 moved pure models/contracts into `nutrition_solver`. S7 moved the deterministic portion solver and strict validators into `nutrition_solver`. S8 added the operational food adapter in `notas`. S9 exposed a controlled AI Assistant preview tool on top of that adapter. S10 creates reviewable solver-generated Meal proposals without applying final changes. TDG13 later retired the temporary compatibility bridges after migrating their last production consumer. The originally planned direct UI step was canceled/differed by decision: users should request solver-backed proposals through `ai_assistant`, not through a dedicated solver UI.
 
 ## Current source of truth
 
@@ -46,7 +51,7 @@ nutrition_solver/
      heuristic/CP-SAT optimization, validators, quality and diagnostics
 
 notas/application/nutrition_engine/
-  -> temporary compatibility bridges plus remaining upstream helpers not yet extracted
+  -> product-owned target estimation, templates and candidate selection helpers
 
 notas/application/queries/solver_food_candidates.py
   -> ORM adapter from operational notas.Food to pure SolverFood/SolverFoodProfile candidates
@@ -62,13 +67,9 @@ Current modules:
 
 | Module | Current responsibility | Extraction classification |
 |---|---|---|
-| `models.py` | Compatibility bridge to pure dataclasses now owned by `nutrition_solver.domain.models`. | Moved in S6; keep temporary bridge. |
-| `contracts.py` | Compatibility bridge to optimization contracts now owned by `nutrition_solver.application.contracts`, including `optimize_meal_portions()`. | Moved in S6/S7; keep temporary bridge. |
 | `target_estimator.py` | Estimates daily kcal/macros from body/profile/goal inputs and explicit overrides. | Move early; depends only on nutrition constants. |
 | `meal_templates.py` | Builds deterministic meal slots, hours, kcal allocations and required roles. | Move early; pure and dependency-light. |
 | `candidate_selector.py` | Classifies operational candidates by macro role and preference/exclusion rules. | Move after input candidate contract is stabilized. |
-| `portion_solver.py` | Compatibility bridge to deterministic portion solver now owned by `nutrition_solver.application.portion_solver`. | Moved in S7; keep temporary bridge. |
-| `validators.py` | Compatibility bridge to strict validators now owned by `nutrition_solver.application.validators`. | Moved in S7; keep temporary bridge. |
 
 ## Current upstream callers
 
@@ -78,7 +79,8 @@ The main current caller is:
 notas/application/ai_intake/dailyplan_generator.py
 ```
 
-That flow uses the engine to turn a nutrition brief into generated daily-plan proposal payloads. It may keep orchestrating proposal creation, but the deterministic calculation should gradually move behind solver contracts.
+That flow turns a nutrition brief into generated daily-plan proposal payloads and
+imports deterministic calculation directly from solver-owned contracts.
 
 ## App boundary
 

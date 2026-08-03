@@ -48,11 +48,6 @@ class Profile(models.Model):
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
-    plan = models.ForeignKey(Plan,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="profiles")
     is_verified = models.BooleanField(default=False)
 
     birth_date = models.DateField(

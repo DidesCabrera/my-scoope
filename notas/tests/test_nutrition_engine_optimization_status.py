@@ -2,7 +2,7 @@ import json
 
 from django.test import SimpleTestCase
 
-from notas.application.nutrition_engine.contracts import (
+from nutrition_solver.application.contracts import (
     OptimizationInput,
     OptimizationResult,
     OptimizationScoringConfig,
@@ -11,7 +11,7 @@ from notas.application.nutrition_engine.contracts import (
     impossible_optimization_result,
     optimize_meal_portions,
 )
-from notas.application.nutrition_engine.models import (
+from nutrition_solver.domain.models import (
     MacroTarget,
     PortionBounds,
     PortionSolverDiagnostics,

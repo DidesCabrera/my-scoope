@@ -12,11 +12,8 @@ S7_DECISION_DOC = ROOT / "docs" / "20_decisions" / "0047-nutrition-solver-portio
 S8_DECISION_DOC = ROOT / "docs" / "20_decisions" / "0048-nutrition-solver-operational-food-adapter.md"
 S9_DECISION_DOC = ROOT / "docs" / "20_decisions" / "0049-nutrition-solver-ai-assistant-preview-tool.md"
 S10_DECISION_DOC = ROOT / "docs" / "00_current" / "architecture" / "nutrition_solver_extraction_map.md"
-LEGACY_CONTRACTS_MODULE = ROOT / "notas" / "application" / "nutrition_engine" / "contracts.py"
 SOLVER_CONTRACTS_MODULE = ROOT / "nutrition_solver" / "application" / "contracts.py"
 SOLVER_MODELS_MODULE = ROOT / "nutrition_solver" / "domain" / "models.py"
-LEGACY_PORTION_SOLVER_MODULE = ROOT / "notas" / "application" / "nutrition_engine" / "portion_solver.py"
-LEGACY_VALIDATORS_MODULE = ROOT / "notas" / "application" / "nutrition_engine" / "validators.py"
 SOLVER_PORTION_SOLVER_MODULE = ROOT / "nutrition_solver" / "application" / "portion_solver.py"
 SOLVER_VALIDATORS_MODULE = ROOT / "nutrition_solver" / "application" / "validators.py"
 SOLVER_CANDIDATES_QUERY = ROOT / "notas" / "application" / "queries" / "solver_food_candidates.py"
@@ -156,10 +153,9 @@ class NutritionSolverExtractionMapDocumentationTests(SimpleTestCase):
                 msg=f"Missing nutrition_solver/{relative_path}",
             )
 
-    def test_s6_documents_pure_contract_move_with_compatibility_bridges(self):
+    def test_s6_history_and_current_bridge_retirement_are_documented(self):
         content = EXTRACTION_MAP.read_text()
         decision = S6_DECISION_DOC.read_text()
-        legacy_contracts = LEGACY_CONTRACTS_MODULE.read_text()
         solver_contracts = SOLVER_CONTRACTS_MODULE.read_text()
         solver_models = SOLVER_MODELS_MODULE.read_text()
 
@@ -167,20 +163,17 @@ class NutritionSolverExtractionMapDocumentationTests(SimpleTestCase):
         self.assertIn("nutrition_solver/domain/models.py", content)
         self.assertIn("nutrition_solver/application/contracts.py", content)
         self.assertIn("legacy modules remain as compatibility bridges", content)
+        self.assertIn("TDG13 retires those temporary import bridges", content)
         self.assertIn("That wrapper stays in `notas.application.nutrition_engine.contracts`", decision)
         self.assertIn("Status: accepted", decision)
         self.assertIn("Patch: S6", decision)
-        self.assertIn("from nutrition_solver.application.contracts import", legacy_contracts)
         self.assertIn("from nutrition_solver.domain.models import", solver_contracts)
         self.assertIn("class MacroTarget", solver_models)
 
 
-    def test_s7_documents_solver_and_validator_move_with_compatibility_bridges(self):
+    def test_s7_history_and_solver_owned_implementations_are_documented(self):
         content = EXTRACTION_MAP.read_text()
         decision = S7_DECISION_DOC.read_text()
-        legacy_contracts = LEGACY_CONTRACTS_MODULE.read_text()
-        legacy_portion_solver = LEGACY_PORTION_SOLVER_MODULE.read_text()
-        legacy_validators = LEGACY_VALIDATORS_MODULE.read_text()
         solver_contracts = SOLVER_CONTRACTS_MODULE.read_text()
         solver_portion_solver = SOLVER_PORTION_SOLVER_MODULE.read_text()
         solver_validators = SOLVER_VALIDATORS_MODULE.read_text()
@@ -189,9 +182,7 @@ class NutritionSolverExtractionMapDocumentationTests(SimpleTestCase):
         self.assertIn("nutrition_solver/application/portion_solver.py", content)
         self.assertIn("nutrition_solver/application/validators.py", content)
         self.assertIn("Patch: S7", decision)
-        self.assertIn("from nutrition_solver.application.portion_solver import", legacy_portion_solver)
-        self.assertIn("from nutrition_solver.application.validators import", legacy_validators)
-        self.assertIn("from nutrition_solver.application.contracts import", legacy_contracts)
+        self.assertIn("TDG13 retires those temporary import bridges", content)
         self.assertIn("def optimize_meal_portions", solver_contracts)
         self.assertIn("def solve_meal_portions", solver_portion_solver)
         self.assertIn("def validate_generated_dailyplan", solver_validators)
