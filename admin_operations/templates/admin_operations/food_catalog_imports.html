@@ -1,9 +1,12 @@
 {% extends "admin_operations/base.html" %}
 {% block title %}Food Catalog Imports{% endblock %}
+{% block admin_operations_subtopbar %}
+  <div class="admin-operations-subtopbar">
+    {% include "admin_operations/_food_catalog_tabs.html" with active_tab="imports" %}
+  </div>
+{% endblock %}
 {% block content %}
-<div class="page admin-analytics-page admin-operations-page">
-  {% include "admin_operations/_food_catalog_tabs.html" with active_tab="imports" %}
-
+<div class="page admin-analytics-page admin-operations-page admin-operations-imports-page">
   <section class="home-stats admin-analytics-kpi-grid admin-operations-kpi-grid" aria-label="Resumen de imports">
     {% for metric in vm.content.metrics %}
       <article class="home-stat-card admin-operations-metric-card">

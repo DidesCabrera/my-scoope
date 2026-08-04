@@ -65,7 +65,7 @@ class CatalogUSDAImportCommandTests(TestCase):
         source = CatalogFoodSource.objects.get(catalog_food=catalog_food)
         batch = CatalogImportBatch.objects.get(is_dry_run=False)
 
-        self.assertEqual(catalog_food.status, CatalogFood.STATUS_EXTERNAL_CANDIDATE)
+        self.assertEqual(catalog_food.status, CatalogFood.STATUS_PENDING_REVIEW)
         self.assertEqual(catalog_food.source_type, CatalogFood.SOURCE_USDA)
         self.assertEqual(catalog_food.protein_g_per_100g, Decimal("9.020"))
         self.assertEqual(source.source_name, CATALOG_SOURCE_NAME_USDA)

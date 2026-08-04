@@ -12,7 +12,10 @@ from admin_operations.views import (
     account_reservation_release,
     accounts,
     food_catalog,
+    food_catalog_curation_dashboard,
     food_catalog_inventory,
+    food_catalog_inventory_master,
+    food_catalog_data_coverage,
     food_catalog_imports,
     food_catalog_core_seed_apply,
     food_catalog_core_seed_dry_run,
@@ -29,6 +32,7 @@ from admin_operations.views import (
     food_catalog_candidate_action,
     food_catalog_candidate_detail,
     food_catalog_food_action,
+    food_catalog_bulk_review,
     food_catalog_food_detail,
     overview,
     system_control,
@@ -50,9 +54,29 @@ urlpatterns = [
     path("accounts/users/<int:user_id>/reservations/<int:reservation_id>/release/", account_reservation_release, name="admin_operations_account_reservation_release"),
     path("food-catalog/", food_catalog, name="admin_operations_food_catalog"),
     path(
+        "food-catalog/bulk-review/",
+        food_catalog_bulk_review,
+        name="admin_operations_food_catalog_bulk_review",
+    ),
+    path(
+        "food-catalog/curation-dashboard/",
+        food_catalog_curation_dashboard,
+        name="admin_operations_food_catalog_curation_dashboard",
+    ),
+    path(
         "food-catalog/inventory/",
         food_catalog_inventory,
         name="admin_operations_food_catalog_inventory",
+    ),
+    path(
+        "food-catalog/inventory-master/",
+        food_catalog_inventory_master,
+        name="admin_operations_food_catalog_inventory_master",
+    ),
+    path(
+        "food-catalog/data-coverage/",
+        food_catalog_data_coverage,
+        name="admin_operations_food_catalog_data_coverage",
     ),
     path(
         "food-catalog/imports/",

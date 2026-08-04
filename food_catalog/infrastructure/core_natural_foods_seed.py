@@ -184,7 +184,7 @@ def _upsert_catalog_food(food_seed: CoreNaturalFoodSeed) -> tuple[CatalogFood, b
         "sugar_g_per_100g": food_seed.sugar_g_per_100g,
         "sodium_mg_per_100g": food_seed.sodium_mg_per_100g,
         "source_type": CatalogFood.SOURCE_NATURAL_VERIFIED,
-        "status": CatalogFood.STATUS_VERIFIED,
+        "status": CatalogFood.STATUS_PENDING_REVIEW,
         "data_quality_score": 95,
         "confidence_score": Decimal("95.00"),
     }

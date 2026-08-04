@@ -51,7 +51,7 @@ class CoreNaturalFoodsSeedTests(TestCase):
         self.assertEqual(result.batch.dry_run_batch, dry_run)
 
         food = CatalogFood.objects.get(canonical_name="pechuga de pollo cocida")
-        self.assertEqual(food.status, CatalogFood.STATUS_VERIFIED)
+        self.assertEqual(food.status, CatalogFood.STATUS_PENDING_REVIEW)
         self.assertEqual(food.source_type, CatalogFood.SOURCE_NATURAL_VERIFIED)
         self.assertEqual(food.country, "CL")
         self.assertEqual(food.preparation_state, CatalogFood.PREPARATION_COOKED)

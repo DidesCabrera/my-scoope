@@ -58,11 +58,7 @@
           </label>
         </div>
         <div class="admin-analytics-page-heading">
-          <p class="section-eyebrow">Staff-only · Read-first · {{ vm.content.period_label|default:"Período activo" }}</p>
           <h1>{% block console_title %}{{ vm.content.title|default:"Strategic Dashboard" }}{% endblock %}</h1>
-          {% if vm.content.subtitle %}
-            <p class="admin-analytics-page-heading__subtitle">{{ vm.content.subtitle }}</p>
-          {% endif %}
         </div>
         <div class="admin-analytics-topbar__meta" aria-label="Metadata de la página">
           {% if vm.content.current_period %}

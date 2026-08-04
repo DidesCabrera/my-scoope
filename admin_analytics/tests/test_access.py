@@ -96,7 +96,8 @@ class AdminAnalyticsAccessTests(TestCase):
         html = response.content.decode("utf-8")
         self.assertIn('class="admin-analytics-page-heading"', html)
         self.assertIn("Accounts Analytics", html)
-        self.assertIn("Planes, suscripciones, wallets y ledger de créditos.", html)
+        self.assertNotIn("admin-analytics-page-heading__subtitle", html)
+        self.assertNotIn("Planes, suscripciones, wallets y ledger de créditos.", html)
         self.assertNotIn("<h2>Accounts Analytics</h2>", html)
         self.assertNotIn("Staff-only · Read-first · {{ vm.content.period_label }}", html)
 

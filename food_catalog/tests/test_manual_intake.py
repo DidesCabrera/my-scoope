@@ -50,7 +50,7 @@ class ManualEvidenceIntakeTests(TestCase):
         food = CatalogFood.objects.get()
         source = CatalogFoodSource.objects.get()
         apply_batch = CatalogImportBatch.objects.get(is_dry_run=False)
-        self.assertEqual(food.status, CatalogFood.STATUS_MANUAL_CANDIDATE)
+        self.assertEqual(food.status, CatalogFood.STATUS_PENDING_REVIEW)
         self.assertEqual(source.import_batch, apply_batch)
         self.assertEqual(source.evidence_payload["reference"], "EVID-001")
         self.assertEqual(apply_batch.dry_run_batch, dry_run)

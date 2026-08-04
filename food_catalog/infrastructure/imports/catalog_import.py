@@ -24,7 +24,10 @@ from food_catalog.infrastructure.imports.governance import CatalogImportIdentity
 
 CATALOG_SOURCE_NAME_USDA = "USDA FoodData Central"
 DEFAULT_CATALOG_IMPORT_SOURCE_TYPE = CatalogFood.SOURCE_EXTERNAL_TEMPORARY
-DEFAULT_CATALOG_IMPORT_STATUS = CatalogFood.STATUS_EXTERNAL_CANDIDATE
+# A successfully governed import has already passed the source-agnostic minimum
+# validation in ``_prepare_foods``. It therefore enters the human review queue;
+# information quality is a prioritisation signal, not a separate workflow gate.
+DEFAULT_CATALOG_IMPORT_STATUS = CatalogFood.STATUS_PENDING_REVIEW
 
 
 @dataclass(frozen=True)

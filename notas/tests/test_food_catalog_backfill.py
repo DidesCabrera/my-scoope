@@ -122,7 +122,7 @@ class FoodCatalogOperationalBackfillTests(TestCase):
 
         self.assertEqual(catalog_food.display_name, "Pechuga de pollo cocida")
         self.assertEqual(catalog_food.canonical_name, "pechuga de pollo cocida")
-        self.assertEqual(catalog_food.status, CatalogFood.STATUS_REVIEWED)
+        self.assertEqual(catalog_food.status, CatalogFood.STATUS_PENDING_REVIEW)
         self.assertEqual(catalog_food.source_type, CatalogFood.SOURCE_ADMIN_IMPORT)
         self.assertEqual(catalog_food.protein_g_per_100g, Decimal("31.000"))
         self.assertEqual(catalog_food.carbs_g_per_100g, Decimal("0.000"))

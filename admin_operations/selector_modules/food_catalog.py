@@ -14,7 +14,106 @@ from admin_operations.selector_modules.constants import (
     CATALOG_GROUP_FAMILIES,
 )
 
-def get_food_catalog_operations_payload(*, query: str = "", stage: str = "all", limit: int = 50) -> dict:
+
+DATA_COVERAGE_SECTION_DEFINITIONS = (
+    (
+        "identity", "Identidad", "fingerprint", (
+            ("display_name", "Nombre visible", Q(display_name__gt="")),
+            ("catalog_ref", "Referencia de catálogo", Q(catalog_ref__isnull=False)),
+            ("canonical_name", "Nombre canónico", Q(canonical_name__gt="")),
+            ("brand_name", "Marca", Q(brand_name__gt="")),
+            ("is_branded", "Indicador de alimento de marca", Q(is_branded__isnull=False)),
+            ("catalog_version", "Versión de catálogo", Q(catalog_version__gt="")),
+            ("language", "Idioma", Q(language__gt="")),
+            ("country", "País", Q(country__gt="")),
+        ),
+    ),
+    (
+        "classification", "Clasificación", "tags", (
+            ("food_group", "Grupo alimentario", Q(food_group__gt="")),
+            ("food_subgroup", "Subgrupo alimentario", Q(food_subgroup__gt="")),
+            ("food_form", "Forma culinaria", ~Q(food_form=CatalogFood.FOOD_FORM_UNKNOWN)),
+            ("preparation_state", "Estado de preparación", ~Q(preparation_state=CatalogFood.PREPARATION_UNKNOWN)),
+            ("preparation_effort", "Esfuerzo de preparación", ~Q(preparation_effort=CatalogFood.PREPARATION_EFFORT_UNKNOWN)),
+            ("cost_band", "Banda de costo", ~Q(cost_band=CatalogFood.COST_BAND_UNKNOWN)),
+        ),
+    ),
+    (
+        "governance", "Fuente y gobierno", "shield-check", (
+            ("source_type", "Tipo de origen", Q(source_type__gt="")),
+            ("status", "Estado de curación", Q(status__gt="")),
+            ("source", "Fuente asociada", Q(sources__isnull=False)),
+            ("source_name", "Nombre de fuente", Q(sources__source_name__gt="")),
+            ("source_food_id", "ID en la fuente", Q(sources__source_food_id__gt="")),
+            ("source_dataset", "Dataset de origen", Q(sources__source_dataset__gt="")),
+            ("source_version", "Versión de la fuente", Q(sources__source_version__gt="")),
+            ("license_status", "Estado de licencia", ~Q(sources__license_status=CatalogFoodSource.LICENSE_UNKNOWN) & Q(sources__isnull=False)),
+        ),
+    ),
+    (
+        "nutrition", "Nutrición / 100 g", "chart-no-axes-combined", (
+            ("protein", "Proteína", Q(protein_g_per_100g__isnull=False)),
+            ("carbs", "Carbohidratos", Q(carbs_g_per_100g__isnull=False)),
+            ("fat", "Grasa", Q(fat_g_per_100g__isnull=False)),
+            ("calories", "Calorías", Q(calories_kcal_per_100g__isnull=False)),
+            ("fiber", "Fibra", Q(fiber_g_per_100g__isnull=False)),
+            ("sugar", "Azúcar", Q(sugar_g_per_100g__isnull=False)),
+            ("saturated_fat", "Grasa saturada", Q(saturated_fat_g_per_100g__isnull=False)),
+            ("sodium", "Sodio", Q(sodium_mg_per_100g__isnull=False)),
+        ),
+    ),
+    (
+        "functionality", "Funcionalidad", "utensils", (
+            ("functional_roles", "Roles funcionales", ~Q(functional_roles=[])),
+            ("meal_affinities", "Afinidades de comida", ~Q(meal_affinities=[])),
+            ("dietary_tags", "Etiquetas dietarias", ~Q(dietary_tags=[])),
+            ("allergens", "Alérgenos", ~Q(allergens=[])),
+        ),
+    ),
+    (
+        "solver", "Solver", "calculator", (
+            ("solver_enabled", "Estado de habilitación", Q(solver_enabled__isnull=False)),
+            ("solver_min", "Porción mínima", Q(solver_min_portion_g__isnull=False)),
+            ("solver_max", "Porción máxima", Q(solver_max_portion_g__isnull=False)),
+            ("solver_step", "Incremento de porción", Q(solver_portion_step_g__isnull=False)),
+            ("solver_capabilities", "Versión de capacidades", Q(solver_capabilities_version__gt="")),
+            ("solver_confidence", "Confianza de características", ~Q(solver_feature_confidence={})),
+        ),
+    ),
+    (
+        "quality", "Calidad", "scan-search", (
+            ("data_quality", "Calidad de información", Q(data_quality_score__isnull=False)),
+            ("confidence", "Confianza", Q(confidence_score__isnull=False)),
+        ),
+    ),
+    (
+        "relations", "Relaciones", "git-branch", (
+            ("sources", "Fuentes", Q(sources__isnull=False)),
+            ("portions", "Porciones", Q(portions__isnull=False)),
+            ("default_portion", "Porción predeterminada", Q(portions__is_default=True)),
+            ("aliases", "Aliases", Q(aliases__isnull=False)),
+            ("primary_alias", "Alias principal", Q(aliases__is_primary=True)),
+        ),
+    ),
+    (
+        "lifecycle", "Ciclo de vida", "history", (
+            ("created_at", "Fecha de creación", Q(created_at__isnull=False)),
+            ("created_by", "Creado por", Q(created_by__isnull=False)),
+            ("reviewed_at", "Fecha de revisión", Q(reviewed_at__isnull=False)),
+            ("reviewed_by", "Revisado por", Q(reviewed_by__isnull=False)),
+            ("published_at", "Fecha de publicación", Q(published_at__isnull=False)),
+            ("updated_at", "Fecha de actualización", Q(updated_at__isnull=False)),
+        ),
+    ),
+)
+
+def get_food_catalog_operations_payload(
+    *,
+    query: str = "",
+    stage: str = "all",
+    sort: str = "quality_asc",
+    limit: int = 50,
+) -> dict:
     """Return actionable Food Catalog queues for OPS03.
 
     The payload is deliberately read-model oriented. Mutations are handled by
@@ -25,14 +124,23 @@ def get_food_catalog_operations_payload(*, query: str = "", stage: str = "all", 
     normalized_stage = stage if stage in {
         "all", "intake", "preparation", "review", "publication", "activation", "blocked"
     } else "all"
+    normalized_sort = sort if sort in {
+        "quality_asc", "quality_desc", "name_asc", "name_desc"
+    } else "quality_asc"
 
     candidate_qs = CatalogCurationCandidate.objects.filter(
         status__in=CATALOG_CANDIDATE_ACTION_STATUSES,
     ).select_related("reviewed_by").order_by("-priority", "status", "display_name")
 
+    food_ordering = {
+        "quality_asc": ("data_quality_score", "display_name"),
+        "quality_desc": ("-data_quality_score", "display_name"),
+        "name_asc": ("display_name", "id"),
+        "name_desc": ("-display_name", "id"),
+    }[normalized_sort]
     catalog_food_qs = CatalogFood.objects.filter(
         status__in=CATALOG_FOOD_REVIEW_STATUSES,
-    ).prefetch_related("sources", "portions").order_by("status", "-data_quality_score", "display_name")
+    ).prefetch_related("sources", "portions").order_by(*food_ordering)
 
     if normalized_query:
         candidate_qs = candidate_qs.filter(
@@ -108,6 +216,7 @@ def get_food_catalog_operations_payload(*, query: str = "", stage: str = "all", 
     return {
         "query": normalized_query,
         "stage": normalized_stage,
+        "sort": normalized_sort,
         "candidate_counts": candidate_counts,
         "food_counts": food_counts,
         "candidates": list(candidate_qs[:limit]),
@@ -243,6 +352,35 @@ def get_food_catalog_inventory_payload(
     }
 
 
+def get_food_catalog_data_coverage_payload(*, section: str = "identity") -> dict:
+    valid_sections = {key for key, _label, _icon, _fields in DATA_COVERAGE_SECTION_DEFINITIONS}
+    selected_section = section if section in valid_sections else "identity"
+    foods = CatalogFood.objects.all()
+    total = foods.count()
+    section_rows = next(
+        fields
+        for key, _label, _icon, fields in DATA_COVERAGE_SECTION_DEFINITIONS
+        if key == selected_section
+    )
+    aggregate = foods.aggregate(**{
+        f"coverage_{field_key}": Count("id", filter=coverage_filter, distinct=True)
+        for field_key, _label, coverage_filter in section_rows
+    })
+    return {
+        "total": total,
+        "selected_section": selected_section,
+        "sections": DATA_COVERAGE_SECTION_DEFINITIONS,
+        "rows": [
+            {
+                "key": field_key,
+                "label": label,
+                "existing": int(aggregate[f"coverage_{field_key}"] or 0),
+            }
+            for field_key, label, _coverage_filter in section_rows
+        ],
+    }
+
+
 def get_generic_food_coverage_payload() -> dict:
     """Reconcile the versioned planning manifest with persisted source evidence."""
 
@@ -363,4 +501,4 @@ def _catalog_category_coverage(group_rows: list[dict]) -> list[dict]:
 
 
 
-__all__ = ['get_food_catalog_operations_payload', 'get_food_catalog_inventory_payload', 'get_generic_food_coverage_payload', 'get_food_catalog_import_batches_payload']
+__all__ = ['get_food_catalog_operations_payload', 'get_food_catalog_inventory_payload', 'get_food_catalog_data_coverage_payload', 'get_generic_food_coverage_payload', 'get_food_catalog_import_batches_payload']

@@ -33,7 +33,7 @@ from notas.domain.models import Food, FoodAlias, FoodLocalizedName, FoodSourceMe
 OPERATIONAL_BACKFILL_SOURCE_NAME = "My Scoope operational foods"
 OPERATIONAL_BACKFILL_SOURCE_DATASET = "notas.Food"
 DEFAULT_OPERATIONAL_BACKFILL_SOURCE_VERSION = "operational-backfill-v1"
-DEFAULT_OPERATIONAL_BACKFILL_STATUS = CatalogFood.STATUS_REVIEWED
+DEFAULT_OPERATIONAL_BACKFILL_STATUS = CatalogFood.STATUS_PENDING_REVIEW
 
 
 @dataclass(frozen=True)
