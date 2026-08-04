@@ -10,8 +10,8 @@ class DeploymentContractTests(SimpleTestCase):
         blueprint = (ROOT / "render.yaml").read_text()
 
         for resource in (
-            "my-scoope-postgres",
-            "my-scoope-cache",
+            "nutricion-db",
+            "myscoope-cache",
             "my-scoope-notifications",
             "my-scoope-ai-jobs",
             "my-scoope-calendar-housekeeping",
