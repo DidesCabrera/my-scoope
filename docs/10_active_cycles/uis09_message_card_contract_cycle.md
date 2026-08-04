@@ -17,4 +17,3 @@ Recognize Proposal, Inbox and AI Chat history as one message-card family without
 ## Acceptance
 
 New message-like surfaces can start from the neutral anatomy instead of copying Proposal markup conventions.
-

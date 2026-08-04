@@ -16,15 +16,13 @@
    List
    ========================================================= */
 
-.message-card,
-.proposal-list-card {
+.message-card, .proposal-list-card {
   position: relative;
   display: grid;
   gap: 10px;
 }
 
-.message-card__main,
-.proposal-list-card__main {
+.message-card__main, .proposal-list-card__main {
   position: relative;
   display: grid;
   gap: 6px;
@@ -33,8 +31,7 @@
   padding-right: 34px;
 }
 
-.message-card__title-block,
-.message-card__copy,
+.message-card__title-block, .message-card__copy,
 .proposal-list-card__title-block,
 .proposal-list-card__copy {
   min-width: 0;
@@ -55,8 +52,7 @@
   text-transform: uppercase;
 }
 
-.message-card__title,
-.proposal-list-card__title {
+.message-card__title, .proposal-list-card__title {
   margin: 0;
   color: var(--text-main);
   font-size: 1.18rem;
@@ -64,8 +60,7 @@
   line-height: 1.2;
 }
 
-.message-card__aside,
-.proposal-list-card__icons-title,
+.message-card__aside, .proposal-list-card__icons-title,
 .proposal-review-hero__icons-title {
   position: absolute;
   top: 0px;
@@ -77,7 +72,6 @@
   width: 22px;
   color: var(--text-muted);
 }
-
 
 .proposal-list-card__icons-title .home-section-header-icon,
 .proposal-review-hero__icons-title .home-section-header-icon {
@@ -135,8 +129,7 @@
   max-width: 100%;
 }
 
-.message-card__summary-block,
-.proposal-list-card__summary-block,
+.message-card__summary-block, .proposal-list-card__summary-block,
 .proposal-review-summary-block {
   display: grid;
   gap: 5px;
@@ -157,8 +150,7 @@
   text-transform: uppercase;
 }
 
-.message-card__summary,
-.proposal-list-card__summary,
+.message-card__summary, .proposal-list-card__summary,
 .proposal-review-summary {
   margin: 0;
   color: var(--text-main);
@@ -166,8 +158,7 @@
   line-height: 1.5;
 }
 
-.message-card__footer,
-.proposal-list-card__bottom {
+.message-card__footer, .proposal-list-card__bottom {
   margin-top: 6px;
   gap: 10px;
 }
@@ -180,8 +171,7 @@
   stroke-width: 2.25;
 }
 
-.message-card__attachment,
-.proposal-attachment {
+.message-card__attachment, .proposal-attachment {
   display: inline-flex;
   align-items: center;
   flex: 0 1 auto;

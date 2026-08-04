@@ -17,4 +17,3 @@ Normalize the shell and empty state used by the user libraries.
 ## Acceptance
 
 The four libraries express entity differences as variants and data, not as separate empty-state implementations.
-

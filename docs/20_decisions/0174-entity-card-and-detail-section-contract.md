@@ -1,4 +1,4 @@
-# 0156 - Entity Card and Detail Section Contract
+# 0174 - Entity Card and Detail Section Contract
 
 Status: accepted
 Date: 2026-07-19

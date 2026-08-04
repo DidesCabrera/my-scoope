@@ -73,6 +73,14 @@ Cuando un ciclo planificado empiece a implementarse, el documento puede permanec
 
 ## Ciclos completados
 
+- `uis10_selective_css_loading_cycle.md`: UIS10 completado; carga Programs CSS solo en sus páginas, separa week tabs y elimina una referencia JavaScript inexistente.
+- `uis09_message_card_contract_cycle.md`: UIS09 completado; declara la familia message-card para Proposal, Inbox y AI Chat.
+- `uis08_collection_shell_cycle.md`: UIS08 completado; comparte shell y empty state entre Foods, Meals, DailyPlans y Programs.
+- `uis07_entity_heading_contract_cycle.md`: UIS07 completado; normaliza headings, indicadores y metadata de entidades, incluyendo Programs.
+- `uis06_detail_section_contract_cycle.md`: UIS06 completado; normaliza encabezados de secciones internas de DailyPlan, Program, Program Week y propuestas enriquecidas.
+- `uis05_entity_card_contract_cycle.md`: UIS05 completado; establece la anatomía neutral de cards para Food, Meal, DailyPlan, Program y Program Week.
+- `uis04_shared_panel_adoption_cycle.md`: UIS04 completado; migra paneles y tabs al contrato neutral compartido, manteniendo aliases legacy.
+- `uis03_shared_visual_language_cycle.md`: UIS03 completado; declara que Programs comparte las primitivas visuales de Foods, Meals y DailyPlans.
 - `technical_debt_priority_closure_cycle.md`: TDG09-TDG14 completado; coordinación
   AI separada, imports AI→`notas` en cero, E2E autenticado determinista, CI sin
   duplicación y retiro reversible de los bridges del solver y `Profile.plan`.

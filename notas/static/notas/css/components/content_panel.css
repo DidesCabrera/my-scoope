@@ -11,22 +11,22 @@
   background: var(--surface-card-muted);
   border: 1px solid var(--border-soft);
   border-radius: 18px;
-  margin: 10px -4px;
+  margin: 10px 0;
 }
 
 .content-panel--main,
 .card-detail-block.main {
-  margin: 10px -6px;
+  margin: 10px 0;
 }
 
 @media (max-width: 768px) {
   .content-panel,
   .card-detail-block {
-    margin: 10px -6px;
+    margin: 20px 0;
   }
 
   .content-panel--main,
   .card-detail-block.main {
-    margin: 10px -8px;
+    margin: 10px 0;
   }
 }

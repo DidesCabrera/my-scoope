@@ -3,6 +3,7 @@
 
 {% block title %}Semana {{ vm.content.week.week_number }} · {{ vm.content.program.name }}{% endblock %}
 {% block body_class %}page-detail page-header-meta-deferred{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/components/programs.css' %}">{% endblock %}
 
 {% block content %}
 <div

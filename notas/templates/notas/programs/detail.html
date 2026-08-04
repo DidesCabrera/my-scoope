@@ -3,6 +3,10 @@
 
 {% block title %}Programa Semanal · {{ vm.content.program.name }}{% endblock %}
 {% block body_class %}page-detail page-header-meta-deferred{% endblock %}
+{% block feature_css %}
+<link rel="stylesheet" href="{% static 'notas/css/components/programs.css' %}">
+<link rel="stylesheet" href="{% static 'notas/css/components/program_week_tabs.css' %}">
+{% endblock %}
 
 {% block content %}
 <div

@@ -12,7 +12,7 @@
   color: var(--text-main);
   border: 1px solid var(--border-soft);
   border-radius: 22px;
-  padding: 17px 22px 14px;
+  padding: 17px var(--desktop-padding-lats) 14px;
   margin-bottom: 24px;
 }
 
@@ -63,7 +63,7 @@
 @media (max-width: 768px) {
   .entity-card,
   .card {
-    padding: 15px 12px 20px;
+    padding: var(--mobil-padding-top) var(--mobil-padding-lats) var(--mobil-padding-bottom);
   }
 
   .entity-card__main,
@@ -76,7 +76,7 @@
   .entity-card__kpi,
   .card-kpi {
     width: 100%;
-    padding-left: 0;
+    padding: 0 var(--mobil-padding-lats);
     border: 0;
   }
 }

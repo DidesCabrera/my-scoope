@@ -1,4 +1,4 @@
-# 0155 - Shared Panel and Tabs Contract
+# 0173 - Shared Panel and Tabs Contract
 
 Status: accepted
 Date: 2026-07-19

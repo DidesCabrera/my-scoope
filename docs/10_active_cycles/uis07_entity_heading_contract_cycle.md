@@ -17,4 +17,3 @@ Give list cards, detail heroes and nested Program entities one shared heading, i
 ## Acceptance
 
 Programs uses the same heading and indicator rules as the other entities while retaining its week-specific content.
-

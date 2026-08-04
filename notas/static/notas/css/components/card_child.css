@@ -1,121 +1,25 @@
-.card {
-  background: var(--surface-card);
-  color: var(--text-main);
-  border: 1px solid var(--border-soft);
-  border-radius: 22px;
-  padding: 17px var(--desktop-padding-lats) 14px;
-  margin-bottom: 24px;
-}
-
 .card.dpm_meal {
   padding: 12px 15px 14px 15px;
 }
 
-.card.dpm_meal .card-detail-block{
-  margin: 10px 0px;
-}
-/* =========================
-   MAIN
-   ========================= */
-
-.card-main {
-  display: flex;
-  width: 100%;
-}
-
-.card-kpi {
-  flex: 1;
-  min-width: 0;
-  padding-left: 5px;
-  border-left: 1px solid var(--border-soft);
-}
-
-.card-kpi.main {
-  padding-left: 0;
-  border-left: 0;
-}
-
-/* =========================
-   BOTTOM
-   ========================= */
-
-.card-bottom {
-  display: flex;
-  align-items: center;
-  margin: 13px 0 0 0;
-}
-
-.card-bottom.main {
-  display: inline;
-  margin: 18px 0 18px 0;
-}
-
-.card-actions {
-  margin-left: auto;
-}
-
-/* =========================
-   DETAIL BLOCK
-   ========================= */
-
-.card-detail-block {
-  background: var(--surface-card-muted);
-  border: 1px solid var(--border-soft);
-  border-radius: 18px;
+.card.dpm_meal .card-detail-block {
   margin: 10px 0px;
 }
 
-
-.card-detail-block.main {
-  margin: 10px 0px;
-}
 /* =========================
    MOBILE BASE
    ========================= */
 
 @media (max-width: 768px) {
-  .card {
-    padding: var(--mobil-padding-top) var(--mobil-padding-lats) var(--mobil-padding-bottom);
-  }
-
   .card.dpm_meal {
     padding: var(--mobil-padding-top) var(--mobil-padding-lats) var(--mobil-padding-bottom);
-  }
-
-  .card-main {
-    flex-direction: column;
-    align-items: flex-start;
-    margin-bottom: 10px;
-  }
-
-  .card-kpi {
-    width: 100%;
-    padding: 0 var(--mobil-padding-lats);
-    border: none;
   }
 
   .hide-mobile {
     display: none !important;
   }
 
-  .card-detail-block {
-    margin: 20px 0px;
-  }
-
-  .card-detail-block.main {
+  .card.dpm_meal .card-detail-block {
     margin: 10px 0px;
-  }
-
-  .card.dpm_meal .card-detail-block{
-    margin: 10px 0px;
-  }
-
-}
-
-
-
-@media (max-width: 980px) {
-  .card-bottom {
-    margin: 20px 0 0 0;
   }
 }
