@@ -34,7 +34,7 @@
         {% include "components/picker_block_meal.html" with meals=meals main_id=main_card.main_id%}
         
         {% with panel_id=main_card.main_id|default:"main-dailyplan-edit" %}
-            <div class="card-detail-block main">
+            <div class="content-panel content-panel--main card-detail-block main">
                 {% include "components/detail_tabs_meals.html" with panel_id=panel_id show_desktop_edit_tab=True show_mobile_edit_tab=True %}
                 {% include "components/detail_panels_meals.html" with panel_id=panel_id menu=main_card.menu items=main_card.table.items dailyplan_id=main_card.main_id show_desktop_edit_panel=True show_mobile_edit_panel=True %}
             </div>
@@ -42,4 +42,3 @@
     </div>
 
 </div>
-  

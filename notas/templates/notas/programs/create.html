@@ -1,6 +1,8 @@
 {% extends "notas/base.html" %}
+{% load static %}
 
 {% block title %}Crear Programa Semanal{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/components/programs.css' %}">{% endblock %}
 
 {% block content %}
 <div class="page page--detail page-modal page-modal--entity-form">

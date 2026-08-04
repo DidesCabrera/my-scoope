@@ -16,12 +16,14 @@
    List
    ========================================================= */
 
+.message-card,
 .proposal-list-card {
   position: relative;
   display: grid;
   gap: 10px;
 }
 
+.message-card__main,
 .proposal-list-card__main {
   position: relative;
   display: grid;
@@ -31,6 +33,8 @@
   padding-right: 34px;
 }
 
+.message-card__title-block,
+.message-card__copy,
 .proposal-list-card__title-block,
 .proposal-list-card__copy {
   min-width: 0;
@@ -51,6 +55,7 @@
   text-transform: uppercase;
 }
 
+.message-card__title,
 .proposal-list-card__title {
   margin: 0;
   color: var(--text-main);
@@ -59,6 +64,7 @@
   line-height: 1.2;
 }
 
+.message-card__aside,
 .proposal-list-card__icons-title,
 .proposal-review-hero__icons-title {
   position: absolute;
@@ -129,6 +135,7 @@
   max-width: 100%;
 }
 
+.message-card__summary-block,
 .proposal-list-card__summary-block,
 .proposal-review-summary-block {
   display: grid;
@@ -150,6 +157,7 @@
   text-transform: uppercase;
 }
 
+.message-card__summary,
 .proposal-list-card__summary,
 .proposal-review-summary {
   margin: 0;
@@ -158,6 +166,7 @@
   line-height: 1.5;
 }
 
+.message-card__footer,
 .proposal-list-card__bottom {
   margin-top: 6px;
   gap: 10px;
@@ -171,6 +180,7 @@
   stroke-width: 2.25;
 }
 
+.message-card__attachment,
 .proposal-attachment {
   display: inline-flex;
   align-items: center;

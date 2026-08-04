@@ -1,0 +1,36 @@
+/* Program-only composition of the shared panel-tab primitive. */
+.program-week-tabs {
+  margin: 0 0 1rem;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+.program-week-tab {
+  flex: 0 0 auto;
+  min-width: 44px;
+  line-height: 1;
+}
+
+.program-week-panel[hidden] {
+  display: none !important;
+}
+
+.program-week-panel.is-active {
+  display: block;
+}
+
+.program-board--tabbed {
+  gap: 0;
+}
+
+@media (max-width: 780px) {
+  .program-week-tabs {
+    margin-inline: -4px;
+    padding: 8px 4px;
+  }
+
+  .program-week-tab {
+    min-width: 40px;
+  }
+}

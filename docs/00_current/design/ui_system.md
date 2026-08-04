@@ -29,7 +29,7 @@ El CSS debe leerse mentalmente en estas capas, aunque la estructura física toda
 | Foundations | tokens, temas, escalas, reset/base | `tokens.css`, `base.css` |
 | Layout | estructura app, sidebar, header, page shell | `layout.css`, `sidebar.css`, `header.css`, `page.css` |
 | Primitives | piezas pequeñas reutilizables | `buttons.css`, `actions.css`, `menu.css`, `toast.css`, `icons.css` |
-| Components | componentes compartidos | `card_*`, `panel_tabs.css`, `data_grid.css`, `dash_kpi.css`, `alloc-*`, `picker_list.css` |
+| Components | componentes compartidos | `entity_card.css`, `content_panel.css`, `detail_section.css`, `card_*`, `panel_tabs.css`, `data_grid.css`, `dash_kpi.css`, `alloc-*`, `picker_list.css` |
 | Features | reglas propias de una feature | `home.css`, `profile.css`, `programs.css`, `proposals.css`, `comparators.css` |
 | Legacy | estilos históricos que se migran gradualmente | reglas genéricas, colores hardcodeados y overrides puntuales |
 
@@ -196,13 +196,28 @@ Estos parciales son la base común de los paneles de reordenar/eliminar en lista
 
 Componentes que deben reutilizarse antes de crear alternativas:
 
+- `entity-heading`
+- `entity-indicators`
+- `entity-metadata`
+- `collection-page`
+- `collection-empty-state`
+- `message-card`
 - `list-panel`
 - `list-page-header`
 - `card-title-comp`
 - `structural-indicator`
+- `entity-card`
+- `entity-card__main`
+- `entity-card__title`
+- `entity-card__kpi`
+- `entity-card__footer`
+- `detail-section-header`
+- `detail-section-heading`
 - `child-card`
 - `card-main`
 - `panel-tabs`
+- `panel-tab`
+- `content-panel`
 - `data-grid`
 - `data-grid-edit-actions`
 - `actions-row`
@@ -218,13 +233,32 @@ Componentes que deben reutilizarse antes de crear alternativas:
 
 ### Programs
 
+Programs comparte el mismo lenguaje visual de Foods, Meals y DailyPlans. Su complejidad pertenece a la composición del dominio —semanas, días, slots y gráficos—, no a una familia visual independiente.
+
+Regla principal:
+
+> Una pieza de Programs puede tener estructura y contenido propios, pero debe reutilizar el componente visual correspondiente del UI System.
+
+Por lo tanto:
+
+- un panel de Programs usa `content-panel`;
+- una navegación hermana usa `panel-tabs` y `panel-tab`;
+- una entidad relacionada usa la familia de entity cards;
+- una tabla nutricional usa `data-grid`;
+- una acción usa los primitives de acciones existentes.
+
+Las clases `program-*` deben controlar composición o comportamiento propio, no volver a declarar superficies, tabs, radios, bordes o estados interactivos compartidos.
+
 `programs.css` es actualmente el archivo con mayor deuda por concentración de responsabilidades. Mantenerlo funcional tiene prioridad sobre dividirlo de golpe.
+
+La carga de `programs.css` es selectiva mediante el bloque `feature_css`; no debe volver a agregarse globalmente a `base.html`. `program_week_tabs.css` contiene la primera extracción acotada y solo se carga en Program detail.
 
 Contrato Etapa 1:
 
 - No agregar estilos globales dentro de `programs.css`.
 - Todo estilo nuevo debe comenzar con `program-` o `program-chart-`.
 - Si un patrón sirve fuera de Programs, moverlo primero a un componente compartido.
+- Si un patrón ya existe fuera de Programs, consumirlo y conservar `program-*` solo como clase de composición o hook.
 - Los nuevos fixes de gráfico deben usar tokens de z-index, superficie, texto y borde.
 - La separación física futura recomendada es:
 

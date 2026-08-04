@@ -2,7 +2,7 @@
 {% block title %}Foods{% endblock %}
 {% block content %}
 
-<div class="page list">
+<div class="page list collection-page collection-page--food">
   {% include "components/list_page_header.html" %}
 
   {% if vm.content.list_mode == "reorder" %}
@@ -13,9 +13,7 @@
     {% for child in vm.content.child_cards %}
       {% include "components/card_child_food.html" with child_card=child %}
     {% empty %}
-      <div>
-        <p>No tienes alimentos creados todavía. Puedes crear uno nuevo desde las acciones de esta vista.</p>
-      </div>
+      {% include "components/collection_empty_state.html" with icon="carrot" title="No tienes alimentos todavía" description="Puedes crear un alimento nuevo desde las acciones de esta vista." %}
     {% endfor %}
   {% endif %}
 </div>

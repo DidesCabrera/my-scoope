@@ -15,11 +15,20 @@ Antes de crear un nuevo componente, revisar si el caso puede resolverse con uno 
 | `list-page-header` | component | encabezados de listas/secciones | no usar en details internos si corresponde `card-title-comp` |
 | `list-panel` | component | paneles de lista para reordenar/eliminar | usar parciales `list_panel_reorder_row.html` y `list_panel_delete_row.html` para filas repetidas |
 | `card-title-comp` | component | encabezado interno de details | útil para detail de comparación guardada, detail de entidad o tarjetas principales |
+| `entity-heading` | component | encabezado neutral de cards y details | usar `__main`, `__aside` y `entity-indicators`; clases `card-title-*` son aliases legacy |
 | `structural-indicator` | component | conteos/resumen bajo títulos | número de alimentos, comidas, semanas, adjuntos |
+| `collection-page` | component | shell de bibliotecas/listas de entidades | Foods, Meals, DailyPlans y Programs |
+| `collection-empty-state` | component | estado vacío de una colección | usar el parcial `collection_empty_state.html` |
+| `message-card` | component | mensajes, propuestas y conversaciones en lista | Proposal, Inbox y AI Chat; variantes de dominio controlan estados y contenido |
+| `entity-card` | component | card estructural de Food, Meal, DailyPlan, Program y entidades anidadas | elementos `__main`, `__title`, `__kpi`, `__footer`, `__metadata`, `__actions`; `.card*` es alias legacy |
 | `child-card` | component | entidades relacionadas dentro de listas/details | Meals, DailyPlans, attachments, proposals |
 | `card-main` | component | cuerpo principal de una entidad | mantener layout y acciones consistentes entre entidades |
 | `card-bottom` | component | metadata/acciones inferiores | evitar crear footers nuevos si aplica |
+| `detail-section-header` | component | encabezado de sección interna en details | compartido por DailyPlan, Program, Program Week y propuestas enriquecidas |
+| `detail-section-heading` | component | icono y título del encabezado de detail | no depender de clases `home-*` en nuevas implementaciones |
 | `panel-tabs` | component | vistas hermanas del mismo nivel | no usar como navegación profunda |
+| `panel-tab` | component | opción interactiva dentro de tabs | estado activo mediante `is-active`; las clases de feature solo agregan composición |
+| `content-panel` | component | superficie estructurada dentro de cards/details | variante `--main`; `card-detail-block` permanece como alias legacy |
 | `data-grid` | component | tablas y paneles estructurados | usar variantes para nutrición, menú, reorder, delete o edit |
 | `data-grid-edit-actions` | component | grupos de acciones de edición | mantener estilo consistente de botones internos |
 | `data-grid-edit-actions__button` | primitive/component | botones guardar/comparar/editar | preferir variantes existentes |
@@ -38,7 +47,7 @@ Antes de crear un nuevo componente, revisar si el caso puede resolverse con uno 
 | Profile | `profile.css` | estilos exclusivos de Profile |
 | Proposals | `proposals.css` | estilos de revisión/propuestas; no redefinir cards globales |
 | Comparators | `comparators.css` | estilos de comparación y comparaciones guardadas |
-| Programs | `programs.css` | estilos exclusivos con prefijo `program-` o `program-chart-`; no agregar reglas genéricas |
+| Programs | `programs.css`, `program_week_tabs.css` | carga selectiva; composición de semanas, días, slots y gráficos; cards, paneles, tabs y acciones consumen componentes compartidos |
 | Calendarization | `calendarization.css` | dashboard, agenda fechada y detalle snapshot; usar prefijo `calendarization-` |
 
 ## Componentes consolidados

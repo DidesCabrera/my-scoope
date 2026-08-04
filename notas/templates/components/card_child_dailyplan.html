@@ -9,12 +9,12 @@
 
   <!-- HEADER CARD ========================================= -->
   <!-- ===================================================== -->
-  <div class="card-main">
-    <div class="card-title">
+  <div class="entity-card__main card-main">
+    <div class="entity-card__title card-title">
       {% include "components//card_child_title.html" with titulo=child_card.titulo %}
     </div>
 
-    <div class="card-kpi">
+    <div class="entity-card__kpi card-kpi">
       {% include "components/dash_kpi.html" with kpis=child_card.kpis %}
     </div>
   </div>
@@ -23,7 +23,7 @@
   {% if child_card.id %}
     {% with panel_id=child_card.id %}
       <div
-        class="card-detail-block"
+        class="content-panel card-detail-block"
         {% if default_menu %}
           data-default-desktop="#card-menu-{{ panel_id }}"
           data-default-mobile="#card-menu-{{ panel_id }}"
@@ -39,7 +39,7 @@
   {% else %}
     {% with panel_id=forloop.counter %}
       <div
-        class="card-detail-block"
+        class="content-panel card-detail-block"
         {% if default_menu %}
           data-default-desktop="#card-menu-{{ panel_id }}"
           data-default-mobile="#card-menu-{{ panel_id }}"
@@ -56,12 +56,12 @@
 
   <!-- BOTTOM SECTION ====================================== -->
   <!-- ===================================================== -->
-  <div class="card-bottom">
-    <div class="card-metadata">
+  <div class="entity-card__footer card-bottom">
+    <div class="entity-card__metadata card-metadata">
       {% include "components//card_child_metadata.html" with metadata=child_card.metadata %}
     </div>
 
-    <div class="card-actions">
+    <div class="entity-card__actions card-actions">
       {% include "components/card_actions.html" with actions=child_card.actions %}
     </div>
   </div>

@@ -1,0 +1,51 @@
+/* Shared shell for entity libraries and their empty states. */
+.collection-page {
+  color: var(--text-main);
+}
+
+.collection-empty-state {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 20px;
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  background: var(--surface-card);
+  color: var(--text-main);
+}
+
+.collection-empty-state__icon {
+  width: 24px;
+  height: 24px;
+  margin-bottom: 2px;
+  color: var(--text-muted);
+  stroke-width: 1.8;
+}
+
+.collection-empty-state__title,
+.collection-empty-state__description {
+  margin: 0;
+}
+
+.collection-empty-state__title {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.collection-empty-state__description {
+  max-width: 640px;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.collection-empty-state__action {
+  margin-top: 4px;
+}
+
+@media (max-width: 768px) {
+  .collection-empty-state {
+    padding: 16px;
+    border-radius: 16px;
+  }
+}

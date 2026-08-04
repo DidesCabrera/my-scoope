@@ -1,26 +1,26 @@
-<div class="card-detail-tabs card-detail-tabs--desktop block-desplegar-tabla block-card-desplegar">
+<div class="panel-tabs panel-tabs--desktop card-detail-tabs card-detail-tabs--desktop block-desplegar-tabla block-card-desplegar">
 
-    <div class="btn-desplegar {% if not show_hide_tab %}is-active{% endif %}" data-target="#card-menu-{{ panel_id }}">
+    <div class="panel-tab btn-desplegar {% if not show_hide_tab %}is-active{% endif %}" data-target="#card-menu-{{ panel_id }}">
         <p>Menú</p>
     </div>
 
-    <div class="btn-desplegar" data-target="#card-grid-meals-{{ panel_id }}">
+    <div class="panel-tab btn-desplegar" data-target="#card-grid-meals-{{ panel_id }}">
         <p>Tabla Nutricional</p>
     </div>
 
     {% if show_desktop_edit_tab %}
-    <div class="btn-desplegar" data-target="#card-grid-meals-edit-{{ panel_id }}">
+    <div class="panel-tab btn-desplegar" data-target="#card-grid-meals-edit-{{ panel_id }}">
         <p>Editar</p>
     </div>
     {% endif %}
 
 </div>
 
-<div class="card-detail-tabs-mobile">
+<div class="panel-tabs panel-tabs--mobile card-detail-tabs-mobile">
 
     <button
         type="button"
-        class="btn-desplegar-mobile {% if not show_hide_tab %}is-active{% endif %}"
+        class="panel-tab btn-desplegar-mobile {% if not show_hide_tab %}is-active{% endif %}"
         data-target="#card-menu-{{ panel_id }}"
     >
         Menú
@@ -28,7 +28,7 @@
 
     <button
         type="button"
-        class="btn-desplegar-mobile"
+        class="panel-tab btn-desplegar-mobile"
         data-target="#card-grid-macros-{{ panel_id }}"
     >
         Macros
@@ -36,7 +36,7 @@
 
     <button
         type="button"
-        class="btn-desplegar-mobile"
+        class="panel-tab btn-desplegar-mobile"
         data-target="#card-grid-alloc-{{ panel_id }}"
     >
         Alloc
@@ -45,7 +45,7 @@
     {% if show_mobile_edit_tab %}
     <button
         type="button"
-        class="btn-desplegar-mobile"
+        class="panel-tab btn-desplegar-mobile"
         data-target="#card-grid-edit-mobile-{{ panel_id }}"
     >
         <i data-lucide="pencil" class="tab-icon-edit"></i>

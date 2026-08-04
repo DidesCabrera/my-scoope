@@ -71,9 +71,49 @@ Las acciones destructivas deben estar visibles solo cuando el contexto permita e
 
 ## Cards
 
+### `entity-card`
+
+Contrato estructural compartido para representar Food, Meal, DailyPlan, Program y entidades anidadas equivalentes.
+
+```text
+entity-card
+  -> entity-card__main
+     -> entity-card__title
+     -> entity-card__kpi
+  -> content-panel (opcional)
+  -> entity-card__footer
+     -> entity-card__metadata
+     -> entity-card__actions
+```
+
+Variantes iniciales:
+
+- `entity-card--food`
+- `entity-card--meal`
+- `entity-card--dailyplan`
+- `entity-card--program`
+- `entity-card--nested`
+- `entity-card--program-week`
+
+Las clases `card`, `card-main`, `card-kpi`, `card-bottom`, `card-metadata` y `card-actions` permanecen como aliases legacy durante la migración.
+
 ### `child-card`
 
 Usar para representar entidades relacionadas dentro de una lista, detail o sección compuesta.
+
+`child-card` describe el rol contextual. La estructura visual debe consumir `entity-card`; no constituye un sistema de card paralelo.
+
+## Secciones de detail
+
+### `detail-section-header`
+
+Usar para el encabezado de una sección interna de detail: entidades relacionadas, información nutricional, días, semanas o agregaciones.
+
+### `detail-section-heading`
+
+Agrupa icono y título dentro del header. Las clases históricas `dailyplan-detail__children-header` y `home-section-title detail-dp` permanecen como aliases/contexto hasta completar la migración.
+
+Programs y Program Week consumen estos mismos componentes. Sus clases específicas controlan únicamente composición y comportamiento.
 
 ## Paneles de lista
 
@@ -100,6 +140,43 @@ Ejemplos:
 - Comparaciones guardadas: alimentos, comidas, planes.
 
 No usar tabs en details que representan una instancia específica si no hay vistas hermanas relevantes.
+
+La estructura neutral es:
+
+```text
+panel-tabs
+  -> panel-tab
+```
+
+Las clases históricas `card-detail-tabs`, `btn-desplegar` y sus variantes mobile continúan como aliases de compatibilidad durante la migración.
+
+Programs no define un contrato visual alternativo: week tabs y chart tabs usan el mismo `panel-tab`; sus clases `program-*` expresan únicamente scroll, tamaño o comportamiento del dominio.
+
+## Paneles de contenido
+
+### `content-panel`
+
+Usar como superficie neutral para contenido estructurado dentro de una card o detail:
+
+- tablas nutricionales de Meals y DailyPlans;
+- agregación de alimentos;
+- paneles de semanas y días;
+- gráficos de Programs;
+- comparadores y otras superficies equivalentes cuando sean migrados.
+
+La variante `content-panel--main` corresponde a paneles principales dentro de un detail. `card-detail-block` y `main` se mantienen temporalmente como aliases legacy.
+
+Una clase de feature puede controlar el layout interno, pero no debe redefinir el fondo, borde o radio base del panel.
+
+## Anatomías neutrales
+
+- `entity-heading` organiza título, indicadores y aside de cards/details, también en Programs.
+- `collection-page` y `collection-empty-state` organizan bibliotecas y sus estados vacíos.
+- `message-card` organiza Proposal, Inbox y Chat; sus clases de feature solo expresan estado y contenido.
+
+Las clases legacy permanecen como aliases durante la migración. Una nueva entidad debe comenzar por el nombre neutral.
+
+La carga de CSS exclusivo debe usar `feature_css`. Programs ya aplica esta regla: `programs.css` solo se carga en sus páginas y `program_week_tabs.css` únicamente donde existen tabs de semanas.
 
 ## CSS
 

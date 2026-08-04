@@ -34,7 +34,7 @@
         {% include "components/picker_block_food.html" with main_id=main_card.main_id %}
         
         {% with panel_id=main_card.main_id|default:"main-meal-edit" %}
-            <div class="card-detail-block main">
+            <div class="content-panel content-panel--main card-detail-block main">
                 {% include "components/detail_tabs_foods_main_detail.html" with panel_id=panel_id show_desktop_edit_tab=True show_mobile_edit_tab=True %}
                 {% include "components/detail_panels_foods.html" with panel_id=panel_id foods=main_card.foods_aggregation items=main_card.table.items nutrition_grid_template="components/grid_foods.html" edit_grid_template="components/grid_foods_edit.html" main_id=main_card.main_id show_mobile_edit_panel=True %}
             </div>
@@ -43,4 +43,3 @@
         
     
 </div>
-  
