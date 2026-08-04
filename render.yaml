@@ -1,6 +1,3 @@
-previews:
-  generation: manual
-
 databases:
   - name: nutricion-db
     plan: basic-256mb

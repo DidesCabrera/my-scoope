@@ -1,6 +1,3 @@
-previews:
-  generation: manual
-
 databases:
   - name: myscoope-staging-db
     plan: basic-256mb
