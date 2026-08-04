@@ -41,7 +41,7 @@ class AdminOperationsAccessTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Admin Operations")
         self.assertContains(response, "Operational Console")
-        self.assertContains(response, "Overview staff-only de colas accionables")
+        self.assertContains(response, "Colas operacionales detectables")
         self.assertNotContains(response, "admin-operations-hero")
 
     def test_overview_uses_independent_operations_shell(self):
