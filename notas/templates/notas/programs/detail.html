@@ -3,6 +3,10 @@
 
 {% block title %}Programa Semanal · {{ vm.content.program.name }}{% endblock %}
 {% block body_class %}page-detail page-header-meta-deferred{% endblock %}
+{% block feature_css %}
+<link rel="stylesheet" href="{% static 'notas/css/components/programs.css' %}">
+<link rel="stylesheet" href="{% static 'notas/css/components/program_week_tabs.css' %}">
+{% endblock %}
 
 {% block content %}
 <div
@@ -20,7 +24,7 @@
 
         <h1>{{ vm.content.program.name }}</h1>
 
-        <div class="structural-indicators">
+        <div class="entity-indicators structural-indicators">
           <span class="structural-item">
             <span class="structural-value">{{ vm.content.program.normalized_duration_weeks }}</span>
             <i data-lucide="calendar-1" class="structural-icon main program-structural-icon"></i>
@@ -60,12 +64,12 @@
 
   <hr>
   <section class="program-board-shell">
-    <div class="dailyplan-detail__children-header program-board-header">
-      <div class="home-section-title detail-dp">
+    <div class="detail-section-header dailyplan-detail__children-header program-board-header">
+      <div class="detail-section-heading home-section-title detail-dp">
         <i data-lucide="calendar" class="home-section-header-icon program"></i>
         <h2>Planificación por semanas</h2>
       </div>
-      <div class="structural-indicators">
+      <div class="entity-indicators structural-indicators">
         <span class="structural-item">
           <span class="structural-value">{{ vm.content.program.normalized_duration_weeks }}</span>
           <i data-lucide="calendar-1" class="structural-icon main program-structural-icon"></i>
@@ -79,12 +83,12 @@
     </div>
 
     {% if vm.content.weeks %}
-      <div class="program-week-tabs js-program-week-tabs" role="tablist" aria-label="Semanas del programa">
+      <div class="panel-tabs panel-tabs--scroll program-week-tabs js-program-week-tabs" role="tablist" aria-label="Semanas del programa">
         {% for week in vm.content.weeks %}
           <button
             type="button"
             id="program-week-tab-{{ week.week_number }}"
-            class="program-week-tab js-program-week-tab{% if forloop.first %} is-active{% endif %}"
+            class="panel-tab program-week-tab js-program-week-tab{% if forloop.first %} is-active{% endif %}"
             role="tab"
             aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
             aria-controls="program-week-panel-{{ week.week_number }}"

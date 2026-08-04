@@ -1,0 +1,10 @@
+<section class="collection-empty-state{% if modifier %} {{ modifier }}{% endif %}" aria-label="{{ title }}">
+  {% if icon %}
+    <i data-lucide="{{ icon }}" class="collection-empty-state__icon" aria-hidden="true"></i>
+  {% endif %}
+  <h3 class="collection-empty-state__title">{{ title }}</h3>
+  <p class="collection-empty-state__description">{{ description }}</p>
+  {% if action_url and action_label %}
+    <a class="btn-primary collection-empty-state__action" href="{{ action_url }}">{{ action_label }}</a>
+  {% endif %}
+</section>

@@ -18,7 +18,7 @@
     <div class="detail-section dailyplan">
         <h3>Comidas en este Plan</h3>
         {% with panel_id=main_card.main_id|default:"main-dailyplan" %}
-            <div class="card-detail-block main">
+            <div class="content-panel content-panel--main card-detail-block main">
                 {% include "components/detail_tabs_meals.html" with panel_id=panel_id %}
                 {% include "components/detail_panels_meals.html" with panel_id=panel_id menu=main_card.menu items=main_card.table.items %}
             </div>
@@ -39,4 +39,3 @@
 
 
 </div>
-      

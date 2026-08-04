@@ -1,4 +1,4 @@
-<div class="card-title-comp">
+<div class="entity-heading card-title-comp">
 
   <div class="main-title">
     {% if titulo.label and titulo.icon %}
@@ -35,7 +35,7 @@
     {% endif %}
 
     {% if titulo.structural_indicators.meals_count or titulo.structural_indicators.foods_count %}
-      <div class="structural-indicators">
+      <div class="entity-indicators structural-indicators">
           {% if titulo.structural_indicators.meals_count %}
               <span class="structural-item">
                   <span class="structural-value">{{ titulo.structural_indicators.meals_count }}</span>

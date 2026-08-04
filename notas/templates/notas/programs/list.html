@@ -2,9 +2,10 @@
 {% load static %}
 
 {% block title %}Programas Semanales{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/components/programs.css' %}">{% endblock %}
 
 {% block content %}
-<div class="page list page--program-list">
+<div class="page list collection-page collection-page--program page--program-list">
   {% include "components/list_page_header.html" %}
 
   {% if vm.content.list_mode == "reorder" %}
@@ -15,12 +16,8 @@
     {% for child in vm.content.child_cards %}
       {% include "components/card_child_program.html" with child_card=child %}
     {% empty %}
-      <div class="program-empty-state">
-        <i data-lucide="calendar" class="program-empty-state__icon"></i>
-        <h3>No tienes programas semanales aún</h3>
-        <p>Crea un programa de 1, 2, 3 o más semanas y asigna planes diarios a cada día.</p>
-        <a class="btn-primary" href="{% url 'program_create' %}">Crear programa semanal</a>
-      </div>
+      {% url 'program_create' as program_create_url %}
+      {% include "components/collection_empty_state.html" with modifier="program-empty-state" icon="calendar" title="No tienes programas semanales todavía" description="Crea un programa de una o más semanas y asigna planes diarios a cada día." action_url=program_create_url action_label="Crear programa semanal" %}
     {% endfor %}
   {% endif %}
 </div>

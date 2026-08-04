@@ -1,4 +1,4 @@
-<section class="program-week-child-card js-program-week-scope{% if is_week_detail %} program-week-child-card--detail{% endif %}" id="week-{{ week.week_number }}" aria-labelledby="program-week-title-{{ week.week_number }}">
+<section class="entity-card entity-card--nested entity-card--program-week program-week-child-card js-program-week-scope{% if is_week_detail %} program-week-child-card--detail{% endif %}" id="week-{{ week.week_number }}" aria-labelledby="program-week-title-{{ week.week_number }}">
   <header class="program-week-child-card__header">
     <div class="card-title-comp program-week-child-card__title-comp">
       <div class="main-title program-week-child-card__title-main">
@@ -8,7 +8,7 @@
         </p>
 
         <h3 id="program-week-title-{{ week.week_number }}">Semana {{ week.week_number }}</h3>
-        <div class="structural-indicators program-week-child-card__indicators" aria-label="Estructura de la semana {{ week.week_number }}">
+        <div class="entity-indicators structural-indicators program-week-child-card__indicators" aria-label="Estructura de la semana {{ week.week_number }}">
           <span class="structural-item">
             <span class="structural-value">{{ week.meals_count }}</span>
             <i data-lucide="utensils" class="structural-icon main"></i>

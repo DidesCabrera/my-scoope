@@ -20,8 +20,8 @@
   <!-- MEALS LIST =========================== -->
   <div class="page-list dailyplan-detail__children-bleed">
     {% if vm.content.child_cards %}
-      <div class="dailyplan-detail__children-header">
-        <div class="home-section-title detail-dp">
+      <div class="detail-section-header dailyplan-detail__children-header">
+        <div class="detail-section-heading home-section-title detail-dp">
           <i data-lucide="utensils" class="home-section-header-icon meal"></i>
           <h2>Detalle de cada Comida</h2>
         </div>
@@ -58,8 +58,8 @@
   <hr>
   <div class="page-list dailyplan-detail__children-bleed">
     {% if vm.content.child_cards %}
-      <div class="dailyplan-detail__children-header">
-        <div class="home-section-title detail-dp">
+      <div class="detail-section-header dailyplan-detail__children-header">
+        <div class="detail-section-heading home-section-title detail-dp">
           <i data-lucide="carrot" class="home-section-header-icon food"></i>
           <h2>Información de Alimentos</h2>
         </div>
@@ -70,7 +70,7 @@
           </span>
         </div>
   
-        <div class="dailyplan-detail__foods-aggregation card-detail-block main" data-default-desktop="#card-grid-dailyplan-foods-table-dailyplan-foods" data-default-mobile="#card-grid-dailyplan-foods-qty-dailyplan-foods">
+        <div class="content-panel content-panel--main dailyplan-detail__foods-aggregation card-detail-block main" data-default-desktop="#card-grid-dailyplan-foods-table-dailyplan-foods" data-default-mobile="#card-grid-dailyplan-foods-qty-dailyplan-foods">
           {% include "components/detail_tabs_dailyplan_foods_aggregation.html" with panel_id="dailyplan-foods" %}
           {% include "components/detail_panels_dailyplan_foods_aggregation.html" with panel_id="dailyplan-foods" items=vm.content.foods_aggregation_table %}
         </div>

@@ -1,6 +1,6 @@
 <div class="card-title-comp js-header-meta-sentinel">
 
-  <div class="main-title main-card">
+  <div class="entity-heading__main main-title main-card">
 
     {% if titulo.label and titulo.icon %}
       {% with entity_class=titulo.label|lower|cut:" " %}
@@ -23,7 +23,7 @@
       {% endfor %}
     </div>
 
-    <div class="structural-indicators">
+    <div class="entity-indicators structural-indicators">
         {% if titulo.structural_indicators.meals_count %}
             <span class="structural-item">
                 <span class="structural-value">{{ titulo.structural_indicators.meals_count }}</span>

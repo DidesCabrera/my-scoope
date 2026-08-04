@@ -12,11 +12,11 @@
     {% include "components/list_panel_proposals_delete.html" with proposals=vm.content.proposals %}
   {% else %}
     {% for proposal in vm.content.proposals %}
-      <article class="card proposal-list-card proposal-list-card--{{ proposal.status }}">
-        <div class="proposal-list-card__main">
-          <div class="proposal-list-card__title-block">
-            <div class="proposal-list-card__copy">
-              <h3 class="proposal-list-card__title">{{ proposal.title }}</h3>
+      <article class="card message-card proposal-list-card proposal-list-card--{{ proposal.status }}">
+        <div class="message-card__main proposal-list-card__main">
+          <div class="message-card__title-block proposal-list-card__title-block">
+            <div class="message-card__copy proposal-list-card__copy">
+              <h3 class="message-card__title proposal-list-card__title">{{ proposal.title }}</h3>
             </div>
           </div>
 
@@ -29,7 +29,7 @@
             </p>
           </div>
 
-          <div class="proposal-list-card__icons-title" aria-hidden="true">
+          <div class="message-card__aside proposal-list-card__icons-title" aria-hidden="true">
             <i data-lucide="sparkles" class="home-section-header-icon proposal"></i>
           </div>
         </div>
@@ -40,16 +40,16 @@
 
 
         {% if proposal.summary %}
-          <div class="proposal-list-card__summary-block">
+          <div class="message-card__summary-block proposal-list-card__summary-block">
             <span class="proposal-list-card__summary-label">Requerimiento</span>
-            <p class="proposal-list-card__summary">{{ proposal.summary }}</p>
+            <p class="message-card__summary proposal-list-card__summary">{{ proposal.summary }}</p>
           </div>
         {% endif %}
 
-        <div class="card-bottom proposal-list-card__bottom">
+        <div class="message-card__footer card-bottom proposal-list-card__bottom">
           <i data-lucide="paperclip" class="proposal-list-card__attachment-paperclip" aria-hidden="true"></i>
 
-          <div class="proposal-attachment proposal-attachment--{{ proposal.attachment_kind }}">
+          <div class="message-card__attachment proposal-attachment proposal-attachment--{{ proposal.attachment_kind }}">
             <span class="proposal-attachment__icon" aria-hidden="true">
               <i data-lucide="{{ proposal.attachment_icon }}" class="proposal-attachment__svg"></i>
             </span>
@@ -58,7 +58,7 @@
             </span>
           </div>
 
-          <div class="card-actions proposal-list-card__actions">
+          <div class="message-card__actions card-actions proposal-list-card__actions">
             {% include "components/card_actions.html" with actions=proposal.actions %}
           </div>
         </div>

@@ -22,11 +22,11 @@
     {% endif %}
 
     {% for item in vm.content.inbox_items %}
-      <article class="card proposal-list-card inbox-list-card inbox-list-card--{{ item.kind }} inbox-list-card--{{ item.direction }}{% if item.is_favorite %} is-favorite{% endif %}{% if item.direction == "received" and not item.is_read %} is-unread{% endif %}">
-        <div class="proposal-list-card__main">
-          <div class="proposal-list-card__title-block">
-            <div class="proposal-list-card__copy">
-              <h3 class="proposal-list-card__title inbox-list-card__title">{{ item.title }}</h3>
+      <article class="card message-card proposal-list-card inbox-list-card inbox-list-card--{{ item.kind }} inbox-list-card--{{ item.direction }}{% if item.is_favorite %} is-favorite{% endif %}{% if item.direction == "received" and not item.is_read %} is-unread{% endif %}">
+        <div class="message-card__main proposal-list-card__main">
+          <div class="message-card__title-block proposal-list-card__title-block">
+            <div class="message-card__copy proposal-list-card__copy">
+              <h3 class="message-card__title proposal-list-card__title inbox-list-card__title">{{ item.title }}</h3>
             </div>
           </div>
 
@@ -52,20 +52,20 @@
             </span>
           </div>
 
-          <div class="proposal-list-card__icons-title" aria-hidden="true">
+          <div class="message-card__aside proposal-list-card__icons-title" aria-hidden="true">
             <i data-lucide="inbox" class="home-section-header-icon inbox"></i>
           </div>
         </div>
 
-        <div class="proposal-list-card__summary-block inbox-list-card__summary-block">
+        <div class="message-card__summary-block proposal-list-card__summary-block inbox-list-card__summary-block">
           <span class="proposal-list-card__summary-label">Mensaje</span>
-          <p class="proposal-list-card__summary">{{ item.summary }}</p>
+          <p class="message-card__summary proposal-list-card__summary">{{ item.summary }}</p>
         </div>
 
-        <div class="card-bottom proposal-list-card__bottom">
+        <div class="message-card__footer card-bottom proposal-list-card__bottom">
           <i data-lucide="paperclip" class="proposal-list-card__attachment-paperclip" aria-hidden="true"></i>
 
-          <a href="{{ item.attachment.open_url }}" class="proposal-attachment proposal-attachment--{{ item.attachment.kind }} proposal-review-attachment inbox-attachment-link">
+          <a href="{{ item.attachment.open_url }}" class="message-card__attachment proposal-attachment proposal-attachment--{{ item.attachment.kind }} proposal-review-attachment inbox-attachment-link">
             <span class="proposal-attachment__icon" aria-hidden="true">
               <i data-lucide="{{ item.attachment.icon }}" class="proposal-attachment__svg"></i>
             </span>
@@ -74,7 +74,7 @@
             </span>
           </a>
 
-          <div class="card-actions proposal-list-card__actions">
+          <div class="message-card__actions card-actions proposal-list-card__actions">
             {% include "components/card_actions.html" with actions=item.actions %}
           </div>
         </div>

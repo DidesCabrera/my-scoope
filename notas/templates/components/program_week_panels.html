@@ -1,19 +1,19 @@
 {% if weeks %}
 <div
-  class="card-detail-block program-card-panels"
+  class="content-panel card-detail-block program-card-panels"
   {% if default_mobile %}data-default-mobile="#card-grid-program-macros-mobile-{{ panel_id }}"{% endif %}
   {% if default_desktop %}data-default-desktop="#card-grid-program-weeks-desktop-{{ panel_id }}"{% endif %}
 >
-  <div class="card-detail-tabs card-detail-tabs--desktop block-desplegar-tabla block-card-desplegar program-card-panels__desktop-tabs">
+  <div class="panel-tabs panel-tabs--desktop card-detail-tabs card-detail-tabs--desktop block-desplegar-tabla block-card-desplegar program-card-panels__desktop-tabs">
     <div
-      class="btn-desplegar"
+      class="panel-tab btn-desplegar"
       data-target="#card-grid-program-weeks-desktop-{{ panel_id }}"
     >
       <p>Semanas</p>
     </div>
     {% if can_edit %}
       <div
-        class="btn-desplegar"
+        class="panel-tab btn-desplegar"
         data-target="#card-grid-program-edit-desktop-{{ panel_id }}"
       >
         <p>Edit</p>
@@ -31,17 +31,17 @@
     </div>
   {% endif %}
 
-  <div class="card-detail-tabs-mobile">
+  <div class="panel-tabs panel-tabs--mobile card-detail-tabs-mobile">
     <button
       type="button"
-      class="btn-desplegar-mobile"
+      class="panel-tab btn-desplegar-mobile"
       data-target="#card-grid-program-macros-mobile-{{ panel_id }}"
     >
       Macros
     </button>
     <button
       type="button"
-      class="btn-desplegar-mobile"
+      class="panel-tab btn-desplegar-mobile"
       data-target="#card-grid-program-alloc-mobile-{{ panel_id }}"
     >
       Alloc
@@ -49,7 +49,7 @@
     {% if can_edit %}
       <button
         type="button"
-        class="btn-desplegar-mobile"
+        class="panel-tab btn-desplegar-mobile"
         data-target="#card-grid-program-edit-mobile-{{ panel_id }}"
         aria-label="Editar semanas"
       >

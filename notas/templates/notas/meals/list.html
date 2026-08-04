@@ -2,7 +2,7 @@
 {% block title %}Meals{% endblock %}
 {% block content %}
 
-<div class="page list">
+<div class="page list collection-page collection-page--meal">
   {% include "components/list_page_header.html" %}
 
   {% if vm.content.list_mode == "reorder" %}
@@ -13,7 +13,7 @@
     {% for child in vm.content.child_cards %}
       {% include "components//card_child_meal.html" with child_card=child hide_desktop_foods_aggregation_tab=True default_foods_table=True %}
     {% empty %}
-      <p>No meals yet.</p>
+      {% include "components/collection_empty_state.html" with icon="utensils" title="No tienes comidas todavía" description="Puedes crear una comida nueva desde las acciones de esta vista." %}
     {% endfor %}
   {% endif %}
 </div>
