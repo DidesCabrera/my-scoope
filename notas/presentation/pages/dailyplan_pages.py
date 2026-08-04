@@ -1,45 +1,41 @@
-from dataclasses import dataclass
-from typing import Optional, List, Any
 import json
+from dataclasses import dataclass
+from typing import Any, List, Optional
 
 from django.core.serializers.json import DjangoJSONEncoder
-from notas.presentation.pages.object_lookup import get_page_object_or_404
 
-from notas.domain.models import DailyPlan, DailyPlanMeal, Meal
 from notas.application.queries.performance.dailyplan_queries import (
     dailyplans_with_kcal,
     get_dailyplan_for_edit,
     get_dailyplan_meals_with_foods,
 )
 from notas.application.queries.performance.meal_queries import meals_with_kcal
+from notas.application.services.access.access import get_dailyplan_for_user
+from notas.application.services.nutrition.meal_nutrition import rebuild_meal_cached_state
 from notas.application.services.nutrition.nutrition_kpis import (
     build_nutrition_kpis_from_dailyplan,
 )
-from notas.application.services.nutrition.meal_nutrition import rebuild_meal_cached_state
+from notas.domain.models import DailyPlan, DailyPlanMeal, Meal
+from notas.presentation.actions.dailyplan_resolvers import (
+    resolve_dailyplan_page_actions,
+)
 from notas.presentation.composition.js.meal_picker_builder import (
     build_meal_picker_context_payload,
     build_meal_picker_data_payload,
 )
 from notas.presentation.config.viewmodel_config import (
-    DAILYPLAN_VIEWMODE_PERSONAL_LIST,
-    DAILYPLAN_VIEWMODE_EXPLORE_LIST,
-    DAILYPLAN_VIEWMODE_SHARED_LIST,
     DAILYPLAN_VIEWMODE_DRAFT_LIST,
+    DAILYPLAN_VIEWMODE_EXPLORE_LIST,
     DAILYPLAN_VIEWMODE_PERSONAL_DETAIL,
+    DAILYPLAN_VIEWMODE_PERSONAL_LIST,
+    DAILYPLAN_VIEWMODE_SHARED_LIST,
 )
-from notas.application.services.access.access import get_dailyplan_for_user
-
-from notas.presentation.actions.dailyplan_resolvers import (
-    resolve_dailyplan_page_actions,
-)
-
 from notas.presentation.navigation.program_context import program_context_query
+from notas.presentation.pages.object_lookup import get_page_object_or_404
 from notas.presentation.viewmodels.dailyplans import (
     build_dailyplan_detail_content_data,
     build_dailyplan_list_content_data,
 )
-
-
 
 
 def _meal_cache_is_missing(meal: Meal) -> bool:

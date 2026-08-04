@@ -1,5 +1,6 @@
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from typing import List, Optional
+
 from notas.presentation.resolvers.title_resolvers import CategoryBadgeUI
 
 # =========================

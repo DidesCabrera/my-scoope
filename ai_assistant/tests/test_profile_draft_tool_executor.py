@@ -1,9 +1,9 @@
 from django.test import SimpleTestCase
 
 from ai_assistant.application.tools import (
-    ProfileDraftToolExecutor,
     TOOL_COMPARE_DAILYPLAN_TO_TARGETS,
     TOOL_UPDATE_PROFILE_DRAFT,
+    ProfileDraftToolExecutor,
     execute_profile_draft_tool,
 )
 from ai_assistant.domain.contracts import AssistantToolRequest, AssistantToolStatus

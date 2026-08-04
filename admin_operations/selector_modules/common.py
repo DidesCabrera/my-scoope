@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 
-
-
 def _build_warning_candidates(*, catalog: dict, ai: dict, accounts: dict) -> list[dict]:
     warnings: list[dict] = []
 

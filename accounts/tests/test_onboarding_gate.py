@@ -7,7 +7,6 @@ from django.utils import timezone
 
 from notas.domain.models import Profile
 
-
 User = get_user_model()
 
 

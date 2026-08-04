@@ -5,13 +5,13 @@ from notas.application.ai_intake.dailyplan_generator import (
     DailyPlanGeneratorFood,
     _select_foods_for_meal,
 )
-from notas.application.nutrition_engine.meal_templates import build_dailyplan_meal_templates
 from notas.application.nutrition_engine.candidate_selector import (
     CandidateSelectionError,
     NutritionFoodCandidate,
     classify_food_for_role,
     select_meal_food_candidates,
 )
+from notas.application.nutrition_engine.meal_templates import build_dailyplan_meal_templates
 
 
 class NutritionEngineCandidateSelectorTests(SimpleTestCase):

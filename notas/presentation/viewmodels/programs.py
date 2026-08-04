@@ -5,8 +5,6 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 from django.urls import reverse
 
-from notas.presentation.navigation.program_context import append_query
-
 from notas.application.services.cache.program_summary import (
     DAY_LABELS,
     build_dailyplan_snapshot,
@@ -20,6 +18,7 @@ from notas.presentation.composition.viewmodel.components.builder_table_items imp
     build_dailyplan_food_aggregation_table_item,
     build_dailyplanmeal_table_item,
 )
+from notas.presentation.navigation.program_context import append_query
 
 FULL_DAY_LABELS = {
     1: "Lunes",

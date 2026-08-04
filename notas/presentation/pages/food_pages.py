@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from typing import Any
 
 from notas.domain.models import Food
-from notas.presentation.config.viewmodel_config import FOOD_VIEWMODE_PERSONAL_LIST
 from notas.presentation.actions.food_resolvers import resolve_food_page_actions
+from notas.presentation.config.viewmodel_config import FOOD_VIEWMODE_PERSONAL_LIST
 
 
 @dataclass

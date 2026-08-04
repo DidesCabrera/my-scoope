@@ -1,7 +1,7 @@
 from django.test import TestCase
 
-from notas.presentation.config.viewmodel_config import PROFILE_VIEWMODE
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
+from notas.presentation.config.viewmodel_config import PROFILE_VIEWMODE
 
 
 class UIBuildersTests(TestCase):

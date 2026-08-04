@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.conf import settings
-from email_delivery.services import deliver_share_invitation
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -13,19 +11,25 @@ from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
+from email_delivery.services import deliver_share_invitation
 from notas.application.services.access.capabilities import get_capabilities
+from notas.application.services.cache.program_summary import refresh_program_summary_cache
 from notas.application.services.commands.program_commands import (
     add_week_to_program,
     assign_dailyplan_to_program_slot,
-    copy_program as copy_program_command,
     create_weekly_program,
     delete_program,
     duplicate_week_in_program,
-    fork_program as fork_program_command,
     remove_program_day,
     remove_week_from_program,
     rename_program,
     reorder_program_weeks,
+)
+from notas.application.services.commands.program_commands import (
+    copy_program as copy_program_command,
+)
+from notas.application.services.commands.program_commands import (
+    fork_program as fork_program_command,
 )
 from notas.application.services.commands.share_commands import create_program_share
 from notas.application.services.notifications.share_emails import build_share_invitation_email
@@ -39,25 +43,43 @@ from notas.presentation.config.viewmodel_config import (
     PROGRAM_VIEWMODE_PERSONAL_LIST,
     PROGRAM_VIEWMODE_SHARE,
 )
-from notas.presentation.viewmodels.programs import (
-    FULL_DAY_LABELS,
-    available_dailyplans as program_available_dailyplans,
-    build_program_day_child_card as build_program_day_child_card_vm,
-    build_program_detail_content as build_program_detail_content_vm,
-    build_program_list_cards as build_program_list_cards_vm,
-    build_program_week_detail_content as build_program_week_detail_content_vm,
-)
 from notas.presentation.navigation.program_context import ProgramBreadcrumbParent
 from notas.presentation.viewmodels.program_actions import (
     action as _action,
+)
+from notas.presentation.viewmodels.program_actions import (
     program_detail_actions as _program_detail_actions,
+)
+from notas.presentation.viewmodels.program_actions import (
     program_header as _header,
+)
+from notas.presentation.viewmodels.program_actions import (
     program_list_actions as _program_list_actions,
+)
+from notas.presentation.viewmodels.program_actions import (
     program_vm_context as _vm_context,
+)
+from notas.presentation.viewmodels.program_actions import (
     program_week_detail_actions as _program_week_detail_actions,
 )
-from notas.application.services.cache.program_summary import refresh_program_summary_cache
-
+from notas.presentation.viewmodels.programs import (
+    FULL_DAY_LABELS,
+)
+from notas.presentation.viewmodels.programs import (
+    available_dailyplans as program_available_dailyplans,
+)
+from notas.presentation.viewmodels.programs import (
+    build_program_day_child_card as build_program_day_child_card_vm,
+)
+from notas.presentation.viewmodels.programs import (
+    build_program_detail_content as build_program_detail_content_vm,
+)
+from notas.presentation.viewmodels.programs import (
+    build_program_list_cards as build_program_list_cards_vm,
+)
+from notas.presentation.viewmodels.programs import (
+    build_program_week_detail_content as build_program_week_detail_content_vm,
+)
 
 # ==================================================
 # REQUEST HELPERS

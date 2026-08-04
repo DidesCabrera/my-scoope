@@ -4,7 +4,6 @@ from notas.application.dto.validation_dto import (
 )
 from notas.application.queries.dailyplan_queries import get_dailyplan_detail
 
-
 SUPPORTED_DAILYPLAN_TARGETS = {
     "total_kcal",
     "protein",

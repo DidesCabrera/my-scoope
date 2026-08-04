@@ -1,10 +1,10 @@
 from notas.application.services.access.capabilities import get_capabilities
-from notas.presentation.viewmodels.content.dailyplan.configure_vm import (
-    ConfigureVM,
-    ConfigureSectionUI,
-    ConfigureFieldUI,
-)
 from notas.presentation.composition.viewmodel.components.builder_headers import build_dailyplan_header
+from notas.presentation.viewmodels.content.dailyplan.configure_vm import (
+    ConfigureFieldUI,
+    ConfigureSectionUI,
+    ConfigureVM,
+)
 
 
 def build_dailyplan_configure_vm(dailyplan, user, viewmode):

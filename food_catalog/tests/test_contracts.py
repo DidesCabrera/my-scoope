@@ -16,7 +16,6 @@ from food_catalog.application.contracts import (
     SourceLicenseStatus,
 )
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 FOOD_CATALOG_ROOT = PROJECT_ROOT / "food_catalog"
 

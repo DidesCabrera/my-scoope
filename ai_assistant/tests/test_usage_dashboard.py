@@ -3,9 +3,11 @@ from decimal import Decimal
 from django.contrib.auth.models import User
 from django.test import TestCase
 
+from accounts.models import AccountPlan, AccountSubscription, CreditLedger, CreditWallet
+from accounts.services.ai_credits import AI_CREDIT_REFERENCE_TYPE
 from ai_assistant.application.credits import current_period
 from ai_assistant.application.reports import build_ai_credit_ledger_summary, build_ai_usage_dashboard_report
-from ai_assistant.models import AICreditLedger, AIUsageEvent, AIUserCreditQuota
+from ai_assistant.models import AIUsageEvent
 
 
 class AIUsageDashboardReportTests(TestCase):
@@ -52,21 +54,31 @@ class AIUsageDashboardReportTests(TestCase):
             error_type="tool_followup_LLMProviderRequestError",
             metadata={"post_tool_degradation": {"degraded": True}},
         )
-        AIUserCreditQuota.objects.create(
-            user=user,
-            period=period,
-            plan_code="member",
+        plan = AccountPlan.objects.create(
+            slug="member",
+            name="Member",
+            status=AccountPlan.Status.ACTIVE,
+            included_monthly_credits=10,
             monthly_credit_limit=10,
             daily_credit_limit=3,
-            credits_used=8,
         )
-        AICreditLedger.objects.create(
+        AccountSubscription.objects.create(user=user, plan=plan)
+        wallet = CreditWallet.objects.create(
             user=user,
-            usage_event=event,
             period=period,
-            plan_code="member",
-            action_type="assistant.ai_nutrition_intake.preview",
-            credits=2,
+            plan_snapshot_code="member",
+            balance=8,
+        )
+        CreditLedger.objects.create(
+            wallet=wallet,
+            user=user,
+            period=period,
+            plan_snapshot_code="member",
+            kind=CreditLedger.Kind.CONSUME,
+            credits_delta=-2,
+            balance_after=8,
+            reference_type=AI_CREDIT_REFERENCE_TYPE,
+            reference_id=event.turn_id or "usage-dashboard-event",
         )
 
         report = build_ai_usage_dashboard_report(period=period)
@@ -89,12 +101,22 @@ class AIUsageDashboardReportTests(TestCase):
     def test_credit_ledger_summary_counts_credits(self):
         user = User.objects.create_user(username="ledger-user")
         period = current_period()
-        AICreditLedger.objects.create(
+        wallet = CreditWallet.objects.create(
             user=user,
             period=period,
-            plan_code="member",
-            action_type="assistant.chat",
-            credits=4,
+            plan_snapshot_code="member",
+            balance=6,
+        )
+        CreditLedger.objects.create(
+            wallet=wallet,
+            user=user,
+            period=period,
+            plan_snapshot_code="member",
+            kind=CreditLedger.Kind.CONSUME,
+            credits_delta=-4,
+            balance_after=6,
+            reference_type=AI_CREDIT_REFERENCE_TYPE,
+            reference_id="ledger-summary-event",
         )
 
         summary = build_ai_credit_ledger_summary(period=period)

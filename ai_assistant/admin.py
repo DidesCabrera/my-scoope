@@ -4,11 +4,38 @@ from django.urls import path
 
 from ai_assistant.application.reports import build_ai_usage_dashboard_report
 from ai_assistant.models import (
+    AIAsyncJob,
     AICreditLedger,
     AIPreparedAction,
     AIUsageEvent,
     AIUserCreditQuota,
 )
+
+
+@admin.register(AIAsyncJob)
+class AIAsyncJobAdmin(admin.ModelAdmin):
+    list_display = (
+        "created_at",
+        "public_id",
+        "user",
+        "kind",
+        "status",
+        "attempts",
+        "available_at",
+        "completed_at",
+    )
+    list_filter = ("status", "kind")
+    search_fields = ("public_id", "user__username", "user__email", "idempotency_key", "lane_key")
+    readonly_fields = tuple(field.name for field in AIAsyncJob._meta.fields)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(AIUsageEvent)
@@ -86,6 +113,9 @@ class AIUsageEventAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         return False
 
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(AIUserCreditQuota)
 class AIUserCreditQuotaAdmin(admin.ModelAdmin):
@@ -101,7 +131,26 @@ class AIUserCreditQuotaAdmin(admin.ModelAdmin):
     )
     list_filter = ("period", "plan_code", "hard_blocked")
     search_fields = ("user__username", "user__email", "plan_code")
-    readonly_fields = ("created_at", "updated_at")
+    readonly_fields = (
+        "user",
+        "period",
+        "plan_code",
+        "monthly_credit_limit",
+        "daily_credit_limit",
+        "credits_used",
+        "hard_blocked",
+        "created_at",
+        "updated_at",
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(AICreditLedger)
@@ -136,6 +185,9 @@ class AICreditLedgerAdmin(admin.ModelAdmin):
         return False
 
     def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
         return False
 
 

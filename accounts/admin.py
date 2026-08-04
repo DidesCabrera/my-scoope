@@ -87,10 +87,11 @@ class CreditWalletAdmin(admin.ModelAdmin):
         "available_credits",
         "period",
         "plan_snapshot_code",
+        "is_frozen",
         "ledger_entries_count",
         "updated_at",
     )
-    list_filter = ("period", "plan_snapshot_code")
+    list_filter = ("period", "plan_snapshot_code", "is_frozen")
     search_fields = ("user__username", "user__email", "plan_snapshot_code")
     readonly_fields = ("available_credits", "ledger_entries_count", "created_at", "updated_at")
     autocomplete_fields = ("user",)
@@ -98,6 +99,7 @@ class CreditWalletAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {"fields": ("user", "period", "plan_snapshot_code")}),
         ("Saldo", {"fields": ("balance", "reserved_balance", "available_credits")}),
+        ("Bloqueo operacional", {"fields": ("is_frozen", "frozen_reason", "frozen_at")}),
         ("Auditoría", {"fields": ("ledger_entries_count", "metadata", "created_at", "updated_at")}),
     )
 

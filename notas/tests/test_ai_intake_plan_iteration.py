@@ -1,17 +1,18 @@
+from unittest.mock import patch
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
-from unittest.mock import patch
 
 from notas.application.ai_intake.deterministic_chat_engine import (
     DeterministicNutritionIntakeChatEngine,
 )
+from notas.application.ai_intake.iteration_commands import (
+    parse_dailyplan_iteration_commands,
+)
 from notas.application.ai_intake.nutrition_brief import (
     NutritionBrief,
     apply_conversation_adjustments,
-)
-from notas.application.ai_intake.iteration_commands import (
-    parse_dailyplan_iteration_commands,
 )
 from notas.application.ai_intake.plan_iteration import should_iterate_generated_plan
 from notas.domain.models import AiNutritionChat, Food, NutritionProposal

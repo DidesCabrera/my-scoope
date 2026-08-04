@@ -5,11 +5,10 @@ from typing import Iterable, Optional
 from django.contrib.auth import get_user_model
 
 from notas.application.services.mcp_user_tokens import (
-    MCPUserTokenValidationError,
     MCP_USER_TOKEN_PREFIX,
+    MCPUserTokenValidationError,
     validate_mcp_user_token,
 )
-
 
 INTERNAL_API_AUTH_HEADER_PREFIX = "Bearer "
 

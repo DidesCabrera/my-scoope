@@ -1,14 +1,13 @@
-from django.urls import reverse, NoReverseMatch
+from django.urls import NoReverseMatch, reverse
 
 from notas.application.services.access.capabilities import get_capabilities
-from notas.presentation.routing.food import food_url, food_list_url
 from notas.presentation.config.viewmodel_config import (
-    FOOD_VIEWMODE_PERSONAL_LIST,
-    FOOD_VIEWMODE_PERSONAL_DETAIL,
     FOOD_VIEWMODE_MEAL,
+    FOOD_VIEWMODE_PERSONAL_DETAIL,
     FOOD_VIEWMODE_PERSONAL_EDIT,
+    FOOD_VIEWMODE_PERSONAL_LIST,
 )
-
+from notas.presentation.routing.food import food_list_url, food_url
 
 # ==================================================
 # 1. ENTITY ACTION DEFINITIONS

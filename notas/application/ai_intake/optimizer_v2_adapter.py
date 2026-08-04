@@ -4,17 +4,6 @@ import unicodedata
 from dataclasses import dataclass
 from typing import Any
 
-from nutrition_solver.application.contracts import OptimizationStatus
-from nutrition_solver.application.optimizer_v2 import (
-    OptimizationBackend,
-    OptimizationPlanResultV2,
-    solve_optimization_problem,
-)
-from nutrition_solver.application.problem_v2 import MealSlotProblem, NutrientRange, OptimizationProblemV2
-from nutrition_solver.application.quality import assess_optimization_quality
-from nutrition_solver.application.shadow import compare_solver_backends
-from nutrition_solver.domain.meal_grammar import archetypes_for_meal_kind
-
 from notas.application.dto.proposal_payloads import (
     CREATE_DAILYPLAN_INTENT,
     ProposedDailyPlanDTO,
@@ -28,6 +17,16 @@ from notas.application.queries.solver_food_candidates import (
     build_solver_food_profile,
     get_solver_food_candidate_queryset,
 )
+from nutrition_solver.application.contracts import OptimizationStatus
+from nutrition_solver.application.optimizer_v2 import (
+    OptimizationBackend,
+    OptimizationPlanResultV2,
+    solve_optimization_problem,
+)
+from nutrition_solver.application.problem_v2 import MealSlotProblem, NutrientRange, OptimizationProblemV2
+from nutrition_solver.application.quality import assess_optimization_quality
+from nutrition_solver.application.shadow import compare_solver_backends
+from nutrition_solver.domain.meal_grammar import archetypes_for_meal_kind
 
 
 @dataclass(frozen=True)

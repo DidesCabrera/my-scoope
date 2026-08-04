@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
-from django.test import TestCase
 from django.http import Http404
+from django.test import TestCase
 
 from notas.application.queries.read_boundaries import (
     get_readable_dailyplan_or_404,

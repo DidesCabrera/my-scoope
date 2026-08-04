@@ -1,5 +1,8 @@
 import ast
+import json
 import os
+import subprocess
+import sys
 from pathlib import Path
 from unittest.mock import patch
 
@@ -9,11 +12,46 @@ from django.test import SimpleTestCase
 from core.environment_contract import ENVIRONMENT_VARIABLE_SPEC_BY_NAME
 from miapp.settings.base import _env_float, _env_int
 
-
 ROOT = Path(__file__).resolve().parents[3]
 
 
 class EnvironmentContractTests(SimpleTestCase):
+    def _load_production_settings(self, **overrides):
+        env = os.environ.copy()
+        for name in ("DATABASE_URL", "SECRET_KEY", "SENTRY_DSN"):
+            env.pop(name, None)
+        env.update(
+            {
+                "DJANGO_SETTINGS_MODULE": "miapp.settings.prod",
+                "SECRET_KEY": "test-production-secret",
+                "SENTRY_DSN": "",
+                **overrides,
+            }
+        )
+        script = """
+import json
+from django.conf import settings
+
+print(json.dumps({
+    "engine": settings.DATABASES["default"]["ENGINE"],
+    "language_code": settings.LANGUAGE_CODE,
+    "time_zone": settings.TIME_ZONE,
+    "hsts_seconds": settings.SECURE_HSTS_SECONDS,
+    "hsts_subdomains": settings.SECURE_HSTS_INCLUDE_SUBDOMAINS,
+    "hsts_preload": settings.SECURE_HSTS_PRELOAD,
+    "traces_sample_rate": settings.SENTRY_TRACES_SAMPLE_RATE,
+    "ai_async_enabled": settings.AI_ASSISTANT_ASYNC_ENABLED,
+}))
+"""
+        return subprocess.run(
+            [sys.executable, "-c", script],
+            cwd=ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
     def test_all_environment_names_declared_by_settings_are_classified(self):
         declared_names = set()
         helper_names = {"_env_bool", "_env_csv", "_env_float", "_env_int"}
@@ -89,3 +127,31 @@ class EnvironmentContractTests(SimpleTestCase):
 
         self.assertIn("miapp.settings.prod", wsgi)
         self.assertIn("miapp.settings.prod", asgi)
+
+    def test_production_settings_fail_closed_without_database_url(self):
+        result = self._load_production_settings()
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("DATABASE_URL must be configured in production", result.stderr)
+
+    def test_production_settings_reject_non_postgresql_database_url(self):
+        result = self._load_production_settings(DATABASE_URL="sqlite:////tmp/unsafe-production.sqlite3")
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("DATABASE_URL must use PostgreSQL in production", result.stderr)
+
+    def test_production_settings_use_launch_defaults_with_postgresql(self):
+        result = self._load_production_settings(
+            DATABASE_URL="postgresql://myscoope:password@localhost:5432/myscoope",
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["engine"], "django.db.backends.postgresql")
+        self.assertEqual(payload["language_code"], "es-cl")
+        self.assertEqual(payload["time_zone"], "America/Santiago")
+        self.assertEqual(payload["hsts_seconds"], 31_536_000)
+        self.assertTrue(payload["hsts_subdomains"])
+        self.assertTrue(payload["hsts_preload"])
+        self.assertEqual(payload["traces_sample_rate"], 0.05)
+        self.assertTrue(payload["ai_async_enabled"])

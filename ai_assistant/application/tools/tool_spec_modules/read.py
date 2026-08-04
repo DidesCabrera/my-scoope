@@ -7,7 +7,6 @@ from ai_assistant.application.tools.contracts import (
 )
 from ai_assistant.application.tools.tool_names import *  # noqa: F403
 
-
 READ_TOOL_SPECS = {
 TOOL_READ_FOOD: AssistantToolSpec(
         name=TOOL_READ_FOOD,

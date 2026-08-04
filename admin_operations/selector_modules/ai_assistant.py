@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from datetime import timedelta
 
-from django.db import models
 from django.db.models import Count, Q
 from django.utils import timezone
 
-from ai_assistant.models import AIUsageEvent, AIUserCreditQuota
+from accounts.services.ai_credits import list_account_ai_credit_quotas
+from admin_operations.selector_modules.constants import AI_OPERATIONAL_STATUSES
+from ai_assistant.models import AIUsageEvent
 from notas.domain.model_modules.proposals import NutritionProposal
 
-from admin_operations.selector_modules.constants import AI_OPERATIONAL_STATUSES
 
 def get_ai_operations_payload(*, query: str = "", limit: int = 25) -> dict:
     """Return actionable AI Assistant queues for OPS05.
@@ -35,10 +35,9 @@ def get_ai_operations_payload(*, query: str = "", limit: int = 25) -> dict:
         )
         .order_by("-created_at", "-id")
     )
-    quota_qs = (
-        AIUserCreditQuota.objects.select_related("user")
-        .filter(Q(hard_blocked=True) | Q(credits_used__gte=models.F("monthly_credit_limit")))
-        .order_by("-hard_blocked", "-updated_at", "user__email", "user__username")
+    quotas = list_account_ai_credit_quotas(
+        query=normalized_query,
+        pressured_only=True,
     )
 
     if normalized_query:
@@ -64,11 +63,6 @@ def get_ai_operations_payload(*, query: str = "", limit: int = 25) -> dict:
             | Q(summary__icontains=normalized_query)
             | Q(source__icontains=normalized_query)
         )
-        quota_qs = quota_qs.filter(
-            user_filter
-            | Q(plan_code__icontains=normalized_query)
-            | Q(period__icontains=normalized_query)
-        )
 
     event_counts = event_qs.aggregate(
         total=Count("id"),
@@ -80,10 +74,10 @@ def get_ai_operations_payload(*, query: str = "", limit: int = 25) -> dict:
         ai=Count("id", filter=Q(source=NutritionProposal.SOURCE_AI)),
         mcp=Count("id", filter=Q(source=NutritionProposal.SOURCE_MCP)),
     )
-    quota_counts = quota_qs.aggregate(
-        total=Count("id"),
-        hard_blocked=Count("id", filter=Q(hard_blocked=True)),
-    )
+    quota_counts = {
+        "total": len(quotas),
+        "hard_blocked": sum(1 for quota in quotas if quota.hard_blocked),
+    }
 
     return {
         "query": normalized_query,
@@ -92,7 +86,7 @@ def get_ai_operations_payload(*, query: str = "", limit: int = 25) -> dict:
         "quota_counts": quota_counts,
         "events": list(event_qs[:limit]),
         "proposals": list(proposal_qs[:limit]),
-        "quotas": list(quota_qs[:limit]),
+        "quotas": quotas[:limit],
     }
 
 

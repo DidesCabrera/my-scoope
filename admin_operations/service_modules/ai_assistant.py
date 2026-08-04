@@ -1,12 +1,24 @@
 from __future__ import annotations
 
-
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.utils import timezone
 
+from accounts.models import CreditWallet
+from accounts.services.ai_credits import (
+    AccountAICreditQuotaSnapshot,
+    account_ai_credit_quota_from_wallet,
+    set_account_ai_credit_freeze,
+)
 from admin_operations.selectors import (
     get_ai_operations_payload,
+)
+from admin_operations.service_modules.common import (
+    AdminOperationResult,
+    _format_int,
+    _get_operation_target,
+    _user_label,
+    record_admin_operation_audit_event,
 )
 from admin_operations.viewmodels import (
     AdminOperationsAIEventVM,
@@ -15,17 +27,9 @@ from admin_operations.viewmodels import (
     AdminOperationsAIVM,
     AdminOperationsMetricVM,
 )
-from ai_assistant.models import AICreditLedger, AIUsageEvent, AIUserCreditQuota
+from ai_assistant.models import AIUsageEvent
 from notas.domain.model_modules.proposals import NutritionProposal, NutritionProposalAuditEvent
 
-
-from admin_operations.service_modules.common import (
-    AdminOperationResult,
-    _format_int,
-    _get_operation_target,
-    _user_label,
-    record_admin_operation_audit_event,
-)
 
 def _ai_event_to_vm(event: AIUsageEvent) -> AdminOperationsAIEventVM:
     user = event.user
@@ -68,7 +72,7 @@ def _ai_proposal_to_vm(proposal: NutritionProposal) -> AdminOperationsAIProposal
     )
 
 
-def _ai_quota_to_vm(quota: AIUserCreditQuota) -> AdminOperationsAIQuotaVM:
+def _ai_quota_to_vm(quota: AccountAICreditQuotaSnapshot) -> AdminOperationsAIQuotaVM:
     user = quota.user
     return AdminOperationsAIQuotaVM(
         pk=quota.pk,
@@ -80,7 +84,7 @@ def _ai_quota_to_vm(quota: AIUserCreditQuota) -> AdminOperationsAIQuotaVM:
         usage_label=f"{_format_int(quota.credits_used)} / {_format_int(quota.monthly_credit_limit)}",
         daily_limit=_format_int(quota.daily_credit_limit),
         hard_blocked=quota.hard_blocked,
-        admin_url=reverse("admin:ai_assistant_aiusercreditquota_change", args=[quota.pk]),
+        admin_url=reverse("admin:accounts_creditwallet_change", args=[quota.pk]),
     )
 
 
@@ -168,33 +172,30 @@ def perform_ai_quota_operation(*, quota_id: int, action: str, actor, reason: str
     if action not in {"block", "unblock"}:
         raise ValidationError(f"Unknown AI quota operation: {action}")
 
-    quota = _get_operation_target(AIUserCreditQuota.objects.select_related("user"), pk=quota_id)
+    wallet = _get_operation_target(CreditWallet.objects.select_related("user"), pk=quota_id)
+    quota = account_ai_credit_quota_from_wallet(wallet)
     target_blocked = action == "block"
     if quota.hard_blocked == target_blocked:
         state = "bloqueada" if target_blocked else "desbloqueada"
         return AdminOperationResult(ok=False, message=f"La cuota ya está {state}.")
 
-    actor_label = getattr(actor, "email", "") or getattr(actor, "username", "staff") or "staff"
     old_blocked = quota.hard_blocked
-    quota.hard_blocked = target_blocked
-    quota.save(update_fields=["hard_blocked", "updated_at"])
-    ledger = AICreditLedger.objects.create(
-        user=quota.user,
-        period=quota.period,
-        plan_code=quota.plan_code,
-        action_type="admin_operations.ai_quota_block" if target_blocked else "admin_operations.ai_quota_unblock",
-        kind=AICreditLedger.Kind.ADJUSTMENT,
-        credits=0,
+    wallet, ledger, changed = set_account_ai_credit_freeze(
+        wallet_id=wallet.pk,
+        frozen=target_blocked,
         reason=reason,
-        metadata={"actor": actor_label, "actor_id": getattr(actor, "pk", None), "source": "OPS05"},
+        actor=actor,
     )
+    if not changed:
+        state = "bloqueada" if target_blocked else "desbloqueada"
+        return AdminOperationResult(ok=False, message=f"La cuota ya está {state}.")
     record_admin_operation_audit_event(
         actor=actor,
-        action="ai_assistant.quota.block" if target_blocked else "ai_assistant.quota.unblock",
-        target=quota,
+        action="accounts.credit_wallet.freeze" if target_blocked else "accounts.credit_wallet.unfreeze",
+        target=wallet,
         reason=reason,
         status_before=f"hard_blocked={old_blocked}",
-        status_after=f"hard_blocked={quota.hard_blocked}",
+        status_after=f"hard_blocked={wallet.is_frozen}",
         metadata={"source_patch": "OPS05", "ledger_id": ledger.pk, "period": quota.period, "plan_code": quota.plan_code},
     )
     return AdminOperationResult(ok=True, message="Acceso IA bloqueado." if target_blocked else "Acceso IA desbloqueado.")

@@ -18,9 +18,8 @@ from django.utils import timezone
 from food_catalog.application.imports.contracts import ImportedFoodDTO
 from food_catalog.application.imports.normalization import normalize_imported_food
 from food_catalog.application.imports.quality import evaluate_imported_food_quality
-from food_catalog.models import CatalogFood, CatalogFoodSource, CatalogImportBatch
 from food_catalog.infrastructure.imports.governance import CatalogImportIdentity, start_catalog_import_batch
-
+from food_catalog.models import CatalogFood, CatalogFoodSource, CatalogImportBatch
 
 CATALOG_SOURCE_NAME_USDA = "USDA FoodData Central"
 DEFAULT_CATALOG_IMPORT_SOURCE_TYPE = CatalogFood.SOURCE_EXTERNAL_TEMPORARY

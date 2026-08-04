@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-
-
 from ai_assistant.models import AIUsageEvent
 from food_catalog.models import CatalogCurationCandidate, CatalogFood
 

@@ -14,6 +14,7 @@ from ai_assistant.domain import (
     AssistantToolRequest,
 )
 
+
 @dataclass(frozen=True)
 class AssistantProviderParseResult:
     """Result of normalizing provider text into an internal structured response."""

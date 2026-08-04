@@ -9,8 +9,8 @@ from nutrition_solver.application.contracts import (
     SolverConstraint,
     impossible_optimization_result,
 )
-from nutrition_solver.domain.models import MacroTarget, PortionBounds, SolverFood
 from nutrition_solver.application.portion_solver import solve_meal_portions
+from nutrition_solver.domain.models import MacroTarget, PortionBounds, SolverFood
 
 
 class NutritionEngineOptimizationContractsTests(SimpleTestCase):

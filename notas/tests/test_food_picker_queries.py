@@ -17,7 +17,6 @@ from notas.domain.models import (
     FoodSourceMetadata,
 )
 
-
 User = get_user_model()
 
 

@@ -2,7 +2,6 @@ from django.test import SimpleTestCase, override_settings
 
 from ai_assistant.checks import check_ai_assistant_production_guard
 
-
 SAFE_CREDIT_PLANS = {
     "free": {
         "monthly_credit_limit": 25,
@@ -25,6 +24,8 @@ SAFE_PROVIDER = {
     "AI_ASSISTANT_LLM_PROVIDER": "openai",
     "AI_ASSISTANT_OPENAI_API_KEY": "test-key",
     "AI_ASSISTANT_ENABLE_REVIEWABLE_PROPOSAL_TOOLS": True,
+    "AI_ASSISTANT_ASYNC_ENABLED": True,
+    "CACHE_URL": "redis://cache.internal:6379/0",
 }
 
 

@@ -33,7 +33,6 @@ from notas.application.services.food_imports.aliases import (
 )
 from notas.domain.models import Food, FoodPortion
 
-
 FOOD_CATALOG_PORTION_SOURCE = "food_catalog"
 
 

@@ -12,7 +12,6 @@ from core.application_dependencies import (
     TRANSITIONAL_APP_EDGES,
 )
 
-
 ROOT = Path(__file__).resolve().parents[2]
 
 

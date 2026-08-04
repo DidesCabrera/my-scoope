@@ -8,7 +8,6 @@ from notas.application.services.food_imports.localized_names import (
 )
 from notas.domain.models import Food, MealFood
 
-
 PICKER_SOURCE_USER = "user"
 PICKER_SOURCE_GLOBAL = "global"
 PICKER_SOURCE_SYSTEM = "system"

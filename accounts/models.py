@@ -152,6 +152,13 @@ class CreditWallet(models.Model):
         blank=True,
         help_text="Plan slug/code that granted or last refreshed this wallet balance.",
     )
+    is_frozen = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="Operational account-level block for commercial credit consumption.",
+    )
+    frozen_reason = models.CharField(max_length=160, blank=True)
+    frozen_at = models.DateTimeField(null=True, blank=True)
     metadata = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

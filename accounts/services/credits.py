@@ -20,6 +20,10 @@ class InsufficientAccountCredits(Exception):
     """Raised when a wallet cannot reserve or consume the requested credits."""
 
 
+class AccountCreditsFrozen(InsufficientAccountCredits):
+    """Raised when account credit consumption is operationally frozen."""
+
+
 @dataclass(frozen=True)
 class AccountCreditPlanSnapshot:
     slug: str
@@ -140,6 +144,9 @@ def reserve_account_credits(
             wallet.balance = int(plan.included_monthly_credits or 0)
             wallet.reserved_balance = 0
             wallet.plan_snapshot_code = plan.slug
+
+        if wallet.is_frozen:
+            raise AccountCreditsFrozen(wallet.frozen_reason or "Account credits are frozen.")
 
         if wallet.available_credits < credits:
             raise InsufficientAccountCredits("Insufficient account credits available for this reservation.")

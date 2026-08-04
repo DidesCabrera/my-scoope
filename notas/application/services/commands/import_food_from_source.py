@@ -5,11 +5,10 @@ from django.db import transaction
 from notas.application.dto.imported_food_dto import ImportedFoodDTO
 from notas.application.services.food_imports.normalization import normalize_imported_food
 from notas.application.services.food_imports.quality import evaluate_imported_food_quality
-from notas.domain.models import Food, FoodSourceMetadata
-
 from notas.application.services.food_imports.visibility_policy import (
     resolve_initial_food_visibility,
 )
+from notas.domain.models import Food, FoodSourceMetadata
 
 
 @dataclass(frozen=True)

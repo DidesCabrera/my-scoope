@@ -1,18 +1,16 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
-from notas.domain.models import MealFood, Meal, Food
 from notas.application.services.commands.meal_commands import (
     create_meal_food,
     delete_meal_food,
     reorder_meal_foods,
     update_meal_food,
 )
-
-
+from notas.domain.models import Food, Meal, MealFood
 
 #************ RENDER COMPLEJOS *********************
 # ---------- DETAIL (NO HAY LIST)  ----------

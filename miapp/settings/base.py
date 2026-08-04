@@ -1,6 +1,7 @@
 import json
 import os
 from pathlib import Path
+
 import dj_database_url
 from django.core.exceptions import ImproperlyConfigured
 
@@ -194,9 +195,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # INTERNATIONALIZATION
 # ==============================
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "es-cl"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "America/Santiago"
 
 USE_I18N = True
 
@@ -407,6 +408,20 @@ AI_ASSISTANT_CREDIT_PLAN_ALIASES = {
 }
 AI_ASSISTANT_ACTION_CREDIT_MULTIPLIERS = {}
 
+# Slow LLM turns run through a PostgreSQL-owned durable queue in production.
+# Redis is only a worker wake-up channel; false remains the local rollback mode.
+AI_ASSISTANT_ASYNC_ENABLED = os.environ.get(
+    "AI_ASSISTANT_ASYNC_ENABLED",
+    "false",
+).lower() in {"1", "true", "yes", "on"}
+AI_ASYNC_JOB_MAX_ATTEMPTS = _env_int("AI_ASYNC_JOB_MAX_ATTEMPTS", 3)
+AI_ASYNC_JOB_LEASE_SECONDS = _env_int("AI_ASYNC_JOB_LEASE_SECONDS", 180)
+AI_ASYNC_JOB_HANDLERS = {
+    "nutrition_intake_turn": (
+        "notas.application.ai_intake.async_turns.process_nutrition_intake_turn_job"
+    ),
+}
+
 # Patch 61: optional cost optimization route table. Keep only a default route
 # out of the box so behavior remains unchanged until production config chooses
 # cheaper/stronger models per action_type. Example action-specific routes can be
@@ -552,7 +567,15 @@ SENTRY_RELEASE = os.environ.get(
     "SENTRY_RELEASE",
     os.environ.get("RENDER_GIT_COMMIT", ""),
 ).strip()
-SENTRY_TRACES_SAMPLE_RATE = _env_float("SENTRY_TRACES_SAMPLE_RATE", 0.0)
+_DEFAULT_SENTRY_TRACES_SAMPLE_RATE = (
+    0.05
+    if os.environ.get("DJANGO_SETTINGS_MODULE", "").endswith(".prod")
+    else 0.0
+)
+SENTRY_TRACES_SAMPLE_RATE = _env_float(
+    "SENTRY_TRACES_SAMPLE_RATE",
+    _DEFAULT_SENTRY_TRACES_SAMPLE_RATE,
+)
 SENTRY_PROFILES_SAMPLE_RATE = _env_float("SENTRY_PROFILES_SAMPLE_RATE", 0.0)
 SENTRY_ENABLED = configure_sentry(
     dsn=SENTRY_DSN,

@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import timedelta
 
-
 PREPARED_ACTION_TTL = timedelta(minutes=30)
 
 

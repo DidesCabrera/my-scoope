@@ -17,17 +17,29 @@ from notas.application.services.commands.saved_comparison_commands import (
 from notas.application.services.comparisons.constants import MIN_COMPARATOR_SLOTS
 from notas.application.services.comparisons.nutrition import (
     comparable_rows as _comparable_rows,
+)
+from notas.application.services.comparisons.nutrition import (
     entity_values as _entity_values,
+)
+from notas.application.services.comparisons.nutrition import (
     food_values as _food_values,
 )
 from notas.application.services.comparisons.payloads import (
     normalize_payload as _normalize_payload,
+)
+from notas.application.services.comparisons.payloads import (
     selected_payload_from_selections as _selected_payload_from_selections,
+)
+from notas.application.services.comparisons.payloads import (
     selection_rows_from_payload as _selection_rows_from_payload,
 )
 from notas.application.services.comparisons.snapshots import (
     comparable_rows_from_snapshot as _comparable_rows_from_snapshot,
+)
+from notas.application.services.comparisons.snapshots import (
     normalize_snapshot_payload as _normalize_snapshot_payload,
+)
+from notas.application.services.comparisons.snapshots import (
     selection_rows_from_snapshot as _selection_rows_from_snapshot,
 )
 from notas.application.services.nutrition.weight import get_current_weight
@@ -45,14 +57,25 @@ from notas.presentation.viewmodels.comparators import (
     ComparatorSelection,
     SavedComparisonCard,
     SavedComparisonsContentVM,
+)
+from notas.presentation.viewmodels.comparators import (
     build_metrics as _build_metrics,
+)
+from notas.presentation.viewmodels.comparators import (
     build_selections_from_params as _build_selections_from_params,
+)
+from notas.presentation.viewmodels.comparators import (
     build_tabs as _build_tabs,
+)
+from notas.presentation.viewmodels.comparators import (
     choices_from_queryset as _choices_from_queryset,
+)
+from notas.presentation.viewmodels.comparators import (
     format_number as _format_number,
+)
+from notas.presentation.viewmodels.comparators import (
     items_by_id as _items_by_id,
 )
-
 
 COMPARATOR_KINDS = {
     "foods": {

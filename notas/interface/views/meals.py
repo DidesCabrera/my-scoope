@@ -1,41 +1,20 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_POST
-from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
-from django.contrib import messages
-from notas.application.services.access.capabilities import get_capabilities
-from notas.domain.models import Meal, MealFood, Food, MealShare
-from notas.presentation.config.viewmodel_config import *
-
 import json
-from django.core.serializers.json import DjangoJSONEncoder
-from notas.application.services.nutrition.nutrition_kpis import build_nutrition_kpis_from_meal
-from notas.presentation.viewmodels.meals import (
-    build_meal_configure_vm,
-    build_meal_detail_vm,
-    build_meal_list_vm,
-)
-from notas.presentation.composition.js.food_picker_builder import build_food_picker_foods_payload, build_food_picker_context_payload
-from notas.application.queries.performance.meal_queries import meals_with_kcal
+from dataclasses import dataclass
 
-from notas.interface.forms.forms import MealShareForm
 from django.conf import settings
-from email_delivery.services import deliver_share_invitation
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.serializers.json import DjangoJSONEncoder
+from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from notas.application.services.notifications.share_emails import build_share_invitation_email
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.http import require_POST
 
-from notas.presentation.viewmodels.base_vm import BaseVM
-from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
-from notas.presentation.pages.meal_pages import get_meal_detail_page_data
-
-from notas.presentation.pages.meal_pages import (
-    get_meal_detail_page_data,
-    get_meal_list_page_data,
-    get_meal_explore_list_page_data,
-    get_meal_shared_list_page_data,
-    get_meal_draft_list_page_data,
-)
-
+from email_delivery.services import deliver_share_invitation
+from notas.application.queries.performance.meal_queries import meals_with_kcal
+from notas.application.services.access.access import get_meal_for_user
+from notas.application.services.access.capabilities import get_capabilities
 from notas.application.services.commands.meal_commands import (
     configure_meal,
     copy_meal,
@@ -48,19 +27,35 @@ from notas.application.services.commands.meal_commands import (
     save_food_in_meal,
     save_meal,
 )
-
 from notas.application.services.commands.share_commands import (
     accept_meal_share,
     create_meal_share,
     dismiss_meal_share,
     remove_meal_share,
 )
-
-from notas.application.services.access.access import get_meal_for_user
-
-from django.utils.http import url_has_allowed_host_and_scheme
-
-from dataclasses import dataclass
+from notas.application.services.notifications.share_emails import build_share_invitation_email
+from notas.application.services.nutrition.nutrition_kpis import build_nutrition_kpis_from_meal
+from notas.domain.models import Food, Meal, MealFood, MealShare
+from notas.interface.forms.forms import MealShareForm
+from notas.presentation.composition.js.food_picker_builder import (
+    build_food_picker_context_payload,
+    build_food_picker_foods_payload,
+)
+from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
+from notas.presentation.config.viewmodel_config import *
+from notas.presentation.pages.meal_pages import (
+    get_meal_detail_page_data,
+    get_meal_draft_list_page_data,
+    get_meal_explore_list_page_data,
+    get_meal_list_page_data,
+    get_meal_shared_list_page_data,
+)
+from notas.presentation.viewmodels.base_vm import BaseVM
+from notas.presentation.viewmodels.meals import (
+    build_meal_configure_vm,
+    build_meal_detail_vm,
+    build_meal_list_vm,
+)
 
 
 @dataclass(frozen=True)

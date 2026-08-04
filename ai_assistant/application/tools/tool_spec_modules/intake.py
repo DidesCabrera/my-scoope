@@ -7,7 +7,6 @@ from ai_assistant.application.tools.contracts import (
 )
 from ai_assistant.application.tools.tool_names import *  # noqa: F403
 
-
 INTAKE_TOOL_SPECS = {
 TOOL_UPDATE_PROFILE_DRAFT: AssistantToolSpec(
         name=TOOL_UPDATE_PROFILE_DRAFT,

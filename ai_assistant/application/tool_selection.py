@@ -5,15 +5,14 @@ from typing import Any, Callable
 
 from ai_assistant.application.product_ports import AIProductBindings
 from ai_assistant.application.tools import (
-    AssistantToolCategory,
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
     TOOL_UPDATE_PREFERENCE_DRAFT,
     TOOL_UPDATE_PROFILE_DRAFT,
     TOOL_UPDATE_PROPOSAL_PREFERENCES,
+    AssistantToolCategory,
     get_tool_spec,
 )
 from ai_assistant.domain import AssistantToolResult, AssistantTurnRequest
-
 
 ProviderToolSpecProvider = Callable[[], list[dict[str, Any]]]
 

@@ -2,12 +2,12 @@ from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
 
-from notas.management.commands.dry_run_usda_food_payloads import (
-    dry_run_usda_food_payloads,
-)
 from notas.application.services.food_imports.usda.foundation_foods_reader import (
     FoundationFoodsReaderError,
     read_foundation_food_payloads_from_json,
+)
+from notas.management.commands.dry_run_usda_food_payloads import (
+    dry_run_usda_food_payloads,
 )
 
 

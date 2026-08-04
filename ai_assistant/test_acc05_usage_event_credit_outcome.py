@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 
 from accounts.models import AccountPlan, CreditLedger, CreditWallet
+from accounts.services.ai_credits import account_ai_credit_quota_for_user
 from accounts.services.credits import reserve_account_credits
 from ai_assistant.application.credits import (
     ACCOUNT_CREDIT_REFERENCE_TYPE,
@@ -68,8 +69,9 @@ class AIUsageEventAccountCreditOutcomeTests(TestCase):
         outcome = event.metadata["account_credit_outcome"]
         self.assertTrue(outcome["charged"])
         self.assertEqual(outcome["account_wallet"]["credits"], 3)
-        self.assertEqual(AIUserCreditQuota.objects.get(user=self.user).credits_used, 3)
-        self.assertEqual(AICreditLedger.objects.get(user=self.user, usage_event=event).credits, 3)
+        self.assertEqual(account_ai_credit_quota_for_user(self.user).credits_used, 3)
+        self.assertFalse(AIUserCreditQuota.objects.filter(user=self.user).exists())
+        self.assertFalse(AICreditLedger.objects.filter(user=self.user).exists())
         self.assertEqual(
             CreditLedger.objects.filter(
                 user=self.user,

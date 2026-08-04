@@ -1,8 +1,9 @@
+from unittest.mock import patch
+
 from django.contrib.auth.models import User
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
-from unittest.mock import patch
 
 from notas.application.ai_intake.deterministic_chat_engine import (
     DeterministicNutritionIntakeChatEngine,

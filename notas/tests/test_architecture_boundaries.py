@@ -2,7 +2,6 @@ import ast
 from pathlib import Path
 from unittest import TestCase
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 NOTAS_ROOT = PROJECT_ROOT / "notas"
 DOMAIN_ROOT = NOTAS_ROOT / "domain"

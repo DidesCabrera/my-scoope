@@ -7,7 +7,6 @@ from django.utils import timezone
 
 from notas.domain.models import Profile, WeightLog
 
-
 DEFAULT_CURRENT_WEIGHT_KG = 75
 _WEIGHT_LOG_NOT_QUERIED = object()
 

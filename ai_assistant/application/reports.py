@@ -8,8 +8,13 @@ from django.db.models import Count, Q, QuerySet, Sum
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
+from accounts.models import CreditLedger
+from accounts.services.ai_credits import (
+    AI_CREDIT_REFERENCE_TYPE,
+    list_account_ai_credit_quotas,
+)
 from ai_assistant.application.credits import current_period
-from ai_assistant.models import AICreditLedger, AIUsageEvent, AIUserCreditQuota
+from ai_assistant.models import AIUsageEvent
 
 
 @dataclass(frozen=True)
@@ -137,10 +142,10 @@ def _top_users(events: QuerySet[AIUsageEvent], *, limit: int = 10) -> list[dict[
 
 
 def _quota_pressure(*, period: str, limit: int = 10) -> list[dict[str, Any]]:
-    quotas = AIUserCreditQuota.objects.filter(period=period, monthly_credit_limit__gt=0).select_related("user")
     rows: list[dict[str, Any]] = []
-    for quota in quotas:
-        usage_ratio = Decimal(quota.credits_used) / Decimal(quota.monthly_credit_limit)
+    for quota in list_account_ai_credit_quotas(period=period):
+        if quota.monthly_credit_limit <= 0:
+            continue
         rows.append(
             {
                 "user_id": quota.user_id,
@@ -150,7 +155,7 @@ def _quota_pressure(*, period: str, limit: int = 10) -> list[dict[str, Any]]:
                 "credits_used": quota.credits_used,
                 "monthly_credit_limit": quota.monthly_credit_limit,
                 "daily_credit_limit": quota.daily_credit_limit,
-                "usage_ratio": usage_ratio,
+                "usage_ratio": quota.usage_ratio,
                 "hard_blocked": quota.hard_blocked,
             }
         )
@@ -160,12 +165,14 @@ def _quota_pressure(*, period: str, limit: int = 10) -> list[dict[str, Any]]:
 
 def build_ai_credit_ledger_summary(*, period: str | None = None) -> dict[str, Any]:
     selected_period = period or current_period()
-    aggregate = AICreditLedger.objects.filter(period=selected_period).aggregate(
-        entries=Count("id"),
-        charged_credits=Coalesce(Sum("credits"), 0),
+    consumed = CreditLedger.objects.filter(
+        period=selected_period,
+        kind=CreditLedger.Kind.CONSUME,
+        reference_type=AI_CREDIT_REFERENCE_TYPE,
     )
+    aggregate = consumed.aggregate(entries=Count("id"), credits_delta=Coalesce(Sum("credits_delta"), 0))
     return {
         "period": selected_period,
         "entries": int(aggregate["entries"] or 0),
-        "charged_credits": int(aggregate["charged_credits"] or 0),
+        "charged_credits": abs(int(aggregate["credits_delta"] or 0)),
     }

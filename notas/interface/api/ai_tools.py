@@ -6,21 +6,19 @@ from notas.application.ai_tools.proposal_tools import (
     iterate_nutrition_engine_dailyplan_proposal_tool,
 )
 from notas.application.ai_tools.read_tools import (
+    list_food_catalog_tool,
     list_user_proposals_tool,
     read_dailyplan_tool,
     read_food_tool,
     read_meal_tool,
     read_proposal_tool,
-    list_food_catalog_tool,
 )
-
-from notas.application.ai_tools.validation_tools import (
-    compare_dailyplan_to_targets_tool,
-)
-
 from notas.application.ai_tools.results import (
     tool_error,
     tool_success,
+)
+from notas.application.ai_tools.validation_tools import (
+    compare_dailyplan_to_targets_tool,
 )
 from notas.application.services.mcp_user_tokens import (
     MCP_SCOPE_PROPOSALS_CREATE,

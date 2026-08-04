@@ -5,9 +5,9 @@ from django.test import SimpleTestCase, override_settings
 from ai_assistant.application import ExternalLLMOrchestrator
 from ai_assistant.application.orchestrator import AssistantOrchestratorConfig
 from ai_assistant.application.tools import (
-    ReviewableProposalToolExecutor,
-    TOOL_CREATE_VALIDATED_MEAL_PROPOSAL,
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
+    TOOL_CREATE_VALIDATED_MEAL_PROPOSAL,
+    ReviewableProposalToolExecutor,
 )
 from ai_assistant.domain import (
     AssistantMessage,

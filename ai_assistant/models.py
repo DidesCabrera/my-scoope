@@ -194,3 +194,76 @@ class AIPreparedAction(models.Model):
 
     def __str__(self) -> str:
         return f"{self.action_key} · {self.user} · {self.status}"
+
+
+class AIAsyncJob(models.Model):
+    """Durable, idempotent execution record for slow assistant work.
+
+    PostgreSQL owns job state and results. Redis may wake workers early, but a
+    lost Redis signal cannot lose a queued job.
+    """
+
+    class Status(models.TextChoices):
+        QUEUED = "queued", "Queued"
+        RUNNING = "running", "Running"
+        RETRYING = "retrying", "Retrying"
+        SUCCEEDED = "succeeded", "Succeeded"
+        FAILED = "failed", "Failed"
+        CANCELLED = "cancelled", "Cancelled"
+
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="ai_async_jobs",
+    )
+    kind = models.CharField(max_length=80, db_index=True)
+    idempotency_key = models.CharField(max_length=120)
+    lane_key = models.CharField(
+        max_length=160,
+        blank=True,
+        db_index=True,
+        help_text="Serializes related jobs such as turns in one conversation.",
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.QUEUED,
+        db_index=True,
+    )
+    request_payload = models.JSONField(default=dict)
+    result_payload = models.JSONField(default=dict, blank=True)
+    attempts = models.PositiveSmallIntegerField(default=0)
+    max_attempts = models.PositiveSmallIntegerField(default=3)
+    available_at = models.DateTimeField(default=timezone.now, db_index=True)
+    leased_at = models.DateTimeField(null=True, blank=True)
+    lease_expires_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    error_code = models.CharField(max_length=120, blank=True)
+    error_message = models.CharField(max_length=500, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["created_at", "id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "kind", "idempotency_key"],
+                name="ai_job_user_kind_idempotency_unique",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["status", "available_at"], name="ai_job_status_available_idx"),
+            models.Index(fields=["user", "status", "created_at"], name="ai_job_user_status_created_idx"),
+        ]
+
+    @property
+    def is_terminal(self) -> bool:
+        return self.status in {
+            self.Status.SUCCEEDED,
+            self.Status.FAILED,
+            self.Status.CANCELLED,
+        }
+
+    def __str__(self) -> str:
+        return f"{self.kind} · {self.public_id} · {self.status}"

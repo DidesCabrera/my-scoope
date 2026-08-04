@@ -8,7 +8,6 @@ from notas.interface.api.auth import (
     get_authorization_header,
     resolve_internal_api_user,
 )
-
 from notas.interface.api.responses import (
     internal_api_auth_error_response,
     invalid_json_response,

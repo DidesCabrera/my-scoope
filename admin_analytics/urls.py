@@ -1,7 +1,14 @@
 from django.urls import path
 
-from admin_analytics.views import accounts, ai_assistant, alerts, food_catalog, nutrition_solver, overview, product_activity
-
+from admin_analytics.views import (
+    accounts,
+    ai_assistant,
+    alerts,
+    food_catalog,
+    nutrition_solver,
+    overview,
+    product_activity,
+)
 
 urlpatterns = [
     path("", overview, name="admin_analytics_overview"),

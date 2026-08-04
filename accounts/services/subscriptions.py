@@ -5,7 +5,11 @@ from typing import Any
 from django.db import transaction
 
 from accounts.models import AccountPlan, AccountSubscription
-from accounts.services.credits import ACCOUNT_PLAN_BY_PROFILE_ROLE, DEFAULT_ACCOUNT_PLAN_SLUG, resolve_account_plan_for_user
+from accounts.services.credits import (
+    ACCOUNT_PLAN_BY_PROFILE_ROLE,
+    DEFAULT_ACCOUNT_PLAN_SLUG,
+    resolve_account_plan_for_user,
+)
 
 
 def ensure_account_subscription_for_user(

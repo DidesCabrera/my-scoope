@@ -2,7 +2,6 @@ import json
 
 from django.test import SimpleTestCase
 
-from notas.application.ai_intake import deterministic_policy
 from ai_assistant.application.orchestrator import ExternalLLMOrchestrator
 from ai_assistant.application.response_style import (
     ASSISTANT_RESPONSE_STYLE_VERSION,
@@ -14,6 +13,7 @@ from ai_assistant.application.tools import (
     TOOL_UPDATE_PROPOSAL_PREFERENCES,
 )
 from ai_assistant.infrastructure.providers import FakeLLMClient
+from notas.application.ai_intake import deterministic_policy
 
 
 class AssistantResponseStylePolicyTests(SimpleTestCase):

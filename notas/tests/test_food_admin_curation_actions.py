@@ -16,7 +16,6 @@ from notas.admin_food_actions import (
 )
 from notas.domain.models import Food
 
-
 User = get_user_model()
 
 

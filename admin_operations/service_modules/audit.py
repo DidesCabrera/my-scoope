@@ -1,21 +1,18 @@
 from __future__ import annotations
 
-
-
+from admin_operations.models import AdminOperationAuditEvent
 from admin_operations.selectors import (
     get_audit_log_payload,
+)
+from admin_operations.service_modules.common import (
+    _format_int,
 )
 from admin_operations.viewmodels import (
     AdminOperationsAuditEventVM,
     AdminOperationsAuditLogVM,
     AdminOperationsMetricVM,
 )
-from admin_operations.models import AdminOperationAuditEvent
 
-
-from admin_operations.service_modules.common import (
-    _format_int,
-)
 
 def _audit_event_to_vm(event: AdminOperationAuditEvent) -> AdminOperationsAuditEventVM:
     target_type = f"{event.target_app}.{event.target_model}"

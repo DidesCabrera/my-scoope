@@ -5,7 +5,6 @@ from dataclasses import dataclass
 import requests
 from django.conf import settings
 
-
 SITEVERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
 
 

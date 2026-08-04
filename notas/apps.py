@@ -1,12 +1,13 @@
 from django.apps import AppConfig
 
+
 class NotasConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'notas'
 
     def ready(self):
-        import notas.signals
         import notas.checks
+        import notas.signals
         from notas.application.ai_tools.bindings import register_product_ai_bindings
 
         register_product_ai_bindings()

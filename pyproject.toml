@@ -3,9 +3,22 @@ target-version = "py313"
 line-length = 120
 
 [tool.ruff.lint]
-# TDG03 starts with correctness/fatal rules. Broader style debt is measured but
-# cannot become a blocking 1,266-item rewrite in one patch.
-select = ["E9", "F63", "F7", "F82"]
+# Correctness/fatal rules plus comprehension and deterministic import-order
+# ratchets. Behavioral bugbear findings remain measured for a dedicated patch.
+select = ["E9", "F63", "F7", "F82", "C4", "I"]
+
+[tool.mypy]
+python_version = "3.13"
+files = [
+  "core/environment_contract.py",
+  "core/observability.py",
+]
+check_untyped_defs = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
 
 [tool.coverage.run]
 branch = true

@@ -1,5 +1,6 @@
 # Repository quality tools run in their own CI job and are not production
 # dependencies.
 coverage==7.15.3
+mypy==1.18.2
 pip-audit==2.10.1
 ruff==0.16.1

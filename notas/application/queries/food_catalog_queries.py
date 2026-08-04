@@ -10,7 +10,6 @@ from notas.domain.constants.nutrition import (
     PROTEIN_KCAL_PER_GRAM,
 )
 
-
 DEFAULT_FOOD_CATALOG_LIMIT = 50
 MAX_FOOD_CATALOG_LIMIT = 200
 

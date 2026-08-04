@@ -3,14 +3,13 @@ from __future__ import annotations
 from django.db import transaction
 from django.utils import timezone
 
-from billing.models import BillingEvent
 from billing.application.contracts import PaymentGateway
 from billing.application.services.provider_sync import (
     UnknownBillingResource,
     sync_provider_payment,
     sync_provider_subscription,
 )
-
+from billing.models import BillingEvent
 
 SUPPORTED_SUBSCRIPTION_TOPIC = "subscription_preapproval"
 SUPPORTED_PAYMENT_TOPICS = {"payment", "subscription_authorized_payment"}

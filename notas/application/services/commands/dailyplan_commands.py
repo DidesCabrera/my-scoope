@@ -2,11 +2,12 @@ from dataclasses import dataclass
 
 from django.db import transaction
 
-from notas.domain.models import DailyPlan, DailyPlanMeal, Meal
 from notas.application.services.cache.dailyplan_summary import (
     refresh_dailyplan_and_related_program_caches,
     refresh_dailyplan_summary_cache,
 )
+from notas.domain.models import DailyPlan, DailyPlanMeal, Meal
+
 
 @dataclass(frozen=True)
 class DailyPlanCreateResult:

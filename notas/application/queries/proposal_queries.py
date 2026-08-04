@@ -1,13 +1,13 @@
 from django.db.models import Q
-from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from django.utils import timezone
 
-from notas.application.dto.proposal_iteration_trace import extract_plan_iteration_trace
 from notas.application.dto.proposal_dto import (
     NutritionProposalDTO,
     NutritionProposalListItemDTO,
 )
+from notas.application.dto.proposal_iteration_trace import extract_plan_iteration_trace
 from notas.domain.models import NutritionProposal
 
 

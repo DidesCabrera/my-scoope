@@ -12,6 +12,11 @@ from notas.application.ai_intake.nutrition_brief import (
     apply_subject_context,
     deserialize_brief,
 )
+from notas.application.ai_intake.optimizer_v2_adapter import (
+    DailyPlanOptimizerV2Error,
+    build_shadow_summary_for_legacy_generator,
+    run_dailyplan_optimizer_v2,
+)
 from notas.application.ai_intake.proposal_from_brief import (
     AI_INTAKE_SOURCE,
     AI_NUTRITION_BRIEF_INTENT,
@@ -23,6 +28,24 @@ from notas.application.dto.proposal_payloads import (
     ProposedDailyPlanPayloadDTO,
     ProposedFoodItemDTO,
     ProposedMealDTO,
+)
+from notas.application.nutrition_engine.candidate_selector import (
+    CandidateSelectionError,
+    NutritionFoodCandidate,
+    select_meal_food_candidates,
+)
+from notas.application.nutrition_engine.meal_templates import (
+    MealRoleTemplate,
+    MealTemplate,
+    build_dailyplan_meal_templates,
+)
+from notas.application.nutrition_engine.meal_templates import (
+    normalize_meals_per_day as normalize_template_meals_per_day,
+)
+from notas.application.nutrition_engine.target_estimator import (
+    DailyNutritionTargetPlan,
+    TargetEstimationProfile,
+    estimate_daily_targets,
 )
 from notas.application.queries.proposal_simulation_queries import (
     simulate_proposal_payload,
@@ -37,43 +60,21 @@ from notas.domain.constants.nutrition import (
     FAT_KCAL_PER_GRAM,
     PROTEIN_KCAL_PER_GRAM,
 )
-from notas.application.nutrition_engine.candidate_selector import (
-    CandidateSelectionError,
-    NutritionFoodCandidate,
-    select_meal_food_candidates,
+from notas.domain.models import (
+    NutritionProposal,
+    NutritionProposalAuditEvent,
 )
-from notas.application.nutrition_engine.meal_templates import (
-    MealRoleTemplate,
-    MealTemplate,
-    build_dailyplan_meal_templates,
-    normalize_meals_per_day as normalize_template_meals_per_day,
+from nutrition_solver.application.portion_solver import solve_meal_portions
+from nutrition_solver.application.validators import (
+    PortionValidationInput,
+    compare_macro_targets,
+    validate_generated_dailyplan,
 )
 from nutrition_solver.domain.models import (
     MacroTarget,
     PortionBounds,
     SolverFood,
 )
-from notas.application.ai_intake.optimizer_v2_adapter import (
-    DailyPlanOptimizerV2Error,
-    build_shadow_summary_for_legacy_generator,
-    run_dailyplan_optimizer_v2,
-)
-from nutrition_solver.application.portion_solver import solve_meal_portions
-from notas.application.nutrition_engine.target_estimator import (
-    DailyNutritionTargetPlan,
-    TargetEstimationProfile,
-    estimate_daily_targets,
-)
-from nutrition_solver.application.validators import (
-    PortionValidationInput,
-    compare_macro_targets,
-    validate_generated_dailyplan,
-)
-from notas.domain.models import (
-    NutritionProposal,
-    NutritionProposalAuditEvent,
-)
-
 
 DAILYPLAN_GENERATOR_INTENT = CREATE_DAILYPLAN_INTENT
 DAILYPLAN_GENERATOR_VERSION = "nutrition_engine_v7_optimizer_gate"

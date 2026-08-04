@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import connection
-from django.test.utils import CaptureQueriesContext
 from django.test import TestCase, override_settings
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 
 from admin_operations.system_control import build_system_control_vm

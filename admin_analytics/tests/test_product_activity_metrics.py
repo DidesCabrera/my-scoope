@@ -3,10 +3,10 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from admin_analytics.selectors.product_activity import get_product_activity_metrics
-from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood, Program, ProgramDay
 from notas.domain.model_modules.comparisons import SavedComparison
 from notas.domain.model_modules.proposals import NutritionProposal
 from notas.domain.model_modules.sharing import DailyPlanShare, MealShare, ProgramShare
+from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood, Program, ProgramDay
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)

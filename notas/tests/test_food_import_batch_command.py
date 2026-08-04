@@ -2,9 +2,9 @@ from decimal import Decimal
 
 from django.test import TestCase
 
-from notas.domain.models import Food, FoodImportBatch, FoodSourceMetadata
-from notas.application.services.commands.import_food_batch import import_food_batch
 from notas.application.dto.imported_food_dto import ImportedFoodDTO
+from notas.application.services.commands.import_food_batch import import_food_batch
+from notas.domain.models import Food, FoodImportBatch, FoodSourceMetadata
 
 
 class ImportFoodBatchTests(TestCase):

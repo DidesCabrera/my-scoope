@@ -6,7 +6,6 @@ from django.urls import reverse
 
 from notas.domain.models import Food, FoodAlias, FoodLocalizedName, Meal, MealFood
 
-
 User = get_user_model()
 
 

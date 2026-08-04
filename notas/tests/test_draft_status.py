@@ -1,8 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from notas.domain.models import DailyPlan, Food, Meal, MealFood, DailyPlanMeal
-
+from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood
 
 User = get_user_model()
 

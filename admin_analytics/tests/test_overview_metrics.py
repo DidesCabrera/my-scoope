@@ -9,10 +9,10 @@ from django.utils import timezone
 from accounts.models import AccountPlan, AccountSubscription, CreditLedger, CreditWallet
 from admin_analytics.selectors.overview import get_overview_metrics
 from ai_assistant.models import AIUsageEvent
-from notas.domain.models import DailyPlan, Meal, MealShare, Program
 from notas.domain.model_modules.comparisons import SavedComparison
 from notas.domain.model_modules.identity import Profile
 from notas.domain.model_modules.proposals import NutritionProposal
+from notas.domain.models import DailyPlan, Meal, MealShare, Program
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)

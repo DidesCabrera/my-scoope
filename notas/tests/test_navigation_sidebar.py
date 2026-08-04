@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
+from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
 from notas.presentation.config.viewmodel_config import (
     DAILYPLAN_MEAL_VIEWMODE_DETAIL,
     FOOD_VIEWMODE_PERSONAL_LIST,
@@ -11,8 +12,6 @@ from notas.presentation.navigation.nav_builders import (
     build_sidebar_vm,
     resolve_navigation_root,
 )
-from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
-
 
 User = get_user_model()
 

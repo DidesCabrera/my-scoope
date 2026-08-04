@@ -5,6 +5,7 @@ from decimal import Decimal
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
+from admin_operations.models import AdminOperationAuditEvent
 from admin_operations.services import (
     build_catalog_food_detail_vm,
     build_food_catalog_data_coverage_vm,
@@ -12,9 +13,14 @@ from admin_operations.services import (
     build_food_catalog_operations_vm,
 )
 from core.tests.builders import create_staff_user, create_test_user
-from food_catalog.models import CatalogCurationCandidate, CatalogFood, CatalogFoodAlias, CatalogFoodPortion, CatalogFoodSource
+from food_catalog.models import (
+    CatalogCurationCandidate,
+    CatalogFood,
+    CatalogFoodAlias,
+    CatalogFoodPortion,
+    CatalogFoodSource,
+)
 from notas.domain.models import Food
-from admin_operations.models import AdminOperationAuditEvent
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)

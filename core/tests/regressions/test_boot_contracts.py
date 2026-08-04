@@ -24,3 +24,9 @@ class BootContractRegressionTests(SimpleTestCase):
         self.assertGreater(len(resolver.url_patterns), 0)
         self.assertEqual(reverse("account_login"), "/accounts/login/")
         self.assertEqual(reverse("account_signup"), "/accounts/signup/")
+
+    def test_health_probe_is_public_and_side_effect_free(self):
+        response = self.client.get(reverse("healthz"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"status": "ok"})

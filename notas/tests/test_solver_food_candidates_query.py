@@ -1,13 +1,12 @@
 from django.contrib.auth.models import User
 from django.test import TestCase
 
-from nutrition_solver.domain.models import PortionBounds, SolverFood
-
 from notas.application.queries.solver_food_candidates import (
     build_solver_food_candidate,
     list_solver_food_candidates,
 )
 from notas.domain.models import Food
+from nutrition_solver.domain.models import PortionBounds, SolverFood
 
 
 class SolverFoodCandidatesQueryTests(TestCase):

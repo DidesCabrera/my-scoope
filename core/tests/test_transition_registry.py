@@ -20,6 +20,8 @@ class TransitionRegistryTests(SimpleTestCase):
                 "operational-food-snapshot-boundary",
                 "food-import-command-wrappers",
                 "django-admin-technical-fallback",
+                "legacy-notas-commercial-model-names",
+                "ai-credit-ledger-cutover",
             },
         )
         for entry in entries:

@@ -12,7 +12,6 @@ from notas.application.services.mcp_user_tokens import (
 )
 from notas.domain.models import OAuthAuthorizationCode, OAuthClient
 
-
 OAUTH_AUTHORIZATION_CODE_PREFIX = "oauth_code_"
 OAUTH_CODE_CHALLENGE_METHOD_S256 = "S256"
 DEFAULT_OAUTH_AUTHORIZATION_CODE_TTL_MINUTES = 5

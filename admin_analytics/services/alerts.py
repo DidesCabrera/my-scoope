@@ -7,8 +7,8 @@ from admin_analytics.filters import AdminAnalyticsFilters
 from admin_analytics.selectors.alerts import get_alert_metrics
 from admin_analytics.viewmodels import (
     AdminAnalyticsAlertGroupVM,
-    AdminAnalyticsAlertVM,
     AdminAnalyticsAlertsVM,
+    AdminAnalyticsAlertVM,
     AdminAnalyticsHealthSignalVM,
     AdminAnalyticsKpiVM,
     AdminAnalyticsSectionVM,
@@ -284,7 +284,7 @@ def _ai_alerts(ai: dict) -> list[_AlertCandidate]:
             "AI Assistant",
             "Usuarios bloqueados por cuota IA",
             _format_int(credits["hard_blocked_quotas"]),
-            "Existen AIUserCreditQuota con hard_blocked=True en el período actual.",
+            "Existen wallets comerciales de accounts con el consumo IA congelado.",
             "Revisar si el bloqueo es correcto para el plan o si requiere ajustar límites comerciales.",
         ))
 

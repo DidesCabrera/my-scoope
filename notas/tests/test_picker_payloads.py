@@ -4,8 +4,7 @@ from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
-from notas.domain.models import DailyPlan, Food, Meal, MealFood, FoodLocalizedName
-
+from notas.domain.models import DailyPlan, Food, FoodLocalizedName, Meal, MealFood
 
 User = get_user_model()
 

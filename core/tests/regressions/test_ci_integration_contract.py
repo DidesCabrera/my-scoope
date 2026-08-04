@@ -2,7 +2,6 @@ from pathlib import Path
 
 from django.test import SimpleTestCase
 
-
 ROOT = Path(__file__).resolve().parents[3]
 
 
@@ -30,9 +29,20 @@ class CiIntegrationContractTests(SimpleTestCase):
 
         self.assertIn("django-fast:", workflow)
         self.assertIn("django-full:", workflow)
+        self.assertIn("django-postgres:", workflow)
         self.assertIn("mcp:", workflow)
         self.assertIn("browser-smoke:", workflow)
         self.assertIn("scripts/test_mcp.sh", workflow)
+
+    def test_postgres_gate_uses_a_real_postgres_service_and_full_suite(self):
+        workflow = (ROOT / ".github/workflows/django-ci.yml").read_text()
+        postgres_script = (ROOT / "scripts/ci_postgres_suite.sh").read_text()
+
+        self.assertIn("image: postgres:17", workflow)
+        self.assertIn("DATABASE_URL: postgresql://", workflow)
+        self.assertIn("scripts/ci_postgres_suite.sh", workflow)
+        self.assertIn("manage.py migrate --noinput", postgres_script)
+        self.assertIn("manage.py test", postgres_script)
 
     def test_browser_gate_seeds_and_runs_the_authenticated_suite(self):
         workflow = (ROOT / ".github/workflows/django-ci.yml").read_text()
@@ -40,3 +50,12 @@ class CiIntegrationContractTests(SimpleTestCase):
         self.assertIn("manage.py seed_e2e_fixtures", workflow)
         self.assertIn('--github-env-path "$GITHUB_ENV"', workflow)
         self.assertIn("scripts/test_e2e.sh", workflow)
+
+    def test_quality_gate_includes_a_scoped_type_check(self):
+        quality_script = (ROOT / "scripts/quality_checks.sh").read_text()
+        configuration = (ROOT / "pyproject.toml").read_text()
+
+        self.assertIn('"${PYTHON_BIN}" -m mypy', quality_script)
+        self.assertIn("[tool.mypy]", configuration)
+        self.assertIn('"core/environment_contract.py"', configuration)
+        self.assertIn('"core/observability.py"', configuration)

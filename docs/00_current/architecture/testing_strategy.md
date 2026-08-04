@@ -203,7 +203,7 @@ El Patch 28 declara fronteras ejecutables para los modelos del dominio en:
 
 Regla operativa:
 
-- `notas/domain/models.py` puede seguir siendo un archivo único por compatibilidad Django, pero cada modelo debe pertenecer a una frontera explícita;
+- `notas/domain/models.py` es una fachada pública sin modelos concretos; cada modelo pertenece a una frontera física explícita;
 - las relaciones ORM entre fronteras deben estar permitidas por `DOMAIN_MODEL_DEPENDENCY_POLICIES`;
 - antes de dividir físicamente `models.py`, los tests deben asegurar que no se pierda propiedad ni se creen dependencias accidentales;
 - cualquier modelo nuevo debe agregarse a `DOMAIN_MODEL_BOUNDARIES` en el mismo patch que lo introduce.
@@ -220,7 +220,7 @@ Regla operativa:
 - `notas.domain.models` sigue siendo el contrato público de importación para todos los modelos;
 - cualquier frontera movida físicamente debe declararse en `DOMAIN_MODEL_MODULE_BY_BOUNDARY_SLUG`;
 - los tests de dominio deben leer tanto el módulo legacy de compatibilidad como los módulos extraídos;
-- antes de mover fronteras centrales como `food_catalog`, `meals`, `dailyplans` o `programs`, se debe validar que no se generen migraciones nuevas por el cambio de ubicación física.
+- todo movimiento de fronteras debe validar que no se generen migraciones nuevas por el cambio de ubicación física.
 
 ### Estado Patch 30
 
@@ -256,4 +256,3 @@ Regla operativa:
   `DOMAIN_MODEL_MODULE_BY_BOUNDARY_SLUG`;
 - el split de propuestas debe validar contratos de proposals, queries, viewmodels
   e intake, porque es una frontera usada por IA, MCP/API y revisión humana.
-

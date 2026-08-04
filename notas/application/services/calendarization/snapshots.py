@@ -8,7 +8,6 @@ from django.db.models import Prefetch
 
 from notas.domain.models import DailyPlanMeal, MealFood, Program
 
-
 SNAPSHOT_SCHEMA_VERSION = "calendarized_dailyplan.v1"
 
 

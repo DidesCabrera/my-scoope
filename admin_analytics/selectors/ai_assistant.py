@@ -6,10 +6,11 @@ from decimal import Decimal
 from django.db.models import Avg, Count, Q, Sum
 from django.utils import timezone
 
+from accounts.models import CreditLedger
+from accounts.services.ai_credits import AI_CREDIT_REFERENCE_TYPE, list_account_ai_credit_quotas
 from admin_analytics.filters import AdminAnalyticsFilters
-
 from ai_assistant.application.credits import current_period
-from ai_assistant.models import AICreditLedger, AIUsageEvent, AIUserCreditQuota
+from ai_assistant.models import AIUsageEvent
 from notas.domain.model_modules.proposals import AiNutritionChat, NutritionProposal
 
 
@@ -104,13 +105,14 @@ def get_ai_assistant_metrics(*, now=None, analytics_filters: AdminAnalyticsFilte
         .order_by("-estimated_cost_usd", "-total_tokens", "-charged_credits")[:top_limit]
     )
 
-    quotas = analytics_filters.apply_user_segment(
-        AIUserCreditQuota.objects.filter(period=period, monthly_credit_limit__gt=0).select_related("user"),
-        "user",
+    quotas = list_account_ai_credit_quotas(
+        period=period,
+        user_segment=analytics_filters.user_segment,
     )
     quota_pressure_rows: list[dict] = []
     for quota in quotas:
-        usage_ratio = Decimal(quota.credits_used) / Decimal(quota.monthly_credit_limit)
+        if quota.monthly_credit_limit <= 0:
+            continue
         quota_pressure_rows.append(
             {
                 "email": quota.user.email or quota.user.get_username(),
@@ -119,16 +121,22 @@ def get_ai_assistant_metrics(*, now=None, analytics_filters: AdminAnalyticsFilte
                 "credits_used": quota.credits_used,
                 "monthly_credit_limit": quota.monthly_credit_limit,
                 "daily_credit_limit": quota.daily_credit_limit,
-                "usage_ratio": usage_ratio,
+                "usage_ratio": quota.usage_ratio,
                 "hard_blocked": quota.hard_blocked,
             }
         )
     quota_pressure_rows.sort(key=lambda row: (row["hard_blocked"], row["usage_ratio"], row["credits_used"]), reverse=True)
 
-    credit_ledger_7d = analytics_filters.apply_user_segment(AICreditLedger.objects.filter(created_at__gte=since_7d), "user")
+    credit_ledger_7d = analytics_filters.apply_user_segment(
+        CreditLedger.objects.filter(
+            created_at__gte=since_7d,
+            reference_type=AI_CREDIT_REFERENCE_TYPE,
+        ),
+        "user",
+    )
     credit_ledger_by_kind_7d = list(
         credit_ledger_7d.values("kind")
-        .annotate(entries=Count("id"), credits=Sum("credits"))
+        .annotate(entries=Count("id"), credits=Sum("credits_delta"))
         .order_by("kind")
     )
 
@@ -168,10 +176,10 @@ def get_ai_assistant_metrics(*, now=None, analytics_filters: AdminAnalyticsFilte
         },
         "credits": {
             "quota_rows": quota_pressure_rows[:top_limit],
-            "quotas_total": quotas.count(),
-            "hard_blocked_quotas": quotas.filter(hard_blocked=True).count(),
+            "quotas_total": len(quotas),
+            "hard_blocked_quotas": sum(1 for quota in quotas if quota.hard_blocked),
             "ledger_entries_7d": credit_ledger_7d.count(),
-            "ledger_credits_7d": _sum(credit_ledger_7d, "credits"),
+            "ledger_credits_7d": abs(_sum(credit_ledger_7d.filter(kind=CreditLedger.Kind.CONSUME), "credits_delta")),
             "ledger_by_kind_7d": credit_ledger_by_kind_7d,
         },
         "outcomes": {

@@ -9,7 +9,6 @@ from django.urls import reverse
 from notas.domain.models import DailyPlanMeal, MealFood, ProgramDay
 from notas.presentation.viewmodels.base_vm import BreadcrumbItem
 
-
 PROGRAM_CONTEXT_KEYS = ("program_day", "dpm", "mealfood")
 
 

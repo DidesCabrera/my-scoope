@@ -1,11 +1,11 @@
+import json
 from dataclasses import dataclass
 from typing import Any, List, Optional
-import json
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Prefetch
-from notas.presentation.pages.object_lookup import get_page_object_or_404
 
+from notas.application.queries.food_picker_queries import list_food_picker_items
 from notas.application.services.nutrition.nutrition_kpis import (
     build_nutrition_kpis_from_dailyplan,
     build_nutrition_kpis_from_meal,
@@ -15,7 +15,6 @@ from notas.presentation.composition.js.dpm_food_picker_builder import (
     build_dpm_food_picker_context_payload,
 )
 from notas.presentation.composition.js.food_picker_builder import build_food_picker_foods_payload
-from notas.application.queries.food_picker_queries import list_food_picker_items
 from notas.presentation.composition.viewmodel.dpm.dpm_content import (
     build_dpm_detail_content_data,
 )
@@ -23,6 +22,7 @@ from notas.presentation.config.viewmodel_config import (
     DAILYPLAN_MEAL_VIEWMODE_DETAIL,
 )
 from notas.presentation.navigation.program_context import program_context_query
+from notas.presentation.pages.object_lookup import get_page_object_or_404
 
 
 def _get_dpm_for_user(user, dailyplan_id: int, dpm_id: int):

@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 
-from food_catalog.models import CatalogFood
+from food_catalog.infrastructure.imports.governance import record_catalog_import_dry_run
+from food_catalog.models import CatalogFood, CatalogImportBatch
 from notas.application.services.commands.food_catalog_backfill import (
     DEFAULT_OPERATIONAL_BACKFILL_SOURCE_VERSION,
     OPERATIONAL_BACKFILL_SOURCE_NAME,
@@ -8,8 +9,6 @@ from notas.application.services.commands.food_catalog_backfill import (
     backfill_catalog_from_operational_foods,
     operational_backfill_identity,
 )
-from food_catalog.infrastructure.imports.governance import record_catalog_import_dry_run
-from food_catalog.models import CatalogImportBatch
 
 
 class Command(BaseCommand):

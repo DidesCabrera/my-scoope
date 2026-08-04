@@ -7,17 +7,16 @@ from notas.application.bounded_contexts import (
     APPLICATION_CONTEXT_BY_PACKAGE,
     APPLICATION_CONTEXT_DEPENDENCY_POLICIES,
     APPLICATION_CONTEXT_POLICY_BY_SLUG,
-    APPLICATION_SERVICE_AREAS,
     APPLICATION_SERVICE_AREA_BY_ENTRY,
     APPLICATION_SERVICE_AREA_DEPENDENCY_POLICIES,
+    APPLICATION_SERVICE_AREAS,
     allowed_dependency_slugs_for_context,
     allowed_dependency_slugs_for_service_area,
-    service_area_for_entry,
-    service_area_for_import,
     context_for_application_import,
     context_for_application_package,
+    service_area_for_entry,
+    service_area_for_import,
 )
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 APPLICATION_ROOT = PROJECT_ROOT / "notas" / "application"

@@ -1,5 +1,5 @@
-from pathlib import Path
 import hashlib
+from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -8,12 +8,12 @@ from food_catalog.application.imports.usda.foundation_foods_reader import (
     read_foundation_food_payloads_from_json,
 )
 from food_catalog.infrastructure.imports.catalog_import import CATALOG_SOURCE_NAME_USDA
-from food_catalog.infrastructure.imports.usda_catalog_import import (
-    dry_run_usda_catalog_food_payloads,
-)
 from food_catalog.infrastructure.imports.governance import (
     catalog_import_identity,
     record_catalog_import_dry_run,
+)
+from food_catalog.infrastructure.imports.usda_catalog_import import (
+    dry_run_usda_catalog_food_payloads,
 )
 from food_catalog.models import CatalogFood
 

@@ -57,6 +57,21 @@ El tercer split físico mueve la frontera de propuestas IA a un módulo propio:
 Esto deja el dominio de revisión IA más visible sin cambiar la app Django, las
 migraciones ni los imports públicos existentes.
 
+## Estado PAR08
+
+La extracción física quedó completa. Las fronteras centrales restantes viven en:
+
+| Frontera | Módulo físico |
+|---|---|
+| Operational Food Snapshot | `notas/domain/model_modules/food.py` |
+| Meals | `notas/domain/model_modules/meals.py` |
+| Daily Plans | `notas/domain/model_modules/dailyplans.py` |
+| Programs | `notas/domain/model_modules/programs.py` |
+
+`notas/domain/models.py` es ahora una fachada de compatibilidad de menos de 120
+líneas y no declara modelos concretos. El contrato se protege con importación de
+todos los módulos, matriz de dependencias y `makemigrations --check --dry-run`.
+
 ## Estado Patch 32
 
 Se crea la app Django física `food_catalog` como frontera independiente del catálogo maestro.

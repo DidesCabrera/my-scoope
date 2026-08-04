@@ -7,7 +7,6 @@ from django.db.models import Avg, Count, Q, Sum
 from django.utils import timezone
 
 from admin_analytics.filters import AdminAnalyticsFilters
-
 from food_catalog.models import (
     CatalogCurationCandidate,
     CatalogFood,

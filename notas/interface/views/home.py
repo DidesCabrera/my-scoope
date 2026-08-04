@@ -11,19 +11,17 @@ from notas.domain.models import (
     Meal,
     Program,
 )
-from notas.presentation.viewmodels.base_vm import BaseVM
+from notas.presentation.composition.viewmodel.components.builder_headers import build_page_header
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
 from notas.presentation.config.viewmodel_config import (
     HOME_VIEWMODE,
 )
-
-from notas.presentation.viewmodels.components.header_vm import HeaderVM
 from notas.presentation.pages.home_calendarization import (
     HomeCalendarizationVM,
     build_home_calendarization_vm,
 )
-
-from notas.presentation.composition.viewmodel.components.builder_headers import build_page_header
+from notas.presentation.viewmodels.base_vm import BaseVM
+from notas.presentation.viewmodels.components.header_vm import HeaderVM
 
 
 @dataclass

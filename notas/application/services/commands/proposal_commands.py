@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+
 from django.db import transaction
 from django.utils import timezone
 
@@ -17,17 +18,17 @@ from notas.application.proposals.applicators import (
 from notas.application.proposals.operations import (
     OPERATION_UPDATE_MEAL_FOOD_QUANTITY,
 )
-from notas.application.services.commands.proposal_apply_helpers import (
-    build_applied_create_dailyplan_metadata,
-    build_applied_create_meal_metadata,
-    create_dailyplan_from_apply_plan,
-    create_meal_from_apply_plan,
-)
 from notas.application.queries.proposal_simulation_queries import (
     simulate_proposal_payload,
 )
 from notas.application.queries.validation_queries import (
     compare_dailyplan_to_targets,
+)
+from notas.application.services.commands.proposal_apply_helpers import (
+    build_applied_create_dailyplan_metadata,
+    build_applied_create_meal_metadata,
+    create_dailyplan_from_apply_plan,
+    create_meal_from_apply_plan,
 )
 from notas.application.validation.proposal_payload_validators import (
     validate_proposal_payload_or_raise,

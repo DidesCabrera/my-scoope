@@ -5,10 +5,9 @@ from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 
+from core.project_status import build_project_status
 from food_catalog.models import CatalogFood, CatalogImportBatch
 from notas.domain.models import Food
-
-from core.project_status import build_project_status
 
 
 class ProjectStatusTests(TestCase):

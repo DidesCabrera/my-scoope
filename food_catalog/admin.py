@@ -4,13 +4,13 @@ from django.contrib import admin, messages
 
 from food_catalog.application.curation import transition_catalog_foods_status
 from food_catalog.models import (
+    CatalogCurationCandidate,
     CatalogFood,
     CatalogFoodAlias,
     CatalogFoodPortion,
     CatalogFoodSource,
     CatalogImportBatch,
     CatalogImportSourcePolicy,
-    CatalogCurationCandidate,
     ExternalFoodReference,
     ExternalProviderFetchLog,
 )

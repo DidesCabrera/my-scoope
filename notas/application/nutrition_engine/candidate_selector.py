@@ -10,7 +10,6 @@ from notas.domain.constants.nutrition import (
     PROTEIN_KCAL_PER_GRAM,
 )
 
-
 PROTEIN_KEYWORDS = (
     "pollo",
     "huevo",

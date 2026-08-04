@@ -2,8 +2,6 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from django.urls import reverse
-
-from notas.presentation.pages.object_lookup import get_page_object_or_404
 from django.utils import timezone
 
 from notas.domain.models import (
@@ -18,18 +16,19 @@ from notas.presentation.composition.viewmodel.dailyplan.dailyplan_content import
 from notas.presentation.composition.viewmodel.dailyplan.list_dailyplan_builder import (
     build_dailyplan_list_vm,
 )
-from notas.presentation.composition.viewmodel.meal.meal_content import (
-    build_meal_list_content_data,
-)
+from notas.presentation.composition.viewmodel.food.list_foods_builder import build_food_list_vm
 from notas.presentation.composition.viewmodel.meal.list_meal_builder import (
     build_meal_list_vm,
 )
-from notas.presentation.composition.viewmodel.food.list_foods_builder import build_food_list_vm
+from notas.presentation.composition.viewmodel.meal.meal_content import (
+    build_meal_list_content_data,
+)
 from notas.presentation.config.viewmodel_config import (
     DAILYPLAN_VIEWMODE_SHARED_LIST,
     FOOD_VIEWMODE_PERSONAL_LIST,
     MEAL_VIEWMODE_SHARED_LIST,
 )
+from notas.presentation.pages.object_lookup import get_page_object_or_404
 
 
 @dataclass(frozen=True)

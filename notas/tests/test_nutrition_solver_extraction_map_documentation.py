@@ -2,7 +2,6 @@ from pathlib import Path
 
 from django.test import SimpleTestCase
 
-
 ROOT = Path(__file__).resolve().parents[2]
 EXTRACTION_MAP = ROOT / "docs" / "00_current" / "architecture" / "nutrition_solver_extraction_map.md"
 PLANNING_DOC = ROOT / "docs" / "10_active_cycles" / "nutrition_solver_app_cycle.md"

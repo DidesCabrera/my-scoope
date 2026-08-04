@@ -2,7 +2,6 @@ from urllib.parse import urlencode
 
 from django.urls import reverse
 
-
 SHARE_KIND_LABELS = {
     "dailyplan": "plan diario",
     "meal": "comida",

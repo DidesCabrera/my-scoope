@@ -1,32 +1,20 @@
 import pandas as pd
-from django.shortcuts import render, redirect, get_object_or_404
+from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_POST
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, JsonResponse
+from django.views.decorators.http import require_POST
 from openpyxl import Workbook
-from django.contrib import messages
-from notas.application.services.access.capabilities import get_capabilities
-from notas.domain.models import Food, FoodShare
+
+from email_delivery.services import deliver_share_invitation
 from notas.application.queries.food_picker_queries import (
     get_food_picker_item_by_id,
     list_food_picker_items,
 )
-from notas.presentation.config.viewmodel_config import (
-    FOOD_VIEWMODE_PERSONAL_LIST,
-    FOOD_VIEWMODE_PERSONAL_DETAIL,
-    FOOD_VIEWMODE_PERSONAL_EDIT,
-    FOOD_VIEWMODE_CREATE,
-    FOOD_VIEWMODE_IMPORT,
-    PROGRAM_VIEWMODE_PERSONAL_DETAIL,
-)
-from notas.interface.routing.food import food_url
-from notas.presentation.composition.viewmodel.food.list_foods_builder import build_food_list_vm
-from notas.presentation.composition.viewmodel.food.detail_food_builder import build_food_detail_vm
-from notas.presentation.composition.viewmodel.food.edit_food_builder import build_edit_food_vm
-from notas.interface.forms.forms import FoodEditForm, FoodShareForm
-
+from notas.application.services.access.capabilities import get_capabilities
 from notas.application.services.commands.food_commands import (
     bulk_create_foods,
     create_food,
@@ -37,13 +25,22 @@ from notas.application.services.commands.share_commands import (
     accept_food_share,
     create_food_share,
 )
-from django.conf import settings
-from email_delivery.services import deliver_share_invitation
 from notas.application.services.notifications.share_emails import build_share_invitation_email
-
-
-from notas.presentation.viewmodels.base_vm import BaseVM
+from notas.domain.models import Food, FoodShare
+from notas.interface.forms.forms import FoodEditForm, FoodShareForm
+from notas.interface.routing.food import food_url
+from notas.presentation.composition.viewmodel.food.detail_food_builder import build_food_detail_vm
+from notas.presentation.composition.viewmodel.food.edit_food_builder import build_edit_food_vm
+from notas.presentation.composition.viewmodel.food.list_foods_builder import build_food_list_vm
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
+from notas.presentation.config.viewmodel_config import (
+    FOOD_VIEWMODE_CREATE,
+    FOOD_VIEWMODE_IMPORT,
+    FOOD_VIEWMODE_PERSONAL_DETAIL,
+    FOOD_VIEWMODE_PERSONAL_EDIT,
+    FOOD_VIEWMODE_PERSONAL_LIST,
+    PROGRAM_VIEWMODE_PERSONAL_DETAIL,
+)
 from notas.presentation.navigation.program_context import (
     compact_program_breadcrumbs,
     dailyplan_context_url,
@@ -56,10 +53,8 @@ from notas.presentation.navigation.program_context import (
     program_parent,
     week_parent,
 )
-
 from notas.presentation.pages.food_pages import get_food_list_page_data
-
-
+from notas.presentation.viewmodels.base_vm import BaseVM
 
 
 def _safe_return_to(request, fallback_name, mode=None):

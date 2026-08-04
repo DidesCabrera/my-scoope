@@ -14,66 +14,66 @@ from django.utils import timezone
 
 from admin_operations.selectors import (
     get_food_catalog_data_coverage_payload,
-    get_food_catalog_inventory_payload,
     get_food_catalog_import_batches_payload,
+    get_food_catalog_inventory_payload,
     get_food_catalog_operations_payload,
 )
 from admin_operations.viewmodels import (
     AdminOperationsCandidateDetailVM,
     AdminOperationsCandidateVM,
-    AdminOperationsCurationItemVM,
-    AdminOperationsCurationStageVM,
+    AdminOperationsCatalogAliasVM,
     AdminOperationsCatalogCoverageVM,
     AdminOperationsCatalogDataCoverageRowVM,
     AdminOperationsCatalogDataCoverageVM,
-    AdminOperationsCatalogAliasVM,
     AdminOperationsCatalogEvidenceVM,
     AdminOperationsCatalogFoodDetailVM,
+    AdminOperationsCatalogFoodVM,
+    AdminOperationsCatalogImportBatchVM,
+    AdminOperationsCatalogImportsVM,
     AdminOperationsCatalogInventoryCellVM,
     AdminOperationsCatalogInventoryColumnVM,
     AdminOperationsCatalogInventoryFoodVM,
     AdminOperationsCatalogInventorySectionVM,
     AdminOperationsCatalogInventoryVM,
-    AdminOperationsCatalogImportBatchVM,
-    AdminOperationsCatalogImportsVM,
     AdminOperationsCatalogPortionVM,
-    AdminOperationsCatalogFoodVM,
+    AdminOperationsCurationItemVM,
+    AdminOperationsCurationStageVM,
     AdminOperationsDetailFactVM,
     AdminOperationsFoodCatalogVM,
     AdminOperationsMetricVM,
-)
-from food_catalog.application.curation import allowed_next_statuses, transition_catalog_food_status
-from food_catalog.application.publication import check_catalog_food_publishable
-from food_catalog.models import CatalogCurationCandidate, CatalogFood, CatalogImportBatch, CatalogImportSourcePolicy
-from food_catalog.infrastructure.core_natural_foods_seed import (
-    apply_core_natural_foods_seed,
-    core_natural_foods_seed_identity,
-    dry_run_core_natural_foods_seed,
-)
-from food_catalog.infrastructure.imports.governance import (
-    CatalogImportGovernanceError,
-    catalog_import_identity,
-    record_catalog_import_dry_run,
-)
-from food_catalog.application.imports.usda.foundation_foods_reader import (
-    FoundationFoodsReaderError,
-    extract_foundation_food_payloads,
-)
-from food_catalog.infrastructure.imports.catalog_import import CATALOG_SOURCE_NAME_USDA
-from food_catalog.infrastructure.imports.usda_catalog_import import (
-    dry_run_usda_catalog_food_payloads,
-    import_usda_catalog_food_payloads,
 )
 from food_catalog.application.brand_intake import (
     apply_brand_food_intake_csv,
     brand_food_intake_identity,
     dry_run_brand_food_intake_csv,
 )
+from food_catalog.application.curation import allowed_next_statuses, transition_catalog_food_status
+from food_catalog.application.imports.usda.foundation_foods_reader import (
+    FoundationFoodsReaderError,
+    extract_foundation_food_payloads,
+)
 from food_catalog.application.manual_intake import (
     apply_manual_evidence_csv,
     dry_run_manual_evidence_csv,
     manual_evidence_identity,
 )
+from food_catalog.application.publication import check_catalog_food_publishable
+from food_catalog.infrastructure.core_natural_foods_seed import (
+    apply_core_natural_foods_seed,
+    core_natural_foods_seed_identity,
+    dry_run_core_natural_foods_seed,
+)
+from food_catalog.infrastructure.imports.catalog_import import CATALOG_SOURCE_NAME_USDA
+from food_catalog.infrastructure.imports.governance import (
+    CatalogImportGovernanceError,
+    catalog_import_identity,
+    record_catalog_import_dry_run,
+)
+from food_catalog.infrastructure.imports.usda_catalog_import import (
+    dry_run_usda_catalog_food_payloads,
+    import_usda_catalog_food_payloads,
+)
+from food_catalog.models import CatalogCurationCandidate, CatalogFood, CatalogImportBatch, CatalogImportSourcePolicy
 from notas.application.services.commands.food_catalog_backfill import (
     DEFAULT_OPERATIONAL_BACKFILL_SOURCE_VERSION,
     OPERATIONAL_BACKFILL_SOURCE_NAME,
@@ -82,12 +82,11 @@ from notas.application.services.commands.food_catalog_backfill import (
     dry_run_backfill_catalog_from_operational_foods,
     operational_backfill_identity,
 )
-from notas.domain.models import Food
 from notas.application.services.food_catalog_snapshots import (
     FoodCatalogSnapshotError,
     create_operational_food_snapshot_from_catalog,
 )
-
+from notas.domain.models import Food
 
 PRIORITY_ORDER = {"warning": 0, "watch": 1, "info": 2, "healthy": 3}
 
@@ -339,6 +338,7 @@ from admin_operations.service_modules.common import (
     _user_label,
     record_admin_operation_audit_event,
 )
+
 
 def _candidate_to_vm(candidate: CatalogCurationCandidate) -> AdminOperationsCandidateVM:
     reviewed_label = "Sin revisión"

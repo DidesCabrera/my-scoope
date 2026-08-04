@@ -34,6 +34,11 @@ Status: planned / active / paused / completed / superseded
 Cuando un ciclo planificado empiece a implementarse, el documento puede permanecer aquí como plan operacional, pero las decisiones estables que surjan deben registrarse también en `docs/20_decisions/`.
 
 ## En curso o pendientes de validación
+- `production_architecture_remediation_cycle.md`: ciclo activo PAR00-PAR10. PAR01-PAR05
+  cierran en repositorio el arranque fail-closed con PostgreSQL, la topología Render
+  versionada, CI completo sobre PostgreSQL, runbooks de recuperación y defaults de
+  lanzamiento. PAR06-PAR10 separan la convergencia de modelos, el runtime AI asíncrono
+  y la deuda estructural en releases con rollback propio.
 - `billing_payments_tax_documents_cycle.md`: ciclo activo BILL00-BILL09. Mercado Pago
   será el primer recaudador y OpenFactura el emisor tributario, con fronteras separadas,
   verificación server-to-server, inbox/outbox idempotentes y proyección controlada hacia

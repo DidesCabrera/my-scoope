@@ -39,7 +39,6 @@ from notas.domain.models import (
     WeightLog,
 )
 
-
 _FORBIDDEN_APPLY_TOOLS = {
     "apply_approved_proposal",
     "apply_proposal",

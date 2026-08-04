@@ -441,7 +441,7 @@ def _clean_int(value: Any, *, min_value: int, max_value: int) -> int | None:
 
 def _clean_text_list(value: Any) -> list[str]:
     if isinstance(value, str):
-        raw_values = [part for part in value.replace(";", ",").split(",")]
+        raw_values = list(value.replace(";", ",").split(","))
     elif isinstance(value, (list, tuple, set)):
         raw_values = list(value)
     else:

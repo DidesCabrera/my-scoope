@@ -3,7 +3,6 @@ from pathlib import Path
 
 from django.test import SimpleTestCase
 
-
 BILLING_ROOT = Path(__file__).resolve().parents[1]
 
 

@@ -11,7 +11,6 @@ from notas.application.services.food_imports.core_catalog_curation import (
 )
 from notas.domain.models import Food
 
-
 User = get_user_model()
 
 

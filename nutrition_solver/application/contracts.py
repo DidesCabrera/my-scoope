@@ -4,13 +4,11 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Mapping
 
-
 from nutrition_solver.application.portion_solver import (
     PortionSolverConfig,
     PortionSolverError,
     solve_meal_portions,
 )
-
 from nutrition_solver.domain.models import (
     MacroTarget,
     PortionSolverDiagnostics,

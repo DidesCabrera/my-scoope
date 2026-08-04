@@ -4,8 +4,8 @@ from admin_analytics.filters import AdminAnalyticsFilters
 from admin_analytics.selectors.accounts import get_account_metrics
 from admin_analytics.viewmodels import (
     AdminAnalyticsAccountPlanRowVM,
-    AdminAnalyticsAccountWalletRowVM,
     AdminAnalyticsAccountsVM,
+    AdminAnalyticsAccountWalletRowVM,
     AdminAnalyticsKpiVM,
     AdminAnalyticsLedgerKindRowVM,
     AdminAnalyticsSectionVM,

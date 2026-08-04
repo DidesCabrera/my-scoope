@@ -6,7 +6,6 @@ from pathlib import Path
 
 from django.conf import settings
 
-
 VALID_STAGES = {"explore", "build", "validate", "scale", "maintain", "planned", "paused"}
 VALID_REVERSIBILITY = {"low", "medium", "high"}
 

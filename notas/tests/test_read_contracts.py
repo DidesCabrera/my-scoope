@@ -25,6 +25,12 @@ from notas.application.queries.meal_queries import (
 from notas.application.queries.nutrition_context_queries import (
     get_user_nutrition_context,
 )
+from notas.application.queries.proposal_queries import (
+    get_proposal_detail,
+    list_dailyplan_proposals,
+    list_user_proposals,
+    search_proposals,
+)
 from notas.application.queries.validation_queries import (
     compare_dailyplan_to_targets,
 )
@@ -34,15 +40,8 @@ from notas.domain.models import (
     Food,
     Meal,
     MealFood,
-    WeightLog,
     NutritionProposal,
-)
-
-from notas.application.queries.proposal_queries import (
-    get_proposal_detail,
-    list_dailyplan_proposals,
-    list_user_proposals,
-    search_proposals,
+    WeightLog,
 )
 
 

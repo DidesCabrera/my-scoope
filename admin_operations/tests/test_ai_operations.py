@@ -3,8 +3,10 @@ from __future__ import annotations
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from ai_assistant.models import AICreditLedger, AIUsageEvent, AIUserCreditQuota
+from accounts.models import CreditLedger, CreditWallet
+from accounts.services.ai_credits import AI_CREDIT_ADMIN_REFERENCE_TYPE
 from admin_operations.services import build_ai_operations_vm
+from ai_assistant.models import AIUsageEvent
 from core.tests.builders import create_staff_user, create_test_user
 from notas.domain.model_modules.proposals import NutritionProposal, NutritionProposalAuditEvent
 
@@ -39,13 +41,12 @@ class AdminOperationsAITests(TestCase):
             status=NutritionProposal.STATUS_PENDING_REVIEW,
             source=NutritionProposal.SOURCE_AI,
         )
-        AIUserCreditQuota.objects.create(
+        CreditWallet.objects.create(
             user=self.member,
             period="2026-07",
-            plan_code="starter",
-            monthly_credit_limit=10,
-            daily_credit_limit=3,
-            credits_used=10,
+            plan_snapshot_code="starter",
+            balance=0,
+            is_frozen=True,
         )
 
         vm = build_ai_operations_vm()
@@ -118,26 +119,31 @@ class AdminOperationsAITests(TestCase):
         self.assertContains(response, "Evento IA escalado")
 
     def test_quota_operation_toggles_hard_block_and_logs_ledger(self):
-        quota = AIUserCreditQuota.objects.create(
+        wallet = CreditWallet.objects.create(
             user=self.member,
             period="2026-07",
-            plan_code="starter",
-            monthly_credit_limit=10,
-            daily_credit_limit=3,
-            credits_used=8,
+            plan_snapshot_code="starter",
+            balance=10,
         )
         self.client.force_login(self.staff)
 
         response = self.client.post(
-            reverse("admin_operations_ai_quota_action", args=[quota.pk]),
+            reverse("admin_operations_ai_quota_action", args=[wallet.pk]),
             {"action": "block", "reason": "Abuso de herramientas."},
             follow=True,
         )
 
         self.assertEqual(response.status_code, 200)
-        quota.refresh_from_db()
-        self.assertTrue(quota.hard_blocked)
-        self.assertEqual(AICreditLedger.objects.filter(user=self.member, credits=0).count(), 1)
+        wallet.refresh_from_db()
+        self.assertTrue(wallet.is_frozen)
+        self.assertEqual(
+            CreditLedger.objects.filter(
+                user=self.member,
+                kind=CreditLedger.Kind.ADJUSTMENT,
+                reference_type=AI_CREDIT_ADMIN_REFERENCE_TYPE,
+            ).count(),
+            1,
+        )
         self.assertContains(response, "Acceso IA bloqueado")
 
     def test_ai_proposal_action_rejects_and_writes_audit_event(self):

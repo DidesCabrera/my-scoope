@@ -1,5 +1,5 @@
-from dataclasses import dataclass
 import csv
+from dataclasses import dataclass
 
 import pandas as pd
 from django.contrib import messages
@@ -9,11 +9,11 @@ from django.shortcuts import redirect, render
 
 from notas.application.services.access.capabilities import get_capabilities
 from notas.domain.models import Food
-from notas.presentation.config.viewmodel_config import (
-    ADMIN_HOME_VIEWMODE,
-    ADMIN_FOOD_CATALOG_VIEWMODE,
-)
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
+from notas.presentation.config.viewmodel_config import (
+    ADMIN_FOOD_CATALOG_VIEWMODE,
+    ADMIN_HOME_VIEWMODE,
+)
 from notas.presentation.viewmodels.base_vm import BaseVM
 
 

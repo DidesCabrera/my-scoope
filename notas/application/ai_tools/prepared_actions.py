@@ -24,6 +24,7 @@ from notas.domain.models import (
     SavedComparison,
 )
 
+
 def prepare_product_action(
     *,
     user,
@@ -303,7 +304,11 @@ def _dispatch_commit(spec: PreparedActionSpec, *, user, target, arguments: dict)
         return {"meal_id": result.meal_id}
 
     if key.startswith("dailyplan."):
-        from notas.application.services.commands.dailyplan_commands import create_draft_dailyplan, delete_dailyplan, rename_dailyplan
+        from notas.application.services.commands.dailyplan_commands import (
+            create_draft_dailyplan,
+            delete_dailyplan,
+            rename_dailyplan,
+        )
         if key == "dailyplan.create":
             result = create_draft_dailyplan(user=user, name=arguments["name"])
             return {"dailyplan_id": result.dailyplan.id, "dailyplan_name": result.dailyplan.name}

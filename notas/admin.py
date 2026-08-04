@@ -1,6 +1,17 @@
 from django.contrib import admin
 
+from .admin_food_actions import (
+    mark_foods_as_active,
+    mark_foods_as_core,
+    mark_foods_as_extended,
+    mark_foods_as_hidden,
+    mark_foods_as_inactive,
+    mark_foods_as_rejected,
+    mark_foods_as_unverified,
+    mark_foods_as_verified,
+)
 from .domain.models import (
+    CalendarizedDay,
     DailyPlan,
     DailyPlanMeal,
     Food,
@@ -11,6 +22,8 @@ from .domain.models import (
     FoodSourceMetadata,
     Meal,
     MealFood,
+    NotificationDelivery,
+    NutritionistMemberRelationship,
     NutritionProposal,
     NutritionProposalAuditEvent,
     Plan,
@@ -18,23 +31,9 @@ from .domain.models import (
     Program,
     ProgramCalendarization,
     ProgramDay,
-    CalendarizedDay,
     ScheduledNotificationEvent,
-    NotificationDelivery,
     WebPushSubscription,
-    Subscription,
     WeightLog,
-)
-
-from .admin_food_actions import (
-    mark_foods_as_active,
-    mark_foods_as_core,
-    mark_foods_as_extended,
-    mark_foods_as_hidden,
-    mark_foods_as_inactive,
-    mark_foods_as_rejected,
-    mark_foods_as_unverified,
-    mark_foods_as_verified,
 )
 
 # =============================================================================
@@ -129,9 +128,18 @@ class PlanAdmin(admin.ModelAdmin):
         "created_at",
     )
 
+    def has_add_permission(self, request):
+        return False
 
-@admin.register(Subscription)
-class SubscriptionAdmin(admin.ModelAdmin):
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(NutritionistMemberRelationship)
+class NutritionistMemberRelationshipAdmin(admin.ModelAdmin):
     list_display = (
         "nutritionist",
         "member",

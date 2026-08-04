@@ -1,5 +1,6 @@
 from notas.presentation.viewmodels.content.meal.detail_meal_vm import *
 
+
 def build_meal_detail_vm(content_data):
     main = MainCardUI(
         main_id=content_data.main_card_data["main_id"],

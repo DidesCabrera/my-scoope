@@ -1,4 +1,5 @@
-from datetime import date, datetime, timezone as dt_timezone
+from datetime import date, datetime
+from datetime import timezone as dt_timezone
 from unittest.mock import patch
 
 from django.contrib.auth.models import User
@@ -6,7 +7,6 @@ from django.test import TestCase
 from django.urls import reverse
 
 from notas.domain.models import CalendarizedDay, DailyPlan, ProgramCalendarization
-
 
 UTC = dt_timezone.utc
 FIXED_NOW = datetime(2026, 7, 15, 12, tzinfo=UTC)

@@ -4,7 +4,6 @@ from django.test import TestCase
 from notas.application.services.commands.meal_commands import fork_meal
 from notas.domain.models import Food, Meal, MealFood
 
-
 User = get_user_model()
 
 

@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Mapping
-
 import re
+from typing import Any, Mapping
 
 from django.db import transaction
 
@@ -364,7 +363,7 @@ def commit_profile_update_tool(
 
 def _normalize_profile_draft(value: Mapping[str, Any]) -> dict[str, Any]:
     payload = dict(value or {})
-    draft: dict[str, Any] = {field: None for field in PROFILE_DRAFT_FIELDS}
+    draft: dict[str, Any] = dict.fromkeys(PROFILE_DRAFT_FIELDS)
     field_sources = _clean_source_map(payload.get("field_sources") or {})
     for field_name in PROFILE_DRAFT_FIELDS:
         normalized = _normalize_field_value(field_name, payload.get(field_name))

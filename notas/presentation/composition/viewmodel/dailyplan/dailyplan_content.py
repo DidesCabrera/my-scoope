@@ -5,15 +5,6 @@ from typing import Any
 
 from django.urls import reverse
 
-from notas.presentation.navigation.program_context import contextual_url
-
-from notas.presentation.actions.dailyplan_meal_resolvers import (
-    resolve_dailyplan_meal_actions,
-)
-from notas.presentation.actions.dailyplan_resolvers import (
-    resolve_dailyplan_entity_actions,
-)
-from notas.presentation.actions.share_resolvers import resolve_share_actions
 from notas.application.services.cache.dailyplan_summary import get_dailyplan_summary
 from notas.application.services.nutrition.food_aggregation import (
     build_dailyplan_foods_aggregation,
@@ -23,6 +14,13 @@ from notas.application.services.nutrition.nutrition_kpis import (
     get_ppk_meal,
 )
 from notas.application.services.nutrition.weight import get_current_weight
+from notas.presentation.actions.dailyplan_meal_resolvers import (
+    resolve_dailyplan_meal_actions,
+)
+from notas.presentation.actions.dailyplan_resolvers import (
+    resolve_dailyplan_entity_actions,
+)
+from notas.presentation.actions.share_resolvers import resolve_share_actions
 from notas.presentation.composition.viewmodel.components.builder_headers import (
     build_dailyplan_header,
 )
@@ -36,6 +34,7 @@ from notas.presentation.composition.viewmodel.components.builder_table_items imp
 )
 from notas.presentation.config.icons import CONTENT_ICON_REGISTRY
 from notas.presentation.config.viewmodel_config import DAILYPLAN_VIEWMODE_PERSONAL_DETAIL
+from notas.presentation.navigation.program_context import contextual_url
 from notas.presentation.resolvers.title_resolvers import resolve_category_badge
 
 

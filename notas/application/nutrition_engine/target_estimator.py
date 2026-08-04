@@ -8,7 +8,6 @@ from notas.domain.constants.nutrition import (
     PROTEIN_KCAL_PER_GRAM,
 )
 
-
 DEFAULT_CALORIE_TARGET = 2200
 DEFAULT_PROTEIN_TARGET = 140
 DEFAULT_CURRENT_WEIGHT_KG = 75

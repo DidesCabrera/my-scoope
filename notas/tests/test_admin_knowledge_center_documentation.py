@@ -2,7 +2,6 @@ from pathlib import Path
 
 from django.test import SimpleTestCase
 
-
 ROOT = Path(__file__).resolve().parents[2]
 KNOWLEDGE_CENTER = ROOT / "docs" / "00_current" / "features" / "admin_knowledge"
 

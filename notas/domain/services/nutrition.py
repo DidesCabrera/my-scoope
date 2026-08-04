@@ -1,7 +1,7 @@
 from notas.domain.constants.nutrition import (
-    PROTEIN_KCAL_PER_GRAM,
     CARBS_KCAL_PER_GRAM,
     FAT_KCAL_PER_GRAM,
+    PROTEIN_KCAL_PER_GRAM,
 )
 
 

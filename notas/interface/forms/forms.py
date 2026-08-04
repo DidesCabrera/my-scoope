@@ -1,5 +1,6 @@
 from django import forms
 
+
 class DailyPlanShareForm(forms.Form):
     recipient_email = forms.EmailField(
         label="Email del destinatario",
@@ -202,6 +203,7 @@ class ProfileNutritionForm(forms.Form):
 
 
 from notas.domain.models import Food
+
 
 class FoodEditForm(forms.ModelForm):
 

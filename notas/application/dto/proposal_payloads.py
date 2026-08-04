@@ -1,7 +1,6 @@
 from dataclasses import asdict, dataclass
 from typing import Any
 
-
 CREATE_MEAL_INTENT = "create_meal"
 CREATE_DAILYPLAN_INTENT = "create_dailyplan"
 

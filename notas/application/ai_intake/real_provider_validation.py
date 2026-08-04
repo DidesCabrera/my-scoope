@@ -8,10 +8,15 @@ from typing import Any, Iterable, Mapping, Sequence
 from django.conf import settings
 from django.contrib.auth import get_user_model
 
+from accounts.models import CreditLedger
+from accounts.services.ai_credits import (
+    AI_CREDIT_REFERENCE_TYPE,
+    account_ai_credit_quota_for_user,
+)
 from ai_assistant.application.chat_engines import ChatEngine, ChatEngineRequest
 from ai_assistant.application.llm_chat_engine import ExternalLLMChatEngine
 from ai_assistant.application.orchestrator import AssistantOrchestratorConfig, ExternalLLMOrchestrator
-from ai_assistant.models import AICreditLedger, AIUsageEvent, AIUserCreditQuota
+from ai_assistant.models import AIUsageEvent
 from notas.application.ai_intake.chat_engine import LLMNutritionIntakeChatEngine
 from notas.application.ai_intake.nutrition_brief import (
     NutritionConversationState,
@@ -1285,8 +1290,14 @@ def _usage_events_for_conversation(conversation_id: str) -> list[dict[str, Any]]
 def _usage_and_credit_snapshot(*, user: Any, run_id: str) -> dict[str, Any]:
     conversation_prefix = f"outcome-{run_id[:20]}-"
     events = AIUsageEvent.objects.filter(user=user, conversation_id__startswith=conversation_prefix)
-    ledgers = AICreditLedger.objects.filter(user=user, usage_event__in=events)
-    quota = AIUserCreditQuota.objects.filter(user=user).order_by("-period", "-updated_at").first()
+    turn_ids = list(events.exclude(turn_id="").values_list("turn_id", flat=True))
+    ledgers = CreditLedger.objects.filter(
+        user=user,
+        kind=CreditLedger.Kind.CONSUME,
+        reference_type=AI_CREDIT_REFERENCE_TYPE,
+        reference_id__in=turn_ids,
+    )
+    quota = account_ai_credit_quota_for_user(user)
     return {
         "event_count": events.count(),
         "completed_count": events.filter(status=AIUsageEvent.Status.COMPLETED).count(),

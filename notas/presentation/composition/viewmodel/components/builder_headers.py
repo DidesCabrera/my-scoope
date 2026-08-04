@@ -1,8 +1,8 @@
 from notas.presentation.actions.dailyplan_meal_resolvers import resolve_dailyplan_meal_actions
 from notas.presentation.actions.dailyplan_resolvers import resolve_dailyplan_entity_actions
-from notas.presentation.actions.meal_resolvers import resolve_meal_entity_actions
 from notas.presentation.actions.food_resolvers import resolve_food_entity_actions
-from notas.presentation.viewmodels.components.header_vm import HeaderVM, HeaderActionVM
+from notas.presentation.actions.meal_resolvers import resolve_meal_entity_actions
+from notas.presentation.viewmodels.components.header_vm import HeaderActionVM, HeaderVM
 
 
 def _build_header_actions(actions_data):

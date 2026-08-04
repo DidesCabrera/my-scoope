@@ -34,7 +34,8 @@ This leaves `programs.py` closer to an interface layer: request handling, permis
 
 The monolithic model file is still large, but splitting Django models is a higher-risk change than URL or view helper extraction because it can affect model discovery, migrations, admin imports and future migration diffs.
 
-For now, keep `notas/domain/models.py` intact unless there is a concrete model-level feature to implement. A safer future split would be done in a dedicated patch with a full `manage.py check`, migration dry-run and admin verification.
+Superseded by decision 0172. PAR08 completed the dedicated split with a full
+Django check, migration dry-run, boundary tests and compatibility imports.
 
 Recommended future package shape, only when justified:
 

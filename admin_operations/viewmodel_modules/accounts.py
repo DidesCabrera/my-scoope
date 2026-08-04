@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-
 from admin_operations.viewmodel_modules.common import AdminOperationsMetricVM
+
 
 @dataclass(frozen=True)
 class AdminOperationsCreditWalletVM:

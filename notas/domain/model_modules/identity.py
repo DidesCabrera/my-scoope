@@ -1,8 +1,10 @@
-from django.db import models
 from django.contrib.auth.models import User
+from django.db import models
 
 
 class Plan(models.Model):
+    """Historical entitlement snapshot; commercial plans live in accounts."""
+
     ROLE_CHOICES = (
         ("member", "Member"),
         ("nutritionist", "Nutritionist"),
@@ -89,6 +91,12 @@ class Profile(models.Model):
 
 
 class Subscription(models.Model):
+    """Legacy name for a nutritionist/member care relationship.
+
+    New code should use ``NutritionistMemberRelationship``. The concrete model
+    remains temporarily for migration and import compatibility.
+    """
+
     nutritionist = models.ForeignKey(
         User, related_name="subscriptions_received", on_delete=models.CASCADE
     )
@@ -104,6 +112,15 @@ class Subscription(models.Model):
 
     def __str__(self):
         return f"{self.member} → {self.nutritionist}"
+
+
+class NutritionistMemberRelationship(Subscription):
+    """Unambiguous public façade over the historical Subscription table."""
+
+    class Meta:
+        proxy = True
+        verbose_name = "nutritionist/member relationship"
+        verbose_name_plural = "nutritionist/member relationships"
 
 
 

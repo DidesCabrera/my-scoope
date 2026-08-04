@@ -3,12 +3,10 @@ from __future__ import annotations
 import math
 import re
 from dataclasses import dataclass
-from decimal import Decimal, InvalidOperation, ROUND_CEILING
+from decimal import ROUND_CEILING, Decimal, InvalidOperation
 from typing import Any, Mapping
 
 from django.conf import settings
-from django.db import transaction
-from django.db.models import Sum
 from django.utils import timezone
 
 from ai_assistant.application.limits import estimate_provider_request_tokens
@@ -17,7 +15,6 @@ from ai_assistant.domain import AssistantTurnRequest
 from ai_assistant.infrastructure.providers import LLMProviderRequest
 
 DEFAULT_PLAN_CODE = "free"
-DEFAULT_CREDIT_REASON = "ai_turn_usage"
 BLOCK_REASON_MONTHLY_LIMIT = "monthly_credit_limit_exceeded"
 BLOCK_REASON_DAILY_LIMIT = "daily_credit_limit_exceeded"
 BLOCK_REASON_ACCOUNT_WALLET = "account_credit_wallet_limit_exceeded"
@@ -107,8 +104,10 @@ class DjangoAICreditService:
                 reason="anonymous_user_not_metered",
             )
 
-        quota = get_or_create_user_credit_quota(user=user, plan=plan)
-        daily_used = get_daily_credits_used(user=user)
+        from accounts.services.ai_credits import account_ai_credit_quota_for_user
+
+        quota = account_ai_credit_quota_for_user(user)
+        daily_used = quota.daily_credits_used
         if quota.hard_blocked:
             return AICreditCheck(
                 allowed=False,
@@ -209,51 +208,28 @@ class DjangoAICreditService:
             )
             return outcome
 
-        from ai_assistant.models import AICreditLedger, AIUserCreditQuota
-
-        with transaction.atomic():
-            quota, _created = AIUserCreditQuota.objects.select_for_update().get_or_create(
-                user=user,
-                period=current_period(),
-                defaults={
-                    "plan_code": plan.code,
-                    "monthly_credit_limit": plan.monthly_credit_limit,
-                    "daily_credit_limit": plan.daily_credit_limit,
-                },
-            )
-            quota.plan_code = plan.code
-            quota.monthly_credit_limit = plan.monthly_credit_limit
-            quota.daily_credit_limit = plan.daily_credit_limit
-            quota.credits_used = int(quota.credits_used or 0) + credits
-            quota.save(
-                update_fields=[
-                    "plan_code",
-                    "monthly_credit_limit",
-                    "daily_credit_limit",
-                    "credits_used",
-                    "updated_at",
-                ]
-            )
-            ledger = AICreditLedger.objects.create(
-                user=user,
-                usage_event=usage_event,
-                period=quota.period,
-                plan_code=plan.code,
-                action_type=getattr(usage_event, "action_type", ""),
-                credits=credits,
-                reason=DEFAULT_CREDIT_REASON,
-                metadata={
-                    "usage_event_id": usage_event.pk,
-                    "estimated_cost_usd": str(getattr(usage_event, "estimated_cost_usd", "") or ""),
-                    "provider": getattr(usage_event, "provider", ""),
-                    "model_name": getattr(usage_event, "model_name", ""),
-                },
-            )
-
         account_wallet_summary = self._consume_account_reservation_for_event(usage_event, credits=credits)
+        if not account_wallet_summary.get("consumed"):
+            outcome = {
+                "charged": False,
+                "reason": "account_credit_consumption_not_recorded",
+                "plan_code": plan.code,
+                "account_wallet": account_wallet_summary,
+            }
+            persist_usage_event_credit_outcome(
+                usage_event,
+                outcome=outcome,
+                plan_code=plan.code,
+                charged_credits=0,
+            )
+            return outcome
+
+        from accounts.services.ai_credits import account_ai_credit_quota_for_user
+
+        quota = account_ai_credit_quota_for_user(user)
         outcome = {
             "charged": True,
-            "ledger_id": ledger.pk,
+            "ledger_id": account_wallet_summary.get("ledger_id"),
             "plan_code": plan.code,
             "credits": credits,
             "credits_used_after": quota.credits_used,
@@ -283,7 +259,11 @@ class DjangoAICreditService:
         if not reference_id:
             return {"reserved": False, "reason": "missing_turn_reference"}
         try:
-            from accounts.services.credits import InsufficientAccountCredits, reserve_account_credits
+            from accounts.services.credits import (
+                AccountCreditsFrozen,
+                InsufficientAccountCredits,
+                reserve_account_credits,
+            )
 
             return reserve_account_credits(
                 user=user,
@@ -299,6 +279,8 @@ class DjangoAICreditService:
                     "source": "ai_assistant.preflight",
                 },
             )
+        except AccountCreditsFrozen:
+            return {"reserved": False, "blocked": True, "reason": "account_credits_frozen"}
         except InsufficientAccountCredits:
             return {"reserved": False, "blocked": True, "reason": "insufficient_account_credits"}
         except Exception as exc:  # pragma: no cover - defensive optional integration
@@ -447,44 +429,10 @@ def _sanitize_credit_outcome(value: Any, *, depth: int = 0) -> Any:
     return str(value)[:200]
 
 
-def get_or_create_user_credit_quota(*, user: Any, plan: AICreditPlan):
-    from ai_assistant.models import AIUserCreditQuota
-
-    quota, _created = AIUserCreditQuota.objects.get_or_create(
-        user=user,
-        period=current_period(),
-        defaults={
-            "plan_code": plan.code,
-            "monthly_credit_limit": plan.monthly_credit_limit,
-            "daily_credit_limit": plan.daily_credit_limit,
-        },
-    )
-    update_fields: list[str] = []
-    if quota.plan_code != plan.code:
-        quota.plan_code = plan.code
-        update_fields.append("plan_code")
-    if quota.monthly_credit_limit != plan.monthly_credit_limit:
-        quota.monthly_credit_limit = plan.monthly_credit_limit
-        update_fields.append("monthly_credit_limit")
-    if quota.daily_credit_limit != plan.daily_credit_limit:
-        quota.daily_credit_limit = plan.daily_credit_limit
-        update_fields.append("daily_credit_limit")
-    if update_fields:
-        update_fields.append("updated_at")
-        quota.save(update_fields=update_fields)
-    return quota
-
-
 def get_daily_credits_used(*, user: Any) -> int:
-    from ai_assistant.models import AICreditLedger
+    from accounts.services.ai_credits import account_ai_credit_quota_for_user
 
-    today = timezone.localdate()
-    value = (
-        AICreditLedger.objects.filter(user=user, created_at__date=today)
-        .aggregate(total=Sum("credits"))
-        .get("total")
-    )
-    return int(value or 0)
+    return account_ai_credit_quota_for_user(user).daily_credits_used
 
 
 def user_from_request(request: AssistantTurnRequest) -> Any | None:

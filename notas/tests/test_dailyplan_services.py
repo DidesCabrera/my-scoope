@@ -6,7 +6,6 @@ from django.test import TestCase
 from notas.application.services.commands.dailyplan_commands import fork_dailyplan, save_dailyplan
 from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood
 
-
 User = get_user_model()
 
 

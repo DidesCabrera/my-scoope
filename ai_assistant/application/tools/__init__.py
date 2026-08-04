@@ -7,7 +7,6 @@ standalone MCP process without loading Django-backed executors.
 from importlib import import_module
 from typing import Final
 
-
 _EXPORTS: Final[dict[str, tuple[str, str]]] = {
     "ReadOnlyToolExecutor": ("ai_assistant.application.tools.executor", "ReadOnlyToolExecutor"),
     "ReadOnlyToolExecutorConfig": (

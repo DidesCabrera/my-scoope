@@ -3,8 +3,8 @@ import json
 from django.contrib.auth.models import User
 from django.test import TestCase, override_settings
 
-from accounts.models import AccountPlan, CreditWallet
-
+from accounts.models import AccountPlan, AccountSubscription, CreditLedger, CreditWallet
+from accounts.services.ai_credits import AI_CREDIT_REFERENCE_TYPE, account_ai_credit_quota_for_user
 from ai_assistant.application import ExternalLLMOrchestrator
 from ai_assistant.application.credits import (
     DjangoAICreditService,
@@ -44,7 +44,11 @@ class ScriptedCreditClient:
 def _turn_request(user, *, action_type="assistant.chat"):
     return AssistantTurnRequest(
         user_message=AssistantMessage(role=AssistantMessageRole.USER, content="Hola"),
-        metadata={"tool_user": user, "action_type": action_type},
+        metadata={
+            "tool_user": user,
+            "action_type": action_type,
+            "turn_id": f"credit-test-{user.pk}-{action_type}",
+        },
     )
 
 
@@ -104,7 +108,7 @@ class AICreditChargingTests(TestCase):
         user = User.objects.create_user(username="credit-charge-user")
         user.profile.role = "member"
         user.profile.save(update_fields=["role"])
-        AccountPlan.objects.create(
+        plan = AccountPlan.objects.create(
             slug="member",
             name="Member",
             status=AccountPlan.Status.ACTIVE,
@@ -113,28 +117,44 @@ class AICreditChargingTests(TestCase):
             daily_credit_limit=100,
             entitlements={
                 "ai_assistant": {
-                    "monthly_credit_limit": 10,
-                    "daily_credit_limit": 10,
+                    "monthly_credit_limit": 100,
+                    "daily_credit_limit": 100,
                     "block_on_exhaustion": True,
                 }
             },
         )
+        AccountSubscription.objects.create(user=user, plan=plan)
         CreditWallet.objects.update_or_create(
             user=user,
-            defaults={"balance": 100, "reserved_balance": 0},
+            defaults={
+                "balance": 100,
+                "reserved_balance": 0,
+                "period": current_period(),
+                "plan_snapshot_code": plan.slug,
+            },
         )
         orchestrator = ExternalLLMOrchestrator(llm_client=ScriptedCreditClient())
 
         response = orchestrator.continue_turn(_turn_request(user))
 
-        self.assertEqual(response.metadata["usage_observability"]["credits"]["charged"], True)
+        self.assertEqual(
+            response.metadata["usage_observability"]["credits"]["charged"],
+            True,
+            response.metadata,
+        )
         event = AIUsageEvent.objects.get(user=user)
-        quota = AIUserCreditQuota.objects.get(user=user, period=current_period())
-        ledger = AICreditLedger.objects.get(user=user, usage_event=event)
+        quota = account_ai_credit_quota_for_user(user)
+        ledger = CreditLedger.objects.get(
+            user=user,
+            kind=CreditLedger.Kind.CONSUME,
+            reference_type=AI_CREDIT_REFERENCE_TYPE,
+        )
         self.assertEqual(event.charged_credits, 1)
         self.assertEqual(event.credit_plan_code, "member")
         self.assertEqual(quota.credits_used, 1)
-        self.assertEqual(ledger.credits, 1)
+        self.assertEqual(ledger.credits_delta, -1)
+        self.assertFalse(AIUserCreditQuota.objects.filter(user=user).exists())
+        self.assertFalse(AICreditLedger.objects.filter(user=user).exists())
 
     @override_settings(
         AI_ASSISTANT_CREDITS_ENABLED=True,
@@ -149,13 +169,22 @@ class AICreditChargingTests(TestCase):
         user = User.objects.create_user(username="credit-block-user")
         user.profile.role = "member"
         user.profile.save(update_fields=["role"])
-        AIUserCreditQuota.objects.create(
+        wallet = CreditWallet.objects.create(
             user=user,
             period=current_period(),
-            plan_code="member",
-            monthly_credit_limit=1,
-            daily_credit_limit=1,
-            credits_used=1,
+            plan_snapshot_code="member",
+            balance=0,
+        )
+        CreditLedger.objects.create(
+            wallet=wallet,
+            user=user,
+            period=current_period(),
+            plan_snapshot_code="member",
+            kind=CreditLedger.Kind.CONSUME,
+            credits_delta=-1,
+            balance_after=0,
+            reference_type=AI_CREDIT_REFERENCE_TYPE,
+            reference_id="prior-turn",
         )
         client = ScriptedCreditClient()
         orchestrator = ExternalLLMOrchestrator(llm_client=client)
@@ -168,3 +197,4 @@ class AICreditChargingTests(TestCase):
         self.assertEqual(response.metadata["usage_observability"]["status"], "blocked")
         self.assertEqual(AIUsageEvent.objects.filter(user=user, status=AIUsageEvent.Status.BLOCKED).count(), 1)
         self.assertEqual(AICreditLedger.objects.filter(user=user).count(), 0)
+        self.assertEqual(AIUserCreditQuota.objects.filter(user=user).count(), 0)

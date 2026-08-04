@@ -5,18 +5,36 @@ import unicodedata
 from dataclasses import dataclass, field, replace
 from typing import Iterable
 
-from notas.application.ai_intake.deterministic_policy import deterministic_questions_for_brief
 from ai_assistant.application.intake_semantics import (
     detect_activity_level as semantic_detect_activity_level,
+)
+from ai_assistant.application.intake_semantics import (
     detect_budget as semantic_detect_budget,
+)
+from ai_assistant.application.intake_semantics import (
     detect_complexity as semantic_detect_complexity,
+)
+from ai_assistant.application.intake_semantics import (
     detect_goal as semantic_detect_goal,
+)
+from ai_assistant.application.intake_semantics import (
     detect_meals_per_day as semantic_detect_meals_per_day,
+)
+from ai_assistant.application.intake_semantics import (
     detect_styles as semantic_detect_styles,
+)
+from ai_assistant.application.intake_semantics import (
     detect_training_frequency as semantic_detect_training_frequency,
+)
+from ai_assistant.application.intake_semantics import (
     extract_nutrition_intake_semantics,
 )
 from ai_assistant.application.response_style import format_bullet_items, format_numbered_questions
+from notas.application.ai_intake.deterministic_policy import deterministic_questions_for_brief
+from notas.application.ai_intake.iteration_commands import (
+    PlanIterationCommandSet,
+    parse_dailyplan_iteration_commands,
+)
 from notas.application.dto.nutrition_subject_context_dto import (
     PPK_WEIGHT_SOURCE_EXTERNAL,
     PPK_WEIGHT_SOURCE_MANUAL,
@@ -30,12 +48,6 @@ from notas.application.queries.user_nutrition_profile import (
     NutritionSubjectContextError,
     build_nutrition_subject_context,
 )
-
-from notas.application.ai_intake.iteration_commands import (
-    PlanIterationCommandSet,
-    parse_dailyplan_iteration_commands,
-)
-
 
 AI_NUTRITION_BRIEF_SESSION_KEY = "ai_nutrition_brief"
 AI_NUTRITION_CONVERSATION_SESSION_KEY = "ai_nutrition_conversation"

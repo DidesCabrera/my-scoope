@@ -17,7 +17,6 @@ from notas.application.proposals.subject_context_warnings import (
 )
 from notas.domain.models import NutritionProposal, Profile, WeightLog
 
-
 User = get_user_model()
 
 

@@ -3,11 +3,11 @@ from datetime import date
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from notas.application.services.nutrition.weight import get_current_weight
 from notas.application.queries.performance.dailyplan_queries import (
     dailyplans_with_kcal,
     get_dailyplan_meals_with_foods,
 )
+from notas.application.services.nutrition.weight import get_current_weight
 from notas.domain.models import (
     DailyPlan,
     DailyPlanMeal,
@@ -20,7 +20,6 @@ from notas.domain.models import (
 from notas.presentation.composition.viewmodel.components.builder_table_items import (
     build_mealfood_table_item,
 )
-
 
 User = get_user_model()
 

@@ -1,47 +1,45 @@
 from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import redirect, render
-from django.views.decorators.http import require_POST
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST
 
 from admin_operations.interface_feedback import flash_operation_result, operation_not_found_as_404
-from admin_operations.system_control import build_system_control_vm
-
 from admin_operations.services import (
     build_account_detail_vm,
     build_accounts_operations_vm,
-    build_audit_log_vm,
     build_ai_operations_vm,
     build_ai_proposal_detail_vm,
+    build_audit_log_vm,
     build_candidate_detail_vm,
     build_catalog_food_detail_vm,
-    build_food_catalog_inventory_vm,
     build_food_catalog_data_coverage_vm,
     build_food_catalog_imports_vm,
+    build_food_catalog_inventory_vm,
     build_food_catalog_operations_vm,
     build_operations_overview_vm,
-    perform_candidate_operation,
-    perform_catalog_food_operation,
-    perform_catalog_food_bulk_review,
-    perform_core_seed_apply,
-    perform_core_seed_dry_run,
-    perform_usda_apply,
-    perform_usda_dry_run,
-    perform_brand_apply,
-    perform_brand_dry_run,
-    perform_manual_apply,
-    perform_manual_dry_run,
-    perform_backfill_apply,
-    perform_backfill_dry_run,
-    perform_import_source_policy_operation,
-    perform_catalog_food_snapshot,
-    perform_credit_adjustment,
     perform_ai_proposal_operation,
     perform_ai_quota_operation,
     perform_ai_usage_event_operation,
+    perform_backfill_apply,
+    perform_backfill_dry_run,
+    perform_brand_apply,
+    perform_brand_dry_run,
+    perform_candidate_operation,
+    perform_catalog_food_bulk_review,
+    perform_catalog_food_operation,
+    perform_catalog_food_snapshot,
+    perform_core_seed_apply,
+    perform_core_seed_dry_run,
+    perform_credit_adjustment,
     perform_credit_reservation_release,
+    perform_import_source_policy_operation,
+    perform_manual_apply,
+    perform_manual_dry_run,
+    perform_usda_apply,
+    perform_usda_dry_run,
 )
-from notas.presentation.config.viewmodel_config import ADMIN_OPERATIONS_OVERVIEW_VIEWMODE
+from admin_operations.system_control import build_system_control_vm
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
+from notas.presentation.config.viewmodel_config import ADMIN_OPERATIONS_OVERVIEW_VIEWMODE
 from notas.presentation.viewmodels.base_vm import BaseVM
 
 

@@ -9,16 +9,16 @@ from ai_assistant.domain import (
     AssistantMessageRole,
     AssistantStructuredResponse,
 )
+from notas.application.ai_intake.chat_engine import (
+    _append_prepared_action_cards_from_llm_tools,
+    _append_proposal_review_cards_from_llm_tools,
+)
 from notas.application.ai_intake.nutrition_brief import (
     NutritionBrief,
     NutritionConversationMessage,
     NutritionConversationState,
     build_intake_result_from_brief,
     serialize_conversation,
-)
-from notas.application.ai_intake.chat_engine import (
-    _append_prepared_action_cards_from_llm_tools,
-    _append_proposal_review_cards_from_llm_tools,
 )
 from notas.presentation.pages.ai_intake_page import (
     append_ai_assistant_structured_response,

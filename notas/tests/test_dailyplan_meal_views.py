@@ -4,7 +4,6 @@ from django.urls import reverse
 
 from notas.domain.models import DailyPlan, DailyPlanMeal, Meal
 
-
 User = get_user_model()
 
 

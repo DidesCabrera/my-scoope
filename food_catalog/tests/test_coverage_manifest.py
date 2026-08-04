@@ -6,7 +6,6 @@ from food_catalog.application.coverage_manifest import (
     parse_coverage_manifest_csv,
 )
 
-
 HEADER = (
     "target_key,preferred_name_es,category,subcategory,preparation_state,priority_tier,"
     "chile_relevance,expected_source,source_food_id,source_dataset,source_version,"

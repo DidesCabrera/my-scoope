@@ -7,7 +7,6 @@ from ai_assistant.application.tools.contracts import (
 )
 from ai_assistant.application.tools.tool_names import *  # noqa: F403
 
-
 ACTIONS_TOOL_SPECS = {
 TOOL_PREPARE_PRODUCT_ACTION: AssistantToolSpec(
         name=TOOL_PREPARE_PRODUCT_ACTION,

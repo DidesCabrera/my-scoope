@@ -7,7 +7,6 @@ from typing import Any, Mapping, Sequence
 
 from ai_assistant.infrastructure.providers import LLMProviderRequest
 
-
 APPROX_CHARS_PER_TOKEN = 4
 
 

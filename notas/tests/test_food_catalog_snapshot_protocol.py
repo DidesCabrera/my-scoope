@@ -11,8 +11,8 @@ from food_catalog.models import (
 )
 from notas.application.queries.food_catalog_queries import list_food_catalog_for_planning
 from notas.application.services.food_catalog_snapshots import (
-    CatalogFoodNotPublishedError,
     FOOD_CATALOG_PORTION_SOURCE,
+    CatalogFoodNotPublishedError,
     build_operational_food_snapshot_payload,
     create_operational_food_snapshot_from_catalog,
     mark_operational_food_catalog_snapshot_stale,

@@ -4,7 +4,6 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any, Mapping
 
-
 SOLVER_CAPABILITY_SCHEMA_VERSION = "solver_food_capabilities.v1"
 
 
