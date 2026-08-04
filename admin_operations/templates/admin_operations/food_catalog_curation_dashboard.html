@@ -1,0 +1,54 @@
+{% extends "admin_operations/base.html" %}
+{% block title %}Dash curación Food Catalog{% endblock %}
+{% block admin_operations_subtopbar %}
+  <div class="admin-operations-subtopbar">
+    {% include "admin_operations/_food_catalog_tabs.html" with active_tab="curation_dashboard" %}
+  </div>
+{% endblock %}
+{% block content %}
+<div class="page admin-analytics-page admin-operations-page admin-operations-curation-page">
+  <section class="admin-operations-curation-summary-section" aria-labelledby="curation-summary-title">
+    <div class="admin-operations-section-heading">
+      <div>
+        <p class="section-eyebrow">Resumen de curación</p>
+        <h2 id="curation-summary-title">Estado operativo del Food Catalog</h2>
+      </div>
+      <p>Lectura rápida de volumen, bloqueos, publicación y activación del catálogo.</p>
+    </div>
+    <div class="admin-operations-curation-summary" aria-label="Resumen de la curación">
+      {% for metric in vm.content.metrics %}
+        <div class="admin-operations-curation-stat">
+          <span class="admin-operations-stage__icon"><i data-lucide="{{ metric.icon }}"></i></span>
+          <span class="admin-operations-stage__copy">
+            <strong>{{ metric.label }}</strong>
+            <small>{{ metric.helper }}</small>
+          </span>
+          <span class="admin-operations-stage__count">{{ metric.value }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="admin-operations-curation-flow" aria-labelledby="curation-flow-title">
+    <div class="admin-operations-section-heading">
+      <div>
+        <p class="section-eyebrow">Proceso de curación</p>
+        <h2 id="curation-flow-title">Del candidato al alimento operativo</h2>
+      </div>
+      <p>Cada número muestra cuánto trabajo espera en esa etapa. "Falta evidencia" reúne los casos detenidos.</p>
+    </div>
+    <nav class="admin-operations-stage-nav" aria-label="Filtrar por etapa de curación">
+      {% for stage in vm.content.stages %}
+        <a class="admin-operations-stage{% if stage.is_active %} admin-operations-stage--active{% endif %}{% if stage.key == 'blocked' %} admin-operations-stage--blocked{% endif %}" href="{{ stage.url }}"{% if stage.is_active %} aria-current="page"{% endif %}>
+          <span class="admin-operations-stage__icon"><i data-lucide="{{ stage.icon }}"></i></span>
+          <span class="admin-operations-stage__copy">
+            <strong>{{ stage.label }}</strong>
+            <small>{{ stage.helper }}</small>
+          </span>
+          <span class="admin-operations-stage__count">{{ stage.count }}</span>
+        </a>
+      {% endfor %}
+    </nav>
+  </section>
+</div>
+{% endblock %}

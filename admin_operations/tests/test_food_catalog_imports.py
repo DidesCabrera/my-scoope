@@ -94,6 +94,10 @@ class FoodCatalogImportsOperationsTests(TestCase):
         apply_batch = CatalogImportBatch.objects.get(is_dry_run=False)
         self.assertEqual(apply_batch.dry_run_batch, dry_run)
         self.assertEqual(CatalogFood.objects.count(), 30)
+        self.assertEqual(
+            CatalogFood.objects.filter(status=CatalogFood.STATUS_PENDING_REVIEW).count(),
+            30,
+        )
         self.assertEqual(CatalogFoodSource.objects.filter(import_batch=apply_batch).count(), 30)
         self.assertFalse(CatalogFood.objects.filter(status=CatalogFood.STATUS_PUBLISHED).exists())
         self.assertEqual(
@@ -153,6 +157,7 @@ class FoodCatalogImportsOperationsTests(TestCase):
         source = CatalogFoodSource.objects.get()
         apply_batch = CatalogImportBatch.objects.get(is_dry_run=False)
         self.assertEqual(food.source_type, CatalogFood.SOURCE_USDA)
+        self.assertEqual(food.status, CatalogFood.STATUS_PENDING_REVIEW)
         self.assertEqual(source.source_type, CatalogFood.SOURCE_USDA)
         self.assertEqual(source.import_batch, apply_batch)
         self.assertEqual(apply_batch.dry_run_batch, dry_run)

@@ -1,0 +1,52 @@
+{% extends "admin_operations/base.html" %}
+{% block title %}Cobertura de datos{% endblock %}
+{% block admin_operations_subtopbar %}
+  <div class="admin-operations-subtopbar">
+    {% include "admin_operations/_food_catalog_tabs.html" with active_tab="data_coverage" %}
+  </div>
+{% endblock %}
+{% block content %}
+<div class="page admin-analytics-page admin-operations-page admin-operations-data-coverage-page">
+  <section class="admin-operations-inventory-workbench" aria-labelledby="data-coverage-title">
+    <div class="admin-operations-workbench-heading admin-operations-inventory-heading">
+      <div>
+        <p class="section-eyebrow">Dimensión de cobertura</p>
+        <h2 id="data-coverage-title">Cobertura de datos del catálogo persistido</h2>
+        <p class="muted-text">Cada fila mide cuántos alimentos tienen ese dato informado y qué proporción representan sobre el catálogo completo.</p>
+      </div>
+      <span class="admin-operations-status-pill">{{ vm.content.total_foods }} alimentos</span>
+    </div>
+
+    <nav class="admin-operations-inventory-section-tabs" aria-label="Subgrupos de cobertura de datos">
+      {% for section in vm.content.sections %}
+        <a class="admin-operations-inventory-section-tab{% if section.is_active %} admin-operations-inventory-section-tab--active{% endif %}" href="{{ section.url }}"{% if section.is_active %} aria-current="page"{% endif %}>
+          <i data-lucide="{{ section.icon }}"></i>{{ section.label }}
+        </a>
+      {% endfor %}
+    </nav>
+
+    <div class="admin-operations-table-card admin-operations-data-coverage-table-card" role="region" aria-label="Cobertura de variables del Food Catalog" tabindex="0">
+      <table class="admin-operations-table admin-operations-data-coverage-table">
+        <thead>
+          <tr>
+            <th>Dato del alimento</th>
+            <th>Datos existentes</th>
+            <th>Porcentaje del catálogo</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in vm.content.rows %}
+            <tr>
+              <td data-label="Dato del alimento"><strong>{{ row.label }}</strong></td>
+              <td data-label="Datos existentes">{{ row.existing_total }}</td>
+              <td data-label="Porcentaje del catálogo"><span class="admin-operations-coverage-percentage">{{ row.share_label }}</span></td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="3">No hay variables configuradas para este subgrupo.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}

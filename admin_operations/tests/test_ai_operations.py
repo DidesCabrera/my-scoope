@@ -69,7 +69,7 @@ class AdminOperationsAITests(TestCase):
         response = self.client.get(reverse("admin_operations_ai_assistant"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "OPS05 · AI Assistant operations")
+        self.assertContains(response, "OPS05 · AI Assistant")
         self.assertContains(response, "Operaciones de AI Assistant")
         self.assertContains(response, "Errores y bloqueos recientes")
         self.assertContains(response, "nutrition_solver_preview")

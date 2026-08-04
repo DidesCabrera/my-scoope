@@ -1,9 +1,18 @@
 <nav class="admin-operations-tabs" aria-label="Vistas de Food Catalog">
+  <a class="admin-operations-tab{% if active_tab == 'curation_dashboard' %} admin-operations-tab--active{% endif %}" href="{% url 'admin_operations_food_catalog_curation_dashboard' %}"{% if active_tab == 'curation_dashboard' %} aria-current="page"{% endif %}>
+    <i data-lucide="layout-dashboard"></i> Dash curación
+  </a>
   <a class="admin-operations-tab{% if active_tab == 'operations' %} admin-operations-tab--active{% endif %}" href="{% url 'admin_operations_food_catalog' %}"{% if active_tab == 'operations' %} aria-current="page"{% endif %}>
-    <i data-lucide="list-checks"></i> Curación
+    <i data-lucide="list-checks"></i> Bandeja curación
   </a>
   <a class="admin-operations-tab{% if active_tab == 'inventory' %} admin-operations-tab--active{% endif %}" href="{% url 'admin_operations_food_catalog_inventory' %}"{% if active_tab == 'inventory' %} aria-current="page"{% endif %}>
-    <i data-lucide="table-properties"></i> Inventario
+    <i data-lucide="table-properties"></i> Cobertura Alimentos
+  </a>
+  <a class="admin-operations-tab{% if active_tab == 'inventory_master' %} admin-operations-tab--active{% endif %}" href="{% url 'admin_operations_food_catalog_inventory_master' %}"{% if active_tab == 'inventory_master' %} aria-current="page"{% endif %}>
+    <i data-lucide="rows-3"></i> Catálogo Alimentos
+  </a>
+  <a class="admin-operations-tab{% if active_tab == 'data_coverage' %} admin-operations-tab--active{% endif %}" href="{% url 'admin_operations_food_catalog_data_coverage' %}"{% if active_tab == 'data_coverage' %} aria-current="page"{% endif %}>
+    <i data-lucide="chart-no-axes-column-increasing"></i> Cobertura datos
   </a>
   <a class="admin-operations-tab{% if active_tab == 'imports' %} admin-operations-tab--active{% endif %}" href="{% url 'admin_operations_food_catalog_imports' %}"{% if active_tab == 'imports' %} aria-current="page"{% endif %}>
     <i data-lucide="database-zap"></i> Fuentes e importaciones

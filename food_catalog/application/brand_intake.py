@@ -353,7 +353,7 @@ def _upsert_brand_food(row: BrandFoodIntakeRow, *, import_batch: CatalogImportBa
         "food_subgroup": row.food_subgroup,
         "preparation_state": row.preparation_state,
         "source_type": CatalogFood.SOURCE_BRAND_SUBMITTED,
-        "status": CatalogFood.STATUS_BRAND_SUBMITTED,
+        "status": CatalogFood.STATUS_PENDING_REVIEW,
         "protein_g_per_100g": row.protein_g_per_100g,
         "carbs_g_per_100g": row.carbs_g_per_100g,
         "fat_g_per_100g": row.fat_g_per_100g,

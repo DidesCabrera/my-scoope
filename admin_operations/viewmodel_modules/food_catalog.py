@@ -136,6 +136,7 @@ class AdminOperationsCurationItemVM:
     readiness_state: str
     readiness_label: str
     readiness_issues: list[str] = field(default_factory=list)
+    quality_score: int | None = None
     detail_url: str = ""
     admin_url: str = ""
     action_url: str = ""
@@ -162,7 +163,11 @@ class AdminOperationsFoodCatalogVM:
     work_items: list[AdminOperationsCurationItemVM] = field(default_factory=list)
     query: str = ""
     selected_stage: str = "all"
+    selected_sort: str = "quality_asc"
+    sort_options: list[tuple[str, str]] = field(default_factory=list)
     filtered_total: str = "0"
+    preparation_total: str = "0"
+    preparation_food_total: str = "0"
     blocked_total: str = "0"
     operational_total: str = "0"
 
@@ -172,6 +177,45 @@ class AdminOperationsCatalogCoverageVM:
     label: str
     total: str
     share_label: str
+    helper: str = ""
+
+
+@dataclass(frozen=True)
+class AdminOperationsCatalogDataCoverageRowVM:
+    label: str
+    existing_total: str
+    share_label: str
+
+
+@dataclass(frozen=True)
+class AdminOperationsCatalogDataCoverageVM:
+    title: str = "Cobertura de datos del Food Catalog"
+    subtitle: str = "Cobertura campo por campo sobre todos los alimentos persistidos."
+    total_foods: str = "0"
+    selected_section: str = "identity"
+    sections: list[AdminOperationsCatalogInventorySectionVM] = field(default_factory=list)
+    rows: list[AdminOperationsCatalogDataCoverageRowVM] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class AdminOperationsCatalogInventorySectionVM:
+    key: str
+    label: str
+    icon: str
+    url: str
+    is_active: bool = False
+
+
+@dataclass(frozen=True)
+class AdminOperationsCatalogInventoryColumnVM:
+    key: str
+    label: str
+
+
+@dataclass(frozen=True)
+class AdminOperationsCatalogInventoryCellVM:
+    value: str
+    label: str = ""
     helper: str = ""
 
 
@@ -189,6 +233,7 @@ class AdminOperationsCatalogInventoryFoodVM:
     relation_lines: list[str]
     lifecycle_lines: list[str]
     admin_url: str
+    inventory_cells: list[AdminOperationsCatalogInventoryCellVM] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -214,6 +259,9 @@ class AdminOperationsCatalogInventoryVM:
     target_category_coverage: list[AdminOperationsCatalogCoverageVM] = field(default_factory=list)
     target_version_label: str = ""
     foods: list[AdminOperationsCatalogInventoryFoodVM] = field(default_factory=list)
+    inventory_sections: list[AdminOperationsCatalogInventorySectionVM] = field(default_factory=list)
+    selected_inventory_section: str = "identity"
+    inventory_columns: list[AdminOperationsCatalogInventoryColumnVM] = field(default_factory=list)
     status_options: list[tuple[str, str]] = field(default_factory=list)
     source_options: list[tuple[str, str]] = field(default_factory=list)
     group_options: list[str] = field(default_factory=list)
@@ -266,4 +314,4 @@ class AdminOperationsCandidateDetailVM:
 
 
 
-__all__ = ['AdminOperationsCandidateVM', 'AdminOperationsCatalogFoodVM', 'AdminOperationsDetailFactVM', 'AdminOperationsCatalogEvidenceVM', 'AdminOperationsCatalogPortionVM', 'AdminOperationsCatalogAliasVM', 'AdminOperationsCatalogFoodDetailVM', 'AdminOperationsCurationStageVM', 'AdminOperationsCurationItemVM', 'AdminOperationsFoodCatalogVM', 'AdminOperationsCatalogCoverageVM', 'AdminOperationsCatalogInventoryFoodVM', 'AdminOperationsCatalogInventoryVM', 'AdminOperationsCatalogImportBatchVM', 'AdminOperationsCatalogImportsVM', 'AdminOperationsCandidateDetailVM']
+__all__ = ['AdminOperationsCandidateVM', 'AdminOperationsCatalogFoodVM', 'AdminOperationsDetailFactVM', 'AdminOperationsCatalogEvidenceVM', 'AdminOperationsCatalogPortionVM', 'AdminOperationsCatalogAliasVM', 'AdminOperationsCatalogFoodDetailVM', 'AdminOperationsCurationStageVM', 'AdminOperationsCurationItemVM', 'AdminOperationsFoodCatalogVM', 'AdminOperationsCatalogCoverageVM', 'AdminOperationsCatalogDataCoverageRowVM', 'AdminOperationsCatalogDataCoverageVM', 'AdminOperationsCatalogInventorySectionVM', 'AdminOperationsCatalogInventoryColumnVM', 'AdminOperationsCatalogInventoryCellVM', 'AdminOperationsCatalogInventoryFoodVM', 'AdminOperationsCatalogInventoryVM', 'AdminOperationsCatalogImportBatchVM', 'AdminOperationsCatalogImportsVM', 'AdminOperationsCandidateDetailVM']

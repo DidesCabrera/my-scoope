@@ -78,7 +78,7 @@ class BrandFoodIntakeTests(TestCase):
         self.assertFalse(result.errors)
 
         food = CatalogFood.objects.get(canonical_name="yogur griego natural marca uno")
-        self.assertEqual(food.status, CatalogFood.STATUS_BRAND_SUBMITTED)
+        self.assertEqual(food.status, CatalogFood.STATUS_PENDING_REVIEW)
         self.assertEqual(food.source_type, CatalogFood.SOURCE_BRAND_SUBMITTED)
         self.assertTrue(food.is_branded)
         self.assertEqual(food.brand_name, "Marca Uno")
@@ -144,7 +144,7 @@ class BrandFoodIntakeTests(TestCase):
         )
 
         self.assertEqual(CatalogFood.objects.count(), 1)
-        self.assertEqual(CatalogFood.objects.get().status, CatalogFood.STATUS_BRAND_SUBMITTED)
+        self.assertEqual(CatalogFood.objects.get().status, CatalogFood.STATUS_PENDING_REVIEW)
 
     def test_management_command_fails_invalid_csv_without_writes(self):
         path = self.write_csv(

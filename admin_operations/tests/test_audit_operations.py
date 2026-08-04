@@ -50,7 +50,7 @@ class AdminOperationsAuditLogTests(TestCase):
         response = self.client.get(reverse("admin_operations_audit_log"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "OPS06 · Operational audit log")
+        self.assertContains(response, "OPS06 · Audit Log")
         self.assertContains(response, "Audit log operacional")
         self.assertContains(response, "food_catalog.candidate.approve")
         self.assertContains(response, "Fuente suficiente")

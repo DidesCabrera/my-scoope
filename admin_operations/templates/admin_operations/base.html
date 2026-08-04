@@ -18,6 +18,8 @@
   <title>{% block title %}Admin Operations{% endblock %} · My Scoope</title>
   <link rel="stylesheet" href="{% static 'notas/css/components/admin_analytics.css' %}">
   <link rel="stylesheet" href="{% static 'notas/css/components/admin_operations.css' %}">
+  <link rel="stylesheet" href="{% static 'notas/css/components/admin_operations_food_catalog.css' %}">
+  <link rel="stylesheet" href="{% static 'notas/css/components/admin_operations_secondary.css' %}">
   {% block extra_styles %}{% endblock %}
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -59,11 +61,7 @@
           </label>
         </div>
         <div class="admin-analytics-page-heading">
-          <p class="section-eyebrow">Staff-only · Action-first · {{ vm.content.period_label|default:"OPS" }}</p>
           <h1>{% block console_title %}{{ vm.content.title|default:"Operational Console" }}{% endblock %}</h1>
-          {% if vm.content.subtitle %}
-            <p class="admin-analytics-page-heading__subtitle">{{ vm.content.subtitle }}</p>
-          {% endif %}
         </div>
         <div class="admin-analytics-topbar__meta" aria-label="Metadata de la página">
           {% if vm.content.current_period %}
@@ -72,6 +70,8 @@
           <span>{{ request.user.email|default:request.user.username }}</span>
         </div>
       </header>
+
+      {% block admin_operations_subtopbar %}{% endblock %}
 
       <main class="admin-analytics-content admin-operations-content" id="main-content">
         {% if messages %}

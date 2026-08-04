@@ -7,10 +7,13 @@ from decimal import Decimal
 from urllib.parse import urlencode
 
 from django.core.exceptions import ValidationError
+from django.db import transaction
+from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
 
 from admin_operations.selectors import (
+    get_food_catalog_data_coverage_payload,
     get_food_catalog_inventory_payload,
     get_food_catalog_import_batches_payload,
     get_food_catalog_operations_payload,
@@ -21,10 +24,15 @@ from admin_operations.viewmodels import (
     AdminOperationsCurationItemVM,
     AdminOperationsCurationStageVM,
     AdminOperationsCatalogCoverageVM,
+    AdminOperationsCatalogDataCoverageRowVM,
+    AdminOperationsCatalogDataCoverageVM,
     AdminOperationsCatalogAliasVM,
     AdminOperationsCatalogEvidenceVM,
     AdminOperationsCatalogFoodDetailVM,
+    AdminOperationsCatalogInventoryCellVM,
+    AdminOperationsCatalogInventoryColumnVM,
     AdminOperationsCatalogInventoryFoodVM,
+    AdminOperationsCatalogInventorySectionVM,
     AdminOperationsCatalogInventoryVM,
     AdminOperationsCatalogImportBatchVM,
     AdminOperationsCatalogImportsVM,
@@ -218,6 +226,98 @@ CATALOG_FUNCTIONAL_LABELS = {
     "lactose_free": "Sin lactosa",
     "vegetarian": "Vegetariano",
     "vegan": "Vegano",
+}
+
+INVENTORY_SECTION_DEFINITIONS = (
+    ("identity", "Identidad", "fingerprint"),
+    ("classification", "Clasificación", "tags"),
+    ("governance", "Fuente y gobierno", "shield-check"),
+    ("nutrition", "Nutrición / 100 g", "chart-no-axes-combined"),
+    ("functionality", "Funcionalidad", "utensils"),
+    ("solver", "Solver", "calculator"),
+    ("quality", "Calidad", "scan-search"),
+    ("relations", "Relaciones", "git-branch"),
+    ("lifecycle", "Ciclo de vida", "history"),
+)
+
+INVENTORY_SECTION_COLUMNS = {
+    "identity": (
+        ("pk", "ID"),
+        ("catalog_ref", "Ref catálogo"),
+        ("canonical_name", "Nombre canónico"),
+        ("brand_name", "Marca"),
+        ("is_branded", "Branded"),
+        ("catalog_version", "Versión"),
+        ("language", "Idioma"),
+        ("country", "País"),
+    ),
+    "classification": (
+        ("food_group", "Grupo"),
+        ("food_subgroup", "Subgrupo"),
+        ("food_form", "Forma"),
+        ("preparation_state", "Preparación"),
+        ("preparation_effort", "Esfuerzo"),
+        ("cost_band", "Costo"),
+    ),
+    "governance": (
+        ("source_type", "Origen"),
+        ("status", "Estado"),
+        ("source_name", "Fuente principal"),
+        ("source_food_id", "ID externo"),
+        ("source_dataset", "Dataset"),
+        ("source_version", "Versión fuente"),
+        ("license_status", "Licencia"),
+        ("source_count", "Fuentes"),
+    ),
+    "nutrition": (
+        ("protein", "Proteína"),
+        ("carbs", "Carbohidratos"),
+        ("fat", "Grasa"),
+        ("calories", "Kcal"),
+        ("macro_calories", "Macro-kcal"),
+        ("fiber", "Fibra"),
+        ("sugar", "Azúcar"),
+        ("saturated_fat", "Grasa saturada"),
+        ("sodium", "Sodio"),
+    ),
+    "functionality": (
+        ("functional_roles", "Roles"),
+        ("meal_affinities", "Afinidades"),
+        ("dietary_tags", "Dietary"),
+        ("allergens", "Alérgenos"),
+    ),
+    "solver": (
+        ("solver_enabled", "Enabled"),
+        ("solver_min", "Mínimo"),
+        ("solver_max", "Máximo"),
+        ("solver_step", "Paso"),
+        ("solver_capabilities", "Capabilities"),
+        ("solver_confidence", "Confianza features"),
+    ),
+    "quality": (
+        ("data_quality", "Data quality"),
+        ("confidence", "Confidence"),
+        ("missing_group", "Food group"),
+        ("missing_evidence", "Evidencia"),
+        ("extended_nutrition", "Nutrición extendida"),
+        ("culinary_semantics", "Semántica culinaria"),
+    ),
+    "relations": (
+        ("source_count", "Fuentes"),
+        ("portion_count", "Porciones"),
+        ("default_portion", "Porción default"),
+        ("default_portion_grams", "Gramos default"),
+        ("alias_count", "Aliases"),
+        ("primary_alias", "Alias principal"),
+    ),
+    "lifecycle": (
+        ("created_at", "Creado"),
+        ("created_by", "Creado por"),
+        ("reviewed_at", "Revisado"),
+        ("reviewed_by", "Revisado por"),
+        ("published_at", "Publicado"),
+        ("updated_at", "Actualizado"),
+    ),
 }
 
 CURATION_STAGE_ORDER = {
@@ -478,6 +578,7 @@ def _catalog_food_to_work_item(
         readiness_state=readiness_state,
         readiness_label=readiness_label,
         readiness_issues=readiness_issues,
+        quality_score=catalog_food.data_quality_score,
         detail_url=detail_url,
         admin_url=admin_url,
         action_url=action_url,
@@ -795,15 +896,35 @@ def build_catalog_food_detail_vm(catalog_food_id: int) -> AdminOperationsCatalog
     )
 
 
-def _curation_stage_url(*, stage: str, query: str) -> str:
-    params = {"stage": stage}
+def _curation_stage_url(*, stage: str, query: str, sort: str) -> str:
+    params = {"stage": stage, "sort": sort}
     if query:
         params["q"] = query
     return f"{reverse('admin_operations_food_catalog')}?{urlencode(params)}"
 
 
-def build_food_catalog_operations_vm(*, query: str = "", stage: str = "all") -> AdminOperationsFoodCatalogVM:
-    payload = get_food_catalog_operations_payload(query=query, stage=stage)
+def _normalize_inventory_section(section: str) -> str:
+    valid_sections = {key for key, _, _ in INVENTORY_SECTION_DEFINITIONS}
+    return section if section in valid_sections else "identity"
+
+
+def _inventory_section_url(params: dict[str, str], section: str) -> str:
+    clean_params = {key: value for key, value in params.items() if value}
+    clean_params["section"] = section
+    return f"{reverse('admin_operations_food_catalog_inventory_master')}?{urlencode(clean_params)}"
+
+
+def _data_coverage_section_url(section: str) -> str:
+    return f"{reverse('admin_operations_food_catalog_data_coverage')}?{urlencode({'section': section})}"
+
+
+def build_food_catalog_operations_vm(
+    *,
+    query: str = "",
+    stage: str = "all",
+    sort: str = "quality_asc",
+) -> AdminOperationsFoodCatalogVM:
+    payload = get_food_catalog_operations_payload(query=query, stage=stage, sort=sort)
     candidate_counts = payload["candidate_counts"]
     food_counts = payload["food_counts"]
     operational_food_ids = set(
@@ -822,7 +943,22 @@ def build_food_catalog_operations_vm(*, query: str = "", stage: str = "all") -> 
         item = _catalog_food_to_work_item(catalog_food, operational_food_ids=operational_food_ids)
         if item is not None:
             work_items.append(item)
-    work_items.sort(key=lambda item: (CURATION_STAGE_ORDER.get(item.stage_key, 99), item.title.casefold()))
+    if payload["sort"] == "quality_asc":
+        work_items.sort(key=lambda item: (
+            item.quality_score is None,
+            item.quality_score if item.quality_score is not None else 101,
+            item.title.casefold(),
+        ))
+    elif payload["sort"] == "quality_desc":
+        work_items.sort(key=lambda item: (
+            item.quality_score is None,
+            -(item.quality_score if item.quality_score is not None else -1),
+            item.title.casefold(),
+        ))
+    elif payload["sort"] == "name_desc":
+        work_items.sort(key=lambda item: item.title.casefold(), reverse=True)
+    else:
+        work_items.sort(key=lambda item: item.title.casefold())
 
     stage_counts = {
         "intake": int(candidate_counts["intake"] or 0),
@@ -877,7 +1013,7 @@ def build_food_catalog_operations_vm(*, query: str = "", stage: str = "all") -> 
                 helper=helper,
                 count=_format_int(stage_counts[key]),
                 icon=icon,
-                url=_curation_stage_url(stage=key, query=payload["query"]),
+                url=_curation_stage_url(stage=key, query=payload["query"], sort=payload["sort"]),
                 is_active=payload["stage"] == key,
             )
             for key, label, helper, icon in stage_definitions
@@ -885,7 +1021,16 @@ def build_food_catalog_operations_vm(*, query: str = "", stage: str = "all") -> 
         work_items=work_items,
         query=payload["query"],
         selected_stage=payload["stage"],
+        selected_sort=payload["sort"],
+        sort_options=[
+            ("quality_asc", "Calidad: menor primero"),
+            ("quality_desc", "Calidad: mayor primero"),
+            ("name_asc", "Nombre: A–Z"),
+            ("name_desc", "Nombre: Z–A"),
+        ],
         filtered_total=_format_int(len(work_items)),
+        preparation_total=_format_int(stage_counts["preparation"]),
+        preparation_food_total=_format_int(food_counts["preparation"]),
         blocked_total=_format_int(blocked_total),
         operational_total=_format_int(len(operational_food_ids)),
     )
@@ -898,6 +1043,7 @@ def build_food_catalog_inventory_vm(
     source_type: str = "",
     food_group: str = "",
     solver_state: str = "",
+    section: str = "identity",
     page: int | str = 1,
 ) -> AdminOperationsCatalogInventoryVM:
     payload = get_food_catalog_inventory_payload(
@@ -912,6 +1058,7 @@ def build_food_catalog_inventory_vm(
     total = int(aggregate["total"] or 0)
     page_obj = payload["page_obj"]
     generic_coverage = payload["generic_coverage"]
+    selected_section = _normalize_inventory_section(section)
 
     category_coverage = [
         AdminOperationsCatalogCoverageVM(
@@ -948,7 +1095,10 @@ def build_food_catalog_inventory_vm(
         "source": payload["source_type"],
         "group": payload["food_group"],
         "solver": payload["solver_state"],
+        "section": selected_section,
     }
+    section_filter_params = dict(filter_params)
+    section_filter_params.pop("section", None)
 
     return AdminOperationsCatalogInventoryVM(
         query=payload["query"],
@@ -1055,7 +1205,22 @@ def build_food_catalog_inventory_vm(
         target_version_label=(
             f"{generic_coverage['version']} · SHA {generic_coverage['sha256'][:12]}…"
         ),
-        foods=[_catalog_inventory_food_to_vm(food) for food in page_obj.object_list],
+        foods=[_catalog_inventory_food_to_vm(food, section=selected_section) for food in page_obj.object_list],
+        inventory_sections=[
+            AdminOperationsCatalogInventorySectionVM(
+                key=key,
+                label=label,
+                icon=icon,
+                url=_inventory_section_url(section_filter_params, key),
+                is_active=selected_section == key,
+            )
+            for key, label, icon in INVENTORY_SECTION_DEFINITIONS
+        ],
+        selected_inventory_section=selected_section,
+        inventory_columns=[
+            AdminOperationsCatalogInventoryColumnVM(key=key, label=label)
+            for key, label in INVENTORY_SECTION_COLUMNS[selected_section]
+        ],
         status_options=list(payload["status_options"]),
         source_options=list(payload["source_options"]),
         group_options=list(payload["group_options"]),
@@ -1063,6 +1228,34 @@ def build_food_catalog_inventory_vm(
         page_label=f"Página {page_obj.number} de {page_obj.paginator.num_pages}",
         previous_url=_inventory_page_url(filter_params, page_obj.previous_page_number()) if page_obj.has_previous() else "",
         next_url=_inventory_page_url(filter_params, page_obj.next_page_number()) if page_obj.has_next() else "",
+    )
+
+
+def build_food_catalog_data_coverage_vm(*, section: str = "identity") -> AdminOperationsCatalogDataCoverageVM:
+    payload = get_food_catalog_data_coverage_payload(section=section)
+    total = payload["total"]
+    selected_section = payload["selected_section"]
+    return AdminOperationsCatalogDataCoverageVM(
+        total_foods=_format_int(total),
+        selected_section=selected_section,
+        sections=[
+            AdminOperationsCatalogInventorySectionVM(
+                key=key,
+                label=label,
+                icon=icon,
+                url=_data_coverage_section_url(key),
+                is_active=key == selected_section,
+            )
+            for key, label, icon, _fields in payload["sections"]
+        ],
+        rows=[
+            AdminOperationsCatalogDataCoverageRowVM(
+                label=row["label"],
+                existing_total=_format_int(row["existing"]),
+                share_label=_format_share(row["existing"], total),
+            )
+            for row in payload["rows"]
+        ],
     )
 
 
@@ -1517,10 +1710,17 @@ def perform_import_source_policy_operation(
     return AdminOperationResult(True, f"Política {normalized_name}: {after}.")
 
 
-def _catalog_inventory_food_to_vm(catalog_food: CatalogFood) -> AdminOperationsCatalogInventoryFoodVM:
+def _catalog_inventory_food_to_vm(
+    catalog_food: CatalogFood,
+    *,
+    section: str = "identity",
+) -> AdminOperationsCatalogInventoryFoodVM:
     sources = list(catalog_food.sources.all())
     portions = list(catalog_food.portions.all())
     aliases = list(catalog_food.aliases.all())
+    primary_source = sources[0] if sources else None
+    default_portion = next((portion for portion in portions if portion.is_default), portions[0] if portions else None)
+    primary_alias = next((alias for alias in aliases if alias.is_primary), aliases[0] if aliases else None)
     source_lines = [
         " · ".join(
             part
@@ -1566,6 +1766,93 @@ def _catalog_inventory_food_to_vm(catalog_food: CatalogFood) -> AdminOperationsC
         ]
     ):
         quality_flags.append("nutrición extendida incompleta")
+    extended_nutrition_state = "Completa" if "nutrición extendida incompleta" not in quality_flags else "Incompleta"
+    culinary_semantics_state = (
+        "Completa"
+        if catalog_food.preparation_state != CatalogFood.PREPARATION_UNKNOWN
+        and catalog_food.food_form != CatalogFood.FOOD_FORM_UNKNOWN
+        else "Incompleta"
+    )
+    section_values = {
+        "identity": {
+            "pk": str(catalog_food.pk),
+            "catalog_ref": catalog_food.catalog_ref,
+            "canonical_name": catalog_food.canonical_name or "—",
+            "brand_name": catalog_food.brand_name or "—",
+            "is_branded": "sí" if catalog_food.is_branded else "no",
+            "catalog_version": str(catalog_food.catalog_version),
+            "language": catalog_food.language or "—",
+            "country": catalog_food.country or "—",
+        },
+        "classification": {
+            "food_group": catalog_food.food_group or "—",
+            "food_subgroup": catalog_food.food_subgroup or "—",
+            "food_form": CATALOG_FORM_LABELS.get(catalog_food.food_form, catalog_food.food_form),
+            "preparation_state": CATALOG_PREPARATION_LABELS.get(catalog_food.preparation_state, catalog_food.preparation_state),
+            "preparation_effort": catalog_food.preparation_effort or "—",
+            "cost_band": catalog_food.cost_band or "—",
+        },
+        "governance": {
+            "source_type": CATALOG_SOURCE_LABELS.get(catalog_food.source_type, catalog_food.source_type),
+            "status": CATALOG_FOOD_STATUS_LABELS.get(catalog_food.status, catalog_food.status),
+            "source_name": primary_source.source_name if primary_source else "—",
+            "source_food_id": primary_source.source_food_id if primary_source and primary_source.source_food_id else "—",
+            "source_dataset": primary_source.source_dataset if primary_source and primary_source.source_dataset else "—",
+            "source_version": primary_source.source_version if primary_source and primary_source.source_version else "—",
+            "license_status": primary_source.license_status if primary_source else "—",
+            "source_count": _format_int(len(sources)),
+        },
+        "nutrition": {
+            "protein": _format_decimal(catalog_food.protein_g_per_100g, suffix=" g"),
+            "carbs": _format_decimal(catalog_food.carbs_g_per_100g, suffix=" g"),
+            "fat": _format_decimal(catalog_food.fat_g_per_100g, suffix=" g"),
+            "calories": _format_decimal(catalog_food.calories_kcal_per_100g),
+            "macro_calories": _format_decimal(catalog_food.macro_calories_kcal),
+            "fiber": _format_decimal(catalog_food.fiber_g_per_100g, suffix=" g"),
+            "sugar": _format_decimal(catalog_food.sugar_g_per_100g, suffix=" g"),
+            "saturated_fat": _format_decimal(catalog_food.saturated_fat_g_per_100g, suffix=" g"),
+            "sodium": _format_decimal(catalog_food.sodium_mg_per_100g, suffix=" mg"),
+        },
+        "functionality": {
+            "functional_roles": _format_labels(catalog_food.functional_roles),
+            "meal_affinities": _format_labels(catalog_food.meal_affinities),
+            "dietary_tags": _format_labels(catalog_food.dietary_tags),
+            "allergens": _format_labels(catalog_food.allergens),
+        },
+        "solver": {
+            "solver_enabled": "sí" if catalog_food.solver_enabled else "no",
+            "solver_min": _format_decimal(catalog_food.solver_min_portion_g, suffix=" g"),
+            "solver_max": _format_decimal(catalog_food.solver_max_portion_g, suffix=" g"),
+            "solver_step": _format_decimal(catalog_food.solver_portion_step_g, suffix=" g"),
+            "solver_capabilities": catalog_food.solver_capabilities_version or "—",
+            "solver_confidence": _format_mapping(catalog_food.solver_feature_confidence),
+        },
+        "quality": {
+            "data_quality": f"{catalog_food.data_quality_score}/100",
+            "confidence": _format_decimal(catalog_food.confidence_score, suffix="/100"),
+            "missing_group": "Pendiente" if not catalog_food.food_group else "Informado",
+            "missing_evidence": "Pendiente" if not sources else "Informada",
+            "extended_nutrition": extended_nutrition_state,
+            "culinary_semantics": culinary_semantics_state,
+        },
+        "relations": {
+            "source_count": _format_int(len(sources)),
+            "portion_count": _format_int(len(portions)),
+            "default_portion": default_portion.label if default_portion else "—",
+            "default_portion_grams": _format_decimal(default_portion.grams, suffix=" g") if default_portion else "—",
+            "alias_count": _format_int(len(aliases)),
+            "primary_alias": primary_alias.name if primary_alias else "—",
+        },
+        "lifecycle": {
+            "created_at": f"{catalog_food.created_at:%Y-%m-%d %H:%M}",
+            "created_by": _user_label(catalog_food.created_by) if catalog_food.created_by else "sistema",
+            "reviewed_at": f"{catalog_food.reviewed_at:%Y-%m-%d %H:%M}" if catalog_food.reviewed_at else "—",
+            "reviewed_by": _user_label(catalog_food.reviewed_by) if catalog_food.reviewed_by else "—",
+            "published_at": f"{catalog_food.published_at:%Y-%m-%d %H:%M}" if catalog_food.published_at else "—",
+            "updated_at": f"{catalog_food.updated_at:%Y-%m-%d %H:%M}",
+        },
+    }
+    selected_section = _normalize_inventory_section(section)
 
     return AdminOperationsCatalogInventoryFoodVM(
         pk=catalog_food.pk,
@@ -1622,6 +1909,10 @@ def _catalog_inventory_food_to_vm(catalog_food: CatalogFood) -> AdminOperationsC
             f"actualizado: {catalog_food.updated_at:%Y-%m-%d %H:%M}",
         ],
         admin_url=reverse("admin:food_catalog_catalogfood_change", args=[catalog_food.pk]),
+        inventory_cells=[
+            AdminOperationsCatalogInventoryCellVM(value=section_values[selected_section].get(key, "—"), label=label)
+            for key, label in INVENTORY_SECTION_COLUMNS[selected_section]
+        ],
     )
 
 
@@ -1652,7 +1943,7 @@ def _format_mapping(values) -> str:
 def _inventory_page_url(params: dict[str, str], page: int) -> str:
     clean_params = {key: value for key, value in params.items() if value}
     clean_params["page"] = str(page)
-    return f"{reverse('admin_operations_food_catalog_inventory')}?{urlencode(clean_params)}"
+    return f"{reverse('admin_operations_food_catalog_inventory_master')}?{urlencode(clean_params)}"
 
 
 def build_candidate_detail_vm(candidate_id: int) -> AdminOperationsCandidateDetailVM:
@@ -1745,6 +2036,48 @@ def perform_catalog_food_operation(*, catalog_food_id: int, action: str, actor, 
     return AdminOperationResult(ok=True, message=f"{label}: {catalog_food.display_name}")
 
 
+def perform_catalog_food_bulk_review(*, actor, reason: str = "", query: str = "") -> AdminOperationResult:
+    """Move legacy preparation records into the human review queue."""
+
+    preparation_statuses = [
+        CatalogFood.STATUS_EXTERNAL_CANDIDATE,
+        CatalogFood.STATUS_MANUAL_CANDIDATE,
+        CatalogFood.STATUS_BRAND_SUBMITTED,
+        CatalogFood.STATUS_NORMALIZED,
+    ]
+    foods = CatalogFood.objects.filter(status__in=preparation_statuses).order_by("pk")
+    normalized_query = (query or "").strip()
+    if normalized_query:
+        foods = foods.filter(
+            Q(display_name__icontains=normalized_query)
+            | Q(canonical_name__icontains=normalized_query)
+            | Q(brand_name__icontains=normalized_query)
+            | Q(source_type__icontains=normalized_query)
+        )
+
+    food_ids = list(foods.values_list("pk", flat=True))
+    if not food_ids:
+        return AdminOperationResult(ok=False, message="No hay alimentos en preparación para enviar a revisión.")
+
+    audit_reason = (reason or "").strip() or "Ingreso masivo al nuevo flujo de revisión."
+    changed_count = 0
+    with transaction.atomic():
+        for catalog_food_id in food_ids:
+            result = perform_catalog_food_operation(
+                catalog_food_id=catalog_food_id,
+                action="pending_review",
+                actor=actor,
+                reason=audit_reason,
+            )
+            if result.ok:
+                changed_count += 1
+
+    return AdminOperationResult(
+        ok=True,
+        message=f"{changed_count} alimentos enviados a pendiente de revisión.",
+    )
+
+
 def perform_catalog_food_snapshot(*, catalog_food_id: int, actor, reason: str) -> AdminOperationResult:
     normalized_reason = (reason or "").strip()
     catalog_food = _get_operation_target(CatalogFood, pk=catalog_food_id)
@@ -1768,4 +2101,4 @@ def perform_catalog_food_snapshot(*, catalog_food_id: int, actor, reason: str) -
 
 
 
-__all__ = ['build_catalog_food_detail_vm', 'build_food_catalog_operations_vm', 'build_food_catalog_inventory_vm', 'build_food_catalog_imports_vm', 'perform_core_seed_dry_run', 'perform_core_seed_apply', 'perform_usda_dry_run', 'perform_usda_apply', 'perform_brand_dry_run', 'perform_brand_apply', 'perform_manual_dry_run', 'perform_manual_apply', 'perform_backfill_dry_run', 'perform_backfill_apply', 'perform_import_source_policy_operation', 'build_candidate_detail_vm', 'perform_candidate_operation', 'perform_catalog_food_operation', 'perform_catalog_food_snapshot']
+__all__ = ['build_catalog_food_detail_vm', 'build_food_catalog_operations_vm', 'build_food_catalog_inventory_vm', 'build_food_catalog_data_coverage_vm', 'build_food_catalog_imports_vm', 'perform_core_seed_dry_run', 'perform_core_seed_apply', 'perform_usda_dry_run', 'perform_usda_apply', 'perform_brand_dry_run', 'perform_brand_apply', 'perform_manual_dry_run', 'perform_manual_apply', 'perform_backfill_dry_run', 'perform_backfill_apply', 'perform_import_source_policy_operation', 'build_candidate_detail_vm', 'perform_candidate_operation', 'perform_catalog_food_operation', 'perform_catalog_food_bulk_review', 'perform_catalog_food_snapshot']

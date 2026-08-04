@@ -15,11 +15,13 @@ from admin_operations.services import (
     build_candidate_detail_vm,
     build_catalog_food_detail_vm,
     build_food_catalog_inventory_vm,
+    build_food_catalog_data_coverage_vm,
     build_food_catalog_imports_vm,
     build_food_catalog_operations_vm,
     build_operations_overview_vm,
     perform_candidate_operation,
     perform_catalog_food_operation,
+    perform_catalog_food_bulk_review,
     perform_core_seed_apply,
     perform_core_seed_dry_run,
     perform_usda_apply,
@@ -178,9 +180,22 @@ def food_catalog(request):
     content = build_food_catalog_operations_vm(
         query=request.GET.get("q", ""),
         stage=request.GET.get("stage", "all"),
+        sort=request.GET.get("sort", "quality_asc"),
     )
     base_vm = BaseVM(ui=ui_vm, content=content)
     return render(request, "admin_operations/food_catalog.html", base_vm.as_context())
+
+
+@staff_member_required
+def food_catalog_curation_dashboard(request):
+    ui_vm = build_ui_vm(ADMIN_OPERATIONS_OVERVIEW_VIEWMODE)
+    content = build_food_catalog_operations_vm(
+        query=request.GET.get("q", ""),
+        stage=request.GET.get("stage", "all"),
+        sort=request.GET.get("sort", "quality_asc"),
+    )
+    base_vm = BaseVM(ui=ui_vm, content=content)
+    return render(request, "admin_operations/food_catalog_curation_dashboard.html", base_vm.as_context())
 
 
 @staff_member_required
@@ -196,6 +211,32 @@ def food_catalog_inventory(request):
     )
     base_vm = BaseVM(ui=ui_vm, content=content)
     return render(request, "admin_operations/food_catalog_inventory.html", base_vm.as_context())
+
+
+@staff_member_required
+def food_catalog_inventory_master(request):
+    ui_vm = build_ui_vm(ADMIN_OPERATIONS_OVERVIEW_VIEWMODE)
+    content = build_food_catalog_inventory_vm(
+        query=request.GET.get("q", ""),
+        status=request.GET.get("status", ""),
+        source_type=request.GET.get("source", ""),
+        food_group=request.GET.get("group", ""),
+        solver_state=request.GET.get("solver", ""),
+        section=request.GET.get("section", "identity"),
+        page=request.GET.get("page", 1),
+    )
+    base_vm = BaseVM(ui=ui_vm, content=content)
+    return render(request, "admin_operations/food_catalog_inventory_master.html", base_vm.as_context())
+
+
+@staff_member_required
+def food_catalog_data_coverage(request):
+    ui_vm = build_ui_vm(ADMIN_OPERATIONS_OVERVIEW_VIEWMODE)
+    content = build_food_catalog_data_coverage_vm(
+        section=request.GET.get("section", "identity"),
+    )
+    base_vm = BaseVM(ui=ui_vm, content=content)
+    return render(request, "admin_operations/food_catalog_data_coverage.html", base_vm.as_context())
 
 
 @staff_member_required
@@ -378,6 +419,18 @@ def food_catalog_food_action(request, catalog_food_id):
     )
     flash_operation_result(request, result)
     return redirect("admin_operations_food_catalog_food", catalog_food_id=catalog_food_id)
+
+
+@staff_member_required
+@require_POST
+def food_catalog_bulk_review(request):
+    result = perform_catalog_food_bulk_review(
+        actor=request.user,
+        reason=request.POST.get("reason", ""),
+        query=request.POST.get("q", ""),
+    )
+    flash_operation_result(request, result)
+    return redirect("admin_operations_food_catalog")
 
 
 @staff_member_required

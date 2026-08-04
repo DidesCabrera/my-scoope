@@ -1,44 +1,12 @@
 {% extends "admin_operations/base.html" %}
 {% block title %}Curación del Food Catalog{% endblock %}
+{% block admin_operations_subtopbar %}
+  <div class="admin-operations-subtopbar">
+    {% include "admin_operations/_food_catalog_tabs.html" with active_tab="operations" %}
+  </div>
+{% endblock %}
 {% block content %}
 <div class="page admin-analytics-page admin-operations-page admin-operations-curation-page">
-  {% include "admin_operations/_food_catalog_tabs.html" with active_tab="operations" %}
-
-  <section class="admin-operations-curation-summary" aria-label="Resumen de la curación">
-    {% for metric in vm.content.metrics %}
-      <div class="admin-operations-curation-stat">
-        <i data-lucide="{{ metric.icon }}"></i>
-        <span>
-          <small>{{ metric.label }}</small>
-          <strong>{{ metric.value }}</strong>
-        </span>
-        <p>{{ metric.helper }}</p>
-      </div>
-    {% endfor %}
-  </section>
-
-  <section class="admin-operations-curation-flow" aria-labelledby="curation-flow-title">
-    <div class="admin-operations-section-heading">
-      <div>
-        <p class="section-eyebrow">Proceso de curación</p>
-        <h2 id="curation-flow-title">Del candidato al alimento operativo</h2>
-      </div>
-      <p>Cada número muestra cuánto trabajo espera en esa etapa. “Falta evidencia” reúne los casos detenidos.</p>
-    </div>
-    <nav class="admin-operations-stage-nav" aria-label="Filtrar por etapa de curación">
-      {% for stage in vm.content.stages %}
-        <a class="admin-operations-stage{% if stage.is_active %} admin-operations-stage--active{% endif %}{% if stage.key == 'blocked' %} admin-operations-stage--blocked{% endif %}" href="{{ stage.url }}"{% if stage.is_active %} aria-current="page"{% endif %}>
-          <span class="admin-operations-stage__icon"><i data-lucide="{{ stage.icon }}"></i></span>
-          <span class="admin-operations-stage__copy">
-            <strong>{{ stage.label }}</strong>
-            <small>{{ stage.helper }}</small>
-          </span>
-          <span class="admin-operations-stage__count">{{ stage.count }}</span>
-        </a>
-      {% endfor %}
-    </nav>
-  </section>
-
   <section class="admin-operations-curation-workbench" aria-labelledby="curation-work-title">
     <div class="admin-operations-workbench-heading">
       <div>
@@ -46,24 +14,49 @@
         <h2 id="curation-work-title">Alimentos que requieren atención</h2>
         <p>{{ vm.content.filtered_total }} elementos en esta vista. Las filas más urgentes aparecen primero.</p>
       </div>
+      <div class="admin-operations-curation-toolbar">
       <form class="admin-operations-curation-search" method="get">
         {% if vm.content.selected_stage != 'all' %}<input type="hidden" name="stage" value="{{ vm.content.selected_stage }}">{% endif %}
+        <input type="hidden" name="sort" value="{{ vm.content.selected_sort }}">
         <label for="curation-search">Buscar alimento, marca u origen</label>
         <div>
           <i data-lucide="search"></i>
           <input id="curation-search" type="search" name="q" value="{{ vm.content.query }}" placeholder="Ej: avena, USDA, marca...">
           <button class="btn-secondary btn-secondary--compact" type="submit">Buscar</button>
-          {% if vm.content.query %}<a class="btn-secondary btn-secondary--compact" href="{% url 'admin_operations_food_catalog' %}{% if vm.content.selected_stage != 'all' %}?stage={{ vm.content.selected_stage }}{% endif %}">Limpiar</a>{% endif %}
+          {% if vm.content.query %}<a class="btn-secondary btn-secondary--compact" href="{% url 'admin_operations_food_catalog' %}?stage={{ vm.content.selected_stage }}&amp;sort={{ vm.content.selected_sort }}">Limpiar</a>{% endif %}
         </div>
       </form>
+      <form class="admin-operations-curation-sort" method="get">
+        {% if vm.content.query %}<input type="hidden" name="q" value="{{ vm.content.query }}">{% endif %}
+        {% if vm.content.selected_stage != 'all' %}<input type="hidden" name="stage" value="{{ vm.content.selected_stage }}">{% endif %}
+        <label for="curation-sort">Ordenar la bandeja</label>
+        <select id="curation-sort" name="sort" onchange="this.form.submit()">
+          {% for value, label in vm.content.sort_options %}
+            <option value="{{ value }}"{% if value == vm.content.selected_sort %} selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </form>
+      </div>
     </div>
 
     <div class="admin-operations-work-filters" aria-label="Filtros de bandeja">
-      <a class="admin-operations-work-filter{% if vm.content.selected_stage == 'all' %} admin-operations-work-filter--active{% endif %}" href="{% url 'admin_operations_food_catalog' %}{% if vm.content.query %}?q={{ vm.content.query|urlencode }}{% endif %}">Todo pendiente</a>
+      <a class="admin-operations-work-filter{% if vm.content.selected_stage == 'all' %} admin-operations-work-filter--active{% endif %}" href="{% url 'admin_operations_food_catalog' %}?sort={{ vm.content.selected_sort }}{% if vm.content.query %}&amp;q={{ vm.content.query|urlencode }}{% endif %}">Todo pendiente</a>
       {% for stage in vm.content.stages %}
         <a class="admin-operations-work-filter{% if stage.is_active %} admin-operations-work-filter--active{% endif %}" href="{{ stage.url }}">{{ stage.label }} <span>{{ stage.count }}</span></a>
       {% endfor %}
     </div>
+
+    {% if vm.content.preparation_food_total != '0' %}
+      <div class="admin-operations-bulk-review">
+        <span><strong>{{ vm.content.preparation_food_total }} alimentos</strong> permanecen en el flujo anterior de preparación.</span>
+        <form method="post" action="{% url 'admin_operations_food_catalog_bulk_review' %}" data-admin-operations-confirm data-confirm-message="¿Enviar todos los alimentos en preparación a pendiente de revisión?">
+          {% csrf_token %}
+          {% if vm.content.query %}<input type="hidden" name="q" value="{{ vm.content.query }}">{% endif %}
+          <input type="hidden" name="reason" value="Migración operativa al flujo de revisión directa.">
+          <button class="btn-secondary btn-secondary--compact" type="submit"><i data-lucide="list-checks"></i> Enviar a revisión</button>
+        </form>
+      </div>
+    {% endif %}
 
     {% if vm.content.work_items %}
       <div class="admin-operations-curation-table-wrap" role="region" aria-label="Bandeja de curación" tabindex="0">

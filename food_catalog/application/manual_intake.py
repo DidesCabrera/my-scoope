@@ -176,7 +176,7 @@ def apply_manual_evidence_csv(
                 "carbs_g_per_100g": row.carbs,
                 "fat_g_per_100g": row.fat,
                 "source_type": CatalogFood.SOURCE_ADMIN_IMPORT,
-                "status": CatalogFood.STATUS_MANUAL_CANDIDATE,
+                "status": CatalogFood.STATUS_PENDING_REVIEW,
                 "data_quality_score": 75,
                 "created_by": requested_by if getattr(requested_by, "is_authenticated", False) else None,
             },

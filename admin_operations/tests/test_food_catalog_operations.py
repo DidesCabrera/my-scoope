@@ -7,6 +7,7 @@ from django.urls import reverse
 
 from admin_operations.services import (
     build_catalog_food_detail_vm,
+    build_food_catalog_data_coverage_vm,
     build_food_catalog_inventory_vm,
     build_food_catalog_operations_vm,
 )
@@ -64,12 +65,18 @@ class AdminOperationsFoodCatalogTests(TestCase):
         response = self.client.get(reverse("admin_operations_food_catalog"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Food Catalog · Curación")
         self.assertContains(response, "Curación del Food Catalog")
-        self.assertContains(response, "Del candidato al alimento operativo")
+        self.assertContains(response, "Bandeja curación")
+        self.assertNotContains(response, "Del candidato al alimento operativo")
         self.assertContains(response, "Cereal externo")
         self.assertContains(response, "Bandeja de trabajo")
         self.assertContains(response, "Quinoa master")
+
+        dashboard_response = self.client.get(reverse("admin_operations_food_catalog_curation_dashboard"))
+
+        self.assertEqual(dashboard_response.status_code, 200)
+        self.assertContains(dashboard_response, "Dash curación")
+        self.assertContains(dashboard_response, "Del candidato al alimento operativo")
 
     def test_food_catalog_stage_filter_separates_blocked_work(self):
         CatalogCurationCandidate.objects.create(
@@ -112,6 +119,60 @@ class AdminOperationsFoodCatalogTests(TestCase):
         self.assertContains(response, "Manual pendiente")
         self.assertContains(response, "Enviar a revisión")
         self.assertNotContains(response, 'value="reviewed">Marcar revisado</button>')
+
+    def test_food_catalog_can_sort_review_queue_by_information_quality(self):
+        _create_catalog_food(
+            status=CatalogFood.STATUS_PENDING_REVIEW,
+            display_name="Calidad alta",
+            data_quality_score=95,
+        )
+        _create_catalog_food(
+            status=CatalogFood.STATUS_PENDING_REVIEW,
+            display_name="Calidad baja",
+            data_quality_score=35,
+        )
+
+        vm = build_food_catalog_operations_vm(stage="review", sort="quality_asc")
+
+        self.assertEqual(vm.selected_sort, "quality_asc")
+        self.assertEqual([item.title for item in vm.work_items], ["Calidad baja", "Calidad alta"])
+
+    def test_bulk_review_moves_legacy_preparation_foods_and_audits_each_one(self):
+        first = _create_catalog_food(
+            status=CatalogFood.STATUS_EXTERNAL_CANDIDATE,
+            display_name="Importado anterior",
+        )
+        second = _create_catalog_food(
+            status=CatalogFood.STATUS_MANUAL_CANDIDATE,
+            display_name="Manual anterior",
+        )
+        untouched = _create_catalog_food(
+            status=CatalogFood.STATUS_PENDING_REVIEW,
+            display_name="Ya estaba en revisión",
+        )
+        self.client.force_login(self.staff)
+
+        response = self.client.post(
+            reverse("admin_operations_food_catalog_bulk_review"),
+            {"reason": "Adoptar revisión directa."},
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        first.refresh_from_db()
+        second.refresh_from_db()
+        untouched.refresh_from_db()
+        self.assertEqual(first.status, CatalogFood.STATUS_PENDING_REVIEW)
+        self.assertEqual(second.status, CatalogFood.STATUS_PENDING_REVIEW)
+        self.assertEqual(untouched.status, CatalogFood.STATUS_PENDING_REVIEW)
+        self.assertContains(response, "2 alimentos enviados a pendiente de revisión")
+        self.assertEqual(
+            AdminOperationAuditEvent.objects.filter(
+                action="food_catalog.catalog_food.pending_review",
+                reason="Adoptar revisión directa.",
+            ).count(),
+            2,
+        )
 
     def test_catalog_food_detail_is_the_primary_review_surface(self):
         catalog_food = _create_catalog_food(
@@ -380,6 +441,49 @@ class AdminOperationsFoodCatalogTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn("/admin/login/", response["Location"])
 
+    def test_data_coverage_counts_existing_values_over_total_catalog(self):
+        _create_catalog_food(
+            status=CatalogFood.STATUS_PENDING_REVIEW,
+            display_name="Sin país",
+            country="",
+            calories_kcal_per_100g=None,
+        )
+        _create_catalog_food(
+            status=CatalogFood.STATUS_PENDING_REVIEW,
+            display_name="Con país",
+            country="CL",
+            calories_kcal_per_100g=Decimal("120"),
+        )
+
+        identity_vm = build_food_catalog_data_coverage_vm(section="identity")
+        identity_rows = {row.label: row for row in identity_vm.rows}
+        nutrition_vm = build_food_catalog_data_coverage_vm(section="nutrition")
+        nutrition_rows = {row.label: row for row in nutrition_vm.rows}
+
+        self.assertEqual(identity_vm.total_foods, "2")
+        self.assertEqual(identity_rows["País"].existing_total, "1")
+        self.assertEqual(identity_rows["País"].share_label, "50.0% del catálogo")
+        self.assertEqual(nutrition_rows["Calorías"].existing_total, "1")
+        self.assertEqual(nutrition_rows["Calorías"].share_label, "50.0% del catálogo")
+
+    def test_data_coverage_page_uses_catalog_sections_and_new_tab_names(self):
+        _create_catalog_food(status=CatalogFood.STATUS_PENDING_REVIEW, display_name="Avena cobertura")
+        self.client.force_login(self.staff)
+
+        response = self.client.get(
+            reverse("admin_operations_food_catalog_data_coverage"),
+            {"section": "nutrition"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Cobertura de datos del catálogo persistido")
+        self.assertContains(response, "Datos existentes")
+        self.assertContains(response, "Porcentaje del catálogo")
+        self.assertContains(response, "Nutrición / 100 g")
+        self.assertContains(response, "Cobertura Alimentos")
+        self.assertContains(response, "Catálogo Alimentos")
+        self.assertContains(response, "Cobertura datos")
+
     def test_inventory_vm_exposes_catalog_coverage_and_quality_gaps(self):
         _create_catalog_food(
             status=CatalogFood.STATUS_PUBLISHED,
@@ -474,21 +578,34 @@ class AdminOperationsFoodCatalogTests(TestCase):
         CatalogFoodAlias.objects.create(catalog_food=food, name="Oatmeal", alias_type=CatalogFoodAlias.ALIAS_SEARCH)
         self.client.force_login(self.staff)
 
-        response = self.client.get(reverse("admin_operations_food_catalog_inventory"))
+        response = self.client.get(reverse("admin_operations_food_catalog_inventory_master"))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Inventario y calidad del Food Catalog")
         self.assertContains(response, "Avena integral")
         self.assertContains(response, "Marca prueba")
-        self.assertContains(response, "grupo: cereals")
-        self.assertContains(response, "subgrupo: whole_grains")
-        self.assertContains(response, "Dataset curado")
-        self.assertContains(response, "ID FOOD-001")
-        self.assertContains(response, "roles: primary_carb")
-        self.assertContains(response, "rango: 20 g – 100 g")
-        self.assertContains(response, "fibra 10 g")
-        self.assertContains(response, "1 taza: 80 g (default)")
-        self.assertContains(response, "Oatmeal (search, es)")
+
+        classification_response = self.client.get(reverse("admin_operations_food_catalog_inventory_master"), {"section": "classification"})
+        self.assertContains(classification_response, "cereals")
+        self.assertContains(classification_response, "whole_grains")
+
+        governance_response = self.client.get(reverse("admin_operations_food_catalog_inventory_master"), {"section": "governance"})
+        self.assertContains(governance_response, "Dataset curado")
+        self.assertContains(governance_response, "FOOD-001")
+
+        functionality_response = self.client.get(reverse("admin_operations_food_catalog_inventory_master"), {"section": "functionality"})
+        self.assertContains(functionality_response, "primary_carb")
+
+        solver_response = self.client.get(reverse("admin_operations_food_catalog_inventory_master"), {"section": "solver"})
+        self.assertContains(solver_response, "20 g")
+        self.assertContains(solver_response, "100 g")
+
+        nutrition_response = self.client.get(reverse("admin_operations_food_catalog_inventory_master"), {"section": "nutrition"})
+        self.assertContains(nutrition_response, "10 g")
+
+        relation_response = self.client.get(reverse("admin_operations_food_catalog_inventory_master"), {"section": "relations"})
+        self.assertContains(relation_response, "1 taza")
+        self.assertContains(relation_response, "Oatmeal")
 
     def test_inventory_filters_are_combined(self):
         _create_catalog_food(
@@ -508,7 +625,7 @@ class AdminOperationsFoodCatalogTests(TestCase):
         self.client.force_login(self.staff)
 
         response = self.client.get(
-            reverse("admin_operations_food_catalog_inventory"),
+            reverse("admin_operations_food_catalog_inventory_master"),
             {
                 "q": "espinaca",
                 "status": CatalogFood.STATUS_PUBLISHED,

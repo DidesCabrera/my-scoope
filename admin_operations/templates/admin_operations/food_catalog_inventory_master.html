@@ -1,0 +1,71 @@
+{% extends "admin_operations/base.html" %}
+{% block title %}Catálogo Alimentos{% endblock %}
+{% block admin_operations_subtopbar %}
+  <div class="admin-operations-subtopbar">
+    {% include "admin_operations/_food_catalog_tabs.html" with active_tab="inventory_master" %}
+  </div>
+{% endblock %}
+{% block content %}
+<div class="page admin-analytics-page admin-operations-page admin-operations-inventory-master-page">
+  <section class="admin-operations-inventory-workbench" aria-labelledby="inventory-master-title">
+    <div class="admin-operations-workbench-heading admin-operations-inventory-heading">
+      <div>
+        <p class="section-eyebrow">Catálogo Alimentos</p>
+        <h2 id="inventory-master-title">Todos los alimentos persistidos</h2>
+        <p class="muted-text">{{ vm.content.filtered_total }} resultados. Cada subgrupo abre una tabla plana: una fila por alimento y una columna por dato.</p>
+      </div>
+      <span class="admin-operations-status-pill">{{ vm.content.page_label }}</span>
+    </div>
+
+    <form class="admin-operations-inventory-filters" method="get">
+      <input type="hidden" name="section" value="{{ vm.content.selected_inventory_section }}">
+      <label><span>Buscar</span><input type="search" name="q" value="{{ vm.content.query }}" placeholder="Nombre, marca, grupo, fuente o ID externo"></label>
+      <label><span>Estado</span><select name="status"><option value="">Todos</option>{% for value, label in vm.content.status_options %}<option value="{{ value }}"{% if vm.content.selected_status == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+      <label><span>Fuente</span><select name="source"><option value="">Todas</option>{% for value, label in vm.content.source_options %}<option value="{{ value }}"{% if vm.content.selected_source == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+      <label><span>Grupo</span><select name="group"><option value="">Todos</option>{% for value in vm.content.group_options %}<option value="{{ value }}"{% if vm.content.selected_group == value %} selected{% endif %}>{{ value }}</option>{% endfor %}</select></label>
+      <label><span>Solver</span><select name="solver"><option value="">Todos</option><option value="enabled"{% if vm.content.selected_solver_state == "enabled" %} selected{% endif %}>Habilitado</option><option value="disabled"{% if vm.content.selected_solver_state == "disabled" %} selected{% endif %}>Deshabilitado</option></select></label>
+      <div class="admin-operations-filter-actions"><button class="btn-secondary btn-secondary--compact" type="submit">Aplicar filtros</button><a class="btn-secondary btn-secondary--compact" href="{% url 'admin_operations_food_catalog_inventory_master' %}">Limpiar</a></div>
+    </form>
+
+    <nav class="admin-operations-inventory-section-tabs" aria-label="Subgrupos del inventario master">
+      {% for section in vm.content.inventory_sections %}
+        <a class="admin-operations-inventory-section-tab{% if section.is_active %} admin-operations-inventory-section-tab--active{% endif %}" href="{{ section.url }}"{% if section.is_active %} aria-current="page"{% endif %}>
+          <i data-lucide="{{ section.icon }}"></i>{{ section.label }}
+        </a>
+      {% endfor %}
+    </nav>
+
+    {% if vm.content.foods %}
+      <div class="admin-operations-table-card admin-operations-inventory-table-card" role="region" aria-label="Inventario completo Food Catalog">
+        <table class="admin-operations-table admin-operations-inventory-table">
+          <thead>
+            <tr>
+              <th>Alimento</th>
+              {% for column in vm.content.inventory_columns %}<th>{{ column.label }}</th>{% endfor %}
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for food in vm.content.foods %}
+              <tr>
+                <td data-label="Alimento"><strong>{{ food.title }}</strong></td>
+                {% for cell in food.inventory_cells %}
+                  <td data-label="{{ cell.label }}"><span>{{ cell.value }}</span>{% if cell.helper %}<small>{{ cell.helper }}</small>{% endif %}</td>
+                {% endfor %}
+                <td data-label="Acción"><a class="btn-secondary btn-secondary--compact" href="{{ food.admin_url }}">Abrir</a></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <nav class="admin-operations-pagination" aria-label="Paginación del inventario">
+        {% if vm.content.previous_url %}<a class="btn-secondary btn-secondary--compact" href="{{ vm.content.previous_url }}">Anterior</a>{% else %}<span></span>{% endif %}
+        <span>{{ vm.content.page_label }}</span>
+        {% if vm.content.next_url %}<a class="btn-secondary btn-secondary--compact" href="{{ vm.content.next_url }}">Siguiente</a>{% else %}<span></span>{% endif %}
+      </nav>
+    {% else %}
+      <div class="admin-operations-empty-state"><i data-lucide="search-x" class="home-stat-icon"></i><div><h4>Sin resultados</h4><p class="muted-text">No existen CatalogFood que coincidan con los filtros seleccionados.</p></div></div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
