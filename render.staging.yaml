@@ -41,6 +41,8 @@ services:
         value: "true"
       - key: SENTRY_TRACES_SAMPLE_RATE
         value: "0.05"
+      - key: SENTRY_DSN
+        sync: false
 
   - type: worker
     name: myscoope-staging-ai-jobs
@@ -73,6 +75,8 @@ services:
         value: "true"
       - key: SENTRY_TRACES_SAMPLE_RATE
         value: "0.05"
+      - key: SENTRY_DSN
+        sync: false
 
   - type: worker
     name: myscoope-staging-notifications
