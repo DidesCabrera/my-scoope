@@ -29,6 +29,8 @@ services:
           type: keyvalue
           name: myscoope-cache
           property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
       - key: ALLOWED_HOSTS
         value: myscoope-staging.onrender.com
       - key: CSRF_TRUSTED_ORIGINS
@@ -49,7 +51,28 @@ services:
     autoDeployTrigger: checksPass
     buildCommand: ./scripts/render_build.sh
     startCommand: python manage.py run_ai_job_worker --poll-interval 5
-    envVars: *staging_app_env
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: miapp.settings.prod
+      - key: DATABASE_URL
+        fromDatabase:
+          name: myscoope-staging-db
+          property: connectionString
+      - key: CACHE_URL
+        fromService:
+          type: keyvalue
+          name: myscoope-cache
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: AI_ASSISTANT_OPENAI_API_KEY
+        sync: false
+      - key: AI_ASSISTANT_CREDITS_ENABLED
+        value: "true"
+      - key: AI_ASSISTANT_ASYNC_ENABLED
+        value: "true"
+      - key: SENTRY_TRACES_SAMPLE_RATE
+        value: "0.05"
 
   - type: worker
     name: myscoope-staging-notifications
