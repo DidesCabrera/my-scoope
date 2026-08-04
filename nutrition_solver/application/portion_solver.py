@@ -3,17 +3,17 @@ from __future__ import annotations
 from dataclasses import dataclass
 from math import isfinite
 
+from nutrition_solver.domain.constants import (
+    CARBS_KCAL_PER_GRAM,
+    FAT_KCAL_PER_GRAM,
+    PROTEIN_KCAL_PER_GRAM,
+)
 from nutrition_solver.domain.models import (
     MacroTarget,
     PortionSolverDiagnostics,
     PortionSolverResult,
     SolvedFoodPortion,
     SolverFood,
-)
-from nutrition_solver.domain.constants import (
-    CARBS_KCAL_PER_GRAM,
-    FAT_KCAL_PER_GRAM,
-    PROTEIN_KCAL_PER_GRAM,
 )
 
 

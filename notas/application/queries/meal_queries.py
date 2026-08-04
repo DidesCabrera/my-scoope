@@ -1,21 +1,19 @@
-from notas.application.queries.read_boundaries import (
-    get_owned_meal_queryset,
-    get_readable_meal_or_404,
-    get_readable_meal_queryset,
-)
 from notas.application.dto.meal_dto import (
     MealDTO,
     MealFoodDTO,
     MealKpiDTO,
     MealListItemDTO,
 )
-
-from notas.application.services.nutrition.nutrition_kpis import get_ppk_meal
-from notas.domain.models import Meal
-
+from notas.application.queries.read_boundaries import (
+    get_owned_meal_queryset,
+    get_readable_meal_or_404,
+    get_readable_meal_queryset,
+)
 from notas.application.services.food_imports.localized_names import (
     resolve_food_display_name,
 )
+from notas.application.services.nutrition.nutrition_kpis import get_ppk_meal
+from notas.domain.models import Meal
 
 
 def _cached_or_computed(value, fallback):

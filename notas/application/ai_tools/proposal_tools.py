@@ -1,11 +1,9 @@
 from collections.abc import Mapping
 from typing import Any
 
-from notas.application.ai_tools.runtime import run_ai_tool
 from notas.application.ai_intake.dailyplan_generator import (
     generate_dailyplan_proposal_from_brief_proposal,
 )
-from notas.application.dto.proposal_iteration_trace import extract_plan_iteration_trace
 from notas.application.ai_intake.nutrition_brief import (
     NutritionBrief,
     build_required_follow_up_questions,
@@ -13,12 +11,14 @@ from notas.application.ai_intake.nutrition_brief import (
     is_brief_ready_for_proposal,
     serialize_brief,
 )
+from notas.application.ai_intake.plan_iteration import create_iterated_dailyplan_proposal
+from notas.application.ai_intake.proposal_from_brief import create_nutrition_brief_proposal
+from notas.application.ai_tools.runtime import run_ai_tool
 from notas.application.dto.nutrition_subject_context_dto import (
     SUBJECT_SOURCE_MANUAL_CHAT_DATA,
     SUBJECT_SOURCE_SELF_PROFILE,
 )
-from notas.application.ai_intake.plan_iteration import create_iterated_dailyplan_proposal
-from notas.application.ai_intake.proposal_from_brief import create_nutrition_brief_proposal
+from notas.application.dto.proposal_iteration_trace import extract_plan_iteration_trace
 from notas.application.proposals.solver_meal_proposals import (
     create_solver_generated_meal_proposal,
 )
@@ -34,7 +34,6 @@ from notas.application.services.commands.proposal_commands import (
     create_validated_dailyplan_proposal,
     create_validated_meal_proposal,
 )
-
 from notas.domain.models import NutritionProposal
 
 

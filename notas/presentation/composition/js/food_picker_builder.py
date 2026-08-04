@@ -1,5 +1,6 @@
 from django.urls import reverse
-from notas.presentation.frontend.jscontext.food_picker import FoodPickerLegacyContext, FoodPickerFoodsPayload
+
+from notas.presentation.frontend.jscontext.food_picker import FoodPickerFoodsPayload, FoodPickerLegacyContext
 
 
 def build_food_picker_context_payload(

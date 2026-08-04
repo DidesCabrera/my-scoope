@@ -6,8 +6,8 @@ from django.db import transaction
 
 from notas.application.ai_intake.nutrition_brief import (
     NutritionBrief,
-    required_proposal_fields,
     build_summary_items,
+    required_proposal_fields,
     serialize_brief,
 )
 from notas.domain.models import (

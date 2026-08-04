@@ -1,8 +1,7 @@
 from django.urls import NoReverseMatch, reverse
 
-from notas.presentation.viewmodels.base_vm import BreadcrumbItem
 from notas.presentation.navigation.app_registry import APP_NAVIGATION
-
+from notas.presentation.viewmodels.base_vm import BreadcrumbItem
 
 NAV_ROOT_ALIASES = {
     "dailyplan_meal": "dailyplan",

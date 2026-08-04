@@ -4,7 +4,6 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
-
 ProductToolCallable = Callable[..., Any]
 
 

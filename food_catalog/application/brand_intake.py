@@ -8,24 +8,24 @@ automatically. The existing curation workflow must review/verify/publish them.
 from __future__ import annotations
 
 import csv
+import hashlib
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
-import hashlib
 from typing import Iterable
 
 from food_catalog.application.imports.normalization import normalize_food_name
+from food_catalog.infrastructure.imports.governance import (
+    catalog_import_identity,
+    start_catalog_import_batch,
+)
 from food_catalog.models import (
     CatalogFood,
     CatalogFoodAlias,
     CatalogFoodPortion,
     CatalogFoodSource,
     CatalogImportBatch,
-)
-from food_catalog.infrastructure.imports.governance import (
-    catalog_import_identity,
-    start_catalog_import_batch,
 )
 
 BRAND_INTAKE_SOURCE_NAME = "brand_verified_intake"

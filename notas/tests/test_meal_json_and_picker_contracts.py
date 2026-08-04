@@ -4,11 +4,10 @@ from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, override_settings
 
 from notas.application.queries.performance.meal_queries import meals_with_kcal
+from notas.domain.models import Food, Meal, MealFood
 from notas.presentation.composition.js.meal_picker_builder import (
     build_meal_picker_meals_payload,
 )
-from notas.domain.models import Food, Meal, MealFood
-
 
 User = get_user_model()
 

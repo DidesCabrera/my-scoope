@@ -1,6 +1,5 @@
 from dataclasses import asdict, dataclass
 
-
 OPERATION_UPDATE_MEAL_FOOD_QUANTITY = "update_meal_food_quantity"
 
 

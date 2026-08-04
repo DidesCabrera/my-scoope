@@ -7,7 +7,6 @@ from django.utils import timezone
 
 from notas.domain.models import MCPUserToken
 
-
 MCP_USER_TOKEN_PREFIX = "mcp_user_"
 
 MCP_SCOPE_READ = "myscoope:read"

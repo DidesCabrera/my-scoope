@@ -14,9 +14,9 @@ from food_catalog.application.imports.usda.foundation_foods_reader import (
 )
 from food_catalog.application.imports.usda.mapper import (
     USDA_NUTRIENT_CARBS,
+    USDA_NUTRIENT_ENERGY,
     USDA_NUTRIENT_FAT,
     USDA_NUTRIENT_PROTEIN,
-    USDA_NUTRIENT_ENERGY,
     map_usda_food_to_imported_food_dto,
 )
 

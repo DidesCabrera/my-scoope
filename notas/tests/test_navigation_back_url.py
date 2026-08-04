@@ -2,8 +2,8 @@ from django.test import TestCase
 from django.urls import reverse
 
 from notas.presentation.config.viewmodel_config import (
-    FOOD_VIEWMODE_PERSONAL_LIST,
     FOOD_VIEWMODE_PERSONAL_DETAIL,
+    FOOD_VIEWMODE_PERSONAL_LIST,
     PROFILE_VIEWMODE,
 )
 from notas.presentation.navigation.nav_builders import build_back_url

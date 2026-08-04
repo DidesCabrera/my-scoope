@@ -1,9 +1,8 @@
-from django.urls import reverse, NoReverseMatch
+from django.urls import NoReverseMatch, reverse
 
 from notas.application.services.access.capabilities import get_capabilities
-from notas.presentation.routing.dailyplan import dailyplan_url, dailyplan_configure_url
 from notas.presentation.config.viewmodel_config import *
-
+from notas.presentation.routing.dailyplan import dailyplan_configure_url, dailyplan_url
 
 # ==================================================
 # 1. ENTITY ACTION DEFINITIONS

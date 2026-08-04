@@ -7,9 +7,9 @@ from typing import Any, Mapping, Protocol, Sequence
 from django.conf import settings
 from django.utils import timezone
 
-from ai_assistant.domain import AssistantIntentName, AssistantStructuredResponse, AssistantTurnRequest
 from ai_assistant.application.credits import DjangoAICreditService
 from ai_assistant.application.pricing import estimate_cost_usd
+from ai_assistant.domain import AssistantIntentName, AssistantStructuredResponse, AssistantTurnRequest
 from ai_assistant.infrastructure.providers import LLMProviderResponse
 
 logger = logging.getLogger(__name__)

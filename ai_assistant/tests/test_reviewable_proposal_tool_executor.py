@@ -1,14 +1,14 @@
 from django.test import SimpleTestCase
 
 from ai_assistant.application.tools import (
-    ReviewableProposalToolExecutor,
-    TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL,
-    TOOL_CREATE_NUTRITION_SOLVER_MEAL_PROPOSAL,
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
+    TOOL_CREATE_NUTRITION_SOLVER_MEAL_PROPOSAL,
     TOOL_CREATE_PROPORTIONAL_DAILYPLAN_CALORIE_PROPOSAL,
-    TOOL_PREPARE_PRODUCT_ACTION,
+    TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL,
     TOOL_CREATE_VALIDATED_MEAL_PROPOSAL,
+    TOOL_PREPARE_PRODUCT_ACTION,
     TOOL_READ_DAILYPLAN,
+    ReviewableProposalToolExecutor,
     execute_reviewable_proposal_tool,
 )
 from ai_assistant.domain.contracts import AssistantToolRequest, AssistantToolStatus

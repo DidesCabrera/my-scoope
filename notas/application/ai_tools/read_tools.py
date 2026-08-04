@@ -5,6 +5,9 @@ from notas.application.queries.dailyplan_queries import (
     list_user_dailyplans,
     search_dailyplans,
 )
+from notas.application.queries.food_catalog_queries import (
+    list_food_catalog_for_planning,
+)
 from notas.application.queries.food_queries import (
     get_food_detail,
     list_available_foods,
@@ -27,9 +30,6 @@ from notas.application.queries.solver_food_candidates import (
     list_solver_food_candidates,
 )
 
-from notas.application.queries.food_catalog_queries import (
-    list_food_catalog_for_planning,
-)
 
 def _serialize_dto_list(items) -> list[dict]:
     return [

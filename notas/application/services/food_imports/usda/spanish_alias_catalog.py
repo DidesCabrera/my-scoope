@@ -1,6 +1,5 @@
 from notas.application.services.food_imports.aliases import FoodAliasInput
 
-
 USDA_SPANISH_ALIAS_CATALOG = {
     "oats raw": [
         FoodAliasInput(name="Avena", language="es", country="CL"),

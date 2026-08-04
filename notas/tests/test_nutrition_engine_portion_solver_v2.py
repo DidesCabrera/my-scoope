@@ -1,7 +1,7 @@
 from django.test import SimpleTestCase
 
-from nutrition_solver.domain.models import MacroTarget, PortionBounds, SolverFood
 from nutrition_solver.application.portion_solver import solve_meal_portions
+from nutrition_solver.domain.models import MacroTarget, PortionBounds, SolverFood
 
 
 class NutritionEnginePortionSolverV2Tests(SimpleTestCase):

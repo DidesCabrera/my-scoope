@@ -1,35 +1,35 @@
 from django.urls import path
 
+from notas.interface.views.dailyplans import add_meal_from_list
+from notas.interface.views.meal_foods import (
+    add_food_to_meal,
+    mealfood_remove,
+    mealfood_reorder,
+    mealfood_update,
+)
 from notas.interface.views.meals import (
-    meal_fork,
-    meal_save,
-    meal_copy,
-    meal_detail,
-    meal_list,
-    meal_list_reorder,
-    meal_list_bulk_delete,
-    meal_create,
     meal_configure,
-    meal_rename,
-    meal_explore_list,
-    meal_explore_detail,
-    meal_draft_list,
-    meal_shared_list,
-    meal_remove,
-    meal_unshare,
+    meal_copy,
+    meal_create,
+    meal_detail,
     meal_draft_delete,
+    meal_draft_list,
+    meal_explore_detail,
+    meal_explore_list,
+    meal_fork,
+    meal_list,
+    meal_list_bulk_delete,
+    meal_list_reorder,
+    meal_remove,
+    meal_rename,
+    meal_save,
     meal_share,
     meal_share_accept,
-    meal_share_dismiss,
     meal_share_detail,
+    meal_share_dismiss,
+    meal_shared_list,
+    meal_unshare,
 )
-from notas.interface.views.meal_foods import (
-    mealfood_remove,
-    mealfood_update,
-    add_food_to_meal,
-    mealfood_reorder,
-)
-from notas.interface.views.dailyplans import add_meal_from_list
 
 urlpatterns = [
     path("meals/<int:pk>/share/", meal_share, name="meal_share"),

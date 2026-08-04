@@ -1,9 +1,10 @@
 from decimal import Decimal
 
+from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.test import TestCase
-from django.contrib.auth import get_user_model
 
+from food_catalog.infrastructure.imports.governance import record_catalog_import_dry_run
 from food_catalog.models import (
     CatalogFood,
     CatalogFoodAlias,
@@ -12,15 +13,14 @@ from food_catalog.models import (
     CatalogImportBatch,
 )
 from notas.application.services.commands.food_catalog_backfill import (
-    OPERATIONAL_BACKFILL_SOURCE_DATASET,
-    OPERATIONAL_BACKFILL_SOURCE_NAME,
     DEFAULT_OPERATIONAL_BACKFILL_SOURCE_VERSION,
     DEFAULT_OPERATIONAL_BACKFILL_STATUS,
+    OPERATIONAL_BACKFILL_SOURCE_DATASET,
+    OPERATIONAL_BACKFILL_SOURCE_NAME,
     backfill_catalog_from_operational_foods,
     dry_run_backfill_catalog_from_operational_foods,
     operational_backfill_identity,
 )
-from food_catalog.infrastructure.imports.governance import record_catalog_import_dry_run
 from notas.domain.models import (
     Food,
     FoodAlias,

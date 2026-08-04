@@ -1,7 +1,7 @@
 from notas.application.services.food_imports.localized_names import (
     resolve_food_display_name,
 )
-from notas.presentation.viewmodels.content.dailyplan.list_vm import MenuUI, MenuMealUI
+from notas.presentation.viewmodels.content.dailyplan.list_vm import MenuMealUI, MenuUI
 
 
 def _format_quantity(value):

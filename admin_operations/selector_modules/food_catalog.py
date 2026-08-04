@@ -5,15 +5,13 @@ from pathlib import Path
 from django.core.paginator import Paginator
 from django.db.models import Avg, Count, Q
 
-from food_catalog.application.coverage_manifest import load_coverage_manifest
-from food_catalog.models import CatalogCurationCandidate, CatalogFood, CatalogFoodSource, CatalogImportBatch
-
 from admin_operations.selector_modules.constants import (
     CATALOG_CANDIDATE_ACTION_STATUSES,
     CATALOG_FOOD_REVIEW_STATUSES,
     CATALOG_GROUP_FAMILIES,
 )
-
+from food_catalog.application.coverage_manifest import load_coverage_manifest
+from food_catalog.models import CatalogCurationCandidate, CatalogFood, CatalogFoodSource, CatalogImportBatch
 
 DATA_COVERAGE_SECTION_DEFINITIONS = (
     (

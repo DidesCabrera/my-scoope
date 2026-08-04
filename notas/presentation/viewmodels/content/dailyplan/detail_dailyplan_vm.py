@@ -1,6 +1,8 @@
-from dataclasses import dataclass, asdict
-from typing import List, Dict, Any, Optional
+from dataclasses import asdict, dataclass
+from typing import Any, Dict, List, Optional
+
 from notas.presentation.resolvers.title_resolvers import CategoryBadgeUI
+
 
 # =========================
 # UI ATOMS

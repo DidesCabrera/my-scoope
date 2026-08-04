@@ -3,11 +3,11 @@ from unittest.mock import patch
 from django.contrib.auth.models import User
 from django.test import TestCase
 
+from notas.application.ai_intake.nutrition_brief import serialize_brief
 from notas.application.ai_tools.proposal_tools import (
     build_nutrition_brief_from_ai_drafts,
     create_nutrition_engine_dailyplan_proposal_from_drafts_tool,
 )
-from notas.application.ai_intake.nutrition_brief import serialize_brief
 from notas.application.dto.nutrition_subject_context_dto import SUBJECT_SOURCE_MANUAL_CHAT_DATA
 
 

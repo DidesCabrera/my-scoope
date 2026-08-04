@@ -2,13 +2,13 @@ from django.urls import path
 
 from notas.interface.views.inbox import (
     inbox_attachment_detail,
-    inbox_sent_attachment_detail,
     inbox_bulk_delete,
     inbox_delete,
     inbox_detail,
-    inbox_sent_detail,
     inbox_list,
     inbox_save_attachment,
+    inbox_sent_attachment_detail,
+    inbox_sent_detail,
     inbox_toggle_favorite,
 )
 from notas.interface.views.project import project_view

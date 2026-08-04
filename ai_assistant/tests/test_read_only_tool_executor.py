@@ -1,8 +1,6 @@
 from django.test import SimpleTestCase
 
 from ai_assistant.application.tools import (
-    ReadOnlyToolExecutor,
-    ReadOnlyToolExecutorConfig,
     TOOL_COMPARE_DAILYPLAN_TO_TARGETS,
     TOOL_CREATE_VALIDATED_MEAL_PROPOSAL,
     TOOL_LIST_OPERATIONAL_FOODS,
@@ -13,6 +11,8 @@ from ai_assistant.application.tools import (
     TOOL_READ_PROPOSAL,
     TOOL_READ_SAVED_COMPARISON,
     TOOL_SEARCH_OPERATIONAL_FOODS,
+    ReadOnlyToolExecutor,
+    ReadOnlyToolExecutorConfig,
     execute_read_only_tool,
 )
 from ai_assistant.domain.contracts import AssistantToolRequest, AssistantToolStatus

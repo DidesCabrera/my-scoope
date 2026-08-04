@@ -1,0 +1,101 @@
+databases:
+  - name: myscoope-staging-db
+    plan: basic-256mb
+    postgresMajorVersion: "18"
+    databaseName: myscoope_staging_db
+    user: myscoope_staging_db_user
+
+services:
+  - type: web
+    name: myscoope-staging
+    runtime: python
+    plan: starter
+    repo: https://github.com/DidesCabrera/my-scoope
+    branch: staging
+    autoDeployTrigger: checksPass
+    buildCommand: ./scripts/render_build.sh
+    preDeployCommand: python manage.py migrate --noinput && python manage.py check --deploy
+    startCommand: python -m gunicorn miapp.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    healthCheckPath: /healthz/
+    envVars: &staging_app_env
+      - key: DJANGO_SETTINGS_MODULE
+        value: miapp.settings.prod
+      - key: DATABASE_URL
+        fromDatabase:
+          name: myscoope-staging-db
+          property: connectionString
+      - key: CACHE_URL
+        fromService:
+          type: keyvalue
+          name: myscoope-cache
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALLOWED_HOSTS
+        value: myscoope-staging.onrender.com
+      - key: CSRF_TRUSTED_ORIGINS
+        value: https://myscoope-staging.onrender.com
+      - key: AI_ASSISTANT_CREDITS_ENABLED
+        value: "true"
+      - key: AI_ASSISTANT_ASYNC_ENABLED
+        value: "true"
+      - key: SENTRY_TRACES_SAMPLE_RATE
+        value: "0.05"
+      - key: SENTRY_DSN
+        sync: false
+
+  - type: worker
+    name: myscoope-staging-ai-jobs
+    runtime: python
+    plan: starter
+    repo: https://github.com/DidesCabrera/my-scoope
+    branch: staging
+    autoDeployTrigger: checksPass
+    buildCommand: ./scripts/render_build.sh
+    startCommand: python manage.py run_ai_job_worker --poll-interval 5
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: miapp.settings.prod
+      - key: DATABASE_URL
+        fromDatabase:
+          name: myscoope-staging-db
+          property: connectionString
+      - key: CACHE_URL
+        fromService:
+          type: keyvalue
+          name: myscoope-cache
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: AI_ASSISTANT_OPENAI_API_KEY
+        sync: false
+      - key: AI_ASSISTANT_CREDITS_ENABLED
+        value: "true"
+      - key: AI_ASSISTANT_ASYNC_ENABLED
+        value: "true"
+      - key: SENTRY_TRACES_SAMPLE_RATE
+        value: "0.05"
+      - key: SENTRY_DSN
+        sync: false
+
+  - type: worker
+    name: myscoope-staging-notifications
+    runtime: python
+    plan: starter
+    repo: https://github.com/DidesCabrera/my-scoope
+    branch: staging
+    autoDeployTrigger: checksPass
+    buildCommand: ./scripts/render_build.sh
+    startCommand: python manage.py run_calendar_notification_worker --interval 300 --limit 100
+    envVars: *staging_app_env
+
+  - type: cron
+    name: myscoope-staging-housekeeping
+    runtime: python
+    plan: starter
+    repo: https://github.com/DidesCabrera/my-scoope
+    branch: staging
+    schedule: "15 4 * * *"
+    buildCommand: ./scripts/render_build.sh
+    startCommand: python manage.py prune_calendarization_data --event-days 90 --subscription-days 30 && python manage.py prune_ai_async_jobs --days 30
+    envVars: *staging_app_env

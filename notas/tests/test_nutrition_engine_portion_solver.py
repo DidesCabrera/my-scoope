@@ -1,12 +1,12 @@
 from django.test import SimpleTestCase
 
+from nutrition_solver.application.portion_solver import solve_meal_portions
+from nutrition_solver.application.validators import compare_macro_targets
 from nutrition_solver.domain.models import (
     MacroTarget,
     PortionBounds,
     SolverFood,
 )
-from nutrition_solver.application.portion_solver import solve_meal_portions
-from nutrition_solver.application.validators import compare_macro_targets
 
 
 class PortionSolverTests(SimpleTestCase):

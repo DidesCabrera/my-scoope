@@ -10,15 +10,8 @@ from django.views.decorators.http import require_POST
 from notas.application.services.commands.dailyplan_commands import save_dailyplan
 from notas.application.services.commands.food_commands import create_food
 from notas.application.services.commands.meal_commands import save_dailyplan_meal_to_library, save_meal
-from notas.presentation.pages.dailyplan_pages import get_dailyplan_detail_page_data
-from notas.presentation.pages.dpm_pages import get_dpm_detail_page_data
-from notas.presentation.pages.meal_pages import get_meal_detail_page_data
-from notas.presentation.pages.inbox_pages import (
-    build_inbox_items,
-    get_inbox_item_or_404,
-    get_inbox_share_or_404,
-    get_sent_inbox_item_or_404,
-    get_sent_inbox_share_or_404,
+from notas.presentation.composition.viewmodel.components.builder_headers import (
+    build_page_header,
 )
 from notas.presentation.composition.viewmodel.dailyplan.detail_dailyplan_builder import (
     build_dailyplan_detail_vm,
@@ -32,9 +25,6 @@ from notas.presentation.composition.viewmodel.food.detail_food_builder import (
 from notas.presentation.composition.viewmodel.meal.detail_meal_builder import (
     build_meal_detail_vm,
 )
-from notas.presentation.composition.viewmodel.components.builder_headers import (
-    build_page_header,
-)
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
 from notas.presentation.config.viewmodel_config import (
     DAILYPLAN_MEAL_VIEWMODE_DETAIL,
@@ -44,6 +34,16 @@ from notas.presentation.config.viewmodel_config import (
     INBOX_VIEWMODE_LIST,
     MEAL_VIEWMODE_SHARED_DETAIL,
 )
+from notas.presentation.pages.dailyplan_pages import get_dailyplan_detail_page_data
+from notas.presentation.pages.dpm_pages import get_dpm_detail_page_data
+from notas.presentation.pages.inbox_pages import (
+    build_inbox_items,
+    get_inbox_item_or_404,
+    get_inbox_share_or_404,
+    get_sent_inbox_item_or_404,
+    get_sent_inbox_share_or_404,
+)
+from notas.presentation.pages.meal_pages import get_meal_detail_page_data
 from notas.presentation.viewmodels.base_vm import BaseVM
 
 

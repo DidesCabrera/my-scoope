@@ -8,7 +8,6 @@ to be configured merely by importing this package.
 from importlib import import_module
 from typing import Final
 
-
 _EXPORTS: Final[dict[str, tuple[str, str]]] = {
     "AUDIT_SCHEMA_VERSION": ("ai_assistant.application.audit", "AUDIT_SCHEMA_VERSION"),
     "AssistantToolAuditItem": ("ai_assistant.application.audit", "AssistantToolAuditItem"),

@@ -3,7 +3,6 @@ from django.test import TestCase
 
 from notas.domain.models import Food, Meal, MealFood
 
-
 User = get_user_model()
 
 

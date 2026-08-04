@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 
-
 SUBJECT_SOURCE_SELF_PROFILE = "self_profile"
 SUBJECT_SOURCE_EXTERNAL_CHAT_DATA = "external_chat_data"
 SUBJECT_SOURCE_MANUAL_CHAT_DATA = "manual_chat_data"

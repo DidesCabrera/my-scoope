@@ -1,13 +1,12 @@
-from notas.application.queries.read_boundaries import (
-    get_owned_food_queryset,
-    get_readable_food_or_404,
-    get_readable_food_queryset,
-)
-
 from notas.application.dto.food_dto import (
     FoodDTO,
     FoodListItemDTO,
     FoodMacroDTO,
+)
+from notas.application.queries.read_boundaries import (
+    get_owned_food_queryset,
+    get_readable_food_or_404,
+    get_readable_food_queryset,
 )
 from notas.domain.models import Food
 

@@ -6,8 +6,8 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from accounts.models import CreditWallet
-from ai_assistant.models import AIUsageEvent
 from admin_operations.services import build_operations_overview_vm
+from ai_assistant.models import AIUsageEvent
 from core.tests.builders import create_staff_user, create_test_user
 from food_catalog.models import CatalogCurationCandidate, CatalogFood
 from notas.domain.model_modules.proposals import NutritionProposal

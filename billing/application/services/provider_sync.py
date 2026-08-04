@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from django.db import transaction
 
-from billing.models import BillingPayment, ProviderSubscription, TaxDocument
 from billing.application.contracts import ProviderPaymentSnapshot, ProviderSubscriptionSnapshot
 from billing.application.services.projections import project_provider_subscription
 from billing.application.services.tax_documents import schedule_tax_document
+from billing.models import BillingPayment, ProviderSubscription, TaxDocument
 
 
 class UnknownBillingResource(LookupError):

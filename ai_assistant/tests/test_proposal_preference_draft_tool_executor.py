@@ -1,8 +1,8 @@
 from django.test import SimpleTestCase
 
 from ai_assistant.application.tools import (
-    ProfileDraftToolExecutor,
     TOOL_UPDATE_PROPOSAL_PREFERENCES,
+    ProfileDraftToolExecutor,
     execute_profile_draft_tool,
 )
 from ai_assistant.domain.contracts import AssistantToolRequest, AssistantToolStatus

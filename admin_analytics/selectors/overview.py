@@ -7,14 +7,13 @@ from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.utils import timezone
 
-from admin_analytics.filters import AdminAnalyticsFilters
-
 from accounts.models import AccountSubscription, CreditLedger, CreditWallet
+from admin_analytics.filters import AdminAnalyticsFilters
 from ai_assistant.models import AIUsageEvent
-from notas.domain.models import DailyPlan, DailyPlanShare, Meal, MealShare, Program, ProgramShare
 from notas.domain.model_modules.comparisons import SavedComparison
 from notas.domain.model_modules.identity import Profile
 from notas.domain.model_modules.proposals import NutritionProposal
+from notas.domain.models import DailyPlan, DailyPlanShare, Meal, MealShare, Program, ProgramShare
 
 
 def get_overview_metrics(*, now=None, analytics_filters: AdminAnalyticsFilters | None = None) -> dict:

@@ -14,7 +14,6 @@ from notas.presentation.composition.viewmodel.components.builder_table_items imp
     build_mealfood_table_item,
 )
 
-
 User = get_user_model()
 
 

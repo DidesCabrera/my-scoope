@@ -4,12 +4,12 @@ from datetime import time
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, override_settings
 
-from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood
 from notas.application.services.commands.dailyplan_commands import (
-    fork_dailyplan,
     copy_dailyplan,
+    fork_dailyplan,
     save_dailyplan,
 )
+from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood
 
 User = get_user_model()
 

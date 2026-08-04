@@ -1,6 +1,5 @@
 from django.db import migrations, models
 
-
 SOURCE_CHOICES = [
     ("natural_verified", "Natural verified"),
     ("usda", "USDA FoodData Central"),

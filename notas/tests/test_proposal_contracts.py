@@ -1,9 +1,9 @@
 from django.test import SimpleTestCase
 
 from notas.application.proposals.contracts import (
+    AI_NUTRITION_BRIEF_INTENT,
     CREATE_DAILYPLAN_INTENT,
     CREATE_MEAL_INTENT,
-    AI_NUTRITION_BRIEF_INTENT,
     can_apply_proposal,
     get_proposal_intent_contract,
     proposal_status_label,

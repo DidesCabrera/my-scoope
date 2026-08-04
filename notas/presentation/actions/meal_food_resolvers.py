@@ -1,14 +1,14 @@
 from django.urls import NoReverseMatch, reverse
 
 from notas.application.services.access.capabilities import get_capabilities
-from notas.presentation.routing.food import food_list_url, food_url
-from notas.presentation.navigation.program_context import contextual_url
 from notas.presentation.config.viewmodel_config import (
     MEAL_FOOD_VIEWMODE_DETAIL,
     MEAL_FOOD_VIEWMODE_DRAFT_DEEP_EDIT,
     MEAL_FOOD_VIEWMODE_LIST,
     MEAL_FOOD_VIEWMODE_PERSONAL_DEEP_EDIT,
 )
+from notas.presentation.navigation.program_context import contextual_url
+from notas.presentation.routing.food import food_list_url, food_url
 
 
 def _resolve_food_subject(subject):

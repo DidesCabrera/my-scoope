@@ -1,18 +1,18 @@
 from django.urls import path
 
 from notas.interface.views.foods import (
-    food_list,
-    food_detail,
-    food_share,
-    food_share_accept,
+    download_food_template,
     food_create,
-    food_edit,
     food_delete,
+    food_detail,
+    food_edit,
+    food_list,
     food_list_bulk_delete,
     food_list_reorder,
+    food_share,
+    food_share_accept,
     foods_json,
     import_foods,
-    download_food_template,
 )
 
 urlpatterns = [

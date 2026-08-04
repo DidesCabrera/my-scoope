@@ -4,29 +4,30 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from typing import Any
 
+from ai_assistant.application.product_ports import get_ai_product_bindings
 from ai_assistant.application.tools.contracts import AssistantToolCategory
 from ai_assistant.application.tools.registry import (
-    TOOL_LIST_OPERATIONAL_FOODS,
     TOOL_LIST_INBOX_ITEMS,
+    TOOL_LIST_OPERATIONAL_FOODS,
     TOOL_LIST_SAVED_COMPARISONS,
     TOOL_LIST_USER_DAILYPLANS,
     TOOL_LIST_USER_FOODS,
     TOOL_LIST_USER_MEALS,
     TOOL_LIST_USER_PROGRAMS,
     TOOL_LIST_USER_PROPOSALS,
-    TOOL_READ_DAILYPLAN,
+    TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES,
     TOOL_READ_ACCOUNT_BILLING_CONTEXT,
     TOOL_READ_CALENDARIZATION,
+    TOOL_READ_DAILYPLAN,
     TOOL_READ_FOOD,
     TOOL_READ_MEAL,
     TOOL_READ_PROGRAM,
+    TOOL_READ_PROPOSAL,
     TOOL_READ_SAVED_COMPARISON,
     TOOL_READ_USER_PROFILE_CONTEXT,
-    TOOL_READ_PROPOSAL,
     TOOL_SEARCH_OPERATIONAL_FOODS,
     TOOL_SEARCH_USER_DAILYPLANS,
     TOOL_SEARCH_USER_MEALS,
-    TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES,
     get_tool_spec,
     normalize_tool_name,
     validate_tool_request,
@@ -37,7 +38,6 @@ from ai_assistant.domain.contracts import (
     AssistantToolStatus,
 )
 from ai_assistant.domain.tool_results import AIToolResult
-from ai_assistant.application.product_ports import get_ai_product_bindings
 
 ReadOnlyToolCallable = Callable[..., AIToolResult]
 

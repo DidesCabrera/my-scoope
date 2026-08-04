@@ -4,7 +4,6 @@ from django.apps import apps
 from django.conf import settings
 from django.test import SimpleTestCase
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 APP_ROOT = PROJECT_ROOT / "nutrition_solver"
 README = APP_ROOT / "README.md"

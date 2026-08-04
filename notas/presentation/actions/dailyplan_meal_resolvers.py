@@ -1,9 +1,8 @@
-from django.urls import reverse, NoReverseMatch
+from django.urls import NoReverseMatch, reverse
 
 from notas.application.services.access.capabilities import get_capabilities
 from notas.presentation.config.viewmodel_config import *
 from notas.presentation.navigation.program_context import contextual_url
-
 
 
 def _contextual_dailyplan_meal_detail_url(dpm, context=None):

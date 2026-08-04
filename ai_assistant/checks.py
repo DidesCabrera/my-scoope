@@ -6,7 +6,6 @@ from typing import Any
 from django.conf import settings
 from django.core.checks import Error, Tags, Warning, register
 
-
 REQUIRED_TECHNICAL_LIMITS = (
     "AI_ASSISTANT_MAX_HISTORY_MESSAGES",
     "AI_ASSISTANT_MAX_OUTPUT_TOKENS",
@@ -15,6 +14,8 @@ REQUIRED_TECHNICAL_LIMITS = (
     "AI_ASSISTANT_MAX_CONTEXT_CHARS",
     "AI_ASSISTANT_MAX_MESSAGE_CHARS",
     "AI_ASSISTANT_MAX_TOOL_REQUESTS_PER_TURN",
+    "AI_ASYNC_JOB_MAX_ATTEMPTS",
+    "AI_ASYNC_JOB_LEASE_SECONDS",
 )
 
 
@@ -106,6 +107,24 @@ def check_ai_assistant_production_guard(app_configs, **kwargs):
                 "AI Assistant production LLM is enabled without credit enforcement.",
                 hint="Set AI_ASSISTANT_CREDITS_ENABLED=true before deployment.",
                 id="ai_assistant.E001",
+            )
+        )
+
+    if not _setting_bool("AI_ASSISTANT_ASYNC_ENABLED", False):
+        issues.append(
+            Error(
+                "AI Assistant production LLM is running inside web requests.",
+                hint="Set AI_ASSISTANT_ASYNC_ENABLED=true and run the durable AI worker.",
+                id="ai_assistant.E007",
+            )
+        )
+
+    if not str(getattr(settings, "CACHE_URL", "") or "").strip():
+        issues.append(
+            Warning(
+                "The durable AI queue has no Redis wake-up channel.",
+                hint="Set CACHE_URL; PostgreSQL polling remains safe but adds queue latency.",
+                id="ai_assistant.W002",
             )
         )
 

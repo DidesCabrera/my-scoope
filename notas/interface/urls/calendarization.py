@@ -2,7 +2,6 @@ from django.urls import path
 
 from notas.interface.views import calendarization
 
-
 urlpatterns = [
     path("calendarization/", calendarization.dashboard, name="calendarization_dashboard"),
     path("calendarization/history/", calendarization.history, name="calendarization_history"),

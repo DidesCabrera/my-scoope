@@ -5,7 +5,6 @@ from mcp.server.auth.provider import AccessToken, TokenVerifier
 from mcp.server.auth.settings import AuthSettings
 from pydantic import AnyHttpUrl
 
-
 MCP_SCOPE_READ = "myscoope:read"
 MCP_SCOPE_PROPOSALS_CREATE = "myscoope:proposals:create"
 

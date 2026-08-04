@@ -4,7 +4,6 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-
 VALID_STATUS_CLASSES = {
     "accepted", "active", "completed", "current", "draft", "paused", "planned", "superseded"
 }

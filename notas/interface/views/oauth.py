@@ -20,7 +20,6 @@ from notas.application.services.oauth_authorization_codes import (
 )
 from notas.domain.models import OAuthClient
 
-
 OAUTH_RESPONSE_TYPE_CODE = "code"
 OAUTH_GRANT_TYPE_AUTHORIZATION_CODE = "authorization_code"
 

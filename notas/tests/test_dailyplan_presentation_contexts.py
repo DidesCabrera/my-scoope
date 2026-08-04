@@ -13,7 +13,6 @@ from notas.presentation.pages.dailyplan_pages import (
     get_dailyplan_list_page_data,
 )
 
-
 User = get_user_model()
 
 

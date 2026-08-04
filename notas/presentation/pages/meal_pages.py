@@ -1,27 +1,22 @@
+import json
 from dataclasses import dataclass
 from typing import Any, List, Optional
-import json
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import BooleanField, Prefetch, Value
-from notas.presentation.pages.object_lookup import get_page_object_or_404
 
-from notas.presentation.actions.meal_resolvers import (
-    resolve_meal_page_actions,
-)
+from notas.application.queries.food_picker_queries import list_food_picker_items
 from notas.application.services.access.access import get_meal_for_user
 from notas.application.services.nutrition.nutrition_kpis import (
     build_nutrition_kpis_from_meal,
 )
 from notas.domain.models import FoodLocalizedName, Meal, MealFood
+from notas.presentation.actions.meal_resolvers import (
+    resolve_meal_page_actions,
+)
 from notas.presentation.composition.js.food_picker_builder import (
     build_food_picker_context_payload,
     build_food_picker_foods_payload,
-)
-from notas.application.queries.food_picker_queries import list_food_picker_items
-from notas.presentation.viewmodels.meals import (
-    build_meal_detail_content_data,
-    build_meal_list_content_data,
 )
 from notas.presentation.config.viewmodel_config import (
     MEAL_VIEWMODE_DRAFT_LIST,
@@ -31,8 +26,11 @@ from notas.presentation.config.viewmodel_config import (
     MEAL_VIEWMODE_PERSONAL_LIST,
     MEAL_VIEWMODE_SHARED_LIST,
 )
-
-
+from notas.presentation.pages.object_lookup import get_page_object_or_404
+from notas.presentation.viewmodels.meals import (
+    build_meal_detail_content_data,
+    build_meal_list_content_data,
+)
 
 
 def _standalone_meals_queryset():

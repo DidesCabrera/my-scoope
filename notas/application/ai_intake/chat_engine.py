@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import replace
-from typing import Any, Mapping
-
 import json
 import logging
 import re
 import unicodedata
+from dataclasses import replace
+from typing import Any, Mapping
 
 from django.conf import settings
 
@@ -28,9 +27,9 @@ from ai_assistant.application.tools import (
 )
 from notas.application.ai_intake.nutrition_brief import (
     AI_NUTRITION_CONVERSATION_MESSAGE_LIMIT,
-    NutritionBrief,
     PPK_WEIGHT_SOURCE_MANUAL,
     PPK_WEIGHT_SOURCE_PROFILE,
+    NutritionBrief,
     NutritionConversationMessage,
     NutritionConversationState,
     build_llm_intake_result_from_brief,
@@ -858,7 +857,7 @@ def _apply_nutrition_brief_patch(
     return _replace_brief_fields(
         brief,
         updates,
-        source_updates={field_name: default_source for field_name in updates},
+        source_updates=dict.fromkeys(updates, default_source),
     )
 
 

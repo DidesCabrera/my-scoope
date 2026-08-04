@@ -6,7 +6,6 @@ from pathlib import Path
 
 from django.conf import settings
 
-
 VALID_TRANSITION_STATUSES = {"transitional", "intentionally_durable"}
 
 

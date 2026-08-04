@@ -3,7 +3,6 @@ from decimal import Decimal
 
 from food_catalog.application.imports.contracts import ImportedFoodDTO
 
-
 MAX_MACRO_G_PER_100G = Decimal("100")
 MAX_TOTAL_MACROS_G_PER_100G = Decimal("120")
 MAX_SODIUM_MG_PER_100G = Decimal("100000")

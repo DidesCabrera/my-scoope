@@ -1,11 +1,10 @@
-from notas.presentation.viewmodels.content.food.detail_food_vm import *
+from notas.application.services.food_imports.localized_names import resolve_food_display_name
+from notas.application.services.nutrition.weight import get_current_weight
 from notas.presentation.composition.viewmodel.components.builder_headers import build_food_header
-
+from notas.presentation.composition.viewmodel.food.list_foods_builder import _build_food_badges
 from notas.presentation.config.icons import CONTENT_ICON_REGISTRY
 from notas.presentation.resolvers.title_resolvers import resolve_category_badge
-from notas.application.services.food_imports.localized_names import resolve_food_display_name
-from notas.presentation.composition.viewmodel.food.list_foods_builder import _build_food_badges
-from notas.application.services.nutrition.weight import get_current_weight
+from notas.presentation.viewmodels.content.food.detail_food_vm import *
 
 
 def build_food_detail_vm(food, user, viewmode):

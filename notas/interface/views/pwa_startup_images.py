@@ -9,7 +9,6 @@ import struct
 import zlib
 from functools import lru_cache
 
-
 PWA_STARTUP_IMAGE_SPECS = [
     {
         "key": 'iphone-se-1st-portrait',

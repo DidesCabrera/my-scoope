@@ -20,7 +20,6 @@ from notas.presentation.viewmodels.dailyplans import (
     build_dailyplan_list_vm,
 )
 
-
 WEEKDAY_LABELS = ("L", "M", "M", "J", "V", "S", "D")
 WEEKDAY_NAMES = ("lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo")
 MONTH_LABELS = ("ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic")

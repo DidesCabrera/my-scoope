@@ -5,7 +5,6 @@ from notas.application.services.nutrition.body_metrics import (
     record_weight,
 )
 
-
 __all__ = [
     "DEFAULT_CURRENT_WEIGHT_KG",
     "get_current_weight",

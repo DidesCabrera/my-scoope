@@ -9,8 +9,8 @@ from django.urls import reverse
 from accounts.models import CreditWallet
 from admin_operations.models import AdminOperationAuditEvent
 from admin_operations.services import build_audit_log_vm
+from ai_assistant.models import AIUsageEvent
 from core.tests.builders import create_staff_user, create_test_user
-from ai_assistant.models import AIUsageEvent, AIUserCreditQuota
 from food_catalog.models import CatalogCurationCandidate, CatalogFood
 from notas.domain.model_modules.proposals import NutritionProposal
 
@@ -172,24 +172,22 @@ class AdminOperationsAuditLogTests(TestCase):
         self.assertEqual(audit.status_after, "acknowledged")
 
     def test_ai_quota_action_writes_admin_operation_audit(self):
-        quota = AIUserCreditQuota.objects.create(
+        wallet = CreditWallet.objects.create(
             user=self.member,
             period="2026-07",
-            plan_code="starter",
-            monthly_credit_limit=10,
-            daily_credit_limit=3,
-            credits_used=8,
+            plan_snapshot_code="starter",
+            balance=10,
         )
         self.client.force_login(self.staff)
 
         self.client.post(
-            reverse("admin_operations_ai_quota_action", args=[quota.pk]),
+            reverse("admin_operations_ai_quota_action", args=[wallet.pk]),
             {"action": "block", "reason": "Uso anómalo."},
             follow=True,
         )
 
-        audit = AdminOperationAuditEvent.objects.get(target_app="ai_assistant", target_model="aiusercreditquota")
-        self.assertEqual(audit.action, "ai_assistant.quota.block")
+        audit = AdminOperationAuditEvent.objects.get(target_app="accounts", target_model="creditwallet")
+        self.assertEqual(audit.action, "accounts.credit_wallet.freeze")
         self.assertIn("hard_blocked=False", audit.status_before)
         self.assertIn("hard_blocked=True", audit.status_after)
 

@@ -2,7 +2,6 @@ import os
 
 from starlette.responses import JSONResponse, PlainTextResponse
 
-
 DEFAULT_MCP_RESOURCE_URL = "https://myscoope-mcp.onrender.com"
 DEFAULT_OAUTH_ISSUER_URL = "https://www.myscoope.com"
 

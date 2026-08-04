@@ -205,7 +205,7 @@ def share_preference_draft_card_tool(user, *, preference_draft: Mapping[str, Any
 
 def _normalize_preference_draft(value: Mapping[str, Any]) -> dict[str, Any]:
     payload = dict(value or {})
-    draft: dict[str, Any] = {field: None for field in PREFERENCE_DRAFT_FIELDS}
+    draft: dict[str, Any] = dict.fromkeys(PREFERENCE_DRAFT_FIELDS)
     field_sources = _clean_source_map(payload.get("field_sources") or {})
     for field_name in PREFERENCE_DRAFT_FIELDS:
         normalized = _normalize_field_value(field_name, payload.get(field_name))

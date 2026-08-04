@@ -13,7 +13,6 @@ from notas.application.services.nutrition.body_metrics import (
 )
 from notas.domain.models import Profile, WeightLog
 
-
 User = get_user_model()
 
 

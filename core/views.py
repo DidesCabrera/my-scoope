@@ -1,4 +1,12 @@
+from django.http import JsonResponse
 from django.shortcuts import render
+from django.views.decorators.http import require_GET
+
+
+@require_GET
+def healthz(request):
+    """Cheap process-level liveness probe for the deployment platform."""
+    return JsonResponse({"status": "ok"})
 
 
 def landing(request):

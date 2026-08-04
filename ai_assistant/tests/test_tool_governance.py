@@ -8,7 +8,7 @@ from ai_assistant.application.tool_governance import (
     developer_tool_governance_policy,
     system_tool_restraint_lines,
 )
-from ai_assistant.application.tools import ReadOnlyToolExecutor, TOOL_READ_PROPOSAL
+from ai_assistant.application.tools import TOOL_READ_PROPOSAL, ReadOnlyToolExecutor
 from ai_assistant.domain import AssistantMessage, AssistantMessageRole, AssistantToolStatus, AssistantTurnRequest
 from ai_assistant.infrastructure.providers import LLMProviderResponse, LLMProviderToolCall
 from notas.application.ai_tools.results import tool_success

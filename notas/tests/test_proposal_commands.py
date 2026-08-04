@@ -8,7 +8,6 @@ from notas.application.services.commands.proposal_commands import (
     reject_proposal,
     submit_proposal_for_review,
 )
-
 from notas.domain.models import (
     DailyPlan,
     NutritionProposal,

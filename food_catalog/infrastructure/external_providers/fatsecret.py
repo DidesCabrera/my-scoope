@@ -24,7 +24,6 @@ from food_catalog.application.external_providers.contracts import (
 )
 from food_catalog.application.imports.sources import SOURCE_FATSECRET
 
-
 FATSECRET_ATTRIBUTION_TEXT = "Nutrition data provided by FatSecret."
 DEFAULT_FATSECRET_TOKEN_URL = "https://oauth.fatsecret.com/connect/token"
 DEFAULT_FATSECRET_API_BASE_URL = "https://platform.fatsecret.com/rest/server.api"

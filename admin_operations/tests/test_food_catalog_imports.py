@@ -1,12 +1,12 @@
-from django.contrib.auth import get_user_model
-from django.test import TestCase
-from django.core.files.uploadedfile import SimpleUploadedFile
 import json
+
+from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import TestCase
 from django.urls import reverse
 
-from food_catalog.models import CatalogFood, CatalogImportBatch, CatalogImportSourcePolicy
-from food_catalog.models import CatalogFoodSource
 from admin_operations.models import AdminOperationAuditEvent
+from food_catalog.models import CatalogFood, CatalogFoodSource, CatalogImportBatch, CatalogImportSourcePolicy
 
 
 class FoodCatalogImportsOperationsTests(TestCase):

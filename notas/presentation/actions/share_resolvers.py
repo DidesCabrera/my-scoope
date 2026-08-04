@@ -6,7 +6,6 @@ from notas.presentation.config.viewmodel_config import (
     MEAL_VIEWMODE_SHARED_LIST,
 )
 
-
 # ==================================================
 # 1. DEFINICIÓN DECLARATIVA DE ACCIONES
 # ==================================================

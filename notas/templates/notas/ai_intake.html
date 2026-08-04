@@ -32,6 +32,24 @@
         </form>
       </div>
     </section>
+  {% elif pending_ai_job %}
+    <section
+      class="ai-intake-card ai-intake-card--welcome"
+      data-ai-pending-job
+      data-status-url="{{ pending_ai_job_status_url }}"
+      aria-live="polite"
+    >
+      <div class="ai-intake-card__header">
+        <div class="ai-intake-card__icon-wrap">
+          <i data-lucide="loader-circle" class="ai-intake-card__icon"></i>
+        </div>
+        <div>
+          <p class="ai-intake-card__eyebrow">Procesando de forma segura</p>
+          <h1>Estoy preparando tu respuesta</h1>
+          <p data-ai-pending-message>Puedes mantener esta página abierta. El trabajo continuará aunque la conexión móvil se interrumpa.</p>
+        </div>
+      </div>
+    </section>
   {% else %}
     <section class="ai-intake-card ai-intake-card--welcome">
       <div class="ai-intake-card__header">
@@ -71,6 +89,24 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
+    var asyncJobs = window.MyScoopeAsyncJobs;
+    if (!asyncJobs) return;
+
+    var pendingJob = document.querySelector("[data-ai-pending-job]");
+    if (pendingJob) {
+      var pendingStatusUrl = pendingJob.getAttribute("data-status-url");
+      var pendingMessage = pendingJob.querySelector("[data-ai-pending-message]");
+      if (pendingStatusUrl) {
+        asyncJobs.pollJob(pendingStatusUrl)
+          .then(function () { window.location.reload(); })
+          .catch(function () {
+            if (pendingMessage) {
+              pendingMessage.textContent = "No pude completar la respuesta. Recarga la página para intentarlo nuevamente.";
+            }
+          });
+      }
+    }
+
     var composer = document.querySelector("[data-ai-chat-composer]");
     var thread = document.querySelector("[data-ai-chat-thread]");
     if (!composer || !thread) return;
@@ -177,7 +213,8 @@
           "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
           "X-CSRFToken": getCsrfToken(),
           "X-Requested-With": "XMLHttpRequest",
-          "Accept": "application/json"
+          "Accept": "application/json",
+          "Idempotency-Key": asyncJobs.createIdempotencyKey(window.crypto)
         },
         credentials: "same-origin",
         redirect: "follow"
@@ -188,6 +225,9 @@
             throw new Error("unexpected_response");
           }
           return response.json().then(function (payload) {
+            if (response.status === 202 && payload.status_url) {
+              return asyncJobs.pollJob(payload.status_url);
+            }
             if (!response.ok) {
               throw new Error(payload.error || "request_failed");
             }
@@ -227,5 +267,6 @@
     });
   });
 </script>
+<script src="{% static 'notas/dist/ai_async_jobs.js' %}" defer></script>
 <script src="{% static 'notas/js/collapse_cards.js' %}" defer></script>
 {% endblock %}

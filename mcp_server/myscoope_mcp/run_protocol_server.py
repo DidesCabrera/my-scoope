@@ -21,7 +21,6 @@ from myscoope_mcp.well_known import (
     openai_apps_challenge,
 )
 
-
 DEFAULT_MCP_HTTP_HOST = "127.0.0.1"
 DEFAULT_MCP_HTTP_PORT = 8001
 

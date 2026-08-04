@@ -4,8 +4,8 @@ from ai_assistant.application.chat_engines import ChatEngineRequest, ChatEngineT
 from notas.application.ai_intake.chat_engine import (
     AI_ASSISTANT_CHAT_ENGINE_LLM_PREVIEW,
     LLMPreviewNutritionIntakeChatEngine,
-    _apply_llm_tool_results_to_conversation_state,
     _append_draft_cards_from_llm_tools,
+    _apply_llm_tool_results_to_conversation_state,
 )
 from notas.application.ai_intake.nutrition_brief import (
     NutritionBrief,

@@ -1,5 +1,4 @@
 from notas.application.services.nutrition.weight import get_current_weight
- 
 
 #=====CALCULO PPK=========
 

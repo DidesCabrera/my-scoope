@@ -311,7 +311,7 @@ def _solve_cp_sat(
     meals = []
     for slot in problem.meal_slots:
         portions = []
-        totals = {metric: 0.0 for metric in _nutrient_metrics()}
+        totals = dict.fromkeys(_nutrient_metrics(), 0.0)
         for profile in profiles:
             steps = solver.value(quantity_steps[slot.slot_id, profile.food.food_id])
             if steps <= 0:

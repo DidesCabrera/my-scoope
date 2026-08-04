@@ -7,6 +7,7 @@ from django.utils import timezone
 
 from admin_operations.models import AdminOperationAuditEvent
 
+
 def get_audit_log_payload(*, query: str = "", limit: int = 50) -> dict:
     """Return recent Admin Operations audit events for OPS06."""
 

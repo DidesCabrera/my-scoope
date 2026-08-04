@@ -1,4 +1,3 @@
-from notas.presentation.viewmodels.base_vm import UI
 from notas.presentation.navigation.nav_builders import (
     build_back_url,
     build_breadcrumb_vm,
@@ -6,6 +5,7 @@ from notas.presentation.navigation.nav_builders import (
     build_sidebar_vm,
     resolve_navigation_root,
 )
+from notas.presentation.viewmodels.base_vm import UI
 
 
 def build_ui_vm(viewmode, instance=None, parents=None, back_config=None):

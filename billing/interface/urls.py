@@ -8,7 +8,6 @@ from billing.interface.views import (
     mercado_pago_webhook,
 )
 
-
 app_name = "billing"
 
 urlpatterns = [

@@ -2,8 +2,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from decimal import Decimal
+
 from django.db.models import Q, QuerySet
 
+from notas.application.queries.read_boundaries import get_readable_food_queryset
+from notas.domain.models import Food
 from nutrition_solver.domain.capabilities import SolverFeatureKey
 from nutrition_solver.domain.food_profiles import (
     SolverFeatureValue,
@@ -11,10 +14,6 @@ from nutrition_solver.domain.food_profiles import (
     derive_macro_role_features,
 )
 from nutrition_solver.domain.models import PortionBounds, SolverFood
-
-from notas.application.queries.read_boundaries import get_readable_food_queryset
-from notas.domain.models import Food
-
 
 DEFAULT_SOLVER_FOOD_CANDIDATE_LIMIT = 120
 MAX_SOLVER_FOOD_CANDIDATE_LIMIT = 250

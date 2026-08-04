@@ -1,6 +1,7 @@
 from django.urls import path
 
 from notas.interface.views.proposals import (
+    proposal_apply,
     proposal_approve,
     proposal_cancel,
     proposal_delete,
@@ -11,7 +12,6 @@ from notas.interface.views.proposals import (
     proposal_list_bulk_delete,
     proposal_list_reorder,
     proposal_reject,
-    proposal_apply,
 )
 
 urlpatterns = [

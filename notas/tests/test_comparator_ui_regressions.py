@@ -1,7 +1,6 @@
 from pathlib import Path
 from unittest import TestCase
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 COMPARATOR_TEMPLATE = PROJECT_ROOT / "notas" / "templates" / "notas" / "comparators" / "detail.html"
 COMPARATOR_JS = PROJECT_ROOT / "notas" / "static" / "notas" / "js" / "comparators.js"

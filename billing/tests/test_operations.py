@@ -13,7 +13,6 @@ from billing.infrastructure.providers.fake import FakeTaxDocumentGateway
 from billing.infrastructure.providers.openfactura import OpenFacturaClient
 from billing.models import BillingPayment, BillingProduct, PaymentProvider, ProviderSubscription, TaxDocument
 
-
 ISSUER = {"RUTEmisor": "76000000-0", "RznSocEmisor": "My Scoope", "GiroEmisor": "Software"}
 
 

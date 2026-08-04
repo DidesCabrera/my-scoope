@@ -1,4 +1,5 @@
 from django.test import SimpleTestCase
+
 from notas.presentation.navigation.program_context import (
     ProgramBreadcrumbParent,
     ProgramNavigationContext,
@@ -8,7 +9,7 @@ from notas.presentation.navigation.program_context import (
     navigation_context_from_query,
     program_context_query,
 )
-from notas.presentation.viewmodels.base_vm import BreadcrumbItem, UI
+from notas.presentation.viewmodels.base_vm import UI, BreadcrumbItem
 
 
 class ProgramNavigationContextTests(SimpleTestCase):

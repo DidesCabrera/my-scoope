@@ -8,7 +8,6 @@ from django.utils import timezone
 from accounts.models import AccountSubscription
 from billing.models import ProviderSubscription
 
-
 _STATUS_MAP = {
     ProviderSubscription.Status.AUTHORIZED: AccountSubscription.Status.ACTIVE,
     ProviderSubscription.Status.PAUSED: AccountSubscription.Status.PAST_DUE,

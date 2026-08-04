@@ -1,35 +1,15 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
-from notas.domain.models import DailyPlan, Meal, DailyPlanShare
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.views.decorators.http import require_POST
-from notas.presentation.config.viewmodel_config import *
-
-from notas.application.services.access.capabilities import get_capabilities
-from notas.application.services.access.access import get_dailyplan_for_user
-
-from notas.interface.forms.forms import DailyPlanShareForm
 from django.conf import settings
-from email_delivery.services import deliver_share_invitation
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from notas.application.services.notifications.share_emails import build_share_invitation_email
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.http import require_POST
 
-from notas.presentation.pages.dailyplan_contexts import (
-    build_dailyplan_configure_context,
-    build_dailyplan_create_context,
-    build_dailyplan_detail_context,
-    build_dailyplan_list_context,
-)
-from notas.presentation.pages.dailyplan_pages import (
-    get_dailyplan_detail_page_data,
-    get_dailyplan_list_page_data,
-    get_dailyplan_explore_list_page_data,
-    get_dailyplan_shared_list_page_data,
-    get_dailyplan_draft_list_page_data,
-)
-
+from email_delivery.services import deliver_share_invitation
+from notas.application.services.access.access import get_dailyplan_for_user
+from notas.application.services.access.capabilities import get_capabilities
 from notas.application.services.commands.dailyplan_commands import (
     configure_dailyplan,
     copy_dailyplan,
@@ -40,12 +20,28 @@ from notas.application.services.commands.dailyplan_commands import (
     rename_dailyplan,
     save_dailyplan,
 )
-
 from notas.application.services.commands.share_commands import (
     accept_dailyplan_share,
     create_dailyplan_share,
     dismiss_dailyplan_share,
     remove_dailyplan_share,
+)
+from notas.application.services.notifications.share_emails import build_share_invitation_email
+from notas.domain.models import DailyPlan, DailyPlanShare, Meal
+from notas.interface.forms.forms import DailyPlanShareForm
+from notas.presentation.config.viewmodel_config import *
+from notas.presentation.pages.dailyplan_contexts import (
+    build_dailyplan_configure_context,
+    build_dailyplan_create_context,
+    build_dailyplan_detail_context,
+    build_dailyplan_list_context,
+)
+from notas.presentation.pages.dailyplan_pages import (
+    get_dailyplan_detail_page_data,
+    get_dailyplan_draft_list_page_data,
+    get_dailyplan_explore_list_page_data,
+    get_dailyplan_list_page_data,
+    get_dailyplan_shared_list_page_data,
 )
 
 #************ VIEW DE INBOX *********************

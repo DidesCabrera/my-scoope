@@ -76,6 +76,51 @@ jobs:
       - name: Run complete Django suite
         run: scripts/ci_django_full_suite.sh
 
+  django-postgres:
+    name: Django PostgreSQL regression suite
+    needs: django-fast
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: myscoope_ci
+          POSTGRES_USER: myscoope
+          POSTGRES_PASSWORD: myscoope-ci-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U myscoope -d myscoope_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DJANGO_SETTINGS_MODULE: miapp.settings.dev
+      DATABASE_URL: postgresql://myscoope:myscoope-ci-password@127.0.0.1:5432/myscoope_ci
+      PYTHONUNBUFFERED: "1"
+      SENTRY_DSN: ""
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Run complete suite on PostgreSQL
+        run: scripts/ci_postgres_suite.sh
+
   mcp:
     name: MCP contract and protocol suite
     runs-on: ubuntu-latest
@@ -170,3 +215,23 @@ jobs:
 
       - name: Run quality gates
         run: scripts/quality_checks.sh
+
+  frontend:
+    name: Frontend build and unit tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Test and build frontend
+        run: npm test && npm run build

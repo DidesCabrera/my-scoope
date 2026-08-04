@@ -6,17 +6,17 @@ from django.db.models import Count, Q, Sum
 from django.utils import timezone
 
 from accounts.models import CreditWallet
-from ai_assistant.models import AIUsageEvent
-from billing.models import BillingEvent, ProviderSubscription, TaxDocument
-from food_catalog.models import CatalogCurationCandidate, CatalogFood
-from notas.domain.model_modules.proposals import NutritionProposal
-
 from admin_operations.selector_modules.common import _build_warning_candidates
 from admin_operations.selector_modules.constants import (
     AI_OPERATIONAL_STATUSES,
     CATALOG_CANDIDATE_ACTION_STATUSES,
     CATALOG_FOOD_REVIEW_STATUSES,
 )
+from ai_assistant.models import AIUsageEvent
+from billing.models import BillingEvent, ProviderSubscription, TaxDocument
+from food_catalog.models import CatalogCurationCandidate, CatalogFood
+from notas.domain.model_modules.proposals import NutritionProposal
+
 
 def get_operations_overview_metrics() -> dict:
     now = timezone.now()

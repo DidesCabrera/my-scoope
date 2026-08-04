@@ -7,8 +7,8 @@ from nutrition_solver.application.problem_v2 import (
     NutrientRange,
     OptimizationProblemV2,
 )
-from nutrition_solver.domain.food_profiles import SolverFeatureValue, SolverFoodProfile
 from nutrition_solver.domain.capabilities import SolverFeatureKey
+from nutrition_solver.domain.food_profiles import SolverFeatureValue, SolverFoodProfile
 from nutrition_solver.domain.meal_grammar import MAIN_PLATE, assess_meal_grammar
 from nutrition_solver.domain.models import PortionBounds, SolverFood
 

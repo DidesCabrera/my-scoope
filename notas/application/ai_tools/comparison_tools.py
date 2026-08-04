@@ -6,7 +6,6 @@ from notas.application.ai_tools.runtime import run_ai_tool
 from notas.application.services.comparisons.snapshots import normalize_snapshot_payload
 from notas.domain.models import SavedComparison
 
-
 SUPPORTED_COMPARISON_KINDS = {
     SavedComparison.KIND_FOODS,
     SavedComparison.KIND_MEALS,

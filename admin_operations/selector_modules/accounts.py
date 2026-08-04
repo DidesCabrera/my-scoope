@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Q, Sum
 
 from accounts.models import AccountSubscription, CreditLedger, CreditWallet
+
 
 def get_accounts_operations_payload(*, query: str = "", limit: int = 25) -> dict:
     """Return actionable Accounts & Credits queues for OPS04.

@@ -7,17 +7,16 @@ from ai_assistant.application.tools.contracts import (
     AssistantToolRegistryError,
     AssistantToolSpec,
 )
-from ai_assistant.domain.contracts import (
-    AssistantToolRequest,
-    AssistantToolResult,
-    AssistantToolStatus,
-)
-
 from ai_assistant.application.tools.tool_names import *  # noqa: F403
 from ai_assistant.application.tools.tool_spec_modules.actions import ACTIONS_TOOL_SPECS
 from ai_assistant.application.tools.tool_spec_modules.intake import INTAKE_TOOL_SPECS
 from ai_assistant.application.tools.tool_spec_modules.proposals import PROPOSALS_TOOL_SPECS
 from ai_assistant.application.tools.tool_spec_modules.read import READ_TOOL_SPECS
+from ai_assistant.domain.contracts import (
+    AssistantToolRequest,
+    AssistantToolResult,
+    AssistantToolStatus,
+)
 
 FORBIDDEN_TOOL_NAMES = {
     "apply_approved_proposal",

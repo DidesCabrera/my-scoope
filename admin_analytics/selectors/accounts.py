@@ -6,10 +6,8 @@ from decimal import Decimal
 from django.db.models import Count, Sum
 from django.utils import timezone
 
-from admin_analytics.filters import AdminAnalyticsFilters
-
 from accounts.models import AccountPlan, AccountSubscription, CreditLedger, CreditWallet
-
+from admin_analytics.filters import AdminAnalyticsFilters
 
 ACTIVE_SUBSCRIPTION_STATUSES = [
     AccountSubscription.Status.TRIALING,

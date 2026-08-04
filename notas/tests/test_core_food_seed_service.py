@@ -6,7 +6,6 @@ from notas.application.services.food_imports.core_food_seed_service import (
 )
 from notas.domain.models import Food, FoodAlias, FoodLocalizedName
 
-
 User = get_user_model()
 
 

@@ -1,3 +1,6 @@
+import json
+from pathlib import Path
+
 from django.test import TestCase
 
 from notas.application.services.commands.import_usda_food_payloads import (
@@ -13,8 +16,6 @@ from notas.application.services.food_imports.usda.mapper import (
 )
 from notas.domain.models import Food, FoodImportBatch, FoodSourceMetadata
 
-import json
-from pathlib import Path
 
 class USDAFoodPayloadImportCommandTests(TestCase):
     def test_import_usda_food_payloads_imports_multiple_foods(self):

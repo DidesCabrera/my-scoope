@@ -7,8 +7,6 @@ from django.db.models import Avg, Count, Q
 from django.utils import timezone
 
 from admin_analytics.filters import AdminAnalyticsFilters
-
-from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood, Program, ProgramDay
 from notas.domain.model_modules.comparisons import SavedComparison
 from notas.domain.model_modules.proposals import NutritionProposal
 from notas.domain.model_modules.sharing import (
@@ -18,7 +16,7 @@ from notas.domain.model_modules.sharing import (
     MealShare,
     ProgramShare,
 )
-
+from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood, Program, ProgramDay
 
 SHARE_MODELS = (
     ("foods", "Foods", FoodShare),

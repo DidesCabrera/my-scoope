@@ -11,7 +11,6 @@ from django.utils import timezone
 
 from food_catalog.models import CatalogFood, CatalogImportBatch, CatalogImportSourcePolicy
 
-
 DEFAULT_DRY_RUN_TTL = timedelta(hours=24)
 
 

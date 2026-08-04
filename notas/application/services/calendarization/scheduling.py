@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime, time, timedelta, timezone as dt_timezone
+from datetime import date, datetime, time, timedelta
+from datetime import timezone as dt_timezone
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.utils import timezone
-
 
 DAILY_NOTIFICATION_GRACE = timedelta(hours=2)
 MEAL_NOTIFICATION_GRACE = timedelta(minutes=15)

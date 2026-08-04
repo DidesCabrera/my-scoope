@@ -1,6 +1,6 @@
+from allauth.account import views as allauth_account_views
 from django.contrib import admin
 from django.urls import include, path
-from allauth.account import views as allauth_account_views
 
 from core.rate_limits import limit_login, limit_signup
 from notas.interface.views.oauth import (
@@ -9,7 +9,6 @@ from notas.interface.views.oauth import (
     oauth_authorize_consent,
     oauth_token,
 )
-
 
 urlpatterns = [
     path("admin/", admin.site.urls),

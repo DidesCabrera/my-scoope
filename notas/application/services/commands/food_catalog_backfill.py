@@ -7,15 +7,19 @@ operational nutrition source and it does not expose any catalog data to MCP.
 
 from __future__ import annotations
 
+import hashlib
 from collections import Counter
 from dataclasses import dataclass, field
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Iterable
-import hashlib
 
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
+from food_catalog.infrastructure.imports.governance import (
+    catalog_import_identity,
+    start_catalog_import_batch,
+)
 from food_catalog.models import (
     CatalogFood,
     CatalogFoodAlias,
@@ -23,12 +27,7 @@ from food_catalog.models import (
     CatalogFoodSource,
     CatalogImportBatch,
 )
-from food_catalog.infrastructure.imports.governance import (
-    catalog_import_identity,
-    start_catalog_import_batch,
-)
 from notas.domain.models import Food, FoodAlias, FoodLocalizedName, FoodSourceMetadata
-
 
 OPERATIONAL_BACKFILL_SOURCE_NAME = "My Scoope operational foods"
 OPERATIONAL_BACKFILL_SOURCE_DATASET = "notas.Food"

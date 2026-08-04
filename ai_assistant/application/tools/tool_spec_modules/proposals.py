@@ -7,7 +7,6 @@ from ai_assistant.application.tools.contracts import (
 )
 from ai_assistant.application.tools.tool_names import *  # noqa: F403
 
-
 PROPOSALS_TOOL_SPECS = {
 TOOL_CREATE_VALIDATED_MEAL_PROPOSAL: AssistantToolSpec(
         name=TOOL_CREATE_VALIDATED_MEAL_PROPOSAL,

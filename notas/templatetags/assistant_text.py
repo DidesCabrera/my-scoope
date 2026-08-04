@@ -6,7 +6,6 @@ from django import template
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
-
 register = template.Library()
 
 _BOLD_RE = re.compile(r"\*\*(.+?)\*\*")

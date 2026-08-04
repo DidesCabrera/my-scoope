@@ -7,14 +7,14 @@ from ai_assistant.application import (
     ExternalLLMChatEngine,
     ExternalLLMOrchestrator,
 )
-from ai_assistant.application.orchestrator import _local_acknowledgement_from_tool_results
 from ai_assistant.application.chat_engines import ChatEngineRequest
+from ai_assistant.application.orchestrator import _local_acknowledgement_from_tool_results
 from ai_assistant.application.tools import (
-    ReadOnlyToolExecutor,
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
     TOOL_READ_DAILYPLAN,
     TOOL_READ_PROPOSAL,
     TOOL_UPDATE_PROPOSAL_PREFERENCES,
+    ReadOnlyToolExecutor,
 )
 from ai_assistant.domain import (
     AssistantIntentName,

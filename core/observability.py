@@ -3,7 +3,6 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-
 FILTERED = "[Filtered]"
 SENSITIVE_KEY_PARTS = (
     "authorization",

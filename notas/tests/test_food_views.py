@@ -8,7 +8,6 @@ from openpyxl import Workbook
 
 from notas.domain.models import Food
 
-
 User = get_user_model()
 
 

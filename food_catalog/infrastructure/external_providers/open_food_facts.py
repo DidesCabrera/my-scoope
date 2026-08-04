@@ -23,7 +23,6 @@ from food_catalog.application.external_providers.contracts import (
 )
 from food_catalog.application.imports.sources import SOURCE_OPEN_FOOD_FACTS
 
-
 OPEN_FOOD_FACTS_ATTRIBUTION_TEXT = "Food data from Open Food Facts."
 DEFAULT_OPEN_FOOD_FACTS_API_BASE_URL = "https://world.openfoodfacts.org"
 DEFAULT_OPEN_FOOD_FACTS_USER_AGENT = "MyScoope FoodCatalog/1.0 (contact: support@myscoope.com)"

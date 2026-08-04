@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import Any
 
-from notas.presentation.actions.meal_food_resolvers import (
-    resolve_meal_food_actions,
+from notas.application.services.food_imports.localized_names import (
+    resolve_food_display_name,
 )
 from notas.application.services.nutrition.food_aggregation import (
     build_meal_foods_aggregation,
@@ -10,6 +10,9 @@ from notas.application.services.nutrition.food_aggregation import (
 from notas.application.services.nutrition.nutrition_kpis import (
     build_nutrition_kpis_from_dailyplan,
     build_nutrition_kpis_from_meal,
+)
+from notas.presentation.actions.meal_food_resolvers import (
+    resolve_meal_food_actions,
 )
 from notas.presentation.composition.viewmodel.components.builder_headers import (
     build_dailyplan_meal_header,
@@ -19,9 +22,7 @@ from notas.presentation.composition.viewmodel.components.builder_table_items imp
 )
 from notas.presentation.config.icons import CONTENT_ICON_REGISTRY
 from notas.presentation.resolvers.title_resolvers import resolve_category_badge
-from notas.application.services.food_imports.localized_names import (
-    resolve_food_display_name,
-)
+
 
 @dataclass
 class DpmDetailContentData:

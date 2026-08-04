@@ -1,10 +1,10 @@
 from django.urls import path
 
 from notas.interface.views.admin_tools import (
-    admin_home,
     admin_food_catalog,
     admin_foods_export_csv,
     admin_foods_template,
+    admin_home,
 )
 
 urlpatterns = [

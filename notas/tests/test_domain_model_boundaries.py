@@ -13,7 +13,6 @@ from notas.domain.model_boundaries import (
     boundary_for_model,
 )
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 MODELS_PATH = PROJECT_ROOT / "notas" / "domain" / "models.py"
 MODEL_MODULES_DIR = PROJECT_ROOT / "notas" / "domain" / "model_modules"
@@ -39,6 +38,17 @@ def _is_django_model_class(node: ast.ClassDef) -> bool:
             return True
         if isinstance(base, ast.Name) and base.id == "Model":
             return True
+    for child in node.body:
+        if not isinstance(child, ast.ClassDef) or child.name != "Meta":
+            continue
+        for statement in child.body:
+            if (
+                isinstance(statement, ast.Assign)
+                and any(isinstance(target, ast.Name) and target.id == "proxy" for target in statement.targets)
+                and isinstance(statement.value, ast.Constant)
+                and statement.value.value is True
+            ):
+                return True
     return False
 
 
@@ -191,8 +201,22 @@ class DomainModelBoundaryTests(TestCase):
                 "proposals": "notas.domain.model_modules.proposals",
                 "calendarization": "notas.domain.model_modules.calendarization",
                 "notification_delivery": "notas.domain.model_modules.notification_delivery",
+                "food_catalog": "notas.domain.model_modules.food",
+                "meals": "notas.domain.model_modules.meals",
+                "dailyplans": "notas.domain.model_modules.dailyplans",
+                "programs": "notas.domain.model_modules.programs",
             },
         )
+
+    def test_compatibility_facade_contains_no_concrete_model_definitions(self):
+        tree = ast.parse(MODELS_PATH.read_text(), filename=str(MODELS_PATH))
+        concrete = [
+            node.name
+            for node in tree.body
+            if isinstance(node, ast.ClassDef) and _is_django_model_class(node)
+        ]
+        self.assertEqual(concrete, [])
+        self.assertLessEqual(len(MODELS_PATH.read_text().splitlines()), 120)
 
     def test_declared_physical_model_modules_are_importable(self):
         for boundary_slug, module_path in DOMAIN_MODEL_MODULE_BY_BOUNDARY_SLUG.items():

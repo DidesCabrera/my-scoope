@@ -16,20 +16,19 @@ from billing.application.services.checkout import (
     cancel_user_subscription,
     create_subscription_checkout,
 )
+from billing.application.services.events import receive_verified_billing_event
+from billing.application.services.mercado_pago_events import process_mercado_pago_event
 from billing.infrastructure.gateways import build_mercado_pago_gateway
 from billing.infrastructure.providers.mercado_pago import MercadoPagoProviderError
-from billing.models import BillingProduct, PaymentProvider, ProviderSubscription
-from billing.presentation.viewmodels import build_billing_overview_vm
 from billing.infrastructure.providers.mercado_pago_webhooks import (
     InvalidMercadoPagoSignature,
     verify_mercado_pago_signature,
 )
-from billing.application.services.events import receive_verified_billing_event
-from billing.application.services.mercado_pago_events import process_mercado_pago_event
+from billing.models import BillingProduct, PaymentProvider, ProviderSubscription
+from billing.presentation.viewmodels import build_billing_overview_vm
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
 from notas.presentation.config.viewmodel_config import BILLING_VIEWMODE
 from notas.presentation.viewmodels.base_vm import BaseVM
-
 
 MAX_WEBHOOK_BODY_BYTES = 128 * 1024
 

@@ -4,9 +4,6 @@ from typing import Any
 from django.urls import reverse
 
 from notas.application.dto.proposal_iteration_trace import extract_plan_iteration_trace
-from notas.application.proposals.subject_context_warnings import (
-    build_proposal_subject_context_warning,
-)
 from notas.application.proposals.contracts import (
     AI_NUTRITION_BRIEF_INTENT,
     CREATE_DAILYPLAN_INTENT,
@@ -15,6 +12,9 @@ from notas.application.proposals.contracts import (
     get_proposal_intent_contract,
     proposal_status_label,
     resolve_proposal_intent,
+)
+from notas.application.proposals.subject_context_warnings import (
+    build_proposal_subject_context_warning,
 )
 
 

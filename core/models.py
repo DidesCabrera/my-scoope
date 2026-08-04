@@ -1,3 +1,1 @@
-from django.db import models
-
-# Create your models here.
+"""Core is an orchestration/operations app and intentionally owns no tables."""

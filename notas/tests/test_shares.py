@@ -4,7 +4,6 @@ from django.urls import resolve, reverse
 
 from notas.domain.models import Meal, MealShare
 
-
 User = get_user_model()
 
 

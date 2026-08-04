@@ -7,6 +7,8 @@ without maintaining a second set of descriptions or schemas.
 
 from ai_assistant.application.tools.registry import (
     FORBIDDEN_TOOL_NAMES as CANONICAL_FORBIDDEN_TOOL_NAMES,
+)
+from ai_assistant.application.tools.registry import (
     TOOL_COMPARE_DAILYPLAN_TO_TARGETS,
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
     TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL,
@@ -16,12 +18,15 @@ from ai_assistant.application.tools.registry import (
     TOOL_LIST_USER_PROPOSALS,
     TOOL_READ_DAILYPLAN,
     TOOL_READ_PROPOSAL,
-    get_mcp_tool_spec as get_canonical_mcp_tool_spec,
-    list_mcp_tool_specs as list_canonical_mcp_tool_specs,
     normalize_tool_name,
 )
+from ai_assistant.application.tools.registry import (
+    get_mcp_tool_spec as get_canonical_mcp_tool_spec,
+)
+from ai_assistant.application.tools.registry import (
+    list_mcp_tool_specs as list_canonical_mcp_tool_specs,
+)
 from myscoope_mcp.contracts import MCPToolSpec
-
 
 # Historical MCP compatibility name. The canonical capability is
 # ``list_operational_foods`` and still exposes only ``notas.Food``.

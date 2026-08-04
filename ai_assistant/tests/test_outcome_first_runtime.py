@@ -9,10 +9,10 @@ from ai_assistant.application.orchestrator import (
     ExternalLLMOrchestrator,
 )
 from ai_assistant.application.tools import (
-    ProfileDraftToolExecutor,
-    ReviewableProposalToolExecutor,
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
     TOOL_UPDATE_PROFILE_DRAFT,
+    ProfileDraftToolExecutor,
+    ReviewableProposalToolExecutor,
 )
 from ai_assistant.domain import (
     AssistantMessage,

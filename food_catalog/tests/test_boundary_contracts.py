@@ -2,7 +2,6 @@ import ast
 from pathlib import Path
 from unittest import TestCase
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 FOOD_CATALOG_ROOT = PROJECT_ROOT / "food_catalog"
 APPLICATION_ROOT = FOOD_CATALOG_ROOT / "application"

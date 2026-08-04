@@ -8,7 +8,6 @@ from django.db.models import Count, Q
 from django.utils import timezone
 
 from admin_analytics.filters import AdminAnalyticsFilters
-
 from food_catalog.models import CatalogFood
 from notas.domain.model_modules.proposals import NutritionProposal
 from notas.domain.models import Food
@@ -19,7 +18,6 @@ from nutrition_solver.application.validators import (
     DEFAULT_REASONABLE_MAX_PORTION_G_BY_ROLE,
     DEFAULT_WARNING_TOLERANCE_PERCENT,
 )
-
 
 SOLVER_SUMMARY_KEY = "nutrition_solver"
 ENGINE_VALIDATION_KEY = "engine_validation"

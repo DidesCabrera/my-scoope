@@ -3,10 +3,10 @@ from django.db import IntegrityError, transaction
 from django.test import TestCase
 
 from accounts.models import AccountPlan, AccountSubscription
-from billing.models import BillingPayment, BillingProduct, PaymentProvider, ProviderSubscription, TaxDocument
 from billing.application.services.events import UnverifiedBillingEvent, receive_verified_billing_event
 from billing.application.services.projections import project_provider_subscription
 from billing.application.services.tax_documents import PaymentNotApproved, schedule_tax_document
+from billing.models import BillingPayment, BillingProduct, PaymentProvider, ProviderSubscription, TaxDocument
 
 
 class BillingFoundationTests(TestCase):

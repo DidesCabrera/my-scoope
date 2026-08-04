@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-
 DEFAULT_MEALS_PER_DAY = 4
 
 MEAL_HOURS = {

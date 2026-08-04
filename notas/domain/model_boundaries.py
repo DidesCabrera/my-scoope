@@ -33,8 +33,11 @@ DOMAIN_MODEL_BOUNDARIES: tuple[DomainModelBoundary, ...] = (
     DomainModelBoundary(
         slug="identity",
         label="Identity & User State",
-        models=("Plan", "Profile", "Subscription", "WeightLog"),
-        responsibility="User profile, subscription and personal state tied to the authenticated account.",
+        models=("Plan", "Profile", "Subscription", "NutritionistMemberRelationship", "WeightLog"),
+        responsibility=(
+            "Nutrition profile and personal state. Subscription is the legacy "
+            "name behind the NutritionistMemberRelationship compatibility façade."
+        ),
     ),
     DomainModelBoundary(
         slug="auth_integration",
@@ -186,6 +189,10 @@ DOMAIN_MODEL_MODULE_BY_BOUNDARY_SLUG: dict[str, str] = {
     "proposals": "notas.domain.model_modules.proposals",
     "calendarization": "notas.domain.model_modules.calendarization",
     "notification_delivery": "notas.domain.model_modules.notification_delivery",
+    "food_catalog": "notas.domain.model_modules.food",
+    "meals": "notas.domain.model_modules.meals",
+    "dailyplans": "notas.domain.model_modules.dailyplans",
+    "programs": "notas.domain.model_modules.programs",
 }
 
 DOMAIN_MODEL_BOUNDARY_BY_MODEL: dict[str, DomainModelBoundary] = {

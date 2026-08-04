@@ -27,6 +27,24 @@
       "current_consumers": ["staff technical diagnosis", "exceptional model-level inspection"],
       "exit_evidence": ["Admin Operations covers every justified technical recovery path", "An explicit security and recovery review accepts removal"],
       "decision": "docs/20_decisions/0070-admin-operations-console-planning.md"
+    },
+    {
+      "id": "legacy-notas-commercial-model-names",
+      "status": "transitional",
+      "owner": "accounts",
+      "purpose": "Prevent historical notas.Plan and the ambiguously named notas.Subscription relationship from being treated as commercial account authorities.",
+      "current_consumers": ["historical notas migrations", "NutritionistMemberRelationship proxy", "legacy compatibility tests"],
+      "exit_evidence": ["notas.Plan data is reconciled and the model is removed", "notas.Subscription has an unambiguous nutrition-relationship contract", "all commercial reads resolve through accounts services"],
+      "decision": "docs/20_decisions/0170-commercial-model-authority-and-cutover.md"
+    },
+    {
+      "id": "ai-credit-ledger-cutover",
+      "status": "transitional",
+      "owner": "accounts",
+      "purpose": "Retire AIUserCreditQuota and AICreditLedger after accounts CreditWallet and CreditLedger become the only commercial write/read path.",
+      "current_consumers": ["historical reconciliation command", "read-only legacy Django Admin"],
+      "exit_evidence": ["historical AI credit rows reconcile with account ledger outcomes", "runtime writes only accounts.CreditLedger", "admin and analytics read accounts projections", "legacy AI credit models are removed in a later migration"],
+      "decision": "docs/20_decisions/0170-commercial-model-authority-and-cutover.md"
     }
   ]
 }

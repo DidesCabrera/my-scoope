@@ -3,7 +3,6 @@ from typing import Any
 
 from .payloads import normalize_payload, parse_quantity
 
-
 COMPARISON_VALUE_KEYS = (
     "total_kcal",
     "ppk",

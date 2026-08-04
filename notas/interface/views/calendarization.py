@@ -41,7 +41,6 @@ from notas.presentation.config.viewmodel_config import (
 )
 from notas.presentation.pages.home_calendarization import build_home_calendarization_vm
 
-
 ERROR_MESSAGES = {
     "calendarization_incomplete_confirmation_required": "El programa está incompleto. Confirma que deseas calendarizarlo con días vacíos.",
     "calendarization_replacement_confirmation_required": "Ya tienes una calendarización vigente. Confirma que deseas reemplazarla.",

@@ -17,7 +17,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Mapping
 
-
 CATEGORIES = frozenset({"vegetable", "fruit", "meat_seafood", "legume", "dairy"})
 PREPARATION_STATES = frozenset({"unknown", "raw", "cooked", "dry", "hydrated", "ready_to_eat"})
 PRIORITY_TIERS = frozenset({"A", "B", "C", "discovery"})

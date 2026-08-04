@@ -1,5 +1,5 @@
-from dataclasses import dataclass, asdict, field
-from typing import List, Dict, Any, Optional
+from dataclasses import asdict, dataclass, field
+from typing import Any, Dict, List, Optional
 
 from notas.presentation.resolvers.title_resolvers import CategoryBadgeUI
 from notas.presentation.viewmodels.components.header_vm import HeaderVM

@@ -1,16 +1,16 @@
 from django.urls import path
 
+from notas.interface.views.authors import (
+    author_dailyplans,
+    author_meals,
+    author_profile,
+    author_programs,
+)
 from notas.interface.views.profile import (
     profile_credits,
     profile_detail,
     profile_nutrition,
     profile_nutrition_update,
-)
-from notas.interface.views.authors import (
-    author_profile,
-    author_programs,
-    author_dailyplans,
-    author_meals,
 )
 from notas.interface.views.weight import register_weight
 

@@ -7,6 +7,7 @@ from django.conf import settings
 
 from ai_assistant.application.limits import AITurnLimitConfig
 
+
 @dataclass(frozen=True)
 class AssistantOrchestratorConfig:
     """Runtime limits for the external LLM orchestrator v1.

@@ -5,10 +5,10 @@ from decimal import Decimal
 
 from django.core.exceptions import ObjectDoesNotExist
 
+from admin_operations.models import AdminOperationAuditEvent
 from admin_operations.viewmodels import (
     AdminOperationsWarningVM,
 )
-from admin_operations.models import AdminOperationAuditEvent
 
 
 @dataclass(frozen=True)

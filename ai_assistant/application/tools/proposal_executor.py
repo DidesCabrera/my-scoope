@@ -6,15 +6,15 @@ from typing import Any
 
 from ai_assistant.application.tools.contracts import AssistantToolCategory
 from ai_assistant.application.tools.registry import (
-    TOOL_CREATE_PROPORTIONAL_DAILYPLAN_CALORIE_PROPOSAL,
-    TOOL_PREPARE_PRODUCT_ACTION,
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
     TOOL_CREATE_NUTRITION_SOLVER_MEAL_PROPOSAL,
-    TOOL_CREATE_VALIDATED_DAILYPLAN_PROPOSAL,
+    TOOL_CREATE_PROPORTIONAL_DAILYPLAN_CALORIE_PROPOSAL,
     TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL,
+    TOOL_CREATE_VALIDATED_DAILYPLAN_PROPOSAL,
     TOOL_CREATE_VALIDATED_MEAL_PROPOSAL,
     TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
+    TOOL_PREPARE_PRODUCT_ACTION,
     get_tool_spec,
     normalize_tool_name,
     validate_tool_request,
@@ -167,7 +167,7 @@ def _extract_proposal_ids(value: Any) -> tuple[int, ...]:
 
 
 def _looks_like_proposal_mapping(value: Mapping[str, Any]) -> bool:
-    keys = set(str(key) for key in value.keys())
+    keys = {str(key) for key in value.keys()}
     return bool({"proposal_type", "validation_summary", "status", "source"} & keys)
 
 

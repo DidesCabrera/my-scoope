@@ -1,9 +1,3 @@
-from notas.application.queries.read_boundaries import (
-    get_owned_dailyplan_queryset,
-    get_readable_dailyplan_or_404,
-    get_readable_dailyplan_queryset,
-)
-
 from notas.application.dto.dailyplan_dto import (
     DailyPlanDTO,
     DailyPlanFoodAggregationDTO,
@@ -15,13 +9,16 @@ from notas.application.queries.meal_queries import (
     build_meal_food_dto,
     build_meal_kpi_dto,
 )
-
-from notas.application.services.nutrition.nutrition_kpis import get_ppk_dailyplan
-from notas.domain.models import DailyPlan
-
+from notas.application.queries.read_boundaries import (
+    get_owned_dailyplan_queryset,
+    get_readable_dailyplan_or_404,
+    get_readable_dailyplan_queryset,
+)
 from notas.application.services.food_imports.localized_names import (
     resolve_food_display_name,
 )
+from notas.application.services.nutrition.nutrition_kpis import get_ppk_dailyplan
+from notas.domain.models import DailyPlan
 
 
 def _cached_or_computed(value, fallback):

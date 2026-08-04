@@ -11,26 +11,26 @@ from notas.application.ai_intake.dailyplan_generator import (
     DailyPlanGeneratorError,
     generate_dailyplan_proposal_from_brief_proposal,
 )
+from notas.application.proposals.contracts import (
+    CREATE_DAILYPLAN_INTENT,
+    CREATE_MEAL_INTENT,
+    resolve_proposal_intent,
+)
+from notas.application.proposals.subject_context_warnings import (
+    proposal_requires_external_subject_ack,
+)
 from notas.application.queries.proposal_queries import (
     get_available_proposal_queryset,
     get_proposal_detail,
     list_user_proposals,
 )
 from notas.application.services.commands.proposal_commands import (
+    apply_approved_create_dailyplan_proposal,
+    apply_approved_create_meal_proposal,
     approve_proposal,
     cancel_proposal,
     delete_proposal,
     reject_proposal,
-    apply_approved_create_dailyplan_proposal,
-    apply_approved_create_meal_proposal,
-)
-from notas.application.proposals.subject_context_warnings import (
-    proposal_requires_external_subject_ack,
-)
-from notas.application.proposals.contracts import (
-    CREATE_DAILYPLAN_INTENT,
-    CREATE_MEAL_INTENT,
-    resolve_proposal_intent,
 )
 from notas.presentation.composition.viewmodel.components.builder_headers import (
     build_page_header,
@@ -40,8 +40,6 @@ from notas.presentation.config.viewmodel_config import (
     PROPOSAL_VIEWMODE_DETAIL,
     PROPOSAL_VIEWMODE_LIST,
 )
-from notas.presentation.viewmodels.base_vm import BaseVM
-
 from notas.presentation.proposals.entity_page import (
     ProposalEntityDetailContentVM,
     build_proposal_entity_content,
@@ -56,6 +54,7 @@ from notas.presentation.proposals.list_page import (
 from notas.presentation.proposals.proposal_review_viewmodels import (
     build_proposal_review_vm,
 )
+from notas.presentation.viewmodels.base_vm import BaseVM
 
 
 @dataclass

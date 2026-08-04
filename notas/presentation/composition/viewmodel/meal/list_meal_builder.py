@@ -1,6 +1,6 @@
-from notas.presentation.viewmodels.content.meal.list_meal_vm import *
-from notas.presentation.config.viewmodel_config import ALLOC_PCT_OUTSIDE_THRESHOLD
 from notas.presentation.composition.viewmodel.components.builder_headers import build_page_header
+from notas.presentation.config.viewmodel_config import ALLOC_PCT_OUTSIDE_THRESHOLD
+from notas.presentation.viewmodels.content.meal.list_meal_vm import *
 
 
 def _resolve_title_url(actions):

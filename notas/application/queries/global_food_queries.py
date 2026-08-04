@@ -4,7 +4,6 @@ from django.db.models import Case, IntegerField, Q, QuerySet, Value, When
 
 from notas.domain.models import Food
 
-
 DEFAULT_GLOBAL_FOOD_LIMIT = 50
 MAX_GLOBAL_FOOD_LIMIT = 200
 

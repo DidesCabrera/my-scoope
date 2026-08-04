@@ -10,8 +10,8 @@ from django.conf import settings
 
 from ai_assistant.application.chat_engines import ChatEngine
 from notas.application.ai_intake.real_provider_validation import (
-    RealProviderValidationReport,
     OUTCOME_FIRST_ACTION_TYPE,
+    RealProviderValidationReport,
     run_real_provider_validation,
 )
 

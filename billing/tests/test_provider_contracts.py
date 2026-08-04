@@ -9,6 +9,13 @@ from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 
 from accounts.models import AccountPlan, AccountSubscription
+from billing.application.contracts import ProviderPaymentSnapshot, ProviderSubscriptionSnapshot
+from billing.infrastructure.providers.fake import FakePaymentGateway, FakeTaxDocumentGateway
+from billing.infrastructure.providers.mercado_pago import MercadoPagoClient, MercadoPagoProviderError
+from billing.infrastructure.providers.mercado_pago_webhooks import (
+    InvalidMercadoPagoSignature,
+    verify_mercado_pago_signature,
+)
 from billing.models import (
     BillingEvent,
     BillingPayment,
@@ -17,14 +24,6 @@ from billing.models import (
     ProviderSubscription,
     TaxDocument,
 )
-from billing.application.contracts import ProviderPaymentSnapshot, ProviderSubscriptionSnapshot
-from billing.infrastructure.providers.fake import FakePaymentGateway, FakeTaxDocumentGateway
-from billing.infrastructure.providers.mercado_pago import MercadoPagoClient, MercadoPagoProviderError
-from billing.infrastructure.providers.mercado_pago_webhooks import (
-    InvalidMercadoPagoSignature,
-    verify_mercado_pago_signature,
-)
-
 
 SECRET = "webhook-test-secret"
 

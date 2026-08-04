@@ -17,7 +17,6 @@ from food_catalog.infrastructure.imports.governance import (
 )
 from food_catalog.models import CatalogFood, CatalogFoodPortion, CatalogFoodSource, CatalogImportBatch
 
-
 MANUAL_INTAKE_SOURCE_NAME = "manual_evidence_intake"
 REQUIRED_COLUMNS = (
     "display_name", "protein_g_per_100g", "carbs_g_per_100g", "fat_g_per_100g",

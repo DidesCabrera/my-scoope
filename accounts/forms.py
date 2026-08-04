@@ -1,11 +1,11 @@
 from __future__ import annotations
 
+from allauth.account.forms import SignupForm
 from django import forms
 from django.utils import timezone
-from allauth.account.forms import SignupForm
 
-from notas.domain.models import Profile
 from accounts.turnstile import validate_signup_token
+from notas.domain.models import Profile
 
 
 class NutritionOnboardingForm(forms.Form):

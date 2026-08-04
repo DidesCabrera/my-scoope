@@ -1,9 +1,8 @@
-from django.urls import reverse, NoReverseMatch
+from django.urls import NoReverseMatch, reverse
 
 from notas.application.services.access.capabilities import get_capabilities
-from notas.presentation.routing.meal import meal_url, meal_configure_url, meal_list_url
 from notas.presentation.config.viewmodel_config import *
-
+from notas.presentation.routing.meal import meal_configure_url, meal_list_url, meal_url
 
 # ==================================================
 # 1. ENTITY ACTION DEFINITIONS

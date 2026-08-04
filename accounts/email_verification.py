@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 SMTP_EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
 

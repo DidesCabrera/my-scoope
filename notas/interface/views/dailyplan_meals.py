@@ -1,60 +1,18 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_POST
-from django.http import Http404, HttpResponseForbidden, JsonResponse
-from django.contrib import messages
-from notas.application.services.access.capabilities import get_capabilities
-from notas.domain.models import Meal, MealFood, DailyPlan, DailyPlanMeal, Food, DailyPlanMealShare
-from notas.presentation.config.viewmodel_config import (
-    DAILYPLAN_MEAL_VIEWMODE_EDIT,
-    DAILYPLAN_MEAL_VIEWMODE_DRAFT_DEEP_EDIT,
-    DAILYPLAN_MEAL_VIEWMODE_DETAIL,
-    PROGRAM_VIEWMODE_PERSONAL_DETAIL,
-)
-from notas.presentation.composition.viewmodel.dpm.detail_dpm_builder import build_dpm_detail_vm
-from notas.presentation.composition.js.dpm_food_picker_builder import build_dpm_food_picker_context_payload
-from notas.presentation.composition.js.food_picker_builder import build_food_picker_foods_payload
-from notas.application.services.nutrition.nutrition_kpis import build_nutrition_kpis_from_meal, build_nutrition_kpis_from_dailyplan
 import json
-from django.core.serializers.json import DjangoJSONEncoder
-
-from notas.presentation.viewmodels.base_vm import BaseVM
-from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
-from notas.presentation.navigation.program_context import (
-    compact_program_breadcrumbs,
-    day_plan_parent,
-    dailyplan_context_url,
-    dpm_parent,
-    get_program_day_for_user,
-    program_parent,
-    week_parent,
-)
-from notas.presentation.composition.viewmodel.components.builder_headers import build_page_header
-from notas.application.services.commands.meal_commands import (
-    fork_meal_for_dailyplan,
-    save_dailyplan_meal_to_library,
-    save_food_in_meal,
-)
-
-from django.urls import reverse
-from notas.interface.forms.forms import DailyPlanMealShareForm
-from notas.application.services.commands.share_commands import (
-    accept_dailyplanmeal_share,
-    create_dailyplanmeal_share,
-)
-from django.conf import settings
-from email_delivery.services import deliver_share_invitation
 from dataclasses import dataclass
-from notas.application.services.notifications.share_emails import build_share_invitation_email
 
-from notas.presentation.pages.dpm_pages import (
-    get_dpm_detail_page_data,
-    get_dpm_edit_page_data,
-)
-
-from django.http import HttpResponseForbidden, JsonResponse
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import transaction
+from django.http import Http404, HttpResponseForbidden, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.views.decorators.http import require_POST
 
+from email_delivery.services import deliver_share_invitation
+from notas.application.services.access.capabilities import get_capabilities
 from notas.application.services.commands.dailyplan_commands import (
     add_existing_meal_to_dailyplan,
     create_empty_meal_for_dailyplan_meal,
@@ -62,6 +20,47 @@ from notas.application.services.commands.dailyplan_commands import (
     reorder_dailyplan_meals,
     update_dailyplan_meal,
 )
+from notas.application.services.commands.meal_commands import (
+    fork_meal_for_dailyplan,
+    save_dailyplan_meal_to_library,
+    save_food_in_meal,
+)
+from notas.application.services.commands.share_commands import (
+    accept_dailyplanmeal_share,
+    create_dailyplanmeal_share,
+)
+from notas.application.services.notifications.share_emails import build_share_invitation_email
+from notas.application.services.nutrition.nutrition_kpis import (
+    build_nutrition_kpis_from_dailyplan,
+    build_nutrition_kpis_from_meal,
+)
+from notas.domain.models import DailyPlan, DailyPlanMeal, DailyPlanMealShare, Food, Meal, MealFood
+from notas.interface.forms.forms import DailyPlanMealShareForm
+from notas.presentation.composition.js.dpm_food_picker_builder import build_dpm_food_picker_context_payload
+from notas.presentation.composition.js.food_picker_builder import build_food_picker_foods_payload
+from notas.presentation.composition.viewmodel.components.builder_headers import build_page_header
+from notas.presentation.composition.viewmodel.dpm.detail_dpm_builder import build_dpm_detail_vm
+from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
+from notas.presentation.config.viewmodel_config import (
+    DAILYPLAN_MEAL_VIEWMODE_DETAIL,
+    DAILYPLAN_MEAL_VIEWMODE_DRAFT_DEEP_EDIT,
+    DAILYPLAN_MEAL_VIEWMODE_EDIT,
+    PROGRAM_VIEWMODE_PERSONAL_DETAIL,
+)
+from notas.presentation.navigation.program_context import (
+    compact_program_breadcrumbs,
+    dailyplan_context_url,
+    day_plan_parent,
+    dpm_parent,
+    get_program_day_for_user,
+    program_parent,
+    week_parent,
+)
+from notas.presentation.pages.dpm_pages import (
+    get_dpm_detail_page_data,
+    get_dpm_edit_page_data,
+)
+from notas.presentation.viewmodels.base_vm import BaseVM
 
 
 @dataclass(frozen=True)

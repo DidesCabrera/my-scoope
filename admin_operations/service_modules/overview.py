@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-
 from django.urls import reverse
 
+from admin_operations.models import AdminOperationAuditEvent
 from admin_operations.selectors import (
     get_operations_overview_metrics,
 )
@@ -12,8 +12,6 @@ from admin_operations.viewmodels import (
     AdminOperationsPrincipleVM,
     AdminOperationsQueueVM,
 )
-from admin_operations.models import AdminOperationAuditEvent
-
 
 PRIORITY_ORDER = {"warning": 0, "watch": 1, "info": 2, "healthy": 3}
 
@@ -23,6 +21,7 @@ from admin_operations.service_modules.common import (
     _queue_priority,
     _warning_to_vm,
 )
+
 
 def build_operations_overview_vm() -> AdminOperationsOverviewVM:
     metrics = get_operations_overview_metrics()

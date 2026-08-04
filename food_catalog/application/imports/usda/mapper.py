@@ -5,7 +5,6 @@ from decimal import Decimal, InvalidOperation
 from food_catalog.application.imports.contracts import ImportedFoodDTO
 from food_catalog.application.imports.sources import SOURCE_USDA
 
-
 USDA_SOURCE_DATASET_DEFAULT = "food_data_central"
 
 USDA_NUTRIENT_PROTEIN = "203"

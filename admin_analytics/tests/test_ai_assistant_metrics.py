@@ -4,9 +4,11 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
+from accounts.models import AccountPlan, AccountSubscription, CreditLedger, CreditWallet
+from accounts.services.ai_credits import AI_CREDIT_REFERENCE_TYPE
 from admin_analytics.selectors.ai_assistant import get_ai_assistant_metrics
 from ai_assistant.application.credits import current_period
-from ai_assistant.models import AICreditLedger, AIUsageEvent, AIUserCreditQuota
+from ai_assistant.models import AIUsageEvent
 from notas.domain.model_modules.proposals import AiNutritionChat, NutritionProposal
 
 
@@ -73,22 +75,32 @@ class AdminAnalyticsAIAssistantMetricsTests(TestCase):
             status=AIUsageEvent.Status.ERROR,
             error_type="provider_error",
         )
-        AIUserCreditQuota.objects.create(
-            user=self.member,
-            period=period,
-            plan_code="basic",
+        plan = AccountPlan.objects.create(
+            slug="basic",
+            name="Basic",
+            status=AccountPlan.Status.ACTIVE,
+            included_monthly_credits=10,
             monthly_credit_limit=10,
             daily_credit_limit=4,
-            credits_used=8,
-            hard_blocked=True,
         )
-        AICreditLedger.objects.create(
+        AccountSubscription.objects.create(user=self.member, plan=plan)
+        wallet = CreditWallet.objects.create(
             user=self.member,
-            usage_event=completed_event,
             period=period,
-            plan_code="basic",
-            action_type="assistant.chat",
-            credits=3,
+            plan_snapshot_code="basic",
+            balance=7,
+            is_frozen=True,
+        )
+        CreditLedger.objects.create(
+            wallet=wallet,
+            user=self.member,
+            period=period,
+            plan_snapshot_code="basic",
+            kind=CreditLedger.Kind.CONSUME,
+            credits_delta=-3,
+            balance_after=7,
+            reference_type=AI_CREDIT_REFERENCE_TYPE,
+            reference_id=completed_event.turn_id or "analytics-completed-event",
         )
         proposal = NutritionProposal.objects.create(
             created_by=self.member,

@@ -1,4 +1,5 @@
-from datetime import date, datetime, time, timedelta, timezone as dt_timezone
+from datetime import date, datetime, time, timedelta
+from datetime import timezone as dt_timezone
 
 from django.contrib.auth.models import User
 from django.core.management import call_command
@@ -7,6 +8,7 @@ from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
+from notas.application.services.calendarization.scheduling import local_datetime_to_utc
 from notas.application.services.commands.calendarization_commands import (
     activate_program_calendarization,
     cancel_calendarization,
@@ -16,7 +18,6 @@ from notas.application.services.commands.calendarization_commands import (
     resume_calendarization,
     update_calendarization_preferences,
 )
-from notas.application.services.calendarization.scheduling import local_datetime_to_utc
 from notas.application.services.notifications.web_push import (
     WebPushSendResult,
     send_web_push,
@@ -34,7 +35,6 @@ from notas.domain.models import (
     ScheduledNotificationEvent,
     WebPushSubscription,
 )
-
 
 UTC = dt_timezone.utc
 

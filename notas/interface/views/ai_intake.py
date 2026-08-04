@@ -6,8 +6,10 @@ from django.contrib.auth.decorators import login_required
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 
+from ai_assistant.application.async_jobs import AsyncJobContractError, async_jobs_enabled
 from ai_assistant.application.chat_engines import ChatEngineRequest
 from ai_assistant.application.prepared_actions import (
     cancel_prepared_action,
@@ -18,7 +20,12 @@ from ai_assistant.application.tools import (
     execute_profile_commit_tool,
 )
 from ai_assistant.domain import AssistantToolRequest, AssistantToolStatus
+from ai_assistant.models import AIAsyncJob
 from core.rate_limits import limit_ai_assistant_turn
+from notas.application.ai_intake.async_turns import (
+    NUTRITION_INTAKE_TURN_RESULT_CONTRACT,
+    enqueue_nutrition_intake_turn,
+)
 from notas.application.ai_intake.chat_engine import get_nutrition_intake_chat_engine
 from notas.application.ai_intake.chat_history import (
     AI_NUTRITION_CHAT_SESSION_KEY,
@@ -32,16 +39,20 @@ from notas.application.ai_intake.dailyplan_generator import (
 from notas.application.ai_intake.nutrition_brief import (
     AI_NUTRITION_BRIEF_SESSION_KEY,
     AI_NUTRITION_CONVERSATION_SESSION_KEY,
+    NutritionConversationState,
+    append_profile_update_confirmation_message,
     build_brief_from_form,
     build_conversation_from_brief,
     build_intake_result,
-    append_profile_update_confirmation_message,
     build_intake_result_from_brief,
     deserialize_brief,
     deserialize_conversation,
     serialize_brief,
     serialize_conversation,
-    NutritionConversationState,
+)
+from notas.application.ai_intake.plan_iteration import (
+    create_iterated_dailyplan_proposal,
+    should_iterate_generated_plan,
 )
 from notas.application.ai_intake.profile_draft_update import (
     apply_profile_update_result_to_brief,
@@ -51,11 +62,13 @@ from notas.application.ai_intake.profile_draft_update import (
 from notas.application.ai_intake.proposal_from_brief import (
     create_nutrition_brief_proposal,
 )
-from notas.application.ai_intake.plan_iteration import (
-    create_iterated_dailyplan_proposal,
-    should_iterate_generated_plan,
-)
 from notas.domain.models import AiNutritionChat
+from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
+from notas.presentation.config.viewmodel_config import (
+    CHAT_VIEWMODE_DETAIL,
+    CHAT_VIEWMODE_LIST,
+    HOME_VIEWMODE,
+)
 from notas.presentation.pages.ai_intake_page import (
     append_generated_plan_message,
     append_iterated_plan_message,
@@ -63,13 +76,9 @@ from notas.presentation.pages.ai_intake_page import (
     build_chat_list_content,
     build_intake_content,
 )
-from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
-from notas.presentation.config.viewmodel_config import (
-    CHAT_VIEWMODE_DETAIL,
-    CHAT_VIEWMODE_LIST,
-    HOME_VIEWMODE,
-)
 from notas.presentation.viewmodels.base_vm import BaseVM
+
+AI_NUTRITION_PENDING_JOB_SESSION_KEY = "ai_nutrition_pending_job_id"
 
 
 def _continue_chat_with_active_engine(*, request, message: str, existing_payload=None, existing_chat_id=None):
@@ -120,6 +129,45 @@ def _render_chat_thread_json(request, *, result, conversation, prompt: str = "")
             "engine_status": content_vm.engine_status or {},
         }
     )
+
+
+def _async_job_accepted_response(job: AIAsyncJob) -> JsonResponse:
+    return JsonResponse(
+        {
+            "job_id": str(job.public_id),
+            "status": job.status,
+            "status_url": reverse("ai_nutrition_async_job_status", args=[job.public_id]),
+            "retry_after_ms": 750,
+        },
+        status=202,
+    )
+
+
+def _apply_async_job_result_to_session(request, job: AIAsyncJob):
+    payload = dict(job.result_payload or {})
+    if payload.get("contract") != NUTRITION_INTAKE_TURN_RESULT_CONTRACT:
+        raise ValueError("unexpected_async_job_result_contract")
+    conversation = deserialize_conversation(payload.get("conversation"))
+    if conversation is None:
+        raise ValueError("invalid_async_job_conversation")
+    _sync_session_from_conversation(
+        request,
+        conversation,
+        existing_chat_id=payload.get("chat_id") or None,
+    )
+    request.session.pop(AI_NUTRITION_PENDING_JOB_SESSION_KEY, None)
+    return conversation
+
+
+def _pending_async_job(request) -> AIAsyncJob | None:
+    public_id = request.session.get(AI_NUTRITION_PENDING_JOB_SESSION_KEY)
+    if not public_id:
+        return None
+    try:
+        return AIAsyncJob.objects.get(public_id=public_id, user=request.user)
+    except (AIAsyncJob.DoesNotExist, TypeError, ValueError):
+        request.session.pop(AI_NUTRITION_PENDING_JOB_SESSION_KEY, None)
+        return None
 
 
 def _sync_session_from_conversation(request, conversation, *, existing_chat_id=None) -> AiNutritionChat:
@@ -240,6 +288,32 @@ def ai_nutrition_intake(request):
             if action == "continue_conversation":
                 existing_payload = request.session.get(AI_NUTRITION_CONVERSATION_SESSION_KEY)
                 existing_chat_id = request.session.get(AI_NUTRITION_CHAT_SESSION_KEY)
+
+            if async_jobs_enabled():
+                idempotency_key = (
+                    request.headers.get("Idempotency-Key")
+                    or request.POST.get("idempotency_key")
+                    or uuid.uuid4().hex
+                )
+                try:
+                    job, _ = enqueue_nutrition_intake_turn(
+                        user=request.user,
+                        message=message,
+                        existing_payload=existing_payload,
+                        existing_chat_id=existing_chat_id,
+                        idempotency_key=idempotency_key,
+                    )
+                except AsyncJobContractError as exc:
+                    if _is_async_request(request):
+                        status = 409 if exc.code == "idempotency_conflict" else 400
+                        return JsonResponse({"error": exc.code}, status=status)
+                    messages.error(request, "La solicitud no pudo ser aceptada para procesamiento.")
+                    return redirect("ai_nutrition_intake")
+                if _is_async_request(request):
+                    return _async_job_accepted_response(job)
+                request.session[AI_NUTRITION_PENDING_JOB_SESSION_KEY] = str(job.public_id)
+                request.session.modified = True
+                return redirect("ai_nutrition_intake")
 
             try:
                 conversation = _continue_chat_with_active_engine(
@@ -400,20 +474,46 @@ def ai_nutrition_intake(request):
             return redirect("ai_nutrition_intake")
 
     else:
+        pending_job = _pending_async_job(request) if async_jobs_enabled() else None
+        if pending_job and pending_job.status == AIAsyncJob.Status.SUCCEEDED:
+            conversation = _apply_async_job_result_to_session(request, pending_job)
+            result = conversation.result
+            prompt = result.prompt
+            pending_job = None
+        elif pending_job and pending_job.status in {
+            AIAsyncJob.Status.FAILED,
+            AIAsyncJob.Status.CANCELLED,
+        }:
+            request.session.pop(AI_NUTRITION_PENDING_JOB_SESSION_KEY, None)
+            messages.error(request, "No pude completar la respuesta. Inténtalo nuevamente.")
+            pending_job = None
         prompt = (request.GET.get("prompt") or "").strip()
         if prompt:
-            conversation = _continue_chat_with_active_engine(
-                request=request,
-                message=prompt,
-                existing_payload=None,
-                existing_chat_id=None,
-            )
-            _sync_session_from_conversation(request, conversation, existing_chat_id=None)
-            return redirect("ai_nutrition_intake")
+            if async_jobs_enabled():
+                job, _ = enqueue_nutrition_intake_turn(
+                    user=request.user,
+                    message=prompt,
+                    existing_payload=None,
+                    existing_chat_id=None,
+                    idempotency_key=uuid.uuid4().hex,
+                )
+                request.session[AI_NUTRITION_PENDING_JOB_SESSION_KEY] = str(job.public_id)
+                request.session.modified = True
+                return redirect("ai_nutrition_intake")
+            else:
+                conversation = _continue_chat_with_active_engine(
+                    request=request,
+                    message=prompt,
+                    existing_payload=None,
+                    existing_chat_id=None,
+                )
+                _sync_session_from_conversation(request, conversation, existing_chat_id=None)
+                return redirect("ai_nutrition_intake")
 
-        conversation = deserialize_conversation(
-            request.session.get(AI_NUTRITION_CONVERSATION_SESSION_KEY)
-        )
+        if conversation is None:
+            conversation = deserialize_conversation(
+                request.session.get(AI_NUTRITION_CONVERSATION_SESSION_KEY)
+            )
         if conversation:
             result = conversation.result
             prompt = result.prompt
@@ -446,10 +546,53 @@ def ai_nutrition_intake(request):
         content=content_vm,
     )
 
+    pending_job = _pending_async_job(request) if async_jobs_enabled() else None
     return render(
         request,
         "notas/ai_intake.html",
-        base_vm.as_context(),
+        {
+            **base_vm.as_context(),
+            "pending_ai_job": pending_job,
+            "pending_ai_job_status_url": (
+                reverse("ai_nutrition_async_job_status", args=[pending_job.public_id])
+                if pending_job
+                else ""
+            ),
+        },
+    )
+
+
+@require_http_methods(["GET"])
+@login_required
+def ai_nutrition_async_job_status(request, job_id):
+    job = get_object_or_404(AIAsyncJob, public_id=job_id, user=request.user)
+    if job.status == AIAsyncJob.Status.SUCCEEDED:
+        try:
+            conversation = _apply_async_job_result_to_session(request, job)
+        except ValueError:
+            return JsonResponse({"error": "invalid_async_job_result"}, status=500)
+        return _render_chat_thread_json(
+            request,
+            result=conversation.result,
+            conversation=conversation,
+            prompt=conversation.result.prompt,
+        )
+    if job.status in {AIAsyncJob.Status.FAILED, AIAsyncJob.Status.CANCELLED}:
+        return JsonResponse(
+            {
+                "error": "assistant_turn_failed",
+                "status": job.status,
+                "retryable": False,
+            },
+            status=422,
+        )
+    return JsonResponse(
+        {
+            "job_id": str(job.public_id),
+            "status": job.status,
+            "retry_after_ms": 750,
+        },
+        status=202,
     )
 
 

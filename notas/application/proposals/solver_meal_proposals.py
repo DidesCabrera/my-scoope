@@ -5,14 +5,6 @@ from typing import Any, Mapping
 
 from django.db import transaction
 
-from nutrition_solver.application.contracts import (
-    OptimizationInput,
-    OptimizationStatus,
-    SolverConstraint,
-    optimize_meal_portions,
-)
-from nutrition_solver.domain.models import MacroTarget
-
 from notas.application.dto.proposal_payloads import CREATE_MEAL_INTENT
 from notas.application.queries.solver_food_candidates import (
     DEFAULT_SOLVER_FOOD_CANDIDATE_LIMIT,
@@ -23,7 +15,13 @@ from notas.application.services.commands.proposal_commands import (
     create_validated_meal_proposal,
 )
 from notas.domain.models import NutritionProposal
-
+from nutrition_solver.application.contracts import (
+    OptimizationInput,
+    OptimizationStatus,
+    SolverConstraint,
+    optimize_meal_portions,
+)
+from nutrition_solver.domain.models import MacroTarget
 
 SOLVER_MEAL_PROPOSAL_VERSION = "nutrition_solver_meal_proposal_v1"
 DEFAULT_SOLVER_MEAL_CANDIDATE_LIMIT = 40

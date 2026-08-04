@@ -1,6 +1,5 @@
 from django.test import SimpleTestCase
 
-from nutrition_solver.domain.models import MacroTarget
 from nutrition_solver.application.validators import (
     STATUS_ERROR,
     STATUS_OK,
@@ -8,6 +7,7 @@ from nutrition_solver.application.validators import (
     PortionValidationInput,
     validate_generated_dailyplan,
 )
+from nutrition_solver.domain.models import MacroTarget
 
 
 class NutritionEngineStrictValidatorTests(SimpleTestCase):
