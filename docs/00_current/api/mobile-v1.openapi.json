@@ -767,6 +767,20 @@
         "title": "CalendarizationRevisionData",
         "type": "object"
       },
+      "DisclosureAcceptanceInput": {
+        "properties": {
+          "accepted": {
+            "const": true,
+            "title": "Accepted",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "accepted"
+        ],
+        "title": "DisclosureAcceptanceInput",
+        "type": "object"
+      },
       "EntitlementsData": {
         "properties": {
           "available_credits": {
@@ -1564,6 +1578,14 @@
             "title": "Onboarding Version",
             "type": "integer"
           },
+          "review_disclosure_required": {
+            "title": "Review Disclosure Required",
+            "type": "boolean"
+          },
+          "review_disclosure_version": {
+            "title": "Review Disclosure Version",
+            "type": "string"
+          },
           "sex": {
             "title": "Sex",
             "type": "string"
@@ -1577,7 +1599,9 @@
           "sex",
           "timezone_name",
           "onboarding_completed",
-          "onboarding_version"
+          "onboarding_version",
+          "review_disclosure_required",
+          "review_disclosure_version"
         ],
         "title": "ProfileData",
         "type": "object"
@@ -2399,6 +2423,60 @@
           }
         ],
         "summary": "Delete Account"
+      }
+    },
+    "/api/v1/account/disclosures": {
+      "post": {
+        "operationId": "mobile_api_api_accept_disclosures",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DisclosureAcceptanceInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Accept Disclosures"
       }
     },
     "/api/v1/ai/jobs/{job_id}": {

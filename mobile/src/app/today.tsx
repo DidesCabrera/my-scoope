@@ -65,6 +65,7 @@ export default function TodayScreen() {
   );
 
   if (status === "anonymous") return <Redirect href="/login" />;
+  if (status === "authenticated" && profile?.review_disclosure_required) return <Redirect href="./disclosures" />;
   if (status === "authenticated" && !profile?.onboarding_completed) return <Redirect href="/onboarding" />;
   if (loading && !today) return <LoadingState />;
 
@@ -170,6 +171,7 @@ export default function TodayScreen() {
       <Button label="Registrar peso" onPress={() => router.push("/weight")} variant="secondary" />
       <Button label="Digitalizar etiqueta nutricional" onPress={() => router.push("./label-capture")} variant="secondary" />
       <Button label="Mi suscripción" onPress={() => router.push("./subscription")} variant="secondary" />
+      <Button label="Cuenta, privacidad y ayuda" onPress={() => router.push("./account")} variant="secondary" />
       {today?.reminders ? (
         <Button label="Configurar recordatorios" onPress={() => router.push("./reminders")} variant="secondary" />
       ) : null}

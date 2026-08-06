@@ -156,7 +156,7 @@
       "reactCompiler": true
     },
     "extra": {
-      "mobileContract": "cml07.v1"
+      "mobileContract": "cml08.v1"
     }
   }
 }

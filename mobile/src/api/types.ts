@@ -25,7 +25,11 @@ export type ProfileData = {
   onboarding_completed: boolean;
   onboarding_version: number;
   current_weight_kg: number | null;
+  review_disclosure_required: boolean;
+  review_disclosure_version: string;
 };
+
+export type AccountDeletionData = { receipt_id: string };
 
 export type CalendarizationData = {
   id: number;

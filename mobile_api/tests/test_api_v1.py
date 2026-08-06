@@ -93,6 +93,7 @@ class MobileAPIV1Tests(TestCase):
             "/api/v1/program/revisions/{revision_id}/decision",
             "/api/v1/weights",
             "/api/v1/account/delete",
+            "/api/v1/account/disclosures",
             "/api/v1/foods",
             "/api/v1/foods/label-captures",
             "/api/v1/ai/turns",
@@ -116,6 +117,7 @@ class MobileAPIV1Tests(TestCase):
         self.assertEqual(session.json()["data"]["device_session_id"], str(self.device_session.public_id))
         self.assertEqual(profile.status_code, 200)
         self.assertFalse(profile.json()["data"]["onboarding_completed"])
+        self.assertTrue(profile.json()["data"]["review_disclosure_required"])
         self.assertEqual(entitlements.status_code, 200)
         self.assertEqual(entitlements.json()["data"]["plan_slug"], "basic")
 
@@ -532,3 +534,19 @@ class MobileAPIV1Tests(TestCase):
         self.assertFalse(self.user.is_active)
         self.assertEqual(AccountDeletionRecord.objects.count(), 1)
         self.assertFalse(WeightLog.objects.filter(user=self.user).exists())
+
+    def test_mobile_disclosure_acceptance_is_versioned_and_persisted(self):
+        response = self.client.post(
+            "/api/v1/account/disclosures",
+            data={"accepted": True},
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.json()["data"]["review_disclosure_required"])
+        self.user.profile.refresh_from_db()
+        self.assertEqual(
+            self.user.profile.mobile_disclosure_version,
+            self.user.profile.MOBILE_DISCLOSURE_VERSION,
+        )
+        self.assertIsNotNone(self.user.profile.mobile_disclosure_accepted_at)

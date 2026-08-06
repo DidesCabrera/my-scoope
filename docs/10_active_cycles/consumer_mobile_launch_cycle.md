@@ -36,7 +36,7 @@ or adjustment claims; App Store work remains separate from general product work.
 | CML05 · Nutrition-label capture | completed (repository; device gate pending) | Product/native | Apple Vision OCR stays on-device, normalizes label values, exposes uncertainty and creates an idempotent private food only after user confirmation. |
 | CML06 · B2C subscriptions | completed (repository; App Store sandbox gate pending) | Product/App Store | Independent Apple/Mercado Pago evidence aggregates deterministically into `AccountSubscription`; StoreKit purchase, restore and lifecycle reconciliation are implemented, with physical sandbox proof still external. |
 | CML07 · iOS capabilities | completed (repository; device/App Store gate pending) | App Store | Apple login shares PKCE; APNs/local delivery is exclusive per device; Keychain, camera-only permission, privacy manifests and sanitized crash reporting pass repository/prebuild QA. Signing, OCR/camera/APNs and archive proof remain external. |
-| CML08 · Review readiness | planned | App Store | Privacy labels, consent, metadata, screenshots, demo program, internal/external TestFlight and complete reviewer notes. |
+| CML08 · Review readiness | completed (repository; App Store/TestFlight gates pending) | App Store | Versioned transparency acceptance, in-app privacy/support/deletion, reconciled privacy labels, metadata, screenshot plan, reproducible demo program and complete reviewer notes. Internal/external TestFlight and submission remain external. |
 
 ## Calendarization target
 
@@ -227,12 +227,42 @@ is repository-complete; its native gates remain external.
   On 2026-08-05 the 95-test fast gate, all 1,735 Django tests, 11 mobile tests,
   lint, strict TypeScript, 14-route web export and production prebuild passed.
 
-Repository completion does not claim an archive or physical iPhone pass. The
-host has macOS 15.3.1 and Xcode 14.0; Expo SDK 57 requires Xcode 26.4, which in
-turn requires macOS Tahoe 26.2+. After that host gate, CML07 still needs Apple
-Developer capabilities/keys, the Apple SocialApp, staging OAuth, Sentry build
-secrets, signed TestFlight installation and physical Apple login, camera/Vision,
-local/APNs, Keychain restore and sanitized-crash proof. CML08 is the next patch.
+Repository completion does not claim an archive or physical iPhone pass. The host
+was upgraded to macOS 26.6 and Xcode 26.6 with the iOS 26.5 runtime; CocoaPods,
+the native simulator build and launch now pass. CML07 still needs Apple Developer
+capabilities/keys, the Apple SocialApp, staging OAuth, Sentry build secrets, a
+signed TestFlight installation and physical Apple login, camera/Vision, local/APNs,
+Keychain restore and sanitized-crash proof.
+
+## CML08 closure evidence
+
+- Every authenticated consumer must explicitly acknowledge the current versioned
+  medical, AI/OCR review and privacy disclosure before onboarding or Today. The
+  server owns durable acceptance state and can require a new acknowledgement when
+  the contract changes.
+- The native Account screen links privacy, terms and support, opens a bounded
+  reporting channel and exposes deliberate in-app account deletion with an
+  identity-free receipt.
+- Published privacy, terms and support copy now describe the consumer iOS product,
+  StoreKit, on-device label OCR, sanitized diagnostics, retention and user controls.
+- `mobile/store/` contains bounded es-CL metadata, App Privacy answers, TestFlight
+  copy, a six-shot 6.9-inch screenshot manifest and complete reviewer notes without
+  credentials.
+- `prepare_app_review_demo` idempotently creates a seven-day lived program for an
+  existing dedicated reviewer account without accepting a password or replacing
+  another current program.
+- Migration 0051, generated OpenAPI, backend tests and mobile contract tests protect
+  disclosure persistence, review endpoints, metadata limits, privacy positioning,
+  screenshot coverage and absence of committed reviewer secrets.
+- Local closure on 2026-08-06 passed the 95-test fast gate, all 1,737 Django
+  tests, mobile lint, strict TypeScript, 12 Node tests, the 16-route Expo web
+  export and an Xcode 26.6 build for the iPhone 17 Pro simulator.
+
+Repository completion does not claim legal approval, App Store Connect entry,
+screenshots, internal/external TestFlight, subscription submission or App Review
+approval. Those external gates are sequenced in
+`docs/40_technical/operations/cml08_app_store_review_runbook.md` and require the
+same signed release candidate that passes the remaining CML07 physical-device matrix.
 
 ## Release order
 

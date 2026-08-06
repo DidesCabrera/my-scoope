@@ -21,6 +21,7 @@ export default function OnboardingScreen() {
   const [error, setError] = useState<string | null>(null);
 
   if (status === "anonymous") return <Redirect href="/login" />;
+  if (profile?.review_disclosure_required) return <Redirect href="./disclosures" />;
   if (profile?.onboarding_completed) return <Redirect href="/today" />;
 
   async function submit() {

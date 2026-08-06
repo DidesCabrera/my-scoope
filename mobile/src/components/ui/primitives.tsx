@@ -132,6 +132,7 @@ export function Field({
   placeholder,
   keyboardType,
   autoCapitalize = "none",
+  secureTextEntry = false,
 }: {
   label: string;
   value: string;
@@ -139,6 +140,7 @@ export function Field({
   placeholder?: string;
   keyboardType?: KeyboardTypeOptions;
   autoCapitalize?: "none" | "sentences" | "words" | "characters";
+  secureTextEntry?: boolean;
 }) {
   return (
     <View style={styles.field}>
@@ -150,6 +152,7 @@ export function Field({
         placeholder={placeholder}
         placeholderTextColor={tokens.color.textSubtle}
         selectionColor={tokens.color.interactivePrimary}
+        secureTextEntry={secureTextEntry}
         style={styles.input}
         value={value}
       />

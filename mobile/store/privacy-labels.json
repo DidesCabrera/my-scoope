@@ -1,0 +1,17 @@
+{
+  "tracking": false,
+  "data_not_linked_to_identity": {
+    "diagnostics": ["crash_data"]
+  },
+  "data_linked_to_identity": {
+    "contact_info": ["name", "email_address"],
+    "identifiers": ["user_id", "device_id"],
+    "purchases": ["purchase_history"],
+    "health_and_fitness": ["health", "fitness"],
+    "usage_data": ["product_interaction"],
+    "user_content": ["other_user_content"]
+  },
+  "purposes": ["app_functionality", "product_personalization"],
+  "not_collected": ["raw_payment_card_data", "nutrition_label_photo", "raw_ocr_text"],
+  "review_note": "Reconfirm every third-party SDK data practice in App Store Connect before each submission."
+}

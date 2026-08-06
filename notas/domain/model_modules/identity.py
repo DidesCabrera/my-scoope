@@ -47,6 +47,7 @@ class Profile(models.Model):
 
     ONBOARDING_VERSION_UNSET = 0
     ONBOARDING_VERSION_NUTRITION_V1 = 1
+    MOBILE_DISCLOSURE_VERSION = "cml08.v1"
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
@@ -82,6 +83,17 @@ class Profile(models.Model):
         max_length=64,
         default="UTC",
         help_text="IANA timezone used as the default for user-local scheduling.",
+    )
+    mobile_disclosure_version = models.CharField(
+        max_length=32,
+        blank=True,
+        default="",
+        help_text="Latest mobile safety and privacy disclosure acknowledged by the user.",
+    )
+    mobile_disclosure_accepted_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When the current mobile disclosure was explicitly acknowledged.",
     )
 
     created_at = models.DateTimeField(auto_now_add=True)

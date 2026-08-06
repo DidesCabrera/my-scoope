@@ -49,6 +49,11 @@ def profile_payload(user) -> dict:
         "onboarding_completed": profile.onboarding_completed_at is not None,
         "onboarding_version": profile.onboarding_version,
         "current_weight_kg": body.current_weight_kg,
+        "review_disclosure_required": (
+            profile.mobile_disclosure_version != profile.MOBILE_DISCLOSURE_VERSION
+            or profile.mobile_disclosure_accepted_at is None
+        ),
+        "review_disclosure_version": profile.MOBILE_DISCLOSURE_VERSION,
     }
 
 

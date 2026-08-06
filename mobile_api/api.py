@@ -7,6 +7,7 @@ from ninja.errors import ValidationError as NinjaValidationError
 
 from accounts.forms import AccountDeletionForm, NutritionOnboardingForm
 from accounts.services.deletion import delete_user_account
+from accounts.services.mobile_disclosures import accept_current_mobile_disclosure
 from accounts.services.onboarding import complete_nutrition_onboarding
 from billing.application.services.apple_app_store import AppleEvidenceError, sync_apple_transaction
 from billing.infrastructure.gateways import build_apple_app_store_gateway
@@ -22,6 +23,7 @@ from mobile_api.errors import MobileAPIError, error_envelope
 from mobile_api.schemas import (
     AccountDeletionEnvelope,
     AccountDeletionInput,
+    DisclosureAcceptanceInput,
     ActiveProgramEnvelope,
     AIJobAcceptedEnvelope,
     AIJobResultEnvelope,
@@ -535,6 +537,17 @@ def delete_account(request, payload: AccountDeletionInput):
         )
     result = delete_user_account(user=request.auth.user, source="self_service_mobile_api")
     return _success({"receipt_id": str(result.receipt_id)})
+
+
+@api.post(
+    "/account/disclosures",
+    auth=mobile_bearer,
+    response={200: ProfileEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def accept_disclosures(request, payload: DisclosureAcceptanceInput):
+    _require_scope(request.auth, MOBILE_SCOPE_ACCOUNT)
+    accept_current_mobile_disclosure(user=request.auth.user)
+    return _success(profile_payload(request.auth.user))
 
 
 @api.get(

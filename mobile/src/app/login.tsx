@@ -46,6 +46,7 @@ export default function LoginScreen() {
   }, [completeAuthorizationCode, request?.codeVerifier, response]);
 
   if (status === "authenticated") {
+    if (profile?.review_disclosure_required) return <Redirect href="./disclosures" />;
     return <Redirect href={profile?.onboarding_completed ? "/today" : "/onboarding"} />;
   }
 

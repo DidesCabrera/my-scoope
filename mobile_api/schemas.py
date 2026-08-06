@@ -52,12 +52,18 @@ class ProfileData(Schema):
     onboarding_completed: bool
     onboarding_version: int
     current_weight_kg: float | None = None
+    review_disclosure_required: bool
+    review_disclosure_version: str
 
 
 class ProfileEnvelope(Schema):
     ok: Literal[True] = True
     data: ProfileData
     error: None = None
+
+
+class DisclosureAcceptanceInput(Schema):
+    accepted: Literal[True]
 
 
 class EntitlementsData(Schema):

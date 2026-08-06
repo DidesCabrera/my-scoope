@@ -1,13 +1,32 @@
 import * as Sentry from "@sentry/react-native";
 import * as Notifications from "expo-notifications";
-import { Stack, useRouter } from "expo-router";
+import { type Href, Stack, usePathname, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
-import { SessionProvider } from "@/auth/session-context";
+import { SessionProvider, useSession } from "@/auth/session-context";
 import { tokens } from "@/design/tokens";
 import "@/observability/sentry";
+
+function AuthenticatedRouteGate() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { status, profile } = useSession();
+
+  useEffect(() => {
+    if (status !== "authenticated" || !profile) return;
+    if (profile.review_disclosure_required && pathname !== "/disclosures") {
+      router.replace("/disclosures" as Href);
+      return;
+    }
+    if (!profile.review_disclosure_required && !profile.onboarding_completed && pathname !== "/onboarding") {
+      router.replace("/onboarding" as Href);
+    }
+  }, [pathname, profile, router, status]);
+
+  return null;
+}
 
 function RootLayout() {
   const router = useRouter();
@@ -22,6 +41,7 @@ function RootLayout() {
   return (
     <SafeAreaProvider>
       <SessionProvider>
+        <AuthenticatedRouteGate />
         <Stack
           screenOptions={{
             animation: "slide_from_right",

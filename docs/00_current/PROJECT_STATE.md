@@ -200,7 +200,11 @@ When a plan becomes real, durable outcomes should be promoted into `docs/00_curr
   execution/adherence/reviews/revisions, review-first on-device label capture and
   verified StoreKit purchase/restore/reconciliation, mutually exclusive native
   reminders, Apple login, Keychain/privacy manifests and sanitized mobile crashes.
-  CML08 is next; CML03/CML05-CML07 device/App Store gates remain explicit.
+  CML08 is repository-complete with versioned transparency acceptance, in-app
+  privacy/support/deletion, production legal-copy alignment, App Store metadata and
+  privacy-label sources, a reproducible reviewer demo program, screenshot manifest,
+  TestFlight copy and reviewer notes. CML03/CML05-CML08 physical-device, legal,
+  App Store Connect, TestFlight and submission gates remain explicit.
 - No continuation of BA or PT is implied. New AI Assistant work should start from observed product evidence and a newly scoped cycle, rather than extending the global prompt or reopening a deterministic questionnaire.
 - The current product bets and next experiments live in `PRODUCT_PORTFOLIO.md`; they are
   hypotheses to validate or reformulate, not a fixed feature sequence.
