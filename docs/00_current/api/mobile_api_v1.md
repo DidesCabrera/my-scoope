@@ -39,7 +39,7 @@ schema in memory and fails when the committed contract drifts.
 
 Mobile scopes are `mobile:read`, `mobile:write` and `mobile:account`.
 
-## Consumer vertical through CML05
+## Consumer vertical through CML06
 
 The API exposes health, session, device revocation, profile, consumer onboarding,
 account entitlements, active calendarized program, Today, weight history/write,
@@ -57,6 +57,15 @@ endpoint. It accepts normalized values only after client review, enforces the
 existing food-creation entitlement and creates a private, unverified,
 solver-disabled food with an idempotent receipt. Photos and raw OCR text are not
 part of the API contract.
+
+CML06 adds `GET /subscriptions` and
+`POST /subscriptions/apple/transactions`. The first returns the current effective
+plan, independent provider evidence, a stable Apple account token and only active
+server-configured Apple product identifiers. It intentionally omits price:
+localized price and currency are StoreKit authority. The second accepts StoreKit
+2's signed transaction JWS, requires `mobile:write`, verifies it server-side and
+updates billing evidence before the native client may finish the transaction.
+Nutritionist accounts receive no consumer purchase offer.
 
 Native notification delivery remains CML07; the API already exposes the common
 calendarization schedule that each channel must follow. Food libraries,

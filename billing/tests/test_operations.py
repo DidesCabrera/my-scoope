@@ -135,3 +135,4 @@ class BillingOperationsTests(TestCase):
         self._approved_payment()
         call_command("issue_tax_documents", dry_run=True, limit=10)
         call_command("reconcile_billing", dry_run=True, limit=10)
+        call_command("reconcile_apple_subscriptions", dry_run=True, limit=10)

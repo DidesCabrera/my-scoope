@@ -77,6 +77,39 @@ class EntitlementsEnvelope(Schema):
     error: None = None
 
 
+class AppleSubscriptionProductData(Schema):
+    product_id: str
+    plan_name: str
+    interval: str
+
+
+class SubscriptionEvidenceData(Schema):
+    provider: str
+    status: str
+    period_end: datetime | None = None
+
+
+class SubscriptionData(Schema):
+    eligible: bool
+    purchases_enabled: bool
+    app_account_token: str
+    plan_name: str
+    status: str
+    products: list[AppleSubscriptionProductData]
+    evidence: list[SubscriptionEvidenceData]
+    duplicate_active_providers: bool
+
+
+class SubscriptionEnvelope(Schema):
+    ok: Literal[True] = True
+    data: SubscriptionData
+    error: None = None
+
+
+class AppleTransactionInput(Schema):
+    signed_transaction: str = Field(min_length=20, max_length=20000)
+
+
 class CalendarizationData(Schema):
     id: int
     program_name: str

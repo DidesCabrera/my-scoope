@@ -2,9 +2,12 @@ asgiref==3.11.0
 aiohappyeyeballs==2.7.1
 aiohttp==3.14.3
 aiosignal==1.4.0
+app-store-server-library==3.1.2
+asn1==3.2.0
 attrs==26.1.0
 certifi==2026.2.25
 cffi==2.0.0
+cattrs==26.1.0
 charset-normalizer==3.4.6
 cryptography==50.0.0
 dj-database-url==3.1.2
@@ -13,6 +16,7 @@ django-ninja==1.6.2
 django-allauth==65.15.0
 django-ratelimit==4.1.0
 et_xmlfile==2.0.0
+enum-compat==0.0.3
 frozenlist==1.8.0
 gunicorn==25.1.0
 idna==3.15
@@ -26,6 +30,7 @@ pandas==2.3.3
 psycopg2-binary==2.9.11
 propcache==0.5.2
 pycparser==3.0
+pyOpenSSL==26.4.0
 PyJWT==2.13.0
 py-vapid==1.9.4
 pywebpush==2.3.0
@@ -37,6 +42,7 @@ sentry-sdk==2.64.0
 six==1.17.0
 sqlparse==0.5.4
 tzdata==2025.3
+typing_extensions==4.16.0
 urllib3==2.7.0
 whitenoise==6.12.0
 yarl==1.24.2

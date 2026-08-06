@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 from django.db import transaction
+from django.utils import timezone
 
 from billing.models import BillingEvent
 
@@ -48,3 +49,25 @@ def receive_verified_billing_event(
         },
     )
     return BillingEventReceipt(event=event, created=created)
+
+
+@transaction.atomic
+def claim_billing_event(event_id: int) -> BillingEvent:
+    event = BillingEvent.objects.select_for_update().get(pk=event_id)
+    if event.status in {BillingEvent.Status.PROCESSED, BillingEvent.Status.IGNORED, BillingEvent.Status.PROCESSING}:
+        return event
+    event.status = BillingEvent.Status.PROCESSING
+    event.attempts += 1
+    event.last_error = ""
+    event.save(update_fields=["status", "attempts", "last_error"])
+    return event
+
+
+@transaction.atomic
+def finish_billing_event(event_id: int, *, status: str, last_error: str = "") -> BillingEvent:
+    event = BillingEvent.objects.select_for_update().get(pk=event_id)
+    event.status = status
+    event.last_error = last_error[:500]
+    event.processed_at = timezone.now() if status in {BillingEvent.Status.PROCESSED, BillingEvent.Status.IGNORED} else None
+    event.save(update_fields=["status", "last_error", "processed_at"])
+    return event

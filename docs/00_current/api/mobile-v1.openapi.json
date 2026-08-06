@@ -337,6 +337,44 @@
         "title": "AdherenceData",
         "type": "object"
       },
+      "AppleSubscriptionProductData": {
+        "properties": {
+          "interval": {
+            "title": "Interval",
+            "type": "string"
+          },
+          "plan_name": {
+            "title": "Plan Name",
+            "type": "string"
+          },
+          "product_id": {
+            "title": "Product Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_id",
+          "plan_name",
+          "interval"
+        ],
+        "title": "AppleSubscriptionProductData",
+        "type": "object"
+      },
+      "AppleTransactionInput": {
+        "properties": {
+          "signed_transaction": {
+            "maxLength": 20000,
+            "minLength": 20,
+            "title": "Signed Transaction",
+            "type": "string"
+          }
+        },
+        "required": [
+          "signed_transaction"
+        ],
+        "title": "AppleTransactionInput",
+        "type": "object"
+      },
       "CalendarizationData": {
         "properties": {
           "end_date": {
@@ -1836,6 +1874,112 @@
         "title": "SessionEnvelope",
         "type": "object"
       },
+      "SubscriptionData": {
+        "properties": {
+          "app_account_token": {
+            "title": "App Account Token",
+            "type": "string"
+          },
+          "duplicate_active_providers": {
+            "title": "Duplicate Active Providers",
+            "type": "boolean"
+          },
+          "eligible": {
+            "title": "Eligible",
+            "type": "boolean"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/SubscriptionEvidenceData"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "plan_name": {
+            "title": "Plan Name",
+            "type": "string"
+          },
+          "products": {
+            "items": {
+              "$ref": "#/components/schemas/AppleSubscriptionProductData"
+            },
+            "title": "Products",
+            "type": "array"
+          },
+          "purchases_enabled": {
+            "title": "Purchases Enabled",
+            "type": "boolean"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "eligible",
+          "purchases_enabled",
+          "app_account_token",
+          "plan_name",
+          "status",
+          "products",
+          "evidence",
+          "duplicate_active_providers"
+        ],
+        "title": "SubscriptionData",
+        "type": "object"
+      },
+      "SubscriptionEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SubscriptionData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "SubscriptionEnvelope",
+        "type": "object"
+      },
+      "SubscriptionEvidenceData": {
+        "properties": {
+          "period_end": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period End"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "status"
+        ],
+        "title": "SubscriptionEvidenceData",
+        "type": "object"
+      },
       "TodayData": {
         "properties": {
           "adherence": {
@@ -3201,6 +3345,124 @@
           }
         ],
         "summary": "Revoke Session"
+      }
+    },
+    "/api/v1/subscriptions": {
+      "get": {
+        "operationId": "mobile_api_api_subscriptions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Subscriptions"
+      }
+    },
+    "/api/v1/subscriptions/apple/transactions": {
+      "post": {
+        "operationId": "mobile_api_api_apple_transaction",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppleTransactionInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Apple Transaction"
       }
     },
     "/api/v1/today": {

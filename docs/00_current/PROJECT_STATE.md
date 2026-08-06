@@ -134,6 +134,13 @@ When a plan becomes real, durable outcomes should be promoted into `docs/00_curr
   The server creates an idempotent private food plus a provenance receipt without
   retaining the photo or raw OCR text. Physical camera/Vision proof remains an
   external device gate because the local machine lacks the iOS SDK.
+- Consumer Mobile Launch CML06 repository baseline: the iOS client purchases and
+  restores only configured Apple subscriptions, uses StoreKit-localized prices
+  and finishes transactions only after server-side JWS verification. Apple and
+  Mercado Pago evidence now aggregate deterministically into the single accounts
+  entitlement authority; possible double charges remain visible to operations.
+  App Store Connect product/price setup and a physical sandbox lifecycle pass
+  remain external activation gates.
 
 - Email delivery abuse-protection baseline: server-validated Turnstile integration,
   multi-window signup limits, shared-cache production path, auditable account email,
@@ -181,10 +188,11 @@ When a plan becomes real, durable outcomes should be promoted into `docs/00_curr
 - Consumer Mobile Launch CML00-CML08 is active. CML00 is complete and fixes the
   B2C scope. CML01 is repository-complete and closes safety/privacy prerequisites;
   its external recovery, staging and legal gates remain visible before release.
-  CML02-CML05 are repository-complete with the consumer API, Expo development
+  CML02-CML06 are repository-complete with the consumer API, Expo development
   client, secure session lifecycle, translated visual grammar and lived-program
-  execution/adherence/reviews/revisions plus review-first on-device label capture.
-  CML06 is next: consumer subscription purchase, restore and reconciliation.
+  execution/adherence/reviews/revisions, review-first on-device label capture and
+  verified StoreKit purchase/restore/reconciliation. CML07 is next: iOS signing,
+  permissions, notification delivery, Keychain/privacy manifests and device QA.
 - No continuation of BA or PT is implied. New AI Assistant work should start from observed product evidence and a newly scoped cycle, rather than extending the global prompt or reopening a deterministic questionnaire.
 - The current product bets and next experiments live in `PRODUCT_PORTFOLIO.md`; they are
   hypotheses to validate or reformulate, not a fixed feature sequence.

@@ -241,3 +241,22 @@ export type OAuthErrorResponse = {
   error_description?: string;
   details?: { code?: string; [key: string]: unknown };
 };
+
+export type SubscriptionData = {
+  eligible: boolean;
+  purchases_enabled: boolean;
+  app_account_token: string;
+  plan_name: string;
+  status: string;
+  products: {
+    product_id: string;
+    plan_name: string;
+    interval: "month" | "year" | string;
+  }[];
+  evidence: {
+    provider: string;
+    status: string;
+    period_end: string | null;
+  }[];
+  duplicate_active_providers: boolean;
+};

@@ -34,7 +34,7 @@ or adjustment claims; App Store work remains separate from general product work.
 | CML03 · React Native and visual system | completed (repository; device gate pending) | Mobile | Expo development build, extracted visual tokens/card grammar and the login → onboarding → Today → check-in preview → persisted weight path. Physical staging proof remains external. |
 | CML04 · Lived program | completed (repository) | Product/mobile | Calendarization owns dated plans, append-only meal execution, reminder coordination, measurement context, frozen reviews and prospective audited adjustment revisions. Native notification delivery remains CML07. |
 | CML05 · Nutrition-label capture | completed (repository; device gate pending) | Product/native | Apple Vision OCR stays on-device, normalizes label values, exposes uncertainty and creates an idempotent private food only after user confirmation. |
-| CML06 · B2C subscriptions | planned | Product/App Store | Independent Apple/Mercado Pago evidence aggregates deterministically into `AccountSubscription`; StoreKit purchase, restore and lifecycle reconciliation pass sandbox. |
+| CML06 · B2C subscriptions | completed (repository; App Store sandbox gate pending) | Product/App Store | Independent Apple/Mercado Pago evidence aggregates deterministically into `AccountSubscription`; StoreKit purchase, restore and lifecycle reconciliation are implemented, with physical sandbox proof still external. |
 | CML07 · iOS capabilities | planned | App Store | Signing, Apple login where applicable, camera permission and on-device OCR verification, local notifications/APNs, Keychain, privacy manifests and sanitized crash reporting pass device QA. |
 | CML08 · Review readiness | planned | App Store | Privacy labels, consent, metadata, screenshots, demo program, internal/external TestFlight and complete reviewer notes. |
 
@@ -171,8 +171,39 @@ existing staging OAuth and Xcode prerequisites. CML05 builds on this baseline.
 
 Repository completion does not claim an iOS binary/device pass. The local machine
 does not have the iPhone simulator SDK, so Vision compilation, camera behavior and
-final permission/privacy review remain explicit CML07 gates. CML06 is the next
-implementation patch.
+final permission/privacy review remain explicit CML07 gates. CML06 builds on that
+repository baseline without claiming this external device gate.
+
+## CML06 closure evidence
+
+- Apple StoreKit products are exposed only from active server-side
+  `BillingProduct` mappings. The native screen takes localized display price from
+  StoreKit and contains no invented product identifier or price.
+- Each eligible consumer account has a stable opaque `appAccountToken`. StoreKit
+  transaction JWS values are verified with Apple's official server library before
+  account/product binding, entitlement projection and native transaction finish.
+- Purchase, restore and native subscription management share one React Native
+  screen. Nutritionist accounts receive status information without a consumer
+  purchase offer.
+- App Store Server Notifications V2 are signature-verified before the idempotent
+  inbox stores normalized evidence. Original transaction IDs can be reconciled
+  against App Store Server API with a separate operational command.
+- Apple and Mercado Pago remain independent evidence. A deterministic aggregator
+  maintains one `AccountSubscription`; simultaneous active providers are retained,
+  marked in projection metadata and counted by Admin Operations as possible
+  double charges.
+- Grace, retry, expiration and revocation states are explicit. Account-token,
+  subscription and event evidence has deletion-retention classification.
+- The generated OpenAPI contract, migration, environment diagnostics, operational
+  dry run, backend tests and mobile type/contract checks protect the repository
+  implementation.
+
+Repository completion does not claim App Store Connect or physical sandbox
+evidence. Felipe must choose product identifiers and prices, complete Apple
+agreements/tax/banking, create the subscription group/products, configure the
+notification URL and API key, and run purchase/renewal/restore/revocation on a
+physical iPhone. Those are activation gates, not missing product behavior. CML07
+is the next repository patch.
 
 ## Release order
 

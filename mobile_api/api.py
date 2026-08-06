@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from django.conf import settings
 from ninja import NinjaAPI
 from ninja.errors import AuthenticationError
 from ninja.errors import ValidationError as NinjaValidationError
@@ -7,6 +8,12 @@ from ninja.errors import ValidationError as NinjaValidationError
 from accounts.forms import AccountDeletionForm, NutritionOnboardingForm
 from accounts.services.deletion import delete_user_account
 from accounts.services.onboarding import complete_nutrition_onboarding
+from billing.application.services.apple_app_store import AppleEvidenceError, sync_apple_transaction
+from billing.infrastructure.gateways import build_apple_app_store_gateway
+from billing.infrastructure.providers.apple_app_store import (
+    AppleAppStoreConfigurationError,
+    InvalidAppleSignedData,
+)
 from ai_assistant.application.async_jobs import AsyncJobContractError, async_jobs_enabled
 from ai_assistant.models import AIAsyncJob
 from core.rate_limits import is_ai_assistant_turn_rate_limited
@@ -23,6 +30,7 @@ from mobile_api.schemas import (
     CalendarizationReviewInput,
     CalendarizationReviewListEnvelope,
     EntitlementsEnvelope,
+    AppleTransactionInput,
     ErrorEnvelope,
     FoodPageEnvelope,
     FoodLabelCaptureEnvelope,
@@ -37,6 +45,7 @@ from mobile_api.schemas import (
     RevisionEnvelope,
     RevisionListEnvelope,
     SessionEnvelope,
+    SubscriptionEnvelope,
     MealCheckInInput,
     TodayEnvelope,
     WeightCreateInput,
@@ -52,6 +61,7 @@ from mobile_api.selectors import (
     review_payload,
     revision_payload,
     session_payload,
+    subscription_payload,
     today_payload,
 )
 from notas.application.ai_intake.async_turns import enqueue_nutrition_intake_turn
@@ -230,6 +240,63 @@ def onboarding(request, payload: OnboardingInput):
 )
 def entitlements(request):
     return _success(entitlements_payload(request.auth.user))
+
+
+@api.get(
+    "/subscriptions",
+    auth=mobile_bearer,
+    response={200: SubscriptionEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope},
+)
+def subscriptions(request):
+    return _success(
+        subscription_payload(
+            request.auth.user,
+            purchases_enabled=settings.BILLING_APPLE_PURCHASES_ENABLED,
+        )
+    )
+
+
+@api.post(
+    "/subscriptions/apple/transactions",
+    auth=mobile_bearer,
+    response={
+        200: SubscriptionEnvelope,
+        403: ErrorEnvelope,
+        409: ErrorEnvelope,
+        422: ErrorEnvelope,
+        503: ErrorEnvelope,
+    },
+)
+def apple_transaction(request, payload: AppleTransactionInput):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    if not settings.BILLING_APPLE_PURCHASES_ENABLED:
+        raise MobileAPIError(
+            code="apple_purchases_disabled",
+            message="Apple purchases are not enabled.",
+            status_code=403,
+        )
+    try:
+        evidence = build_apple_app_store_gateway().verify_transaction(payload.signed_transaction)
+        sync_apple_transaction(evidence, expected_user=request.auth.user, source="mobile_storekit")
+    except InvalidAppleSignedData as exc:
+        raise MobileAPIError(
+            code="apple_transaction_invalid",
+            message="The StoreKit transaction could not be verified.",
+            status_code=422,
+        ) from exc
+    except AppleEvidenceError as exc:
+        raise MobileAPIError(
+            code="apple_transaction_mismatch",
+            message="The StoreKit transaction does not match this account or product.",
+            status_code=409,
+        ) from exc
+    except AppleAppStoreConfigurationError as exc:
+        raise MobileAPIError(
+            code="apple_billing_unavailable",
+            message="Apple purchase verification is temporarily unavailable.",
+            status_code=503,
+        ) from exc
+    return _success(subscription_payload(request.auth.user, purchases_enabled=True))
 
 
 @api.get(

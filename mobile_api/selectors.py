@@ -6,6 +6,8 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from django.utils import timezone
 
 from accounts.services.profile import build_account_credit_display
+from billing.application.services.apple_app_store import get_or_create_apple_app_account_token
+from billing.models import BillingProduct, PaymentProvider, ProviderSubscription
 from notas.application.queries.calendarization_queries import (
     current_calendarization_for_user,
     today_for_calendarization,
@@ -61,6 +63,51 @@ def entitlements_payload(user) -> dict:
         "reserved_credits": account.reserved_credits,
         "monthly_credit_limit": account.monthly_credit_limit,
         "daily_credit_limit": account.daily_credit_limit,
+    }
+
+
+def subscription_payload(user, *, purchases_enabled: bool) -> dict:
+    profile = getattr(user, "profile", None)
+    eligible = str(getattr(profile, "role", "member") or "member").lower() == "member"
+    subscription = getattr(user, "account_subscription", None)
+    token = get_or_create_apple_app_account_token(user) if eligible else None
+    products = []
+    if eligible and purchases_enabled:
+        products = [
+            {
+                "product_id": product.external_product_id,
+                "plan_name": product.account_plan.name,
+                "interval": product.interval,
+            }
+            for product in BillingProduct.objects.select_related("account_plan").filter(
+                provider=PaymentProvider.APPLE_APP_STORE,
+                active=True,
+                account_plan__status="active",
+            )
+        ]
+    evidence = list(
+        ProviderSubscription.objects.filter(user=user)
+        .exclude(status=ProviderSubscription.Status.PENDING)
+        .order_by("provider", "-updated_at")
+        .values("provider", "status", "current_period_end")
+    )
+    metadata = dict(getattr(subscription, "metadata", {}) or {})
+    return {
+        "eligible": eligible,
+        "purchases_enabled": bool(eligible and purchases_enabled and products),
+        "app_account_token": str(token.token) if token is not None else "",
+        "plan_name": subscription.plan.name if subscription is not None else "Sin plan",
+        "status": subscription.status if subscription is not None else "none",
+        "products": products,
+        "evidence": [
+            {
+                "provider": item["provider"],
+                "status": item["status"],
+                "period_end": item["current_period_end"],
+            }
+            for item in evidence
+        ],
+        "duplicate_active_providers": bool(metadata.get("billing_duplicate_active_providers")),
     }
 
 

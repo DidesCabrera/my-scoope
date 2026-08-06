@@ -92,7 +92,8 @@ def build_operations_overview_vm() -> AdminOperationsOverviewVM:
                 f"{_format_int(billing['failed_events'])} eventos · "
                 f"{_format_int(billing['past_due_subscriptions'])} morosas · "
                 f"{_format_int(billing['failed_tax_documents'])} DTE fallidos · "
-                f"{_format_int(billing['tax_adjustments'])} ajustes"
+                f"{_format_int(billing['tax_adjustments'])} ajustes · "
+                f"{_format_int(billing['duplicate_active_providers'])} dobles cobros"
             ),
             primary_action_label="Revisar Billing",
             is_enabled=True,

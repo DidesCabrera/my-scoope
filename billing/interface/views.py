@@ -16,9 +16,11 @@ from billing.application.services.checkout import (
     cancel_user_subscription,
     create_subscription_checkout,
 )
+from billing.application.services.apple_app_store import process_apple_notification
 from billing.application.services.events import receive_verified_billing_event
 from billing.application.services.mercado_pago_events import process_mercado_pago_event
-from billing.infrastructure.gateways import build_mercado_pago_gateway
+from billing.infrastructure.gateways import build_apple_app_store_gateway, build_mercado_pago_gateway
+from billing.infrastructure.providers.apple_app_store import InvalidAppleSignedData
 from billing.infrastructure.providers.mercado_pago import MercadoPagoProviderError
 from billing.infrastructure.providers.mercado_pago_webhooks import (
     InvalidMercadoPagoSignature,
@@ -140,6 +142,53 @@ def mercado_pago_webhook(request: HttpRequest) -> HttpResponse:
     )
     try:
         event = process_mercado_pago_event(event=receipt.event, gateway=build_mercado_pago_gateway())
+    except Exception:
+        return JsonResponse({"detail": "provider_reconciliation_failed"}, status=502)
+    return JsonResponse({"status": event.status}, status=200)
+
+
+@csrf_exempt
+@require_POST
+def apple_app_store_webhook(request: HttpRequest) -> HttpResponse:
+    """Receive App Store Server Notifications V2 after signed-payload verification."""
+
+    if not settings.BILLING_APPLE_NOTIFICATIONS_ENABLED:
+        return HttpResponse(status=404)
+    if len(request.body) > MAX_WEBHOOK_BODY_BYTES:
+        return HttpResponse(status=413)
+    try:
+        payload = json.loads(request.body or b"{}")
+    except (TypeError, ValueError):
+        return JsonResponse({"detail": "invalid_json"}, status=400)
+    signed_payload = str(payload.get("signedPayload") or "") if isinstance(payload, dict) else ""
+    try:
+        notification = build_apple_app_store_gateway().verify_notification(signed_payload)
+    except InvalidAppleSignedData:
+        return JsonResponse({"detail": "invalid_signature"}, status=401)
+    if not notification.notification_uuid or not notification.notification_type:
+        return JsonResponse({"detail": "missing_event_identity"}, status=400)
+
+    transaction = notification.transaction
+    normalized_payload = {
+        "notification_uuid": notification.notification_uuid,
+        "notification_type": notification.notification_type,
+        "subtype": notification.subtype,
+        "environment": notification.environment,
+        "signed_date": notification.signed_date,
+        "original_transaction_id": transaction.original_transaction_id if transaction else "",
+        "transaction_id": transaction.transaction_id if transaction else "",
+        "product_id": transaction.product_id if transaction else "",
+    }
+    receipt = receive_verified_billing_event(
+        provider=PaymentProvider.APPLE_APP_STORE,
+        external_event_id=notification.notification_uuid,
+        event_type=notification.notification_type,
+        resource_id=transaction.original_transaction_id if transaction else "",
+        payload=normalized_payload,
+        signature_verified=True,
+    )
+    try:
+        event = process_apple_notification(event=receipt.event, notification=notification)
     except Exception:
         return JsonResponse({"detail": "provider_reconciliation_failed"}, status=502)
     return JsonResponse({"status": event.status}, status=200)

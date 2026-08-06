@@ -225,6 +225,12 @@ def _capability_snapshot() -> dict[str, object]:
             "mercado_pago_webhook_enabled": bool(
                 getattr(settings, "BILLING_MERCADOPAGO_WEBHOOK_ENABLED", False)
             ),
+            "apple_purchases_enabled": bool(
+                getattr(settings, "BILLING_APPLE_PURCHASES_ENABLED", False)
+            ),
+            "apple_notifications_enabled": bool(
+                getattr(settings, "BILLING_APPLE_NOTIFICATIONS_ENABLED", False)
+            ),
             "openfactura_enabled": bool(getattr(settings, "BILLING_OPENFACTURA_ENABLED", False)),
         },
     }

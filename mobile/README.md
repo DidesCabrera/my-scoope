@@ -18,8 +18,8 @@ npm start
 ```
 
 Use `npm run ios` to generate and compile the native iOS development build. The
-first native build includes `expo-dev-client`, `expo-secure-store`, `expo-camera`
-and the local Apple Vision OCR module. JavaScript changes after that can use the
+first native build includes `expo-dev-client`, `expo-secure-store`, `expo-camera`,
+`expo-iap` and the local Apple Vision OCR module. JavaScript changes after that can use the
 development server until native configuration changes again.
 
 For a physical device, `EXPO_PUBLIC_API_BASE_URL` must be an HTTPS environment
@@ -51,5 +51,9 @@ commands through `scripts/ci_mobile_checks.sh`.
   notification/APNs delivery and permission handling remain CML07.
 - CML05 keeps label photos and raw OCR text on-device, exposes uncertain fields
   for editing and persists only explicitly confirmed private foods.
+- CML06 fetches localized App Store prices, passes the server-issued
+  `appAccountToken`, verifies signed transactions before finishing them, restores
+  purchases and opens native subscription management. Product identifiers and
+  prices must first be configured in App Store Connect and `BillingProduct`.
 - App Store signing, universal links, final camera-permission QA, notifications
-  and privacy manifests belong to later CML patches.
+  and privacy manifests belong to CML07-CML08.
