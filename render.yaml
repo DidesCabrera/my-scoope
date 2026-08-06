@@ -1,3 +1,9 @@
+envVarGroups:
+  - name: myscoope-django-runtime
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+
 databases:
   - name: nutricion-db
     plan: basic-256mb
@@ -22,6 +28,7 @@ services:
     startCommand: python -m gunicorn miapp.wsgi:application --bind 0.0.0.0:$PORT --workers 3 --timeout 120
     healthCheckPath: /healthz/
     envVars:
+      - fromGroup: myscoope-django-runtime
       - key: DJANGO_SETTINGS_MODULE
         value: miapp.settings.prod
       - key: DATABASE_URL
@@ -33,8 +40,6 @@ services:
           type: keyvalue
           name: myscoope-cache
           property: connectionString
-      - key: SECRET_KEY
-        generateValue: true
       - key: ALLOWED_HOSTS
         value: www.myscoope.com,myscoope.com,my-scoope.onrender.com
       - key: CSRF_TRUSTED_ORIGINS
@@ -76,6 +81,7 @@ services:
     buildCommand: ./scripts/render_build.sh
     startCommand: python manage.py run_ai_job_worker --poll-interval 5
     envVars:
+      - fromGroup: myscoope-django-runtime
       - key: DJANGO_SETTINGS_MODULE
         value: miapp.settings.prod
       - key: DATABASE_URL
@@ -87,8 +93,6 @@ services:
           type: keyvalue
           name: myscoope-cache
           property: connectionString
-      - key: SECRET_KEY
-        generateValue: true
       - key: AI_ASSISTANT_OPENAI_API_KEY
         sync: false
       - key: AI_ASSISTANT_CREDITS_ENABLED
@@ -108,6 +112,7 @@ services:
     buildCommand: ./scripts/render_build.sh
     startCommand: python manage.py run_calendar_notification_worker --interval 300 --limit 100
     envVars:
+      - fromGroup: myscoope-django-runtime
       - key: DJANGO_SETTINGS_MODULE
         value: miapp.settings.prod
       - key: DATABASE_URL
@@ -119,8 +124,6 @@ services:
           type: keyvalue
           name: myscoope-cache
           property: connectionString
-      - key: SECRET_KEY
-        generateValue: true
       - key: MYSCOOPE_WEB_PUSH_ENABLED
         value: "false"
       - key: MYSCOOPE_VAPID_PUBLIC_KEY
@@ -142,6 +145,7 @@ services:
     buildCommand: ./scripts/render_build.sh
     startCommand: python manage.py prune_calendarization_data --event-days 90 --subscription-days 30 && python manage.py prune_ai_async_jobs --days 30
     envVars:
+      - fromGroup: myscoope-django-runtime
       - key: DJANGO_SETTINGS_MODULE
         value: miapp.settings.prod
       - key: DATABASE_URL
@@ -153,7 +157,5 @@ services:
           type: keyvalue
           name: myscoope-cache
           property: connectionString
-      - key: SECRET_KEY
-        generateValue: true
       - key: SENTRY_DSN
         sync: false

@@ -183,3 +183,9 @@ Consequences
 - `0166-technical-debt-guardrails-cycle-closure.md`: cierra TDG00-TDG08 con Django/MCP/browser/calidad verdes, transiciones revisadas y evidencia antes/después.
 - `0167-priority-technical-debt-closure.md`: adopta TDG09-TDG14 para extraer coordinación AI, invertir los adapters de producto, ejecutar E2E autenticado en CI y retirar los bridges legado del solver y `Profile.plan`.
 - `0168-priority-technical-debt-closure.md`: cierra TDG09-TDG14 con 1.649 pruebas Django, MCP/calidad/E2E verdes, cero imports AI→`notas` y retiro reversible de los bridges de Nutrition Solver y `Profile.plan`.
+- `0170-commercial-model-authority-and-cutover.md`: fija `accounts` como autoridad comercial única, congela las escrituras a créditos IA heredados y exige conciliación antes de retirar tablas.
+- `0171-durable-ai-jobs.md`: adopta trabajos IA durables en PostgreSQL con Redis como canal opcional de activación, sin depender de una señal efímera para conservar trabajo.
+- `0172-notas-model-module-completion.md`: completa la separación física de modelos `notas` en módulos por responsabilidad preservando la fachada de imports existente.
+- `0173-consumer-first-mobile-product-direction.md`: define al consumidor que sigue su propio programa como cliente móvil principal y difiere los flujos profesionales.
+- `0174-react-native-client-and-visual-grammar.md`: adopta React Native y traduce la gramática visual existente de cartas y tokens a primitivas nativas sin compartir HTML/CSS.
+- `0175-calendarization-as-lived-program.md`: convierte `ProgramCalendarization` en el programa vivido que coordina planes fechados, ejecución, mediciones, recordatorios y ajustes prospectivos.

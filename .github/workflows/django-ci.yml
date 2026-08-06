@@ -235,3 +235,6 @@ jobs:
 
       - name: Test and build frontend
         run: npm test && npm run build
+
+      - name: Verify committed frontend bundle
+        run: git diff --exit-code -- notas/static/notas/dist/ai_async_jobs.js

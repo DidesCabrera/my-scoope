@@ -1,7 +1,7 @@
 # Project State - My Scoope
 
 Status: current
-Last updated: 2026-08-02
+Last updated: 2026-08-05
 Audience: developers and AI assistants
 
 ## What My Scoope is
@@ -9,6 +9,12 @@ Audience: developers and AI assistants
 My Scoope is a Django product for building, managing and evolving nutrition programs, food libraries, meals, daily plans, AI-assisted proposals and internal operational dashboards.
 
 The product is evolving from a monolithic `notas` origin toward clearer app boundaries, with AI-assisted workflows, food catalog governance, nutrition solving, account plans/credits and internal admin tooling.
+
+The accepted product direction is consumer-first: the first mobile client serves
+people who personally pursue fat loss, muscle gain or recomposition by weighing
+food and following their own calendarized program. Nutritionist workspaces,
+invited clients and seat purchasing are later product work, not mobile MVP
+constraints. See `CONSUMER_PRODUCT_BRIEF.md` and decisions 0173-0175.
 
 ## Current product posture
 
@@ -100,6 +106,13 @@ When a plan becomes real, durable outcomes should be promoted into `docs/00_curr
 
 ## Recently closed baselines
 
+- Consumer Mobile Launch CML00-CML01 repository baseline: the B2C consumer and
+  mobile MVP are explicit; all Django Render processes share one generated
+  runtime secret; frontend bundle drift is rejected by CI; and users can delete
+  their account through an exhaustive erase/anonymize/legal-retention policy.
+  Backup restoration, staging Blueprint application and jurisdiction-specific
+  retention approval remain external release gates before CML02 begins shipping.
+
 - Email delivery abuse-protection baseline: server-validated Turnstile integration,
   multi-window signup limits, shared-cache production path, auditable account email,
   idempotent/budgeted share invitations and a non-critical email kill switch.
@@ -143,6 +156,10 @@ When a plan becomes real, durable outcomes should be promoted into `docs/00_curr
 
 ## Planned near-term cycles
 
+- Consumer Mobile Launch CML00-CML08 is active. CML00 is complete and fixes the
+  B2C scope. CML01 is repository-complete and closes safety/privacy prerequisites;
+  its external recovery, staging and legal gates remain visible before release.
+  CML02 is the next implementation patch: a narrow mobile API vertical slice.
 - No continuation of BA or PT is implied. New AI Assistant work should start from observed product evidence and a newly scoped cycle, rather than extending the global prompt or reopening a deterministic questionnaire.
 - The current product bets and next experiments live in `PRODUCT_PORTFOLIO.md`; they are
   hypotheses to validate or reformulate, not a fixed feature sequence.

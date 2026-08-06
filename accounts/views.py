@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.utils import timezone
@@ -7,7 +8,8 @@ from django.utils import timezone
 from notas.application.services.nutrition.body_metrics import record_weight
 from notas.domain.models import Profile, WeightLog
 
-from .forms import NutritionOnboardingForm
+from .forms import AccountDeletionForm, NutritionOnboardingForm
+from .services.deletion import delete_user_account
 
 
 @login_required
@@ -54,3 +56,21 @@ def nutrition_onboarding(request):
             "has_form_errors": bool(form.errors),
         },
     )
+
+
+@login_required
+def delete_account(request):
+    if request.method == "POST":
+        form = AccountDeletionForm(request.POST, user=request.user)
+        if form.is_valid():
+            result = delete_user_account(user=request.user, source="self_service_web")
+            logout(request)
+            return render(
+                request,
+                "accounts/account_deleted.html",
+                {"receipt_id": result.receipt_id},
+            )
+    else:
+        form = AccountDeletionForm(user=request.user)
+
+    return render(request, "accounts/delete_account.html", {"form": form})

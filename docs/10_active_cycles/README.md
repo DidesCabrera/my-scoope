@@ -34,6 +34,13 @@ Status: planned / active / paused / completed / superseded
 Cuando un ciclo planificado empiece a implementarse, el documento puede permanecer aquí como plan operacional, pero las decisiones estables que surjan deben registrarse también en `docs/20_decisions/`.
 
 ## En curso o pendientes de validación
+- `consumer_mobile_launch_cycle.md`: ciclo activo CML00-CML08. Reorienta el primer
+  cliente móvil hacia consumidores que siguen su propio programa; separa seguridad,
+  API, React Native, calendarización ejecutable, OCR de etiquetas, IAP y review de
+  App Store en patches con evidencia independiente. CML00 está completado y CML01
+  está completado en repositorio; restauración real, aplicación segura del Blueprint
+  en staging y aprobación contable/legal siguen como gates externos. CML02 es el
+  siguiente patch de implementación.
 - `production_architecture_remediation_cycle.md`: ciclo activo PAR00-PAR10. PAR01-PAR05
   cierran en repositorio el arranque fail-closed con PostgreSQL, la topología Render
   versionada, CI completo sobre PostgreSQL, runbooks de recuperación y defaults de
