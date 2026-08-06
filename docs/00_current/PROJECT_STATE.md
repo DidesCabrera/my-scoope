@@ -117,6 +117,12 @@ When a plan becomes real, durable outcomes should be promoted into `docs/00_curr
   reuses existing application services and extends PKCE with rotating,
   device-bound mobile sessions. Staging mobile-client registration remains an
   external configuration gate; adherence state intentionally waits for CML04.
+- Consumer Mobile Launch CML03 repository baseline: `mobile/` now contains an
+  Expo SDK 57 development-build client with a platform-neutral dark card grammar,
+  PKCE/SecureStore session rotation and the consumer login, onboarding, Today,
+  check-in preview and persisted-weight path. Physical iOS/staging proof remains
+  external because Xcode and the staging OAuth registration are not available in
+  the repository; durable check-ins remain CML04.
 
 - Email delivery abuse-protection baseline: server-validated Turnstile integration,
   multi-window signup limits, shared-cache production path, auditable account email,
@@ -164,8 +170,9 @@ When a plan becomes real, durable outcomes should be promoted into `docs/00_curr
 - Consumer Mobile Launch CML00-CML08 is active. CML00 is complete and fixes the
   B2C scope. CML01 is repository-complete and closes safety/privacy prerequisites;
   its external recovery, staging and legal gates remain visible before release.
-  CML02 is repository-complete with its consumer API vertical. CML03 is next:
-  the React Native development build and translated visual grammar.
+  CML02 and CML03 are repository-complete with the consumer API, Expo development
+  client, secure session lifecycle and translated visual grammar. CML04 is next:
+  the lived-program execution, adherence, reminders and measurement context.
 - No continuation of BA or PT is implied. New AI Assistant work should start from observed product evidence and a newly scoped cycle, rather than extending the global prompt or reopening a deterministic questionnaire.
 - The current product bets and next experiments live in `PRODUCT_PORTFOLIO.md`; they are
   hypotheses to validate or reformulate, not a fixed feature sequence.

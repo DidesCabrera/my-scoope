@@ -40,8 +40,9 @@ Cuando un ciclo planificado empiece a implementarse, el documento puede permanec
   App Store en patches con evidencia independiente. CML00 está completado y CML01
   está completado en repositorio; restauración real, aplicación segura del Blueprint
   en staging y aprobación contable/legal siguen como gates externos. CML02 es el
-  contrato API consumer-first y está completado en repositorio; CML03 es el
-  siguiente patch de implementación para React Native y el sistema visual nativo.
+  contrato API consumer-first y está completado en repositorio. CML03 también
+  está completado en repositorio con Expo, sesión segura y recorrido nativo; su
+  prueba física depende de Xcode y OAuth staging. CML04 es el siguiente patch.
 - `production_architecture_remediation_cycle.md`: ciclo activo PAR00-PAR10. PAR01-PAR05
   cierran en repositorio el arranque fail-closed con PostgreSQL, la topología Render
   versionada, CI completo sobre PostgreSQL, runbooks de recuperación y defaults de

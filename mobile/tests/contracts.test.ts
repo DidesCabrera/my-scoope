@@ -1,0 +1,31 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import test from "node:test";
+
+import tokens from "../src/design/tokens.json";
+
+test("mobile visual grammar exposes the reusable card and nutrition tokens", () => {
+  assert.equal(tokens.contract, "myscoope.visual-grammar.v1");
+  assert.equal(tokens.radius.card, 22);
+  assert.equal(tokens.color.surfaceApp, "#000000");
+  for (const key of ["protein", "carbs", "fat", "kcalSurface", "food", "meal", "dailyPlan", "program"] as const) {
+    assert.match(tokens.color[key], /^#[0-9A-F]{6}$/);
+  }
+});
+
+test("the committed CML02 contract still exposes every route consumed by CML03", async () => {
+  const file = path.resolve(process.cwd(), "../docs/00_current/api/mobile-v1.openapi.json");
+  const schema = JSON.parse(await readFile(file, "utf8")) as { info: { version: string }; paths: Record<string, unknown> };
+  assert.equal(schema.info.version, "1.0.0");
+  for (const route of [
+    "/api/v1/session",
+    "/api/v1/sessions/{device_session_id}",
+    "/api/v1/me",
+    "/api/v1/onboarding",
+    "/api/v1/today",
+    "/api/v1/weights",
+  ]) {
+    assert.ok(schema.paths[route], `missing ${route}`);
+  }
+});

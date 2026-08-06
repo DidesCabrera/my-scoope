@@ -31,7 +31,7 @@ or adjustment claims; App Store work remains separate from general product work.
 | CML00 · Consumer baseline | completed | Product | Accepted B2C brief, MVP boundary, success measures and durable decisions. |
 | CML01 · Safety and privacy | completed (repository) | Product + review prerequisite | Shared runtime secret, reproducible frontend bundle, account deletion with exhaustive retention classification, legacy credit monitoring evidence and current project state. |
 | CML02 · Vertical mobile API | completed (repository) | Product/mobile | Versioned OpenAPI contract for auth, profile, active program, Today, weight, foods, durable AI submit/poll, entitlements and deletion. Mobile OAuth is audited from the existing PKCE baseline and gains rotating device sessions. Adherence waits for the CML04 execution model. |
-| CML03 · React Native and visual system | planned | Mobile | Expo development build, extracted visual tokens/card grammar and the on-device login → onboarding → Today → check-in → weight path against staging. |
+| CML03 · React Native and visual system | completed (repository; device gate pending) | Mobile | Expo development build, extracted visual tokens/card grammar and the login → onboarding → Today → check-in preview → persisted weight path. Physical staging proof remains external. |
 | CML04 · Lived program | planned | Product/mobile | Calendarization owns dated plans, meal execution, reminder coordination, measurement context, reviews and prospective audited adjustment revisions. |
 | CML05 · Nutrition-label capture | planned | Product/native | On-device OCR normalizes label values, exposes uncertainty and creates a private food only after user confirmation. |
 | CML06 · B2C subscriptions | planned | Product/App Store | Independent Apple/Mercado Pago evidence aggregates deterministically into `AccountSubscription`; StoreKit purchase, restore and lifecycle reconciliation pass sandbox. |
@@ -98,9 +98,30 @@ and Sign in with Apple token revocation belong to CML06-CML07.
 - Adherence remains absent by design until CML04 owns execution evidence inside
   the calendarized program.
 
-CML03 is the next implementation patch. Staging must still register the mobile
-OAuth public client and its HTTPS universal-link callback before a device can
-complete the authorization flow.
+## CML03 closure evidence
+
+- `mobile/` is a strict-TypeScript Expo SDK 57 client configured for development
+  builds, Expo Router and future bounded native modules.
+- `myscoope.visual-grammar.v1` translates dark surfaces, cards, spacing, radii,
+  entity colors and nutrition colors into a platform-neutral JSON contract used
+  directly by native primitives.
+- OAuth authorization code + PKCE runs through the system browser. Access and
+  rotating refresh tokens are device-bound, stored with SecureStore and managed
+  behind one independently tested session manager.
+- The native path includes login/signup handoff, nutrition onboarding, Today,
+  active calendarization, daily plan/macros, planned meal cards, check-in preview,
+  real weight writes and recent weight history.
+- Check-in cannot persist yet by design: CML04 must introduce immutable execution
+  evidence owned by the lived `ProgramCalendarization` before the control is
+  enabled.
+- Mobile CI installs from its lockfile and runs lint, strict TypeScript, contract
+  tests, session rotation tests and a Metro bundle export.
+
+Repository completion does not claim on-device staging evidence. The current
+machine lacks a full Xcode installation, and staging must register the mobile
+OAuth public client plus its exact callback. Once those external prerequisites
+exist, `npm run ios` is the bounded device smoke for CML03. CML04 is the next
+implementation patch.
 
 ## Release order
 
