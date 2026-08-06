@@ -9,6 +9,8 @@ from notas.domain.model_modules.auth_integration import (
     MCPUserToken,
     OAuthAuthorizationCode,
     OAuthClient,
+    OAuthDeviceSession,
+    OAuthRefreshToken,
 )
 from notas.domain.model_modules.calendarization import (
     CalendarizedDay,
@@ -76,6 +78,8 @@ __all__ = [
     "NutritionistMemberRelationship",
     "OAuthAuthorizationCode",
     "OAuthClient",
+    "OAuthDeviceSession",
+    "OAuthRefreshToken",
     "Plan",
     "Profile",
     "Program",
