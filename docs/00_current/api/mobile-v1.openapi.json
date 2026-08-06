@@ -282,6 +282,61 @@
         "title": "ActiveProgramEnvelope",
         "type": "object"
       },
+      "AdherenceData": {
+        "properties": {
+          "adherence_percent": {
+            "title": "Adherence Percent",
+            "type": "integer"
+          },
+          "completed_meals": {
+            "title": "Completed Meals",
+            "type": "integer"
+          },
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "days_with_plan": {
+            "title": "Days With Plan",
+            "type": "integer"
+          },
+          "period_end": {
+            "format": "date",
+            "title": "Period End",
+            "type": "string"
+          },
+          "period_start": {
+            "format": "date",
+            "title": "Period Start",
+            "type": "string"
+          },
+          "planned_meals": {
+            "title": "Planned Meals",
+            "type": "integer"
+          },
+          "skipped_meals": {
+            "title": "Skipped Meals",
+            "type": "integer"
+          },
+          "unrecorded_meals": {
+            "title": "Unrecorded Meals",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "period_start",
+          "period_end",
+          "days",
+          "days_with_plan",
+          "planned_meals",
+          "completed_meals",
+          "skipped_meals",
+          "unrecorded_meals",
+          "adherence_percent"
+        ],
+        "title": "AdherenceData",
+        "type": "object"
+      },
       "CalendarizationData": {
         "properties": {
           "end_date": {
@@ -335,6 +390,261 @@
           "progress_percent"
         ],
         "title": "CalendarizationData",
+        "type": "object"
+      },
+      "CalendarizationReviewData": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "energy_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Energy Score"
+          },
+          "hunger_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hunger Score"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "period_end": {
+            "format": "date",
+            "title": "Period End",
+            "type": "string"
+          },
+          "period_start": {
+            "format": "date",
+            "title": "Period Start",
+            "type": "string"
+          },
+          "summary_snapshot": {
+            "additionalProperties": true,
+            "title": "Summary Snapshot",
+            "type": "object"
+          },
+          "training_performance_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Training Performance Score"
+          }
+        },
+        "required": [
+          "id",
+          "period_start",
+          "period_end",
+          "note",
+          "summary_snapshot",
+          "created_at"
+        ],
+        "title": "CalendarizationReviewData",
+        "type": "object"
+      },
+      "CalendarizationReviewEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CalendarizationReviewData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "CalendarizationReviewEnvelope",
+        "type": "object"
+      },
+      "CalendarizationReviewInput": {
+        "properties": {
+          "energy_score": {
+            "anyOf": [
+              {
+                "maximum": 5,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Energy Score"
+          },
+          "hunger_score": {
+            "anyOf": [
+              {
+                "maximum": 5,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hunger Score"
+          },
+          "idempotency_key": {
+            "maxLength": 120,
+            "minLength": 8,
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "maxLength": 1000,
+            "title": "Note",
+            "type": "string"
+          },
+          "period_end": {
+            "format": "date",
+            "title": "Period End",
+            "type": "string"
+          },
+          "period_start": {
+            "format": "date",
+            "title": "Period Start",
+            "type": "string"
+          },
+          "training_performance_score": {
+            "anyOf": [
+              {
+                "maximum": 5,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Training Performance Score"
+          }
+        },
+        "required": [
+          "period_start",
+          "period_end",
+          "idempotency_key"
+        ],
+        "title": "CalendarizationReviewInput",
+        "type": "object"
+      },
+      "CalendarizationReviewListData": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CalendarizationReviewData"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items",
+          "count"
+        ],
+        "title": "CalendarizationReviewListData",
+        "type": "object"
+      },
+      "CalendarizationReviewListEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CalendarizationReviewListData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "CalendarizationReviewListEnvelope",
+        "type": "object"
+      },
+      "CalendarizationRevisionData": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/RevisionDayComparisonData"
+            },
+            "title": "Days",
+            "type": "array"
+          },
+          "effective_from": {
+            "format": "date",
+            "title": "Effective From",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "rationale": {
+            "title": "Rationale",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "effective_from",
+          "status",
+          "rationale",
+          "days",
+          "created_at"
+        ],
+        "title": "CalendarizationRevisionData",
         "type": "object"
       },
       "EntitlementsData": {
@@ -620,6 +930,138 @@
         "title": "HealthEnvelope",
         "type": "object"
       },
+      "MealCheckInInput": {
+        "properties": {
+          "action": {
+            "enum": [
+              "completed",
+              "skipped",
+              "reset"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "maxLength": 120,
+            "minLength": 8,
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "maxLength": 500,
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "idempotency_key"
+        ],
+        "title": "MealCheckInInput",
+        "type": "object"
+      },
+      "MealExecutionData": {
+        "properties": {
+          "last_event_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Event Id"
+          },
+          "meal_key": {
+            "title": "Meal Key",
+            "type": "string"
+          },
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          },
+          "recorded_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recorded At"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "meal_key",
+          "status"
+        ],
+        "title": "MealExecutionData",
+        "type": "object"
+      },
+      "MeasurementSummaryData": {
+        "properties": {
+          "change_kg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Kg"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "first_weight_kg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Weight Kg"
+          },
+          "items": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "latest_weight_kg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Weight Kg"
+          }
+        },
+        "required": [
+          "items",
+          "count"
+        ],
+        "title": "MeasurementSummaryData",
+        "type": "object"
+      },
       "OnboardingInput": {
         "properties": {
           "birth_date": {
@@ -737,6 +1179,249 @@
         "title": "ProfileEnvelope",
         "type": "object"
       },
+      "ReminderEventData": {
+        "properties": {
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "local_date": {
+            "format": "date",
+            "title": "Local Date",
+            "type": "string"
+          },
+          "local_time": {
+            "format": "time",
+            "title": "Local Time",
+            "type": "string"
+          },
+          "meal_key": {
+            "title": "Meal Key",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_type",
+          "meal_key",
+          "local_date",
+          "local_time",
+          "status"
+        ],
+        "title": "ReminderEventData",
+        "type": "object"
+      },
+      "ReminderSettingsData": {
+        "properties": {
+          "daily_notification_time": {
+            "format": "time",
+            "title": "Daily Notification Time",
+            "type": "string"
+          },
+          "daily_notifications_enabled": {
+            "title": "Daily Notifications Enabled",
+            "type": "boolean"
+          },
+          "meal_notifications_enabled": {
+            "title": "Meal Notifications Enabled",
+            "type": "boolean"
+          },
+          "timezone_name": {
+            "title": "Timezone Name",
+            "type": "string"
+          },
+          "upcoming": {
+            "items": {
+              "$ref": "#/components/schemas/ReminderEventData"
+            },
+            "title": "Upcoming",
+            "type": "array"
+          }
+        },
+        "required": [
+          "timezone_name",
+          "daily_notification_time",
+          "daily_notifications_enabled",
+          "meal_notifications_enabled",
+          "upcoming"
+        ],
+        "title": "ReminderSettingsData",
+        "type": "object"
+      },
+      "ReminderSettingsEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ReminderSettingsData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "ReminderSettingsEnvelope",
+        "type": "object"
+      },
+      "ReminderSettingsInput": {
+        "properties": {
+          "daily_notification_time": {
+            "format": "time",
+            "title": "Daily Notification Time",
+            "type": "string"
+          },
+          "daily_notifications_enabled": {
+            "title": "Daily Notifications Enabled",
+            "type": "boolean"
+          },
+          "meal_notifications_enabled": {
+            "title": "Meal Notifications Enabled",
+            "type": "boolean"
+          },
+          "timezone_name": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Timezone Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "timezone_name",
+          "daily_notification_time",
+          "daily_notifications_enabled",
+          "meal_notifications_enabled"
+        ],
+        "title": "ReminderSettingsInput",
+        "type": "object"
+      },
+      "RevisionDayComparisonData": {
+        "properties": {
+          "after_name": {
+            "title": "After Name",
+            "type": "string"
+          },
+          "after_totals": {
+            "additionalProperties": true,
+            "title": "After Totals",
+            "type": "object"
+          },
+          "before_name": {
+            "title": "Before Name",
+            "type": "string"
+          },
+          "before_totals": {
+            "additionalProperties": true,
+            "title": "Before Totals",
+            "type": "object"
+          },
+          "calendar_date": {
+            "format": "date",
+            "title": "Calendar Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "calendar_date",
+          "before_name",
+          "after_name",
+          "before_totals",
+          "after_totals"
+        ],
+        "title": "RevisionDayComparisonData",
+        "type": "object"
+      },
+      "RevisionDecisionInput": {
+        "properties": {
+          "decision": {
+            "enum": [
+              "approve",
+              "reject"
+            ],
+            "title": "Decision",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision"
+        ],
+        "title": "RevisionDecisionInput",
+        "type": "object"
+      },
+      "RevisionEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CalendarizationRevisionData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "RevisionEnvelope",
+        "type": "object"
+      },
+      "RevisionListData": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CalendarizationRevisionData"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items",
+          "count"
+        ],
+        "title": "RevisionListData",
+        "type": "object"
+      },
+      "RevisionListEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/RevisionListData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "RevisionListEnvelope",
+        "type": "object"
+      },
       "RevokeSessionData": {
         "properties": {
           "device_session_id": {
@@ -848,6 +1533,16 @@
       },
       "TodayData": {
         "properties": {
+          "adherence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AdherenceData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "calendarization": {
             "anyOf": [
               {
@@ -878,6 +1573,33 @@
             "title": "Local Date",
             "type": "string"
           },
+          "meal_execution": {
+            "items": {
+              "$ref": "#/components/schemas/MealExecutionData"
+            },
+            "title": "Meal Execution",
+            "type": "array"
+          },
+          "measurements": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MeasurementSummaryData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pending_revision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CalendarizationRevisionData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "plan_snapshot": {
             "anyOf": [
               {
@@ -889,6 +1611,16 @@
               }
             ],
             "title": "Plan Snapshot"
+          },
+          "reminders": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReminderSettingsData"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -971,6 +1703,17 @@
       },
       "WeightItem": {
         "properties": {
+          "calendarization_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calendarization Id"
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
@@ -1284,6 +2027,99 @@
         "summary": "Submit Ai Turn"
       }
     },
+    "/api/v1/days/{day_id}/meals/{meal_snapshot_key}/check-ins": {
+      "post": {
+        "operationId": "mobile_api_api_meal_check_in",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "day_id",
+            "required": true,
+            "schema": {
+              "title": "Day Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "meal_snapshot_key",
+            "required": true,
+            "schema": {
+              "title": "Meal Snapshot Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MealCheckInInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TodayEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Meal Check In"
+      }
+    },
     "/api/v1/entitlements": {
       "get": {
         "operationId": "mobile_api_api_entitlements",
@@ -1568,6 +2404,336 @@
           }
         ],
         "summary": "Active Program"
+      }
+    },
+    "/api/v1/program/active/reminders": {
+      "put": {
+        "operationId": "mobile_api_api_update_active_program_reminders",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReminderSettingsInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReminderSettingsEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Update Active Program Reminders"
+      }
+    },
+    "/api/v1/program/reviews": {
+      "get": {
+        "operationId": "mobile_api_api_program_reviews",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 12,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarizationReviewListEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Program Reviews"
+      },
+      "post": {
+        "operationId": "mobile_api_api_create_program_review",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalendarizationReviewInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarizationReviewEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Create Program Review"
+      }
+    },
+    "/api/v1/program/revisions": {
+      "get": {
+        "operationId": "mobile_api_api_program_revisions",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 12,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevisionListEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Program Revisions"
+      }
+    },
+    "/api/v1/program/revisions/{revision_id}/decision": {
+      "post": {
+        "operationId": "mobile_api_api_decide_program_revision",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revision_id",
+            "required": true,
+            "schema": {
+              "title": "Revision Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevisionDecisionInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevisionEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Decide Program Revision"
       }
     },
     "/api/v1/session": {

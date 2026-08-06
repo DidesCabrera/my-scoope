@@ -129,3 +129,158 @@ class CalendarizedDay(models.Model):
     @property
     def has_plan(self):
         return bool(self.plan_snapshot)
+
+
+class CalendarizedMealExecution(models.Model):
+    ACTION_COMPLETED = "completed"
+    ACTION_SKIPPED = "skipped"
+    ACTION_RESET = "reset"
+    ACTION_CHOICES = (
+        (ACTION_COMPLETED, "Completed"),
+        (ACTION_SKIPPED, "Skipped"),
+        (ACTION_RESET, "Reset"),
+    )
+
+    calendarized_day = models.ForeignKey(
+        CalendarizedDay,
+        on_delete=models.CASCADE,
+        related_name="meal_execution_events",
+    )
+    meal_snapshot_key = models.CharField(max_length=80)
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
+    idempotency_key = models.CharField(max_length=120, unique=True)
+    note = models.CharField(max_length=500, blank=True)
+    occurred_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at", "id"]
+        indexes = [
+            models.Index(
+                fields=["calendarized_day", "created_at"],
+                name="cal_meal_exec_day_idx",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.calendarized_day_id} · {self.meal_snapshot_key} · {self.action}"
+
+
+class CalendarizationMeasurementContext(models.Model):
+    calendarization = models.ForeignKey(
+        ProgramCalendarization,
+        on_delete=models.CASCADE,
+        related_name="measurement_contexts",
+    )
+    calendarized_day = models.ForeignKey(
+        CalendarizedDay,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="measurement_contexts",
+    )
+    weight_log = models.ForeignKey(
+        "notas.WeightLog",
+        on_delete=models.CASCADE,
+        related_name="calendarization_contexts",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["weight_log__date", "id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["calendarization", "weight_log"],
+                name="cal_unique_measure_context",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=["calendarization", "created_at"],
+                name="cal_measure_context_idx",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.calendarization_id} · weight {self.weight_log_id}"
+
+
+class CalendarizationReview(models.Model):
+    calendarization = models.ForeignKey(
+        ProgramCalendarization,
+        on_delete=models.CASCADE,
+        related_name="reviews",
+    )
+    period_start = models.DateField()
+    period_end = models.DateField()
+    energy_score = models.PositiveSmallIntegerField(null=True, blank=True)
+    hunger_score = models.PositiveSmallIntegerField(null=True, blank=True)
+    training_performance_score = models.PositiveSmallIntegerField(null=True, blank=True)
+    note = models.CharField(max_length=1000, blank=True)
+    summary_snapshot = models.JSONField(default=dict)
+    idempotency_key = models.CharField(max_length=120, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-period_end", "-created_at", "-id"]
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(period_end__gte=models.F("period_start")),
+                name="cal_review_period_valid",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=["calendarization", "period_end"],
+                name="cal_review_period_idx",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.calendarization_id} · {self.period_start}–{self.period_end}"
+
+
+class CalendarizationRevision(models.Model):
+    STATUS_PENDING = "pending"
+    STATUS_APPLIED = "applied"
+    STATUS_REJECTED = "rejected"
+    STATUS_CHOICES = (
+        (STATUS_PENDING, "Pending"),
+        (STATUS_APPLIED, "Applied"),
+        (STATUS_REJECTED, "Rejected"),
+    )
+
+    calendarization = models.ForeignKey(
+        ProgramCalendarization,
+        on_delete=models.CASCADE,
+        related_name="revisions",
+    )
+    review = models.ForeignKey(
+        CalendarizationReview,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="revisions",
+    )
+    effective_from = models.DateField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    before_snapshot = models.JSONField(default=dict)
+    after_snapshot = models.JSONField(default=dict)
+    rationale = models.CharField(max_length=1000)
+    idempotency_key = models.CharField(max_length=120, unique=True)
+    decided_at = models.DateTimeField(null=True, blank=True)
+    applied_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        indexes = [
+            models.Index(
+                fields=["calendarization", "status", "effective_from"],
+                name="cal_revision_status_idx",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.calendarization_id} · {self.effective_from} · {self.status}"

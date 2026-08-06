@@ -12,6 +12,10 @@ from .admin_food_actions import (
 )
 from .domain.models import (
     CalendarizedDay,
+    CalendarizedMealExecution,
+    CalendarizationMeasurementContext,
+    CalendarizationReview,
+    CalendarizationRevision,
     DailyPlan,
     DailyPlanMeal,
     Food,
@@ -816,6 +820,46 @@ class CalendarizedDayAdmin(admin.ModelAdmin):
     list_filter = ("calendar_date", "week_number")
     search_fields = ("calendarization__program_name_snapshot", "calendarization__user__username")
     readonly_fields = tuple(field.name for field in CalendarizedDay._meta.fields)
+
+
+@admin.register(CalendarizedMealExecution)
+class CalendarizedMealExecutionAdmin(admin.ModelAdmin):
+    list_display = ("calendarized_day", "meal_snapshot_key", "action", "created_at")
+    list_filter = ("action", "created_at")
+    search_fields = ("calendarized_day__calendarization__user__username", "meal_snapshot_key", "idempotency_key")
+    readonly_fields = tuple(field.name for field in CalendarizedMealExecution._meta.fields)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(CalendarizationMeasurementContext)
+class CalendarizationMeasurementContextAdmin(admin.ModelAdmin):
+    list_display = ("calendarization", "weight_log", "calendarized_day", "created_at")
+    search_fields = ("calendarization__user__username", "calendarization__program_name_snapshot")
+    readonly_fields = tuple(field.name for field in CalendarizationMeasurementContext._meta.fields)
+
+
+@admin.register(CalendarizationReview)
+class CalendarizationReviewAdmin(admin.ModelAdmin):
+    list_display = ("calendarization", "period_start", "period_end", "energy_score", "hunger_score", "created_at")
+    list_filter = ("period_start", "period_end", "created_at")
+    search_fields = ("calendarization__user__username", "calendarization__program_name_snapshot", "idempotency_key")
+    readonly_fields = tuple(field.name for field in CalendarizationReview._meta.fields)
+
+
+@admin.register(CalendarizationRevision)
+class CalendarizationRevisionAdmin(admin.ModelAdmin):
+    list_display = ("calendarization", "effective_from", "status", "created_at", "decided_at")
+    list_filter = ("status", "effective_from", "created_at")
+    search_fields = ("calendarization__user__username", "calendarization__program_name_snapshot", "idempotency_key")
+    readonly_fields = tuple(field.name for field in CalendarizationRevision._meta.fields)
 
 
 @admin.register(WebPushSubscription)

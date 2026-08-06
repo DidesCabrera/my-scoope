@@ -32,7 +32,7 @@ or adjustment claims; App Store work remains separate from general product work.
 | CML01 · Safety and privacy | completed (repository) | Product + review prerequisite | Shared runtime secret, reproducible frontend bundle, account deletion with exhaustive retention classification, legacy credit monitoring evidence and current project state. |
 | CML02 · Vertical mobile API | completed (repository) | Product/mobile | Versioned OpenAPI contract for auth, profile, active program, Today, weight, foods, durable AI submit/poll, entitlements and deletion. Mobile OAuth is audited from the existing PKCE baseline and gains rotating device sessions. Adherence waits for the CML04 execution model. |
 | CML03 · React Native and visual system | completed (repository; device gate pending) | Mobile | Expo development build, extracted visual tokens/card grammar and the login → onboarding → Today → check-in preview → persisted weight path. Physical staging proof remains external. |
-| CML04 · Lived program | planned | Product/mobile | Calendarization owns dated plans, meal execution, reminder coordination, measurement context, reviews and prospective audited adjustment revisions. |
+| CML04 · Lived program | completed (repository) | Product/mobile | Calendarization owns dated plans, append-only meal execution, reminder coordination, measurement context, frozen reviews and prospective audited adjustment revisions. Native notification delivery remains CML07. |
 | CML05 · Nutrition-label capture | planned | Product/native | On-device OCR normalizes label values, exposes uncertainty and creates a private food only after user confirmation. |
 | CML06 · B2C subscriptions | planned | Product/App Store | Independent Apple/Mercado Pago evidence aggregates deterministically into `AccountSubscription`; StoreKit purchase, restore and lifecycle reconciliation pass sandbox. |
 | CML07 · iOS capabilities | planned | App Store | Signing, Apple login where applicable, camera permissions, local notifications/APNs, Keychain, privacy manifests and sanitized crash reporting pass device QA. |
@@ -120,8 +120,38 @@ and Sign in with Apple token revocation belong to CML06-CML07.
 Repository completion does not claim on-device staging evidence. The current
 machine lacks a full Xcode installation, and staging must register the mobile
 OAuth public client plus its exact callback. Once those external prerequisites
-exist, `npm run ios` is the bounded device smoke for CML03. CML04 is the next
-implementation patch.
+exist, `npm run ios` is the bounded device smoke for CML03. CML04 builds on that
+repository baseline without claiming this external device gate.
+
+## CML04 closure evidence
+
+- `ProgramCalendarization` now owns append-only meal execution events. A
+  correction appends a reset instead of rewriting history, and idempotency keys
+  make retries safe.
+- Today derives the current state of each planned meal plus a rolling seven-day
+  adherence summary from that immutable evidence.
+- Weight writes continue through the established user-owned `WeightLog` service;
+  a separate context record relates each measurement to the lived program and
+  dated day without duplicating the measurement authority.
+- Periodic reviews freeze adherence, measurements and the user's energy, hunger
+  and training-performance scores at submission time.
+- Prepared adjustments are explicit revisions with before/after snapshots. The
+  consumer API can approve or reject them, but cannot author arbitrary plan
+  changes. Approval revalidates that every affected day is strictly future and
+  has no execution evidence, then recalculates its reminder events.
+- Reminder preferences and upcoming logical events are visible and editable from
+  the mobile client. The calendarization remains the schedule authority; local
+  notifications/APNs attach as delivery channels in CML07.
+- The API/OpenAPI contract, deletion-policy manifest, migration, domain-boundary
+  rules and focused backend/mobile tests protect the new behavior.
+- Local closure on 2026-08-05 passed the 95-test fast gate, all 1,711 Django
+  tests, mobile lint, strict TypeScript, five Node contract/session tests and the
+  12-route Expo web export.
+
+Repository completion does not claim native alarm delivery or physical-device
+evidence. Those require the CML07 notification permission/channel work plus the
+existing staging OAuth and Xcode prerequisites. CML05 is the next implementation
+patch.
 
 ## Release order
 

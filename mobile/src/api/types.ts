@@ -45,6 +45,70 @@ export type TodayData = {
   day_id: number | null;
   has_plan: boolean;
   plan_snapshot: DailyPlanSnapshot | null;
+  meal_execution: MealExecutionItem[];
+  adherence: AdherenceSummary | null;
+  measurements: MeasurementSummary | null;
+  reminders: ReminderSettings | null;
+  pending_revision: CalendarizationRevision | null;
+};
+
+export type MealExecutionStatus = "planned" | "completed" | "skipped";
+
+export type MealExecutionItem = {
+  meal_key: string;
+  status: MealExecutionStatus;
+  last_event_id: number | null;
+  recorded_at: string | null;
+  note: string;
+};
+
+export type AdherenceSummary = {
+  period_start: string;
+  period_end: string;
+  days: number;
+  days_with_plan: number;
+  planned_meals: number;
+  completed_meals: number;
+  skipped_meals: number;
+  unrecorded_meals: number;
+  adherence_percent: number;
+};
+
+export type MeasurementSummary = {
+  items: { weight_log_id: number; measured_on: string; weight_kg: number }[];
+  count: number;
+  first_weight_kg: number | null;
+  latest_weight_kg: number | null;
+  change_kg: number | null;
+};
+
+export type ReminderSettings = {
+  timezone_name: string;
+  daily_notification_time: string;
+  daily_notifications_enabled: boolean;
+  meal_notifications_enabled: boolean;
+  upcoming: {
+    event_type: "daily_plan" | "meal_reminder";
+    meal_key: string;
+    local_date: string;
+    local_time: string;
+    status: string;
+  }[];
+};
+
+export type CalendarizationRevision = {
+  id: number;
+  effective_from: string;
+  status: "pending" | "applied" | "rejected";
+  rationale: string;
+  days: {
+    calendar_date: string;
+    before_name: string;
+    after_name: string;
+    before_totals: MacroTotals;
+    after_totals: MacroTotals;
+  }[];
+  created_at: string;
 };
 
 export type DailyPlanSnapshot = {
@@ -77,6 +141,7 @@ export type WeightItem = {
   weight_kg: number;
   source: string;
   created_at: string;
+  calendarization_id?: number | null;
 };
 
 export type WeightListData = { items: WeightItem[]; count: number };
@@ -89,6 +154,38 @@ export type OnboardingInput = {
 };
 
 export type WeightInput = { weight_kg: number; measured_on?: string };
+
+export type MealCheckInInput = {
+  action: "completed" | "skipped" | "reset";
+  idempotency_key: string;
+  note?: string;
+};
+
+export type ReviewInput = {
+  period_start: string;
+  period_end: string;
+  idempotency_key: string;
+  energy_score: number;
+  hunger_score: number;
+  training_performance_score: number;
+  note?: string;
+};
+
+export type CalendarizationReview = {
+  id: number;
+  period_start: string;
+  period_end: string;
+  energy_score: number | null;
+  hunger_score: number | null;
+  training_performance_score: number | null;
+  note: string;
+  summary_snapshot: {
+    schema_version: string;
+    adherence: AdherenceSummary;
+    measurements: MeasurementSummary;
+  };
+  created_at: string;
+};
 
 export type OAuthTokenResponse = {
   access_token: string;

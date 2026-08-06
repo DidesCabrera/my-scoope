@@ -191,3 +191,4 @@ Consequences
 - `0175-calendarization-as-lived-program.md`: convierte `ProgramCalendarization` en el programa vivido que coordina planes fechados, ejecución, mediciones, recordatorios y ajustes prospectivos.
 - `0176-mobile-api-and-device-session-foundation.md`: adopta Django Ninja, OpenAPI versionado y sesiones móviles con PKCE, access tokens cortos, refresh rotatorio y revocación por dispositivo.
 - `0177-expo-mobile-shell-and-secure-session-client.md`: adopta Expo SDK 57, development builds, sesión PKCE/SecureStore, contrato visual nativo y CI móvil independiente.
+- `0178-calendarized-execution-evidence-and-prospective-revisions.md`: conserva la calendarización como programa vivido con check-ins append-only, contexto de mediciones, revisiones periódicas y ajustes futuros auditables.

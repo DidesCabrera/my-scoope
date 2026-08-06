@@ -97,6 +97,49 @@ export default function TodayScreen() {
         </Card>
       )}
 
+      {today?.adherence ? (
+        <Card accent={tokens.color.success}>
+          <View style={styles.programHeader}>
+            <View style={styles.programCopy}>
+              <Text style={styles.planLabel}>ÚLTIMOS {today.adherence.days} DÍAS</Text>
+              <Text style={styles.planName}>{today.adherence.adherence_percent}% de adherencia</Text>
+            </View>
+            <Pill
+              color={tokens.color.success}
+              label={`${today.adherence.completed_meals}/${today.adherence.planned_meals}`}
+            />
+          </View>
+          <ProgressBar value={today.adherence.adherence_percent} />
+          <Text style={textStyles.caption}>
+            {today.adherence.skipped_meals} omitidas · {today.adherence.unrecorded_meals} aún sin registrar
+          </Text>
+          <Button label="Registrar revisión" onPress={() => router.push("./review")} variant="secondary" />
+        </Card>
+      ) : null}
+
+      {today?.measurements?.latest_weight_kg != null ? (
+        <Card muted>
+          <SectionTitle detail={`${today.measurements.count} mediciones`} title="Tendencia del programa" />
+          <View style={styles.measurementRow}>
+            <Text style={styles.measurementValue}>{today.measurements.latest_weight_kg.toFixed(1)} kg</Text>
+            {today.measurements.change_kg != null ? (
+              <Pill
+                color={tokens.color.protein}
+                label={`${today.measurements.change_kg > 0 ? "+" : ""}${today.measurements.change_kg.toFixed(1)} kg`}
+              />
+            ) : null}
+          </View>
+        </Card>
+      ) : null}
+
+      {today?.pending_revision ? (
+        <Card accent={tokens.color.warning}>
+          <SectionTitle detail={`Desde ${today.pending_revision.effective_from}`} title="Ajuste para revisar" />
+          <Text style={textStyles.muted}>{today.pending_revision.rationale}</Text>
+          <Button label="Revisar antes de aplicar" onPress={() => router.push("./revision")} />
+        </Card>
+      ) : null}
+
       {today?.has_plan && snapshot ? (
         <>
           <Card accent={tokens.color.dailyPlan}>
@@ -120,6 +163,9 @@ export default function TodayScreen() {
         </Card>
       )}
       <Button label="Registrar peso" onPress={() => router.push("/weight")} variant="secondary" />
+      {today?.reminders ? (
+        <Button label="Configurar recordatorios" onPress={() => router.push("./reminders")} variant="secondary" />
+      ) : null}
     </Screen>
   );
 }
@@ -140,4 +186,6 @@ const styles = StyleSheet.create({
   mealName: { color: tokens.color.textMain, fontSize: 17, fontWeight: "800" },
   miniMacros: { flexDirection: "row", gap: 15 },
   miniMacro: { fontSize: 12, fontWeight: "800" },
+  measurementRow: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
+  measurementValue: { color: tokens.color.textMain, fontSize: 28, fontWeight: "900", fontVariant: ["tabular-nums"] },
 });

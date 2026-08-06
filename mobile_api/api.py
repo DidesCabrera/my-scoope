@@ -19,6 +19,9 @@ from mobile_api.schemas import (
     AIJobAcceptedEnvelope,
     AIJobResultEnvelope,
     AITurnInput,
+    CalendarizationReviewEnvelope,
+    CalendarizationReviewInput,
+    CalendarizationReviewListEnvelope,
     EntitlementsEnvelope,
     ErrorEnvelope,
     FoodPageEnvelope,
@@ -26,7 +29,13 @@ from mobile_api.schemas import (
     OnboardingInput,
     ProfileEnvelope,
     RevokeSessionEnvelope,
+    ReminderSettingsEnvelope,
+    ReminderSettingsInput,
+    RevisionDecisionInput,
+    RevisionEnvelope,
+    RevisionListEnvelope,
     SessionEnvelope,
+    MealCheckInInput,
     TodayEnvelope,
     WeightCreateInput,
     WeightEnvelope,
@@ -36,18 +45,33 @@ from mobile_api.selectors import (
     active_program_payload,
     entitlements_payload,
     profile_payload,
+    reminder_settings_payload,
+    review_payload,
+    revision_payload,
     session_payload,
     today_payload,
 )
 from notas.application.ai_intake.async_turns import enqueue_nutrition_intake_turn
 from notas.application.queries.food_picker_queries import list_food_picker_page
-from notas.application.services.nutrition.body_metrics import record_weight
+from notas.application.services.commands.calendarization_commands import update_calendarization_preferences
+from notas.application.services.commands.calendarization_execution_commands import (
+    create_calendarization_review,
+    decide_calendarization_revision,
+    record_calendarized_weight,
+    record_meal_execution,
+)
 from notas.application.services.oauth_device_sessions import (
     MOBILE_SCOPE_ACCOUNT,
     MOBILE_SCOPE_WRITE,
     revoke_oauth_device_session,
 )
-from notas.domain.models import AiNutritionChat, WeightLog
+from notas.domain.models import (
+    AiNutritionChat,
+    CalendarizationReview,
+    CalendarizationRevision,
+    ProgramCalendarization,
+    WeightLog,
+)
 
 api = NinjaAPI(
     title="My Scoope Consumer API",
@@ -103,6 +127,26 @@ def _form_error(form, *, code: str, message: str) -> MobileAPIError:
         message=message,
         status_code=422,
         details={"fields": form.errors.get_json_data()},
+    )
+
+
+def _calendarization_error(exc: ValueError) -> MobileAPIError:
+    code = str(exc)
+    not_found = {
+        "calendarization_not_found",
+        "calendarized_day_not_found",
+        "calendarization_revision_not_found",
+        "calendarization_review_not_found",
+    }
+    conflicts = {
+        "calendarization_idempotency_conflict",
+        "calendarization_revision_already_decided",
+        "calendarization_revision_no_longer_eligible",
+    }
+    return MobileAPIError(
+        code=code,
+        message="The lived-program operation could not be completed.",
+        status_code=404 if code in not_found else 409 if code in conflicts else 422,
     )
 
 
@@ -188,6 +232,121 @@ def today(request):
     return _success(today_payload(request.auth.user))
 
 
+@api.post(
+    "/days/{day_id}/meals/{meal_snapshot_key}/check-ins",
+    auth=mobile_bearer,
+    response={200: TodayEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def meal_check_in(request, day_id: int, meal_snapshot_key: str, payload: MealCheckInInput):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    try:
+        record_meal_execution(
+            user=request.auth.user,
+            day_id=day_id,
+            meal_snapshot_key=meal_snapshot_key,
+            action=payload.action,
+            idempotency_key=payload.idempotency_key,
+            note=payload.note,
+        )
+    except ValueError as exc:
+        raise _calendarization_error(exc) from exc
+    return _success(today_payload(request.auth.user))
+
+
+@api.put(
+    "/program/active/reminders",
+    auth=mobile_bearer,
+    response={200: ReminderSettingsEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def update_active_program_reminders(request, payload: ReminderSettingsInput):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    calendarization = ProgramCalendarization.objects.filter(
+        user=request.auth.user,
+        status__in=ProgramCalendarization.CURRENT_STATUSES,
+    ).first()
+    if calendarization is None:
+        raise _calendarization_error(ValueError("calendarization_not_found"))
+    try:
+        calendarization = update_calendarization_preferences(
+            user=request.auth.user,
+            calendarization_id=calendarization.id,
+            timezone_name=payload.timezone_name,
+            daily_notification_time=payload.daily_notification_time,
+            daily_notifications_enabled=payload.daily_notifications_enabled,
+            meal_notifications_enabled=payload.meal_notifications_enabled,
+        )
+    except ValueError as exc:
+        raise _calendarization_error(exc) from exc
+    return _success(reminder_settings_payload(calendarization))
+
+
+@api.get(
+    "/program/reviews",
+    auth=mobile_bearer,
+    response={200: CalendarizationReviewListEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope},
+)
+def program_reviews(request, limit: int = 12):
+    items = CalendarizationReview.objects.filter(calendarization__user=request.auth.user).order_by(
+        "-period_end", "-created_at", "-id"
+    )[: min(max(limit, 1), 50)]
+    payload = [review_payload(item) for item in items]
+    return _success({"items": payload, "count": len(payload)})
+
+
+@api.post(
+    "/program/reviews",
+    auth=mobile_bearer,
+    response={200: CalendarizationReviewEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def create_program_review(request, payload: CalendarizationReviewInput):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    try:
+        review = create_calendarization_review(
+            user=request.auth.user,
+            period_start=payload.period_start,
+            period_end=payload.period_end,
+            idempotency_key=payload.idempotency_key,
+            energy_score=payload.energy_score,
+            hunger_score=payload.hunger_score,
+            training_performance_score=payload.training_performance_score,
+            note=payload.note,
+        )
+    except ValueError as exc:
+        raise _calendarization_error(exc) from exc
+    return _success(review_payload(review))
+
+
+@api.get(
+    "/program/revisions",
+    auth=mobile_bearer,
+    response={200: RevisionListEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope},
+)
+def program_revisions(request, limit: int = 12):
+    revisions = CalendarizationRevision.objects.filter(calendarization__user=request.auth.user).order_by(
+        "-created_at", "-id"
+    )[: min(max(limit, 1), 50)]
+    payload = [revision_payload(item) for item in revisions]
+    return _success({"items": payload, "count": len(payload)})
+
+
+@api.post(
+    "/program/revisions/{revision_id}/decision",
+    auth=mobile_bearer,
+    response={200: RevisionEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def decide_program_revision(request, revision_id: int, payload: RevisionDecisionInput):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    try:
+        revision = decide_calendarization_revision(
+            user=request.auth.user,
+            revision_id=revision_id,
+            decision=payload.decision,
+        )
+    except ValueError as exc:
+        raise _calendarization_error(exc) from exc
+    return _success(revision_payload(revision))
+
+
 @api.get(
     "/weights",
     auth=mobile_bearer,
@@ -216,11 +375,10 @@ def weights(request, limit: int = 30):
 )
 def create_weight(request, payload: WeightCreateInput):
     _require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    item = record_weight(
-        request.auth.user,
-        payload.weight_kg,
+    item, context = record_calendarized_weight(
+        user=request.auth.user,
+        weight_kg=payload.weight_kg,
         measured_on=payload.measured_on,
-        source=WeightLog.SOURCE_MANUAL,
     )
     return _success(
         {
@@ -229,6 +387,7 @@ def create_weight(request, payload: WeightCreateInput):
             "weight_kg": item.weight_kg,
             "source": item.source,
             "created_at": item.created_at,
+            "calendarization_id": context.calendarization_id if context else None,
         }
     )
 

@@ -142,7 +142,7 @@ Este bridge vive en `notas` porque lee modelos operativos. `food_catalog` sigue 
 | Meals | `Meal`, `MealFood`, `MealAccess` | Meals reutilizables, composición meal-food y metadata de acceso de meals. |
 | Daily Plans | `DailyPlan`, `DailyPlanMeal` | Planes diarios y comidas adjuntas. |
 | Programs | `Program`, `ProgramDay` | Programas semanales y días copiados desde DailyPlans. |
-| Calendarization | `ProgramCalendarization`, `CalendarizedDay` | Ejecución fechada y snapshots inmutables de un programa para un usuario. |
+| Calendarization | `ProgramCalendarization`, `CalendarizedDay`, `CalendarizedMealExecution`, `CalendarizationMeasurementContext`, `CalendarizationReview`, `CalendarizationRevision` | Programa vivido: snapshots fechados, ejecución append-only, contexto de mediciones, revisiones y ajustes futuros auditables. |
 | Notification Delivery | `ScheduledNotificationEvent`, `WebPushSubscription`, `NotificationDelivery` | Eventos lógicos, dispositivos Web Push y entregas idempotentes. |
 | AI Proposals / Chat Assistant | `AiNutritionChat`, `NutritionProposal`, `NutritionProposalAuditEvent` | Chat IA, AI Assistant sobre chat existente, propuestas revisables y auditoría. |
 | Sharing | `DailyPlanShare`, `ProgramShare`, `MealShare`, `FoodShare`, `DailyPlanMealShare` | Registros de Inbox/share entre usuarios. |
@@ -158,7 +158,7 @@ Este bridge vive en `notas` porque lee modelos operativos. `food_catalog` sigue 
 | Meals | Operational Food Snapshot, Daily Plans | Meals componen `notas.Food` y mantienen vínculos legacy/auxiliares con planes diarios. |
 | Daily Plans | Meals | Los planes diarios adjuntan meals. |
 | Programs | Daily Plans | Los programas guardan días copiados desde DailyPlans. |
-| Calendarization | Programs | La agenda conserva una referencia opcional al programa fuente; sus días renderizan snapshots autocontenidos. |
+| Calendarization | Identity & User State, Programs | La agenda conserva una referencia opcional al programa fuente, renderiza snapshots autocontenidos y contextualiza `WeightLog` sin tomar su propiedad. |
 | Notification Delivery | Calendarization | Los eventos y deliveries pertenecen a una agenda/día calendarizado, no al programa editable. |
 | AI Proposals | Daily Plans | Las propuestas pueden referenciar el DailyPlan aplicado/generado. |
 | Sharing | Operational Food Snapshot, Meals, Daily Plans, Programs | Los share records apuntan a la entidad compartida. |

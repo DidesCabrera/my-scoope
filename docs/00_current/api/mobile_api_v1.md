@@ -39,15 +39,21 @@ schema in memory and fails when the committed contract drifts.
 
 Mobile scopes are `mobile:read`, `mobile:write` and `mobile:account`.
 
-## First vertical
+## Consumer vertical through CML04
 
-The first CML02 vertical exposes health, session, device revocation, profile,
-consumer onboarding, account entitlements, active calendarized program, Today,
-weight history/write, paginated food search, durable AI submit/poll and account
-deletion.
+The API exposes health, session, device revocation, profile, consumer onboarding,
+account entitlements, active calendarized program, Today, weight history/write,
+paginated food search, durable AI submit/poll and account deletion.
 
-Adherence/execution writes are intentionally absent until CML04 gives them a
-durable lived-program model. Food-label capture remains CML05. Food libraries,
-meal/daily-plan editing and remaining library mutations can be added after the
-React Native execution journey proves they are needed; they must preserve the
-same envelope, scopes and service boundaries.
+CML04 adds meal check-ins, derived adherence, program-context measurements,
+periodic reviews, reminder settings/upcoming logical events and explicit decisions
+for prepared future revisions. Check-ins are append-only; corrections preserve
+history. Review summaries are frozen at creation. Revision approval revalidates
+that all affected days are strictly future and unexecuted, and the client cannot
+submit arbitrary before/after plan snapshots.
+
+Native notification delivery remains CML07; the API already exposes the common
+calendarization schedule that each channel must follow. Food-label capture remains
+CML05. Food libraries, meal/daily-plan editing and remaining library mutations can
+be added after the React Native execution journey proves they are needed; they
+must preserve the same envelope, scopes and service boundaries.

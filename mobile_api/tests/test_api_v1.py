@@ -14,8 +14,12 @@ from notas.application.services.oauth_device_sessions import (
     MOBILE_SCOPE_READ,
     MOBILE_SCOPE_WRITE,
 )
+from notas.application.services.calendarization.snapshots import SNAPSHOT_SCHEMA_VERSION
+from notas.application.services.commands.calendarization_execution_commands import prepare_calendarization_revision
 from notas.domain.models import (
     CalendarizedDay,
+    CalendarizedMealExecution,
+    CalendarizationMeasurementContext,
     Food,
     OAuthClient,
     OAuthDeviceSession,
@@ -73,6 +77,11 @@ class MobileAPIV1Tests(TestCase):
             "/api/v1/entitlements",
             "/api/v1/program/active",
             "/api/v1/today",
+            "/api/v1/days/{day_id}/meals/{meal_snapshot_key}/check-ins",
+            "/api/v1/program/active/reminders",
+            "/api/v1/program/reviews",
+            "/api/v1/program/revisions",
+            "/api/v1/program/revisions/{revision_id}/decision",
             "/api/v1/weights",
             "/api/v1/account/delete",
             "/api/v1/foods",
@@ -152,6 +161,166 @@ class MobileAPIV1Tests(TestCase):
         self.assertEqual(active_response.status_code, 200)
         self.assertEqual(active_response.json()["data"]["calendarization"]["id"], calendarization.id)
         self.assertEqual(len(active_response.json()["data"]["days"]), 1)
+
+    def test_today_check_in_persists_append_only_execution_evidence(self):
+        today = timezone.localdate(timezone=ZoneInfo("UTC"))
+        calendarization = ProgramCalendarization.objects.create(
+            user=self.user,
+            program_name_snapshot="Programa en ejecución",
+            start_date=today,
+            end_date=today + timedelta(days=6),
+            timezone_name="UTC",
+            status=ProgramCalendarization.STATUS_ACTIVE,
+        )
+        day = CalendarizedDay.objects.create(
+            calendarization=calendarization,
+            calendar_date=today,
+            week_number=1,
+            day_number=1,
+            plan_snapshot={
+                "schema_version": SNAPSHOT_SCHEMA_VERSION,
+                "name": "Día ejecutable",
+                "meals": [{"key": "dailyplan_meal:99", "name": "Desayuno", "hour": "08:00", "foods": []}],
+                "totals": {},
+            },
+        )
+
+        completed = self.client.post(
+            f"/api/v1/days/{day.id}/meals/dailyplan_meal:99/check-ins",
+            data={"action": "completed", "idempotency_key": "mobile-checkin-0001"},
+            content_type="application/json",
+        )
+        reset = self.client.post(
+            f"/api/v1/days/{day.id}/meals/dailyplan_meal:99/check-ins",
+            data={"action": "reset", "idempotency_key": "mobile-checkin-0002"},
+            content_type="application/json",
+        )
+
+        self.assertEqual(completed.status_code, 200)
+        self.assertEqual(completed.json()["data"]["meal_execution"][0]["status"], "completed")
+        self.assertEqual(reset.status_code, 200)
+        self.assertEqual(reset.json()["data"]["meal_execution"][0]["status"], "planned")
+        self.assertEqual(CalendarizedMealExecution.objects.filter(calendarized_day=day).count(), 2)
+
+    def test_reviews_reminders_and_measurement_context_share_the_active_program(self):
+        today = timezone.localdate(timezone=ZoneInfo("UTC"))
+        calendarization = ProgramCalendarization.objects.create(
+            user=self.user,
+            program_name_snapshot="Programa medible",
+            start_date=today,
+            end_date=today + timedelta(days=6),
+            timezone_name="UTC",
+            status=ProgramCalendarization.STATUS_ACTIVE,
+        )
+        CalendarizedDay.objects.create(
+            calendarization=calendarization,
+            calendar_date=today,
+            week_number=1,
+            day_number=1,
+            plan_snapshot={
+                "schema_version": SNAPSHOT_SCHEMA_VERSION,
+                "name": "Día uno",
+                "meals": [{"key": "dailyplan_meal:1", "name": "Comida", "hour": "20:00", "foods": []}],
+                "totals": {},
+            },
+        )
+
+        weight = self.client.post(
+            "/api/v1/weights",
+            data={"weight_kg": 81.2, "measured_on": today.isoformat()},
+            content_type="application/json",
+        )
+        review = self.client.post(
+            "/api/v1/program/reviews",
+            data={
+                "period_start": today.isoformat(),
+                "period_end": today.isoformat(),
+                "idempotency_key": "mobile-review-0001",
+                "energy_score": 4,
+                "hunger_score": 2,
+                "training_performance_score": 5,
+                "note": "Buen rendimiento.",
+            },
+            content_type="application/json",
+        )
+        reminders = self.client.put(
+            "/api/v1/program/active/reminders",
+            data={
+                "timezone_name": "America/Santiago",
+                "daily_notification_time": "07:30",
+                "daily_notifications_enabled": True,
+                "meal_notifications_enabled": True,
+            },
+            content_type="application/json",
+        )
+
+        self.assertEqual(weight.status_code, 200)
+        self.assertEqual(weight.json()["data"]["calendarization_id"], calendarization.id)
+        self.assertEqual(CalendarizationMeasurementContext.objects.filter(calendarization=calendarization).count(), 1)
+        self.assertEqual(reminders.status_code, 200)
+        self.assertTrue(reminders.json()["data"]["meal_notifications_enabled"])
+        self.assertEqual(reminders.json()["data"]["timezone_name"], "America/Santiago")
+        self.assertEqual(review.status_code, 200)
+        self.assertEqual(review.json()["data"]["summary_snapshot"]["measurements"]["latest_weight_kg"], 81.2)
+
+    def test_mobile_can_decide_but_cannot_inject_a_prospective_revision(self):
+        today = timezone.localdate(timezone=ZoneInfo("UTC"))
+        calendarization = ProgramCalendarization.objects.create(
+            user=self.user,
+            program_name_snapshot="Programa revisable",
+            start_date=today,
+            end_date=today + timedelta(days=6),
+            timezone_name="UTC",
+            status=ProgramCalendarization.STATUS_ACTIVE,
+        )
+        future_day = CalendarizedDay.objects.create(
+            calendarization=calendarization,
+            calendar_date=today + timedelta(days=1),
+            week_number=1,
+            day_number=2,
+            plan_snapshot={
+                "schema_version": SNAPSHOT_SCHEMA_VERSION,
+                "name": "Plan original",
+                "meals": [],
+                "totals": {"total_kcal": 2200},
+            },
+        )
+        revision = prepare_calendarization_revision(
+            user=self.user,
+            calendarization_id=calendarization.id,
+            effective_from=future_day.calendar_date,
+            replacement_days=[
+                {
+                    "calendar_date": future_day.calendar_date,
+                    "plan_snapshot": {
+                        "schema_version": SNAPSHOT_SCHEMA_VERSION,
+                        "name": "Plan revisado",
+                        "meals": [],
+                        "totals": {"total_kcal": 2050},
+                    },
+                }
+            ],
+            rationale="Cambio futuro preparado por una autoridad interna.",
+            idempotency_key="mobile-revision-0001",
+        )
+
+        listed = self.client.get("/api/v1/program/revisions")
+        decided = self.client.post(
+            f"/api/v1/program/revisions/{revision.id}/decision",
+            data={"decision": "approve"},
+            content_type="application/json",
+        )
+
+        self.assertEqual(listed.status_code, 200)
+        self.assertEqual(listed.json()["data"]["items"][0]["days"][0]["after_name"], "Plan revisado")
+        self.assertEqual(decided.status_code, 200)
+        self.assertEqual(decided.json()["data"]["status"], "applied")
+        future_day.refresh_from_db()
+        self.assertEqual(future_day.plan_snapshot["name"], "Plan revisado")
+        self.assertEqual(
+            self.client.post("/api/v1/program/revisions", data={}, content_type="application/json").status_code,
+            405,
+        )
 
     def test_write_scope_is_required_for_mutations(self):
         read_only = create_mcp_user_token(

@@ -42,7 +42,10 @@ Cuando un ciclo planificado empiece a implementarse, el documento puede permanec
   en staging y aprobación contable/legal siguen como gates externos. CML02 es el
   contrato API consumer-first y está completado en repositorio. CML03 también
   está completado en repositorio con Expo, sesión segura y recorrido nativo; su
-  prueba física depende de Xcode y OAuth staging. CML04 es el siguiente patch.
+  prueba física depende de Xcode y OAuth staging. CML04 está completado en
+  repositorio con ejecución inmutable, adherencia, mediciones contextualizadas,
+  revisiones, ajustes futuros auditados y coordinación de recordatorios. CML05 es
+  el siguiente patch; la entrega nativa de notificaciones permanece en CML07.
 - `production_architecture_remediation_cycle.md`: ciclo activo PAR00-PAR10. PAR01-PAR05
   cierran en repositorio el arranque fail-closed con PostgreSQL, la topología Render
   versionada, CI completo sobre PostgreSQL, runbooks de recuperación y defaults de

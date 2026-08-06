@@ -44,7 +44,10 @@ commands through `scripts/ci_mobile_checks.sh`.
   devices. No OAuth client secret exists in the app.
 - `src/design/tokens.json` is the platform-neutral visual contract consumed by
   native components.
-- The CML03 check-in route is an explicit interaction preview. Durable adherence
-  writes wait for the CML04 lived-program model.
+- The CML04 execution path writes append-only meal evidence, contextualizes
+  weights, freezes periodic reviews and requires explicit approval for prepared
+  future revisions.
+- Calendarization owns logical reminder times and upcoming events. Native local
+  notification/APNs delivery and permission handling remain CML07.
 - App Store signing, universal links, camera, notifications and privacy manifests
   belong to later CML patches.

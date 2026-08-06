@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import timedelta
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.utils import timezone
@@ -8,6 +9,12 @@ from accounts.services.profile import build_account_credit_display
 from notas.application.queries.calendarization_queries import (
     current_calendarization_for_user,
     today_for_calendarization,
+)
+from notas.application.queries.calendarization_execution_queries import (
+    calendarization_measurement_summary,
+    calendarization_progress_summary,
+    meal_execution_state_for_day,
+    pending_revision_for_calendarization,
 )
 from notas.application.services.nutrition.body_metrics import get_basic_body_profile
 
@@ -72,12 +79,19 @@ def today_payload(user, *, now=None) -> dict:
             "day_id": None,
             "has_plan": False,
             "plan_snapshot": None,
+            "meal_execution": [],
+            "adherence": None,
+            "measurements": None,
+            "reminders": None,
+            "pending_revision": None,
         }
 
     local_date = today_for_calendarization(calendarization, now=now)
     day = next((item for item in calendarization.days.all() if item.calendar_date == local_date), None)
     total_days = max(1, (calendarization.end_date - calendarization.start_date).days + 1)
     progress_day = min(max((local_date - calendarization.start_date).days + 1, 0), total_days)
+    elapsed_end = min(local_date, calendarization.end_date)
+    period_start = max(calendarization.start_date, elapsed_end - timedelta(days=6))
     return {
         "local_date": local_date,
         "calendarization": {
@@ -94,6 +108,87 @@ def today_payload(user, *, now=None) -> dict:
         "day_id": day.id if day else None,
         "has_plan": bool(day and day.has_plan),
         "plan_snapshot": day.plan_snapshot if day and day.has_plan else None,
+        "meal_execution": meal_execution_state_for_day(day) if day and day.has_plan else [],
+        "adherence": (
+            calendarization_progress_summary(
+                calendarization,
+                period_start=period_start,
+                period_end=elapsed_end,
+            )
+            if elapsed_end >= calendarization.start_date
+            else None
+        ),
+        "measurements": calendarization_measurement_summary(calendarization),
+        "reminders": reminder_settings_payload(calendarization),
+        "pending_revision": revision_payload(pending_revision_for_calendarization(calendarization)),
+    }
+
+
+def reminder_settings_payload(calendarization) -> dict:
+    upcoming = [
+        {
+            "event_type": event.event_type,
+            "meal_key": event.meal_snapshot_key,
+            "local_date": event.local_scheduled_date,
+            "local_time": event.local_scheduled_time,
+            "status": event.status,
+        }
+        for event in calendarization.notification_events.filter(status="pending").order_by(
+            "scheduled_for_utc", "id"
+        )[:20]
+    ]
+    return {
+        "timezone_name": calendarization.timezone_name,
+        "daily_notification_time": calendarization.daily_notification_time,
+        "daily_notifications_enabled": calendarization.daily_notifications_enabled,
+        "meal_notifications_enabled": calendarization.meal_notifications_enabled,
+        "upcoming": upcoming,
+    }
+
+
+def revision_payload(revision) -> dict | None:
+    if revision is None:
+        return None
+    before_by_date = {
+        item.get("calendar_date"): item
+        for item in revision.before_snapshot.get("days", [])
+    }
+    days = []
+    for after in revision.after_snapshot.get("days", []):
+        calendar_date = after.get("calendar_date")
+        before = before_by_date.get(calendar_date, {})
+        before_plan = before.get("plan_snapshot") or {}
+        after_plan = after.get("plan_snapshot") or {}
+        days.append(
+            {
+                "calendar_date": calendar_date,
+                "before_name": before_plan.get("name", ""),
+                "after_name": after_plan.get("name", ""),
+                "before_totals": before_plan.get("totals", {}),
+                "after_totals": after_plan.get("totals", {}),
+            }
+        )
+    return {
+        "id": revision.id,
+        "effective_from": revision.effective_from,
+        "status": revision.status,
+        "rationale": revision.rationale,
+        "days": days,
+        "created_at": revision.created_at,
+    }
+
+
+def review_payload(review) -> dict:
+    return {
+        "id": review.id,
+        "period_start": review.period_start,
+        "period_end": review.period_end,
+        "energy_score": review.energy_score,
+        "hunger_score": review.hunger_score,
+        "training_performance_score": review.training_performance_score,
+        "note": review.note,
+        "summary_snapshot": review.summary_snapshot,
+        "created_at": review.created_at,
     }
 
 

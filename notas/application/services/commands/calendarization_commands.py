@@ -161,6 +161,31 @@ def _sync_day_events(*, calendarization: ProgramCalendarization, day: Calendariz
             )
 
 
+def reschedule_calendarized_days(
+    *,
+    calendarization: ProgramCalendarization,
+    days: list[CalendarizedDay],
+    now: datetime,
+    reason: str,
+) -> None:
+    day_ids = [day.id for day in days]
+    if not day_ids:
+        return
+    calendarization.notification_events.filter(
+        calendarized_day_id__in=day_ids,
+        status__in=(
+            ScheduledNotificationEvent.STATUS_PENDING,
+            ScheduledNotificationEvent.STATUS_PROCESSING,
+        ),
+    ).update(
+        status=ScheduledNotificationEvent.STATUS_CANCELLED,
+        skip_reason=reason,
+        claimed_at=None,
+    )
+    for day in days:
+        _sync_day_events(calendarization=calendarization, day=day, now=now)
+
+
 def _cancel_pending_events(calendarization: ProgramCalendarization, *, reason: str) -> None:
     calendarization.notification_events.filter(
         status__in=(

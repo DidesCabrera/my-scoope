@@ -13,7 +13,9 @@ from notas.domain.model_modules.auth_integration import (
     OAuthRefreshToken,
 )
 from notas.domain.model_modules.calendarization import (
-    CalendarizedDay,
+    CalendarizedDay, CalendarizedMealExecution,
+    CalendarizationMeasurementContext, CalendarizationReview,
+    CalendarizationRevision,
     ProgramCalendarization,
 )
 from notas.domain.model_modules.comparisons import SavedComparison
@@ -56,6 +58,10 @@ from notas.domain.model_modules.sharing import (
 __all__ = [
     "AiNutritionChat",
     "CalendarizedDay",
+    "CalendarizedMealExecution",
+    "CalendarizationMeasurementContext",
+    "CalendarizationReview",
+    "CalendarizationRevision",
     "DailyPlan",
     "DailyPlanMeal",
     "DailyPlanMealShare",
