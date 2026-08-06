@@ -373,6 +373,7 @@ class ApplicationBoundedContextTests(TestCase):
         self.assertEqual(service_area_for_entry("food_imports").slug, "food_catalog")
         self.assertEqual(service_area_for_entry("nutrition").slug, "nutrition_services")
         self.assertEqual(service_area_for_entry("mcp_user_tokens").slug, "auth_integration")
+        self.assertEqual(service_area_for_entry("oauth_device_sessions").slug, "auth_integration")
         self.assertIsNone(service_area_for_entry("does_not_exist"))
 
     def test_service_area_dependency_policies_cover_all_service_areas(self):
@@ -410,7 +411,8 @@ class ApplicationBoundedContextTests(TestCase):
             "notas.application.services.nutrition",
         )
         for path in _python_files(SERVICES_ROOT):
-            if _service_entry_from_path(path) not in {"mcp_user_tokens", "oauth_authorization_codes"}:
+            service_area = service_area_for_entry(_service_entry_from_path(path))
+            if service_area is None or service_area.slug != "auth_integration":
                 continue
             for imported in sorted(_imports_from(path)):
                 if any(
@@ -420,4 +422,3 @@ class ApplicationBoundedContextTests(TestCase):
                     offenders.append(f"{path.relative_to(PROJECT_ROOT)} imports {imported}")
 
         self.assertEqual(offenders, [])
-

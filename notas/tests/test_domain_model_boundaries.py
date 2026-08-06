@@ -137,6 +137,8 @@ class DomainModelBoundaryTests(TestCase):
         self.assertEqual(boundary_for_model("Program").slug, "programs")
         self.assertEqual(boundary_for_model("NutritionProposal").slug, "proposals")
         self.assertEqual(boundary_for_model("SavedComparison").slug, "comparisons")
+        self.assertEqual(boundary_for_model("OAuthDeviceSession").slug, "auth_integration")
+        self.assertEqual(boundary_for_model("OAuthRefreshToken").slug, "auth_integration")
         self.assertIsNone(boundary_for_model("DoesNotExist"))
 
     def test_dependency_policies_cover_all_boundaries(self):

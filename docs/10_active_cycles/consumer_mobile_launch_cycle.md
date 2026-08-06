@@ -30,7 +30,7 @@ or adjustment claims; App Store work remains separate from general product work.
 | --- | --- | --- | --- |
 | CML00 · Consumer baseline | completed | Product | Accepted B2C brief, MVP boundary, success measures and durable decisions. |
 | CML01 · Safety and privacy | completed (repository) | Product + review prerequisite | Shared runtime secret, reproducible frontend bundle, account deletion with exhaustive retention classification, legacy credit monitoring evidence and current project state. |
-| CML02 · Vertical mobile API | planned | Product/mobile | Versioned OpenAPI contract for auth, profile, active program, Today, adherence, weight, foods, AI, entitlements and deletion. Mobile OAuth is audited from the existing PKCE baseline and gains rotating device sessions. |
+| CML02 · Vertical mobile API | completed (repository) | Product/mobile | Versioned OpenAPI contract for auth, profile, active program, Today, weight, foods, durable AI submit/poll, entitlements and deletion. Mobile OAuth is audited from the existing PKCE baseline and gains rotating device sessions. Adherence waits for the CML04 execution model. |
 | CML03 · React Native and visual system | planned | Mobile | Expo development build, extracted visual tokens/card grammar and the on-device login → onboarding → Today → check-in → weight path against staging. |
 | CML04 · Lived program | planned | Product/mobile | Calendarization owns dated plans, meal execution, reminder coordination, measurement context, reviews and prospective audited adjustment revisions. |
 | CML05 · Nutrition-label capture | planned | Product/native | On-device OCR normalizes label values, exposes uncertainty and creates a private food only after user confirmation. |
@@ -80,6 +80,27 @@ production/App Store release, My Scoope must still prove a real backup restore,
 apply the Render Blueprint safely in staging and obtain accounting/legal approval
 for country-specific financial retention periods. Apple subscription management
 and Sign in with Apple token revocation belong to CML06-CML07.
+
+## CML02 closure evidence
+
+- `/api/v1/` is owned by the new `mobile_api` interface app and uses the stable
+  `{ok, data, error}` envelope.
+- Django Ninja generates `docs/00_current/api/mobile-v1.openapi.json`; the fast
+  CI gate rejects contract drift.
+- Existing PKCE S256 remains mandatory. Mobile clients gain device-bound access
+  tokens, rotating refresh-token families, reuse detection and per-device
+  revocation without changing the ChatGPT/MCP flow.
+- The consumer vertical includes session, onboarding, profile, entitlements,
+  active program, Today, weights, food search, AI async submit/poll and account
+  deletion.
+- API code calls existing account, calendarization, food-picker, body-metric, AI
+  queue and deletion services. No parallel domain calculations were introduced.
+- Adherence remains absent by design until CML04 owns execution evidence inside
+  the calendarized program.
+
+CML03 is the next implementation patch. Staging must still register the mobile
+OAuth public client and its HTTPS universal-link callback before a device can
+complete the authorization flow.
 
 ## Release order
 

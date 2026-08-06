@@ -81,6 +81,7 @@ INSTALLED_APPS = [
     "notas.apps.NotasConfig",
     "accounts",
     "core",
+    "mobile_api.apps.MobileApiConfig",
 
     "allauth",
     "allauth.account",

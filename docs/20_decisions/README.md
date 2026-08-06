@@ -189,3 +189,4 @@ Consequences
 - `0173-consumer-first-mobile-product-direction.md`: define al consumidor que sigue su propio programa como cliente móvil principal y difiere los flujos profesionales.
 - `0174-react-native-client-and-visual-grammar.md`: adopta React Native y traduce la gramática visual existente de cartas y tokens a primitivas nativas sin compartir HTML/CSS.
 - `0175-calendarization-as-lived-program.md`: convierte `ProgramCalendarization` en el programa vivido que coordina planes fechados, ejecución, mediciones, recordatorios y ajustes prospectivos.
+- `0176-mobile-api-and-device-session-foundation.md`: adopta Django Ninja, OpenAPI versionado y sesiones móviles con PKCE, access tokens cortos, refresh rotatorio y revocación por dispositivo.

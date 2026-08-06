@@ -42,8 +42,17 @@ DOMAIN_MODEL_BOUNDARIES: tuple[DomainModelBoundary, ...] = (
     DomainModelBoundary(
         slug="auth_integration",
         label="Auth Integration",
-        models=("MCPUserToken", "OAuthClient", "OAuthAuthorizationCode"),
-        responsibility="Tokens and OAuth authorization state used by external integrations.",
+        models=(
+            "MCPUserToken",
+            "OAuthClient",
+            "OAuthAuthorizationCode",
+            "OAuthDeviceSession",
+            "OAuthRefreshToken",
+        ),
+        responsibility=(
+            "Tokens, authorization codes, and durable device sessions used by "
+            "external and mobile integrations."
+        ),
     ),
     DomainModelBoundary(
         slug="food_catalog",

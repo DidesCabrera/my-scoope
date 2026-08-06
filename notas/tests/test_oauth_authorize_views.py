@@ -12,6 +12,7 @@ from notas.application.services.oauth_authorization_codes import (
     OAUTH_CODE_CHALLENGE_METHOD_S256,
     hash_oauth_authorization_code,
 )
+from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_READ
 from notas.domain.models import OAuthAuthorizationCode, OAuthClient
 
 
@@ -78,8 +79,10 @@ class OAuthAuthorizeViewsTests(TestCase):
             data["grant_types_supported"],
             [
                 "authorization_code",
+                "refresh_token",
             ],
         )
+        self.assertIn(MOBILE_SCOPE_READ, data["scopes_supported"])
         self.assertEqual(
             data["code_challenge_methods_supported"],
             [
@@ -292,4 +295,3 @@ class OAuthAuthorizeViewsTests(TestCase):
             data["error"],
             "unsupported_grant_type",
         )
-
