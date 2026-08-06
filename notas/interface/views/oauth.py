@@ -2,7 +2,7 @@ import os
 from urllib.parse import urlencode
 
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
@@ -28,6 +28,12 @@ from notas.domain.models import OAuthClient
 OAUTH_RESPONSE_TYPE_CODE = "code"
 OAUTH_GRANT_TYPE_AUTHORIZATION_CODE = "authorization_code"
 OAUTH_GRANT_TYPE_REFRESH_TOKEN = "refresh_token"
+
+
+class OAuthCallbackRedirect(HttpResponseRedirect):
+    """Allow the registered native callback after exact client validation."""
+
+    allowed_schemes = [*HttpResponseRedirect.allowed_schemes, "myscoope"]
 
 
 def _get_oauth_issuer_url(request) -> str:
@@ -288,7 +294,7 @@ def oauth_authorize_consent(request):
 
     separator = "&" if "?" in redirect_uri else "?"
 
-    return redirect(
+    return OAuthCallbackRedirect(
         f"{redirect_uri}{separator}{urlencode(redirect_params)}"
     )
 
