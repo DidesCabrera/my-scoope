@@ -88,12 +88,21 @@ export type ReminderSettings = {
   daily_notifications_enabled: boolean;
   meal_notifications_enabled: boolean;
   upcoming: {
+    event_key: string;
     event_type: "daily_plan" | "meal_reminder";
     meal_key: string;
     local_date: string;
     local_time: string;
+    scheduled_for_utc: string;
     status: string;
   }[];
+};
+
+export type ApplePushRegistration = {
+  delivery_mode: "apns" | "local";
+  token_fingerprint: string;
+  environment: "sandbox" | "production";
+  is_active: boolean;
 };
 
 export type CalendarizationRevision = {

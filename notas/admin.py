@@ -38,6 +38,7 @@ from .domain.models import (
     ProgramDay,
     ScheduledNotificationEvent,
     WebPushSubscription,
+    ApplePushSubscription,
     WeightLog,
 )
 
@@ -889,6 +890,15 @@ class WebPushSubscriptionAdmin(admin.ModelAdmin):
     readonly_fields = ("endpoint_fingerprint", "created_at", "updated_at", "last_success_at", "last_failure_at")
 
 
+@admin.register(ApplePushSubscription)
+class ApplePushSubscriptionAdmin(admin.ModelAdmin):
+    list_display = ("user", "token_fingerprint", "environment", "is_active", "last_success_at", "last_failure_at")
+    list_filter = ("environment", "is_active", "last_success_at", "last_failure_at")
+    search_fields = ("user__username", "user__email", "token_fingerprint")
+    exclude = ("device_token",)
+    readonly_fields = ("token_fingerprint", "created_at", "updated_at", "last_success_at", "last_failure_at")
+
+
 @admin.register(ScheduledNotificationEvent)
 class ScheduledNotificationEventAdmin(admin.ModelAdmin):
     list_display = ("event_key", "event_type", "scheduled_for_utc", "status", "skip_reason")
@@ -899,8 +909,8 @@ class ScheduledNotificationEventAdmin(admin.ModelAdmin):
 
 @admin.register(NotificationDelivery)
 class NotificationDeliveryAdmin(admin.ModelAdmin):
-    list_display = ("event", "subscription_fingerprint", "status", "attempt_count", "sent_at")
-    list_filter = ("status", "sent_at")
+    list_display = ("event", "channel", "subscription_fingerprint", "status", "attempt_count", "sent_at")
+    list_filter = ("channel", "status", "sent_at")
     search_fields = ("event__event_key", "subscription_fingerprint")
     readonly_fields = tuple(field.name for field in NotificationDelivery._meta.fields)
 

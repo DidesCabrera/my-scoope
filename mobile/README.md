@@ -47,13 +47,13 @@ commands through `scripts/ci_mobile_checks.sh`.
 - The CML04 execution path writes append-only meal evidence, contextualizes
   weights, freezes periodic reviews and requires explicit approval for prepared
   future revisions.
-- Calendarization owns logical reminder times and upcoming events. Native local
-  notification/APNs delivery and permission handling remain CML07.
+- Calendarization owns logical reminder times and upcoming events. CML07 selects
+  APNs or deterministic local delivery per iPhone and never schedules both modes.
 - CML05 keeps label photos and raw OCR text on-device, exposes uncertain fields
   for editing and persists only explicitly confirmed private foods.
 - CML06 fetches localized App Store prices, passes the server-issued
   `appAccountToken`, verifies signed transactions before finishing them, restores
   purchases and opens native subscription management. Product identifiers and
   prices must first be configured in App Store Connect and `BillingProduct`.
-- App Store signing, universal links, final camera-permission QA, notifications
-  and privacy manifests belong to CML07-CML08.
+- App Store signing and physical camera/OCR, Apple login, APNs, Keychain and crash
+  proof remain CML07 external gates; metadata, screenshots and review belong CML08.

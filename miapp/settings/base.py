@@ -86,6 +86,7 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
+    "allauth.socialaccount.providers.apple",
     "allauth.socialaccount.providers.google",
 ]
 
@@ -519,6 +520,15 @@ MYSCOOPE_VAPID_SUBJECT = os.environ.get(
     "mailto:notifications@myscoope.com",
 ).strip()
 MYSCOOPE_PWA_CACHE_VERSION = os.environ.get("MYSCOOPE_PWA_CACHE_VERSION", "v2")
+
+# Native iOS reminders are opt-in. The app falls back to deterministic local
+# notifications until all APNs provider credentials are present.
+MYSCOOPE_APNS_ENABLED = _env_bool("MYSCOOPE_APNS_ENABLED", False)
+MYSCOOPE_APNS_KEY_ID = os.environ.get("MYSCOOPE_APNS_KEY_ID", "").strip()
+MYSCOOPE_APNS_TEAM_ID = os.environ.get("MYSCOOPE_APNS_TEAM_ID", "").strip()
+MYSCOOPE_APNS_PRIVATE_KEY = os.environ.get("MYSCOOPE_APNS_PRIVATE_KEY", "").strip()
+MYSCOOPE_APNS_BUNDLE_ID = os.environ.get("MYSCOOPE_APNS_BUNDLE_ID", "com.myscoope.app").strip()
+MYSCOOPE_APNS_TIMEOUT_SECONDS = _env_int("MYSCOOPE_APNS_TIMEOUT_SECONDS", 10)
 
 # Billing providers are opt-in. Webhooks stay unavailable until explicitly enabled
 # with both Mercado Pago credentials present.

@@ -14,7 +14,7 @@ test("mobile visual grammar exposes the reusable card and nutrition tokens", () 
   }
 });
 
-test("the committed mobile contract exposes every route consumed through CML06", async () => {
+test("the committed mobile contract exposes every route consumed through CML07", async () => {
   const file = path.resolve(process.cwd(), "../docs/00_current/api/mobile-v1.openapi.json");
   const schema = JSON.parse(await readFile(file, "utf8")) as { info: { version: string }; paths: Record<string, unknown> };
   assert.equal(schema.info.version, "1.0.0");
@@ -26,6 +26,7 @@ test("the committed mobile contract exposes every route consumed through CML06",
     "/api/v1/today",
     "/api/v1/days/{day_id}/meals/{meal_snapshot_key}/check-ins",
     "/api/v1/program/active/reminders",
+    "/api/v1/notifications/apple/device",
     "/api/v1/program/reviews",
     "/api/v1/program/revisions",
     "/api/v1/program/revisions/{revision_id}/decision",
@@ -36,4 +37,29 @@ test("the committed mobile contract exposes every route consumed through CML06",
   ]) {
     assert.ok(schema.paths[route], `missing ${route}`);
   }
+});
+
+test("the iOS release contract declares only approved capabilities and privacy categories", async () => {
+  const appFile = path.resolve(process.cwd(), "app.json");
+  const app = JSON.parse(await readFile(appFile, "utf8")).expo as {
+    ios: { usesAppleSignIn: boolean; privacyManifests: { NSPrivacyTracking: boolean; NSPrivacyCollectedDataTypes: { NSPrivacyCollectedDataType: string }[] } };
+    plugins: (string | [string, Record<string, unknown>])[];
+  };
+  assert.equal(app.ios.usesAppleSignIn, true);
+  assert.equal(app.ios.privacyManifests.NSPrivacyTracking, false);
+  const collected = new Set(
+    app.ios.privacyManifests.NSPrivacyCollectedDataTypes.map((item) => item.NSPrivacyCollectedDataType),
+  );
+  for (const category of [
+    "NSPrivacyCollectedDataTypeHealth",
+    "NSPrivacyCollectedDataTypeFitness",
+    "NSPrivacyCollectedDataTypeDeviceID",
+    "NSPrivacyCollectedDataTypeCrashData",
+  ]) assert.ok(collected.has(category), `missing ${category}`);
+
+  const secureStore = app.plugins.find((plugin) => Array.isArray(plugin) && plugin[0] === "expo-secure-store");
+  const camera = app.plugins.find((plugin) => Array.isArray(plugin) && plugin[0] === "expo-camera");
+  assert.deepEqual(secureStore, ["expo-secure-store", { configureAndroidBackup: true, faceIDPermission: false }]);
+  assert.equal(Array.isArray(camera) && camera[1].microphonePermission, false);
+  assert.equal(Array.isArray(camera) && camera[1].barcodeScannerEnabled, false);
 });

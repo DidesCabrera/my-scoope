@@ -25,7 +25,14 @@ from notas.application.services.notifications.web_push import (
     send_web_push,
     validate_push_endpoint,
 )
+from notas.application.services.notifications.apple_push import (
+    apns_is_configured,
+    apple_token_fingerprint,
+    send_apple_push,
+    validate_apple_device_token,
+)
 from notas.domain.models import (
+    ApplePushSubscription,
     CalendarizedDay,
     NotificationDelivery,
     Program,
@@ -434,6 +441,44 @@ def deactivate_web_push_subscription(*, user, endpoint: str) -> bool:
     return bool(updated)
 
 
+@transaction.atomic
+def register_apple_push_subscription(
+    *,
+    user,
+    device_session,
+    device_token: str,
+    environment: str,
+) -> ApplePushSubscription:
+    if device_session.user_id != user.id or not device_session.is_active or device_session.platform != "ios":
+        raise ValueError("apns_device_session_invalid")
+    if environment not in dict(ApplePushSubscription.ENVIRONMENT_CHOICES):
+        raise ValueError("apns_environment_invalid")
+    normalized_token = validate_apple_device_token(device_token)
+    fingerprint = apple_token_fingerprint(normalized_token)
+    existing = (
+        ApplePushSubscription.objects.select_for_update()
+        .filter(token_fingerprint=fingerprint)
+        .exclude(device_session=device_session)
+        .first()
+    )
+    if existing is not None:
+        if existing.user_id != user.id:
+            raise ValueError("apns_device_token_conflict")
+        existing.delete()
+    subscription, _ = ApplePushSubscription.objects.update_or_create(
+        device_session=device_session,
+        defaults={
+            "user": user,
+            "device_token": normalized_token,
+            "token_fingerprint": fingerprint,
+            "environment": environment,
+            "is_active": True,
+            "failure_code": "",
+        },
+    )
+    return subscription
+
+
 def _mark_event(event: ScheduledNotificationEvent, *, status: str, reason: str = "", now: datetime) -> None:
     event.status = status
     event.skip_reason = reason
@@ -485,10 +530,18 @@ def _push_payload(event: ScheduledNotificationEvent) -> dict:
     return payload
 
 
-def dispatch_due_notifications(*, now: datetime | None = None, limit: int = 100, send_func=send_web_push) -> NotificationDispatchResult:
+def dispatch_due_notifications(
+    *,
+    now: datetime | None = None,
+    limit: int = 100,
+    send_func=send_web_push,
+    apns_send_func=send_apple_push,
+) -> NotificationDispatchResult:
     current_time = now or timezone.now()
     reconcile_calendarization_statuses(now=current_time)
-    if not getattr(settings, "MYSCOOPE_WEB_PUSH_ENABLED", False):
+    web_push_enabled = bool(getattr(settings, "MYSCOOPE_WEB_PUSH_ENABLED", False))
+    native_push_enabled = apns_is_configured()
+    if not web_push_enabled and not native_push_enabled:
         return NotificationDispatchResult()
 
     events = _claim_due_events(now=current_time, limit=max(1, min(limit, 500)))
@@ -535,7 +588,21 @@ def dispatch_due_notifications(*, now: datetime | None = None, limit: int = 100,
             skipped += 1
             continue
 
-        subscriptions = list(WebPushSubscription.objects.filter(user=calendarization.user, is_active=True))
+        subscriptions = []
+        if web_push_enabled:
+            subscriptions.extend(
+                (NotificationDelivery.CHANNEL_WEB_PUSH, subscription, send_func)
+                for subscription in WebPushSubscription.objects.filter(user=calendarization.user, is_active=True)
+            )
+        if native_push_enabled:
+            subscriptions.extend(
+                (NotificationDelivery.CHANNEL_APNS, subscription, apns_send_func)
+                for subscription in ApplePushSubscription.objects.filter(
+                    user=calendarization.user,
+                    is_active=True,
+                    device_session__is_active=True,
+                )
+            )
         if not subscriptions:
             _mark_event(event, status=ScheduledNotificationEvent.STATUS_SKIPPED, reason="no_active_subscription", now=current_time)
             skipped += 1
@@ -544,11 +611,20 @@ def dispatch_due_notifications(*, now: datetime | None = None, limit: int = 100,
         any_sent = False
         transient_failure = False
         payload = _push_payload(event)
-        for subscription in subscriptions:
+        for channel, subscription, sender in subscriptions:
+            fingerprint = (
+                subscription.endpoint_fingerprint
+                if channel == NotificationDelivery.CHANNEL_WEB_PUSH
+                else subscription.token_fingerprint
+            )
             delivery, _ = NotificationDelivery.objects.get_or_create(
                 event=event,
-                subscription_fingerprint=subscription.endpoint_fingerprint,
-                defaults={"subscription": subscription},
+                subscription_fingerprint=fingerprint,
+                defaults={
+                    "subscription": subscription if channel == NotificationDelivery.CHANNEL_WEB_PUSH else None,
+                    "apple_subscription": subscription if channel == NotificationDelivery.CHANNEL_APNS else None,
+                    "channel": channel,
+                },
             )
             if delivery.status in {NotificationDelivery.STATUS_SENT, NotificationDelivery.STATUS_EXPIRED}:
                 any_sent = any_sent or delivery.status == NotificationDelivery.STATUS_SENT
@@ -557,8 +633,10 @@ def dispatch_due_notifications(*, now: datetime | None = None, limit: int = 100,
                 deliveries_failed += 1
                 continue
 
-            result = send_func(subscription=subscription, payload=payload)
-            delivery.subscription = subscription
+            result = sender(subscription=subscription, payload=payload)
+            delivery.channel = channel
+            delivery.subscription = subscription if channel == NotificationDelivery.CHANNEL_WEB_PUSH else None
+            delivery.apple_subscription = subscription if channel == NotificationDelivery.CHANNEL_APNS else None
             delivery.attempt_count += 1
             if result.ok:
                 delivery.status = NotificationDelivery.STATUS_SENT
@@ -641,8 +719,13 @@ def prune_calendarization_operational_data(
         is_active=False,
         updated_at__lt=subscription_cutoff,
     ).delete()
+    apple_subscriptions_deleted, _ = ApplePushSubscription.objects.filter(
+        is_active=False,
+        updated_at__lt=subscription_cutoff,
+    ).delete()
     return {
         "deliveries_deleted": deliveries_deleted,
         "events_deleted": events_deleted,
         "subscriptions_deleted": subscriptions_deleted,
+        "apple_subscriptions_deleted": apple_subscriptions_deleted,
     }

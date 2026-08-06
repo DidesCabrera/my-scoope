@@ -36,9 +36,8 @@ from notas.domain.model_modules.identity import (
 )
 from notas.domain.model_modules.meals import Meal, MealAccess, MealFood
 from notas.domain.model_modules.notification_delivery import (
-    NotificationDelivery,
-    ScheduledNotificationEvent,
-    WebPushSubscription,
+    ApplePushSubscription, NotificationDelivery,
+    ScheduledNotificationEvent, WebPushSubscription,
 )
 from notas.domain.model_modules.programs import Program, ProgramDay
 from notas.domain.model_modules.proposals import (
@@ -56,6 +55,7 @@ from notas.domain.model_modules.sharing import (
 
 __all__ = [
     "AiNutritionChat",
+    "ApplePushSubscription",
     "CalendarizedDay",
     "CalendarizedMealExecution",
     "CalendarizationMeasurementContext",

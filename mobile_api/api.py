@@ -31,6 +31,8 @@ from mobile_api.schemas import (
     CalendarizationReviewListEnvelope,
     EntitlementsEnvelope,
     AppleTransactionInput,
+    ApplePushRegistrationEnvelope,
+    ApplePushRegistrationInput,
     ErrorEnvelope,
     FoodPageEnvelope,
     FoodLabelCaptureEnvelope,
@@ -66,7 +68,11 @@ from mobile_api.selectors import (
 )
 from notas.application.ai_intake.async_turns import enqueue_nutrition_intake_turn
 from notas.application.queries.food_picker_queries import list_food_picker_page
-from notas.application.services.commands.calendarization_commands import update_calendarization_preferences
+from notas.application.services.commands.calendarization_commands import (
+    register_apple_push_subscription,
+    update_calendarization_preferences,
+)
+from notas.application.services.notifications.apple_push import apns_is_configured
 from notas.application.services.commands.calendarization_execution_commands import (
     create_calendarization_review,
     decide_calendarization_revision,
@@ -359,6 +365,43 @@ def update_active_program_reminders(request, payload: ReminderSettingsInput):
     except ValueError as exc:
         raise _calendarization_error(exc) from exc
     return _success(reminder_settings_payload(calendarization))
+
+
+@api.put(
+    "/notifications/apple/device",
+    auth=mobile_bearer,
+    response={200: ApplePushRegistrationEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def register_apple_notification_device(request, payload: ApplePushRegistrationInput):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    device_session = request.auth.token.device_session
+    if device_session is None:
+        raise MobileAPIError(
+            code="apns_device_session_required",
+            message="A native mobile device session is required.",
+            status_code=422,
+        )
+    try:
+        subscription = register_apple_push_subscription(
+            user=request.auth.user,
+            device_session=device_session,
+            device_token=payload.device_token,
+            environment=payload.environment,
+        )
+    except ValueError as exc:
+        raise MobileAPIError(
+            code=str(exc),
+            message="The Apple notification device could not be registered.",
+            status_code=422,
+        ) from exc
+    return _success(
+        {
+            "delivery_mode": "apns" if apns_is_configured() else "local",
+            "token_fingerprint": subscription.token_fingerprint,
+            "environment": subscription.environment,
+            "is_active": subscription.is_active,
+        }
+    )
 
 
 @api.get(

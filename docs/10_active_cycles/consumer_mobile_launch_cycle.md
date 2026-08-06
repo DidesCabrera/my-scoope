@@ -35,7 +35,7 @@ or adjustment claims; App Store work remains separate from general product work.
 | CML04 · Lived program | completed (repository) | Product/mobile | Calendarization owns dated plans, append-only meal execution, reminder coordination, measurement context, frozen reviews and prospective audited adjustment revisions. Native notification delivery remains CML07. |
 | CML05 · Nutrition-label capture | completed (repository; device gate pending) | Product/native | Apple Vision OCR stays on-device, normalizes label values, exposes uncertainty and creates an idempotent private food only after user confirmation. |
 | CML06 · B2C subscriptions | completed (repository; App Store sandbox gate pending) | Product/App Store | Independent Apple/Mercado Pago evidence aggregates deterministically into `AccountSubscription`; StoreKit purchase, restore and lifecycle reconciliation are implemented, with physical sandbox proof still external. |
-| CML07 · iOS capabilities | planned | App Store | Signing, Apple login where applicable, camera permission and on-device OCR verification, local notifications/APNs, Keychain, privacy manifests and sanitized crash reporting pass device QA. |
+| CML07 · iOS capabilities | completed (repository; device/App Store gate pending) | App Store | Apple login shares PKCE; APNs/local delivery is exclusive per device; Keychain, camera-only permission, privacy manifests and sanitized crash reporting pass repository/prebuild QA. Signing, OCR/camera/APNs and archive proof remain external. |
 | CML08 · Review readiness | planned | App Store | Privacy labels, consent, metadata, screenshots, demo program, internal/external TestFlight and complete reviewer notes. |
 
 ## Calendarization target
@@ -203,7 +203,36 @@ evidence. Felipe must choose product identifiers and prices, complete Apple
 agreements/tax/banking, create the subscription group/products, configure the
 notification URL and API key, and run purchase/renewal/restore/revocation on a
 physical iPhone. Those are activation gates, not missing product behavior. CML07
-is the next repository patch.
+is repository-complete; its native gates remain external.
+
+## CML07 closure evidence
+
+- Sign in with Apple is an allauth provider in the same system-browser PKCE flow
+  as Google/email. No second mobile account or token exchange was introduced.
+- A native APNs subscription belongs one-to-one to an active iOS OAuth device
+  session. The backend uses signed ES256 provider tokens over HTTP/2, redacts raw
+  device tokens from Admin, retries transient failures and expires invalid tokens.
+- The API reports `apns` only with a complete enabled provider configuration.
+  Otherwise the app schedules logical events locally from server UTC instants.
+  Switching to APNs cancels owned local requests, preventing duplicates.
+- SecureStore retains `WHEN_UNLOCKED_THIS_DEVICE_ONLY`. The production prebuild
+  contains camera, Push Notifications and Sign in with Apple, while Face ID,
+  microphone, photos and barcode remain absent/deferred.
+- The privacy manifest aggregates required-reason APIs and declares the app's
+  linked account/health/fitness/content plus unlinked crash categories without
+  tracking. Sentry is disabled without a DSN and strips identity plus
+  request/breadcrumb data; source-map credentials remain build secrets.
+- OpenAPI, migration 0050, deletion classification, fail-closed environment
+  checks, APNs payload tests and mobile contract/privacy tests protect the patch.
+  On 2026-08-05 the 95-test fast gate, all 1,735 Django tests, 11 mobile tests,
+  lint, strict TypeScript, 14-route web export and production prebuild passed.
+
+Repository completion does not claim an archive or physical iPhone pass. The
+host has macOS 15.3.1 and Xcode 14.0; Expo SDK 57 requires Xcode 26.4, which in
+turn requires macOS Tahoe 26.2+. After that host gate, CML07 still needs Apple
+Developer capabilities/keys, the Apple SocialApp, staging OAuth, Sentry build
+secrets, signed TestFlight installation and physical Apple login, camera/Vision,
+local/APNs, Keychain restore and sanitized-crash proof. CML08 is the next patch.
 
 ## Release order
 

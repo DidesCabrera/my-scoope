@@ -194,3 +194,4 @@ Consequences
 - `0178-calendarized-execution-evidence-and-prospective-revisions.md`: conserva la calendarización como programa vivido con check-ins append-only, contexto de mediciones, revisiones periódicas y ajustes futuros auditables.
 - `0179-on-device-nutrition-label-capture-and-confirmed-private-foods.md`: ejecuta OCR de etiquetas en el iPhone, exige revisión explícita y crea únicamente alimentos privados con recibos técnicos sin foto ni texto crudo.
 - `0180-deterministic-multi-provider-subscription-evidence.md`: agrega evidencia independiente de Apple y Mercado Pago en una única proyección determinística de entitlement, con verificación StoreKit server-side y dobles cobros visibles.
+- `0181-exclusive-native-reminder-delivery-and-ios-release-capabilities.md`: coordina APNs o avisos locales —nunca ambos— desde la calendarización, integra Apple en el mismo PKCE y fija Keychain, privacidad y errores móviles sin PII.

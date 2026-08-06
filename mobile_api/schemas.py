@@ -151,10 +151,12 @@ class MeasurementSummaryData(Schema):
 
 
 class ReminderEventData(Schema):
+    event_key: str
     event_type: str
     meal_key: str
     local_date: date
     local_time: time
+    scheduled_for_utc: datetime
     status: str
 
 
@@ -264,6 +266,24 @@ class ReminderSettingsInput(Schema):
     daily_notification_time: time
     daily_notifications_enabled: bool
     meal_notifications_enabled: bool
+
+
+class ApplePushRegistrationInput(Schema):
+    device_token: str = Field(min_length=32, max_length=220)
+    environment: Literal["sandbox", "production"]
+
+
+class ApplePushRegistrationData(Schema):
+    delivery_mode: Literal["apns", "local"]
+    token_fingerprint: str
+    environment: Literal["sandbox", "production"]
+    is_active: bool
+
+
+class ApplePushRegistrationEnvelope(Schema):
+    ok: Literal[True] = True
+    data: ApplePushRegistrationData
+    error: None = None
 
 
 class CalendarizationReviewInput(Schema):

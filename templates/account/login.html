@@ -16,7 +16,7 @@
 
     <h1 class="auth-title">Iniciar sesión</h1>
 
-    {% include "account/_google_login_option.html" %}
+    {% include "account/_social_login_options.html" %}
 
     <form method="post" action="{% url 'account_login' %}" class="auth-form" novalidate>
     {% csrf_token %}

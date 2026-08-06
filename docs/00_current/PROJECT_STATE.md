@@ -141,6 +141,13 @@ When a plan becomes real, durable outcomes should be promoted into `docs/00_curr
   entitlement authority; possible double charges remain visible to operations.
   App Store Connect product/price setup and a physical sandbox lifecycle pass
   remain external activation gates.
+- Consumer Mobile Launch CML07 repository baseline: Sign in with Apple reuses the
+  existing PKCE browser account flow; an iOS OAuth device chooses exactly one of
+  direct APNs or deterministic local reminders from the calendarization schedule.
+  SecureStore remains device-only Keychain storage, production prebuild exposes
+  camera without Face ID/microphone/photos, privacy manifests declare the used
+  required-reason APIs and Sentry strips identity/request payloads. Signing and
+  physical QA remain external because SDK 57 needs Xcode 26.4/macOS Tahoe 26.2+.
 
 - Email delivery abuse-protection baseline: server-validated Turnstile integration,
   multi-window signup limits, shared-cache production path, auditable account email,
@@ -188,11 +195,12 @@ When a plan becomes real, durable outcomes should be promoted into `docs/00_curr
 - Consumer Mobile Launch CML00-CML08 is active. CML00 is complete and fixes the
   B2C scope. CML01 is repository-complete and closes safety/privacy prerequisites;
   its external recovery, staging and legal gates remain visible before release.
-  CML02-CML06 are repository-complete with the consumer API, Expo development
+  CML02-CML07 are repository-complete with the consumer API, Expo development
   client, secure session lifecycle, translated visual grammar and lived-program
   execution/adherence/reviews/revisions, review-first on-device label capture and
-  verified StoreKit purchase/restore/reconciliation. CML07 is next: iOS signing,
-  permissions, notification delivery, Keychain/privacy manifests and device QA.
+  verified StoreKit purchase/restore/reconciliation, mutually exclusive native
+  reminders, Apple login, Keychain/privacy manifests and sanitized mobile crashes.
+  CML08 is next; CML03/CML05-CML07 device/App Store gates remain explicit.
 - No continuation of BA or PT is implied. New AI Assistant work should start from observed product evidence and a newly scoped cycle, rather than extending the global prompt or reopening a deterministic questionnaire.
 - The current product bets and next experiments live in `PRODUCT_PORTFOLIO.md`; they are
   hypotheses to validate or reformulate, not a fixed feature sequence.

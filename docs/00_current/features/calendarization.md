@@ -54,13 +54,17 @@ La suscripción Web Push requiere acción del usuario, CSRF, endpoint HTTPS vali
 claves VAPID. El payload de lock screen es discreto y al tocarlo abre el snapshot dentro
 de una ruta autenticada. En iOS/iPadOS se requiere instalar la PWA en Home Screen.
 
-La operación está deshabilitada por defecto con `MYSCOOPE_WEB_PUSH_ENABLED=false`.
-El dashboard y los snapshots siguen funcionando aunque Push no esté configurado.
+APNs se registra contra la sesión OAuth del iPhone y también está deshabilitado
+por defecto. Sólo se activa con `MYSCOOPE_APNS_ENABLED=true` y key ID, team ID,
+llave privada y bundle ID completos; la verificación de configuración falla
+cerrada si falta uno. El token crudo se excluye de Admin.
 
-La agenda lógica es común para todos los canales. La app móvil ya configura sus
-horas y muestra próximos eventos; la entrega mediante notificaciones locales/APNs,
-incluido el permiso nativo, se incorpora en CML07. Negar el permiso no bloquea la
-ejecución del programa.
+El dashboard y los snapshots siguen funcionando aunque ningún Push esté configurado.
+
+La agenda lógica es común para todos los canales. Con permiso nativo, la API elige
+APNs sólo cuando el proveedor está listo; en cualquier otro caso la app crea avisos
+locales desde los mismos instantes UTC. Al activar APNs elimina sus avisos locales,
+por lo que un dispositivo nunca recibe ambos. Negar el permiso no bloquea el programa.
 
 ## Entradas técnicas
 
@@ -69,9 +73,10 @@ ejecución del programa.
 - lecturas: `notas/application/queries/calendarization_queries.py`;
 - ejecución/revisiones: `notas/application/services/commands/calendarization_execution_commands.py`;
 - lecturas de adherencia: `notas/application/queries/calendarization_execution_queries.py`;
-- adapter: `notas/application/services/notifications/web_push.py`;
+- adapters: `notas/application/services/notifications/web_push.py` y `apple_push.py`;
 - worker: `python manage.py dispatch_calendar_notifications --limit 100`;
 - worker continuo: `python manage.py run_calendar_notification_worker --interval 300`;
 - retención: `python manage.py prune_calendarization_data`;
 - migración base: `notas/migrations/0044_profile_timezone_name_programcalendarization_and_more.py`;
 - migración de ejecución: `notas/migrations/0048_calendarized_execution_reviews.py`.
+- migración APNs: `notas/migrations/0050_notificationdelivery_channel_applepushsubscription_and_more.py`.

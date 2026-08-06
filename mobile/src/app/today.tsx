@@ -8,6 +8,7 @@ import { useSession } from "@/auth/session-context";
 import { MacroSummary } from "@/components/nutrition/macro-summary";
 import { AppHeader, Brand, Button, Card, InlineNotice, LoadingState, Pill, ProgressBar, Screen, SectionTitle, textStyles } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
+import { syncNativeReminders } from "@/notifications/native-reminders";
 
 function displayDate(value: string): string {
   return new Intl.DateTimeFormat("es-CL", { weekday: "long", day: "numeric", month: "long" }).format(
@@ -45,7 +46,11 @@ export default function TodayScreen() {
     setLoading(true);
     setError(null);
     try {
-      setToday(await apiRequest<TodayData>("/api/v1/today"));
+      const nextToday = await apiRequest<TodayData>("/api/v1/today");
+      setToday(nextToday);
+      if (nextToday.reminders) {
+        void syncNativeReminders(nextToday.reminders, apiRequest).catch(() => undefined);
+      }
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {

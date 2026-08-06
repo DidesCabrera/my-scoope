@@ -21,6 +21,7 @@ from notas.application.services.oauth_device_sessions import (
 from notas.application.services.calendarization.snapshots import SNAPSHOT_SCHEMA_VERSION
 from notas.application.services.commands.calendarization_execution_commands import prepare_calendarization_revision
 from notas.domain.models import (
+    ApplePushSubscription,
     CalendarizedDay,
     CalendarizedMealExecution,
     CalendarizationMeasurementContext,
@@ -86,6 +87,7 @@ class MobileAPIV1Tests(TestCase):
             "/api/v1/today",
             "/api/v1/days/{day_id}/meals/{meal_snapshot_key}/check-ins",
             "/api/v1/program/active/reminders",
+            "/api/v1/notifications/apple/device",
             "/api/v1/program/reviews",
             "/api/v1/program/revisions",
             "/api/v1/program/revisions/{revision_id}/decision",
@@ -116,6 +118,20 @@ class MobileAPIV1Tests(TestCase):
         self.assertFalse(profile.json()["data"]["onboarding_completed"])
         self.assertEqual(entitlements.status_code, 200)
         self.assertEqual(entitlements.json()["data"]["plan_slug"], "basic")
+
+    def test_apple_notification_device_is_bound_to_authenticated_device_session(self):
+        response = self.client.put(
+            "/api/v1/notifications/apple/device",
+            data={"device_token": "ab" * 32, "environment": "sandbox"},
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["data"]["delivery_mode"], "local")
+        subscription = ApplePushSubscription.objects.get(device_session=self.device_session)
+        self.assertEqual(subscription.user, self.user)
+        self.assertEqual(subscription.environment, ApplePushSubscription.ENVIRONMENT_SANDBOX)
+        self.assertNotEqual(subscription.token_fingerprint, subscription.device_token)
 
     def test_subscription_overview_is_consumer_only_and_uses_configured_apple_products(self):
         plan = self.user.account_subscription.plan

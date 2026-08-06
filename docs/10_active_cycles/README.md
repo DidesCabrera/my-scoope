@@ -49,8 +49,11 @@ Cuando un ciclo planificado empiece a implementarse, el documento puede permanec
   explícita y creación idempotente de alimentos privados; su gate físico depende
   de Xcode/dispositivo. CML06 está completado en repositorio con compra/restauración
   StoreKit verificada, conciliación Apple y agregación determinística con Mercado
-  Pago; el ciclo sandbox físico sigue como gate externo. CML07 es el siguiente
-  patch y mantiene la entrega nativa de notificaciones y el QA de capacidades iOS.
+  Pago; el ciclo sandbox físico sigue como gate externo. CML07 está completado en
+  repositorio con Apple dentro del mismo PKCE, entrega APNs/local exclusiva,
+  Keychain, manifiesto de privacidad y errores móviles sanitizados. Su gate físico
+  exige macOS Tahoe 26.2+, Xcode 26.4, credenciales Apple y un iPhone. CML08 es el
+  siguiente patch de TestFlight, metadata y preparación de review.
 - `production_architecture_remediation_cycle.md`: ciclo activo PAR00-PAR10. PAR01-PAR05
   cierran en repositorio el arranque fail-closed con PostgreSQL, la topología Render
   versionada, CI completo sobre PostgreSQL, runbooks de recuperación y defaults de

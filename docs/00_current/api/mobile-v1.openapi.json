@@ -337,6 +337,88 @@
         "title": "AdherenceData",
         "type": "object"
       },
+      "ApplePushRegistrationData": {
+        "properties": {
+          "delivery_mode": {
+            "enum": [
+              "apns",
+              "local"
+            ],
+            "title": "Delivery Mode",
+            "type": "string"
+          },
+          "environment": {
+            "enum": [
+              "sandbox",
+              "production"
+            ],
+            "title": "Environment",
+            "type": "string"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "token_fingerprint": {
+            "title": "Token Fingerprint",
+            "type": "string"
+          }
+        },
+        "required": [
+          "delivery_mode",
+          "token_fingerprint",
+          "environment",
+          "is_active"
+        ],
+        "title": "ApplePushRegistrationData",
+        "type": "object"
+      },
+      "ApplePushRegistrationEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ApplePushRegistrationData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "ApplePushRegistrationEnvelope",
+        "type": "object"
+      },
+      "ApplePushRegistrationInput": {
+        "properties": {
+          "device_token": {
+            "maxLength": 220,
+            "minLength": 32,
+            "title": "Device Token",
+            "type": "string"
+          },
+          "environment": {
+            "enum": [
+              "sandbox",
+              "production"
+            ],
+            "title": "Environment",
+            "type": "string"
+          }
+        },
+        "required": [
+          "device_token",
+          "environment"
+        ],
+        "title": "ApplePushRegistrationInput",
+        "type": "object"
+      },
       "AppleSubscriptionProductData": {
         "properties": {
           "interval": {
@@ -1524,6 +1606,10 @@
       },
       "ReminderEventData": {
         "properties": {
+          "event_key": {
+            "title": "Event Key",
+            "type": "string"
+          },
           "event_type": {
             "title": "Event Type",
             "type": "string"
@@ -1542,16 +1628,23 @@
             "title": "Meal Key",
             "type": "string"
           },
+          "scheduled_for_utc": {
+            "format": "date-time",
+            "title": "Scheduled For Utc",
+            "type": "string"
+          },
           "status": {
             "title": "Status",
             "type": "string"
           }
         },
         "required": [
+          "event_key",
           "event_type",
           "meal_key",
           "local_date",
           "local_time",
+          "scheduled_for_utc",
           "status"
         ],
         "title": "ReminderEventData",
@@ -2819,6 +2912,60 @@
           }
         ],
         "summary": "Me"
+      }
+    },
+    "/api/v1/notifications/apple/device": {
+      "put": {
+        "operationId": "mobile_api_api_register_apple_notification_device",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplePushRegistrationInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplePushRegistrationEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Register Apple Notification Device"
       }
     },
     "/api/v1/onboarding": {

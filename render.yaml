@@ -78,6 +78,16 @@ services:
         sync: false
       - key: BILLING_OPENFACTURA_API_KEY
         sync: false
+      - key: MYSCOOPE_APNS_ENABLED
+        value: "false"
+      - key: MYSCOOPE_APNS_KEY_ID
+        sync: false
+      - key: MYSCOOPE_APNS_TEAM_ID
+        sync: false
+      - key: MYSCOOPE_APNS_PRIVATE_KEY
+        sync: false
+      - key: MYSCOOPE_APNS_BUNDLE_ID
+        value: com.myscoope.app
 
   - type: worker
     name: my-scoope-ai-jobs
@@ -138,6 +148,16 @@ services:
         sync: false
       - key: MYSCOOPE_VAPID_SUBJECT
         value: mailto:notifications@myscoope.com
+      - key: MYSCOOPE_APNS_ENABLED
+        value: "false"
+      - key: MYSCOOPE_APNS_KEY_ID
+        sync: false
+      - key: MYSCOOPE_APNS_TEAM_ID
+        sync: false
+      - key: MYSCOOPE_APNS_PRIVATE_KEY
+        sync: false
+      - key: MYSCOOPE_APNS_BUNDLE_ID
+        value: com.myscoope.app
       - key: SENTRY_DSN
         sync: false
       - key: SENTRY_TRACES_SAMPLE_RATE

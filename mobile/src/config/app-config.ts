@@ -17,4 +17,5 @@ export const appConfig = {
   oauthAuthorizationEndpoint: `${apiBaseUrl}/oauth/authorize`,
   oauthTokenEndpoint: `${apiBaseUrl}/oauth/token`,
   mobileScopes: ["mobile:read", "mobile:write", "mobile:account"],
+  apnsEnvironment: process.env.EXPO_PUBLIC_APNS_ENVIRONMENT === "production" ? "production" : "sandbox",
 } as const;

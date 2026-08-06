@@ -87,6 +87,7 @@ print(json.dumps({
             "AI_ASSISTANT_OPENAI_API_KEY", "FOOD_CATALOG_FATSECRET_CLIENT_SECRET",
             "BILLING_MERCADOPAGO_ACCESS_TOKEN", "BILLING_MERCADOPAGO_WEBHOOK_SECRET",
             "BILLING_APPLE_IN_APP_PURCHASE_KEY",
+            "MYSCOOPE_APNS_PRIVATE_KEY",
             "BILLING_OPENFACTURA_API_KEY",
             "TURNSTILE_SECRET_KEY", "CACHE_URL",
         ):
@@ -105,6 +106,9 @@ print(json.dumps({
         )
         self.assertTrue(
             ENVIRONMENT_VARIABLE_SPEC_BY_NAME["MYSCOOPE_VAPID_PRIVATE_KEY"].secret,
+        )
+        self.assertTrue(
+            ENVIRONMENT_VARIABLE_SPEC_BY_NAME["MYSCOOPE_APNS_PRIVATE_KEY"].secret,
         )
         self.assertFalse(
             ENVIRONMENT_VARIABLE_SPEC_BY_NAME["MYSCOOPE_VAPID_PUBLIC_KEY"].secret,

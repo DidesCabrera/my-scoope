@@ -174,10 +174,12 @@ def today_payload(user, *, now=None) -> dict:
 def reminder_settings_payload(calendarization) -> dict:
     upcoming = [
         {
+            "event_key": event.event_key,
             "event_type": event.event_type,
             "meal_key": event.meal_snapshot_key,
             "local_date": event.local_scheduled_date,
             "local_time": event.local_scheduled_time,
+            "scheduled_for_utc": event.scheduled_for_utc,
             "status": event.status,
         }
         for event in calendarization.notification_events.filter(status="pending").order_by(

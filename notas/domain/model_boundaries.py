@@ -108,8 +108,8 @@ DOMAIN_MODEL_BOUNDARIES: tuple[DomainModelBoundary, ...] = (
     DomainModelBoundary(
         slug="notification_delivery",
         label="Notification Delivery",
-        models=("WebPushSubscription", "ScheduledNotificationEvent", "NotificationDelivery"),
-        responsibility="Web Push subscriptions, logical scheduled events and per-device delivery attempts.",
+        models=("WebPushSubscription", "ApplePushSubscription", "ScheduledNotificationEvent", "NotificationDelivery"),
+        responsibility="Web Push/APNs subscriptions, logical scheduled events and per-device delivery attempts.",
     ),
     DomainModelBoundary(
         slug="proposals",
@@ -179,8 +179,8 @@ DOMAIN_MODEL_DEPENDENCY_POLICIES: tuple[DomainModelDependencyPolicy, ...] = (
     ),
     DomainModelDependencyPolicy(
         source_slug="notification_delivery",
-        allowed_dependency_slugs=("calendarization",),
-        rationale="Notification events are scheduled for calendarized days and deliveries remain device-specific.",
+        allowed_dependency_slugs=("auth_integration", "calendarization"),
+        rationale="Notification events are scheduled for calendarized days and native subscriptions belong to OAuth device sessions.",
     ),
     DomainModelDependencyPolicy(
         source_slug="proposals",
