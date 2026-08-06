@@ -33,9 +33,9 @@ or adjustment claims; App Store work remains separate from general product work.
 | CML02 · Vertical mobile API | completed (repository) | Product/mobile | Versioned OpenAPI contract for auth, profile, active program, Today, weight, foods, durable AI submit/poll, entitlements and deletion. Mobile OAuth is audited from the existing PKCE baseline and gains rotating device sessions. Adherence waits for the CML04 execution model. |
 | CML03 · React Native and visual system | completed (repository; device gate pending) | Mobile | Expo development build, extracted visual tokens/card grammar and the login → onboarding → Today → check-in preview → persisted weight path. Physical staging proof remains external. |
 | CML04 · Lived program | completed (repository) | Product/mobile | Calendarization owns dated plans, append-only meal execution, reminder coordination, measurement context, frozen reviews and prospective audited adjustment revisions. Native notification delivery remains CML07. |
-| CML05 · Nutrition-label capture | planned | Product/native | On-device OCR normalizes label values, exposes uncertainty and creates a private food only after user confirmation. |
+| CML05 · Nutrition-label capture | completed (repository; device gate pending) | Product/native | Apple Vision OCR stays on-device, normalizes label values, exposes uncertainty and creates an idempotent private food only after user confirmation. |
 | CML06 · B2C subscriptions | planned | Product/App Store | Independent Apple/Mercado Pago evidence aggregates deterministically into `AccountSubscription`; StoreKit purchase, restore and lifecycle reconciliation pass sandbox. |
-| CML07 · iOS capabilities | planned | App Store | Signing, Apple login where applicable, camera permissions, local notifications/APNs, Keychain, privacy manifests and sanitized crash reporting pass device QA. |
+| CML07 · iOS capabilities | planned | App Store | Signing, Apple login where applicable, camera permission and on-device OCR verification, local notifications/APNs, Keychain, privacy manifests and sanitized crash reporting pass device QA. |
 | CML08 · Review readiness | planned | App Store | Privacy labels, consent, metadata, screenshots, demo program, internal/external TestFlight and complete reviewer notes. |
 
 ## Calendarization target
@@ -111,9 +111,8 @@ and Sign in with Apple token revocation belong to CML06-CML07.
 - The native path includes login/signup handoff, nutrition onboarding, Today,
   active calendarization, daily plan/macros, planned meal cards, check-in preview,
   real weight writes and recent weight history.
-- Check-in cannot persist yet by design: CML04 must introduce immutable execution
-  evidence owned by the lived `ProgramCalendarization` before the control is
-  enabled.
+- The original check-in preview was intentionally non-persistent; CML04 later
+  replaced it with immutable evidence owned by the lived calendarization.
 - Mobile CI installs from its lockfile and runs lint, strict TypeScript, contract
   tests, session rotation tests and a Metro bundle export.
 
@@ -150,8 +149,30 @@ repository baseline without claiming this external device gate.
 
 Repository completion does not claim native alarm delivery or physical-device
 evidence. Those require the CML07 notification permission/channel work plus the
-existing staging OAuth and Xcode prerequisites. CML05 is the next implementation
-patch.
+existing staging OAuth and Xcode prerequisites. CML05 builds on this baseline.
+
+## CML05 closure evidence
+
+- `expo-camera` captures a temporary image only after an explicit permission
+  action; refusing permission degrades to manual review.
+- An auto-linked, iOS-only Expo module uses Apple Vision locally and returns text,
+  bounding boxes and confidence without a network OCR provider.
+- The TypeScript normalizer handles decimal commas, per-100-gram values,
+  per-serving conversion and common two-column labels. Missing, uncertain and
+  energy-inconsistent values remain visible for correction.
+- The review form is the only path to persistence. It sends confirmed normalized
+  facts, not the photo or raw OCR text.
+- The API reuses the food entitlement and creates only private, unverified,
+  solver-disabled foods. `FoodLabelCaptureReceipt` provides idempotency and
+  provenance without retaining the image or recognized text.
+- Backend ownership, account deletion, OpenAPI, native configuration, 9 mobile
+  tests, the 13-route Expo export, 95 fast-gate tests and the complete 1,717-test
+  Django suite protect the repository contract.
+
+Repository completion does not claim an iOS binary/device pass. The local machine
+does not have the iPhone simulator SDK, so Vision compilation, camera behavior and
+final permission/privacy review remain explicit CML07 gates. CML06 is the next
+implementation patch.
 
 ## Release order
 

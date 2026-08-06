@@ -21,6 +21,7 @@ from .domain.models import (
     Food,
     FoodAlias,
     FoodImportBatch,
+    FoodLabelCaptureReceipt,
     FoodLocalizedName,
     FoodPortion,
     FoodSourceMetadata,
@@ -424,6 +425,23 @@ class FoodSourceMetadataAdmin(admin.ModelAdmin):
     readonly_fields = (
         "imported_at",
     )
+
+
+@admin.register(FoodLabelCaptureReceipt)
+class FoodLabelCaptureReceiptAdmin(admin.ModelAdmin):
+    list_display = ("food", "ocr_engine", "detected_basis", "serving_size_g", "created_at")
+    list_filter = ("ocr_engine", "detected_basis", "created_at")
+    search_fields = ("food__name", "food__created_by__username", "idempotency_key")
+    readonly_fields = tuple(field.name for field in FoodLabelCaptureReceipt._meta.fields)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(FoodPortion)

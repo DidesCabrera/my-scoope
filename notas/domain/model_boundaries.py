@@ -64,10 +64,11 @@ DOMAIN_MODEL_BOUNDARIES: tuple[DomainModelBoundary, ...] = (
             "FoodAlias",
             "FoodLocalizedName",
             "FoodImportBatch",
+            "FoodLabelCaptureReceipt",
         ),
         responsibility=(
             "Operational food snapshots, portions, aliases, localized names, "
-            "source metadata and imports currently owned by notas.Food."
+            "source metadata, confirmed label-capture receipts and imports currently owned by notas.Food."
         ),
     ),
     DomainModelBoundary(

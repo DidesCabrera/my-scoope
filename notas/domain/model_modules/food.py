@@ -388,6 +388,45 @@ class FoodSourceMetadata(models.Model):
         return f"{self.food} · {self.source}"
 
 
+class FoodLabelCaptureReceipt(models.Model):
+    BASIS_PER_100G = "per_100g"
+    BASIS_PER_SERVING = "per_serving"
+    BASIS_MANUAL = "manual"
+    BASIS_CHOICES = [
+        (BASIS_PER_100G, "Per 100 g"),
+        (BASIS_PER_SERVING, "Per serving"),
+        (BASIS_MANUAL, "Manual review"),
+    ]
+
+    food = models.OneToOneField(
+        Food,
+        on_delete=models.CASCADE,
+        related_name="label_capture_receipt",
+    )
+    idempotency_key = models.CharField(max_length=120, unique=True)
+    ocr_engine = models.CharField(max_length=80)
+    ocr_engine_version = models.CharField(max_length=40, blank=True)
+    detected_basis = models.CharField(max_length=24, choices=BASIS_CHOICES)
+    serving_size_g = models.DecimalField(max_digits=8, decimal_places=3, null=True, blank=True)
+    declared_energy_kcal_per_100g = models.DecimalField(max_digits=10, decimal_places=3, null=True, blank=True)
+    field_confidence = models.JSONField(default=dict, blank=True)
+    warnings = models.JSONField(default=list, blank=True)
+    confirmed_payload_hash = models.CharField(max_length=64)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        indexes = [
+            models.Index(
+                fields=["ocr_engine", "created_at"],
+                name="food_label_ocr_engine_idx",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.food} · {self.ocr_engine}"
+
+
 class FoodPortion(models.Model):
     food = models.ForeignKey(
         Food,

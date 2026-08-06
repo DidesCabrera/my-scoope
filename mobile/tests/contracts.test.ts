@@ -14,7 +14,7 @@ test("mobile visual grammar exposes the reusable card and nutrition tokens", () 
   }
 });
 
-test("the committed mobile contract exposes every route consumed through CML04", async () => {
+test("the committed mobile contract exposes every route consumed through CML05", async () => {
   const file = path.resolve(process.cwd(), "../docs/00_current/api/mobile-v1.openapi.json");
   const schema = JSON.parse(await readFile(file, "utf8")) as { info: { version: string }; paths: Record<string, unknown> };
   assert.equal(schema.info.version, "1.0.0");
@@ -30,6 +30,7 @@ test("the committed mobile contract exposes every route consumed through CML04",
     "/api/v1/program/revisions",
     "/api/v1/program/revisions/{revision_id}/decision",
     "/api/v1/weights",
+    "/api/v1/foods/label-captures",
   ]) {
     assert.ok(schema.paths[route], `missing ${route}`);
   }

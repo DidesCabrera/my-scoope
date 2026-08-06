@@ -21,9 +21,8 @@ from notas.domain.model_modules.calendarization import (
 from notas.domain.model_modules.comparisons import SavedComparison
 from notas.domain.model_modules.dailyplans import DailyPlan, DailyPlanMeal
 from notas.domain.model_modules.food import (
-    Food,
-    FoodAlias,
-    FoodImportBatch,
+    Food, FoodAlias,
+    FoodImportBatch, FoodLabelCaptureReceipt,
     FoodLocalizedName,
     FoodPortion,
     FoodSourceMetadata,
@@ -69,6 +68,7 @@ __all__ = [
     "Food",
     "FoodAlias",
     "FoodImportBatch",
+    "FoodLabelCaptureReceipt",
     "FoodLocalizedName",
     "FoodPortion",
     "FoodShare",

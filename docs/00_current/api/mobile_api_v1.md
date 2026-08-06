@@ -39,7 +39,7 @@ schema in memory and fails when the committed contract drifts.
 
 Mobile scopes are `mobile:read`, `mobile:write` and `mobile:account`.
 
-## Consumer vertical through CML04
+## Consumer vertical through CML05
 
 The API exposes health, session, device revocation, profile, consumer onboarding,
 account entitlements, active calendarized program, Today, weight history/write,
@@ -52,8 +52,14 @@ history. Review summaries are frozen at creation. Revision approval revalidates
 that all affected days are strictly future and unexecuted, and the client cannot
 submit arbitrary before/after plan snapshots.
 
+CML05 adds `POST /foods/label-captures` as a confirmation endpoint, not an OCR
+endpoint. It accepts normalized values only after client review, enforces the
+existing food-creation entitlement and creates a private, unverified,
+solver-disabled food with an idempotent receipt. Photos and raw OCR text are not
+part of the API contract.
+
 Native notification delivery remains CML07; the API already exposes the common
-calendarization schedule that each channel must follow. Food-label capture remains
-CML05. Food libraries, meal/daily-plan editing and remaining library mutations can
-be added after the React Native execution journey proves they are needed; they
-must preserve the same envelope, scopes and service boundaries.
+calendarization schedule that each channel must follow. Food libraries,
+meal/daily-plan editing and remaining library mutations can be added after the
+React Native execution journey proves they are needed; they must preserve the
+same envelope, scopes and service boundaries.

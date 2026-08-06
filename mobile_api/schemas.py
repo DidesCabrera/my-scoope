@@ -360,6 +360,51 @@ class FoodPageEnvelope(Schema):
     error: None = None
 
 
+class FoodLabelCaptureInput(Schema):
+    name: str = Field(min_length=1, max_length=100)
+    protein_g: float = Field(ge=0, le=100)
+    carbs_g: float = Field(ge=0, le=100)
+    fat_g: float = Field(ge=0, le=100)
+    saturated_fat_g: float | None = Field(default=None, ge=0, le=100)
+    sugar_g: float | None = Field(default=None, ge=0, le=100)
+    fiber_g: float | None = Field(default=None, ge=0, le=100)
+    sodium_mg: float | None = Field(default=None, ge=0, le=100_000)
+    serving_size_g: float | None = Field(default=None, gt=0, le=10_000)
+    declared_energy_kcal_per_100g: float | None = Field(default=None, ge=0, le=10_000)
+    detected_basis: Literal["per_100g", "per_serving", "manual"]
+    ocr_engine: str = Field(min_length=1, max_length=80)
+    ocr_engine_version: str = Field(default="", max_length=40)
+    field_confidence: dict[str, float] = Field(default_factory=dict)
+    warnings: list[str] = Field(default_factory=list, max_length=20)
+    idempotency_key: str = Field(min_length=8, max_length=120)
+
+
+class FoodLabelCaptureData(Schema):
+    id: int
+    name: str
+    protein_g: float
+    carbs_g: float
+    fat_g: float
+    saturated_fat_g: float | None = None
+    sugar_g: float | None = None
+    fiber_g: float | None = None
+    sodium_mg: float | None = None
+    total_kcal: float
+    is_user_food: bool
+    is_verified: bool
+    capture_receipt_id: int
+    detected_basis: str
+    serving_size_g: float | None = None
+    ocr_engine: str
+    created_at: datetime
+
+
+class FoodLabelCaptureEnvelope(Schema):
+    ok: Literal[True] = True
+    data: FoodLabelCaptureData
+    error: None = None
+
+
 class AITurnInput(Schema):
     message: str = Field(min_length=1, max_length=2000)
     idempotency_key: str = Field(min_length=8, max_length=120)

@@ -72,6 +72,11 @@ La extracción física quedó completa. Las fronteras centrales restantes viven 
 líneas y no declara modelos concretos. El contrato se protege con importación de
 todos los módulos, matriz de dependencias y `makemigrations --check --dry-run`.
 
+Desde CML05, `FoodLabelCaptureReceipt` pertenece también a Operational Food
+Snapshot. Depende del `Food` privado confirmado y conserva sólo procedencia,
+confianza, warnings y hash del payload; foto y texto OCR crudo no son modelos del
+servidor.
+
 ## Estado Patch 32
 
 Se crea la app Django física `food_catalog` como frontera independiente del catálogo maestro.

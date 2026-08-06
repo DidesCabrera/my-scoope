@@ -826,6 +826,311 @@
         "title": "FoodItem",
         "type": "object"
       },
+      "FoodLabelCaptureData": {
+        "properties": {
+          "capture_receipt_id": {
+            "title": "Capture Receipt Id",
+            "type": "integer"
+          },
+          "carbs_g": {
+            "title": "Carbs G",
+            "type": "number"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "detected_basis": {
+            "title": "Detected Basis",
+            "type": "string"
+          },
+          "fat_g": {
+            "title": "Fat G",
+            "type": "number"
+          },
+          "fiber_g": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fiber G"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "is_user_food": {
+            "title": "Is User Food",
+            "type": "boolean"
+          },
+          "is_verified": {
+            "title": "Is Verified",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "ocr_engine": {
+            "title": "Ocr Engine",
+            "type": "string"
+          },
+          "protein_g": {
+            "title": "Protein G",
+            "type": "number"
+          },
+          "saturated_fat_g": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Saturated Fat G"
+          },
+          "serving_size_g": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Serving Size G"
+          },
+          "sodium_mg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sodium Mg"
+          },
+          "sugar_g": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sugar G"
+          },
+          "total_kcal": {
+            "title": "Total Kcal",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "protein_g",
+          "carbs_g",
+          "fat_g",
+          "total_kcal",
+          "is_user_food",
+          "is_verified",
+          "capture_receipt_id",
+          "detected_basis",
+          "ocr_engine",
+          "created_at"
+        ],
+        "title": "FoodLabelCaptureData",
+        "type": "object"
+      },
+      "FoodLabelCaptureEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/FoodLabelCaptureData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "FoodLabelCaptureEnvelope",
+        "type": "object"
+      },
+      "FoodLabelCaptureInput": {
+        "properties": {
+          "carbs_g": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Carbs G",
+            "type": "number"
+          },
+          "declared_energy_kcal_per_100g": {
+            "anyOf": [
+              {
+                "maximum": 10000,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Declared Energy Kcal Per 100G"
+          },
+          "detected_basis": {
+            "enum": [
+              "per_100g",
+              "per_serving",
+              "manual"
+            ],
+            "title": "Detected Basis",
+            "type": "string"
+          },
+          "fat_g": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Fat G",
+            "type": "number"
+          },
+          "fiber_g": {
+            "anyOf": [
+              {
+                "maximum": 100,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fiber G"
+          },
+          "field_confidence": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Field Confidence",
+            "type": "object"
+          },
+          "idempotency_key": {
+            "maxLength": 120,
+            "minLength": 8,
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "ocr_engine": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Ocr Engine",
+            "type": "string"
+          },
+          "ocr_engine_version": {
+            "default": "",
+            "maxLength": 40,
+            "title": "Ocr Engine Version",
+            "type": "string"
+          },
+          "protein_g": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Protein G",
+            "type": "number"
+          },
+          "saturated_fat_g": {
+            "anyOf": [
+              {
+                "maximum": 100,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Saturated Fat G"
+          },
+          "serving_size_g": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 10000,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Serving Size G"
+          },
+          "sodium_mg": {
+            "anyOf": [
+              {
+                "maximum": 100000,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sodium Mg"
+          },
+          "sugar_g": {
+            "anyOf": [
+              {
+                "maximum": 100,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sugar G"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "protein_g",
+          "carbs_g",
+          "fat_g",
+          "detected_basis",
+          "ocr_engine",
+          "idempotency_key"
+        ],
+        "title": "FoodLabelCaptureInput",
+        "type": "object"
+      },
       "FoodPageData": {
         "properties": {
           "items": {
@@ -2243,6 +2548,70 @@
           }
         ],
         "summary": "Foods"
+      }
+    },
+    "/api/v1/foods/label-captures": {
+      "post": {
+        "operationId": "mobile_api_api_confirm_food_label_capture",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FoodLabelCaptureInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FoodLabelCaptureEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Confirm Food Label Capture"
       }
     },
     "/api/v1/health": {

@@ -163,6 +163,7 @@ export default function TodayScreen() {
         </Card>
       )}
       <Button label="Registrar peso" onPress={() => router.push("/weight")} variant="secondary" />
+      <Button label="Digitalizar etiqueta nutricional" onPress={() => router.push("./label-capture")} variant="secondary" />
       {today?.reminders ? (
         <Button label="Configurar recordatorios" onPress={() => router.push("./reminders")} variant="secondary" />
       ) : null}

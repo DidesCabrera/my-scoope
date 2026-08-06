@@ -128,6 +128,12 @@ When a plan becomes real, durable outcomes should be promoted into `docs/00_curr
   weight records, freezes periodic reviews and protects future program changes
   behind audited before/after revisions and explicit user approval. Mobile exposes
   these flows and the common reminder schedule; native iOS delivery remains CML07.
+- Consumer Mobile Launch CML05 repository baseline: the iOS client captures a
+  nutrition label with Expo Camera, recognizes it locally through Apple Vision,
+  exposes normalization uncertainty for editing and sends only confirmed values.
+  The server creates an idempotent private food plus a provenance receipt without
+  retaining the photo or raw OCR text. Physical camera/Vision proof remains an
+  external device gate because the local machine lacks the iOS SDK.
 
 - Email delivery abuse-protection baseline: server-validated Turnstile integration,
   multi-window signup limits, shared-cache production path, auditable account email,
@@ -175,10 +181,10 @@ When a plan becomes real, durable outcomes should be promoted into `docs/00_curr
 - Consumer Mobile Launch CML00-CML08 is active. CML00 is complete and fixes the
   B2C scope. CML01 is repository-complete and closes safety/privacy prerequisites;
   its external recovery, staging and legal gates remain visible before release.
-  CML02-CML04 are repository-complete with the consumer API, Expo development
+  CML02-CML05 are repository-complete with the consumer API, Expo development
   client, secure session lifecycle, translated visual grammar and lived-program
-  execution/adherence/reviews/revisions. CML05 is next: nutrition-label capture
-  with on-device OCR and explicit confirmation.
+  execution/adherence/reviews/revisions plus review-first on-device label capture.
+  CML06 is next: consumer subscription purchase, restore and reconciliation.
 - No continuation of BA or PT is implied. New AI Assistant work should start from observed product evidence and a newly scoped cycle, rather than extending the global prompt or reopening a deterministic questionnaire.
 - The current product bets and next experiments live in `PRODUCT_PORTFOLIO.md`; they are
   hypotheses to validate or reformulate, not a fixed feature sequence.

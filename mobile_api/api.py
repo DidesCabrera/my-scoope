@@ -25,6 +25,8 @@ from mobile_api.schemas import (
     EntitlementsEnvelope,
     ErrorEnvelope,
     FoodPageEnvelope,
+    FoodLabelCaptureEnvelope,
+    FoodLabelCaptureInput,
     HealthEnvelope,
     OnboardingInput,
     ProfileEnvelope,
@@ -44,6 +46,7 @@ from mobile_api.schemas import (
 from mobile_api.selectors import (
     active_program_payload,
     entitlements_payload,
+    food_label_capture_payload,
     profile_payload,
     reminder_settings_payload,
     review_payload,
@@ -60,6 +63,8 @@ from notas.application.services.commands.calendarization_execution_commands impo
     record_calendarized_weight,
     record_meal_execution,
 )
+from notas.application.services.access.capabilities import get_capabilities
+from notas.application.services.commands.food_commands import create_food_from_label_capture
 from notas.application.services.oauth_device_sessions import (
     MOBILE_SCOPE_ACCOUNT,
     MOBILE_SCOPE_WRITE,
@@ -147,6 +152,15 @@ def _calendarization_error(exc: ValueError) -> MobileAPIError:
         code=code,
         message="The lived-program operation could not be completed.",
         status_code=404 if code in not_found else 409 if code in conflicts else 422,
+    )
+
+
+def _food_label_error(exc: ValueError) -> MobileAPIError:
+    code = str(exc)
+    return MobileAPIError(
+        code=code,
+        message="The confirmed nutrition label could not be saved.",
+        status_code=409 if code == "food_label_idempotency_conflict" else 422,
     )
 
 
@@ -449,6 +463,45 @@ def foods(request, search: str | None = None, offset: int = 0, limit: int = 30):
             "search": page.search,
         }
     )
+
+
+@api.post(
+    "/foods/label-captures",
+    auth=mobile_bearer,
+    response={200: FoodLabelCaptureEnvelope, 403: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def confirm_food_label_capture(request, payload: FoodLabelCaptureInput):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    capabilities = get_capabilities(request.auth.user)
+    if capabilities is None or not capabilities.can_create_food():
+        raise MobileAPIError(
+            code="food_creation_not_entitled",
+            message="The current account cannot create private foods.",
+            status_code=403,
+        )
+    try:
+        result = create_food_from_label_capture(
+            user=request.auth.user,
+            name=payload.name,
+            protein_g=payload.protein_g,
+            carbs_g=payload.carbs_g,
+            fat_g=payload.fat_g,
+            saturated_fat_g=payload.saturated_fat_g,
+            sugar_g=payload.sugar_g,
+            fiber_g=payload.fiber_g,
+            sodium_mg=payload.sodium_mg,
+            serving_size_g=payload.serving_size_g,
+            declared_energy_kcal_per_100g=payload.declared_energy_kcal_per_100g,
+            detected_basis=payload.detected_basis,
+            ocr_engine=payload.ocr_engine,
+            ocr_engine_version=payload.ocr_engine_version,
+            field_confidence=payload.field_confidence,
+            warnings=payload.warnings,
+            idempotency_key=payload.idempotency_key,
+        )
+    except ValueError as exc:
+        raise _food_label_error(exc) from exc
+    return _success(food_label_capture_payload(result))
 
 
 @api.post(

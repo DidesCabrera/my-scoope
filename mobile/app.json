@@ -30,6 +30,15 @@
       "expo-dev-client",
       "expo-secure-store",
       [
+        "expo-camera",
+        {
+          "cameraPermission": "My Scoope usa la cámara para leer una etiqueta nutricional en tu dispositivo.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": false
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#000000",
@@ -43,7 +52,7 @@
       "reactCompiler": true
     },
     "extra": {
-      "mobileContract": "cml03.v1"
+      "mobileContract": "cml05.v1"
     }
   }
 }
