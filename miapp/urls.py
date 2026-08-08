@@ -3,6 +3,7 @@ from django.contrib import admin
 from django.urls import include, path
 
 from core.rate_limits import limit_login, limit_signup
+from mobile_api.api import api as mobile_api_v1
 from notas.interface.views.oauth import (
     oauth_authorization_server_metadata,
     oauth_authorize,
@@ -54,6 +55,9 @@ urlpatterns = [
 
     # External billing callbacks (provider-authenticated, disabled by default)
     path("billing/", include("billing.interface.urls")),
+
+    # Versioned consumer/mobile interface
+    path("api/v1/", mobile_api_v1.urls),
 
     # Internal product intelligence
     path("staff/analytics/", include("admin_analytics.urls")),

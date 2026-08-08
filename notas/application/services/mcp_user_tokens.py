@@ -64,6 +64,7 @@ def create_mcp_user_token(
     name: str,
     scopes: Optional[Iterable[str]] = None,
     expires_at=None,
+    device_session=None,
 ) -> MCPUserTokenCreationResult:
     raw_token = generate_mcp_user_raw_token()
 
@@ -73,6 +74,7 @@ def create_mcp_user_token(
         token_hash=hash_mcp_user_token(raw_token),
         scopes=list(scopes or DEFAULT_MCP_USER_TOKEN_SCOPES),
         expires_at=expires_at,
+        device_session=device_session,
     )
 
     return MCPUserTokenCreationResult(
@@ -111,7 +113,7 @@ def validate_mcp_user_token(
     try:
         token = (
             MCPUserToken.objects
-            .select_related("user")
+            .select_related("user", "device_session")
             .get(token_hash=token_hash)
         )
     except MCPUserToken.DoesNotExist:
@@ -157,6 +159,20 @@ def validate_mcp_user_token(
                 message="MCP user token owner is inactive.",
                 details={
                     "user_id": token.user_id,
+                },
+            )
+        )
+
+    if token.device_session_id and (
+        not token.device_session.is_active
+        or token.device_session.revoked_at is not None
+    ):
+        return MCPUserTokenValidationResult(
+            error=MCPUserTokenValidationError(
+                code="mcp_user_token_device_session_revoked",
+                message="The device session for this token has been revoked.",
+                details={
+                    "device_session_id": str(token.device_session.public_id),
                 },
             )
         )

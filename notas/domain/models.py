@@ -9,9 +9,15 @@ from notas.domain.model_modules.auth_integration import (
     MCPUserToken,
     OAuthAuthorizationCode,
     OAuthClient,
+    OAuthDeviceSession,
+    OAuthRefreshToken,
 )
 from notas.domain.model_modules.calendarization import (
+    CalendarizationMeasurementContext,
+    CalendarizationReview,
+    CalendarizationRevision,
     CalendarizedDay,
+    CalendarizedMealExecution,
     ProgramCalendarization,
 )
 from notas.domain.model_modules.comparisons import SavedComparison
@@ -20,6 +26,7 @@ from notas.domain.model_modules.food import (
     Food,
     FoodAlias,
     FoodImportBatch,
+    FoodLabelCaptureReceipt,
     FoodLocalizedName,
     FoodPortion,
     FoodSourceMetadata,
@@ -33,6 +40,7 @@ from notas.domain.model_modules.identity import (
 )
 from notas.domain.model_modules.meals import Meal, MealAccess, MealFood
 from notas.domain.model_modules.notification_delivery import (
+    ApplePushSubscription,
     NotificationDelivery,
     ScheduledNotificationEvent,
     WebPushSubscription,
@@ -52,16 +60,14 @@ from notas.domain.model_modules.sharing import (
 )
 
 __all__ = [
-    "AiNutritionChat",
-    "CalendarizedDay",
-    "DailyPlan",
-    "DailyPlanMeal",
-    "DailyPlanMealShare",
-    "DailyPlanShare",
-    "Food",
-    "FoodAlias",
-    "FoodImportBatch",
-    "FoodLocalizedName",
+    "AiNutritionChat", "ApplePushSubscription",
+    "CalendarizedDay", "CalendarizedMealExecution",
+    "CalendarizationMeasurementContext", "CalendarizationReview",
+    "CalendarizationRevision", "DailyPlan",
+    "DailyPlanMeal", "DailyPlanMealShare",
+    "DailyPlanShare", "Food",
+    "FoodAlias", "FoodImportBatch",
+    "FoodLabelCaptureReceipt", "FoodLocalizedName",
     "FoodPortion",
     "FoodShare",
     "FoodSourceMetadata",
@@ -76,6 +82,8 @@ __all__ = [
     "NutritionistMemberRelationship",
     "OAuthAuthorizationCode",
     "OAuthClient",
+    "OAuthDeviceSession",
+    "OAuthRefreshToken",
     "Plan",
     "Profile",
     "Program",

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from accounts.models import AccountPlan, AccountSubscription, CreditLedger, CreditWallet
+from accounts.models import AccountDeletionRecord, AccountPlan, AccountSubscription, CreditLedger, CreditWallet
 
 
 @admin.register(AccountPlan)
@@ -144,6 +144,22 @@ class CreditLedgerAdmin(admin.ModelAdmin):
     )
     autocomplete_fields = ("wallet", "user")
     ordering = ("-created_at",)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(AccountDeletionRecord)
+class AccountDeletionRecordAdmin(admin.ModelAdmin):
+    list_display = ("public_id", "policy_version", "source", "completed_at")
+    readonly_fields = ("public_id", "policy_version", "source", "deleted_counts", "retained_counts", "completed_at")
+    ordering = ("-completed_at",)
 
     def has_add_permission(self, request):
         return False

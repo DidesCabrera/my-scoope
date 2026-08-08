@@ -12,6 +12,7 @@ from notas.application.services.oauth_authorization_codes import (
     OAUTH_CODE_CHALLENGE_METHOD_S256,
     hash_oauth_authorization_code,
 )
+from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_ACCOUNT, MOBILE_SCOPE_READ, MOBILE_SCOPE_WRITE
 from notas.domain.models import OAuthAuthorizationCode, OAuthClient
 
 
@@ -78,8 +79,10 @@ class OAuthAuthorizeViewsTests(TestCase):
             data["grant_types_supported"],
             [
                 "authorization_code",
+                "refresh_token",
             ],
         )
+        self.assertIn(MOBILE_SCOPE_READ, data["scopes_supported"])
         self.assertEqual(
             data["code_challenge_methods_supported"],
             [
@@ -268,6 +271,28 @@ class OAuthAuthorizeViewsTests(TestCase):
             authorization_code.used_at,
         )
 
+    def test_consent_redirects_to_exact_registered_native_scheme(self):
+        mobile_client = OAuthClient.objects.create(
+            client_id="myscoope-ios",
+            client_name="My Scoope iOS",
+            redirect_uris=["myscoope://oauth/callback"],
+            allowed_scopes=[MOBILE_SCOPE_READ, MOBILE_SCOPE_WRITE, MOBILE_SCOPE_ACCOUNT],
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse("oauth_authorize_consent"),
+            data=self._authorize_params(
+                client_id=mobile_client.client_id,
+                redirect_uri="myscoope://oauth/callback",
+                scope=f"{MOBILE_SCOPE_READ} {MOBILE_SCOPE_WRITE} {MOBILE_SCOPE_ACCOUNT}",
+            ),
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response["Location"].startswith("myscoope://oauth/callback?code="))
+        self.assertIn("state=state-123", response["Location"])
+
     def test_consent_requires_login(self):
         response = self.client.post(
             reverse("oauth_authorize_consent"),
@@ -292,4 +317,3 @@ class OAuthAuthorizeViewsTests(TestCase):
             data["error"],
             "unsupported_grant_type",
         )
-

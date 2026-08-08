@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, cast
+
+from sentry_sdk.types import Event, Hint
 
 FILTERED = "[Filtered]"
 SENSITIVE_KEY_PARTS = (
@@ -50,8 +52,8 @@ def sanitize_for_observability(value: Any, *, depth: int = 0, parent_key: Any = 
     return value
 
 
-def sanitize_sentry_event(event: dict[str, Any], hint: Any | None = None) -> dict[str, Any]:
-    sanitized = sanitize_for_observability(event)
+def sanitize_sentry_event(event: Event, hint: Hint | None = None) -> Event:
+    sanitized = cast(Event, sanitize_for_observability(event))
     request = sanitized.get("request")
     if isinstance(request, dict):
         for key in SENSITIVE_REQUEST_KEYS:

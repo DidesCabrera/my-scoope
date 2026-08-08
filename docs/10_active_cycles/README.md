@@ -34,6 +34,26 @@ Status: planned / active / paused / completed / superseded
 Cuando un ciclo planificado empiece a implementarse, el documento puede permanecer aquí como plan operacional, pero las decisiones estables que surjan deben registrarse también en `docs/20_decisions/`.
 
 ## En curso o pendientes de validación
+- `consumer_mobile_launch_cycle.md`: ciclo activo CML00-CML08. Reorienta el primer
+  cliente móvil hacia consumidores que siguen su propio programa; separa seguridad,
+  API, React Native, calendarización ejecutable, OCR de etiquetas, IAP y review de
+  App Store en patches con evidencia independiente. CML00 está completado y CML01
+  está completado en repositorio; restauración real, aplicación segura del Blueprint
+  en staging y aprobación contable/legal siguen como gates externos. CML02 es el
+  contrato API consumer-first y está completado en repositorio. CML03 también
+  está completado en repositorio con Expo, sesión segura y recorrido nativo; su
+  prueba física depende de Xcode y OAuth staging. CML04 está completado en
+  repositorio con ejecución inmutable, adherencia, mediciones contextualizadas,
+  revisiones, ajustes futuros auditados y coordinación de recordatorios. CML05
+  está completado en repositorio con cámara, OCR local Apple Vision, revisión
+  explícita y creación idempotente de alimentos privados; su gate físico depende
+  de Xcode/dispositivo. CML06 está completado en repositorio con compra/restauración
+  StoreKit verificada, conciliación Apple y agregación determinística con Mercado
+  Pago; el ciclo sandbox físico sigue como gate externo. CML07 está completado en
+  repositorio con Apple dentro del mismo PKCE, entrega APNs/local exclusiva,
+  Keychain, manifiesto de privacidad y errores móviles sanitizados. Su gate físico
+  exige macOS Tahoe 26.2+, Xcode 26.4, credenciales Apple y un iPhone. CML08 es el
+  siguiente patch de TestFlight, metadata y preparación de review.
 - `production_architecture_remediation_cycle.md`: ciclo activo PAR00-PAR10. PAR01-PAR05
   cierran en repositorio el arranque fail-closed con PostgreSQL, la topología Render
   versionada, CI completo sobre PostgreSQL, runbooks de recuperación y defaults de

@@ -1,0 +1,46 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Eliminar cuenta · My Scoope</title>
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+    <link rel="stylesheet" href="{% static 'css/account_deletion.css' %}">
+</head>
+<body class="auth-body deletion-body">
+    <main class="deletion-shell">
+        <section class="deletion-card">
+            <p class="deletion-kicker">Cuenta y privacidad</p>
+            <h1>Eliminar tu cuenta</h1>
+            <p>Esta acción es permanente. Cerraremos tu acceso y eliminaremos tus datos personales de nutrición.</p>
+
+            <ul class="deletion-list">
+                <li>Se borrarán perfil, mediciones, alimentos privados, comidas, planes, programas y chats.</li>
+                <li>Se revocarán sesiones, accesos sociales, notificaciones y créditos.</li>
+                <li>Pagos y documentos tributarios mínimos se conservarán solo cuando exista una obligación legal.</li>
+                <li>Eliminar la cuenta no cancela automáticamente una suscripción gestionada por una tienda de aplicaciones.</li>
+            </ul>
+
+            <form method="post" class="auth-form deletion-form" novalidate>
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="auth-field">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+                        {% if field.errors %}
+                            <ul class="auth-field-errors">
+                                {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                <button type="submit" class="deletion-submit">Eliminar mi cuenta definitivamente</button>
+            </form>
+
+            <a class="deletion-cancel" href="{% url 'profile_detail' %}">Cancelar y volver a mi perfil</a>
+        </section>
+    </main>
+</body>
+</html>

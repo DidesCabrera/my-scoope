@@ -81,10 +81,12 @@ INSTALLED_APPS = [
     "notas.apps.NotasConfig",
     "accounts",
     "core",
+    "mobile_api.apps.MobileApiConfig",
 
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
+    "allauth.socialaccount.providers.apple",
     "allauth.socialaccount.providers.google",
 ]
 
@@ -519,6 +521,15 @@ MYSCOOPE_VAPID_SUBJECT = os.environ.get(
 ).strip()
 MYSCOOPE_PWA_CACHE_VERSION = os.environ.get("MYSCOOPE_PWA_CACHE_VERSION", "v2")
 
+# Native iOS reminders are opt-in. The app falls back to deterministic local
+# notifications until all APNs provider credentials are present.
+MYSCOOPE_APNS_ENABLED = _env_bool("MYSCOOPE_APNS_ENABLED", False)
+MYSCOOPE_APNS_KEY_ID = os.environ.get("MYSCOOPE_APNS_KEY_ID", "").strip()
+MYSCOOPE_APNS_TEAM_ID = os.environ.get("MYSCOOPE_APNS_TEAM_ID", "").strip()
+MYSCOOPE_APNS_PRIVATE_KEY = os.environ.get("MYSCOOPE_APNS_PRIVATE_KEY", "").strip()
+MYSCOOPE_APNS_BUNDLE_ID = os.environ.get("MYSCOOPE_APNS_BUNDLE_ID", "com.myscoope.app").strip()
+MYSCOOPE_APNS_TIMEOUT_SECONDS = _env_int("MYSCOOPE_APNS_TIMEOUT_SECONDS", 10)
+
 # Billing providers are opt-in. Webhooks stay unavailable until explicitly enabled
 # with both Mercado Pago credentials present.
 BILLING_MERCADOPAGO_WEBHOOK_ENABLED = _env_bool("BILLING_MERCADOPAGO_WEBHOOK_ENABLED", False)
@@ -533,6 +544,15 @@ BILLING_MERCADOPAGO_TIMEOUT_SECONDS = _env_int("BILLING_MERCADOPAGO_TIMEOUT_SECO
 BILLING_MERCADOPAGO_WEBHOOK_TOLERANCE_SECONDS = _env_int(
     "BILLING_MERCADOPAGO_WEBHOOK_TOLERANCE_SECONDS", 300
 )
+BILLING_APPLE_NOTIFICATIONS_ENABLED = _env_bool("BILLING_APPLE_NOTIFICATIONS_ENABLED", False)
+BILLING_APPLE_PURCHASES_ENABLED = _env_bool("BILLING_APPLE_PURCHASES_ENABLED", False)
+BILLING_APPLE_ENVIRONMENT = os.environ.get("BILLING_APPLE_ENVIRONMENT", "sandbox").strip().lower()
+BILLING_APPLE_BUNDLE_ID = os.environ.get("BILLING_APPLE_BUNDLE_ID", "com.myscoope.app").strip()
+BILLING_APPLE_APP_ID = _env_int("BILLING_APPLE_APP_ID", 0) or None
+BILLING_APPLE_IN_APP_PURCHASE_KEY = os.environ.get("BILLING_APPLE_IN_APP_PURCHASE_KEY", "").strip()
+BILLING_APPLE_KEY_ID = os.environ.get("BILLING_APPLE_KEY_ID", "").strip()
+BILLING_APPLE_ISSUER_ID = os.environ.get("BILLING_APPLE_ISSUER_ID", "").strip()
+BILLING_APPLE_ONLINE_CHECKS = _env_bool("BILLING_APPLE_ONLINE_CHECKS", True)
 BILLING_OPENFACTURA_ENABLED = _env_bool("BILLING_OPENFACTURA_ENABLED", False)
 BILLING_OPENFACTURA_API_KEY = os.environ.get("BILLING_OPENFACTURA_API_KEY", "").strip()
 BILLING_OPENFACTURA_API_BASE_URL = os.environ.get(

@@ -14,6 +14,24 @@ class PaymentProvider(models.TextChoices):
     GOOGLE_PLAY = "google_play", "Google Play"
 
 
+class AppleAppAccountToken(models.Model):
+    """Stable opaque UUID used to bind StoreKit evidence to one My Scoope account."""
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="apple_app_account_token",
+    )
+    token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["user_id"]
+
+    def __str__(self) -> str:
+        return f"Apple account token · {self.user_id}"
+
+
 class BillingProduct(models.Model):
     """Provider product mapped to one commercial plan owned by accounts."""
 

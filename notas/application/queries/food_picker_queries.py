@@ -56,6 +56,43 @@ class FoodPickerListDTO:
         }
 
 
+@dataclass(frozen=True)
+class FoodPickerPageDTO:
+    foods: list[FoodPickerItemDTO]
+    total: int
+    offset: int
+    limit: int
+    search: str | None
+
+
+def list_food_picker_page(
+    *,
+    user,
+    search: str | None = None,
+    offset: int = 0,
+    limit: int = 30,
+) -> FoodPickerPageDTO:
+    safe_limit = _normalize_limit(limit)
+    safe_offset = max(int(offset or 0), 0)
+    normalized_search = _normalize_search(search)
+    queryset = _apply_food_picker_search(
+        queryset=get_food_picker_queryset(user),
+        search=normalized_search,
+    )
+    total = queryset.count()
+    foods = [
+        build_food_picker_item_dto(food=food, user=user)
+        for food in queryset[safe_offset:safe_offset + safe_limit]
+    ]
+    return FoodPickerPageDTO(
+        foods=foods,
+        total=total,
+        offset=safe_offset,
+        limit=safe_limit,
+        search=normalized_search,
+    )
+
+
 def get_food_picker_queryset(user) -> QuerySet:
     """
     Return foods available for food picker surfaces.

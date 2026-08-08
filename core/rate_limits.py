@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from django.conf import settings
+from django_ratelimit.core import is_ratelimited
 from django_ratelimit.decorators import ratelimit
 
 
@@ -82,3 +83,16 @@ def limit_ai_assistant_turn(view_func):
         block=True,
         group="ai_assistant.turn",
     )(view_func)
+
+
+def is_ai_assistant_turn_rate_limited(request) -> bool:
+    """Consume the shared AI limit while allowing JSON interfaces to own the response."""
+
+    return bool(is_ratelimited(
+        request=request,
+        key=ai_assistant_turn_key,
+        rate=ai_assistant_turn_rate,
+        method="POST",
+        group="ai_assistant.turn",
+        increment=True,
+    ))

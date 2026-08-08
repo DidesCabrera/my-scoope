@@ -35,6 +35,47 @@ class WebPushSubscription(models.Model):
         return f"{self.user} · {label}"
 
 
+class ApplePushSubscription(models.Model):
+    ENVIRONMENT_SANDBOX = "sandbox"
+    ENVIRONMENT_PRODUCTION = "production"
+    ENVIRONMENT_CHOICES = (
+        (ENVIRONMENT_SANDBOX, "Sandbox"),
+        (ENVIRONMENT_PRODUCTION, "Production"),
+    )
+
+    device_session = models.OneToOneField(
+        "notas.OAuthDeviceSession",
+        on_delete=models.CASCADE,
+        related_name="apple_push_subscription",
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="apple_push_subscriptions",
+    )
+    device_token = models.CharField(max_length=200)
+    token_fingerprint = models.CharField(max_length=64, unique=True)
+    environment = models.CharField(max_length=20, choices=ENVIRONMENT_CHOICES)
+    is_active = models.BooleanField(default=True, db_index=True)
+    last_success_at = models.DateTimeField(null=True, blank=True)
+    last_failure_at = models.DateTimeField(null=True, blank=True)
+    failure_code = models.CharField(max_length=80, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at", "-id"]
+        indexes = [
+            models.Index(
+                fields=["user", "is_active"],
+                name="apns_user_active_idx",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.user} · iOS {self.token_fingerprint[:12]}"
+
+
 class ScheduledNotificationEvent(models.Model):
     TYPE_DAILY_PLAN = "daily_plan"
     TYPE_MEAL_REMINDER = "meal_reminder"
@@ -105,6 +146,13 @@ class ScheduledNotificationEvent(models.Model):
 
 
 class NotificationDelivery(models.Model):
+    CHANNEL_WEB_PUSH = "web_push"
+    CHANNEL_APNS = "apns"
+    CHANNEL_CHOICES = (
+        (CHANNEL_WEB_PUSH, "Web Push"),
+        (CHANNEL_APNS, "Apple Push Notification service"),
+    )
+
     STATUS_PENDING = "pending"
     STATUS_SENT = "sent"
     STATUS_FAILED = "failed"
@@ -128,6 +176,14 @@ class NotificationDelivery(models.Model):
         on_delete=models.SET_NULL,
         related_name="deliveries",
     )
+    apple_subscription = models.ForeignKey(
+        ApplePushSubscription,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="deliveries",
+    )
+    channel = models.CharField(max_length=20, choices=CHANNEL_CHOICES, default=CHANNEL_WEB_PUSH)
     subscription_fingerprint = models.CharField(max_length=64)
     status = models.CharField(
         max_length=20,
@@ -147,6 +203,13 @@ class NotificationDelivery(models.Model):
             models.UniqueConstraint(
                 fields=["event", "subscription_fingerprint"],
                 name="push_unique_event_device",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(channel="web_push", apple_subscription__isnull=True)
+                    | models.Q(channel="apns", subscription__isnull=True)
+                ),
+                name="push_delivery_channel_target",
             ),
         ]
         indexes = [

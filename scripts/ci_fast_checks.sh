@@ -17,6 +17,7 @@ scripts/check_repository_hygiene.sh
 "${PYTHON_BIN}" scripts/check_e2e_contract.py
 "${PYTHON_BIN}" manage.py check
 "${PYTHON_BIN}" manage.py makemigrations --check --dry-run
+"${PYTHON_BIN}" manage.py export_mobile_openapi --check
 "${PYTHON_BIN}" manage.py document_registry --strict
 "${PYTHON_BIN}" manage.py test \
   core.tests.regressions \

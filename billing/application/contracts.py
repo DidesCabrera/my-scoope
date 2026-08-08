@@ -30,6 +30,38 @@ class ProviderPaymentSnapshot:
 
 
 @dataclass(frozen=True)
+class AppleTransactionEvidence:
+    original_transaction_id: str
+    transaction_id: str
+    product_id: str
+    app_account_token: str = ""
+    status: str = "active"
+    purchase_date: Any = None
+    expires_date: Any = None
+    revocation_date: Any = None
+    environment: str = ""
+    ownership_type: str = ""
+    signed_date: Any = None
+    metadata: Mapping[str, Any] | None = None
+
+
+@dataclass(frozen=True)
+class AppleNotificationEvidence:
+    notification_uuid: str
+    notification_type: str
+    subtype: str = ""
+    environment: str = ""
+    signed_date: Any = None
+    transaction: AppleTransactionEvidence | None = None
+
+
+@dataclass(frozen=True)
+class AppleSubscriptionStatusEvidence:
+    status: str
+    transaction: AppleTransactionEvidence
+
+
+@dataclass(frozen=True)
 class SubscriptionCheckoutResult:
     subscription: ProviderSubscriptionSnapshot
     checkout_url: str
@@ -67,6 +99,17 @@ class PaymentGateway(Protocol):
     def get_payment(self, external_payment_id: str) -> ProviderPaymentSnapshot: ...
 
     def get_authorized_payment(self, external_payment_id: str) -> ProviderPaymentSnapshot: ...
+
+
+class AppleAppStoreGateway(Protocol):
+    def verify_transaction(self, signed_transaction: str) -> AppleTransactionEvidence: ...
+
+    def verify_notification(self, signed_payload: str) -> AppleNotificationEvidence: ...
+
+    def get_subscription_statuses(
+        self,
+        original_transaction_id: str,
+    ) -> tuple[AppleSubscriptionStatusEvidence, ...]: ...
 
 
 class TaxDocumentGateway(Protocol):

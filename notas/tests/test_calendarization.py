@@ -14,21 +14,26 @@ from notas.application.services.commands.calendarization_commands import (
     cancel_calendarization,
     dispatch_due_notifications,
     pause_calendarization,
+    register_apple_push_subscription,
     register_web_push_subscription,
     resume_calendarization,
     update_calendarization_preferences,
 )
+from notas.application.services.notifications.apple_push import ApplePushSendResult
 from notas.application.services.notifications.web_push import (
     WebPushSendResult,
     send_web_push,
     validate_push_endpoint,
 )
 from notas.domain.models import (
+    ApplePushSubscription,
     CalendarizedDay,
     DailyPlan,
     DailyPlanMeal,
     Meal,
     NotificationDelivery,
+    OAuthClient,
+    OAuthDeviceSession,
     Program,
     ProgramCalendarization,
     ProgramDay,
@@ -218,6 +223,58 @@ class CalendarizationDispatchTests(CalendarizationFixtureMixin, TestCase):
         )
         self.subscription.refresh_from_db()
         self.assertFalse(self.subscription.is_active)
+
+
+@override_settings(
+    MYSCOOPE_WEB_PUSH_ENABLED=False,
+    MYSCOOPE_APNS_ENABLED=True,
+    MYSCOOPE_APNS_KEY_ID="KEY123",
+    MYSCOOPE_APNS_TEAM_ID="TEAM123",
+    MYSCOOPE_APNS_PRIVATE_KEY="private-key",
+    MYSCOOPE_APNS_BUNDLE_ID="com.myscoope.app",
+)
+class ApplePushDispatchTests(CalendarizationFixtureMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.calendarization = self.activate(timezone_name="UTC").calendarization
+        client = OAuthClient.objects.create(
+            client_id="calendar-apns-tests",
+            client_name="Calendar APNs tests",
+            redirect_uris=["myscoope://oauth/callback"],
+            allowed_scopes=["mobile:read"],
+        )
+        session = OAuthDeviceSession.objects.create(
+            client=client,
+            user=self.user,
+            device_id_hash="a" * 64,
+            device_name="Test iPhone",
+            platform=OAuthDeviceSession.PLATFORM_IOS,
+        )
+        self.subscription = register_apple_push_subscription(
+            user=self.user,
+            device_session=session,
+            device_token="ab" * 32,
+            environment=ApplePushSubscription.ENVIRONMENT_SANDBOX,
+        )
+
+    def test_dispatch_uses_apns_once_for_native_device(self):
+        event = self.calendarization.notification_events.get(event_type=ScheduledNotificationEvent.TYPE_DAILY_PLAN)
+        calls = []
+
+        def apns_send_func(**kwargs):
+            calls.append(kwargs)
+            return ApplePushSendResult(ok=True)
+
+        result = dispatch_due_notifications(
+            now=event.scheduled_for_utc + timedelta(minutes=1),
+            apns_send_func=apns_send_func,
+        )
+
+        self.assertEqual(result.deliveries_sent, 1)
+        self.assertEqual(len(calls), 1)
+        delivery = NotificationDelivery.objects.get()
+        self.assertEqual(delivery.channel, NotificationDelivery.CHANNEL_APNS)
+        self.assertEqual(delivery.apple_subscription, self.subscription)
 
 
 class WebPushSecurityTests(TestCase):

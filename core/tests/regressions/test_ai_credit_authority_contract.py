@@ -10,12 +10,14 @@ class AICreditAuthorityContractTests(SimpleTestCase):
             Path("ai_assistant/models.py"),
             Path("ai_assistant/admin.py"),
             Path("ai_assistant/application/credit_reconciliation.py"),
+            Path("accounts/services/deletion.py"),
         }
         offenders = []
         for path in project_root.rglob("*.py"):
             relative = path.relative_to(project_root)
             if (
                 relative in allowed
+                or ".venv" in relative.parts
                 or "migrations" in relative.parts
                 or "tests" in relative.parts
                 or relative.name.startswith("test_")
@@ -28,5 +30,5 @@ class AICreditAuthorityContractTests(SimpleTestCase):
         self.assertEqual(
             offenders,
             [],
-            "Legacy AI credit models may only be read by the explicit reconciliation boundary.",
+            "Legacy AI credit models may only be read by reconciliation or erased by account deletion.",
         )

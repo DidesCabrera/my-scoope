@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand, CommandError
 from billing.application.services.openfactura import reconcile_tax_document
 from billing.application.services.provider_sync import sync_provider_subscription
 from billing.infrastructure.gateways import build_mercado_pago_gateway, build_openfactura_gateway
-from billing.models import ProviderSubscription, TaxDocument
+from billing.models import PaymentProvider, ProviderSubscription, TaxDocument
 
 
 class Command(BaseCommand):
@@ -16,7 +16,10 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         limit = options["limit"]
-        subscriptions = list(ProviderSubscription.objects.order_by("updated_at")[:limit])
+        subscriptions = list(
+            ProviderSubscription.objects.filter(provider=PaymentProvider.MERCADO_PAGO)
+            .order_by("updated_at")[:limit]
+        )
         documents = list(TaxDocument.objects.exclude(document_token="").filter(status__in=[TaxDocument.Status.ISSUED, TaxDocument.Status.REJECTED]).order_by("updated_at")[:limit])
         if options["dry_run"]:
             self.stdout.write(f"subscriptions={len(subscriptions)} tax_documents={len(documents)}")

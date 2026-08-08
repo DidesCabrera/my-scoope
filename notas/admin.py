@@ -11,12 +11,18 @@ from .admin_food_actions import (
     mark_foods_as_verified,
 )
 from .domain.models import (
+    ApplePushSubscription,
+    CalendarizationMeasurementContext,
+    CalendarizationReview,
+    CalendarizationRevision,
     CalendarizedDay,
+    CalendarizedMealExecution,
     DailyPlan,
     DailyPlanMeal,
     Food,
     FoodAlias,
     FoodImportBatch,
+    FoodLabelCaptureReceipt,
     FoodLocalizedName,
     FoodPortion,
     FoodSourceMetadata,
@@ -422,6 +428,23 @@ class FoodSourceMetadataAdmin(admin.ModelAdmin):
     )
 
 
+@admin.register(FoodLabelCaptureReceipt)
+class FoodLabelCaptureReceiptAdmin(admin.ModelAdmin):
+    list_display = ("food", "ocr_engine", "detected_basis", "serving_size_g", "created_at")
+    list_filter = ("ocr_engine", "detected_basis", "created_at")
+    search_fields = ("food__name", "food__created_by__username", "idempotency_key")
+    readonly_fields = tuple(field.name for field in FoodLabelCaptureReceipt._meta.fields)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(FoodPortion)
 class FoodPortionAdmin(admin.ModelAdmin):
     list_display = (
@@ -818,6 +841,46 @@ class CalendarizedDayAdmin(admin.ModelAdmin):
     readonly_fields = tuple(field.name for field in CalendarizedDay._meta.fields)
 
 
+@admin.register(CalendarizedMealExecution)
+class CalendarizedMealExecutionAdmin(admin.ModelAdmin):
+    list_display = ("calendarized_day", "meal_snapshot_key", "action", "created_at")
+    list_filter = ("action", "created_at")
+    search_fields = ("calendarized_day__calendarization__user__username", "meal_snapshot_key", "idempotency_key")
+    readonly_fields = tuple(field.name for field in CalendarizedMealExecution._meta.fields)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(CalendarizationMeasurementContext)
+class CalendarizationMeasurementContextAdmin(admin.ModelAdmin):
+    list_display = ("calendarization", "weight_log", "calendarized_day", "created_at")
+    search_fields = ("calendarization__user__username", "calendarization__program_name_snapshot")
+    readonly_fields = tuple(field.name for field in CalendarizationMeasurementContext._meta.fields)
+
+
+@admin.register(CalendarizationReview)
+class CalendarizationReviewAdmin(admin.ModelAdmin):
+    list_display = ("calendarization", "period_start", "period_end", "energy_score", "hunger_score", "created_at")
+    list_filter = ("period_start", "period_end", "created_at")
+    search_fields = ("calendarization__user__username", "calendarization__program_name_snapshot", "idempotency_key")
+    readonly_fields = tuple(field.name for field in CalendarizationReview._meta.fields)
+
+
+@admin.register(CalendarizationRevision)
+class CalendarizationRevisionAdmin(admin.ModelAdmin):
+    list_display = ("calendarization", "effective_from", "status", "created_at", "decided_at")
+    list_filter = ("status", "effective_from", "created_at")
+    search_fields = ("calendarization__user__username", "calendarization__program_name_snapshot", "idempotency_key")
+    readonly_fields = tuple(field.name for field in CalendarizationRevision._meta.fields)
+
+
 @admin.register(WebPushSubscription)
 class WebPushSubscriptionAdmin(admin.ModelAdmin):
     list_display = ("user", "device_label", "endpoint_fingerprint", "is_active", "last_success_at", "last_failure_at")
@@ -825,6 +888,15 @@ class WebPushSubscriptionAdmin(admin.ModelAdmin):
     search_fields = ("user__username", "user__email", "endpoint_fingerprint", "device_label")
     exclude = ("endpoint", "p256dh_key", "auth_key")
     readonly_fields = ("endpoint_fingerprint", "created_at", "updated_at", "last_success_at", "last_failure_at")
+
+
+@admin.register(ApplePushSubscription)
+class ApplePushSubscriptionAdmin(admin.ModelAdmin):
+    list_display = ("user", "token_fingerprint", "environment", "is_active", "last_success_at", "last_failure_at")
+    list_filter = ("environment", "is_active", "last_success_at", "last_failure_at")
+    search_fields = ("user__username", "user__email", "token_fingerprint")
+    exclude = ("device_token",)
+    readonly_fields = ("token_fingerprint", "created_at", "updated_at", "last_success_at", "last_failure_at")
 
 
 @admin.register(ScheduledNotificationEvent)
@@ -837,8 +909,8 @@ class ScheduledNotificationEventAdmin(admin.ModelAdmin):
 
 @admin.register(NotificationDelivery)
 class NotificationDeliveryAdmin(admin.ModelAdmin):
-    list_display = ("event", "subscription_fingerprint", "status", "attempt_count", "sent_at")
-    list_filter = ("status", "sent_at")
+    list_display = ("event", "channel", "subscription_fingerprint", "status", "attempt_count", "sent_at")
+    list_filter = ("channel", "status", "sent_at")
     search_fields = ("event__event_key", "subscription_fingerprint")
     readonly_fields = tuple(field.name for field in NotificationDelivery._meta.fields)
 

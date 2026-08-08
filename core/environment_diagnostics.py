@@ -181,6 +181,30 @@ def _integration_findings(environment: str) -> list[DiagnosticFinding]:
         action="Configure SENTRY_DSN before production operation." if environment == "production" and not sentry_ready else "",
     ))
 
+    apns_enabled = bool(getattr(settings, "MYSCOOPE_APNS_ENABLED", False))
+    apns_ready = all(
+        bool(getattr(settings, name, ""))
+        for name in (
+            "MYSCOOPE_APNS_KEY_ID",
+            "MYSCOOPE_APNS_TEAM_ID",
+            "MYSCOOPE_APNS_PRIVATE_KEY",
+            "MYSCOOPE_APNS_BUNDLE_ID",
+        )
+    )
+    findings.append(DiagnosticFinding(
+        code="notifications.apns",
+        status="error" if apns_enabled and not apns_ready else "ok",
+        category="notifications",
+        summary=(
+            "APNs delivery is configured."
+            if apns_enabled and apns_ready
+            else "APNs delivery is disabled."
+            if not apns_enabled
+            else "APNs is enabled without complete provider credentials."
+        ),
+        action="Disable APNs or configure its key, team, private key and bundle ID." if apns_enabled and not apns_ready else "",
+    ))
+
     provider = str(getattr(settings, "AI_ASSISTANT_LLM_PROVIDER", "fake"))
     provider_ready = provider != "openai" or bool(getattr(settings, "AI_ASSISTANT_OPENAI_API_KEY", ""))
     findings.append(DiagnosticFinding(
@@ -237,6 +261,28 @@ def _integration_findings(environment: str) -> list[DiagnosticFinding]:
         category="billing",
         summary="Mercado Pago checkout is ready." if mercado_pago_checkout_enabled and mercado_pago_ready and public_base_url.startswith("https://") else "Mercado Pago checkout is disabled." if not mercado_pago_checkout_enabled else "Mercado Pago checkout is missing credentials or a public HTTPS URL.",
         action="Configure the access token and BILLING_PUBLIC_BASE_URL, or disable checkout." if mercado_pago_checkout_enabled and (not mercado_pago_ready or not public_base_url.startswith("https://")) else "",
+    ))
+    apple_enabled = bool(getattr(settings, "BILLING_APPLE_PURCHASES_ENABLED", False)) or bool(
+        getattr(settings, "BILLING_APPLE_NOTIFICATIONS_ENABLED", False)
+    )
+    apple_environment = str(getattr(settings, "BILLING_APPLE_ENVIRONMENT", ""))
+    apple_verifier_ready = bool(getattr(settings, "BILLING_APPLE_BUNDLE_ID", "")) and apple_environment in {
+        "sandbox", "production"
+    }
+    if apple_environment == "production":
+        apple_verifier_ready = apple_verifier_ready and bool(getattr(settings, "BILLING_APPLE_APP_ID", None))
+    findings.append(DiagnosticFinding(
+        code="billing.apple_app_store",
+        status="error" if apple_enabled and not apple_verifier_ready else "ok",
+        category="billing",
+        summary=(
+            "Apple purchase verification is enabled and configured."
+            if apple_enabled and apple_verifier_ready
+            else "Apple purchase verification is disabled."
+            if not apple_enabled
+            else "Apple purchase verification is missing bundle, environment or production app ID configuration."
+        ),
+        action="Complete Apple verifier configuration or disable both Apple billing flags." if apple_enabled and not apple_verifier_ready else "",
     ))
     openfactura_enabled = bool(getattr(settings, "BILLING_OPENFACTURA_ENABLED", False))
     openfactura_ready = bool(getattr(settings, "BILLING_OPENFACTURA_API_KEY", "")) and bool(

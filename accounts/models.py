@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import uuid
+
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -255,3 +257,20 @@ class CreditLedger(models.Model):
         from django.core.exceptions import ValidationError
 
         raise ValidationError("CreditLedger entries are append-only and cannot be deleted.")
+
+
+class AccountDeletionRecord(models.Model):
+    """Identity-free receipt for a completed account deletion operation."""
+
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    policy_version = models.CharField(max_length=40)
+    source = models.CharField(max_length=40)
+    deleted_counts = models.JSONField(default=dict, blank=True)
+    retained_counts = models.JSONField(default=dict, blank=True)
+    completed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-completed_at", "-id"]
+
+    def __str__(self) -> str:
+        return f"Account deletion {self.public_id}"

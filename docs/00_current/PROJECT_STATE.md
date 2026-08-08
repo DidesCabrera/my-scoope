@@ -1,7 +1,7 @@
 # Project State - My Scoope
 
 Status: current
-Last updated: 2026-08-02
+Last updated: 2026-08-05
 Audience: developers and AI assistants
 
 ## What My Scoope is
@@ -9,6 +9,12 @@ Audience: developers and AI assistants
 My Scoope is a Django product for building, managing and evolving nutrition programs, food libraries, meals, daily plans, AI-assisted proposals and internal operational dashboards.
 
 The product is evolving from a monolithic `notas` origin toward clearer app boundaries, with AI-assisted workflows, food catalog governance, nutrition solving, account plans/credits and internal admin tooling.
+
+The accepted product direction is consumer-first: the first mobile client serves
+people who personally pursue fat loss, muscle gain or recomposition by weighing
+food and following their own calendarized program. Nutritionist workspaces,
+invited clients and seat purchasing are later product work, not mobile MVP
+constraints. See `CONSUMER_PRODUCT_BRIEF.md` and decisions 0176-0178.
 
 ## Current product posture
 
@@ -100,6 +106,49 @@ When a plan becomes real, durable outcomes should be promoted into `docs/00_curr
 
 ## Recently closed baselines
 
+- Consumer Mobile Launch CML00-CML01 repository baseline: the B2C consumer and
+  mobile MVP are explicit; all Django Render processes share one generated
+  runtime secret; frontend bundle drift is rejected by CI; and users can delete
+  their account through an exhaustive erase/anonymize/legal-retention policy.
+  Backup restoration, staging Blueprint application and jurisdiction-specific
+  retention approval remain external release gates before CML02 begins shipping.
+- Consumer Mobile Launch CML02 repository baseline: `/api/v1/` now publishes a
+  drift-checked OpenAPI contract for the first consumer execution journey,
+  reuses existing application services and extends PKCE with rotating,
+  device-bound mobile sessions. Staging mobile-client registration remains an
+  external configuration gate; adherence state intentionally waits for CML04.
+- Consumer Mobile Launch CML03 repository baseline: `mobile/` now contains an
+  Expo SDK 57 development-build client with a platform-neutral dark card grammar,
+  PKCE/SecureStore session rotation and the consumer login, onboarding, Today,
+  original check-in preview and persisted-weight path. Physical iOS/staging proof remains
+  external because Xcode and the staging OAuth registration are not available in
+  the repository; durable check-ins were completed by the subsequent CML04 baseline.
+- Consumer Mobile Launch CML04 repository baseline: the dated calendarization now
+  owns append-only meal evidence and derived adherence, contextualizes existing
+  weight records, freezes periodic reviews and protects future program changes
+  behind audited before/after revisions and explicit user approval. Mobile exposes
+  these flows and the common reminder schedule; native iOS delivery remains CML07.
+- Consumer Mobile Launch CML05 repository baseline: the iOS client captures a
+  nutrition label with Expo Camera, recognizes it locally through Apple Vision,
+  exposes normalization uncertainty for editing and sends only confirmed values.
+  The server creates an idempotent private food plus a provenance receipt without
+  retaining the photo or raw OCR text. Physical camera/Vision proof remains an
+  external device gate because the local machine lacks the iOS SDK.
+- Consumer Mobile Launch CML06 repository baseline: the iOS client purchases and
+  restores only configured Apple subscriptions, uses StoreKit-localized prices
+  and finishes transactions only after server-side JWS verification. Apple and
+  Mercado Pago evidence now aggregate deterministically into the single accounts
+  entitlement authority; possible double charges remain visible to operations.
+  App Store Connect product/price setup and a physical sandbox lifecycle pass
+  remain external activation gates.
+- Consumer Mobile Launch CML07 repository baseline: Sign in with Apple reuses the
+  existing PKCE browser account flow; an iOS OAuth device chooses exactly one of
+  direct APNs or deterministic local reminders from the calendarization schedule.
+  SecureStore remains device-only Keychain storage, production prebuild exposes
+  camera without Face ID/microphone/photos, privacy manifests declare the used
+  required-reason APIs and Sentry strips identity/request payloads. Signing and
+  physical QA remain external because SDK 57 needs Xcode 26.4/macOS Tahoe 26.2+.
+
 - Email delivery abuse-protection baseline: server-validated Turnstile integration,
   multi-window signup limits, shared-cache production path, auditable account email,
   idempotent/budgeted share invitations and a non-critical email kill switch.
@@ -143,6 +192,19 @@ When a plan becomes real, durable outcomes should be promoted into `docs/00_curr
 
 ## Planned near-term cycles
 
+- Consumer Mobile Launch CML00-CML08 is active. CML00 is complete and fixes the
+  B2C scope. CML01 is repository-complete and closes safety/privacy prerequisites;
+  its external recovery, staging and legal gates remain visible before release.
+  CML02-CML07 are repository-complete with the consumer API, Expo development
+  client, secure session lifecycle, translated visual grammar and lived-program
+  execution/adherence/reviews/revisions, review-first on-device label capture and
+  verified StoreKit purchase/restore/reconciliation, mutually exclusive native
+  reminders, Apple login, Keychain/privacy manifests and sanitized mobile crashes.
+  CML08 is repository-complete with versioned transparency acceptance, in-app
+  privacy/support/deletion, production legal-copy alignment, App Store metadata and
+  privacy-label sources, a reproducible reviewer demo program, screenshot manifest,
+  TestFlight copy and reviewer notes. CML03/CML05-CML08 physical-device, legal,
+  App Store Connect, TestFlight and submission gates remain explicit.
 - No continuation of BA or PT is implied. New AI Assistant work should start from observed product evidence and a newly scoped cycle, rather than extending the global prompt or reopening a deterministic questionnaire.
 - The current product bets and next experiments live in `PRODUCT_PORTFOLIO.md`; they are
   hypotheses to validate or reformulate, not a fixed feature sequence.
