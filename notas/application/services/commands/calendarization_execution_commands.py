@@ -17,11 +17,11 @@ from notas.application.services.calendarization.snapshots import SNAPSHOT_SCHEMA
 from notas.application.services.commands.calendarization_commands import reschedule_calendarized_days
 from notas.application.services.nutrition.body_metrics import record_weight
 from notas.domain.models import (
-    CalendarizedDay,
-    CalendarizedMealExecution,
     CalendarizationMeasurementContext,
     CalendarizationReview,
     CalendarizationRevision,
+    CalendarizedDay,
+    CalendarizedMealExecution,
     ProgramCalendarization,
     WeightLog,
 )

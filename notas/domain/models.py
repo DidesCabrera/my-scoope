@@ -13,16 +13,20 @@ from notas.domain.model_modules.auth_integration import (
     OAuthRefreshToken,
 )
 from notas.domain.model_modules.calendarization import (
-    CalendarizedDay, CalendarizedMealExecution,
-    CalendarizationMeasurementContext, CalendarizationReview,
+    CalendarizationMeasurementContext,
+    CalendarizationReview,
     CalendarizationRevision,
+    CalendarizedDay,
+    CalendarizedMealExecution,
     ProgramCalendarization,
 )
 from notas.domain.model_modules.comparisons import SavedComparison
 from notas.domain.model_modules.dailyplans import DailyPlan, DailyPlanMeal
 from notas.domain.model_modules.food import (
-    Food, FoodAlias,
-    FoodImportBatch, FoodLabelCaptureReceipt,
+    Food,
+    FoodAlias,
+    FoodImportBatch,
+    FoodLabelCaptureReceipt,
     FoodLocalizedName,
     FoodPortion,
     FoodSourceMetadata,
@@ -36,8 +40,10 @@ from notas.domain.model_modules.identity import (
 )
 from notas.domain.model_modules.meals import Meal, MealAccess, MealFood
 from notas.domain.model_modules.notification_delivery import (
-    ApplePushSubscription, NotificationDelivery,
-    ScheduledNotificationEvent, WebPushSubscription,
+    ApplePushSubscription,
+    NotificationDelivery,
+    ScheduledNotificationEvent,
+    WebPushSubscription,
 )
 from notas.domain.model_modules.programs import Program, ProgramDay
 from notas.domain.model_modules.proposals import (

@@ -19,17 +19,17 @@ from notas.application.services.calendarization.snapshots import (
     build_dailyplan_snapshot,
     program_with_calendarization_content,
 )
-from notas.application.services.notifications.web_push import (
-    build_daily_plan_push_payload,
-    endpoint_fingerprint,
-    send_web_push,
-    validate_push_endpoint,
-)
 from notas.application.services.notifications.apple_push import (
     apns_is_configured,
     apple_token_fingerprint,
     send_apple_push,
     validate_apple_device_token,
+)
+from notas.application.services.notifications.web_push import (
+    build_daily_plan_push_payload,
+    endpoint_fingerprint,
+    send_web_push,
+    validate_push_endpoint,
 )
 from notas.domain.models import (
     ApplePushSubscription,

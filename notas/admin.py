@@ -11,11 +11,12 @@ from .admin_food_actions import (
     mark_foods_as_verified,
 )
 from .domain.models import (
-    CalendarizedDay,
-    CalendarizedMealExecution,
+    ApplePushSubscription,
     CalendarizationMeasurementContext,
     CalendarizationReview,
     CalendarizationRevision,
+    CalendarizedDay,
+    CalendarizedMealExecution,
     DailyPlan,
     DailyPlanMeal,
     Food,
@@ -38,7 +39,6 @@ from .domain.models import (
     ProgramDay,
     ScheduledNotificationEvent,
     WebPushSubscription,
-    ApplePushSubscription,
     WeightLog,
 )
 

@@ -11,12 +11,12 @@ from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
+from billing.application.services.apple_app_store import process_apple_notification
 from billing.application.services.checkout import (
     BillingCheckoutUnavailable,
     cancel_user_subscription,
     create_subscription_checkout,
 )
-from billing.application.services.apple_app_store import process_apple_notification
 from billing.application.services.events import receive_verified_billing_event
 from billing.application.services.mercado_pago_events import process_mercado_pago_event
 from billing.infrastructure.gateways import build_apple_app_store_gateway, build_mercado_pago_gateway

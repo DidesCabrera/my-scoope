@@ -8,7 +8,6 @@ from dataclasses import dataclass
 import jwt
 from django.conf import settings
 
-
 _DEVICE_TOKEN_PATTERN = re.compile(r"^[0-9a-fA-F]{32,200}$")
 _PROVIDER_TOKEN_TTL_SECONDS = 50 * 60
 _provider_token_cache: tuple[tuple[str, str, str], str, int] | None = None

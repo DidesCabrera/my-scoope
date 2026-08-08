@@ -3,9 +3,9 @@ from __future__ import annotations
 from datetime import date
 
 from notas.domain.models import (
-    CalendarizedMealExecution,
     CalendarizationMeasurementContext,
     CalendarizationRevision,
+    CalendarizedMealExecution,
 )
 
 
