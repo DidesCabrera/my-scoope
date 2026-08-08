@@ -2,7 +2,7 @@
 {% block title %}Daily Plans{% endblock %}
 {% block content %}
 
-<div class="page list">
+<div class="page list collection-page collection-page--dailyplan">
   {% include "components/list_page_header.html" %}
 
   {% if vm.content.list_mode == "reorder" %}
@@ -13,9 +13,7 @@
     {% for child in vm.content.child_cards %}
       {% include "components//card_child_dailyplan.html" with child_card=child default_menu=True %}
     {% empty %}
-      <div>
-        <p>No tienes planes diarios aun, puedes explorar Planes de otros usuarios, o crear un nuevo Plan Diario </p>
-      </div>
+      {% include "components/collection_empty_state.html" with icon="clipboard-list" title="No tienes planes diarios todavía" description="Puedes explorar planes de otros usuarios o crear un nuevo plan diario desde las acciones de esta vista." %}
     {% endfor %}
   {% endif %}
 </div>

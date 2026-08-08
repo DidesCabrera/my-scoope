@@ -1,0 +1,32 @@
+/* =========================================================
+   SHARED CONTENT PANEL
+
+   Neutral surface contract for structured content embedded in
+   entity cards and detail pages. Feature classes may control
+   internal layout, but must not redefine the base surface.
+   ========================================================= */
+
+.content-panel,
+.card-detail-block {
+  background: var(--surface-card-muted);
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  margin: 10px 0;
+}
+
+.content-panel--main,
+.card-detail-block.main {
+  margin: 10px 0;
+}
+
+@media (max-width: 768px) {
+  .content-panel,
+  .card-detail-block {
+    margin: 20px 0;
+  }
+
+  .content-panel--main,
+  .card-detail-block.main {
+    margin: 10px 0;
+  }
+}

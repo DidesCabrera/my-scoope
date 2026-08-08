@@ -117,7 +117,7 @@ document.addEventListener("DOMContentLoaded", () => {
     tabsContainer.innerHTML = "";
 
     return (data.metrics || []).map((metric) => {
-      const tab = makeElement("button", "program-chart-tab js-program-chart-tab", {
+      const tab = makeElement("button", "panel-tab program-chart-tab js-program-chart-tab", {
         type: "button",
         role: "tab",
         "data-metric": metric.key,

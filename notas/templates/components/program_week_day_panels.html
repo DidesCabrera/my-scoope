@@ -1,15 +1,15 @@
 {% if rows %}
 <div
-  class="card-detail-block main program-week-day-panels"
+  class="content-panel content-panel--main card-detail-block main program-week-day-panels"
   data-default-desktop="#program-week-days-table-{{ panel_id }}"
   data-default-mobile="#program-week-days-macros-{{ panel_id }}"
 >
-  <div class="card-detail-tabs card-detail-tabs--desktop block-desplegar-tabla block-card-desplegar program-week-day-panels__desktop-tabs">
-    <div class="btn-desplegar is-active" data-target="#program-week-days-table-{{ panel_id }}">
+  <div class="panel-tabs panel-tabs--desktop card-detail-tabs card-detail-tabs--desktop block-desplegar-tabla block-card-desplegar program-week-day-panels__desktop-tabs">
+    <div class="panel-tab btn-desplegar is-active" data-target="#program-week-days-table-{{ panel_id }}">
       <p>Días</p>
     </div>
     {% if can_edit %}
-      <div class="btn-desplegar" data-target="#program-week-days-edit-{{ panel_id }}">
+      <div class="panel-tab btn-desplegar" data-target="#program-week-days-edit-{{ panel_id }}">
         <p>Edit</p>
       </div>
     {% endif %}
@@ -54,17 +54,17 @@
     </div>
   </div>
 
-  <div class="card-detail-tabs-mobile program-week-day-panels__mobile-tabs">
+  <div class="panel-tabs panel-tabs--mobile card-detail-tabs-mobile program-week-day-panels__mobile-tabs">
     <button
       type="button"
-      class="btn-desplegar-mobile is-active"
+      class="panel-tab btn-desplegar-mobile is-active"
       data-target="#program-week-days-macros-{{ panel_id }}"
     >
       Macros
     </button>
     <button
       type="button"
-      class="btn-desplegar-mobile"
+      class="panel-tab btn-desplegar-mobile"
       data-target="#program-week-days-alloc-{{ panel_id }}"
     >
       Alloc
@@ -72,7 +72,7 @@
     {% if can_edit %}
       <button
         type="button"
-        class="btn-desplegar-mobile"
+        class="panel-tab btn-desplegar-mobile"
         data-target="#program-week-days-edit-{{ panel_id }}"
         aria-label="Editar días"
       >

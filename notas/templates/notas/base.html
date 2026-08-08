@@ -127,8 +127,12 @@
     
     <!-- Cards and panels -->
     <link rel="stylesheet" href="{% static 'notas/css/components/list.css' %}">
+    <link rel="stylesheet" href="{% static 'notas/css/components/collection.css' %}">
+    <link rel="stylesheet" href="{% static 'notas/css/components/detail_section.css' %}">
     <link rel="stylesheet" href="{% static 'notas/css/components/card_mini_dpm.css' %}">
+    <link rel="stylesheet" href="{% static 'notas/css/components/entity_card.css' %}">
     <link rel="stylesheet" href="{% static 'notas/css/components/card_child.css' %}">
+    <link rel="stylesheet" href="{% static 'notas/css/components/content_panel.css' %}">
     <link rel="stylesheet" href="{% static 'notas/css/components/panel_tabs.css' %}">
     <link rel="stylesheet" href="{% static 'notas/css/components/card_father.css' %}">
     <link rel="stylesheet" href="{% static 'notas/css/components/card_title.css' %}">
@@ -156,7 +160,7 @@
     <link rel="stylesheet" href="{% static 'notas/css/components/profile.css' %}">
     <link rel="stylesheet" href="{% static 'notas/css/components/theme_toggle.css' %}">
     <link rel="stylesheet" href="{% static 'notas/css/components/proposals.css' %}">
-    <link rel="stylesheet" href="{% static 'notas/css/components/programs.css' %}">
+    {% block feature_css %}{% endblock %}
     <link rel="stylesheet" href="{% static 'notas/css/components/programs_charts.css' %}">
     <link rel="stylesheet" href="{% static 'notas/css/components/programs_week_detail.css' %}">
     <link rel="stylesheet" href="{% static 'notas/css/components/calendarization.css' %}">
@@ -542,8 +546,6 @@
     });
 </script>
 
-<script src="{% static 'notas/js/mobile_grid_tabs.js' %}"></script>
-
 <script src="{% static 'notas/js/sortable_data_grids.js' %}" defer></script>
 
 <script src="{% static 'notas/js/collapse_cards.js' %}"></script>
@@ -558,6 +560,5 @@
 
 </body>
 </html>
-
 
 

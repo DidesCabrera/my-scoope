@@ -1,13 +1,13 @@
 {% if chart and chart.data_json %}
 <section
-  class="program-chart-panel card-detail-block {{ modifier }} js-program-chart"
+  class="content-panel program-chart-panel card-detail-block {{ modifier }} js-program-chart"
   data-chart-scope="{{ chart.scope|default:'program' }}"
   data-show-bar-values="{% if show_bar_values %}true{% else %}false{% endif %}"
   aria-label="{{ chart.title }}"
 >
   <script type="application/json" class="js-program-chart-data">{{ chart.data_json|safe }}</script>
 
-  <div class="program-chart-tabs js-program-chart-tabs" role="tablist" aria-label="Variable del gráfico"></div>
+  <div class="panel-tabs program-chart-tabs js-program-chart-tabs" role="tablist" aria-label="Variable del gráfico"></div>
 
   <div class="program-chart-panel__body js-program-chart-body"></div>
 </section>

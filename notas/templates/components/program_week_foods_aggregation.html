@@ -1,21 +1,21 @@
 {% if items %}
 <div
-  class="card-detail-block main program-week-foods-aggregation"
+  class="content-panel content-panel--main card-detail-block main program-week-foods-aggregation"
   {% if not collapsed %}
     data-default-desktop="#program-week-foods-table-{{ panel_id }}"
     data-default-mobile="#program-week-foods-qty-{{ panel_id }}"
   {% endif %}
 >
-  <div class="card-detail-tabs card-detail-tabs--desktop block-desplegar-tabla block-card-desplegar">
-    <div class="btn-desplegar{% if not collapsed %} is-active{% endif %}" data-target="#program-week-foods-table-{{ panel_id }}">
+  <div class="panel-tabs panel-tabs--desktop card-detail-tabs card-detail-tabs--desktop block-desplegar-tabla block-card-desplegar">
+    <div class="panel-tab btn-desplegar{% if not collapsed %} is-active{% endif %}" data-target="#program-week-foods-table-{{ panel_id }}">
       <p>Tabla Alimentos</p>
     </div>
   </div>
 
-  <div class="card-detail-tabs-mobile">
+  <div class="panel-tabs panel-tabs--mobile card-detail-tabs-mobile">
     <button
       type="button"
-      class="btn-desplegar-mobile{% if not collapsed %} is-active{% endif %}"
+      class="panel-tab btn-desplegar-mobile{% if not collapsed %} is-active{% endif %}"
       data-target="#program-week-foods-qty-{{ panel_id }}"
     >
       Alimentos
@@ -23,7 +23,7 @@
 
     <button
       type="button"
-      class="btn-desplegar-mobile"
+      class="panel-tab btn-desplegar-mobile"
       data-target="#program-week-foods-macros-{{ panel_id }}"
     >
       Macros
@@ -31,7 +31,7 @@
 
     <button
       type="button"
-      class="btn-desplegar-mobile"
+      class="panel-tab btn-desplegar-mobile"
       data-target="#program-week-foods-alloc-{{ panel_id }}"
     >
       Alloc

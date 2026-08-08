@@ -7,7 +7,7 @@
 
   <section class="ai-chat-history-list" aria-label="Chats históricos">
     {% for chat in vm.content.chats %}
-      <article class="card proposal-list-card ai-chat-history-card{% if chat.is_active %} ai-chat-history-card--active{% endif %}">
+      <article class="card message-card proposal-list-card ai-chat-history-card{% if chat.is_active %} ai-chat-history-card--active{% endif %}">
         <a href="{{ chat.url }}" class="ai-chat-history-card__link">
           <div class="ai-chat-history-card__content">
             <div class="proposal-list-card__main ai-chat-history-card__main">
@@ -51,7 +51,7 @@
             </div>
           </div>
 
-          <div class="card-bottom proposal-list-card__bottom ai-chat-history-card__bottom">
+          <div class="message-card__footer card-bottom proposal-list-card__bottom ai-chat-history-card__bottom">
             <div class="ai-chat-history-card__badges">
               <span class="proposal-status-badge proposal-status-badge--{{ chat.status_key }}">
                 {{ chat.status_label }}
