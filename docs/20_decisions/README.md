@@ -186,12 +186,15 @@ Consequences
 - `0170-commercial-model-authority-and-cutover.md`: fija `accounts` como autoridad comercial única, congela las escrituras a créditos IA heredados y exige conciliación antes de retirar tablas.
 - `0171-durable-ai-jobs.md`: adopta trabajos IA durables en PostgreSQL con Redis como canal opcional de activación, sin depender de una señal efímera para conservar trabajo.
 - `0172-notas-model-module-completion.md`: completa la separación física de modelos `notas` en módulos por responsabilidad preservando la fachada de imports existente.
-- `0173-consumer-first-mobile-product-direction.md`: define al consumidor que sigue su propio programa como cliente móvil principal y difiere los flujos profesionales.
-- `0174-react-native-client-and-visual-grammar.md`: adopta React Native y traduce la gramática visual existente de cartas y tokens a primitivas nativas sin compartir HTML/CSS.
-- `0175-calendarization-as-lived-program.md`: convierte `ProgramCalendarization` en el programa vivido que coordina planes fechados, ejecución, mediciones, recordatorios y ajustes prospectivos.
-- `0176-mobile-api-and-device-session-foundation.md`: adopta Django Ninja, OpenAPI versionado y sesiones móviles con PKCE, access tokens cortos, refresh rotatorio y revocación por dispositivo.
-- `0177-expo-mobile-shell-and-secure-session-client.md`: adopta Expo SDK 57, development builds, sesión PKCE/SecureStore, contrato visual nativo y CI móvil independiente.
-- `0178-calendarized-execution-evidence-and-prospective-revisions.md`: conserva la calendarización como programa vivido con check-ins append-only, contexto de mediciones, revisiones periódicas y ajustes futuros auditables.
-- `0179-on-device-nutrition-label-capture-and-confirmed-private-foods.md`: ejecuta OCR de etiquetas en el iPhone, exige revisión explícita y crea únicamente alimentos privados con recibos técnicos sin foto ni texto crudo.
-- `0180-deterministic-multi-provider-subscription-evidence.md`: agrega evidencia independiente de Apple y Mercado Pago en una única proyección determinística de entitlement, con verificación StoreKit server-side y dobles cobros visibles.
-- `0181-exclusive-native-reminder-delivery-and-ios-release-capabilities.md`: coordina APNs o avisos locales —nunca ambos— desde la calendarización, integra Apple en el mismo PKCE y fija Keychain, privacidad y errores móviles sin PII.
+- `0173-shared-panel-and-tabs-contract.md`: unifica paneles y tabs equivalentes bajo contratos visuales compartidos.
+- `0174-entity-card-and-detail-section-contract.md`: normaliza cards de entidades y encabezados de secciones de detalle.
+- `0175-ui-anatomy-and-selective-program-css.md`: define anatomías neutrales y carga selectiva del CSS de Programs.
+- `0176-consumer-first-mobile-product-direction.md`: define al consumidor que sigue su propio programa como cliente móvil principal y difiere los flujos profesionales.
+- `0177-react-native-client-and-visual-grammar.md`: adopta React Native y traduce la gramática visual existente de cartas y tokens a primitivas nativas sin compartir HTML/CSS.
+- `0178-calendarization-as-lived-program.md`: convierte `ProgramCalendarization` en el programa vivido que coordina planes fechados, ejecución, mediciones, recordatorios y ajustes prospectivos.
+- `0179-mobile-api-and-device-session-foundation.md`: adopta Django Ninja, OpenAPI versionado y sesiones móviles con PKCE, access tokens cortos, refresh rotatorio y revocación por dispositivo.
+- `0180-expo-mobile-shell-and-secure-session-client.md`: adopta Expo SDK 57, development builds, sesión PKCE/SecureStore, contrato visual nativo y CI móvil independiente.
+- `0181-calendarized-execution-evidence-and-prospective-revisions.md`: conserva la calendarización como programa vivido con check-ins append-only, contexto de mediciones, revisiones periódicas y ajustes futuros auditables.
+- `0182-on-device-nutrition-label-capture-and-confirmed-private-foods.md`: ejecuta OCR de etiquetas en el iPhone, exige revisión explícita y crea únicamente alimentos privados con recibos técnicos sin foto ni texto crudo.
+- `0183-deterministic-multi-provider-subscription-evidence.md`: agrega evidencia independiente de Apple y Mercado Pago en una única proyección determinística de entitlement, con verificación StoreKit server-side y dobles cobros visibles.
+- `0184-exclusive-native-reminder-delivery-and-ios-release-capabilities.md`: coordina APNs o avisos locales —nunca ambos— desde la calendarización, integra Apple en el mismo PKCE y fija Keychain, privacidad y errores móviles sin PII.

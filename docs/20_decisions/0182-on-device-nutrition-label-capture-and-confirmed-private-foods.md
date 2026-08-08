@@ -1,4 +1,4 @@
-# 0179 - On-device nutrition-label capture and confirmed private foods
+# 0182 - On-device nutrition-label capture and confirmed private foods
 
 Status: accepted
 Date: 2026-08-05

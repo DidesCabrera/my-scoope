@@ -60,7 +60,7 @@ permission denial degrades gracefully.
 
 - `docs/00_current/CONSUMER_PRODUCT_BRIEF.md` fixes the consumer, outcome,
   exclusions, visual direction and launch measures.
-- Decisions 0173-0175 make the consumer-first client, React Native visual
+- Decisions 0176-0178 make the consumer-first client, React Native visual
   translation and lived-program ownership durable.
 - All Render Django processes inherit one generated `SECRET_KEY` from the same
   environment group; a regression contract protects that topology.

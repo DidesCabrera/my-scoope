@@ -14,7 +14,7 @@ The accepted product direction is consumer-first: the first mobile client serves
 people who personally pursue fat loss, muscle gain or recomposition by weighing
 food and following their own calendarized program. Nutritionist workspaces,
 invited clients and seat purchasing are later product work, not mobile MVP
-constraints. See `CONSUMER_PRODUCT_BRIEF.md` and decisions 0173-0175.
+constraints. See `CONSUMER_PRODUCT_BRIEF.md` and decisions 0176-0178.
 
 ## Current product posture
 

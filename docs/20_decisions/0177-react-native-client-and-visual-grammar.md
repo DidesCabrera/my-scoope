@@ -1,4 +1,4 @@
-# 0174 React Native client and visual grammar
+# 0177 React Native client and visual grammar
 
 Status: accepted
 Date: 2026-08-05

@@ -1,4 +1,4 @@
-# 0173 Consumer-first mobile product direction
+# 0176 Consumer-first mobile product direction
 
 Status: accepted
 Date: 2026-08-05

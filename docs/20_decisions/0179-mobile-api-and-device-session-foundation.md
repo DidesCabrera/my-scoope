@@ -1,4 +1,4 @@
-# 0176 - Mobile API and device-session foundation
+# 0179 - Mobile API and device-session foundation
 
 Status: accepted
 Date: 2026-08-05

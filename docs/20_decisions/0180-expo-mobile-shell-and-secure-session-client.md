@@ -1,4 +1,4 @@
-# 0177 - Expo mobile shell and secure session client
+# 0180 - Expo mobile shell and secure session client
 
 Status: accepted
 Date: 2026-08-05
