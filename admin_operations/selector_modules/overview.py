@@ -30,11 +30,19 @@ def get_operations_overview_metrics() -> dict:
         status=NutritionProposal.STATUS_PENDING_REVIEW,
     )
     wallet_qs = CreditWallet.objects.filter(reserved_balance__gt=0)
+    duplicate_active_providers = (
+        ProviderSubscription.objects.filter(status=ProviderSubscription.Status.AUTHORIZED)
+        .values("user_id")
+        .annotate(provider_count=Count("provider", distinct=True))
+        .filter(provider_count__gt=1)
+        .count()
+    )
     billing = {
         "failed_events": BillingEvent.objects.filter(status=BillingEvent.Status.FAILED).count(),
         "past_due_subscriptions": ProviderSubscription.objects.filter(status=ProviderSubscription.Status.PAST_DUE).count(),
         "failed_tax_documents": TaxDocument.objects.filter(status__in=[TaxDocument.Status.FAILED, TaxDocument.Status.REJECTED]).count(),
         "tax_adjustments": TaxDocument.objects.filter(adjustment_required=True).count(),
+        "duplicate_active_providers": duplicate_active_providers,
     }
 
     catalog = {

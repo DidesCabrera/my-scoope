@@ -235,3 +235,28 @@ jobs:
 
       - name: Test and build frontend
         run: npm test && npm run build
+
+      - name: Verify committed frontend bundle
+        run: git diff --exit-code -- notas/static/notas/dist/ai_async_jobs.js
+
+  mobile:
+    name: Expo mobile contract and bundle
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22.14"
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Install mobile dependencies
+        working-directory: mobile
+        run: npm ci
+
+      - name: Validate mobile client
+        run: scripts/ci_mobile_checks.sh

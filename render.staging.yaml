@@ -43,6 +43,16 @@ services:
         value: "0.05"
       - key: SENTRY_DSN
         sync: false
+      - key: MYSCOOPE_APNS_ENABLED
+        value: "false"
+      - key: MYSCOOPE_APNS_KEY_ID
+        sync: false
+      - key: MYSCOOPE_APNS_TEAM_ID
+        sync: false
+      - key: MYSCOOPE_APNS_PRIVATE_KEY
+        sync: false
+      - key: MYSCOOPE_APNS_BUNDLE_ID
+        value: com.myscoope.app
 
   - type: worker
     name: myscoope-staging-ai-jobs

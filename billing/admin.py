@@ -1,6 +1,29 @@
 from django.contrib import admin
 
-from billing.models import BillingEvent, BillingPayment, BillingProduct, ProviderSubscription, TaxDocument
+from billing.models import (
+    AppleAppAccountToken,
+    BillingEvent,
+    BillingPayment,
+    BillingProduct,
+    ProviderSubscription,
+    TaxDocument,
+)
+
+
+@admin.register(AppleAppAccountToken)
+class AppleAppAccountTokenAdmin(admin.ModelAdmin):
+    list_display = ("user", "token", "created_at")
+    search_fields = ("user__username", "user__email", "token")
+    readonly_fields = ("user", "token", "created_at")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(BillingProduct)

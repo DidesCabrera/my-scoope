@@ -185,8 +185,15 @@ APPLICATION_SERVICE_AREAS: tuple[ApplicationServiceArea, ...] = (
     ApplicationServiceArea(
         slug="auth_integration",
         label="Auth Integration",
-        entries=("mcp_user_tokens", "oauth_authorization_codes"),
-        responsibility="MCP user-token and OAuth authorization-code application services.",
+        entries=(
+            "mcp_user_tokens",
+            "oauth_authorization_codes",
+            "oauth_device_sessions",
+        ),
+        responsibility=(
+            "MCP and mobile access tokens, OAuth authorization codes, and "
+            "durable device-session lifecycle services."
+        ),
     ),
 )
 

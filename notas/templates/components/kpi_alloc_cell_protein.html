@@ -1,6 +1,7 @@
 {# components/kpi_alloc_cell_protein.html #}
+{% load l10n %}
 
-<td class="alloc-cell alloc-cell--kpi" style="--alloc: {{ value }};">
+<td class="alloc-cell alloc-cell--kpi" style="--alloc: {{ value|unlocalize }};">
   <div class="alloc-bar alloc-bar--protein"></div>
   <span class="alloc-text alloc-text--kpi">{{ value|floatformat:0 }}%</span>
 </td>

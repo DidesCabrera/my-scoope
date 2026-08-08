@@ -1,0 +1,68 @@
+.deletion-body {
+    min-height: 100vh;
+}
+
+.deletion-shell {
+    display: grid;
+    min-height: 100vh;
+    place-items: center;
+    padding: 24px;
+}
+
+.deletion-card {
+    width: min(620px, 100%);
+    padding: 28px;
+    background: #111;
+    border: 1px solid #2b2b2b;
+    border-radius: 20px;
+}
+
+.deletion-card h1 {
+    margin: 4px 0 12px;
+}
+
+.deletion-kicker {
+    margin: 0;
+    color: #ef7777;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.deletion-list {
+    display: grid;
+    gap: 8px;
+    margin: 20px 0;
+    padding-left: 20px;
+    color: #c9c9c9;
+}
+
+.deletion-form {
+    margin-top: 24px;
+}
+
+.deletion-form small {
+    color: #aaa;
+}
+
+.deletion-submit {
+    background: #b42323 !important;
+}
+
+.deletion-cancel {
+    display: inline-block;
+    margin-top: 18px;
+    color: #ddd;
+}
+
+.deletion-card--complete {
+    text-align: center;
+}
+
+.deletion-receipt {
+    overflow-wrap: anywhere;
+    padding: 12px;
+    background: #080808;
+    border-radius: 12px;
+}

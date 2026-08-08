@@ -38,3 +38,10 @@ class DeploymentContractTests(SimpleTestCase):
 
         self.assertIn("collectstatic --noinput", build_script)
         self.assertNotIn("manage.py migrate", build_script)
+
+    def test_all_django_processes_share_one_generated_secret_key(self):
+        blueprint = (ROOT / "render.yaml").read_text()
+
+        self.assertEqual(blueprint.count("key: SECRET_KEY"), 1)
+        self.assertEqual(blueprint.count("generateValue: true"), 1)
+        self.assertEqual(blueprint.count("fromGroup: myscoope-django-runtime"), 4)

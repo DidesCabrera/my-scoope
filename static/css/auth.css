@@ -94,10 +94,10 @@ text-align:center;
 }
 
 /* =========================
-   GOOGLE BUTTON
+   SOCIAL LOGIN BUTTONS
    ========================= */
 
-.btn-google{
+.btn-social{
 display:flex;
 width:100%;
 align-items:center;
@@ -117,14 +117,23 @@ margin-bottom:clamp(14px,2.4vh,22px);
 transition:background 0.15s;
 }
 
-.btn-google:hover{
+.btn-social:hover{
 background:#262626;
 }
 
-.btn-google__icon{
+.btn-social__icon{
 width:26px;
 height:26px;
 flex:0 0 auto;
+}
+
+.btn-apple{
+background:#fff;
+color:#000;
+}
+
+.btn-apple:hover{
+background:#e7e7e7;
 }
 
 /* =========================
@@ -279,7 +288,7 @@ font-size:20px;
 
 .auth-form input,
 .auth-form button,
-.btn-google{
+.btn-social{
 padding:11px 12px;
 }
 

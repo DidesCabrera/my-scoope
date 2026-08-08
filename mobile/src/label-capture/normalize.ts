@@ -1,0 +1,181 @@
+import type {
+  NutritionLabelObservation,
+  NutritionLabelRecognition,
+} from "../../modules/nutrition-label-ocr/src/NutritionLabelOcr.types";
+
+export type NutritionField =
+  | "energy_kcal"
+  | "protein_g"
+  | "carbs_g"
+  | "fat_g"
+  | "saturated_fat_g"
+  | "sugar_g"
+  | "fiber_g"
+  | "sodium_mg";
+
+export type NutritionLabelDraft = {
+  basis: "per_100g" | "per_serving" | "manual";
+  servingSizeG: number | null;
+  values: Partial<Record<NutritionField, number>>;
+  fieldConfidence: Partial<Record<NutritionField | "serving_size_g", number>>;
+  warnings: string[];
+  ocrEngine: string;
+  ocrEngineVersion: string;
+};
+
+type Row = { text: string; confidence: number };
+
+const definitions: { key: NutritionField; pattern: RegExp }[] = [
+  { key: "saturated_fat_g", pattern: /grasas?\s+saturadas?|saturated\s+fat/i },
+  { key: "sugar_g", pattern: /az[uú]cares?(?:\s+totales?)?|(?:total\s+)?sugars?/i },
+  { key: "fiber_g", pattern: /fibra\s+(?:dietaria|alimentaria)|dietary\s+fiber|\bfibra\b/i },
+  { key: "sodium_mg", pattern: /\bsodio\b|\bsodium\b/i },
+  { key: "protein_g", pattern: /prote[ií]nas?|\bprotein\b/i },
+  { key: "carbs_g", pattern: /carbohidratos?|hidratos?\s+de\s+carbono|(?:total\s+)?carbohydrate/i },
+  { key: "fat_g", pattern: /grasas?\s+totales?|total\s+fat|l[ií]pidos?|^\s*grasas?(?!\s+saturad)\b|^\s*fat\b/i },
+  { key: "energy_kcal", pattern: /energ[ií]a|valor\s+energ[eé]tico|calor[ií]as?|\benergy\b/i },
+];
+
+function plain(value: string): string {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+function rounded(value: number, digits = 3): number {
+  const factor = 10 ** digits;
+  return Math.round(value * factor) / factor;
+}
+
+function rowsFromObservations(observations: NutritionLabelObservation[]): Row[] {
+  const positioned = observations
+    .filter((item) => item.text.trim())
+    .sort((left, right) => {
+      const yDistance = left.boundingBox.y - right.boundingBox.y;
+      return Math.abs(yDistance) > 0.015 ? yDistance : left.boundingBox.x - right.boundingBox.x;
+    });
+  const rows: { centerY: number; items: NutritionLabelObservation[] }[] = [];
+  for (const observation of positioned) {
+    const centerY = observation.boundingBox.y + observation.boundingBox.height / 2;
+    const current = rows.at(-1);
+    if (current && Math.abs(current.centerY - centerY) <= Math.max(0.018, observation.boundingBox.height * 0.6)) {
+      current.items.push(observation);
+      current.centerY = (current.centerY + centerY) / 2;
+    } else {
+      rows.push({ centerY, items: [observation] });
+    }
+  }
+  return rows.map((row) => {
+    const items = row.items.sort((left, right) => left.boundingBox.x - right.boundingBox.x);
+    return {
+      text: items.map((item) => item.text.trim()).join(" "),
+      confidence: Math.min(...items.map((item) => item.confidence)),
+    };
+  });
+}
+
+function numericTokens(value: string): number[] {
+  const result: number[] = [];
+  const pattern = /\d+(?:[.,]\d+)?/g;
+  for (const match of value.matchAll(pattern)) {
+    const rest = value.slice((match.index ?? 0) + match[0].length);
+    if (/^\s*%/.test(rest)) continue;
+    result.push(Number(match[0].replace(",", ".")));
+  }
+  return result.filter(Number.isFinite);
+}
+
+function selectedColumn(values: number[], per100AfterServing: boolean | null): number | null {
+  if (!values.length) return null;
+  if (values.length === 1 || per100AfterServing === null) return values[0];
+  return per100AfterServing ? values.at(-1) ?? null : values[0];
+}
+
+function energyValue(value: string, per100AfterServing: boolean | null): number | null {
+  const kcal: number[] = [];
+  const kilojoules: number[] = [];
+  for (const match of value.matchAll(/(\d+(?:[.,]\d+)?)\s*(kcal|kj)\b/gi)) {
+    const number = Number(match[1].replace(",", "."));
+    if (match[2].toLowerCase() === "kcal") kcal.push(number);
+    else kilojoules.push(number);
+  }
+  const kcalValue = selectedColumn(kcal, per100AfterServing);
+  if (kcalValue !== null) return kcalValue;
+  const kjValue = selectedColumn(kilojoules, per100AfterServing);
+  if (kjValue !== null) return kjValue / 4.184;
+  const untagged = numericTokens(value);
+  if (/\bkj\b.*\bkcal\b/i.test(value) && untagged.length >= 2) return untagged.at(-1) ?? null;
+  const fallback = selectedColumn(untagged, per100AfterServing);
+  if (fallback === null) return null;
+  return /\bkj\b/i.test(value) && !/\bkcal\b/i.test(value) ? fallback / 4.184 : fallback;
+}
+
+function valueForRow(row: Row, key: NutritionField, pattern: RegExp, per100AfterServing: boolean | null): number | null {
+  const label = pattern.exec(row.text);
+  if (!label) return null;
+  const afterLabel = row.text.slice((label.index ?? 0) + label[0].length);
+  if (key === "energy_kcal") return energyValue(afterLabel, per100AfterServing);
+  const value = selectedColumn(numericTokens(afterLabel), per100AfterServing);
+  if (value === null) return null;
+  if (key === "sodium_mg" && /\bg\b/i.test(row.text) && !/\bmg\b/i.test(row.text)) return value * 1000;
+  return value;
+}
+
+function detectServingSize(text: string): number | null {
+  const match = text.match(/(?:porci[oó]n|serving\s+size)[^\d]{0,24}(\d+(?:[.,]\d+)?)\s*g\b/i);
+  return match ? Number(match[1].replace(",", ".")) : null;
+}
+
+export function normalizeNutritionLabel(recognition: NutritionLabelRecognition): NutritionLabelDraft {
+  const rows = rowsFromObservations(recognition.observations);
+  const allText = rows.map((row) => row.text).join("\n");
+  const normalizedText = plain(allText);
+  const hundredIndex = normalizedText.search(/\b100\s*g\b/);
+  const servingIndex = normalizedText.search(/porcion|serving/);
+  const hasPer100 = hundredIndex >= 0;
+  const hasServing = servingIndex >= 0;
+  const basis: NutritionLabelDraft["basis"] = hasPer100 ? "per_100g" : hasServing ? "per_serving" : "manual";
+  const servingSizeG = detectServingSize(allText);
+  const per100AfterServing = hasPer100 && hasServing ? hundredIndex > servingIndex : null;
+  const factor = basis === "per_serving" && servingSizeG ? 100 / servingSizeG : 1;
+  const values: NutritionLabelDraft["values"] = {};
+  const fieldConfidence: NutritionLabelDraft["fieldConfidence"] = {};
+  const warnings: string[] = [];
+
+  for (const definition of definitions) {
+    const row = rows.find((candidate) => definition.pattern.test(candidate.text));
+    if (!row) continue;
+    const raw = valueForRow(row, definition.key, definition.pattern, per100AfterServing);
+    if (raw === null) continue;
+    const normalized = raw * factor;
+    const maximum = definition.key === "sodium_mg" ? 100_000 : definition.key === "energy_kcal" ? 10_000 : 100;
+    if (normalized < 0 || normalized > maximum) {
+      warnings.push(`${definition.key}_outside_expected_range`);
+      continue;
+    }
+    values[definition.key] = rounded(normalized);
+    fieldConfidence[definition.key] = rounded(row.confidence, 2);
+    if (row.confidence < 0.75) warnings.push(`${definition.key}_low_confidence`);
+  }
+  if (servingSizeG) fieldConfidence.serving_size_g = 0.9;
+  if (basis === "manual") warnings.push("basis_not_detected");
+  if (basis === "per_serving" && !servingSizeG) warnings.push("serving_size_required");
+  if (basis === "per_serving" && servingSizeG) warnings.push("basis_normalized_from_serving");
+  for (const key of ["protein_g", "carbs_g", "fat_g"] as const) {
+    if (values[key] === undefined) warnings.push(`${key}_missing`);
+  }
+  if (values.energy_kcal !== undefined && values.protein_g !== undefined && values.carbs_g !== undefined && values.fat_g !== undefined) {
+    const macroEnergy = values.protein_g * 4 + values.carbs_g * 4 + values.fat_g * 9;
+    if (Math.abs(values.energy_kcal - macroEnergy) > Math.max(20, values.energy_kcal * 0.2)) {
+      warnings.push("energy_macro_mismatch");
+    }
+  }
+
+  return {
+    basis,
+    servingSizeG,
+    values,
+    fieldConfidence,
+    warnings: [...new Set(warnings)],
+    ocrEngine: recognition.engine,
+    ocrEngineVersion: recognition.engineVersion,
+  };
+}

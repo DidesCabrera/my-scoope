@@ -1,0 +1,22 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cuenta eliminada · My Scoope</title>
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+    <link rel="stylesheet" href="{% static 'css/account_deletion.css' %}">
+</head>
+<body class="auth-body deletion-body">
+    <main class="deletion-shell">
+        <section class="deletion-card deletion-card--complete">
+            <p class="deletion-kicker">Proceso completado</p>
+            <h1>Tu cuenta fue eliminada</h1>
+            <p>Tu acceso fue cerrado y tus datos personales quedaron eliminados o anonimizados según nuestra política.</p>
+            <p class="deletion-receipt">Comprobante: <strong>{{ receipt_id }}</strong></p>
+            <a class="deletion-cancel" href="/">Volver al inicio</a>
+        </section>
+    </main>
+</body>
+</html>

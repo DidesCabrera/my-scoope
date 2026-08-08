@@ -2,7 +2,7 @@ import os
 from urllib.parse import urlencode
 
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
@@ -18,10 +18,22 @@ from notas.application.services.oauth_authorization_codes import (
     issue_oauth_access_token_from_authorization_code,
     normalize_oauth_scopes,
 )
+from notas.application.services.oauth_device_sessions import (
+    MOBILE_SCOPES,
+    issue_mobile_tokens_from_authorization_code,
+    rotate_mobile_refresh_token,
+)
 from notas.domain.models import OAuthClient
 
 OAUTH_RESPONSE_TYPE_CODE = "code"
 OAUTH_GRANT_TYPE_AUTHORIZATION_CODE = "authorization_code"
+OAUTH_GRANT_TYPE_REFRESH_TOKEN = "refresh_token"
+
+
+class OAuthCallbackRedirect(HttpResponseRedirect):
+    """Allow the registered native callback after exact client validation."""
+
+    allowed_schemes = [*HttpResponseRedirect.allowed_schemes, "myscoope"]
 
 
 def _get_oauth_issuer_url(request) -> str:
@@ -174,12 +186,14 @@ def oauth_authorization_server_metadata(request):
             "scopes_supported": [
                 MCP_SCOPE_READ,
                 MCP_SCOPE_PROPOSALS_CREATE,
+                *MOBILE_SCOPES,
             ],
             "response_types_supported": [
                 OAUTH_RESPONSE_TYPE_CODE,
             ],
             "grant_types_supported": [
                 OAUTH_GRANT_TYPE_AUTHORIZATION_CODE,
+                OAUTH_GRANT_TYPE_REFRESH_TOKEN,
             ],
             "code_challenge_methods_supported": [
                 OAUTH_CODE_CHALLENGE_METHOD_S256,
@@ -280,7 +294,7 @@ def oauth_authorize_consent(request):
 
     separator = "&" if "?" in redirect_uri else "?"
 
-    return redirect(
+    return OAuthCallbackRedirect(
         f"{redirect_uri}{separator}{urlencode(redirect_params)}"
     )
 
@@ -290,11 +304,8 @@ def oauth_authorize_consent(request):
 def oauth_token(request):
     grant_type = request.POST.get("grant_type", "").strip()
     client_id = request.POST.get("client_id", "").strip()
-    raw_code = request.POST.get("code", "").strip()
-    redirect_uri = request.POST.get("redirect_uri", "").strip()
-    code_verifier = request.POST.get("code_verifier", "").strip()
 
-    if grant_type != OAUTH_GRANT_TYPE_AUTHORIZATION_CODE:
+    if grant_type not in {OAUTH_GRANT_TYPE_AUTHORIZATION_CODE, OAUTH_GRANT_TYPE_REFRESH_TOKEN}:
         return _oauth_token_error_response(
             code="unsupported_grant_type",
             message=_oauth_error_message("oauth_grant_type_not_supported"),
@@ -322,6 +333,29 @@ def oauth_token(request):
             status=401,
         )
 
+    if grant_type == OAUTH_GRANT_TYPE_REFRESH_TOKEN:
+        raw_refresh_token = request.POST.get("refresh_token", "").strip()
+        if not raw_refresh_token:
+            return _oauth_token_error_response(
+                code="invalid_request",
+                message="OAuth refresh token is required.",
+            )
+        result = rotate_mobile_refresh_token(
+            raw_refresh_token=raw_refresh_token,
+            client=client,
+        )
+        if not result.ok:
+            return _oauth_token_error_response(
+                code="invalid_grant",
+                message=result.error.message,
+                details={"code": result.error.code, **result.error.details},
+            )
+        return JsonResponse(result.as_token_response(), status=200)
+
+    raw_code = request.POST.get("code", "").strip()
+    redirect_uri = request.POST.get("redirect_uri", "").strip()
+    code_verifier = request.POST.get("code_verifier", "").strip()
+
     if not raw_code:
         return _oauth_token_error_response(
             code="invalid_request",
@@ -340,12 +374,24 @@ def oauth_token(request):
             message=_oauth_error_message("oauth_code_verifier_required"),
         )
 
-    result = issue_oauth_access_token_from_authorization_code(
-        raw_code=raw_code,
-        client=client,
-        redirect_uri=redirect_uri,
-        code_verifier=code_verifier,
-    )
+    is_mobile_client = any(scope in MOBILE_SCOPES for scope in client.allowed_scopes)
+    if is_mobile_client:
+        result = issue_mobile_tokens_from_authorization_code(
+            raw_code=raw_code,
+            client=client,
+            redirect_uri=redirect_uri,
+            code_verifier=code_verifier,
+            device_id=request.POST.get("device_id", "").strip(),
+            device_name=request.POST.get("device_name", "").strip(),
+            platform=request.POST.get("platform", "").strip(),
+        )
+    else:
+        result = issue_oauth_access_token_from_authorization_code(
+            raw_code=raw_code,
+            client=client,
+            redirect_uri=redirect_uri,
+            code_verifier=code_verifier,
+        )
 
     if not result.ok:
         return _oauth_token_error_response(

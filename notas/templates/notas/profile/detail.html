@@ -37,6 +37,14 @@
                 </article>
             {% endfor %}
         </div>
+
+        <div class="profile-account-danger">
+            <div>
+                <strong>Eliminar cuenta</strong>
+                <p>Borra tu identidad, datos nutricionales y acceso de forma permanente.</p>
+            </div>
+            <a href="{% url 'accounts:delete_account' %}">Revisar eliminación</a>
+        </div>
     </section>
     {% endif %}
 

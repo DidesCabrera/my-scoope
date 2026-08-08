@@ -42,8 +42,17 @@ DOMAIN_MODEL_BOUNDARIES: tuple[DomainModelBoundary, ...] = (
     DomainModelBoundary(
         slug="auth_integration",
         label="Auth Integration",
-        models=("MCPUserToken", "OAuthClient", "OAuthAuthorizationCode"),
-        responsibility="Tokens and OAuth authorization state used by external integrations.",
+        models=(
+            "MCPUserToken",
+            "OAuthClient",
+            "OAuthAuthorizationCode",
+            "OAuthDeviceSession",
+            "OAuthRefreshToken",
+        ),
+        responsibility=(
+            "Tokens, authorization codes, and durable device sessions used by "
+            "external and mobile integrations."
+        ),
     ),
     DomainModelBoundary(
         slug="food_catalog",
@@ -55,10 +64,11 @@ DOMAIN_MODEL_BOUNDARIES: tuple[DomainModelBoundary, ...] = (
             "FoodAlias",
             "FoodLocalizedName",
             "FoodImportBatch",
+            "FoodLabelCaptureReceipt",
         ),
         responsibility=(
             "Operational food snapshots, portions, aliases, localized names, "
-            "source metadata and imports currently owned by notas.Food."
+            "source metadata, confirmed label-capture receipts and imports currently owned by notas.Food."
         ),
     ),
     DomainModelBoundary(
@@ -82,14 +92,24 @@ DOMAIN_MODEL_BOUNDARIES: tuple[DomainModelBoundary, ...] = (
     DomainModelBoundary(
         slug="calendarization",
         label="Calendarization",
-        models=("ProgramCalendarization", "CalendarizedDay"),
-        responsibility="Dated executions and immutable daily snapshots derived from weekly programs.",
+        models=(
+            "ProgramCalendarization",
+            "CalendarizedDay",
+            "CalendarizedMealExecution",
+            "CalendarizationMeasurementContext",
+            "CalendarizationReview",
+            "CalendarizationRevision",
+        ),
+        responsibility=(
+            "Dated program snapshots, append-only execution evidence, measurement context, "
+            "periodic reviews and prospective revisions."
+        ),
     ),
     DomainModelBoundary(
         slug="notification_delivery",
         label="Notification Delivery",
-        models=("WebPushSubscription", "ScheduledNotificationEvent", "NotificationDelivery"),
-        responsibility="Web Push subscriptions, logical scheduled events and per-device delivery attempts.",
+        models=("WebPushSubscription", "ApplePushSubscription", "ScheduledNotificationEvent", "NotificationDelivery"),
+        responsibility="Web Push/APNs subscriptions, logical scheduled events and per-device delivery attempts.",
     ),
     DomainModelBoundary(
         slug="proposals",
@@ -151,13 +171,16 @@ DOMAIN_MODEL_DEPENDENCY_POLICIES: tuple[DomainModelDependencyPolicy, ...] = (
     ),
     DomainModelDependencyPolicy(
         source_slug="calendarization",
-        allowed_dependency_slugs=("programs",),
-        rationale="Calendarizations retain an optional trace to the source Program and own dated snapshots.",
+        allowed_dependency_slugs=("identity", "programs"),
+        rationale=(
+            "Calendarizations retain an optional trace to Program and may contextualize "
+            "user-owned WeightLog measurements without taking ownership of them."
+        ),
     ),
     DomainModelDependencyPolicy(
         source_slug="notification_delivery",
-        allowed_dependency_slugs=("calendarization",),
-        rationale="Notification events are scheduled for calendarized days and deliveries remain device-specific.",
+        allowed_dependency_slugs=("auth_integration", "calendarization"),
+        rationale="Notification events are scheduled for calendarized days and native subscriptions belong to OAuth device sessions.",
     ),
     DomainModelDependencyPolicy(
         source_slug="proposals",

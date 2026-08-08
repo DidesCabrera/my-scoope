@@ -1,7 +1,7 @@
 # Billing
 
-Status: current BILL00-BILL09 repository implementation
-Last updated: 2026-07-19
+Status: current BILL00-BILL09 + CML06 repository implementation
+Last updated: 2026-08-05
 
 `billing` is the provider-integration boundary between external collection/tax systems
 and the commercial state owned by `accounts`.
@@ -12,17 +12,22 @@ and the commercial state owned by `accounts`.
 - `ProviderSubscription` records provider state without granting access by itself.
 - `BillingPayment` records one external payment with a provider-scoped unique ID.
 - `BillingEvent` receives only authenticated events and deduplicates provider event IDs.
-- `project_provider_subscription` is the explicit projection into
-  `accounts.AccountSubscription`.
+- `project_provider_subscription` deterministically aggregates every verified
+  provider row into the one `accounts.AccountSubscription` authority.
+- `AppleAppAccountToken` supplies a stable opaque UUID for StoreKit ownership
+  binding without exposing a database user ID.
 - `TaxDocument` is a one-to-one outbox/audit record for an approved payment.
 - `schedule_tax_document` does no network I/O and is idempotent per payment.
 - `billing.application` owns provider-neutral contracts and write use cases.
-- `billing.infrastructure` owns Mercado Pago transport/signature verification and fake gateways.
+- `billing.infrastructure` owns Mercado Pago transport/signature verification,
+  Apple signed-data/App Store Server API verification and fake gateways.
 - `billing.interface` owns the provider-authenticated HTTP endpoint.
 - `/billing/` exposes the authenticated account-facing overview and opt-in checkout.
 - OpenFactura issuance runs out of band with `issue_tax_documents`; provider state is refreshed with `reconcile_billing`.
 - Refunds and chargebacks project the subscription to past due and flag the original document for tax review without deleting evidence or guessing a credit note.
 - Admin Operations exposes a Billing queue for failed events, past-due subscriptions, failed/rejected DTEs and tax adjustments.
+- Admin Operations also exposes accounts with simultaneous active providers;
+  evidence is never silently removed to hide a possible double charge.
 
 The Mercado Pago webhook route is `/billing/webhooks/mercado-pago/`. It is hidden while
 `BILLING_MERCADOPAGO_WEBHOOK_ENABLED=false`. When enabled, it requires an HMAC-SHA256
@@ -34,12 +39,29 @@ Checkout, webhook reception and OpenFactura issuance are implemented but opt-in.
 provider credentials are optional secret environment variables; safe defaults keep real
 traffic disabled until sandbox and accounting gates pass.
 
+The Apple notification route is `/billing/webhooks/apple-app-store/` and is
+hidden until `BILLING_APPLE_NOTIFICATIONS_ENABLED=true`. It accepts only App
+Store Server Notifications V2 whose signed payload and nested transaction pass
+Apple's official verifier. Mobile purchase JWS values enter through
+`POST /api/v1/subscriptions/apple/transactions`; product, account token, bundle
+and environment are verified before projection and transaction finalization.
+The inbox stores normalized evidence, never the raw JWS.
+
 ```text
 BILLING_MERCADOPAGO_WEBHOOK_ENABLED=false
 BILLING_MERCADOPAGO_CHECKOUT_ENABLED=false
 BILLING_PUBLIC_BASE_URL=
 BILLING_MERCADOPAGO_ACCESS_TOKEN=
 BILLING_MERCADOPAGO_WEBHOOK_SECRET=
+BILLING_APPLE_NOTIFICATIONS_ENABLED=false
+BILLING_APPLE_PURCHASES_ENABLED=false
+BILLING_APPLE_ENVIRONMENT=sandbox
+BILLING_APPLE_BUNDLE_ID=com.myscoope.app
+BILLING_APPLE_APP_ID=
+BILLING_APPLE_IN_APP_PURCHASE_KEY=
+BILLING_APPLE_KEY_ID=
+BILLING_APPLE_ISSUER_ID=
+BILLING_APPLE_ONLINE_CHECKS=true
 BILLING_OPENFACTURA_ENABLED=false
 BILLING_OPENFACTURA_API_KEY=
 BILLING_OPENFACTURA_ISSUER_JSON={}

@@ -1,6 +1,7 @@
 {# components/alloc_cell_carbs.html #}
+{% load l10n %}
 
-<td class="alloc-cell" style="--alloc: {{ value }};">
+<td class="alloc-cell" style="--alloc: {{ value|unlocalize }};">
   <div class="alloc-bar alloc-bar--carbs"></div>
   <span class="alloc-text">{{ value|floatformat:0 }}%</span>
 </td>

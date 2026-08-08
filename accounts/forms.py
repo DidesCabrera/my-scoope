@@ -80,3 +80,38 @@ class ProtectedSignupForm(SignupForm):
                 "Inténtalo nuevamente."
             )
         return cleaned_data
+
+
+class AccountDeletionForm(forms.Form):
+    confirmation = forms.CharField(
+        label="Confirmación",
+        help_text='Escribe "ELIMINAR" para confirmar.',
+        widget=forms.TextInput(attrs={"autocomplete": "off", "placeholder": "ELIMINAR"}),
+    )
+    password = forms.CharField(
+        label="Contraseña actual",
+        required=False,
+        widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}),
+    )
+
+    def __init__(self, *args, user, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+        if not user.has_usable_password():
+            self.fields.pop("password")
+
+    def clean_confirmation(self):
+        confirmation = self.cleaned_data["confirmation"].strip()
+        if confirmation != "ELIMINAR":
+            raise forms.ValidationError('Escribe exactamente "ELIMINAR".')
+        return confirmation
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if self.user.has_usable_password():
+            password = cleaned_data.get("password", "")
+            if not password:
+                self.add_error("password", "Ingresa tu contraseña actual.")
+            elif not self.user.check_password(password):
+                self.add_error("password", "La contraseña no es correcta.")
+        return cleaned_data
