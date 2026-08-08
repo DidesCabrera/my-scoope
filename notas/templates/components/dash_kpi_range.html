@@ -1,3 +1,4 @@
+{% load l10n %}
 <div class="dash-kpi-comp dash-kpi-range {{ modifier }}">
 
   <!-- TOTAL CAL RANGE -->
@@ -28,7 +29,7 @@
           <div class="alloc-pct alloc-bar-fill--protein">
             <p>{{ ranges.alloc_protein.label }}</p>
           </div>
-          <div class="alloc-bar-comp" style="--alloc: {{ ranges.alloc_protein.bar_value|default:0 }};">
+          <div class="alloc-bar-comp" style="--alloc: {{ ranges.alloc_protein.bar_value|default:0|unlocalize }};">
             <div class="alloc-bar-bg"></div>
             <div class="alloc-bar-fill alloc-bar-fill--protein"></div>
           </div>
@@ -51,7 +52,7 @@
           <div class="alloc-pct alloc-bar-fill--carbs">
             <p>{{ ranges.alloc_carbs.label }}</p>
           </div>
-          <div class="alloc-bar-comp" style="--alloc: {{ ranges.alloc_carbs.bar_value|default:0 }};">
+          <div class="alloc-bar-comp" style="--alloc: {{ ranges.alloc_carbs.bar_value|default:0|unlocalize }};">
             <div class="alloc-bar-bg"></div>
             <div class="alloc-bar-fill alloc-bar-fill--carbs"></div>
           </div>
@@ -74,7 +75,7 @@
           <div class="alloc-pct alloc-bar-fill--fat">
             <p>{{ ranges.alloc_fat.label }}</p>
           </div>
-          <div class="alloc-bar-comp" style="--alloc: {{ ranges.alloc_fat.bar_value|default:0 }};">
+          <div class="alloc-bar-comp" style="--alloc: {{ ranges.alloc_fat.bar_value|default:0|unlocalize }};">
             <div class="alloc-bar-bg"></div>
             <div class="alloc-bar-fill alloc-bar-fill--fat"></div>
           </div>
