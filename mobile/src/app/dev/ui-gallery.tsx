@@ -198,6 +198,13 @@ export default function UiGalleryScreen() {
               <Text style={textStyles.caption}>{size} pt</Text>
             </View>
           ))}
+          <SectionTitle detail="400 → 900" title="Grosores" />
+          {Object.entries(tokens.weight).map(([name, weight]) => (
+            <View key={name} style={styles.typeRow}>
+              <Text style={[styles.weightSample, { fontWeight: weight }]}>My Scoope · {name}</Text>
+              <Text style={textStyles.caption}>{weight}</Text>
+            </View>
+          ))}
           <SectionTitle detail="xs → xxl" title="Espaciado" />
           {Object.entries(tokens.spacing).map(([name, size]) => (
             <View key={name} style={styles.scaleRow}>
@@ -223,7 +230,8 @@ export default function UiGalleryScreen() {
 
 const styles = StyleSheet.create({
   typeRow: { alignItems: "baseline", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", justifyContent: "space-between", paddingVertical: tokens.spacing.sm },
-  typeSample: { color: tokens.color.textMain, fontWeight: "800" },
+  typeSample: { color: tokens.color.textMain, fontWeight: tokens.weight.bold },
+  weightSample: { color: tokens.color.textMain, fontSize: tokens.type.body },
   scaleRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, minHeight: 34 },
   scaleLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, width: 48 },
   scaleBar: { backgroundColor: tokens.color.interactivePrimary, borderRadius: tokens.radius.pill, height: 8 },

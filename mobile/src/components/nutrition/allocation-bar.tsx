@@ -79,10 +79,10 @@ const styles = StyleSheet.create({
   kpiContainerCompact: { height: 18 },
   kpiPercentage: { alignItems: "center", borderBottomLeftRadius: 6, borderRightColor: "rgba(0, 0, 0, 0.18)", borderRightWidth: 1, borderTopLeftRadius: 6, justifyContent: "center", paddingHorizontal: tokens.spacing.xs, width: 48 },
   kpiPercentageCompact: { paddingHorizontal: 2, width: 42 },
-  kpiPercentageText: { color: "#000000", fontSize: tokens.type.caption, fontWeight: "700", fontVariant: ["tabular-nums"] },
+  kpiPercentageText: { color: "#000000", fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold, fontVariant: ["tabular-nums"] },
   kpiPercentageTextCompact: { fontSize: tokens.type.label },
   kpiTrack: { backgroundColor: tokens.color.allocationBarTrack, borderBottomRightRadius: 6, borderTopRightRadius: 6, flex: 1, minWidth: 0, overflow: "hidden" },
   panelTrack: { backgroundColor: tokens.color.allocationPanelTrack, borderRadius: 4, height: 24, justifyContent: "center", overflow: "hidden", width: "100%" },
   panelTrackCompact: { height: 18 },
-  panelPercentage: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: "600", fontVariant: ["tabular-nums"], paddingRight: tokens.spacing.xs, textAlign: "right" },
+  panelPercentage: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, fontVariant: ["tabular-nums"], paddingRight: tokens.spacing.xs, textAlign: "right" },
 });

@@ -3,6 +3,7 @@
   "shared": {
     "spacing": {
       "xs": 4,
+      "compact": 6,
       "sm": 8,
       "md": 12,
       "lg": 16,
@@ -23,6 +24,14 @@
       "body": 16,
       "caption": 13,
       "label": 12
+    },
+    "fontWeight": {
+      "regular": "400",
+      "medium": "500",
+      "semibold": "600",
+      "bold": "700",
+      "extraBold": "800",
+      "black": "900"
     },
     "entities": {
       "food": "#FF8800",

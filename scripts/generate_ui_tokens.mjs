@@ -80,6 +80,7 @@ const css = [
   ...cssLines(shared.radius, "radius-", px),
   `  --radius-xl: ${px(shared.radius.card)};`,
   ...cssLines(shared.typography, "font-size-", px),
+  ...cssLines(shared.fontWeight, "font-weight-"),
   ...entityLines,
   ...nutritionLines,
   "}",
@@ -105,6 +106,7 @@ const nativeTokens = {
   spacing: { ...shared.spacing, ...platforms.native.overrides.spacing },
   radius: shared.radius,
   type: shared.typography,
+  weight: shared.fontWeight,
   card: platforms.native.overrides.card,
 };
 

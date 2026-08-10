@@ -89,6 +89,12 @@ grams and allocation bar. Product copy uses `Carbos`; the formal
 `carbohidratos` term remains only in label/OCR parsing rules for source-data
 compatibility.
 
+The shared scale includes `spacing.compact` (6 px) for layouts that need a
+step between `xs` (4 px) and `sm` (8 px). Font weights also belong to the
+contract (`regular`, `medium`, `semibold`, `bold`, `extraBold`, `black`): use
+medium or semibold for compact supporting data, and reserve heavier weights
+for hierarchy and emphasis.
+
 ## Explicit platform differences
 
 Shared spacing, radii, typography, nutrition and entity semantics live under

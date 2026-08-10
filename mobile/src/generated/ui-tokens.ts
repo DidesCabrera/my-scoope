@@ -43,6 +43,7 @@ export const tokens = {
   },
   "spacing": {
     "xs": 4,
+    "compact": 6,
     "sm": 8,
     "md": 12,
     "lg": 16,
@@ -64,6 +65,14 @@ export const tokens = {
     "body": 16,
     "caption": 13,
     "label": 12
+  },
+  "weight": {
+    "regular": "400",
+    "medium": "500",
+    "semibold": "600",
+    "bold": "700",
+    "extraBold": "800",
+    "black": "900"
   },
   "card": {
     "outerPadding": 18,
