@@ -1,4 +1,17 @@
 import type { PropsWithChildren, ReactNode } from "react";
+import {
+  CalendarDays,
+  CalendarRange,
+  Carrot,
+  ClipboardList,
+  GitCompareArrows,
+  Home,
+  Inbox,
+  type LucideIcon,
+  MessageSquareText,
+  UserRound,
+  Utensils,
+} from "lucide-react-native";
 import { Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 
 import { tokens } from "@/design/tokens";
@@ -7,27 +20,105 @@ import { Card } from "./surfaces";
 
 export type EntityKind = "food" | "meal" | "dailyPlan" | "dpm" | "program" | "proposal" | "inbox" | "comparator" | "home" | "profile";
 
+export type StructuralIndicatorKind = "day" | "food" | "meal" | "week";
+
+export type StructuralIndicator = {
+  icon: StructuralIndicatorKind;
+  label: string;
+  value: number | string;
+};
+
+const entityLabels: Record<EntityKind, string> = {
+  food: "Alimento",
+  meal: "Comida",
+  dailyPlan: "Plan diario",
+  dpm: "Plan diario",
+  program: "Programa",
+  proposal: "Propuesta",
+  inbox: "Bandeja",
+  comparator: "Comparador",
+  home: "Inicio",
+  profile: "Perfil",
+};
+
+const entityIcons: Record<EntityKind, LucideIcon> = {
+  food: Carrot,
+  meal: Utensils,
+  dailyPlan: ClipboardList,
+  dpm: CalendarDays,
+  program: CalendarRange,
+  proposal: MessageSquareText,
+  inbox: Inbox,
+  comparator: GitCompareArrows,
+  home: Home,
+  profile: UserRound,
+};
+
+const structuralIcons: Record<StructuralIndicatorKind, LucideIcon> = {
+  day: CalendarDays,
+  food: Carrot,
+  meal: Utensils,
+  week: CalendarRange,
+};
+
+export function EntityIcon({ entity, size = "regular" }: { entity: EntityKind; size?: "compact" | "regular" }) {
+  const Icon = entityIcons[entity];
+  const compact = size === "compact";
+  return (
+    <View style={[styles.entityIcon, compact && styles.entityIconCompact, { backgroundColor: tokens.color[entity] }]}>
+      <Icon color="#111111" size={compact ? 11 : 13} strokeWidth={2.4} />
+    </View>
+  );
+}
+
+export function StructuralIndicators({ indicators }: { indicators: StructuralIndicator[] }) {
+  if (indicators.length === 0) return null;
+  return (
+    <View
+      accessibilityLabel={indicators.map(({ label, value }) => `${value} ${label}`).join(", ")}
+      accessible
+      style={styles.structuralIndicators}>
+      {indicators.map((indicator, index) => {
+        const Icon = structuralIcons[indicator.icon];
+        return (
+          <View key={`${indicator.icon}-${indicator.label}-${index}`} style={styles.structuralFragment}>
+            {index > 0 ? <View style={styles.structuralDivider} /> : null}
+            <View style={styles.structuralItem}>
+              <Text style={styles.structuralValue}>{indicator.value}</Text>
+              <Icon color={tokens.color.textMuted} size={13} strokeWidth={2.2} />
+            </View>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 export function EntityHeading({
   title,
   entity,
   eyebrow,
   subtitle,
+  indicators,
   accessory,
 }: {
   title: string;
   entity: EntityKind;
   eyebrow?: string;
   subtitle?: string;
+  indicators?: StructuralIndicator[];
   accessory?: ReactNode;
 }) {
-  const color = tokens.color[entity];
   return (
     <View style={styles.headingRow}>
-      <View style={[styles.entityMarker, { backgroundColor: color }]} />
       <View style={styles.headingCopy}>
-        {eyebrow ? <Text style={[styles.eyebrow, { color }]}>{eyebrow}</Text> : null}
+        <View style={styles.entityEyebrowRow}>
+          <EntityIcon entity={entity} size="compact" />
+          <Text style={styles.eyebrow}>{eyebrow ?? entityLabels[entity]}</Text>
+        </View>
         <Text style={styles.headingTitle}>{title}</Text>
         {subtitle ? <Text style={styles.headingSubtitle}>{subtitle}</Text> : null}
+        {indicators ? <StructuralIndicators indicators={indicators} /> : null}
       </View>
       {accessory}
     </View>
@@ -39,6 +130,7 @@ export function EntityCard({
   title,
   eyebrow,
   subtitle,
+  indicators,
   accessory,
   children,
   onPress,
@@ -48,13 +140,14 @@ export function EntityCard({
   title: string;
   eyebrow?: string;
   subtitle?: string;
+  indicators?: StructuralIndicator[];
   accessory?: ReactNode;
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
 }>) {
   const content = (
     <Card accent={tokens.color[entity]} style={style}>
-      <EntityHeading accessory={accessory} entity={entity} eyebrow={eyebrow} subtitle={subtitle} title={title} />
+      <EntityHeading accessory={accessory} entity={entity} eyebrow={eyebrow} indicators={indicators} subtitle={subtitle} title={title} />
       {children}
     </Card>
   );
@@ -188,12 +281,19 @@ export function MessageCard({
 
 const styles = StyleSheet.create({
   pressed: { opacity: 0.72 },
-  headingRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md },
-  entityMarker: { borderRadius: tokens.radius.pill, height: 34, width: 5 },
-  headingCopy: { flex: 1, gap: 2 },
-  eyebrow: { fontSize: tokens.type.label, fontWeight: "900", letterSpacing: 1, textTransform: "uppercase" },
-  headingTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },
+  headingRow: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md },
+  headingCopy: { alignItems: "flex-start", flex: 1, gap: tokens.spacing.xs, minWidth: 0 },
+  entityEyebrowRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },
+  entityIcon: { alignItems: "center", borderRadius: 5, height: 22, justifyContent: "center", width: 22 },
+  entityIconCompact: { height: 18, width: 18 },
+  eyebrow: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.bold, letterSpacing: 0, textTransform: "uppercase" },
+  headingTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: tokens.weight.semibold, letterSpacing: 0, lineHeight: 25 },
   headingSubtitle: { color: tokens.color.textSoft, fontSize: tokens.type.caption, lineHeight: 18 },
+  structuralIndicators: { alignItems: "center", alignSelf: "flex-start", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.sm, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.compact, paddingHorizontal: tokens.spacing.compact, paddingVertical: tokens.spacing.xs },
+  structuralFragment: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },
+  structuralItem: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs },
+  structuralValue: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.medium, letterSpacing: 0, lineHeight: 15 },
+  structuralDivider: { backgroundColor: tokens.color.borderDefault, height: 12, width: 1 },
   cardHeader: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
   cardHeaderCompact: { gap: tokens.spacing.sm },
   cardHeaderCopy: { flex: 1, gap: tokens.spacing.xs },

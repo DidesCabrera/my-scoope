@@ -115,7 +115,13 @@ compact variant.
 
 `SectionTitle` remains a screen-level section divider outside cards.
 `EntityHeading` remains the branded heading for entity cards and owns the
-entity marker, eyebrow and semantic color.
+entity icon, eyebrow and semantic color. Its composition follows the web:
+entity icon plus eyebrow, entity name, then optional structural indicators.
+
+`EntityIcon` maps semantic entity kinds to the shared Lucide vocabulary and
+applies the entity color. `StructuralIndicators` is independent from the
+heading and renders accessible value/icon pairs with automatic dividers; it
+can therefore be reused in cards, detail headers and future picker results.
 
 ## Explicit platform differences
 

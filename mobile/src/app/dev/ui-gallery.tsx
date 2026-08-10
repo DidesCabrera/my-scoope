@@ -96,11 +96,31 @@ export default function UiGalleryScreen() {
           <EntityCard
             accessory={<Pill color={tokens.color.dailyPlan} label="Activo" />}
             entity="dailyPlan"
-            eyebrow="Plan de hoy"
-            subtitle="4 comidas · 2.140 kcal"
+            indicators={[
+              { icon: "meal", label: "comidas", value: 4 },
+              { icon: "food", label: "alimentos", value: 12 },
+            ]}
             title="Día de entrenamiento">
-            <Text style={textStyles.muted}>EntityCard y EntityHeading comparten el color semántico de la entidad.</Text>
+            <Text style={textStyles.muted}>El icono, eyebrow, título e indicadores reproducen la jerarquía de la web.</Text>
           </EntityCard>
+          <EntityCard
+            entity="food"
+            indicators={[{ icon: "food", label: "alimento", value: 1 }]}
+            title="Yogur griego natural"
+          />
+          <EntityCard
+            entity="meal"
+            indicators={[{ icon: "food", label: "alimentos", value: 5 }]}
+            title="Desayuno pre-entreno"
+          />
+          <EntityCard
+            entity="program"
+            indicators={[
+              { icon: "week", label: "semanas", value: 8 },
+              { icon: "food", label: "alimentos", value: 36 },
+            ]}
+            title="Programa de recomposición"
+          />
           <CollectionEmptyState
             actionLabel="Crear elemento"
             description="Este estado mantiene la acción principal junto al contexto de la colección."
