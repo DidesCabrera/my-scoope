@@ -93,8 +93,8 @@ export function FoodQuantityPanel({ items }: { items: FoodPanelItem[] }) {
   return (
     <PanelBody>
       <QuantityHeader leadingLabel="Alimentos" trailingLabel="Qty" />
-      {items.map((item) => (
-        <View key={item.id} style={styles.row}>
+      {items.map((item, index) => (
+        <View key={item.id} style={[styles.row, index === items.length - 1 && styles.rowLast]}>
           <Text numberOfLines={2} style={[styles.cell, styles.name]}>{item.name}</Text>
           <Text style={[styles.cell, styles.quantityValue]}>{decimal(item.quantity)} {item.quantityUnit}</Text>
         </View>
@@ -108,8 +108,8 @@ export function NutritionMacrosPanel({ items, leadingLabel }: { items: (FoodPane
   return (
     <PanelBody>
       <MacrosHeader leadingLabel={leadingLabel} />
-      {items.map((item) => (
-        <View key={item.id} style={styles.row}>
+      {items.map((item, index) => (
+        <View key={item.id} style={[styles.row, index === items.length - 1 && styles.rowLast]}>
           <Text numberOfLines={2} style={[styles.cell, styles.name]}>{item.name}</Text>
           <View style={styles.kcalCell}>
             <PanelAllocationBar accessibilityLabel={`${item.name}: ${rounded(item.calories)} calorías`} displayValue={rounded(item.calories)} tone="calories" value={item.calorieShare} />
@@ -128,8 +128,8 @@ export function NutritionAllocationPanel({ items, leadingLabel }: { items: (Food
   return (
     <PanelBody>
       <AllocationHeader leadingLabel={leadingLabel} />
-      {items.map((item) => (
-        <View key={item.id} style={[styles.row, styles.allocationRow]}>
+      {items.map((item, index) => (
+        <View key={item.id} style={[styles.row, styles.allocationRow, index === items.length - 1 && styles.rowLast]}>
           <Text numberOfLines={2} style={[styles.cell, styles.name]}>{item.name}</Text>
           <PanelAllocationBar style={styles.allocationCell} tone="protein" value={item.proteinAllocation} />
           <PanelAllocationBar style={styles.allocationCell} tone="carbs" value={item.carbsAllocation} />
@@ -144,8 +144,8 @@ export function MealMenuPanel({ items }: { items: MealPanelItem[] }) {
   if (items.length === 0) return <PanelEmptyState label="Todavía no hay comidas." />;
   return (
     <PanelBody>
-      {items.map((item) => (
-        <View key={item.id} style={styles.menuRow}>
+      {items.map((item, index) => (
+        <View key={item.id} style={[styles.menuRow, index === items.length - 1 && styles.rowLast]}>
           <View style={styles.menuTitleRow}>
             <EntityIcon entity="meal" size="compact" />
             <Text numberOfLines={2} style={styles.menuName}>{item.name}</Text>
@@ -186,6 +186,7 @@ export function MealPanels({ items }: { items: MealPanelItem[] }) {
 
 const styles = StyleSheet.create({
   row: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", minHeight: 44 },
+  rowLast: { borderBottomWidth: 0 },
   header: { minHeight: 32 },
   headerText: { color: tokens.color.textMuted, fontSize: 10, fontWeight: tokens.weight.semibold, letterSpacing: 0, textAlign: "center", textTransform: "uppercase" },
   cell: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, letterSpacing: 0 },

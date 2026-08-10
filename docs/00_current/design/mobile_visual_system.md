@@ -154,7 +154,8 @@ and `PanelEmptyState` own the shared interaction and surface contract.
 and `Alloc`. `MealPanels` is used by DailyPlan and exposes `Menú`, `Macros` and
 `Alloc`. Their content panels (`FoodQuantityPanel`, `MealMenuPanel`,
 `NutritionMacrosPanel`, `NutritionAllocationPanel`) remain independently
-reusable. Food has no nested panels in the current web contract. Program
+reusable. The final data row in every panel omits its bottom separator. Food
+has no nested panels in the current web contract. Program
 panels and charts are intentionally excluded from this first stage.
 
 ## Entity detail pages
@@ -173,7 +174,8 @@ The extended page-card bleeds through the standard screen side gutters so its
 outer border reaches both viewport edges and its internal content recovers the
 full mobile width. DailyPlan meal sequence markers mirror web: a numbered
 circle sits over a horizontal divider above each meal card, consuming no
-horizontal card space.
+horizontal card space. The DPM card list bleeds through the page-card's 18 px
+content padding and restores an 8 px lateral card gutter.
 
 DailyPlan detail keeps the web hierarchy: the aggregated `MealPanels` section
 is followed by `DailyPlanMealDetailList`. The latter renders an ordered meal

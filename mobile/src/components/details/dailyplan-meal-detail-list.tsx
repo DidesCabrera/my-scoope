@@ -45,7 +45,7 @@ export function DailyPlanMealDetailList({ items }: { items: DailyPlanMealDetailI
 }
 
 const styles = StyleSheet.create({
-  list: { minWidth: 0 },
+  list: { marginHorizontal: -(tokens.card.outerPadding - tokens.spacing.sm), minWidth: 0 },
   step: { gap: tokens.spacing.sm, minWidth: 0 },
   marker: { alignItems: "center", height: 36, justifyContent: "center", paddingHorizontal: tokens.spacing.xs, position: "relative", width: "100%" },
   markerNumber: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, height: 36, justifyContent: "center", left: tokens.spacing.xs, position: "absolute", width: 36, zIndex: 1 },
