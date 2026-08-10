@@ -20,6 +20,13 @@ import {
 } from "@/components/nutrition";
 import { FoodPanels, type FoodPanelItem, MealPanels, type MealPanelItem } from "@/components/panels";
 import {
+  ProposalCard,
+  ProposalDetailPage,
+  ProposalMetricGrid,
+  ProposalReviewActions,
+  ProposalReviewSection,
+} from "@/components/proposals";
+import {
   AppHeader,
   Brand,
   Button,
@@ -115,7 +122,7 @@ const dailyPlanMealDetailItems: DailyPlanMealDetailItem[] = [
   },
 ];
 
-type GalleryTab = "components" | "details" | "states" | "tokens";
+type GalleryTab = "components" | "details" | "proposals" | "states" | "tokens";
 type Choice = "daily" | "weekly";
 
 export default function UiGalleryScreen() {
@@ -136,6 +143,7 @@ export default function UiGalleryScreen() {
         tabs={[
           { key: "components", label: "Componentes" },
           { key: "details", label: "Detalle" },
+          { key: "proposals", label: "Propuestas" },
           { key: "states", label: "Estados" },
           { key: "tokens", label: "Tokens" },
         ]}
@@ -334,6 +342,60 @@ export default function UiGalleryScreen() {
             </EntityDetailSection>
             <EntityDetailMetadata creator="Felipe Dides" updatedAt="Hoy, 14:30" />
           </EntityDetailPage>
+        </>
+      ) : null}
+
+      {tab === "proposals" ? (
+        <>
+          <SectionTitle detail="Resumen de bandeja" title="Card de propuesta" />
+          <ProposalCard
+            attachment={{ kind: "dailyPlan", name: "Día de entrenamiento propuesto" }}
+            isRead={false}
+            onPress={() => undefined}
+            receivedAt="Recibida hoy, 14:30"
+            status="pending"
+            summary="Crear un DailyPlan alto en proteína para un día de entrenamiento."
+            title="Propuesta de DailyPlan"
+          />
+          <SectionTitle detail="Revisión antes de aplicar" title="Detalle de propuesta" />
+          <ProposalDetailPage
+            attachment={{ kind: "dailyPlan", name: "Día de entrenamiento propuesto" }}
+            intent="create_dailyplan"
+            isRead
+            receivedAt="Recibida hoy, 14:30"
+            status="pending"
+            summary="Crear un DailyPlan alto en proteína para un día de entrenamiento."
+            title="Propuesta de DailyPlan"
+            typeLabel="Nuevo DailyPlan">
+            <ProposalReviewSection eyebrow="Objetivos" title="Targets usados para validar la propuesta">
+              <ProposalMetricGrid metrics={[
+                { label: "Calorías", value: "2.140 kcal" },
+                { label: "Proteína", value: "155 g" },
+                { label: "Carbos", value: "238 g" },
+                { label: "Grasas", value: "62 g" },
+              ]} />
+            </ProposalReviewSection>
+            <NutritionEntityCard
+              entity="dailyPlan"
+              indicators={[
+                { icon: "meal", label: "comidas", value: 3 },
+                { icon: "food", label: "alimentos", value: 9 },
+              ]}
+              nutrition={{
+                calories: 2140,
+                carbs: { grams: 238, allocation: 44 },
+                fat: { grams: 62, allocation: 26 },
+                protein: { grams: 155, allocation: 30, perKilogram: 1.8 },
+              }}
+              title="Día de entrenamiento propuesto"
+            />
+            <ProposalReviewActions
+              description="Aprobar confirma la revisión; aplicar cambios reales será un paso posterior y explícito."
+              onApprove={() => undefined}
+              onCancel={() => undefined}
+              onReject={() => undefined}
+            />
+          </ProposalDetailPage>
         </>
       ) : null}
 
