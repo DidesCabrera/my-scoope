@@ -146,6 +146,8 @@ panels and charts are intentionally excluded from this first stage.
 desktop two-column table: each full-width cell starts with the Meal entity icon
 and meal name, followed by a secondary enumeration of structured food
 quantities such as `Avena (80g)`.
+Panel bodies use the 4 px `xs` horizontal inset, and DailyPlan food
+enumerations do not add a second left indent.
 
 ## Explicit platform differences
 

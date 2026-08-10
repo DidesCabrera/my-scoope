@@ -49,6 +49,6 @@ const styles = StyleSheet.create({
   tabLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, letterSpacing: 0 },
   tabLabelSelected: { color: tokens.color.surfaceApp },
   pressed: { opacity: 0.72 },
-  body: { borderTopColor: tokens.color.borderSoft, borderTopWidth: 1, paddingBottom: tokens.spacing.sm, paddingHorizontal: tokens.spacing.sm },
+  body: { borderTopColor: tokens.color.borderSoft, borderTopWidth: 1, paddingBottom: tokens.spacing.sm, paddingHorizontal: tokens.spacing.xs },
   empty: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 18, paddingHorizontal: tokens.spacing.sm, paddingVertical: tokens.spacing.lg, textAlign: "center" },
 });
