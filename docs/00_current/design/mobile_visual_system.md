@@ -101,8 +101,9 @@ weight, the calorie value uses bold, and the complete KPI composition keeps
 neutral tracking (`letterSpacing: 0`).
 
 `CalorieValue` owns the shared calorie-number typography used by both
-`MacroSummary` and `NutritionKpiSection`, including bold weight, tabular
-figures and neutral tracking.
+`MacroSummary` and `NutritionKpiSection`. It uses extra-bold weight,
+proportional figures and neutral tracking for a compact native display.
+Tabular figures remain reserved for aligned grams, percentages and PPK data.
 
 ## Explicit platform differences
 

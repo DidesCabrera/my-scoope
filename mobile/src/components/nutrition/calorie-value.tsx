@@ -15,8 +15,7 @@ const styles = StyleSheet.create({
   value: {
     color: tokens.color.textMain,
     fontSize: 29,
-    fontVariant: ["tabular-nums"],
-    fontWeight: tokens.weight.bold,
+    fontWeight: tokens.weight.extraBold,
     letterSpacing: 0,
   },
   compact: { fontSize: 23 },
