@@ -208,7 +208,9 @@ received-date metadata. They do not use a detached top-right icon.
 
 `ProposalObjectiveKpiSection` presents nutrition targets through the canonical
 KPI composition and is placed immediately after the requirement, before intent
-and attachments. `ChatProposalCard` reuses `ProposalCard`; `Lista para revisión`
+and attachments. `ProposalObjectiveSection` places that KPI directly on the
+proposal page-card with no nested card surface. `ChatProposalCard` reuses
+`ProposalCard`; `Lista para revisión`
 is a status label, not a separate visual object type.
 
 DailyPlan detail keeps the web hierarchy: the aggregated `MealPanels` section

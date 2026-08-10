@@ -44,6 +44,21 @@ export function ProposalObjectiveKpiSection(props: Omit<NutritionKpiSectionProps
   return <NutritionKpiSection {...props} />;
 }
 
+export function ProposalObjectiveSection({
+  title = "Targets usados para validar la propuesta",
+  ...nutrition
+}: Omit<NutritionKpiSectionProps, "density" | "style"> & { title?: string }) {
+  return (
+    <View style={styles.objectiveSection}>
+      <View style={styles.sectionHeader}>
+        <Text style={proposalTextStyles.eyebrow}>Objetivos</Text>
+        <Text style={styles.sectionTitle}>{title}</Text>
+      </View>
+      <ProposalObjectiveKpiSection {...nutrition} />
+    </View>
+  );
+}
+
 export function ProposalReviewSection({ children, eyebrow, title }: PropsWithChildren<{ eyebrow?: string; title: string }>) {
   return (
     <Card>
@@ -81,6 +96,7 @@ const styles = StyleSheet.create({
   contextText: { color: tokens.color.textMuted, fontSize: tokens.type.caption },
   contextStrong: { color: tokens.color.textMain, fontWeight: tokens.weight.bold },
   sectionHeader: { gap: 3 },
+  objectiveSection: { gap: tokens.spacing.sm, minWidth: 0 },
   sectionTitle: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.bold, lineHeight: 22 },
   metrics: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.sm },
   metric: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, flexBasis: "47%", flexGrow: 1, gap: tokens.spacing.xs, minWidth: 120, padding: tokens.spacing.md },

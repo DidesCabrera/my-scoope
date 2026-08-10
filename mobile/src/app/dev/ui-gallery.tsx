@@ -23,9 +23,8 @@ import {
   ChatProposalCard,
   ProposalCard,
   ProposalDetailPage,
-  ProposalObjectiveKpiSection,
+  ProposalObjectiveSection,
   ProposalReviewActions,
-  ProposalReviewSection,
 } from "@/components/proposals";
 import {
   AppHeader,
@@ -376,14 +375,12 @@ export default function UiGalleryScreen() {
             intent="create_dailyplan"
             isRead
             objectives={
-              <ProposalReviewSection eyebrow="Objetivos" title="Targets usados para validar la propuesta">
-                <ProposalObjectiveKpiSection
-                  calories={2140}
-                  carbs={{ grams: 238, allocation: 44 }}
-                  fat={{ grams: 62, allocation: 26 }}
-                  protein={{ grams: 155, allocation: 30, perKilogram: 1.8 }}
-                />
-              </ProposalReviewSection>
+              <ProposalObjectiveSection
+                calories={2140}
+                carbs={{ grams: 238, allocation: 44 }}
+                fat={{ grams: 62, allocation: 26 }}
+                protein={{ grams: 155, allocation: 30, perKilogram: 1.8 }}
+              />
             }
             receivedAt="Recibida hoy, 14:30"
             status="pending"
