@@ -89,6 +89,10 @@ grams and allocation bar. Product copy uses `Carbos`; the formal
 `carbohidratos` term remains only in label/OCR parsing rules for source-data
 compatibility.
 
+`NutritionKpiSection` supports an explicit allocation presentation variant:
+`kpi` keeps the branded percentage cell plus track, while `panel` reuses the
+compact filled bar from entity panels. The KPI variant remains the default.
+
 The shared scale includes `spacing.compact` (6 px) for layouts that need a
 step between `xs` (4 px) and `sm` (8 px). Font weights also belong to the
 contract (`regular`, `medium`, `semibold`, `bold`, `extraBold`, `black`): use

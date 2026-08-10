@@ -220,6 +220,16 @@ export default function UiGalleryScreen() {
               protein={{ grams: 155, allocation: 30, perKilogram: 1.8 }}
             />
           </Card>
+          <SectionTitle detail="Mismos datos" title="Sección KPI · barras de panel" />
+          <Card>
+            <NutritionKpiSection
+              allocationVariant="panel"
+              calories={2140}
+              carbs={{ grams: 238, allocation: 44 }}
+              fat={{ grams: 62, allocation: 26 }}
+              protein={{ grams: 155, allocation: 30, perKilogram: 1.8 }}
+            />
+          </Card>
           <ContentPanel description="La misma jerarquía con menor densidad para cards anidadas." muted title="Sección KPI compacta">
             <NutritionKpiSection
               calories={640}
