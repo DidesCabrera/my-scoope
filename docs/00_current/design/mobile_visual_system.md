@@ -122,6 +122,12 @@ entity icon plus eyebrow, entity name, then optional structural indicators.
 applies the entity color. `StructuralIndicators` is independent from the
 heading and renders accessible value/icon pairs with automatic dividers; it
 can therefore be reused in cards, detail headers and future picker results.
+Entity icon vectors and structural-indicator content use explicit white
+foreground tokens for contrast on native surfaces.
+
+`NutritionEntityCard` is the reusable product composition of `EntityCard` and
+`NutritionKpiSection`. It owns only the separator and spacing between those
+sections; both the heading and KPI remain independently reusable.
 
 ## Explicit platform differences
 

@@ -135,6 +135,8 @@
         "textMuted": "#B5B5B5",
         "textSoft": "#8F8F8F",
         "textSubtle": "#737373",
+        "entityIconForeground": "#FFFFFF",
+        "structuralIndicatorForeground": "#FFFFFF",
         "borderSoft": "#2A2A2A",
         "borderDefault": "#343434",
         "borderStrong": "#4A4A4A",

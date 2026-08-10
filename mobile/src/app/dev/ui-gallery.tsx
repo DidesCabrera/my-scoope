@@ -5,6 +5,7 @@ import { StyleSheet, Text, View } from "react-native";
 import {
   KpiAllocationBar,
   MacroSummary,
+  NutritionEntityCard,
   NutritionKpiSection,
   NutrientProgress,
   NutritionMetric,
@@ -120,6 +121,22 @@ export default function UiGalleryScreen() {
               { icon: "food", label: "alimentos", value: 36 },
             ]}
             title="Programa de recomposición"
+          />
+          <SectionTitle detail="Título + KPI" title="Card nutricional compuesta" />
+          <NutritionEntityCard
+            accessory={<Pill color={tokens.color.dailyPlan} label="Activo" />}
+            entity="dailyPlan"
+            indicators={[
+              { icon: "meal", label: "comidas", value: 4 },
+              { icon: "food", label: "alimentos", value: 12 },
+            ]}
+            nutrition={{
+              calories: 2140,
+              carbs: { grams: 238, allocation: 44 },
+              fat: { grams: 62, allocation: 26 },
+              protein: { grams: 155, allocation: 30, perKilogram: 1.8 },
+            }}
+            title="Día de entrenamiento"
           />
           <CollectionEmptyState
             actionLabel="Crear elemento"

@@ -66,7 +66,7 @@ export function EntityIcon({ entity, size = "regular" }: { entity: EntityKind; s
   const compact = size === "compact";
   return (
     <View style={[styles.entityIcon, compact && styles.entityIconCompact, { backgroundColor: tokens.color[entity] }]}>
-      <Icon color="#111111" size={compact ? 11 : 13} strokeWidth={2.4} />
+      <Icon color={tokens.color.entityIconForeground} size={compact ? 11 : 13} strokeWidth={2.4} />
     </View>
   );
 }
@@ -85,7 +85,7 @@ export function StructuralIndicators({ indicators }: { indicators: StructuralInd
             {index > 0 ? <View style={styles.structuralDivider} /> : null}
             <View style={styles.structuralItem}>
               <Text style={styles.structuralValue}>{indicator.value}</Text>
-              <Icon color={tokens.color.textMuted} size={13} strokeWidth={2.2} />
+              <Icon color={tokens.color.structuralIndicatorForeground} size={13} strokeWidth={2.2} />
             </View>
           </View>
         );
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
   structuralIndicators: { alignItems: "center", alignSelf: "flex-start", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.sm, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.compact, paddingHorizontal: tokens.spacing.compact, paddingVertical: tokens.spacing.xs },
   structuralFragment: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },
   structuralItem: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs },
-  structuralValue: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.medium, letterSpacing: 0, lineHeight: 15 },
+  structuralValue: { color: tokens.color.structuralIndicatorForeground, fontSize: tokens.type.caption, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.medium, letterSpacing: 0, lineHeight: 15 },
   structuralDivider: { backgroundColor: tokens.color.borderDefault, height: 12, width: 1 },
   cardHeader: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
   cardHeaderCompact: { gap: tokens.spacing.sm },
