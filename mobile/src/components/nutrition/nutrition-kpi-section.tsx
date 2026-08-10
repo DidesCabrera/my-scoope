@@ -10,13 +10,23 @@ type MacroKpi = {
   allocation: number;
 };
 
+export type CalorieSurfaceScale = 0.8 | 0.85 | 0.9 | 1;
+
 export type NutritionKpiSectionProps = {
   calories: number;
   protein: MacroKpi & { perKilogram?: number | null };
   carbs: MacroKpi;
   fat: MacroKpi;
   density?: "compact" | "regular";
+  calorieSurfaceScale?: CalorieSurfaceScale;
   style?: StyleProp<ViewStyle>;
+};
+
+const calorieSurfaceHeights: Record<CalorieSurfaceScale, `${number}%`> = {
+  0.8: "80%",
+  0.85: "85%",
+  0.9: "90%",
+  1: "100%",
 };
 
 type MacroRowProps = MacroKpi & {
@@ -58,6 +68,7 @@ export function NutritionKpiSection({
   carbs,
   fat,
   density = "regular",
+  calorieSurfaceScale = 1,
   style,
 }: NutritionKpiSectionProps) {
   const compact = density === "compact";
@@ -66,9 +77,13 @@ export function NutritionKpiSection({
       <View
         accessibilityLabel={`${rounded(calories)} calorías`}
         accessible
-        style={[styles.calories, compact && styles.caloriesCompact]}>
+        style={[
+          styles.calories,
+          compact && styles.caloriesCompact,
+          { height: calorieSurfaceHeights[calorieSurfaceScale] },
+        ]}>
         <Text style={[styles.caloriesLabel, compact && styles.caloriesLabelCompact]}>Calorías</Text>
-        <CalorieValue compact={compact} value={rounded(calories)} />
+        <CalorieValue compact value={rounded(calories)} />
         <Text style={[styles.caloriesUnit, compact && styles.caloriesLabelCompact]}>kcal</Text>
       </View>
       <View style={styles.macros}>
@@ -83,8 +98,8 @@ export function NutritionKpiSection({
 const styles = StyleSheet.create({
   container: { alignItems: "stretch", flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0, width: "100%" },
   containerCompact: { gap: tokens.spacing.compact },
-  calories: { alignItems: "center", alignSelf: "stretch", backgroundColor: tokens.color.kcalSurface, borderColor: tokens.color.kcalBorder, borderRadius: tokens.radius.card, borderWidth: 3, justifyContent: "center", paddingHorizontal: 5, width: 80 },
-  caloriesCompact: { borderRadius: tokens.radius.lg, borderWidth: 2, width: 68 },
+  calories: { alignItems: "center", alignSelf: "center", aspectRatio: 1, backgroundColor: tokens.color.kcalSurface, borderColor: tokens.color.kcalBorder, borderRadius: tokens.radius.card, borderWidth: 3, flexShrink: 0, justifyContent: "center", paddingHorizontal: 5 },
+  caloriesCompact: { borderRadius: tokens.radius.lg, borderWidth: 2 },
   caloriesLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, letterSpacing: 0 },
   caloriesLabelCompact: { fontSize: tokens.type.label },
   caloriesUnit: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.weight.medium, letterSpacing: 0 },

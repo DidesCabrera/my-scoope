@@ -112,7 +112,7 @@ export function NutritionMacrosPanel({ items, leadingLabel }: { items: (FoodPane
         <View key={item.id} style={styles.row}>
           <Text numberOfLines={2} style={[styles.cell, styles.name]}>{item.name}</Text>
           <View style={styles.kcalCell}>
-            <PanelAllocationBar accessibilityLabel={`${item.name}: ${rounded(item.calories)} calorías`} displayValue={rounded(item.calories)} size="compact" tone="calories" value={item.calorieShare} />
+            <PanelAllocationBar accessibilityLabel={`${item.name}: ${rounded(item.calories)} calorías`} displayValue={rounded(item.calories)} tone="calories" value={item.calorieShare} />
           </View>
           <Text style={[styles.cell, styles.macroValue]}>{decimal(item.proteinGrams)}</Text>
           <Text style={[styles.cell, styles.macroValue]}>{decimal(item.carbsGrams)}</Text>
@@ -131,9 +131,9 @@ export function NutritionAllocationPanel({ items, leadingLabel }: { items: (Food
       {items.map((item) => (
         <View key={item.id} style={[styles.row, styles.allocationRow]}>
           <Text numberOfLines={2} style={[styles.cell, styles.name]}>{item.name}</Text>
-          <PanelAllocationBar size="compact" style={styles.allocationCell} tone="protein" value={item.proteinAllocation} />
-          <PanelAllocationBar size="compact" style={styles.allocationCell} tone="carbs" value={item.carbsAllocation} />
-          <PanelAllocationBar size="compact" style={styles.allocationCell} tone="fat" value={item.fatAllocation} />
+          <PanelAllocationBar style={styles.allocationCell} tone="protein" value={item.proteinAllocation} />
+          <PanelAllocationBar style={styles.allocationCell} tone="carbs" value={item.carbsAllocation} />
+          <PanelAllocationBar style={styles.allocationCell} tone="fat" value={item.fatAllocation} />
         </View>
       ))}
     </PanelBody>

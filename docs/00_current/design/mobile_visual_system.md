@@ -72,17 +72,23 @@ interaction states, entity palette, type sizes, spacing, radii and nutrition
 widgets using production component code.
 
 `KpiAllocationBar` and `PanelAllocationBar` share percentage normalization and
-nutrition tones. KPI composition keeps the colored percentage cell next to its
-track; panel composition overlays the value on the track and supports regular
-and compact density. A future calories tone must extend the neutral token
+nutrition tones and overlay the value on the track. Entity panels use the
+regular 24 px bar; compact density remains available only for deliberately
+dense secondary contexts. A future calories tone must extend the neutral token
 contract and reuse these components rather than introduce a third bar.
 
 `NutritionKpiSection` is the canonical composition of total calories, macro
 grams, protein-per-kilogram and the three KPI allocation bars. It receives
 already-computed presentation values and never recalculates domain nutrition.
-Regular density belongs in main entity surfaces; compact density belongs in
-nested cards and panels. `ProteinPerKilogramBadge` owns the reusable PPK label,
+Regular KPI density belongs in main entity surfaces; compact KPI density belongs
+in deliberately nested cards. `ProteinPerKilogramBadge` owns the reusable PPK label,
 locale-aware formatting and accessible description.
+
+The calorie surface is square in both KPI densities. Its number uses the
+compact `CalorieValue` size in both cases so the square changes the composition
+without increasing the numeric emphasis. The gallery exposes controlled 90%,
+85% and 80% square scales for comparison; the production default remains 100%
+until one of those trials is selected.
 
 Each macro KPI is a single horizontal row: short label, reserved PPK slot,
 grams and allocation bar. Product copy uses `Carbos`; the formal
