@@ -1,12 +1,11 @@
 import type { ReactNode } from "react";
-import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
+import { StyleProp, View, ViewStyle } from "react-native";
 
 import {
   EntityCard,
   type EntityKind,
   type StructuralIndicator,
 } from "@/components/ui";
-import { tokens } from "@/design/tokens";
 import {
   NutritionKpiSection,
   type NutritionKpiSectionProps,
@@ -49,19 +48,10 @@ export function NutritionEntityCard({
       style={style}
       subtitle={subtitle}
       title={title}>
-      <View style={[styles.kpi, density === "compact" && styles.kpiCompact]}>
+      <View>
         <NutritionKpiSection density={density} {...nutrition} />
       </View>
       {children}
     </EntityCard>
   );
 }
-
-const styles = StyleSheet.create({
-  kpi: {
-    borderTopColor: tokens.color.borderSoft,
-    borderTopWidth: 1,
-    paddingTop: tokens.spacing.md,
-  },
-  kpiCompact: { paddingTop: tokens.spacing.sm },
-});

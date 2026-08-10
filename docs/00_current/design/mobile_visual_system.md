@@ -137,8 +137,9 @@ Entity icon vectors and structural-indicator content use explicit white
 foreground tokens for contrast on native surfaces.
 
 `NutritionEntityCard` is the reusable product composition of `EntityCard` and
-`NutritionKpiSection`. It owns only the separator and spacing between those
-sections; both the heading and KPI remain independently reusable.
+`NutritionKpiSection`. The composition relies only on the card's standard gap:
+it adds no separator or extra padding between heading and KPI. Both components
+remain independently reusable, and standalone entity headings are unchanged.
 
 ## Entity panels
 
