@@ -1,5 +1,6 @@
-{
-  "contract": "myscoope.visual-grammar.v1",
+// This file is generated from design/ui-contract.json. Do not edit by hand.
+export const tokens = {
+  "contract": "myscoope.visual-grammar.v2",
   "mode": "dark",
   "color": {
     "surfaceApp": "#000000",
@@ -19,15 +20,24 @@
     "danger": "#FF6B6B",
     "success": "#01E888",
     "warning": "#FFD16E",
+    "kcalSurface": "#26211D",
+    "kcalBorder": "#5A4031",
     "protein": "#00D0F5",
     "carbs": "#01E888",
     "fat": "#BBFF00",
-    "kcalSurface": "#26211D",
-    "kcalBorder": "#5A4031",
+    "quantity": "#FFFB82",
+    "ppk": "#FFD16E",
+    "ppkMuted": "#FFB69F",
     "food": "#FF8800",
     "meal": "#CF34B0",
     "dailyPlan": "#7C4DDB",
-    "program": "#3A86FF"
+    "dpm": "#0084A2",
+    "program": "#3A86FF",
+    "proposal": "#121212",
+    "inbox": "#121212",
+    "comparator": "#3057FF",
+    "home": "#121212",
+    "profile": "#121212"
   },
   "spacing": {
     "xs": 4,
@@ -58,4 +68,13 @@
     "innerPadding": 14,
     "gap": 12
   }
-}
+} as const;
+
+export const font = {
+  "regular": "System",
+  "medium": "System",
+  "semibold": "System",
+  "bold": "System"
+} as const;
+
+export type VisualTokens = typeof tokens;

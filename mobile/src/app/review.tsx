@@ -6,7 +6,7 @@ import { StyleSheet, Text } from "react-native";
 import { userFacingError } from "@/api/errors";
 import type { CalendarizationReview, ReviewInput, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
-import { AppHeader, Button, Card, ChoiceRow, Field, InlineNotice, LoadingState, Screen, textStyles } from "@/components/ui/primitives";
+import { AppHeader, Button, Card, ChoiceRow, Field, InlineNotice, LoadingState, Screen, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 type Score = "1" | "2" | "3" | "4" | "5";

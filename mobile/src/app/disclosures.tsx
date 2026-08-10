@@ -6,7 +6,7 @@ import { Text } from "react-native";
 import { userFacingError } from "@/api/errors";
 import type { ProfileData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
-import { AppHeader, Brand, Button, Card, InlineNotice, Screen, SectionTitle, textStyles } from "@/components/ui/primitives";
+import { AppHeader, Brand, Button, Card, InlineNotice, Screen, SectionTitle, textStyles } from "@/components/ui";
 import { appConfig } from "@/config/app-config";
 import { tokens } from "@/design/tokens";
 

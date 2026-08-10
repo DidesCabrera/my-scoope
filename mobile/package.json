@@ -46,7 +46,7 @@
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
-    "check": "npm run lint && npm run typecheck && npm test && npm run export:web",
+    "check": "node ../scripts/generate_ui_tokens.mjs --check && npm run lint && npm run typecheck && npm test && npm run export:web",
     "export:web": "expo export --platform web"
   },
   "overrides": {

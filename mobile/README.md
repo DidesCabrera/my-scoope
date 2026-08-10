@@ -42,8 +42,12 @@ commands through `scripts/ci_mobile_checks.sh`.
   commercial state.
 - Access and rotating refresh tokens are stored through SecureStore on native
   devices. No OAuth client secret exists in the app.
-- `src/design/tokens.json` is the platform-neutral visual contract consumed by
-  native components.
+- `../design/ui-contract.json` is the platform-neutral visual contract. Running
+  `npm run generate:ui` at the repository root derives the Django CSS variables
+  and `src/generated/ui-tokens.ts`; native code imports the stable facade
+  `src/design/tokens.ts`.
+- `/dev/ui-gallery` is the internal Expo component gallery. It is linked from
+  Account only in development builds and redirects away in production.
 - The CML04 execution path writes append-only meal evidence, contextualizes
   weights, freezes periodic reviews and requires explicit approval for prepared
   future revisions.

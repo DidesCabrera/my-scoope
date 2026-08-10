@@ -5,8 +5,8 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { userFacingError } from "@/api/errors";
 import type { MealSnapshot, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
-import { MacroSummary } from "@/components/nutrition/macro-summary";
-import { AppHeader, Brand, Button, Card, InlineNotice, LoadingState, Pill, ProgressBar, Screen, SectionTitle, textStyles } from "@/components/ui/primitives";
+import { MacroSummary } from "@/components/nutrition";
+import { AppHeader, Brand, Button, Card, InlineNotice, LoadingState, Pill, ProgressBar, Screen, SectionTitle, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { syncNativeReminders } from "@/notifications/native-reminders";
 

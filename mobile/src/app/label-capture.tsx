@@ -8,7 +8,7 @@ import { Platform, StyleSheet, Text, View } from "react-native";
 import type { FoodLabelCaptureInput, FoodLabelCaptureResult } from "@/api/types";
 import { userFacingError } from "@/api/errors";
 import { useSession } from "@/auth/session-context";
-import { AppHeader, Button, Card, Field, InlineNotice, Pill, Screen, SectionTitle, textStyles } from "@/components/ui/primitives";
+import { AppHeader, Button, Card, Field, InlineNotice, Pill, Screen, SectionTitle, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { normalizeNutritionLabel, type NutritionLabelDraft } from "@/label-capture/normalize";
 import {

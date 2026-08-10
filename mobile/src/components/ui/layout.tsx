@@ -1,0 +1,65 @@
+import type { PropsWithChildren, ReactNode } from "react";
+import { ScrollView, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+import { tokens } from "@/design/tokens";
+
+type ScreenProps = PropsWithChildren<{
+  scroll?: boolean;
+  contentStyle?: StyleProp<ViewStyle>;
+}>;
+
+export function Screen({ children, scroll = true, contentStyle }: ScreenProps) {
+  const content = <View style={[styles.screenContent, contentStyle]}>{children}</View>;
+  return (
+    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+      {scroll ? (
+        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+          {content}
+        </ScrollView>
+      ) : content}
+    </SafeAreaView>
+  );
+}
+
+export function Brand({ compact = false }: { compact?: boolean }) {
+  return (
+    <View style={styles.brandRow}>
+      <View style={styles.brandMark}>
+        <Text style={styles.brandMarkText}>M</Text>
+      </View>
+      <View>
+        <Text style={[styles.brandName, compact && styles.brandNameCompact]}>MY SCOOPE</Text>
+        {!compact && <Text style={styles.brandCaption}>Tu programa. Hoy.</Text>}
+      </View>
+    </View>
+  );
+}
+
+export function AppHeader({ eyebrow, title, action }: { eyebrow?: string; title: string; action?: ReactNode }) {
+  return (
+    <View style={styles.header}>
+      <View style={styles.headerCopy}>
+        {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
+        <Text style={styles.title}>{title}</Text>
+      </View>
+      {action}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: tokens.color.surfaceApp },
+  scrollContent: { flexGrow: 1 },
+  screenContent: { flex: 1, gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg, paddingBottom: 42 },
+  brandRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md },
+  brandMark: { alignItems: "center", backgroundColor: tokens.color.textMain, borderRadius: tokens.radius.md, height: 38, justifyContent: "center", width: 38 },
+  brandMarkText: { color: tokens.color.surfaceApp, fontSize: 20, fontWeight: "900" },
+  brandName: { color: tokens.color.textMain, fontSize: 15, fontWeight: "900", letterSpacing: 1.8 },
+  brandNameCompact: { fontSize: 13 },
+  brandCaption: { color: tokens.color.textSoft, fontSize: 12, marginTop: 2 },
+  header: { alignItems: "flex-end", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
+  headerCopy: { flex: 1, gap: tokens.spacing.xs },
+  eyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: "700", letterSpacing: 1.2, textTransform: "uppercase" },
+  title: { color: tokens.color.textMain, fontSize: tokens.type.title, fontWeight: "800", letterSpacing: -0.5 },
+});

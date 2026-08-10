@@ -6,7 +6,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { userFacingError } from "@/api/errors";
 import type { MealCheckInInput, MealExecutionStatus, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
-import { AppHeader, Button, Card, InlineNotice, LoadingState, Pill, Screen, textStyles } from "@/components/ui/primitives";
+import { AppHeader, Button, Card, InlineNotice, LoadingState, Pill, Screen, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 export default function CheckInScreen() {

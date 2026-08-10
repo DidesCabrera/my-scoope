@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 
 import type { MacroTotals } from "@/api/types";
+import { NutritionMetric } from "@/components/nutrition/nutrition-metric";
 import { tokens } from "@/design/tokens";
 
 function value(value?: number | null): string {
@@ -21,11 +22,7 @@ export function MacroSummary({ totals }: { totals?: MacroTotals }) {
       </View>
       <View style={styles.macros}>
         {macros.map((macro) => (
-          <View key={macro.label} style={styles.macroRow}>
-            <View style={[styles.dot, { backgroundColor: macro.color }]} />
-            <Text style={styles.macroLabel}>{macro.label}</Text>
-            <Text style={styles.macroValue}>{macro.value} g</Text>
-          </View>
+          <NutritionMetric color={macro.color} key={macro.label} label={macro.label} unit="g" value={macro.value} />
         ))}
       </View>
     </View>
@@ -38,8 +35,4 @@ const styles = StyleSheet.create({
   kcalValue: { color: tokens.color.textMain, fontSize: 29, fontWeight: "800" },
   kcalLabel: { color: tokens.color.textMuted, fontSize: 12, fontWeight: "700" },
   macros: { flex: 1, justifyContent: "center" },
-  macroRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: 8, minHeight: 32 },
-  dot: { borderRadius: 4, height: 8, width: 8 },
-  macroLabel: { color: tokens.color.textMuted, flex: 1, fontSize: 13 },
-  macroValue: { color: tokens.color.textMain, fontSize: 14, fontWeight: "800", fontVariant: ["tabular-nums"] },
 });

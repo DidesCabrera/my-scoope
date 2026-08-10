@@ -3,10 +3,10 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 
-import tokens from "../src/design/tokens.json";
+import { tokens } from "../src/generated/ui-tokens";
 
 test("mobile visual grammar exposes the reusable card and nutrition tokens", () => {
-  assert.equal(tokens.contract, "myscoope.visual-grammar.v1");
+  assert.equal(tokens.contract, "myscoope.visual-grammar.v2");
   assert.equal(tokens.radius.card, 22);
   assert.equal(tokens.color.surfaceApp, "#000000");
   for (const key of ["protein", "carbs", "fat", "kcalSurface", "food", "meal", "dailyPlan", "program"] as const) {

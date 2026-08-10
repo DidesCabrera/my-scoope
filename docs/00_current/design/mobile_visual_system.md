@@ -1,13 +1,20 @@
 # Mobile visual system
 
 Status: current
-Contract: `myscoope.visual-grammar.v1`
+Contract: `myscoope.visual-grammar.v2`
 
 ## Purpose
 
 The React Native client translates the established My Scoope grammar instead of
-sharing web CSS or copying web screens. The machine-readable contract is
-`mobile/src/design/tokens.json`; React Native components consume it directly.
+sharing web CSS or copying web screens. The neutral machine-readable source is
+`design/ui-contract.json`. `scripts/generate_ui_tokens.mjs` derives
+`mobile/src/generated/ui-tokens.ts`, and application code consumes it through
+the stable `mobile/src/design/tokens.ts` facade.
+
+The same generation pass writes
+`notas/static/notas/css/ui-contract.generated.css` for Django. Generated files
+must not be edited by hand. `npm run generate:ui` refreshes them and
+`npm run check:ui` rejects stale output.
 
 ## Foundations
 
@@ -24,9 +31,10 @@ sharing web CSS or copying web screens. The machine-readable contract is
 ```text
 Screen
   -> AppHeader
-  -> Card (entity accent optional)
+  -> ContentPanel / EntityCard
+      -> EntityHeading / DetailSection / PanelTabs
       -> nested muted Card
-      -> MacroSummary
+      -> MacroSummary / NutrientProgress / NutritionMetric
       -> Pill / InlineNotice
       -> Button / Field / ChoiceRow
 ```
@@ -49,3 +57,22 @@ accessibility roles and states.
 
 Pixel parity with Django is not a goal. Semantic continuity, hierarchy and reuse
 are required.
+
+## Component boundaries
+
+`mobile/src/components/ui/index.ts` is the only public UI import. Internally the
+layer is divided into `layout`, `typography`, `controls`, `feedback`, `surfaces`
+and `product`. Nutrition components have their own public barrel at
+`mobile/src/components/nutrition/index.ts`.
+
+The development-only route `/dev/ui-gallery` renders the shared components,
+interaction states, entity palette, type sizes, spacing, radii and nutrition
+widgets using production component code.
+
+## Explicit platform differences
+
+Shared spacing, radii, typography, nutrition and entity semantics live under
+`shared` in the contract. A difference must be recorded under `platforms.web`
+or `platforms.native`; it must not be introduced in a generated file. Current
+examples are the web spacing aliases used by legacy CSS and the brighter native
+`dailyPlan` accent.
