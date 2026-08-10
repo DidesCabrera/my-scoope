@@ -89,9 +89,8 @@ grams and allocation bar. Product copy uses `Carbos`; the formal
 `carbohidratos` term remains only in label/OCR parsing rules for source-data
 compatibility.
 
-`NutritionKpiSection` supports an explicit allocation presentation variant:
-`kpi` keeps the branded percentage cell plus track, while `panel` reuses the
-compact filled bar from entity panels. The KPI variant remains the default.
+KPI allocation bars use the same continuous filled-track presentation as
+panel bars. KPI retains its original 6 px radius while panel bars use 4 px.
 
 The shared scale includes `spacing.compact` (6 px) for layouts that need a
 step between `xs` (4 px) and `sm` (8 px). Font weights also belong to the
@@ -132,8 +131,6 @@ foreground tokens for contrast on native surfaces.
 `NutritionEntityCard` is the reusable product composition of `EntityCard` and
 `NutritionKpiSection`. It owns only the separator and spacing between those
 sections; both the heading and KPI remain independently reusable.
-The gallery includes matching DailyPlan cards with the default and panel-bar
-KPI variants so the allocation treatment can be compared in full context.
 
 ## Entity panels
 

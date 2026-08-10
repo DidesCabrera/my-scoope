@@ -50,12 +50,8 @@ export function KpiAllocationBar({
     <View
       {...progressAccessibility(normalized, tone, accessibilityLabel)}
       style={[styles.kpiContainer, size === "compact" && styles.kpiContainerCompact, style]}>
-      <View style={[styles.kpiPercentage, size === "compact" && styles.kpiPercentageCompact, { backgroundColor: color }]}>
-        <Text style={[styles.kpiPercentageText, size === "compact" && styles.kpiPercentageTextCompact]}>{Math.round(normalized)}%</Text>
-      </View>
-      <View style={styles.kpiTrack}>
-        <View style={[styles.fill, { backgroundColor: color, width: `${normalized}%` }]} />
-      </View>
+      <View style={[styles.fill, { backgroundColor: color, width: `${normalized}%` }]} />
+      <Text style={styles.panelPercentage}>{Math.round(normalized)}%</Text>
     </View>
   );
 }
@@ -82,13 +78,8 @@ export function PanelAllocationBar({
 
 const styles = StyleSheet.create({
   fill: { bottom: 0, left: 0, position: "absolute", top: 0 },
-  kpiContainer: { flexDirection: "row", height: 24, minWidth: 0, overflow: "hidden", width: "100%" },
+  kpiContainer: { backgroundColor: tokens.color.allocationBarTrack, borderRadius: 6, height: 24, justifyContent: "center", minWidth: 0, overflow: "hidden", width: "100%" },
   kpiContainerCompact: { height: 18 },
-  kpiPercentage: { alignItems: "center", borderBottomLeftRadius: 6, borderRightColor: "rgba(0, 0, 0, 0.18)", borderRightWidth: 1, borderTopLeftRadius: 6, justifyContent: "center", paddingHorizontal: tokens.spacing.xs, width: 48 },
-  kpiPercentageCompact: { paddingHorizontal: 2, width: 42 },
-  kpiPercentageText: { color: "#000000", fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold, fontVariant: ["tabular-nums"], letterSpacing: 0 },
-  kpiPercentageTextCompact: { fontSize: tokens.type.label },
-  kpiTrack: { backgroundColor: tokens.color.allocationBarTrack, borderBottomRightRadius: 6, borderTopRightRadius: 6, flex: 1, minWidth: 0, overflow: "hidden" },
   panelTrack: { backgroundColor: tokens.color.allocationPanelTrack, borderRadius: 4, height: 24, justifyContent: "center", overflow: "hidden", width: "100%" },
   panelTrackCompact: { height: 18 },
   panelPercentage: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, fontVariant: ["tabular-nums"], letterSpacing: 0, paddingRight: tokens.spacing.xs, textAlign: "right" },

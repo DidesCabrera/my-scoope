@@ -1,10 +1,6 @@
 
 {% load l10n %}
-<div class="alloc-pct alloc-bar-fill--{{ kind }}">
-    <p>{{ value|floatformat:0 }}%</p>
-</div>
-
-<div class="alloc-bar-comp {% if pct_outside %}pct-out{% endif %}"
+<div class="alloc-bar-comp alloc-bar-comp--kpi-panel"
      style="--alloc: {{ value|unlocalize }};">
 
     <div class="alloc-bar-bg"></div>
@@ -12,5 +8,6 @@
     <!-- Fill -->
     <div class="alloc-bar-fill alloc-bar-fill--{{ kind }}">
     </div>
-  
+
+    <span class="alloc-bar-text">{{ value|floatformat:0 }}%</span>
 </div>

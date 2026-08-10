@@ -14,6 +14,10 @@
   height: 18px;
 }
 
+.alloc-bar-comp--kpi-panel {
+  border-radius: 6px;
+}
+
 /* Fondo: se mantiene claro en light y dark */
 .alloc-bar-bg {
   position: absolute;
@@ -47,6 +51,21 @@
 .alloc-bar-fill--protein { background: var(--color-protein); }
 .alloc-bar-fill--carbs   { background: var(--color-carbs); }
 .alloc-bar-fill--fat     { background: var(--color-fat); }
+
+.alloc-bar-text {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 4px;
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
 
 .alloc-pct {
   font-size: 13.5px;

@@ -1,7 +1,7 @@
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 
 import { tokens } from "@/design/tokens";
-import { AllocationTone, KpiAllocationBar, PanelAllocationBar } from "./allocation-bar";
+import { AllocationTone, KpiAllocationBar } from "./allocation-bar";
 import { CalorieValue } from "./calorie-value";
 import { ProteinPerKilogramBadge } from "./protein-per-kilogram-badge";
 
@@ -16,7 +16,6 @@ export type NutritionKpiSectionProps = {
   carbs: MacroKpi;
   fat: MacroKpi;
   density?: "compact" | "regular";
-  allocationVariant?: "kpi" | "panel";
   style?: StyleProp<ViewStyle>;
 };
 
@@ -24,7 +23,6 @@ type MacroRowProps = MacroKpi & {
   label: string;
   tone: AllocationTone;
   density: "compact" | "regular";
-  allocationVariant: "kpi" | "panel";
   perKilogram?: number | null;
 };
 
@@ -32,9 +30,8 @@ function rounded(value: number): number {
   return Number.isFinite(value) ? Math.round(value) : 0;
 }
 
-function MacroRow({ label, tone, grams, allocation, perKilogram, density, allocationVariant }: MacroRowProps) {
+function MacroRow({ label, tone, grams, allocation, perKilogram, density }: MacroRowProps) {
   const compact = density === "compact";
-  const AllocationBar = allocationVariant === "panel" ? PanelAllocationBar : KpiAllocationBar;
   return (
     <View style={[styles.macroRow, compact && styles.macroRowCompact]}>
       <Text style={[styles.macroLabel, compact && styles.macroLabelCompact]}>{label}</Text>
@@ -44,7 +41,7 @@ function MacroRow({ label, tone, grams, allocation, perKilogram, density, alloca
         ) : null}
       </View>
       <Text style={[styles.grams, compact && styles.gramsCompact]}>{rounded(grams)} g</Text>
-      <AllocationBar
+      <KpiAllocationBar
         accessibilityLabel={`${label}: ${rounded(grams)} gramos, ${rounded(allocation)}% de distribución`}
         size={density}
         style={styles.allocationBar}
@@ -61,7 +58,6 @@ export function NutritionKpiSection({
   carbs,
   fat,
   density = "regular",
-  allocationVariant = "kpi",
   style,
 }: NutritionKpiSectionProps) {
   const compact = density === "compact";
@@ -76,9 +72,9 @@ export function NutritionKpiSection({
         <Text style={[styles.caloriesUnit, compact && styles.caloriesLabelCompact]}>kcal</Text>
       </View>
       <View style={styles.macros}>
-        <MacroRow allocationVariant={allocationVariant} density={density} label="Proteína" tone="protein" {...protein} />
-        <MacroRow allocationVariant={allocationVariant} density={density} label="Carbos" tone="carbs" {...carbs} />
-        <MacroRow allocationVariant={allocationVariant} density={density} label="Grasas" tone="fat" {...fat} />
+        <MacroRow density={density} label="Proteína" tone="protein" {...protein} />
+        <MacroRow density={density} label="Carbos" tone="carbs" {...carbs} />
+        <MacroRow density={density} label="Grasas" tone="fat" {...fat} />
       </View>
     </View>
   );
