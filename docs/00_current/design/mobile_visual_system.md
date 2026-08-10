@@ -184,9 +184,9 @@ follows the page-card's content padding.
 
 The gallery token tab exposes `card.outerPadding`, `card.innerPadding` and
 `card.gap` alongside the spacing scale so card dimensions remain explicit.
-Gallery navigation uses an adaptive vertical sidebar rather than the product
-panel tabs: below 700 pt it sits above the examples to preserve card width, and
-at 700 pt or wider it moves to the left of the content.
+Gallery navigation is adaptive and remains separate from product panel tabs:
+below 700 pt it uses a compact dropdown above the examples to preserve card
+width, and at 700 pt or wider it becomes a vertical sidebar to the left.
 
 ## Proposals
 

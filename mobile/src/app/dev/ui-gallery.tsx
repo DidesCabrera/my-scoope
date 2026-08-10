@@ -1,4 +1,5 @@
 import { Redirect } from "expo-router";
+import { ChevronDown } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 
@@ -133,9 +134,46 @@ const galleryTabs: { key: GalleryTab; label: string }[] = [
   { key: "tokens", label: "Tokens" },
 ];
 
-function GallerySidebar({ activeTab, onChange, wide }: { activeTab: GalleryTab; onChange: (tab: GalleryTab) => void; wide: boolean }) {
+function GalleryNavigation({ activeTab, onChange, wide }: { activeTab: GalleryTab; onChange: (tab: GalleryTab) => void; wide: boolean }) {
+  const [open, setOpen] = useState(false);
+  const activeLabel = galleryTabs.find((item) => item.key === activeTab)?.label ?? "Sección";
+
+  if (!wide) {
+    return (
+      <View style={styles.dropdown}>
+        <Text style={styles.sidebarLabel}>Sección de la galería</Text>
+        <Pressable
+          accessibilityLabel={`Sección actual: ${activeLabel}`}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: open }}
+          onPress={() => setOpen((current) => !current)}
+          style={({ pressed }) => [styles.dropdownTrigger, pressed && styles.sidebarItemPressed]}>
+          <Text style={styles.dropdownValue}>{activeLabel}</Text>
+          <ChevronDown color={tokens.color.textMuted} size={18} style={open && styles.dropdownChevronOpen} />
+        </Pressable>
+        {open ? (
+          <View accessibilityLabel="Secciones disponibles" style={styles.dropdownMenu}>
+            {galleryTabs.map((item) => {
+              const active = activeTab === item.key;
+              return (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
+                  key={item.key}
+                  onPress={() => { onChange(item.key); setOpen(false); }}
+                  style={({ pressed }) => [styles.dropdownItem, active && styles.dropdownItemActive, pressed && styles.sidebarItemPressed]}>
+                  <Text style={[styles.sidebarItemText, active && styles.sidebarItemTextActive]}>{item.label}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : null}
+      </View>
+    );
+  }
+
   return (
-    <View accessibilityLabel="Secciones de la galería" accessibilityRole="tablist" style={[styles.sidebar, wide && styles.sidebarWide]}>
+    <View accessibilityLabel="Secciones de la galería" accessibilityRole="tablist" style={[styles.sidebar, styles.sidebarWide]}>
       <Text style={styles.sidebarLabel}>Secciones</Text>
       {galleryTabs.map((item) => {
         const active = activeTab === item.key;
@@ -168,7 +206,7 @@ export default function UiGalleryScreen() {
       <AppHeader eyebrow="Solo desarrollo" title="Galería del sistema UI" />
       <InlineNotice>Referencia interna construida con los componentes reales de la app.</InlineNotice>
       <View style={[styles.galleryLayout, width >= 700 && styles.galleryLayoutWide]}>
-        <GallerySidebar activeTab={tab} onChange={setTab} wide={width >= 700} />
+        <GalleryNavigation activeTab={tab} onChange={setTab} wide={width >= 700} />
         <View style={styles.galleryContent}>
 
       {tab === "components" ? (
@@ -518,6 +556,13 @@ const styles = StyleSheet.create({
   galleryLayout: { gap: tokens.spacing.lg, minWidth: 0, width: "100%" },
   galleryLayoutWide: { alignItems: "flex-start", flexDirection: "row" },
   galleryContent: { flex: 1, gap: tokens.spacing.lg, minWidth: 0, width: "100%" },
+  dropdown: { alignSelf: "stretch", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, gap: tokens.spacing.xs, padding: tokens.spacing.sm },
+  dropdownTrigger: { alignItems: "center", backgroundColor: tokens.color.surfaceElevated, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, flexDirection: "row", justifyContent: "space-between", minHeight: 44, paddingHorizontal: tokens.spacing.md },
+  dropdownValue: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
+  dropdownChevronOpen: { transform: [{ rotate: "180deg" }] },
+  dropdownMenu: { borderTopColor: tokens.color.borderSoft, borderTopWidth: 1, gap: tokens.spacing.xs, marginTop: tokens.spacing.xs, paddingTop: tokens.spacing.sm },
+  dropdownItem: { borderRadius: tokens.radius.md, minHeight: 40, paddingHorizontal: tokens.spacing.md, paddingVertical: 10 },
+  dropdownItemActive: { backgroundColor: tokens.color.surfaceElevated },
   sidebar: { alignSelf: "stretch", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, gap: tokens.spacing.xs, padding: tokens.spacing.sm },
   sidebarWide: { flexBasis: 156, flexGrow: 0, flexShrink: 0 },
   sidebarLabel: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.weight.bold, paddingHorizontal: tokens.spacing.sm, paddingVertical: tokens.spacing.xs, textTransform: "uppercase" },
