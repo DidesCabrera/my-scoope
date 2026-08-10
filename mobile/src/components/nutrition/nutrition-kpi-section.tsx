@@ -19,6 +19,7 @@ export type NutritionKpiSectionProps = {
   fat: MacroKpi;
   density?: "compact" | "regular";
   calorieSurfaceScale?: CalorieSurfaceScale;
+  macroRowSpacing?: "regular" | "slightlyTight";
   style?: StyleProp<ViewStyle>;
 };
 
@@ -33,6 +34,7 @@ type MacroRowProps = MacroKpi & {
   label: string;
   tone: AllocationTone;
   density: "compact" | "regular";
+  spacing: "regular" | "slightlyTight";
   perKilogram?: number | null;
 };
 
@@ -40,10 +42,10 @@ function rounded(value: number): number {
   return Number.isFinite(value) ? Math.round(value) : 0;
 }
 
-function MacroRow({ label, tone, grams, allocation, perKilogram, density }: MacroRowProps) {
+function MacroRow({ label, tone, grams, allocation, perKilogram, density, spacing }: MacroRowProps) {
   const compact = density === "compact";
   return (
-    <View style={[styles.macroRow, compact && styles.macroRowCompact]}>
+    <View style={[styles.macroRow, spacing === "slightlyTight" && styles.macroRowSlightlyTight, compact && styles.macroRowCompact]}>
       <Text style={[styles.macroLabel, compact && styles.macroLabelCompact]}>{label}</Text>
       <View style={[styles.ppkSlot, compact && styles.ppkSlotCompact]}>
         {perKilogram != null ? (
@@ -69,6 +71,7 @@ export function NutritionKpiSection({
   fat,
   density = "regular",
   calorieSurfaceScale = 1,
+  macroRowSpacing = "regular",
   style,
 }: NutritionKpiSectionProps) {
   const compact = density === "compact";
@@ -94,9 +97,9 @@ export function NutritionKpiSection({
         <Text style={[styles.caloriesUnit, compact && styles.caloriesLabelCompact]}>kcal</Text>
       </View>
       <View style={styles.macros}>
-        <MacroRow density={density} label="Proteína" tone="protein" {...protein} />
-        <MacroRow density={density} label="Carbos" tone="carbs" {...carbs} />
-        <MacroRow density={density} label="Grasas" tone="fat" {...fat} />
+        <MacroRow density={density} label="Proteína" spacing={macroRowSpacing} tone="protein" {...protein} />
+        <MacroRow density={density} label="Carbos" spacing={macroRowSpacing} tone="carbs" {...carbs} />
+        <MacroRow density={density} label="Grasas" spacing={macroRowSpacing} tone="fat" {...fat} />
       </View>
     </View>
   );
@@ -113,6 +116,7 @@ const styles = StyleSheet.create({
   caloriesUnit: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.weight.medium, letterSpacing: 0 },
   macros: { flex: 1, minWidth: 0 },
   macroRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.xs, minWidth: 0, paddingVertical: 5 },
+  macroRowSlightlyTight: { paddingVertical: tokens.spacing.xs },
   macroRowCompact: { gap: 3, paddingVertical: 4 },
   macroLabel: { color: tokens.color.textMain, fontSize: tokens.type.label, fontWeight: tokens.weight.regular, letterSpacing: 0, width: 52 },
   macroLabelCompact: { fontSize: 11, width: 48 },
