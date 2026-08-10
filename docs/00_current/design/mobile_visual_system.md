@@ -132,6 +132,8 @@ foreground tokens for contrast on native surfaces.
 `NutritionEntityCard` is the reusable product composition of `EntityCard` and
 `NutritionKpiSection`. It owns only the separator and spacing between those
 sections; both the heading and KPI remain independently reusable.
+The gallery includes matching DailyPlan cards with the default and panel-bar
+KPI variants so the allocation treatment can be compared in full context.
 
 ## Entity panels
 

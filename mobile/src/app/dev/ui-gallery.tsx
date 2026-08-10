@@ -151,6 +151,23 @@ export default function UiGalleryScreen() {
             }}
             title="Día de entrenamiento"
           />
+          <SectionTitle detail="KPI con barra panel" title="Card DailyPlan alternativa" />
+          <NutritionEntityCard
+            accessory={<Pill color={tokens.color.dailyPlan} label="Alternativa" />}
+            entity="dailyPlan"
+            indicators={[
+              { icon: "meal", label: "comidas", value: 4 },
+              { icon: "food", label: "alimentos", value: 12 },
+            ]}
+            nutrition={{
+              allocationVariant: "panel",
+              calories: 2140,
+              carbs: { grams: 238, allocation: 44 },
+              fat: { grams: 62, allocation: 26 },
+              protein: { grams: 155, allocation: 30, perKilogram: 1.8 },
+            }}
+            title="Día de entrenamiento"
+          />
           <SectionTitle detail="Meal y DPM" title="Paneles de alimentos" />
           <NutritionEntityCard
             entity="meal"
