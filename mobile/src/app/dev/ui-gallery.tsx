@@ -1,6 +1,6 @@
 import { Redirect } from "expo-router";
 import { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 
 import {
   DailyPlanMealDetailList,
@@ -42,7 +42,6 @@ import {
   Field,
   InlineNotice,
   MessageCard,
-  PanelTabs,
   Pill,
   ProgressBar,
   Screen,
@@ -126,7 +125,37 @@ const dailyPlanMealDetailItems: DailyPlanMealDetailItem[] = [
 type GalleryTab = "components" | "details" | "proposals" | "states" | "tokens";
 type Choice = "daily" | "weekly";
 
+const galleryTabs: { key: GalleryTab; label: string }[] = [
+  { key: "components", label: "Componentes" },
+  { key: "details", label: "Detalle" },
+  { key: "proposals", label: "Propuestas" },
+  { key: "states", label: "Estados" },
+  { key: "tokens", label: "Tokens" },
+];
+
+function GallerySidebar({ activeTab, onChange, wide }: { activeTab: GalleryTab; onChange: (tab: GalleryTab) => void; wide: boolean }) {
+  return (
+    <View accessibilityLabel="Secciones de la galería" accessibilityRole="tablist" style={[styles.sidebar, wide && styles.sidebarWide]}>
+      <Text style={styles.sidebarLabel}>Secciones</Text>
+      {galleryTabs.map((item) => {
+        const active = activeTab === item.key;
+        return (
+          <Pressable
+            accessibilityRole="tab"
+            accessibilityState={{ selected: active }}
+            key={item.key}
+            onPress={() => onChange(item.key)}
+            style={({ pressed }) => [styles.sidebarItem, active && styles.sidebarItemActive, pressed && styles.sidebarItemPressed]}>
+            <Text style={[styles.sidebarItemText, active && styles.sidebarItemTextActive]}>{item.label}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
 export default function UiGalleryScreen() {
+  const { width } = useWindowDimensions();
   const [tab, setTab] = useState<GalleryTab>("components");
   const [choice, setChoice] = useState<Choice>("daily");
   const [field, setField] = useState("");
@@ -138,17 +167,9 @@ export default function UiGalleryScreen() {
       <Brand />
       <AppHeader eyebrow="Solo desarrollo" title="Galería del sistema UI" />
       <InlineNotice>Referencia interna construida con los componentes reales de la app.</InlineNotice>
-      <PanelTabs
-        activeTab={tab}
-        onChange={setTab}
-        tabs={[
-          { key: "components", label: "Componentes" },
-          { key: "details", label: "Detalle" },
-          { key: "proposals", label: "Propuestas" },
-          { key: "states", label: "Estados" },
-          { key: "tokens", label: "Tokens" },
-        ]}
-      />
+      <View style={[styles.galleryLayout, width >= 700 && styles.galleryLayoutWide]}>
+        <GallerySidebar activeTab={tab} onChange={setTab} wide={width >= 700} />
+        <View style={styles.galleryContent}>
 
       {tab === "components" ? (
         <>
@@ -487,11 +508,24 @@ export default function UiGalleryScreen() {
           </View>
         </>
       ) : null}
+        </View>
+      </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  galleryLayout: { gap: tokens.spacing.lg, minWidth: 0, width: "100%" },
+  galleryLayoutWide: { alignItems: "flex-start", flexDirection: "row" },
+  galleryContent: { flex: 1, gap: tokens.spacing.lg, minWidth: 0, width: "100%" },
+  sidebar: { alignSelf: "stretch", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, gap: tokens.spacing.xs, padding: tokens.spacing.sm },
+  sidebarWide: { flexBasis: 156, flexGrow: 0, flexShrink: 0 },
+  sidebarLabel: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.weight.bold, paddingHorizontal: tokens.spacing.sm, paddingVertical: tokens.spacing.xs, textTransform: "uppercase" },
+  sidebarItem: { borderRadius: tokens.radius.md, minHeight: 40, paddingHorizontal: tokens.spacing.sm, paddingVertical: 10 },
+  sidebarItemActive: { backgroundColor: tokens.color.surfaceElevated, borderLeftColor: tokens.color.interactivePrimary, borderLeftWidth: 3 },
+  sidebarItemPressed: { opacity: 0.7 },
+  sidebarItemText: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium },
+  sidebarItemTextActive: { color: tokens.color.textMain, fontWeight: tokens.weight.bold },
   typeRow: { alignItems: "baseline", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", justifyContent: "space-between", paddingVertical: tokens.spacing.sm },
   typeSample: { color: tokens.color.textMain, fontWeight: tokens.weight.bold },
   weightSample: { color: tokens.color.textMain, fontSize: tokens.type.body },

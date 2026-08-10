@@ -184,13 +184,16 @@ follows the page-card's content padding.
 
 The gallery token tab exposes `card.outerPadding`, `card.innerPadding` and
 `card.gap` alongside the spacing scale so card dimensions remain explicit.
+Gallery navigation uses an adaptive vertical sidebar rather than the product
+panel tabs: below 700 pt it sits above the examples to preserve card width, and
+at 700 pt or wider it moves to the left of the content.
 
 ## Proposals
 
 Proposals use a separate native family because review state, request summary,
 attachments and human approval actions do not belong to normal entity cards.
 `ProposalCard` is the inbox/list summary. `ProposalDetailPage` composes the
-review hero, intent and attachment context inside one full-bleed extended
+review hero, request context and proposed entities inside one full-bleed extended
 page-card, matching the entity detail contract. The hero is not wrapped in a
 second card, and the page-card reaches both viewport edges.
 `ProposalReviewSection`,
