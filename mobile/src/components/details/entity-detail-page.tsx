@@ -3,14 +3,14 @@ import type { PropsWithChildren, ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import {
-  NutritionEntityCard,
   type NutritionEntityCardProps,
+  NutritionKpiSection,
 } from "@/components/nutrition";
-import { ContentPanel, SectionTitle } from "@/components/ui";
+import { ContentPanel, EntityHeading, SectionTitle } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 export type EntityDetailPageProps = PropsWithChildren<
-  Omit<NutritionEntityCardProps, "children" | "style"> & {
+  Omit<NutritionEntityCardProps, "children" | "onPress" | "style"> & {
     action?: ReactNode;
     backLabel?: string;
     onBack?: () => void;
@@ -21,8 +21,15 @@ export function EntityDetailPage({
   action,
   backLabel = "Volver",
   children,
+  accessory,
+  density = "regular",
+  entity,
+  eyebrow,
+  indicators,
+  nutrition,
   onBack,
-  ...entityCardProps
+  subtitle,
+  title,
 }: EntityDetailPageProps) {
   return (
     <View style={styles.page}>
@@ -43,8 +50,20 @@ export function EntityDetailPage({
         </View>
       ) : null}
 
-      <NutritionEntityCard {...entityCardProps} />
-      {children}
+      <View style={[styles.pageCard, { borderTopColor: tokens.color[entity] }]}>
+        <View style={styles.summary}>
+          <EntityHeading
+            accessory={accessory}
+            entity={entity}
+            eyebrow={eyebrow}
+            indicators={indicators}
+            subtitle={subtitle}
+            title={title}
+          />
+          <NutritionKpiSection density={density} {...nutrition} />
+        </View>
+        {children}
+      </View>
     </View>
   );
 }
@@ -87,6 +106,8 @@ export function EntityDetailMetadata({
 
 const styles = StyleSheet.create({
   page: { gap: tokens.spacing.lg, minWidth: 0, width: "100%" },
+  pageCard: { backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderTopWidth: 3, borderWidth: 1, gap: tokens.spacing.lg, minWidth: 0, padding: tokens.card.outerPadding, width: "100%" },
+  summary: { gap: tokens.card.gap, minWidth: 0 },
   navigation: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", minHeight: 32 },
   backButton: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs, minHeight: 32 },
   backLabel: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, letterSpacing: 0 },
