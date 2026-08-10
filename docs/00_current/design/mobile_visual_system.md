@@ -84,6 +84,11 @@ Regular density belongs in main entity surfaces; compact density belongs in
 nested cards and panels. `ProteinPerKilogramBadge` owns the reusable PPK label,
 locale-aware formatting and accessible description.
 
+Each macro KPI is a single horizontal row: short label, reserved PPK slot,
+grams and allocation bar. Product copy uses `Carbos`; the formal
+`carbohidratos` term remains only in label/OCR parsing rules for source-data
+compatibility.
+
 ## Explicit platform differences
 
 Shared spacing, radii, typography, nutrition and entity semantics live under

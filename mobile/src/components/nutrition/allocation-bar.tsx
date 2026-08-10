@@ -14,7 +14,7 @@ type AllocationBarProps = {
 
 const toneLabels: Record<AllocationTone, string> = {
   protein: "Proteína",
-  carbs: "Carbohidratos",
+  carbs: "Carbos",
   fat: "Grasas",
 };
 
@@ -77,8 +77,8 @@ const styles = StyleSheet.create({
   fill: { bottom: 0, left: 0, position: "absolute", top: 0 },
   kpiContainer: { flexDirection: "row", height: 24, minWidth: 0, overflow: "hidden", width: "100%" },
   kpiContainerCompact: { height: 18 },
-  kpiPercentage: { alignItems: "center", borderBottomLeftRadius: 6, borderRightColor: "rgba(0, 0, 0, 0.18)", borderRightWidth: 1, borderTopLeftRadius: 6, justifyContent: "center", paddingHorizontal: tokens.spacing.sm, width: 68 },
-  kpiPercentageCompact: { paddingHorizontal: tokens.spacing.xs, width: 58 },
+  kpiPercentage: { alignItems: "center", borderBottomLeftRadius: 6, borderRightColor: "rgba(0, 0, 0, 0.18)", borderRightWidth: 1, borderTopLeftRadius: 6, justifyContent: "center", paddingHorizontal: tokens.spacing.xs, width: 48 },
+  kpiPercentageCompact: { paddingHorizontal: 2, width: 42 },
   kpiPercentageText: { color: "#000000", fontSize: tokens.type.caption, fontWeight: "700", fontVariant: ["tabular-nums"] },
   kpiPercentageTextCompact: { fontSize: tokens.type.label },
   kpiTrack: { backgroundColor: tokens.color.allocationBarTrack, borderBottomRightRadius: 6, borderTopRightRadius: 6, flex: 1, minWidth: 0, overflow: "hidden" },

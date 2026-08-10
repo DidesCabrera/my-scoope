@@ -33,16 +33,17 @@ function MacroRow({ label, tone, grams, allocation, perKilogram, density }: Macr
   const compact = density === "compact";
   return (
     <View style={[styles.macroRow, compact && styles.macroRowCompact]}>
-      <View style={styles.macroHeader}>
-        <Text style={[styles.macroLabel, compact && styles.macroLabelCompact]}>{label}</Text>
+      <Text style={[styles.macroLabel, compact && styles.macroLabelCompact]}>{label}</Text>
+      <View style={[styles.ppkSlot, compact && styles.ppkSlotCompact]}>
         {perKilogram != null ? (
           <ProteinPerKilogramBadge density={density} value={perKilogram} />
-        ) : <View style={styles.ppkSpacer} />}
-        <Text style={[styles.grams, compact && styles.gramsCompact]}>{rounded(grams)} g</Text>
+        ) : null}
       </View>
+      <Text style={[styles.grams, compact && styles.gramsCompact]}>{rounded(grams)} g</Text>
       <KpiAllocationBar
         accessibilityLabel={`${label}: ${rounded(grams)} gramos, ${rounded(allocation)}% de distribución`}
         size={density}
+        style={styles.allocationBar}
         tone={tone}
         value={allocation}
       />
@@ -71,7 +72,7 @@ export function NutritionKpiSection({
       </View>
       <View style={styles.macros}>
         <MacroRow density={density} label="Proteína" tone="protein" {...protein} />
-        <MacroRow density={density} label="Carbohidratos" tone="carbs" {...carbs} />
+        <MacroRow density={density} label="Carbos" tone="carbs" {...carbs} />
         <MacroRow density={density} label="Grasas" tone="fat" {...fat} />
       </View>
     </View>
@@ -79,22 +80,23 @@ export function NutritionKpiSection({
 }
 
 const styles = StyleSheet.create({
-  container: { alignItems: "stretch", flexDirection: "row", gap: tokens.spacing.md, minWidth: 0, width: "100%" },
-  containerCompact: { gap: tokens.spacing.sm },
-  calories: { alignItems: "center", alignSelf: "stretch", backgroundColor: tokens.color.kcalSurface, borderColor: tokens.color.kcalBorder, borderRadius: tokens.radius.card, borderWidth: 3, justifyContent: "center", paddingHorizontal: tokens.spacing.sm, width: 94 },
-  caloriesCompact: { borderRadius: tokens.radius.lg, borderWidth: 2, width: 76 },
+  container: { alignItems: "stretch", flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0, width: "100%" },
+  containerCompact: { gap: 6 },
+  calories: { alignItems: "center", alignSelf: "stretch", backgroundColor: tokens.color.kcalSurface, borderColor: tokens.color.kcalBorder, borderRadius: tokens.radius.card, borderWidth: 3, justifyContent: "center", paddingHorizontal: 5, width: 80 },
+  caloriesCompact: { borderRadius: tokens.radius.lg, borderWidth: 2, width: 68 },
   caloriesLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700" },
   caloriesLabelCompact: { fontSize: tokens.type.label },
   caloriesValue: { color: tokens.color.textMain, fontSize: 29, fontWeight: "800", fontVariant: ["tabular-nums"] },
   caloriesValueCompact: { fontSize: 23 },
   caloriesUnit: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: "700" },
   macros: { flex: 1, minWidth: 0 },
-  macroRow: { borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, gap: 5, paddingVertical: tokens.spacing.sm },
-  macroRowCompact: { gap: 3, paddingVertical: 5 },
-  macroHeader: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0 },
-  macroLabel: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.caption, fontWeight: "700" },
-  macroLabelCompact: { fontSize: tokens.type.label },
-  ppkSpacer: { minWidth: 0 },
-  grams: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: "700", fontVariant: ["tabular-nums"], minWidth: 42, textAlign: "right" },
-  gramsCompact: { fontSize: tokens.type.label, minWidth: 36 },
+  macroRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.xs, minWidth: 0, paddingVertical: 5 },
+  macroRowCompact: { gap: 3, paddingVertical: 4 },
+  macroLabel: { color: tokens.color.textMain, fontSize: tokens.type.label, fontWeight: "700", width: 52 },
+  macroLabelCompact: { fontSize: 11, width: 48 },
+  ppkSlot: { alignItems: "stretch", justifyContent: "center", width: 60 },
+  ppkSlotCompact: { width: 52 },
+  grams: { color: tokens.color.textMain, fontSize: tokens.type.label, fontWeight: "700", fontVariant: ["tabular-nums"], textAlign: "right", width: 40 },
+  gramsCompact: { fontSize: 11, width: 34 },
+  allocationBar: { flex: 1, minWidth: 0, width: "auto" },
 });

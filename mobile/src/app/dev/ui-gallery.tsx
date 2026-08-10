@@ -98,7 +98,7 @@ export default function UiGalleryScreen() {
           <Card>
             <MacroSummary totals={{ total_kcal: 2140, protein_g: 155, carbs_g: 238, fat_g: 62 }} />
             <NutrientProgress color={tokens.color.protein} label="Proteína" target={180} value={155} />
-            <NutrientProgress color={tokens.color.carbs} label="Carbohidratos" target={260} value={238} />
+            <NutrientProgress color={tokens.color.carbs} label="Carbos" target={260} value={238} />
             <NutritionMetric color={tokens.color.ppk} label="Proteína por kilo" unit="g/kg" value="1,8" />
           </Card>
 
@@ -109,7 +109,7 @@ export default function UiGalleryScreen() {
               <KpiAllocationBar style={styles.allocationBarInRow} tone="protein" value={72} />
             </View>
             <View style={styles.allocationRow}>
-              <Text style={styles.allocationLabel}>Carbohidratos</Text>
+              <Text style={styles.allocationLabel}>Carbos</Text>
               <KpiAllocationBar style={styles.allocationBarInRow} tone="carbs" value={48} />
             </View>
             <View style={styles.allocationRow}>
@@ -144,7 +144,7 @@ export default function UiGalleryScreen() {
               <PanelAllocationBar style={styles.allocationBarInRow} tone="protein" value={84} />
             </View>
             <View style={styles.allocationRow}>
-              <Text style={styles.allocationLabel}>Carbohidratos</Text>
+              <Text style={styles.allocationLabel}>Carbos</Text>
               <PanelAllocationBar style={styles.allocationBarInRow} tone="carbs" value={51} />
             </View>
             <View style={styles.allocationRow}>

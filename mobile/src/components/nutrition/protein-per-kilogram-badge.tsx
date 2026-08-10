@@ -23,14 +23,20 @@ export function ProteinPerKilogramBadge({
       accessibilityLabel={`Proteína por kilogramo: ${formattedValue(value)} gramos por kilogramo`}
       accessible
       style={[styles.badge, compact && styles.badgeCompact]}>
-      <Text style={[styles.text, compact && styles.textCompact]}>{formattedValue(value)} g/kg</Text>
+      <Text
+        adjustsFontSizeToFit
+        minimumFontScale={0.85}
+        numberOfLines={1}
+        style={[styles.text, compact && styles.textCompact]}>
+        {formattedValue(value)} g/kg
+      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  badge: { alignItems: "center", backgroundColor: tokens.color.ppk, borderRadius: 5, justifyContent: "center", minHeight: 22, paddingHorizontal: tokens.spacing.sm },
-  badgeCompact: { minHeight: 18, paddingHorizontal: 5 },
-  text: { color: "#111111", fontSize: tokens.type.label, fontWeight: "800", fontVariant: ["tabular-nums"] },
+  badge: { alignItems: "center", backgroundColor: tokens.color.ppk, borderRadius: 5, justifyContent: "center", minHeight: 22, paddingHorizontal: 3 },
+  badgeCompact: { minHeight: 18, paddingHorizontal: 3 },
+  text: { color: "#111111", fontSize: 11, fontWeight: "800", fontVariant: ["tabular-nums"] },
   textCompact: { fontSize: 10 },
 });
