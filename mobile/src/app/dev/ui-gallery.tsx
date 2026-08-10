@@ -387,7 +387,7 @@ export default function UiGalleryScreen() {
             title="Propuesta de DailyPlan"
             typeLabel="Nuevo DailyPlan"
             proposedEntity={
-              <ProposalEntitySection>
+              <ProposalEntitySection entity="dailyPlan">
                 <NutritionEntityCard
                   entity="dailyPlan"
                   indicators={[

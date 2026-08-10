@@ -129,7 +129,8 @@ compact variant.
 
 `SectionHeading` is the canonical structural heading for a section. It combines
 a title with optional structural detail (for example, an item count) and an
-optional semantic icon; it is therefore more than a typographic H1/H2 style.
+optional semantic icon; it is therefore more than a typographic H1/H2 style. It
+also owns the standard 8 px separation above section boundaries.
 `SectionTitle` remains only as a compatibility alias.
 `EntityHeading` remains the branded heading for entity cards and owns the
 entity icon, eyebrow and semantic color. Its composition follows the web:
@@ -211,11 +212,14 @@ received-date metadata. They do not use a detached top-right icon.
 
 `ProposalRequestSummary` is the semantic block that presents what the user
 requested together with the information and objectives used to evaluate the
-proposal. `ProposalObjectiveKpiSection` presents nutrition targets through the
+proposal. It sits below a `Detalles de la propuesta` section heading and uses
+the standard 18 px card padding. `ProposalObjectiveKpiSection` presents nutrition targets through the
 canonical KPI composition, and `ProposalObjectiveSection` places it immediately
 below the requirement copy in that same block. Technical intent identifiers are
-not shown in the interface. `ProposalEntitySection` groups the proposed entity
-card under the shared `SectionHeading`, using a paperclip icon. It has no
+not shown in the interface. `ProposalEntitySection` groups proposed entity
+cards under the shared `SectionHeading`, using a white paperclip icon. Its
+everyday title is derived from entity kind and count (`Plan propuesto`, `Planes
+propuestos`, `Comida propuesta`, etc.). It has no
 `Adjunto` eyebrow, nested card or redundant attachment-name pill. `ChatProposalCard`
 reuses `ProposalCard`; `Lista para revisión`
 is a status label, not a separate visual object type.
