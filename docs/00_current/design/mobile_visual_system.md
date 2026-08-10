@@ -206,10 +206,13 @@ Proposal list-card and detail-page headings follow the entity title hierarchy:
 a proposal icon sits beside the `Propuesta` eyebrow, followed by title and
 received-date metadata. They do not use a detached top-right icon.
 
-`ProposalObjectiveKpiSection` presents nutrition targets through the canonical
-KPI composition. `ProposalObjectiveSection` places that KPI immediately below
-the requirement copy, inside the same requirement block and before intent and
-attachments. It does not introduce a second card surface. `ChatProposalCard`
+`ProposalRequestSummary` is the semantic block that presents what the user
+requested together with the information and objectives used to evaluate the
+proposal. `ProposalObjectiveKpiSection` presents nutrition targets through the
+canonical KPI composition, and `ProposalObjectiveSection` places it immediately
+below the requirement copy in that same block. Technical intent identifiers are
+not shown in the interface. `ProposalAttachmentSection` uses a paperclip icon and
+a section title instead of an `Adjunto` eyebrow or a nested card. `ChatProposalCard`
 reuses `ProposalCard`; `Lista para revisión`
 is a status label, not a separate visual object type.
 

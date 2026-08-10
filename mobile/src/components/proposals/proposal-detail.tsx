@@ -1,4 +1,4 @@
-import { Route } from "lucide-react-native";
+import { Paperclip } from "lucide-react-native";
 import type { PropsWithChildren, ReactNode } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
@@ -11,14 +11,13 @@ import {
   ProposalHeading,
   ProposalStatusBadge,
   type ProposalStatus,
-  ProposalSummary,
   proposalTextStyles,
 } from "./proposal-card";
 
 export function ProposalDetailPage({
-  attachment, children, intent, isRead, objectives, receivedAt, status, summary, title, typeLabel,
+  attachment, children, isRead, objectives, receivedAt, status, summary, title, typeLabel,
 }: PropsWithChildren<{
-  attachment?: ProposalAttachmentData; intent?: string; isRead: boolean; objectives?: ReactNode;
+  attachment?: ProposalAttachmentData; isRead: boolean; objectives?: ReactNode;
   receivedAt: string; status: ProposalStatus; summary?: string;
   title: string; typeLabel?: string;
 }>) {
@@ -30,11 +29,34 @@ export function ProposalDetailPage({
           <ProposalStatusBadge status={status} />
           {typeLabel ? <View style={styles.type}><Text style={styles.typeText}>{typeLabel}</Text></View> : null}
         </View>
-        {summary ? <ProposalSummary details={objectives}>{summary}</ProposalSummary> : objectives}
+        {summary ? <ProposalRequestSummary objectives={objectives} requirement={summary} /> : objectives}
       </View>
-      {intent ? <View style={styles.context}><Route color={tokens.color.textMuted} size={16} /><Text style={styles.contextText}>Intent: <Text style={styles.contextStrong}>{intent}</Text></Text></View> : null}
-      {attachment ? <ProposalReviewSection eyebrow="Adjunto" title="Entidad propuesta"><ProposalAttachment attachment={attachment} /></ProposalReviewSection> : null}
+      {attachment ? <ProposalAttachmentSection attachment={attachment} /> : null}
       {children}
+    </View>
+  );
+}
+
+export function ProposalRequestSummary({ objectives, requirement }: { objectives?: ReactNode; requirement: string }) {
+  return (
+    <View style={styles.requestSummary}>
+      <View style={styles.requestCopy}>
+        <Text style={proposalTextStyles.eyebrow}>Requerimiento</Text>
+        <Text style={styles.requestText}>{requirement}</Text>
+      </View>
+      {objectives}
+    </View>
+  );
+}
+
+export function ProposalAttachmentSection({ attachment, title = "Entidad propuesta" }: { attachment: ProposalAttachmentData; title?: string }) {
+  return (
+    <View style={styles.attachmentSection}>
+      <View style={styles.attachmentHeader}>
+        <Paperclip color={tokens.color.textMain} size={18} />
+        <Text style={styles.sectionTitle}>{title}</Text>
+      </View>
+      <ProposalAttachment attachment={attachment} />
     </View>
   );
 }
@@ -91,9 +113,11 @@ const styles = StyleSheet.create({
   badges: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.sm },
   type: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 6 },
   typeText: { color: tokens.color.textMain, fontSize: tokens.type.label, fontWeight: tokens.weight.bold, textTransform: "uppercase" },
-  context: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },
-  contextText: { color: tokens.color.textMuted, fontSize: tokens.type.caption },
-  contextStrong: { color: tokens.color.textMain, fontWeight: tokens.weight.bold },
+  requestSummary: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, gap: tokens.spacing.md, padding: tokens.spacing.md },
+  requestCopy: { gap: tokens.spacing.xs },
+  requestText: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, lineHeight: 20 },
+  attachmentSection: { gap: tokens.spacing.sm, minWidth: 0 },
+  attachmentHeader: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
   sectionHeader: { gap: 3 },
   objectiveSection: { gap: tokens.spacing.sm, minWidth: 0 },
   sectionTitle: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.bold, lineHeight: 22 },

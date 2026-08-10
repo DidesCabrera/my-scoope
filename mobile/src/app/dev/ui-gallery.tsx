@@ -372,7 +372,6 @@ export default function UiGalleryScreen() {
           <SectionTitle detail="Revisión antes de aplicar" title="Detalle de propuesta" />
           <ProposalDetailPage
             attachment={{ kind: "dailyPlan", name: "Día de entrenamiento propuesto" }}
-            intent="create_dailyplan"
             isRead
             objectives={
               <ProposalObjectiveSection
