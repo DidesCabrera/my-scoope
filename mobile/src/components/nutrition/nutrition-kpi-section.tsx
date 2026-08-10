@@ -23,6 +23,7 @@ type MacroRowProps = MacroKpi & {
   label: string;
   tone: AllocationTone;
   density: "compact" | "regular";
+  fontSize: 12 | 13;
   isLast?: boolean;
   refined: boolean;
   perKilogram?: number | null;
@@ -32,21 +33,22 @@ function rounded(value: number): number {
   return Number.isFinite(value) ? Math.round(value) : 0;
 }
 
-function MacroRow({ label, tone, grams, allocation, perKilogram, density, isLast = false, refined }: MacroRowProps) {
+function MacroRow({ label, tone, grams, allocation, perKilogram, density, fontSize, isLast = false, refined }: MacroRowProps) {
   const compact = density === "compact";
   return (
     <View style={[styles.macroRow, refined && styles.macroRowSlightlyTight, compact && styles.macroRowCompact, isLast && styles.macroRowLast]}>
-      <Text style={[styles.macroLabel, compact && styles.macroLabelCompact]}>{label}</Text>
+      <Text style={[styles.macroLabel, compact && styles.macroLabelCompact, { fontSize }]}>{label}</Text>
       <View style={[styles.ppkSlot, compact && styles.ppkSlotCompact]}>
         {perKilogram != null ? (
-          <ProteinPerKilogramBadge density={density} value={perKilogram} />
+          <ProteinPerKilogramBadge density={density} textSize={fontSize} value={perKilogram} />
         ) : null}
       </View>
-      <Text style={[styles.grams, compact && styles.gramsCompact]}>{rounded(grams)} g</Text>
+      <Text style={[styles.grams, compact && styles.gramsCompact, { fontSize }]}>{rounded(grams)} g</Text>
       <KpiAllocationBar
         accessibilityLabel={`${label}: ${rounded(grams)} gramos, ${rounded(allocation)}% de distribución`}
         size={density}
         style={[styles.allocationBar, refined && styles.allocationBarSlightlyTight]}
+        textSize={fontSize}
         tone={tone}
         value={allocation}
       />
@@ -65,6 +67,7 @@ export function NutritionKpiSection({
   const { width } = useWindowDimensions();
   const compact = density === "compact";
   const refined = !compact && width < 420;
+  const macroFontSize = width < 420 ? 12 : 13;
   return (
     <View style={[styles.container, compact && styles.containerCompact, style]}>
       <View
@@ -87,9 +90,9 @@ export function NutritionKpiSection({
         <Text style={[styles.caloriesUnit, compact && styles.caloriesLabelCompact]}>kcal</Text>
       </View>
       <View style={styles.macros}>
-        <MacroRow density={density} label="Proteína" refined={refined} tone="protein" {...protein} />
-        <MacroRow density={density} label="Carbos" refined={refined} tone="carbs" {...carbs} />
-        <MacroRow density={density} isLast label="Grasas" refined={refined} tone="fat" {...fat} />
+        <MacroRow density={density} fontSize={macroFontSize} label="Proteína" refined={refined} tone="protein" {...protein} />
+        <MacroRow density={density} fontSize={macroFontSize} label="Carbos" refined={refined} tone="carbs" {...carbs} />
+        <MacroRow density={density} fontSize={macroFontSize} isLast label="Grasas" refined={refined} tone="fat" {...fat} />
       </View>
     </View>
   );

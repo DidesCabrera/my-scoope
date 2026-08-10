@@ -13,9 +13,11 @@ function formattedValue(value: number): string {
 export function ProteinPerKilogramBadge({
   value,
   density = "regular",
+  textSize = 13,
 }: {
   value: number;
   density?: "compact" | "regular";
+  textSize?: 12 | 13;
 }) {
   const compact = density === "compact";
   return (
@@ -25,7 +27,7 @@ export function ProteinPerKilogramBadge({
       style={[styles.badge, compact && styles.badgeCompact]}>
       <Text
         numberOfLines={1}
-        style={styles.text}>
+        style={[styles.text, { fontSize: textSize }]}>
         {formattedValue(value)} g/kg
       </Text>
     </View>

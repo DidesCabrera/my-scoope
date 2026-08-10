@@ -10,6 +10,7 @@ type AllocationBarProps = {
   accessibilityLabel?: string;
   displayValue?: number | string;
   size?: "compact" | "regular";
+  textSize?: 12 | 13;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -42,6 +43,7 @@ export function KpiAllocationBar({
   tone,
   accessibilityLabel,
   size = "regular",
+  textSize = 13,
   style,
 }: AllocationBarProps) {
   const normalized = normalizedPercentage(value);
@@ -51,7 +53,7 @@ export function KpiAllocationBar({
       {...progressAccessibility(normalized, tone, accessibilityLabel)}
       style={[styles.kpiContainer, size === "compact" && styles.kpiContainerCompact, style]}>
       <View style={[styles.fill, styles.kpiFill, { backgroundColor: color, width: `${normalized}%` }]} />
-      <Text style={styles.panelPercentage}>{Math.round(normalized)}%</Text>
+      <Text style={[styles.panelPercentage, { fontSize: textSize }]}>{Math.round(normalized)}%</Text>
     </View>
   );
 }
@@ -62,6 +64,7 @@ export function PanelAllocationBar({
   accessibilityLabel,
   displayValue,
   size = "regular",
+  textSize = 13,
   style,
 }: AllocationBarProps) {
   const normalized = normalizedPercentage(value);
@@ -71,7 +74,7 @@ export function PanelAllocationBar({
       {...progressAccessibility(normalized, tone, accessibilityLabel)}
       style={[styles.panelTrack, size === "compact" && styles.panelTrackCompact, style]}>
       <View style={[styles.fill, styles.panelFill, { backgroundColor: color, width: `${normalized}%` }]} />
-      <Text style={styles.panelPercentage}>{displayValue ?? `${Math.round(normalized)}%`}</Text>
+      <Text style={[styles.panelPercentage, { fontSize: textSize }]}>{displayValue ?? `${Math.round(normalized)}%`}</Text>
     </View>
   );
 }
