@@ -95,6 +95,11 @@ contract (`regular`, `medium`, `semibold`, `bold`, `extraBold`, `black`): use
 medium or semibold for compact supporting data, and reserve heavier weights
 for hierarchy and emphasis.
 
+Native UI uses the platform `System` family (SF Pro on iOS and Roboto on
+Android); web uses the `system-ui` stack. Nutrition KPI labels use regular
+weight, the calorie value uses bold, and the complete KPI composition keeps
+neutral tracking (`letterSpacing: 0`).
+
 ## Explicit platform differences
 
 Shared spacing, radii, typography, nutrition and entity semantics live under

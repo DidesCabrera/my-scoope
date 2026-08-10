@@ -37,6 +37,6 @@ export function ProteinPerKilogramBadge({
 const styles = StyleSheet.create({
   badge: { alignItems: "center", backgroundColor: tokens.color.ppk, borderRadius: 5, justifyContent: "center", minHeight: 22, paddingHorizontal: 3 },
   badgeCompact: { minHeight: 18, paddingHorizontal: 3 },
-  text: { color: "#111111", fontSize: 11, fontWeight: tokens.weight.semibold, fontVariant: ["tabular-nums"] },
+  text: { color: "#111111", fontSize: 11, fontWeight: tokens.weight.semibold, fontVariant: ["tabular-nums"], letterSpacing: 0 },
   textCompact: { fontSize: 10 },
 });
