@@ -22,6 +22,8 @@ export const tokens = {
     "warning": "#FFD16E",
     "kcalSurface": "#26211D",
     "kcalBorder": "#5A4031",
+    "allocationBarTrack": "#313131",
+    "allocationPanelTrack": "#313131",
     "protein": "#00D0F5",
     "carbs": "#01E888",
     "fat": "#BBFF00",

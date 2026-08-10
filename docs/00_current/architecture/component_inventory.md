@@ -55,7 +55,9 @@ pantallas no deben importar archivos internos de esta carpeta.
 
 Los componentes nutricionales se exportan desde
 `mobile/src/components/nutrition/index.ts`: `MacroSummary`,
-`NutritionMetric` y `NutrientProgress`.
+`NutritionMetric`, `NutrientProgress`, `KpiAllocationBar` y
+`PanelAllocationBar`. Las dos barras alloc comparten cálculo y colores
+nutricionales; solo cambia su composición contextual.
 
 ## Features con estilos propios
 

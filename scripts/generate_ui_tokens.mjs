@@ -39,6 +39,8 @@ function themeCss(theme) {
     warning: "status-warning",
     kcalSurface: "nutrition-kcal",
     kcalBorder: "nutrition-kcal-border",
+    allocationBarTrack: "alloc-bar-bg",
+    allocationPanelTrack: "alloc-cell-bg",
   };
   return Object.entries(direct)
     .filter(([key]) => theme[key] !== undefined)

@@ -23,6 +23,8 @@
   --status-warning: #FFD16E;
   --nutrition-kcal: #FFF9F5;
   --nutrition-kcal-border: #FEDDC8;
+  --alloc-bar-bg: #F8F8F8;
+  --alloc-cell-bg: #FFFFFF;
   --space-xs: 0.25rem;
   --space-sm: 0.5rem;
   --space-md: 0.75rem;
@@ -88,4 +90,6 @@ html[data-theme="dark"] {
   --status-warning: #FFD16E;
   --nutrition-kcal: #26211D;
   --nutrition-kcal-border: #5A4031;
+  --alloc-bar-bg: #313131;
+  --alloc-cell-bg: #313131;
 }

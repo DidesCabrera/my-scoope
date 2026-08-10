@@ -2,7 +2,13 @@ import { Redirect } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
-import { MacroSummary, NutrientProgress, NutritionMetric } from "@/components/nutrition";
+import {
+  KpiAllocationBar,
+  MacroSummary,
+  NutrientProgress,
+  NutritionMetric,
+  PanelAllocationBar,
+} from "@/components/nutrition";
 import {
   AppHeader,
   Brand,
@@ -94,6 +100,43 @@ export default function UiGalleryScreen() {
             <NutrientProgress color={tokens.color.carbs} label="Carbohidratos" target={260} value={238} />
             <NutritionMetric color={tokens.color.ppk} label="Proteína por kilo" unit="g/kg" value="1,8" />
           </Card>
+
+          <SectionTitle detail="Identidad de marca" title="Alloc en KPI" />
+          <Card>
+            <View style={styles.allocationRow}>
+              <Text style={styles.allocationLabel}>Proteína</Text>
+              <KpiAllocationBar style={styles.allocationBarInRow} tone="protein" value={72} />
+            </View>
+            <View style={styles.allocationRow}>
+              <Text style={styles.allocationLabel}>Carbohidratos</Text>
+              <KpiAllocationBar style={styles.allocationBarInRow} tone="carbs" value={48} />
+            </View>
+            <View style={styles.allocationRow}>
+              <Text style={styles.allocationLabel}>Grasas</Text>
+              <KpiAllocationBar style={styles.allocationBarInRow} tone="fat" value={26} />
+            </View>
+          </Card>
+
+          <SectionTitle detail="Regular y compacta" title="Alloc en paneles" />
+          <ContentPanel description="El mismo porcentaje base cambia de composición según su contexto." title="Distribución objetivo">
+            <View style={styles.allocationRow}>
+              <Text style={styles.allocationLabel}>Proteína</Text>
+              <PanelAllocationBar style={styles.allocationBarInRow} tone="protein" value={84} />
+            </View>
+            <View style={styles.allocationRow}>
+              <Text style={styles.allocationLabel}>Carbohidratos</Text>
+              <PanelAllocationBar style={styles.allocationBarInRow} tone="carbs" value={51} />
+            </View>
+            <View style={styles.allocationRow}>
+              <Text style={styles.allocationLabel}>Grasas</Text>
+              <PanelAllocationBar style={styles.allocationBarInRow} tone="fat" value={18} />
+            </View>
+            <DetailSection description="Para filas densas, pickers y cards secundarias." title="Tamaño compacto">
+              <PanelAllocationBar size="compact" tone="protein" value={100} />
+              <PanelAllocationBar size="compact" tone="carbs" value={4} />
+              <PanelAllocationBar size="compact" tone="fat" value={0} />
+            </DetailSection>
+          </ContentPanel>
         </>
       ) : null}
 
@@ -167,4 +210,7 @@ const styles = StyleSheet.create({
   radiusGrid: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.md },
   radiusItem: { alignItems: "center", gap: tokens.spacing.sm, width: "29%" },
   radiusSample: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.interactivePrimary, borderWidth: 1, height: 58, width: 58 },
+  allocationRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md },
+  allocationLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700", width: 96 },
+  allocationBarInRow: { flex: 1, minWidth: 0, width: "auto" },
 });

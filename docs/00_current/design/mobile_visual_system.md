@@ -35,6 +35,7 @@ Screen
       -> EntityHeading / DetailSection / PanelTabs
       -> nested muted Card
       -> MacroSummary / NutrientProgress / NutritionMetric
+      -> KpiAllocationBar / PanelAllocationBar
       -> Pill / InlineNotice
       -> Button / Field / ChoiceRow
 ```
@@ -68,6 +69,12 @@ and `product`. Nutrition components have their own public barrel at
 The development-only route `/dev/ui-gallery` renders the shared components,
 interaction states, entity palette, type sizes, spacing, radii and nutrition
 widgets using production component code.
+
+`KpiAllocationBar` and `PanelAllocationBar` share percentage normalization and
+nutrition tones. KPI composition keeps the colored percentage cell next to its
+track; panel composition overlays the value on the track and supports regular
+and compact density. A future calories tone must extend the neutral token
+contract and reuse these components rather than introduce a third bar.
 
 ## Explicit platform differences
 
