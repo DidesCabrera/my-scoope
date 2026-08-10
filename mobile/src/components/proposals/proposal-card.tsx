@@ -1,5 +1,5 @@
 import { Mail, MailOpen, Paperclip } from "lucide-react-native";
-import type { ReactNode } from "react";
+import type { PropsWithChildren, ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Card, EntityIcon, type EntityKind } from "@/components/ui";
@@ -23,11 +23,11 @@ function statusColor(status: ProposalStatus): string {
   return tokens.color.warning;
 }
 
-export function ProposalStatusBadge({ status }: { status: ProposalStatus }) {
+export function ProposalStatusBadge({ status, label }: { status: ProposalStatus; label?: string }) {
   const color = statusColor(status);
   return (
     <View style={[styles.status, { backgroundColor: `${color}1A`, borderColor: `${color}55` }]}>
-      <Text style={[styles.statusText, { color }]}>{labels[status]}</Text>
+      <Text style={[styles.statusText, { color }]}>{label ?? labels[status]}</Text>
     </View>
   );
 }
@@ -42,17 +42,18 @@ export function ProposalAttachment({ attachment }: { attachment: ProposalAttachm
 }
 
 export function ProposalCard({
-  action, attachment, isRead, onPress, receivedAt, status, summary, title,
-}: {
+  action, attachment, children, isRead, onPress, receivedAt, status, statusLabel, summary, title,
+}: PropsWithChildren<{
   action?: ReactNode; attachment: ProposalAttachmentData; isRead: boolean;
   onPress?: () => void; receivedAt: string; status: ProposalStatus;
-  summary?: string; title: string;
-}) {
+  statusLabel?: string; summary?: string; title: string;
+}>) {
   const content = (
     <Card accent={tokens.color.proposal}>
       <ProposalHeading isRead={isRead} receivedAt={receivedAt} title={title} />
-      <ProposalStatusBadge status={status} />
+      <ProposalStatusBadge label={statusLabel} status={status} />
       {summary ? <ProposalSummary>{summary}</ProposalSummary> : null}
+      {children}
       <View style={styles.footer}>
         <Paperclip color={tokens.color.textSoft} size={16} />
         <ProposalAttachment attachment={attachment} />

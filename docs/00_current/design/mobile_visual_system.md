@@ -206,6 +206,11 @@ Proposal list-card and detail-page headings follow the entity title hierarchy:
 a proposal icon sits beside the `Propuesta` eyebrow, followed by title and
 received-date metadata. They do not use a detached top-right icon.
 
+`ProposalObjectiveKpiSection` presents nutrition targets through the canonical
+KPI composition and is placed immediately after the requirement, before intent
+and attachments. `ChatProposalCard` reuses `ProposalCard`; `Lista para revisión`
+is a status label, not a separate visual object type.
+
 DailyPlan detail keeps the web hierarchy: the aggregated `MealPanels` section
 is followed by `DailyPlanMealDetailList`. The latter renders an ordered meal
 sequence and reuses `NutritionEntityCard` plus `FoodPanels` for every child

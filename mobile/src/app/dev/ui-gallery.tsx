@@ -23,7 +23,7 @@ import {
   ChatProposalCard,
   ProposalCard,
   ProposalDetailPage,
-  ProposalMetricGrid,
+  ProposalObjectiveKpiSection,
   ProposalReviewActions,
   ProposalReviewSection,
 } from "@/components/proposals";
@@ -375,19 +375,21 @@ export default function UiGalleryScreen() {
             attachment={{ kind: "dailyPlan", name: "Día de entrenamiento propuesto" }}
             intent="create_dailyplan"
             isRead
+            objectives={
+              <ProposalReviewSection eyebrow="Objetivos" title="Targets usados para validar la propuesta">
+                <ProposalObjectiveKpiSection
+                  calories={2140}
+                  carbs={{ grams: 238, allocation: 44 }}
+                  fat={{ grams: 62, allocation: 26 }}
+                  protein={{ grams: 155, allocation: 30, perKilogram: 1.8 }}
+                />
+              </ProposalReviewSection>
+            }
             receivedAt="Recibida hoy, 14:30"
             status="pending"
             summary="Crear un DailyPlan alto en proteína para un día de entrenamiento."
             title="Propuesta de DailyPlan"
             typeLabel="Nuevo DailyPlan">
-            <ProposalReviewSection eyebrow="Objetivos" title="Targets usados para validar la propuesta">
-              <ProposalMetricGrid metrics={[
-                { label: "Calorías", value: "2.140 kcal" },
-                { label: "Proteína", value: "155 g" },
-                { label: "Carbos", value: "238 g" },
-                { label: "Grasas", value: "62 g" },
-              ]} />
-            </ProposalReviewSection>
             <NutritionEntityCard
               entity="dailyPlan"
               indicators={[

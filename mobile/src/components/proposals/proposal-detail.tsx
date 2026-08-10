@@ -1,8 +1,9 @@
 import { Route } from "lucide-react-native";
-import type { PropsWithChildren } from "react";
+import type { PropsWithChildren, ReactNode } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { Button, Card } from "@/components/ui";
+import { NutritionKpiSection, type NutritionKpiSectionProps } from "@/components/nutrition";
 import { tokens } from "@/design/tokens";
 import {
   ProposalAttachment,
@@ -15,9 +16,9 @@ import {
 } from "./proposal-card";
 
 export function ProposalDetailPage({
-  attachment, children, intent, isRead, receivedAt, status, summary, title, typeLabel,
+  attachment, children, intent, isRead, objectives, receivedAt, status, summary, title, typeLabel,
 }: PropsWithChildren<{
-  attachment?: ProposalAttachmentData; intent?: string; isRead: boolean;
+  attachment?: ProposalAttachmentData; intent?: string; isRead: boolean; objectives?: ReactNode;
   receivedAt: string; status: ProposalStatus; summary?: string;
   title: string; typeLabel?: string;
 }>) {
@@ -31,11 +32,16 @@ export function ProposalDetailPage({
         </View>
         {summary ? <ProposalSummary>{summary}</ProposalSummary> : null}
       </View>
+      {objectives}
       {intent ? <View style={styles.context}><Route color={tokens.color.textMuted} size={16} /><Text style={styles.contextText}>Intent: <Text style={styles.contextStrong}>{intent}</Text></Text></View> : null}
       {attachment ? <ProposalReviewSection eyebrow="Adjunto" title="Entidad propuesta"><ProposalAttachment attachment={attachment} /></ProposalReviewSection> : null}
       {children}
     </View>
   );
+}
+
+export function ProposalObjectiveKpiSection(props: Omit<NutritionKpiSectionProps, "density" | "style">) {
+  return <NutritionKpiSection {...props} />;
 }
 
 export function ProposalReviewSection({ children, eyebrow, title }: PropsWithChildren<{ eyebrow?: string; title: string }>) {
