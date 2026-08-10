@@ -22,15 +22,15 @@ export function ProposalDetailPage({
   title: string; typeLabel?: string;
 }>) {
   return (
-    <View style={styles.page}>
-      <Card accent={tokens.color.proposal}>
+    <View style={styles.pageCard}>
+      <View style={styles.hero}>
         <ProposalHeading detail isRead={isRead} receivedAt={receivedAt} title={title} />
         <View style={styles.badges}>
           <ProposalStatusBadge status={status} />
           {typeLabel ? <View style={styles.type}><Text style={styles.typeText}>{typeLabel}</Text></View> : null}
         </View>
         {summary ? <ProposalSummary>{summary}</ProposalSummary> : null}
-      </Card>
+      </View>
       {intent ? <View style={styles.context}><Route color={tokens.color.textMuted} size={16} /><Text style={styles.contextText}>Intent: <Text style={styles.contextStrong}>{intent}</Text></Text></View> : null}
       {attachment ? <ProposalReviewSection eyebrow="Adjunto" title="Entidad propuesta"><ProposalAttachment attachment={attachment} /></ProposalReviewSection> : null}
       {children}
@@ -66,7 +66,8 @@ export function ProposalReviewActions({ description, onApprove, onCancel, onReje
 }
 
 const styles = StyleSheet.create({
-  page: { gap: tokens.spacing.lg, minWidth: 0, width: "100%" },
+  pageCard: { alignSelf: "stretch", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderTopColor: tokens.color.proposal, borderTopWidth: 3, borderWidth: 1, gap: tokens.spacing.lg, marginHorizontal: -tokens.spacing.screen, minWidth: 0, padding: tokens.card.outerPadding },
+  hero: { gap: tokens.card.gap, minWidth: 0 },
   badges: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.sm },
   type: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 6 },
   typeText: { color: tokens.color.textMain, fontSize: tokens.type.label, fontWeight: tokens.weight.bold, textTransform: "uppercase" },

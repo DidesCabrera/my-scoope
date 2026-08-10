@@ -186,7 +186,10 @@ The gallery token tab exposes `card.outerPadding`, `card.innerPadding` and
 Proposals use a separate native family because review state, request summary,
 attachments and human approval actions do not belong to normal entity cards.
 `ProposalCard` is the inbox/list summary. `ProposalDetailPage` composes the
-review hero, intent and attachment context; `ProposalReviewSection`,
+review hero, intent and attachment context inside one full-bleed extended
+page-card, matching the entity detail contract. The hero is not wrapped in a
+second card, and the page-card reaches both viewport edges.
+`ProposalReviewSection`,
 `ProposalMetricGrid` and `ProposalReviewActions` cover validation content and
 the approval/rejection/cancellation workflow. Proposed Meal or DailyPlan
 content continues to reuse the existing entity cards inside that review shell.
