@@ -130,7 +130,8 @@ compact variant.
 `SectionHeading` is the canonical structural heading for a section. It combines
 a title with optional structural detail (for example, an item count) and an
 optional semantic icon; it is therefore more than a typographic H1/H2 style. It
-also owns the standard 8 px separation above section boundaries.
+uses 16 pt semibold type and owns the standard 8 px separation above section
+boundaries.
 `SectionTitle` remains only as a compatibility alias.
 `EntityHeading` remains the branded heading for entity cards and owns the
 entity icon, eyebrow and semantic color. Its composition follows the web:

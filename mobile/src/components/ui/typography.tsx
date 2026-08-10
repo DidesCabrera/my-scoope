@@ -31,6 +31,6 @@ const styles = StyleSheet.create({
   sectionHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between", marginTop: tokens.spacing.sm, minWidth: 0 },
   sectionIdentity: { alignItems: "center", flexDirection: "row", flexShrink: 1, gap: tokens.spacing.sm, minWidth: 0 },
   sectionIcon: { alignItems: "center", justifyContent: "center" },
-  sectionTitle: { color: tokens.color.textMain, flexShrink: 1, fontSize: tokens.type.section, fontWeight: "800" },
+  sectionTitle: { color: tokens.color.textMain, flexShrink: 1, fontSize: tokens.type.body, fontWeight: tokens.weight.semibold },
   sectionDetail: { color: tokens.color.textSoft, fontSize: tokens.type.caption },
 });
