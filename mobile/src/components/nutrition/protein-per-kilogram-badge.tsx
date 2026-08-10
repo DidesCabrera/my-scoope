@@ -24,10 +24,8 @@ export function ProteinPerKilogramBadge({
       accessible
       style={[styles.badge, compact && styles.badgeCompact]}>
       <Text
-        adjustsFontSizeToFit
-        minimumFontScale={0.85}
         numberOfLines={1}
-        style={[styles.text, compact && styles.textCompact]}>
+        style={styles.text}>
         {formattedValue(value)} g/kg
       </Text>
     </View>
@@ -37,6 +35,5 @@ export function ProteinPerKilogramBadge({
 const styles = StyleSheet.create({
   badge: { alignItems: "center", backgroundColor: tokens.color.ppk, borderRadius: 5, justifyContent: "center", minHeight: 22, paddingHorizontal: 3 },
   badgeCompact: { minHeight: 18, paddingHorizontal: 3 },
-  text: { color: "#111111", fontSize: 11, fontWeight: tokens.weight.semibold, fontVariant: ["tabular-nums"], letterSpacing: 0 },
-  textCompact: { fontSize: 10 },
+  text: { color: "#111111", fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, fontVariant: ["tabular-nums"], letterSpacing: 0 },
 });

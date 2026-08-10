@@ -93,7 +93,9 @@ existing geometry. This responds to usable width rather than device names.
 Each macro KPI is a single horizontal row: short label, reserved PPK slot,
 grams and allocation bar. Product copy uses `Carbos`; the formal
 `carbohidratos` term remains only in label/OCR parsing rules for source-data
-compatibility. The final `Grasas` row has no bottom separator.
+compatibility. Labels, PPK, grams and allocation values use a unified 13 px
+medium treatment in both KPI densities. The final `Grasas` row has no bottom
+separator.
 
 KPI allocation bars use the same continuous filled-track presentation as
 panel bars. KPI retains its original 6 px radius while panel bars use 4 px;
