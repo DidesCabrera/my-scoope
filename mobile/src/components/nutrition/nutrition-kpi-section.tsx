@@ -56,7 +56,7 @@ function MacroRow({ label, tone, grams, allocation, perKilogram, density, spacin
       <KpiAllocationBar
         accessibilityLabel={`${label}: ${rounded(grams)} gramos, ${rounded(allocation)}% de distribución`}
         size={density}
-        style={styles.allocationBar}
+        style={[styles.allocationBar, !compact && spacing === "slightlyTight" && styles.allocationBarSlightlyTight]}
         tone={tone}
         value={allocation}
       />
@@ -125,4 +125,5 @@ const styles = StyleSheet.create({
   grams: { color: tokens.color.textMain, fontSize: tokens.type.label, fontWeight: tokens.weight.medium, fontVariant: ["tabular-nums"], letterSpacing: 0, textAlign: "right", width: 40 },
   gramsCompact: { fontSize: 11, width: 34 },
   allocationBar: { flex: 1, minWidth: 0, width: "auto" },
+  allocationBarSlightlyTight: { height: 22 },
 });

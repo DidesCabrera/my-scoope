@@ -89,7 +89,8 @@ compact `CalorieValue` size in both cases so the square changes the composition
 without increasing the numeric emphasis. The gallery exposes controlled 90%,
 85% and 83% square scales for comparison, with a smaller `Calorías` label on
 all three trials. The 83% trial also reduces macro-row vertical padding from
-5 px to 4 px; the production default remains 100% until one is selected.
+5 px to 4 px and KPI bar height from 24 px to 22 px; the production default
+remains 100% until one is selected.
 
 Each macro KPI is a single horizontal row: short label, reserved PPK slot,
 grams and allocation bar. Product copy uses `Carbos`; the formal
@@ -97,7 +98,9 @@ grams and allocation bar. Product copy uses `Carbos`; the formal
 compatibility.
 
 KPI allocation bars use the same continuous filled-track presentation as
-panel bars. KPI retains its original 6 px radius while panel bars use 4 px.
+panel bars. KPI retains its original 6 px radius while panel bars use 4 px;
+both tracks and their colored fills round the right edge consistently. The web
+counterparts apply the same geometry through inherited fill radii.
 
 The shared scale includes `spacing.compact` (6 px) for layouts that need a
 step between `xs` (4 px) and `sm` (8 px). Font weights also belong to the

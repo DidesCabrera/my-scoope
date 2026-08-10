@@ -50,7 +50,7 @@ export function KpiAllocationBar({
     <View
       {...progressAccessibility(normalized, tone, accessibilityLabel)}
       style={[styles.kpiContainer, size === "compact" && styles.kpiContainerCompact, style]}>
-      <View style={[styles.fill, { backgroundColor: color, width: `${normalized}%` }]} />
+      <View style={[styles.fill, styles.kpiFill, { backgroundColor: color, width: `${normalized}%` }]} />
       <Text style={styles.panelPercentage}>{Math.round(normalized)}%</Text>
     </View>
   );
@@ -70,7 +70,7 @@ export function PanelAllocationBar({
     <View
       {...progressAccessibility(normalized, tone, accessibilityLabel)}
       style={[styles.panelTrack, size === "compact" && styles.panelTrackCompact, style]}>
-      <View style={[styles.fill, { backgroundColor: color, width: `${normalized}%` }]} />
+      <View style={[styles.fill, styles.panelFill, { backgroundColor: color, width: `${normalized}%` }]} />
       <Text style={styles.panelPercentage}>{displayValue ?? `${Math.round(normalized)}%`}</Text>
     </View>
   );
@@ -78,9 +78,11 @@ export function PanelAllocationBar({
 
 const styles = StyleSheet.create({
   fill: { bottom: 0, left: 0, position: "absolute", top: 0 },
+  kpiFill: { borderRadius: 6 },
   kpiContainer: { backgroundColor: tokens.color.allocationBarTrack, borderRadius: 6, height: 24, justifyContent: "center", minWidth: 0, overflow: "hidden", width: "100%" },
   kpiContainerCompact: { height: 18 },
   panelTrack: { backgroundColor: tokens.color.allocationPanelTrack, borderRadius: 4, height: 24, justifyContent: "center", overflow: "hidden", width: "100%" },
+  panelFill: { borderRadius: 4 },
   panelTrackCompact: { height: 18 },
   panelPercentage: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, fontVariant: ["tabular-nums"], letterSpacing: 0, paddingRight: tokens.spacing.xs, textAlign: "right" },
 });
