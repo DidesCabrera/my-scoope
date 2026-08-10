@@ -33,7 +33,6 @@ export function DailyPlanMealDetailList({ items }: { items: DailyPlanMealDetailI
               entity="meal"
               indicators={[{ icon: "food", label: "alimentos", value: item.foods.length }]}
               nutrition={item.nutrition}
-              style={styles.mealCard}
               title={item.name}>
               <FoodPanels items={item.foods} />
             </NutritionEntityCard>
@@ -52,5 +51,4 @@ const styles = StyleSheet.create({
   markerText: { color: tokens.color.textMuted, fontSize: 18, fontWeight: tokens.weight.semibold, fontVariant: ["tabular-nums"] },
   markerLine: { backgroundColor: tokens.color.borderDefault, height: 1, width: "100%" },
   cardSlot: { minWidth: 0, paddingBottom: tokens.spacing.lg, width: "100%" },
-  mealCard: { gap: tokens.spacing.sm, padding: tokens.spacing.sm },
 });

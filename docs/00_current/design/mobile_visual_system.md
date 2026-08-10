@@ -174,9 +174,12 @@ The extended page-card bleeds through the standard screen side gutters so its
 outer border reaches both viewport edges and its internal content recovers the
 full mobile width. DailyPlan meal sequence markers mirror web: a numbered
 circle sits over a horizontal divider above each meal card, consuming no
-horizontal card space. Each nested DPM meal card uses `spacing.sm` (8 px) as
-its internal padding; its outer placement continues to follow the page-card's
-content padding.
+horizontal card space. Nested DPM meal cards use the standard card contract:
+`card.outerPadding` (18 px) and `card.gap` (12 px). Their outer placement also
+follows the page-card's content padding.
+
+The gallery token tab exposes `card.outerPadding`, `card.innerPadding` and
+`card.gap` alongside the spacing scale so card dimensions remain explicit.
 
 DailyPlan detail keeps the web hierarchy: the aggregated `MealPanels` section
 is followed by `DailyPlanMealDetailList`. The latter renders an ordered meal

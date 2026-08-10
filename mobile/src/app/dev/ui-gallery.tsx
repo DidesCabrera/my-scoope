@@ -390,6 +390,14 @@ export default function UiGalleryScreen() {
               <Text style={textStyles.caption}>{size}</Text>
             </View>
           ))}
+          <SectionTitle detail="Padding y separación interna" title="Dimensiones de card" />
+          {Object.entries(tokens.card).map(([name, size]) => (
+            <View key={name} style={styles.scaleRow}>
+              <Text style={styles.scaleLabel}>{name}</Text>
+              <View style={[styles.scaleBar, { width: size * 3 }]} />
+              <Text style={textStyles.caption}>{size} px</Text>
+            </View>
+          ))}
           <SectionTitle detail="sm → pill" title="Radios" />
           <View style={styles.radiusGrid}>
             {Object.entries(tokens.radius).map(([name, radius]) => (
