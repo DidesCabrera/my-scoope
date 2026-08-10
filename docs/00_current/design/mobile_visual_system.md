@@ -157,6 +157,16 @@ and `Alloc`. `MealPanels` is used by DailyPlan and exposes `Menú`, `Macros` and
 reusable. Food has no nested panels in the current web contract. Program
 panels and charts are intentionally excluded from this first stage.
 
+## Entity detail pages
+
+`EntityDetailPage` is the first reusable native detail-page composition. It
+combines optional back navigation and actions with the existing
+`NutritionEntityCard`, then accepts independent detail sections as children.
+`EntityDetailSection` pairs a screen-level section heading with reusable panel
+content, while `EntityDetailMetadata` provides the initial creator/update
+footer. The gallery's `Detalle` tab demonstrates the contract with a DailyPlan;
+food, meal and DPM routes can reuse the same shell with entity-specific panels.
+
 `MealMenuPanel` follows the pre-existing mobile DailyPlan menu rather than the
 desktop two-column table: each full-width cell starts with the Meal entity icon
 and meal name, followed by a secondary enumeration of structured food

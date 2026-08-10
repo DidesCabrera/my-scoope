@@ -3,6 +3,11 @@ import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import {
+  EntityDetailMetadata,
+  EntityDetailPage,
+  EntityDetailSection,
+} from "@/components/details";
+import {
   KpiAllocationBar,
   MacroSummary,
   NutritionEntityCard,
@@ -61,7 +66,7 @@ const mealPanelItems: MealPanelItem[] = [
   { id: "dinner", name: "Cena", time: "20:00", foods: [{ name: "Salmón", quantity: 170, quantityUnit: "g" }, { name: "Papas", quantity: 220, quantityUnit: "g" }, { name: "Verduras", quantity: 140, quantityUnit: "g" }], calories: 610, calorieShare: 29, proteinGrams: 43, carbsGrams: 58, fatGrams: 23, proteinAllocation: 28, carbsAllocation: 38, fatAllocation: 34 },
 ];
 
-type GalleryTab = "components" | "states" | "tokens";
+type GalleryTab = "components" | "details" | "states" | "tokens";
 type Choice = "daily" | "weekly";
 
 export default function UiGalleryScreen() {
@@ -81,6 +86,7 @@ export default function UiGalleryScreen() {
         onChange={setTab}
         tabs={[
           { key: "components", label: "Componentes" },
+          { key: "details", label: "Detalle" },
           { key: "states", label: "Estados" },
           { key: "tokens", label: "Tokens" },
         ]}
@@ -250,6 +256,32 @@ export default function UiGalleryScreen() {
               <PanelAllocationBar size="compact" tone="fat" value={0} />
             </DetailSection>
           </ContentPanel>
+        </>
+      ) : null}
+
+      {tab === "details" ? (
+        <>
+          <SectionTitle detail="Primera composición reutilizable" title="Página de detalle" />
+          <EntityDetailPage
+            action={<Pill color={tokens.color.dailyPlan} label="Editar" />}
+            entity="dailyPlan"
+            indicators={[
+              { icon: "meal", label: "comidas", value: mealPanelItems.length },
+              { icon: "food", label: "alimentos", value: 9 },
+            ]}
+            nutrition={{
+              calories: 2140,
+              carbs: { grams: 238, allocation: 44 },
+              fat: { grams: 62, allocation: 26 },
+              protein: { grams: 155, allocation: 30, perKilogram: 1.8 },
+            }}
+            onBack={() => undefined}
+            title="Día de entrenamiento">
+            <EntityDetailSection detail="3 comidas" title="Comidas en este plan">
+              <MealPanels items={mealPanelItems} />
+            </EntityDetailSection>
+            <EntityDetailMetadata creator="Felipe Dides" updatedAt="Hoy, 14:30" />
+          </EntityDetailPage>
         </>
       ) : null}
 
