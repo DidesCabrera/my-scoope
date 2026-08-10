@@ -12,7 +12,7 @@ import {
   UserRound,
   Utensils,
 } from "lucide-react-native";
-import { Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
+import { Pressable, StyleProp, StyleSheet, Text, useWindowDimensions, View, ViewStyle } from "react-native";
 
 import { tokens } from "@/design/tokens";
 import { Button } from "./controls";
@@ -101,6 +101,7 @@ export function EntityHeading({
   subtitle,
   indicators,
   accessory,
+  variant = "card",
 }: {
   title: string;
   entity: EntityKind;
@@ -108,7 +109,12 @@ export function EntityHeading({
   subtitle?: string;
   indicators?: StructuralIndicator[];
   accessory?: ReactNode;
+  variant?: "card" | "page";
 }) {
+  const { width } = useWindowDimensions();
+  const page = variant === "page";
+  const pageTitleSize = width < 420 ? 22 : 24;
+  const pageTitleLineHeight = width < 420 ? 32 : 34;
   return (
     <View style={styles.headingRow}>
       <View style={styles.headingCopy}>
@@ -116,7 +122,7 @@ export function EntityHeading({
           <EntityIcon entity={entity} size="compact" />
           <Text style={styles.eyebrow}>{eyebrow ?? entityLabels[entity]}</Text>
         </View>
-        <Text style={styles.headingTitle}>{title}</Text>
+        <Text style={[styles.headingTitle, page && { fontSize: pageTitleSize, lineHeight: pageTitleLineHeight }]}>{title}</Text>
         {subtitle ? <Text style={styles.headingSubtitle}>{subtitle}</Text> : null}
         {indicators ? <StructuralIndicators indicators={indicators} /> : null}
       </View>

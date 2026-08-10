@@ -136,6 +136,9 @@ boundaries.
 `EntityHeading` remains the branded heading for entity cards and owns the
 entity icon, eyebrow and semantic color. Its composition follows the web:
 entity icon plus eyebrow, entity name, then optional structural indicators.
+Its `page` variant is reserved for extended page-cards: below 420 pt the entity
+name uses 22 pt type with a 32 pt line height; at wider widths it uses 24/34.
+The regular card variant keeps its existing 20/25 treatment.
 
 `EntityIcon` maps semantic entity kinds to the shared Lucide vocabulary and
 applies the entity color. `StructuralIndicators` is independent from the

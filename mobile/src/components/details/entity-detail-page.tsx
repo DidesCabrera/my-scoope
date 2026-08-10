@@ -59,6 +59,7 @@ export function EntityDetailPage({
             indicators={indicators}
             subtitle={subtitle}
             title={title}
+            variant="page"
           />
           <NutritionKpiSection density={density} {...nutrition} />
         </View>
