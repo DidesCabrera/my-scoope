@@ -3,6 +3,8 @@ import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import {
+  DailyPlanMealDetailList,
+  type DailyPlanMealDetailItem,
   EntityDetailMetadata,
   EntityDetailPage,
   EntityDetailSection,
@@ -64,6 +66,53 @@ const mealPanelItems: MealPanelItem[] = [
   { id: "breakfast", name: "Desayuno", time: "08:00", foods: [{ name: "Avena", quantity: 80, quantityUnit: "g" }, { name: "Yogur", quantity: 180, quantityUnit: "g" }, { name: "Plátano", quantity: 120, quantityUnit: "g" }], calories: 594, calorieShare: 28, proteinGrams: 29.8, carbsGrams: 88.4, fatGrams: 13, proteinAllocation: 20, carbsAllocation: 60, fatAllocation: 20 },
   { id: "lunch", name: "Almuerzo", time: "13:30", foods: [{ name: "Arroz", quantity: 180, quantityUnit: "g" }, { name: "Pollo", quantity: 160, quantityUnit: "g" }, { name: "Ensalada", quantity: 120, quantityUnit: "g" }], calories: 720, calorieShare: 34, proteinGrams: 52, carbsGrams: 82, fatGrams: 20, proteinAllocation: 29, carbsAllocation: 46, fatAllocation: 25 },
   { id: "dinner", name: "Cena", time: "20:00", foods: [{ name: "Salmón", quantity: 170, quantityUnit: "g" }, { name: "Papas", quantity: 220, quantityUnit: "g" }, { name: "Verduras", quantity: 140, quantityUnit: "g" }], calories: 610, calorieShare: 29, proteinGrams: 43, carbsGrams: 58, fatGrams: 23, proteinAllocation: 28, carbsAllocation: 38, fatAllocation: 34 },
+];
+
+const dailyPlanMealDetailItems: DailyPlanMealDetailItem[] = [
+  {
+    id: "breakfast-detail",
+    name: "Desayuno",
+    time: "08:00",
+    foods: foodPanelItems,
+    nutrition: {
+      calories: 594,
+      carbs: { grams: 88.4, allocation: 60 },
+      fat: { grams: 13, allocation: 20 },
+      protein: { grams: 29.8, allocation: 20, perKilogram: 0.35 },
+    },
+  },
+  {
+    id: "lunch-detail",
+    name: "Almuerzo",
+    time: "13:30",
+    foods: [
+      { ...foodPanelItems[0], id: "rice", name: "Arroz", quantity: 180, calories: 234 },
+      { ...foodPanelItems[1], id: "chicken", name: "Pollo", quantity: 160, calories: 264 },
+      { ...foodPanelItems[2], id: "salad", name: "Ensalada", calories: 72 },
+    ],
+    nutrition: {
+      calories: 720,
+      carbs: { grams: 82, allocation: 46 },
+      fat: { grams: 20, allocation: 25 },
+      protein: { grams: 52, allocation: 29, perKilogram: 0.61 },
+    },
+  },
+  {
+    id: "dinner-detail",
+    name: "Cena",
+    time: "20:00",
+    foods: [
+      { ...foodPanelItems[0], id: "salmon", name: "Salmón", quantity: 170, calories: 350 },
+      { ...foodPanelItems[1], id: "potatoes", name: "Papas", quantity: 220, calories: 170 },
+      { ...foodPanelItems[2], id: "vegetables", name: "Verduras", quantity: 140, calories: 90 },
+    ],
+    nutrition: {
+      calories: 610,
+      carbs: { grams: 58, allocation: 38 },
+      fat: { grams: 23, allocation: 34 },
+      protein: { grams: 43, allocation: 28, perKilogram: 0.51 },
+    },
+  },
 ];
 
 type GalleryTab = "components" | "details" | "states" | "tokens";
@@ -279,6 +328,9 @@ export default function UiGalleryScreen() {
             title="Día de entrenamiento">
             <EntityDetailSection detail="3 comidas" title="Comidas en este plan">
               <MealPanels items={mealPanelItems} />
+            </EntityDetailSection>
+            <EntityDetailSection detail="3 comidas" title="Detalle de cada comida">
+              <DailyPlanMealDetailList items={dailyPlanMealDetailItems} />
             </EntityDetailSection>
             <EntityDetailMetadata creator="Felipe Dides" updatedAt="Hoy, 14:30" />
           </EntityDetailPage>

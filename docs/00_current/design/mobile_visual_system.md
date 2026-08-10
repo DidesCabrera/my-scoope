@@ -169,6 +169,11 @@ initial creator/update footer. The gallery's `Detalle` tab demonstrates the
 contract with a DailyPlan; food, meal and DPM routes can reuse the same shell
 with entity-specific panels.
 
+DailyPlan detail keeps the web hierarchy: the aggregated `MealPanels` section
+is followed by `DailyPlanMealDetailList`. The latter renders an ordered meal
+sequence and reuses `NutritionEntityCard` plus `FoodPanels` for every child
+meal, rather than introducing a second child-card implementation.
+
 `MealMenuPanel` follows the pre-existing mobile DailyPlan menu rather than the
 desktop two-column table: each full-width cell starts with the Meal entity icon
 and meal name, followed by a secondary enumeration of structured food
