@@ -387,8 +387,9 @@ export default function UiGalleryScreen() {
                 fat: { grams: 62, allocation: 26 },
                 protein: { grams: 155, allocation: 30, perKilogram: 1.8 },
               }}
-              title="Día de entrenamiento propuesto"
-            />
+              title="Día de entrenamiento propuesto">
+              <MealPanels items={mealPanelItems} />
+            </NutritionEntityCard>
             <ProposalReviewActions
               description="Aprobar confirma la revisión; aplicar cambios reales será un paso posterior y explícito."
               onApprove={() => undefined}

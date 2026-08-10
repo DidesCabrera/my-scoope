@@ -193,7 +193,9 @@ second card, and the page-card reaches both viewport edges.
 `ProposalMetricGrid` and `ProposalReviewActions` cover validation content and
 the approval/rejection/cancellation workflow. Proposed Meal or DailyPlan
 content continues to reuse the existing entity cards inside that review shell.
-The gallery's `Propuestas` tab shows both levels.
+Those entity cards retain their corresponding panels: the DailyPlan example
+includes `MealPanels` with Menú, Macros and Alloc. The gallery's `Propuestas`
+tab shows both levels.
 
 DailyPlan detail keeps the web hierarchy: the aggregated `MealPanels` section
 is followed by `DailyPlanMealDetailList`. The latter renders an ordered meal
