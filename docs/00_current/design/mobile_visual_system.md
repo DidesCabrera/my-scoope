@@ -197,6 +197,11 @@ Those entity cards retain their corresponding panels: the DailyPlan example
 includes `MealPanels` with Menú, Macros and Alloc. The gallery's `Propuestas`
 tab shows both levels.
 
+`ChatProposalCard` is the compact third scale inserted in an assistant message
+after a proposal request. It shows current/previous state, a short summary,
+optional iteration labels, key comparison metrics and one explicit CTA into
+the full review; it intentionally does not embed the complete entity card.
+
 DailyPlan detail keeps the web hierarchy: the aggregated `MealPanels` section
 is followed by `DailyPlanMealDetailList`. The latter renders an ordered meal
 sequence and reuses `NutritionEntityCard` plus `FoodPanels` for every child

@@ -20,6 +20,7 @@ import {
 } from "@/components/nutrition";
 import { FoodPanels, type FoodPanelItem, MealPanels, type MealPanelItem } from "@/components/panels";
 import {
+  ChatProposalCard,
   ProposalCard,
   ProposalDetailPage,
   ProposalMetricGrid,
@@ -347,6 +348,18 @@ export default function UiGalleryScreen() {
 
       {tab === "proposals" ? (
         <>
+          <SectionTitle detail="Respuesta dentro del chat" title="Propuesta generada" />
+          <ChatProposalCard
+            adjustments={["Más proteína", "Mantener alimentos"]}
+            metrics={[
+              { label: "Actual", value: "2.050 kcal" },
+              { label: "Objetivo", value: "2.140 kcal" },
+              { label: "Alimentos", value: "Sin cambios" },
+            ]}
+            onPress={() => undefined}
+            summary="Ajusté las porciones para acercar el plan al objetivo sin reemplazar sus alimentos."
+            title="Día de entrenamiento ajustado"
+          />
           <SectionTitle detail="Resumen de bandeja" title="Card de propuesta" />
           <ProposalCard
             attachment={{ kind: "dailyPlan", name: "Día de entrenamiento propuesto" }}
