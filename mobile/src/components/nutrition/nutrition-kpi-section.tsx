@@ -2,6 +2,7 @@ import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 
 import { tokens } from "@/design/tokens";
 import { AllocationTone, KpiAllocationBar } from "./allocation-bar";
+import { CalorieValue } from "./calorie-value";
 import { ProteinPerKilogramBadge } from "./protein-per-kilogram-badge";
 
 type MacroKpi = {
@@ -67,7 +68,7 @@ export function NutritionKpiSection({
         accessible
         style={[styles.calories, compact && styles.caloriesCompact]}>
         <Text style={[styles.caloriesLabel, compact && styles.caloriesLabelCompact]}>Calorías</Text>
-        <Text style={[styles.caloriesValue, compact && styles.caloriesValueCompact]}>{rounded(calories)}</Text>
+        <CalorieValue compact={compact} value={rounded(calories)} />
         <Text style={[styles.caloriesUnit, compact && styles.caloriesLabelCompact]}>kcal</Text>
       </View>
       <View style={styles.macros}>
@@ -86,8 +87,6 @@ const styles = StyleSheet.create({
   caloriesCompact: { borderRadius: tokens.radius.lg, borderWidth: 2, width: 68 },
   caloriesLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, letterSpacing: 0 },
   caloriesLabelCompact: { fontSize: tokens.type.label },
-  caloriesValue: { color: tokens.color.textMain, fontSize: 29, fontWeight: tokens.weight.bold, fontVariant: ["tabular-nums"], letterSpacing: 0 },
-  caloriesValueCompact: { fontSize: 23 },
   caloriesUnit: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.weight.medium, letterSpacing: 0 },
   macros: { flex: 1, minWidth: 0 },
   macroRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.xs, minWidth: 0, paddingVertical: 5 },

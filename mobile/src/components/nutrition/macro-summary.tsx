@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 
 import type { MacroTotals } from "@/api/types";
+import { CalorieValue } from "@/components/nutrition/calorie-value";
 import { NutritionMetric } from "@/components/nutrition/nutrition-metric";
 import { tokens } from "@/design/tokens";
 
@@ -17,7 +18,7 @@ export function MacroSummary({ totals }: { totals?: MacroTotals }) {
   return (
     <View style={styles.row}>
       <View style={styles.kcal}>
-        <Text style={styles.kcalValue}>{value(totals?.total_kcal)}</Text>
+        <CalorieValue value={value(totals?.total_kcal)} />
         <Text style={styles.kcalLabel}>kcal</Text>
       </View>
       <View style={styles.macros}>
@@ -32,7 +33,6 @@ export function MacroSummary({ totals }: { totals?: MacroTotals }) {
 const styles = StyleSheet.create({
   row: { alignItems: "stretch", flexDirection: "row", gap: tokens.spacing.md },
   kcal: { alignItems: "center", backgroundColor: tokens.color.kcalSurface, borderColor: tokens.color.kcalBorder, borderRadius: tokens.radius.card, borderWidth: 2, justifyContent: "center", minHeight: 102, width: 102 },
-  kcalValue: { color: tokens.color.textMain, fontSize: 29, fontWeight: "800" },
   kcalLabel: { color: tokens.color.textMuted, fontSize: 12, fontWeight: "700" },
   macros: { flex: 1, justifyContent: "center" },
 });

@@ -100,6 +100,10 @@ Android); web uses the `system-ui` stack. Nutrition KPI labels use regular
 weight, the calorie value uses bold, and the complete KPI composition keeps
 neutral tracking (`letterSpacing: 0`).
 
+`CalorieValue` owns the shared calorie-number typography used by both
+`MacroSummary` and `NutritionKpiSection`, including bold weight, tabular
+figures and neutral tracking.
+
 ## Explicit platform differences
 
 Shared spacing, radii, typography, nutrition and entity semantics live under
