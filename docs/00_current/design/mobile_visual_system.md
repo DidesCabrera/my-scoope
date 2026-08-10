@@ -36,6 +36,7 @@ Screen
       -> nested muted Card
       -> MacroSummary / NutrientProgress / NutritionMetric
       -> KpiAllocationBar / PanelAllocationBar
+      -> NutritionKpiSection / ProteinPerKilogramBadge
       -> Pill / InlineNotice
       -> Button / Field / ChoiceRow
 ```
@@ -75,6 +76,13 @@ nutrition tones. KPI composition keeps the colored percentage cell next to its
 track; panel composition overlays the value on the track and supports regular
 and compact density. A future calories tone must extend the neutral token
 contract and reuse these components rather than introduce a third bar.
+
+`NutritionKpiSection` is the canonical composition of total calories, macro
+grams, protein-per-kilogram and the three KPI allocation bars. It receives
+already-computed presentation values and never recalculates domain nutrition.
+Regular density belongs in main entity surfaces; compact density belongs in
+nested cards and panels. `ProteinPerKilogramBadge` owns the reusable PPK label,
+locale-aware formatting and accessible description.
 
 ## Explicit platform differences
 

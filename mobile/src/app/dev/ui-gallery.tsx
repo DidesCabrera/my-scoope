@@ -5,6 +5,7 @@ import { StyleSheet, Text, View } from "react-native";
 import {
   KpiAllocationBar,
   MacroSummary,
+  NutritionKpiSection,
   NutrientProgress,
   NutritionMetric,
   PanelAllocationBar,
@@ -116,6 +117,25 @@ export default function UiGalleryScreen() {
               <KpiAllocationBar style={styles.allocationBarInRow} tone="fat" value={26} />
             </View>
           </Card>
+
+          <SectionTitle detail="Composición principal" title="Sección KPI" />
+          <Card>
+            <NutritionKpiSection
+              calories={2140}
+              carbs={{ grams: 238, allocation: 44 }}
+              fat={{ grams: 62, allocation: 26 }}
+              protein={{ grams: 155, allocation: 30, perKilogram: 1.8 }}
+            />
+          </Card>
+          <ContentPanel description="La misma jerarquía con menor densidad para cards anidadas." muted title="Sección KPI compacta">
+            <NutritionKpiSection
+              calories={640}
+              carbs={{ grams: 72, allocation: 45 }}
+              density="compact"
+              fat={{ grams: 18, allocation: 25 }}
+              protein={{ grams: 48, allocation: 30, perKilogram: 0.6 }}
+            />
+          </ContentPanel>
 
           <SectionTitle detail="Regular y compacta" title="Alloc en paneles" />
           <ContentPanel description="El mismo porcentaje base cambia de composición según su contexto." title="Distribución objetivo">

@@ -56,8 +56,10 @@ pantallas no deben importar archivos internos de esta carpeta.
 Los componentes nutricionales se exportan desde
 `mobile/src/components/nutrition/index.ts`: `MacroSummary`,
 `NutritionMetric`, `NutrientProgress`, `KpiAllocationBar` y
-`PanelAllocationBar`. Las dos barras alloc comparten cálculo y colores
-nutricionales; solo cambia su composición contextual.
+`PanelAllocationBar`. Las dos barras alloc comparten normalización y colores
+nutricionales; solo cambia su composición contextual. `NutritionKpiSection`
+compone calorías, gramos, PPK y las tres barras KPI sin calcular datos de
+dominio; `ProteinPerKilogramBadge` es la etiqueta PPK reutilizable.
 
 ## Features con estilos propios
 

@@ -8,6 +8,7 @@ type AllocationBarProps = {
   value: number;
   tone: AllocationTone;
   accessibilityLabel?: string;
+  size?: "compact" | "regular";
   style?: StyleProp<ViewStyle>;
 };
 
@@ -30,15 +31,21 @@ function progressAccessibility(value: number, tone: AllocationTone, accessibilit
   };
 }
 
-export function KpiAllocationBar({ value, tone, accessibilityLabel, style }: AllocationBarProps) {
+export function KpiAllocationBar({
+  value,
+  tone,
+  accessibilityLabel,
+  size = "regular",
+  style,
+}: AllocationBarProps) {
   const normalized = normalizedPercentage(value);
   const color = tokens.color[tone];
   return (
     <View
       {...progressAccessibility(normalized, tone, accessibilityLabel)}
-      style={[styles.kpiContainer, style]}>
-      <View style={[styles.kpiPercentage, { backgroundColor: color }]}>
-        <Text style={styles.kpiPercentageText}>{Math.round(normalized)}%</Text>
+      style={[styles.kpiContainer, size === "compact" && styles.kpiContainerCompact, style]}>
+      <View style={[styles.kpiPercentage, size === "compact" && styles.kpiPercentageCompact, { backgroundColor: color }]}>
+        <Text style={[styles.kpiPercentageText, size === "compact" && styles.kpiPercentageTextCompact]}>{Math.round(normalized)}%</Text>
       </View>
       <View style={styles.kpiTrack}>
         <View style={[styles.fill, { backgroundColor: color, width: `${normalized}%` }]} />
@@ -53,7 +60,7 @@ export function PanelAllocationBar({
   accessibilityLabel,
   size = "regular",
   style,
-}: AllocationBarProps & { size?: "compact" | "regular" }) {
+}: AllocationBarProps) {
   const normalized = normalizedPercentage(value);
   const color = tokens.color[tone];
   return (
@@ -69,8 +76,11 @@ export function PanelAllocationBar({
 const styles = StyleSheet.create({
   fill: { bottom: 0, left: 0, position: "absolute", top: 0 },
   kpiContainer: { flexDirection: "row", height: 24, minWidth: 0, overflow: "hidden", width: "100%" },
+  kpiContainerCompact: { height: 18 },
   kpiPercentage: { alignItems: "center", borderBottomLeftRadius: 6, borderRightColor: "rgba(0, 0, 0, 0.18)", borderRightWidth: 1, borderTopLeftRadius: 6, justifyContent: "center", paddingHorizontal: tokens.spacing.sm, width: 68 },
+  kpiPercentageCompact: { paddingHorizontal: tokens.spacing.xs, width: 58 },
   kpiPercentageText: { color: "#000000", fontSize: tokens.type.caption, fontWeight: "700", fontVariant: ["tabular-nums"] },
+  kpiPercentageTextCompact: { fontSize: tokens.type.label },
   kpiTrack: { backgroundColor: tokens.color.allocationBarTrack, borderBottomRightRadius: 6, borderTopRightRadius: 6, flex: 1, minWidth: 0, overflow: "hidden" },
   panelTrack: { backgroundColor: tokens.color.allocationPanelTrack, borderRadius: 4, height: 24, justifyContent: "center", overflow: "hidden", width: "100%" },
   panelTrackCompact: { height: 18 },
