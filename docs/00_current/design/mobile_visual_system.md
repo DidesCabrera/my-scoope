@@ -88,9 +88,9 @@ The calorie surface is square in both KPI densities. Its number uses the
 compact `CalorieValue` size in both cases so the square changes the composition
 without increasing the numeric emphasis. The gallery exposes controlled 90%,
 85% and 83% square scales for comparison, with a smaller `Calorías` label on
-all three trials. The 83% trial also reduces macro-row vertical padding from
-5 px to 4 px and KPI bar height from 24 px to 22 px; the production default
-remains 100% until one is selected.
+all three trials. The 85% and 83% trials also reduce macro-row vertical padding
+from 5 px to 4 px and KPI bar height from 24 px to 22 px; the production
+default remains 100% until one is selected.
 
 Each macro KPI is a single horizontal row: short label, reserved PPK slot,
 grams and allocation bar. Product copy uses `Carbos`; the formal

@@ -235,6 +235,7 @@ export default function UiGalleryScreen() {
               calories={2140}
               carbs={{ grams: 238, allocation: 44 }}
               fat={{ grams: 62, allocation: 26 }}
+              macroRowSpacing="slightlyTight"
               protein={{ grams: 155, allocation: 30, perKilogram: 1.8 }}
             />
           </ContentPanel>
