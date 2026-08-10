@@ -23,6 +23,7 @@ import {
   ChatProposalCard,
   ProposalCard,
   ProposalDetailPage,
+  ProposalEntitySection,
   ProposalObjectiveSection,
   ProposalReviewActions,
 } from "@/components/proposals";
@@ -371,7 +372,6 @@ export default function UiGalleryScreen() {
           />
           <SectionTitle detail="Revisión antes de aplicar" title="Detalle de propuesta" />
           <ProposalDetailPage
-            attachment={{ kind: "dailyPlan", name: "Día de entrenamiento propuesto" }}
             isRead
             objectives={
               <ProposalObjectiveSection
@@ -385,22 +385,26 @@ export default function UiGalleryScreen() {
             status="pending"
             summary="Crear un DailyPlan alto en proteína para un día de entrenamiento."
             title="Propuesta de DailyPlan"
-            typeLabel="Nuevo DailyPlan">
-            <NutritionEntityCard
-              entity="dailyPlan"
-              indicators={[
-                { icon: "meal", label: "comidas", value: 3 },
-                { icon: "food", label: "alimentos", value: 9 },
-              ]}
-              nutrition={{
-                calories: 2140,
-                carbs: { grams: 238, allocation: 44 },
-                fat: { grams: 62, allocation: 26 },
-                protein: { grams: 155, allocation: 30, perKilogram: 1.8 },
-              }}
-              title="Día de entrenamiento propuesto">
-              <MealPanels items={mealPanelItems} />
-            </NutritionEntityCard>
+            typeLabel="Nuevo DailyPlan"
+            proposedEntity={
+              <ProposalEntitySection>
+                <NutritionEntityCard
+                  entity="dailyPlan"
+                  indicators={[
+                    { icon: "meal", label: "comidas", value: 3 },
+                    { icon: "food", label: "alimentos", value: 9 },
+                  ]}
+                  nutrition={{
+                    calories: 2140,
+                    carbs: { grams: 238, allocation: 44 },
+                    fat: { grams: 62, allocation: 26 },
+                    protein: { grams: 155, allocation: 30, perKilogram: 1.8 },
+                  }}
+                  title="Día de entrenamiento propuesto">
+                  <MealPanels items={mealPanelItems} />
+                </NutritionEntityCard>
+              </ProposalEntitySection>
+            }>
             <ProposalReviewActions
               description="Aprobar confirma la revisión; aplicar cambios reales será un paso posterior y explícito."
               onApprove={() => undefined}

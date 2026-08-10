@@ -2,12 +2,10 @@ import { Paperclip } from "lucide-react-native";
 import type { PropsWithChildren, ReactNode } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
-import { Button, Card } from "@/components/ui";
+import { Button, Card, SectionHeading } from "@/components/ui";
 import { NutritionKpiSection, type NutritionKpiSectionProps } from "@/components/nutrition";
 import { tokens } from "@/design/tokens";
 import {
-  ProposalAttachment,
-  type ProposalAttachmentData,
   ProposalHeading,
   ProposalStatusBadge,
   type ProposalStatus,
@@ -15,9 +13,9 @@ import {
 } from "./proposal-card";
 
 export function ProposalDetailPage({
-  attachment, children, isRead, objectives, receivedAt, status, summary, title, typeLabel,
+  children, isRead, objectives, proposedEntity, receivedAt, status, summary, title, typeLabel,
 }: PropsWithChildren<{
-  attachment?: ProposalAttachmentData; isRead: boolean; objectives?: ReactNode;
+  isRead: boolean; objectives?: ReactNode; proposedEntity?: ReactNode;
   receivedAt: string; status: ProposalStatus; summary?: string;
   title: string; typeLabel?: string;
 }>) {
@@ -31,7 +29,7 @@ export function ProposalDetailPage({
         </View>
         {summary ? <ProposalRequestSummary objectives={objectives} requirement={summary} /> : objectives}
       </View>
-      {attachment ? <ProposalAttachmentSection attachment={attachment} /> : null}
+      {proposedEntity}
       {children}
     </View>
   );
@@ -49,14 +47,11 @@ export function ProposalRequestSummary({ objectives, requirement }: { objectives
   );
 }
 
-export function ProposalAttachmentSection({ attachment, title = "Entidad propuesta" }: { attachment: ProposalAttachmentData; title?: string }) {
+export function ProposalEntitySection({ children, detail, title = "Entidad propuesta" }: PropsWithChildren<{ detail?: string; title?: string }>) {
   return (
     <View style={styles.attachmentSection}>
-      <View style={styles.attachmentHeader}>
-        <Paperclip color={tokens.color.textMain} size={18} />
-        <Text style={styles.sectionTitle}>{title}</Text>
-      </View>
-      <ProposalAttachment attachment={attachment} />
+      <SectionHeading detail={detail} icon={<Paperclip color={tokens.color.proposal} size={18} />} title={title} />
+      {children}
     </View>
   );
 }
@@ -117,7 +112,6 @@ const styles = StyleSheet.create({
   requestCopy: { gap: tokens.spacing.xs },
   requestText: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, lineHeight: 20 },
   attachmentSection: { gap: tokens.spacing.sm, minWidth: 0 },
-  attachmentHeader: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
   sectionHeader: { gap: 3 },
   objectiveSection: { gap: tokens.spacing.sm, minWidth: 0 },
   sectionTitle: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.bold, lineHeight: 22 },

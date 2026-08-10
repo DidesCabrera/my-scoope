@@ -127,7 +127,10 @@ neutral tracking, optional regular-weight descriptions and an optional trailing
 accessory. `ContentPanel` uses the regular variant and `DetailSection` uses the
 compact variant.
 
-`SectionTitle` remains a screen-level section divider outside cards.
+`SectionHeading` is the canonical structural heading for a section. It combines
+a title with optional structural detail (for example, an item count) and an
+optional semantic icon; it is therefore more than a typographic H1/H2 style.
+`SectionTitle` remains only as a compatibility alias.
 `EntityHeading` remains the branded heading for entity cards and owns the
 entity icon, eyebrow and semantic color. Its composition follows the web:
 entity icon plus eyebrow, entity name, then optional structural indicators.
@@ -164,8 +167,8 @@ panels and charts are intentionally excluded from this first stage.
 detail page is itself one extended entity-colored card: entity heading, KPI,
 subsequent sections and metadata all live inside that single page surface.
 Only optional back navigation and page actions sit outside it. Internal panels
-retain their own functional surfaces. `EntityDetailSection` pairs a section
-heading with reusable panel content, while `EntityDetailMetadata` provides the
+retain their own functional surfaces. `EntityDetailSection` pairs the shared
+`SectionHeading` with reusable panel content, while `EntityDetailMetadata` provides the
 initial creator/update footer. The gallery's `Detalle` tab demonstrates the
 contract with a DailyPlan; food, meal and DPM routes can reuse the same shell
 with entity-specific panels.
@@ -211,8 +214,9 @@ requested together with the information and objectives used to evaluate the
 proposal. `ProposalObjectiveKpiSection` presents nutrition targets through the
 canonical KPI composition, and `ProposalObjectiveSection` places it immediately
 below the requirement copy in that same block. Technical intent identifiers are
-not shown in the interface. `ProposalAttachmentSection` uses a paperclip icon and
-a section title instead of an `Adjunto` eyebrow or a nested card. `ChatProposalCard`
+not shown in the interface. `ProposalEntitySection` groups the proposed entity
+card under the shared `SectionHeading`, using a paperclip icon. It has no
+`Adjunto` eyebrow, nested card or redundant attachment-name pill. `ChatProposalCard`
 reuses `ProposalCard`; `Lista para revisión`
 is a status label, not a separate visual object type.
 

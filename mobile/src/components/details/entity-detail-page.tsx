@@ -6,7 +6,7 @@ import {
   type NutritionEntityCardProps,
   NutritionKpiSection,
 } from "@/components/nutrition";
-import { ContentPanel, EntityHeading, SectionTitle } from "@/components/ui";
+import { ContentPanel, EntityHeading, SectionHeading } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 export type EntityDetailPageProps = PropsWithChildren<
@@ -75,7 +75,7 @@ export function EntityDetailSection({
 }: PropsWithChildren<{ detail?: string; title: string }>) {
   return (
     <View style={styles.section}>
-      <SectionTitle detail={detail} title={title} />
+      <SectionHeading detail={detail} title={title} />
       {children}
     </View>
   );
