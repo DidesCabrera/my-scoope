@@ -92,6 +92,10 @@ all three trials. The 85% and 83% trials also reduce macro-row vertical padding
 from 5 px to 4 px and KPI bar height from 24 px to 22 px; the production
 default remains 100% until one is selected.
 
+The gallery keeps the original 90% trial and a parallel `90% · Alloc refinado`
+trial that applies the same 4 px row padding and 22 px KPI bars. This isolates
+the effect of macro spacing and bar height from the calorie-square scale.
+
 Each macro KPI is a single horizontal row: short label, reserved PPK slot,
 grams and allocation bar. Product copy uses `Carbos`; the formal
 `carbohidratos` term remains only in label/OCR parsing rules for source-data
