@@ -129,6 +129,19 @@ foreground tokens for contrast on native surfaces.
 `NutritionKpiSection`. It owns only the separator and spacing between those
 sections; both the heading and KPI remain independently reusable.
 
+## Entity panels
+
+The native panel system mirrors the mobile Django information architecture
+without copying desktop tables. `PanelSurface`, `EntityPanelTabs`, `PanelBody`
+and `PanelEmptyState` own the shared interaction and surface contract.
+
+`FoodPanels` is used by Meal and DPM entities and exposes `Alimentos`, `Macros`
+and `Alloc`. `MealPanels` is used by DailyPlan and exposes `Menú`, `Macros` and
+`Alloc`. Their content panels (`FoodQuantityPanel`, `MealMenuPanel`,
+`NutritionMacrosPanel`, `NutritionAllocationPanel`) remain independently
+reusable. Food has no nested panels in the current web contract. Program
+panels and charts are intentionally excluded from this first stage.
+
 ## Explicit platform differences
 
 Shared spacing, radii, typography, nutrition and entity semantics live under

@@ -2,12 +2,13 @@ import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 
 import { tokens } from "@/design/tokens";
 
-export type AllocationTone = "protein" | "carbs" | "fat";
+export type AllocationTone = "protein" | "carbs" | "fat" | "calories";
 
 type AllocationBarProps = {
   value: number;
   tone: AllocationTone;
   accessibilityLabel?: string;
+  displayValue?: number | string;
   size?: "compact" | "regular";
   style?: StyleProp<ViewStyle>;
 };
@@ -16,7 +17,12 @@ const toneLabels: Record<AllocationTone, string> = {
   protein: "Proteína",
   carbs: "Carbos",
   fat: "Grasas",
+  calories: "Calorías",
 };
+
+function toneColor(tone: AllocationTone): string {
+  return tone === "calories" ? tokens.color.kcalBorder : tokens.color[tone];
+}
 
 function normalizedPercentage(value: number): number {
   if (!Number.isFinite(value)) return 0;
@@ -39,7 +45,7 @@ export function KpiAllocationBar({
   style,
 }: AllocationBarProps) {
   const normalized = normalizedPercentage(value);
-  const color = tokens.color[tone];
+  const color = toneColor(tone);
   return (
     <View
       {...progressAccessibility(normalized, tone, accessibilityLabel)}
@@ -58,17 +64,18 @@ export function PanelAllocationBar({
   value,
   tone,
   accessibilityLabel,
+  displayValue,
   size = "regular",
   style,
 }: AllocationBarProps) {
   const normalized = normalizedPercentage(value);
-  const color = tokens.color[tone];
+  const color = toneColor(tone);
   return (
     <View
       {...progressAccessibility(normalized, tone, accessibilityLabel)}
       style={[styles.panelTrack, size === "compact" && styles.panelTrackCompact, style]}>
       <View style={[styles.fill, { backgroundColor: color, width: `${normalized}%` }]} />
-      <Text style={styles.panelPercentage}>{Math.round(normalized)}%</Text>
+      <Text style={styles.panelPercentage}>{displayValue ?? `${Math.round(normalized)}%`}</Text>
     </View>
   );
 }

@@ -11,6 +11,7 @@ import {
   NutritionMetric,
   PanelAllocationBar,
 } from "@/components/nutrition";
+import { FoodPanels, type FoodPanelItem, MealPanels, type MealPanelItem } from "@/components/panels";
 import {
   AppHeader,
   Brand,
@@ -46,6 +47,18 @@ const entities: { key: EntityKind; label: string }[] = [
   { key: "comparator", label: "Comparator" },
   { key: "home", label: "Home" },
   { key: "profile", label: "Profile" },
+];
+
+const foodPanelItems: FoodPanelItem[] = [
+  { id: "oats", name: "Avena integral", quantity: 80, quantityUnit: "g", calories: 311, calorieShare: 34, proteinGrams: 10.5, carbsGrams: 52.8, fatGrams: 5.5, proteinAllocation: 14, carbsAllocation: 71, fatAllocation: 15 },
+  { id: "yogurt", name: "Yogur griego", quantity: 180, quantityUnit: "g", calories: 176, calorieShare: 19, proteinGrams: 18, carbsGrams: 8.2, fatGrams: 7.1, proteinAllocation: 41, carbsAllocation: 19, fatAllocation: 40 },
+  { id: "banana", name: "Plátano", quantity: 120, quantityUnit: "g", calories: 107, calorieShare: 12, proteinGrams: 1.3, carbsGrams: 27.4, fatGrams: 0.4, proteinAllocation: 5, carbsAllocation: 92, fatAllocation: 3 },
+];
+
+const mealPanelItems: MealPanelItem[] = [
+  { id: "breakfast", name: "Desayuno", time: "08:00", foods: ["Avena", "Yogur", "Plátano"], calories: 594, calorieShare: 28, proteinGrams: 29.8, carbsGrams: 88.4, fatGrams: 13, proteinAllocation: 20, carbsAllocation: 60, fatAllocation: 20 },
+  { id: "lunch", name: "Almuerzo", time: "13:30", foods: ["Arroz", "Pollo", "Ensalada"], calories: 720, calorieShare: 34, proteinGrams: 52, carbsGrams: 82, fatGrams: 20, proteinAllocation: 29, carbsAllocation: 46, fatAllocation: 25 },
+  { id: "dinner", name: "Cena", time: "20:00", foods: ["Salmón", "Papas", "Verduras"], calories: 610, calorieShare: 29, proteinGrams: 43, carbsGrams: 58, fatGrams: 23, proteinAllocation: 28, carbsAllocation: 38, fatAllocation: 34 },
 ];
 
 type GalleryTab = "components" | "states" | "tokens";
@@ -138,6 +151,35 @@ export default function UiGalleryScreen() {
             }}
             title="Día de entrenamiento"
           />
+          <SectionTitle detail="Meal y DPM" title="Paneles de alimentos" />
+          <NutritionEntityCard
+            entity="meal"
+            indicators={[{ icon: "food", label: "alimentos", value: foodPanelItems.length }]}
+            nutrition={{
+              calories: 594,
+              carbs: { grams: 88.4, allocation: 60 },
+              fat: { grams: 13, allocation: 20 },
+              protein: { grams: 29.8, allocation: 20, perKilogram: 0.35 },
+            }}
+            title="Desayuno pre-entreno">
+            <FoodPanels items={foodPanelItems} />
+          </NutritionEntityCard>
+          <SectionTitle detail="DailyPlan" title="Paneles de comidas" />
+          <NutritionEntityCard
+            entity="dailyPlan"
+            indicators={[
+              { icon: "meal", label: "comidas", value: mealPanelItems.length },
+              { icon: "food", label: "alimentos", value: 9 },
+            ]}
+            nutrition={{
+              calories: 2140,
+              carbs: { grams: 238, allocation: 44 },
+              fat: { grams: 62, allocation: 26 },
+              protein: { grams: 155, allocation: 30, perKilogram: 1.8 },
+            }}
+            title="Día de entrenamiento">
+            <MealPanels items={mealPanelItems} />
+          </NutritionEntityCard>
           <CollectionEmptyState
             actionLabel="Crear elemento"
             description="Este estado mantiene la acción principal junto al contexto de la colección."

@@ -14,6 +14,7 @@ import {
 
 export type NutritionEntityCardProps = {
   accessory?: ReactNode;
+  children?: ReactNode;
   density?: "compact" | "regular";
   entity: EntityKind;
   eyebrow?: string;
@@ -27,6 +28,7 @@ export type NutritionEntityCardProps = {
 
 export function NutritionEntityCard({
   accessory,
+  children,
   density = "regular",
   entity,
   eyebrow,
@@ -50,6 +52,7 @@ export function NutritionEntityCard({
       <View style={[styles.kpi, density === "compact" && styles.kpiCompact]}>
         <NutritionKpiSection density={density} {...nutrition} />
       </View>
+      {children}
     </EntityCard>
   );
 }
