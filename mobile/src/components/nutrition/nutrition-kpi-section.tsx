@@ -10,7 +10,7 @@ type MacroKpi = {
   allocation: number;
 };
 
-export type CalorieSurfaceScale = 0.8 | 0.85 | 0.9 | 1;
+export type CalorieSurfaceScale = 0.83 | 0.85 | 0.9 | 1;
 
 export type NutritionKpiSectionProps = {
   calories: number;
@@ -23,7 +23,7 @@ export type NutritionKpiSectionProps = {
 };
 
 const calorieSurfaceHeights: Record<CalorieSurfaceScale, `${number}%`> = {
-  0.8: "80%",
+  0.83: "83%",
   0.85: "85%",
   0.9: "90%",
   1: "100%",
@@ -82,7 +82,14 @@ export function NutritionKpiSection({
           compact && styles.caloriesCompact,
           { height: calorieSurfaceHeights[calorieSurfaceScale] },
         ]}>
-        <Text style={[styles.caloriesLabel, compact && styles.caloriesLabelCompact]}>Calorías</Text>
+        <Text
+          style={[
+            styles.caloriesLabel,
+            compact && styles.caloriesLabelCompact,
+            calorieSurfaceScale < 1 && styles.caloriesLabelTrial,
+          ]}>
+          Calorías
+        </Text>
         <CalorieValue compact value={rounded(calories)} />
         <Text style={[styles.caloriesUnit, compact && styles.caloriesLabelCompact]}>kcal</Text>
       </View>
@@ -102,6 +109,7 @@ const styles = StyleSheet.create({
   caloriesCompact: { borderRadius: tokens.radius.lg, borderWidth: 2 },
   caloriesLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, letterSpacing: 0 },
   caloriesLabelCompact: { fontSize: tokens.type.label },
+  caloriesLabelTrial: { fontSize: 10 },
   caloriesUnit: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.weight.medium, letterSpacing: 0 },
   macros: { flex: 1, minWidth: 0 },
   macroRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.xs, minWidth: 0, paddingVertical: 5 },

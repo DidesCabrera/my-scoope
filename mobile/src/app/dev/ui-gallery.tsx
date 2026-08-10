@@ -238,9 +238,9 @@ export default function UiGalleryScreen() {
               protein={{ grams: 155, allocation: 30, perKilogram: 1.8 }}
             />
           </ContentPanel>
-          <ContentPanel description="Superficie calórica cuadrada reducida en ancho y alto." muted title="Prueba −20%">
+          <ContentPanel description="Superficie calórica cuadrada reducida en ancho y alto." muted title="Prueba −17%">
             <NutritionKpiSection
-              calorieSurfaceScale={0.8}
+              calorieSurfaceScale={0.83}
               calories={2140}
               carbs={{ grams: 238, allocation: 44 }}
               fat={{ grams: 62, allocation: 26 }}
