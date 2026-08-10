@@ -105,6 +105,18 @@ neutral tracking (`letterSpacing: 0`).
 proportional figures and neutral tracking for a compact native display.
 Tabular figures remain reserved for aligned grams, percentages and PPK data.
 
+## Card headings
+
+`CardHeader` is the generic heading inside a card or panel. Its regular title
+uses 16 pt semibold text; its compact title uses 13 pt semibold text. Both use
+neutral tracking, optional regular-weight descriptions and an optional trailing
+accessory. `ContentPanel` uses the regular variant and `DetailSection` uses the
+compact variant.
+
+`SectionTitle` remains a screen-level section divider outside cards.
+`EntityHeading` remains the branded heading for entity cards and owns the
+entity marker, eyebrow and semantic color.
+
 ## Explicit platform differences
 
 Shared spacing, radii, typography, nutrition and entity semantics live under

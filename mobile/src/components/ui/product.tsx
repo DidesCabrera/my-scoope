@@ -66,6 +66,33 @@ export function EntityCard({
   );
 }
 
+export function CardHeader({
+  title,
+  description,
+  accessory,
+  density = "regular",
+}: {
+  title: string;
+  description?: string;
+  accessory?: ReactNode;
+  density?: "compact" | "regular";
+}) {
+  const compact = density === "compact";
+  return (
+    <View style={[styles.cardHeader, compact && styles.cardHeaderCompact]}>
+      <View style={[styles.cardHeaderCopy, compact && styles.cardHeaderCopyCompact]}>
+        <Text style={[styles.cardHeaderTitle, compact && styles.cardHeaderTitleCompact]}>{title}</Text>
+        {description ? (
+          <Text style={[styles.cardHeaderDescription, compact && styles.cardHeaderDescriptionCompact]}>
+            {description}
+          </Text>
+        ) : null}
+      </View>
+      {accessory}
+    </View>
+  );
+}
+
 export function ContentPanel({
   title,
   description,
@@ -75,15 +102,7 @@ export function ContentPanel({
 }: PropsWithChildren<{ title?: string; description?: string; action?: ReactNode; muted?: boolean }>) {
   return (
     <Card muted={muted}>
-      {title ? (
-        <View style={styles.panelHeader}>
-          <View style={styles.panelCopy}>
-            <Text style={styles.panelTitle}>{title}</Text>
-            {description ? <Text style={styles.panelDescription}>{description}</Text> : null}
-          </View>
-          {action}
-        </View>
-      ) : null}
+      {title ? <CardHeader accessory={action} description={description} title={title} /> : null}
       {children}
     </Card>
   );
@@ -126,13 +145,7 @@ export function DetailSection({
 }: PropsWithChildren<{ title: string; description?: string; action?: ReactNode }>) {
   return (
     <View style={styles.detailSection}>
-      <View style={styles.panelHeader}>
-        <View style={styles.panelCopy}>
-          <Text style={styles.panelTitle}>{title}</Text>
-          {description ? <Text style={styles.panelDescription}>{description}</Text> : null}
-        </View>
-        {action}
-      </View>
+      <CardHeader accessory={action} density="compact" description={description} title={title} />
       {children}
     </View>
   );
@@ -181,10 +194,14 @@ const styles = StyleSheet.create({
   eyebrow: { fontSize: tokens.type.label, fontWeight: "900", letterSpacing: 1, textTransform: "uppercase" },
   headingTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },
   headingSubtitle: { color: tokens.color.textSoft, fontSize: tokens.type.caption, lineHeight: 18 },
-  panelHeader: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
-  panelCopy: { flex: 1, gap: tokens.spacing.xs },
-  panelTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },
-  panelDescription: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 19 },
+  cardHeader: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
+  cardHeaderCompact: { gap: tokens.spacing.sm },
+  cardHeaderCopy: { flex: 1, gap: tokens.spacing.xs },
+  cardHeaderCopyCompact: { gap: 2 },
+  cardHeaderTitle: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.semibold, letterSpacing: 0, lineHeight: 21 },
+  cardHeaderTitleCompact: { fontSize: tokens.type.caption, lineHeight: 18 },
+  cardHeaderDescription: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, letterSpacing: 0, lineHeight: 18 },
+  cardHeaderDescriptionCompact: { fontSize: tokens.type.label, lineHeight: 16 },
   tabs: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.lg, flexDirection: "row", gap: tokens.spacing.xs, padding: tokens.spacing.xs },
   tab: { alignItems: "center", borderRadius: tokens.radius.md, flex: 1, flexDirection: "row", gap: 5, justifyContent: "center", minHeight: 44, paddingHorizontal: tokens.spacing.sm },
   tabSelected: { backgroundColor: tokens.color.textMain },

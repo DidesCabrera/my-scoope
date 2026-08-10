@@ -15,6 +15,7 @@ import {
   Brand,
   Button,
   Card,
+  CardHeader,
   ChoiceRow,
   CollectionEmptyState,
   ContentPanel,
@@ -73,12 +74,25 @@ export default function UiGalleryScreen() {
 
       {tab === "components" ? (
         <>
-          <SectionTitle detail="Jerarquía compartida" title="Producto" />
+          <SectionTitle detail="Genérico y anidado" title="Títulos de card" />
+          <Card>
+            <CardHeader
+              accessory={<Pill label="Acción" />}
+              description="Encabezado estándar para una superficie de contenido."
+              title="Título de card"
+            />
+            <CardHeader
+              density="compact"
+              description="Variante para contenido anidado o de mayor densidad."
+              title="Título compacto"
+            />
+          </Card>
           <ContentPanel description="Panel principal que agrupa información relacionada." title="ContentPanel">
             <DetailSection description="Sección anidada con encabezado y acción opcional." title="DetailSection">
               <Text style={textStyles.body}>Contenido compuesto sin replicar estilos de superficie.</Text>
             </DetailSection>
           </ContentPanel>
+          <SectionTitle detail="Identidad semántica" title="Título de entidad" />
           <EntityCard
             accessory={<Pill color={tokens.color.dailyPlan} label="Activo" />}
             entity="dailyPlan"
