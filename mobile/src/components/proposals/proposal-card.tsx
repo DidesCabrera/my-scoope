@@ -1,4 +1,4 @@
-import { Mail, MailOpen, Paperclip, Sparkles } from "lucide-react-native";
+import { Mail, MailOpen, Paperclip } from "lucide-react-native";
 import type { ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -66,15 +66,16 @@ export function ProposalCard({
 
 export function ProposalHeading({ isRead, receivedAt, title, detail = false }: { isRead: boolean; receivedAt: string; title: string; detail?: boolean }) {
   return (
-    <View style={styles.heading}>
-      <View style={styles.copy}>
-        <Text style={[styles.title, detail && styles.detailTitle]}>{title}</Text>
-        <View style={styles.received}>
-          {isRead ? <MailOpen color={tokens.color.textMuted} size={14} /> : <Mail color={tokens.color.textMuted} size={14} />}
-          <Text style={styles.receivedText}>{receivedAt}</Text>
-        </View>
+    <View style={styles.copy}>
+      <View style={styles.entityEyebrow}>
+        <EntityIcon entity="proposal" size="compact" />
+        <Text style={styles.headingEyebrow}>Propuesta</Text>
       </View>
-      <View style={styles.icon}><Sparkles color={tokens.color.entityIconForeground} size={14} /></View>
+      <Text style={[styles.title, detail && styles.detailTitle]}>{title}</Text>
+      <View style={styles.received}>
+        {isRead ? <MailOpen color={tokens.color.textMuted} size={14} /> : <Mail color={tokens.color.textMuted} size={14} />}
+        <Text style={styles.receivedText}>{receivedAt}</Text>
+      </View>
     </View>
   );
 }
@@ -89,13 +90,13 @@ export const proposalTextStyles = StyleSheet.create({
 
 const styles = StyleSheet.create({
   pressed: { opacity: 0.72 },
-  heading: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
-  copy: { flex: 1, gap: tokens.spacing.compact, minWidth: 0 },
+  copy: { gap: tokens.spacing.compact, minWidth: 0 },
+  entityEyebrow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },
+  headingEyebrow: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.bold, letterSpacing: 0, textTransform: "uppercase" },
   title: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: tokens.weight.bold, lineHeight: 24 },
   detailTitle: { fontSize: tokens.type.title, lineHeight: 30 },
   received: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },
   receivedText: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.regular },
-  icon: { alignItems: "center", backgroundColor: tokens.color.proposal, borderRadius: tokens.radius.sm, height: 22, justifyContent: "center", width: 22 },
   status: { alignSelf: "flex-start", borderRadius: tokens.radius.pill, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 6 },
   statusText: { fontSize: tokens.type.label, fontWeight: tokens.weight.bold, textTransform: "uppercase" },
   summary: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, gap: tokens.spacing.xs, padding: tokens.spacing.md },

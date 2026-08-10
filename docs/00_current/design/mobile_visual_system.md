@@ -202,6 +202,10 @@ after a proposal request. It shows current/previous state, a short summary,
 optional iteration labels, key comparison metrics and one explicit CTA into
 the full review; it intentionally does not embed the complete entity card.
 
+Proposal list-card and detail-page headings follow the entity title hierarchy:
+a proposal icon sits beside the `Propuesta` eyebrow, followed by title and
+received-date metadata. They do not use a detached top-right icon.
+
 DailyPlan detail keeps the web hierarchy: the aggregated `MealPanels` section
 is followed by `DailyPlanMealDetailList`. The latter renders an ordered meal
 sequence and reuses `NutritionEntityCard` plus `FoodPanels` for every child
