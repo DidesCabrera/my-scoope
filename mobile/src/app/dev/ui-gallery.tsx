@@ -211,7 +211,7 @@ export default function UiGalleryScreen() {
             </View>
           </Card>
 
-          <SectionTitle detail="Composición principal" title="Sección KPI" />
+          <SectionTitle detail="Adaptativa · breakpoint 420 pt" title="Sección KPI" />
           <Card>
             <NutritionKpiSection
               calories={2140}
@@ -220,45 +220,6 @@ export default function UiGalleryScreen() {
               protein={{ grams: 155, allocation: 30, perKilogram: 1.8 }}
             />
           </Card>
-          <ContentPanel description="Superficie calórica cuadrada reducida en ancho y alto." muted title="Prueba −10%">
-            <NutritionKpiSection
-              calorieSurfaceScale={0.9}
-              calories={2140}
-              carbs={{ grams: 238, allocation: 44 }}
-              fat={{ grams: 62, allocation: 26 }}
-              protein={{ grams: 155, allocation: 30, perKilogram: 1.8 }}
-            />
-          </ContentPanel>
-          <ContentPanel description="Mismo cuadrado de −10%, con filas y barras KPI sutilmente más compactas." muted title="Prueba −10% · Alloc refinado">
-            <NutritionKpiSection
-              calorieSurfaceScale={0.9}
-              calories={2140}
-              carbs={{ grams: 238, allocation: 44 }}
-              fat={{ grams: 62, allocation: 26 }}
-              macroRowSpacing="slightlyTight"
-              protein={{ grams: 155, allocation: 30, perKilogram: 1.8 }}
-            />
-          </ContentPanel>
-          <ContentPanel description="Superficie calórica cuadrada reducida en ancho y alto." muted title="Prueba −15%">
-            <NutritionKpiSection
-              calorieSurfaceScale={0.85}
-              calories={2140}
-              carbs={{ grams: 238, allocation: 44 }}
-              fat={{ grams: 62, allocation: 26 }}
-              macroRowSpacing="slightlyTight"
-              protein={{ grams: 155, allocation: 30, perKilogram: 1.8 }}
-            />
-          </ContentPanel>
-          <ContentPanel description="Superficie calórica cuadrada reducida en ancho y alto." muted title="Prueba −17%">
-            <NutritionKpiSection
-              calorieSurfaceScale={0.83}
-              calories={2140}
-              carbs={{ grams: 238, allocation: 44 }}
-              fat={{ grams: 62, allocation: 26 }}
-              macroRowSpacing="slightlyTight"
-              protein={{ grams: 155, allocation: 30, perKilogram: 1.8 }}
-            />
-          </ContentPanel>
           <ContentPanel description="La misma jerarquía con menor densidad para cards anidadas." muted title="Sección KPI compacta">
             <NutritionKpiSection
               calories={640}

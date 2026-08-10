@@ -84,22 +84,16 @@ Regular KPI density belongs in main entity surfaces; compact KPI density belongs
 in deliberately nested cards. `ProteinPerKilogramBadge` owns the reusable PPK label,
 locale-aware formatting and accessible description.
 
-The calorie surface is square in both KPI densities. Its number uses the
-compact `CalorieValue` size in both cases so the square changes the composition
-without increasing the numeric emphasis. The gallery exposes controlled 90%,
-85% and 83% square scales for comparison, with a smaller `Calorías` label on
-all three trials. The 85% and 83% trials also reduce macro-row vertical padding
-from 5 px to 4 px and KPI bar height from 24 px to 22 px; the production
-default remains 100% until one is selected.
-
-The gallery keeps the original 90% trial and a parallel `90% · Alloc refinado`
-trial that applies the same 4 px row padding and 22 px KPI bars. This isolates
-the effect of macro spacing and bar height from the calorie-square scale.
+The calorie surface is square in both KPI densities. Regular KPI composition
+uses the selected 90% square and the compact `CalorieValue` size. Below 420 pt
+of available window width it switches to 4 px macro-row padding and 22 px KPI
+bars; from 420 pt it uses 5 px and 24 px. Compact KPI density keeps its own
+existing geometry. This responds to usable width rather than device names.
 
 Each macro KPI is a single horizontal row: short label, reserved PPK slot,
 grams and allocation bar. Product copy uses `Carbos`; the formal
 `carbohidratos` term remains only in label/OCR parsing rules for source-data
-compatibility.
+compatibility. The final `Grasas` row has no bottom separator.
 
 KPI allocation bars use the same continuous filled-track presentation as
 panel bars. KPI retains its original 6 px radius while panel bars use 4 px;
