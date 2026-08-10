@@ -81,8 +81,8 @@ export function ProposalHeading({ isRead, receivedAt, title, detail = false }: {
   );
 }
 
-export function ProposalSummary({ children }: { children: string }) {
-  return <View style={styles.summary}><Text style={proposalTextStyles.eyebrow}>Requerimiento</Text><Text style={styles.summaryText}>{children}</Text></View>;
+export function ProposalSummary({ children, details }: { children: string; details?: ReactNode }) {
+  return <View style={styles.summary}><Text style={proposalTextStyles.eyebrow}>Requerimiento</Text><Text style={styles.summaryText}>{children}</Text>{details}</View>;
 }
 
 export const proposalTextStyles = StyleSheet.create({

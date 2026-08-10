@@ -30,9 +30,8 @@ export function ProposalDetailPage({
           <ProposalStatusBadge status={status} />
           {typeLabel ? <View style={styles.type}><Text style={styles.typeText}>{typeLabel}</Text></View> : null}
         </View>
-        {summary ? <ProposalSummary>{summary}</ProposalSummary> : null}
+        {summary ? <ProposalSummary details={objectives}>{summary}</ProposalSummary> : objectives}
       </View>
-      {objectives}
       {intent ? <View style={styles.context}><Route color={tokens.color.textMuted} size={16} /><Text style={styles.contextText}>Intent: <Text style={styles.contextStrong}>{intent}</Text></Text></View> : null}
       {attachment ? <ProposalReviewSection eyebrow="Adjunto" title="Entidad propuesta"><ProposalAttachment attachment={attachment} /></ProposalReviewSection> : null}
       {children}
