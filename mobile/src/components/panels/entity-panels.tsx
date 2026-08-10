@@ -2,6 +2,7 @@ import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { PanelAllocationBar } from "@/components/nutrition";
+import { EntityIcon } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { EntityPanelTabs, PanelBody, PanelEmptyState, PanelSurface } from "./panel-surface";
 
@@ -24,10 +25,16 @@ export type FoodPanelItem = NutritionPanelValues & {
 };
 
 export type MealPanelItem = NutritionPanelValues & {
-  foods: string[];
+  foods: MealMenuFood[];
   id: string;
   name: string;
   time?: string;
+};
+
+export type MealMenuFood = {
+  name: string;
+  quantity: number;
+  quantityUnit: string;
 };
 
 type FoodPanelTab = "quantity" | "macros" | "allocation";
@@ -137,14 +144,16 @@ export function MealMenuPanel({ items }: { items: MealPanelItem[] }) {
   if (items.length === 0) return <PanelEmptyState label="Todavía no hay comidas." />;
   return (
     <PanelBody>
-      <QuantityHeader leadingLabel="Comidas" trailingLabel="Alimentos" />
       {items.map((item) => (
-        <View key={item.id} style={[styles.row, styles.menuRow]}>
-          <View style={styles.menuHeading}>
+        <View key={item.id} style={styles.menuRow}>
+          <View style={styles.menuTitleRow}>
+            <EntityIcon entity="meal" size="compact" />
             <Text numberOfLines={2} style={styles.menuName}>{item.name}</Text>
             {item.time ? <Text style={styles.menuTime}>{item.time}</Text> : null}
           </View>
-          <Text style={styles.menuFoods}>{item.foods.join(", ")}</Text>
+          <Text style={styles.menuFoods}>
+            {item.foods.map((food) => `${food.name} (${decimal(food.quantity)}${food.quantityUnit})`).join(", ")}
+          </Text>
         </View>
       ))}
     </PanelBody>
@@ -186,9 +195,9 @@ const styles = StyleSheet.create({
   macroValue: { textAlign: "center", width: 34 },
   allocationRow: { gap: 3 },
   allocationCell: { flex: 1, minWidth: 0, width: "auto" },
-  menuRow: { alignItems: "flex-start", paddingVertical: tokens.spacing.sm },
-  menuHeading: { flex: 0.8, gap: 2, minWidth: 0, paddingHorizontal: tokens.spacing.xs },
-  menuName: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold, letterSpacing: 0, lineHeight: 18 },
-  menuTime: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.regular, letterSpacing: 0 },
-  menuFoods: { color: tokens.color.textMuted, flex: 1.6, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, letterSpacing: 0, lineHeight: 19, paddingHorizontal: tokens.spacing.xs },
+  menuRow: { borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, gap: tokens.spacing.compact, paddingHorizontal: tokens.spacing.xs, paddingVertical: tokens.spacing.md },
+  menuTitleRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
+  menuName: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold, letterSpacing: 0, lineHeight: 18 },
+  menuTime: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.regular, letterSpacing: 0 },
+  menuFoods: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, letterSpacing: 0, lineHeight: 20, opacity: 0.82, paddingLeft: 24 },
 });

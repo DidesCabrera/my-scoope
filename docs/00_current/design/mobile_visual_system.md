@@ -142,6 +142,11 @@ and `Alloc`. `MealPanels` is used by DailyPlan and exposes `Menú`, `Macros` and
 reusable. Food has no nested panels in the current web contract. Program
 panels and charts are intentionally excluded from this first stage.
 
+`MealMenuPanel` follows the pre-existing mobile DailyPlan menu rather than the
+desktop two-column table: each full-width cell starts with the Meal entity icon
+and meal name, followed by a secondary enumeration of structured food
+quantities such as `Avena (80g)`.
+
 ## Explicit platform differences
 
 Shared spacing, radii, typography, nutrition and entity semantics live under
