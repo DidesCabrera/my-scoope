@@ -1,7 +1,8 @@
 import { ChevronDown, ChevronRight, Trash2 } from "lucide-react-native";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import type { PropsWithChildren, ReactNode } from "react";
+import { Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
 
-import { Button, EntityIcon, SectionIcon, type EntityKind } from "@/components/ui";
+import { Button, EntityIcon, SectionHeading, SectionIcon, type EntityKind } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 export type ComparisonScope = Extract<EntityKind, "food" | "meal" | "dailyPlan">;
@@ -155,7 +156,7 @@ export function ComparisonBuilder({ addActionLabel, children, onAdd, onCompare, 
     <View style={styles.builder}>
       <View style={styles.builderEyebrow}>
         <SectionIcon section="comparator" size="compact" />
-        <Text style={styles.builderEyebrowText}>Comparación de {scopeLabels[scope].toLowerCase()}</Text>
+        <Text style={styles.builderEyebrowText}>Nueva comparación</Text>
       </View>
       <View style={styles.builderSelections}>{children}</View>
       <View style={styles.builderActions}>
@@ -219,6 +220,53 @@ export function SavedComparisonCard({ entity, onPress, preview, subtitle, title 
   );
 }
 
+export function SavedComparisonDetailPage({
+  children,
+  itemCount,
+  onEdit,
+  scope,
+  selections,
+  title,
+}: PropsWithChildren<{
+  itemCount: number;
+  onEdit?: () => void;
+  scope: ComparisonScope;
+  selections: ReactNode;
+  title: string;
+}>) {
+  const { width } = useWindowDimensions();
+  const titleSize = width < 420 ? 22 : 24;
+  const titleLineHeight = width < 420 ? 32 : 34;
+
+  return (
+    <View style={styles.savedDetailPage}>
+      <View style={styles.savedDetailHero}>
+        <View style={styles.builderEyebrow}>
+          <SectionIcon section="comparator" size="compact" />
+          <Text style={styles.builderEyebrowText}>Comparación guardada</Text>
+        </View>
+        <Text style={[styles.savedDetailTitle, { fontSize: titleSize, lineHeight: titleLineHeight }]}>{title}</Text>
+        <View accessibilityLabel={`${itemCount} ${scopeLabels[scope].toLowerCase()}`} style={styles.savedDetailCount}>
+          <Text style={styles.savedDetailCountValue}>{itemCount}</Text>
+          <EntityIcon entity={scope} size="compact" />
+        </View>
+      </View>
+
+      <View style={styles.savedDetailSection}>
+        <SectionHeading detail={`${itemCount} ${scopeLabels[scope].toLowerCase()}`} title="Elementos comparados" />
+        <View style={styles.savedDetailSelections}>{selections}</View>
+      </View>
+
+      <View style={styles.savedDetailSection}>
+        <SectionHeading title="Resultados comparativos" />
+        <View style={styles.savedDetailResults}>{children}</View>
+      </View>
+
+      {onEdit ? <Button label="Editar comparación" onPress={onEdit} variant="secondary" /> : null}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   pressed: { opacity: 0.7 },
   scopeTabs: { flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0 },
@@ -226,7 +274,7 @@ const styles = StyleSheet.create({
   scopeTabSelected: { backgroundColor: tokens.color.textMain, borderColor: "transparent" },
   scopeTabLabel: { color: tokens.color.textMuted, flexShrink: 1, fontSize: tokens.type.label, fontWeight: tokens.weight.semibold },
   scopeTabLabelSelected: { color: tokens.color.surfaceApp },
-  selectionCard: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, padding: tokens.spacing.md },
+  selectionCard: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, padding: tokens.spacing.md },
   selectionHeading: { alignItems: "flex-start", flexDirection: "row", justifyContent: "space-between", minWidth: 0 },
   selectionIdentity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0 },
   selectionNumber: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, height: 28, justifyContent: "center", width: 28 },
@@ -253,7 +301,7 @@ const styles = StyleSheet.create({
   quantityInput: { backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, color: tokens.color.textMain, fontSize: tokens.type.caption, minHeight: 40, paddingHorizontal: tokens.spacing.sm, paddingRight: 34 },
   quantityUnit: { color: tokens.color.textSoft, fontSize: tokens.type.label, position: "absolute", right: tokens.spacing.sm },
   builderActions: { gap: tokens.spacing.sm },
-  metricCard: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderWidth: 1, gap: tokens.spacing.md, padding: tokens.card.outerPadding },
+  metricCard: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderWidth: 1, gap: tokens.spacing.md, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, padding: tokens.card.outerPadding },
   metricHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
   metricTitle: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.bold },
   metricUnit: { backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.pill, borderWidth: 1, color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.bold, paddingHorizontal: tokens.spacing.sm, paddingVertical: tokens.spacing.xs },
@@ -270,4 +318,12 @@ const styles = StyleSheet.create({
   savedTitle: { color: tokens.color.textMain, fontSize: 15, fontWeight: tokens.weight.bold },
   savedSubtitle: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.semibold },
   savedPreview: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.weight.medium },
+  savedDetailPage: { alignSelf: "stretch", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderWidth: 1, gap: tokens.spacing.lg, marginHorizontal: -tokens.spacing.screen, minWidth: 0, padding: tokens.card.outerPadding },
+  savedDetailHero: { gap: tokens.spacing.compact, minWidth: 0 },
+  savedDetailTitle: { color: tokens.color.textMain, fontWeight: tokens.weight.semibold, letterSpacing: 0 },
+  savedDetailCount: { alignItems: "center", alignSelf: "flex-start", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.pill, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.compact, minHeight: 30, paddingHorizontal: tokens.spacing.sm },
+  savedDetailCountValue: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.bold },
+  savedDetailSection: { gap: tokens.spacing.sm, minWidth: 0 },
+  savedDetailSelections: { gap: tokens.spacing.sm },
+  savedDetailResults: { gap: tokens.spacing.sm },
 });

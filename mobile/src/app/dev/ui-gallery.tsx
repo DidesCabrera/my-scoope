@@ -11,6 +11,7 @@ import {
   ComparisonSelectionCard,
   type ComparisonScope,
   SavedComparisonCard,
+  SavedComparisonDetailPage,
 } from "@/components/comparisons";
 import {
   DailyPlanMealDetailList,
@@ -559,6 +560,37 @@ export default function UiGalleryScreen() {
             subtitle="2 alimentos · Actualizada hoy"
             title="Yogures altos en proteína"
           />
+          <SectionTitle detail="Vista extendida en modo lectura" title="Page-card guardada" />
+          <SavedComparisonDetailPage
+            itemCount={2}
+            onEdit={() => undefined}
+            scope="food"
+            selections={
+              <>
+                <ComparisonSelectionCard entity="food" index={1} label="Yogur griego natural" quantity="100 g" />
+                <ComparisonSelectionCard entity="food" index={2} label="Skyr natural" quantity="100 g" />
+              </>
+            }
+            title="Yogures altos en proteína">
+            <ComparisonMetricCard
+              items={[
+                { entity: "food", formattedValue: "97 kcal", id: "saved-yogurt-kcal", label: "Yogur griego natural", labelSuffix: "(100 g)", width: 78 },
+                { entity: "food", formattedValue: "62 kcal", id: "saved-skyr-kcal", label: "Skyr natural", labelSuffix: "(100 g)", width: 50 },
+              ]}
+              label="Calorías"
+              tone="calories"
+              unit="kcal"
+            />
+            <ComparisonMetricCard
+              items={[
+                { entity: "food", formattedValue: "9,0 g", id: "saved-yogurt-protein", label: "Yogur griego natural", width: 75 },
+                { entity: "food", formattedValue: "12,0 g", id: "saved-skyr-protein", label: "Skyr natural", width: 100 },
+              ]}
+              label="Proteína"
+              tone="protein"
+              unit="g"
+            />
+          </SavedComparisonDetailPage>
         </>
       ) : null}
 

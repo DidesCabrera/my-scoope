@@ -289,8 +289,7 @@ its optional quantity/removal action in read mode. `ComparisonBuilder` groups
 editable `ComparisonEditorCard` instances with add, save and compare actions;
 each editor owns the entity selector and, where applicable, quantity input.
 The builder identifies itself with the canonical transparent Comparator section
-icon (`columns-3`) and a scope-aware
-eyebrow (`Comparación de alimentos`, comidas or planes).
+icon (`columns-3`) and the `Nueva comparación` eyebrow.
 Builder actions reuse the canonical `Button` component also used by proposal
 review: Compare is primary, while Add and Save are secondary actions.
 Editable selection cards use the standard reduced 12 px nested-card inset by
@@ -300,9 +299,13 @@ muted surface, with dark input surfaces nested inside them.
 `ComparisonMetricCard` presents one
 metric and receives already-normalized bar widths rather than recalculating
 domain values. `SavedComparisonCard` summarizes a persisted comparison. The
-gallery demonstrates these contracts with a Food comparison; live selectors,
-editing, persistence and advanced saved-detail actions remain outside this
-first visual iteration.
+list card mirrors Django's compact saved-comparison result. The extended
+`SavedComparisonDetailPage` follows the full-bleed page-card contract and owns
+the saved-comparison heading, entity count, read-only selections, comparative
+results and optional edit action.
+The gallery demonstrates these contracts with a Food comparison; live selector
+data, persistence, rename/delete and advanced saved-detail actions remain
+outside this first visual iteration.
 
 ## Explicit platform differences
 
