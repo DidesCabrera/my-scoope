@@ -295,6 +295,8 @@ Builder actions reuse the canonical `Button` component also used by proposal
 review: Compare is primary, while Add and Save are secondary actions.
 Editable selection cards use the standard reduced 12 px nested-card inset by
 expanding horizontally from the builder's 18 px content padding.
+The builder uses the dark card surface; editable selections use the lighter
+muted surface, with dark input surfaces nested inside them.
 `ComparisonMetricCard` presents one
 metric and receives already-normalized bar widths rather than recalculating
 domain values. `SavedComparisonCard` summarizes a persisted comparison. The
