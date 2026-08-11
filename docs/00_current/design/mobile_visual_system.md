@@ -147,6 +147,13 @@ can therefore be reused in cards, detail headers and future picker results.
 Entity icon vectors and structural-indicator content use explicit white
 foreground tokens for contrast on native surfaces.
 
+`CollectionPageHeader` is the canonical heading for list views. It composes a
+48 px semantic entity icon, a centered 22/32 semibold collection title and an
+optional structural item count using `StructuralIndicators`. It also accepts
+an explicit icon or action for list views whose page identity differs from the
+underlying entity. It must not be confused with `SectionHeading`, which labels
+a section inside an existing page.
+
 `NutritionEntityCard` is the reusable product composition of `EntityCard` and
 `NutritionKpiSection`. The composition relies only on the card's standard gap:
 it adds no separator or extra padding between heading and KPI. Both components
