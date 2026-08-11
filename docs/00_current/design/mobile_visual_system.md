@@ -293,6 +293,9 @@ quantity, matching the read-only saved-selection identity.
 Selected and saved comparison identities always render quantity inline after
 the entity name using the compact `(100g)` format; quantity is never a detached
 right-aligned column.
+An empty editor omits the complete numbered heading and removal action. It shows
+only the selector with a position-aware label such as `Alimento 1`; the heading
+appears once an entity has been selected.
 The builder identifies itself with the canonical transparent Comparator section
 icon (`columns-3`) and the `Nueva comparación` eyebrow.
 Builder actions reuse the canonical `Button` component also used by proposal

@@ -116,28 +116,28 @@ export function ComparisonEditorCard({
 
   return (
     <View style={styles.editorCard}>
-      <View style={styles.selectionHeading}>
-        <View style={styles.selectionIdentity}>
-          <View style={styles.selectionNumber}><Text style={styles.selectionNumberText}>{index}</Text></View>
-          <View style={styles.selectionCopy}>
-            <Text style={styles.selectionEyebrow}>{singularLabel} {index}</Text>
-            {label ? (
+      {label ? (
+        <View style={styles.selectionHeading}>
+          <View style={styles.selectionIdentity}>
+            <View style={styles.selectionNumber}><Text style={styles.selectionNumberText}>{index}</Text></View>
+            <View style={styles.selectionCopy}>
+              <Text style={styles.selectionEyebrow}>{singularLabel} {index}</Text>
               <View style={styles.editorSelectedRow}>
                 <EntityIcon entity={entity} size="compact" />
                 <Text numberOfLines={1} style={styles.editorSelectedName}>{label}{quantity ? <Text style={styles.metricSuffix}> {formatComparisonQuantity(`${quantity}g`)}</Text> : null}</Text>
               </View>
-            ) : null}
+            </View>
           </View>
+          {onRemove ? (
+            <Pressable accessibilityLabel={`Quitar ${label}`} accessibilityRole="button" hitSlop={8} onPress={onRemove} style={({ pressed }) => [styles.removeButton, pressed && styles.pressed]}>
+              <Trash2 color={tokens.color.textMuted} size={15} />
+            </Pressable>
+          ) : null}
         </View>
-        {onRemove ? (
-          <Pressable accessibilityLabel={`Quitar ${label ?? "selección"}`} accessibilityRole="button" hitSlop={8} onPress={onRemove} style={({ pressed }) => [styles.removeButton, pressed && styles.pressed]}>
-            <Trash2 color={tokens.color.textMuted} size={15} />
-          </Pressable>
-        ) : null}
-      </View>
+      ) : null}
 
       <View style={styles.editorField}>
-        <Text style={styles.editorFieldLabel}>{singularLabel}</Text>
+        <Text style={styles.editorFieldLabel}>{label ? singularLabel : `${singularLabel} ${index}`}</Text>
         <Pressable accessibilityLabel={`Seleccionar ${singularLabel.toLowerCase()}`} accessibilityRole="button" onPress={onOpenSelector} style={({ pressed }) => [styles.editorSelect, pressed && styles.pressed]}>
           <Text numberOfLines={1} style={[styles.editorInputText, !label && styles.editorPlaceholder]}>{label ?? `Seleccionar ${singularLabel.toLowerCase()}`}</Text>
           <ChevronDown color={tokens.color.textMuted} size={16} />
