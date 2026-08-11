@@ -174,6 +174,9 @@ and `Alloc`. `MealPanels` is used by DailyPlan and exposes `Menú`, `Macros` and
 reusable. The final data row in every panel omits its bottom separator. Food
 has no nested panels in the current web contract. Program
 panels and charts are intentionally excluded from this first stage.
+Panel tabs are borderless on both platforms. Every grid header and item row owns
+8 px of horizontal padding; panel bodies and grid wrappers do not add a second
+horizontal inset around those rows.
 
 ## Entity detail pages
 

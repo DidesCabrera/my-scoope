@@ -363,7 +363,7 @@
   .data-grid-row--program-week-days-mobile-macros,
   .data-grid-header--program-week-days-mobile-alloc,
   .data-grid-row--program-week-days-mobile-alloc {
-    padding-inline: 8px 0;
+    padding-inline: 8px;
   }
 }
 
