@@ -28,6 +28,11 @@ const metricColors: Record<ComparisonMetricTone, string> = {
   fat: tokens.color.fat,
 };
 
+function formatComparisonQuantity(value: string): string {
+  const normalized = value.trim().replace(/^\(|\)$/g, "").replace(/\s+g$/i, "g");
+  return `(${normalized})`;
+}
+
 export function ComparisonScopeTabs({ activeScope, onChange }: { activeScope: ComparisonScope; onChange: (scope: ComparisonScope) => void }) {
   return (
     <View accessibilityLabel="Tipo de comparación" accessibilityRole="tablist" style={styles.scopeTabs}>
@@ -71,8 +76,10 @@ export function ComparisonSelectionCard({
             <Text style={styles.selectionEyebrow}>{scopeSingularLabels[entity]} {index}</Text>
             <View style={styles.selectionNameRow}>
               <EntityIcon entity={entity} size="compact" />
-              <Text numberOfLines={1} style={styles.selectionName}>{label ?? `Seleccionar ${scopeSingularLabels[entity].toLowerCase()}`}</Text>
-              {quantity ? <Text style={styles.selectionQuantity}>{quantity}</Text> : null}
+              <Text numberOfLines={1} style={styles.selectionName}>
+                {label ?? `Seleccionar ${scopeSingularLabels[entity].toLowerCase()}`}
+                {label && quantity ? <Text style={styles.metricSuffix}> {formatComparisonQuantity(quantity)}</Text> : null}
+              </Text>
             </View>
           </View>
         </View>
@@ -116,7 +123,7 @@ export function ComparisonEditorCard({
             {label ? (
               <View style={styles.editorSelectedRow}>
                 <EntityIcon entity={entity} size="compact" />
-                <Text numberOfLines={1} style={styles.editorSelectedName}>{label}{quantity ? <Text style={styles.metricSuffix}> ({quantity}g)</Text> : null}</Text>
+                <Text numberOfLines={1} style={styles.editorSelectedName}>{label}{quantity ? <Text style={styles.metricSuffix}> {formatComparisonQuantity(`${quantity}g`)}</Text> : null}</Text>
               </View>
             ) : null}
           </View>
@@ -288,7 +295,6 @@ const styles = StyleSheet.create({
   selectionEyebrow: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.semibold },
   selectionNameRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
   selectionName: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
-  selectionQuantity: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.regular },
   removeButton: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.pill, borderWidth: 1, height: 32, justifyContent: "center", width: 32 },
   builder: { backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderWidth: 1, gap: tokens.spacing.md, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, padding: tokens.card.outerPadding },
   builderEyebrow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },

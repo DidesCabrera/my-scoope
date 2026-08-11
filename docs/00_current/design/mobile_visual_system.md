@@ -290,6 +290,9 @@ editable `ComparisonEditorCard` instances with add, save and compare actions;
 each editor owns the entity selector and, where applicable, quantity input.
 Once selected, its heading repeats the entity icon beside the entity name and
 quantity, matching the read-only saved-selection identity.
+Selected and saved comparison identities always render quantity inline after
+the entity name using the compact `(100g)` format; quantity is never a detached
+right-aligned column.
 The builder identifies itself with the canonical transparent Comparator section
 icon (`columns-3`) and the `Nueva comparación` eyebrow.
 Builder actions reuse the canonical `Button` component also used by proposal
