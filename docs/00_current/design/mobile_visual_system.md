@@ -288,14 +288,14 @@ DailyPlan scopes. `ComparisonSelectionCard` represents a numbered selection and
 its optional quantity/removal action in read mode. `ComparisonBuilder` groups
 editable `ComparisonEditorCard` instances with add, save and compare actions;
 each editor owns the entity selector and, where applicable, quantity input.
-Once selected, its heading repeats the entity icon beside the entity name and
-quantity, matching the read-only saved-selection identity.
+Editable selections never render a separate numbered heading. Their
+position-aware field label (`Alimento 1`) and selector are the complete identity;
+once selected, the entity icon appears inside the selector beside its name.
 Selected and saved comparison identities always render quantity inline after
 the entity name using the compact `(100g)` format; quantity is never a detached
 right-aligned column.
-An empty editor omits the complete numbered heading and removal action. It shows
-only the selector with a position-aware label such as `Alimento 1`; the heading
-appears once an entity has been selected.
+An optional removal action sits beside the selected input and does not recreate
+a detached title section.
 The builder identifies itself with the canonical transparent Comparator section
 icon (`columns-3`) and the `Nueva comparación` eyebrow.
 Builder actions reuse the canonical `Button` component also used by proposal

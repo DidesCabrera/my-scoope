@@ -116,32 +116,20 @@ export function ComparisonEditorCard({
 
   return (
     <View style={styles.editorCard}>
-      {label ? (
-        <View style={styles.selectionHeading}>
-          <View style={styles.selectionIdentity}>
-            <View style={styles.selectionNumber}><Text style={styles.selectionNumberText}>{index}</Text></View>
-            <View style={styles.selectionCopy}>
-              <Text style={styles.selectionEyebrow}>{singularLabel} {index}</Text>
-              <View style={styles.editorSelectedRow}>
-                <EntityIcon entity={entity} size="compact" />
-                <Text numberOfLines={1} style={styles.editorSelectedName}>{label}{quantity ? <Text style={styles.metricSuffix}> {formatComparisonQuantity(`${quantity}g`)}</Text> : null}</Text>
-              </View>
-            </View>
-          </View>
-          {onRemove ? (
+      <View style={styles.editorField}>
+        <Text style={styles.editorFieldLabel}>{singularLabel} {index}</Text>
+        <View style={styles.editorSelectRow}>
+          <Pressable accessibilityLabel={`Seleccionar ${singularLabel.toLowerCase()}`} accessibilityRole="button" onPress={onOpenSelector} style={({ pressed }) => [styles.editorSelect, pressed && styles.pressed]}>
+            {label ? <EntityIcon entity={entity} size="compact" /> : null}
+            <Text numberOfLines={1} style={[styles.editorInputText, !label && styles.editorPlaceholder]}>{label ?? `Seleccionar ${singularLabel.toLowerCase()}`}</Text>
+            <ChevronDown color={tokens.color.textMuted} size={16} />
+          </Pressable>
+          {label && onRemove ? (
             <Pressable accessibilityLabel={`Quitar ${label}`} accessibilityRole="button" hitSlop={8} onPress={onRemove} style={({ pressed }) => [styles.removeButton, pressed && styles.pressed]}>
               <Trash2 color={tokens.color.textMuted} size={15} />
             </Pressable>
           ) : null}
         </View>
-      ) : null}
-
-      <View style={styles.editorField}>
-        <Text style={styles.editorFieldLabel}>{label ? singularLabel : `${singularLabel} ${index}`}</Text>
-        <Pressable accessibilityLabel={`Seleccionar ${singularLabel.toLowerCase()}`} accessibilityRole="button" onPress={onOpenSelector} style={({ pressed }) => [styles.editorSelect, pressed && styles.pressed]}>
-          <Text numberOfLines={1} style={[styles.editorInputText, !label && styles.editorPlaceholder]}>{label ?? `Seleccionar ${singularLabel.toLowerCase()}`}</Text>
-          <ChevronDown color={tokens.color.textMuted} size={16} />
-        </Pressable>
       </View>
 
       {supportsQuantity && label ? (
@@ -303,11 +291,10 @@ const styles = StyleSheet.create({
   builderEyebrowText: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.bold, letterSpacing: 0, textTransform: "uppercase" },
   builderSelections: { gap: tokens.spacing.sm },
   editorCard: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, gap: tokens.spacing.md, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, padding: tokens.spacing.md },
-  editorSelectedRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
-  editorSelectedName: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
   editorField: { gap: tokens.spacing.compact },
   editorFieldLabel: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.semibold },
-  editorSelect: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.sm, minHeight: 40, paddingHorizontal: tokens.spacing.sm },
+  editorSelectRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0 },
+  editorSelect: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, flex: 1, flexDirection: "row", gap: tokens.spacing.sm, minHeight: 40, minWidth: 0, paddingHorizontal: tokens.spacing.sm },
   editorInputText: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular },
   editorPlaceholder: { color: tokens.color.textMuted },
   quantityField: { maxWidth: 150 },
