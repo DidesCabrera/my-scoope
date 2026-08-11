@@ -113,7 +113,12 @@ export function ComparisonEditorCard({
           <View style={styles.selectionNumber}><Text style={styles.selectionNumberText}>{index}</Text></View>
           <View style={styles.selectionCopy}>
             <Text style={styles.selectionEyebrow}>{singularLabel} {index}</Text>
-            {label ? <Text numberOfLines={1} style={styles.editorSelectedName}>{label}{quantity ? <Text style={styles.metricSuffix}> ({quantity}g)</Text> : null}</Text> : null}
+            {label ? (
+              <View style={styles.editorSelectedRow}>
+                <EntityIcon entity={entity} size="compact" />
+                <Text numberOfLines={1} style={styles.editorSelectedName}>{label}{quantity ? <Text style={styles.metricSuffix}> ({quantity}g)</Text> : null}</Text>
+              </View>
+            ) : null}
           </View>
         </View>
         {onRemove ? (
@@ -290,7 +295,8 @@ const styles = StyleSheet.create({
   builderEyebrowText: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.bold, letterSpacing: 0, textTransform: "uppercase" },
   builderSelections: { gap: tokens.spacing.sm },
   editorCard: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, gap: tokens.spacing.md, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, padding: tokens.spacing.md },
-  editorSelectedName: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
+  editorSelectedRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
+  editorSelectedName: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
   editorField: { gap: tokens.spacing.compact },
   editorFieldLabel: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.semibold },
   editorSelect: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.sm, minHeight: 40, paddingHorizontal: tokens.spacing.sm },
