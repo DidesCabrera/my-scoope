@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 
 import {
+  ComparisonBuilder,
+  ComparisonEditorCard,
   ComparisonMetricCard,
   ComparisonScopeTabs,
   ComparisonSelectionCard,
@@ -203,6 +205,7 @@ export default function UiGalleryScreen() {
   const [tab, setTab] = useState<GalleryTab>("components");
   const [choice, setChoice] = useState<Choice>("daily");
   const [comparisonScope, setComparisonScope] = useState<ComparisonScope>("food");
+  const [comparisonQuantity, setComparisonQuantity] = useState("100");
   const [field, setField] = useState("");
 
   if (!__DEV__) return <Redirect href="/" />;
@@ -492,7 +495,24 @@ export default function UiGalleryScreen() {
         <>
           <SectionTitle detail="Alimentos, comidas y planes" title="Alcance de comparación" />
           <ComparisonScopeTabs activeScope={comparisonScope} onChange={setComparisonScope} />
-          <SectionTitle detail="Selecciones numeradas" title="Elementos comparados" />
+          <SectionTitle detail="Selección, cantidad y acciones" title="Construir comparación" />
+          <ComparisonBuilder onAdd={() => undefined} onCompare={() => undefined} onSave={() => undefined}>
+            <ComparisonEditorCard
+              entity="food"
+              index={1}
+              label="Yogur griego natural"
+              onOpenSelector={() => undefined}
+              onQuantityChange={setComparisonQuantity}
+              quantity={comparisonQuantity}
+            />
+            <ComparisonEditorCard
+              entity="food"
+              index={2}
+              onOpenSelector={() => undefined}
+              onRemove={() => undefined}
+            />
+          </ComparisonBuilder>
+          <SectionTitle detail="Estado resumido de lectura" title="Elementos comparados" />
           <ComparisonSelectionCard entity="food" index={1} label="Yogur griego natural" quantity="100 g" />
           <ComparisonSelectionCard entity="food" index={2} label="Skyr natural" onRemove={() => undefined} quantity="100 g" />
           <SectionTitle detail="Primera propuesta de resultados" title="Métricas comparativas" />

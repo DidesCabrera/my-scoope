@@ -282,7 +282,10 @@ enumerations do not add a second left indent.
 The first native comparison family is derived from Django's comparator detail
 and saved-list views. `ComparisonScopeTabs` switches among Food, Meal and
 DailyPlan scopes. `ComparisonSelectionCard` represents a numbered selection and
-its optional quantity/removal action. `ComparisonMetricCard` presents one
+its optional quantity/removal action in read mode. `ComparisonBuilder` groups
+editable `ComparisonEditorCard` instances with add, save and compare actions;
+each editor owns the entity selector and, where applicable, quantity input.
+`ComparisonMetricCard` presents one
 metric and receives already-normalized bar widths rather than recalculating
 domain values. `SavedComparisonCard` summarizes a persisted comparison. The
 gallery demonstrates these contracts with a Food comparison; live selectors,

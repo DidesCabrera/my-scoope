@@ -1,5 +1,5 @@
-import { ChevronRight, Trash2 } from "lucide-react-native";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Bookmark, ChevronDown, ChevronRight, Columns3, Plus, Trash2 } from "lucide-react-native";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { EntityIcon, type EntityKind } from "@/components/ui";
 import { tokens } from "@/design/tokens";
@@ -85,6 +85,96 @@ export function ComparisonSelectionCard({
   );
 }
 
+export function ComparisonEditorCard({
+  entity,
+  index,
+  label,
+  onOpenSelector,
+  onQuantityChange,
+  onRemove,
+  quantity,
+}: {
+  entity: ComparisonScope;
+  index: number;
+  label?: string;
+  onOpenSelector?: () => void;
+  onQuantityChange?: (value: string) => void;
+  onRemove?: () => void;
+  quantity?: string;
+}) {
+  const singularLabel = scopeSingularLabels[entity];
+  const supportsQuantity = entity !== "dailyPlan";
+
+  return (
+    <View style={styles.editorCard}>
+      <View style={styles.selectionHeading}>
+        <View style={styles.selectionIdentity}>
+          <View style={styles.selectionNumber}><Text style={styles.selectionNumberText}>{index}</Text></View>
+          <View style={styles.selectionCopy}>
+            <Text style={styles.selectionEyebrow}>{singularLabel} {index}</Text>
+            {label ? <Text numberOfLines={1} style={styles.editorSelectedName}>{label}{quantity ? <Text style={styles.metricSuffix}> ({quantity}g)</Text> : null}</Text> : null}
+          </View>
+        </View>
+        {onRemove ? (
+          <Pressable accessibilityLabel={`Quitar ${label ?? "selección"}`} accessibilityRole="button" hitSlop={8} onPress={onRemove} style={({ pressed }) => [styles.removeButton, pressed && styles.pressed]}>
+            <Trash2 color={tokens.color.textMuted} size={15} />
+          </Pressable>
+        ) : null}
+      </View>
+
+      <View style={styles.editorField}>
+        <Text style={styles.editorFieldLabel}>{singularLabel}</Text>
+        <Pressable accessibilityLabel={`Seleccionar ${singularLabel.toLowerCase()}`} accessibilityRole="button" onPress={onOpenSelector} style={({ pressed }) => [styles.editorSelect, pressed && styles.pressed]}>
+          <Text numberOfLines={1} style={[styles.editorInputText, !label && styles.editorPlaceholder]}>{label ?? `Seleccionar ${singularLabel.toLowerCase()}`}</Text>
+          <ChevronDown color={tokens.color.textMuted} size={16} />
+        </Pressable>
+      </View>
+
+      {supportsQuantity && label ? (
+        <View style={[styles.editorField, styles.quantityField]}>
+          <Text style={styles.editorFieldLabel}>Cantidad</Text>
+          <View style={styles.quantityInputWrap}>
+            <TextInput
+              accessibilityLabel="Cantidad en gramos"
+              inputMode="numeric"
+              onChangeText={onQuantityChange}
+              style={styles.quantityInput}
+              value={quantity}
+            />
+            <Text style={styles.quantityUnit}>g</Text>
+          </View>
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+export function ComparisonBuilder({ addActionLabel = "Agregar alimento", children, onAdd, onCompare, onSave }: { addActionLabel?: string; children: React.ReactNode; onAdd?: () => void; onCompare?: () => void; onSave?: () => void }) {
+  return (
+    <View style={styles.builder}>
+      <View style={styles.builderSelections}>{children}</View>
+      <View style={styles.builderActions}>
+        <Pressable accessibilityRole="button" onPress={onAdd} style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
+          <Plus color={tokens.color.textMain} size={15} />
+          <Text style={styles.actionButtonLabel}>{addActionLabel}</Text>
+        </Pressable>
+        <View style={styles.builderActionsPrimary}>
+          {onSave ? (
+            <Pressable accessibilityRole="button" onPress={onSave} style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
+              <Bookmark color={tokens.color.textMain} size={15} />
+              <Text style={styles.actionButtonLabel}>Guardar</Text>
+            </Pressable>
+          ) : null}
+          <Pressable accessibilityRole="button" onPress={onCompare} style={({ pressed }) => [styles.actionButton, styles.actionButtonPrimary, pressed && styles.pressed]}>
+            <Columns3 color={tokens.color.surfaceApp} size={15} />
+            <Text style={[styles.actionButtonLabel, styles.actionButtonLabelPrimary]}>Comparar</Text>
+          </Pressable>
+        </View>
+      </View>
+    </View>
+  );
+}
+
 export type ComparisonBarItem = {
   entity: ComparisonScope;
   formattedValue: string;
@@ -155,6 +245,25 @@ const styles = StyleSheet.create({
   selectionName: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
   selectionQuantity: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.regular },
   removeButton: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.pill, borderWidth: 1, height: 32, justifyContent: "center", width: 32 },
+  builder: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderWidth: 1, gap: tokens.spacing.md, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, padding: tokens.card.outerPadding },
+  builderSelections: { gap: tokens.spacing.sm },
+  editorCard: { backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, gap: tokens.spacing.md, padding: tokens.spacing.md },
+  editorSelectedName: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
+  editorField: { gap: tokens.spacing.compact },
+  editorFieldLabel: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.semibold },
+  editorSelect: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.sm, minHeight: 40, paddingHorizontal: tokens.spacing.sm },
+  editorInputText: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular },
+  editorPlaceholder: { color: tokens.color.textMuted },
+  quantityField: { maxWidth: 150 },
+  quantityInputWrap: { justifyContent: "center" },
+  quantityInput: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, color: tokens.color.textMain, fontSize: tokens.type.caption, minHeight: 40, paddingHorizontal: tokens.spacing.sm, paddingRight: 34 },
+  quantityUnit: { color: tokens.color.textSoft, fontSize: tokens.type.label, position: "absolute", right: tokens.spacing.sm },
+  builderActions: { gap: tokens.spacing.sm },
+  builderActionsPrimary: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.sm, justifyContent: "flex-end" },
+  actionButton: { alignItems: "center", alignSelf: "flex-start", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.compact, minHeight: 38, paddingHorizontal: tokens.spacing.md },
+  actionButtonPrimary: { backgroundColor: tokens.color.textMain, borderColor: tokens.color.textMain },
+  actionButtonLabel: { color: tokens.color.textMain, fontSize: tokens.type.label, fontWeight: tokens.weight.semibold },
+  actionButtonLabelPrimary: { color: tokens.color.surfaceApp },
   metricCard: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderWidth: 1, gap: tokens.spacing.md, padding: tokens.card.outerPadding },
   metricHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
   metricTitle: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.bold },
