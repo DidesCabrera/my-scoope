@@ -277,6 +277,18 @@ quantities such as `Avena (80g)`.
 Panel bodies use the 4 px `xs` horizontal inset, and DailyPlan food
 enumerations do not add a second left indent.
 
+## Comparisons
+
+The first native comparison family is derived from Django's comparator detail
+and saved-list views. `ComparisonScopeTabs` switches among Food, Meal and
+DailyPlan scopes. `ComparisonSelectionCard` represents a numbered selection and
+its optional quantity/removal action. `ComparisonMetricCard` presents one
+metric and receives already-normalized bar widths rather than recalculating
+domain values. `SavedComparisonCard` summarizes a persisted comparison. The
+gallery demonstrates these contracts with a Food comparison; live selectors,
+editing, persistence and advanced saved-detail actions remain outside this
+first visual iteration.
+
 ## Explicit platform differences
 
 Shared spacing, radii, typography, nutrition and entity semantics live under

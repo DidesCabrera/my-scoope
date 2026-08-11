@@ -4,6 +4,13 @@ import { useState } from "react";
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 
 import {
+  ComparisonMetricCard,
+  ComparisonScopeTabs,
+  ComparisonSelectionCard,
+  type ComparisonScope,
+  SavedComparisonCard,
+} from "@/components/comparisons";
+import {
   DailyPlanMealDetailList,
   type DailyPlanMealDetailItem,
   EntityDetailMetadata,
@@ -121,13 +128,14 @@ const dailyPlanMealDetailItems: DailyPlanMealDetailItem[] = [
   },
 ];
 
-type GalleryTab = "components" | "details" | "proposals" | "states" | "tokens";
+type GalleryTab = "components" | "details" | "proposals" | "comparisons" | "states" | "tokens";
 type Choice = "daily" | "weekly";
 
 const galleryTabs: { key: GalleryTab; label: string }[] = [
   { key: "components", label: "Componentes" },
   { key: "details", label: "Detalle" },
   { key: "proposals", label: "Propuestas" },
+  { key: "comparisons", label: "Comparaciones" },
   { key: "states", label: "Estados" },
   { key: "tokens", label: "Tokens" },
 ];
@@ -194,6 +202,7 @@ export default function UiGalleryScreen() {
   const { width } = useWindowDimensions();
   const [tab, setTab] = useState<GalleryTab>("components");
   const [choice, setChoice] = useState<Choice>("daily");
+  const [comparisonScope, setComparisonScope] = useState<ComparisonScope>("food");
   const [field, setField] = useState("");
 
   if (!__DEV__) return <Redirect href="/" />;
@@ -476,6 +485,43 @@ export default function UiGalleryScreen() {
               onReject={() => undefined}
             />
           </ProposalDetailPage>
+        </>
+      ) : null}
+
+      {tab === "comparisons" ? (
+        <>
+          <SectionTitle detail="Alimentos, comidas y planes" title="Alcance de comparación" />
+          <ComparisonScopeTabs activeScope={comparisonScope} onChange={setComparisonScope} />
+          <SectionTitle detail="Selecciones numeradas" title="Elementos comparados" />
+          <ComparisonSelectionCard entity="food" index={1} label="Yogur griego natural" quantity="100 g" />
+          <ComparisonSelectionCard entity="food" index={2} label="Skyr natural" onRemove={() => undefined} quantity="100 g" />
+          <SectionTitle detail="Primera propuesta de resultados" title="Métricas comparativas" />
+          <ComparisonMetricCard
+            items={[
+              { entity: "food", formattedValue: "97 kcal", id: "yogurt-kcal", label: "Yogur griego natural", labelSuffix: "(100 g)", width: 78 },
+              { entity: "food", formattedValue: "62 kcal", id: "skyr-kcal", label: "Skyr natural", labelSuffix: "(100 g)", width: 50 },
+            ]}
+            label="Calorías"
+            tone="calories"
+            unit="kcal"
+          />
+          <ComparisonMetricCard
+            items={[
+              { entity: "food", formattedValue: "9,0 g", id: "yogurt-protein", label: "Yogur griego natural", width: 75 },
+              { entity: "food", formattedValue: "12,0 g", id: "skyr-protein", label: "Skyr natural", width: 100 },
+            ]}
+            label="Proteína"
+            tone="protein"
+            unit="g"
+          />
+          <SectionTitle detail="Resumen de comparaciones persistidas" title="Comparación guardada" />
+          <SavedComparisonCard
+            entity="food"
+            onPress={() => undefined}
+            preview="Yogur griego natural · Skyr natural"
+            subtitle="2 alimentos · Actualizada hoy"
+            title="Yogures altos en proteína"
+          />
         </>
       ) : null}
 
