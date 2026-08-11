@@ -152,14 +152,14 @@ export function EntityCard({
   style?: StyleProp<ViewStyle>;
 }>) {
   const content = (
-    <Card accent={tokens.color[entity]} style={style}>
+    <Card accent={tokens.color[entity]} style={[onPress && styles.entityCardInPressable, style]}>
       <EntityHeading accessory={accessory} entity={entity} eyebrow={eyebrow} indicators={indicators} subtitle={subtitle} title={title} />
       {children}
     </Card>
   );
   if (!onPress) return content;
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => pressed && styles.pressed}>
+    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.entityCardPressable, pressed && styles.pressed]}>
       {content}
     </Pressable>
   );
@@ -291,6 +291,8 @@ export function MessageCard({
 
 const styles = StyleSheet.create({
   pressed: { opacity: 0.72 },
+  entityCardPressable: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding },
+  entityCardInPressable: { marginHorizontal: 0 },
   headingRow: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md },
   headingCopy: { alignItems: "flex-start", flex: 1, gap: tokens.spacing.xs, minWidth: 0 },
   entityEyebrowRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },

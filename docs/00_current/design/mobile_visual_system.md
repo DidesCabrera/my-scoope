@@ -188,12 +188,14 @@ follows the page-card's content padding.
 
 The gallery token tab exposes `card.outerPadding`, `card.innerPadding` and
 `card.gap` alongside the spacing scale so card dimensions remain explicit.
-`layout.reducedInset` is 12 px. `EntityCardPanelSlot` and
-`CollectionListSlot` derive their horizontal expansion from the difference
-between that inset and `card.outerPadding` (currently -6 px per side). This
-keeps headings, KPI and direct page content at 18 px while panels inside entity
-cards and card collections sit at 12 px. The negative margin is owned only by
-these semantic slots and must not be repeated manually in consuming views.
+`layout.reducedInset` is 12 px. Every standard `Card` derives its horizontal
+expansion from the difference between that inset and `card.outerPadding`
+(currently -6 px per side), so cards sit 12 px from a standard 18 px container
+while headings and other direct content remain at 18 px. Pressable entity cards
+apply the same expansion to their touch target rather than only their visual
+surface. `EntityCardPanelSlot` independently applies the same calculation to
+panels inside entity cards. These negative margins are owned by the primitives
+and must not be repeated manually in consuming views.
 Gallery navigation is adaptive and remains separate from product panel tabs:
 below 700 pt it uses a compact dropdown above the examples to preserve card
 width, and at 700 pt or wider it becomes a vertical sidebar to the left.

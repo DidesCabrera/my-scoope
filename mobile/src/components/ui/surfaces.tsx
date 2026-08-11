@@ -25,7 +25,7 @@ export function Pill({ label, color = tokens.color.interactivePrimary }: { label
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderWidth: 1, gap: tokens.card.gap, padding: tokens.card.outerPadding },
+  card: { backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderWidth: 1, gap: tokens.card.gap, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, padding: tokens.card.outerPadding },
   cardMuted: { backgroundColor: tokens.color.surfaceMuted },
   pill: { alignSelf: "flex-start", borderRadius: tokens.radius.pill, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 5 },
   pillText: { fontSize: tokens.type.label, fontWeight: "800", letterSpacing: 0.4 },

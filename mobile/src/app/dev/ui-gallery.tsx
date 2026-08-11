@@ -12,11 +12,8 @@ import {
 } from "@/components/details";
 import {
   KpiAllocationBar,
-  MacroSummary,
   NutritionEntityCard,
   NutritionKpiSection,
-  NutrientProgress,
-  NutritionMetric,
   PanelAllocationBar,
 } from "@/components/nutrition";
 import { FoodPanels, type FoodPanelItem, MealPanels, type MealPanelItem } from "@/components/panels";
@@ -36,7 +33,6 @@ import {
   CardHeader,
   ChoiceRow,
   CollectionEmptyState,
-  CollectionListSlot,
   ContentPanel,
   DetailSection,
   EntityCard,
@@ -311,14 +307,6 @@ export default function UiGalleryScreen() {
             title="Todavía no hay elementos"
           />
 
-          <SectionTitle detail="Resumen y progreso" title="Nutrición" />
-          <Card>
-            <MacroSummary totals={{ total_kcal: 2140, protein_g: 155, carbs_g: 238, fat_g: 62 }} />
-            <NutrientProgress color={tokens.color.protein} label="Proteína" target={180} value={155} />
-            <NutrientProgress color={tokens.color.carbs} label="Carbos" target={260} value={238} />
-            <NutritionMetric color={tokens.color.ppk} label="Proteína por kilo" unit="g/kg" value="1,8" />
-          </Card>
-
           <SectionTitle detail="Identidad de marca" title="Alloc en KPI" />
           <Card>
             <View style={styles.allocationRow}>
@@ -399,9 +387,7 @@ export default function UiGalleryScreen() {
               <MealPanels items={mealPanelItems} />
             </EntityDetailSection>
             <EntityDetailSection detail="3 comidas" title="Detalle de cada comida">
-              <CollectionListSlot>
-                <DailyPlanMealDetailList items={dailyPlanMealDetailItems} />
-              </CollectionListSlot>
+              <DailyPlanMealDetailList items={dailyPlanMealDetailItems} />
             </EntityDetailSection>
             <EntityDetailMetadata creator="Felipe Dides" updatedAt="Hoy, 14:30" />
           </EntityDetailPage>
