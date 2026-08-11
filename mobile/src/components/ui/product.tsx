@@ -67,7 +67,7 @@ export function EntityIcon({ entity, size = "regular" }: { entity: EntityKind; s
   const hero = size === "hero";
   return (
     <View style={[styles.entityIcon, compact && styles.entityIconCompact, hero && styles.entityIconHero, { backgroundColor: tokens.color[entity] }]}>
-      <Icon color={tokens.color.entityIconForeground} size={compact ? 11 : hero ? 26 : 13} strokeWidth={hero ? 1.9 : 2.4} />
+      <Icon color={tokens.color.entityIconForeground} size={compact ? 11 : hero ? 22 : 13} strokeWidth={hero ? 1.9 : 2.4} />
     </View>
   );
 }
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
   entityEyebrowRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },
   entityIcon: { alignItems: "center", borderRadius: 5, height: 22, justifyContent: "center", width: 22 },
   entityIconCompact: { height: 18, width: 18 },
-  entityIconHero: { borderRadius: 15, height: 48, width: 48 },
+  entityIconHero: { borderRadius: tokens.radius.md, height: 40, width: 40 },
   eyebrow: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.bold, letterSpacing: 0, textTransform: "uppercase" },
   headingTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: tokens.weight.semibold, letterSpacing: 0, lineHeight: 25 },
   headingSubtitle: { color: tokens.color.textSoft, fontSize: tokens.type.caption, lineHeight: 18 },

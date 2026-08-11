@@ -198,11 +198,11 @@
 }
 
 .list-page-header__icon {
-    width: 48px;
-    height: 48px;
+    width: 40px;
+    height: 40px;
     flex-shrink: 0;
-    padding: 9px;
-    border-radius: 13px;
+    padding: 7px;
+    border-radius: 12px;
     color: #ffffff;
     stroke-width: 1.7;
     background: var(--entity-home);
@@ -238,7 +238,7 @@
 .list-page-header__title {
     margin: 0;
     color: var(--text-main);
-    font-size: 24px;
+    font-size: var(--font-size-title);
     font-weight: 600;
     line-height: 1.12;
 }
@@ -277,10 +277,10 @@
     }
 
     .list-page-header__icon {
-        width: 48px;
-        height: 48px;
-        padding: 9px;
-        border-radius: 15px;
+        width: 40px;
+        height: 40px;
+        padding: 7px;
+        border-radius: 12px;
     }
 
     .list-page-header__identity {
@@ -288,7 +288,7 @@
     }
 
     .list-page-header__title {
-        font-size: 22px;
+        font-size: var(--font-size-title);
     }
 
     .list-page-header__indicator {
