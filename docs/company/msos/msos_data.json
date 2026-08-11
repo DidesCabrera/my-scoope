@@ -1,0 +1,165 @@
+{
+  "meta": {
+    "code": "MSOS00",
+    "name": "My Scoope Operating System",
+    "version": "Arquitectura fundacional",
+    "status": "Activo · read-only",
+    "updated_at": "2026-08-11",
+    "source": "docs/company/msos/msos_data.json",
+    "description": "La fuente de verdad estratégica desde la que My Scoope ordena su identidad, dirección, decisiones y ciclos de empresa.",
+    "footer": "MSOS · Documento estratégico interno de My Scoope"
+  },
+  "tabs": [
+    {"id": "ceo-dashboard", "label": "CEO Dashboard"},
+    {"id": "departments", "label": "Departamentos"},
+    {"id": "decision-log", "label": "Decision Log"},
+    {"id": "strategy", "label": "Estrategia"},
+    {"id": "cycles", "label": "Ciclos MSOS"},
+    {"id": "identity", "label": "Identidad"},
+    {"id": "manifesto", "label": "Manifiesto"}
+  ],
+  "manifesto": {
+    "title": "Un sistema para construir y dirigir la empresa",
+    "summary": "My Scoope ya cuenta con una metodología sólida para construir software. El siguiente paso es aplicar la misma disciplina a la construcción de la empresa.",
+    "paragraphs": [
+      "El producto avanza mediante ciclos, patches, documentación jerárquica, decisiones persistentes y validaciones. Esa forma de trabajar reduce ambigüedad y permite aprender sin perder el contexto.",
+      "MSOS traslada esa capacidad al nivel de empresa. Será el lugar donde viven la identidad, la estrategia, los departamentos, las decisiones, los riesgos, las prioridades y los ciclos de trabajo.",
+      "No nace como un dashboard automatizado ni como una colección de tareas. Nace como una fuente de verdad estratégica, legible y evolutiva."
+    ],
+    "thesis": "PLANIFICA → EJECUTA → APRENDE: construir la empresa con la misma intención con la que construimos el software.",
+    "principles": [
+      "Una fuente de verdad visible y versionada.",
+      "Decisiones con contexto, motivo e impacto persistentes.",
+      "Evolución por ciclos pequeños, explícitos y verificables.",
+      "Claridad antes que automatización; señal antes que volumen.",
+      "La dirección se revisa y aprende, no se presupone."
+    ]
+  },
+  "identity": {
+    "title": "Identidad",
+    "summary": "Las definiciones que mantienen coherente a My Scoope mientras el producto y la empresa evolucionan.",
+    "definitions": [
+      {"label": "Misión", "value": "Ayudar a las personas a convertir sus objetivos de alimentación en decisiones cotidianas claras, ejecutables y sostenibles."},
+      {"label": "Visión", "value": "Ser el sistema personal de referencia para planificar, ejecutar y aprender sobre la propia alimentación."},
+      {"label": "Propósito", "value": "Reducir la distancia entre saber qué hacer y poder hacerlo de forma consistente."},
+      {"label": "Problema que resolvemos", "value": "La planificación nutricional suele estar fragmentada, ser difícil de ejecutar y ofrecer poco aprendizaje sobre lo que realmente funciona."},
+      {"label": "Para quién existe", "value": "Para personas que quieren mejorar su alimentación con estructura práctica, contexto personal y acompañamiento continuo."},
+      {"label": "Promesa", "value": "Transformar intención nutricional en un ciclo comprensible de planificación, acción y aprendizaje."}
+    ],
+    "principle_groups": [
+      {"title": "Valores", "items": ["Claridad radical", "Progreso sostenible", "Cuidado de la persona", "Rigor con pragmatismo", "Aprendizaje continuo"]},
+      {"title": "Principios del producto", "items": ["Cada recomendación debe poder ejecutarse", "El contexto personal importa", "La experiencia debe cerrar el ciclo PLANIFICA → EJECUTA → APRENDE", "La confianza se gana con explicabilidad y consistencia"]},
+      {"title": "Principios de diseño", "items": ["La información principal aparece primero", "La interfaz reduce carga mental", "El sistema explica estados y consecuencias", "La accesibilidad y la legibilidad son requisitos"]}
+    ]
+  },
+  "strategy": {
+    "title": "Estrategia",
+    "summary": "Una dirección inicial que debe hacerse más precisa a medida que avanzan los ciclos de lanzamiento y aprendizaje.",
+    "north_star_metric": "Semanas con el ciclo PLANIFICA → EJECUTA → APRENDE completado por usuario activo.",
+    "groups": [
+      {"title": "Objetivos 2026", "items": ["Lanzar una experiencia confiable y coherente de extremo a extremo", "Validar que el ciclo ampliado genera uso recurrente y aprendizaje", "Construir una operación sostenible y medible", "Establecer una identidad de marca y producto consistente"]},
+      {"title": "Objetivos de lanzamiento", "items": ["Cerrar los bloqueos críticos de producto, operación y cumplimiento", "Definir una propuesta de valor comprensible", "Instrumentar las señales mínimas para aprender del lanzamiento", "Preparar soporte y respuesta ante incidentes"]},
+      {"title": "Ventaja competitiva", "items": ["Sistema integrado que conecta planificación, ejecución y aprendizaje", "Contexto nutricional persistente y personal", "Metodología de construcción disciplinada y trazable", "Capacidad de convertir complejidad en decisiones accionables"]},
+      {"title": "Hipótesis estratégicas", "items": ["Completar el ciclo ampliado aumenta retención y confianza", "La claridad práctica genera más valor que una mayor cantidad de información", "Una experiencia contextual reduce el abandono", "La trazabilidad de decisiones mejora la velocidad de la empresa"]},
+      {"title": "Roadmap", "items": ["Fundación MSOS y preparación del lanzamiento", "Validación del producto ampliado", "Aprendizaje de adquisición y retención", "Escalamiento operacional responsable"]}
+    ],
+    "kpis": [
+      {"name": "Activación", "purpose": "Confirmar que una persona alcanza el primer valor útil", "cadence": "Semanal"},
+      {"name": "Ciclos ampliados completados", "purpose": "Medir adopción de PLANIFICA → EJECUTA → APRENDE", "cadence": "Semanal"},
+      {"name": "Retención", "purpose": "Entender si el valor se sostiene en el tiempo", "cadence": "Mensual"},
+      {"name": "Conversión a pago", "purpose": "Validar disposición a pagar y sostenibilidad", "cadence": "Mensual"},
+      {"name": "Incidentes críticos", "purpose": "Proteger confianza y estabilidad del servicio", "cadence": "Continua"}
+    ]
+  },
+  "departments": {
+    "title": "Departamentos",
+    "summary": "Una primera lectura común de responsabilidad, foco, riesgos y siguiente movimiento por área.",
+    "items": [
+      {"name": "Producto", "responsibility": "Definir el valor entregado y mantener coherente la experiencia completa.", "status": "En construcción", "priority": "Cerrar la propuesta de lanzamiento y el producto ampliado.", "active_topics": ["experiencia core", "launch scope", "aprendizaje"], "pending_decisions": ["criterio final de readiness"], "risks": ["alcance difuso", "experiencia fragmentada"], "next_action": "Consolidar el alcance verificable del lanzamiento."},
+      {"name": "Marketing", "responsibility": "Explicar el valor de My Scoope y crear demanda con una narrativa honesta.", "status": "Por estructurar", "priority": "Definir posicionamiento, audiencia inicial y plan de lanzamiento.", "active_topics": ["posicionamiento", "mensajes", "canales"], "pending_decisions": ["audiencia de entrada", "canal prioritario"], "risks": ["mensaje genérico", "adquisición sin aprendizaje"], "next_action": "Redactar la tesis de posicionamiento inicial."},
+      {"name": "Comercial", "responsibility": "Convertir interés en ingresos y aprendizaje de mercado.", "status": "Fundacional", "priority": "Definir el movimiento comercial inicial.", "active_topics": ["oferta", "pricing", "conversión"], "pending_decisions": ["modelo de venta inicial"], "risks": ["señales de demanda insuficientes"], "next_action": "Mapear el primer embudo comercial y sus criterios."},
+      {"name": "Finanzas", "responsibility": "Proteger caja, visibilidad económica y capacidad de inversión.", "status": "Manual", "priority": "Construir una lectura confiable de caja y runway.", "active_topics": ["caja", "costos", "forecast"], "pending_decisions": ["presupuesto de lanzamiento"], "risks": ["falta de proyección integrada"], "next_action": "Consolidar caja, compromisos y escenarios de runway."},
+      {"name": "Legal", "responsibility": "Reducir exposición y mantener el producto dentro de obligaciones aplicables.", "status": "En revisión", "priority": "Verificar readiness legal para lanzamiento.", "active_topics": ["privacidad", "términos", "claims"], "pending_decisions": ["revisión externa requerida"], "risks": ["vacíos de cumplimiento", "promesas no respaldadas"], "next_action": "Cerrar checklist legal de lanzamiento y responsables."},
+      {"name": "Operaciones", "responsibility": "Hacer que la empresa responda de forma consistente antes y después del lanzamiento.", "status": "En diseño", "priority": "Definir soporte, incidentes y rutinas operativas.", "active_topics": ["soporte", "incidentes", "procesos"], "pending_decisions": ["niveles de servicio iniciales"], "risks": ["operación reactiva", "dependencia de una persona"], "next_action": "Crear el playbook mínimo de operación de lanzamiento."},
+      {"name": "Tecnología", "responsibility": "Entregar una plataforma segura, estable y evolutiva al servicio del producto.", "status": "Activo", "priority": "Proteger estabilidad y observabilidad del lanzamiento.", "active_topics": ["calidad", "seguridad", "observabilidad"], "pending_decisions": ["umbrales técnicos de readiness"], "risks": ["deuda crítica oculta", "señales operativas incompletas"], "next_action": "Consolidar checks técnicos y plan de respuesta."}
+    ]
+  },
+  "ceo_dashboard": {
+    "title": "CEO Dashboard",
+    "summary": "Punto de entrada para la revisión diaria: primero los pendientes por prioridad y luego las preguntas que mantienen la atención en las decisiones más importantes.",
+    "task_board": {
+      "title": "Pendientes por prioridad",
+      "summary": "Orden manual de trabajo vigente. Cada pendiente debe tener un siguiente paso concreto y revisarse cuando cambie su estado.",
+      "groups": [
+        {
+          "label": "Crítica",
+          "tone": "critical",
+          "items": [
+            {"title": "Consolidar el criterio de readiness para lanzamiento", "area": "Producto", "next_action": "Definir condiciones verificables y responsables para cada bloqueo.", "status": "En curso"},
+            {"title": "Confirmar caja y runway bajo escenarios explícitos", "area": "Finanzas", "next_action": "Consolidar caja disponible, compromisos y presupuesto de lanzamiento.", "status": "Pendiente"}
+          ]
+        },
+        {
+          "label": "Alta",
+          "tone": "high",
+          "items": [
+            {"title": "Cerrar el checklist legal de lanzamiento", "area": "Legal", "next_action": "Asignar responsables y resolver los vacíos de privacidad, términos y claims.", "status": "Pendiente"},
+            {"title": "Crear el playbook mínimo de soporte e incidentes", "area": "Operaciones", "next_action": "Definir flujo de respuesta, responsables y niveles de servicio iniciales.", "status": "Pendiente"},
+            {"title": "Definir la tesis de posicionamiento inicial", "area": "Marketing", "next_action": "Precisar audiencia de entrada, problema principal y promesa diferenciadora.", "status": "Pendiente"}
+          ]
+        },
+        {
+          "label": "Media",
+          "tone": "medium",
+          "items": [
+            {"title": "Mapear el primer embudo comercial", "area": "Comercial", "next_action": "Documentar etapas, criterios de avance y señales de conversión.", "status": "Por iniciar"},
+            {"title": "Definir umbrales técnicos de readiness", "area": "Tecnología", "next_action": "Acordar checks de estabilidad, seguridad y observabilidad.", "status": "Por iniciar"}
+          ]
+        },
+        {
+          "label": "Baja",
+          "tone": "low",
+          "items": [
+            {"title": "Preparar la estructura del ciclo MSOS01", "area": "Dirección", "next_action": "Convertir los aprendizajes de MSOS00 en el alcance del Launch Command Center.", "status": "En espera"}
+          ]
+        }
+      ]
+    },
+    "questions": [
+      {"question": "¿Estamos listos para lanzar?", "guidance": "Separar hechos, supuestos y bloqueos por área."},
+      {"question": "¿Tenemos caja?", "guidance": "Revisar caja disponible, compromisos y runway bajo escenarios explícitos."},
+      {"question": "¿Qué bloquea el lanzamiento?", "guidance": "Nombrar el cuello de botella principal, su dueño y la fecha de resolución."},
+      {"question": "¿Qué área está más débil?", "guidance": "Identificar dónde una falla tendría mayor impacto sistémico."},
+      {"question": "¿Qué decisión estoy evitando?", "guidance": "Hacer visible la decisión, el costo de esperar y la información realmente necesaria."},
+      {"question": "¿Qué debe avanzar esta semana?", "guidance": "Elegir el resultado que reduce más riesgo o abre más aprendizaje."},
+      {"question": "¿Qué puede esperar?", "guidance": "Proteger el foco declarando qué no se trabajará todavía."},
+      {"question": "¿Qué aprendimos recientemente?", "guidance": "Convertir señales nuevas en cambios de decisión, prioridad o hipótesis."}
+    ]
+  },
+  "decision_log": {
+    "title": "Decision Log",
+    "summary": "Registro persistente del contexto y las consecuencias de las decisiones estratégicas.",
+    "items": [
+      {"date": "2026-08-11", "title": "Crear MSOS — My Scoope Operating System", "area": "Empresa", "reason": "La metodología de software no cubre todavía la dirección integral de la empresa.", "impact": "Establece un lugar común para ordenar y evolucionar la compañía.", "status": "Adoptada"},
+      {"date": "2026-08-11", "title": "Usar MSOS como sistema estratégico de empresa", "area": "Dirección", "reason": "Identidad, estrategia, riesgos y prioridades necesitan una fuente persistente.", "impact": "Las revisiones y ciclos futuros parten de un contexto compartido.", "status": "Adoptada"},
+      {"date": "2026-08-11", "title": "Adoptar el concepto de producto ampliado: PLANIFICA → EJECUTA → APRENDE", "area": "Producto", "reason": "El valor no termina en generar un plan; requiere ejecución y aprendizaje.", "impact": "Orienta producto, métricas y narrativa hacia un ciclo completo.", "status": "Adoptada"},
+      {"date": "2026-08-11", "title": "Implementar MSOS inicialmente como vista read-only con datos versionados", "area": "Tecnología", "reason": "La claridad de la estructura debe preceder a la automatización.", "impact": "Reduce riesgo técnico y permite evolucionar el contenido mediante revisión de código.", "status": "Implementada"}
+    ]
+  },
+  "cycles": {
+    "title": "Ciclos MSOS",
+    "summary": "La empresa se construye mediante una secuencia explícita de ciclos, cada uno con un objetivo acotado.",
+    "items": [
+      {"code": "MSOS00", "title": "Arquitectura del sistema", "objective": "Crear la fuente versionada y la primera vista interna consultable.", "status": "Activo"},
+      {"code": "MSOS01", "title": "Launch Command Center", "objective": "Consolidar readiness, bloqueos, responsables y cadencia de lanzamiento.", "status": "Próximo"},
+      {"code": "MSOS02", "title": "Identidad", "objective": "Profundizar y validar misión, visión, propósito, valores y principios.", "status": "Planificado"},
+      {"code": "MSOS03", "title": "Producto", "objective": "Convertir la estrategia de producto ampliado en sistema operativo de producto.", "status": "Planificado"},
+      {"code": "MSOS04", "title": "Marketing", "objective": "Definir posicionamiento, narrativa, audiencia, canales y aprendizaje.", "status": "Planificado"},
+      {"code": "MSOS05", "title": "Finanzas", "objective": "Crear visibilidad de caja, runway, presupuesto y escenarios.", "status": "Planificado"},
+      {"code": "MSOS06", "title": "Legal", "objective": "Organizar obligaciones, riesgos, decisiones y readiness legal.", "status": "Planificado"},
+      {"code": "MSOS07", "title": "Comercial", "objective": "Definir oferta, pricing, embudo y sistema inicial de ventas.", "status": "Planificado"},
+      {"code": "MSOS08", "title": "Operaciones", "objective": "Diseñar rutinas, soporte, incidentes y continuidad operacional.", "status": "Planificado"},
+      {"code": "MSOS09", "title": "CEO Dashboard", "objective": "Convertir las preguntas ejecutivas en una revisión periódica útil.", "status": "Planificado"}
+    ]
+  }
+}

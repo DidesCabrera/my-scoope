@@ -1,0 +1,128 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>{{ msos.meta.name }} · My Scoope</title>
+  <link rel="stylesheet" href="{% static 'css/msos.css' %}">
+  <script src="{% static 'js/msos.js' %}" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#msos-content">Ir al contenido</a>
+  <header class="site-header">
+    <a href="/" class="brand" aria-label="Volver a My Scoope">My Scoope Operating System</a>
+    <span class="internal-label">Documento interno · Solo lectura</span>
+  </header>
+
+  <nav class="tabs-shell" aria-label="Navegación de MSOS">
+    <div class="tabs" role="tablist" aria-label="Secciones de MSOS">
+      {% for tab in msos.tabs %}
+        <button class="tab{% if forloop.first %} is-active{% endif %}" type="button" role="tab" id="tab-{{ tab.id }}" aria-controls="panel-{{ tab.id }}" aria-selected="{% if forloop.first %}true{% else %}false{% endif %}" tabindex="{% if forloop.first %}0{% else %}-1{% endif %}" data-msos-tab="{{ tab.id }}">{{ tab.label }}</button>
+      {% endfor %}
+    </div>
+  </nav>
+
+  <main class="document" id="msos-content">
+    <section class="tab-panel" id="panel-manifesto" role="tabpanel" aria-labelledby="tab-manifesto" data-msos-panel="manifesto" hidden>
+      <header class="document-header">
+        <p class="eyebrow">{{ msos.meta.code }} · {{ msos.meta.version }}</p>
+        <h1>{{ msos.meta.name }}</h1>
+        <p class="lead">{{ msos.meta.description }}</p>
+        <dl class="document-meta">
+          <div><dt>Estado</dt><dd>{{ msos.meta.status }}</dd></div>
+          <div><dt>Actualizado</dt><dd>{{ msos.meta.updated_at }}</dd></div>
+          <div><dt>Fuente</dt><dd><code>{{ msos.meta.source }}</code></dd></div>
+        </dl>
+      </header>
+      <div class="section-heading"><p class="eyebrow">Fundamento</p><h2>{{ msos.manifesto.title }}</h2><p>{{ msos.manifesto.summary }}</p></div>
+      <div class="prose">
+        {% for paragraph in msos.manifesto.paragraphs %}<p>{{ paragraph }}</p>{% endfor %}
+      </div>
+      <div class="statement">{{ msos.manifesto.thesis }}</div>
+      <h3>Principios del sistema</h3>
+      <ul class="clean-list">{% for item in msos.manifesto.principles %}<li>{{ item }}</li>{% endfor %}</ul>
+    </section>
+
+    <section class="tab-panel" id="panel-identity" role="tabpanel" aria-labelledby="tab-identity" data-msos-panel="identity" hidden>
+      <div class="section-heading"><p class="eyebrow">Nivel 1</p><h2>{{ msos.identity.title }}</h2><p>{{ msos.identity.summary }}</p></div>
+      <div class="definition-grid">
+        {% for item in msos.identity.definitions %}<article class="minimal-card"><h3>{{ item.label }}</h3><p>{{ item.value }}</p></article>{% endfor %}
+      </div>
+      <div class="split-sections">
+        {% for group in msos.identity.principle_groups %}<section><h3>{{ group.title }}</h3><ul class="clean-list">{% for item in group.items %}<li>{{ item }}</li>{% endfor %}</ul></section>{% endfor %}
+      </div>
+    </section>
+
+    <section class="tab-panel" id="panel-strategy" role="tabpanel" aria-labelledby="tab-strategy" data-msos-panel="strategy" hidden>
+      <div class="section-heading"><p class="eyebrow">Nivel 2</p><h2>{{ msos.strategy.title }}</h2><p>{{ msos.strategy.summary }}</p></div>
+      <div class="statement"><span>North Star Metric</span><strong>{{ msos.strategy.north_star_metric }}</strong></div>
+      <div class="strategy-grid">
+        {% for group in msos.strategy.groups %}<section class="minimal-card"><h3>{{ group.title }}</h3><ul class="clean-list">{% for item in group.items %}<li>{{ item }}</li>{% endfor %}</ul></section>{% endfor %}
+      </div>
+      <h3>KPIs iniciales</h3>
+      <div class="table-wrap"><table><thead><tr><th>Indicador</th><th>Propósito</th><th>Cadencia</th></tr></thead><tbody>{% for item in msos.strategy.kpis %}<tr><td>{{ item.name }}</td><td>{{ item.purpose }}</td><td><span class="badge">{{ item.cadence }}</span></td></tr>{% endfor %}</tbody></table></div>
+    </section>
+
+    <section class="tab-panel" id="panel-departments" role="tabpanel" aria-labelledby="tab-departments" data-msos-panel="departments" hidden>
+      <div class="section-heading"><p class="eyebrow">Nivel 3</p><h2>{{ msos.departments.title }}</h2><p>{{ msos.departments.summary }}</p></div>
+      <div class="department-list">
+        {% for department in msos.departments.items %}
+          <article class="department">
+            <header><h3>{{ department.name }}</h3><span class="badge">{{ department.status }}</span></header>
+            <p>{{ department.responsibility }}</p>
+            <dl class="detail-list">
+              <div><dt>Prioridad</dt><dd>{{ department.priority }}</dd></div>
+              <div><dt>Temas activos</dt><dd>{{ department.active_topics|join:", " }}</dd></div>
+              <div><dt>Decisiones pendientes</dt><dd>{{ department.pending_decisions|join:", " }}</dd></div>
+              <div><dt>Riesgos</dt><dd>{{ department.risks|join:", " }}</dd></div>
+              <div><dt>Próxima acción</dt><dd>{{ department.next_action }}</dd></div>
+            </dl>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="tab-panel" id="panel-ceo-dashboard" role="tabpanel" aria-labelledby="tab-ceo-dashboard" data-msos-panel="ceo-dashboard">
+      <div class="section-heading"><p class="eyebrow">Revisión diaria</p><h2>{{ msos.ceo_dashboard.title }}</h2><p>{{ msos.ceo_dashboard.summary }}</p></div>
+      <section class="task-board" aria-labelledby="task-board-title">
+        <header class="task-board__header">
+          <div><h3 id="task-board-title">{{ msos.ceo_dashboard.task_board.title }}</h3><p>{{ msos.ceo_dashboard.task_board.summary }}</p></div>
+          <span class="badge">Read-only</span>
+        </header>
+        <div class="priority-grid">
+          {% for group in msos.ceo_dashboard.task_board.groups %}
+            <section class="priority-column" data-priority="{{ group.tone }}">
+              <header><span class="priority-dot" aria-hidden="true"></span><h3>{{ group.label }}</h3><span>{{ group.items|length }}</span></header>
+              <div class="priority-items">
+                {% for task in group.items %}
+                  <article class="task-card">
+                    <div class="task-card__meta"><span>{{ task.area }}</span><span class="badge">{{ task.status }}</span></div>
+                    <h4>{{ task.title }}</h4>
+                    <p>{{ task.next_action }}</p>
+                  </article>
+                {% endfor %}
+              </div>
+            </section>
+          {% endfor %}
+        </div>
+      </section>
+      <div class="subsection-heading"><p class="eyebrow">Preguntas de dirección</p><h3>Revisión ejecutiva</h3></div>
+      <div class="question-list">{% for item in msos.ceo_dashboard.questions %}<article><span>{{ forloop.counter|stringformat:"02d" }}</span><div><h3>{{ item.question }}</h3><p>{{ item.guidance }}</p></div></article>{% endfor %}</div>
+    </section>
+
+    <section class="tab-panel" id="panel-decision-log" role="tabpanel" aria-labelledby="tab-decision-log" data-msos-panel="decision-log" hidden>
+      <div class="section-heading"><p class="eyebrow">Memoria estratégica</p><h2>{{ msos.decision_log.title }}</h2><p>{{ msos.decision_log.summary }}</p></div>
+      <div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Decisión</th><th>Área</th><th>Motivo</th><th>Impacto</th><th>Estado</th></tr></thead><tbody>{% for decision in msos.decision_log.items %}<tr><td><time datetime="{{ decision.date }}">{{ decision.date }}</time></td><td><strong>{{ decision.title }}</strong></td><td>{{ decision.area }}</td><td>{{ decision.reason }}</td><td>{{ decision.impact }}</td><td><span class="badge">{{ decision.status }}</span></td></tr>{% endfor %}</tbody></table></div>
+    </section>
+
+    <section class="tab-panel" id="panel-cycles" role="tabpanel" aria-labelledby="tab-cycles" data-msos-panel="cycles" hidden>
+      <div class="section-heading"><p class="eyebrow">Evolución por ciclos</p><h2>{{ msos.cycles.title }}</h2><p>{{ msos.cycles.summary }}</p></div>
+      <ol class="cycle-list">{% for cycle in msos.cycles.items %}<li><span>{{ cycle.code }}</span><div><h3>{{ cycle.title }}</h3><p>{{ cycle.objective }}</p></div><span class="badge">{{ cycle.status }}</span></li>{% endfor %}</ol>
+    </section>
+  </main>
+
+  <footer class="site-footer">{{ msos.meta.footer }}</footer>
+</body>
+</html>
