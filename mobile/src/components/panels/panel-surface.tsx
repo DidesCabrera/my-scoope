@@ -44,8 +44,8 @@ export function PanelEmptyState({ label }: { label: string }) {
 const styles = StyleSheet.create({
   surface: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, overflow: "hidden" },
   tabs: { gap: tokens.spacing.compact, padding: tokens.spacing.sm },
-  tab: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.pill, height: 30, justifyContent: "center", paddingHorizontal: tokens.spacing.md },
-  tabSelected: { backgroundColor: tokens.color.textMain },
+  tab: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, height: 30, justifyContent: "center", paddingHorizontal: tokens.spacing.md },
+  tabSelected: { backgroundColor: tokens.color.textMain, borderColor: "transparent" },
   tabLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, letterSpacing: 0 },
   tabLabelSelected: { color: tokens.color.surfaceApp },
   pressed: { opacity: 0.72 },

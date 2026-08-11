@@ -88,7 +88,7 @@
 
   background-color: var(--panel-tab-bg);
   color: var(--panel-tab-text);
-  border: none;
+  border: 1px solid var(--panel-tab-border);
 
   gap: 4px;
   cursor: pointer;
@@ -125,7 +125,7 @@
 .btn-desplegar-mobile.is-active {
   background-color: var(--panel-tab-active-bg);
   color: var(--panel-tab-active-text);
-  border-color: var(--panel-tab-active-border);
+  border-color: transparent;
 }
 
 .btn-desplegar.is-active p,

@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
   macroValue: { textAlign: "center", width: 34 },
   allocationRow: { gap: 3 },
   allocationCell: { flex: 1, minWidth: 0, width: "auto" },
-  menuRow: { borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, gap: tokens.spacing.compact, paddingHorizontal: tokens.spacing.sm, paddingVertical: tokens.spacing.md },
+  menuRow: { alignSelf: "stretch", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, gap: tokens.spacing.compact, paddingHorizontal: tokens.spacing.sm, paddingVertical: tokens.spacing.md },
   menuTitleRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
   menuName: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold, letterSpacing: 0, lineHeight: 18 },
   menuTime: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.regular, letterSpacing: 0 },
