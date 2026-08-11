@@ -386,21 +386,12 @@ body.is-mealfood-sorting .js-mealfood-sortable-row {
 
 .data-grid-header--mobile-macros,
 .data-grid-row--mobile-macros {
-    grid-template-columns:
-        minmax(140px, 1.6fr)
-        minmax(45px, 1.3fr)
-        minmax(30px, 1fr)
-        minmax(30px, 1fr)
-        minmax(30px, 1fr);
+    grid-template-columns: 40% repeat(4, minmax(0, 1fr));
 }
 
 .data-grid-header--mobile-alloc,
 .data-grid-row--mobile-alloc {
-    grid-template-columns:
-        minmax(140px, 1.6fr)
-        minmax(40px, 1fr)
-        minmax(40px, 1fr)
-        minmax(40px, 1fr);
+    grid-template-columns: 40% repeat(3, minmax(0, 1fr));
     gap: 6px;
 }
 
@@ -413,21 +404,12 @@ body.is-mealfood-sorting .js-mealfood-sortable-row {
 
 .data-grid-header--mobile-foods-macros,
 .data-grid-row--mobile-foods-macros {
-    grid-template-columns:
-        minmax(140px, 1.6fr)
-        minmax(45px, 1.3fr)
-        minmax(30px, 1fr)
-        minmax(30px, 1fr)
-        minmax(30px, 1fr);
+    grid-template-columns: 40% repeat(4, minmax(0, 1fr));
 }
 
 .data-grid-header--mobile-foods-alloc,
 .data-grid-row--mobile-foods-alloc {
-    grid-template-columns:
-        minmax(140px, 1.6fr)
-        minmax(40px, 1fr)
-        minmax(40px, 1fr)
-        minmax(40px, 1fr);
+    grid-template-columns: 40% repeat(3, minmax(0, 1fr));
     gap: 6px;
 }
 

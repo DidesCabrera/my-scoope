@@ -73,6 +73,14 @@ function isMealPanelItem(item: FoodPanelItem | MealPanelItem): item is MealPanel
   return "foods" in item;
 }
 
+function PanelItemName({ item }: { item: FoodPanelItem | MealPanelItem }) {
+  return (
+    <View style={styles.gridLeadingCell}>
+      {isMealPanelItem(item) ? <MealRowIdentity name={item.name} /> : <Text numberOfLines={2} style={[styles.cell, styles.name]}>{item.name}</Text>}
+    </View>
+  );
+}
+
 function QuantityHeader({ leadingLabel, trailingLabel }: { leadingLabel: string; trailingLabel: string }) {
   return (
     <View style={[styles.row, styles.header]}>
@@ -85,7 +93,7 @@ function QuantityHeader({ leadingLabel, trailingLabel }: { leadingLabel: string;
 function MacrosHeader({ leadingLabel }: { leadingLabel: string }) {
   return (
     <View style={[styles.row, styles.header]}>
-      <Text style={[styles.headerText, styles.name]}>{leadingLabel}</Text>
+      <Text style={[styles.headerText, styles.name, styles.gridLeadingCell]}>{leadingLabel}</Text>
       <Text style={[styles.headerText, styles.kcalCell]}>Kcal</Text>
       {(["P", "C", "F"] as const).map((label) => <Text key={label} style={[styles.headerText, styles.macroValue]}>{label}</Text>)}
     </View>
@@ -95,7 +103,7 @@ function MacrosHeader({ leadingLabel }: { leadingLabel: string }) {
 function AllocationHeader({ leadingLabel }: { leadingLabel: string }) {
   return (
     <View style={[styles.row, styles.header, styles.allocationRow]}>
-      <Text style={[styles.headerText, styles.name]}>{leadingLabel}</Text>
+      <Text style={[styles.headerText, styles.name, styles.gridLeadingCell]}>{leadingLabel}</Text>
       {(["P%", "C%", "F%"] as const).map((label) => <Text key={label} style={[styles.headerText, styles.allocationCell]}>{label}</Text>)}
     </View>
   );
@@ -108,7 +116,7 @@ export function FoodQuantityPanel({ items }: { items: FoodPanelItem[] }) {
       <QuantityHeader leadingLabel="Alimentos" trailingLabel="Qty" />
       {items.map((item, index) => (
         <View key={item.id} style={[styles.row, index === items.length - 1 && styles.rowLast]}>
-          {isMealPanelItem(item) ? <MealRowIdentity name={item.name} /> : <Text numberOfLines={2} style={[styles.cell, styles.name]}>{item.name}</Text>}
+          <Text numberOfLines={2} style={[styles.cell, styles.name]}>{item.name}</Text>
           <Text style={[styles.cell, styles.quantityValue]}>{decimal(item.quantity)} {item.quantityUnit}</Text>
         </View>
       ))}
@@ -123,7 +131,7 @@ export function NutritionMacrosPanel({ items, leadingLabel }: { items: (FoodPane
       <MacrosHeader leadingLabel={leadingLabel} />
       {items.map((item, index) => (
         <View key={item.id} style={[styles.row, index === items.length - 1 && styles.rowLast]}>
-          {isMealPanelItem(item) ? <MealRowIdentity name={item.name} /> : <Text numberOfLines={2} style={[styles.cell, styles.name]}>{item.name}</Text>}
+          <PanelItemName item={item} />
           <View style={styles.kcalCell}>
             <PanelAllocationBar accessibilityLabel={`${item.name}: ${rounded(item.calories)} calorías`} displayValue={rounded(item.calories)} tone="calories" value={item.calorieShare} />
           </View>
@@ -143,7 +151,7 @@ export function NutritionAllocationPanel({ items, leadingLabel }: { items: (Food
       <AllocationHeader leadingLabel={leadingLabel} />
       {items.map((item, index) => (
         <View key={item.id} style={[styles.row, styles.allocationRow, index === items.length - 1 && styles.rowLast]}>
-          {isMealPanelItem(item) ? <MealRowIdentity name={item.name} /> : <Text numberOfLines={2} style={[styles.cell, styles.name]}>{item.name}</Text>}
+          <PanelItemName item={item} />
           <PanelAllocationBar style={styles.allocationCell} tone="protein" value={item.proteinAllocation} />
           <PanelAllocationBar style={styles.allocationCell} tone="carbs" value={item.carbsAllocation} />
           <PanelAllocationBar style={styles.allocationCell} tone="fat" value={item.fatAllocation} />
@@ -203,9 +211,10 @@ const styles = StyleSheet.create({
   headerText: { color: tokens.color.textMuted, fontSize: 10, fontWeight: tokens.weight.semibold, letterSpacing: 0, textAlign: "center", textTransform: "uppercase" },
   cell: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, letterSpacing: 0 },
   name: { flex: 1, minWidth: 0, paddingHorizontal: tokens.spacing.xs, textAlign: "left" },
+  gridLeadingCell: { flexBasis: "40%", flexGrow: 0, flexShrink: 0, minWidth: 0 },
   quantityValue: { textAlign: "right", width: 88 },
-  kcalCell: { width: 58 },
-  macroValue: { textAlign: "center", width: 34 },
+  kcalCell: { flex: 1, minWidth: 0 },
+  macroValue: { flex: 1, minWidth: 0, textAlign: "center" },
   allocationRow: { gap: 3 },
   allocationCell: { flex: 1, minWidth: 0, width: "auto" },
   menuRow: { alignSelf: "stretch", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, gap: tokens.spacing.compact, paddingHorizontal: tokens.spacing.sm, paddingVertical: tokens.spacing.md },

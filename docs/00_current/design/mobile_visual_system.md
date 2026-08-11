@@ -188,6 +188,9 @@ name; Django uses the equivalent `grid_meal_identity.html` partial. Menu, macro
 and allocation panels reuse it in their meal-name column. Its 4 px internal
 inset makes Menu identity content align with the first column in other panels.
 The menu time and ingredient enumeration use that same 4 px internal inset.
+Macro and allocation panels reserve a fixed 40% of their grid width for the
+leading Food or Meal identity. Macros divides the remaining width equally among
+Kcal, P, C and F; Alloc divides it equally among P%, C% and F%.
 
 ## Entity detail pages
 
