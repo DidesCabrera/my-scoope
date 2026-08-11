@@ -72,7 +72,6 @@ export function ComparisonSelectionCard({
     <View style={styles.selectionCard}>
       <View style={styles.selectionHeading}>
         <View style={styles.selectionIdentity}>
-          <View style={styles.selectionNumber}><Text style={styles.selectionNumberText}>{index}</Text></View>
           <View style={styles.selectionCopy}>
             <Text style={styles.selectionEyebrow}>{scopeSingularLabels[entity]} {index}</Text>
             <View style={styles.selectionNameRow}>
@@ -279,8 +278,6 @@ const styles = StyleSheet.create({
   selectionCard: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, padding: tokens.spacing.md },
   selectionHeading: { alignItems: "flex-start", flexDirection: "row", justifyContent: "space-between", minWidth: 0 },
   selectionIdentity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0 },
-  selectionNumber: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, height: 28, justifyContent: "center", width: 28 },
-  selectionNumberText: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
   selectionCopy: { flex: 1, gap: tokens.spacing.xs, minWidth: 0 },
   selectionEyebrow: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.semibold },
   selectionNameRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },

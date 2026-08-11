@@ -294,6 +294,8 @@ once selected, the entity icon appears inside the selector beside its name.
 Selected and saved comparison identities always render quantity inline after
 the entity name using the compact `(100g)` format; quantity is never a detached
 right-aligned column.
+Read-only and saved selections also omit the numbered circle. Position remains
+available through the textual eyebrow (`Alimento 1`) above the entity identity.
 An optional removal action sits beside the selected input and does not recreate
 a detached title section.
 The builder identifies itself with the canonical transparent Comparator section
