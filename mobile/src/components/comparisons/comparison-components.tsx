@@ -1,7 +1,7 @@
-import { Bookmark, ChevronDown, ChevronRight, Columns3, Plus, Trash2 } from "lucide-react-native";
+import { ChevronDown, ChevronRight, Trash2 } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
-import { EntityIcon, type EntityKind } from "@/components/ui";
+import { Button, EntityIcon, type EntityKind } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 export type ComparisonScope = Extract<EntityKind, "food" | "meal" | "dailyPlan">;
@@ -154,22 +154,9 @@ export function ComparisonBuilder({ addActionLabel = "Agregar alimento", childre
     <View style={styles.builder}>
       <View style={styles.builderSelections}>{children}</View>
       <View style={styles.builderActions}>
-        <Pressable accessibilityRole="button" onPress={onAdd} style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
-          <Plus color={tokens.color.textMain} size={15} />
-          <Text style={styles.actionButtonLabel}>{addActionLabel}</Text>
-        </Pressable>
-        <View style={styles.builderActionsPrimary}>
-          {onSave ? (
-            <Pressable accessibilityRole="button" onPress={onSave} style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
-              <Bookmark color={tokens.color.textMain} size={15} />
-              <Text style={styles.actionButtonLabel}>Guardar</Text>
-            </Pressable>
-          ) : null}
-          <Pressable accessibilityRole="button" onPress={onCompare} style={({ pressed }) => [styles.actionButton, styles.actionButtonPrimary, pressed && styles.pressed]}>
-            <Columns3 color={tokens.color.surfaceApp} size={15} />
-            <Text style={[styles.actionButtonLabel, styles.actionButtonLabelPrimary]}>Comparar</Text>
-          </Pressable>
-        </View>
+        {onAdd ? <Button label={addActionLabel} onPress={onAdd} variant="secondary" /> : null}
+        {onSave ? <Button label="Guardar comparación" onPress={onSave} variant="secondary" /> : null}
+        {onCompare ? <Button label="Comparar" onPress={onCompare} /> : null}
       </View>
     </View>
   );
@@ -259,11 +246,6 @@ const styles = StyleSheet.create({
   quantityInput: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, color: tokens.color.textMain, fontSize: tokens.type.caption, minHeight: 40, paddingHorizontal: tokens.spacing.sm, paddingRight: 34 },
   quantityUnit: { color: tokens.color.textSoft, fontSize: tokens.type.label, position: "absolute", right: tokens.spacing.sm },
   builderActions: { gap: tokens.spacing.sm },
-  builderActionsPrimary: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.sm, justifyContent: "flex-end" },
-  actionButton: { alignItems: "center", alignSelf: "flex-start", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.compact, minHeight: 38, paddingHorizontal: tokens.spacing.md },
-  actionButtonPrimary: { backgroundColor: tokens.color.textMain, borderColor: tokens.color.textMain },
-  actionButtonLabel: { color: tokens.color.textMain, fontSize: tokens.type.label, fontWeight: tokens.weight.semibold },
-  actionButtonLabelPrimary: { color: tokens.color.surfaceApp },
   metricCard: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderWidth: 1, gap: tokens.spacing.md, padding: tokens.card.outerPadding },
   metricHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
   metricTitle: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.bold },
