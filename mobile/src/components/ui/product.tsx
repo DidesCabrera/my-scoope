@@ -1,15 +1,21 @@
 import type { PropsWithChildren, ReactNode } from "react";
 import {
+  CalendarClock,
   CalendarDays,
   CalendarRange,
   Carrot,
+  CircleFadingPlus,
+  CircleUserRound,
   ClipboardList,
-  GitCompareArrows,
-  Home,
+  Columns3,
+  FileDown,
+  House,
   Inbox,
   type LucideIcon,
-  MessageSquareText,
-  UserRound,
+  MessageSquarePlus,
+  MessagesSquare,
+  Search,
+  Sparkles,
   Utensils,
 } from "lucide-react-native";
 import { Pressable, StyleProp, StyleSheet, Text, useWindowDimensions, View, ViewStyle } from "react-native";
@@ -18,7 +24,8 @@ import { tokens } from "@/design/tokens";
 import { Button } from "./controls";
 import { Card } from "./surfaces";
 
-export type EntityKind = "food" | "meal" | "dailyPlan" | "dpm" | "program" | "proposal" | "inbox" | "comparator" | "home" | "profile";
+export type EntityKind = "food" | "meal" | "dailyPlan" | "dpm" | "program";
+export type SectionKind = "home" | "profile" | "chatNew" | "chat" | "proposal" | "calendarization" | "comparator" | "explore" | "inbox" | "create" | "import";
 
 export type StructuralIndicatorKind = "day" | "food" | "meal" | "week";
 
@@ -34,11 +41,6 @@ const entityLabels: Record<EntityKind, string> = {
   dailyPlan: "Plan diario",
   dpm: "Plan diario",
   program: "Programa",
-  proposal: "Propuesta",
-  inbox: "Bandeja",
-  comparator: "Comparador",
-  home: "Inicio",
-  profile: "Perfil",
 };
 
 const entityIcons: Record<EntityKind, LucideIcon> = {
@@ -47,11 +49,6 @@ const entityIcons: Record<EntityKind, LucideIcon> = {
   dailyPlan: ClipboardList,
   dpm: CalendarDays,
   program: CalendarRange,
-  proposal: MessageSquareText,
-  inbox: Inbox,
-  comparator: GitCompareArrows,
-  home: Home,
-  profile: UserRound,
 };
 
 const structuralIcons: Record<StructuralIndicatorKind, LucideIcon> = {
@@ -61,6 +58,20 @@ const structuralIcons: Record<StructuralIndicatorKind, LucideIcon> = {
   week: CalendarRange,
 };
 
+const sectionIcons: Record<SectionKind, LucideIcon> = {
+  home: House,
+  profile: CircleUserRound,
+  chatNew: MessageSquarePlus,
+  chat: MessagesSquare,
+  proposal: Sparkles,
+  calendarization: CalendarClock,
+  comparator: Columns3,
+  explore: Search,
+  inbox: Inbox,
+  create: CircleFadingPlus,
+  import: FileDown,
+};
+
 export function EntityIcon({ entity, size = "regular" }: { entity: EntityKind; size?: "compact" | "regular" | "hero" }) {
   const Icon = entityIcons[entity];
   const compact = size === "compact";
@@ -68,6 +79,17 @@ export function EntityIcon({ entity, size = "regular" }: { entity: EntityKind; s
   return (
     <View style={[styles.entityIcon, compact && styles.entityIconCompact, hero && styles.entityIconHero, { backgroundColor: tokens.color[entity] }]}>
       <Icon color={tokens.color.entityIconForeground} size={compact ? 11 : hero ? 22 : 13} strokeWidth={hero ? 1.9 : 2.4} />
+    </View>
+  );
+}
+
+export function SectionIcon({ section, size = "regular" }: { section: SectionKind; size?: "compact" | "regular" | "hero" }) {
+  const Icon = sectionIcons[section];
+  const compact = size === "compact";
+  const hero = size === "hero";
+  return (
+    <View style={[styles.sectionIcon, compact && styles.sectionIconCompact, hero && styles.sectionIconHero]}>
+      <Icon color={tokens.color.textMain} size={compact ? 16 : hero ? 28 : 20} strokeWidth={hero ? 1.8 : 2} />
     </View>
   );
 }
@@ -300,6 +322,9 @@ const styles = StyleSheet.create({
   entityIcon: { alignItems: "center", borderRadius: 5, height: 22, justifyContent: "center", width: 22 },
   entityIconCompact: { height: 18, width: 18 },
   entityIconHero: { borderRadius: tokens.radius.md, height: 40, width: 40 },
+  sectionIcon: { alignItems: "center", backgroundColor: "transparent", height: 22, justifyContent: "center", width: 22 },
+  sectionIconCompact: { height: 18, width: 18 },
+  sectionIconHero: { height: 40, width: 40 },
   eyebrow: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.bold, letterSpacing: 0, textTransform: "uppercase" },
   headingTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: tokens.weight.semibold, letterSpacing: 0, lineHeight: 25 },
   headingSubtitle: { color: tokens.color.textSoft, fontSize: tokens.type.caption, lineHeight: 18 },

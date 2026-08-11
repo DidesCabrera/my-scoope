@@ -141,7 +141,10 @@ name uses 22 pt type with a 32 pt line height; at wider widths it uses 24/34.
 The regular card variant keeps its existing 20/25 treatment.
 
 `EntityIcon` maps semantic entity kinds to the shared Lucide vocabulary and
-applies the entity color. `StructuralIndicators` is independent from the
+applies the entity color. Only Food, Meal, DailyPlan, DPM and Program use this
+colored surface. Navigation and functional areas use `SectionIcon`; its
+canonical Lucide glyphs render on a transparent background, and their complete
+mapping is visible in the Tokens gallery. `StructuralIndicators` is independent from the
 heading and renders accessible value/icon pairs with automatic dividers; it
 can therefore be reused in cards, detail headers and future picker results.
 Entity icon vectors and structural-indicator content use explicit white
@@ -285,7 +288,8 @@ DailyPlan scopes. `ComparisonSelectionCard` represents a numbered selection and
 its optional quantity/removal action in read mode. `ComparisonBuilder` groups
 editable `ComparisonEditorCard` instances with add, save and compare actions;
 each editor owns the entity selector and, where applicable, quantity input.
-The builder identifies itself with the Comparator entity icon and a scope-aware
+The builder identifies itself with the canonical transparent Comparator section
+icon (`columns-3`) and a scope-aware
 eyebrow (`Comparación de alimentos`, comidas or planes).
 Builder actions reuse the canonical `Button` component also used by proposal
 review: Compare is primary, while Add and Save are secondary actions.

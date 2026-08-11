@@ -1,7 +1,7 @@
 import { ChevronDown, ChevronRight, Trash2 } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
-import { Button, EntityIcon, type EntityKind } from "@/components/ui";
+import { Button, EntityIcon, SectionIcon, type EntityKind } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 export type ComparisonScope = Extract<EntityKind, "food" | "meal" | "dailyPlan">;
@@ -154,7 +154,7 @@ export function ComparisonBuilder({ addActionLabel, children, onAdd, onCompare, 
   return (
     <View style={styles.builder}>
       <View style={styles.builderEyebrow}>
-        <EntityIcon entity="comparator" size="compact" />
+        <SectionIcon section="comparator" size="compact" />
         <Text style={styles.builderEyebrowText}>Comparación de {scopeLabels[scope].toLowerCase()}</Text>
       </View>
       <View style={styles.builderSelections}>{children}</View>

@@ -53,6 +53,8 @@ import {
   Pill,
   ProgressBar,
   Screen,
+  SectionIcon,
+  type SectionKind,
   SectionTitle,
   textStyles,
 } from "@/components/ui";
@@ -64,11 +66,20 @@ const entities: { key: EntityKind; label: string }[] = [
   { key: "dailyPlan", label: "DailyPlan" },
   { key: "dpm", label: "DPM" },
   { key: "program", label: "Program" },
-  { key: "proposal", label: "Proposal" },
-  { key: "inbox", label: "Inbox" },
-  { key: "comparator", label: "Comparator" },
-  { key: "home", label: "Home" },
-  { key: "profile", label: "Profile" },
+];
+
+const sections: { key: SectionKind; label: string; lucide: string }[] = [
+  { key: "home", label: "Inicio", lucide: "house" },
+  { key: "profile", label: "Perfil", lucide: "circle-user-round" },
+  { key: "chatNew", label: "Nuevo chat", lucide: "message-square-plus" },
+  { key: "chat", label: "Chats", lucide: "messages-square" },
+  { key: "proposal", label: "Propuestas", lucide: "sparkles" },
+  { key: "calendarization", label: "Calendarizar", lucide: "calendar-clock" },
+  { key: "comparator", label: "Comparaciones", lucide: "columns-3" },
+  { key: "explore", label: "Explorar", lucide: "search" },
+  { key: "inbox", label: "Inbox", lucide: "inbox" },
+  { key: "create", label: "Crear", lucide: "circle-fading-plus" },
+  { key: "import", label: "Importar", lucide: "file-down" },
 ];
 
 const foodPanelItems: FoodPanelItem[] = [
@@ -582,6 +593,16 @@ export default function UiGalleryScreen() {
           {entities.map((entity) => (
             <EntityCard entity={entity.key} key={entity.key} subtitle={`tokens.color.${entity.key}`} title={entity.label} />
           ))}
+          <SectionTitle detail="Lucide · fondo transparente" title="Iconos de secciones" />
+          <View style={styles.sectionIconList}>
+            {sections.map((section) => (
+              <View key={section.key} style={styles.sectionIconRow}>
+                <SectionIcon section={section.key} />
+                <Text style={styles.sectionIconLabel}>{section.label}</Text>
+                <Text style={textStyles.caption}>{section.lucide}</Text>
+              </View>
+            ))}
+          </View>
           <SectionTitle detail="Escala semántica" title="Tipografía" />
           {Object.entries(tokens.type).map(([name, size]) => (
             <View key={name} style={styles.typeRow}>
@@ -662,6 +683,9 @@ const styles = StyleSheet.create({
   radiusGrid: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.md },
   radiusItem: { alignItems: "center", gap: tokens.spacing.sm, width: "29%" },
   radiusSample: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.interactivePrimary, borderWidth: 1, height: 58, width: 58 },
+  sectionIconList: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderWidth: 1, paddingHorizontal: tokens.spacing.md },
+  sectionIconRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.sm, minHeight: 44 },
+  sectionIconLabel: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
   allocationRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md },
   allocationLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700", width: 96 },
   allocationBarInRow: { flex: 1, minWidth: 0, width: "auto" },

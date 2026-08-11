@@ -2,7 +2,7 @@ import { Mail, MailOpen, Paperclip } from "lucide-react-native";
 import type { PropsWithChildren, ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { Card, EntityIcon, type EntityKind } from "@/components/ui";
+import { Card, EntityIcon, SectionIcon, type EntityKind } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 export type ProposalStatus = "pending" | "approved" | "applied" | "rejected" | "cancelled";
@@ -69,7 +69,7 @@ export function ProposalHeading({ isRead, receivedAt, title, detail = false }: {
   return (
     <View style={styles.copy}>
       <View style={styles.entityEyebrow}>
-        <EntityIcon entity="proposal" size="compact" />
+        <SectionIcon section="proposal" size="compact" />
         <Text style={styles.headingEyebrow}>Propuesta</Text>
       </View>
       <Text style={[styles.title, detail && styles.detailTitle]}>{title}</Text>
