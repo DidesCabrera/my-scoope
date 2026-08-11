@@ -552,6 +552,17 @@ export default function UiGalleryScreen() {
             tone="protein"
             unit="g"
           />
+          <SectionTitle detail="Alloc de panel compacto · sin valor interior" title="Métrica alternativa" />
+          <ComparisonMetricCard
+            barVariant="compactAlloc"
+            items={[
+              { entity: "food", formattedValue: "9,0 g", id: "alt-yogurt-protein", label: "Yogur griego natural", width: 75 },
+              { entity: "food", formattedValue: "12,0 g", id: "alt-skyr-protein", label: "Skyr natural", width: 100 },
+            ]}
+            label="Proteína"
+            tone="protein"
+            unit="g"
+          />
           <SectionTitle detail="Resumen de comparaciones persistidas" title="Comparación guardada" />
           <SavedComparisonCard
             entity="food"

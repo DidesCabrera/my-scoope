@@ -27,7 +27,7 @@ import { Card } from "./surfaces";
 export type EntityKind = "food" | "meal" | "dailyPlan" | "dpm" | "program";
 export type SectionKind = "home" | "profile" | "chatNew" | "chat" | "proposal" | "calendarization" | "comparator" | "explore" | "inbox" | "create" | "import";
 
-export type StructuralIndicatorKind = "day" | "food" | "meal" | "week";
+export type StructuralIndicatorKind = "day" | "food" | "meal" | "dailyPlan" | "week";
 
 export type StructuralIndicator = {
   icon?: StructuralIndicatorKind;
@@ -55,6 +55,7 @@ const structuralIcons: Record<StructuralIndicatorKind, LucideIcon> = {
   day: CalendarDays,
   food: Carrot,
   meal: Utensils,
+  dailyPlan: ClipboardList,
   week: CalendarRange,
 };
 

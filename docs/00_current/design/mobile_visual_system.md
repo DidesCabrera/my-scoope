@@ -303,11 +303,15 @@ The builder uses the dark card surface; editable selections use the lighter
 muted surface, with dark input surfaces nested inside them.
 `ComparisonMetricCard` presents one
 metric and receives already-normalized bar widths rather than recalculating
-domain values. `SavedComparisonCard` summarizes a persisted comparison. The
+domain values. Its parallel `compactAlloc` variant reuses `PanelAllocationBar`
+at compact height with its interior value hidden; the continuous variant remains
+the default. `SavedComparisonCard` summarizes a persisted comparison. The
 list card mirrors Django's compact saved-comparison result. The extended
 `SavedComparisonDetailPage` follows the full-bleed page-card contract and owns
 the saved-comparison heading, entity count, read-only selections, comparative
 results and optional edit action.
+Its title count is rendered by the canonical `StructuralIndicators` component,
+including the white structural entity glyph rather than a colored entity icon.
 The gallery demonstrates these contracts with a Food comparison; live selector
 data, persistence, rename/delete and advanced saved-detail actions remain
 outside this first visual iteration.

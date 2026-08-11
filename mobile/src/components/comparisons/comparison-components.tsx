@@ -2,7 +2,8 @@ import { ChevronDown, ChevronRight, Trash2 } from "lucide-react-native";
 import type { PropsWithChildren, ReactNode } from "react";
 import { Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
 
-import { Button, EntityIcon, SectionHeading, SectionIcon, type EntityKind } from "@/components/ui";
+import { PanelAllocationBar } from "@/components/nutrition";
+import { Button, EntityIcon, SectionHeading, SectionIcon, StructuralIndicators, type EntityKind } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 export type ComparisonScope = Extract<EntityKind, "food" | "meal" | "dailyPlan">;
@@ -189,7 +190,7 @@ export type ComparisonBarItem = {
   width: number;
 };
 
-export function ComparisonMetricCard({ items, label, tone, unit }: { items: ComparisonBarItem[]; label: string; tone: ComparisonMetricTone; unit: string }) {
+export function ComparisonMetricCard({ barVariant = "continuous", items, label, tone, unit }: { barVariant?: "compactAlloc" | "continuous"; items: ComparisonBarItem[]; label: string; tone: ComparisonMetricTone; unit: string }) {
   const color = metricColors[tone];
   return (
     <View style={styles.metricCard}>
@@ -207,9 +208,13 @@ export function ComparisonMetricCard({ items, label, tone, unit }: { items: Comp
                 <Text numberOfLines={1} style={styles.metricLabel}>{item.label}{item.labelSuffix ? <Text style={styles.metricSuffix}> {item.labelSuffix}</Text> : null}</Text>
                 <Text style={styles.metricValue}>{item.formattedValue}</Text>
               </View>
-              <View accessibilityLabel={`${item.label}: ${item.formattedValue}`} accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: 100, now: width }} style={styles.metricTrack}>
-                <View style={[styles.metricFill, { backgroundColor: color, width: `${width}%` }]} />
-              </View>
+              {barVariant === "compactAlloc" ? (
+                <PanelAllocationBar accessibilityLabel={`${item.label}: ${item.formattedValue}`} showValue={false} size="compact" tone={tone} value={width} />
+              ) : (
+                <View accessibilityLabel={`${item.label}: ${item.formattedValue}`} accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: 100, now: width }} style={styles.metricTrack}>
+                  <View style={[styles.metricFill, { backgroundColor: color, width: `${width}%` }]} />
+                </View>
+              )}
             </View>
           );
         })}
@@ -258,10 +263,7 @@ export function SavedComparisonDetailPage({
           <Text style={styles.builderEyebrowText}>Comparación guardada</Text>
         </View>
         <Text style={[styles.savedDetailTitle, { fontSize: titleSize, lineHeight: titleLineHeight }]}>{title}</Text>
-        <View accessibilityLabel={`${itemCount} ${scopeLabels[scope].toLowerCase()}`} style={styles.savedDetailCount}>
-          <Text style={styles.savedDetailCountValue}>{itemCount}</Text>
-          <EntityIcon entity={scope} size="compact" />
-        </View>
+        <StructuralIndicators indicators={[{ icon: scope, label: scopeLabels[scope].toLowerCase(), value: itemCount }]} />
       </View>
 
       <View style={styles.savedDetailSection}>
@@ -333,8 +335,6 @@ const styles = StyleSheet.create({
   savedDetailPage: { alignSelf: "stretch", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderWidth: 1, gap: tokens.spacing.lg, marginHorizontal: -tokens.spacing.screen, minWidth: 0, padding: tokens.card.outerPadding },
   savedDetailHero: { gap: tokens.spacing.compact, minWidth: 0 },
   savedDetailTitle: { color: tokens.color.textMain, fontWeight: tokens.weight.semibold, letterSpacing: 0 },
-  savedDetailCount: { alignItems: "center", alignSelf: "flex-start", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.pill, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.compact, minHeight: 30, paddingHorizontal: tokens.spacing.sm },
-  savedDetailCountValue: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.bold },
   savedDetailSection: { gap: tokens.spacing.sm, minWidth: 0 },
   savedDetailSelections: { gap: tokens.spacing.sm },
   savedDetailResults: { gap: tokens.spacing.sm },

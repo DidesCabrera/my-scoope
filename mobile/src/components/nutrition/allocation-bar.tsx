@@ -2,13 +2,14 @@ import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 
 import { tokens } from "@/design/tokens";
 
-export type AllocationTone = "protein" | "carbs" | "fat" | "calories";
+export type AllocationTone = "protein" | "carbs" | "fat" | "calories" | "ppk";
 
 type AllocationBarProps = {
   value: number;
   tone: AllocationTone;
   accessibilityLabel?: string;
   displayValue?: number | string;
+  showValue?: boolean;
   size?: "compact" | "regular";
   textSize?: 12 | 13;
   style?: StyleProp<ViewStyle>;
@@ -19,6 +20,7 @@ const toneLabels: Record<AllocationTone, string> = {
   carbs: "Carbos",
   fat: "Grasas",
   calories: "Calorías",
+  ppk: "PPK",
 };
 
 function toneColor(tone: AllocationTone): string {
@@ -63,6 +65,7 @@ export function PanelAllocationBar({
   tone,
   accessibilityLabel,
   displayValue,
+  showValue = true,
   size = "regular",
   textSize = 13,
   style,
@@ -74,7 +77,7 @@ export function PanelAllocationBar({
       {...progressAccessibility(normalized, tone, accessibilityLabel)}
       style={[styles.panelTrack, size === "compact" && styles.panelTrackCompact, style]}>
       <View style={[styles.fill, styles.panelFill, { backgroundColor: color, width: `${normalized}%` }]} />
-      <Text style={[styles.panelPercentage, { fontSize: textSize }]}>{displayValue ?? `${Math.round(normalized)}%`}</Text>
+      {showValue ? <Text style={[styles.panelPercentage, { fontSize: textSize }]}>{displayValue ?? `${Math.round(normalized)}%`}</Text> : null}
     </View>
   );
 }
