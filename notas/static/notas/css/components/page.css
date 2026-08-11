@@ -191,10 +191,10 @@
     margin: 0 0 34px 0;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    align-items: flex-start;
+    justify-content: flex-start;
     gap: 12px;
-    text-align: center;
+    text-align: left;
 }
 
 .list-page-header__icon {
@@ -228,9 +228,9 @@
     background: var(--entity-home);
 }
 
-.list-page-header__copy {
-    display: inline-flex;
-    flex-direction: column;
+.list-page-header__identity {
+    width: 100%;
+    display: flex;
     align-items: center;
     gap: 12px;
 }
@@ -283,7 +283,7 @@
         border-radius: 15px;
     }
 
-    .list-page-header__copy {
+    .list-page-header__identity {
         gap: 12px;
     }
 

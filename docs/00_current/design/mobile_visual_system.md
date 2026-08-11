@@ -147,9 +147,11 @@ can therefore be reused in cards, detail headers and future picker results.
 Entity icon vectors and structural-indicator content use explicit white
 foreground tokens for contrast on native surfaces.
 
-`CollectionPageHeader` is the canonical heading for list views. It composes a
-48 px semantic entity icon, a centered 22/32 semibold collection title and an
-optional structural item count using `StructuralIndicators`. It also accepts
+`CollectionPageHeader` is the canonical heading for list views on native and
+matches Django's `list_page_header`. Its first row aligns a 48 px semantic
+entity icon and a left-aligned 22/32 semibold collection title; structural item
+information occupies a new left-aligned row below the icon. It uses
+`StructuralIndicators` on native and the equivalent web indicator. It also accepts
 an explicit icon or action for list views whose page identity differs from the
 underlying entity. It must not be confused with `SectionHeading`, which labels
 a section inside an existing page.

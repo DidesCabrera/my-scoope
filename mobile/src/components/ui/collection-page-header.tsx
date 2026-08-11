@@ -26,20 +26,20 @@ export function CollectionPageHeader({
 }) {
   return (
     <View style={styles.container}>
-      {icon ?? <EntityIcon entity={entity} size="hero" />}
-      <View style={styles.copy}>
+      <View style={styles.identity}>
+        {icon ?? <EntityIcon entity={entity} size="hero" />}
         <Text style={styles.title}>{title}</Text>
-        {count !== undefined ? (
-          <StructuralIndicators indicators={[{ icon: countIcon, label: "elementos", value: count }]} />
-        ) : null}
       </View>
+      {count !== undefined ? (
+        <StructuralIndicators indicators={[{ icon: countIcon, label: "elementos", value: count }]} />
+      ) : null}
       {action}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { alignItems: "center", gap: tokens.spacing.md, minWidth: 0, paddingVertical: tokens.spacing.md, width: "100%" },
-  copy: { alignItems: "center", gap: tokens.spacing.md, minWidth: 0 },
-  title: { color: tokens.color.textMain, fontSize: 22, fontWeight: tokens.weight.semibold, letterSpacing: 0, lineHeight: 32, textAlign: "center" },
+  container: { alignItems: "flex-start", gap: tokens.spacing.md, minWidth: 0, paddingVertical: tokens.spacing.md, width: "100%" },
+  identity: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, minWidth: 0, width: "100%" },
+  title: { color: tokens.color.textMain, flexShrink: 1, fontSize: 22, fontWeight: tokens.weight.semibold, letterSpacing: 0, lineHeight: 32, textAlign: "left" },
 });
