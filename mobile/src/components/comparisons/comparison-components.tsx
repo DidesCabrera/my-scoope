@@ -1,8 +1,9 @@
-import { ChevronDown, ChevronRight, Trash2 } from "lucide-react-native";
+import { ChevronDown, Trash2 } from "lucide-react-native";
 import type { PropsWithChildren, ReactNode } from "react";
 import { Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
 
 import { PanelAllocationBar } from "@/components/nutrition";
+import { FoodPanels, type FoodPanelItem } from "@/components/panels";
 import { Button, EntityIcon, SectionHeading, SectionIcon, StructuralIndicators, type EntityKind } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
@@ -210,17 +211,21 @@ export function ComparisonMetricCard({ barVariant = "continuous", items, label, 
   );
 }
 
-export function SavedComparisonCard({ entity, onPress, preview, subtitle, title }: { entity: ComparisonScope; onPress?: () => void; preview: string; subtitle: string; title: string }) {
+export function SavedComparisonCard({ items, title }: { items: FoodPanelItem[]; title: string }) {
   return (
-    <Pressable accessibilityRole={onPress ? "button" : undefined} disabled={!onPress} onPress={onPress} style={({ pressed }) => [styles.savedCard, pressed && styles.pressed]}>
-      <EntityIcon entity={entity} size="hero" />
-      <View style={styles.savedCopy}>
-        <Text numberOfLines={1} style={styles.savedTitle}>{title}</Text>
-        <Text numberOfLines={1} style={styles.savedSubtitle}>{subtitle}</Text>
-        <Text numberOfLines={1} style={styles.savedPreview}>{preview}</Text>
+    <View style={styles.savedCard}>
+      <View style={styles.savedCardHeading}>
+        <View style={styles.builderEyebrow}>
+          <SectionIcon section="comparator" size="compact" />
+          <Text style={styles.builderEyebrowText}>Comparación guardada</Text>
+        </View>
+        <Text style={styles.savedTitle}>{title}</Text>
+        <StructuralIndicators indicators={[{ icon: "food", label: "alimentos", value: items.length }]} />
       </View>
-      <ChevronRight color={tokens.color.textMuted} size={18} />
-    </Pressable>
+      <View style={styles.savedCardPanel}>
+        <FoodPanels items={items} />
+      </View>
+    </View>
   );
 }
 
@@ -311,11 +316,10 @@ const styles = StyleSheet.create({
   metricValue: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.bold },
   metricTrack: { backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.pill, borderWidth: 1, height: 11, overflow: "hidden" },
   metricFill: { borderRadius: tokens.radius.pill, height: "100%" },
-  savedCard: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.md, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minHeight: 82, padding: tokens.spacing.md },
-  savedCopy: { flex: 1, gap: tokens.spacing.xs, minWidth: 0 },
-  savedTitle: { color: tokens.color.textMain, fontSize: 15, fontWeight: tokens.weight.bold },
-  savedSubtitle: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.semibold },
-  savedPreview: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.weight.medium },
+  savedCard: { backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderWidth: 1, gap: tokens.card.gap, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minWidth: 0, padding: tokens.card.outerPadding },
+  savedCardHeading: { gap: tokens.spacing.xs, minWidth: 0 },
+  savedTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: tokens.weight.semibold, lineHeight: 25 },
+  savedCardPanel: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minWidth: 0 },
   savedDetailPage: { alignSelf: "stretch", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderWidth: 1, gap: tokens.spacing.lg, marginHorizontal: -tokens.spacing.screen, minWidth: 0, padding: tokens.card.outerPadding },
   savedDetailHero: { gap: tokens.spacing.compact, minWidth: 0 },
   savedDetailTitle: { color: tokens.color.textMain, fontWeight: tokens.weight.semibold, letterSpacing: 0 },

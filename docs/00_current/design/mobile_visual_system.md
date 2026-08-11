@@ -310,8 +310,10 @@ muted surface, with dark input surfaces nested inside them.
 metric and receives already-normalized bar widths rather than recalculating
 domain values. Its parallel `compactAlloc` variant reuses `PanelAllocationBar`
 at compact height with its interior value hidden; the continuous variant remains
-the default. `SavedComparisonCard` summarizes a persisted comparison. The
-list card mirrors Django's compact saved-comparison result. The extended
+the default. `SavedComparisonCard` composes a comparison heading, canonical
+structural count and the existing `FoodPanels` component. Its tabs are
+Alimentos, Macros and Alloc, and its rows are the compared foods rather than a
+detached preview string. The extended
 `SavedComparisonDetailPage` follows the full-bleed page-card contract and owns
 the saved-comparison heading, entity count, read-only selections, comparative
 results and optional edit action.
