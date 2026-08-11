@@ -240,7 +240,7 @@ export default function UiGalleryScreen() {
           </EntityCard>
           <EntityCard
             entity="food"
-            indicators={[{ icon: "food", label: "alimento", value: 1 }]}
+            indicators={[{ label: "base nutricional", value: "100 g" }]}
             title="Yogur griego natural"
           />
           <EntityCard
@@ -259,6 +259,18 @@ export default function UiGalleryScreen() {
           <SectionTitle detail="Identidad + colección + cantidad" title="Encabezados de páginas de lista" />
           <CollectionPageHeader count={8} countIcon="day" entity="dailyPlan" title="Planes diarios" />
           <CollectionPageHeader count={14} countIcon="meal" entity="meal" title="Comidas" />
+          <SectionTitle detail="Base nutricional por 100 g" title="Card de alimento" />
+          <NutritionEntityCard
+            entity="food"
+            indicators={[{ label: "base nutricional", value: "100 g" }]}
+            nutrition={{
+              calories: 97,
+              carbs: { grams: 3.9, allocation: 16 },
+              fat: { grams: 5, allocation: 47 },
+              protein: { grams: 9, allocation: 37, perKilogram: 0.1 },
+            }}
+            title="Yogur griego natural"
+          />
           <SectionTitle detail="Título + KPI" title="Card nutricional compuesta" />
           <NutritionEntityCard
             accessory={<Pill color={tokens.color.dailyPlan} label="Activo" />}

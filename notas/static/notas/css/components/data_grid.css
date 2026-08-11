@@ -490,6 +490,8 @@ body.is-mealfood-sorting .js-mealfood-sortable-row {
 .data-grid--menu .data-grid-cell--foods {
     line-height: 1.50;
     opacity: 0.9;
+    padding-left: 4px;
+    padding-right: 4px;
 }
 
 .data-grid-header--foods-aggregation,
@@ -522,7 +524,8 @@ body.is-mealfood-sorting .js-mealfood-sortable-row {
     line-height: 1.1;
     font-weight: 400;
     opacity: 0.75;
-    margin-left: 4px;
+    padding-left: 4px;
+    padding-right: 4px;
 }
 
 /* =========================================================
@@ -959,7 +962,7 @@ body.is-list-panel-sorting .js-list-reorder-row {
     }
 
     .data-grid--menu .data-grid-cell--foods {
-        padding: 0;
+        padding: 0 4px;
         font-size: 14px;
         line-height: 1.50;
         opacity: 0.7;

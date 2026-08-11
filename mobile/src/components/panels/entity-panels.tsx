@@ -143,7 +143,7 @@ export function NutritionAllocationPanel({ items, leadingLabel }: { items: (Food
       <AllocationHeader leadingLabel={leadingLabel} />
       {items.map((item, index) => (
         <View key={item.id} style={[styles.row, styles.allocationRow, index === items.length - 1 && styles.rowLast]}>
-          <Text numberOfLines={2} style={[styles.cell, styles.name]}>{item.name}</Text>
+          {isMealPanelItem(item) ? <MealRowIdentity name={item.name} /> : <Text numberOfLines={2} style={[styles.cell, styles.name]}>{item.name}</Text>}
           <PanelAllocationBar style={styles.allocationCell} tone="protein" value={item.proteinAllocation} />
           <PanelAllocationBar style={styles.allocationCell} tone="carbs" value={item.carbsAllocation} />
           <PanelAllocationBar style={styles.allocationCell} tone="fat" value={item.fatAllocation} />
@@ -212,6 +212,6 @@ const styles = StyleSheet.create({
   menuTitleRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
   mealIdentity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0, paddingHorizontal: tokens.spacing.xs },
   mealIdentityName: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold, letterSpacing: 0, lineHeight: 18 },
-  menuTime: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.regular, letterSpacing: 0 },
-  menuFoods: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, letterSpacing: 0, lineHeight: 20, opacity: 0.82 },
+  menuTime: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.regular, letterSpacing: 0, paddingHorizontal: tokens.spacing.xs },
+  menuFoods: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, letterSpacing: 0, lineHeight: 20, opacity: 0.82, paddingHorizontal: tokens.spacing.xs },
 });

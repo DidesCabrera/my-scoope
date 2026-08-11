@@ -23,7 +23,7 @@ export type EntityKind = "food" | "meal" | "dailyPlan" | "dpm" | "program" | "pr
 export type StructuralIndicatorKind = "day" | "food" | "meal" | "week";
 
 export type StructuralIndicator = {
-  icon: StructuralIndicatorKind;
+  icon?: StructuralIndicatorKind;
   label: string;
   value: number | string;
 };
@@ -80,13 +80,13 @@ export function StructuralIndicators({ indicators }: { indicators: StructuralInd
       accessible
       style={styles.structuralIndicators}>
       {indicators.map((indicator, index) => {
-        const Icon = structuralIcons[indicator.icon];
+        const Icon = indicator.icon ? structuralIcons[indicator.icon] : null;
         return (
-          <View key={`${indicator.icon}-${indicator.label}-${index}`} style={styles.structuralFragment}>
+          <View key={`${indicator.icon ?? "text"}-${indicator.label}-${index}`} style={styles.structuralFragment}>
             {index > 0 ? <View style={styles.structuralDivider} /> : null}
             <View style={styles.structuralItem}>
               <Text style={styles.structuralValue}>{indicator.value}</Text>
-              <Icon color={tokens.color.structuralIndicatorForeground} size={13} strokeWidth={2.2} />
+              {Icon ? <Icon color={tokens.color.structuralIndicatorForeground} size={13} strokeWidth={2.2} /> : null}
             </View>
           </View>
         );

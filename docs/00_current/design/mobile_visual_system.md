@@ -146,6 +146,9 @@ heading and renders accessible value/icon pairs with automatic dividers; it
 can therefore be reused in cards, detail headers and future picker results.
 Entity icon vectors and structural-indicator content use explicit white
 foreground tokens for contrast on native surfaces.
+Structural indicators may omit their icon when the structural value is already
+self-describing, such as a Food nutrition basis of `100 g` or a named serving.
+The gallery's complete Food card demonstrates this title + basis + KPI contract.
 
 `CollectionPageHeader` is the canonical heading for list views on native and
 matches Django's `list_page_header`. Its first row aligns a 40 px semantic
@@ -184,6 +187,7 @@ explicitly because their responsive layout has specialized rules.
 name; Django uses the equivalent `grid_meal_identity.html` partial. Menu, macro
 and allocation panels reuse it in their meal-name column. Its 4 px internal
 inset makes Menu identity content align with the first column in other panels.
+The menu time and ingredient enumeration use that same 4 px internal inset.
 
 ## Entity detail pages
 
