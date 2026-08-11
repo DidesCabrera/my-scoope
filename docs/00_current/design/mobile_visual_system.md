@@ -180,6 +180,10 @@ second visible outline or a size change. Every grid header and item row owns 8
 px of horizontal padding; panel bodies and grid wrappers do not add a second
 horizontal inset around those rows. Menu headers and rows declare this inset
 explicitly because their responsive layout has specialized rules.
+`MealRowIdentity` is the shared native microcomponent for the Meal icon and meal
+name; Django uses the equivalent `grid_meal_identity.html` partial. Menu, macro
+and allocation panels reuse it in their meal-name column. Its 4 px internal
+inset makes Menu identity content align with the first column in other panels.
 
 ## Entity detail pages
 

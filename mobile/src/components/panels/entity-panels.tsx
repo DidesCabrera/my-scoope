@@ -60,6 +60,19 @@ function decimal(value: number): string {
   return Number.isFinite(value) ? value.toLocaleString("es-CL", { maximumFractionDigits: 1 }) : "0";
 }
 
+export function MealRowIdentity({ name }: { name: string }) {
+  return (
+    <View style={styles.mealIdentity}>
+      <EntityIcon entity="meal" size="compact" />
+      <Text numberOfLines={2} style={styles.mealIdentityName}>{name}</Text>
+    </View>
+  );
+}
+
+function isMealPanelItem(item: FoodPanelItem | MealPanelItem): item is MealPanelItem {
+  return "foods" in item;
+}
+
 function QuantityHeader({ leadingLabel, trailingLabel }: { leadingLabel: string; trailingLabel: string }) {
   return (
     <View style={[styles.row, styles.header]}>
@@ -95,7 +108,7 @@ export function FoodQuantityPanel({ items }: { items: FoodPanelItem[] }) {
       <QuantityHeader leadingLabel="Alimentos" trailingLabel="Qty" />
       {items.map((item, index) => (
         <View key={item.id} style={[styles.row, index === items.length - 1 && styles.rowLast]}>
-          <Text numberOfLines={2} style={[styles.cell, styles.name]}>{item.name}</Text>
+          {isMealPanelItem(item) ? <MealRowIdentity name={item.name} /> : <Text numberOfLines={2} style={[styles.cell, styles.name]}>{item.name}</Text>}
           <Text style={[styles.cell, styles.quantityValue]}>{decimal(item.quantity)} {item.quantityUnit}</Text>
         </View>
       ))}
@@ -110,7 +123,7 @@ export function NutritionMacrosPanel({ items, leadingLabel }: { items: (FoodPane
       <MacrosHeader leadingLabel={leadingLabel} />
       {items.map((item, index) => (
         <View key={item.id} style={[styles.row, index === items.length - 1 && styles.rowLast]}>
-          <Text numberOfLines={2} style={[styles.cell, styles.name]}>{item.name}</Text>
+          {isMealPanelItem(item) ? <MealRowIdentity name={item.name} /> : <Text numberOfLines={2} style={[styles.cell, styles.name]}>{item.name}</Text>}
           <View style={styles.kcalCell}>
             <PanelAllocationBar accessibilityLabel={`${item.name}: ${rounded(item.calories)} calorías`} displayValue={rounded(item.calories)} tone="calories" value={item.calorieShare} />
           </View>
@@ -147,8 +160,7 @@ export function MealMenuPanel({ items }: { items: MealPanelItem[] }) {
       {items.map((item, index) => (
         <View key={item.id} style={[styles.menuRow, index === items.length - 1 && styles.rowLast]}>
           <View style={styles.menuTitleRow}>
-            <EntityIcon entity="meal" size="compact" />
-            <Text numberOfLines={2} style={styles.menuName}>{item.name}</Text>
+            <MealRowIdentity name={item.name} />
             {item.time ? <Text style={styles.menuTime}>{item.time}</Text> : null}
           </View>
           <Text style={styles.menuFoods}>
@@ -198,7 +210,8 @@ const styles = StyleSheet.create({
   allocationCell: { flex: 1, minWidth: 0, width: "auto" },
   menuRow: { alignSelf: "stretch", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, gap: tokens.spacing.compact, paddingHorizontal: tokens.spacing.sm, paddingVertical: tokens.spacing.md },
   menuTitleRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
-  menuName: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold, letterSpacing: 0, lineHeight: 18 },
+  mealIdentity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0, paddingHorizontal: tokens.spacing.xs },
+  mealIdentityName: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold, letterSpacing: 0, lineHeight: 18 },
   menuTime: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.regular, letterSpacing: 0 },
   menuFoods: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, letterSpacing: 0, lineHeight: 20, opacity: 0.82 },
 });

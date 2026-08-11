@@ -14,8 +14,8 @@
     {% for row in items %}
         <div class="data-grid-row data-grid-row--meals">
 
-            <div class="data-grid-cell data-grid-cell--name">
-                <div class="truncate">{{ row.rel.name }}</div>
+            <div class="data-grid-cell data-grid-cell--name data-grid-cell--meal-identity">
+                {% include "components/grid_meal_identity.html" with meal_name=row.rel.name %}
             </div>
 
             <div class="data-grid-cell data-grid-cell--kcal">
