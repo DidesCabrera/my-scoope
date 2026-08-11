@@ -287,6 +287,8 @@ editable `ComparisonEditorCard` instances with add, save and compare actions;
 each editor owns the entity selector and, where applicable, quantity input.
 Builder actions reuse the canonical `Button` component also used by proposal
 review: Compare is primary, while Add and Save are secondary actions.
+Editable selection cards use the standard reduced 12 px nested-card inset by
+expanding horizontally from the builder's 18 px content padding.
 `ComparisonMetricCard` presents one
 metric and receives already-normalized bar widths rather than recalculating
 domain values. `SavedComparisonCard` summarizes a persisted comparison. The
