@@ -22,6 +22,10 @@ export function Screen({ children, scroll = true, contentStyle }: ScreenProps) {
   );
 }
 
+export function CollectionListSlot({ children }: PropsWithChildren) {
+  return <View style={styles.reducedInsetSlot}>{children}</View>;
+}
+
 export function Brand({ compact = false }: { compact?: boolean }) {
   return (
     <View style={styles.brandRow}>
@@ -52,6 +56,7 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: tokens.color.surfaceApp },
   scrollContent: { flexGrow: 1 },
   screenContent: { flex: 1, gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg, paddingBottom: 42 },
+  reducedInsetSlot: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minWidth: 0 },
   brandRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md },
   brandMark: { alignItems: "center", backgroundColor: tokens.color.textMain, borderRadius: tokens.radius.md, height: 38, justifyContent: "center", width: 38 },
   brandMarkText: { color: tokens.color.surfaceApp, fontSize: 20, fontWeight: "900" },

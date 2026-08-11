@@ -165,6 +165,10 @@ export function EntityCard({
   );
 }
 
+export function EntityCardPanelSlot({ children }: PropsWithChildren) {
+  return <View style={styles.entityCardPanelSlot}>{children}</View>;
+}
+
 export function CardHeader({
   title,
   description,
@@ -300,6 +304,7 @@ const styles = StyleSheet.create({
   structuralItem: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs },
   structuralValue: { color: tokens.color.structuralIndicatorForeground, fontSize: tokens.type.caption, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.medium, letterSpacing: 0, lineHeight: 15 },
   structuralDivider: { backgroundColor: tokens.color.borderDefault, height: 12, width: 1 },
+  entityCardPanelSlot: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minWidth: 0 },
   cardHeader: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
   cardHeaderCompact: { gap: tokens.spacing.sm },
   cardHeaderCopy: { flex: 1, gap: tokens.spacing.xs },

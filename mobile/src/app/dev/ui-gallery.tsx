@@ -36,6 +36,7 @@ import {
   CardHeader,
   ChoiceRow,
   CollectionEmptyState,
+  CollectionListSlot,
   ContentPanel,
   DetailSection,
   EntityCard,
@@ -398,7 +399,9 @@ export default function UiGalleryScreen() {
               <MealPanels items={mealPanelItems} />
             </EntityDetailSection>
             <EntityDetailSection detail="3 comidas" title="Detalle de cada comida">
-              <DailyPlanMealDetailList items={dailyPlanMealDetailItems} />
+              <CollectionListSlot>
+                <DailyPlanMealDetailList items={dailyPlanMealDetailItems} />
+              </CollectionListSlot>
             </EntityDetailSection>
             <EntityDetailMetadata creator="Felipe Dides" updatedAt="Hoy, 14:30" />
           </EntityDetailPage>
@@ -535,6 +538,11 @@ export default function UiGalleryScreen() {
               <Text style={textStyles.caption}>{size} px</Text>
             </View>
           ))}
+          <View style={styles.scaleRow}>
+            <Text style={styles.scaleLabel}>reducedInset</Text>
+            <View style={[styles.scaleBar, { width: tokens.layout.reducedInset * 3 }]} />
+            <Text style={textStyles.caption}>{tokens.layout.reducedInset} px</Text>
+          </View>
           <SectionTitle detail="sm → pill" title="Radios" />
           <View style={styles.radiusGrid}>
             {Object.entries(tokens.radius).map(([name, radius]) => (

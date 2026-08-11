@@ -3,6 +3,7 @@ import { StyleProp, View, ViewStyle } from "react-native";
 
 import {
   EntityCard,
+  EntityCardPanelSlot,
   type EntityKind,
   type StructuralIndicator,
 } from "@/components/ui";
@@ -51,7 +52,7 @@ export function NutritionEntityCard({
       <View>
         <NutritionKpiSection density={density} {...nutrition} />
       </View>
-      {children}
+      {children ? <EntityCardPanelSlot>{children}</EntityCardPanelSlot> : null}
     </EntityCard>
   );
 }

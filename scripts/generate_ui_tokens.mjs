@@ -108,6 +108,7 @@ const nativeTokens = {
   type: shared.typography,
   weight: shared.fontWeight,
   card: platforms.native.overrides.card,
+  layout: platforms.native.overrides.layout,
 };
 
 const native = [

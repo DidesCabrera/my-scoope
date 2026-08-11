@@ -80,6 +80,9 @@ export const tokens = {
     "outerPadding": 18,
     "innerPadding": 14,
     "gap": 12
+  },
+  "layout": {
+    "reducedInset": 12
   }
 } as const;
 
