@@ -1,6 +1,9 @@
+from django.contrib.admin.views.decorators import staff_member_required
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_GET
+
+from core.msos import load_msos_data
 
 
 @require_GET
@@ -11,6 +14,12 @@ def healthz(request):
 
 def landing(request):
     return render(request, "core/landing.html")
+
+
+@staff_member_required
+@require_GET
+def msos(request):
+    return render(request, "core/msos.html", {"msos": load_msos_data()})
 
 
 def privacy(request):
