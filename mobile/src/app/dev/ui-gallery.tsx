@@ -142,6 +142,12 @@ const galleryTabs: { key: GalleryTab; label: string }[] = [
   { key: "tokens", label: "Tokens" },
 ];
 
+const comparisonExamples: Record<ComparisonScope, { label: string }> = {
+  food: { label: "Yogur griego natural" },
+  meal: { label: "Desayuno proteico" },
+  dailyPlan: { label: "Plan semanal equilibrado" },
+};
+
 function GalleryNavigation({ activeTab, onChange, wide }: { activeTab: GalleryTab; onChange: (tab: GalleryTab) => void; wide: boolean }) {
   const [open, setOpen] = useState(false);
   const activeLabel = galleryTabs.find((item) => item.key === activeTab)?.label ?? "Sección";
@@ -496,17 +502,17 @@ export default function UiGalleryScreen() {
           <SectionTitle detail="Alimentos, comidas y planes" title="Alcance de comparación" />
           <ComparisonScopeTabs activeScope={comparisonScope} onChange={setComparisonScope} />
           <SectionTitle detail="Selección, cantidad y acciones" title="Construir comparación" />
-          <ComparisonBuilder onAdd={() => undefined} onCompare={() => undefined} onSave={() => undefined}>
+          <ComparisonBuilder onAdd={() => undefined} onCompare={() => undefined} onSave={() => undefined} scope={comparisonScope}>
             <ComparisonEditorCard
-              entity="food"
+              entity={comparisonScope}
               index={1}
-              label="Yogur griego natural"
+              label={comparisonExamples[comparisonScope].label}
               onOpenSelector={() => undefined}
               onQuantityChange={setComparisonQuantity}
               quantity={comparisonQuantity}
             />
             <ComparisonEditorCard
-              entity="food"
+              entity={comparisonScope}
               index={2}
               onOpenSelector={() => undefined}
               onRemove={() => undefined}

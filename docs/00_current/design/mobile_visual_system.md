@@ -285,6 +285,8 @@ DailyPlan scopes. `ComparisonSelectionCard` represents a numbered selection and
 its optional quantity/removal action in read mode. `ComparisonBuilder` groups
 editable `ComparisonEditorCard` instances with add, save and compare actions;
 each editor owns the entity selector and, where applicable, quantity input.
+The builder identifies itself with the Comparator entity icon and a scope-aware
+eyebrow (`Comparación de alimentos`, comidas or planes).
 Builder actions reuse the canonical `Button` component also used by proposal
 review: Compare is primary, while Add and Save are secondary actions.
 Editable selection cards use the standard reduced 12 px nested-card inset by

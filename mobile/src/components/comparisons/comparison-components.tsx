@@ -149,12 +149,17 @@ export function ComparisonEditorCard({
   );
 }
 
-export function ComparisonBuilder({ addActionLabel = "Agregar alimento", children, onAdd, onCompare, onSave }: { addActionLabel?: string; children: React.ReactNode; onAdd?: () => void; onCompare?: () => void; onSave?: () => void }) {
+export function ComparisonBuilder({ addActionLabel, children, onAdd, onCompare, onSave, scope }: { addActionLabel?: string; children: React.ReactNode; onAdd?: () => void; onCompare?: () => void; onSave?: () => void; scope: ComparisonScope }) {
+  const resolvedAddActionLabel = addActionLabel ?? `Agregar ${scopeSingularLabels[scope].toLowerCase()}`;
   return (
     <View style={styles.builder}>
+      <View style={styles.builderEyebrow}>
+        <EntityIcon entity="comparator" size="compact" />
+        <Text style={styles.builderEyebrowText}>Comparación de {scopeLabels[scope].toLowerCase()}</Text>
+      </View>
       <View style={styles.builderSelections}>{children}</View>
       <View style={styles.builderActions}>
-        {onAdd ? <Button label={addActionLabel} onPress={onAdd} variant="secondary" /> : null}
+        {onAdd ? <Button label={resolvedAddActionLabel} onPress={onAdd} variant="secondary" /> : null}
         {onSave ? <Button label="Guardar comparación" onPress={onSave} variant="secondary" /> : null}
         {onCompare ? <Button label="Comparar" onPress={onCompare} /> : null}
       </View>
@@ -233,6 +238,8 @@ const styles = StyleSheet.create({
   selectionQuantity: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.regular },
   removeButton: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.pill, borderWidth: 1, height: 32, justifyContent: "center", width: 32 },
   builder: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderWidth: 1, gap: tokens.spacing.md, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, padding: tokens.card.outerPadding },
+  builderEyebrow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },
+  builderEyebrowText: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.bold, letterSpacing: 0, textTransform: "uppercase" },
   builderSelections: { gap: tokens.spacing.sm },
   editorCard: { backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, gap: tokens.spacing.md, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, padding: tokens.spacing.md },
   editorSelectedName: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
