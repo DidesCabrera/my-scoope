@@ -25,6 +25,7 @@ from admin_operations.viewmodels import (
     AdminOperationsCatalogCoverageVM,
     AdminOperationsCatalogDataCoverageRowVM,
     AdminOperationsCatalogDataCoverageVM,
+    AdminOperationsCatalogEnrichmentBatchVM,
     AdminOperationsCatalogEvidenceVM,
     AdminOperationsCatalogFoodDetailVM,
     AdminOperationsCatalogFoodVM,
@@ -73,7 +74,13 @@ from food_catalog.infrastructure.imports.usda_catalog_import import (
     dry_run_usda_catalog_food_payloads,
     import_usda_catalog_food_payloads,
 )
-from food_catalog.models import CatalogCurationCandidate, CatalogFood, CatalogImportBatch, CatalogImportSourcePolicy
+from food_catalog.models import (
+    CatalogCurationCandidate,
+    CatalogEnrichmentBatch,
+    CatalogFood,
+    CatalogImportBatch,
+    CatalogImportSourcePolicy,
+)
 from notas.application.services.commands.food_catalog_backfill import (
     DEFAULT_OPERATIONAL_BACKFILL_SOURCE_VERSION,
     OPERATIONAL_BACKFILL_SOURCE_NAME,
@@ -1298,6 +1305,21 @@ def build_food_catalog_imports_vm(*, source_type: str = "", status: str = "") ->
                 started_label=batch.started_at.strftime("%Y-%m-%d %H:%M"),
             )
             for batch in payload["batches"]
+        ],
+        enrichment_batches=[
+            AdminOperationsCatalogEnrichmentBatchVM(
+                batch_ref=str(batch.batch_ref),
+                environment=batch.environment,
+                status=batch.status,
+                counts_label=(
+                    f"propuestas {batch.total_proposals} · válidas {batch.valid_proposals} · "
+                    f"aplicadas {batch.applied_proposals} · fallidas {batch.failed_proposals}"
+                ),
+                reason=batch.reason,
+                contract_label=f"{batch.contract_version} · {batch.policy_version}",
+                created_label=batch.created_at.strftime("%Y-%m-%d %H:%M"),
+            )
+            for batch in CatalogEnrichmentBatch.objects.order_by("-created_at")[:50]
         ],
         source_options=list(payload["source_options"]),
         status_options=list(payload["status_options"]),

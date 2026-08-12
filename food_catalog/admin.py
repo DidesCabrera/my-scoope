@@ -4,9 +4,15 @@ from django.contrib import admin, messages
 
 from food_catalog.application.curation import transition_catalog_foods_status
 from food_catalog.models import (
+    CatalogCapabilityDefinition,
+    CatalogClientRequirement,
     CatalogCurationCandidate,
+    CatalogEnrichmentBatch,
+    CatalogEnrichmentChange,
+    CatalogFieldProposal,
     CatalogFood,
     CatalogFoodAlias,
+    CatalogFoodCapability,
     CatalogFoodPortion,
     CatalogFoodSource,
     CatalogImportBatch,
@@ -14,6 +20,60 @@ from food_catalog.models import (
     ExternalFoodReference,
     ExternalProviderFetchLog,
 )
+
+
+@admin.register(CatalogCapabilityDefinition)
+class CatalogCapabilityDefinitionAdmin(admin.ModelAdmin):
+    list_display = ("key", "schema_version", "nature", "maturity", "authority_requirement", "risk_level", "is_active")
+    list_filter = ("nature", "maturity", "authority_requirement", "risk_level", "is_active")
+    search_fields = ("key", "label")
+
+
+@admin.register(CatalogClientRequirement)
+class CatalogClientRequirementAdmin(admin.ModelAdmin):
+    list_display = ("client_key", "requirement_version", "capability", "is_required", "is_active")
+    list_filter = ("client_key", "is_required", "is_active")
+
+
+@admin.register(CatalogFoodCapability)
+class CatalogFoodCapabilityAdmin(admin.ModelAdmin):
+    list_display = ("catalog_food", "definition", "assessment_status", "confidence", "generation_method", "updated_at")
+    list_filter = ("assessment_status", "generation_method", "definition")
+    search_fields = ("catalog_food__display_name", "definition__key")
+
+
+@admin.register(CatalogEnrichmentBatch)
+class CatalogEnrichmentBatchAdmin(admin.ModelAdmin):
+    list_display = ("batch_ref", "environment", "status", "total_proposals", "valid_proposals", "applied_proposals", "created_at")
+    list_filter = ("environment", "status", "executor_kind", "contract_version")
+    search_fields = ("batch_ref", "reason", "instruction", "input_sha256", "manifest_sha256")
+    readonly_fields = (
+        "batch_ref", "input_sha256", "manifest_sha256", "manifest_payload", "status",
+        "total_proposals", "valid_proposals", "applied_proposals", "failed_proposals",
+        "dry_run_at", "approved_at", "applied_at", "reverted_at", "created_at", "updated_at",
+    )
+
+
+@admin.register(CatalogFieldProposal)
+class CatalogFieldProposalAdmin(admin.ModelAdmin):
+    list_display = ("batch", "catalog_food", "field_name", "status", "confidence", "risk_level", "authority_requirement")
+    list_filter = ("status", "nature", "maturity", "risk_level", "authority_requirement", "generation_method")
+    search_fields = ("catalog_food__display_name", "field_name", "rationale", "batch__batch_ref")
+    readonly_fields = tuple(field.name for field in CatalogFieldProposal._meta.fields)
+
+
+@admin.register(CatalogEnrichmentChange)
+class CatalogEnrichmentChangeAdmin(admin.ModelAdmin):
+    list_display = ("batch", "catalog_food", "field_name", "action", "actor", "created_at")
+    list_filter = ("action", "field_name")
+    search_fields = ("catalog_food__display_name", "batch__batch_ref", "reason")
+    readonly_fields = tuple(field.name for field in CatalogEnrichmentChange._meta.fields)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 class CatalogFoodPortionInline(admin.TabularInline):
