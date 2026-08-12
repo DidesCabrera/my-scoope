@@ -947,3 +947,294 @@ class CatalogImportSourcePolicy(models.Model):
 
     def __str__(self) -> str:
         return f"{self.source_name} · max {self.max_batch_rows}"
+
+
+class CatalogCapabilityDefinition(models.Model):
+    """Versioned definition of an evolvable Food Catalog capability.
+
+    The independent dimensions intentionally avoid conflating who consumes a
+    value with what kind of value it is, how it was obtained, or how mature the
+    contract currently is.
+    """
+
+    NATURE_FACTUAL = "factual"
+    NATURE_OPERATIONAL = "operational"
+    NATURE_SEMANTIC = "semantic"
+    NATURE_DERIVED = "derived"
+    NATURE_COMMERCIAL_CONTEXT = "commercial_context"
+    NATURE_CHOICES = [
+        (NATURE_FACTUAL, "Factual"),
+        (NATURE_OPERATIONAL, "Operational"),
+        (NATURE_SEMANTIC, "Semantic"),
+        (NATURE_DERIVED, "Derived"),
+        (NATURE_COMMERCIAL_CONTEXT, "Commercial context"),
+    ]
+
+    MATURITY_EXPERIMENTAL = "experimental"
+    MATURITY_CANDIDATE = "candidate"
+    MATURITY_STABLE = "stable"
+    MATURITY_DEPRECATED = "deprecated"
+    MATURITY_RETIRED = "retired"
+    MATURITY_CHOICES = [
+        (MATURITY_EXPERIMENTAL, "Experimental"),
+        (MATURITY_CANDIDATE, "Candidate"),
+        (MATURITY_STABLE, "Stable"),
+        (MATURITY_DEPRECATED, "Deprecated"),
+        (MATURITY_RETIRED, "Retired"),
+    ]
+
+    AUTHORITY_RULE_AUTO = "rule_auto_apply"
+    AUTHORITY_INTERNAL = "internal_review"
+    AUTHORITY_EXPERT = "expert_review"
+    AUTHORITY_EXTERNAL = "external_evidence_required"
+    AUTHORITY_LEGAL = "legal_review_required"
+    AUTHORITY_CHOICES = [
+        (AUTHORITY_RULE_AUTO, "Rule auto-apply"),
+        (AUTHORITY_INTERNAL, "Internal review"),
+        (AUTHORITY_EXPERT, "Expert review"),
+        (AUTHORITY_EXTERNAL, "External evidence required"),
+        (AUTHORITY_LEGAL, "Legal review required"),
+    ]
+
+    RISK_LOW = "low"
+    RISK_MEDIUM = "medium"
+    RISK_HIGH = "high"
+    RISK_CRITICAL = "critical"
+    RISK_CHOICES = [
+        (RISK_LOW, "Low"),
+        (RISK_MEDIUM, "Medium"),
+        (RISK_HIGH, "High"),
+        (RISK_CRITICAL, "Critical"),
+    ]
+
+    key = models.SlugField(max_length=120)
+    schema_version = models.CharField(max_length=64, default="v1")
+    label = models.CharField(max_length=160)
+    data_type = models.CharField(max_length=40)
+    nature = models.CharField(max_length=40, choices=NATURE_CHOICES)
+    maturity = models.CharField(max_length=30, choices=MATURITY_CHOICES, default=MATURITY_EXPERIMENTAL)
+    consumers = models.JSONField(default=list, blank=True)
+    allowed_values = models.JSONField(default=list, blank=True)
+    authority_requirement = models.CharField(max_length=40, choices=AUTHORITY_CHOICES)
+    risk_level = models.CharField(max_length=20, choices=RISK_CHOICES, default=RISK_MEDIUM)
+    scope_rules = models.JSONField(default=dict, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["key", "schema_version"], name="unique_catalog_capability_version")
+        ]
+        ordering = ["key", "schema_version"]
+
+    def __str__(self) -> str:
+        return f"{self.key}@{self.schema_version}"
+
+
+class CatalogClientRequirement(models.Model):
+    """A client declares a need; Food Catalog retains authority over its value."""
+
+    client_key = models.SlugField(max_length=80)
+    requirement_version = models.CharField(max_length=64)
+    capability = models.ForeignKey(
+        CatalogCapabilityDefinition,
+        on_delete=models.PROTECT,
+        related_name="client_requirements",
+    )
+    is_required = models.BooleanField(default=False)
+    absence_behavior = models.CharField(max_length=80, blank=True)
+    operational_destination = models.CharField(max_length=160, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["client_key", "requirement_version", "capability"],
+                name="unique_catalog_client_requirement",
+            )
+        ]
+
+
+class CatalogFoodCapability(models.Model):
+    """Assessed value of an evolvable capability for one master food."""
+
+    STATUS_UNASSESSED = "unassessed"
+    STATUS_PROPOSED = "proposed"
+    STATUS_CONFIRMED_VALUE = "confirmed_value"
+    STATUS_CONFIRMED_NONE = "confirmed_none"
+    STATUS_NOT_APPLICABLE = "not_applicable"
+    STATUS_CONFLICTING = "conflicting_evidence"
+    STATUS_SUPERSEDED = "superseded"
+    STATUS_CHOICES = [
+        (STATUS_UNASSESSED, "Unassessed"),
+        (STATUS_PROPOSED, "Proposed"),
+        (STATUS_CONFIRMED_VALUE, "Confirmed value"),
+        (STATUS_CONFIRMED_NONE, "Confirmed none"),
+        (STATUS_NOT_APPLICABLE, "Not applicable"),
+        (STATUS_CONFLICTING, "Conflicting evidence"),
+        (STATUS_SUPERSEDED, "Superseded"),
+    ]
+
+    catalog_food = models.ForeignKey(CatalogFood, on_delete=models.CASCADE, related_name="capability_values")
+    definition = models.ForeignKey(
+        CatalogCapabilityDefinition, on_delete=models.PROTECT, related_name="food_values"
+    )
+    value = models.JSONField(null=True, blank=True)
+    assessment_status = models.CharField(max_length=40, choices=STATUS_CHOICES, default=STATUS_UNASSESSED)
+    provenance = models.JSONField(default=list, blank=True)
+    generation_method = models.CharField(max_length=40, blank=True)
+    evidence_references = models.JSONField(default=list, blank=True)
+    confidence = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    policy_version = models.CharField(max_length=80, blank=True)
+    scope = models.JSONField(default=dict, blank=True)
+    valid_from = models.DateTimeField(null=True, blank=True)
+    review_due_at = models.DateTimeField(null=True, blank=True)
+    decided_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="catalog_capability_decisions"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["catalog_food", "definition"], name="unique_catalog_food_capability")
+        ]
+
+
+class CatalogEnrichmentBatch(models.Model):
+    """One bounded, reproducible Codex-assisted enrichment instance."""
+
+    STATUS_DRAFT = "draft"
+    STATUS_GENERATED = "generated"
+    STATUS_DRY_RUN_VALID = "dry_run_valid"
+    STATUS_DRY_RUN_FAILED = "dry_run_failed"
+    STATUS_APPROVED = "approved_for_apply"
+    STATUS_APPLIED = "applied"
+    STATUS_PARTIALLY_APPLIED = "partially_applied"
+    STATUS_REVERTED = "reverted"
+    STATUS_CANCELLED = "cancelled"
+    STATUS_CHOICES = [(value, value.replace("_", " ").title()) for value in (
+        STATUS_DRAFT, STATUS_GENERATED, STATUS_DRY_RUN_VALID, STATUS_DRY_RUN_FAILED,
+        STATUS_APPROVED, STATUS_APPLIED, STATUS_PARTIALLY_APPLIED, STATUS_REVERTED, STATUS_CANCELLED,
+    )]
+
+    batch_ref = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    environment = models.CharField(max_length=30)
+    reason = models.TextField()
+    scope_payload = models.JSONField(default=dict)
+    instruction = models.TextField(blank=True)
+    executor_kind = models.CharField(max_length=40, default="codex_assisted")
+    contract_version = models.CharField(max_length=64, default="catalog-enrichment.v1")
+    policy_version = models.CharField(max_length=64, default="catalog-enrichment-policy.v1")
+    input_sha256 = models.CharField(max_length=64)
+    manifest_sha256 = models.CharField(max_length=64, blank=True)
+    manifest_payload = models.JSONField(default=dict, blank=True)
+    status = models.CharField(max_length=40, choices=STATUS_CHOICES, default=STATUS_DRAFT)
+    total_proposals = models.PositiveIntegerField(default=0)
+    valid_proposals = models.PositiveIntegerField(default=0)
+    applied_proposals = models.PositiveIntegerField(default=0)
+    failed_proposals = models.PositiveIntegerField(default=0)
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="requested_catalog_enrichment_batches"
+    )
+    applied_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="applied_catalog_enrichment_batches"
+    )
+    dry_run_at = models.DateTimeField(null=True, blank=True)
+    approved_at = models.DateTimeField(null=True, blank=True)
+    applied_at = models.DateTimeField(null=True, blank=True)
+    reverted_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+
+class CatalogFieldProposal(models.Model):
+    """One field-level proposed decision; proposals never imply publication."""
+
+    STATUS_PENDING = "pending"
+    STATUS_VALID = "valid"
+    STATUS_INVALID = "invalid"
+    STATUS_APPROVED = "approved"
+    STATUS_REJECTED = "rejected"
+    STATUS_APPLIED = "applied"
+    STATUS_CHOICES = [(value, value.title()) for value in (
+        STATUS_PENDING, STATUS_VALID, STATUS_INVALID, STATUS_APPROVED, STATUS_REJECTED, STATUS_APPLIED,
+    )]
+
+    batch = models.ForeignKey(CatalogEnrichmentBatch, on_delete=models.PROTECT, related_name="proposals")
+    catalog_food = models.ForeignKey(CatalogFood, on_delete=models.PROTECT, related_name="enrichment_proposals")
+    field_name = models.CharField(max_length=120)
+    capability_definition = models.ForeignKey(
+        CatalogCapabilityDefinition, on_delete=models.PROTECT, null=True, blank=True, related_name="proposals"
+    )
+    expected_food_updated_at = models.DateTimeField()
+    current_value = models.JSONField(null=True, blank=True)
+    proposed_value = models.JSONField(null=True, blank=True)
+    nature = models.CharField(max_length=40, choices=CatalogCapabilityDefinition.NATURE_CHOICES)
+    provenance = models.JSONField(default=list)
+    consumers = models.JSONField(default=list)
+    maturity = models.CharField(max_length=30, choices=CatalogCapabilityDefinition.MATURITY_CHOICES)
+    generation_method = models.CharField(max_length=40, default="codex_assisted")
+    authority_requirement = models.CharField(max_length=40, choices=CatalogCapabilityDefinition.AUTHORITY_CHOICES)
+    risk_level = models.CharField(max_length=20, choices=CatalogCapabilityDefinition.RISK_CHOICES)
+    assessment_status = models.CharField(max_length=40, choices=CatalogFoodCapability.STATUS_CHOICES)
+    profile_key = models.CharField(max_length=100, blank=True)
+    policy_version = models.CharField(max_length=80, blank=True)
+    rationale = models.TextField()
+    confidence = models.DecimalField(max_digits=5, decimal_places=2)
+    evidence_references = models.JSONField(default=list, blank=True)
+    validation_errors = models.JSONField(default=list, blank=True)
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="reviewed_catalog_field_proposals"
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["batch", "catalog_food", "field_name"], name="unique_catalog_batch_food_field")
+        ]
+        ordering = ["batch", "catalog_food", "field_name"]
+
+
+class CatalogEnrichmentChange(models.Model):
+    """Append-only ledger entry for an applied or compensating enrichment change."""
+
+    ACTION_APPLY = "apply"
+    ACTION_REVERT = "revert"
+    ACTION_CHOICES = [(ACTION_APPLY, "Apply"), (ACTION_REVERT, "Revert")]
+
+    batch = models.ForeignKey(CatalogEnrichmentBatch, on_delete=models.PROTECT, related_name="changes")
+    proposal = models.ForeignKey(CatalogFieldProposal, on_delete=models.PROTECT, related_name="changes")
+    catalog_food = models.ForeignKey(CatalogFood, on_delete=models.PROTECT, related_name="enrichment_changes")
+    field_name = models.CharField(max_length=120)
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
+    value_before = models.JSONField(null=True, blank=True)
+    value_after = models.JSONField(null=True, blank=True)
+    food_updated_at_before = models.DateTimeField()
+    food_updated_at_after = models.DateTimeField()
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="catalog_enrichment_changes"
+    )
+    reason = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at", "id"]
+
+    def save(self, *args, **kwargs):
+        if self.pk and CatalogEnrichmentChange.objects.filter(pk=self.pk).exists():
+            from django.core.exceptions import ValidationError
+            raise ValidationError("CatalogEnrichmentChange entries are append-only.")
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        from django.core.exceptions import ValidationError
+        raise ValidationError("CatalogEnrichmentChange entries are append-only.")

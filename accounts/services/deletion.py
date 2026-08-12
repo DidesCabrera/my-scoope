@@ -50,8 +50,14 @@ MODEL_RETENTION_POLICY = {
     "contenttypes.ContentType": RetentionAction.RETAIN_SYSTEM,
     "email_delivery.EmailDeliveryAttempt": RetentionAction.ANONYMIZE,
     "food_catalog.CatalogCurationCandidate": RetentionAction.ANONYMIZE,
+    "food_catalog.CatalogCapabilityDefinition": RetentionAction.RETAIN_SYSTEM,
+    "food_catalog.CatalogClientRequirement": RetentionAction.RETAIN_SYSTEM,
+    "food_catalog.CatalogEnrichmentBatch": RetentionAction.RETAIN_OPERATIONAL,
+    "food_catalog.CatalogEnrichmentChange": RetentionAction.RETAIN_OPERATIONAL,
+    "food_catalog.CatalogFieldProposal": RetentionAction.RETAIN_OPERATIONAL,
     "food_catalog.CatalogFood": RetentionAction.ANONYMIZE,
     "food_catalog.CatalogFoodAlias": RetentionAction.FOLLOW_PARENT,
+    "food_catalog.CatalogFoodCapability": RetentionAction.RETAIN_OPERATIONAL,
     "food_catalog.CatalogFoodPortion": RetentionAction.FOLLOW_PARENT,
     "food_catalog.CatalogFoodSource": RetentionAction.FOLLOW_PARENT,
     "food_catalog.CatalogImportBatch": RetentionAction.ANONYMIZE,
@@ -169,6 +175,10 @@ def delete_user_account(*, user, source: str) -> AccountDeletionResult:
         "food_catalog.CatalogCurationCandidate": ("created_by", "reviewed_by"),
         "food_catalog.CatalogImportBatch": ("requested_by",),
         "food_catalog.CatalogImportSourcePolicy": ("approved_by",),
+        "food_catalog.CatalogFoodCapability": ("decided_by",),
+        "food_catalog.CatalogEnrichmentBatch": ("requested_by", "applied_by"),
+        "food_catalog.CatalogFieldProposal": ("reviewed_by",),
+        "food_catalog.CatalogEnrichmentChange": ("actor",),
     }.items():
         model = _model(label)
         for field in fields:

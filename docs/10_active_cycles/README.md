@@ -34,6 +34,7 @@ Status: planned / active / paused / completed / superseded
 Cuando un ciclo planificado empiece a implementarse, el documento puede permanecer aquí como plan operacional, pero las decisiones estables que surjan deben registrarse también en `docs/20_decisions/`.
 
 ## En curso o pendientes de validación
+- `catalog_enrichment_cycle.md`: CE01–CE10 implementa enriquecimiento asistido por Codex, por campo, gobernado y reversible, con clasificación multidimensional de capacidades. Las ejecuciones con datos reales en staging y producción permanecen como gates operacionales.
 - `consumer_mobile_launch_cycle.md`: ciclo activo CML00-CML08. Reorienta el primer
   cliente móvil hacia consumidores que siguen su propio programa; separa seguridad,
   API, React Native, calendarización ejecutable, OCR de etiquetas, IAP y review de
@@ -93,6 +94,10 @@ Cuando un ciclo planificado empiece a implementarse, el documento puede permanec
 
 ## Ciclos completados
 
+- `nutrition_panel_energy_metrics_cycle.md`: ciclo NPE00-NPE05 completado; separa
+  kcal absolutas de `% kcal`, agrega composición calórica intrínseca P/C/G en una
+  barra acumulada compartida y crea el tab responsive `Calorías` sin cambiar el
+  significado contextual de Alloc.
 - `uis10_selective_css_loading_cycle.md`: UIS10 completado; carga Programs CSS solo en sus páginas, separa week tabs y elimina una referencia JavaScript inexistente.
 - `uis09_message_card_contract_cycle.md`: UIS09 completado; declara la familia message-card para Proposal, Inbox y AI Chat.
 - `uis08_collection_shell_cycle.md`: UIS08 completado; comparte shell y empty state entre Foods, Meals, DailyPlans y Programs.
