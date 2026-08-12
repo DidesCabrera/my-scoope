@@ -25,12 +25,14 @@ from food_catalog.models import (
     CatalogFieldProposal,
     CatalogFood,
     CatalogFoodCapability,
+    CatalogFoodPortion,
 )
 
 CONTRACT_VERSION = "catalog-enrichment.v1"
 DEFAULT_DRY_RUN_TTL = timedelta(hours=24)
 
 ALLOWED_CATALOG_FIELDS = {
+    "default_portion_g",
     "solver_min_portion_g",
     "solver_max_portion_g",
     "solver_portion_step_g",
@@ -41,7 +43,7 @@ ALLOWED_CATALOG_FIELDS = {
     "preparation_effort",
     "cost_band",
 }
-DECIMAL_FIELDS = {"solver_min_portion_g", "solver_max_portion_g", "solver_portion_step_g"}
+DECIMAL_FIELDS = {"default_portion_g", "solver_min_portion_g", "solver_max_portion_g", "solver_portion_step_g"}
 LIST_FIELDS = {"functional_roles", "meal_affinities"}
 CHOICE_FIELDS = {
     "food_form": {value for value, _label in CatalogFood.FOOD_FORM_CHOICES},
@@ -373,6 +375,8 @@ def _read_raw_value(food, field_name, capability=None):
             "policy_version": entry.policy_version,
             "scope": entry.scope,
         }
+    if field_name == "default_portion_g":
+        return food.portions.filter(is_default=True).order_by("id").values_list("grams", flat=True).first()
     return getattr(food, field_name)
 
 
@@ -419,6 +423,27 @@ def _write_raw_value(food, proposal, value, *, actor=None):
         )
         food.save(update_fields=["updated_at"])
         return
+    if proposal.field_name == "default_portion_g":
+        current = food.portions.filter(is_default=True).order_by("id").first()
+        if value is None:
+            if current is not None:
+                current.delete()
+        else:
+            grams = Decimal(str(value))
+            if current is None:
+                CatalogFoodPortion.objects.create(
+                    catalog_food=food,
+                    label="porción",
+                    grams=grams,
+                    source="internal_policy_ai_assisted",
+                    is_default=True,
+                )
+            else:
+                current.grams = grams
+                current.source = "internal_policy_ai_assisted"
+                current.save(update_fields=["grams", "source", "updated_at"])
+        food.save(update_fields=["updated_at"])
+        return
     if proposal.field_name in DECIMAL_FIELDS and value is not None:
         value = Decimal(str(value))
     setattr(food, proposal.field_name, value)
@@ -426,12 +451,13 @@ def _write_raw_value(food, proposal, value, *, actor=None):
 
 
 def _food_snapshot(food):
+    direct_fields = ALLOWED_CATALOG_FIELDS - {"default_portion_g"}
     return {
         "id": food.pk, "updated_at": food.updated_at.isoformat(), "display_name": food.display_name,
         "food_group": food.food_group, "food_subgroup": food.food_subgroup,
         "preparation_state": food.preparation_state,
         "default_portion_g": str(food.portions.filter(is_default=True).values_list("grams", flat=True).first() or ""),
-        **{field: _json_value(getattr(food, field)) for field in sorted(ALLOWED_CATALOG_FIELDS)},
+        **{field: _json_value(getattr(food, field)) for field in sorted(direct_fields)},
     }
 
 
