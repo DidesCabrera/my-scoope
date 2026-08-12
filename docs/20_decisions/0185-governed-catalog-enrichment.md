@@ -1,4 +1,4 @@
-# 0150 - Governed, multidimensional Food Catalog enrichment
+# 0185 - Governed, multidimensional Food Catalog enrichment
 
 Status: accepted
 Date: 2026-08-12
