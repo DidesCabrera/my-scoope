@@ -84,6 +84,28 @@ class CatalogEnrichmentTests(TestCase):
         self.assertIsNone(change.value_before)
         self.assertEqual(change.value_after, "60.000")
 
+    def test_default_portion_proposal_is_reversible_and_does_not_publish(self):
+        self.food.portions.all().delete()
+        self.food.save(update_fields=["updated_at"])
+        self.batch = create_enrichment_batch(
+            foods=[self.food], environment="production", reason="Propose default portion."
+        )
+        manifest = self._manifest(field_name="default_portion_g", value="180.000")
+
+        result = dry_run_enrichment_manifest(batch=self.batch, manifest=manifest)
+        self.assertEqual((result.valid, result.invalid), (1, 0))
+        self.assertFalse(self.food.portions.exists())
+
+        apply_enrichment_batch(batch=self.batch, manifest=manifest, reason="Apply proposed portion.")
+        portion = self.food.portions.get(is_default=True)
+        self.assertEqual(portion.grams, Decimal("180"))
+        self.assertEqual(portion.source, "internal_policy_ai_assisted")
+        self.food.refresh_from_db()
+        self.assertEqual(self.food.status, CatalogFood.STATUS_MANUAL_CANDIDATE)
+
+        revert_enrichment_batch(batch=self.batch, reason="Revert proposed portion.")
+        self.assertFalse(self.food.portions.filter(is_default=True).exists())
+
     def test_revert_creates_compensating_ledger_event(self):
         manifest = self._manifest()
         dry_run_enrichment_manifest(batch=self.batch, manifest=manifest)
