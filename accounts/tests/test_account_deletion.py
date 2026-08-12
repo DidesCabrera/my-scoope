@@ -4,6 +4,7 @@ from django.apps import apps
 from django.contrib.auth import authenticate, get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from accounts.models import AccountDeletionRecord, AccountSubscription
 from accounts.seed_plans import seed_account_plans
@@ -11,6 +12,14 @@ from accounts.services.deletion import MODEL_RETENTION_POLICY, POLICY_VERSION
 from ai_assistant.models import AIUsageEvent
 from billing.models import BillingPayment, BillingProduct, PaymentProvider, ProviderSubscription, TaxDocument
 from email_delivery.models import EmailDeliveryAttempt
+from food_catalog.models import (
+    CatalogCapabilityDefinition,
+    CatalogEnrichmentBatch,
+    CatalogEnrichmentChange,
+    CatalogFieldProposal,
+    CatalogFood,
+    CatalogFoodCapability,
+)
 from notas.domain.models import Food, Profile, WeightLog
 
 
@@ -89,6 +98,64 @@ class AccountDeletionViewTests(TestCase):
             recipient_email=self.user.email,
             subject="Private subject",
         )
+        catalog_food = CatalogFood.objects.create(
+            display_name="Lentejas cocidas",
+            protein_g_per_100g=9,
+            carbs_g_per_100g=20,
+            fat_g_per_100g=0.4,
+        )
+        capability_definition = CatalogCapabilityDefinition.objects.create(
+            key="test-portion-policy",
+            label="Test portion policy",
+            data_type="decimal",
+            nature=CatalogCapabilityDefinition.NATURE_OPERATIONAL,
+            authority_requirement=CatalogCapabilityDefinition.AUTHORITY_INTERNAL,
+        )
+        food_capability = CatalogFoodCapability.objects.create(
+            catalog_food=catalog_food,
+            definition=capability_definition,
+            value={"grams": 100},
+            assessment_status=CatalogFoodCapability.STATUS_CONFIRMED_VALUE,
+            decided_by=self.user,
+        )
+        enrichment_batch = CatalogEnrichmentBatch.objects.create(
+            environment="test",
+            reason="Verify account-deletion retention",
+            input_sha256="0" * 64,
+            requested_by=self.user,
+            applied_by=self.user,
+        )
+        field_proposal = CatalogFieldProposal.objects.create(
+            batch=enrichment_batch,
+            catalog_food=catalog_food,
+            field_name="solver_min_portion_g",
+            expected_food_updated_at=catalog_food.updated_at,
+            current_value=None,
+            proposed_value="50.000",
+            nature=CatalogCapabilityDefinition.NATURE_OPERATIONAL,
+            provenance=["internal_policy"],
+            consumers=["solver"],
+            maturity=CatalogCapabilityDefinition.MATURITY_CANDIDATE,
+            authority_requirement=CatalogCapabilityDefinition.AUTHORITY_INTERNAL,
+            risk_level=CatalogCapabilityDefinition.RISK_MEDIUM,
+            assessment_status=CatalogFoodCapability.STATUS_PROPOSED,
+            rationale="Representative retained proposal",
+            confidence=90,
+            reviewed_by=self.user,
+        )
+        enrichment_change = CatalogEnrichmentChange.objects.create(
+            batch=enrichment_batch,
+            proposal=field_proposal,
+            catalog_food=catalog_food,
+            field_name="solver_min_portion_g",
+            action=CatalogEnrichmentChange.ACTION_APPLY,
+            value_before=None,
+            value_after="50.000",
+            food_updated_at_before=catalog_food.updated_at,
+            food_updated_at_after=timezone.now(),
+            actor=self.user,
+            reason="Representative retained change",
+        )
 
         account_subscription = AccountSubscription.objects.get(user=self.user)
         product = BillingProduct.objects.create(
@@ -137,6 +204,15 @@ class AccountDeletionViewTests(TestCase):
         self.assertIsNone(usage.user_id)
         self.assertEqual(usage.conversation_id, "")
         self.assertEqual(usage.usage_payload, {})
+        food_capability.refresh_from_db()
+        enrichment_batch.refresh_from_db()
+        field_proposal.refresh_from_db()
+        enrichment_change.refresh_from_db()
+        self.assertIsNone(food_capability.decided_by_id)
+        self.assertIsNone(enrichment_batch.requested_by_id)
+        self.assertIsNone(enrichment_batch.applied_by_id)
+        self.assertIsNone(field_proposal.reviewed_by_id)
+        self.assertIsNone(enrichment_change.actor_id)
 
         self.assertTrue(ProviderSubscription.objects.filter(pk=provider_subscription.pk, user=self.user).exists())
         self.assertTrue(BillingPayment.objects.filter(pk=payment.pk, user=self.user).exists())

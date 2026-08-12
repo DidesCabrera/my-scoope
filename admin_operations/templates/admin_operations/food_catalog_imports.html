@@ -98,6 +98,27 @@
   </section>
 
   <section class="card-detail-block">
+    <div class="card-title-row"><div><p class="section-eyebrow">Catalog Enrichment</p><h3>Lotes asistidos por Codex</h3><p class="muted-text">Observabilidad de propuestas y cambios sobre datos internos. Aplicar un lote no publica alimentos ni refresca snapshots.</p></div></div>
+    {% if vm.content.enrichment_batches %}
+      <div class="admin-operations-table-card" role="region" aria-label="Lotes de enriquecimiento">
+        <table class="admin-operations-table">
+          <thead><tr><th>Lote</th><th>Ambiente</th><th>Estado</th><th>Conteos</th><th>Contrato</th><th>Creado</th></tr></thead>
+          <tbody>{% for batch in vm.content.enrichment_batches %}<tr>
+            <td data-label="Lote"><strong>{{ batch.batch_ref }}</strong><small>{{ batch.reason }}</small></td>
+            <td data-label="Ambiente">{{ batch.environment }}</td>
+            <td data-label="Estado"><span class="admin-operations-status-pill">{{ batch.status }}</span></td>
+            <td data-label="Conteos">{{ batch.counts_label }}</td>
+            <td data-label="Contrato">{{ batch.contract_label }}</td>
+            <td data-label="Creado">{{ batch.created_label }}</td>
+          </tr>{% endfor %}</tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="admin-operations-empty-state"><i data-lucide="wand-sparkles" class="home-stat-icon"></i><div><h4>Sin lotes de enriquecimiento</h4><p class="muted-text">Los lotes aparecerán aquí después de crear su alcance contra staging o producción.</p></div></div>
+    {% endif %}
+  </section>
+
+  <section class="card-detail-block">
     <div class="card-title-row"><div><p class="section-eyebrow">Historial</p><h3>Ejecuciones correlacionables</h3></div></div>
     {% if vm.content.batches %}
       <div class="admin-operations-table-card" role="region" aria-label="Historial de imports y dry-runs">

@@ -14,10 +14,10 @@ from django.utils import timezone
 
 from admin_operations.selectors import (
     get_food_catalog_data_coverage_payload,
-    get_food_catalog_import_batches_payload,
     get_food_catalog_inventory_payload,
     get_food_catalog_operations_payload,
 )
+from admin_operations.service_modules.food_catalog_enrichment import build_food_catalog_imports_vm
 from admin_operations.viewmodels import (
     AdminOperationsCandidateDetailVM,
     AdminOperationsCandidateVM,
@@ -28,8 +28,6 @@ from admin_operations.viewmodels import (
     AdminOperationsCatalogEvidenceVM,
     AdminOperationsCatalogFoodDetailVM,
     AdminOperationsCatalogFoodVM,
-    AdminOperationsCatalogImportBatchVM,
-    AdminOperationsCatalogImportsVM,
     AdminOperationsCatalogInventoryCellVM,
     AdminOperationsCatalogInventoryColumnVM,
     AdminOperationsCatalogInventoryFoodVM,
@@ -1256,51 +1254,6 @@ def build_food_catalog_data_coverage_vm(*, section: str = "identity") -> AdminOp
             )
             for row in payload["rows"]
         ],
-    )
-
-
-def build_food_catalog_imports_vm(*, source_type: str = "", status: str = "") -> AdminOperationsCatalogImportsVM:
-    payload = get_food_catalog_import_batches_payload(source_type=source_type, status=status)
-    aggregate = payload["aggregate"]
-    source_labels = dict(CatalogFood.SOURCE_TYPE_CHOICES)
-
-    return AdminOperationsCatalogImportsVM(
-        selected_source=payload["source_type"],
-        selected_status=payload["status"],
-        metrics=[
-            AdminOperationsMetricVM("Ejecuciones", _format_int(aggregate["total"]), "Dry-runs e imports persistidos.", "history"),
-            AdminOperationsMetricVM("Dry-runs", _format_int(aggregate["dry_runs"]), "Planes no mutantes trazables.", "scan-search"),
-            AdminOperationsMetricVM("Imports", _format_int(aggregate["imports"]), "Batches de aplicación.", "database-zap"),
-            AdminOperationsMetricVM(
-                "Applies sin dry-run",
-                _format_int(payload["orphan_applies"]),
-                "Las filas históricas pueden carecer de correlación; toda ejecución FCG nueva debe ser 0.",
-                "triangle-alert",
-            ),
-        ],
-        batches=[
-            AdminOperationsCatalogImportBatchVM(
-                pk=batch.pk,
-                run_type="Dry-run" if batch.is_dry_run else "Import",
-                source_label=f"{source_labels.get(batch.source_type, batch.source_type)} · {batch.source_name}",
-                status=batch.status,
-                version=batch.source_version or "—",
-                counts_label=(
-                    f"total {batch.total_rows} · importables/importados {batch.imported_rows} · "
-                    f"omitidos {batch.skipped_rows} · fallidos {batch.failed_rows}"
-                ),
-                operator_label=_actor_label(batch.requested_by) if batch.requested_by else "sistema/legacy",
-                reason=batch.reason or batch.notes or "—",
-                input_hash_label=f"{batch.input_sha256[:12]}…" if batch.input_sha256 else "legacy/sin hash",
-                dry_run_label=(
-                    f"dry-run #{batch.dry_run_batch_id}" if batch.dry_run_batch_id else ("plan" if batch.is_dry_run else "sin correlación")
-                ),
-                started_label=batch.started_at.strftime("%Y-%m-%d %H:%M"),
-            )
-            for batch in payload["batches"]
-        ],
-        source_options=list(payload["source_options"]),
-        status_options=list(payload["status_options"]),
     )
 
 

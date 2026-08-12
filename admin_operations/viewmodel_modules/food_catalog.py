@@ -287,6 +287,17 @@ class AdminOperationsCatalogImportBatchVM:
 
 
 @dataclass(frozen=True)
+class AdminOperationsCatalogEnrichmentBatchVM:
+    batch_ref: str
+    environment: str
+    status: str
+    counts_label: str
+    reason: str
+    contract_label: str
+    created_label: str
+
+
+@dataclass(frozen=True)
 class AdminOperationsCatalogImportsVM:
     title: str = "Imports y dry-runs del Food Catalog"
     subtitle: str = (
@@ -298,6 +309,7 @@ class AdminOperationsCatalogImportsVM:
     selected_status: str = ""
     metrics: list[AdminOperationsMetricVM] = field(default_factory=list)
     batches: list[AdminOperationsCatalogImportBatchVM] = field(default_factory=list)
+    enrichment_batches: list[AdminOperationsCatalogEnrichmentBatchVM] = field(default_factory=list)
     source_options: list[tuple[str, str]] = field(default_factory=list)
     status_options: list[tuple[str, str]] = field(default_factory=list)
 
@@ -314,4 +326,4 @@ class AdminOperationsCandidateDetailVM:
 
 
 
-__all__ = ['AdminOperationsCandidateVM', 'AdminOperationsCatalogFoodVM', 'AdminOperationsDetailFactVM', 'AdminOperationsCatalogEvidenceVM', 'AdminOperationsCatalogPortionVM', 'AdminOperationsCatalogAliasVM', 'AdminOperationsCatalogFoodDetailVM', 'AdminOperationsCurationStageVM', 'AdminOperationsCurationItemVM', 'AdminOperationsFoodCatalogVM', 'AdminOperationsCatalogCoverageVM', 'AdminOperationsCatalogDataCoverageRowVM', 'AdminOperationsCatalogDataCoverageVM', 'AdminOperationsCatalogInventorySectionVM', 'AdminOperationsCatalogInventoryColumnVM', 'AdminOperationsCatalogInventoryCellVM', 'AdminOperationsCatalogInventoryFoodVM', 'AdminOperationsCatalogInventoryVM', 'AdminOperationsCatalogImportBatchVM', 'AdminOperationsCatalogImportsVM', 'AdminOperationsCandidateDetailVM']
+__all__ = ['AdminOperationsCandidateVM', 'AdminOperationsCatalogFoodVM', 'AdminOperationsDetailFactVM', 'AdminOperationsCatalogEvidenceVM', 'AdminOperationsCatalogPortionVM', 'AdminOperationsCatalogAliasVM', 'AdminOperationsCatalogFoodDetailVM', 'AdminOperationsCurationStageVM', 'AdminOperationsCurationItemVM', 'AdminOperationsFoodCatalogVM', 'AdminOperationsCatalogCoverageVM', 'AdminOperationsCatalogDataCoverageRowVM', 'AdminOperationsCatalogDataCoverageVM', 'AdminOperationsCatalogInventorySectionVM', 'AdminOperationsCatalogInventoryColumnVM', 'AdminOperationsCatalogInventoryCellVM', 'AdminOperationsCatalogInventoryFoodVM', 'AdminOperationsCatalogInventoryVM', 'AdminOperationsCatalogImportBatchVM', 'AdminOperationsCatalogEnrichmentBatchVM', 'AdminOperationsCatalogImportsVM', 'AdminOperationsCandidateDetailVM']
