@@ -90,7 +90,26 @@ def map_usda_food_to_imported_food_dto(
         normalized_payload_hash="",
         source_description=source_description,
         source_data_type=str(payload.get("dataType", "")).strip(),
+        source_portions=_extract_source_portions(payload),
     )
+
+
+def _extract_source_portions(payload: dict) -> tuple[dict, ...]:
+    portions = []
+    for row in payload.get("foodPortions", []) or []:
+        try:
+            grams = Decimal(str(row.get("gramWeight")))
+        except (InvalidOperation, TypeError, ValueError):
+            continue
+        if grams <= 0:
+            continue
+        portions.append({
+            "amount": str(row.get("amount", "")).strip(),
+            "grams": str(grams),
+            "modifier": str(row.get("modifier", "")).strip(),
+            "measure_unit": str((row.get("measureUnit") or {}).get("name", "")).strip(),
+        })
+    return tuple(portions)
 
 
 def _extract_nutrients_by_number(payload: dict) -> dict[str, Decimal]:

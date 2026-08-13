@@ -1,6 +1,6 @@
 # CE01–CE10 · Governed Catalog Enrichment
 
-Status: repository implementation complete; staging and production data runs pending
+Status: governed enrichment implemented; compact readiness rollout in progress
 Date: 2026-08-12
 
 ## Objective
@@ -15,13 +15,24 @@ The existing boundary remains unchanged:
 CatalogFood master -> explicit publication -> explicit notas.Food snapshot -> clients
 ```
 
-The new path is:
+The governed base path is:
 
 ```text
 read-only audit -> bounded batch -> Codex manifest -> dry-run -> apply -> append-only ledger
 ```
 
-There is no autonomous worker in this cycle. Codex produces each manifest interactively from the real connected database.
+There is no autonomous worker in this cycle. Codex authors the versioned readiness policy and executes it against the real connected database. The deterministic runtime generates the manifest, validates it and stores it with the batch, avoiding manual JSON transport while preserving the same review boundary.
+
+For source-complete foods, the compact path is:
+
+```text
+trusted source + retained household portions
+  -> versioned internal policy
+  -> missing fields only
+  -> stored dry-run manifest
+  -> explicit apply
+  -> pending_review
+```
 
 ## Multidimensional capability contract
 
@@ -64,9 +75,13 @@ python manage.py create_catalog_enrichment_batch --ids 1,2,3 --environment stagi
 python manage.py dry_run_catalog_enrichment manifest.json
 python manage.py apply_catalog_enrichment manifest.json --reason "..." --confirm-apply
 python manage.py revert_catalog_enrichment_batch <batch-ref> --reason "..." --confirm-revert
+python manage.py prepare_catalog_readiness --environment staging --reason "..." --ids 1,2,3
+python manage.py apply_catalog_readiness_batch <batch-ref> --reason "..." --confirm-apply
 ```
 
 The audit command is read-only. Batch creation freezes exact IDs and input hashes. The create command emits the context Codex needs, including optimistic concurrency timestamps. Dry-run persists field-level proposals but does not change `CatalogFood`.
+
+`prepare_catalog_readiness` is the efficient path for routine waves of up to ten eligible foods. It selects only records with an allowed, identified source and missing internal readiness data; it never overwrites an already populated field. The companion apply command consumes only the exact stored manifest and does not approve, publish, or create operational snapshots.
 
 ## Portion profiles
 

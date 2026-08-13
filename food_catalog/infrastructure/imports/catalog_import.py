@@ -414,6 +414,7 @@ def _evidence_payload_for_dto(dto: ImportedFoodDTO) -> dict:
         "source_description": dto.source_description,
         "source_data_type": dto.source_data_type,
         "preparation_state": dto.preparation_state,
+        "source_portions": list(dto.source_portions),
         "nutrients_per_100g": {
             "calories_kcal": _decimal_to_string(dto.calories_kcal_per_100g),
             "protein_g": _decimal_to_string(dto.protein),

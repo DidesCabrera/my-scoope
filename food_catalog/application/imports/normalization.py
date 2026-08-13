@@ -49,6 +49,7 @@ def normalize_imported_food(dto: ImportedFoodDTO) -> ImportedFoodDTO:
         normalized_payload_hash=_clean_display_text(dto.normalized_payload_hash),
         source_description=_clean_display_text(dto.source_description),
         source_data_type=_clean_display_text(dto.source_data_type),
+        source_portions=tuple(dto.source_portions),
     )
 
 
