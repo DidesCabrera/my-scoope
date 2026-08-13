@@ -56,6 +56,7 @@ class FoodCatalogImportAdapterTests(SimpleTestCase):
                 {"nutrient": {"number": USDA_NUTRIENT_FAT}, "amount": 1.49},
                 {"nutrient": {"number": USDA_NUTRIENT_ENERGY}, "amount": 35},
             ],
+            "foodPortions": [{"amount": 1, "gramWeight": 67, "modifier": "cup"}],
         }
 
         result = map_usda_food_to_imported_food_dto(
@@ -74,6 +75,7 @@ class FoodCatalogImportAdapterTests(SimpleTestCase):
         self.assertEqual(result.preparation_state, "raw")
         self.assertEqual(len(result.raw_payload_hash), 64)
         self.assertIn("168421", result.source_url)
+        self.assertEqual(result.source_portions[0]["grams"], "67")
 
     def test_quality_validation_is_source_agnostic(self):
         dto = ImportedFoodDTO(
