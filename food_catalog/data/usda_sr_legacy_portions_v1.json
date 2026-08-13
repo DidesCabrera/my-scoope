@@ -1,0 +1,18 @@
+{
+  "dataset": "USDA FoodData Central SR Legacy",
+  "version": "2018-04",
+  "evidence_url_template": "https://fdc.nal.usda.gov/fdc-app.html#/food-details/{fdc_id}/nutrients",
+  "portions": {
+    "168463": [{"amount": "1", "grams": "180.000", "modifier": "cup, cooked", "measure_unit": "cup"}],
+    "168389": [{"amount": "1", "grams": "134.000", "modifier": "cup", "measure_unit": "cup"}],
+    "169291": [{"amount": "1", "grams": "124.000", "modifier": "cup, chopped", "measure_unit": "cup"}],
+    "169118": [{"amount": "1", "grams": "178.000", "modifier": "medium pear", "measure_unit": "item"}],
+    "169124": [{"amount": "1", "grams": "165.000", "modifier": "cup, chunks", "measure_unit": "cup"}],
+    "169910": [{"amount": "1", "grams": "165.000", "modifier": "cup, pieces", "measure_unit": "cup"}],
+    "168153": [{"amount": "1", "grams": "148.000", "modifier": "NLEA serving", "measure_unit": "serving"}],
+    "169097": [{"amount": "1", "grams": "131.000", "modifier": "medium orange", "measure_unit": "item"}],
+    "167762": [{"amount": "1", "grams": "147.000", "modifier": "NLEA serving", "measure_unit": "serving"}],
+    "167755": [{"amount": "1", "grams": "123.000", "modifier": "cup", "measure_unit": "cup"}],
+    "175180": [{"amount": "3", "grams": "85.000", "modifier": "oz", "measure_unit": "oz"}]
+  }
+}

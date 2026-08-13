@@ -24,6 +24,9 @@ class CatalogReadinessPipelineTests(TestCase):
             source_dataset="sr_legacy", source_version="2018-04",
             source_url="https://fdc.nal.usda.gov/fdc-app.html#/food-details/175180/nutrients",
             license_status=CatalogFoodSource.LICENSE_ALLOWED,
+            evidence_payload={
+                "source_portions": [{"amount": "3", "grams": "85", "modifier": "oz"}],
+            },
         )
 
     def test_prepare_generates_all_mandatory_missing_fields_without_mutation(self):
@@ -36,6 +39,7 @@ class CatalogReadinessPipelineTests(TestCase):
         self.assertEqual((result.valid, result.invalid), (10, 0))
         self.assertEqual(skipped, [])
         self.assertEqual(batch.status, CatalogEnrichmentBatch.STATUS_DRY_RUN_VALID)
+        self.assertEqual(batch.policy_version, "catalog-readiness.cl.v1")
         self.assertEqual(batch.manifest_payload["food_proposals"][0]["changes"][0]["field_name"], "default_portion_g")
         self.assertFalse(self.food.portions.exists())
         self.assertFalse(self.food.solver_enabled)
@@ -111,3 +115,32 @@ class CatalogReadinessPipelineTests(TestCase):
 
         self.assertEqual((result.valid, result.invalid, skipped), (9, 0, []))
         self.assertFalse(batch.proposals.filter(field_name="default_portion_g").exists())
+
+    def test_prepare_command_emits_resume_cursor_and_remaining_count(self):
+        second = CatalogFood.objects.create(
+            display_name="Otro camarón", canonical_name="otro camaron",
+            food_group="finfish_and_shellfish_products", food_subgroup="shellfish",
+            preparation_state=CatalogFood.PREPARATION_COOKED,
+            protein_g_per_100g=Decimal("20"), carbs_g_per_100g=Decimal("0"),
+            fat_g_per_100g=Decimal("1"), data_quality_score=90,
+            status=CatalogFood.STATUS_PENDING_REVIEW,
+        )
+        CatalogFoodSource.objects.create(
+            catalog_food=second, source_type=CatalogFood.SOURCE_USDA,
+            source_name="USDA FoodData Central", source_food_id="future-2",
+            license_status=CatalogFoodSource.LICENSE_ALLOWED,
+            evidence_payload={"source_portions": [{"amount": "1", "grams": "90", "modifier": "serving"}]},
+        )
+        output = StringIO()
+
+        call_command(
+            "prepare_catalog_readiness",
+            environment="staging",
+            reason="Prepare resumable wave.",
+            limit=1,
+            stdout=output,
+        )
+
+        payload = output.getvalue()
+        self.assertIn('"remaining": 1', payload)
+        self.assertIn(f'"next_after_id": {self.food.pk}', payload)

@@ -1,0 +1,77 @@
+{% extends "admin_operations/base.html" %}
+{% block title %}Readiness del Food Catalog{% endblock %}
+{% block admin_operations_subtopbar %}
+  <div class="admin-operations-subtopbar">
+    {% include "admin_operations/_food_catalog_tabs.html" with active_tab="readiness" %}
+  </div>
+{% endblock %}
+{% block content %}
+<div class="page admin-analytics-page admin-operations-page">
+  <section class="home-stats admin-analytics-kpi-grid admin-operations-kpi-grid" aria-label="Auditoría de readiness">
+    {% for metric in vm.content.metrics %}
+      <article class="home-stat-card admin-operations-metric-card">
+        <div class="home-stat-top"><i data-lucide="{{ metric.icon }}" class="home-stat-icon"></i><span class="home-stat-label">{{ metric.label }}</span></div>
+        <h3>{{ metric.value }}</h3><p class="muted-text">{{ metric.helper }}</p>
+      </article>
+    {% endfor %}
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row"><div><p class="section-eyebrow">Auditoría estable</p><h3>{% if vm.content.audit_passes %}Catálogo elegible completo{% else %}Existen brechas de readiness{% endif %}</h3><p class="muted-text">La misma auditoría se puede ejecutar desde consola y CI. Solo evalúa alimentos respaldados por una fuente confiable.</p></div></div>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row"><div><p class="section-eyebrow">Preparar lote</p><h3>Alimentos con campos internos pendientes</h3><p class="muted-text">Selecciona hasta diez. Preparar crea propuestas y un dry-run; no modifica ni publica alimentos.</p></div></div>
+    {% if vm.content.foods %}
+      <form method="post" action="{% url 'admin_operations_food_catalog_readiness_prepare' %}" data-admin-operations-confirm data-confirm-message="¿Preparar este lote sin modificar los alimentos?">
+        {% csrf_token %}
+        <div class="admin-operations-table-card" role="region" aria-label="Alimentos pendientes de readiness">
+          <table class="admin-operations-table">
+            <thead><tr><th>Seleccionar</th><th>Alimento</th><th>Estado</th><th>Fuente</th><th>Campos faltantes</th></tr></thead>
+            <tbody>{% for food in vm.content.foods %}<tr>
+              <td data-label="Seleccionar"><input type="checkbox" name="food_ids" value="{{ food.pk }}" aria-label="Seleccionar {{ food.title }}"></td>
+              <td data-label="Alimento"><a href="{{ food.detail_url }}" target="_blank" rel="noopener noreferrer"><strong>{{ food.title }}</strong></a></td>
+              <td data-label="Estado">{{ food.status_label }}</td>
+              <td data-label="Fuente">{{ food.source_label }}</td>
+              <td data-label="Campos faltantes">{{ food.missing_label }}</td>
+            </tr>{% endfor %}</tbody>
+          </table>
+        </div>
+        <div class="admin-operations-inventory-filters">
+          <label><span>Ambiente</span><select name="environment" required><option value="">Seleccionar…</option><option value="staging">Staging</option><option value="production">Producción</option></select></label>
+          <label><span>Motivo</span><input name="reason" required placeholder="Por qué se prepara este lote"></label>
+          <div class="admin-operations-filter-actions"><button class="btn-secondary" type="submit">Preparar propuestas</button></div>
+        </div>
+      </form>
+    {% else %}
+      <div class="admin-operations-empty-state"><i data-lucide="circle-check" class="home-stat-icon"></i><div><h4>Sin alimentos pendientes</h4><p class="muted-text">Todos los alimentos con fuente confiable tienen completos sus campos internos obligatorios.</p></div></div>
+    {% endif %}
+  </section>
+
+  <section class="admin-analytics-section-grid admin-operations-observability-grid">
+    <article class="card-detail-block">
+      <div class="card-title-row"><div><p class="section-eyebrow">Evidencia histórica</p><h3>{{ vm.content.source_backfill_pending }} fuentes requieren backfill</h3><p class="muted-text">Copia medidas domésticas USDA verificadas a la evidencia de importaciones antiguas. Opera en olas reanudables de hasta diez.</p></div></div>
+      <form method="post" action="{% url 'admin_operations_food_catalog_source_portions_backfill' %}" data-admin-operations-confirm>
+        {% csrf_token %}<label><span>Límite</span><input name="limit" type="number" min="1" max="10" value="10" required></label><label><span>Cursor opcional</span><input name="after_id" type="number" min="0" value="0"></label><label><span>Motivo</span><textarea name="reason" placeholder="Obligatorio al aplicar"></textarea></label><button class="btn-secondary" name="mode" value="dry_run" type="submit">Comprobar</button><button class="btn-secondary" name="mode" value="apply" type="submit">Aplicar backfill</button>
+      </form>
+    </article>
+    <article class="card-detail-block">
+      <div class="card-title-row"><div><p class="section-eyebrow">Reglas operacionales</p><h3>Separación de decisiones</h3><p class="muted-text">Preparar, aplicar, revisar, verificar y publicar son pasos independientes. Ninguna acción de esta pantalla publica o genera snapshots.</p></div></div>
+    </article>
+  </section>
+
+  <section class="card-detail-block">
+    <div class="card-title-row"><div><p class="section-eyebrow">Trazabilidad</p><h3>Lotes de readiness</h3><p class="muted-text">Abre un lote para revisar propuestas agrupadas por alimento y decidir si aplicarlo o revertirlo.</p></div></div>
+    {% if vm.content.batches %}
+      <div class="admin-operations-table-card"><table class="admin-operations-table">
+        <thead><tr><th>Lote</th><th>Ambiente</th><th>Estado</th><th>Conteos</th><th>Motivo</th><th>Creado</th></tr></thead>
+        <tbody>{% for batch in vm.content.batches %}<tr>
+          <td data-label="Lote"><a href="{{ batch.detail_url }}"><strong>{{ batch.batch_ref }}</strong></a></td><td data-label="Ambiente">{{ batch.environment }}</td><td data-label="Estado"><span class="admin-operations-status-pill">{{ batch.status }}</span></td><td data-label="Conteos">{{ batch.counts_label }}</td><td data-label="Motivo">{{ batch.reason }}</td><td data-label="Creado">{{ batch.created_label }}</td>
+        </tr>{% endfor %}</tbody>
+      </table></div>
+    {% else %}
+      <div class="admin-operations-empty-state"><i data-lucide="history"></i><div><h4>Sin lotes</h4><p class="muted-text">El historial aparecerá después de preparar la primera ola.</p></div></div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

@@ -24,23 +24,6 @@ MANDATORY_INTERNAL_FIELDS = (
     "cost_band",
 )
 
-# Existing rows imported before source portions were retained need an explicit,
-# reviewed bridge to their USDA household measure. Keys are stable FDC IDs.
-USDA_DEFAULT_PORTION_OVERRIDES = {
-    "168463": ("180.000", "1 taza cocida"),
-    "168389": ("134.000", "1 taza"),
-    "169291": ("124.000", "1 taza picada"),
-    "169118": ("178.000", "1 pera mediana"),
-    "169124": ("165.000", "1 taza en trozos"),
-    "169910": ("165.000", "1 taza en trozos"),
-    "168153": ("148.000", "porción NLEA"),
-    "169097": ("131.000", "1 naranja mediana"),
-    "167762": ("147.000", "porción NLEA"),
-    "167755": ("123.000", "1 taza"),
-    "175180": ("85.000", "3 oz"),
-}
-
-
 @dataclass(frozen=True)
 class ReadinessDecision:
     profile_key: str
@@ -107,10 +90,6 @@ def _default_portion(food, source) -> tuple[Decimal, str]:
     existing = food.portions.filter(is_default=True).order_by("id").first()
     if existing is not None:
         return existing.grams, existing.label or "porción predeterminada existente"
-
-    override = USDA_DEFAULT_PORTION_OVERRIDES.get(source.source_food_id)
-    if override:
-        return Decimal(override[0]), override[1]
 
     candidates = (source.evidence_payload or {}).get("source_portions", [])
     ranked = sorted(

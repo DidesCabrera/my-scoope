@@ -14,6 +14,9 @@
   <a class="admin-operations-tab{% if active_tab == 'data_coverage' %} admin-operations-tab--active{% endif %}" href="{% url 'admin_operations_food_catalog_data_coverage' %}"{% if active_tab == 'data_coverage' %} aria-current="page"{% endif %}>
     <i data-lucide="chart-no-axes-column-increasing"></i> Cobertura datos
   </a>
+  <a class="admin-operations-tab{% if active_tab == 'readiness' %} admin-operations-tab--active{% endif %}" href="{% url 'admin_operations_food_catalog_readiness' %}"{% if active_tab == 'readiness' %} aria-current="page"{% endif %}>
+    <i data-lucide="shield-check"></i> Readiness
+  </a>
   <a class="admin-operations-tab{% if active_tab == 'imports' %} admin-operations-tab--active{% endif %}" href="{% url 'admin_operations_food_catalog_imports' %}"{% if active_tab == 'imports' %} aria-current="page"{% endif %}>
     <i data-lucide="database-zap"></i> Fuentes e importaciones
   </a>

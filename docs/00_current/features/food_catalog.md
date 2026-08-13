@@ -431,3 +431,16 @@ nutrition_solver / MCP / AI Assistant = consumen notas.Food, no CatalogFood
 Las métricas/eventos de dashboard no se completan dentro de este ciclo. Se difieren al proyecto transversal `Product Intelligence / Admin Analytics`, donde podrán medir Food Catalog junto con Nutrition Solver, AI Assistant, costos, propuestas y uso real del producto.
 
 Con este cierre, Food Catalog ya no bloquea el inicio de la separación progresiva de `nutrition_solver`; el solver debe iniciar consumiendo candidatos operacionales desde `notas.application.queries.solver_food_candidates`.
+
+## Operación continua de readiness
+
+Food Catalog dispone de un ciclo proposal-first para completar datos internos de alimentos con fuente confiable:
+
+1. El Admin permite seleccionar hasta diez alimentos y preparar un lote trazable. Esta etapa solo crea propuestas y ejecuta un dry-run.
+2. El detalle del lote agrupa la revisión por alimento y muestra fuente, valor actual, valor propuesto, política, confianza y fundamento.
+3. Aplicar y revertir son operaciones explícitas con motivo obligatorio. Aplicar no cambia el estado de curación, no publica y no crea snapshots operacionales.
+4. `audit_catalog_readiness` entrega un contrato JSON estable con cobertura de fuentes, campos internos faltantes y errores del perfil del solver.
+5. `prepare_catalog_readiness --after-id ...` permite continuar en olas acotadas sin elevar el límite de diez alimentos.
+6. Las importaciones USDA nuevas conservan `source_portions` dentro de la evidencia. Para filas históricas, `backfill_catalog_source_portions` permite reparar esa evidencia mediante dry-run y aplicación reanudable, registrando versión, motivo, fecha y lote dentro de la propia evidencia.
+
+La política determinista de readiness consume porciones desde `CatalogFoodSource.evidence_payload`; no contiene excepciones por identificador de alimento. La decisión humana de revisar/verificar/publicar sigue separada del enriquecimiento asistido.

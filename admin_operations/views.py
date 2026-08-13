@@ -15,7 +15,9 @@ from admin_operations.services import (
     build_food_catalog_imports_vm,
     build_food_catalog_inventory_vm,
     build_food_catalog_operations_vm,
+    build_food_catalog_readiness_vm,
     build_operations_overview_vm,
+    build_readiness_batch_detail_vm,
     perform_ai_proposal_operation,
     perform_ai_quota_operation,
     perform_ai_usage_event_operation,
@@ -27,6 +29,7 @@ from admin_operations.services import (
     perform_catalog_food_bulk_review,
     perform_catalog_food_operation,
     perform_catalog_food_snapshot,
+    perform_catalog_readiness_batch_operation,
     perform_core_seed_apply,
     perform_core_seed_dry_run,
     perform_credit_adjustment,
@@ -34,8 +37,10 @@ from admin_operations.services import (
     perform_import_source_policy_operation,
     perform_manual_apply,
     perform_manual_dry_run,
+    perform_source_portion_backfill_operation,
     perform_usda_apply,
     perform_usda_dry_run,
+    prepare_catalog_readiness_operation,
 )
 from admin_operations.system_control import build_system_control_vm
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
@@ -246,6 +251,66 @@ def food_catalog_imports(request):
     )
     base_vm = BaseVM(ui=ui_vm, content=content)
     return render(request, "admin_operations/food_catalog_imports.html", base_vm.as_context())
+
+
+@staff_member_required
+def food_catalog_readiness(request):
+    ui_vm = build_ui_vm(ADMIN_OPERATIONS_OVERVIEW_VIEWMODE)
+    content = build_food_catalog_readiness_vm()
+    base_vm = BaseVM(ui=ui_vm, content=content)
+    return render(request, "admin_operations/food_catalog_readiness.html", base_vm.as_context())
+
+
+@staff_member_required
+@operation_not_found_as_404
+def food_catalog_readiness_batch(request, batch_ref):
+    ui_vm = build_ui_vm(ADMIN_OPERATIONS_OVERVIEW_VIEWMODE)
+    content = build_readiness_batch_detail_vm(batch_ref)
+    base_vm = BaseVM(ui=ui_vm, content=content)
+    return render(request, "admin_operations/food_catalog_readiness_batch.html", base_vm.as_context())
+
+
+@staff_member_required
+@require_POST
+def food_catalog_readiness_prepare(request):
+    result, batch_ref = prepare_catalog_readiness_operation(
+        actor=request.user,
+        food_ids=request.POST.getlist("food_ids"),
+        environment=request.POST.get("environment", ""),
+        reason=request.POST.get("reason", ""),
+    )
+    flash_operation_result(request, result)
+    if result.ok and batch_ref:
+        return redirect("admin_operations_food_catalog_readiness_batch", batch_ref=batch_ref)
+    return redirect("admin_operations_food_catalog_readiness")
+
+
+@staff_member_required
+@require_POST
+@operation_not_found_as_404
+def food_catalog_readiness_batch_action(request, batch_ref):
+    result = perform_catalog_readiness_batch_operation(
+        batch_ref=batch_ref,
+        action=request.POST.get("action", ""),
+        actor=request.user,
+        reason=request.POST.get("reason", ""),
+    )
+    flash_operation_result(request, result)
+    return redirect("admin_operations_food_catalog_readiness_batch", batch_ref=batch_ref)
+
+
+@staff_member_required
+@require_POST
+def food_catalog_source_portions_backfill(request):
+    result = perform_source_portion_backfill_operation(
+        actor=request.user,
+        apply=request.POST.get("mode") == "apply",
+        reason=request.POST.get("reason", ""),
+        limit=request.POST.get("limit", 10),
+        after_id=request.POST.get("after_id", 0),
+    )
+    flash_operation_result(request, result)
+    return redirect("admin_operations_food_catalog_readiness")
 
 
 @staff_member_required
