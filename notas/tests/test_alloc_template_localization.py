@@ -43,3 +43,14 @@ class AllocTemplateLocalizationTests(SimpleTestCase):
                 )
             },
         )
+
+    def test_macro_kcal_distribution_emits_valid_css_numbers_in_spanish(self):
+        with translation.override("es"):
+            rendered = render_to_string(
+                "components/macro_kcal_distribution.html",
+                {"protein": 25.5, "carbs": 30.25, "fat": 44.25},
+            )
+
+        self.assertIn("--macro-kcal-share: 25.5;", rendered)
+        self.assertIn("--macro-kcal-share: 30.25;", rendered)
+        self.assertNotIn("--macro-kcal-share: 25,5;", rendered)

@@ -1,0 +1,20 @@
+{% load l10n %}
+<div
+    class="macro-kcal-distribution"
+    role="img"
+    aria-label="Distribución calórica: proteínas {{ protein|floatformat:0 }}%, carbohidratos {{ carbs|floatformat:0 }}%, grasas {{ fat|floatformat:0 }}%"
+    title="P {{ protein|floatformat:0 }}% · C {{ carbs|floatformat:0 }}% · G {{ fat|floatformat:0 }}%"
+>
+    <div
+        class="macro-kcal-distribution__segment macro-kcal-distribution__segment--protein"
+        style="--macro-kcal-share: {{ protein|default:0|unlocalize }};"
+    ></div>
+    <div
+        class="macro-kcal-distribution__segment macro-kcal-distribution__segment--carbs"
+        style="--macro-kcal-share: {{ carbs|default:0|unlocalize }};"
+    ></div>
+    <div
+        class="macro-kcal-distribution__segment macro-kcal-distribution__segment--fat"
+        style="--macro-kcal-share: {{ fat|default:0|unlocalize }};"
+    ></div>
+</div>

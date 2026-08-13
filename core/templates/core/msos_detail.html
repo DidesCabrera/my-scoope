@@ -1,0 +1,62 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>{{ item.title }} · MSOS</title>
+  <link rel="stylesheet" href="{% static 'css/msos.css' %}">
+</head>
+<body class="detail-page">
+  <a class="skip-link" href="#detail-content">Ir al contenido</a>
+  <header class="site-header detail-site-header">
+    <a href="{{ return_url }}" class="back-link" aria-label="Volver a {{ parent_label }}"><span aria-hidden="true">←</span> {{ parent_label }}</a>
+    <a href="{% url 'msos' %}" class="brand">My Scoope Operating System</a>
+    <span class="internal-label">Documento interno · Solo lectura</span>
+  </header>
+
+  <main class="detail-document" id="detail-content">
+    <header class="detail-hero">
+      <p class="eyebrow">{% if kind == 'project' %}Proyecto · {{ item.code }}{% elif kind == 'front' %}Frente de readiness{% elif kind == 'department' %}Departamento{% else %}Asunto ejecutivo · {{ item.area }}{% endif %}</p>
+      <h1>{{ item_title }}</h1>
+      <p class="lead">{{ item_intro }}</p>
+      <dl class="document-meta">
+        <div><dt>Estado</dt><dd><span class="badge">{{ item.status }}</span></dd></div>
+        {% if item.priority %}<div><dt>Prioridad</dt><dd>{{ item.priority }}</dd></div>{% endif %}
+        {% if item.timeframe %}<div><dt>Horizonte</dt><dd>{{ item.timeframe }}</dd></div>{% endif %}
+        {% if item.owner %}<div><dt>Responsable</dt><dd>{{ item.owner }}</dd></div>{% endif %}
+      </dl>
+    </header>
+
+    {% if item.detail %}
+      {% if item.detail.central_question %}<section class="detail-question"><p class="eyebrow"><span class="outline-number">1.</span> Pregunta central</p><p>{{ item.detail.central_question }}</p></section>{% endif %}
+      {% for section in item.detail.sections %}
+        <section class="detail-section">
+          <p class="eyebrow">{{ section.label }}</p>
+          <h2><span class="outline-number">{{ section.number }}.</span> {{ section.title }}</h2>
+          {% if section.summary %}<p class="section-intro">{{ section.summary }}</p>{% endif %}
+          {% if section.blocks %}
+            <div class="detail-block-grid">
+              {% for entry in section.blocks %}
+                {% if entry.id %}<a class="detail-block detail-block--link" href="{% url 'msos_detail' 'front' entry.id %}">{% else %}<article class="detail-block">{% endif %}
+                  <h3><span class="outline-number">{{ entry.number }}</span> {{ entry.title }}</h3>
+                  {% if entry.status %}<span class="badge">{{ entry.status }}</span>{% endif %}
+                  {% if entry.description %}<p>{{ entry.description }}</p>{% endif %}
+                  {% if entry.id %}</a>{% else %}</article>{% endif %}
+              {% endfor %}
+            </div>
+          {% endif %}
+          {% if section.points %}<ul class="clean-list detail-points">{% for point in section.points %}<li>{{ point }}</li>{% endfor %}</ul>{% endif %}
+        </section>
+      {% endfor %}
+    {% else %}
+      <div class="detail-two-column">
+        {% if item.objectives %}<section><p class="eyebrow">Dirección</p><h2><span class="outline-number">1.</span> Objetivos</h2><ul class="clean-list">{% for objective in item.objectives %}<li>{{ objective }}</li>{% endfor %}</ul></section>{% endif %}
+        {% if item.milestones %}<section><p class="eyebrow">Avance</p><h2><span class="outline-number">2.</span> Hitos</h2><ol class="milestone-list">{% for milestone in item.milestones %}<li><span>{{ milestone.title }}</span><span class="badge">{{ milestone.status }}</span></li>{% endfor %}</ol></section>{% endif %}
+      </div>
+      {% if item.next_action %}<section class="detail-question"><p class="eyebrow"><span class="outline-number">3.</span> Próxima acción</p><p>{{ item.next_action }}</p></section>{% endif %}
+    {% endif %}
+  </main>
+</body>
+</html>

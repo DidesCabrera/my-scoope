@@ -15,7 +15,12 @@ from notas.application.ai_intake.dailyplan_generator import (
     DailyPlanGeneratorError,
 )
 from notas.application.ai_intake.generated_plan_messages import append_iterated_plan_message
-from notas.application.ai_intake.nutrition_brief import serialize_conversation
+from notas.application.ai_intake.nutrition_brief import (
+    AI_NUTRITION_CONVERSATION_MESSAGE_LIMIT,
+    NutritionConversationMessage,
+    NutritionConversationState,
+    serialize_conversation,
+)
 from notas.application.ai_intake.plan_iteration import (
     create_iterated_dailyplan_proposal,
     should_iterate_generated_plan,
@@ -32,6 +37,7 @@ def enqueue_nutrition_intake_turn(
     existing_payload: Mapping[str, Any] | None,
     existing_chat_id: int | None,
     idempotency_key: str,
+    product_context: Mapping[str, Any] | None = None,
 ):
     normalized_message = " ".join(str(message or "").split())
     if not normalized_message:
@@ -56,6 +62,7 @@ def enqueue_nutrition_intake_turn(
             "message": normalized_message,
             "existing_payload": dict(existing_payload or {}),
             "existing_chat_id": existing_chat_id,
+            "product_context": dict(product_context or {}),
         },
     )
 
@@ -67,6 +74,7 @@ def process_nutrition_intake_turn_job(*, job) -> dict[str, Any]:
         raise AsyncJobContractError("Stored nutrition intake job has no message.")
     existing_chat_id = payload.get("existing_chat_id") or None
     existing_payload = payload.get("existing_payload") or None
+    product_context = payload.get("product_context") if isinstance(payload.get("product_context"), dict) else {}
 
     turn_result = get_nutrition_intake_chat_engine().continue_chat(
         ChatEngineRequest(
@@ -80,10 +88,17 @@ def process_nutrition_intake_turn_job(*, job) -> dict[str, Any]:
                 "turn_id": str(job.public_id),
                 "action_type": "assistant.ai_nutrition_intake.preview",
                 "async_job_id": str(job.public_id),
+                "product_context": product_context,
             },
         )
     )
     conversation = turn_result.state
+    comparison_card = product_context.get("saved_comparison_card")
+    if isinstance(comparison_card, dict) and comparison_card.get("comparison_id"):
+        conversation = NutritionConversationState(
+            messages=[*conversation.messages, NutritionConversationMessage(role="assistant", text="", saved_comparison_card=comparison_card)][-AI_NUTRITION_CONVERSATION_MESSAGE_LIMIT:],
+            result=conversation.result,
+        )
     chat = sync_chat_from_conversation(
         user=job.user,
         conversation=conversation,

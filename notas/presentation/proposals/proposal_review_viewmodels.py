@@ -16,6 +16,7 @@ from notas.application.proposals.contracts import (
 from notas.application.proposals.subject_context_warnings import (
     build_proposal_subject_context_warning,
 )
+from notas.domain.services.nutrition import macro_kcal_distribution
 
 
 @dataclass(frozen=True)
@@ -632,6 +633,7 @@ def _build_dailyplan_card_payload(
                 _build_meal_table_row(
                     dailyplan_meal.meal,
                     parent_total_kcal=total_kcal,
+                    parent_kpis=kpis,
                 )
                 for dailyplan_meal in meals
             ],
@@ -679,6 +681,7 @@ def _build_meal_card_payload(
                 _build_food_table_row(
                     food,
                     parent_total_kcal=total_kcal,
+                    parent_kpis=kpis,
                 )
                 for food in foods
             ],
@@ -713,20 +716,38 @@ def _build_meal_table_row(
     meal: ProposalReviewMealVM,
     *,
     parent_total_kcal: float,
+    parent_kpis: ProposalReviewKpisVM | None,
 ) -> dict[str, Any]:
     meal_total_kcal = _kpi_total_kcal(meal.kpis)
+    protein = _kpi_value(meal.kpis, "protein")
+    carbs = _kpi_value(meal.kpis, "carbs")
+    fat = _kpi_value(meal.kpis, "fat")
 
     return {
         "rel": {
             "name": meal.name,
             "total_kcal": meal_total_kcal,
             "kcal_share": _percentage(meal_total_kcal, parent_total_kcal),
-            "g_protein": _kpi_value(meal.kpis, "protein"),
-            "g_carbs": _kpi_value(meal.kpis, "carbs"),
-            "g_fat": _kpi_value(meal.kpis, "fat"),
-            "alloc_protein": _macro_alloc(meal.kpis, "protein"),
-            "alloc_carbs": _macro_alloc(meal.kpis, "carbs"),
-            "alloc_fat": _macro_alloc(meal.kpis, "fat"),
+            "kcal_distribution": macro_kcal_distribution(
+                protein * 4,
+                carbs * 4,
+                fat * 9,
+            ),
+            "g_protein": protein,
+            "g_carbs": carbs,
+            "g_fat": fat,
+            "alloc_protein": _percentage(
+                protein * 4,
+                _kpi_value(parent_kpis, "protein") * 4,
+            ),
+            "alloc_carbs": _percentage(
+                carbs * 4,
+                _kpi_value(parent_kpis, "carbs") * 4,
+            ),
+            "alloc_fat": _percentage(
+                fat * 9,
+                _kpi_value(parent_kpis, "fat") * 9,
+            ),
         },
     }
 
@@ -735,6 +756,7 @@ def _build_food_table_row(
     food: ProposalReviewFoodVM,
     *,
     parent_total_kcal: float,
+    parent_kpis: ProposalReviewKpisVM | None,
 ) -> dict[str, Any]:
     total_kcal = _safe_number(food.total_kcal)
     protein = _safe_number(food.protein)
@@ -748,12 +770,26 @@ def _build_food_table_row(
             "quantity_unit": food.unit or "g",
             "total_kcal": total_kcal,
             "kcal_share": _percentage(total_kcal, parent_total_kcal),
+            "kcal_distribution": macro_kcal_distribution(
+                protein * 4,
+                carbs * 4,
+                fat * 9,
+            ),
             "g_protein": protein,
             "g_carbs": carbs,
             "g_fat": fat,
-            "alloc_protein": _percentage(protein * 4, total_kcal),
-            "alloc_carbs": _percentage(carbs * 4, total_kcal),
-            "alloc_fat": _percentage(fat * 9, total_kcal),
+            "alloc_protein": _percentage(
+                protein * 4,
+                _kpi_value(parent_kpis, "protein") * 4,
+            ),
+            "alloc_carbs": _percentage(
+                carbs * 4,
+                _kpi_value(parent_kpis, "carbs") * 4,
+            ),
+            "alloc_fat": _percentage(
+                fat * 9,
+                _kpi_value(parent_kpis, "fat") * 9,
+            ),
         },
     }
 

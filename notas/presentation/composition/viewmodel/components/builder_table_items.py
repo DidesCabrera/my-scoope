@@ -1,6 +1,7 @@
 from notas.application.services.food_imports.localized_names import (
     resolve_food_display_name,
 )
+from notas.domain.services.nutrition import macro_kcal_distribution
 
 
 def _cached_or_live(obj, cached_attr, live_attr):
@@ -46,6 +47,11 @@ def _dailyplanmeal_snapshot_metrics(meal, dailyplan_snapshot):
             meal_total_kcal,
             dailyplan_total_kcal,
         ),
+        "kcal_distribution": macro_kcal_distribution(
+            meal_kcal_protein,
+            meal_kcal_carbs,
+            meal_kcal_fat,
+        ),
         "alloc": {
             "protein": _safe_percentage(
                 meal_kcal_protein,
@@ -72,6 +78,9 @@ def build_dailyplanmeal_table_item(dpm, dailyplan_snapshot=None):
     # ==================================================
 
     meal_total_kcal = _cached_or_live(meal, "total_kcal_cached", "total_kcal")
+    meal_kcal_protein = _cached_or_live(meal, "kcal_protein_cached", "kcal_protein")
+    meal_kcal_carbs = _cached_or_live(meal, "kcal_carbs_cached", "kcal_carbs")
+    meal_kcal_fat = _cached_or_live(meal, "kcal_fat_cached", "kcal_fat")
     meal_protein = _cached_or_live(meal, "protein_cached", "protein")
     meal_carbs = _cached_or_live(meal, "carbs_cached", "carbs")
     meal_fat = _cached_or_live(meal, "fat_cached", "fat")
@@ -82,6 +91,11 @@ def build_dailyplanmeal_table_item(dpm, dailyplan_snapshot=None):
         # ser caras porque vuelven a recorrer relaciones del DailyPlan.
         dpm_alloc = dpm.alloc
         kcal_share = dpm.kcal_share
+        kcal_distribution = macro_kcal_distribution(
+            meal_kcal_protein,
+            meal_kcal_carbs,
+            meal_kcal_fat,
+        )
     else:
         snapshot_metrics = _dailyplanmeal_snapshot_metrics(
             meal,
@@ -89,6 +103,7 @@ def build_dailyplanmeal_table_item(dpm, dailyplan_snapshot=None):
         )
         dpm_alloc = snapshot_metrics["alloc"]
         kcal_share = snapshot_metrics["kcal_share"]
+        kcal_distribution = snapshot_metrics["kcal_distribution"]
 
     return {
         # entidad principal
@@ -105,6 +120,7 @@ def build_dailyplanmeal_table_item(dpm, dailyplan_snapshot=None):
 
             "total_kcal": meal_total_kcal,
             "kcal_share": kcal_share,
+            "kcal_distribution": kcal_distribution,
 
             "g_protein": meal_protein,
             "g_carbs": meal_carbs,
@@ -145,6 +161,11 @@ def build_mealfood_table_item(mf):
 
             "total_kcal": mf_total_kcal,
             "kcal_share": mf.kcal_share,
+            "kcal_distribution": macro_kcal_distribution(
+                mf.kcal_protein,
+                mf.kcal_carbs,
+                mf.kcal_fat,
+            ),
 
             "g_protein": mf_protein,
             "g_carbs": mf_carbs,
@@ -187,6 +208,11 @@ def build_dailyplan_food_aggregation_table_item(food_aggregation, dailyplan_snap
             "kcal_share": _safe_percentage(
                 total_kcal,
                 dailyplan_total_kcal,
+            ),
+            "kcal_distribution": macro_kcal_distribution(
+                kcal_protein,
+                kcal_carbs,
+                kcal_fat,
             ),
             "g_protein": g_protein,
             "g_carbs": g_carbs,

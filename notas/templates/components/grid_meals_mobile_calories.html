@@ -1,0 +1,19 @@
+<div class="data-grid data-grid--mobile-meals-calories">
+    <div class="data-grid-header data-grid-header--mobile-meals-calories">
+        <div class="data-grid-col data-grid-col--name">Comidas</div>
+        <div class="data-grid-col data-grid-col--kcal">Cal</div>
+        <div class="data-grid-col data-grid-col--kcal-share">% Cal</div>
+    </div>
+
+    {% for row in items %}
+        <div class="data-grid-row data-grid-row--mobile-meals-calories">
+            <div class="data-grid-cell data-grid-cell--name">{{ row.rel.name }}</div>
+            <div class="data-grid-cell data-grid-cell--kcal">{{ row.rel.total_kcal|floatformat:0 }}</div>
+            <div class="data-grid-cell data-grid-cell--kcal-share">
+                {% include "components/grid_alloc_item.html" with value=row.rel.kcal_share kind="kcal" %}
+            </div>
+        </div>
+    {% empty %}
+        <div class="data-grid-empty">No meals added yet.</div>
+    {% endfor %}
+</div>

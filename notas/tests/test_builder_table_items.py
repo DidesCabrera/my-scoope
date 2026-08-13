@@ -62,6 +62,9 @@ class BuilderTableItemsTests(TestCase):
 
         self.assertEqual(item["rel"]["name"], "Avena")
         self.assertEqual(item["rel"]["quantity_unit"], "g")
+        distribution = item["rel"]["kcal_distribution"]
+        self.assertAlmostEqual(sum(distribution.values()), 100)
+        self.assertNotEqual(distribution["protein"], item["rel"]["alloc_protein"])
 
 
 class DailyPlanMealTableItemSnapshotTests(TestCase):
@@ -128,3 +131,7 @@ class DailyPlanMealTableItemSnapshotTests(TestCase):
         self.assertEqual(item["rel"]["alloc_protein"], 100)
         self.assertEqual(item["rel"]["alloc_carbs"], 100)
         self.assertEqual(item["rel"]["alloc_fat"], 100)
+        distribution = item["rel"]["kcal_distribution"]
+        self.assertAlmostEqual(sum(distribution.values()), 100)
+        self.assertAlmostEqual(distribution["protein"], 80 / 165 * 100)
+        self.assertNotEqual(distribution["protein"], item["rel"]["alloc_protein"])

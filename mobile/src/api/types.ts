@@ -34,13 +34,66 @@ export type AccountDeletionData = { receipt_id: string };
 export type CalendarizationData = {
   id: number;
   program_name: string;
-  status: string;
+  status: CalendarizationStatus;
   start_date: string;
   end_date: string;
   timezone_name: string;
   progress_day: number;
   progress_total_days: number;
   progress_percent: number;
+};
+
+export type CalendarizationStatus = "scheduled" | "active" | "paused" | "completed" | "cancelled";
+
+export type ActiveProgramDay = {
+  id: number;
+  calendar_date: string;
+  week_number: number;
+  day_number: number;
+  has_plan: boolean;
+  plan_name: string;
+};
+
+export type ActiveProgramData = {
+  calendarization: CalendarizationData | null;
+  days: ActiveProgramDay[];
+};
+
+export type CalendarizationActivationInput = {
+  program_id: number;
+  start_date: string;
+  timezone_name: string;
+  daily_notification_time: string;
+  daily_notifications_enabled: boolean;
+  meal_notifications_enabled: boolean;
+  confirm_incomplete: boolean;
+  replace_current: boolean;
+};
+
+export type CalendarizationActivationData = ActiveProgramData & {
+  empty_dates: string[];
+  replaced_calendarization_id: number | null;
+};
+
+export type CalendarizationHistoryItem = {
+  id: number;
+  program_name: string;
+  status: CalendarizationStatus;
+  start_date: string;
+  end_date: string;
+  timezone_name: string;
+  days_total: number;
+  days_with_plan: number;
+  created_at: string;
+};
+
+export type CalendarizationHistoryData = {
+  items: CalendarizationHistoryItem[];
+  count: number;
+};
+
+export type CalendarizedDayDetail = ActiveProgramDay & {
+  plan_snapshot: DailyPlanSnapshot | null;
 };
 
 export type TodayData = {
@@ -137,6 +190,103 @@ export type MacroTotals = {
   carbs_g?: number | null;
   fat_g?: number | null;
   total_kcal?: number | null;
+};
+
+export type LibraryEntity = "food" | "meal" | "dailyPlan" | "program";
+
+export type LibraryNutrition = {
+  calories: number;
+  protein: { grams: number; allocation: number; per_kilogram: number | null };
+  carbs: { grams: number; allocation: number };
+  fat: { grams: number; allocation: number };
+};
+
+export type LibraryIndicator = {
+  icon?: "day" | "food" | "meal" | "dailyPlan" | "week";
+  label: string;
+  value: number | string;
+};
+
+export type LibraryFoodPanelItem = {
+  id: string;
+  name: string;
+  quantity: number;
+  quantity_unit: string;
+  calories: number;
+  calorie_share: number;
+  calorie_distribution: LibraryCalorieDistribution;
+  protein_grams: number;
+  carbs_grams: number;
+  fat_grams: number;
+  protein_allocation: number;
+  carbs_allocation: number;
+  fat_allocation: number;
+};
+
+export type LibraryMealPanelItem = {
+  id: string;
+  detail_id: number;
+  name: string;
+  time: string | null;
+  foods: LibraryFoodPanelItem[];
+  calories: number;
+  calorie_share: number;
+  calorie_distribution: LibraryCalorieDistribution;
+  protein_grams: number;
+  carbs_grams: number;
+  fat_grams: number;
+  protein_allocation: number;
+  carbs_allocation: number;
+  fat_allocation: number;
+};
+
+export type LibraryWeekPanelItem = {
+  id: string;
+  week_number: number;
+  days: { day_label: string; plan_name: string | null }[];
+  calories: number;
+  calorie_share: number;
+  calorie_distribution: LibraryCalorieDistribution;
+  protein_grams: number;
+  carbs_grams: number;
+  fat_grams: number;
+  protein_allocation: number;
+  carbs_allocation: number;
+  fat_allocation: number;
+};
+
+export type LibraryCalorieDistribution = {
+  protein: number;
+  carbs: number;
+  fat: number;
+};
+
+export type LibraryPanel = {
+  kind: "none" | "foods" | "meals" | "weeks";
+  foods: LibraryFoodPanelItem[];
+  meals: LibraryMealPanelItem[];
+  weeks: LibraryWeekPanelItem[];
+};
+
+export type LibraryItem = {
+  id: number;
+  entity: LibraryEntity;
+  name: string;
+  subtitle: string;
+  nutrition: LibraryNutrition;
+  indicators: LibraryIndicator[];
+  panel: LibraryPanel;
+  creator: string;
+  created_at: string;
+  can_calendarize: boolean;
+};
+
+export type LibraryPageData = {
+  items: LibraryItem[];
+  total: number;
+  offset: number;
+  limit: number;
+  search: string | null;
 };
 
 export type MealSnapshot = {
@@ -272,4 +422,300 @@ export type SubscriptionData = {
     period_end: string | null;
   }[];
   duplicate_active_providers: boolean;
+};
+
+export type MobilePageData<T> = {
+  items: T[];
+  total: number;
+  offset: number;
+  limit: number;
+};
+
+export type MobileAction = {
+  key: string;
+  label: string;
+  tone: "default" | "warning" | "danger";
+  requires_confirmation: boolean;
+};
+
+export type ProposalStatus = "draft" | "pending_review" | "approved" | "rejected" | "cancelled" | "applied";
+
+export type ProposalSummary = {
+  id: number;
+  title: string;
+  summary: string;
+  status: ProposalStatus;
+  status_label: string;
+  source: string;
+  attachment_kind: "meal" | "dailyplan" | "brief";
+  attachment_label: string;
+  attachment_name: string;
+  is_reviewable: boolean;
+  created_at: string | null;
+  actions: MobileAction[];
+};
+
+export type ProposalListData = MobilePageData<ProposalSummary> & {
+  pending_count: number;
+};
+
+export type ProposalFact = {
+  label: string;
+  value: string;
+};
+
+export type ProposalKpis = {
+  total_kcal: number | null;
+  protein: number | null;
+  carbs: number | null;
+  fat: number | null;
+  ppk: number | null;
+};
+
+export type ProposalFood = {
+  food_id: number | null;
+  food_name: string;
+  quantity: number | null;
+  unit: string;
+};
+
+export type ProposalMeal = {
+  name: string;
+  foods: ProposalFood[];
+  kpis: ProposalKpis | null;
+};
+
+export type ProposalDailyPlan = {
+  name: string;
+  meals: { hour: string | null; note: string; meal: ProposalMeal }[];
+  kpis: ProposalKpis | null;
+};
+
+export type ProposalDetail = ProposalSummary & {
+  dailyplan_id: number | null;
+  dailyplan_name: string;
+  created_by_username: string;
+  reviewed_by_username: string | null;
+  intent: string | null;
+  entity_title: string;
+  target_facts: ProposalFact[];
+  current_facts: ProposalFact[];
+  validation_facts: ProposalFact[];
+  meal: ProposalMeal | null;
+  dailyplan: ProposalDailyPlan | null;
+  subject_context_warning: {
+    requires_warning: boolean;
+    source_label: string;
+    calculation_weight_label: string;
+    title: string;
+    message: string;
+  };
+  applied_result: {
+    kind: "meal" | "dailyplan" | null;
+    object_id: number | null;
+    object_name: string;
+  } | null;
+  applied_at: string | null;
+};
+
+export type ComparisonKind = "foods" | "meals" | "dailyplans";
+
+export type ComparisonSelection = {
+  id: number;
+  quantity?: number | null;
+};
+
+export type ComparisonKindOption = {
+  key: ComparisonKind;
+  label: string;
+  entity_label: string;
+  uses_quantity: boolean;
+  quantity_unit: string | null;
+  includes_ppk: boolean;
+};
+
+export type ComparisonMetadata = { kinds: ComparisonKindOption[] };
+
+export type ComparisonOption = { id: number; name: string };
+
+export type ComparisonOptionsData = MobilePageData<ComparisonOption> & { search: string | null };
+
+export type ComparisonMetricValues = {
+  calories: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+  protein_per_kilogram: number | null;
+};
+
+export type ComparisonResultItem = {
+  position: number;
+  id: number;
+  name: string;
+  quantity: number | null;
+  values: ComparisonMetricValues;
+};
+
+export type ComparisonMetricBar = {
+  position: number;
+  id: number;
+  label: string;
+  quantity: number | null;
+  value: number;
+  formatted_value: string;
+  relative_percentage: number;
+};
+
+export type ComparisonMetric = {
+  key: "total_kcal" | "ppk" | "protein" | "carbs" | "fat" | "alloc_protein" | "alloc_carbs" | "alloc_fat";
+  label: string;
+  unit: string;
+  bars: ComparisonMetricBar[];
+};
+
+export type ComparisonResult = {
+  kind: ComparisonKind;
+  kind_label: string;
+  historical_snapshot: boolean;
+  saved_comparison_id: number | null;
+  saved_comparison_name: string;
+  metrics: ComparisonMetric[];
+  items: ComparisonResultItem[];
+};
+
+export type SavedComparisonSummary = {
+  id: number;
+  name: string;
+  kind: ComparisonKind;
+  kind_label: string;
+  item_count: number;
+  updated_at: string;
+};
+
+export type SavedComparisonListData = MobilePageData<SavedComparisonSummary>;
+
+export type SavedComparisonDetail = ComparisonResult & {
+  editable_selections: ComparisonSelection[];
+  updated_at: string;
+};
+
+export type AIJobAcceptedData = {
+  job_id: string;
+  status: "queued" | "running" | "retrying";
+  retry_after_ms: number;
+};
+
+export type AITurnResultData = {
+  chat_id: number;
+  conversation_updated: true;
+  has_iteration_warning: boolean;
+};
+
+export type AssistantAvailability = {
+  is_available: boolean;
+  label: string;
+  queue_available: boolean;
+  available_credits: number;
+  monthly_credit_limit: number;
+  daily_credit_limit: number;
+  max_message_chars: number;
+};
+
+export type AIPendingTurn = {
+  job_id: string;
+  status: "queued" | "running" | "retrying";
+  retry_after_ms: number;
+};
+
+export type AIChatCardItem = {
+  key: string;
+  label: string;
+  value: string;
+  is_pending: boolean;
+};
+
+type AIChatDraftCard = {
+  type: "profile_draft" | "preference_draft" | "proposal_preferences";
+  title: string;
+  subtitle: string;
+  items: AIChatCardItem[];
+  status: string;
+};
+
+type AIChatProposalCard = {
+  type: "proposal_review";
+  proposal_id: number;
+  title: string;
+  summary: string;
+  status: string;
+};
+
+type AIChatComparisonCard = {
+  type: "saved_comparison";
+  comparison_id: number;
+  kind: ComparisonKind;
+  title: string;
+};
+
+type AIChatPreparedActionCard = {
+  type: "prepared_action";
+  action_id: string;
+  title: string;
+  summary: string;
+  expires_at: string;
+  status: "prepared" | "committed" | "cancelled" | "expired" | "failed";
+  destructive: boolean;
+};
+
+type AIChatGeneratedPlanCard = {
+  type: "generated_plan";
+  proposal_id: number | null;
+  title: string;
+  summary: string;
+  is_current: boolean;
+  items: AIChatCardItem[];
+};
+
+export type AIPreparedActionResult = {
+  action_id: string;
+  status: "committed" | "cancelled";
+  refresh_chat: boolean;
+};
+
+export type AIChatCard =
+  | AIChatDraftCard
+  | AIChatProposalCard
+  | AIChatComparisonCard
+  | AIChatPreparedActionCard
+  | AIChatGeneratedPlanCard;
+
+export type AIChatMessage = {
+  id: string;
+  role: "user" | "assistant";
+  text: string;
+  cards?: AIChatCard[];
+  created_at: string | null;
+  has_structured_content: boolean;
+};
+
+export type AIChatSummary = {
+  id: number;
+  title: string;
+  status: string;
+  status_label: string;
+  last_message_preview: string;
+  message_count: number;
+  proposal_id: number | null;
+  updated_at: string;
+};
+
+export type AIChatListData = MobilePageData<AIChatSummary> & {
+  availability: AssistantAvailability;
+  pending_new_turn: AIPendingTurn | null;
+};
+
+export type AIChatDetail = AIChatSummary & {
+  messages: AIChatMessage[];
+  availability: AssistantAvailability;
+  pending_turn: AIPendingTurn | null;
 };

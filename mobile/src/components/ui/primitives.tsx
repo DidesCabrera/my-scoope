@@ -1,7 +1,11 @@
 import type { PropsWithChildren, ReactNode } from "react";
+import { useCallback, useState } from "react";
+import { useFocusEffect } from "expo-router";
 import {
   ActivityIndicator,
   KeyboardTypeOptions,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Pressable,
   ScrollView,
   StyleProp,
@@ -14,18 +18,26 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { tokens } from "@/design/tokens";
+import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 
 type ScreenProps = PropsWithChildren<{
   scroll?: boolean;
   contentStyle?: StyleProp<ViewStyle>;
+  onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
 }>;
 
-export function Screen({ children, scroll = true, contentStyle }: ScreenProps) {
+export function Screen({ children, scroll = true, contentStyle, onScroll }: ScreenProps) {
+  const setHeaderPresentation = useHeaderPresentation();
+  const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
+  useFocusEffect(useCallback(() => {
+    setHeaderPresentation({ mode: "default", identityVisible: compactHeaderVisible });
+    return () => setHeaderPresentation({ mode: "default" });
+  }, [compactHeaderVisible, setHeaderPresentation]));
   const content = <View style={[styles.screenContent, contentStyle]}>{children}</View>;
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+    <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
       {scroll ? (
-        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" onScroll={(event) => { const visible = event.nativeEvent.contentOffset.y > 1; if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible); onScroll?.(event); }} scrollEventThrottle={16}>
           {content}
         </ScrollView>
       ) : (

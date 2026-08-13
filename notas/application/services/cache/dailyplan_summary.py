@@ -8,8 +8,9 @@ from django.utils import timezone
 
 from notas.application.services.food_imports.localized_names import resolve_food_display_name
 from notas.domain.models import DailyPlan, DailyPlanMeal, MealFood, Program
+from notas.domain.services.nutrition import macro_kcal_distribution
 
-DAILYPLAN_SUMMARY_CACHE_VERSION = 1
+DAILYPLAN_SUMMARY_CACHE_VERSION = 2
 
 
 def _safe_percentage(part, total):
@@ -128,6 +129,11 @@ def _food_table_row(food, display_name, total_grams, dailyplan_totals):
             "name": display_name,
             "total_kcal": total_kcal,
             "kcal_share": _safe_percentage(total_kcal, dailyplan_totals["total_kcal"]),
+            "kcal_distribution": macro_kcal_distribution(
+                kcal_protein,
+                kcal_carbs,
+                kcal_fat,
+            ),
             "g_protein": g_protein,
             "g_carbs": g_carbs,
             "g_fat": g_fat,
@@ -187,6 +193,11 @@ def build_dailyplan_summary(dailyplan: DailyPlan) -> dict:
                 "name": meal_item["meal_name"],
                 "total_kcal": snapshot["total_kcal"],
                 "kcal_share": _safe_percentage(snapshot["total_kcal"], totals["total_kcal"]),
+                "kcal_distribution": macro_kcal_distribution(
+                    snapshot["kcal_protein"],
+                    snapshot["kcal_carbs"],
+                    snapshot["kcal_fat"],
+                ),
                 "g_protein": snapshot["protein"],
                 "g_carbs": snapshot["carbs"],
                 "g_fat": snapshot["fat"],

@@ -1,6 +1,529 @@
 {
   "components": {
     "schemas": {
+      "AIChatCardItemData": {
+        "properties": {
+          "is_pending": {
+            "default": false,
+            "title": "Is Pending",
+            "type": "boolean"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "value"
+        ],
+        "title": "AIChatCardItemData",
+        "type": "object"
+      },
+      "AIChatComparisonCardData": {
+        "properties": {
+          "comparison_id": {
+            "title": "Comparison Id",
+            "type": "integer"
+          },
+          "kind": {
+            "enum": [
+              "foods",
+              "meals",
+              "dailyplans"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "type": {
+            "const": "saved_comparison",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "comparison_id",
+          "kind",
+          "title"
+        ],
+        "title": "AIChatComparisonCardData",
+        "type": "object"
+      },
+      "AIChatDetailData": {
+        "properties": {
+          "availability": {
+            "$ref": "#/components/schemas/AssistantAvailabilityData"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "last_message_preview": {
+            "title": "Last Message Preview",
+            "type": "string"
+          },
+          "message_count": {
+            "title": "Message Count",
+            "type": "integer"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/AIChatMessageData"
+            },
+            "title": "Messages",
+            "type": "array"
+          },
+          "pending_turn": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AIPendingTurnData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "proposal_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proposal Id"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "status_label": {
+            "title": "Status Label",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status",
+          "status_label",
+          "last_message_preview",
+          "message_count",
+          "updated_at",
+          "messages",
+          "availability"
+        ],
+        "title": "AIChatDetailData",
+        "type": "object"
+      },
+      "AIChatDetailEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AIChatDetailData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "AIChatDetailEnvelope",
+        "type": "object"
+      },
+      "AIChatDraftCardData": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AIChatCardItemData"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "status": {
+            "default": "",
+            "title": "Status",
+            "type": "string"
+          },
+          "subtitle": {
+            "default": "",
+            "title": "Subtitle",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "profile_draft",
+              "preference_draft",
+              "proposal_preferences"
+            ],
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title"
+        ],
+        "title": "AIChatDraftCardData",
+        "type": "object"
+      },
+      "AIChatGeneratedPlanCardData": {
+        "properties": {
+          "is_current": {
+            "default": false,
+            "title": "Is Current",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AIChatCardItemData"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "proposal_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proposal Id"
+          },
+          "summary": {
+            "default": "",
+            "title": "Summary",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "type": {
+            "const": "generated_plan",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title"
+        ],
+        "title": "AIChatGeneratedPlanCardData",
+        "type": "object"
+      },
+      "AIChatListData": {
+        "properties": {
+          "availability": {
+            "$ref": "#/components/schemas/AssistantAvailabilityData"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AIChatSummaryData"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "pending_new_turn": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AIPendingTurnData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "offset",
+          "limit",
+          "availability"
+        ],
+        "title": "AIChatListData",
+        "type": "object"
+      },
+      "AIChatListEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AIChatListData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "AIChatListEnvelope",
+        "type": "object"
+      },
+      "AIChatMessageData": {
+        "properties": {
+          "cards": {
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/AIChatDraftCardData"
+                },
+                {
+                  "$ref": "#/components/schemas/AIChatProposalCardData"
+                },
+                {
+                  "$ref": "#/components/schemas/AIChatComparisonCardData"
+                },
+                {
+                  "$ref": "#/components/schemas/AIChatPreparedActionCardData"
+                },
+                {
+                  "$ref": "#/components/schemas/AIChatGeneratedPlanCardData"
+                }
+              ]
+            },
+            "title": "Cards",
+            "type": "array"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "has_structured_content": {
+            "default": false,
+            "title": "Has Structured Content",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "user",
+              "assistant"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "role",
+          "text"
+        ],
+        "title": "AIChatMessageData",
+        "type": "object"
+      },
+      "AIChatPreparedActionCardData": {
+        "properties": {
+          "action_id": {
+            "title": "Action Id",
+            "type": "string"
+          },
+          "destructive": {
+            "default": false,
+            "title": "Destructive",
+            "type": "boolean"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "prepared",
+              "committed",
+              "cancelled",
+              "expired",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "summary": {
+            "default": "",
+            "title": "Summary",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "type": {
+            "const": "prepared_action",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "action_id",
+          "title",
+          "status",
+          "expires_at"
+        ],
+        "title": "AIChatPreparedActionCardData",
+        "type": "object"
+      },
+      "AIChatProposalCardData": {
+        "properties": {
+          "proposal_id": {
+            "title": "Proposal Id",
+            "type": "integer"
+          },
+          "status": {
+            "default": "",
+            "title": "Status",
+            "type": "string"
+          },
+          "summary": {
+            "default": "",
+            "title": "Summary",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "type": {
+            "const": "proposal_review",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "proposal_id",
+          "title"
+        ],
+        "title": "AIChatProposalCardData",
+        "type": "object"
+      },
+      "AIChatSummaryData": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "last_message_preview": {
+            "title": "Last Message Preview",
+            "type": "string"
+          },
+          "message_count": {
+            "title": "Message Count",
+            "type": "integer"
+          },
+          "proposal_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proposal Id"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "status_label": {
+            "title": "Status Label",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status",
+          "status_label",
+          "last_message_preview",
+          "message_count",
+          "updated_at"
+        ],
+        "title": "AIChatSummaryData",
+        "type": "object"
+      },
       "AIJobAcceptedData": {
         "properties": {
           "job_id": {
@@ -55,14 +578,12 @@
           "result": {
             "anyOf": [
               {
-                "additionalProperties": true,
-                "type": "object"
+                "$ref": "#/components/schemas/AITurnResultData"
               },
               {
                 "type": "null"
               }
-            ],
-            "title": "Result"
+            ]
           },
           "retry_after_ms": {
             "anyOf": [
@@ -109,6 +630,83 @@
         "title": "AIJobResultEnvelope",
         "type": "object"
       },
+      "AIPendingTurnData": {
+        "properties": {
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "retry_after_ms": {
+            "title": "Retry After Ms",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "running",
+              "retrying"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id",
+          "status",
+          "retry_after_ms"
+        ],
+        "title": "AIPendingTurnData",
+        "type": "object"
+      },
+      "AIPreparedActionResultData": {
+        "properties": {
+          "action_id": {
+            "title": "Action Id",
+            "type": "string"
+          },
+          "refresh_chat": {
+            "default": true,
+            "title": "Refresh Chat",
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "committed",
+              "cancelled"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action_id",
+          "status"
+        ],
+        "title": "AIPreparedActionResultData",
+        "type": "object"
+      },
+      "AIPreparedActionResultEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AIPreparedActionResultData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "AIPreparedActionResultEnvelope",
+        "type": "object"
+      },
       "AITurnInput": {
         "properties": {
           "chat_id": {
@@ -121,6 +719,18 @@
               }
             ],
             "title": "Chat Id"
+          },
+          "comparison_id": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comparison Id"
           },
           "idempotency_key": {
             "maxLength": 120,
@@ -140,6 +750,30 @@
           "idempotency_key"
         ],
         "title": "AITurnInput",
+        "type": "object"
+      },
+      "AITurnResultData": {
+        "properties": {
+          "chat_id": {
+            "title": "Chat Id",
+            "type": "integer"
+          },
+          "conversation_updated": {
+            "const": true,
+            "default": true,
+            "title": "Conversation Updated",
+            "type": "boolean"
+          },
+          "has_iteration_warning": {
+            "default": false,
+            "title": "Has Iteration Warning",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "chat_id"
+        ],
+        "title": "AITurnResultData",
         "type": "object"
       },
       "AccountDeletionData": {
@@ -457,6 +1091,169 @@
         "title": "AppleTransactionInput",
         "type": "object"
       },
+      "AssistantAvailabilityData": {
+        "properties": {
+          "available_credits": {
+            "title": "Available Credits",
+            "type": "integer"
+          },
+          "daily_credit_limit": {
+            "title": "Daily Credit Limit",
+            "type": "integer"
+          },
+          "is_available": {
+            "title": "Is Available",
+            "type": "boolean"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "max_message_chars": {
+            "title": "Max Message Chars",
+            "type": "integer"
+          },
+          "monthly_credit_limit": {
+            "title": "Monthly Credit Limit",
+            "type": "integer"
+          },
+          "queue_available": {
+            "title": "Queue Available",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "is_available",
+          "label",
+          "queue_available",
+          "available_credits",
+          "monthly_credit_limit",
+          "daily_credit_limit",
+          "max_message_chars"
+        ],
+        "title": "AssistantAvailabilityData",
+        "type": "object"
+      },
+      "CalendarizationActivationData": {
+        "properties": {
+          "calendarization": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CalendarizationData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/ActiveProgramDay"
+            },
+            "title": "Days",
+            "type": "array"
+          },
+          "empty_dates": {
+            "items": {
+              "format": "date",
+              "type": "string"
+            },
+            "title": "Empty Dates",
+            "type": "array"
+          },
+          "replaced_calendarization_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Replaced Calendarization Id"
+          }
+        },
+        "required": [
+          "days"
+        ],
+        "title": "CalendarizationActivationData",
+        "type": "object"
+      },
+      "CalendarizationActivationEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CalendarizationActivationData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "CalendarizationActivationEnvelope",
+        "type": "object"
+      },
+      "CalendarizationActivationInput": {
+        "properties": {
+          "confirm_incomplete": {
+            "default": false,
+            "title": "Confirm Incomplete",
+            "type": "boolean"
+          },
+          "daily_notification_time": {
+            "default": "07:00:00",
+            "format": "time",
+            "title": "Daily Notification Time",
+            "type": "string"
+          },
+          "daily_notifications_enabled": {
+            "default": true,
+            "title": "Daily Notifications Enabled",
+            "type": "boolean"
+          },
+          "meal_notifications_enabled": {
+            "default": false,
+            "title": "Meal Notifications Enabled",
+            "type": "boolean"
+          },
+          "program_id": {
+            "exclusiveMinimum": 0,
+            "title": "Program Id",
+            "type": "integer"
+          },
+          "replace_current": {
+            "default": false,
+            "title": "Replace Current",
+            "type": "boolean"
+          },
+          "start_date": {
+            "format": "date",
+            "title": "Start Date",
+            "type": "string"
+          },
+          "timezone_name": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Timezone Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "program_id",
+          "start_date",
+          "timezone_name"
+        ],
+        "title": "CalendarizationActivationInput",
+        "type": "object"
+      },
       "CalendarizationData": {
         "properties": {
           "end_date": {
@@ -510,6 +1307,105 @@
           "progress_percent"
         ],
         "title": "CalendarizationData",
+        "type": "object"
+      },
+      "CalendarizationHistoryData": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CalendarizationHistoryItem"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items",
+          "count"
+        ],
+        "title": "CalendarizationHistoryData",
+        "type": "object"
+      },
+      "CalendarizationHistoryEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CalendarizationHistoryData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "CalendarizationHistoryEnvelope",
+        "type": "object"
+      },
+      "CalendarizationHistoryItem": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "days_total": {
+            "title": "Days Total",
+            "type": "integer"
+          },
+          "days_with_plan": {
+            "title": "Days With Plan",
+            "type": "integer"
+          },
+          "end_date": {
+            "format": "date",
+            "title": "End Date",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "program_name": {
+            "title": "Program Name",
+            "type": "string"
+          },
+          "start_date": {
+            "format": "date",
+            "title": "Start Date",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "timezone_name": {
+            "title": "Timezone Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "program_name",
+          "status",
+          "start_date",
+          "end_date",
+          "timezone_name",
+          "days_total",
+          "days_with_plan",
+          "created_at"
+        ],
+        "title": "CalendarizationHistoryItem",
         "type": "object"
       },
       "CalendarizationReviewData": {
@@ -765,6 +1661,549 @@
           "created_at"
         ],
         "title": "CalendarizationRevisionData",
+        "type": "object"
+      },
+      "CalendarizedDayDetailData": {
+        "properties": {
+          "calendar_date": {
+            "format": "date",
+            "title": "Calendar Date",
+            "type": "string"
+          },
+          "day_number": {
+            "title": "Day Number",
+            "type": "integer"
+          },
+          "has_plan": {
+            "title": "Has Plan",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "plan_name": {
+            "title": "Plan Name",
+            "type": "string"
+          },
+          "plan_snapshot": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Snapshot"
+          },
+          "week_number": {
+            "title": "Week Number",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "calendar_date",
+          "week_number",
+          "day_number",
+          "has_plan",
+          "plan_name"
+        ],
+        "title": "CalendarizedDayDetailData",
+        "type": "object"
+      },
+      "CalendarizedDayDetailEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CalendarizedDayDetailData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "CalendarizedDayDetailEnvelope",
+        "type": "object"
+      },
+      "ComparisonKindData": {
+        "properties": {
+          "entity_label": {
+            "title": "Entity Label",
+            "type": "string"
+          },
+          "includes_ppk": {
+            "title": "Includes Ppk",
+            "type": "boolean"
+          },
+          "key": {
+            "enum": [
+              "foods",
+              "meals",
+              "dailyplans"
+            ],
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "quantity_unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity Unit"
+          },
+          "uses_quantity": {
+            "title": "Uses Quantity",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "entity_label",
+          "uses_quantity",
+          "includes_ppk"
+        ],
+        "title": "ComparisonKindData",
+        "type": "object"
+      },
+      "ComparisonMetadataData": {
+        "properties": {
+          "kinds": {
+            "items": {
+              "$ref": "#/components/schemas/ComparisonKindData"
+            },
+            "title": "Kinds",
+            "type": "array"
+          }
+        },
+        "required": [
+          "kinds"
+        ],
+        "title": "ComparisonMetadataData",
+        "type": "object"
+      },
+      "ComparisonMetadataEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ComparisonMetadataData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "ComparisonMetadataEnvelope",
+        "type": "object"
+      },
+      "ComparisonMetricBarData": {
+        "properties": {
+          "formatted_value": {
+            "title": "Formatted Value",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity"
+          },
+          "relative_percentage": {
+            "title": "Relative Percentage",
+            "type": "number"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "position",
+          "id",
+          "label",
+          "value",
+          "formatted_value",
+          "relative_percentage"
+        ],
+        "title": "ComparisonMetricBarData",
+        "type": "object"
+      },
+      "ComparisonMetricData": {
+        "properties": {
+          "bars": {
+            "items": {
+              "$ref": "#/components/schemas/ComparisonMetricBarData"
+            },
+            "title": "Bars",
+            "type": "array"
+          },
+          "key": {
+            "enum": [
+              "total_kcal",
+              "ppk",
+              "protein",
+              "carbs",
+              "fat",
+              "alloc_protein",
+              "alloc_carbs",
+              "alloc_fat"
+            ],
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "unit",
+          "bars"
+        ],
+        "title": "ComparisonMetricData",
+        "type": "object"
+      },
+      "ComparisonMetricValuesData": {
+        "properties": {
+          "calories": {
+            "title": "Calories",
+            "type": "number"
+          },
+          "carbs_g": {
+            "title": "Carbs G",
+            "type": "number"
+          },
+          "fat_g": {
+            "title": "Fat G",
+            "type": "number"
+          },
+          "protein_g": {
+            "title": "Protein G",
+            "type": "number"
+          },
+          "protein_per_kilogram": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Protein Per Kilogram"
+          }
+        },
+        "required": [
+          "calories",
+          "protein_g",
+          "carbs_g",
+          "fat_g"
+        ],
+        "title": "ComparisonMetricValuesData",
+        "type": "object"
+      },
+      "ComparisonOptionData": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "ComparisonOptionData",
+        "type": "object"
+      },
+      "ComparisonOptionsData": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ComparisonOptionData"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "search": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Search"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "offset",
+          "limit"
+        ],
+        "title": "ComparisonOptionsData",
+        "type": "object"
+      },
+      "ComparisonOptionsEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ComparisonOptionsData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "ComparisonOptionsEnvelope",
+        "type": "object"
+      },
+      "ComparisonRequestInput": {
+        "properties": {
+          "kind": {
+            "enum": [
+              "foods",
+              "meals",
+              "dailyplans"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "selections": {
+            "items": {
+              "$ref": "#/components/schemas/ComparisonSelectionInput"
+            },
+            "minItems": 2,
+            "title": "Selections",
+            "type": "array"
+          }
+        },
+        "required": [
+          "kind",
+          "selections"
+        ],
+        "title": "ComparisonRequestInput",
+        "type": "object"
+      },
+      "ComparisonResultData": {
+        "properties": {
+          "historical_snapshot": {
+            "default": false,
+            "title": "Historical Snapshot",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ComparisonResultItemData"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "kind": {
+            "enum": [
+              "foods",
+              "meals",
+              "dailyplans"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "kind_label": {
+            "title": "Kind Label",
+            "type": "string"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/ComparisonMetricData"
+            },
+            "title": "Metrics",
+            "type": "array"
+          },
+          "saved_comparison_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Saved Comparison Id"
+          },
+          "saved_comparison_name": {
+            "default": "",
+            "title": "Saved Comparison Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "kind_label",
+          "metrics",
+          "items"
+        ],
+        "title": "ComparisonResultData",
+        "type": "object"
+      },
+      "ComparisonResultEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ComparisonResultData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "ComparisonResultEnvelope",
+        "type": "object"
+      },
+      "ComparisonResultItemData": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity"
+          },
+          "values": {
+            "$ref": "#/components/schemas/ComparisonMetricValuesData"
+          }
+        },
+        "required": [
+          "position",
+          "id",
+          "name",
+          "values"
+        ],
+        "title": "ComparisonResultItemData",
+        "type": "object"
+      },
+      "ComparisonSelectionInput": {
+        "properties": {
+          "id": {
+            "exclusiveMinimum": 0,
+            "title": "Id",
+            "type": "integer"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "ComparisonSelectionInput",
         "type": "object"
       },
       "DisclosureAcceptanceInput": {
@@ -1369,6 +2808,570 @@
         "title": "HealthEnvelope",
         "type": "object"
       },
+      "LibraryCalorieDistributionData": {
+        "properties": {
+          "carbs": {
+            "title": "Carbs",
+            "type": "number"
+          },
+          "fat": {
+            "title": "Fat",
+            "type": "number"
+          },
+          "protein": {
+            "title": "Protein",
+            "type": "number"
+          }
+        },
+        "required": [
+          "protein",
+          "carbs",
+          "fat"
+        ],
+        "title": "LibraryCalorieDistributionData",
+        "type": "object"
+      },
+      "LibraryFoodPanelItemData": {
+        "properties": {
+          "calorie_distribution": {
+            "$ref": "#/components/schemas/LibraryCalorieDistributionData"
+          },
+          "calorie_share": {
+            "title": "Calorie Share",
+            "type": "number"
+          },
+          "calories": {
+            "title": "Calories",
+            "type": "number"
+          },
+          "carbs_allocation": {
+            "title": "Carbs Allocation",
+            "type": "number"
+          },
+          "carbs_grams": {
+            "title": "Carbs Grams",
+            "type": "number"
+          },
+          "fat_allocation": {
+            "title": "Fat Allocation",
+            "type": "number"
+          },
+          "fat_grams": {
+            "title": "Fat Grams",
+            "type": "number"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "protein_allocation": {
+            "title": "Protein Allocation",
+            "type": "number"
+          },
+          "protein_grams": {
+            "title": "Protein Grams",
+            "type": "number"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "number"
+          },
+          "quantity_unit": {
+            "title": "Quantity Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "quantity",
+          "quantity_unit",
+          "calories",
+          "calorie_share",
+          "calorie_distribution",
+          "protein_grams",
+          "carbs_grams",
+          "fat_grams",
+          "protein_allocation",
+          "carbs_allocation",
+          "fat_allocation"
+        ],
+        "title": "LibraryFoodPanelItemData",
+        "type": "object"
+      },
+      "LibraryIndicatorData": {
+        "properties": {
+          "icon": {
+            "anyOf": [
+              {
+                "enum": [
+                  "day",
+                  "food",
+                  "meal",
+                  "dailyPlan",
+                  "week"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Icon"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "label",
+          "value"
+        ],
+        "title": "LibraryIndicatorData",
+        "type": "object"
+      },
+      "LibraryItemData": {
+        "properties": {
+          "can_calendarize": {
+            "default": false,
+            "title": "Can Calendarize",
+            "type": "boolean"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "creator": {
+            "title": "Creator",
+            "type": "string"
+          },
+          "entity": {
+            "enum": [
+              "food",
+              "meal",
+              "dailyPlan",
+              "program"
+            ],
+            "title": "Entity",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "indicators": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryIndicatorData"
+            },
+            "title": "Indicators",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "nutrition": {
+            "$ref": "#/components/schemas/LibraryNutritionData"
+          },
+          "panel": {
+            "$ref": "#/components/schemas/LibraryPanelData"
+          },
+          "subtitle": {
+            "title": "Subtitle",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "entity",
+          "name",
+          "subtitle",
+          "nutrition",
+          "indicators",
+          "panel",
+          "creator",
+          "created_at"
+        ],
+        "title": "LibraryItemData",
+        "type": "object"
+      },
+      "LibraryItemEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/LibraryItemData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "LibraryItemEnvelope",
+        "type": "object"
+      },
+      "LibraryMacroData": {
+        "properties": {
+          "allocation": {
+            "title": "Allocation",
+            "type": "number"
+          },
+          "grams": {
+            "title": "Grams",
+            "type": "number"
+          },
+          "per_kilogram": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Per Kilogram"
+          }
+        },
+        "required": [
+          "grams",
+          "allocation"
+        ],
+        "title": "LibraryMacroData",
+        "type": "object"
+      },
+      "LibraryMealPanelItemData": {
+        "properties": {
+          "calorie_distribution": {
+            "$ref": "#/components/schemas/LibraryCalorieDistributionData"
+          },
+          "calorie_share": {
+            "title": "Calorie Share",
+            "type": "number"
+          },
+          "calories": {
+            "title": "Calories",
+            "type": "number"
+          },
+          "carbs_allocation": {
+            "title": "Carbs Allocation",
+            "type": "number"
+          },
+          "carbs_grams": {
+            "title": "Carbs Grams",
+            "type": "number"
+          },
+          "detail_id": {
+            "title": "Detail Id",
+            "type": "integer"
+          },
+          "fat_allocation": {
+            "title": "Fat Allocation",
+            "type": "number"
+          },
+          "fat_grams": {
+            "title": "Fat Grams",
+            "type": "number"
+          },
+          "foods": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryFoodPanelItemData"
+            },
+            "title": "Foods",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "protein_allocation": {
+            "title": "Protein Allocation",
+            "type": "number"
+          },
+          "protein_grams": {
+            "title": "Protein Grams",
+            "type": "number"
+          },
+          "time": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time"
+          }
+        },
+        "required": [
+          "id",
+          "detail_id",
+          "name",
+          "foods",
+          "calories",
+          "calorie_share",
+          "calorie_distribution",
+          "protein_grams",
+          "carbs_grams",
+          "fat_grams",
+          "protein_allocation",
+          "carbs_allocation",
+          "fat_allocation"
+        ],
+        "title": "LibraryMealPanelItemData",
+        "type": "object"
+      },
+      "LibraryNutritionData": {
+        "properties": {
+          "calories": {
+            "title": "Calories",
+            "type": "number"
+          },
+          "carbs": {
+            "$ref": "#/components/schemas/LibraryMacroData"
+          },
+          "fat": {
+            "$ref": "#/components/schemas/LibraryMacroData"
+          },
+          "protein": {
+            "$ref": "#/components/schemas/LibraryMacroData"
+          }
+        },
+        "required": [
+          "calories",
+          "protein",
+          "carbs",
+          "fat"
+        ],
+        "title": "LibraryNutritionData",
+        "type": "object"
+      },
+      "LibraryPageData": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryItemData"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "search": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Search"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "offset",
+          "limit"
+        ],
+        "title": "LibraryPageData",
+        "type": "object"
+      },
+      "LibraryPageEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/LibraryPageData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "LibraryPageEnvelope",
+        "type": "object"
+      },
+      "LibraryPanelData": {
+        "properties": {
+          "foods": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryFoodPanelItemData"
+            },
+            "title": "Foods",
+            "type": "array"
+          },
+          "kind": {
+            "enum": [
+              "none",
+              "foods",
+              "meals",
+              "weeks"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "meals": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryMealPanelItemData"
+            },
+            "title": "Meals",
+            "type": "array"
+          },
+          "weeks": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryWeekPanelItemData"
+            },
+            "title": "Weeks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "LibraryPanelData",
+        "type": "object"
+      },
+      "LibraryWeekDayData": {
+        "properties": {
+          "day_label": {
+            "title": "Day Label",
+            "type": "string"
+          },
+          "plan_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Name"
+          }
+        },
+        "required": [
+          "day_label"
+        ],
+        "title": "LibraryWeekDayData",
+        "type": "object"
+      },
+      "LibraryWeekPanelItemData": {
+        "properties": {
+          "calorie_distribution": {
+            "$ref": "#/components/schemas/LibraryCalorieDistributionData"
+          },
+          "calorie_share": {
+            "title": "Calorie Share",
+            "type": "number"
+          },
+          "calories": {
+            "title": "Calories",
+            "type": "number"
+          },
+          "carbs_allocation": {
+            "title": "Carbs Allocation",
+            "type": "number"
+          },
+          "carbs_grams": {
+            "title": "Carbs Grams",
+            "type": "number"
+          },
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryWeekDayData"
+            },
+            "title": "Days",
+            "type": "array"
+          },
+          "fat_allocation": {
+            "title": "Fat Allocation",
+            "type": "number"
+          },
+          "fat_grams": {
+            "title": "Fat Grams",
+            "type": "number"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "protein_allocation": {
+            "title": "Protein Allocation",
+            "type": "number"
+          },
+          "protein_grams": {
+            "title": "Protein Grams",
+            "type": "number"
+          },
+          "week_number": {
+            "title": "Week Number",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "week_number",
+          "days",
+          "calories",
+          "calorie_share",
+          "calorie_distribution",
+          "protein_grams",
+          "carbs_grams",
+          "fat_grams",
+          "protein_allocation",
+          "carbs_allocation",
+          "fat_allocation"
+        ],
+        "title": "LibraryWeekPanelItemData",
+        "type": "object"
+      },
       "MealCheckInInput": {
         "properties": {
           "action": {
@@ -1501,6 +3504,39 @@
         "title": "MeasurementSummaryData",
         "type": "object"
       },
+      "MobileActionData": {
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "requires_confirmation": {
+            "default": true,
+            "title": "Requires Confirmation",
+            "type": "boolean"
+          },
+          "tone": {
+            "default": "default",
+            "enum": [
+              "default",
+              "warning",
+              "danger"
+            ],
+            "title": "Tone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label"
+        ],
+        "title": "MobileActionData",
+        "type": "object"
+      },
       "OnboardingInput": {
         "properties": {
           "birth_date": {
@@ -1626,6 +3662,669 @@
           "data"
         ],
         "title": "ProfileEnvelope",
+        "type": "object"
+      },
+      "ProposalAppliedResultData": {
+        "properties": {
+          "kind": {
+            "anyOf": [
+              {
+                "enum": [
+                  "meal",
+                  "dailyplan"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "object_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Object Id"
+          },
+          "object_name": {
+            "default": "",
+            "title": "Object Name",
+            "type": "string"
+          }
+        },
+        "title": "ProposalAppliedResultData",
+        "type": "object"
+      },
+      "ProposalApplyInput": {
+        "properties": {
+          "acknowledge_external_subject": {
+            "default": false,
+            "title": "Acknowledge External Subject",
+            "type": "boolean"
+          }
+        },
+        "title": "ProposalApplyInput",
+        "type": "object"
+      },
+      "ProposalDailyPlanData": {
+        "properties": {
+          "kpis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProposalKpisData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meals": {
+            "items": {
+              "$ref": "#/components/schemas/ProposalDailyPlanMealData"
+            },
+            "title": "Meals",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "ProposalDailyPlanData",
+        "type": "object"
+      },
+      "ProposalDailyPlanMealData": {
+        "properties": {
+          "hour": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hour"
+          },
+          "meal": {
+            "$ref": "#/components/schemas/ProposalMealData"
+          },
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "meal"
+        ],
+        "title": "ProposalDailyPlanMealData",
+        "type": "object"
+      },
+      "ProposalDetailData": {
+        "properties": {
+          "actions": {
+            "items": {
+              "$ref": "#/components/schemas/MobileActionData"
+            },
+            "title": "Actions",
+            "type": "array"
+          },
+          "applied_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applied At"
+          },
+          "applied_result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProposalAppliedResultData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "attachment_kind": {
+            "enum": [
+              "meal",
+              "dailyplan",
+              "brief"
+            ],
+            "title": "Attachment Kind",
+            "type": "string"
+          },
+          "attachment_label": {
+            "title": "Attachment Label",
+            "type": "string"
+          },
+          "attachment_name": {
+            "title": "Attachment Name",
+            "type": "string"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "created_by_username": {
+            "title": "Created By Username",
+            "type": "string"
+          },
+          "current_facts": {
+            "items": {
+              "$ref": "#/components/schemas/ProposalFactData"
+            },
+            "title": "Current Facts",
+            "type": "array"
+          },
+          "dailyplan": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProposalDailyPlanData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "dailyplan_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dailyplan Id"
+          },
+          "dailyplan_name": {
+            "default": "",
+            "title": "Dailyplan Name",
+            "type": "string"
+          },
+          "entity_title": {
+            "title": "Entity Title",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "intent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intent"
+          },
+          "is_reviewable": {
+            "title": "Is Reviewable",
+            "type": "boolean"
+          },
+          "meal": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProposalMealData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reviewed_by_username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed By Username"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "pending_review",
+              "approved",
+              "rejected",
+              "cancelled",
+              "applied"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "status_label": {
+            "title": "Status Label",
+            "type": "string"
+          },
+          "subject_context_warning": {
+            "$ref": "#/components/schemas/ProposalSubjectWarningData"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "target_facts": {
+            "items": {
+              "$ref": "#/components/schemas/ProposalFactData"
+            },
+            "title": "Target Facts",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "validation_facts": {
+            "items": {
+              "$ref": "#/components/schemas/ProposalFactData"
+            },
+            "title": "Validation Facts",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "summary",
+          "status",
+          "status_label",
+          "source",
+          "attachment_kind",
+          "attachment_label",
+          "attachment_name",
+          "is_reviewable",
+          "created_by_username",
+          "entity_title",
+          "subject_context_warning"
+        ],
+        "title": "ProposalDetailData",
+        "type": "object"
+      },
+      "ProposalDetailEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ProposalDetailData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "ProposalDetailEnvelope",
+        "type": "object"
+      },
+      "ProposalFactData": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "value"
+        ],
+        "title": "ProposalFactData",
+        "type": "object"
+      },
+      "ProposalFoodData": {
+        "properties": {
+          "food_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Food Id"
+          },
+          "food_name": {
+            "title": "Food Name",
+            "type": "string"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity"
+          },
+          "unit": {
+            "default": "g",
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "food_name"
+        ],
+        "title": "ProposalFoodData",
+        "type": "object"
+      },
+      "ProposalKpisData": {
+        "properties": {
+          "carbs": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Carbs"
+          },
+          "fat": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fat"
+          },
+          "ppk": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ppk"
+          },
+          "protein": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Protein"
+          },
+          "total_kcal": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Kcal"
+          }
+        },
+        "title": "ProposalKpisData",
+        "type": "object"
+      },
+      "ProposalListData": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ProposalSummaryData"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "pending_count": {
+            "title": "Pending Count",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "offset",
+          "limit",
+          "pending_count"
+        ],
+        "title": "ProposalListData",
+        "type": "object"
+      },
+      "ProposalListEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ProposalListData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "ProposalListEnvelope",
+        "type": "object"
+      },
+      "ProposalMealData": {
+        "properties": {
+          "foods": {
+            "items": {
+              "$ref": "#/components/schemas/ProposalFoodData"
+            },
+            "title": "Foods",
+            "type": "array"
+          },
+          "kpis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProposalKpisData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "ProposalMealData",
+        "type": "object"
+      },
+      "ProposalSubjectWarningData": {
+        "properties": {
+          "calculation_weight_label": {
+            "title": "Calculation Weight Label",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "requires_warning": {
+            "title": "Requires Warning",
+            "type": "boolean"
+          },
+          "source_label": {
+            "title": "Source Label",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requires_warning",
+          "source_label",
+          "calculation_weight_label",
+          "title",
+          "message"
+        ],
+        "title": "ProposalSubjectWarningData",
+        "type": "object"
+      },
+      "ProposalSummaryData": {
+        "properties": {
+          "actions": {
+            "items": {
+              "$ref": "#/components/schemas/MobileActionData"
+            },
+            "title": "Actions",
+            "type": "array"
+          },
+          "attachment_kind": {
+            "enum": [
+              "meal",
+              "dailyplan",
+              "brief"
+            ],
+            "title": "Attachment Kind",
+            "type": "string"
+          },
+          "attachment_label": {
+            "title": "Attachment Label",
+            "type": "string"
+          },
+          "attachment_name": {
+            "title": "Attachment Name",
+            "type": "string"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "is_reviewable": {
+            "title": "Is Reviewable",
+            "type": "boolean"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "pending_review",
+              "approved",
+              "rejected",
+              "cancelled",
+              "applied"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "status_label": {
+            "title": "Status Label",
+            "type": "string"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "summary",
+          "status",
+          "status_label",
+          "source",
+          "attachment_kind",
+          "attachment_label",
+          "attachment_name",
+          "is_reviewable"
+        ],
+        "title": "ProposalSummaryData",
         "type": "object"
       },
       "ReminderEventData": {
@@ -1920,6 +4619,199 @@
           "data"
         ],
         "title": "RevokeSessionEnvelope",
+        "type": "object"
+      },
+      "SavedComparisonDetailData": {
+        "properties": {
+          "editable_selections": {
+            "items": {
+              "$ref": "#/components/schemas/ComparisonSelectionInput"
+            },
+            "title": "Editable Selections",
+            "type": "array"
+          },
+          "historical_snapshot": {
+            "default": false,
+            "title": "Historical Snapshot",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ComparisonResultItemData"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "kind": {
+            "enum": [
+              "foods",
+              "meals",
+              "dailyplans"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "kind_label": {
+            "title": "Kind Label",
+            "type": "string"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/ComparisonMetricData"
+            },
+            "title": "Metrics",
+            "type": "array"
+          },
+          "saved_comparison_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Saved Comparison Id"
+          },
+          "saved_comparison_name": {
+            "default": "",
+            "title": "Saved Comparison Name",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "kind_label",
+          "metrics",
+          "items",
+          "editable_selections",
+          "updated_at"
+        ],
+        "title": "SavedComparisonDetailData",
+        "type": "object"
+      },
+      "SavedComparisonDetailEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SavedComparisonDetailData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "SavedComparisonDetailEnvelope",
+        "type": "object"
+      },
+      "SavedComparisonListData": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SavedComparisonSummaryData"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "offset",
+          "limit"
+        ],
+        "title": "SavedComparisonListData",
+        "type": "object"
+      },
+      "SavedComparisonListEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SavedComparisonListData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "SavedComparisonListEnvelope",
+        "type": "object"
+      },
+      "SavedComparisonSummaryData": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "item_count": {
+            "title": "Item Count",
+            "type": "integer"
+          },
+          "kind": {
+            "enum": [
+              "foods",
+              "meals",
+              "dailyplans"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "kind_label": {
+            "title": "Kind Label",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "kind_label",
+          "item_count",
+          "updated_at"
+        ],
+        "title": "SavedComparisonSummaryData",
         "type": "object"
       },
       "SessionData": {
@@ -2479,6 +5371,135 @@
         "summary": "Accept Disclosures"
       }
     },
+    "/api/v1/ai/chats": {
+      "get": {
+        "operationId": "mobile_api_api_ai_chats",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIChatListEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Ai Chats"
+      }
+    },
+    "/api/v1/ai/chats/{chat_id}": {
+      "get": {
+        "operationId": "mobile_api_api_ai_chat_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "chat_id",
+            "required": true,
+            "schema": {
+              "title": "Chat Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIChatDetailEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Ai Chat Detail"
+      }
+    },
     "/api/v1/ai/jobs/{job_id}": {
       "get": {
         "operationId": "mobile_api_api_ai_job",
@@ -2563,6 +5584,134 @@
         "summary": "Ai Job"
       }
     },
+    "/api/v1/ai/prepared-actions/{action_id}/cancel": {
+      "post": {
+        "operationId": "mobile_api_api_cancel_ai_prepared_action",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "action_id",
+            "required": true,
+            "schema": {
+              "title": "Action Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIPreparedActionResultEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Cancel Ai Prepared Action"
+      }
+    },
+    "/api/v1/ai/prepared-actions/{action_id}/commit": {
+      "post": {
+        "operationId": "mobile_api_api_commit_ai_prepared_action",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "action_id",
+            "required": true,
+            "schema": {
+              "title": "Action Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIPreparedActionResultEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Commit Ai Prepared Action"
+      }
+    },
     "/api/v1/ai/turns": {
       "post": {
         "operationId": "mobile_api_api_submit_ai_turn",
@@ -2645,6 +5794,513 @@
           }
         ],
         "summary": "Submit Ai Turn"
+      }
+    },
+    "/api/v1/comparisons/compare": {
+      "post": {
+        "operationId": "mobile_api_api_compare_entities",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComparisonRequestInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComparisonResultEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Compare Entities"
+      }
+    },
+    "/api/v1/comparisons/metadata": {
+      "get": {
+        "operationId": "mobile_api_api_comparison_metadata",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComparisonMetadataEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Comparison Metadata"
+      }
+    },
+    "/api/v1/comparisons/options/{kind}": {
+      "get": {
+        "operationId": "mobile_api_api_comparison_options",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "title": "Kind",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComparisonOptionsEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Comparison Options"
+      }
+    },
+    "/api/v1/comparisons/saved": {
+      "get": {
+        "operationId": "mobile_api_api_saved_comparisons",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedComparisonListEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Saved Comparisons"
+      },
+      "post": {
+        "operationId": "mobile_api_api_create_mobile_saved_comparison",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComparisonRequestInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedComparisonDetailEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Create Mobile Saved Comparison"
+      }
+    },
+    "/api/v1/comparisons/saved/{comparison_id}": {
+      "get": {
+        "operationId": "mobile_api_api_saved_comparison_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "comparison_id",
+            "required": true,
+            "schema": {
+              "title": "Comparison Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedComparisonDetailEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Saved Comparison Detail"
+      },
+      "put": {
+        "operationId": "mobile_api_api_update_mobile_saved_comparison",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "comparison_id",
+            "required": true,
+            "schema": {
+              "title": "Comparison Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComparisonRequestInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedComparisonDetailEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Update Mobile Saved Comparison"
       }
     },
     "/api/v1/days/{day_id}/meals/{meal_snapshot_key}/check-ins": {
@@ -2948,6 +6604,403 @@
         "summary": "Health"
       }
     },
+    "/api/v1/library/daily-plans": {
+      "get": {
+        "operationId": "mobile_api_api_library_dailyplans",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryPageEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Library Dailyplans"
+      }
+    },
+    "/api/v1/library/foods": {
+      "get": {
+        "operationId": "mobile_api_api_library_foods",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryPageEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Library Foods"
+      }
+    },
+    "/api/v1/library/meals": {
+      "get": {
+        "operationId": "mobile_api_api_library_meals",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryPageEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Library Meals"
+      }
+    },
+    "/api/v1/library/programs": {
+      "get": {
+        "operationId": "mobile_api_api_library_programs",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryPageEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Library Programs"
+      }
+    },
+    "/api/v1/library/{entity}/{item_id}": {
+      "get": {
+        "operationId": "mobile_api_api_library_item_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "entity",
+            "required": true,
+            "schema": {
+              "title": "Entity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "title": "Item Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryItemEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Library Item Detail"
+      }
+    },
     "/api/v1/me": {
       "get": {
         "operationId": "mobile_api_api_me",
@@ -3206,6 +7259,421 @@
           }
         ],
         "summary": "Update Active Program Reminders"
+      }
+    },
+    "/api/v1/program/calendarizations": {
+      "post": {
+        "operationId": "mobile_api_api_activate_calendarization",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalendarizationActivationInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarizationActivationEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Activate Calendarization"
+      }
+    },
+    "/api/v1/program/calendarizations/history": {
+      "get": {
+        "operationId": "mobile_api_api_calendarization_history",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarizationHistoryEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Calendarization History"
+      }
+    },
+    "/api/v1/program/calendarizations/{calendarization_id}/cancel": {
+      "post": {
+        "operationId": "mobile_api_api_cancel_active_calendarization",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "calendarization_id",
+            "required": true,
+            "schema": {
+              "title": "Calendarization Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActiveProgramEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Cancel Active Calendarization"
+      }
+    },
+    "/api/v1/program/calendarizations/{calendarization_id}/pause": {
+      "post": {
+        "operationId": "mobile_api_api_pause_active_calendarization",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "calendarization_id",
+            "required": true,
+            "schema": {
+              "title": "Calendarization Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActiveProgramEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Pause Active Calendarization"
+      }
+    },
+    "/api/v1/program/calendarizations/{calendarization_id}/resume": {
+      "post": {
+        "operationId": "mobile_api_api_resume_active_calendarization",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "calendarization_id",
+            "required": true,
+            "schema": {
+              "title": "Calendarization Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActiveProgramEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Resume Active Calendarization"
+      }
+    },
+    "/api/v1/program/days/{day_id}": {
+      "get": {
+        "operationId": "mobile_api_api_calendarized_day_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "day_id",
+            "required": true,
+            "schema": {
+              "title": "Day Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarizedDayDetailEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Calendarized Day Detail"
       }
     },
     "/api/v1/program/reviews": {
@@ -3472,6 +7940,457 @@
           }
         ],
         "summary": "Decide Program Revision"
+      }
+    },
+    "/api/v1/proposals": {
+      "get": {
+        "operationId": "mobile_api_api_proposals",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalListEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Proposals"
+      }
+    },
+    "/api/v1/proposals/{proposal_id}": {
+      "get": {
+        "operationId": "mobile_api_api_proposal_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "title": "Proposal Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalDetailEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Proposal Detail"
+      }
+    },
+    "/api/v1/proposals/{proposal_id}/apply": {
+      "post": {
+        "operationId": "mobile_api_api_apply_mobile_proposal",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "title": "Proposal Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposalApplyInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalDetailEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Apply Mobile Proposal"
+      }
+    },
+    "/api/v1/proposals/{proposal_id}/approve": {
+      "post": {
+        "operationId": "mobile_api_api_approve_mobile_proposal",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "title": "Proposal Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalDetailEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Approve Mobile Proposal"
+      }
+    },
+    "/api/v1/proposals/{proposal_id}/cancel": {
+      "post": {
+        "operationId": "mobile_api_api_cancel_mobile_proposal",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "title": "Proposal Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalDetailEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Cancel Mobile Proposal"
+      }
+    },
+    "/api/v1/proposals/{proposal_id}/reject": {
+      "post": {
+        "operationId": "mobile_api_api_reject_mobile_proposal",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposal_id",
+            "required": true,
+            "schema": {
+              "title": "Proposal Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalDetailEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Reject Mobile Proposal"
       }
     },
     "/api/v1/session": {

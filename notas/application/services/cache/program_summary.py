@@ -8,6 +8,7 @@ from django.utils import timezone
 
 from notas.application.services.food_imports.localized_names import resolve_food_display_name
 from notas.domain.models import DailyPlan, MealFood, Program, ProgramDay
+from notas.domain.services.nutrition import macro_kcal_distribution
 
 DAY_LABELS = (
     (1, "Lun"),
@@ -19,7 +20,7 @@ DAY_LABELS = (
     (7, "Dom"),
 )
 
-PROGRAM_SUMMARY_CACHE_VERSION = 1
+PROGRAM_SUMMARY_CACHE_VERSION = 2
 
 
 def _dailyplan_meals_for(dailyplan: DailyPlan):
@@ -156,6 +157,11 @@ def _food_row(food, display_name, total_grams, program_totals):
             "name": display_name,
             "total_kcal": total_kcal,
             "kcal_share": _safe_percentage(total_kcal, program_totals.get("total_kcal", 0)),
+            "kcal_distribution": macro_kcal_distribution(
+                kcal_protein,
+                kcal_carbs,
+                kcal_fat,
+            ),
             "g_protein": g_protein,
             "g_carbs": g_carbs,
             "g_fat": g_fat,

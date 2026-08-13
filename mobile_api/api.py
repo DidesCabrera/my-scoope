@@ -9,48 +9,76 @@ from accounts.forms import AccountDeletionForm, NutritionOnboardingForm
 from accounts.services.deletion import delete_user_account
 from accounts.services.mobile_disclosures import accept_current_mobile_disclosure
 from accounts.services.onboarding import complete_nutrition_onboarding
+from ai_assistant.application.async_jobs import AsyncJobContractError, async_jobs_enabled
+from ai_assistant.models import AIAsyncJob
 from billing.application.services.apple_app_store import AppleEvidenceError, sync_apple_transaction
 from billing.infrastructure.gateways import build_apple_app_store_gateway
 from billing.infrastructure.providers.apple_app_store import (
     AppleAppStoreConfigurationError,
     InvalidAppleSignedData,
 )
-from ai_assistant.application.async_jobs import AsyncJobContractError, async_jobs_enabled
-from ai_assistant.models import AIAsyncJob
 from core.rate_limits import is_ai_assistant_turn_rate_limited
+from mobile_api.ai_chats import chat_detail_payload, chat_list_payload, completed_turn_payload, pending_turn_job
 from mobile_api.auth import mobile_bearer
+from mobile_api.comparisons import (
+    comparison_metadata_payload,
+    comparison_options_payload,
+    dynamic_comparison_payload,
+    save_comparison,
+    saved_comparison_detail_payload,
+    saved_comparison_list_payload,
+    update_comparison,
+)
 from mobile_api.errors import MobileAPIError, error_envelope
 from mobile_api.schemas import (
     AccountDeletionEnvelope,
     AccountDeletionInput,
-    DisclosureAcceptanceInput,
     ActiveProgramEnvelope,
+    AIChatDetailEnvelope,
+    AIChatListEnvelope,
     AIJobAcceptedEnvelope,
     AIJobResultEnvelope,
+    AIPreparedActionResultEnvelope,
     AITurnInput,
+    ApplePushRegistrationEnvelope,
+    ApplePushRegistrationInput,
+    AppleTransactionInput,
+    CalendarizationActivationEnvelope,
+    CalendarizationActivationInput,
+    CalendarizationHistoryEnvelope,
     CalendarizationReviewEnvelope,
     CalendarizationReviewInput,
     CalendarizationReviewListEnvelope,
+    CalendarizedDayDetailEnvelope,
+    ComparisonMetadataEnvelope,
+    ComparisonOptionsEnvelope,
+    ComparisonRequestInput,
+    ComparisonResultEnvelope,
+    DisclosureAcceptanceInput,
     EntitlementsEnvelope,
-    AppleTransactionInput,
-    ApplePushRegistrationEnvelope,
-    ApplePushRegistrationInput,
     ErrorEnvelope,
-    FoodPageEnvelope,
     FoodLabelCaptureEnvelope,
     FoodLabelCaptureInput,
+    FoodPageEnvelope,
     HealthEnvelope,
+    LibraryItemEnvelope,
+    LibraryPageEnvelope,
+    MealCheckInInput,
     OnboardingInput,
     ProfileEnvelope,
-    RevokeSessionEnvelope,
+    ProposalApplyInput,
+    ProposalDetailEnvelope,
+    ProposalListEnvelope,
     ReminderSettingsEnvelope,
     ReminderSettingsInput,
     RevisionDecisionInput,
     RevisionEnvelope,
     RevisionListEnvelope,
+    RevokeSessionEnvelope,
+    SavedComparisonDetailEnvelope,
+    SavedComparisonListEnvelope,
     SessionEnvelope,
     SubscriptionEnvelope,
-    MealCheckInInput,
     TodayEnvelope,
     WeightCreateInput,
     WeightEnvelope,
@@ -58,9 +86,18 @@ from mobile_api.schemas import (
 )
 from mobile_api.selectors import (
     active_program_payload,
+    calendarization_history_payload,
+    calendarized_day_payload,
     entitlements_payload,
     food_label_capture_payload,
+    library_dailyplans_payload,
+    library_foods_payload,
+    library_item_detail_payload,
+    library_meals_payload,
+    library_programs_payload,
     profile_payload,
+    proposal_detail_payload,
+    proposal_list_payload,
     reminder_settings_payload,
     review_payload,
     revision_payload,
@@ -69,20 +106,42 @@ from mobile_api.selectors import (
     today_payload,
 )
 from notas.application.ai_intake.async_turns import enqueue_nutrition_intake_turn
+from notas.application.ai_tools.prepared_actions import cancel_prepared_action, commit_prepared_action
+from notas.application.proposals.contracts import (
+    CREATE_DAILYPLAN_INTENT,
+    CREATE_MEAL_INTENT,
+    resolve_proposal_intent,
+)
+from notas.application.proposals.subject_context_warnings import (
+    proposal_requires_external_subject_ack,
+)
 from notas.application.queries.food_picker_queries import list_food_picker_page
+from notas.application.queries.proposal_queries import get_available_proposal_queryset
+from notas.application.services.access.capabilities import get_capabilities
 from notas.application.services.commands.calendarization_commands import (
+    activate_program_calendarization,
+    calendarization_empty_dates,
+    cancel_calendarization,
+    pause_calendarization,
     register_apple_push_subscription,
+    resume_calendarization,
     update_calendarization_preferences,
 )
-from notas.application.services.notifications.apple_push import apns_is_configured
 from notas.application.services.commands.calendarization_execution_commands import (
     create_calendarization_review,
     decide_calendarization_revision,
     record_calendarized_weight,
     record_meal_execution,
 )
-from notas.application.services.access.capabilities import get_capabilities
 from notas.application.services.commands.food_commands import create_food_from_label_capture
+from notas.application.services.commands.proposal_commands import (
+    apply_approved_create_dailyplan_proposal,
+    apply_approved_create_meal_proposal,
+    approve_proposal,
+    cancel_proposal,
+    reject_proposal,
+)
+from notas.application.services.notifications.apple_push import apns_is_configured
 from notas.application.services.oauth_device_sessions import (
     MOBILE_SCOPE_ACCOUNT,
     MOBILE_SCOPE_WRITE,
@@ -92,7 +151,9 @@ from notas.domain.models import (
     AiNutritionChat,
     CalendarizationReview,
     CalendarizationRevision,
+    Program,
     ProgramCalendarization,
+    SavedComparison,
     WeightLog,
 )
 
@@ -160,11 +221,18 @@ def _calendarization_error(exc: ValueError) -> MobileAPIError:
         "calendarized_day_not_found",
         "calendarization_revision_not_found",
         "calendarization_review_not_found",
+        "calendarization_program_not_owned",
     }
     conflicts = {
         "calendarization_idempotency_conflict",
         "calendarization_revision_already_decided",
         "calendarization_revision_no_longer_eligible",
+        "calendarization_incomplete_confirmation_required",
+        "calendarization_replacement_confirmation_required",
+        "calendarization_current_conflict",
+        "calendarization_cannot_pause",
+        "calendarization_cannot_resume",
+        "calendarization_cannot_cancel",
     }
     return MobileAPIError(
         code=code,
@@ -179,6 +247,40 @@ def _food_label_error(exc: ValueError) -> MobileAPIError:
         code=code,
         message="The confirmed nutrition label could not be saved.",
         status_code=409 if code == "food_label_idempotency_conflict" else 422,
+    )
+
+
+def _proposal_error(exc: ValueError) -> MobileAPIError:
+    code = str(exc)
+    not_found = {
+        "proposal_not_found",
+        "proposal_review_not_allowed",
+        "proposal_cancel_not_allowed",
+    }
+    conflicts = {
+        "proposal_is_not_pending_review",
+        "proposal_is_not_applicable",
+        "proposal_apply_requires_applicable_status",
+        "proposal_already_applied",
+        "proposal_is_final",
+        "proposal_external_subject_ack_required",
+        "proposal_apply_not_supported",
+    }
+    return MobileAPIError(
+        code=code,
+        message="No pudimos completar la operación de la propuesta.",
+        status_code=404 if code in not_found else 409 if code in conflicts else 422,
+    )
+
+
+def _comparison_error(exc: ValueError) -> MobileAPIError:
+    code = str(exc)
+    not_found = {"comparison_item_not_available", "saved_comparison_not_found"}
+    conflicts = {"saved_comparison_kind_mismatch"}
+    return MobileAPIError(
+        code=code,
+        message="No pudimos completar la comparación.",
+        status_code=404 if code in not_found else 409 if code in conflicts else 422,
     )
 
 
@@ -314,6 +416,330 @@ def apple_transaction(request, payload: AppleTransactionInput):
 )
 def active_program(request):
     return _success(active_program_payload(request.auth.user))
+
+
+@api.post(
+    "/program/calendarizations",
+    auth=mobile_bearer,
+    response={200: CalendarizationActivationEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def activate_calendarization(request, payload: CalendarizationActivationInput):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    program = Program.objects.filter(pk=payload.program_id, created_by=request.auth.user).first()
+    if program is None:
+        raise _calendarization_error(ValueError("calendarization_program_not_owned"))
+    try:
+        result = activate_program_calendarization(
+            user=request.auth.user,
+            program=program,
+            start_date=payload.start_date,
+            timezone_name=payload.timezone_name,
+            daily_notification_time=payload.daily_notification_time,
+            daily_notifications_enabled=payload.daily_notifications_enabled,
+            meal_notifications_enabled=payload.meal_notifications_enabled,
+            confirm_incomplete=payload.confirm_incomplete,
+            replace_current=payload.replace_current,
+        )
+    except ValueError as exc:
+        error = _calendarization_error(exc)
+        if str(exc) == "calendarization_incomplete_confirmation_required":
+            empty_dates = calendarization_empty_dates(program=program, start_date=payload.start_date)
+            error = MobileAPIError(
+                code=error.code,
+                message=error.message,
+                status_code=error.status_code,
+                details={
+                    "empty_count": len(empty_dates),
+                    "empty_dates": [value.isoformat() for value in empty_dates],
+                },
+            )
+        elif str(exc) == "calendarization_replacement_confirmation_required":
+            current = ProgramCalendarization.objects.filter(
+                user=request.auth.user,
+                status__in=ProgramCalendarization.CURRENT_STATUSES,
+            ).first()
+            error = MobileAPIError(
+                code=error.code,
+                message=error.message,
+                status_code=error.status_code,
+                details={
+                    "current_calendarization_id": current.id if current else None,
+                    "current_program_name": current.program_name_snapshot if current else "",
+                },
+            )
+        raise error from exc
+    response = active_program_payload(request.auth.user)
+    response.update(
+        {
+            "empty_dates": list(result.empty_dates),
+            "replaced_calendarization_id": result.replaced_calendarization_id,
+        }
+    )
+    return _success(response)
+
+
+@api.get(
+    "/program/calendarizations/history",
+    auth=mobile_bearer,
+    response={200: CalendarizationHistoryEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope},
+)
+def calendarization_history(request, limit: int = 20):
+    return _success(calendarization_history_payload(request.auth.user, limit=limit))
+
+
+@api.get(
+    "/program/days/{day_id}",
+    auth=mobile_bearer,
+    response={200: CalendarizedDayDetailEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope},
+)
+def calendarized_day_detail(request, day_id: int):
+    day = calendarized_day_payload(request.auth.user, day_id)
+    if day is None:
+        raise _calendarization_error(ValueError("calendarized_day_not_found"))
+    return _success(day)
+
+
+def _calendarization_state_action(request, calendarization_id: int, command):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    try:
+        command(user=request.auth.user, calendarization_id=calendarization_id)
+    except ValueError as exc:
+        raise _calendarization_error(exc) from exc
+    return _success(active_program_payload(request.auth.user))
+
+
+@api.post(
+    "/program/calendarizations/{calendarization_id}/pause",
+    auth=mobile_bearer,
+    response={200: ActiveProgramEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def pause_active_calendarization(request, calendarization_id: int):
+    return _calendarization_state_action(request, calendarization_id, pause_calendarization)
+
+
+@api.post(
+    "/program/calendarizations/{calendarization_id}/resume",
+    auth=mobile_bearer,
+    response={200: ActiveProgramEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def resume_active_calendarization(request, calendarization_id: int):
+    return _calendarization_state_action(request, calendarization_id, resume_calendarization)
+
+
+@api.post(
+    "/program/calendarizations/{calendarization_id}/cancel",
+    auth=mobile_bearer,
+    response={200: ActiveProgramEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def cancel_active_calendarization(request, calendarization_id: int):
+    return _calendarization_state_action(request, calendarization_id, cancel_calendarization)
+
+
+def _owned_proposal(user, proposal_id: int):
+    proposal = get_available_proposal_queryset(user).filter(pk=proposal_id).first()
+    if proposal is None:
+        raise _proposal_error(ValueError("proposal_not_found"))
+    return proposal
+
+
+@api.get(
+    "/proposals",
+    auth=mobile_bearer,
+    response={200: ProposalListEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope},
+)
+def proposals(request, status: str | None = None, offset: int = 0, limit: int = 30):
+    return _success(proposal_list_payload(request.auth.user, status_filter=status, offset=offset, limit=limit))
+
+
+@api.get(
+    "/proposals/{proposal_id}",
+    auth=mobile_bearer,
+    response={200: ProposalDetailEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope},
+)
+def proposal_detail(request, proposal_id: int):
+    payload = proposal_detail_payload(request.auth.user, proposal_id)
+    if payload is None:
+        raise _proposal_error(ValueError("proposal_not_found"))
+    return _success(payload)
+
+
+def _proposal_state_action(request, proposal_id: int, command):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    proposal = _owned_proposal(request.auth.user, proposal_id)
+    try:
+        command(user=request.auth.user, proposal=proposal)
+    except ValueError as exc:
+        raise _proposal_error(exc) from exc
+    return _success(proposal_detail_payload(request.auth.user, proposal_id))
+
+
+@api.post(
+    "/proposals/{proposal_id}/approve",
+    auth=mobile_bearer,
+    response={200: ProposalDetailEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def approve_mobile_proposal(request, proposal_id: int):
+    return _proposal_state_action(request, proposal_id, approve_proposal)
+
+
+@api.post(
+    "/proposals/{proposal_id}/reject",
+    auth=mobile_bearer,
+    response={200: ProposalDetailEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def reject_mobile_proposal(request, proposal_id: int):
+    return _proposal_state_action(request, proposal_id, reject_proposal)
+
+
+@api.post(
+    "/proposals/{proposal_id}/cancel",
+    auth=mobile_bearer,
+    response={200: ProposalDetailEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def cancel_mobile_proposal(request, proposal_id: int):
+    return _proposal_state_action(request, proposal_id, cancel_proposal)
+
+
+@api.post(
+    "/proposals/{proposal_id}/apply",
+    auth=mobile_bearer,
+    response={200: ProposalDetailEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def apply_mobile_proposal(request, proposal_id: int, payload: ProposalApplyInput):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    proposal = _owned_proposal(request.auth.user, proposal_id)
+    if proposal_requires_external_subject_ack(proposal) and not payload.acknowledge_external_subject:
+        raise _proposal_error(ValueError("proposal_external_subject_ack_required"))
+    intent = resolve_proposal_intent(proposal.proposed_payload)
+    try:
+        if intent == CREATE_MEAL_INTENT:
+            apply_approved_create_meal_proposal(user=request.auth.user, proposal=proposal)
+        elif intent == CREATE_DAILYPLAN_INTENT:
+            apply_approved_create_dailyplan_proposal(user=request.auth.user, proposal=proposal)
+        else:
+            raise ValueError("proposal_apply_not_supported")
+    except ValueError as exc:
+        raise _proposal_error(exc) from exc
+    return _success(proposal_detail_payload(request.auth.user, proposal_id))
+
+
+@api.get(
+    "/comparisons/metadata",
+    auth=mobile_bearer,
+    response={200: ComparisonMetadataEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope},
+)
+def comparison_metadata(request):
+    return _success(comparison_metadata_payload())
+
+
+@api.get(
+    "/comparisons/options/{kind}",
+    auth=mobile_bearer,
+    response={200: ComparisonOptionsEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def comparison_options(request, kind: str, search: str | None = None, offset: int = 0, limit: int = 30):
+    try:
+        payload = comparison_options_payload(
+            request.auth.user,
+            kind=kind,
+            search=search,
+            offset=offset,
+            limit=limit,
+        )
+    except ValueError as exc:
+        raise _comparison_error(exc) from exc
+    return _success(payload)
+
+
+def _comparison_selections(payload: ComparisonRequestInput) -> list[dict]:
+    return [
+        {"id": selection.id, "quantity": selection.quantity}
+        for selection in payload.selections
+    ]
+
+
+@api.post(
+    "/comparisons/compare",
+    auth=mobile_bearer,
+    response={200: ComparisonResultEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def compare_entities(request, payload: ComparisonRequestInput):
+    try:
+        result = dynamic_comparison_payload(
+            request.auth.user,
+            kind=payload.kind,
+            selections=_comparison_selections(payload),
+        )
+    except ValueError as exc:
+        raise _comparison_error(exc) from exc
+    return _success(result)
+
+
+@api.get(
+    "/comparisons/saved",
+    auth=mobile_bearer,
+    response={200: SavedComparisonListEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def saved_comparisons(request, kind: str | None = None, offset: int = 0, limit: int = 30):
+    try:
+        payload = saved_comparison_list_payload(
+            request.auth.user,
+            kind=kind,
+            offset=offset,
+            limit=limit,
+        )
+    except ValueError as exc:
+        raise _comparison_error(exc) from exc
+    return _success(payload)
+
+
+@api.post(
+    "/comparisons/saved",
+    auth=mobile_bearer,
+    response={200: SavedComparisonDetailEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def create_mobile_saved_comparison(request, payload: ComparisonRequestInput):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    try:
+        comparison = save_comparison(
+            request.auth.user,
+            kind=payload.kind,
+            selections=_comparison_selections(payload),
+        )
+    except ValueError as exc:
+        raise _comparison_error(exc) from exc
+    return _success(saved_comparison_detail_payload(request.auth.user, comparison.id))
+
+
+@api.get(
+    "/comparisons/saved/{comparison_id}",
+    auth=mobile_bearer,
+    response={200: SavedComparisonDetailEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope},
+)
+def saved_comparison_detail(request, comparison_id: int):
+    payload = saved_comparison_detail_payload(request.auth.user, comparison_id)
+    if payload is None:
+        raise _comparison_error(ValueError("saved_comparison_not_found"))
+    return _success(payload)
+
+
+@api.put(
+    "/comparisons/saved/{comparison_id}",
+    auth=mobile_bearer,
+    response={200: SavedComparisonDetailEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def update_mobile_saved_comparison(request, comparison_id: int, payload: ComparisonRequestInput):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    try:
+        comparison = update_comparison(
+            request.auth.user,
+            comparison_id=comparison_id,
+            kind=payload.kind,
+            selections=_comparison_selections(payload),
+        )
+    except ValueError as exc:
+        raise _comparison_error(exc) from exc
+    return _success(saved_comparison_detail_payload(request.auth.user, comparison.id))
 
 
 @api.get("/today", auth=mobile_bearer, response={200: TodayEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope})
@@ -588,6 +1014,33 @@ def foods(request, search: str | None = None, offset: int = 0, limit: int = 30):
     )
 
 
+@api.get("/library/programs", auth=mobile_bearer, response={200: LibraryPageEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope})
+def library_programs(request, search: str | None = None, offset: int = 0, limit: int = 30):
+    return _success(library_programs_payload(request.auth.user, search=search, offset=offset, limit=limit))
+
+
+@api.get("/library/daily-plans", auth=mobile_bearer, response={200: LibraryPageEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope})
+def library_dailyplans(request, search: str | None = None, offset: int = 0, limit: int = 30):
+    return _success(library_dailyplans_payload(request.auth.user, search=search, offset=offset, limit=limit))
+
+
+@api.get("/library/meals", auth=mobile_bearer, response={200: LibraryPageEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope})
+def library_meals(request, search: str | None = None, offset: int = 0, limit: int = 30):
+    return _success(library_meals_payload(request.auth.user, search=search, offset=offset, limit=limit))
+
+
+@api.get("/library/foods", auth=mobile_bearer, response={200: LibraryPageEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope})
+def library_foods(request, search: str | None = None, offset: int = 0, limit: int = 30):
+    return _success(library_foods_payload(request.auth.user, search=search, offset=offset, limit=limit))
+
+
+@api.get("/library/{entity}/{item_id}", auth=mobile_bearer, response={200: LibraryItemEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope})
+def library_item_detail(request, entity: str, item_id: int):
+    if entity not in {"programs", "daily-plans", "meals", "foods"}:
+        raise MobileAPIError(code="library_item_not_found", message="The requested library item was not found.", status_code=404)
+    return _success(library_item_detail_payload(request.auth.user, entity, item_id))
+
+
 @api.post(
     "/foods/label-captures",
     auth=mobile_bearer,
@@ -655,6 +1108,43 @@ def submit_ai_turn(request, payload: AITurnInput):
                 message="AI chat was not found.",
                 status_code=422,
             )
+    product_context = {}
+    if payload.comparison_id is not None:
+        comparison = SavedComparison.objects.filter(pk=payload.comparison_id, owner=request.auth.user).first()
+        if comparison is None:
+            raise MobileAPIError(
+                code="saved_comparison_not_found",
+                message="The saved comparison was not found.",
+                status_code=422,
+            )
+        snapshot = comparison.snapshot_payload if isinstance(comparison.snapshot_payload, list) else []
+        product_context = {
+            "saved_comparison_card": {
+                "type": "saved_comparison_card",
+                "comparison_id": comparison.id,
+                "title": comparison.name,
+                "kind": comparison.kind,
+                "item_count": len(snapshot),
+            },
+            "saved_comparison": {
+                "id": comparison.id,
+                "title": comparison.name,
+                "kind": comparison.kind,
+                "items": [
+                    str(row.get("name") or "")[:120]
+                    for row in snapshot[:8]
+                    if isinstance(row, dict)
+                ],
+            },
+        }
+    pending_job = pending_turn_job(request.auth.user, chat_id=chat.id if chat else None)
+    if pending_job is not None and pending_job.idempotency_key != payload.idempotency_key:
+        raise MobileAPIError(
+            code="assistant_turn_pending",
+            message="A turn is already being processed for this conversation.",
+            status_code=409,
+            details={"job_id": str(pending_job.public_id)},
+        )
     try:
         job, _created = enqueue_nutrition_intake_turn(
             user=request.auth.user,
@@ -662,6 +1152,7 @@ def submit_ai_turn(request, payload: AITurnInput):
             existing_payload=chat.conversation_payload if chat else None,
             existing_chat_id=chat.id if chat else None,
             idempotency_key=payload.idempotency_key,
+            product_context=product_context,
         )
     except AsyncJobContractError as exc:
         status_code = 409 if exc.code == "idempotency_conflict" else 422
@@ -677,6 +1168,53 @@ def submit_ai_turn(request, payload: AITurnInput):
             "retry_after_ms": 750,
         }
     )
+
+
+@api.get(
+    "/ai/chats",
+    auth=mobile_bearer,
+    response={200: AIChatListEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope},
+)
+def ai_chats(request, offset: int = 0, limit: int = 30):
+    return _success(chat_list_payload(request.auth.user, offset=offset, limit=limit))
+
+
+@api.get(
+    "/ai/chats/{chat_id}",
+    auth=mobile_bearer,
+    response={200: AIChatDetailEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope},
+)
+def ai_chat_detail(request, chat_id: int):
+    payload = chat_detail_payload(request.auth.user, chat_id)
+    if payload is None:
+        raise MobileAPIError(code="ai_chat_not_found", message="AI chat was not found.", status_code=404)
+    return _success(payload)
+
+
+def _prepared_action_error(exc: ValueError) -> MobileAPIError:
+    code = str(exc)
+    status = 404 if code == "prepared_action_not_found" else 409
+    return MobileAPIError(code=code, message="The prepared action is no longer available.", status_code=status)
+
+
+@api.post("/ai/prepared-actions/{action_id}/commit", auth=mobile_bearer, response={200: AIPreparedActionResultEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope})
+def commit_ai_prepared_action(request, action_id: str):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    try:
+        action = commit_prepared_action(user=request.auth.user, public_id=action_id)
+    except ValueError as exc:
+        raise _prepared_action_error(exc) from exc
+    return _success({"action_id": str(action.public_id), "status": action.status, "refresh_chat": True})
+
+
+@api.post("/ai/prepared-actions/{action_id}/cancel", auth=mobile_bearer, response={200: AIPreparedActionResultEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope})
+def cancel_ai_prepared_action(request, action_id: str):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    try:
+        action = cancel_prepared_action(user=request.auth.user, public_id=action_id)
+    except ValueError as exc:
+        raise _prepared_action_error(exc) from exc
+    return _success({"action_id": str(action.public_id), "status": action.status, "refresh_chat": True})
 
 
 @api.get(
@@ -701,12 +1239,20 @@ def ai_job(request, job_id: str):
             details={"status": job.status, "retryable": False},
         )
     if job.status == AIAsyncJob.Status.SUCCEEDED:
+        try:
+            result = completed_turn_payload(job)
+        except ValueError as exc:
+            raise MobileAPIError(
+                code="assistant_turn_result_invalid",
+                message="The assistant turn completed without a valid conversation.",
+                status_code=422,
+            ) from exc
         return _success(
             {
                 "job_id": str(job.public_id),
                 "status": job.status,
                 "retry_after_ms": None,
-                "result": dict(job.result_payload or {}),
+                "result": result,
             }
         )
     return 202, _success(

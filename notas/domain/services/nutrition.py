@@ -21,6 +21,28 @@ def macro_kcal_breakdown(protein: float, carbs: float, fat: float) -> dict:
     }
 
 
+def macro_kcal_distribution(
+    kcal_protein: float,
+    kcal_carbs: float,
+    kcal_fat: float,
+) -> dict:
+    """Return the intrinsic P/C/F distribution of an entity's macro calories."""
+    total_kcal = kcal_protein + kcal_carbs + kcal_fat
+
+    if total_kcal <= 0:
+        return {
+            "protein": 0.0,
+            "carbs": 0.0,
+            "fat": 0.0,
+        }
+
+    return {
+        "protein": kcal_protein / total_kcal * 100,
+        "carbs": kcal_carbs / total_kcal * 100,
+        "fat": kcal_fat / total_kcal * 100,
+    }
+
+
 def macro_allocation(protein: float, carbs: float, fat: float) -> dict:
     total = protein + carbs + fat
 

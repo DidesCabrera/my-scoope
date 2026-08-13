@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { SessionProvider, useSession } from "@/auth/session-context";
+import { AppNavigationHeader, AppNavigationProvider } from "@/components/navigation/app-navigation";
 import { tokens } from "@/design/tokens";
 import "@/observability/sentry";
 
@@ -41,14 +42,17 @@ function RootLayout() {
   return (
     <SafeAreaProvider>
       <SessionProvider>
-        <AuthenticatedRouteGate />
-        <Stack
-          screenOptions={{
-            animation: "slide_from_right",
-            contentStyle: { backgroundColor: tokens.color.surfaceApp },
-            headerShown: false,
-          }}
-        />
+        <AppNavigationProvider>
+          <AuthenticatedRouteGate />
+          <Stack
+            screenOptions={{
+              animation: "slide_from_right",
+              contentStyle: { backgroundColor: tokens.color.surfaceApp },
+              header: () => <AppNavigationHeader />,
+              headerShown: true,
+            }}
+          />
+        </AppNavigationProvider>
         <StatusBar style="light" />
       </SessionProvider>
     </SafeAreaProvider>

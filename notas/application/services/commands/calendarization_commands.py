@@ -59,6 +59,18 @@ class NotificationDispatchResult:
     deliveries_failed: int = 0
 
 
+def calendarization_empty_dates(*, program: Program, start_date: date) -> tuple[date, ...]:
+    slots = {
+        (program_day.week_number, program_day.day_number)
+        for program_day in program.program_dailyplan.all()
+    }
+    return tuple(
+        start_date + timedelta(days=offset)
+        for offset in range(program.duration_days)
+        if ((offset // 7) + 1, (offset % 7) + 1) not in slots
+    )
+
+
 def _initial_status(*, start_date: date, timezone_name: str, now: datetime) -> str:
     today = local_date_for_timezone(timezone_name, now=now)
     if start_date <= today:
@@ -228,15 +240,11 @@ def activate_program_calendarization(
         raise ValueError("calendarization_start_date_past")
 
     program = program_with_calendarization_content(program.id)
-    slots = {
+    program_days_by_slot = {
         (program_day.week_number, program_day.day_number): program_day
         for program_day in program.program_dailyplan.all()
     }
-    empty_dates = tuple(
-        start_date + timedelta(days=offset)
-        for offset in range(program.duration_days)
-        if ((offset // 7) + 1, (offset % 7) + 1) not in slots
-    )
+    empty_dates = calendarization_empty_dates(program=program, start_date=start_date)
     if empty_dates and not confirm_incomplete:
         raise ValueError("calendarization_incomplete_confirmation_required")
 
@@ -276,7 +284,7 @@ def activate_program_calendarization(
     for offset in range(program.duration_days):
         week_number = (offset // 7) + 1
         day_number = (offset % 7) + 1
-        program_day = slots.get((week_number, day_number))
+        program_day = program_days_by_slot.get((week_number, day_number))
         snapshot = build_dailyplan_snapshot(program_day) if program_day else None
         day = CalendarizedDay.objects.create(
             calendarization=calendarization,
