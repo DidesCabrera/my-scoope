@@ -50,6 +50,7 @@ class ImportedFoodDTO:
     normalized_payload_hash: str = ""
     source_description: str = ""
     source_data_type: str = ""
+    source_portions: tuple[dict, ...] = ()
 
 
 __all__ = ["ImportedFoodDTO"]
