@@ -33,6 +33,8 @@ def prepare_readiness_batch(*, foods, environment: str, reason: str, requested_b
         ),
         requested_by=requested_by,
     )
+    batch.policy_version = READINESS_POLICY_VERSION
+    batch.save(update_fields=["policy_version", "updated_at"])
     rows = []
     skipped = []
     for food in selected:
@@ -64,13 +66,11 @@ def prepare_readiness_batch(*, foods, environment: str, reason: str, requested_b
 
 def source_complete_queryset(queryset=None):
     foods = queryset if queryset is not None else CatalogFood.objects.all()
-    return foods.filter(
-        sources__license_status=CatalogFoodSource.LICENSE_ALLOWED,
-    ).exclude(
-        sources__source_name="",
-    ).exclude(
-        sources__source_food_id="",
-    ).distinct()
+    trusted_sources = CatalogFoodSource.objects.filter(
+        catalog_food_id=OuterRef("pk"),
+        license_status=CatalogFoodSource.LICENSE_ALLOWED,
+    ).exclude(source_name="").exclude(source_food_id="")
+    return foods.annotate(has_trusted_source=Exists(trusted_sources)).filter(has_trusted_source=True).distinct()
 
 
 def readiness_incomplete_queryset(queryset=None):

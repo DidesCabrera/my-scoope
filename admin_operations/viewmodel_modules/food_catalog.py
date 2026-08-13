@@ -298,6 +298,80 @@ class AdminOperationsCatalogEnrichmentBatchVM:
 
 
 @dataclass(frozen=True)
+class AdminOperationsReadinessFoodVM:
+    pk: int
+    title: str
+    status_label: str
+    source_label: str
+    missing_label: str
+    detail_url: str
+
+
+@dataclass(frozen=True)
+class AdminOperationsReadinessBatchVM:
+    batch_ref: str
+    status: str
+    environment: str
+    counts_label: str
+    reason: str
+    created_label: str
+    detail_url: str
+
+
+@dataclass(frozen=True)
+class AdminOperationsReadinessProposalVM:
+    field_label: str
+    current_label: str
+    proposed_label: str
+    policy_label: str
+    confidence_label: str
+    rationale: str
+    evidence: list[str] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class AdminOperationsReadinessProposalGroupVM:
+    food_pk: int
+    title: str
+    status_label: str
+    source_label: str
+    source_url: str
+    food_detail_url: str
+    proposals: list[AdminOperationsReadinessProposalVM] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class AdminOperationsReadinessVM:
+    title: str = "Readiness del Food Catalog"
+    subtitle: str = "Preparación, auditoría y aplicación trazable de datos internos sin publicación automática."
+    period_label: str = "Food Catalog · Readiness"
+    current_period: str = "Control de readiness"
+    metrics: list[AdminOperationsMetricVM] = field(default_factory=list)
+    foods: list[AdminOperationsReadinessFoodVM] = field(default_factory=list)
+    batches: list[AdminOperationsReadinessBatchVM] = field(default_factory=list)
+    audit_passes: bool = False
+    source_backfill_pending: int = 0
+
+
+@dataclass(frozen=True)
+class AdminOperationsReadinessBatchDetailVM:
+    title: str
+    subtitle: str
+    period_label: str = "Food Catalog · Readiness"
+    current_period: str = "Revisión de lote"
+    batch_ref: str = ""
+    status: str = ""
+    environment: str = ""
+    reason: str = ""
+    counts_label: str = ""
+    manifest_hash_label: str = ""
+    groups: list[AdminOperationsReadinessProposalGroupVM] = field(default_factory=list)
+    action_url: str = ""
+    can_apply: bool = False
+    can_revert: bool = False
+
+
+@dataclass(frozen=True)
 class AdminOperationsCatalogImportsVM:
     title: str = "Imports y dry-runs del Food Catalog"
     subtitle: str = (
@@ -326,4 +400,4 @@ class AdminOperationsCandidateDetailVM:
 
 
 
-__all__ = ['AdminOperationsCandidateVM', 'AdminOperationsCatalogFoodVM', 'AdminOperationsDetailFactVM', 'AdminOperationsCatalogEvidenceVM', 'AdminOperationsCatalogPortionVM', 'AdminOperationsCatalogAliasVM', 'AdminOperationsCatalogFoodDetailVM', 'AdminOperationsCurationStageVM', 'AdminOperationsCurationItemVM', 'AdminOperationsFoodCatalogVM', 'AdminOperationsCatalogCoverageVM', 'AdminOperationsCatalogDataCoverageRowVM', 'AdminOperationsCatalogDataCoverageVM', 'AdminOperationsCatalogInventorySectionVM', 'AdminOperationsCatalogInventoryColumnVM', 'AdminOperationsCatalogInventoryCellVM', 'AdminOperationsCatalogInventoryFoodVM', 'AdminOperationsCatalogInventoryVM', 'AdminOperationsCatalogImportBatchVM', 'AdminOperationsCatalogEnrichmentBatchVM', 'AdminOperationsCatalogImportsVM', 'AdminOperationsCandidateDetailVM']
+__all__ = ['AdminOperationsCandidateVM', 'AdminOperationsCatalogFoodVM', 'AdminOperationsDetailFactVM', 'AdminOperationsCatalogEvidenceVM', 'AdminOperationsCatalogPortionVM', 'AdminOperationsCatalogAliasVM', 'AdminOperationsCatalogFoodDetailVM', 'AdminOperationsCurationStageVM', 'AdminOperationsCurationItemVM', 'AdminOperationsFoodCatalogVM', 'AdminOperationsCatalogCoverageVM', 'AdminOperationsCatalogDataCoverageRowVM', 'AdminOperationsCatalogDataCoverageVM', 'AdminOperationsCatalogInventorySectionVM', 'AdminOperationsCatalogInventoryColumnVM', 'AdminOperationsCatalogInventoryCellVM', 'AdminOperationsCatalogInventoryFoodVM', 'AdminOperationsCatalogInventoryVM', 'AdminOperationsCatalogImportBatchVM', 'AdminOperationsCatalogEnrichmentBatchVM', 'AdminOperationsReadinessFoodVM', 'AdminOperationsReadinessBatchVM', 'AdminOperationsReadinessProposalVM', 'AdminOperationsReadinessProposalGroupVM', 'AdminOperationsReadinessVM', 'AdminOperationsReadinessBatchDetailVM', 'AdminOperationsCatalogImportsVM', 'AdminOperationsCandidateDetailVM']
