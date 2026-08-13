@@ -5,7 +5,7 @@ from django.core.management import call_command
 from django.test import TestCase
 
 from food_catalog.infrastructure.readiness_pipeline import prepare_readiness_batch
-from food_catalog.models import CatalogEnrichmentBatch, CatalogFood, CatalogFoodSource
+from food_catalog.models import CatalogEnrichmentBatch, CatalogFood, CatalogFoodPortion, CatalogFoodSource
 
 
 class CatalogReadinessPipelineTests(TestCase):
@@ -91,3 +91,23 @@ class CatalogReadinessPipelineTests(TestCase):
         self.assertEqual(batch.total_proposals, 9)
         self.assertFalse(batch.proposals.filter(field_name="cost_band").exists())
         self.assertIn('"valid_proposals": 9', output.getvalue())
+
+    def test_existing_default_portion_does_not_require_source_household_portions(self):
+        source = self.food.sources.get()
+        source.source_food_id = "source-without-portions"
+        source.save(update_fields=["source_food_id"])
+        CatalogFoodPortion.objects.create(
+            catalog_food=self.food,
+            label="1 taza existente",
+            grams=Decimal("180"),
+            is_default=True,
+        )
+
+        batch, result, skipped = prepare_readiness_batch(
+            foods=CatalogFood.objects.filter(pk=self.food.pk),
+            environment="staging",
+            reason="Preserve existing portion.",
+        )
+
+        self.assertEqual((result.valid, result.invalid, skipped), (9, 0, []))
+        self.assertFalse(batch.proposals.filter(field_name="default_portion_g").exists())
