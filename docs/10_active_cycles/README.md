@@ -34,6 +34,26 @@ Status: planned / active / paused / completed / superseded
 Cuando un ciclo planificado empiece a implementarse, el documento puede permanecer aquí como plan operacional, pero las decisiones estables que surjan deben registrarse también en `docs/20_decisions/`.
 
 ## En curso o pendientes de validación
+- `consumer_mobile_enrichment_cycle.md`: ciclo MCE00-MCE08 completado en repositorio para una
+  jornada intensiva que incorpora en la app React Native la gestión completa de la
+  calendarización, el centro de propuestas, el comparador y el chat IA durable. El
+  orden instala primero las superficies confiables y después conecta cards/acciones
+  del Assistant, cerrando con recorridos integrados y evidencia de contrato. MCE00 y
+  MCE01 están completados con baseline verde, catálogo de navegación seguro,
+  contratos compartidos, estados de pantalla y polling durable. MCE02 también está
+  completado con activación nativa, calendario, detalle diario, historial y ciclo de
+  vida de `Mi programa`. MCE03 está completado con centro móvil de propuestas,
+  revisión/aprobación separada de la aplicación, advertencia de sujeto externo y
+  navegación al resultado. MCE04 también está completado con comparación
+  autoritativa de Foods, Meals y DailyPlans, snapshots históricos guardados,
+  edición explícita y navegación nativa. MCE05 está completado con historial de
+  chats owner-scoped, conversación nueva/reanudada, turnos durables recuperables y
+  bloqueo de doble envío. MCE06 está completado con objetos tipados, navegación
+  contextual y acciones preparadas con confirmación confiable. MCE07 está
+  completado con recorridos integrados, contexto tipado de comparaciones,
+  refresco al volver y resiliencia. MCE08 cerró OpenAPI, 366 pruebas focalizadas,
+  el fast gate de 95 pruebas, 1.770 pruebas Django completas, 24 pruebas móviles y
+  35 rutas Expo. Sólo permanece como gate externo el smoke físico en iPhone.
 - `catalog_enrichment_cycle.md`: CE01–CE10 implementa enriquecimiento asistido por Codex, por campo, gobernado y reversible, con clasificación multidimensional de capacidades. Las ejecuciones con datos reales en staging y producción permanecen como gates operacionales.
 - `consumer_mobile_launch_cycle.md`: ciclo activo CML00-CML08. Reorienta el primer
   cliente móvil hacia consumidores que siguen su propio programa; separa seguridad,

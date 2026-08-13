@@ -14,6 +14,7 @@
     {"id": "departments", "label": "Departamentos"},
     {"id": "decision-log", "label": "Decision Log"},
     {"id": "strategy", "label": "Estrategia"},
+    {"id": "mkt", "label": "MKT"},
     {"id": "cycles", "label": "Ciclos MSOS"},
     {"id": "identity", "label": "Identidad"},
     {"id": "manifesto", "label": "Manifiesto"}
@@ -53,15 +54,135 @@
     ]
   },
   "strategy": {
-    "title": "Estrategia",
-    "summary": "Una dirección inicial que debe hacerse más precisa a medida que avanzan los ciclos de lanzamiento y aprendizaje.",
+    "title": "Estrategia 2026",
+    "summary": "La dirección temporal de la empresa: una meta anual, el foco del trimestre actual y el siguiente, y los proyectos que convierten esa dirección en resultados.",
+    "annual_goal": {
+      "label": "Meta 2026",
+      "title": "Lanzar y validar My Scoope como un sistema útil, confiable y sostenible para planificar, ejecutar y aprender sobre la alimentación.",
+      "description": "2026 debe demostrar que My Scoope puede entregar valor de extremo a extremo, generar uso recurrente y operar con una base empresarial suficientemente sólida.",
+      "success_criteria": [
+        "Experiencia de lanzamiento confiable y coherente de extremo a extremo.",
+        "Primeras señales verificables de activación, recurrencia y aprendizaje.",
+        "Operación mínima de soporte, finanzas, legal y tecnología funcionando.",
+        "Identidad, posicionamiento y propuesta de valor consistentes."
+      ]
+    },
     "north_star_metric": "Semanas con el ciclo PLANIFICA → EJECUTA → APRENDE completado por usuario activo.",
-    "groups": [
-      {"title": "Objetivos 2026", "items": ["Lanzar una experiencia confiable y coherente de extremo a extremo", "Validar que el ciclo ampliado genera uso recurrente y aprendizaje", "Construir una operación sostenible y medible", "Establecer una identidad de marca y producto consistente"]},
-      {"title": "Objetivos de lanzamiento", "items": ["Cerrar los bloqueos críticos de producto, operación y cumplimiento", "Definir una propuesta de valor comprensible", "Instrumentar las señales mínimas para aprender del lanzamiento", "Preparar soporte y respuesta ante incidentes"]},
-      {"title": "Ventaja competitiva", "items": ["Sistema integrado que conecta planificación, ejecución y aprendizaje", "Contexto nutricional persistente y personal", "Metodología de construcción disciplinada y trazable", "Capacidad de convertir complejidad en decisiones accionables"]},
-      {"title": "Hipótesis estratégicas", "items": ["Completar el ciclo ampliado aumenta retención y confianza", "La claridad práctica genera más valor que una mayor cantidad de información", "Una experiencia contextual reduce el abandono", "La trazabilidad de decisiones mejora la velocidad de la empresa"]},
-      {"title": "Roadmap", "items": ["Fundación MSOS y preparación del lanzamiento", "Validación del producto ampliado", "Aprendizaje de adquisición y retención", "Escalamiento operacional responsable"]}
+    "quarters": [
+      {
+        "code": "Q3-2026",
+        "status": "Actual",
+        "title": "Preparar el lanzamiento y cerrar fundamentos",
+        "objective": "Reducir los riesgos que impiden lanzar y convertir la estrategia de empresa en proyectos verificables.",
+        "outcomes": [
+          "Criterio único de readiness y bloqueos de lanzamiento visibles.",
+          "Producto ampliado definido como PLANIFICA → EJECUTA → APRENDE.",
+          "MSOS operando como fuente estratégica versionada.",
+          "Caja, legal, soporte y estabilidad técnica con responsables claros."
+        ]
+      },
+      {
+        "code": "Q4-2026",
+        "status": "Próximo",
+        "title": "Lanzar, medir y aprender",
+        "objective": "Poner My Scoope frente a usuarios reales, medir las primeras señales de valor y ajustar producto y operación con evidencia.",
+        "outcomes": [
+          "Lanzamiento controlado completado.",
+          "Activación, recurrencia y ciclos ampliados medidos.",
+          "Primer aprendizaje de adquisición y conversión documentado.",
+          "Ritmo operativo de revisión y respuesta estabilizado."
+        ]
+      }
+    ],
+    "roadmap": {
+      "title": "Roadmap de empresa",
+      "summary": "Portafolio de proyectos temporales que materializan la estrategia. Cada proyecto tiene objetivos, áreas responsables e hitos propios.",
+      "projects": [
+        {
+          "code": "LAUNCH26",
+          "title": "Lanzamiento público de My Scoope",
+          "status": "En curso",
+          "priority": "Crítica",
+          "timeframe": "Q3 → Q4 2026",
+          "owner": "Dirección · Producto",
+          "summary": "Cerrar readiness y ejecutar un lanzamiento controlado que permita aprender sin comprometer confianza ni operación.",
+          "objectives": [
+            "Cerrar los bloqueos críticos de producto, operación y cumplimiento.",
+            "Definir una propuesta de valor comprensible.",
+            "Instrumentar las señales mínimas para aprender del lanzamiento.",
+            "Preparar soporte y respuesta ante incidentes."
+          ],
+          "milestones": [
+            {"title": "Criterio de readiness consolidado", "status": "En curso"},
+            {"title": "Checklist legal y operacional cerrado", "status": "Pendiente"},
+            {"title": "Instrumentación mínima validada", "status": "Pendiente"},
+            {"title": "Lanzamiento controlado ejecutado", "status": "Pendiente"}
+          ]
+        },
+        {
+          "code": "PROD26",
+          "title": "Producto ampliado",
+          "status": "En curso",
+          "priority": "Alta",
+          "timeframe": "Q3 → Q4 2026",
+          "owner": "Producto · Tecnología",
+          "summary": "Convertir PLANIFICA → EJECUTA → APRENDE en una experiencia coherente y medible.",
+          "objectives": [
+            "Conectar planificación, ejecución y aprendizaje en un ciclo reconocible.",
+            "Reducir fricción en el camino hacia el primer valor útil.",
+            "Definir señales de uso recurrente y aprendizaje."
+          ],
+          "milestones": [
+            {"title": "Tesis de producto ampliado adoptada", "status": "Completado"},
+            {"title": "Experiencia end-to-end validada", "status": "En curso"},
+            {"title": "North Star instrumentada", "status": "Pendiente"}
+          ]
+        },
+        {
+          "code": "MSOS",
+          "title": "My Scoope Operating System",
+          "status": "En curso",
+          "priority": "Alta",
+          "timeframe": "Q3-2026 en adelante",
+          "owner": "Dirección",
+          "summary": "Construir la fuente versionada desde la que se dirige la identidad, estrategia, áreas, decisiones y ciclos de empresa.",
+          "objectives": [
+            "Separar definiciones permanentes, dirección temporal y operación.",
+            "Hacer visibles proyectos, prioridades, decisiones y riesgos.",
+            "Establecer una revisión ejecutiva periódica."
+          ],
+          "milestones": [
+            {"title": "Vista fundacional read-only", "status": "Completado"},
+            {"title": "Jerarquía anual, trimestral y roadmap", "status": "En curso"},
+            {"title": "Launch Command Center", "status": "Próximo"}
+          ]
+        },
+        {
+          "code": "GTM26",
+          "title": "Go-to-market inicial",
+          "status": "Planificado",
+          "priority": "Media",
+          "timeframe": "Q4-2026",
+          "owner": "Marketing · Comercial",
+          "summary": "Validar audiencia, mensaje, canales y conversión con aprendizaje controlado.",
+          "objectives": [
+            "Validar el target inicial y su problema prioritario.",
+            "Probar una narrativa y oferta comprensibles.",
+            "Construir el primer embudo medible de adquisición a conversión."
+          ],
+          "milestones": [
+            {"title": "Definiciones MKT iniciales", "status": "En curso"},
+            {"title": "Canal de entrada seleccionado", "status": "Pendiente"},
+            {"title": "Primer experimento de adquisición", "status": "Pendiente"}
+          ]
+        }
+      ]
+    },
+    "hypotheses": [
+      "Completar el ciclo ampliado aumenta retención y confianza.",
+      "La claridad práctica genera más valor que una mayor cantidad de información.",
+      "Una experiencia contextual reduce el abandono.",
+      "La trazabilidad de decisiones mejora la velocidad de la empresa."
     ],
     "kpis": [
       {"name": "Activación", "purpose": "Confirmar que una persona alcanza el primer valor útil", "cadence": "Semanal"},
@@ -71,17 +192,56 @@
       {"name": "Incidentes críticos", "purpose": "Proteger confianza y estabilidad del servicio", "cadence": "Continua"}
     ]
   },
+  "mkt": {
+    "title": "MKT",
+    "summary": "Definiciones de mercado relativamente estables que orientan posicionamiento, producto, comunicación y adquisición. Marketing opera y aprende desde estas definiciones; no las reinventa en cada campaña.",
+    "target_segments": [
+      {"title": "Target inicial", "description": "Personas adultas que quieren mejorar su alimentación, valoran una estructura práctica y han tenido dificultad para sostener planes aislados o genéricos."},
+      {"title": "Necesidad principal", "description": "Traducir objetivos nutricionales en decisiones cotidianas claras que puedan ejecutar y revisar."},
+      {"title": "Situación de entrada", "description": "Existe intención de mejorar, pero la planificación, el seguimiento y el aprendizaje están fragmentados."},
+      {"title": "No prioritario por ahora", "description": "Casos clínicos complejos que requieren supervisión médica directa o personas que solo buscan registro pasivo sin intención de cambiar hábitos."}
+    ],
+    "value_proposition": "My Scoope convierte un objetivo de alimentación en un ciclo personal y ejecutable para planificar, actuar y aprender con continuidad.",
+    "customer_value": [
+      "Claridad sobre qué hacer hoy y por qué.",
+      "Menor carga mental al planificar y ajustar la alimentación.",
+      "Continuidad entre intención, ejecución y aprendizaje.",
+      "Contexto personal persistente en lugar de recomendaciones aisladas."
+    ],
+    "key_attributes": [
+      {"title": "Práctico", "description": "La información termina en una decisión o acción posible."},
+      {"title": "Personal", "description": "El sistema conserva contexto y adapta la experiencia a la persona."},
+      {"title": "Continuo", "description": "Cada semana alimenta la siguiente mediante aprendizaje."},
+      {"title": "Confiable", "description": "Las recomendaciones son consistentes, explicables y cuidadosas."}
+    ],
+    "differentiators": [
+      "Sistema integrado que conecta PLANIFICA → EJECUTA → APRENDE.",
+      "Contexto nutricional persistente y personal.",
+      "Capacidad de convertir complejidad en decisiones accionables.",
+      "Experiencia diseñada para sostener progreso, no solo registrar datos."
+    ],
+    "competitive_frame": {
+      "title": "Alternativas con las que competimos",
+      "summary": "En esta etapa importa comprender la alternativa que el cliente usa para resolver el problema. Una matriz de marcas específicas se añadirá cuando exista investigación comparable y vigente.",
+      "alternatives": [
+        "Planificar manualmente con notas, hojas de cálculo o memoria.",
+        "Usar aplicaciones centradas únicamente en registro o conteo.",
+        "Seguir planes estáticos que no aprenden de la ejecución.",
+        "Recibir acompañamiento profesional sin una capa cotidiana de continuidad."
+      ]
+    }
+  },
   "departments": {
     "title": "Departamentos",
     "summary": "Una primera lectura común de responsabilidad, foco, riesgos y siguiente movimiento por área.",
     "items": [
-      {"name": "Producto", "responsibility": "Definir el valor entregado y mantener coherente la experiencia completa.", "status": "En construcción", "priority": "Cerrar la propuesta de lanzamiento y el producto ampliado.", "active_topics": ["experiencia core", "launch scope", "aprendizaje"], "pending_decisions": ["criterio final de readiness"], "risks": ["alcance difuso", "experiencia fragmentada"], "next_action": "Consolidar el alcance verificable del lanzamiento."},
-      {"name": "Marketing", "responsibility": "Explicar el valor de My Scoope y crear demanda con una narrativa honesta.", "status": "Por estructurar", "priority": "Definir posicionamiento, audiencia inicial y plan de lanzamiento.", "active_topics": ["posicionamiento", "mensajes", "canales"], "pending_decisions": ["audiencia de entrada", "canal prioritario"], "risks": ["mensaje genérico", "adquisición sin aprendizaje"], "next_action": "Redactar la tesis de posicionamiento inicial."},
-      {"name": "Comercial", "responsibility": "Convertir interés en ingresos y aprendizaje de mercado.", "status": "Fundacional", "priority": "Definir el movimiento comercial inicial.", "active_topics": ["oferta", "pricing", "conversión"], "pending_decisions": ["modelo de venta inicial"], "risks": ["señales de demanda insuficientes"], "next_action": "Mapear el primer embudo comercial y sus criterios."},
-      {"name": "Finanzas", "responsibility": "Proteger caja, visibilidad económica y capacidad de inversión.", "status": "Manual", "priority": "Construir una lectura confiable de caja y runway.", "active_topics": ["caja", "costos", "forecast"], "pending_decisions": ["presupuesto de lanzamiento"], "risks": ["falta de proyección integrada"], "next_action": "Consolidar caja, compromisos y escenarios de runway."},
-      {"name": "Legal", "responsibility": "Reducir exposición y mantener el producto dentro de obligaciones aplicables.", "status": "En revisión", "priority": "Verificar readiness legal para lanzamiento.", "active_topics": ["privacidad", "términos", "claims"], "pending_decisions": ["revisión externa requerida"], "risks": ["vacíos de cumplimiento", "promesas no respaldadas"], "next_action": "Cerrar checklist legal de lanzamiento y responsables."},
-      {"name": "Operaciones", "responsibility": "Hacer que la empresa responda de forma consistente antes y después del lanzamiento.", "status": "En diseño", "priority": "Definir soporte, incidentes y rutinas operativas.", "active_topics": ["soporte", "incidentes", "procesos"], "pending_decisions": ["niveles de servicio iniciales"], "risks": ["operación reactiva", "dependencia de una persona"], "next_action": "Crear el playbook mínimo de operación de lanzamiento."},
-      {"name": "Tecnología", "responsibility": "Entregar una plataforma segura, estable y evolutiva al servicio del producto.", "status": "Activo", "priority": "Proteger estabilidad y observabilidad del lanzamiento.", "active_topics": ["calidad", "seguridad", "observabilidad"], "pending_decisions": ["umbrales técnicos de readiness"], "risks": ["deuda crítica oculta", "señales operativas incompletas"], "next_action": "Consolidar checks técnicos y plan de respuesta."}
+      {"id": "product", "name": "Producto", "responsibility": "Definir el valor entregado y mantener coherente la experiencia completa.", "status": "En construcción", "priority": "Cerrar la propuesta de lanzamiento y el producto ampliado.", "active_topics": ["experiencia core", "launch scope", "aprendizaje"], "pending_decisions": ["criterio final de readiness"], "risks": ["alcance difuso", "experiencia fragmentada"], "next_action": "Consolidar el alcance verificable del lanzamiento."},
+      {"id": "marketing", "name": "Marketing", "responsibility": "Explicar el valor de My Scoope y crear demanda con una narrativa honesta.", "status": "Por estructurar", "priority": "Definir posicionamiento, audiencia inicial y plan de lanzamiento.", "active_topics": ["posicionamiento", "mensajes", "canales"], "pending_decisions": ["audiencia de entrada", "canal prioritario"], "risks": ["mensaje genérico", "adquisición sin aprendizaje"], "next_action": "Redactar la tesis de posicionamiento inicial."},
+      {"id": "commercial", "name": "Comercial", "responsibility": "Convertir interés en ingresos y aprendizaje de mercado.", "status": "Fundacional", "priority": "Definir el movimiento comercial inicial.", "active_topics": ["oferta", "pricing", "conversión"], "pending_decisions": ["modelo de venta inicial"], "risks": ["señales de demanda insuficientes"], "next_action": "Mapear el primer embudo comercial y sus criterios."},
+      {"id": "finance", "name": "Finanzas", "responsibility": "Proteger caja, visibilidad económica y capacidad de inversión.", "status": "Manual", "priority": "Construir una lectura confiable de caja y runway.", "active_topics": ["caja", "costos", "forecast"], "pending_decisions": ["presupuesto de lanzamiento"], "risks": ["falta de proyección integrada"], "next_action": "Consolidar caja, compromisos y escenarios de runway."},
+      {"id": "legal", "name": "Legal", "responsibility": "Reducir exposición y mantener el producto dentro de obligaciones aplicables.", "status": "En revisión", "priority": "Verificar readiness legal para lanzamiento.", "active_topics": ["privacidad", "términos", "claims"], "pending_decisions": ["revisión externa requerida"], "risks": ["vacíos de cumplimiento", "promesas no respaldadas"], "next_action": "Cerrar checklist legal de lanzamiento y responsables."},
+      {"id": "operations", "name": "Operaciones", "responsibility": "Hacer que la empresa responda de forma consistente antes y después del lanzamiento.", "status": "En diseño", "priority": "Definir soporte, incidentes y rutinas operativas.", "active_topics": ["soporte", "incidentes", "procesos"], "pending_decisions": ["niveles de servicio iniciales"], "risks": ["operación reactiva", "dependencia de una persona"], "next_action": "Crear el playbook mínimo de operación de lanzamiento."},
+      {"id": "technology", "name": "Tecnología", "responsibility": "Entregar una plataforma segura, estable y evolutiva al servicio del producto.", "status": "Activo", "priority": "Proteger estabilidad y observabilidad del lanzamiento.", "active_topics": ["calidad", "seguridad", "observabilidad"], "pending_decisions": ["umbrales técnicos de readiness"], "risks": ["deuda crítica oculta", "señales operativas incompletas"], "next_action": "Consolidar checks técnicos y plan de respuesta."}
     ]
   },
   "ceo_dashboard": {
@@ -95,32 +255,177 @@
           "label": "Crítica",
           "tone": "critical",
           "items": [
-            {"title": "Consolidar el criterio de readiness para lanzamiento", "area": "Producto", "next_action": "Definir condiciones verificables y responsables para cada bloqueo.", "status": "En curso"},
-            {"title": "Confirmar caja y runway bajo escenarios explícitos", "area": "Finanzas", "next_action": "Consolidar caja disponible, compromisos y presupuesto de lanzamiento.", "status": "Pendiente"}
+            {
+              "id": "launch-readiness",
+              "title": "Consolidar el criterio de readiness para lanzamiento",
+              "area": "Producto",
+              "next_action": "Definir condiciones verificables y responsables para cada bloqueo.",
+              "status": "En curso",
+              "why": "Sin una definición común, cada área puede declarar readiness con criterios distintos.",
+              "done_when": "Existe un checklist único con estado, responsable y evidencia por condición.",
+              "dependencies": ["Producto", "Legal", "Operaciones", "Tecnología"],
+              "detail": {
+                "central_question": "¿Qué debe ser cierto para lanzar My Scoope de forma útil, confiable y responsable, y qué trabajo podemos completar desde ahora sin esperar dependencias externas?",
+                "sections": [
+                  {
+                    "label": "Mapa de la preocupación",
+                    "title": "Frentes de readiness",
+                    "summary": "El lanzamiento no depende de una sola tarea. Estos frentes deben avanzar con criterios y evidencia propios.",
+                    "blocks": [
+                      {
+                        "id": "mobile-app",
+                        "title": "Aplicación móvil",
+                        "status": "En desarrollo",
+                        "description": "Completar y validar el recorrido móvil mínimo que entrega valor al usuario inicial.",
+                        "detail": {
+                          "central_question": "¿Qué debe estar realmente terminado y validado en la aplicación móvil para ofrecer una primera experiencia útil y confiable?",
+                          "sections": [
+                            {"label": "Criterio provisional", "title": "Preparar el recorrido mínimo completo", "points": ["Distinguir lo imprescindible para lanzar de lo que puede evolucionar después.", "Validar el recorrido principal de inicio a fin, no solo pantallas aisladas.", "Definir estabilidad y experiencia aceptables con evidencia observable."]},
+                            {"label": "Reflexión", "title": "Preguntas abiertas", "points": ["¿Cuál es el primer resultado que debe lograr una persona en móvil?", "¿Qué funciones pueden quedar fuera sin romper la promesa central?", "¿Qué fallas impedirían una beta controlada?"]}
+                          ]
+                        }
+                      },
+                      {
+                        "id": "legal-distribution",
+                        "title": "Legal y distribución",
+                        "status": "En progreso",
+                        "description": "Preparar la habilitación legal y comercial para distribuir la app móvil en App Store bajo MY SCOOPE SpA.",
+                        "detail": {
+                          "central_question": "¿Qué debe quedar habilitado para distribuir y comercializar My Scoope en App Store como MY SCOOPE SpA, sin avanzar como cuenta individual ni mezclar responsabilidades legales?",
+                          "sections": [
+                            {"label": "Estado actual", "title": "Apple Developer en preparación", "points": ["MY SCOOPE SpA está avanzando hacia inscripción como Organization / Company en Apple Developer Program.", "Google Workspace ya está activo para myscoope.com y felipe@myscoope.com funciona como correo corporativo responsable.", "La recepción real de correos externos al dominio fue comprobada, por lo que el correo corporativo puede usarse para gestiones legales, comerciales y Apple Developer.", "El número D-U-N-S de MY SCOOPE SpA fue recibido, pero Apple todavía no lo reconoce por probable desfase de sincronización con Dun & Bradstreet."]},
+                            {"label": "Avances completados", "title": "Identidad corporativa y base de inscripción", "points": ["Se definió felipe@myscoope.com como cuenta principal responsable para Apple Developer.", "Se descartó usar correos impersonales como no-reply@myscoope.com para gestiones de representación.", "Se confirmó que la inscripción debe realizarse como organización, no como persona individual.", "Se identificó que el App Store Small Business Program se solicita después de tener activa la membresía Developer y App Store Connect."]},
+                            {"label": "Bloqueo activo", "title": "Sincronización D-U-N-S con Apple", "points": ["Apple Developer aún no reconoce el D-U-N-S recibido.", "La hipótesis operativa es desfase normal de sincronización entre Dun & Bradstreet y Apple.", "La decisión actual es esperar aproximadamente 48 horas hábiles antes de insistir.", "No se debe solicitar un nuevo D-U-N-S mientras el número actual esté en proceso de sincronización, para evitar duplicidades."]},
+                            {"label": "Próximas acciones", "title": "Ruta de inscripción y distribución", "points": ["Reintentar la inscripción en Apple Developer Program con felipe@myscoope.com cuando Apple reconozca el D-U-N-S.", "Seleccionar Organization / Company e ingresar el D-U-N-S de MY SCOOPE SpA.", "Validar que razón social, dirección y país coincidan con los datos entregados por D&B.", "Declarar autoridad legal para representar a MY SCOOPE SpA si Apple lo solicita.", "Esperar revisión de Apple y pagar la membresía anual cuando la inscripción sea aprobada.", "Entrar a App Store Connect y completar información legal, bancaria, tributaria y contractual.", "Solicitar App Store Small Business Program para optar a comisión reducida del 15%.", "Preparar en paralelo política de privacidad, términos, soporte, ficha App Store y requisitos de distribución."]},
+                            {"label": "Riesgos", "title": "Dependencias y puntos de atención", "points": ["Desfase de sincronización D-U-N-S entre D&B y Apple.", "Inconsistencias entre razón social, dirección, país o datos legales registrados.", "Necesidad de acreditar autoridad legal o representación de la empresa.", "Demora en revisión de Apple o requisitos adicionales en App Store Connect.", "La comisión reducida del 15% no está garantizada hasta aprobación formal del Small Business Program."]},
+                            {"label": "Decisiones tomadas", "title": "Distribución bajo entidad jurídica", "points": ["Usar correo corporativo real y funcional, no correo personal ni no-reply.", "Inscribir Apple Developer como organización para que el seller sea MY SCOOPE SpA.", "No avanzar como Individual aunque sea más rápido.", "Esperar sincronización del D-U-N-S antes de escalar a soporte.", "Mantener no-reply@myscoope.com exclusivamente para correos transaccionales de la aplicación.", "Entender que Small Business Program reduce la comisión elegible de Apple, no la membresía anual de Apple Developer Program."]},
+                            {"label": "Criterios de avance", "title": "Habilitación parcial y comercial", "points": ["El frente puede pasar a habilitado parcialmente cuando Apple Developer Program esté aprobado para MY SCOOPE SpA, la membresía anual esté pagada y App Store Connect esté accesible.", "La habilitación parcial debe permitir crear Bundle IDs, certificados, perfiles y TestFlight.", "El frente puede pasar a habilitado comercialmente cuando Paid Apps Agreement esté aceptado, la información bancaria y tributaria esté aprobada y Small Business Program esté solicitado o aprobado.", "La habilitación comercial también requiere política de privacidad, términos y soporte listos para revisión App Store."]},
+                            {"label": "Línea de tiempo", "title": "Rangos estimados", "points": ["Reconocimiento D-U-N-S por Apple: 0-2 días hábiles desde recepción o sincronización.", "Revisión de inscripción como organización: 1-7 días hábiles.", "Pago y activación de Apple Developer Program: mismo día tras aprobación.", "Configuración App Store Connect: 1-5 días hábiles.", "Solicitud Small Business Program: varios días hábiles.", "Preparación para TestFlight y revisión App Store: variable según estado de la app móvil."]}
+                          ]
+                        }
+                      },
+                      {
+                        "id": "food-catalog-solver",
+                        "title": "Food Catalog y solver",
+                        "status": "En avance",
+                        "description": "Asegurar datos suficientes, trazables y útiles para que el solver produzca propuestas de calidad, separando generación asistida de aprobación humana.",
+                        "detail": {
+                          "central_question": "¿Cómo completamos el catálogo con suficiente cobertura y calidad, usando AI/Codex para preparar datos sin delegar la aprobación final?",
+                          "sections": [
+                            {"label": "Criterio adoptado", "title": "Separar evidencia externa de definición interna", "points": ["Los nutrientes por 100 g y otros datos factuales necesitan una fuente trazable.", "Porciones operativas, límites y pasos del solver pueden definirse mediante procesos internos.", "Toda propuesta debe indicar procedencia, regla y nivel de confianza."]},
+                            {"label": "Decisión operativa", "title": "AI/Codex prepara, Felipe aprueba", "points": ["AI/Codex queda responsable de completar propuestas de datos, normalizaciones, porciones, rangos y trazabilidad inicial cuando exista información suficiente.", "Felipe conserva la responsabilidad de aprobar, corregir, rechazar o publicar los cambios en el catálogo.", "Ningún dato asistido debe considerarse oficial hasta pasar por una acción explícita de aprobación o actualización humana.", "La revisión humana se concentra en criterios, excepciones y publicación, no en llenar manualmente cada campo repetible."]},
+                            {"label": "Viabilidad", "title": "Automatización asistida con control", "points": ["La arquitectura ya incluye importación USDA, consulta a Open Food Facts, normalización y controles de calidad.", "El sistema puede inferir mínimos, máximos y pasos desde una porción predeterminada.", "Los casos claros pueden avanzar como propuestas listas para revisar y los ambiguos deben ingresar a revisión.", "Automatizar propuestas no significa publicar automáticamente."]},
+                            {"label": "Priorización", "title": "Completar por cobertura útil", "points": ["Priorizar los alimentos necesarios para el target inicial y para planes que el solver realmente debe poder construir.", "Medir si la cobertura permite generar propuestas suficientemente buenas antes de perseguir volumen de catálogo.", "Usar Codex para levantar brechas, preparar lotes de mejora y registrar la evidencia detrás de cada recomendación."]},
+                            {"label": "Reflexión", "title": "Preguntas abiertas y criterios pendientes", "points": ["Fijar la cobertura mínima de lanzamiento por alimento, nutriente, porción y capacidad del solver.", "Definir qué campos pueden proponerse por reglas y qué campos requieren siempre mirada humana.", "Diseñar una revisión periódica de calidad real de las propuestas del solver y de los cambios aprobados."]}
+                          ]
+                        }
+                      },
+                      {
+                        "id": "llm-reliability",
+                        "title": "LLM",
+                        "status": "Riesgo por validar",
+                        "description": "Comprobar que interpreta el contexto y participa de manera consistente, segura y observable.",
+                        "detail": {
+                          "central_question": "¿En qué tareas podemos confiar en el LLM y cómo responde el sistema cuando falla, duda o carece de contexto?",
+                          "sections": [
+                            {"label": "Criterio provisional", "title": "Confiabilidad antes que apariencia de inteligencia", "points": ["Evaluar tareas concretas con casos representativos.", "Separar errores de conversación de errores que afecten nutrición, confianza o acciones.", "Diseñar respuestas de respaldo y señales observables de falla."]},
+                            {"label": "Reflexión", "title": "Preguntas abiertas", "points": ["¿Qué errores son tolerables y cuáles bloquean el lanzamiento?", "¿Qué acciones nunca debe ejecutar sin confirmación?", "¿Cómo sabremos si entiende correctamente el contexto del usuario?"]}
+                          ]
+                        }
+                      },
+                      {
+                        "id": "onboarding-activation",
+                        "title": "Onboarding y activación",
+                        "status": "Reflexión abierta",
+                        "description": "Entregar valor desde la primera sesión sin dejar el sistema vacío ni fingir una personalización que todavía no existe.",
+                        "detail": {
+                          "central_question": "¿Cómo entregamos valor desde la primera sesión sin mostrar un sistema vacío ni asignar un programa que todavía no puede ser personal?",
+                          "sections": [
+                            {"label": "Dirección emergente", "title": "Orientar mediante objetivos específicos", "points": ["Diseñar secciones que ayuden a conseguir objetivos concretos dentro de la aplicación.", "Recopilar contexto mientras la persona avanza, en lugar de exigirlo todo al inicio.", "Entender la activación como alcanzar el primer valor útil, no completar un formulario."]},
+                            {"label": "Reflexión", "title": "Preguntas abiertas", "points": ["¿Qué objetivos iniciales debemos ofrecer?", "¿Qué acción demuestra primer valor?", "¿Cuánto contexto mínimo necesitamos antes de personalizar?", "¿Cómo explicamos honestamente lo que todavía es provisional?"]}
+                          ]
+                        }
+                      },
+                      {
+                        "id": "weekly-programs-dashboards",
+                        "title": "Programas semanales y dashboards",
+                        "status": "Reflexión abierta",
+                        "description": "Replantear los programas semanales y los dashboards/KPIs para ayudar a comprender, ejecutar y ajustar la semana.",
+                        "detail": {
+                          "central_question": "¿Qué estructura semanal y qué señales ayudan realmente a cada usuario a decidir qué hacer y cómo ajustar su programa?",
+                          "sections": [
+                            {"label": "Decisión de enfoque", "title": "Definir decisiones antes que indicadores", "points": ["El dashboard debe ayudar a actuar, no limitarse a mostrar datos.", "Definir primero las preguntas que el usuario necesita responder.", "Crear estilos de programa solo si representan necesidades o etapas diferentes."]},
+                            {"label": "Reflexión", "title": "Preguntas abiertas", "points": ["¿Qué debería entender una persona al revisar su semana?", "¿Qué desviaciones requieren una acción?", "¿Cuándo debe ajustarse el programa?", "¿Qué estilos semanales son realmente distintos y útiles?"]}
+                          ]
+                        }
+                      },
+                      {
+                        "id": "customer-care",
+                        "title": "Atención al cliente",
+                        "status": "Reflexión abierta",
+                        "description": "Definir puntos de contacto, tipos de necesidad y alternativas de automatización y escalamiento.",
+                        "detail": {
+                          "central_question": "¿Cómo entregamos ayuda rápida y contextual, automatizando lo repetitivo sin abandonar al usuario ni automatizar asuntos sensibles?",
+                          "sections": [
+                            {"label": "Marco inicial", "title": "Contacto, necesidad y respuesta", "points": ["Mapear puntos de contacto dentro y fuera de la aplicación.", "Separar dudas de uso, problemas técnicos, recomendaciones y asuntos administrativos.", "Automatizar orientación repetitiva y recolección de contexto.", "Mantener escalamiento humano visible para casos sensibles o no resueltos."]},
+                            {"label": "Reflexión", "title": "Preguntas abiertas", "points": ["¿Dónde es más probable que una persona necesite ayuda?", "¿Qué puede resolver el autoservicio?", "¿Qué no debe responder automáticamente el sistema?", "¿Qué información necesita recibir quien tome el escalamiento?"]}
+                          ]
+                        }
+                      },
+                      {
+                        "id": "commercial-plans-costs",
+                        "title": "Planes comerciales y costos",
+                        "status": "Reflexión abierta",
+                        "description": "Diseñar planes comerciales entendiendo primero costos, alcance y sostenibilidad de cada alternativa.",
+                        "detail": {
+                          "central_question": "¿Qué podemos prometer, incluir y cobrar de manera sostenible según los costos reales de servir a cada tipo de cliente?",
+                          "sections": [
+                            {"label": "Foco inicial", "title": "Comprender costos antes de cerrar planes", "points": ["Identificar costos variables de IA, infraestructura, soporte y operación.", "Relacionar el alcance de cada plan con el costo de servirlo.", "Evitar fijar precios o beneficios sin escenarios económicos explícitos."]},
+                            {"label": "Reflexión", "title": "Preguntas abiertas", "points": ["¿Qué costos cambian con el uso?", "¿Qué capacidades generan suficiente valor para diferenciar planes?", "¿Qué margen necesitamos para aprender sin comprometer sostenibilidad?", "¿Qué límites deben ser comerciales y cuáles protegen la operación?"]}
+                          ]
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "label": "Principio de avance",
+                    "title": "Completar primero lo que controlamos",
+                    "summary": "Las dependencias externas deben seguirse, pero no deben inmovilizar definiciones, procesos ni validaciones que pertenecen a la empresa.",
+                    "points": ["Clasificar cada vacío como fuente externa, definición interna, validación o dependencia.", "Avanzar de inmediato en porciones, reglas del solver y criterios de calidad internos.", "Mantener los datos sin respaldo claramente incompletos, sin inventarlos ni mezclarlos con supuestos.", "Probar si las decisiones internas permiten al solver producir propuestas suficientemente buenas."]
+                  },
+                  {
+                    "label": "Conversación abierta",
+                    "title": "Preguntas que aún debemos resolver",
+                    "points": ["¿Qué significa una propuesta suficientemente buena y cómo la evaluaremos?", "¿Qué cobertura mínima de alimentos necesita el target inicial?", "¿Qué campos del catálogo pueden aprobarse por reglas y cuáles requieren siempre revisión humana?", "¿Qué errores del solver o del LLM son tolerables y cuáles bloquean el lanzamiento?", "¿Qué puede validarse en una beta controlada antes de tener listo el lanzamiento público?", "¿Cómo entregamos valor desde la primera sesión sin fingir una personalización que todavía no existe?", "¿Qué decisiones debe ayudar a tomar un programa semanal y su dashboard?", "¿Qué puntos de contacto necesitan automatización y cuáles requieren escalamiento humano?", "¿Qué costos debemos comprender antes de diseñar los planes comerciales?"]
+                  }
+                ]
+              }
+            },
+            {"id": "cash-runway-scenarios", "title": "Confirmar caja y runway bajo escenarios explícitos", "area": "Finanzas", "next_action": "Consolidar caja disponible, compromisos y presupuesto de lanzamiento.", "status": "Pendiente", "why": "La velocidad y el alcance del lanzamiento dependen de la capacidad financiera real.", "done_when": "Caja, compromisos y runway están documentados en escenarios base y conservador.", "dependencies": ["Dirección", "Comercial"]}
           ]
         },
         {
           "label": "Alta",
           "tone": "high",
           "items": [
-            {"title": "Cerrar el checklist legal de lanzamiento", "area": "Legal", "next_action": "Asignar responsables y resolver los vacíos de privacidad, términos y claims.", "status": "Pendiente"},
-            {"title": "Crear el playbook mínimo de soporte e incidentes", "area": "Operaciones", "next_action": "Definir flujo de respuesta, responsables y niveles de servicio iniciales.", "status": "Pendiente"},
-            {"title": "Definir la tesis de posicionamiento inicial", "area": "Marketing", "next_action": "Precisar audiencia de entrada, problema principal y promesa diferenciadora.", "status": "Pendiente"}
+            {"id": "legal-launch-checklist", "title": "Cerrar el checklist legal de lanzamiento", "area": "Legal", "next_action": "Asignar responsables y resolver los vacíos de privacidad, términos y claims.", "status": "Pendiente", "why": "El lanzamiento no debe exponer a usuarios ni a la empresa a promesas o tratamientos de datos ambiguos.", "done_when": "Privacidad, términos, claims y responsables tienen revisión y cierre explícitos.", "dependencies": ["Producto", "Dirección"]},
+            {"id": "support-incident-playbook", "title": "Crear el playbook mínimo de soporte e incidentes", "area": "Operaciones", "next_action": "Definir flujo de respuesta, responsables y niveles de servicio iniciales.", "status": "Pendiente", "why": "Los primeros usuarios necesitan una respuesta predecible cuando algo falla.", "done_when": "Existe un flujo probado para soporte, incidentes, escalamiento y comunicación.", "dependencies": ["Tecnología", "Producto"]},
+            {"id": "initial-positioning-thesis", "title": "Definir la tesis de posicionamiento inicial", "area": "Marketing", "next_action": "Precisar audiencia de entrada, problema principal y promesa diferenciadora.", "status": "Pendiente", "why": "Sin posicionamiento, adquisición y producto pueden comunicar valores diferentes.", "done_when": "Target, problema, valor y diferenciadores están documentados en MKT.", "dependencies": ["Producto", "Comercial"]}
           ]
         },
         {
           "label": "Media",
           "tone": "medium",
           "items": [
-            {"title": "Mapear el primer embudo comercial", "area": "Comercial", "next_action": "Documentar etapas, criterios de avance y señales de conversión.", "status": "Por iniciar"},
-            {"title": "Definir umbrales técnicos de readiness", "area": "Tecnología", "next_action": "Acordar checks de estabilidad, seguridad y observabilidad.", "status": "Por iniciar"}
+            {"id": "first-commercial-funnel", "title": "Mapear el primer embudo comercial", "area": "Comercial", "next_action": "Documentar etapas, criterios de avance y señales de conversión.", "status": "Por iniciar", "why": "La empresa necesita distinguir interés, activación y disposición a pagar.", "done_when": "Cada etapa tiene entrada, salida, responsable y señal medible.", "dependencies": ["Marketing", "Finanzas"]},
+            {"id": "technical-readiness-thresholds", "title": "Definir umbrales técnicos de readiness", "area": "Tecnología", "next_action": "Acordar checks de estabilidad, seguridad y observabilidad.", "status": "Por iniciar", "why": "La estabilidad debe evaluarse con condiciones observables, no por percepción.", "done_when": "Los umbrales y el procedimiento de respuesta están documentados y probados.", "dependencies": ["Producto", "Operaciones"]}
           ]
         },
         {
           "label": "Baja",
           "tone": "low",
           "items": [
-            {"title": "Preparar la estructura del ciclo MSOS01", "area": "Dirección", "next_action": "Convertir los aprendizajes de MSOS00 en el alcance del Launch Command Center.", "status": "En espera"}
+            {"id": "msos01-cycle-structure", "title": "Preparar la estructura del ciclo MSOS01", "area": "Dirección", "next_action": "Convertir los aprendizajes de MSOS00 en el alcance del Launch Command Center.", "status": "En espera", "why": "El siguiente ciclo debe consolidar readiness sin duplicar los tableros ya creados.", "done_when": "MSOS01 tiene objetivo, límites, datos requeridos y criterios de aceptación.", "dependencies": ["MSOS00", "Proyecto LAUNCH26"]}
           ]
         }
       ]

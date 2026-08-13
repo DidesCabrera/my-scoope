@@ -315,6 +315,15 @@ class ProposalReviewViewModelTests(SimpleTestCase):
         self.assertEqual(vm.payload.meal.kpis.total_kcal, 312.8)
         self.assertEqual(vm.payload.meal.kpis.ppk, 0.62)
 
+        row = vm.payload.meal.card["table"]["items"][0]["rel"]
+        self.assertAlmostEqual(row["alloc_protein"], 100)
+        self.assertAlmostEqual(row["alloc_fat"], 100)
+        self.assertAlmostEqual(sum(row["kcal_distribution"].values()), 100)
+        self.assertNotEqual(
+            row["alloc_protein"],
+            row["kcal_distribution"]["protein"],
+        )
+
 
     def test_build_review_vm_includes_create_dailyplan_render_data(self):
         proposal = {
@@ -421,6 +430,16 @@ class ProposalReviewViewModelTests(SimpleTestCase):
         self.assertEqual(food.food_name, "a nuevo egg TEST")
         self.assertEqual(food.quantity, 200.0)
         self.assertEqual(food.total_kcal, 34.0)
+
+        row = dailyplan.card["table"]["items"][0]["rel"]
+        self.assertAlmostEqual(row["alloc_protein"], 100)
+        self.assertAlmostEqual(row["alloc_carbs"], 100)
+        self.assertAlmostEqual(row["alloc_fat"], 100)
+        self.assertAlmostEqual(sum(row["kcal_distribution"].values()), 100)
+        self.assertNotEqual(
+            row["alloc_protein"],
+            row["kcal_distribution"]["protein"],
+        )
 
     def test_build_review_vm_can_apply_approved_create_meal(self):
         proposal = {

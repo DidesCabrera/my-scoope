@@ -1,12 +1,12 @@
-import { Redirect, useFocusEffect, useRouter } from "expo-router";
+import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
-import type { MealSnapshot, TodayData } from "@/api/types";
+import type { MealSnapshot, ProposalListData, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { MacroSummary } from "@/components/nutrition/macro-summary";
-import { AppHeader, Brand, Button, Card, InlineNotice, LoadingState, Pill, ProgressBar, Screen, SectionTitle, textStyles } from "@/components/ui/primitives";
+import { AppHeader, Button, Card, InlineNotice, LoadingState, Pill, ProgressBar, Screen, SectionTitle, textStyles } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
 import { syncNativeReminders } from "@/notifications/native-reminders";
 
@@ -37,10 +37,11 @@ function MealCard({ meal }: { meal: MealSnapshot }) {
 
 export default function TodayScreen() {
   const router = useRouter();
-  const { status, session, profile, apiRequest, signOut } = useSession();
+  const { status, session, profile, apiRequest } = useSession();
   const [today, setToday] = useState<TodayData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pendingProposalCount, setPendingProposalCount] = useState(0);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -48,6 +49,9 @@ export default function TodayScreen() {
     try {
       const nextToday = await apiRequest<TodayData>("/api/v1/today");
       setToday(nextToday);
+      void apiRequest<ProposalListData>("/api/v1/proposals?status=pending_review&limit=1")
+        .then((page) => setPendingProposalCount(page.pending_count))
+        .catch(() => undefined);
       if (nextToday.reminders) {
         void syncNativeReminders(nextToday.reminders, apiRequest).catch(() => undefined);
       }
@@ -75,12 +79,6 @@ export default function TodayScreen() {
 
   return (
     <Screen>
-      <View style={styles.topbar}>
-        <Brand compact />
-        <Pressable accessibilityRole="button" onPress={() => void signOut()} style={styles.signOut}>
-          <Text style={styles.signOutText}>Salir</Text>
-        </Pressable>
-      </View>
       <AppHeader eyebrow={today ? displayDate(today.local_date) : "Hoy"} title={`Vamos, ${firstName}`} />
       {error ? (
         <InlineNotice tone="error">{error}</InlineNotice>
@@ -95,11 +93,13 @@ export default function TodayScreen() {
             <Pill color={tokens.color.program} label={`${today.calendarization.progress_percent}%`} />
           </View>
           <ProgressBar value={today.calendarization.progress_percent} />
+          <Button label="Abrir mi programa" onPress={() => router.push("/program" as Href)} variant="secondary" />
         </Card>
       ) : (
         <Card accent={tokens.color.program}>
           <SectionTitle title="Aún no hay programa activo" />
-          <Text style={textStyles.muted}>Calendariza un programa desde la web para convertirlo en tu recorrido diario.</Text>
+          <Text style={textStyles.muted}>Elige uno de tus programas y conviértelo en tu recorrido diario desde la app.</Text>
+          <Button label="Calendarizar un programa" onPress={() => router.push("/program/activate" as Href)} />
         </Card>
       )}
 
@@ -146,6 +146,14 @@ export default function TodayScreen() {
         </Card>
       ) : null}
 
+      {pendingProposalCount > 0 ? (
+        <Card accent={tokens.color.warning}>
+          <SectionTitle detail={`${pendingProposalCount} pendientes`} title="Propuestas para revisar" />
+          <Text style={textStyles.muted}>El Asistente preparó resultados que aún no modifican tu librería.</Text>
+          <Button label="Abrir Propuestas" onPress={() => router.push("/proposals" as Href)} />
+        </Card>
+      ) : null}
+
       {today?.has_plan && snapshot ? (
         <>
           <Card accent={tokens.color.dailyPlan}>
@@ -180,9 +188,6 @@ export default function TodayScreen() {
 }
 
 const styles = StyleSheet.create({
-  topbar: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
-  signOut: { paddingHorizontal: 12, paddingVertical: 8 },
-  signOutText: { color: tokens.color.textSoft, fontSize: 13, fontWeight: "700" },
   programHeader: { alignItems: "flex-start", flexDirection: "row", justifyContent: "space-between" },
   programCopy: { flex: 1, gap: 4 },
   programName: { color: tokens.color.textMain, fontSize: 18, fontWeight: "800" },

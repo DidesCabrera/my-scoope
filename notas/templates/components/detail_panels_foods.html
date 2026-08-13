@@ -30,6 +30,10 @@
     {% include "components/grid_foods_mobile_qty.html" with items=items %}
 </div>
 
+<div id="card-grid-calories-{{ panel_id }}" class="card-table-foods-mobile">
+    {% include "components/grid_foods_mobile_calories.html" with items=items %}
+</div>
+
 <div id="card-grid-macros-{{ panel_id }}" class="card-table-foods-mobile">
     {% include "components/grid_foods_mobile_macros.html" with items=items %}
 </div>

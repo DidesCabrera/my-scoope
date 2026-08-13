@@ -57,16 +57,82 @@
 
     <section class="tab-panel" id="panel-strategy" role="tabpanel" aria-labelledby="tab-strategy" data-msos-panel="strategy" hidden>
       <div class="section-heading"><p class="eyebrow">Nivel 2</p><h2>{{ msos.strategy.title }}</h2><p>{{ msos.strategy.summary }}</p></div>
+      <section class="annual-goal">
+        <p class="eyebrow">{{ msos.strategy.annual_goal.label }}</p>
+        <h3>{{ msos.strategy.annual_goal.title }}</h3>
+        <p>{{ msos.strategy.annual_goal.description }}</p>
+        <ul class="clean-list">{% for item in msos.strategy.annual_goal.success_criteria %}<li>{{ item }}</li>{% endfor %}</ul>
+      </section>
       <div class="statement"><span>North Star Metric</span><strong>{{ msos.strategy.north_star_metric }}</strong></div>
-      <div class="strategy-grid">
-        {% for group in msos.strategy.groups %}<section class="minimal-card"><h3>{{ group.title }}</h3><ul class="clean-list">{% for item in group.items %}<li>{{ item }}</li>{% endfor %}</ul></section>{% endfor %}
+
+      <div class="subsection-heading"><p class="eyebrow">Horizonte operativo</p><h3>Trimestre actual y siguiente</h3></div>
+      <div class="quarter-grid">
+        {% for quarter in msos.strategy.quarters %}
+          <section class="quarter-card{% if quarter.status == 'Actual' %} quarter-card--current{% endif %}">
+            <header><span>{{ quarter.code }}</span><span class="badge">{{ quarter.status }}</span></header>
+            <h3>{{ quarter.title }}</h3>
+            <p>{{ quarter.objective }}</p>
+            <h4>Resultados esperados</h4>
+            <ul class="clean-list">{% for item in quarter.outcomes %}<li>{{ item }}</li>{% endfor %}</ul>
+          </section>
+        {% endfor %}
       </div>
-      <h3>KPIs iniciales</h3>
-      <div class="table-wrap"><table><thead><tr><th>Indicador</th><th>Propósito</th><th>Cadencia</th></tr></thead><tbody>{% for item in msos.strategy.kpis %}<tr><td>{{ item.name }}</td><td>{{ item.purpose }}</td><td><span class="badge">{{ item.cadence }}</span></td></tr>{% endfor %}</tbody></table></div>
+
+      <section class="roadmap-section">
+        <div class="subsection-heading"><p class="eyebrow">Portafolio estratégico</p><h3>{{ msos.strategy.roadmap.title }}</h3><p>{{ msos.strategy.roadmap.summary }}</p></div>
+        <div class="project-list">
+          {% for project in msos.strategy.roadmap.projects %}
+            <a class="project-card project-card--link" href="{% url 'msos_detail' 'project' project.code|lower %}">
+              <span class="project-card__content">
+                <span class="project-card__code">{{ project.code }}</span>
+                <span class="project-card__identity"><strong>{{ project.title }}</strong><small>{{ project.summary }}</small></span>
+                <span class="project-card__summary-meta"><span class="badge">{{ project.priority }}</span><span class="badge">{{ project.status }}</span><span class="enter-icon" aria-hidden="true">→</span></span>
+              </span>
+            </a>
+          {% endfor %}
+        </div>
+      </section>
+
+      <div class="strategy-lower-grid">
+        <section><h3>Hipótesis estratégicas</h3><ul class="clean-list">{% for item in msos.strategy.hypotheses %}<li>{{ item }}</li>{% endfor %}</ul></section>
+        <section><h3>KPIs iniciales</h3><div class="table-wrap"><table><thead><tr><th>Indicador</th><th>Propósito</th><th>Cadencia</th></tr></thead><tbody>{% for item in msos.strategy.kpis %}<tr><td>{{ item.name }}</td><td>{{ item.purpose }}</td><td><span class="badge">{{ item.cadence }}</span></td></tr>{% endfor %}</tbody></table></div></section>
+      </div>
+    </section>
+
+    <section class="tab-panel" id="panel-mkt" role="tabpanel" aria-labelledby="tab-mkt" data-msos-panel="mkt" hidden>
+      <div class="section-heading"><p class="eyebrow">Definiciones de mercado</p><h2>{{ msos.mkt.title }}</h2><p>{{ msos.mkt.summary }}</p></div>
+      <h3>Target</h3>
+      <div class="definition-grid mkt-target-grid">
+        {% for item in msos.mkt.target_segments %}<article class="minimal-card"><h3>{{ item.title }}</h3><p>{{ item.description }}</p></article>{% endfor %}
+      </div>
+      <div class="statement"><span>Propuesta de valor</span><strong>{{ msos.mkt.value_proposition }}</strong></div>
+      <div class="mkt-definition-grid">
+        <section><h3>Valor para el cliente</h3><ul class="clean-list">{% for item in msos.mkt.customer_value %}<li>{{ item }}</li>{% endfor %}</ul></section>
+        <section><h3>Diferenciadores</h3><ul class="clean-list">{% for item in msos.mkt.differentiators %}<li>{{ item }}</li>{% endfor %}</ul></section>
+      </div>
+      <div class="subsection-heading"><p class="eyebrow">Cómo debe sentirse</p><h3>Características clave</h3></div>
+      <div class="definition-grid">
+        {% for item in msos.mkt.key_attributes %}<article class="minimal-card"><h3>{{ item.title }}</h3><p>{{ item.description }}</p></article>{% endfor %}
+      </div>
+      <section class="competitive-frame">
+        <h3>{{ msos.mkt.competitive_frame.title }}</h3>
+        <p>{{ msos.mkt.competitive_frame.summary }}</p>
+        <ul class="clean-list">{% for item in msos.mkt.competitive_frame.alternatives %}<li>{{ item }}</li>{% endfor %}</ul>
+      </section>
     </section>
 
     <section class="tab-panel" id="panel-departments" role="tabpanel" aria-labelledby="tab-departments" data-msos-panel="departments" hidden>
       <div class="section-heading"><p class="eyebrow">Nivel 3</p><h2>{{ msos.departments.title }}</h2><p>{{ msos.departments.summary }}</p></div>
+      <div class="subsection-heading"><p class="eyebrow">Mapa rápido</p><h3>Áreas de la empresa</h3><p>Vista breve de las capacidades permanentes. Cada card permite ingresar a la hoja del departamento.</p></div>
+      <div class="department-card-grid">
+        {% for department in msos.departments.items %}
+          <a class="department-card" href="{% url 'msos_detail' 'department' department.id %}">
+            <span class="department-card__header"><strong>{{ department.name }}</strong><span class="badge">{{ department.status }}</span></span>
+            <span class="department-card__description">{{ department.responsibility }}</span>
+          </a>
+        {% endfor %}
+      </div>
+      <div class="subsection-heading department-detail-heading"><p class="eyebrow">Lectura consolidada</p><h3>Detalle por departamento</h3><p>Responsabilidad, foco, decisiones, riesgos y siguiente movimiento vigentes.</p></div>
       <div class="department-list">
         {% for department in msos.departments.items %}
           <article class="department">
@@ -97,11 +163,14 @@
               <header><span class="priority-dot" aria-hidden="true"></span><h3>{{ group.label }}</h3><span>{{ group.items|length }}</span></header>
               <div class="priority-items">
                 {% for task in group.items %}
-                  <article class="task-card">
-                    <div class="task-card__meta"><span>{{ task.area }}</span><span class="badge">{{ task.status }}</span></div>
-                    <h4>{{ task.title }}</h4>
-                    <p>{{ task.next_action }}</p>
-                  </article>
+                  <a class="task-card task-card--link" href="{% url 'msos_detail' 'task' task.id %}">
+                    <span class="task-card__content">
+                      <span class="task-card__meta"><span>{{ task.area }}</span><span class="badge">{{ task.status }}</span></span>
+                      <span class="task-card__title">{{ task.title }}</span>
+                      <span class="task-card__preview">{{ task.next_action }}</span>
+                      <span class="task-card__open-label">Entrar <span class="enter-icon" aria-hidden="true">→</span></span>
+                    </span>
+                  </a>
                 {% endfor %}
               </div>
             </section>

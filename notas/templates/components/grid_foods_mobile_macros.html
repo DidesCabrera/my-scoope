@@ -2,10 +2,10 @@
 
     <div class="data-grid-header data-grid-header--mobile-foods-macros">
         <div class="data-grid-col data-grid-col--name">Alimentos</div>
-        <div class="data-grid-col data-grid-col--kcal">Kcal</div>
         <div class="data-grid-col data-grid-col--macro">P</div>
         <div class="data-grid-col data-grid-col--macro">C</div>
         <div class="data-grid-col data-grid-col--macro">F</div>
+        <div class="data-grid-col data-grid-col--kcal-distribution">P|C|F%</div>
     </div>
 
     {% for row in items %}
@@ -21,10 +21,6 @@
                 {% endif %}
             </div>
 
-            <div class="data-grid-cell data-grid-cell--kcal">
-                {% include "components/grid_kcal_share_item.html" with value=row.rel.kcal_share kcal=row.rel.total_kcal %}
-            </div>
-
             <div class="data-grid-cell data-grid-cell--macro">
                 {{ row.rel.g_protein|floatformat:1 }}
             </div>
@@ -35,6 +31,10 @@
 
             <div class="data-grid-cell data-grid-cell--macro">
                 {{ row.rel.g_fat|floatformat:1 }}
+            </div>
+
+            <div class="data-grid-cell data-grid-cell--kcal-distribution">
+                {% include "components/macro_kcal_distribution.html" with protein=row.rel.kcal_distribution.protein carbs=row.rel.kcal_distribution.carbs fat=row.rel.kcal_distribution.fat %}
             </div>
         </div>
     {% empty %}

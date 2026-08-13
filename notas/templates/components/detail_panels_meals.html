@@ -12,6 +12,10 @@
 </div>
 {% endif %}
 
+<div id="card-grid-calories-{{ panel_id }}" class="card-table-meals-mobile">
+    {% include "components/grid_meals_mobile_calories.html" with items=items %}
+</div>
+
 <div id="card-grid-macros-{{ panel_id }}" class="card-table-meals-mobile">
     {% include "components/grid_meals_mobile_macros.html" with items=items %}
 </div>

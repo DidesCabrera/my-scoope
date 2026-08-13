@@ -224,6 +224,7 @@ Componentes que deben reutilizarse antes de crear alternativas:
 - `dash-kpi`
 - `dash-kpi-range`
 - `alloc-bar`
+- `macro-kcal-distribution`
 - `overflow-menu`
 - `picker-list`
 

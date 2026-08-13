@@ -1,0 +1,127 @@
+.macro-kcal-distribution {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  height: 18px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--alloc-cell-bg);
+  font-variant-numeric: tabular-nums;
+}
+
+.macro-kcal-distribution__segment {
+  flex: 0 0 calc(min(max(var(--macro-kcal-share, 0), 0), 100) * 1%);
+  min-width: 0;
+}
+
+.macro-kcal-distribution__segment--protein {
+  background: var(--nutrition-protein);
+}
+
+.macro-kcal-distribution__segment--carbs {
+  background: var(--nutrition-carbs);
+}
+
+.macro-kcal-distribution__segment--fat {
+  background: var(--nutrition-fat);
+}
+
+.data-grid-col--kcal-share,
+.data-grid-col--kcal-distribution,
+.data-grid-cell--kcal-share,
+.data-grid-cell--kcal-distribution {
+  text-align: center;
+}
+
+.data-grid-col--kcal-distribution {
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.data-grid-cell--kcal-share,
+.data-grid-cell--kcal-distribution {
+  min-width: 0;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.data-grid-cell--kcal-share .alloc-cell--grid {
+  margin-inline: 4px;
+  width: calc(100% - 8px);
+}
+
+.data-grid-cell--kcal-distribution .macro-kcal-distribution {
+  margin-inline: 4px;
+  width: calc(100% - 8px);
+}
+
+/* Desktop groups mirror the responsive Calorías, Macros and Alloc tabs. */
+@media (min-width: 981px) {
+  .data-grid-cell--kcal-share .alloc-cell--grid,
+  .data-grid-cell--kcal-distribution .macro-kcal-distribution {
+    margin-inline: 8px;
+    width: calc(100% - 16px);
+  }
+
+  .data-grid-group-start {
+    align-self: stretch;
+    border-inline-start: 1px solid var(--panel-row-separator);
+    box-sizing: border-box;
+  }
+
+  .data-grid-col--kcal-distribution {
+    font-size: 9px;
+    letter-spacing: 0.02em;
+  }
+
+  .data-grid-row .data-grid-group-start {
+    min-height: var(--data-grid-row-min-height);
+  }
+
+  .data-grid-alloc-group {
+    align-items: center;
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    padding-inline: 8px;
+  }
+
+  .data-grid-alloc-group .alloc-cell--grid {
+    width: 100%;
+  }
+}
+
+.data-grid-header--mobile-meals-calories,
+.data-grid-row--mobile-meals-calories,
+.data-grid-header--mobile-foods-calories,
+.data-grid-row--mobile-foods-calories {
+  grid-template-columns:
+    minmax(128px, 1.6fr)
+    minmax(54px, 0.62fr)
+    minmax(92px, 1fr);
+}
+
+@media (max-width: 980px) {
+  .macro-kcal-distribution {
+    height: 24px;
+  }
+
+  .data-grid-cell--kcal-share,
+  .data-grid-cell--kcal-distribution {
+    padding-inline: 0;
+  }
+
+  .data-grid-cell--kcal-share .alloc-cell--grid,
+  .data-grid-cell--kcal-distribution .macro-kcal-distribution {
+    margin-inline: 2px;
+    width: calc(100% - 4px);
+  }
+
+  .data-grid-cell--kcal-distribution + .data-grid-cell--alloc .alloc-cell--grid {
+    margin-inline: 1px;
+    width: calc(100% - 2px);
+  }
+}

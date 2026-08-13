@@ -36,6 +36,7 @@ Antes de crear un nuevo componente, revisar si el caso puede resolverse con uno 
 | `dash-kpi` | component | KPIs de dashboards | métricas principales por entidad o detalle |
 | `dash-kpi-range` | component | rangos min/max | usado en Program detail/list/chart summaries |
 | `alloc-bar` | component | distribución P/C/F | usar tokens nutricionales |
+| `macro-kcal-distribution` | component | composición intrínseca de kcal P/C/F en una barra acumulada | segmentos con tokens nutricionales, sin valores interiores y con ancho de columna equivalente a Alloc |
 | `overflow-menu` | primitive | menú contextual de cards/headers | z-index mediante `--z-dropdown` |
 | `picker-list` | component | listas de selección | no mezclar reglas propias de Food Picker si el patrón es genérico |
 

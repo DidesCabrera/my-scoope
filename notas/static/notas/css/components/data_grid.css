@@ -26,30 +26,26 @@
 .data-grid-header--foods,
 .data-grid-row--foods {
     grid-template-columns:
-        minmax(180px, 1.8fr)
-        minmax(62px, 0.8fr)
-        minmax(80px, 0.1fr)
-        minmax(56px, 0.7fr)
-        minmax(56px, 0.7fr)
-        minmax(56px, 0.7fr)
-        minmax(90px, 1fr)
-        minmax(90px, 1fr)
-        minmax(90px, 1fr);
+        minmax(150px, 1.65fr)
+        minmax(56px, 0.65fr)
+        minmax(54px, 0.55fr)
+        minmax(72px, 0.8fr)
+        repeat(3, minmax(44px, 0.5fr))
+        minmax(70px, 0.82fr)
+        minmax(210px, 2.46fr);
 }
 
 .data-grid-header--foods-edit,
 .data-grid-row--foods-edit {
     grid-template-columns:
         34px
-        minmax(150px, 1.8fr)
-        minmax(62px, 0.8fr)
-        minmax(70px, 1fr)
-        minmax(56px, 0.7fr)
-        minmax(56px, 0.7fr)
-        minmax(56px, 0.7fr)
-        minmax(70px, 1fr)
-        minmax(70px, 1fr)
-        minmax(70px, 1fr)
+        minmax(120px, 1.55fr)
+        minmax(52px, 0.6fr)
+        minmax(52px, 0.55fr)
+        minmax(68px, 0.75fr)
+        repeat(3, minmax(42px, 0.48fr))
+        minmax(60px, 0.72fr)
+        minmax(180px, 2.16fr)
         40px
         40px;
 }
@@ -57,28 +53,24 @@
 .data-grid-header--meals,
 .data-grid-row--meals {
     grid-template-columns:
-        minmax(180px, 1.6fr)
-        minmax(80px, 0.85fr)
-        minmax(60px, 0.65fr)
-        minmax(60px, 0.65fr)
-        minmax(60px, 0.65fr)
-        minmax(90px, 1fr)
-        minmax(90px, 1fr)
-        minmax(90px, 1fr);
+        minmax(150px, 1.5fr)
+        minmax(54px, 0.55fr)
+        minmax(72px, 0.78fr)
+        repeat(3, minmax(44px, 0.5fr))
+        minmax(70px, 0.82fr)
+        minmax(210px, 2.46fr);
 }
 
 .data-grid-header--meals-edit,
 .data-grid-row--meals-edit {
     grid-template-columns:
         34px
-        minmax(140px, 1.6fr)
-        minmax(80px, 1fr)
-        minmax(60px, 1fr)
-        minmax(60px, 1fr)
-        minmax(60px, 1fr)
-        minmax(80px, 1fr)
-        minmax(80px, 1fr)
-        minmax(80px, 1fr)
+        minmax(120px, 1.45fr)
+        minmax(52px, 0.55fr)
+        minmax(68px, 0.72fr)
+        repeat(3, minmax(42px, 0.48fr))
+        minmax(60px, 0.7fr)
+        minmax(180px, 2.1fr)
         40px
         40px
         40px;
@@ -146,8 +138,6 @@
 .data-grid-cell--alloc {
     min-width: 0;
     justify-content: center;
-    margin-right: 4px;
-    margin-left: 4px;
 }
 
 .alloc-cell--grid {
@@ -359,8 +349,12 @@ body.is-mealfood-sorting .js-mealfood-sortable-row {
     }
 
     .data-grid-cell--alloc {
-        margin-right: 1px;
-        margin-left: 1px;
+        margin: 0;
+    }
+
+    .data-grid-cell--alloc .alloc-cell--grid {
+        margin-inline: 1px;
+        width: calc(100% - 2px);
     }
 
 
@@ -380,11 +374,9 @@ body.is-mealfood-sorting .js-mealfood-sortable-row {
 .data-grid-header--mobile-macros,
 .data-grid-row--mobile-macros {
     grid-template-columns:
-        minmax(140px, 1.6fr)
-        minmax(45px, 1.3fr)
-        minmax(30px, 1fr)
-        minmax(30px, 1fr)
-        minmax(30px, 1fr);
+        minmax(108px, 1.35fr)
+        repeat(3, minmax(30px, 0.42fr))
+        minmax(108px, 1.2fr);
 }
 
 .data-grid-header--mobile-alloc,
@@ -407,11 +399,9 @@ body.is-mealfood-sorting .js-mealfood-sortable-row {
 .data-grid-header--mobile-foods-macros,
 .data-grid-row--mobile-foods-macros {
     grid-template-columns:
-        minmax(140px, 1.6fr)
-        minmax(45px, 1.3fr)
-        minmax(30px, 1fr)
-        minmax(30px, 1fr)
-        minmax(30px, 1fr);
+        minmax(108px, 1.35fr)
+        repeat(3, minmax(30px, 0.42fr))
+        minmax(108px, 1.2fr);
 }
 
 .data-grid-header--mobile-foods-alloc,
@@ -556,6 +546,7 @@ body.is-mealfood-sorting .js-mealfood-sortable-row {
     .data-grid-col--kcal {
         padding-right: 4px;
     }
+
 }
 
 .data-grid-empty {

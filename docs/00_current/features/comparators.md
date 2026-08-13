@@ -20,7 +20,15 @@ La vista normal permite seleccionar múltiples entidades y comparar métricas.
 
 Foods usan cantidad en gramos.
 
+La selección es posicional: comienza con dos slots, permite agregar o quitar
+posiciones y admite repetir una entidad. Esto permite, por ejemplo, comparar 100 g
+contra 200 g del mismo alimento.
+
 Meals y DailyPlans no usan cantidad, pero incluyen PPK cuando corresponde.
+
+Los resultados se agrupan por métrica, no por entidad. Cada bloque muestra todas
+las selecciones con valores y barras relativas al máximo del bloque, en el orden:
+calorías, PPK cuando corresponde, proteínas, carbohidratos, grasas y P/C/F %.
 
 ### Comparación guardada
 

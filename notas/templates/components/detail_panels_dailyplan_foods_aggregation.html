@@ -6,6 +6,10 @@
     {% include "components/grid_foods_mobile_qty.html" with items=items %}
 </div>
 
+<div id="card-grid-dailyplan-foods-calories-{{ panel_id }}" class="card-table-dailyplan-foods card-table-dailyplan-foods--mobile">
+    {% include "components/grid_foods_mobile_calories.html" with items=items %}
+</div>
+
 <div id="card-grid-dailyplan-foods-macros-{{ panel_id }}" class="card-table-dailyplan-foods card-table-dailyplan-foods--mobile">
     {% include "components/grid_foods_mobile_macros.html" with items=items %}
 </div>

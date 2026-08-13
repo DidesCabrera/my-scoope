@@ -14,3 +14,17 @@ La primera versión, **MSOS00**, es deliberadamente simple y de solo lectura. La
 ## Evolución
 
 MSOS crece por ciclos pequeños y verificables, de la misma forma que el producto. MSOS00 establece la arquitectura; los ciclos siguientes profundizarán lanzamiento, identidad, producto, marketing, finanzas, legal, comercial, operaciones y dirección ejecutiva.
+
+## Modelo de información
+
+MSOS separa tres tipos de información para evitar mezclar definiciones duraderas con ejecución:
+
+- **Definiciones:** Identidad establece quién es My Scoope; MKT define para quién existe, qué valor entrega y cómo se diferencia.
+- **Dirección temporal:** Estrategia jerarquiza la meta anual, el trimestre actual, el siguiente y los proyectos del roadmap.
+- **Operación:** Departamentos conserva responsabilidades y prioridades por área; CEO Dashboard concentra la revisión diaria.
+
+Los departamentos son capacidades permanentes de la empresa. Los proyectos son esfuerzos temporales, pueden involucrar varias áreas y contienen sus propios objetivos e hitos.
+
+Las cards del CEO Dashboard y del roadmap son puntos de entrada, no contenedores de toda la conversación. Cada una abre una página propia con una estructura adaptable al asunto: puede reunir contexto, preguntas, criterios, riesgos, evidencia, conclusiones, objetivos o hitos según sea necesario. El enlace de retorno conserva el tab desde el que se ingresó.
+
+Dentro de una página, las cards de frentes mantienen únicamente una síntesis visible. Cada frente recibe una página independiente desde su creación para conservar contexto, criterios provisionales, decisiones pequeñas y preguntas de reflexión sin perder la vista general de readiness.

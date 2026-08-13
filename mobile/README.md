@@ -49,6 +49,25 @@ commands through `scripts/ci_mobile_checks.sh`.
   future revisions.
 - Calendarization owns logical reminder times and upcoming events. CML07 selects
   APNs or deterministic local delivery per iPhone and never schedules both modes.
+- `Mi programa` activates an owned Program, displays its immutable dated snapshots
+  and delegates pause, resume and cancel to the versioned consumer API. Replacing
+  an active program and accepting empty days always require explicit confirmation.
+- `Propuestas` renders a bounded server projection and server-authorized actions.
+  Approval and application are separate confirmations; external-subject PPK
+  warnings require acknowledgement, and an applied result links to its trusted
+  Meal or DailyPlan library detail.
+- `Comparador` follows the web slot model for owned Foods, Meals and DailyPlans:
+  two initial positions, explicit add/remove and repeated entities when useful.
+  Food quantities are edited in grams with the established 100 g fallback;
+  non-Food comparisons reject quantities. Results are grouped by metric with
+  server-computed relative bars. Saved detail renders a frozen snapshot, while
+  explicit edit/save refreshes it from current source values.
+- `Asistente AI` lists persisted owner-scoped conversations and supports new or
+  resumed chats over the durable submit/poll API. A pending server job is recovered
+  when its route is reopened, one turn is allowed per conversation, and completed
+  jobs trigger a trusted chat-detail refresh instead of exposing raw conversation
+  or provider payloads. MCE06 renders a bounded typed card union and keeps all
+  prepared mutations behind an explicit trusted confirmation.
 - CML05 keeps label photos and raw OCR text on-device, exposes uncertain fields
   for editing and persists only explicitly confirmed private foods.
 - CML06 fetches localized App Store prices, passes the server-issued

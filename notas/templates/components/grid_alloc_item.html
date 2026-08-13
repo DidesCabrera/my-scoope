@@ -1,5 +1,5 @@
 {% load l10n %}
 <div class="alloc-cell alloc-cell--grid" style="--alloc: {{ value|unlocalize }};">
     <div class="alloc-bar alloc-bar--{{ kind }}"></div>
-    <span class="alloc-text">{{ value|floatformat:0 }}%</span>
+    <span class="alloc-text{% if value > 0 %} alloc-text--shadowed{% endif %}">{{ value|floatformat:0 }}%</span>
 </div>

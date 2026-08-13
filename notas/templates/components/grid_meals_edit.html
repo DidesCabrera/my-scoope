@@ -8,13 +8,15 @@
     <div class="data-grid-header data-grid-header--meals-edit">
         <div class="data-grid-col data-grid-col--drag"></div>
         <div class="data-grid-col data-grid-col--name">Comidas</div>
-        <div class="data-grid-col data-grid-col--kcal">Kcal</div>
-        <div class="data-grid-col data-grid-col--macro">P</div>
+        <div class="data-grid-col data-grid-col--kcal">Cal</div>
+        <div class="data-grid-col data-grid-col--kcal-share">% Cal</div>
+        <div class="data-grid-col data-grid-col--macro data-grid-group-start">P</div>
         <div class="data-grid-col data-grid-col--macro">C</div>
         <div class="data-grid-col data-grid-col--macro">F</div>
-        <div class="data-grid-col data-grid-col--alloc">P%</div>
-        <div class="data-grid-col data-grid-col--alloc">C%</div>
-        <div class="data-grid-col data-grid-col--alloc">F%</div>
+        <div class="data-grid-col data-grid-col--kcal-distribution">P|C|F%</div>
+        <div class="data-grid-alloc-group data-grid-alloc-group--header data-grid-group-start">
+            <div class="data-grid-col data-grid-col--alloc">P%</div><div class="data-grid-col data-grid-col--alloc">C%</div><div class="data-grid-col data-grid-col--alloc">F%</div>
+        </div>
         <div class="data-grid-col data-grid-col--action"></div>
         <div class="data-grid-col data-grid-col--action"></div>
         <div class="data-grid-col data-grid-col--action"></div>
@@ -42,10 +44,14 @@
             </div>
 
             <div class="data-grid-cell data-grid-cell--kcal">
-                {% include "components/grid_kcal_share_item.html" with value=row.rel.kcal_share kcal=row.rel.total_kcal %}
+                {{ row.rel.total_kcal|floatformat:0 }}
             </div>
 
-            <div class="data-grid-cell data-grid-cell--macro">
+            <div class="data-grid-cell data-grid-cell--kcal-share">
+                {% include "components/grid_alloc_item.html" with value=row.rel.kcal_share kind="kcal" %}
+            </div>
+
+            <div class="data-grid-cell data-grid-cell--macro data-grid-group-start">
                 {{ row.rel.g_protein|floatformat:1 }}
             </div>
 
@@ -57,16 +63,14 @@
                 {{ row.rel.g_fat|floatformat:1 }}
             </div>
 
-            <div class="data-grid-cell data-grid-cell--alloc">
-                {% include "components/grid_alloc_item.html" with value=row.rel.alloc_protein kind="protein" %}
+            <div class="data-grid-cell data-grid-cell--kcal-distribution">
+                {% include "components/macro_kcal_distribution.html" with protein=row.rel.kcal_distribution.protein carbs=row.rel.kcal_distribution.carbs fat=row.rel.kcal_distribution.fat %}
             </div>
 
-            <div class="data-grid-cell data-grid-cell--alloc">
-                {% include "components/grid_alloc_item.html" with value=row.rel.alloc_carbs kind="carbs" %}
-            </div>
-
-            <div class="data-grid-cell data-grid-cell--alloc">
-                {% include "components/grid_alloc_item.html" with value=row.rel.alloc_fat kind="fat" %}
+            <div class="data-grid-alloc-group data-grid-group-start">
+                <div class="data-grid-cell data-grid-cell--alloc">{% include "components/grid_alloc_item.html" with value=row.rel.alloc_protein kind="protein" %}</div>
+                <div class="data-grid-cell data-grid-cell--alloc">{% include "components/grid_alloc_item.html" with value=row.rel.alloc_carbs kind="carbs" %}</div>
+                <div class="data-grid-cell data-grid-cell--alloc">{% include "components/grid_alloc_item.html" with value=row.rel.alloc_fat kind="fat" %}</div>
             </div>
 
             <div class="data-grid-cell data-grid-cell--action">
