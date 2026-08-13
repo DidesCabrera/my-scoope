@@ -187,7 +187,7 @@ class LLMNutritionIntakeChatEngine:
             request,
             surface="ai_nutrition_intake",
             conversation_state=conversation_state,
-            extra_context={"llm_runtime": "outcome_first_llm_v1"},
+            extra_context={"llm_runtime": "outcome_first_llm_v1", "product_context": request.metadata.get("product_context", {})},
         )
         llm_request = merge_safe_context_into_request(request, safe_context=safe_context)
         llm_request = _with_llm_metadata(llm_request)

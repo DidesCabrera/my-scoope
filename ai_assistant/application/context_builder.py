@@ -422,6 +422,15 @@ def _recent_chat_objects(messages: Sequence[Any]) -> list[dict[str, Any]]:
         generated_card = getattr(message, "generated_plan_card", None)
         if isinstance(generated_card, Mapping):
             objects.append(_generic_card_context("generated_plan_card", generated_card))
+            continue
+        comparison_card = getattr(message, "saved_comparison_card", None)
+        if isinstance(comparison_card, Mapping):
+            objects.append({
+                "type": "saved_comparison_card",
+                "title": _bounded_text(comparison_card.get("title") or "Comparación guardada"),
+                "kind": _bounded_text(comparison_card.get("kind") or ""),
+                "item_count": min(int(comparison_card.get("item_count") or 0), MAX_LIST_ITEMS),
+            })
     return objects[-6:]
 
 

@@ -230,6 +230,306 @@ class ActiveProgramEnvelope(Schema):
     error: None = None
 
 
+class CalendarizationActivationInput(Schema):
+    program_id: int = Field(gt=0)
+    start_date: date
+    timezone_name: str = Field(min_length=1, max_length=64)
+    daily_notification_time: time = time(7, 0)
+    daily_notifications_enabled: bool = True
+    meal_notifications_enabled: bool = False
+    confirm_incomplete: bool = False
+    replace_current: bool = False
+
+
+class CalendarizationActivationData(ActiveProgramData):
+    empty_dates: list[date] = Field(default_factory=list)
+    replaced_calendarization_id: int | None = None
+
+
+class CalendarizationActivationEnvelope(Schema):
+    ok: Literal[True] = True
+    data: CalendarizationActivationData
+    error: None = None
+
+
+class CalendarizationHistoryItem(Schema):
+    id: int
+    program_name: str
+    status: str
+    start_date: date
+    end_date: date
+    timezone_name: str
+    days_total: int
+    days_with_plan: int
+    created_at: datetime
+
+
+class CalendarizationHistoryData(Schema):
+    items: list[CalendarizationHistoryItem]
+    count: int
+
+
+class CalendarizationHistoryEnvelope(Schema):
+    ok: Literal[True] = True
+    data: CalendarizationHistoryData
+    error: None = None
+
+
+class CalendarizedDayDetailData(ActiveProgramDay):
+    plan_snapshot: dict[str, Any] | None = None
+
+
+class CalendarizedDayDetailEnvelope(Schema):
+    ok: Literal[True] = True
+    data: CalendarizedDayDetailData
+    error: None = None
+
+
+class MobileActionData(Schema):
+    key: str
+    label: str
+    tone: Literal["default", "warning", "danger"] = "default"
+    requires_confirmation: bool = True
+
+
+class ProposalSummaryData(Schema):
+    id: int
+    title: str
+    summary: str
+    status: Literal["draft", "pending_review", "approved", "rejected", "cancelled", "applied"]
+    status_label: str
+    source: str
+    attachment_kind: Literal["meal", "dailyplan", "brief"]
+    attachment_label: str
+    attachment_name: str
+    is_reviewable: bool
+    created_at: datetime | None = None
+    actions: list[MobileActionData] = Field(default_factory=list)
+
+
+class ProposalListData(Schema):
+    items: list[ProposalSummaryData]
+    total: int
+    offset: int
+    limit: int
+    pending_count: int
+
+
+class ProposalListEnvelope(Schema):
+    ok: Literal[True] = True
+    data: ProposalListData
+    error: None = None
+
+
+class ProposalFactData(Schema):
+    label: str
+    value: str
+
+
+class ProposalKpisData(Schema):
+    total_kcal: float | None = None
+    protein: float | None = None
+    carbs: float | None = None
+    fat: float | None = None
+    ppk: float | None = None
+
+
+class ProposalFoodData(Schema):
+    food_id: int | None = None
+    food_name: str
+    quantity: float | None = None
+    unit: str = "g"
+
+
+class ProposalMealData(Schema):
+    name: str
+    foods: list[ProposalFoodData] = Field(default_factory=list)
+    kpis: ProposalKpisData | None = None
+
+
+class ProposalDailyPlanMealData(Schema):
+    hour: str | None = None
+    note: str = ""
+    meal: ProposalMealData
+
+
+class ProposalDailyPlanData(Schema):
+    name: str
+    meals: list[ProposalDailyPlanMealData] = Field(default_factory=list)
+    kpis: ProposalKpisData | None = None
+
+
+class ProposalSubjectWarningData(Schema):
+    requires_warning: bool
+    source_label: str
+    calculation_weight_label: str
+    title: str
+    message: str
+
+
+class ProposalAppliedResultData(Schema):
+    kind: Literal["meal", "dailyplan"] | None = None
+    object_id: int | None = None
+    object_name: str = ""
+
+
+class ProposalDetailData(ProposalSummaryData):
+    dailyplan_id: int | None = None
+    dailyplan_name: str = ""
+    created_by_username: str
+    reviewed_by_username: str | None = None
+    intent: str | None = None
+    entity_title: str
+    target_facts: list[ProposalFactData] = Field(default_factory=list)
+    current_facts: list[ProposalFactData] = Field(default_factory=list)
+    validation_facts: list[ProposalFactData] = Field(default_factory=list)
+    meal: ProposalMealData | None = None
+    dailyplan: ProposalDailyPlanData | None = None
+    subject_context_warning: ProposalSubjectWarningData
+    applied_result: ProposalAppliedResultData | None = None
+    applied_at: datetime | None = None
+
+
+class ProposalDetailEnvelope(Schema):
+    ok: Literal[True] = True
+    data: ProposalDetailData
+    error: None = None
+
+
+class ProposalApplyInput(Schema):
+    acknowledge_external_subject: bool = False
+
+
+class ComparisonKindData(Schema):
+    key: Literal["foods", "meals", "dailyplans"]
+    label: str
+    entity_label: str
+    uses_quantity: bool
+    quantity_unit: str | None = None
+    includes_ppk: bool
+
+
+class ComparisonMetadataData(Schema):
+    kinds: list[ComparisonKindData]
+
+
+class ComparisonMetadataEnvelope(Schema):
+    ok: Literal[True] = True
+    data: ComparisonMetadataData
+    error: None = None
+
+
+class ComparisonOptionData(Schema):
+    id: int
+    name: str
+
+
+class ComparisonOptionsData(Schema):
+    items: list[ComparisonOptionData]
+    total: int
+    offset: int
+    limit: int
+    search: str | None = None
+
+
+class ComparisonOptionsEnvelope(Schema):
+    ok: Literal[True] = True
+    data: ComparisonOptionsData
+    error: None = None
+
+
+class ComparisonSelectionInput(Schema):
+    id: int = Field(gt=0)
+    quantity: float | None = None
+
+
+class ComparisonRequestInput(Schema):
+    kind: Literal["foods", "meals", "dailyplans"]
+    selections: list[ComparisonSelectionInput] = Field(min_length=2)
+
+
+class ComparisonMetricValuesData(Schema):
+    calories: float
+    protein_g: float
+    carbs_g: float
+    fat_g: float
+    protein_per_kilogram: float | None = None
+
+
+class ComparisonMetricBarData(Schema):
+    position: int
+    id: int
+    label: str
+    quantity: float | None = None
+    value: float
+    formatted_value: str
+    relative_percentage: float
+
+
+class ComparisonMetricData(Schema):
+    key: Literal["total_kcal", "ppk", "protein", "carbs", "fat", "alloc_protein", "alloc_carbs", "alloc_fat"]
+    label: str
+    unit: str
+    bars: list[ComparisonMetricBarData]
+
+
+class ComparisonResultItemData(Schema):
+    position: int
+    id: int
+    name: str
+    quantity: float | None = None
+    values: ComparisonMetricValuesData
+
+
+class ComparisonResultData(Schema):
+    kind: Literal["foods", "meals", "dailyplans"]
+    kind_label: str
+    historical_snapshot: bool = False
+    saved_comparison_id: int | None = None
+    saved_comparison_name: str = ""
+    metrics: list[ComparisonMetricData]
+    items: list[ComparisonResultItemData]
+
+
+class ComparisonResultEnvelope(Schema):
+    ok: Literal[True] = True
+    data: ComparisonResultData
+    error: None = None
+
+
+class SavedComparisonSummaryData(Schema):
+    id: int
+    name: str
+    kind: Literal["foods", "meals", "dailyplans"]
+    kind_label: str
+    item_count: int
+    updated_at: datetime
+
+
+class SavedComparisonListData(Schema):
+    items: list[SavedComparisonSummaryData]
+    total: int
+    offset: int
+    limit: int
+
+
+class SavedComparisonListEnvelope(Schema):
+    ok: Literal[True] = True
+    data: SavedComparisonListData
+    error: None = None
+
+
+class SavedComparisonDetailData(ComparisonResultData):
+    editable_selections: list[ComparisonSelectionInput]
+    updated_at: datetime
+
+
+class SavedComparisonDetailEnvelope(Schema):
+    ok: Literal[True] = True
+    data: SavedComparisonDetailData
+    error: None = None
+
+
 class WeightItem(Schema):
     id: int
     measured_on: date
@@ -419,6 +719,124 @@ class FoodPageEnvelope(Schema):
     error: None = None
 
 
+class LibraryMacroData(Schema):
+    grams: float
+    allocation: float
+    per_kilogram: float | None = None
+
+
+class LibraryNutritionData(Schema):
+    calories: float
+    protein: LibraryMacroData
+    carbs: LibraryMacroData
+    fat: LibraryMacroData
+
+
+class LibraryIndicatorData(Schema):
+    icon: Literal["day", "food", "meal", "dailyPlan", "week"] | None = None
+    label: str
+    value: int | str
+
+
+class LibraryCalorieDistributionData(Schema):
+    protein: float
+    carbs: float
+    fat: float
+
+
+class LibraryFoodPanelItemData(Schema):
+    id: str
+    name: str
+    quantity: float
+    quantity_unit: str
+    calories: float
+    calorie_share: float
+    calorie_distribution: LibraryCalorieDistributionData
+    protein_grams: float
+    carbs_grams: float
+    fat_grams: float
+    protein_allocation: float
+    carbs_allocation: float
+    fat_allocation: float
+
+
+class LibraryMealPanelItemData(Schema):
+    id: str
+    detail_id: int
+    name: str
+    time: str | None = None
+    foods: list[LibraryFoodPanelItemData]
+    calories: float
+    calorie_share: float
+    calorie_distribution: LibraryCalorieDistributionData
+    protein_grams: float
+    carbs_grams: float
+    fat_grams: float
+    protein_allocation: float
+    carbs_allocation: float
+    fat_allocation: float
+
+
+class LibraryWeekDayData(Schema):
+    day_label: str
+    plan_name: str | None = None
+
+
+class LibraryWeekPanelItemData(Schema):
+    id: str
+    week_number: int
+    days: list[LibraryWeekDayData]
+    calories: float
+    calorie_share: float
+    calorie_distribution: LibraryCalorieDistributionData
+    protein_grams: float
+    carbs_grams: float
+    fat_grams: float
+    protein_allocation: float
+    carbs_allocation: float
+    fat_allocation: float
+
+
+class LibraryPanelData(Schema):
+    kind: Literal["none", "foods", "meals", "weeks"]
+    foods: list[LibraryFoodPanelItemData] = Field(default_factory=list)
+    meals: list[LibraryMealPanelItemData] = Field(default_factory=list)
+    weeks: list[LibraryWeekPanelItemData] = Field(default_factory=list)
+
+
+class LibraryItemData(Schema):
+    id: int
+    entity: Literal["food", "meal", "dailyPlan", "program"]
+    name: str
+    subtitle: str
+    nutrition: LibraryNutritionData
+    indicators: list[LibraryIndicatorData]
+    panel: LibraryPanelData
+    creator: str
+    created_at: datetime
+    can_calendarize: bool = False
+
+
+class LibraryPageData(Schema):
+    items: list[LibraryItemData]
+    total: int
+    offset: int
+    limit: int
+    search: str | None = None
+
+
+class LibraryPageEnvelope(Schema):
+    ok: Literal[True] = True
+    data: LibraryPageData
+    error: None = None
+
+
+class LibraryItemEnvelope(Schema):
+    ok: Literal[True] = True
+    data: LibraryItemData
+    error: None = None
+
+
 class FoodLabelCaptureInput(Schema):
     name: str = Field(min_length=1, max_length=100)
     protein_g: float = Field(ge=0, le=100)
@@ -468,6 +886,7 @@ class AITurnInput(Schema):
     message: str = Field(min_length=1, max_length=2000)
     idempotency_key: str = Field(min_length=8, max_length=120)
     chat_id: int | None = None
+    comparison_id: int | None = Field(default=None, gt=0)
 
 
 class AIJobAcceptedData(Schema):
@@ -482,11 +901,144 @@ class AIJobAcceptedEnvelope(Schema):
     error: None = None
 
 
+class AssistantAvailabilityData(Schema):
+    is_available: bool
+    label: str
+    queue_available: bool
+    available_credits: int
+    monthly_credit_limit: int
+    daily_credit_limit: int
+    max_message_chars: int
+
+
+class AIPendingTurnData(Schema):
+    job_id: str
+    status: Literal["queued", "running", "retrying"]
+    retry_after_ms: int
+
+
+class AIChatCardItemData(Schema):
+    key: str
+    label: str
+    value: str
+    is_pending: bool = False
+
+
+class AIChatDraftCardData(Schema):
+    type: Literal["profile_draft", "preference_draft", "proposal_preferences"]
+    title: str
+    subtitle: str = ""
+    items: list[AIChatCardItemData] = Field(default_factory=list)
+    status: str = ""
+
+
+class AIChatProposalCardData(Schema):
+    type: Literal["proposal_review"]
+    proposal_id: int
+    title: str
+    summary: str = ""
+    status: str = ""
+
+
+class AIChatComparisonCardData(Schema):
+    type: Literal["saved_comparison"]
+    comparison_id: int
+    kind: Literal["foods", "meals", "dailyplans"]
+    title: str
+
+
+class AIChatPreparedActionCardData(Schema):
+    type: Literal["prepared_action"]
+    action_id: str
+    title: str
+    summary: str = ""
+    status: Literal["prepared", "committed", "cancelled", "expired", "failed"]
+    destructive: bool = False
+    expires_at: datetime
+
+
+class AIChatGeneratedPlanCardData(Schema):
+    type: Literal["generated_plan"]
+    proposal_id: int | None = None
+    title: str
+    summary: str = ""
+    is_current: bool = False
+    items: list[AIChatCardItemData] = Field(default_factory=list)
+
+
+AIChatCardData = AIChatDraftCardData | AIChatProposalCardData | AIChatComparisonCardData | AIChatPreparedActionCardData | AIChatGeneratedPlanCardData
+
+
+class AIChatMessageData(Schema):
+    id: str
+    role: Literal["user", "assistant"]
+    text: str
+    created_at: datetime | None = None
+    has_structured_content: bool = False
+    cards: list[AIChatCardData] = Field(default_factory=list)
+
+
+class AIPreparedActionResultData(Schema):
+    action_id: str
+    status: Literal["committed", "cancelled"]
+    refresh_chat: bool = True
+
+
+class AIPreparedActionResultEnvelope(Schema):
+    ok: Literal[True] = True
+    data: AIPreparedActionResultData
+    error: None = None
+
+
+class AIChatSummaryData(Schema):
+    id: int
+    title: str
+    status: str
+    status_label: str
+    last_message_preview: str
+    message_count: int
+    proposal_id: int | None = None
+    updated_at: datetime
+
+
+class AIChatListData(Schema):
+    items: list[AIChatSummaryData]
+    total: int
+    offset: int
+    limit: int
+    availability: AssistantAvailabilityData
+    pending_new_turn: AIPendingTurnData | None = None
+
+
+class AIChatListEnvelope(Schema):
+    ok: Literal[True] = True
+    data: AIChatListData
+    error: None = None
+
+
+class AIChatDetailData(AIChatSummaryData):
+    messages: list[AIChatMessageData]
+    availability: AssistantAvailabilityData
+    pending_turn: AIPendingTurnData | None = None
+
+
+class AIChatDetailEnvelope(Schema):
+    ok: Literal[True] = True
+    data: AIChatDetailData
+    error: None = None
+
+
+class AITurnResultData(Schema):
+    chat_id: int
+    conversation_updated: Literal[True] = True
+    has_iteration_warning: bool = False
+
+
 class AIJobResultData(Schema):
     job_id: str
     status: str
     retry_after_ms: int | None = None
-    result: dict[str, Any] | None = None
+    result: AITurnResultData | None = None
 
 
 class AIJobResultEnvelope(Schema):

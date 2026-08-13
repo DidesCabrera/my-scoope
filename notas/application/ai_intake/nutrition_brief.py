@@ -297,6 +297,10 @@ class NutritionConversationMessage:
     proposal_preferences_card: dict | None = None
     proposal_review_card: dict | None = None
     prepared_action_card: dict | None = None
+    saved_comparison_card: dict | None = None
+
+
+CONVERSATION_CARD_FIELDS = ("generated_plan_card", "profile_draft_card", "preference_draft_card", "proposal_preferences_card", "proposal_review_card", "prepared_action_card", "saved_comparison_card")
 
 
 @dataclass(frozen=True)
@@ -1292,22 +1296,10 @@ def _append_unique(values: list[str], value: str) -> None:
 def serialize_conversation(state: NutritionConversationState) -> dict:
     serialized_messages = []
     for message in state.messages:
-        if not message.text and not message.generated_plan_card and not message.profile_draft_card and not message.preference_draft_card and not message.proposal_preferences_card and not message.proposal_review_card and not message.prepared_action_card:
+        cards = {name: value for name in CONVERSATION_CARD_FIELDS if (value := getattr(message, name))}
+        if not message.text and not cards:
             continue
-        item = {"role": message.role, "text": message.text}
-        if message.generated_plan_card:
-            item["generated_plan_card"] = message.generated_plan_card
-        if message.profile_draft_card:
-            item["profile_draft_card"] = message.profile_draft_card
-        if message.preference_draft_card:
-            item["preference_draft_card"] = message.preference_draft_card
-        if message.proposal_preferences_card:
-            item["proposal_preferences_card"] = message.proposal_preferences_card
-        if message.proposal_review_card:
-            item["proposal_review_card"] = message.proposal_review_card
-        if message.prepared_action_card:
-            item["prepared_action_card"] = message.prepared_action_card
-        serialized_messages.append(item)
+        serialized_messages.append({"role": message.role, "text": message.text, **cards})
 
     return {
         "brief": serialize_brief(state.result.brief),
@@ -1327,45 +1319,9 @@ def deserialize_conversation(payload: dict | None) -> NutritionConversationState
     for item in payload.get("messages") or []:
         role = str(item.get("role") or "").strip()
         text = str(item.get("text") or "").strip()
-        generated_plan_card = item.get("generated_plan_card")
-        if not isinstance(generated_plan_card, dict):
-            generated_plan_card = None
-        profile_draft_card = item.get("profile_draft_card")
-        if not isinstance(profile_draft_card, dict):
-            profile_draft_card = None
-        preference_draft_card = item.get("preference_draft_card")
-        if not isinstance(preference_draft_card, dict):
-            preference_draft_card = None
-        proposal_preferences_card = item.get("proposal_preferences_card")
-        if not isinstance(proposal_preferences_card, dict):
-            proposal_preferences_card = None
-        proposal_review_card = item.get("proposal_review_card")
-        if not isinstance(proposal_review_card, dict):
-            proposal_review_card = None
-        prepared_action_card = item.get("prepared_action_card")
-        if not isinstance(prepared_action_card, dict):
-            prepared_action_card = None
-        if role in {"user", "assistant"} and (
-            text
-            or generated_plan_card
-            or profile_draft_card
-            or preference_draft_card
-            or proposal_preferences_card
-            or proposal_review_card
-            or prepared_action_card
-        ):
-            messages.append(
-                NutritionConversationMessage(
-                    role=role,
-                    text=text,
-                    generated_plan_card=generated_plan_card,
-                    profile_draft_card=profile_draft_card,
-                    preference_draft_card=preference_draft_card,
-                    proposal_preferences_card=proposal_preferences_card,
-                    proposal_review_card=proposal_review_card,
-                    prepared_action_card=prepared_action_card,
-                )
-            )
+        cards = {name: value for name in CONVERSATION_CARD_FIELDS if isinstance((value := item.get(name)), dict)}
+        if role in {"user", "assistant"} and (text or cards):
+            messages.append(NutritionConversationMessage(role=role, text=text, **cards))
 
     return NutritionConversationState(
         messages=messages[-AI_NUTRITION_CONVERSATION_MESSAGE_LIMIT:],
