@@ -1,0 +1,33 @@
+{% extends "admin_operations/base.html" %}
+{% block title %}{{ vm.content.title }}{% endblock %}
+{% block admin_operations_subtopbar %}<div class="admin-operations-subtopbar">{% include "admin_operations/_food_catalog_tabs.html" with active_tab="readiness" %}</div>{% endblock %}
+{% block content %}
+<div class="page admin-analytics-page admin-operations-page">
+  <a class="admin-operations-back-link" href="{% url 'admin_operations_food_catalog_readiness' %}"><i data-lucide="arrow-left"></i> Volver a readiness</a>
+  <section class="card-detail-block">
+    <div class="card-title-row"><div><p class="section-eyebrow">{{ vm.content.environment }} · {{ vm.content.status }}</p><h3>{{ vm.content.title }}</h3><p class="muted-text">{{ vm.content.subtitle }}</p></div></div>
+    <p><strong>Conteos:</strong> {{ vm.content.counts_label }}</p><p><strong>Motivo:</strong> {{ vm.content.reason }}</p><p><strong>Hash del manifiesto:</strong> {{ vm.content.manifest_hash_label }}</p>
+    {% if vm.content.can_apply or vm.content.can_revert %}
+      <form method="post" action="{{ vm.content.action_url }}" data-admin-operations-confirm data-confirm-message="¿Confirmar esta operación sobre el lote?">
+        {% csrf_token %}<label><span>Motivo obligatorio</span><textarea name="reason" required></textarea></label>
+        {% if vm.content.can_apply %}<button class="btn-secondary" name="action" value="apply" type="submit">Aplicar propuestas</button>{% endif %}
+        {% if vm.content.can_revert %}<button class="btn-secondary" name="action" value="revert" type="submit">Revertir lote</button>{% endif %}
+      </form>
+    {% endif %}
+  </section>
+
+  {% for group in vm.content.groups %}
+    <section class="card-detail-block">
+      <div class="card-title-row"><div><p class="section-eyebrow">Alimento #{{ group.food_pk }} · {{ group.status_label }}</p><h3><a href="{{ group.food_detail_url }}" target="_blank" rel="noopener noreferrer">{{ group.title }}</a></h3><p class="muted-text">{{ group.source_label }}{% if group.source_url %} · <a href="{{ group.source_url }}" target="_blank" rel="noopener noreferrer">Abrir evidencia</a>{% endif %}</p></div></div>
+      <div class="admin-operations-table-card"><table class="admin-operations-table">
+        <thead><tr><th>Campo</th><th>Actual</th><th>Propuesto</th><th>Política</th><th>Confianza</th><th>Fundamento</th></tr></thead>
+        <tbody>{% for proposal in group.proposals %}<tr>
+          <td data-label="Campo"><strong>{{ proposal.field_label }}</strong></td><td data-label="Actual">{{ proposal.current_label }}</td><td data-label="Propuesto">{{ proposal.proposed_label }}</td><td data-label="Política">{{ proposal.policy_label }}</td><td data-label="Confianza">{{ proposal.confidence_label }}</td><td data-label="Fundamento">{{ proposal.rationale }}{% if proposal.evidence %}<small>{{ proposal.evidence|join:" · " }}</small>{% endif %}</td>
+        </tr>{% endfor %}</tbody>
+      </table></div>
+    </section>
+  {% empty %}
+    <section class="card-detail-block"><div class="admin-operations-empty-state"><i data-lucide="file-question"></i><div><h4>Sin propuestas</h4><p class="muted-text">Este lote no contiene propuestas revisables.</p></div></div></section>
+  {% endfor %}
+</div>
+{% endblock %}
