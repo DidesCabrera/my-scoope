@@ -1,17 +1,16 @@
 <div class="list-page-header list-page-header--{{ vm.ui.entity }} list-page-header--scope-{{ vm.ui.scope }} js-header-meta-sentinel">
-  <i
-    data-lucide="{% if vm.ui.page_icon %}{{ vm.ui.page_icon }}{% else %}{{ vm.ui.icon }}{% endif %}"
-    class="list-page-header__icon list-page-header__icon--{{ vm.ui.entity }}{% if vm.ui.scope == 'explore' %} list-page-header__icon--explore{% endif %}"
-  ></i>
-
-  <div class="list-page-header__copy">
+  <div class="list-page-header__identity">
+    <i
+      data-lucide="{% if vm.ui.page_icon %}{{ vm.ui.page_icon }}{% else %}{{ vm.ui.icon }}{% endif %}"
+      class="list-page-header__icon list-page-header__icon--{{ vm.ui.entity }}{% if vm.ui.scope == 'explore' %} list-page-header__icon--explore{% endif %}"
+    ></i>
     <h2 class="list-page-header__title">{{ vm.ui.title }}</h2>
+  </div>
 
-    <div class="list-page-header__indicator" aria-label="Total de elementos">
-      <span class="structural-item">
-        <strong>{% if vm.content.child_cards %}{{ vm.content.child_cards|length }}{% elif vm.content.proposals %}{{ vm.content.proposals|length }}{% elif vm.content.inbox_items %}{{ vm.content.inbox_items|length }}{% elif vm.content.item_count %}{{ vm.content.item_count }}{% else %}0{% endif %}</strong>
-        <i data-lucide="{{ vm.ui.icon }}" class="structural-icon main" aria-hidden="true"></i>
-      </span>
-    </div>
+  <div class="list-page-header__indicator" aria-label="Total de elementos">
+    <span class="structural-item">
+      <strong>{% if vm.content.child_cards %}{{ vm.content.child_cards|length }}{% elif vm.content.proposals %}{{ vm.content.proposals|length }}{% elif vm.content.inbox_items %}{{ vm.content.inbox_items|length }}{% elif vm.content.item_count %}{{ vm.content.item_count }}{% else %}0{% endif %}</strong>
+      <i data-lucide="{{ vm.ui.icon }}" class="structural-icon main" aria-hidden="true"></i>
+    </span>
   </div>
 </div>

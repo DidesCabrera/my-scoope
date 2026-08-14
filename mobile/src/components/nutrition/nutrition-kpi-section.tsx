@@ -1,7 +1,6 @@
 import { StyleProp, StyleSheet, Text, useWindowDimensions, View, ViewStyle } from "react-native";
 
 import { tokens } from "@/design/tokens";
-
 import { AllocationTone, KpiAllocationBar } from "./allocation-bar";
 import { CalorieValue } from "./calorie-value";
 import { ProteinPerKilogramBadge } from "./protein-per-kilogram-badge";
@@ -46,7 +45,7 @@ function MacroRow({ label, tone, grams, allocation, perKilogram, density, fontSi
       </View>
       <Text style={[styles.grams, compact && styles.gramsCompact, { fontSize }]}>{rounded(grams)} g</Text>
       <KpiAllocationBar
-        accessibilityLabel={`${label}: ${rounded(grams)} gramos, ${rounded(allocation)}% de distribucion`}
+        accessibilityLabel={`${label}: ${rounded(grams)} gramos, ${rounded(allocation)}% de distribución`}
         size={density}
         style={[styles.allocationBar, refined && styles.allocationBarSlightlyTight]}
         textSize={fontSize}
@@ -72,11 +71,12 @@ export function NutritionKpiSection({
   return (
     <View style={[styles.container, compact && styles.containerCompact, style]}>
       <View
-        accessibilityLabel={`${rounded(calories)} calorias`}
+        accessibilityLabel={`${rounded(calories)} calorías`}
         accessible
         style={[
           styles.calories,
           compact && styles.caloriesCompact,
+          { height: compact ? "100%" : "90%" },
         ]}>
         <Text
           style={[
@@ -84,13 +84,13 @@ export function NutritionKpiSection({
             compact && styles.caloriesLabelCompact,
             !compact && styles.caloriesLabelRegular,
           ]}>
-          Calorias
+          Calorías
         </Text>
         <CalorieValue compact value={rounded(calories)} />
         <Text style={[styles.caloriesUnit, compact && styles.caloriesLabelCompact]}>kcal</Text>
       </View>
       <View style={styles.macros}>
-        <MacroRow density={density} fontSize={macroFontSize} label="Proteina" refined={refined} tone="protein" {...protein} />
+        <MacroRow density={density} fontSize={macroFontSize} label="Proteína" refined={refined} tone="protein" {...protein} />
         <MacroRow density={density} fontSize={macroFontSize} label="Carbos" refined={refined} tone="carbs" {...carbs} />
         <MacroRow density={density} fontSize={macroFontSize} isLast label="Grasas" refined={refined} tone="fat" {...fat} />
       </View>
@@ -101,22 +101,22 @@ export function NutritionKpiSection({
 const styles = StyleSheet.create({
   container: { alignItems: "stretch", flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0, width: "100%" },
   containerCompact: { gap: tokens.spacing.compact },
-  calories: { alignItems: "center", alignSelf: "center", aspectRatio: 1, backgroundColor: tokens.color.kcalSurface, borderColor: tokens.color.kcalBorder, borderRadius: tokens.radius.card, borderWidth: 3, flexShrink: 0, justifyContent: "center", minHeight: 102, paddingHorizontal: 5, width: 102 },
-  caloriesCompact: { borderRadius: tokens.radius.lg, borderWidth: 2, minHeight: 82, width: 82 },
-  caloriesLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "500", letterSpacing: 0 },
+  calories: { alignItems: "center", alignSelf: "center", aspectRatio: 1, backgroundColor: tokens.color.kcalSurface, borderColor: tokens.color.kcalBorder, borderRadius: tokens.radius.card, borderWidth: 3, flexShrink: 0, justifyContent: "center", paddingHorizontal: 5 },
+  caloriesCompact: { borderRadius: tokens.radius.lg, borderWidth: 2 },
+  caloriesLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, letterSpacing: 0 },
   caloriesLabelCompact: { fontSize: tokens.type.label },
   caloriesLabelRegular: { fontSize: 10 },
-  caloriesUnit: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: "500", letterSpacing: 0 },
+  caloriesUnit: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.weight.medium, letterSpacing: 0 },
   macros: { flex: 1, minWidth: 0 },
   macroRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.xs, minWidth: 0, paddingVertical: 5 },
   macroRowSlightlyTight: { paddingVertical: tokens.spacing.xs },
   macroRowCompact: { gap: 3, paddingVertical: 4 },
   macroRowLast: { borderBottomWidth: 0 },
-  macroLabel: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: "500", letterSpacing: 0, width: 52 },
+  macroLabel: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, letterSpacing: 0, width: 52 },
   macroLabelCompact: { width: 52 },
   ppkSlot: { alignItems: "stretch", justifyContent: "center", width: 60 },
   ppkSlotCompact: { width: 60 },
-  grams: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: "500", fontVariant: ["tabular-nums"], letterSpacing: 0, textAlign: "right", width: 40 },
+  grams: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, fontVariant: ["tabular-nums"], letterSpacing: 0, textAlign: "right", width: 40 },
   gramsCompact: { width: 40 },
   allocationBar: { flex: 1, minWidth: 0, width: "auto" },
   allocationBarSlightlyTight: { height: 22 },

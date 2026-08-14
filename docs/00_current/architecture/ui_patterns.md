@@ -198,7 +198,9 @@ Preferir BEM:
 
 ## Tokens y cascada
 
-Los estilos nuevos deben usar tokens semánticos de `tokens.css`.
+Los estilos nuevos deben usar tokens semánticos generados desde
+`design/ui-contract.json`. `tokens.css` mantiene compatibilidad histórica y
+`ui-contract.generated.css`, cargado después, fija el contrato vigente.
 
 Priorizar:
 

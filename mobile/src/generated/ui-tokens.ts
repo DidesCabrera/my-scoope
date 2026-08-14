@@ -1,4 +1,5 @@
-{
+// This file is generated from design/ui-contract.json. Do not edit by hand.
+export const tokens = {
   "contract": "myscoope.visual-grammar.v2",
   "mode": "dark",
   "color": {
@@ -83,4 +84,13 @@
   "layout": {
     "reducedInset": 12
   }
-}
+} as const;
+
+export const font = {
+  "regular": "System",
+  "medium": "System",
+  "semibold": "System",
+  "bold": "System"
+} as const;
+
+export type VisualTokens = typeof tokens;

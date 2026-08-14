@@ -40,6 +40,28 @@ Antes de crear un nuevo componente, revisar si el caso puede resolverse con uno 
 | `overflow-menu` | primitive | menú contextual de cards/headers | z-index mediante `--z-dropdown` |
 | `picker-list` | component | listas de selección | no mezclar reglas propias de Food Picker si el patrón es genérico |
 
+## React Native
+
+La exportación pública única vive en `mobile/src/components/ui/index.ts`. Las
+pantallas no deben importar archivos internos de esta carpeta.
+
+| Exportación | Responsabilidad |
+|---|---|
+| `Screen`, `Brand`, `AppHeader` | layout y shell nativo |
+| `SectionTitle`, `textStyles` | tipografía |
+| `Button`, `Field`, `ChoiceRow` | controles |
+| `InlineNotice`, `ProgressBar`, `LoadingState` | feedback |
+| `Card`, `Pill` | superficies |
+| `EntityCard`, `EntityHeading`, `ContentPanel`, `PanelTabs`, `DetailSection`, `CollectionEmptyState`, `MessageCard` | composición de producto equivalente al vocabulario Django |
+
+Los componentes nutricionales se exportan desde
+`mobile/src/components/nutrition/index.ts`: `MacroSummary`,
+`NutritionMetric`, `NutrientProgress`, `KpiAllocationBar` y
+`PanelAllocationBar`. Las dos barras alloc comparten normalización y colores
+nutricionales; solo cambia su composición contextual. `NutritionKpiSection`
+compone calorías, gramos, PPK y las tres barras KPI sin calcular datos de
+dominio; `ProteinPerKilogramBadge` es la etiqueta PPK reutilizable.
+
 ## Features con estilos propios
 
 | Feature | Archivo | Contrato |

@@ -5,7 +5,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { userFacingError } from "@/api/errors";
 import type { ReminderSettings, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
-import { AppHeader, Button, Card, ChoiceRow, Field, InlineNotice, LoadingState, Screen, SectionTitle, textStyles } from "@/components/ui/primitives";
+import { AppHeader, Button, Card, ChoiceRow, Field, InlineNotice, LoadingState, Screen, SectionTitle, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { NativeReminderState, syncNativeReminders } from "@/notifications/native-reminders";
 

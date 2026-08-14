@@ -1,4 +1,4 @@
-import { Redirect, useRouter } from "expo-router";
+import { type Href, Redirect, useRouter } from "expo-router";
 import * as Linking from "expo-linking";
 import { Alert, Text } from "react-native";
 import { useState } from "react";
@@ -6,7 +6,7 @@ import { useState } from "react";
 import { userFacingError } from "@/api/errors";
 import type { AccountDeletionData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
-import { AppHeader, Button, Card, Field, InlineNotice, Screen, SectionTitle, textStyles } from "@/components/ui/primitives";
+import { AppHeader, Button, Card, Field, InlineNotice, Screen, SectionTitle, textStyles } from "@/components/ui";
 import { appConfig } from "@/config/app-config";
 import { tokens } from "@/design/tokens";
 
@@ -52,6 +52,9 @@ export default function AccountScreen() {
         <Button label="Reportar contenido o un problema" onPress={() => void Linking.openURL(`mailto:${supportEmail}?subject=Reporte%20desde%20My%20Scoope`)} variant="secondary" />
       </Card>
       <InlineNotice tone="warning">My Scoope no reemplaza atención médica. Revisa cualquier cálculo, lectura OCR o propuesta asistida por IA antes de aplicarla.</InlineNotice>
+      {__DEV__ ? (
+        <Button label="Abrir galería del sistema UI" onPress={() => router.push("/dev/ui-gallery" as Href)} variant="secondary" />
+      ) : null}
       <Card accent={tokens.color.danger}>
         <SectionTitle title="Eliminar mi cuenta" />
         <Text style={textStyles.muted}>Esta acción revoca el acceso inmediatamente y elimina o anonimiza tus datos conforme a nuestra política. No se puede deshacer.</Text>
