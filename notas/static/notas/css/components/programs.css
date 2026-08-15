@@ -2311,3 +2311,140 @@
     left: auto;
   }
 }
+
+/* Program week card: calendar-like day circles ============================= */
+.program-week-child-card__days {
+  gap: clamp(0.35rem, 1.2vw, 0.75rem);
+  align-items: center;
+  justify-items: center;
+  margin: 0;
+}
+
+.program-week-child-card__days .program-day-cell {
+  display: grid;
+  grid-template-rows: auto auto;
+  align-content: center;
+  align-items: center;
+  justify-content: center;
+  justify-items: center;
+  gap: 7px;
+  width: 100%;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-main);
+}
+
+.program-week-child-card__days .program-day-cell__day-initial {
+  justify-self: center;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 750;
+  line-height: 1;
+}
+
+.program-week-child-card__days .program-day-cell__content,
+.program-week-child-card__days .program-day-cell__add {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(48px, 7vw, 64px);
+  height: auto;
+  min-height: 0;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 2px solid var(--border-soft);
+  border-radius: 50%;
+  background: var(--surface-card);
+  color: var(--text-main);
+  transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+}
+
+.program-week-child-card__days .program-day-cell.has-plan .program-day-cell__content {
+  border-style: solid;
+  border-color: var(--border-soft);
+}
+
+.program-week-child-card__days .program-day-cell.is-empty .program-day-cell__add {
+  border-style: dashed;
+  border-color: var(--border-soft);
+}
+
+.program-week-child-card__days .program-day-cell.is-picking .program-day-cell__add,
+.program-week-child-card__days .program-day-cell.is-picking .program-day-cell__content {
+  border-color: var(--text-main);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--text-main) 35%, transparent);
+}
+
+.program-week-child-card__days .program-day-cell.is-selected .program-day-cell__content::after,
+.program-week-child-card__days .program-day-cell.is-selected .program-day-cell__add::after {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  border-radius: 50%;
+  padding: 5px;
+  background: var(--gradient-instagram);
+  pointer-events: none;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+
+.program-week-child-card__days .program-day-cell:hover .program-day-cell__content,
+.program-week-child-card__days .program-day-cell:hover .program-day-cell__add,
+.program-week-child-card__days .program-day-cell:focus-visible .program-day-cell__content,
+.program-week-child-card__days .program-day-cell:focus-visible .program-day-cell__add {
+  transform: translateY(-2px);
+}
+
+.program-week-child-card__days .program-day-cell:focus-visible {
+  outline: 2px solid var(--interactive-primary);
+  outline-offset: 5px;
+  border-radius: var(--radius-md);
+}
+
+.program-week-child-card__days .program-day-cell__icon,
+.program-week-child-card__days .program-day-cell__add-icon {
+  width: clamp(20px, 3vw, 26px);
+  height: clamp(20px, 3vw, 26px);
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: currentColor !important;
+  stroke: currentColor !important;
+}
+
+.program-week-child-card__days .program-day-cell.has-plan .program-day-cell__icon {
+  width: clamp(28px, 3.6vw, 34px);
+  height: clamp(28px, 3.6vw, 34px);
+  padding: 7px;
+  border-radius: 9px;
+  background: var(--entity-dailyplan);
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+.program-week-child-card__days .program-day-cell.is-empty .program-day-cell__add-icon {
+  color: var(--entity-program) !important;
+  stroke: var(--entity-program) !important;
+}
+
+.program-week-child-card__days .program-day-cell.has-plan.is-selected {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.program-week-child-card__days .program-day-cell.has-plan.is-selected .program-day-cell__content,
+.program-week-child-card__days .program-day-cell.is-selected .program-day-cell__add {
+  border-color: #000000;
+  box-shadow: none;
+}

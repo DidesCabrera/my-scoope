@@ -19,11 +19,13 @@
     {% else %}
       <h3>{{ titulo.name }}</h3>
     {% endif %}
-    <div class="label-class">
-      {% for class in titulo.classes %}
-        <span class="class-tag">{{ class }}</span>
-      {% endfor %}
-    </div>
+    {% if titulo.classes %}
+      <div class="label-class">
+        {% for class in titulo.classes %}
+          <span class="class-tag">{{ class }}</span>
+        {% endfor %}
+      </div>
+    {% endif %}
     {% if titulo.badges %}
       <div class="card-title-badges" aria-label="Características">
         {% for badge in titulo.badges %}

@@ -50,12 +50,6 @@
         </div>
       </header>
 
-      {% if vm.content.week.kpi_ranges %}
-        <section class="card-kpi program-week-detail-kpi" aria-label="Rangos KPI de Semana {{ vm.content.week.week_number }}">
-          {% include "components/dash_kpi_range.html" with ranges=vm.content.week.kpi_ranges modifier="dash-kpi-range--week-card" %}
-        </section>
-      {% endif %}
-
       <div class="program-week-detail-chart" aria-label="Variación diaria de Semana {{ vm.content.week.week_number }}">
         {% include "components/program_metric_chart_week.html" with chart=vm.content.week.chart modifier="program-chart-panel--week program-chart-panel--week-detail" %}
       </div>

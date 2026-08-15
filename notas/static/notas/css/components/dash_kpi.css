@@ -360,18 +360,14 @@ padding: 0 4px;
 .dash-kpi-range .dash-kpi-range__tot h2,
 .dash-kpi-range .dash-kpi-range__tot .dash-kpi-range__min,
 .dash-kpi-range--card .tot h2,
-.dash-kpi-range--card .tot .dash-kpi-range__min,
-.dash-kpi-range--week-card .tot h2,
-.dash-kpi-range--week-card .tot .dash-kpi-range__min {
+.dash-kpi-range--card .tot .dash-kpi-range__min {
   font-size: 1.35rem;
 }
 
 /* KPI range total: max/min descriptor ====================================== */
-.dash-kpi-range p.dash-kpi-range__spread,
-.dash-kpi-range--week-card p.dash-kpi-range__spread {
+.dash-kpi-range p.dash-kpi-range__spread {
   font-size: 10px;
   font-weight: 350;
   line-height: 1;
   opacity: 0.9;
 }
-

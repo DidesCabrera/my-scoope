@@ -36,6 +36,34 @@ flex: 1 1 auto;
 min-width: 0;
 }
 
+.entity-heading__main.main-title.main-card,
+.card-title-comp .main-title.main-card {
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+}
+
+.main-title.main-card .card-title-eyebrow {
+order: 1;
+}
+
+.main-title.main-card .block-title-card-edit {
+order: 2;
+}
+
+.main-title.main-card > h1 {
+order: 2;
+}
+
+.main-title.main-card > .structural-indicators {
+order: 3;
+}
+
+.main-title.main-card > .label-class,
+.main-title.main-card > .card-title-badges {
+order: 4;
+}
+
 .main-title h3 {
 width: 100%;
 margin: 0;
@@ -217,6 +245,36 @@ display: inline-flex;
 align-items: center;
 gap: 4px;
 line-height: 1;
+--structural-entity-color: var(--text-muted);
+color: var(--structural-entity-color);
+}
+
+.structural-item:has([data-lucide="carrot"]) {
+--structural-entity-color: var(--entity-food);
+}
+
+.structural-item:has([data-lucide="utensils"]) {
+--structural-entity-color: var(--entity-meal);
+}
+
+.structural-item:has([data-lucide="clipboard-list"]) {
+--structural-entity-color: var(--entity-dailyplan);
+}
+
+.structural-item:has([data-lucide="calendar"]),
+.structural-item:has([data-lucide="calendar-1"]),
+.structural-item:has([data-lucide="calendar-days"]),
+.structural-item:has(.program-structural-icon),
+.structural-item:has(.program-structural-label) {
+--structural-entity-color: var(--entity-program);
+}
+
+.structural-item .structural-value,
+.structural-item .structural-label,
+.structural-item .structural-icon,
+.structural-item .card-icon.main {
+color: currentColor !important;
+stroke: currentColor !important;
 }
 
 .structural-icon{
@@ -236,11 +294,33 @@ background-color: var(--border-default);
 display: inline-block;
 }
 
+.main-title > .structural-indicators,
+.entity-heading__main.main-title > .structural-indicators {
+background: transparent;
+border: 0;
+border-radius: 0;
+padding: 0;
+gap: 0.35rem;
+}
+
+.main-title > .structural-indicators .structural-divider,
+.entity-heading__main.main-title > .structural-indicators .structural-divider {
+display: none;
+}
+
+.main-title > .structural-indicators .structural-item,
+.entity-heading__main.main-title > .structural-indicators .structural-item {
+color: #ffffff;
+background: var(--structural-entity-color);
+border-radius: 6px;
+padding: 0.28rem 0.48rem;
+}
+
 .structural-indicators .card-icon.main {
 width: 12px;
 height: 12px;
 display: block;
-color: var(--text-main);
+color: currentColor;
 }
 
 .structural-indicators p {
@@ -263,6 +343,15 @@ margin: 0;
   gap: 6px;
 }
 
+  .main-title > .structural-indicators,
+  .entity-heading__main.main-title > .structural-indicators {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    gap: 0.35rem;
+  }
+
 .structural-icon.main {
   width: 12px;
   height: 12px;
@@ -277,7 +366,6 @@ margin: 0;
 
 
 .card-title-comp h3 {
-  margin-bottom: 0;
   font-size: 24px;
 } 
 

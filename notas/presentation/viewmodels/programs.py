@@ -99,15 +99,16 @@ def _program_chart_bar_height(value, max_value):
     return min((value / max_value) * 100, 100)
 
 
-def _program_chart_value_label(value, unit, decimals=0):
+def _program_chart_value_label(value, unit="", decimals=0):
     number = _format_chart_number(value, decimals)
     return f"{number} {unit}".strip()
 
 
 def _program_chart_range_label(min_value, max_value, unit, decimals=0):
-    min_label = _program_chart_value_label(min_value, unit, decimals)
-    max_label = _program_chart_value_label(max_value, unit, decimals)
-    return f"Min: {min_label} - Max: {max_label}"
+    display_unit = "cal" if unit == "kcal" else unit
+    min_label = _program_chart_value_label(min_value, "", decimals)
+    max_label = _program_chart_value_label(max_value, display_unit, decimals)
+    return f"{min_label} - {max_label}"
 
 
 def _empty_totals():
@@ -275,7 +276,12 @@ def build_program_metric_chart(
         "kind": "stacked",
         "decimals": 0,
         "isActive": False,
-        "rangeLabel": "Min: 0% - Max: 100%",
+        "rangeLabel": "",
+        "rangeLabels": [
+            {"key": "protein", "label": "P", "value": _chart_metric_range([point["alloc_protein"] for point in day_points], "%", 0)},
+            {"key": "carbs", "label": "C", "value": _chart_metric_range([point["alloc_carbs"] for point in day_points], "%", 0)},
+            {"key": "fat", "label": "G", "value": _chart_metric_range([point["alloc_fat"] for point in day_points], "%", 0)},
+        ],
         "legendLabel": "Leyenda de alloc",
         "legendItems": [
             {"key": "protein", "label": "P%"},
@@ -298,7 +304,7 @@ def build_program_metric_chart(
         axis_count = len(axis_labels)
     else:
         axis_labels = [
-            {"label": f"S{week_number}", "mobileLabel": f"S{week_number}"}
+            {"label": f"Semana {week_number}", "mobileLabel": f"Semana {week_number}"}
             for week_number in week_numbers
         ]
         axis_count = len(axis_labels)

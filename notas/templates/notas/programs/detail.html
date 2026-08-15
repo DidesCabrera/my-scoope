@@ -27,7 +27,12 @@
         <div class="entity-indicators structural-indicators">
           <span class="structural-item">
             <span class="structural-value">{{ vm.content.program.normalized_duration_weeks }}</span>
-            <i data-lucide="calendar-1" class="structural-icon main program-structural-icon"></i>
+            <span class="structural-label program-structural-label">SEMANAS</span>
+          </span>
+          <span class="structural-divider"></span>
+          <span class="structural-item">
+            <span class="structural-value">{{ vm.content.filled_days_count }}</span>
+            <i data-lucide="clipboard-list" class="structural-icon main"></i>
           </span>
           <span class="structural-divider"></span>
           <span class="structural-item">
@@ -38,11 +43,6 @@
       </div>
 
     </div>
-  </section>
-
-  <h3>Información Nutricional</h3>
-  <section class="card-kpi program-main-kpi-range">
-    {% include "components/dash_kpi_range.html" with ranges=vm.content.program_kpi_ranges modifier="dash-kpi-range--main" %}
   </section>
 
   {% include "components/program_metric_chart_program.html" with chart=vm.content.program_chart modifier="program-chart-panel--detail" %}
@@ -72,7 +72,12 @@
       <div class="entity-indicators structural-indicators">
         <span class="structural-item">
           <span class="structural-value">{{ vm.content.program.normalized_duration_weeks }}</span>
-          <i data-lucide="calendar-1" class="structural-icon main program-structural-icon"></i>
+          <span class="structural-label program-structural-label">SEMANAS</span>
+        </span>
+        <span class="structural-divider"></span>
+        <span class="structural-item">
+          <span class="structural-value">{{ vm.content.filled_days_count }}</span>
+          <i data-lucide="clipboard-list" class="structural-icon main"></i>
         </span>
         <span class="structural-divider"></span>
         <span class="structural-item">

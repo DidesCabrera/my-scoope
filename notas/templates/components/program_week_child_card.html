@@ -21,14 +21,9 @@
         </div>
       </div>
     </div>
-    {% if week.kpi_ranges %}
-      <div class="card-kpi program-week-child-card__dash-kpi" aria-label="Rangos KPI de Semana {{ week.week_number }}">
-        {% include "components/dash_kpi_range.html" with ranges=week.kpi_ranges modifier="dash-kpi-range--week-card" %}
-      </div>
-    {% endif %}
   </header>
 
-  {% include "components/program_metric_chart_week.html" with chart=week.chart modifier="program-chart-panel--week" %}
+  {% include "components/program_metric_chart_base.html" with chart=week.chart modifier="program-chart-panel--week program-chart-panel--week-card-kpi-preview" show_bar_values=False only %}
 
   <section class="program-week-child-card__plan-section" aria-label="Planes diarios de Semana {{ week.week_number }}">
     {% include "components/program_week_days_grid.html" with program=program week=week %}

@@ -2814,16 +2814,7 @@ body.page-ai-intake-chat::after {
   width: 0;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--nutrition-protein), var(--nutrition-carbs), var(--nutrition-fat));
-  background:
-    linear-gradient(
-      90deg,
-      var(--nutrition-protein) 0%,
-      color-mix(in srgb, var(--nutrition-protein) 55%, var(--nutrition-carbs)) 30%,
-      var(--nutrition-carbs) 52%,
-      color-mix(in srgb, var(--nutrition-carbs) 45%, var(--nutrition-fat)) 72%,
-      var(--nutrition-fat) 100%
-    );
+  background: var(--gradient-instagram);
 }
 
 .home-calendar__progress-details {
@@ -2972,7 +2963,7 @@ body.page-ai-intake-chat::after {
   justify-content: center;
   width: clamp(48px, 7vw, 64px);
   aspect-ratio: 1;
-  border: 1px solid var(--border-strong);
+  border: 2px solid var(--border-strong);
   border-style: dashed;
   border-radius: 50%;
   background: var(--surface-card);
@@ -3028,16 +3019,17 @@ body.page-ai-intake-chat::after {
 }
 
 .home-calendar__day.is-selected .home-calendar__date-circle {
+  border-color: #000000;
   box-shadow: none;
 }
 
 .home-calendar__day.is-selected .home-calendar__date-circle::after {
   content: "";
   position: absolute;
-  inset: -5px;
+  inset: -7px;
   border-radius: 50%;
-  padding: 3px;
-  background: linear-gradient(90deg, var(--nutrition-protein), var(--nutrition-carbs), var(--nutrition-fat));
+  padding: 5px;
+  background: var(--gradient-instagram);
   pointer-events: none;
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
