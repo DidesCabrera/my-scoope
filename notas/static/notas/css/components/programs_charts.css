@@ -2060,293 +2060,51 @@ html[data-theme="dark"] .program-chart-guide {
 }
 
 /* Program previews: show every metric at once in a compressed stack. */
-.program-chart-panel--stacked-preview {
-  gap: 0.5rem;
-  background: var(--surface-card);
-}
-
-.content-panel.program-chart-panel.card-detail-block.program-chart-panel--detail.program-chart-panel--stacked-preview {
-  padding: 0;
-  border: 0;
-}
-
-.content-panel.program-chart-panel.card-detail-block.program-chart-panel--week.program-chart-panel--stacked-preview {
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-}
-
-.program-chart-panel--stacked-preview .program-chart-tabs {
-  display: none;
-}
-
-.program-chart-panel__body--stacked-preview {
-  display: grid;
-  grid-template-columns: minmax(92px, 0.34fr) minmax(0, 1fr);
-  column-gap: 0;
-  row-gap: 0.35rem;
-  align-items: stretch;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-preview-axis-header {
-  grid-column: 2;
-  min-width: 0;
-  padding: 0 0.48rem;
-  background: transparent;
-  overflow-x: auto;
-  overflow-y: hidden;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-preview-axis-header .program-chart-week-axis {
-  display: grid;
-  grid-template-columns: repeat(var(--program-chart-axis-count, var(--program-chart-days, 7)), minmax(0, 1fr));
-  width: var(--program-chart-min-width, 100%);
-  min-width: var(--program-chart-min-width, 100%);
-  font-size: 0.48rem;
-  padding-inline: 0;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-preview-axis-header .program-chart-week-axis span {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  justify-self: stretch;
-  min-height: 1.1rem;
-  width: auto;
-  min-width: 0;
-  margin: 0 1px;
-  border: 0;
-  border-radius: 999px;
-  background: #f49a3d;
-  color: #0d1117;
-  text-align: center;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-pane {
-  display: contents;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-layout {
-  display: block;
-  min-width: 0;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-main-axis {
-  gap: 0.28rem;
-  padding: 0.42rem 0.48rem 0.36rem;
-  border: 1px solid var(--surface-card-muted);
-  border-radius: 0 12px 12px 0;
-  background: transparent;
-  overflow-x: auto;
-  overflow-y: hidden;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-axis-header {
-  position: static;
-  display: grid;
-  align-content: center;
-  justify-content: stretch;
-  gap: 0.32rem;
-  min-height: 0;
-  width: auto;
-  min-width: 0;
-  padding: 0.4rem 0.5rem;
-  border-radius: 12px 0 0 12px;
-  background: var(--surface-card-muted);
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-axis-header__title {
-  font-size: 13px;
-  font-weight: 750;
-  line-height: 1;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-axis-header__unit {
-  display: none;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-axis-header__range {
-  justify-self: start;
-  min-height: 1.1rem;
-  padding: 1px 7px;
-  border-radius: 6px;
-  border: 0;
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-axis-header__range--calories {
-  background: #6f4a2f !important;
-  color: #fff !important;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-axis-header__range--ppk {
-  background: #f2d84b !important;
-  color: #0d1117 !important;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-axis-header__range--protein {
-  background: #7dd8f7 !important;
-  color: #0d1117 !important;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-axis-header__range--carbs {
-  background: #3bd67f !important;
-  color: #0d1117 !important;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-axis-header__range--fat {
-  background: #cce84f !important;
-  color: #0d1117 !important;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-axis-header__range--alloc-protein {
-  background: var(--nutrition-protein) !important;
-  color: #0d1117 !important;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-axis-header__range--alloc-carbs {
-  background: var(--nutrition-carbs) !important;
-  color: #0d1117 !important;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-axis-header__range--alloc-fat {
-  background: var(--nutrition-fat) !important;
-  color: #0d1117 !important;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-plot {
-  height: 52px !important;
-  min-height: 52px;
-  padding-top: 0.25rem !important;
-  padding-bottom: 0.12rem;
-  border-radius: 0;
-  background: transparent !important;
-  background-image: none !important;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-week-column {
-  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
-  justify-content: stretch !important;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-bar-slot {
-  width: auto !important;
-  min-width: 0 !important;
-  max-width: none !important;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-bar,
-.program-chart-panel__body--stacked-preview .program-chart-stacked-bar {
-  width: 100% !important;
-  border-radius: 0;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-plot:not(.program-chart-plot--alloc) .program-chart-bar {
-  opacity: 1;
-  background: transparent !important;
-  background-image: none !important;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-plot:not(.program-chart-plot--alloc) .program-chart-outline-path {
-  stroke-width: 2.65px;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-guide-svg {
-  display: none;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-plot--alloc .program-chart-stacked-bar {
-  gap: 2px;
-  padding: 3px;
-  background: transparent;
-  border: 0;
-  opacity: 1 !important;
-}
-
-@media (max-width: 760px) {
-  .program-chart-panel__body--stacked-preview .program-chart-plot--alloc .program-chart-stacked-bar {
-    padding: 1px;
-  }
-}
-
-
-.program-chart-panel__body--stacked-preview .program-chart-plot--alloc .program-chart-stacked-bar__segment {
-  border-radius: 3px;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-plot--alloc .program-chart-stacked-bar__segment--protein {
-  background: #00d0f5 !important;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-plot--alloc .program-chart-stacked-bar__segment--carbs {
-  background: #01e888 !important;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-plot--alloc .program-chart-stacked-bar__segment--fat {
-  background: #bbff00 !important;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-plot--alloc .program-chart-outline-svg {
-  display: none;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-main-axis:has(.program-chart-plot--alloc) {
-  align-self: stretch;
-  display: grid;
-  align-content: stretch;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-main-axis:has(.program-chart-plot--alloc) .program-chart-plot {
-  height: 92px !important;
-  min-height: 92px;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-week-axis {
-  font-size: 0.42rem;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-legend {
-  display: none;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-guide-label,
-.program-chart-panel__body--stacked-preview .program-chart-grid-label {
-  display: none;
-}
-
+.program-chart-panel--stacked-preview { gap: 0.5rem; background: var(--surface-card); }
+.content-panel.program-chart-panel.card-detail-block.program-chart-panel--detail.program-chart-panel--stacked-preview, .content-panel.program-chart-panel.card-detail-block.program-chart-panel--week.program-chart-panel--stacked-preview { padding: 0; border: 0; }
+.content-panel.program-chart-panel.card-detail-block.program-chart-panel--week.program-chart-panel--stacked-preview { border-radius: 0; }
+.program-chart-panel--stacked-preview .program-chart-tabs, .program-chart-panel__body--stacked-preview .program-chart-axis-header__unit, .program-chart-panel__body--stacked-preview .program-chart-legend, .program-chart-panel__body--stacked-preview .program-chart-guide-label, .program-chart-panel__body--stacked-preview .program-chart-grid-label, .program-chart-panel__body--stacked-preview .program-chart-guide-svg, .program-chart-panel__body--stacked-preview .program-chart-grid-svg, .program-chart-panel__body--stacked-preview .program-chart-plot--alloc .program-chart-outline-svg { display: none; }
+.program-chart-panel__body--stacked-preview { display: grid; grid-template-columns: minmax(92px, 0.34fr) minmax(0, 1fr); column-gap: 0; row-gap: 0.35rem; align-items: stretch; }
+.program-chart-panel__body--stacked-preview .program-chart-preview-axis-header { grid-column: 2; min-width: 0; padding: 0 0.48rem; background: transparent; overflow-x: auto; overflow-y: hidden; }
+.program-chart-panel__body--stacked-preview .program-chart-preview-axis-header .program-chart-week-axis { display: grid; grid-template-columns: repeat(var(--program-chart-axis-count, var(--program-chart-days, 7)), minmax(0, 1fr)); width: var(--program-chart-min-width, 100%); min-width: var(--program-chart-min-width, 100%); padding-inline: 0; font-size: 0.48rem; }
+.program-chart-panel__body--stacked-preview .program-chart-preview-axis-header .program-chart-week-axis span { display: inline-flex; align-items: center; justify-content: center; justify-self: stretch; width: auto; min-width: 0; min-height: 1.1rem; margin: 0 1px; border: 0; border-radius: 999px; background: var(--surface-card-muted); color: #fff; text-align: center; }
+.program-chart-panel__body--stacked-preview .program-chart-pane { display: contents; }
+.program-chart-panel__body--stacked-preview .program-chart-layout { display: block; min-width: 0; }
+.program-chart-panel__body--stacked-preview .program-chart-main-axis { gap: 0.28rem; padding: 0.42rem 0.48rem 0.36rem; border: 1px solid var(--surface-card-muted); border-radius: 0 12px 12px 0; background: transparent; overflow-x: auto; overflow-y: hidden; }
+.program-chart-panel__body--stacked-preview .program-chart-axis-header { position: static; display: grid; align-content: center; justify-content: stretch; gap: 0.32rem; width: auto; min-width: 0; min-height: 0; padding: 0.4rem 0.5rem; border-radius: 12px 0 0 12px; background: var(--surface-card-muted); }
+.program-chart-panel__body--stacked-preview .program-chart-axis-header__title { font-size: 13px; font-weight: 750; line-height: 1; }
+.program-chart-panel__body--stacked-preview .program-chart-axis-header__ranges { display: grid; gap: 0.22rem; justify-items: start; }
+.program-chart-panel__body--stacked-preview .program-chart-axis-header__range { justify-self: start; min-height: 1.1rem; padding: 1px 7px; border: 0; border-radius: 6px; font-size: 10px; font-weight: 700; }
+.program-chart-panel__body--stacked-preview .program-chart-axis-header__range--calories { background: #6f4a2f; color: #fff; }
+.program-chart-panel__body--stacked-preview .program-chart-axis-header__range--ppk { background: #f2d84b; color: #0d1117; }
+.program-chart-panel__body--stacked-preview .program-chart-axis-header__range--protein { background: #7dd8f7; color: #0d1117; }
+.program-chart-panel__body--stacked-preview .program-chart-axis-header__range--carbs { background: #3bd67f; color: #0d1117; }
+.program-chart-panel__body--stacked-preview .program-chart-axis-header__range--fat { background: #cce84f; color: #0d1117; }
+.program-chart-panel__body--stacked-preview .program-chart-axis-header__range--alloc-protein { background: var(--nutrition-protein); color: #0d1117; }
+.program-chart-panel__body--stacked-preview .program-chart-axis-header__range--alloc-carbs { background: var(--nutrition-carbs); color: #0d1117; }
+.program-chart-panel__body--stacked-preview .program-chart-axis-header__range--alloc-fat { background: var(--nutrition-fat); color: #0d1117; }
+.program-chart-panel__body--stacked-preview .program-chart-plot { height: 52px; min-height: 52px; padding-top: 0.25rem; padding-bottom: 0.12rem; border-radius: 0; background: transparent !important; background-image: none; }
+.program-chart-panel__body--stacked-preview .program-chart-week-column { grid-template-columns: repeat(7, minmax(0, 1fr)); justify-content: stretch; padding-left: 0; padding-right: 0; }
+.program-chart-panel__body--stacked-preview .program-chart-bar-slot { width: auto; min-width: 0; max-width: none; padding-left: 0; padding-right: 0; }
+.program-chart-panel__body--stacked-preview .program-chart-bar, .program-chart-panel__body--stacked-preview .program-chart-stacked-bar { width: 100%; border-radius: 0; }
+.program-chart-panel__body--stacked-preview .program-chart-plot:not(.program-chart-plot--alloc) .program-chart-bar { opacity: 1; background: transparent; background-image: none; }
+.program-chart-panel__body--stacked-preview .program-chart-plot:not(.program-chart-plot--alloc) .program-chart-outline-path { stroke-width: 2.65px; }
+.program-chart-panel__body--stacked-preview .program-chart-plot--alloc .program-chart-stacked-bar { gap: 2px; padding: 3px; border: 0; background: transparent; opacity: 1; }
+.program-chart-panel__body--stacked-preview .program-chart-plot--alloc .program-chart-stacked-bar__segment { border-radius: 3px; }
+.program-chart-panel__body--stacked-preview .program-chart-plot--alloc .program-chart-stacked-bar__segment--protein { background: #00d0f5; }
+.program-chart-panel__body--stacked-preview .program-chart-plot--alloc .program-chart-stacked-bar__segment--carbs { background: #01e888; }
+.program-chart-panel__body--stacked-preview .program-chart-plot--alloc .program-chart-stacked-bar__segment--fat { background: #bbff00; }
+.program-chart-panel__body--stacked-preview .program-chart-main-axis:has(.program-chart-plot--alloc) { align-self: stretch; display: grid; align-content: stretch; }
+.program-chart-panel__body--stacked-preview .program-chart-main-axis:has(.program-chart-plot--alloc) .program-chart-plot { height: 92px; min-height: 92px; }
+.program-chart-panel__body--stacked-preview .program-chart-week-axis { font-size: 0.42rem; }
+@media (max-width: 760px) { .program-chart-panel__body--stacked-preview .program-chart-plot--alloc .program-chart-stacked-bar { padding: 1px; } }
 @media (max-width: 780px) {
-  .program-chart-panel__body--stacked-preview {
-    grid-template-columns: minmax(76px, 0.38fr) minmax(0, 1fr);
-    column-gap: 0;
-    row-gap: 0.32rem;
-  }
-
-  .program-chart-panel__body--stacked-preview .program-chart-preview-axis-header {
-    padding: 0 0.42rem;
-  }
-
-  .program-chart-panel__body--stacked-preview .program-chart-main-axis {
-    margin: 0;
-    padding: 0.4rem 0.42rem 0.34rem;
-  }
-
-  .program-chart-panel__body--stacked-preview .program-chart-axis-header {
-    padding: 0.35rem 0.42rem;
-  }
-
-  .program-chart-panel__body--stacked-preview .program-chart-axis-header__title {
-    font-size: 12px;
-  }
-
-  .program-chart-panel__body--stacked-preview .program-chart-plot {
-    height: 48px !important;
-    min-height: 48px;
-  }
+  .program-chart-panel__body--stacked-preview { grid-template-columns: minmax(76px, 0.38fr) minmax(0, 1fr); row-gap: 0.32rem; }
+  .program-chart-panel__body--stacked-preview .program-chart-preview-axis-header { padding: 0 0.42rem; }
+  .program-chart-panel__body--stacked-preview .program-chart-main-axis { margin: 0; padding: 0.4rem 0.42rem 0.34rem; }
+  .program-chart-panel__body--stacked-preview .program-chart-axis-header { padding: 0.35rem 0.42rem; }
+  .program-chart-panel__body--stacked-preview .program-chart-axis-header__title { font-size: 12px; }
+  .program-chart-panel__body--stacked-preview .program-chart-plot { height: 48px; min-height: 48px; }
 }
 
 .program-chart-bar-slot:hover,
@@ -2831,81 +2589,14 @@ html[data-theme="dark"] .program-chart-guide {
   }
 }
 
-/* Program preview scroll sync and clean chart backgrounds =================== */
-.program-chart-panel__body--stacked-preview .program-chart-preview-axis-header,
-.program-chart-panel__body--stacked-preview .program-chart-main-axis {
-  scrollbar-width: none;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-preview-axis-header::-webkit-scrollbar,
-.program-chart-panel__body--stacked-preview .program-chart-main-axis::-webkit-scrollbar {
-  display: none;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-preview-axis-header .program-chart-week-axis,
-.program-chart-panel__body--stacked-preview .program-chart-main-axis .program-chart-plot {
-  width: var(--program-chart-min-width, 100%) !important;
-  min-width: var(--program-chart-min-width, 100%) !important;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-main-axis .program-chart-plot,
-.program-chart-panel__body--stacked-preview .program-chart-main-axis--program .program-chart-plot.program-chart-plot--program {
-  background: transparent !important;
-  background-image: none !important;
-}
-
-/* Program list card and preview final composition =========================== */
-.program-card .program-card__main {
-  display: flex;
-  align-items: stretch;
-  gap: 0;
-}
-
-.program-card .program-card__title-block.card-title {
-  flex: 1 1 70%;
-  width: auto;
-  max-width: none;
-  min-width: 0;
-}
-
-.program-card .program-structural-label {
-  color: currentColor;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  line-height: 1;
-}
-
-.content-panel.program-chart-panel.card-detail-block.program-chart-panel--card.program-chart-panel--stacked-preview {
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-axis-header__ranges {
-  display: grid;
-  gap: 0.22rem;
-  justify-items: start;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-preview-axis-header .program-chart-week-axis span {
-  background: var(--surface-card-muted) !important;
-  color: #fff !important;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-grid-svg {
-  display: none !important;
-}
-
-.program-chart-panel__body--stacked-preview .program-chart-main-axis .program-chart-plot,
-.program-chart-panel__body--stacked-preview .program-chart-main-axis--program .program-chart-plot.program-chart-plot--program,
-.program-chart-panel__body--stacked-preview .program-chart-panel--card .program-chart-plot {
-  background: transparent !important;
-  background-image: none !important;
-}
-
-.program-week-child-card__days .program-day-cell.has-plan.is-selected {
-  background: transparent !important;
-  border-color: transparent !important;
-  box-shadow: none !important;
-}
+/* Program preview scroll sync and final composition ========================= */
+.program-chart-panel__body--stacked-preview .program-chart-preview-axis-header, .program-chart-panel__body--stacked-preview .program-chart-main-axis { scrollbar-width: none; }
+.program-chart-panel__body--stacked-preview .program-chart-preview-axis-header::-webkit-scrollbar, .program-chart-panel__body--stacked-preview .program-chart-main-axis::-webkit-scrollbar { display: none; }
+.program-chart-panel__body--stacked-preview .program-chart-preview-axis-header .program-chart-week-axis, .program-chart-panel__body--stacked-preview .program-chart-main-axis .program-chart-plot { width: var(--program-chart-min-width, 100%); min-width: var(--program-chart-min-width, 100%); }
+.program-chart-panel__body--stacked-preview .program-chart-main-axis .program-chart-plot, .program-chart-panel__body--stacked-preview .program-chart-main-axis--program .program-chart-plot.program-chart-plot--program, .program-chart-panel__body--stacked-preview .program-chart-panel--card .program-chart-plot { background: transparent !important; background-image: none; }
+.program-card .program-card__main { display: flex; align-items: stretch; gap: 0; }
+.program-card .program-card__title-block.card-title { flex: 1 1 70%; width: auto; max-width: none; min-width: 0; }
+.program-card .program-structural-label { color: currentColor; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em; line-height: 1; }
+.content-panel.program-chart-panel.card-detail-block.program-chart-panel--card.program-chart-panel--stacked-preview { padding: 0; border: 0; border-radius: 0; }
+.program-week-child-card__days .program-day-cell.has-plan.is-selected { background: transparent; border-color: transparent; box-shadow: none; }
+.program-week-child-card__days .program-day-cell.is-empty .program-day-cell__add-icon { color: var(--entity-program); stroke: var(--entity-program); }

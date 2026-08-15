@@ -3,7 +3,6 @@
     padding: 6px 0;
     --data-grid-row-min-height: 40px;
 }
-
 .data-grid-header,
 .data-grid-row {
     display: grid;
@@ -12,19 +11,15 @@
     padding-left: 8px;
     padding-right: 8px;
 }
-
 .data-grid-row {
     min-height: var(--data-grid-row-min-height);
 }
-
 .data-grid-row:last-of-type {
     border-bottom: none;
 }
-
 /* =========================================================
    Desktop grids
    ========================================================= */
-
 .data-grid-header--foods,
 .data-grid-row--foods {
     grid-template-columns:
@@ -36,7 +31,6 @@
         minmax(70px, 0.82fr)
         minmax(210px, 2.46fr);
 }
-
 .data-grid-header--foods-edit,
 .data-grid-row--foods-edit {
     grid-template-columns:
@@ -51,7 +45,6 @@
         40px
         40px;
 }
-
 .data-grid-header--meals,
 .data-grid-row--meals {
     grid-template-columns:
@@ -62,7 +55,6 @@
         minmax(70px, 0.82fr)
         minmax(210px, 2.46fr);
 }
-
 .data-grid-header--meals-edit,
 .data-grid-row--meals-edit {
     grid-template-columns:
@@ -77,11 +69,9 @@
         40px
         40px;
 }
-
 /* =========================================================
    Base grid typography / cells
    ========================================================= */
-
 .data-grid-col {
     font-size: 11px;
     height: 20px;
@@ -91,7 +81,6 @@
     color: rgb(95, 95, 95);
     padding-bottom: 8px;
 }
-
 .data-grid-row {
     border-bottom: 1px solid var(--panel-row-separator);
     margin-bottom: 0;
