@@ -4,8 +4,8 @@
 {% block title %}Programa Semanal · {{ vm.content.program.name }}{% endblock %}
 {% block body_class %}page-detail page-header-meta-deferred{% endblock %}
 {% block feature_css %}
-<link rel="stylesheet" href="{% static 'notas/css/components/programs.css' %}">
-<link rel="stylesheet" href="{% static 'notas/css/components/program_week_tabs.css' %}">
+<link rel="stylesheet" href="{% static 'notas/css/components/programs.css' %}?v=20260818-2">
+<link rel="stylesheet" href="{% static 'notas/css/components/program_week_tabs.css' %}?v=20260818-4">
 {% endblock %}
 
 {% block content %}
@@ -14,75 +14,71 @@
   data-page="program-detail"
   data-program-dailyplans="{{ vm.content.available_dailyplans_json|escape }}"
 >
-  <section class="card-title main program-main-title-card">
-    <div class="card-title-comp js-header-meta-sentinel">
-      <div class="main-title main-card">
-        <p class="card-title-eyebrow">
-          <i data-lucide="calendar" class="card-title-eyebrow__icon program" aria-hidden="true"></i>
-          <span>Programa</span>
-        </p>
+  <section class="program-overview-section" aria-labelledby="program-detail-title">
+    <section class="card-title main program-main-title-card">
+      <div class="card-title-comp js-header-meta-sentinel">
+        <div class="main-title main-card">
+          <p class="card-title-eyebrow">
+            <i data-lucide="calendar" class="card-title-eyebrow__icon program" aria-hidden="true"></i>
+            <span>Programa</span>
+          </p>
 
-        <h1>{{ vm.content.program.name }}</h1>
+          <h1 id="program-detail-title">{{ vm.content.program.name }}</h1>
 
-        <div class="entity-indicators structural-indicators">
-          <span class="structural-item">
-            <span class="structural-value">{{ vm.content.program.normalized_duration_weeks }}</span>
-            <span class="structural-label program-structural-label">SEMANAS</span>
-          </span>
-          <span class="structural-divider"></span>
-          <span class="structural-item">
-            <span class="structural-value">{{ vm.content.filled_days_count }}</span>
-            <i data-lucide="clipboard-list" class="structural-icon main"></i>
-          </span>
-          <span class="structural-divider"></span>
-          <span class="structural-item">
-            <span class="structural-value">{{ vm.content.program_foods_count }}</span>
-            <i data-lucide="carrot" class="structural-icon main"></i>
-          </span>
+          <div class="entity-indicators structural-indicators">
+            <span class="structural-item">
+              <span class="structural-value">{{ vm.content.program.normalized_duration_weeks }}</span>
+              <span class="structural-label program-structural-label">SEMANAS</span>
+            </span>
+            <span class="structural-divider"></span>
+            <span class="structural-item">
+              <span class="structural-value">{{ vm.content.filled_days_count }}</span>
+              <i data-lucide="clipboard-list" class="structural-icon main"></i>
+            </span>
+            <span class="structural-divider"></span>
+            <span class="structural-item">
+              <span class="structural-value">{{ vm.content.program_foods_count }}</span>
+              <i data-lucide="carrot" class="structural-icon main"></i>
+            </span>
+          </div>
         </div>
       </div>
+    </section>
+    <h3>Gráficos de KPIs del Programa</h3>
+    {% include "components/program_metric_chart_program.html" with chart=vm.content.program_chart modifier="program-chart-panel--detail" %}
 
-    </div>
+    <section class="program-weeks-summary-section" aria-labelledby="program-weeks-summary-title">
+      <div class="title-section-panels program-weeks-title-section">
+        <h3 id="program-weeks-summary-title">Tabla de comparacion entre semanas</h3>
+        {% if vm.content.can_edit %}
+          <form method="post" action="{% url 'program_add_week' vm.content.program.id %}" class="program-add-week-form">
+            {% csrf_token %}
+            <button type="submit" class="add-title program-add-week-button">
+              <i data-lucide="plus" class="table-icon program-add-week-button__icon"></i>
+              <i data-lucide="calendar-1" class="table-icon program-add-week-button__icon program-add-week-button__icon--week"></i>
+              <h4>Agregar Semana</h4>
+            </button>
+          </form>
+        {% endif %}
+      </div>
+      {% include "components/program_week_panels.html" with panel_id=vm.content.program.id program=vm.content.program weeks=vm.content.weeks default_desktop=True default_mobile=True can_edit=vm.content.can_edit %}
+    </section>
   </section>
 
-  {% include "components/program_metric_chart_program.html" with chart=vm.content.program_chart modifier="program-chart-panel--detail" %}
-  
-  <div class="title-section-panels program-weeks-title-section">
-    <h3>Semanas en este Programa</h3>
-    {% if vm.content.can_edit %}
-      <form method="post" action="{% url 'program_add_week' vm.content.program.id %}" class="program-add-week-form">
-        {% csrf_token %}
-        <button type="submit" class="add-title program-add-week-button">
-          <i data-lucide="plus" class="table-icon program-add-week-button__icon"></i>
-          <i data-lucide="calendar-1" class="table-icon program-add-week-button__icon program-add-week-button__icon--week"></i>
-          <h4>Agregar Semana</h4>
-        </button>
-      </form>
-    {% endif %}
-  </div>
-  {% include "components/program_week_panels.html" with panel_id=vm.content.program.id program=vm.content.program weeks=vm.content.weeks default_desktop=True default_mobile=True can_edit=vm.content.can_edit %}
-
   <hr>
-  <section class="program-board-shell">
+  <section class="program-board-shell" aria-labelledby="program-board-title">
     <div class="detail-section-header dailyplan-detail__children-header program-board-header">
       <div class="detail-section-heading home-section-title detail-dp">
         <i data-lucide="calendar" class="home-section-header-icon program"></i>
-        <h2>Planificación por semanas</h2>
+        <h2 id="program-board-title">Planificación por semanas</h2>
       </div>
       <div class="entity-indicators structural-indicators">
         <span class="structural-item">
           <span class="structural-value">{{ vm.content.program.normalized_duration_weeks }}</span>
-          <span class="structural-label program-structural-label">SEMANAS</span>
-        </span>
-        <span class="structural-divider"></span>
-        <span class="structural-item">
-          <span class="structural-value">{{ vm.content.filled_days_count }}</span>
-          <i data-lucide="clipboard-list" class="structural-icon main"></i>
-        </span>
-        <span class="structural-divider"></span>
-        <span class="structural-item">
-          <span class="structural-value">{{ vm.content.program_foods_count }}</span>
-          <i data-lucide="carrot" class="structural-icon main"></i>
+          <span class="structural-label program-structural-label" aria-label="Semanas">
+            <span class="program-structural-label__desktop" aria-hidden="true">SEMANAS</span>
+            <span class="program-structural-label__mobile" aria-hidden="true">S</span>
+          </span>
         </span>
       </div>
     </div>
@@ -95,12 +91,14 @@
             id="program-week-tab-{{ week.week_number }}"
             class="panel-tab program-week-tab js-program-week-tab{% if forloop.first %} is-active{% endif %}"
             role="tab"
+            aria-label="Semana {{ week.week_number }}"
             aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
             aria-controls="program-week-panel-{{ week.week_number }}"
             tabindex="{% if forloop.first %}0{% else %}-1{% endif %}"
             data-target="program-week-panel-{{ week.week_number }}"
           >
-            {{ week.week_number }}
+            <span class="program-week-tab__label program-week-tab__label--desktop" aria-hidden="true">Semana {{ week.week_number }}</span>
+            <span class="program-week-tab__label program-week-tab__label--mobile" aria-hidden="true">S{{ week.week_number }}</span>
           </button>
         {% endfor %}
       </div>
@@ -123,7 +121,7 @@
 {% include "components/program_slot_global_picker.html" with program=vm.content.program %}
 </div>
 
-<script src="{% static 'notas/js/program_metric_chart.js' %}"></script>
+<script src="{% static 'notas/js/program_metric_chart.js' %}?v=20260818-2"></script>
 <script src="{% static 'notas/js/program_week_tabs.js' %}"></script>
 <script src="{% static 'notas/js/program_slot_picker.js' %}"></script>
 <script src="{% static 'notas/js/program_week_edit.js' %}"></script>

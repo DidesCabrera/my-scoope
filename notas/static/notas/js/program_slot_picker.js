@@ -115,8 +115,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function syncReturnToInput() {
     const input = picker?.querySelector(".js-program-slot-return-to");
     if (!input) return;
-    const isWeekDetail = page?.dataset.page === "program-week-detail";
-    input.value = isWeekDetail ? `${window.location.pathname}${window.location.search}` : "";
+    input.value = "";
   }
 
   function preselectDailyplan(dailyplanId, options = {}) {
@@ -455,10 +454,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return FULL_DAY_LABELS[dayNumber] || cell?.dataset.dayLabel || "Día seleccionado";
   }
 
-  function shouldAutoOpenInitialSlotCards() {
-    return page?.dataset.page !== "program-detail";
-  }
-
   function getWeekDayTitle(cell) {
     const weekNumber = cell?.dataset.weekNumber || "";
     const dayLabel = getFullDayLabel(cell);
@@ -757,14 +752,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.addEventListener("program-week-tab:changed", (event) => {
     closePicker();
-    if (!shouldAutoOpenInitialSlotCards()) return;
     const panel = event.detail?.targetId ? document.getElementById(event.detail.targetId) : null;
     openMondayCardInScope(panel);
   });
 
   function openInitialMondayCards() {
-    if (!shouldAutoOpenInitialSlotCards()) return;
-
     const tabbedPanels = Array.from(document.querySelectorAll(".js-program-week-panel"));
     if (tabbedPanels.length) {
       tabbedPanels

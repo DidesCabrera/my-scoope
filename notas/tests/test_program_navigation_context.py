@@ -8,11 +8,17 @@ from notas.presentation.navigation.program_context import (
     contextual_url,
     navigation_context_from_query,
     program_context_query,
+    week_url,
 )
 from notas.presentation.viewmodels.base_vm import UI, BreadcrumbItem
 
 
 class ProgramNavigationContextTests(SimpleTestCase):
+    def test_week_url_returns_to_the_week_inside_program_detail(self):
+        program_day = type("ProgramDayStub", (), {"program_id": 8, "week_number": 2})()
+
+        self.assertEqual(week_url(program_day), "/app/programs/8/#week-2")
+
     def test_program_context_query_serializes_supported_params(self):
         query = program_context_query(program_day=10, dpm=20, mealfood=30)
 

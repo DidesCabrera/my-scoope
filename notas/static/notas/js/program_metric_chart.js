@@ -141,9 +141,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     labels.forEach((label) => {
       const mobileLabel = label.mobileLabel || label.label;
+      const visibleLabel = scope === "week" ? mobileLabel : label.label;
       axis.appendChild(makeElement("span", "", {
         "data-mobile-label": mobileLabel,
-        text: options.uppercase ? (scope === "week" ? mobileLabel : label.label).toUpperCase() : (scope === "week" ? mobileLabel : label.label),
+        text: options.uppercase && scope === "week" ? visibleLabel.toUpperCase() : visibleLabel,
       }));
     });
 

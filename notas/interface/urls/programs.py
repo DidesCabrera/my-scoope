@@ -18,7 +18,6 @@ from notas.interface.views.programs import (
     program_rename,
     program_reorder_weeks,
     program_share,
-    program_week_detail,
     remove_dailyplan_from_program,
 )
 
@@ -38,7 +37,6 @@ urlpatterns = [
     path("programs/<int:pk>/add-dailyplan/", add_dailyplan_to_program, name="add_dailyplan_to_program"),
     path("programs/<int:pk>/days/<int:program_day_id>/card/", program_day_card, name="program_day_card"),
     path("programs/<int:pk>/days/<int:program_day_id>/remove/", remove_dailyplan_from_program, name="remove_dailyplan_from_program"),
-    path("programs/<int:pk>/weeks/<int:week_number>/", program_week_detail, name="program_week_detail"),
     path("programs/<int:pk>/", program_detail, name="program_detail"),
     path("programs/<int:program_id>/fork/", fork_program, name="fork_program"),
     path("programs/<int:pk>/copy/", copy_program, name="copy_program"),

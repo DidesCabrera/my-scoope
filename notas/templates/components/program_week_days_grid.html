@@ -10,7 +10,7 @@
       aria-expanded="false"
       {% if day.program_day %}
         data-slot-card-target="program-week-{{ week.week_number }}-day-{{ day.day_number }}-card"
-        data-slot-card-url="{% url 'program_day_card' program.id day.program_day.id %}{% if include_dailyplan_detail_action %}?source=week_detail{% endif %}"
+        data-slot-card-url="{% url 'program_day_card' program.id day.program_day.id %}"
         aria-controls="program-week-{{ week.week_number }}-day-{{ day.day_number }}-card"
         aria-label="{{ day.day_label }}: ver {{ day.dailyplan.name }}"
       {% else %}

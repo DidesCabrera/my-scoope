@@ -4,7 +4,6 @@ from dataclasses import asdict
 
 from django.urls import reverse
 
-from notas.domain.models import Program
 from notas.presentation.composition.viewmodel.components.builder_headers import build_page_header
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
 
@@ -192,47 +191,6 @@ def program_detail_actions(program, user):
     return actions
 
 
-def program_week_detail_actions(program, user, week_number):
-    actions = [
-        action(
-            key="back_program",
-            label="Volver",
-            url=f"{reverse('program_detail', args=[program.id])}#week-{week_number}",
-            icon="chevron-left",
-            order=10,
-            is_back=True,
-        )
-    ]
-
-    if program.created_by_id == user.id:
-        actions.append(
-            action(
-                key="duplicate_week",
-                label="Duplicar semana",
-                url=reverse("program_duplicate_week", args=[program.id, week_number]),
-                method="post",
-                icon="copy",
-                order=20,
-                desktop_position="inline",
-                mobile_position="menu",
-            )
-        )
-
-        if program.normalized_duration_weeks > Program.MIN_DURATION_WEEKS:
-            actions.append(
-                action(
-                    key="remove_week",
-                    label="Eliminar semana",
-                    url=reverse("program_remove_week", args=[program.id, week_number]),
-                    method="post",
-                    icon="trash-2",
-                    order=30,
-                    desktop_position="inline",
-                    mobile_position="menu",
-                )
-            )
-
-    return actions
 
 
 def program_header(actions=None):

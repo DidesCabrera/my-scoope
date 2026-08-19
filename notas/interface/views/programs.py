@@ -43,7 +43,6 @@ from notas.presentation.config.viewmodel_config import (
     PROGRAM_VIEWMODE_PERSONAL_LIST,
     PROGRAM_VIEWMODE_SHARE,
 )
-from notas.presentation.navigation.program_context import ProgramBreadcrumbParent
 from notas.presentation.viewmodels.program_actions import (
     action as _action,
 )
@@ -59,9 +58,6 @@ from notas.presentation.viewmodels.program_actions import (
 from notas.presentation.viewmodels.program_actions import (
     program_vm_context as _vm_context,
 )
-from notas.presentation.viewmodels.program_actions import (
-    program_week_detail_actions as _program_week_detail_actions,
-)
 from notas.presentation.viewmodels.programs import (
     FULL_DAY_LABELS,
 )
@@ -76,9 +72,6 @@ from notas.presentation.viewmodels.programs import (
 )
 from notas.presentation.viewmodels.programs import (
     build_program_list_cards as build_program_list_cards_vm,
-)
-from notas.presentation.viewmodels.programs import (
-    build_program_week_detail_content as build_program_week_detail_content_vm,
 )
 
 # ==================================================
@@ -340,59 +333,6 @@ def program_detail(request, pk):
 
 
 @login_required
-def program_week_detail(request, pk, week_number):
-    program = get_object_or_404(
-        Program.objects.select_related("created_by", "original_author", "forked_from"),
-        pk=pk,
-    )
-
-    if program.created_by_id != request.user.id and not program.shares.filter(
-        accepted_by=request.user,
-        removed=False,
-    ).exists():
-        return HttpResponseForbidden()
-
-    try:
-        week_number = int(week_number)
-    except (TypeError, ValueError):
-        return HttpResponseBadRequest("Invalid week number.")
-
-    if week_number < 1 or week_number > program.normalized_duration_weeks:
-        return HttpResponseBadRequest("Invalid week number.")
-
-    content = build_program_week_detail_content_vm(
-        program=program,
-        user=request.user,
-        week_number=week_number,
-        header=_header(_program_week_detail_actions(program, request.user, week_number)),
-    )
-    if content is None:
-        return HttpResponseBadRequest("Invalid week number.")
-
-    week_node = ProgramBreadcrumbParent(
-        f"Semana {week_number}",
-        None,
-    )
-    program_node = ProgramBreadcrumbParent(
-        str(program),
-        reverse("program_detail", args=[program.id]),
-    )
-
-    context = _vm_context(
-        PROGRAM_VIEWMODE_PERSONAL_DETAIL,
-        content=content,
-        parents=[program_node],
-        instance=week_node,
-        back_config={
-            "type": "url",
-            "value": f"{reverse('program_detail', args=[program.id])}#week-{week_number}",
-        },
-    )
-
-    return render(request, "notas/programs/week_detail.html", context)
-
-
-@login_required
 @require_POST
 def program_add_week(request, pk):
     program = get_object_or_404(Program, pk=pk, created_by=request.user)
@@ -646,12 +586,10 @@ def program_day_card(request, pk, program_day_id):
     ).exists():
         return HttpResponseForbidden()
 
-    include_detail_action = request.GET.get("source") == "week_detail"
     card = build_program_day_child_card_vm(
         program_day.dailyplan,
         request.user,
         program_day=program_day,
-        include_detail_action=include_detail_action,
     )
     html = render_to_string(
         "components/program_day_selected_card.html",

@@ -20,11 +20,10 @@
 /*    max-width: 882px;
     margin: 0 auto; */
     width: 100%;
-    max-width: 840px;
+    max-width: 980px;
     margin: 0 auto;
     margin-top: 18px;
-    padding: 0px;
-    border-radius: 22px;
+    padding: 0 28px;
     border: 1px solid var(--border-soft);
 }
 
@@ -41,10 +40,10 @@
 }
 
 .page--detail{
-    max-width: 900px;
+    max-width: 980px;
     margin-top: 18px;
     padding: 26px var(--desktop-padding-lats-2);
-    background-color: var(--surface-card);
+    background-color: transparent;
     color: var(--text-main);
 }
 

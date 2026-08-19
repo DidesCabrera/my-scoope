@@ -1,0 +1,18 @@
+<section class="page-list dailyplan-detail__children-bleed program-week-detail-section program-week-detail-section--foods" aria-labelledby="program-week-foods-title-{{ week.week_number }}">
+  <div class="detail-section-header dailyplan-detail__children-header program-week-detail-section__header">
+    <div class="detail-section-heading home-section-title detail-dp">
+      <i data-lucide="carrot" class="home-section-header-icon food"></i>
+      <h2 id="program-week-foods-title-{{ week.week_number }}">Alimentos en esta Semana</h2>
+    </div>
+    <div class="entity-indicators structural-indicators">
+      <span class="structural-item">
+        <span class="structural-value">{{ week.foods_count }}</span>
+        <i data-lucide="carrot" class="structural-icon main"></i>
+      </span>
+    </div>
+  </div>
+
+  <div class="program-week-detail-foods-panel">
+    {% include "components/program_week_foods_aggregation.html" with panel_id=week.foods_panel_id items=week.foods_aggregation_table collapsed=False %}
+  </div>
+</section>
