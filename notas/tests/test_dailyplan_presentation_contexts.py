@@ -1,7 +1,8 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.urls import reverse
 
-from notas.domain.models import DailyPlan
+from notas.domain.models import DailyPlan, Program, ProgramDay
 from notas.presentation.config.viewmodel_config import DAILYPLAN_VIEWMODE_PERSONAL_DETAIL
 from notas.presentation.pages.dailyplan_contexts import (
     build_dailyplan_create_context,
@@ -67,3 +68,49 @@ class DailyPlanPresentationContextTests(TestCase):
         self.assertIn("meal_picker_context", context)
         self.assertIn("selected_meal_id", context)
         self.assertIn("editing_dailyplanmeal_id", context)
+
+    def test_dailyplan_back_returns_to_its_program_week_context(self):
+        program = Program.objects.create(
+            name="Programa contextual",
+            created_by=self.user,
+            duration_weeks=2,
+        )
+        program_day = ProgramDay.objects.create(
+            program=program,
+            dailyplan=self.dailyplan,
+            week_number=2,
+            day_number=1,
+        )
+        page = get_dailyplan_detail_page_data(
+            user=self.user,
+            dailyplan_id=self.dailyplan.id,
+            viewmode=DAILYPLAN_VIEWMODE_PERSONAL_DETAIL,
+            request_get={"program_day": str(program_day.id)},
+        )
+
+        context = build_dailyplan_detail_context(
+            page=page,
+            user=self.user,
+            program_day_id=program_day.id,
+        )
+
+        self.assertEqual(
+            context["vm"]["ui"]["back_url"],
+            f"{reverse('program_detail', args=[program.id])}#week-2",
+        )
+        self.assertEqual(
+            [item["label"] for item in context["vm"]["ui"]["breadcrumb"]],
+            ["...", "Semana 2", "Día 1 - Training Day"],
+        )
+
+    def test_dailyplan_back_returns_to_library_without_program_context(self):
+        page = get_dailyplan_detail_page_data(
+            user=self.user,
+            dailyplan_id=self.dailyplan.id,
+            viewmode=DAILYPLAN_VIEWMODE_PERSONAL_DETAIL,
+            request_get={},
+        )
+
+        context = build_dailyplan_detail_context(page=page, user=self.user)
+
+        self.assertEqual(context["vm"]["ui"]["back_url"], reverse("dailyplan_list"))

@@ -205,10 +205,7 @@ def program_url(program_day: ProgramDay) -> str:
 
 
 def week_url(program_day: ProgramDay) -> str:
-    return reverse(
-        "program_week_detail",
-        args=[program_day.program_id, program_day.week_number],
-    )
+    return f"{program_url(program_day)}#week-{program_day.week_number}"
 
 
 def dailyplan_context_url(program_day: ProgramDay) -> str:

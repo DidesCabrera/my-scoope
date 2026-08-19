@@ -16,10 +16,10 @@ type AllocationBarProps = {
 };
 
 const toneLabels: Record<AllocationTone, string> = {
-  protein: "Proteina",
+  protein: "Proteína",
   carbs: "Carbos",
   fat: "Grasas",
-  calories: "Calorias",
+  calories: "Calorías",
   ppk: "PPK",
 };
 
@@ -55,7 +55,7 @@ export function KpiAllocationBar({
       {...progressAccessibility(normalized, tone, accessibilityLabel)}
       style={[styles.kpiContainer, size === "compact" && styles.kpiContainerCompact, style]}>
       <View style={[styles.fill, styles.kpiFill, { backgroundColor: color, width: `${normalized}%` }]} />
-      <Text style={[styles.panelPercentage, { fontSize: textSize }]}>{Math.round(normalized)}%</Text>
+      <Text style={[styles.panelPercentage, normalized > 0 && styles.percentageShadow, { fontSize: textSize }]}>{Math.round(normalized)}%</Text>
     </View>
   );
 }
@@ -77,7 +77,7 @@ export function PanelAllocationBar({
       {...progressAccessibility(normalized, tone, accessibilityLabel)}
       style={[styles.panelTrack, size === "compact" && styles.panelTrackCompact, style]}>
       <View style={[styles.fill, styles.panelFill, { backgroundColor: color, width: `${normalized}%` }]} />
-      {showValue ? <Text style={[styles.panelPercentage, { fontSize: textSize }]}>{displayValue ?? `${Math.round(normalized)}%`}</Text> : null}
+      {showValue ? <Text style={[styles.panelPercentage, normalized > 0 && styles.percentageShadow, { fontSize: textSize }]}>{displayValue ?? `${Math.round(normalized)}%`}</Text> : null}
     </View>
   );
 }
@@ -90,5 +90,6 @@ const styles = StyleSheet.create({
   panelTrack: { backgroundColor: tokens.color.allocationPanelTrack, borderRadius: 4, height: 24, justifyContent: "center", overflow: "hidden", width: "100%" },
   panelFill: { borderRadius: 4 },
   panelTrackCompact: { height: 18 },
-  panelPercentage: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: "500", fontVariant: ["tabular-nums"], letterSpacing: 0, paddingRight: tokens.spacing.xs, textAlign: "right" },
+  panelPercentage: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, fontVariant: ["tabular-nums"], letterSpacing: 0, paddingRight: tokens.spacing.xs, textAlign: "right" },
+  percentageShadow: { textShadowColor: "rgba(0, 0, 0, 0.42)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 3 },
 });

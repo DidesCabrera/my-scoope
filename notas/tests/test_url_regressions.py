@@ -76,10 +76,6 @@ class UrlRegressionTests(SimpleTestCase):
             reverse("program_remove_week", kwargs={"pk": 8, "week_number": 2}),
             "/app/programs/8/weeks/2/remove/",
         )
-        self.assertEqual(
-            reverse("program_week_detail", kwargs={"pk": 8, "week_number": 2}),
-            "/app/programs/8/weeks/2/",
-        )
 
     def test_proposal_urls_keep_expected_names(self):
         self.assertEqual(reverse("proposal_list"), "/app/proposals/")

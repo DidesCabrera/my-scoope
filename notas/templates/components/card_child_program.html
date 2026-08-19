@@ -15,7 +15,12 @@
           <div class="entity-indicators structural-indicators">
             <span class="structural-item">
               <span class="structural-value">{{ child_card.weeks_count }}</span>
-              <i data-lucide="calendar-1" class="card-icon main program-structural-icon"></i>
+              <span class="structural-label program-structural-label">SEMANAS</span>
+            </span>
+            <span class="structural-divider"></span>
+            <span class="structural-item">
+              <span class="structural-value">{{ child_card.filled_days_count }}</span>
+              <i data-lucide="clipboard-list" class="structural-icon main"></i>
             </span>
             <span class="structural-divider"></span>
             <span class="structural-item">
@@ -26,10 +31,6 @@
         </div>
 
       </div>
-    </div>
-
-    <div class="entity-card__kpi card-kpi program-card__kpi-range">
-      {% include "components/dash_kpi_range.html" with ranges=child_card.kpi_ranges modifier="dash-kpi-range--card" %}
     </div>
   </div>
 

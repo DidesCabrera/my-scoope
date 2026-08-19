@@ -3,8 +3,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  margin: 0 0 1rem;
-  padding: 10px;
+  margin: 0 0 0.6rem;
+  padding: 0 10px 12px 10px;
   overflow-x: auto;
   background: transparent;
   border: 0;
@@ -66,7 +66,7 @@
 @media (max-width: 780px) {
   .program-week-tabs {
     margin-inline: -4px;
-    padding: 8px 4px;
+    padding: 8px 12px 14px 12px;
   }
 
   .program-week-tab {
@@ -78,42 +78,23 @@
 }
 
 /* Program detail selected day card refinements ============================= */
-.page--program-detail:not(.page--program-week-detail) .program-week-child-card__plan-section {
+.page--program-detail .program-week-child-card__plan-section {
   padding: 0;
   border: 0;
 }
 
-.page--program-detail:not(.page--program-week-detail) .program-day-selected-card {
-  padding: var(--mobil-padding-top) var(--mobil-padding-lats) var(--mobil-padding-bottom);
+.page--program-detail .program-day-selected-card {
   border: 1px solid var(--panel-row-separator);
 }
 
-/* Program week detail refactor ===================================== */
-.program-week-detail-body {
-  display: block;
-  min-width: 0;
-}
-
-.program-week-detail-header,
+/* Shared program week sections ===================================== */
 .program-week-detail-section__header {
-  align-items: flex-start;
   gap: 1rem;
-  margin: 0;
+  margin: 0 0 8px 0;
 }
 
-.program-week-detail-header {
-  display: flex;
-}
-
-.program-week-detail-kpi {
-  width: 100%;
-  margin: 0;
-  padding-left: 0;
-  border-left: 0;
-}
-
-.program-week-detail-kpi .dash-kpi-range--week-card {
-  width: 100%;
+.program-week-detail-section__header {
+  align-items: center;
 }
 
 .program-week-detail-section {
@@ -122,27 +103,8 @@
   min-width: 0;
 }
 
-.program-week-detail-section--summary {
-  gap: 1.25rem;
-}
-
 .program-week-detail-section__header {
   padding: 0;
-}
-
-.program-week-detail-chart {
-  min-width: 0;
-}
-
-.program-week-detail-plan-section {
-  margin: 0;
-  padding: 0;
-  border: 0;
-}
-
-.page--program-week-detail .program-day-selected-card {
-  padding: var(--mobil-padding-top) var(--mobil-padding-lats) var(--mobil-padding-bottom);
-  border: 1px solid var(--panel-row-separator);
 }
 
 .program-week-detail-foods-panel .program-week-foods-aggregation {
@@ -152,21 +114,15 @@
 
 
 @media (max-width: 780px) {
-  .program-week-detail-header,
   .program-week-detail-section__header {
     gap: 0.75rem;
   }
+  .page--program-detail .program-day-selected-card {
+    padding: var(--mobil-padding-top) var(--mobil-padding-lats) var(--mobil-padding-bottom);
+  }
 }
 
-/* Program week detail day nutrition panel ================================ */
-.program-week-detail-section--day-panel {
-  margin-top: 1rem;
-}
-
-.program-week-day-panels {
-  overflow: hidden;
-}
-
+/* Program week day nutrition panel ======================================= */
 .program-week-day-panels__desktop-tabs,
 .program-week-day-panels__mobile-tabs {
   padding-bottom: 0.55rem;
@@ -176,33 +132,60 @@
   padding: 0;
 }
 
+.program-week-day-panels__desktop-panel {
+  overflow-x: auto;
+}
+
 .data-grid--program-week-days {
-  min-width: 760px;
+  min-width: 0;
 }
 
 .data-grid-header--program-week-days,
 .data-grid-row--program-week-days {
   grid-template-columns:
-    minmax(148px, 1.35fr)
-    minmax(70px, 0.75fr)
-    minmax(62px, 0.65fr)
-    minmax(52px, 0.58fr)
-    minmax(52px, 0.58fr)
-    minmax(52px, 0.58fr)
-    minmax(78px, 0.82fr)
-    minmax(78px, 0.82fr)
-    minmax(78px, 0.82fr);
+    minmax(118px, 1.35fr)
+    minmax(44px, 0.55fr)
+    minmax(58px, 0.78fr)
+    minmax(48px, 0.65fr)
+    repeat(3, minmax(36px, 0.5fr))
+    minmax(224px, 3.2fr);
+}
+
+@media (min-width: 981px) {
+  .program-week-day-table__distribution-group {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 1px repeat(3, minmax(0, 1fr));
+    align-self: stretch;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding-inline: 8px;
+  }
+
+  .program-week-day-table__distribution-group .data-grid-cell--kcal-distribution .macro-kcal-distribution,
+  .program-week-day-table__distribution-group .data-grid-cell--alloc .alloc-cell--grid {
+    width: 100%;
+    margin-inline: 0;
+  }
+}
+
+.data-grid-header--program-week-days-mobile-calories,
+.data-grid-row--program-week-days-mobile-calories {
+  grid-template-columns:
+    minmax(126px, 1.45fr)
+    minmax(48px, 0.55fr)
+    minmax(82px, 0.9fr)
+    minmax(48px, 0.55fr);
 }
 
 .data-grid-header--program-week-days-mobile-macros,
 .data-grid-row--program-week-days-mobile-macros {
   grid-template-columns:
-    minmax(118px, 1.4fr)
-    minmax(48px, 0.62fr)
-    minmax(48px, 0.62fr)
+    minmax(118px, 1.35fr)
     minmax(34px, 0.48fr)
     minmax(34px, 0.48fr)
-    minmax(34px, 0.48fr);
+    minmax(34px, 0.48fr)
+    minmax(96px, 1.1fr);
 }
 
 .data-grid-header--program-week-days-mobile-alloc,
@@ -215,47 +198,11 @@
   gap: 6px;
 }
 
-.data-grid-cell--program-day,
-.data-grid-col--program-day {
-  justify-content: flex-start;
-  padding-inline: 4px;
-}
-
-.data-grid-cell--program-day {
-  display: grid;
-  align-content: center;
-  gap: 0.12rem;
-}
-
-.program-week-day-table__day-name {
-  min-width: 0;
-  color: var(--text-main);
-  font-size: 13px;
-  font-weight: 650;
-  line-height: 1.15;
-}
-
-.program-week-day-table__plan-name {
-  min-width: 0;
-  overflow: hidden;
-  color: var(--text-muted);
-  font-size: 11px;
-  font-weight: 450;
-  line-height: 1.15;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.data-grid-cell--ppk,
-.data-grid-col--ppk {
-  justify-content: center;
-  text-align: center;
-  white-space: nowrap;
-}
-
 .data-grid-row--program-week-days.is-empty .program-week-day-table__day-name,
 .data-grid-row--program-week-days.is-empty .program-week-day-table__plan-name,
 .data-grid-row--program-week-days.is-empty .data-grid-cell--kcal,
+.data-grid-row--program-week-days.is-empty .data-grid-cell--kcal-share,
+.data-grid-row--program-week-days.is-empty .data-grid-cell--kcal-distribution,
 .data-grid-row--program-week-days.is-empty .data-grid-cell--ppk,
 .data-grid-row--program-week-days.is-empty .data-grid-cell--macro,
 .data-grid-row--program-week-days-mobile-macros.is-empty .program-week-day-table__day-name,
@@ -263,6 +210,12 @@
 .data-grid-row--program-week-days-mobile-macros.is-empty .data-grid-cell--kcal,
 .data-grid-row--program-week-days-mobile-macros.is-empty .data-grid-cell--ppk,
 .data-grid-row--program-week-days-mobile-macros.is-empty .data-grid-cell--macro,
+.data-grid-row--program-week-days-mobile-macros.is-empty .data-grid-cell--kcal-distribution,
+.data-grid-row--program-week-days-mobile-calories.is-empty .program-week-day-table__day-name,
+.data-grid-row--program-week-days-mobile-calories.is-empty .program-week-day-table__plan-name,
+.data-grid-row--program-week-days-mobile-calories.is-empty .data-grid-cell--kcal,
+.data-grid-row--program-week-days-mobile-calories.is-empty .data-grid-cell--kcal-share,
+.data-grid-row--program-week-days-mobile-calories.is-empty .data-grid-cell--ppk,
 .data-grid-row--program-week-days-mobile-alloc.is-empty .program-week-day-table__day-name,
 .data-grid-row--program-week-days-mobile-alloc.is-empty .program-week-day-table__plan-name {
   color: var(--text-muted);
@@ -363,7 +316,7 @@
   .data-grid-row--program-week-days-mobile-macros,
   .data-grid-header--program-week-days-mobile-alloc,
   .data-grid-row--program-week-days-mobile-alloc {
-    padding-inline: 8px 0;
+    padding-inline: 8px;
   }
 }
 

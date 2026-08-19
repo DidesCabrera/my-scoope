@@ -1,14 +1,34 @@
+.header-breadcrumbs nav {
+  width: 100%;
+  min-width: 0;
+}
+
 .breadcrumbs {
   position: relative;
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
+  width: 100%;
   min-width: 0;
   color: var(--breadcrumb-text);
 }
 
 .breadcrumb-item {
+  display: inline-block;
+  flex: 0 1 auto;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.breadcrumb-item:last-child {
+  flex-shrink: 1;
+}
+
+.breadcrumb-overflow {
+  flex: 0 0 auto;
+  overflow: visible;
 }
 
 .breadcrumbs a,

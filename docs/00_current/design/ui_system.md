@@ -26,7 +26,7 @@ El CSS debe leerse mentalmente en estas capas, aunque la estructura física toda
 
 | Capa | Responsabilidad | Archivos actuales |
 |---|---|---|
-| Foundations | tokens, temas, escalas, reset/base | `tokens.css`, `base.css` |
+| Foundations | contrato neutral, tokens generados, temas, reset/base | `design/ui-contract.json`, `ui-contract.generated.css`, `tokens.css`, `base.css` |
 | Layout | estructura app, sidebar, header, page shell | `layout.css`, `sidebar.css`, `header.css`, `page.css` |
 | Primitives | piezas pequeñas reutilizables | `buttons.css`, `actions.css`, `menu.css`, `toast.css`, `icons.css` |
 | Components | componentes compartidos | `entity_card.css`, `content_panel.css`, `detail_section.css`, `card_*`, `panel_tabs.css`, `data_grid.css`, `dash_kpi.css`, `alloc-*`, `picker_list.css` |
@@ -44,7 +44,15 @@ El CSS debe leerse mentalmente en estas capas, aunque la estructura física toda
 
 ## Tokens oficiales
 
-Los nuevos estilos deben usar tokens semánticos de `notas/static/notas/css/tokens.css`.
+Los nuevos estilos deben usar tokens semánticos derivados de
+`design/ui-contract.json`. Django carga primero la compatibilidad histórica de
+`notas/static/notas/css/tokens.css` y después la salida autoritativa
+`notas/static/notas/css/ui-contract.generated.css`.
+
+No editar la salida generada. Ejecutar `npm run generate:ui` para actualizar CSS
+y TypeScript, y `npm run check:ui` para comprobar que el repositorio está
+sincronizado. Las diferencias deliberadas entre web y React Native se declaran
+en `platforms` dentro del contrato.
 
 ### Superficies
 

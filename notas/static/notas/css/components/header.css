@@ -30,6 +30,7 @@
 .page-header-left {
   display: flex;
   align-items: center;
+  flex: 1 1 auto;
   min-width: 0;
   padding-right: 16px;
 }
@@ -43,6 +44,7 @@
   align-items: center;
   justify-content: flex-end;
 
+  flex: 0 0 auto;
   min-width: 0;
 }
 
@@ -105,6 +107,8 @@ html[data-theme="dark"] .header-home-brand-logo--dark {
 
 .header-breadcrumbs {
   display: block;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 /* Deferred header metadata: shown after the page/list hero leaves the viewport */
@@ -143,9 +147,7 @@ body.page-header-meta-deferred.page-header-meta-visible .page-header .header-tit
 }
 
 @media (min-width: 981px) {
-  body.page-detail.page-header-meta-deferred .page-header .label-entity.header,
-  body.page-detail.page-header-meta-deferred .page-header .header-title-mobile,
-  body.page-detail.page-header-meta-deferred .page-header .header-breadcrumbs {
+  body.page-header-meta-deferred .page-header .label-entity.header {
     display: flex;
     opacity: 1;
     visibility: visible;
@@ -155,25 +157,16 @@ body.page-header-meta-deferred.page-header-meta-visible .page-header .header-tit
 
   body.page-header-meta-deferred .page-header .header-breadcrumbs {
     display: block;
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transform: translateY(-4px);
-    transition:
-      opacity 180ms ease,
-      transform 180ms ease,
-      visibility 180ms ease;
-  }
-
-  body.page-header-meta-deferred.page-header-meta-visible .page-header .header-breadcrumbs {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
-    transform: translateY(0);
+    transform: none;
   }
 
-  body.page-header-meta-deferred .page-header .header-title-mobile {
-    display: none;
+  .page-header .header-title-mobile,
+  body.page-header-meta-deferred .page-header .header-title-mobile,
+  body.page-header-meta-deferred.page-header-meta-visible .page-header .header-title-mobile {
+    display: none !important;
   }
 
   body.page-home .page-header .header-breadcrumbs {

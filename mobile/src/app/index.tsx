@@ -1,7 +1,7 @@
 import { Redirect } from "expo-router";
 
 import { useSession } from "@/auth/session-context";
-import { LoadingState } from "@/components/ui/primitives";
+import { LoadingState } from "@/components/ui";
 
 export default function Index() {
   const { status, profile } = useSession();

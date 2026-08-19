@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
-from notas.domain.models import DailyPlan, DailyPlanMeal, Meal
+from notas.domain.models import DailyPlan, DailyPlanMeal, Meal, Program, ProgramDay
 
 User = get_user_model()
 
@@ -62,4 +62,28 @@ class DailyPlanMealNavigationTests(TestCase):
         self.assertEqual(
             response.context["vm"]["ui"]["back_url"],
             expected_back_url,
+        )
+
+    def test_dailyplan_meal_back_preserves_program_context(self):
+        program = Program.objects.create(
+            name="Programa contextual",
+            created_by=self.user,
+            duration_weeks=2,
+        )
+        program_day = ProgramDay.objects.create(
+            program=program,
+            dailyplan=self.dailyplan,
+            week_number=2,
+            day_number=1,
+        )
+
+        response = self.client.get(
+            reverse("dailyplan_meal_detail", args=[self.dailyplan.id, self.dpm.id]),
+            {"program_day": program_day.id},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.context["vm"]["ui"]["back_url"],
+            f"{reverse('dailyplan_detail', args=[self.dailyplan.id])}?program_day={program_day.id}",
         )

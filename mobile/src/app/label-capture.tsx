@@ -8,7 +8,7 @@ import { Platform, StyleSheet, Text, View } from "react-native";
 import type { FoodLabelCaptureInput, FoodLabelCaptureResult } from "@/api/types";
 import { userFacingError } from "@/api/errors";
 import { useSession } from "@/auth/session-context";
-import { AppHeader, Button, Card, Field, InlineNotice, Pill, Screen, SectionTitle, textStyles } from "@/components/ui/primitives";
+import { AppHeader, Button, Card, Field, InlineNotice, Pill, Screen, SectionTitle, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { normalizeNutritionLabel, type NutritionLabelDraft } from "@/label-capture/normalize";
 import {
@@ -48,9 +48,9 @@ const warningCopy: Record<string, string> = {
   basis_not_detected: "No se identificó si la tabla está expresada por 100 g o por porción.",
   serving_size_required: "Se detectó una porción, pero no su peso en gramos.",
   basis_normalized_from_serving: "Los valores fueron convertidos desde una porción hacia 100 g.",
-  energy_macro_mismatch: "Las calorías declaradas difieren del cálculo de proteínas, carbohidratos y grasas.",
+  energy_macro_mismatch: "Las calorías declaradas difieren del cálculo de proteínas, carbos y grasas.",
   protein_g_missing: "No se detectaron proteínas.",
-  carbs_g_missing: "No se detectaron carbohidratos.",
+  carbs_g_missing: "No se detectaron carbos.",
   fat_g_missing: "No se detectaron grasas.",
 };
 
@@ -173,7 +173,7 @@ export default function LabelCaptureScreen() {
     const carbs = optionalNumber(form.carbs);
     const fat = optionalNumber(form.fat);
     if (!form.name.trim() || protein === undefined || carbs === undefined || fat === undefined) {
-      setError("Completa el nombre, proteínas, carbohidratos y grasas antes de confirmar.");
+      setError("Completa el nombre, proteínas, carbos y grasas antes de confirmar.");
       return;
     }
     const optionalInputs = [form.energy, form.saturatedFat, form.sugar, form.fiber, form.sodium, form.servingSize];
@@ -290,7 +290,7 @@ export default function LabelCaptureScreen() {
             <Field autoCapitalize="words" label="Nombre del producto" onChangeText={(value) => update("name", value)} placeholder="Ej. Yogur griego natural" value={form.name} />
             <View style={styles.fieldRow}>
               <View style={styles.fieldCell}><Field keyboardType="decimal-pad" label="Proteínas (g)" onChangeText={(value) => update("protein", value)} value={form.protein} /></View>
-              <View style={styles.fieldCell}><Field keyboardType="decimal-pad" label="Carbohidratos (g)" onChangeText={(value) => update("carbs", value)} value={form.carbs} /></View>
+              <View style={styles.fieldCell}><Field keyboardType="decimal-pad" label="Carbos (g)" onChangeText={(value) => update("carbs", value)} value={form.carbs} /></View>
             </View>
             <View style={styles.fieldRow}>
               <View style={styles.fieldCell}><Field keyboardType="decimal-pad" label="Grasas (g)" onChangeText={(value) => update("fat", value)} value={form.fat} /></View>

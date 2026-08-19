@@ -28,12 +28,29 @@ document.addEventListener("DOMContentLoaded", () => {
       }));
 
       if (options.focus) tab.focus();
+      if (options.updateHash) {
+        const weekNumber = targetId.replace(/^program-week-panel-/, "");
+        window.history.replaceState(null, "", `#week-${weekNumber}`);
+      }
+
+      if (options.scrollToWeek) {
+        const weekNumber = targetId.replace(/^program-week-panel-/, "");
+        window.requestAnimationFrame(() => {
+          document.getElementById(`week-${weekNumber}`)?.scrollIntoView({ block: "start" });
+        });
+      }
+    }
+
+    function tabFromLocationHash() {
+      const match = window.location.hash.match(/^#week-(\d+)$/);
+      if (!match) return null;
+      return tabs.find((tab) => tab.dataset.target === `program-week-panel-${match[1]}`) || null;
     }
 
     tablist.addEventListener("click", (event) => {
       const tab = event.target.closest(".js-program-week-tab");
       if (!tab || !tablist.contains(tab)) return;
-      activateTab(tab);
+      activateTab(tab, { updateHash: true });
     });
 
     tablist.addEventListener("keydown", (event) => {
@@ -48,10 +65,16 @@ document.addEventListener("DOMContentLoaded", () => {
       if (nextIndex === currentIndex && event.key !== "Home" && event.key !== "End") return;
 
       event.preventDefault();
-      activateTab(tabs[nextIndex], { focus: true });
+      activateTab(tabs[nextIndex], { focus: true, updateHash: true });
     });
 
-    const selectedTab = tabs.find((tab) => tab.getAttribute("aria-selected") === "true") || tabs[0];
-    activateTab(selectedTab);
+    window.addEventListener("hashchange", () => {
+      const hashTab = tabFromLocationHash();
+      if (hashTab) activateTab(hashTab, { scrollToWeek: true });
+    });
+
+    const hashTab = tabFromLocationHash();
+    const selectedTab = hashTab || tabs.find((tab) => tab.getAttribute("aria-selected") === "true") || tabs[0];
+    activateTab(selectedTab, { scrollToWeek: Boolean(hashTab) });
   });
 });

@@ -2,12 +2,19 @@
   <div class="data-grid-header data-grid-header--program-weeks" role="row">
     <div class="data-grid-col data-grid-col--program-week" role="columnheader">Semana</div>
     <div class="data-grid-col data-grid-col--kcal" role="columnheader">Cal.</div>
-    <div class="data-grid-col data-grid-col--macro" role="columnheader">P g</div>
+    <div class="data-grid-col data-grid-col--program-plans" role="columnheader">Planes</div>
+    <div class="data-grid-col data-grid-col--program-average-kcal" role="columnheader">Prom. Cal.</div>
+    <div class="data-grid-col data-grid-col--program-week-ratio" role="columnheader">Vs. ant.</div>
+    <div class="data-grid-col data-grid-col--macro data-grid-group-start" role="columnheader">P g</div>
     <div class="data-grid-col data-grid-col--macro" role="columnheader">C g</div>
     <div class="data-grid-col data-grid-col--macro" role="columnheader">F g</div>
-    <div class="data-grid-col data-grid-col--alloc" role="columnheader">P%</div>
-    <div class="data-grid-col data-grid-col--alloc" role="columnheader">C%</div>
-    <div class="data-grid-col data-grid-col--alloc" role="columnheader">F%</div>
+    <div class="program-week-table__distribution-group program-week-table__distribution-group--header" role="presentation">
+      <div class="data-grid-col data-grid-col--kcal-distribution" role="columnheader">Dist. PCF</div>
+      <span class="program-nutrition-bars__separator" role="presentation"></span>
+      <div class="data-grid-col data-grid-col--alloc" role="columnheader">P%</div>
+      <div class="data-grid-col data-grid-col--alloc" role="columnheader">C%</div>
+      <div class="data-grid-col data-grid-col--alloc" role="columnheader">F%</div>
+    </div>
   </div>
 
   {% for week in weeks %}
@@ -18,7 +25,12 @@
       <div class="data-grid-cell data-grid-cell--kcal" role="cell">
         <span>{{ week.totals.total_kcal|floatformat:0 }}</span>
       </div>
-      <div class="data-grid-cell data-grid-cell--macro program-week-table__macro--protein" role="cell">
+      <div class="data-grid-cell data-grid-cell--program-plans" role="cell">{{ week.assigned_dailyplans_count }}</div>
+      <div class="data-grid-cell data-grid-cell--program-average-kcal" role="cell">{{ week.average_kcal_per_assigned_day|floatformat:0 }}</div>
+      <div class="data-grid-cell data-grid-cell--program-week-ratio" role="cell">
+        {% if week.previous_week_average_ratio is None %}-{% else %}{{ week.previous_week_average_ratio|floatformat:0 }}%{% endif %}
+      </div>
+      <div class="data-grid-cell data-grid-cell--macro data-grid-group-start program-week-table__macro--protein" role="cell">
         {{ week.totals.protein|floatformat:0 }}
       </div>
       <div class="data-grid-cell data-grid-cell--macro program-week-table__macro--carbs" role="cell">
@@ -27,14 +39,20 @@
       <div class="data-grid-cell data-grid-cell--macro program-week-table__macro--fat" role="cell">
         {{ week.totals.fat|floatformat:0 }}
       </div>
-      <div class="data-grid-cell data-grid-cell--alloc" role="cell">
-        {% include "components/grid_alloc_item.html" with value=week.totals.alloc.protein kind="protein" %}
-      </div>
-      <div class="data-grid-cell data-grid-cell--alloc" role="cell">
-        {% include "components/grid_alloc_item.html" with value=week.totals.alloc.carbs kind="carbs" %}
-      </div>
-      <div class="data-grid-cell data-grid-cell--alloc" role="cell">
-        {% include "components/grid_alloc_item.html" with value=week.totals.alloc.fat kind="fat" %}
+      <div class="program-week-table__distribution-group" role="presentation">
+        <div class="data-grid-cell data-grid-cell--kcal-distribution" role="cell">
+          {% include "components/macro_kcal_distribution.html" with protein=week.totals.alloc.protein carbs=week.totals.alloc.carbs fat=week.totals.alloc.fat %}
+        </div>
+        <span class="program-nutrition-bars__separator" role="presentation"></span>
+        <div class="data-grid-cell data-grid-cell--alloc" role="cell">
+          {% include "components/grid_alloc_item.html" with value=week.totals.alloc.protein kind="protein" %}
+        </div>
+        <div class="data-grid-cell data-grid-cell--alloc" role="cell">
+          {% include "components/grid_alloc_item.html" with value=week.totals.alloc.carbs kind="carbs" %}
+        </div>
+        <div class="data-grid-cell data-grid-cell--alloc" role="cell">
+          {% include "components/grid_alloc_item.html" with value=week.totals.alloc.fat kind="fat" %}
+        </div>
       </div>
     </div>
   {% empty %}

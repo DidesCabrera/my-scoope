@@ -13,23 +13,9 @@
       {% endwith %}
     {% endif %}
 
-    <h1>{{ titulo.name }}</h1>
-
-    <div class="label-class">
-      {% for class in titulo.classes %}
-        <span class="class-tag">{{ class }}</span>
-      {% endfor %}
+    <div class="block-title-card-edit">
+      <h1>{{ titulo.name }}</h1>
     </div>
-
-    {% if titulo.badges %}
-      <div class="card-title-badges" aria-label="Características">
-        {% for badge in titulo.badges %}
-          <span class="picker-result-badge picker-result-badge--{{ badge.modifier }}">
-            {{ badge.label }}
-          </span>
-        {% endfor %}
-      </div>
-    {% endif %}
 
     {% if titulo.structural_indicators %}
     <div class="entity-indicators structural-indicators">
@@ -47,6 +33,24 @@
             <i data-lucide="carrot" class="structural-icon main"></i>
         </span>
     </div>
+    {% endif %}
+
+    {% if titulo.classes %}
+      <div class="label-class">
+        {% for class in titulo.classes %}
+          <span class="class-tag">{{ class }}</span>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% if titulo.badges %}
+      <div class="card-title-badges" aria-label="Características">
+        {% for badge in titulo.badges %}
+          <span class="picker-result-badge picker-result-badge--{{ badge.modifier }}">
+            {{ badge.label }}
+          </span>
+        {% endfor %}
+      </div>
     {% endif %}
   </div>
 

@@ -1,0 +1,11 @@
+<span class="program-week-day-table__identity">
+  {% if has_plan %}
+    <i data-lucide="clipboard-list" class="program-week-day-table__dailyplan-icon" aria-hidden="true"></i>
+  {% else %}
+    <span class="program-week-day-table__dailyplan-placeholder" aria-hidden="true">-</span>
+  {% endif %}
+  <span class="program-week-day-table__identity-copy">
+    <span class="program-week-day-table__day-name">{{ day_name }}</span>
+    <span class="program-week-day-table__plan-name">{{ dailyplan_name }}</span>
+  </span>
+</span>

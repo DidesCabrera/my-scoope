@@ -3,8 +3,8 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 
-import tokens from "../src/design/tokens.json";
 import { MobileApiError, userFacingError } from "../src/api/errors";
+import { tokens } from "../src/generated/ui-tokens";
 
 test("mobile visual grammar exposes the reusable card and nutrition tokens", () => {
   assert.equal(tokens.contract, "myscoope.visual-grammar.v2");
@@ -15,6 +15,16 @@ test("mobile visual grammar exposes the reusable card and nutrition tokens", () 
   }
   assert.equal(tokens.weight.extraBold, "800");
   assert.equal(tokens.spacing.compact, 6);
+});
+
+test("the development UI gallery remains available at /dev/ui-gallery", async () => {
+  const gallery = await readFile(
+    path.resolve(process.cwd(), "src/app/dev/ui-gallery.tsx"),
+    "utf8",
+  );
+  assert.match(gallery, /export default function UiGalleryScreen/);
+  assert.match(gallery, /if \(!__DEV__\) return <Redirect href="\/" \/>/);
+  assert.match(gallery, /Galería del sistema UI/);
 });
 
 test("the committed mobile contract exposes every route consumed through CML08", async () => {

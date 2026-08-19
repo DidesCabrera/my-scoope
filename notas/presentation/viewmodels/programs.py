@@ -99,15 +99,16 @@ def _program_chart_bar_height(value, max_value):
     return min((value / max_value) * 100, 100)
 
 
-def _program_chart_value_label(value, unit, decimals=0):
+def _program_chart_value_label(value, unit="", decimals=0):
     number = _format_chart_number(value, decimals)
     return f"{number} {unit}".strip()
 
 
 def _program_chart_range_label(min_value, max_value, unit, decimals=0):
-    min_label = _program_chart_value_label(min_value, unit, decimals)
-    max_label = _program_chart_value_label(max_value, unit, decimals)
-    return f"Min: {min_label} - Max: {max_label}"
+    display_unit = "cal" if unit == "kcal" else unit
+    min_label = _program_chart_value_label(min_value, "", decimals)
+    max_label = _program_chart_value_label(max_value, display_unit, decimals)
+    return f"{min_label} - {max_label}"
 
 
 def _empty_totals():
@@ -275,7 +276,12 @@ def build_program_metric_chart(
         "kind": "stacked",
         "decimals": 0,
         "isActive": False,
-        "rangeLabel": "Min: 0% - Max: 100%",
+        "rangeLabel": "",
+        "rangeLabels": [
+            {"key": "protein", "label": "P", "value": _chart_metric_range([point["alloc_protein"] for point in day_points], "%", 0)},
+            {"key": "carbs", "label": "C", "value": _chart_metric_range([point["alloc_carbs"] for point in day_points], "%", 0)},
+            {"key": "fat", "label": "G", "value": _chart_metric_range([point["alloc_fat"] for point in day_points], "%", 0)},
+        ],
         "legendLabel": "Leyenda de alloc",
         "legendItems": [
             {"key": "protein", "label": "P%"},
@@ -298,7 +304,7 @@ def build_program_metric_chart(
         axis_count = len(axis_labels)
     else:
         axis_labels = [
-            {"label": f"S{week_number}", "mobileLabel": f"S{week_number}"}
+            {"label": f"Semana {week_number}", "mobileLabel": f"S{week_number}"}
             for week_number in week_numbers
         ]
         axis_count = len(axis_labels)
@@ -405,10 +411,11 @@ def build_week_kpi_ranges(week, current_weight=None):
 
 def build_week_day_nutrition_rows(week, current_weight=None, program=None):
     rows = []
+    week_totals = week.get("totals") or _empty_totals()
     for day in week.get("days", []):
         snapshot = day.get("snapshot") or _empty_totals()
         protein = float(snapshot.get("protein") or 0)
-        alloc = snapshot.get("alloc") or {"protein": 0, "carbs": 0, "fat": 0}
+        macro_distribution = snapshot.get("alloc") or {"protein": 0, "carbs": 0, "fat": 0}
         dailyplan = day.get("dailyplan") or {}
         program_day = day.get("program_day") or {}
         day_name = FULL_DAY_LABELS.get(day["day_number"], day.get("day_label") or "")
@@ -426,14 +433,20 @@ def build_week_day_nutrition_rows(week, current_weight=None, program=None):
             "remove_url": remove_url,
             "is_empty": not has_plan,
             "total_kcal": snapshot.get("total_kcal", 0),
+            "kcal_share": _safe_percentage(snapshot.get("total_kcal", 0), week_totals.get("total_kcal", 0)),
+            "kcal_distribution": {
+                "protein": macro_distribution.get("protein", 0),
+                "carbs": macro_distribution.get("carbs", 0),
+                "fat": macro_distribution.get("fat", 0),
+            },
             "ppk": (protein / current_weight) if (current_weight and protein) else 0,
             "protein": protein,
             "carbs": snapshot.get("carbs", 0),
             "fat": snapshot.get("fat", 0),
             "alloc": {
-                "protein": alloc.get("protein", 0),
-                "carbs": alloc.get("carbs", 0),
-                "fat": alloc.get("fat", 0),
+                "protein": _safe_percentage(snapshot.get("kcal_protein", 0), week_totals.get("kcal_protein", 0)),
+                "carbs": _safe_percentage(snapshot.get("kcal_carbs", 0), week_totals.get("kcal_carbs", 0)),
+                "fat": _safe_percentage(snapshot.get("kcal_fat", 0), week_totals.get("kcal_fat", 0)),
             },
         })
     return rows
@@ -486,9 +499,27 @@ def _dailyplan_options(user):
     return [build_dailyplan_snapshot(dailyplan) for dailyplan in list(available_dailyplans(user))]
 
 
+def build_program_week_summary_metrics(weeks):
+    previous_average_kcal = None
+    for week in weeks:
+        assigned_dailyplans_count = int(week.get("filled_days_count") or 0)
+        total_kcal = float((week.get("totals") or {}).get("total_kcal") or 0)
+        average_kcal = total_kcal / assigned_dailyplans_count if assigned_dailyplans_count else 0.0
+        previous_ratio = (
+            (average_kcal - previous_average_kcal) / previous_average_kcal * 100
+            if previous_average_kcal is not None and previous_average_kcal > 0
+            else None
+        )
+        week["assigned_dailyplans_count"] = assigned_dailyplans_count
+        week["average_kcal_per_assigned_day"] = average_kcal
+        week["previous_week_average_ratio"] = previous_ratio
+        previous_average_kcal = average_kcal
+    return weeks
+
+
 def build_program_detail_content(*, program: Program, user, header):
     summary = get_program_summary(program)
-    weeks = summary["weeks"]
+    weeks = build_program_week_summary_metrics(summary["weeks"])
     current_weight = get_current_weight(user)
     for week in weeks:
         week["chart"] = build_program_metric_chart(
@@ -499,7 +530,11 @@ def build_program_detail_content(*, program: Program, user, header):
             axis_mode="days",
         )
         week["kpi_ranges"] = build_week_kpi_ranges(week, current_weight=current_weight)
-        week["detail_url"] = reverse("program_week_detail", args=[program.id, week["week_number"]])
+        week["day_nutrition_rows"] = build_week_day_nutrition_rows(
+            week,
+            current_weight=current_weight,
+            program=program,
+        )
     dailyplan_options = _dailyplan_options(user)
     return {
         "header": header,
@@ -522,33 +557,6 @@ def build_program_detail_content(*, program: Program, user, header):
     }
 
 
-def build_program_week_detail_content(*, program: Program, user, week_number: int, header):
-    summary = get_program_summary(program)
-    selected_week = next((week for week in summary["weeks"] if week["week_number"] == week_number), None)
-    if selected_week is None:
-        return None
-    current_weight = get_current_weight(user)
-    selected_week["chart"] = build_program_metric_chart(
-        [selected_week],
-        current_weight=current_weight,
-        title=f"Variación diaria · Semana {selected_week['week_number']}",
-        subtitle="Detalle diario de calorías, macros, alloc y PPK de esta semana.",
-        axis_mode="days",
-    )
-    selected_week["kpi_ranges"] = build_week_kpi_ranges(selected_week, current_weight=current_weight)
-    selected_week["day_nutrition_rows"] = build_week_day_nutrition_rows(selected_week, current_weight=current_weight, program=program)
-    dailyplan_options = _dailyplan_options(user)
-    return {
-        "header": header,
-        "program": program,
-        "week": selected_week,
-        "available_dailyplans": dailyplan_options,
-        "available_dailyplans_json": json.dumps(dailyplan_options, cls=DjangoJSONEncoder),
-        "program_foods_count": summary["program_foods_count"],
-        "can_edit": program.created_by_id == user.id,
-    }
-
-
 def _dailyplan_meals_for_card(dailyplan):
     prefetched = getattr(dailyplan, "_prefetched_objects_cache", {}).get("dailyplan_meals")
     if prefetched is not None:
@@ -556,7 +564,7 @@ def _dailyplan_meals_for_card(dailyplan):
     return list(dailyplan.dailyplan_meals.all().order_by("order", "id"))
 
 
-def build_program_day_child_card(dailyplan, user, program_day=None, include_detail_action=False):
+def build_program_day_child_card(dailyplan, user, program_day=None):
     snapshot = build_dailyplan_snapshot(dailyplan)
     dailyplan_meals = _dailyplan_meals_for_card(dailyplan)
     foods_aggregation = build_dailyplan_foods_aggregation(dailyplan_meals)
@@ -613,12 +621,11 @@ def build_program_day_child_card(dailyplan, user, program_day=None, include_deta
         "actions": build_program_day_card_actions(
             dailyplan,
             program_day,
-            include_detail_action=include_detail_action,
         ),
     }
 
 
-def build_program_day_card_actions(dailyplan, program_day=None, include_detail_action=False):
+def build_program_day_card_actions(dailyplan, program_day=None):
     if program_day is None:
         return []
 
@@ -644,18 +651,17 @@ def build_program_day_card_actions(dailyplan, program_day=None, include_detail_a
         ),
     ]
 
-    if include_detail_action:
-        actions.append(
-            _action(
-                key="detail",
-                label="Ir a detalle",
-                url=append_query(
-                    reverse("dailyplan_detail", args=[dailyplan.id]),
-                    program_day=program_day.id,
-                ),
-                icon="chevron-right",
-                extra_class="program-day-selected-card__detail",
-            )
+    actions.append(
+        _action(
+            key="detail",
+            label="Ir a detalle",
+            url=append_query(
+                reverse("dailyplan_detail", args=[dailyplan.id]),
+                program_day=program_day.id,
+            ),
+            icon="chevron-right",
+            extra_class="program-day-selected-card__detail",
         )
+    )
 
     return actions

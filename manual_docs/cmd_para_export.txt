@@ -1,8 +1,15 @@
---------------------------
+--------------------------  cooking-pot, pill
 ***COMANDOS VENV - RUNSERVER
---------------------------
-cooking-pot
-pill
+-------------------------- #d336ff
+
+
+Necesito ayuda con la realizacion de cambio en mi proyecto my-scoope,
+el cual esta ubicado en el directorio /Users/felipedides/Developer/my-scoope.
+El entorno virtual esta en el proyecto.
+
+Indicame la rama en la que realizaras los cambios, y si hay otras ramas creadas simultaneamente.
+
+
 ----- ** Nueva forma nuevo mac ***
 cd /Users/felipedides/Developer/my-scoope
 source .venv/bin/activate
@@ -18,16 +25,15 @@ caffeinate -t 3600   # 1 hora
 caffeinate -t 7200   # 2 horas
 caffeinate -t 14400  # 4 horas
 
----
-
-Necesito ayuda con la realizacion de cambio en mi proyecto my-scoope,
-el cual esta ubicado en el directorio /Users/felipedides/Developer/my-scoope.
-El entorno virtual esta en el proyecto.
+----
+cd /Users/felipedides/Developer/my-scoope/mobile
+npx expo run:ios --device "iPhone 17 Pro"
 
 
+open /Users/felipedides/Developer/my-scoope/mobile/ios/MyScoope.xcworkspace
 
 
-python manage.py runserver
+xcrun simctl openurl booted "myscoope://dev/ui-gallery"
 
 
 --------------------------

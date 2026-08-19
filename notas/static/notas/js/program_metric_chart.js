@@ -130,7 +130,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function renderAxis(data) {
+  function renderAxis(data, options = {}) {
     const scope = data.scope || "program";
     const labels = Array.isArray(data.axisLabels) ? data.axisLabels : [];
     const axisCount = data.axisCount || (scope === "week" ? labels.length || data.daysCount : data.weeksCount) || 1;
@@ -141,9 +141,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     labels.forEach((label) => {
       const mobileLabel = label.mobileLabel || label.label;
+      const visibleLabel = scope === "week" ? mobileLabel : label.label;
       axis.appendChild(makeElement("span", "", {
         "data-mobile-label": mobileLabel,
-        text: scope === "week" ? mobileLabel : label.label,
+        text: options.uppercase && scope === "week" ? visibleLabel.toUpperCase() : visibleLabel,
       }));
     });
 
@@ -151,7 +152,33 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
-  function renderAxisHeader(metric) {
+  function compactRangeLabel(label, metric) {
+    const displayUnit = metric.key === "calories" ? "cal" : (metric.unit || "");
+    const cleaned = String(label || "")
+      .replace(/\bMin:\s*/gi, "")
+      .replace(/\bMax:\s*/gi, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (!displayUnit) return cleaned;
+
+    const escapedUnit = displayUnit.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const sourceUnit = metric.key === "calories" ? "(?:kcal|cal)" : escapedUnit;
+    const unitPattern = new RegExp(`\\s*${sourceUnit}\\b`, "gi");
+    return `${cleaned.replace(unitPattern, "")} ${displayUnit}`;
+  }
+
+  function renderRangeBadge(metric, label, modifierKey = "") {
+    const modifier = modifierKey ? ` program-chart-axis-header__range--${metric.key}-${modifierKey}` : "";
+    const allocInitials = { protein: "P", carbs: "C", fat: "G" };
+    const compactLabel = metric.key === "alloc" && modifierKey
+      ? `${allocInitials[modifierKey] || String(modifierKey).charAt(0).toUpperCase()} ${String(label).replace(/^\S+\s+/, "")}`
+      : label;
+    return makeElement("span", `program-chart-axis-header__range program-chart-axis-header__range--${metric.key}${modifier}`, {
+      text: compactRangeLabel(compactLabel, metric),
+    });
+  }
+
+  function renderAxisHeader(metric, options = {}) {
     const header = makeElement("div", "program-chart-axis-header");
     const heading = makeElement("div", "program-chart-axis-header__heading");
     const title = makeElement("h3", "program-chart-axis-header__title", {
@@ -160,14 +187,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const unit = makeElement("span", "program-chart-axis-header__unit", {
       text: metric.unit || "",
     });
-    const range = makeElement("span", "program-chart-axis-header__range", {
-      text: metric.rangeLabel || "",
-    });
+    const rangeLabels = Array.isArray(metric.rangeLabels) ? metric.rangeLabels : [];
+    const rangeGroup = makeElement("div", "program-chart-axis-header__ranges");
 
     heading.appendChild(title);
-    if (metric.unit) heading.appendChild(unit);
+    if (metric.unit && !options.hideUnit) heading.appendChild(unit);
     header.appendChild(heading);
-    if (metric.rangeLabel) header.appendChild(range);
+    if (rangeLabels.length) {
+      rangeLabels.forEach((rangeItem) => {
+        rangeGroup.appendChild(renderRangeBadge(metric, `${rangeItem.label} ${rangeItem.value}`, rangeItem.key));
+      });
+      header.appendChild(rangeGroup);
+    } else if (metric.rangeLabel) {
+      rangeGroup.appendChild(renderRangeBadge(metric, metric.rangeLabel));
+      header.appendChild(rangeGroup);
+    }
     return header;
   }
 
@@ -258,7 +292,7 @@ document.addEventListener("DOMContentLoaded", () => {
     circle.setAttribute("class", "program-chart-outline-dot");
     circle.setAttribute("cx", x.toFixed(2));
     circle.setAttribute("cy", y.toFixed(2));
-    circle.setAttribute("r", "3.5");
+    circle.setAttribute("r", "2.35");
     return circle;
   }
 
@@ -524,35 +558,19 @@ document.addEventListener("DOMContentLoaded", () => {
       const rect = bar.getBoundingClientRect();
       const x1 = Math.min(Math.max(rect.left - plotRect.left, 0), width);
       const x2 = Math.min(Math.max(rect.right - plotRect.left, 0), width);
+      const xCenter = Math.min(Math.max(x1 + ((x2 - x1) / 2), 0), width);
       const yTop = Math.min(Math.max(rect.top - plotRect.top, 0), height);
-      const yBottom = Math.min(Math.max(rect.bottom - plotRect.top, 0), height);
-      return { x1, x2, yTop, yBottom };
+      return { xCenter, yTop };
     });
 
+    const lineCommands = points.map((point, index) => (
+      `${index === 0 ? "M" : "L"} ${point.xCenter.toFixed(2)} ${point.yTop.toFixed(2)}`
+    ));
+    svg.appendChild(makeOutlinePath(lineCommands.join(" ")));
+
     points.forEach((point, index) => {
-      const previous = points[index - 1];
-      const next = points[index + 1];
-      const isFirst = index === 0;
-      const isLast = index === points.length - 1;
-      const leftStop = previous ? Math.min(previous.yTop, point.yBottom) : point.yTop;
-      const rightStop = next ? Math.min(next.yTop, point.yBottom) : point.yTop;
-      const commands = [];
-
-      if (!isFirst && leftStop > point.yTop) {
-        commands.push(`M ${point.x1.toFixed(2)} ${leftStop.toFixed(2)}`);
-        commands.push(`L ${point.x1.toFixed(2)} ${point.yTop.toFixed(2)}`);
-      }
-
-      commands.push(`M ${point.x1.toFixed(2)} ${point.yTop.toFixed(2)}`);
-      commands.push(`L ${point.x2.toFixed(2)} ${point.yTop.toFixed(2)}`);
-
-      if (!isLast && rightStop > point.yTop) {
-        commands.push(`L ${point.x2.toFixed(2)} ${rightStop.toFixed(2)}`);
-      }
-
-      svg.appendChild(makeOutlinePath(commands.join(" ")));
-      svg.appendChild(makeOutlineDot(point.x1, point.yTop));
-      svg.appendChild(makeOutlineDot(point.x2, point.yTop));
+      if (index === 0) return;
+      svg.appendChild(makeOutlineDot(point.xCenter, point.yTop));
     });
   }
 
@@ -733,7 +751,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return legend;
   }
 
-  function renderPane(data, metric, showBarValues) {
+  function renderPane(data, metric, showBarValues, options = {}) {
     const pane = makeElement("div", "program-chart-pane js-program-chart-pane", {
       "data-metric": metric.key,
     });
@@ -745,6 +763,9 @@ document.addEventListener("DOMContentLoaded", () => {
       style: `--program-chart-days: ${data.daysCount || 1}; --program-chart-weeks: ${weeksCount}; --program-chart-min-width: ${getChartMinWidth(data)};`,
       "data-weeks-count": Math.min(weeksCount, 12),
     });
+    if (options.syncScroll) {
+      axis.classList.add("js-program-chart-scroll-sync");
+    }
     const rawMetricMax = getRawMetricMax(metric);
     const metricMax = getMetricMax(metric);
     const guideValues = getGuideValues(metric, rawMetricMax);
@@ -789,40 +810,93 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    axis.appendChild(renderAxisHeader(metric));
+    if (options.externalHeader) {
+      pane.appendChild(renderAxisHeader(metric, { hideUnit: true }));
+    } else {
+      axis.appendChild(renderAxisHeader(metric));
+    }
     axis.appendChild(plot);
-    axis.appendChild(renderAxis(data));
+    if (!options.externalAxis) {
+      axis.appendChild(renderAxis(data));
+    }
     layout.appendChild(axis);
     pane.appendChild(layout);
 
-    const legend = renderLegend(metric);
+    const legend = options.externalHeader ? null : renderLegend(metric);
     if (legend) pane.appendChild(legend);
 
     return pane;
+  }
+
+  function bindSynchronizedScroll(body) {
+    const scrollContainers = Array.from(body.querySelectorAll(".js-program-chart-scroll-sync"));
+    let isSyncing = false;
+
+    scrollContainers.forEach((container) => {
+      container.addEventListener("scroll", () => {
+        if (isSyncing) return;
+        isSyncing = true;
+        const left = container.scrollLeft;
+        scrollContainers.forEach((target) => {
+          if (target !== container) target.scrollLeft = left;
+        });
+        window.requestAnimationFrame(() => {
+          isSyncing = false;
+          scheduleVisibleOutlines(body);
+        });
+      }, { passive: true });
+    });
   }
 
   function renderChart(chart) {
     const data = readChartData(chart);
     if (!data || !Array.isArray(data.metrics) || !data.metrics.length) return;
 
-    const showBarValues = chart.dataset.showBarValues === "true";
+    const isProgramScope = (data.scope || "program") === "program";
+    const isWeekScope = (data.scope || "") === "week" || chart.classList.contains("program-chart-panel--week");
+    const isProgramPreview = (
+      (isProgramScope && (
+        chart.classList.contains("program-chart-panel--card")
+        || chart.classList.contains("program-chart-panel--detail")
+      ))
+      || isWeekScope
+      || chart.classList.contains("program-chart-panel--week-card-kpi-preview")
+    );
+    const showBarValues = isProgramPreview ? false : chart.dataset.showBarValues === "true";
     const body = chart.querySelector(".js-program-chart-body");
     if (!body) return;
 
     const activeMetric = data.metrics.find((metric) => metric.isActive) || data.metrics[0];
-    const tabs = renderTabs(chart, data, activeMetric.key);
+    const tabs = isProgramPreview ? [] : renderTabs(chart, data, activeMetric.key);
+    chart.classList.toggle("program-chart-panel--stacked-preview", isProgramPreview);
+    body.classList.toggle("program-chart-panel__body--stacked-preview", isProgramPreview);
     body.innerHTML = "";
 
+    if (isProgramPreview) {
+      const previewHeader = makeElement("div", "program-chart-preview-axis-header js-program-chart-scroll-sync", {
+        style: `--program-chart-min-width: ${getChartMinWidth(data)};`,
+      });
+      previewHeader.appendChild(renderAxis(data, { uppercase: true }));
+      body.appendChild(previewHeader);
+    }
+
     data.metrics.forEach((metric) => {
-      const pane = renderPane(data, metric, showBarValues);
-      pane.hidden = metric.key !== activeMetric.key;
+      const pane = renderPane(data, metric, showBarValues, {
+        externalHeader: isProgramPreview,
+        externalAxis: isProgramPreview,
+        syncScroll: isProgramPreview,
+      });
+      pane.hidden = !isProgramPreview && metric.key !== activeMetric.key;
       body.appendChild(pane);
     });
 
     scheduleVisibleOutlines(body);
+    if (isProgramPreview) bindSynchronizedScroll(body);
     if (window.lucide && typeof window.lucide.createIcons === "function") {
       window.lucide.createIcons();
     }
+
+    if (isProgramPreview) return;
 
     function activate(metricKey) {
       tabs.forEach((tab) => {

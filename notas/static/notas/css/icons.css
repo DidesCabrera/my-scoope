@@ -515,9 +515,10 @@
 
   }
 
-/* Structural indicators icons should follow theme text color */
+/* Structural indicators icons should follow their entity tuple color */
 .structural-indicators .card-icon,
 .structural-indicators .card-icon.main,
 .structural-indicators svg {
-  color: var(--text-muted);
+  color: currentColor;
+  stroke: currentColor;
 }
