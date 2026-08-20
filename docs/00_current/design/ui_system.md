@@ -20,6 +20,25 @@ La opción preferida es siempre extender un patrón existente mediante una varia
 
 ---
 
+## Plataformas y galerías oficiales
+
+My Scoope mantiene un solo contrato semántico con dos implementaciones reales:
+
+| Superficie | Implementación autoritativa | Galería |
+|---|---|---|
+| Desktop web y mobile web | Django templates + CSS productivo | `/app/dev/ui-system/` |
+| App iOS/Android | React Native + `StyleSheet` | `/dev/ui-gallery` en Expo |
+
+La ruta Expo abierta en un navegador sigue siendo una previsualización de React
+Native mediante `react-native-web`; no representa el CSS Django. La galería Web
+renderiza los parciales productivos y contiene además un iframe de 390 px para
+activar los media queries reales de mobile web.
+
+Las galerías son consumidores y superficies de validación. No son fuentes de
+estilos. Los componentes y recetas compartidas viven fuera de ellas.
+
+---
+
 ## Capas CSS oficiales
 
 El CSS debe leerse mentalmente en estas capas, aunque la estructura física todavía sea progresiva:
@@ -53,6 +72,19 @@ No editar la salida generada. Ejecutar `npm run generate:ui` para actualizar CSS
 y TypeScript, y `npm run check:ui` para comprobar que el repositorio está
 sincronizado. Las diferencias deliberadas entre web y React Native se declaran
 en `platforms` dentro del contrato.
+
+### Recetas de componentes
+
+Los valores internos que forman parte de la identidad estable de un componente
+—por ejemplo tamaño, borde, radio y altura de barras de `nutritionKpi`— se
+declaran en `componentRecipes` dentro de `design/ui-contract.json`. El generador
+los convierte en variables CSS para Django y en `tokens.component` para React
+Native. Las recetas admiten valores distintos por plataforma, pero conservan
+los mismos nombres semánticos de componente y variante.
+
+No se genera HTML ni JSX desde el contrato. La estructura sigue viviendo en el
+parcial Django o componente React Native correspondiente. El contrato comparte
+decisiones; cada plataforma conserva su implementación nativa.
 
 ### Superficies
 
