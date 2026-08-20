@@ -84,9 +84,9 @@ export function PanelAllocationBar({
 
 const styles = StyleSheet.create({
   fill: { bottom: 0, left: 0, position: "absolute", top: 0 },
-  kpiFill: { borderRadius: 6 },
-  kpiContainer: { backgroundColor: tokens.color.allocationBarTrack, borderRadius: 6, height: 24, justifyContent: "center", minWidth: 0, overflow: "hidden", width: "100%" },
-  kpiContainerCompact: { height: 18 },
+  kpiFill: { borderRadius: tokens.component.nutritionKpi.regular.barRadius },
+  kpiContainer: { backgroundColor: tokens.color.allocationBarTrack, borderRadius: tokens.component.nutritionKpi.regular.barRadius, height: tokens.component.nutritionKpi.regular.barHeight, justifyContent: "center", minWidth: 0, overflow: "hidden", width: "100%" },
+  kpiContainerCompact: { height: tokens.component.nutritionKpi.nested.barHeight },
   panelTrack: { backgroundColor: tokens.color.allocationPanelTrack, borderRadius: 4, height: 24, justifyContent: "center", overflow: "hidden", width: "100%" },
   panelFill: { borderRadius: 4 },
   panelTrackCompact: { height: 18 },

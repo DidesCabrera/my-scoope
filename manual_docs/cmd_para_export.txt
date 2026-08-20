@@ -7,7 +7,7 @@ Necesito ayuda con la realizacion de cambio en mi proyecto my-scoope,
 el cual esta ubicado en el directorio /Users/felipedides/Developer/my-scoope.
 El entorno virtual esta en el proyecto.
 
-Indicame la rama en la que realizaras los cambios, y si hay otras ramas creadas simultaneamente.
+Si realizamos cambios, indicame la rama en la que realizaras los cambios, y si hay otras ramas creadas simultaneamente, o cambios que no hayan sido commiteados aun.
 
 
 ----- ** Nueva forma nuevo mac ***

@@ -22,7 +22,7 @@ export function EntityDetailPage({
   backLabel = "Volver",
   children,
   accessory,
-  density = "regular",
+  kpiVariant = "regular",
   entity,
   eyebrow,
   indicators,
@@ -61,7 +61,7 @@ export function EntityDetailPage({
             title={title}
             variant="page"
           />
-          <NutritionKpiSection density={density} {...nutrition} />
+          <NutritionKpiSection variant={kpiVariant} {...nutrition} />
         </View>
         {children}
       </View>

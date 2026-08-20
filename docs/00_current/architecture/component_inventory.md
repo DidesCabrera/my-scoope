@@ -62,6 +62,11 @@ nutricionales; solo cambia su composición contextual. `NutritionKpiSection`
 compone calorías, gramos, PPK y las tres barras KPI sin calcular datos de
 dominio; `ProteinPerKilogramBadge` es la etiqueta PPK reutilizable.
 
+`NutritionKpiSection` y el `dash-kpi` Django comparten la receta semántica
+`componentRecipes.nutritionKpi` de `design/ui-contract.json`. Las variantes
+oficiales son `regular` y `nested` en Native; Web agrega `picker` para su flujo
+de selección. No crear copias dentro de `components/libraries`.
+
 ## Features con estilos propios
 
 | Feature | Archivo | Contrato |

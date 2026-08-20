@@ -6,10 +6,10 @@ import { Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } fro
 import type { LibraryFoodPanelItem, LibraryMealPanelItem, LibraryWeekPanelItem } from "@/api/types";
 import { PanelAllocationBar } from "@/components/nutrition/allocation-bar";
 import { CalorieDistributionBar } from "@/components/nutrition/calorie-distribution-bar";
+import { NutritionEntityCard } from "@/components/nutrition/nutrition-entity-card";
+import { EntityIcon } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
-import { EntityIcon } from "./entity-card";
-import { NutritionEntityCard } from "./nutrition-entity-card";
 import { EntityPanelTabs, PanelBody, PanelEmptyState, PanelSurface } from "./panel-surface";
 
 type PanelNutritionItem = {
@@ -162,7 +162,7 @@ export function DailyPlanMealCards({ items }: { items: LibraryMealPanelItem[] })
             indicators={[{ icon: "food", label: "alimentos", value: item.foods.length }]}
             nutrition={{
               calories: item.calories,
-              protein: { grams: item.protein_grams, allocation: item.protein_allocation, per_kilogram: null },
+              protein: { grams: item.protein_grams, allocation: item.protein_allocation, perKilogram: null },
               carbs: { grams: item.carbs_grams, allocation: item.carbs_allocation },
               fat: { grams: item.fat_grams, allocation: item.fat_allocation },
             }}

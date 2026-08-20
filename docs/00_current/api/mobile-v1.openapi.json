@@ -3280,9 +3280,45 @@
       },
       "LibraryWeekDayData": {
         "properties": {
+          "dailyplan_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dailyplan Id"
+          },
           "day_label": {
             "title": "Day Label",
             "type": "string"
+          },
+          "day_number": {
+            "title": "Day Number",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "meals": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryMealPanelItemData"
+            },
+            "title": "Meals",
+            "type": "array"
+          },
+          "nutrition": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LibraryNutritionData"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "plan_name": {
             "anyOf": [
@@ -3297,6 +3333,8 @@
           }
         },
         "required": [
+          "id",
+          "day_number",
           "day_label"
         ],
         "title": "LibraryWeekDayData",
@@ -3304,6 +3342,10 @@
       },
       "LibraryWeekPanelItemData": {
         "properties": {
+          "average_calories": {
+            "title": "Average Calories",
+            "type": "number"
+          },
           "calorie_distribution": {
             "$ref": "#/components/schemas/LibraryCalorieDistributionData"
           },
@@ -3338,9 +3380,28 @@
             "title": "Fat Grams",
             "type": "number"
           },
+          "filled_days_count": {
+            "title": "Filled Days Count",
+            "type": "integer"
+          },
+          "foods": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryFoodPanelItemData"
+            },
+            "title": "Foods",
+            "type": "array"
+          },
+          "foods_count": {
+            "title": "Foods Count",
+            "type": "integer"
+          },
           "id": {
             "title": "Id",
             "type": "string"
+          },
+          "meals_count": {
+            "title": "Meals Count",
+            "type": "integer"
           },
           "protein_allocation": {
             "title": "Protein Allocation",
@@ -3359,6 +3420,10 @@
           "id",
           "week_number",
           "days",
+          "filled_days_count",
+          "meals_count",
+          "foods_count",
+          "average_calories",
           "calories",
           "calorie_share",
           "calorie_distribution",

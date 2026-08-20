@@ -1,9 +1,9 @@
-import type { PropsWithChildren } from "react";
+import type { PropsWithChildren, ReactNode } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { tokens } from "@/design/tokens";
 
-export type EntityPanelTab<T extends string> = { key: T; label: string };
+export type EntityPanelTab<T extends string> = { icon?: ReactNode | ((selected: boolean) => ReactNode); iconOnly?: boolean; key: T; label: string };
 
 export function EntityPanelTabs<T extends string>({ activeTab, onChange, tabs }: {
   activeTab: T;
@@ -16,12 +16,14 @@ export function EntityPanelTabs<T extends string>({ activeTab, onChange, tabs }:
         const selected = tab.key === activeTab;
         return (
           <Pressable
+            accessibilityLabel={tab.label}
             accessibilityRole="tab"
             accessibilityState={{ selected }}
             key={tab.key}
             onPress={() => onChange(tab.key)}
             style={({ pressed }) => [styles.tab, selected && styles.tabSelected, pressed && styles.pressed]}>
-            <Text style={[styles.tabLabel, selected && styles.tabLabelSelected]}>{tab.label}</Text>
+            {typeof tab.icon === "function" ? tab.icon(selected) : tab.icon}
+            {!tab.iconOnly ? <Text style={[styles.tabLabel, selected && styles.tabLabelSelected]}>{tab.label}</Text> : null}
           </Pressable>
         );
       })}
@@ -44,7 +46,7 @@ export function PanelEmptyState({ label }: { label: string }) {
 const styles = StyleSheet.create({
   surface: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, overflow: "hidden" },
   tabs: { gap: tokens.spacing.compact, padding: tokens.spacing.sm },
-  tab: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, height: 30, justifyContent: "center", paddingHorizontal: tokens.spacing.md },
+  tab: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.xs, height: 30, justifyContent: "center", paddingHorizontal: tokens.spacing.md },
   tabSelected: { backgroundColor: tokens.color.textMain, borderColor: "transparent" },
   tabLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, letterSpacing: 0 },
   tabLabelSelected: { color: tokens.color.surfaceApp },

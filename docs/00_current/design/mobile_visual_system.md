@@ -67,9 +67,11 @@ layer is divided into `layout`, `typography`, `controls`, `feedback`, `surfaces`
 and `product`. Nutrition components have their own public barrel at
 `mobile/src/components/nutrition/index.ts`.
 
-The development-only route `/dev/ui-gallery` renders the shared components,
+The development-only route `/dev/ui-gallery` is the Native UI Gallery and renders the shared components,
 interaction states, entity palette, type sizes, spacing, radii and nutrition
-widgets using production component code.
+widgets using production component code. Its browser rendering is an Expo/
+`react-native-web` preview; the Django/CSS system is validated separately at
+`/app/dev/ui-system/`.
 
 `KpiAllocationBar` and `PanelAllocationBar` share percentage normalization and
 nutrition tones and overlay the value on the track. Entity panels use the
@@ -80,22 +82,23 @@ contract and reuse these components rather than introduce a third bar.
 `NutritionKpiSection` is the canonical composition of total calories, macro
 grams, protein-per-kilogram and the three KPI allocation bars. It receives
 already-computed presentation values and never recalculates domain nutrition.
-Regular KPI density belongs in main entity surfaces; compact KPI density belongs
-in deliberately nested cards. `ProteinPerKilogramBadge` owns the reusable PPK label,
+The `regular` variant belongs in main entity surfaces; the semantic `nested`
+variant belongs only in deliberately nested cards. `ProteinPerKilogramBadge` owns the reusable PPK label,
 locale-aware formatting and accessible description.
 
-The calorie surface is square in both KPI densities. Regular KPI composition
-uses the selected 90% square and the compact `CalorieValue` size. Below 420 pt
-of available window width it switches to 4 px macro-row padding and 22 px KPI
-bars; from 420 pt it uses 5 px and 24 px. Compact KPI density keeps its own
-existing geometry. This responds to usable width rather than device names.
+The calorie surface is square in both KPI variants. Its geometry comes from the
+generated `tokens.component.nutritionKpi` recipe: Native regular uses 96 pt,
+3 pt border and 22 pt radius; Native nested uses 76 pt, 2 pt border and 16 pt
+radius. Below 420 pt of available window width the regular composition switches
+to 4 px macro-row padding and 22 px KPI bars; from 420 pt it uses 5 px and 24 px.
+Nested keeps its 18 px bars. This responds to usable width rather than device names.
 
 Each macro KPI is a single horizontal row: short label, reserved PPK slot,
 grams and allocation bar. Product copy uses `Carbos`; the formal
 `carbohidratos` term remains only in label/OCR parsing rules for source-data
 compatibility. Labels, PPK, grams and allocation values use a unified 13 px
 medium treatment from 420 pt of window width and a unified 12 px medium
-treatment below 420 pt. This typography rule applies in both KPI densities.
+treatment below 420 pt. This typography rule applies in both KPI variants.
 The final `Grasas` row has no bottom separator.
 
 KPI allocation bars use the same continuous filled-track presentation as

@@ -20,6 +20,8 @@ import {
   EntityDetailPage,
   EntityDetailSection,
 } from "@/components/details";
+import { ProgramChildCard } from "@/components/libraries/program-child-card";
+import { ProgramDetailPreview } from "@/components/libraries/program-detail-preview";
 import {
   KpiAllocationBar,
   NutritionEntityCard,
@@ -147,11 +149,12 @@ const dailyPlanMealDetailItems: DailyPlanMealDetailItem[] = [
   },
 ];
 
-type GalleryTab = "components" | "details" | "proposals" | "comparisons" | "states" | "tokens";
+type GalleryTab = "components" | "program" | "details" | "proposals" | "comparisons" | "states" | "tokens";
 type Choice = "daily" | "weekly";
 
 const galleryTabs: { key: GalleryTab; label: string }[] = [
   { key: "components", label: "Componentes" },
+  { key: "program", label: "Programa" },
   { key: "details", label: "Detalle" },
   { key: "proposals", label: "Propuestas" },
   { key: "comparisons", label: "Comparaciones" },
@@ -291,8 +294,18 @@ export default function UiGalleryScreen() {
             ]}
             title="Programa de recomposición"
           />
+          <SectionTitle detail="Título, gráfico y acciones" title="Card-child de programa" />
+          <ProgramChildCard
+            filledDaysCount={12}
+            foodsCount={36}
+            onMore={() => undefined}
+            onOpen={() => undefined}
+            owner="Tú"
+            title="Programa de recomposición"
+            weeksCount={2}
+          />
           <SectionTitle detail="Identidad + colección + cantidad" title="Encabezados de páginas de lista" />
-          <CollectionPageHeader count={8} countIcon="day" entity="dailyPlan" title="Planes diarios" />
+          <CollectionPageHeader count={8} countIcon="dailyPlan" entity="dailyPlan" title="Planes diarios" />
           <CollectionPageHeader count={14} countIcon="meal" entity="meal" title="Comidas" />
           <SectionTitle detail="Base nutricional por 100 g" title="Card de alimento" />
           <NutritionEntityCard
@@ -387,7 +400,7 @@ export default function UiGalleryScreen() {
             <NutritionKpiSection
               calories={640}
               carbs={{ grams: 72, allocation: 45 }}
-              density="compact"
+              variant="nested"
               fat={{ grams: 18, allocation: 25 }}
               protein={{ grams: 48, allocation: 30, perKilogram: 0.6 }}
             />
@@ -442,6 +455,13 @@ export default function UiGalleryScreen() {
             </EntityDetailSection>
             <EntityDetailMetadata creator="Felipe Dides" updatedAt="Hoy, 14:30" />
           </EntityDetailPage>
+        </>
+      ) : null}
+
+      {tab === "program" ? (
+        <>
+          <SectionTitle detail="Vista completa" title="Detalle de programa" />
+          <ProgramDetailPreview />
         </>
       ) : null}
 

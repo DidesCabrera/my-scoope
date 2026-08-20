@@ -1,0 +1,84 @@
+{% extends "notas/base.html" %}
+{% load static %}
+
+{% block title %}UI System Web · My Scoope{% endblock %}
+{% block body_class %}ui-system-gallery-page{% if gallery.embed %} ui-system-gallery-page--embed{% endif %}{% endblock %}
+{% block feature_css %}
+  <link rel="stylesheet" href="{% static 'notas/css/components/programs.css' %}">
+  <link rel="stylesheet" href="{% static 'notas/css/components/ui_system_gallery.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="ui-system-gallery" id="ui-system-top">
+  <header class="ui-system-gallery__hero">
+    <p class="ui-system-gallery__eyebrow">Solo desarrollo · CSS y templates productivos</p>
+    <h1>UI System Web</h1>
+    <p>Esta galería renderiza la implementación Django real. Desktop y navegador mobile comparten estos mismos componentes y estilos.</p>
+  </header>
+
+  <nav class="ui-system-gallery__nav" aria-label="Secciones del UI System Web">
+    <a href="#foundations">Foundations</a>
+    <a href="#components">Components</a>
+    <a href="#patterns">Patterns</a>
+    {% if not gallery.embed %}<a href="#mobile-web">Mobile web</a>{% endif %}
+  </nav>
+
+  <section class="ui-system-gallery__section" id="foundations">
+    <div class="ui-system-gallery__section-heading">
+      <div><p>Foundations</p><h2>Contrato visual generado</h2></div>
+      <code>design/ui-contract.json</code>
+    </div>
+    <div class="ui-system-gallery__swatches">
+      <article><span style="--swatch: var(--surface-card)"></span><strong>Surface card</strong><code>--surface-card</code></article>
+      <article><span style="--swatch: var(--text-main)"></span><strong>Text main</strong><code>--text-main</code></article>
+      <article><span style="--swatch: var(--entity-program)"></span><strong>Program</strong><code>--entity-program</code></article>
+      <article><span style="--swatch: var(--nutrition-protein)"></span><strong>Protein</strong><code>--nutrition-protein</code></article>
+      <article><span style="--swatch: var(--nutrition-carbs)"></span><strong>Carbs</strong><code>--nutrition-carbs</code></article>
+      <article><span style="--swatch: var(--nutrition-fat)"></span><strong>Fat</strong><code>--nutrition-fat</code></article>
+    </div>
+  </section>
+
+  <section class="ui-system-gallery__section" id="components">
+    <div class="ui-system-gallery__section-heading">
+      <div><p>Components</p><h2>Dash KPI</h2></div>
+      <code>components/dash_kpi.html</code>
+    </div>
+    <div class="ui-system-gallery__canvas ui-system-gallery__canvas--kpi">
+      {% include "components/dash_kpi.html" with kpis=gallery.kpis %}
+    </div>
+  </section>
+
+  <section class="ui-system-gallery__section" id="patterns">
+    <div class="ui-system-gallery__section-heading">
+      <div><p>Patterns</p><h2>Encabezado de colección</h2></div>
+      <code>components/list_page_header.html</code>
+    </div>
+    <div class="ui-system-gallery__canvas">
+      {% include "components/list_page_header.html" with vm=gallery.list_header_vm %}
+    </div>
+  </section>
+
+  <section class="ui-system-gallery__section" id="program-card">
+    <div class="ui-system-gallery__section-heading">
+      <div><p>Product components</p><h2>Card-child de Program</h2></div>
+      <code>components/card_child_program.html</code>
+    </div>
+    <div class="ui-system-gallery__canvas ui-system-gallery__canvas--program">
+      {% include "components/card_child_program.html" with child_card=gallery.program_card %}
+    </div>
+  </section>
+
+  {% if not gallery.embed %}
+    <section class="ui-system-gallery__section" id="mobile-web">
+      <div class="ui-system-gallery__section-heading">
+        <div><p>Responsive validation</p><h2>Navegador mobile real</h2></div>
+        <code>390px viewport</code>
+      </div>
+      <p class="ui-system-gallery__help">El marco usa esta misma ruta dentro de un viewport de 390px; por eso activa los media queries productivos, no una simulación de estilos.</p>
+      <iframe class="ui-system-gallery__mobile-frame" src="?embed=1#components" title="UI System Web en viewport mobile"></iframe>
+    </section>
+  {% endif %}
+</main>
+
+<script src="{% static 'notas/js/program_metric_chart.js' %}"></script>
+{% endblock %}

@@ -243,7 +243,20 @@ export type LibraryMealPanelItem = {
 export type LibraryWeekPanelItem = {
   id: string;
   week_number: number;
-  days: { day_label: string; plan_name: string | null }[];
+  days: {
+    id?: string;
+    day_number?: number;
+    day_label: string;
+    dailyplan_id?: number | null;
+    plan_name: string | null;
+    nutrition?: LibraryNutrition | null;
+    meals?: LibraryMealPanelItem[];
+  }[];
+  filled_days_count?: number;
+  meals_count?: number;
+  foods_count?: number;
+  average_calories?: number;
+  foods?: LibraryFoodPanelItem[];
   calories: number;
   calorie_share: number;
   calorie_distribution: LibraryCalorieDistribution;

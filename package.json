@@ -5,7 +5,7 @@
   "scripts": {
     "build": "esbuild frontend/src/ai_async_jobs.js --bundle --minify --format=iife --global-name=MyScoopeAsyncJobs --outfile=notas/static/notas/dist/ai_async_jobs.js",
     "generate:ui": "node scripts/generate_ui_tokens.mjs",
-    "check:ui": "node scripts/generate_ui_tokens.mjs --check",
+    "check:ui": "node scripts/generate_ui_tokens.mjs --check && node scripts/check_ui_architecture.mjs",
     "test": "node --test frontend/tests/*.test.js"
   },
   "devDependencies": {

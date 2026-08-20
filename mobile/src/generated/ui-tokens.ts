@@ -83,6 +83,27 @@ export const tokens = {
   },
   "layout": {
     "reducedInset": 12
+  },
+  "component": {
+    "nutritionKpi": {
+      "regular": {
+        "totalSize": 96,
+        "totalBorderWidth": 3,
+        "totalRadius": 22,
+        "contentGap": 8,
+        "barHeight": 24,
+        "narrowBarHeight": 22,
+        "barRadius": 6
+      },
+      "nested": {
+        "totalSize": 76,
+        "totalBorderWidth": 2,
+        "totalRadius": 16,
+        "contentGap": 6,
+        "barHeight": 18,
+        "barRadius": 6
+      }
+    }
   }
 } as const;
 

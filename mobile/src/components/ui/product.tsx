@@ -59,6 +59,14 @@ const structuralIcons: Record<StructuralIndicatorKind, LucideIcon> = {
   week: CalendarRange,
 };
 
+const structuralIndicatorColors: Record<StructuralIndicatorKind, string> = {
+  day: tokens.color.program,
+  food: tokens.color.food,
+  meal: tokens.color.meal,
+  dailyPlan: tokens.color.dailyPlan,
+  week: tokens.color.program,
+};
+
 const sectionIcons: Record<SectionKind, LucideIcon> = {
   home: House,
   profile: CircleUserRound,
@@ -73,13 +81,13 @@ const sectionIcons: Record<SectionKind, LucideIcon> = {
   import: FileDown,
 };
 
-export function EntityIcon({ entity, size = "regular" }: { entity: EntityKind; size?: "compact" | "regular" | "hero" }) {
+export function EntityIcon({ entity, size = "regular", tone = "entity" }: { entity: EntityKind; size?: "compact" | "regular" | "hero"; tone?: "entity" | "white" }) {
   const Icon = entityIcons[entity];
   const compact = size === "compact";
   const hero = size === "hero";
   return (
-    <View style={[styles.entityIcon, compact && styles.entityIconCompact, hero && styles.entityIconHero, { backgroundColor: tokens.color[entity] }]}>
-      <Icon color={tokens.color.entityIconForeground} size={compact ? 11 : hero ? 22 : 13} strokeWidth={hero ? 1.9 : 2.4} />
+    <View style={[styles.entityIcon, compact && styles.entityIconCompact, hero && styles.entityIconHero, { backgroundColor: tone === "white" ? "transparent" : tokens.color[entity] }]}>
+      <Icon color={tone === "white" ? tokens.color.textMain : tokens.color.entityIconForeground} size={tone === "white" ? 18 : compact ? 11 : hero ? 22 : 13} strokeWidth={hero ? 1.9 : 2.4} />
     </View>
   );
 }
@@ -95,7 +103,7 @@ export function SectionIcon({ section, size = "regular" }: { section: SectionKin
   );
 }
 
-export function StructuralIndicators({ indicators }: { indicators: StructuralIndicator[] }) {
+export function StructuralIndicators({ indicators, entity }: { indicators: StructuralIndicator[]; entity?: EntityKind }) {
   if (indicators.length === 0) return null;
   return (
     <View
@@ -104,13 +112,15 @@ export function StructuralIndicators({ indicators }: { indicators: StructuralInd
       style={styles.structuralIndicators}>
       {indicators.map((indicator, index) => {
         const Icon = indicator.icon ? structuralIcons[indicator.icon] : null;
+        const color = indicator.icon
+          ? structuralIndicatorColors[indicator.icon]
+          : entity
+            ? tokens.color[entity]
+            : tokens.color.textMuted;
         return (
-          <View key={`${indicator.icon ?? "text"}-${indicator.label}-${index}`} style={styles.structuralFragment}>
-            {index > 0 ? <View style={styles.structuralDivider} /> : null}
-            <View style={styles.structuralItem}>
-              <Text style={styles.structuralValue}>{indicator.value}</Text>
-              {Icon ? <Icon color={tokens.color.structuralIndicatorForeground} size={13} strokeWidth={2.2} /> : null}
-            </View>
+          <View key={`${indicator.icon ?? "text"}-${indicator.label}-${index}`} style={[styles.structuralItem, { backgroundColor: color }]}>
+            <Text style={styles.structuralValue}>{indicator.value}</Text>
+            {Icon ? <Icon color={tokens.color.entityIconForeground} size={13} strokeWidth={2.2} /> : null}
           </View>
         );
       })}
@@ -148,7 +158,7 @@ export function EntityHeading({
         </View>
         <Text style={[styles.headingTitle, page && { fontSize: pageTitleSize, lineHeight: pageTitleLineHeight }]}>{title}</Text>
         {subtitle ? <Text style={styles.headingSubtitle}>{subtitle}</Text> : null}
-        {indicators ? <StructuralIndicators indicators={indicators} /> : null}
+        {indicators ? <StructuralIndicators entity={entity} indicators={indicators} /> : null}
       </View>
       {accessory}
     </View>
@@ -329,11 +339,9 @@ const styles = StyleSheet.create({
   eyebrow: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.bold, letterSpacing: 0, textTransform: "uppercase" },
   headingTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: tokens.weight.semibold, letterSpacing: 0, lineHeight: 25 },
   headingSubtitle: { color: tokens.color.textSoft, fontSize: tokens.type.caption, lineHeight: 18 },
-  structuralIndicators: { alignItems: "center", alignSelf: "flex-start", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.sm, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.compact, paddingHorizontal: tokens.spacing.compact, paddingVertical: tokens.spacing.xs },
-  structuralFragment: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },
-  structuralItem: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs },
-  structuralValue: { color: tokens.color.structuralIndicatorForeground, fontSize: tokens.type.caption, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.medium, letterSpacing: 0, lineHeight: 15 },
-  structuralDivider: { backgroundColor: tokens.color.borderDefault, height: 12, width: 1 },
+  structuralIndicators: { alignItems: "center", alignSelf: "flex-start", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.compact },
+  structuralItem: { alignItems: "center", borderRadius: tokens.spacing.compact, flexDirection: "row", gap: tokens.spacing.xs, paddingHorizontal: tokens.spacing.sm, paddingVertical: tokens.spacing.xs },
+  structuralValue: { color: tokens.color.entityIconForeground, fontSize: tokens.type.caption, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.medium, letterSpacing: 0, lineHeight: 15 },
   entityCardPanelSlot: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minWidth: 0 },
   cardHeader: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
   cardHeaderCompact: { gap: tokens.spacing.sm },
