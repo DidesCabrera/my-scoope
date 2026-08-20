@@ -8,10 +8,11 @@ import { Card } from "@/components/ui/primitives";
 import { FoodPanels, type FoodPanelItem } from "@/components/panels";
 import { SectionHeading } from "@/components/ui/typography";
 import { tokens } from "@/design/tokens";
+import type { LibraryFoodPanelItem, LibraryItem, LibraryWeekPanelItem } from "@/api/types";
 import { EntityHeading, EntityIcon, StructuralIndicators } from "./entity-card";
-import { ProgramMetricPreview } from "./program-child-card";
+import { ProgramMetricPreview, type ProgramMetricDatum } from "./program-child-card";
 import { ProgramDailyPlanPreview } from "./program-daily-plan-preview";
-import { ProgramDayComparisonPanels } from "./program-day-comparison-panels";
+import { ProgramDayComparisonPanels, type ProgramDayNutrition } from "./program-day-comparison-panels";
 import { ProgramWeekComparisonPanels, type ProgramWeekSummary } from "./program-week-comparison-panels";
 
 const weekSummaries: ProgramWeekSummary[] = [
@@ -55,17 +56,18 @@ function SelectedDayRing() {
   );
 }
 
-function ProgramDaysGrid({ week }: { week: number }) {
-  const filledDays = week === 1 ? [true, true, true, true, true, false, true] : [true, true, false, true, true, true, true];
+function ProgramDaysGrid({ week, weekData }: { week: number; weekData?: LibraryWeekPanelItem }) {
+  const filledDays = weekData ? weekData.days.map((day) => Boolean(day.plan_name)) : week === 1 ? [true, true, true, true, true, false, true] : [true, true, false, true, true, true, true];
+  const labels = weekData?.days.map((day) => day.day_label.slice(0, 1).toUpperCase()) ?? dayLabels;
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   return (
     <View style={styles.daySelection}>
       <View accessibilityLabel={`Planes diarios de Semana ${week}`} style={styles.daysGrid}>
-        {dayLabels.map((label, index) => {
+        {labels.map((label, index) => {
           const filled = filledDays[index];
           const selected = selectedDay === index;
           return (
-            <View key={`${week}-${label}`} style={styles.dayCell}>
+            <View key={`${week}-${index}-${label}`} style={styles.dayCell}>
               <Text style={styles.dayLabel}>{label}</Text>
               <Pressable
                 accessibilityLabel={filled ? `${label}: ver plan diario` : `${label}: agregar plan diario`}
@@ -82,12 +84,58 @@ function ProgramDaysGrid({ week }: { week: number }) {
           );
         })}
       </View>
-      {selectedDay !== null ? <ProgramDailyPlanPreview dayLabel={dayLabels[selectedDay]} week={week} /> : null}
+      {selectedDay !== null ? <ProgramDailyPlanPreview day={weekData?.days[selectedDay]} dayLabel={labels[selectedDay]} week={week} /> : null}
     </View>
   );
 }
 
-function ProgramWeekDetail({ week }: { week: number }) {
+function dayRows(week: LibraryWeekPanelItem): ProgramDayNutrition[] {
+  return week.days.map((day) => ({
+    allocation: {
+      protein: day.nutrition?.protein.allocation ?? 0,
+      carbs: day.nutrition?.carbs.allocation ?? 0,
+      fat: day.nutrition?.fat.allocation ?? 0,
+    },
+    calorieShare: day.nutrition ? day.nutrition.calories / Math.max(week.calories, 1) * 100 : 0,
+    calories: day.nutrition?.calories ?? 0,
+    carbsGrams: day.nutrition?.carbs.grams ?? 0,
+    day: day.day_label,
+    fatGrams: day.nutrition?.fat.grams ?? 0,
+    id: day.id ?? `${week.id}:day:${day.day_number ?? day.day_label}`,
+    planName: day.plan_name,
+    ppk: day.nutrition?.protein.per_kilogram ?? 0,
+    proteinGrams: day.nutrition?.protein.grams ?? 0,
+  }));
+}
+
+function metricDataFromWeeks(weeks: LibraryWeekPanelItem[]): ProgramMetricDatum[] {
+  return weeks.map((week) => {
+    const filledDays = week.filled_days_count ?? week.days.filter((day) => day.plan_name).length;
+    const ppk = week.days.map((day) => day.nutrition?.protein.per_kilogram).filter((value): value is number => value != null);
+    return {
+      allocation: { protein: week.protein_allocation, carbs: week.carbs_allocation, fat: week.fat_allocation },
+      calories: week.average_calories ?? week.calories / Math.max(filledDays, 1),
+      protein: week.protein_grams / Math.max(filledDays, 1),
+      carbs: week.carbs_grams / Math.max(filledDays, 1),
+      fat: week.fat_grams / Math.max(filledDays, 1),
+      ppk: ppk.length ? ppk.reduce((sum, value) => sum + value, 0) / ppk.length : null,
+    };
+  });
+}
+
+function foodItem(item: LibraryFoodPanelItem): FoodPanelItem {
+  return { id: item.id, name: item.name, quantity: item.quantity, quantityUnit: item.quantity_unit, calories: item.calories, calorieShare: item.calorie_share, proteinGrams: item.protein_grams, carbsGrams: item.carbs_grams, fatGrams: item.fat_grams, proteinAllocation: item.protein_allocation, carbsAllocation: item.carbs_allocation, fatAllocation: item.fat_allocation };
+}
+
+function ProgramWeekDetail({ week, weekData }: { week: number; weekData?: LibraryWeekPanelItem }) {
+  const liveMetricData = weekData ? weekData.days.filter((day) => day.nutrition).map((day) => ({
+    allocation: { protein: day.nutrition!.protein.allocation, carbs: day.nutrition!.carbs.allocation, fat: day.nutrition!.fat.allocation },
+    calories: day.nutrition!.calories,
+    protein: day.nutrition!.protein.grams,
+    carbs: day.nutrition!.carbs.grams,
+    fat: day.nutrition!.fat.grams,
+    ppk: day.nutrition!.protein.per_kilogram,
+  })) : undefined;
   return (
     <Card style={styles.weekCard}>
       <View style={styles.weekCardHeader}>
@@ -99,9 +147,9 @@ function ProgramWeekDetail({ week }: { week: number }) {
           <StructuralIndicators
             entity="program"
             indicators={[
-              { icon: "dailyPlan", label: "planes diarios", value: 6 },
-              { icon: "meal", label: "comidas", value: 24 },
-              { icon: "food", label: "alimentos", value: 28 },
+              { icon: "dailyPlan", label: "planes diarios", value: weekData ? weekData.filled_days_count ?? weekData.days.filter((day) => day.plan_name).length : 6 },
+              { icon: "meal", label: "comidas", value: weekData?.meals_count ?? 0 },
+              { icon: "food", label: "alimentos", value: weekData?.foods_count ?? weekData?.foods?.length ?? 0 },
             ]}
           />
         </View>
@@ -111,24 +159,32 @@ function ProgramWeekDetail({ week }: { week: number }) {
       </View>
 
       <SectionHeading title="Gráfico de KPIs de la semana" />
-      <ProgramMetricPreview axisLabels={dayLabels} days={7} style={styles.systemBleed} />
+      <ProgramMetricPreview axisLabels={weekData?.days.map((day) => day.day_label.slice(0, 1).toUpperCase()) ?? dayLabels} data={liveMetricData} days={7} style={styles.systemBleed} />
 
       <SectionHeading title="Tabla de comparación entre planes diarios" />
-      <View style={styles.systemBleed}><ProgramDayComparisonPanels key={`comparison-${week}`} week={week} /></View>
+      <View style={styles.systemBleed}><ProgramDayComparisonPanels key={`comparison-${week}`} rows={weekData ? dayRows(weekData) : undefined} week={week} /></View>
 
       <View style={styles.sectionDivider} />
-      <SectionHeading detail="6 asignados" title="Planes diarios esta semana" />
-      <ProgramDaysGrid key={week} week={week} />
+      <SectionHeading detail={`${weekData ? weekData.filled_days_count ?? weekData.days.filter((day) => day.plan_name).length : 6} asignados`} title="Planes diarios esta semana" />
+      <ProgramDaysGrid key={week} week={week} weekData={weekData} />
 
       <View style={styles.sectionDivider} />
-      <SectionHeading detail="28 alimentos" title="Alimentos en esta semana" />
-      <View style={styles.systemBleed}><FoodPanels items={weekFoodItems} /></View>
+      <SectionHeading detail={`${weekData?.foods_count ?? weekData?.foods?.length ?? 28} alimentos`} title="Alimentos en esta semana" />
+      <View style={styles.systemBleed}><FoodPanels items={weekData ? (weekData.foods ?? []).map(foodItem) : weekFoodItems} /></View>
     </Card>
   );
 }
 
-export function ProgramDetailPreview() {
+export function ProgramDetailPreview({ item }: { item?: LibraryItem } = {}) {
   const [activeWeek, setActiveWeek] = useState(1);
+  const liveWeeks = item?.panel.kind === "weeks" ? item.panel.weeks : [];
+  const displayedWeeks = liveWeeks.length ? liveWeeks.map((week) => week.week_number) : [1, 2];
+  const liveSummaries: ProgramWeekSummary[] = liveWeeks.map((week) => { const filledDays = week.filled_days_count ?? week.days.filter((day) => day.plan_name).length; return { allocation: { protein: week.protein_allocation, carbs: week.carbs_allocation, fat: week.fat_allocation }, averageCalories: week.average_calories ?? week.calories / Math.max(filledDays, 1), calories: week.calories, carbsGrams: week.carbs_grams, dailyPlans: filledDays, fatGrams: week.fat_grams, id: week.id, proteinGrams: week.protein_grams, week: week.week_number }; });
+  const selectedWeek = liveWeeks.find((week) => week.week_number === activeWeek);
+  const liveMetrics = liveWeeks.length ? metricDataFromWeeks(liveWeeks) : undefined;
+  const weeksCount = liveWeeks.length || 2;
+  const plansCount = liveWeeks.reduce((sum, week) => sum + (week.filled_days_count ?? week.days.filter((day) => day.plan_name).length), 0) || 12;
+  const foodsCount = liveWeeks.reduce((maximum, week) => Math.max(maximum, week.foods_count ?? week.foods?.length ?? 0), 0) || 36;
 
   return (
     <View style={styles.page}>
@@ -136,16 +192,16 @@ export function ProgramDetailPreview() {
         <EntityHeading
           entity="program"
           indicators={[
-            { label: "semanas", value: "2 SEMANAS" },
-            { icon: "dailyPlan", label: "planes asignados", value: 12 },
-            { icon: "food", label: "alimentos", value: 36 },
+            { label: "semanas", value: `${weeksCount} SEMANAS` },
+            { icon: "dailyPlan", label: "planes asignados", value: plansCount },
+            { icon: "food", label: "alimentos", value: foodsCount },
           ]}
-          title="Programa de recomposición"
+          title={item?.name ?? "Programa de recomposición"}
           variant="page"
         />
 
         <SectionHeading title="Gráficos de KPIs del Programa" />
-        <ProgramMetricPreview style={styles.systemBleed} />
+        <ProgramMetricPreview axisLabels={liveWeeks.map((week) => `SEMANA ${week.week_number}`)} data={liveMetrics} days={liveMetrics?.length ?? 14} style={styles.systemBleed} />
 
         <View style={styles.sectionTitleWithAction}>
           <SectionHeading title="Tabla de comparación entre semanas" />
@@ -154,7 +210,7 @@ export function ProgramDetailPreview() {
             <Text style={styles.addWeekText}>Agregar semana</Text>
           </Pressable>
         </View>
-        <View style={styles.systemBleed}><ProgramWeekComparisonPanels weeks={weekSummaries} /></View>
+        <View style={styles.systemBleed}><ProgramWeekComparisonPanels weeks={liveSummaries.length ? liveSummaries : weekSummaries} /></View>
       </View>
 
       <View style={styles.majorDivider} />
@@ -165,11 +221,11 @@ export function ProgramDetailPreview() {
             <EntityIcon entity="program" />
             <Text style={styles.planningTitle}>Planificación por semanas</Text>
           </View>
-          <StructuralIndicators entity="program" indicators={[{ icon: "week", label: "semanas", value: "2 SEMANAS" }]} />
+          <StructuralIndicators entity="program" indicators={[{ icon: "week", label: "semanas", value: `${weeksCount} SEMANAS` }]} />
         </View>
 
         <View accessibilityLabel="Semanas del programa" accessibilityRole="tablist" style={styles.weekTabs}>
-          {[1, 2].map((week) => {
+          {displayedWeeks.map((week) => {
             const selected = activeWeek === week;
             return (
               <Pressable
@@ -185,7 +241,7 @@ export function ProgramDetailPreview() {
           })}
         </View>
 
-        <ProgramWeekDetail week={activeWeek} />
+        <ProgramWeekDetail week={activeWeek} weekData={selectedWeek} />
       </View>
     </View>
   );

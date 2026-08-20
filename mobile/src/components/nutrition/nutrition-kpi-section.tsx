@@ -73,11 +73,7 @@ export function NutritionKpiSection({
       <View
         accessibilityLabel={`${rounded(calories)} calorías`}
         accessible
-        style={[
-          styles.calories,
-          compact && styles.caloriesCompact,
-          { height: compact ? "100%" : "90%" },
-        ]}>
+        style={[styles.calories, compact && styles.caloriesCompact]}>
         <Text
           style={[
             styles.caloriesLabel,
@@ -86,7 +82,7 @@ export function NutritionKpiSection({
           ]}>
           Calorías
         </Text>
-        <CalorieValue compact value={rounded(calories)} />
+        <CalorieValue compact={compact} value={rounded(calories)} />
         <Text style={[styles.caloriesUnit, compact && styles.caloriesLabelCompact]}>kcal</Text>
       </View>
       <View style={styles.macros}>
@@ -101,8 +97,8 @@ export function NutritionKpiSection({
 const styles = StyleSheet.create({
   container: { alignItems: "stretch", flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0, width: "100%" },
   containerCompact: { gap: tokens.spacing.compact },
-  calories: { alignItems: "center", alignSelf: "center", aspectRatio: 1, backgroundColor: tokens.color.kcalSurface, borderColor: tokens.color.kcalBorder, borderRadius: tokens.radius.card, borderWidth: 3, flexShrink: 0, justifyContent: "center", paddingHorizontal: 5 },
-  caloriesCompact: { borderRadius: tokens.radius.lg, borderWidth: 2 },
+  calories: { alignItems: "center", alignSelf: "center", backgroundColor: tokens.color.kcalSurface, borderColor: tokens.color.kcalBorder, borderRadius: tokens.radius.card, borderWidth: 3, flexShrink: 0, height: 96, justifyContent: "center", paddingHorizontal: 5, width: 96 },
+  caloriesCompact: { borderRadius: tokens.radius.lg, borderWidth: 2, height: 76, width: 76 },
   caloriesLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium, letterSpacing: 0 },
   caloriesLabelCompact: { fontSize: tokens.type.label },
   caloriesLabelRegular: { fontSize: 10 },

@@ -76,7 +76,7 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
       refreshControl={<RefreshControl onRefresh={() => void load({ refresh: true })} refreshing={refreshing} tintColor={tokens.color.interactivePrimary} />}
       scrollEventThrottle={16}
       style={styles.screen}>
-      <CollectionPageHeader count={page?.total} countIcon={entity === "program" ? "week" : entity === "dailyPlan" ? "meal" : entity === "meal" ? "food" : "food"} entity={entity} title={title} />
+      <CollectionPageHeader count={page?.total} countIcon={entity === "program" ? "week" : entity} entity={entity} title={title} />
       <View style={styles.searchField}>
         <Search color={tokens.color.textSoft} size={20} />
         <TextInput

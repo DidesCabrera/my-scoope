@@ -305,7 +305,7 @@ export default function UiGalleryScreen() {
             weeksCount={2}
           />
           <SectionTitle detail="Identidad + colección + cantidad" title="Encabezados de páginas de lista" />
-          <CollectionPageHeader count={8} countIcon="day" entity="dailyPlan" title="Planes diarios" />
+          <CollectionPageHeader count={8} countIcon="dailyPlan" entity="dailyPlan" title="Planes diarios" />
           <CollectionPageHeader count={14} countIcon="meal" entity="meal" title="Comidas" />
           <SectionTitle detail="Base nutricional por 100 g" title="Card de alimento" />
           <NutritionEntityCard

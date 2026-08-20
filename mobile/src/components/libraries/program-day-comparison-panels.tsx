@@ -9,7 +9,7 @@ import { EntityIcon } from "./entity-card";
 
 type ProgramDayPanelTab = "calories" | "macros" | "allocation" | "edit";
 
-type ProgramDayNutrition = {
+export type ProgramDayNutrition = {
   allocation: { carbs: number; fat: number; protein: number };
   calorieShare: number;
   calories: number;
@@ -149,9 +149,9 @@ function EditPanel({ rows }: { rows: ProgramDayNutrition[] }) {
   );
 }
 
-export function ProgramDayComparisonPanels({ week }: { week: number }) {
+export function ProgramDayComparisonPanels({ rows: providedRows, week }: { rows?: ProgramDayNutrition[]; week: number }) {
   const [activeTab, setActiveTab] = useState<ProgramDayPanelTab>("calories");
-  const rows = rowsForWeek(week);
+  const rows = providedRows ?? rowsForWeek(week);
   return (
     <PanelSurface>
       <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={tabs} />

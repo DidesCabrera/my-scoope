@@ -6,6 +6,15 @@ import { Card } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
 import { EntityHeading } from "./entity-card";
 
+export type ProgramMetricDatum = {
+  allocation: { protein: number; carbs: number; fat: number };
+  calories: number;
+  carbs: number;
+  fat: number;
+  protein: number;
+  ppk?: number | null;
+};
+
 type MetricRow = {
   key: "calories" | "ppk" | "protein" | "carbs" | "fat";
   label: string;
@@ -27,12 +36,22 @@ const allocationValues = [
   [30, 46, 24], [31, 45, 24], [28, 47, 25], [32, 44, 24], [29, 46, 25], [30, 48, 22], [31, 43, 26],
 ];
 
+function liveRange(metric: MetricRow, values: number[] | undefined): string {
+  const finite = (values ?? []).filter((value) => Number.isFinite(value) && value > 0);
+  if (finite.length === 0) return metric.range;
+  const minimum = Math.min(...finite);
+  const maximum = Math.max(...finite);
+  const unit = metric.key === "calories" ? "kcal" : metric.key === "ppk" ? "g/kg" : "g";
+  const format = (value: number) => metric.key === "ppk" ? value.toLocaleString("es-CL", { maximumFractionDigits: 1 }) : Math.round(value).toLocaleString("es-CL");
+  return `${format(minimum)} - ${format(maximum)} ${unit}`;
+}
+
 function ChartAxisHeader({ labels, metricColumnStyle }: { labels: string[]; metricColumnStyle: StyleProp<ViewStyle> }) {
   return (
     <View style={styles.weekHeader}>
       <View style={[styles.metricColumnSpacer, metricColumnStyle]} />
       <View accessibilityLabel="Eje del gráfico" style={styles.weekLabels}>
-        {labels.map((label) => <Text key={label} style={styles.weekLabel}>{label}</Text>)}
+        {labels.map((label, index) => <Text key={`${index}-${label}`} style={styles.weekLabel}>{label}</Text>)}
       </View>
     </View>
   );
@@ -47,8 +66,10 @@ function MetricIdentity({ label, range, color, metricColumnStyle }: Pick<MetricR
   );
 }
 
-function MetricPlot({ days, metric }: { days: number; metric: MetricRow }) {
-  const values = metric.values.slice(0, days);
+function MetricPlot({ days, metric, values: providedValues }: { days: number; metric: MetricRow; values?: number[] }) {
+  const rawValues = (providedValues ?? metric.values).slice(0, days);
+  const maximum = Math.max(...rawValues, 1);
+  const values = providedValues ? rawValues.map((value) => 12 + (value / maximum) * 82) : rawValues;
   const divisor = Math.max(values.length - 1, 1);
   const points = values.map((value, index) => `${index * (140 / divisor)},${43 - value * 0.4}`).join(" ");
   return (
@@ -61,10 +82,10 @@ function MetricPlot({ days, metric }: { days: number; metric: MetricRow }) {
   );
 }
 
-function AllocationPlot({ days }: { days: number }) {
+function AllocationPlot({ days, values = allocationValues }: { days: number; values?: number[][] }) {
   return (
     <View accessibilityLabel="Distribución de macronutrientes por día" style={[styles.metricPlot, styles.allocationPlot]}>
-      {allocationValues.slice(0, days).map(([protein, carbs, fat], index) => (
+      {values.slice(0, days).map(([protein, carbs, fat], index) => (
         <View key={`allocation-${index}`} style={[styles.allocationSlot, days > 7 && index === 7 && styles.weekDivider]}>
           <View style={[styles.allocationSegment, { backgroundColor: tokens.color.protein, flex: protein }]} />
           <View style={[styles.allocationSegment, { backgroundColor: tokens.color.carbs, flex: carbs }]} />
@@ -77,10 +98,12 @@ function AllocationPlot({ days }: { days: number }) {
 
 export function ProgramMetricPreview({
   axisLabels = ["SEMANA 1", "SEMANA 2"],
+  data,
   days = 14,
   style,
 }: {
   axisLabels?: string[];
+  data?: ProgramMetricDatum[];
   days?: number;
   style?: StyleProp<ViewStyle>;
 }) {
@@ -89,13 +112,22 @@ export function ProgramMetricPreview({
     ? { width: 150 }
     : { minWidth: 92, width: "24%" as const };
 
+  const metricValues: Record<MetricRow["key"], number[]> | undefined = data ? {
+    calories: data.map((item) => item.calories),
+    ppk: data.map((item) => item.ppk ?? 0),
+    protein: data.map((item) => item.protein),
+    carbs: data.map((item) => item.carbs),
+    fat: data.map((item) => item.fat),
+  } : undefined;
+  const liveAllocationValues = data?.map(({ allocation }) => [allocation.protein, allocation.carbs, allocation.fat]);
+
   return (
     <View accessibilityLabel="Gráficos de KPI del programa" style={[styles.chartPreview, style]}>
       <ChartAxisHeader labels={axisLabels} metricColumnStyle={metricColumnStyle} />
       {metricRows.map((metric) => (
         <View key={metric.key} style={styles.metricRow}>
-          <MetricIdentity color={metric.color} label={metric.label} metricColumnStyle={metricColumnStyle} range={metric.range} />
-          <MetricPlot days={days} metric={metric} />
+          <MetricIdentity color={metric.color} label={metric.label} metricColumnStyle={metricColumnStyle} range={liveRange(metric, metricValues?.[metric.key])} />
+          <MetricPlot days={days} metric={metric} values={metricValues?.[metric.key]} />
         </View>
       ))}
       <View style={styles.metricRow}>
@@ -107,7 +139,7 @@ export function ProgramMetricPreview({
             <Text style={[styles.allocationRange, { backgroundColor: tokens.color.fat }]}>G 22 - 26%</Text>
           </View>
         </View>
-        <AllocationPlot days={days} />
+        <AllocationPlot days={days} values={liveAllocationValues} />
       </View>
     </View>
   );
@@ -121,6 +153,8 @@ export function ProgramChildCard({
   owner,
   onOpen,
   onMore,
+  metricData,
+  axisLabels,
 }: {
   title: string;
   weeksCount: number;
@@ -129,6 +163,8 @@ export function ProgramChildCard({
   owner: string;
   onOpen(): void;
   onMore(): void;
+  metricData?: ProgramMetricDatum[];
+  axisLabels?: string[];
 }) {
   return (
     <Card>
@@ -142,7 +178,7 @@ export function ProgramChildCard({
         title={title}
       />
 
-      <ProgramMetricPreview />
+      <ProgramMetricPreview axisLabels={axisLabels} data={metricData} days={metricData?.length ?? 14} />
 
       <View style={styles.footer}>
         <View accessibilityLabel={`Creado por ${owner}`} style={styles.owner}>

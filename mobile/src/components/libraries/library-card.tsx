@@ -1,16 +1,54 @@
 import { type Href, useRouter } from "expo-router";
 import { ChevronRight } from "lucide-react-native";
-import { Pressable, StyleSheet } from "react-native";
+import { Alert, Pressable, StyleSheet } from "react-native";
 import type { LibraryItem } from "@/api/types";
 import { tokens } from "@/design/tokens";
 
 import { FoodPanels, MealPanels, ProgramPanels } from "./entity-panels";
 import { NutritionEntityCard } from "./nutrition-entity-card";
+import { ProgramChildCard, type ProgramMetricDatum } from "./program-child-card";
+
+function indicatorValue(item: LibraryItem, icon: "week" | "dailyPlan" | "food"): number {
+  const value = item.indicators.find((indicator) => indicator.icon === icon)?.value;
+  return typeof value === "number" ? value : Number.parseInt(String(value ?? 0), 10) || 0;
+}
+
+function programMetricData(item: LibraryItem): ProgramMetricDatum[] {
+  if (item.panel.kind !== "weeks") return [];
+  return item.panel.weeks.map((week) => {
+    const filledDays = week.filled_days_count ?? week.days.filter((day) => day.plan_name).length;
+    const ppkValues = week.days.map((day) => day.nutrition?.protein.per_kilogram).filter((value): value is number => value != null);
+    return {
+      allocation: { protein: week.protein_allocation, carbs: week.carbs_allocation, fat: week.fat_allocation },
+      calories: week.average_calories ?? week.calories / Math.max(filledDays, 1),
+      carbs: week.carbs_grams / Math.max(filledDays, 1),
+      fat: week.fat_grams / Math.max(filledDays, 1),
+      protein: week.protein_grams / Math.max(filledDays, 1),
+      ppk: ppkValues.length ? ppkValues.reduce((sum, value) => sum + value, 0) / ppkValues.length : null,
+    };
+  });
+}
 
 export function LibraryCard({ item }: { item: LibraryItem }) {
   const router = useRouter();
   const segment = item.entity === "dailyPlan" ? "daily-plans" : item.entity === "program" ? "programs" : item.entity === "meal" ? "meals" : "foods";
   const detailHref = `/libraries/${segment}/${item.id}` as Href;
+  if (item.entity === "program") {
+    const metrics = programMetricData(item);
+    return (
+      <ProgramChildCard
+        axisLabels={metrics.map((_, index) => `SEMANA ${index + 1}`)}
+        filledDaysCount={indicatorValue(item, "dailyPlan")}
+        foodsCount={indicatorValue(item, "food")}
+        metricData={metrics}
+        onMore={() => Alert.alert(item.name, "Las acciones de edición estarán disponibles desde el detalle del programa.")}
+        onOpen={() => router.push(detailHref)}
+        owner={item.creator}
+        title={item.name}
+        weeksCount={indicatorValue(item, "week")}
+      />
+    );
+  }
   return (
     <NutritionEntityCard entity={item.entity} indicators={item.indicators} nutrition={item.nutrition} subtitle={item.subtitle || undefined} title={item.name}>
       {item.panel.kind === "foods" ? <FoodPanels items={item.panel.foods} /> : null}

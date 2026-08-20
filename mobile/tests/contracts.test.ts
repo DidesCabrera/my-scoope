@@ -30,6 +30,16 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(gallery, /Detalle de programa/);
   assert.match(gallery, /ProgramDetailPreview/);
 
+  const nutritionKpi = await readFile(
+    path.resolve(process.cwd(), "src/components/nutrition/nutrition-kpi-section.tsx"),
+    "utf8",
+  );
+  assert.match(nutritionKpi, /borderColor: tokens\.color\.kcalBorder/);
+  assert.match(nutritionKpi, /borderRadius: tokens\.radius\.card/);
+  assert.match(nutritionKpi, /borderWidth: 3[^\n]*height: 96[^\n]*width: 96/);
+  assert.match(nutritionKpi, /height: 76, width: 76/);
+  assert.doesNotMatch(nutritionKpi, /height: compact \? "100%"/);
+
   const programWeekPanels = await readFile(
     path.resolve(process.cwd(), "src/components/libraries/program-week-comparison-panels.tsx"),
     "utf8",
@@ -50,7 +60,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   );
   assert.match(programDetail, /ProgramDailyPlanPreview/);
   assert.match(programDetail, /ProgramDayComparisonPanels/);
-  assert.match(programDetail, /<FoodPanels items=\{weekFoodItems\}/);
+  assert.match(programDetail, /weekData\.foods \?\? \[\]\)\.map\(foodItem\)/);
+  assert.match(programDetail, /: weekFoodItems/);
   assert.match(programDetail, /accessibilityState=\{\{ expanded:/);
   assert.match(programDetail, /<Card style=\{styles\.weekCard\}>/);
   assert.doesNotMatch(programDetail, /<Card muted style=\{styles\.weekCard\}>/);
@@ -62,7 +73,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(programDetail, /weekCard: \{ gap: tokens\.spacing\.lg, marginHorizontal: -tokens\.spacing\.screen \}/);
   assert.match(programDetail, /borderRadius: tokens\.spacing\.compact, height: 24/);
   assert.match(programDetail, /systemBleed: \{ marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding \}/);
-  assert.match(programDetail, /<ProgramMetricPreview style=\{styles\.systemBleed\}/);
+  assert.match(programDetail, /<ProgramMetricPreview[^\n]*style=\{styles\.systemBleed\}/);
   assert.match(programDetail, /<View style=\{styles\.systemBleed\}><FoodPanels/);
 
   const programChart = await readFile(
@@ -71,6 +82,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   );
   assert.match(programChart, /allocationSlot: \{[^\n]*gap: 2[^\n]*paddingHorizontal: 1/);
   assert.match(programChart, /allocationSegment: \{ borderRadius: 2/);
+  assert.match(programChart, /key=\{`\$\{index\}-\$\{label\}`\}/);
+  assert.match(programDetail, /key=\{`\$\{week\}-\$\{index\}-\$\{label\}`\}/);
 
   const programDayPanels = await readFile(
     path.resolve(process.cwd(), "src/components/libraries/program-day-comparison-panels.tsx"),

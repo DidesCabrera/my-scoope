@@ -4,6 +4,7 @@ import { Pressable, StyleSheet } from "react-native";
 import { NutritionEntityCard } from "@/components/nutrition";
 import { MealPanels, type MealPanelItem } from "@/components/panels";
 import { tokens } from "@/design/tokens";
+import type { LibraryWeekPanelItem } from "@/api/types";
 
 const meals: MealPanelItem[] = [
   {
@@ -62,7 +63,8 @@ const meals: MealPanelItem[] = [
   },
 ];
 
-export function ProgramDailyPlanPreview({ dayLabel, week }: { dayLabel: string; week: number }) {
+export function ProgramDailyPlanPreview({ day, dayLabel, week }: { day?: LibraryWeekPanelItem["days"][number]; dayLabel: string; week: number }) {
+  const nutrition = day?.nutrition;
   return (
     <NutritionEntityCard
       accessory={(
@@ -74,18 +76,22 @@ export function ProgramDailyPlanPreview({ dayLabel, week }: { dayLabel: string; 
       entity="dailyPlan"
       eyebrow={`SEMANA ${week} · ${dayLabel.toUpperCase()}`}
       indicators={[
-        { icon: "meal", label: "comidas", value: 3 },
-        { icon: "food", label: "alimentos", value: 9 },
+        { icon: "dailyPlan", label: "plan asignado", value: 1 },
       ]}
-      nutrition={{
+      nutrition={nutrition ? {
+        calories: nutrition.calories,
+        carbs: nutrition.carbs,
+        fat: nutrition.fat,
+        protein: { ...nutrition.protein, perKilogram: nutrition.protein.per_kilogram },
+      } : {
         calories: 2040,
         carbs: { allocation: 45, grams: 224 },
         fat: { allocation: 26, grams: 59 },
         protein: { allocation: 29, grams: 148, perKilogram: 1.8 },
       }}
       subtitle="Plan diario asignado"
-      title="Día de entrenamiento">
-      <MealPanels items={meals} />
+      title={day?.plan_name ?? "Día de entrenamiento"}>
+      {!day ? <MealPanels items={meals} /> : null}
     </NutritionEntityCard>
   );
 }

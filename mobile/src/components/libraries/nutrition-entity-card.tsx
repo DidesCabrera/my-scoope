@@ -19,7 +19,7 @@ export function NutritionEntityCard({ children, entity, indicators, nutrition, s
         <NutritionKpiSection
           calories={nutrition.calories}
           carbs={nutrition.carbs}
-          density="compact"
+          density="regular"
           fat={nutrition.fat}
           protein={{ ...nutrition.protein, perKilogram: nutrition.protein.per_kilogram }}
         />
