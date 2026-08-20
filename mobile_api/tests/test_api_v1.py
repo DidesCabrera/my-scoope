@@ -1040,6 +1040,14 @@ class MobileAPIV1Tests(TestCase):
         self.assertEqual(embedded_meal_detail.status_code, 200)
         self.assertEqual(embedded_meal_detail.json()["data"]["name"], "Instancia del plan")
 
+        dailyplan.source = DailyPlan.SOURCE_PROGRAM
+        dailyplan.save(update_fields=["source"])
+        program_dailyplan_detail = self.client.get(f"/api/v1/library/daily-plans/{dailyplan.id}")
+        self.assertEqual(program_dailyplan_detail.status_code, 200)
+        self.assertEqual(program_dailyplan_detail.json()["data"]["id"], dailyplan.id)
+        private_program_dailyplan = DailyPlan.objects.create(name="Plan de programa ajeno", created_by=other, source=DailyPlan.SOURCE_PROGRAM, is_draft=False)
+        self.assertEqual(self.client.get(f"/api/v1/library/daily-plans/{private_program_dailyplan.id}").status_code, 404)
+
         missing = self.client.get("/api/v1/library/meals/999999")
         self.assertEqual(missing.status_code, 404)
         self.assertEqual(missing.json()["error"]["code"], "library_item_not_found")

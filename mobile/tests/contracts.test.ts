@@ -95,12 +95,41 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(programDetail, /systemBleed: \{ marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding \}/);
   assert.match(programDetail, /<ProgramMetricPreview[^\n]*style=\{styles\.systemBleed\}/);
   assert.match(programDetail, /<View style=\{styles\.systemBleed\}><FoodPanels/);
+  assert.match(programDetail, /horizontal\n\s+showsHorizontalScrollIndicator=\{false\}/);
+  assert.match(programDetail, /stickyHeaderIndices=\{\[3\]\}/);
+  assert.match(programDetail, /weekTabsSticky: \{ backgroundColor: tokens\.color\.surfaceApp, borderBottomColor: "transparent", borderBottomWidth: 1/);
+  assert.match(programDetail, /weekTabsStickyPinned: \{ borderBottomColor: tokens\.color\.borderDefault \}/);
+  assert.match(programDetail, /contentOffset\.y >= weekTabsOffset\.current/);
+  assert.match(programDetail, /paddingVertical: tokens\.spacing\.sm/);
+
+  const libraryDetail = await readFile(
+    path.resolve(process.cwd(), "src/components/libraries/library-detail-screen.tsx"),
+    "utf8",
+  );
+  assert.match(libraryDetail, /<ProgramDetailPreview[\s\S]*?scrollable\s*\/>/);
 
   const programDailyPlan = await readFile(
     path.resolve(process.cwd(), "src/components/libraries/program-daily-plan-preview.tsx"),
     "utf8",
   );
   assert.match(programDailyPlan, /day \? \(day\.meals \?\? \[\]\)\.map\(mealPanelItem\) : meals/);
+  assert.match(programDailyPlan, /label=\{`Ir al detalle del plan de \$\{dayLabel\}`\}/);
+  assert.match(programDailyPlan, /router\.push\(`\/libraries\/daily-plans\/\$\{day\.dailyplan_id\}` as Href\)/);
+  assert.match(programDailyPlan, /\{day\?\.dailyplan_id \? \(/);
+  assert.match(programDailyPlan, /actions=\{\(/);
+  assert.doesNotMatch(programDailyPlan, /accessory=\{\(/);
+
+  const productUiSource = await readFile(
+    path.resolve(process.cwd(), "src/components/ui/product.tsx"),
+    "utf8",
+  );
+  assert.match(productUiSource, /export function EntityCardActions/);
+  assert.match(productUiSource, /export function EntityCardAction/);
+  assert.match(productUiSource, /entityCardAction: \{ alignItems: "center", borderRadius:/);
+  assert.doesNotMatch(productUiSource, /entityCardAction: \{[^\n]*borderWidth/);
+
+  assert.match(gallery, /Siempre abajo y sin bordes/);
+  assert.match(gallery, /EntityCardAction/);
 
   const programChart = await readFile(
     path.resolve(process.cwd(), "src/components/libraries/program-child-card.tsx"),
@@ -112,7 +141,24 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(programChart, /allocationSlot: \{[^\n]*gap: 2[^\n]*paddingHorizontal: 1/);
   assert.match(programChart, /allocationSegment: \{ borderRadius: 2/);
   assert.match(programChart, /key=\{`\$\{index\}-\$\{label\}`\}/);
+  assert.match(programChart, /export function programDailyMetricData/);
+  assert.match(programChart, /weeks\.flatMap\(\(week\) => week\.days\.map/);
+  assert.match(programChart, /axisLabels = \["S1", "S2"\]/);
+  assert.match(programChart, /width <= 780[\s\S]*?\? \{ width: 120 \}/);
+  assert.match(programChart, /strokeWidth="5"[^\n]*x1=\{x\} x2=\{x\} y1=\{y\} y2=\{y\}/);
+  assert.match(programChart, /P \{allocationRange\(liveAllocationValues, 0/);
+  assert.match(programChart, /const hasAllocation = protein \+ carbs \+ fat > 0/);
   assert.match(programDetail, /key=\{`\$\{week\}-\$\{index\}-\$\{label\}`\}/);
+  assert.match(programDetail, /axisLabels=\{liveWeeks\.map\(\(week\) => `S\$\{week\.week_number\}`\)\}/);
+  assert.match(programDetail, /const liveMetricData = weekData \? programDailyMetricData\(\[weekData\]\) : undefined/);
+  assert.doesNotMatch(programDetail, /weekData\.days\.filter\(\(day\) => day\.nutrition\)/);
+
+  const libraryCardSource = await readFile(
+    path.resolve(process.cwd(), "src/components/libraries/library-card.tsx"),
+    "utf8",
+  );
+  assert.match(libraryCardSource, /programDailyMetricData\(item\.panel\.weeks\)/);
+  assert.match(libraryCardSource, /`S\$\{week\.week_number\}`/);
 
   const programDayPanels = await readFile(
     path.resolve(process.cwd(), "src/components/libraries/program-day-comparison-panels.tsx"),

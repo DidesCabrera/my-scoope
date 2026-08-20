@@ -2,6 +2,7 @@ import { ChevronRight, CircleUserRound, MoreHorizontal } from "lucide-react-nati
 import { Pressable, StyleProp, StyleSheet, Text, useWindowDimensions, View, ViewStyle } from "react-native";
 import Svg, { Line, Polyline } from "react-native-svg";
 
+import type { LibraryWeekPanelItem } from "@/api/types";
 import { Card, EntityHeading } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
@@ -34,6 +35,21 @@ const allocationValues = [
   [29, 46, 25], [31, 44, 25], [28, 48, 24], [30, 45, 25], [27, 47, 26], [32, 43, 25], [29, 49, 22],
   [30, 46, 24], [31, 45, 24], [28, 47, 25], [32, 44, 24], [29, 46, 25], [30, 48, 22], [31, 43, 26],
 ];
+
+export function programDailyMetricData(weeks: LibraryWeekPanelItem[]): ProgramMetricDatum[] {
+  return weeks.flatMap((week) => week.days.map((day) => ({
+    allocation: {
+      protein: day.nutrition?.protein.allocation ?? 0,
+      carbs: day.nutrition?.carbs.allocation ?? 0,
+      fat: day.nutrition?.fat.allocation ?? 0,
+    },
+    calories: day.nutrition?.calories ?? 0,
+    protein: day.nutrition?.protein.grams ?? 0,
+    carbs: day.nutrition?.carbs.grams ?? 0,
+    fat: day.nutrition?.fat.grams ?? 0,
+    ppk: day.nutrition?.protein.per_kilogram ?? null,
+  })));
+}
 
 function liveRange(metric: MetricRow, values: number[] | undefined): string {
   const finite = (values ?? []).filter((value) => Number.isFinite(value) && value > 0);
@@ -70,12 +86,14 @@ function MetricPlot({ days, metric, values: providedValues }: { days: number; me
   const maximum = Math.max(...rawValues, 1);
   const values = providedValues ? rawValues.map((value) => 12 + (value / maximum) * 82) : rawValues;
   const divisor = Math.max(values.length - 1, 1);
-  const points = values.map((value, index) => `${index * (140 / divisor)},${43 - value * 0.4}`).join(" ");
+  const coordinates = values.map((value, index) => ({ x: index * (140 / divisor), y: 43 - value * 0.4 }));
+  const points = coordinates.map(({ x, y }) => `${x},${y}`).join(" ");
   return (
     <View accessibilityLabel={`${metric.label}: ${metric.range}`} style={styles.metricPlot}>
       <Svg height="100%" preserveAspectRatio="none" viewBox="0 0 140 44" width="100%">
         <Line stroke={tokens.color.borderSoft} strokeWidth="0.8" x1="70" x2="70" y1="0" y2="44" />
         <Polyline fill="none" points={points} stroke={metric.color} strokeLinejoin="round" strokeLinecap="round" strokeWidth="2.6" vectorEffect="non-scaling-stroke" />
+        {coordinates.map(({ x, y }, index) => <Line key={`${metric.key}-point-${index}`} stroke={metric.color} strokeLinecap="round" strokeWidth="5" vectorEffect="non-scaling-stroke" x1={x} x2={x} y1={y} y2={y} />)}
       </Svg>
     </View>
   );
@@ -84,19 +102,30 @@ function MetricPlot({ days, metric, values: providedValues }: { days: number; me
 function AllocationPlot({ days, values = allocationValues }: { days: number; values?: number[][] }) {
   return (
     <View accessibilityLabel="Distribución de macronutrientes por día" style={[styles.metricPlot, styles.allocationPlot]}>
-      {values.slice(0, days).map(([protein, carbs, fat], index) => (
-        <View key={`allocation-${index}`} style={[styles.allocationSlot, days > 7 && index === 7 && styles.weekDivider]}>
-          <View style={[styles.allocationSegment, { backgroundColor: tokens.color.protein, flex: protein }]} />
-          <View style={[styles.allocationSegment, { backgroundColor: tokens.color.carbs, flex: carbs }]} />
-          <View style={[styles.allocationSegment, { backgroundColor: tokens.color.fat, flex: fat }]} />
-        </View>
-      ))}
+      {values.slice(0, days).map(([protein, carbs, fat], index) => {
+        const hasAllocation = protein + carbs + fat > 0;
+        return (
+          <View key={`allocation-${index}`} style={[styles.allocationSlot, days > 7 && index === 7 && styles.weekDivider]}>
+            {hasAllocation ? <>
+              <View style={[styles.allocationSegment, { backgroundColor: tokens.color.protein, flex: protein }]} />
+              <View style={[styles.allocationSegment, { backgroundColor: tokens.color.carbs, flex: carbs }]} />
+              <View style={[styles.allocationSegment, { backgroundColor: tokens.color.fat, flex: fat }]} />
+            </> : null}
+          </View>
+        );
+      })}
     </View>
   );
 }
 
+function allocationRange(values: number[][] | undefined, index: number, fallback: string): string {
+  const finite = (values ?? []).map((row) => row[index]).filter((value) => Number.isFinite(value) && value > 0);
+  if (!finite.length) return fallback;
+  return `${Math.round(Math.min(...finite))} - ${Math.round(Math.max(...finite))}%`;
+}
+
 export function ProgramMetricPreview({
-  axisLabels = ["SEMANA 1", "SEMANA 2"],
+  axisLabels = ["S1", "S2"],
   data,
   days = 14,
   style,
@@ -108,7 +137,7 @@ export function ProgramMetricPreview({
 }) {
   const { width } = useWindowDimensions();
   const metricColumnStyle = width <= 780
-    ? { width: 150 }
+    ? { width: 120 }
     : { minWidth: 92, width: "24%" as const };
 
   const metricValues: Record<MetricRow["key"], number[]> | undefined = data ? {
@@ -133,9 +162,9 @@ export function ProgramMetricPreview({
         <View style={[styles.metricIdentity, styles.allocationIdentity, metricColumnStyle]}>
           <Text style={styles.metricTitle}>Alloc</Text>
           <View style={styles.allocationRanges}>
-            <Text style={[styles.allocationRange, { backgroundColor: tokens.color.protein }]}>P 27 - 32%</Text>
-            <Text style={[styles.allocationRange, { backgroundColor: tokens.color.carbs }]}>C 43 - 49%</Text>
-            <Text style={[styles.allocationRange, { backgroundColor: tokens.color.fat }]}>G 22 - 26%</Text>
+            <Text style={[styles.allocationRange, { backgroundColor: tokens.color.protein }]}>P {allocationRange(liveAllocationValues, 0, "27 - 32%")}</Text>
+            <Text style={[styles.allocationRange, { backgroundColor: tokens.color.carbs }]}>C {allocationRange(liveAllocationValues, 1, "43 - 49%")}</Text>
+            <Text style={[styles.allocationRange, { backgroundColor: tokens.color.fat }]}>G {allocationRange(liveAllocationValues, 2, "22 - 26%")}</Text>
           </View>
         </View>
         <AllocationPlot days={days} values={liveAllocationValues} />

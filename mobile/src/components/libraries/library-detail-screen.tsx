@@ -34,11 +34,12 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   if (loading && !item) return <View style={styles.loading}><ActivityIndicator color={tokens.color.interactivePrimary} size="large" /><Text style={textStyles.muted}>Cargando detalle…</Text></View>;
   if (!item) return <View style={styles.loading}>{error ? <InlineNotice tone="error">{error}</InlineNotice> : null}<Button label="Reintentar" onPress={() => void load()} variant="secondary" /></View>;
   if (item.entity === "program") {
-    return <ScrollView contentContainerStyle={styles.content} onScroll={({ nativeEvent }) => { const visible = nativeEvent.contentOffset.y > 1; if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible); }} scrollEventThrottle={16} style={styles.screen}>
-      <ProgramDetailPreview item={item} />
-      {item.can_calendarize ? <Button label="Calendarizar este programa" onPress={() => router.push(`/program/activate?programId=${item.id}` as Href)} /> : null}
-      <EntityDetailMetadata creator={item.creator} updatedAt={libraryDate(item.created_at)} />
-    </ScrollView>;
+    return <ProgramDetailPreview
+      footer={<>{item.can_calendarize ? <Button label="Calendarizar este programa" onPress={() => router.push(`/program/activate?programId=${item.id}` as Href)} /> : null}<EntityDetailMetadata creator={item.creator} updatedAt={libraryDate(item.created_at)} /></>}
+      item={item}
+      onScroll={({ nativeEvent }) => { const visible = nativeEvent.contentOffset.y > 1; if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible); }}
+      scrollable
+    />;
   }
   const panelCount = item.panel.kind === "foods" ? item.panel.foods.length : item.panel.kind === "meals" ? item.panel.meals.length : item.panel.kind === "weeks" ? item.panel.weeks.length : 0;
   return <ScrollView contentContainerStyle={styles.content} onScroll={({ nativeEvent }) => { const visible = nativeEvent.contentOffset.y > 1; if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible); }} scrollEventThrottle={16} style={styles.screen}><EntityDetailPage entity={item.entity} indicators={item.indicators} nutrition={libraryNutrition(item.nutrition)} subtitle={item.subtitle || undefined} title={item.name}>

@@ -1,13 +1,13 @@
 import { type Href, useRouter } from "expo-router";
 import { ChevronRight } from "lucide-react-native";
 import { useState } from "react";
-import { Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from "react-native";
+import { type StyleProp, StyleSheet, Text, View, type ViewStyle } from "react-native";
 
 import type { LibraryFoodPanelItem, LibraryMealPanelItem, LibraryWeekPanelItem } from "@/api/types";
 import { PanelAllocationBar } from "@/components/nutrition/allocation-bar";
 import { CalorieDistributionBar } from "@/components/nutrition/calorie-distribution-bar";
 import { NutritionEntityCard } from "@/components/nutrition/nutrition-entity-card";
-import { EntityIcon } from "@/components/ui";
+import { EntityCardAction, EntityIcon } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 import { EntityPanelTabs, PanelBody, PanelEmptyState, PanelSurface } from "./panel-surface";
@@ -158,6 +158,7 @@ export function DailyPlanMealCards({ items }: { items: LibraryMealPanelItem[] })
             <View style={styles.mealCardNumber}><Text style={styles.mealCardNumberText}>{index + 1}</Text></View>
           </View>
           <NutritionEntityCard
+            actions={<EntityCardAction label={`Ver detalle de ${item.name}`} onPress={() => router.push(`/libraries/meals/${item.detail_id}` as Href)} role="link"><ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction>}
             entity="meal"
             indicators={[{ icon: "food", label: "alimentos", value: item.foods.length }]}
             nutrition={{
@@ -169,14 +170,6 @@ export function DailyPlanMealCards({ items }: { items: LibraryMealPanelItem[] })
             subtitle={item.time ? item.time.slice(0, 5) : undefined}
             title={item.name}>
             <FoodPanels items={item.foods} />
-            <Pressable
-              accessibilityLabel={`Ver detalle de ${item.name}`}
-              accessibilityRole="button"
-              hitSlop={8}
-              onPress={() => router.push(`/libraries/meals/${item.detail_id}` as Href)}
-              style={({ pressed }) => [styles.mealDetailButton, pressed && styles.pressed]}>
-              <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
-            </Pressable>
           </NutritionEntityCard>
         </View>
       ))}
@@ -229,7 +222,6 @@ const styles = StyleSheet.create({
   mealCardLine: { backgroundColor: tokens.color.borderDefault, height: 1, width: "100%" },
   mealCardNumber: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, height: 36, justifyContent: "center", left: tokens.spacing.xs, position: "absolute", width: 36, zIndex: 1 },
   mealCardNumberText: { color: tokens.color.textMuted, fontSize: 18, fontVariant: ["tabular-nums"], fontWeight: "600" },
-  mealDetailButton: { alignItems: "center", alignSelf: "flex-end", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, height: 36, justifyContent: "center", width: 36 },
   pressed: { opacity: 0.6 },
   weekRow: { borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, gap: tokens.spacing.xs, padding: tokens.spacing.md },
   weekTitle: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: "600", marginBottom: tokens.spacing.xs },

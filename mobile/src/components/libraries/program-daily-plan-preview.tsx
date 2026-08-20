@@ -1,8 +1,9 @@
-import { MoreHorizontal } from "lucide-react-native";
-import { Pressable, StyleSheet } from "react-native";
+import { type Href, useRouter } from "expo-router";
+import { ChevronRight, MoreHorizontal } from "lucide-react-native";
 
 import { NutritionEntityCard } from "@/components/nutrition";
 import { MealPanels, type MealPanelItem } from "@/components/panels";
+import { EntityCardAction } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import type { LibraryWeekPanelItem } from "@/api/types";
 
@@ -81,13 +82,24 @@ function mealPanelItem(item: NonNullable<LibraryWeekPanelItem["days"][number]["m
 }
 
 export function ProgramDailyPlanPreview({ day, dayLabel, week }: { day?: LibraryWeekPanelItem["days"][number]; dayLabel: string; week: number }) {
+  const router = useRouter();
   const nutrition = day?.nutrition;
   return (
     <NutritionEntityCard
-      accessory={(
-        <Pressable accessibilityLabel={`Más acciones para el plan de ${dayLabel}`} accessibilityRole="button" style={({ pressed }) => [styles.action, pressed && styles.pressed]}>
-          <MoreHorizontal color={tokens.color.textMuted} size={20} />
-        </Pressable>
+      actions={(
+        <>
+          <EntityCardAction label={`Más acciones para el plan de ${dayLabel}`} onPress={() => undefined}>
+            <MoreHorizontal color={tokens.color.textMuted} size={20} />
+          </EntityCardAction>
+          {day?.dailyplan_id ? (
+            <EntityCardAction
+              label={`Ir al detalle del plan de ${dayLabel}`}
+              onPress={() => router.push(`/libraries/daily-plans/${day.dailyplan_id}` as Href)}
+              role="link">
+              <ChevronRight color={tokens.color.textMuted} size={21} />
+            </EntityCardAction>
+          ) : null}
+        </>
       )}
       kpiVariant="nested"
       entity="dailyPlan"
@@ -112,8 +124,3 @@ export function ProgramDailyPlanPreview({ day, dayLabel, week }: { day?: Library
     </NutritionEntityCard>
   );
 }
-
-const styles = StyleSheet.create({
-  action: { alignItems: "center", borderRadius: tokens.radius.pill, height: 34, justifyContent: "center", width: 34 },
-  pressed: { opacity: 0.68 },
-});

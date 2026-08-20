@@ -1,7 +1,7 @@
 import { ClipboardList, MoreHorizontal, Plus } from "lucide-react-native";
 import type { ReactNode } from "react";
-import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useRef, useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View, type ScrollViewProps } from "react-native";
 import Svg, { Circle, Defs, LinearGradient, Stop } from "react-native-svg";
 
 import { Card } from "@/components/ui/primitives";
@@ -10,7 +10,7 @@ import { SectionHeading } from "@/components/ui/typography";
 import { tokens } from "@/design/tokens";
 import type { LibraryFoodPanelItem, LibraryItem, LibraryWeekPanelItem } from "@/api/types";
 import { EntityHeading, EntityIcon, StructuralIndicators } from "@/components/ui";
-import { ProgramMetricPreview, type ProgramMetricDatum } from "./program-child-card";
+import { ProgramMetricPreview, programDailyMetricData } from "./program-child-card";
 import { ProgramDailyPlanPreview } from "./program-daily-plan-preview";
 import { ProgramDayComparisonPanels, type ProgramDayNutrition } from "./program-day-comparison-panels";
 import { ProgramWeekComparisonPanels, type ProgramWeekSummary } from "./program-week-comparison-panels";
@@ -108,34 +108,12 @@ function dayRows(week: LibraryWeekPanelItem): ProgramDayNutrition[] {
   }));
 }
 
-function metricDataFromWeeks(weeks: LibraryWeekPanelItem[]): ProgramMetricDatum[] {
-  return weeks.map((week) => {
-    const filledDays = week.filled_days_count ?? week.days.filter((day) => day.plan_name).length;
-    const ppk = week.days.map((day) => day.nutrition?.protein.per_kilogram).filter((value): value is number => value != null);
-    return {
-      allocation: { protein: week.protein_allocation, carbs: week.carbs_allocation, fat: week.fat_allocation },
-      calories: week.average_calories ?? week.calories / Math.max(filledDays, 1),
-      protein: week.protein_grams / Math.max(filledDays, 1),
-      carbs: week.carbs_grams / Math.max(filledDays, 1),
-      fat: week.fat_grams / Math.max(filledDays, 1),
-      ppk: ppk.length ? ppk.reduce((sum, value) => sum + value, 0) / ppk.length : null,
-    };
-  });
-}
-
 function foodItem(item: LibraryFoodPanelItem): FoodPanelItem {
   return { id: item.id, name: item.name, quantity: item.quantity, quantityUnit: item.quantity_unit, calories: item.calories, calorieShare: item.calorie_share, proteinGrams: item.protein_grams, carbsGrams: item.carbs_grams, fatGrams: item.fat_grams, proteinAllocation: item.protein_allocation, carbsAllocation: item.carbs_allocation, fatAllocation: item.fat_allocation };
 }
 
 function ProgramWeekDetail({ week, weekData }: { week: number; weekData?: LibraryWeekPanelItem }) {
-  const liveMetricData = weekData ? weekData.days.filter((day) => day.nutrition).map((day) => ({
-    allocation: { protein: day.nutrition!.protein.allocation, carbs: day.nutrition!.carbs.allocation, fat: day.nutrition!.fat.allocation },
-    calories: day.nutrition!.calories,
-    protein: day.nutrition!.protein.grams,
-    carbs: day.nutrition!.carbs.grams,
-    fat: day.nutrition!.fat.grams,
-    ppk: day.nutrition!.protein.per_kilogram,
-  })) : undefined;
+  const liveMetricData = weekData ? programDailyMetricData([weekData]) : undefined;
   return (
     <Card style={styles.weekCard}>
       <View style={styles.weekCardHeader}>
@@ -175,20 +153,28 @@ function ProgramWeekDetail({ week, weekData }: { week: number; weekData?: Librar
   );
 }
 
-export function ProgramDetailPreview({ item }: { item?: LibraryItem } = {}) {
+type ProgramDetailPreviewProps = {
+  footer?: ReactNode;
+  item?: LibraryItem;
+  onScroll?: ScrollViewProps["onScroll"];
+  scrollable?: boolean;
+};
+
+export function ProgramDetailPreview({ footer, item, onScroll, scrollable = false }: ProgramDetailPreviewProps = {}) {
   const [activeWeek, setActiveWeek] = useState(1);
+  const [weekTabsPinned, setWeekTabsPinned] = useState(false);
+  const weekTabsOffset = useRef(Number.POSITIVE_INFINITY);
   const liveWeeks = item?.panel.kind === "weeks" ? item.panel.weeks : [];
   const displayedWeeks = liveWeeks.length ? liveWeeks.map((week) => week.week_number) : [1, 2];
   const liveSummaries: ProgramWeekSummary[] = liveWeeks.map((week) => { const filledDays = week.filled_days_count ?? week.days.filter((day) => day.plan_name).length; return { allocation: { protein: week.protein_allocation, carbs: week.carbs_allocation, fat: week.fat_allocation }, averageCalories: week.average_calories ?? week.calories / Math.max(filledDays, 1), calories: week.calories, carbsGrams: week.carbs_grams, dailyPlans: filledDays, fatGrams: week.fat_grams, id: week.id, proteinGrams: week.protein_grams, week: week.week_number }; });
   const selectedWeek = liveWeeks.find((week) => week.week_number === activeWeek);
-  const liveMetrics = liveWeeks.length ? metricDataFromWeeks(liveWeeks) : undefined;
+  const liveMetrics = liveWeeks.length ? programDailyMetricData(liveWeeks) : undefined;
   const weeksCount = liveWeeks.length || 2;
   const plansCount = liveWeeks.reduce((sum, week) => sum + (week.filled_days_count ?? week.days.filter((day) => day.plan_name).length), 0) || 12;
   const foodsCount = liveWeeks.reduce((maximum, week) => Math.max(maximum, week.foods_count ?? week.foods?.length ?? 0), 0) || 36;
 
-  return (
-    <View style={styles.page}>
-      <View style={styles.overview}>
+  const overview = (
+    <View style={styles.overview}>
         <EntityHeading
           entity="program"
           indicators={[
@@ -201,7 +187,7 @@ export function ProgramDetailPreview({ item }: { item?: LibraryItem } = {}) {
         />
 
         <SectionHeading title="Gráficos de KPIs del Programa" />
-        <ProgramMetricPreview axisLabels={liveWeeks.map((week) => `SEMANA ${week.week_number}`)} data={liveMetrics} days={liveMetrics?.length ?? 14} style={styles.systemBleed} />
+        <ProgramMetricPreview axisLabels={liveWeeks.map((week) => `S${week.week_number}`)} data={liveMetrics} days={liveMetrics?.length ?? 14} style={styles.systemBleed} />
 
         <View style={styles.sectionTitleWithAction}>
           <SectionHeading title="Tabla de comparación entre semanas" />
@@ -211,20 +197,29 @@ export function ProgramDetailPreview({ item }: { item?: LibraryItem } = {}) {
           </Pressable>
         </View>
         <View style={styles.systemBleed}><ProgramWeekComparisonPanels weeks={liveSummaries.length ? liveSummaries : weekSummaries} /></View>
+    </View>
+  );
+
+  const planningHeader = (
+    <View style={styles.planningHeader}>
+      <View style={styles.planningIdentity}>
+        <EntityIcon entity="program" />
+        <Text style={styles.planningTitle}>Planificación por semanas</Text>
       </View>
+      <StructuralIndicators entity="program" indicators={[{ icon: "week", label: "semanas", value: `${weeksCount} SEMANAS` }]} />
+    </View>
+  );
 
-      <View style={styles.majorDivider} />
-
-      <View style={styles.planningSection}>
-        <View style={styles.planningHeader}>
-          <View style={styles.planningIdentity}>
-            <EntityIcon entity="program" />
-            <Text style={styles.planningTitle}>Planificación por semanas</Text>
-          </View>
-          <StructuralIndicators entity="program" indicators={[{ icon: "week", label: "semanas", value: `${weeksCount} SEMANAS` }]} />
-        </View>
-
-        <View accessibilityLabel="Semanas del programa" accessibilityRole="tablist" style={styles.weekTabs}>
+  const weekTabs = (
+    <View
+      onLayout={scrollable ? ({ nativeEvent }) => { weekTabsOffset.current = nativeEvent.layout.y; } : undefined}
+      style={scrollable ? [styles.weekTabsSticky, weekTabsPinned && styles.weekTabsStickyPinned] : styles.weekTabsEmbedded}>
+      <ScrollView
+        accessibilityLabel="Semanas del programa"
+        accessibilityRole="tablist"
+        contentContainerStyle={styles.weekTabs}
+        horizontal
+        showsHorizontalScrollIndicator={false}>
           {displayedWeeks.map((week) => {
             const selected = activeWeek === week;
             return (
@@ -239,8 +234,39 @@ export function ProgramDetailPreview({ item }: { item?: LibraryItem } = {}) {
               </Pressable>
             );
           })}
-        </View>
+      </ScrollView>
+    </View>
+  );
 
+  if (scrollable) {
+    return (
+      <ScrollView
+        contentContainerStyle={styles.screenContent}
+        onScroll={(event) => {
+          const pinned = event.nativeEvent.contentOffset.y >= weekTabsOffset.current;
+          if (pinned !== weekTabsPinned) setWeekTabsPinned(pinned);
+          onScroll?.(event);
+        }}
+        scrollEventThrottle={16}
+        stickyHeaderIndices={[3]}
+        style={styles.screen}>
+        {overview}
+        <View style={styles.majorDividerScreen} />
+        <View style={styles.planningHeaderScreen}>{planningHeader}</View>
+        {weekTabs}
+        <ProgramWeekDetail week={activeWeek} weekData={selectedWeek} />
+        {footer ? <View style={styles.footer}>{footer}</View> : null}
+      </ScrollView>
+    );
+  }
+
+  return (
+    <View style={styles.page}>
+      {overview}
+      <View style={styles.majorDivider} />
+      <View style={styles.planningSection}>
+        {planningHeader}
+        {weekTabs}
         <ProgramWeekDetail week={activeWeek} weekData={selectedWeek} />
       </View>
     </View>
@@ -248,23 +274,31 @@ export function ProgramDetailPreview({ item }: { item?: LibraryItem } = {}) {
 }
 
 const styles = StyleSheet.create({
+  screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
+  screenContent: { flexGrow: 1, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
   page: { gap: tokens.spacing.xl, minWidth: 0, width: "100%" },
   overview: { gap: tokens.spacing.lg, minWidth: 0 },
   planningSection: { gap: tokens.spacing.md, minWidth: 0 },
   majorDivider: { backgroundColor: tokens.color.borderDefault, height: 1 },
+  majorDividerScreen: { backgroundColor: tokens.color.borderDefault, height: 1, marginVertical: tokens.spacing.xl },
   sectionDivider: { backgroundColor: tokens.color.borderSoft, height: 1, marginVertical: tokens.spacing.xs },
   systemBleed: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding },
   sectionTitleWithAction: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.md, justifyContent: "space-between" },
   addWeekButton: { alignItems: "center", backgroundColor: tokens.color.textMain, borderRadius: tokens.radius.md, flexDirection: "row", gap: tokens.spacing.xs, minHeight: 38, paddingHorizontal: tokens.spacing.md },
   addWeekText: { color: tokens.color.surfaceApp, fontSize: tokens.type.caption, fontWeight: "700" },
   planningHeader: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.md, justifyContent: "space-between" },
+  planningHeaderScreen: { marginBottom: tokens.spacing.md },
   planningIdentity: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
   planningTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "700" },
-  weekTabs: { flexDirection: "row", gap: tokens.spacing.compact, paddingBottom: tokens.spacing.sm },
+  weekTabsSticky: { backgroundColor: tokens.color.surfaceApp, borderBottomColor: "transparent", borderBottomWidth: 1, marginHorizontal: -tokens.spacing.screen, paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.sm, zIndex: 2 },
+  weekTabsStickyPinned: { borderBottomColor: tokens.color.borderDefault },
+  weekTabsEmbedded: { paddingBottom: tokens.spacing.sm },
+  weekTabs: { flexDirection: "row", gap: tokens.spacing.compact },
   weekTab: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, justifyContent: "center", minHeight: 30, paddingHorizontal: tokens.spacing.md },
   weekTabActive: { backgroundColor: tokens.color.textMain, borderColor: tokens.color.textMain },
   weekTabText: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "500" },
   weekTabTextActive: { color: tokens.color.surfaceApp },
+  footer: { gap: tokens.spacing.lg, marginTop: tokens.spacing.xl },
   weekCard: { gap: tokens.spacing.lg, marginHorizontal: -tokens.spacing.screen },
   weekCardHeader: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
   weekIdentity: { alignItems: "flex-start", flex: 1, gap: tokens.spacing.sm, minWidth: 0 },

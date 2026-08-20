@@ -14,6 +14,7 @@ import {
 
 export type NutritionEntityCardProps = {
   accessory?: ReactNode;
+  actions?: ReactNode;
   children?: ReactNode;
   kpiVariant?: "nested" | "regular";
   entity: EntityKind;
@@ -28,6 +29,7 @@ export type NutritionEntityCardProps = {
 
 export function NutritionEntityCard({
   accessory,
+  actions,
   children,
   kpiVariant = "regular",
   entity,
@@ -42,6 +44,7 @@ export function NutritionEntityCard({
   return (
     <EntityCard
       accessory={accessory}
+      actions={actions}
       entity={entity}
       eyebrow={eyebrow}
       indicators={indicators}

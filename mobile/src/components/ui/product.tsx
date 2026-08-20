@@ -172,6 +172,7 @@ export function EntityCard({
   subtitle,
   indicators,
   accessory,
+  actions,
   children,
   onPress,
   style,
@@ -182,6 +183,7 @@ export function EntityCard({
   subtitle?: string;
   indicators?: StructuralIndicator[];
   accessory?: ReactNode;
+  actions?: ReactNode;
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
 }>) {
@@ -189,12 +191,30 @@ export function EntityCard({
     <Card accent={tokens.color[entity]} style={[onPress && styles.entityCardInPressable, style]}>
       <EntityHeading accessory={accessory} entity={entity} eyebrow={eyebrow} indicators={indicators} subtitle={subtitle} title={title} />
       {children}
+      {actions ? <EntityCardActions>{actions}</EntityCardActions> : null}
     </Card>
   );
   if (!onPress) return content;
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.entityCardPressable, pressed && styles.pressed]}>
       {content}
+    </Pressable>
+  );
+}
+
+export function EntityCardActions({ children }: PropsWithChildren) {
+  return <View accessibilityLabel="Acciones de la card" style={styles.entityCardActions}>{children}</View>;
+}
+
+export function EntityCardAction({ children, label, onPress, role = "button" }: PropsWithChildren<{ label: string; onPress(): void; role?: "button" | "link" }>) {
+  return (
+    <Pressable
+      accessibilityLabel={label}
+      accessibilityRole={role}
+      hitSlop={8}
+      onPress={onPress}
+      style={({ pressed }) => [styles.entityCardAction, pressed && styles.pressed]}>
+      {children}
     </Pressable>
   );
 }
@@ -327,6 +347,8 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.72 },
   entityCardPressable: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding },
   entityCardInPressable: { marginHorizontal: 0 },
+  entityCardActions: { alignItems: "center", alignSelf: "stretch", flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "flex-end", marginTop: tokens.spacing.sm },
+  entityCardAction: { alignItems: "center", borderRadius: tokens.radius.pill, height: 36, justifyContent: "center", width: 36 },
   headingRow: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md },
   headingCopy: { alignItems: "flex-start", flex: 1, gap: tokens.spacing.xs, minWidth: 0 },
   entityEyebrowRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },

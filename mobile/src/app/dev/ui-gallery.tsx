@@ -1,5 +1,5 @@
 import { Redirect } from "expo-router";
-import { ChevronDown } from "lucide-react-native";
+import { ChevronDown, ChevronRight, MoreHorizontal } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 
@@ -49,6 +49,7 @@ import {
   ContentPanel,
   DetailSection,
   EntityCard,
+  EntityCardAction,
   type EntityKind,
   Field,
   InlineNotice,
@@ -319,9 +320,9 @@ export default function UiGalleryScreen() {
             }}
             title="Yogur griego natural"
           />
-          <SectionTitle detail="Título + KPI" title="Card nutricional compuesta" />
+          <SectionTitle detail="Siempre abajo y sin bordes" title="Acciones de card" />
           <NutritionEntityCard
-            accessory={<Pill color={tokens.color.dailyPlan} label="Activo" />}
+            actions={<><EntityCardAction label="Más acciones" onPress={() => undefined}><MoreHorizontal color={tokens.color.textMuted} size={21} /></EntityCardAction><EntityCardAction label="Ir a detalle" onPress={() => undefined} role="link"><ChevronRight color={tokens.color.textMuted} size={21} /></EntityCardAction></>}
             entity="dailyPlan"
             indicators={[
               { icon: "meal", label: "comidas", value: 4 },
