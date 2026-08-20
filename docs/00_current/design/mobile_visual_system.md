@@ -200,19 +200,17 @@ Kcal, P, C and F; Alloc divides it equally among P%, C% and F%.
 
 ## Entity detail pages
 
-`EntityDetailPage` is the first reusable native detail-page composition. The
-detail page is itself one extended entity-colored card: entity heading, KPI,
-subsequent sections and metadata all live inside that single page surface.
-Only optional back navigation and page actions sit outside it. Internal panels
-retain their own functional surfaces. `EntityDetailSection` pairs the shared
+`EntityDetailPage` is the reusable native detail-page composition. Its outer
+surface is transparent and borderless, matching the web detail contract;
+entity heading, KPI, subsequent sections and metadata share the app surface.
+Internal cards and panels retain their own functional surfaces. `EntityDetailSection` pairs the shared
 `SectionHeading` with reusable panel content, while `EntityDetailMetadata` provides the
 initial creator/update footer. The gallery's `Detalle` tab demonstrates the
 contract with a DailyPlan; food, meal and DPM routes can reuse the same shell
 with entity-specific panels.
 
-The extended page-card bleeds through the standard screen side gutters so its
-outer border reaches both viewport edges and its internal content recovers the
-full mobile width. DailyPlan meal sequence markers mirror web: a numbered
+The detail composition preserves standard screen gutters without adding top
+padding beyond the screen container. DailyPlan meal sequence markers mirror web: a numbered
 circle sits over a horizontal divider above each meal card, consuming no
 horizontal card space. Nested DPM meal cards use the standard card contract:
 `card.outerPadding` (18 px) and `card.gap` (12 px). Their outer placement also
@@ -225,9 +223,11 @@ expansion from the difference between that inset and `card.outerPadding`
 (currently -6 px per side), so cards sit 12 px from a standard 18 px container
 while headings and other direct content remain at 18 px. Pressable entity cards
 apply the same expansion to their touch target rather than only their visual
-surface. `EntityCardPanelSlot` independently applies the same calculation to
-panels inside entity cards. These negative margins are owned by the primitives
-and must not be repeated manually in consuming views.
+surface. The canonical `PanelSurface` owns that same calculation for every
+panel subtype (food, meal, calories, macros, allocation and comparison).
+`EntityCardPanelSlot` only provides layout containment. Negative margins are
+owned by the card and panel primitives and must not be repeated manually in
+consuming views.
 Gallery navigation is adaptive and remains separate from product panel tabs:
 below 700 pt it uses a compact dropdown above the examples to preserve card
 width, and at 700 pt or wider it becomes a vertical sidebar to the left.

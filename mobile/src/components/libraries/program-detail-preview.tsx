@@ -140,7 +140,7 @@ function ProgramWeekDetail({ week, weekData }: { week: number; weekData?: Librar
       <ProgramMetricPreview axisLabels={weekData?.days.map((day) => day.day_label.slice(0, 1).toUpperCase()) ?? dayLabels} data={liveMetricData} days={7} style={styles.systemBleed} />
 
       <SectionHeading title="Tabla de comparación entre planes diarios" />
-      <View style={styles.systemBleed}><ProgramDayComparisonPanels key={`comparison-${week}`} rows={weekData ? dayRows(weekData) : undefined} week={week} /></View>
+      <ProgramDayComparisonPanels key={`comparison-${week}`} rows={weekData ? dayRows(weekData) : undefined} week={week} />
 
       <View style={styles.sectionDivider} />
       <SectionHeading detail={`${weekData ? weekData.filled_days_count ?? weekData.days.filter((day) => day.plan_name).length : 6} asignados`} title="Planes diarios esta semana" />
@@ -148,7 +148,7 @@ function ProgramWeekDetail({ week, weekData }: { week: number; weekData?: Librar
 
       <View style={styles.sectionDivider} />
       <SectionHeading detail={`${weekData?.foods_count ?? weekData?.foods?.length ?? 28} alimentos`} title="Alimentos en esta semana" />
-      <View style={styles.systemBleed}><FoodPanels items={weekData ? (weekData.foods ?? []).map(foodItem) : weekFoodItems} /></View>
+      <FoodPanels items={weekData ? (weekData.foods ?? []).map(foodItem) : weekFoodItems} />
     </Card>
   );
 }
@@ -196,7 +196,7 @@ export function ProgramDetailPreview({ footer, item, onScroll, scrollable = fals
             <Text style={styles.addWeekText}>Agregar semana</Text>
           </Pressable>
         </View>
-        <View style={styles.systemBleed}><ProgramWeekComparisonPanels weeks={liveSummaries.length ? liveSummaries : weekSummaries} /></View>
+        <ProgramWeekComparisonPanels weeks={liveSummaries.length ? liveSummaries : weekSummaries} />
     </View>
   );
 

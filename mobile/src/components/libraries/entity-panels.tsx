@@ -10,7 +10,7 @@ import { NutritionEntityCard } from "@/components/nutrition/nutrition-entity-car
 import { EntityCardAction, EntityIcon } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
-import { EntityPanelTabs, PanelBody, PanelEmptyState, PanelSurface } from "./panel-surface";
+import { EntityPanelTabs, PanelBody, PanelEmptyState, PanelSurface } from "@/components/panels/panel-surface";
 
 type PanelNutritionItem = {
   id: string;
