@@ -50,7 +50,7 @@ export function EntityDetailPage({
         </View>
       ) : null}
 
-      <View style={[styles.pageCard, { borderTopColor: tokens.color[entity] }]}>
+      <View style={styles.pageCard}>
         <View style={styles.summary}>
           <EntityHeading
             accessory={accessory}
@@ -107,7 +107,7 @@ export function EntityDetailMetadata({
 
 const styles = StyleSheet.create({
   page: { gap: tokens.spacing.lg, minWidth: 0, width: "100%" },
-  pageCard: { alignSelf: "stretch", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderTopWidth: 3, borderWidth: 1, gap: tokens.spacing.lg, marginHorizontal: -tokens.spacing.screen, minWidth: 0, padding: tokens.card.outerPadding },
+  pageCard: { alignSelf: "stretch", gap: tokens.spacing.lg, marginHorizontal: -tokens.spacing.screen, minWidth: 0, paddingBottom: tokens.card.outerPadding, paddingHorizontal: tokens.card.outerPadding },
   summary: { gap: tokens.card.gap, minWidth: 0 },
   navigation: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", minHeight: 32 },
   backButton: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs, minHeight: 32 },
