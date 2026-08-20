@@ -2,9 +2,8 @@ import { ChevronRight, CircleUserRound, MoreHorizontal } from "lucide-react-nati
 import { Pressable, StyleProp, StyleSheet, Text, useWindowDimensions, View, ViewStyle } from "react-native";
 import Svg, { Line, Polyline } from "react-native-svg";
 
-import { Card } from "@/components/ui/primitives";
+import { Card, EntityHeading } from "@/components/ui";
 import { tokens } from "@/design/tokens";
-import { EntityHeading } from "@/components/ui";
 
 export type ProgramMetricDatum = {
   allocation: { protein: number; carbs: number; fat: number };
@@ -167,7 +166,7 @@ export function ProgramChildCard({
   axisLabels?: string[];
 }) {
   return (
-    <Card>
+    <Card accent={tokens.color.program}>
       <EntityHeading
         entity="program"
         indicators={[

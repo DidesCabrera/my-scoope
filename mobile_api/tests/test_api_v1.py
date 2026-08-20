@@ -1017,13 +1017,20 @@ class MobileAPIV1Tests(TestCase):
             with self.subTest(detail=path):
                 detail = self.client.get(path)
                 self.assertEqual(detail.status_code, 200)
-                self.assertEqual(detail.json()["data"]["entity"], entity)
-                self.assertEqual(detail.json()["data"]["creator"], self.user.get_full_name().strip() or self.user.username)
+                detail_data = detail.json()["data"]
+                self.assertEqual(detail_data["entity"], entity)
+                self.assertEqual(detail_data["creator"], self.user.get_full_name().strip() or self.user.username)
                 if entity == "dailyPlan":
-                    meal_data = detail.json()["data"]["panel"]["meals"][0]
+                    meal_data = detail_data["panel"]["meals"][0]
                     self.assertEqual(meal_data["foods"][0]["name"], "Avena personal")
                     self.assertIn("calories", meal_data["foods"][0])
                     self.assertIn("calorie_distribution", meal_data["foods"][0])
+                if entity == "program":
+                    week_data = detail_data["panel"]["weeks"][0]
+                    self.assertEqual(week_data["filled_days_count"], 1)
+                    self.assertEqual(week_data["average_calories"], 55.3)
+                    self.assertEqual(week_data["days"][0]["dailyplan_id"], dailyplan.id)
+                    self.assertEqual(week_data["days"][0]["nutrition"]["calories"], 387.0)
 
         embedded_meal_detail = self.client.get(f"/api/v1/library/meals/{embedded_meal.id}")
         self.assertEqual(embedded_meal_detail.status_code, 200)

@@ -82,6 +82,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(programDetail, /weekData\.foods \?\? \[\]\)\.map\(foodItem\)/);
   assert.match(programDetail, /: weekFoodItems/);
   assert.match(programDetail, /accessibilityState=\{\{ expanded:/);
+  assert.match(programDetail, /useState<number \| null>\(\(\) => filledDays\[0\] \? 0 : null\)/);
   assert.match(programDetail, /<Card style=\{styles\.weekCard\}>/);
   assert.doesNotMatch(programDetail, /<Card muted style=\{styles\.weekCard\}>/);
   assert.match(programDetail, /function SelectedDayRing/);
@@ -99,6 +100,9 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     path.resolve(process.cwd(), "src/components/libraries/program-child-card.tsx"),
     "utf8",
   );
+  assert.match(programChart, /import \{ Card, EntityHeading \} from "@\/components\/ui"/);
+  assert.doesNotMatch(programChart, /Card.*from "@\/components\/ui\/primitives"/);
+  assert.match(programChart, /<Card accent=\{tokens\.color\.program\}>/);
   assert.match(programChart, /allocationSlot: \{[^\n]*gap: 2[^\n]*paddingHorizontal: 1/);
   assert.match(programChart, /allocationSegment: \{ borderRadius: 2/);
   assert.match(programChart, /key=\{`\$\{index\}-\$\{label\}`\}/);

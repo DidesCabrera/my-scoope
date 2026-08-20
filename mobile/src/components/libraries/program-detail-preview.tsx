@@ -59,7 +59,7 @@ function SelectedDayRing() {
 function ProgramDaysGrid({ week, weekData }: { week: number; weekData?: LibraryWeekPanelItem }) {
   const filledDays = weekData ? weekData.days.map((day) => Boolean(day.plan_name)) : week === 1 ? [true, true, true, true, true, false, true] : [true, true, false, true, true, true, true];
   const labels = weekData?.days.map((day) => day.day_label.slice(0, 1).toUpperCase()) ?? dayLabels;
-  const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [selectedDay, setSelectedDay] = useState<number | null>(() => filledDays[0] ? 0 : null);
   return (
     <View style={styles.daySelection}>
       <View accessibilityLabel={`Planes diarios de Semana ${week}`} style={styles.daysGrid}>
