@@ -94,7 +94,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(programDetail, /borderRadius: tokens\.spacing\.compact, height: 24/);
   assert.match(programDetail, /systemBleed: \{ marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding \}/);
   assert.match(programDetail, /<ProgramMetricPreview[^\n]*style=\{styles\.systemBleed\}/);
-  assert.match(programDetail, /<View style=\{styles\.systemBleed\}><FoodPanels/);
+  assert.match(programDetail, /<FoodPanels items=\{weekData/);
+  assert.doesNotMatch(programDetail, /<View style=\{styles\.systemBleed\}><(?:FoodPanels|ProgramDayComparisonPanels|ProgramWeekComparisonPanels)/);
   assert.match(programDetail, /horizontal\n\s+showsHorizontalScrollIndicator=\{false\}/);
   assert.match(programDetail, /stickyHeaderIndices=\{\[3\]\}/);
   assert.match(programDetail, /weekTabsSticky: \{ backgroundColor: tokens\.color\.surfaceApp, borderBottomColor: "transparent", borderBottomWidth: 1/);
@@ -139,6 +140,13 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(productUiSource, /export function EntityCardAction/);
   assert.match(productUiSource, /entityCardAction: \{ alignItems: "center", borderRadius:/);
   assert.doesNotMatch(productUiSource, /entityCardAction: \{[^\n]*borderWidth/);
+  assert.match(productUiSource, /entityCardPanelSlot: \{ minWidth: 0 \}/);
+
+  const panelSurface = await readFile(
+    path.resolve(process.cwd(), "src/components/panels/panel-surface.tsx"),
+    "utf8",
+  );
+  assert.match(panelSurface, /marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
 
   assert.match(gallery, /Siempre abajo y sin bordes/);
   assert.match(gallery, /EntityCardAction/);
