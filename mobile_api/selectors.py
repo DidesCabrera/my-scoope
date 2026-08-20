@@ -126,7 +126,7 @@ def _meal_panel_item(dailyplan_meal, dailyplan) -> dict:
     }
 
 
-def _program_week_panel_items(program) -> list[dict]:
+def _program_week_panel_items(program, current_weight=None) -> list[dict]:
     summary = get_program_summary(program)
     program_total_kcal = summary["program_totals"]["total_kcal"]
     return [
@@ -135,10 +135,48 @@ def _program_week_panel_items(program) -> list[dict]:
             "week_number": week["week_number"],
             "days": [
                 {
+                    "id": f"program-week:{program.id}:{week['week_number']}:day:{day['day_number']}",
+                    "day_number": day["day_number"],
                     "day_label": day["day_label"],
+                    "dailyplan_id": day["dailyplan"]["id"] if day.get("dailyplan") else None,
                     "plan_name": day["dailyplan"]["name"] if day.get("dailyplan") else None,
+                    "nutrition": (
+                        {
+                            "calories": _safe_number(day["snapshot"]["total_kcal"]),
+                            "protein": {
+                                "grams": _safe_number(day["snapshot"]["protein"]),
+                                "allocation": _safe_number(day["snapshot"]["alloc"]["protein"]),
+                                "per_kilogram": _safe_number(day["snapshot"]["protein"] / current_weight) if current_weight and day["snapshot"]["protein"] else None,
+                            },
+                            "carbs": {"grams": _safe_number(day["snapshot"]["carbs"]), "allocation": _safe_number(day["snapshot"]["alloc"]["carbs"])},
+                            "fat": {"grams": _safe_number(day["snapshot"]["fat"]), "allocation": _safe_number(day["snapshot"]["alloc"]["fat"])},
+                        }
+                        if day.get("snapshot") else None
+                    ),
                 }
                 for day in week["days"]
+            ],
+            "filled_days_count": week["filled_days_count"],
+            "meals_count": week["meals_count"],
+            "foods_count": week["foods_count"],
+            "average_calories": _safe_number(week["averages"]["total_kcal"]),
+            "foods": [
+                {
+                    "id": f"program-week-food:{program.id}:{week['week_number']}:{row['child']['id']}",
+                    "name": row["rel"]["name"],
+                    "quantity": _safe_number(row["rel"]["quantity"]),
+                    "quantity_unit": row["rel"]["quantity_unit"],
+                    "calories": _safe_number(row["rel"]["total_kcal"]),
+                    "calorie_share": _safe_number(row["rel"]["kcal_share"]),
+                    "calorie_distribution": {key: _safe_number(value) for key, value in row["rel"]["kcal_distribution"].items()},
+                    "protein_grams": _safe_number(row["rel"]["g_protein"]),
+                    "carbs_grams": _safe_number(row["rel"]["g_carbs"]),
+                    "fat_grams": _safe_number(row["rel"]["g_fat"]),
+                    "protein_allocation": _safe_number(row["rel"]["alloc_protein"]),
+                    "carbs_allocation": _safe_number(row["rel"]["alloc_carbs"]),
+                    "fat_allocation": _safe_number(row["rel"]["alloc_fat"]),
+                }
+                for row in week["foods_aggregation_table"]
             ],
             "calories": _safe_number(week["totals"]["total_kcal"]),
             "calorie_share": _safe_number(_safe_percentage(week["totals"]["total_kcal"], program_total_kcal)),
@@ -284,9 +322,10 @@ def library_programs_payload(user, *, search=None, offset=0, limit=30) -> dict:
             "nutrition": _library_nutrition_payload(program, current_weight),
             "indicators": [
                 {"icon": "week", "label": "semanas", "value": program.normalized_duration_weeks},
-                {"icon": "day", "label": "días con plan", "value": program.library_day_count},
+                {"icon": "dailyPlan", "label": "planes asignados", "value": program.library_day_count},
+                {"icon": "food", "label": "alimentos", "value": get_program_summary(program)["program_foods_count"]},
             ],
-            "panel": {**_empty_library_panel("weeks"), "weeks": _program_week_panel_items(program)},
+            "panel": {**_empty_library_panel("weeks"), "weeks": _program_week_panel_items(program, current_weight)},
             "creator": _creator_name(program),
             "created_at": program.created_at,
             "can_calendarize": program.created_by_id == user.id,
@@ -311,7 +350,7 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
     elif entity == "programs":
         item = (Program.objects.filter(pk=item_id).filter(Q(created_by=user) | Q(shares__accepted_by=user, shares__removed=False)).select_related("created_by").annotate(library_day_count=Count("program_dailyplan", distinct=True)).prefetch_related("program_dailyplan__dailyplan__dailyplan_meals__meal__meal_food_set__food").distinct().first())
         if item:
-            return {"id": item.id, "entity": "program", "name": item.name, "subtitle": "", "nutrition": _library_nutrition_payload(item, current_weight), "indicators": [{"icon": "week", "label": "semanas", "value": item.normalized_duration_weeks}, {"icon": "day", "label": "días con plan", "value": item.library_day_count}], "panel": {**_empty_library_panel("weeks"), "weeks": _program_week_panel_items(item)}, "creator": _creator_name(item), "created_at": item.created_at, "can_calendarize": item.created_by_id == user.id}
+            return {"id": item.id, "entity": "program", "name": item.name, "subtitle": "", "nutrition": _library_nutrition_payload(item, current_weight), "indicators": [{"icon": "week", "label": "semanas", "value": item.normalized_duration_weeks}, {"icon": "dailyPlan", "label": "planes asignados", "value": item.library_day_count}, {"icon": "food", "label": "alimentos", "value": get_program_summary(item)["program_foods_count"]}], "panel": {**_empty_library_panel("weeks"), "weeks": _program_week_panel_items(item, current_weight)}, "creator": _creator_name(item), "created_at": item.created_at, "can_calendarize": item.created_by_id == user.id}
     raise MobileAPIError(code="library_item_not_found", message="The requested library item was not found.", status_code=404)
 
 

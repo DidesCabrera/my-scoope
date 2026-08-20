@@ -999,6 +999,11 @@ class MobileAPIV1Tests(TestCase):
         self.assertEqual(program_item["panel"]["kind"], "weeks")
         self.assertTrue(program_item["can_calendarize"])
         self.assertEqual(program_item["panel"]["weeks"][0]["days"][0]["plan_name"], "Día de entrenamiento")
+        self.assertEqual(program_item["panel"]["weeks"][0]["filled_days_count"], 1)
+        self.assertEqual(program_item["panel"]["weeks"][0]["days"][0]["nutrition"]["calories"], 387.0)
+        self.assertEqual(program_item["panel"]["weeks"][0]["foods"][0]["name"], "Avena personal")
+        self.assertEqual(program_item["indicators"][1]["icon"], "dailyPlan")
+        self.assertEqual(program_item["indicators"][2]["icon"], "food")
         self.assertIn("calorie_share", program_item["panel"]["weeks"][0])
         self.assertIn("calorie_distribution", program_item["panel"]["weeks"][0])
 

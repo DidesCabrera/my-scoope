@@ -778,14 +778,23 @@ class LibraryMealPanelItemData(Schema):
 
 
 class LibraryWeekDayData(Schema):
+    id: str
+    day_number: int
     day_label: str
+    dailyplan_id: int | None = None
     plan_name: str | None = None
+    nutrition: LibraryNutritionData | None = None
 
 
 class LibraryWeekPanelItemData(Schema):
     id: str
     week_number: int
     days: list[LibraryWeekDayData]
+    filled_days_count: int
+    meals_count: int
+    foods_count: int
+    average_calories: float
+    foods: list[LibraryFoodPanelItemData] = Field(default_factory=list)
     calories: float
     calorie_share: float
     calorie_distribution: LibraryCalorieDistributionData
