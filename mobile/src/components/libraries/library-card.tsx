@@ -2,10 +2,11 @@ import { type Href, useRouter } from "expo-router";
 import { ChevronRight } from "lucide-react-native";
 import { Alert, Pressable, StyleSheet } from "react-native";
 import type { LibraryItem } from "@/api/types";
+import { NutritionEntityCard } from "@/components/nutrition";
 import { tokens } from "@/design/tokens";
 
 import { FoodPanels, MealPanels, ProgramPanels } from "./entity-panels";
-import { NutritionEntityCard } from "./nutrition-entity-card";
+import { libraryNutrition } from "./presentation-adapters";
 import { ProgramChildCard, type ProgramMetricDatum } from "./program-child-card";
 
 function indicatorValue(item: LibraryItem, icon: "week" | "dailyPlan" | "food"): number {
@@ -50,7 +51,7 @@ export function LibraryCard({ item }: { item: LibraryItem }) {
     );
   }
   return (
-    <NutritionEntityCard entity={item.entity} indicators={item.indicators} nutrition={item.nutrition} subtitle={item.subtitle || undefined} title={item.name}>
+    <NutritionEntityCard entity={item.entity} indicators={item.indicators} nutrition={libraryNutrition(item.nutrition)} subtitle={item.subtitle || undefined} title={item.name}>
       {item.panel.kind === "foods" ? <FoodPanels items={item.panel.foods} /> : null}
       {item.panel.kind === "meals" ? <MealPanels items={item.panel.meals} /> : null}
       {item.panel.kind === "weeks" ? <ProgramPanels items={item.panel.weeks} /> : null}

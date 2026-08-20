@@ -73,14 +73,14 @@ export function ProposalEntitySection({ children, count = 1, detail, entity, tit
   );
 }
 
-export function ProposalObjectiveKpiSection(props: Omit<NutritionKpiSectionProps, "density" | "style">) {
+export function ProposalObjectiveKpiSection(props: Omit<NutritionKpiSectionProps, "style" | "variant">) {
   return <NutritionKpiSection {...props} />;
 }
 
 export function ProposalObjectiveSection({
   title = "Targets usados para validar la propuesta",
   ...nutrition
-}: Omit<NutritionKpiSectionProps, "density" | "style"> & { title?: string }) {
+}: Omit<NutritionKpiSectionProps, "style" | "variant"> & { title?: string }) {
   return (
     <View style={styles.objectiveSection}>
       <View style={styles.sectionHeader}>

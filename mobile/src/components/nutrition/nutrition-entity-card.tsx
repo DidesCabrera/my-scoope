@@ -15,11 +15,11 @@ import {
 export type NutritionEntityCardProps = {
   accessory?: ReactNode;
   children?: ReactNode;
-  density?: "compact" | "regular";
+  kpiVariant?: "nested" | "regular";
   entity: EntityKind;
   eyebrow?: string;
   indicators?: StructuralIndicator[];
-  nutrition: Omit<NutritionKpiSectionProps, "density" | "style">;
+  nutrition: Omit<NutritionKpiSectionProps, "style" | "variant">;
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
   subtitle?: string;
@@ -29,7 +29,7 @@ export type NutritionEntityCardProps = {
 export function NutritionEntityCard({
   accessory,
   children,
-  density = "regular",
+  kpiVariant = "regular",
   entity,
   eyebrow,
   indicators,
@@ -50,7 +50,7 @@ export function NutritionEntityCard({
       subtitle={subtitle}
       title={title}>
       <View>
-        <NutritionKpiSection density={density} {...nutrition} />
+        <NutritionKpiSection variant={kpiVariant} {...nutrition} />
       </View>
       {children ? <EntityCardPanelSlot>{children}</EntityCardPanelSlot> : null}
     </EntityCard>

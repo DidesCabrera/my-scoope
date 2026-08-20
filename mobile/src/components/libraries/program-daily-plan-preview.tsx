@@ -72,7 +72,7 @@ export function ProgramDailyPlanPreview({ day, dayLabel, week }: { day?: Library
           <MoreHorizontal color={tokens.color.textMuted} size={20} />
         </Pressable>
       )}
-      density="compact"
+      kpiVariant="nested"
       entity="dailyPlan"
       eyebrow={`SEMANA ${week} · ${dayLabel.toUpperCase()}`}
       indicators={[

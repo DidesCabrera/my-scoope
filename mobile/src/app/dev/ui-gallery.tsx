@@ -400,7 +400,7 @@ export default function UiGalleryScreen() {
             <NutritionKpiSection
               calories={640}
               carbs={{ grams: 72, allocation: 45 }}
-              density="compact"
+              variant="nested"
               fat={{ grams: 18, allocation: 25 }}
               protein={{ grams: 48, allocation: 30, perKilogram: 0.6 }}
             />

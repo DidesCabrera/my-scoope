@@ -11,7 +11,7 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { tokens } from "@/design/tokens";
 
 import { LibraryCard } from "./library-card";
-import { CollectionPageHeader } from "./entity-card";
+import { CollectionPageHeader } from "@/components/ui";
 
 type LibraryListScreenProps = {
   emptyDescription: string;

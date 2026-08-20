@@ -1,6 +1,15 @@
 {
   "contract": "myscoope.visual-grammar.v2",
   "shared": {
+    "componentRecipes": {
+      "nutritionKpi": {
+        "variants": [
+          "regular",
+          "nested",
+          "picker"
+        ]
+      }
+    },
     "spacing": {
       "xs": 4,
       "compact": 6,
@@ -56,6 +65,40 @@
   },
   "platforms": {
     "web": {
+      "componentRecipes": {
+        "nutritionKpi": {
+          "regular": {
+            "totalSize": 96,
+            "totalBorderWidth": 3,
+            "totalRadius": 22,
+            "totalPadding": 10,
+            "totalMargin": 4,
+            "contentGap": 10,
+            "barHeight": 24,
+            "barRadius": 6
+          },
+          "nested": {
+            "totalSize": 70,
+            "totalBorderWidth": 3,
+            "totalRadius": 22,
+            "totalPadding": 6,
+            "totalMargin": 4,
+            "contentGap": 10,
+            "barHeight": 18,
+            "barRadius": 6
+          },
+          "picker": {
+            "totalSize": 85,
+            "totalBorderWidth": 3,
+            "totalRadius": 22,
+            "totalPadding": 10,
+            "totalMargin": 0,
+            "contentGap": 10,
+            "barHeight": 20,
+            "barRadius": 6
+          }
+        }
+      },
       "fontFamily": "system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif",
       "overrides": {
         "spacing": {
@@ -118,6 +161,27 @@
       }
     },
     "native": {
+      "componentRecipes": {
+        "nutritionKpi": {
+          "regular": {
+            "totalSize": 96,
+            "totalBorderWidth": 3,
+            "totalRadius": 22,
+            "contentGap": 8,
+            "barHeight": 24,
+            "narrowBarHeight": 22,
+            "barRadius": 6
+          },
+          "nested": {
+            "totalSize": 76,
+            "totalBorderWidth": 2,
+            "totalRadius": 16,
+            "contentGap": 6,
+            "barHeight": 18,
+            "barRadius": 6
+          }
+        }
+      },
       "mode": "dark",
       "fontFamily": {
         "regular": "System",

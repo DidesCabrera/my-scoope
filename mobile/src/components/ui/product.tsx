@@ -81,13 +81,13 @@ const sectionIcons: Record<SectionKind, LucideIcon> = {
   import: FileDown,
 };
 
-export function EntityIcon({ entity, size = "regular" }: { entity: EntityKind; size?: "compact" | "regular" | "hero" }) {
+export function EntityIcon({ entity, size = "regular", tone = "entity" }: { entity: EntityKind; size?: "compact" | "regular" | "hero"; tone?: "entity" | "white" }) {
   const Icon = entityIcons[entity];
   const compact = size === "compact";
   const hero = size === "hero";
   return (
-    <View style={[styles.entityIcon, compact && styles.entityIconCompact, hero && styles.entityIconHero, { backgroundColor: tokens.color[entity] }]}>
-      <Icon color={tokens.color.entityIconForeground} size={compact ? 11 : hero ? 22 : 13} strokeWidth={hero ? 1.9 : 2.4} />
+    <View style={[styles.entityIcon, compact && styles.entityIconCompact, hero && styles.entityIconHero, { backgroundColor: tone === "white" ? "transparent" : tokens.color[entity] }]}>
+      <Icon color={tone === "white" ? tokens.color.textMain : tokens.color.entityIconForeground} size={tone === "white" ? 18 : compact ? 11 : hero ? 22 : 13} strokeWidth={hero ? 1.9 : 2.4} />
     </View>
   );
 }

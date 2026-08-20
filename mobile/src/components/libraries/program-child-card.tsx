@@ -4,7 +4,7 @@ import Svg, { Line, Polyline } from "react-native-svg";
 
 import { Card } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
-import { EntityHeading } from "./entity-card";
+import { EntityHeading } from "@/components/ui";
 
 export type ProgramMetricDatum = {
   allocation: { protein: number; carbs: number; fat: number };

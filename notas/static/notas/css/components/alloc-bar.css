@@ -17,7 +17,11 @@
 .alloc-bar-comp--kpi {
   flex: 1 1 auto;
   max-width: 100%;
-  border-radius: 6px;
+  border-radius: var(--nutrition-kpi-regular-bar-radius);
+}
+
+.alloc-bar-comp--kpi.mini {
+  border-radius: var(--nutrition-kpi-nested-bar-radius);
 }
 
 /* Fondo: se mantiene claro en light y dark */

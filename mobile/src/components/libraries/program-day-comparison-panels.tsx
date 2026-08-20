@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { MacroCalorieDistribution, PanelAllocationBar } from "@/components/nutrition";
 import { EntityPanelTabs, PanelBody, PanelSurface } from "@/components/panels";
 import { tokens } from "@/design/tokens";
-import { EntityIcon } from "./entity-card";
+import { EntityIcon } from "@/components/ui";
 
 type ProgramDayPanelTab = "calories" | "macros" | "allocation" | "edit";
 

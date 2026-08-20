@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { MacroCalorieDistribution, PanelAllocationBar } from "@/components/nutrition";
 import { EntityPanelTabs, PanelBody, PanelEmptyState, PanelSurface } from "@/components/panels";
 import { tokens } from "@/design/tokens";
-import { EntityIcon } from "./entity-card";
+import { EntityIcon } from "@/components/ui";
 
 export type ProgramWeekSummary = {
   allocation: { carbs: number; fat: number; protein: number };

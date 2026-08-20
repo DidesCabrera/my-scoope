@@ -17,7 +17,7 @@ background: transparent;
 /* == TOT ========================= */
 
 .dash-kpi-comp .tot {
-  flex: 0 0 96px;
+  flex: 0 0 var(--nutrition-kpi-regular-total-size);
 
   display: flex;
   flex-direction: column;
@@ -25,24 +25,30 @@ background: transparent;
   align-items: center;
 
   text-align: center;
-  padding: 10px 10px;
-  margin: 4px;
+  padding: var(--nutrition-kpi-regular-total-padding);
+  margin: var(--nutrition-kpi-regular-total-margin);
 
-  border-radius: 22px;
+  border-radius: var(--nutrition-kpi-regular-total-radius);
   gap: 2px;
   background-color: var(--kpi-total-bg);
-  border: 3px solid var(--kpi-total-border);
+  border: var(--nutrition-kpi-regular-total-border-width) solid var(--kpi-total-border);
   color: var(--kpi-total-text);
 }
 
 .dash-kpi-comp.mini .tot {
-flex: 0 0 70px;
-padding: 6px;
+flex: 0 0 var(--nutrition-kpi-nested-total-size);
+padding: var(--nutrition-kpi-nested-total-padding);
+margin: var(--nutrition-kpi-nested-total-margin);
+border-radius: var(--nutrition-kpi-nested-total-radius);
+border-width: var(--nutrition-kpi-nested-total-border-width);
 }
 
 .dash-kpi-comp.picker .tot {
-flex: 0 0 85px;
-margin-left: 0;
+flex: 0 0 var(--nutrition-kpi-picker-total-size);
+padding: var(--nutrition-kpi-picker-total-padding);
+margin-left: var(--nutrition-kpi-picker-total-margin);
+border-radius: var(--nutrition-kpi-picker-total-radius);
+border-width: var(--nutrition-kpi-picker-total-border-width);
 }
 
 .dash-kpi-comp .tot h2 {
@@ -76,7 +82,7 @@ font-size: 0.7rem;
   flex-direction: column;
   gap: 0;
   margin-right: 0;
-  margin-left: 10px;
+  margin-left: var(--nutrition-kpi-regular-content-gap);
   width: 100%;
   font-weight: 600;
 }
@@ -176,11 +182,11 @@ color: var(--text-inverted);
   min-width: 0;
   display: flex;
   align-items: center;
-  height: 24px;
+  height: var(--nutrition-kpi-regular-bar-height);
 }
 
 .kpi-alloc.picker {
-height: 20px;
+height: var(--nutrition-kpi-picker-bar-height);
 }
 
 .kpi-alloc p {
@@ -188,7 +194,7 @@ padding: 0 4px;
 }
 
 .kpi-alloc.mini {
-  height: 18px;
+  height: var(--nutrition-kpi-nested-bar-height);
 }
 
 @media (max-width: 768px) {

@@ -16,6 +16,12 @@ const px = (value) => `${value}px`;
 const cssLines = (values, prefix, format = (value) => value) =>
   Object.entries(values).map(([key, value]) => `  --${prefix}${kebab(key)}: ${format(value)};`);
 
+const componentRecipeCssLines = (recipes) => Object.entries(recipes).flatMap(
+  ([component, variants]) => Object.entries(variants).flatMap(
+    ([variant, values]) => cssLines(values, `${kebab(component)}-${kebab(variant)}-`, px),
+  ),
+);
+
 function themeCss(theme) {
   const direct = {
     surfaceApp: "surface-app",
@@ -81,6 +87,7 @@ const css = [
   `  --radius-xl: ${px(shared.radius.card)};`,
   ...cssLines(shared.typography, "font-size-", px),
   ...cssLines(shared.fontWeight, "font-weight-"),
+  ...componentRecipeCssLines(platforms.web.componentRecipes),
   ...entityLines,
   ...nutritionLines,
   "}",
@@ -109,6 +116,7 @@ const nativeTokens = {
   weight: shared.fontWeight,
   card: platforms.native.overrides.card,
   layout: platforms.native.overrides.layout,
+  component: platforms.native.componentRecipes,
 };
 
 const native = [

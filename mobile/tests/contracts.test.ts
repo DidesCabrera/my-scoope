@@ -15,6 +15,16 @@ test("mobile visual grammar exposes the reusable card and nutrition tokens", () 
   }
   assert.equal(tokens.weight.extraBold, "800");
   assert.equal(tokens.spacing.compact, 6);
+  assert.deepEqual(tokens.component.nutritionKpi.regular, {
+    totalSize: 96,
+    totalBorderWidth: 3,
+    totalRadius: 22,
+    contentGap: 8,
+    barHeight: 24,
+    narrowBarHeight: 22,
+    barRadius: 6,
+  });
+  assert.equal(tokens.component.nutritionKpi.nested.totalSize, 76);
 });
 
 test("the development UI gallery remains available at /dev/ui-gallery", async () => {
@@ -35,10 +45,19 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     "utf8",
   );
   assert.match(nutritionKpi, /borderColor: tokens\.color\.kcalBorder/);
-  assert.match(nutritionKpi, /borderRadius: tokens\.radius\.card/);
-  assert.match(nutritionKpi, /borderWidth: 3[^\n]*height: 96[^\n]*width: 96/);
-  assert.match(nutritionKpi, /height: 76, width: 76/);
+  assert.match(nutritionKpi, /borderRadius: tokens\.component\.nutritionKpi\.regular\.totalRadius/);
+  assert.match(nutritionKpi, /height: tokens\.component\.nutritionKpi\.regular\.totalSize/);
+  assert.match(nutritionKpi, /height: tokens\.component\.nutritionKpi\.nested\.totalSize/);
+  assert.match(nutritionKpi, /variant\?: "nested" \| "regular"/);
+  assert.doesNotMatch(nutritionKpi, /density\?: "compact" \| "regular"/);
   assert.doesNotMatch(nutritionKpi, /height: compact \? "100%"/);
+
+  const libraryCard = await readFile(
+    path.resolve(process.cwd(), "src/components/libraries/library-card.tsx"),
+    "utf8",
+  );
+  assert.match(libraryCard, /NutritionEntityCard.*from "@\/components\/nutrition"/);
+  assert.doesNotMatch(libraryCard, /\.\/nutrition-entity-card/);
 
   const programWeekPanels = await readFile(
     path.resolve(process.cwd(), "src/components/libraries/program-week-comparison-panels.tsx"),

@@ -9,7 +9,7 @@ import { FoodPanels, type FoodPanelItem } from "@/components/panels";
 import { SectionHeading } from "@/components/ui/typography";
 import { tokens } from "@/design/tokens";
 import type { LibraryFoodPanelItem, LibraryItem, LibraryWeekPanelItem } from "@/api/types";
-import { EntityHeading, EntityIcon, StructuralIndicators } from "./entity-card";
+import { EntityHeading, EntityIcon, StructuralIndicators } from "@/components/ui";
 import { ProgramMetricPreview, type ProgramMetricDatum } from "./program-child-card";
 import { ProgramDailyPlanPreview } from "./program-daily-plan-preview";
 import { ProgramDayComparisonPanels, type ProgramDayNutrition } from "./program-day-comparison-panels";
