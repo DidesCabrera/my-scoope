@@ -63,6 +63,23 @@ const meals: MealPanelItem[] = [
   },
 ];
 
+function mealPanelItem(item: NonNullable<LibraryWeekPanelItem["days"][number]["meals"]>[number]): MealPanelItem {
+  return {
+    calorieShare: item.calorie_share,
+    calories: item.calories,
+    carbsAllocation: item.carbs_allocation,
+    carbsGrams: item.carbs_grams,
+    fatAllocation: item.fat_allocation,
+    fatGrams: item.fat_grams,
+    foods: item.foods.map((food) => ({ name: food.name, quantity: food.quantity, quantityUnit: food.quantity_unit })),
+    id: item.id,
+    name: item.name,
+    proteinAllocation: item.protein_allocation,
+    proteinGrams: item.protein_grams,
+    time: item.time?.slice(0, 5),
+  };
+}
+
 export function ProgramDailyPlanPreview({ day, dayLabel, week }: { day?: LibraryWeekPanelItem["days"][number]; dayLabel: string; week: number }) {
   const nutrition = day?.nutrition;
   return (
@@ -91,7 +108,7 @@ export function ProgramDailyPlanPreview({ day, dayLabel, week }: { day?: Library
       }}
       subtitle="Plan diario asignado"
       title={day?.plan_name ?? "Día de entrenamiento"}>
-      {!day ? <MealPanels items={meals} /> : null}
+      <MealPanels items={day ? (day.meals ?? []).map(mealPanelItem) : meals} />
     </NutritionEntityCard>
   );
 }

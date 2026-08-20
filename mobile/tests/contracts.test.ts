@@ -96,6 +96,12 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(programDetail, /<ProgramMetricPreview[^\n]*style=\{styles\.systemBleed\}/);
   assert.match(programDetail, /<View style=\{styles\.systemBleed\}><FoodPanels/);
 
+  const programDailyPlan = await readFile(
+    path.resolve(process.cwd(), "src/components/libraries/program-daily-plan-preview.tsx"),
+    "utf8",
+  );
+  assert.match(programDailyPlan, /day \? \(day\.meals \?\? \[\]\)\.map\(mealPanelItem\) : meals/);
+
   const programChart = await readFile(
     path.resolve(process.cwd(), "src/components/libraries/program-child-card.tsx"),
     "utf8",

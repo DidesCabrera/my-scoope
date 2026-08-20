@@ -1001,6 +1001,8 @@ class MobileAPIV1Tests(TestCase):
         self.assertEqual(program_item["panel"]["weeks"][0]["days"][0]["plan_name"], "Día de entrenamiento")
         self.assertEqual(program_item["panel"]["weeks"][0]["filled_days_count"], 1)
         self.assertEqual(program_item["panel"]["weeks"][0]["days"][0]["nutrition"]["calories"], 387.0)
+        self.assertEqual(program_item["panel"]["weeks"][0]["days"][0]["meals"][0]["name"], "Instancia del plan")
+        self.assertEqual(program_item["panel"]["weeks"][0]["days"][0]["meals"][0]["foods"][0]["name"], "Avena personal")
         self.assertEqual(program_item["panel"]["weeks"][0]["foods"][0]["name"], "Avena personal")
         self.assertEqual(program_item["indicators"][1]["icon"], "dailyPlan")
         self.assertEqual(program_item["indicators"][2]["icon"], "food")
@@ -1031,6 +1033,8 @@ class MobileAPIV1Tests(TestCase):
                     self.assertEqual(week_data["average_calories"], 55.3)
                     self.assertEqual(week_data["days"][0]["dailyplan_id"], dailyplan.id)
                     self.assertEqual(week_data["days"][0]["nutrition"]["calories"], 387.0)
+                    self.assertEqual(week_data["days"][0]["meals"][0]["name"], "Instancia del plan")
+                    self.assertEqual(week_data["foods"][0]["name"], "Avena personal")
 
         embedded_meal_detail = self.client.get(f"/api/v1/library/meals/{embedded_meal.id}")
         self.assertEqual(embedded_meal_detail.status_code, 200)

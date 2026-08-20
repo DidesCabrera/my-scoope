@@ -250,6 +250,7 @@ export type LibraryWeekPanelItem = {
     dailyplan_id?: number | null;
     plan_name: string | null;
     nutrition?: LibraryNutrition | null;
+    meals?: LibraryMealPanelItem[];
   }[];
   filled_days_count?: number;
   meals_count?: number;

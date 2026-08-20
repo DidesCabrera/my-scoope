@@ -3303,6 +3303,13 @@
             "title": "Id",
             "type": "string"
           },
+          "meals": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryMealPanelItemData"
+            },
+            "title": "Meals",
+            "type": "array"
+          },
           "nutrition": {
             "anyOf": [
               {

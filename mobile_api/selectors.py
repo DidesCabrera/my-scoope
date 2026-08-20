@@ -129,33 +129,46 @@ def _meal_panel_item(dailyplan_meal, dailyplan) -> dict:
 def _program_week_panel_items(program, current_weight=None) -> list[dict]:
     summary = get_program_summary(program)
     program_total_kcal = summary["program_totals"]["total_kcal"]
+    program_days = {
+        (program_day.week_number, program_day.day_number): program_day
+        for program_day in program.program_dailyplan.all()
+    }
+
+    def day_item(week_number, day):
+        program_day = program_days.get((week_number, day["day_number"]))
+        snapshot = day.get("snapshot")
+        nutrition = (
+            {
+                "calories": _safe_number(snapshot["total_kcal"]),
+                "protein": {
+                    "grams": _safe_number(snapshot["protein"]),
+                    "allocation": _safe_number(snapshot["alloc"]["protein"]),
+                    "per_kilogram": _safe_number(snapshot["protein"] / current_weight) if current_weight and snapshot["protein"] else None,
+                },
+                "carbs": {"grams": _safe_number(snapshot["carbs"]), "allocation": _safe_number(snapshot["alloc"]["carbs"])},
+                "fat": {"grams": _safe_number(snapshot["fat"]), "allocation": _safe_number(snapshot["alloc"]["fat"])},
+            }
+            if snapshot
+            else _library_nutrition_payload(program_day.dailyplan, current_weight) if program_day else None
+        )
+        return {
+            "id": f"program-week:{program.id}:{week_number}:day:{day['day_number']}",
+            "day_number": day["day_number"],
+            "day_label": day["day_label"],
+            "dailyplan_id": program_day.dailyplan_id if program_day else None,
+            "plan_name": program_day.dailyplan.name if program_day else None,
+            "nutrition": nutrition,
+            "meals": [
+                _meal_panel_item(dailyplan_meal, program_day.dailyplan)
+                for dailyplan_meal in program_day.dailyplan.dailyplan_meals.all()
+            ] if program_day else [],
+        }
+
     return [
         {
             "id": f"program-week:{program.id}:{week['week_number']}",
             "week_number": week["week_number"],
-            "days": [
-                {
-                    "id": f"program-week:{program.id}:{week['week_number']}:day:{day['day_number']}",
-                    "day_number": day["day_number"],
-                    "day_label": day["day_label"],
-                    "dailyplan_id": day["dailyplan"]["id"] if day.get("dailyplan") else None,
-                    "plan_name": day["dailyplan"]["name"] if day.get("dailyplan") else None,
-                    "nutrition": (
-                        {
-                            "calories": _safe_number(day["snapshot"]["total_kcal"]),
-                            "protein": {
-                                "grams": _safe_number(day["snapshot"]["protein"]),
-                                "allocation": _safe_number(day["snapshot"]["alloc"]["protein"]),
-                                "per_kilogram": _safe_number(day["snapshot"]["protein"] / current_weight) if current_weight and day["snapshot"]["protein"] else None,
-                            },
-                            "carbs": {"grams": _safe_number(day["snapshot"]["carbs"]), "allocation": _safe_number(day["snapshot"]["alloc"]["carbs"])},
-                            "fat": {"grams": _safe_number(day["snapshot"]["fat"]), "allocation": _safe_number(day["snapshot"]["alloc"]["fat"])},
-                        }
-                        if day.get("snapshot") else None
-                    ),
-                }
-                for day in week["days"]
-            ],
+            "days": [day_item(week["week_number"], day) for day in week["days"]],
             "filled_days_count": week["filled_days_count"],
             "meals_count": week["meals_count"],
             "foods_count": week["foods_count"],

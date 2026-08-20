@@ -784,6 +784,7 @@ class LibraryWeekDayData(Schema):
     dailyplan_id: int | None = None
     plan_name: str | None = None
     nutrition: LibraryNutritionData | None = None
+    meals: list[LibraryMealPanelItemData] = Field(default_factory=list)
 
 
 class LibraryWeekPanelItemData(Schema):
