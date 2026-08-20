@@ -28,6 +28,14 @@ const structuralIcons: Record<NonNullable<LibraryIndicator["icon"]>, LucideIcon>
   week: CalendarRange,
 };
 
+const structuralIndicatorColors: Record<NonNullable<LibraryIndicator["icon"]>, string> = {
+  day: tokens.color.program,
+  food: tokens.color.food,
+  meal: tokens.color.meal,
+  dailyPlan: tokens.color.dailyPlan,
+  week: tokens.color.program,
+};
+
 export function EntityIcon({ entity, size = "regular", tone = "entity" }: { entity: LibraryEntity; size?: "compact" | "regular" | "hero"; tone?: "entity" | "white" }) {
   const Icon = entityIcons[entity];
   const compact = size === "compact";
@@ -39,19 +47,21 @@ export function EntityIcon({ entity, size = "regular", tone = "entity" }: { enti
   );
 }
 
-export function StructuralIndicators({ indicators }: { indicators: LibraryIndicator[] }) {
+export function StructuralIndicators({ indicators, entity }: { indicators: LibraryIndicator[]; entity?: LibraryEntity }) {
   if (indicators.length === 0) return null;
   return (
     <View accessibilityLabel={indicators.map(({ label, value }) => `${value} ${label}`).join(", ")} accessible style={styles.structuralIndicators}>
       {indicators.map((indicator, index) => {
         const Icon = indicator.icon ? structuralIcons[indicator.icon] : null;
+        const color = indicator.icon
+          ? structuralIndicatorColors[indicator.icon]
+          : entity
+            ? tokens.color[entity]
+            : tokens.color.textMuted;
         return (
-          <View key={`${indicator.icon}-${indicator.label}-${index}`} style={styles.structuralFragment}>
-            {index > 0 ? <View style={styles.structuralDivider} /> : null}
-            <View style={styles.structuralItem}>
-              <Text style={styles.structuralValue}>{indicator.value}</Text>
-              {Icon ? <Icon color={tokens.color.structuralIndicatorForeground} size={13} strokeWidth={2.2} /> : null}
-            </View>
+          <View key={`${indicator.icon}-${indicator.label}-${index}`} style={[styles.structuralItem, { backgroundColor: color }]}>
+            <Text style={styles.structuralValue}>{indicator.value}</Text>
+            {Icon ? <Icon color={tokens.color.entityIconForeground} size={13} strokeWidth={2.2} /> : null}
           </View>
         );
       })}
@@ -74,7 +84,7 @@ export function EntityHeading({ entity, indicators, subtitle, title, variant = "
       </View>
       <Text style={[styles.headingTitle, variant === "page" && styles.headingTitlePage]}>{title}</Text>
       {subtitle ? <Text style={styles.headingSubtitle}>{subtitle}</Text> : null}
-      {indicators ? <StructuralIndicators indicators={indicators} /> : null}
+      {indicators ? <StructuralIndicators entity={entity} indicators={indicators} /> : null}
     </View>
   );
 }
@@ -111,7 +121,7 @@ export function CollectionPageHeader({ action, count, countIcon, entity, title }
         <EntityIcon entity={entity} size="hero" />
         <Text style={styles.collectionTitle}>{title}</Text>
       </View>
-      {count !== undefined ? <StructuralIndicators indicators={[{ icon: countIcon, label: "elementos", value: count }]} /> : null}
+      {count !== undefined ? <StructuralIndicators entity={entity} indicators={[{ icon: countIcon, label: "elementos", value: count }]} /> : null}
       {action}
     </View>
   );
@@ -128,11 +138,9 @@ const styles = StyleSheet.create({
   headingTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "600", lineHeight: 25 },
   headingTitlePage: { fontSize: 22, lineHeight: 32 },
   headingSubtitle: { color: tokens.color.textSoft, fontSize: tokens.type.caption, lineHeight: 18 },
-  structuralIndicators: { alignItems: "center", alignSelf: "flex-start", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.sm, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.compact, paddingHorizontal: tokens.spacing.compact, paddingVertical: tokens.spacing.xs },
-  structuralFragment: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },
-  structuralItem: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs },
-  structuralValue: { color: tokens.color.structuralIndicatorForeground, fontSize: tokens.type.caption, fontVariant: ["tabular-nums"], fontWeight: "500", lineHeight: 15 },
-  structuralDivider: { backgroundColor: tokens.color.borderDefault, height: 12, width: 1 },
+  structuralIndicators: { alignItems: "center", alignSelf: "flex-start", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.compact },
+  structuralItem: { alignItems: "center", borderRadius: tokens.spacing.compact, flexDirection: "row", gap: tokens.spacing.xs, paddingHorizontal: tokens.spacing.sm, paddingVertical: tokens.spacing.xs },
+  structuralValue: { color: tokens.color.entityIconForeground, fontSize: tokens.type.caption, fontVariant: ["tabular-nums"], fontWeight: "500", lineHeight: 15 },
   panelSlot: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minWidth: 0 },
   collectionHeader: { alignItems: "flex-start", gap: tokens.spacing.md, minWidth: 0, paddingVertical: tokens.spacing.md, width: "100%" },
   collectionIdentity: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, minWidth: 0, width: "100%" },

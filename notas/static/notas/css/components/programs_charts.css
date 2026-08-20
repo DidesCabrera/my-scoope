@@ -2068,7 +2068,7 @@ html[data-theme="dark"] .program-chart-guide {
 .program-chart-panel__body--stacked-preview .program-chart-week-axis { font-size: 0.42rem; }
 @media (max-width: 760px) { .program-chart-panel__body--stacked-preview .program-chart-plot--alloc .program-chart-stacked-bar { padding: 1px; } }
 @media (max-width: 780px) {
-  .program-chart-panel__body--stacked-preview { grid-template-columns: minmax(76px, 0.7fr) minmax(0, 1fr); row-gap: 0.32rem; }
+  .program-chart-panel__body--stacked-preview { grid-template-columns: 150px minmax(0, 1fr); row-gap: 0.32rem; }
   .program-chart-panel__body--stacked-preview .program-chart-preview-axis-header { padding: 0 0.42rem; }
   .program-chart-panel__body--stacked-preview .program-chart-main-axis { margin: 0; padding: 0.4rem 0.42rem 0.34rem; }
   .program-chart-panel__body--stacked-preview .program-chart-axis-header { padding: 0.45rem 0.72rem; }

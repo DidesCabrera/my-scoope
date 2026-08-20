@@ -83,8 +83,8 @@
     }
 
     .page--detail{
-        padding: 14px var(--mobil-padding-lats) 16px;
-        margin-top: 18px;
+        padding: 0px var(--mobil-padding-lats) 16px;
+        margin-top: 0px;
     }
   
   }
