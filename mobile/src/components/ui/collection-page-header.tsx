@@ -31,7 +31,7 @@ export function CollectionPageHeader({
         <Text style={styles.title}>{title}</Text>
       </View>
       {count !== undefined ? (
-        <StructuralIndicators indicators={[{ icon: countIcon, label: "elementos", value: count }]} />
+        <StructuralIndicators entity={entity} indicators={[{ icon: countIcon, label: "elementos", value: count }]} />
       ) : null}
       {action}
     </View>

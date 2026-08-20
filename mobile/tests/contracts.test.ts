@@ -25,6 +25,71 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(gallery, /export default function UiGalleryScreen/);
   assert.match(gallery, /if \(!__DEV__\) return <Redirect href="\/" \/>/);
   assert.match(gallery, /Galería del sistema UI/);
+  assert.match(gallery, /Card-child de programa/);
+  assert.match(gallery, /ProgramChildCard/);
+  assert.match(gallery, /Detalle de programa/);
+  assert.match(gallery, /ProgramDetailPreview/);
+
+  const programWeekPanels = await readFile(
+    path.resolve(process.cwd(), "src/components/libraries/program-week-comparison-panels.tsx"),
+    "utf8",
+  );
+  assert.match(programWeekPanels, /EntityPanelTabs/);
+  assert.match(programWeekPanels, /PanelSurface/);
+  assert.match(programWeekPanels, /MacroCalorieDistribution/);
+  assert.match(programWeekPanels, /PanelAllocationBar/);
+  for (const tab of ["Calorías", "Macros", "Alloc", "Editar"]) assert.match(programWeekPanels, new RegExp(tab));
+  assert.doesNotMatch(programWeekPanels, /label: "Semanas"/);
+  assert.match(programWeekPanels, /<Pencil/);
+  assert.match(programWeekPanels, /weekName: \{ color: tokens\.color\.textMain/);
+  assert.doesNotMatch(programWeekPanels, /deltaUp|deltaDown|styles\.protein|styles\.carbs|styles\.fat/);
+
+  const programDetail = await readFile(
+    path.resolve(process.cwd(), "src/components/libraries/program-detail-preview.tsx"),
+    "utf8",
+  );
+  assert.match(programDetail, /ProgramDailyPlanPreview/);
+  assert.match(programDetail, /ProgramDayComparisonPanels/);
+  assert.match(programDetail, /<FoodPanels items=\{weekFoodItems\}/);
+  assert.match(programDetail, /accessibilityState=\{\{ expanded:/);
+  assert.match(programDetail, /<Card style=\{styles\.weekCard\}>/);
+  assert.doesNotMatch(programDetail, /<Card muted style=\{styles\.weekCard\}>/);
+  assert.match(programDetail, /function SelectedDayRing/);
+  assert.match(programDetail, /stopColor="#D62976"/);
+  assert.match(programDetail, /backgroundColor: tokens\.color\.surfaceCard/);
+  assert.match(programDetail, /backgroundColor: tokens\.color\.dailyPlan/);
+  assert.match(programDetail, /<ClipboardList color=\{tokens\.color\.entityIconForeground\} size=\{14\}/);
+  assert.match(programDetail, /weekCard: \{ gap: tokens\.spacing\.lg, marginHorizontal: -tokens\.spacing\.screen \}/);
+  assert.match(programDetail, /borderRadius: tokens\.spacing\.compact, height: 24/);
+  assert.match(programDetail, /systemBleed: \{ marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding \}/);
+  assert.match(programDetail, /<ProgramMetricPreview style=\{styles\.systemBleed\}/);
+  assert.match(programDetail, /<View style=\{styles\.systemBleed\}><FoodPanels/);
+
+  const programChart = await readFile(
+    path.resolve(process.cwd(), "src/components/libraries/program-child-card.tsx"),
+    "utf8",
+  );
+  assert.match(programChart, /allocationSlot: \{[^\n]*gap: 2[^\n]*paddingHorizontal: 1/);
+  assert.match(programChart, /allocationSegment: \{ borderRadius: 2/);
+
+  const programDayPanels = await readFile(
+    path.resolve(process.cwd(), "src/components/libraries/program-day-comparison-panels.tsx"),
+    "utf8",
+  );
+  assert.match(programDayPanels, /EntityPanelTabs/);
+  assert.match(programDayPanels, /MacroCalorieDistribution/);
+  assert.match(programDayPanels, /PanelAllocationBar/);
+  assert.match(programDayPanels, /<Pencil/);
+
+  const productUi = await readFile(
+    path.resolve(process.cwd(), "src/components/ui/product.tsx"),
+    "utf8",
+  );
+  assert.match(productUi, /const structuralIndicatorColors/);
+  assert.match(productUi, /food: tokens\.color\.food/);
+  assert.match(productUi, /meal: tokens\.color\.meal/);
+  assert.match(productUi, /dailyPlan: tokens\.color\.dailyPlan/);
+  assert.doesNotMatch(productUi, /styles\.structuralDivider/);
 });
 
 test("the committed mobile contract exposes every route consumed through CML08", async () => {

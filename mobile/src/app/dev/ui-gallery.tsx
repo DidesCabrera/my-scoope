@@ -20,6 +20,8 @@ import {
   EntityDetailPage,
   EntityDetailSection,
 } from "@/components/details";
+import { ProgramChildCard } from "@/components/libraries/program-child-card";
+import { ProgramDetailPreview } from "@/components/libraries/program-detail-preview";
 import {
   KpiAllocationBar,
   NutritionEntityCard,
@@ -147,11 +149,12 @@ const dailyPlanMealDetailItems: DailyPlanMealDetailItem[] = [
   },
 ];
 
-type GalleryTab = "components" | "details" | "proposals" | "comparisons" | "states" | "tokens";
+type GalleryTab = "components" | "program" | "details" | "proposals" | "comparisons" | "states" | "tokens";
 type Choice = "daily" | "weekly";
 
 const galleryTabs: { key: GalleryTab; label: string }[] = [
   { key: "components", label: "Componentes" },
+  { key: "program", label: "Programa" },
   { key: "details", label: "Detalle" },
   { key: "proposals", label: "Propuestas" },
   { key: "comparisons", label: "Comparaciones" },
@@ -290,6 +293,16 @@ export default function UiGalleryScreen() {
               { icon: "food", label: "alimentos", value: 36 },
             ]}
             title="Programa de recomposición"
+          />
+          <SectionTitle detail="Título, gráfico y acciones" title="Card-child de programa" />
+          <ProgramChildCard
+            filledDaysCount={12}
+            foodsCount={36}
+            onMore={() => undefined}
+            onOpen={() => undefined}
+            owner="Tú"
+            title="Programa de recomposición"
+            weeksCount={2}
           />
           <SectionTitle detail="Identidad + colección + cantidad" title="Encabezados de páginas de lista" />
           <CollectionPageHeader count={8} countIcon="day" entity="dailyPlan" title="Planes diarios" />
@@ -442,6 +455,13 @@ export default function UiGalleryScreen() {
             </EntityDetailSection>
             <EntityDetailMetadata creator="Felipe Dides" updatedAt="Hoy, 14:30" />
           </EntityDetailPage>
+        </>
+      ) : null}
+
+      {tab === "program" ? (
+        <>
+          <SectionTitle detail="Vista completa" title="Detalle de programa" />
+          <ProgramDetailPreview />
         </>
       ) : null}
 
