@@ -32,6 +32,7 @@ from notas.application.queries.proposal_queries import (
     build_proposal_list_item_dto,
     get_available_proposal_queryset,
 )
+from notas.application.services.cache.dailyplan_summary import get_dailyplan_summary
 from notas.application.services.cache.program_summary import get_program_summary
 from notas.application.services.food_imports.localized_names import resolve_food_display_name
 from notas.application.services.nutrition.body_metrics import get_basic_body_profile
@@ -126,6 +127,30 @@ def _meal_panel_item(dailyplan_meal, dailyplan) -> dict:
     }
 
 
+def _aggregated_food_panel_items(rows, *, id_prefix: str) -> list[dict]:
+    return [
+        {
+            "id": f"{id_prefix}:{row['child']['id']}",
+            "name": row["rel"]["name"],
+            "quantity": _safe_number(row["rel"]["quantity"]),
+            "quantity_unit": row["rel"]["quantity_unit"],
+            "calories": _safe_number(row["rel"]["total_kcal"]),
+            "calorie_share": _safe_number(row["rel"]["kcal_share"]),
+            "calorie_distribution": {
+                key: _safe_number(value)
+                for key, value in row["rel"]["kcal_distribution"].items()
+            },
+            "protein_grams": _safe_number(row["rel"]["g_protein"]),
+            "carbs_grams": _safe_number(row["rel"]["g_carbs"]),
+            "fat_grams": _safe_number(row["rel"]["g_fat"]),
+            "protein_allocation": _safe_number(row["rel"]["alloc_protein"]),
+            "carbs_allocation": _safe_number(row["rel"]["alloc_carbs"]),
+            "fat_allocation": _safe_number(row["rel"]["alloc_fat"]),
+        }
+        for row in rows
+    ]
+
+
 def _program_week_panel_items(program, current_weight=None) -> list[dict]:
     summary = get_program_summary(program)
     program_total_kcal = summary["program_totals"]["total_kcal"]
@@ -173,24 +198,10 @@ def _program_week_panel_items(program, current_weight=None) -> list[dict]:
             "meals_count": week["meals_count"],
             "foods_count": week["foods_count"],
             "average_calories": _safe_number(week["averages"]["total_kcal"]),
-            "foods": [
-                {
-                    "id": f"program-week-food:{program.id}:{week['week_number']}:{row['child']['id']}",
-                    "name": row["rel"]["name"],
-                    "quantity": _safe_number(row["rel"]["quantity"]),
-                    "quantity_unit": row["rel"]["quantity_unit"],
-                    "calories": _safe_number(row["rel"]["total_kcal"]),
-                    "calorie_share": _safe_number(row["rel"]["kcal_share"]),
-                    "calorie_distribution": {key: _safe_number(value) for key, value in row["rel"]["kcal_distribution"].items()},
-                    "protein_grams": _safe_number(row["rel"]["g_protein"]),
-                    "carbs_grams": _safe_number(row["rel"]["g_carbs"]),
-                    "fat_grams": _safe_number(row["rel"]["g_fat"]),
-                    "protein_allocation": _safe_number(row["rel"]["alloc_protein"]),
-                    "carbs_allocation": _safe_number(row["rel"]["alloc_carbs"]),
-                    "fat_allocation": _safe_number(row["rel"]["alloc_fat"]),
-                }
-                for row in week["foods_aggregation_table"]
-            ],
+            "foods": _aggregated_food_panel_items(
+                week["foods_aggregation_table"],
+                id_prefix=f"program-week-food:{program.id}:{week['week_number']}",
+            ),
             "calories": _safe_number(week["totals"]["total_kcal"]),
             "calorie_share": _safe_number(_safe_percentage(week["totals"]["total_kcal"], program_total_kcal)),
             "calorie_distribution": _calorie_distribution(week["totals"]["kcal_protein"], week["totals"]["kcal_carbs"], week["totals"]["kcal_fat"]),
@@ -359,7 +370,11 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
     elif entity == "daily-plans":
         item = (DailyPlan.objects.filter(pk=item_id, created_by=user, is_draft=False).select_related("created_by").annotate(library_meal_count=Count("dailyplan_meals", distinct=True), library_food_count=Count("dailyplan_meals__meal__meal_food_set__food", distinct=True)).prefetch_related(Prefetch("dailyplan_meals__meal__meal_food_set", queryset=MealFood.objects.select_related("food").order_by("order", "id"))).first())
         if item:
-            return {"id": item.id, "entity": "dailyPlan", "name": item.name, "subtitle": "", "nutrition": _library_nutrition_payload(item, current_weight), "indicators": [{"icon": "meal", "label": "comidas", "value": item.library_meal_count}, {"icon": "food", "label": "alimentos", "value": item.library_food_count}], "panel": {**_empty_library_panel("meals"), "meals": [_meal_panel_item(row, item) for row in item.dailyplan_meals.all()]}, "creator": _creator_name(item), "created_at": item.created_at}
+            foods = _aggregated_food_panel_items(
+                get_dailyplan_summary(item)["foods_aggregation_table"],
+                id_prefix=f"dailyplan-food:{item.id}",
+            )
+            return {"id": item.id, "entity": "dailyPlan", "name": item.name, "subtitle": "", "nutrition": _library_nutrition_payload(item, current_weight), "indicators": [{"icon": "meal", "label": "comidas", "value": item.library_meal_count}, {"icon": "food", "label": "alimentos", "value": item.library_food_count}], "panel": {**_empty_library_panel("meals"), "meals": [_meal_panel_item(row, item) for row in item.dailyplan_meals.all()], "foods": foods}, "creator": _creator_name(item), "created_at": item.created_at}
     elif entity == "programs":
         item = (Program.objects.filter(pk=item_id).filter(Q(created_by=user) | Q(shares__accepted_by=user, shares__removed=False)).select_related("created_by").annotate(library_day_count=Count("program_dailyplan", distinct=True)).prefetch_related("program_dailyplan__dailyplan__dailyplan_meals__meal__meal_food_set__food").distinct().first())
         if item:

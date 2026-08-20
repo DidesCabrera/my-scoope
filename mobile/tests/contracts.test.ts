@@ -107,6 +107,18 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     "utf8",
   );
   assert.match(libraryDetail, /<ProgramDetailPreview[\s\S]*?scrollable\s*\/>/);
+  assert.match(libraryDetail, /FoodPanels, MealPanels.*from "@\/components\/panels"/);
+  assert.match(libraryDetail, /title="Alimentos en este plan diario"><FoodPanels items=\{item\.panel\.foods\.map\(foodPanelItem\)\}/);
+
+  const entityDetail = await readFile(
+    path.resolve(process.cwd(), "src/components/details/entity-detail-page.tsx"),
+    "utf8",
+  );
+  const pageCardStyle = entityDetail.match(/pageCard: \{([^}]+)\}/)?.[1] ?? "";
+  assert.doesNotMatch(pageCardStyle, /backgroundColor/);
+  assert.doesNotMatch(pageCardStyle, /border(?:Color|Radius|TopWidth|Width)/);
+  assert.doesNotMatch(pageCardStyle, /padding(?:Top|:)/);
+  assert.doesNotMatch(entityDetail, /borderTopColor: tokens\.color\[entity\]/);
 
   const programDailyPlan = await readFile(
     path.resolve(process.cwd(), "src/components/libraries/program-daily-plan-preview.tsx"),

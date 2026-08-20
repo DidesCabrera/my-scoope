@@ -6,15 +6,24 @@ import { userFacingError } from "@/api/errors";
 import type { LibraryItem } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { EntityDetailMetadata, EntityDetailPage, EntityDetailSection } from "@/components/details";
+import { FoodPanels, MealPanels, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
 import { Button, InlineNotice, textStyles } from "@/components/ui/primitives";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { tokens } from "@/design/tokens";
 
-import { DailyPlanMealCards, FoodPanels, MealPanels, ProgramPanels } from "./entity-panels";
+import { DailyPlanMealCards, ProgramPanels } from "./entity-panels";
 import { libraryDate, libraryNutrition } from "./presentation-adapters";
 import { ProgramDetailPreview } from "./program-detail-preview";
 
 const sectionTitles = { foods: "Alimentos de esta comida", meals: "Comidas en este plan", weeks: "Semanas del programa" } as const;
+
+function foodPanelItem(item: LibraryItem["panel"]["foods"][number]): FoodPanelItem {
+  return { id: item.id, name: item.name, quantity: item.quantity, quantityUnit: item.quantity_unit, calories: item.calories, calorieShare: item.calorie_share, proteinGrams: item.protein_grams, carbsGrams: item.carbs_grams, fatGrams: item.fat_grams, proteinAllocation: item.protein_allocation, carbsAllocation: item.carbs_allocation, fatAllocation: item.fat_allocation };
+}
+
+function mealPanelItem(item: LibraryItem["panel"]["meals"][number]): MealPanelItem {
+  return { id: item.id, name: item.name, time: item.time?.slice(0, 5), foods: item.foods.map((food) => ({ name: food.name, quantity: food.quantity, quantityUnit: food.quantity_unit })), calories: item.calories, calorieShare: item.calorie_share, proteinGrams: item.protein_grams, carbsGrams: item.carbs_grams, fatGrams: item.fat_grams, proteinAllocation: item.protein_allocation, carbsAllocation: item.carbs_allocation, fatAllocation: item.fat_allocation };
+}
 
 export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "meals" | "daily-plans" | "programs" }) {
   const router = useRouter();
@@ -43,8 +52,9 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   }
   const panelCount = item.panel.kind === "foods" ? item.panel.foods.length : item.panel.kind === "meals" ? item.panel.meals.length : item.panel.kind === "weeks" ? item.panel.weeks.length : 0;
   return <ScrollView contentContainerStyle={styles.content} onScroll={({ nativeEvent }) => { const visible = nativeEvent.contentOffset.y > 1; if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible); }} scrollEventThrottle={16} style={styles.screen}><EntityDetailPage entity={item.entity} indicators={item.indicators} nutrition={libraryNutrition(item.nutrition)} subtitle={item.subtitle || undefined} title={item.name}>
-    {item.panel.kind !== "none" ? <EntityDetailSection detail={`${panelCount} elementos`} title={sectionTitles[item.panel.kind]}>{item.panel.kind === "foods" ? <FoodPanels items={item.panel.foods} /> : null}{item.panel.kind === "meals" ? <MealPanels items={item.panel.meals} /> : null}{item.panel.kind === "weeks" ? <ProgramPanels items={item.panel.weeks} /> : null}</EntityDetailSection> : null}
+    {item.panel.kind !== "none" ? <EntityDetailSection detail={`${panelCount} elementos`} title={sectionTitles[item.panel.kind]}>{item.panel.kind === "foods" ? <FoodPanels items={item.panel.foods.map(foodPanelItem)} /> : null}{item.panel.kind === "meals" ? <MealPanels items={item.panel.meals.map(mealPanelItem)} /> : null}{item.panel.kind === "weeks" ? <ProgramPanels items={item.panel.weeks} /> : null}</EntityDetailSection> : null}
     {item.entity === "dailyPlan" && item.panel.kind === "meals" && item.panel.meals.length > 0 ? <EntityDetailSection detail={`${item.panel.meals.length} comidas`} title="Detalle de cada Comida"><DailyPlanMealCards items={item.panel.meals} /></EntityDetailSection> : null}
+    {item.entity === "dailyPlan" && item.panel.foods.length > 0 ? <EntityDetailSection detail={`${item.panel.foods.length} alimentos`} title="Alimentos en este plan diario"><FoodPanels items={item.panel.foods.map(foodPanelItem)} /></EntityDetailSection> : null}
     <EntityDetailMetadata creator={item.creator} updatedAt={libraryDate(item.created_at)} />
   </EntityDetailPage></ScrollView>;
 }
