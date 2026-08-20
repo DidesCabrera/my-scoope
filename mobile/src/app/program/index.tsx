@@ -1,10 +1,11 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
 import type { ActiveProgramData, CalendarizationHistoryData, CalendarizationStatus } from "@/api/types";
 import { useSession } from "@/auth/session-context";
+import { CalendarizedProgramPlanning } from "@/components/calendarization/calendarized-program-planning";
 import { ConfirmationState, EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
 import { AppHeader, Button, Card, LoadingState, Pill, ProgressBar, Screen, SectionTitle, textStyles } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
@@ -90,29 +91,8 @@ export default function ProgramScreen() {
             <ProgressBar value={calendarization.progress_percent} />
             <Text style={textStyles.caption}>{calendarization.progress_percent}% del recorrido</Text>
           </Card>
-          <Button label="Abrir plan de hoy" onPress={() => router.push("/today" as Href)} />
-
           <SectionTitle detail={`${program?.days.length ?? 0} días`} title="Recorrido" />
-          <Card muted>
-            {program?.days.map((day) => (
-              <Pressable
-                accessibilityLabel={`${displayDate(day.calendar_date)}: ${day.has_plan ? day.plan_name || "Plan diario" : "Día sin plan"}`}
-                accessibilityRole="button"
-                key={day.id}
-                onPress={() => router.push(`/program/days/${day.id}` as Href)}
-                style={({ pressed }) => [styles.day, pressed && styles.pressed]}>
-                <View style={styles.dayDate}>
-                  <Text style={styles.dayNumber}>{displayDate(day.calendar_date)}</Text>
-                  <Text style={textStyles.caption}>S{day.week_number} · D{day.day_number}</Text>
-                </View>
-                <View style={styles.dayCopy}>
-                  <Text numberOfLines={1} style={styles.dayName}>{day.has_plan ? day.plan_name || "Plan diario" : "Día sin plan"}</Text>
-                  <Text style={textStyles.caption}>{day.has_plan ? "Ver detalle" : "Sin contenido asignado"}</Text>
-                </View>
-                <Text style={styles.chevron}>›</Text>
-              </Pressable>
-            ))}
-          </Card>
+          <CalendarizedProgramPlanning days={program?.days ?? []} key={calendarization.id} />
 
           {pendingAction === "pause" ? (
             <ConfirmationState busy={acting} confirmLabel="Pausar" message="Tu progreso se conservará y podrás reanudar este programa más adelante." onCancel={() => setPendingAction(null)} onConfirm={() => void applyAction("pause")} title="¿Pausar el programa?" />
@@ -146,15 +126,8 @@ export default function ProgramScreen() {
 
 const styles = StyleSheet.create({
   actions: { gap: tokens.spacing.sm },
-  chevron: { color: tokens.color.textSoft, fontSize: 28 },
   copy: { flex: 1, gap: 4 },
-  day: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, paddingVertical: 12 },
-  dayCopy: { flex: 1, gap: 3 },
-  dayDate: { gap: 3, width: 68 },
-  dayName: { color: tokens.color.textMain, fontSize: 15, fontWeight: "800" },
-  dayNumber: { color: tokens.color.program, fontSize: 13, fontWeight: "900", textTransform: "uppercase" },
   historyName: { color: tokens.color.textMain, fontSize: 16, fontWeight: "800" },
   name: { color: tokens.color.textMain, fontSize: 22, fontWeight: "900" },
-  pressed: { opacity: 0.6 },
   row: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
 });

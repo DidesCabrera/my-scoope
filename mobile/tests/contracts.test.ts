@@ -81,27 +81,48 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(programDetail, /ProgramDayComparisonPanels/);
   assert.match(programDetail, /weekData\.foods \?\? \[\]\)\.map\(foodItem\)/);
   assert.match(programDetail, /: weekFoodItems/);
-  assert.match(programDetail, /accessibilityState=\{\{ expanded:/);
   assert.match(programDetail, /useState<number \| null>\(\(\) => filledDays\[0\] \? 0 : null\)/);
   assert.match(programDetail, /<Card style=\{styles\.weekCard\}>/);
   assert.doesNotMatch(programDetail, /<Card muted style=\{styles\.weekCard\}>/);
-  assert.match(programDetail, /function SelectedDayRing/);
-  assert.match(programDetail, /stopColor="#D62976"/);
-  assert.match(programDetail, /backgroundColor: tokens\.color\.surfaceCard/);
-  assert.match(programDetail, /backgroundColor: tokens\.color\.dailyPlan/);
-  assert.match(programDetail, /<ClipboardList color=\{tokens\.color\.entityIconForeground\} size=\{14\}/);
+  assert.match(programDetail, /<ProgramDaySelector/);
+  assert.match(programDetail, /<ProgramWeekTabs/);
   assert.match(programDetail, /weekCard: \{ gap: tokens\.spacing\.lg, marginHorizontal: -tokens\.spacing\.screen \}/);
-  assert.match(programDetail, /borderRadius: tokens\.spacing\.compact, height: 24/);
   assert.match(programDetail, /systemBleed: \{ marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding \}/);
   assert.match(programDetail, /<ProgramMetricPreview[^\n]*style=\{styles\.systemBleed\}/);
   assert.match(programDetail, /<FoodPanels items=\{weekData/);
   assert.doesNotMatch(programDetail, /<View style=\{styles\.systemBleed\}><(?:FoodPanels|ProgramDayComparisonPanels|ProgramWeekComparisonPanels)/);
-  assert.match(programDetail, /horizontal\n\s+showsHorizontalScrollIndicator=\{false\}/);
   assert.match(programDetail, /stickyHeaderIndices=\{\[3\]\}/);
   assert.match(programDetail, /weekTabsSticky: \{ backgroundColor: tokens\.color\.surfaceApp, borderBottomColor: "transparent", borderBottomWidth: 1/);
   assert.match(programDetail, /weekTabsStickyPinned: \{ borderBottomColor: tokens\.color\.borderDefault \}/);
   assert.match(programDetail, /contentOffset\.y >= weekTabsOffset\.current/);
   assert.match(programDetail, /paddingVertical: tokens\.spacing\.sm/);
+
+  const planningControls = await readFile(
+    path.resolve(process.cwd(), "src/components/libraries/program-planning-controls.tsx"),
+    "utf8",
+  );
+  assert.match(planningControls, /function SelectedDayRing/);
+  assert.match(planningControls, /stopColor="#D62976"/);
+  assert.match(planningControls, /accessibilityState=\{\{ expanded:/);
+  assert.match(planningControls, /backgroundColor: tokens\.color\.surfaceCard/);
+  assert.match(planningControls, /backgroundColor: tokens\.color\.dailyPlan/);
+  assert.match(planningControls, /<ClipboardList color=\{tokens\.color\.entityIconForeground\} size=\{14\}/);
+  assert.match(planningControls, /borderRadius: tokens\.spacing\.compact, height: 24/);
+  assert.match(planningControls, /horizontal\n\s+showsHorizontalScrollIndicator=\{false\}/);
+
+  const calendarizedPlanning = await readFile(
+    path.resolve(process.cwd(), "src/components/calendarization/calendarized-program-planning.tsx"),
+    "utf8",
+  );
+  assert.match(calendarizedPlanning, /title="Planes diarios esta semana"/);
+  assert.match(calendarizedPlanning, /<ProgramWeekTabs/);
+  assert.match(calendarizedPlanning, /<ProgramDaySelector/);
+  assert.match(calendarizedPlanning, /apiRequest<CalendarizedDayDetail>/);
+  assert.match(calendarizedPlanning, /<NutritionEntityCard/);
+
+  const activeProgram = await readFile(path.resolve(process.cwd(), "src/app/program/index.tsx"), "utf8");
+  assert.match(activeProgram, /<CalendarizedProgramPlanning days=\{program\?\.days \?\? \[\]\} key=\{calendarization\.id\} \/>/);
+  assert.doesNotMatch(activeProgram, /program\?\.days\.map/);
 
   const libraryDetail = await readFile(
     path.resolve(process.cwd(), "src/components/libraries/library-detail-screen.tsx"),
@@ -168,7 +189,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(programChart, /strokeWidth="5"[^\n]*x1=\{x\} x2=\{x\} y1=\{y\} y2=\{y\}/);
   assert.match(programChart, /P \{allocationRange\(liveAllocationValues, 0/);
   assert.match(programChart, /const hasAllocation = protein \+ carbs \+ fat > 0/);
-  assert.match(programDetail, /key=\{`\$\{week\}-\$\{index\}-\$\{label\}`\}/);
+  assert.match(planningControls, /key=\{day\.id\}/);
   assert.match(programDetail, /axisLabels=\{liveWeeks\.map\(\(week\) => `S\$\{week\.week_number\}`\)\}/);
   assert.match(programDetail, /const liveMetricData = weekData \? programDailyMetricData\(\[weekData\]\) : undefined/);
   assert.doesNotMatch(programDetail, /weekData\.days\.filter\(\(day\) => day\.nutrition\)/);
