@@ -1,8 +1,7 @@
-import { ClipboardList, MoreHorizontal, Plus } from "lucide-react-native";
+import { MoreHorizontal, Plus } from "lucide-react-native";
 import type { ReactNode } from "react";
 import { useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View, type ScrollViewProps } from "react-native";
-import Svg, { Circle, Defs, LinearGradient, Stop } from "react-native-svg";
 
 import { Card } from "@/components/ui/primitives";
 import { FoodPanels, type FoodPanelItem } from "@/components/panels";
@@ -12,6 +11,7 @@ import type { LibraryFoodPanelItem, LibraryItem, LibraryWeekPanelItem } from "@/
 import { EntityHeading, EntityIcon, StructuralIndicators } from "@/components/ui";
 import { ProgramMetricPreview, programDailyMetricData } from "./program-child-card";
 import { ProgramDailyPlanPreview } from "./program-daily-plan-preview";
+import { ProgramDaySelector, ProgramWeekTabs } from "./program-planning-controls";
 import { ProgramDayComparisonPanels, type ProgramDayNutrition } from "./program-day-comparison-panels";
 import { ProgramWeekComparisonPanels, type ProgramWeekSummary } from "./program-week-comparison-panels";
 
@@ -37,55 +37,18 @@ function CompactAction({ label, onPress, children }: { label: string; onPress():
   );
 }
 
-function SelectedDayRing() {
-  return (
-    <View pointerEvents="none" style={styles.daySelectedRing}>
-      <Svg height="100%" viewBox="0 0 100 100" width="100%">
-        <Defs>
-          <LinearGradient id="selected-day-gradient" x1="0" x2="1" y1="1" y2="0">
-            <Stop offset="0" stopColor="#FEDA75" />
-            <Stop offset="0.24" stopColor="#FA7E1E" />
-            <Stop offset="0.52" stopColor="#D62976" />
-            <Stop offset="0.76" stopColor="#962FBF" />
-            <Stop offset="1" stopColor="#4F5BD5" />
-          </LinearGradient>
-        </Defs>
-        <Circle cx="50" cy="50" fill="none" r="44" stroke="url(#selected-day-gradient)" strokeWidth="8" />
-      </Svg>
-    </View>
-  );
-}
-
 function ProgramDaysGrid({ week, weekData }: { week: number; weekData?: LibraryWeekPanelItem }) {
   const filledDays = weekData ? weekData.days.map((day) => Boolean(day.plan_name)) : week === 1 ? [true, true, true, true, true, false, true] : [true, true, false, true, true, true, true];
   const labels = weekData?.days.map((day) => day.day_label.slice(0, 1).toUpperCase()) ?? dayLabels;
   const [selectedDay, setSelectedDay] = useState<number | null>(() => filledDays[0] ? 0 : null);
   return (
-    <View style={styles.daySelection}>
-      <View accessibilityLabel={`Planes diarios de Semana ${week}`} style={styles.daysGrid}>
-        {labels.map((label, index) => {
-          const filled = filledDays[index];
-          const selected = selectedDay === index;
-          return (
-            <View key={`${week}-${index}-${label}`} style={styles.dayCell}>
-              <Text style={styles.dayLabel}>{label}</Text>
-              <Pressable
-                accessibilityLabel={filled ? `${label}: ver plan diario` : `${label}: agregar plan diario`}
-                accessibilityRole="button"
-                accessibilityState={{ expanded: filled ? selected : undefined, selected }}
-                onPress={() => { if (filled) setSelectedDay((current) => current === index ? null : index); }}
-                style={({ pressed }) => [styles.dayCircle, !filled && styles.dayCircleEmpty, selected && styles.dayCircleSelected, pressed && styles.pressed]}>
-                {selected ? <SelectedDayRing /> : null}
-                {filled
-                  ? <View style={styles.dayPlanIcon}><ClipboardList color={tokens.color.entityIconForeground} size={14} /></View>
-                  : <Plus color={tokens.color.program} size={24} />}
-              </Pressable>
-            </View>
-          );
-        })}
-      </View>
+    <ProgramDaySelector
+      accessibilityLabel={`Planes diarios de Semana ${week}`}
+      days={labels.map((label, index) => ({ filled: filledDays[index], id: index, label }))}
+      onSelect={(day) => setSelectedDay(Number(day.id))}
+      selectedId={selectedDay}>
       {selectedDay !== null ? <ProgramDailyPlanPreview day={weekData?.days[selectedDay]} dayLabel={labels[selectedDay]} week={week} /> : null}
-    </View>
+    </ProgramDaySelector>
   );
 }
 
@@ -214,27 +177,7 @@ export function ProgramDetailPreview({ footer, item, onScroll, scrollable = fals
     <View
       onLayout={scrollable ? ({ nativeEvent }) => { weekTabsOffset.current = nativeEvent.layout.y; } : undefined}
       style={scrollable ? [styles.weekTabsSticky, weekTabsPinned && styles.weekTabsStickyPinned] : styles.weekTabsEmbedded}>
-      <ScrollView
-        accessibilityLabel="Semanas del programa"
-        accessibilityRole="tablist"
-        contentContainerStyle={styles.weekTabs}
-        horizontal
-        showsHorizontalScrollIndicator={false}>
-          {displayedWeeks.map((week) => {
-            const selected = activeWeek === week;
-            return (
-              <Pressable
-                accessibilityLabel={`Semana ${week}`}
-                accessibilityRole="tab"
-                accessibilityState={{ selected }}
-                key={week}
-                onPress={() => setActiveWeek(week)}
-                style={({ pressed }) => [styles.weekTab, selected && styles.weekTabActive, pressed && styles.pressed]}>
-                <Text style={[styles.weekTabText, selected && styles.weekTabTextActive]}>Semana {week}</Text>
-              </Pressable>
-            );
-          })}
-      </ScrollView>
+      <ProgramWeekTabs activeWeek={activeWeek} onChange={setActiveWeek} weeks={displayedWeeks} />
     </View>
   );
 
@@ -293,11 +236,6 @@ const styles = StyleSheet.create({
   weekTabsSticky: { backgroundColor: tokens.color.surfaceApp, borderBottomColor: "transparent", borderBottomWidth: 1, marginHorizontal: -tokens.spacing.screen, paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.sm, zIndex: 2 },
   weekTabsStickyPinned: { borderBottomColor: tokens.color.borderDefault },
   weekTabsEmbedded: { paddingBottom: tokens.spacing.sm },
-  weekTabs: { flexDirection: "row", gap: tokens.spacing.compact },
-  weekTab: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, justifyContent: "center", minHeight: 30, paddingHorizontal: tokens.spacing.md },
-  weekTabActive: { backgroundColor: tokens.color.textMain, borderColor: tokens.color.textMain },
-  weekTabText: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "500" },
-  weekTabTextActive: { color: tokens.color.surfaceApp },
   footer: { gap: tokens.spacing.lg, marginTop: tokens.spacing.xl },
   weekCard: { gap: tokens.spacing.lg, marginHorizontal: -tokens.spacing.screen },
   weekCardHeader: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
@@ -305,14 +243,5 @@ const styles = StyleSheet.create({
   weekEyebrow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },
   weekEyebrowText: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: "700" },
   compactAction: { alignItems: "center", height: 34, justifyContent: "center", width: 34 },
-  daysGrid: { flexDirection: "row", gap: tokens.spacing.compact, justifyContent: "space-between" },
-  daySelection: { gap: tokens.spacing.lg, minWidth: 0 },
-  dayCell: { alignItems: "center", flex: 1, gap: tokens.spacing.sm, minWidth: 0 },
-  dayLabel: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: "700" },
-  dayCircle: { alignItems: "center", aspectRatio: 1, backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.pill, borderWidth: 2, justifyContent: "center", maxWidth: 58, overflow: "visible", position: "relative", width: "100%" },
-  dayCircleEmpty: { borderStyle: "dashed" },
-  dayCircleSelected: { borderColor: tokens.color.surfaceApp },
-  dayPlanIcon: { alignItems: "center", backgroundColor: tokens.color.dailyPlan, borderRadius: tokens.spacing.compact, height: 24, justifyContent: "center", width: 24 },
-  daySelectedRing: { bottom: -7, left: -7, position: "absolute", right: -7, top: -7 },
   pressed: { opacity: 0.68 },
 });

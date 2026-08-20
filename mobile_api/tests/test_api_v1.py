@@ -421,6 +421,46 @@ class MobileAPIV1Tests(TestCase):
         self.assertEqual(hidden_day.status_code, 404)
         self.assertEqual(hidden_calendarization.status_code, 404)
 
+    def test_calendarized_day_exposes_owned_meal_detail_links_without_mutating_snapshot(self):
+        today = timezone.localdate(timezone=ZoneInfo("UTC"))
+        dailyplan = DailyPlan.objects.create(name="Plan activo", created_by=self.user, is_draft=False)
+        owned_meal = Meal.objects.create(name="Comida navegable", created_by=self.user, is_draft=False)
+        owned_slot = DailyPlanMeal.objects.create(dailyplan=dailyplan, meal=owned_meal)
+        other = User.objects.create_user(username="calendar-meal-owner")
+        foreign_meal = Meal.objects.create(name="Comida ajena", created_by=other, is_draft=False)
+        foreign_slot = DailyPlanMeal.objects.create(dailyplan=dailyplan, meal=foreign_meal)
+        calendarization = ProgramCalendarization.objects.create(
+            user=self.user,
+            program_name_snapshot="Programa activo",
+            start_date=today,
+            end_date=today,
+            timezone_name="UTC",
+            status=ProgramCalendarization.STATUS_ACTIVE,
+        )
+        stored_snapshot = {
+            "name": "Plan activo",
+            "meals": [
+                {"key": f"dailyplan_meal:{owned_slot.id}", "name": owned_meal.name},
+                {"key": f"dailyplan_meal:{foreign_slot.id}", "name": foreign_meal.name},
+            ],
+        }
+        day = CalendarizedDay.objects.create(
+            calendarization=calendarization,
+            calendar_date=today,
+            week_number=1,
+            day_number=1,
+            plan_snapshot=stored_snapshot,
+        )
+
+        response = self.client.get(f"/api/v1/program/days/{day.id}")
+
+        self.assertEqual(response.status_code, 200)
+        meals = response.json()["data"]["plan_snapshot"]["meals"]
+        self.assertEqual(meals[0]["detail_id"], owned_meal.id)
+        self.assertNotIn("detail_id", meals[1])
+        day.refresh_from_db()
+        self.assertEqual(day.plan_snapshot, stored_snapshot)
+
     def test_proposal_center_lists_details_and_separates_approval_from_application(self):
         food = Food.objects.create(
             name="Avena para propuesta",

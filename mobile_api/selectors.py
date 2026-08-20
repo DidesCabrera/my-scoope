@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from datetime import timedelta
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -37,7 +38,7 @@ from notas.application.services.cache.program_summary import get_program_summary
 from notas.application.services.food_imports.localized_names import resolve_food_display_name
 from notas.application.services.nutrition.body_metrics import get_basic_body_profile
 from notas.application.services.nutrition.weight import get_current_weight
-from notas.domain.models import DailyPlan, Food, Meal, MealFood, Program
+from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood, Program
 from notas.domain.services.nutrition import macro_kcal_distribution
 from notas.presentation.proposals.proposal_review_viewmodels import build_proposal_review_vm
 
@@ -696,11 +697,42 @@ def calendarization_history_payload(user, *, limit=20) -> dict:
     }
 
 
+def _calendarized_snapshot_with_meal_links(user, snapshot: dict | None) -> dict | None:
+    if not snapshot:
+        return None
+    payload = deepcopy(snapshot)
+    meals = payload.get("meals")
+    if not isinstance(meals, list):
+        return payload
+
+    meals_by_slot_id = {}
+    for meal in meals:
+        if not isinstance(meal, dict):
+            continue
+        meal.pop("detail_id", None)
+        key = meal.get("key")
+        if not isinstance(key, str) or not key.startswith("dailyplan_meal:"):
+            continue
+        try:
+            meals_by_slot_id[int(key.removeprefix("dailyplan_meal:"))] = meal
+        except ValueError:
+            continue
+
+    links = DailyPlanMeal.objects.filter(
+        pk__in=meals_by_slot_id,
+        meal__created_by=user,
+        meal__is_draft=False,
+    ).values_list("id", "meal_id")
+    for slot_id, meal_id in links:
+        meals_by_slot_id[slot_id]["detail_id"] = meal_id
+    return payload
+
+
 def calendarized_day_payload(user, day_id: int) -> dict | None:
     day = calendarized_day_for_user(user, day_id)
     if day is None:
         return None
-    snapshot = day.plan_snapshot or None
+    snapshot = _calendarized_snapshot_with_meal_links(user, day.plan_snapshot)
     return {
         "id": day.id,
         "calendar_date": day.calendar_date,

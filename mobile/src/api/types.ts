@@ -304,6 +304,7 @@ export type LibraryPageData = {
 
 export type MealSnapshot = {
   key?: string;
+  detail_id?: number | null;
   name?: string;
   hour?: string | null;
   note?: string;

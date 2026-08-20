@@ -25,14 +25,23 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   const proposal = await readFile(path.resolve(process.cwd(), "src/app/proposals/[id].tsx"), "utf8");
   const comparison = await readFile(path.resolve(process.cwd(), "src/app/comparator/saved/[id].tsx"), "utf8");
   const program = await readFile(path.resolve(process.cwd(), "src/app/program/index.tsx"), "utf8");
+  const programDay = await readFile(path.resolve(process.cwd(), "src/app/program/days/[id].tsx"), "utf8");
   const today = await readFile(path.resolve(process.cwd(), "src/app/today.tsx"), "utf8");
   assert.match(proposal, /\/libraries\/meals\//);
   assert.match(proposal, /\/libraries\/daily-plans\//);
   assert.match(comparison, /Usar en el Asistente/);
   assert.match(comparison, /comparisonId/);
-  assert.match(program, /\/today/);
+  assert.doesNotMatch(program, /Abrir plan de hoy/);
+  assert.match(program, /CalendarizedProgramPlanning/);
+  assert.match(programDay, /<EntityDetailPage/);
+  assert.match(programDay, /title="Comidas en este plan"/);
+  assert.match(programDay, /title="Detalle de cada Comida"/);
+  assert.match(programDay, /<NutritionEntityCard/);
+  assert.match(programDay, /router\.push\(`\/libraries\/meals\/\$\{meal\.detail_id\}` as Href\)/);
+  assert.match(programDay, /<ChevronRight/);
+  assert.match(programDay, /mode: "library-detail", entity: "dailyPlan"/);
   assert.match(today, /\/program/);
-  for (const screen of [proposal, comparison, program, today]) assert.match(screen, /useFocusEffect/);
+  for (const screen of [proposal, comparison, program, programDay, today]) assert.match(screen, /useFocusEffect/);
 });
 
 test("shared screens use compact white scroll identities and only Home keeps the centered logo", async () => {
