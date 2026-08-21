@@ -11,7 +11,6 @@
     "ios": {
       "icon": "./assets/images/icon.png",
       "bundleIdentifier": "com.myscoope.app",
-      "buildNumber": "1",
       "supportsTablet": false,
       "usesAppleSignIn": true,
       "infoPlist": {
@@ -156,7 +155,10 @@
       "reactCompiler": true
     },
     "extra": {
-      "mobileContract": "cml08.v1"
+      "mobileContract": "cml08.v1",
+      "eas": {
+        "projectId": "ea9b4286-222a-4b79-93da-584ed07ed072"
+      }
     }
   }
 }
