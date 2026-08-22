@@ -34,7 +34,7 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assert.doesNotMatch(program, /Abrir plan de hoy/);
   assert.match(program, /CalendarizedProgramPlanning/);
   assert.match(programDay, /<EntityDetailPage/);
-  assert.match(programDay, /title="Comidas en este plan"/);
+  assert.match(programDay, /title="Tabla de comparación entre comidas"/);
   assert.match(programDay, /title="Detalle de cada Comida"/);
   assert.match(programDay, /<NutritionEntityCard/);
   assert.match(programDay, /router\.push\(`\/libraries\/meals\/\$\{meal\.detail_id\}` as Href\)/);
@@ -44,14 +44,22 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   for (const screen of [proposal, comparison, program, programDay, today]) assert.match(screen, /useFocusEffect/);
 });
 
-test("shared screens use compact white scroll identities and only Home keeps the centered logo", async () => {
+test("shared screens use compact scroll identities and only Home keeps the centered logo", async () => {
   const navigation = await readFile(path.resolve(process.cwd(), "src/components/navigation/app-navigation.tsx"), "utf8");
+  const entityIdentity = await readFile(path.resolve(process.cwd(), "src/components/navigation/header-entity-identity.tsx"), "utf8");
+  const libraryList = await readFile(path.resolve(process.cwd(), "src/components/libraries/library-list-screen.tsx"), "utf8");
   const primitives = await readFile(path.resolve(process.cwd(), "src/components/ui/primitives.tsx"), "utf8");
   const headerBody = navigation.slice(navigation.indexOf("export function AppNavigationHeader"), navigation.indexOf("export function useHeaderPresentation"));
   assert.match(headerBody, /isHome \? <View pointerEvents="none" style=\{styles\.headerLogo\}><MyScoopeLogo/);
   assert.match(headerBody, /HeaderIdentity/);
   assert.match(headerBody, /defaultIdentityVisible/);
   assert.match(navigation, /Icon color=\{tokens\.color\.textMain\}/);
+  assert.match(entityIdentity, /<EntityIcon entity=\{entity\} size="header" \/>/);
+  assert.doesNotMatch(entityIdentity, /tone="white"/);
   assert.match(primitives, /contentOffset\.y > 1/);
   assert.match(primitives, /identityVisible: compactHeaderVisible/);
+  assert.match(libraryList, /stickyHeaderIndices=\{\[1\]\}/);
+  assert.match(libraryList, /contentOffset\.y >= searchOffset\.current/);
+  assert.match(libraryList, /stickySearch: \{ backgroundColor: tokens\.color\.surfaceApp, borderBottomColor: "transparent", borderBottomWidth: 1/);
+  assert.match(libraryList, /stickySearchPinned: \{ borderBottomColor: tokens\.color\.borderDefault \}/);
 });

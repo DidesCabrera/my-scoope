@@ -25,7 +25,6 @@
     </section>
 
     <div class="page-kpi calendarization-day-detail__kpis">
-      <h3>Información Nutricional</h3>
       <div class="calendarization-macros">
         <span>{{ vm.content.day.plan_snapshot.totals.total_kcal|floatformat:0 }} kcal</span>
         <span>P {{ vm.content.day.plan_snapshot.totals.protein_g|floatformat:1 }} g</span>
@@ -35,7 +34,7 @@
     </div>
 
     <div class="detail-section dailyplan calendarization-day-detail__meals">
-      <h3>Comidas en este Plan</h3>
+      <h3>Tabla de comparación entre comidas</h3>
       <div class="calendarization-meals">
         {% for meal in vm.content.day.plan_snapshot.meals %}
           <article>

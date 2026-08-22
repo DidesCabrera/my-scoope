@@ -8,7 +8,7 @@ import { FoodPanels, type FoodPanelItem } from "@/components/panels";
 import { SectionHeading } from "@/components/ui/typography";
 import { tokens } from "@/design/tokens";
 import type { LibraryFoodPanelItem, LibraryItem, LibraryWeekPanelItem } from "@/api/types";
-import { EntityHeading, EntityIcon, StructuralIndicators } from "@/components/ui";
+import { EntityHeading, EntityIcon, layoutStyles, StructuralIndicators } from "@/components/ui";
 import { ProgramMetricPreview, programDailyMetricData } from "./program-child-card";
 import { ProgramDailyPlanPreview } from "./program-daily-plan-preview";
 import { ProgramDaySelector, ProgramWeekTabs } from "./program-planning-controls";
@@ -99,8 +99,7 @@ function ProgramWeekDetail({ week, weekData }: { week: number; weekData?: Librar
         </CompactAction>
       </View>
 
-      <SectionHeading title="Gráfico de KPIs de la semana" />
-      <ProgramMetricPreview axisLabels={weekData?.days.map((day) => day.day_label.slice(0, 1).toUpperCase()) ?? dayLabels} data={liveMetricData} days={7} style={styles.systemBleed} />
+      <ProgramMetricPreview axisLabels={weekData?.days.map((day) => day.day_label.slice(0, 1).toUpperCase()) ?? dayLabels} data={liveMetricData} days={7} style={layoutStyles.cardContentBleed} />
 
       <SectionHeading title="Tabla de comparación entre planes diarios" />
       <ProgramDayComparisonPanels key={`comparison-${week}`} rows={weekData ? dayRows(weekData) : undefined} week={week} />
@@ -149,8 +148,7 @@ export function ProgramDetailPreview({ footer, item, onScroll, scrollable = fals
           variant="page"
         />
 
-        <SectionHeading title="Gráficos de KPIs del Programa" />
-        <ProgramMetricPreview axisLabels={liveWeeks.map((week) => `S${week.week_number}`)} data={liveMetrics} days={liveMetrics?.length ?? 14} style={styles.systemBleed} />
+        <ProgramMetricPreview axisLabels={liveWeeks.map((week) => `S${week.week_number}`)} data={liveMetrics} days={liveMetrics?.length ?? 14} style={layoutStyles.cardContentBleed} />
 
         <View style={styles.sectionTitleWithAction}>
           <SectionHeading title="Tabla de comparación entre semanas" />
@@ -225,7 +223,6 @@ const styles = StyleSheet.create({
   majorDivider: { backgroundColor: tokens.color.borderDefault, height: 1 },
   majorDividerScreen: { backgroundColor: tokens.color.borderDefault, height: 1, marginVertical: tokens.spacing.xl },
   sectionDivider: { backgroundColor: tokens.color.borderSoft, height: 1, marginVertical: tokens.spacing.xs },
-  systemBleed: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding },
   sectionTitleWithAction: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.md, justifyContent: "space-between" },
   addWeekButton: { alignItems: "center", backgroundColor: tokens.color.textMain, borderRadius: tokens.radius.md, flexDirection: "row", gap: tokens.spacing.xs, minHeight: 38, paddingHorizontal: tokens.spacing.md },
   addWeekText: { color: tokens.color.surfaceApp, fontSize: tokens.type.caption, fontWeight: "700" },

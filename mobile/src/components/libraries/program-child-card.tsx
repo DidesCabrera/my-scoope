@@ -3,7 +3,7 @@ import { Pressable, StyleProp, StyleSheet, Text, useWindowDimensions, View, View
 import Svg, { Line, Polyline } from "react-native-svg";
 
 import type { LibraryWeekPanelItem } from "@/api/types";
-import { Card, EntityHeading } from "@/components/ui";
+import { Card, EntityHeading, layoutStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 export type ProgramMetricDatum = {
@@ -189,8 +189,8 @@ export function ProgramChildCard({
   filledDaysCount: number;
   foodsCount: number;
   owner: string;
-  onOpen(): void;
-  onMore(): void;
+  onOpen?: () => void;
+  onMore?: () => void;
   metricData?: ProgramMetricDatum[];
   axisLabels?: string[];
 }) {
@@ -206,7 +206,7 @@ export function ProgramChildCard({
         title={title}
       />
 
-      <ProgramMetricPreview axisLabels={axisLabels} data={metricData} days={metricData?.length ?? 14} />
+      <ProgramMetricPreview axisLabels={axisLabels} data={metricData} days={metricData?.length ?? 14} style={layoutStyles.cardContentBleed} />
 
       <View style={styles.footer}>
         <View accessibilityLabel={`Creado por ${owner}`} style={styles.owner}>
@@ -214,12 +214,12 @@ export function ProgramChildCard({
           <Text style={styles.ownerText}>{owner}</Text>
         </View>
         <View style={styles.actions}>
-          <Pressable accessibilityLabel="Más acciones" accessibilityRole="button" onPress={onMore} style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
+          {onMore ? <Pressable accessibilityLabel="Más acciones" accessibilityRole="button" onPress={onMore} style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
             <MoreHorizontal color={tokens.color.textMuted} size={21} />
-          </Pressable>
-          <Pressable accessibilityLabel="Ver programa" accessibilityRole="button" onPress={onOpen} style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
+          </Pressable> : null}
+          {onOpen ? <Pressable accessibilityLabel="Ver programa" accessibilityRole="button" onPress={onOpen} style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
             <ChevronRight color={tokens.color.textMuted} size={21} />
-          </Pressable>
+          </Pressable> : null}
         </View>
       </View>
     </Card>

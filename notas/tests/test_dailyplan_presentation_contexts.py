@@ -1,5 +1,8 @@
+from pathlib import Path
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.template.loader import render_to_string
 from django.urls import reverse
 
 from notas.domain.models import DailyPlan, Program, ProgramDay
@@ -114,3 +117,23 @@ class DailyPlanPresentationContextTests(TestCase):
         context = build_dailyplan_detail_context(page=page, user=self.user)
 
         self.assertEqual(context["vm"]["ui"]["back_url"], reverse("dailyplan_list"))
+
+    def test_dailyplan_meal_sequence_is_rendered_in_card_eyebrows(self):
+        eyebrow = render_to_string(
+            "components/card_child_title.html",
+            {
+                "meal_number": 2,
+                "titulo": {
+                    "icon": "utensils",
+                    "label": "Meal",
+                    "name": "Almuerzo",
+                    "structural_indicators": {},
+                },
+            },
+        )
+        detail_template = Path("notas/templates/notas/dailyplans/detail.html").read_text()
+
+        self.assertIn("Comida 2", eyebrow)
+        self.assertIn("meal_number=forloop.counter", detail_template)
+        self.assertNotIn("dailyplan-detail__meal-step-marker", detail_template)
+        self.assertNotIn("dailyplan-detail__meal-step-number", detail_template)

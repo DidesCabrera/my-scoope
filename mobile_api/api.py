@@ -30,6 +30,7 @@ from mobile_api.comparisons import (
     update_comparison,
 )
 from mobile_api.errors import MobileAPIError, error_envelope
+from mobile_api.library_actions import bulk_delete_library, perform_library_action, reorder_library
 from mobile_api.schemas import (
     AccountDeletionEnvelope,
     AccountDeletionInput,
@@ -61,8 +62,13 @@ from mobile_api.schemas import (
     FoodLabelCaptureInput,
     FoodPageEnvelope,
     HealthEnvelope,
+    LibraryActionInput,
+    LibraryActionResultEnvelope,
+    LibraryBulkDeleteInput,
     LibraryItemEnvelope,
     LibraryPageEnvelope,
+    LibraryListActionResultEnvelope,
+    LibraryOrderInput,
     MealCheckInInput,
     OnboardingInput,
     ProfileEnvelope,
@@ -1034,11 +1040,42 @@ def library_foods(request, search: str | None = None, offset: int = 0, limit: in
     return _success(library_foods_payload(request.auth.user, search=search, offset=offset, limit=limit))
 
 
+@api.put("/library/{entity}/order", auth=mobile_bearer, response={200: LibraryListActionResultEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope})
+def library_order(request, entity: str, payload: LibraryOrderInput):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    return _success(reorder_library(request.auth.user, entity, payload.ordered_ids))
+
+
+@api.post("/library/{entity}/bulk-delete", auth=mobile_bearer, response={200: LibraryListActionResultEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope})
+def library_bulk_delete(request, entity: str, payload: LibraryBulkDeleteInput):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    return _success(bulk_delete_library(request.auth.user, entity, payload.item_ids))
+
+
 @api.get("/library/{entity}/{item_id}", auth=mobile_bearer, response={200: LibraryItemEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope})
 def library_item_detail(request, entity: str, item_id: int):
     if entity not in {"programs", "daily-plans", "meals", "foods"}:
         raise MobileAPIError(code="library_item_not_found", message="The requested library item was not found.", status_code=404)
     return _success(library_item_detail_payload(request.auth.user, entity, item_id))
+
+
+@api.post(
+    "/library/{entity}/{item_id}/actions",
+    auth=mobile_bearer,
+    response={
+        200: LibraryActionResultEnvelope,
+        401: ErrorEnvelope,
+        403: ErrorEnvelope,
+        404: ErrorEnvelope,
+        409: ErrorEnvelope,
+        422: ErrorEnvelope,
+    },
+)
+def library_item_action(request, entity: str, item_id: int, payload: LibraryActionInput):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    if entity not in {"programs", "daily-plans", "meals", "foods"}:
+        raise MobileAPIError(code="library_item_not_found", message="The requested library item was not found.", status_code=404)
+    return _success(perform_library_action(request, entity, item_id, payload))
 
 
 @api.post(

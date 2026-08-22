@@ -31,6 +31,7 @@ from notas.domain.models import (
     DailyPlanMeal,
     Food,
     FoodLabelCaptureReceipt,
+    FoodShare,
     Meal,
     MealFood,
     NutritionProposal,
@@ -126,6 +127,7 @@ class MobileAPIV1Tests(TestCase):
             "/api/v1/library/daily-plans",
             "/api/v1/library/meals",
             "/api/v1/library/foods",
+            "/api/v1/library/{entity}/{item_id}/actions",
             "/api/v1/foods/label-captures",
             "/api/v1/ai/turns",
             "/api/v1/ai/jobs/{job_id}",
@@ -1034,6 +1036,7 @@ class MobileAPIV1Tests(TestCase):
         self.assertIn("protein_allocation", dailyplan_item["panel"]["meals"][0]["foods"][0])
         self.assertIn("calorie_share", dailyplan_item["panel"]["meals"][0])
         self.assertIn("calorie_distribution", dailyplan_item["panel"]["meals"][0])
+        self.assertEqual(dailyplan_item["panel"]["meals"][0]["protein_per_kilogram"], 0.2)
 
         program_item = self.client.get("/api/v1/library/programs").json()["data"]["items"][0]
         self.assertEqual(program_item["panel"]["kind"], "weeks")
@@ -1067,6 +1070,7 @@ class MobileAPIV1Tests(TestCase):
                     self.assertEqual(meal_data["foods"][0]["name"], "Avena personal")
                     self.assertIn("calories", meal_data["foods"][0])
                     self.assertIn("calorie_distribution", meal_data["foods"][0])
+                    self.assertEqual(meal_data["protein_per_kilogram"], 0.2)
                     aggregated_food = detail_data["panel"]["foods"][0]
                     self.assertEqual(aggregated_food["name"], "Avena personal")
                     self.assertEqual(aggregated_food["quantity"], 100.0)
@@ -1079,6 +1083,7 @@ class MobileAPIV1Tests(TestCase):
                     self.assertEqual(week_data["days"][0]["dailyplan_id"], dailyplan.id)
                     self.assertEqual(week_data["days"][0]["nutrition"]["calories"], 387.0)
                     self.assertEqual(week_data["days"][0]["meals"][0]["name"], "Instancia del plan")
+                    self.assertEqual(week_data["days"][0]["meals"][0]["protein_per_kilogram"], 0.2)
                     self.assertEqual(week_data["foods"][0]["name"], "Avena personal")
 
         embedded_meal_detail = self.client.get(f"/api/v1/library/meals/{embedded_meal.id}")
@@ -1096,6 +1101,131 @@ class MobileAPIV1Tests(TestCase):
         missing = self.client.get("/api/v1/library/meals/999999")
         self.assertEqual(missing.status_code, 404)
         self.assertEqual(missing.json()["error"]["code"], "library_item_not_found")
+
+    def test_library_list_actions_reorder_and_bulk_delete_only_owned_items(self):
+        first = Food.objects.create(name="Primero", protein=1, carbs=1, fat=1, created_by=self.user, list_order=0)
+        second = Food.objects.create(name="Segundo", protein=1, carbs=1, fat=1, created_by=self.user, list_order=1)
+        other = User.objects.create_user(username="other-library-actions")
+        foreign = Food.objects.create(name="Ajeno", protein=1, carbs=1, fat=1, created_by=other)
+
+        reordered = self.client.put(
+            "/api/v1/library/foods/order",
+            data={"ordered_ids": [second.id, first.id]},
+            content_type="application/json",
+        )
+        self.assertEqual(reordered.status_code, 200)
+        first.refresh_from_db()
+        second.refresh_from_db()
+        self.assertEqual((second.list_order, first.list_order), (0, 1))
+
+        rejected = self.client.put(
+            "/api/v1/library/foods/order",
+            data={"ordered_ids": [first.id, foreign.id]},
+            content_type="application/json",
+        )
+        self.assertEqual(rejected.status_code, 403)
+
+        deleted = self.client.post(
+            "/api/v1/library/foods/bulk-delete",
+            data={"item_ids": [first.id, second.id]},
+            content_type="application/json",
+        )
+        self.assertEqual(deleted.status_code, 200)
+        self.assertEqual(set(deleted.json()["data"]["affected_ids"]), {first.id, second.id})
+        self.assertFalse(Food.objects.filter(id__in=[first.id, second.id], is_active=True).exists())
+        self.assertTrue(Food.objects.filter(pk=foreign.id, is_active=True).exists())
+
+    def test_library_list_actions_require_write_scope(self):
+        food = Food.objects.create(name="Solo lectura", protein=1, carbs=1, fat=1, created_by=self.user)
+        read_only = create_mcp_user_token(
+            user=self.user,
+            name="Read-only library token",
+            scopes=[MOBILE_SCOPE_READ],
+            expires_at=timezone.now() + timedelta(minutes=15),
+            device_session=self.device_session,
+        )
+        client = Client(HTTP_AUTHORIZATION=f"Bearer {read_only.raw_token}")
+        response = client.put(
+            "/api/v1/library/foods/order",
+            data={"ordered_ids": [food.id]},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.json()["error"]["code"], "mobile_scope_missing")
+
+    def test_library_actions_match_web_placement_and_execute_through_the_mobile_api(self):
+        food = Food.objects.create(name="Yogur natural", protein=10, carbs=4, fat=3, created_by=self.user)
+        meal = Meal.objects.create(name="Colación", created_by=self.user, is_draft=False)
+
+        food_list_item = self.client.get("/api/v1/library/foods").json()["data"]["items"][0]
+        food_detail = self.client.get(f"/api/v1/library/foods/{food.id}").json()["data"]
+        meal_list_item = self.client.get("/api/v1/library/meals").json()["data"]["items"][0]
+        meal_detail = self.client.get(f"/api/v1/library/meals/{meal.id}").json()["data"]
+
+        self.assertEqual(food_list_item["actions"], [])
+        self.assertEqual([action["key"] for action in food_detail["actions"]], ["share", "delete"])
+        self.assertEqual([action["key"] for action in meal_list_item["actions"]], ["duplicate", "delete"])
+        self.assertEqual(
+            [action["key"] for action in meal_detail["actions"]],
+            ["rename", "duplicate", "share", "delete"],
+        )
+
+        renamed = self.client.post(
+            f"/api/v1/library/meals/{meal.id}/actions",
+            data={"action": "rename", "name": "Colación PM"},
+            content_type="application/json",
+        )
+        self.assertEqual(renamed.status_code, 200)
+        meal.refresh_from_db()
+        self.assertEqual(meal.name, "Colación PM")
+
+        duplicated = self.client.post(
+            f"/api/v1/library/meals/{meal.id}/actions",
+            data={"action": "duplicate"},
+            content_type="application/json",
+        )
+        self.assertEqual(duplicated.status_code, 200)
+        duplicate_id = duplicated.json()["data"]["item_id"]
+        self.assertTrue(Meal.objects.filter(pk=duplicate_id, name="Colación PM (Copia)").exists())
+
+        deleted = self.client.post(
+            f"/api/v1/library/meals/{duplicate_id}/actions",
+            data={"action": "delete"},
+            content_type="application/json",
+        )
+        self.assertEqual(deleted.status_code, 200)
+        self.assertFalse(Meal.objects.filter(pk=duplicate_id).exists())
+
+        with patch(
+            "mobile_api.library_actions.deliver_share_invitation",
+            return_value=SimpleNamespace(sent=False, reason="delivery_disabled"),
+        ):
+            shared = self.client.post(
+                f"/api/v1/library/foods/{food.id}/actions",
+                data={
+                    "action": "share",
+                    "recipient_email": "friend@example.com",
+                    "subject": "Un alimento para ti",
+                    "message": "Revísalo cuando puedas.",
+                },
+                content_type="application/json",
+            )
+        self.assertEqual(shared.status_code, 200)
+        self.assertTrue(FoodShare.objects.filter(food=food, recipient_email="friend@example.com").exists())
+
+    def test_library_actions_reject_items_owned_by_another_user(self):
+        other = User.objects.create_user(username="another-library-owner")
+        meal = Meal.objects.create(name="Privada", created_by=other, is_draft=False)
+
+        response = self.client.post(
+            f"/api/v1/library/meals/{meal.id}/actions",
+            data={"action": "delete"},
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json()["error"]["code"], "library_item_not_found")
+        self.assertTrue(Meal.objects.filter(pk=meal.id).exists())
 
     def test_confirmed_label_capture_creates_only_a_private_food_and_is_idempotent(self):
         payload = {

@@ -86,6 +86,14 @@ const sections: { key: SectionKind; label: string; lucide: string }[] = [
   { key: "import", label: "Importar", lucide: "file-down" },
 ];
 
+const surfaces = [
+  { key: "surfaceApp", label: "App", role: "Fondo raíz y navegación global" },
+  { key: "surfacePage", label: "Página", role: "Superficie base de una vista" },
+  { key: "surfaceCard", label: "Card", role: "Contenido agrupado y elementos elevados" },
+  { key: "surfaceMuted", label: "Muted", role: "Paneles secundarios y campos" },
+  { key: "surfaceElevated", label: "Elevated", role: "Controles activos y capas superiores" },
+] as const;
+
 const foodPanelItems: FoodPanelItem[] = [
   { id: "oats", name: "Avena integral", quantity: 80, quantityUnit: "g", calories: 311, calorieShare: 34, proteinGrams: 10.5, carbsGrams: 52.8, fatGrams: 5.5, proteinAllocation: 14, carbsAllocation: 71, fatAllocation: 15 },
   { id: "yogurt", name: "Yogur griego", quantity: 180, quantityUnit: "g", calories: 176, calorieShare: 19, proteinGrams: 18, carbsGrams: 8.2, fatGrams: 7.1, proteinAllocation: 41, carbsAllocation: 19, fatAllocation: 40 },
@@ -448,7 +456,7 @@ export default function UiGalleryScreen() {
             }}
             onBack={() => undefined}
             title="Día de entrenamiento">
-            <EntityDetailSection detail="3 comidas" title="Comidas en este plan">
+            <EntityDetailSection detail="3 comidas" title="Tabla de comparación entre comidas">
               <MealPanels items={mealPanelItems} />
             </EntityDetailSection>
             <EntityDetailSection detail="3 comidas" title="Detalle de cada comida">
@@ -655,6 +663,19 @@ export default function UiGalleryScreen() {
 
       {tab === "tokens" ? (
         <>
+          <SectionTitle detail={`${surfaces.length} roles semánticos`} title="Colores de superficies" />
+          <View style={styles.surfaceList}>
+            {surfaces.map((surface) => (
+              <View key={surface.key} style={styles.surfaceRow}>
+                <View style={[styles.surfaceSwatch, { backgroundColor: tokens.color[surface.key] }]} />
+                <View style={styles.surfaceCopy}>
+                  <Text style={styles.surfaceName}>{surface.label}</Text>
+                  <Text style={styles.surfaceRole}>{surface.role}</Text>
+                  <Text style={styles.surfaceToken}>tokens.color.{surface.key} · {tokens.color[surface.key]}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
           <SectionTitle detail={tokens.contract} title="Entidades" />
           {entities.map((entity) => (
             <EntityCard entity={entity.key} key={entity.key} subtitle={`tokens.color.${entity.key}`} title={entity.label} />
@@ -752,6 +773,13 @@ const styles = StyleSheet.create({
   sectionIconList: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderWidth: 1, paddingHorizontal: tokens.spacing.md },
   sectionIconRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.sm, minHeight: 44 },
   sectionIconLabel: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
+  surfaceList: { borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.card, borderWidth: 1, overflow: "hidden" },
+  surfaceRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, minHeight: 86, padding: tokens.spacing.md },
+  surfaceSwatch: { borderColor: tokens.color.borderStrong, borderRadius: tokens.radius.md, borderWidth: 1, height: 56, width: 56 },
+  surfaceCopy: { flex: 1, gap: 2, minWidth: 0 },
+  surfaceName: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.semibold },
+  surfaceRole: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 18 },
+  surfaceToken: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontVariant: ["tabular-nums"] },
   allocationRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md },
   allocationLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700", width: 96 },
   allocationBarInRow: { flex: 1, minWidth: 0, width: "auto" },

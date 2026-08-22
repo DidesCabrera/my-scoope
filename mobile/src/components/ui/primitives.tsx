@@ -145,6 +145,7 @@ export function Field({
   keyboardType,
   autoCapitalize = "none",
   secureTextEntry = false,
+  multiline = false,
 }: {
   label: string;
   value: string;
@@ -153,6 +154,7 @@ export function Field({
   keyboardType?: KeyboardTypeOptions;
   autoCapitalize?: "none" | "sentences" | "words" | "characters";
   secureTextEntry?: boolean;
+  multiline?: boolean;
 }) {
   return (
     <View style={styles.field}>
@@ -160,12 +162,13 @@ export function Field({
       <TextInput
         autoCapitalize={autoCapitalize}
         keyboardType={keyboardType}
+        multiline={multiline}
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={tokens.color.textSubtle}
         selectionColor={tokens.color.interactivePrimary}
         secureTextEntry={secureTextEntry}
-        style={styles.input}
+        style={[styles.input, multiline && styles.inputMultiline]}
         value={value}
       />
     </View>
@@ -272,7 +275,8 @@ const styles = StyleSheet.create({
   buttonDangerText: { color: tokens.color.danger },
   field: { gap: 7 },
   fieldLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700" },
-  input: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.lg, borderWidth: 1, color: tokens.color.textMain, fontSize: 17, minHeight: 54, paddingHorizontal: 16 },
+  input: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.lg, borderWidth: 1, color: tokens.color.textMain, fontSize: 17, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minHeight: 44, paddingHorizontal: 16 },
+  inputMultiline: { minHeight: 104, paddingTop: 15, textAlignVertical: "top" },
   choiceRow: { flexDirection: "row", gap: tokens.spacing.sm },
   choice: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.lg, borderWidth: 1, flex: 1, justifyContent: "center", minHeight: 50, paddingHorizontal: 10 },
   choiceSelected: { backgroundColor: tokens.color.textMain, borderColor: tokens.color.textMain },

@@ -26,20 +26,26 @@ export function CollectionPageHeader({
 }) {
   return (
     <View style={styles.container}>
-      <View style={styles.identity}>
+      <View style={styles.iconSlot}>
         {icon ?? <EntityIcon entity={entity} size="hero" />}
-        <Text style={styles.title}>{title}</Text>
       </View>
-      {count !== undefined ? (
-        <StructuralIndicators entity={entity} indicators={[{ icon: countIcon, label: "elementos", value: count }]} />
-      ) : null}
-      {action}
+      <View style={styles.copy}>
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>{title}</Text>
+          {action}
+        </View>
+        {count !== undefined ? (
+          <StructuralIndicators entity={entity} indicators={[{ icon: countIcon, label: "elementos", value: count }]} tone="surfaceMuted" />
+        ) : null}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { alignItems: "flex-start", gap: tokens.spacing.md, minWidth: 0, paddingVertical: tokens.spacing.md, width: "100%" },
-  identity: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, minWidth: 0, width: "100%" },
+  container: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, minWidth: 0, paddingVertical: tokens.spacing.xs, width: "100%" },
+  iconSlot: { paddingTop: tokens.spacing.xs },
+  copy: { alignItems: "flex-start", flex: 1, gap: tokens.spacing.sm, minWidth: 0 },
+  titleRow: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between", minWidth: 0, width: "100%" },
   title: { color: tokens.color.textMain, flexShrink: 1, fontSize: tokens.type.title, fontWeight: tokens.weight.semibold, letterSpacing: 0, lineHeight: 32, textAlign: "left" },
 });

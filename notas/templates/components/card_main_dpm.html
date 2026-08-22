@@ -10,7 +10,6 @@
     <!-- KPI ========================================= -->
     <div class="page-kpi">
 
-        <h3>Información Nutricional</h3>
         <div class="card-kpi main">
             {% include "components/dash_kpi.html" with kpis=main_card.kpis %}
         </div>
@@ -20,7 +19,7 @@
     <!-- MEALS TABLE ========================================= -->
     
     <div class="detail-section">
-        <h3>Alimentos en esta Comida</h3>
+        <h3>Tabla de comparación entre alimentos</h3>
     
         {% with panel_id=main_card.main_id|default:"main-dpm" %}
             <div class="content-panel content-panel--main card-detail-block main">

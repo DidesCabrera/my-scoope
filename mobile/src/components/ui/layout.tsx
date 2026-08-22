@@ -12,7 +12,7 @@ type ScreenProps = PropsWithChildren<{
 export function Screen({ children, scroll = true, contentStyle }: ScreenProps) {
   const content = <View style={[styles.screenContent, contentStyle]}>{children}</View>;
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+    <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
       {scroll ? (
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
           {content}
@@ -47,6 +47,10 @@ export function AppHeader({ eyebrow, title, action }: { eyebrow?: string; title:
     </View>
   );
 }
+
+export const layoutStyles = StyleSheet.create({
+  cardContentBleed: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding },
+});
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: tokens.color.surfaceApp },

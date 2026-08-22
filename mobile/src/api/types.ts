@@ -194,6 +194,28 @@ export type MacroTotals = {
 
 export type LibraryEntity = "food" | "meal" | "dailyPlan" | "program";
 
+export type LibraryActionKey = "rename" | "duplicate" | "share" | "delete";
+
+export type LibraryAction = {
+  key: LibraryActionKey;
+  label: string;
+  destructive: boolean;
+};
+
+export type LibraryActionInput = {
+  action: LibraryActionKey;
+  name?: string;
+  recipient_email?: string;
+  subject?: string;
+  message?: string;
+};
+
+export type LibraryActionResult = {
+  action: LibraryActionKey;
+  item_id: number;
+  message: string;
+};
+
 export type LibraryNutrition = {
   calories: number;
   protein: { grams: number; allocation: number; per_kilogram: number | null };
@@ -233,6 +255,7 @@ export type LibraryMealPanelItem = {
   calorie_share: number;
   calorie_distribution: LibraryCalorieDistribution;
   protein_grams: number;
+  protein_per_kilogram: number | null;
   carbs_grams: number;
   fat_grams: number;
   protein_allocation: number;
@@ -292,6 +315,7 @@ export type LibraryItem = {
   creator: string;
   created_at: string;
   can_calendarize: boolean;
+  actions: LibraryAction[];
 };
 
 export type LibraryPageData = {

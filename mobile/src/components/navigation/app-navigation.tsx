@@ -9,7 +9,8 @@ import {
   FileCheck,
   House,
   LogOut,
-  Menu,
+  PanelRight,
+  MoreHorizontal,
   Bell,
   Scale,
   Sparkles,
@@ -30,7 +31,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { initialWindowMetrics, SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useSession } from "@/auth/session-context";
 import type { LibraryEntity } from "@/api/types";
@@ -41,8 +42,8 @@ import { EntitySidebarItem, type EntitySidebarItemData, NavigationSidebarItem, t
 
 type HeaderPresentation =
   | { mode: "default"; borderVisible?: boolean; identityVisible?: boolean; title?: string }
-  | { mode: "library-detail"; entity: LibraryEntity; identityVisible: boolean; title: string }
-  | { mode: "library-list"; entity: LibraryEntity; identityVisible: boolean; title: string };
+  | { mode: "library-detail"; action?: { label: string; onPress(): void }; borderVisible?: boolean; entity: LibraryEntity; identityVisible: boolean; title: string }
+  | { mode: "library-list"; action?: { label: string; onPress(): void }; borderVisible?: boolean; entity: LibraryEntity; identityVisible: boolean; title: string };
 
 type NavigationContextValue = {
   closeMenu(): void;
@@ -161,7 +162,7 @@ export function AppNavigationHeader() {
   const defaultIdentityVisible = headerPresentation.mode === "default" && Boolean(headerPresentation.identityVisible);
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.headerSafeArea}>
-      <View style={[styles.header, headerPresentation.mode === "default" ? !defaultIdentityVisible && styles.headerWithoutBorder : !headerPresentation.identityVisible && styles.headerWithoutBorder]}>
+      <View style={[styles.header, headerPresentation.mode === "default" ? !defaultIdentityVisible && styles.headerWithoutBorder : (headerPresentation.borderVisible === false || !headerPresentation.identityVisible) && styles.headerWithoutBorder]}>
         {headerPresentation.mode === "library-detail" ? (
           <Pressable accessibilityLabel="Volver" accessibilityRole="button" hitSlop={8} onPress={() => { if (router.canGoBack()) router.back(); else router.replace(detailFallback); }} style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}><ChevronLeft color={tokens.color.textMain} size={26} strokeWidth={2.2} /></Pressable>
         ) : canOpenMenu ? (
@@ -171,7 +172,7 @@ export function AppNavigationHeader() {
             hitSlop={8}
             onPress={openMenu}
             style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}>
-            <Menu color={tokens.color.textMain} size={25} strokeWidth={2} />
+            <PanelRight color={tokens.color.textMain} size={25} strokeWidth={2} />
           </Pressable>
         ) : (
           <View style={styles.headerButton} />
@@ -179,7 +180,16 @@ export function AppNavigationHeader() {
         {headerPresentation.mode === "library-list" || headerPresentation.mode === "library-detail" ? (
           <LibraryHeaderIdentity entity={headerPresentation.entity} title={headerPresentation.title} visible={headerPresentation.identityVisible} />
         ) : isHome ? <View pointerEvents="none" style={styles.headerLogo}><MyScoopeLogo /></View> : <HeaderIdentity icon={routeIdentity.icon} title={headerPresentation.title || routeIdentity.title} visible={defaultIdentityVisible} />}
-        <View style={styles.headerButton} />
+        {(headerPresentation.mode === "library-detail" || headerPresentation.mode === "library-list") && headerPresentation.action ? (
+          <Pressable
+            accessibilityLabel={headerPresentation.action.label}
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={headerPresentation.action.onPress}
+            style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}>
+            <MoreHorizontal color={tokens.color.textMain} size={26} strokeWidth={2.2} />
+          </Pressable>
+        ) : <View style={styles.headerButton} />}
       </View>
     </SafeAreaView>
   );
@@ -209,27 +219,43 @@ function EntitySidebarEntry({ item }: { item: EntitySidebarItemData }) {
 
 function AppSidebar() {
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { closeMenu, menuOpen } = useAppNavigation();
   const { session, signOut } = useSession();
   const [translateX] = useState(() => new Animated.Value(-380));
+  const [scrimOpacity] = useState(() => new Animated.Value(0));
+  const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
-    if (!menuOpen) return;
-    translateX.setValue(-Math.min(width * 0.88, 360));
-    Animated.timing(translateX, {
-      duration: 220,
-      toValue: 0,
-      useNativeDriver: true,
-    }).start();
-  }, [menuOpen, translateX, width]);
+    const hiddenPosition = -Math.min(width * 0.88, 360);
+    if (menuOpen) {
+      setModalVisible(true);
+      translateX.setValue(hiddenPosition);
+      scrimOpacity.setValue(0);
+      Animated.parallel([
+        Animated.timing(translateX, { duration: 220, toValue: 0, useNativeDriver: true }),
+        Animated.timing(scrimOpacity, { duration: 220, toValue: 1, useNativeDriver: true }),
+      ]).start();
+      return;
+    }
+    if (!modalVisible) return;
+    Animated.parallel([
+      Animated.timing(translateX, { duration: 220, toValue: hiddenPosition, useNativeDriver: true }),
+      Animated.timing(scrimOpacity, { duration: 180, toValue: 0, useNativeDriver: true }),
+    ]).start(({ finished }) => { if (finished) setModalVisible(false); });
+  }, [menuOpen, modalVisible, scrimOpacity, translateX, width]);
 
   return (
-    <Modal animationType="fade" onRequestClose={closeMenu} transparent visible={menuOpen}>
+    <Modal animationType="none" onRequestClose={closeMenu} transparent visible={modalVisible}>
       <View style={styles.modalRoot}>
-        <Pressable accessibilityLabel="Cerrar menú" onPress={closeMenu} style={styles.scrim} />
+        <Animated.View style={[styles.scrim, { opacity: scrimOpacity }]}><Pressable accessibilityLabel="Cerrar menú" onPress={closeMenu} style={styles.scrimPressable} /></Animated.View>
         <Animated.View style={[styles.drawer, { maxWidth: 360, transform: [{ translateX }], width: Math.min(width * 0.88, 360) }]}>
-          <SafeAreaView edges={["top", "bottom", "left"]} style={styles.drawerSafeArea}>
+          <View style={[styles.drawerSafeArea, {
+            paddingBottom: Math.max(insets.bottom, initialWindowMetrics?.insets.bottom ?? 0),
+            paddingLeft: Math.max(insets.left, initialWindowMetrics?.insets.left ?? 0),
+            paddingTop: Math.max(insets.top, initialWindowMetrics?.insets.top ?? 0),
+          }]}>
             <View style={styles.drawerHeader}>
               <MyScoopeLogo />
               <Pressable
@@ -267,7 +293,7 @@ function AppSidebar() {
                 <LogOut color={tokens.color.textMuted} size={20} />
               </Pressable>
             </View>
-          </SafeAreaView>
+          </View>
         </Animated.View>
       </View>
     </Modal>
@@ -293,6 +319,7 @@ const styles = StyleSheet.create({
   logoBarFat: { backgroundColor: tokens.color.fat },
   modalRoot: { flex: 1, flexDirection: "row" },
   scrim: { backgroundColor: "rgba(0,0,0,0.72)", bottom: 0, left: 0, position: "absolute", right: 0, top: 0 },
+  scrimPressable: { flex: 1 },
   drawer: { backgroundColor: tokens.color.surfacePage, borderRightColor: tokens.color.borderDefault, borderRightWidth: 1, height: "100%", shadowColor: "#000000", shadowOffset: { height: 0, width: 8 }, shadowOpacity: 0.45, shadowRadius: 20 },
   drawerSafeArea: { flex: 1 },
   drawerHeader: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", justifyContent: "space-between", minHeight: 64, paddingHorizontal: tokens.spacing.lg },

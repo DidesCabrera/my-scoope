@@ -39,6 +39,10 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(gallery, /ProgramChildCard/);
   assert.match(gallery, /Detalle de programa/);
   assert.match(gallery, /ProgramDetailPreview/);
+  assert.match(gallery, /title="Colores de superficies"/);
+  for (const surface of ["surfaceApp", "surfacePage", "surfaceCard", "surfaceMuted", "surfaceElevated"]) {
+    assert.match(gallery, new RegExp(surface));
+  }
 
   const nutritionKpi = await readFile(
     path.resolve(process.cwd(), "src/components/nutrition/nutrition-kpi-section.tsx"),
@@ -58,6 +62,42 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   );
   assert.match(libraryCard, /NutritionEntityCard.*from "@\/components\/nutrition"/);
   assert.doesNotMatch(libraryCard, /\.\/nutrition-entity-card/);
+
+  const collectionPageHeader = await readFile(
+    path.resolve(process.cwd(), "src/components/ui/collection-page-header.tsx"),
+    "utf8",
+  );
+  assert.match(collectionPageHeader, /container: \{ alignItems: "flex-start", flexDirection: "row"/);
+  assert.match(collectionPageHeader, /iconSlot: \{ paddingTop: tokens\.spacing\.xs \}/);
+  assert.match(collectionPageHeader, /copy: \{ alignItems: "flex-start", flex: 1/);
+  assert.match(collectionPageHeader, /<View style=\{styles\.copy\}>[\s\S]*?<Text style=\{styles\.title\}>\{title\}<\/Text>[\s\S]*?<StructuralIndicators/);
+  assert.match(collectionPageHeader, /<StructuralIndicators[^\n]*tone="surfaceMuted"/);
+
+  const productUiSourceForIndicators = await readFile(
+    path.resolve(process.cwd(), "src/components/ui/product.tsx"),
+    "utf8",
+  );
+  assert.match(productUiSourceForIndicators, /tone\?: "identity" \| "surfaceCard" \| "surfaceMuted"/);
+  assert.match(productUiSourceForIndicators, /tone === "surfaceMuted" \? tokens\.color\.surfaceMuted : color/);
+  assert.match(productUiSourceForIndicators, /structuralItemSurface: \{ borderColor: tokens\.color\.borderDefault, borderWidth: 1 \}/);
+
+  const libraryEntityPanels = await readFile(
+    path.resolve(process.cwd(), "src/components/libraries/entity-panels.tsx"),
+    "utf8",
+  );
+  assert.match(libraryEntityPanels, /perKilogram: item\.protein_per_kilogram/);
+  assert.match(libraryEntityPanels, /eyebrow=\{`Comida \$\{index \+ 1\}`\}/);
+  assert.doesNotMatch(libraryEntityPanels, /mealCardMarker|mealCardNumber|mealCardLine/);
+
+  for (const relativePath of [
+    "src/app/program/days/[id].tsx",
+    "src/components/details/dailyplan-meal-detail-list.tsx",
+  ]) {
+    const dailyPlanMealCards = await readFile(path.resolve(process.cwd(), relativePath), "utf8");
+    assert.match(dailyPlanMealCards, /eyebrow=\{`Comida \$\{index \+ 1\}`\}/);
+    assert.doesNotMatch(dailyPlanMealCards, /mealCardMarker|mealCardNumber|mealCardLine|markerNumber|markerLine/);
+  }
+  assert.doesNotMatch(libraryEntityPanels, /protein: \{ grams: item\.protein_grams, allocation: item\.protein_allocation, perKilogram: null \}/);
 
   const programWeekPanels = await readFile(
     path.resolve(process.cwd(), "src/components/libraries/program-week-comparison-panels.tsx"),
@@ -87,10 +127,9 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(programDetail, /<ProgramDaySelector/);
   assert.match(programDetail, /<ProgramWeekTabs/);
   assert.match(programDetail, /weekCard: \{ gap: tokens\.spacing\.lg, marginHorizontal: -tokens\.spacing\.screen \}/);
-  assert.match(programDetail, /systemBleed: \{ marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding \}/);
-  assert.match(programDetail, /<ProgramMetricPreview[^\n]*style=\{styles\.systemBleed\}/);
+  assert.match(programDetail, /<ProgramMetricPreview[^\n]*style=\{layoutStyles\.cardContentBleed\}/);
   assert.match(programDetail, /<FoodPanels items=\{weekData/);
-  assert.doesNotMatch(programDetail, /<View style=\{styles\.systemBleed\}><(?:FoodPanels|ProgramDayComparisonPanels|ProgramWeekComparisonPanels)/);
+  assert.doesNotMatch(programDetail, /<View style=\{layoutStyles\.cardContentBleed\}><(?:FoodPanels|ProgramDayComparisonPanels|ProgramWeekComparisonPanels)/);
   assert.match(programDetail, /stickyHeaderIndices=\{\[3\]\}/);
   assert.match(programDetail, /weekTabsSticky: \{ backgroundColor: tokens\.color\.surfaceApp, borderBottomColor: "transparent", borderBottomWidth: 1/);
   assert.match(programDetail, /weekTabsStickyPinned: \{ borderBottomColor: tokens\.color\.borderDefault \}/);
@@ -176,9 +215,10 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     path.resolve(process.cwd(), "src/components/libraries/program-child-card.tsx"),
     "utf8",
   );
-  assert.match(programChart, /import \{ Card, EntityHeading \} from "@\/components\/ui"/);
+  assert.match(programChart, /import \{ Card, EntityHeading, layoutStyles \} from "@\/components\/ui"/);
   assert.doesNotMatch(programChart, /Card.*from "@\/components\/ui\/primitives"/);
   assert.match(programChart, /<Card accent=\{tokens\.color\.program\}>/);
+  assert.match(programChart, /<ProgramMetricPreview[^\n]*style=\{layoutStyles\.cardContentBleed\}/);
   assert.match(programChart, /allocationSlot: \{[^\n]*gap: 2[^\n]*paddingHorizontal: 1/);
   assert.match(programChart, /allocationSegment: \{ borderRadius: 2/);
   assert.match(programChart, /key=\{`\$\{index\}-\$\{label\}`\}/);
@@ -200,6 +240,12 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   );
   assert.match(libraryCardSource, /programDailyMetricData\(item\.panel\.weeks\)/);
   assert.match(libraryCardSource, /`S\$\{week\.week_number\}`/);
+
+  const layoutUiSource = await readFile(
+    path.resolve(process.cwd(), "src/components/ui/layout.tsx"),
+    "utf8",
+  );
+  assert.match(layoutUiSource, /cardContentBleed: \{ marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding \}/);
 
   const programDayPanels = await readFile(
     path.resolve(process.cwd(), "src/components/libraries/program-day-comparison-panels.tsx"),

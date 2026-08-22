@@ -25,11 +25,7 @@ function CalendarizedMealCards({ meals }: { meals: MealSnapshot[] }) {
       {meals.map((meal, index) => {
         const totals = meal.totals;
         return (
-          <View key={meal.key ?? `${meal.name}-${index}`} style={styles.mealCardStep}>
-            <View aria-hidden style={styles.mealCardMarker}>
-              <View style={styles.mealCardLine} />
-              <View style={styles.mealCardNumber}><Text style={styles.mealCardNumberText}>{index + 1}</Text></View>
-            </View>
+          <View key={meal.key ?? `${meal.name}-${index}`}>
             <NutritionEntityCard
               actions={meal.detail_id ? (
                 <EntityCardAction
@@ -40,6 +36,7 @@ function CalendarizedMealCards({ meals }: { meals: MealSnapshot[] }) {
                 </EntityCardAction>
               ) : null}
               entity="meal"
+              eyebrow={`Comida ${index + 1}`}
               indicators={[{ icon: "food", label: "alimentos", value: meal.foods?.length ?? 0 }]}
               nutrition={{
                 calories: snapshotCalories(totals),
@@ -125,7 +122,7 @@ export default function ProgramDayScreen() {
           }}
           subtitle="Plan diario calendarizado"
           title={snapshot.name ?? day.plan_name ?? "Plan diario"}>
-          <EntityDetailSection detail={`${meals.length} elementos`} title="Comidas en este plan">
+          <EntityDetailSection detail={`${meals.length} elementos`} title="Tabla de comparación entre comidas">
             <MealPanels items={mealItems} />
           </EntityDetailSection>
           {meals.length ? (
@@ -155,12 +152,7 @@ const styles = StyleSheet.create({
   foodRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between", minHeight: 42, paddingHorizontal: tokens.spacing.sm },
   foodRowLast: { borderBottomWidth: 0 },
   loading: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, flex: 1, gap: tokens.spacing.md, justifyContent: "center", padding: tokens.spacing.screen },
-  mealCardLine: { backgroundColor: tokens.color.borderDefault, height: 1, width: "100%" },
   mealCardList: { gap: tokens.spacing.lg, minWidth: 0, width: "100%" },
-  mealCardMarker: { alignItems: "center", height: 36, justifyContent: "center", paddingHorizontal: tokens.spacing.xs, position: "relative", width: "100%" },
-  mealCardNumber: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, height: 36, justifyContent: "center", left: tokens.spacing.xs, position: "absolute", width: 36, zIndex: 1 },
-  mealCardNumberText: { color: tokens.color.textMuted, fontSize: 18, fontVariant: ["tabular-nums"], fontWeight: "600" },
-  mealCardStep: { gap: tokens.spacing.sm, minWidth: 0 },
   metadataLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption },
   metadataRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
   metadataValue: { color: tokens.color.textMain, flexShrink: 1, fontSize: tokens.type.caption, fontWeight: "500", textAlign: "right", textTransform: "capitalize" },

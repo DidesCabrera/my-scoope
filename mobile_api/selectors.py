@@ -11,6 +11,7 @@ from accounts.services.profile import build_account_credit_display
 from billing.application.services.apple_app_store import get_or_create_apple_app_account_token
 from billing.models import BillingProduct, PaymentProvider, ProviderSubscription
 from mobile_api.errors import MobileAPIError
+from mobile_api.library_actions import library_actions_payload
 from notas.application.proposals.contracts import (
     can_apply_proposal,
     proposal_status_label,
@@ -104,12 +105,13 @@ def _food_panel_item(meal_food) -> dict:
     }
 
 
-def _meal_panel_item(dailyplan_meal, dailyplan) -> dict:
+def _meal_panel_item(dailyplan_meal, dailyplan, current_weight=None) -> dict:
     meal = dailyplan_meal.meal
     meal_total_kcal = _cached_or_live(meal, "total_kcal_cached", "total_kcal")
     meal_kcal_protein = _cached_or_live(meal, "kcal_protein_cached", "kcal_protein")
     meal_kcal_carbs = _cached_or_live(meal, "kcal_carbs_cached", "kcal_carbs")
     meal_kcal_fat = _cached_or_live(meal, "kcal_fat_cached", "kcal_fat")
+    protein = _safe_number(_cached_or_live(meal, "protein_cached", "protein"))
     return {
         "id": f"dailyplan-meal:{dailyplan_meal.id}",
         "detail_id": meal.id,
@@ -119,7 +121,8 @@ def _meal_panel_item(dailyplan_meal, dailyplan) -> dict:
         "calories": _safe_number(meal_total_kcal),
         "calorie_share": _safe_number(_safe_percentage(meal_total_kcal, dailyplan.total_kcal)),
         "calorie_distribution": _calorie_distribution(meal_kcal_protein, meal_kcal_carbs, meal_kcal_fat),
-        "protein_grams": _safe_number(_cached_or_live(meal, "protein_cached", "protein")),
+        "protein_grams": protein,
+        "protein_per_kilogram": _safe_number(protein / current_weight) if current_weight and protein else None,
         "carbs_grams": _safe_number(_cached_or_live(meal, "carbs_cached", "carbs")),
         "fat_grams": _safe_number(_cached_or_live(meal, "fat_cached", "fat")),
         "protein_allocation": _safe_number(_safe_percentage(meal_kcal_protein, dailyplan.kcal_protein)),
@@ -185,7 +188,7 @@ def _program_week_panel_items(program, current_weight=None) -> list[dict]:
             "plan_name": program_day.dailyplan.name if program_day else None,
             "nutrition": nutrition,
             "meals": [
-                _meal_panel_item(dailyplan_meal, program_day.dailyplan)
+                _meal_panel_item(dailyplan_meal, program_day.dailyplan, current_weight)
                 for dailyplan_meal in program_day.dailyplan.dailyplan_meals.all()
             ] if program_day else [],
         }
@@ -251,6 +254,7 @@ def library_foods_payload(user, *, search=None, offset=0, limit=30) -> dict:
             "panel": _empty_library_panel(),
             "creator": _creator_name(food),
             "created_at": food.created_at,
+            "actions": library_actions_payload(food, user, context="list"),
         },
     )
 
@@ -279,6 +283,7 @@ def library_meals_payload(user, *, search=None, offset=0, limit=30) -> dict:
             "panel": {**_empty_library_panel("foods"), "foods": [_food_panel_item(meal_food) for meal_food in meal.meal_food_set.all()]},
             "creator": _creator_name(meal),
             "created_at": meal.created_at,
+            "actions": library_actions_payload(meal, user, context="list"),
         },
     )
 
@@ -317,10 +322,11 @@ def library_dailyplans_payload(user, *, search=None, offset=0, limit=30) -> dict
             ],
             "panel": {
                 **_empty_library_panel("meals"),
-                "meals": [_meal_panel_item(dailyplan_meal, dailyplan) for dailyplan_meal in dailyplan.dailyplan_meals.all()],
+                "meals": [_meal_panel_item(dailyplan_meal, dailyplan, current_weight) for dailyplan_meal in dailyplan.dailyplan_meals.all()],
             },
             "creator": _creator_name(dailyplan),
             "created_at": dailyplan.created_at,
+            "actions": library_actions_payload(dailyplan, user, context="list"),
         },
     )
 
@@ -354,6 +360,7 @@ def library_programs_payload(user, *, search=None, offset=0, limit=30) -> dict:
             "creator": _creator_name(program),
             "created_at": program.created_at,
             "can_calendarize": program.created_by_id == user.id,
+            "actions": library_actions_payload(program, user, context="list"),
         },
     )
 
@@ -363,11 +370,11 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
     if entity == "foods":
         item = Food.objects.filter(pk=item_id, created_by=user, is_active=True).select_related("created_by").first()
         if item:
-            return {"id": item.id, "entity": "food", "name": resolve_food_display_name(item), "subtitle": "", "nutrition": _library_nutrition_payload(item, current_weight), "indicators": [{"label": "base nutricional", "value": "100 g"}], "panel": _empty_library_panel(), "creator": _creator_name(item), "created_at": item.created_at}
+            return {"id": item.id, "entity": "food", "name": resolve_food_display_name(item), "subtitle": "", "nutrition": _library_nutrition_payload(item, current_weight), "indicators": [{"label": "base nutricional", "value": "100 g"}], "panel": _empty_library_panel(), "creator": _creator_name(item), "created_at": item.created_at, "actions": library_actions_payload(item, user, context="detail")}
     elif entity == "meals":
         item = (Meal.objects.filter(pk=item_id, created_by=user, is_draft=False).select_related("created_by").annotate(library_food_count=Count("meal_food_set", distinct=True)).prefetch_related(Prefetch("meal_food_set", queryset=MealFood.objects.select_related("food").order_by("order", "id"))).first())
         if item:
-            return {"id": item.id, "entity": "meal", "name": item.name, "subtitle": "", "nutrition": _library_nutrition_payload(item, current_weight), "indicators": [{"icon": "food", "label": "alimentos", "value": item.library_food_count}], "panel": {**_empty_library_panel("foods"), "foods": [_food_panel_item(row) for row in item.meal_food_set.all()]}, "creator": _creator_name(item), "created_at": item.created_at}
+            return {"id": item.id, "entity": "meal", "name": item.name, "subtitle": "", "nutrition": _library_nutrition_payload(item, current_weight), "indicators": [{"icon": "food", "label": "alimentos", "value": item.library_food_count}], "panel": {**_empty_library_panel("foods"), "foods": [_food_panel_item(row) for row in item.meal_food_set.all()]}, "creator": _creator_name(item), "created_at": item.created_at, "actions": library_actions_payload(item, user, context="detail")}
     elif entity == "daily-plans":
         item = (DailyPlan.objects.filter(pk=item_id, created_by=user, is_draft=False).select_related("created_by").annotate(library_meal_count=Count("dailyplan_meals", distinct=True), library_food_count=Count("dailyplan_meals__meal__meal_food_set__food", distinct=True)).prefetch_related(Prefetch("dailyplan_meals__meal__meal_food_set", queryset=MealFood.objects.select_related("food").order_by("order", "id"))).first())
         if item:
@@ -375,11 +382,11 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
                 get_dailyplan_summary(item)["foods_aggregation_table"],
                 id_prefix=f"dailyplan-food:{item.id}",
             )
-            return {"id": item.id, "entity": "dailyPlan", "name": item.name, "subtitle": "", "nutrition": _library_nutrition_payload(item, current_weight), "indicators": [{"icon": "meal", "label": "comidas", "value": item.library_meal_count}, {"icon": "food", "label": "alimentos", "value": item.library_food_count}], "panel": {**_empty_library_panel("meals"), "meals": [_meal_panel_item(row, item) for row in item.dailyplan_meals.all()], "foods": foods}, "creator": _creator_name(item), "created_at": item.created_at}
+            return {"id": item.id, "entity": "dailyPlan", "name": item.name, "subtitle": "", "nutrition": _library_nutrition_payload(item, current_weight), "indicators": [{"icon": "meal", "label": "comidas", "value": item.library_meal_count}, {"icon": "food", "label": "alimentos", "value": item.library_food_count}], "panel": {**_empty_library_panel("meals"), "meals": [_meal_panel_item(row, item, current_weight) for row in item.dailyplan_meals.all()], "foods": foods}, "creator": _creator_name(item), "created_at": item.created_at, "actions": library_actions_payload(item, user, context="detail")}
     elif entity == "programs":
         item = (Program.objects.filter(pk=item_id).filter(Q(created_by=user) | Q(shares__accepted_by=user, shares__removed=False)).select_related("created_by").annotate(library_day_count=Count("program_dailyplan", distinct=True)).prefetch_related("program_dailyplan__dailyplan__dailyplan_meals__meal__meal_food_set__food").distinct().first())
         if item:
-            return {"id": item.id, "entity": "program", "name": item.name, "subtitle": "", "nutrition": _library_nutrition_payload(item, current_weight), "indicators": [{"icon": "week", "label": "semanas", "value": item.normalized_duration_weeks}, {"icon": "dailyPlan", "label": "planes asignados", "value": item.library_day_count}, {"icon": "food", "label": "alimentos", "value": get_program_summary(item)["program_foods_count"]}], "panel": {**_empty_library_panel("weeks"), "weeks": _program_week_panel_items(item, current_weight)}, "creator": _creator_name(item), "created_at": item.created_at, "can_calendarize": item.created_by_id == user.id}
+            return {"id": item.id, "entity": "program", "name": item.name, "subtitle": "", "nutrition": _library_nutrition_payload(item, current_weight), "indicators": [{"icon": "week", "label": "semanas", "value": item.normalized_duration_weeks}, {"icon": "dailyPlan", "label": "planes asignados", "value": item.library_day_count}, {"icon": "food", "label": "alimentos", "value": get_program_summary(item)["program_foods_count"]}], "panel": {**_empty_library_panel("weeks"), "weeks": _program_week_panel_items(item, current_weight)}, "creator": _creator_name(item), "created_at": item.created_at, "can_calendarize": item.created_by_id == user.id, "actions": library_actions_payload(item, user, context="detail")}
     raise MobileAPIError(code="library_item_not_found", message="The requested library item was not found.", status_code=404)
 
 

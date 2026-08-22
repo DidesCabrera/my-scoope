@@ -770,6 +770,7 @@ class LibraryMealPanelItemData(Schema):
     calorie_share: float
     calorie_distribution: LibraryCalorieDistributionData
     protein_grams: float
+    protein_per_kilogram: float | None = None
     carbs_grams: float
     fat_grams: float
     protein_allocation: float
@@ -814,6 +815,12 @@ class LibraryPanelData(Schema):
     weeks: list[LibraryWeekPanelItemData] = Field(default_factory=list)
 
 
+class LibraryActionData(Schema):
+    key: Literal["rename", "duplicate", "share", "delete"]
+    label: str
+    destructive: bool = False
+
+
 class LibraryItemData(Schema):
     id: int
     entity: Literal["food", "meal", "dailyPlan", "program"]
@@ -825,6 +832,7 @@ class LibraryItemData(Schema):
     creator: str
     created_at: datetime
     can_calendarize: bool = False
+    actions: list[LibraryActionData] = Field(default_factory=list)
 
 
 class LibraryPageData(Schema):
@@ -844,6 +852,46 @@ class LibraryPageEnvelope(Schema):
 class LibraryItemEnvelope(Schema):
     ok: Literal[True] = True
     data: LibraryItemData
+    error: None = None
+
+
+class LibraryActionInput(Schema):
+    action: Literal["rename", "duplicate", "share", "delete"]
+    name: str = Field(default="", max_length=100)
+    recipient_email: str = Field(default="", max_length=254)
+    subject: str = Field(default="", max_length=160)
+    message: str = Field(default="", max_length=2000)
+
+
+class LibraryActionResultData(Schema):
+    action: Literal["rename", "duplicate", "share", "delete"]
+    item_id: int
+    message: str
+
+
+class LibraryActionResultEnvelope(Schema):
+    ok: Literal[True] = True
+    data: LibraryActionResultData
+    error: None = None
+
+
+class LibraryOrderInput(Schema):
+    ordered_ids: list[int] = Field(min_length=1)
+
+
+class LibraryBulkDeleteInput(Schema):
+    item_ids: list[int] = Field(min_length=1)
+
+
+class LibraryListActionResultData(Schema):
+    affected_ids: list[int]
+    skipped_ids: list[int] = Field(default_factory=list)
+    message: str
+
+
+class LibraryListActionResultEnvelope(Schema):
+    ok: Literal[True] = True
+    data: LibraryListActionResultData
     error: None = None
 
 

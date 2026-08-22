@@ -81,13 +81,14 @@ const sectionIcons: Record<SectionKind, LucideIcon> = {
   import: FileDown,
 };
 
-export function EntityIcon({ entity, size = "regular", tone = "entity" }: { entity: EntityKind; size?: "compact" | "regular" | "hero"; tone?: "entity" | "white" }) {
+export function EntityIcon({ entity, size = "regular", tone = "entity" }: { entity: EntityKind; size?: "compact" | "regular" | "header" | "hero"; tone?: "entity" | "white" }) {
   const Icon = entityIcons[entity];
   const compact = size === "compact";
+  const header = size === "header";
   const hero = size === "hero";
   return (
-    <View style={[styles.entityIcon, compact && styles.entityIconCompact, hero && styles.entityIconHero, { backgroundColor: tone === "white" ? "transparent" : tokens.color[entity] }]}>
-      <Icon color={tone === "white" ? tokens.color.textMain : tokens.color.entityIconForeground} size={tone === "white" ? 18 : compact ? 11 : hero ? 22 : 13} strokeWidth={hero ? 1.9 : 2.4} />
+    <View style={[styles.entityIcon, compact && styles.entityIconCompact, header && styles.entityIconHeader, hero && styles.entityIconHero, { backgroundColor: tone === "white" ? "transparent" : tokens.color[entity] }]}>
+      <Icon color={tone === "white" ? tokens.color.textMain : tokens.color.entityIconForeground} size={tone === "white" || header ? 18 : compact ? 11 : hero ? 22 : 13} strokeWidth={hero ? 1.9 : 2.4} />
     </View>
   );
 }
@@ -103,7 +104,7 @@ export function SectionIcon({ section, size = "regular" }: { section: SectionKin
   );
 }
 
-export function StructuralIndicators({ indicators, entity }: { indicators: StructuralIndicator[]; entity?: EntityKind }) {
+export function StructuralIndicators({ indicators, entity, tone = "identity" }: { indicators: StructuralIndicator[]; entity?: EntityKind; tone?: "identity" | "surfaceCard" | "surfaceMuted" }) {
   if (indicators.length === 0) return null;
   return (
     <View
@@ -118,7 +119,13 @@ export function StructuralIndicators({ indicators, entity }: { indicators: Struc
             ? tokens.color[entity]
             : tokens.color.textMuted;
         return (
-          <View key={`${indicator.icon ?? "text"}-${indicator.label}-${index}`} style={[styles.structuralItem, { backgroundColor: color }]}>
+          <View
+            key={`${indicator.icon ?? "text"}-${indicator.label}-${index}`}
+            style={[
+              styles.structuralItem,
+              { backgroundColor: tone === "surfaceCard" ? tokens.color.surfaceCard : tone === "surfaceMuted" ? tokens.color.surfaceMuted : color },
+              tone !== "identity" && styles.structuralItemSurface,
+            ]}>
             <Text style={styles.structuralValue}>{indicator.value}</Text>
             {Icon ? <Icon color={tokens.color.entityIconForeground} size={13} strokeWidth={2.2} /> : null}
           </View>
@@ -354,6 +361,7 @@ const styles = StyleSheet.create({
   entityEyebrowRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },
   entityIcon: { alignItems: "center", borderRadius: 5, height: 22, justifyContent: "center", width: 22 },
   entityIconCompact: { height: 18, width: 18 },
+  entityIconHeader: { borderRadius: 7, height: 28, width: 28 },
   entityIconHero: { borderRadius: tokens.radius.md, height: 40, width: 40 },
   sectionIcon: { alignItems: "center", backgroundColor: "transparent", height: 22, justifyContent: "center", width: 22 },
   sectionIconCompact: { height: 18, width: 18 },
@@ -363,6 +371,7 @@ const styles = StyleSheet.create({
   headingSubtitle: { color: tokens.color.textSoft, fontSize: tokens.type.caption, lineHeight: 18 },
   structuralIndicators: { alignItems: "center", alignSelf: "flex-start", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.compact },
   structuralItem: { alignItems: "center", borderRadius: tokens.spacing.compact, flexDirection: "row", gap: tokens.spacing.xs, paddingHorizontal: tokens.spacing.sm, paddingVertical: tokens.spacing.xs },
+  structuralItemSurface: { borderColor: tokens.color.borderDefault, borderWidth: 1 },
   structuralValue: { color: tokens.color.entityIconForeground, fontSize: tokens.type.caption, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.medium, letterSpacing: 0, lineHeight: 15 },
   entityCardPanelSlot: { minWidth: 0 },
   cardHeader: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },

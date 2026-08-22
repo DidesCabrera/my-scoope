@@ -39,12 +39,12 @@ function emptySlots(): ComparisonSlot[] {
 
 export default function ComparatorScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ savedId?: string }>();
+  const params = useLocalSearchParams<{ kind?: string; savedId?: string }>();
   const savedId = Number(params.savedId || 0) || null;
   const { status, apiRequest } = useSession();
   const nextSlotKey = useRef(3);
   const [metadata, setMetadata] = useState<ComparisonMetadata | null>(null);
-  const [kind, setKind] = useState<ComparisonKind>("foods");
+  const [kind, setKind] = useState<ComparisonKind>(params.kind === "meals" || params.kind === "dailyplans" ? params.kind : "foods");
   const [slots, setSlots] = useState<ComparisonSlot[]>(emptySlots);
   const [activeSlotKey, setActiveSlotKey] = useState<number | null>(null);
   const [query, setQuery] = useState("");

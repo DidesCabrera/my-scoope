@@ -57,10 +57,9 @@
     {% endif %}
   </header>
 
-  <h3 class="program-week-child-card__section-title">Gráfico de KPIs de la semana</h3>
   {% include "components/program_metric_chart_base.html" with chart=week.chart modifier="program-chart-panel--week program-chart-panel--week-card-kpi-preview" show_bar_values=False only %}
 
-  <h3 class="program-week-child-card__section-title">Tabla de entre planes diarios</h3>
+  <h3 class="program-week-child-card__section-title">Tabla de comparación entre planes diarios</h3>
   {% include "components/program_week_day_panels.html" with panel_id=week.foods_panel_id rows=week.day_nutrition_rows week=week can_edit=can_edit %}
 
   <hr>

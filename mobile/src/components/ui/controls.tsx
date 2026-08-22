@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
   buttonDangerText: { color: tokens.color.danger },
   field: { gap: 7 },
   fieldLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700" },
-  input: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.lg, borderWidth: 1, color: tokens.color.textMain, fontSize: 17, minHeight: 54, paddingHorizontal: tokens.spacing.lg },
+  input: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.lg, borderWidth: 1, color: tokens.color.textMain, fontSize: 17, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minHeight: 44, paddingHorizontal: tokens.spacing.lg },
   choiceRow: { flexDirection: "row", gap: tokens.spacing.sm },
   choice: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.lg, borderWidth: 1, flex: 1, justifyContent: "center", minHeight: 50, paddingHorizontal: 10 },
   choiceSelected: { backgroundColor: tokens.color.textMain, borderColor: tokens.color.textMain },

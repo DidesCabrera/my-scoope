@@ -152,18 +152,15 @@ export function DailyPlanMealCards({ items }: { items: LibraryMealPanelItem[] })
   return (
     <View style={styles.mealCardList}>
       {items.map((item, index) => (
-        <View key={item.id} style={styles.mealCardStep}>
-          <View aria-hidden style={styles.mealCardMarker}>
-            <View style={styles.mealCardLine} />
-            <View style={styles.mealCardNumber}><Text style={styles.mealCardNumberText}>{index + 1}</Text></View>
-          </View>
+        <View key={item.id}>
           <NutritionEntityCard
             actions={<EntityCardAction label={`Ver detalle de ${item.name}`} onPress={() => router.push(`/libraries/meals/${item.detail_id}` as Href)} role="link"><ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction>}
             entity="meal"
+            eyebrow={`Comida ${index + 1}`}
             indicators={[{ icon: "food", label: "alimentos", value: item.foods.length }]}
             nutrition={{
               calories: item.calories,
-              protein: { grams: item.protein_grams, allocation: item.protein_allocation, perKilogram: null },
+              protein: { grams: item.protein_grams, allocation: item.protein_allocation, perKilogram: item.protein_per_kilogram },
               carbs: { grams: item.carbs_grams, allocation: item.carbs_allocation },
               fat: { grams: item.fat_grams, allocation: item.fat_allocation },
             }}
@@ -217,11 +214,6 @@ const styles = StyleSheet.create({
   menuTime: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"], paddingHorizontal: tokens.spacing.xs },
   menuFoods: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 20, opacity: 0.82, paddingHorizontal: tokens.spacing.xs },
   mealCardList: { gap: tokens.spacing.lg, minWidth: 0, width: "100%" },
-  mealCardStep: { gap: tokens.spacing.sm, minWidth: 0 },
-  mealCardMarker: { alignItems: "center", height: 36, justifyContent: "center", paddingHorizontal: tokens.spacing.xs, position: "relative", width: "100%" },
-  mealCardLine: { backgroundColor: tokens.color.borderDefault, height: 1, width: "100%" },
-  mealCardNumber: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, height: 36, justifyContent: "center", left: tokens.spacing.xs, position: "absolute", width: 36, zIndex: 1 },
-  mealCardNumberText: { color: tokens.color.textMuted, fontSize: 18, fontVariant: ["tabular-nums"], fontWeight: "600" },
   pressed: { opacity: 0.6 },
   weekRow: { borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, gap: tokens.spacing.xs, padding: tokens.spacing.md },
   weekTitle: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: "600", marginBottom: tokens.spacing.xs },

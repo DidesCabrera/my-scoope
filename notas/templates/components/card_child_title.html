@@ -6,7 +6,7 @@
         <p class="card-title-eyebrow">
           <i data-lucide="{{ titulo.icon }}" class="card-title-eyebrow__icon {{ entity_class }}" aria-hidden="true"></i>
           <span>
-            {% if entity_class == "dailyplan" %}Plan Diario{% elif entity_class == "meal" %}Comida{% elif entity_class == "food" %}Alimento{% else %}{{ titulo.label }}{% endif %}
+            {% if entity_class == "dailyplan" %}Plan Diario{% elif entity_class == "meal" and meal_number %}Comida {{ meal_number }}{% elif entity_class == "meal" %}Comida{% elif entity_class == "food" %}Alimento{% else %}{{ titulo.label }}{% endif %}
           </span>
         </p>
       {% endwith %}
