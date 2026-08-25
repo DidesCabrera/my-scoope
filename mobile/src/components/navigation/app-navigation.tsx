@@ -47,7 +47,9 @@ type HeaderPresentation =
 
 type NavigationContextValue = {
   closeMenu(): void;
+  finishClosingMenu(): void;
   headerPresentation: HeaderPresentation;
+  menuMounted: boolean;
   menuOpen: boolean;
   openMenu(): void;
   setHeaderPresentation(presentation: HeaderPresentation): void;
@@ -84,10 +86,12 @@ function useAppNavigation(): NavigationContextValue {
 
 export function AppNavigationProvider({ children }: PropsWithChildren) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuMounted, setMenuMounted] = useState(false);
   const [headerPresentation, setHeaderPresentation] = useState<HeaderPresentation>({ mode: "default" });
   const closeMenu = useCallback(() => setMenuOpen(false), []);
-  const openMenu = useCallback(() => setMenuOpen(true), []);
-  const value = useMemo<NavigationContextValue>(() => ({ closeMenu, headerPresentation, menuOpen, openMenu, setHeaderPresentation }), [closeMenu, headerPresentation, menuOpen, openMenu]);
+  const finishClosingMenu = useCallback(() => setMenuMounted(false), []);
+  const openMenu = useCallback(() => { setMenuMounted(true); setMenuOpen(true); }, []);
+  const value = useMemo<NavigationContextValue>(() => ({ closeMenu, finishClosingMenu, headerPresentation, menuMounted, menuOpen, openMenu, setHeaderPresentation }), [closeMenu, finishClosingMenu, headerPresentation, menuMounted, menuOpen, openMenu]);
   return (
     <NavigationContext.Provider value={value}>
       {children}
@@ -221,16 +225,14 @@ function AppSidebar() {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { closeMenu, menuOpen } = useAppNavigation();
+  const { closeMenu, finishClosingMenu, menuMounted, menuOpen } = useAppNavigation();
   const { session, signOut } = useSession();
   const [translateX] = useState(() => new Animated.Value(-380));
   const [scrimOpacity] = useState(() => new Animated.Value(0));
-  const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
     const hiddenPosition = -Math.min(width * 0.88, 360);
     if (menuOpen) {
-      setModalVisible(true);
       translateX.setValue(hiddenPosition);
       scrimOpacity.setValue(0);
       Animated.parallel([
@@ -239,15 +241,15 @@ function AppSidebar() {
       ]).start();
       return;
     }
-    if (!modalVisible) return;
+    if (!menuMounted) return;
     Animated.parallel([
       Animated.timing(translateX, { duration: 220, toValue: hiddenPosition, useNativeDriver: true }),
       Animated.timing(scrimOpacity, { duration: 180, toValue: 0, useNativeDriver: true }),
-    ]).start(({ finished }) => { if (finished) setModalVisible(false); });
-  }, [menuOpen, modalVisible, scrimOpacity, translateX, width]);
+    ]).start(({ finished }) => { if (finished) finishClosingMenu(); });
+  }, [finishClosingMenu, menuMounted, menuOpen, scrimOpacity, translateX, width]);
 
   return (
-    <Modal animationType="none" onRequestClose={closeMenu} transparent visible={modalVisible}>
+    <Modal animationType="none" onRequestClose={closeMenu} transparent visible={menuMounted}>
       <View style={styles.modalRoot}>
         <Animated.View style={[styles.scrim, { opacity: scrimOpacity }]}><Pressable accessibilityLabel="Cerrar menú" onPress={closeMenu} style={styles.scrimPressable} /></Animated.View>
         <Animated.View style={[styles.drawer, { maxWidth: 360, transform: [{ translateX }], width: Math.min(width * 0.88, 360) }]}>
