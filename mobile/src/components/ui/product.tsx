@@ -142,6 +142,7 @@ export function EntityHeading({
   subtitle,
   indicators,
   accessory,
+  identityIcon: IdentityIcon,
   variant = "card",
 }: {
   title: string;
@@ -150,6 +151,7 @@ export function EntityHeading({
   subtitle?: string;
   indicators?: StructuralIndicator[];
   accessory?: ReactNode;
+  identityIcon?: LucideIcon;
   variant?: "card" | "page";
 }) {
   const { width } = useWindowDimensions();
@@ -160,7 +162,7 @@ export function EntityHeading({
     <View style={styles.headingRow}>
       <View style={styles.headingCopy}>
         <View style={styles.entityEyebrowRow}>
-          <EntityIcon entity={entity} size="compact" />
+          {IdentityIcon ? <View style={[styles.entityIcon, styles.entityIconCompact, { backgroundColor: tokens.color[entity] }]}><IdentityIcon color={tokens.color.entityIconForeground} size={11} strokeWidth={2.4} /></View> : <EntityIcon entity={entity} size="compact" />}
           <Text style={styles.eyebrow}>{eyebrow ?? entityLabels[entity]}</Text>
         </View>
         <Text style={[styles.headingTitle, page && { fontSize: pageTitleSize, lineHeight: pageTitleLineHeight }]}>{title}</Text>

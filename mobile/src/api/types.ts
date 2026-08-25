@@ -33,6 +33,7 @@ export type AccountDeletionData = { receipt_id: string };
 
 export type CalendarizationData = {
   id: number;
+  source_program_id: number | null;
   program_name: string;
   status: CalendarizationStatus;
   start_date: string;
@@ -57,6 +58,8 @@ export type ActiveProgramDay = {
 export type ActiveProgramData = {
   calendarization: CalendarizationData | null;
   days: ActiveProgramDay[];
+  adherence: AdherenceSummary | null;
+  indicators: { icon: "food" | "dailyPlan" | "week"; label: string; value: number | string }[];
 };
 
 export type CalendarizationActivationInput = {
@@ -124,6 +127,8 @@ export type AdherenceSummary = {
   period_end: string;
   days: number;
   days_with_plan: number;
+  scheduled_meals?: number;
+  elapsed_meals?: number;
   planned_meals: number;
   completed_meals: number;
   skipped_meals: number;
@@ -396,7 +401,7 @@ export type FoodLabelCaptureResult = {
 };
 
 export type MealCheckInInput = {
-  action: "completed" | "skipped" | "reset";
+  action: "completed" | "skipped" | "reset" | "note";
   idempotency_key: string;
   note?: string;
 };

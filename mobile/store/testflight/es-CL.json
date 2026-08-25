@@ -1,6 +1,6 @@
 {
   "beta_description": "My Scoope convierte un programa nutricional calendarizado en acciones diarias para usuarios que pesan su comida y siguen un plan.",
-  "what_to_test": "Inicia sesión, revisa el programa y las comidas de Hoy, registra un check-in y peso, configura recordatorios, digitaliza una etiqueta y revisa la suscripción. Confirma que privacidad, soporte y eliminación de cuenta sean accesibles desde Cuenta.",
+  "what_to_test": "Inicia sesión, revisa el programa y las comidas de Hoy, registra el cumplimiento desde el detalle de una comida y guarda un peso, configura recordatorios, digitaliza una etiqueta y revisa la suscripción. Confirma que privacidad, soporte y eliminación de cuenta sean accesibles desde Cuenta.",
   "feedback_email": "bacardides@gmail.com",
   "privacy_policy_url": "https://www.myscoope.com/privacy/"
 }

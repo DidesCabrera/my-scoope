@@ -5,6 +5,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-nat
 import { userFacingError } from "@/api/errors";
 import type { LibraryActionResult, LibraryItem } from "@/api/types";
 import { useSession } from "@/auth/session-context";
+import { MealAdherenceCheckIn } from "@/components/calendarization/meal-adherence-check-in";
 import { EntityDetailMetadata, EntityDetailPage, EntityDetailSection } from "@/components/details";
 import { FoodPanels, MealPanels, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
 import { Button, InlineNotice, textStyles } from "@/components/ui/primitives";
@@ -28,7 +29,7 @@ function mealPanelItem(item: LibraryItem["panel"]["meals"][number]): MealPanelIt
 
 export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "meals" | "daily-plans" | "programs" }) {
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, calendarizedDayId, mealKey } = useLocalSearchParams<{ id: string; calendarizedDayId?: string; mealKey?: string }>();
   const { status, apiRequest } = useSession();
   const [item, setItem] = useState<LibraryItem | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -66,8 +67,10 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
     />{actionsModal}</>;
   }
   const panelCount = item.panel.kind === "foods" ? item.panel.foods.length : item.panel.kind === "meals" ? item.panel.meals.length : item.panel.kind === "weeks" ? item.panel.weeks.length : 0;
+  const contextualDayId = Number(calendarizedDayId);
   return <><ScrollView contentContainerStyle={styles.content} onScroll={({ nativeEvent }) => { const visible = nativeEvent.contentOffset.y > 1; if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible); }} scrollEventThrottle={16} style={styles.screen}><EntityDetailPage entity={item.entity} indicators={item.indicators} nutrition={libraryNutrition(item.nutrition)} subtitle={item.subtitle || undefined} title={item.name}>
     {item.panel.kind !== "none" ? <EntityDetailSection detail={`${panelCount} elementos`} title={sectionTitles[item.panel.kind]}>{item.panel.kind === "foods" ? <FoodPanels items={item.panel.foods.map(foodPanelItem)} /> : null}{item.panel.kind === "meals" ? <MealPanels items={item.panel.meals.map(mealPanelItem)} /> : null}{item.panel.kind === "weeks" ? <ProgramPanels items={item.panel.weeks} /> : null}</EntityDetailSection> : null}
+    {item.entity === "meal" && Number.isInteger(contextualDayId) && contextualDayId > 0 && mealKey ? <MealAdherenceCheckIn dayId={contextualDayId} mealKey={mealKey} /> : null}
     {item.entity === "dailyPlan" && item.panel.kind === "meals" && item.panel.meals.length > 0 ? <EntityDetailSection detail={`${item.panel.meals.length} comidas`} title="Detalle de cada Comida"><DailyPlanMealCards items={item.panel.meals} /></EntityDetailSection> : null}
     {item.entity === "dailyPlan" && item.panel.foods.length > 0 ? <EntityDetailSection detail={`${item.panel.foods.length} alimentos`} title="Alimentos en este plan diario"><FoodPanels items={item.panel.foods.map(foodPanelItem)} /></EntityDetailSection> : null}
     <EntityDetailMetadata creator={item.creator} updatedAt={libraryDate(item.created_at)} />

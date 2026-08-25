@@ -39,6 +39,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(gallery, /ProgramChildCard/);
   assert.match(gallery, /Detalle de programa/);
   assert.match(gallery, /ProgramDetailPreview/);
+  assert.match(gallery, /ProgramActiveKpis/);
+  assert.match(gallery, /KPI de programa en curso/);
   assert.match(gallery, /title="Colores de superficies"/);
   for (const surface of ["surfaceApp", "surfacePage", "surfaceCard", "surfaceMuted", "surfaceElevated"]) {
     assert.match(gallery, new RegExp(surface));
@@ -157,7 +159,37 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(calendarizedPlanning, /<ProgramWeekTabs/);
   assert.match(calendarizedPlanning, /<ProgramDaySelector/);
   assert.match(calendarizedPlanning, /apiRequest<CalendarizedDayDetail>/);
-  assert.match(calendarizedPlanning, /<NutritionEntityCard/);
+  assert.match(calendarizedPlanning, /<CalendarizedDailyPlanCard/);
+
+  const calendarizedDailyPlanCard = await readFile(
+    path.resolve(process.cwd(), "src/components/calendarization/calendarized-daily-plan-card.tsx"),
+    "utf8",
+  );
+  assert.match(calendarizedDailyPlanCard, /<NutritionEntityCard/);
+  assert.match(calendarizedDailyPlanCard, /<MealPanels/);
+  assert.match(calendarizedDailyPlanCard, /onOpenItem=/);
+  assert.match(calendarizedDailyPlanCard, /calendarizedDayId=/);
+  assert.match(calendarizedDailyPlanCard, /mealKey=/);
+
+  const sharedEntityPanels = await readFile(
+    path.resolve(process.cwd(), "src/components/panels/entity-panels.tsx"),
+    "utf8",
+  );
+  assert.match(sharedEntityPanels, /accessibilityLabel=\{`Ver detalle de \$\{item\.name\}`\}/);
+  assert.match(sharedEntityPanels, /<ChevronRight/);
+
+  const mealAdherence = await readFile(
+    path.resolve(process.cwd(), "src/components/calendarization/meal-adherence-check-in.tsx"),
+    "utf8",
+  );
+  assert.match(mealAdherence, /accessibilityRole="checkbox"/);
+  assert.match(mealAdherence, /onPress=\{\(\) => void saveStatus\(!completed\)\}/);
+  assert.match(mealAdherence, /action: "note"/);
+  assert.match(mealAdherence, /Guardar nota/);
+  assert.match(mealAdherence, /maxLength=\{500\}/);
+  assert.match(mealAdherence, /action: nextCompleted \? "completed" : "skipped"/);
+  assert.match(mealAdherence, /<View style=\{styles\.divider\} \/>/);
+  assert.doesNotMatch(mealAdherence, /statusLabel|styles\.status/);
 
   const activeProgram = await readFile(path.resolve(process.cwd(), "src/app/program/index.tsx"), "utf8");
   assert.match(activeProgram, /<CalendarizedProgramPlanning days=\{program\?\.days \?\? \[\]\} key=\{calendarization\.id\} \/>/);
@@ -335,8 +367,10 @@ test("the App Store review package is complete, bounded and secret-free", async 
   assert.match(metadata.privacy_policy_url, /^https:\/\//);
   assert.match(metadata.support_url, /^https:\/\//);
   assert.equal(privacy.tracking, false);
-  assert.equal(screenshots.shots.length, 6);
+  assert.equal(screenshots.shots.length, 5);
+  assert.ok(screenshots.shots.every((shot: { route: string }) => shot.route !== "/check-in"));
   assert.match(notes, /App Store Connect/);
+  assert.doesNotMatch(notes, /check-in del día/i);
   assert.doesNotMatch(notes, /password\s*[=:]\s*\S+/i);
 });
 

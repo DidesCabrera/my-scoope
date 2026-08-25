@@ -118,6 +118,7 @@ class AppleTransactionInput(Schema):
 
 class CalendarizationData(Schema):
     id: int
+    source_program_id: int | None = None
     program_name: str
     status: str
     start_date: date
@@ -141,6 +142,8 @@ class AdherenceData(Schema):
     period_end: date
     days: int
     days_with_plan: int
+    scheduled_meals: int
+    elapsed_meals: int
     planned_meals: int
     completed_meals: int
     skipped_meals: int
@@ -219,9 +222,17 @@ class ActiveProgramDay(Schema):
     plan_name: str
 
 
+class ActiveProgramIndicatorData(Schema):
+    icon: Literal["food", "dailyPlan", "week"]
+    label: str
+    value: int | str
+
+
 class ActiveProgramData(Schema):
     calendarization: CalendarizationData | None = None
     days: list[ActiveProgramDay]
+    adherence: AdherenceData | None = None
+    indicators: list[ActiveProgramIndicatorData] = Field(default_factory=list)
 
 
 class ActiveProgramEnvelope(Schema):
@@ -562,7 +573,7 @@ class WeightEnvelope(Schema):
 
 
 class MealCheckInInput(Schema):
-    action: Literal["completed", "skipped", "reset"]
+    action: Literal["completed", "skipped", "reset", "note"]
     idempotency_key: str = Field(min_length=8, max_length=120)
     note: str = Field(default="", max_length=500)
 

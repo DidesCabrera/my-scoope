@@ -44,6 +44,11 @@ export default function AccountScreen() {
     <Screen>
       <AppHeader eyebrow="Tu cuenta" title={session?.display_name || session?.username || "My Scoope"} />
       <Card muted>
+        <SectionTitle title="Suscripción" />
+        <Text style={textStyles.muted}>Consulta tu plan, administra tu suscripción y restaura compras.</Text>
+        <Button label="Mi suscripción" onPress={() => router.push("/subscription" as Href)} variant="secondary" />
+      </Card>
+      <Card muted>
         <SectionTitle title="Privacidad y ayuda" />
         <Text style={textStyles.muted}>Consulta cómo tratamos tus datos, los términos del servicio o solicita ayuda.</Text>
         <Button label="Política de privacidad" onPress={() => void Linking.openURL(`${appConfig.apiBaseUrl}/privacy/`)} variant="secondary" />

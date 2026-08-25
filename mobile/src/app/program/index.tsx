@@ -6,8 +6,9 @@ import { userFacingError } from "@/api/errors";
 import type { ActiveProgramData, CalendarizationHistoryData, CalendarizationStatus } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { CalendarizedProgramPlanning } from "@/components/calendarization/calendarized-program-planning";
+import { ProgramActiveOverview } from "@/components/programs/program-active-card";
 import { ConfirmationState, EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
-import { AppHeader, Button, Card, LoadingState, Pill, ProgressBar, Screen, SectionTitle, textStyles } from "@/components/ui/primitives";
+import { Button, Card, LoadingState, Pill, Screen, SectionTitle, textStyles } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
 
 type PendingAction = "pause" | "cancel" | null;
@@ -75,22 +76,10 @@ export default function ProgramScreen() {
 
   return (
     <Screen>
-      <AppHeader eyebrow="Programa vivido" title="Mi programa" />
       {error ? <RecoverableErrorState message={error} onRetry={() => void load()} /> : null}
       {calendarization ? (
         <>
-          <Card accent={tokens.color.program}>
-            <View style={styles.row}>
-              <View style={styles.copy}>
-                <Text style={styles.name}>{calendarization.program_name}</Text>
-                <Text style={textStyles.caption}>{displayDate(calendarization.start_date)} – {displayDate(calendarization.end_date)}</Text>
-              </View>
-              <Pill color={tokens.color.program} label={statusLabels[calendarization.status]} />
-            </View>
-            <Text style={textStyles.strong}>Día {calendarization.progress_day} de {calendarization.progress_total_days}</Text>
-            <ProgressBar value={calendarization.progress_percent} />
-            <Text style={textStyles.caption}>{calendarization.progress_percent}% del recorrido</Text>
-          </Card>
+          {program ? <ProgramActiveOverview calendarization={calendarization} program={program} /> : null}
           <SectionTitle detail={`${program?.days.length ?? 0} días`} title="Recorrido" />
           <CalendarizedProgramPlanning days={program?.days ?? []} key={calendarization.id} />
 
@@ -128,6 +117,5 @@ const styles = StyleSheet.create({
   actions: { gap: tokens.spacing.sm },
   copy: { flex: 1, gap: 4 },
   historyName: { color: tokens.color.textMain, fontSize: 16, fontWeight: "800" },
-  name: { color: tokens.color.textMain, fontSize: 22, fontWeight: "900" },
   row: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
 });

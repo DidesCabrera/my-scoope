@@ -18,7 +18,7 @@ function displayDate(value: string): string {
   return new Intl.DateTimeFormat("es-CL", { weekday: "long", day: "numeric", month: "long" }).format(new Date(`${value}T12:00:00`));
 }
 
-function CalendarizedMealCards({ meals }: { meals: MealSnapshot[] }) {
+function CalendarizedMealCards({ dayId, meals }: { dayId: number; meals: MealSnapshot[] }) {
   const router = useRouter();
   return (
     <View style={styles.mealCardList}>
@@ -30,7 +30,7 @@ function CalendarizedMealCards({ meals }: { meals: MealSnapshot[] }) {
               actions={meal.detail_id ? (
                 <EntityCardAction
                   label={`Ver detalle de ${meal.name ?? "la comida"}`}
-                  onPress={() => router.push(`/libraries/meals/${meal.detail_id}` as Href)}
+                  onPress={() => router.push(`/libraries/meals/${meal.detail_id}?calendarizedDayId=${dayId}&mealKey=${encodeURIComponent(meal.key ?? "")}` as Href)}
                   role="link">
                   <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
                 </EntityCardAction>
@@ -120,14 +120,13 @@ export default function ProgramDayScreen() {
             fat: { allocation: snapshotAllocation(totals, "fat_g"), grams: totals?.fat_g ?? 0 },
             protein: { allocation: snapshotAllocation(totals, "protein_g"), grams: totals?.protein_g ?? 0, perKilogram: null },
           }}
-          subtitle="Plan diario calendarizado"
           title={snapshot.name ?? day.plan_name ?? "Plan diario"}>
           <EntityDetailSection detail={`${meals.length} elementos`} title="Tabla de comparación entre comidas">
             <MealPanels items={mealItems} />
           </EntityDetailSection>
           {meals.length ? (
             <EntityDetailSection detail={`${meals.length} comidas`} title="Detalle de cada Comida">
-              <CalendarizedMealCards meals={meals} />
+              <CalendarizedMealCards dayId={day.id} meals={meals} />
             </EntityDetailSection>
           ) : null}
           <ContentPanel muted title="Información del día">

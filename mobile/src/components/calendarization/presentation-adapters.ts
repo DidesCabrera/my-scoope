@@ -19,6 +19,7 @@ export function snapshotMealPanelItem(meal: MealSnapshot, index: number, planCal
     calories: mealCalories,
     carbsAllocation: snapshotAllocation(meal.totals, "carbs_g"),
     carbsGrams: meal.totals?.carbs_g ?? 0,
+    detailId: meal.detail_id ?? undefined,
     fatAllocation: snapshotAllocation(meal.totals, "fat_g"),
     fatGrams: meal.totals?.fat_g ?? 0,
     foods: (meal.foods ?? []).map((food) => ({ name: food.name ?? "Alimento", quantity: food.quantity_g ?? 0, quantityUnit: "g" })),

@@ -20,6 +20,7 @@
     <a href="#foundations">Foundations</a>
     <a href="#components">Components</a>
     <a href="#patterns">Patterns</a>
+    <a href="#program-active-kpis">Programa en curso</a>
     {% if not gallery.embed %}<a href="#mobile-web">Mobile web</a>{% endif %}
   </nav>
 
@@ -36,6 +37,11 @@
       <article><span style="--swatch: var(--nutrition-carbs)"></span><strong>Carbs</strong><code>--nutrition-carbs</code></article>
       <article><span style="--swatch: var(--nutrition-fat)"></span><strong>Fat</strong><code>--nutrition-fat</code></article>
     </div>
+  </section>
+
+  <section class="ui-system-gallery__section" id="program-active-kpis">
+    <div class="ui-system-gallery__section-heading"><div><p>Propuesta · Product component</p><h2>KPI de programa en curso</h2></div><code>components/program_active_kpis.html</code></div>
+    <div class="ui-system-gallery__canvas">{% include "components/program_active_kpis.html" with program_kpis=gallery.program_kpis standalone=True %}</div>
   </section>
 
   <section class="ui-system-gallery__section" id="components">

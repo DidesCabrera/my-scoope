@@ -135,7 +135,6 @@ function routeHeader(pathname: string): { icon: LucideIcon; title: string } {
   if (pathname === "/today" || pathname === "/") return { icon: House, title: "Inicio" };
   if (pathname === "/weight") return { icon: Weight, title: "Registrar peso" };
   if (pathname === "/label-capture") return { icon: Camera, title: "Digitalizar etiqueta" };
-  if (pathname === "/check-in") return { icon: FileCheck, title: "Check-in del día" };
   if (pathname === "/review") return { icon: TrendingUp, title: "Revisión de progreso" };
   if (pathname === "/revision") return { icon: ClipboardCheck, title: "Revisar ajuste" };
   if (pathname === "/reminders") return { icon: Bell, title: "Recordatorios" };

@@ -57,6 +57,7 @@ def build_ui_system_gallery_examples():
             },
             "content": {"item_count": 3},
         },
+        "program_kpis": {"start_date": "17 ago", "end_date": "27 sep", "elapsed_days": 24, "remaining_days": 18, "total_days": 42, "progress": 57, "adhered_days": 82, "planned_adherence_days": 87, "adherence": 97},
         "program_card": {
             "child_id": 1,
             "title": "Programa de recomposición",

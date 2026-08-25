@@ -13,6 +13,8 @@ from notas.application.queries.calendarization_queries import (
     current_calendarization_for_user,
     today_for_calendarization,
 )
+from notas.application.queries.calendarization_execution_queries import calendarization_progress_summary
+from notas.application.services.cache.program_summary import get_program_summary
 from notas.domain.models import DailyPlan
 from notas.presentation.config.viewmodel_config import DAILYPLAN_VIEWMODE_PERSONAL_LIST
 from notas.presentation.viewmodels.dailyplans import (
@@ -78,11 +80,22 @@ class HomeCalendarizationVM:
     status_label: str
     start_label: str
     end_label: str
+    start_date: str
+    end_date: str
     duration_label: str
     duration_days_label: str
     progress_day: int
     progress_total_days: int
     progress_percent: int
+    elapsed_days: int
+    total_days: int
+    progress: int
+    adhered_days: int
+    planned_adherence_days: int
+    adherence: int
+    weeks_count: int
+    assigned_plans_count: int
+    foods_count: int
     dashboard_url: str
     previous_week_url: str
     next_week_url: str
@@ -225,6 +238,14 @@ def build_home_calendarization_vm(
         calendarization,
         today,
     )
+    adherence_summary = None
+    if calendarization and today >= calendarization.start_date:
+        adherence_summary = calendarization_progress_summary(
+            calendarization,
+            period_start=calendarization.start_date,
+            period_end=min(today, calendarization.end_date),
+        )
+    source_program = calendarization.source_program if calendarization else None
 
     return HomeCalendarizationVM(
         has_calendarization=calendarization is not None,
@@ -232,11 +253,22 @@ def build_home_calendarization_vm(
         status_label=STATUS_LABELS.get(calendarization.status, calendarization.status.title()) if calendarization else "",
         start_label=_compact_date_label(calendarization.start_date) if calendarization else "",
         end_label=_compact_date_label(calendarization.end_date) if calendarization else "",
+        start_date=_compact_date_label(calendarization.start_date) if calendarization else "",
+        end_date=_compact_date_label(calendarization.end_date) if calendarization else "",
         duration_label=_duration_label(calendarization.start_date, calendarization.end_date) if calendarization else "",
         duration_days_label=_duration_days_label(progress_total_days) if calendarization else "",
         progress_day=progress_day,
         progress_total_days=progress_total_days,
         progress_percent=progress_percent,
+        elapsed_days=progress_day,
+        total_days=progress_total_days,
+        progress=progress_percent,
+        adhered_days=adherence_summary["completed_meals"] if adherence_summary else 0,
+        planned_adherence_days=adherence_summary["elapsed_meals"] if adherence_summary else 0,
+        adherence=adherence_summary["adherence_percent"] if adherence_summary else 0,
+        weeks_count=source_program.normalized_duration_weeks if source_program else max(1, (progress_total_days + 6) // 7),
+        assigned_plans_count=source_program.filled_days_count if source_program else sum(1 for day in calendarized_days.values() if day.has_plan),
+        foods_count=get_program_summary(source_program)["program_foods_count"] if source_program else 0,
         dashboard_url=reverse("calendarization_dashboard"),
         previous_week_url=_calendar_week_url(navigation_view_name, monday - timedelta(days=7)),
         next_week_url=_calendar_week_url(navigation_view_name, monday + timedelta(days=7)),

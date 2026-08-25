@@ -1,0 +1,9 @@
+<article class="program-active-kpis{% if standalone %} program-active-kpis--standalone{% endif %}">
+  <div class="program-active-kpis__summary">
+    <section class="program-active-kpis__period" aria-label="Periodo del programa"><span><i data-lucide="calendar-days"></i>Periodo</span><strong>{{ program_kpis.start_label|default:program_kpis.start_date }} <span aria-hidden="true">—</span> {{ program_kpis.end_label|default:program_kpis.end_date }}</strong></section>
+    <section class="program-active-kpis__indicators" aria-label="Indicadores del programa">
+      <div class="program-active-kpis__indicator program-active-kpis__indicator--elapsed"><div class="program-active-kpis__indicator-row"><span><i data-lucide="clock-3"></i>Días transcurridos</span><strong>{{ program_kpis.elapsed_days }}/{{ program_kpis.total_days }} <em>{{ program_kpis.progress }}%</em></strong></div><div class="program-active-kpis__track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ program_kpis.progress }}"><span style="width: {{ program_kpis.progress }}%"></span></div></div>
+      <div class="program-active-kpis__indicator program-active-kpis__indicator--adherence"><div class="program-active-kpis__indicator-row"><span><i data-lucide="check-check"></i>Adhesión</span><strong>{{ program_kpis.adhered_days }}/{{ program_kpis.planned_adherence_days }} <em>{{ program_kpis.adherence }}%</em></strong></div><div class="program-active-kpis__track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ program_kpis.adherence }}"><span style="width: {{ program_kpis.adherence }}%"></span></div></div>
+    </section>
+  </div>
+</article>

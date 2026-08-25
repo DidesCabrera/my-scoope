@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { ChevronRight } from "lucide-react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { MacroCalorieDistribution, PanelAllocationBar } from "@/components/nutrition";
 import { EntityIcon } from "@/components/ui";
@@ -25,6 +26,7 @@ export type FoodPanelItem = NutritionPanelValues & {
 };
 
 export type MealPanelItem = NutritionPanelValues & {
+  detailId?: number;
   foods: MealMenuFood[];
   id: string;
   name: string;
@@ -194,19 +196,31 @@ export function NutritionAllocationPanel({ items, leadingLabel }: { items: (Food
   );
 }
 
-export function MealMenuPanel({ items }: { items: MealPanelItem[] }) {
+export function MealMenuPanel({ items, onOpenItem }: { items: MealPanelItem[]; onOpenItem?: (item: MealPanelItem) => void }) {
   if (items.length === 0) return <PanelEmptyState label="Todavía no hay comidas." />;
   return (
     <PanelBody>
       {items.map((item, index) => (
         <View key={item.id} style={[styles.menuRow, index === items.length - 1 && styles.rowLast]}>
-          <View style={styles.menuTitleRow}>
-            <MealRowIdentity name={item.name} />
-            {item.time ? <Text style={styles.menuTime}>{item.time}</Text> : null}
+          <View style={styles.menuCopy}>
+            <View style={styles.menuTitleRow}>
+              <MealRowIdentity name={item.name} />
+              {item.time ? <Text style={styles.menuTime}>{item.time}</Text> : null}
+            </View>
+            <Text style={styles.menuFoods}>
+              {item.foods.map((food) => `${food.name} (${decimal(food.quantity)}${food.quantityUnit})`).join(", ")}
+            </Text>
           </View>
-          <Text style={styles.menuFoods}>
-            {item.foods.map((food) => `${food.name} (${decimal(food.quantity)}${food.quantityUnit})`).join(", ")}
-          </Text>
+          {item.detailId != null && onOpenItem ? (
+            <Pressable
+              accessibilityLabel={`Ver detalle de ${item.name}`}
+              accessibilityRole="link"
+              hitSlop={8}
+              onPress={() => onOpenItem(item)}
+              style={({ pressed }) => [styles.menuAction, pressed && styles.menuActionPressed]}>
+              <ChevronRight color={tokens.color.textMuted} size={21} strokeWidth={2.2} />
+            </Pressable>
+          ) : null}
         </View>
       ))}
     </PanelBody>
@@ -226,12 +240,12 @@ export function FoodPanels({ items }: { items: FoodPanelItem[] }) {
   );
 }
 
-export function MealPanels({ items }: { items: MealPanelItem[] }) {
+export function MealPanels({ items, onOpenItem }: { items: MealPanelItem[]; onOpenItem?: (item: MealPanelItem) => void }) {
   const [activeTab, setActiveTab] = useState<MealPanelTab>("menu");
   return (
     <PanelSurface>
       <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={mealTabs} />
-      {activeTab === "menu" ? <MealMenuPanel items={items} /> : null}
+      {activeTab === "menu" ? <MealMenuPanel items={items} onOpenItem={onOpenItem} /> : null}
       {activeTab === "calories" ? <NutritionCaloriesPanel items={items} leadingLabel="Comidas" /> : null}
       {activeTab === "macros" ? <NutritionMacrosPanel items={items} leadingLabel="Comidas" /> : null}
       {activeTab === "allocation" ? <NutritionAllocationPanel items={items} leadingLabel="Comidas" /> : null}
@@ -254,7 +268,10 @@ const styles = StyleSheet.create({
   calorieShare: { flex: 1, minWidth: 92, textAlign: "center" },
   allocationRow: { gap: 3 },
   allocationCell: { flex: 1, minWidth: 0, width: "auto" },
-  menuRow: { alignSelf: "stretch", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, gap: tokens.spacing.compact, paddingHorizontal: tokens.spacing.sm, paddingVertical: tokens.spacing.md },
+  menuRow: { alignItems: "center", alignSelf: "stretch", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.compact, paddingHorizontal: tokens.spacing.sm, paddingVertical: tokens.spacing.md },
+  menuCopy: { flex: 1, gap: tokens.spacing.compact, minWidth: 0 },
+  menuAction: { alignItems: "center", alignSelf: "stretch", borderRadius: tokens.radius.pill, justifyContent: "center", minWidth: 32 },
+  menuActionPressed: { opacity: 0.55 },
   menuTitleRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
   mealIdentity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0, paddingHorizontal: tokens.spacing.xs },
   mealIdentityName: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold, letterSpacing: 0, lineHeight: 18 },

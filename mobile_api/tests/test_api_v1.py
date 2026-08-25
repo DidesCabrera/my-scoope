@@ -258,6 +258,9 @@ class MobileAPIV1Tests(TestCase):
 
     def test_today_and_active_program_resolve_from_current_calendarization(self):
         today = timezone.localdate(timezone=ZoneInfo("UTC"))
+        dailyplan = DailyPlan.objects.create(name="Plan de hoy", created_by=self.user, is_draft=False)
+        meal = Meal.objects.create(name="Comida de hoy", created_by=self.user, is_draft=False)
+        slot = DailyPlanMeal.objects.create(dailyplan=dailyplan, meal=meal)
         calendarization = ProgramCalendarization.objects.create(
             user=self.user,
             program_name_snapshot="Definición 8 semanas",
@@ -271,7 +274,10 @@ class MobileAPIV1Tests(TestCase):
             calendar_date=today,
             week_number=1,
             day_number=1,
-            plan_snapshot={"name": "Día alto en carbohidratos", "meals": []},
+            plan_snapshot={
+                "name": "Día alto en carbohidratos",
+                "meals": [{"key": f"dailyplan_meal:{slot.id}", "name": meal.name}],
+            },
         )
 
         today_response = self.client.get("/api/v1/today")
@@ -280,6 +286,7 @@ class MobileAPIV1Tests(TestCase):
         self.assertEqual(today_response.status_code, 200)
         self.assertEqual(today_response.json()["data"]["day_id"], day.id)
         self.assertEqual(today_response.json()["data"]["plan_snapshot"]["name"], "Día alto en carbohidratos")
+        self.assertEqual(today_response.json()["data"]["plan_snapshot"]["meals"][0]["detail_id"], meal.id)
         self.assertEqual(active_response.status_code, 200)
         self.assertEqual(active_response.json()["data"]["calendarization"]["id"], calendarization.id)
         self.assertEqual(len(active_response.json()["data"]["days"]), 1)
@@ -787,6 +794,11 @@ class MobileAPIV1Tests(TestCase):
             data={"action": "completed", "idempotency_key": "mobile-checkin-0001"},
             content_type="application/json",
         )
+        noted = self.client.post(
+            f"/api/v1/days/{day.id}/meals/dailyplan_meal:99/check-ins",
+            data={"action": "note", "idempotency_key": "mobile-checkin-note-0001", "note": "Cumplida según lo planificado."},
+            content_type="application/json",
+        )
         reset = self.client.post(
             f"/api/v1/days/{day.id}/meals/dailyplan_meal:99/check-ins",
             data={"action": "reset", "idempotency_key": "mobile-checkin-0002"},
@@ -795,9 +807,13 @@ class MobileAPIV1Tests(TestCase):
 
         self.assertEqual(completed.status_code, 200)
         self.assertEqual(completed.json()["data"]["meal_execution"][0]["status"], "completed")
+        self.assertEqual(noted.status_code, 200)
+        self.assertEqual(noted.json()["data"]["meal_execution"][0]["status"], "completed")
+        self.assertEqual(noted.json()["data"]["meal_execution"][0]["note"], "Cumplida según lo planificado.")
         self.assertEqual(reset.status_code, 200)
         self.assertEqual(reset.json()["data"]["meal_execution"][0]["status"], "planned")
-        self.assertEqual(CalendarizedMealExecution.objects.filter(calendarized_day=day).count(), 2)
+        self.assertEqual(reset.json()["data"]["meal_execution"][0]["note"], "Cumplida según lo planificado.")
+        self.assertEqual(CalendarizedMealExecution.objects.filter(calendarized_day=day).count(), 3)
 
     def test_reviews_reminders_and_measurement_context_share_the_active_program(self):
         today = timezone.localdate(timezone=ZoneInfo("UTC"))

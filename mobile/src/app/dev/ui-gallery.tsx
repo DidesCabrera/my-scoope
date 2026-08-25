@@ -37,6 +37,7 @@ import {
   ProposalObjectiveSection,
   ProposalReviewActions,
 } from "@/components/proposals";
+import { ProgramActiveKpis } from "@/components/programs";
 import {
   AppHeader,
   Brand,
@@ -469,6 +470,8 @@ export default function UiGalleryScreen() {
 
       {tab === "program" ? (
         <>
+          <SectionTitle detail="Propuesta · componente compartido" title="KPI de programa en curso" />
+          <ProgramActiveKpis adheredDays={82} adherence={97} elapsedDays={24} endDate="27 sep" plannedAdherenceDays={87} progress={57} standalone startDate="17 ago" totalDays={42} />
           <SectionTitle detail="Vista completa" title="Detalle de programa" />
           <ProgramDetailPreview />
         </>

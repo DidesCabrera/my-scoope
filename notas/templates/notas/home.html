@@ -239,29 +239,7 @@
               </p>
               <h2 class="home-calendar__program-name">{{ vm.content.calendarization.program_name }}</h2>
             </div>
-            <div class="home-calendar__program-progress" aria-label="Avance del programa: {{ vm.content.calendarization.progress_day }} de {{ vm.content.calendarization.progress_total_days }} días">
-              <dl class="home-calendar__progress-details">
-                <div>
-                  <dt>Duración</dt>
-                  <dd>{{ vm.content.calendarization.duration_days_label }}</dd>
-                </div>
-                <div>
-                  <dt>Inicio</dt>
-                  <dd>{{ vm.content.calendarization.start_label }}</dd>
-                </div>
-                <div>
-                  <dt>Termina</dt>
-                  <dd>{{ vm.content.calendarization.end_label }}</dd>
-                </div>
-                <div>
-                  <dt>Avance</dt>
-                  <dd>{{ vm.content.calendarization.progress_day }}/{{ vm.content.calendarization.progress_total_days }}</dd>
-                </div>
-              </dl>
-              <div class="home-calendar__progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="{{ vm.content.calendarization.progress_total_days }}" aria-valuenow="{{ vm.content.calendarization.progress_day }}">
-                <span class="home-calendar__progress-bar" style="width: {{ vm.content.calendarization.progress_percent }}%;"></span>
-              </div>
-            </div>
+            {% include "components/program_active_kpis.html" with program_kpis=vm.content.calendarization standalone=True %}
           {% else %}
             <p class="home-calendar__empty-state">No tienes un programa calendarizado</p>
           {% endif %}

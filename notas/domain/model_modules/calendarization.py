@@ -135,10 +135,12 @@ class CalendarizedMealExecution(models.Model):
     ACTION_COMPLETED = "completed"
     ACTION_SKIPPED = "skipped"
     ACTION_RESET = "reset"
+    ACTION_NOTE = "note"
     ACTION_CHOICES = (
         (ACTION_COMPLETED, "Completed"),
         (ACTION_SKIPPED, "Skipped"),
         (ACTION_RESET, "Reset"),
+        (ACTION_NOTE, "Note"),
     )
 
     calendarized_day = models.ForeignKey(

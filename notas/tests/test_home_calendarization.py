@@ -101,8 +101,9 @@ class HomeCalendarizationTests(TestCase):
 
         self.assertContains(response, "Programa Fuerza")
         self.assertContains(response, "Programa Calendarizado")
-        self.assertContains(response, "Duración")
-        self.assertContains(response, "7 días")
+        self.assertContains(response, "Periodo")
+        self.assertContains(response, "Días transcurridos")
+        self.assertContains(response, "Adhesión")
         self.assertContains(response, "3/7")
         self.assertContains(response, "Plan de potencia")
         self.assertContains(response, 'class="card home-calendar__dailyplan-card"')

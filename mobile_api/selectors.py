@@ -528,7 +528,11 @@ def today_payload(user, *, now=None) -> dict:
         },
         "day_id": day.id if day else None,
         "has_plan": bool(day and day.has_plan),
-        "plan_snapshot": day.plan_snapshot if day and day.has_plan else None,
+        "plan_snapshot": (
+            _calendarized_snapshot_with_meal_links(user, day.plan_snapshot)
+            if day and day.has_plan
+            else None
+        ),
         "meal_execution": meal_execution_state_for_day(day) if day and day.has_plan else [],
         "adherence": (
             calendarization_progress_summary(
@@ -645,6 +649,7 @@ def _calendarization_data_payload(calendarization) -> dict:
     progress_day = min(max((local_date - calendarization.start_date).days + 1, 0), total_days)
     return {
         "id": calendarization.id,
+        "source_program_id": calendarization.source_program_id,
         "program_name": calendarization.program_name_snapshot,
         "status": calendarization.status,
         "start_date": calendarization.start_date,
@@ -673,10 +678,40 @@ def _calendarized_days_payload(calendarization) -> list[dict]:
 def active_program_payload(user) -> dict:
     calendarization = current_calendarization_for_user(user)
     if calendarization is None:
-        return {"calendarization": None, "days": []}
+        return {"calendarization": None, "days": [], "adherence": None, "indicators": []}
+    local_date = today_for_calendarization(calendarization)
+    adherence = (
+        calendarization_progress_summary(
+            calendarization,
+            period_start=calendarization.start_date,
+            period_end=min(local_date, calendarization.end_date),
+        )
+        if local_date >= calendarization.start_date
+        else None
+    )
+    source_program = calendarization.source_program
+    indicators = [
+        {
+            "icon": "week",
+            "label": "semanas",
+            "value": source_program.normalized_duration_weeks if source_program else max(1, ((calendarization.end_date - calendarization.start_date).days + 7) // 7),
+        },
+        {
+            "icon": "dailyPlan",
+            "label": "planes asignados",
+            "value": source_program.filled_days_count if source_program else sum(1 for day in calendarization.days.all() if day.has_plan),
+        },
+        {
+            "icon": "food",
+            "label": "alimentos",
+            "value": get_program_summary(source_program)["program_foods_count"] if source_program else 0,
+        },
+    ]
     return {
         "calendarization": _calendarization_data_payload(calendarization),
         "days": _calendarized_days_payload(calendarization),
+        "adherence": adherence,
+        "indicators": indicators,
     }
 
 

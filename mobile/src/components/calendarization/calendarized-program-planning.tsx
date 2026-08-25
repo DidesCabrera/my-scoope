@@ -1,5 +1,3 @@
-import { type Href, useRouter } from "expo-router";
-import { ChevronRight } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
@@ -7,11 +5,9 @@ import { userFacingError } from "@/api/errors";
 import type { ActiveProgramDay, CalendarizedDayDetail } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { ProgramDaySelector, ProgramWeekTabs } from "@/components/libraries/program-planning-controls";
-import { NutritionEntityCard } from "@/components/nutrition";
-import { MealPanels } from "@/components/panels";
-import { Card, EntityCardAction, InlineNotice, SectionHeading, textStyles } from "@/components/ui";
+import { Card, InlineNotice, SectionHeading, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
-import { snapshotAllocation, snapshotCalories, snapshotMealPanelItem } from "./presentation-adapters";
+import { CalendarizedDailyPlanCard } from "./calendarized-daily-plan-card";
 
 function localDate(): string {
   const now = new Date();
@@ -32,7 +28,6 @@ function preferredDay(days: ActiveProgramDay[]): ActiveProgramDay | undefined {
 }
 
 export function CalendarizedProgramPlanning({ days }: { days: ActiveProgramDay[] }) {
-  const router = useRouter();
   const { apiRequest } = useSession();
   const weeks = useMemo(() => [...new Set(days.map((day) => day.week_number))], [days]);
   const initialDay = preferredDay(days);
@@ -77,9 +72,6 @@ export function CalendarizedProgramPlanning({ days }: { days: ActiveProgramDay[]
   }, [apiRequest, selectedId]);
 
   const snapshot = detail?.plan_snapshot;
-  const totals = snapshot?.totals;
-  const totalCalories = snapshotCalories(totals);
-  const mealItems = (snapshot?.meals ?? []).map((meal, index) => snapshotMealPanelItem(meal, index, totalCalories));
 
   if (!weeks.length) return null;
 
@@ -104,29 +96,7 @@ export function CalendarizedProgramPlanning({ days }: { days: ActiveProgramDay[]
           ) : error ? (
             <InlineNotice tone="error">{error}</InlineNotice>
           ) : detail?.has_plan && snapshot ? (
-            <NutritionEntityCard
-              actions={(
-                <EntityCardAction
-                  label="Ir al detalle del plan calendarizado"
-                  onPress={() => router.push(`/program/days/${detail.id}` as Href)}
-                  role="link">
-                  <ChevronRight color={tokens.color.textMuted} size={21} />
-                </EntityCardAction>
-              )}
-              entity="dailyPlan"
-              eyebrow={`SEMANA ${activeWeek} · ${dayLabel(detail.calendar_date)}`}
-              indicators={[{ icon: "meal", label: "comidas", value: mealItems.length }]}
-              kpiVariant="nested"
-              nutrition={{
-                calories: totalCalories,
-                carbs: { allocation: snapshotAllocation(totals, "carbs_g"), grams: totals?.carbs_g ?? 0 },
-                fat: { allocation: snapshotAllocation(totals, "fat_g"), grams: totals?.fat_g ?? 0 },
-                protein: { allocation: snapshotAllocation(totals, "protein_g"), grams: totals?.protein_g ?? 0, perKilogram: null },
-              }}
-              subtitle="Plan diario calendarizado"
-              title={snapshot.name ?? detail.plan_name ?? "Plan diario"}>
-              <MealPanels items={mealItems} />
-            </NutritionEntityCard>
+            <CalendarizedDailyPlanCard dayId={detail.id} eyebrow={`SEMANA ${activeWeek} · ${dayLabel(detail.calendar_date)}`} planName={detail.plan_name} snapshot={snapshot} />
           ) : null}
         </ProgramDaySelector>
       </Card>

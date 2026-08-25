@@ -27,6 +27,7 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   const program = await readFile(path.resolve(process.cwd(), "src/app/program/index.tsx"), "utf8");
   const programDay = await readFile(path.resolve(process.cwd(), "src/app/program/days/[id].tsx"), "utf8");
   const today = await readFile(path.resolve(process.cwd(), "src/app/today.tsx"), "utf8");
+  const account = await readFile(path.resolve(process.cwd(), "src/app/account.tsx"), "utf8");
   assert.match(proposal, /\/libraries\/meals\//);
   assert.match(proposal, /\/libraries\/daily-plans\//);
   assert.match(comparison, /Usar en el Asistente/);
@@ -37,10 +38,14 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assert.match(programDay, /title="Tabla de comparación entre comidas"/);
   assert.match(programDay, /title="Detalle de cada Comida"/);
   assert.match(programDay, /<NutritionEntityCard/);
-  assert.match(programDay, /router\.push\(`\/libraries\/meals\/\$\{meal\.detail_id\}` as Href\)/);
+  assert.match(programDay, /calendarizedDayId=\$\{dayId\}&mealKey=/);
   assert.match(programDay, /<ChevronRight/);
   assert.match(programDay, /mode: "library-detail", entity: "dailyPlan"/);
   assert.match(today, /\/program/);
+  assert.doesNotMatch(today, /check-in/);
+  assert.doesNotMatch(today, /Mi suscripción|Cuenta, privacidad y ayuda|Configurar recordatorios/);
+  assert.match(account, /label="Mi suscripción"/);
+  assert.match(account, /router\.push\("\/subscription" as Href\)/);
   for (const screen of [proposal, comparison, program, programDay, today]) assert.match(screen, /useFocusEffect/);
 });
 
