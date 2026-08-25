@@ -168,8 +168,17 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(calendarizedDailyPlanCard, /<NutritionEntityCard/);
   assert.match(calendarizedDailyPlanCard, /<MealPanels/);
   assert.match(calendarizedDailyPlanCard, /onOpenItem=/);
-  assert.match(calendarizedDailyPlanCard, /calendarizedDayId=/);
-  assert.match(calendarizedDailyPlanCard, /mealKey=/);
+  assert.match(calendarizedDailyPlanCard, /pathname: "\/program\/days\/\[id\]\/meals\/\[mealKey\]"/);
+  assert.match(calendarizedDailyPlanCard, /mealKey: meal\.id/);
+
+  const calendarizedMealDetail = await readFile(
+    path.resolve(process.cwd(), "src/app/program/days/[id]/meals/[mealKey].tsx"),
+    "utf8",
+  );
+  assert.match(calendarizedMealDetail, /apiRequest<CalendarizedDayDetail>\(`\/api\/v1\/program\/days\/\$\{dayId\}`\)/);
+  assert.match(calendarizedMealDetail, /day\.plan_snapshot\?\.meals\?\.find/);
+  assert.match(calendarizedMealDetail, /<FoodPanels items=\{foods\} \/>[\s\S]*<MealAdherenceCheckIn/);
+  assert.doesNotMatch(calendarizedMealDetail, /\/api\/v1\/library\/meals/);
 
   const sharedEntityPanels = await readFile(
     path.resolve(process.cwd(), "src/components/panels/entity-panels.tsx"),
@@ -177,6 +186,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   );
   assert.match(sharedEntityPanels, /accessibilityLabel=\{`Ver detalle de \$\{item\.name\}`\}/);
   assert.match(sharedEntityPanels, /<ChevronRight/);
+  assert.match(sharedEntityPanels, /item\.detailId != null \|\| item\.canOpen/);
 
   const mealAdherence = await readFile(
     path.resolve(process.cwd(), "src/components/calendarization/meal-adherence-check-in.tsx"),

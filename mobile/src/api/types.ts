@@ -338,7 +338,15 @@ export type MealSnapshot = {
   hour?: string | null;
   note?: string;
   totals?: MacroTotals;
-  foods?: { key?: string; name?: string; quantity_g?: number | null }[];
+  foods?: {
+    key?: string;
+    name?: string;
+    quantity_g?: number | null;
+    protein_g?: number | null;
+    carbs_g?: number | null;
+    fat_g?: number | null;
+    total_kcal?: number | null;
+  }[];
 };
 
 export type WeightItem = {

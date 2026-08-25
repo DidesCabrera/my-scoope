@@ -33,11 +33,11 @@ export function CalendarizedDailyPlanCard({ dayId, eyebrow, planName, snapshot }
       <MealPanels
         items={mealItems}
         onOpenItem={(meal) => {
-          if (meal.detailId == null) return;
-          const context = dayId != null
-            ? `?calendarizedDayId=${dayId}&mealKey=${encodeURIComponent(meal.id)}`
-            : "";
-          router.push(`/libraries/meals/${meal.detailId}${context}` as Href);
+          if (dayId == null || !meal.id) return;
+          router.push({
+            pathname: "/program/days/[id]/meals/[mealKey]",
+            params: { id: String(dayId), mealKey: meal.id },
+          } as Href);
         }}
       />
     </NutritionEntityCard>

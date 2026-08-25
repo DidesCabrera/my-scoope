@@ -15,6 +15,7 @@ export function snapshotAllocation(totals: MacroTotals | undefined, macro: "prot
 export function snapshotMealPanelItem(meal: MealSnapshot, index: number, planCalories: number): MealPanelItem {
   const mealCalories = snapshotCalories(meal.totals);
   return {
+    canOpen: Boolean(meal.key),
     calorieShare: planCalories > 0 ? mealCalories / planCalories * 100 : 0,
     calories: mealCalories,
     carbsAllocation: snapshotAllocation(meal.totals, "carbs_g"),

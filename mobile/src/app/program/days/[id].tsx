@@ -27,10 +27,13 @@ function CalendarizedMealCards({ dayId, meals }: { dayId: number; meals: MealSna
         return (
           <View key={meal.key ?? `${meal.name}-${index}`}>
             <NutritionEntityCard
-              actions={meal.detail_id ? (
+              actions={meal.key ? (
                 <EntityCardAction
                   label={`Ver detalle de ${meal.name ?? "la comida"}`}
-                  onPress={() => router.push(`/libraries/meals/${meal.detail_id}?calendarizedDayId=${dayId}&mealKey=${encodeURIComponent(meal.key ?? "")}` as Href)}
+                  onPress={() => router.push({
+                    pathname: "/program/days/[id]/meals/[mealKey]",
+                    params: { id: String(dayId), mealKey: meal.key ?? "" },
+                  } as Href)}
                   role="link">
                   <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
                 </EntityCardAction>

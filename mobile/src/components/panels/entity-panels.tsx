@@ -26,6 +26,7 @@ export type FoodPanelItem = NutritionPanelValues & {
 };
 
 export type MealPanelItem = NutritionPanelValues & {
+  canOpen?: boolean;
   detailId?: number;
   foods: MealMenuFood[];
   id: string;
@@ -211,7 +212,7 @@ export function MealMenuPanel({ items, onOpenItem }: { items: MealPanelItem[]; o
               {item.foods.map((food) => `${food.name} (${decimal(food.quantity)}${food.quantityUnit})`).join(", ")}
             </Text>
           </View>
-          {item.detailId != null && onOpenItem ? (
+          {(item.detailId != null || item.canOpen) && onOpenItem ? (
             <Pressable
               accessibilityLabel={`Ver detalle de ${item.name}`}
               accessibilityRole="link"
