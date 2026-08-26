@@ -4,6 +4,7 @@ import { StyleProp, View, ViewStyle } from "react-native";
 import {
   EntityCard,
   EntityCardPanelSlot,
+  type CompletionIndicatorCounts,
   type EntityKind,
   type StructuralIndicator,
 } from "@/components/ui";
@@ -16,6 +17,7 @@ export type NutritionEntityCardProps = {
   accessory?: ReactNode;
   actions?: ReactNode;
   children?: ReactNode;
+  completion?: CompletionIndicatorCounts;
   kpiVariant?: "nested" | "regular";
   entity: EntityKind;
   eyebrow?: string;
@@ -31,6 +33,7 @@ export function NutritionEntityCard({
   accessory,
   actions,
   children,
+  completion,
   kpiVariant = "regular",
   entity,
   eyebrow,
@@ -45,6 +48,7 @@ export function NutritionEntityCard({
     <EntityCard
       accessory={accessory}
       actions={actions}
+      completion={completion}
       entity={entity}
       eyebrow={eyebrow}
       indicators={indicators}

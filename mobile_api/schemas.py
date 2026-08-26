@@ -287,6 +287,7 @@ class CalendarizationHistoryEnvelope(Schema):
 
 
 class CalendarizedDayDetailData(ActiveProgramDay):
+    meal_execution: list[MealExecutionData] = Field(default_factory=list)
     plan_snapshot: dict[str, Any] | None = None
 
 

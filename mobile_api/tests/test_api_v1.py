@@ -448,9 +448,10 @@ class MobileAPIV1Tests(TestCase):
         )
         stored_snapshot = {
             "name": "Plan activo",
+            "totals": {"protein_g": 150, "carbs_g": 200, "fat_g": 60},
             "meals": [
-                {"key": f"dailyplan_meal:{owned_slot.id}", "name": owned_meal.name},
-                {"key": f"dailyplan_meal:{foreign_slot.id}", "name": foreign_meal.name},
+                {"key": f"dailyplan_meal:{owned_slot.id}", "name": owned_meal.name, "totals": {"protein_g": 30}},
+                {"key": f"dailyplan_meal:{foreign_slot.id}", "name": foreign_meal.name, "totals": {"protein_g": 15}},
             ],
         }
         day = CalendarizedDay.objects.create(
@@ -465,6 +466,8 @@ class MobileAPIV1Tests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         meals = response.json()["data"]["plan_snapshot"]["meals"]
+        self.assertEqual(response.json()["data"]["plan_snapshot"]["totals"]["protein_per_kilogram"], 2.0)
+        self.assertEqual(meals[0]["totals"]["protein_per_kilogram"], 0.4)
         self.assertEqual(meals[0]["detail_id"], owned_meal.id)
         self.assertNotIn("detail_id", meals[1])
         day.refresh_from_db()
@@ -813,6 +816,10 @@ class MobileAPIV1Tests(TestCase):
         self.assertEqual(reset.status_code, 200)
         self.assertEqual(reset.json()["data"]["meal_execution"][0]["status"], "planned")
         self.assertEqual(reset.json()["data"]["meal_execution"][0]["note"], "Cumplida según lo planificado.")
+        day_detail = self.client.get(f"/api/v1/program/days/{day.id}")
+        self.assertEqual(day_detail.status_code, 200)
+        self.assertEqual(day_detail.json()["data"]["meal_execution"][0]["status"], "planned")
+        self.assertEqual(day_detail.json()["data"]["meal_execution"][0]["note"], "Cumplida según lo planificado.")
         self.assertEqual(CalendarizedMealExecution.objects.filter(calendarized_day=day).count(), 3)
 
     def test_reviews_reminders_and_measurement_context_share_the_active_program(self):

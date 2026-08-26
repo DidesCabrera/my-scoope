@@ -113,6 +113,11 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.doesNotMatch(programWeekPanels, /label: "Semanas"/);
   assert.match(programWeekPanels, /<Pencil/);
   assert.match(programWeekPanels, /weekName: \{ color: tokens\.color\.textMain/);
+  assert.match(programWeekPanels, /cell: \{[^}]*fontSize: tokens\.type\.caption/);
+  assert.match(programWeekPanels, /row: \{[^}]*minHeight: 48/);
+  assert.doesNotMatch(programWeekPanels, /cell: \{[^}]*fontSize: 11/);
+  assert.doesNotMatch(programWeekPanels, /<PanelAllocationBar size="compact"/);
+  assert.match(programWeekPanels, /allocationRow: \{ gap: tokens\.spacing\.sm \}/);
   assert.doesNotMatch(programWeekPanels, /deltaUp|deltaDown|styles\.protein|styles\.carbs|styles\.fat/);
 
   const programDetail = await readFile(
@@ -124,11 +129,19 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(programDetail, /weekData\.foods \?\? \[\]\)\.map\(foodItem\)/);
   assert.match(programDetail, /: weekFoodItems/);
   assert.match(programDetail, /useState<number \| null>\(\(\) => filledDays\[0\] \? 0 : null\)/);
-  assert.match(programDetail, /<Card style=\{styles\.weekCard\}>/);
-  assert.doesNotMatch(programDetail, /<Card muted style=\{styles\.weekCard\}>/);
+  assert.match(programDetail, /<View style=\{styles\.weekContent\}>/);
+  assert.doesNotMatch(programDetail, /<Card(?: muted)? style=\{styles\.weekCard\}>/);
   assert.match(programDetail, /<ProgramDaySelector/);
   assert.match(programDetail, /<ProgramWeekTabs/);
-  assert.match(programDetail, /weekCard: \{ gap: tokens\.spacing\.lg, marginHorizontal: -tokens\.spacing\.screen \}/);
+  assert.match(programDetail, /detail=\{`\$\{weeksCount\} \$\{weeksCount === 1 \? "semana" : "semanas"\}`\}/);
+  assert.match(programDetail, /title="Planificación semanal"/);
+  assert.doesNotMatch(programDetail, /MajorSectionTitle/);
+  assert.match(programDetail, /<ProgramWeekHeading week=\{week\} \/>/);
+  assert.match(programDetail, /weekContent: \{[^}]*paddingTop: tokens\.spacing\.md/);
+  assert.doesNotMatch(programDetail, /weekEyebrow|weekEyebrowText/);
+  assert.doesNotMatch(programDetail, /Planificación por semanas/);
+  assert.doesNotMatch(programDetail, /planningIdentity|planningTitle/);
+  assert.match(programDetail, /weekContent: \{ gap: tokens\.spacing\.lg, minWidth: 0, paddingTop: tokens\.spacing\.md, width: "100%" \}/);
   assert.match(programDetail, /<ProgramMetricPreview[^\n]*style=\{layoutStyles\.cardContentBleed\}/);
   assert.match(programDetail, /<FoodPanels items=\{weekData/);
   assert.doesNotMatch(programDetail, /<View style=\{layoutStyles\.cardContentBleed\}><(?:FoodPanels|ProgramDayComparisonPanels|ProgramWeekComparisonPanels)/);
@@ -150,12 +163,18 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(planningControls, /<ClipboardList color=\{tokens\.color\.entityIconForeground\} size=\{14\}/);
   assert.match(planningControls, /borderRadius: tokens\.spacing\.compact, height: 24/);
   assert.match(planningControls, /horizontal\n\s+showsHorizontalScrollIndicator=\{false\}/);
+  assert.match(planningControls, /export function ProgramWeekHeading/);
+  assert.match(planningControls, /<CalendarRange color=\{tokens\.color\.entityIconForeground\} size=\{11\}/);
+  assert.match(planningControls, /weekHeadingTitle: \{[^}]*fontSize: tokens\.type\.section[^}]*fontWeight: tokens\.weight\.semibold/);
 
   const calendarizedPlanning = await readFile(
     path.resolve(process.cwd(), "src/components/calendarization/calendarized-program-planning.tsx"),
     "utf8",
   );
-  assert.match(calendarizedPlanning, /title="Planes diarios esta semana"/);
+  assert.match(calendarizedPlanning, /<ProgramWeekHeading detail=\{weekDateRange\(weekDays\)\} week=\{activeWeek\} \/>/);
+  assert.match(calendarizedPlanning, /style=\{styles\.weekContent\}/);
+  assert.match(calendarizedPlanning, /weekContent: \{[^}]*paddingTop: tokens\.spacing\.md/);
+  assert.doesNotMatch(calendarizedPlanning, /<Card style=\{styles\.weekCard\}>/);
   assert.match(calendarizedPlanning, /<ProgramWeekTabs/);
   assert.match(calendarizedPlanning, /<ProgramDaySelector/);
   assert.match(calendarizedPlanning, /apiRequest<CalendarizedDayDetail>/);
@@ -170,6 +189,11 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(calendarizedDailyPlanCard, /onOpenItem=/);
   assert.match(calendarizedDailyPlanCard, /pathname: "\/program\/days\/\[id\]\/meals\/\[mealKey\]"/);
   assert.match(calendarizedDailyPlanCard, /mealKey: meal\.id/);
+  assert.doesNotMatch(calendarizedDailyPlanCard, /kpiVariant="nested"/);
+  assert.match(calendarizedDailyPlanCard, /perKilogram: totals\?\.protein_per_kilogram \?\? null/);
+  assert.match(calendarizedDailyPlanCard, /completedCount: executions\.filter/);
+  assert.match(calendarizedDailyPlanCard, /noteCount: executions\.filter/);
+  assert.match(calendarizedDailyPlanCard, /label: "posición", value: `S\$\{position\.weekNumber\} · D\$\{position\.dayNumber\}`/);
 
   const calendarizedMealDetail = await readFile(
     path.resolve(process.cwd(), "src/app/program/days/[id]/meals/[mealKey].tsx"),
@@ -178,6 +202,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(calendarizedMealDetail, /apiRequest<CalendarizedDayDetail>\(`\/api\/v1\/program\/days\/\$\{dayId\}`\)/);
   assert.match(calendarizedMealDetail, /day\.plan_snapshot\?\.meals\?\.find/);
   assert.match(calendarizedMealDetail, /<FoodPanels items=\{foods\} \/>[\s\S]*<MealAdherenceCheckIn/);
+  assert.match(calendarizedMealDetail, /completion=\{\{/);
+  assert.match(calendarizedMealDetail, /onChange=\{setExecution\}/);
   assert.doesNotMatch(calendarizedMealDetail, /\/api\/v1\/library\/meals/);
 
   const sharedEntityPanels = await readFile(
@@ -187,6 +213,19 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(sharedEntityPanels, /accessibilityLabel=\{`Ver detalle de \$\{item\.name\}`\}/);
   assert.match(sharedEntityPanels, /<ChevronRight/);
   assert.match(sharedEntityPanels, /item\.detailId != null \|\| item\.canOpen/);
+  assert.match(sharedEntityPanels, /allocationRow: \{ gap: tokens\.spacing\.sm \}/);
+  assert.match(libraryEntityPanels, /allocationRow: \{ gap: tokens\.spacing\.sm \}/);
+
+  const completionUi = await readFile(
+    path.resolve(process.cwd(), "src/components/ui/product.tsx"),
+    "utf8",
+  );
+  assert.match(completionUi, /summarized=\{entity === "dailyPlan"\}/);
+  assert.match(completionUi, /<CheckCheck color=\{tokens\.color\.textMuted\}/);
+  assert.match(completionUi, /<Text style=\{styles\.completionIndicatorCount\}>\{completedCount\}<\/Text>/);
+  assert.match(completionUi, /<Text style=\{styles\.completionIndicatorCount\}>\{noteCount\}<\/Text>/);
+  assert.match(completionUi, /style=\{\[styles\.headingIndicators, page && styles\.headingIndicatorsPage\]\}/);
+  assert.match(completionUi, /headingIndicatorsPage: \{ marginTop: tokens\.spacing\.xs \}/);
 
   const mealAdherence = await readFile(
     path.resolve(process.cwd(), "src/components/calendarization/meal-adherence-check-in.tsx"),
@@ -196,13 +235,39 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(mealAdherence, /onPress=\{\(\) => void saveStatus\(!completed\)\}/);
   assert.match(mealAdherence, /action: "note"/);
   assert.match(mealAdherence, /Guardar nota/);
+  assert.match(mealAdherence, /Editar nota/);
+  assert.match(mealAdherence, /<Pencil/);
+  assert.match(mealAdherence, /onChange\?\.\(execution\)/);
   assert.match(mealAdherence, /maxLength=\{500\}/);
   assert.match(mealAdherence, /action: nextCompleted \? "completed" : "skipped"/);
   assert.match(mealAdherence, /<View style=\{styles\.divider\} \/>/);
+  assert.match(mealAdherence, /<SectionHeading title="Cumplimiento de esta comida" \/>[\s\S]*<ContentPanel muted>/);
+  assert.match(mealAdherence, /editingNote \? \([\s\S]*<TextInput[\s\S]*\) : \([\s\S]*styles\.noteText/);
   assert.doesNotMatch(mealAdherence, /statusLabel|styles\.status/);
+  assert.doesNotMatch(mealAdherence, /Cumplimiento actualizado|Nota guardada|statusSaved|noteSaved/);
+  assert.doesNotMatch(mealAdherence, /label=\{editingNote \? "Guardar nota" : "Editar nota"\}/);
 
   const activeProgram = await readFile(path.resolve(process.cwd(), "src/app/program/index.tsx"), "utf8");
   assert.match(activeProgram, /<CalendarizedProgramPlanning days=\{program\?\.days \?\? \[\]\} key=\{calendarization\.id\} \/>/);
+  assert.match(activeProgram, /<SectionDivider \/>[\s\S]*<SectionHeading[^>]*title="Planificación Semanal"/);
+  assert.match(activeProgram, /weekCount === 1 \? "semana" : "semanas"/);
+
+  const activeProgramCard = await readFile(
+    path.resolve(process.cwd(), "src/components/programs/program-active-card.tsx"),
+    "utf8",
+  );
+  assert.match(activeProgramCard, /<ProgramActiveKpis[^>]*bleed=\{false\}/);
+
+  const activeProgramKpis = await readFile(
+    path.resolve(process.cwd(), "src/components/programs/program-active-kpis.tsx"),
+    "utf8",
+  );
+  assert.match(activeProgramKpis, /periodRow:\{[^}]*borderRadius:tokens\.radius\.lg[^}]*marginTop:tokens\.spacing\.sm[^}]*padding:tokens\.spacing\.md/);
+  assert.match(activeProgramKpis, /indicatorsSurfaceReset:\{[^}]*padding:tokens\.spacing\.xs/);
+
+  const todayScreen = await readFile(path.resolve(process.cwd(), "src/app/today.tsx"), "utf8");
+  assert.match(todayScreen, /activeProgram\?\.days\.find\(\(day\) => day\.id === today\?\.day_id\)/);
+  assert.match(todayScreen, /position=\{todayProgramDay \? \{ dayNumber: todayProgramDay\.day_number, weekNumber: todayProgramDay\.week_number \} : undefined\}/);
   assert.doesNotMatch(activeProgram, /program\?\.days\.map/);
 
   const libraryDetail = await readFile(
@@ -212,6 +277,23 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(libraryDetail, /<ProgramDetailPreview[\s\S]*?scrollable\s*\/>/);
   assert.match(libraryDetail, /FoodPanels, MealPanels.*from "@\/components\/panels"/);
   assert.match(libraryDetail, /title="Alimentos en este plan diario"><FoodPanels items=\{item\.panel\.foods\.map\(foodPanelItem\)\}/);
+  assert.match(libraryDetail, /<SectionDivider \/><EntityDetailSection[^>]*title="Detalle de cada Comida"/);
+
+  const calendarizedDayDetail = await readFile(
+    path.resolve(process.cwd(), "src/app/program/days/[id].tsx"),
+    "utf8",
+  );
+  assert.match(calendarizedDayDetail, /<FoodPanels items=\{foods\} \/>/);
+  assert.match(calendarizedDayDetail, /perKilogram: totals\?\.protein_per_kilogram \?\? null/);
+  assert.match(calendarizedDayDetail, /<SectionDivider \/>[\s\S]*title="Detalle de cada Comida"/);
+
+  const sectionDivider = await readFile(
+    path.resolve(process.cwd(), "src/components/ui/section-divider.tsx"),
+    "utf8",
+  );
+  assert.match(sectionDivider, /export function SectionDivider/);
+  assert.match(sectionDivider, /marginVertical: tokens\.spacing\.md/);
+  assert.match(gallery, /title="Separador de secciones"/);
 
   const entityDetail = await readFile(
     path.resolve(process.cwd(), "src/components/details/entity-detail-page.tsx"),
@@ -233,6 +315,10 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(programDailyPlan, /\{day\?\.dailyplan_id \? \(/);
   assert.match(programDailyPlan, /actions=\{\(/);
   assert.doesNotMatch(programDailyPlan, /accessory=\{\(/);
+  assert.doesNotMatch(programDailyPlan, /kpiVariant="nested"|subtitle="Plan diario asignado"|label: "plan asignado"/);
+  assert.match(programDailyPlan, /label: "posición"/);
+  assert.match(programDailyPlan, /icon: "meal", label: "comidas"/);
+  assert.match(programDailyPlan, /onOpenItem=\{\(meal\) =>/);
 
   const productUiSource = await readFile(
     path.resolve(process.cwd(), "src/components/ui/product.tsx"),
@@ -261,13 +347,27 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.doesNotMatch(programChart, /Card.*from "@\/components\/ui\/primitives"/);
   assert.match(programChart, /<Card accent=\{tokens\.color\.program\}>/);
   assert.match(programChart, /<ProgramMetricPreview[^\n]*style=\{layoutStyles\.cardContentBleed\}/);
+  assert.doesNotMatch(programChart, /footer: \{[^}]*borderTop/);
   assert.match(programChart, /allocationSlot: \{[^\n]*gap: 2[^\n]*paddingHorizontal: 1/);
   assert.match(programChart, /allocationSegment: \{ borderRadius: 2/);
-  assert.match(programChart, /key=\{`\$\{index\}-\$\{label\}`\}/);
+  assert.match(programChart, /key=\{`\$\{index\}-\$\{label\}`\} style=\{styles\.weekLabelCell\}/);
   assert.match(programChart, /export function programDailyMetricData/);
+  assert.match(programChart, /lastWeek === 1 \? "Semana 1" : `Semanas 1-\$\{lastWeek\}`/);
+  assert.match(programChart, /style=\{\[styles\.axisChip, styles\.axisLeadingChip\]\}/);
+  assert.match(programChart, /axisLeadingChip: \{[^}]*textAlign: "left"[^}]*width: "100%"/);
+  assert.match(programChart, /plotViewportWidth \* Math\.max\(1, axisLabels\.length \/ 8\)/);
+  assert.match(programChart, /<ScrollView[\s\S]*horizontal[\s\S]*showsHorizontalScrollIndicator=\{axisLabels\.length > 8\}/);
+  assert.match(programChart, /index > 0 && index % 7 === 0 && styles\.weekDivider/);
+  assert.doesNotMatch(programChart, /weekLabels: \{[^}]*paddingHorizontal/);
+  assert.doesNotMatch(programChart, /weekLabels: \{[^}]*gap:/);
+  assert.match(programChart, /weekLabelCell: \{ flex: 1, minWidth: 0, paddingHorizontal: 1 \}/);
+  assert.match(programChart, /\(index \+ 0\.5\) \* \(140 \/ slotCount\)/);
+  assert.match(programChart, /\(index \+ 1\) \* 7 \* \(140 \/ slotCount\)/);
+  assert.doesNotMatch(programChart, /metricPlot: \{[^}]*paddingHorizontal/);
+  assert.match(programDetail, /axisLeadingLabel="Semana"/);
   assert.match(programChart, /weeks\.flatMap\(\(week\) => week\.days\.map/);
   assert.match(programChart, /axisLabels = \["S1", "S2"\]/);
-  assert.match(programChart, /width <= 780[\s\S]*?\? \{ width: 120 \}/);
+  assert.match(programChart, /width < 600[\s\S]*?\? \{ width: "40%" as const \}/);
   assert.match(programChart, /strokeWidth="5"[^\n]*x1=\{x\} x2=\{x\} y1=\{y\} y2=\{y\}/);
   assert.match(programChart, /P \{allocationRange\(liveAllocationValues, 0/);
   assert.match(programChart, /const hasAllocation = protein \+ carbs \+ fat > 0/);
@@ -297,6 +397,30 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(programDayPanels, /MacroCalorieDistribution/);
   assert.match(programDayPanels, /PanelAllocationBar/);
   assert.match(programDayPanels, /<Pencil/);
+  assert.match(programDayPanels, /cell: \{[^}]*fontSize: tokens\.type\.caption/);
+  assert.match(programDayPanels, /planName: \{[^}]*fontSize: tokens\.type\.label/);
+  assert.doesNotMatch(programDayPanels, /cell: \{[^}]*fontSize: 11/);
+  assert.doesNotMatch(programDayPanels, /<PanelAllocationBar size="compact"/);
+  assert.match(programDayPanels, /<ProteinPerKilogramBadge showUnit=\{false\} style=\{styles\.ppkBadge\}/);
+  assert.match(programDayPanels, /ppkBadge: \{ height: 24, minHeight: 24 \}/);
+  assert.match(programDayPanels, /calorieShareDataCell: \{ flex: 1\.35 \}/);
+  assert.match(programDayPanels, /ppkDataCell: \{ flex: 0\.65 \}/);
+  assert.match(programDayPanels, /column === "% Cal" && styles\.calorieShareDataCell/);
+  assert.match(programDayPanels, /column === "PPK" && styles\.ppkDataCell/);
+  assert.match(programDayPanels, /allocationRow: \{ gap: tokens\.spacing\.sm \}/);
+
+  const programMetricPanels = await readFile(
+    path.resolve(process.cwd(), "src/components/libraries/program-child-card.tsx"),
+    "utf8",
+  );
+  assert.match(programMetricPanels, /metricTitle: \{[^}]*fontSize: tokens\.type\.body/);
+  assert.match(programMetricPanels, /metricIdentity: \{[^}]*height: 58/);
+  assert.match(programMetricPanels, /allocationIdentity: \{ height: 94/);
+  assert.match(programMetricPanels, /rangeBadge: \{[^}]*fontSize: tokens\.type\.label/);
+  assert.match(programMetricPanels, /axisChip: \{[^}]*fontSize: tokens\.type\.label/);
+  assert.match(programMetricPanels, /axisChip: \{[^}]*backgroundColor: "transparent"[^}]*borderColor: tokens\.color\.borderDefault[^}]*borderWidth: 1[^}]*color: tokens\.color\.textMuted/);
+  assert.match(programMetricPanels, /allocationRange: \{[^}]*fontSize: tokens\.type\.label/);
+  assert.match(programMetricPanels, /width < 600[\s\S]*\? \{ width: "40%" as const \}/);
 
   const productUi = await readFile(
     path.resolve(process.cwd(), "src/components/ui/product.tsx"),

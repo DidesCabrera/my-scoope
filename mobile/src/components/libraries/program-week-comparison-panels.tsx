@@ -105,9 +105,9 @@ function AllocationPanel({ weeks }: { weeks: ProgramWeekSummary[] }) {
       {weeks.map((week, index) => (
         <View key={week.id} style={[styles.row, styles.allocationRow, index === weeks.length - 1 && styles.rowLast]}>
           <View style={styles.leadingCell}><WeekIdentity week={week.week} /></View>
-          <PanelAllocationBar size="compact" style={styles.dataCell} tone="protein" value={week.allocation.protein} />
-          <PanelAllocationBar size="compact" style={styles.dataCell} tone="carbs" value={week.allocation.carbs} />
-          <PanelAllocationBar size="compact" style={styles.dataCell} tone="fat" value={week.allocation.fat} />
+          <PanelAllocationBar style={styles.dataCell} tone="protein" value={week.allocation.protein} />
+          <PanelAllocationBar style={styles.dataCell} tone="carbs" value={week.allocation.carbs} />
+          <PanelAllocationBar style={styles.dataCell} tone="fat" value={week.allocation.fat} />
         </View>
       ))}
     </PanelBody>
@@ -198,22 +198,22 @@ export function ProgramWeekComparisonPanels({ weeks }: { weeks: ProgramWeekSumma
 }
 
 const styles = StyleSheet.create({
-  row: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", minHeight: 44, paddingHorizontal: tokens.spacing.sm },
+  row: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", minHeight: 48, paddingHorizontal: tokens.spacing.sm },
   rowLast: { borderBottomWidth: 0 },
   header: { minHeight: 32 },
   headerText: { color: tokens.color.textMuted, fontSize: 10, fontWeight: tokens.weight.semibold, textAlign: "center", textTransform: "uppercase" },
-  cell: { color: tokens.color.textMain, fontSize: 11, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.regular, textAlign: "center" },
+  cell: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.regular, textAlign: "center" },
   leadingCell: { flexBasis: "25%", flexGrow: 0, flexShrink: 0, minWidth: 0, textAlign: "left" },
   dataCell: { flex: 1, minWidth: 0 },
   weekIdentity: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
   weekName: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
-  allocationRow: { gap: 3 },
+  allocationRow: { gap: tokens.spacing.sm },
   editRow: { gap: tokens.spacing.sm },
   reorderActions: { flexDirection: "row", gap: 2 },
   editLeading: { flex: 1, textAlign: "left" },
   editIdentity: { flex: 1, minWidth: 0 },
   editActions: { flexDirection: "row", gap: 2, justifyContent: "flex-end", minWidth: 68 },
-  iconAction: { alignItems: "center", borderRadius: tokens.radius.sm, height: 30, justifyContent: "center", width: 30 },
+  iconAction: { alignItems: "center", borderRadius: tokens.radius.sm, height: 34, justifyContent: "center", width: 34 },
   disabled: { opacity: 0.28 },
   pressed: { opacity: 0.68 },
   commitActions: { flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "flex-end", padding: tokens.spacing.sm },

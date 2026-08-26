@@ -4,5 +4,6 @@ export * from "./detail-link-row";
 export * from "./feedback";
 export * from "./layout";
 export * from "./product";
+export * from "./section-divider";
 export * from "./surfaces";
 export * from "./typography";

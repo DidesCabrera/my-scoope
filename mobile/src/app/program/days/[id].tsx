@@ -4,26 +4,35 @@ import { useCallback, useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
-import type { CalendarizedDayDetail, MealSnapshot } from "@/api/types";
+import type { CalendarizedDayDetail, MealExecutionItem, MealSnapshot } from "@/api/types";
 import { useSession } from "@/auth/session-context";
-import { snapshotAllocation, snapshotCalories, snapshotMealPanelItem } from "@/components/calendarization/presentation-adapters";
+import { snapshotAllocation, snapshotCalories, snapshotFoodPanelItems, snapshotMealPanelItem } from "@/components/calendarization/presentation-adapters";
 import { EntityDetailPage, EntityDetailSection } from "@/components/details";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { NutritionEntityCard } from "@/components/nutrition";
-import { MealPanels } from "@/components/panels";
-import { Button, ContentPanel, EntityCardAction, InlineNotice, textStyles } from "@/components/ui";
+import { FoodPanels, MealPanels } from "@/components/panels";
+import { Button, ContentPanel, EntityCardAction, InlineNotice, SectionDivider, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 function displayDate(value: string): string {
   return new Intl.DateTimeFormat("es-CL", { weekday: "long", day: "numeric", month: "long" }).format(new Date(`${value}T12:00:00`));
 }
 
-function CalendarizedMealCards({ dayId, meals }: { dayId: number; meals: MealSnapshot[] }) {
+function completionFor(items: MealExecutionItem[]) {
+  return {
+    completedCount: items.filter((item) => item.status === "completed").length,
+    noteCount: items.filter((item) => item.note.trim()).length,
+  };
+}
+
+function CalendarizedMealCards({ dayId, mealExecution, meals }: { dayId: number; mealExecution: MealExecutionItem[]; meals: MealSnapshot[] }) {
   const router = useRouter();
   return (
     <View style={styles.mealCardList}>
       {meals.map((meal, index) => {
         const totals = meal.totals;
+        const foods = snapshotFoodPanelItems(meal);
+        const execution = mealExecution.find((item) => item.meal_key === meal.key);
         return (
           <View key={meal.key ?? `${meal.name}-${index}`}>
             <NutritionEntityCard
@@ -38,25 +47,22 @@ function CalendarizedMealCards({ dayId, meals }: { dayId: number; meals: MealSna
                   <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
                 </EntityCardAction>
               ) : null}
+              completion={{
+                completedCount: execution?.status === "completed" ? 1 : 0,
+                noteCount: execution?.note.trim() ? 1 : 0,
+              }}
               entity="meal"
               eyebrow={`Comida ${index + 1}`}
-              indicators={[{ icon: "food", label: "alimentos", value: meal.foods?.length ?? 0 }]}
+              indicators={[{ icon: "food", label: "alimentos", value: foods.length }]}
               nutrition={{
                 calories: snapshotCalories(totals),
                 carbs: { allocation: snapshotAllocation(totals, "carbs_g"), grams: totals?.carbs_g ?? 0 },
                 fat: { allocation: snapshotAllocation(totals, "fat_g"), grams: totals?.fat_g ?? 0 },
-                protein: { allocation: snapshotAllocation(totals, "protein_g"), grams: totals?.protein_g ?? 0, perKilogram: null },
+                protein: { allocation: snapshotAllocation(totals, "protein_g"), grams: totals?.protein_g ?? 0, perKilogram: totals?.protein_per_kilogram ?? null },
               }}
               subtitle={meal.hour?.slice(0, 5)}
               title={meal.name ?? "Comida"}>
-              <ContentPanel muted title="Alimentos de esta comida">
-                {meal.foods?.length ? meal.foods.map((food, foodIndex) => (
-                  <View key={food.key ?? `${food.name}-${foodIndex}`} style={[styles.foodRow, foodIndex === (meal.foods?.length ?? 0) - 1 && styles.foodRowLast]}>
-                    <Text numberOfLines={2} style={styles.foodName}>{food.name ?? "Alimento"}</Text>
-                    <Text style={styles.foodQuantity}>{food.quantity_g != null ? `${food.quantity_g.toLocaleString("es-CL", { maximumFractionDigits: 1 })} g` : "Sin cantidad"}</Text>
-                  </View>
-                )) : <Text style={textStyles.muted}>Esta comida no contiene alimentos detallados.</Text>}
-              </ContentPanel>
+              <FoodPanels items={foods} />
             </NutritionEntityCard>
           </View>
         );
@@ -112,6 +118,7 @@ export default function ProgramDayScreen() {
       {day.has_plan && snapshot ? (
         <EntityDetailPage
           entity="dailyPlan"
+          completion={completionFor(day.meal_execution)}
           eyebrow={displayDate(day.calendar_date)}
           indicators={[
             { icon: "day", label: "posición", value: `S${day.week_number} · D${day.day_number}` },
@@ -121,16 +128,19 @@ export default function ProgramDayScreen() {
             calories: totalCalories,
             carbs: { allocation: snapshotAllocation(totals, "carbs_g"), grams: totals?.carbs_g ?? 0 },
             fat: { allocation: snapshotAllocation(totals, "fat_g"), grams: totals?.fat_g ?? 0 },
-            protein: { allocation: snapshotAllocation(totals, "protein_g"), grams: totals?.protein_g ?? 0, perKilogram: null },
+            protein: { allocation: snapshotAllocation(totals, "protein_g"), grams: totals?.protein_g ?? 0, perKilogram: totals?.protein_per_kilogram ?? null },
           }}
           title={snapshot.name ?? day.plan_name ?? "Plan diario"}>
           <EntityDetailSection detail={`${meals.length} elementos`} title="Tabla de comparación entre comidas">
             <MealPanels items={mealItems} />
           </EntityDetailSection>
           {meals.length ? (
-            <EntityDetailSection detail={`${meals.length} comidas`} title="Detalle de cada Comida">
-              <CalendarizedMealCards dayId={day.id} meals={meals} />
-            </EntityDetailSection>
+            <>
+              <SectionDivider />
+              <EntityDetailSection detail={`${meals.length} comidas`} title="Detalle de cada Comida">
+                <CalendarizedMealCards dayId={day.id} mealExecution={day.meal_execution} meals={meals} />
+              </EntityDetailSection>
+            </>
           ) : null}
           <ContentPanel muted title="Información del día">
             <View style={styles.metadataRow}><Text style={styles.metadataLabel}>Fecha</Text><Text style={styles.metadataValue}>{displayDate(day.calendar_date)}</Text></View>
@@ -149,10 +159,6 @@ export default function ProgramDayScreen() {
 
 const styles = StyleSheet.create({
   content: { flexGrow: 1, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
-  foodName: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.caption, fontWeight: "500" },
-  foodQuantity: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontVariant: ["tabular-nums"] },
-  foodRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between", minHeight: 42, paddingHorizontal: tokens.spacing.sm },
-  foodRowLast: { borderBottomWidth: 0 },
   loading: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, flex: 1, gap: tokens.spacing.md, justifyContent: "center", padding: tokens.spacing.screen },
   mealCardList: { gap: tokens.spacing.lg, minWidth: 0, width: "100%" },
   metadataLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption },

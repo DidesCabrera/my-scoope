@@ -22,6 +22,7 @@ export function EntityDetailPage({
   backLabel = "Volver",
   children,
   accessory,
+  completion,
   kpiVariant = "regular",
   entity,
   eyebrow,
@@ -54,6 +55,7 @@ export function EntityDetailPage({
         <View style={styles.summary}>
           <EntityHeading
             accessory={accessory}
+            completion={completion}
             entity={entity}
             eyebrow={eyebrow}
             indicators={indicators}

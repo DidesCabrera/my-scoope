@@ -8,6 +8,7 @@ import { useSession } from "@/auth/session-context";
 import { CalendarizedProgramPlanning } from "@/components/calendarization/calendarized-program-planning";
 import { ProgramActiveOverview } from "@/components/programs/program-active-card";
 import { ConfirmationState, EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
+import { SectionDivider, SectionHeading } from "@/components/ui";
 import { Button, Card, LoadingState, Pill, Screen, SectionTitle, textStyles } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
 
@@ -58,6 +59,7 @@ export default function ProgramScreen() {
   if (loading && !program) return <LoadingState label="Preparando tu programa…" />;
 
   const calendarization = program?.calendarization ?? null;
+  const weekCount = new Set((program?.days ?? []).map((day) => day.week_number)).size;
 
   async function applyAction(action: "pause" | "resume" | "cancel") {
     if (!calendarization) return;
@@ -80,7 +82,8 @@ export default function ProgramScreen() {
       {calendarization ? (
         <>
           {program ? <ProgramActiveOverview calendarization={calendarization} program={program} /> : null}
-          <SectionTitle detail={`${program?.days.length ?? 0} días`} title="Recorrido" />
+          <SectionDivider />
+          <SectionHeading detail={`${weekCount} ${weekCount === 1 ? "semana" : "semanas"}`} title="Planificación Semanal" />
           <CalendarizedProgramPlanning days={program?.days ?? []} key={calendarization.id} />
 
           {pendingAction === "pause" ? (

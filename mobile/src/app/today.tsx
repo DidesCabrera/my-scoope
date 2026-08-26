@@ -61,6 +61,7 @@ export default function TodayScreen() {
   if (loading && !today) return <LoadingState />;
 
   const snapshot = today?.plan_snapshot;
+  const todayProgramDay = activeProgram?.days.find((day) => day.id === today?.day_id);
   const firstName = session?.display_name.split(" ")[0] || session?.username || "Atleta";
 
   return (
@@ -111,7 +112,13 @@ export default function TodayScreen() {
       ) : null}
 
       {today?.has_plan && snapshot ? (
-        <CalendarizedDailyPlanCard dayId={today.day_id} eyebrow="PLAN DE HOY" snapshot={snapshot} />
+        <CalendarizedDailyPlanCard
+          dayId={today.day_id}
+          eyebrow="PLAN DE HOY"
+          mealExecution={today.meal_execution}
+          position={todayProgramDay ? { dayNumber: todayProgramDay.day_number, weekNumber: todayProgramDay.week_number } : undefined}
+          snapshot={snapshot}
+        />
       ) : (
         <Card muted>
           <SectionTitle title="Día sin plan" />

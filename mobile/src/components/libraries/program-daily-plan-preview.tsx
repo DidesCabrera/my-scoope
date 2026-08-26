@@ -74,6 +74,8 @@ function mealPanelItem(item: NonNullable<LibraryWeekPanelItem["days"][number]["m
     fatGrams: item.fat_grams,
     foods: item.foods.map((food) => ({ name: food.name, quantity: food.quantity, quantityUnit: food.quantity_unit })),
     id: item.id,
+    canOpen: true,
+    detailId: item.detail_id,
     name: item.name,
     proteinAllocation: item.protein_allocation,
     proteinGrams: item.protein_grams,
@@ -101,11 +103,11 @@ export function ProgramDailyPlanPreview({ day, dayLabel, week }: { day?: Library
           ) : null}
         </>
       )}
-      kpiVariant="nested"
       entity="dailyPlan"
       eyebrow={`SEMANA ${week} · ${dayLabel.toUpperCase()}`}
       indicators={[
-        { icon: "dailyPlan", label: "plan asignado", value: 1 },
+        ...(day?.day_number ? [{ icon: "day" as const, label: "posición", value: `S${week} · D${day.day_number}` }] : []),
+        { icon: "meal", label: "comidas", value: day ? (day.meals ?? []).length : meals.length },
       ]}
       nutrition={nutrition ? {
         calories: nutrition.calories,
@@ -118,9 +120,14 @@ export function ProgramDailyPlanPreview({ day, dayLabel, week }: { day?: Library
         fat: { allocation: 26, grams: 59 },
         protein: { allocation: 29, grams: 148, perKilogram: 1.8 },
       }}
-      subtitle="Plan diario asignado"
       title={day?.plan_name ?? "Día de entrenamiento"}>
-      <MealPanels items={day ? (day.meals ?? []).map(mealPanelItem) : meals} />
+      <MealPanels
+        items={day ? (day.meals ?? []).map(mealPanelItem) : meals}
+        onOpenItem={(meal) => {
+          if (meal.detailId == null) return;
+          router.push(`/libraries/meals/${meal.detailId}` as Href);
+        }}
+      />
     </NutritionEntityCard>
   );
 }

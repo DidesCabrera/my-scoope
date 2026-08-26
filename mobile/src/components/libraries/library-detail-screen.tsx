@@ -8,6 +8,7 @@ import { useSession } from "@/auth/session-context";
 import { MealAdherenceCheckIn } from "@/components/calendarization/meal-adherence-check-in";
 import { EntityDetailMetadata, EntityDetailPage, EntityDetailSection } from "@/components/details";
 import { FoodPanels, MealPanels, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
+import { SectionDivider } from "@/components/ui";
 import { Button, InlineNotice, textStyles } from "@/components/ui/primitives";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { tokens } from "@/design/tokens";
@@ -71,7 +72,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   return <><ScrollView contentContainerStyle={styles.content} onScroll={({ nativeEvent }) => { const visible = nativeEvent.contentOffset.y > 1; if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible); }} scrollEventThrottle={16} style={styles.screen}><EntityDetailPage entity={item.entity} indicators={item.indicators} nutrition={libraryNutrition(item.nutrition)} subtitle={item.subtitle || undefined} title={item.name}>
     {item.panel.kind !== "none" ? <EntityDetailSection detail={`${panelCount} elementos`} title={sectionTitles[item.panel.kind]}>{item.panel.kind === "foods" ? <FoodPanels items={item.panel.foods.map(foodPanelItem)} /> : null}{item.panel.kind === "meals" ? <MealPanels items={item.panel.meals.map(mealPanelItem)} /> : null}{item.panel.kind === "weeks" ? <ProgramPanels items={item.panel.weeks} /> : null}</EntityDetailSection> : null}
     {item.entity === "meal" && Number.isInteger(contextualDayId) && contextualDayId > 0 && mealKey ? <MealAdherenceCheckIn dayId={contextualDayId} mealKey={mealKey} /> : null}
-    {item.entity === "dailyPlan" && item.panel.kind === "meals" && item.panel.meals.length > 0 ? <EntityDetailSection detail={`${item.panel.meals.length} comidas`} title="Detalle de cada Comida"><DailyPlanMealCards items={item.panel.meals} /></EntityDetailSection> : null}
+    {item.entity === "dailyPlan" && item.panel.kind === "meals" && item.panel.meals.length > 0 ? <><SectionDivider /><EntityDetailSection detail={`${item.panel.meals.length} comidas`} title="Detalle de cada Comida"><DailyPlanMealCards items={item.panel.meals} /></EntityDetailSection></> : null}
     {item.entity === "dailyPlan" && item.panel.foods.length > 0 ? <EntityDetailSection detail={`${item.panel.foods.length} alimentos`} title="Alimentos en este plan diario"><FoodPanels items={item.panel.foods.map(foodPanelItem)} /></EntityDetailSection> : null}
     <EntityDetailMetadata creator={item.creator} updatedAt={libraryDate(item.created_at)} />
   </EntityDetailPage></ScrollView>{actionsModal}</>;

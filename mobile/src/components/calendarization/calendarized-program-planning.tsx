@@ -4,8 +4,8 @@ import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { userFacingError } from "@/api/errors";
 import type { ActiveProgramDay, CalendarizedDayDetail } from "@/api/types";
 import { useSession } from "@/auth/session-context";
-import { ProgramDaySelector, ProgramWeekTabs } from "@/components/libraries/program-planning-controls";
-import { Card, InlineNotice, SectionHeading, textStyles } from "@/components/ui";
+import { ProgramDaySelector, ProgramWeekHeading, ProgramWeekTabs } from "@/components/libraries/program-planning-controls";
+import { InlineNotice, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { CalendarizedDailyPlanCard } from "./calendarized-daily-plan-card";
 
@@ -18,6 +18,16 @@ function localDate(): string {
 
 function dayLabel(value: string): string {
   return new Intl.DateTimeFormat("es-CL", { weekday: "narrow" }).format(new Date(`${value}T12:00:00`)).toUpperCase();
+}
+
+function dateLabel(value: string): string {
+  return new Intl.DateTimeFormat("es-CL", { day: "numeric", month: "short" }).format(new Date(`${value}T12:00:00`));
+}
+
+function weekDateRange(days: ActiveProgramDay[]): string {
+  const dates = days.map((day) => day.calendar_date).sort();
+  if (!dates.length) return "Sin fechas";
+  return `${dateLabel(dates[0])} — ${dateLabel(dates.at(-1) ?? dates[0])}`;
 }
 
 function preferredDay(days: ActiveProgramDay[]): ActiveProgramDay | undefined {
@@ -78,11 +88,8 @@ export function CalendarizedProgramPlanning({ days }: { days: ActiveProgramDay[]
   return (
     <View style={styles.section}>
       <ProgramWeekTabs activeWeek={activeWeek} onChange={selectWeek} weeks={weeks} />
-      <Card style={styles.weekCard}>
-        <SectionHeading
-          detail={`${weekDays.filter((day) => day.has_plan).length} asignados`}
-          title="Planes diarios esta semana"
-        />
+      <View style={styles.weekContent}>
+        <ProgramWeekHeading detail={weekDateRange(weekDays)} week={activeWeek} />
         <ProgramDaySelector
           accessibilityLabel={`Planes diarios de Semana ${activeWeek}`}
           days={weekDays.map((day) => ({ filled: day.has_plan, id: day.id, label: dayLabel(day.calendar_date) }))}
@@ -96,10 +103,10 @@ export function CalendarizedProgramPlanning({ days }: { days: ActiveProgramDay[]
           ) : error ? (
             <InlineNotice tone="error">{error}</InlineNotice>
           ) : detail?.has_plan && snapshot ? (
-            <CalendarizedDailyPlanCard dayId={detail.id} eyebrow={`SEMANA ${activeWeek} · ${dayLabel(detail.calendar_date)}`} planName={detail.plan_name} snapshot={snapshot} />
+            <CalendarizedDailyPlanCard dayId={detail.id} eyebrow={`SEMANA ${activeWeek} · ${dayLabel(detail.calendar_date)}`} mealExecution={detail.meal_execution} planName={detail.plan_name} snapshot={snapshot} />
           ) : null}
         </ProgramDaySelector>
-      </Card>
+      </View>
     </View>
   );
 }
@@ -107,5 +114,5 @@ export function CalendarizedProgramPlanning({ days }: { days: ActiveProgramDay[]
 const styles = StyleSheet.create({
   loading: { alignItems: "center", gap: tokens.spacing.sm, justifyContent: "center", minHeight: 120 },
   section: { gap: tokens.spacing.md },
-  weekCard: { gap: tokens.spacing.lg, marginHorizontal: -tokens.spacing.screen },
+  weekContent: { gap: tokens.spacing.lg, minWidth: 0, paddingTop: tokens.spacing.md, width: "100%" },
 });

@@ -58,6 +58,7 @@ import {
   Pill,
   ProgressBar,
   Screen,
+  SectionDivider,
   SectionIcon,
   type SectionKind,
   SectionTitle,
@@ -275,6 +276,12 @@ export default function UiGalleryScreen() {
               <Text style={textStyles.body}>Contenido compuesto sin replicar estilos de superficie.</Text>
             </DetailSection>
           </ContentPanel>
+          <SectionTitle detail="Espacio antes y después" title="Separador de secciones" />
+          <Card>
+            <Text style={textStyles.body}>Sección anterior</Text>
+            <SectionDivider />
+            <Text style={textStyles.body}>Sección siguiente</Text>
+          </Card>
           <SectionTitle detail="Identidad semántica" title="Título de entidad" />
           <EntityCard
             accessory={<Pill color={tokens.color.dailyPlan} label="Activo" />}
@@ -444,6 +451,7 @@ export default function UiGalleryScreen() {
           <SectionTitle detail="Primera composición reutilizable" title="Página de detalle" />
           <EntityDetailPage
             action={<Pill color={tokens.color.dailyPlan} label="Editar" />}
+            completion={{ completedCount: 2, noteCount: 1 }}
             entity="dailyPlan"
             indicators={[
               { icon: "meal", label: "comidas", value: mealPanelItems.length },
@@ -460,6 +468,7 @@ export default function UiGalleryScreen() {
             <EntityDetailSection detail="3 comidas" title="Tabla de comparación entre comidas">
               <MealPanels items={mealPanelItems} />
             </EntityDetailSection>
+            <SectionDivider />
             <EntityDetailSection detail="3 comidas" title="Detalle de cada comida">
               <DailyPlanMealDetailList items={dailyPlanMealDetailItems} />
             </EntityDetailSection>

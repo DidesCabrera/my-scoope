@@ -3,52 +3,21 @@ import { useCallback, useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
-import type { CalendarizedDayDetail, MacroTotals, MealSnapshot } from "@/api/types";
+import type { CalendarizedDayDetail, MealExecutionItem, MealSnapshot } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { MealAdherenceCheckIn } from "@/components/calendarization/meal-adherence-check-in";
-import { snapshotAllocation, snapshotCalories } from "@/components/calendarization/presentation-adapters";
+import { snapshotAllocation, snapshotCalories, snapshotFoodPanelItems } from "@/components/calendarization/presentation-adapters";
 import { EntityDetailPage, EntityDetailSection } from "@/components/details";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
-import { FoodPanels, type FoodPanelItem } from "@/components/panels";
+import { FoodPanels } from "@/components/panels";
 import { Button, InlineNotice, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
-
-function percentage(part: number | null | undefined, total: number | null | undefined): number {
-  return total && total > 0 ? ((part ?? 0) / total) * 100 : 0;
-}
-
-function foodItems(meal: MealSnapshot): FoodPanelItem[] {
-  const mealTotals = meal.totals;
-  const mealCalories = snapshotCalories(mealTotals);
-  return (meal.foods ?? []).map((food, index) => {
-    const totals: MacroTotals = {
-      protein_g: food.protein_g ?? 0,
-      carbs_g: food.carbs_g ?? 0,
-      fat_g: food.fat_g ?? 0,
-      total_kcal: food.total_kcal ?? undefined,
-    };
-    const calories = snapshotCalories(totals);
-    return {
-      id: food.key ?? `food-${index}`,
-      name: food.name ?? "Alimento",
-      quantity: food.quantity_g ?? 0,
-      quantityUnit: "g",
-      calories,
-      calorieShare: percentage(calories, mealCalories),
-      proteinGrams: totals.protein_g ?? 0,
-      carbsGrams: totals.carbs_g ?? 0,
-      fatGrams: totals.fat_g ?? 0,
-      proteinAllocation: percentage(totals.protein_g, mealTotals?.protein_g),
-      carbsAllocation: percentage(totals.carbs_g, mealTotals?.carbs_g),
-      fatAllocation: percentage(totals.fat_g, mealTotals?.fat_g),
-    };
-  });
-}
 
 export default function CalendarizedMealDetailScreen() {
   const { id, mealKey } = useLocalSearchParams<{ id: string; mealKey: string }>();
   const { status, apiRequest } = useSession();
   const [meal, setMeal] = useState<MealSnapshot | null>(null);
+  const [execution, setExecution] = useState<MealExecutionItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
@@ -63,10 +32,12 @@ export default function CalendarizedMealDetailScreen() {
       const day = await apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${dayId}`);
       const match = day.plan_snapshot?.meals?.find((item) => item.key === mealKey) ?? null;
       setMeal(match);
+      setExecution(day.meal_execution.find((item) => item.meal_key === mealKey) ?? null);
       if (!match) setError("Esta comida ya no está disponible en el día calendarizado.");
     } catch (nextError) {
       setError(userFacingError(nextError));
       setMeal(null);
+      setExecution(null);
     } finally {
       setLoading(false);
     }
@@ -91,7 +62,7 @@ export default function CalendarizedMealDetailScreen() {
   if (!meal) return <View style={styles.loading}>{error ? <InlineNotice tone="error">{error}</InlineNotice> : null}<Button label="Reintentar" onPress={() => void load()} variant="secondary" /></View>;
 
   const totals = meal.totals;
-  const foods = foodItems(meal);
+  const foods = snapshotFoodPanelItems(meal);
   return (
     <ScrollView
       contentContainerStyle={styles.content}
@@ -103,19 +74,23 @@ export default function CalendarizedMealDetailScreen() {
       style={styles.screen}>
       <EntityDetailPage
         entity="meal"
+        completion={{
+          completedCount: execution?.status === "completed" ? 1 : 0,
+          noteCount: execution?.note.trim() ? 1 : 0,
+        }}
         indicators={[{ icon: "food", label: "alimentos", value: foods.length }]}
         nutrition={{
           calories: snapshotCalories(totals),
           carbs: { allocation: snapshotAllocation(totals, "carbs_g"), grams: totals?.carbs_g ?? 0 },
           fat: { allocation: snapshotAllocation(totals, "fat_g"), grams: totals?.fat_g ?? 0 },
-          protein: { allocation: snapshotAllocation(totals, "protein_g"), grams: totals?.protein_g ?? 0, perKilogram: null },
+          protein: { allocation: snapshotAllocation(totals, "protein_g"), grams: totals?.protein_g ?? 0, perKilogram: totals?.protein_per_kilogram ?? null },
         }}
         subtitle={meal.hour?.slice(0, 5)}
         title={meal.name ?? "Comida"}>
         <EntityDetailSection detail={`${foods.length} alimentos`} title="Tabla de comparación entre alimentos">
           <FoodPanels items={foods} />
         </EntityDetailSection>
-        <MealAdherenceCheckIn dayId={dayId} mealKey={mealKey} />
+        <MealAdherenceCheckIn dayId={dayId} mealKey={mealKey} onChange={setExecution} />
       </EntityDetailPage>
     </ScrollView>
   );

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Pressable, ScrollView, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
-import { ClipboardList, Plus } from "lucide-react-native";
+import { CalendarRange, ClipboardList, Plus } from "lucide-react-native";
 import Svg, { Circle, Defs, LinearGradient, Stop } from "react-native-svg";
 
 import { tokens } from "@/design/tokens";
@@ -10,6 +10,20 @@ export type ProgramPlanningDay = {
   id: number | string;
   label: string;
 };
+
+export function ProgramWeekHeading({ detail, week }: { detail?: string; week: number }) {
+  return (
+    <View style={styles.weekHeading}>
+      <View style={styles.weekHeadingIdentity}>
+        <View style={styles.weekHeadingIcon}>
+          <CalendarRange color={tokens.color.entityIconForeground} size={11} strokeWidth={2.4} />
+        </View>
+        <Text style={styles.weekHeadingTitle}>Semana {week}</Text>
+      </View>
+      {detail ? <Text style={styles.weekHeadingDetail}>{detail}</Text> : null}
+    </View>
+  );
+}
 
 function SelectedDayRing() {
   return (
@@ -126,4 +140,9 @@ const styles = StyleSheet.create({
   weekTabText: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "500" },
   weekTabTextActive: { color: tokens.color.surfaceApp },
   weekTabs: { flexDirection: "row", gap: tokens.spacing.compact },
+  weekHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between", minWidth: 0, width: "100%" },
+  weekHeadingIdentity: { alignItems: "center", flexDirection: "row", flexShrink: 1, gap: tokens.spacing.compact, minWidth: 0 },
+  weekHeadingIcon: { alignItems: "center", backgroundColor: tokens.color.program, borderRadius: 5, height: 18, justifyContent: "center", width: 18 },
+  weekHeadingTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: tokens.weight.semibold, letterSpacing: 0, lineHeight: 25 },
+  weekHeadingDetail: { color: tokens.color.textSoft, fontSize: tokens.type.caption },
 });

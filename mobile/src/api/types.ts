@@ -96,6 +96,7 @@ export type CalendarizationHistoryData = {
 };
 
 export type CalendarizedDayDetail = ActiveProgramDay & {
+  meal_execution: MealExecutionItem[];
   plan_snapshot: DailyPlanSnapshot | null;
 };
 
@@ -192,6 +193,7 @@ export type DailyPlanSnapshot = {
 
 export type MacroTotals = {
   protein_g?: number | null;
+  protein_per_kilogram?: number | null;
   carbs_g?: number | null;
   fat_g?: number | null;
   total_kcal?: number | null;

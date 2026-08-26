@@ -4,6 +4,8 @@ import {
   CalendarDays,
   CalendarRange,
   Carrot,
+  Check,
+  CheckCheck,
   CircleFadingPlus,
   CircleUserRound,
   ClipboardList,
@@ -14,6 +16,7 @@ import {
   type LucideIcon,
   MessageSquarePlus,
   MessagesSquare,
+  NotebookPen,
   Search,
   Sparkles,
   Utensils,
@@ -33,6 +36,11 @@ export type StructuralIndicator = {
   icon?: StructuralIndicatorKind;
   label: string;
   value: number | string;
+};
+
+export type CompletionIndicatorCounts = {
+  completedCount?: number;
+  noteCount?: number;
 };
 
 const entityLabels: Record<EntityKind, string> = {
@@ -135,12 +143,45 @@ export function StructuralIndicators({ indicators, entity, tone = "identity" }: 
   );
 }
 
+export function CompletionIndicators({ completedCount = 0, noteCount = 0, summarized = false }: CompletionIndicatorCounts & { summarized?: boolean }) {
+  if (completedCount <= 0 && noteCount <= 0) return null;
+  const labels = [
+    noteCount > 0 ? `${noteCount} ${noteCount === 1 ? "comida con nota" : "comidas con nota"}` : null,
+    completedCount > 0 ? `${completedCount} ${completedCount === 1 ? "comida cumplida" : "comidas cumplidas"}` : null,
+  ].filter(Boolean).join(", ");
+  if (summarized) {
+    return (
+      <View accessibilityLabel={labels} accessible style={styles.completionIndicators}>
+        {noteCount > 0 ? (
+          <View style={styles.completionIndicatorSummary}>
+            <Text style={styles.completionIndicatorCount}>{noteCount}</Text>
+            <NotebookPen color={tokens.color.textMuted} size={17} strokeWidth={2.1} />
+          </View>
+        ) : null}
+        {completedCount > 0 ? (
+          <View style={styles.completionIndicatorSummary}>
+            <Text style={styles.completionIndicatorCount}>{completedCount}</Text>
+            <CheckCheck color={tokens.color.textMuted} size={19} strokeWidth={2.3} />
+          </View>
+        ) : null}
+      </View>
+    );
+  }
+  return (
+    <View accessibilityLabel={labels} accessible style={styles.completionIndicators}>
+      {Array.from({ length: noteCount }, (_, index) => <NotebookPen color={tokens.color.textMuted} key={`note-${index}`} size={17} strokeWidth={2.1} />)}
+      {Array.from({ length: completedCount }, (_, index) => <Check color={tokens.color.textMuted} key={`check-${index}`} size={18} strokeWidth={2.4} />)}
+    </View>
+  );
+}
+
 export function EntityHeading({
   title,
   entity,
   eyebrow,
   subtitle,
   indicators,
+  completion,
   accessory,
   identityIcon: IdentityIcon,
   variant = "card",
@@ -150,6 +191,7 @@ export function EntityHeading({
   eyebrow?: string;
   subtitle?: string;
   indicators?: StructuralIndicator[];
+  completion?: CompletionIndicatorCounts;
   accessory?: ReactNode;
   identityIcon?: LucideIcon;
   variant?: "card" | "page";
@@ -167,7 +209,12 @@ export function EntityHeading({
         </View>
         <Text style={[styles.headingTitle, page && { fontSize: pageTitleSize, lineHeight: pageTitleLineHeight }]}>{title}</Text>
         {subtitle ? <Text style={styles.headingSubtitle}>{subtitle}</Text> : null}
-        {indicators ? <StructuralIndicators entity={entity} indicators={indicators} /> : null}
+        {indicators || completion ? (
+          <View style={[styles.headingIndicators, page && styles.headingIndicatorsPage]}>
+            {indicators ? <StructuralIndicators entity={entity} indicators={indicators} /> : null}
+            {completion ? <CompletionIndicators {...completion} summarized={entity === "dailyPlan"} /> : null}
+          </View>
+        ) : null}
       </View>
       {accessory}
     </View>
@@ -180,6 +227,7 @@ export function EntityCard({
   eyebrow,
   subtitle,
   indicators,
+  completion,
   accessory,
   actions,
   children,
@@ -191,6 +239,7 @@ export function EntityCard({
   eyebrow?: string;
   subtitle?: string;
   indicators?: StructuralIndicator[];
+  completion?: CompletionIndicatorCounts;
   accessory?: ReactNode;
   actions?: ReactNode;
   onPress?: () => void;
@@ -198,7 +247,7 @@ export function EntityCard({
 }>) {
   const content = (
     <Card accent={tokens.color[entity]} style={[onPress && styles.entityCardInPressable, style]}>
-      <EntityHeading accessory={accessory} entity={entity} eyebrow={eyebrow} indicators={indicators} subtitle={subtitle} title={title} />
+      <EntityHeading accessory={accessory} completion={completion} entity={entity} eyebrow={eyebrow} indicators={indicators} subtitle={subtitle} title={title} />
       {children}
       {actions ? <EntityCardActions>{actions}</EntityCardActions> : null}
     </Card>
@@ -372,6 +421,11 @@ const styles = StyleSheet.create({
   headingTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: tokens.weight.semibold, letterSpacing: 0, lineHeight: 25 },
   headingSubtitle: { color: tokens.color.textSoft, fontSize: tokens.type.caption, lineHeight: 18 },
   structuralIndicators: { alignItems: "center", alignSelf: "flex-start", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.compact },
+  completionIndicators: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.xs },
+  completionIndicatorCount: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.semibold },
+  completionIndicatorSummary: { alignItems: "center", flexDirection: "row", gap: 3 },
+  headingIndicators: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.sm },
+  headingIndicatorsPage: { marginTop: tokens.spacing.xs },
   structuralItem: { alignItems: "center", borderRadius: tokens.spacing.compact, flexDirection: "row", gap: tokens.spacing.xs, paddingHorizontal: tokens.spacing.sm, paddingVertical: tokens.spacing.xs },
   structuralItemSurface: { borderColor: tokens.color.borderDefault, borderWidth: 1 },
   structuralValue: { color: tokens.color.entityIconForeground, fontSize: tokens.type.caption, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.medium, letterSpacing: 0, lineHeight: 15 },

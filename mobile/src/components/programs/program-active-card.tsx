@@ -18,7 +18,7 @@ export function ProgramActiveOverview({ calendarization, program, embedded = fal
   return (
     <View style={styles.content}>
       <EntityHeading entity="program" eyebrow="Programa en curso" identityIcon={CalendarClock} indicators={program.indicators} title={calendarization.program_name} variant={embedded ? "card" : "page"} />
-      <ProgramActiveKpis adheredDays={program.adherence?.completed_meals ?? 0} adherence={program.adherence?.adherence_percent ?? 0} bleed={!embedded} elapsedDays={calendarization.progress_day} endDate={displayDate(calendarization.end_date)} plannedAdherenceDays={program.adherence?.elapsed_meals ?? program.adherence?.planned_meals ?? 0} progress={calendarization.progress_percent} standalone startDate={displayDate(calendarization.start_date)} totalDays={calendarization.progress_total_days} />
+      <ProgramActiveKpis adheredDays={program.adherence?.completed_meals ?? 0} adherence={program.adherence?.adherence_percent ?? 0} bleed={false} elapsedDays={calendarization.progress_day} endDate={displayDate(calendarization.end_date)} plannedAdherenceDays={program.adherence?.elapsed_meals ?? program.adherence?.planned_meals ?? 0} progress={calendarization.progress_percent} standalone startDate={displayDate(calendarization.start_date)} totalDays={calendarization.progress_total_days} />
       {calendarization.source_program_id ? <DetailLinkRow accessibilityLabel={`Ir al detalle de ${calendarization.program_name}`} bleed={!embedded} label="Ir a detalle de programa" onPress={() => router.push(`/libraries/programs/${calendarization.source_program_id}` as Href)} /> : null}
     </View>
   );

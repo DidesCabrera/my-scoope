@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
   caloriesLeadingCell: { alignSelf: "stretch", flex: 1.6, justifyContent: "center", minWidth: 0 },
   calorieValueCell: { flex: 0.62, minWidth: 0, textAlign: "center" },
   calorieShareCell: { flex: 1, minWidth: 0 },
-  allocationRow: { gap: 6 },
+  allocationRow: { gap: tokens.spacing.sm },
   allocationLeadingCell: { alignSelf: "stretch", flex: 1.6, justifyContent: "center", minWidth: 0 },
   allocationCell: { flex: 1, minWidth: 0, width: "auto" },
   mealIdentity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0, paddingHorizontal: tokens.spacing.xs },

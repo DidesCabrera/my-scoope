@@ -743,6 +743,19 @@ def _calendarized_snapshot_with_meal_links(user, snapshot: dict | None) -> dict 
     if not snapshot:
         return None
     payload = deepcopy(snapshot)
+    current_weight = get_current_weight(user)
+
+    def add_protein_per_kilogram(totals) -> None:
+        if not isinstance(totals, dict):
+            return
+        protein = totals.get("protein_g")
+        totals["protein_per_kilogram"] = (
+            _safe_number(protein / current_weight)
+            if current_weight and protein
+            else None
+        )
+
+    add_protein_per_kilogram(payload.get("totals"))
     meals = payload.get("meals")
     if not isinstance(meals, list):
         return payload
@@ -751,6 +764,7 @@ def _calendarized_snapshot_with_meal_links(user, snapshot: dict | None) -> dict 
     for meal in meals:
         if not isinstance(meal, dict):
             continue
+        add_protein_per_kilogram(meal.get("totals"))
         meal.pop("detail_id", None)
         key = meal.get("key")
         if not isinstance(key, str) or not key.startswith("dailyplan_meal:"):
@@ -781,6 +795,7 @@ def calendarized_day_payload(user, day_id: int) -> dict | None:
         "week_number": day.week_number,
         "day_number": day.day_number,
         "has_plan": day.has_plan,
+        "meal_execution": meal_execution_state_for_day(day) if day.has_plan else [],
         "plan_name": (snapshot or {}).get("name", ""),
         "plan_snapshot": snapshot,
     }

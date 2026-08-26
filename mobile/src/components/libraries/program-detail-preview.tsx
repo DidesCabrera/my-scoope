@@ -3,15 +3,14 @@ import type { ReactNode } from "react";
 import { useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View, type ScrollViewProps } from "react-native";
 
-import { Card } from "@/components/ui/primitives";
 import { FoodPanels, type FoodPanelItem } from "@/components/panels";
 import { SectionHeading } from "@/components/ui/typography";
 import { tokens } from "@/design/tokens";
 import type { LibraryFoodPanelItem, LibraryItem, LibraryWeekPanelItem } from "@/api/types";
-import { EntityHeading, EntityIcon, layoutStyles, StructuralIndicators } from "@/components/ui";
+import { EntityHeading, layoutStyles, SectionDivider, StructuralIndicators } from "@/components/ui";
 import { ProgramMetricPreview, programDailyMetricData } from "./program-child-card";
 import { ProgramDailyPlanPreview } from "./program-daily-plan-preview";
-import { ProgramDaySelector, ProgramWeekTabs } from "./program-planning-controls";
+import { ProgramDaySelector, ProgramWeekHeading, ProgramWeekTabs } from "./program-planning-controls";
 import { ProgramDayComparisonPanels, type ProgramDayNutrition } from "./program-day-comparison-panels";
 import { ProgramWeekComparisonPanels, type ProgramWeekSummary } from "./program-week-comparison-panels";
 
@@ -78,13 +77,10 @@ function foodItem(item: LibraryFoodPanelItem): FoodPanelItem {
 function ProgramWeekDetail({ week, weekData }: { week: number; weekData?: LibraryWeekPanelItem }) {
   const liveMetricData = weekData ? programDailyMetricData([weekData]) : undefined;
   return (
-    <Card style={styles.weekCard}>
+    <View style={styles.weekContent}>
       <View style={styles.weekCardHeader}>
         <View style={styles.weekIdentity}>
-          <View style={styles.weekEyebrow}>
-            <EntityIcon entity="program" size="compact" />
-            <Text style={styles.weekEyebrowText}>SEMANA {week}</Text>
-          </View>
+          <ProgramWeekHeading week={week} />
           <StructuralIndicators
             entity="program"
             indicators={[
@@ -99,19 +95,19 @@ function ProgramWeekDetail({ week, weekData }: { week: number; weekData?: Librar
         </CompactAction>
       </View>
 
-      <ProgramMetricPreview axisLabels={weekData?.days.map((day) => day.day_label.slice(0, 1).toUpperCase()) ?? dayLabels} data={liveMetricData} days={7} style={layoutStyles.cardContentBleed} />
+      <ProgramMetricPreview axisLabels={weekData?.days.map((day) => day.day_label.slice(0, 1).toUpperCase()) ?? dayLabels} axisLeadingLabel="Semana" data={liveMetricData} days={7} style={layoutStyles.cardContentBleed} />
 
       <SectionHeading title="Tabla de comparación entre planes diarios" />
       <ProgramDayComparisonPanels key={`comparison-${week}`} rows={weekData ? dayRows(weekData) : undefined} week={week} />
 
-      <View style={styles.sectionDivider} />
+      <SectionDivider spacing="compact" tone="soft" />
       <SectionHeading detail={`${weekData ? weekData.filled_days_count ?? weekData.days.filter((day) => day.plan_name).length : 6} asignados`} title="Planes diarios esta semana" />
       <ProgramDaysGrid key={week} week={week} weekData={weekData} />
 
-      <View style={styles.sectionDivider} />
+      <SectionDivider spacing="compact" tone="soft" />
       <SectionHeading detail={`${weekData?.foods_count ?? weekData?.foods?.length ?? 28} alimentos`} title="Alimentos en esta semana" />
       <FoodPanels items={weekData ? (weekData.foods ?? []).map(foodItem) : weekFoodItems} />
-    </Card>
+    </View>
   );
 }
 
@@ -162,13 +158,10 @@ export function ProgramDetailPreview({ footer, item, onScroll, scrollable = fals
   );
 
   const planningHeader = (
-    <View style={styles.planningHeader}>
-      <View style={styles.planningIdentity}>
-        <EntityIcon entity="program" />
-        <Text style={styles.planningTitle}>Planificación por semanas</Text>
-      </View>
-      <StructuralIndicators entity="program" indicators={[{ icon: "week", label: "semanas", value: `${weeksCount} SEMANAS` }]} />
-    </View>
+    <SectionHeading
+      detail={`${weeksCount} ${weeksCount === 1 ? "semana" : "semanas"}`}
+      title="Planificación semanal"
+    />
   );
 
   const weekTabs = (
@@ -192,7 +185,7 @@ export function ProgramDetailPreview({ footer, item, onScroll, scrollable = fals
         stickyHeaderIndices={[3]}
         style={styles.screen}>
         {overview}
-        <View style={styles.majorDividerScreen} />
+        <SectionDivider spacing="wide" />
         <View style={styles.planningHeaderScreen}>{planningHeader}</View>
         {weekTabs}
         <ProgramWeekDetail week={activeWeek} weekData={selectedWeek} />
@@ -204,7 +197,7 @@ export function ProgramDetailPreview({ footer, item, onScroll, scrollable = fals
   return (
     <View style={styles.page}>
       {overview}
-      <View style={styles.majorDivider} />
+      <SectionDivider />
       <View style={styles.planningSection}>
         {planningHeader}
         {weekTabs}
@@ -220,25 +213,17 @@ const styles = StyleSheet.create({
   page: { gap: tokens.spacing.xl, minWidth: 0, width: "100%" },
   overview: { gap: tokens.spacing.lg, minWidth: 0 },
   planningSection: { gap: tokens.spacing.md, minWidth: 0 },
-  majorDivider: { backgroundColor: tokens.color.borderDefault, height: 1 },
-  majorDividerScreen: { backgroundColor: tokens.color.borderDefault, height: 1, marginVertical: tokens.spacing.xl },
-  sectionDivider: { backgroundColor: tokens.color.borderSoft, height: 1, marginVertical: tokens.spacing.xs },
   sectionTitleWithAction: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.md, justifyContent: "space-between" },
   addWeekButton: { alignItems: "center", backgroundColor: tokens.color.textMain, borderRadius: tokens.radius.md, flexDirection: "row", gap: tokens.spacing.xs, minHeight: 38, paddingHorizontal: tokens.spacing.md },
   addWeekText: { color: tokens.color.surfaceApp, fontSize: tokens.type.caption, fontWeight: "700" },
-  planningHeader: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.md, justifyContent: "space-between" },
   planningHeaderScreen: { marginBottom: tokens.spacing.md },
-  planningIdentity: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
-  planningTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "700" },
   weekTabsSticky: { backgroundColor: tokens.color.surfaceApp, borderBottomColor: "transparent", borderBottomWidth: 1, marginHorizontal: -tokens.spacing.screen, paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.sm, zIndex: 2 },
   weekTabsStickyPinned: { borderBottomColor: tokens.color.borderDefault },
   weekTabsEmbedded: { paddingBottom: tokens.spacing.sm },
   footer: { gap: tokens.spacing.lg, marginTop: tokens.spacing.xl },
-  weekCard: { gap: tokens.spacing.lg, marginHorizontal: -tokens.spacing.screen },
+  weekContent: { gap: tokens.spacing.lg, minWidth: 0, paddingTop: tokens.spacing.md, width: "100%" },
   weekCardHeader: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
   weekIdentity: { alignItems: "flex-start", flex: 1, gap: tokens.spacing.sm, minWidth: 0 },
-  weekEyebrow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },
-  weekEyebrowText: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: "700" },
   compactAction: { alignItems: "center", height: 34, justifyContent: "center", width: 34 },
   pressed: { opacity: 0.68 },
 });
