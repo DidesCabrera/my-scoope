@@ -1,4 +1,4 @@
-<div class="program-week-child-card__days" role="list" aria-label="Días de la semana {{ week.week_number }}">
+<div class="program-week-child-card__days program-week-days-layout" role="list" aria-label="Días de la semana {{ week.week_number }}">
   {% for day in week.days %}
     <article
       class="program-day-cell {% if day.program_day %}has-plan{% else %}is-empty{% endif %}"

@@ -230,6 +230,8 @@ class ActiveProgramIndicatorData(Schema):
 
 class ActiveProgramData(Schema):
     calendarization: CalendarizationData | None = None
+    weeks_count: int = 0
+    weeks: list[dict[str, Any]] = Field(default_factory=list)
     days: list[ActiveProgramDay]
     adherence: AdherenceData | None = None
     indicators: list[ActiveProgramIndicatorData] = Field(default_factory=list)
@@ -1036,7 +1038,13 @@ class AIChatGeneratedPlanCardData(Schema):
     items: list[AIChatCardItemData] = Field(default_factory=list)
 
 
-AIChatCardData = AIChatDraftCardData | AIChatProposalCardData | AIChatComparisonCardData | AIChatPreparedActionCardData | AIChatGeneratedPlanCardData
+AIChatCardData = (
+    AIChatDraftCardData
+    | AIChatProposalCardData
+    | AIChatComparisonCardData
+    | AIChatPreparedActionCardData
+    | AIChatGeneratedPlanCardData
+)
 
 
 class AIChatMessageData(Schema):

@@ -39,7 +39,13 @@
 .calendarization-current__identity>.structural-indicators .structural-divider{display:none}
 .calendarization-current__identity>.structural-indicators .structural-item{background:var(--structural-entity-color);border-radius:6px;color:#fff;padding:.28rem .48rem}
 .calendarization-current__program-board-header{margin:0}
-.calendarization-current__week-tabs{margin-bottom:0}
+.calendarization-current__planning{display:block;min-width:0;overflow:visible}
+.calendarization-current__planning>.calendarization-current__program-board-header{margin-bottom:var(--space-6)}
+.calendarization-current__planning>.calendarization-current__week-tabs{margin:0 0 var(--space-6)}
+.calendarization-current__planning>.home-calendar__week-slider{margin-bottom:var(--space-6)}
+.calendarization-current__section-divider{margin:0}
+.calendarization-current .home-calendar__week-slider--single{width:100%}
+.calendarization-current .home-calendar__day{width:100%}
 .calendarization-current .calendarization-actions{justify-content:flex-end;flex-wrap:wrap}
 .calendarization-current+.calendarization-notifications{width:min(100%,940px);margin:0 auto 22px}
 .calendarization-current+.calendarization-notifications>button{justify-self:start}
@@ -109,10 +115,6 @@
 }
 
 @media(max-width:760px){
-  .calendarization-current__program-board-header,
-  .calendarization-current__week-tabs{
-    display:none;
-  }
   .calendarization-current{
     padding:0;
   }
@@ -129,5 +131,162 @@
     margin-left:0;
     margin-right:0;
     justify-self:stretch;
+  }
+}
+
+.calendarization-meal-detail-page .main-detail {
+  display: grid;
+  gap: var(--space-lg);
+}
+
+.calendarization-meal-detail-page .card-title.main,
+.calendarization-meal-detail-page .page-kpi {
+  margin-bottom: 0;
+}
+
+.calendarization-meal-checkin {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.calendarization-meal-checkin > h3 {
+  margin: 0;
+}
+
+.calendarization-meal-checkin__panel {
+  display: grid;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+}
+
+.calendarization-meal-checkin__status label {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  gap: var(--space-md);
+  justify-content: space-between;
+}
+
+.calendarization-meal-checkin__status label > span {
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.calendarization-meal-checkin__status small {
+  color: var(--text-muted);
+}
+
+.calendarization-meal-checkin__status input[type="checkbox"] {
+  accent-color: var(--entity-meal);
+  flex: 0 0 auto;
+  height: 26px;
+  width: 26px;
+}
+
+.calendarization-meal-checkin__divider {
+  background: var(--border-soft);
+  height: 1px;
+  width: 100%;
+}
+
+.calendarization-meal-checkin__note,
+.calendarization-meal-checkin__note form {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.calendarization-meal-checkin__note [hidden] {
+  display: none !important;
+}
+
+.calendarization-meal-checkin__note-heading,
+.calendarization-meal-checkin__note-actions {
+  align-items: center;
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: space-between;
+}
+
+.calendarization-meal-checkin__note-heading button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  height: 32px;
+  justify-content: center;
+  padding: 0;
+  width: 32px;
+}
+
+.calendarization-meal-checkin__note-heading button:hover {
+  color: var(--text-main);
+}
+
+.calendarization-meal-checkin__note-heading svg {
+  height: 18px;
+  width: 18px;
+}
+
+.calendarization-meal-checkin__note p {
+  color: var(--text-main);
+  line-height: 1.5;
+  margin: 0;
+  min-height: 42px;
+}
+
+.calendarization-meal-checkin__note textarea {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-md);
+  color: var(--input-text);
+  font: inherit;
+  min-height: 104px;
+  padding: var(--space-md);
+  resize: vertical;
+  width: 100%;
+}
+
+.calendarization-meal-checkin__note-actions span {
+  color: var(--text-muted);
+  font-size: var(--font-size-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.calendarization-meal-checkin__note-actions .calendarization-button {
+  margin: 0;
+}
+
+.calendarization-meals article {
+  position: relative;
+}
+
+.calendarization-meal-detail-link {
+  align-items: center;
+  color: var(--text-muted);
+  display: inline-flex;
+  justify-content: center;
+  min-height: 40px;
+  min-width: 40px;
+}
+
+.calendarization-meal-detail-link:hover {
+  color: var(--text-main);
+}
+
+.calendarization-meal-detail-link svg {
+  height: 20px;
+  width: 20px;
+}
+
+@media (max-width: 760px) {
+  .calendarization-meal-checkin__panel {
+    padding: var(--space-md);
+  }
+
+  .calendarization-meal-checkin__note-actions {
+    align-items: stretch;
+    flex-direction: column;
   }
 }

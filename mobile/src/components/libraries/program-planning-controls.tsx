@@ -56,12 +56,15 @@ export function ProgramWeekTabs({
   weeks: number[];
 }) {
   return (
-    <View style={style}>
+    <View style={[styles.weekTabsViewport, style]}>
       <ScrollView
         accessibilityLabel="Semanas del programa"
         accessibilityRole="tablist"
         contentContainerStyle={styles.weekTabs}
+        directionalLockEnabled
         horizontal
+        nestedScrollEnabled
+        style={styles.weekTabsScroll}
         showsHorizontalScrollIndicator={false}>
         {weeks.map((week) => {
           const selected = activeWeek === week;
@@ -140,6 +143,8 @@ const styles = StyleSheet.create({
   weekTabText: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "500" },
   weekTabTextActive: { color: tokens.color.surfaceApp },
   weekTabs: { flexDirection: "row", gap: tokens.spacing.compact },
+  weekTabsScroll: { flexGrow: 0, width: "100%" },
+  weekTabsViewport: { flexShrink: 1, minWidth: 0, width: "100%" },
   weekHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between", minWidth: 0, width: "100%" },
   weekHeadingIdentity: { alignItems: "center", flexDirection: "row", flexShrink: 1, gap: tokens.spacing.compact, minWidth: 0 },
   weekHeadingIcon: { alignItems: "center", backgroundColor: tokens.color.program, borderRadius: 5, height: 18, justifyContent: "center", width: 18 },

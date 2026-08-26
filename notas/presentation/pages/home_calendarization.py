@@ -9,11 +9,14 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from django.urls import reverse
 from django.utils import timezone
 
+from notas.application.queries.calendarization_execution_queries import (
+    calendarization_progress_summary,
+    meal_execution_state_for_day,
+)
 from notas.application.queries.calendarization_queries import (
     current_calendarization_for_user,
     today_for_calendarization,
 )
-from notas.application.queries.calendarization_execution_queries import calendarization_progress_summary
 from notas.application.services.cache.program_summary import get_program_summary
 from notas.domain.models import DailyPlan
 from notas.presentation.config.viewmodel_config import DAILYPLAN_VIEWMODE_PERSONAL_LIST
@@ -64,6 +67,9 @@ class HomeCalendarDayVM:
     detail_url: str | None
     plan_snapshot: dict | None
     dailyplan_card: object | None
+    calendarized_meals: list[dict]
+    completed_meals_count: int
+    noted_meals_count: int
 
 
 @dataclass(frozen=True)
@@ -96,9 +102,8 @@ class HomeCalendarizationVM:
     weeks_count: int
     assigned_plans_count: int
     foods_count: int
+    active_week_summary: dict | None
     dashboard_url: str
-    previous_week_url: str
-    next_week_url: str
     has_multiple_weeks: bool
     days: list[HomeCalendarDayVM]
     weeks: list[HomeCalendarWeekVM]
@@ -132,10 +137,6 @@ def _week_start_from_param(value: str | None, fallback: date) -> date:
     else:
         selected_date = fallback
     return selected_date - timedelta(days=selected_date.weekday())
-
-
-def _calendar_week_url(view_name: str, monday: date) -> str:
-    return f"{reverse(view_name)}?{urlencode({'calendar_week': monday.isoformat()})}"
 
 
 def _calendar_day_url(view_name: str, monday: date, selected_date: date) -> str:
@@ -196,11 +197,7 @@ def build_home_calendarization_vm(
     navigation_view_name: str = "home_view",
 ) -> HomeCalendarizationVM:
     calendarization = current_calendarization_for_user(user)
-    today = (
-        today_for_calendarization(calendarization, now=now)
-        if calendarization
-        else _today_for_user(user, now=now)
-    )
+    today = today_for_calendarization(calendarization, now=now) if calendarization else _today_for_user(user, now=now)
     today_monday = today - timedelta(days=today.weekday())
     requested_monday = _week_start_from_param(
         (request_get or {}).get("calendar_week"),
@@ -214,10 +211,7 @@ def build_home_calendarization_vm(
         if requested_selected_date and _week_start_from_param(requested_selected_date.isoformat(), monday) == monday
         else (today if monday == today_monday else monday)
     )
-    calendarized_days = {
-        day.calendar_date: day
-        for day in (calendarization.days.all() if calendarization else ())
-    }
+    calendarized_days = {day.calendar_date: day for day in (calendarization.days.all() if calendarization else ())}
     dailyplans_by_id = _dailyplan_cards_by_id(user, calendarized_days.values())
 
     weeks = [
@@ -246,11 +240,23 @@ def build_home_calendarization_vm(
             period_end=min(today, calendarization.end_date),
         )
     source_program = calendarization.source_program if calendarization else None
+    active_week_number = ((monday - week_starts[0]).days // 7) + 1 if calendarization else 1
+    program_summary = get_program_summary(source_program) if source_program else None
+    active_week_summary = next(
+        (
+            week
+            for week in (program_summary["weeks"] if program_summary else [])
+            if week["week_number"] == active_week_number
+        ),
+        None,
+    )
 
     return HomeCalendarizationVM(
         has_calendarization=calendarization is not None,
         program_name=calendarization.program_name_snapshot if calendarization else "",
-        status_label=STATUS_LABELS.get(calendarization.status, calendarization.status.title()) if calendarization else "",
+        status_label=STATUS_LABELS.get(calendarization.status, calendarization.status.title())
+        if calendarization
+        else "",
         start_label=_compact_date_label(calendarization.start_date) if calendarization else "",
         end_label=_compact_date_label(calendarization.end_date) if calendarization else "",
         start_date=_compact_date_label(calendarization.start_date) if calendarization else "",
@@ -266,12 +272,15 @@ def build_home_calendarization_vm(
         adhered_days=adherence_summary["completed_meals"] if adherence_summary else 0,
         planned_adherence_days=adherence_summary["elapsed_meals"] if adherence_summary else 0,
         adherence=adherence_summary["adherence_percent"] if adherence_summary else 0,
-        weeks_count=source_program.normalized_duration_weeks if source_program else max(1, (progress_total_days + 6) // 7),
-        assigned_plans_count=source_program.filled_days_count if source_program else sum(1 for day in calendarized_days.values() if day.has_plan),
-        foods_count=get_program_summary(source_program)["program_foods_count"] if source_program else 0,
+        weeks_count=source_program.normalized_duration_weeks
+        if source_program
+        else max(1, (progress_total_days + 6) // 7),
+        assigned_plans_count=source_program.filled_days_count
+        if source_program
+        else sum(1 for day in calendarized_days.values() if day.has_plan),
+        foods_count=program_summary["program_foods_count"] if program_summary else 0,
+        active_week_summary=active_week_summary,
         dashboard_url=reverse("calendarization_dashboard"),
-        previous_week_url=_calendar_week_url(navigation_view_name, monday - timedelta(days=7)),
-        next_week_url=_calendar_week_url(navigation_view_name, monday + timedelta(days=7)),
         has_multiple_weeks=len(weeks) > 1,
         days=days,
         weeks=weeks,
@@ -308,6 +317,32 @@ def _build_week_vm(
             if is_active_week and has_plan and calendarized_day.source_dailyplan_id
             else None
         )
+        execution = meal_execution_state_for_day(calendarized_day) if dailyplan_card is not None else []
+        state_by_key = {item["meal_key"]: item for item in execution}
+        calendarized_meals = []
+        for meal in (calendarized_day.plan_snapshot or {}).get("meals", []) if calendarized_day else []:
+            if not isinstance(meal, dict):
+                continue
+            meal_key = meal.get("key") or ""
+            meal_state = state_by_key.get(meal_key, {"status": "planned", "note": ""})
+            calendarized_meals.append(
+                {
+                    "key": meal_key,
+                    "name": meal.get("name") or "Comida",
+                    "hour": meal.get("hour"),
+                    "foods": [
+                        food.get("name") or "Alimento" for food in meal.get("foods", []) if isinstance(food, dict)
+                    ],
+                    "detail_url": reverse(
+                        "calendarization_meal_detail",
+                        args=[calendarized_day.id, meal_key],
+                    )
+                    if meal_key
+                    else None,
+                    "completed": meal_state["status"] == "completed",
+                    "has_note": bool(meal_state["note"].strip()),
+                }
+            )
         is_today = calendar_date == today
         temporal_state = "today" if is_today else ("past" if calendar_date < today else "future")
         days.append(
@@ -325,13 +360,12 @@ def _build_week_vm(
                 has_plan=has_plan,
                 plan_name=(calendarized_day.plan_snapshot.get("name", "") if has_plan else ""),
                 selection_url=_calendar_day_url(navigation_view_name, week_monday, calendar_date),
-                detail_url=(
-                    reverse("calendarization_day_detail", args=[calendarized_day.id])
-                    if has_plan
-                    else None
-                ),
+                detail_url=(reverse("calendarization_day_detail", args=[calendarized_day.id]) if has_plan else None),
                 plan_snapshot=(calendarized_day.plan_snapshot if has_plan else None),
                 dailyplan_card=dailyplan_card,
+                calendarized_meals=calendarized_meals,
+                completed_meals_count=sum(item["completed"] for item in calendarized_meals),
+                noted_meals_count=sum(item["has_note"] for item in calendarized_meals),
             )
         )
     return HomeCalendarWeekVM(
@@ -342,11 +376,7 @@ def _build_week_vm(
 
 
 def _dailyplan_cards_by_id(user, calendarized_days) -> dict[int, object]:
-    dailyplan_ids = [
-        day.source_dailyplan_id
-        for day in calendarized_days
-        if day.source_dailyplan_id and day.has_plan
-    ]
+    dailyplan_ids = [day.source_dailyplan_id for day in calendarized_days if day.source_dailyplan_id and day.has_plan]
 
     if not dailyplan_ids:
         return {}

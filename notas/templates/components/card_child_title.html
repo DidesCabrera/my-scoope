@@ -36,6 +36,7 @@
       </div>
     {% endif %}
 
+    {% if completion_summarized %}<div class="entity-heading__indicator-row">{% endif %}
     {% if titulo.structural_indicators.meals_count or titulo.structural_indicators.foods_count %}
       <div class="entity-indicators structural-indicators">
           {% if titulo.structural_indicators.meals_count %}
@@ -56,6 +57,10 @@
             </span>
           {% endif %}
       </div>
+    {% endif %}
+    {% if completion_summarized %}
+      {% include "components/completion_indicators.html" with completed_count=completed_count note_count=note_count completion_summarized=True %}
+    </div>
     {% endif %}
   </div> 
 

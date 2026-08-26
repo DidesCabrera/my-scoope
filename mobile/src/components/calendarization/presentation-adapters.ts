@@ -58,3 +58,64 @@ export function snapshotFoodPanelItems(meal: MealSnapshot): FoodPanelItem[] {
     };
   });
 }
+
+export function snapshotDailyPlanFoodPanelItems(meals: MealSnapshot[]): FoodPanelItem[] {
+  const aggregated = new Map<string, {
+    carbsGrams: number;
+    fatGrams: number;
+    name: string;
+    proteinGrams: number;
+    quantity: number;
+  }>();
+
+  meals.forEach((meal) => {
+    (meal.foods ?? []).forEach((food) => {
+      const name = food.name?.trim() || "Alimento";
+      const key = name.toLocaleLowerCase("es-CL");
+      const current = aggregated.get(key) ?? {
+        carbsGrams: 0,
+        fatGrams: 0,
+        name,
+        proteinGrams: 0,
+        quantity: 0,
+      };
+      current.carbsGrams += food.carbs_g ?? 0;
+      current.fatGrams += food.fat_g ?? 0;
+      current.proteinGrams += food.protein_g ?? 0;
+      current.quantity += food.quantity_g ?? 0;
+      aggregated.set(key, current);
+    });
+  });
+
+  const rows = [...aggregated.entries()].map(([key, food]) => {
+    const totals: MacroTotals = {
+      carbs_g: food.carbsGrams,
+      fat_g: food.fatGrams,
+      protein_g: food.proteinGrams,
+    };
+    return {
+      ...food,
+      calories: snapshotCalories(totals),
+      carbsAllocation: snapshotAllocation(totals, "carbs_g"),
+      fatAllocation: snapshotAllocation(totals, "fat_g"),
+      id: `plan-food-${key}`,
+      proteinAllocation: snapshotAllocation(totals, "protein_g"),
+    };
+  });
+  const planCalories = rows.reduce((total, food) => total + food.calories, 0);
+
+  return rows.map((food) => ({
+    calorieShare: planCalories > 0 ? food.calories / planCalories * 100 : 0,
+    calories: food.calories,
+    carbsAllocation: food.carbsAllocation,
+    carbsGrams: food.carbsGrams,
+    fatAllocation: food.fatAllocation,
+    fatGrams: food.fatGrams,
+    id: food.id,
+    name: food.name,
+    proteinAllocation: food.proteinAllocation,
+    proteinGrams: food.proteinGrams,
+    quantity: food.quantity,
+    quantityUnit: "g",
+  }));
+}

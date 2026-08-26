@@ -57,6 +57,8 @@ export type ActiveProgramDay = {
 
 export type ActiveProgramData = {
   calendarization: CalendarizationData | null;
+  weeks_count: number;
+  weeks: LibraryWeekPanelItem[];
   days: ActiveProgramDay[];
   adherence: AdherenceSummary | null;
   indicators: { icon: "food" | "dailyPlan" | "week"; label: string; value: number | string }[];

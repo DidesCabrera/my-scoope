@@ -186,11 +186,16 @@ class MobileAPIV1Tests(TestCase):
         data = response.json()["data"]
         self.assertTrue(data["eligible"])
         self.assertTrue(data["purchases_enabled"])
-        self.assertEqual(data["products"], [{
-            "product_id": product.external_product_id,
-            "plan_name": plan.name,
-            "interval": "month",
-        }])
+        self.assertEqual(
+            data["products"],
+            [
+                {
+                    "product_id": product.external_product_id,
+                    "plan_name": plan.name,
+                    "interval": "month",
+                }
+            ],
+        )
         self.assertNotIn("price", data["products"][0])
         self.assertTrue(AppleAppAccountToken.objects.filter(user=self.user).exists())
 
@@ -258,11 +263,18 @@ class MobileAPIV1Tests(TestCase):
 
     def test_today_and_active_program_resolve_from_current_calendarization(self):
         today = timezone.localdate(timezone=ZoneInfo("UTC"))
+        program = Program.objects.create(
+            name="Definición 11 semanas",
+            created_by=self.user,
+            duration_weeks=11,
+            is_draft=False,
+        )
         dailyplan = DailyPlan.objects.create(name="Plan de hoy", created_by=self.user, is_draft=False)
         meal = Meal.objects.create(name="Comida de hoy", created_by=self.user, is_draft=False)
         slot = DailyPlanMeal.objects.create(dailyplan=dailyplan, meal=meal)
         calendarization = ProgramCalendarization.objects.create(
             user=self.user,
+            source_program=program,
             program_name_snapshot="Definición 8 semanas",
             start_date=today,
             end_date=today + timedelta(days=6),
@@ -289,6 +301,9 @@ class MobileAPIV1Tests(TestCase):
         self.assertEqual(today_response.json()["data"]["plan_snapshot"]["meals"][0]["detail_id"], meal.id)
         self.assertEqual(active_response.status_code, 200)
         self.assertEqual(active_response.json()["data"]["calendarization"]["id"], calendarization.id)
+        self.assertEqual(active_response.json()["data"]["weeks_count"], 11)
+        self.assertEqual(len(active_response.json()["data"]["weeks"]), 11)
+        self.assertEqual(active_response.json()["data"]["weeks"][0]["week_number"], 1)
         self.assertEqual(len(active_response.json()["data"]["days"]), 1)
 
     def test_calendarization_activation_requires_explicit_incomplete_and_replacement_confirmation(self):
@@ -423,9 +438,7 @@ class MobileAPIV1Tests(TestCase):
         )
         other_client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {other_token.raw_token}"
         hidden_day = other_client.get(f"/api/v1/program/days/{day_id}")
-        hidden_calendarization = other_client.post(
-            f"/api/v1/program/calendarizations/{calendarization_id}/pause"
-        )
+        hidden_calendarization = other_client.post(f"/api/v1/program/calendarizations/{calendarization_id}/pause")
 
         self.assertEqual(hidden_day.status_code, 404)
         self.assertEqual(hidden_calendarization.status_code, 404)
@@ -523,7 +536,9 @@ class MobileAPIV1Tests(TestCase):
         self.assertEqual(proposal_list.status_code, 200)
         self.assertEqual(proposal_list.json()["data"]["pending_count"], 1)
         self.assertEqual(proposal_list.json()["data"]["items"][0]["id"], proposal.id)
-        self.assertEqual({action["key"] for action in detail.json()["data"]["actions"]}, {"approve", "reject", "cancel"})
+        self.assertEqual(
+            {action["key"] for action in detail.json()["data"]["actions"]}, {"approve", "reject", "cancel"}
+        )
         self.assertEqual(detail.json()["data"]["meal"]["name"], "Desayuno AI")
         self.assertEqual(approved.status_code, 200)
         self.assertEqual(approved.json()["data"]["status"], "approved")
@@ -799,7 +814,11 @@ class MobileAPIV1Tests(TestCase):
         )
         noted = self.client.post(
             f"/api/v1/days/{day.id}/meals/dailyplan_meal:99/check-ins",
-            data={"action": "note", "idempotency_key": "mobile-checkin-note-0001", "note": "Cumplida según lo planificado."},
+            data={
+                "action": "note",
+                "idempotency_key": "mobile-checkin-note-0001",
+                "note": "Cumplida según lo planificado.",
+            },
             content_type="application/json",
         )
         reset = self.client.post(
@@ -995,7 +1014,15 @@ class MobileAPIV1Tests(TestCase):
             name="Día de entrenamiento",
             created_by=self.user,
             is_draft=False,
-            summary_cache={"totals": {"protein": 13, "carbs": 68, "fat": 7, "total_kcal": 387, "alloc": {"protein": 13.4, "carbs": 70.3, "fat": 16.3}}},
+            summary_cache={
+                "totals": {
+                    "protein": 13,
+                    "carbs": 68,
+                    "fat": 7,
+                    "total_kcal": 387,
+                    "alloc": {"protein": 13.4, "carbs": 70.3, "fat": 16.3},
+                }
+            },
         )
         embedded_meal = Meal.objects.create(
             name="Instancia del plan",
@@ -1018,7 +1045,17 @@ class MobileAPIV1Tests(TestCase):
             name="Programa base",
             created_by=self.user,
             duration_weeks=1,
-            summary_cache={"filled_days_count": 1, "program_totals": {"protein": 13, "carbs": 68, "fat": 7, "kcal_protein": 52, "kcal_carbs": 272, "kcal_fat": 63}},
+            summary_cache={
+                "filled_days_count": 1,
+                "program_totals": {
+                    "protein": 13,
+                    "carbs": 68,
+                    "fat": 7,
+                    "kcal_protein": 52,
+                    "kcal_carbs": 272,
+                    "kcal_fat": 63,
+                },
+            },
         )
         ProgramDay.objects.create(program=program, dailyplan=dailyplan, week_number=1, day_number=1)
         other = User.objects.create_user(username="private-library-owner")
@@ -1118,8 +1155,12 @@ class MobileAPIV1Tests(TestCase):
         program_dailyplan_detail = self.client.get(f"/api/v1/library/daily-plans/{dailyplan.id}")
         self.assertEqual(program_dailyplan_detail.status_code, 200)
         self.assertEqual(program_dailyplan_detail.json()["data"]["id"], dailyplan.id)
-        private_program_dailyplan = DailyPlan.objects.create(name="Plan de programa ajeno", created_by=other, source=DailyPlan.SOURCE_PROGRAM, is_draft=False)
-        self.assertEqual(self.client.get(f"/api/v1/library/daily-plans/{private_program_dailyplan.id}").status_code, 404)
+        private_program_dailyplan = DailyPlan.objects.create(
+            name="Plan de programa ajeno", created_by=other, source=DailyPlan.SOURCE_PROGRAM, is_draft=False
+        )
+        self.assertEqual(
+            self.client.get(f"/api/v1/library/daily-plans/{private_program_dailyplan.id}").status_code, 404
+        )
 
         missing = self.client.get("/api/v1/library/meals/999999")
         self.assertEqual(missing.status_code, 404)
@@ -1398,31 +1439,53 @@ class MobileAPIV1Tests(TestCase):
 
     def test_ai_chat_projects_persisted_cards_and_ignores_unknown_payloads(self):
         meal = Meal.objects.create(name="Comida original", created_by=self.user, is_draft=False)
-        action = prepare_product_action(user=self.user, action_key="meal.rename", target_id=meal.id, parameters={"name": "Comida confirmada"})
+        action = prepare_product_action(
+            user=self.user, action_key="meal.rename", target_id=meal.id, parameters={"name": "Comida confirmada"}
+        )
         chat = AiNutritionChat.objects.create(
             user=self.user,
             title="Objetos persistidos",
-            conversation_payload={"messages": [{
-                "role": "assistant",
-                "text": "Revisa estos objetos.",
-                "profile_draft_card": {"title": "Ficha", "items": [{"key": "weight", "label": "Peso", "value": "80 kg"}]},
-                "proposal_review_card": {"proposal_id": 42, "title": "Propuesta", "summary": "Lista", "status": "Pendiente"},
-                "prepared_action_card": {"id": str(action.public_id), "title": "dato no confiable", "summary": "dato no confiable"},
-                "unknown_card": {"secret": "no exponer"},
-            }]},
+            conversation_payload={
+                "messages": [
+                    {
+                        "role": "assistant",
+                        "text": "Revisa estos objetos.",
+                        "profile_draft_card": {
+                            "title": "Ficha",
+                            "items": [{"key": "weight", "label": "Peso", "value": "80 kg"}],
+                        },
+                        "proposal_review_card": {
+                            "proposal_id": 42,
+                            "title": "Propuesta",
+                            "summary": "Lista",
+                            "status": "Pendiente",
+                        },
+                        "prepared_action_card": {
+                            "id": str(action.public_id),
+                            "title": "dato no confiable",
+                            "summary": "dato no confiable",
+                        },
+                        "unknown_card": {"secret": "no exponer"},
+                    }
+                ]
+            },
         )
 
         response = self.client.get(f"/api/v1/ai/chats/{chat.id}")
 
         self.assertEqual(response.status_code, 200)
         message = response.json()["data"]["messages"][0]
-        self.assertEqual([card["type"] for card in message["cards"]], ["profile_draft", "proposal_review", "prepared_action"])
+        self.assertEqual(
+            [card["type"] for card in message["cards"]], ["profile_draft", "proposal_review", "prepared_action"]
+        )
         self.assertEqual(message["cards"][2]["title"], action.title)
         self.assertNotIn("unknown_card", str(message))
 
     def test_ai_prepared_action_requires_owner_and_explicit_commit_or_cancel(self):
         meal = Meal.objects.create(name="Comida original", created_by=self.user, is_draft=False)
-        action = prepare_product_action(user=self.user, action_key="meal.rename", target_id=meal.id, parameters={"name": "Comida confirmada"})
+        action = prepare_product_action(
+            user=self.user, action_key="meal.rename", target_id=meal.id, parameters={"name": "Comida confirmada"}
+        )
 
         committed = self.client.post(f"/api/v1/ai/prepared-actions/{action.public_id}/commit")
 
@@ -1440,7 +1503,12 @@ class MobileAPIV1Tests(TestCase):
         self.assertTrue(Meal.objects.filter(id=meal.id).exists())
 
         other_user = User.objects.create_user(username="prepared-action-outsider")
-        other_token = create_mcp_user_token(user=other_user, name="Outsider", scopes=[MOBILE_SCOPE_READ, MOBILE_SCOPE_WRITE], expires_at=timezone.now() + timedelta(minutes=15))
+        other_token = create_mcp_user_token(
+            user=other_user,
+            name="Outsider",
+            scopes=[MOBILE_SCOPE_READ, MOBILE_SCOPE_WRITE],
+            expires_at=timezone.now() + timedelta(minutes=15),
+        )
         outsider = Client(HTTP_AUTHORIZATION=f"Bearer {other_token.raw_token}")
         hidden = outsider.post(f"/api/v1/ai/prepared-actions/{destructive.public_id}/commit")
         self.assertEqual(hidden.status_code, 404)
@@ -1457,7 +1525,11 @@ class MobileAPIV1Tests(TestCase):
 
         accepted = self.client.post(
             "/api/v1/ai/turns",
-            data={"message": "Ayúdame a elegir", "idempotency_key": "comparison-context-0001", "comparison_id": comparison.id},
+            data={
+                "message": "Ayúdame a elegir",
+                "idempotency_key": "comparison-context-0001",
+                "comparison_id": comparison.id,
+            },
             content_type="application/json",
         )
 
@@ -1472,7 +1544,11 @@ class MobileAPIV1Tests(TestCase):
         foreign = SavedComparison.objects.create(owner=outsider, kind=SavedComparison.KIND_FOODS, name="Privada")
         denied = self.client.post(
             "/api/v1/ai/turns",
-            data={"message": "Intenta abrirla", "idempotency_key": "comparison-context-0002", "comparison_id": foreign.id},
+            data={
+                "message": "Intenta abrirla",
+                "idempotency_key": "comparison-context-0002",
+                "comparison_id": foreign.id,
+            },
             content_type="application/json",
         )
         self.assertEqual(denied.status_code, 422)

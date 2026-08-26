@@ -6,7 +6,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-nat
 import { userFacingError } from "@/api/errors";
 import type { CalendarizedDayDetail, MealExecutionItem, MealSnapshot } from "@/api/types";
 import { useSession } from "@/auth/session-context";
-import { snapshotAllocation, snapshotCalories, snapshotFoodPanelItems, snapshotMealPanelItem } from "@/components/calendarization/presentation-adapters";
+import { snapshotAllocation, snapshotCalories, snapshotDailyPlanFoodPanelItems, snapshotFoodPanelItems, snapshotMealPanelItem } from "@/components/calendarization/presentation-adapters";
 import { EntityDetailPage, EntityDetailSection } from "@/components/details";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { NutritionEntityCard } from "@/components/nutrition";
@@ -108,6 +108,7 @@ export default function ProgramDayScreen() {
   const totals = snapshot?.totals;
   const totalCalories = snapshotCalories(totals);
   const mealItems = meals.map((meal, index) => snapshotMealPanelItem(meal, index, totalCalories));
+  const foods = snapshotDailyPlanFoodPanelItems(meals);
 
   return (
     <ScrollView
@@ -139,6 +140,14 @@ export default function ProgramDayScreen() {
               <SectionDivider />
               <EntityDetailSection detail={`${meals.length} comidas`} title="Detalle de cada Comida">
                 <CalendarizedMealCards dayId={day.id} mealExecution={day.meal_execution} meals={meals} />
+              </EntityDetailSection>
+            </>
+          ) : null}
+          {foods.length ? (
+            <>
+              <SectionDivider />
+              <EntityDetailSection detail={`${foods.length} alimentos`} title="Alimentos en este plan diario">
+                <FoodPanels items={foods} />
               </EntityDetailSection>
             </>
           ) : null}

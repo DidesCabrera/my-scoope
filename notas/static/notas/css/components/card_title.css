@@ -59,6 +59,10 @@ order: 2;
 order: 3;
 }
 
+.main-title.main-card > .entity-heading__indicator-row {
+order: 3;
+}
+
 .main-title.main-card > .label-class,
 .main-title.main-card > .card-title-badges {
 order: 4;
@@ -325,6 +329,59 @@ color: currentColor;
 
 .structural-indicators p {
 margin: 0;
+}
+
+.entity-heading__indicator-row {
+display: flex;
+align-items: center;
+flex-wrap: wrap;
+gap: var(--space-sm);
+}
+
+.main-title > .entity-heading__indicator-row > .structural-indicators,
+.main-title.main-card > .entity-heading__indicator-row > .structural-indicators {
+background: transparent;
+border: 0;
+border-radius: 0;
+padding: 0;
+gap: 0.35rem;
+}
+
+.main-title > .entity-heading__indicator-row > .structural-indicators .structural-divider,
+.main-title.main-card > .entity-heading__indicator-row > .structural-indicators .structural-divider {
+display: none;
+}
+
+.main-title > .entity-heading__indicator-row > .structural-indicators .structural-item,
+.main-title.main-card > .entity-heading__indicator-row > .structural-indicators .structural-item {
+color: #ffffff;
+background: var(--structural-entity-color);
+border-radius: 6px;
+padding: 0.28rem 0.48rem;
+}
+
+.completion-indicators,
+.completion-indicator {
+display: inline-flex;
+align-items: center;
+}
+
+.completion-indicators {
+color: var(--text-muted);
+gap: var(--space-sm);
+font-size: var(--font-size-caption);
+font-weight: var(--font-weight-semibold);
+}
+
+.completion-indicator {
+gap: 3px;
+}
+
+.completion-indicator svg {
+width: 17px;
+height: 17px;
+color: currentColor;
+stroke: currentColor;
 }
 
 @media (max-width: 768px) {

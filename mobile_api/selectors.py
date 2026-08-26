@@ -60,7 +60,9 @@ def _cached_or_live(entity, cached_name, live_name):
 
 
 def _calorie_distribution(protein_kcal, carbs_kcal, fat_kcal) -> dict:
-    return {key: _safe_number(value) for key, value in macro_kcal_distribution(protein_kcal, carbs_kcal, fat_kcal).items()}
+    return {
+        key: _safe_number(value) for key, value in macro_kcal_distribution(protein_kcal, carbs_kcal, fat_kcal).items()
+    }
 
 
 def _library_nutrition_payload(entity, current_weight=None) -> dict:
@@ -141,8 +143,7 @@ def _aggregated_food_panel_items(rows, *, id_prefix: str) -> list[dict]:
             "calories": _safe_number(row["rel"]["total_kcal"]),
             "calorie_share": _safe_number(row["rel"]["kcal_share"]),
             "calorie_distribution": {
-                key: _safe_number(value)
-                for key, value in row["rel"]["kcal_distribution"].items()
+                key: _safe_number(value) for key, value in row["rel"]["kcal_distribution"].items()
             },
             "protein_grams": _safe_number(row["rel"]["g_protein"]),
             "carbs_grams": _safe_number(row["rel"]["g_carbs"]),
@@ -172,13 +173,20 @@ def _program_week_panel_items(program, current_weight=None) -> list[dict]:
                 "protein": {
                     "grams": _safe_number(snapshot["protein"]),
                     "allocation": _safe_number(snapshot["alloc"]["protein"]),
-                    "per_kilogram": _safe_number(snapshot["protein"] / current_weight) if current_weight and snapshot["protein"] else None,
+                    "per_kilogram": _safe_number(snapshot["protein"] / current_weight)
+                    if current_weight and snapshot["protein"]
+                    else None,
                 },
-                "carbs": {"grams": _safe_number(snapshot["carbs"]), "allocation": _safe_number(snapshot["alloc"]["carbs"])},
+                "carbs": {
+                    "grams": _safe_number(snapshot["carbs"]),
+                    "allocation": _safe_number(snapshot["alloc"]["carbs"]),
+                },
                 "fat": {"grams": _safe_number(snapshot["fat"]), "allocation": _safe_number(snapshot["alloc"]["fat"])},
             }
             if snapshot
-            else _library_nutrition_payload(program_day.dailyplan, current_weight) if program_day else None
+            else _library_nutrition_payload(program_day.dailyplan, current_weight)
+            if program_day
+            else None
         )
         return {
             "id": f"program-week:{program.id}:{week_number}:day:{day['day_number']}",
@@ -190,7 +198,9 @@ def _program_week_panel_items(program, current_weight=None) -> list[dict]:
             "meals": [
                 _meal_panel_item(dailyplan_meal, program_day.dailyplan, current_weight)
                 for dailyplan_meal in program_day.dailyplan.dailyplan_meals.all()
-            ] if program_day else [],
+            ]
+            if program_day
+            else [],
         }
 
     return [
@@ -208,7 +218,9 @@ def _program_week_panel_items(program, current_weight=None) -> list[dict]:
             ),
             "calories": _safe_number(week["totals"]["total_kcal"]),
             "calorie_share": _safe_number(_safe_percentage(week["totals"]["total_kcal"], program_total_kcal)),
-            "calorie_distribution": _calorie_distribution(week["totals"]["kcal_protein"], week["totals"]["kcal_carbs"], week["totals"]["kcal_fat"]),
+            "calorie_distribution": _calorie_distribution(
+                week["totals"]["kcal_protein"], week["totals"]["kcal_carbs"], week["totals"]["kcal_fat"]
+            ),
             "protein_grams": _safe_number(week["totals"]["protein"]),
             "carbs_grams": _safe_number(week["totals"]["carbs"]),
             "fat_grams": _safe_number(week["totals"]["fat"]),
@@ -228,7 +240,7 @@ def _library_page(queryset, *, search, offset, limit, builder) -> dict:
     safe_limit = min(max(int(limit or 30), 1), 100)
     total = queryset.count()
     return {
-        "items": [builder(item) for item in queryset[safe_offset:safe_offset + safe_limit]],
+        "items": [builder(item) for item in queryset[safe_offset : safe_offset + safe_limit]],
         "total": total,
         "offset": safe_offset,
         "limit": safe_limit,
@@ -238,7 +250,11 @@ def _library_page(queryset, *, search, offset, limit, builder) -> dict:
 
 def library_foods_payload(user, *, search=None, offset=0, limit=30) -> dict:
     current_weight = get_current_weight(user)
-    queryset = Food.objects.filter(created_by=user, is_active=True).select_related("created_by").order_by("list_order", "name", "id")
+    queryset = (
+        Food.objects.filter(created_by=user, is_active=True)
+        .select_related("created_by")
+        .order_by("list_order", "name", "id")
+    )
     return _library_page(
         queryset,
         search=search,
@@ -262,9 +278,12 @@ def library_foods_payload(user, *, search=None, offset=0, limit=30) -> dict:
 def library_meals_payload(user, *, search=None, offset=0, limit=30) -> dict:
     current_weight = get_current_weight(user)
     queryset = (
-        Meal.objects.filter(created_by=user, is_draft=False, dailyplanmeal__isnull=True).select_related("created_by")
+        Meal.objects.filter(created_by=user, is_draft=False, dailyplanmeal__isnull=True)
+        .select_related("created_by")
         .annotate(library_food_count=Count("meal_food_set", distinct=True))
-        .prefetch_related(Prefetch("meal_food_set", queryset=MealFood.objects.select_related("food").order_by("order", "id")))
+        .prefetch_related(
+            Prefetch("meal_food_set", queryset=MealFood.objects.select_related("food").order_by("order", "id"))
+        )
         .order_by("list_order", "-created_at", "-id")
         .distinct()
     )
@@ -280,7 +299,10 @@ def library_meals_payload(user, *, search=None, offset=0, limit=30) -> dict:
             "subtitle": "",
             "nutrition": _library_nutrition_payload(meal, current_weight),
             "indicators": [{"icon": "food", "label": "alimentos", "value": meal.library_food_count}],
-            "panel": {**_empty_library_panel("foods"), "foods": [_food_panel_item(meal_food) for meal_food in meal.meal_food_set.all()]},
+            "panel": {
+                **_empty_library_panel("foods"),
+                "foods": [_food_panel_item(meal_food) for meal_food in meal.meal_food_set.all()],
+            },
             "creator": _creator_name(meal),
             "created_at": meal.created_at,
             "actions": library_actions_payload(meal, user, context="list"),
@@ -291,7 +313,8 @@ def library_meals_payload(user, *, search=None, offset=0, limit=30) -> dict:
 def library_dailyplans_payload(user, *, search=None, offset=0, limit=30) -> dict:
     current_weight = get_current_weight(user)
     queryset = (
-        DailyPlan.objects.filter(created_by=user, is_draft=False).select_related("created_by")
+        DailyPlan.objects.filter(created_by=user, is_draft=False)
+        .select_related("created_by")
         .exclude(source=DailyPlan.SOURCE_PROGRAM)
         .annotate(
             library_meal_count=Count("dailyplan_meals", distinct=True),
@@ -322,7 +345,10 @@ def library_dailyplans_payload(user, *, search=None, offset=0, limit=30) -> dict
             ],
             "panel": {
                 **_empty_library_panel("meals"),
-                "meals": [_meal_panel_item(dailyplan_meal, dailyplan, current_weight) for dailyplan_meal in dailyplan.dailyplan_meals.all()],
+                "meals": [
+                    _meal_panel_item(dailyplan_meal, dailyplan, current_weight)
+                    for dailyplan_meal in dailyplan.dailyplan_meals.all()
+                ],
             },
             "creator": _creator_name(dailyplan),
             "created_at": dailyplan.created_at,
@@ -334,7 +360,8 @@ def library_dailyplans_payload(user, *, search=None, offset=0, limit=30) -> dict
 def library_programs_payload(user, *, search=None, offset=0, limit=30) -> dict:
     current_weight = get_current_weight(user)
     queryset = (
-        Program.objects.filter(Q(created_by=user) | Q(shares__accepted_by=user, shares__removed=False)).select_related("created_by")
+        Program.objects.filter(Q(created_by=user) | Q(shares__accepted_by=user, shares__removed=False))
+        .select_related("created_by")
         .annotate(library_day_count=Count("program_dailyplan", distinct=True))
         .prefetch_related("program_dailyplan__dailyplan__dailyplan_meals__meal__meal_food_set__food")
         .order_by("list_order", "-created_at", "-id")
@@ -370,24 +397,115 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
     if entity == "foods":
         item = Food.objects.filter(pk=item_id, created_by=user, is_active=True).select_related("created_by").first()
         if item:
-            return {"id": item.id, "entity": "food", "name": resolve_food_display_name(item), "subtitle": "", "nutrition": _library_nutrition_payload(item, current_weight), "indicators": [{"label": "base nutricional", "value": "100 g"}], "panel": _empty_library_panel(), "creator": _creator_name(item), "created_at": item.created_at, "actions": library_actions_payload(item, user, context="detail")}
+            return {
+                "id": item.id,
+                "entity": "food",
+                "name": resolve_food_display_name(item),
+                "subtitle": "",
+                "nutrition": _library_nutrition_payload(item, current_weight),
+                "indicators": [{"label": "base nutricional", "value": "100 g"}],
+                "panel": _empty_library_panel(),
+                "creator": _creator_name(item),
+                "created_at": item.created_at,
+                "actions": library_actions_payload(item, user, context="detail"),
+            }
     elif entity == "meals":
-        item = (Meal.objects.filter(pk=item_id, created_by=user, is_draft=False).select_related("created_by").annotate(library_food_count=Count("meal_food_set", distinct=True)).prefetch_related(Prefetch("meal_food_set", queryset=MealFood.objects.select_related("food").order_by("order", "id"))).first())
+        item = (
+            Meal.objects.filter(pk=item_id, created_by=user, is_draft=False)
+            .select_related("created_by")
+            .annotate(library_food_count=Count("meal_food_set", distinct=True))
+            .prefetch_related(
+                Prefetch("meal_food_set", queryset=MealFood.objects.select_related("food").order_by("order", "id"))
+            )
+            .first()
+        )
         if item:
-            return {"id": item.id, "entity": "meal", "name": item.name, "subtitle": "", "nutrition": _library_nutrition_payload(item, current_weight), "indicators": [{"icon": "food", "label": "alimentos", "value": item.library_food_count}], "panel": {**_empty_library_panel("foods"), "foods": [_food_panel_item(row) for row in item.meal_food_set.all()]}, "creator": _creator_name(item), "created_at": item.created_at, "actions": library_actions_payload(item, user, context="detail")}
+            return {
+                "id": item.id,
+                "entity": "meal",
+                "name": item.name,
+                "subtitle": "",
+                "nutrition": _library_nutrition_payload(item, current_weight),
+                "indicators": [{"icon": "food", "label": "alimentos", "value": item.library_food_count}],
+                "panel": {
+                    **_empty_library_panel("foods"),
+                    "foods": [_food_panel_item(row) for row in item.meal_food_set.all()],
+                },
+                "creator": _creator_name(item),
+                "created_at": item.created_at,
+                "actions": library_actions_payload(item, user, context="detail"),
+            }
     elif entity == "daily-plans":
-        item = (DailyPlan.objects.filter(pk=item_id, created_by=user, is_draft=False).select_related("created_by").annotate(library_meal_count=Count("dailyplan_meals", distinct=True), library_food_count=Count("dailyplan_meals__meal__meal_food_set__food", distinct=True)).prefetch_related(Prefetch("dailyplan_meals__meal__meal_food_set", queryset=MealFood.objects.select_related("food").order_by("order", "id"))).first())
+        item = (
+            DailyPlan.objects.filter(pk=item_id, created_by=user, is_draft=False)
+            .select_related("created_by")
+            .annotate(
+                library_meal_count=Count("dailyplan_meals", distinct=True),
+                library_food_count=Count("dailyplan_meals__meal__meal_food_set__food", distinct=True),
+            )
+            .prefetch_related(
+                Prefetch(
+                    "dailyplan_meals__meal__meal_food_set",
+                    queryset=MealFood.objects.select_related("food").order_by("order", "id"),
+                )
+            )
+            .first()
+        )
         if item:
             foods = _aggregated_food_panel_items(
                 get_dailyplan_summary(item)["foods_aggregation_table"],
                 id_prefix=f"dailyplan-food:{item.id}",
             )
-            return {"id": item.id, "entity": "dailyPlan", "name": item.name, "subtitle": "", "nutrition": _library_nutrition_payload(item, current_weight), "indicators": [{"icon": "meal", "label": "comidas", "value": item.library_meal_count}, {"icon": "food", "label": "alimentos", "value": item.library_food_count}], "panel": {**_empty_library_panel("meals"), "meals": [_meal_panel_item(row, item, current_weight) for row in item.dailyplan_meals.all()], "foods": foods}, "creator": _creator_name(item), "created_at": item.created_at, "actions": library_actions_payload(item, user, context="detail")}
+            return {
+                "id": item.id,
+                "entity": "dailyPlan",
+                "name": item.name,
+                "subtitle": "",
+                "nutrition": _library_nutrition_payload(item, current_weight),
+                "indicators": [
+                    {"icon": "meal", "label": "comidas", "value": item.library_meal_count},
+                    {"icon": "food", "label": "alimentos", "value": item.library_food_count},
+                ],
+                "panel": {
+                    **_empty_library_panel("meals"),
+                    "meals": [_meal_panel_item(row, item, current_weight) for row in item.dailyplan_meals.all()],
+                    "foods": foods,
+                },
+                "creator": _creator_name(item),
+                "created_at": item.created_at,
+                "actions": library_actions_payload(item, user, context="detail"),
+            }
     elif entity == "programs":
-        item = (Program.objects.filter(pk=item_id).filter(Q(created_by=user) | Q(shares__accepted_by=user, shares__removed=False)).select_related("created_by").annotate(library_day_count=Count("program_dailyplan", distinct=True)).prefetch_related("program_dailyplan__dailyplan__dailyplan_meals__meal__meal_food_set__food").distinct().first())
+        item = (
+            Program.objects.filter(pk=item_id)
+            .filter(Q(created_by=user) | Q(shares__accepted_by=user, shares__removed=False))
+            .select_related("created_by")
+            .annotate(library_day_count=Count("program_dailyplan", distinct=True))
+            .prefetch_related("program_dailyplan__dailyplan__dailyplan_meals__meal__meal_food_set__food")
+            .distinct()
+            .first()
+        )
         if item:
-            return {"id": item.id, "entity": "program", "name": item.name, "subtitle": "", "nutrition": _library_nutrition_payload(item, current_weight), "indicators": [{"icon": "week", "label": "semanas", "value": item.normalized_duration_weeks}, {"icon": "dailyPlan", "label": "planes asignados", "value": item.library_day_count}, {"icon": "food", "label": "alimentos", "value": get_program_summary(item)["program_foods_count"]}], "panel": {**_empty_library_panel("weeks"), "weeks": _program_week_panel_items(item, current_weight)}, "creator": _creator_name(item), "created_at": item.created_at, "can_calendarize": item.created_by_id == user.id, "actions": library_actions_payload(item, user, context="detail")}
-    raise MobileAPIError(code="library_item_not_found", message="The requested library item was not found.", status_code=404)
+            return {
+                "id": item.id,
+                "entity": "program",
+                "name": item.name,
+                "subtitle": "",
+                "nutrition": _library_nutrition_payload(item, current_weight),
+                "indicators": [
+                    {"icon": "week", "label": "semanas", "value": item.normalized_duration_weeks},
+                    {"icon": "dailyPlan", "label": "planes asignados", "value": item.library_day_count},
+                    {"icon": "food", "label": "alimentos", "value": get_program_summary(item)["program_foods_count"]},
+                ],
+                "panel": {**_empty_library_panel("weeks"), "weeks": _program_week_panel_items(item, current_weight)},
+                "creator": _creator_name(item),
+                "created_at": item.created_at,
+                "can_calendarize": item.created_by_id == user.id,
+                "actions": library_actions_payload(item, user, context="detail"),
+            }
+    raise MobileAPIError(
+        code="library_item_not_found", message="The requested library item was not found.", status_code=404
+    )
 
 
 def session_payload(auth) -> dict:
@@ -399,11 +517,7 @@ def session_payload(auth) -> dict:
         "email": user.email,
         "display_name": display_name,
         "scopes": list(auth.token.scopes),
-        "device_session_id": (
-            str(auth.token.device_session.public_id)
-            if auth.token.device_session_id
-            else None
-        ),
+        "device_session_id": (str(auth.token.device_session.public_id) if auth.token.device_session_id else None),
     }
 
 
@@ -529,9 +643,7 @@ def today_payload(user, *, now=None) -> dict:
         "day_id": day.id if day else None,
         "has_plan": bool(day and day.has_plan),
         "plan_snapshot": (
-            _calendarized_snapshot_with_meal_links(user, day.plan_snapshot)
-            if day and day.has_plan
-            else None
+            _calendarized_snapshot_with_meal_links(user, day.plan_snapshot) if day and day.has_plan else None
         ),
         "meal_execution": meal_execution_state_for_day(day) if day and day.has_plan else [],
         "adherence": (
@@ -560,9 +672,9 @@ def reminder_settings_payload(calendarization) -> dict:
             "scheduled_for_utc": event.scheduled_for_utc,
             "status": event.status,
         }
-        for event in calendarization.notification_events.filter(status="pending").order_by(
-            "scheduled_for_utc", "id"
-        )[:20]
+        for event in calendarization.notification_events.filter(status="pending").order_by("scheduled_for_utc", "id")[
+            :20
+        ]
     ]
     return {
         "timezone_name": calendarization.timezone_name,
@@ -576,10 +688,7 @@ def reminder_settings_payload(calendarization) -> dict:
 def revision_payload(revision) -> dict | None:
     if revision is None:
         return None
-    before_by_date = {
-        item.get("calendar_date"): item
-        for item in revision.before_snapshot.get("days", [])
-    }
+    before_by_date = {item.get("calendar_date"): item for item in revision.before_snapshot.get("days", [])}
     days = []
     for after in revision.after_snapshot.get("days", []):
         calendar_date = after.get("calendar_date")
@@ -678,7 +787,14 @@ def _calendarized_days_payload(calendarization) -> list[dict]:
 def active_program_payload(user) -> dict:
     calendarization = current_calendarization_for_user(user)
     if calendarization is None:
-        return {"calendarization": None, "days": [], "adherence": None, "indicators": []}
+        return {
+            "calendarization": None,
+            "weeks_count": 0,
+            "weeks": [],
+            "days": [],
+            "adherence": None,
+            "indicators": [],
+        }
     local_date = today_for_calendarization(calendarization)
     adherence = (
         calendarization_progress_summary(
@@ -690,16 +806,23 @@ def active_program_payload(user) -> dict:
         else None
     )
     source_program = calendarization.source_program
+    weeks_count = (
+        source_program.normalized_duration_weeks
+        if source_program
+        else max(1, ((calendarization.end_date - calendarization.start_date).days + 7) // 7)
+    )
     indicators = [
         {
             "icon": "week",
             "label": "semanas",
-            "value": source_program.normalized_duration_weeks if source_program else max(1, ((calendarization.end_date - calendarization.start_date).days + 7) // 7),
+            "value": weeks_count,
         },
         {
             "icon": "dailyPlan",
             "label": "planes asignados",
-            "value": source_program.filled_days_count if source_program else sum(1 for day in calendarization.days.all() if day.has_plan),
+            "value": source_program.filled_days_count
+            if source_program
+            else sum(1 for day in calendarization.days.all() if day.has_plan),
         },
         {
             "icon": "food",
@@ -709,6 +832,8 @@ def active_program_payload(user) -> dict:
     ]
     return {
         "calendarization": _calendarization_data_payload(calendarization),
+        "weeks_count": weeks_count,
+        "weeks": _program_week_panel_items(source_program, get_current_weight(user)) if source_program else [],
         "days": _calendarized_days_payload(calendarization),
         "adherence": adherence,
         "indicators": indicators,
@@ -749,11 +874,7 @@ def _calendarized_snapshot_with_meal_links(user, snapshot: dict | None) -> dict 
         if not isinstance(totals, dict):
             return
         protein = totals.get("protein_g")
-        totals["protein_per_kilogram"] = (
-            _safe_number(protein / current_weight)
-            if current_weight and protein
-            else None
-        )
+        totals["protein_per_kilogram"] = _safe_number(protein / current_weight) if current_weight and protein else None
 
     add_protein_per_kilogram(payload.get("totals"))
     meals = payload.get("meals")
@@ -850,12 +971,14 @@ def proposal_list_payload(user, *, status_filter=None, offset=0, limit=30) -> di
     safe_limit = min(max(int(limit or 30), 1), 50)
     total = queryset.count()
     items = [
-        _proposal_summary_payload({
-            **build_proposal_list_item_dto(proposal).as_dict(),
-            "proposed_payload": proposal.proposed_payload,
-            "applied_at": proposal.applied_at,
-        })
-        for proposal in queryset[safe_offset:safe_offset + safe_limit]
+        _proposal_summary_payload(
+            {
+                **build_proposal_list_item_dto(proposal).as_dict(),
+                "proposed_payload": proposal.proposed_payload,
+                "applied_at": proposal.applied_at,
+            }
+        )
+        for proposal in queryset[safe_offset : safe_offset + safe_limit]
     ]
     return {"items": items, "total": total, "offset": safe_offset, "limit": safe_limit, "pending_count": pending_count}
 
@@ -968,6 +1091,14 @@ def proposal_detail_payload(user, proposal_id: int) -> dict | None:
             "title": warning.get("title", ""),
             "message": warning.get("message", ""),
         },
-        "applied_result": ({"kind": applied.get("kind"), "object_id": applied.get("object_id"), "object_name": applied.get("object_name", "")} if applied else None),
+        "applied_result": (
+            {
+                "kind": applied.get("kind"),
+                "object_id": applied.get("object_id"),
+                "object_name": applied.get("object_name", ""),
+            }
+            if applied
+            else None
+        ),
         "applied_at": dto.get("applied_at"),
     }

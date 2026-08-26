@@ -162,7 +162,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(planningControls, /backgroundColor: tokens\.color\.dailyPlan/);
   assert.match(planningControls, /<ClipboardList color=\{tokens\.color\.entityIconForeground\} size=\{14\}/);
   assert.match(planningControls, /borderRadius: tokens\.spacing\.compact, height: 24/);
-  assert.match(planningControls, /horizontal\n\s+showsHorizontalScrollIndicator=\{false\}/);
+  assert.match(planningControls, /horizontal\n[\s\S]*?showsHorizontalScrollIndicator=\{false\}/);
   assert.match(planningControls, /export function ProgramWeekHeading/);
   assert.match(planningControls, /<CalendarRange color=\{tokens\.color\.entityIconForeground\} size=\{11\}/);
   assert.match(planningControls, /weekHeadingTitle: \{[^}]*fontSize: tokens\.type\.section[^}]*fontWeight: tokens\.weight\.semibold/);
@@ -179,6 +179,9 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(calendarizedPlanning, /<ProgramDaySelector/);
   assert.match(calendarizedPlanning, /apiRequest<CalendarizedDayDetail>/);
   assert.match(calendarizedPlanning, /<CalendarizedDailyPlanCard/);
+  assert.match(calendarizedPlanning, /<SectionDivider spacing="compact" tone="soft" \/>/);
+  assert.match(calendarizedPlanning, /title="Alimentos en esta semana"/);
+  assert.match(calendarizedPlanning, /<FoodPanels items=\{weekFoods\} \/>/);
 
   const calendarizedDailyPlanCard = await readFile(
     path.resolve(process.cwd(), "src/components/calendarization/calendarized-daily-plan-card.tsx"),
@@ -248,9 +251,18 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.doesNotMatch(mealAdherence, /label=\{editingNote \? "Guardar nota" : "Editar nota"\}/);
 
   const activeProgram = await readFile(path.resolve(process.cwd(), "src/app/program/index.tsx"), "utf8");
-  assert.match(activeProgram, /<CalendarizedProgramPlanning days=\{program\?\.days \?\? \[\]\} key=\{calendarization\.id\} \/>/);
+  assert.match(activeProgram, /stickyHeaderIndices=\{\[1\]\}/);
+  assert.match(activeProgram, /weekTabsStickyPinned/);
+  assert.match(activeProgram, /program\?\.weeks_count/);
+  assert.match(activeProgram, /Array\.from\(\{ length: weekCount \}/);
+  assert.match(activeProgram, /<ProgramWeekTabs activeWeek=\{activeWeek\}/);
+  assert.match(activeProgram, /<CalendarizedProgramPlanning days=\{programDays\} initialWeek=\{activeWeek\} key=\{`\$\{calendarization\.id\}:\$\{activeWeek\}`\} showWeekTabs=\{false\} weeksData=\{program\.weeks\} \/>/);
   assert.match(activeProgram, /<SectionDivider \/>[\s\S]*<SectionHeading[^>]*title="Planificación Semanal"/);
   assert.match(activeProgram, /weekCount === 1 \? "semana" : "semanas"/);
+
+  const activePlanningControls = await readFile(path.resolve(process.cwd(), "src/components/libraries/program-planning-controls.tsx"), "utf8");
+  assert.match(activePlanningControls, /nestedScrollEnabled/);
+  assert.match(activePlanningControls, /weekTabsScroll: \{ flexGrow: 0, width: "100%" \}/);
 
   const activeProgramCard = await readFile(
     path.resolve(process.cwd(), "src/components/programs/program-active-card.tsx"),
@@ -278,6 +290,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(libraryDetail, /FoodPanels, MealPanels.*from "@\/components\/panels"/);
   assert.match(libraryDetail, /title="Alimentos en este plan diario"><FoodPanels items=\{item\.panel\.foods\.map\(foodPanelItem\)\}/);
   assert.match(libraryDetail, /<SectionDivider \/><EntityDetailSection[^>]*title="Detalle de cada Comida"/);
+  assert.match(libraryDetail, /<SectionDivider \/><EntityDetailSection[^>]*title="Alimentos en este plan diario"/);
 
   const calendarizedDayDetail = await readFile(
     path.resolve(process.cwd(), "src/app/program/days/[id].tsx"),
@@ -286,6 +299,15 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(calendarizedDayDetail, /<FoodPanels items=\{foods\} \/>/);
   assert.match(calendarizedDayDetail, /perKilogram: totals\?\.protein_per_kilogram \?\? null/);
   assert.match(calendarizedDayDetail, /<SectionDivider \/>[\s\S]*title="Detalle de cada Comida"/);
+  assert.match(calendarizedDayDetail, /snapshotDailyPlanFoodPanelItems\(meals\)/);
+  assert.match(calendarizedDayDetail, /<SectionDivider \/>[\s\S]*title="Alimentos en este plan diario"[\s\S]*<FoodPanels items=\{foods\} \/>/);
+
+  const calendarizationAdapters = await readFile(
+    path.resolve(process.cwd(), "src/components/calendarization/presentation-adapters.ts"),
+    "utf8",
+  );
+  assert.match(calendarizationAdapters, /export function snapshotDailyPlanFoodPanelItems/);
+  assert.match(calendarizationAdapters, /current\.quantity \+= food\.quantity_g \?\? 0/);
 
   const sectionDivider = await readFile(
     path.resolve(process.cwd(), "src/components/ui/section-divider.tsx"),

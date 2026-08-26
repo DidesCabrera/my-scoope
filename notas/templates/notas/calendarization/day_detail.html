@@ -14,11 +14,14 @@
           </p>
 
           <h1>{{ vm.content.day.plan_snapshot.name }}</h1>
-          <div class="structural-indicators">
-            <span class="structural-item">
-              <span class="structural-value">{{ vm.content.day.plan_snapshot.meals|length }}</span>
-              <i data-lucide="utensils" class="structural-icon main"></i>
-            </span>
+          <div class="entity-heading__indicator-row">
+            <div class="structural-indicators">
+              <span class="structural-item">
+                <span class="structural-value">{{ vm.content.meals|length }}</span>
+                <i data-lucide="utensils" class="structural-icon main"></i>
+              </span>
+            </div>
+            {% include "components/completion_indicators.html" with completed_count=vm.content.completed_meals_count note_count=vm.content.noted_meals_count completion_summarized=True %}
           </div>
         </div>
       </div>
@@ -36,7 +39,7 @@
     <div class="detail-section dailyplan calendarization-day-detail__meals">
       <h3>Tabla de comparación entre comidas</h3>
       <div class="calendarization-meals">
-        {% for meal in vm.content.day.plan_snapshot.meals %}
+        {% for meal in vm.content.meals %}
           <article>
             <div>
               <span>{% if meal.hour %}{{ meal.hour }}{% else %}Sin hora{% endif %}</span>
@@ -50,6 +53,11 @@
                 <li>Sin alimentos</li>
               {% endfor %}
             </ul>
+            {% if meal.detail_url %}
+              <a class="calendarization-meal-detail-link" href="{{ meal.detail_url }}" aria-label="Ver detalle de {{ meal.name }}">
+                <i data-lucide="chevron-right" aria-hidden="true"></i>
+              </a>
+            {% endif %}
           </article>
         {% empty %}
           <p>Este plan no contiene comidas.</p>

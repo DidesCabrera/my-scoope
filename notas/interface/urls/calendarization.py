@@ -9,8 +9,26 @@ urlpatterns = [
     path("calendarization/<int:calendarization_id>/pause/", calendarization.pause, name="calendarization_pause"),
     path("calendarization/<int:calendarization_id>/resume/", calendarization.resume, name="calendarization_resume"),
     path("calendarization/<int:calendarization_id>/cancel/", calendarization.cancel, name="calendarization_cancel"),
-    path("calendarization/<int:calendarization_id>/preferences/", calendarization.preferences, name="calendarization_preferences"),
+    path(
+        "calendarization/<int:calendarization_id>/preferences/",
+        calendarization.preferences,
+        name="calendarization_preferences",
+    ),
     path("calendarization/days/<int:day_id>/", calendarization.day_detail, name="calendarization_day_detail"),
+    path(
+        "calendarization/days/<int:day_id>/meals/<str:meal_snapshot_key>/",
+        calendarization.meal_detail,
+        name="calendarization_meal_detail",
+    ),
+    path(
+        "calendarization/days/<int:day_id>/meals/<str:meal_snapshot_key>/check-in/",
+        calendarization.meal_check_in,
+        name="calendarization_meal_check_in",
+    ),
     path("calendarization/push/subscriptions/", calendarization.push_subscribe, name="calendarization_push_subscribe"),
-    path("calendarization/push/subscriptions/deactivate/", calendarization.push_unsubscribe, name="calendarization_push_unsubscribe"),
+    path(
+        "calendarization/push/subscriptions/deactivate/",
+        calendarization.push_unsubscribe,
+        name="calendarization_push_unsubscribe",
+    ),
 ]
