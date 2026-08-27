@@ -464,7 +464,7 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
             hour=time(8),
             order=1,
         )
-        today = timezone.localdate()
+        today = timezone.localdate(timezone=UTC)
         calendarization = self.activate(
             start_date=today,
             timezone_name="UTC",
