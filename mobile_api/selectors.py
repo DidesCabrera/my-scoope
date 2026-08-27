@@ -92,6 +92,7 @@ def _creator_name(entity) -> str:
 def _food_panel_item(meal_food) -> dict:
     return {
         "id": f"meal-food:{meal_food.id}",
+        "relation_id": meal_food.id,
         "name": resolve_food_display_name(meal_food.food),
         "quantity": _safe_number(meal_food.quantity),
         "quantity_unit": "g",
@@ -116,9 +117,11 @@ def _meal_panel_item(dailyplan_meal, dailyplan, current_weight=None) -> dict:
     protein = _safe_number(_cached_or_live(meal, "protein_cached", "protein"))
     return {
         "id": f"dailyplan-meal:{dailyplan_meal.id}",
+        "relation_id": dailyplan_meal.id,
         "detail_id": meal.id,
         "name": meal.name,
         "time": str(dailyplan_meal.hour) if dailyplan_meal.hour else None,
+        "note": dailyplan_meal.note or "",
         "foods": [_food_panel_item(meal_food) for meal_food in meal.meal_food_set.all()],
         "calories": _safe_number(meal_total_kcal),
         "calorie_share": _safe_number(_safe_percentage(meal_total_kcal, dailyplan.total_kcal)),
@@ -190,6 +193,7 @@ def _program_week_panel_items(program, current_weight=None) -> list[dict]:
         )
         return {
             "id": f"program-week:{program.id}:{week_number}:day:{day['day_number']}",
+            "program_day_id": program_day.id if program_day else None,
             "day_number": day["day_number"],
             "day_label": day["day_label"],
             "dailyplan_id": program_day.dailyplan_id if program_day else None,
@@ -248,7 +252,7 @@ def _library_page(queryset, *, search, offset, limit, builder) -> dict:
     }
 
 
-def library_foods_payload(user, *, search=None, offset=0, limit=30) -> dict:
+def library_foods_payload(user, *, search=None, offset=0, limit=30, include_drafts=False) -> dict:
     current_weight = get_current_weight(user)
     queryset = (
         Food.objects.filter(created_by=user, is_active=True)
@@ -270,15 +274,16 @@ def library_foods_payload(user, *, search=None, offset=0, limit=30) -> dict:
             "panel": _empty_library_panel(),
             "creator": _creator_name(food),
             "created_at": food.created_at,
+            "is_draft": False,
             "actions": library_actions_payload(food, user, context="list"),
         },
     )
 
 
-def library_meals_payload(user, *, search=None, offset=0, limit=30) -> dict:
+def library_meals_payload(user, *, search=None, offset=0, limit=30, include_drafts=False) -> dict:
     current_weight = get_current_weight(user)
     queryset = (
-        Meal.objects.filter(created_by=user, is_draft=False, dailyplanmeal__isnull=True)
+        Meal.objects.filter(created_by=user, dailyplanmeal__isnull=True)
         .select_related("created_by")
         .annotate(library_food_count=Count("meal_food_set", distinct=True))
         .prefetch_related(
@@ -287,6 +292,8 @@ def library_meals_payload(user, *, search=None, offset=0, limit=30) -> dict:
         .order_by("list_order", "-created_at", "-id")
         .distinct()
     )
+    if not include_drafts:
+        queryset = queryset.filter(is_draft=False)
     return _library_page(
         queryset,
         search=search,
@@ -298,22 +305,24 @@ def library_meals_payload(user, *, search=None, offset=0, limit=30) -> dict:
             "name": meal.name,
             "subtitle": "",
             "nutrition": _library_nutrition_payload(meal, current_weight),
-            "indicators": [{"icon": "food", "label": "alimentos", "value": meal.library_food_count}],
+            "indicators": [{"icon": "food", "label": "alimentos", "value": meal.library_food_count}]
+            + ([{"label": "estado", "value": "Borrador"}] if meal.is_draft else []),
             "panel": {
                 **_empty_library_panel("foods"),
                 "foods": [_food_panel_item(meal_food) for meal_food in meal.meal_food_set.all()],
             },
             "creator": _creator_name(meal),
             "created_at": meal.created_at,
+            "is_draft": meal.is_draft,
             "actions": library_actions_payload(meal, user, context="list"),
         },
     )
 
 
-def library_dailyplans_payload(user, *, search=None, offset=0, limit=30) -> dict:
+def library_dailyplans_payload(user, *, search=None, offset=0, limit=30, include_drafts=False) -> dict:
     current_weight = get_current_weight(user)
     queryset = (
-        DailyPlan.objects.filter(created_by=user, is_draft=False)
+        DailyPlan.objects.filter(created_by=user)
         .select_related("created_by")
         .exclude(source=DailyPlan.SOURCE_PROGRAM)
         .annotate(
@@ -328,6 +337,8 @@ def library_dailyplans_payload(user, *, search=None, offset=0, limit=30) -> dict
         )
         .order_by("list_order", "-created_at", "-id")
     )
+    if not include_drafts:
+        queryset = queryset.filter(is_draft=False)
     return _library_page(
         queryset,
         search=search,
@@ -342,7 +353,7 @@ def library_dailyplans_payload(user, *, search=None, offset=0, limit=30) -> dict
             "indicators": [
                 {"icon": "meal", "label": "comidas", "value": dailyplan.library_meal_count},
                 {"icon": "food", "label": "alimentos", "value": dailyplan.library_food_count},
-            ],
+            ] + ([{"label": "estado", "value": "Borrador"}] if dailyplan.is_draft else []),
             "panel": {
                 **_empty_library_panel("meals"),
                 "meals": [
@@ -352,6 +363,7 @@ def library_dailyplans_payload(user, *, search=None, offset=0, limit=30) -> dict
             },
             "creator": _creator_name(dailyplan),
             "created_at": dailyplan.created_at,
+            "is_draft": dailyplan.is_draft,
             "actions": library_actions_payload(dailyplan, user, context="list"),
         },
     )
@@ -382,10 +394,11 @@ def library_programs_payload(user, *, search=None, offset=0, limit=30) -> dict:
                 {"icon": "week", "label": "semanas", "value": program.normalized_duration_weeks},
                 {"icon": "dailyPlan", "label": "planes asignados", "value": program.library_day_count},
                 {"icon": "food", "label": "alimentos", "value": get_program_summary(program)["program_foods_count"]},
-            ],
+            ] + ([{"label": "estado", "value": "Borrador"}] if program.is_draft else []),
             "panel": {**_empty_library_panel("weeks"), "weeks": _program_week_panel_items(program, current_weight)},
             "creator": _creator_name(program),
             "created_at": program.created_at,
+            "is_draft": program.is_draft,
             "can_calendarize": program.created_by_id == user.id,
             "actions": library_actions_payload(program, user, context="list"),
         },
@@ -407,11 +420,12 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
                 "panel": _empty_library_panel(),
                 "creator": _creator_name(item),
                 "created_at": item.created_at,
+                "is_draft": False,
                 "actions": library_actions_payload(item, user, context="detail"),
             }
     elif entity == "meals":
         item = (
-            Meal.objects.filter(pk=item_id, created_by=user, is_draft=False)
+            Meal.objects.filter(pk=item_id, created_by=user)
             .select_related("created_by")
             .annotate(library_food_count=Count("meal_food_set", distinct=True))
             .prefetch_related(
@@ -426,18 +440,20 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
                 "name": item.name,
                 "subtitle": "",
                 "nutrition": _library_nutrition_payload(item, current_weight),
-                "indicators": [{"icon": "food", "label": "alimentos", "value": item.library_food_count}],
+                "indicators": [{"icon": "food", "label": "alimentos", "value": item.library_food_count}]
+                + ([{"label": "estado", "value": "Borrador"}] if item.is_draft else []),
                 "panel": {
                     **_empty_library_panel("foods"),
                     "foods": [_food_panel_item(row) for row in item.meal_food_set.all()],
                 },
                 "creator": _creator_name(item),
                 "created_at": item.created_at,
+                "is_draft": item.is_draft,
                 "actions": library_actions_payload(item, user, context="detail"),
             }
     elif entity == "daily-plans":
         item = (
-            DailyPlan.objects.filter(pk=item_id, created_by=user, is_draft=False)
+            DailyPlan.objects.filter(pk=item_id, created_by=user)
             .select_related("created_by")
             .annotate(
                 library_meal_count=Count("dailyplan_meals", distinct=True),
@@ -465,7 +481,7 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
                 "indicators": [
                     {"icon": "meal", "label": "comidas", "value": item.library_meal_count},
                     {"icon": "food", "label": "alimentos", "value": item.library_food_count},
-                ],
+                ] + ([{"label": "estado", "value": "Borrador"}] if item.is_draft else []),
                 "panel": {
                     **_empty_library_panel("meals"),
                     "meals": [_meal_panel_item(row, item, current_weight) for row in item.dailyplan_meals.all()],
@@ -473,6 +489,7 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
                 },
                 "creator": _creator_name(item),
                 "created_at": item.created_at,
+                "is_draft": item.is_draft,
                 "actions": library_actions_payload(item, user, context="detail"),
             }
     elif entity == "programs":
@@ -496,10 +513,11 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
                     {"icon": "week", "label": "semanas", "value": item.normalized_duration_weeks},
                     {"icon": "dailyPlan", "label": "planes asignados", "value": item.library_day_count},
                     {"icon": "food", "label": "alimentos", "value": get_program_summary(item)["program_foods_count"]},
-                ],
+                ] + ([{"label": "estado", "value": "Borrador"}] if item.is_draft else []),
                 "panel": {**_empty_library_panel("weeks"), "weeks": _program_week_panel_items(item, current_weight)},
                 "creator": _creator_name(item),
                 "created_at": item.created_at,
+                "is_draft": item.is_draft,
                 "can_calendarize": item.created_by_id == user.id,
                 "actions": library_actions_payload(item, user, context="detail"),
             }

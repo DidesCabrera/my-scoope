@@ -1,6 +1,6 @@
 import { ArrowDown, ArrowUp, Check, Copy, Pencil, RotateCcw, Trash2 } from "lucide-react-native";
 import { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { MacroCalorieDistribution, PanelAllocationBar } from "@/components/nutrition";
 import { EntityPanelTabs, PanelBody, PanelEmptyState, PanelSurface } from "@/components/panels";
@@ -127,10 +127,10 @@ function IconAction({ disabled = false, label, onPress, children }: { children: 
   );
 }
 
-function EditPanel({ initialWeeks }: { initialWeeks: ProgramWeekSummary[] }) {
-  const [savedWeeks, setSavedWeeks] = useState(initialWeeks);
+function EditPanel({ initialWeeks, onDelete, onDuplicate, onReorder }: { initialWeeks: ProgramWeekSummary[]; onDelete(week: number): Promise<void>; onDuplicate(week: number): Promise<void>; onReorder(weeks: number[]): Promise<void> }) {
   const [draftWeeks, setDraftWeeks] = useState(initialWeeks);
-  const dirty = useMemo(() => savedWeeks.map(({ id }) => id).join() !== draftWeeks.map(({ id }) => id).join(), [draftWeeks, savedWeeks]);
+  const [busy, setBusy] = useState(false);
+  const dirty = useMemo(() => initialWeeks.map(({ id }) => id).join() !== draftWeeks.map(({ id }) => id).join(), [draftWeeks, initialWeeks]);
 
   const move = (index: number, offset: number) => {
     const destination = index + offset;
@@ -142,13 +142,7 @@ function EditPanel({ initialWeeks }: { initialWeeks: ProgramWeekSummary[] }) {
     });
   };
 
-  const duplicate = (index: number) => {
-    setDraftWeeks((current) => {
-      const source = current[index];
-      const copy = { ...source, id: `${source.id}-copy-${current.length}`, week: current.length + 1 };
-      return [...current.slice(0, index + 1), copy, ...current.slice(index + 1)];
-    });
-  };
+  async function run(action: () => Promise<void>) { setBusy(true); try { await action(); } catch { /* El padre ya presentó el error. */ } finally { setBusy(false); } }
 
   if (draftWeeks.length === 0) return <PanelEmptyState label="El programa no tiene semanas." />;
   return (
@@ -160,22 +154,22 @@ function EditPanel({ initialWeeks }: { initialWeeks: ProgramWeekSummary[] }) {
       {draftWeeks.map((week, index) => (
         <View key={week.id} style={[styles.row, styles.editRow]}>
           <View style={styles.reorderActions}>
-            <IconAction disabled={index === 0} label={`Subir Semana ${week.week}`} onPress={() => move(index, -1)}><ArrowUp color={tokens.color.textMuted} size={16} /></IconAction>
-            <IconAction disabled={index === draftWeeks.length - 1} label={`Bajar Semana ${week.week}`} onPress={() => move(index, 1)}><ArrowDown color={tokens.color.textMuted} size={16} /></IconAction>
+            <IconAction disabled={busy || index === 0} label={`Subir Semana ${week.week}`} onPress={() => move(index, -1)}><ArrowUp color={tokens.color.textMuted} size={16} /></IconAction>
+            <IconAction disabled={busy || index === draftWeeks.length - 1} label={`Bajar Semana ${week.week}`} onPress={() => move(index, 1)}><ArrowDown color={tokens.color.textMuted} size={16} /></IconAction>
           </View>
           <View style={styles.editIdentity}><WeekIdentity week={week.week} /></View>
           <View style={styles.editActions}>
-            <IconAction label={`Duplicar Semana ${week.week}`} onPress={() => duplicate(index)}><Copy color={tokens.color.textMuted} size={16} /></IconAction>
-            <IconAction disabled={draftWeeks.length === 1} label={`Eliminar Semana ${week.week}`} onPress={() => setDraftWeeks((current) => current.filter(({ id }) => id !== week.id))}><Trash2 color={tokens.color.danger} size={16} /></IconAction>
+            <IconAction disabled={busy} label={`Duplicar Semana ${week.week}`} onPress={() => void run(() => onDuplicate(week.week))}><Copy color={tokens.color.textMuted} size={16} /></IconAction>
+            <IconAction disabled={busy || draftWeeks.length === 1} label={`Eliminar Semana ${week.week}`} onPress={() => Alert.alert("Eliminar semana", `¿Eliminar la Semana ${week.week} y su planificación?`, [{ text: "Cancelar", style: "cancel" }, { text: "Eliminar", style: "destructive", onPress: () => void run(() => onDelete(week.week)) }])}><Trash2 color={tokens.color.danger} size={16} /></IconAction>
           </View>
         </View>
       ))}
       {dirty ? (
         <View style={styles.commitActions}>
-          <Pressable accessibilityRole="button" onPress={() => setDraftWeeks(savedWeeks)} style={({ pressed }) => [styles.commitButton, pressed && styles.pressed]}>
+          <Pressable accessibilityRole="button" disabled={busy} onPress={() => setDraftWeeks(initialWeeks)} style={({ pressed }) => [styles.commitButton, pressed && styles.pressed]}>
             <RotateCcw color={tokens.color.textMain} size={16} /><Text style={styles.commitLabel}>Descartar</Text>
           </Pressable>
-          <Pressable accessibilityRole="button" onPress={() => setSavedWeeks(draftWeeks)} style={({ pressed }) => [styles.commitButton, styles.commitButtonPrimary, pressed && styles.pressed]}>
+          <Pressable accessibilityRole="button" disabled={busy} onPress={() => void run(() => onReorder(draftWeeks.map(({ week }) => week)))} style={({ pressed }) => [styles.commitButton, styles.commitButtonPrimary, pressed && styles.pressed]}>
             <Check color={tokens.color.surfaceApp} size={16} /><Text style={styles.commitLabelPrimary}>Guardar orden</Text>
           </Pressable>
         </View>
@@ -184,15 +178,15 @@ function EditPanel({ initialWeeks }: { initialWeeks: ProgramWeekSummary[] }) {
   );
 }
 
-export function ProgramWeekComparisonPanels({ weeks }: { weeks: ProgramWeekSummary[] }) {
+export function ProgramWeekComparisonPanels({ onDelete, onDuplicate, onReorder, weeks }: { onDelete?: (week: number) => Promise<void>; onDuplicate?: (week: number) => Promise<void>; onReorder?: (weeks: number[]) => Promise<void>; weeks: ProgramWeekSummary[] }) {
   const [activeTab, setActiveTab] = useState<ProgramWeekPanelTab>("calories");
   return (
     <PanelSurface>
-      <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={tabs} />
+      <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={onDelete && onDuplicate && onReorder ? tabs : tabs.filter(({ key }) => key !== "edit")} />
       {activeTab === "calories" ? <CaloriesPanel weeks={weeks} /> : null}
       {activeTab === "macros" ? <MacrosPanel weeks={weeks} /> : null}
       {activeTab === "allocation" ? <AllocationPanel weeks={weeks} /> : null}
-      {activeTab === "edit" ? <EditPanel initialWeeks={weeks} /> : null}
+      {activeTab === "edit" && onDelete && onDuplicate && onReorder ? <EditPanel initialWeeks={weeks} key={weeks.map(({ id }) => id).join("|")} onDelete={onDelete} onDuplicate={onDuplicate} onReorder={onReorder} /> : null}
     </PanelSurface>
   );
 }

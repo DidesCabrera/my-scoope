@@ -4,9 +4,6 @@ import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -26,6 +23,7 @@ import type {
 import { Button, Field, InlineNotice } from "@/components/ui/primitives";
 import { EntityCardAction } from "@/components/ui";
 import { tokens } from "@/design/tokens";
+import { ActionSheetModal } from "./action-sheet-modal";
 
 type ApiRequest = <T>(path: string, init?: RequestInit) => Promise<T>;
 
@@ -126,9 +124,7 @@ export function LibraryActions({ apiRequest, entitySlug, item, onCompleted, onVi
           <MoreHorizontal color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
         </EntityCardAction>
       )}
-      <Modal animationType="fade" onRequestClose={close} transparent visible={visible}>
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.modalRoot}>
-          <Pressable accessibilityLabel="Cerrar acciones" onPress={close} style={styles.scrim} />
+      <ActionSheetModal onRequestClose={close} visible={visible}>
           <SafeAreaView edges={["bottom", "left", "right"]} style={styles.sheetSafeArea}>
             <View style={styles.sheet}>
               <View style={styles.sheetHeader}>
@@ -199,15 +195,12 @@ export function LibraryActions({ apiRequest, entitySlug, item, onCompleted, onVi
               </ScrollView>
             </View>
           </SafeAreaView>
-        </KeyboardAvoidingView>
-      </Modal>
+      </ActionSheetModal>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  modalRoot: { flex: 1, justifyContent: "flex-end" },
-  scrim: { backgroundColor: "rgba(20, 24, 22, 0.42)", bottom: 0, left: 0, position: "absolute", right: 0, top: 0 },
   sheetSafeArea: { backgroundColor: tokens.color.surfaceCard, borderTopLeftRadius: tokens.radius.card, borderTopRightRadius: tokens.radius.card, maxHeight: "88%", overflow: "hidden" },
   sheet: { backgroundColor: tokens.color.surfaceCard },
   sheetHeader: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between", paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.md },

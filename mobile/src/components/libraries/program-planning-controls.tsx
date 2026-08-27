@@ -87,12 +87,14 @@ export function ProgramWeekTabs({
 
 export function ProgramDaySelector({
   accessibilityLabel,
+  allowEmptySelection = false,
   children,
   days,
   onSelect,
   selectedId,
 }: {
   accessibilityLabel: string;
+  allowEmptySelection?: boolean;
   children?: ReactNode;
   days: ProgramPlanningDay[];
   onSelect(day: ProgramPlanningDay): void;
@@ -110,7 +112,7 @@ export function ProgramDaySelector({
                 accessibilityLabel={day.filled ? `${day.label}: ver plan diario` : `${day.label}: día sin plan`}
                 accessibilityRole="button"
                 accessibilityState={{ expanded: day.filled ? selected : undefined, selected }}
-                disabled={!day.filled}
+                disabled={!day.filled && !allowEmptySelection}
                 onPress={() => onSelect(day)}
                 style={({ pressed }) => [styles.dayCircle, !day.filled && styles.dayCircleEmpty, selected && styles.dayCircleSelected, pressed && styles.pressed]}>
                 {selected ? <SelectedDayRing /> : null}

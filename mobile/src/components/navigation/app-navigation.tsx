@@ -42,6 +42,7 @@ import { EntitySidebarItem, type EntitySidebarItemData, NavigationSidebarItem, t
 
 type HeaderPresentation =
   | { mode: "default"; borderVisible?: boolean; identityVisible?: boolean; title?: string }
+  | { mode: "back"; action?: { label: string; onPress(): void }; borderVisible?: boolean; fallback?: Href; title: string }
   | { mode: "library-detail"; action?: { label: string; onPress(): void }; borderVisible?: boolean; entity: LibraryEntity; identityVisible: boolean; title: string }
   | { mode: "library-list"; action?: { label: string; onPress(): void }; borderVisible?: boolean; entity: LibraryEntity; identityVisible: boolean; title: string };
 
@@ -127,6 +128,10 @@ function LibraryHeaderIdentity({ entity, title, visible }: { entity: LibraryEnti
   return <Animated.View accessibilityElementsHidden={!visible} importantForAccessibility={visible ? "auto" : "no-hide-descendants"} pointerEvents="none" style={[styles.headerListIdentity, { opacity: progress }]}><HeaderEntityIdentity entity={entity} title={title} /></Animated.View>;
 }
 
+function BackHeaderIdentity({ title }: { title: string }) {
+  return <View accessibilityLabel={title} accessible pointerEvents="none" style={styles.backHeaderIdentity}><Text numberOfLines={1} style={styles.routeIdentityTitle}>{title}</Text></View>;
+}
+
 function routeHeader(pathname: string): { icon: LucideIcon; title: string } {
   if (pathname.startsWith("/assistant")) return { icon: Sparkles, title: pathname === "/assistant" ? "Asistente" : "Conversación" };
   if (pathname.startsWith("/proposals")) return { icon: ClipboardCheck, title: pathname === "/proposals" ? "Propuestas" : "Detalle de propuesta" };
@@ -151,7 +156,9 @@ export function AppNavigationHeader() {
   const pathname = usePathname();
   const { status, profile } = useSession();
   const canOpenMenu = status === "authenticated" && Boolean(profile?.onboarding_completed) && !profile?.review_disclosure_required;
-  const detailFallback = headerPresentation.mode === "library-detail"
+  const detailFallback = headerPresentation.mode === "back"
+    ? headerPresentation.fallback ?? "/today"
+    : headerPresentation.mode === "library-detail"
     ? headerPresentation.entity === "dailyPlan"
       ? "/libraries/daily-plans"
       : headerPresentation.entity === "program"
@@ -163,11 +170,16 @@ export function AppNavigationHeader() {
   const routeIdentity = routeHeader(pathname);
   const isHome = pathname === "/today" || pathname === "/";
   const defaultIdentityVisible = headerPresentation.mode === "default" && Boolean(headerPresentation.identityVisible);
+  const headerWithoutBorder = headerPresentation.mode === "default"
+    ? !defaultIdentityVisible
+    : headerPresentation.mode === "back"
+      ? headerPresentation.borderVisible === false
+      : headerPresentation.borderVisible === false || !headerPresentation.identityVisible;
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.headerSafeArea}>
-      <View style={[styles.header, headerPresentation.mode === "default" ? !defaultIdentityVisible && styles.headerWithoutBorder : (headerPresentation.borderVisible === false || !headerPresentation.identityVisible) && styles.headerWithoutBorder]}>
-        {headerPresentation.mode === "library-detail" ? (
-          <Pressable accessibilityLabel="Volver" accessibilityRole="button" hitSlop={8} onPress={() => { if (router.canGoBack()) router.back(); else router.replace(detailFallback); }} style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}><ChevronLeft color={tokens.color.textMain} size={26} strokeWidth={2.2} /></Pressable>
+      <View style={[styles.header, headerWithoutBorder && styles.headerWithoutBorder]}>
+        {headerPresentation.mode === "library-detail" || headerPresentation.mode === "back" ? (
+          <Pressable accessibilityLabel="Volver" accessibilityRole="button" hitSlop={8} onPress={() => { if (router.canGoBack()) router.back(); else router.replace(detailFallback); }} style={({ pressed }) => [styles.headerButton, headerPresentation.mode === "back" && styles.backHeaderSide, pressed && styles.pressed]}><ChevronLeft color={tokens.color.textMain} size={26} strokeWidth={2.2} /></Pressable>
         ) : canOpenMenu ? (
           <Pressable
             accessibilityLabel="Abrir menú"
@@ -180,10 +192,19 @@ export function AppNavigationHeader() {
         ) : (
           <View style={styles.headerButton} />
         )}
-        {headerPresentation.mode === "library-list" || headerPresentation.mode === "library-detail" ? (
+        {headerPresentation.mode === "back" ? <BackHeaderIdentity title={headerPresentation.title} /> : headerPresentation.mode === "library-list" || headerPresentation.mode === "library-detail" ? (
           <LibraryHeaderIdentity entity={headerPresentation.entity} title={headerPresentation.title} visible={headerPresentation.identityVisible} />
         ) : isHome ? <View pointerEvents="none" style={styles.headerLogo}><MyScoopeLogo /></View> : <HeaderIdentity icon={routeIdentity.icon} title={headerPresentation.title || routeIdentity.title} visible={defaultIdentityVisible} />}
-        {(headerPresentation.mode === "library-detail" || headerPresentation.mode === "library-list") && headerPresentation.action ? (
+        {headerPresentation.mode === "back" && headerPresentation.action ? (
+          <Pressable
+            accessibilityLabel={headerPresentation.action.label}
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={headerPresentation.action.onPress}
+            style={({ pressed }) => [styles.backHeaderAction, pressed && styles.pressed]}>
+            <Text style={styles.backHeaderActionText}>{headerPresentation.action.label}</Text>
+          </Pressable>
+        ) : (headerPresentation.mode === "library-detail" || headerPresentation.mode === "library-list") && headerPresentation.action ? (
           <Pressable
             accessibilityLabel={headerPresentation.action.label}
             accessibilityRole="button"
@@ -192,7 +213,7 @@ export function AppNavigationHeader() {
             style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}>
             <MoreHorizontal color={tokens.color.textMain} size={26} strokeWidth={2.2} />
           </Pressable>
-        ) : <View style={styles.headerButton} />}
+        ) : <View style={[styles.headerButton, headerPresentation.mode === "back" && styles.backHeaderSide]} />}
       </View>
     </SafeAreaView>
   );
@@ -307,6 +328,10 @@ const styles = StyleSheet.create({
   header: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", height: 58, justifyContent: "space-between" },
   headerWithoutBorder: { borderBottomWidth: 0 },
   headerButton: { alignItems: "center", height: 52, justifyContent: "center", width: 58 },
+  backHeaderSide: { width: 76 },
+  backHeaderAction: { alignItems: "center", height: 52, justifyContent: "center", paddingHorizontal: tokens.spacing.md, width: 76 },
+  backHeaderActionText: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: "700" },
+  backHeaderIdentity: { alignItems: "center", flex: 1, justifyContent: "center", minWidth: 0 },
   headerListIdentity: { flex: 1, justifyContent: "center" },
   headerLogo: { alignItems: "center", bottom: 0, justifyContent: "center", left: 58, position: "absolute", right: 58, top: 0 },
   routeIdentity: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0 },

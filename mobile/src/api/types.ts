@@ -240,6 +240,7 @@ export type LibraryIndicator = {
 
 export type LibraryFoodPanelItem = {
   id: string;
+  relation_id: number | null;
   name: string;
   quantity: number;
   quantity_unit: string;
@@ -256,9 +257,11 @@ export type LibraryFoodPanelItem = {
 
 export type LibraryMealPanelItem = {
   id: string;
+  relation_id: number | null;
   detail_id: number;
   name: string;
   time: string | null;
+  note: string;
   foods: LibraryFoodPanelItem[];
   calories: number;
   calorie_share: number;
@@ -277,6 +280,7 @@ export type LibraryWeekPanelItem = {
   week_number: number;
   days: {
     id?: string;
+    program_day_id?: number | null;
     day_number?: number;
     day_label: string;
     dailyplan_id?: number | null;
@@ -323,6 +327,7 @@ export type LibraryItem = {
   panel: LibraryPanel;
   creator: string;
   created_at: string;
+  is_draft: boolean;
   can_calendarize: boolean;
   actions: LibraryAction[];
 };
@@ -333,6 +338,67 @@ export type LibraryPageData = {
   offset: number;
   limit: number;
   search: string | null;
+};
+
+export type FoodPickerOption = {
+  id: number;
+  name: string;
+  display_name: string;
+  protein: number;
+  carbs: number;
+  fat: number;
+  total_kcal: number;
+  protein_allocation: number;
+  carbs_allocation: number;
+  fat_allocation: number;
+  source: string;
+  is_user_food: boolean;
+  is_verified: boolean;
+  data_quality_score: number;
+};
+
+export type FoodPickerPageData = {
+  items: FoodPickerOption[];
+  total: number;
+  offset: number;
+  limit: number;
+  search: string | null;
+};
+
+export type PickerSelection = {
+  id: number;
+  entity: "food" | "meal" | "dailyPlan" | "week";
+  name: string;
+  nutrition: LibraryNutrition | null;
+  quantity: number | null;
+  hour: string | null;
+};
+
+export type PickerImpact = {
+  label: string;
+  entity: "meal" | "dailyPlan" | "week" | "program";
+  before: LibraryNutrition;
+  after: LibraryNutrition;
+  metrics: { label: string; before: number; after: number }[];
+};
+
+export type PickerPreview = {
+  selection: PickerSelection;
+  impacts: PickerImpact[];
+  replacements: string[];
+  confirmation_required: boolean;
+};
+
+export type PickerCommitResult = {
+  message: string;
+  target_id: number;
+  created_id: number;
+};
+
+export type CompositionMutationResult = {
+  message: string;
+  target_id: number;
+  affected_id: number;
 };
 
 export type MealSnapshot = {

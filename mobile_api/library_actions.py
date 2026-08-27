@@ -96,9 +96,9 @@ def _available_item(user, entity: str, item_id: int):
     if entity == "foods":
         item = Food.objects.filter(pk=item_id, created_by=user, is_active=True).first()
     elif entity == "meals":
-        item = Meal.objects.filter(pk=item_id, created_by=user, is_draft=False).first()
+        item = Meal.objects.filter(pk=item_id, created_by=user).first()
     elif entity == "daily-plans":
-        item = DailyPlan.objects.filter(pk=item_id, created_by=user, is_draft=False).first()
+        item = DailyPlan.objects.filter(pk=item_id, created_by=user).first()
     elif entity == "programs":
         item = (
             Program.objects.filter(pk=item_id)
@@ -307,9 +307,9 @@ def _owned_library_items(user, entity: str):
     if entity == "foods":
         return Food.objects.filter(created_by=user, is_active=True)
     if entity == "meals":
-        return Meal.objects.filter(created_by=user, is_draft=False, dailyplanmeal__isnull=True).distinct()
+        return Meal.objects.filter(created_by=user, dailyplanmeal__isnull=True).distinct()
     if entity == "daily-plans":
-        return DailyPlan.objects.filter(created_by=user, is_draft=False).exclude(source=DailyPlan.SOURCE_PROGRAM)
+        return DailyPlan.objects.filter(created_by=user).exclude(source=DailyPlan.SOURCE_PROGRAM)
     if entity == "programs":
         return Program.objects.filter(created_by=user)
     raise MobileAPIError(code="library_not_found", message="The requested library was not found.", status_code=404)

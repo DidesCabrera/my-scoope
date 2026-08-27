@@ -1,11 +1,12 @@
 import { type Href, useRouter } from "expo-router";
-import { ChevronRight, MoreHorizontal } from "lucide-react-native";
+import { ChevronRight, RefreshCw, Trash2 } from "lucide-react-native";
 
 import { NutritionEntityCard } from "@/components/nutrition";
 import { MealPanels, type MealPanelItem } from "@/components/panels";
 import { EntityCardAction } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import type { LibraryWeekPanelItem } from "@/api/types";
+import { ContextCardActions, type ContextCardAction } from "./context-card-actions";
 
 const meals: MealPanelItem[] = [
   {
@@ -83,16 +84,29 @@ function mealPanelItem(item: NonNullable<LibraryWeekPanelItem["days"][number]["m
   };
 }
 
-export function ProgramDailyPlanPreview({ day, dayLabel, week }: { day?: LibraryWeekPanelItem["days"][number]; dayLabel: string; week: number }) {
+export function ProgramDailyPlanPreview({ day, dayLabel, onRemove, onReplace, week }: { day?: LibraryWeekPanelItem["days"][number]; dayLabel: string; onRemove?: () => Promise<void>; onReplace?: () => void; week: number }) {
   const router = useRouter();
   const nutrition = day?.nutrition;
+  const contextualActions: ContextCardAction[] = [
+    ...(onReplace ? [{ icon: RefreshCw, key: "replace", label: "Reemplazar plan diario", onPress: onReplace }] : []),
+    ...(onRemove ? [{
+      confirmation: {
+        confirmLabel: "Quitar plan diario",
+        message: "Se quitará este plan del día. El plan diario seguirá disponible en tu biblioteca.",
+        title: "¿Quitar plan diario?",
+      },
+      destructive: true,
+      icon: Trash2,
+      key: "remove",
+      label: "Quitar plan diario",
+      onPress: onRemove,
+    }] : []),
+  ];
   return (
     <NutritionEntityCard
       actions={(
         <>
-          <EntityCardAction label={`Más acciones para el plan de ${dayLabel}`} onPress={() => undefined}>
-            <MoreHorizontal color={tokens.color.textMuted} size={20} />
-          </EntityCardAction>
+          <ContextCardActions actions={contextualActions} label={`Más acciones para el plan de ${dayLabel}`} title={day?.plan_name ?? `Plan de ${dayLabel}`} />
           {day?.dailyplan_id ? (
             <EntityCardAction
               label={`Ir al detalle del plan de ${dayLabel}`}

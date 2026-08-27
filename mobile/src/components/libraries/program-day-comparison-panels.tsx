@@ -1,6 +1,6 @@
 import { Pencil, Plus, RefreshCw, Trash2 } from "lucide-react-native";
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { MacroCalorieDistribution, PanelAllocationBar, ProteinPerKilogramBadge } from "@/components/nutrition";
 import { EntityPanelTabs, PanelBody, PanelSurface } from "@/components/panels";
@@ -15,11 +15,13 @@ export type ProgramDayNutrition = {
   calories: number;
   carbsGrams: number;
   day: string;
+  dayNumber: number;
   fatGrams: number;
   id: string;
   planName: string | null;
   ppk: number;
   proteinGrams: number;
+  week: number;
 };
 
 const tabs = [
@@ -42,11 +44,13 @@ function rowsForWeek(week: number): ProgramDayNutrition[] {
       calories: empty ? 0 : 1980 + index * 35,
       carbsGrams: empty ? 0 : 218 + index * 4,
       day,
+      dayNumber: index + 1,
       fatGrams: empty ? 0 : 57 + index,
       id: `week-${week}-day-${index + 1}`,
       planName: empty ? null : planNames[index],
       ppk: empty ? 0 : 1.7 + (index % 3) * 0.1,
       proteinGrams: empty ? 0 : 145 + index * 2,
+      week,
     };
   });
 }
@@ -137,7 +141,7 @@ function AllocationPanel({ rows }: { rows: ProgramDayNutrition[] }) {
   );
 }
 
-function EditPanel({ rows }: { rows: ProgramDayNutrition[] }) {
+function EditPanel({ onAssign, onDelete, rows }: { onAssign(week: number, day: number): void; onDelete(week: number, day: number): Promise<void>; rows: ProgramDayNutrition[] }) {
   return (
     <PanelBody>
       <View style={[styles.row, styles.header]}>
@@ -150,10 +154,10 @@ function EditPanel({ rows }: { rows: ProgramDayNutrition[] }) {
           <Text style={[styles.cell, styles.editDay]}>{row.day}</Text>
           <Text numberOfLines={2} style={[styles.cell, styles.editPlan, !row.planName && styles.planName]}>{row.planName ?? "Sin plan"}</Text>
           <View style={styles.editActions}>
-            <Pressable accessibilityLabel={`${row.planName ? "Reemplazar" : "Agregar"} plan de ${row.day}`} accessibilityRole="button" style={({ pressed }) => [styles.iconAction, pressed && styles.pressed]}>
+            <Pressable accessibilityLabel={`${row.planName ? "Reemplazar" : "Agregar"} plan de ${row.day}`} accessibilityRole="button" onPress={() => onAssign(row.week, row.dayNumber)} style={({ pressed }) => [styles.iconAction, pressed && styles.pressed]}>
               {row.planName ? <RefreshCw color={tokens.color.textMuted} size={16} /> : <Plus color={tokens.color.dailyPlan} size={17} />}
             </Pressable>
-            {row.planName ? <Pressable accessibilityLabel={`Eliminar plan de ${row.day}`} accessibilityRole="button" style={({ pressed }) => [styles.iconAction, pressed && styles.pressed]}><Trash2 color={tokens.color.danger} size={16} /></Pressable> : null}
+            {row.planName ? <Pressable accessibilityLabel={`Eliminar plan de ${row.day}`} accessibilityRole="button" onPress={() => Alert.alert("Eliminar plan diario", `¿Quitar el plan asignado a ${row.day}?`, [{ text: "Cancelar", style: "cancel" }, { text: "Eliminar", style: "destructive", onPress: () => void onDelete(row.week, row.dayNumber).catch(() => undefined) }])} style={({ pressed }) => [styles.iconAction, pressed && styles.pressed]}><Trash2 color={tokens.color.danger} size={16} /></Pressable> : null}
           </View>
         </View>
       ))}
@@ -161,16 +165,16 @@ function EditPanel({ rows }: { rows: ProgramDayNutrition[] }) {
   );
 }
 
-export function ProgramDayComparisonPanels({ rows: providedRows, week }: { rows?: ProgramDayNutrition[]; week: number }) {
+export function ProgramDayComparisonPanels({ onAssign, onDelete, rows: providedRows, week }: { onAssign?: (week: number, day: number) => void; onDelete?: (week: number, day: number) => Promise<void>; rows?: ProgramDayNutrition[]; week: number }) {
   const [activeTab, setActiveTab] = useState<ProgramDayPanelTab>("calories");
   const rows = providedRows ?? rowsForWeek(week);
   return (
     <PanelSurface>
-      <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={tabs} />
+      <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={onAssign && onDelete ? tabs : tabs.filter(({ key }) => key !== "edit")} />
       {activeTab === "calories" ? <CaloriesPanel rows={rows} /> : null}
       {activeTab === "macros" ? <MacrosPanel rows={rows} /> : null}
       {activeTab === "allocation" ? <AllocationPanel rows={rows} /> : null}
-      {activeTab === "edit" ? <EditPanel rows={rows} /> : null}
+      {activeTab === "edit" && onAssign && onDelete ? <EditPanel onAssign={onAssign} onDelete={onDelete} rows={rows} /> : null}
     </PanelSurface>
   );
 }

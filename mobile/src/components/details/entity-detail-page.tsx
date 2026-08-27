@@ -14,6 +14,7 @@ export type EntityDetailPageProps = PropsWithChildren<
     action?: ReactNode;
     backLabel?: string;
     onBack?: () => void;
+    showNutrition?: boolean;
   }
 >;
 
@@ -29,6 +30,7 @@ export function EntityDetailPage({
   indicators,
   nutrition,
   onBack,
+  showNutrition = true,
   subtitle,
   title,
 }: EntityDetailPageProps) {
@@ -63,7 +65,7 @@ export function EntityDetailPage({
             title={title}
             variant="page"
           />
-          <NutritionKpiSection variant={kpiVariant} {...nutrition} />
+          {showNutrition ? <NutritionKpiSection variant={kpiVariant} {...nutrition} /> : null}
         </View>
         {children}
       </View>

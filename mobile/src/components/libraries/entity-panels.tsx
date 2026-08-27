@@ -1,5 +1,5 @@
 import { type Href, useRouter } from "expo-router";
-import { ChevronRight } from "lucide-react-native";
+import { ChevronRight, Trash2 } from "lucide-react-native";
 import { useState } from "react";
 import { type StyleProp, StyleSheet, Text, View, type ViewStyle } from "react-native";
 
@@ -11,6 +11,7 @@ import { EntityCardAction, EntityIcon } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 import { EntityPanelTabs, PanelBody, PanelEmptyState, PanelSurface } from "@/components/panels/panel-surface";
+import { ContextCardActions, type ContextCardAction } from "./context-card-actions";
 
 type PanelNutritionItem = {
   id: string;
@@ -147,14 +148,32 @@ export function MealPanels({ items }: { items: LibraryMealPanelItem[] }) {
   );
 }
 
-export function DailyPlanMealCards({ items }: { items: LibraryMealPanelItem[] }) {
+export function DailyPlanMealCards({ items, onRemove }: { items: LibraryMealPanelItem[]; onRemove?: (item: LibraryMealPanelItem) => Promise<void> }) {
   const router = useRouter();
   return (
     <View style={styles.mealCardList}>
       {items.map((item, index) => (
         <View key={item.id}>
           <NutritionEntityCard
-            actions={<EntityCardAction label={`Ver detalle de ${item.name}`} onPress={() => router.push(`/libraries/meals/${item.detail_id}` as Href)} role="link"><ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction>}
+            actions={<>
+              {onRemove ? <ContextCardActions
+                actions={[{
+                  confirmation: {
+                    confirmLabel: "Quitar comida",
+                    message: "Se quitará esta comida del plan diario. La comida seguirá disponible en tu biblioteca.",
+                    title: "¿Quitar comida?",
+                  },
+                  destructive: true,
+                  icon: Trash2,
+                  key: "remove",
+                  label: "Quitar comida",
+                  onPress: () => onRemove(item),
+                }] satisfies ContextCardAction[]}
+                label={`Más acciones para ${item.name}`}
+                title={item.name}
+              /> : null}
+              <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={() => router.push(`/libraries/meals/${item.detail_id}` as Href)} role="link"><ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction>
+            </>}
             entity="meal"
             eyebrow={`Comida ${index + 1}`}
             indicators={[{ icon: "food", label: "alimentos", value: item.foods.length }]}

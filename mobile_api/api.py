@@ -29,6 +29,26 @@ from mobile_api.comparisons import (
     saved_comparison_list_payload,
     update_comparison,
 )
+from mobile_api.composition import (
+    add_dailyplan_from_picker,
+    add_food_from_picker,
+    add_meal_from_picker,
+    add_week_from_picker,
+    duplicate_program_week,
+    preview_dailyplan_for_program,
+    preview_food_for_meal,
+    preview_meal_for_dailyplan,
+    preview_week_for_program,
+    remove_dailyplan_from_program,
+    remove_food_from_meal,
+    remove_meal_from_dailyplan,
+    remove_program_week,
+    reorder_foods_in_meal,
+    reorder_meals_in_dailyplan,
+    reorder_weeks_in_program,
+    update_food_in_meal,
+    update_meal_in_dailyplan,
+)
 from mobile_api.errors import MobileAPIError, error_envelope
 from mobile_api.library_actions import bulk_delete_library, perform_library_action, reorder_library
 from mobile_api.schemas import (
@@ -55,22 +75,34 @@ from mobile_api.schemas import (
     ComparisonOptionsEnvelope,
     ComparisonRequestInput,
     ComparisonResultEnvelope,
+    CompositionMutationEnvelope,
+    CompositionOrderInput,
+    DailyPlanPickerInput,
+    DailyPlanMealUpdateInput,
     DisclosureAcceptanceInput,
     EntitlementsEnvelope,
     ErrorEnvelope,
+    FoodItemEnvelope,
+    FoodCreateInput,
     FoodLabelCaptureEnvelope,
     FoodLabelCaptureInput,
     FoodPageEnvelope,
+    FoodPickerInput,
     HealthEnvelope,
     LibraryActionInput,
     LibraryActionResultEnvelope,
     LibraryBulkDeleteInput,
     LibraryItemEnvelope,
-    LibraryPageEnvelope,
     LibraryListActionResultEnvelope,
     LibraryOrderInput,
+    LibraryPageEnvelope,
     MealCheckInInput,
+    MealFoodUpdateInput,
+    MealPickerInput,
+    NamedLibraryCreateInput,
     OnboardingInput,
+    PickerCommitEnvelope,
+    PickerPreviewEnvelope,
     ProfileEnvelope,
     ProposalApplyInput,
     ProposalDetailEnvelope,
@@ -121,7 +153,11 @@ from notas.application.proposals.contracts import (
 from notas.application.proposals.subject_context_warnings import (
     proposal_requires_external_subject_ack,
 )
-from notas.application.queries.food_picker_queries import list_food_picker_page
+from notas.application.queries.food_picker_queries import (
+    build_food_picker_item_dto,
+    get_food_picker_queryset,
+    list_food_picker_page,
+)
 from notas.application.queries.proposal_queries import get_available_proposal_queryset
 from notas.application.services.access.capabilities import get_capabilities
 from notas.application.services.commands.calendarization_commands import (
@@ -139,7 +175,10 @@ from notas.application.services.commands.calendarization_execution_commands impo
     record_calendarized_weight,
     record_meal_execution,
 )
-from notas.application.services.commands.food_commands import create_food_from_label_capture
+from notas.application.services.commands.dailyplan_commands import create_draft_dailyplan
+from notas.application.services.commands.food_commands import create_food, create_food_from_label_capture
+from notas.application.services.commands.meal_commands import create_draft_meal
+from notas.application.services.commands.program_commands import create_weekly_program
 from notas.application.services.commands.proposal_commands import (
     apply_approved_create_dailyplan_proposal,
     apply_approved_create_meal_proposal,
@@ -996,22 +1035,7 @@ def foods(request, search: str | None = None, offset: int = 0, limit: int = 30):
     )
     return _success(
         {
-            "items": [
-                {
-                    "id": item.id,
-                    "name": item.name,
-                    "display_name": item.display_name,
-                    "protein": item.protein,
-                    "carbs": item.carbs,
-                    "fat": item.fat,
-                    "total_kcal": item.total_kcal,
-                    "source": item.source,
-                    "is_user_food": item.is_user_food,
-                    "is_verified": item.is_verified,
-                    "data_quality_score": item.data_quality_score,
-                }
-                for item in page.foods
-            ],
+            "items": [_food_picker_item_payload(item) for item in page.foods],
             "total": page.total,
             "offset": page.offset,
             "limit": page.limit,
@@ -1020,24 +1044,96 @@ def foods(request, search: str | None = None, offset: int = 0, limit: int = 30):
     )
 
 
+def _food_picker_item_payload(item):
+    return {
+        "id": item.id,
+        "name": item.name,
+        "display_name": item.display_name,
+        "protein": item.protein,
+        "carbs": item.carbs,
+        "fat": item.fat,
+        "total_kcal": item.total_kcal,
+        "protein_allocation": item.alloc.get("protein", 0),
+        "carbs_allocation": item.alloc.get("carbs", 0),
+        "fat_allocation": item.alloc.get("fat", 0),
+        "source": item.source,
+        "is_user_food": item.is_user_food,
+        "is_verified": item.is_verified,
+        "data_quality_score": item.data_quality_score,
+    }
+
+
+@api.get(
+    "/food-picker-options/{food_id}",
+    auth=mobile_bearer,
+    response={200: FoodItemEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope},
+)
+def food_detail(request, food_id: int):
+    food = get_food_picker_queryset(request.auth.user).filter(pk=food_id).first()
+    if food is None:
+        raise MobileAPIError("picker_selection_not_found", "El alimento seleccionado no está disponible.", 404)
+    return _success(_food_picker_item_payload(build_food_picker_item_dto(food=food, user=request.auth.user)))
+
+
 @api.get("/library/programs", auth=mobile_bearer, response={200: LibraryPageEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope})
 def library_programs(request, search: str | None = None, offset: int = 0, limit: int = 30):
     return _success(library_programs_payload(request.auth.user, search=search, offset=offset, limit=limit))
 
 
 @api.get("/library/daily-plans", auth=mobile_bearer, response={200: LibraryPageEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope})
-def library_dailyplans(request, search: str | None = None, offset: int = 0, limit: int = 30):
-    return _success(library_dailyplans_payload(request.auth.user, search=search, offset=offset, limit=limit))
+def library_dailyplans(request, search: str | None = None, offset: int = 0, limit: int = 30, include_drafts: bool = False):
+    return _success(library_dailyplans_payload(request.auth.user, search=search, offset=offset, limit=limit, include_drafts=include_drafts))
 
 
 @api.get("/library/meals", auth=mobile_bearer, response={200: LibraryPageEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope})
-def library_meals(request, search: str | None = None, offset: int = 0, limit: int = 30):
-    return _success(library_meals_payload(request.auth.user, search=search, offset=offset, limit=limit))
+def library_meals(request, search: str | None = None, offset: int = 0, limit: int = 30, include_drafts: bool = False):
+    return _success(library_meals_payload(request.auth.user, search=search, offset=offset, limit=limit, include_drafts=include_drafts))
 
 
 @api.get("/library/foods", auth=mobile_bearer, response={200: LibraryPageEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope})
 def library_foods(request, search: str | None = None, offset: int = 0, limit: int = 30):
     return _success(library_foods_payload(request.auth.user, search=search, offset=offset, limit=limit))
+
+
+def _clean_creation_name(name: str) -> str:
+    clean_name = (name or "").strip()
+    if not clean_name:
+        raise MobileAPIError("library_name_required", "Ingresa un nombre antes de guardar.", 422)
+    return clean_name
+
+
+@api.post("/library/foods", auth=mobile_bearer, response={200: LibraryItemEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope})
+def create_library_food(request, payload: FoodCreateInput):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    result = create_food(
+        user=request.auth.user,
+        name=_clean_creation_name(payload.name),
+        protein=payload.protein,
+        carbs=payload.carbs,
+        fat=payload.fat,
+    )
+    return _success(library_item_detail_payload(request.auth.user, "foods", result.food.id))
+
+
+@api.post("/library/meals", auth=mobile_bearer, response={200: LibraryItemEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope})
+def create_library_meal(request, payload: NamedLibraryCreateInput):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    result = create_draft_meal(user=request.auth.user, name=_clean_creation_name(payload.name))
+    return _success(library_item_detail_payload(request.auth.user, "meals", result.meal.id))
+
+
+@api.post("/library/daily-plans", auth=mobile_bearer, response={200: LibraryItemEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope})
+def create_library_dailyplan(request, payload: NamedLibraryCreateInput):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    result = create_draft_dailyplan(user=request.auth.user, name=_clean_creation_name(payload.name))
+    return _success(library_item_detail_payload(request.auth.user, "daily-plans", result.dailyplan.id))
+
+
+@api.post("/library/programs", auth=mobile_bearer, response={200: LibraryItemEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope})
+def create_library_program(request, payload: NamedLibraryCreateInput):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    result = create_weekly_program(user=request.auth.user, name=_clean_creation_name(payload.name))
+    return _success(library_item_detail_payload(request.auth.user, "programs", result.program.id))
 
 
 @api.put("/library/{entity}/order", auth=mobile_bearer, response={200: LibraryListActionResultEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope})
@@ -1057,6 +1153,236 @@ def library_item_detail(request, entity: str, item_id: int):
     if entity not in {"programs", "daily-plans", "meals", "foods"}:
         raise MobileAPIError(code="library_item_not_found", message="The requested library item was not found.", status_code=404)
     return _success(library_item_detail_payload(request.auth.user, entity, item_id))
+
+
+@api.put(
+    "/library/meals/{meal_id}/foods/order",
+    auth=mobile_bearer,
+    response={200: CompositionMutationEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def meal_food_order(request, meal_id: int, payload: CompositionOrderInput):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    return _success(reorder_foods_in_meal(user=request.auth.user, meal_id=meal_id, ordered_ids=payload.ordered_ids))
+
+
+@api.patch(
+    "/library/meals/{meal_id}/foods/{meal_food_id}",
+    auth=mobile_bearer,
+    response={200: CompositionMutationEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def meal_food_update(request, meal_id: int, meal_food_id: int, payload: MealFoodUpdateInput):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    return _success(update_food_in_meal(user=request.auth.user, meal_id=meal_id, meal_food_id=meal_food_id, quantity=payload.quantity))
+
+
+@api.delete(
+    "/library/meals/{meal_id}/foods/{meal_food_id}",
+    auth=mobile_bearer,
+    response={200: CompositionMutationEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope},
+)
+def meal_food_delete(request, meal_id: int, meal_food_id: int):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    return _success(remove_food_from_meal(user=request.auth.user, meal_id=meal_id, meal_food_id=meal_food_id))
+
+
+@api.put(
+    "/library/daily-plans/{dailyplan_id}/meals/order",
+    auth=mobile_bearer,
+    response={200: CompositionMutationEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def dailyplan_meal_order(request, dailyplan_id: int, payload: CompositionOrderInput):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    return _success(reorder_meals_in_dailyplan(user=request.auth.user, dailyplan_id=dailyplan_id, ordered_ids=payload.ordered_ids))
+
+
+@api.patch(
+    "/library/daily-plans/{dailyplan_id}/meals/{dailyplan_meal_id}",
+    auth=mobile_bearer,
+    response={200: CompositionMutationEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def dailyplan_meal_update(request, dailyplan_id: int, dailyplan_meal_id: int, payload: DailyPlanMealUpdateInput):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    return _success(update_meal_in_dailyplan(user=request.auth.user, dailyplan_id=dailyplan_id, dailyplan_meal_id=dailyplan_meal_id, hour=payload.hour, note=payload.note))
+
+
+@api.delete(
+    "/library/daily-plans/{dailyplan_id}/meals/{dailyplan_meal_id}",
+    auth=mobile_bearer,
+    response={200: CompositionMutationEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope},
+)
+def dailyplan_meal_delete(request, dailyplan_id: int, dailyplan_meal_id: int):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    return _success(remove_meal_from_dailyplan(user=request.auth.user, dailyplan_id=dailyplan_id, dailyplan_meal_id=dailyplan_meal_id))
+
+
+@api.put(
+    "/library/programs/{program_id}/weeks/order",
+    auth=mobile_bearer,
+    response={200: CompositionMutationEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def program_week_order(request, program_id: int, payload: CompositionOrderInput):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    return _success(reorder_weeks_in_program(user=request.auth.user, program_id=program_id, ordered_weeks=payload.ordered_ids))
+
+
+@api.post(
+    "/library/programs/{program_id}/weeks/{week_number}/duplicate",
+    auth=mobile_bearer,
+    response={200: CompositionMutationEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def program_week_duplicate(request, program_id: int, week_number: int):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    return _success(duplicate_program_week(user=request.auth.user, program_id=program_id, week_number=week_number))
+
+
+@api.delete(
+    "/library/programs/{program_id}/weeks/{week_number}",
+    auth=mobile_bearer,
+    response={200: CompositionMutationEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def program_week_delete(request, program_id: int, week_number: int):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    return _success(remove_program_week(user=request.auth.user, program_id=program_id, week_number=week_number))
+
+
+@api.delete(
+    "/library/programs/{program_id}/weeks/{week_number}/days/{day_number}",
+    auth=mobile_bearer,
+    response={200: CompositionMutationEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope},
+)
+def program_day_delete(request, program_id: int, week_number: int, day_number: int):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    return _success(remove_dailyplan_from_program(user=request.auth.user, program_id=program_id, week_number=week_number, day_number=day_number))
+
+
+@api.post(
+    "/library/meals/{meal_id}/food-picker/preview",
+    auth=mobile_bearer,
+    response={200: PickerPreviewEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def meal_food_picker_preview(request, meal_id: int, payload: FoodPickerInput):
+    return _success(
+        preview_food_for_meal(
+            user=request.auth.user,
+            meal_id=meal_id,
+            food_id=payload.food_id,
+            quantity=payload.quantity,
+        )
+    )
+
+
+@api.post(
+    "/library/meals/{meal_id}/food-picker/commit",
+    auth=mobile_bearer,
+    response={200: PickerCommitEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def meal_food_picker_commit(request, meal_id: int, payload: FoodPickerInput):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    return _success(
+        add_food_from_picker(
+            user=request.auth.user,
+            meal_id=meal_id,
+            food_id=payload.food_id,
+            quantity=payload.quantity,
+        )
+    )
+
+
+@api.post(
+    "/library/daily-plans/{dailyplan_id}/meal-picker/preview",
+    auth=mobile_bearer,
+    response={200: PickerPreviewEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def dailyplan_meal_picker_preview(request, dailyplan_id: int, payload: MealPickerInput):
+    return _success(
+        preview_meal_for_dailyplan(
+            user=request.auth.user,
+            dailyplan_id=dailyplan_id,
+            meal_id=payload.meal_id,
+            dailyplan_meal_id=payload.dailyplan_meal_id,
+            hour=payload.hour,
+        )
+    )
+
+
+@api.post(
+    "/library/daily-plans/{dailyplan_id}/meal-picker/commit",
+    auth=mobile_bearer,
+    response={200: PickerCommitEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def dailyplan_meal_picker_commit(request, dailyplan_id: int, payload: MealPickerInput):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    return _success(
+        add_meal_from_picker(
+            user=request.auth.user,
+            dailyplan_id=dailyplan_id,
+            meal_id=payload.meal_id,
+            dailyplan_meal_id=payload.dailyplan_meal_id,
+            hour=payload.hour,
+            note=payload.note,
+        )
+    )
+
+
+@api.post(
+    "/library/programs/{program_id}/daily-plan-picker/preview",
+    auth=mobile_bearer,
+    response={200: PickerPreviewEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def program_dailyplan_picker_preview(request, program_id: int, payload: DailyPlanPickerInput):
+    return _success(
+        preview_dailyplan_for_program(
+            user=request.auth.user,
+            program_id=program_id,
+            dailyplan_id=payload.dailyplan_id,
+            week_number=payload.week_number,
+            day_numbers=payload.day_numbers,
+        )
+    )
+
+
+@api.post(
+    "/library/programs/{program_id}/daily-plan-picker/commit",
+    auth=mobile_bearer,
+    response={200: PickerCommitEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def program_dailyplan_picker_commit(request, program_id: int, payload: DailyPlanPickerInput):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    return _success(
+        add_dailyplan_from_picker(
+            user=request.auth.user,
+            program_id=program_id,
+            dailyplan_id=payload.dailyplan_id,
+            week_number=payload.week_number,
+            day_numbers=payload.day_numbers,
+            confirm_replacements=payload.confirm_replacements,
+        )
+    )
+
+
+@api.post(
+    "/library/programs/{program_id}/week-picker/preview",
+    auth=mobile_bearer,
+    response={200: PickerPreviewEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope},
+)
+def program_week_picker_preview(request, program_id: int):
+    return _success(preview_week_for_program(user=request.auth.user, program_id=program_id))
+
+
+@api.post(
+    "/library/programs/{program_id}/week-picker/commit",
+    auth=mobile_bearer,
+    response={200: PickerCommitEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope},
+)
+def program_week_picker_commit(request, program_id: int, expected_week_number: int | None = None):
+    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    return _success(
+        add_week_from_picker(
+            user=request.auth.user,
+            program_id=program_id,
+            expected_week_number=expected_week_number,
+        )
+    )
 
 
 @api.post(

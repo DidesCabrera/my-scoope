@@ -21,6 +21,13 @@ type LibraryListScreenProps = {
   title: string;
 };
 
+const createLabels: Record<LibraryEntity, string> = {
+  food: "+ Crear alimento",
+  meal: "+ Crear comida",
+  dailyPlan: "+ Crear plan diario",
+  program: "+ Crear programa",
+};
+
 export function LibraryListScreen({ emptyDescription, endpoint, entity, title }: LibraryListScreenProps) {
   const { status, apiRequest } = useSession();
   const router = useRouter();
@@ -55,6 +62,7 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
         limit: "30",
         offset: append ? String(offset) : "0",
       });
+      if (entity === "meal" || entity === "dailyPlan") params.set("include_drafts", "true");
       if (submittedQuery) params.set("search", submittedQuery);
       const nextPage = await apiRequest<LibraryPageData>(`${endpoint}?${params.toString()}`);
       setPage((current) => append && current ? { ...nextPage, items: [...current.items, ...nextPage.items] } : nextPage);
@@ -65,13 +73,15 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
       setLoadingMore(false);
       setRefreshing(false);
     }
-  }, [apiRequest, endpoint, submittedQuery]);
+  }, [apiRequest, endpoint, entity, submittedQuery]);
 
   const loadAll = async () => {
     const items: LibraryPageData["items"] = [];
     let total = 0;
     do {
-      const next = await apiRequest<LibraryPageData>(`${endpoint}?limit=100&offset=${items.length}`);
+      const params = new URLSearchParams({ limit: "100", offset: String(items.length) });
+      if (entity === "meal" || entity === "dailyPlan") params.set("include_drafts", "true");
+      const next = await apiRequest<LibraryPageData>(`${endpoint}?${params.toString()}`);
       items.push(...next.items);
       total = next.total;
     } while (items.length < total);
@@ -162,6 +172,7 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
           ) : null}
         </View>
       </View>
+      {mode === "list" ? <Button label={createLabels[entity]} onPress={() => router.push({ pathname: "/libraries/create", params: { entity } })} /> : null}
       {mode !== "list" ? <View style={styles.modeBar}><View style={styles.modeCopy}><Text style={styles.modeTitle}>{mode === "reorder" ? "Reordenar" : "Seleccionar para eliminar"}</Text>{mode === "delete" ? <Text style={styles.modeCount}>{selectedIds.size} seleccionado(s)</Text> : null}</View><Button label="Cancelar" onPress={() => { setMode("list"); setSelectedIds(new Set()); void load(); }} variant="secondary" />{mode === "reorder" ? <Button label="Guardar" loading={submitting} onPress={() => void saveOrder()} /> : <Button disabled={!selectedIds.size} label="Eliminar" loading={submitting} onPress={confirmDelete} variant="danger" />}</View> : null}
       {error ? (
         <Card>
