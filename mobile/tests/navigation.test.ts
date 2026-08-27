@@ -67,7 +67,13 @@ test("shared screens use compact scroll identities and only Home keeps the cente
   assert.match(primitives, /contentOffset\.y > 1/);
   assert.match(primitives, /identityVisible: compactHeaderVisible/);
   assert.match(libraryList, /stickyHeaderIndices=\{\[1\]\}/);
-  assert.match(libraryList, /contentOffset\.y >= searchOffset\.current/);
-  assert.match(libraryList, /stickySearch: \{ backgroundColor: tokens\.color\.surfaceApp, borderBottomColor: "transparent", borderBottomWidth: 1/);
-  assert.match(libraryList, /stickySearchPinned: \{ borderBottomColor: tokens\.color\.borderDefault \}/);
+  assert.doesNotMatch(libraryList, /searchOffset/);
+  assert.match(libraryList, /stickySearch: \{ backgroundColor: tokens\.color\.surfaceApp, marginHorizontal:/);
+  assert.doesNotMatch(libraryList, /stickySearchPinned|searchPinned/);
+  assert.match(navigation, /<Plus color=\{tokens\.color\.textMain\}/);
+  assert.match(navigation, /headerPresentation\.createAction/);
+  assert.match(navigation, /height: 48/);
+  const globalHeaderStyle = navigation.slice(navigation.indexOf("header: { alignItems"), navigation.indexOf("headerButton: {"));
+  assert.doesNotMatch(globalHeaderStyle, /borderBottom/);
+  assert.match(navigation, /backHeaderSide: \{ alignItems: "flex-start", paddingLeft: tokens\.spacing\.lg, width: 92 \}/);
 });

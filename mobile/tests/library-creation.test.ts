@@ -8,10 +8,12 @@ test("mobile libraries expose native creation for all four entities", async () =
   const create = await readFile(path.resolve(process.cwd(), "src/components/libraries/library-create-screen.tsx"), "utf8");
   const route = await readFile(path.resolve(process.cwd(), "src/app/libraries/create.tsx"), "utf8");
 
-  for (const label of ["+ Crear alimento", "+ Crear comida", "+ Crear plan diario", "+ Crear programa"]) {
-    assert.match(list, new RegExp(label.replace("+", "\\+")));
+  for (const label of ["Crear alimento", "Crear comida", "Crear plan diario", "Crear programa"]) {
+    assert.match(list, new RegExp(label));
   }
   assert.match(list, /pathname: "\/libraries\/create"/);
+  assert.match(list, /createAction: mode === "list" \? \{ label: createLabels\[entity\]/);
+  assert.doesNotMatch(list, /<Button label=\{createLabels\[entity\]\}/);
   assert.match(list, /include_drafts/);
   assert.match(route, /LibraryCreateScreen/);
   assert.match(create, /mode: "back"/);

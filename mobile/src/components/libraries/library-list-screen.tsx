@@ -1,18 +1,18 @@
 import { Redirect, useFocusEffect, useRouter } from "expo-router";
 import { Check, ChevronDown, ChevronUp, Search, Square, X } from "lucide-react-native";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
 import type { LibraryEntity, LibraryPageData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
-import { Button, Card, InlineNotice, textStyles } from "@/components/ui/primitives";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
+import { CollectionPageHeader } from "@/components/ui";
+import { Button, Card, InlineNotice, textStyles } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
 
 import { LibraryCard } from "./library-card";
 import { LibraryListActions } from "./library-list-actions";
-import { CollectionPageHeader } from "@/components/ui";
 
 type LibraryListScreenProps = {
   emptyDescription: string;
@@ -22,10 +22,10 @@ type LibraryListScreenProps = {
 };
 
 const createLabels: Record<LibraryEntity, string> = {
-  food: "+ Crear alimento",
-  meal: "+ Crear comida",
-  dailyPlan: "+ Crear plan diario",
-  program: "+ Crear programa",
+  food: "Crear alimento",
+  meal: "Crear comida",
+  dailyPlan: "Crear plan diario",
+  program: "Crear programa",
 };
 
 export function LibraryListScreen({ emptyDescription, endpoint, entity, title }: LibraryListScreenProps) {
@@ -40,17 +40,22 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
   const [error, setError] = useState<string | null>(null);
   const setHeaderPresentation = useHeaderPresentation();
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
-  const [searchPinned, setSearchPinned] = useState(false);
-  const searchOffset = useRef(Number.POSITIVE_INFINITY);
   const [actionsVisible, setActionsVisible] = useState(false);
   const [mode, setMode] = useState<"list" | "reorder" | "delete">("list");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [submitting, setSubmitting] = useState(false);
 
   useFocusEffect(useCallback(() => {
-    setHeaderPresentation({ mode: "library-list", action: { label: `Acciones de ${title}`, onPress: () => setActionsVisible(true) }, borderVisible: !searchPinned, entity, identityVisible: compactHeaderVisible, title });
+    setHeaderPresentation({
+      mode: "library-list",
+      action: mode === "list" ? { label: `Acciones de ${title}`, onPress: () => setActionsVisible(true) } : undefined,
+      createAction: mode === "list" ? { label: createLabels[entity], onPress: () => router.push({ pathname: "/libraries/create", params: { entity } }) } : undefined,
+      entity,
+      identityVisible: compactHeaderVisible,
+      title,
+    });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [compactHeaderVisible, entity, searchPinned, setHeaderPresentation, title]));
+  }, [compactHeaderVisible, entity, mode, router, setHeaderPresentation, title]));
 
   const load = useCallback(async ({ append = false, offset = 0, refresh = false } = {}) => {
     if (refresh) setRefreshing(true);
@@ -136,15 +141,13 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
       onScroll={({ nativeEvent }) => {
         const visible = nativeEvent.contentOffset.y > 1;
         if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible);
-        const pinned = nativeEvent.contentOffset.y >= searchOffset.current;
-        if (pinned !== searchPinned) setSearchPinned(pinned);
       }}
       refreshControl={<RefreshControl onRefresh={() => void load({ refresh: true })} refreshing={refreshing} tintColor={tokens.color.interactivePrimary} />}
       scrollEventThrottle={16}
       stickyHeaderIndices={[1]}
       style={styles.screen}>
       <CollectionPageHeader count={page?.total} countIcon={entity === "program" ? "week" : entity} entity={entity} title={title} />
-      <View onLayout={({ nativeEvent }) => { searchOffset.current = nativeEvent.layout.y; }} style={[styles.stickySearch, searchPinned && styles.stickySearchPinned]}>
+      <View style={styles.stickySearch}>
         <View style={styles.searchField}>
           <Search color={tokens.color.textSoft} size={20} />
           <TextInput
@@ -172,7 +175,6 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
           ) : null}
         </View>
       </View>
-      {mode === "list" ? <Button label={createLabels[entity]} onPress={() => router.push({ pathname: "/libraries/create", params: { entity } })} /> : null}
       {mode !== "list" ? <View style={styles.modeBar}><View style={styles.modeCopy}><Text style={styles.modeTitle}>{mode === "reorder" ? "Reordenar" : "Seleccionar para eliminar"}</Text>{mode === "delete" ? <Text style={styles.modeCount}>{selectedIds.size} seleccionado(s)</Text> : null}</View><Button label="Cancelar" onPress={() => { setMode("list"); setSelectedIds(new Set()); void load(); }} variant="secondary" />{mode === "reorder" ? <Button label="Guardar" loading={submitting} onPress={() => void saveOrder()} /> : <Button disabled={!selectedIds.size} label="Eliminar" loading={submitting} onPress={confirmDelete} variant="danger" />}</View> : null}
       {error ? (
         <Card>
@@ -210,11 +212,10 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
 const styles = StyleSheet.create({
   screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   content: { flexGrow: 1, gap: tokens.spacing.lg, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
-  stickySearch: { backgroundColor: tokens.color.surfaceApp, borderBottomColor: "transparent", borderBottomWidth: 1, marginHorizontal: -tokens.spacing.screen, paddingBottom: tokens.spacing.sm, paddingHorizontal: tokens.layout.reducedInset, paddingTop: 0, zIndex: 3 },
-  stickySearchPinned: { borderBottomColor: tokens.color.borderDefault },
-  searchField: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.lg, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.sm, minHeight: 44, paddingHorizontal: tokens.spacing.md },
-  searchInput: { color: tokens.color.textMain, flex: 1, fontSize: 16, minHeight: 42, paddingVertical: 0 },
-  clearButton: { alignItems: "center", height: 40, justifyContent: "center", width: 36 },
+  stickySearch: { backgroundColor: tokens.color.surfaceApp, marginHorizontal: -tokens.spacing.screen, paddingBottom: tokens.spacing.sm, paddingHorizontal: tokens.layout.reducedInset, paddingTop: tokens.spacing.xs, zIndex: 3 },
+  searchField: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.sm, minHeight: 38, paddingHorizontal: tokens.spacing.md },
+  searchInput: { color: tokens.color.textMain, flex: 1, fontSize: 16, minHeight: 36, paddingVertical: 0 },
+  clearButton: { alignItems: "center", height: 34, justifyContent: "center", width: 34 },
   modeBar: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.lg, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.sm, padding: tokens.spacing.sm },
   modeCopy: { flex: 1, minWidth: 0 }, modeTitle: { color: tokens.color.textMain, fontSize: 15, fontWeight: "800" }, modeCount: { color: tokens.color.textMuted, fontSize: 12, marginTop: 2 },
   managedItem: { gap: tokens.spacing.sm }, itemControls: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "flex-end" }, position: { color: tokens.color.textMuted, fontSize: 13, fontWeight: "700", marginRight: "auto" }, controlButton: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, height: 42, justifyContent: "center", width: 48 }, disabled: { opacity: 0.35 }, selectionRow: { alignItems: "center", alignSelf: "flex-start", flexDirection: "row", gap: tokens.spacing.sm, minHeight: 42 }, selectionLabel: { color: tokens.color.textMain, fontSize: 14, fontWeight: "700" },

@@ -9,8 +9,25 @@ test("composition pickers use independent native routes and one shared flow", as
     "utf8",
   );
   assert.match(picker, /mode: "back"/);
-  assert.match(picker, /contentStyle={!selectedId \? styles\.searchContent/);
-  assert.match(picker, /!selectedId \? \(/);
+  assert.match(picker, /stickyHeaderIndices=\{\[0\]\}/);
+  assert.match(picker, /style=\{styles\.selectionSticky\}/);
+  assert.match(picker, /style=\{styles\.searchField\}/);
+  assert.match(picker, /if \(!selectedId\) \{/);
+  assert.match(picker, /<PickerEntryTabs/);
+  assert.match(picker, /styles\.entryTabsBar/);
+  assert.match(picker, /styles\.entryTabActive/);
+  assert.match(picker, /icon: Bookmark/);
+  assert.match(picker, /icon: Plus/);
+  assert.match(picker, /entryTab: \{[^}]*flex: 1/);
+  assert.match(picker, /borderRadius: tokens\.radius\.pill/);
+  assert.match(picker, /backgroundColor: tokens\.color\.textMain/);
+  assert.match(picker, /Mi librería/);
+  for (const createLabel of ["Crear alimento", "Crear comida", "Crear plan diario"]) {
+    assert.match(picker, new RegExp(createLabel));
+  }
+  assert.match(picker, /pathname: "\/libraries\/create"/);
+  assert.match(picker, /params: \{ entity: config\.createEntity \}/);
+  assert.ok(picker.indexOf("<PickerEntryTabs") < picker.indexOf("<View style={styles.searchField}"));
   assert.match(picker, /NutritionEntityCard/);
   assert.match(picker, /styles\.selectButton/);
   assert.match(picker, /actionLabel="Seleccionar"/);

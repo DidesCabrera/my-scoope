@@ -3,12 +3,14 @@ import { ActivityIndicator, KeyboardTypeOptions, Pressable, StyleSheet, Text, Te
 import { tokens } from "@/design/tokens";
 
 export function Button({
+  bleed = false,
   label,
   onPress,
   variant = "primary",
   disabled = false,
   loading = false,
 }: {
+  bleed?: boolean;
   label: string;
   onPress(): void;
   variant?: "primary" | "secondary" | "danger";
@@ -26,6 +28,7 @@ export function Button({
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
+        bleed && styles.buttonBleed,
         buttonStyle,
         variant === "danger" && styles.buttonDanger,
         (disabled || loading) && styles.buttonDisabled,
@@ -108,6 +111,7 @@ export function ChoiceRow<T extends string>({
 
 const styles = StyleSheet.create({
   button: { alignItems: "center", borderRadius: tokens.radius.lg, flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "center", minHeight: 54, paddingHorizontal: tokens.spacing.lg },
+  buttonBleed: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding },
   buttonPrimary: { backgroundColor: tokens.color.textMain },
   buttonSecondary: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderWidth: 1 },
   buttonDanger: { backgroundColor: "transparent", borderColor: tokens.color.danger },

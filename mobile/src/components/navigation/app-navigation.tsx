@@ -11,6 +11,7 @@ import {
   LogOut,
   PanelRight,
   MoreHorizontal,
+  Plus,
   Bell,
   Scale,
   Sparkles,
@@ -41,10 +42,10 @@ import { HeaderEntityIdentity } from "./header-entity-identity";
 import { EntitySidebarItem, type EntitySidebarItemData, NavigationSidebarItem, type NavigationSidebarItemData } from "./sidebar-items";
 
 type HeaderPresentation =
-  | { mode: "default"; borderVisible?: boolean; identityVisible?: boolean; title?: string }
-  | { mode: "back"; action?: { label: string; onPress(): void }; borderVisible?: boolean; fallback?: Href; title: string }
-  | { mode: "library-detail"; action?: { label: string; onPress(): void }; borderVisible?: boolean; entity: LibraryEntity; identityVisible: boolean; title: string }
-  | { mode: "library-list"; action?: { label: string; onPress(): void }; borderVisible?: boolean; entity: LibraryEntity; identityVisible: boolean; title: string };
+  | { mode: "default"; action?: { label: string; onPress(): void }; identityVisible?: boolean; title?: string }
+  | { mode: "back"; action?: { label: string; onPress(): void }; fallback?: Href; title: string }
+  | { mode: "library-detail"; action?: { label: string; onPress(): void }; entity: LibraryEntity; identityVisible: boolean; title: string }
+  | { mode: "library-list"; action?: { label: string; onPress(): void }; createAction?: { label: string; onPress(): void }; entity: LibraryEntity; identityVisible: boolean; title: string };
 
 type NavigationContextValue = {
   closeMenu(): void;
@@ -170,14 +171,9 @@ export function AppNavigationHeader() {
   const routeIdentity = routeHeader(pathname);
   const isHome = pathname === "/today" || pathname === "/";
   const defaultIdentityVisible = headerPresentation.mode === "default" && Boolean(headerPresentation.identityVisible);
-  const headerWithoutBorder = headerPresentation.mode === "default"
-    ? !defaultIdentityVisible
-    : headerPresentation.mode === "back"
-      ? headerPresentation.borderVisible === false
-      : headerPresentation.borderVisible === false || !headerPresentation.identityVisible;
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.headerSafeArea}>
-      <View style={[styles.header, headerWithoutBorder && styles.headerWithoutBorder]}>
+      <View style={styles.header}>
         {headerPresentation.mode === "library-detail" || headerPresentation.mode === "back" ? (
           <Pressable accessibilityLabel="Volver" accessibilityRole="button" hitSlop={8} onPress={() => { if (router.canGoBack()) router.back(); else router.replace(detailFallback); }} style={({ pressed }) => [styles.headerButton, headerPresentation.mode === "back" && styles.backHeaderSide, pressed && styles.pressed]}><ChevronLeft color={tokens.color.textMain} size={26} strokeWidth={2.2} /></Pressable>
         ) : canOpenMenu ? (
@@ -202,9 +198,41 @@ export function AppNavigationHeader() {
             hitSlop={8}
             onPress={headerPresentation.action.onPress}
             style={({ pressed }) => [styles.backHeaderAction, pressed && styles.pressed]}>
-            <Text style={styles.backHeaderActionText}>{headerPresentation.action.label}</Text>
+            <Text numberOfLines={1} style={styles.backHeaderActionText}>{headerPresentation.action.label}</Text>
           </Pressable>
-        ) : (headerPresentation.mode === "library-detail" || headerPresentation.mode === "library-list") && headerPresentation.action ? (
+        ) : headerPresentation.mode === "library-list" ? (
+          <View style={styles.libraryHeaderActions}>
+            {headerPresentation.createAction ? (
+              <Pressable
+                accessibilityLabel={headerPresentation.createAction.label}
+                accessibilityRole="button"
+                hitSlop={8}
+                onPress={headerPresentation.createAction.onPress}
+                style={({ pressed }) => [styles.headerButton, styles.libraryHeaderButton, pressed && styles.pressed]}>
+                <Plus color={tokens.color.textMain} size={25} strokeWidth={2.2} />
+              </Pressable>
+            ) : null}
+            {headerPresentation.action ? (
+              <Pressable
+                accessibilityLabel={headerPresentation.action.label}
+                accessibilityRole="button"
+                hitSlop={8}
+                onPress={headerPresentation.action.onPress}
+                style={({ pressed }) => [styles.headerButton, styles.libraryHeaderButton, pressed && styles.pressed]}>
+                <MoreHorizontal color={tokens.color.textMain} size={26} strokeWidth={2.2} />
+              </Pressable>
+            ) : null}
+          </View>
+        ) : headerPresentation.mode === "library-detail" && headerPresentation.action ? (
+          <Pressable
+            accessibilityLabel={headerPresentation.action.label}
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={headerPresentation.action.onPress}
+            style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}>
+            <MoreHorizontal color={tokens.color.textMain} size={26} strokeWidth={2.2} />
+          </Pressable>
+        ) : headerPresentation.mode === "default" && headerPresentation.action ? (
           <Pressable
             accessibilityLabel={headerPresentation.action.label}
             accessibilityRole="button"
@@ -325,11 +353,12 @@ function AppSidebar() {
 const styles = StyleSheet.create({
   pressed: { opacity: 0.65 },
   headerSafeArea: { backgroundColor: tokens.color.surfaceApp },
-  header: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", height: 58, justifyContent: "space-between" },
-  headerWithoutBorder: { borderBottomWidth: 0 },
+  header: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, flexDirection: "row", height: 48, justifyContent: "space-between" },
   headerButton: { alignItems: "center", height: 52, justifyContent: "center", width: 58 },
-  backHeaderSide: { width: 76 },
-  backHeaderAction: { alignItems: "center", height: 52, justifyContent: "center", paddingHorizontal: tokens.spacing.md, width: 76 },
+  libraryHeaderButton: { width: 44 },
+  libraryHeaderActions: { alignItems: "center", flexDirection: "row" },
+  backHeaderSide: { alignItems: "flex-start", paddingLeft: tokens.spacing.lg, width: 92 },
+  backHeaderAction: { alignItems: "center", height: 52, justifyContent: "center", paddingHorizontal: tokens.spacing.sm, width: 92 },
   backHeaderActionText: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: "700" },
   backHeaderIdentity: { alignItems: "center", flex: 1, justifyContent: "center", minWidth: 0 },
   headerListIdentity: { flex: 1, justifyContent: "center" },

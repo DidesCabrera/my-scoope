@@ -99,7 +99,7 @@ function isMealPanelItem(item: FoodPanelItem | MealPanelItem): item is MealPanel
 function PanelItemName({ item }: { item: FoodPanelItem | MealPanelItem }) {
   return (
     <View style={styles.gridLeadingCell}>
-      {isMealPanelItem(item) ? <MealRowIdentity name={item.name} /> : <Text numberOfLines={2} style={[styles.cell, styles.name]}>{item.name}</Text>}
+      {isMealPanelItem(item) ? <MealRowIdentity name={item.name} /> : <Text numberOfLines={2} style={styles.itemName}>{item.name}</Text>}
     </View>
   );
 }
@@ -149,7 +149,7 @@ export function FoodQuantityPanel({ items }: { items: FoodPanelItem[] }) {
       <QuantityHeader leadingLabel="Alimentos" trailingLabel="Qty" />
       {items.map((item, index) => (
         <View key={item.id} style={[styles.row, index === items.length - 1 && styles.rowLast]}>
-          <Text numberOfLines={2} style={[styles.cell, styles.name]}>{item.name}</Text>
+          <PanelItemName item={item} />
           <Text style={[styles.cell, styles.quantityValue]}>{decimal(item.quantity)} {item.quantityUnit}</Text>
         </View>
       ))}
@@ -359,7 +359,8 @@ const styles = StyleSheet.create({
   headerText: { color: tokens.color.textMuted, fontSize: 10, fontWeight: tokens.weight.semibold, letterSpacing: 0, textAlign: "center", textTransform: "uppercase" },
   cell: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, letterSpacing: 0 },
   name: { flex: 1, minWidth: 0, paddingHorizontal: tokens.spacing.xs, textAlign: "left" },
-  gridLeadingCell: { flexBasis: "40%", flexGrow: 0, flexShrink: 0, minWidth: 0 },
+  gridLeadingCell: { alignSelf: "stretch", flexBasis: "40%", flexGrow: 0, flexShrink: 0, justifyContent: "center", minWidth: 0 },
+  itemName: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, letterSpacing: 0, lineHeight: 18, paddingHorizontal: tokens.spacing.xs, textAlign: "left" },
   quantityValue: { textAlign: "right", width: 88 },
   macroValue: { flex: 1, minWidth: 0, textAlign: "center" },
   distributionCell: { flex: 1.4, minWidth: 0 },

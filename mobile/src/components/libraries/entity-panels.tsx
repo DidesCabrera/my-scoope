@@ -61,7 +61,7 @@ function PanelItemName({ item, meal = false, style }: { item: PanelNutritionItem
           <EntityIcon entity="meal" size="compact" />
           <Text numberOfLines={2} style={styles.mealIdentityName}>{item.name}</Text>
         </View>
-      ) : <Text numberOfLines={2} style={[styles.cell, styles.name]}>{item.name}</Text>}
+      ) : <Text numberOfLines={2} style={styles.itemName}>{item.name}</Text>}
     </View>
   );
 }
@@ -215,6 +215,7 @@ const styles = StyleSheet.create({
   headerText: { color: tokens.color.textMuted, fontSize: 10, fontWeight: "600", textAlign: "center", textTransform: "uppercase" },
   cell: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: "400" },
   name: { flex: 1, minWidth: 0, paddingHorizontal: tokens.spacing.xs, textAlign: "left" },
+  itemName: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: "400", lineHeight: 18, paddingHorizontal: tokens.spacing.xs, textAlign: "left" },
   quantityValue: { textAlign: "right", width: 88 },
   macrosLeadingCell: { alignSelf: "stretch", flex: 1.35, justifyContent: "center", minWidth: 0 },
   macroCell: { flex: 0.42, minWidth: 0, textAlign: "center" },

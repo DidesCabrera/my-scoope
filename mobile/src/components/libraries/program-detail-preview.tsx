@@ -1,6 +1,6 @@
 import { Copy, MoreHorizontal, Trash2 } from "lucide-react-native";
 import type { ReactNode } from "react";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View, type ScrollViewProps } from "react-native";
 
 import { FoodPanels, type FoodPanelItem } from "@/components/panels";
@@ -168,8 +168,6 @@ type ProgramDetailPreviewProps = {
 
 export function ProgramDetailPreview({ footer, item, onAddWeek, onAssignDailyPlan, onDuplicateWeek, onRemoveDailyPlan, onRemoveWeek, onReorderWeeks, onScroll, scrollable = false }: ProgramDetailPreviewProps = {}) {
   const [activeWeek, setActiveWeek] = useState(1);
-  const [weekTabsPinned, setWeekTabsPinned] = useState(false);
-  const weekTabsOffset = useRef(Number.POSITIVE_INFINITY);
   const liveWeeks = item?.panel.kind === "weeks" ? item.panel.weeks : [];
   const displayedWeeks = liveWeeks.length ? liveWeeks.map((week) => week.week_number) : item ? [1] : [1, 2];
   const displayedActiveWeek = displayedWeeks.includes(activeWeek) ? activeWeek : displayedWeeks[0] ?? 1;
@@ -202,7 +200,7 @@ export function ProgramDetailPreview({ footer, item, onAddWeek, onAssignDailyPla
           <SectionHeading title="Tabla de comparación entre semanas" />
           <ProgramWeekComparisonPanels onDelete={onRemoveWeek} onDuplicate={onDuplicateWeek} onReorder={onReorderWeeks} weeks={liveSummaries.length ? liveSummaries : weekSummaries} />
         </> : null}
-        {onAddWeek ? <Button label="+ Agregar nueva semana" onPress={onAddWeek} /> : null}
+        {onAddWeek ? <Button bleed label="+ Agregar nueva semana" onPress={onAddWeek} /> : null}
     </View>
   );
 
@@ -215,8 +213,7 @@ export function ProgramDetailPreview({ footer, item, onAddWeek, onAssignDailyPla
 
   const weekTabs = (
     <View
-      onLayout={scrollable ? ({ nativeEvent }) => { weekTabsOffset.current = nativeEvent.layout.y; } : undefined}
-      style={scrollable ? [styles.weekTabsSticky, weekTabsPinned && styles.weekTabsStickyPinned] : styles.weekTabsEmbedded}>
+      style={scrollable ? styles.weekTabsSticky : styles.weekTabsEmbedded}>
       <ProgramWeekTabs activeWeek={displayedActiveWeek} onChange={setActiveWeek} weeks={displayedWeeks} />
     </View>
   );
@@ -225,11 +222,7 @@ export function ProgramDetailPreview({ footer, item, onAddWeek, onAssignDailyPla
     return (
       <ScrollView
         contentContainerStyle={styles.screenContent}
-        onScroll={(event) => {
-          const pinned = event.nativeEvent.contentOffset.y >= weekTabsOffset.current;
-          if (pinned !== weekTabsPinned) setWeekTabsPinned(pinned);
-          onScroll?.(event);
-        }}
+        onScroll={onScroll}
         scrollEventThrottle={16}
         stickyHeaderIndices={[3]}
         style={styles.screen}>
@@ -263,8 +256,7 @@ const styles = StyleSheet.create({
   overview: { gap: tokens.spacing.lg, minWidth: 0 },
   planningSection: { gap: tokens.spacing.md, minWidth: 0 },
   planningHeaderScreen: { marginBottom: tokens.spacing.md },
-  weekTabsSticky: { backgroundColor: tokens.color.surfaceApp, borderBottomColor: "transparent", borderBottomWidth: 1, marginHorizontal: -tokens.spacing.screen, paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.sm, zIndex: 2 },
-  weekTabsStickyPinned: { borderBottomColor: tokens.color.borderDefault },
+  weekTabsSticky: { backgroundColor: tokens.color.surfaceApp, marginHorizontal: -tokens.spacing.screen, paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.sm, zIndex: 2 },
   weekTabsEmbedded: { paddingBottom: tokens.spacing.sm },
   footer: { gap: tokens.spacing.lg, marginTop: tokens.spacing.xl },
   weekContent: { gap: tokens.spacing.lg, minWidth: 0, paddingTop: tokens.spacing.md, width: "100%" },

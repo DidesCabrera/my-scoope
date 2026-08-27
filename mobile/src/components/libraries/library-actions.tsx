@@ -22,8 +22,8 @@ import type {
 } from "@/api/types";
 import { Button, Field, InlineNotice } from "@/components/ui/primitives";
 import { EntityCardAction } from "@/components/ui";
+import { ActionSheetModal } from "@/components/ui/action-sheet-modal";
 import { tokens } from "@/design/tokens";
-import { ActionSheetModal } from "./action-sheet-modal";
 
 type ApiRequest = <T>(path: string, init?: RequestInit) => Promise<T>;
 
@@ -125,7 +125,7 @@ export function LibraryActions({ apiRequest, entitySlug, item, onCompleted, onVi
         </EntityCardAction>
       )}
       <ActionSheetModal onRequestClose={close} visible={visible}>
-          <SafeAreaView edges={["bottom", "left", "right"]} style={styles.sheetSafeArea}>
+          <SafeAreaView edges={["left", "right"]} style={styles.sheetSafeArea}>
             <View style={styles.sheet}>
               <View style={styles.sheetHeader}>
                 <View style={styles.headerCopy}>

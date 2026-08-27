@@ -2,23 +2,28 @@ import type { PropsWithChildren } from "react";
 import { useEffect, useState } from "react";
 import {
   Animated,
-  Dimensions,
   Easing,
   KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
   StyleSheet,
+  useWindowDimensions,
 } from "react-native";
+import { initialWindowMetrics, useSafeAreaInsets } from "react-native-safe-area-context";
+
+import { tokens } from "@/design/tokens";
 
 type ActionSheetModalProps = PropsWithChildren<{
   onRequestClose(): void;
   visible: boolean;
 }>;
 
-const hiddenSheetOffset = Dimensions.get("window").height;
-
 export function ActionSheetModal({ children, onRequestClose, visible }: ActionSheetModalProps) {
+  const { height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const bottomInset = Math.max(insets.bottom, initialWindowMetrics?.insets.bottom ?? 0);
+  const hiddenSheetOffset = height;
   const [mounted, setMounted] = useState(visible);
   const [scrimOpacity] = useState(() => new Animated.Value(visible ? 1 : 0));
   const [sheetTranslateY] = useState(() => new Animated.Value(visible ? 0 : hiddenSheetOffset));
@@ -71,11 +76,12 @@ export function ActionSheetModal({ children, onRequestClose, visible }: ActionSh
     ]).start(({ finished }) => {
       if (finished) setMounted(false);
     });
-  }, [mounted, scrimOpacity, sheetTranslateY, visible]);
+  }, [hiddenSheetOffset, mounted, scrimOpacity, sheetTranslateY, visible]);
 
   return (
     <Modal
       animationType="none"
+      navigationBarTranslucent
       onRequestClose={onRequestClose}
       presentationStyle="overFullScreen"
       statusBarTranslucent
@@ -85,7 +91,7 @@ export function ActionSheetModal({ children, onRequestClose, visible }: ActionSh
         <Animated.View pointerEvents={visible ? "auto" : "none"} style={[styles.scrim, { opacity: scrimOpacity }]}>
           <Pressable accessibilityLabel="Cerrar acciones" onPress={onRequestClose} style={styles.scrimPressable} />
         </Animated.View>
-        <Animated.View style={{ transform: [{ translateY: sheetTranslateY }] }}>
+        <Animated.View style={[styles.sheetFrame, { paddingBottom: bottomInset, transform: [{ translateY: sheetTranslateY }] }]}>
           {children}
         </Animated.View>
       </KeyboardAvoidingView>
@@ -97,4 +103,5 @@ const styles = StyleSheet.create({
   modalRoot: { flex: 1, justifyContent: "flex-end" },
   scrim: { backgroundColor: "rgba(20, 24, 22, 0.42)", bottom: 0, left: 0, position: "absolute", right: 0, top: 0 },
   scrimPressable: { flex: 1 },
+  sheetFrame: { backgroundColor: tokens.color.surfaceCard, borderTopLeftRadius: tokens.radius.card, borderTopRightRadius: tokens.radius.card, overflow: "hidden", width: "100%" },
 });

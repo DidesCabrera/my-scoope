@@ -146,9 +146,9 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(programDetail, /<FoodPanels items=\{weekData/);
   assert.doesNotMatch(programDetail, /<View style=\{layoutStyles\.cardContentBleed\}><(?:FoodPanels|ProgramDayComparisonPanels|ProgramWeekComparisonPanels)/);
   assert.match(programDetail, /stickyHeaderIndices=\{\[3\]\}/);
-  assert.match(programDetail, /weekTabsSticky: \{ backgroundColor: tokens\.color\.surfaceApp, borderBottomColor: "transparent", borderBottomWidth: 1/);
-  assert.match(programDetail, /weekTabsStickyPinned: \{ borderBottomColor: tokens\.color\.borderDefault \}/);
-  assert.match(programDetail, /contentOffset\.y >= weekTabsOffset\.current/);
+  assert.match(programDetail, /weekTabsSticky: \{ backgroundColor: tokens\.color\.surfaceApp, marginHorizontal:/);
+  assert.doesNotMatch(programDetail, /weekTabsStickyPinned/);
+  assert.doesNotMatch(programDetail, /weekTabsOffset|weekTabsPinned/);
   assert.match(programDetail, /paddingVertical: tokens\.spacing\.sm/);
 
   const planningControls = await readFile(
@@ -252,7 +252,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
 
   const activeProgram = await readFile(path.resolve(process.cwd(), "src/app/program/index.tsx"), "utf8");
   assert.match(activeProgram, /stickyHeaderIndices=\{\[1\]\}/);
-  assert.match(activeProgram, /weekTabsStickyPinned/);
+  assert.doesNotMatch(activeProgram, /weekTabsStickyPinned/);
   assert.match(activeProgram, /program\?\.weeks_count/);
   assert.match(activeProgram, /Array\.from\(\{ length: weekCount \}/);
   assert.match(activeProgram, /<ProgramWeekTabs activeWeek=\{activeWeek\}/);

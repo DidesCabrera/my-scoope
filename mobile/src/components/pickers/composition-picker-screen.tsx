@@ -1,12 +1,14 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
-import { Search } from "lucide-react-native";
+import { Bookmark, Plus, Search } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
 import type {
   FoodPickerPageData,
   FoodPickerOption,
+  LibraryEntity,
   LibraryIndicator,
   LibraryItem,
   LibraryNutrition,
@@ -36,6 +38,8 @@ type PickerOption = {
 };
 
 type PickerConfig = {
+  createEntity: LibraryEntity;
+  createLabel: string;
   title: string;
   searchLabel: string;
   searchPlaceholder: string;
@@ -46,6 +50,8 @@ type PickerConfig = {
 
 const configs: Record<PickerKind, PickerConfig> = {
   "food-to-meal": {
+    createEntity: "food",
+    createLabel: "Crear alimento",
     title: "Agregar alimento",
     searchLabel: "Buscar alimento",
     searchPlaceholder: "Escribe el nombre de un alimento",
@@ -54,6 +60,8 @@ const configs: Record<PickerKind, PickerConfig> = {
     commitPath: (id) => `/api/v1/library/meals/${id}/food-picker/commit`,
   },
   "meal-to-dailyplan": {
+    createEntity: "meal",
+    createLabel: "Crear comida",
     title: "Agregar comida",
     searchLabel: "Buscar comida",
     searchPlaceholder: "Escribe el nombre de una comida",
@@ -62,6 +70,8 @@ const configs: Record<PickerKind, PickerConfig> = {
     commitPath: (id) => `/api/v1/library/daily-plans/${id}/meal-picker/commit`,
   },
   "dailyplan-to-program": {
+    createEntity: "dailyPlan",
+    createLabel: "Crear plan diario",
     title: "Asignar plan diario",
     searchLabel: "Buscar plan diario",
     searchPlaceholder: "Escribe el nombre de un plan diario",
@@ -70,6 +80,33 @@ const configs: Record<PickerKind, PickerConfig> = {
     commitPath: (id) => `/api/v1/library/programs/${id}/daily-plan-picker/commit`,
   },
 };
+
+type PickerEntryTab = "library" | "create";
+
+function PickerEntryTabs({ createLabel, onCreate }: { createLabel: string; onCreate(): void }) {
+  return (
+    <View accessibilityLabel="Origen de la selección" accessibilityRole="tablist" style={styles.entryTabsBar}>
+      {([
+        { icon: Bookmark, key: "library", label: "Mi librería" },
+        { icon: Plus, key: "create", label: createLabel },
+      ] satisfies { icon: typeof Bookmark; key: PickerEntryTab; label: string }[]).map((tab) => {
+        const selected = tab.key === "library";
+        const Icon = tab.icon;
+        return (
+          <Pressable
+            accessibilityRole="tab"
+            accessibilityState={{ selected }}
+            key={tab.key}
+            onPress={() => { if (tab.key === "create") onCreate(); }}
+            style={({ pressed }) => [styles.entryTab, selected && styles.entryTabActive, pressed && styles.pressed]}>
+            <Icon color={selected ? tokens.color.surfaceApp : tokens.color.textMuted} size={16} strokeWidth={2.2} />
+            <Text style={[styles.entryTabText, selected && styles.entryTabTextActive]}>{tab.label}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
 
 const dayOptions = [
   { id: 1, short: "L", label: "Lunes" },
@@ -209,8 +246,10 @@ export function CompositionPickerScreen({
     return () => { active = false; };
   }, [apiRequest, config.targetSlug, kind, relationId, retryNonce, selectedId, status, targetId]);
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     if (status !== "authenticated" || selectedId) return;
+    // Recreate the focused request after an explicit retry, even when the search text is unchanged.
+    void retryNonce;
     let active = true;
     const timer = setTimeout(() => {
       setSearching(true);
@@ -224,7 +263,7 @@ export function CompositionPickerScreen({
         .finally(() => active && setSearching(false));
     }, 220);
     return () => { active = false; clearTimeout(timer); };
-  }, [apiRequest, kind, query, retryNonce, selectedId, status]);
+  }, [apiRequest, kind, query, retryNonce, selectedId, status]));
 
   const hourValid = kind !== "meal-to-dailyplan" || /^([01]\d|2[0-3]):[0-5]\d$/.test(hour);
   const quantityValid = kind !== "food-to-meal" || Number(quantity) > 0;
@@ -275,23 +314,34 @@ export function CompositionPickerScreen({
   if (status === "anonymous") return <Redirect href="/login" />;
   if (loading) return <LoadingState label="Preparando el selector…" />;
 
-  return (
-    <Screen contentStyle={!selectedId ? styles.searchContent : undefined}>
-      {!selectedId ? (
-        <>
-          <View style={styles.searchField}>
-            <Search color={tokens.color.textSoft} size={19} />
-            <TextInput
-              accessibilityLabel={config.searchLabel}
-              autoCapitalize="words"
-              onChangeText={setQuery}
-              placeholder={config.searchPlaceholder}
-              placeholderTextColor={tokens.color.textSubtle}
-              style={styles.searchInput}
-              value={query}
+  if (!selectedId) {
+    return (
+      <SafeAreaView edges={["left", "right"]} style={styles.selectionSafeArea}>
+        <ScrollView
+          contentContainerStyle={styles.selectionScrollContent}
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
+          stickyHeaderIndices={[0]}>
+          <View style={styles.selectionSticky}>
+            <PickerEntryTabs
+              createLabel={config.createLabel}
+              onCreate={() => router.push({ pathname: "/libraries/create", params: { entity: config.createEntity } })}
             />
-            {searching ? <ActivityIndicator color={tokens.color.interactivePrimary} size="small" /> : null}
+            <View style={styles.searchField}>
+              <Search color={tokens.color.textSoft} size={19} />
+              <TextInput
+                accessibilityLabel={config.searchLabel}
+                autoCapitalize="words"
+                onChangeText={setQuery}
+                placeholder={config.searchPlaceholder}
+                placeholderTextColor={tokens.color.textSubtle}
+                style={styles.searchInput}
+                value={query}
+              />
+              {searching ? <ActivityIndicator color={tokens.color.interactivePrimary} size="small" /> : null}
+            </View>
           </View>
+
           <View style={styles.options}>
             {options.map((option) => (
               <PickerOptionCard
@@ -302,9 +352,16 @@ export function CompositionPickerScreen({
               />
             ))}
             {!searching && options.length === 0 ? <Text style={textStyles.muted}>No encontramos resultados.</Text> : null}
+            {error ? <RecoverableErrorState message={error} onRetry={() => { setError(null); setRetryNonce((value) => value + 1); }} /> : null}
           </View>
-        </>
-      ) : selected ? (
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <Screen>
+      {selected ? (
         <PickerOptionCard
           actionLabel="Cambiar selección"
           onAction={() => router.back()}
@@ -381,6 +438,7 @@ export function CompositionPickerScreen({
         />
       ) : preview ? (
         <Button
+          bleed
           label={kind === "food-to-meal" ? "Agregar alimento" : kind === "meal-to-dailyplan" ? relationId ? "Reemplazar comida" : "Agregar comida" : "Asignar plan diario"}
           loading={submitting}
           onPress={() => preview.confirmation_required ? setConfirming(true) : void commit()}
@@ -418,14 +476,21 @@ const styles = StyleSheet.create({
   dayTextSelected: { color: tokens.color.surfaceApp },
   days: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.sm },
   daysBlock: { gap: tokens.spacing.sm },
+  entryTab: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, flex: 1, flexDirection: "row", gap: tokens.spacing.compact, justifyContent: "center", minHeight: 34, minWidth: 0, paddingHorizontal: tokens.spacing.sm },
+  entryTabActive: { backgroundColor: tokens.color.textMain, borderColor: tokens.color.textMain },
+  entryTabText: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "500" },
+  entryTabTextActive: { color: tokens.color.surfaceApp },
+  entryTabsBar: { backgroundColor: tokens.color.surfaceApp, flexDirection: "row", gap: tokens.spacing.compact, paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.sm },
   fieldLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700" },
-  options: { gap: tokens.spacing.lg },
+  options: { gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen },
   pressed: { opacity: 0.68 },
   previewLoading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
   previewSection: { gap: tokens.spacing.lg },
-  searchContent: { paddingTop: 0 },
-  searchField: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.lg, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.sm, minHeight: 46, paddingHorizontal: tokens.spacing.md },
-  searchInput: { color: tokens.color.textMain, flex: 1, fontSize: 16, minHeight: 44, paddingVertical: 0 },
+  searchField: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.sm, marginHorizontal: tokens.spacing.screen, minHeight: 38, paddingHorizontal: tokens.spacing.md },
+  searchInput: { color: tokens.color.textMain, flex: 1, fontSize: 16, minHeight: 36, paddingVertical: 0 },
+  selectionSafeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
+  selectionScrollContent: { flexGrow: 1, paddingBottom: 42 },
+  selectionSticky: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.xs, paddingBottom: tokens.spacing.lg, zIndex: 2 },
   selectButton: { backgroundColor: tokens.color.textMain, borderRadius: tokens.radius.pill, minHeight: 38, minWidth: 112, paddingHorizontal: tokens.spacing.lg, alignItems: "center", justifyContent: "center" },
   selectButtonText: { color: tokens.color.surfaceApp, fontSize: tokens.type.caption, fontWeight: "800" },
 });

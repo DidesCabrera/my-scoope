@@ -104,12 +104,14 @@ export function Pill({ label, color = tokens.color.interactivePrimary }: { label
 }
 
 export function Button({
+  bleed = false,
   label,
   onPress,
   variant = "primary",
   disabled = false,
   loading = false,
 }: {
+  bleed?: boolean;
   label: string;
   onPress(): void;
   variant?: "primary" | "secondary" | "danger";
@@ -126,6 +128,7 @@ export function Button({
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
+        bleed && styles.buttonBleed,
         buttonStyle,
         variant === "danger" && styles.buttonDanger,
         (disabled || loading) && styles.buttonDisabled,
@@ -265,6 +268,7 @@ const styles = StyleSheet.create({
   pill: { alignSelf: "flex-start", borderRadius: tokens.radius.pill, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 5 },
   pillText: { fontSize: tokens.type.label, fontWeight: "800", letterSpacing: 0.4 },
   button: { alignItems: "center", borderRadius: tokens.radius.lg, flexDirection: "row", gap: 8, justifyContent: "center", minHeight: 54, paddingHorizontal: tokens.spacing.lg },
+  buttonBleed: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding },
   buttonPrimary: { backgroundColor: tokens.color.textMain },
   buttonSecondary: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderWidth: 1 },
   buttonDanger: { backgroundColor: "transparent", borderColor: tokens.color.danger },

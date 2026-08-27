@@ -6,9 +6,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { userFacingError } from "@/api/errors";
 import { EntityCardAction } from "@/components/ui";
+import { ActionSheetModal } from "@/components/ui/action-sheet-modal";
 import { Button, InlineNotice } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
-import { ActionSheetModal } from "./action-sheet-modal";
 
 export type ContextCardAction = {
   confirmation?: {
@@ -81,7 +81,7 @@ export function ContextCardActions({ actions, label, renderTrigger, title }: Con
         </EntityCardAction>
       )}
       <ActionSheetModal onRequestClose={close} visible={visible}>
-          <SafeAreaView edges={["bottom", "left", "right"]} style={styles.sheetSafeArea}>
+          <SafeAreaView edges={["left", "right"]} style={styles.sheetSafeArea}>
             <View style={styles.sheetHeader}>
               <View style={styles.headerCopy}>
                 <Text style={styles.eyebrow}>ACCIONES</Text>
