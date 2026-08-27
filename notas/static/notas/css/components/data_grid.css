@@ -959,46 +959,6 @@ body.is-list-panel-sorting .js-list-reorder-row {
     text-underline-offset: 3px;
 }
 
-.data-grid--calendarized-menu .data-grid-header--menu,
-.data-grid--calendarized-menu .data-grid-row--menu {
-    grid-template-columns: minmax(110px, 0.7fr) minmax(180px, 2.1fr) 32px;
-}
-
-.data-grid--calendarized-menu .data-grid-cell--action {
-    align-items: center;
-    align-self: stretch;
-    color: var(--text-muted);
-    display: flex;
-    justify-content: center;
-    min-height: 40px;
-    padding: 0;
-    text-decoration: none;
-}
-
-.data-grid--calendarized-menu .data-grid-cell--action:hover {
-    color: var(--text-main);
-}
-
-.data-grid--calendarized-menu .data-grid-cell--action svg {
-    height: 20px;
-    width: 20px;
-}
-
-@media (max-width: 980px) {
-    .data-grid--calendarized-menu .data-grid-row--menu {
-        grid-template-columns: minmax(0, 1fr) 32px;
-    }
-
-    .data-grid--calendarized-menu .data-grid-cell--foods {
-        grid-column: 1;
-    }
-
-    .data-grid--calendarized-menu .data-grid-cell--action {
-        grid-column: 2;
-        grid-row: 1 / span 2;
-    }
-}
-
 /* =========================================================
    Temporary analysis sorting for panel tables
    ========================================================= */

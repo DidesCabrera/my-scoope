@@ -1,8 +1,8 @@
 from pathlib import Path
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
 from django.template.loader import render_to_string
+from django.test import TestCase
 from django.urls import reverse
 
 from notas.domain.models import DailyPlan, Program, ProgramDay
