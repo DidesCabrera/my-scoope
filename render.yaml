@@ -25,7 +25,7 @@ services:
     autoDeployTrigger: commit
     buildCommand: ./scripts/render_build.sh
     preDeployCommand: python manage.py migrate --noinput && python manage.py check --deploy
-    startCommand: python -m gunicorn miapp.wsgi:application --bind 0.0.0.0:$PORT --workers 3 --timeout 120
+    startCommand: python -m gunicorn miapp.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120
     healthCheckPath: /healthz/
     envVars:
       - fromGroup: myscoope-django-runtime
