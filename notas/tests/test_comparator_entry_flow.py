@@ -2,7 +2,6 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-
 User = get_user_model()
 
 
@@ -29,7 +28,6 @@ class ComparatorEntryFlowTests(TestCase):
         self.assertContains(response, "Alimentos")
         self.assertContains(response, "Comidas")
         self.assertContains(response, "Planes")
-        self.assertContains(response, "Crear nueva comparación")
         self.assertContains(response, "Crear nueva comparación")
         self.assertContains(response, 'data-lucide="plus"')
         self.assertContains(response, reverse("food_comparator"))
