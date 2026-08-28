@@ -28,6 +28,7 @@ from notas.application.services.notifications.web_push import (
 from notas.domain.models import (
     ApplePushSubscription,
     CalendarizedDay,
+    CalendarizedMealExecution,
     DailyPlan,
     DailyPlanMeal,
     Meal,
@@ -361,19 +362,63 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'class="home-calendar calendarization-current"')
-        self.assertContains(response, 'class="home-calendar__heading-content"')
+        self.assertContains(response, 'class="calendarization-current__overview"')
+        self.assertContains(response, 'class="program-active-kpis program-active-kpis--standalone"')
+        self.assertContains(response, "Ir a detalle de programa")
         self.assertContains(response, reverse("program_detail", args=[self.program.id]))
+        self.assertContains(response, "calendarization-current__section-divider")
+        self.assertContains(response, "Planificación semanal")
+        self.assertContains(response, "calendarization-current__week-foods-divider")
+        self.assertContains(response, "Alimentos en esta Semana")
+        self.assertContains(
+            response,
+            'class="program-board-shell calendarization-current__planning"',
+        )
         self.assertContains(response, 'class="calendarization-actions"')
         self.assertContains(response, 'class="card "')
         self.assertContains(response, "card-kpi")
-        self.assertContains(response, "Programa Calendarizado")
+        self.assertContains(response, "Programa en curso")
         self.assertNotContains(response, "Reemplazar calendarización")
         self.assertNotContains(response, "Nueva calendarización")
         self.assertContains(response, "Notificaciones")
         self.assertContains(response, "Guardar preferencias")
         self.assertContains(response, "Cancelar")
+        self.assertContains(
+            response,
+            'class="home-calendar__week-slider home-calendar__week-slider--single"',
+            count=1,
+        )
+        self.assertContains(response, "program-week-days-layout")
+        self.assertContains(response, "data-calendarization-day", count=7)
+        self.assertNotContains(response, "data-home-calendar-week-nav")
+        self.assertNotContains(response, "data-home-calendar-day-link")
+        self.assertNotContains(response, "home_calendarization.js")
+        self.assertContains(response, "calendarization_days.js")
         self.assertNotContains(response, "Pausar")
         self.assertNotContains(response, "Reanudar")
+
+    def test_dashboard_week_tabs_render_only_the_selected_weeks_days(self):
+        ProgramCalendarization.objects.create(
+            user=self.user,
+            program_name_snapshot="Programa de tres semanas",
+            start_date=date(2026, 7, 13),
+            end_date=date(2026, 8, 2),
+            timezone_name="UTC",
+            status=ProgramCalendarization.STATUS_ACTIVE,
+        )
+
+        response = self.client.get(
+            reverse("calendarization_dashboard"),
+            {"calendar_week": "2026-07-20", "calendar_date": "2026-07-20"},
+        )
+
+        self.assertContains(response, "Semana 1")
+        self.assertContains(response, "Semana 2")
+        self.assertContains(response, "Semana 3")
+        self.assertContains(response, 'class="home-calendar__day ', count=7)
+        self.assertContains(response, "data-calendarization-day", count=7)
+        self.assertNotContains(response, "data-home-calendar-day-link")
+        self.assertNotContains(response, "data-home-calendar-week-nav")
 
     def test_activation_endpoint_creates_calendarization(self):
         response = self.client.post(
@@ -410,6 +455,109 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
             )
         self.assertContains(response, "Día original")
         self.assertContains(response, "card-kpi")
+
+    def test_web_meal_check_in_uses_persisted_execution_and_updates_indicators(self):
+        meal = Meal.objects.create(name="Desayuno de hoy", created_by=self.user)
+        slot = DailyPlanMeal.objects.create(
+            dailyplan=self.dailyplan,
+            meal=meal,
+            hour=time(8),
+            order=1,
+        )
+        today = timezone.localdate(timezone=UTC)
+        calendarization = self.activate(
+            start_date=today,
+            timezone_name="UTC",
+            now=datetime.combine(today, time(6), tzinfo=UTC),
+        ).calendarization
+        day = calendarization.days.get(day_number=1)
+        meal_key = f"dailyplan_meal:{slot.id}"
+        detail_url = reverse(
+            "calendarization_meal_detail",
+            args=[day.id, meal_key],
+        )
+        check_in_url = reverse(
+            "calendarization_meal_check_in",
+            args=[day.id, meal_key],
+        )
+
+        dashboard = self.client.get(
+            reverse("calendarization_dashboard"),
+            {
+                "calendar_week": (today - timedelta(days=today.weekday())).isoformat(),
+                "calendar_date": today.isoformat(),
+            },
+        )
+        self.assertContains(dashboard, detail_url)
+        self.assertContains(dashboard, 'data-lucide="chevron-right"')
+
+        completed_payload = {
+            "action": "completed",
+            "idempotency_key": "web-status-test-0001",
+        }
+        completed = self.client.post(check_in_url, completed_payload)
+        self.assertRedirects(completed, detail_url)
+        retried = self.client.post(check_in_url, completed_payload)
+        self.assertRedirects(retried, detail_url)
+        note = self.client.post(
+            check_in_url,
+            {
+                "action": "note",
+                "idempotency_key": "web-note-test-0001",
+                "note": "Cumplida sin reemplazos.",
+            },
+        )
+        self.assertRedirects(note, detail_url)
+
+        events = CalendarizedMealExecution.objects.filter(calendarized_day=day)
+        self.assertEqual(events.count(), 2)
+        self.assertEqual(events.filter(action="completed").count(), 1)
+        self.assertEqual(events.filter(action="note").get().note, "Cumplida sin reemplazos.")
+
+        detail = self.client.get(detail_url)
+        self.assertContains(detail, "Cumplimiento de esta comida")
+        self.assertContains(detail, "Cumplida sin reemplazos.")
+        self.assertContains(detail, 'data-lucide="check"')
+        self.assertContains(detail, 'data-lucide="notebook-pen"')
+
+        dashboard = self.client.get(
+            reverse("calendarization_dashboard"),
+            {
+                "calendar_week": (today - timedelta(days=today.weekday())).isoformat(),
+                "calendar_date": today.isoformat(),
+            },
+        )
+        self.assertContains(dashboard, 'data-lucide="check-check"')
+        self.assertContains(dashboard, 'data-lucide="notebook-pen"')
+        self.assertContains(dashboard, "1/1")
+        self.assertContains(dashboard, "100%")
+
+    def test_web_meal_check_in_rejects_another_users_day(self):
+        meal = Meal.objects.create(name="Comida privada", created_by=self.user)
+        slot = DailyPlanMeal.objects.create(
+            dailyplan=self.dailyplan,
+            meal=meal,
+            hour=time(8),
+            order=1,
+        )
+        today = timezone.localdate()
+        day = self.activate(
+            start_date=today,
+            timezone_name="UTC",
+            now=datetime.combine(today, time(6), tzinfo=UTC),
+        ).calendarization.days.get(day_number=1)
+        self.client.force_login(self.other)
+
+        response = self.client.post(
+            reverse(
+                "calendarization_meal_check_in",
+                args=[day.id, f"dailyplan_meal:{slot.id}"],
+            ),
+            {"action": "completed"},
+        )
+
+        self.assertEqual(response.status_code, 404)
+        self.assertFalse(CalendarizedMealExecution.objects.exists())
 
     def test_push_subscription_rejects_malformed_json_shape(self):
         response = self.client.post(

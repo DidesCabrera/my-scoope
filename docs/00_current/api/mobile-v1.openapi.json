@@ -831,6 +831,16 @@
       },
       "ActiveProgramData": {
         "properties": {
+          "adherence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AdherenceData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "calendarization": {
             "anyOf": [
               {
@@ -847,6 +857,26 @@
             },
             "title": "Days",
             "type": "array"
+          },
+          "indicators": {
+            "items": {
+              "$ref": "#/components/schemas/ActiveProgramIndicatorData"
+            },
+            "title": "Indicators",
+            "type": "array"
+          },
+          "weeks": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Weeks",
+            "type": "array"
+          },
+          "weeks_count": {
+            "default": 0,
+            "title": "Weeks Count",
+            "type": "integer"
           }
         },
         "required": [
@@ -916,6 +946,41 @@
         "title": "ActiveProgramEnvelope",
         "type": "object"
       },
+      "ActiveProgramIndicatorData": {
+        "properties": {
+          "icon": {
+            "enum": [
+              "food",
+              "dailyPlan",
+              "week"
+            ],
+            "title": "Icon",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "icon",
+          "label",
+          "value"
+        ],
+        "title": "ActiveProgramIndicatorData",
+        "type": "object"
+      },
       "AdherenceData": {
         "properties": {
           "adherence_percent": {
@@ -934,6 +999,10 @@
             "title": "Days With Plan",
             "type": "integer"
           },
+          "elapsed_meals": {
+            "title": "Elapsed Meals",
+            "type": "integer"
+          },
           "period_end": {
             "format": "date",
             "title": "Period End",
@@ -946,6 +1015,10 @@
           },
           "planned_meals": {
             "title": "Planned Meals",
+            "type": "integer"
+          },
+          "scheduled_meals": {
+            "title": "Scheduled Meals",
             "type": "integer"
           },
           "skipped_meals": {
@@ -962,6 +1035,8 @@
           "period_end",
           "days",
           "days_with_plan",
+          "scheduled_meals",
+          "elapsed_meals",
           "planned_meals",
           "completed_meals",
           "skipped_meals",
@@ -1136,6 +1211,16 @@
       },
       "CalendarizationActivationData": {
         "properties": {
+          "adherence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AdherenceData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "calendarization": {
             "anyOf": [
               {
@@ -1161,6 +1246,13 @@
             "title": "Empty Dates",
             "type": "array"
           },
+          "indicators": {
+            "items": {
+              "$ref": "#/components/schemas/ActiveProgramIndicatorData"
+            },
+            "title": "Indicators",
+            "type": "array"
+          },
           "replaced_calendarization_id": {
             "anyOf": [
               {
@@ -1171,6 +1263,19 @@
               }
             ],
             "title": "Replaced Calendarization Id"
+          },
+          "weeks": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Weeks",
+            "type": "array"
+          },
+          "weeks_count": {
+            "default": 0,
+            "title": "Weeks Count",
+            "type": "integer"
           }
         },
         "required": [
@@ -1280,6 +1385,17 @@
           "progress_total_days": {
             "title": "Progress Total Days",
             "type": "integer"
+          },
+          "source_program_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Program Id"
           },
           "start_date": {
             "format": "date",
@@ -1682,6 +1798,13 @@
             "title": "Id",
             "type": "integer"
           },
+          "meal_execution": {
+            "items": {
+              "$ref": "#/components/schemas/MealExecutionData"
+            },
+            "title": "Meal Execution",
+            "type": "array"
+          },
           "plan_name": {
             "title": "Plan Name",
             "type": "string"
@@ -1953,19 +2076,51 @@
         "type": "object"
       },
       "ComparisonOptionData": {
+        "description": "Visual contract required to render an entity card in a comparison picker.",
         "properties": {
+          "entity": {
+            "enum": [
+              "food",
+              "meal",
+              "dailyPlan"
+            ],
+            "title": "Entity",
+            "type": "string"
+          },
           "id": {
             "title": "Id",
             "type": "integer"
           },
+          "indicators": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryIndicatorData"
+            },
+            "title": "Indicators",
+            "type": "array"
+          },
           "name": {
             "title": "Name",
+            "type": "string"
+          },
+          "nutrition": {
+            "$ref": "#/components/schemas/LibraryNutritionData"
+          },
+          "panel": {
+            "$ref": "#/components/schemas/LibraryPanelData"
+          },
+          "subtitle": {
+            "title": "Subtitle",
             "type": "string"
           }
         },
         "required": [
           "id",
-          "name"
+          "entity",
+          "name",
+          "subtitle",
+          "nutrition",
+          "indicators",
+          "panel"
         ],
         "title": "ComparisonOptionData",
         "type": "object"
@@ -2206,6 +2361,127 @@
         "title": "ComparisonSelectionInput",
         "type": "object"
       },
+      "CompositionMutationData": {
+        "properties": {
+          "affected_id": {
+            "title": "Affected Id",
+            "type": "integer"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "target_id": {
+            "title": "Target Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "message",
+          "target_id",
+          "affected_id"
+        ],
+        "title": "CompositionMutationData",
+        "type": "object"
+      },
+      "CompositionMutationEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CompositionMutationData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "CompositionMutationEnvelope",
+        "type": "object"
+      },
+      "CompositionOrderInput": {
+        "properties": {
+          "ordered_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "minItems": 1,
+            "title": "Ordered Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "ordered_ids"
+        ],
+        "title": "CompositionOrderInput",
+        "type": "object"
+      },
+      "DailyPlanMealUpdateInput": {
+        "properties": {
+          "hour": {
+            "anyOf": [
+              {
+                "format": "time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hour"
+          },
+          "note": {
+            "default": "",
+            "maxLength": 500,
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "title": "DailyPlanMealUpdateInput",
+        "type": "object"
+      },
+      "DailyPlanPickerInput": {
+        "properties": {
+          "confirm_replacements": {
+            "default": false,
+            "title": "Confirm Replacements",
+            "type": "boolean"
+          },
+          "dailyplan_id": {
+            "exclusiveMinimum": 0,
+            "title": "Dailyplan Id",
+            "type": "integer"
+          },
+          "day_numbers": {
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 7,
+            "minItems": 1,
+            "title": "Day Numbers",
+            "type": "array"
+          },
+          "week_number": {
+            "exclusiveMinimum": 0,
+            "title": "Week Number",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "dailyplan_id",
+          "week_number",
+          "day_numbers"
+        ],
+        "title": "DailyPlanPickerInput",
+        "type": "object"
+      },
       "DisclosureAcceptanceInput": {
         "properties": {
           "accepted": {
@@ -2336,10 +2612,50 @@
         "title": "ErrorEnvelope",
         "type": "object"
       },
+      "FoodCreateInput": {
+        "properties": {
+          "carbs": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Carbs",
+            "type": "number"
+          },
+          "fat": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Fat",
+            "type": "number"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "protein": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Protein",
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "protein",
+          "carbs",
+          "fat"
+        ],
+        "title": "FoodCreateInput",
+        "type": "object"
+      },
       "FoodItem": {
         "properties": {
           "carbs": {
             "title": "Carbs",
+            "type": "number"
+          },
+          "carbs_allocation": {
+            "title": "Carbs Allocation",
             "type": "number"
           },
           "data_quality_score": {
@@ -2352,6 +2668,10 @@
           },
           "fat": {
             "title": "Fat",
+            "type": "number"
+          },
+          "fat_allocation": {
+            "title": "Fat Allocation",
             "type": "number"
           },
           "id": {
@@ -2374,6 +2694,10 @@
             "title": "Protein",
             "type": "number"
           },
+          "protein_allocation": {
+            "title": "Protein Allocation",
+            "type": "number"
+          },
           "source": {
             "title": "Source",
             "type": "string"
@@ -2391,12 +2715,37 @@
           "carbs",
           "fat",
           "total_kcal",
+          "protein_allocation",
+          "carbs_allocation",
+          "fat_allocation",
           "source",
           "is_user_food",
           "is_verified",
           "data_quality_score"
         ],
         "title": "FoodItem",
+        "type": "object"
+      },
+      "FoodItemEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/FoodItem"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "FoodItemEnvelope",
         "type": "object"
       },
       "FoodLabelCaptureData": {
@@ -2768,6 +3117,27 @@
         "title": "FoodPageEnvelope",
         "type": "object"
       },
+      "FoodPickerInput": {
+        "properties": {
+          "food_id": {
+            "exclusiveMinimum": 0,
+            "title": "Food Id",
+            "type": "integer"
+          },
+          "quantity": {
+            "exclusiveMinimum": 0,
+            "maximum": 100000,
+            "title": "Quantity",
+            "type": "number"
+          }
+        },
+        "required": [
+          "food_id",
+          "quantity"
+        ],
+        "title": "FoodPickerInput",
+        "type": "object"
+      },
       "HealthData": {
         "properties": {
           "api_version": {
@@ -2806,6 +3176,146 @@
           "data"
         ],
         "title": "HealthEnvelope",
+        "type": "object"
+      },
+      "LibraryActionData": {
+        "properties": {
+          "destructive": {
+            "default": false,
+            "title": "Destructive",
+            "type": "boolean"
+          },
+          "key": {
+            "enum": [
+              "rename",
+              "duplicate",
+              "share",
+              "delete"
+            ],
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label"
+        ],
+        "title": "LibraryActionData",
+        "type": "object"
+      },
+      "LibraryActionInput": {
+        "properties": {
+          "action": {
+            "enum": [
+              "rename",
+              "duplicate",
+              "share",
+              "delete"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "message": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Message",
+            "type": "string"
+          },
+          "name": {
+            "default": "",
+            "maxLength": 100,
+            "title": "Name",
+            "type": "string"
+          },
+          "recipient_email": {
+            "default": "",
+            "maxLength": 254,
+            "title": "Recipient Email",
+            "type": "string"
+          },
+          "subject": {
+            "default": "",
+            "maxLength": 160,
+            "title": "Subject",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action"
+        ],
+        "title": "LibraryActionInput",
+        "type": "object"
+      },
+      "LibraryActionResultData": {
+        "properties": {
+          "action": {
+            "enum": [
+              "rename",
+              "duplicate",
+              "share",
+              "delete"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "item_id": {
+            "title": "Item Id",
+            "type": "integer"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "item_id",
+          "message"
+        ],
+        "title": "LibraryActionResultData",
+        "type": "object"
+      },
+      "LibraryActionResultEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/LibraryActionResultData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "LibraryActionResultEnvelope",
+        "type": "object"
+      },
+      "LibraryBulkDeleteInput": {
+        "properties": {
+          "item_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "minItems": 1,
+            "title": "Item Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "item_ids"
+        ],
+        "title": "LibraryBulkDeleteInput",
         "type": "object"
       },
       "LibraryCalorieDistributionData": {
@@ -2883,6 +3393,17 @@
           "quantity_unit": {
             "title": "Quantity Unit",
             "type": "string"
+          },
+          "relation_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relation Id"
           }
         },
         "required": [
@@ -2948,6 +3469,13 @@
       },
       "LibraryItemData": {
         "properties": {
+          "actions": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryActionData"
+            },
+            "title": "Actions",
+            "type": "array"
+          },
           "can_calendarize": {
             "default": false,
             "title": "Can Calendarize",
@@ -2982,6 +3510,11 @@
             },
             "title": "Indicators",
             "type": "array"
+          },
+          "is_draft": {
+            "default": false,
+            "title": "Is Draft",
+            "type": "boolean"
           },
           "name": {
             "title": "Name",
@@ -3032,6 +3565,56 @@
           "data"
         ],
         "title": "LibraryItemEnvelope",
+        "type": "object"
+      },
+      "LibraryListActionResultData": {
+        "properties": {
+          "affected_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Affected Ids",
+            "type": "array"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "skipped_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Skipped Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "affected_ids",
+          "message"
+        ],
+        "title": "LibraryListActionResultData",
+        "type": "object"
+      },
+      "LibraryListActionResultEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/LibraryListActionResultData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "LibraryListActionResultEnvelope",
         "type": "object"
       },
       "LibraryMacroData": {
@@ -3111,6 +3694,11 @@
             "title": "Name",
             "type": "string"
           },
+          "note": {
+            "default": "",
+            "title": "Note",
+            "type": "string"
+          },
           "protein_allocation": {
             "title": "Protein Allocation",
             "type": "number"
@@ -3118,6 +3706,28 @@
           "protein_grams": {
             "title": "Protein Grams",
             "type": "number"
+          },
+          "protein_per_kilogram": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Protein Per Kilogram"
+          },
+          "relation_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relation Id"
           },
           "time": {
             "anyOf": [
@@ -3172,6 +3782,23 @@
           "fat"
         ],
         "title": "LibraryNutritionData",
+        "type": "object"
+      },
+      "LibraryOrderInput": {
+        "properties": {
+          "ordered_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "minItems": 1,
+            "title": "Ordered Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "ordered_ids"
+        ],
+        "title": "LibraryOrderInput",
         "type": "object"
       },
       "LibraryPageData": {
@@ -3330,6 +3957,17 @@
               }
             ],
             "title": "Plan Name"
+          },
+          "program_day_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Program Day Id"
           }
         },
         "required": [
@@ -3443,7 +4081,8 @@
             "enum": [
               "completed",
               "skipped",
-              "reset"
+              "reset",
+              "note"
             ],
             "title": "Action",
             "type": "string"
@@ -3512,6 +4151,65 @@
           "status"
         ],
         "title": "MealExecutionData",
+        "type": "object"
+      },
+      "MealFoodUpdateInput": {
+        "properties": {
+          "quantity": {
+            "exclusiveMinimum": 0,
+            "maximum": 100000,
+            "title": "Quantity",
+            "type": "number"
+          }
+        },
+        "required": [
+          "quantity"
+        ],
+        "title": "MealFoodUpdateInput",
+        "type": "object"
+      },
+      "MealPickerInput": {
+        "properties": {
+          "dailyplan_meal_id": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dailyplan Meal Id"
+          },
+          "hour": {
+            "anyOf": [
+              {
+                "format": "time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hour"
+          },
+          "meal_id": {
+            "exclusiveMinimum": 0,
+            "title": "Meal Id",
+            "type": "integer"
+          },
+          "note": {
+            "default": "",
+            "maxLength": 500,
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "meal_id"
+        ],
+        "title": "MealPickerInput",
         "type": "object"
       },
       "MeasurementSummaryData": {
@@ -3602,6 +4300,21 @@
         "title": "MobileActionData",
         "type": "object"
       },
+      "NamedLibraryCreateInput": {
+        "properties": {
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "NamedLibraryCreateInput",
+        "type": "object"
+      },
       "OnboardingInput": {
         "properties": {
           "birth_date": {
@@ -3633,6 +4346,228 @@
           "weight_kg"
         ],
         "title": "OnboardingInput",
+        "type": "object"
+      },
+      "PickerCommitData": {
+        "properties": {
+          "created_id": {
+            "title": "Created Id",
+            "type": "integer"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "target_id": {
+            "title": "Target Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "message",
+          "target_id",
+          "created_id"
+        ],
+        "title": "PickerCommitData",
+        "type": "object"
+      },
+      "PickerCommitEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PickerCommitData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "PickerCommitEnvelope",
+        "type": "object"
+      },
+      "PickerImpactData": {
+        "properties": {
+          "after": {
+            "$ref": "#/components/schemas/LibraryNutritionData"
+          },
+          "before": {
+            "$ref": "#/components/schemas/LibraryNutritionData"
+          },
+          "entity": {
+            "enum": [
+              "meal",
+              "dailyPlan",
+              "week",
+              "program"
+            ],
+            "title": "Entity",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/PickerMetricData"
+            },
+            "title": "Metrics",
+            "type": "array"
+          }
+        },
+        "required": [
+          "label",
+          "entity",
+          "before",
+          "after"
+        ],
+        "title": "PickerImpactData",
+        "type": "object"
+      },
+      "PickerMetricData": {
+        "properties": {
+          "after": {
+            "title": "After",
+            "type": "number"
+          },
+          "before": {
+            "title": "Before",
+            "type": "number"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "before",
+          "after"
+        ],
+        "title": "PickerMetricData",
+        "type": "object"
+      },
+      "PickerPreviewData": {
+        "properties": {
+          "confirmation_required": {
+            "default": false,
+            "title": "Confirmation Required",
+            "type": "boolean"
+          },
+          "impacts": {
+            "items": {
+              "$ref": "#/components/schemas/PickerImpactData"
+            },
+            "title": "Impacts",
+            "type": "array"
+          },
+          "replacements": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Replacements",
+            "type": "array"
+          },
+          "selection": {
+            "$ref": "#/components/schemas/PickerSelectionData"
+          }
+        },
+        "required": [
+          "selection",
+          "impacts"
+        ],
+        "title": "PickerPreviewData",
+        "type": "object"
+      },
+      "PickerPreviewEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PickerPreviewData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "PickerPreviewEnvelope",
+        "type": "object"
+      },
+      "PickerSelectionData": {
+        "properties": {
+          "entity": {
+            "enum": [
+              "food",
+              "meal",
+              "dailyPlan",
+              "week"
+            ],
+            "title": "Entity",
+            "type": "string"
+          },
+          "hour": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hour"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "nutrition": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LibraryNutritionData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity"
+          }
+        },
+        "required": [
+          "id",
+          "entity",
+          "name"
+        ],
+        "title": "PickerSelectionData",
         "type": "object"
       },
       "ProfileData": {
@@ -6505,6 +7440,70 @@
         "summary": "Entitlements"
       }
     },
+    "/api/v1/food-picker-options/{food_id}": {
+      "get": {
+        "operationId": "mobile_api_api_food_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "food_id",
+            "required": true,
+            "schema": {
+              "title": "Food Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FoodItemEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Food Detail"
+      }
+    },
     "/api/v1/foods": {
       "get": {
         "operationId": "mobile_api_api_foods",
@@ -6708,6 +7707,16 @@
               "title": "Limit",
               "type": "integer"
             }
+          },
+          {
+            "in": "query",
+            "name": "include_drafts",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Drafts",
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -6748,6 +7757,444 @@
           }
         ],
         "summary": "Library Dailyplans"
+      },
+      "post": {
+        "operationId": "mobile_api_api_create_library_dailyplan",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NamedLibraryCreateInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryItemEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Create Library Dailyplan"
+      }
+    },
+    "/api/v1/library/daily-plans/{dailyplan_id}/meal-picker/commit": {
+      "post": {
+        "operationId": "mobile_api_api_dailyplan_meal_picker_commit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dailyplan_id",
+            "required": true,
+            "schema": {
+              "title": "Dailyplan Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MealPickerInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickerCommitEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Dailyplan Meal Picker Commit"
+      }
+    },
+    "/api/v1/library/daily-plans/{dailyplan_id}/meal-picker/preview": {
+      "post": {
+        "operationId": "mobile_api_api_dailyplan_meal_picker_preview",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dailyplan_id",
+            "required": true,
+            "schema": {
+              "title": "Dailyplan Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MealPickerInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickerPreviewEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Dailyplan Meal Picker Preview"
+      }
+    },
+    "/api/v1/library/daily-plans/{dailyplan_id}/meals/order": {
+      "put": {
+        "operationId": "mobile_api_api_dailyplan_meal_order",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dailyplan_id",
+            "required": true,
+            "schema": {
+              "title": "Dailyplan Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompositionOrderInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompositionMutationEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Dailyplan Meal Order"
+      }
+    },
+    "/api/v1/library/daily-plans/{dailyplan_id}/meals/{dailyplan_meal_id}": {
+      "delete": {
+        "operationId": "mobile_api_api_dailyplan_meal_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dailyplan_id",
+            "required": true,
+            "schema": {
+              "title": "Dailyplan Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "dailyplan_meal_id",
+            "required": true,
+            "schema": {
+              "title": "Dailyplan Meal Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompositionMutationEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Dailyplan Meal Delete"
+      },
+      "patch": {
+        "operationId": "mobile_api_api_dailyplan_meal_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dailyplan_id",
+            "required": true,
+            "schema": {
+              "title": "Dailyplan Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "dailyplan_meal_id",
+            "required": true,
+            "schema": {
+              "title": "Dailyplan Meal Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DailyPlanMealUpdateInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompositionMutationEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Dailyplan Meal Update"
       }
     },
     "/api/v1/library/foods": {
@@ -6829,6 +8276,58 @@
           }
         ],
         "summary": "Library Foods"
+      },
+      "post": {
+        "operationId": "mobile_api_api_create_library_food",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FoodCreateInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryItemEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Create Library Food"
       }
     },
     "/api/v1/library/meals": {
@@ -6870,6 +8369,16 @@
               "title": "Limit",
               "type": "integer"
             }
+          },
+          {
+            "in": "query",
+            "name": "include_drafts",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Drafts",
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -6910,6 +8419,444 @@
           }
         ],
         "summary": "Library Meals"
+      },
+      "post": {
+        "operationId": "mobile_api_api_create_library_meal",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NamedLibraryCreateInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryItemEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Create Library Meal"
+      }
+    },
+    "/api/v1/library/meals/{meal_id}/food-picker/commit": {
+      "post": {
+        "operationId": "mobile_api_api_meal_food_picker_commit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "meal_id",
+            "required": true,
+            "schema": {
+              "title": "Meal Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FoodPickerInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickerCommitEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Meal Food Picker Commit"
+      }
+    },
+    "/api/v1/library/meals/{meal_id}/food-picker/preview": {
+      "post": {
+        "operationId": "mobile_api_api_meal_food_picker_preview",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "meal_id",
+            "required": true,
+            "schema": {
+              "title": "Meal Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FoodPickerInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickerPreviewEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Meal Food Picker Preview"
+      }
+    },
+    "/api/v1/library/meals/{meal_id}/foods/order": {
+      "put": {
+        "operationId": "mobile_api_api_meal_food_order",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "meal_id",
+            "required": true,
+            "schema": {
+              "title": "Meal Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompositionOrderInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompositionMutationEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Meal Food Order"
+      }
+    },
+    "/api/v1/library/meals/{meal_id}/foods/{meal_food_id}": {
+      "delete": {
+        "operationId": "mobile_api_api_meal_food_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "meal_id",
+            "required": true,
+            "schema": {
+              "title": "Meal Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "meal_food_id",
+            "required": true,
+            "schema": {
+              "title": "Meal Food Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompositionMutationEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Meal Food Delete"
+      },
+      "patch": {
+        "operationId": "mobile_api_api_meal_food_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "meal_id",
+            "required": true,
+            "schema": {
+              "title": "Meal Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "meal_food_id",
+            "required": true,
+            "schema": {
+              "title": "Meal Food Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MealFoodUpdateInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompositionMutationEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Meal Food Update"
       }
     },
     "/api/v1/library/programs": {
@@ -6991,6 +8938,820 @@
           }
         ],
         "summary": "Library Programs"
+      },
+      "post": {
+        "operationId": "mobile_api_api_create_library_program",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NamedLibraryCreateInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryItemEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Create Library Program"
+      }
+    },
+    "/api/v1/library/programs/{program_id}/daily-plan-picker/commit": {
+      "post": {
+        "operationId": "mobile_api_api_program_dailyplan_picker_commit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "program_id",
+            "required": true,
+            "schema": {
+              "title": "Program Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DailyPlanPickerInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickerCommitEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Program Dailyplan Picker Commit"
+      }
+    },
+    "/api/v1/library/programs/{program_id}/daily-plan-picker/preview": {
+      "post": {
+        "operationId": "mobile_api_api_program_dailyplan_picker_preview",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "program_id",
+            "required": true,
+            "schema": {
+              "title": "Program Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DailyPlanPickerInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickerPreviewEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Program Dailyplan Picker Preview"
+      }
+    },
+    "/api/v1/library/programs/{program_id}/week-picker/commit": {
+      "post": {
+        "operationId": "mobile_api_api_program_week_picker_commit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "program_id",
+            "required": true,
+            "schema": {
+              "title": "Program Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "expected_week_number",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Expected Week Number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickerCommitEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Program Week Picker Commit"
+      }
+    },
+    "/api/v1/library/programs/{program_id}/week-picker/preview": {
+      "post": {
+        "operationId": "mobile_api_api_program_week_picker_preview",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "program_id",
+            "required": true,
+            "schema": {
+              "title": "Program Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickerPreviewEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Program Week Picker Preview"
+      }
+    },
+    "/api/v1/library/programs/{program_id}/weeks/order": {
+      "put": {
+        "operationId": "mobile_api_api_program_week_order",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "program_id",
+            "required": true,
+            "schema": {
+              "title": "Program Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompositionOrderInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompositionMutationEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Program Week Order"
+      }
+    },
+    "/api/v1/library/programs/{program_id}/weeks/{week_number}": {
+      "delete": {
+        "operationId": "mobile_api_api_program_week_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "program_id",
+            "required": true,
+            "schema": {
+              "title": "Program Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "week_number",
+            "required": true,
+            "schema": {
+              "title": "Week Number",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompositionMutationEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Program Week Delete"
+      }
+    },
+    "/api/v1/library/programs/{program_id}/weeks/{week_number}/days/{day_number}": {
+      "delete": {
+        "operationId": "mobile_api_api_program_day_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "program_id",
+            "required": true,
+            "schema": {
+              "title": "Program Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "week_number",
+            "required": true,
+            "schema": {
+              "title": "Week Number",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "day_number",
+            "required": true,
+            "schema": {
+              "title": "Day Number",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompositionMutationEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Program Day Delete"
+      }
+    },
+    "/api/v1/library/programs/{program_id}/weeks/{week_number}/duplicate": {
+      "post": {
+        "operationId": "mobile_api_api_program_week_duplicate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "program_id",
+            "required": true,
+            "schema": {
+              "title": "Program Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "week_number",
+            "required": true,
+            "schema": {
+              "title": "Week Number",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompositionMutationEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Program Week Duplicate"
+      }
+    },
+    "/api/v1/library/{entity}/bulk-delete": {
+      "post": {
+        "operationId": "mobile_api_api_library_bulk_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "entity",
+            "required": true,
+            "schema": {
+              "title": "Entity",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibraryBulkDeleteInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryListActionResultEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Library Bulk Delete"
+      }
+    },
+    "/api/v1/library/{entity}/order": {
+      "put": {
+        "operationId": "mobile_api_api_library_order",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "entity",
+            "required": true,
+            "schema": {
+              "title": "Entity",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibraryOrderInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryListActionResultEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Library Order"
       }
     },
     "/api/v1/library/{entity}/{item_id}": {
@@ -7064,6 +9825,109 @@
           }
         ],
         "summary": "Library Item Detail"
+      }
+    },
+    "/api/v1/library/{entity}/{item_id}/actions": {
+      "post": {
+        "operationId": "mobile_api_api_library_item_action",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "entity",
+            "required": true,
+            "schema": {
+              "title": "Entity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "title": "Item Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibraryActionInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryActionResultEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Library Item Action"
       }
     },
     "/api/v1/me": {

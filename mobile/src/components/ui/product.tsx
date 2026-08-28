@@ -4,16 +4,19 @@ import {
   CalendarDays,
   CalendarRange,
   Carrot,
+  Check,
+  CheckCheck,
   CircleFadingPlus,
   CircleUserRound,
+  ClipboardCheck,
   ClipboardList,
-  Columns3,
   FileDown,
   House,
   Inbox,
   type LucideIcon,
   MessageSquarePlus,
-  MessagesSquare,
+  NotebookPen,
+  Scale,
   Search,
   Sparkles,
   Utensils,
@@ -33,6 +36,11 @@ export type StructuralIndicator = {
   icon?: StructuralIndicatorKind;
   label: string;
   value: number | string;
+};
+
+export type CompletionIndicatorCounts = {
+  completedCount?: number;
+  noteCount?: number;
 };
 
 const entityLabels: Record<EntityKind, string> = {
@@ -71,23 +79,24 @@ const sectionIcons: Record<SectionKind, LucideIcon> = {
   home: House,
   profile: CircleUserRound,
   chatNew: MessageSquarePlus,
-  chat: MessagesSquare,
-  proposal: Sparkles,
+  chat: Sparkles,
+  proposal: ClipboardCheck,
   calendarization: CalendarClock,
-  comparator: Columns3,
+  comparator: Scale,
   explore: Search,
   inbox: Inbox,
   create: CircleFadingPlus,
   import: FileDown,
 };
 
-export function EntityIcon({ entity, size = "regular", tone = "entity" }: { entity: EntityKind; size?: "compact" | "regular" | "hero"; tone?: "entity" | "white" }) {
+export function EntityIcon({ entity, size = "regular", tone = "entity" }: { entity: EntityKind; size?: "compact" | "regular" | "header" | "hero"; tone?: "entity" | "white" }) {
   const Icon = entityIcons[entity];
   const compact = size === "compact";
+  const header = size === "header";
   const hero = size === "hero";
   return (
-    <View style={[styles.entityIcon, compact && styles.entityIconCompact, hero && styles.entityIconHero, { backgroundColor: tone === "white" ? "transparent" : tokens.color[entity] }]}>
-      <Icon color={tone === "white" ? tokens.color.textMain : tokens.color.entityIconForeground} size={tone === "white" ? 18 : compact ? 11 : hero ? 22 : 13} strokeWidth={hero ? 1.9 : 2.4} />
+    <View style={[styles.entityIcon, compact && styles.entityIconCompact, header && styles.entityIconHeader, hero && styles.entityIconHero, { backgroundColor: tone === "white" ? "transparent" : tokens.color[entity] }]}>
+      <Icon color={tone === "white" ? tokens.color.textMain : tokens.color.entityIconForeground} size={tone === "white" || header ? 18 : compact ? 11 : hero ? 22 : 13} strokeWidth={hero ? 1.9 : 2.4} />
     </View>
   );
 }
@@ -103,7 +112,7 @@ export function SectionIcon({ section, size = "regular" }: { section: SectionKin
   );
 }
 
-export function StructuralIndicators({ indicators, entity }: { indicators: StructuralIndicator[]; entity?: EntityKind }) {
+export function StructuralIndicators({ indicators, entity, tone = "identity" }: { indicators: StructuralIndicator[]; entity?: EntityKind; tone?: "identity" | "surfaceCard" | "surfaceMuted" }) {
   if (indicators.length === 0) return null;
   return (
     <View
@@ -118,12 +127,50 @@ export function StructuralIndicators({ indicators, entity }: { indicators: Struc
             ? tokens.color[entity]
             : tokens.color.textMuted;
         return (
-          <View key={`${indicator.icon ?? "text"}-${indicator.label}-${index}`} style={[styles.structuralItem, { backgroundColor: color }]}>
+          <View
+            key={`${indicator.icon ?? "text"}-${indicator.label}-${index}`}
+            style={[
+              styles.structuralItem,
+              { backgroundColor: tone === "surfaceCard" ? tokens.color.surfaceCard : tone === "surfaceMuted" ? tokens.color.surfaceMuted : color },
+              tone !== "identity" && styles.structuralItemSurface,
+            ]}>
             <Text style={styles.structuralValue}>{indicator.value}</Text>
             {Icon ? <Icon color={tokens.color.entityIconForeground} size={13} strokeWidth={2.2} /> : null}
           </View>
         );
       })}
+    </View>
+  );
+}
+
+export function CompletionIndicators({ completedCount = 0, noteCount = 0, summarized = false }: CompletionIndicatorCounts & { summarized?: boolean }) {
+  if (completedCount <= 0 && noteCount <= 0) return null;
+  const labels = [
+    noteCount > 0 ? `${noteCount} ${noteCount === 1 ? "comida con nota" : "comidas con nota"}` : null,
+    completedCount > 0 ? `${completedCount} ${completedCount === 1 ? "comida cumplida" : "comidas cumplidas"}` : null,
+  ].filter(Boolean).join(", ");
+  if (summarized) {
+    return (
+      <View accessibilityLabel={labels} accessible style={styles.completionIndicators}>
+        {noteCount > 0 ? (
+          <View style={styles.completionIndicatorSummary}>
+            <Text style={styles.completionIndicatorCount}>{noteCount}</Text>
+            <NotebookPen color={tokens.color.textMuted} size={17} strokeWidth={2.1} />
+          </View>
+        ) : null}
+        {completedCount > 0 ? (
+          <View style={styles.completionIndicatorSummary}>
+            <Text style={styles.completionIndicatorCount}>{completedCount}</Text>
+            <CheckCheck color={tokens.color.textMuted} size={19} strokeWidth={2.3} />
+          </View>
+        ) : null}
+      </View>
+    );
+  }
+  return (
+    <View accessibilityLabel={labels} accessible style={styles.completionIndicators}>
+      {Array.from({ length: noteCount }, (_, index) => <NotebookPen color={tokens.color.textMuted} key={`note-${index}`} size={17} strokeWidth={2.1} />)}
+      {Array.from({ length: completedCount }, (_, index) => <Check color={tokens.color.textMuted} key={`check-${index}`} size={18} strokeWidth={2.4} />)}
     </View>
   );
 }
@@ -134,7 +181,9 @@ export function EntityHeading({
   eyebrow,
   subtitle,
   indicators,
+  completion,
   accessory,
+  identityIcon: IdentityIcon,
   variant = "card",
 }: {
   title: string;
@@ -142,7 +191,9 @@ export function EntityHeading({
   eyebrow?: string;
   subtitle?: string;
   indicators?: StructuralIndicator[];
+  completion?: CompletionIndicatorCounts;
   accessory?: ReactNode;
+  identityIcon?: LucideIcon;
   variant?: "card" | "page";
 }) {
   const { width } = useWindowDimensions();
@@ -153,12 +204,17 @@ export function EntityHeading({
     <View style={styles.headingRow}>
       <View style={styles.headingCopy}>
         <View style={styles.entityEyebrowRow}>
-          <EntityIcon entity={entity} size="compact" />
+          {IdentityIcon ? <View style={[styles.entityIcon, styles.entityIconCompact, { backgroundColor: tokens.color[entity] }]}><IdentityIcon color={tokens.color.entityIconForeground} size={11} strokeWidth={2.4} /></View> : <EntityIcon entity={entity} size="compact" />}
           <Text style={styles.eyebrow}>{eyebrow ?? entityLabels[entity]}</Text>
         </View>
         <Text style={[styles.headingTitle, page && { fontSize: pageTitleSize, lineHeight: pageTitleLineHeight }]}>{title}</Text>
         {subtitle ? <Text style={styles.headingSubtitle}>{subtitle}</Text> : null}
-        {indicators ? <StructuralIndicators entity={entity} indicators={indicators} /> : null}
+        {indicators || completion ? (
+          <View style={[styles.headingIndicators, page && styles.headingIndicatorsPage]}>
+            {indicators ? <StructuralIndicators entity={entity} indicators={indicators} /> : null}
+            {completion ? <CompletionIndicators {...completion} summarized={entity === "dailyPlan"} /> : null}
+          </View>
+        ) : null}
       </View>
       {accessory}
     </View>
@@ -171,7 +227,9 @@ export function EntityCard({
   eyebrow,
   subtitle,
   indicators,
+  completion,
   accessory,
+  actions,
   children,
   onPress,
   style,
@@ -181,20 +239,40 @@ export function EntityCard({
   eyebrow?: string;
   subtitle?: string;
   indicators?: StructuralIndicator[];
+  completion?: CompletionIndicatorCounts;
   accessory?: ReactNode;
+  actions?: ReactNode;
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
 }>) {
   const content = (
     <Card accent={tokens.color[entity]} style={[onPress && styles.entityCardInPressable, style]}>
-      <EntityHeading accessory={accessory} entity={entity} eyebrow={eyebrow} indicators={indicators} subtitle={subtitle} title={title} />
+      <EntityHeading accessory={accessory} completion={completion} entity={entity} eyebrow={eyebrow} indicators={indicators} subtitle={subtitle} title={title} />
       {children}
+      {actions ? <EntityCardActions>{actions}</EntityCardActions> : null}
     </Card>
   );
   if (!onPress) return content;
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.entityCardPressable, pressed && styles.pressed]}>
       {content}
+    </Pressable>
+  );
+}
+
+export function EntityCardActions({ children }: PropsWithChildren) {
+  return <View accessibilityLabel="Acciones de la card" style={styles.entityCardActions}>{children}</View>;
+}
+
+export function EntityCardAction({ children, label, onPress, role = "button" }: PropsWithChildren<{ label: string; onPress(): void; role?: "button" | "link" }>) {
+  return (
+    <Pressable
+      accessibilityLabel={label}
+      accessibilityRole={role}
+      hitSlop={8}
+      onPress={onPress}
+      style={({ pressed }) => [styles.entityCardAction, pressed && styles.pressed]}>
+      {children}
     </Pressable>
   );
 }
@@ -327,11 +405,14 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.72 },
   entityCardPressable: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding },
   entityCardInPressable: { marginHorizontal: 0 },
+  entityCardActions: { alignItems: "center", alignSelf: "stretch", flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "flex-end", marginTop: tokens.spacing.sm },
+  entityCardAction: { alignItems: "center", borderRadius: tokens.radius.pill, height: 36, justifyContent: "center", width: 36 },
   headingRow: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md },
   headingCopy: { alignItems: "flex-start", flex: 1, gap: tokens.spacing.xs, minWidth: 0 },
   entityEyebrowRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact },
   entityIcon: { alignItems: "center", borderRadius: 5, height: 22, justifyContent: "center", width: 22 },
   entityIconCompact: { height: 18, width: 18 },
+  entityIconHeader: { borderRadius: 7, height: 28, width: 28 },
   entityIconHero: { borderRadius: tokens.radius.md, height: 40, width: 40 },
   sectionIcon: { alignItems: "center", backgroundColor: "transparent", height: 22, justifyContent: "center", width: 22 },
   sectionIconCompact: { height: 18, width: 18 },
@@ -340,9 +421,15 @@ const styles = StyleSheet.create({
   headingTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: tokens.weight.semibold, letterSpacing: 0, lineHeight: 25 },
   headingSubtitle: { color: tokens.color.textSoft, fontSize: tokens.type.caption, lineHeight: 18 },
   structuralIndicators: { alignItems: "center", alignSelf: "flex-start", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.compact },
+  completionIndicators: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.xs },
+  completionIndicatorCount: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.semibold },
+  completionIndicatorSummary: { alignItems: "center", flexDirection: "row", gap: 3 },
+  headingIndicators: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.sm },
+  headingIndicatorsPage: { marginTop: tokens.spacing.xs },
   structuralItem: { alignItems: "center", borderRadius: tokens.spacing.compact, flexDirection: "row", gap: tokens.spacing.xs, paddingHorizontal: tokens.spacing.sm, paddingVertical: tokens.spacing.xs },
+  structuralItemSurface: { borderColor: tokens.color.borderDefault, borderWidth: 1 },
   structuralValue: { color: tokens.color.entityIconForeground, fontSize: tokens.type.caption, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.medium, letterSpacing: 0, lineHeight: 15 },
-  entityCardPanelSlot: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minWidth: 0 },
+  entityCardPanelSlot: { minWidth: 0 },
   cardHeader: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
   cardHeaderCompact: { gap: tokens.spacing.sm },
   cardHeaderCopy: { flex: 1, gap: tokens.spacing.xs },

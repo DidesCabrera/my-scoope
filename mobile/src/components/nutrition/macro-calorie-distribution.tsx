@@ -28,6 +28,7 @@ const styles = StyleSheet.create({
     backgroundColor: tokens.color.allocationPanelTrack,
     borderRadius: 4,
     flexDirection: "row",
+    gap: 1,
     height: 24,
     minWidth: 0,
     overflow: "hidden",

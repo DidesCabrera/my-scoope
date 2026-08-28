@@ -118,6 +118,7 @@ class AppleTransactionInput(Schema):
 
 class CalendarizationData(Schema):
     id: int
+    source_program_id: int | None = None
     program_name: str
     status: str
     start_date: date
@@ -141,6 +142,8 @@ class AdherenceData(Schema):
     period_end: date
     days: int
     days_with_plan: int
+    scheduled_meals: int
+    elapsed_meals: int
     planned_meals: int
     completed_meals: int
     skipped_meals: int
@@ -219,9 +222,19 @@ class ActiveProgramDay(Schema):
     plan_name: str
 
 
+class ActiveProgramIndicatorData(Schema):
+    icon: Literal["food", "dailyPlan", "week"]
+    label: str
+    value: int | str
+
+
 class ActiveProgramData(Schema):
     calendarization: CalendarizationData | None = None
+    weeks_count: int = 0
+    weeks: list[dict[str, Any]] = Field(default_factory=list)
     days: list[ActiveProgramDay]
+    adherence: AdherenceData | None = None
+    indicators: list[ActiveProgramIndicatorData] = Field(default_factory=list)
 
 
 class ActiveProgramEnvelope(Schema):
@@ -276,6 +289,7 @@ class CalendarizationHistoryEnvelope(Schema):
 
 
 class CalendarizedDayDetailData(ActiveProgramDay):
+    meal_execution: list[MealExecutionData] = Field(default_factory=list)
     plan_snapshot: dict[str, Any] | None = None
 
 
@@ -419,25 +433,6 @@ class ComparisonMetadataEnvelope(Schema):
     error: None = None
 
 
-class ComparisonOptionData(Schema):
-    id: int
-    name: str
-
-
-class ComparisonOptionsData(Schema):
-    items: list[ComparisonOptionData]
-    total: int
-    offset: int
-    limit: int
-    search: str | None = None
-
-
-class ComparisonOptionsEnvelope(Schema):
-    ok: Literal[True] = True
-    data: ComparisonOptionsData
-    error: None = None
-
-
 class ComparisonSelectionInput(Schema):
     id: int = Field(gt=0)
     quantity: float | None = None
@@ -562,7 +557,7 @@ class WeightEnvelope(Schema):
 
 
 class MealCheckInInput(Schema):
-    action: Literal["completed", "skipped", "reset"]
+    action: Literal["completed", "skipped", "reset", "note"]
     idempotency_key: str = Field(min_length=8, max_length=120)
     note: str = Field(default="", max_length=500)
 
@@ -699,6 +694,9 @@ class FoodItem(Schema):
     carbs: float
     fat: float
     total_kcal: float
+    protein_allocation: float
+    carbs_allocation: float
+    fat_allocation: float
     source: str
     is_user_food: bool
     is_verified: bool
@@ -716,6 +714,12 @@ class FoodPageData(Schema):
 class FoodPageEnvelope(Schema):
     ok: Literal[True] = True
     data: FoodPageData
+    error: None = None
+
+
+class FoodItemEnvelope(Schema):
+    ok: Literal[True] = True
+    data: FoodItem
     error: None = None
 
 
@@ -746,6 +750,7 @@ class LibraryCalorieDistributionData(Schema):
 
 class LibraryFoodPanelItemData(Schema):
     id: str
+    relation_id: int | None = None
     name: str
     quantity: float
     quantity_unit: str
@@ -762,14 +767,17 @@ class LibraryFoodPanelItemData(Schema):
 
 class LibraryMealPanelItemData(Schema):
     id: str
+    relation_id: int | None = None
     detail_id: int
     name: str
     time: str | None = None
+    note: str = ""
     foods: list[LibraryFoodPanelItemData]
     calories: float
     calorie_share: float
     calorie_distribution: LibraryCalorieDistributionData
     protein_grams: float
+    protein_per_kilogram: float | None = None
     carbs_grams: float
     fat_grams: float
     protein_allocation: float
@@ -779,6 +787,7 @@ class LibraryMealPanelItemData(Schema):
 
 class LibraryWeekDayData(Schema):
     id: str
+    program_day_id: int | None = None
     day_number: int
     day_label: str
     dailyplan_id: int | None = None
@@ -814,6 +823,23 @@ class LibraryPanelData(Schema):
     weeks: list[LibraryWeekPanelItemData] = Field(default_factory=list)
 
 
+class LibraryActionData(Schema):
+    key: Literal["rename", "duplicate", "share", "delete"]
+    label: str
+    destructive: bool = False
+
+
+class FoodCreateInput(Schema):
+    name: str = Field(min_length=1, max_length=100)
+    protein: float = Field(ge=0, le=100)
+    carbs: float = Field(ge=0, le=100)
+    fat: float = Field(ge=0, le=100)
+
+
+class NamedLibraryCreateInput(Schema):
+    name: str = Field(min_length=1, max_length=100)
+
+
 class LibraryItemData(Schema):
     id: int
     entity: Literal["food", "meal", "dailyPlan", "program"]
@@ -824,7 +850,35 @@ class LibraryItemData(Schema):
     panel: LibraryPanelData
     creator: str
     created_at: datetime
+    is_draft: bool = False
     can_calendarize: bool = False
+    actions: list[LibraryActionData] = Field(default_factory=list)
+
+
+class ComparisonOptionData(Schema):
+    """Visual contract required to render an entity card in a comparison picker."""
+
+    id: int
+    entity: Literal["food", "meal", "dailyPlan"]
+    name: str
+    subtitle: str
+    nutrition: LibraryNutritionData
+    indicators: list[LibraryIndicatorData]
+    panel: LibraryPanelData
+
+
+class ComparisonOptionsData(Schema):
+    items: list[ComparisonOptionData]
+    total: int
+    offset: int
+    limit: int
+    search: str | None = None
+
+
+class ComparisonOptionsEnvelope(Schema):
+    ok: Literal[True] = True
+    data: ComparisonOptionsData
+    error: None = None
 
 
 class LibraryPageData(Schema):
@@ -844,6 +898,138 @@ class LibraryPageEnvelope(Schema):
 class LibraryItemEnvelope(Schema):
     ok: Literal[True] = True
     data: LibraryItemData
+    error: None = None
+
+
+class FoodPickerInput(Schema):
+    food_id: int = Field(gt=0)
+    quantity: float = Field(gt=0, le=100000)
+
+
+class MealPickerInput(Schema):
+    meal_id: int = Field(gt=0)
+    dailyplan_meal_id: int | None = Field(default=None, gt=0)
+    hour: time | None = None
+    note: str = Field(default="", max_length=500)
+
+
+class CompositionOrderInput(Schema):
+    ordered_ids: list[int] = Field(min_length=1)
+
+
+class MealFoodUpdateInput(Schema):
+    quantity: float = Field(gt=0, le=100000)
+
+
+class DailyPlanMealUpdateInput(Schema):
+    hour: time | None = None
+    note: str = Field(default="", max_length=500)
+
+
+class CompositionMutationData(Schema):
+    message: str
+    target_id: int
+    affected_id: int
+
+
+class CompositionMutationEnvelope(Schema):
+    ok: Literal[True] = True
+    data: CompositionMutationData
+    error: None = None
+
+
+class DailyPlanPickerInput(Schema):
+    dailyplan_id: int = Field(gt=0)
+    week_number: int = Field(gt=0)
+    day_numbers: list[int] = Field(min_length=1, max_length=7)
+    confirm_replacements: bool = False
+
+
+class PickerSelectionData(Schema):
+    id: int
+    entity: Literal["food", "meal", "dailyPlan", "week"]
+    name: str
+    nutrition: LibraryNutritionData | None = None
+    quantity: float | None = None
+    hour: str | None = None
+
+
+class PickerMetricData(Schema):
+    label: str
+    before: float
+    after: float
+
+
+class PickerImpactData(Schema):
+    label: str
+    entity: Literal["meal", "dailyPlan", "week", "program"]
+    before: LibraryNutritionData
+    after: LibraryNutritionData
+    metrics: list[PickerMetricData] = Field(default_factory=list)
+
+
+class PickerPreviewData(Schema):
+    selection: PickerSelectionData
+    impacts: list[PickerImpactData]
+    replacements: list[str] = Field(default_factory=list)
+    confirmation_required: bool = False
+
+
+class PickerPreviewEnvelope(Schema):
+    ok: Literal[True] = True
+    data: PickerPreviewData
+    error: None = None
+
+
+class PickerCommitData(Schema):
+    message: str
+    target_id: int
+    created_id: int
+
+
+class PickerCommitEnvelope(Schema):
+    ok: Literal[True] = True
+    data: PickerCommitData
+    error: None = None
+
+
+class LibraryActionInput(Schema):
+    action: Literal["rename", "duplicate", "share", "delete"]
+    name: str = Field(default="", max_length=100)
+    recipient_email: str = Field(default="", max_length=254)
+    subject: str = Field(default="", max_length=160)
+    message: str = Field(default="", max_length=2000)
+
+
+class LibraryActionResultData(Schema):
+    action: Literal["rename", "duplicate", "share", "delete"]
+    item_id: int
+    message: str
+
+
+class LibraryActionResultEnvelope(Schema):
+    ok: Literal[True] = True
+    data: LibraryActionResultData
+    error: None = None
+
+
+class LibraryOrderInput(Schema):
+    ordered_ids: list[int] = Field(min_length=1)
+
+
+class LibraryBulkDeleteInput(Schema):
+    item_ids: list[int] = Field(min_length=1)
+
+
+class LibraryListActionResultData(Schema):
+    affected_ids: list[int]
+    skipped_ids: list[int] = Field(default_factory=list)
+    message: str
+
+
+class LibraryListActionResultEnvelope(Schema):
+    ok: Literal[True] = True
+    data: LibraryListActionResultData
     error: None = None
 
 
@@ -976,7 +1162,13 @@ class AIChatGeneratedPlanCardData(Schema):
     items: list[AIChatCardItemData] = Field(default_factory=list)
 
 
-AIChatCardData = AIChatDraftCardData | AIChatProposalCardData | AIChatComparisonCardData | AIChatPreparedActionCardData | AIChatGeneratedPlanCardData
+AIChatCardData = (
+    AIChatDraftCardData
+    | AIChatProposalCardData
+    | AIChatComparisonCardData
+    | AIChatPreparedActionCardData
+    | AIChatGeneratedPlanCardData
+)
 
 
 class AIChatMessageData(Schema):

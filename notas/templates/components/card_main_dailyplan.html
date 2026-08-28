@@ -6,8 +6,6 @@
         
         <div class="page-kpi">
 
-            <h3>Información Nutricional</h3>
-
             <div class="card-kpi main">
                 {% include "components/dash_kpi.html" with kpis=main_card.kpis %}
             </div>
@@ -16,7 +14,7 @@
 
     <!-- TABLE ========================================= -->
     <div class="detail-section dailyplan">
-        <h3>Comidas en este Plan</h3>
+        <h3>Tabla de comparación entre comidas</h3>
         {% with panel_id=main_card.main_id|default:"main-dailyplan" %}
             <div class="content-panel content-panel--main card-detail-block main">
                 {% include "components/detail_tabs_meals.html" with panel_id=panel_id %}

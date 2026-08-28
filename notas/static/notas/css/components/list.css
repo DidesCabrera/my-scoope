@@ -7,6 +7,7 @@
 .dailyplan-detail__children-list {
     display: flex;
     flex-direction: column;
+    gap: 16px;
     margin-top: 12px;
 }
 
@@ -26,87 +27,12 @@
 }
 
 
-/* =========================================================
-   DailyPlan meal sequence marker
-   ========================================================= */
-
-   .dailyplan-detail__meal-step {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  
-  .dailyplan-detail__meal-step + .dailyplan-detail__meal-step {
-    margin-top: -10px;
-  }
-  
-  .dailyplan-detail__meal-step-marker {
-    position: relative;
-  
-    display: flex;
-    align-items: center;
-  
-    min-height: 28px;
-    width: 100%;
+.dailyplan-detail__meal-step {
     scroll-margin-top: calc(var(--header-height, 40px) + 16px);
-  }
-  
-  .dailyplan-detail__meal-step-line {
-    display: block;
-    width: 100%;
-    height: 1px;
-  
-    background: var(--panel-row-separator);
-  }
-  
-  .dailyplan-detail__meal-step-number {
-    position: absolute;
-    left: 0;
-  
-    width: 28px;
-    height: 28px;
-  
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  
-    border-radius: 999px;
-  
-    background: var(--surface-card);
-    border: 1px solid var(--panel-row-separator);
-    color: var(--text-muted);
-  
-    font-size: 13px;
-    font-weight: 600;
-    line-height: 1;
-  }
-  
-  /* Desktop: alinear visualmente con el ancho de la card */
-  @media (min-width: 769px) {
-    .dailyplan-detail__meal-step-marker {
-      padding-right: 0px;
-    }
-  }
+}
   
   /* Mobile: un poco más compacto */
   @media (max-width: 768px) {
-    .dailyplan-detail__meal-step + .dailyplan-detail__meal-step {
-      margin-top: -10px;
-    }
-  
-    .dailyplan-detail__meal-step-marker {
-      min-height: 36px;
-      padding-right: 6px;
-      padding-left: 4px;
-    }
-  
-    .dailyplan-detail__meal-step-number {
-      width: 36px;
-      height: 36px;
-      font-size: 18px;
-      margin-left: 4px;
-    }
-
     .dailyplan-detail {
       padding: 0 var(--mobil-padding-lats);
     }

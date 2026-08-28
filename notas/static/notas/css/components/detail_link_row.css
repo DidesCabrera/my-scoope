@@ -1,0 +1,6 @@
+.detail-link-row{align-items:center;background:var(--surface-card-muted);border:1px solid var(--border-soft);border-radius:var(--radius-lg);display:flex;justify-content:space-between;min-height:48px;padding:4px 4px 4px var(--space-md)}
+.detail-link-row--standalone{margin-inline:-4px;width:calc(100% + 8px)}
+.detail-link-row>span{color:var(--text-main);font-size:var(--font-size-caption);font-weight:var(--font-weight-semibold)}
+.detail-link-row>a{align-items:center;border-radius:var(--radius-md);color:var(--text-main);display:inline-flex;height:40px;justify-content:center;width:40px}
+.detail-link-row>a:hover{background:var(--border-soft)}
+.detail-link-row svg{height:22px;width:22px}

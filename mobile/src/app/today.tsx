@@ -3,10 +3,14 @@ import { useCallback, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
-import type { MealSnapshot, ProposalListData, TodayData } from "@/api/types";
+import type { ActiveProgramData, ProposalListData, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
-import { MacroSummary } from "@/components/nutrition";
-import { AppHeader, Button, Card, InlineNotice, LoadingState, Pill, ProgressBar, Screen, SectionTitle, textStyles } from "@/components/ui";
+import { CalendarizedDailyPlanCard } from "@/components/calendarization/calendarized-daily-plan-card";
+import { CurrentWeekSection } from "@/components/calendarization/current-week-section";
+import { HomeActions } from "@/components/home-actions";
+import { useHeaderPresentation } from "@/components/navigation/app-navigation";
+import { ProgramActiveHomeOverview } from "@/components/programs/program-active-card";
+import { AppHeader, Button, Card, InlineNotice, LoadingState, Pill, Screen, SectionTitle, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { syncNativeReminders } from "@/notifications/native-reminders";
 
@@ -16,39 +20,28 @@ function displayDate(value: string): string {
   );
 }
 
-function MealCard({ meal }: { meal: MealSnapshot }) {
-  return (
-    <Card muted style={styles.mealCard}>
-      <View style={styles.mealHeader}>
-        <View style={styles.mealCopy}>
-          <Text style={styles.mealName}>{meal.name ?? "Comida"}</Text>
-          <Text style={textStyles.caption}>{meal.foods?.length ?? 0} alimentos</Text>
-        </View>
-        {meal.hour ? <Pill color={tokens.color.meal} label={meal.hour} /> : null}
-      </View>
-      <View style={styles.miniMacros}>
-        <Text style={[styles.miniMacro, { color: tokens.color.protein }]}>P {Math.round(meal.totals?.protein_g ?? 0)} g</Text>
-        <Text style={[styles.miniMacro, { color: tokens.color.carbs }]}>C {Math.round(meal.totals?.carbs_g ?? 0)} g</Text>
-        <Text style={[styles.miniMacro, { color: tokens.color.fat }]}>G {Math.round(meal.totals?.fat_g ?? 0)} g</Text>
-      </View>
-    </Card>
-  );
-}
-
 export default function TodayScreen() {
   const router = useRouter();
   const { status, session, profile, apiRequest } = useSession();
   const [today, setToday] = useState<TodayData | null>(null);
+  const [activeProgram, setActiveProgram] = useState<ActiveProgramData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [homeActionsVisible, setHomeActionsVisible] = useState(false);
   const [pendingProposalCount, setPendingProposalCount] = useState(0);
+  const setHeaderPresentation = useHeaderPresentation();
+  const openHomeActions = useCallback(() => setHomeActionsVisible(true), []);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const nextToday = await apiRequest<TodayData>("/api/v1/today");
+      const [nextToday, nextProgram] = await Promise.all([
+        apiRequest<TodayData>("/api/v1/today"),
+        apiRequest<ActiveProgramData>("/api/v1/program/active"),
+      ]);
       setToday(nextToday);
+      setActiveProgram(nextProgram);
       void apiRequest<ProposalListData>("/api/v1/proposals?status=pending_review&limit=1")
         .then((page) => setPendingProposalCount(page.pending_count))
         .catch(() => undefined);
@@ -68,33 +61,43 @@ export default function TodayScreen() {
     }, [load]),
   );
 
+  useFocusEffect(useCallback(() => {
+    setHeaderPresentation({ action: { label: "Acciones de inicio", onPress: openHomeActions }, mode: "default" });
+    return () => setHeaderPresentation({ mode: "default" });
+  }, [openHomeActions, setHeaderPresentation]));
+
   if (status === "anonymous") return <Redirect href="/login" />;
   if (status === "authenticated" && profile?.review_disclosure_required) return <Redirect href="./disclosures" />;
   if (status === "authenticated" && !profile?.onboarding_completed) return <Redirect href="/onboarding" />;
   if (loading && !today) return <LoadingState />;
 
   const snapshot = today?.plan_snapshot;
-  const meals = snapshot?.meals ?? [];
+  const todayProgramDay = activeProgram?.days.find((day) => day.id === today?.day_id);
   const firstName = session?.display_name.split(" ")[0] || session?.username || "Atleta";
 
   return (
-    <Screen>
+    <>
+      <Screen headerMode="preserve">
       <AppHeader eyebrow={today ? displayDate(today.local_date) : "Hoy"} title={`Vamos, ${firstName}`} />
-      {error ? (
-        <InlineNotice tone="error">{error}</InlineNotice>
-      ) : null}
-      {today?.calendarization ? (
-        <Card accent={tokens.color.program}>
-          <View style={styles.programHeader}>
-            <View style={styles.programCopy}>
-              <Text style={styles.programName}>{today.calendarization.program_name}</Text>
-              <Text style={textStyles.caption}>Día {today.calendarization.progress_day} de {today.calendarization.progress_total_days}</Text>
-            </View>
-            <Pill color={tokens.color.program} label={`${today.calendarization.progress_percent}%`} />
-          </View>
-          <ProgressBar value={today.calendarization.progress_percent} />
-          <Button label="Abrir mi programa" onPress={() => router.push("/program" as Href)} variant="secondary" />
+      {today ? <CurrentWeekSection localDate={today.local_date} /> : null}
+
+      {today?.has_plan && snapshot ? (
+        <CalendarizedDailyPlanCard
+          dayId={today.day_id}
+          eyebrow="PLAN DE HOY"
+          mealExecution={today.meal_execution}
+          position={todayProgramDay ? { dayNumber: todayProgramDay.day_number, weekNumber: todayProgramDay.week_number } : undefined}
+          snapshot={snapshot}
+        />
+      ) : (
+        <Card muted>
+          <SectionTitle title="Día sin plan" />
+          <Text style={textStyles.muted}>Tu calendarización no tiene un plan nutricional previsto para esta fecha.</Text>
         </Card>
+      )}
+
+      {activeProgram?.calendarization ? (
+        <ProgramActiveHomeOverview calendarization={activeProgram.calendarization} program={activeProgram} />
       ) : (
         <Card accent={tokens.color.program}>
           <SectionTitle title="Aún no hay programa activo" />
@@ -103,24 +106,8 @@ export default function TodayScreen() {
         </Card>
       )}
 
-      {today?.adherence ? (
-        <Card accent={tokens.color.success}>
-          <View style={styles.programHeader}>
-            <View style={styles.programCopy}>
-              <Text style={styles.planLabel}>ÚLTIMOS {today.adherence.days} DÍAS</Text>
-              <Text style={styles.planName}>{today.adherence.adherence_percent}% de adherencia</Text>
-            </View>
-            <Pill
-              color={tokens.color.success}
-              label={`${today.adherence.completed_meals}/${today.adherence.planned_meals}`}
-            />
-          </View>
-          <ProgressBar value={today.adherence.adherence_percent} />
-          <Text style={textStyles.caption}>
-            {today.adherence.skipped_meals} omitidas · {today.adherence.unrecorded_meals} aún sin registrar
-          </Text>
-          <Button label="Registrar revisión" onPress={() => router.push("./review")} variant="secondary" />
-        </Card>
+      {error ? (
+        <InlineNotice tone="error">{error}</InlineNotice>
       ) : null}
 
       {today?.measurements?.latest_weight_kg != null ? (
@@ -154,52 +141,18 @@ export default function TodayScreen() {
         </Card>
       ) : null}
 
-      {today?.has_plan && snapshot ? (
-        <>
-          <Card accent={tokens.color.dailyPlan}>
-            <View style={styles.planHeader}>
-              <View style={styles.programCopy}>
-                <Text style={styles.planLabel}>PLAN DE HOY</Text>
-                <Text style={styles.planName}>{snapshot.name ?? "Plan diario"}</Text>
-              </View>
-              <Pill color={tokens.color.dailyPlan} label={`${meals.length} comidas`} />
-            </View>
-            <MacroSummary totals={snapshot.totals} />
-          </Card>
-          <SectionTitle detail="Horario local" title="Comidas previstas" />
-          {meals.map((meal, index) => <MealCard key={meal.key ?? `${meal.name}-${index}`} meal={meal} />)}
-          <Button label="Abrir check-in del día" onPress={() => router.push("/check-in")} />
-        </>
-      ) : (
-        <Card muted>
-          <SectionTitle title="Día sin plan" />
-          <Text style={textStyles.muted}>Tu calendarización no tiene un plan nutricional previsto para esta fecha.</Text>
-        </Card>
-      )}
-      <Button label="Registrar peso" onPress={() => router.push("/weight")} variant="secondary" />
-      <Button label="Digitalizar etiqueta nutricional" onPress={() => router.push("./label-capture")} variant="secondary" />
-      <Button label="Mi suscripción" onPress={() => router.push("./subscription")} variant="secondary" />
-      <Button label="Cuenta, privacidad y ayuda" onPress={() => router.push("./account")} variant="secondary" />
-      {today?.reminders ? (
-        <Button label="Configurar recordatorios" onPress={() => router.push("./reminders")} variant="secondary" />
-      ) : null}
-    </Screen>
+      </Screen>
+      <HomeActions
+        onCaptureLabel={() => router.push("/label-capture")}
+        onClose={() => setHomeActionsVisible(false)}
+        onRegisterWeight={() => router.push("/weight")}
+        visible={homeActionsVisible}
+      />
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  programHeader: { alignItems: "flex-start", flexDirection: "row", justifyContent: "space-between" },
-  programCopy: { flex: 1, gap: 4 },
-  programName: { color: tokens.color.textMain, fontSize: 18, fontWeight: "800" },
-  planHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
-  planLabel: { color: tokens.color.dailyPlan, fontSize: 11, fontWeight: "900", letterSpacing: 1.2 },
-  planName: { color: tokens.color.textMain, fontSize: 22, fontWeight: "800" },
-  mealCard: { borderLeftColor: tokens.color.meal, borderLeftWidth: 3 },
-  mealHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
-  mealCopy: { gap: 3 },
-  mealName: { color: tokens.color.textMain, fontSize: 17, fontWeight: "800" },
-  miniMacros: { flexDirection: "row", gap: 15 },
-  miniMacro: { fontSize: 12, fontWeight: "800" },
   measurementRow: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
   measurementValue: { color: tokens.color.textMain, fontSize: 28, fontWeight: "900", fontVariant: ["tabular-nums"] },
 });

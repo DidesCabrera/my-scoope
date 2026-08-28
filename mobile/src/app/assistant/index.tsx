@@ -5,8 +5,9 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { userFacingError } from "@/api/errors";
 import type { AIChatListData, AIChatSummary } from "@/api/types";
 import { useSession } from "@/auth/session-context";
+import { SectionPageHeader } from "@/components/ui";
 import { EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
-import { AppHeader, Button, Card, InlineNotice, LoadingState, Pill, Screen, textStyles } from "@/components/ui/primitives";
+import { Button, Card, InlineNotice, LoadingState, Pill, Screen, textStyles } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
 
 function ChatCard({ chat, onPress }: { chat: AIChatSummary; onPress(): void }) {
@@ -45,7 +46,7 @@ export default function AssistantHistoryScreen() {
   if (loading && !page) return <LoadingState label="Abriendo tus conversaciones…" />;
   return (
     <Screen>
-      <AppHeader eyebrow="Conversaciones nutricionales" title="Asistente AI" />
+      <SectionPageHeader count={page?.total} countLabel="conversaciones" section="chat" title="Asistente AI" />
       {page?.availability ? <InlineNotice>{page.availability.available_credits} créditos disponibles · {page.availability.label}</InlineNotice> : null}
       {page?.pending_new_turn ? <InlineNotice tone="warning">Hay una conversación nueva procesándose. Ábrela para recuperar su resultado.</InlineNotice> : null}
       <Button disabled={!page?.availability.is_available} label="Nuevo chat" onPress={() => router.push("/assistant/new" as Href)} />

@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 
 import { tokens } from "@/design/tokens";
 
@@ -13,10 +13,14 @@ function formattedValue(value: number): string {
 export function ProteinPerKilogramBadge({
   value,
   density = "regular",
+  showUnit = true,
+  style,
   textSize = 13,
 }: {
   value: number;
   density?: "compact" | "regular";
+  showUnit?: boolean;
+  style?: StyleProp<ViewStyle>;
   textSize?: 12 | 13;
 }) {
   const compact = density === "compact";
@@ -24,11 +28,11 @@ export function ProteinPerKilogramBadge({
     <View
       accessibilityLabel={`Proteína por kilogramo: ${formattedValue(value)} gramos por kilogramo`}
       accessible
-      style={[styles.badge, compact && styles.badgeCompact]}>
+      style={[styles.badge, compact && styles.badgeCompact, style]}>
       <Text
         numberOfLines={1}
         style={[styles.text, { fontSize: textSize }]}>
-        {formattedValue(value)} g/kg
+        {formattedValue(value)}{showUnit ? " g/kg" : ""}
       </Text>
     </View>
   );

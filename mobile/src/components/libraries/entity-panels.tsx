@@ -1,16 +1,17 @@
 import { type Href, useRouter } from "expo-router";
-import { ChevronRight } from "lucide-react-native";
+import { ChevronRight, Trash2 } from "lucide-react-native";
 import { useState } from "react";
-import { Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from "react-native";
+import { type StyleProp, StyleSheet, Text, View, type ViewStyle } from "react-native";
 
 import type { LibraryFoodPanelItem, LibraryMealPanelItem, LibraryWeekPanelItem } from "@/api/types";
 import { PanelAllocationBar } from "@/components/nutrition/allocation-bar";
 import { CalorieDistributionBar } from "@/components/nutrition/calorie-distribution-bar";
 import { NutritionEntityCard } from "@/components/nutrition/nutrition-entity-card";
-import { EntityIcon } from "@/components/ui";
+import { EntityCardAction, EntityIcon } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
-import { EntityPanelTabs, PanelBody, PanelEmptyState, PanelSurface } from "./panel-surface";
+import { EntityPanelTabs, PanelBody, PanelEmptyState, PanelSurface } from "@/components/panels/panel-surface";
+import { ContextCardActions, type ContextCardAction } from "./context-card-actions";
 
 type PanelNutritionItem = {
   id: string;
@@ -60,7 +61,7 @@ function PanelItemName({ item, meal = false, style }: { item: PanelNutritionItem
           <EntityIcon entity="meal" size="compact" />
           <Text numberOfLines={2} style={styles.mealIdentityName}>{item.name}</Text>
         </View>
-      ) : <Text numberOfLines={2} style={[styles.cell, styles.name]}>{item.name}</Text>}
+      ) : <Text numberOfLines={2} style={styles.itemName}>{item.name}</Text>}
     </View>
   );
 }
@@ -147,36 +148,44 @@ export function MealPanels({ items }: { items: LibraryMealPanelItem[] }) {
   );
 }
 
-export function DailyPlanMealCards({ items }: { items: LibraryMealPanelItem[] }) {
+export function DailyPlanMealCards({ items, onRemove }: { items: LibraryMealPanelItem[]; onRemove?: (item: LibraryMealPanelItem) => Promise<void> }) {
   const router = useRouter();
   return (
     <View style={styles.mealCardList}>
       {items.map((item, index) => (
-        <View key={item.id} style={styles.mealCardStep}>
-          <View aria-hidden style={styles.mealCardMarker}>
-            <View style={styles.mealCardLine} />
-            <View style={styles.mealCardNumber}><Text style={styles.mealCardNumberText}>{index + 1}</Text></View>
-          </View>
+        <View key={item.id}>
           <NutritionEntityCard
+            actions={<>
+              {onRemove ? <ContextCardActions
+                actions={[{
+                  confirmation: {
+                    confirmLabel: "Quitar comida",
+                    message: "Se quitará esta comida del plan diario. La comida seguirá disponible en tu biblioteca.",
+                    title: "¿Quitar comida?",
+                  },
+                  destructive: true,
+                  icon: Trash2,
+                  key: "remove",
+                  label: "Quitar comida",
+                  onPress: () => onRemove(item),
+                }] satisfies ContextCardAction[]}
+                label={`Más acciones para ${item.name}`}
+                title={item.name}
+              /> : null}
+              <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={() => router.push(`/libraries/meals/${item.detail_id}` as Href)} role="link"><ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction>
+            </>}
             entity="meal"
+            eyebrow={`Comida ${index + 1}`}
             indicators={[{ icon: "food", label: "alimentos", value: item.foods.length }]}
             nutrition={{
               calories: item.calories,
-              protein: { grams: item.protein_grams, allocation: item.protein_allocation, perKilogram: null },
+              protein: { grams: item.protein_grams, allocation: item.protein_allocation, perKilogram: item.protein_per_kilogram },
               carbs: { grams: item.carbs_grams, allocation: item.carbs_allocation },
               fat: { grams: item.fat_grams, allocation: item.fat_allocation },
             }}
             subtitle={item.time ? item.time.slice(0, 5) : undefined}
             title={item.name}>
             <FoodPanels items={item.foods} />
-            <Pressable
-              accessibilityLabel={`Ver detalle de ${item.name}`}
-              accessibilityRole="button"
-              hitSlop={8}
-              onPress={() => router.push(`/libraries/meals/${item.detail_id}` as Href)}
-              style={({ pressed }) => [styles.mealDetailButton, pressed && styles.pressed]}>
-              <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
-            </Pressable>
           </NutritionEntityCard>
         </View>
       ))}
@@ -206,6 +215,7 @@ const styles = StyleSheet.create({
   headerText: { color: tokens.color.textMuted, fontSize: 10, fontWeight: "600", textAlign: "center", textTransform: "uppercase" },
   cell: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: "400" },
   name: { flex: 1, minWidth: 0, paddingHorizontal: tokens.spacing.xs, textAlign: "left" },
+  itemName: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: "400", lineHeight: 18, paddingHorizontal: tokens.spacing.xs, textAlign: "left" },
   quantityValue: { textAlign: "right", width: 88 },
   macrosLeadingCell: { alignSelf: "stretch", flex: 1.35, justifyContent: "center", minWidth: 0 },
   macroCell: { flex: 0.42, minWidth: 0, textAlign: "center" },
@@ -214,7 +224,7 @@ const styles = StyleSheet.create({
   caloriesLeadingCell: { alignSelf: "stretch", flex: 1.6, justifyContent: "center", minWidth: 0 },
   calorieValueCell: { flex: 0.62, minWidth: 0, textAlign: "center" },
   calorieShareCell: { flex: 1, minWidth: 0 },
-  allocationRow: { gap: 6 },
+  allocationRow: { gap: tokens.spacing.sm },
   allocationLeadingCell: { alignSelf: "stretch", flex: 1.6, justifyContent: "center", minWidth: 0 },
   allocationCell: { flex: 1, minWidth: 0, width: "auto" },
   mealIdentity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0, paddingHorizontal: tokens.spacing.xs },
@@ -224,12 +234,6 @@ const styles = StyleSheet.create({
   menuTime: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"], paddingHorizontal: tokens.spacing.xs },
   menuFoods: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 20, opacity: 0.82, paddingHorizontal: tokens.spacing.xs },
   mealCardList: { gap: tokens.spacing.lg, minWidth: 0, width: "100%" },
-  mealCardStep: { gap: tokens.spacing.sm, minWidth: 0 },
-  mealCardMarker: { alignItems: "center", height: 36, justifyContent: "center", paddingHorizontal: tokens.spacing.xs, position: "relative", width: "100%" },
-  mealCardLine: { backgroundColor: tokens.color.borderDefault, height: 1, width: "100%" },
-  mealCardNumber: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, height: 36, justifyContent: "center", left: tokens.spacing.xs, position: "absolute", width: 36, zIndex: 1 },
-  mealCardNumberText: { color: tokens.color.textMuted, fontSize: 18, fontVariant: ["tabular-nums"], fontWeight: "600" },
-  mealDetailButton: { alignItems: "center", alignSelf: "flex-end", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, height: 36, justifyContent: "center", width: 36 },
   pressed: { opacity: 0.6 },
   weekRow: { borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, gap: tokens.spacing.xs, padding: tokens.spacing.md },
   weekTitle: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: "600", marginBottom: tokens.spacing.xs },

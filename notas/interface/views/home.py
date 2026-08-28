@@ -46,14 +46,12 @@ class HomeContentVM:
     calendarization: HomeCalendarizationVM
 
 
-
 @login_required
 def home_view(request):
     user = request.user
 
     dailyplans_qs = (
-        DailyPlan.objects
-        .filter(
+        DailyPlan.objects.filter(
             created_by=user,
             is_draft=False,
         )
@@ -61,24 +59,16 @@ def home_view(request):
         .order_by("-created_at")
     )
 
-    meals_qs = (
-        Meal.objects
-        .filter(
-            created_by=user,
-            is_draft=False,
-            dailyplanmeal__isnull=True,
-        )
-        .distinct()
-    )
+    meals_qs = Meal.objects.filter(
+        created_by=user,
+        is_draft=False,
+        dailyplanmeal__isnull=True,
+    ).distinct()
 
-    foods_qs = (
-        Food.objects
-        .filter(
-            created_by=user,
-            is_active=True,
-        )
-        .order_by("list_order", "name", "id")
-    )
+    foods_qs = Food.objects.filter(
+        created_by=user,
+        is_active=True,
+    ).order_by("list_order", "name", "id")
 
     programs_count = Program.objects.filter(created_by=user).count()
     dailyplans_count = dailyplans_qs.count()
@@ -104,8 +94,7 @@ def home_view(request):
         hero=HomeHeroVM(
             title=f"Bienvenido {user.username}!",
             subtitle=(
-                "Organiza planes diarios, comidas y alimentos en un solo lugar. "
-                "Este es tu resumen de trabajo actual."
+                "Organiza planes diarios, comidas y alimentos en un solo lugar. Este es tu resumen de trabajo actual."
             ),
         ),
         stats=[
@@ -134,7 +123,7 @@ def home_view(request):
                 url=reverse("food_list"),
             ),
         ],
-        calendarization=build_home_calendarization_vm(user, request_get=request.GET),
+        calendarization=build_home_calendarization_vm(user),
     )
 
     ui_vm = build_ui_vm(HOME_VIEWMODE)

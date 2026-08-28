@@ -12,7 +12,7 @@ La app requiere inicio de sesión. Las credenciales de la cuenta de demostració
 
 1. Iniciar sesión y aceptar la pantalla de transparencia.
 2. En **Hoy**, revisar el programa activo, las comidas previstas y sus macros.
-3. Abrir **check-in del día** y registrar el estado de una comida.
+3. En **Plan de hoy**, abrir el detalle de una comida y marcar su cumplimiento.
 4. Abrir **Registrar peso** y guardar una medición.
 5. Abrir **Digitalizar etiqueta nutricional**. El OCR usa Apple Vision en el dispositivo; la foto y el texto crudo no se envían al servidor. Solo se guarda el alimento privado después de confirmar los valores.
 6. Abrir **Mi suscripción** para probar compra/restauración en Sandbox.

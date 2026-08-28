@@ -4,14 +4,17 @@
   {% if dailyplan_card_role %}role="{{ dailyplan_card_role }}"{% endif %}
   {% if dailyplan_card_hidden %}hidden{% endif %}
   {% if dailyplan_card_labelledby %}aria-labelledby="{{ dailyplan_card_labelledby }}"{% endif %}
-  {% if dailyplan_card_data_home %}data-home-calendar-plan-card{% endif %}
 >
 
   <!-- HEADER CARD ========================================= -->
   <!-- ===================================================== -->
   <div class="entity-card__main card-main">
     <div class="entity-card__title card-title">
-      {% include "components//card_child_title.html" with titulo=child_card.titulo %}
+      {% if calendarized_day %}
+        {% include "components//card_child_title.html" with titulo=child_card.titulo completed_count=calendarized_day.completed_meals_count note_count=calendarized_day.noted_meals_count completion_summarized=True %}
+      {% else %}
+        {% include "components//card_child_title.html" with titulo=child_card.titulo %}
+      {% endif %}
     </div>
 
     <div class="entity-card__kpi card-kpi">
@@ -33,7 +36,7 @@
         {% endif %}
       >
         {% include "components/detail_tabs_meals.html" with panel_id=panel_id show_hide_tab=True %}
-        {% include "components/detail_panels_meals.html" with panel_id=panel_id menu=child_card.menu items=child_card.table.items %}
+        {% include "components/detail_panels_meals.html" with panel_id=panel_id menu=child_card.menu items=child_card.table.items calendarized_day=calendarized_day calendarized_meals=calendarized_day.calendarized_meals %}
       </div>
     {% endwith %}
   {% else %}
@@ -49,7 +52,7 @@
         {% endif %}
       >
         {% include "components/detail_tabs_meals.html" with panel_id=panel_id show_hide_tab=True %}
-        {% include "components/detail_panels_meals.html" with panel_id=panel_id menu=child_card.menu items=child_card.table.items %}
+        {% include "components/detail_panels_meals.html" with panel_id=panel_id menu=child_card.menu items=child_card.table.items calendarized_day=calendarized_day calendarized_meals=calendarized_day.calendarized_meals %}
       </div>
     {% endwith %}
   {% endif %}

@@ -136,6 +136,8 @@ class AiNutritionChatHistoryTests(TestCase):
 
         list_response = self.client.get(reverse("ai_nutrition_chat_list"))
         self.assertEqual(list_response.status_code, 200)
+        self.assertContains(list_response, "list-page-header--stacked")
+        self.assertNotContains(list_response, "list-page-header__eyebrow")
         self.assertContains(list_response, "Chats")
         self.assertContains(list_response, chat.title)
 

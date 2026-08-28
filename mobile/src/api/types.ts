@@ -33,6 +33,7 @@ export type AccountDeletionData = { receipt_id: string };
 
 export type CalendarizationData = {
   id: number;
+  source_program_id: number | null;
   program_name: string;
   status: CalendarizationStatus;
   start_date: string;
@@ -56,7 +57,11 @@ export type ActiveProgramDay = {
 
 export type ActiveProgramData = {
   calendarization: CalendarizationData | null;
+  weeks_count: number;
+  weeks: LibraryWeekPanelItem[];
   days: ActiveProgramDay[];
+  adherence: AdherenceSummary | null;
+  indicators: { icon: "food" | "dailyPlan" | "week"; label: string; value: number | string }[];
 };
 
 export type CalendarizationActivationInput = {
@@ -93,6 +98,7 @@ export type CalendarizationHistoryData = {
 };
 
 export type CalendarizedDayDetail = ActiveProgramDay & {
+  meal_execution: MealExecutionItem[];
   plan_snapshot: DailyPlanSnapshot | null;
 };
 
@@ -124,6 +130,8 @@ export type AdherenceSummary = {
   period_end: string;
   days: number;
   days_with_plan: number;
+  scheduled_meals?: number;
+  elapsed_meals?: number;
   planned_meals: number;
   completed_meals: number;
   skipped_meals: number;
@@ -187,12 +195,35 @@ export type DailyPlanSnapshot = {
 
 export type MacroTotals = {
   protein_g?: number | null;
+  protein_per_kilogram?: number | null;
   carbs_g?: number | null;
   fat_g?: number | null;
   total_kcal?: number | null;
 };
 
 export type LibraryEntity = "food" | "meal" | "dailyPlan" | "program";
+
+export type LibraryActionKey = "rename" | "duplicate" | "share" | "delete";
+
+export type LibraryAction = {
+  key: LibraryActionKey;
+  label: string;
+  destructive: boolean;
+};
+
+export type LibraryActionInput = {
+  action: LibraryActionKey;
+  name?: string;
+  recipient_email?: string;
+  subject?: string;
+  message?: string;
+};
+
+export type LibraryActionResult = {
+  action: LibraryActionKey;
+  item_id: number;
+  message: string;
+};
 
 export type LibraryNutrition = {
   calories: number;
@@ -209,6 +240,7 @@ export type LibraryIndicator = {
 
 export type LibraryFoodPanelItem = {
   id: string;
+  relation_id: number | null;
   name: string;
   quantity: number;
   quantity_unit: string;
@@ -225,14 +257,17 @@ export type LibraryFoodPanelItem = {
 
 export type LibraryMealPanelItem = {
   id: string;
+  relation_id: number | null;
   detail_id: number;
   name: string;
   time: string | null;
+  note: string;
   foods: LibraryFoodPanelItem[];
   calories: number;
   calorie_share: number;
   calorie_distribution: LibraryCalorieDistribution;
   protein_grams: number;
+  protein_per_kilogram: number | null;
   carbs_grams: number;
   fat_grams: number;
   protein_allocation: number;
@@ -245,6 +280,7 @@ export type LibraryWeekPanelItem = {
   week_number: number;
   days: {
     id?: string;
+    program_day_id?: number | null;
     day_number?: number;
     day_label: string;
     dailyplan_id?: number | null;
@@ -291,7 +327,9 @@ export type LibraryItem = {
   panel: LibraryPanel;
   creator: string;
   created_at: string;
+  is_draft: boolean;
   can_calendarize: boolean;
+  actions: LibraryAction[];
 };
 
 export type LibraryPageData = {
@@ -302,13 +340,83 @@ export type LibraryPageData = {
   search: string | null;
 };
 
+export type FoodPickerOption = {
+  id: number;
+  name: string;
+  display_name: string;
+  protein: number;
+  carbs: number;
+  fat: number;
+  total_kcal: number;
+  protein_allocation: number;
+  carbs_allocation: number;
+  fat_allocation: number;
+  source: string;
+  is_user_food: boolean;
+  is_verified: boolean;
+  data_quality_score: number;
+};
+
+export type FoodPickerPageData = {
+  items: FoodPickerOption[];
+  total: number;
+  offset: number;
+  limit: number;
+  search: string | null;
+};
+
+export type PickerSelection = {
+  id: number;
+  entity: "food" | "meal" | "dailyPlan" | "week";
+  name: string;
+  nutrition: LibraryNutrition | null;
+  quantity: number | null;
+  hour: string | null;
+};
+
+export type PickerImpact = {
+  label: string;
+  entity: "meal" | "dailyPlan" | "week" | "program";
+  before: LibraryNutrition;
+  after: LibraryNutrition;
+  metrics: { label: string; before: number; after: number }[];
+};
+
+export type PickerPreview = {
+  selection: PickerSelection;
+  impacts: PickerImpact[];
+  replacements: string[];
+  confirmation_required: boolean;
+};
+
+export type PickerCommitResult = {
+  message: string;
+  target_id: number;
+  created_id: number;
+};
+
+export type CompositionMutationResult = {
+  message: string;
+  target_id: number;
+  affected_id: number;
+};
+
 export type MealSnapshot = {
   key?: string;
+  detail_id?: number | null;
   name?: string;
   hour?: string | null;
   note?: string;
   totals?: MacroTotals;
-  foods?: { key?: string; name?: string; quantity_g?: number | null }[];
+  foods?: {
+    key?: string;
+    name?: string;
+    quantity_g?: number | null;
+    protein_g?: number | null;
+    carbs_g?: number | null;
+    fat_g?: number | null;
+    total_kcal?: number | null;
+  }[];
 };
 
 export type WeightItem = {
@@ -371,7 +479,7 @@ export type FoodLabelCaptureResult = {
 };
 
 export type MealCheckInInput = {
-  action: "completed" | "skipped" | "reset";
+  action: "completed" | "skipped" | "reset" | "note";
   idempotency_key: string;
   note?: string;
 };
@@ -549,7 +657,13 @@ export type ComparisonKindOption = {
 
 export type ComparisonMetadata = { kinds: ComparisonKindOption[] };
 
-export type ComparisonOption = { id: number; name: string };
+export type ComparisonOption = Pick<
+  LibraryItem,
+  "id" | "entity" | "indicators" | "name" | "nutrition" | "panel" | "subtitle"
+>;
+
+export type SelectedComparisonOption = Pick<ComparisonOption, "id" | "name"> &
+  Partial<Pick<ComparisonOption, "nutrition">>;
 
 export type ComparisonOptionsData = MobilePageData<ComparisonOption> & { search: string | null };
 

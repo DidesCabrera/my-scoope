@@ -1,4 +1,3 @@
-import pandas as pd
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -7,7 +6,6 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
-from openpyxl import Workbook
 
 from email_delivery.services import deliver_share_invitation
 from notas.application.queries.food_picker_queries import (
@@ -334,6 +332,8 @@ def import_foods(request):
     )
 
     if request.method == "POST":
+        import pandas as pd
+
         file = request.FILES.get("file")
 
         if not file:
@@ -389,6 +389,8 @@ def import_foods(request):
 
 @login_required
 def download_food_template(request):
+    from openpyxl import Workbook
+
     wb = Workbook()
     ws = wb.active
     ws.title = "Foods"

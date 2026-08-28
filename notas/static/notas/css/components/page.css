@@ -234,6 +234,10 @@
     gap: 12px;
 }
 
+.list-page-header--stacked .list-page-header__identity {
+    align-items: flex-start;
+}
+
 .list-page-header__title {
     margin: 0;
     color: var(--text-main);

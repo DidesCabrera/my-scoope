@@ -5,8 +5,9 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { userFacingError } from "@/api/errors";
 import type { ProposalListData, ProposalStatus, ProposalSummary } from "@/api/types";
 import { useSession } from "@/auth/session-context";
+import { SectionPageHeader } from "@/components/ui";
 import { EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
-import { AppHeader, Card, ChoiceRow, LoadingState, Pill, Screen, textStyles } from "@/components/ui/primitives";
+import { Card, ChoiceRow, LoadingState, Pill, Screen, textStyles } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
 
 type Filter = "all" | "pending_review" | "approved" | "applied" | "rejected";
@@ -76,7 +77,7 @@ export default function ProposalsScreen() {
 
   return (
     <Screen>
-      <AppHeader eyebrow={page?.pending_count ? `${page.pending_count} por revisar` : "Centro de revisión"} title="Propuestas" />
+      <SectionPageHeader count={page?.total} countLabel="propuestas" section="proposal" title="Propuestas" />
       <ChoiceRow<Filter> label="Estado" onChange={setFilter} options={filters} value={filter} />
       {error ? <RecoverableErrorState message={error} onRetry={() => void load()} /> : null}
       {loading ? <Text style={textStyles.caption}>Actualizando…</Text> : null}

@@ -1,0 +1,16 @@
+{% if completed_count or note_count %}
+  <div class="completion-indicators" aria-label="Registro de cumplimiento">
+    {% if note_count %}
+      <span class="completion-indicator" aria-label="{{ note_count }} comida{{ note_count|pluralize }} con nota">
+        {% if completion_summarized %}<span>{{ note_count }}</span>{% endif %}
+        <i data-lucide="notebook-pen" aria-hidden="true"></i>
+      </span>
+    {% endif %}
+    {% if completed_count %}
+      <span class="completion-indicator" aria-label="{{ completed_count }} comida{{ completed_count|pluralize }} cumplida{{ completed_count|pluralize }}">
+        {% if completion_summarized %}<span>{{ completed_count }}</span>{% endif %}
+        <i data-lucide="{% if completion_summarized %}check-check{% else %}check{% endif %}" aria-hidden="true"></i>
+      </span>
+    {% endif %}
+  </div>
+{% endif %}

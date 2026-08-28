@@ -176,14 +176,14 @@ def _build_saved_list_header(kind: str):
         actions=[
             {
                 "key": "new_comparison",
-                "label": "Nueva comparación",
+                "label": "Crear nueva comparación",
                 "method": "get",
-                "icon": "columns-3",
+                "icon": "plus",
                 "order": 10,
-                "desktop_position": "menu",
-                "mobile_position": "menu",
+                "desktop_position": "inline",
+                "mobile_position": "inline",
                 "url": reverse(COMPARATOR_KINDS[kind]["comparator_url_name"]),
-            }
+            },
         ]
     )
 
@@ -474,7 +474,7 @@ def _build_saved_comparison_cards(kind: str, comparisons, user) -> list[SavedCom
 
 @login_required
 def comparator_index(request):
-    return redirect("food_comparator")
+    return redirect("saved_comparisons_list", kind="foods")
 
 
 @login_required
@@ -519,9 +519,10 @@ def saved_comparisons_list(request, kind: str):
     )
 
     ui_vm = build_ui_vm(config["viewmode"])
-    ui_vm.title = "Comparaciones guardadas"
-    ui_vm.page_icon = "pin"
-    ui_vm.nav_root = config["entity_scope"]
+    ui_vm.title = "Comparador"
+    ui_vm.icon = "scale"
+    ui_vm.page_icon = "scale"
+    ui_vm.nav_root = "comparator"
 
     base_vm = BaseVM(ui=ui_vm, content=content_vm)
 
@@ -645,7 +646,7 @@ def saved_comparison_rename(request, kind: str, pk: int):
 
 def _render_comparator(request, viewmode, content_vm: ComparatorContentVM, saved_comparison: SavedComparison | None = None):
     ui_vm = build_ui_vm(viewmode, instance=saved_comparison if saved_comparison else None)
-    ui_vm.nav_root = content_vm.entity_scope
+    ui_vm.nav_root = "comparator"
 
     if saved_comparison:
         ui_vm.mode = "detail"
@@ -655,6 +656,10 @@ def _render_comparator(request, viewmode, content_vm: ComparatorContentVM, saved
         ui_vm.page_icon = "pin"
         ui_vm.is_inside = True
         ui_vm.back_url = reverse("saved_comparisons_list", kwargs={"kind": saved_comparison.kind})
+    else:
+        ui_vm.title = "Nueva Comparación"
+        ui_vm.icon = "scale"
+        ui_vm.page_icon = "scale"
 
     base_vm = BaseVM(ui=ui_vm, content=content_vm)
 

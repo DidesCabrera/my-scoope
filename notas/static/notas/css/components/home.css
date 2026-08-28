@@ -2880,45 +2880,7 @@ body.page-ai-intake-chat::after {
 }
 
 .home-calendar__week-slider--single {
-  grid-template-columns: minmax(0, auto);
-}
-
-.home-calendar__week-nav {
-  appearance: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  padding: 0;
-  border: 0;
-  border-radius: var(--radius-pill);
-  background: transparent;
-  color: var(--text-main);
-  cursor: pointer;
-  font: inherit;
-  text-decoration: none;
-  transition: background 0.16s ease;
-}
-
-.home-calendar__week-nav:hover {
-  background: var(--interactive-hover);
-}
-
-.home-calendar__week-nav svg {
-  width: 20px;
-  height: 20px;
-}
-
-.home-calendar__week-viewport {
-  overflow: hidden;
-  width: min(100%, 720px);
-}
-
-.home-calendar__week-track {
-  display: flex;
-  transition: transform 0.22s ease;
-  transform: translateX(0);
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .home-calendar__week {
@@ -3449,25 +3411,6 @@ body.page-ai-intake-chat::after {
   .home-calendar__week-slider {
     grid-template-columns: minmax(0, 1fr);
     gap: 0;
-  }
-
-  .home-calendar__week-nav {
-    display: none;
-  }
-
-  .home-calendar__week-viewport {
-    overflow-x: auto;
-    width: 100%;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
-  }
-
-  .home-calendar__week-viewport::-webkit-scrollbar {
-    display: none;
-  }
-
-  .home-calendar__week-track {
-    transform: none;
   }
 
   .home-calendar__week {

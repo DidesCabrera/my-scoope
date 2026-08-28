@@ -1,7 +1,6 @@
 import csv
 from dataclasses import dataclass
 
-import pandas as pd
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
@@ -149,6 +148,8 @@ def admin_food_catalog(request):
     ui_vm = build_ui_vm(ADMIN_FOOD_CATALOG_VIEWMODE)
 
     if request.method == "POST":
+        import pandas as pd
+
         upload = request.FILES.get("file")
 
         if not upload:

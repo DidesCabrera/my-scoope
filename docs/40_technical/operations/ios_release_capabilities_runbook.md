@@ -1,7 +1,7 @@
 # iOS release capabilities runbook
 
 Status: current
-Date: 2026-08-05
+Date: 2026-08-20
 
 ## Host and signing prerequisites
 
@@ -17,6 +17,65 @@ Date: 2026-08-05
    bundle identifier or Apple team.
 4. Create/associate the App Store Connect application. Signing, agreements and
    account roles are external gates; no identifier in source proves they exist.
+
+## Physical development workflow
+
+The Expo project is `@my-scoope/my-scoope`, with EAS project ID
+`ea9b4286-222a-4b79-93da-584ed07ed072`. The Apple App ID
+`com.myscoope.app` belongs to the My Scoope SpA team. Keep those identifiers
+aligned with `mobile/app.json`; do not create replacement identifiers from an
+Xcode Personal Team.
+
+Register each physical test device before creating its first ad hoc build:
+
+```bash
+cd mobile
+npx eas-cli@latest device:create
+npx eas-cli@latest build --platform ios --profile development
+```
+
+After installing the development build, enable iOS Developer Mode and run Metro
+from the same Wi-Fi network:
+
+```bash
+cd mobile
+npm start -- --lan
+```
+
+The phone connects to the LAN Metro address shown by Expo. The API remains a
+separate dependency: `EXPO_PUBLIC_API_BASE_URL` must be HTTPS and reachable from
+the phone; `localhost` and `127.0.0.1` refer to the phone itself.
+
+The development profiles set `SENTRY_DISABLE_AUTO_UPLOAD=true` so missing Sentry
+organization/project build credentials do not block local device builds. Preview
+and production builds must configure `SENTRY_ORG`, `SENTRY_PROJECT` and
+`SENTRY_AUTH_TOKEN` before relying on source-map upload.
+
+On 2026-08-20, an ad hoc Expo development build installed and opened on a physical
+iPhone, and connected successfully to Metro over LAN. This proves signing,
+installation and the development-server path only; it does not close the release
+evidence listed below.
+
+## TestFlight staging workflow
+
+Use the dedicated store-distribution profile for beta builds that connect to the
+Render staging environment:
+
+```bash
+cd mobile
+npx eas-cli@latest build --platform ios --profile testflight --auto-submit
+```
+
+Do not use the `production` profile until its public API environment is explicitly
+configured. Keeping staging values in a separate profile prevents an App Store
+release from accidentally connecting customers to staging.
+
+On 2026-08-21, EAS build `1.0.0 (3)` was uploaded to App Store Connect, assigned
+to the internal `Team (Expo)` group, installed from TestFlight on a physical
+iPhone and connected successfully to `https://myscoope-staging.onrender.com`.
+This closes the first-build TestFlight delivery proof. The build used App Store
+Connect app ID `6804048394`, bundle ID `com.myscoope.app`, production APNs
+entitlements and EAS-managed signing credentials.
 
 ## Sign in with Apple
 

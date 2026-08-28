@@ -4,11 +4,10 @@
   "portrait_pixels": ["1260x2736", "1290x2796", "1320x2868"],
   "shots": [
     {"order": 1, "route": "/today", "title": "Tu programa, hoy", "state": "active demo program"},
-    {"order": 2, "route": "/check-in", "title": "Cumple cada comida", "state": "planned meals"},
-    {"order": 3, "route": "/review", "title": "Mide adherencia y progreso", "state": "seven-day evidence"},
-    {"order": 4, "route": "/label-capture", "title": "Digitaliza una etiqueta", "state": "review form with no brand"},
-    {"order": 5, "route": "/reminders", "title": "Tu horario te acompaña", "state": "notifications configured"},
-    {"order": 6, "route": "/account", "title": "Tus datos bajo control", "state": "privacy and account controls"}
+    {"order": 2, "route": "/review", "title": "Mide adherencia y progreso", "state": "seven-day evidence"},
+    {"order": 3, "route": "/label-capture", "title": "Digitaliza una etiqueta", "state": "review form with no brand"},
+    {"order": 4, "route": "/reminders", "title": "Tu horario te acompaña", "state": "notifications configured"},
+    {"order": 5, "route": "/account", "title": "Tus datos bajo control", "state": "privacy and account controls"}
   ],
   "rules": ["No real personal data", "No third-party trademarks", "No debug UI", "Use the same approved build and demo account"]
 }

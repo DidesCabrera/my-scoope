@@ -1,5 +1,5 @@
 import { Redirect } from "expo-router";
-import { ChevronDown } from "lucide-react-native";
+import { ChevronDown, ChevronRight, MoreHorizontal } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 
@@ -37,6 +37,7 @@ import {
   ProposalObjectiveSection,
   ProposalReviewActions,
 } from "@/components/proposals";
+import { ProgramActiveKpis } from "@/components/programs";
 import {
   AppHeader,
   Brand,
@@ -49,6 +50,7 @@ import {
   ContentPanel,
   DetailSection,
   EntityCard,
+  EntityCardAction,
   type EntityKind,
   Field,
   InlineNotice,
@@ -56,8 +58,10 @@ import {
   Pill,
   ProgressBar,
   Screen,
+  SectionDivider,
   SectionIcon,
   type SectionKind,
+  SectionPageHeader,
   SectionTitle,
   textStyles,
 } from "@/components/ui";
@@ -75,15 +79,23 @@ const sections: { key: SectionKind; label: string; lucide: string }[] = [
   { key: "home", label: "Inicio", lucide: "house" },
   { key: "profile", label: "Perfil", lucide: "circle-user-round" },
   { key: "chatNew", label: "Nuevo chat", lucide: "message-square-plus" },
-  { key: "chat", label: "Chats", lucide: "messages-square" },
-  { key: "proposal", label: "Propuestas", lucide: "sparkles" },
+  { key: "chat", label: "Asistente", lucide: "sparkles" },
+  { key: "proposal", label: "Propuestas", lucide: "clipboard-check" },
   { key: "calendarization", label: "Calendarizar", lucide: "calendar-clock" },
-  { key: "comparator", label: "Comparaciones", lucide: "columns-3" },
+  { key: "comparator", label: "Comparaciones", lucide: "scale" },
   { key: "explore", label: "Explorar", lucide: "search" },
   { key: "inbox", label: "Inbox", lucide: "inbox" },
   { key: "create", label: "Crear", lucide: "circle-fading-plus" },
   { key: "import", label: "Importar", lucide: "file-down" },
 ];
+
+const surfaces = [
+  { key: "surfaceApp", label: "App", role: "Fondo raíz y navegación global" },
+  { key: "surfacePage", label: "Página", role: "Superficie base de una vista" },
+  { key: "surfaceCard", label: "Card", role: "Contenido agrupado y elementos elevados" },
+  { key: "surfaceMuted", label: "Muted", role: "Paneles secundarios y campos" },
+  { key: "surfaceElevated", label: "Elevated", role: "Controles activos y capas superiores" },
+] as const;
 
 const foodPanelItems: FoodPanelItem[] = [
   { id: "oats", name: "Avena integral", quantity: 80, quantityUnit: "g", calories: 311, calorieShare: 34, proteinGrams: 10.5, carbsGrams: 52.8, fatGrams: 5.5, proteinAllocation: 14, carbsAllocation: 71, fatAllocation: 15 },
@@ -265,6 +277,12 @@ export default function UiGalleryScreen() {
               <Text style={textStyles.body}>Contenido compuesto sin replicar estilos de superficie.</Text>
             </DetailSection>
           </ContentPanel>
+          <SectionTitle detail="Espacio antes y después" title="Separador de secciones" />
+          <Card>
+            <Text style={textStyles.body}>Sección anterior</Text>
+            <SectionDivider />
+            <Text style={textStyles.body}>Sección siguiente</Text>
+          </Card>
           <SectionTitle detail="Identidad semántica" title="Título de entidad" />
           <EntityCard
             accessory={<Pill color={tokens.color.dailyPlan} label="Activo" />}
@@ -307,6 +325,9 @@ export default function UiGalleryScreen() {
           <SectionTitle detail="Identidad + colección + cantidad" title="Encabezados de páginas de lista" />
           <CollectionPageHeader count={8} countIcon="dailyPlan" entity="dailyPlan" title="Planes diarios" />
           <CollectionPageHeader count={14} countIcon="meal" entity="meal" title="Comidas" />
+          <SectionPageHeader count={6} countLabel="conversaciones" section="chat" title="Asistente AI" />
+          <SectionPageHeader count={4} countLabel="propuestas" section="proposal" title="Propuestas" />
+          <SectionPageHeader count={2} countLabel="elementos seleccionados" section="comparator" title="Comparador" />
           <SectionTitle detail="Base nutricional por 100 g" title="Card de alimento" />
           <NutritionEntityCard
             entity="food"
@@ -319,9 +340,9 @@ export default function UiGalleryScreen() {
             }}
             title="Yogur griego natural"
           />
-          <SectionTitle detail="Título + KPI" title="Card nutricional compuesta" />
+          <SectionTitle detail="Siempre abajo y sin bordes" title="Acciones de card" />
           <NutritionEntityCard
-            accessory={<Pill color={tokens.color.dailyPlan} label="Activo" />}
+            actions={<><EntityCardAction label="Más acciones" onPress={() => undefined}><MoreHorizontal color={tokens.color.textMuted} size={21} /></EntityCardAction><EntityCardAction label="Ir a detalle" onPress={() => undefined} role="link"><ChevronRight color={tokens.color.textMuted} size={21} /></EntityCardAction></>}
             entity="dailyPlan"
             indicators={[
               { icon: "meal", label: "comidas", value: 4 },
@@ -434,6 +455,7 @@ export default function UiGalleryScreen() {
           <SectionTitle detail="Primera composición reutilizable" title="Página de detalle" />
           <EntityDetailPage
             action={<Pill color={tokens.color.dailyPlan} label="Editar" />}
+            completion={{ completedCount: 2, noteCount: 1 }}
             entity="dailyPlan"
             indicators={[
               { icon: "meal", label: "comidas", value: mealPanelItems.length },
@@ -447,9 +469,10 @@ export default function UiGalleryScreen() {
             }}
             onBack={() => undefined}
             title="Día de entrenamiento">
-            <EntityDetailSection detail="3 comidas" title="Comidas en este plan">
+            <EntityDetailSection detail="3 comidas" title="Tabla de comparación entre comidas">
               <MealPanels items={mealPanelItems} />
             </EntityDetailSection>
+            <SectionDivider />
             <EntityDetailSection detail="3 comidas" title="Detalle de cada comida">
               <DailyPlanMealDetailList items={dailyPlanMealDetailItems} />
             </EntityDetailSection>
@@ -460,6 +483,8 @@ export default function UiGalleryScreen() {
 
       {tab === "program" ? (
         <>
+          <SectionTitle detail="Propuesta · componente compartido" title="KPI de programa en curso" />
+          <ProgramActiveKpis adheredDays={82} adherence={97} elapsedDays={24} endDate="27 sep" plannedAdherenceDays={87} progress={57} standalone startDate="17 ago" totalDays={42} />
           <SectionTitle detail="Vista completa" title="Detalle de programa" />
           <ProgramDetailPreview />
         </>
@@ -654,6 +679,19 @@ export default function UiGalleryScreen() {
 
       {tab === "tokens" ? (
         <>
+          <SectionTitle detail={`${surfaces.length} roles semánticos`} title="Colores de superficies" />
+          <View style={styles.surfaceList}>
+            {surfaces.map((surface) => (
+              <View key={surface.key} style={styles.surfaceRow}>
+                <View style={[styles.surfaceSwatch, { backgroundColor: tokens.color[surface.key] }]} />
+                <View style={styles.surfaceCopy}>
+                  <Text style={styles.surfaceName}>{surface.label}</Text>
+                  <Text style={styles.surfaceRole}>{surface.role}</Text>
+                  <Text style={styles.surfaceToken}>tokens.color.{surface.key} · {tokens.color[surface.key]}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
           <SectionTitle detail={tokens.contract} title="Entidades" />
           {entities.map((entity) => (
             <EntityCard entity={entity.key} key={entity.key} subtitle={`tokens.color.${entity.key}`} title={entity.label} />
@@ -751,6 +789,13 @@ const styles = StyleSheet.create({
   sectionIconList: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderWidth: 1, paddingHorizontal: tokens.spacing.md },
   sectionIconRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.sm, minHeight: 44 },
   sectionIconLabel: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
+  surfaceList: { borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.card, borderWidth: 1, overflow: "hidden" },
+  surfaceRow: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, minHeight: 86, padding: tokens.spacing.md },
+  surfaceSwatch: { borderColor: tokens.color.borderStrong, borderRadius: tokens.radius.md, borderWidth: 1, height: 56, width: 56 },
+  surfaceCopy: { flex: 1, gap: 2, minWidth: 0 },
+  surfaceName: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.semibold },
+  surfaceRole: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 18 },
+  surfaceToken: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontVariant: ["tabular-nums"] },
   allocationRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md },
   allocationLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700", width: 96 },
   allocationBarInRow: { flex: 1, minWidth: 0, width: "auto" },

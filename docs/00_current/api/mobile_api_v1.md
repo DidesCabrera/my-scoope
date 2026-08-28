@@ -85,6 +85,9 @@ or DailyPlan library identity.
 
 MCE04 adds supported-kind metadata and owner-scoped selectable options through
 `GET /comparisons/metadata` and `GET /comparisons/options/{kind}`. Dynamic
+option rows carry the canonical entity-card projection: identity, structural
+indicators, nutrition KPIs and the Food or Meal composition panel required by the
+selected kind; library mutation actions are intentionally excluded. Dynamic
 comparison uses `POST /comparisons/compare`; Food slots use the established 100 g
 fallback, while Meals and DailyPlans reject quantities and can include PPK.
 Programs are not an accepted kind. Slots are positional and may repeat the same
@@ -131,8 +134,68 @@ resulting conversation. A missing or foreign comparison fails closed as
 `saved_comparison_not_found`; the message remains independent from the attached
 object and no client-provided comparison payload is trusted.
 
+## Native composition pickers
+
+The library detail journey exposes dedicated preview/commit pairs for the four
+composition operations available in the responsive web product:
+
+- Food into an owned Meal, including a positive gram portion;
+- an owned reusable Meal into an owned DailyPlan, including hour and optional
+  note;
+- an owned reusable DailyPlan into one or more days of an owned Program week;
+- one new empty week at the end of an owned Program.
+
+Preview endpoints are read-scoped and return server-computed selection nutrition,
+before/after impacts and structural metrics. Commit endpoints require
+`mobile:write` and delegate to the established Meal, DailyPlan and Program
+commands. Meal and DailyPlan insertion preserve the existing snapshot semantics.
+Assigning a DailyPlan reports occupied days during preview and rejects commit
+with `picker_replacement_confirmation_required` until the client explicitly
+confirms replacements. Adding a week increases duration and creates seven empty
+slots; it does not create a parallel Week aggregate. The native creation flow
+passes the previewed `expected_week_number` when committing, making a retry return
+the already-created week instead of appending a duplicate.
+
+## Native library creation
+
+The four personal libraries accept owner-scoped creation through `POST` on their
+existing collection routes: `/library/foods`, `/library/meals`,
+`/library/daily-plans` and `/library/programs`. Every mutation requires
+`mobile:write` and delegates to the same application commands used by the web
+product.
+
+Food creation receives a name and protein, carbohydrate and fat values per 100 g
+and immediately returns a complete Food detail. Meal, DailyPlan and Program
+creation receives a name and returns an owned draft detail so the native client
+can continue directly into composition. Adding the first Food completes a Meal;
+adding the first Meal completes a DailyPlan; assigning the first DailyPlan
+completes a Program.
+
+Meal and DailyPlan collection reads keep their reusable-only behavior by default.
+The native personal-library screens opt into `include_drafts=true`, which exposes
+only the authenticated owner's resumable drafts and labels them explicitly as
+`Borrador`. Composition pickers continue using the default query and therefore
+never offer incomplete drafts as source selections.
+
+## Native comparison edit panels
+
+Owned library details expose the same edit surface as the responsive comparison
+panels. Their mutation routes require `mobile:write`, verify the parent and child
+relationship against the authenticated owner, and delegate to the existing
+composition commands:
+
+- Meal food rows can update portion, delete, and save a complete relation order;
+- DailyPlan meal rows can update schedule metadata, delete, save order, or pass
+  `dailyplan_meal_id` through the meal picker to replace the existing slot;
+- Program weeks can be reordered, duplicated, or removed while preserving at
+  least one week;
+- Program day rows can remove an assigned DailyPlan, while add and replace keep
+  using the DailyPlan picker and its replacement confirmation.
+
+Relation identifiers are projected explicitly as `relation_id`; aggregated food
+rows remain read-only because they do not identify a single editable relation.
+Shared Programs expose the comparison data but not owner-only mutations.
+
 Native notification delivery remains CML07; the API already exposes the common
-calendarization schedule that each channel must follow. Food libraries,
-meal/daily-plan editing and remaining library mutations can be added after the
-React Native execution journey proves they are needed; they must preserve the
-same envelope, scopes and service boundaries.
+calendarization schedule that each channel must follow. Future library edits must
+preserve the same envelope, scopes, snapshot rules and service boundaries.

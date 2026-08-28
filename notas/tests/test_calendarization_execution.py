@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from django.contrib.auth.models import User
@@ -92,6 +92,27 @@ class CalendarizationExecutionTests(TestCase):
         self.assertEqual(CalendarizedMealExecution.objects.count(), 2)
         self.assertEqual(meal_execution_state_for_day(self.day)[0]["status"], "planned")
 
+    def test_meal_note_is_independent_from_completion_status(self):
+        record_meal_execution(
+            user=self.user,
+            day_id=self.day.id,
+            meal_snapshot_key="dailyplan_meal:1",
+            action="completed",
+            idempotency_key="meal-status-0001",
+        )
+        record_meal_execution(
+            user=self.user,
+            day_id=self.day.id,
+            meal_snapshot_key="dailyplan_meal:1",
+            action="note",
+            note="Sin hambre al terminar.",
+            idempotency_key="meal-note-0001",
+        )
+
+        state = meal_execution_state_for_day(self.day)[0]
+        self.assertEqual(state["status"], "completed")
+        self.assertEqual(state["note"], "Sin hambre al terminar.")
+
     def test_meal_evidence_requires_owned_today_snapshot_key(self):
         other = User.objects.create_user(username="other-calendar-user")
 
@@ -155,6 +176,29 @@ class CalendarizationExecutionTests(TestCase):
             1,
         )
         self.assertEqual(calendarization_measurement_summary(self.calendarization)["count"], 1)
+
+    def test_adherence_only_counts_meals_whose_time_has_elapsed(self):
+        self.day.plan_snapshot = {
+            **plan_snapshot(),
+            "meals": [
+                {"key": "dailyplan_meal:1", "name": "Desayuno", "hour": "08:00", "foods": []},
+                {"key": "dailyplan_meal:2", "name": "Cena", "hour": "20:00", "foods": []},
+            ],
+        }
+        self.day.save(update_fields=["plan_snapshot"])
+
+        summary = calendarization_progress_summary(
+            self.calendarization,
+            period_start=self.today,
+            period_end=self.today,
+            now=datetime.combine(self.today, datetime.min.time(), tzinfo=ZoneInfo("UTC")).replace(hour=12),
+        )
+
+        self.assertEqual(summary["scheduled_meals"], 2)
+        self.assertEqual(summary["elapsed_meals"], 1)
+        self.assertEqual(summary["planned_meals"], 1)
+        self.assertEqual(summary["unrecorded_meals"], 1)
+        self.assertEqual(summary["adherence_percent"], 0)
 
     def test_approved_revision_changes_only_selected_future_snapshots(self):
         future_day = CalendarizedDay.objects.create(

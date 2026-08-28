@@ -2,14 +2,16 @@ import type { PropsWithChildren } from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { type Href, usePathname, useRouter } from "expo-router";
 import {
-  CalendarDays,
+  CalendarClock,
   Camera,
   ChevronLeft,
   ClipboardCheck,
   FileCheck,
   House,
   LogOut,
-  Menu,
+  PanelRight,
+  MoreHorizontal,
+  Plus,
   Bell,
   Scale,
   Sparkles,
@@ -30,7 +32,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { initialWindowMetrics, SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useSession } from "@/auth/session-context";
 import type { LibraryEntity } from "@/api/types";
@@ -39,14 +41,19 @@ import { listAvailableProductAreas, type ProductAreaKey } from "@/navigation/pro
 import { HeaderEntityIdentity } from "./header-entity-identity";
 import { EntitySidebarItem, type EntitySidebarItemData, NavigationSidebarItem, type NavigationSidebarItemData } from "./sidebar-items";
 
+type HeaderAction = { icon?: "more" | "plus"; label: string; onPress(): void };
+
 type HeaderPresentation =
-  | { mode: "default"; borderVisible?: boolean; identityVisible?: boolean; title?: string }
-  | { mode: "library-detail"; entity: LibraryEntity; identityVisible: boolean; title: string }
-  | { mode: "library-list"; entity: LibraryEntity; identityVisible: boolean; title: string };
+  | { mode: "default"; action?: HeaderAction; identityVisible?: boolean; title?: string }
+  | { mode: "back"; action?: HeaderAction; fallback?: Href; title: string }
+  | { mode: "library-detail"; action?: HeaderAction; entity: LibraryEntity; identityVisible: boolean; title: string }
+  | { mode: "library-list"; action?: HeaderAction; createAction?: { label: string; onPress(): void }; entity: LibraryEntity; identityVisible: boolean; title: string };
 
 type NavigationContextValue = {
   closeMenu(): void;
+  finishClosingMenu(): void;
   headerPresentation: HeaderPresentation;
+  menuMounted: boolean;
   menuOpen: boolean;
   openMenu(): void;
   setHeaderPresentation(presentation: HeaderPresentation): void;
@@ -58,7 +65,7 @@ const productAreaIcons: Record<ProductAreaKey, LucideIcon> = {
   assistant: Sparkles,
   comparator: Scale,
   home: House,
-  program: CalendarDays,
+  program: CalendarClock,
   proposals: ClipboardCheck,
 };
 
@@ -83,10 +90,12 @@ function useAppNavigation(): NavigationContextValue {
 
 export function AppNavigationProvider({ children }: PropsWithChildren) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuMounted, setMenuMounted] = useState(false);
   const [headerPresentation, setHeaderPresentation] = useState<HeaderPresentation>({ mode: "default" });
   const closeMenu = useCallback(() => setMenuOpen(false), []);
-  const openMenu = useCallback(() => setMenuOpen(true), []);
-  const value = useMemo<NavigationContextValue>(() => ({ closeMenu, headerPresentation, menuOpen, openMenu, setHeaderPresentation }), [closeMenu, headerPresentation, menuOpen, openMenu]);
+  const finishClosingMenu = useCallback(() => setMenuMounted(false), []);
+  const openMenu = useCallback(() => { setMenuMounted(true); setMenuOpen(true); }, []);
+  const value = useMemo<NavigationContextValue>(() => ({ closeMenu, finishClosingMenu, headerPresentation, menuMounted, menuOpen, openMenu, setHeaderPresentation }), [closeMenu, finishClosingMenu, headerPresentation, menuMounted, menuOpen, openMenu]);
   return (
     <NavigationContext.Provider value={value}>
       {children}
@@ -122,15 +131,18 @@ function LibraryHeaderIdentity({ entity, title, visible }: { entity: LibraryEnti
   return <Animated.View accessibilityElementsHidden={!visible} importantForAccessibility={visible ? "auto" : "no-hide-descendants"} pointerEvents="none" style={[styles.headerListIdentity, { opacity: progress }]}><HeaderEntityIdentity entity={entity} title={title} /></Animated.View>;
 }
 
+function BackHeaderIdentity({ title }: { title: string }) {
+  return <View accessibilityLabel={title} accessible pointerEvents="none" style={styles.backHeaderIdentity}><Text numberOfLines={1} style={styles.routeIdentityTitle}>{title}</Text></View>;
+}
+
 function routeHeader(pathname: string): { icon: LucideIcon; title: string } {
   if (pathname.startsWith("/assistant")) return { icon: Sparkles, title: pathname === "/assistant" ? "Asistente" : "Conversación" };
   if (pathname.startsWith("/proposals")) return { icon: ClipboardCheck, title: pathname === "/proposals" ? "Propuestas" : "Detalle de propuesta" };
   if (pathname.startsWith("/comparator")) return { icon: Scale, title: pathname.includes("/saved") ? "Comparaciones guardadas" : "Comparador" };
-  if (pathname.startsWith("/program")) return { icon: CalendarDays, title: pathname === "/program" ? "Mi programa" : pathname.includes("/activate") ? "Calendarizar programa" : "Detalle del día" };
+  if (pathname.startsWith("/program")) return { icon: CalendarClock, title: pathname === "/program" ? "Mi programa" : pathname.includes("/activate") ? "Calendarizar programa" : "Detalle del día" };
   if (pathname === "/today" || pathname === "/") return { icon: House, title: "Inicio" };
   if (pathname === "/weight") return { icon: Weight, title: "Registrar peso" };
   if (pathname === "/label-capture") return { icon: Camera, title: "Digitalizar etiqueta" };
-  if (pathname === "/check-in") return { icon: FileCheck, title: "Check-in del día" };
   if (pathname === "/review") return { icon: TrendingUp, title: "Revisión de progreso" };
   if (pathname === "/revision") return { icon: ClipboardCheck, title: "Revisar ajuste" };
   if (pathname === "/reminders") return { icon: Bell, title: "Recordatorios" };
@@ -147,7 +159,9 @@ export function AppNavigationHeader() {
   const pathname = usePathname();
   const { status, profile } = useSession();
   const canOpenMenu = status === "authenticated" && Boolean(profile?.onboarding_completed) && !profile?.review_disclosure_required;
-  const detailFallback = headerPresentation.mode === "library-detail"
+  const detailFallback = headerPresentation.mode === "back"
+    ? headerPresentation.fallback ?? "/today"
+    : headerPresentation.mode === "library-detail"
     ? headerPresentation.entity === "dailyPlan"
       ? "/libraries/daily-plans"
       : headerPresentation.entity === "program"
@@ -161,9 +175,9 @@ export function AppNavigationHeader() {
   const defaultIdentityVisible = headerPresentation.mode === "default" && Boolean(headerPresentation.identityVisible);
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.headerSafeArea}>
-      <View style={[styles.header, headerPresentation.mode === "default" ? !defaultIdentityVisible && styles.headerWithoutBorder : !headerPresentation.identityVisible && styles.headerWithoutBorder]}>
-        {headerPresentation.mode === "library-detail" ? (
-          <Pressable accessibilityLabel="Volver" accessibilityRole="button" hitSlop={8} onPress={() => { if (router.canGoBack()) router.back(); else router.replace(detailFallback); }} style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}><ChevronLeft color={tokens.color.textMain} size={26} strokeWidth={2.2} /></Pressable>
+      <View style={styles.header}>
+        {headerPresentation.mode === "library-detail" || headerPresentation.mode === "back" ? (
+          <Pressable accessibilityLabel="Volver" accessibilityRole="button" hitSlop={8} onPress={() => { if (router.canGoBack()) router.back(); else router.replace(detailFallback); }} style={({ pressed }) => [styles.headerButton, headerPresentation.mode === "back" && styles.backHeaderSide, pressed && styles.pressed]}><ChevronLeft color={tokens.color.textMain} size={26} strokeWidth={2.2} /></Pressable>
         ) : canOpenMenu ? (
           <Pressable
             accessibilityLabel="Abrir menú"
@@ -171,15 +185,67 @@ export function AppNavigationHeader() {
             hitSlop={8}
             onPress={openMenu}
             style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}>
-            <Menu color={tokens.color.textMain} size={25} strokeWidth={2} />
+            <PanelRight color={tokens.color.textMain} size={25} strokeWidth={2} />
           </Pressable>
         ) : (
           <View style={styles.headerButton} />
         )}
-        {headerPresentation.mode === "library-list" || headerPresentation.mode === "library-detail" ? (
+        {headerPresentation.mode === "back" ? <BackHeaderIdentity title={headerPresentation.title} /> : headerPresentation.mode === "library-list" || headerPresentation.mode === "library-detail" ? (
           <LibraryHeaderIdentity entity={headerPresentation.entity} title={headerPresentation.title} visible={headerPresentation.identityVisible} />
         ) : isHome ? <View pointerEvents="none" style={styles.headerLogo}><MyScoopeLogo /></View> : <HeaderIdentity icon={routeIdentity.icon} title={headerPresentation.title || routeIdentity.title} visible={defaultIdentityVisible} />}
-        <View style={styles.headerButton} />
+        {headerPresentation.mode === "back" && headerPresentation.action ? (
+          <Pressable
+            accessibilityLabel={headerPresentation.action.label}
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={headerPresentation.action.onPress}
+            style={({ pressed }) => [styles.backHeaderAction, pressed && styles.pressed]}>
+            <Text numberOfLines={1} style={styles.backHeaderActionText}>{headerPresentation.action.label}</Text>
+          </Pressable>
+        ) : headerPresentation.mode === "library-list" ? (
+          <View style={styles.libraryHeaderActions}>
+            {headerPresentation.createAction ? (
+              <Pressable
+                accessibilityLabel={headerPresentation.createAction.label}
+                accessibilityRole="button"
+                hitSlop={8}
+                onPress={headerPresentation.createAction.onPress}
+                style={({ pressed }) => [styles.headerButton, styles.libraryHeaderButton, pressed && styles.pressed]}>
+                <Plus color={tokens.color.textMain} size={25} strokeWidth={2.2} />
+              </Pressable>
+            ) : null}
+            {headerPresentation.action ? (
+              <Pressable
+                accessibilityLabel={headerPresentation.action.label}
+                accessibilityRole="button"
+                hitSlop={8}
+                onPress={headerPresentation.action.onPress}
+                style={({ pressed }) => [styles.headerButton, styles.libraryHeaderButton, pressed && styles.pressed]}>
+                <MoreHorizontal color={tokens.color.textMain} size={26} strokeWidth={2.2} />
+              </Pressable>
+            ) : null}
+          </View>
+        ) : headerPresentation.mode === "library-detail" && headerPresentation.action ? (
+          <Pressable
+            accessibilityLabel={headerPresentation.action.label}
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={headerPresentation.action.onPress}
+            style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}>
+            <MoreHorizontal color={tokens.color.textMain} size={26} strokeWidth={2.2} />
+          </Pressable>
+        ) : headerPresentation.mode === "default" && headerPresentation.action ? (
+          <Pressable
+            accessibilityLabel={headerPresentation.action.label}
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={headerPresentation.action.onPress}
+            style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}>
+            {headerPresentation.action.icon === "plus"
+              ? <Plus color={tokens.color.textMain} size={25} strokeWidth={2.2} />
+              : <MoreHorizontal color={tokens.color.textMain} size={26} strokeWidth={2.2} />}
+          </Pressable>
+        ) : <View style={[styles.headerButton, headerPresentation.mode === "back" && styles.backHeaderSide]} />}
       </View>
     </SafeAreaView>
   );
@@ -209,27 +275,41 @@ function EntitySidebarEntry({ item }: { item: EntitySidebarItemData }) {
 
 function AppSidebar() {
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { closeMenu, menuOpen } = useAppNavigation();
+  const { closeMenu, finishClosingMenu, menuMounted, menuOpen } = useAppNavigation();
   const { session, signOut } = useSession();
   const [translateX] = useState(() => new Animated.Value(-380));
+  const [scrimOpacity] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
-    if (!menuOpen) return;
-    translateX.setValue(-Math.min(width * 0.88, 360));
-    Animated.timing(translateX, {
-      duration: 220,
-      toValue: 0,
-      useNativeDriver: true,
-    }).start();
-  }, [menuOpen, translateX, width]);
+    const hiddenPosition = -Math.min(width * 0.88, 360);
+    if (menuOpen) {
+      translateX.setValue(hiddenPosition);
+      scrimOpacity.setValue(0);
+      Animated.parallel([
+        Animated.timing(translateX, { duration: 220, toValue: 0, useNativeDriver: true }),
+        Animated.timing(scrimOpacity, { duration: 220, toValue: 1, useNativeDriver: true }),
+      ]).start();
+      return;
+    }
+    if (!menuMounted) return;
+    Animated.parallel([
+      Animated.timing(translateX, { duration: 220, toValue: hiddenPosition, useNativeDriver: true }),
+      Animated.timing(scrimOpacity, { duration: 180, toValue: 0, useNativeDriver: true }),
+    ]).start(({ finished }) => { if (finished) finishClosingMenu(); });
+  }, [finishClosingMenu, menuMounted, menuOpen, scrimOpacity, translateX, width]);
 
   return (
-    <Modal animationType="fade" onRequestClose={closeMenu} transparent visible={menuOpen}>
+    <Modal animationType="none" onRequestClose={closeMenu} transparent visible={menuMounted}>
       <View style={styles.modalRoot}>
-        <Pressable accessibilityLabel="Cerrar menú" onPress={closeMenu} style={styles.scrim} />
+        <Animated.View style={[styles.scrim, { opacity: scrimOpacity }]}><Pressable accessibilityLabel="Cerrar menú" onPress={closeMenu} style={styles.scrimPressable} /></Animated.View>
         <Animated.View style={[styles.drawer, { maxWidth: 360, transform: [{ translateX }], width: Math.min(width * 0.88, 360) }]}>
-          <SafeAreaView edges={["top", "bottom", "left"]} style={styles.drawerSafeArea}>
+          <View style={[styles.drawerSafeArea, {
+            paddingBottom: Math.max(insets.bottom, initialWindowMetrics?.insets.bottom ?? 0),
+            paddingLeft: Math.max(insets.left, initialWindowMetrics?.insets.left ?? 0),
+            paddingTop: Math.max(insets.top, initialWindowMetrics?.insets.top ?? 0),
+          }]}>
             <View style={styles.drawerHeader}>
               <MyScoopeLogo />
               <Pressable
@@ -267,7 +347,7 @@ function AppSidebar() {
                 <LogOut color={tokens.color.textMuted} size={20} />
               </Pressable>
             </View>
-          </SafeAreaView>
+          </View>
         </Animated.View>
       </View>
     </Modal>
@@ -277,9 +357,14 @@ function AppSidebar() {
 const styles = StyleSheet.create({
   pressed: { opacity: 0.65 },
   headerSafeArea: { backgroundColor: tokens.color.surfaceApp },
-  header: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", height: 58, justifyContent: "space-between" },
-  headerWithoutBorder: { borderBottomWidth: 0 },
+  header: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, flexDirection: "row", height: 48, justifyContent: "space-between" },
   headerButton: { alignItems: "center", height: 52, justifyContent: "center", width: 58 },
+  libraryHeaderButton: { width: 44 },
+  libraryHeaderActions: { alignItems: "center", flexDirection: "row" },
+  backHeaderSide: { alignItems: "flex-start", paddingLeft: tokens.spacing.lg, width: 92 },
+  backHeaderAction: { alignItems: "center", height: 52, justifyContent: "center", paddingHorizontal: tokens.spacing.sm, width: 92 },
+  backHeaderActionText: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: "700" },
+  backHeaderIdentity: { alignItems: "center", flex: 1, justifyContent: "center", minWidth: 0 },
   headerListIdentity: { flex: 1, justifyContent: "center" },
   headerLogo: { alignItems: "center", bottom: 0, justifyContent: "center", left: 58, position: "absolute", right: 58, top: 0 },
   routeIdentity: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0 },
@@ -293,6 +378,7 @@ const styles = StyleSheet.create({
   logoBarFat: { backgroundColor: tokens.color.fat },
   modalRoot: { flex: 1, flexDirection: "row" },
   scrim: { backgroundColor: "rgba(0,0,0,0.72)", bottom: 0, left: 0, position: "absolute", right: 0, top: 0 },
+  scrimPressable: { flex: 1 },
   drawer: { backgroundColor: tokens.color.surfacePage, borderRightColor: tokens.color.borderDefault, borderRightWidth: 1, height: "100%", shadowColor: "#000000", shadowOffset: { height: 0, width: 8 }, shadowOpacity: 0.45, shadowRadius: 20 },
   drawerSafeArea: { flex: 1 },
   drawerHeader: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", justifyContent: "space-between", minHeight: 64, paddingHorizontal: tokens.spacing.lg },

@@ -31,6 +31,7 @@ from notas.domain.models import (
     DailyPlanMeal,
     Food,
     FoodLabelCaptureReceipt,
+    FoodShare,
     Meal,
     MealFood,
     NutritionProposal,
@@ -126,6 +127,23 @@ class MobileAPIV1Tests(TestCase):
             "/api/v1/library/daily-plans",
             "/api/v1/library/meals",
             "/api/v1/library/foods",
+            "/api/v1/library/meals/{meal_id}/food-picker/preview",
+            "/api/v1/library/meals/{meal_id}/food-picker/commit",
+            "/api/v1/library/daily-plans/{dailyplan_id}/meal-picker/preview",
+            "/api/v1/library/daily-plans/{dailyplan_id}/meal-picker/commit",
+            "/api/v1/library/programs/{program_id}/daily-plan-picker/preview",
+            "/api/v1/library/programs/{program_id}/daily-plan-picker/commit",
+            "/api/v1/library/programs/{program_id}/week-picker/preview",
+            "/api/v1/library/programs/{program_id}/week-picker/commit",
+            "/api/v1/library/meals/{meal_id}/foods/{meal_food_id}",
+            "/api/v1/library/meals/{meal_id}/foods/order",
+            "/api/v1/library/daily-plans/{dailyplan_id}/meals/{dailyplan_meal_id}",
+            "/api/v1/library/daily-plans/{dailyplan_id}/meals/order",
+            "/api/v1/library/programs/{program_id}/weeks/order",
+            "/api/v1/library/programs/{program_id}/weeks/{week_number}/duplicate",
+            "/api/v1/library/programs/{program_id}/weeks/{week_number}",
+            "/api/v1/library/programs/{program_id}/weeks/{week_number}/days/{day_number}",
+            "/api/v1/library/{entity}/{item_id}/actions",
             "/api/v1/foods/label-captures",
             "/api/v1/ai/turns",
             "/api/v1/ai/jobs/{job_id}",
@@ -133,6 +151,13 @@ class MobileAPIV1Tests(TestCase):
             "/api/v1/ai/chats/{chat_id}",
         ):
             self.assertIn(path, schema["paths"])
+        for path in (
+            "/api/v1/library/foods",
+            "/api/v1/library/meals",
+            "/api/v1/library/daily-plans",
+            "/api/v1/library/programs",
+        ):
+            self.assertIn("post", schema["paths"][path])
 
     def test_protected_endpoint_uses_stable_error_envelope(self):
         response = Client().get("/api/v1/session")
@@ -184,11 +209,16 @@ class MobileAPIV1Tests(TestCase):
         data = response.json()["data"]
         self.assertTrue(data["eligible"])
         self.assertTrue(data["purchases_enabled"])
-        self.assertEqual(data["products"], [{
-            "product_id": product.external_product_id,
-            "plan_name": plan.name,
-            "interval": "month",
-        }])
+        self.assertEqual(
+            data["products"],
+            [
+                {
+                    "product_id": product.external_product_id,
+                    "plan_name": plan.name,
+                    "interval": "month",
+                }
+            ],
+        )
         self.assertNotIn("price", data["products"][0])
         self.assertTrue(AppleAppAccountToken.objects.filter(user=self.user).exists())
 
@@ -256,8 +286,18 @@ class MobileAPIV1Tests(TestCase):
 
     def test_today_and_active_program_resolve_from_current_calendarization(self):
         today = timezone.localdate(timezone=ZoneInfo("UTC"))
+        program = Program.objects.create(
+            name="Definición 11 semanas",
+            created_by=self.user,
+            duration_weeks=11,
+            is_draft=False,
+        )
+        dailyplan = DailyPlan.objects.create(name="Plan de hoy", created_by=self.user, is_draft=False)
+        meal = Meal.objects.create(name="Comida de hoy", created_by=self.user, is_draft=False)
+        slot = DailyPlanMeal.objects.create(dailyplan=dailyplan, meal=meal)
         calendarization = ProgramCalendarization.objects.create(
             user=self.user,
+            source_program=program,
             program_name_snapshot="Definición 8 semanas",
             start_date=today,
             end_date=today + timedelta(days=6),
@@ -269,7 +309,10 @@ class MobileAPIV1Tests(TestCase):
             calendar_date=today,
             week_number=1,
             day_number=1,
-            plan_snapshot={"name": "Día alto en carbohidratos", "meals": []},
+            plan_snapshot={
+                "name": "Día alto en carbohidratos",
+                "meals": [{"key": f"dailyplan_meal:{slot.id}", "name": meal.name}],
+            },
         )
 
         today_response = self.client.get("/api/v1/today")
@@ -278,8 +321,12 @@ class MobileAPIV1Tests(TestCase):
         self.assertEqual(today_response.status_code, 200)
         self.assertEqual(today_response.json()["data"]["day_id"], day.id)
         self.assertEqual(today_response.json()["data"]["plan_snapshot"]["name"], "Día alto en carbohidratos")
+        self.assertEqual(today_response.json()["data"]["plan_snapshot"]["meals"][0]["detail_id"], meal.id)
         self.assertEqual(active_response.status_code, 200)
         self.assertEqual(active_response.json()["data"]["calendarization"]["id"], calendarization.id)
+        self.assertEqual(active_response.json()["data"]["weeks_count"], 11)
+        self.assertEqual(len(active_response.json()["data"]["weeks"]), 11)
+        self.assertEqual(active_response.json()["data"]["weeks"][0]["week_number"], 1)
         self.assertEqual(len(active_response.json()["data"]["days"]), 1)
 
     def test_calendarization_activation_requires_explicit_incomplete_and_replacement_confirmation(self):
@@ -414,12 +461,53 @@ class MobileAPIV1Tests(TestCase):
         )
         other_client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {other_token.raw_token}"
         hidden_day = other_client.get(f"/api/v1/program/days/{day_id}")
-        hidden_calendarization = other_client.post(
-            f"/api/v1/program/calendarizations/{calendarization_id}/pause"
-        )
+        hidden_calendarization = other_client.post(f"/api/v1/program/calendarizations/{calendarization_id}/pause")
 
         self.assertEqual(hidden_day.status_code, 404)
         self.assertEqual(hidden_calendarization.status_code, 404)
+
+    def test_calendarized_day_exposes_owned_meal_detail_links_without_mutating_snapshot(self):
+        today = timezone.localdate(timezone=ZoneInfo("UTC"))
+        dailyplan = DailyPlan.objects.create(name="Plan activo", created_by=self.user, is_draft=False)
+        owned_meal = Meal.objects.create(name="Comida navegable", created_by=self.user, is_draft=False)
+        owned_slot = DailyPlanMeal.objects.create(dailyplan=dailyplan, meal=owned_meal)
+        other = User.objects.create_user(username="calendar-meal-owner")
+        foreign_meal = Meal.objects.create(name="Comida ajena", created_by=other, is_draft=False)
+        foreign_slot = DailyPlanMeal.objects.create(dailyplan=dailyplan, meal=foreign_meal)
+        calendarization = ProgramCalendarization.objects.create(
+            user=self.user,
+            program_name_snapshot="Programa activo",
+            start_date=today,
+            end_date=today,
+            timezone_name="UTC",
+            status=ProgramCalendarization.STATUS_ACTIVE,
+        )
+        stored_snapshot = {
+            "name": "Plan activo",
+            "totals": {"protein_g": 150, "carbs_g": 200, "fat_g": 60},
+            "meals": [
+                {"key": f"dailyplan_meal:{owned_slot.id}", "name": owned_meal.name, "totals": {"protein_g": 30}},
+                {"key": f"dailyplan_meal:{foreign_slot.id}", "name": foreign_meal.name, "totals": {"protein_g": 15}},
+            ],
+        }
+        day = CalendarizedDay.objects.create(
+            calendarization=calendarization,
+            calendar_date=today,
+            week_number=1,
+            day_number=1,
+            plan_snapshot=stored_snapshot,
+        )
+
+        response = self.client.get(f"/api/v1/program/days/{day.id}")
+
+        self.assertEqual(response.status_code, 200)
+        meals = response.json()["data"]["plan_snapshot"]["meals"]
+        self.assertEqual(response.json()["data"]["plan_snapshot"]["totals"]["protein_per_kilogram"], 2.0)
+        self.assertEqual(meals[0]["totals"]["protein_per_kilogram"], 0.4)
+        self.assertEqual(meals[0]["detail_id"], owned_meal.id)
+        self.assertNotIn("detail_id", meals[1])
+        day.refresh_from_db()
+        self.assertEqual(day.plan_snapshot, stored_snapshot)
 
     def test_proposal_center_lists_details_and_separates_approval_from_application(self):
         food = Food.objects.create(
@@ -471,7 +559,9 @@ class MobileAPIV1Tests(TestCase):
         self.assertEqual(proposal_list.status_code, 200)
         self.assertEqual(proposal_list.json()["data"]["pending_count"], 1)
         self.assertEqual(proposal_list.json()["data"]["items"][0]["id"], proposal.id)
-        self.assertEqual({action["key"] for action in detail.json()["data"]["actions"]}, {"approve", "reject", "cancel"})
+        self.assertEqual(
+            {action["key"] for action in detail.json()["data"]["actions"]}, {"approve", "reject", "cancel"}
+        )
         self.assertEqual(detail.json()["data"]["meal"]["name"], "Desayuno AI")
         self.assertEqual(approved.status_code, 200)
         self.assertEqual(approved.json()["data"]["status"], "approved")
@@ -604,7 +694,18 @@ class MobileAPIV1Tests(TestCase):
         )
         self.assertNotIn("programs", [kind["key"] for kind in metadata.json()["data"]["kinds"]])
         self.assertEqual(options.status_code, 200)
-        self.assertEqual({item["id"] for item in options.json()["data"]["items"]}, {oats.id, rice.id})
+        option_items = options.json()["data"]["items"]
+        self.assertEqual({item["id"] for item in option_items}, {oats.id, rice.id})
+        oats_option = next(item for item in option_items if item["id"] == oats.id)
+        self.assertEqual(
+            set(oats_option),
+            {"id", "entity", "name", "subtitle", "nutrition", "indicators", "panel"},
+        )
+        self.assertEqual(oats_option["entity"], "food")
+        self.assertEqual(oats_option["nutrition"]["calories"], 165.0)
+        self.assertEqual(oats_option["nutrition"]["protein"]["grams"], 10.0)
+        self.assertEqual(oats_option["indicators"], [{"icon": None, "label": "base nutricional", "value": "100 g"}])
+        self.assertEqual(oats_option["panel"]["kind"], "none")
         self.assertEqual(compared.status_code, 200)
         first = compared.json()["data"]["items"][0]
         self.assertEqual(first["quantity"], 50.0)
@@ -656,6 +757,89 @@ class MobileAPIV1Tests(TestCase):
             [bar["relative_percentage"] for bar in repeated_food.json()["data"]["metrics"][0]["bars"]],
             [50.0, 100.0],
         )
+
+    def test_comparator_options_deliver_complete_meal_and_dailyplan_cards(self):
+        food = Food.objects.create(
+            name="Ingrediente del selector",
+            protein=10,
+            carbs=20,
+            fat=5,
+            created_by=self.user,
+        )
+        meal = Meal.objects.create(
+            name="Comida completa del selector",
+            created_by=self.user,
+            is_draft=False,
+            protein_cached=10,
+            carbs_cached=20,
+            fat_cached=5,
+            kcal_protein_cached=40,
+            kcal_carbs_cached=80,
+            kcal_fat_cached=45,
+            total_kcal_cached=165,
+            alloc_protein_cached=24.2,
+            alloc_carbs_cached=48.5,
+            alloc_fat_cached=27.3,
+        )
+        MealFood.objects.create(meal=meal, food=food, quantity=100)
+        dailyplan = DailyPlan.objects.create(
+            name="Plan completo del selector",
+            created_by=self.user,
+            is_draft=False,
+            summary_cache={
+                "totals": {
+                    "protein": 10,
+                    "carbs": 20,
+                    "fat": 5,
+                    "total_kcal": 165,
+                    "alloc": {"protein": 24.2, "carbs": 48.5, "fat": 27.3},
+                }
+            },
+        )
+        embedded_meal = Meal.objects.create(
+            name="Comida incluida en plan",
+            created_by=self.user,
+            is_draft=False,
+            protein_cached=10,
+            carbs_cached=20,
+            fat_cached=5,
+            kcal_protein_cached=40,
+            kcal_carbs_cached=80,
+            kcal_fat_cached=45,
+            total_kcal_cached=165,
+            alloc_protein_cached=24.2,
+            alloc_carbs_cached=48.5,
+            alloc_fat_cached=27.3,
+        )
+        MealFood.objects.create(meal=embedded_meal, food=food, quantity=100)
+        DailyPlanMeal.objects.create(dailyplan=dailyplan, meal=embedded_meal, hour="08:00")
+
+        meal_response = self.client.get("/api/v1/comparisons/options/meals?search=Comida%20completa")
+        dailyplan_response = self.client.get("/api/v1/comparisons/options/dailyplans?search=Plan%20completo")
+
+        self.assertEqual(meal_response.status_code, 200)
+        meal_option = meal_response.json()["data"]["items"][0]
+        self.assertEqual(meal_option["entity"], "meal")
+        self.assertEqual(meal_option["nutrition"]["calories"], 165.0)
+        self.assertEqual(meal_option["indicators"][0], {"icon": "food", "label": "alimentos", "value": 1})
+        self.assertEqual(meal_option["panel"]["kind"], "foods")
+        self.assertEqual(meal_option["panel"]["foods"][0]["name"], "Ingrediente del selector")
+        self.assertEqual(meal_option["panel"]["foods"][0]["quantity"], 100.0)
+
+        self.assertEqual(dailyplan_response.status_code, 200)
+        dailyplan_option = dailyplan_response.json()["data"]["items"][0]
+        self.assertEqual(dailyplan_option["entity"], "dailyPlan")
+        self.assertEqual(dailyplan_option["nutrition"]["calories"], 165.0)
+        self.assertEqual(
+            dailyplan_option["indicators"],
+            [
+                {"icon": "meal", "label": "comidas", "value": 1},
+                {"icon": "food", "label": "alimentos", "value": 1},
+            ],
+        )
+        self.assertEqual(dailyplan_option["panel"]["kind"], "meals")
+        self.assertEqual(dailyplan_option["panel"]["meals"][0]["name"], "Comida incluida en plan")
+        self.assertEqual(dailyplan_option["panel"]["meals"][0]["foods"][0]["name"], "Ingrediente del selector")
 
     def test_saved_comparison_is_owner_scoped_and_preserves_its_snapshot(self):
         first_food = Food.objects.create(
@@ -745,6 +929,15 @@ class MobileAPIV1Tests(TestCase):
             data={"action": "completed", "idempotency_key": "mobile-checkin-0001"},
             content_type="application/json",
         )
+        noted = self.client.post(
+            f"/api/v1/days/{day.id}/meals/dailyplan_meal:99/check-ins",
+            data={
+                "action": "note",
+                "idempotency_key": "mobile-checkin-note-0001",
+                "note": "Cumplida según lo planificado.",
+            },
+            content_type="application/json",
+        )
         reset = self.client.post(
             f"/api/v1/days/{day.id}/meals/dailyplan_meal:99/check-ins",
             data={"action": "reset", "idempotency_key": "mobile-checkin-0002"},
@@ -753,9 +946,17 @@ class MobileAPIV1Tests(TestCase):
 
         self.assertEqual(completed.status_code, 200)
         self.assertEqual(completed.json()["data"]["meal_execution"][0]["status"], "completed")
+        self.assertEqual(noted.status_code, 200)
+        self.assertEqual(noted.json()["data"]["meal_execution"][0]["status"], "completed")
+        self.assertEqual(noted.json()["data"]["meal_execution"][0]["note"], "Cumplida según lo planificado.")
         self.assertEqual(reset.status_code, 200)
         self.assertEqual(reset.json()["data"]["meal_execution"][0]["status"], "planned")
-        self.assertEqual(CalendarizedMealExecution.objects.filter(calendarized_day=day).count(), 2)
+        self.assertEqual(reset.json()["data"]["meal_execution"][0]["note"], "Cumplida según lo planificado.")
+        day_detail = self.client.get(f"/api/v1/program/days/{day.id}")
+        self.assertEqual(day_detail.status_code, 200)
+        self.assertEqual(day_detail.json()["data"]["meal_execution"][0]["status"], "planned")
+        self.assertEqual(day_detail.json()["data"]["meal_execution"][0]["note"], "Cumplida según lo planificado.")
+        self.assertEqual(CalendarizedMealExecution.objects.filter(calendarized_day=day).count(), 3)
 
     def test_reviews_reminders_and_measurement_context_share_the_active_program(self):
         today = timezone.localdate(timezone=ZoneInfo("UTC"))
@@ -897,10 +1098,10 @@ class MobileAPIV1Tests(TestCase):
         self.assertEqual(response.json()["error"]["code"], "mobile_scope_missing")
 
     def test_food_search_is_paginated_and_respects_existing_visibility(self):
-        Food.objects.create(name="Arroz personal", protein=7, carbs=78, fat=1, created_by=self.user)
+        personal = Food.objects.create(name="Arroz personal", protein=7, carbs=78, fat=1, created_by=self.user)
         Food.objects.create(name="Arroz global", protein=8, carbs=77, fat=1, created_by=None, is_global=True)
         other = User.objects.create_user(username="other-user")
-        Food.objects.create(name="Arroz privado ajeno", protein=9, carbs=70, fat=2, created_by=other)
+        private = Food.objects.create(name="Arroz privado ajeno", protein=9, carbs=70, fat=2, created_by=other)
 
         response = self.client.get("/api/v1/foods", {"search": "Arroz", "offset": 0, "limit": 1})
 
@@ -910,6 +1111,13 @@ class MobileAPIV1Tests(TestCase):
         self.assertEqual(data["limit"], 1)
         self.assertEqual(len(data["items"]), 1)
         self.assertTrue(data["items"][0]["is_user_food"])
+        self.assertIn("protein_allocation", data["items"][0])
+        self.assertIn("carbs_allocation", data["items"][0])
+        self.assertIn("fat_allocation", data["items"][0])
+        detail = self.client.get(f"/api/v1/food-picker-options/{personal.id}")
+        self.assertEqual(detail.status_code, 200)
+        self.assertEqual(detail.json()["data"]["id"], personal.id)
+        self.assertEqual(self.client.get(f"/api/v1/food-picker-options/{private.id}").status_code, 404)
 
     def test_personal_library_endpoints_match_the_four_web_library_entities(self):
         food = Food.objects.create(name="Avena personal", protein=13, carbs=68, fat=7, created_by=self.user)
@@ -930,7 +1138,15 @@ class MobileAPIV1Tests(TestCase):
             name="Día de entrenamiento",
             created_by=self.user,
             is_draft=False,
-            summary_cache={"totals": {"protein": 13, "carbs": 68, "fat": 7, "total_kcal": 387, "alloc": {"protein": 13.4, "carbs": 70.3, "fat": 16.3}}},
+            summary_cache={
+                "totals": {
+                    "protein": 13,
+                    "carbs": 68,
+                    "fat": 7,
+                    "total_kcal": 387,
+                    "alloc": {"protein": 13.4, "carbs": 70.3, "fat": 16.3},
+                }
+            },
         )
         embedded_meal = Meal.objects.create(
             name="Instancia del plan",
@@ -953,7 +1169,17 @@ class MobileAPIV1Tests(TestCase):
             name="Programa base",
             created_by=self.user,
             duration_weeks=1,
-            summary_cache={"filled_days_count": 1, "program_totals": {"protein": 13, "carbs": 68, "fat": 7, "kcal_protein": 52, "kcal_carbs": 272, "kcal_fat": 63}},
+            summary_cache={
+                "filled_days_count": 1,
+                "program_totals": {
+                    "protein": 13,
+                    "carbs": 68,
+                    "fat": 7,
+                    "kcal_protein": 52,
+                    "kcal_carbs": 272,
+                    "kcal_fat": 63,
+                },
+            },
         )
         ProgramDay.objects.create(program=program, dailyplan=dailyplan, week_number=1, day_number=1)
         other = User.objects.create_user(username="private-library-owner")
@@ -994,6 +1220,7 @@ class MobileAPIV1Tests(TestCase):
         self.assertIn("protein_allocation", dailyplan_item["panel"]["meals"][0]["foods"][0])
         self.assertIn("calorie_share", dailyplan_item["panel"]["meals"][0])
         self.assertIn("calorie_distribution", dailyplan_item["panel"]["meals"][0])
+        self.assertEqual(dailyplan_item["panel"]["meals"][0]["protein_per_kilogram"], 0.2)
 
         program_item = self.client.get("/api/v1/library/programs").json()["data"]["items"][0]
         self.assertEqual(program_item["panel"]["kind"], "weeks")
@@ -1027,6 +1254,13 @@ class MobileAPIV1Tests(TestCase):
                     self.assertEqual(meal_data["foods"][0]["name"], "Avena personal")
                     self.assertIn("calories", meal_data["foods"][0])
                     self.assertIn("calorie_distribution", meal_data["foods"][0])
+                    self.assertEqual(meal_data["protein_per_kilogram"], 0.2)
+                    aggregated_food = detail_data["panel"]["foods"][0]
+                    self.assertEqual(aggregated_food["name"], "Avena personal")
+                    self.assertEqual(aggregated_food["quantity"], 100.0)
+                    self.assertIn("calorie_share", aggregated_food)
+
+                    self.assertIn("protein_allocation", aggregated_food)
                 if entity == "program":
                     week_data = detail_data["panel"]["weeks"][0]
                     self.assertEqual(week_data["filled_days_count"], 1)
@@ -1034,15 +1268,530 @@ class MobileAPIV1Tests(TestCase):
                     self.assertEqual(week_data["days"][0]["dailyplan_id"], dailyplan.id)
                     self.assertEqual(week_data["days"][0]["nutrition"]["calories"], 387.0)
                     self.assertEqual(week_data["days"][0]["meals"][0]["name"], "Instancia del plan")
+                    self.assertEqual(week_data["days"][0]["meals"][0]["protein_per_kilogram"], 0.2)
                     self.assertEqual(week_data["foods"][0]["name"], "Avena personal")
 
         embedded_meal_detail = self.client.get(f"/api/v1/library/meals/{embedded_meal.id}")
         self.assertEqual(embedded_meal_detail.status_code, 200)
         self.assertEqual(embedded_meal_detail.json()["data"]["name"], "Instancia del plan")
 
+        dailyplan.source = DailyPlan.SOURCE_PROGRAM
+        dailyplan.save(update_fields=["source"])
+        program_dailyplan_detail = self.client.get(f"/api/v1/library/daily-plans/{dailyplan.id}")
+        self.assertEqual(program_dailyplan_detail.status_code, 200)
+        self.assertEqual(program_dailyplan_detail.json()["data"]["id"], dailyplan.id)
+        private_program_dailyplan = DailyPlan.objects.create(
+            name="Plan de programa ajeno", created_by=other, source=DailyPlan.SOURCE_PROGRAM, is_draft=False
+        )
+        self.assertEqual(
+            self.client.get(f"/api/v1/library/daily-plans/{private_program_dailyplan.id}").status_code, 404
+        )
+
         missing = self.client.get("/api/v1/library/meals/999999")
         self.assertEqual(missing.status_code, 404)
         self.assertEqual(missing.json()["error"]["code"], "library_item_not_found")
+
+    def test_mobile_can_create_and_complete_each_library_entity(self):
+        food_response = self.client.post(
+            "/api/v1/library/foods",
+            data={"name": "Yogur natural", "protein": 4.2, "carbs": 5.1, "fat": 2.3},
+            content_type="application/json",
+        )
+        self.assertEqual(food_response.status_code, 200)
+        food = food_response.json()["data"]
+        self.assertEqual(food["entity"], "food")
+        self.assertFalse(food["is_draft"])
+
+        meal_response = self.client.post(
+            "/api/v1/library/meals", data={"name": "Desayuno nuevo"}, content_type="application/json"
+        )
+        dailyplan_response = self.client.post(
+            "/api/v1/library/daily-plans", data={"name": "Día nuevo"}, content_type="application/json"
+        )
+        program_response = self.client.post(
+            "/api/v1/library/programs", data={"name": "Programa nuevo"}, content_type="application/json"
+        )
+        for response, entity in (
+            (meal_response, "meal"),
+            (dailyplan_response, "dailyPlan"),
+            (program_response, "program"),
+        ):
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json()["data"]["entity"], entity)
+            self.assertTrue(response.json()["data"]["is_draft"])
+
+        meal_id = meal_response.json()["data"]["id"]
+        dailyplan_id = dailyplan_response.json()["data"]["id"]
+        program_id = program_response.json()["data"]["id"]
+        self.assertEqual(self.client.get("/api/v1/library/meals").json()["data"]["total"], 0)
+        draft_meals = self.client.get("/api/v1/library/meals", {"include_drafts": True}).json()["data"]
+        self.assertEqual(draft_meals["total"], 1)
+        self.assertEqual(draft_meals["items"][0]["indicators"][-1]["value"], "Borrador")
+        self.assertEqual(self.client.get(f"/api/v1/library/meals/{meal_id}").status_code, 200)
+        self.assertEqual(self.client.get(f"/api/v1/library/daily-plans/{dailyplan_id}").status_code, 200)
+
+        add_food = self.client.post(
+            f"/api/v1/library/meals/{meal_id}/food-picker/commit",
+            data={"food_id": food["id"], "quantity": 150},
+            content_type="application/json",
+        )
+        self.assertEqual(add_food.status_code, 200)
+        self.assertFalse(Meal.objects.get(pk=meal_id).is_draft)
+
+        add_meal = self.client.post(
+            f"/api/v1/library/daily-plans/{dailyplan_id}/meal-picker/commit",
+            data={"meal_id": meal_id, "hour": "08:30", "note": ""},
+            content_type="application/json",
+        )
+        self.assertEqual(add_meal.status_code, 200)
+        self.assertFalse(DailyPlan.objects.get(pk=dailyplan_id).is_draft)
+
+        assign_dailyplan = self.client.post(
+            f"/api/v1/library/programs/{program_id}/daily-plan-picker/commit",
+            data={
+                "dailyplan_id": dailyplan_id,
+                "week_number": 1,
+                "day_numbers": [1],
+                "confirm_replacements": False,
+            },
+            content_type="application/json",
+        )
+        self.assertEqual(assign_dailyplan.status_code, 200)
+        self.assertFalse(Program.objects.get(pk=program_id).is_draft)
+
+    def test_library_creation_rejects_blank_names_and_out_of_range_macros(self):
+        blank = self.client.post(
+            "/api/v1/library/meals", data={"name": "   "}, content_type="application/json"
+        )
+        invalid_macro = self.client.post(
+            "/api/v1/library/foods",
+            data={"name": "Inválido", "protein": 101, "carbs": 0, "fat": 0},
+            content_type="application/json",
+        )
+        self.assertEqual(blank.status_code, 422)
+        self.assertEqual(blank.json()["error"]["code"], "library_name_required")
+        self.assertEqual(invalid_macro.status_code, 422)
+        self.assertEqual(invalid_macro.json()["error"]["code"], "request_validation_failed")
+
+    def test_mobile_composition_pickers_preview_and_commit_the_four_web_flows(self):
+        food = Food.objects.create(
+            name="Avena para picker",
+            protein=10,
+            carbs=60,
+            fat=5,
+            created_by=self.user,
+        )
+        target_meal = Meal.objects.create(
+            name="Comida destino",
+            created_by=self.user,
+            is_draft=False,
+            protein_cached=0,
+            carbs_cached=0,
+            fat_cached=0,
+            total_kcal_cached=0,
+        )
+
+        food_preview = self.client.post(
+            f"/api/v1/library/meals/{target_meal.id}/food-picker/preview",
+            data={"food_id": food.id, "quantity": 50},
+            content_type="application/json",
+        )
+        self.assertEqual(food_preview.status_code, 200)
+        self.assertEqual(food_preview.json()["data"]["selection"]["quantity"], 50.0)
+        self.assertEqual(food_preview.json()["data"]["impacts"][0]["after"]["protein"]["grams"], 5.0)
+
+        food_commit = self.client.post(
+            f"/api/v1/library/meals/{target_meal.id}/food-picker/commit",
+            data={"food_id": food.id, "quantity": 50},
+            content_type="application/json",
+        )
+        self.assertEqual(food_commit.status_code, 200)
+        self.assertTrue(MealFood.objects.filter(meal=target_meal, food=food, quantity=50).exists())
+
+        source_meal = Meal.objects.create(
+            name="Comida reutilizable",
+            created_by=self.user,
+            is_draft=False,
+            protein_cached=10,
+            carbs_cached=60,
+            fat_cached=5,
+            total_kcal_cached=325,
+        )
+        MealFood.objects.create(meal=source_meal, food=food, quantity=100)
+        target_dailyplan = DailyPlan.objects.create(
+            name="Plan destino",
+            created_by=self.user,
+            is_draft=False,
+        )
+        meal_payload = {"meal_id": source_meal.id, "hour": "08:30:00", "note": "Antes de entrenar"}
+        meal_preview = self.client.post(
+            f"/api/v1/library/daily-plans/{target_dailyplan.id}/meal-picker/preview",
+            data=meal_payload,
+            content_type="application/json",
+        )
+        self.assertEqual(meal_preview.status_code, 200)
+        self.assertEqual(meal_preview.json()["data"]["selection"]["hour"], "08:30")
+        meal_commit = self.client.post(
+            f"/api/v1/library/daily-plans/{target_dailyplan.id}/meal-picker/commit",
+            data=meal_payload,
+            content_type="application/json",
+        )
+        self.assertEqual(meal_commit.status_code, 200)
+        slot = DailyPlanMeal.objects.get(dailyplan=target_dailyplan)
+        self.assertEqual(str(slot.hour), "08:30:00")
+        self.assertEqual(slot.note, "Antes de entrenar")
+        self.assertNotEqual(slot.meal_id, source_meal.id)
+
+        replacement_meal = Meal.objects.create(
+            name="Comida de reemplazo",
+            created_by=self.user,
+            is_draft=False,
+            protein_cached=20,
+            carbs_cached=30,
+            fat_cached=10,
+            total_kcal_cached=290,
+        )
+        MealFood.objects.create(meal=replacement_meal, food=food, quantity=80)
+        replacement_payload = {
+            "meal_id": replacement_meal.id,
+            "dailyplan_meal_id": slot.id,
+            "hour": "09:00:00",
+            "note": "Reemplazada",
+        }
+        replacement_preview = self.client.post(
+            f"/api/v1/library/daily-plans/{target_dailyplan.id}/meal-picker/preview",
+            data=replacement_payload,
+            content_type="application/json",
+        )
+        self.assertEqual(replacement_preview.status_code, 200)
+        self.assertIn("reemplazar", replacement_preview.json()["data"]["impacts"][0]["label"].lower())
+        replacement_commit = self.client.post(
+            f"/api/v1/library/daily-plans/{target_dailyplan.id}/meal-picker/commit",
+            data=replacement_payload,
+            content_type="application/json",
+        )
+        self.assertEqual(replacement_commit.status_code, 200)
+        slot.refresh_from_db()
+        self.assertEqual(slot.id, replacement_commit.json()["data"]["created_id"])
+        self.assertEqual(slot.meal.name, "Comida de reemplazo")
+        self.assertEqual(DailyPlanMeal.objects.filter(dailyplan=target_dailyplan).count(), 1)
+
+        source_dailyplan = DailyPlan.objects.create(
+            name="Plan reutilizable",
+            created_by=self.user,
+            is_draft=False,
+        )
+        source_dailyplan_meal = Meal.objects.create(
+            name="Comida del plan reutilizable",
+            created_by=self.user,
+            is_draft=False,
+            protein_cached=10,
+            carbs_cached=60,
+            fat_cached=5,
+            total_kcal_cached=325,
+        )
+        MealFood.objects.create(meal=source_dailyplan_meal, food=food, quantity=100)
+        DailyPlanMeal.objects.create(dailyplan=source_dailyplan, meal=source_dailyplan_meal, hour="13:00")
+        program = Program.objects.create(name="Programa destino", created_by=self.user, duration_weeks=1)
+        occupied_dailyplan = DailyPlan.objects.create(
+            name="Plan ocupado",
+            created_by=self.user,
+            is_draft=False,
+            source=DailyPlan.SOURCE_PROGRAM,
+        )
+        ProgramDay.objects.create(program=program, dailyplan=occupied_dailyplan, week_number=1, day_number=1)
+        program_payload = {
+            "dailyplan_id": source_dailyplan.id,
+            "week_number": 1,
+            "day_numbers": [1, 2],
+        }
+        program_preview = self.client.post(
+            f"/api/v1/library/programs/{program.id}/daily-plan-picker/preview",
+            data=program_payload,
+            content_type="application/json",
+        )
+        self.assertEqual(program_preview.status_code, 200)
+        self.assertEqual(program_preview.json()["data"]["replacements"], ["Lunes"])
+        self.assertEqual(program_preview.json()["data"]["impacts"], [])
+
+        unconfirmed = self.client.post(
+            f"/api/v1/library/programs/{program.id}/daily-plan-picker/commit",
+            data=program_payload,
+            content_type="application/json",
+        )
+        self.assertEqual(unconfirmed.status_code, 409)
+        self.assertEqual(unconfirmed.json()["error"]["code"], "picker_replacement_confirmation_required")
+        program_payload["confirm_replacements"] = True
+        program_commit = self.client.post(
+            f"/api/v1/library/programs/{program.id}/daily-plan-picker/commit",
+            data=program_payload,
+            content_type="application/json",
+        )
+        self.assertEqual(program_commit.status_code, 200)
+        self.assertEqual(ProgramDay.objects.filter(program=program, week_number=1).count(), 2)
+        self.assertTrue(
+            all(
+                row.dailyplan.source == DailyPlan.SOURCE_PROGRAM
+                for row in ProgramDay.objects.filter(program=program).select_related("dailyplan")
+            )
+        )
+
+        week_preview = self.client.post(f"/api/v1/library/programs/{program.id}/week-picker/preview")
+        self.assertEqual(week_preview.status_code, 200)
+        self.assertEqual(week_preview.json()["data"]["selection"]["name"], "Semana 2")
+        week_commit = self.client.post(
+            f"/api/v1/library/programs/{program.id}/week-picker/commit?expected_week_number=2",
+        )
+        self.assertEqual(week_commit.status_code, 200)
+        program.refresh_from_db()
+        self.assertEqual(program.normalized_duration_weeks, 2)
+        repeated_commit = self.client.post(
+            f"/api/v1/library/programs/{program.id}/week-picker/commit?expected_week_number=2",
+        )
+        self.assertEqual(repeated_commit.status_code, 200)
+        program.refresh_from_db()
+        self.assertEqual(program.normalized_duration_weeks, 2)
+
+    def test_mobile_comparison_edit_panels_mutate_owned_compositions(self):
+        first_food = Food.objects.create(name="Primer alimento", protein=10, carbs=20, fat=3, created_by=self.user)
+        second_food = Food.objects.create(name="Segundo alimento", protein=5, carbs=8, fat=2, created_by=self.user)
+        meal = Meal.objects.create(name="Comida editable", created_by=self.user, is_draft=False)
+        first_relation = MealFood.objects.create(meal=meal, food=first_food, quantity=100, order=1)
+        second_relation = MealFood.objects.create(meal=meal, food=second_food, quantity=50, order=2)
+
+        detail = self.client.get(f"/api/v1/library/meals/{meal.id}").json()["data"]
+        self.assertEqual(detail["panel"]["foods"][0]["relation_id"], first_relation.id)
+        updated = self.client.patch(
+            f"/api/v1/library/meals/{meal.id}/foods/{first_relation.id}",
+            data={"quantity": 75},
+            content_type="application/json",
+        )
+        self.assertEqual(updated.status_code, 200)
+        first_relation.refresh_from_db()
+        self.assertEqual(float(first_relation.quantity), 75)
+        reordered = self.client.put(
+            f"/api/v1/library/meals/{meal.id}/foods/order",
+            data={"ordered_ids": [second_relation.id, first_relation.id]},
+            content_type="application/json",
+        )
+        self.assertEqual(reordered.status_code, 200)
+        self.assertEqual(list(meal.meal_food_set.order_by("order").values_list("id", flat=True)), [second_relation.id, first_relation.id])
+        deleted = self.client.delete(f"/api/v1/library/meals/{meal.id}/foods/{first_relation.id}")
+        self.assertEqual(deleted.status_code, 200)
+        self.assertFalse(MealFood.objects.filter(pk=first_relation.id).exists())
+
+        source_one = Meal.objects.create(name="Fuente uno", created_by=self.user, is_draft=False)
+        source_two = Meal.objects.create(name="Fuente dos", created_by=self.user, is_draft=False)
+        dailyplan = DailyPlan.objects.create(name="Plan editable", created_by=self.user, is_draft=False)
+        slot_one = DailyPlanMeal.objects.create(dailyplan=dailyplan, meal=source_one, order=1, hour="08:00")
+        slot_two = DailyPlanMeal.objects.create(dailyplan=dailyplan, meal=source_two, order=2, hour="13:00")
+        plan_detail = self.client.get(f"/api/v1/library/daily-plans/{dailyplan.id}").json()["data"]
+        self.assertEqual(plan_detail["panel"]["meals"][0]["relation_id"], slot_one.id)
+        scheduled = self.client.patch(
+            f"/api/v1/library/daily-plans/{dailyplan.id}/meals/{slot_one.id}",
+            data={"hour": "09:15:00", "note": "Después de entrenar"},
+            content_type="application/json",
+        )
+        self.assertEqual(scheduled.status_code, 200)
+        slot_one.refresh_from_db()
+        self.assertEqual(str(slot_one.hour), "09:15:00")
+        self.assertEqual(slot_one.note, "Después de entrenar")
+        plan_reordered = self.client.put(
+            f"/api/v1/library/daily-plans/{dailyplan.id}/meals/order",
+            data={"ordered_ids": [slot_two.id, slot_one.id]},
+            content_type="application/json",
+        )
+        self.assertEqual(plan_reordered.status_code, 200)
+        self.assertEqual(list(dailyplan.dailyplan_meals.order_by("order").values_list("id", flat=True)), [slot_two.id, slot_one.id])
+        self.assertEqual(self.client.delete(f"/api/v1/library/daily-plans/{dailyplan.id}/meals/{slot_two.id}").status_code, 200)
+
+        program = Program.objects.create(name="Programa editable", created_by=self.user, duration_weeks=2)
+        snapshot = DailyPlan.objects.create(name="Día editable", created_by=self.user, is_draft=False, source=DailyPlan.SOURCE_PROGRAM)
+        ProgramDay.objects.create(program=program, dailyplan=snapshot, week_number=1, day_number=1)
+        self.assertEqual(self.client.put(
+            f"/api/v1/library/programs/{program.id}/weeks/order",
+            data={"ordered_ids": [2, 1]},
+            content_type="application/json",
+        ).status_code, 200)
+        occupied = ProgramDay.objects.filter(program=program).first()
+        self.assertIsNotNone(occupied)
+        self.assertEqual(self.client.delete(f"/api/v1/library/programs/{program.id}/weeks/{occupied.week_number}/days/{occupied.day_number}").status_code, 200)
+        self.assertFalse(ProgramDay.objects.filter(pk=occupied.id).exists())
+        self.assertEqual(self.client.post(f"/api/v1/library/programs/{program.id}/weeks/1/duplicate").status_code, 200)
+        program.refresh_from_db()
+        self.assertEqual(program.normalized_duration_weeks, 3)
+        self.assertEqual(self.client.delete(f"/api/v1/library/programs/{program.id}/weeks/3").status_code, 200)
+        program.refresh_from_db()
+        self.assertEqual(program.normalized_duration_weeks, 2)
+
+    def test_mobile_composition_pickers_enforce_ownership_and_write_scope(self):
+        food = Food.objects.create(name="Alimento permitido", protein=5, carbs=10, fat=2, created_by=self.user)
+        meal = Meal.objects.create(name="Comida propia", created_by=self.user, is_draft=False)
+        other = User.objects.create_user(username="picker-other-owner")
+        foreign_meal = Meal.objects.create(name="Comida ajena", created_by=other, is_draft=False)
+
+        foreign_target = self.client.post(
+            f"/api/v1/library/meals/{foreign_meal.id}/food-picker/preview",
+            data={"food_id": food.id, "quantity": 100},
+            content_type="application/json",
+        )
+        self.assertEqual(foreign_target.status_code, 404)
+        self.assertEqual(foreign_target.json()["error"]["code"], "picker_target_not_found")
+
+        read_only_token = create_mcp_user_token(
+            user=self.user,
+            name="Read-only picker token",
+            scopes=[MOBILE_SCOPE_READ],
+            expires_at=timezone.now() + timedelta(minutes=15),
+        ).raw_token
+        read_only_client = Client(HTTP_AUTHORIZATION=f"Bearer {read_only_token}")
+        preview = read_only_client.post(
+            f"/api/v1/library/meals/{meal.id}/food-picker/preview",
+            data={"food_id": food.id, "quantity": 100},
+            content_type="application/json",
+        )
+        commit = read_only_client.post(
+            f"/api/v1/library/meals/{meal.id}/food-picker/commit",
+            data={"food_id": food.id, "quantity": 100},
+            content_type="application/json",
+        )
+        self.assertEqual(preview.status_code, 200)
+        self.assertEqual(commit.status_code, 403)
+        self.assertEqual(commit.json()["error"]["code"], "mobile_scope_missing")
+        self.assertFalse(MealFood.objects.filter(meal=meal).exists())
+
+    def test_library_list_actions_reorder_and_bulk_delete_only_owned_items(self):
+        first = Food.objects.create(name="Primero", protein=1, carbs=1, fat=1, created_by=self.user, list_order=0)
+        second = Food.objects.create(name="Segundo", protein=1, carbs=1, fat=1, created_by=self.user, list_order=1)
+        other = User.objects.create_user(username="other-library-actions")
+        foreign = Food.objects.create(name="Ajeno", protein=1, carbs=1, fat=1, created_by=other)
+
+        reordered = self.client.put(
+            "/api/v1/library/foods/order",
+            data={"ordered_ids": [second.id, first.id]},
+            content_type="application/json",
+        )
+        self.assertEqual(reordered.status_code, 200)
+        first.refresh_from_db()
+        second.refresh_from_db()
+        self.assertEqual((second.list_order, first.list_order), (0, 1))
+
+        rejected = self.client.put(
+            "/api/v1/library/foods/order",
+            data={"ordered_ids": [first.id, foreign.id]},
+            content_type="application/json",
+        )
+        self.assertEqual(rejected.status_code, 403)
+
+        deleted = self.client.post(
+            "/api/v1/library/foods/bulk-delete",
+            data={"item_ids": [first.id, second.id]},
+            content_type="application/json",
+        )
+        self.assertEqual(deleted.status_code, 200)
+        self.assertEqual(set(deleted.json()["data"]["affected_ids"]), {first.id, second.id})
+        self.assertFalse(Food.objects.filter(id__in=[first.id, second.id], is_active=True).exists())
+        self.assertTrue(Food.objects.filter(pk=foreign.id, is_active=True).exists())
+
+    def test_library_list_actions_require_write_scope(self):
+        food = Food.objects.create(name="Solo lectura", protein=1, carbs=1, fat=1, created_by=self.user)
+        read_only = create_mcp_user_token(
+            user=self.user,
+            name="Read-only library token",
+            scopes=[MOBILE_SCOPE_READ],
+            expires_at=timezone.now() + timedelta(minutes=15),
+            device_session=self.device_session,
+        )
+        client = Client(HTTP_AUTHORIZATION=f"Bearer {read_only.raw_token}")
+        response = client.put(
+            "/api/v1/library/foods/order",
+            data={"ordered_ids": [food.id]},
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.json()["error"]["code"], "mobile_scope_missing")
+        create_response = client.post(
+            "/api/v1/library/foods",
+            data={"name": "No autorizado", "protein": 1, "carbs": 1, "fat": 1},
+            content_type="application/json",
+        )
+        self.assertEqual(create_response.status_code, 403)
+        self.assertEqual(create_response.json()["error"]["code"], "mobile_scope_missing")
+        self.assertFalse(Food.objects.filter(name="No autorizado").exists())
+
+    def test_library_actions_match_web_placement_and_execute_through_the_mobile_api(self):
+        food = Food.objects.create(name="Yogur natural", protein=10, carbs=4, fat=3, created_by=self.user)
+        meal = Meal.objects.create(name="Colación", created_by=self.user, is_draft=False)
+
+        food_list_item = self.client.get("/api/v1/library/foods").json()["data"]["items"][0]
+        food_detail = self.client.get(f"/api/v1/library/foods/{food.id}").json()["data"]
+        meal_list_item = self.client.get("/api/v1/library/meals").json()["data"]["items"][0]
+        meal_detail = self.client.get(f"/api/v1/library/meals/{meal.id}").json()["data"]
+
+        self.assertEqual(food_list_item["actions"], [])
+        self.assertEqual([action["key"] for action in food_detail["actions"]], ["share", "delete"])
+        self.assertEqual([action["key"] for action in meal_list_item["actions"]], ["duplicate", "delete"])
+        self.assertEqual(
+            [action["key"] for action in meal_detail["actions"]],
+            ["rename", "duplicate", "share", "delete"],
+        )
+
+        renamed = self.client.post(
+            f"/api/v1/library/meals/{meal.id}/actions",
+            data={"action": "rename", "name": "Colación PM"},
+            content_type="application/json",
+        )
+        self.assertEqual(renamed.status_code, 200)
+        meal.refresh_from_db()
+        self.assertEqual(meal.name, "Colación PM")
+
+        duplicated = self.client.post(
+            f"/api/v1/library/meals/{meal.id}/actions",
+            data={"action": "duplicate"},
+            content_type="application/json",
+        )
+        self.assertEqual(duplicated.status_code, 200)
+        duplicate_id = duplicated.json()["data"]["item_id"]
+        self.assertTrue(Meal.objects.filter(pk=duplicate_id, name="Colación PM (Copia)").exists())
+
+        deleted = self.client.post(
+            f"/api/v1/library/meals/{duplicate_id}/actions",
+            data={"action": "delete"},
+            content_type="application/json",
+        )
+        self.assertEqual(deleted.status_code, 200)
+        self.assertFalse(Meal.objects.filter(pk=duplicate_id).exists())
+
+        with patch(
+            "mobile_api.library_actions.deliver_share_invitation",
+            return_value=SimpleNamespace(sent=False, reason="delivery_disabled"),
+        ):
+            shared = self.client.post(
+                f"/api/v1/library/foods/{food.id}/actions",
+                data={
+                    "action": "share",
+                    "recipient_email": "friend@example.com",
+                    "subject": "Un alimento para ti",
+                    "message": "Revísalo cuando puedas.",
+                },
+                content_type="application/json",
+            )
+        self.assertEqual(shared.status_code, 200)
+        self.assertTrue(FoodShare.objects.filter(food=food, recipient_email="friend@example.com").exists())
+
+    def test_library_actions_reject_items_owned_by_another_user(self):
+        other = User.objects.create_user(username="another-library-owner")
+        meal = Meal.objects.create(name="Privada", created_by=other, is_draft=False)
+
+        response = self.client.post(
+            f"/api/v1/library/meals/{meal.id}/actions",
+            data={"action": "delete"},
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json()["error"]["code"], "library_item_not_found")
+        self.assertTrue(Meal.objects.filter(pk=meal.id).exists())
 
     def test_confirmed_label_capture_creates_only_a_private_food_and_is_idempotent(self):
         payload = {
@@ -1192,31 +1941,53 @@ class MobileAPIV1Tests(TestCase):
 
     def test_ai_chat_projects_persisted_cards_and_ignores_unknown_payloads(self):
         meal = Meal.objects.create(name="Comida original", created_by=self.user, is_draft=False)
-        action = prepare_product_action(user=self.user, action_key="meal.rename", target_id=meal.id, parameters={"name": "Comida confirmada"})
+        action = prepare_product_action(
+            user=self.user, action_key="meal.rename", target_id=meal.id, parameters={"name": "Comida confirmada"}
+        )
         chat = AiNutritionChat.objects.create(
             user=self.user,
             title="Objetos persistidos",
-            conversation_payload={"messages": [{
-                "role": "assistant",
-                "text": "Revisa estos objetos.",
-                "profile_draft_card": {"title": "Ficha", "items": [{"key": "weight", "label": "Peso", "value": "80 kg"}]},
-                "proposal_review_card": {"proposal_id": 42, "title": "Propuesta", "summary": "Lista", "status": "Pendiente"},
-                "prepared_action_card": {"id": str(action.public_id), "title": "dato no confiable", "summary": "dato no confiable"},
-                "unknown_card": {"secret": "no exponer"},
-            }]},
+            conversation_payload={
+                "messages": [
+                    {
+                        "role": "assistant",
+                        "text": "Revisa estos objetos.",
+                        "profile_draft_card": {
+                            "title": "Ficha",
+                            "items": [{"key": "weight", "label": "Peso", "value": "80 kg"}],
+                        },
+                        "proposal_review_card": {
+                            "proposal_id": 42,
+                            "title": "Propuesta",
+                            "summary": "Lista",
+                            "status": "Pendiente",
+                        },
+                        "prepared_action_card": {
+                            "id": str(action.public_id),
+                            "title": "dato no confiable",
+                            "summary": "dato no confiable",
+                        },
+                        "unknown_card": {"secret": "no exponer"},
+                    }
+                ]
+            },
         )
 
         response = self.client.get(f"/api/v1/ai/chats/{chat.id}")
 
         self.assertEqual(response.status_code, 200)
         message = response.json()["data"]["messages"][0]
-        self.assertEqual([card["type"] for card in message["cards"]], ["profile_draft", "proposal_review", "prepared_action"])
+        self.assertEqual(
+            [card["type"] for card in message["cards"]], ["profile_draft", "proposal_review", "prepared_action"]
+        )
         self.assertEqual(message["cards"][2]["title"], action.title)
         self.assertNotIn("unknown_card", str(message))
 
     def test_ai_prepared_action_requires_owner_and_explicit_commit_or_cancel(self):
         meal = Meal.objects.create(name="Comida original", created_by=self.user, is_draft=False)
-        action = prepare_product_action(user=self.user, action_key="meal.rename", target_id=meal.id, parameters={"name": "Comida confirmada"})
+        action = prepare_product_action(
+            user=self.user, action_key="meal.rename", target_id=meal.id, parameters={"name": "Comida confirmada"}
+        )
 
         committed = self.client.post(f"/api/v1/ai/prepared-actions/{action.public_id}/commit")
 
@@ -1234,7 +2005,12 @@ class MobileAPIV1Tests(TestCase):
         self.assertTrue(Meal.objects.filter(id=meal.id).exists())
 
         other_user = User.objects.create_user(username="prepared-action-outsider")
-        other_token = create_mcp_user_token(user=other_user, name="Outsider", scopes=[MOBILE_SCOPE_READ, MOBILE_SCOPE_WRITE], expires_at=timezone.now() + timedelta(minutes=15))
+        other_token = create_mcp_user_token(
+            user=other_user,
+            name="Outsider",
+            scopes=[MOBILE_SCOPE_READ, MOBILE_SCOPE_WRITE],
+            expires_at=timezone.now() + timedelta(minutes=15),
+        )
         outsider = Client(HTTP_AUTHORIZATION=f"Bearer {other_token.raw_token}")
         hidden = outsider.post(f"/api/v1/ai/prepared-actions/{destructive.public_id}/commit")
         self.assertEqual(hidden.status_code, 404)
@@ -1251,7 +2027,11 @@ class MobileAPIV1Tests(TestCase):
 
         accepted = self.client.post(
             "/api/v1/ai/turns",
-            data={"message": "Ayúdame a elegir", "idempotency_key": "comparison-context-0001", "comparison_id": comparison.id},
+            data={
+                "message": "Ayúdame a elegir",
+                "idempotency_key": "comparison-context-0001",
+                "comparison_id": comparison.id,
+            },
             content_type="application/json",
         )
 
@@ -1266,7 +2046,11 @@ class MobileAPIV1Tests(TestCase):
         foreign = SavedComparison.objects.create(owner=outsider, kind=SavedComparison.KIND_FOODS, name="Privada")
         denied = self.client.post(
             "/api/v1/ai/turns",
-            data={"message": "Intenta abrirla", "idempotency_key": "comparison-context-0002", "comparison_id": foreign.id},
+            data={
+                "message": "Intenta abrirla",
+                "idempotency_key": "comparison-context-0002",
+                "comparison_id": foreign.id,
+            },
             content_type="application/json",
         )
         self.assertEqual(denied.status_code, 422)

@@ -11,8 +11,13 @@
 }
 
 .macro-kcal-distribution__segment {
+  box-sizing: border-box;
   flex: 0 0 calc(min(max(var(--macro-kcal-share, 0), 0), 100) * 1%);
   min-width: 0;
+}
+
+.macro-kcal-distribution__segment:not(:last-child) {
+  border-inline-end: 2px solid var(--alloc-cell-bg);
 }
 
 .macro-kcal-distribution__segment--protein {

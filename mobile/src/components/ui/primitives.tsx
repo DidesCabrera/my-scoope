@@ -1,13 +1,8 @@
 import type { PropsWithChildren, ReactNode } from "react";
-import { useCallback, useState } from "react";
-import { useFocusEffect } from "expo-router";
 import {
   ActivityIndicator,
   KeyboardTypeOptions,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
   Pressable,
-  ScrollView,
   StyleProp,
   StyleSheet,
   Text,
@@ -15,37 +10,11 @@ import {
   View,
   ViewStyle,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 import { tokens } from "@/design/tokens";
-import { useHeaderPresentation } from "@/components/navigation/app-navigation";
+import { Screen } from "./layout";
 
-type ScreenProps = PropsWithChildren<{
-  scroll?: boolean;
-  contentStyle?: StyleProp<ViewStyle>;
-  onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
-}>;
-
-export function Screen({ children, scroll = true, contentStyle, onScroll }: ScreenProps) {
-  const setHeaderPresentation = useHeaderPresentation();
-  const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
-  useFocusEffect(useCallback(() => {
-    setHeaderPresentation({ mode: "default", identityVisible: compactHeaderVisible });
-    return () => setHeaderPresentation({ mode: "default" });
-  }, [compactHeaderVisible, setHeaderPresentation]));
-  const content = <View style={[styles.screenContent, contentStyle]}>{children}</View>;
-  return (
-    <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
-      {scroll ? (
-        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" onScroll={(event) => { const visible = event.nativeEvent.contentOffset.y > 1; if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible); onScroll?.(event); }} scrollEventThrottle={16}>
-          {content}
-        </ScrollView>
-      ) : (
-        content
-      )}
-    </SafeAreaView>
-  );
-}
+export { Screen };
 
 export function Brand({ compact = false }: { compact?: boolean }) {
   return (
@@ -104,12 +73,14 @@ export function Pill({ label, color = tokens.color.interactivePrimary }: { label
 }
 
 export function Button({
+  bleed = false,
   label,
   onPress,
   variant = "primary",
   disabled = false,
   loading = false,
 }: {
+  bleed?: boolean;
   label: string;
   onPress(): void;
   variant?: "primary" | "secondary" | "danger";
@@ -126,6 +97,7 @@ export function Button({
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
+        bleed && styles.buttonBleed,
         buttonStyle,
         variant === "danger" && styles.buttonDanger,
         (disabled || loading) && styles.buttonDisabled,
@@ -145,6 +117,7 @@ export function Field({
   keyboardType,
   autoCapitalize = "none",
   secureTextEntry = false,
+  multiline = false,
 }: {
   label: string;
   value: string;
@@ -153,6 +126,7 @@ export function Field({
   keyboardType?: KeyboardTypeOptions;
   autoCapitalize?: "none" | "sentences" | "words" | "characters";
   secureTextEntry?: boolean;
+  multiline?: boolean;
 }) {
   return (
     <View style={styles.field}>
@@ -160,12 +134,13 @@ export function Field({
       <TextInput
         autoCapitalize={autoCapitalize}
         keyboardType={keyboardType}
+        multiline={multiline}
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={tokens.color.textSubtle}
         selectionColor={tokens.color.interactivePrimary}
         secureTextEntry={secureTextEntry}
-        style={styles.input}
+        style={[styles.input, multiline && styles.inputMultiline]}
         value={value}
       />
     </View>
@@ -225,7 +200,7 @@ export function ProgressBar({ value }: { value: number }) {
 
 export function LoadingState({ label = "Preparando tu día…" }: { label?: string }) {
   return (
-    <Screen scroll={false} contentStyle={styles.loadingState}>
+    <Screen scroll={false} contentStyle={styles.loadingState} headerMode="preserve">
       <Brand />
       <ActivityIndicator color={tokens.color.interactivePrimary} size="large" />
       <Text style={styles.mutedText}>{label}</Text>
@@ -241,9 +216,6 @@ export const textStyles = StyleSheet.create({
 });
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: tokens.color.surfaceApp },
-  scrollContent: { flexGrow: 1 },
-  screenContent: { flex: 1, gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg, paddingBottom: 42 },
   brandRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md },
   brandMark: { alignItems: "center", backgroundColor: tokens.color.textMain, borderRadius: tokens.radius.md, height: 38, justifyContent: "center", width: 38 },
   brandMarkText: { color: tokens.color.surfaceApp, fontSize: 20, fontWeight: "900" },
@@ -262,6 +234,7 @@ const styles = StyleSheet.create({
   pill: { alignSelf: "flex-start", borderRadius: tokens.radius.pill, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 5 },
   pillText: { fontSize: tokens.type.label, fontWeight: "800", letterSpacing: 0.4 },
   button: { alignItems: "center", borderRadius: tokens.radius.lg, flexDirection: "row", gap: 8, justifyContent: "center", minHeight: 54, paddingHorizontal: tokens.spacing.lg },
+  buttonBleed: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding },
   buttonPrimary: { backgroundColor: tokens.color.textMain },
   buttonSecondary: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderWidth: 1 },
   buttonDanger: { backgroundColor: "transparent", borderColor: tokens.color.danger },
@@ -272,7 +245,8 @@ const styles = StyleSheet.create({
   buttonDangerText: { color: tokens.color.danger },
   field: { gap: 7 },
   fieldLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700" },
-  input: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.lg, borderWidth: 1, color: tokens.color.textMain, fontSize: 17, minHeight: 54, paddingHorizontal: 16 },
+  input: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.lg, borderWidth: 1, color: tokens.color.textMain, fontSize: 17, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minHeight: 44, paddingHorizontal: 16 },
+  inputMultiline: { minHeight: 104, paddingTop: 15, textAlignVertical: "top" },
   choiceRow: { flexDirection: "row", gap: tokens.spacing.sm },
   choice: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.lg, borderWidth: 1, flex: 1, justifyContent: "center", minHeight: 50, paddingHorizontal: 10 },
   choiceSelected: { backgroundColor: tokens.color.textMain, borderColor: tokens.color.textMain },

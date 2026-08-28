@@ -28,7 +28,16 @@ class UISystemGalleryTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "UI System Web")
         self.assertContains(response, 'class="dash-kpi-comp"')
+        self.assertContains(
+            response,
+            'class="program-active-kpis program-active-kpis--standalone"',
+        )
+        self.assertContains(response, "KPI de programa en curso")
         self.assertContains(response, "list-page-header--program")
+        self.assertContains(response, "list-page-header--library")
+        self.assertContains(response, "list-page-header--stacked")
+        self.assertContains(response, 'data-lucide="calendar"')
+        self.assertNotContains(response, 'class="list-page-header__eyebrow"')
         self.assertContains(response, "card card--program program-card")
         self.assertContains(response, "?embed=1#components")
         self.assertEqual(response["X-Frame-Options"], "SAMEORIGIN")

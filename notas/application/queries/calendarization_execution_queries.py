@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime, time
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
+from django.utils import timezone
 
 from notas.domain.models import (
     CalendarizationMeasurementContext,
@@ -10,56 +13,96 @@ from notas.domain.models import (
 
 
 def meal_execution_state_for_day(day) -> list[dict]:
-    latest_by_key: dict[str, CalendarizedMealExecution] = {}
+    latest_status_by_key: dict[str, CalendarizedMealExecution] = {}
+    latest_note_by_key: dict[str, CalendarizedMealExecution] = {}
     events = day.meal_execution_events.all().order_by("created_at", "id")
     for event in events:
-        latest_by_key[event.meal_snapshot_key] = event
+        if event.action == CalendarizedMealExecution.ACTION_NOTE:
+            latest_note_by_key[event.meal_snapshot_key] = event
+            continue
+        latest_status_by_key[event.meal_snapshot_key] = event
+        if event.note:
+            latest_note_by_key[event.meal_snapshot_key] = event
 
     state = []
     for meal in (day.plan_snapshot or {}).get("meals", []):
         meal_key = meal.get("key") or ""
-        event = latest_by_key.get(meal_key)
-        status = "planned" if event is None or event.action == CalendarizedMealExecution.ACTION_RESET else event.action
+        status_event = latest_status_by_key.get(meal_key)
+        note_event = latest_note_by_key.get(meal_key)
+        status = "planned" if status_event is None or status_event.action == CalendarizedMealExecution.ACTION_RESET else status_event.action
         state.append(
             {
                 "meal_key": meal_key,
                 "status": status,
-                "last_event_id": event.id if event else None,
-                "recorded_at": event.created_at if event else None,
-                "note": event.note if event and event.action != CalendarizedMealExecution.ACTION_RESET else "",
+                "last_event_id": status_event.id if status_event else None,
+                "recorded_at": status_event.created_at if status_event else None,
+                "note": note_event.note if note_event else "",
             }
         )
     return state
 
 
-def calendarization_progress_summary(calendarization, *, period_start: date, period_end: date) -> dict:
+def _calendarization_local_now(calendarization, now: datetime | None) -> datetime:
+    try:
+        local_timezone = ZoneInfo(calendarization.timezone_name)
+    except ZoneInfoNotFoundError:
+        local_timezone = ZoneInfo("UTC")
+    return (now or timezone.now()).astimezone(local_timezone)
+
+
+def _meal_has_elapsed(*, day_date: date, meal: dict, status: str, local_now: datetime) -> bool:
+    if status in {CalendarizedMealExecution.ACTION_COMPLETED, CalendarizedMealExecution.ACTION_SKIPPED}:
+        return True
+    if day_date < local_now.date():
+        return True
+    if day_date > local_now.date():
+        return False
+    meal_hour = meal.get("hour")
+    if not isinstance(meal_hour, str) or not meal_hour.strip():
+        return False
+    try:
+        scheduled_time = time.fromisoformat(meal_hour.strip())
+    except ValueError:
+        return False
+    return scheduled_time <= local_now.time().replace(tzinfo=None)
+
+
+def calendarization_progress_summary(calendarization, *, period_start: date, period_end: date, now: datetime | None = None) -> dict:
     days = list(
         calendarization.days.filter(
             calendar_date__gte=period_start,
             calendar_date__lte=period_end,
         ).prefetch_related("meal_execution_events")
     )
-    planned = completed = skipped = 0
+    scheduled = elapsed = completed = skipped = 0
     days_with_plan = 0
+    local_now = _calendarization_local_now(calendarization, now)
     for day in days:
         meals = (day.plan_snapshot or {}).get("meals", [])
         if day.plan_snapshot:
             days_with_plan += 1
-        planned += len(meals)
-        for item in meal_execution_state_for_day(day):
-            if item["status"] == CalendarizedMealExecution.ACTION_COMPLETED:
+        scheduled += len(meals)
+        state_by_key = {item["meal_key"]: item for item in meal_execution_state_for_day(day)}
+        for meal in meals:
+            status = state_by_key.get(meal.get("key") or "", {}).get("status", "planned")
+            if not _meal_has_elapsed(day_date=day.calendar_date, meal=meal, status=status, local_now=local_now):
+                continue
+            elapsed += 1
+            if status == CalendarizedMealExecution.ACTION_COMPLETED:
                 completed += 1
-            elif item["status"] == CalendarizedMealExecution.ACTION_SKIPPED:
+            elif status == CalendarizedMealExecution.ACTION_SKIPPED:
                 skipped += 1
 
-    unrecorded = max(planned - completed - skipped, 0)
-    adherence_percent = round((completed / planned) * 100) if planned else 0
+    unrecorded = max(elapsed - completed - skipped, 0)
+    adherence_percent = round((completed / elapsed) * 100) if elapsed else 0
     return {
         "period_start": period_start.isoformat(),
         "period_end": period_end.isoformat(),
         "days": len(days),
         "days_with_plan": days_with_plan,
-        "planned_meals": planned,
+        "scheduled_meals": scheduled,
+        "elapsed_meals": elapsed,
+        "planned_meals": elapsed,
         "completed_meals": completed,
         "skipped_meals": skipped,
         "unrecorded_meals": unrecorded,

@@ -1,10 +1,12 @@
-import { MoreHorizontal } from "lucide-react-native";
-import { Pressable, StyleSheet } from "react-native";
+import { type Href, useRouter } from "expo-router";
+import { ChevronRight, RefreshCw, Trash2 } from "lucide-react-native";
 
 import { NutritionEntityCard } from "@/components/nutrition";
 import { MealPanels, type MealPanelItem } from "@/components/panels";
+import { EntityCardAction } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import type { LibraryWeekPanelItem } from "@/api/types";
+import { ContextCardActions, type ContextCardAction } from "./context-card-actions";
 
 const meals: MealPanelItem[] = [
   {
@@ -73,6 +75,8 @@ function mealPanelItem(item: NonNullable<LibraryWeekPanelItem["days"][number]["m
     fatGrams: item.fat_grams,
     foods: item.foods.map((food) => ({ name: food.name, quantity: food.quantity, quantityUnit: food.quantity_unit })),
     id: item.id,
+    canOpen: true,
+    detailId: item.detail_id,
     name: item.name,
     proteinAllocation: item.protein_allocation,
     proteinGrams: item.protein_grams,
@@ -80,20 +84,44 @@ function mealPanelItem(item: NonNullable<LibraryWeekPanelItem["days"][number]["m
   };
 }
 
-export function ProgramDailyPlanPreview({ day, dayLabel, week }: { day?: LibraryWeekPanelItem["days"][number]; dayLabel: string; week: number }) {
+export function ProgramDailyPlanPreview({ day, dayLabel, onRemove, onReplace, week }: { day?: LibraryWeekPanelItem["days"][number]; dayLabel: string; onRemove?: () => Promise<void>; onReplace?: () => void; week: number }) {
+  const router = useRouter();
   const nutrition = day?.nutrition;
+  const contextualActions: ContextCardAction[] = [
+    ...(onReplace ? [{ icon: RefreshCw, key: "replace", label: "Reemplazar plan diario", onPress: onReplace }] : []),
+    ...(onRemove ? [{
+      confirmation: {
+        confirmLabel: "Quitar plan diario",
+        message: "Se quitará este plan del día. El plan diario seguirá disponible en tu biblioteca.",
+        title: "¿Quitar plan diario?",
+      },
+      destructive: true,
+      icon: Trash2,
+      key: "remove",
+      label: "Quitar plan diario",
+      onPress: onRemove,
+    }] : []),
+  ];
   return (
     <NutritionEntityCard
-      accessory={(
-        <Pressable accessibilityLabel={`Más acciones para el plan de ${dayLabel}`} accessibilityRole="button" style={({ pressed }) => [styles.action, pressed && styles.pressed]}>
-          <MoreHorizontal color={tokens.color.textMuted} size={20} />
-        </Pressable>
+      actions={(
+        <>
+          <ContextCardActions actions={contextualActions} label={`Más acciones para el plan de ${dayLabel}`} title={day?.plan_name ?? `Plan de ${dayLabel}`} />
+          {day?.dailyplan_id ? (
+            <EntityCardAction
+              label={`Ir al detalle del plan de ${dayLabel}`}
+              onPress={() => router.push(`/libraries/daily-plans/${day.dailyplan_id}` as Href)}
+              role="link">
+              <ChevronRight color={tokens.color.textMuted} size={21} />
+            </EntityCardAction>
+          ) : null}
+        </>
       )}
-      kpiVariant="nested"
       entity="dailyPlan"
       eyebrow={`SEMANA ${week} · ${dayLabel.toUpperCase()}`}
       indicators={[
-        { icon: "dailyPlan", label: "plan asignado", value: 1 },
+        ...(day?.day_number ? [{ icon: "day" as const, label: "posición", value: `S${week} · D${day.day_number}` }] : []),
+        { icon: "meal", label: "comidas", value: day ? (day.meals ?? []).length : meals.length },
       ]}
       nutrition={nutrition ? {
         calories: nutrition.calories,
@@ -106,14 +134,14 @@ export function ProgramDailyPlanPreview({ day, dayLabel, week }: { day?: Library
         fat: { allocation: 26, grams: 59 },
         protein: { allocation: 29, grams: 148, perKilogram: 1.8 },
       }}
-      subtitle="Plan diario asignado"
       title={day?.plan_name ?? "Día de entrenamiento"}>
-      <MealPanels items={day ? (day.meals ?? []).map(mealPanelItem) : meals} />
+      <MealPanels
+        items={day ? (day.meals ?? []).map(mealPanelItem) : meals}
+        onOpenItem={(meal) => {
+          if (meal.detailId == null) return;
+          router.push(`/libraries/meals/${meal.detailId}` as Href);
+        }}
+      />
     </NutritionEntityCard>
   );
 }
-
-const styles = StyleSheet.create({
-  action: { alignItems: "center", borderRadius: tokens.radius.pill, height: 34, justifyContent: "center", width: 34 },
-  pressed: { opacity: 0.68 },
-});

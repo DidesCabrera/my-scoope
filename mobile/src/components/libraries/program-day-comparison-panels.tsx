@@ -1,8 +1,8 @@
 import { Pencil, Plus, RefreshCw, Trash2 } from "lucide-react-native";
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { MacroCalorieDistribution, PanelAllocationBar } from "@/components/nutrition";
+import { MacroCalorieDistribution, PanelAllocationBar, ProteinPerKilogramBadge } from "@/components/nutrition";
 import { EntityPanelTabs, PanelBody, PanelSurface } from "@/components/panels";
 import { tokens } from "@/design/tokens";
 import { EntityIcon } from "@/components/ui";
@@ -15,11 +15,13 @@ export type ProgramDayNutrition = {
   calories: number;
   carbsGrams: number;
   day: string;
+  dayNumber: number;
   fatGrams: number;
   id: string;
   planName: string | null;
   ppk: number;
   proteinGrams: number;
+  week: number;
 };
 
 const tabs = [
@@ -42,11 +44,13 @@ function rowsForWeek(week: number): ProgramDayNutrition[] {
       calories: empty ? 0 : 1980 + index * 35,
       carbsGrams: empty ? 0 : 218 + index * 4,
       day,
+      dayNumber: index + 1,
       fatGrams: empty ? 0 : 57 + index,
       id: `week-${week}-day-${index + 1}`,
       planName: empty ? null : planNames[index],
       ppk: empty ? 0 : 1.7 + (index % 3) * 0.1,
       proteinGrams: empty ? 0 : 145 + index * 2,
+      week,
     };
   });
 }
@@ -67,7 +71,19 @@ function Header({ columns }: { columns: string[] }) {
   return (
     <View style={[styles.row, styles.header]}>
       <Text style={[styles.headerText, styles.leadingCell]}>Día</Text>
-      {columns.map((column) => <Text key={column} style={[styles.headerText, styles.dataCell]}>{column}</Text>)}
+      {columns.map((column) => (
+        <Text
+          key={column}
+          style={[
+            styles.headerText,
+            styles.dataCell,
+            column === "% Cal" && styles.calorieShareDataCell,
+            column === "PPK" && styles.ppkDataCell,
+          ]}
+        >
+          {column}
+        </Text>
+      ))}
     </View>
   );
 }
@@ -80,8 +96,8 @@ function CaloriesPanel({ rows }: { rows: ProgramDayNutrition[] }) {
         <View key={row.id} style={[styles.row, styles.calorieRow, index === rows.length - 1 && styles.rowLast]}>
           <View style={styles.leadingCell}><DayIdentity row={row} /></View>
           <Text style={[styles.cell, styles.dataCell]}>{row.planName ? Math.round(row.calories).toLocaleString("es-CL") : "—"}</Text>
-          <View style={styles.dataCell}>{row.planName ? <PanelAllocationBar size="compact" tone="calories" value={row.calorieShare} /> : <Text style={styles.emptyValue}>—</Text>}</View>
-          <Text style={[styles.cell, styles.dataCell]}>{row.planName ? row.ppk.toLocaleString("es-CL", { maximumFractionDigits: 1 }) : "—"}</Text>
+          <View style={[styles.dataCell, styles.calorieShareDataCell]}>{row.planName ? <PanelAllocationBar tone="calories" value={row.calorieShare} /> : <Text style={styles.emptyValue}>—</Text>}</View>
+          <View style={[styles.dataCell, styles.ppkDataCell, styles.ppkCell]}>{row.planName ? <ProteinPerKilogramBadge showUnit={false} style={styles.ppkBadge} value={row.ppk} /> : <Text style={styles.emptyValue}>—</Text>}</View>
         </View>
       ))}
     </PanelBody>
@@ -114,9 +130,9 @@ function AllocationPanel({ rows }: { rows: ProgramDayNutrition[] }) {
           <View style={styles.leadingCell}><DayIdentity row={row} /></View>
           {row.planName ? (
             <>
-              <PanelAllocationBar size="compact" style={styles.dataCell} tone="protein" value={row.allocation.protein} />
-              <PanelAllocationBar size="compact" style={styles.dataCell} tone="carbs" value={row.allocation.carbs} />
-              <PanelAllocationBar size="compact" style={styles.dataCell} tone="fat" value={row.allocation.fat} />
+              <PanelAllocationBar style={styles.dataCell} tone="protein" value={row.allocation.protein} />
+              <PanelAllocationBar style={styles.dataCell} tone="carbs" value={row.allocation.carbs} />
+              <PanelAllocationBar style={styles.dataCell} tone="fat" value={row.allocation.fat} />
             </>
           ) : <Text style={[styles.emptyValue, styles.emptyAllocation]}>Sin distribución</Text>}
         </View>
@@ -125,7 +141,7 @@ function AllocationPanel({ rows }: { rows: ProgramDayNutrition[] }) {
   );
 }
 
-function EditPanel({ rows }: { rows: ProgramDayNutrition[] }) {
+function EditPanel({ onAssign, onDelete, rows }: { onAssign(week: number, day: number): void; onDelete(week: number, day: number): Promise<void>; rows: ProgramDayNutrition[] }) {
   return (
     <PanelBody>
       <View style={[styles.row, styles.header]}>
@@ -138,10 +154,10 @@ function EditPanel({ rows }: { rows: ProgramDayNutrition[] }) {
           <Text style={[styles.cell, styles.editDay]}>{row.day}</Text>
           <Text numberOfLines={2} style={[styles.cell, styles.editPlan, !row.planName && styles.planName]}>{row.planName ?? "Sin plan"}</Text>
           <View style={styles.editActions}>
-            <Pressable accessibilityLabel={`${row.planName ? "Reemplazar" : "Agregar"} plan de ${row.day}`} accessibilityRole="button" style={({ pressed }) => [styles.iconAction, pressed && styles.pressed]}>
+            <Pressable accessibilityLabel={`${row.planName ? "Reemplazar" : "Agregar"} plan de ${row.day}`} accessibilityRole="button" onPress={() => onAssign(row.week, row.dayNumber)} style={({ pressed }) => [styles.iconAction, pressed && styles.pressed]}>
               {row.planName ? <RefreshCw color={tokens.color.textMuted} size={16} /> : <Plus color={tokens.color.dailyPlan} size={17} />}
             </Pressable>
-            {row.planName ? <Pressable accessibilityLabel={`Eliminar plan de ${row.day}`} accessibilityRole="button" style={({ pressed }) => [styles.iconAction, pressed && styles.pressed]}><Trash2 color={tokens.color.danger} size={16} /></Pressable> : null}
+            {row.planName ? <Pressable accessibilityLabel={`Eliminar plan de ${row.day}`} accessibilityRole="button" onPress={() => Alert.alert("Eliminar plan diario", `¿Quitar el plan asignado a ${row.day}?`, [{ text: "Cancelar", style: "cancel" }, { text: "Eliminar", style: "destructive", onPress: () => void onDelete(row.week, row.dayNumber).catch(() => undefined) }])} style={({ pressed }) => [styles.iconAction, pressed && styles.pressed]}><Trash2 color={tokens.color.danger} size={16} /></Pressable> : null}
           </View>
         </View>
       ))}
@@ -149,16 +165,16 @@ function EditPanel({ rows }: { rows: ProgramDayNutrition[] }) {
   );
 }
 
-export function ProgramDayComparisonPanels({ rows: providedRows, week }: { rows?: ProgramDayNutrition[]; week: number }) {
+export function ProgramDayComparisonPanels({ onAssign, onDelete, rows: providedRows, week }: { onAssign?: (week: number, day: number) => void; onDelete?: (week: number, day: number) => Promise<void>; rows?: ProgramDayNutrition[]; week: number }) {
   const [activeTab, setActiveTab] = useState<ProgramDayPanelTab>("calories");
   const rows = providedRows ?? rowsForWeek(week);
   return (
     <PanelSurface>
-      <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={tabs} />
+      <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={onAssign && onDelete ? tabs : tabs.filter(({ key }) => key !== "edit")} />
       {activeTab === "calories" ? <CaloriesPanel rows={rows} /> : null}
       {activeTab === "macros" ? <MacrosPanel rows={rows} /> : null}
       {activeTab === "allocation" ? <AllocationPanel rows={rows} /> : null}
-      {activeTab === "edit" ? <EditPanel rows={rows} /> : null}
+      {activeTab === "edit" && onAssign && onDelete ? <EditPanel onAssign={onAssign} onDelete={onDelete} rows={rows} /> : null}
     </PanelSurface>
   );
 }
@@ -168,21 +184,25 @@ const styles = StyleSheet.create({
   rowLast: { borderBottomWidth: 0 },
   header: { minHeight: 32 },
   headerText: { color: tokens.color.textMuted, fontSize: 10, fontWeight: tokens.weight.semibold, textAlign: "center", textTransform: "uppercase" },
-  cell: { color: tokens.color.textMain, fontSize: 11, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.regular, textAlign: "center" },
+  cell: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.regular, textAlign: "center" },
   leadingCell: { flexBasis: "38%", flexGrow: 0, flexShrink: 0, minWidth: 0, textAlign: "left" },
   dataCell: { flex: 1, minWidth: 0 },
+  calorieShareDataCell: { flex: 1.35 },
+  ppkDataCell: { flex: 0.65 },
   dayIdentity: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
   dayCopy: { flex: 1, minWidth: 0 },
   dayName: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
-  planName: { color: tokens.color.textMuted, fontSize: 10, lineHeight: 14 },
-  emptyValue: { color: tokens.color.textMuted, fontSize: 11, textAlign: "center" },
+  planName: { color: tokens.color.textMuted, fontSize: tokens.type.label, lineHeight: 16 },
+  ppkBadge: { height: 24, minHeight: 24 },
+  ppkCell: { paddingHorizontal: 3 },
+  emptyValue: { color: tokens.color.textMuted, fontSize: tokens.type.caption, textAlign: "center" },
   calorieRow: { gap: 3 },
-  allocationRow: { gap: 3 },
+  allocationRow: { gap: tokens.spacing.sm },
   emptyAllocation: { flex: 3 },
   editRow: { gap: tokens.spacing.sm },
   editDay: { flexBasis: "24%", flexGrow: 0, flexShrink: 0, textAlign: "left" },
   editPlan: { flex: 1, minWidth: 0, textAlign: "left" },
   editActions: { flexDirection: "row", justifyContent: "flex-end", minWidth: 66 },
-  iconAction: { alignItems: "center", borderRadius: tokens.radius.sm, height: 30, justifyContent: "center", width: 30 },
+  iconAction: { alignItems: "center", borderRadius: tokens.radius.sm, height: 34, justifyContent: "center", width: 34 },
   pressed: { opacity: 0.68 },
 });

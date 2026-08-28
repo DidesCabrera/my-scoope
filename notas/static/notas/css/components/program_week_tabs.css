@@ -6,15 +6,19 @@
   border-radius: 0;
 }
 
-.page--program-detail .program-week-tabs {
+.page--program-detail .program-week-tabs,
+.calendarization-page .program-week-tabs {
   position: sticky;
   top: var(--app-header-height, 54px);
   z-index: var(--z-sticky);
+  align-self: start;
+  width: 100%;
   background: var(--surface-app);
   scrollbar-width: none;
 }
 
-.page--program-detail .program-week-tabs::-webkit-scrollbar {
+.page--program-detail .program-week-tabs::-webkit-scrollbar,
+.calendarization-page .program-week-tabs::-webkit-scrollbar {
   display: none;
 }
 
@@ -22,6 +26,18 @@
   flex: 0 0 auto;
   min-width: 44px;
   line-height: 1;
+}
+
+/* Shared seven-day layout for program detail and active calendarization. */
+.program-week-days-layout {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  align-items: center;
+  justify-items: center;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  gap: clamp(0.35rem, 1.2vw, 0.75rem);
 }
 
 @media (min-width: 781px) {
@@ -78,5 +94,9 @@
 
   .program-week-tab .program-week-tab__label--mobile {
     display: inline;
+  }
+
+  .program-week-days-layout {
+    gap: clamp(3px, 1.5vw, 7px);
   }
 }

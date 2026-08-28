@@ -54,3 +54,13 @@ class AllocTemplateLocalizationTests(SimpleTestCase):
         self.assertIn("--macro-kcal-share: 25.5;", rendered)
         self.assertIn("--macro-kcal-share: 30.25;", rendered)
         self.assertNotIn("--macro-kcal-share: 25,5;", rendered)
+
+    def test_macro_kcal_distribution_omits_zero_width_segments(self):
+        rendered = render_to_string(
+            "components/macro_kcal_distribution.html",
+            {"protein": 0, "carbs": 0, "fat": 100},
+        )
+
+        self.assertNotIn("macro-kcal-distribution__segment--protein", rendered)
+        self.assertNotIn("macro-kcal-distribution__segment--carbs", rendered)
+        self.assertIn("macro-kcal-distribution__segment--fat", rendered)

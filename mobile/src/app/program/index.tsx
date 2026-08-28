@@ -1,48 +1,42 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useCallback, useMemo, useState } from "react";
+import { ScrollView, StyleSheet, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
-import type { ActiveProgramData, CalendarizationHistoryData, CalendarizationStatus } from "@/api/types";
+import type { ActiveProgramData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
-import { ConfirmationState, EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
-import { AppHeader, Button, Card, LoadingState, Pill, ProgressBar, Screen, SectionTitle, textStyles } from "@/components/ui/primitives";
+import { CalendarizedProgramPlanning } from "@/components/calendarization/calendarized-program-planning";
+import { ProgramWeekTabs } from "@/components/libraries/program-planning-controls";
+import { useHeaderPresentation } from "@/components/navigation/app-navigation";
+import { ProgramActiveActions } from "@/components/programs/program-active-actions";
+import { ProgramActiveOverview } from "@/components/programs/program-active-card";
+import { EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
+import { LoadingState, Screen, SectionDivider, SectionHeading, SectionPageHeader } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
-type PendingAction = "pause" | "cancel" | null;
-
-const statusLabels: Record<CalendarizationStatus, string> = {
-  active: "Activo",
-  cancelled: "Cancelado",
-  completed: "Completado",
-  paused: "Pausado",
-  scheduled: "Programado",
-};
-
-function displayDate(value: string): string {
-  return new Intl.DateTimeFormat("es-CL", { day: "numeric", month: "short" }).format(new Date(`${value}T12:00:00`));
+function localDate(): string {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${now.getFullYear()}-${month}-${day}`;
 }
 
 export default function ProgramScreen() {
   const router = useRouter();
   const { status, apiRequest } = useSession();
   const [program, setProgram] = useState<ActiveProgramData | null>(null);
-  const [history, setHistory] = useState<CalendarizationHistoryData>({ items: [], count: 0 });
   const [loading, setLoading] = useState(true);
-  const [acting, setActing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pendingAction, setPendingAction] = useState<PendingAction>(null);
+  const [actionsVisible, setActionsVisible] = useState(false);
+  const [weekSelection, setWeekSelection] = useState<{ calendarizationId: number; week: number } | null>(null);
+  const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
+  const setHeaderPresentation = useHeaderPresentation();
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [nextProgram, nextHistory] = await Promise.all([
-        apiRequest<ActiveProgramData>("/api/v1/program/active"),
-        apiRequest<CalendarizationHistoryData>("/api/v1/program/calendarizations/history"),
-      ]);
-      setProgram(nextProgram);
-      setHistory(nextHistory);
+      setProgram(await apiRequest<ActiveProgramData>("/api/v1/program/active"));
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {
@@ -50,111 +44,108 @@ export default function ProgramScreen() {
     }
   }, [apiRequest]);
 
+  const openActions = useCallback(() => setActionsVisible(true), []);
+
   useFocusEffect(useCallback(() => { if (status === "authenticated") void load(); }, [load, status]));
+  useFocusEffect(useCallback(() => {
+    setHeaderPresentation({
+      action: loading && !program ? undefined : { label: "Acciones del programa en curso", onPress: openActions },
+      identityVisible: compactHeaderVisible,
+      mode: "default",
+      title: "Mi programa",
+    });
+    return () => setHeaderPresentation({ mode: "default" });
+  }, [compactHeaderVisible, loading, openActions, program, setHeaderPresentation]));
+
+  const calendarization = program?.calendarization ?? null;
+  const programDays = useMemo(() => program?.days ?? [], [program]);
+  const observedWeeks = useMemo(() => [...new Set(programDays.map((day) => day.week_number))], [programDays]);
+  const weekCount = Math.max(program?.weeks_count ?? 0, observedWeeks.length);
+  const weeks = useMemo(() => Array.from({ length: weekCount }, (_, index) => index + 1), [weekCount]);
+  const preferredWeek = useMemo(() => {
+    const today = localDate();
+    return programDays.find((day) => day.calendar_date === today)?.week_number
+      ?? programDays.find((day) => day.calendar_date > today)?.week_number
+      ?? programDays.at(-1)?.week_number
+      ?? weeks[0]
+      ?? 1;
+  }, [programDays, weeks]);
+
+  const selectedWeek = weekSelection
+    && weekSelection.calendarizationId === calendarization?.id
+    && weeks.includes(weekSelection.week)
+    ? weekSelection.week
+    : null;
+  const activeWeek = selectedWeek ?? preferredWeek;
 
   if (status === "anonymous") return <Redirect href="/login" />;
   if (loading && !program) return <LoadingState label="Preparando tu programa…" />;
 
-  const calendarization = program?.calendarization ?? null;
-
   async function applyAction(action: "pause" | "resume" | "cancel") {
-    if (!calendarization) return;
-    setActing(true);
-    setError(null);
-    try {
-      await apiRequest<ActiveProgramData>(`/api/v1/program/calendarizations/${calendarization.id}/${action}`, { method: "POST" });
-      setPendingAction(null);
-      await load();
-    } catch (nextError) {
-      setError(userFacingError(nextError));
-    } finally {
-      setActing(false);
-    }
+    if (!calendarization) throw new Error("No hay un programa en curso para actualizar.");
+    await apiRequest<ActiveProgramData>(`/api/v1/program/calendarizations/${calendarization.id}/${action}`, { method: "POST" });
+    await load();
+  }
+
+  const actionsModal = (
+    <ProgramActiveActions
+      onChangeProgram={() => router.push("/program/activate" as Href)}
+      onClose={() => setActionsVisible(false)}
+      onOpenHistory={() => router.push("/program/history" as Href)}
+      onOpenReminders={() => router.push("/reminders")}
+      onStateAction={applyAction}
+      status={calendarization?.status ?? null}
+      visible={actionsVisible}
+    />
+  );
+
+  if (!calendarization || !program) {
+    return (
+      <>
+        <Screen headerMode="preserve">
+          <SectionPageHeader countLabel="semanas" section="calendarization" title="Mi programa" />
+          {error ? <RecoverableErrorState message={error} onRetry={() => void load()} /> : null}
+          <EmptyState actionLabel="Calendarizar un programa" message="Elige uno de tus programas guardados para comenzar un recorrido diario." onAction={() => router.push("/program/activate" as Href)} title="Aún no tienes un programa activo" />
+        </Screen>
+        {actionsModal}
+      </>
+    );
   }
 
   return (
-    <Screen>
-      <AppHeader eyebrow="Programa vivido" title="Mi programa" />
-      {error ? <RecoverableErrorState message={error} onRetry={() => void load()} /> : null}
-      {calendarization ? (
-        <>
-          <Card accent={tokens.color.program}>
-            <View style={styles.row}>
-              <View style={styles.copy}>
-                <Text style={styles.name}>{calendarization.program_name}</Text>
-                <Text style={textStyles.caption}>{displayDate(calendarization.start_date)} – {displayDate(calendarization.end_date)}</Text>
-              </View>
-              <Pill color={tokens.color.program} label={statusLabels[calendarization.status]} />
-            </View>
-            <Text style={textStyles.strong}>Día {calendarization.progress_day} de {calendarization.progress_total_days}</Text>
-            <ProgressBar value={calendarization.progress_percent} />
-            <Text style={textStyles.caption}>{calendarization.progress_percent}% del recorrido</Text>
-          </Card>
-          <Button label="Abrir plan de hoy" onPress={() => router.push("/today" as Href)} />
+    <>
+      <ScrollView
+        contentContainerStyle={styles.screenContent}
+        keyboardShouldPersistTaps="handled"
+        onScroll={({ nativeEvent }) => {
+          const visible = nativeEvent.contentOffset.y > 1;
+          if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible);
+        }}
+        scrollEventThrottle={16}
+        stickyHeaderIndices={[1]}
+        style={styles.screen}>
+        <View style={styles.beforePlanning}>
+          <SectionPageHeader count={weekCount} countLabel="semanas" section="calendarization" title="Mi programa" />
+          {error ? <RecoverableErrorState message={error} onRetry={() => void load()} /> : null}
+          <ProgramActiveOverview calendarization={calendarization} program={program} />
+          <SectionDivider />
+          <SectionHeading detail={`${weekCount} ${weekCount === 1 ? "semana" : "semanas"}`} title="Planificación Semanal" />
+        </View>
 
-          <SectionTitle detail={`${program?.days.length ?? 0} días`} title="Recorrido" />
-          <Card muted>
-            {program?.days.map((day) => (
-              <Pressable
-                accessibilityLabel={`${displayDate(day.calendar_date)}: ${day.has_plan ? day.plan_name || "Plan diario" : "Día sin plan"}`}
-                accessibilityRole="button"
-                key={day.id}
-                onPress={() => router.push(`/program/days/${day.id}` as Href)}
-                style={({ pressed }) => [styles.day, pressed && styles.pressed]}>
-                <View style={styles.dayDate}>
-                  <Text style={styles.dayNumber}>{displayDate(day.calendar_date)}</Text>
-                  <Text style={textStyles.caption}>S{day.week_number} · D{day.day_number}</Text>
-                </View>
-                <View style={styles.dayCopy}>
-                  <Text numberOfLines={1} style={styles.dayName}>{day.has_plan ? day.plan_name || "Plan diario" : "Día sin plan"}</Text>
-                  <Text style={textStyles.caption}>{day.has_plan ? "Ver detalle" : "Sin contenido asignado"}</Text>
-                </View>
-                <Text style={styles.chevron}>›</Text>
-              </Pressable>
-            ))}
-          </Card>
+        <View style={styles.weekTabsSticky}>
+          <ProgramWeekTabs activeWeek={activeWeek} onChange={(week) => setWeekSelection({ calendarizationId: calendarization.id, week })} weeks={weeks} />
+        </View>
 
-          {pendingAction === "pause" ? (
-            <ConfirmationState busy={acting} confirmLabel="Pausar" message="Tu progreso se conservará y podrás reanudar este programa más adelante." onCancel={() => setPendingAction(null)} onConfirm={() => void applyAction("pause")} title="¿Pausar el programa?" />
-          ) : pendingAction === "cancel" ? (
-            <ConfirmationState busy={acting} confirmLabel="Cancelar programa" danger message="El programa saldrá de tu recorrido actual y quedará disponible en el historial." onCancel={() => setPendingAction(null)} onConfirm={() => void applyAction("cancel")} title="¿Cancelar este programa?" />
-          ) : (
-            <View style={styles.actions}>
-              {calendarization.status === "paused" ? <Button label="Reanudar programa" loading={acting} onPress={() => void applyAction("resume")} /> : <Button label="Pausar programa" onPress={() => setPendingAction("pause")} variant="secondary" />}
-              <Button label="Configurar recordatorios" onPress={() => router.push("/reminders")} variant="secondary" />
-              <Button label="Cancelar programa" onPress={() => setPendingAction("cancel")} variant="danger" />
-            </View>
-          )}
-        </>
-      ) : (
-        <EmptyState actionLabel="Calendarizar un programa" message="Elige uno de tus programas guardados para comenzar un recorrido diario." onAction={() => router.push("/program/activate" as Href)} title="Aún no tienes un programa activo" />
-      )}
-
-      {calendarization ? <Button label="Cambiar de programa" onPress={() => router.push("/program/activate" as Href)} variant="secondary" /> : null}
-      <SectionTitle detail={`${history.count}`} title="Historial" />
-      {history.items.length ? history.items.map((item) => (
-        <Card key={item.id} muted>
-          <View style={styles.row}>
-            <View style={styles.copy}><Text style={styles.historyName}>{item.program_name}</Text><Text style={textStyles.caption}>{displayDate(item.start_date)} – {displayDate(item.end_date)} · {item.days_with_plan}/{item.days_total} días con plan</Text></View>
-            <Pill color={tokens.color.textSoft} label={statusLabels[item.status]} />
-          </View>
-        </Card>
-      )) : <Text style={textStyles.muted}>Tus programas finalizados o cancelados aparecerán aquí.</Text>}
-    </Screen>
+        <CalendarizedProgramPlanning days={programDays} initialWeek={activeWeek} key={`${calendarization.id}:${activeWeek}`} showWeekTabs={false} weeksData={program.weeks} />
+      </ScrollView>
+      {actionsModal}
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  actions: { gap: tokens.spacing.sm },
-  chevron: { color: tokens.color.textSoft, fontSize: 28 },
-  copy: { flex: 1, gap: 4 },
-  day: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.md, paddingVertical: 12 },
-  dayCopy: { flex: 1, gap: 3 },
-  dayDate: { gap: 3, width: 68 },
-  dayName: { color: tokens.color.textMain, fontSize: 15, fontWeight: "800" },
-  dayNumber: { color: tokens.color.program, fontSize: 13, fontWeight: "900", textTransform: "uppercase" },
-  historyName: { color: tokens.color.textMain, fontSize: 16, fontWeight: "800" },
-  name: { color: tokens.color.textMain, fontSize: 22, fontWeight: "900" },
-  pressed: { opacity: 0.6 },
-  row: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
+  beforePlanning: { gap: tokens.spacing.lg },
+  screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
+  screenContent: { flexGrow: 1, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
+  weekTabsSticky: { backgroundColor: tokens.color.surfaceApp, marginHorizontal: -tokens.spacing.screen, paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.sm, zIndex: 2 },
 });
