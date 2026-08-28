@@ -25,12 +25,7 @@ def _pkce_challenge(verifier: str) -> str:
 class OAuthDeviceSessionServiceTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="mobile-user", password="pass123")
-        self.client = OAuthClient.objects.create(
-            client_id="myscoope-ios",
-            client_name="My Scoope iOS",
-            redirect_uris=["myscoope://oauth/callback"],
-            allowed_scopes=[MOBILE_SCOPE_READ, MOBILE_SCOPE_WRITE, MOBILE_SCOPE_ACCOUNT],
-        )
+        self.client = OAuthClient.objects.get(client_id="myscoope-ios")
         self.redirect_uri = "myscoope://oauth/callback"
         self.verifier = "mobile-code-verifier-with-enough-entropy-123456789"
         self.device_id = "7a4626e1-1897-4f71-93dd-ae61ffd03fde"

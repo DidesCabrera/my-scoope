@@ -272,11 +272,12 @@ class OAuthAuthorizeViewsTests(TestCase):
         )
 
     def test_consent_redirects_to_exact_registered_native_scheme(self):
-        mobile_client = OAuthClient.objects.create(
-            client_id="myscoope-ios",
-            client_name="My Scoope iOS",
-            redirect_uris=["myscoope://oauth/callback"],
-            allowed_scopes=[MOBILE_SCOPE_READ, MOBILE_SCOPE_WRITE, MOBILE_SCOPE_ACCOUNT],
+        mobile_client = OAuthClient.objects.get(client_id="myscoope-ios")
+        self.assertEqual(mobile_client.client_name, "My Scoope iOS")
+        self.assertTrue(mobile_client.is_active)
+        self.assertTrue(mobile_client.allows_redirect_uri("myscoope://oauth/callback"))
+        self.assertTrue(
+            mobile_client.allows_scopes([MOBILE_SCOPE_READ, MOBILE_SCOPE_WRITE, MOBILE_SCOPE_ACCOUNT])
         )
         self.client.force_login(self.user)
 
