@@ -204,7 +204,7 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
           variant="secondary"
         />
       ) : null}
-      <LibraryListActions canCompare={entity !== "program"} onClose={() => setActionsVisible(false)} onCompare={() => { setActionsVisible(false); const kind = entity === "food" ? "foods" : entity === "meal" ? "meals" : "dailyplans"; router.push(`/comparator?kind=${kind}`); }} onDelete={() => { setActionsVisible(false); setSelectedIds(new Set()); setMode("delete"); }} onReorder={() => void beginReorder()} visible={actionsVisible} />
+      <LibraryListActions canCompare={entity !== "program"} onClose={() => setActionsVisible(false)} onCompare={() => { setActionsVisible(false); const kind = entity === "food" ? "foods" : entity === "meal" ? "meals" : "dailyplans"; router.push(`/comparator?create=1&kind=${kind}`); }} onDelete={() => { setActionsVisible(false); setSelectedIds(new Set()); setMode("delete"); }} onReorder={() => void beginReorder()} visible={actionsVisible} />
     </ScrollView>
   );
 }

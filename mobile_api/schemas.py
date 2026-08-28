@@ -433,25 +433,6 @@ class ComparisonMetadataEnvelope(Schema):
     error: None = None
 
 
-class ComparisonOptionData(Schema):
-    id: int
-    name: str
-
-
-class ComparisonOptionsData(Schema):
-    items: list[ComparisonOptionData]
-    total: int
-    offset: int
-    limit: int
-    search: str | None = None
-
-
-class ComparisonOptionsEnvelope(Schema):
-    ok: Literal[True] = True
-    data: ComparisonOptionsData
-    error: None = None
-
-
 class ComparisonSelectionInput(Schema):
     id: int = Field(gt=0)
     quantity: float | None = None
@@ -872,6 +853,32 @@ class LibraryItemData(Schema):
     is_draft: bool = False
     can_calendarize: bool = False
     actions: list[LibraryActionData] = Field(default_factory=list)
+
+
+class ComparisonOptionData(Schema):
+    """Visual contract required to render an entity card in a comparison picker."""
+
+    id: int
+    entity: Literal["food", "meal", "dailyPlan"]
+    name: str
+    subtitle: str
+    nutrition: LibraryNutritionData
+    indicators: list[LibraryIndicatorData]
+    panel: LibraryPanelData
+
+
+class ComparisonOptionsData(Schema):
+    items: list[ComparisonOptionData]
+    total: int
+    offset: int
+    limit: int
+    search: str | None = None
+
+
+class ComparisonOptionsEnvelope(Schema):
+    ok: Literal[True] = True
+    data: ComparisonOptionsData
+    error: None = None
 
 
 class LibraryPageData(Schema):

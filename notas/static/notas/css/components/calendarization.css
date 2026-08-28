@@ -3,7 +3,7 @@
 
 /* Calendarizador */
 .calendarization-page .list-page-header{margin-bottom:16px}
-.list-page-header__icon--calendarization{background:var(--entity-home)}
+.list-page-header__icon--calendarization{background:transparent;color:var(--text-main)}
 .calendarization-preferences h3{width:100%;margin:0}
 .calendarization-preview{display:grid;grid-template-columns:minmax(0,.6fr) minmax(360px,1.05fr);align-items:center;gap:18px;width:100%;padding:18px 22px;border: 1px solid var(--border-soft);border-radius:22px;background:var(--surface-card);text-align:left}
 .calendarization-preview[hidden]{display:none}
@@ -32,7 +32,7 @@
 .calendarization-current__overview{display:grid;gap:var(--space-lg);min-width:0}
 .calendarization-current__identity{display:grid;gap:var(--space-xs);min-width:0}
 .calendarization-current__eyebrow{align-items:center;color:var(--text-muted);display:flex;font-size:var(--font-size-label);font-weight:var(--font-weight-bold);gap:var(--space-xs);margin:0;text-transform:uppercase}
-.calendarization-current__eyebrow svg{background:var(--entity-program);border-radius:5px;box-sizing:content-box;color:#fff;height:13px;padding:3px;width:13px}
+.calendarization-current__eyebrow svg{background:transparent;color:currentColor;height:16px;width:16px}
 .calendarization-current__identity h2{color:var(--text-main);font-size:clamp(1.35rem,2.5vw,1.8rem);font-weight:var(--font-weight-semibold);line-height:1.2;margin:0}
 .calendarization-current__identity .structural-indicators{margin-top:0}
 .calendarization-current__identity>.structural-indicators{background:transparent;border:0;border-radius:0;gap:.35rem;padding:0}

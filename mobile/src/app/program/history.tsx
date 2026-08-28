@@ -58,7 +58,7 @@ export default function ProgramHistoryScreen() {
   if (loading && !history) return <LoadingState label="Cargando tu historial…" />;
 
   return (
-    <Screen>
+    <Screen headerMode="preserve">
       {error ? <RecoverableErrorState message={error} onRetry={() => void load()} /> : null}
       <SectionHeading detail={`${history?.count ?? 0}`} title="Programas anteriores" />
       {history?.items.length ? history.items.map((item) => (

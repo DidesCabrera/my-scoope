@@ -1,20 +1,32 @@
 import type { PropsWithChildren, ReactNode } from "react";
-import { ScrollView, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
+import { useCallback, useState } from "react";
+import { useFocusEffect } from "expo-router";
+import { NativeScrollEvent, NativeSyntheticEvent, ScrollView, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { tokens } from "@/design/tokens";
 
 type ScreenProps = PropsWithChildren<{
-  scroll?: boolean;
   contentStyle?: StyleProp<ViewStyle>;
+  headerMode?: "automatic" | "preserve";
+  onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  scroll?: boolean;
 }>;
 
-export function Screen({ children, scroll = true, contentStyle }: ScreenProps) {
+export function Screen({ children, scroll = true, contentStyle, headerMode = "automatic", onScroll }: ScreenProps) {
+  const setHeaderPresentation = useHeaderPresentation();
+  const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
+  useFocusEffect(useCallback(() => {
+    if (headerMode === "preserve") return undefined;
+    setHeaderPresentation({ mode: "default", identityVisible: compactHeaderVisible });
+    return () => setHeaderPresentation({ mode: "default" });
+  }, [compactHeaderVisible, headerMode, setHeaderPresentation]));
   const content = <View style={[styles.screenContent, contentStyle]}>{children}</View>;
   return (
     <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
       {scroll ? (
-        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" onScroll={(event) => { const visible = event.nativeEvent.contentOffset.y > 1; if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible); onScroll?.(event); }} scrollEventThrottle={16}>
           {content}
         </ScrollView>
       ) : content}

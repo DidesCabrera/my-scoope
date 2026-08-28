@@ -4,7 +4,7 @@ import type { LucideIcon } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import type { LibraryEntity } from "@/api/types";
-import { EntityIcon } from "@/components/ui";
+import { EntityIcon } from "@/components/ui/product";
 import { tokens } from "@/design/tokens";
 
 export type NavigationSidebarItemData = { href: Href; icon: LucideIcon; label: string };

@@ -214,6 +214,7 @@ export function ProgramChildCard({
   foodsCount,
   owner,
   onOpen,
+  openActionLabel,
   onMore,
   metricData,
   axisLabels,
@@ -224,6 +225,7 @@ export function ProgramChildCard({
   foodsCount: number;
   owner: string;
   onOpen?: () => void;
+  openActionLabel?: string;
   onMore?: () => void;
   metricData?: ProgramMetricDatum[];
   axisLabels?: string[];
@@ -251,7 +253,8 @@ export function ProgramChildCard({
           {onMore ? <Pressable accessibilityLabel="Más acciones" accessibilityRole="button" onPress={onMore} style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
             <MoreHorizontal color={tokens.color.textMuted} size={21} />
           </Pressable> : null}
-          {onOpen ? <Pressable accessibilityLabel="Ver programa" accessibilityRole="button" onPress={onOpen} style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}>
+          {onOpen ? <Pressable accessibilityLabel={openActionLabel ?? "Ver programa"} accessibilityRole="button" onPress={onOpen} style={({ pressed }) => [styles.actionButton, openActionLabel && styles.actionButtonLabeled, pressed && styles.pressed]}>
+            {openActionLabel ? <Text style={styles.actionButtonLabel}>{openActionLabel}</Text> : null}
             <ChevronRight color={tokens.color.textMuted} size={21} />
           </Pressable> : null}
         </View>
@@ -291,4 +294,6 @@ const styles = StyleSheet.create({
   ownerText: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "600" },
   actions: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md },
   actionButton: { alignItems: "center", height: 34, justifyContent: "center", width: 34 },
+  actionButtonLabeled: { flexDirection: "row", gap: tokens.spacing.xs, paddingHorizontal: tokens.spacing.sm, width: "auto" },
+  actionButtonLabel: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
 });

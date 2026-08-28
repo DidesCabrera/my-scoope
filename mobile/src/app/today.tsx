@@ -6,7 +6,10 @@ import { userFacingError } from "@/api/errors";
 import type { ActiveProgramData, ProposalListData, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { CalendarizedDailyPlanCard } from "@/components/calendarization/calendarized-daily-plan-card";
-import { ProgramActiveCard } from "@/components/programs/program-active-card";
+import { CurrentWeekSection } from "@/components/calendarization/current-week-section";
+import { HomeActions } from "@/components/home-actions";
+import { useHeaderPresentation } from "@/components/navigation/app-navigation";
+import { ProgramActiveHomeOverview } from "@/components/programs/program-active-card";
 import { AppHeader, Button, Card, InlineNotice, LoadingState, Pill, Screen, SectionTitle, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { syncNativeReminders } from "@/notifications/native-reminders";
@@ -24,7 +27,10 @@ export default function TodayScreen() {
   const [activeProgram, setActiveProgram] = useState<ActiveProgramData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [homeActionsVisible, setHomeActionsVisible] = useState(false);
   const [pendingProposalCount, setPendingProposalCount] = useState(0);
+  const setHeaderPresentation = useHeaderPresentation();
+  const openHomeActions = useCallback(() => setHomeActionsVisible(true), []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -55,6 +61,11 @@ export default function TodayScreen() {
     }, [load]),
   );
 
+  useFocusEffect(useCallback(() => {
+    setHeaderPresentation({ action: { label: "Acciones de inicio", onPress: openHomeActions }, mode: "default" });
+    return () => setHeaderPresentation({ mode: "default" });
+  }, [openHomeActions, setHeaderPresentation]));
+
   if (status === "anonymous") return <Redirect href="/login" />;
   if (status === "authenticated" && profile?.review_disclosure_required) return <Redirect href="./disclosures" />;
   if (status === "authenticated" && !profile?.onboarding_completed) return <Redirect href="/onboarding" />;
@@ -65,13 +76,28 @@ export default function TodayScreen() {
   const firstName = session?.display_name.split(" ")[0] || session?.username || "Atleta";
 
   return (
-    <Screen>
+    <>
+      <Screen headerMode="preserve">
       <AppHeader eyebrow={today ? displayDate(today.local_date) : "Hoy"} title={`Vamos, ${firstName}`} />
-      {error ? (
-        <InlineNotice tone="error">{error}</InlineNotice>
-      ) : null}
+      {today ? <CurrentWeekSection localDate={today.local_date} /> : null}
+
+      {today?.has_plan && snapshot ? (
+        <CalendarizedDailyPlanCard
+          dayId={today.day_id}
+          eyebrow="PLAN DE HOY"
+          mealExecution={today.meal_execution}
+          position={todayProgramDay ? { dayNumber: todayProgramDay.day_number, weekNumber: todayProgramDay.week_number } : undefined}
+          snapshot={snapshot}
+        />
+      ) : (
+        <Card muted>
+          <SectionTitle title="Día sin plan" />
+          <Text style={textStyles.muted}>Tu calendarización no tiene un plan nutricional previsto para esta fecha.</Text>
+        </Card>
+      )}
+
       {activeProgram?.calendarization ? (
-        <ProgramActiveCard calendarization={activeProgram.calendarization} program={activeProgram} />
+        <ProgramActiveHomeOverview calendarization={activeProgram.calendarization} program={activeProgram} />
       ) : (
         <Card accent={tokens.color.program}>
           <SectionTitle title="Aún no hay programa activo" />
@@ -79,6 +105,10 @@ export default function TodayScreen() {
           <Button label="Calendarizar un programa" onPress={() => router.push("/program/activate" as Href)} />
         </Card>
       )}
+
+      {error ? (
+        <InlineNotice tone="error">{error}</InlineNotice>
+      ) : null}
 
       {today?.measurements?.latest_weight_kg != null ? (
         <Card muted>
@@ -111,23 +141,14 @@ export default function TodayScreen() {
         </Card>
       ) : null}
 
-      {today?.has_plan && snapshot ? (
-        <CalendarizedDailyPlanCard
-          dayId={today.day_id}
-          eyebrow="PLAN DE HOY"
-          mealExecution={today.meal_execution}
-          position={todayProgramDay ? { dayNumber: todayProgramDay.day_number, weekNumber: todayProgramDay.week_number } : undefined}
-          snapshot={snapshot}
-        />
-      ) : (
-        <Card muted>
-          <SectionTitle title="Día sin plan" />
-          <Text style={textStyles.muted}>Tu calendarización no tiene un plan nutricional previsto para esta fecha.</Text>
-        </Card>
-      )}
-      <Button label="Registrar peso" onPress={() => router.push("/weight")} variant="secondary" />
-      <Button label="Digitalizar etiqueta nutricional" onPress={() => router.push("./label-capture")} variant="secondary" />
-    </Screen>
+      </Screen>
+      <HomeActions
+        onCaptureLabel={() => router.push("/label-capture")}
+        onClose={() => setHomeActionsVisible(false)}
+        onRegisterWeight={() => router.push("/weight")}
+        visible={homeActionsVisible}
+      />
+    </>
   );
 }
 

@@ -85,6 +85,9 @@ or DailyPlan library identity.
 
 MCE04 adds supported-kind metadata and owner-scoped selectable options through
 `GET /comparisons/metadata` and `GET /comparisons/options/{kind}`. Dynamic
+option rows carry the canonical entity-card projection: identity, structural
+indicators, nutrition KPIs and the Food or Meal composition panel required by the
+selected kind; library mutation actions are intentionally excluded. Dynamic
 comparison uses `POST /comparisons/compare`; Food slots use the established 100 g
 fallback, while Meals and DailyPlans reject quantities and can include PPK.
 Programs are not an accepted kind. Slots are positional and may repeat the same

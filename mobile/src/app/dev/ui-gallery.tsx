@@ -61,6 +61,7 @@ import {
   SectionDivider,
   SectionIcon,
   type SectionKind,
+  SectionPageHeader,
   SectionTitle,
   textStyles,
 } from "@/components/ui";
@@ -78,10 +79,10 @@ const sections: { key: SectionKind; label: string; lucide: string }[] = [
   { key: "home", label: "Inicio", lucide: "house" },
   { key: "profile", label: "Perfil", lucide: "circle-user-round" },
   { key: "chatNew", label: "Nuevo chat", lucide: "message-square-plus" },
-  { key: "chat", label: "Chats", lucide: "messages-square" },
-  { key: "proposal", label: "Propuestas", lucide: "sparkles" },
+  { key: "chat", label: "Asistente", lucide: "sparkles" },
+  { key: "proposal", label: "Propuestas", lucide: "clipboard-check" },
   { key: "calendarization", label: "Calendarizar", lucide: "calendar-clock" },
-  { key: "comparator", label: "Comparaciones", lucide: "columns-3" },
+  { key: "comparator", label: "Comparaciones", lucide: "scale" },
   { key: "explore", label: "Explorar", lucide: "search" },
   { key: "inbox", label: "Inbox", lucide: "inbox" },
   { key: "create", label: "Crear", lucide: "circle-fading-plus" },
@@ -324,6 +325,9 @@ export default function UiGalleryScreen() {
           <SectionTitle detail="Identidad + colección + cantidad" title="Encabezados de páginas de lista" />
           <CollectionPageHeader count={8} countIcon="dailyPlan" entity="dailyPlan" title="Planes diarios" />
           <CollectionPageHeader count={14} countIcon="meal" entity="meal" title="Comidas" />
+          <SectionPageHeader count={6} countLabel="conversaciones" section="chat" title="Asistente AI" />
+          <SectionPageHeader count={4} countLabel="propuestas" section="proposal" title="Propuestas" />
+          <SectionPageHeader count={2} countLabel="elementos seleccionados" section="comparator" title="Comparador" />
           <SectionTitle detail="Base nutricional por 100 g" title="Card de alimento" />
           <NutritionEntityCard
             entity="food"

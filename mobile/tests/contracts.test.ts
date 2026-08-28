@@ -69,16 +69,32 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     path.resolve(process.cwd(), "src/components/ui/collection-page-header.tsx"),
     "utf8",
   );
-  assert.match(collectionPageHeader, /container: \{ alignItems: "flex-start", flexDirection: "row"/);
-  assert.match(collectionPageHeader, /iconSlot: \{ paddingTop: tokens\.spacing\.xs \}/);
-  assert.match(collectionPageHeader, /copy: \{ alignItems: "flex-start", flex: 1/);
-  assert.match(collectionPageHeader, /<View style=\{styles\.copy\}>[\s\S]*?<Text style=\{styles\.title\}>\{title\}<\/Text>[\s\S]*?<StructuralIndicators/);
+  assert.match(collectionPageHeader, /container: \{ alignItems: "flex-start", gap: tokens\.spacing\.sm/);
+  assert.match(collectionPageHeader, /iconSlot: \{ alignSelf: "flex-start" \}/);
+  assert.match(collectionPageHeader, /function PageHeader[\s\S]*<View style=\{styles\.copy\}>[\s\S]*?<Text style=\{styles\.title\}>\{title\}<\/Text>[\s\S]*\{indicator\}/);
+  assert.doesNotMatch(collectionPageHeader, /Bookmark|Mis librerías|eyebrow/);
   assert.match(collectionPageHeader, /<StructuralIndicators[^\n]*tone="surfaceMuted"/);
+  assert.match(collectionPageHeader, /export function SectionPageHeader/);
+  assert.match(collectionPageHeader, /<SectionIcon section=\{section\} size="hero" \/>/);
+  assert.match(collectionPageHeader, /style=\{styles\.countChip\}/);
+
+  for (const [relativePath, section, title] of [
+    ["src/app/comparator/index.tsx", "comparator", "Comparador"],
+    ["src/app/proposals/index.tsx", "proposal", "Propuestas"],
+    ["src/app/assistant/index.tsx", "chat", "Asistente AI"],
+  ]) {
+    const sectionScreen = await readFile(path.resolve(process.cwd(), relativePath), "utf8");
+    assert.match(sectionScreen, new RegExp(`<SectionPageHeader[^>]*section="${section}"[^>]*title="${title}"`));
+    assert.doesNotMatch(sectionScreen, /<AppHeader/);
+  }
 
   const productUiSourceForIndicators = await readFile(
     path.resolve(process.cwd(), "src/components/ui/product.tsx"),
     "utf8",
   );
+  assert.match(productUiSourceForIndicators, /chat: Sparkles/);
+  assert.match(productUiSourceForIndicators, /proposal: ClipboardCheck/);
+  assert.match(productUiSourceForIndicators, /comparator: Scale/);
   assert.match(productUiSourceForIndicators, /tone\?: "identity" \| "surfaceCard" \| "surfaceMuted"/);
   assert.match(productUiSourceForIndicators, /tone === "surfaceMuted" \? tokens\.color\.surfaceMuted : color/);
   assert.match(productUiSourceForIndicators, /structuralItemSurface: \{ borderColor: tokens\.color\.borderDefault, borderWidth: 1 \}/);
@@ -251,6 +267,12 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.doesNotMatch(mealAdherence, /label=\{editingNote \? "Guardar nota" : "Editar nota"\}/);
 
   const activeProgram = await readFile(path.resolve(process.cwd(), "src/app/program/index.tsx"), "utf8");
+  assert.match(activeProgram, /<SectionPageHeader count=\{weekCount\} countLabel="semanas" section="calendarization" title="Mi programa" \/>/);
+  assert.doesNotMatch(activeProgram, /<CollectionPageHeader/);
+
+  const appNavigation = await readFile(path.resolve(process.cwd(), "src/components/navigation/app-navigation.tsx"), "utf8");
+  assert.match(appNavigation, /program: CalendarClock/);
+  assert.match(appNavigation, /pathname\.startsWith\("\/program"\).*icon: CalendarClock/);
   assert.match(activeProgram, /stickyHeaderIndices=\{\[1\]\}/);
   assert.doesNotMatch(activeProgram, /weekTabsStickyPinned/);
   assert.match(activeProgram, /program\?\.weeks_count/);
@@ -264,20 +286,62 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(activePlanningControls, /nestedScrollEnabled/);
   assert.match(activePlanningControls, /weekTabsScroll: \{ flexGrow: 0, width: "100%" \}/);
 
-  const activeProgramCard = await readFile(
+  const activeProgramOverview = await readFile(
     path.resolve(process.cwd(), "src/components/programs/program-active-card.tsx"),
     "utf8",
   );
-  assert.match(activeProgramCard, /<ProgramActiveKpis[^>]*bleed=\{false\}/);
+  assert.match(activeProgramOverview, /<ProgramActiveKpis[^>]*bleed=\{false\}/);
+  assert.match(activeProgramOverview, /indicators=\{embedded \? undefined : program\.indicators\}/);
+  assert.match(activeProgramOverview, /export function ProgramActiveHomeOverview[\s\S]*<ProgramActiveOverview \{\.\.\.props\} embedded/);
+  assert.doesNotMatch(activeProgramOverview, /<Card/);
 
   const activeProgramKpis = await readFile(
     path.resolve(process.cwd(), "src/components/programs/program-active-kpis.tsx"),
     "utf8",
   );
-  assert.match(activeProgramKpis, /periodRow:\{[^}]*borderRadius:tokens\.radius\.lg[^}]*marginTop:tokens\.spacing\.sm[^}]*padding:tokens\.spacing\.md/);
+  assert.match(activeProgramKpis, /periodRow:\{[^}]*backgroundColor:tokens\.color\.surfaceCard[^}]*borderColor:tokens\.color\.borderSoft[^}]*borderRadius:tokens\.radius\.md[^}]*borderWidth:1[^}]*marginTop:tokens\.spacing\.sm[^}]*padding:tokens\.spacing\.md/);
+  assert.doesNotMatch(activeProgramKpis, /kcalSurface|kcalBorder|periodBorder|periodText/);
   assert.match(activeProgramKpis, /indicatorsSurfaceReset:\{[^}]*padding:tokens\.spacing\.xs/);
+  assert.match(activeProgramKpis, /Días recorridos/);
+  assert.match(activeProgramKpis, /indicator:\{[^}]*padding:tokens\.spacing\.md/);
+  assert.match(activeProgramKpis, /indicatorValue:\{[^}]*marginTop:tokens\.spacing\.sm/);
+  assert.match(activeProgramKpis, /fraction:\{[^}]*fontSize:tokens\.type\.section/);
+  assert.match(activeProgramKpis, /percentageText:\{[^}]*fontSize:tokens\.type\.section/);
+  assert.match(activeProgramKpis, /percentageText:\{[^}]*color:tokens\.color\.textMain/);
+  assert.match(activeProgramKpis, /<Text style=\{styles\.percentageText\}>\{advancement\}%<\/Text>/);
+  assert.match(activeProgramKpis, /<Text style=\{styles\.percentageText\}>\{compliance\}%<\/Text>/);
+  assert.doesNotMatch(activeProgramKpis, /percentageTag/);
+
+  const activateProgram = await readFile(
+    path.resolve(process.cwd(), "src/app/program/activate.tsx"),
+    "utf8",
+  );
+  assert.match(activateProgram, /stickyHeaderIndices=\{\[0\]\}/);
+  assert.match(activateProgram, /<PickerEntryTabs[\s\S]*createLabel="Crear Nuevo"/);
+  assert.match(activateProgram, /accessibilityLabel="Buscar programa"/);
+  assert.match(activateProgram, /pathname: "\/libraries\/create", params: \{ entity: "program" \}/);
+  assert.match(activateProgram, /<ProgramChildCard[\s\S]*openActionLabel="Seleccionar"/);
+  assert.match(activateProgram, /<ProgramChildCard[\s\S]*openActionLabel="Cambiar selección"/);
+  assert.match(activateProgram, /<SectionHeading title="Configura la selección" \/>/);
+  assert.match(activateProgram, /label="Calendarizar programa"/);
+  assert.doesNotMatch(activateProgram, /PASO 3 DE 3|Confirma la calendarización|Volver a configurar/);
 
   const todayScreen = await readFile(path.resolve(process.cwd(), "src/app/today.tsx"), "utf8");
+  assert.match(todayScreen, /<AppHeader[^>]*title=\{`Vamos, \$\{firstName\}`\} \/>[\s\S]*<CurrentWeekSection localDate=\{today\.local_date\} \/>/);
+  assert.ok(todayScreen.indexOf("<CurrentWeekSection") < todayScreen.indexOf("<CalendarizedDailyPlanCard"));
+  assert.ok(todayScreen.indexOf("<CalendarizedDailyPlanCard") < todayScreen.indexOf("<ProgramActiveHomeOverview"));
+  assert.doesNotMatch(todayScreen, /<SectionDivider \/>/);
+  const currentWeek = await readFile(
+    path.resolve(process.cwd(), "src/components/calendarization/current-week-section.tsx"),
+    "utf8",
+  );
+  assert.match(currentWeek, /dayCircle: \{[^}]*backgroundColor: tokens\.color\.surfaceCard[^}]*height: 38[^}]*width: 38/);
+  assert.match(currentWeek, /todayRing: \{[^}]*borderColor: tokens\.color\.dailyPlan[^}]*borderWidth: 3[^}]*bottom: -5[^}]*left: -5[^}]*right: -5[^}]*top: -5/);
+  assert.match(currentWeek, /dayCircleToday: \{ backgroundColor: tokens\.color\.entityIconForeground \}/);
+  assert.match(currentWeek, /dayNumberToday: \{ color: tokens\.color\.surfaceApp \}/);
+  assert.match(currentWeek, /day: \{[^}]*gap: tokens\.spacing\.sm/);
+  assert.match(todayScreen, /<ProgramActiveHomeOverview/);
+  assert.doesNotMatch(todayScreen, /<ProgramActiveCard/);
   assert.match(todayScreen, /activeProgram\?\.days\.find\(\(day\) => day\.id === today\?\.day_id\)/);
   assert.match(todayScreen, /position=\{todayProgramDay \? \{ dayNumber: todayProgramDay\.day_number, weekNumber: todayProgramDay\.week_number \} : undefined\}/);
   assert.doesNotMatch(activeProgram, /program\?\.days\.map/);
@@ -314,7 +378,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     "utf8",
   );
   assert.match(sectionDivider, /export function SectionDivider/);
-  assert.match(sectionDivider, /marginVertical: tokens\.spacing\.md/);
+  assert.match(sectionDivider, /marginBottom: tokens\.spacing\.sm, marginTop: tokens\.spacing\.lg/);
   assert.match(gallery, /title="Separador de secciones"/);
 
   const entityDetail = await readFile(

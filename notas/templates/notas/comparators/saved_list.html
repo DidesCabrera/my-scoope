@@ -1,6 +1,6 @@
 {% extends "notas/base.html" %}
 {% load static %}
-{% block title %}Comparaciones guardadas{% endblock %}
+{% block title %}Comparador{% endblock %}
 {% block content %}
 
 <div class="page list comparator-page comparator-saved-page">
@@ -9,7 +9,7 @@
   <nav class="comparator-tabs" aria-label="Tipo de comparación guardada">
     {% for tab in vm.content.tabs %}
       <a href="{{ tab.url }}" class="comparator-tab {% if tab.is_active %}is-active{% endif %}">
-        <i data-lucide="{{ tab.icon }}" class="comparator-tab__icon"></i>
+        <i data-lucide="{{ tab.icon }}" class="comparator-tab__icon" aria-hidden="true"></i>
         <span>{{ tab.label }}</span>
       </a>
     {% endfor %}
@@ -31,7 +31,10 @@
         </a>
       </article>
     {% empty %}
-      <p class="comparator-saved-list__empty">{{ vm.content.empty_message }}</p>
+      <div class="comparator-saved-list__empty">
+        <p>{{ vm.content.empty_message }}</p>
+        <a href="{% if vm.content.entity_scope == 'food' %}{% url 'food_comparator' %}{% elif vm.content.entity_scope == 'meal' %}{% url 'meal_comparator' %}{% else %}{% url 'dailyplan_comparator' %}{% endif %}" class="btn-primary">Crear nueva comparación</a>
+      </div>
     {% endfor %}
   </section>
 </div>

@@ -1,5 +1,5 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
-import { Bookmark, Plus, Search } from "lucide-react-native";
+import { Search } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -24,6 +24,8 @@ import { NutritionEntityCard } from "@/components/nutrition";
 import { Button, Card, Field, InlineNotice, LoadingState, Screen, SectionTitle, textStyles } from "@/components/ui";
 import { ConfirmationState, RecoverableErrorState } from "@/components/ui/screen-states";
 import { tokens } from "@/design/tokens";
+import { PickerCardAction } from "./picker-card-action";
+import { PickerEntryTabs } from "./picker-entry-tabs";
 
 export type PickerKind = "food-to-meal" | "meal-to-dailyplan" | "dailyplan-to-program";
 
@@ -81,33 +83,6 @@ const configs: Record<PickerKind, PickerConfig> = {
   },
 };
 
-type PickerEntryTab = "library" | "create";
-
-function PickerEntryTabs({ createLabel, onCreate }: { createLabel: string; onCreate(): void }) {
-  return (
-    <View accessibilityLabel="Origen de la selección" accessibilityRole="tablist" style={styles.entryTabsBar}>
-      {([
-        { icon: Bookmark, key: "library", label: "Mi librería" },
-        { icon: Plus, key: "create", label: createLabel },
-      ] satisfies { icon: typeof Bookmark; key: PickerEntryTab; label: string }[]).map((tab) => {
-        const selected = tab.key === "library";
-        const Icon = tab.icon;
-        return (
-          <Pressable
-            accessibilityRole="tab"
-            accessibilityState={{ selected }}
-            key={tab.key}
-            onPress={() => { if (tab.key === "create") onCreate(); }}
-            style={({ pressed }) => [styles.entryTab, selected && styles.entryTabActive, pressed && styles.pressed]}>
-            <Icon color={selected ? tokens.color.surfaceApp : tokens.color.textMuted} size={16} strokeWidth={2.2} />
-            <Text style={[styles.entryTabText, selected && styles.entryTabTextActive]}>{tab.label}</Text>
-          </Pressable>
-        );
-      })}
-    </View>
-  );
-}
-
 const dayOptions = [
   { id: 1, short: "L", label: "Lunes" },
   { id: 2, short: "M", label: "Martes" },
@@ -157,13 +132,7 @@ function PickerOptionCard({ actionLabel, onAction, option }: { actionLabel: stri
   return (
     <NutritionEntityCard
       actions={(
-        <Pressable
-          accessibilityLabel={`${actionLabel}: ${option.name}`}
-          accessibilityRole="button"
-          onPress={onAction}
-          style={({ pressed }) => [styles.selectButton, pressed && styles.pressed]}>
-          <Text style={styles.selectButtonText}>{actionLabel}</Text>
-        </Pressable>
+        <PickerCardAction label={actionLabel} onPress={onAction} subject={option.name} />
       )}
       entity={option.entity}
       indicators={option.indicators}
@@ -360,7 +329,7 @@ export function CompositionPickerScreen({
   }
 
   return (
-    <Screen>
+    <Screen headerMode="preserve">
       {selected ? (
         <PickerOptionCard
           actionLabel="Cambiar selección"
@@ -476,14 +445,8 @@ const styles = StyleSheet.create({
   dayTextSelected: { color: tokens.color.surfaceApp },
   days: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.sm },
   daysBlock: { gap: tokens.spacing.sm },
-  entryTab: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, flex: 1, flexDirection: "row", gap: tokens.spacing.compact, justifyContent: "center", minHeight: 34, minWidth: 0, paddingHorizontal: tokens.spacing.sm },
-  entryTabActive: { backgroundColor: tokens.color.textMain, borderColor: tokens.color.textMain },
-  entryTabText: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "500" },
-  entryTabTextActive: { color: tokens.color.surfaceApp },
-  entryTabsBar: { backgroundColor: tokens.color.surfaceApp, flexDirection: "row", gap: tokens.spacing.compact, paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.sm },
   fieldLabel: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "700" },
   options: { gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen },
-  pressed: { opacity: 0.68 },
   previewLoading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm },
   previewSection: { gap: tokens.spacing.lg },
   searchField: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.sm, marginHorizontal: tokens.spacing.screen, minHeight: 38, paddingHorizontal: tokens.spacing.md },
@@ -491,6 +454,4 @@ const styles = StyleSheet.create({
   selectionSafeArea: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   selectionScrollContent: { flexGrow: 1, paddingBottom: 42 },
   selectionSticky: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.xs, paddingBottom: tokens.spacing.lg, zIndex: 2 },
-  selectButton: { backgroundColor: tokens.color.textMain, borderRadius: tokens.radius.pill, minHeight: 38, minWidth: 112, paddingHorizontal: tokens.spacing.lg, alignItems: "center", justifyContent: "center" },
-  selectButtonText: { color: tokens.color.surfaceApp, fontSize: tokens.type.caption, fontWeight: "800" },
 });

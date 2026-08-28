@@ -11,7 +11,7 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { ProgramActiveActions } from "@/components/programs/program-active-actions";
 import { ProgramActiveOverview } from "@/components/programs/program-active-card";
 import { EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
-import { LoadingState, Screen, SectionDivider, SectionHeading } from "@/components/ui";
+import { LoadingState, Screen, SectionDivider, SectionHeading, SectionPageHeader } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 function localDate(): string {
@@ -102,7 +102,8 @@ export default function ProgramScreen() {
   if (!calendarization || !program) {
     return (
       <>
-        <Screen>
+        <Screen headerMode="preserve">
+          <SectionPageHeader countLabel="semanas" section="calendarization" title="Mi programa" />
           {error ? <RecoverableErrorState message={error} onRetry={() => void load()} /> : null}
           <EmptyState actionLabel="Calendarizar un programa" message="Elige uno de tus programas guardados para comenzar un recorrido diario." onAction={() => router.push("/program/activate" as Href)} title="Aún no tienes un programa activo" />
         </Screen>
@@ -124,6 +125,7 @@ export default function ProgramScreen() {
         stickyHeaderIndices={[1]}
         style={styles.screen}>
         <View style={styles.beforePlanning}>
+          <SectionPageHeader count={weekCount} countLabel="semanas" section="calendarization" title="Mi programa" />
           {error ? <RecoverableErrorState message={error} onRetry={() => void load()} /> : null}
           <ProgramActiveOverview calendarization={calendarization} program={program} />
           <SectionDivider />

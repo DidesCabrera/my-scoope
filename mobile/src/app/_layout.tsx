@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { SessionProvider, useSession } from "@/auth/session-context";
+import { ComparatorSelectionProvider } from "@/components/comparisons/comparator-selection-context";
 import { AppNavigationHeader, AppNavigationProvider } from "@/components/navigation/app-navigation";
 import { tokens } from "@/design/tokens";
 import "@/observability/sentry";
@@ -43,15 +44,17 @@ function RootLayout() {
     <SafeAreaProvider>
       <SessionProvider>
         <AppNavigationProvider>
-          <AuthenticatedRouteGate />
-          <Stack
-            screenOptions={{
-              animation: "slide_from_right",
-              contentStyle: { backgroundColor: tokens.color.surfaceApp },
-              header: () => <AppNavigationHeader />,
-              headerShown: true,
-            }}
-          />
+          <ComparatorSelectionProvider>
+            <AuthenticatedRouteGate />
+            <Stack
+              screenOptions={{
+                animation: "slide_from_right",
+                contentStyle: { backgroundColor: tokens.color.surfaceApp },
+                header: () => <AppNavigationHeader />,
+                headerShown: true,
+              }}
+            />
+          </ComparatorSelectionProvider>
         </AppNavigationProvider>
         <StatusBar style="light" />
       </SessionProvider>

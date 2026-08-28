@@ -657,7 +657,13 @@ export type ComparisonKindOption = {
 
 export type ComparisonMetadata = { kinds: ComparisonKindOption[] };
 
-export type ComparisonOption = { id: number; name: string };
+export type ComparisonOption = Pick<
+  LibraryItem,
+  "id" | "entity" | "indicators" | "name" | "nutrition" | "panel" | "subtitle"
+>;
+
+export type SelectedComparisonOption = Pick<ComparisonOption, "id" | "name"> &
+  Partial<Pick<ComparisonOption, "nutrition">>;
 
 export type ComparisonOptionsData = MobilePageData<ComparisonOption> & { search: string | null };
 

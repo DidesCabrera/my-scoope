@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from django.db.models import Q
-
+from mobile_api.selectors import library_dailyplans_payload, library_foods_payload, library_meals_payload
 from notas.application.services.commands.saved_comparison_commands import (
     create_saved_comparison,
     update_saved_comparison,
@@ -72,19 +71,23 @@ def _queryset_for_kind(kind: str, user):
 
 
 def comparison_options_payload(user, *, kind: str, search=None, offset=0, limit=30) -> dict:
-    queryset = _queryset_for_kind(kind, user)
-    normalized_search = (search or "").strip()[:100]
-    if normalized_search:
-        queryset = queryset.filter(Q(name__icontains=normalized_search))
-    safe_offset = max(int(offset or 0), 0)
-    safe_limit = min(max(int(limit or 30), 1), 100)
-    total = queryset.count()
+    builders = {
+        SavedComparison.KIND_FOODS: library_foods_payload,
+        SavedComparison.KIND_MEALS: library_meals_payload,
+        SavedComparison.KIND_DAILYPLANS: library_dailyplans_payload,
+    }
+    try:
+        builder = builders[kind]
+    except KeyError as exc:
+        raise ValueError("comparison_kind_not_supported") from exc
+    page = builder(user, search=search, offset=offset, limit=limit, include_actions=False)
+    visual_fields = {"id", "entity", "name", "subtitle", "nutrition", "indicators", "panel"}
     return {
-        "items": [{"id": item.id, "name": item.name} for item in queryset[safe_offset:safe_offset + safe_limit]],
-        "total": total,
-        "offset": safe_offset,
-        "limit": safe_limit,
-        "search": normalized_search or None,
+        **page,
+        "items": [
+            {key: value for key, value in item.items() if key in visual_fields}
+            for item in page["items"]
+        ],
     }
 
 

@@ -103,6 +103,11 @@ class SidebarBuilderTests(TestCase):
         self.assertEqual(explore_group["key"], "explore")
         self.assertEqual(explore_group["nav_root"], "explore")
 
+        tool_groups = {group["key"]: group for group in sidebar[0]["groups"]}
+        self.assertEqual(tool_groups["chat"]["icon"], "sparkles")
+        self.assertEqual(tool_groups["proposal"]["icon"], "clipboard-check")
+        self.assertEqual(tool_groups["comparators"]["icon"], "scale")
+
  
     def test_build_ui_vm_for_profile_populates_navigation_metadata(self):
         ui = build_ui_vm(PROFILE_VIEWMODE)

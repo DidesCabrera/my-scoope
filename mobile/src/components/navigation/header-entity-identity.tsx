@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 
 import type { LibraryEntity } from "@/api/types";
-import { EntityIcon } from "@/components/ui";
+import { EntityIcon } from "@/components/ui/product";
 import { tokens } from "@/design/tokens";
 
 export function HeaderEntityIdentity({ entity, title }: { entity: LibraryEntity; title: string }) {

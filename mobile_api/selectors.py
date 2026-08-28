@@ -252,7 +252,9 @@ def _library_page(queryset, *, search, offset, limit, builder) -> dict:
     }
 
 
-def library_foods_payload(user, *, search=None, offset=0, limit=30, include_drafts=False) -> dict:
+def library_foods_payload(
+    user, *, search=None, offset=0, limit=30, include_drafts=False, include_actions=True
+) -> dict:
     current_weight = get_current_weight(user)
     queryset = (
         Food.objects.filter(created_by=user, is_active=True)
@@ -275,12 +277,14 @@ def library_foods_payload(user, *, search=None, offset=0, limit=30, include_draf
             "creator": _creator_name(food),
             "created_at": food.created_at,
             "is_draft": False,
-            "actions": library_actions_payload(food, user, context="list"),
+            "actions": library_actions_payload(food, user, context="list") if include_actions else [],
         },
     )
 
 
-def library_meals_payload(user, *, search=None, offset=0, limit=30, include_drafts=False) -> dict:
+def library_meals_payload(
+    user, *, search=None, offset=0, limit=30, include_drafts=False, include_actions=True
+) -> dict:
     current_weight = get_current_weight(user)
     queryset = (
         Meal.objects.filter(created_by=user, dailyplanmeal__isnull=True)
@@ -314,12 +318,14 @@ def library_meals_payload(user, *, search=None, offset=0, limit=30, include_draf
             "creator": _creator_name(meal),
             "created_at": meal.created_at,
             "is_draft": meal.is_draft,
-            "actions": library_actions_payload(meal, user, context="list"),
+            "actions": library_actions_payload(meal, user, context="list") if include_actions else [],
         },
     )
 
 
-def library_dailyplans_payload(user, *, search=None, offset=0, limit=30, include_drafts=False) -> dict:
+def library_dailyplans_payload(
+    user, *, search=None, offset=0, limit=30, include_drafts=False, include_actions=True
+) -> dict:
     current_weight = get_current_weight(user)
     queryset = (
         DailyPlan.objects.filter(created_by=user)
@@ -364,7 +370,7 @@ def library_dailyplans_payload(user, *, search=None, offset=0, limit=30, include
             "creator": _creator_name(dailyplan),
             "created_at": dailyplan.created_at,
             "is_draft": dailyplan.is_draft,
-            "actions": library_actions_payload(dailyplan, user, context="list"),
+            "actions": library_actions_payload(dailyplan, user, context="list") if include_actions else [],
         },
     )
 

@@ -1,13 +1,8 @@
 import type { PropsWithChildren, ReactNode } from "react";
-import { useCallback, useState } from "react";
-import { useFocusEffect } from "expo-router";
 import {
   ActivityIndicator,
   KeyboardTypeOptions,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
   Pressable,
-  ScrollView,
   StyleProp,
   StyleSheet,
   Text,
@@ -15,37 +10,11 @@ import {
   View,
   ViewStyle,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 import { tokens } from "@/design/tokens";
-import { useHeaderPresentation } from "@/components/navigation/app-navigation";
+import { Screen } from "./layout";
 
-type ScreenProps = PropsWithChildren<{
-  scroll?: boolean;
-  contentStyle?: StyleProp<ViewStyle>;
-  onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
-}>;
-
-export function Screen({ children, scroll = true, contentStyle, onScroll }: ScreenProps) {
-  const setHeaderPresentation = useHeaderPresentation();
-  const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
-  useFocusEffect(useCallback(() => {
-    setHeaderPresentation({ mode: "default", identityVisible: compactHeaderVisible });
-    return () => setHeaderPresentation({ mode: "default" });
-  }, [compactHeaderVisible, setHeaderPresentation]));
-  const content = <View style={[styles.screenContent, contentStyle]}>{children}</View>;
-  return (
-    <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
-      {scroll ? (
-        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" onScroll={(event) => { const visible = event.nativeEvent.contentOffset.y > 1; if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible); onScroll?.(event); }} scrollEventThrottle={16}>
-          {content}
-        </ScrollView>
-      ) : (
-        content
-      )}
-    </SafeAreaView>
-  );
-}
+export { Screen };
 
 export function Brand({ compact = false }: { compact?: boolean }) {
   return (
@@ -231,7 +200,7 @@ export function ProgressBar({ value }: { value: number }) {
 
 export function LoadingState({ label = "Preparando tu día…" }: { label?: string }) {
   return (
-    <Screen scroll={false} contentStyle={styles.loadingState}>
+    <Screen scroll={false} contentStyle={styles.loadingState} headerMode="preserve">
       <Brand />
       <ActivityIndicator color={tokens.color.interactivePrimary} size="large" />
       <Text style={styles.mutedText}>{label}</Text>
@@ -247,9 +216,6 @@ export const textStyles = StyleSheet.create({
 });
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: tokens.color.surfaceApp },
-  scrollContent: { flexGrow: 1 },
-  screenContent: { flex: 1, gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg, paddingBottom: 42 },
   brandRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md },
   brandMark: { alignItems: "center", backgroundColor: tokens.color.textMain, borderRadius: tokens.radius.md, height: 38, justifyContent: "center", width: 38 },
   brandMarkText: { color: tokens.color.surfaceApp, fontSize: 20, fontWeight: "900" },

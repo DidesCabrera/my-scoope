@@ -24,7 +24,7 @@ export function ProgressBar({ value, color = tokens.color.program }: { value: nu
 
 export function LoadingState({ label = "Preparando tu día…" }: { label?: string }) {
   return (
-    <Screen scroll={false} contentStyle={styles.loadingState}>
+    <Screen scroll={false} contentStyle={styles.loadingState} headerMode="preserve">
       <Brand />
       <ActivityIndicator color={tokens.color.interactivePrimary} size="large" />
       <Text style={styles.mutedText}>{label}</Text>

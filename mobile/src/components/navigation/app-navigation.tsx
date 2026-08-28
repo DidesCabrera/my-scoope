@@ -2,7 +2,7 @@ import type { PropsWithChildren } from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { type Href, usePathname, useRouter } from "expo-router";
 import {
-  CalendarDays,
+  CalendarClock,
   Camera,
   ChevronLeft,
   ClipboardCheck,
@@ -41,11 +41,13 @@ import { listAvailableProductAreas, type ProductAreaKey } from "@/navigation/pro
 import { HeaderEntityIdentity } from "./header-entity-identity";
 import { EntitySidebarItem, type EntitySidebarItemData, NavigationSidebarItem, type NavigationSidebarItemData } from "./sidebar-items";
 
+type HeaderAction = { icon?: "more" | "plus"; label: string; onPress(): void };
+
 type HeaderPresentation =
-  | { mode: "default"; action?: { label: string; onPress(): void }; identityVisible?: boolean; title?: string }
-  | { mode: "back"; action?: { label: string; onPress(): void }; fallback?: Href; title: string }
-  | { mode: "library-detail"; action?: { label: string; onPress(): void }; entity: LibraryEntity; identityVisible: boolean; title: string }
-  | { mode: "library-list"; action?: { label: string; onPress(): void }; createAction?: { label: string; onPress(): void }; entity: LibraryEntity; identityVisible: boolean; title: string };
+  | { mode: "default"; action?: HeaderAction; identityVisible?: boolean; title?: string }
+  | { mode: "back"; action?: HeaderAction; fallback?: Href; title: string }
+  | { mode: "library-detail"; action?: HeaderAction; entity: LibraryEntity; identityVisible: boolean; title: string }
+  | { mode: "library-list"; action?: HeaderAction; createAction?: { label: string; onPress(): void }; entity: LibraryEntity; identityVisible: boolean; title: string };
 
 type NavigationContextValue = {
   closeMenu(): void;
@@ -63,7 +65,7 @@ const productAreaIcons: Record<ProductAreaKey, LucideIcon> = {
   assistant: Sparkles,
   comparator: Scale,
   home: House,
-  program: CalendarDays,
+  program: CalendarClock,
   proposals: ClipboardCheck,
 };
 
@@ -137,7 +139,7 @@ function routeHeader(pathname: string): { icon: LucideIcon; title: string } {
   if (pathname.startsWith("/assistant")) return { icon: Sparkles, title: pathname === "/assistant" ? "Asistente" : "Conversación" };
   if (pathname.startsWith("/proposals")) return { icon: ClipboardCheck, title: pathname === "/proposals" ? "Propuestas" : "Detalle de propuesta" };
   if (pathname.startsWith("/comparator")) return { icon: Scale, title: pathname.includes("/saved") ? "Comparaciones guardadas" : "Comparador" };
-  if (pathname.startsWith("/program")) return { icon: CalendarDays, title: pathname === "/program" ? "Mi programa" : pathname.includes("/activate") ? "Calendarizar programa" : "Detalle del día" };
+  if (pathname.startsWith("/program")) return { icon: CalendarClock, title: pathname === "/program" ? "Mi programa" : pathname.includes("/activate") ? "Calendarizar programa" : "Detalle del día" };
   if (pathname === "/today" || pathname === "/") return { icon: House, title: "Inicio" };
   if (pathname === "/weight") return { icon: Weight, title: "Registrar peso" };
   if (pathname === "/label-capture") return { icon: Camera, title: "Digitalizar etiqueta" };
@@ -239,7 +241,9 @@ export function AppNavigationHeader() {
             hitSlop={8}
             onPress={headerPresentation.action.onPress}
             style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}>
-            <MoreHorizontal color={tokens.color.textMain} size={26} strokeWidth={2.2} />
+            {headerPresentation.action.icon === "plus"
+              ? <Plus color={tokens.color.textMain} size={25} strokeWidth={2.2} />
+              : <MoreHorizontal color={tokens.color.textMain} size={26} strokeWidth={2.2} />}
           </Pressable>
         ) : <View style={[styles.headerButton, headerPresentation.mode === "back" && styles.backHeaderSide]} />}
       </View>

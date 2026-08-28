@@ -25,8 +25,8 @@ export function SectionDivider({ spacing = "regular", tone = "default", style }:
 }
 
 const styles = StyleSheet.create({
-  divider: { backgroundColor: tokens.color.borderDefault, height: 1, marginVertical: tokens.spacing.md },
+  divider: { backgroundColor: tokens.color.borderDefault, height: 1, marginBottom: tokens.spacing.sm, marginTop: tokens.spacing.lg },
   soft: { backgroundColor: tokens.color.borderSoft },
-  compact: { marginVertical: tokens.spacing.xs },
-  wide: { marginVertical: tokens.spacing.xl },
+  compact: { marginBottom: 0, marginTop: tokens.spacing.sm },
+  wide: { marginBottom: tokens.spacing.lg, marginTop: tokens.spacing.xxl },
 });

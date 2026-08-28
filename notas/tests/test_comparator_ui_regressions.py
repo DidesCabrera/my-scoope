@@ -4,9 +4,27 @@ from unittest import TestCase
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 COMPARATOR_TEMPLATE = PROJECT_ROOT / "notas" / "templates" / "notas" / "comparators" / "detail.html"
 COMPARATOR_JS = PROJECT_ROOT / "notas" / "static" / "notas" / "js" / "comparators.js"
+SAVED_LIST_TEMPLATE = PROJECT_ROOT / "notas" / "templates" / "notas" / "comparators" / "saved_list.html"
+LIST_HEADER_TEMPLATE = PROJECT_ROOT / "notas" / "templates" / "components" / "list_page_header.html"
 
 
 class ComparatorUiRegressionTests(TestCase):
+    def test_saved_comparison_entry_uses_entity_tabs_and_empty_creation_action(self):
+        template = SAVED_LIST_TEMPLATE.read_text()
+
+        self.assertIn('class="comparator-tabs"', template)
+        self.assertIn("{{ tab.label }}", template)
+        self.assertIn("Crear nueva comparación", template)
+        self.assertIn('data-lucide="{{ tab.icon }}"', template)
+        self.assertIn('class="comparator-tab__icon"', template)
+
+    def test_comparator_uses_the_stacked_page_header_without_eyebrow(self):
+        template = LIST_HEADER_TEMPLATE.read_text()
+
+        self.assertIn("vm.ui.entity == 'comparator'", template)
+        self.assertIn("list-page-header--stacked", template)
+        self.assertNotIn("list-page-header__eyebrow", template)
+
     def test_remove_button_is_rendered_inside_each_selector_heading(self):
         template = COMPARATOR_TEMPLATE.read_text()
         heading_start = template.index('class="comparator-selector__heading"')

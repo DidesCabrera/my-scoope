@@ -2076,19 +2076,51 @@
         "type": "object"
       },
       "ComparisonOptionData": {
+        "description": "Visual contract required to render an entity card in a comparison picker.",
         "properties": {
+          "entity": {
+            "enum": [
+              "food",
+              "meal",
+              "dailyPlan"
+            ],
+            "title": "Entity",
+            "type": "string"
+          },
           "id": {
             "title": "Id",
             "type": "integer"
           },
+          "indicators": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryIndicatorData"
+            },
+            "title": "Indicators",
+            "type": "array"
+          },
           "name": {
             "title": "Name",
+            "type": "string"
+          },
+          "nutrition": {
+            "$ref": "#/components/schemas/LibraryNutritionData"
+          },
+          "panel": {
+            "$ref": "#/components/schemas/LibraryPanelData"
+          },
+          "subtitle": {
+            "title": "Subtitle",
             "type": "string"
           }
         },
         "required": [
           "id",
-          "name"
+          "entity",
+          "name",
+          "subtitle",
+          "nutrition",
+          "indicators",
+          "panel"
         ],
         "title": "ComparisonOptionData",
         "type": "object"

@@ -14,14 +14,6 @@ test("composition pickers use independent native routes and one shared flow", as
   assert.match(picker, /style=\{styles\.searchField\}/);
   assert.match(picker, /if \(!selectedId\) \{/);
   assert.match(picker, /<PickerEntryTabs/);
-  assert.match(picker, /styles\.entryTabsBar/);
-  assert.match(picker, /styles\.entryTabActive/);
-  assert.match(picker, /icon: Bookmark/);
-  assert.match(picker, /icon: Plus/);
-  assert.match(picker, /entryTab: \{[^}]*flex: 1/);
-  assert.match(picker, /borderRadius: tokens\.radius\.pill/);
-  assert.match(picker, /backgroundColor: tokens\.color\.textMain/);
-  assert.match(picker, /Mi librería/);
   for (const createLabel of ["Crear alimento", "Crear comida", "Crear plan diario"]) {
     assert.match(picker, new RegExp(createLabel));
   }
@@ -29,7 +21,8 @@ test("composition pickers use independent native routes and one shared flow", as
   assert.match(picker, /params: \{ entity: config\.createEntity \}/);
   assert.ok(picker.indexOf("<PickerEntryTabs") < picker.indexOf("<View style={styles.searchField}"));
   assert.match(picker, /NutritionEntityCard/);
-  assert.match(picker, /styles\.selectButton/);
+  assert.match(picker, /import \{ PickerCardAction \} from "\.\/picker-card-action"/);
+  assert.match(picker, /<PickerCardAction label=\{actionLabel\} onPress=\{onAction\} subject=\{option\.name\} \/>/);
   assert.match(picker, /actionLabel="Seleccionar"/);
   assert.match(picker, /router\.push\(pickerConfigureHref/);
   assert.match(picker, /onPress: \(\) => router\.dismissTo\(detailHref\)/);
@@ -56,6 +49,28 @@ test("composition pickers use independent native routes and one shared flow", as
   assert.match(picker, /const detailHref = returnTo \?\?/);
   assert.match(picker, /pickerConfigureHref\(kind, \{ dayNumber: initialDayNumber, relationId, returnTo/);
   assert.doesNotMatch(picker, /protein\s*\*\s*4|carbs\s*\*\s*4|fat\s*\*\s*9/);
+
+  const cardAction = await readFile(
+    path.resolve(process.cwd(), "src/components/pickers/picker-card-action.tsx"),
+    "utf8",
+  );
+  assert.match(cardAction, /accessibilityLabel=\{`\$\{label\}: \$\{subject\}`\}/);
+  assert.match(cardAction, /backgroundColor: tokens\.color\.textMain/);
+  assert.match(cardAction, /borderRadius: tokens\.radius\.pill/);
+  assert.match(cardAction, /minHeight: 38/);
+
+  const entryTabs = await readFile(
+    path.resolve(process.cwd(), "src/components/pickers/picker-entry-tabs.tsx"),
+    "utf8",
+  );
+  assert.match(entryTabs, /styles\.entryTabsBar/);
+  assert.match(entryTabs, /styles\.entryTabActive/);
+  assert.match(entryTabs, /icon: Bookmark/);
+  assert.match(entryTabs, /icon: Plus/);
+  assert.match(entryTabs, /entryTab: \{[^}]*flex: 1/);
+  assert.match(entryTabs, /borderRadius: tokens\.radius\.pill/);
+  assert.match(entryTabs, /backgroundColor: tokens\.color\.textMain/);
+  assert.match(entryTabs, /Mi librería/);
 
   const navigation = await readFile(path.resolve(process.cwd(), "src/components/navigation/app-navigation.tsx"), "utf8");
   assert.match(navigation, /mode: "back"/);

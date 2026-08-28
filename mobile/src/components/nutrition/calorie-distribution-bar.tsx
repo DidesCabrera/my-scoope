@@ -27,5 +27,5 @@ export function CalorieDistributionBar({ distribution, style }: {
 }
 
 const styles = StyleSheet.create({
-  track: { backgroundColor: tokens.color.allocationPanelTrack, borderRadius: 4, flexDirection: "row", height: 24, minWidth: 0, overflow: "hidden", width: "100%" },
+  track: { backgroundColor: tokens.color.allocationPanelTrack, borderRadius: 4, flexDirection: "row", gap: 1, height: 24, minWidth: 0, overflow: "hidden", width: "100%" },
 });

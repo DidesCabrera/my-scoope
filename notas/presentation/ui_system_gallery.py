@@ -51,8 +51,9 @@ def build_ui_system_gallery_examples():
             "ui": {
                 "entity": "program",
                 "scope": "personal",
-                "page_icon": "calendar-range",
-                "icon": "calendar-range",
+                "section_label": "Mis librerias",
+                "page_icon": "bookmark",
+                "icon": "calendar",
                 "title": "Programas",
             },
             "content": {"item_count": 3},
