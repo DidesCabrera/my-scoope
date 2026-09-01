@@ -26,6 +26,63 @@ object containing `code`, `message` and `details`.
 The generated source of truth is `mobile-v1.openapi.json`. CI regenerates the
 schema in memory and fails when the committed contract drifts.
 
+## Implementation navigation
+
+The stable public contract is intentionally separated from domain ownership:
+
+```text
+mobile_api/api.py                         API composition root and legacy route facade
+mobile_api/routes/<domain>.py             HTTP routes, auth/scopes and stable operation IDs
+mobile_api/schema_domains/<domain>.py     request/response schemas owned by one domain
+mobile_api/<domain>.py                    domain-facing payload and application coordination
+mobile_api/tests/test_<domain>_api.py     owner, authorization and behavior contracts
+mobile_api/schemas.py                     compatibility re-export facade during extraction
+mobile_api/tests/test_api_v1.py           compatibility regression suite during extraction
+```
+
+Comparisons is the reference extraction. Its route registry lives in
+`routes/comparisons.py`, its independent schemas in
+`schema_domains/comparisons.py`, its comparison calculations/projections in
+`comparisons.py`, and its endpoint tests in `tests/test_comparisons_api.py`.
+Proposals follows the same vertical pattern in `routes/proposals.py`,
+`schema_domains/proposals.py` and `tests/test_proposals_api.py`; its queries and
+commands remain the product authority outside transport.
+Calendarization and Today follow it in `routes/calendarization.py`,
+`schema_domains/calendarization.py` and `tests/test_calendarization_api.py`.
+That domain owns the lived-program transport boundary—including activation,
+dated days, execution evidence, reviews, revisions, reminders and measurements—
+while the existing application services remain authoritative for behavior.
+Libraries use `routes/libraries.py` for search, collection/detail, creation and
+item actions; `routes/composition.py` owns relation mutations and picker
+preview/commit flows. Their data contracts live in `schema_domains/libraries.py`
+and `schema_domains/composition.py`, with the complete behavior journey in
+`tests/test_libraries_api.py`. Shared projection functions intentionally remain
+in `selectors.py` because they form one read-model boundary across library kinds.
+Identity uses `routes/identity.py` for session, profile, onboarding and account
+lifecycle; billing uses `routes/billing.py` for entitlements and provider
+evidence. Their schemas and tests follow the same names. This separation is
+intentional: transport remains easy to find without collapsing OAuth, account
+and commercial business authority into one module.
+Assistant uses `routes/assistant.py`, `schema_domains/assistant.py` and
+`tests/test_assistant_api.py`; durable queues, chat projection and prepared-action
+commands stay in their established application modules. The composition root now
+owns only API construction, shared errors, the public health route and router mounts.
+`schemas.py` is intentionally a compatibility re-export surface plus Error/Health.
+
+When extracting another domain:
+
+1. preserve every URL, response envelope, status code and auth/scope rule;
+2. pin each moved OpenAPI `operation_id` to its existing public value;
+3. mount the domain router from `api.py` without adding tags or metadata drift;
+4. keep compatibility re-exports in `schemas.py` until all consumers migrate;
+5. move tests rather than copying them, using `tests/base.py` for authenticated setup;
+6. lower the facade budgets and add exact budgets for the extracted modules;
+7. require `export_mobile_openapi --check` and focused domain tests before the full suite.
+
+The remaining extraction domain is Assistant. The order follows cohesion and
+dependency depth: domains
+with existing application services move before the composition-heavy library surface.
+
 ## Authentication
 
 - Public clients use authorization code + mandatory PKCE S256.

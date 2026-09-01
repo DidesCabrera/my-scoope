@@ -16,5 +16,6 @@ fi
   accounts admin_analytics admin_operations ai_assistant billing core email_delivery \
   food_catalog miapp notas nutrition_solver mcp_server/myscoope_mcp \
   --no-cache
+"${PYTHON_BIN}" scripts/check_python_complexity_debt.py
 "${PYTHON_BIN}" -m mypy
 "${PYTHON_BIN}" -m pip_audit -r requirements.txt --progress-spinner off

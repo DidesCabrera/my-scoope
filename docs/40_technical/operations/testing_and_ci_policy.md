@@ -222,6 +222,38 @@ foods/meals/daily plans
 
 ## Patch checklist
 
+## Executable quality ratchets
+
+The complete Django job must run branch-aware coverage through
+`scripts/coverage_django.sh`. The measured source set includes `mobile_api`, and the
+repository minimum is 75%. Raising the threshold requires a measured green baseline;
+lowering it requires an explicit accepted decision.
+
+Dependency safety has independent contracts:
+
+```text
+Python runtime dependencies   pip-audit, no known vulnerabilities
+root npm dependencies         exact audit budget, currently clean
+mobile npm dependencies       exact reviewed SDK-compatible transitive budget
+```
+
+An audit budget is not a vulnerability waiver. It records the exact vendor-blocked
+finding so a new package, severity change or critical advisory fails CI. Expo package
+compatibility is determined with Expo SDK tooling before changing the budget.
+
+Progressive debt controls live under `config/` and are checked by the CI scripts:
+
+- backend/mobile hotspot line ceilings are no-growth limits;
+- remaining mobile source reads and regex assertions have declining ceilings;
+- Python functions above complexity 15 are an exact reviewed set;
+- query budgets protect Today, active program and library reads from hidden N+1 growth;
+- mypy expands through stable typed seams instead of enabling a repository-wide flag without remediation.
+
+When a refactor improves one of these measurements, lower its committed budget in
+the same patch. Do not reuse the recovered allowance for unrelated growth.
+
+## Patch checklist
+
 Every functional patch should either add/update an appropriate test or explicitly
 state why no test is needed, such as docs-only, CSS-only or copy-only changes.
 

@@ -8,6 +8,7 @@ on:
       - "static/img/landing/**"
   push:
     branches:
+      - staging
       - main
       - master
     paths-ignore:
@@ -66,15 +67,17 @@ jobs:
         with:
           python-version: "3.13"
           cache: pip
-          cache-dependency-path: requirements.txt
+          cache-dependency-path: |
+            requirements.txt
+            requirements-quality.txt
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
+          python -m pip install -r requirements.txt -r requirements-quality.txt
 
-      - name: Run complete Django suite
-        run: scripts/ci_django_full_suite.sh
+      - name: Run complete Django suite with coverage
+        run: scripts/coverage_django.sh
 
   django-postgres:
     name: Django PostgreSQL regression suite

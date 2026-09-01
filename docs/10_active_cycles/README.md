@@ -34,6 +34,11 @@ Status: planned / active / paused / completed / superseded
 Cuando un ciclo planificado empiece a implementarse, el documento puede permanecer aquí como plan operacional, pero las decisiones estables que surjan deben registrarse también en `docs/20_decisions/`.
 
 ## En curso o pendientes de validación
+- `mobile_api_domain_decomposition_cycle.md`: ciclo activo MADD00-MADD07 para
+  convertir la propiedad lógica del API móvil en módulos físicos por dominio.
+  Comparisons ya es el patrón de referencia con rutas, schemas y pruebas separadas,
+  OpenAPI idéntico y presupuestos reducidos; siguen Propuestas, Calendarización,
+  Librerías/Composición, Cuenta/Billing y Assistant.
 - `consumer_mobile_enrichment_cycle.md`: ciclo MCE00-MCE08 completado en repositorio para una
   jornada intensiva que incorpora en la app React Native la gestión completa de la
   calendarización, el centro de propuestas, el comparador y el chat IA durable. El
@@ -114,6 +119,11 @@ Cuando un ciclo planificado empiece a implementarse, el documento puede permanec
 
 ## Ciclos completados
 
+- `code_quality_consolidation_cycle.md`: ciclo CQC00-CQC08 completado; alinea CI con
+  `staging`, incorpora `mobile_api` a una cobertura por ramas de 78% con mínimo de
+  75%, controla dependencias y hotspots mediante presupuestos ejecutables, reduce
+  tests móviles frágiles, agrega límites de consultas y amplía tipado/complejidad sin
+  cambiar el contrato público `/api/v1/`.
 - `nutrition_panel_energy_metrics_cycle.md`: ciclo NPE00-NPE05 completado; separa
   kcal absolutas de `% kcal`, agrega composición calórica intrínseca P/C/G en una
   barra acumulada compartida y crea el tab responsive `Calorías` sin cambiar el
