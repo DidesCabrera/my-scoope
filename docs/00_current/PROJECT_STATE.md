@@ -60,6 +60,9 @@ My Scoope is past the first architecture-expansion phase. The current priority i
 - External payment evidence and tax-document lifecycle belong to `billing`; verified outcomes project into `accounts`, which remains the entitlement source of truth.
 - Cross-app dependencies, transitional adapters and production module cycles are
   executable quality contracts rather than informal conventions.
+- Mobile API domains move vertically into `routes/`, `schema_domains/` and focused
+  endpoint tests while `api.py` remains the composition root; Comparisons is the
+  reference pattern and moved operation IDs are pinned to prevent OpenAPI drift.
 - Admin Operations services, selectors and view models are owned by operational
   domain. Food Catalog remains its principal and intentionally broad domain surface.
 - Food Catalog is the master/curation layer; operational `notas.Food` remains the runtime snapshot consumed by existing flows.

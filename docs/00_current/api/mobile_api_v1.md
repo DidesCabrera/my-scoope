@@ -26,6 +26,39 @@ object containing `code`, `message` and `details`.
 The generated source of truth is `mobile-v1.openapi.json`. CI regenerates the
 schema in memory and fails when the committed contract drifts.
 
+## Implementation navigation
+
+The stable public contract is intentionally separated from domain ownership:
+
+```text
+mobile_api/api.py                         API composition root and legacy route facade
+mobile_api/routes/<domain>.py             HTTP routes, auth/scopes and stable operation IDs
+mobile_api/schema_domains/<domain>.py     request/response schemas owned by one domain
+mobile_api/<domain>.py                    domain-facing payload and application coordination
+mobile_api/tests/test_<domain>_api.py     owner, authorization and behavior contracts
+mobile_api/schemas.py                     compatibility re-export facade during extraction
+mobile_api/tests/test_api_v1.py           compatibility regression suite during extraction
+```
+
+Comparisons is the reference extraction. Its route registry lives in
+`routes/comparisons.py`, its independent schemas in
+`schema_domains/comparisons.py`, its comparison calculations/projections in
+`comparisons.py`, and its endpoint tests in `tests/test_comparisons_api.py`.
+
+When extracting another domain:
+
+1. preserve every URL, response envelope, status code and auth/scope rule;
+2. pin each moved OpenAPI `operation_id` to its existing public value;
+3. mount the domain router from `api.py` without adding tags or metadata drift;
+4. keep compatibility re-exports in `schemas.py` until all consumers migrate;
+5. move tests rather than copying them, using `tests/base.py` for authenticated setup;
+6. lower the facade budgets and add exact budgets for the extracted modules;
+7. require `export_mobile_openapi --check` and focused domain tests before the full suite.
+
+The preferred extraction order is Proposals, Calendarization, Libraries/Composition,
+Account/Billing and Assistant. It follows cohesion and dependency depth: domains
+with existing application services move before the composition-heavy library surface.
+
 ## Authentication
 
 - Public clients use authorization code + mandatory PKCE S256.

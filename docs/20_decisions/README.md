@@ -203,3 +203,6 @@ Consequences
 - `0188-code-quality-consolidation-closure.md`: cierra CQC00-CQC08 con cobertura de
   `mobile_api`, auditorías y presupuestos ejecutables, tests conductuales y límites
   de consultas, manteniendo deuda legacy y gates externos explícitos.
+- `0189-mobile-api-domain-module-pattern.md`: adopta una extracción vertical e
+  incremental por dominio para rutas, schemas y pruebas del API móvil, usando
+  Comparisons como referencia y preservando OpenAPI byte por byte.
