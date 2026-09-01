@@ -1,6 +1,6 @@
 # MADD00-MADD07 · Mobile API Domain Decomposition
 
-Status: active
+Status: completed
 Owner: Mobile API / Architecture
 Started: 2026-08-31
 Decision: `docs/20_decisions/0189-mobile-api-domain-module-pattern.md`
@@ -99,10 +99,12 @@ authorization or product behavior.
 - Add an architecture invariant that allows only the health route and platform
   schemas in the compatibility facades.
 
-### MADD07 — Closure — planned
+### MADD07 — Closure — completed
 
-- Run all repository quality surfaces and branch coverage.
-- Promote the final module map and record any remaining compatibility facade.
+- Run the repository fast gate, quality gate, complete 1,812-test Django suite
+  and branch coverage at 78% against the 75% minimum.
+- Promote the final module map and record the deliberate compatibility surfaces.
+- Confirm the generated OpenAPI is unchanged and all 48 Mobile API tests pass.
 
 ## Exit criteria
 
@@ -110,3 +112,33 @@ authorization or product behavior.
 - Domain schemas and tests can be found without searching the compatibility facades.
 - OpenAPI remains unchanged unless a separate product decision intentionally changes it.
 - Facade line budgets fall monotonically and all supported automated suites pass.
+
+## Delivered outcome
+
+- Eight domain routers own all product routes; `api.py` owns only construction,
+  shared errors, health and router mounting.
+- Seven schema-domain modules own product contracts; `schemas.py` retains explicit
+  compatibility re-exports plus Error/Health.
+- Six focused endpoint suites own domain behavior; `test_api_v1.py` retains only
+  the public health/OpenAPI inventory contract.
+- Architecture tests reject routes or product schemas returning to the facades and
+  reject extracted routes without pinned operation IDs.
+- Exact no-growth budgets cover every new module and the reduced facades.
+
+## Closure evidence
+
+- fast gate: 96 tests passed
+- Mobile API suite: 48 tests passed
+- complete Django suite: 1,812 tests passed in 292.325 seconds
+- branch coverage including `mobile_api`: 78% against a 75% minimum
+- Ruff, complexity, mypy and Python dependency audit: passed
+- OpenAPI, migrations, repository hygiene and document registry: passed
+
+## Remaining controlled boundary
+
+- `selectors.py` remains a shared 1,128-line read-model boundary because library,
+  comparison and calendarization projections intentionally compose common cards
+  and nutrition summaries. Its exact no-growth budget remains active; a future
+  extraction should begin only when those projections acquire independent owners.
+- PostgreSQL CI and physical iOS/staging checks remain external gates and were not
+  simulated by this repository-only refactor.

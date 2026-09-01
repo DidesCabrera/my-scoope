@@ -117,6 +117,12 @@ When a plan becomes real, durable outcomes should be promoted into `docs/00_curr
 
 ## Recently closed baselines
 
+- Mobile API Domain Decomposition MADD00-MADD07: all product routes, schemas and
+  endpoint behavior tests now have vertical domain homes while `/api/v1/` and its
+  generated OpenAPI remain unchanged. `api.py` fell from 1,544 to 69 lines,
+  `schemas.py` from 1,249 to 207 and `test_api_v1.py` from 2,055 to 87; 1,812
+  Django tests pass with 78% branch coverage. `selectors.py` remains an explicit,
+  budgeted shared read-model boundary rather than being split without ownership gain.
 - Code Quality Consolidation CQC00-CQC08: `staging` now triggers the complete
   workflow, 1,809 Django tests produce 78% branch coverage including `mobile_api`,
   46 mobile tests include behavioral comparator state coverage, and dependency,
