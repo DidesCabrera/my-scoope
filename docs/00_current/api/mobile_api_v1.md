@@ -58,6 +58,11 @@ preview/commit flows. Their data contracts live in `schema_domains/libraries.py`
 and `schema_domains/composition.py`, with the complete behavior journey in
 `tests/test_libraries_api.py`. Shared projection functions intentionally remain
 in `selectors.py` because they form one read-model boundary across library kinds.
+Identity uses `routes/identity.py` for session, profile, onboarding and account
+lifecycle; billing uses `routes/billing.py` for entitlements and provider
+evidence. Their schemas and tests follow the same names. This separation is
+intentional: transport remains easy to find without collapsing OAuth, account
+and commercial business authority into one module.
 
 When extracting another domain:
 
@@ -69,8 +74,8 @@ When extracting another domain:
 6. lower the facade budgets and add exact budgets for the extracted modules;
 7. require `export_mobile_openapi --check` and focused domain tests before the full suite.
 
-The remaining extraction order is Account/Billing and Assistant. It follows
-cohesion and dependency depth: domains
+The remaining extraction domain is Assistant. The order follows cohesion and
+dependency depth: domains
 with existing application services move before the composition-heavy library surface.
 
 ## Authentication

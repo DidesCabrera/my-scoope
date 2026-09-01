@@ -5,6 +5,15 @@ from typing import Any, Literal
 
 from ninja import Field, Schema
 
+from mobile_api.schema_domains.billing import (  # noqa: F401 -- compatibility re-exports
+    AppleSubscriptionProductData,
+    AppleTransactionInput,
+    EntitlementsData,
+    EntitlementsEnvelope,
+    SubscriptionData,
+    SubscriptionEnvelope,
+    SubscriptionEvidenceData,
+)
 from mobile_api.schema_domains.calendarization import (  # noqa: F401 -- compatibility re-exports
     ActiveProgramData,
     ActiveProgramDay,
@@ -87,6 +96,19 @@ from mobile_api.schema_domains.composition import (  # noqa: F401 -- compatibili
     PickerPreviewEnvelope,
     PickerSelectionData,
 )
+from mobile_api.schema_domains.identity import (  # noqa: F401 -- compatibility re-exports
+    AccountDeletionData,
+    AccountDeletionEnvelope,
+    AccountDeletionInput,
+    DisclosureAcceptanceInput,
+    OnboardingInput,
+    ProfileData,
+    ProfileEnvelope,
+    RevokeSessionData,
+    RevokeSessionEnvelope,
+    SessionData,
+    SessionEnvelope,
+)
 from mobile_api.schema_domains.libraries import (  # noqa: F401 -- compatibility re-exports
     FoodCreateInput,
     FoodItem,
@@ -158,126 +180,6 @@ class HealthData(Schema):
 class HealthEnvelope(Schema):
     ok: Literal[True] = True
     data: HealthData
-    error: None = None
-
-
-class SessionData(Schema):
-    user_id: int
-    username: str
-    email: str
-    display_name: str
-    scopes: list[str]
-    device_session_id: str | None = None
-
-
-class SessionEnvelope(Schema):
-    ok: Literal[True] = True
-    data: SessionData
-    error: None = None
-
-
-class ProfileData(Schema):
-    birth_date: date | None = None
-    sex: str
-    height_cm: int | None = None
-    timezone_name: str
-    onboarding_completed: bool
-    onboarding_version: int
-    current_weight_kg: float | None = None
-    review_disclosure_required: bool
-    review_disclosure_version: str
-
-
-class ProfileEnvelope(Schema):
-    ok: Literal[True] = True
-    data: ProfileData
-    error: None = None
-
-
-class DisclosureAcceptanceInput(Schema):
-    accepted: Literal[True]
-
-
-class EntitlementsData(Schema):
-    plan_name: str
-    plan_slug: str
-    subscription_status: str
-    period: str
-    available_credits: int
-    reserved_credits: int
-    monthly_credit_limit: int
-    daily_credit_limit: int
-
-
-class EntitlementsEnvelope(Schema):
-    ok: Literal[True] = True
-    data: EntitlementsData
-    error: None = None
-
-
-class AppleSubscriptionProductData(Schema):
-    product_id: str
-    plan_name: str
-    interval: str
-
-
-class SubscriptionEvidenceData(Schema):
-    provider: str
-    status: str
-    period_end: datetime | None = None
-
-
-class SubscriptionData(Schema):
-    eligible: bool
-    purchases_enabled: bool
-    app_account_token: str
-    plan_name: str
-    status: str
-    products: list[AppleSubscriptionProductData]
-    evidence: list[SubscriptionEvidenceData]
-    duplicate_active_providers: bool
-
-
-class SubscriptionEnvelope(Schema):
-    ok: Literal[True] = True
-    data: SubscriptionData
-    error: None = None
-
-
-class AppleTransactionInput(Schema):
-    signed_transaction: str = Field(min_length=20, max_length=20000)
-
-
-class OnboardingInput(Schema):
-    birth_date: date
-    sex: str
-    height_cm: int = Field(ge=80, le=250)
-    weight_kg: float = Field(ge=25, le=350)
-
-
-class AccountDeletionInput(Schema):
-    confirmation: str
-    password: str = ""
-
-
-class AccountDeletionData(Schema):
-    receipt_id: str
-
-
-class AccountDeletionEnvelope(Schema):
-    ok: Literal[True] = True
-    data: AccountDeletionData
-    error: None = None
-
-
-class RevokeSessionData(Schema):
-    revoked: bool
-    device_session_id: str
-
-
-class RevokeSessionEnvelope(Schema):
-    ok: Literal[True] = True
-    data: RevokeSessionData
     error: None = None
 
 

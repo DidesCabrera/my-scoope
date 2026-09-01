@@ -1,15 +1,10 @@
 from datetime import timedelta
-from types import SimpleNamespace
-from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.test import Client, override_settings
 from django.utils import timezone
 
-from accounts.models import AccountDeletionRecord
 from ai_assistant.models import AIAsyncJob, AIPreparedAction
-from billing.application.contracts import AppleTransactionEvidence
-from billing.models import AppleAppAccountToken, BillingProduct, PaymentProvider, ProviderSubscription
 from mobile_api.tests.base import AuthenticatedMobileAPITestCase
 from notas.application.ai_tools.prepared_actions import prepare_product_action
 from notas.application.services.mcp_user_tokens import create_mcp_user_token
@@ -21,7 +16,6 @@ from notas.domain.models import (
     AiNutritionChat,
     Meal,
     SavedComparison,
-    WeightLog,
 )
 
 
@@ -107,117 +101,6 @@ class MobileAPIV1Tests(AuthenticatedMobileAPITestCase):
             "/api/v1/library/programs",
         ):
             self.assertIn("post", schema["paths"][path])
-
-    def test_protected_endpoint_uses_stable_error_envelope(self):
-        response = Client().get("/api/v1/session")
-
-        self.assertEqual(response.status_code, 401)
-        self.assertFalse(response.json()["ok"])
-        self.assertEqual(response.json()["error"]["code"], "mobile_auth_required")
-
-    def test_session_profile_and_entitlements_use_existing_authorities(self):
-        session = self.client.get("/api/v1/session")
-        profile = self.client.get("/api/v1/me")
-        entitlements = self.client.get("/api/v1/entitlements")
-
-        self.assertEqual(session.status_code, 200)
-        self.assertEqual(session.json()["data"]["device_session_id"], str(self.device_session.public_id))
-        self.assertEqual(profile.status_code, 200)
-        self.assertFalse(profile.json()["data"]["onboarding_completed"])
-        self.assertTrue(profile.json()["data"]["review_disclosure_required"])
-        self.assertEqual(entitlements.status_code, 200)
-        self.assertEqual(entitlements.json()["data"]["plan_slug"], "basic")
-
-    def test_subscription_overview_is_consumer_only_and_uses_configured_apple_products(self):
-        plan = self.user.account_subscription.plan
-        product = BillingProduct.objects.create(
-            provider=PaymentProvider.APPLE_APP_STORE,
-            external_product_id="com.myscoope.basic.monthly",
-            account_plan=plan,
-            amount_minor=0,
-        )
-
-        with override_settings(BILLING_APPLE_PURCHASES_ENABLED=True):
-            response = self.client.get("/api/v1/subscriptions")
-
-        self.assertEqual(response.status_code, 200)
-        data = response.json()["data"]
-        self.assertTrue(data["eligible"])
-        self.assertTrue(data["purchases_enabled"])
-        self.assertEqual(
-            data["products"],
-            [
-                {
-                    "product_id": product.external_product_id,
-                    "plan_name": plan.name,
-                    "interval": "month",
-                }
-            ],
-        )
-        self.assertNotIn("price", data["products"][0])
-        self.assertTrue(AppleAppAccountToken.objects.filter(user=self.user).exists())
-
-    @override_settings(BILLING_APPLE_PURCHASES_ENABLED=True)
-    def test_apple_transaction_is_verified_server_side_before_projection(self):
-        plan = self.user.account_subscription.plan
-        product = BillingProduct.objects.create(
-            provider=PaymentProvider.APPLE_APP_STORE,
-            external_product_id="com.myscoope.basic.yearly",
-            account_plan=plan,
-            amount_minor=0,
-            interval=BillingProduct.Interval.YEAR,
-        )
-        token = AppleAppAccountToken.objects.create(user=self.user)
-        evidence = AppleTransactionEvidence(
-            original_transaction_id="api-original",
-            transaction_id="api-transaction",
-            product_id=product.external_product_id,
-            app_account_token=str(token.token),
-            expires_date=int((timezone.now() + timedelta(days=365)).timestamp() * 1000),
-            ownership_type="PURCHASED",
-        )
-        gateway = SimpleNamespace(verify_transaction=lambda value: evidence)
-
-        with patch("mobile_api.api.build_apple_app_store_gateway", return_value=gateway):
-            response = self.client.post(
-                "/api/v1/subscriptions/apple/transactions",
-                data={"signed_transaction": "header.payload.signature"},
-                content_type="application/json",
-            )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(
-            ProviderSubscription.objects.filter(
-                user=self.user,
-                provider=PaymentProvider.APPLE_APP_STORE,
-                status=ProviderSubscription.Status.AUTHORIZED,
-            ).exists()
-        )
-
-    def test_onboarding_and_weight_endpoints_reuse_product_services(self):
-        onboarding = self.client.post(
-            "/api/v1/onboarding",
-            data={
-                "birth_date": "1990-05-10",
-                "sex": "male",
-                "height_cm": 188,
-                "weight_kg": 84.5,
-            },
-            content_type="application/json",
-        )
-        weight = self.client.post(
-            "/api/v1/weights",
-            data={"weight_kg": 83.8, "measured_on": "2026-08-04"},
-            content_type="application/json",
-        )
-        history = self.client.get("/api/v1/weights")
-
-        self.assertEqual(onboarding.status_code, 200)
-        self.assertTrue(onboarding.json()["data"]["onboarding_completed"])
-        self.assertEqual(weight.status_code, 200)
-        self.assertEqual(weight.json()["data"]["weight_kg"], 83.8)
-        self.assertEqual(history.status_code, 200)
-        self.assertEqual(history.json()["data"]["count"], 2)
 
     @override_settings(AI_ASSISTANT_ASYNC_ENABLED=True)
     def test_ai_turn_uses_existing_durable_submit_and_poll_contract(self):
@@ -425,33 +308,3 @@ class MobileAPIV1Tests(AuthenticatedMobileAPITestCase):
         )
         self.assertEqual(denied.status_code, 422)
         self.assertEqual(denied.json()["error"]["code"], "saved_comparison_not_found")
-
-    def test_account_deletion_is_available_through_the_mobile_contract(self):
-        response = self.client.post(
-            "/api/v1/account/delete",
-            data={"confirmation": "ELIMINAR", "password": "mobile-pass-123"},
-            content_type="application/json",
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.json()["data"]["receipt_id"])
-        self.user.refresh_from_db()
-        self.assertFalse(self.user.is_active)
-        self.assertEqual(AccountDeletionRecord.objects.count(), 1)
-        self.assertFalse(WeightLog.objects.filter(user=self.user).exists())
-
-    def test_mobile_disclosure_acceptance_is_versioned_and_persisted(self):
-        response = self.client.post(
-            "/api/v1/account/disclosures",
-            data={"accepted": True},
-            content_type="application/json",
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(response.json()["data"]["review_disclosure_required"])
-        self.user.profile.refresh_from_db()
-        self.assertEqual(
-            self.user.profile.mobile_disclosure_version,
-            self.user.profile.MOBILE_DISCLOSURE_VERSION,
-        )
-        self.assertIsNotNone(self.user.profile.mobile_disclosure_accepted_at)

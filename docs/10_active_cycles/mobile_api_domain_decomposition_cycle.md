@@ -71,10 +71,15 @@ authorization or product behavior.
   457; selector extraction is deferred because its projection helpers remain a
   cohesive read boundary shared by these routes.
 
-### MADD04 — Identity, account and billing — planned
+### MADD04 — Identity, account and billing — completed
 
-- Group session/profile/onboarding/disclosures/deletion and subscription evidence.
-- Preserve independent account, billing and OAuth authorities.
+- Put session/profile/onboarding/disclosures/deletion in `routes/identity.py` and
+  entitlements/subscription evidence in `routes/billing.py`.
+- Preserve independent account, billing and OAuth authorities and move their
+  schemas and seven behavior tests to matching domain modules.
+- Keep the cross-domain onboarding/weight and profile/entitlements assertions as
+  explicit integration contracts rather than duplicating them.
+- Reduce `api.py` to 447 lines, `schemas.py` to 354 and the legacy suite to 310.
 
 ### MADD05 — Assistant — planned
 

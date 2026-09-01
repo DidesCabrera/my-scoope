@@ -57,9 +57,11 @@ from mobile_api.composition import (
 )
 from mobile_api.errors import MobileAPIError, error_envelope
 from mobile_api.library_actions import bulk_delete_library, perform_library_action, reorder_library
+from mobile_api.routes.billing import router as billing_router
 from mobile_api.routes.calendarization import router as calendarization_router
 from mobile_api.routes.comparisons import router as comparisons_router
 from mobile_api.routes.composition import router as composition_router
+from mobile_api.routes.identity import router as identity_router
 from mobile_api.routes.libraries import router as libraries_router
 from mobile_api.routes.proposals import router as proposals_router
 from mobile_api.schemas import (
@@ -225,124 +227,8 @@ def health(request):
     return _success({"status": "ok", "api_version": "v1"})
 
 
-@api.get("/session", auth=mobile_bearer, response={200: SessionEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope})
-def session(request):
-    return _success(session_payload(request.auth))
-
-
-@api.delete(
-    "/sessions/{device_session_id}",
-    auth=mobile_bearer,
-    response={200: RevokeSessionEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope},
-)
-def revoke_session(request, device_session_id: str):
-    _require_scope(request.auth, MOBILE_SCOPE_ACCOUNT)
-    revoked = revoke_oauth_device_session(user=request.auth.user, public_id=device_session_id)
-    if not revoked:
-        raise MobileAPIError(
-            code="device_session_not_found",
-            message="Device session was not found.",
-            status_code=404,
-        )
-    return _success({"revoked": True, "device_session_id": device_session_id})
-
-
-@api.get("/me", auth=mobile_bearer, response={200: ProfileEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope})
-def me(request):
-    return _success(profile_payload(request.auth.user))
-
-
-@api.post(
-    "/onboarding",
-    auth=mobile_bearer,
-    response={200: ProfileEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope},
-)
-def onboarding(request, payload: OnboardingInput):
-    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    form = NutritionOnboardingForm(
-        {
-            "birth_date": payload.birth_date.isoformat(),
-            "sex": payload.sex,
-            "height_cm": payload.height_cm,
-            "weight_kg": payload.weight_kg,
-        }
-    )
-    if not form.is_valid():
-        raise _form_error(form, code="onboarding_invalid", message="Onboarding data is invalid.")
-    complete_nutrition_onboarding(
-        user=request.auth.user,
-        birth_date=form.cleaned_data["birth_date"],
-        sex=form.cleaned_data["sex"],
-        height_cm=form.cleaned_data["height_cm"],
-        weight_kg=form.cleaned_data["weight_kg"],
-    )
-    return _success(profile_payload(request.auth.user))
-
-
-@api.get(
-    "/entitlements",
-    auth=mobile_bearer,
-    response={200: EntitlementsEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope},
-)
-def entitlements(request):
-    return _success(entitlements_payload(request.auth.user))
-
-
-@api.get(
-    "/subscriptions",
-    auth=mobile_bearer,
-    response={200: SubscriptionEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope},
-)
-def subscriptions(request):
-    return _success(
-        subscription_payload(
-            request.auth.user,
-            purchases_enabled=settings.BILLING_APPLE_PURCHASES_ENABLED,
-        )
-    )
-
-
-@api.post(
-    "/subscriptions/apple/transactions",
-    auth=mobile_bearer,
-    response={
-        200: SubscriptionEnvelope,
-        403: ErrorEnvelope,
-        409: ErrorEnvelope,
-        422: ErrorEnvelope,
-        503: ErrorEnvelope,
-    },
-)
-def apple_transaction(request, payload: AppleTransactionInput):
-    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    if not settings.BILLING_APPLE_PURCHASES_ENABLED:
-        raise MobileAPIError(
-            code="apple_purchases_disabled",
-            message="Apple purchases are not enabled.",
-            status_code=403,
-        )
-    try:
-        evidence = build_apple_app_store_gateway().verify_transaction(payload.signed_transaction)
-        sync_apple_transaction(evidence, expected_user=request.auth.user, source="mobile_storekit")
-    except InvalidAppleSignedData as exc:
-        raise MobileAPIError(
-            code="apple_transaction_invalid",
-            message="The StoreKit transaction could not be verified.",
-            status_code=422,
-        ) from exc
-    except AppleEvidenceError as exc:
-        raise MobileAPIError(
-            code="apple_transaction_mismatch",
-            message="The StoreKit transaction does not match this account or product.",
-            status_code=409,
-        ) from exc
-    except AppleAppStoreConfigurationError as exc:
-        raise MobileAPIError(
-            code="apple_billing_unavailable",
-            message="Apple purchase verification is temporarily unavailable.",
-            status_code=503,
-        ) from exc
-    return _success(subscription_payload(request.auth.user, purchases_enabled=True))
+api.add_router("", identity_router)
+api.add_router("", billing_router)
 
 
 api.add_router("", calendarization_router)
@@ -352,38 +238,6 @@ api.add_router("", proposals_router)
 
 
 api.add_router("", comparisons_router)
-
-
-@api.post(
-    "/account/delete",
-    auth=mobile_bearer,
-    response={200: AccountDeletionEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope},
-)
-def delete_account(request, payload: AccountDeletionInput):
-    _require_scope(request.auth, MOBILE_SCOPE_ACCOUNT)
-    form = AccountDeletionForm(
-        {"confirmation": payload.confirmation, "password": payload.password},
-        user=request.auth.user,
-    )
-    if not form.is_valid():
-        raise _form_error(
-            form,
-            code="account_deletion_confirmation_invalid",
-            message="Account deletion could not be confirmed.",
-        )
-    result = delete_user_account(user=request.auth.user, source="self_service_mobile_api")
-    return _success({"receipt_id": str(result.receipt_id)})
-
-
-@api.post(
-    "/account/disclosures",
-    auth=mobile_bearer,
-    response={200: ProfileEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope},
-)
-def accept_disclosures(request, payload: DisclosureAcceptanceInput):
-    _require_scope(request.auth, MOBILE_SCOPE_ACCOUNT)
-    accept_current_mobile_disclosure(user=request.auth.user)
-    return _success(profile_payload(request.auth.user))
 
 
 api.add_router("", libraries_router)
