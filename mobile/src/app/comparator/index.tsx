@@ -12,10 +12,14 @@ import type {
   SavedComparisonDetail,
   SavedComparisonListData,
   SavedComparisonSummary,
-  SelectedComparisonOption,
 } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { ComparisonResultCards } from "@/components/comparisons/comparison-result";
+import {
+  applyComparatorSelection,
+  initialComparisonSlots,
+  type ComparisonSlot,
+} from "@/components/comparisons/comparison-state";
 import { useComparatorSelectionTransfer } from "@/components/comparisons/comparator-selection-context";
 import { libraryNutrition } from "@/components/libraries/presentation-adapters";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
@@ -24,12 +28,6 @@ import { EntityCard, SectionPageHeader } from "@/components/ui";
 import { EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
 import { Button, Card, Field, LoadingState, Pill, Screen, textStyles } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
-
-type ComparisonSlot = {
-  key: number;
-  option: SelectedComparisonOption | null;
-  quantity: string;
-};
 
 const fallbackKinds = [
   { value: "foods" as const, icon: Carrot, label: "Alimentos" },
@@ -42,13 +40,6 @@ const comparisonEntities = {
   meals: "meal",
   dailyplans: "dailyPlan",
 } as const satisfies Record<ComparisonKind, "food" | "meal" | "dailyPlan">;
-
-function emptySlots(): ComparisonSlot[] {
-  return [
-    { key: 1, option: null, quantity: "100" },
-    { key: 2, option: null, quantity: "100" },
-  ];
-}
 
 function creationHref(kind: ComparisonKind): Href {
   return { pathname: "/comparator", params: { create: "1", kind } } as Href;
@@ -148,7 +139,7 @@ function ComparatorBuilderScreen() {
   const nextSlotKey = useRef(3);
   const [metadata, setMetadata] = useState<ComparisonMetadata | null>(null);
   const [kind, setKind] = useState<ComparisonKind>(params.kind === "meals" || params.kind === "dailyplans" ? params.kind : "foods");
-  const [slots, setSlots] = useState<ComparisonSlot[]>(emptySlots);
+  const [slots, setSlots] = useState<ComparisonSlot[]>(initialComparisonSlots);
   const [result, setResult] = useState<ComparisonResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState(false);
@@ -164,7 +155,7 @@ function ComparatorBuilderScreen() {
   useFocusEffect(useCallback(() => {
     const selection = consumeSelection();
     if (!selection || selection.kind !== kind) return;
-    setSlots((current) => current.map((slot) => slot.key === selection.slotKey ? { ...slot, option: selection.option } : slot));
+    setSlots((current) => applyComparatorSelection(current, selection));
     setResult(null);
     setError(null);
   }, [consumeSelection, kind]));
@@ -189,7 +180,7 @@ function ComparatorBuilderScreen() {
             },
             quantity: String(selection.quantity ?? 100),
           }));
-          setSlots(restored.length >= 2 ? restored : emptySlots());
+          setSlots(restored.length >= 2 ? restored : initialComparisonSlots());
           nextSlotKey.current = Math.max(restored.length + 1, 3);
         }
       })
@@ -209,7 +200,7 @@ function ComparatorBuilderScreen() {
 
   function changeKind(nextKind: ComparisonKind) {
     setKind(nextKind);
-    setSlots(emptySlots());
+    setSlots(initialComparisonSlots());
     nextSlotKey.current = 3;
     invalidateResult();
   }

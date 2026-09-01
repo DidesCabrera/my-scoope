@@ -1,0 +1,8 @@
+{
+  "mobile_api/api.py": {"max_lines": 1544},
+  "mobile_api/schemas.py": {"max_lines": 1249},
+  "mobile_api/selectors.py": {"max_lines": 1128},
+  "mobile_api/tests/test_api_v1.py": {"max_lines": 2055},
+  "mobile/src/api/types.ts": {"max_lines": 848},
+  "mobile/src/app/dev/ui-gallery.tsx": {"max_lines": 802}
+}

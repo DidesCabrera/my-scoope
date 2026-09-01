@@ -4,14 +4,14 @@ from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
 from django.contrib.auth.models import User
-from django.test import Client, TestCase, override_settings
+from django.test import Client, override_settings
 from django.utils import timezone
 
 from accounts.models import AccountDeletionRecord
-from accounts.seed_plans import seed_account_plans
 from ai_assistant.models import AIAsyncJob, AIPreparedAction
 from billing.application.contracts import AppleTransactionEvidence
 from billing.models import AppleAppAccountToken, BillingProduct, PaymentProvider, ProviderSubscription
+from mobile_api.tests.base import AuthenticatedMobileAPITestCase
 from notas.application.ai_tools.prepared_actions import prepare_product_action
 from notas.application.services.calendarization.snapshots import SNAPSHOT_SCHEMA_VERSION
 from notas.application.services.commands.calendarization_execution_commands import prepare_calendarization_revision
@@ -35,8 +35,6 @@ from notas.domain.models import (
     Meal,
     MealFood,
     NutritionProposal,
-    OAuthClient,
-    OAuthDeviceSession,
     Program,
     ProgramCalendarization,
     ProgramDay,
@@ -46,37 +44,7 @@ from notas.domain.models import (
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
-class MobileAPIV1Tests(TestCase):
-    def setUp(self):
-        seed_account_plans()
-        self.user = User.objects.create_user(
-            username="mobile-api-user",
-            email="mobile@example.com",
-            password="mobile-pass-123",
-            first_name="Felipe",
-        )
-        self.oauth_client = OAuthClient.objects.create(
-            client_id="mobile-api-tests",
-            client_name="Mobile API tests",
-            redirect_uris=["myscoope://oauth/callback"],
-            allowed_scopes=[MOBILE_SCOPE_READ, MOBILE_SCOPE_WRITE, MOBILE_SCOPE_ACCOUNT],
-        )
-        self.device_session = OAuthDeviceSession.objects.create(
-            client=self.oauth_client,
-            user=self.user,
-            device_id_hash="a" * 64,
-            device_name="Test iPhone",
-            platform=OAuthDeviceSession.PLATFORM_IOS,
-        )
-        created = create_mcp_user_token(
-            user=self.user,
-            name="Mobile API test token",
-            scopes=[MOBILE_SCOPE_READ, MOBILE_SCOPE_WRITE, MOBILE_SCOPE_ACCOUNT],
-            expires_at=timezone.now() + timedelta(minutes=15),
-            device_session=self.device_session,
-        )
-        self.raw_token = created.raw_token
-        self.client = Client(HTTP_AUTHORIZATION=f"Bearer {self.raw_token}")
+class MobileAPIV1Tests(AuthenticatedMobileAPITestCase):
 
     def test_health_and_openapi_contract_are_public_and_versioned(self):
         health = Client().get("/api/v1/health")

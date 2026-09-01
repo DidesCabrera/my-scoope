@@ -6,11 +6,11 @@ ROOT = Path(__file__).resolve().parents[3]
 
 
 class CiIntegrationContractTests(SimpleTestCase):
-    def test_proposed_changes_run_once_from_pull_requests(self):
+    def test_proposed_changes_run_from_staging_pushes_and_pull_requests(self):
         workflow = (ROOT / ".github/workflows/django-ci.yml").read_text()
 
         self.assertIn("  pull_request:", workflow)
-        self.assertNotIn("      - staging", workflow)
+        self.assertIn("      - staging", workflow)
         self.assertIn("      - main", workflow)
 
     def test_ci_checks_migration_drift_and_repository_hygiene(self):
@@ -21,6 +21,7 @@ class CiIntegrationContractTests(SimpleTestCase):
         self.assertIn("scripts/ci_django_full_suite.sh", aggregate_script)
         self.assertIn("scripts/check_repository_hygiene.sh", fast_script)
         self.assertIn("scripts/check_frontend_debt.py", fast_script)
+        self.assertIn("scripts/check_backend_debt.py", fast_script)
         self.assertIn("scripts/check_e2e_contract.py", fast_script)
         self.assertIn("manage.py makemigrations --check --dry-run", fast_script)
 
@@ -33,6 +34,18 @@ class CiIntegrationContractTests(SimpleTestCase):
         self.assertIn("mcp:", workflow)
         self.assertIn("browser-smoke:", workflow)
         self.assertIn("scripts/test_mcp.sh", workflow)
+
+    def test_complete_django_gate_measures_coverage_and_mobile_audits_dependencies(self):
+        workflow = (ROOT / ".github/workflows/django-ci.yml").read_text()
+        coverage_script = (ROOT / "scripts/coverage_django.sh").read_text()
+        mobile_script = (ROOT / "scripts/ci_mobile_checks.sh").read_text()
+        configuration = (ROOT / "pyproject.toml").read_text()
+
+        self.assertIn("scripts/coverage_django.sh", workflow)
+        self.assertIn('"mobile_api"', configuration)
+        self.assertIn("fail_under = 75", configuration)
+        self.assertIn("MYSCOOPE_COVERAGE_MINIMUM", coverage_script)
+        self.assertIn("scripts/check_dependency_audits.mjs", mobile_script)
 
     def test_postgres_gate_uses_a_real_postgres_service_and_full_suite(self):
         workflow = (ROOT / ".github/workflows/django-ci.yml").read_text()

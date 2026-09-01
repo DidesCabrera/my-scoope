@@ -18,4 +18,4 @@ export RATE_LIMIT_AI_ASSISTANT_TURN_USER="${RATE_LIMIT_AI_ASSISTANT_TURN_USER:-1
 export RATE_LIMIT_AI_ASSISTANT_TURN_IP="${RATE_LIMIT_AI_ASSISTANT_TURN_IP:-10000/h}"
 
 "${PYTHON_BIN}" -m coverage run manage.py test "$@"
-"${PYTHON_BIN}" -m coverage report
+"${PYTHON_BIN}" -m coverage report --fail-under="${MYSCOOPE_COVERAGE_MINIMUM:-75}"
