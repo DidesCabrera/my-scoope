@@ -15,6 +15,7 @@ files = [
   "mobile_api/api_support.py",
   "mobile_api/architecture.py",
   "mobile_api/errors.py",
+  "mobile_api/schema_domains/comparisons.py",
 ]
 check_untyped_defs = true
 disallow_untyped_defs = true

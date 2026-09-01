@@ -21,23 +21,23 @@ from core.rate_limits import is_ai_assistant_turn_rate_limited
 from mobile_api.ai_chats import chat_detail_payload, chat_list_payload, completed_turn_payload, pending_turn_job
 from mobile_api.api_support import (
     calendarization_error as _calendarization_error,
-    comparison_error as _comparison_error,
+)
+from mobile_api.api_support import (
     food_label_error as _food_label_error,
+)
+from mobile_api.api_support import (
     form_error as _form_error,
+)
+from mobile_api.api_support import (
     proposal_error as _proposal_error,
+)
+from mobile_api.api_support import (
     require_scope as _require_scope,
+)
+from mobile_api.api_support import (
     success as _success,
 )
 from mobile_api.auth import mobile_bearer
-from mobile_api.comparisons import (
-    comparison_metadata_payload,
-    comparison_options_payload,
-    dynamic_comparison_payload,
-    save_comparison,
-    saved_comparison_detail_payload,
-    saved_comparison_list_payload,
-    update_comparison,
-)
 from mobile_api.composition import (
     add_dailyplan_from_picker,
     add_food_from_picker,
@@ -60,6 +60,7 @@ from mobile_api.composition import (
 )
 from mobile_api.errors import MobileAPIError, error_envelope
 from mobile_api.library_actions import bulk_delete_library, perform_library_action, reorder_library
+from mobile_api.routes.comparisons import router as comparisons_router
 from mobile_api.schemas import (
     AccountDeletionEnvelope,
     AccountDeletionInput,
@@ -80,19 +81,15 @@ from mobile_api.schemas import (
     CalendarizationReviewInput,
     CalendarizationReviewListEnvelope,
     CalendarizedDayDetailEnvelope,
-    ComparisonMetadataEnvelope,
-    ComparisonOptionsEnvelope,
-    ComparisonRequestInput,
-    ComparisonResultEnvelope,
     CompositionMutationEnvelope,
     CompositionOrderInput,
-    DailyPlanPickerInput,
     DailyPlanMealUpdateInput,
+    DailyPlanPickerInput,
     DisclosureAcceptanceInput,
     EntitlementsEnvelope,
     ErrorEnvelope,
-    FoodItemEnvelope,
     FoodCreateInput,
+    FoodItemEnvelope,
     FoodLabelCaptureEnvelope,
     FoodLabelCaptureInput,
     FoodPageEnvelope,
@@ -122,8 +119,6 @@ from mobile_api.schemas import (
     RevisionEnvelope,
     RevisionListEnvelope,
     RevokeSessionEnvelope,
-    SavedComparisonDetailEnvelope,
-    SavedComparisonListEnvelope,
     SessionEnvelope,
     SubscriptionEnvelope,
     TodayEnvelope,
@@ -584,123 +579,7 @@ def apply_mobile_proposal(request, proposal_id: int, payload: ProposalApplyInput
     return _success(proposal_detail_payload(request.auth.user, proposal_id))
 
 
-@api.get(
-    "/comparisons/metadata",
-    auth=mobile_bearer,
-    response={200: ComparisonMetadataEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope},
-)
-def comparison_metadata(request):
-    return _success(comparison_metadata_payload())
-
-
-@api.get(
-    "/comparisons/options/{kind}",
-    auth=mobile_bearer,
-    response={200: ComparisonOptionsEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope},
-)
-def comparison_options(request, kind: str, search: str | None = None, offset: int = 0, limit: int = 30):
-    try:
-        payload = comparison_options_payload(
-            request.auth.user,
-            kind=kind,
-            search=search,
-            offset=offset,
-            limit=limit,
-        )
-    except ValueError as exc:
-        raise _comparison_error(exc) from exc
-    return _success(payload)
-
-
-def _comparison_selections(payload: ComparisonRequestInput) -> list[dict]:
-    return [
-        {"id": selection.id, "quantity": selection.quantity}
-        for selection in payload.selections
-    ]
-
-
-@api.post(
-    "/comparisons/compare",
-    auth=mobile_bearer,
-    response={200: ComparisonResultEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
-)
-def compare_entities(request, payload: ComparisonRequestInput):
-    try:
-        result = dynamic_comparison_payload(
-            request.auth.user,
-            kind=payload.kind,
-            selections=_comparison_selections(payload),
-        )
-    except ValueError as exc:
-        raise _comparison_error(exc) from exc
-    return _success(result)
-
-
-@api.get(
-    "/comparisons/saved",
-    auth=mobile_bearer,
-    response={200: SavedComparisonListEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope},
-)
-def saved_comparisons(request, kind: str | None = None, offset: int = 0, limit: int = 30):
-    try:
-        payload = saved_comparison_list_payload(
-            request.auth.user,
-            kind=kind,
-            offset=offset,
-            limit=limit,
-        )
-    except ValueError as exc:
-        raise _comparison_error(exc) from exc
-    return _success(payload)
-
-
-@api.post(
-    "/comparisons/saved",
-    auth=mobile_bearer,
-    response={200: SavedComparisonDetailEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
-)
-def create_mobile_saved_comparison(request, payload: ComparisonRequestInput):
-    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    try:
-        comparison = save_comparison(
-            request.auth.user,
-            kind=payload.kind,
-            selections=_comparison_selections(payload),
-        )
-    except ValueError as exc:
-        raise _comparison_error(exc) from exc
-    return _success(saved_comparison_detail_payload(request.auth.user, comparison.id))
-
-
-@api.get(
-    "/comparisons/saved/{comparison_id}",
-    auth=mobile_bearer,
-    response={200: SavedComparisonDetailEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope},
-)
-def saved_comparison_detail(request, comparison_id: int):
-    payload = saved_comparison_detail_payload(request.auth.user, comparison_id)
-    if payload is None:
-        raise _comparison_error(ValueError("saved_comparison_not_found"))
-    return _success(payload)
-
-
-@api.put(
-    "/comparisons/saved/{comparison_id}",
-    auth=mobile_bearer,
-    response={200: SavedComparisonDetailEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
-)
-def update_mobile_saved_comparison(request, comparison_id: int, payload: ComparisonRequestInput):
-    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    try:
-        comparison = update_comparison(
-            request.auth.user,
-            comparison_id=comparison_id,
-            kind=payload.kind,
-            selections=_comparison_selections(payload),
-        )
-    except ValueError as exc:
-        raise _comparison_error(exc) from exc
-    return _success(saved_comparison_detail_payload(request.auth.user, comparison.id))
+api.add_router("", comparisons_router)
 
 
 @api.get("/today", auth=mobile_bearer, response={200: TodayEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope})
