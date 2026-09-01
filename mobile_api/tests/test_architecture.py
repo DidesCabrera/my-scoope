@@ -50,15 +50,23 @@ class MobileAPIArchitectureTests(SimpleTestCase):
 
         self.assertIn('api.add_router("", calendarization_router)', api_source)
         self.assertIn('api.add_router("", comparisons_router)', api_source)
+        self.assertIn('api.add_router("", composition_router)', api_source)
+        self.assertIn('api.add_router("", libraries_router)', api_source)
         self.assertIn('api.add_router("", proposals_router)', api_source)
         self.assertNotIn("def active_program", api_source)
         self.assertNotIn("def comparison_metadata", api_source)
+        self.assertNotIn("def library_item_detail", api_source)
+        self.assertNotIn("def meal_food_picker_commit", api_source)
         self.assertNotIn("def proposal_detail", api_source)
         self.assertIn("from mobile_api.schema_domains.calendarization import", schema_source)
         self.assertIn("from mobile_api.schema_domains.comparisons import", schema_source)
+        self.assertIn("from mobile_api.schema_domains.composition import", schema_source)
+        self.assertIn("from mobile_api.schema_domains.libraries import", schema_source)
         self.assertIn("from mobile_api.schema_domains.proposals import", schema_source)
         self.assertNotIn("class TodayData", schema_source)
         self.assertNotIn("class ComparisonResultData", schema_source)
+        self.assertNotIn("class LibraryItemData", schema_source)
+        self.assertNotIn("class PickerPreviewData", schema_source)
         self.assertNotIn("class ProposalDetailData", schema_source)
 
     def test_extracted_routes_pin_their_public_operation_ids(self):

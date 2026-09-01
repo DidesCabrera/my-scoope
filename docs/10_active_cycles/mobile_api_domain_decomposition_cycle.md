@@ -59,10 +59,17 @@ authorization or product behavior.
 - Reduce `api.py` to 1,116 lines, `schemas.py` to 792 and the legacy test suite
   to 1,240 while adding exact per-module debt budgets.
 
-### MADD03 — Libraries and composition — planned
+### MADD03 — Libraries and composition — completed
 
-- Separate collection/detail routes from composition mutations and picker preview/commit flows.
-- Extract library projection helpers from the selector facade by cohesive entity groups.
+- Separate 15 collection/detail/action routes from 18 composition mutations and
+  picker preview/commit flows in two explicit route modules.
+- Move library and composition schemas to independent domains; comparison picker
+  options now import the shared library-card contract instead of keeping it in the facade.
+- Move 13 end-to-end behavior tests to `test_libraries_api.py`, preserving a
+  readable create → compose → mutate → share/delete journey.
+- Reduce `api.py` to 593 lines, `schemas.py` to 452 and the legacy test suite to
+  457; selector extraction is deferred because its projection helpers remain a
+  cohesive read boundary shared by these routes.
 
 ### MADD04 — Identity, account and billing — planned
 

@@ -52,6 +52,12 @@ Calendarization and Today follow it in `routes/calendarization.py`,
 That domain owns the lived-program transport boundary—including activation,
 dated days, execution evidence, reviews, revisions, reminders and measurements—
 while the existing application services remain authoritative for behavior.
+Libraries use `routes/libraries.py` for search, collection/detail, creation and
+item actions; `routes/composition.py` owns relation mutations and picker
+preview/commit flows. Their data contracts live in `schema_domains/libraries.py`
+and `schema_domains/composition.py`, with the complete behavior journey in
+`tests/test_libraries_api.py`. Shared projection functions intentionally remain
+in `selectors.py` because they form one read-model boundary across library kinds.
 
 When extracting another domain:
 
@@ -63,8 +69,8 @@ When extracting another domain:
 6. lower the facade budgets and add exact budgets for the extracted modules;
 7. require `export_mobile_openapi --check` and focused domain tests before the full suite.
 
-The remaining extraction order is Libraries/Composition, Account/Billing and
-Assistant. It follows cohesion and dependency depth: domains
+The remaining extraction order is Account/Billing and Assistant. It follows
+cohesion and dependency depth: domains
 with existing application services move before the composition-heavy library surface.
 
 ## Authentication

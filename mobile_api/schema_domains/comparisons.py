@@ -5,6 +5,8 @@ from typing import Literal
 
 from ninja import Field, Schema
 
+from mobile_api.schema_domains.libraries import LibraryIndicatorData, LibraryNutritionData, LibraryPanelData
+
 
 class ComparisonKindData(Schema):
     key: Literal["foods", "meals", "dailyplans"]
@@ -33,6 +35,32 @@ class ComparisonSelectionInput(Schema):
 class ComparisonRequestInput(Schema):
     kind: Literal["foods", "meals", "dailyplans"]
     selections: list[ComparisonSelectionInput] = Field(min_length=2)
+
+
+class ComparisonOptionData(Schema):
+    """Visual contract required to render an entity card in a comparison picker."""
+
+    id: int
+    entity: Literal["food", "meal", "dailyPlan"]
+    name: str
+    subtitle: str
+    nutrition: LibraryNutritionData
+    indicators: list[LibraryIndicatorData]
+    panel: LibraryPanelData
+
+
+class ComparisonOptionsData(Schema):
+    items: list[ComparisonOptionData]
+    total: int
+    offset: int
+    limit: int
+    search: str | None = None
+
+
+class ComparisonOptionsEnvelope(Schema):
+    ok: Literal[True] = True
+    data: ComparisonOptionsData
+    error: None = None
 
 
 class ComparisonMetricValuesData(Schema):

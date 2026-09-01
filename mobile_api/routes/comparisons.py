@@ -21,12 +21,13 @@ from mobile_api.comparisons import (
 )
 from mobile_api.schema_domains.comparisons import (
     ComparisonMetadataEnvelope,
+    ComparisonOptionsEnvelope,
     ComparisonRequestInput,
     ComparisonResultEnvelope,
     SavedComparisonDetailEnvelope,
     SavedComparisonListEnvelope,
 )
-from mobile_api.schemas import ComparisonOptionsEnvelope, ErrorEnvelope
+from mobile_api.schemas import ErrorEnvelope
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_WRITE
 
 router = Router(auth=mobile_bearer)
@@ -142,7 +143,13 @@ def saved_comparison_detail(request: Any, comparison_id: int) -> dict[str, Any]:
 
 @router.put(
     "/comparisons/saved/{comparison_id}",
-    response={200: SavedComparisonDetailEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
+    response={
+        200: SavedComparisonDetailEnvelope,
+        403: ErrorEnvelope,
+        404: ErrorEnvelope,
+        409: ErrorEnvelope,
+        422: ErrorEnvelope,
+    },
     operation_id="mobile_api_api_update_mobile_saved_comparison",
 )
 def update_mobile_saved_comparison(
