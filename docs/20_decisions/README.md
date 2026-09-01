@@ -207,5 +207,5 @@ Consequences
   incremental por dominio para rutas, schemas y pruebas del API móvil, usando
   Comparisons como referencia y preservando OpenAPI byte por byte.
 - `0190-mobile-api-domain-decomposition-closure.md`: cierra MADD00-MADD07 con ocho
-  routers, siete dominios de schemas, pruebas verticales y fachadas mínimas,
+  routers, ocho dominios de schemas, pruebas verticales y fachadas mínimas,
   manteniendo `selectors.py` como frontera de lectura compartida y presupuestada.

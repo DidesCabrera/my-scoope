@@ -117,7 +117,7 @@ authorization or product behavior.
 
 - Eight domain routers own all product routes; `api.py` owns only construction,
   shared errors, health and router mounting.
-- Seven schema-domain modules own product contracts; `schemas.py` retains explicit
+- Eight schema-domain modules own product contracts; `schemas.py` retains explicit
   compatibility re-exports plus Error/Health.
 - Six focused endpoint suites own domain behavior; `test_api_v1.py` retains only
   the public health/OpenAPI inventory contract.

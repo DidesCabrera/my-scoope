@@ -38,6 +38,6 @@ must not leak into the contract as accidental refactor effects.
 
 The completed decomposition leaves `api.py` as the API construction/error/health
 composition root and `schemas.py` as a compatibility re-export surface plus the
-platform Error and Health contracts. Eight domain routers and seven schema-domain
+platform Error and Health contracts. Eight domain routers and eight schema-domain
 modules own the product interfaces. `selectors.py` remains deliberately shared as
 the read-model boundary used across calendarization and library projections.
