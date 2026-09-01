@@ -41,10 +41,12 @@ authorization or product behavior.
 - Validate 96 fast tests, quality checks, 1,811 complete Django tests and 77%
   branch coverage against the 75% minimum.
 
-### MADD01 — Proposals — planned
+### MADD01 — Proposals — completed
 
 - Move list/detail/review/apply routes, schemas and endpoint tests.
 - Keep proposal queries and commands as the existing product authority.
+- Preserve six operation IDs and the byte-identical OpenAPI contract.
+- Reduce `api.py` to 1,316 lines, `schemas.py` to 1,061 and the legacy test suite to 1,663.
 
 ### MADD02 — Calendarization and Today — planned
 

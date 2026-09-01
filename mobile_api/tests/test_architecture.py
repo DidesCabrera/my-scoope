@@ -44,14 +44,18 @@ class MobileAPIArchitectureTests(SimpleTestCase):
         self.assertNotIn("def _calendarization_error", source)
         self.assertNotIn("def _proposal_error", source)
 
-    def test_comparisons_are_owned_outside_the_route_and_schema_facades(self):
+    def test_extracted_domains_are_owned_outside_the_route_and_schema_facades(self):
         api_source = (ROOT / "mobile_api/api.py").read_text()
         schema_source = (ROOT / "mobile_api/schemas.py").read_text()
 
         self.assertIn('api.add_router("", comparisons_router)', api_source)
+        self.assertIn('api.add_router("", proposals_router)', api_source)
         self.assertNotIn("def comparison_metadata", api_source)
+        self.assertNotIn("def proposal_detail", api_source)
         self.assertIn("from mobile_api.schema_domains.comparisons import", schema_source)
+        self.assertIn("from mobile_api.schema_domains.proposals import", schema_source)
         self.assertNotIn("class ComparisonResultData", schema_source)
+        self.assertNotIn("class ProposalDetailData", schema_source)
 
     def test_extracted_routes_pin_their_public_operation_ids(self):
         for route_file in (ROOT / "mobile_api/routes").glob("*.py"):

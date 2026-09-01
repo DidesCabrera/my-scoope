@@ -29,9 +29,6 @@ from mobile_api.api_support import (
     form_error as _form_error,
 )
 from mobile_api.api_support import (
-    proposal_error as _proposal_error,
-)
-from mobile_api.api_support import (
     require_scope as _require_scope,
 )
 from mobile_api.api_support import (
@@ -61,6 +58,7 @@ from mobile_api.composition import (
 from mobile_api.errors import MobileAPIError, error_envelope
 from mobile_api.library_actions import bulk_delete_library, perform_library_action, reorder_library
 from mobile_api.routes.comparisons import router as comparisons_router
+from mobile_api.routes.proposals import router as proposals_router
 from mobile_api.schemas import (
     AccountDeletionEnvelope,
     AccountDeletionInput,
@@ -110,9 +108,6 @@ from mobile_api.schemas import (
     PickerCommitEnvelope,
     PickerPreviewEnvelope,
     ProfileEnvelope,
-    ProposalApplyInput,
-    ProposalDetailEnvelope,
-    ProposalListEnvelope,
     ReminderSettingsEnvelope,
     ReminderSettingsInput,
     RevisionDecisionInput,
@@ -138,8 +133,6 @@ from mobile_api.selectors import (
     library_meals_payload,
     library_programs_payload,
     profile_payload,
-    proposal_detail_payload,
-    proposal_list_payload,
     reminder_settings_payload,
     review_payload,
     revision_payload,
@@ -149,20 +142,11 @@ from mobile_api.selectors import (
 )
 from notas.application.ai_intake.async_turns import enqueue_nutrition_intake_turn
 from notas.application.ai_tools.prepared_actions import cancel_prepared_action, commit_prepared_action
-from notas.application.proposals.contracts import (
-    CREATE_DAILYPLAN_INTENT,
-    CREATE_MEAL_INTENT,
-    resolve_proposal_intent,
-)
-from notas.application.proposals.subject_context_warnings import (
-    proposal_requires_external_subject_ack,
-)
 from notas.application.queries.food_picker_queries import (
     build_food_picker_item_dto,
     get_food_picker_queryset,
     list_food_picker_page,
 )
-from notas.application.queries.proposal_queries import get_available_proposal_queryset
 from notas.application.services.access.capabilities import get_capabilities
 from notas.application.services.commands.calendarization_commands import (
     activate_program_calendarization,
@@ -183,13 +167,6 @@ from notas.application.services.commands.dailyplan_commands import create_draft_
 from notas.application.services.commands.food_commands import create_food, create_food_from_label_capture
 from notas.application.services.commands.meal_commands import create_draft_meal
 from notas.application.services.commands.program_commands import create_weekly_program
-from notas.application.services.commands.proposal_commands import (
-    apply_approved_create_dailyplan_proposal,
-    apply_approved_create_meal_proposal,
-    approve_proposal,
-    cancel_proposal,
-    reject_proposal,
-)
 from notas.application.services.notifications.apple_push import apns_is_configured
 from notas.application.services.oauth_device_sessions import (
     MOBILE_SCOPE_ACCOUNT,
@@ -491,92 +468,8 @@ def cancel_active_calendarization(request, calendarization_id: int):
     return _calendarization_state_action(request, calendarization_id, cancel_calendarization)
 
 
-def _owned_proposal(user, proposal_id: int):
-    proposal = get_available_proposal_queryset(user).filter(pk=proposal_id).first()
-    if proposal is None:
-        raise _proposal_error(ValueError("proposal_not_found"))
-    return proposal
+api.add_router("", proposals_router)
 
-
-@api.get(
-    "/proposals",
-    auth=mobile_bearer,
-    response={200: ProposalListEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope},
-)
-def proposals(request, status: str | None = None, offset: int = 0, limit: int = 30):
-    return _success(proposal_list_payload(request.auth.user, status_filter=status, offset=offset, limit=limit))
-
-
-@api.get(
-    "/proposals/{proposal_id}",
-    auth=mobile_bearer,
-    response={200: ProposalDetailEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope},
-)
-def proposal_detail(request, proposal_id: int):
-    payload = proposal_detail_payload(request.auth.user, proposal_id)
-    if payload is None:
-        raise _proposal_error(ValueError("proposal_not_found"))
-    return _success(payload)
-
-
-def _proposal_state_action(request, proposal_id: int, command):
-    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    proposal = _owned_proposal(request.auth.user, proposal_id)
-    try:
-        command(user=request.auth.user, proposal=proposal)
-    except ValueError as exc:
-        raise _proposal_error(exc) from exc
-    return _success(proposal_detail_payload(request.auth.user, proposal_id))
-
-
-@api.post(
-    "/proposals/{proposal_id}/approve",
-    auth=mobile_bearer,
-    response={200: ProposalDetailEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
-)
-def approve_mobile_proposal(request, proposal_id: int):
-    return _proposal_state_action(request, proposal_id, approve_proposal)
-
-
-@api.post(
-    "/proposals/{proposal_id}/reject",
-    auth=mobile_bearer,
-    response={200: ProposalDetailEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
-)
-def reject_mobile_proposal(request, proposal_id: int):
-    return _proposal_state_action(request, proposal_id, reject_proposal)
-
-
-@api.post(
-    "/proposals/{proposal_id}/cancel",
-    auth=mobile_bearer,
-    response={200: ProposalDetailEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
-)
-def cancel_mobile_proposal(request, proposal_id: int):
-    return _proposal_state_action(request, proposal_id, cancel_proposal)
-
-
-@api.post(
-    "/proposals/{proposal_id}/apply",
-    auth=mobile_bearer,
-    response={200: ProposalDetailEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
-)
-def apply_mobile_proposal(request, proposal_id: int, payload: ProposalApplyInput):
-    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    proposal = _owned_proposal(request.auth.user, proposal_id)
-    if proposal_requires_external_subject_ack(proposal) and not payload.acknowledge_external_subject:
-        raise _proposal_error(ValueError("proposal_external_subject_ack_required"))
-    intent = resolve_proposal_intent(proposal.proposed_payload)
-    try:
-        if intent == CREATE_MEAL_INTENT:
-            apply_approved_create_meal_proposal(user=request.auth.user, proposal=proposal)
-        elif intent == CREATE_DAILYPLAN_INTENT:
-            apply_approved_create_dailyplan_proposal(user=request.auth.user, proposal=proposal)
-        else:
-            raise ValueError("proposal_apply_not_supported")
-    except ValueError as exc:
-        raise _proposal_error(exc) from exc
-    return _success(proposal_detail_payload(request.auth.user, proposal_id))
 
 
 api.add_router("", comparisons_router)
