@@ -48,12 +48,16 @@ class MobileAPIArchitectureTests(SimpleTestCase):
         api_source = (ROOT / "mobile_api/api.py").read_text()
         schema_source = (ROOT / "mobile_api/schemas.py").read_text()
 
+        self.assertIn('api.add_router("", calendarization_router)', api_source)
         self.assertIn('api.add_router("", comparisons_router)', api_source)
         self.assertIn('api.add_router("", proposals_router)', api_source)
+        self.assertNotIn("def active_program", api_source)
         self.assertNotIn("def comparison_metadata", api_source)
         self.assertNotIn("def proposal_detail", api_source)
+        self.assertIn("from mobile_api.schema_domains.calendarization import", schema_source)
         self.assertIn("from mobile_api.schema_domains.comparisons import", schema_source)
         self.assertIn("from mobile_api.schema_domains.proposals import", schema_source)
+        self.assertNotIn("class TodayData", schema_source)
         self.assertNotIn("class ComparisonResultData", schema_source)
         self.assertNotIn("class ProposalDetailData", schema_source)
 

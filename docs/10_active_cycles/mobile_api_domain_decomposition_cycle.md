@@ -48,10 +48,16 @@ authorization or product behavior.
 - Preserve six operation IDs and the byte-identical OpenAPI contract.
 - Reduce `api.py` to 1,316 lines, `schemas.py` to 1,061 and the legacy test suite to 1,663.
 
-### MADD02 — Calendarization and Today — planned
+### MADD02 — Calendarization and Today — completed
 
-- Group activation, lifecycle, day detail, Today, reviews, revisions, reminders and weights.
-- Preserve dated-snapshot and append-only evidence contracts.
+- Group activation, lifecycle, day detail, Today, reviews, revisions, reminders,
+  notification registration and weights in one vertical domain.
+- Move 18 routes, 42 schemas and nine behavior tests out of the compatibility
+  facades without duplicating test discovery.
+- Preserve dated-snapshot and append-only evidence contracts, all operation IDs
+  and the byte-identical generated OpenAPI contract.
+- Reduce `api.py` to 1,116 lines, `schemas.py` to 792 and the legacy test suite
+  to 1,240 while adding exact per-module debt budgets.
 
 ### MADD03 — Libraries and composition — planned
 

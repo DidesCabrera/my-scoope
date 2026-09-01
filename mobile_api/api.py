@@ -57,6 +57,7 @@ from mobile_api.composition import (
 )
 from mobile_api.errors import MobileAPIError, error_envelope
 from mobile_api.library_actions import bulk_delete_library, perform_library_action, reorder_library
+from mobile_api.routes.calendarization import router as calendarization_router
 from mobile_api.routes.comparisons import router as comparisons_router
 from mobile_api.routes.proposals import router as proposals_router
 from mobile_api.schemas import (
@@ -342,339 +343,13 @@ def apple_transaction(request, payload: AppleTransactionInput):
     return _success(subscription_payload(request.auth.user, purchases_enabled=True))
 
 
-@api.get(
-    "/program/active",
-    auth=mobile_bearer,
-    response={200: ActiveProgramEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope},
-)
-def active_program(request):
-    return _success(active_program_payload(request.auth.user))
-
-
-@api.post(
-    "/program/calendarizations",
-    auth=mobile_bearer,
-    response={200: CalendarizationActivationEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
-)
-def activate_calendarization(request, payload: CalendarizationActivationInput):
-    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    program = Program.objects.filter(pk=payload.program_id, created_by=request.auth.user).first()
-    if program is None:
-        raise _calendarization_error(ValueError("calendarization_program_not_owned"))
-    try:
-        result = activate_program_calendarization(
-            user=request.auth.user,
-            program=program,
-            start_date=payload.start_date,
-            timezone_name=payload.timezone_name,
-            daily_notification_time=payload.daily_notification_time,
-            daily_notifications_enabled=payload.daily_notifications_enabled,
-            meal_notifications_enabled=payload.meal_notifications_enabled,
-            confirm_incomplete=payload.confirm_incomplete,
-            replace_current=payload.replace_current,
-        )
-    except ValueError as exc:
-        error = _calendarization_error(exc)
-        if str(exc) == "calendarization_incomplete_confirmation_required":
-            empty_dates = calendarization_empty_dates(program=program, start_date=payload.start_date)
-            error = MobileAPIError(
-                code=error.code,
-                message=error.message,
-                status_code=error.status_code,
-                details={
-                    "empty_count": len(empty_dates),
-                    "empty_dates": [value.isoformat() for value in empty_dates],
-                },
-            )
-        elif str(exc) == "calendarization_replacement_confirmation_required":
-            current = ProgramCalendarization.objects.filter(
-                user=request.auth.user,
-                status__in=ProgramCalendarization.CURRENT_STATUSES,
-            ).first()
-            error = MobileAPIError(
-                code=error.code,
-                message=error.message,
-                status_code=error.status_code,
-                details={
-                    "current_calendarization_id": current.id if current else None,
-                    "current_program_name": current.program_name_snapshot if current else "",
-                },
-            )
-        raise error from exc
-    response = active_program_payload(request.auth.user)
-    response.update(
-        {
-            "empty_dates": list(result.empty_dates),
-            "replaced_calendarization_id": result.replaced_calendarization_id,
-        }
-    )
-    return _success(response)
-
-
-@api.get(
-    "/program/calendarizations/history",
-    auth=mobile_bearer,
-    response={200: CalendarizationHistoryEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope},
-)
-def calendarization_history(request, limit: int = 20):
-    return _success(calendarization_history_payload(request.auth.user, limit=limit))
-
-
-@api.get(
-    "/program/days/{day_id}",
-    auth=mobile_bearer,
-    response={200: CalendarizedDayDetailEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope},
-)
-def calendarized_day_detail(request, day_id: int):
-    day = calendarized_day_payload(request.auth.user, day_id)
-    if day is None:
-        raise _calendarization_error(ValueError("calendarized_day_not_found"))
-    return _success(day)
-
-
-def _calendarization_state_action(request, calendarization_id: int, command):
-    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    try:
-        command(user=request.auth.user, calendarization_id=calendarization_id)
-    except ValueError as exc:
-        raise _calendarization_error(exc) from exc
-    return _success(active_program_payload(request.auth.user))
-
-
-@api.post(
-    "/program/calendarizations/{calendarization_id}/pause",
-    auth=mobile_bearer,
-    response={200: ActiveProgramEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
-)
-def pause_active_calendarization(request, calendarization_id: int):
-    return _calendarization_state_action(request, calendarization_id, pause_calendarization)
-
-
-@api.post(
-    "/program/calendarizations/{calendarization_id}/resume",
-    auth=mobile_bearer,
-    response={200: ActiveProgramEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
-)
-def resume_active_calendarization(request, calendarization_id: int):
-    return _calendarization_state_action(request, calendarization_id, resume_calendarization)
-
-
-@api.post(
-    "/program/calendarizations/{calendarization_id}/cancel",
-    auth=mobile_bearer,
-    response={200: ActiveProgramEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
-)
-def cancel_active_calendarization(request, calendarization_id: int):
-    return _calendarization_state_action(request, calendarization_id, cancel_calendarization)
+api.add_router("", calendarization_router)
 
 
 api.add_router("", proposals_router)
 
 
-
 api.add_router("", comparisons_router)
-
-
-@api.get("/today", auth=mobile_bearer, response={200: TodayEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope})
-def today(request):
-    return _success(today_payload(request.auth.user))
-
-
-@api.post(
-    "/days/{day_id}/meals/{meal_snapshot_key}/check-ins",
-    auth=mobile_bearer,
-    response={200: TodayEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
-)
-def meal_check_in(request, day_id: int, meal_snapshot_key: str, payload: MealCheckInInput):
-    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    try:
-        record_meal_execution(
-            user=request.auth.user,
-            day_id=day_id,
-            meal_snapshot_key=meal_snapshot_key,
-            action=payload.action,
-            idempotency_key=payload.idempotency_key,
-            note=payload.note,
-        )
-    except ValueError as exc:
-        raise _calendarization_error(exc) from exc
-    return _success(today_payload(request.auth.user))
-
-
-@api.put(
-    "/program/active/reminders",
-    auth=mobile_bearer,
-    response={200: ReminderSettingsEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
-)
-def update_active_program_reminders(request, payload: ReminderSettingsInput):
-    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    calendarization = ProgramCalendarization.objects.filter(
-        user=request.auth.user,
-        status__in=ProgramCalendarization.CURRENT_STATUSES,
-    ).first()
-    if calendarization is None:
-        raise _calendarization_error(ValueError("calendarization_not_found"))
-    try:
-        calendarization = update_calendarization_preferences(
-            user=request.auth.user,
-            calendarization_id=calendarization.id,
-            timezone_name=payload.timezone_name,
-            daily_notification_time=payload.daily_notification_time,
-            daily_notifications_enabled=payload.daily_notifications_enabled,
-            meal_notifications_enabled=payload.meal_notifications_enabled,
-        )
-    except ValueError as exc:
-        raise _calendarization_error(exc) from exc
-    return _success(reminder_settings_payload(calendarization))
-
-
-@api.put(
-    "/notifications/apple/device",
-    auth=mobile_bearer,
-    response={200: ApplePushRegistrationEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope},
-)
-def register_apple_notification_device(request, payload: ApplePushRegistrationInput):
-    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    device_session = request.auth.token.device_session
-    if device_session is None:
-        raise MobileAPIError(
-            code="apns_device_session_required",
-            message="A native mobile device session is required.",
-            status_code=422,
-        )
-    try:
-        subscription = register_apple_push_subscription(
-            user=request.auth.user,
-            device_session=device_session,
-            device_token=payload.device_token,
-            environment=payload.environment,
-        )
-    except ValueError as exc:
-        raise MobileAPIError(
-            code=str(exc),
-            message="The Apple notification device could not be registered.",
-            status_code=422,
-        ) from exc
-    return _success(
-        {
-            "delivery_mode": "apns" if apns_is_configured() else "local",
-            "token_fingerprint": subscription.token_fingerprint,
-            "environment": subscription.environment,
-            "is_active": subscription.is_active,
-        }
-    )
-
-
-@api.get(
-    "/program/reviews",
-    auth=mobile_bearer,
-    response={200: CalendarizationReviewListEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope},
-)
-def program_reviews(request, limit: int = 12):
-    items = CalendarizationReview.objects.filter(calendarization__user=request.auth.user).order_by(
-        "-period_end", "-created_at", "-id"
-    )[: min(max(limit, 1), 50)]
-    payload = [review_payload(item) for item in items]
-    return _success({"items": payload, "count": len(payload)})
-
-
-@api.post(
-    "/program/reviews",
-    auth=mobile_bearer,
-    response={200: CalendarizationReviewEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
-)
-def create_program_review(request, payload: CalendarizationReviewInput):
-    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    try:
-        review = create_calendarization_review(
-            user=request.auth.user,
-            period_start=payload.period_start,
-            period_end=payload.period_end,
-            idempotency_key=payload.idempotency_key,
-            energy_score=payload.energy_score,
-            hunger_score=payload.hunger_score,
-            training_performance_score=payload.training_performance_score,
-            note=payload.note,
-        )
-    except ValueError as exc:
-        raise _calendarization_error(exc) from exc
-    return _success(review_payload(review))
-
-
-@api.get(
-    "/program/revisions",
-    auth=mobile_bearer,
-    response={200: RevisionListEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope},
-)
-def program_revisions(request, limit: int = 12):
-    revisions = CalendarizationRevision.objects.filter(calendarization__user=request.auth.user).order_by(
-        "-created_at", "-id"
-    )[: min(max(limit, 1), 50)]
-    payload = [revision_payload(item) for item in revisions]
-    return _success({"items": payload, "count": len(payload)})
-
-
-@api.post(
-    "/program/revisions/{revision_id}/decision",
-    auth=mobile_bearer,
-    response={200: RevisionEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
-)
-def decide_program_revision(request, revision_id: int, payload: RevisionDecisionInput):
-    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    try:
-        revision = decide_calendarization_revision(
-            user=request.auth.user,
-            revision_id=revision_id,
-            decision=payload.decision,
-        )
-    except ValueError as exc:
-        raise _calendarization_error(exc) from exc
-    return _success(revision_payload(revision))
-
-
-@api.get(
-    "/weights",
-    auth=mobile_bearer,
-    response={200: WeightListEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope},
-)
-def weights(request, limit: int = 30):
-    safe_limit = min(max(limit, 1), 100)
-    queryset = WeightLog.objects.filter(user=request.auth.user).order_by("-date", "-created_at")[:safe_limit]
-    items = [
-        {
-            "id": item.id,
-            "measured_on": item.date,
-            "weight_kg": item.weight_kg,
-            "source": item.source,
-            "created_at": item.created_at,
-        }
-        for item in queryset
-    ]
-    return _success({"items": items, "count": len(items)})
-
-
-@api.post(
-    "/weights",
-    auth=mobile_bearer,
-    response={200: WeightEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope},
-)
-def create_weight(request, payload: WeightCreateInput):
-    _require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    item, context = record_calendarized_weight(
-        user=request.auth.user,
-        weight_kg=payload.weight_kg,
-        measured_on=payload.measured_on,
-    )
-    return _success(
-        {
-            "id": item.id,
-            "measured_on": item.date,
-            "weight_kg": item.weight_kg,
-            "source": item.source,
-            "created_at": item.created_at,
-            "calendarization_id": context.calendarization_id if context else None,
-        }
-    )
 
 
 @api.post(
@@ -763,22 +438,42 @@ def food_detail(request, food_id: int):
     return _success(_food_picker_item_payload(build_food_picker_item_dto(food=food, user=request.auth.user)))
 
 
-@api.get("/library/programs", auth=mobile_bearer, response={200: LibraryPageEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope})
+@api.get(
+    "/library/programs", auth=mobile_bearer, response={200: LibraryPageEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope}
+)
 def library_programs(request, search: str | None = None, offset: int = 0, limit: int = 30):
     return _success(library_programs_payload(request.auth.user, search=search, offset=offset, limit=limit))
 
 
-@api.get("/library/daily-plans", auth=mobile_bearer, response={200: LibraryPageEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope})
-def library_dailyplans(request, search: str | None = None, offset: int = 0, limit: int = 30, include_drafts: bool = False):
-    return _success(library_dailyplans_payload(request.auth.user, search=search, offset=offset, limit=limit, include_drafts=include_drafts))
+@api.get(
+    "/library/daily-plans",
+    auth=mobile_bearer,
+    response={200: LibraryPageEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope},
+)
+def library_dailyplans(
+    request, search: str | None = None, offset: int = 0, limit: int = 30, include_drafts: bool = False
+):
+    return _success(
+        library_dailyplans_payload(
+            request.auth.user, search=search, offset=offset, limit=limit, include_drafts=include_drafts
+        )
+    )
 
 
-@api.get("/library/meals", auth=mobile_bearer, response={200: LibraryPageEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope})
+@api.get(
+    "/library/meals", auth=mobile_bearer, response={200: LibraryPageEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope}
+)
 def library_meals(request, search: str | None = None, offset: int = 0, limit: int = 30, include_drafts: bool = False):
-    return _success(library_meals_payload(request.auth.user, search=search, offset=offset, limit=limit, include_drafts=include_drafts))
+    return _success(
+        library_meals_payload(
+            request.auth.user, search=search, offset=offset, limit=limit, include_drafts=include_drafts
+        )
+    )
 
 
-@api.get("/library/foods", auth=mobile_bearer, response={200: LibraryPageEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope})
+@api.get(
+    "/library/foods", auth=mobile_bearer, response={200: LibraryPageEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope}
+)
 def library_foods(request, search: str | None = None, offset: int = 0, limit: int = 30):
     return _success(library_foods_payload(request.auth.user, search=search, offset=offset, limit=limit))
 
@@ -790,7 +485,9 @@ def _clean_creation_name(name: str) -> str:
     return clean_name
 
 
-@api.post("/library/foods", auth=mobile_bearer, response={200: LibraryItemEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope})
+@api.post(
+    "/library/foods", auth=mobile_bearer, response={200: LibraryItemEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope}
+)
 def create_library_food(request, payload: FoodCreateInput):
     _require_scope(request.auth, MOBILE_SCOPE_WRITE)
     result = create_food(
@@ -803,43 +500,65 @@ def create_library_food(request, payload: FoodCreateInput):
     return _success(library_item_detail_payload(request.auth.user, "foods", result.food.id))
 
 
-@api.post("/library/meals", auth=mobile_bearer, response={200: LibraryItemEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope})
+@api.post(
+    "/library/meals", auth=mobile_bearer, response={200: LibraryItemEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope}
+)
 def create_library_meal(request, payload: NamedLibraryCreateInput):
     _require_scope(request.auth, MOBILE_SCOPE_WRITE)
     result = create_draft_meal(user=request.auth.user, name=_clean_creation_name(payload.name))
     return _success(library_item_detail_payload(request.auth.user, "meals", result.meal.id))
 
 
-@api.post("/library/daily-plans", auth=mobile_bearer, response={200: LibraryItemEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope})
+@api.post(
+    "/library/daily-plans",
+    auth=mobile_bearer,
+    response={200: LibraryItemEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope},
+)
 def create_library_dailyplan(request, payload: NamedLibraryCreateInput):
     _require_scope(request.auth, MOBILE_SCOPE_WRITE)
     result = create_draft_dailyplan(user=request.auth.user, name=_clean_creation_name(payload.name))
     return _success(library_item_detail_payload(request.auth.user, "daily-plans", result.dailyplan.id))
 
 
-@api.post("/library/programs", auth=mobile_bearer, response={200: LibraryItemEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope})
+@api.post(
+    "/library/programs", auth=mobile_bearer, response={200: LibraryItemEnvelope, 403: ErrorEnvelope, 422: ErrorEnvelope}
+)
 def create_library_program(request, payload: NamedLibraryCreateInput):
     _require_scope(request.auth, MOBILE_SCOPE_WRITE)
     result = create_weekly_program(user=request.auth.user, name=_clean_creation_name(payload.name))
     return _success(library_item_detail_payload(request.auth.user, "programs", result.program.id))
 
 
-@api.put("/library/{entity}/order", auth=mobile_bearer, response={200: LibraryListActionResultEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope})
+@api.put(
+    "/library/{entity}/order",
+    auth=mobile_bearer,
+    response={200: LibraryListActionResultEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+)
 def library_order(request, entity: str, payload: LibraryOrderInput):
     _require_scope(request.auth, MOBILE_SCOPE_WRITE)
     return _success(reorder_library(request.auth.user, entity, payload.ordered_ids))
 
 
-@api.post("/library/{entity}/bulk-delete", auth=mobile_bearer, response={200: LibraryListActionResultEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope})
+@api.post(
+    "/library/{entity}/bulk-delete",
+    auth=mobile_bearer,
+    response={200: LibraryListActionResultEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+)
 def library_bulk_delete(request, entity: str, payload: LibraryBulkDeleteInput):
     _require_scope(request.auth, MOBILE_SCOPE_WRITE)
     return _success(bulk_delete_library(request.auth.user, entity, payload.item_ids))
 
 
-@api.get("/library/{entity}/{item_id}", auth=mobile_bearer, response={200: LibraryItemEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope})
+@api.get(
+    "/library/{entity}/{item_id}",
+    auth=mobile_bearer,
+    response={200: LibraryItemEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope},
+)
 def library_item_detail(request, entity: str, item_id: int):
     if entity not in {"programs", "daily-plans", "meals", "foods"}:
-        raise MobileAPIError(code="library_item_not_found", message="The requested library item was not found.", status_code=404)
+        raise MobileAPIError(
+            code="library_item_not_found", message="The requested library item was not found.", status_code=404
+        )
     return _success(library_item_detail_payload(request.auth.user, entity, item_id))
 
 
@@ -860,7 +579,11 @@ def meal_food_order(request, meal_id: int, payload: CompositionOrderInput):
 )
 def meal_food_update(request, meal_id: int, meal_food_id: int, payload: MealFoodUpdateInput):
     _require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    return _success(update_food_in_meal(user=request.auth.user, meal_id=meal_id, meal_food_id=meal_food_id, quantity=payload.quantity))
+    return _success(
+        update_food_in_meal(
+            user=request.auth.user, meal_id=meal_id, meal_food_id=meal_food_id, quantity=payload.quantity
+        )
+    )
 
 
 @api.delete(
@@ -880,7 +603,9 @@ def meal_food_delete(request, meal_id: int, meal_food_id: int):
 )
 def dailyplan_meal_order(request, dailyplan_id: int, payload: CompositionOrderInput):
     _require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    return _success(reorder_meals_in_dailyplan(user=request.auth.user, dailyplan_id=dailyplan_id, ordered_ids=payload.ordered_ids))
+    return _success(
+        reorder_meals_in_dailyplan(user=request.auth.user, dailyplan_id=dailyplan_id, ordered_ids=payload.ordered_ids)
+    )
 
 
 @api.patch(
@@ -890,7 +615,15 @@ def dailyplan_meal_order(request, dailyplan_id: int, payload: CompositionOrderIn
 )
 def dailyplan_meal_update(request, dailyplan_id: int, dailyplan_meal_id: int, payload: DailyPlanMealUpdateInput):
     _require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    return _success(update_meal_in_dailyplan(user=request.auth.user, dailyplan_id=dailyplan_id, dailyplan_meal_id=dailyplan_meal_id, hour=payload.hour, note=payload.note))
+    return _success(
+        update_meal_in_dailyplan(
+            user=request.auth.user,
+            dailyplan_id=dailyplan_id,
+            dailyplan_meal_id=dailyplan_meal_id,
+            hour=payload.hour,
+            note=payload.note,
+        )
+    )
 
 
 @api.delete(
@@ -900,7 +633,11 @@ def dailyplan_meal_update(request, dailyplan_id: int, dailyplan_meal_id: int, pa
 )
 def dailyplan_meal_delete(request, dailyplan_id: int, dailyplan_meal_id: int):
     _require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    return _success(remove_meal_from_dailyplan(user=request.auth.user, dailyplan_id=dailyplan_id, dailyplan_meal_id=dailyplan_meal_id))
+    return _success(
+        remove_meal_from_dailyplan(
+            user=request.auth.user, dailyplan_id=dailyplan_id, dailyplan_meal_id=dailyplan_meal_id
+        )
+    )
 
 
 @api.put(
@@ -910,7 +647,9 @@ def dailyplan_meal_delete(request, dailyplan_id: int, dailyplan_meal_id: int):
 )
 def program_week_order(request, program_id: int, payload: CompositionOrderInput):
     _require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    return _success(reorder_weeks_in_program(user=request.auth.user, program_id=program_id, ordered_weeks=payload.ordered_ids))
+    return _success(
+        reorder_weeks_in_program(user=request.auth.user, program_id=program_id, ordered_weeks=payload.ordered_ids)
+    )
 
 
 @api.post(
@@ -940,13 +679,23 @@ def program_week_delete(request, program_id: int, week_number: int):
 )
 def program_day_delete(request, program_id: int, week_number: int, day_number: int):
     _require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    return _success(remove_dailyplan_from_program(user=request.auth.user, program_id=program_id, week_number=week_number, day_number=day_number))
+    return _success(
+        remove_dailyplan_from_program(
+            user=request.auth.user, program_id=program_id, week_number=week_number, day_number=day_number
+        )
+    )
 
 
 @api.post(
     "/library/meals/{meal_id}/food-picker/preview",
     auth=mobile_bearer,
-    response={200: PickerPreviewEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+    response={
+        200: PickerPreviewEnvelope,
+        401: ErrorEnvelope,
+        403: ErrorEnvelope,
+        404: ErrorEnvelope,
+        422: ErrorEnvelope,
+    },
 )
 def meal_food_picker_preview(request, meal_id: int, payload: FoodPickerInput):
     return _success(
@@ -962,7 +711,13 @@ def meal_food_picker_preview(request, meal_id: int, payload: FoodPickerInput):
 @api.post(
     "/library/meals/{meal_id}/food-picker/commit",
     auth=mobile_bearer,
-    response={200: PickerCommitEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+    response={
+        200: PickerCommitEnvelope,
+        401: ErrorEnvelope,
+        403: ErrorEnvelope,
+        404: ErrorEnvelope,
+        422: ErrorEnvelope,
+    },
 )
 def meal_food_picker_commit(request, meal_id: int, payload: FoodPickerInput):
     _require_scope(request.auth, MOBILE_SCOPE_WRITE)
@@ -979,7 +734,13 @@ def meal_food_picker_commit(request, meal_id: int, payload: FoodPickerInput):
 @api.post(
     "/library/daily-plans/{dailyplan_id}/meal-picker/preview",
     auth=mobile_bearer,
-    response={200: PickerPreviewEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+    response={
+        200: PickerPreviewEnvelope,
+        401: ErrorEnvelope,
+        403: ErrorEnvelope,
+        404: ErrorEnvelope,
+        422: ErrorEnvelope,
+    },
 )
 def dailyplan_meal_picker_preview(request, dailyplan_id: int, payload: MealPickerInput):
     return _success(
@@ -996,7 +757,13 @@ def dailyplan_meal_picker_preview(request, dailyplan_id: int, payload: MealPicke
 @api.post(
     "/library/daily-plans/{dailyplan_id}/meal-picker/commit",
     auth=mobile_bearer,
-    response={200: PickerCommitEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+    response={
+        200: PickerCommitEnvelope,
+        401: ErrorEnvelope,
+        403: ErrorEnvelope,
+        404: ErrorEnvelope,
+        422: ErrorEnvelope,
+    },
 )
 def dailyplan_meal_picker_commit(request, dailyplan_id: int, payload: MealPickerInput):
     _require_scope(request.auth, MOBILE_SCOPE_WRITE)
@@ -1015,7 +782,13 @@ def dailyplan_meal_picker_commit(request, dailyplan_id: int, payload: MealPicker
 @api.post(
     "/library/programs/{program_id}/daily-plan-picker/preview",
     auth=mobile_bearer,
-    response={200: PickerPreviewEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+    response={
+        200: PickerPreviewEnvelope,
+        401: ErrorEnvelope,
+        403: ErrorEnvelope,
+        404: ErrorEnvelope,
+        422: ErrorEnvelope,
+    },
 )
 def program_dailyplan_picker_preview(request, program_id: int, payload: DailyPlanPickerInput):
     return _success(
@@ -1032,7 +805,14 @@ def program_dailyplan_picker_preview(request, program_id: int, payload: DailyPla
 @api.post(
     "/library/programs/{program_id}/daily-plan-picker/commit",
     auth=mobile_bearer,
-    response={200: PickerCommitEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope},
+    response={
+        200: PickerCommitEnvelope,
+        401: ErrorEnvelope,
+        403: ErrorEnvelope,
+        404: ErrorEnvelope,
+        409: ErrorEnvelope,
+        422: ErrorEnvelope,
+    },
 )
 def program_dailyplan_picker_commit(request, program_id: int, payload: DailyPlanPickerInput):
     _require_scope(request.auth, MOBILE_SCOPE_WRITE)
@@ -1088,7 +868,9 @@ def program_week_picker_commit(request, program_id: int, expected_week_number: i
 def library_item_action(request, entity: str, item_id: int, payload: LibraryActionInput):
     _require_scope(request.auth, MOBILE_SCOPE_WRITE)
     if entity not in {"programs", "daily-plans", "meals", "foods"}:
-        raise MobileAPIError(code="library_item_not_found", message="The requested library item was not found.", status_code=404)
+        raise MobileAPIError(
+            code="library_item_not_found", message="The requested library item was not found.", status_code=404
+        )
     return _success(perform_library_action(request, entity, item_id, payload))
 
 
@@ -1134,7 +916,14 @@ def confirm_food_label_capture(request, payload: FoodLabelCaptureInput):
 @api.post(
     "/ai/turns",
     auth=mobile_bearer,
-    response={202: AIJobAcceptedEnvelope, 403: ErrorEnvelope, 409: ErrorEnvelope, 422: ErrorEnvelope, 429: ErrorEnvelope, 503: ErrorEnvelope},
+    response={
+        202: AIJobAcceptedEnvelope,
+        403: ErrorEnvelope,
+        409: ErrorEnvelope,
+        422: ErrorEnvelope,
+        429: ErrorEnvelope,
+        503: ErrorEnvelope,
+    },
 )
 def submit_ai_turn(request, payload: AITurnInput):
     _require_scope(request.auth, MOBILE_SCOPE_WRITE)
@@ -1181,11 +970,7 @@ def submit_ai_turn(request, payload: AITurnInput):
                 "id": comparison.id,
                 "title": comparison.name,
                 "kind": comparison.kind,
-                "items": [
-                    str(row.get("name") or "")[:120]
-                    for row in snapshot[:8]
-                    if isinstance(row, dict)
-                ],
+                "items": [str(row.get("name") or "")[:120] for row in snapshot[:8] if isinstance(row, dict)],
             },
         }
     pending_job = pending_turn_job(request.auth.user, chat_id=chat.id if chat else None)
@@ -1248,7 +1033,11 @@ def _prepared_action_error(exc: ValueError) -> MobileAPIError:
     return MobileAPIError(code=code, message="The prepared action is no longer available.", status_code=status)
 
 
-@api.post("/ai/prepared-actions/{action_id}/commit", auth=mobile_bearer, response={200: AIPreparedActionResultEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope})
+@api.post(
+    "/ai/prepared-actions/{action_id}/commit",
+    auth=mobile_bearer,
+    response={200: AIPreparedActionResultEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope},
+)
 def commit_ai_prepared_action(request, action_id: str):
     _require_scope(request.auth, MOBILE_SCOPE_WRITE)
     try:
@@ -1258,7 +1047,11 @@ def commit_ai_prepared_action(request, action_id: str):
     return _success({"action_id": str(action.public_id), "status": action.status, "refresh_chat": True})
 
 
-@api.post("/ai/prepared-actions/{action_id}/cancel", auth=mobile_bearer, response={200: AIPreparedActionResultEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope})
+@api.post(
+    "/ai/prepared-actions/{action_id}/cancel",
+    auth=mobile_bearer,
+    response={200: AIPreparedActionResultEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope},
+)
 def cancel_ai_prepared_action(request, action_id: str):
     _require_scope(request.auth, MOBILE_SCOPE_WRITE)
     try:
@@ -1271,7 +1064,14 @@ def cancel_ai_prepared_action(request, action_id: str):
 @api.get(
     "/ai/jobs/{job_id}",
     auth=mobile_bearer,
-    response={200: AIJobResultEnvelope, 202: AIJobResultEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+    response={
+        200: AIJobResultEnvelope,
+        202: AIJobResultEnvelope,
+        401: ErrorEnvelope,
+        403: ErrorEnvelope,
+        404: ErrorEnvelope,
+        422: ErrorEnvelope,
+    },
 )
 def ai_job(request, job_id: str):
     try:

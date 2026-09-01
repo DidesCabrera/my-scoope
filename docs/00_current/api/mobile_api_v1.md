@@ -47,6 +47,11 @@ Comparisons is the reference extraction. Its route registry lives in
 Proposals follows the same vertical pattern in `routes/proposals.py`,
 `schema_domains/proposals.py` and `tests/test_proposals_api.py`; its queries and
 commands remain the product authority outside transport.
+Calendarization and Today follow it in `routes/calendarization.py`,
+`schema_domains/calendarization.py` and `tests/test_calendarization_api.py`.
+That domain owns the lived-program transport boundary—including activation,
+dated days, execution evidence, reviews, revisions, reminders and measurements—
+while the existing application services remain authoritative for behavior.
 
 When extracting another domain:
 
@@ -58,8 +63,8 @@ When extracting another domain:
 6. lower the facade budgets and add exact budgets for the extracted modules;
 7. require `export_mobile_openapi --check` and focused domain tests before the full suite.
 
-The remaining extraction order is Calendarization, Libraries/Composition,
-Account/Billing and Assistant. It follows cohesion and dependency depth: domains
+The remaining extraction order is Libraries/Composition, Account/Billing and
+Assistant. It follows cohesion and dependency depth: domains
 with existing application services move before the composition-heavy library surface.
 
 ## Authentication
