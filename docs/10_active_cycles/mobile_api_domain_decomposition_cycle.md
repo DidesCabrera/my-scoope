@@ -81,14 +81,23 @@ authorization or product behavior.
   explicit integration contracts rather than duplicating them.
 - Reduce `api.py` to 447 lines, `schemas.py` to 354 and the legacy suite to 310.
 
-### MADD05 — Assistant — planned
+### MADD05 — Assistant — completed
 
-- Group chat, durable jobs and prepared-action routes without moving AI product rules into transport.
+- Group chat, durable jobs, comparison context and prepared-action routes in one
+  transport module without moving AI product rules out of their existing authorities.
+- Move all Assistant schemas and five behavioral contracts to matching domain modules.
+- Preserve durable submission/polling, owner scoping and explicit commit/cancel semantics.
 
-### MADD06 — Facade convergence — planned
+### MADD06 — Facade convergence — completed
 
-- Reduce `api.py`, `schemas.py`, `selectors.py` and the legacy test suite to compatibility composition surfaces.
-- Update imports only after all direct consumers have a domain home.
+- Reduce `api.py` to a 69-line composition root with only health and shared error
+  handling, and `test_api_v1.py` to the 87-line public platform-contract test.
+- Keep `schemas.py` as a 207-line compatibility re-export surface whose only
+  local schemas are Error and Health.
+- Retain `selectors.py` as the explicit shared read-model boundary: splitting it
+  would duplicate cross-domain library/calendar projections without improving ownership.
+- Add an architecture invariant that allows only the health route and platform
+  schemas in the compatibility facades.
 
 ### MADD07 — Closure — planned
 

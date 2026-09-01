@@ -63,6 +63,11 @@ lifecycle; billing uses `routes/billing.py` for entitlements and provider
 evidence. Their schemas and tests follow the same names. This separation is
 intentional: transport remains easy to find without collapsing OAuth, account
 and commercial business authority into one module.
+Assistant uses `routes/assistant.py`, `schema_domains/assistant.py` and
+`tests/test_assistant_api.py`; durable queues, chat projection and prepared-action
+commands stay in their established application modules. The composition root now
+owns only API construction, shared errors, the public health route and router mounts.
+`schemas.py` is intentionally a compatibility re-export surface plus Error/Health.
 
 When extracting another domain:
 
