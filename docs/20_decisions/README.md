@@ -200,3 +200,6 @@ Consequences
 - `0184-exclusive-native-reminder-delivery-and-ios-release-capabilities.md`: coordina APNs o avisos locales —nunca ambos— desde la calendarización, integra Apple en el mismo PKCE y fija Keychain, privacidad y errores móviles sin PII.
 - `0186-shared-ui-recipes-and-platform-galleries.md`: adopta recetas neutrales generadas y galerías autoritativas separadas para Django/CSS y React Native.
 - `0187-code-quality-consolidation.md`: convierte la auditoría posterior al crecimiento de agosto en ratchets ejecutables de CI, cobertura, dependencias, modularidad, tests, consultas y complejidad.
+- `0188-code-quality-consolidation-closure.md`: cierra CQC00-CQC08 con cobertura de
+  `mobile_api`, auditorías y presupuestos ejecutables, tests conductuales y límites
+  de consultas, manteniendo deuda legacy y gates externos explícitos.
