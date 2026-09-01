@@ -199,3 +199,4 @@ Consequences
 - `0183-deterministic-multi-provider-subscription-evidence.md`: agrega evidencia independiente de Apple y Mercado Pago en una única proyección determinística de entitlement, con verificación StoreKit server-side y dobles cobros visibles.
 - `0184-exclusive-native-reminder-delivery-and-ios-release-capabilities.md`: coordina APNs o avisos locales —nunca ambos— desde la calendarización, integra Apple en el mismo PKCE y fija Keychain, privacidad y errores móviles sin PII.
 - `0186-shared-ui-recipes-and-platform-galleries.md`: adopta recetas neutrales generadas y galerías autoritativas separadas para Django/CSS y React Native.
+- `0187-code-quality-consolidation.md`: convierte la auditoría posterior al crecimiento de agosto en ratchets ejecutables de CI, cobertura, dependencias, modularidad, tests, consultas y complejidad.
