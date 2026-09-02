@@ -1,7 +1,7 @@
 # Calendarization notifications runbook
 
 Status: current
-Date: 2026-08-05
+Date: 2026-09-02
 
 ## Production configuration
 
@@ -42,17 +42,24 @@ python manage.py prune_calendarization_data --event-days 90 --subscription-days 
 
 1. Apply migrations and run `python manage.py check`.
 2. Test Chrome/Firefox/Safari-compatible PWA subscription where supported.
-3. On a signed physical iPhone build, grant notification permission and verify the
-   device subscription is attached to its active OAuth device session.
-4. With APNs disabled, verify the expected local requests and delivery while offline.
+3. On a signed physical iPhone build, enable a daily or meal reminder from an explicit
+   user action, grant notification permission and verify the device subscription is
+   attached to its active OAuth device session.
+4. With APNs disabled, open Recordatorios and verify a positive local-request count.
+   Background the app, disconnect the network and verify delivery of a near-future
+   meal event.
 5. Enable APNs with a sandbox key, resync and verify local requests are removed and
    one APNs alert arrives. Repeat with the production/TestFlight environment.
 6. Activate accounts in at least two IANA zones and verify the same local configured
    hour maps to different UTC instants.
 7. Run the dispatcher twice and verify one delivery per device.
-8. Pause/cancel and verify no later event is sent.
+8. Change a future meal hour and verify the old local request is removed and the new
+   instant is delivered. Pause, cancel and replace in separate runs and verify no stale
+   request is sent.
 9. Enable meal reminders and verify only meals with a valid hour produce an event.
-10. Deny permission and verify Today/check-ins remain usable without scheduled alerts.
+10. Force-quit the app, tap an alert and verify Today opens after session restoration.
+11. Deny permission and verify Today/check-ins remain usable without scheduled alerts.
+12. Record device, iOS, build and timestamps without account or nutrition PII.
 
 ## Incidents and rollback
 

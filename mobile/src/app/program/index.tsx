@@ -13,6 +13,7 @@ import { ProgramActiveOverview } from "@/components/programs/program-active-card
 import { EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
 import { LoadingState, Screen, SectionDivider, SectionHeading, SectionPageHeader } from "@/components/ui";
 import { tokens } from "@/design/tokens";
+import { refreshNativeReminders } from "@/notifications/native-reminders";
 
 function localDate(): string {
   const now = new Date();
@@ -83,8 +84,13 @@ export default function ProgramScreen() {
 
   async function applyAction(action: "pause" | "resume" | "cancel") {
     if (!calendarization) throw new Error("No hay un programa en curso para actualizar.");
-    await apiRequest<ActiveProgramData>(`/api/v1/program/calendarizations/${calendarization.id}/${action}`, { method: "POST" });
-    await load();
+    const nextProgram = await apiRequest<ActiveProgramData>(`/api/v1/program/calendarizations/${calendarization.id}/${action}`, { method: "POST" });
+    setProgram(nextProgram);
+    try {
+      await refreshNativeReminders(apiRequest);
+    } catch {
+      setError("El programa se actualizó, pero el iPhone no pudo reconciliar sus avisos. Abre Recordatorios para reintentarlo.");
+    }
   }
 
   const actionsModal = (

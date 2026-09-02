@@ -9,7 +9,7 @@ from mobile_api.api_support import proposal_error, require_scope, success
 from mobile_api.auth import mobile_bearer
 from mobile_api.schema_domains.proposals import ProposalApplyInput, ProposalDetailEnvelope, ProposalListEnvelope
 from mobile_api.schemas import ErrorEnvelope
-from mobile_api.selectors import proposal_detail_payload, proposal_list_payload
+from mobile_api.selectors_proposals import proposal_detail_payload, proposal_list_payload
 from notas.application.proposals.contracts import (
     CREATE_DAILYPLAN_INTENT,
     CREATE_MEAL_INTENT,

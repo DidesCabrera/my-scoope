@@ -12,7 +12,7 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { ProgramActiveHomeOverview } from "@/components/programs/program-active-card";
 import { AppHeader, Button, Card, InlineNotice, LoadingState, Pill, Screen, SectionTitle, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
-import { syncNativeReminders } from "@/notifications/native-reminders";
+import { syncNativeRemindersForProgram } from "@/notifications/native-reminders";
 
 function displayDate(value: string): string {
   return new Intl.DateTimeFormat("es-CL", { weekday: "long", day: "numeric", month: "long" }).format(
@@ -46,7 +46,11 @@ export default function TodayScreen() {
         .then((page) => setPendingProposalCount(page.pending_count))
         .catch(() => undefined);
       if (nextToday.reminders) {
-        void syncNativeReminders(nextToday.reminders, apiRequest).catch(() => undefined);
+        void syncNativeRemindersForProgram(
+          nextToday.reminders,
+          nextToday.calendarization?.status ?? null,
+          apiRequest,
+        ).catch(() => undefined);
       }
     } catch (nextError) {
       setError(userFacingError(nextError));
