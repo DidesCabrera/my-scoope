@@ -526,6 +526,15 @@ class MobileAPILibrariesTests(AuthenticatedMobileAPITestCase):
         slot_one.refresh_from_db()
         self.assertEqual(str(slot_one.hour), "09:15:00")
         self.assertEqual(slot_one.note, "Después de entrenar")
+        time_only = self.client.patch(
+            f"/api/v1/library/daily-plans/{dailyplan.id}/meals/{slot_one.id}",
+            data={"hour": "10:20:00"},
+            content_type="application/json",
+        )
+        self.assertEqual(time_only.status_code, 200)
+        slot_one.refresh_from_db()
+        self.assertEqual(str(slot_one.hour), "10:20:00")
+        self.assertEqual(slot_one.note, "Después de entrenar")
         plan_reordered = self.client.put(
             f"/api/v1/library/daily-plans/{dailyplan.id}/meals/order",
             data={"ordered_ids": [slot_two.id, slot_one.id]},

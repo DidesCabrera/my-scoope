@@ -108,12 +108,13 @@ def build_meal_header(*, meal, user, viewmode):
     )
 
 
-def build_dailyplan_meal_header(*, dpm, user, viewmode):
+def build_dailyplan_meal_header(*, dpm, user, viewmode, context=None):
     meal = dpm.meal
     actions = resolve_dailyplan_meal_actions(
         dpm,
         user,
         viewmode,
+        context=context,
     )
     header_actions = _build_header_actions(actions)
     classified = _classify_header_actions(header_actions)

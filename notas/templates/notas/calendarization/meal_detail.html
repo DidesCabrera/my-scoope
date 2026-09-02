@@ -14,6 +14,10 @@
             <span>Comida</span>
           </p>
           <h1>{{ detail.meal.name }}</h1>
+          <p class="calendarization-meal-detail__time">
+            <i data-lucide="clock-3" aria-hidden="true"></i>
+            {% if detail.meal.hour %}{{ detail.meal.hour }}{% else %}Sin hora{% endif %}
+          </p>
           <div class="entity-heading__indicator-row">
             <div class="structural-indicators">
               <span class="structural-item">

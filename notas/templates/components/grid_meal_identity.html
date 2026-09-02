@@ -1,4 +1,7 @@
 <span class="data-grid-meal-identity">
   <i data-lucide="utensils" class="data-grid-meal-icon meal" aria-hidden="true"></i>
-  <span class="data-grid-meal-name">{{ meal_name }}</span>
+  <span class="data-grid-meal-identity__copy">
+    <span class="data-grid-meal-name">{{ meal_name }}</span>
+    {% if meal_time %}<span class="data-grid-meal-time">{{ meal_time }}</span>{% endif %}
+  </span>
 </span>

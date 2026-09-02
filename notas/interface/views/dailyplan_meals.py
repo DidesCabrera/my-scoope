@@ -1,5 +1,6 @@
 import json
 from dataclasses import dataclass
+from typing import Any
 
 from django.conf import settings
 from django.contrib import messages
@@ -36,19 +37,21 @@ from notas.application.services.nutrition.nutrition_kpis import (
 )
 from notas.domain.models import DailyPlan, DailyPlanMeal, DailyPlanMealShare, Food, Meal, MealFood
 from notas.interface.forms.forms import DailyPlanMealShareForm
+from notas.interface.forms.meal_time_forms import MealTimeChangeForm
 from notas.presentation.composition.js.dpm_food_picker_builder import build_dpm_food_picker_context_payload
 from notas.presentation.composition.js.food_picker_builder import build_food_picker_foods_payload
 from notas.presentation.composition.viewmodel.components.builder_headers import build_page_header
 from notas.presentation.composition.viewmodel.dpm.detail_dpm_builder import build_dpm_detail_vm
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
 from notas.presentation.config.viewmodel_config import (
+    DAILYPLAN_MEAL_VIEWMODE_CHANGE_TIME,
     DAILYPLAN_MEAL_VIEWMODE_DETAIL,
     DAILYPLAN_MEAL_VIEWMODE_DRAFT_DEEP_EDIT,
-    DAILYPLAN_MEAL_VIEWMODE_EDIT,
     PROGRAM_VIEWMODE_PERSONAL_DETAIL,
 )
 from notas.presentation.navigation.program_context import (
     compact_program_breadcrumbs,
+    contextual_url,
     dailyplan_context_url,
     day_plan_parent,
     dpm_parent,
@@ -56,10 +59,7 @@ from notas.presentation.navigation.program_context import (
     program_parent,
     week_parent,
 )
-from notas.presentation.pages.dpm_pages import (
-    get_dpm_detail_page_data,
-    get_dpm_edit_page_data,
-)
+from notas.presentation.pages.dpm_pages import get_dpm_detail_page_data
 from notas.presentation.viewmodels.base_vm import BaseVM
 
 
@@ -73,6 +73,14 @@ class BreadcrumbParent:
 
     def get_absolute_url(self):
         return self.url
+
+
+@dataclass(frozen=True)
+class MealTimeChangeContent:
+    header: Any
+    title: str
+    description: str
+    cancel_url: str
 
 
 @login_required
@@ -205,50 +213,71 @@ def dailyplan_meal_detail(request, dailyplan_id, pk):
 
 
 
-# ---------- EDIT - DEEP EDIT ----------
-
 @login_required
-def dailyplan_meal_edit(request, dailyplan_id, dailyplanmeal_id):
-
-    page = get_dpm_edit_page_data(
-        user=request.user,
+def dailyplanmeal_change_time(request, dailyplan_id, dailyplanmeal_id):
+    dpm = get_object_or_404(
+        DailyPlanMeal.objects.select_related("dailyplan", "meal"),
+        pk=dailyplanmeal_id,
         dailyplan_id=dailyplan_id,
-        dpm_id=dailyplanmeal_id,
-        viewmode=DAILYPLAN_MEAL_VIEWMODE_EDIT,
+        dailyplan__created_by=request.user,
+    )
+    navigation_context = {"query": request.GET}
+    detail_url = contextual_url(
+        reverse("dailyplan_meal_detail", args=[dailyplan_id, dailyplanmeal_id]),
+        navigation_context,
+    )
+    form = MealTimeChangeForm(
+        request.POST or None,
+        initial={"hour": dpm.hour},
     )
 
-    if request.method == "POST":
-        result = update_dailyplan_meal(
-            dailyplan_meal=page.dpm,
+    if request.method == "POST" and form.is_valid():
+        update_dailyplan_meal(
+            dailyplan_meal=dpm,
             user=request.user,
-            hour=request.POST.get("hour"),
-            note=request.POST.get("note"),
+            hour=form.cleaned_data["hour"],
+            note=dpm.note,
         )
+        messages.success(request, "Hora de la comida actualizada.")
+        return redirect(detail_url)
 
-        return redirect(
-            "dailyplan_meal_detail",
-            dailyplan_id=result.dailyplan.id,
-            pk=result.dailyplan_meal.id,
+    program_day = get_program_day_for_user(request.user, request.GET.get("program_day"))
+    if program_day and program_day.dailyplan_id == dpm.dailyplan_id:
+        ui_vm = build_ui_vm(
+            PROGRAM_VIEWMODE_PERSONAL_DETAIL,
+            parents=[
+                program_parent(program_day),
+                week_parent(program_day),
+                day_plan_parent(program_day, url=dailyplan_context_url(program_day)),
+                dpm_parent(program_day, dpm, url=detail_url),
+            ],
+            instance=BreadcrumbParent("Cambiar hora", ""),
+            back_config={"type": "url", "value": detail_url},
         )
-
-    content_vm = build_dpm_detail_vm(
-        page.detail_content_data,
+        compact_program_breadcrumbs(ui_vm)
+    else:
+        dailyplan_url = reverse("dailyplan_detail", args=[dpm.dailyplan_id])
+        ui_vm = build_ui_vm(
+            DAILYPLAN_MEAL_VIEWMODE_CHANGE_TIME,
+            parents=[
+                BreadcrumbParent(str(dpm.dailyplan), dailyplan_url),
+                BreadcrumbParent(dpm.meal.name, detail_url),
+            ],
+            instance=BreadcrumbParent("Cambiar hora", ""),
+            back_config={"type": "url", "value": detail_url},
+        )
+    content = MealTimeChangeContent(
+        header=build_page_header(),
+        title="Cambiar hora",
+        description="El cambio se aplicará a esta comida dentro de este plan diario.",
+        cancel_url=detail_url,
     )
-
-    ui_vm = build_ui_vm(
-        page.viewmode,
-        instance=page.dpm,
-    )
-
-    base_vm = BaseVM(
-        ui=ui_vm,
-        content=content_vm,
-    )
-
+    context = BaseVM(ui=ui_vm, content=content).as_context()
+    context["form"] = form
     return render(
         request,
-        "notas/dailyplan_meals/edit.html",
-        base_vm.as_context(),
+        "notas/time_change.html",
+        context,
     )
 
 @login_required

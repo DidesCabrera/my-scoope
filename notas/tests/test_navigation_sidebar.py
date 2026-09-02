@@ -79,10 +79,9 @@ class SidebarBuilderTests(TestCase):
         self.assertEqual(sidebar[0]["label"], "Tools")
         self.assertEqual(sidebar[1]["label"], "Mis librerias")
         self.assertEqual(
-            [group["label"] for group in sidebar[0]["groups"][:7]],
+            [group["label"] for group in sidebar[0]["groups"][:6]],
             [
-                "Nuevo Chat",
-                "Chats",
+                "Asistente",
                 "Propuestas",
                 "Calendarizar",
                 "Comparar",
@@ -99,11 +98,14 @@ class SidebarBuilderTests(TestCase):
                 "Mis Alimentos",
             ],
         )
-        explore_group = sidebar[0]["groups"][5]
+        explore_group = sidebar[0]["groups"][4]
         self.assertEqual(explore_group["key"], "explore")
         self.assertEqual(explore_group["nav_root"], "explore")
 
         tool_groups = {group["key"]: group for group in sidebar[0]["groups"]}
+        self.assertNotIn("chat_new", tool_groups)
+        self.assertEqual(tool_groups["chat"]["label"], "Asistente")
+        self.assertEqual(tool_groups["chat"]["url_name"], "ai_nutrition_chat_list")
         self.assertEqual(tool_groups["chat"]["icon"], "sparkles")
         self.assertEqual(tool_groups["proposal"]["icon"], "clipboard-check")
         self.assertEqual(tool_groups["comparators"]["icon"], "scale")

@@ -3,7 +3,7 @@ from django.urls import path
 from notas.interface.views.dailyplan_meals import (
     dailyplan_add_meal,
     dailyplan_meal_detail,
-    dailyplan_meal_edit,
+    dailyplanmeal_change_time,
     dailyplanmeal_create_meal,
     dailyplanmeal_remove,
     dailyplanmeal_reorder,
@@ -66,7 +66,7 @@ urlpatterns = [
     path("dailyplans/<int:dailyplan_id>/meals/create/", create_meal_for_dailyplan, name="create_meal_for_dailyplan"),
     path("dailyplans/<int:dailyplan_id>/meals/<int:pk>/", dailyplan_meal_detail, name="dailyplan_meal_detail"),
     path("dailyplans/<int:dailyplan_id>/meals/<int:dailyplanmeal_id>/update/", dailyplanmeal_update, name="dailyplanmeal_update"),
-    path("dailyplans/<int:dailyplan_id>/meals/<int:dailyplanmeal_id>/edit/", dailyplan_meal_edit, name="dailyplan_meal_edit"),
+    path("dailyplans/<int:dailyplan_id>/meals/<int:dailyplanmeal_id>/change-time/", dailyplanmeal_change_time, name="dailyplanmeal_change_time"),
     path("dailyplans/<int:dailyplan_id>/meals/<int:dailyplanmeal_id>/remove/", dailyplanmeal_remove, name="dailyplanmeal_remove"),
     path("dailyplans/<int:dailyplan_id>/meals/<int:dailyplanmeal_id>/create/", dailyplanmeal_create_meal, name="dailyplanmeal_create_meal"),
     path("dailyplans/<int:dailyplan_id>/meals/<int:pk>/share/", dailyplanmeal_share, name="dailyplanmeal_share"),

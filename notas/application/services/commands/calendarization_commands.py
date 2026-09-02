@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 
@@ -18,6 +19,7 @@ from notas.application.services.calendarization.scheduling import (
 from notas.application.services.calendarization.snapshots import (
     build_dailyplan_snapshot,
     program_with_calendarization_content,
+    snapshot_content_hash,
 )
 from notas.application.services.notifications.apple_push import (
     apns_is_configured,
@@ -203,6 +205,125 @@ def reschedule_calendarized_days(
     )
     for day in days:
         _sync_day_events(calendarization=calendarization, day=day, now=now)
+
+
+def _calendarized_day_for_snapshot_update(*, user, day_id: int) -> CalendarizedDay:
+    try:
+        day = (
+            CalendarizedDay.objects.select_for_update()
+            .select_related("calendarization")
+            .get(pk=day_id, calendarization__user=user)
+        )
+    except CalendarizedDay.DoesNotExist as exc:
+        raise ValueError("calendarized_day_not_found") from exc
+
+    if day.calendarization.status not in ProgramCalendarization.CURRENT_STATUSES:
+        raise ValueError("calendarization_not_current")
+    return day
+
+
+def _calendarized_snapshot(day: CalendarizedDay) -> dict:
+    snapshot = deepcopy(day.plan_snapshot) if isinstance(day.plan_snapshot, dict) else None
+    if snapshot is None:
+        raise ValueError("calendarized_plan_snapshot_invalid")
+    return snapshot
+
+
+def _clean_calendarized_name(name: str) -> str:
+    clean_name = (name or "").strip()
+    if not clean_name or len(clean_name) > 255:
+        raise ValueError("calendarized_name_invalid")
+    return clean_name
+
+
+def _save_calendarized_snapshot(day: CalendarizedDay, snapshot: dict) -> None:
+    day.plan_snapshot = snapshot
+    day.snapshot_hash = snapshot_content_hash(snapshot)
+    day.save(update_fields=["plan_snapshot", "snapshot_hash"])
+
+
+@transaction.atomic
+def rename_calendarized_day_plan(*, user, day_id: int, name: str) -> CalendarizedDay:
+    day = _calendarized_day_for_snapshot_update(user=user, day_id=day_id)
+    snapshot = _calendarized_snapshot(day)
+    snapshot["name"] = _clean_calendarized_name(name)
+    _save_calendarized_snapshot(day, snapshot)
+    return day
+
+
+@transaction.atomic
+def rename_calendarized_meal(
+    *,
+    user,
+    day_id: int,
+    meal_snapshot_key: str,
+    name: str,
+) -> CalendarizedDay:
+    day = _calendarized_day_for_snapshot_update(user=user, day_id=day_id)
+    snapshot = _calendarized_snapshot(day)
+    meals = snapshot.get("meals")
+    if not isinstance(meals, list):
+        raise ValueError("meal_snapshot_key_invalid")
+    meal = next(
+        (
+            item
+            for item in meals
+            if isinstance(item, dict) and item.get("key") == meal_snapshot_key
+        ),
+        None,
+    )
+    if meal is None:
+        raise ValueError("meal_snapshot_key_invalid")
+
+    meal["name"] = _clean_calendarized_name(name)
+    _save_calendarized_snapshot(day, snapshot)
+    return day
+
+
+@transaction.atomic
+def update_calendarized_meal_hour(
+    *,
+    user,
+    day_id: int,
+    meal_snapshot_key: str,
+    hour: time | str,
+    now: datetime | None = None,
+) -> CalendarizedDay:
+    current_time = now or timezone.now()
+    day = _calendarized_day_for_snapshot_update(user=user, day_id=day_id)
+    calendarization = day.calendarization
+
+    try:
+        parsed_hour = time.fromisoformat(hour) if isinstance(hour, str) else hour
+    except ValueError as exc:
+        raise ValueError("calendarized_meal_hour_invalid") from exc
+    if not isinstance(parsed_hour, time):
+        raise ValueError("calendarized_meal_hour_invalid")
+
+    snapshot = _calendarized_snapshot(day)
+    meals = snapshot.get("meals")
+    if not isinstance(meals, list):
+        raise ValueError("meal_snapshot_key_invalid")
+    meal = next(
+        (
+            item
+            for item in meals
+            if isinstance(item, dict) and item.get("key") == meal_snapshot_key
+        ),
+        None,
+    )
+    if meal is None:
+        raise ValueError("meal_snapshot_key_invalid")
+
+    meal["hour"] = parsed_hour.strftime("%H:%M")
+    _save_calendarized_snapshot(day, snapshot)
+    reschedule_calendarized_days(
+        calendarization=calendarization,
+        days=[day],
+        now=current_time,
+        reason="calendarized_meal_hour_changed",
+    )
+    return day
 
 
 def _cancel_pending_events(calendarization: ProgramCalendarization, *, reason: str) -> None:

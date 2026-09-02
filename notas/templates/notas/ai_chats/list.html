@@ -5,6 +5,22 @@
 <div class="page list ai-chat-history-page proposal-list-page">
   {% include "components/list_page_header.html" %}
 
+  <section class="ai-chat-credit-status{% if assistant_credits.available_credits == 0 %} ai-chat-credit-status--empty{% endif %}" aria-label="Créditos del Asistente">
+    <div class="ai-chat-credit-status__icon" aria-hidden="true">
+      <i data-lucide="sparkles"></i>
+    </div>
+    <div class="ai-chat-credit-status__copy">
+      <strong>{{ assistant_credits.available_credits }} crédito{{ assistant_credits.available_credits|pluralize }} disponible{{ assistant_credits.available_credits|pluralize }}</strong>
+      <span>Úsalos para iniciar o continuar conversaciones con el Asistente.</span>
+    </div>
+    {% if assistant_credits.available_credits == 0 %}
+      <a href="{{ assistant_billing_url }}" class="home-cta home-cta--primary ai-chat-credit-status__action">
+        <i data-lucide="credit-card" aria-hidden="true"></i>
+        <span>Comprar créditos</span>
+      </a>
+    {% endif %}
+  </section>
+
   <section class="ai-chat-history-list" aria-label="Chats históricos">
     {% for chat in vm.content.chats %}
       <article class="card message-card proposal-list-card ai-chat-history-card{% if chat.is_active %} ai-chat-history-card--active{% endif %}">

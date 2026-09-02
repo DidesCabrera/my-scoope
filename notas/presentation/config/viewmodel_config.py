@@ -70,7 +70,7 @@ DAILYPLAN_VIEWMODE_CONFIGURE = vm("dailyplan", "configure", "create")
 # DPM ---------------------------------------------
 DAILYPLAN_MEAL_VIEWMODE_LIST = vm("dailyplan_meal", "list", "personal")
 DAILYPLAN_MEAL_VIEWMODE_DETAIL = vm("dailyplan_meal", "detail", "personal")
-DAILYPLAN_MEAL_VIEWMODE_EDIT = vm("dailyplan_meal", "edit", "personal")
+DAILYPLAN_MEAL_VIEWMODE_CHANGE_TIME = vm("dailyplan_meal", "change_time", "personal")
 
 DAILYPLAN_MEAL_VIEWMODE_DRAFT_DEEP_EDIT = vm("dailyplan_meal", "deep_edit", "draft")
 

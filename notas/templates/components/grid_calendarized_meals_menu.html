@@ -8,10 +8,7 @@
   {% for meal in meals %}
     <div class="data-grid-row data-grid-row--menu">
       <div class="data-grid-cell data-grid-cell--meal">
-        {% include "components/grid_meal_identity.html" with meal_name=meal.name %}
-        {% if meal.hour %}
-          <div class="data-grid-meal-hour">{{ meal.hour }}</div>
-        {% endif %}
+        {% include "components/grid_meal_identity.html" with meal_name=meal.name meal_time=meal.hour %}
       </div>
 
       <div class="data-grid-cell data-grid-cell--foods">

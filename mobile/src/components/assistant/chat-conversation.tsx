@@ -29,11 +29,12 @@ export function ChatConversation({ messages, onPreparedAction }: { messages: AIC
       {messages.map((message) => {
         const isUser = message.role === "user";
         return (
-          <View key={message.id} style={[styles.bubble, isUser ? styles.userBubble : styles.assistantBubble]}>
-            <Text style={styles.role}>{isUser ? "Tú" : "Asistente"}</Text>
-            {message.text ? <Text style={styles.text}>{message.text}</Text> : null}
-            {message.cards?.map((card, index) => <ChatCard card={card} key={`${message.id}-${card.type}-${index}`} onPreparedAction={onPreparedAction} />)}
-            {message.has_structured_content && !message.cards?.length ? <InlineNotice>Este objeto no está disponible en esta versión de la app.</InlineNotice> : null}
+          <View key={message.id} style={[styles.message, isUser ? styles.userMessage : styles.assistantMessage]}>
+            <View style={isUser ? styles.userBubble : styles.assistantContent}>
+              {message.text ? <Text style={styles.text}>{message.text}</Text> : null}
+              {message.cards?.map((card, index) => <ChatCard card={card} key={`${message.id}-${card.type}-${index}`} onPreparedAction={onPreparedAction} />)}
+              {message.has_structured_content && !message.cards?.length ? <InlineNotice>Este objeto no está disponible en esta versión de la app.</InlineNotice> : null}
+            </View>
           </View>
         );
       })}
@@ -42,17 +43,18 @@ export function ChatConversation({ messages, onPreparedAction }: { messages: AIC
 }
 
 const styles = StyleSheet.create({
-  assistantBubble: { alignSelf: "flex-start", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderWidth: 1 },
+  assistantContent: { gap: tokens.spacing.md, width: "100%" },
+  assistantMessage: { alignItems: "stretch" },
   actions: { gap: tokens.spacing.sm },
-  bubble: { borderRadius: tokens.radius.card, gap: tokens.spacing.sm, maxWidth: "92%", padding: tokens.spacing.md },
-  conversation: { gap: tokens.spacing.md },
+  conversation: { gap: tokens.spacing.xxl },
   cardCopy: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 20 },
   cardTitle: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: "800" },
   item: { borderTopColor: tokens.color.borderSoft, borderTopWidth: 1, gap: 2, paddingTop: tokens.spacing.sm },
   itemLabel: { color: tokens.color.textSoft, fontSize: tokens.type.caption, fontWeight: "700" },
   itemValue: { color: tokens.color.textMain, fontSize: tokens.type.body },
+  message: { width: "100%" },
   pending: { color: tokens.color.textMuted },
-  role: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: "900", textTransform: "uppercase" },
-  text: { color: tokens.color.textMain, fontSize: tokens.type.body, lineHeight: 24 },
-  userBubble: { alignSelf: "flex-end", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.interactivePrimary, borderWidth: 1 },
+  text: { color: tokens.color.textMain, fontSize: tokens.type.body, lineHeight: 25 },
+  userBubble: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.card, gap: tokens.spacing.sm, maxWidth: "86%", paddingHorizontal: tokens.spacing.lg, paddingVertical: tokens.spacing.md },
+  userMessage: { alignItems: "flex-end" },
 });

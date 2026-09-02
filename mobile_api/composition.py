@@ -449,7 +449,12 @@ def reorder_foods_in_meal(*, user, meal_id: int, ordered_ids) -> dict:
 def update_meal_in_dailyplan(*, user, dailyplan_id: int, dailyplan_meal_id: int, hour=None, note=None) -> dict:
     dailyplan = _owned_dailyplan(user, dailyplan_id)
     dailyplan_meal = _owned_dailyplan_meal(user, dailyplan, dailyplan_meal_id)
-    update_dailyplan_meal(dailyplan_meal=dailyplan_meal, user=user, hour=hour, note=note)
+    update_dailyplan_meal(
+        dailyplan_meal=dailyplan_meal,
+        user=user,
+        hour=dailyplan_meal.hour if hour is None else hour,
+        note=dailyplan_meal.note if note is None else note,
+    )
     return {"message": "Horario de la comida actualizado.", "target_id": dailyplan.id, "affected_id": dailyplan_meal.id}
 
 
