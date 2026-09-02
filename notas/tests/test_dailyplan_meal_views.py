@@ -86,7 +86,12 @@ class DailyPlanMealViewTests(TestCase):
 
         self.assertContains(detail, "Cambiar hora")
         self.assertContains(detail, change_url)
-        self.assertNotContains(detail, "entity-heading__subtitle")
+        self.assertContains(detail, "entity-heading__subtitle--time")
+        self.assertContains(detail, "08:00")
+        self.assertEqual(
+            detail.context["vm"]["content"]["main_card"]["titulo"]["subtitle"],
+            {"text": "08:00", "icon": "clock-3", "modifier": "time"},
+        )
         self.assertContains(form, "Hora de la comida")
         self.assertContains(form, 'value="08:00"')
         self.assertNotContains(form, 'name="note"')

@@ -74,7 +74,7 @@ class DailyPlanViewTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertFalse(DailyPlan.objects.filter(id=dailyplan.id).exists())
 
-    def test_dailyplan_meal_hour_is_visible_only_in_menu_panels(self):
+    def test_dailyplan_meal_hour_is_visible_in_menu_and_meal_titles_only(self):
         dailyplan = DailyPlan.objects.create(
             name="Plan con horarios",
             created_by=self.user,
@@ -97,6 +97,7 @@ class DailyPlanViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         table_item = response.context["vm"]["content"]["main_card"]["table"]["items"][0]
         menu_item = response.context["vm"]["content"]["main_card"]["menu"]["meals"][0]
+        child_title = response.context["vm"]["content"]["child_cards"][0]["titulo"]
         menu_html = render_to_string(
             "components/grid_meals_menu.html",
             {"menu": response.context["vm"]["content"]["main_card"]["menu"]},
@@ -116,6 +117,10 @@ class DailyPlanViewTests(TestCase):
         )
         self.assertEqual(table_item["rel"]["hour"], "07:05")
         self.assertEqual(menu_item["hour"], "07:05")
+        self.assertEqual(
+            child_title["subtitle"],
+            {"text": "07:05", "icon": "clock-3", "modifier": "time"},
+        )
         for rendered_menu in (menu_html, active_menu_html):
             self.assertIn("data-grid-meal-identity", rendered_menu)
             self.assertIn('class="data-grid-meal-time">07:05</span>', rendered_menu)
@@ -136,7 +141,7 @@ class DailyPlanViewTests(TestCase):
             self.assertNotIn("data-grid-meal-time", rendered_panel)
 
         self.assertContains(response, 'class="data-grid-meal-time"', count=1)
-        self.assertNotContains(response, "entity-heading__subtitle")
+        self.assertContains(response, "entity-heading__subtitle--compact", count=1)
 
     def test_dailyplan_list_menu_displays_meal_hour_and_refreshes_old_cache(self):
         dailyplan = DailyPlan.objects.create(

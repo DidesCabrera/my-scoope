@@ -1,3 +1,4 @@
+from notas.presentation.viewmodels.components.entity_heading_vm import EntitySubtitleVM
 from notas.presentation.viewmodels.content.dpm.detail_dpm_vm import *
 
 
@@ -41,6 +42,11 @@ def build_dpm_detail_vm(content_data):
             name=content_data.main_card_data["title"]["name"],
             label=content_data.main_card_data["title"]["label"],
             icon=content_data.main_card_data["title"]["icon"],
+            subtitle=(
+                EntitySubtitleVM(**content_data.main_card_data["title"]["subtitle"])
+                if content_data.main_card_data["title"].get("subtitle")
+                else None
+            ),
             category=content_data.main_card_data["title"]["category"],
             category_badge=content_data.main_card_data["title"]["category_badge"],
             structural_indicators=StructuralIndicatorsUI(
