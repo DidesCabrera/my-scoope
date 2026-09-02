@@ -117,10 +117,7 @@ class DailyPlanViewTests(TestCase):
         )
         self.assertEqual(table_item["rel"]["hour"], "07:05")
         self.assertEqual(menu_item["hour"], "07:05")
-        self.assertEqual(
-            child_title["subtitle"],
-            {"text": "07:05", "icon": "clock-3", "modifier": "time"},
-        )
+        self.assertEqual(child_title["structural_indicators"]["hour"], "07:05")
         for rendered_menu in (menu_html, active_menu_html):
             self.assertIn("data-grid-meal-identity", rendered_menu)
             self.assertIn('class="data-grid-meal-time">07:05</span>', rendered_menu)
@@ -141,7 +138,14 @@ class DailyPlanViewTests(TestCase):
             self.assertNotIn("data-grid-meal-time", rendered_panel)
 
         self.assertContains(response, 'class="data-grid-meal-time"', count=1)
-        self.assertContains(response, "entity-heading__subtitle--compact", count=1)
+        self.assertContains(response, "structural-item--time", count=1)
+        self.assertContains(response, 'data-lucide="clock"', count=1)
+        self.assertEqual(
+            response.context["vm"]["content"]["child_cards"][0]["titulo"][
+                "structural_indicators"
+            ]["hour"],
+            "07:05",
+        )
 
     def test_dailyplan_list_menu_displays_meal_hour_and_refreshes_old_cache(self):
         dailyplan = DailyPlan.objects.create(

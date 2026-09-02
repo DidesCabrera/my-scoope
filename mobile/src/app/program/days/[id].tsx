@@ -54,14 +54,16 @@ function CalendarizedMealCards({ dayId, mealExecution, meals }: { dayId: number;
               }}
               entity="meal"
               eyebrow={`Comida ${index + 1}`}
-              indicators={[{ icon: "food", label: "alimentos", value: foods.length }]}
+              indicators={[
+                { icon: "food", label: "alimentos", value: foods.length },
+                ...(meal.hour ? [{ icon: "clock" as const, label: "hora", value: meal.hour.slice(0, 5) }] : []),
+              ]}
               nutrition={{
                 calories: snapshotCalories(totals),
                 carbs: { allocation: snapshotAllocation(totals, "carbs_g"), grams: totals?.carbs_g ?? 0 },
                 fat: { allocation: snapshotAllocation(totals, "fat_g"), grams: totals?.fat_g ?? 0 },
                 protein: { allocation: snapshotAllocation(totals, "protein_g"), grams: totals?.protein_g ?? 0, perKilogram: totals?.protein_per_kilogram ?? null },
               }}
-              subtitle={meal.hour?.slice(0, 5)}
               title={meal.name ?? "Comida"}>
               <FoodPanels items={foods} />
             </NutritionEntityCard>

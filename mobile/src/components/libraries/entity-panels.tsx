@@ -176,14 +176,16 @@ export function DailyPlanMealCards({ dailyPlanId, items, onRemove }: { dailyPlan
             </>}
             entity="meal"
             eyebrow={`Comida ${index + 1}`}
-            indicators={[{ icon: "food", label: "alimentos", value: item.foods.length }]}
+            indicators={[
+              { icon: "food", label: "alimentos", value: item.foods.length },
+              ...(item.time ? [{ icon: "clock" as const, label: "hora", value: item.time.slice(0, 5) }] : []),
+            ]}
             nutrition={{
               calories: item.calories,
               protein: { grams: item.protein_grams, allocation: item.protein_allocation, perKilogram: item.protein_per_kilogram },
               carbs: { grams: item.carbs_grams, allocation: item.carbs_allocation },
               fat: { grams: item.fat_grams, allocation: item.fat_allocation },
             }}
-            subtitle={item.time ? item.time.slice(0, 5) : undefined}
             title={item.name}>
             <FoodPanels items={item.foods} />
           </NutritionEntityCard>

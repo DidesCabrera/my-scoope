@@ -2,7 +2,6 @@ from dataclasses import asdict, dataclass
 from typing import List, Optional
 
 from notas.presentation.resolvers.title_resolvers import CategoryBadgeUI
-from notas.presentation.viewmodels.components.entity_heading_vm import EntitySubtitleVM
 
 # =========================
 # UI ATOMS
@@ -12,6 +11,7 @@ from notas.presentation.viewmodels.components.entity_heading_vm import EntitySub
 class StructuralIndicatorsUI:
     meals_count: Optional[int] = None
     foods_count: Optional[int] = None
+    hour: Optional[str] = None
 
 
 @dataclass
@@ -22,7 +22,6 @@ class TitleUI:
     category: Optional[str] = None
     category_badge: Optional[CategoryBadgeUI] = None
     structural_indicators: Optional[StructuralIndicatorsUI] = None
-    subtitle: Optional[EntitySubtitleVM] = None
 
 
 @dataclass

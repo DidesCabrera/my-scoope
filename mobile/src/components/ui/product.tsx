@@ -10,6 +10,7 @@ import {
   CircleUserRound,
   ClipboardCheck,
   ClipboardList,
+  Clock,
   FileDown,
   House,
   Inbox,
@@ -30,7 +31,7 @@ import { Card } from "./surfaces";
 export type EntityKind = "food" | "meal" | "dailyPlan" | "dpm" | "program";
 export type SectionKind = "home" | "profile" | "chatNew" | "chat" | "proposal" | "calendarization" | "comparator" | "explore" | "inbox" | "create" | "import";
 
-export type StructuralIndicatorKind = "day" | "food" | "meal" | "dailyPlan" | "week";
+export type StructuralIndicatorKind = "clock" | "day" | "food" | "meal" | "dailyPlan" | "week";
 
 export type StructuralIndicator = {
   icon?: StructuralIndicatorKind;
@@ -60,6 +61,7 @@ const entityIcons: Record<EntityKind, LucideIcon> = {
 };
 
 const structuralIcons: Record<StructuralIndicatorKind, LucideIcon> = {
+  clock: Clock,
   day: CalendarDays,
   food: Carrot,
   meal: Utensils,
@@ -68,6 +70,7 @@ const structuralIcons: Record<StructuralIndicatorKind, LucideIcon> = {
 };
 
 const structuralIndicatorColors: Record<StructuralIndicatorKind, string> = {
+  clock: tokens.color.meal,
   day: tokens.color.program,
   food: tokens.color.food,
   meal: tokens.color.meal,
