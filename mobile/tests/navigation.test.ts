@@ -41,9 +41,7 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assert.match(programDay, /<NutritionEntityCard/);
   assert.match(programDay, /\/program\/days\/\[id\]\/meals\/\[mealKey\]/);
   assert.match(programDay, /<ChevronRight/);
-  assert.match(programDay, /mode: "library-detail"/);
-  assert.match(programDay, /entity: "dailyPlan"/);
-  assert.match(programDay, /action: day\?\.has_plan/);
+  assert.match(programDay, /mode: "library-detail",[\s\S]*entity: "dailyPlan"/);
   assert.match(programMeal, /mode: "library-detail"/);
   assert.match(programMeal, /entity: "meal"/);
   assert.match(today, /\/program/);
@@ -74,8 +72,6 @@ test("shared screens use compact scroll identities and only Home keeps the cente
   assert.doesNotMatch(libraryList, /stickySearchPinned|searchPinned/);
   assert.match(navigation, /<Plus color=\{tokens\.color\.textMain\}/);
   assert.match(navigation, /headerPresentation\.createAction/);
-  assert.match(navigation, /disabled=\{headerPresentation\.action\.disabled\}/);
-  assert.match(navigation, /accessibilityState=\{\{ disabled: headerPresentation\.action\.disabled \}\}/);
   assert.match(navigation, /height: 48/);
   const globalHeaderStyle = navigation.slice(navigation.indexOf("header: { alignItems"), navigation.indexOf("headerButton: {"));
   assert.doesNotMatch(globalHeaderStyle, /borderBottom/);

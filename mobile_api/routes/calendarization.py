@@ -15,9 +15,6 @@ from mobile_api.schema_domains.calendarization import (
     CalendarizationReviewEnvelope,
     CalendarizationReviewInput,
     CalendarizationReviewListEnvelope,
-    CalendarizedDayDetailEnvelope,
-    CalendarizedMealHourInput,
-    CalendarizedNameInput,
     MealCheckInInput,
     ReminderSettingsEnvelope,
     ReminderSettingsInput,
@@ -33,7 +30,6 @@ from mobile_api.schemas import ErrorEnvelope
 from mobile_api.selectors import (
     active_program_payload,
     calendarization_history_payload,
-    calendarized_day_payload,
     reminder_settings_payload,
     review_payload,
     revision_payload,
@@ -45,11 +41,8 @@ from notas.application.services.commands.calendarization_commands import (
     cancel_calendarization,
     pause_calendarization,
     register_apple_push_subscription,
-    rename_calendarized_day_plan,
-    rename_calendarized_meal,
     resume_calendarization,
     update_calendarization_preferences,
-    update_calendarized_meal_hour,
 )
 from notas.application.services.commands.calendarization_execution_commands import (
     create_calendarization_review,
@@ -155,105 +148,6 @@ def activate_calendarization(request, payload: CalendarizationActivationInput):
 )
 def calendarization_history(request, limit: int = 20):
     return success(calendarization_history_payload(request.auth.user, limit=limit))
-
-
-@router.get(
-    "/program/days/{day_id}",
-    operation_id="mobile_api_api_calendarized_day_detail",
-    auth=mobile_bearer,
-    response={200: CalendarizedDayDetailEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope},
-)
-def calendarized_day_detail(request, day_id: int):
-    day = calendarized_day_payload(request.auth.user, day_id)
-    if day is None:
-        raise calendarization_error(ValueError("calendarized_day_not_found"))
-    return success(day)
-
-
-@router.patch(
-    "/program/days/{day_id}",
-    operation_id="mobile_api_api_calendarized_day_rename",
-    auth=mobile_bearer,
-    response={
-        200: CalendarizedDayDetailEnvelope,
-        403: ErrorEnvelope,
-        404: ErrorEnvelope,
-        409: ErrorEnvelope,
-        422: ErrorEnvelope,
-    },
-)
-def calendarized_day_rename(request, day_id: int, payload: CalendarizedNameInput):
-    require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    try:
-        rename_calendarized_day_plan(
-            user=request.auth.user,
-            day_id=day_id,
-            name=payload.name,
-        )
-    except ValueError as exc:
-        raise calendarization_error(exc) from exc
-    day = calendarized_day_payload(request.auth.user, day_id)
-    if day is None:
-        raise calendarization_error(ValueError("calendarized_day_not_found"))
-    return success(day)
-
-
-@router.patch(
-    "/program/days/{day_id}/meals/{meal_snapshot_key}",
-    operation_id="mobile_api_api_calendarized_meal_hour_update",
-    auth=mobile_bearer,
-    response={
-        200: CalendarizedDayDetailEnvelope,
-        403: ErrorEnvelope,
-        404: ErrorEnvelope,
-        409: ErrorEnvelope,
-        422: ErrorEnvelope,
-    },
-)
-def calendarized_meal_hour_update(request, day_id: int, meal_snapshot_key: str, payload: CalendarizedMealHourInput):
-    require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    try:
-        update_calendarized_meal_hour(
-            user=request.auth.user,
-            day_id=day_id,
-            meal_snapshot_key=meal_snapshot_key,
-            hour=payload.hour,
-        )
-    except ValueError as exc:
-        raise calendarization_error(exc) from exc
-    day = calendarized_day_payload(request.auth.user, day_id)
-    if day is None:
-        raise calendarization_error(ValueError("calendarized_day_not_found"))
-    return success(day)
-
-
-@router.patch(
-    "/program/days/{day_id}/meals/{meal_snapshot_key}/name",
-    operation_id="mobile_api_api_calendarized_meal_rename",
-    auth=mobile_bearer,
-    response={
-        200: CalendarizedDayDetailEnvelope,
-        403: ErrorEnvelope,
-        404: ErrorEnvelope,
-        409: ErrorEnvelope,
-        422: ErrorEnvelope,
-    },
-)
-def calendarized_meal_rename(request, day_id: int, meal_snapshot_key: str, payload: CalendarizedNameInput):
-    require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    try:
-        rename_calendarized_meal(
-            user=request.auth.user,
-            day_id=day_id,
-            meal_snapshot_key=meal_snapshot_key,
-            name=payload.name,
-        )
-    except ValueError as exc:
-        raise calendarization_error(exc) from exc
-    day = calendarized_day_payload(request.auth.user, day_id)
-    if day is None:
-        raise calendarization_error(ValueError("calendarized_day_not_found"))
-    return success(day)
 
 
 def _calendarization_state_action(request, calendarization_id: int, command):

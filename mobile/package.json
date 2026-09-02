@@ -54,7 +54,13 @@
     "export:web": "expo export --platform web"
   },
   "overrides": {
+    "@expo/plist": {
+      "@xmldom/xmldom": "0.8.15"
+    },
     "nanoid": "^3.3.18",
+    "plist": {
+      "@xmldom/xmldom": "0.9.12"
+    },
     "uuid": "^11.1.1"
   },
   "private": true

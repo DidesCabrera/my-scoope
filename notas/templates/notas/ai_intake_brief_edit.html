@@ -1,7 +1,9 @@
 {% extends "notas/base.html" %}
+{% load static %}
 
 {% block title %}Editar Brief Nutricional{% endblock %}
 {% block body_class %}page-home page-ai-intake page-ai-intake-brief-edit{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/components/ai_assistant.css' %}">{% endblock %}
 
 {% block content %}
 <div class="page home-page ai-intake-page">

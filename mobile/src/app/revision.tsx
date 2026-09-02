@@ -7,6 +7,7 @@ import type { CalendarizationRevision, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { AppHeader, Button, Card, InlineNotice, LoadingState, Pill, Screen, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
+import { refreshNativeReminders } from "@/notifications/native-reminders";
 
 export default function RevisionScreen() {
   const router = useRouter();
@@ -31,10 +32,18 @@ export default function RevisionScreen() {
     setSaving(true);
     setError(null);
     try {
-      setRevision(await apiRequest<CalendarizationRevision>(`/api/v1/program/revisions/${revision.id}/decision`, {
+      const updated = await apiRequest<CalendarizationRevision>(`/api/v1/program/revisions/${revision.id}/decision`, {
         method: "POST",
         body: JSON.stringify({ decision }),
-      }));
+      });
+      setRevision(updated);
+      if (updated.status === "applied") {
+        try {
+          await refreshNativeReminders(apiRequest);
+        } catch {
+          setError("El ajuste se aplicó, pero el iPhone no pudo actualizar sus avisos. Abre Recordatorios para reintentarlo.");
+        }
+      }
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {

@@ -13,6 +13,7 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { FoodPanels } from "@/components/panels";
 import { Button, InlineNotice, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
+import { refreshNativeReminders } from "@/notifications/native-reminders";
 
 export default function CalendarizedMealDetailScreen() {
   const { id, mealKey } = useLocalSearchParams<{ id: string; mealKey: string }>();
@@ -125,6 +126,7 @@ export default function CalendarizedMealDetailScreen() {
           const updatedMeal = day.plan_snapshot?.meals?.find((item) => item.key === mealKey) ?? null;
           setMeal(updatedMeal);
           setExecution(day.meal_execution.find((item) => item.meal_key === mealKey) ?? null);
+          await refreshNativeReminders(apiRequest);
         },
       }}
       visible={actionsVisible}

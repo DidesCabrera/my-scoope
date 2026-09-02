@@ -4,13 +4,12 @@ from ninja import NinjaAPI
 from ninja.errors import AuthenticationError
 from ninja.errors import ValidationError as NinjaValidationError
 
-from mobile_api.api_support import (
-    success as _success,
-)
+from mobile_api.api_support import success as _success
 from mobile_api.errors import MobileAPIError, error_envelope
 from mobile_api.routes.assistant import router as assistant_router
 from mobile_api.routes.billing import router as billing_router
 from mobile_api.routes.calendarization import router as calendarization_router
+from mobile_api.routes.calendarization_edits import router as calendarization_edits_router
 from mobile_api.routes.comparisons import router as comparisons_router
 from mobile_api.routes.composition import router as composition_router
 from mobile_api.routes.identity import router as identity_router
@@ -62,6 +61,7 @@ def health(request):
 api.add_router("", identity_router)
 api.add_router("", billing_router)
 api.add_router("", calendarization_router)
+api.add_router("", calendarization_edits_router)
 api.add_router("", proposals_router)
 api.add_router("", comparisons_router)
 api.add_router("", libraries_router)

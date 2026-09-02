@@ -1,5 +1,7 @@
 {% extends "notas/base.html" %}
+{% load static %}
 {% block title %}Chats{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/components/ai_assistant.css' %}">{% endblock %}
 {% block content %}
 
 <div class="page list ai-chat-history-page proposal-list-page">

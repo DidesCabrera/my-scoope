@@ -3,6 +3,7 @@
 
 {% block title %}Asistente nutricional{% endblock %}
 {% block body_class %}page-ai-intake{% if vm.content.conversation %} page-ai-intake-chat{% endif %}{% if assistant_credits.available_credits == 0 %} page-ai-intake-no-credits{% endif %}{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/components/ai_assistant.css' %}">{% endblock %}
 
 {% block content %}
 <div class="page home-page ai-intake-page">
