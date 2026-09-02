@@ -223,6 +223,11 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(calendarizedMealDetail, /<FoodPanels items=\{foods\} \/>[\s\S]*<MealAdherenceCheckIn/);
   assert.match(calendarizedMealDetail, /completion=\{\{/);
   assert.match(calendarizedMealDetail, /onChange=\{setExecution\}/);
+  assert.match(calendarizedMealDetail, /<CalendarizedEntityActions/);
+  assert.match(calendarizedMealDetail, /rename=\{\{/);
+  assert.match(calendarizedMealDetail, /timeChange=\{\{/);
+  assert.match(calendarizedMealDetail, /method: "PATCH"/);
+  assert.match(calendarizedMealDetail, /\/api\/v1\/program\/days\/\$\{dayId\}\/meals\//);
   assert.doesNotMatch(calendarizedMealDetail, /\/api\/v1\/library\/meals/);
 
   const sharedEntityPanels = await readFile(
@@ -364,6 +369,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(calendarizedDayDetail, /perKilogram: totals\?\.protein_per_kilogram \?\? null/);
   assert.match(calendarizedDayDetail, /<SectionDivider \/>[\s\S]*title="Detalle de cada Comida"/);
   assert.match(calendarizedDayDetail, /snapshotDailyPlanFoodPanelItems\(meals\)/);
+  assert.match(calendarizedDayDetail, /<CalendarizedEntityActions/);
+  assert.match(calendarizedDayDetail, /rename=\{\{/);
   assert.match(calendarizedDayDetail, /<SectionDivider \/>[\s\S]*title="Alimentos en este plan diario"[\s\S]*<FoodPanels items=\{foods\} \/>/);
 
   const calendarizationAdapters = await readFile(

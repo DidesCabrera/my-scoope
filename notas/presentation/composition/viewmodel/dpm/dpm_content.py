@@ -48,6 +48,7 @@ def build_dpm_detail_content_data(
         dpm=dpm,
         user=user,
         viewmode=viewmode,
+        context={"query": program_context_query},
     )
 
     dailyplan_kpis = dailyplan_kpis or build_nutrition_kpis_from_dailyplan(
@@ -119,7 +120,7 @@ def build_dpm_detail_content_data(
         },
         "related_data": {
             "rel_id": dpm.id,
-            "hour": str(dpm.hour) if dpm.hour else None,
+            "hour": dpm.hour.strftime("%H:%M") if dpm.hour else None,
             "note": dpm.note,
             "alloc_protein": meal_alloc["protein"],
             "alloc_carbs": meal_alloc["carbs"],

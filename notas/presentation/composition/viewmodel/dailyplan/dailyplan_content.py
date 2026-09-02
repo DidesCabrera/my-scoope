@@ -256,7 +256,7 @@ def build_dailyplan_detail_content_data(
                 "foods_aggregation": meal_foods_aggregation,
                 "related_data": {
                     "rel_id": dpm.id,
-                    "hour": str(dpm.hour) if dpm.hour else None,
+                    "hour": dpm.hour.strftime("%H:%M") if dpm.hour else None,
                     "note": dpm.note,
                     "alloc_protein": meal_alloc["protein"],
                     "alloc_carbs": meal_alloc["carbs"],

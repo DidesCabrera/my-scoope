@@ -24,6 +24,7 @@ class NavGroupSpec:
     nav_root: Optional[str] = None
     scope: Optional[str] = None
     page_icon: Optional[str] = None
+    page_title: Optional[str] = None
     show_in_sidebar: bool = True
 
     action_url_name: Optional[str] = None
@@ -68,19 +69,11 @@ APP_NAVIGATION = (
                 show_in_sidebar=False,
             ),
             NavGroupSpec(
-                key="chat_new",
-                label="Nuevo Chat",
-                icon="message-square-plus",
-                page_icon="message-square-plus",
-                url_name="ai_nutrition_chat_new",
-                nav_root="chat",
-                scope="create",
-            ),
-            NavGroupSpec(
                 key="chat",
-                label="Chats",
+                label="Asistente",
                 icon="sparkles",
                 page_icon="sparkles",
+                page_title="Chats",
                 url_name="ai_nutrition_chat_list",
                 nav_root="chat",
                 scope="personal",

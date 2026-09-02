@@ -33,6 +33,7 @@ def build_dailyplan_menu(dailyplan_meals):
             MenuMealUI(
                 meal_name=meal.name,
                 foods=foods,
+                hour=dpm.hour.strftime("%H:%M") if dpm.hour else None,
                 target_id=f"dailyplan-meal-step-{dpm.id}",
             )
         )

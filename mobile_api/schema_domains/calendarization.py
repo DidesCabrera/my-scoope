@@ -27,6 +27,14 @@ class MealExecutionData(Schema):
     note: str = ""
 
 
+class CalendarizedMealHourInput(Schema):
+    hour: time
+
+
+class CalendarizedNameInput(Schema):
+    name: str = Field(min_length=1, max_length=255)
+
+
 class AdherenceData(Schema):
     period_start: date
     period_end: date

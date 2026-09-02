@@ -1,3 +1,5 @@
+from datetime import time
+
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
@@ -59,40 +61,87 @@ class DailyPlanMealViewTests(TestCase):
         self.assertEqual(dpm.note, "Breakfast slot")
         self.assertIsNotNone(dpm.hour)
 
-    def test_dailyplanmeal_edit_updates_slot_metadata_without_replacing_meal(self):
-        original_meal = Meal.objects.create(
-            name="Original meal",
+    def test_change_time_action_updates_only_the_slot_and_preserves_its_note(self):
+        meal = Meal.objects.create(
+            name="Desayuno",
             created_by=self.user,
             is_draft=False,
-            is_public=False,
-            is_forkable=True,
-            is_copiable=False,
         )
-
         dpm = DailyPlanMeal.objects.create(
             dailyplan=self.dailyplan,
-            meal=original_meal,
-            note="Old note",
+            meal=meal,
+            hour=time(8),
+            note="Antes de entrenar",
             order=1,
         )
+        change_url = reverse("dailyplanmeal_change_time", args=[self.dailyplan.id, dpm.id])
+        detail_url = reverse("dailyplan_meal_detail", args=[self.dailyplan.id, dpm.id])
 
-        original_meal_id = dpm.meal_id
-
-        response = self.client.post(
-            reverse("dailyplan_meal_edit", args=[self.dailyplan.id, dpm.id]),
-            data={
-                "hour": "10:15",
-                "note": "Updated note",
-            },
+        detail = self.client.get(detail_url)
+        form = self.client.get(change_url)
+        updated = self.client.post(
+            change_url,
+            {"hour": "09:35", "note": "Este campo legacy debe ignorarse"},
         )
 
-        self.assertEqual(response.status_code, 302)
-
+        self.assertContains(detail, "Cambiar hora")
+        self.assertContains(detail, change_url)
+        self.assertNotContains(detail, "entity-heading__subtitle")
+        self.assertContains(form, "Hora de la comida")
+        self.assertContains(form, 'value="08:00"')
+        self.assertNotContains(form, 'name="note"')
+        self.assertEqual(list(form.context["form"].fields), ["hour"])
+        action_keys = [
+            action["key"]
+            for action in detail.context["vm"]["content"]["header"]["actions"]
+        ]
+        self.assertEqual(
+            action_keys,
+            [
+                "back_dp_detail",
+                "change_time",
+                "rename",
+                "share",
+                "save_to_library",
+                "replace",
+            ],
+        )
+        self.assertRedirects(updated, detail_url)
         dpm.refresh_from_db()
+        self.assertEqual(dpm.hour, time(9, 35))
+        self.assertEqual(dpm.note, "Antes de entrenar")
 
-        self.assertEqual(dpm.meal_id, original_meal_id)
-        self.assertEqual(dpm.note, "Updated note")
-        self.assertIsNotNone(dpm.hour)
+    def test_change_time_rejects_invalid_hour_and_ignores_legacy_note_field(self):
+        meal = Meal.objects.create(name="Cena", created_by=self.user, is_draft=False)
+        dpm = DailyPlanMeal.objects.create(
+            dailyplan=self.dailyplan,
+            meal=meal,
+            hour=time(20),
+            note="Nota que debe conservarse",
+            order=1,
+        )
+        change_url = reverse("dailyplanmeal_change_time", args=[self.dailyplan.id, dpm.id])
+
+        response = self.client.post(
+            change_url,
+            {"hour": "hora-inválida", "note": "Intento de cambio"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Selecciona una hora válida")
+        dpm.refresh_from_db()
+        self.assertEqual(dpm.hour, time(20))
+        self.assertEqual(dpm.note, "Nota que debe conservarse")
+
+    def test_legacy_dailyplan_meal_edit_route_is_removed(self):
+        meal = Meal.objects.create(name="Colación", created_by=self.user, is_draft=False)
+        dpm = DailyPlanMeal.objects.create(dailyplan=self.dailyplan, meal=meal, order=1)
+
+        response = self.client.get(
+            f"/dailyplans/{self.dailyplan.id}/meals/{dpm.id}/edit/",
+        )
+
+        self.assertEqual(response.status_code, 404)
 
     def test_dailyplanmeal_update_replaces_slot_with_new_snapshot(self):
         meal_a = Meal.objects.create(

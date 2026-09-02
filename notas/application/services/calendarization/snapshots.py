@@ -45,6 +45,11 @@ def _round(value, digits=3):
     return round(float(value), digits)
 
 
+def snapshot_content_hash(payload: dict) -> str:
+    canonical_payload = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical_payload.encode("utf-8")).hexdigest()
+
+
 def build_dailyplan_snapshot(program_day) -> DailyPlanSnapshotResult:
     dailyplan = program_day.dailyplan
     meals = []
@@ -98,9 +103,7 @@ def build_dailyplan_snapshot(program_day) -> DailyPlanSnapshotResult:
             "total_kcal": _round(dailyplan.total_kcal),
         },
     }
-    canonical_payload = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return DailyPlanSnapshotResult(
         payload=payload,
-        content_hash=hashlib.sha256(canonical_payload.encode("utf-8")).hexdigest(),
+        content_hash=snapshot_content_hash(payload),
     )
-

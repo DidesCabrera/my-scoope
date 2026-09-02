@@ -16,6 +16,11 @@ urlpatterns = [
     ),
     path("calendarization/days/<int:day_id>/", calendarization.day_detail, name="calendarization_day_detail"),
     path(
+        "calendarization/days/<int:day_id>/rename/",
+        calendarization.day_rename,
+        name="calendarization_day_rename",
+    ),
+    path(
         "calendarization/days/<int:day_id>/meals/<str:meal_snapshot_key>/",
         calendarization.meal_detail,
         name="calendarization_meal_detail",
@@ -24,6 +29,16 @@ urlpatterns = [
         "calendarization/days/<int:day_id>/meals/<str:meal_snapshot_key>/check-in/",
         calendarization.meal_check_in,
         name="calendarization_meal_check_in",
+    ),
+    path(
+        "calendarization/days/<int:day_id>/meals/<str:meal_snapshot_key>/change-time/",
+        calendarization.meal_change_time,
+        name="calendarization_meal_change_time",
+    ),
+    path(
+        "calendarization/days/<int:day_id>/meals/<str:meal_snapshot_key>/rename/",
+        calendarization.meal_rename,
+        name="calendarization_meal_rename",
     ),
     path("calendarization/push/subscriptions/", calendarization.push_subscribe, name="calendarization_push_subscribe"),
     path(

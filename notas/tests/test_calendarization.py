@@ -18,6 +18,7 @@ from notas.application.services.commands.calendarization_commands import (
     register_web_push_subscription,
     resume_calendarization,
     update_calendarization_preferences,
+    update_calendarized_meal_hour,
 )
 from notas.application.services.notifications.apple_push import ApplePushSendResult
 from notas.application.services.notifications.web_push import (
@@ -90,6 +91,43 @@ class CalendarizationCommandTests(CalendarizationFixtureMixin, TestCase):
         day = CalendarizedDay.objects.select_related("calendarization").get(id=day_id)
         self.assertIsNone(day.calendarization.source_program)
         self.assertEqual(day.plan_snapshot["name"], "Día original")
+
+    def test_changing_active_meal_hour_updates_snapshot_hash_and_reschedules_reminder(self):
+        meal = Meal.objects.create(name="Desayuno activo", created_by=self.user)
+        slot = DailyPlanMeal.objects.create(
+            dailyplan=self.dailyplan,
+            meal=meal,
+            hour=time(8),
+            order=1,
+        )
+        result = self.activate(
+            start_date=date(2026, 7, 20),
+            timezone_name="UTC",
+            meal_notifications_enabled=True,
+            now=datetime(2026, 7, 19, 12, tzinfo=UTC),
+        )
+        day = result.calendarization.days.get(day_number=1)
+        meal_key = f"dailyplan_meal:{slot.id}"
+        original_hash = day.snapshot_hash
+
+        update_calendarized_meal_hour(
+            user=self.user,
+            day_id=day.id,
+            meal_snapshot_key=meal_key,
+            hour=time(9, 25),
+            now=datetime(2026, 7, 19, 12, tzinfo=UTC),
+        )
+
+        day.refresh_from_db()
+        event = ScheduledNotificationEvent.objects.get(
+            calendarized_day=day,
+            event_type=ScheduledNotificationEvent.TYPE_MEAL_REMINDER,
+            meal_snapshot_key=meal_key,
+        )
+        self.assertEqual(day.plan_snapshot["meals"][0]["hour"], "09:25")
+        self.assertNotEqual(day.snapshot_hash, original_hash)
+        self.assertEqual(event.local_scheduled_time, time(9, 25))
+        self.assertEqual(event.status, ScheduledNotificationEvent.STATUS_PENDING)
 
     def test_incomplete_program_requires_explicit_confirmation(self):
         with self.assertRaisesMessage(ValueError, "calendarization_incomplete_confirmation_required"):
@@ -558,6 +596,112 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
 
         self.assertEqual(response.status_code, 404)
         self.assertFalse(CalendarizedMealExecution.objects.exists())
+
+    def test_active_meal_header_exposes_change_time_and_web_form_updates_snapshot(self):
+        meal = Meal.objects.create(name="Almuerzo activo", created_by=self.user)
+        slot = DailyPlanMeal.objects.create(
+            dailyplan=self.dailyplan,
+            meal=meal,
+            hour=time(13),
+            order=1,
+        )
+        day = self.activate(
+            start_date=date(2026, 7, 20),
+            timezone_name="UTC",
+            now=datetime(2026, 7, 19, 12, tzinfo=UTC),
+        ).calendarization.days.get(day_number=1)
+        meal_key = f"dailyplan_meal:{slot.id}"
+        detail_url = reverse("calendarization_meal_detail", args=[day.id, meal_key])
+        change_url = reverse("calendarization_meal_change_time", args=[day.id, meal_key])
+        rename_url = reverse("calendarization_meal_rename", args=[day.id, meal_key])
+
+        detail = self.client.get(detail_url)
+        form = self.client.get(change_url)
+        updated = self.client.post(
+            change_url,
+            {"hour": "14:10", "note": "Este campo legacy debe ignorarse"},
+        )
+
+        self.assertContains(detail, "Cambiar hora")
+        self.assertContains(detail, change_url)
+        self.assertContains(detail, "Renombrar")
+        self.assertContains(detail, rename_url)
+        self.assertContains(detail, "13:00")
+        action_keys = [
+            action["key"]
+            for action in detail.context["vm"]["content"]["header"]["actions"]
+        ]
+        self.assertEqual(
+            action_keys,
+            ["calendarization_history", "rename", "change_time"],
+        )
+        self.assertContains(form, "plan activo")
+        self.assertNotContains(form, 'name="note"')
+        self.assertEqual(list(form.context["form"].fields), ["hour"])
+        self.assertRedirects(updated, detail_url)
+        day.refresh_from_db()
+        self.assertEqual(day.plan_snapshot["meals"][0]["hour"], "14:10")
+        self.assertEqual(day.plan_snapshot["meals"][0].get("note", ""), "")
+
+    def test_active_plan_and_meal_headers_rename_only_the_day_snapshot(self):
+        meal = Meal.objects.create(name="Cena original", created_by=self.user)
+        slot = DailyPlanMeal.objects.create(
+            dailyplan=self.dailyplan,
+            meal=meal,
+            hour=time(20),
+            order=1,
+        )
+        day = self.activate(
+            start_date=date(2026, 7, 20),
+            timezone_name="UTC",
+            now=datetime(2026, 7, 19, 12, tzinfo=UTC),
+        ).calendarization.days.get(day_number=1)
+        meal_key = f"dailyplan_meal:{slot.id}"
+        day_detail_url = reverse("calendarization_day_detail", args=[day.id])
+        day_rename_url = reverse("calendarization_day_rename", args=[day.id])
+        meal_detail_url = reverse(
+            "calendarization_meal_detail",
+            args=[day.id, meal_key],
+        )
+        meal_rename_url = reverse(
+            "calendarization_meal_rename",
+            args=[day.id, meal_key],
+        )
+
+        day_detail = self.client.get(day_detail_url)
+        day_form = self.client.get(day_rename_url)
+        renamed_day = self.client.post(
+            day_rename_url,
+            {"name": "Plan activo personalizado"},
+        )
+        meal_form = self.client.get(meal_rename_url)
+        renamed_meal = self.client.post(
+            meal_rename_url,
+            {"name": "Cena activa personalizada"},
+        )
+
+        self.assertContains(day_detail, "Renombrar")
+        self.assertContains(day_detail, day_rename_url)
+        day_action_keys = [
+            action["key"]
+            for action in day_detail.context["vm"]["content"]["header"]["actions"]
+        ]
+        self.assertEqual(day_action_keys, ["calendarization_history", "rename"])
+        self.assertContains(day_form, "Renombrar plan activo")
+        self.assertContains(meal_form, "Renombrar comida activa")
+        self.assertRedirects(renamed_day, day_detail_url)
+        self.assertRedirects(renamed_meal, meal_detail_url)
+
+        day.refresh_from_db()
+        self.dailyplan.refresh_from_db()
+        meal.refresh_from_db()
+        self.assertEqual(day.plan_snapshot["name"], "Plan activo personalizado")
+        self.assertEqual(
+            day.plan_snapshot["meals"][0]["name"],
+            "Cena activa personalizada",
+        )
+        self.assertEqual(self.dailyplan.name, "Día original")
+        self.assertEqual(meal.name, "Cena original")
 
     def test_push_subscription_rejects_malformed_json_shape(self):
         response = self.client.post(

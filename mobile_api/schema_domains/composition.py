@@ -30,7 +30,7 @@ class MealFoodUpdateInput(Schema):
 
 class DailyPlanMealUpdateInput(Schema):
     hour: time | None = None
-    note: str = Field(default="", max_length=500)
+    note: str | None = Field(default=None, max_length=500)
 
 
 class CompositionMutationData(Schema):

@@ -182,7 +182,7 @@ def build_breadcrumb_vm(viewmode, parents=None, instance=None):
         elif group.is_link:
             breadcrumb.append(
                 BreadcrumbItem(
-                    label=group.label,
+                    label=group.page_title or group.label,
                     url=safe_reverse(group.url_name),
                 )
             )
@@ -243,7 +243,7 @@ def build_navigation_meta(viewmode):
         "icon": group.icon,
         "page_icon": group.page_icon or group.icon,
         "section_label": section.label,
-        "default_title": group.label,
+        "default_title": group.page_title or group.label,
         "default_root": section.label,
     }
 
@@ -318,4 +318,3 @@ def build_back_url(viewmode, parents=None, breadcrumb=None, back_config=None):
 
 
 
-    

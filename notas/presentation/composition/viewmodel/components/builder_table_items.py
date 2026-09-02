@@ -113,7 +113,7 @@ def build_dailyplanmeal_table_item(dpm, dailyplan_snapshot=None):
         # RELACIÓN EXPLÍCITA
         "rel": {
             "id": dpm.id,
-            "hour": dpm.hour,
+            "hour": dpm.hour.strftime("%H:%M") if dpm.hour else None,
             "note": dpm.note,
 
             "name": meal.name,

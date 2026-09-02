@@ -13,14 +13,8 @@
                     class="data-grid-meal-title data-grid-meal-title--action"
                     {% if meal.target_id %}data-dailyplan-meal-target="{{ meal.target_id }}"{% endif %}
                 >
-                    {% include "components/grid_meal_identity.html" with meal_name=meal.meal_name %}
+                    {% include "components/grid_meal_identity.html" with meal_name=meal.meal_name meal_time=meal.hour %}
                 </button>
-
-                {% if meal.hour %}
-                    <div class="data-grid-meal-hour">
-                        {{ meal.hour }}
-                    </div>
-                {% endif %}
             </div>
 
             <div class="data-grid-cell data-grid-cell--foods">
