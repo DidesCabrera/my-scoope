@@ -71,6 +71,15 @@ def _context(viewmode, content):
     return {"vm": {"ui": asdict(ui), "content": content}}
 
 
+def _can_check_in_today(day) -> bool:
+    calendarization = day.calendarization
+    today = today_for_calendarization(calendarization)
+    return day.calendar_date == today and calendarization.status in {
+        calendarization.STATUS_SCHEDULED,
+        calendarization.STATUS_ACTIVE,
+    }
+
+
 def _header(*, history=False, extra_actions=None):
     action = {
         "key": "calendarization_dashboard" if history else "calendarization_history",
@@ -244,10 +253,7 @@ def day_detail(request, day_id):
         )
         execution = meal_execution_state_for_day(day)
         state_by_key = {item["meal_key"]: item for item in execution}
-        can_check_in = (
-            day.calendarization.status == day.calendarization.STATUS_ACTIVE
-            and day.calendar_date == today_for_calendarization(day.calendarization)
-        )
+        can_check_in = _can_check_in_today(day)
         return_to = reverse("calendarization_day_detail", args=[day.id])
         meal_entries = []
         for index, (meal, child_card) in enumerate(
@@ -305,10 +311,7 @@ def meal_detail(request, day_id, meal_snapshot_key):
     )
     if detail is None:
         raise Http404("Comida calendarizada no encontrada")
-    detail["can_check_in"] = (
-        day.calendarization.status == day.calendarization.STATUS_ACTIVE
-        and day.calendar_date == today_for_calendarization(day.calendarization)
-    )
+    detail["can_check_in"] = _can_check_in_today(day)
     detail["status_idempotency_key"] = f"web-meal-status-{uuid.uuid4()}"
     detail["note_idempotency_key"] = f"web-meal-note-{uuid.uuid4()}"
     detail["instance_id"] = f"{day.id}-detail"

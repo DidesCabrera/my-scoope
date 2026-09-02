@@ -693,6 +693,39 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
         self.assertContains(dashboard, "1/1")
         self.assertContains(dashboard, "100%")
 
+    def test_scheduled_program_exposes_todays_meal_check_in_and_activates_on_submit(self):
+        meal = Meal.objects.create(name="Desayuno programado", created_by=self.user)
+        slot = DailyPlanMeal.objects.create(
+            dailyplan=self.dailyplan,
+            meal=meal,
+            hour=time(8),
+            order=1,
+        )
+        today = timezone.localdate(timezone=UTC)
+        calendarization = self.activate(
+            start_date=today,
+            timezone_name="UTC",
+            now=datetime.combine(today - timedelta(days=1), time(6), tzinfo=UTC),
+        ).calendarization
+        day = calendarization.days.get(day_number=1)
+        meal_key = f"dailyplan_meal:{slot.id}"
+        detail_url = reverse("calendarization_meal_detail", args=[day.id, meal_key])
+
+        detail = self.client.get(detail_url)
+        self.assertContains(detail, "Cumplimiento de esta comida")
+        response = self.client.post(
+            reverse("calendarization_meal_check_in", args=[day.id, meal_key]),
+            {
+                "action": "completed",
+                "idempotency_key": "scheduled-status-test-0001",
+            },
+        )
+
+        self.assertRedirects(response, detail_url)
+        calendarization.refresh_from_db()
+        self.assertEqual(calendarization.status, ProgramCalendarization.STATUS_ACTIVE)
+        self.assertTrue(CalendarizedMealExecution.objects.filter(calendarized_day=day).exists())
+
     def test_web_meal_check_in_rejects_another_users_day(self):
         meal = Meal.objects.create(name="Comida privada", created_by=self.user)
         slot = DailyPlanMeal.objects.create(
