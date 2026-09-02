@@ -13,16 +13,25 @@ from notas.application.queries.calendarization_execution_queries import (
     calendarization_progress_summary,
     meal_execution_state_for_day,
 )
+from notas.application.queries.calendarization_projection_queries import (
+    build_calendarization_snapshot_projection,
+    snapshot_nutrition_totals,
+)
 from notas.application.queries.calendarization_queries import (
     current_calendarization_for_user,
     today_for_calendarization,
 )
-from notas.application.services.cache.program_summary import get_program_summary
-from notas.domain.models import DailyPlan
-from notas.presentation.config.viewmodel_config import DAILYPLAN_VIEWMODE_PERSONAL_LIST
-from notas.presentation.viewmodels.dailyplans import (
-    build_dailyplan_list_content_data,
-    build_dailyplan_list_vm,
+from notas.application.services.nutrition.weight import get_current_weight
+from notas.domain.services.nutrition import macro_kcal_distribution
+from notas.presentation.resolvers.title_resolvers import resolve_category_badge
+from notas.presentation.viewmodels.content.dailyplan.list_vm import (
+    KPIUI,
+    ChildCardUI,
+    FoodsAggregationUI,
+    MenuUI,
+    MetadataUI,
+    StructuralIndicatorsUI,
+    TitleUI,
 )
 
 WEEKDAY_LABELS = ("L", "M", "M", "J", "V", "S", "D")
@@ -212,7 +221,13 @@ def build_home_calendarization_vm(
         else (today if monday == today_monday else monday)
     )
     calendarized_days = {day.calendar_date: day for day in (calendarization.days.all() if calendarization else ())}
-    dailyplans_by_id = _dailyplan_cards_by_id(user, calendarized_days.values())
+    projection = (
+        build_calendarization_snapshot_projection(calendarization)
+        if calendarization
+        else None
+    )
+    current_weight = get_current_weight(user) if calendarization else None
+    owner_label = str(user)
 
     weeks = [
         _build_week_vm(
@@ -221,7 +236,8 @@ def build_home_calendarization_vm(
             selected_date=selected_date,
             today=today,
             calendarized_days=calendarized_days,
-            dailyplans_by_id=dailyplans_by_id,
+            current_weight=current_weight,
+            owner_label=owner_label,
             navigation_view_name=navigation_view_name,
         )
         for week_monday in week_starts
@@ -239,13 +255,11 @@ def build_home_calendarization_vm(
             period_start=calendarization.start_date,
             period_end=min(today, calendarization.end_date),
         )
-    source_program = calendarization.source_program if calendarization else None
     active_week_number = ((monday - week_starts[0]).days // 7) + 1 if calendarization else 1
-    program_summary = get_program_summary(source_program) if source_program else None
     active_week_summary = next(
         (
             week
-            for week in (program_summary["weeks"] if program_summary else [])
+            for week in (projection["weeks"] if projection else [])
             if week["week_number"] == active_week_number
         ),
         None,
@@ -272,13 +286,9 @@ def build_home_calendarization_vm(
         adhered_days=adherence_summary["completed_meals"] if adherence_summary else 0,
         planned_adherence_days=adherence_summary["elapsed_meals"] if adherence_summary else 0,
         adherence=adherence_summary["adherence_percent"] if adherence_summary else 0,
-        weeks_count=source_program.normalized_duration_weeks
-        if source_program
-        else max(1, (progress_total_days + 6) // 7),
-        assigned_plans_count=source_program.filled_days_count
-        if source_program
-        else sum(1 for day in calendarized_days.values() if day.has_plan),
-        foods_count=program_summary["program_foods_count"] if program_summary else 0,
+        weeks_count=projection["duration_weeks"] if projection else 0,
+        assigned_plans_count=projection["filled_days_count"] if projection else 0,
+        foods_count=projection["program_foods_count"] if projection else 0,
         active_week_summary=active_week_summary,
         dashboard_url=reverse("calendarization_dashboard"),
         has_multiple_weeks=len(weeks) > 1,
@@ -303,7 +313,8 @@ def _build_week_vm(
     selected_date: date,
     today: date,
     calendarized_days,
-    dailyplans_by_id,
+    current_weight,
+    owner_label: str,
     navigation_view_name: str,
 ) -> HomeCalendarWeekVM:
     is_active_week = week_monday == active_monday
@@ -313,11 +324,15 @@ def _build_week_vm(
         calendarized_day = calendarized_days.get(calendar_date)
         has_plan = bool(calendarized_day and calendarized_day.has_plan)
         dailyplan_card = (
-            dailyplans_by_id.get(calendarized_day.source_dailyplan_id)
-            if is_active_week and has_plan and calendarized_day.source_dailyplan_id
+            _build_snapshot_dailyplan_card(
+                calendarized_day,
+                current_weight=current_weight,
+                owner_label=owner_label,
+            )
+            if is_active_week and has_plan
             else None
         )
-        execution = meal_execution_state_for_day(calendarized_day) if dailyplan_card is not None else []
+        execution = meal_execution_state_for_day(calendarized_day) if has_plan else []
         state_by_key = {item["meal_key"]: item for item in execution}
         calendarized_meals = []
         for meal in (calendarized_day.plan_snapshot or {}).get("meals", []) if calendarized_day else []:
@@ -375,22 +390,112 @@ def _build_week_vm(
     )
 
 
-def _dailyplan_cards_by_id(user, calendarized_days) -> dict[int, object]:
-    dailyplan_ids = [day.source_dailyplan_id for day in calendarized_days if day.source_dailyplan_id and day.has_plan]
+def _percentage(part: float, total: float) -> float:
+    return (part / total) * 100 if total > 0 else 0
 
-    if not dailyplan_ids:
-        return {}
 
-    dailyplans = (
-        DailyPlan.objects.filter(id__in=dailyplan_ids)
-        .select_related("created_by", "original_author", "forked_from")
-        .prefetch_related("shares", "dailyplan_meals__meal__meal_food_set__food")
-        .order_by("id")
+def _snapshot_meal_table_items(snapshot: dict, plan_totals: dict) -> list[dict]:
+    items = []
+    for index, meal in enumerate(snapshot.get("meals", [])):
+        if not isinstance(meal, dict):
+            continue
+        totals = snapshot_nutrition_totals({"totals": meal.get("totals") or {}})
+        items.append(
+            {
+                "main_id": snapshot.get("source", {}).get("dailyplan_id"),
+                "child_id": meal.get("key") or index,
+                "rel": {
+                    "id": meal.get("key") or index,
+                    "hour": meal.get("hour"),
+                    "note": meal.get("note") or "",
+                    "name": meal.get("name") or "Comida",
+                    "total_kcal": totals["total_kcal"],
+                    "kcal_share": _percentage(
+                        totals["total_kcal"],
+                        plan_totals["total_kcal"],
+                    ),
+                    "kcal_distribution": macro_kcal_distribution(
+                        totals["kcal_protein"],
+                        totals["kcal_carbs"],
+                        totals["kcal_fat"],
+                    ),
+                    "g_protein": totals["protein"],
+                    "g_carbs": totals["carbs"],
+                    "g_fat": totals["fat"],
+                    "alloc_protein": _percentage(
+                        totals["kcal_protein"],
+                        plan_totals["kcal_protein"],
+                    ),
+                    "alloc_carbs": _percentage(
+                        totals["kcal_carbs"],
+                        plan_totals["kcal_carbs"],
+                    ),
+                    "alloc_fat": _percentage(
+                        totals["kcal_fat"],
+                        plan_totals["kcal_fat"],
+                    ),
+                },
+            }
+        )
+    return items
+
+
+def _build_snapshot_dailyplan_card(day, *, current_weight, owner_label: str) -> ChildCardUI:
+    snapshot = day.plan_snapshot
+    totals = snapshot_nutrition_totals(snapshot)
+    meals = [meal for meal in snapshot.get("meals", []) if isinstance(meal, dict)]
+    food_names = {
+        str(food.get("name") or "Alimento").strip().casefold()
+        for meal in meals
+        for food in meal.get("foods", [])
+        if isinstance(food, dict)
+    }
+    detail_url = reverse("calendarization_day_detail", args=[day.id])
+    return ChildCardUI(
+        child_id=day.id,
+        titulo=TitleUI(
+            name=snapshot.get("name") or "Plan diario",
+            label="DailyPlan",
+            icon="clipboard-list",
+            category="en plan",
+            category_badge=resolve_category_badge("en plan"),
+            structural_indicators=StructuralIndicatorsUI(
+                meals_count=len(meals),
+                foods_count=len(food_names),
+            ),
+            url=detail_url,
+        ),
+        kpis=KPIUI(
+            ppk=(totals["protein"] / current_weight) if current_weight else 0,
+            tot_kcal=totals["total_kcal"],
+            g_protein=totals["protein"],
+            g_carbs=totals["carbs"],
+            g_fat=totals["fat"],
+            kcal_protein=totals["kcal_protein"],
+            kcal_carbs=totals["kcal_carbs"],
+            kcal_fat=totals["kcal_fat"],
+            alloc_protein=totals["alloc"]["protein"],
+            alloc_carbs=totals["alloc"]["carbs"],
+            alloc_fat=totals["alloc"]["fat"],
+        ),
+        table={"items": _snapshot_meal_table_items(snapshot, totals)},
+        menu=MenuUI(meals=[]),
+        foods_aggregation=FoodsAggregationUI(foods_aggregation=[]),
+        metadata=MetadataUI(
+            owner=owner_label,
+            author=owner_label,
+            fork_from=None,
+        ),
+        actions=[
+            {
+                "key": "detail",
+                "label": "Ver detalle",
+                "url": detail_url,
+                "method": "get",
+                "icon": "chevron-right",
+                "desktop_position": "inline",
+                "mobile_position": "inline",
+                "extra_class": "",
+            }
+        ],
     )
-    content_data = build_dailyplan_list_content_data(
-        dailyplans=dailyplans,
-        user=user,
-        viewmode=DAILYPLAN_VIEWMODE_PERSONAL_LIST,
-    )
-    list_vm = build_dailyplan_list_vm(content_data)
-    return {card.child_id: card for card in list_vm.child_cards}
