@@ -84,9 +84,28 @@ class MobileAPICalendarizationTests(AuthenticatedMobileAPITestCase):
             day_number=1,
             plan_snapshot={
                 "name": "Día alto en carbohidratos",
-                "meals": [{"key": f"dailyplan_meal:{slot.id}", "name": meal.name}],
+                "totals": {"protein_g": 30, "carbs_g": 60, "fat_g": 20, "total_kcal": 540},
+                "meals": [
+                    {
+                        "key": f"dailyplan_meal:{slot.id}",
+                        "name": meal.name,
+                        "totals": {"protein_g": 30, "carbs_g": 60, "fat_g": 20, "total_kcal": 540},
+                        "foods": [
+                            {
+                                "key": "meal_food:999",
+                                "name": "Avena snapshot",
+                                "quantity_g": 80,
+                                "protein_g": 10,
+                                "carbs_g": 50,
+                                "fat_g": 6,
+                                "total_kcal": 294,
+                            }
+                        ],
+                    }
+                ],
             },
         )
+        program.delete()
 
         today_response = self.client.get("/api/v1/today")
         active_response = self.client.get("/api/v1/program/active")
@@ -97,9 +116,20 @@ class MobileAPICalendarizationTests(AuthenticatedMobileAPITestCase):
         self.assertEqual(today_response.json()["data"]["plan_snapshot"]["meals"][0]["detail_id"], meal.id)
         self.assertEqual(active_response.status_code, 200)
         self.assertEqual(active_response.json()["data"]["calendarization"]["id"], calendarization.id)
-        self.assertEqual(active_response.json()["data"]["weeks_count"], 11)
-        self.assertEqual(len(active_response.json()["data"]["weeks"]), 11)
-        self.assertEqual(active_response.json()["data"]["weeks"][0]["week_number"], 1)
+        active_data = active_response.json()["data"]
+        self.assertEqual(active_data["weeks_count"], 1)
+        self.assertIsNone(active_data["calendarization"]["source_program_id"])
+        self.assertEqual(len(active_data["weeks"]), 1)
+        self.assertEqual(active_data["weeks"][0]["week_number"], 1)
+        self.assertEqual(
+            active_data["weeks"][0]["days"][0]["plan_name"],
+            "Día alto en carbohidratos",
+        )
+        self.assertEqual(
+            active_data["weeks"][0]["foods"][0]["name"],
+            "Avena snapshot",
+        )
+        self.assertEqual(active_data["indicators"][2]["value"], 1)
         self.assertEqual(len(active_response.json()["data"]["days"]), 1)
 
     def test_calendarization_activation_requires_explicit_incomplete_and_replacement_confirmation(self):

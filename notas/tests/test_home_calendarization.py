@@ -87,8 +87,41 @@ class HomeCalendarizationTests(TestCase):
             week_number=1,
             day_number=3,
             source_dailyplan_id=dailyplan.id,
-            plan_snapshot={"name": "Plan de potencia"},
+            plan_snapshot={
+                "name": "Plan calendarizado",
+                "totals": {
+                    "protein_g": 30,
+                    "carbs_g": 60,
+                    "fat_g": 20,
+                    "total_kcal": 540,
+                },
+                "meals": [
+                    {
+                        "key": "dailyplan_meal:700",
+                        "name": "Comida snapshot",
+                        "hour": "08:15",
+                        "totals": {
+                            "protein_g": 30,
+                            "carbs_g": 60,
+                            "fat_g": 20,
+                            "total_kcal": 540,
+                        },
+                        "foods": [
+                            {
+                                "key": "meal_food:900",
+                                "name": "Avena snapshot",
+                                "quantity_g": 80,
+                                "protein_g": 10,
+                                "carbs_g": 50,
+                                "fat_g": 6,
+                                "total_kcal": 294,
+                            }
+                        ],
+                    }
+                ],
+            },
         )
+        dailyplan.delete()
 
         response = self._get_home()
 
@@ -98,7 +131,10 @@ class HomeCalendarizationTests(TestCase):
         self.assertContains(response, "Días transcurridos")
         self.assertContains(response, "Adhesión")
         self.assertContains(response, "3/7")
-        self.assertContains(response, "Plan de potencia")
+        self.assertContains(response, "Plan calendarizado")
+        self.assertContains(response, "Comida snapshot")
+        self.assertContains(response, "Avena snapshot")
+        self.assertNotContains(response, "Plan de potencia")
         self.assertContains(response, 'class="card home-calendar__dailyplan-card"')
         self.assertNotContains(response, "El programa calendarizado no tiene un plan asignado a esta fecha.")
         self.assertNotContains(response, "home-calendar__week-slider")
@@ -110,12 +146,19 @@ class HomeCalendarizationTests(TestCase):
         self.assertEqual(calendarization_vm["progress_percent"], 43)
         self.assertEqual(len(calendarization_vm["weeks"]), 1)
         self.assertFalse(calendarization_vm["has_multiple_weeks"])
+        self.assertEqual(calendarization_vm["foods_count"], 1)
+        self.assertEqual(
+            calendarization_vm["active_week_summary"]["foods_aggregation_table"][0]["rel"]["name"],
+            "Avena snapshot",
+        )
         self.assertNotContains(response, 'type="button" aria-label="Semana anterior"')
         self.assertNotContains(response, 'type="button" aria-label="Semana siguiente"')
         today_vm = calendarization_vm["days"][2]
         sunday_vm = calendarization_vm["days"][6]
         self.assertEqual(today_vm["temporal_state"], "today")
         self.assertTrue(today_vm["has_plan"])
+        self.assertEqual(today_vm["dailyplan_card"]["titulo"]["name"], "Plan calendarizado")
+        self.assertEqual(today_vm["dailyplan_card"]["kpis"]["tot_kcal"], 540)
         self.assertEqual(sunday_vm["temporal_state"], "future")
 
     def test_home_clamps_unavailable_week_without_calendarization(self):

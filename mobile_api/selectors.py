@@ -23,6 +23,10 @@ from notas.application.queries.calendarization_execution_queries import (
     meal_execution_state_for_day,
     pending_revision_for_calendarization,
 )
+from notas.application.queries.calendarization_projection_queries import (
+    build_calendarization_snapshot_projection,
+    snapshot_nutrition_totals,
+)
 from notas.application.queries.calendarization_queries import (
     calendarization_history_for_user,
     calendarized_day_for_user,
@@ -234,6 +238,89 @@ def _program_week_panel_items(program, current_weight=None) -> list[dict]:
         }
         for week in summary["weeks"]
     ]
+
+
+def _snapshot_nutrition_payload(snapshot, current_weight=None) -> dict:
+    totals = snapshot_nutrition_totals(snapshot)
+    protein = _safe_number(totals["protein"])
+    return {
+        "calories": _safe_number(totals["total_kcal"]),
+        "protein": {
+            "grams": protein,
+            "allocation": _safe_number(totals["alloc"]["protein"]),
+            "per_kilogram": (
+                _safe_number(protein / current_weight)
+                if current_weight and protein
+                else None
+            ),
+        },
+        "carbs": {
+            "grams": _safe_number(totals["carbs"]),
+            "allocation": _safe_number(totals["alloc"]["carbs"]),
+        },
+        "fat": {
+            "grams": _safe_number(totals["fat"]),
+            "allocation": _safe_number(totals["alloc"]["fat"]),
+        },
+    }
+
+
+def _calendarized_week_panel_items(calendarization, current_weight=None) -> tuple[dict, list[dict]]:
+    projection = build_calendarization_snapshot_projection(calendarization)
+    program_total_kcal = projection["program_totals"]["total_kcal"]
+    items = []
+    for week in projection["weeks"]:
+        days = []
+        for day in week["days"]:
+            snapshot = day["snapshot"]
+            days.append(
+                {
+                    "id": (
+                        f"calendarized-day:{day['calendarized_day_id']}"
+                        if day["calendarized_day_id"]
+                        else f"calendarization-week:{calendarization.id}:{week['week_number']}:day:{day['day_number']}"
+                    ),
+                    "day_number": day["day_number"],
+                    "day_label": day["day_label"],
+                    "plan_name": day["plan_name"],
+                    "nutrition": (
+                        _snapshot_nutrition_payload(snapshot, current_weight)
+                        if snapshot
+                        else None
+                    ),
+                }
+            )
+        items.append(
+            {
+                "id": f"calendarization-week:{calendarization.id}:{week['week_number']}",
+                "week_number": week["week_number"],
+                "days": days,
+                "filled_days_count": week["filled_days_count"],
+                "meals_count": week["meals_count"],
+                "foods_count": week["foods_count"],
+                "average_calories": _safe_number(week["averages"]["total_kcal"]),
+                "foods": _aggregated_food_panel_items(
+                    week["foods_aggregation_table"],
+                    id_prefix=f"calendarization-week-food:{calendarization.id}:{week['week_number']}",
+                ),
+                "calories": _safe_number(week["totals"]["total_kcal"]),
+                "calorie_share": _safe_number(
+                    _safe_percentage(week["totals"]["total_kcal"], program_total_kcal)
+                ),
+                "calorie_distribution": _calorie_distribution(
+                    week["totals"]["kcal_protein"],
+                    week["totals"]["kcal_carbs"],
+                    week["totals"]["kcal_fat"],
+                ),
+                "protein_grams": _safe_number(week["totals"]["protein"]),
+                "carbs_grams": _safe_number(week["totals"]["carbs"]),
+                "fat_grams": _safe_number(week["totals"]["fat"]),
+                "protein_allocation": _safe_number(week["totals"]["alloc"]["protein"]),
+                "carbs_allocation": _safe_number(week["totals"]["alloc"]["carbs"]),
+                "fat_allocation": _safe_number(week["totals"]["alloc"]["fat"]),
+            }
+        )
+    return projection, items
 
 
 def _library_page(queryset, *, search, offset, limit, builder) -> dict:
@@ -829,12 +916,11 @@ def active_program_payload(user) -> dict:
         if local_date >= calendarization.start_date
         else None
     )
-    source_program = calendarization.source_program
-    weeks_count = (
-        source_program.normalized_duration_weeks
-        if source_program
-        else max(1, ((calendarization.end_date - calendarization.start_date).days + 7) // 7)
+    projection, weeks = _calendarized_week_panel_items(
+        calendarization,
+        get_current_weight(user),
     )
+    weeks_count = projection["duration_weeks"]
     indicators = [
         {
             "icon": "week",
@@ -844,20 +930,18 @@ def active_program_payload(user) -> dict:
         {
             "icon": "dailyPlan",
             "label": "planes asignados",
-            "value": source_program.filled_days_count
-            if source_program
-            else sum(1 for day in calendarization.days.all() if day.has_plan),
+            "value": projection["filled_days_count"],
         },
         {
             "icon": "food",
             "label": "alimentos",
-            "value": get_program_summary(source_program)["program_foods_count"] if source_program else 0,
+            "value": projection["program_foods_count"],
         },
     ]
     return {
         "calendarization": _calendarization_data_payload(calendarization),
         "weeks_count": weeks_count,
-        "weeks": _program_week_panel_items(source_program, get_current_weight(user)) if source_program else [],
+        "weeks": weeks,
         "days": _calendarized_days_payload(calendarization),
         "adherence": adherence,
         "indicators": indicators,
