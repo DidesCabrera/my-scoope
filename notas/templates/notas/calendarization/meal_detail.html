@@ -48,73 +48,7 @@
     </section>
 
     {% if detail.can_check_in %}
-      <section class="calendarization-meal-checkin" aria-labelledby="meal-checkin-title">
-        <h3 id="meal-checkin-title">Cumplimiento de esta comida</h3>
-        <div class="content-panel calendarization-meal-checkin__panel">
-          <form
-            action="{% url 'calendarization_meal_check_in' detail.day.id detail.meal.key %}"
-            method="post"
-            class="calendarization-meal-checkin__status"
-            data-meal-checkin-status
-          >
-            {% csrf_token %}
-            <input type="hidden" name="idempotency_key" value="{{ detail.status_idempotency_key }}">
-            <input type="hidden" name="action" value="{% if detail.completed %}skipped{% else %}completed{% endif %}" data-meal-checkin-action>
-            <label for="meal-completed-{{ detail.day.id }}">
-              <span>
-                <strong>Comida cumplida</strong>
-                <small>Marca la casilla si cumpliste esta comida del programa.</small>
-              </span>
-              <input
-                id="meal-completed-{{ detail.day.id }}"
-                type="checkbox"
-                data-meal-checkin-checkbox
-                {% if detail.completed %}checked{% endif %}
-              >
-            </label>
-          </form>
-
-          <div class="calendarization-meal-checkin__divider" aria-hidden="true"></div>
-
-          <div class="calendarization-meal-checkin__note" data-meal-note>
-            <div class="calendarization-meal-checkin__note-heading">
-              <strong>Nota</strong>
-              {% if detail.has_note %}
-                <button type="button" aria-label="Editar nota" data-meal-note-edit>
-                  <i data-lucide="pencil" aria-hidden="true"></i>
-                </button>
-              {% endif %}
-            </div>
-
-            {% if detail.has_note %}
-              <p data-meal-note-display>{{ detail.execution.note|linebreaksbr }}</p>
-            {% endif %}
-
-            <form
-              action="{% url 'calendarization_meal_check_in' detail.day.id detail.meal.key %}"
-              method="post"
-              data-meal-note-form
-              {% if detail.has_note %}hidden{% endif %}
-            >
-              {% csrf_token %}
-              <input type="hidden" name="idempotency_key" value="{{ detail.note_idempotency_key }}">
-              <input type="hidden" name="action" value="note">
-              <label class="sr-only" for="meal-note-{{ detail.day.id }}">Nota sobre el cumplimiento de la comida</label>
-              <textarea
-                id="meal-note-{{ detail.day.id }}"
-                name="note"
-                maxlength="500"
-                placeholder="Escribe una observación opcional…"
-                data-meal-note-input
-              >{{ detail.execution.note }}</textarea>
-              <div class="calendarization-meal-checkin__note-actions">
-                <span data-meal-note-count>{{ detail.execution.note|length }}/500</span>
-                <button class="btn-primary calendarization-button" type="submit">Guardar nota</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </section>
+      {% include "components/calendarization_meal_checkin.html" with checkin=detail %}
     {% endif %}
   </div>
 </div>

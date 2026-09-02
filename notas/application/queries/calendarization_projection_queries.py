@@ -101,7 +101,8 @@ def _average_totals(totals: dict, divisor: int = 7) -> dict:
     return _finalize_totals(averaged)
 
 
-def _snapshot_foods(snapshots: list[dict], totals: dict) -> list[dict]:
+def snapshot_food_aggregation_rows(snapshots: list[dict], totals: dict) -> list[dict]:
+    """Build the system-UI food table contract from immutable plan snapshots."""
     aggregation = defaultdict(
         lambda: {
             "name": "",
@@ -198,9 +199,7 @@ def build_calendarization_snapshot_projection(calendarization) -> dict:
                 _add_totals(program_totals, totals)
                 week_snapshots.append(snapshot)
                 program_snapshots.append(snapshot)
-                meals_count += sum(
-                    1 for meal in snapshot.get("meals", []) if isinstance(meal, dict)
-                )
+                meals_count += sum(1 for meal in snapshot.get("meals", []) if isinstance(meal, dict))
             week_days.append(
                 {
                     "calendarized_day_id": day.id if day else None,
@@ -215,7 +214,7 @@ def build_calendarization_snapshot_projection(calendarization) -> dict:
             )
 
         week_totals = _finalize_totals(week_totals)
-        foods = _snapshot_foods(week_snapshots, week_totals)
+        foods = snapshot_food_aggregation_rows(week_snapshots, week_totals)
         weeks.append(
             {
                 "week_number": week_number,
@@ -231,7 +230,7 @@ def build_calendarization_snapshot_projection(calendarization) -> dict:
         )
 
     program_totals = _finalize_totals(program_totals)
-    program_foods = _snapshot_foods(program_snapshots, program_totals)
+    program_foods = snapshot_food_aggregation_rows(program_snapshots, program_totals)
     return {
         "duration_weeks": duration_weeks,
         "duration_days": (calendarization.end_date - calendarization.start_date).days + 1,

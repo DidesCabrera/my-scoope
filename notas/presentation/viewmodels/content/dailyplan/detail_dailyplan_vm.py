@@ -11,11 +11,13 @@ from notas.presentation.resolvers.title_resolvers import CategoryBadgeUI
 class FoodsAggregationUI:
     foods_aggregation: List[Dict[str, Any]]
 
+
 @dataclass
 class StructuralIndicatorsUI:
     meals_count: Optional[int] = None
     foods_count: Optional[int] = None
     hour: Optional[str] = None
+
 
 @dataclass
 class TitleUI:
@@ -26,6 +28,7 @@ class TitleUI:
     category_badge: Optional[CategoryBadgeUI] = None
     structural_indicators: Optional[StructuralIndicatorsUI] = None
     url: Optional[str] = None
+
 
 @dataclass
 class KPIUI:
@@ -41,14 +44,16 @@ class KPIUI:
     alloc_carbs: float
     alloc_fat: float
 
+
 @dataclass
 class MetadataUI:
     owner: str
     author: str
     fork_from: Optional[str]
-    
+
 
 # === Related_data ESPECIFICOS ===
+
 
 @dataclass
 class DpmRelatedDataUI:
@@ -63,6 +68,7 @@ class DpmRelatedDataUI:
 # =========================
 # CARDS
 # =========================
+
 
 @dataclass
 class MainCardUI:
@@ -79,8 +85,8 @@ class MainCardUI:
 
 @dataclass
 class ChildCardUI:
-    main_id:float
-    child_id:float
+    main_id: float
+    child_id: float
     related_data: DpmRelatedDataUI
     titulo: TitleUI
     kpis: KPIUI
@@ -88,15 +94,16 @@ class ChildCardUI:
     foods_aggregation: FoodsAggregationUI
     metadata: MetadataUI
     actions: list
+    id: Optional[str] = None
 
 
 # =========================
 # ROOT VIEWMODEL
 # =========================
 
+
 @dataclass
 class DailyPlanDetailVM:
-
     header: dict
     main_card: MainCardUI
     structural_indicators: Optional[StructuralIndicatorsUI]
@@ -105,6 +112,4 @@ class DailyPlanDetailVM:
     child_cards: List[ChildCardUI]
 
     def as_context(self):
-        return {
-            "ui": asdict(self)
-        }
+        return {"ui": asdict(self)}

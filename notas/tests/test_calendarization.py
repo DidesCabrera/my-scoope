@@ -32,7 +32,9 @@ from notas.domain.models import (
     CalendarizedMealExecution,
     DailyPlan,
     DailyPlanMeal,
+    Food,
     Meal,
+    MealFood,
     NotificationDelivery,
     OAuthClient,
     OAuthDeviceSession,
@@ -494,6 +496,119 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
         self.assertContains(response, "Día original")
         self.assertContains(response, "card-kpi")
 
+    def test_todays_plan_detail_uses_official_dailyplan_ui_and_embeds_meal_check_in(self):
+        meal = Meal.objects.create(name="Almuerzo snapshot", created_by=self.user)
+        food = Food.objects.create(
+            name="Arroz integral",
+            protein=3,
+            carbs=23,
+            fat=1,
+            created_by=self.user,
+        )
+        MealFood.objects.create(meal=meal, food=food, quantity=150, order=1)
+        slot = DailyPlanMeal.objects.create(
+            dailyplan=self.dailyplan,
+            meal=meal,
+            hour=time(13, 15),
+            order=1,
+        )
+        today = timezone.localdate(timezone=UTC)
+        day = self.activate(
+            start_date=today,
+            timezone_name="UTC",
+            now=datetime.combine(today, time(6), tzinfo=UTC),
+        ).calendarization.days.get(day_number=1)
+        day_url = reverse("calendarization_day_detail", args=[day.id])
+        meal_key = f"dailyplan_meal:{slot.id}"
+        check_in_url = reverse(
+            "calendarization_meal_check_in",
+            args=[day.id, meal_key],
+        )
+
+        response = self.client.get(day_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-page="dailyplan-detail"')
+        self.assertContains(response, 'class="card-title-comp js-header-meta-sentinel"')
+        self.assertContains(response, 'class="dash-kpi-comp"', count=2)
+        self.assertContains(response, "Tabla de comparación entre comidas")
+        self.assertContains(response, "Detalle de cada Comida")
+        self.assertContains(response, "Información de Alimentos")
+        self.assertContains(response, "data-grid--calendarized-menu")
+        self.assertContains(response, "Almuerzo snapshot")
+        self.assertContains(response, "Arroz integral")
+        self.assertContains(response, "13:15")
+        self.assertContains(response, 'data-lucide="clock"')
+        self.assertContains(response, "Cumplimiento de esta comida", count=1)
+        self.assertContains(response, "data-meal-checkin-status", count=1)
+        self.assertContains(response, f'name="return_to" value="{day_url}"', count=2)
+        self.assertNotContains(response, "calendarization-hero")
+        self.assertNotContains(response, "calendarization-macros")
+
+        completed = self.client.post(
+            check_in_url,
+            {
+                "action": "completed",
+                "idempotency_key": "web-day-status-0001",
+                "return_to": day_url,
+            },
+        )
+        self.assertRedirects(completed, day_url)
+        noted = self.client.post(
+            check_in_url,
+            {
+                "action": "note",
+                "note": "Todo según lo planificado.",
+                "idempotency_key": "web-day-note-0001",
+                "return_to": day_url,
+            },
+        )
+        self.assertRedirects(noted, day_url)
+
+        updated = self.client.get(day_url)
+        self.assertContains(updated, "Todo según lo planificado.")
+        self.assertTrue(updated.context["vm"]["content"]["meal_entries"][0]["checkin"]["completed"])
+        self.assertEqual(
+            CalendarizedMealExecution.objects.filter(calendarized_day=day).count(),
+            2,
+        )
+
+    def test_plan_detail_hides_check_in_outside_today_and_external_return_is_rejected(self):
+        meal = Meal.objects.create(name="Cena futura", created_by=self.user)
+        slot = DailyPlanMeal.objects.create(
+            dailyplan=self.dailyplan,
+            meal=meal,
+            hour=time(20),
+            order=1,
+        )
+        tomorrow = timezone.localdate(timezone=UTC) + timedelta(days=1)
+        day = self.activate(
+            start_date=tomorrow,
+            timezone_name="UTC",
+            now=datetime.combine(tomorrow - timedelta(days=1), time(6), tzinfo=UTC),
+        ).calendarization.days.get(day_number=1)
+        meal_key = f"dailyplan_meal:{slot.id}"
+        day_url = reverse("calendarization_day_detail", args=[day.id])
+        meal_url = reverse("calendarization_meal_detail", args=[day.id, meal_key])
+        check_in_url = reverse(
+            "calendarization_meal_check_in",
+            args=[day.id, meal_key],
+        )
+
+        response = self.client.get(day_url)
+        self.assertNotContains(response, "Cumplimiento de esta comida")
+
+        posted = self.client.post(
+            check_in_url,
+            {
+                "action": "completed",
+                "idempotency_key": "web-external-return-0001",
+                "return_to": "https://attacker.example/steal",
+            },
+        )
+        self.assertRedirects(posted, meal_url)
+        self.assertFalse(CalendarizedMealExecution.objects.exists())
+
     def test_web_meal_check_in_uses_persisted_execution_and_updates_indicators(self):
         meal = Meal.objects.create(name="Desayuno de hoy", created_by=self.user)
         slot = DailyPlanMeal.objects.create(
@@ -627,10 +742,7 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
         self.assertContains(detail, "Renombrar")
         self.assertContains(detail, rename_url)
         self.assertContains(detail, "13:00")
-        action_keys = [
-            action["key"]
-            for action in detail.context["vm"]["content"]["header"]["actions"]
-        ]
+        action_keys = [action["key"] for action in detail.context["vm"]["content"]["header"]["actions"]]
         self.assertEqual(
             action_keys,
             ["calendarization_history", "rename", "change_time"],
@@ -682,10 +794,7 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
 
         self.assertContains(day_detail, "Renombrar")
         self.assertContains(day_detail, day_rename_url)
-        day_action_keys = [
-            action["key"]
-            for action in day_detail.context["vm"]["content"]["header"]["actions"]
-        ]
+        day_action_keys = [action["key"] for action in day_detail.context["vm"]["content"]["header"]["actions"]]
         self.assertEqual(day_action_keys, ["calendarization_history", "rename"])
         self.assertContains(day_form, "Renombrar plan activo")
         self.assertContains(meal_form, "Renombrar comida activa")

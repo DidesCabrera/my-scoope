@@ -1,5 +1,7 @@
 <div id="card-menu-{{ panel_id }}" class="card-menu">
-    {% if calendarized_day %}
+    {% if menu.uses_detail_links %}
+        {% include "components/grid_calendarized_meals_menu.html" with meals=menu.meals %}
+    {% elif calendarized_day %}
         {% include "components/grid_calendarized_meals_menu.html" with meals=calendarized_meals %}
     {% else %}
         {% include "components/grid_meals_menu.html" with menu=menu %}
