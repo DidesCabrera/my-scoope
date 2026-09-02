@@ -17,6 +17,7 @@
       <h1>{{ titulo.name }}</h1>
     </div>
 
+    {% if show_completion %}<div class="entity-heading__indicator-row">{% endif %}
     {% if titulo.structural_indicators %}
     <div class="entity-indicators structural-indicators">
         {% if titulo.structural_indicators.meals_count %}
@@ -39,6 +40,10 @@
               <span class="structural-value">{{ titulo.structural_indicators.hour }}</span>
           </span>
         {% endif %}
+    </div>
+    {% endif %}
+    {% if show_completion %}
+      {% include "components/completion_indicators.html" with completed_count=completed_count note_count=note_count %}
     </div>
     {% endif %}
 

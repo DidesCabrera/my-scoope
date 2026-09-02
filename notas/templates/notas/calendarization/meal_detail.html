@@ -6,30 +6,9 @@
 {% with detail=vm.content.meal_detail %}
 <div class="page page--detail has-collapsible-panels calendarization-meal-detail-page" data-page="calendarized-meal-detail">
   <div class="main-detail">
-    <section class="card-title main calendarization-meal-detail__title">
-      <div class="card-title-comp js-header-meta-sentinel">
-        <div class="entity-heading__main main-title main-card">
-          <p class="card-title-eyebrow">
-            <i data-lucide="utensils" class="card-title-eyebrow__icon meal" aria-hidden="true"></i>
-            <span>Comida</span>
-          </p>
-          <h1>{{ detail.meal.name }}</h1>
-          <p class="calendarization-meal-detail__time">
-            <i data-lucide="clock-3" aria-hidden="true"></i>
-            {% if detail.meal.hour %}{{ detail.meal.hour }}{% else %}Sin hora{% endif %}
-          </p>
-          <div class="entity-heading__indicator-row">
-            <div class="structural-indicators">
-              <span class="structural-item">
-                <span class="structural-value">{{ detail.foods_count }}</span>
-                <i data-lucide="carrot" class="structural-icon main" aria-hidden="true"></i>
-              </span>
-            </div>
-            {% include "components/completion_indicators.html" with completed_count=detail.completed_count note_count=detail.note_count %}
-          </div>
-        </div>
-      </div>
-    </section>
+    <div class="card-title main calendarization-meal-detail__title">
+      {% include "components/card_main_title.html" with titulo=detail.titulo show_completion=True completed_count=detail.completed_count note_count=detail.note_count %}
+    </div>
 
     <div class="page-kpi calendarization-meal-detail__kpis">
       <div class="card-kpi main">
