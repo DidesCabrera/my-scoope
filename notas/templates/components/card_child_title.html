@@ -19,6 +19,7 @@
     {% else %}
       <h3>{{ titulo.name }}</h3>
     {% endif %}
+    {% include "components/entity_heading_subtitle.html" with subtitle=titulo.subtitle compact=True %}
     {% if titulo.classes %}
       <div class="label-class">
         {% for class in titulo.classes %}

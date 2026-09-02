@@ -134,6 +134,15 @@ def build_dpm_detail_content_data(
             "name": meal.name,
             "label": "Meal",
             "icon": CONTENT_ICON_REGISTRY.get("meal"),
+            "subtitle": (
+                {
+                    "text": dpm.hour.strftime("%H:%M"),
+                    "icon": "clock-3",
+                    "modifier": "time",
+                }
+                if dpm.hour
+                else None
+            ),
             "category": meal.category,
             "category_badge": resolve_category_badge(meal.category),
             "foods_count": len(foods_aggregation),

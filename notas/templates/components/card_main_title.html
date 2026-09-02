@@ -17,6 +17,8 @@
       <h1>{{ titulo.name }}</h1>
     </div>
 
+    {% include "components/entity_heading_subtitle.html" with subtitle=titulo.subtitle %}
+
     {% if titulo.structural_indicators %}
     <div class="entity-indicators structural-indicators">
         {% if titulo.structural_indicators.meals_count %}
