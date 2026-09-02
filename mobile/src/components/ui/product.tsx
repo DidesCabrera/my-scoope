@@ -35,7 +35,9 @@ export type StructuralIndicatorKind = "clock" | "day" | "food" | "meal" | "daily
 
 export type StructuralIndicator = {
   icon?: StructuralIndicatorKind;
+  iconPosition?: "leading" | "trailing";
   label: string;
+  tone?: "identity" | "surfaceCard" | "surfaceMuted";
   value: number | string;
 };
 
@@ -124,6 +126,7 @@ export function StructuralIndicators({ indicators, entity, tone = "identity" }: 
       style={styles.structuralIndicators}>
       {indicators.map((indicator, index) => {
         const Icon = indicator.icon ? structuralIcons[indicator.icon] : null;
+        const itemTone = indicator.tone ?? tone;
         const color = indicator.icon
           ? structuralIndicatorColors[indicator.icon]
           : entity
@@ -134,11 +137,12 @@ export function StructuralIndicators({ indicators, entity, tone = "identity" }: 
             key={`${indicator.icon ?? "text"}-${indicator.label}-${index}`}
             style={[
               styles.structuralItem,
-              { backgroundColor: tone === "surfaceCard" ? tokens.color.surfaceCard : tone === "surfaceMuted" ? tokens.color.surfaceMuted : color },
-              tone !== "identity" && styles.structuralItemSurface,
+              { backgroundColor: itemTone === "surfaceCard" ? tokens.color.surfaceCard : itemTone === "surfaceMuted" ? tokens.color.surfaceMuted : color },
+              itemTone !== "identity" && styles.structuralItemSurface,
             ]}>
-            <Text style={styles.structuralValue}>{indicator.value}</Text>
-            {Icon ? <Icon color={tokens.color.entityIconForeground} size={13} strokeWidth={2.2} /> : null}
+            {Icon && indicator.iconPosition === "leading" ? <Icon color={tokens.color.textMain} size={13} strokeWidth={2.2} /> : null}
+            <Text style={[styles.structuralValue, itemTone !== "identity" && styles.structuralValueSurface]}>{indicator.value}</Text>
+            {Icon && indicator.iconPosition !== "leading" ? <Icon color={tokens.color.entityIconForeground} size={13} strokeWidth={2.2} /> : null}
           </View>
         );
       })}
@@ -432,6 +436,7 @@ const styles = StyleSheet.create({
   structuralItem: { alignItems: "center", borderRadius: tokens.spacing.compact, flexDirection: "row", gap: tokens.spacing.xs, paddingHorizontal: tokens.spacing.sm, paddingVertical: tokens.spacing.xs },
   structuralItemSurface: { borderColor: tokens.color.borderDefault, borderWidth: 1 },
   structuralValue: { color: tokens.color.entityIconForeground, fontSize: tokens.type.caption, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.medium, letterSpacing: 0, lineHeight: 15 },
+  structuralValueSurface: { color: tokens.color.textMain },
   entityCardPanelSlot: { minWidth: 0 },
   cardHeader: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
   cardHeaderCompact: { gap: tokens.spacing.sm },

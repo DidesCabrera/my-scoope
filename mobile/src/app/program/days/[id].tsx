@@ -56,7 +56,7 @@ function CalendarizedMealCards({ dayId, mealExecution, meals }: { dayId: number;
               eyebrow={`Comida ${index + 1}`}
               indicators={[
                 { icon: "food", label: "alimentos", value: foods.length },
-                ...(meal.hour ? [{ icon: "clock" as const, label: "hora", value: meal.hour.slice(0, 5) }] : []),
+                ...(meal.hour ? [{ icon: "clock" as const, iconPosition: "leading" as const, label: "hora", tone: "surfaceCard" as const, value: meal.hour.slice(0, 5) }] : []),
               ]}
               nutrition={{
                 calories: snapshotCalories(totals),

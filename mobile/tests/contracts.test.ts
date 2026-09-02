@@ -96,7 +96,9 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(productUiSourceForIndicators, /proposal: ClipboardCheck/);
   assert.match(productUiSourceForIndicators, /comparator: Scale/);
   assert.match(productUiSourceForIndicators, /tone\?: "identity" \| "surfaceCard" \| "surfaceMuted"/);
-  assert.match(productUiSourceForIndicators, /tone === "surfaceMuted" \? tokens\.color\.surfaceMuted : color/);
+  assert.match(productUiSourceForIndicators, /const itemTone = indicator\.tone \?\? tone/);
+  assert.match(productUiSourceForIndicators, /itemTone === "surfaceMuted" \? tokens\.color\.surfaceMuted : color/);
+  assert.match(productUiSourceForIndicators, /indicator\.iconPosition === "leading"/);
   assert.match(productUiSourceForIndicators, /structuralItemSurface: \{ borderColor: tokens\.color\.borderDefault, borderWidth: 1 \}/);
 
   const libraryEntityPanels = await readFile(
