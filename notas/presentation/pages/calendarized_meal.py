@@ -89,6 +89,15 @@ def build_calendarized_meal_detail(*, day, meal_snapshot_key: str, user) -> dict
         "has_note": has_note,
         "note_count": int(has_note),
         "foods_count": len(foods),
+        "titulo": {
+            "name": meal.get("name") or "Comida",
+            "label": "Meal",
+            "icon": "utensils",
+            "structural_indicators": {
+                "foods_count": len(foods),
+                "hour": meal.get("hour"),
+            },
+        },
         "foods_aggregation": [{"display_name": item.get("name") or "Alimento"} for item in foods],
         "food_rows": [snapshot_food_table_row(item, nutrition["calories"]) for item in foods],
         "kpis": {

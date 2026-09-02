@@ -285,20 +285,6 @@
   width: 20px;
 }
 
-.calendarization-meal-detail__time {
-  align-items: center;
-  color: var(--text-muted);
-  display: flex;
-  font-variant-numeric: tabular-nums;
-  gap: var(--space-xs);
-  margin: var(--space-xs) 0 0;
-}
-
-.calendarization-meal-detail__time svg {
-  height: 16px;
-  width: 16px;
-}
-
 .data-grid--calendarized-menu .data-grid-header--menu,
 .data-grid--calendarized-menu .data-grid-row--menu {
   grid-template-columns: minmax(110px, 0.7fr) minmax(180px, 2.1fr) 32px;

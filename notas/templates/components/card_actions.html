@@ -4,7 +4,7 @@
   {% if actions %}
     {# DESKTOP #}
     <div class="actions card-actions-row card-actions-row--desktop">
-      <div class="overflow-menu card-overflow-menu card-overflow-menu--desktop">
+      {% if not hide_overflow %}<div class="overflow-menu card-overflow-menu card-overflow-menu--desktop">
         <button class="overflow-btn" type="button" aria-label="Más acciones" title="Más acciones">
           <i data-lucide="more-horizontal" class="more-horizontal-icon"></i>
         </button>
@@ -34,7 +34,7 @@
             {% endif %}
           {% endfor %}
         </div>
-      </div>
+      </div>{% endif %}
 
       {% for action in actions %}
         {% if action.desktop_position == "inline" %}
@@ -81,7 +81,7 @@
 
     {# MOBILE #}
     <div class="actions card-actions-row card-actions-row--mobile">
-      <div class="overflow-menu card-overflow-menu card-overflow-menu--mobile">
+      {% if not hide_overflow %}<div class="overflow-menu card-overflow-menu card-overflow-menu--mobile">
         <button class="overflow-btn" type="button" aria-label="Más acciones" title="Más acciones">
           <i data-lucide="more-horizontal" class="more-horizontal-icon"></i>
         </button>
@@ -111,7 +111,7 @@
             {% endif %}
           {% endfor %}
         </div>
-      </div>
+      </div>{% endif %}
 
       {% for action in actions %}
         {% if action.mobile_position == "inline" %}

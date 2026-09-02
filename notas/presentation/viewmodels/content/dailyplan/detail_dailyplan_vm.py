@@ -95,6 +95,7 @@ class ChildCardUI:
     metadata: MetadataUI
     actions: list
     id: Optional[str] = None
+    hide_overflow_actions: bool = False
 
 
 # =========================

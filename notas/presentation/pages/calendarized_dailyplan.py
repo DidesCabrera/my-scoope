@@ -128,8 +128,21 @@ def build_calendarized_dailyplan_detail(*, day, user, header: dict) -> dict:
                 table={"items": [snapshot_food_table_row(food, meal_totals["total_kcal"]) for food in foods]},
                 foods_aggregation=[{"display_name": food.get("name") or "Alimento"} for food in foods],
                 metadata=metadata,
-                actions=[],
+                actions=[
+                    {
+                        "key": "detail",
+                        "label": "Ver detalle",
+                        "method": "get",
+                        "icon": "chevron-right",
+                        "desktop_position": "inline",
+                        "mobile_position": "inline",
+                        "url": detail_url,
+                    }
+                ]
+                if detail_url
+                else [],
                 id=f"calendarized-meal-{day.id}-{index}",
+                hide_overflow_actions=True,
             )
         )
 
