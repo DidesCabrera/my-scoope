@@ -118,7 +118,13 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
     onReorder: async (meals: MealPanelItem[]) => { await mutateComposition(`/api/v1/library/daily-plans/${item.id}/meals/order`, { method: "PUT", body: JSON.stringify({ ordered_ids: meals.map((meal) => meal.relationId) }) }); },
     onReplace: (meal: MealPanelItem) => { if (meal.relationId) router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: item.id, dailyPlanMealId: meal.relationId })); },
   } : undefined;
-  return <><ScrollView contentContainerStyle={styles.content} onScroll={({ nativeEvent }) => { const visible = nativeEvent.contentOffset.y > 1; if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible); }} scrollEventThrottle={16} style={styles.screen}><EntityDetailPage entity={item.entity} indicators={isEmptyDraft ? undefined : item.indicators} nutrition={libraryNutrition(item.nutrition)} showNutrition={!isEmptyDraft} subtitle={item.entity === "meal" && hasMealTimeContext ? contextTime || "Sin hora" : item.subtitle || undefined} title={item.name}>
+  const detailIndicators = isEmptyDraft ? undefined : [
+    ...item.indicators,
+    ...(item.entity === "meal" && hasMealTimeContext && contextTime
+      ? [{ icon: "clock" as const, label: "hora", value: contextTime }]
+      : []),
+  ];
+  return <><ScrollView contentContainerStyle={styles.content} onScroll={({ nativeEvent }) => { const visible = nativeEvent.contentOffset.y > 1; if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible); }} scrollEventThrottle={16} style={styles.screen}><EntityDetailPage entity={item.entity} indicators={detailIndicators} nutrition={libraryNutrition(item.nutrition)} showNutrition={!isEmptyDraft} subtitle={item.subtitle || undefined} title={item.name}>
     {!isEmptyDraft && item.panel.kind !== "none" ? <EntityDetailSection detail={`${panelCount} elementos`} title={sectionTitles[item.panel.kind]}>{item.panel.kind === "foods" ? <FoodPanels editing={foodEditing} items={foodItems} /> : null}{item.panel.kind === "meals" ? <MealPanels editing={mealEditing} items={mealItems} /> : null}{item.panel.kind === "weeks" ? <ProgramPanels items={item.panel.weeks} /> : null}</EntityDetailSection> : null}
     {item.entity === "meal" ? <Button bleed label="+ Agregar alimento" onPress={() => router.push(pickerHref("food-to-meal", { mealId: item.id }))} /> : null}
     {item.entity === "dailyPlan" ? <Button bleed label="+ Agregar Comida" onPress={() => router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: item.id }))} /> : null}

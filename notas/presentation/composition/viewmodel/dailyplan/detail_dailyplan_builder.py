@@ -1,4 +1,3 @@
-from notas.presentation.viewmodels.components.entity_heading_vm import EntitySubtitleVM
 from notas.presentation.viewmodels.content.dailyplan.detail_dailyplan_vm import *
 
 
@@ -59,15 +58,11 @@ def build_dailyplan_detail_vm(content_data):
                 name=child_data["title"]["name"],
                 label=child_data["title"]["label"],
                 icon=child_data["title"]["icon"],
-                subtitle=(
-                    EntitySubtitleVM(**child_data["title"]["subtitle"])
-                    if child_data["title"].get("subtitle")
-                    else None
-                ),
                 category=child_data["title"]["category"],
                 category_badge=child_data["title"]["category_badge"],
                 structural_indicators=StructuralIndicatorsUI(
                     foods_count=child_data["title"]["foods_count"],
+                    hour=child_data["title"]["hour"],
                 ),
                 url=child_data["title"].get("url"),
             ),

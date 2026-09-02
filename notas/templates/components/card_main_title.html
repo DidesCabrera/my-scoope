@@ -17,8 +17,6 @@
       <h1>{{ titulo.name }}</h1>
     </div>
 
-    {% include "components/entity_heading_subtitle.html" with subtitle=titulo.subtitle %}
-
     {% if titulo.structural_indicators %}
     <div class="entity-indicators structural-indicators">
         {% if titulo.structural_indicators.meals_count %}
@@ -34,6 +32,13 @@
             <span class="structural-value">{{ titulo.structural_indicators.foods_count }}</span>
             <i data-lucide="carrot" class="structural-icon main"></i>
         </span>
+        {% if titulo.structural_indicators.hour %}
+          <span class="structural-divider"></span>
+          <span class="structural-item structural-item--time">
+              <span class="structural-value">{{ titulo.structural_indicators.hour }}</span>
+              <i data-lucide="clock" class="structural-icon main"></i>
+          </span>
+        {% endif %}
     </div>
     {% endif %}
 

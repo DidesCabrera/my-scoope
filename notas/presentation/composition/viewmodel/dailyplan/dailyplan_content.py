@@ -266,15 +266,7 @@ def build_dailyplan_detail_content_data(
                     "name": meal.name,
                     "label": "Meal",
                     "icon": CONTENT_ICON_REGISTRY.get("meal"),
-                    "subtitle": (
-                        {
-                            "text": dpm.hour.strftime("%H:%M"),
-                            "icon": "clock-3",
-                            "modifier": "time",
-                        }
-                        if dpm.hour
-                        else None
-                    ),
+                    "hour": dpm.hour.strftime("%H:%M") if dpm.hour else None,
                     "category": "en plan",
                     "category_badge": resolve_category_badge("en plan"),
                     "foods_count": len(meal_foods_aggregation),

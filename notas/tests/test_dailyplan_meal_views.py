@@ -86,11 +86,14 @@ class DailyPlanMealViewTests(TestCase):
 
         self.assertContains(detail, "Cambiar hora")
         self.assertContains(detail, change_url)
-        self.assertContains(detail, "entity-heading__subtitle--time")
+        self.assertContains(detail, "structural-item--time")
+        self.assertContains(detail, 'data-lucide="clock"')
         self.assertContains(detail, "08:00")
         self.assertEqual(
-            detail.context["vm"]["content"]["main_card"]["titulo"]["subtitle"],
-            {"text": "08:00", "icon": "clock-3", "modifier": "time"},
+            detail.context["vm"]["content"]["main_card"]["titulo"][
+                "structural_indicators"
+            ]["hour"],
+            "08:00",
         )
         self.assertContains(form, "Hora de la comida")
         self.assertContains(form, 'value="08:00"')

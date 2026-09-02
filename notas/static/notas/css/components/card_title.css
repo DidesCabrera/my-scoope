@@ -55,10 +55,6 @@ order: 2;
 order: 2;
 }
 
-.main-title.main-card > .entity-heading__subtitle {
-order: 3;
-}
-
 .main-title.main-card > .structural-indicators {
 order: 3;
 }
@@ -122,34 +118,8 @@ background-color: var(--entity-food);
 background-color: var(--entity-program);
 }
 
-.entity-heading__subtitle {
-display: flex;
-align-items: center;
-gap: var(--space-xs);
-margin: var(--space-xs) 0 0;
-color: var(--text-muted);
-font-size: 0.95rem;
-line-height: 1.3;
-}
-
-.entity-heading__subtitle--time {
+.structural-item--time .structural-value {
 font-variant-numeric: tabular-nums;
-}
-
-.entity-heading__subtitle--time svg {
-width: 16px;
-height: 16px;
-flex-shrink: 0;
-}
-
-.entity-heading__subtitle--compact {
-font-size: 0.82rem;
-margin-top: 3px;
-}
-
-.entity-heading__subtitle--compact svg {
-width: 14px;
-height: 14px;
 }
 
 .card-title-comp h3 {

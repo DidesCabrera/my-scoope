@@ -1,6 +1,0 @@
-{% if subtitle %}
-  <p class="entity-heading__subtitle{% if subtitle.modifier %} entity-heading__subtitle--{{ subtitle.modifier }}{% endif %}{% if compact %} entity-heading__subtitle--compact{% endif %}">
-    {% if subtitle.icon %}<i data-lucide="{{ subtitle.icon }}" aria-hidden="true"></i>{% endif %}
-    <span>{{ subtitle.text }}</span>
-  </p>
-{% endif %}
