@@ -139,6 +139,11 @@
   gap: var(--space-lg);
 }
 
+.calendarization-day-detail-page .dailyplan-detail__meal-step {
+  display: grid;
+  gap: var(--space-md);
+}
+
 .calendarization-meal-detail-page .card-title.main,
 .calendarization-meal-detail-page .page-kpi {
   margin-bottom: 0;
