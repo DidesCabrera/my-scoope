@@ -25,7 +25,7 @@ export function DailyPlanMealDetailList({ items }: { items: DailyPlanMealDetailI
             eyebrow={`Comida ${index + 1}`}
             indicators={[
               { icon: "food", label: "alimentos", value: item.foods.length },
-              ...(item.time ? [{ icon: "clock" as const, label: "hora", value: item.time }] : []),
+              ...(item.time ? [{ icon: "clock" as const, iconPosition: "leading" as const, label: "hora", tone: "surfaceCard" as const, value: item.time }] : []),
             ]}
             nutrition={item.nutrition}
             title={item.name}>

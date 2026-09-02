@@ -364,6 +364,15 @@ border-radius: 6px;
 padding: 0.28rem 0.48rem;
 }
 
+.main-title > .structural-indicators .structural-item--time,
+.entity-heading__main.main-title > .structural-indicators .structural-item--time,
+.main-title > .entity-heading__indicator-row > .structural-indicators .structural-item--time,
+.main-title.main-card > .entity-heading__indicator-row > .structural-indicators .structural-item--time {
+color: var(--text-main);
+background: var(--surface-card);
+border: 1px solid var(--border-soft);
+}
+
 .completion-indicators,
 .completion-indicator {
 display: inline-flex;

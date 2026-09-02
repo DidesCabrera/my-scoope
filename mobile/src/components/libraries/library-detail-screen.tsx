@@ -121,7 +121,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   const detailIndicators = isEmptyDraft ? undefined : [
     ...item.indicators,
     ...(item.entity === "meal" && hasMealTimeContext && contextTime
-      ? [{ icon: "clock" as const, label: "hora", value: contextTime }]
+      ? [{ icon: "clock" as const, iconPosition: "leading" as const, label: "hora", tone: "surfaceCard" as const, value: contextTime }]
       : []),
   ];
   return <><ScrollView contentContainerStyle={styles.content} onScroll={({ nativeEvent }) => { const visible = nativeEvent.contentOffset.y > 1; if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible); }} scrollEventThrottle={16} style={styles.screen}><EntityDetailPage entity={item.entity} indicators={detailIndicators} nutrition={libraryNutrition(item.nutrition)} showNutrition={!isEmptyDraft} subtitle={item.subtitle || undefined} title={item.name}>
