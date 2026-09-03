@@ -1,7 +1,7 @@
 # iOS Notification Reliability Cycle
 
-Status: repository implementation complete — physical iPhone evidence pending
-Date: 2026-09-02
+Status: repository implementation complete — physical iPhone evidence partially recorded
+Date: 2026-09-03
 Cycle code: INR
 
 ## Objective
@@ -32,7 +32,20 @@ fallback used while APNs is disabled.
 | INR03 · Lifecycle reconciliation | completed | Activation, pause/resume/cancel, meal-hour change and approved revisions reconcile immediately; logout clears owned requests. |
 | INR04 · App lifecycle and navigation | completed | Startup/foreground refreshes the rolling window and both initial and live notification responses open Today. |
 | INR05 · Automated verification | completed | Django notification/API tests, mobile unit/contract tests, TypeScript, lint, iOS bundle export and a generic signed Release build pass. |
-| INR06 · Physical iPhone gate | pending | Local fallback, offline delivery, stale-request cancellation, cold-start tap and APNs production delivery recorded on a signed device. |
+| INR06 · Physical iPhone gate | in progress | TestFlight build 11 delivered notifications successfully on a physical iPhone. Detailed device metadata and the remaining offline, stale-request, cold-start, denial and duplicate-channel checks are still pending. |
+
+## Physical evidence log
+
+### 2026-09-03 — TestFlight build 11
+
+- Environment: staging.
+- Distribution: TestFlight, build 11.
+- Device: physical iPhone; model, iOS version and timezone were not recorded.
+- Result reported by the tester: notifications were received successfully.
+- Scope limitation: this confirms basic notification delivery only. It does not
+  yet close the offline fallback, changed-time cancellation, pause/cancel,
+  cold-start navigation, denied-permission, APNs/local exclusivity or duplicate
+  delivery checks below.
 
 ## Physical acceptance protocol
 
@@ -54,5 +67,6 @@ or nutrition details in screenshots or logs.
    requests are removed and exactly one remote alert arrives.
 9. Run the dispatcher twice and verify one `NotificationDelivery` per event/device.
 
-INR is closed only after INR06 evidence is recorded. Repository completion alone
-does not prove iOS delivery, signing, Focus-mode behavior or APNs credentials.
+INR is closed only after all INR06 evidence is recorded. The successful build 11
+test proves basic delivery on a physical iPhone, but does not by itself prove the
+remaining lifecycle cases, Focus-mode behavior or APNs/local exclusivity.
