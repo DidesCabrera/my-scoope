@@ -295,6 +295,11 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
   flex: 0 0 auto;
 }
 
+.composition-picker-modal .picker-section.picker-impact {
+  margin-left: 0;
+  border-left: 0;
+}
+
 .composition-picker-schedule-fields {
   justify-content: flex-start;
   margin-bottom: 14px;
