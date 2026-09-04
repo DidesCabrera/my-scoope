@@ -30,27 +30,25 @@
         data-picker-step-panel="selection"
         aria-labelledby="meal-selection-title"
       >
-        <div class="composition-picker-modal__body">
-          <div class="composition-picker-step-heading">
-            <h3 id="meal-selection-title">Selecciona una comida</h3>
-          </div>
+        <div class="composition-picker-modal__body composition-picker-modal__body--selection">
+          <div id="meal-picker" class="selector">
+            <div class="composition-picker-step-heading">
+              <h3 id="meal-selection-title">Selecciona una comida</h3>
 
-          <div class="composition-picker-entry-actions">
-            <span class="composition-picker-entry-actions__active">
-              <i data-lucide="bookmark"></i>
-              Mi biblioteca
-            </span>
-            <a
-              href="{% url 'create_meal_for_dailyplan' main_id %}"
-              class="composition-picker-entry-actions__create"
-            >
-              <i data-lucide="plus"></i>
-              Crear comida
-            </a>
-          </div>
+              <div class="composition-picker-entry-actions">
+                <span class="composition-picker-entry-actions__active">
+                  <i data-lucide="bookmark"></i>
+                  Mi biblioteca
+                </span>
+                <a
+                  href="{% url 'create_meal_for_dailyplan' main_id %}"
+                  class="composition-picker-entry-actions__create"
+                >
+                  <i data-lucide="plus"></i>
+                  Crear comida
+                </a>
+              </div>
 
-          <div class="add-row add-row--meal-picker">
-            <div id="meal-picker" class="selector">
               <div class="composition-picker-search-row">
                 <i data-lucide="search" class="search-icon-add-row-icon"></i>
                 <label class="sr-only" for="meal-search">Buscar comida</label>
@@ -61,10 +59,10 @@
                   autocomplete="off"
                 >
               </div>
-              <ul id="meal-list" class="selector-list" aria-label="Resultados de comidas"></ul>
             </div>
-            <input type="hidden" id="dp-selected-meal-id" name="meal_id">
+            <ul id="meal-list" class="selector-list" aria-label="Resultados de comidas"></ul>
           </div>
+          <input type="hidden" id="dp-selected-meal-id" name="meal_id">
         </div>
 
         <footer class="composition-picker-modal__footer">

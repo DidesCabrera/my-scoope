@@ -25,27 +25,25 @@
       data-picker-step-panel="selection"
       aria-labelledby="food-selection-title"
     >
-      <div class="composition-picker-modal__body">
-        <div class="composition-picker-step-heading">
-          <h3 id="food-selection-title">Selecciona un alimento</h3>
-        </div>
+      <div class="composition-picker-modal__body composition-picker-modal__body--selection">
+        <div id="food-picker" class="selector">
+          <div class="composition-picker-step-heading">
+            <h3 id="food-selection-title">Selecciona un alimento</h3>
 
-        <div class="composition-picker-entry-actions">
-          <span class="composition-picker-entry-actions__active">
-            <i data-lucide="bookmark"></i>
-            Mi biblioteca
-          </span>
-          <a
-            href="{% url 'food_create' %}?return_to={{ request.path|urlencode }}"
-            class="composition-picker-entry-actions__create"
-          >
-            <i data-lucide="plus"></i>
-            Crear alimento
-          </a>
-        </div>
+            <div class="composition-picker-entry-actions">
+              <span class="composition-picker-entry-actions__active">
+                <i data-lucide="bookmark"></i>
+                Mi biblioteca
+              </span>
+              <a
+                href="{% url 'food_create' %}?return_to={{ request.path|urlencode }}"
+                class="composition-picker-entry-actions__create"
+              >
+                <i data-lucide="plus"></i>
+                Crear alimento
+              </a>
+            </div>
 
-        <div class="add-row">
-          <div id="food-picker" class="selector">
             <div class="composition-picker-search-row">
               <i data-lucide="search" class="search-icon-add-row-icon"></i>
               <label class="sr-only" for="food-search">Buscar alimento</label>
@@ -56,8 +54,8 @@
                 autocomplete="off"
               >
             </div>
-            <ul id="food-list" class="selector-list" aria-label="Resultados de alimentos"></ul>
           </div>
+          <ul id="food-list" class="selector-list" aria-label="Resultados de alimentos"></ul>
         </div>
       </div>
 

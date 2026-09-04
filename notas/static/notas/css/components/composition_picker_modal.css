@@ -117,6 +117,12 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
   overflow: hidden;
 }
 
+.composition-picker-modal__body--selection {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 
 .composition-picker-step-heading {
   margin-bottom: 14px;
@@ -191,12 +197,26 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
 }
 
 .composition-picker-modal .selector {
-  display: block;
+  display: flex;
+  flex: 1 1 auto;
+  align-items: stretch;
+  flex-direction: column;
+  gap: 0;
+  min-height: 0;
   width: 100%;
   padding: 0;
-  background: var(--input-bg);
-  border: 1px solid var(--input-border);
-  border-radius: 14px 14px 0 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+.composition-picker-modal .selector > .composition-picker-step-heading {
+  flex: 0 0 auto;
+  margin-bottom: 0;
+}
+
+.composition-picker-modal .selector > .composition-picker-step-heading > h3 {
+  margin-bottom: 14px;
 }
 
 .composition-picker-search-row {
@@ -205,6 +225,9 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 14px 14px 0 0;
 }
 
 .composition-picker-modal #food-search,
@@ -220,9 +243,11 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
 .composition-picker-modal .selector > .selector-list {
   position: static;
   box-sizing: border-box;
+  flex: 1 1 auto;
+  min-height: 0;
   width: 100%;
   height: auto;
-  max-height: min(430px, 48dvh);
+  max-height: none;
   margin: 0;
   overflow-y: auto;
   background: var(--surface-card-muted);

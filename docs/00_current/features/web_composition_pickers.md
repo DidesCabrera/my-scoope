@@ -49,6 +49,8 @@ before previewing the replacement.
 - The dialog keeps one responsive height across both states. In Impacto, its
   heading and optional schedule fields remain fixed while the stacked selected
   item and nutrition impact sections scroll inside `picker-layout`.
+- In Selección, the step heading owns the title, library/create actions, and
+  search row as one fixed control region; only `selector-list` scrolls.
 - The dialog is labelled by its visible title. Step progression is conveyed by
   the changing selection and impact content rather than a separate visual
   progress indicator.
