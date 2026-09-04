@@ -176,15 +176,15 @@ class DailyPlanMealPickerTests(TestCase):
 
         picker_context = json.loads(response.context["meal_picker_context"])
         self.assertEqual(picker_context["dailyplan"]["name"], self.dailyplan.name)
-        self.assertEqual(
-            picker_context["dailyplan"]["meals"],
-            [
-                {
-                    "dailyplanmeal_id": dailyplan_meal.id,
-                    "meal_id": self.dpm_meal.id,
-                    "name": "DPM meal",
-                    "hour": "",
-                    "note": "",
-                }
-            ],
-        )
+        self.assertEqual(picker_context["dailyplan"]["owner"], self.user.username)
+        projected_meal = picker_context["dailyplan"]["meals"][0]
+        self.assertEqual(projected_meal["dailyplanmeal_id"], dailyplan_meal.id)
+        self.assertEqual(projected_meal["meal_id"], self.dpm_meal.id)
+        self.assertEqual(projected_meal["name"], "DPM meal")
+        self.assertEqual(projected_meal["hour"], "")
+        self.assertEqual(projected_meal["note"], "")
+        self.assertEqual(projected_meal["protein"], 0)
+        self.assertEqual(projected_meal["carbs"], 0)
+        self.assertEqual(projected_meal["fat"], 0)
+        self.assertEqual(projected_meal["total_kcal"], 0)
+        self.assertEqual(projected_meal["foods"], [])

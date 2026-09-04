@@ -32,7 +32,7 @@ def test_food_picker_selecting_food_shows_preview(page, meal_edit_url, ui_settle
     assert page.locator("#meal-picker-section").get_attribute("data-picker-step") == "impact"
     assert not food_search.is_visible(), "La búsqueda siguió visible en el paso de impacto"
     result_card = page.locator('[data-scope="meal-result"]')
-    projected_item = result_card.locator(".picker-result-card__item--projected")
+    projected_item = result_card.locator(".is-visible [data-projected='true']")
     assert result_card.is_visible(), "No se mostró la card de la comida resultante"
     assert projected_item.count() == 1, "La card no destacó el alimento por agregar"
     assert "Por agregar" in (projected_item.text_content() or "")

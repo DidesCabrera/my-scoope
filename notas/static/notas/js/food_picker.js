@@ -455,9 +455,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (isEdit()) {
       const originalFood = findFoodById(ctx.editing.food_id);
+      const originalRelation = (ctx.meal.foods || []).find(
+        item => Number(item.mealfood_id) === Number(ctx.editing.mealfood_id)
+      );
       const oldPortion = originalFood
         ? portionFromFood(originalFood, ctx.editing.original_quantity)
-        : null;
+        : originalRelation;
 
       baseMeal = removePortionTotals(ctx.meal.kpis, oldPortion);
     }
@@ -471,6 +474,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderResultCard(preview, {
       scope: "meal-result",
       name: ctx.meal.name,
+      owner: ctx.meal.owner,
       kpis: previewMeal,
       items: projectMealResultItems(
         ctx.meal.foods,
@@ -478,7 +482,7 @@ document.addEventListener("DOMContentLoaded", () => {
         quantity,
         isEdit() ? ctx.editing.mealfood_id : null,
       ),
-      emptyLabel: "Sin alimentos",
+      entityKind: "meal",
     });
   }
 

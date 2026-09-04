@@ -1,6 +1,35 @@
 from django.urls import reverse
 
+from notas.application.services.nutrition.food_aggregation import (
+    build_meal_foods_projection,
+)
 from notas.presentation.frontend.jscontext.meal_picker import MealPickerContext, MealPickerMealsPayload
+
+
+def _cached_or_live(meal, cached_attr, live_attr):
+    cached_value = getattr(meal, cached_attr, None)
+    return cached_value if cached_value is not None else getattr(meal, live_attr)
+
+
+def _serialize_dailyplan_meal(item):
+    meal = item.meal
+    foods = meal.foods_aggregation_cached
+
+    if foods is None:
+        foods = build_meal_foods_projection(meal)
+
+    return {
+        "dailyplanmeal_id": item.id,
+        "meal_id": item.meal_id,
+        "name": meal.name,
+        "hour": item.hour.isoformat(timespec="minutes") if item.hour else "",
+        "note": item.note or "",
+        "protein": _cached_or_live(meal, "protein_cached", "protein"),
+        "carbs": _cached_or_live(meal, "carbs_cached", "carbs"),
+        "fat": _cached_or_live(meal, "fat_cached", "fat"),
+        "total_kcal": _cached_or_live(meal, "total_kcal_cached", "total_kcal"),
+        "foods": foods,
+    }
 
 
 def build_meal_picker_context_payload(
@@ -14,15 +43,10 @@ def build_meal_picker_context_payload(
         "dailyplan": {
             "id": dailyplan.id,
             "name": dailyplan.name,
+            "owner": str(dailyplan.created_by),
             "kpis": dailyplan_kpis,
             "meals": [
-                {
-                    "dailyplanmeal_id": item.id,
-                    "meal_id": item.meal_id,
-                    "name": item.meal.name,
-                    "hour": item.hour.isoformat(timespec="minutes") if item.hour else "",
-                    "note": item.note or "",
-                }
+                _serialize_dailyplan_meal(item)
                 for item in dailyplan_meals
             ],
         }
@@ -113,5 +137,3 @@ def build_meal_picker_data_payload(
             for m in existing_meals_qs
         ],
     }
-
-

@@ -14,6 +14,7 @@ def build_food_picker_context_payload(
         "meal": {
             "id": meal.id,
             "name": meal.name,
+            "owner": str(meal.created_by),
             "kpis": nutrition_kpis,
             "foods": [
                 {
@@ -21,6 +22,10 @@ def build_food_picker_context_payload(
                     "food_id": meal_food.food_id,
                     "name": resolve_food_display_name(meal_food.food),
                     "quantity": float(meal_food.quantity),
+                    "protein": float(meal_food.protein),
+                    "carbs": float(meal_food.carbs),
+                    "fat": float(meal_food.fat),
+                    "total_kcal": float(meal_food.total_kcal),
                 }
                 for meal_food in meal.meal_food_set.all()
             ],

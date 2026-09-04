@@ -36,7 +36,7 @@ def test_meal_picker_select_from_browse_shows_preview(page, dailyplan_edit_url, 
     assert page.locator('input[name="hour"]').is_visible(), "El paso de impacto no mostró la hora"
     assert page.locator('input[name="note"]').is_visible(), "El paso de impacto no mostró la nota"
     result_card = page.locator('[data-scope="day-preview"]')
-    projected_item = result_card.locator(".picker-result-card__item--projected")
+    projected_item = result_card.locator(".is-visible [data-projected='true']")
     assert result_card.is_visible(), "No se mostró la card del plan diario resultante"
     assert projected_item.count() == 1, "La card no destacó la comida por agregar"
     assert "Por agregar" in (projected_item.text_content() or "")

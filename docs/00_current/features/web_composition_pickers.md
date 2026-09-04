@@ -56,6 +56,13 @@ before previewing the replacement.
   selection produces the resulting DailyPlan card. Each card includes the
   current children, highlights the pending addition or replacement, and updates
   projected nutrition totals before submission.
+- Result cards reuse the production card anatomy (`card-title-comp`,
+  `dash-kpi-comp`, responsive tabs and data grids). Meal projections expose the
+  Alimentos, Tabla Alimentos, Calorías, Macros and Alloc panels; DailyPlan
+  projections expose Menú, Tabla Nutricional, Calorías, Macros and Alloc.
+- Every projected table row recalculates `% Cal`, intrinsic P|C|F distribution
+  and macro allocation against the resulting entity. Quantity, selected Meal,
+  Hora and Nota remain provisional until the user submits the fixed footer.
 - In Selección, the step heading owns the title, library/create actions, and
   search row as one fixed control region; only `selector-list` scrolls.
 - The dialog is labelled by its visible title. Step progression is conveyed by

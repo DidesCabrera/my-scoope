@@ -52,6 +52,20 @@ test("composition picker keeps padding on scroll content and actions in a fixed 
   assert.match(styles, /\.composition-picker-modal__footer\s*\{[\s\S]*?flex:\s*0 0 auto;[\s\S]*?border-top:/);
 });
 
+test("impact cards reuse UI-system card, KPI, tab, and data-grid contracts", async () => {
+  const resultCard = await source("notas/templates/components/card_picker_result.html");
+
+  assert.match(resultCard, /entity-card card picker-result-card/);
+  assert.match(resultCard, /entity-heading card-title-comp/);
+  assert.match(resultCard, /dash-kpi-comp/);
+  assert.match(resultCard, /detail_tabs_foods\.html/);
+  assert.match(resultCard, /detail_tabs_meals\.html/);
+  assert.match(resultCard, /data-grid--foods/);
+  assert.match(resultCard, /data-grid--meals/);
+  assert.match(resultCard, /data-grid--mobile-foods-alloc/);
+  assert.match(resultCard, /data-grid--mobile-alloc/);
+});
+
 test("impact keeps a stable dialog height and scrolls only its stacked picker layout", async () => {
   const styles = await source("notas/static/notas/css/components/composition_picker_modal.css");
 

@@ -261,6 +261,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderResultCard(previewRoot, {
       scope: "day-preview",
       name: ctx.dailyplan.name,
+      owner: ctx.dailyplan.owner,
       kpis: previewWithAlloc,
       items: projectDailyPlanResultItems(
         ctx.dailyplan.meals,
@@ -271,7 +272,7 @@ document.addEventListener("DOMContentLoaded", () => {
           editingDailyPlanMealId: isEdit() ? ctx.editing.dailyplanmeal_id : null,
         },
       ),
-      emptyLabel: "Sin comidas",
+      entityKind: "dailyplan",
     });
 
     previewBox.style.display = "flex";

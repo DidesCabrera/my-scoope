@@ -204,19 +204,16 @@ class PickerPayloadTests(TestCase):
         self.assertEqual(picker_context["editing"]["food_id"], food.id)
         self.assertEqual(picker_context["editing"]["original_quantity"], 120.0)
         self.assertEqual(picker_context["meal"]["name"], "Editable meal")
-        self.assertEqual(
-            picker_context["meal"]["foods"],
-            [
-                {
-                    "mealfood_id": meal_food.id,
-                    "food_id": food.id,
-                    "name": "Egg",
-                    "quantity": 120.0,
-                }
-            ],
-        )
-
-
+        self.assertEqual(picker_context["meal"]["owner"], self.user.username)
+        projected_food = picker_context["meal"]["foods"][0]
+        self.assertEqual(projected_food["mealfood_id"], meal_food.id)
+        self.assertEqual(projected_food["food_id"], food.id)
+        self.assertEqual(projected_food["name"], "Egg")
+        self.assertEqual(projected_food["quantity"], 120.0)
+        self.assertEqual(projected_food["protein"], 12.0)
+        self.assertEqual(projected_food["carbs"], 2.4)
+        self.assertEqual(projected_food["fat"], 6.0)
+        self.assertEqual(projected_food["total_kcal"], 111.6)
     def test_meal_detail_foods_json_includes_visible_global_foods(self):
         meal = Meal.objects.create(
             name="Editable meal",
