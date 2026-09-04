@@ -51,6 +51,11 @@ before previewing the replacement.
   nutrition impact scroll inside `picker-layout`.
 - DailyPlan Meal Impacto places Hora and Nota between the selected Meal and day
   impact, using the same contextual-control treatment as Food quantity.
+- Impacto presents a projected UI-system `entity-card` instead of an isolated
+  KPI preview: Food selection produces the resulting Meal card and Meal
+  selection produces the resulting DailyPlan card. Each card includes the
+  current children, highlights the pending addition or replacement, and updates
+  projected nutrition totals before submission.
 - In Selección, the step heading owns the title, library/create actions, and
   search row as one fixed control region; only `selector-list` scrolls.
 - The dialog is labelled by its visible title. Step progression is conveyed by

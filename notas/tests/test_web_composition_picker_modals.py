@@ -33,6 +33,9 @@ class WebCompositionPickerModalTests(TestCase):
         self.assertContains(response, 'data-picker-step-panel="selection"')
         self.assertContains(response, 'data-picker-step-panel="impact"')
         self.assertContains(response, "Crear alimento")
+        self.assertContains(response, 'data-scope="meal-result"')
+        self.assertContains(response, 'class="entity-card picker-result-card picker-result-card--meal"')
+        self.assertNotContains(response, 'class="preview-picker"')
         self.assertContains(response, reverse("food_create"))
         self.assertNotContains(response, 'id="meal-picker-section" class="section_picker')
 
@@ -51,6 +54,9 @@ class WebCompositionPickerModalTests(TestCase):
         self.assertContains(response, 'data-picker-step-panel="selection"')
         self.assertContains(response, 'data-picker-step-panel="impact"')
         self.assertContains(response, "Crear comida")
+        self.assertContains(response, 'data-scope="day-preview"')
+        self.assertContains(response, 'class="entity-card picker-result-card picker-result-card--dailyplan"')
+        self.assertNotContains(response, 'class="preview-picker"')
         self.assertContains(
             response,
             reverse("create_meal_for_dailyplan", args=[dailyplan.id]),

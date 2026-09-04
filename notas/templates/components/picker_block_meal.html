@@ -108,15 +108,7 @@
             </div>
 
             <div class="picker-section picker-impact">
-              <div data-scope="day-preview">
-                <div class="picker-title-row">
-                  <i data-lucide="clipboard-list" class="preview-picker-icon dailyplan"></i>
-                  <h3>Impacto en el plan diario</h3>
-                </div>
-                <div class="preview-picker">
-                  {% include "components/grid_picker_meal_day_preview.html" %}
-                </div>
-              </div>
+              {% include "components/card_picker_result.html" with result_scope="day-preview" result_kind="dailyplan" result_icon="clipboard-list" result_aria_label="Plan diario resultante" items_icon="utensils" items_label="Comidas del plan" %}
             </div>
           </div>
         </div>

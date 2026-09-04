@@ -1,0 +1,73 @@
+<article
+  class="entity-card picker-result-card picker-result-card--{{ result_kind }}"
+  data-scope="{{ result_scope }}"
+  aria-label="{{ result_aria_label }}"
+  aria-live="polite"
+>
+  <div class="entity-card__main picker-result-card__main">
+    <div class="entity-card__title picker-result-card__identity">
+      <div class="picker-result-card__title-row">
+        <i data-lucide="{{ result_icon }}" class="picker-summary-card__icon {{ result_kind }}"></i>
+        <div>
+          <span class="picker-result-card__eyebrow">Resultado proyectado</span>
+          <h4 data-role="result-name"></h4>
+        </div>
+      </div>
+    </div>
+
+    <div class="entity-card__kpi picker-result-card__kpi">
+      <div class="picker-summary-kpi">
+        <div class="picker-summary-kpi__total">
+          <p>Calories</p>
+          <strong><span data-role="result-kcal"></span></strong>
+        </div>
+
+        <div class="picker-summary-kpi__macros">
+          <div class="picker-summary-kpi__row">
+            <div class="picker-summary-kpi__label">Protein</div>
+            <div class="picker-summary-kpi__ppk"><span data-role="result-ppk"></span></div>
+            <div class="picker-summary-kpi__grams"><span data-role="result-protein"></span>g</div>
+            <div class="picker-summary-kpi__alloc" data-role="result-alloc-protein" style="--alloc:0">
+              <div class="picker-alloc-item">
+                <div class="alloc-pct micro alloc-bar-fill--protein"><p data-role="result-alloc-protein-text"></p></div>
+                <div class="alloc-bar-comp mini"><div class="alloc-bar-bg"></div><div class="alloc-bar-fill alloc-bar-fill--protein"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="picker-summary-kpi__row">
+            <div class="picker-summary-kpi__label">Carbs</div>
+            <div class="picker-summary-kpi__ppk"></div>
+            <div class="picker-summary-kpi__grams"><span data-role="result-carbs"></span>g</div>
+            <div class="picker-summary-kpi__alloc" data-role="result-alloc-carbs" style="--alloc:0">
+              <div class="picker-alloc-item">
+                <div class="alloc-pct micro alloc-bar-fill--carbs"><p data-role="result-alloc-carbs-text"></p></div>
+                <div class="alloc-bar-comp mini"><div class="alloc-bar-bg"></div><div class="alloc-bar-fill alloc-bar-fill--carbs"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="picker-summary-kpi__row">
+            <div class="picker-summary-kpi__label">Fat</div>
+            <div class="picker-summary-kpi__ppk"></div>
+            <div class="picker-summary-kpi__grams"><span data-role="result-fat"></span>g</div>
+            <div class="picker-summary-kpi__alloc" data-role="result-alloc-fat" style="--alloc:0">
+              <div class="picker-alloc-item">
+                <div class="alloc-pct micro alloc-bar-fill--fat"><p data-role="result-alloc-fat-text"></p></div>
+                <div class="alloc-bar-comp mini"><div class="alloc-bar-bg"></div><div class="alloc-bar-fill alloc-bar-fill--fat"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-panel card-detail-block picker-result-card__contents">
+    <div class="picker-result-card__contents-header">
+      <i data-lucide="{{ items_icon }}"></i>
+      <h5>{{ items_label }}</h5>
+    </div>
+    <ul class="picker-result-card__items" data-role="result-items"></ul>
+  </div>
+</article>

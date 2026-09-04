@@ -1,5 +1,6 @@
 from django.urls import reverse
 
+from notas.application.services.food_imports.localized_names import resolve_food_display_name
 from notas.presentation.frontend.jscontext.food_picker import FoodPickerFoodsPayload, FoodPickerLegacyContext
 
 
@@ -12,7 +13,17 @@ def build_food_picker_context_payload(
     base = {
         "meal": {
             "id": meal.id,
+            "name": meal.name,
             "kpis": nutrition_kpis,
+            "foods": [
+                {
+                    "mealfood_id": meal_food.id,
+                    "food_id": meal_food.food_id,
+                    "name": resolve_food_display_name(meal_food.food),
+                    "quantity": float(meal_food.quantity),
+                }
+                for meal_food in meal.meal_food_set.all()
+            ],
         }
     }
 

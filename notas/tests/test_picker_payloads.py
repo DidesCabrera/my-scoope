@@ -203,6 +203,18 @@ class PickerPayloadTests(TestCase):
         self.assertEqual(picker_context["editing"]["mealfood_id"], meal_food.id)
         self.assertEqual(picker_context["editing"]["food_id"], food.id)
         self.assertEqual(picker_context["editing"]["original_quantity"], 120.0)
+        self.assertEqual(picker_context["meal"]["name"], "Editable meal")
+        self.assertEqual(
+            picker_context["meal"]["foods"],
+            [
+                {
+                    "mealfood_id": meal_food.id,
+                    "food_id": food.id,
+                    "name": "Egg",
+                    "quantity": 120.0,
+                }
+            ],
+        )
 
 
     def test_meal_detail_foods_json_includes_visible_global_foods(self):

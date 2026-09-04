@@ -12,11 +12,14 @@ import {
 
 import {
   renderSelectedMeal,
-  renderDayPreview,
   renderFoodsAggregation
 } from "./meal_preview.js";
 
 import { renderMealItem } from "./meal_item_list.js";
+import {
+  projectDailyPlanResultItems,
+  renderResultCard
+} from "./picker_result_card.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   const ctx = window.MEAL_PICKER_CONTEXT;
@@ -244,11 +247,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const previewPlanKpis = addKpis(basePlanKpis, selectedMealKpis);
 
-    const currentWithAlloc = {
-      ...basePlanKpis,
-      alloc: computeAlloc(basePlanKpis),
-    };
-
     const previewWithAlloc = {
       ...previewPlanKpis,
       alloc: computeAlloc(previewPlanKpis),
@@ -256,17 +254,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const weight = ctx.dailyplan.kpis.weight;
 
-    currentWithAlloc.ppk = computePPK(currentWithAlloc.protein, weight);
     previewWithAlloc.ppk = computePPK(previewWithAlloc.protein, weight);
 
     renderSelectedMeal(previewRoot, selectedMeal);
     renderFoodsAggregation(previewRoot, selectedMeal.foods || []);
-    renderDayPreview(
-      previewRoot,
-      currentWithAlloc,
-      previewWithAlloc,
-      selectedMeal
-    );
+    renderResultCard(previewRoot, {
+      scope: "day-preview",
+      name: ctx.dailyplan.name,
+      kpis: previewWithAlloc,
+      items: projectDailyPlanResultItems(
+        ctx.dailyplan.meals,
+        selectedMeal,
+        {
+          hour: hourInput?.value,
+          note: noteInput?.value,
+          editingDailyPlanMealId: isEdit() ? ctx.editing.dailyplanmeal_id : null,
+        },
+      ),
+      emptyLabel: "Sin comidas",
+    });
 
     previewBox.style.display = "flex";
   }
@@ -299,6 +305,9 @@ document.addEventListener("DOMContentLoaded", () => {
     renderMealList(filteredMeals);
     openList();
   });
+
+  hourInput?.addEventListener("input", showPreview);
+  noteInput?.addEventListener("input", showPreview);
 
   document.addEventListener("mousedown", e => {
     if (!picker.contains(e.target)) {

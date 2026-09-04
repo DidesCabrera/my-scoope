@@ -8,16 +8,20 @@ import {
   portionFromFoodById,
   previewTotals,
   removePortionTotals,
-  computePPK
+  computePPK,
+  computeAlloc
 } from "./food_math.js";
 
 import {
   renderBase,
-  renderPortion,
-  renderPreviewTotals
+  renderPortion
 } from "./food_preview.js";
 
 import { renderFoodItem } from "./food_item_list.js";
+import {
+  projectMealResultItems,
+  renderResultCard
+} from "./picker_result_card.js";
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -462,8 +466,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const weight = ctx.meal.kpis.weight;
     previewMeal.ppk = computePPK(previewMeal.protein, weight);
+    previewMeal.alloc = computeAlloc(previewMeal);
 
-    renderPreviewTotals(previewMeal);
+    renderResultCard(preview, {
+      scope: "meal-result",
+      name: ctx.meal.name,
+      kpis: previewMeal,
+      items: projectMealResultItems(
+        ctx.meal.foods,
+        selectedFood,
+        quantity,
+        isEdit() ? ctx.editing.mealfood_id : null,
+      ),
+      emptyLabel: "Sin alimentos",
+    });
   }
 
   // ---------------------------

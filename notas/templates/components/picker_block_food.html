@@ -101,13 +101,7 @@
             </div>
 
             <div class="picker-section picker-impact">
-              <div class="picker-title-row">
-                <i data-lucide="utensils" class="preview-picker-icon meal"></i>
-                <h3>Impacto en la comida</h3>
-              </div>
-              <div class="preview-picker">
-                {% include "components/grid_picker_food_preview.html" %}
-              </div>
+              {% include "components/card_picker_result.html" with result_scope="meal-result" result_kind="meal" result_icon="utensils" result_aria_label="Comida resultante" items_icon="carrot" items_label="Alimentos de la comida" %}
             </div>
           </div>
         </div>

@@ -7,12 +7,24 @@ def build_meal_picker_context_payload(
     *,
     dailyplan,
     dailyplan_kpis,
+    dailyplan_meals,
     dpm,
 ):
     base = {
         "dailyplan": {
             "id": dailyplan.id,
+            "name": dailyplan.name,
             "kpis": dailyplan_kpis,
+            "meals": [
+                {
+                    "dailyplanmeal_id": item.id,
+                    "meal_id": item.meal_id,
+                    "name": item.meal.name,
+                    "hour": item.hour.isoformat(timespec="minutes") if item.hour else "",
+                    "note": item.note or "",
+                }
+                for item in dailyplan_meals
+            ],
         }
     }
 
@@ -101,6 +113,5 @@ def build_meal_picker_data_payload(
             for m in existing_meals_qs
         ],
     }
-
 
 

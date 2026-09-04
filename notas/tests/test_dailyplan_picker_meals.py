@@ -155,7 +155,7 @@ class DailyPlanMealPickerTests(TestCase):
             is_copiable=False,
         )
 
-        DailyPlanMeal.objects.create(
+        dailyplan_meal = DailyPlanMeal.objects.create(
             dailyplan=self.dailyplan,
             meal=self.dpm_meal,
             order=1,
@@ -173,3 +173,18 @@ class DailyPlanMealPickerTests(TestCase):
         existing_names = [meal["name"] for meal in existing_meals]
 
         self.assertIn("DPM meal", existing_names)
+
+        picker_context = json.loads(response.context["meal_picker_context"])
+        self.assertEqual(picker_context["dailyplan"]["name"], self.dailyplan.name)
+        self.assertEqual(
+            picker_context["dailyplan"]["meals"],
+            [
+                {
+                    "dailyplanmeal_id": dailyplan_meal.id,
+                    "meal_id": self.dpm_meal.id,
+                    "name": "DPM meal",
+                    "hour": "",
+                    "note": "",
+                }
+            ],
+        )
