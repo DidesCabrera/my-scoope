@@ -10,7 +10,14 @@ import { useSession } from "@/auth/session-context";
 import { AppHeader, Button, Card, Field, InlineNotice, Pill, Screen, SectionTitle, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { deleteCachedImage, prepareLabelImage, type PreparedLabelImage } from "@/label-capture/image";
-import { normalizeNutritionLabel, type NutritionField, type NutritionLabelDraft } from "@/label-capture/normalize";
+import {
+  confirmNutritionLabelBasis,
+  convertServingDraftTo100g,
+  convertVolumeDraftTo100g,
+  normalizeNutritionLabel,
+  type NutritionField,
+  type NutritionLabelDraft,
+} from "@/label-capture/normalize";
 import type {
   FoodLabelAIAnalysis,
   FoodLabelAIConfig,
@@ -34,16 +41,21 @@ type FormState = {
   fiber: string;
   sodium: string;
   servingSize: string;
+  volumeWeight: string;
 };
 
 const emptyForm: FormState = {
   name: "", energy: "", protein: "", carbs: "", fat: "", saturatedFat: "",
-  sugar: "", fiber: "", sodium: "", servingSize: "",
+  sugar: "", fiber: "", sodium: "", servingSize: "", volumeWeight: "",
 };
 
 const warningCopy: Record<string, string> = {
   manual_review: "Los valores serán ingresados y revisados manualmente.",
   basis_normalized_from_serving: "La IA convirtió los valores desde una porción hacia 100 g.",
+  basis_per_100ml_requires_weight: "La etiqueta está expresada por 100 ml. Indica cuánto pesan 100 ml para convertirla con precisión.",
+  basis_normalized_from_100ml: "Los valores fueron convertidos de 100 ml a 100 g usando el peso que indicaste.",
+  basis_not_detected: "Confirma si los valores corresponden a 100 g, 100 ml o una porción.",
+  serving_size_required: "Indica el peso en gramos de la porción impresa.",
   energy_macro_mismatch: "Las calorías declaradas difieren del cálculo de proteínas, carbos y grasas.",
   model_escalation_unresolved: "La lectura requirió comprobaciones adicionales. Revisa con especial atención.",
 };
@@ -65,13 +77,13 @@ function displayWarning(value: string) {
 
 function aiDraft(result: FoodLabelAIAnalysis): NutritionLabelDraft {
   return {
-    basis: "per_100g",
+    basis: result.basis === "unknown" ? "manual" : result.basis,
     servingSizeG: result.serving_size_g,
     sourceValues: result.source_values as Partial<Record<NutritionField, number>>,
     values: result.values as Partial<Record<NutritionField, number>>,
     fieldConfidence: result.field_confidence,
     warnings: result.warnings,
-    normalizationStatus: "ready",
+    normalizationStatus: result.normalization_status,
     ocrEngine: result.ocr_engine,
     ocrEngineVersion: result.ocr_engine_version,
   };
@@ -115,20 +127,61 @@ export default function LabelCaptureScreen() {
 
   function applyDraft(next: NutritionLabelDraft, name = "") {
     setDraft(next);
+    const displayedValues = next.normalizationStatus === "ready" ? next.values : next.sourceValues;
     setForm({
       ...emptyForm,
       name,
-      energy: valueString(next.values.energy_kcal),
-      protein: valueString(next.values.protein_g),
-      carbs: valueString(next.values.carbs_g),
-      fat: valueString(next.values.fat_g),
-      saturatedFat: valueString(next.values.saturated_fat_g),
-      sugar: valueString(next.values.sugar_g),
-      fiber: valueString(next.values.fiber_g),
-      sodium: valueString(next.values.sodium_mg),
+      energy: valueString(displayedValues.energy_kcal),
+      protein: valueString(displayedValues.protein_g),
+      carbs: valueString(displayedValues.carbs_g),
+      fat: valueString(displayedValues.fat_g),
+      saturatedFat: valueString(displayedValues.saturated_fat_g),
+      sugar: valueString(displayedValues.sugar_g),
+      fiber: valueString(displayedValues.fiber_g),
+      sodium: valueString(displayedValues.sodium_mg),
       servingSize: valueString(next.servingSizeG),
     });
     setPhase("review");
+  }
+
+  function confirmBasis(basis: "per_100g" | "per_serving" | "per_100ml") {
+    if (!draft) return;
+    try {
+      applyDraft(confirmNutritionLabelBasis(draft, basis), form.name);
+      setError(null);
+    } catch {
+      setError("No pudimos confirmar la base de esta etiqueta.");
+    }
+  }
+
+  function normalizeServingValues() {
+    const servingSize = optionalNumber(form.servingSize);
+    if (!draft || !servingSize || servingSize <= 0) {
+      setError("Indica el peso en gramos de la porción impresa.");
+      return;
+    }
+    try {
+      applyDraft(convertServingDraftTo100g(draft, servingSize), form.name);
+      setError(null);
+    } catch {
+      setError("No pudimos convertir los valores de esta porción.");
+    }
+  }
+
+  function normalizeVolumeValues() {
+    const weight = optionalNumber(form.volumeWeight);
+    if (!draft || !weight || weight <= 0) {
+      setError("Indica cuántos gramos pesan 100 ml de este producto.");
+      return;
+    }
+    try {
+      const next = convertVolumeDraftTo100g(draft, weight);
+      applyDraft(next, form.name);
+      setForm((current) => ({ ...current, volumeWeight: String(weight) }));
+      setError(null);
+    } catch {
+      setError("No pudimos convertir los valores expresados por 100 ml.");
+    }
   }
 
   function beginManualReview(message?: string) {
@@ -245,6 +298,10 @@ export default function LabelCaptureScreen() {
   }
 
   async function save() {
+    if (draft?.normalizationStatus !== "ready") {
+      setError("Confirma la base y completa la conversión antes de guardar el alimento.");
+      return;
+    }
     const protein = optionalNumber(form.protein);
     const carbs = optionalNumber(form.carbs);
     const fat = optionalNumber(form.fat);
@@ -252,7 +309,7 @@ export default function LabelCaptureScreen() {
       setError("Completa el nombre, proteínas, carbos y grasas antes de confirmar.");
       return;
     }
-    const optionalInputs = [form.energy, form.saturatedFat, form.sugar, form.fiber, form.sodium, form.servingSize];
+    const optionalInputs = [form.energy, form.saturatedFat, form.sugar, form.fiber, form.sodium, form.servingSize, form.volumeWeight];
     if (optionalInputs.some((value) => value.trim() && optionalNumber(value) === undefined)) {
       setError("Revisa los campos opcionales: usa sólo números positivos o déjalos vacíos.");
       return;
@@ -267,6 +324,7 @@ export default function LabelCaptureScreen() {
       fiber_g: optionalNumber(form.fiber),
       sodium_mg: optionalNumber(form.sodium),
       serving_size_g: optionalNumber(form.servingSize),
+      volume_weight_g_per_100ml: draft?.basis === "per_100ml" ? optionalNumber(form.volumeWeight) : undefined,
       declared_energy_kcal_per_100g: optionalNumber(form.energy),
       detected_basis: draft?.basis ?? "manual",
       ocr_engine: draft?.ocrEngine ?? "manual_entry",
@@ -364,6 +422,30 @@ export default function LabelCaptureScreen() {
       {phase === "review" ? (
         <>
           <InlineNotice tone="warning">La IA puede equivocarse. Compara cada valor con el envase antes de guardar.</InlineNotice>
+          {draft?.normalizationStatus === "basis_confirmation_required" ? (
+            <Card accent={tokens.color.warning}>
+              <SectionTitle title="¿A qué cantidad corresponden estos valores?" />
+              <Text style={textStyles.muted}>La foto permitió leer los nutrientes, pero no mostró claramente el encabezado de la columna.</Text>
+              <Button label="Corresponden a 100 g" onPress={() => confirmBasis("per_100g")} />
+              <Button label="Corresponden a una porción" onPress={() => confirmBasis("per_serving")} variant="secondary" />
+              <Button label="Corresponden a 100 ml" onPress={() => confirmBasis("per_100ml")} variant="secondary" />
+            </Card>
+          ) : null}
+          {draft?.normalizationStatus === "serving_size_required" ? (
+            <Card accent={tokens.color.warning}>
+              <SectionTitle title="Completa el peso de la porción" />
+              <Field keyboardType="decimal-pad" label="Peso de la porción (g)" onChangeText={(value) => update("servingSize", value)} value={form.servingSize} />
+              <Button label="Convertir a valores por 100 g" onPress={normalizeServingValues} />
+            </Card>
+          ) : null}
+          {draft?.normalizationStatus === "volume_weight_required" ? (
+            <Card accent={tokens.color.warning}>
+              <SectionTitle title="Convierte 100 ml a 100 g" />
+              <Text style={textStyles.muted}>No asumimos que 100 ml pesan 100 g. Busca el peso declarado por volumen o mídelo para evitar alterar los macros.</Text>
+              <Field keyboardType="decimal-pad" label="Peso de 100 ml (g)" onChangeText={(value) => update("volumeWeight", value)} value={form.volumeWeight} />
+              <Button label="Convertir con este peso" onPress={normalizeVolumeValues} />
+            </Card>
+          ) : null}
           {draft?.warnings.length ? (
             <Card muted>
               <SectionTitle detail={`${draft.warnings.length}`} title="Puntos por revisar" />
@@ -372,7 +454,7 @@ export default function LabelCaptureScreen() {
           ) : <InlineNotice>La lectura pasó las comprobaciones automáticas. Aun así, confírmala visualmente.</InlineNotice>}
           <Card accent={tokens.color.food}>
             <View style={styles.reviewHeader}>
-              <Text style={styles.reviewTitle}>Valores por 100 g</Text>
+              <Text style={styles.reviewTitle}>{draft?.normalizationStatus === "ready" ? "Valores por 100 g" : "Valores extraídos"}</Text>
               <Pill color={tokens.color.food} label={analysisId ? "IA" : "Manual"} />
             </View>
             <Field autoCapitalize="words" label="Nombre del producto" onChangeText={(value) => update("name", value)} placeholder="Ej. Yogur griego natural" value={form.name} />

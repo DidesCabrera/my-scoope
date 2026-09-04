@@ -86,6 +86,39 @@ class FoodLabelCaptureTests(TestCase):
         self.assertFalse(Food.objects.exists())
         self.assertFalse(FoodLabelCaptureReceipt.objects.exists())
 
+    def test_per_100ml_capture_requires_a_conversion_weight(self):
+        with self.assertRaisesMessage(ValueError, "food_label_volume_weight_required"):
+            create_food_from_label_capture(
+                user=self.user,
+                name="Bebida sin densidad",
+                protein_g=3,
+                carbs_g=5,
+                fat_g=2,
+                detected_basis="per_100ml",
+                ocr_engine="openai_responses",
+                idempotency_key="label-service-per-100ml-missing",
+            )
+
+        self.assertFalse(Food.objects.exists())
+        self.assertFalse(FoodLabelCaptureReceipt.objects.exists())
+
+    def test_per_100ml_capture_persists_the_explicit_conversion_weight(self):
+        result = create_food_from_label_capture(
+            user=self.user,
+            name="Leche convertida",
+            protein_g=3.204,
+            carbs_g=4.854,
+            fat_g=1.942,
+            volume_weight_g_per_100ml=103,
+            detected_basis="per_100ml",
+            ocr_engine="openai_responses",
+            idempotency_key="label-service-per-100ml-converted",
+        )
+
+        self.assertEqual(float(result.food.protein), 3.204)
+        self.assertEqual(result.receipt.detected_basis, "per_100ml")
+        self.assertEqual(float(result.receipt.volume_weight_g_per_100ml), 103)
+
     def test_another_user_cannot_replay_a_capture_key(self):
         create_food_from_label_capture(
             user=self.user,

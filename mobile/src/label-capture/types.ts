@@ -8,8 +8,9 @@ export type FoodLabelCaptureInput = {
   fiber_g?: number;
   sodium_mg?: number;
   serving_size_g?: number;
+  volume_weight_g_per_100ml?: number;
   declared_energy_kcal_per_100g?: number;
-  detected_basis: "per_100g" | "per_serving" | "manual";
+  detected_basis: "per_100g" | "per_serving" | "per_100ml" | "manual";
   ocr_engine: string;
   ocr_engine_version: string;
   field_confidence: Record<string, number>;
@@ -31,14 +32,14 @@ export type FoodLabelAIConfig = {
 export type FoodLabelAIAnalysis = {
   analysis_id: string;
   name: string;
-  basis: "per_100g";
-  source_basis: "per_100g" | "per_serving";
+  basis: "per_100g" | "per_serving" | "per_100ml" | "unknown";
+  source_basis: "per_100g" | "per_serving" | "per_100ml" | "unknown";
   serving_size_g: number | null;
   source_values: Record<string, number>;
   values: Record<string, number>;
   field_confidence: Record<string, number>;
   warnings: string[];
-  normalization_status: "ready";
+  normalization_status: "ready" | "basis_confirmation_required" | "serving_size_required" | "volume_weight_required";
   quality_confidence: number;
   ocr_engine: string;
   ocr_engine_version: string;

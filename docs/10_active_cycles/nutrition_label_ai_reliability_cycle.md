@@ -1,6 +1,6 @@
 # Nutrition-label AI reliability cycle
 
-Status: completed in repository; staging and TestFlight validation pending
+Status: corrective cycle active after first physical TestFlight validation
 Date: 2026-09-03
 
 ## Objective
@@ -48,3 +48,19 @@ decimal comma/point; glossy packaging; curved packages; small typography; kcal/k
 sodium in mg/g; low light; and deliberate non-label/blurred controls. Record whether
 the candidate was usable before edits, which fields needed edits and whether the
 scan escalated (from the internal report, not the app UI).
+
+## TestFlight 14 finding and corrective loop
+
+The first physical attempt on 2026-09-04 produced a 422 after two successful
+provider calls. Sanitized staging evidence identified
+`unsupported_or_unknown_basis`; no credits were charged. The provider schema
+already permitted `per_100ml` and `unknown`, while normalization rejected both.
+
+The corrective loop is:
+
+1. preserve extracted core nutrients when only their basis needs confirmation;
+2. support per-100-ml labels through an explicit volume-to-mass conversion;
+3. block food creation until values are genuinely normalized per 100 g;
+4. cover both paths with API, domain and mobile regression tests;
+5. deploy the correction to staging and repeat the same physical image on the
+   next TestFlight build before continuing the wider 30-label matrix.

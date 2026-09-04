@@ -16,8 +16,9 @@ class FoodLabelCaptureInput(Schema):
     fiber_g: float | None = Field(default=None, ge=0, le=100)
     sodium_mg: float | None = Field(default=None, ge=0, le=100_000)
     serving_size_g: float | None = Field(default=None, gt=0, le=10_000)
+    volume_weight_g_per_100ml: float | None = Field(default=None, gt=0, le=10_000)
     declared_energy_kcal_per_100g: float | None = Field(default=None, ge=0, le=10_000)
-    detected_basis: Literal["per_100g", "per_serving", "manual"]
+    detected_basis: Literal["per_100g", "per_serving", "per_100ml", "manual"]
     ocr_engine: str = Field(min_length=1, max_length=80)
     ocr_engine_version: str = Field(default="", max_length=40)
     field_confidence: dict[str, float] = Field(default_factory=dict)
@@ -47,14 +48,19 @@ class FoodLabelAIAnalysisInput(Schema):
 class FoodLabelAIAnalysisData(Schema):
     analysis_id: str
     name: str
-    basis: Literal["per_100g"]
-    source_basis: Literal["per_100g", "per_serving"]
+    basis: Literal["per_100g", "per_serving", "per_100ml", "unknown"]
+    source_basis: Literal["per_100g", "per_serving", "per_100ml", "unknown"]
     serving_size_g: float | None = None
     source_values: dict[str, float]
     values: dict[str, float]
     field_confidence: dict[str, float]
     warnings: list[str]
-    normalization_status: Literal["ready"]
+    normalization_status: Literal[
+        "ready",
+        "basis_confirmation_required",
+        "serving_size_required",
+        "volume_weight_required",
+    ]
     quality_confidence: float
     ocr_engine: str
     ocr_engine_version: str

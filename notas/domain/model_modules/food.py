@@ -393,10 +393,12 @@ class FoodSourceMetadata(models.Model):
 class FoodLabelCaptureReceipt(models.Model):
     BASIS_PER_100G = "per_100g"
     BASIS_PER_SERVING = "per_serving"
+    BASIS_PER_100ML = "per_100ml"
     BASIS_MANUAL = "manual"
     BASIS_CHOICES = [
         (BASIS_PER_100G, "Per 100 g"),
         (BASIS_PER_SERVING, "Per serving"),
+        (BASIS_PER_100ML, "Per 100 ml"),
         (BASIS_MANUAL, "Manual review"),
     ]
 
@@ -410,6 +412,7 @@ class FoodLabelCaptureReceipt(models.Model):
     ocr_engine_version = models.CharField(max_length=40, blank=True)
     detected_basis = models.CharField(max_length=24, choices=BASIS_CHOICES)
     serving_size_g = models.DecimalField(max_digits=8, decimal_places=3, null=True, blank=True)
+    volume_weight_g_per_100ml = models.DecimalField(max_digits=8, decimal_places=3, null=True, blank=True)
     declared_energy_kcal_per_100g = models.DecimalField(max_digits=10, decimal_places=3, null=True, blank=True)
     field_confidence = models.JSONField(default=dict, blank=True)
     warnings = models.JSONField(default=list, blank=True)

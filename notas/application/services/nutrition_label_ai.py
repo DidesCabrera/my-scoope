@@ -111,10 +111,12 @@ LABEL_RESPONSE_SCHEMA: dict[str, Any] = {
 
 LABEL_PROMPT = """You extract printed nutrition facts from a package photo.
 Return only the strict JSON result. Never infer values that are not visible. Ignore daily-value percentages.
-Prefer the column explicitly headed per 100 g; otherwise use the per-serving column and its printed serving weight.
+Prefer the column explicitly headed per 100 g. Use per_100ml when that exact volumetric basis is printed.
+Otherwise use the per-serving column and its printed serving weight in grams.
 Keep decimal separators and units semantically correct. Sodium may be printed as salt: do not convert salt to sodium.
-Set status to resolved only when protein, carbohydrates, fat and their basis are clearly legible.
-If this is not a nutrition label, the image is unreadable, or the basis is uncertain, report that status instead of guessing.
+Set status to resolved when protein, carbohydrates and fat are clearly legible. If those values are legible but
+their basis is cropped or genuinely uncertain, keep status resolved and set basis to unknown so the user can confirm it.
+If this is not a nutrition label or the nutrient values themselves are unreadable, report that status instead of guessing.
 The user will review every resulting field before saving."""
 
 
@@ -234,10 +236,13 @@ def analyze_nutrition_label(
         )
         stronger_candidate, stronger_validation_error = _normalize_provider_payload(stronger_payload)
         stronger_quality_error = _escalation_reason(stronger_candidate, safe_local) if stronger_candidate else ""
-        if stronger_candidate and not stronger_quality_error:
-            selected = stronger_candidate
-            stronger_selected = True
-        else:
+        selected, stronger_selected = _select_escalated_candidate(
+            primary_candidate=primary_candidate,
+            primary_reason=escalation_reason,
+            stronger_candidate=stronger_candidate,
+            stronger_reason=stronger_quality_error,
+        )
+        if selected is None:
             failure = (
                 stronger_error
                 or stronger_validation_error
@@ -295,7 +300,7 @@ def analyze_nutrition_label(
                 "analysis_id": str(analysis.public_id),
                 **selected,
                 "ocr_engine": "openai_responses",
-                "ocr_engine_version": "nutrition_label_ai.v1",
+                "ocr_engine_version": "nutrition_label_ai.v2",
                 "credits_charged": charged,
                 "available_credits": balance_after,
             }
@@ -544,12 +549,46 @@ def _normalize_provider_payload(payload: Any) -> tuple[dict[str, Any] | None, st
     if payload.get("status") != "resolved":
         return None, str(payload.get("status") or "invalid_output")[:120]
     basis = str(payload.get("basis") or "")
-    if basis not in {"per_100g", "per_serving"}:
-        return None, "unsupported_or_unknown_basis"
+    if basis not in {"per_100g", "per_serving", "per_100ml", "unknown"}:
+        return None, "unsupported_basis"
     serving_size = _number(payload.get("serving_size_g"), maximum=10_000)
-    if basis == "per_serving" and (serving_size is None or serving_size <= 0):
-        return None, "serving_size_required"
-    source_values = {
+    source_values = _provider_nutrient_values(payload)
+    if any(source_values[key] is None for key in ("protein_g", "carbs_g", "fat_g")):
+        return None, "core_macros_missing"
+    present_source_values = _drop_optional_outliers(
+        {key: value for key, value in source_values.items() if value is not None}
+    )
+    range_error = _nutrient_range_error(present_source_values)
+    if range_error:
+        return None, range_error
+    values, normalization_status, warnings = _normalize_basis_values(
+        basis=basis,
+        serving_size=serving_size,
+        source_values=present_source_values,
+    )
+    values = _drop_optional_outliers(values)
+    range_error = _nutrient_range_error(values)
+    if range_error:
+        return None, range_error
+    confidence = _number(payload.get("confidence"), maximum=1) or 0
+    validation_values = values or present_source_values
+    _append_energy_warning(validation_values, warnings)
+    return {
+        "name": str(payload.get("product_name") or "").strip()[:100],
+        "basis": basis,
+        "source_basis": basis,
+        "serving_size_g": serving_size,
+        "source_values": present_source_values,
+        "values": values,
+        "field_confidence": {key: round(confidence, 3) for key in present_source_values},
+        "warnings": warnings,
+        "normalization_status": normalization_status,
+        "quality_confidence": round(confidence, 3),
+    }, ""
+
+
+def _provider_nutrient_values(payload: Mapping[str, Any]) -> dict[str, float | None]:
+    return {
         "energy_kcal": _energy_kcal(payload.get("energy_value"), payload.get("energy_unit")),
         "protein_g": _number(payload.get("protein_g"), maximum=10_000),
         "carbs_g": _number(payload.get("carbs_g"), maximum=10_000),
@@ -559,45 +598,56 @@ def _normalize_provider_payload(payload: Any) -> tuple[dict[str, Any] | None, st
         "fiber_g": _number(payload.get("fiber_g"), maximum=10_000),
         "sodium_mg": _sodium_mg(payload.get("sodium_value"), payload.get("sodium_unit")),
     }
-    if any(source_values[key] is None for key in ("protein_g", "carbs_g", "fat_g")):
-        return None, "core_macros_missing"
-    factor = 100 / serving_size if basis == "per_serving" and serving_size else 1
-    values = {key: round(value * factor, 3) for key, value in source_values.items() if value is not None}
-    if any(values[key] > 100 for key in ("protein_g", "carbs_g", "fat_g")):
-        return None, "macro_outside_range"
+
+
+def _drop_optional_outliers(values: Mapping[str, float]) -> dict[str, float]:
+    result = dict(values)
     for key in ("saturated_fat_g", "sugar_g", "fiber_g"):
-        if values.get(key, 0) > 100:
-            values.pop(key, None)
+        if result.get(key, 0) > 100:
+            result.pop(key, None)
+    return result
+
+
+def _nutrient_range_error(values: Mapping[str, float]) -> str:
+    if any(values.get(key, 0) > 100 for key in ("protein_g", "carbs_g", "fat_g")):
+        return "macro_outside_range"
     if values.get("energy_kcal", 0) > 10_000 or values.get("sodium_mg", 0) > 100_000:
-        return None, "nutrient_outside_range"
-    confidence = _number(payload.get("confidence"), maximum=1) or 0
-    warnings: list[str] = []
-    if basis == "per_serving":
-        warnings.append("basis_normalized_from_serving")
+        return "nutrient_outside_range"
+    return ""
+
+
+def _normalize_basis_values(
+    *, basis: str, serving_size: float | None, source_values: Mapping[str, float]
+) -> tuple[dict[str, float], str, list[str]]:
+    if basis == "per_serving" and not serving_size:
+        return {}, "serving_size_required", ["serving_size_required"]
+    if basis == "per_100ml":
+        return {}, "volume_weight_required", ["basis_per_100ml_requires_weight"]
+    if basis == "unknown":
+        return {}, "basis_confirmation_required", ["basis_not_detected"]
+    factor = 100 / serving_size if basis == "per_serving" and serving_size else 1
+    values = {key: round(value * factor, 3) for key, value in source_values.items()}
+    warnings = ["basis_normalized_from_serving"] if basis == "per_serving" else []
+    return values, "ready", warnings
+
+
+def _append_energy_warning(values: Mapping[str, float], warnings: list[str]) -> None:
     macro_kcal = values["protein_g"] * 4 + values["carbs_g"] * 4 + values["fat_g"] * 9
     declared = values.get("energy_kcal")
     if declared is not None and abs(declared - macro_kcal) > max(40, declared * 0.2):
         warnings.append("energy_macro_mismatch")
-    return {
-        "name": str(payload.get("product_name") or "").strip()[:100],
-        "basis": "per_100g",
-        "source_basis": basis,
-        "serving_size_g": serving_size,
-        "source_values": {key: value for key, value in source_values.items() if value is not None},
-        "values": values,
-        "field_confidence": {key: round(confidence, 3) for key in values},
-        "warnings": warnings,
-        "normalization_status": "ready",
-        "quality_confidence": round(confidence, 3),
-    }, ""
 
 
 def _escalation_reason(candidate: Mapping[str, Any], local_candidate: Mapping[str, Any]) -> str:
     if float(candidate.get("quality_confidence") or 0) < 0.82:
         return "primary_low_confidence"
+    if candidate.get("source_basis") == "unknown":
+        return "primary_unknown_basis"
     if "energy_macro_mismatch" in candidate.get("warnings", []):
         return "primary_energy_mismatch"
     ai_values = candidate.get("values") if isinstance(candidate.get("values"), Mapping) else {}
+    if not ai_values and isinstance(candidate.get("source_values"), Mapping):
+        ai_values = candidate["source_values"]
     local_values = local_candidate.get("values") if isinstance(local_candidate.get("values"), Mapping) else {}
     disagreements = 0
     for key in ("protein_g", "carbs_g", "fat_g"):
@@ -608,6 +658,39 @@ def _escalation_reason(candidate: Mapping[str, Any], local_candidate: Mapping[st
         if abs(ai_value - local_value) > max(1.5, max(ai_value, local_value) * 0.2):
             disagreements += 1
     return "local_candidate_disagreement" if disagreements >= 2 else ""
+
+
+def _reviewable_candidate(candidate: Mapping[str, Any], reason: str) -> bool:
+    return (
+        reason in {"primary_unknown_basis", "primary_energy_mismatch", "local_candidate_disagreement"}
+        and float(candidate.get("quality_confidence") or 0) >= 0.82
+        and isinstance(candidate.get("source_values"), Mapping)
+        and all(candidate["source_values"].get(key) is not None for key in ("protein_g", "carbs_g", "fat_g"))
+    )
+
+
+def _select_escalated_candidate(
+    *,
+    primary_candidate: Mapping[str, Any] | None,
+    primary_reason: str,
+    stronger_candidate: Mapping[str, Any] | None,
+    stronger_reason: str,
+) -> tuple[dict[str, Any] | None, bool]:
+    if stronger_candidate and not stronger_reason:
+        return dict(stronger_candidate), True
+    if stronger_candidate and _reviewable_candidate(stronger_candidate, stronger_reason):
+        return _with_review_warning(stronger_candidate), True
+    if primary_candidate and _reviewable_candidate(primary_candidate, primary_reason):
+        return _with_review_warning(primary_candidate), False
+    return None, False
+
+
+def _with_review_warning(candidate: Mapping[str, Any]) -> dict[str, Any]:
+    result = dict(candidate)
+    warnings = list(result.get("warnings") or [])
+    warnings.append("model_escalation_unresolved")
+    result["warnings"] = list(dict.fromkeys(warnings))
+    return result
 
 
 def _safe_local_candidate(value: Mapping[str, Any] | None) -> dict[str, Any]:
