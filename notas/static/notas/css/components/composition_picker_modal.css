@@ -86,8 +86,23 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
   height: 18px;
 }
 
-.composition-picker-modal__body,
-.composition-picker-modal [data-picker-step-panel="impact"] {
+.composition-picker-modal__step,
+.composition-picker-modal__step-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.composition-picker-modal__step {
+  display: flex;
+}
+
+.composition-picker-modal__step[hidden] {
+  display: none;
+}
+
+.composition-picker-modal__body {
+  flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -211,10 +226,51 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
   position: static;
 }
 
-.composition-picker-modal__selection-actions {
+.composition-picker-modal__footer {
   display: flex;
+  flex: 0 0 auto;
+  align-items: center;
   justify-content: flex-end;
-  padding-top: 14px;
+  gap: 8px;
+  padding: 14px 24px 18px;
+  background: var(--surface-elevated);
+  border-top: 1px solid var(--border-soft);
+}
+
+.composition-picker-modal__action {
+  min-height: 38px;
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.composition-picker-modal__action--secondary {
+  margin: 0;
+  color: var(--text-muted);
+  background: transparent;
+  border-color: var(--border-soft);
+}
+
+.composition-picker-modal__action--secondary:hover {
+  color: var(--text-main);
+  background: var(--interactive-hover);
+}
+
+.composition-picker-modal__action--primary {
+  color: var(--text-inverted);
+  background: var(--text-main);
+}
+
+.composition-picker-modal__action--primary:hover {
+  color: #ffffff;
+  background: var(--interactive-primary);
 }
 
 .composition-picker-modal .picker-layout {
@@ -257,11 +313,6 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
   padding: 7px 10px;
 }
 
-.composition-picker-modal .actions-row {
-  padding-right: 0;
-  padding-bottom: 0;
-}
-
 @media (max-width: 768px) {
   .composition-picker-modal {
     position: fixed;
@@ -283,8 +334,12 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
     padding: 18px 16px 12px;
   }
 
-  .composition-picker-modal__body,
-  .composition-picker-modal [data-picker-step-panel="impact"] {
+  .composition-picker-modal__body {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .composition-picker-modal__footer {
     padding-right: 16px;
     padding-left: 16px;
   }
@@ -307,7 +362,7 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
     margin: 0;
   }
 
-  .composition-picker-modal .actions-row {
+  .composition-picker-modal__footer {
     flex-wrap: wrap;
   }
 

@@ -321,10 +321,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     preview.style.display = "none";
 
-    if (btnCancelInline) {
-      btnCancelInline.style.display = "inline-block";
-    }
-
     closeList();
   }
 
@@ -374,10 +370,6 @@ document.addEventListener("DOMContentLoaded", () => {
       li.addEventListener("click", () => {
         selectedFood = food;
         input.value = getFoodDisplayName(food);
-  
-        if (btnCancelInline) {
-          btnCancelInline.style.display = "none";
-        }
   
         closeList();
         showPreview();
@@ -429,7 +421,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function showPreview() {
     if (!selectedFood) return;
 
-    preview.style.display = "block";
+    preview.style.display = "flex";
     document.getElementById("preview-name").textContent = getFoodDisplayName(selectedFood);
     renderSelectedFoodSource(selectedFood);
 

@@ -43,6 +43,9 @@ before previewing the replacement.
   the detail document.
 - Only one step is exposed at a time. “Cambiar selección” returns from Impacto to
   Selección without submitting.
+- Both steps use the same padded scroll region and a shared, non-scrolling action
+  footer. Cancel remains available after returning to Selección, and primary and
+  secondary actions use the same visual contract in both picker types.
 - The dialog is labelled by its visible title. Step progression is conveyed by
   the changing selection and impact content rather than a separate visual
   progress indicator.

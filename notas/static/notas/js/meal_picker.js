@@ -105,9 +105,6 @@ document.addEventListener("DOMContentLoaded", () => {
     previewBox.style.display = "none";
     form.classList.remove("has-selection");
 
-    if (btnCancelInline) {
-      btnCancelInline.style.display = "inline-block";
-    }
   }
 
   function applySelectedMeal(meal) {
@@ -207,10 +204,6 @@ document.addEventListener("DOMContentLoaded", () => {
         li.addEventListener("click", () => {
           applySelectedMeal(meal);
   
-          if (btnCancelInline) {
-            btnCancelInline.style.display = "none";
-          }
-  
           closeList();
           showImpactStep();
         });
@@ -275,7 +268,7 @@ document.addEventListener("DOMContentLoaded", () => {
       selectedMeal
     );
 
-    previewBox.style.display = "block";
+    previewBox.style.display = "flex";
   }
 
   // ---------------------------
@@ -352,10 +345,6 @@ document.addEventListener("DOMContentLoaded", () => {
       enterEditMode();
       applySelectedMeal(meal);
 
-      if (btnCancelInline) {
-        btnCancelInline.style.display = "none";
-      }
-
       closeList();
     });
   });
@@ -405,10 +394,6 @@ document.addEventListener("DOMContentLoaded", () => {
           detail: { sectionId: "dailyplan-picker-section", step: "impact" }
         }));
       });
-
-      if (btnCancelInline) {
-        btnCancelInline.style.display = "none";
-      }
 
       closeList();
 

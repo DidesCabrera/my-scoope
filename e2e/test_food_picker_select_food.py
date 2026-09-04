@@ -9,8 +9,10 @@ def test_food_picker_selecting_food_shows_preview(page, meal_edit_url, ui_settle
     food_list = page.locator("#food-list")
     food_preview = page.locator("#food-preview")
     add_button = page.locator("#btn-add-food")
+    selection_cancel = page.locator("#btn-cancel-picker-inline-food")
 
     food_search.wait_for()
+    assert selection_cancel.is_visible(), "Cancelar no está visible al abrir Selección"
     food_search.fill("Pechuga Pollo Cocida")
 
     ui_settle(page)
@@ -32,3 +34,4 @@ def test_food_picker_selecting_food_shows_preview(page, meal_edit_url, ui_settle
 
     assert page.locator("#meal-picker-section").get_attribute("data-picker-step") == "selection"
     assert food_search.is_visible(), "Cambiar selección no regresó a la biblioteca"
+    assert selection_cancel.is_visible(), "Cancelar desapareció al regresar a Selección"

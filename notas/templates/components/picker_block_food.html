@@ -21,55 +21,58 @@
     </header>
 
     <section
-      class="composition-picker-modal__body composition-picker-modal__body--selection"
+      class="composition-picker-modal__step"
       data-picker-step-panel="selection"
       aria-labelledby="food-selection-title"
     >
-      <div class="composition-picker-step-heading">
-        <h3 id="food-selection-title">Selecciona un alimento</h3>
-      </div>
+      <div class="composition-picker-modal__body">
+        <div class="composition-picker-step-heading">
+          <h3 id="food-selection-title">Selecciona un alimento</h3>
+        </div>
 
-      <div class="composition-picker-entry-actions">
-        <span class="composition-picker-entry-actions__active">
-          <i data-lucide="bookmark"></i>
-          Mi biblioteca
-        </span>
-        <a
-          href="{% url 'food_create' %}?return_to={{ request.path|urlencode }}"
-          class="composition-picker-entry-actions__create"
-        >
-          <i data-lucide="plus"></i>
-          Crear alimento
-        </a>
-      </div>
+        <div class="composition-picker-entry-actions">
+          <span class="composition-picker-entry-actions__active">
+            <i data-lucide="bookmark"></i>
+            Mi biblioteca
+          </span>
+          <a
+            href="{% url 'food_create' %}?return_to={{ request.path|urlencode }}"
+            class="composition-picker-entry-actions__create"
+          >
+            <i data-lucide="plus"></i>
+            Crear alimento
+          </a>
+        </div>
 
-      <div class="add-row">
-        <div id="food-picker" class="selector">
-          <div class="composition-picker-search-row">
-            <i data-lucide="search" class="search-icon-add-row-icon"></i>
-            <label class="sr-only" for="food-search">Buscar alimento</label>
-            <input
-              type="search"
-              id="food-search"
-              placeholder="Escribe el nombre de un alimento"
-              autocomplete="off"
-            >
+        <div class="add-row">
+          <div id="food-picker" class="selector">
+            <div class="composition-picker-search-row">
+              <i data-lucide="search" class="search-icon-add-row-icon"></i>
+              <label class="sr-only" for="food-search">Buscar alimento</label>
+              <input
+                type="search"
+                id="food-search"
+                placeholder="Escribe el nombre de un alimento"
+                autocomplete="off"
+              >
+            </div>
+            <ul id="food-list" class="selector-list" aria-label="Resultados de alimentos"></ul>
           </div>
-          <ul id="food-list" class="selector-list" aria-label="Resultados de alimentos"></ul>
         </div>
       </div>
 
-      <div class="composition-picker-modal__selection-actions">
-        <button type="button" id="btn-cancel-picker-inline-food" class="btn-cancel-picker">
+      <footer class="composition-picker-modal__footer">
+        <button type="button" id="btn-cancel-picker-inline-food" class="composition-picker-modal__action composition-picker-modal__action--secondary">
           Cancelar
         </button>
-      </div>
+      </footer>
     </section>
 
     <form
       method="post"
       action="{% url 'add_food_to_meal' main_id %}"
       id="form-preview"
+      class="composition-picker-modal__step"
       data-meal-id="{{ main_id }}"
       data-picker-step-panel="impact"
       hidden
@@ -83,43 +86,45 @@
       <input type="hidden" id="editing-mealfood-id">
       <input type="hidden" id="editing-original-quantity">
 
-      <div id="food-preview" style="display:none;">
-        <div class="composition-picker-step-heading composition-picker-step-heading--impact">
-          <div>
-            <h3>Configura y revisa el impacto</h3>
+      <div id="food-preview" class="composition-picker-modal__step-content" style="display:none;">
+        <div class="composition-picker-modal__body">
+          <div class="composition-picker-step-heading composition-picker-step-heading--impact">
+            <div>
+              <h3>Configura y revisa el impacto</h3>
+            </div>
+            <button type="button" class="composition-picker-change" data-picker-go-to="selection">
+              Cambiar selección
+            </button>
           </div>
-          <button type="button" class="composition-picker-change" data-picker-go-to="selection">
-            Cambiar selección
-          </button>
+
+          <div class="picker-layout">
+            <div class="picker-section picker-food-info">
+              {% include "components/card_picker_food.html" %}
+            </div>
+
+            <div class="picker-section picker-impact">
+              <div class="picker-title-row">
+                <i data-lucide="utensils" class="preview-picker-icon meal"></i>
+                <h3>Impacto en la comida</h3>
+              </div>
+              <div class="preview-picker">
+                {% include "components/grid_picker_food_preview.html" %}
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="picker-layout">
-          <div class="picker-section picker-food-info">
-            {% include "components/card_picker_food.html" %}
-          </div>
-
-          <div class="picker-section picker-impact">
-            <div class="picker-title-row">
-              <i data-lucide="utensils" class="preview-picker-icon meal"></i>
-              <h3>Impacto en la comida</h3>
-            </div>
-            <div class="preview-picker">
-              {% include "components/grid_picker_food_preview.html" %}
-            </div>
-          </div>
-        </div>
-
-        <div class="actions-row">
-          <button type="button" id="btn-cancel-edit" class="btn-cancel-picker">
+        <footer class="composition-picker-modal__footer">
+          <button type="button" id="btn-cancel-edit" class="composition-picker-modal__action composition-picker-modal__action--secondary">
             Cancelar
           </button>
-          <button type="submit" id="btn-add-food" class="btn-add-picker">
+          <button type="submit" id="btn-add-food" class="composition-picker-modal__action composition-picker-modal__action--primary">
             Agregar Alimento
           </button>
-          <button type="submit" id="btn-update-food" style="display:none;" class="btn-update-picker">
+          <button type="submit" id="btn-update-food" style="display:none;" class="composition-picker-modal__action composition-picker-modal__action--primary">
             Guardar Cambios
           </button>
-        </div>
+        </footer>
       </div>
     </form>
   </div>

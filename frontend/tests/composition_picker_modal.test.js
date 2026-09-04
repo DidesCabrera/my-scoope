@@ -26,6 +26,11 @@ test("Food and Meal web pickers share the two-step top-layer dialog contract", a
     assert.doesNotMatch(template, /composition-picker-steps/);
     assert.doesNotMatch(template, /composition-picker-step-heading[\s\S]*?<p>/);
     assert.match(template, /composition-picker-search-row[\s\S]*?selector-list/);
+    assert.equal((template.match(/class="composition-picker-modal__body"/g) || []).length, 2);
+    assert.equal((template.match(/class="composition-picker-modal__footer"/g) || []).length, 2);
+    assert.match(template, /composition-picker-modal__body[\s\S]*?composition-picker-modal__footer/);
+    assert.match(template, /composition-picker-modal__action--secondary/);
+    assert.match(template, /composition-picker-modal__action--primary/);
     assert.doesNotMatch(template, /class="section_picker/);
   }
 
@@ -33,6 +38,13 @@ test("Food and Meal web pickers share the two-step top-layer dialog contract", a
   assert.match(food, />\s*Crear alimento\s*</);
   assert.match(meal, /url 'create_meal_for_dailyplan'/);
   assert.match(meal, />\s*Crear comida\s*</);
+});
+
+test("composition picker keeps padding on scroll content and actions in a fixed footer", async () => {
+  const styles = await source("notas/static/notas/css/components/composition_picker_modal.css");
+
+  assert.match(styles, /\.composition-picker-modal__body\s*\{[\s\S]*?overflow-y:\s*auto;[\s\S]*?padding:\s*0 24px 22px;/);
+  assert.match(styles, /\.composition-picker-modal__footer\s*\{[\s\S]*?flex:\s*0 0 auto;[\s\S]*?border-top:/);
 });
 
 test("shared picker controller owns modal lifecycle, steps, and accessible dismissal", async () => {

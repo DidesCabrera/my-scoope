@@ -12,8 +12,10 @@ def test_meal_picker_select_from_browse_shows_preview(page, dailyplan_edit_url, 
     preview_name = page.locator('[data-scope="meal-preview"] [data-role="preview-name"]')
     preview_kcal = page.locator('[data-scope="meal-preview"] [data-role="meal-kcal"]')
     hidden_input = page.locator("#dp-selected-meal-id")
+    selection_cancel = page.locator("#btn-cancel-picker-inline-meal")
 
     meal_search.wait_for()
+    assert selection_cancel.is_visible(), "Cancelar no está visible al abrir Selección"
     meal_search.click()
 
     assert meal_list.is_visible(), "La lista no se abrió al enfocar el input"
@@ -39,3 +41,8 @@ def test_meal_picker_select_from_browse_shows_preview(page, dailyplan_edit_url, 
     assert preview_name_text != "", "El preview no mostró nombre de meal"
     assert preview_kcal_text != "", "El preview no mostró kcal"
     assert hidden_value != "", "No se pobló el hidden con la meal seleccionada"
+
+    page.get_by_role("button", name="Cambiar selección").click()
+
+    assert page.locator("#dailyplan-picker-section").get_attribute("data-picker-step") == "selection"
+    assert selection_cancel.is_visible(), "Cancelar desapareció al regresar a Selección"

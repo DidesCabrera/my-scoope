@@ -26,108 +26,112 @@
       </header>
 
       <section
-        class="composition-picker-modal__body composition-picker-modal__body--selection"
+        class="composition-picker-modal__step"
         data-picker-step-panel="selection"
         aria-labelledby="meal-selection-title"
       >
-        <div class="composition-picker-step-heading">
-          <h3 id="meal-selection-title">Selecciona una comida</h3>
-        </div>
-
-        <div class="composition-picker-entry-actions">
-          <span class="composition-picker-entry-actions__active">
-            <i data-lucide="bookmark"></i>
-            Mi biblioteca
-          </span>
-          <a
-            href="{% url 'create_meal_for_dailyplan' main_id %}"
-            class="composition-picker-entry-actions__create"
-          >
-            <i data-lucide="plus"></i>
-            Crear comida
-          </a>
-        </div>
-
-        <div class="add-row add-row--meal-picker">
-          <div id="meal-picker" class="selector">
-            <div class="composition-picker-search-row">
-              <i data-lucide="search" class="search-icon-add-row-icon"></i>
-              <label class="sr-only" for="meal-search">Buscar comida</label>
-              <input
-                type="search"
-                id="meal-search"
-                placeholder="Escribe el nombre de una comida"
-                autocomplete="off"
-              >
-            </div>
-            <ul id="meal-list" class="selector-list" aria-label="Resultados de comidas"></ul>
+        <div class="composition-picker-modal__body">
+          <div class="composition-picker-step-heading">
+            <h3 id="meal-selection-title">Selecciona una comida</h3>
           </div>
-          <input type="hidden" id="dp-selected-meal-id" name="meal_id">
+
+          <div class="composition-picker-entry-actions">
+            <span class="composition-picker-entry-actions__active">
+              <i data-lucide="bookmark"></i>
+              Mi biblioteca
+            </span>
+            <a
+              href="{% url 'create_meal_for_dailyplan' main_id %}"
+              class="composition-picker-entry-actions__create"
+            >
+              <i data-lucide="plus"></i>
+              Crear comida
+            </a>
+          </div>
+
+          <div class="add-row add-row--meal-picker">
+            <div id="meal-picker" class="selector">
+              <div class="composition-picker-search-row">
+                <i data-lucide="search" class="search-icon-add-row-icon"></i>
+                <label class="sr-only" for="meal-search">Buscar comida</label>
+                <input
+                  type="search"
+                  id="meal-search"
+                  placeholder="Escribe el nombre de una comida"
+                  autocomplete="off"
+                >
+              </div>
+              <ul id="meal-list" class="selector-list" aria-label="Resultados de comidas"></ul>
+            </div>
+            <input type="hidden" id="dp-selected-meal-id" name="meal_id">
+          </div>
         </div>
 
-        <div class="composition-picker-modal__selection-actions">
-          <button type="button" id="btn-cancel-picker-inline-meal" class="btn-cancel-picker">
+        <footer class="composition-picker-modal__footer">
+          <button type="button" id="btn-cancel-picker-inline-meal" class="composition-picker-modal__action composition-picker-modal__action--secondary">
             Cancelar
           </button>
-        </div>
+        </footer>
       </section>
 
-      <div id="dp-preview" data-picker-step-panel="impact" style="display:none;" hidden>
-        <div class="composition-picker-step-heading composition-picker-step-heading--impact">
-          <div>
-            <h3>Configura y revisa el impacto</h3>
-          </div>
-          <button type="button" class="composition-picker-change" data-picker-go-to="selection">
-            Cambiar selección
-          </button>
-        </div>
-
-        <div class="extra-fields composition-picker-schedule-fields">
-          <label>
-            Hora
-            <input type="time" name="hour" class="hour-picker">
-          </label>
-          <label>
-            Nota <span>(opcional)</span>
-            <input
-              type="text"
-              name="note"
-              class="note-picker"
-              placeholder="Ej. antes de entrenar"
-              maxlength="255"
-            >
-          </label>
-        </div>
-
-        <div class="picker-layout">
-          <div class="picker-section picker-meal-info">
-            {% include "components/card_picker_meal.html" %}
+      <div id="dp-preview" class="composition-picker-modal__step" data-picker-step-panel="impact" style="display:none;" hidden>
+        <div class="composition-picker-modal__body">
+          <div class="composition-picker-step-heading composition-picker-step-heading--impact">
+            <div>
+              <h3>Configura y revisa el impacto</h3>
+            </div>
+            <button type="button" class="composition-picker-change" data-picker-go-to="selection">
+              Cambiar selección
+            </button>
           </div>
 
-          <div class="picker-section picker-impact">
-            <div data-scope="day-preview">
-              <div class="picker-title-row">
-                <i data-lucide="clipboard-list" class="preview-picker-icon dailyplan"></i>
-                <h3>Impacto en el plan diario</h3>
-              </div>
-              <div class="preview-picker">
-                {% include "components/grid_picker_meal_day_preview.html" %}
+          <div class="extra-fields composition-picker-schedule-fields">
+            <label>
+              Hora
+              <input type="time" name="hour" class="hour-picker">
+            </label>
+            <label>
+              Nota <span>(opcional)</span>
+              <input
+                type="text"
+                name="note"
+                class="note-picker"
+                placeholder="Ej. antes de entrenar"
+                maxlength="255"
+              >
+            </label>
+          </div>
+
+          <div class="picker-layout">
+            <div class="picker-section picker-meal-info">
+              {% include "components/card_picker_meal.html" %}
+            </div>
+
+            <div class="picker-section picker-impact">
+              <div data-scope="day-preview">
+                <div class="picker-title-row">
+                  <i data-lucide="clipboard-list" class="preview-picker-icon dailyplan"></i>
+                  <h3>Impacto en el plan diario</h3>
+                </div>
+                <div class="preview-picker">
+                  {% include "components/grid_picker_meal_day_preview.html" %}
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="actions-row">
-          <button type="button" id="btn-cancel-meal-edit" class="btn-cancel-picker">
+        <footer class="composition-picker-modal__footer">
+          <button type="button" id="btn-cancel-meal-edit" class="composition-picker-modal__action composition-picker-modal__action--secondary">
             Cancelar
           </button>
-          <button type="submit" id="btn-add-meal" class="btn-add-picker">
+          <button type="submit" id="btn-add-meal" class="composition-picker-modal__action composition-picker-modal__action--primary">
             Agregar Comida al Plan
           </button>
-          <button type="submit" id="btn-update-meal" style="display:none;" class="btn-update-picker">
+          <button type="submit" id="btn-update-meal" style="display:none;" class="composition-picker-modal__action composition-picker-modal__action--primary">
             Reemplazar Comida en Plan
           </button>
-        </div>
+        </footer>
       </div>
     </div>
   </dialog>
