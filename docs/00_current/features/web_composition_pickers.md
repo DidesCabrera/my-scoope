@@ -67,6 +67,10 @@ before previewing the replacement.
   border or radius. The selected entity and its configuration form one standard
   `entity-card`: Food groups the selected Food with quantity, while Meal groups
   the selected Meal with Hora and Nota.
+- Selected Food and Meal summaries preserve their picker-specific content but
+  use the production card main anatomy: `entity-card__main` contains an
+  `entity-card__title` column and an `entity-card__kpi` column. Source, unit and
+  food aggregation remain secondary content below that main row.
 - In Selección, the step heading owns the title, library/create actions, and
   search row as one fixed control region; only `selector-list` scrolls.
 - The dialog is labelled by its visible title. Step progression is conveyed by

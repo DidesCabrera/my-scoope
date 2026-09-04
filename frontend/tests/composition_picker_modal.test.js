@@ -67,6 +67,20 @@ test("impact cards reuse UI-system card, KPI, tab, and data-grid contracts", asy
   assert.match(resultCard, /data-grid--mobile-alloc/);
 });
 
+test("selected Food and Meal summaries use the entity-card main structure", async () => {
+  const summaries = await Promise.all([
+    source("notas/templates/components/card_picker_food.html"),
+    source("notas/templates/components/card_picker_meal.html"),
+  ]);
+
+  for (const summary of summaries) {
+    assert.match(
+      summary,
+      /picker-summary-card--selected[\s\S]*?entity-card__main card-main[\s\S]*?entity-card__title card-title[\s\S]*?entity-card__kpi card-kpi/,
+    );
+  }
+});
+
 test("impact keeps a stable dialog height and scrolls only its stacked picker layout", async () => {
   const styles = await source("notas/static/notas/css/components/composition_picker_modal.css");
 

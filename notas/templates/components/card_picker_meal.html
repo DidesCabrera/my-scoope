@@ -1,53 +1,59 @@
 <div data-scope="meal-preview">
   <div class="picker-summary-card picker-summary-card--selected picker-summary-card--meal">
-    <div class="picker-summary-card__header">
-      <div class="picker-summary-card__title-row">
-        <i data-lucide="utensils" class="picker-summary-card__icon meal"></i>
-        <div class="picker-summary-card__title">
-          <span data-role="preview-name"></span>
-        </div>
-      </div>
-    </div>
-
-    <div class="picker-summary-kpi">
-      <div class="picker-summary-kpi__total">
-        <p>Calories</p>
-        <strong><span data-role="meal-kcal"></span></strong>
-      </div>
-
-      <div class="picker-summary-kpi__macros">
-        <div class="picker-summary-kpi__row">
-          <div class="picker-summary-kpi__label">Protein</div>
-          <div class="picker-summary-kpi__ppk"></div>
-          <div class="picker-summary-kpi__grams"><span data-role="meal-protein"></span>g</div>
-          <div class="picker-summary-kpi__alloc" data-role="alloc-protein" style="--alloc:0">
-            <div class="picker-alloc-item">
-              <div class="alloc-pct micro alloc-bar-fill--protein"><p data-role="alloc-protein-text"></p></div>
-              <div class="alloc-bar-comp mini"><div class="alloc-bar-bg"></div><div class="alloc-bar-fill alloc-bar-fill--protein"></div></div>
+    <div class="entity-card__main card-main">
+      <div class="entity-card__title card-title">
+        <div class="picker-summary-card__header">
+          <div class="picker-summary-card__title-row">
+            <i data-lucide="utensils" class="picker-summary-card__icon meal"></i>
+            <div class="picker-summary-card__title">
+              <span data-role="preview-name"></span>
             </div>
           </div>
         </div>
+      </div>
 
-        <div class="picker-summary-kpi__row">
-          <div class="picker-summary-kpi__label">Carbs</div>
-          <div class="picker-summary-kpi__ppk"></div>
-          <div class="picker-summary-kpi__grams"><span data-role="meal-carbs"></span>g</div>
-          <div class="picker-summary-kpi__alloc" data-role="alloc-carbs" style="--alloc:0">
-            <div class="picker-alloc-item">
-              <div class="alloc-pct micro alloc-bar-fill--carbs"><p data-role="alloc-carbs-text"></p></div>
-              <div class="alloc-bar-comp mini"><div class="alloc-bar-bg"></div><div class="alloc-bar-fill alloc-bar-fill--carbs"></div></div>
-            </div>
+      <div class="entity-card__kpi card-kpi">
+        <div class="picker-summary-kpi">
+          <div class="picker-summary-kpi__total">
+            <p>Calories</p>
+            <strong><span data-role="meal-kcal"></span></strong>
           </div>
-        </div>
 
-        <div class="picker-summary-kpi__row">
-          <div class="picker-summary-kpi__label">Fat</div>
-          <div class="picker-summary-kpi__ppk"></div>
-          <div class="picker-summary-kpi__grams"><span data-role="meal-fat"></span>g</div>
-          <div class="picker-summary-kpi__alloc" data-role="alloc-fat" style="--alloc:0">
-            <div class="picker-alloc-item">
-              <div class="alloc-pct micro alloc-bar-fill--fat"><p data-role="alloc-fat-text"></p></div>
-              <div class="alloc-bar-comp mini"><div class="alloc-bar-bg"></div><div class="alloc-bar-fill alloc-bar-fill--fat"></div></div>
+          <div class="picker-summary-kpi__macros">
+            <div class="picker-summary-kpi__row">
+              <div class="picker-summary-kpi__label">Protein</div>
+              <div class="picker-summary-kpi__ppk"></div>
+              <div class="picker-summary-kpi__grams"><span data-role="meal-protein"></span>g</div>
+              <div class="picker-summary-kpi__alloc" data-role="alloc-protein" style="--alloc:0">
+                <div class="picker-alloc-item">
+                  <div class="alloc-pct micro alloc-bar-fill--protein"><p data-role="alloc-protein-text"></p></div>
+                  <div class="alloc-bar-comp mini"><div class="alloc-bar-bg"></div><div class="alloc-bar-fill alloc-bar-fill--protein"></div></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="picker-summary-kpi__row">
+              <div class="picker-summary-kpi__label">Carbs</div>
+              <div class="picker-summary-kpi__ppk"></div>
+              <div class="picker-summary-kpi__grams"><span data-role="meal-carbs"></span>g</div>
+              <div class="picker-summary-kpi__alloc" data-role="alloc-carbs" style="--alloc:0">
+                <div class="picker-alloc-item">
+                  <div class="alloc-pct micro alloc-bar-fill--carbs"><p data-role="alloc-carbs-text"></p></div>
+                  <div class="alloc-bar-comp mini"><div class="alloc-bar-bg"></div><div class="alloc-bar-fill alloc-bar-fill--carbs"></div></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="picker-summary-kpi__row">
+              <div class="picker-summary-kpi__label">Fat</div>
+              <div class="picker-summary-kpi__ppk"></div>
+              <div class="picker-summary-kpi__grams"><span data-role="meal-fat"></span>g</div>
+              <div class="picker-summary-kpi__alloc" data-role="alloc-fat" style="--alloc:0">
+                <div class="picker-alloc-item">
+                  <div class="alloc-pct micro alloc-bar-fill--fat"><p data-role="alloc-fat-text"></p></div>
+                  <div class="alloc-bar-comp mini"><div class="alloc-bar-bg"></div><div class="alloc-bar-fill alloc-bar-fill--fat"></div></div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
