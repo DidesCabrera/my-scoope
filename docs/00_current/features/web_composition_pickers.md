@@ -47,8 +47,10 @@ before previewing the replacement.
   footer. Cancel remains available after returning to Selección, and primary and
   secondary actions use the same visual contract in both picker types.
 - The dialog keeps one responsive height across both states. In Impacto, its
-  heading and optional schedule fields remain fixed while the stacked selected
-  item and nutrition impact sections scroll inside `picker-layout`.
+  heading remains fixed while the selected item, contextual controls, and
+  nutrition impact scroll inside `picker-layout`.
+- DailyPlan Meal Impacto places Hora and Nota between the selected Meal and day
+  impact, using the same contextual-control treatment as Food quantity.
 - In Selección, the step heading owns the title, library/create actions, and
   search row as one fixed control region; only `selector-list` scrolls.
 - The dialog is labelled by its visible title. Step progression is conveyed by

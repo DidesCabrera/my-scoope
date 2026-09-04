@@ -38,6 +38,7 @@ test("Food and Meal web pickers share the two-step top-layer dialog contract", a
   assert.match(food, />\s*Crear alimento\s*</);
   assert.match(meal, /url 'create_meal_for_dailyplan'/);
   assert.match(meal, />\s*Crear comida\s*</);
+  assert.match(meal, /picker-meal-info[\s\S]*?composition-picker-schedule-fields[\s\S]*?picker-impact/);
 });
 
 test("composition picker keeps padding on scroll content and actions in a fixed footer", async () => {
