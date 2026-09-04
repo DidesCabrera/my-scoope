@@ -84,28 +84,30 @@
           </div>
 
           <div class="picker-layout">
-            <div class="picker-section picker-meal-info">
-              {% include "components/card_picker_meal.html" %}
-            </div>
+            <section class="entity-card card picker-selection-card">
+              <div class="picker-section picker-meal-info">
+                {% include "components/card_picker_meal.html" %}
+              </div>
 
-            <div class="composition-picker-schedule-fields">
-              <label>
-                <i data-lucide="clock" class="add-row-icon"></i>
-                Hora:
-                <input type="time" name="hour" class="hour-picker">
-              </label>
-              <label>
-                <i data-lucide="notebook-pen" class="add-row-icon"></i>
-                Nota <span>(opcional):</span>
-                <input
-                  type="text"
-                  name="note"
-                  class="note-picker"
-                  placeholder="Ej. antes de entrenar"
-                  maxlength="255"
-                >
-              </label>
-            </div>
+              <div class="composition-picker-schedule-fields">
+                <label>
+                  <i data-lucide="clock" class="add-row-icon"></i>
+                  Hora:
+                  <input type="time" name="hour" class="hour-picker">
+                </label>
+                <label>
+                  <i data-lucide="notebook-pen" class="add-row-icon"></i>
+                  Nota <span>(opcional):</span>
+                  <input
+                    type="text"
+                    name="note"
+                    class="note-picker"
+                    placeholder="Ej. antes de entrenar"
+                    maxlength="255"
+                  >
+                </label>
+              </div>
+            </section>
 
             <div class="picker-section picker-impact">
               {% include "components/card_picker_result.html" with result_scope="day-preview" result_kind="dailyplan" result_icon="clipboard-list" result_aria_label="Plan diario resultante" result_panel_id="picker-result-dailyplan" %}

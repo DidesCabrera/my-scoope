@@ -312,8 +312,12 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
   flex-direction: column;
   min-height: 0;
   margin: 0;
+  padding: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
 }
 
 .composition-picker-modal .picker-layout > .picker-section {
@@ -324,6 +328,19 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
   margin-left: 0;
   padding-left: 0;
   border-left: 0;
+}
+
+.composition-picker-modal .picker-selection-card {
+  flex: 0 0 auto;
+}
+
+.composition-picker-modal .picker-selection-card .picker-summary-card--selected {
+  margin-bottom: 0;
+}
+
+.composition-picker-modal .picker-selection-card .qty-preview,
+.composition-picker-modal .picker-selection-card .composition-picker-schedule-fields {
+  margin: 12px 0 0;
 }
 
 .picker-result-row--projected {

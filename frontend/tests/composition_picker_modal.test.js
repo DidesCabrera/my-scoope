@@ -36,11 +36,12 @@ test("Food and Meal web pickers share the two-step top-layer dialog contract", a
 
   assert.match(food, /url 'food_create'[\s\S]*return_to=/);
   assert.match(food, />\s*Crear alimento\s*</);
+  assert.match(food, /entity-card card picker-selection-card picker-section picker-food-info/);
   assert.match(food, /card_picker_result\.html[\s\S]*result_scope="meal-result"/);
   assert.doesNotMatch(food, /grid_picker_food_preview|class="preview-picker"/);
   assert.match(meal, /url 'create_meal_for_dailyplan'/);
   assert.match(meal, />\s*Crear comida\s*</);
-  assert.match(meal, /picker-meal-info[\s\S]*?composition-picker-schedule-fields[\s\S]*?picker-impact/);
+  assert.match(meal, /entity-card card picker-selection-card[\s\S]*?picker-meal-info[\s\S]*?composition-picker-schedule-fields[\s\S]*?<\/section>[\s\S]*?picker-impact/);
   assert.match(meal, /card_picker_result\.html[\s\S]*result_scope="day-preview"/);
   assert.doesNotMatch(meal, /grid_picker_meal_day_preview|class="preview-picker"/);
 });
@@ -72,6 +73,8 @@ test("impact keeps a stable dialog height and scrolls only its stacked picker la
   assert.match(styles, /\.composition-picker-modal\s*\{[\s\S]*?height:\s*min\(820px, calc\(100dvh - 32px\)\);/);
   assert.match(styles, /\.composition-picker-modal__body--impact\s*\{[\s\S]*?overflow:\s*hidden;/);
   assert.match(styles, /\.composition-picker-modal \.picker-layout\s*\{[\s\S]*?flex-direction:\s*column;[\s\S]*?overflow-y:\s*auto;/);
+  assert.match(styles, /\.composition-picker-modal \.picker-layout\s*\{[\s\S]*?padding:\s*0;[\s\S]*?background:\s*transparent;[\s\S]*?border:\s*0;[\s\S]*?border-radius:\s*0;/);
+  assert.match(styles, /\.composition-picker-modal \.picker-selection-card\s*\{/);
   assert.match(styles, /\.composition-picker-modal \.selector > \.selector-list\s*\{[\s\S]*?width:\s*100%;[\s\S]*?border:\s*0;[\s\S]*?border-radius:\s*0;/);
 });
 

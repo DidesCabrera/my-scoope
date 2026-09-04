@@ -63,6 +63,10 @@ before previewing the replacement.
 - Every projected table row recalculates `% Cal`, intrinsic P|C|F distribution
   and macro allocation against the resulting entity. Quantity, selected Meal,
   Hora and Nota remain provisional until the user submits the fixed footer.
+- `picker-layout` is a neutral scroll container with no padding, background,
+  border or radius. The selected entity and its configuration form one standard
+  `entity-card`: Food groups the selected Food with quantity, while Meal groups
+  the selected Meal with Hora and Nota.
 - In Selección, the step heading owns the title, library/create actions, and
   search row as one fixed control region; only `selector-list` scrolls.
 - The dialog is labelled by its visible title. Step progression is conveyed by
