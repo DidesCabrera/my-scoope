@@ -10,7 +10,7 @@ def test_food_picker_shows_results_when_typing(page, meal_edit_url, ui_settle, o
 
     food_search.wait_for()
     assert food_search.is_visible()
-    assert not food_list.is_visible()
+    assert food_list.is_visible(), "La biblioteca no se mostró al abrir el paso de selección"
 
     food_search.fill("Pechuga Pollo Cocida")
 

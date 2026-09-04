@@ -8,6 +8,9 @@
 
     <form method="POST" class="food-edit-form__form" novalidate>
       {% csrf_token %}
+      {% if return_to %}
+        <input type="hidden" name="return_to" value="{{ return_to }}">
+      {% endif %}
 
       <div class="main-modal food-edit-form__main-modal">
         <i data-lucide="carrot" class="main-modal-icon food"></i>
@@ -76,7 +79,7 @@
       </section>
 
       <div class="food-edit-form__actions">
-        <a href="{% url 'food_list' %}" class="btn-cancel-create food-edit-form__cancel">Cancelar</a>
+        <a href="{% if return_to %}{{ return_to }}{% else %}{% url 'food_list' %}{% endif %}" class="btn-cancel-create food-edit-form__cancel">Cancelar</a>
         <button type="submit" class="btn-continue food-edit-form__submit">Crear</button>
       </div>
     </form>

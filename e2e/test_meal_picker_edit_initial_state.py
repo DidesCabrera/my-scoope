@@ -17,7 +17,7 @@ def test_meal_picker_edit_initial_state(
     form_preview = page.locator("#dp-form")
     preview_name = page.locator('[data-scope="meal-preview"] [data-role="preview-name"]')
 
-    form_title.wait_for()
+    form_title.wait_for(state="attached")
 
     assert form_title.text_content().strip() == "Agrega una Comida"
     assert not meal_preview.is_visible()

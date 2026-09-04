@@ -20,9 +20,10 @@ def test_food_picker_edit_quantity_updates_preview(page, meal_edit_url, ui_settl
     assert update_button.is_visible(), "El botón Guardar Cambios no apareció en modo edit"
 
     initial_kcal = qty_kcal.text_content()
+    initial_quantity = float(quantity_input.input_value())
 
     quantity_input.wait_for()
-    quantity_input.fill("120")
+    quantity_input.fill(str(initial_quantity + 25))
 
     ui_settle(page)
 

@@ -1,103 +1,148 @@
-<div id="meal-picker-section" class="section_picker is-collapsed">
-  
-    <div class="add-row">
-      <div id="food-picker" class="selector">
-        <i data-lucide="search" class="search-icon-add-row-icon"></i>
-        <input
-          type="text"
-          id="food-search"
-          placeholder="Escribe el alimento…"
-          autocomplete="off"
-        />
-        <ul id="food-list" class="selector-list"></ul>
+<dialog
+  id="meal-picker-section"
+  class="composition-picker-modal"
+  aria-labelledby="food-form-title"
+  data-picker-modal
+  data-picker-step="selection"
+>
+  <div class="composition-picker-modal__surface">
+    <header class="composition-picker-modal__header">
+      <div>
+        <p class="composition-picker-modal__eyebrow">Composición de la comida</p>
+        <h2 id="food-form-title">Agrega un Alimento</h2>
       </div>
-    
       <button
         type="button"
-        id="btn-cancel-picker-inline-food"
-        class="btn-cancel-picker btn-cancel-picker-inline"
+        class="composition-picker-modal__close"
+        aria-label="Cerrar selector de alimentos"
+        data-picker-dismiss
       >
-        Cancelar
+        <i data-lucide="x"></i>
       </button>
-    </div>
-  
-    <!-- FORM -->
+    </header>
+
+    <ol class="composition-picker-steps" aria-label="Progreso del selector">
+      <li data-picker-step-indicator="selection" aria-current="step">
+        <span>1</span>
+        Selección
+      </li>
+      <li data-picker-step-indicator="impact">
+        <span>2</span>
+        Impacto
+      </li>
+    </ol>
+
+    <section
+      class="composition-picker-modal__body composition-picker-modal__body--selection"
+      data-picker-step-panel="selection"
+      aria-labelledby="food-selection-title"
+    >
+      <div class="composition-picker-step-heading">
+        <h3 id="food-selection-title">Selecciona un alimento</h3>
+        <p>Busca en tu biblioteca o crea un alimento nuevo.</p>
+      </div>
+
+      <div class="composition-picker-entry-actions">
+        <span class="composition-picker-entry-actions__active">
+          <i data-lucide="bookmark"></i>
+          Mi biblioteca
+        </span>
+        <a
+          href="{% url 'food_create' %}?return_to={{ request.path|urlencode }}"
+          class="composition-picker-entry-actions__create"
+        >
+          <i data-lucide="plus"></i>
+          Crear alimento
+        </a>
+      </div>
+
+      <div class="add-row">
+        <div id="food-picker" class="selector">
+          <i data-lucide="search" class="search-icon-add-row-icon"></i>
+          <label class="sr-only" for="food-search">Buscar alimento</label>
+          <input
+            type="search"
+            id="food-search"
+            placeholder="Escribe el nombre de un alimento"
+            autocomplete="off"
+          >
+          <ul id="food-list" class="selector-list" aria-label="Resultados de alimentos"></ul>
+        </div>
+      </div>
+
+      <div class="composition-picker-modal__selection-actions">
+        <button type="button" id="btn-cancel-picker-inline-food" class="btn-cancel-picker">
+          Cancelar
+        </button>
+      </div>
+    </section>
+
     <form
       method="post"
       action="{% url 'add_food_to_meal' main_id %}"
       id="form-preview"
       data-meal-id="{{ main_id }}"
+      data-picker-step-panel="impact"
+      hidden
     >
       {% csrf_token %}
-  
-      <!-- Hidden fields -->
+
       <input type="hidden" name="food_id" id="selected-food-id">
       <input type="hidden" name="quantity" id="selected-food-quantity">
       <input type="hidden" id="food-picker-mode" value="add">
       <input type="hidden" name="return_to" value="{{ request.path }}">
-  
       <input type="hidden" id="editing-mealfood-id">
       <input type="hidden" id="editing-original-quantity">
-  
-      <!-- PREVIEW -->
-      <div id="food-preview" style="display:none;">
-  
-        <div class="picker-layout">
-  
-          <!-- LEFT : FOOD INFO -->
-          <div class="picker-section picker-food-info">
-  
-            {% include "components/card_picker_food.html" %}
-  
-          </div>
-  
-  
-          <!-- RIGHT : IMPACT -->
-          <div class="picker-section picker-impact">
 
+      <div id="food-preview" style="display:none;">
+        <div class="composition-picker-step-heading composition-picker-step-heading--impact">
+          <div>
+            <h3>Configura y revisa el impacto</h3>
+            <p>Ajusta la porción antes de confirmar el cambio.</p>
+          </div>
+          <button type="button" class="composition-picker-change" data-picker-go-to="selection">
+            Cambiar selección
+          </button>
+        </div>
+
+        <div class="picker-layout">
+          <div class="picker-section picker-food-info">
+            {% include "components/card_picker_food.html" %}
+          </div>
+
+          <div class="picker-section picker-impact">
             <div class="picker-title-row">
               <i data-lucide="utensils" class="preview-picker-icon meal"></i>
-              <h3>Preview Comida</h3>
+              <h3>Impacto en la comida</h3>
             </div>
-  
             <div class="preview-picker">
               {% include "components/grid_picker_food_preview.html" %}
             </div>
-  
           </div>
-  
         </div>
-  
-        <!-- BUTTONS -->
+
         <div class="actions-row">
           <button type="button" id="btn-cancel-edit" class="btn-cancel-picker">
             Cancelar
           </button>
-          
           <button type="submit" id="btn-add-food" class="btn-add-picker">
             Agregar Alimento
           </button>
-  
           <button type="submit" id="btn-update-food" style="display:none;" class="btn-update-picker">
             Guardar Cambios
           </button>
-  
         </div>
-  
       </div>
-  
     </form>
-  
-</div>
-  
+  </div>
+</dialog>
 
-<!-- JS DATA -->
 {% load static %}
 <script>
 window.FOOD_PICKER_FOODS = {{ foods_json|safe }};
 window.FOOD_PICKER_CONTEXT = {{ food_picker_context|safe }};
+window.FOOD_PICKER_INITIAL_ID = Number("{{ selected_food_id|default:''|escapejs }}") || null;
 </script>
-
 
 <script type="module" src="{% static 'notas/js/food_math.js' %}"></script>
 <script type="module" src="{% static 'notas/js/food_picker.js' %}"></script>

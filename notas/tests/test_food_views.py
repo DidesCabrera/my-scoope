@@ -6,7 +6,7 @@ from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from openpyxl import Workbook
 
-from notas.domain.models import Food
+from notas.domain.models import Food, Meal
 
 User = get_user_model()
 
@@ -94,6 +94,66 @@ class FoodViewTests(TestCase):
         self.assertEqual(food.protein, 31)
         self.assertEqual(food.carbs, 0)
         self.assertEqual(food.fat, 3.6)
+
+    def test_food_create_returns_new_food_to_originating_meal_picker(self):
+        meal = Meal.objects.create(
+            name="Meal in progress",
+            created_by=self.user,
+            is_draft=False,
+        )
+        return_to = reverse("meal_detail", args=[meal.id])
+
+        response = self.client.post(
+            reverse("food_create"),
+            data={
+                "name": "Picker food",
+                "protein": "20",
+                "carbs": "5",
+                "fat": "3",
+                "return_to": return_to,
+            },
+        )
+
+        food = Food.objects.get(name="Picker food")
+        self.assertRedirects(
+            response,
+            f"{return_to}?select_food={food.id}",
+            fetch_redirect_response=False,
+        )
+
+    def test_food_create_rejects_external_return_url(self):
+        response = self.client.post(
+            reverse("food_create"),
+            data={
+                "name": "Safe food",
+                "protein": "20",
+                "carbs": "5",
+                "fat": "3",
+                "return_to": "https://example.invalid/steal",
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("food_list"),
+            fetch_redirect_response=False,
+        )
+
+    def test_food_create_preserves_safe_return_url_in_form(self):
+        meal = Meal.objects.create(
+            name="Meal in progress",
+            created_by=self.user,
+            is_draft=False,
+        )
+        return_to = reverse("meal_detail", args=[meal.id])
+
+        response = self.client.get(
+            reverse("food_create"),
+            data={"return_to": return_to},
+        )
+
+        self.assertContains(response, f'name="return_to" value="{return_to}"')
+        self.assertContains(response, f'href="{return_to}"')
 
     def test_food_edit_updates_food(self):
         food = Food.objects.create(
