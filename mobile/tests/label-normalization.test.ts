@@ -188,12 +188,16 @@ test("routes an explicitly confirmed per-serving basis through the conversion ga
 test("the capture screen focuses the label and blocks unconverted serving values", async () => {
   const screen = await readFile(path.resolve(process.cwd(), "src/app/label-capture.tsx"), "utf8");
 
-  assert.match(screen, /autofocus="on"/);
-  assert.match(screen, /enableTorch=\{torchEnabled\}/);
-  assert.match(screen, /normalizationStatus === "serving_size_required"/);
-  assert.match(screen, /normalizationStatus === "basis_confirmation_required"/);
-  assert.match(screen, /Convertir a valores por 100 g/);
-  assert.doesNotMatch(screen, /development build iOS de CML05/);
+  for (const expected of [
+    'autofocus="on"',
+    "enableTorch={torchEnabled}",
+    'normalizationStatus === "serving_size_required"',
+    'normalizationStatus === "basis_confirmation_required"',
+    "Convertir a valores por 100 g",
+  ]) {
+    assert.ok(screen.includes(expected), `missing capture safeguard: ${expected}`);
+  }
+  assert.ok(!screen.includes("development build iOS de CML05"));
 });
 
 test("the native OCR module uses nutrition vocabulary and versioned provenance", async () => {
@@ -202,8 +206,12 @@ test("the native OCR module uses nutrition vocabulary and versioned provenance",
     "utf8",
   );
 
-  assert.match(module, /"engineVersion": "2"/);
-  assert.match(module, /request\.customWords = \[/);
-  assert.match(module, /"Proteínas"/);
-  assert.match(module, /"Carbohidratos"/);
+  for (const expected of [
+    '"engineVersion": "2"',
+    "request.customWords = [",
+    '"Proteínas"',
+    '"Carbohidratos"',
+  ]) {
+    assert.ok(module.includes(expected), `missing native OCR safeguard: ${expected}`);
+  }
 });
