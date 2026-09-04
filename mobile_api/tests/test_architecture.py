@@ -47,6 +47,7 @@ class MobileAPIArchitectureTests(SimpleTestCase):
     def test_extracted_domains_are_owned_outside_the_route_and_schema_facades(self):
         api_source = (ROOT / "mobile_api/api.py").read_text()
         schema_source = (ROOT / "mobile_api/schemas.py").read_text()
+        label_capture_route_source = (ROOT / "mobile_api/routes/label_capture.py").read_text()
 
         self.assertIn('api.add_router("", assistant_router)', api_source)
         self.assertIn('api.add_router("", billing_router)', api_source)
@@ -54,6 +55,7 @@ class MobileAPIArchitectureTests(SimpleTestCase):
         self.assertIn('api.add_router("", comparisons_router)', api_source)
         self.assertIn('api.add_router("", composition_router)', api_source)
         self.assertIn('api.add_router("", identity_router)', api_source)
+        self.assertIn('api.add_router("", label_capture_router)', api_source)
         self.assertIn('api.add_router("", libraries_router)', api_source)
         self.assertIn('api.add_router("", proposals_router)', api_source)
         self.assertNotIn("def active_program", api_source)
@@ -70,6 +72,8 @@ class MobileAPIArchitectureTests(SimpleTestCase):
         self.assertIn("from mobile_api.schema_domains.comparisons import", schema_source)
         self.assertIn("from mobile_api.schema_domains.composition import", schema_source)
         self.assertIn("from mobile_api.schema_domains.identity import", schema_source)
+        self.assertIn("from mobile_api.schema_domains.label_capture import", label_capture_route_source)
+        self.assertNotIn("from mobile_api.schema_domains.label_capture import", schema_source)
         self.assertIn("from mobile_api.schema_domains.libraries import", schema_source)
         self.assertIn("from mobile_api.schema_domains.proposals import", schema_source)
         self.assertNotIn("class TodayData", schema_source)

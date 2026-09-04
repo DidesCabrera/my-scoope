@@ -96,3 +96,14 @@ def is_ai_assistant_turn_rate_limited(request) -> bool:
         group="ai_assistant.turn",
         increment=True,
     ))
+
+
+def is_nutrition_label_scan_rate_limited(request) -> bool:
+    return bool(is_ratelimited(
+        request=request,
+        key="user",
+        rate=lambda group, req: _rate("RATE_LIMIT_NUTRITION_LABEL_SCAN_USER", "10/h"),
+        method="POST",
+        group="nutrition_label.scan",
+        increment=True,
+    ))

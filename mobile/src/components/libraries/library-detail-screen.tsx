@@ -1,6 +1,6 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
 import type { CompositionMutationResult, LibraryActionResult, LibraryItem } from "@/api/types";
@@ -12,6 +12,7 @@ import { SectionDivider } from "@/components/ui";
 import { Button, InlineNotice, textStyles } from "@/components/ui/primitives";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { tokens } from "@/design/tokens";
+import type { FoodLabelImage } from "@/label-capture/types";
 
 import { DailyPlanMealCards, ProgramPanels } from "./entity-panels";
 import { libraryDate, libraryNutrition } from "./presentation-adapters";
@@ -39,6 +40,8 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   const setHeaderPresentation = useHeaderPresentation();
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const [actionsVisible, setActionsVisible] = useState(false);
+  const [labelImage, setLabelImage] = useState<FoodLabelImage | null>(null);
+  const [labelImageBusy, setLabelImageBusy] = useState(false);
   const [contextTime, setContextTime] = useState(mealTime?.slice(0, 5) ?? "");
   const contextDailyPlanId = Number(dailyPlanId);
   const contextDailyPlanMealId = Number(dailyPlanMealId);
@@ -73,6 +76,35 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
       throw nextError;
     }
   }, [apiRequest, load]);
+  const loadLabelImage = useCallback(async () => {
+    if (!item?.label_capture_receipt_id) return;
+    setLabelImageBusy(true);
+    try {
+      setLabelImage(await apiRequest<FoodLabelImage>(`/api/v1/foods/label-captures/${item.label_capture_receipt_id}/image`));
+    } catch (nextError) {
+      Alert.alert("No pudimos abrir la etiqueta", userFacingError(nextError));
+    } finally {
+      setLabelImageBusy(false);
+    }
+  }, [apiRequest, item]);
+  const deleteLabelImage = useCallback(() => {
+    if (!item?.label_capture_receipt_id) return;
+    Alert.alert("Eliminar copia de la etiqueta", "El alimento se conservará, pero esta imagen no podrá recuperarse.", [
+      { text: "Cancelar", style: "cancel" },
+      { text: "Eliminar", style: "destructive", onPress: () => { void (async () => {
+        setLabelImageBusy(true);
+        try {
+          await apiRequest(`/api/v1/foods/label-captures/${item.label_capture_receipt_id}/image`, { method: "DELETE" });
+          setLabelImage(null);
+          setItem((current) => current ? { ...current, label_image_available: false } : current);
+        } catch (nextError) {
+          Alert.alert("No pudimos eliminar la imagen", userFacingError(nextError));
+        } finally {
+          setLabelImageBusy(false);
+        }
+      })(); } },
+    ]);
+  }, [apiRequest, item]);
   useFocusEffect(useCallback(() => { if (status === "authenticated" && id) void load(); }, [id, load, status]));
   if (status === "anonymous") return <Redirect href="/login" />;
   if (loading && !item) return <View style={styles.loading}><ActivityIndicator color={tokens.color.interactivePrimary} size="large" /><Text style={textStyles.muted}>Cargando detalle…</Text></View>;
@@ -125,6 +157,11 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
       : []),
   ];
   return <><ScrollView contentContainerStyle={styles.content} onScroll={({ nativeEvent }) => { const visible = nativeEvent.contentOffset.y > 1; if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible); }} scrollEventThrottle={16} style={styles.screen}><EntityDetailPage entity={item.entity} indicators={detailIndicators} nutrition={libraryNutrition(item.nutrition)} showNutrition={!isEmptyDraft} subtitle={item.subtitle || undefined} title={item.name}>
+    {item.entity === "food" && item.label_image_available ? <><SectionDivider /><EntityDetailSection title="Etiqueta guardada">
+      {labelImage ? <Image resizeMode="contain" source={{ uri: `data:${labelImage.content_type};base64,${labelImage.image_base64}` }} style={styles.labelImage} /> : null}
+      {!labelImage ? <Button label="Ver copia procesada" loading={labelImageBusy} onPress={() => void loadLabelImage()} variant="secondary" /> : null}
+      <Button label="Eliminar copia" loading={labelImageBusy} onPress={deleteLabelImage} variant="secondary" />
+    </EntityDetailSection></> : null}
     {!isEmptyDraft && item.panel.kind !== "none" ? <EntityDetailSection detail={`${panelCount} elementos`} title={sectionTitles[item.panel.kind]}>{item.panel.kind === "foods" ? <FoodPanels editing={foodEditing} items={foodItems} /> : null}{item.panel.kind === "meals" ? <MealPanels editing={mealEditing} items={mealItems} /> : null}{item.panel.kind === "weeks" ? <ProgramPanels items={item.panel.weeks} /> : null}</EntityDetailSection> : null}
     {item.entity === "meal" ? <Button bleed label="+ Agregar alimento" onPress={() => router.push(pickerHref("food-to-meal", { mealId: item.id }))} /> : null}
     {item.entity === "dailyPlan" ? <Button bleed label="+ Agregar Comida" onPress={() => router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: item.id }))} /> : null}
@@ -134,4 +171,4 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
     {!isEmptyDraft ? <EntityDetailMetadata creator={item.creator} updatedAt={libraryDate(item.created_at)} /> : null}
   </EntityDetailPage></ScrollView>{actionsModal}</>;
 }
-const styles = StyleSheet.create({ screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 }, content: { flexGrow: 1, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg }, loading: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, flex: 1, gap: tokens.spacing.md, justifyContent: "center", padding: tokens.spacing.screen } });
+const styles = StyleSheet.create({ screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 }, content: { flexGrow: 1, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg }, loading: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, flex: 1, gap: tokens.spacing.md, justifyContent: "center", padding: tokens.spacing.screen }, labelImage: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, height: 320, width: "100%" } });

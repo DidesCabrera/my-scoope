@@ -34,6 +34,9 @@ Status: planned / active / paused / completed / superseded
 Cuando un ciclo planificado empiece a implementarse, el documento puede permanecer aquí como plan operacional, pero las decisiones estables que surjan deben registrarse también en `docs/20_decisions/`.
 
 ## En curso o pendientes de validación
+- `nutrition_label_ai_reliability_cycle.md`: implementación completada en repositorio
+  para cámara/galería, IA multimodal, tarifa fija, escalamiento interno, retención
+  opcional y métricas; quedan los gates de staging y TestFlight físico.
 - `mobile_api_domain_decomposition_cycle.md`: ciclo activo MADD00-MADD07 para
   convertir la propiedad lógica del API móvil en módulos físicos por dominio.
   Comparisons ya es el patrón de referencia con rutas, schemas y pruebas separadas,

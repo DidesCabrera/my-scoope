@@ -47,7 +47,7 @@ class Profile(models.Model):
 
     ONBOARDING_VERSION_UNSET = 0
     ONBOARDING_VERSION_NUTRITION_V1 = 1
-    MOBILE_DISCLOSURE_VERSION = "cml08.v1"
+    MOBILE_DISCLOSURE_VERSION = "label-ai.v1"
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)

@@ -22,6 +22,7 @@ from .domain.models import (
     Food,
     FoodAlias,
     FoodImportBatch,
+    FoodLabelAIAnalysis,
     FoodLabelCaptureReceipt,
     FoodLocalizedName,
     FoodPortion,
@@ -434,6 +435,26 @@ class FoodLabelCaptureReceiptAdmin(admin.ModelAdmin):
     list_filter = ("ocr_engine", "detected_basis", "created_at")
     search_fields = ("food__name", "food__created_by__username", "idempotency_key")
     readonly_fields = tuple(field.name for field in FoodLabelCaptureReceipt._meta.fields)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(FoodLabelAIAnalysis)
+class FoodLabelAIAnalysisAdmin(admin.ModelAdmin):
+    list_display = (
+        "public_id", "user", "status", "primary_model", "final_model",
+        "escalated", "credits_charged", "estimated_cost_usd", "created_at",
+    )
+    list_filter = ("status", "escalated", "primary_model", "final_model", "created_at")
+    search_fields = ("public_id", "user__username", "idempotency_key")
+    readonly_fields = tuple(field.name for field in FoodLabelAIAnalysis._meta.fields)
 
     def has_add_permission(self, request):
         return False

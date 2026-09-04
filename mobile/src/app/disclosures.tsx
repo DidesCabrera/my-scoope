@@ -53,7 +53,7 @@ export default function DisclosuresScreen() {
       </Card>
       <Card muted>
         <SectionTitle title="Privacidad y control" />
-        <Text style={textStyles.muted}>La foto y el texto crudo de una etiqueta se procesan en el dispositivo y no se guardan en el servidor. Puedes revisar nuestra política y eliminar tu cuenta desde la app.</Text>
+        <Text style={textStyles.muted}>Si digitalizas una etiqueta, una copia reducida y sin metadatos se envía temporalmente a OpenAI para extraer sus valores. My Scoope no guarda esa foto salvo que tú actives expresamente “Guardar copia procesada”; podrás verla y eliminarla después. Puedes revisar nuestra política y eliminar tu cuenta desde la app.</Text>
         <Button label="Leer política de privacidad" onPress={() => void Linking.openURL(`${appConfig.apiBaseUrl}/privacy/`)} variant="secondary" />
         <Button label="Leer términos de uso" onPress={() => void Linking.openURL(`${appConfig.apiBaseUrl}/terms/`)} variant="secondary" />
       </Card>

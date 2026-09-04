@@ -492,8 +492,11 @@ def library_programs_payload(user, *, search=None, offset=0, limit=30) -> dict:
 def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
     current_weight = get_current_weight(user)
     if entity == "foods":
-        item = Food.objects.filter(pk=item_id, created_by=user, is_active=True).select_related("created_by").first()
+        item = Food.objects.filter(pk=item_id, created_by=user, is_active=True).select_related(
+            "created_by", "label_capture_receipt"
+        ).first()
         if item:
+            receipt = getattr(item, "label_capture_receipt", None)
             return {
                 "id": item.id,
                 "entity": "food",
@@ -506,6 +509,8 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
                 "created_at": item.created_at,
                 "is_draft": False,
                 "actions": library_actions_payload(item, user, context="detail"),
+                "label_capture_receipt_id": receipt.id if receipt else None,
+                "label_image_available": bool(receipt and receipt.retained_label_image),
             }
     elif entity == "meals":
         item = (
@@ -854,6 +859,7 @@ def food_label_capture_payload(result) -> dict:
         "detected_basis": receipt.detected_basis,
         "serving_size_g": float(receipt.serving_size_g) if receipt.serving_size_g is not None else None,
         "ocr_engine": receipt.ocr_engine,
+        "label_image_retained": bool(receipt.retained_label_image),
         "created_at": receipt.created_at,
     }
 

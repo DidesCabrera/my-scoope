@@ -9,7 +9,7 @@ class FoodLabelCaptureTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="label-capture-user")
 
-    def test_confirmation_persists_normalized_values_without_raw_ocr_or_image(self):
+    def test_confirmation_persists_normalized_values_without_raw_ocr_or_image_by_default(self):
         result = create_food_from_label_capture(
             user=self.user,
             name="  Avena de etiqueta  ",
@@ -35,7 +35,7 @@ class FoodLabelCaptureTests(TestCase):
         self.assertEqual(result.receipt.food, result.food)
         self.assertEqual(result.receipt.field_confidence, {"protein_g": 0.91})
         self.assertFalse(hasattr(result.receipt, "raw_text"))
-        self.assertFalse(hasattr(result.receipt, "image"))
+        self.assertIsNone(result.receipt.retained_label_image)
 
     def test_invalid_or_unconfirmed_input_creates_nothing(self):
         with self.assertRaisesMessage(ValueError, "food_label_protein_invalid"):

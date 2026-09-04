@@ -132,6 +132,9 @@ def create_food_from_label_capture(
     sodium_mg=None,
     field_confidence=None,
     warnings=None,
+    retained_label_image=None,
+    retained_label_image_content_type="",
+    retained_label_image_sha256="",
 ) -> FoodLabelCaptureResult:
     clean_name = str(name or "").strip()
     if not clean_name or len(clean_name) > 100:
@@ -166,7 +169,17 @@ def create_food_from_label_capture(
         "detected_basis": detected_basis,
         "field_confidence": _label_confidence(field_confidence or {}),
         "warnings": _label_warnings(warnings or []),
+        "retained_label_image_sha256": str(retained_label_image_sha256 or ""),
     }
+    image_bytes = bytes(retained_label_image) if retained_label_image else None
+    image_content_type = str(retained_label_image_content_type or "").strip()
+    if image_bytes:
+        if len(image_bytes) > 1_500_000 or image_content_type not in {"image/jpeg", "image/png", "image/webp"}:
+            raise ValueError("food_label_retained_image_invalid")
+        if hashlib.sha256(image_bytes).hexdigest() != confirmed["retained_label_image_sha256"]:
+            raise ValueError("food_label_retained_image_invalid")
+    elif image_content_type or confirmed["retained_label_image_sha256"]:
+        raise ValueError("food_label_retained_image_invalid")
     if confirmed["serving_size_g"] is not None and confirmed["serving_size_g"] <= 0:
         raise ValueError("food_label_serving_size_invalid")
     if detected_basis == FoodLabelCaptureReceipt.BASIS_PER_SERVING and confirmed["serving_size_g"] is None:
@@ -205,6 +218,10 @@ def create_food_from_label_capture(
                 field_confidence=confirmed["field_confidence"],
                 warnings=confirmed["warnings"],
                 confirmed_payload_hash=payload_hash,
+                retained_label_image=image_bytes,
+                retained_label_image_content_type=image_content_type,
+                retained_label_image_sha256=confirmed["retained_label_image_sha256"],
+                retained_label_image_size=len(image_bytes or b""),
             )
     except IntegrityError:
         existing = _existing_label_capture(user=user, idempotency_key=clean_key, payload_hash=payload_hash)
