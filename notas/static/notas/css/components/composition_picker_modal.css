@@ -9,6 +9,7 @@ html.has-picker-modal-open {
 .composition-picker-modal {
   box-sizing: border-box;
   width: min(960px, calc(100vw - 32px));
+  height: min(820px, calc(100dvh - 32px));
   max-width: none;
   max-height: min(820px, calc(100dvh - 32px));
   padding: 0;
@@ -32,6 +33,7 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
 .composition-picker-modal__surface {
   display: flex;
   flex-direction: column;
+  height: 100%;
   max-height: min(820px, calc(100dvh - 32px));
   overflow: hidden;
   background: var(--surface-elevated);
@@ -107,6 +109,12 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 0 24px 22px;
+}
+
+.composition-picker-modal__body--impact {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 
@@ -209,8 +217,9 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
   box-shadow: none;
 }
 
-.composition-picker-modal .selector-list {
+.composition-picker-modal .selector > .selector-list {
   position: static;
+  box-sizing: border-box;
   width: 100%;
   height: auto;
   max-height: min(430px, 48dvh);
@@ -218,8 +227,7 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
   overflow-y: auto;
   background: var(--surface-card-muted);
   border: 0;
-  border-top: 1px solid var(--panel-row-separator);
-  border-radius: 0 0 14px 14px;
+  border-radius: 0;
 }
 
 .composition-picker-modal .picker-list-close-btn {
@@ -274,7 +282,17 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
 }
 
 .composition-picker-modal .picker-layout {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
   margin: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.composition-picker-modal .picker-layout > .picker-section {
+  flex: 0 0 auto;
 }
 
 .composition-picker-schedule-fields {

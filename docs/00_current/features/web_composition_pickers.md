@@ -46,6 +46,9 @@ before previewing the replacement.
 - Both steps use the same padded scroll region and a shared, non-scrolling action
   footer. Cancel remains available after returning to Selección, and primary and
   secondary actions use the same visual contract in both picker types.
+- The dialog keeps one responsive height across both states. In Impacto, its
+  heading and optional schedule fields remain fixed while the stacked selected
+  item and nutrition impact sections scroll inside `picker-layout`.
 - The dialog is labelled by its visible title. Step progression is conveyed by
   the changing selection and impact content rather than a separate visual
   progress indicator.

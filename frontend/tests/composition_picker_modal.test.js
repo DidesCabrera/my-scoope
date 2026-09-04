@@ -26,7 +26,7 @@ test("Food and Meal web pickers share the two-step top-layer dialog contract", a
     assert.doesNotMatch(template, /composition-picker-steps/);
     assert.doesNotMatch(template, /composition-picker-step-heading[\s\S]*?<p>/);
     assert.match(template, /composition-picker-search-row[\s\S]*?selector-list/);
-    assert.equal((template.match(/class="composition-picker-modal__body"/g) || []).length, 2);
+    assert.equal((template.match(/class="composition-picker-modal__body(?:\s|\")/g) || []).length, 2);
     assert.equal((template.match(/class="composition-picker-modal__footer"/g) || []).length, 2);
     assert.match(template, /composition-picker-modal__body[\s\S]*?composition-picker-modal__footer/);
     assert.match(template, /composition-picker-modal__action--secondary/);
@@ -45,6 +45,15 @@ test("composition picker keeps padding on scroll content and actions in a fixed 
 
   assert.match(styles, /\.composition-picker-modal__body\s*\{[\s\S]*?overflow-y:\s*auto;[\s\S]*?padding:\s*0 24px 22px;/);
   assert.match(styles, /\.composition-picker-modal__footer\s*\{[\s\S]*?flex:\s*0 0 auto;[\s\S]*?border-top:/);
+});
+
+test("impact keeps a stable dialog height and scrolls only its stacked picker layout", async () => {
+  const styles = await source("notas/static/notas/css/components/composition_picker_modal.css");
+
+  assert.match(styles, /\.composition-picker-modal\s*\{[\s\S]*?height:\s*min\(820px, calc\(100dvh - 32px\)\);/);
+  assert.match(styles, /\.composition-picker-modal__body--impact\s*\{[\s\S]*?overflow:\s*hidden;/);
+  assert.match(styles, /\.composition-picker-modal \.picker-layout\s*\{[\s\S]*?flex-direction:\s*column;[\s\S]*?overflow-y:\s*auto;/);
+  assert.match(styles, /\.composition-picker-modal \.selector > \.selector-list\s*\{[\s\S]*?width:\s*100%;[\s\S]*?border:\s*0;[\s\S]*?border-radius:\s*0;/);
 });
 
 test("shared picker controller owns modal lifecycle, steps, and accessible dismissal", async () => {
