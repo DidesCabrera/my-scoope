@@ -68,17 +68,25 @@ test("impact cards reuse UI-system card, KPI, tab, and data-grid contracts", asy
 });
 
 test("selected Food and Meal summaries use the entity-card main structure", async () => {
-  const summaries = await Promise.all([
+  const [food, meal, mealPreview] = await Promise.all([
     source("notas/templates/components/card_picker_food.html"),
     source("notas/templates/components/card_picker_meal.html"),
+    source("notas/static/notas/js/meal_preview.js"),
   ]);
 
-  for (const summary of summaries) {
+  for (const summary of [food, meal]) {
     assert.match(
       summary,
       /picker-summary-card--selected[\s\S]*?entity-card__main card-main[\s\S]*?entity-card__title card-title[\s\S]*?entity-card__kpi card-kpi/,
     );
+    assert.match(summary, /entity-heading card-title-comp/);
   }
+
+  assert.match(food, /card-title-eyebrow[\s\S]*?Alimento seleccionado[\s\S]*?<h3[^>]*data-role="preview-name"/);
+  assert.match(food, /card-title-badges[\s\S]*?data-role="food-source"[\s\S]*?100g/);
+  assert.match(meal, /card-title-eyebrow[\s\S]*?Comida seleccionada[\s\S]*?<h3[^>]*data-role="preview-name"/);
+  assert.match(meal, /entity-indicators structural-indicators[\s\S]*?data-role="selected-food-count"/);
+  assert.match(mealPreview, /selected-food-count[\s\S]*?normalizedFoods\.length/);
 });
 
 test("impact keeps a stable dialog height and scrolls only its stacked picker layout", async () => {

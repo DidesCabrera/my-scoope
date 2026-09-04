@@ -71,6 +71,10 @@ before previewing the replacement.
   use the production card main anatomy: `entity-card__main` contains an
   `entity-card__title` column and an `entity-card__kpi` column. Source, unit and
   food aggregation remain secondary content below that main row.
+- Selected titles use the production `entity-heading` hierarchy. Their eyebrow
+  identifies `Alimento seleccionado` or `Comida seleccionada`, the entity name
+  is the following `h3`, Food shows source/base badges, and Meal shows a live
+  structural count of its foods.
 - In Selección, the step heading owns the title, library/create actions, and
   search row as one fixed control region; only `selector-list` scrolls.
 - The dialog is labelled by its visible title. Step progression is conveyed by

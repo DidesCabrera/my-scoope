@@ -417,6 +417,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const sourceLabel = normalizeSourceLabel(food?.source);
     sourceNode.textContent = sourceLabel;
+    sourceNode.hidden = !sourceLabel;
   }
 
   // ---------------------------
