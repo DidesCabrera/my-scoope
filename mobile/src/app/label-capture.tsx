@@ -104,6 +104,7 @@ export default function LabelCaptureScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [phase, setPhase] = useState<Phase>("intro");
   const [cameraReady, setCameraReady] = useState(false);
+  const [openingCamera, setOpeningCamera] = useState(false);
   const [torchEnabled, setTorchEnabled] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -155,23 +156,27 @@ export default function LabelCaptureScreen() {
   }
 
   async function beginCamera() {
+    if (openingCamera) return;
+    setOpeningCamera(true);
     setError(null);
     setTorchEnabled(false);
-    if (Platform.OS !== "ios" || !isNutritionLabelOcrAvailable()) {
-      beginManualReview("El reconocimiento de etiquetas no está disponible en esta instalación. Puedes revisar los valores manualmente.");
-      return;
+    try {
+      if (Platform.OS !== "ios" || !isNutritionLabelOcrAvailable()) {
+        beginManualReview("El reconocimiento de etiquetas no está disponible en esta instalación. Puedes revisar los valores manualmente.");
+        return;
+      }
+      const nextPermission = permission?.granted ? permission : await requestPermission();
+      if (!nextPermission.granted) {
+        beginManualReview("Sin permiso de cámara, My Scoope continúa con ingreso manual.");
+        return;
+      }
+      setCameraReady(false);
+      setPhase("camera");
+    } catch {
+      setError("No pudimos abrir la cámara. Reintenta o ingresa la etiqueta manualmente.");
+    } finally {
+      setOpeningCamera(false);
     }
-    if (!(await CameraView.isAvailableAsync())) {
-      beginManualReview("Este dispositivo no tiene una cámara disponible. Puedes ingresar la etiqueta manualmente.");
-      return;
-    }
-    const nextPermission = permission?.granted ? permission : await requestPermission();
-    if (!nextPermission.granted) {
-      beginManualReview("Sin permiso de cámara, My Scoope continúa con ingreso manual.");
-      return;
-    }
-    setCameraReady(false);
-    setPhase("camera");
   }
 
   async function capture() {
@@ -321,7 +326,7 @@ export default function LabelCaptureScreen() {
               <Text style={textStyles.caption}>3 · Confirma para crear un alimento visible sólo para ti.</Text>
             </View>
           </Card>
-          <Button label="Abrir cámara" onPress={() => void beginCamera()} />
+          <Button label="Abrir cámara" loading={openingCamera} onPress={() => void beginCamera()} />
           <Button label="Ingresar sin cámara" onPress={() => beginManualReview()} variant="secondary" />
         </>
       ) : null}

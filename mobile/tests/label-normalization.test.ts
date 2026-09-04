@@ -194,10 +194,12 @@ test("the capture screen focuses the label and blocks unconverted serving values
     'normalizationStatus === "serving_size_required"',
     'normalizationStatus === "basis_confirmation_required"',
     "Convertir a valores por 100 g",
+    'loading={openingCamera}',
   ]) {
     assert.ok(screen.includes(expected), `missing capture safeguard: ${expected}`);
   }
   assert.ok(!screen.includes("development build iOS de CML05"));
+  assert.ok(!screen.includes("CameraView.isAvailableAsync()"));
 });
 
 test("the native OCR module uses nutrition vocabulary and versioned provenance", async () => {
