@@ -25,3 +25,10 @@ def test_food_picker_selecting_food_shows_preview(page, meal_edit_url, ui_settle
 
     assert food_preview.is_visible(), "El preview no se mostró tras seleccionar un alimento"
     assert add_button.is_visible(), "El botón de agregar no se mostró tras seleccionar un alimento"
+    assert page.locator("#meal-picker-section").get_attribute("data-picker-step") == "impact"
+    assert not food_search.is_visible(), "La búsqueda siguió visible en el paso de impacto"
+
+    page.get_by_role("button", name="Cambiar selección").click()
+
+    assert page.locator("#meal-picker-section").get_attribute("data-picker-step") == "selection"
+    assert food_search.is_visible(), "Cambiar selección no regresó a la biblioteca"

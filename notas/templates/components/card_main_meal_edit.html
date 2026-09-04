@@ -19,17 +19,17 @@
     <div class="detail-section">
         <div class="title-section-panels">
             <h3>Tabla de comparación entre alimentos</h3>
-            <div
+            <button
+                type="button"
                 class="add-title js-picker-toggle"
-                role="button"
-                tabindex="0"
                 aria-expanded="false"
+                aria-haspopup="dialog"
                 aria-controls="meal-picker-section"
             >
                 <i data-lucide="plus" class="add-row-icon"></i>
                 <i data-lucide="carrot" class="add-row-icon"></i>
-                <h4 id="food-form-title">Agrega un Alimento</h4>
-            </div>
+                <h4 class="add-title__label">Agregar alimento</h4>
+            </button>
         </div>
         {% include "components/picker_block_food.html" with main_id=main_card.main_id %}
         

@@ -18,7 +18,7 @@ def test_meal_picker_cancel_edit_restores_add_mode(
     hidden_input = page.locator("#dp-selected-meal-id")
     form_preview = page.locator("#dp-form")
 
-    form_title.wait_for()
+    form_title.wait_for(state="attached")
 
     initial_action = form_preview.get_attribute("action")
     assert initial_action is not None

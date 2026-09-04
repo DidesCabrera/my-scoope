@@ -97,52 +97,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function isMobileViewport() {
-    return window.innerWidth <= 768;
-  }
-
-  function getPickerSection() {
-    return (
-      picker.closest(".section-picker") ||
-      picker.closest("[id$='picker-section']") ||
-      picker.closest(".add-row") ||
-      picker
-    );
-  }
-
-  function getPickerScrollTarget() {
-    const pickerSection = getPickerSection();
-
-    return (
-      pickerSection.querySelector(".title-section-panels") ||
-      title?.closest(".title-section-panels") ||
-      pickerSection
-    );
-  }
-
-  function scrollPickerIntoMobileView() {
-    if (!isMobileViewport()) return;
-  
-    const targetElement = getPickerScrollTarget();
-    if (!targetElement) return;
-  
-    const topOffset = 12;
-    const rect = targetElement.getBoundingClientRect();
-    const targetY = window.scrollY + rect.top - topOffset;
-  
-    window.scrollTo({
-      top: Math.max(targetY, 0),
-      behavior: "smooth",
-    });
-  }
-
-  function schedulePickerScrollIntoMobileView() {
-    if (!isMobileViewport()) return;
-
-    window.setTimeout(scrollPickerIntoMobileView, 80);
-    window.setTimeout(scrollPickerIntoMobileView, 260);
-  }
-
   function clearSelection() {
     selectedMeal = null;
     hidden.value = "";
@@ -165,6 +119,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     showPreview();
     form.classList.add("has-selection");
+  }
+
+  function showImpactStep() {
+    document.dispatchEvent(new CustomEvent("picker:step", {
+      detail: { sectionId: "dailyplan-picker-section", step: "impact" }
+    }));
   }
 
   function enterAddMode() {
@@ -194,22 +154,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (mealId == null || mealId === "") return null;
     return mealById.get(Number(mealId)) || null;
   }
-
-  function expandPickerSection() {
-    const pickerSection = document.getElementById("dailyplan-picker-section");
-    const pickerToggle = document.querySelector(
-      '.js-picker-toggle[aria-controls="dailyplan-picker-section"]'
-    );
-
-    if (pickerSection) {
-      pickerSection.classList.remove("is-collapsed");
-    }
-
-    if (pickerToggle) {
-      pickerToggle.setAttribute("aria-expanded", "true");
-    }
-  }
-
 
   function ensurePickerCloseButton() {
     const selector = input.closest(".selector");
@@ -268,6 +212,7 @@ document.addEventListener("DOMContentLoaded", () => {
           }
   
           closeList();
+          showImpactStep();
         });
   
         list.appendChild(li);
@@ -340,7 +285,6 @@ document.addEventListener("DOMContentLoaded", () => {
   input.addEventListener("focus", () => {
     openList();
     renderMealList(browseMeals);
-    schedulePickerScrollIntoMobileView();
   });
 
   input.addEventListener("input", () => {
@@ -402,12 +346,11 @@ document.addEventListener("DOMContentLoaded", () => {
       form.action = `/app/dailyplans/${ctx.dailyplan.id}/meals/${ctx.editing.dailyplanmeal_id}/update/`;
 
       document.dispatchEvent(new CustomEvent("picker:open", {
-        detail: { sectionId: "dailyplan-picker-section" }
+        detail: { sectionId: "dailyplan-picker-section", step: "impact" }
       }));
 
       enterEditMode();
       applySelectedMeal(meal);
-      schedulePickerScrollIntoMobileView();
 
       if (btnCancelInline) {
         btnCancelInline.style.display = "none";
@@ -421,29 +364,29 @@ document.addEventListener("DOMContentLoaded", () => {
   // CANCEL EDIT
   // ---------------------------
 
-  if (btnCancel) {
-    btnCancel.addEventListener("click", () => {
-      clearSelection();
-      enterAddMode();
-      closeList();
+  function cancelPicker() {
+    clearSelection();
+    enterAddMode();
+    closeList();
 
-      document.dispatchEvent(new CustomEvent("picker:close", {
-        detail: { sectionId: "dailyplan-picker-section" }
-      }));
-    });
+    document.dispatchEvent(new CustomEvent("picker:close", {
+      detail: { sectionId: "dailyplan-picker-section" }
+    }));
+  }
+
+  if (btnCancel) {
+    btnCancel.addEventListener("click", cancelPicker);
   }
 
   if (btnCancelInline) {
-    btnCancelInline.addEventListener("click", () => {
-      clearSelection();
-      enterAddMode();
-      closeList();
-
-      document.dispatchEvent(new CustomEvent("picker:close", {
-        detail: { sectionId: "dailyplan-picker-section" }
-      }));
-    });
+    btnCancelInline.addEventListener("click", cancelPicker);
   }
+
+  document.addEventListener("picker:dismiss", event => {
+    if (event.detail?.sectionId !== "dailyplan-picker-section") return;
+    event.preventDefault();
+    cancelPicker();
+  });
 
   // ---------------------------
   // INITIAL MEAL FROM URL
@@ -455,8 +398,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const meal = findMealById(initialMealId);
 
     if (meal) {
-      expandPickerSection();
       applySelectedMeal(meal);
+
+      window.requestAnimationFrame(() => {
+        document.dispatchEvent(new CustomEvent("picker:open", {
+          detail: { sectionId: "dailyplan-picker-section", step: "impact" }
+        }));
+      });
 
       if (btnCancelInline) {
         btnCancelInline.style.display = "none";

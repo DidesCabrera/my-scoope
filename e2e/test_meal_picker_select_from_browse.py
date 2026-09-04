@@ -27,6 +27,10 @@ def test_meal_picker_select_from_browse_shows_preview(page, dailyplan_edit_url, 
     assert not meal_list.is_visible(), "La lista no se cerró tras seleccionar una meal"
     assert meal_preview.is_visible(), "El preview no se mostró tras seleccionar una meal"
     assert add_button.is_visible(), "El botón add no apareció tras seleccionar una meal"
+    assert page.locator("#dailyplan-picker-section").get_attribute("data-picker-step") == "impact"
+    assert not meal_search.is_visible(), "La búsqueda siguió visible en el paso de impacto"
+    assert page.locator('input[name="hour"]').is_visible(), "El paso de impacto no mostró la hora"
+    assert page.locator('input[name="note"]').is_visible(), "El paso de impacto no mostró la nota"
 
     preview_name_text = (preview_name.text_content() or "").strip()
     preview_kcal_text = (preview_kcal.text_content() or "").strip()

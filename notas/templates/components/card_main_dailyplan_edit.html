@@ -19,17 +19,17 @@
     <div class="detail-section dailyplan">
         <div class="title-section-panels">
             <h3>Tabla de comparación entre comidas</h3>
-            <div
+            <button
+                type="button"
                 class="add-title js-picker-toggle"
-                role="button"
-                tabindex="0"
                 aria-expanded="false"
+                aria-haspopup="dialog"
                 aria-controls="dailyplan-picker-section"
             >
                 <i data-lucide="plus" class="add-row-icon"></i>
                 <i data-lucide="utensils" class="add-row-icon"></i>
-                <h4 id="meal-form-title">Agrega una Comida</h4>
-            </div>
+                <h4 class="add-title__label">Agregar comida</h4>
+            </button>
         </div>
         {% include "components/picker_block_meal.html" with meals=meals main_id=main_card.main_id%}
         

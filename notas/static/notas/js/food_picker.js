@@ -115,52 +115,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return food?.display_name || food?.name || "";
   }
 
-  function isMobileViewport() {
-    return window.innerWidth <= 768;
-  }
-
-  function getPickerSection() {
-    return (
-      picker.closest(".section-picker") ||
-      picker.closest("[id$='picker-section']") ||
-      picker.closest(".add-row") ||
-      picker
-    );
-  }
-
-  function getPickerScrollTarget() {
-    const pickerSection = getPickerSection();
-
-    return (
-      pickerSection.querySelector(".title-section-panels") ||
-      title?.closest(".title-section-panels") ||
-      pickerSection
-    );
-  }
-
-  function scrollPickerIntoMobileView() {
-    if (!isMobileViewport()) return;
-  
-    const targetElement = getPickerScrollTarget();
-    if (!targetElement) return;
-  
-    const topOffset = 12;
-    const rect = targetElement.getBoundingClientRect();
-    const targetY = window.scrollY + rect.top - topOffset;
-  
-    window.scrollTo({
-      top: Math.max(targetY, 0),
-      behavior: "smooth",
-    });
-  }
-
-  function schedulePickerScrollIntoMobileView() {
-    if (!isMobileViewport()) return;
-
-    window.setTimeout(scrollPickerIntoMobileView, 80);
-    window.setTimeout(scrollPickerIntoMobileView, 260);
-  }
-
   function normalizeSearchValue(value) {
     return String(value ?? "")
       .toLowerCase()
@@ -427,6 +381,10 @@ document.addEventListener("DOMContentLoaded", () => {
   
         closeList();
         showPreview();
+
+        document.dispatchEvent(new CustomEvent("picker:step", {
+          detail: { sectionId: "meal-picker-section", step: "impact" }
+        }));
       });
   
       list.appendChild(li);
@@ -522,7 +480,6 @@ document.addEventListener("DOMContentLoaded", () => {
   input.addEventListener("focus", async () => {
     renderFoodList(await getInitialFoodResults());
     openList();
-    schedulePickerScrollIntoMobileView();
   });
 
   input.addEventListener("input", () => {
@@ -563,7 +520,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       document.dispatchEvent(new CustomEvent("picker:open", {
-        detail: { sectionId: "meal-picker-section" }
+        detail: { sectionId: "meal-picker-section", step: "impact" }
       }));
 
       input.value = button.dataset.name || "";
@@ -575,7 +532,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         input.value = getFoodDisplayName(selectedFood);
         showPreview();
-        schedulePickerScrollIntoMobileView();
       });
     });
   });
@@ -583,25 +539,26 @@ document.addEventListener("DOMContentLoaded", () => {
   // ---------------------------
   // Cancel
   // ---------------------------
-  btnCancel.addEventListener("click", () => {
+  function cancelPicker() {
     setAddMode();
     resetPickerState();
 
     document.dispatchEvent(new CustomEvent("picker:close", {
       detail: { sectionId: "meal-picker-section" }
     }));
-  });
+  }
+
+  btnCancel.addEventListener("click", cancelPicker);
 
   if (btnCancelInline) {
-    btnCancelInline.addEventListener("click", () => {
-      setAddMode();
-      resetPickerState();
-
-      document.dispatchEvent(new CustomEvent("picker:close", {
-        detail: { sectionId: "meal-picker-section" }
-      }));
-    });
+    btnCancelInline.addEventListener("click", cancelPicker);
   }
+
+  document.addEventListener("picker:dismiss", event => {
+    if (event.detail?.sectionId !== "meal-picker-section") return;
+    event.preventDefault();
+    cancelPicker();
+  });
 
   // ---------------------------
   // Init
@@ -611,4 +568,24 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   syncHiddenState();
+
+  const initialFoodId = window.FOOD_PICKER_INITIAL_ID;
+  if (initialFoodId) {
+    setAddMode();
+    fetchFoodById(initialFoodId).then(food => {
+      if (!food) return;
+
+      selectedFood = food;
+      input.value = getFoodDisplayName(food);
+      showPreview();
+
+      document.dispatchEvent(new CustomEvent("picker:open", {
+        detail: { sectionId: "meal-picker-section", step: "impact" }
+      }));
+
+      const url = new URL(window.location);
+      url.searchParams.delete("select_food");
+      window.history.replaceState({}, "", url);
+    });
+  }
 });

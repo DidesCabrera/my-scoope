@@ -1158,7 +1158,7 @@ p.h3-table2 {
    ========================================================= */
 
   @media (max-width: 980px) {
-    #meal-picker-section:focus-within,
+    .section_picker#meal-picker-section:focus-within,
     #dpm-picker-section:focus-within {
       margin-bottom: calc(42vh + env(safe-area-inset-bottom, 0px));
     }

@@ -1,3 +1,5 @@
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -70,6 +72,24 @@ def _safe_return_to(request, fallback_name, mode=None):
         return return_to
 
     return fallback_url
+
+
+def _safe_requested_return_to(request):
+    return_to = request.POST.get("return_to") or request.GET.get("return_to") or ""
+    if return_to and url_has_allowed_host_and_scheme(
+        url=return_to,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return return_to
+    return ""
+
+
+def _with_query_parameter(url, key, value):
+    parts = urlsplit(url)
+    query = dict(parse_qsl(parts.query, keep_blank_values=True))
+    query[key] = str(value)
+    return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
 
 
 @login_required
@@ -293,18 +313,28 @@ def food_create(request):
     base_vm = BaseVM(
         ui=ui_vm,
     )
+    return_to = _safe_requested_return_to(request)
 
     if request.method == "POST":
         form = FoodEditForm(request.POST)
 
         if form.is_valid():
-            create_food(
+            result = create_food(
                 user=request.user,
                 name=form.cleaned_data["name"],
                 protein=form.cleaned_data["protein"],
                 carbs=form.cleaned_data["carbs"],
                 fat=form.cleaned_data["fat"],
             )
+
+            if return_to:
+                return redirect(
+                    _with_query_parameter(
+                        return_to,
+                        "select_food",
+                        result.food.pk,
+                    )
+                )
 
             return redirect("food_list")
     else:
@@ -316,6 +346,7 @@ def food_create(request):
         {
             **base_vm.as_context(),
             "form": form,
+            "return_to": return_to,
         },
     )
 
