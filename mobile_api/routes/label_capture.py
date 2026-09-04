@@ -145,6 +145,7 @@ def confirm_food_label_capture(request, payload: FoodLabelCaptureInput):
             fiber_g=payload.fiber_g,
             sodium_mg=payload.sodium_mg,
             serving_size_g=payload.serving_size_g,
+            volume_weight_g_per_100ml=payload.volume_weight_g_per_100ml,
             declared_energy_kcal_per_100g=payload.declared_energy_kcal_per_100g,
             detected_basis=payload.detected_basis,
             ocr_engine=payload.ocr_engine,

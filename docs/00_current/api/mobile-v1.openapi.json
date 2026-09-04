@@ -2794,7 +2794,12 @@
             "type": "integer"
           },
           "basis": {
-            "const": "per_100g",
+            "enum": [
+              "per_100g",
+              "per_serving",
+              "per_100ml",
+              "unknown"
+            ],
             "title": "Basis",
             "type": "string"
           },
@@ -2814,7 +2819,12 @@
             "type": "string"
           },
           "normalization_status": {
-            "const": "ready",
+            "enum": [
+              "ready",
+              "basis_confirmation_required",
+              "serving_size_required",
+              "volume_weight_required"
+            ],
             "title": "Normalization Status",
             "type": "string"
           },
@@ -2844,7 +2854,9 @@
           "source_basis": {
             "enum": [
               "per_100g",
-              "per_serving"
+              "per_serving",
+              "per_100ml",
+              "unknown"
             ],
             "title": "Source Basis",
             "type": "string"
@@ -3211,6 +3223,7 @@
             "enum": [
               "per_100g",
               "per_serving",
+              "per_100ml",
               "manual"
             ],
             "title": "Detected Basis",
@@ -3356,6 +3369,19 @@
               }
             ],
             "title": "Sugar G"
+          },
+          "volume_weight_g_per_100ml": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 10000,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Volume Weight G Per 100Ml"
           },
           "warnings": {
             "items": {

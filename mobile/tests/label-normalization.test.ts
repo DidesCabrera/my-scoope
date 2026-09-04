@@ -7,6 +7,7 @@ import type { NutritionLabelRecognition } from "../modules/nutrition-label-ocr/s
 import {
   confirmNutritionLabelBasis,
   convertServingDraftTo100g,
+  convertVolumeDraftTo100g,
   normalizeNutritionLabel,
 } from "../src/label-capture/normalize";
 
@@ -185,6 +186,41 @@ test("routes an explicitly confirmed per-serving basis through the conversion ga
   assert.deepEqual(perServing.values, {});
 });
 
+test("keeps per-100ml values unnormalized until the user supplies their real weight", () => {
+  const draft = normalizeNutritionLabel(recognition([
+    "Información nutricional por 100 ml",
+    "Energía 46 kcal",
+    "Proteínas 3,3 g",
+    "Carbohidratos 5 g",
+    "Grasas totales 2 g",
+  ]));
+
+  assert.equal(draft.basis, "per_100ml");
+  assert.equal(draft.normalizationStatus, "volume_weight_required");
+  assert.equal(draft.sourceValues.protein_g, 3.3);
+  assert.deepEqual(draft.values, {});
+
+  const converted = convertVolumeDraftTo100g(draft, 103);
+  assert.equal(converted.normalizationStatus, "ready");
+  assert.equal(converted.values.protein_g, 3.204);
+  assert.equal(converted.values.carbs_g, 4.854);
+  assert.equal(converted.values.fat_g, 1.942);
+  assert.ok(converted.warnings.includes("basis_normalized_from_100ml"));
+});
+
+test("routes an unknown basis confirmed as per-100ml through the weight gate", () => {
+  const draft = normalizeNutritionLabel(recognition([
+    "Proteínas 3,3 g",
+    "Carbohidratos 5 g",
+    "Grasas totales 2 g",
+  ]));
+  const perVolume = confirmNutritionLabelBasis(draft, "per_100ml");
+
+  assert.equal(perVolume.basis, "per_100ml");
+  assert.equal(perVolume.normalizationStatus, "volume_weight_required");
+  assert.deepEqual(perVolume.values, {});
+});
+
 test("the capture screen supports camera and gallery with explicit AI safeguards", async () => {
   const screen = await readFile(path.resolve(process.cwd(), "src/app/label-capture.tsx"), "utf8");
 
@@ -197,6 +233,8 @@ test("the capture screen supports camera and gallery with explicit AI safeguards
     'retain_label_image: Boolean(retainImage && prepared && analysisId)',
     '"/api/v1/foods/label-captures/analyze"',
     'loading={openingCamera}',
+    'confirmBasis("per_100ml")',
+    "convertVolumeDraftTo100g",
   ]) {
     assert.ok(screen.includes(expected), `missing capture safeguard: ${expected}`);
   }

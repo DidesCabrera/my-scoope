@@ -11,12 +11,19 @@ from mobile_api.tests.base import AuthenticatedMobileAPITestCase
 from notas.domain.models import Food, FoodLabelAIAnalysis, FoodLabelCaptureReceipt
 
 
-def _provider_response(*, status="resolved", confidence=0.96, model="gpt-5.6-luna"):
+def _provider_response(
+    *,
+    status="resolved",
+    confidence=0.96,
+    model="gpt-5.6-luna",
+    basis="per_100g",
+    serving_size=150,
+):
     output = {
         "status": status,
         "product_name": "Yogur IA" if status == "resolved" else None,
-        "basis": "per_100g" if status == "resolved" else "unknown",
-        "serving_size_g": 150 if status == "resolved" else None,
+        "basis": basis if status == "resolved" else "unknown",
+        "serving_size_g": serving_size if status == "resolved" else None,
         "energy_value": 165 if status == "resolved" else None,
         "energy_unit": "kcal" if status == "resolved" else None,
         "protein_g": 10 if status == "resolved" else None,
@@ -36,7 +43,10 @@ def _provider_response(*, status="resolved", confidence=0.96, model="gpt-5.6-lun
     }
 
 
-@override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
+@override_settings(
+    NUTRITION_ONBOARDING_GATE_ENABLED=False,
+    RATE_LIMIT_NUTRITION_LABEL_SCAN_USER="1000/h",
+)
 class MobileAPILabelCaptureTests(AuthenticatedMobileAPITestCase):
     def _analysis_payload(self, key="label-analysis-0001"):
         return {
@@ -96,6 +106,52 @@ class MobileAPILabelCaptureTests(AuthenticatedMobileAPITestCase):
         self.assertEqual(analysis.final_model, "gpt-5.6-sol")
         self.assertEqual(analysis.provider_call_count, 2)
         self.assertEqual(CreditWallet.objects.get(user=self.user).balance, 148)
+
+    @override_settings(AI_ASSISTANT_CREDITS_ENABLED=True)
+    @patch("notas.application.services.nutrition_label_ai._call_openai")
+    def test_per_100ml_analysis_returns_extracted_values_for_safe_user_conversion(self, provider):
+        provider.return_value = _provider_response(basis="per_100ml", serving_size=None)
+
+        response = self.client.post(
+            "/api/v1/foods/label-captures/analyze",
+            data=self._analysis_payload("label-analysis-per-100ml"),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()["data"]
+        self.assertEqual(data["basis"], "per_100ml")
+        self.assertEqual(data["source_basis"], "per_100ml")
+        self.assertEqual(data["normalization_status"], "volume_weight_required")
+        self.assertEqual(data["ocr_engine_version"], "nutrition_label_ai.v2")
+        self.assertEqual(data["values"], {})
+        self.assertEqual(data["source_values"]["protein_g"], 10)
+        self.assertEqual(data["credits_charged"], 2)
+        self.assertFalse(FoodLabelAIAnalysis.objects.get().escalated)
+
+    @override_settings(AI_ASSISTANT_CREDITS_ENABLED=True)
+    @patch("notas.application.services.nutrition_label_ai._call_openai")
+    def test_unknown_basis_is_escalated_then_returned_for_user_confirmation(self, provider):
+        provider.side_effect = [
+            _provider_response(basis="unknown", serving_size=None),
+            _provider_response(basis="unknown", serving_size=None, model="gpt-5.6-sol"),
+        ]
+
+        response = self.client.post(
+            "/api/v1/foods/label-captures/analyze",
+            data=self._analysis_payload("label-analysis-unknown-basis"),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()["data"]
+        self.assertEqual(data["basis"], "unknown")
+        self.assertEqual(data["normalization_status"], "basis_confirmation_required")
+        self.assertEqual(data["credits_charged"], 2)
+        self.assertIn("model_escalation_unresolved", data["warnings"])
+        analysis = FoodLabelAIAnalysis.objects.get()
+        self.assertTrue(analysis.escalated)
+        self.assertEqual(analysis.final_model, "gpt-5.6-sol")
 
     @override_settings(AI_ASSISTANT_CREDITS_ENABLED=True)
     @patch("notas.application.services.nutrition_label_ai._call_openai")
@@ -331,3 +387,35 @@ class MobileAPILabelCaptureTests(AuthenticatedMobileAPITestCase):
         self.assertEqual(response.json()["error"]["code"], "food_label_serving_size_required")
         self.assertFalse(Food.objects.exists())
         self.assertFalse(FoodLabelCaptureReceipt.objects.exists())
+
+    def test_per_100ml_capture_requires_and_records_conversion_weight(self):
+        payload = {
+            "name": "Leche por volumen",
+            "protein_g": 3.204,
+            "carbs_g": 4.854,
+            "fat_g": 1.942,
+            "detected_basis": "per_100ml",
+            "ocr_engine": "openai_responses",
+            "field_confidence": {"protein_g": 0.96},
+            "warnings": ["basis_normalized_from_100ml"],
+            "idempotency_key": "label-confirm-per-100ml",
+        }
+
+        missing = self.client.post(
+            "/api/v1/foods/label-captures",
+            data=payload,
+            content_type="application/json",
+        )
+        self.assertEqual(missing.status_code, 422)
+        self.assertEqual(missing.json()["error"]["code"], "food_label_volume_weight_required")
+
+        payload["volume_weight_g_per_100ml"] = 103
+        saved = self.client.post(
+            "/api/v1/foods/label-captures",
+            data=payload,
+            content_type="application/json",
+        )
+        self.assertEqual(saved.status_code, 200)
+        receipt = FoodLabelCaptureReceipt.objects.get(pk=saved.json()["data"]["capture_receipt_id"])
+        self.assertEqual(receipt.detected_basis, "per_100ml")
+        self.assertEqual(float(receipt.volume_weight_g_per_100ml), 103)

@@ -50,8 +50,11 @@ The model must return a strict JSON schema and may report `ambiguous`,
 `not_nutrition_label` or `image_unreadable`; it is instructed never to guess.
 Server code then:
 
-- requires protein, carbohydrates, fat and a supported basis;
+- requires legible protein, carbohydrates and fat, while allowing the basis to
+  be confirmed separately when its header is cropped;
 - converts per-serving values only with a positive printed serving weight;
+- accepts labels expressed per 100 ml but never assumes that 100 ml equals
+  100 g; the user must provide the real weight of 100 ml before saving;
 - converts kJ to kcal and sodium grams to milligrams;
 - rejects impossible macro, energy and sodium ranges;
 - compares declared energy with macro-derived energy;
@@ -62,6 +65,26 @@ Server code then:
 If Sol fails but the primary candidate remains valid, the primary candidate is
 shown with an additional review warning. If no valid candidate exists, the scan
 fails without a charge and the same manual form remains available.
+
+### Basis-resolution incident and correction (2026-09-04)
+
+The first physical TestFlight 14 scan reached both Luna and Sol successfully but
+returned HTTP 422 with `unsupported_or_unknown_basis`. The scan charged zero
+credits. The root cause was an internal contract mismatch: `per_100ml` and
+`unknown` were valid provider-schema values but the deterministic normalizer
+accepted only `per_100g` and `per_serving`.
+
+The corrected contract preserves readable nutrients instead of discarding them:
+
+- `unknown` opens an explicit choice between per 100 g, per serving and per 100 ml;
+- a serving without a printed gram weight requests that weight before conversion;
+- `per_100ml` requests the grams represented by 100 ml and converts by
+  `source value * 100 / supplied grams`;
+- food creation remains blocked until the normalized per-100-g values are ready;
+- the receipt records the volumetric source basis and supplied conversion weight.
+
+This avoids both false failures and the scientifically unsafe shortcut of treating
+volume and mass as interchangeable.
 
 ## API and persistence
 

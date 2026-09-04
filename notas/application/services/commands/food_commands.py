@@ -125,6 +125,7 @@ def create_food_from_label_capture(
     ocr_engine_version="",
     detected_basis=FoodLabelCaptureReceipt.BASIS_MANUAL,
     serving_size_g=None,
+    volume_weight_g_per_100ml=None,
     declared_energy_kcal_per_100g=None,
     saturated_fat_g=None,
     sugar_g=None,
@@ -159,6 +160,11 @@ def create_food_from_label_capture(
         "fiber_g": _label_number(fiber_g, field="fiber", maximum=100),
         "sodium_mg": _label_number(sodium_mg, field="sodium", maximum=100_000),
         "serving_size_g": _label_number(serving_size_g, field="serving_size", maximum=10_000),
+        "volume_weight_g_per_100ml": _label_number(
+            volume_weight_g_per_100ml,
+            field="volume_weight",
+            maximum=10_000,
+        ),
         "declared_energy_kcal_per_100g": _label_number(
             declared_energy_kcal_per_100g,
             field="energy",
@@ -180,10 +186,7 @@ def create_food_from_label_capture(
             raise ValueError("food_label_retained_image_invalid")
     elif image_content_type or confirmed["retained_label_image_sha256"]:
         raise ValueError("food_label_retained_image_invalid")
-    if confirmed["serving_size_g"] is not None and confirmed["serving_size_g"] <= 0:
-        raise ValueError("food_label_serving_size_invalid")
-    if detected_basis == FoodLabelCaptureReceipt.BASIS_PER_SERVING and confirmed["serving_size_g"] is None:
-        raise ValueError("food_label_serving_size_required")
+    _validate_label_basis_evidence(detected_basis=detected_basis, confirmed=confirmed)
     payload_hash = _label_payload_hash(confirmed)
     existing = _existing_label_capture(user=user, idempotency_key=clean_key, payload_hash=payload_hash)
     if existing:
@@ -214,6 +217,7 @@ def create_food_from_label_capture(
                 ocr_engine_version=clean_engine_version,
                 detected_basis=detected_basis,
                 serving_size_g=confirmed["serving_size_g"],
+                volume_weight_g_per_100ml=confirmed["volume_weight_g_per_100ml"],
                 declared_energy_kcal_per_100g=confirmed["declared_energy_kcal_per_100g"],
                 field_confidence=confirmed["field_confidence"],
                 warnings=confirmed["warnings"],
@@ -229,6 +233,19 @@ def create_food_from_label_capture(
             return existing
         raise
     return FoodLabelCaptureResult(food=food, receipt=receipt)
+
+
+def _validate_label_basis_evidence(*, detected_basis: str, confirmed: dict) -> None:
+    serving_size = confirmed["serving_size_g"]
+    volume_weight = confirmed["volume_weight_g_per_100ml"]
+    if serving_size is not None and serving_size <= 0:
+        raise ValueError("food_label_serving_size_invalid")
+    if volume_weight is not None and volume_weight <= 0:
+        raise ValueError("food_label_volume_weight_invalid")
+    if detected_basis == FoodLabelCaptureReceipt.BASIS_PER_SERVING and serving_size is None:
+        raise ValueError("food_label_serving_size_required")
+    if detected_basis == FoodLabelCaptureReceipt.BASIS_PER_100ML and volume_weight is None:
+        raise ValueError("food_label_volume_weight_required")
 
 
 @transaction.atomic
