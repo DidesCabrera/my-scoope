@@ -61,3 +61,25 @@ class MobileAPILabelCaptureTests(AuthenticatedMobileAPITestCase):
 
         self.assertEqual(conflict.status_code, 409)
         self.assertEqual(conflict.json()["error"]["code"], "food_label_idempotency_conflict")
+
+    def test_per_serving_capture_without_weight_is_rejected(self):
+        response = self.client.post(
+            "/api/v1/foods/label-captures",
+            data={
+                "name": "Porción sin peso",
+                "protein_g": 10,
+                "carbs_g": 20,
+                "fat_g": 5,
+                "detected_basis": "per_serving",
+                "ocr_engine": "apple_vision",
+                "field_confidence": {},
+                "warnings": ["serving_size_required"],
+                "idempotency_key": "label-capture-0003",
+            },
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(response.json()["error"]["code"], "food_label_serving_size_required")
+        self.assertFalse(Food.objects.exists())
+        self.assertFalse(FoodLabelCaptureReceipt.objects.exists())

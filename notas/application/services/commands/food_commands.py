@@ -169,6 +169,8 @@ def create_food_from_label_capture(
     }
     if confirmed["serving_size_g"] is not None and confirmed["serving_size_g"] <= 0:
         raise ValueError("food_label_serving_size_invalid")
+    if detected_basis == FoodLabelCaptureReceipt.BASIS_PER_SERVING and confirmed["serving_size_g"] is None:
+        raise ValueError("food_label_serving_size_required")
     payload_hash = _label_payload_hash(confirmed)
     existing = _existing_label_capture(user=user, idempotency_key=clean_key, payload_hash=payload_hash)
     if existing:

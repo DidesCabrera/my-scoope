@@ -58,7 +58,7 @@ public class NutritionLabelOcrModule: Module {
 
           promise.resolve([
             "engine": "apple_vision",
-            "engineVersion": "1",
+            "engineVersion": "2",
             "durationMs": Int((CFAbsoluteTimeGetCurrent() - startedAt) * 1000),
             "observations": observations
           ])
@@ -66,6 +66,18 @@ public class NutritionLabelOcrModule: Module {
         request.recognitionLevel = .accurate
         request.usesLanguageCorrection = true
         request.recognitionLanguages = ["es-CL", "es-ES", "en-US"]
+        request.customWords = [
+          "Información nutricional",
+          "Energía",
+          "Proteínas",
+          "Carbohidratos",
+          "Grasas totales",
+          "Grasas saturadas",
+          "Azúcares",
+          "Fibra alimentaria",
+          "Sodio",
+          "Porción"
+        ]
 
         do {
           let handler = VNImageRequestHandler(

@@ -27,7 +27,10 @@ enter and review the same fields manually.
 The client recognizes Spanish and English nutrient labels, decimal comma/point,
 values per 100 g, values per serving and common dual-column tables. Per-serving
 values are converted to the operational per-100-gram contract only when a serving
-weight is available.
+weight is available. Common unit-based portions such as `1 unidad (30 g)` are
+supported. If the OCR cannot recover the serving weight, the raw per-serving
+readings are kept separate: the review flow requires the user to enter the weight
+and performs the conversion before the food form can be confirmed.
 
 The review screen exposes:
 
@@ -44,7 +47,9 @@ The user may edit every value. OCR never persists or approves a food by itself.
 
 `POST /api/v1/foods/label-captures` accepts only confirmed normalized values and
 technical confidence metadata. It requires `mobile:write`, the existing
-`can_create_food` entitlement and an idempotency key.
+`can_create_food` entitlement and an idempotency key. A payload that declares a
+per-serving source without a serving weight is rejected as a second fail-closed
+guard even if it does not come from the current mobile client.
 
 The application service creates a user-owned `notas.Food` with `is_global=false`,
 `is_verified=false` and `solver_enabled=false`. A one-to-one
@@ -56,9 +61,13 @@ dependent receipt.
 
 The iOS module lives at `mobile/modules/nutrition-label-ocr/`, is auto-linked by
 Expo Modules API and uses Apple Vision without a remote OCR provider. The camera
-uses an explicit Spanish purpose string, disables microphone recording and
-disables barcode support. Android and barcode lookup remain deferred.
+uses continuous autofocus for small label text, offers a torch control, uses an
+explicit Spanish purpose string, disables microphone recording and disables
+barcode support. Apple Vision receives a bounded nutrition vocabulary to improve
+recognition of the supported Spanish fields. Android and barcode lookup remain
+deferred.
 
-Repository checks can validate autolinking, TypeScript, normalization and the web
-fallback. A physical iOS development build is still required to compile Vision,
-exercise the camera and approve final permission/privacy copy during CML07.
+Repository checks validate autolinking, TypeScript, normalization and the web
+fallback. The native module also compiles as part of the iOS application. A
+physical iPhone and a real label are still required to exercise camera optics and
+approve final permission/privacy copy during CML07.

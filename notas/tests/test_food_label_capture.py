@@ -70,6 +70,22 @@ class FoodLabelCaptureTests(TestCase):
         self.assertFalse(Food.objects.exists())
         self.assertFalse(FoodLabelCaptureReceipt.objects.exists())
 
+    def test_per_serving_capture_requires_a_serving_weight(self):
+        with self.assertRaisesMessage(ValueError, "food_label_serving_size_required"):
+            create_food_from_label_capture(
+                user=self.user,
+                name="Porción sin peso",
+                protein_g=10,
+                carbs_g=20,
+                fat_g=5,
+                detected_basis="per_serving",
+                ocr_engine="apple_vision",
+                idempotency_key="label-service-0005",
+            )
+
+        self.assertFalse(Food.objects.exists())
+        self.assertFalse(FoodLabelCaptureReceipt.objects.exists())
+
     def test_another_user_cannot_replay_a_capture_key(self):
         create_food_from_label_capture(
             user=self.user,
