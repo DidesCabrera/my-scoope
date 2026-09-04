@@ -195,23 +195,13 @@ def analyze_nutrition_label(
     credits = nutrition_label_scan_cost()
     reference_id = f"{analysis.public_id}:{analysis.attempt_count}"
     credits_enabled = bool(getattr(settings, "AI_ASSISTANT_CREDITS_ENABLED", False))
-    if credits_enabled:
-        try:
-            reserve_account_credits(
-                user=user,
-                credits=credits,
-                reference_type=REFERENCE_TYPE,
-                reference_id=reference_id,
-                reason="nutrition_label_scan_reservation",
-                metadata={"analysis_id": str(analysis.public_id), "fixed_scan_price": credits},
-            )
-        except (InsufficientAccountCredits, AccountCreditsFrozen) as exc:
-            _fail_analysis(analysis, "insufficient_credits")
-            raise NutritionLabelAIError(
-                "nutrition_label_insufficient_credits",
-                f"Necesitas {credits} créditos disponibles para digitalizar esta etiqueta.",
-                402,
-            ) from exc
+    _reserve_scan_credits(
+        user=user,
+        analysis=analysis,
+        credits=credits,
+        enabled=credits_enabled,
+        reference_id=reference_id,
+    )
 
     calls: list[ProviderCall] = []
     primary_model = str(getattr(settings, "NUTRITION_LABEL_AI_PRIMARY_MODEL", "gpt-5.6-luna") or "").strip()
@@ -363,6 +353,29 @@ def analyze_nutrition_label(
             503,
         ) from exc
     return result
+
+
+def _reserve_scan_credits(
+    *, user, analysis: FoodLabelAIAnalysis, credits: int, enabled: bool, reference_id: str
+) -> None:
+    if not enabled:
+        return
+    try:
+        reserve_account_credits(
+            user=user,
+            credits=credits,
+            reference_type=REFERENCE_TYPE,
+            reference_id=reference_id,
+            reason="nutrition_label_scan_reservation",
+            metadata={"analysis_id": str(analysis.public_id), "fixed_scan_price": credits},
+        )
+    except (InsufficientAccountCredits, AccountCreditsFrozen) as exc:
+        _fail_analysis(analysis, "insufficient_credits")
+        raise NutritionLabelAIError(
+            "nutrition_label_insufficient_credits",
+            f"Necesitas {credits} créditos disponibles para digitalizar esta etiqueta.",
+            402,
+        ) from exc
 
 
 def _decode_image(value: str, content_type: str) -> tuple[bytes, str]:
