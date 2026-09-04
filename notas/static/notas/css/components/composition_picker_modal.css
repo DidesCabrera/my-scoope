@@ -47,15 +47,6 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
   padding: 22px 24px 14px;
 }
 
-.composition-picker-modal__eyebrow {
-  margin: 0 0 4px;
-  color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
 .composition-picker-modal__header h2 {
   margin: 0;
   color: var(--text-main);
@@ -95,50 +86,6 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
   height: 18px;
 }
 
-.composition-picker-steps {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  margin: 0;
-  padding: 0 24px 16px;
-  list-style: none;
-}
-
-.composition-picker-steps li {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  color: var(--text-muted);
-  background: var(--surface-card-muted);
-  border: 1px solid var(--border-soft);
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 650;
-}
-
-.composition-picker-steps li span {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  color: var(--text-muted);
-  background: var(--surface-app);
-  border-radius: 999px;
-  font-size: 12px;
-}
-
-.composition-picker-steps li[aria-current="step"] {
-  color: var(--text-main);
-  border-color: var(--text-main);
-}
-
-.composition-picker-steps li[aria-current="step"] span {
-  color: var(--text-inverted);
-  background: var(--text-main);
-}
-
 .composition-picker-modal__body,
 .composition-picker-modal [data-picker-step-panel="impact"] {
   min-height: 0;
@@ -160,20 +107,13 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
   padding-top: 2px;
 }
 
-.composition-picker-step-heading h3,
-.composition-picker-step-heading p {
+.composition-picker-step-heading h3 {
   margin: 0;
 }
 
 .composition-picker-step-heading h3 {
   color: var(--text-main);
   font-size: 17px;
-}
-
-.composition-picker-step-heading p {
-  margin-top: 4px;
-  color: var(--text-muted);
-  font-size: 13px;
 }
 
 .composition-picker-entry-actions {
@@ -228,13 +168,20 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
 }
 
 .composition-picker-modal .selector {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  display: block;
   width: 100%;
-  padding: 10px 12px;
+  padding: 0;
   background: var(--input-bg);
   border: 1px solid var(--input-border);
   border-radius: 14px 14px 0 0;
+}
+
+.composition-picker-search-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
 }
 
 .composition-picker-modal #food-search,
@@ -249,11 +196,10 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
 
 .composition-picker-modal .selector-list {
   position: static;
-  grid-column: 1 / -1;
-  width: auto;
+  width: 100%;
   height: auto;
   max-height: min(430px, 48dvh);
-  margin: 10px -12px -10px;
+  margin: 0;
   overflow-y: auto;
   background: var(--surface-card-muted);
   border: 0;
@@ -335,10 +281,6 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
 
   .composition-picker-modal__header {
     padding: 18px 16px 12px;
-  }
-
-  .composition-picker-steps {
-    padding: 0 16px 14px;
   }
 
   .composition-picker-modal__body,

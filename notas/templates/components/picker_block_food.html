@@ -8,7 +8,6 @@
   <div class="composition-picker-modal__surface">
     <header class="composition-picker-modal__header">
       <div>
-        <p class="composition-picker-modal__eyebrow">Composición de la comida</p>
         <h2 id="food-form-title">Agrega un Alimento</h2>
       </div>
       <button
@@ -21,17 +20,6 @@
       </button>
     </header>
 
-    <ol class="composition-picker-steps" aria-label="Progreso del selector">
-      <li data-picker-step-indicator="selection" aria-current="step">
-        <span>1</span>
-        Selección
-      </li>
-      <li data-picker-step-indicator="impact">
-        <span>2</span>
-        Impacto
-      </li>
-    </ol>
-
     <section
       class="composition-picker-modal__body composition-picker-modal__body--selection"
       data-picker-step-panel="selection"
@@ -39,7 +27,6 @@
     >
       <div class="composition-picker-step-heading">
         <h3 id="food-selection-title">Selecciona un alimento</h3>
-        <p>Busca en tu biblioteca o crea un alimento nuevo.</p>
       </div>
 
       <div class="composition-picker-entry-actions">
@@ -58,14 +45,16 @@
 
       <div class="add-row">
         <div id="food-picker" class="selector">
-          <i data-lucide="search" class="search-icon-add-row-icon"></i>
-          <label class="sr-only" for="food-search">Buscar alimento</label>
-          <input
-            type="search"
-            id="food-search"
-            placeholder="Escribe el nombre de un alimento"
-            autocomplete="off"
-          >
+          <div class="composition-picker-search-row">
+            <i data-lucide="search" class="search-icon-add-row-icon"></i>
+            <label class="sr-only" for="food-search">Buscar alimento</label>
+            <input
+              type="search"
+              id="food-search"
+              placeholder="Escribe el nombre de un alimento"
+              autocomplete="off"
+            >
+          </div>
           <ul id="food-list" class="selector-list" aria-label="Resultados de alimentos"></ul>
         </div>
       </div>
@@ -98,7 +87,6 @@
         <div class="composition-picker-step-heading composition-picker-step-heading--impact">
           <div>
             <h3>Configura y revisa el impacto</h3>
-            <p>Ajusta la porción antes de confirmar el cambio.</p>
           </div>
           <button type="button" class="composition-picker-change" data-picker-go-to="selection">
             Cambiar selección

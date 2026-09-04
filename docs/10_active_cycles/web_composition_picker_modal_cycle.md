@@ -102,9 +102,9 @@ styles, browser scripts, tests, and documentation.
 
 - Replaced the inline Meal Food and DailyPlan Meal picker containers with a
   shared native-dialog contract that stays outside document layout.
-- Added explicit Selección and Impacto steps, visible progress, library/create
-  entry actions, “Cambiar selección”, internal scrolling, and a compact bottom
-  sheet presentation.
+- Added explicit Selección and Impacto states, library/create entry actions,
+  “Cambiar selección”, internal scrolling, and a compact bottom sheet
+  presentation.
 - Preserved Food quantity math, Meal/DailyPlan impact math, add/update endpoints,
   edit and replacement initialization, and the legacy inline DailyPlanMeal Food
   picker.

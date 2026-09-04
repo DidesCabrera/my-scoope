@@ -43,8 +43,9 @@ before previewing the replacement.
   the detail document.
 - Only one step is exposed at a time. “Cambiar selección” returns from Impacto to
   Selección without submitting.
-- The active step is announced with `aria-current`; the dialog is labelled by
-  its visible title.
+- The dialog is labelled by its visible title. Step progression is conveyed by
+  the changing selection and impact content rather than a separate visual
+  progress indicator.
 - The trigger is a real button with `aria-haspopup="dialog"` and synchronized
   `aria-expanded` state.
 - Escape, backdrop click, the header close button, and Cancel reset transient

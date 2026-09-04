@@ -20,10 +20,12 @@ test("Food and Meal web pickers share the two-step top-layer dialog contract", a
     assert.match(template, /data-picker-step="selection"/);
     assert.match(template, /data-picker-step-panel="selection"/);
     assert.match(template, /data-picker-step-panel="impact"/);
-    assert.match(template, /data-picker-step-indicator="selection"/);
-    assert.match(template, /data-picker-step-indicator="impact"/);
     assert.match(template, /data-picker-go-to="selection"/);
     assert.match(template, /data-picker-dismiss/);
+    assert.doesNotMatch(template, /composition-picker-modal__eyebrow/);
+    assert.doesNotMatch(template, /composition-picker-steps/);
+    assert.doesNotMatch(template, /composition-picker-step-heading[\s\S]*?<p>/);
+    assert.match(template, /composition-picker-search-row[\s\S]*?selector-list/);
     assert.doesNotMatch(template, /class="section_picker/);
   }
 

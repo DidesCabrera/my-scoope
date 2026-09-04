@@ -13,7 +13,6 @@
     <div class="composition-picker-modal__surface">
       <header class="composition-picker-modal__header">
         <div>
-          <p class="composition-picker-modal__eyebrow">Composición del plan diario</p>
           <h2 id="meal-form-title">Agrega una Comida</h2>
         </div>
         <button
@@ -26,17 +25,6 @@
         </button>
       </header>
 
-      <ol class="composition-picker-steps" aria-label="Progreso del selector">
-        <li data-picker-step-indicator="selection" aria-current="step">
-          <span>1</span>
-          Selección
-        </li>
-        <li data-picker-step-indicator="impact">
-          <span>2</span>
-          Impacto
-        </li>
-      </ol>
-
       <section
         class="composition-picker-modal__body composition-picker-modal__body--selection"
         data-picker-step-panel="selection"
@@ -44,7 +32,6 @@
       >
         <div class="composition-picker-step-heading">
           <h3 id="meal-selection-title">Selecciona una comida</h3>
-          <p>Busca en tu biblioteca o crea una comida nueva.</p>
         </div>
 
         <div class="composition-picker-entry-actions">
@@ -63,14 +50,16 @@
 
         <div class="add-row add-row--meal-picker">
           <div id="meal-picker" class="selector">
-            <i data-lucide="search" class="search-icon-add-row-icon"></i>
-            <label class="sr-only" for="meal-search">Buscar comida</label>
-            <input
-              type="search"
-              id="meal-search"
-              placeholder="Escribe el nombre de una comida"
-              autocomplete="off"
-            >
+            <div class="composition-picker-search-row">
+              <i data-lucide="search" class="search-icon-add-row-icon"></i>
+              <label class="sr-only" for="meal-search">Buscar comida</label>
+              <input
+                type="search"
+                id="meal-search"
+                placeholder="Escribe el nombre de una comida"
+                autocomplete="off"
+              >
+            </div>
             <ul id="meal-list" class="selector-list" aria-label="Resultados de comidas"></ul>
           </div>
           <input type="hidden" id="dp-selected-meal-id" name="meal_id">
@@ -87,7 +76,6 @@
         <div class="composition-picker-step-heading composition-picker-step-heading--impact">
           <div>
             <h3>Configura y revisa el impacto</h3>
-            <p>Define el horario y revisa el resultado antes de confirmar.</p>
           </div>
           <button type="button" class="composition-picker-change" data-picker-go-to="selection">
             Cambiar selección
