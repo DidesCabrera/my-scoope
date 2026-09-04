@@ -133,10 +133,16 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "My Scoope usa la cámara para leer una etiqueta nutricional en tu dispositivo.",
+          "cameraPermission": "My Scoope usa la cámara para fotografiar una etiqueta nutricional que tú eliges digitalizar.",
           "microphonePermission": false,
           "recordAudioAndroid": false,
           "barcodeScannerEnabled": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "My Scoope accede sólo a la foto de etiqueta nutricional que tú elijas para digitalizar."
         }
       ],
       [

@@ -179,8 +179,11 @@ APPLICATION_SERVICE_AREAS: tuple[ApplicationServiceArea, ...] = (
     ApplicationServiceArea(
         slug="nutrition_services",
         label="Nutrition Services",
-        entries=("nutrition",),
-        responsibility="Reusable nutrition aggregation, meal totals, KPI and weight helpers.",
+        entries=("nutrition", "nutrition_label_ai"),
+        responsibility=(
+            "Reusable nutrition aggregation, meal totals, KPI and weight helpers, "
+            "including nutrition-label extraction and validation."
+        ),
     ),
     ApplicationServiceArea(
         slug="auth_integration",

@@ -12,6 +12,6 @@
     "user_content": ["other_user_content"]
   },
   "purposes": ["app_functionality", "product_personalization"],
-  "not_collected": ["raw_payment_card_data", "nutrition_label_photo", "raw_ocr_text"],
+  "not_collected": ["raw_payment_card_data", "raw_ocr_text"],
   "review_note": "Reconfirm every third-party SDK data practice in App Store Connect before each submission."
 }

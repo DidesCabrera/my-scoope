@@ -84,6 +84,7 @@ def configure_sentry(
         traces_sample_rate=traces_sample_rate,
         profiles_sample_rate=profiles_sample_rate,
         send_default_pii=False,
+        max_request_body_size="never",
         before_send=sanitize_sentry_event,
     )
     return True

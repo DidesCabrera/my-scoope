@@ -13,11 +13,10 @@ from mobile_api.routes.calendarization_edits import router as calendarization_ed
 from mobile_api.routes.comparisons import router as comparisons_router
 from mobile_api.routes.composition import router as composition_router
 from mobile_api.routes.identity import router as identity_router
+from mobile_api.routes.label_capture import router as label_capture_router
 from mobile_api.routes.libraries import router as libraries_router
 from mobile_api.routes.proposals import router as proposals_router
-from mobile_api.schemas import (
-    HealthEnvelope,
-)
+from mobile_api.schemas import HealthEnvelope
 
 api = NinjaAPI(
     title="My Scoope Consumer API",
@@ -64,6 +63,7 @@ api.add_router("", calendarization_router)
 api.add_router("", calendarization_edits_router)
 api.add_router("", proposals_router)
 api.add_router("", comparisons_router)
+api.add_router("", label_capture_router)
 api.add_router("", libraries_router)
 api.add_router("", composition_router)
 api.add_router("", assistant_router)

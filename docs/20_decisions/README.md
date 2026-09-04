@@ -209,3 +209,6 @@ Consequences
 - `0190-mobile-api-domain-decomposition-closure.md`: cierra MADD00-MADD07 con ocho
   routers, ocho dominios de schemas, pruebas verticales y fachadas mínimas,
   manteniendo `selectors.py` como frontera de lectura compartida y presupuestada.
+- `0191-ai-nutrition-label-extraction-with-internal-escalation.md`: reemplaza el
+  OCR local como autoridad por extracción multimodal con cobro fijo, escalamiento
+  Luna→Sol absorbido internamente, revisión humana y retención opcional privada.

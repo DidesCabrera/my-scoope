@@ -15,9 +15,7 @@ class MobileAPIV1Tests(AuthenticatedMobileAPITestCase):
         schema = schema_response.json()
         self.assertEqual(schema["info"]["version"], "1.0.0")
         for path in (
-            "/api/v1/session",
-            "/api/v1/me",
-            "/api/v1/onboarding",
+            "/api/v1/session", "/api/v1/me", "/api/v1/onboarding",
             "/api/v1/entitlements",
             "/api/v1/subscriptions",
             "/api/v1/subscriptions/apple/transactions",
@@ -71,7 +69,9 @@ class MobileAPIV1Tests(AuthenticatedMobileAPITestCase):
             "/api/v1/library/programs/{program_id}/weeks/{week_number}",
             "/api/v1/library/programs/{program_id}/weeks/{week_number}/days/{day_number}",
             "/api/v1/library/{entity}/{item_id}/actions",
-            "/api/v1/foods/label-captures",
+            "/api/v1/foods/label-captures", "/api/v1/foods/label-captures/config",
+            "/api/v1/foods/label-captures/analyze",
+            "/api/v1/foods/label-captures/{receipt_id}/image",
             "/api/v1/ai/turns",
             "/api/v1/ai/jobs/{job_id}",
             "/api/v1/ai/chats",

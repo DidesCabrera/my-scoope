@@ -185,15 +185,17 @@ test("routes an explicitly confirmed per-serving basis through the conversion ga
   assert.deepEqual(perServing.values, {});
 });
 
-test("the capture screen focuses the label and blocks unconverted serving values", async () => {
+test("the capture screen supports camera and gallery with explicit AI safeguards", async () => {
   const screen = await readFile(path.resolve(process.cwd(), "src/app/label-capture.tsx"), "utf8");
 
   for (const expected of [
     'autofocus="on"',
     "enableTorch={torchEnabled}",
-    'normalizationStatus === "serving_size_required"',
-    'normalizationStatus === "basis_confirmation_required"',
-    "Convertir a valores por 100 g",
+    "launchImageLibraryAsync",
+    "prepareLabelImage",
+    "consent_to_ai_processing: true",
+    'retain_label_image: Boolean(retainImage && prepared && analysisId)',
+    '"/api/v1/foods/label-captures/analyze"',
     'loading={openingCamera}',
   ]) {
     assert.ok(screen.includes(expected), `missing capture safeguard: ${expected}`);

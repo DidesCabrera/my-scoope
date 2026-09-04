@@ -1,22 +1,22 @@
 import * as Crypto from "expo-crypto";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import { File } from "expo-file-system";
+import * as ImagePicker from "expo-image-picker";
 import { Redirect, useRouter } from "expo-router";
-import { useRef, useState } from "react";
-import { Platform, StyleSheet, Text, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Platform, StyleSheet, Switch, Text, View } from "react-native";
 
-import type { FoodLabelCaptureInput, FoodLabelCaptureResult } from "@/api/types";
 import { userFacingError } from "@/api/errors";
 import { useSession } from "@/auth/session-context";
 import { AppHeader, Button, Card, Field, InlineNotice, Pill, Screen, SectionTitle, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
-import {
-  confirmNutritionLabelBasis,
-  convertServingDraftTo100g,
-  normalizeNutritionLabel,
-  type NutritionField,
-  type NutritionLabelDraft,
-} from "@/label-capture/normalize";
+import { deleteCachedImage, prepareLabelImage, type PreparedLabelImage } from "@/label-capture/image";
+import { normalizeNutritionLabel, type NutritionField, type NutritionLabelDraft } from "@/label-capture/normalize";
+import type {
+  FoodLabelAIAnalysis,
+  FoodLabelAIConfig,
+  FoodLabelCaptureInput,
+  FoodLabelCaptureResult,
+} from "@/label-capture/types";
 import {
   isNutritionLabelOcrAvailable,
   recognizeNutritionLabel,
@@ -37,42 +37,18 @@ type FormState = {
 };
 
 const emptyForm: FormState = {
-  name: "",
-  energy: "",
-  protein: "",
-  carbs: "",
-  fat: "",
-  saturatedFat: "",
-  sugar: "",
-  fiber: "",
-  sodium: "",
-  servingSize: "",
+  name: "", energy: "", protein: "", carbs: "", fat: "", saturatedFat: "",
+  sugar: "", fiber: "", sodium: "", servingSize: "",
 };
 
 const warningCopy: Record<string, string> = {
   manual_review: "Los valores serán ingresados y revisados manualmente.",
-  basis_not_detected: "No se identificó si la tabla está expresada por 100 g o por porción.",
-  basis_confirmed_as_per_100g: "Confirmaste que los valores originales de la etiqueta corresponden a 100 g.",
-  serving_size_required: "Se detectaron valores por porción, pero falta su peso en gramos para convertirlos con seguridad.",
-  basis_normalized_from_serving: "Los valores fueron convertidos desde una porción hacia 100 g.",
+  basis_normalized_from_serving: "La IA convirtió los valores desde una porción hacia 100 g.",
   energy_macro_mismatch: "Las calorías declaradas difieren del cálculo de proteínas, carbos y grasas.",
-  protein_g_missing: "No se detectaron proteínas.",
-  carbs_g_missing: "No se detectaron carbos.",
-  fat_g_missing: "No se detectaron grasas.",
+  model_escalation_unresolved: "La lectura requirió comprobaciones adicionales. Revisa con especial atención.",
 };
 
-const nutritionFieldLabels: Record<NutritionField, string> = {
-  energy_kcal: "Energía",
-  protein_g: "Proteínas",
-  carbs_g: "Carbohidratos",
-  fat_g: "Grasas",
-  saturated_fat_g: "Grasas saturadas",
-  sugar_g: "Azúcares",
-  fiber_g: "Fibra",
-  sodium_mg: "Sodio",
-};
-
-function valueString(value: number | undefined | null): string {
+function valueString(value: number | undefined | null) {
   return value == null ? "" : String(value);
 }
 
@@ -83,18 +59,22 @@ function optionalNumber(value: string): number | undefined {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
 }
 
-function displayWarning(value: string): string {
-  if (warningCopy[value]) return warningCopy[value];
-  const field = (Object.keys(nutritionFieldLabels) as NutritionField[]).find((key) => value.startsWith(`${key}_`));
-  if (value.endsWith("_low_confidence")) return `${field ? nutritionFieldLabels[field] : "Un valor"}: lectura OCR con baja confianza.`;
-  if (value.endsWith("_outside_expected_range")) return `${field ? nutritionFieldLabels[field] : "Un valor"}: lectura descartada porque quedó fuera del rango esperado.`;
-  return value;
+function displayWarning(value: string) {
+  return warningCopy[value] ?? "Compara este valor con la etiqueta antes de confirmar.";
 }
 
-function sourceValueLines(draft: NutritionLabelDraft): string[] {
-  return (Object.entries(draft.sourceValues) as [NutritionField, number][]).map(
-    ([key, value]) => `${nutritionFieldLabels[key]}: ${value}${key === "sodium_mg" ? " mg" : key === "energy_kcal" ? " kcal" : " g"}`,
-  );
+function aiDraft(result: FoodLabelAIAnalysis): NutritionLabelDraft {
+  return {
+    basis: "per_100g",
+    servingSizeG: result.serving_size_g,
+    sourceValues: result.source_values as Partial<Record<NutritionField, number>>,
+    values: result.values as Partial<Record<NutritionField, number>>,
+    fieldConfidence: result.field_confidence,
+    warnings: result.warnings,
+    normalizationStatus: "ready",
+    ocrEngine: result.ocr_engine,
+    ocrEngineVersion: result.ocr_engine_version,
+  };
 }
 
 export default function LabelCaptureScreen() {
@@ -111,8 +91,21 @@ export default function LabelCaptureScreen() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [draft, setDraft] = useState<NutritionLabelDraft | null>(null);
   const [saved, setSaved] = useState<FoodLabelCaptureResult | null>(null);
+  const [config, setConfig] = useState<FoodLabelAIConfig | null>(null);
+  const [analysisId, setAnalysisId] = useState<string | null>(null);
+  const [prepared, setPrepared] = useState<PreparedLabelImage | null>(null);
+  const [retainImage, setRetainImage] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [captureKey, setCaptureKey] = useState(Crypto.randomUUID());
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    void apiRequest<FoodLabelAIConfig>("/api/v1/foods/label-captures/config")
+      .then(setConfig)
+      .catch(() => setConfig(null));
+  }, [apiRequest, status]);
+
+  useEffect(() => () => deleteCachedImage(prepared?.uri), [prepared?.uri]);
 
   if (status === "anonymous") return <Redirect href="/login" />;
 
@@ -120,11 +113,11 @@ export default function LabelCaptureScreen() {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
-  function applyDraft(next: NutritionLabelDraft, preserveName = false) {
+  function applyDraft(next: NutritionLabelDraft, name = "") {
     setDraft(next);
-    setForm((current) => ({
+    setForm({
       ...emptyForm,
-      name: preserveName ? current.name : "",
+      name,
       energy: valueString(next.values.energy_kcal),
       protein: valueString(next.values.protein_g),
       carbs: valueString(next.values.carbs_g),
@@ -134,12 +127,16 @@ export default function LabelCaptureScreen() {
       fiber: valueString(next.values.fiber_g),
       sodium: valueString(next.values.sodium_mg),
       servingSize: valueString(next.servingSizeG),
-    }));
+    });
     setPhase("review");
   }
 
   function beginManualReview(message?: string) {
-    setDraft({
+    deleteCachedImage(prepared?.uri);
+    setPrepared(null);
+    setAnalysisId(null);
+    setRetainImage(false);
+    applyDraft({
       basis: "manual",
       servingSizeG: null,
       sourceValues: {},
@@ -150,9 +147,7 @@ export default function LabelCaptureScreen() {
       ocrEngine: "manual_entry",
       ocrEngineVersion: "1",
     });
-    setForm(emptyForm);
     setError(message ?? null);
-    setPhase("review");
   }
 
   async function beginCamera() {
@@ -161,53 +156,95 @@ export default function LabelCaptureScreen() {
     setError(null);
     setTorchEnabled(false);
     try {
-      if (Platform.OS !== "ios" || !isNutritionLabelOcrAvailable()) {
-        beginManualReview("El reconocimiento de etiquetas no está disponible en esta instalación. Puedes revisar los valores manualmente.");
-        return;
-      }
       const nextPermission = permission?.granted ? permission : await requestPermission();
       if (!nextPermission.granted) {
-        beginManualReview("Sin permiso de cámara, My Scoope continúa con ingreso manual.");
+        setError("Sin permiso de cámara aún puedes elegir una foto o ingresar los valores manualmente.");
         return;
       }
       setCameraReady(false);
       setPhase("camera");
     } catch {
-      setError("No pudimos abrir la cámara. Reintenta o ingresa la etiqueta manualmente.");
+      setError("No pudimos abrir la cámara. Reintenta o selecciona una foto.");
     } finally {
       setOpeningCamera(false);
     }
   }
 
-  async function capture() {
-    if (!cameraRef.current || !cameraReady) return;
+  async function processImage(uri: string, width: number, height: number) {
     setProcessing(true);
     setError(null);
-    let photoUri: string | null = null;
+    let nextPrepared: PreparedLabelImage | null = null;
     try {
-      const photo = await cameraRef.current.takePictureAsync({ quality: 0.92, skipProcessing: false });
-      photoUri = photo.uri;
-      const recognition = await recognizeNutritionLabel(photo.uri);
-      applyDraft(normalizeNutritionLabel(recognition));
-    } catch (nextError) {
-      beginManualReview(`No pudimos leer esta foto. ${userFacingError(nextError)} Puedes completar los valores manualmente.`);
-    } finally {
-      if (photoUri?.startsWith("file:")) {
+      nextPrepared = await prepareLabelImage(uri, width, height);
+      let localCandidate: { basis: string; values: Record<string, number> } | undefined;
+      if (Platform.OS === "ios" && isNutritionLabelOcrAvailable()) {
         try {
-          new File(photoUri).delete();
+          const local = normalizeNutritionLabel(await recognizeNutritionLabel(nextPrepared.uri));
+          localCandidate = { basis: local.basis, values: local.values as Record<string, number> };
         } catch {
-          // Expo's cache remains ephemeral if the platform has already removed the file.
+          // Local OCR is only a quality signal; server-side AI remains authoritative.
         }
       }
+      const result = await apiRequest<FoodLabelAIAnalysis>("/api/v1/foods/label-captures/analyze", {
+        method: "POST",
+        body: JSON.stringify({
+          image_base64: nextPrepared.base64,
+          image_content_type: nextPrepared.contentType,
+          image_width: nextPrepared.width,
+          image_height: nextPrepared.height,
+          idempotency_key: captureKey,
+          consent_to_ai_processing: true,
+          local_candidate: localCandidate,
+        }),
+      });
+      setAnalysisId(result.analysis_id);
+      setPrepared(nextPrepared);
+      setConfig((current) => current ? { ...current, available_credits: result.available_credits } : current);
+      applyDraft(aiDraft(result), result.name);
+    } catch (nextError) {
+      deleteCachedImage(nextPrepared?.uri);
+      beginManualReview(`${userFacingError(nextError)} Puedes completar los valores manualmente sin consumir una digitalización fallida.`);
+    } finally {
+      deleteCachedImage(uri);
+      setProcessing(false);
+    }
+  }
+
+  async function capture() {
+    if (!cameraRef.current || !cameraReady || processing) return;
+    try {
+      const photo = await cameraRef.current.takePictureAsync({ quality: 1, skipProcessing: false });
+      await processImage(photo.uri, photo.width, photo.height);
+    } catch (nextError) {
+      beginManualReview(`No pudimos preparar esta foto. ${userFacingError(nextError)}`);
+      setProcessing(false);
+    }
+  }
+
+  async function chooseFromGallery() {
+    setProcessing(true);
+    setError(null);
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: false,
+        base64: false,
+        exif: false,
+        quality: 1,
+        selectionLimit: 1,
+      });
+      if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
+        await processImage(asset.uri, asset.width, asset.height);
+      }
+    } catch (nextError) {
+      setError(userFacingError(nextError));
+    } finally {
       setProcessing(false);
     }
   }
 
   async function save() {
-    if (draft && draft.normalizationStatus !== "ready") {
-      setError("Confirma la base de la etiqueta y convierte sus valores a 100 g antes de guardar.");
-      return;
-    }
     const protein = optionalNumber(form.protein);
     const carbs = optionalNumber(form.carbs);
     const fat = optionalNumber(form.fat);
@@ -218,10 +255,6 @@ export default function LabelCaptureScreen() {
     const optionalInputs = [form.energy, form.saturatedFat, form.sugar, form.fiber, form.sodium, form.servingSize];
     if (optionalInputs.some((value) => value.trim() && optionalNumber(value) === undefined)) {
       setError("Revisa los campos opcionales: usa sólo números positivos o déjalos vacíos.");
-      return;
-    }
-    if (form.servingSize.trim() && optionalNumber(form.servingSize) === 0) {
-      setError("El tamaño de porción debe ser mayor que cero.");
       return;
     }
     const payload: FoodLabelCaptureInput = {
@@ -241,14 +274,21 @@ export default function LabelCaptureScreen() {
       field_confidence: draft?.fieldConfidence ?? {},
       warnings: draft?.warnings ?? ["manual_review"],
       idempotency_key: captureKey,
+      analysis_id: analysisId ?? undefined,
+      retain_label_image: Boolean(retainImage && prepared && analysisId),
+      label_image_base64: retainImage ? prepared?.base64 : undefined,
+      label_image_content_type: retainImage ? prepared?.contentType : undefined,
     };
     setSaving(true);
     setError(null);
     try {
-      setSaved(await apiRequest<FoodLabelCaptureResult>("/api/v1/foods/label-captures", {
+      const result = await apiRequest<FoodLabelCaptureResult>("/api/v1/foods/label-captures", {
         method: "POST",
         body: JSON.stringify(payload),
-      }));
+      });
+      setSaved(result);
+      deleteCachedImage(prepared?.uri);
+      setPrepared(null);
       setPhase("saved");
     } catch (nextError) {
       setError(userFacingError(nextError));
@@ -257,26 +297,14 @@ export default function LabelCaptureScreen() {
     }
   }
 
-  function convertServingValues() {
-    const servingSize = optionalNumber(form.servingSize);
-    if (!draft || draft.normalizationStatus !== "serving_size_required" || !servingSize || servingSize > 10_000) {
-      setError("Ingresa el peso de una porción en gramos para realizar la conversión.");
-      return;
-    }
-    setError(null);
-    applyDraft(convertServingDraftTo100g(draft, servingSize), true);
-  }
-
-  function confirmDetectedBasis(basis: "per_100g" | "per_serving") {
-    if (!draft || draft.normalizationStatus !== "basis_confirmation_required") return;
-    setError(null);
-    applyDraft(confirmNutritionLabelBasis(draft, basis), true);
-  }
-
   function restart() {
+    deleteCachedImage(prepared?.uri);
     setForm(emptyForm);
     setDraft(null);
     setSaved(null);
+    setPrepared(null);
+    setAnalysisId(null);
+    setRetainImage(false);
     setError(null);
     setCaptureKey(Crypto.randomUUID());
     setPhase("intro");
@@ -285,7 +313,7 @@ export default function LabelCaptureScreen() {
   if (phase === "camera") {
     return (
       <Screen scroll={false}>
-        <AppHeader eyebrow="OCR local" title="Encuadra la tabla" />
+        <AppHeader eyebrow="Foto para IA" title="Encuadra la tabla" />
         <View style={styles.cameraFrame}>
           <CameraView
             autofocus="on"
@@ -293,19 +321,19 @@ export default function LabelCaptureScreen() {
             facing="back"
             mode="picture"
             onCameraReady={() => setCameraReady(true)}
-            onMountError={() => beginManualReview("No pudimos iniciar la cámara. Puedes completar la etiqueta manualmente.")}
+            onMountError={() => { setPhase("intro"); setError("No pudimos iniciar la cámara. Puedes elegir una foto de tu galería."); }}
             ref={cameraRef}
             style={StyleSheet.absoluteFill}
           />
           <View pointerEvents="none" style={styles.guide} />
           <View pointerEvents="none" style={styles.cameraCopy}>
-            <Text style={styles.cameraCopyText}>Evita reflejos y llena el marco con la información nutricional.</Text>
+            <Text style={styles.cameraCopyText}>Evita reflejos y llena el marco con la tabla completa.</Text>
           </View>
         </View>
         {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-        <Button disabled={!cameraReady} label="Capturar y leer" loading={processing} onPress={() => void capture()} />
+        <Button disabled={!cameraReady || processing} label="Capturar y digitalizar" loading={processing} onPress={() => void capture()} />
         <Button disabled={!cameraReady || processing} label={torchEnabled ? "Apagar luz" : "Encender luz"} onPress={() => setTorchEnabled((current) => !current)} variant="secondary" />
-        <Button disabled={processing} label="Cancelar" onPress={() => { setTorchEnabled(false); setPhase("intro"); }} variant="secondary" />
+        <Button disabled={processing} label="Cancelar" onPress={() => setPhase("intro")} variant="secondary" />
       </Screen>
     );
   }
@@ -318,72 +346,65 @@ export default function LabelCaptureScreen() {
       {phase === "intro" ? (
         <>
           <Card accent={tokens.color.food}>
-            <SectionTitle detail="Sin subir la foto" title="Apunta, revisa, confirma" />
-            <Text style={textStyles.muted}>La cámara lee la tabla en tu iPhone. Nada se guarda en tu cuenta hasta que revises y confirmes los valores por 100 g.</Text>
+            <SectionTitle detail={config ? `${config.credits_per_scan} créditos` : "Créditos"} title="Foto, IA y revisión" />
+            <Text style={textStyles.muted}>Al continuar, autorizas enviar temporalmente una copia reducida y sin metadatos de la etiqueta a nuestro proveedor de IA. La foto original no se guarda.</Text>
             <View style={styles.steps}>
-              <Text style={textStyles.caption}>1 · Encuadra sólo la tabla nutricional.</Text>
-              <Text style={textStyles.caption}>2 · Revisa los campos dudosos o faltantes.</Text>
-              <Text style={textStyles.caption}>3 · Confirma para crear un alimento visible sólo para ti.</Text>
+              <Text style={textStyles.caption}>1 · Usa la cámara o elige una foto clara.</Text>
+              <Text style={textStyles.caption}>2 · La IA extrae y valida los valores por 100 g.</Text>
+              <Text style={textStyles.caption}>3 · Tú revisas todo antes de crear el alimento.</Text>
             </View>
+            {config ? <Text style={textStyles.caption}>Saldo disponible: {config.available_credits} créditos.</Text> : null}
           </Card>
-          <Button label="Abrir cámara" loading={openingCamera} onPress={() => void beginCamera()} />
-          <Button label="Ingresar sin cámara" onPress={() => beginManualReview()} variant="secondary" />
+          <Button disabled={config ? !config.can_scan : false} label="Abrir cámara" loading={openingCamera} onPress={() => void beginCamera()} />
+          <Button disabled={config ? !config.can_scan : false} label="Elegir desde galería" loading={processing} onPress={() => void chooseFromGallery()} variant="secondary" />
+          <Button label="Ingresar manualmente" onPress={() => beginManualReview()} variant="secondary" />
         </>
       ) : null}
 
       {phase === "review" ? (
         <>
-          <InlineNotice tone="warning">El OCR es una ayuda, no una fuente de verdad. Compara cada valor con la etiqueta antes de guardar.</InlineNotice>
+          <InlineNotice tone="warning">La IA puede equivocarse. Compara cada valor con el envase antes de guardar.</InlineNotice>
           {draft?.warnings.length ? (
             <Card muted>
               <SectionTitle detail={`${draft.warnings.length}`} title="Puntos por revisar" />
               {draft.warnings.map((warning) => <Text key={warning} style={textStyles.caption}>• {displayWarning(warning)}</Text>)}
             </Card>
-          ) : <InlineNotice>Lectura clara. Aun así, confirma los valores contra la etiqueta.</InlineNotice>}
-          {draft?.normalizationStatus === "basis_confirmation_required" ? (
-            <Card accent={tokens.color.warning}>
-              <SectionTitle detail="Confirmación requerida" title="¿Qué base usa esta etiqueta?" />
-              <Text style={textStyles.muted}>El encabezado no se leyó con suficiente claridad. Compara estos números con el envase y elige su base antes de continuar.</Text>
-              {sourceValueLines(draft).map((line) => <Text key={line} style={textStyles.caption}>• {line}</Text>)}
-              <Button label="La etiqueta indica valores por 100 g" onPress={() => confirmDetectedBasis("per_100g")} />
-              <Button label="La etiqueta indica valores por porción" onPress={() => confirmDetectedBasis("per_serving")} variant="secondary" />
-            </Card>
-          ) : draft?.normalizationStatus === "serving_size_required" ? (
-            <Card accent={tokens.color.warning}>
-              <SectionTitle detail="Conversión requerida" title="¿Cuántos gramos tiene una porción?" />
-              <Text style={textStyles.muted}>Estos números fueron leídos por porción y todavía no representan 100 g. Ingresa el peso indicado en el envase; la app hará la conversión antes de permitir guardar.</Text>
-              {sourceValueLines(draft).map((line) => <Text key={line} style={textStyles.caption}>• {line} por porción</Text>)}
-              <Field keyboardType="decimal-pad" label="Peso de una porción (g)" onChangeText={(value) => update("servingSize", value)} placeholder="Ej. 30" value={form.servingSize} />
-              <Button label="Convertir a valores por 100 g" onPress={convertServingValues} />
-            </Card>
-          ) : (
-            <Card accent={tokens.color.food}>
-              <View style={styles.reviewHeader}>
-                <Text style={styles.reviewTitle}>Valores por 100 g</Text>
-                <Pill color={tokens.color.food} label={draft?.ocrEngine === "apple_vision" ? "OCR local" : "Manual"} />
+          ) : <InlineNotice>La lectura pasó las comprobaciones automáticas. Aun así, confírmala visualmente.</InlineNotice>}
+          <Card accent={tokens.color.food}>
+            <View style={styles.reviewHeader}>
+              <Text style={styles.reviewTitle}>Valores por 100 g</Text>
+              <Pill color={tokens.color.food} label={analysisId ? "IA" : "Manual"} />
+            </View>
+            <Field autoCapitalize="words" label="Nombre del producto" onChangeText={(value) => update("name", value)} placeholder="Ej. Yogur griego natural" value={form.name} />
+            <View style={styles.fieldRow}>
+              <View style={styles.fieldCell}><Field keyboardType="decimal-pad" label="Proteínas (g)" onChangeText={(value) => update("protein", value)} value={form.protein} /></View>
+              <View style={styles.fieldCell}><Field keyboardType="decimal-pad" label="Carbos (g)" onChangeText={(value) => update("carbs", value)} value={form.carbs} /></View>
+            </View>
+            <View style={styles.fieldRow}>
+              <View style={styles.fieldCell}><Field keyboardType="decimal-pad" label="Grasas (g)" onChangeText={(value) => update("fat", value)} value={form.fat} /></View>
+              <View style={styles.fieldCell}><Field keyboardType="decimal-pad" label="Energía (kcal)" onChangeText={(value) => update("energy", value)} value={form.energy} /></View>
+            </View>
+            <View style={styles.fieldRow}>
+              <View style={styles.fieldCell}><Field keyboardType="decimal-pad" label="Azúcares (g)" onChangeText={(value) => update("sugar", value)} value={form.sugar} /></View>
+              <View style={styles.fieldCell}><Field keyboardType="decimal-pad" label="Fibra (g)" onChangeText={(value) => update("fiber", value)} value={form.fiber} /></View>
+            </View>
+            <View style={styles.fieldRow}>
+              <View style={styles.fieldCell}><Field keyboardType="decimal-pad" label="Grasas saturadas (g)" onChangeText={(value) => update("saturatedFat", value)} value={form.saturatedFat} /></View>
+              <View style={styles.fieldCell}><Field keyboardType="decimal-pad" label="Sodio (mg)" onChangeText={(value) => update("sodium", value)} value={form.sodium} /></View>
+            </View>
+            <Field keyboardType="decimal-pad" label="Tamaño de porción original (g, opcional)" onChangeText={(value) => update("servingSize", value)} value={form.servingSize} />
+            {prepared && analysisId ? (
+              <View style={styles.retentionRow}>
+                <View style={styles.retentionCopy}>
+                  <Text style={textStyles.body}>Guardar copia procesada</Text>
+                  <Text style={textStyles.caption}>Opcional. Quedará privada y podrás eliminarla después.</Text>
+                </View>
+                <Switch onValueChange={setRetainImage} value={retainImage} />
               </View>
-              <Field autoCapitalize="words" label="Nombre del producto" onChangeText={(value) => update("name", value)} placeholder="Ej. Yogur griego natural" value={form.name} />
-              <View style={styles.fieldRow}>
-                <View style={styles.fieldCell}><Field keyboardType="decimal-pad" label="Proteínas (g)" onChangeText={(value) => update("protein", value)} value={form.protein} /></View>
-                <View style={styles.fieldCell}><Field keyboardType="decimal-pad" label="Carbos (g)" onChangeText={(value) => update("carbs", value)} value={form.carbs} /></View>
-              </View>
-              <View style={styles.fieldRow}>
-                <View style={styles.fieldCell}><Field keyboardType="decimal-pad" label="Grasas (g)" onChangeText={(value) => update("fat", value)} value={form.fat} /></View>
-                <View style={styles.fieldCell}><Field keyboardType="decimal-pad" label="Energía (kcal)" onChangeText={(value) => update("energy", value)} value={form.energy} /></View>
-              </View>
-              <View style={styles.fieldRow}>
-                <View style={styles.fieldCell}><Field keyboardType="decimal-pad" label="Azúcares (g)" onChangeText={(value) => update("sugar", value)} value={form.sugar} /></View>
-                <View style={styles.fieldCell}><Field keyboardType="decimal-pad" label="Fibra (g)" onChangeText={(value) => update("fiber", value)} value={form.fiber} /></View>
-              </View>
-              <View style={styles.fieldRow}>
-                <View style={styles.fieldCell}><Field keyboardType="decimal-pad" label="Grasas saturadas (g)" onChangeText={(value) => update("saturatedFat", value)} value={form.saturatedFat} /></View>
-                <View style={styles.fieldCell}><Field keyboardType="decimal-pad" label="Sodio (mg)" onChangeText={(value) => update("sodium", value)} value={form.sodium} /></View>
-              </View>
-              <Field keyboardType="decimal-pad" label="Tamaño de porción original (g, opcional)" onChangeText={(value) => update("servingSize", value)} value={form.servingSize} />
-              <Button label="Confirmar y crear alimento" loading={saving} onPress={() => void save()} />
-            </Card>
-          )}
-          <Button disabled={saving} label="Volver a capturar" onPress={() => setPhase("intro")} variant="secondary" />
+            ) : null}
+            <Button label="Confirmar y crear alimento" loading={saving} onPress={() => void save()} />
+          </Card>
+          <Button disabled={saving} label="Usar otra foto" onPress={restart} variant="secondary" />
         </>
       ) : null}
 
@@ -392,7 +413,7 @@ export default function LabelCaptureScreen() {
           <Card accent={tokens.color.success}>
             <SectionTitle detail={`${Math.round(saved.total_kcal)} kcal`} title={saved.name} />
             <Text style={textStyles.muted}>Creado en tu biblioteca privada · P {saved.protein_g} g · C {saved.carbs_g} g · G {saved.fat_g} g</Text>
-            <Text style={textStyles.caption}>La foto y el texto OCR no se enviaron. Sólo se guardaron los valores que confirmaste y un recibo técnico sin contenido crudo.</Text>
+            <Text style={textStyles.caption}>{saved.label_image_retained ? "Guardamos sólo la copia procesada que autorizaste." : "La foto utilizada para la lectura no fue guardada."}</Text>
           </Card>
           <Button label="Digitalizar otra etiqueta" onPress={restart} />
         </>
@@ -413,4 +434,6 @@ const styles = StyleSheet.create({
   reviewTitle: { color: tokens.color.textMain, fontSize: 20, fontWeight: "800" },
   fieldRow: { flexDirection: "row", gap: tokens.spacing.sm },
   fieldCell: { flex: 1 },
+  retentionRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
+  retentionCopy: { flex: 1, gap: tokens.spacing.xs },
 });
