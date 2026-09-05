@@ -107,6 +107,7 @@ def serialize_meal(m, *, current_weight=None):
     return {
         "id": m.id,
         "name": m.name,
+        "detail_url": reverse("meal_detail", args=[m.id]),
         "total_kcal": m.total_kcal_cached,
         "protein": m.protein_cached,
         "carbs": m.carbs_cached,

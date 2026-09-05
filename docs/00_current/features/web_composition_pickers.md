@@ -82,6 +82,10 @@ before previewing the replacement.
   so their heading and footer cannot remain visible between steps.
 - The modal and its fixed action footer use the shared `surface-card` token; the
   Impacto heading keeps its title and change-selection action on one row.
+- Picker headers expose the current operation with a `plus` icon in add mode and
+  a `repeat` icon in replace mode. Step headings are numbered `1.` and `2.`.
+- The Meal impact step links directly to the selected Meal detail, using the URL
+  supplied by the server payload rather than constructing a route in JavaScript.
 - The dialog is labelled by its visible title. Step progression is conveyed by
   the changing selection and impact content rather than a separate visual
   progress indicator.

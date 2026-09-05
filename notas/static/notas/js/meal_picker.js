@@ -62,6 +62,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const hourInput = form.querySelector('input[name="hour"]');
   const noteInput = form.querySelector('input[name="note"]');
   const title = document.getElementById("meal-form-title");
+  const modal = document.getElementById("dailyplan-picker-section");
+  const addHeaderIcon = modal?.querySelector('[data-picker-header-icon="add"]');
+  const editHeaderIcon = modal?.querySelector('[data-picker-header-icon="edit"]');
+  const editSelectedMeal = modal?.querySelector('[data-role="edit-selected-meal"]');
 
   const btnAdd = document.getElementById("btn-add-meal");
   const btnUpdate = document.getElementById("btn-update-meal");
@@ -78,6 +82,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function isEdit() {
     return ctx.mode === "edit";
+  }
+
+  function syncHeaderMode(mode) {
+    const editing = mode === "edit";
+    if (addHeaderIcon) addHeaderIcon.hidden = editing;
+    if (editHeaderIcon) editHeaderIcon.hidden = !editing;
+  }
+
+  function syncSelectedMealDetail(meal) {
+    if (!editSelectedMeal) return;
+
+    const detailUrl = meal?.detail_url || "";
+    editSelectedMeal.hidden = !detailUrl;
+    editSelectedMeal.setAttribute("href", detailUrl || "#");
   }
 
   function openList() {
@@ -104,6 +122,7 @@ document.addEventListener("DOMContentLoaded", () => {
     selectedMeal = null;
     hidden.value = "";
     input.value = "";
+    syncSelectedMealDetail(null);
 
     previewBox.style.display = "none";
     form.classList.remove("has-selection");
@@ -116,6 +135,7 @@ document.addEventListener("DOMContentLoaded", () => {
     selectedMeal = meal;
     hidden.value = meal.id;
     input.value = meal.name;
+    syncSelectedMealDetail(meal);
 
     showPreview();
     form.classList.add("has-selection");
@@ -140,6 +160,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (noteInput) noteInput.value = "";
 
     if (title) title.textContent = "Agrega una Comida";
+    syncHeaderMode("add");
   }
 
   function enterEditMode() {
@@ -148,6 +169,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btnCancel) btnCancel.style.display = "inline-block";
 
     if (title) title.textContent = "Reemplaza la Comida";
+    syncHeaderMode("edit");
   }
 
   function findMealById(mealId) {

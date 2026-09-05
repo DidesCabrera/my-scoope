@@ -32,6 +32,10 @@ test("Food and Meal web pickers share the two-step top-layer dialog contract", a
     assert.match(template, /composition-picker-modal__action--secondary/);
     assert.match(template, /composition-picker-modal__action--primary/);
     assert.doesNotMatch(template, /class="section_picker/);
+    assert.match(template, /data-picker-header-icon="add"[\s\S]*?data-lucide="plus"/);
+    assert.match(template, /data-picker-header-icon="edit"[\s\S]*?data-lucide="repeat"/);
+    assert.match(template, /<h3[^>]*>1\. Selecciona/);
+    assert.match(template, /<h3>2\. Configura y revisa el impacto<\/h3>/);
   }
 
   assert.match(food, /url 'food_create'[\s\S]*return_to=/);
@@ -43,6 +47,7 @@ test("Food and Meal web pickers share the two-step top-layer dialog contract", a
   assert.match(meal, />\s*Crear comida\s*</);
   assert.match(meal, /entity-card card picker-selection-card[\s\S]*?picker-meal-info[\s\S]*?composition-picker-schedule-fields[\s\S]*?<\/section>[\s\S]*?picker-impact/);
   assert.match(meal, /card_picker_result\.html[\s\S]*result_scope="day-preview"/);
+  assert.match(meal, /data-role="edit-selected-meal"[\s\S]*?Editar comida/);
   assert.doesNotMatch(meal, /grid_picker_meal_day_preview|class="preview-picker"/);
 });
 
@@ -135,10 +140,15 @@ test("selection advances to impact without changing the existing submit contract
   ]);
 
   assert.match(food, /sectionId: "meal-picker-section", step: "impact"/);
+  assert.match(food, /syncHeaderMode\("add"\)/);
+  assert.match(food, /syncHeaderMode\("edit"\)/);
   assert.match(food, /FOOD_PICKER_INITIAL_ID/);
   assert.match(food, /form\.action = updateUrl/);
 
   assert.match(meal, /sectionId: "dailyplan-picker-section", step: "impact"/);
+  assert.match(meal, /syncHeaderMode\("add"\)/);
+  assert.match(meal, /syncHeaderMode\("edit"\)/);
+  assert.match(meal, /meal\?\.detail_url[\s\S]*?editSelectedMeal\.setAttribute\("href"/);
   assert.match(meal, /form\.action = ADD_ACTION/);
   assert.match(meal, /dailyplanmeal_id/);
 });

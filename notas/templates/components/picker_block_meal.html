@@ -12,7 +12,9 @@
   >
     <div class="composition-picker-modal__surface">
       <header class="composition-picker-modal__header">
-        <div>
+        <div class="composition-picker-modal__title">
+          <span data-picker-header-icon="add" aria-hidden="true"><i data-lucide="plus"></i></span>
+          <span data-picker-header-icon="edit" aria-hidden="true" hidden><i data-lucide="repeat"></i></span>
           <h2 id="meal-form-title">Agrega una Comida</h2>
         </div>
         <button
@@ -33,7 +35,7 @@
         <div class="composition-picker-modal__body composition-picker-modal__body--selection">
           <div id="meal-picker" class="selector">
             <div class="composition-picker-step-heading">
-              <h3 id="meal-selection-title">Selecciona una comida</h3>
+              <h3 id="meal-selection-title">1. Selecciona una comida</h3>
 
               <div class="composition-picker-entry-actions">
                 <span class="composition-picker-entry-actions__active">
@@ -76,11 +78,17 @@
         <div class="composition-picker-modal__body composition-picker-modal__body--impact">
           <div class="composition-picker-step-heading composition-picker-step-heading--impact">
             <div>
-              <h3>Configura y revisa el impacto</h3>
+              <h3>2. Configura y revisa el impacto</h3>
             </div>
-            <button type="button" class="composition-picker-change" data-picker-go-to="selection">
-              Cambiar selección
-            </button>
+            <div class="composition-picker-impact-actions">
+              <a class="composition-picker-change" data-role="edit-selected-meal" href="#" hidden>
+                <i data-lucide="pencil"></i>
+                Editar comida
+              </a>
+              <button type="button" class="composition-picker-change" data-picker-go-to="selection">
+                Cambiar selección
+              </button>
+            </div>
           </div>
 
           <div class="picker-layout">

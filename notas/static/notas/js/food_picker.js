@@ -55,6 +55,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("form-preview");
 
   const title = document.getElementById("food-form-title");
+  const modal = document.getElementById("meal-picker-section");
+  const addHeaderIcon = modal?.querySelector('[data-picker-header-icon="add"]');
+  const editHeaderIcon = modal?.querySelector('[data-picker-header-icon="edit"]');
 
   const btnAdd = document.getElementById("btn-add-food");
   const btnUpdate = document.getElementById("btn-update-food");
@@ -75,6 +78,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // ---------------------------
   function isEdit() {
     return ctx.mode === "edit";
+  }
+
+  function syncHeaderMode(mode) {
+    const editing = mode === "edit";
+    if (addHeaderIcon) addHeaderIcon.hidden = editing;
+    if (editHeaderIcon) editHeaderIcon.hidden = !editing;
   }
 
   function openList() {
@@ -287,6 +296,7 @@ document.addEventListener("DOMContentLoaded", () => {
     ctx.editing = null;
 
     title.textContent = "Agrega un Alimento";
+    syncHeaderMode("add");
     btnAdd.style.display = "inline-block";
     btnUpdate.style.display = "none";
     btnCancel.style.display = "inline-block";
@@ -305,6 +315,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     title.textContent = "Edita el Alimento";
+    syncHeaderMode("edit");
     btnAdd.style.display = "none";
     btnUpdate.style.display = "inline-block";
     btnCancel.style.display = "inline-block";

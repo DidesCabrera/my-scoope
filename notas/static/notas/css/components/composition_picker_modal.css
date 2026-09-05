@@ -55,6 +55,29 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
   font-size: clamp(1.3rem, 2.4vw, 1.75rem);
 }
 
+.composition-picker-modal__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.composition-picker-modal__title > span {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-main);
+}
+
+.composition-picker-modal__title > span[hidden] {
+  display: none;
+}
+
+.composition-picker-modal__title svg {
+  width: 22px;
+  height: 22px;
+}
+
 .composition-picker-modal__close {
   display: inline-flex;
   align-items: center;
@@ -150,6 +173,13 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
   align-items: center;
   gap: 8px;
   margin-bottom: 12px;
+}
+
+.composition-picker-impact-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .composition-picker-entry-actions__active,

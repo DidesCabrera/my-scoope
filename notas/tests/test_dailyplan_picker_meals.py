@@ -141,9 +141,16 @@ class DailyPlanMealPickerTests(TestCase):
         browse_meals = payload["browse_meals"]
         browse_ids = [meal["id"] for meal in browse_meals]
         browse_names = [meal["name"] for meal in browse_meals]
+        selected_payload = next(
+            meal for meal in browse_meals if meal["id"] == self.library_meal.id
+        )
 
         self.assertIn(self.library_meal.id, browse_ids)
         self.assertIn("Visible meal", browse_names)
+        self.assertEqual(
+            selected_payload["detail_url"],
+            reverse("meal_detail", args=[self.library_meal.id]),
+        )
 
     def test_dailyplan_detail_picker_existing_meals_includes_dailyplan_meals(self):
         self.dpm_meal = Meal.objects.create(
