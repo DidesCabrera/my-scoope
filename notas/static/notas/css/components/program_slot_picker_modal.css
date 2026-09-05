@@ -92,30 +92,9 @@
   background: var(--surface-card);
 }
 
-.program-slot-picker__projection-heading {
-  display: flex;
-  align-items: flex-start;
-  gap: 9px;
-  padding: 0 4px;
-}
-
-.program-slot-picker__projection-heading p,
-.program-slot-picker__projection-heading h4 {
+.program-slot-picker__projection-title {
+  width: 100%;
   margin: 0;
-}
-
-.program-slot-picker__projection-heading p {
-  color: var(--text-muted);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.program-slot-picker__projection-heading h4 {
-  margin-top: 2px;
-  color: var(--text-main);
-  font-size: 17px;
 }
 
 .program-slot-picker__projection-panel {

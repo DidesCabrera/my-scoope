@@ -126,6 +126,9 @@ overwrite confirmation before the established mutation is submitted.
   to fill the selector viewport. Its selected-plan and resulting-week cards use
   the same responsive padding, complete border and spacing contract as the UI
   system entity cards.
+- The resulting-week heading uses the canonical `entity-heading` hierarchy:
+  `Resultado proyectado` is its eyebrow and `Semana N resultante` is its `h3`,
+  inheriting the same title scale as the selected DailyPlan.
 - Fixed configuration controls align their leading icon with entity-card title
   content by deriving the left inset from the shared desktop/mobile card-padding
   tokens plus the title component's 4px internal inset.

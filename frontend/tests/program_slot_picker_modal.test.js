@@ -26,6 +26,9 @@ test("Program DailyPlan picker uses the shared two-step modal contract", async (
   assert.match(template, /2\. Configura y revisa el impacto/);
   assert.match(template, /composition-picker-fixed-configuration program-slot-picker__days/);
   assert.match(template, /program-slot-picker__projection js-program-slot-projection/);
+  assert.match(template, /entity-heading card-title-comp program-slot-picker__projection-heading/);
+  assert.match(template, /<p class="card-title-eyebrow">[\s\S]*Resultado proyectado[\s\S]*<h3 id="program-slot-projection-title"/);
+  assert.doesNotMatch(template, /<h4 id="program-slot-projection-title"/);
   assert.match(template, /composition-picker-modal__footer program-slot-picker__actions/);
   assert.doesNotMatch(template, /class="program-slot-picker section_picker/);
 

@@ -37,6 +37,11 @@ Ejemplos:
 - detail de entidad;
 - tarjetas principales de detalle.
 
+La jerarquía de una card usa `card-title-eyebrow` para el contexto y un `h3`
+para el nombre visible de la entidad o resultado. Esto incluye semanas
+proyectadas: `Resultado proyectado` es el eyebrow y `Semana N resultante` es el
+`h3`. No definir tamaños tipográficos locales para esta variante.
+
 ## Indicadores
 
 ### `structural-indicator`
