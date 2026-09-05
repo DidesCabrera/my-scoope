@@ -61,6 +61,9 @@ overwrite confirmation before the established mutation is submitted.
 - Both steps use the same padded scroll region and a shared, non-scrolling action
   footer. Cancel remains available after returning to Selección, and primary and
   secondary actions use the same visual contract in both picker types.
+- Step and step-content containers are height-constrained flex columns. Growing
+  impact tables therefore consume `picker-layout` scroll space and never expand
+  the modal or displace its footer.
 - The dialog keeps one responsive height across both states. In Impacto, its
   heading remains fixed while the selected item, contextual controls, and
   nutrition impact scroll inside `picker-layout`.

@@ -115,10 +115,15 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
 .composition-picker-modal__step-content {
   flex: 1 1 auto;
   min-height: 0;
+  overflow: hidden;
   flex-direction: column;
 }
 
 .composition-picker-modal__step {
+  display: flex;
+}
+
+.composition-picker-modal__step-content {
   display: flex;
 }
 

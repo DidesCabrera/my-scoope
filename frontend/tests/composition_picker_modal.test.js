@@ -124,6 +124,8 @@ test("impact keeps a stable dialog height and scrolls only its stacked picker la
   ]);
 
   assert.match(styles, /\.composition-picker-modal\s*\{[\s\S]*?height:\s*min\(820px, calc\(100dvh - 32px\)\);/);
+  assert.match(styles, /\.composition-picker-modal__step,\s*\.composition-picker-modal__step-content\s*\{[^}]*min-height:\s*0;[^}]*overflow:\s*hidden;/);
+  assert.match(styles, /\.composition-picker-modal__step-content\s*\{\s*display:\s*flex;/);
   assert.match(styles, /\.composition-picker-modal__body--impact\s*\{[\s\S]*?overflow:\s*hidden;/);
   assert.match(styles, /\.composition-picker-modal \.picker-layout\s*\{[\s\S]*?flex-direction:\s*column;[\s\S]*?overflow-y:\s*auto;/);
   assert.match(styles, /\.composition-picker-modal \.picker-layout\s*\{[\s\S]*?padding:\s*0;[\s\S]*?background:\s*transparent;[\s\S]*?border:\s*0;[\s\S]*?border-radius:\s*0;/);
