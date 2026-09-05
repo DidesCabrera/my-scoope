@@ -48,6 +48,10 @@ before previewing the replacement.
    macro distribution and week allocation are recalculated for the resulting
    set of plans.
 
+DailyPlan selection cards expose their weight-adjusted PPK beside Protein. The
+projected week table preserves the production PPK metric badge rather than
+rendering that value as unstyled table text.
+
 Replacing an occupied day opens directly on the second step with its current
 DailyPlan selected. Choosing additional occupied days preserves the existing
 overwrite confirmation before the established mutation is submitted.

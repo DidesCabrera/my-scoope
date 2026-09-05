@@ -33,6 +33,9 @@ test("Program DailyPlan picker uses the shared two-step modal contract", async (
   assert.doesNotMatch(template, /class="program-slot-picker section_picker/);
 
   assert.match(controller, /projectProgramWeekRows/);
+  assert.match(controller, /renderDailyplanPickerCard\(\{ name, kcal, protein, carbs, fat, ppk,/);
+  assert.match(controller, /renderKpiRow\("Protein", protein, proteinAlloc, "protein", ppk\)/);
+  assert.match(controller, /class="program-week-day-table__ppk-value">\$\{numeric\(row\.ppk\)\.toFixed\(1\)\}/);
   assert.match(controller, /renderWeekProjection\(\);\s*showImpactStep\(\);/);
   assert.match(controller, /renderWeekProjection\(\);[\s\S]*js-program-slot-day-checkbox/);
   assert.match(controller, /sectionId: "program-slot-picker-section"/);

@@ -200,7 +200,7 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
   }
 
-  function renderDailyplanPickerCard({ name, kcal, protein, carbs, fat, proteinAlloc, carbsAlloc, fatAlloc }) {
+  function renderDailyplanPickerCard({ name, kcal, protein, carbs, fat, ppk, proteinAlloc, carbsAlloc, fatAlloc }) {
     return `
       <div class="picker-result-title">
         <div class="picker-result-title__main">
@@ -221,7 +221,7 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
 
         <div class="picker-result-kpi__macros">
-          ${renderKpiRow("Protein", protein, proteinAlloc, "protein")}
+          ${renderKpiRow("Protein", protein, proteinAlloc, "protein", ppk)}
           ${renderKpiRow("Carbs", carbs, carbsAlloc, "carbs")}
           ${renderKpiRow("Fat", fat, fatAlloc, "fat")}
         </div>
@@ -366,7 +366,12 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     setText(".data-grid-cell--kcal", numeric(row.total_kcal).toFixed(0));
-    setText(".data-grid-cell--ppk", numeric(row.ppk).toFixed(1));
+    const ppkCell = rowElement.querySelector(".data-grid-cell--ppk");
+    if (ppkCell) {
+      ppkCell.innerHTML = isEmpty
+        ? "-"
+        : `<span class="program-week-day-table__ppk-value">${numeric(row.ppk).toFixed(1)}</span>`;
+    }
 
     const macroCells = rowElement.querySelectorAll(".data-grid-cell--macro");
     [row.protein, row.carbs, row.fat].forEach((value, index) => {
@@ -481,7 +486,7 @@ document.addEventListener("DOMContentLoaded", () => {
             required
           >
 
-          ${renderDailyplanPickerCard({ name, kcal, protein, carbs, fat, proteinAlloc, carbsAlloc, fatAlloc })}
+          ${renderDailyplanPickerCard({ name, kcal, protein, carbs, fat, ppk, proteinAlloc, carbsAlloc, fatAlloc })}
         </label>
       `;
     }).join("");
