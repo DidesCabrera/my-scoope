@@ -106,6 +106,8 @@ before previewing the replacement.
 - Fixed configuration controls align their leading icon with entity-card title
   content by deriving the left inset from the shared desktop/mobile card-padding
   tokens plus the title component's 4px internal inset.
+- Modal step bodies keep horizontal inset but no bottom padding; spacing at the
+  lower edge belongs to the fixed footer and the scrolling content itself.
 - The dialog is labelled by its visible title. Step progression is conveyed by
   the changing selection and impact content rather than a separate visual
   progress indicator.
