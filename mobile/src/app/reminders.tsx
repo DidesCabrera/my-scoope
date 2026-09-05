@@ -3,11 +3,11 @@ import { useCallback, useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
-import type { ReminderSettings, TodayData } from "@/api/types";
+import type { CalendarizationStatus, ReminderSettings, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { AppHeader, Button, Card, ChoiceRow, Field, InlineNotice, LoadingState, Screen, SectionTitle, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
-import { NativeReminderState, syncNativeReminders } from "@/notifications/native-reminders";
+import { NativeReminderState, syncNativeRemindersForProgram } from "@/notifications/native-reminders";
 
 type Toggle = "on" | "off";
 const toggleOptions: { value: Toggle; label: string }[] = [
@@ -19,6 +19,7 @@ export default function RemindersScreen() {
   const router = useRouter();
   const { status, apiRequest } = useSession();
   const [settings, setSettings] = useState<ReminderSettings | null>(null);
+  const [calendarizationStatus, setCalendarizationStatus] = useState<CalendarizationStatus | null>(null);
   const [timezoneName, setTimezoneName] = useState("");
   const [dailyTime, setDailyTime] = useState("");
   const [daily, setDaily] = useState<Toggle>("on");
@@ -30,10 +31,10 @@ export default function RemindersScreen() {
   const [nativeState, setNativeState] = useState<NativeReminderState | null>(null);
   const [syncingNative, setSyncingNative] = useState(false);
 
-  const syncNative = useCallback(async (next: ReminderSettings, requestPermission = false) => {
+  const syncNative = useCallback(async (next: ReminderSettings, nextStatus: CalendarizationStatus | null, requestPermission = false) => {
     setSyncingNative(true);
     try {
-      setNativeState(await syncNativeReminders(next, apiRequest, { requestPermission }));
+      setNativeState(await syncNativeRemindersForProgram(next, nextStatus, apiRequest, { requestPermission }));
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {
@@ -45,13 +46,15 @@ export default function RemindersScreen() {
     void apiRequest<TodayData>("/api/v1/today")
       .then((today) => {
         const next = today.reminders;
+        const nextStatus = today.calendarization?.status ?? null;
         setSettings(next);
+        setCalendarizationStatus(nextStatus);
         if (next) {
           setTimezoneName(next.timezone_name);
           setDailyTime(next.daily_notification_time.slice(0, 5));
           setDaily(next.daily_notifications_enabled ? "on" : "off");
           setMeals(next.meal_notifications_enabled ? "on" : "off");
-          void syncNative(next);
+          void syncNative(next, nextStatus);
         }
       })
       .catch((nextError) => setError(userFacingError(nextError)))
@@ -81,7 +84,7 @@ export default function RemindersScreen() {
         }),
       });
       setSettings(updated);
-      await syncNative(updated);
+      await syncNative(updated, calendarizationStatus);
       setSaved(true);
     } catch (nextError) {
       setError(userFacingError(nextError));
@@ -107,7 +110,7 @@ export default function RemindersScreen() {
               <Button
                 label={nativeState?.permission === "granted" ? "Sincronizar" : "Activar"}
                 loading={syncingNative}
-                onPress={() => void syncNative(settings, true)}
+                onPress={() => void syncNative(settings, calendarizationStatus, true)}
                 variant="secondary"
               />
             </View>
@@ -152,5 +155,6 @@ function nativeDeliveryLabel(state: NativeReminderState | null): string {
   if (state.permission === "denied") return "Desactivados en Ajustes de iOS.";
   if (state.permission === "undetermined") return "Aún no has decidido si permites avisos.";
   if (state.deliveryMode === "apns") return "APNs activo para este dispositivo.";
+  if (state.deliveryMode === "none") return "No hay avisos activos para el estado actual del programa.";
   return `${state.scheduledCount} avisos locales sincronizados.`;
 }

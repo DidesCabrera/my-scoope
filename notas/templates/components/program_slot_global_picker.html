@@ -1,56 +1,147 @@
-<form
-  class="program-slot-picker section_picker js-program-slot-picker js-program-slot-picker-global"
-  method="post"
-  action="{% url 'add_dailyplan_to_program' program.id %}"
-  hidden
+<dialog
+  id="program-slot-picker-section"
+  class="composition-picker-modal program-slot-picker-modal js-program-slot-picker-global"
+  aria-labelledby="program-slot-picker-title"
+  data-picker-modal
+  data-picker-step="selection"
 >
-  {% csrf_token %}
-  <input type="hidden" name="week_number" value="">
-  <input type="hidden" name="day_number" value="">
-  <input type="hidden" name="return_to" class="js-program-slot-return-to" value="">
-
-  <div class="add-row program-slot-picker__add-row">
-    <div class="selector program-slot-picker__selector">
-      <i data-lucide="search" class="search-icon-add-row-icon"></i>
-      <input
-        type="search"
-        class="program-slot-picker__search js-program-slot-search"
-        placeholder="Selecciona un plan diario…"
-        autocomplete="off"
-      >
-    </div>
-    <button type="button" class="btn-cancel-picker btn-cancel-picker-inline js-program-slot-close">Cancelar</button>
-  </div>
-
-  <div class="program-slot-picker__results js-program-slot-results" role="listbox" aria-label="Planes diarios disponibles"></div>
-
-  <div class="program-slot-picker__preview picker-summary-card picker-summary-card--selected picker-summary-card--dailyplan js-program-slot-preview" hidden>
-    <div class="picker-summary-card__header">
-      <div class="picker-summary-card__title-row">
-        <i data-lucide="clipboard-list" class="picker-summary-card__icon dailyplan"></i>
-        <div class="picker-summary-card__title">
-          <span class="js-program-slot-preview-name"></span>
-        </div>
+  <div class="composition-picker-modal__surface">
+    <header class="composition-picker-modal__header">
+      <div class="composition-picker-modal__title">
+        <span data-program-slot-header-icon="add" aria-hidden="true"><i data-lucide="plus"></i></span>
+        <span data-program-slot-header-icon="replace" aria-hidden="true" hidden><i data-lucide="repeat"></i></span>
+        <h2 id="program-slot-picker-title">Agrega un Plan Diario</h2>
       </div>
-    </div>
-    <small class="js-program-slot-preview-kpis"></small>
-  </div>
+      <button
+        type="button"
+        class="composition-picker-modal__close"
+        aria-label="Cerrar selector de planes diarios"
+        data-picker-dismiss
+      >
+        <i data-lucide="x"></i>
+      </button>
+    </header>
 
-  <div class="program-slot-picker__days js-program-slot-days" hidden></div>
+    <form
+      class="program-slot-picker__form js-program-slot-picker-form"
+      method="post"
+      action="{% url 'add_dailyplan_to_program' program.id %}"
+    >
+      {% csrf_token %}
+      <input type="hidden" name="week_number" value="">
+      <input type="hidden" name="day_number" value="">
+      <input type="hidden" name="return_to" class="js-program-slot-return-to" value="">
 
-  <div class="program-slot-picker__overwrite-warning js-program-slot-overwrite-warning" hidden>
-    <div class="program-slot-picker__overwrite-copy">
-      <strong>Hay días ocupados seleccionados.</strong>
-      <span>Si continúas, se sobrescribirán esos planes.</span>
-    </div>
-    <div class="program-slot-picker__overwrite-actions">
-      <button type="button" class="btn-cancel-picker js-program-slot-overwrite-cancel">Cancelar</button>
-      <button type="button" class="btn-add-picker js-program-slot-overwrite-continue">Continuar</button>
-    </div>
-  </div>
+      <section
+        class="composition-picker-modal__step"
+        data-picker-step-panel="selection"
+        aria-labelledby="program-slot-selection-title"
+      >
+        <div class="composition-picker-modal__body composition-picker-modal__body--selection">
+          <div class="selector program-slot-picker__selector">
+            <div class="composition-picker-step-heading">
+              <h3 id="program-slot-selection-title">1. Selecciona un plan diario</h3>
 
-  <div class="actions-row program-slot-picker__actions" hidden>
-    <button type="button" class="btn-cancel-picker js-program-slot-close">Cancelar</button>
-    <button type="submit" class="btn-add-picker">Asignar Plan</button>
+              <div class="composition-picker-entry-actions">
+                <span class="composition-picker-entry-actions__active">
+                  <i data-lucide="bookmark"></i>
+                  Mi biblioteca
+                </span>
+                <a
+                  href="{% url 'dailyplan_create' %}?return_to={{ request.path|urlencode }}"
+                  class="composition-picker-entry-actions__create"
+                >
+                  <i data-lucide="plus"></i>
+                  Crear plan
+                </a>
+              </div>
+
+              <div class="composition-picker-search-row">
+                <i data-lucide="search" class="search-icon-add-row-icon"></i>
+                <label class="sr-only" for="program-slot-search">Buscar plan diario</label>
+                <input
+                  type="search"
+                  id="program-slot-search"
+                  class="program-slot-picker__search js-program-slot-search"
+                  placeholder="Escribe el nombre de un plan diario"
+                  autocomplete="off"
+                >
+              </div>
+            </div>
+
+            <div
+              class="selector-list program-slot-picker__results js-program-slot-results"
+              role="listbox"
+              aria-label="Planes diarios disponibles"
+            ></div>
+          </div>
+        </div>
+
+        <footer class="composition-picker-modal__footer">
+          <button type="button" class="composition-picker-modal__action composition-picker-modal__action--secondary js-program-slot-close">
+            Cancelar
+          </button>
+        </footer>
+      </section>
+
+      <section
+        class="composition-picker-modal__step"
+        data-picker-step-panel="impact"
+        aria-labelledby="program-slot-impact-title"
+        hidden
+      >
+        <div class="composition-picker-modal__step-content">
+          <div class="composition-picker-modal__body composition-picker-modal__body--impact">
+            <div class="composition-picker-step-heading composition-picker-step-heading--impact">
+              <h3 id="program-slot-impact-title">2. Configura y revisa el impacto</h3>
+              <button type="button" class="composition-picker-change" data-picker-go-to="selection">
+                Cambiar selección
+              </button>
+            </div>
+
+            <div class="composition-picker-fixed-configuration program-slot-picker__days js-program-slot-days" hidden></div>
+
+            <div class="picker-layout program-slot-picker__impact-layout">
+              <section class="entity-card card picker-selection-card program-slot-picker__preview js-program-slot-preview" hidden></section>
+
+              <section class="picker-section picker-impact program-slot-picker__projection-card" aria-labelledby="program-slot-projection-title">
+                <div class="entity-card__title card-title program-slot-picker__projection-title">
+                  <div class="entity-heading card-title-comp program-slot-picker__projection-heading">
+                    <div class="main-title">
+                      <p class="card-title-eyebrow">
+                        <i data-lucide="calendar-range" class="card-title-eyebrow__icon program" aria-hidden="true"></i>
+                        <span>Resultado proyectado</span>
+                      </p>
+                      <h3 id="program-slot-projection-title" class="js-program-slot-projection-title">Semana resultante</h3>
+                    </div>
+                  </div>
+                </div>
+                <div class="program-slot-picker__projection js-program-slot-projection"></div>
+              </section>
+            </div>
+          </div>
+
+          <div class="program-slot-picker__overwrite-warning js-program-slot-overwrite-warning" hidden>
+            <div class="program-slot-picker__overwrite-copy">
+              <strong>Hay días ocupados seleccionados.</strong>
+              <span>Si continúas, se sobrescribirán esos planes.</span>
+            </div>
+            <div class="program-slot-picker__overwrite-actions">
+              <button type="button" class="composition-picker-modal__action composition-picker-modal__action--secondary js-program-slot-overwrite-cancel">Cancelar</button>
+              <button type="button" class="composition-picker-modal__action composition-picker-modal__action--primary js-program-slot-overwrite-continue">Continuar</button>
+            </div>
+          </div>
+
+          <footer class="composition-picker-modal__footer program-slot-picker__actions">
+            <button type="button" class="composition-picker-modal__action composition-picker-modal__action--secondary js-program-slot-close">
+              Cancelar
+            </button>
+            <button type="submit" class="composition-picker-modal__action composition-picker-modal__action--primary">
+              Asignar Plan
+            </button>
+          </footer>
+        </div>
+      </section>
+    </form>
   </div>
-</form>
+</dialog>

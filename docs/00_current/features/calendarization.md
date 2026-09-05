@@ -66,6 +66,14 @@ APNs sólo cuando el proveedor está listo; en cualquier otro caso la app crea a
 locales desde los mismos instantes UTC. Al activar APNs elimina sus avisos locales,
 por lo que un dispositivo nunca recibe ambos. Negar el permiso no bloquea el programa.
 
+La proyección nativa contiene únicamente eventos futuros y está acotada a los 60
+instantes más próximos. El iPhone valida nuevamente las fechas, usa identificadores
+deterministas y renueva esa ventana al iniciar o volver a primer plano. Activar,
+pausar, reanudar, cancelar o reemplazar el programa, cambiar la hora de una comida y
+aprobar una revisión futura reconcilian inmediatamente los avisos locales. Sólo una
+calendarización `scheduled` o `active` puede conservarlos; cerrar sesión los elimina.
+Tocar una notificación abre Today tanto con la app viva como desde un arranque en frío.
+
 ## Entradas técnicas
 
 - comandos: `notas/application/services/commands/calendarization_commands.py`;

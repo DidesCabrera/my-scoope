@@ -6,6 +6,7 @@
 {% block feature_css %}
 <link rel="stylesheet" href="{% static 'notas/css/components/programs.css' %}?v=20260818-2">
 <link rel="stylesheet" href="{% static 'notas/css/components/program_week_tabs.css' %}?v=20260818-4">
+<link rel="stylesheet" href="{% static 'notas/css/components/program_slot_picker_modal.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -122,6 +123,6 @@
 
 <script src="{% static 'notas/js/program_metric_chart.js' %}?v=20260818-2"></script>
 <script src="{% static 'notas/js/program_week_tabs.js' %}"></script>
-<script src="{% static 'notas/js/program_slot_picker.js' %}"></script>
+<script type="module" src="{% static 'notas/js/program_slot_picker.js' %}"></script>
 <script src="{% static 'notas/js/program_week_edit.js' %}"></script>
 {% endblock %}

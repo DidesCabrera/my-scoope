@@ -31,6 +31,13 @@
             <span class="structural-value">{{ titulo.structural_indicators.foods_count }}</span>
             <i data-lucide="carrot" class="structural-icon main"></i>
         </span>
+        {% if titulo.structural_indicators.hour %}
+          <span class="structural-divider"></span>
+          <span class="structural-item structural-item--time">
+              <i data-lucide="clock" class="structural-icon main"></i>
+              <span class="structural-value">{{ titulo.structural_indicators.hour }}</span>
+          </span>
+        {% endif %}
     </div>
 
     {% if titulo.classes %}

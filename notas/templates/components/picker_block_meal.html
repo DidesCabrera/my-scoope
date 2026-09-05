@@ -1,115 +1,149 @@
-<!-- FORM -->
 <form method="post"
       action="{% url 'dailyplan_add_meal' main_id %}"
       id="dp-form">
-
   {% csrf_token %}
 
-  <div id="dailyplan-picker-section" class="section_picker is-collapsed">
+  <dialog
+    id="dailyplan-picker-section"
+    class="composition-picker-modal"
+    aria-labelledby="meal-form-title"
+    data-picker-modal
+    data-picker-step="selection"
+  >
+    <div class="composition-picker-modal__surface">
+      <header class="composition-picker-modal__header">
+        <div class="composition-picker-modal__title">
+          <span data-picker-header-icon="add" aria-hidden="true"><i data-lucide="plus"></i></span>
+          <span data-picker-header-icon="edit" aria-hidden="true" hidden><i data-lucide="repeat"></i></span>
+          <h2 id="meal-form-title">Agrega una Comida</h2>
+        </div>
+        <button
+          type="button"
+          class="composition-picker-modal__close"
+          aria-label="Cerrar selector de comidas"
+          data-picker-dismiss
+        >
+          <i data-lucide="x"></i>
+        </button>
+      </header>
 
-    <div class="add-row add-row--meal-picker">
-
-      <div id="meal-picker" class="selector">
-        <i data-lucide="search" class="search-icon-add-row-icon"></i>
-        <input
-          type="text"
-          id="meal-search"
-          placeholder="Selecciona una comida…"
-          autocomplete="off"
-        />
-        <ul id="meal-list" class="selector-list"></ul>
-      </div>
-    
-      <input type="hidden" id="dp-selected-meal-id" name="meal_id">
-    
-      <div class="btn-create-picker">
-        <a href="{% url 'create_meal_for_dailyplan' main_id %}"
-           class="btn btn-sm btn-outline-primary">
-           + Crear Nueva Comida
-        </a>
-      </div>
-    
-      <button
-        type="button"
-        id="btn-cancel-picker-inline-meal"
-        class="btn-cancel-picker btn-cancel-picker-inline"
+      <section
+        class="composition-picker-modal__step"
+        data-picker-step-panel="selection"
+        aria-labelledby="meal-selection-title"
       >
-        Cancelar
-      </button>
-    
-    </div>
+        <div class="composition-picker-modal__body composition-picker-modal__body--selection">
+          <div id="meal-picker" class="selector">
+            <div class="composition-picker-step-heading">
+              <h3 id="meal-selection-title">1. Selecciona una comida</h3>
 
-    <!-- PREVIEW :::::::::::::::::::::::::::::::::::::::::::::::-->
-    <div id="dp-preview" style="display:none;">
+              <div class="composition-picker-entry-actions">
+                <span class="composition-picker-entry-actions__active">
+                  <i data-lucide="bookmark"></i>
+                  Mi biblioteca
+                </span>
+                <a
+                  href="{% url 'create_meal_for_dailyplan' main_id %}"
+                  class="composition-picker-entry-actions__create"
+                >
+                  <i data-lucide="plus"></i>
+                  Crear comida
+                </a>
+              </div>
 
-      <div class="picker-layout">
-    
-        <!-- LEFT : MEAL INFO -->
-        <div class="picker-section picker-meal-info">
-          {% include "components/card_picker_meal.html" %}
-        </div>
-    
-    
-    
-        <!-- RIGHT : IMPACT -->
-        <div class="picker-section picker-impact">
-    
-          <div data-scope="day-preview">
-
-            <div class="picker-title-row">
-              <i data-lucide="clipboard-list" class="preview-picker-icon dailyplan"></i>
-              <h3>Preview Plan Diario</h3>
+              <div class="composition-picker-search-row">
+                <i data-lucide="search" class="search-icon-add-row-icon"></i>
+                <label class="sr-only" for="meal-search">Buscar comida</label>
+                <input
+                  type="search"
+                  id="meal-search"
+                  placeholder="Escribe el nombre de una comida"
+                  autocomplete="off"
+                >
+              </div>
             </div>
-          
-            <div class="preview-picker">
-              {% include "components/grid_picker_meal_day_preview.html" %}
-            </div>
-          
+            <ul id="meal-list" class="selector-list" aria-label="Resultados de comidas"></ul>
           </div>
-    
+          <input type="hidden" id="dp-selected-meal-id" name="meal_id">
         </div>
-    
-    
-      </div>
-      
-      <!-- BOTONES =================================== -->
-      <div class="actions-row">
 
-        <!-- ⚪ CANCEL -->
-        <button type="button" id="btn-cancel-meal-edit" class="btn-cancel-picker">
-          Cancelar
-        </button>
-  
-        <!-- 🔵 ADD MODE -->
-        <button type="submit" id="btn-add-meal" class="btn-add-picker">
-          Agregar Comida al Plan
-        </button>
-  
-        <!-- 🟠 EDIT MODE -->
-        <button type="submit" id="btn-update-meal" style="display:none;" class="btn-update-picker">
-          Reemplazar Comida en Plan
-        </button>
-  
+        <footer class="composition-picker-modal__footer">
+          <button type="button" id="btn-cancel-picker-inline-meal" class="composition-picker-modal__action composition-picker-modal__action--secondary">
+            Cancelar
+          </button>
+        </footer>
+      </section>
+
+      <div id="dp-preview" class="composition-picker-modal__step" data-picker-step-panel="impact" style="display:none;" hidden>
+        <div class="composition-picker-modal__body composition-picker-modal__body--impact">
+          <div class="composition-picker-step-heading composition-picker-step-heading--impact">
+            <h3>2. Configura y revisa el impacto</h3>
+            <div class="composition-picker-impact-actions">
+              <button type="button" class="composition-picker-change" data-picker-go-to="selection">
+                Cambiar selección
+              </button>
+              <a class="composition-picker-change" data-role="edit-selected-meal" href="#" hidden>
+                <i data-lucide="pencil"></i>
+                Editar comida
+              </a>
+            </div>
+          </div>
+
+          <div class="composition-picker-schedule-fields composition-picker-fixed-configuration">
+            <label>
+              <i data-lucide="clock" class="add-row-icon"></i>
+              Hora:
+              <input type="time" name="hour" class="hour-picker">
+            </label>
+            <label>
+              <i data-lucide="notebook-pen" class="add-row-icon"></i>
+              Nota <span>(opcional):</span>
+              <input
+                type="text"
+                name="note"
+                class="note-picker"
+                placeholder="Ej. antes de entrenar"
+                maxlength="255"
+              >
+            </label>
+          </div>
+
+          <div class="picker-layout">
+            <section class="entity-card card picker-selection-card">
+              <div class="picker-section picker-meal-info">
+                {% include "components/card_picker_meal.html" %}
+              </div>
+            </section>
+
+            <div class="picker-section picker-impact">
+              {% include "components/card_picker_result.html" with result_scope="day-preview" result_kind="dailyplan" result_icon="clipboard-list" result_aria_label="Plan diario resultante" result_panel_id="picker-result-dailyplan" %}
+            </div>
+          </div>
+        </div>
+
+        <footer class="composition-picker-modal__footer">
+          <button type="button" id="btn-cancel-meal-edit" class="composition-picker-modal__action composition-picker-modal__action--secondary">
+            Cancelar
+          </button>
+          <button type="submit" id="btn-add-meal" class="composition-picker-modal__action composition-picker-modal__action--primary">
+            Agregar Comida al Plan
+          </button>
+          <button type="submit" id="btn-update-meal" style="display:none;" class="composition-picker-modal__action composition-picker-modal__action--primary">
+            Reemplazar Comida en Plan
+          </button>
+        </footer>
       </div>
-      
     </div>
-
-  </div>
-
+  </dialog>
 </form>
 
 {% load static %}
-
 <script>
   window.MEAL_PICKER_DATA = {{ meal_picker_data_json|safe }};
   window.MEAL_PICKER_CONTEXT = {{ meal_picker_context|safe }};
-  window.dailyplanInitialMeal = {{ selected_meal_id|default:"null" }};
+  window.dailyplanInitialMeal = Number("{{ selected_meal_id|default:''|escapejs }}") || null;
 </script>
-
-
-
 
 <script type="module" src="{% static 'notas/js/meal_picker.js' %}"></script>
 <script type="module" src="{% static 'notas/js/meal_math.js' %}"></script>
 <script type="module" src="{% static 'notas/js/meal_preview.js' %}"></script>
-  

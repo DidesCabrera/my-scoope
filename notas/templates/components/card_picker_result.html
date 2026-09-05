@@ -1,0 +1,194 @@
+<article
+  class="entity-card card picker-result-card picker-result-card--{{ result_kind }}"
+  data-scope="{{ result_scope }}"
+  aria-label="{{ result_aria_label }}"
+>
+  <div class="entity-card__main card-main">
+    <div class="entity-card__title card-title">
+      <div class="entity-heading card-title-comp">
+        <div class="main-title">
+          <p class="card-title-eyebrow">
+            <i data-lucide="{{ result_icon }}" class="card-title-eyebrow__icon {{ result_kind }}" aria-hidden="true"></i>
+            <span>{% if result_kind == "dailyplan" %}Plan Diario{% else %}Comida{% endif %}</span>
+          </p>
+          <h3 data-role="result-name"></h3>
+          <div class="entity-indicators structural-indicators">
+            {% if result_kind == "dailyplan" %}
+              <span class="structural-item">
+                <span class="structural-value" data-role="result-meal-count">0</span>
+                <i data-lucide="utensils" class="card-icon main" aria-hidden="true"></i>
+              </span>
+              <span class="structural-divider"></span>
+            {% endif %}
+            <span class="structural-item">
+              <span class="structural-value" data-role="result-food-count">0</span>
+              <i data-lucide="carrot" class="card-icon main" aria-hidden="true"></i>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="entity-card__kpi card-kpi">
+      <div class="dash-kpi-comp">
+        <div class="tot">
+          <p>Calories</p>
+          <h2 data-role="result-kcal">0</h2>
+          <p></p>
+        </div>
+        <div class="macros">
+          <div class="kpi-row">
+            <div class="kpi-label">Protein</div>
+            <div class="kpi-ppk"><span data-role="result-ppk">0.0g/kg</span></div>
+            <div class="kpi-grams"><span data-role="result-protein">0</span>g</div>
+            <div class="kpi-alloc">
+              <div class="alloc-bar-comp alloc-bar-comp--kpi" data-role="result-alloc-protein" style="--alloc:0">
+                <div class="alloc-bar-bg"></div>
+                <div class="alloc-bar-fill alloc-bar-fill--protein"></div>
+                <span class="alloc-bar-text" data-role="result-alloc-protein-text">0%</span>
+              </div>
+            </div>
+          </div>
+          <div class="kpi-row">
+            <div class="kpi-label">Carbs</div>
+            <div></div>
+            <div class="kpi-grams"><span data-role="result-carbs">0</span>g</div>
+            <div class="kpi-alloc">
+              <div class="alloc-bar-comp alloc-bar-comp--kpi" data-role="result-alloc-carbs" style="--alloc:0">
+                <div class="alloc-bar-bg"></div>
+                <div class="alloc-bar-fill alloc-bar-fill--carbs"></div>
+                <span class="alloc-bar-text" data-role="result-alloc-carbs-text">0%</span>
+              </div>
+            </div>
+          </div>
+          <div class="kpi-row">
+            <div class="kpi-label">Fat</div>
+            <div></div>
+            <div class="kpi-grams"><span data-role="result-fat">0</span>g</div>
+            <div class="kpi-alloc">
+              <div class="alloc-bar-comp alloc-bar-comp--kpi" data-role="result-alloc-fat" style="--alloc:0">
+                <div class="alloc-bar-bg"></div>
+                <div class="alloc-bar-fill alloc-bar-fill--fat"></div>
+                <span class="alloc-bar-text" data-role="result-alloc-fat-text">0%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if result_kind == "meal" %}
+    <div
+      class="content-panel card-detail-block picker-result-card__panels"
+      data-default-desktop="#card-grid-foods-{{ result_panel_id }}"
+      data-default-mobile="#card-grid-foods-{{ result_panel_id }}"
+    >
+      <div class="panel-tabs panel-tabs--desktop card-detail-tabs card-detail-tabs--desktop block-desplegar-tabla block-card-desplegar">
+        <div class="panel-tab btn-desplegar is-active" data-target="#card-grid-foods-{{ result_panel_id }}">
+          <p>Tabla Alimentos</p>
+        </div>
+      </div>
+      <div class="panel-tabs panel-tabs--mobile card-detail-tabs-mobile">
+        <button type="button" class="panel-tab btn-desplegar-mobile is-active" data-target="#card-grid-foods-{{ result_panel_id }}">
+          Tabla Alimentos
+        </button>
+      </div>
+      <div id="card-grid-foods-{{ result_panel_id }}" class="picker-result-card__single-panel is-visible">
+        <div class="data-grid data-grid--foods" data-role="result-foods-grid">
+          <div class="data-grid-header data-grid-header--foods">
+            <div class="data-grid-col data-grid-col--name">Alimentos</div>
+            <div class="data-grid-col data-grid-col--qty">Qty</div>
+            <div class="data-grid-col data-grid-col--kcal data-grid-group-start">Cal</div>
+            <div class="data-grid-col data-grid-col--kcal-share">% Cal</div>
+            <div class="data-grid-col data-grid-col--macro data-grid-group-start">P</div>
+            <div class="data-grid-col data-grid-col--macro">C</div>
+            <div class="data-grid-col data-grid-col--macro">F</div>
+            <div class="data-grid-col data-grid-col--kcal-distribution">P|C|F%</div>
+            <div class="data-grid-alloc-group data-grid-alloc-group--header data-grid-group-start">
+              <div class="data-grid-col data-grid-col--alloc">P%</div>
+              <div class="data-grid-col data-grid-col--alloc">C%</div>
+              <div class="data-grid-col data-grid-col--alloc">F%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <div
+      class="content-panel card-detail-block picker-result-card__panels"
+      data-default-desktop="#card-menu-{{ result_panel_id }}"
+      data-default-mobile="#card-menu-{{ result_panel_id }}"
+    >
+      {% include "components/detail_tabs_meals.html" with panel_id=result_panel_id %}
+      <div id="card-menu-{{ result_panel_id }}" class="card-menu">
+        <div class="data-grid data-grid--menu" data-role="result-meals-menu-grid">
+          <div class="data-grid-header data-grid-header--menu">
+            <div class="data-grid-col data-grid-col--meal">Comidas</div>
+            <div class="data-grid-col data-grid-col--foods">Alimentos</div>
+          </div>
+        </div>
+      </div>
+      <div id="card-grid-meals-{{ result_panel_id }}" class="card-table-meals">
+        <div class="data-grid data-grid--meals" data-role="result-meals-grid">
+          <div class="data-grid-header data-grid-header--meals">
+            <div class="data-grid-col data-grid-col--name">Comidas</div>
+            <div class="data-grid-col data-grid-col--kcal">Cal</div>
+            <div class="data-grid-col data-grid-col--kcal-share">% Cal</div>
+            <div class="data-grid-col data-grid-col--macro data-grid-group-start">P</div>
+            <div class="data-grid-col data-grid-col--macro">C</div>
+            <div class="data-grid-col data-grid-col--macro">F</div>
+            <div class="data-grid-col data-grid-col--kcal-distribution">P|C|F%</div>
+            <div class="data-grid-alloc-group data-grid-alloc-group--header data-grid-group-start">
+              <div class="data-grid-col data-grid-col--alloc">P%</div>
+              <div class="data-grid-col data-grid-col--alloc">C%</div>
+              <div class="data-grid-col data-grid-col--alloc">F%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="card-grid-calories-{{ result_panel_id }}" class="card-table-meals-mobile">
+        <div class="data-grid data-grid--mobile-meals-calories" data-role="result-meals-calories-grid">
+          <div class="data-grid-header data-grid-header--mobile-meals-calories">
+            <div class="data-grid-col data-grid-col--name">Comidas</div>
+            <div class="data-grid-col data-grid-col--kcal">Cal</div>
+            <div class="data-grid-col data-grid-col--kcal-share">% Cal</div>
+          </div>
+        </div>
+      </div>
+      <div id="card-grid-macros-{{ result_panel_id }}" class="card-table-meals-mobile">
+        <div class="data-grid data-grid--mobile-macros" data-role="result-meals-macros-grid">
+          <div class="data-grid-header data-grid-header--mobile-macros">
+            <div class="data-grid-col data-grid-col--name">Comidas</div>
+            <div class="data-grid-col data-grid-col--macro">P</div>
+            <div class="data-grid-col data-grid-col--macro">C</div>
+            <div class="data-grid-col data-grid-col--macro">F</div>
+            <div class="data-grid-col data-grid-col--kcal-distribution">P|C|F%</div>
+          </div>
+        </div>
+      </div>
+      <div id="card-grid-alloc-{{ result_panel_id }}" class="card-table-meals-mobile">
+        <div class="data-grid data-grid--mobile-alloc" data-role="result-meals-alloc-grid">
+          <div class="data-grid-header data-grid-header--mobile-alloc">
+            <div class="data-grid-col data-grid-col--name">Comidas</div>
+            <div class="data-grid-col data-grid-col--alloc">P%</div>
+            <div class="data-grid-col data-grid-col--alloc">C%</div>
+            <div class="data-grid-col data-grid-col--alloc">F%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="entity-card__footer card-bottom">
+    <div class="entity-card__metadata card-metadata">
+      <div class="entity-metadata metadata">
+        <i data-lucide="circle-user-round" class="metadata-icon" aria-hidden="true"></i>
+        <p data-role="result-owner"></p>
+      </div>
+    </div>
+    <div class="entity-card__actions card-actions">
+      <span class="picker-result-badge picker-result-badge--pending">Resultado proyectado</span>
+    </div>
+  </div>
+</article>

@@ -5,6 +5,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
+from accounts.models import CreditWallet
 from notas.application.ai_intake.chat_history import AI_NUTRITION_CHAT_SESSION_KEY
 from notas.application.ai_intake.deterministic_chat_engine import (
     DeterministicNutritionIntakeChatEngine,
@@ -29,6 +30,7 @@ class AiNutritionChatHistoryTests(TestCase):
         profile.onboarding_completed_at = timezone.now()
         profile.onboarding_version = profile.ONBOARDING_VERSION_NUTRITION_V1
         profile.save(update_fields=["onboarding_completed_at", "onboarding_version"])
+        self.wallet = CreditWallet.objects.create(user=self.user, balance=12)
         self.client.force_login(self.user)
 
     def test_home_uses_compact_ai_composer_without_copy_or_visible_hero(self):
@@ -140,10 +142,28 @@ class AiNutritionChatHistoryTests(TestCase):
         self.assertNotContains(list_response, "list-page-header__eyebrow")
         self.assertContains(list_response, "Chats")
         self.assertContains(list_response, chat.title)
+        self.assertEqual(list_response.context["vm"]["ui"]["title"], "Chats")
+        self.assertEqual(
+            [item["label"] for item in list_response.context["vm"]["ui"]["breadcrumb"]],
+            ["Chats"],
+        )
 
         detail_response = self.client.get(reverse("ai_nutrition_chat_detail", args=[chat.id]))
         self.assertEqual(detail_response.status_code, 200)
         self.assertContains(detail_response, "Quiero bajar grasa")
+        self.assertContains(detail_response, '<body class="page-ai-intake page-ai-intake-chat">')
+        self.assertNotContains(detail_response, '<body class="page-home page-ai-intake')
+        self.assertContains(
+            detail_response,
+            f'<a href="{reverse("ai_nutrition_chat_list")}" class="breadcrumb-item">Chats</a>',
+        )
+        detail_ui = detail_response.context["vm"]["ui"]
+        self.assertEqual(detail_ui["back_url"], reverse("ai_nutrition_chat_list"))
+        self.assertEqual(
+            [item["label"] for item in detail_ui["breadcrumb"]],
+            ["Chats", chat.title],
+        )
+        self.assertEqual(detail_ui["breadcrumb"][0]["url"], reverse("ai_nutrition_chat_list"))
         self.assertEqual(self.client.session[AI_NUTRITION_CHAT_SESSION_KEY], chat.id)
 
 
@@ -172,6 +192,49 @@ class AiNutritionChatHistoryTests(TestCase):
         self.assertIn("4 comidas/día", html)
         self.assertIn("2 mensajes", html)
         self.assertIn("Brief listo", html)
+        self.assertIn("12 créditos disponibles", html)
+
+    def test_web_chat_surfaces_offer_billing_when_credits_are_empty(self):
+        self.client.post(
+            reverse("ai_nutrition_intake"),
+            {
+                "action": "analyze_prompt",
+                "prompt": "Quiero bajar grasa con 4 comidas y algo simple.",
+            },
+        )
+        chat = AiNutritionChat.objects.get(user=self.user)
+        self.wallet.balance = 0
+        self.wallet.save(update_fields=["balance", "updated_at"])
+
+        list_response = self.client.get(reverse("ai_nutrition_chat_list"))
+        self.assertContains(list_response, "0 créditos disponibles")
+        self.assertContains(list_response, "Comprar créditos")
+        self.assertContains(list_response, reverse("billing:overview"))
+        self.assertContains(list_response, reverse("ai_nutrition_chat_new"))
+
+        new_response = self.client.get(reverse("ai_nutrition_chat_new"), follow=True)
+        self.assertContains(new_response, "No tienes créditos disponibles")
+        self.assertContains(new_response, "Comprar créditos")
+        self.assertContains(new_response, reverse("billing:overview"))
+        self.assertContains(new_response, "page-ai-intake-no-credits")
+        self.assertContains(new_response, 'name="prompt"')
+        self.assertContains(new_response, "ai-intake-form--disabled")
+        self.assertContains(new_response, "Agrega créditos para iniciar una conversación")
+        self.assertRegex(
+            new_response.content.decode(),
+            r'<textarea[^>]*name="prompt"[^>]*disabled',
+        )
+
+        detail_response = self.client.get(reverse("ai_nutrition_chat_detail", args=[chat.id]))
+        self.assertContains(detail_response, "No tienes créditos disponibles")
+        self.assertContains(detail_response, "Comprar créditos")
+        self.assertContains(detail_response, "ai-chat-composer--disabled")
+        self.assertContains(detail_response, 'data-credit-disabled="true"')
+        self.assertContains(detail_response, "Agrega créditos para continuar")
+        self.assertRegex(
+            detail_response.content.decode(),
+            r'<textarea[^>]*name="message"[^>]*disabled',
+        )
 
     def test_new_chat_action_clears_only_active_session(self):
         self.client.post(
@@ -191,6 +254,20 @@ class AiNutritionChatHistoryTests(TestCase):
         self.assertNotIn(AI_NUTRITION_CHAT_SESSION_KEY, self.client.session)
         self.assertNotIn(AI_NUTRITION_CONVERSATION_SESSION_KEY, self.client.session)
         self.assertNotIn(AI_NUTRITION_BRIEF_SESSION_KEY, self.client.session)
+
+        new_chat_response = self.client.get(reverse("ai_nutrition_intake"))
+        new_chat_ui = new_chat_response.context["vm"]["ui"]
+        self.assertContains(new_chat_response, '<body class="page-ai-intake">')
+        self.assertNotContains(new_chat_response, '<body class="page-home page-ai-intake')
+        self.assertContains(
+            new_chat_response,
+            f'<a href="{reverse("ai_nutrition_chat_list")}" class="breadcrumb-item">Chats</a>',
+        )
+        self.assertEqual(new_chat_ui["back_url"], reverse("ai_nutrition_chat_list"))
+        self.assertEqual(
+            [item["label"] for item in new_chat_ui["breadcrumb"]],
+            ["Chats", "Nuevo chat"],
+        )
 
     def test_create_proposal_generates_dailyplan_card_inside_chat(self):
         self._create_minimal_food_catalog()

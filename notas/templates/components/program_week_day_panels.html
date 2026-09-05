@@ -35,7 +35,7 @@
       </div>
 
       {% for row in rows %}
-        <div class="data-grid-row data-grid-row--program-week-days{% if row.is_empty %} is-empty{% endif %}" role="row">
+        <div class="data-grid-row data-grid-row--program-week-days{% if row.is_empty %} is-empty{% endif %}" role="row" data-day-number="{{ row.day_number }}">
           <div class="data-grid-cell data-grid-cell--program-day" role="cell">
             {% include "components/grid_program_day_identity.html" with has_plan=row.has_plan day_name=row.day_name dailyplan_name=row.dailyplan_name %}
           </div>
@@ -109,7 +109,7 @@
       </div>
 
       {% for row in rows %}
-        <div class="data-grid-row data-grid-row--program-week-days-mobile-calories{% if row.is_empty %} is-empty{% endif %}" role="row">
+        <div class="data-grid-row data-grid-row--program-week-days-mobile-calories{% if row.is_empty %} is-empty{% endif %}" role="row" data-day-number="{{ row.day_number }}">
           <div class="data-grid-cell data-grid-cell--program-day" role="cell">
             {% include "components/grid_program_day_identity.html" with has_plan=row.has_plan day_name=row.day_name dailyplan_name=row.dailyplan_name %}
           </div>
@@ -132,7 +132,7 @@
       </div>
 
       {% for row in rows %}
-        <div class="data-grid-row data-grid-row--program-week-days-mobile-macros{% if row.is_empty %} is-empty{% endif %}" role="row">
+        <div class="data-grid-row data-grid-row--program-week-days-mobile-macros{% if row.is_empty %} is-empty{% endif %}" role="row" data-day-number="{{ row.day_number }}">
           <div class="data-grid-cell data-grid-cell--program-day" role="cell">
             {% include "components/grid_program_day_identity.html" with has_plan=row.has_plan day_name=row.day_name dailyplan_name=row.dailyplan_name %}
           </div>
@@ -157,7 +157,7 @@
       </div>
 
       {% for row in rows %}
-        <div class="data-grid-row data-grid-row--program-week-days-mobile-alloc{% if row.is_empty %} is-empty{% endif %}" role="row">
+        <div class="data-grid-row data-grid-row--program-week-days-mobile-alloc{% if row.is_empty %} is-empty{% endif %}" role="row" data-day-number="{{ row.day_number }}">
           <div class="data-grid-cell data-grid-cell--program-day" role="cell">
             {% include "components/grid_program_day_identity.html" with has_plan=row.has_plan day_name=row.day_name dailyplan_name=row.dailyplan_name %}
           </div>

@@ -1,3 +1,5 @@
+import uuid
+
 from django.contrib.auth.models import User
 from django.db import models
 
@@ -391,10 +393,12 @@ class FoodSourceMetadata(models.Model):
 class FoodLabelCaptureReceipt(models.Model):
     BASIS_PER_100G = "per_100g"
     BASIS_PER_SERVING = "per_serving"
+    BASIS_PER_100ML = "per_100ml"
     BASIS_MANUAL = "manual"
     BASIS_CHOICES = [
         (BASIS_PER_100G, "Per 100 g"),
         (BASIS_PER_SERVING, "Per serving"),
+        (BASIS_PER_100ML, "Per 100 ml"),
         (BASIS_MANUAL, "Manual review"),
     ]
 
@@ -408,10 +412,15 @@ class FoodLabelCaptureReceipt(models.Model):
     ocr_engine_version = models.CharField(max_length=40, blank=True)
     detected_basis = models.CharField(max_length=24, choices=BASIS_CHOICES)
     serving_size_g = models.DecimalField(max_digits=8, decimal_places=3, null=True, blank=True)
+    volume_weight_g_per_100ml = models.DecimalField(max_digits=8, decimal_places=3, null=True, blank=True)
     declared_energy_kcal_per_100g = models.DecimalField(max_digits=10, decimal_places=3, null=True, blank=True)
     field_confidence = models.JSONField(default=dict, blank=True)
     warnings = models.JSONField(default=list, blank=True)
     confirmed_payload_hash = models.CharField(max_length=64)
+    retained_label_image = models.BinaryField(null=True, blank=True, editable=False)
+    retained_label_image_content_type = models.CharField(max_length=40, blank=True)
+    retained_label_image_sha256 = models.CharField(max_length=64, blank=True)
+    retained_label_image_size = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -425,6 +434,63 @@ class FoodLabelCaptureReceipt(models.Model):
 
     def __str__(self):
         return f"{self.food} · {self.ocr_engine}"
+
+
+class FoodLabelAIAnalysis(models.Model):
+    """Sanitized, idempotent audit record for one AI label scan.
+
+    The source image and provider output are deliberately absent. Only the
+    normalized candidate, image digest and operational/economic metadata remain.
+    """
+
+    STATUS_PROCESSING = "processing"
+    STATUS_COMPLETED = "completed"
+    STATUS_FAILED = "failed"
+    STATUS_CHOICES = [
+        (STATUS_PROCESSING, "Processing"),
+        (STATUS_COMPLETED, "Completed"),
+        (STATUS_FAILED, "Failed"),
+    ]
+
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="food_label_ai_analyses",
+    )
+    idempotency_key = models.CharField(max_length=120)
+    request_hash = models.CharField(max_length=64)
+    image_sha256 = models.CharField(max_length=64)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PROCESSING, db_index=True)
+    result_payload = models.JSONField(default=dict, blank=True)
+    primary_model = models.CharField(max_length=120, blank=True)
+    final_model = models.CharField(max_length=120, blank=True)
+    escalated = models.BooleanField(default=False, db_index=True)
+    escalation_reason = models.CharField(max_length=120, blank=True)
+    provider_call_count = models.PositiveSmallIntegerField(default=0)
+    attempt_count = models.PositiveSmallIntegerField(default=1)
+    credits_charged = models.PositiveIntegerField(default=0)
+    estimated_cost_usd = models.DecimalField(max_digits=12, decimal_places=6, null=True, blank=True)
+    error_type = models.CharField(max_length=120, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "idempotency_key"],
+                name="food_label_ai_user_key_unique",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["status", "created_at"], name="food_label_ai_status_idx"),
+            models.Index(fields=["escalated", "created_at"], name="food_label_ai_escalated_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.user_id} · {self.status} · {self.public_id}"
 
 
 class FoodPortion(models.Model):

@@ -49,5 +49,5 @@ test("meal cards nested in a daily plan expose remove and detail only", async ()
 
   assert.match(cards, /label: "Quitar comida"/);
   assert.match(cards, /Ver detalle de/);
-  assert.match(detail, /<DailyPlanMealCards items=\{item\.panel\.meals\} onRemove=/);
+  assert.match(detail, /<DailyPlanMealCards[^>]*items=\{item\.panel\.meals\}[^>]*onRemove=/);
 });

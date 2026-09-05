@@ -24,20 +24,31 @@ test("Screen has one implementation and never overrides externally owned headers
 test("screens that own global navigation preserve their header through content and loading states", async () => {
   for (const relativePath of [
     "src/app/comparator/index.tsx",
+    "src/app/assistant/index.tsx",
     "src/app/program/activate.tsx",
     "src/app/program/history.tsx",
     "src/app/program/index.tsx",
     "src/app/today.tsx",
-    "src/components/pickers/composition-picker-screen.tsx",
   ]) {
     const screen = await source(relativePath);
     assert.match(screen, /useHeaderPresentation/);
     assert.match(screen, /<Screen headerMode="preserve">/);
   }
 
+  const compositionPicker = await source("src/components/pickers/composition-picker-screen.tsx");
+  assert.match(compositionPicker, /useHeaderPresentation/);
+  assert.match(compositionPicker, /setHeaderPresentation\(\{ action: \{ label: "Cancelar"/);
+  assert.match(compositionPicker, /return \(\) => setHeaderPresentation\(\{ mode: "default" \}\)/);
+  assert.match(compositionPicker, /<SafeAreaView edges=\{\["left", "right"\]\}/);
+
   const comparator = await source("src/app/comparator/index.tsx");
   assert.match(comparator, /mode: "back", title: savedId \? "Editar comparación" : "Nueva comparación"/);
   assert.match(comparator, /action: \{ label: "Cancelar", onPress: cancel \}/);
   assert.doesNotMatch(comparator, /title=\{savedId \? "Editar Comparación" : "Nueva Comparación"\}/);
   assert.match(comparator, /<View style=\{styles\.builderTabs\}>[\s\S]*<ComparisonKindTabs kind=\{kind\} onChange=\{changeKind\} \/>[\s\S]*<Screen headerMode="preserve">/);
+
+  const assistant = await source("src/app/assistant/index.tsx");
+  assert.match(assistant, /action: \{ icon: "plus", label: "Nuevo chat", onPress: \(\) => router\.push\("\/assistant\/new" as Href\) \}/);
+  assert.doesNotMatch(assistant, /disabled: !page\.availability\.is_available/);
+  assert.doesNotMatch(assistant, /<Button[^>]*label="Nuevo chat"/);
 });

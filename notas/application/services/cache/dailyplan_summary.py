@@ -10,7 +10,7 @@ from notas.application.services.food_imports.localized_names import resolve_food
 from notas.domain.models import DailyPlan, DailyPlanMeal, MealFood, Program
 from notas.domain.services.nutrition import macro_kcal_distribution
 
-DAILYPLAN_SUMMARY_CACHE_VERSION = 2
+DAILYPLAN_SUMMARY_CACHE_VERSION = 3
 
 
 def _safe_percentage(part, total):
@@ -162,7 +162,7 @@ def build_dailyplan_summary(dailyplan: DailyPlan) -> dict:
             "dpm_id": dpm.id,
             "meal_id": meal.id,
             "meal_name": meal.name,
-            "hour": str(dpm.hour) if dpm.hour else None,
+            "hour": dpm.hour.strftime("%H:%M") if dpm.hour else None,
             "note": dpm.note,
             "order": dpm.order,
             "snapshot": snapshot,
@@ -226,6 +226,7 @@ def build_dailyplan_summary(dailyplan: DailyPlan) -> dict:
         "menu": [
             {
                 "meal_name": item["meal_name"],
+                "hour": item["hour"],
                 "foods": item.get("menu_foods", []),
                 "target_id": f"dailyplan-meal-step-{item['dpm_id']}",
             }

@@ -41,7 +41,7 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assert.match(programDay, /<NutritionEntityCard/);
   assert.match(programDay, /\/program\/days\/\[id\]\/meals\/\[mealKey\]/);
   assert.match(programDay, /<ChevronRight/);
-  assert.match(programDay, /mode: "library-detail", entity: "dailyPlan"/);
+  assert.match(programDay, /mode: "library-detail",[\s\S]*entity: "dailyPlan"/);
   assert.match(programMeal, /mode: "library-detail"/);
   assert.match(programMeal, /entity: "meal"/);
   assert.match(today, /\/program/);

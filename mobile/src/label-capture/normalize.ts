@@ -14,11 +14,13 @@ export type NutritionField =
   | "sodium_mg";
 
 export type NutritionLabelDraft = {
-  basis: "per_100g" | "per_serving" | "manual";
+  basis: "per_100g" | "per_serving" | "per_100ml" | "manual";
   servingSizeG: number | null;
+  sourceValues: Partial<Record<NutritionField, number>>;
   values: Partial<Record<NutritionField, number>>;
   fieldConfidence: Partial<Record<NutritionField | "serving_size_g", number>>;
   warnings: string[];
+  normalizationStatus: "ready" | "basis_confirmation_required" | "serving_size_required" | "volume_weight_required";
   ocrEngine: string;
   ocrEngineVersion: string;
 };
@@ -119,24 +121,69 @@ function valueForRow(row: Row, key: NutritionField, pattern: RegExp, per100After
   return value;
 }
 
-function detectServingSize(text: string): number | null {
-  const match = text.match(/(?:porci[oó]n|serving\s+size)[^\d]{0,24}(\d+(?:[.,]\d+)?)\s*g\b/i);
-  return match ? Number(match[1].replace(",", ".")) : null;
+function detectServingSize(rows: Row[]): number | null {
+  for (const row of rows) {
+    const portion = /(?:porci[oó]n\b|serving\s+size\b)/i.exec(row.text);
+    if (!portion) continue;
+    const afterPortion = row.text.slice((portion.index ?? 0) + portion[0].length);
+    const match = /(\d+(?:[.,]\d+)?)\s*g\b/i.exec(afterPortion);
+    if (match) return Number(match[1].replace(",", "."));
+  }
+  return null;
+}
+
+function maximumFor(key: NutritionField): number {
+  if (key === "sodium_mg") return 100_000;
+  if (key === "energy_kcal") return 10_000;
+  return 100;
+}
+
+function normalizedValues(
+  sourceValues: NutritionLabelDraft["sourceValues"],
+  factor: number,
+  warnings: string[],
+): NutritionLabelDraft["values"] {
+  const values: NutritionLabelDraft["values"] = {};
+  for (const [key, raw] of Object.entries(sourceValues) as [NutritionField, number][]) {
+    const normalized = raw * factor;
+    if (normalized < 0 || normalized > maximumFor(key)) {
+      warnings.push(`${key}_outside_expected_range`);
+      continue;
+    }
+    values[key] = rounded(normalized);
+  }
+  return values;
+}
+
+function appendEnergyWarning(values: NutritionLabelDraft["values"], warnings: string[]) {
+  if (values.energy_kcal === undefined || values.protein_g === undefined || values.carbs_g === undefined || values.fat_g === undefined) return;
+  const macroEnergy = values.protein_g * 4 + values.carbs_g * 4 + values.fat_g * 9;
+  if (Math.abs(values.energy_kcal - macroEnergy) > Math.max(20, values.energy_kcal * 0.2)) {
+    warnings.push("energy_macro_mismatch");
+  }
 }
 
 export function normalizeNutritionLabel(recognition: NutritionLabelRecognition): NutritionLabelDraft {
   const rows = rowsFromObservations(recognition.observations);
   const allText = rows.map((row) => row.text).join("\n");
   const normalizedText = plain(allText);
-  const hundredIndex = normalizedText.search(/\b100\s*g\b/);
-  const servingIndex = normalizedText.search(/porcion|serving/);
-  const hasPer100 = hundredIndex >= 0;
+  const hundredGramIndex = normalizedText.search(/\b100\s*g\b/);
+  const hundredMlIndex = normalizedText.search(/\b100\s*ml\b/);
+  const servingIndex = normalizedText.search(/\bporcion\b|\bserving\b/);
+  const hasPer100g = hundredGramIndex >= 0;
+  const hasPer100ml = hundredMlIndex >= 0;
   const hasServing = servingIndex >= 0;
-  const basis: NutritionLabelDraft["basis"] = hasPer100 ? "per_100g" : hasServing ? "per_serving" : "manual";
-  const servingSizeG = detectServingSize(allText);
-  const per100AfterServing = hasPer100 && hasServing ? hundredIndex > servingIndex : null;
-  const factor = basis === "per_serving" && servingSizeG ? 100 / servingSizeG : 1;
-  const values: NutritionLabelDraft["values"] = {};
+  const basis: NutritionLabelDraft["basis"] = hasPer100g
+    ? "per_100g"
+    : hasPer100ml
+      ? "per_100ml"
+      : hasServing
+        ? "per_serving"
+        : "manual";
+  const servingSizeG = detectServingSize(rows);
+  const hundredIndex = hasPer100g ? hundredGramIndex : hundredMlIndex;
+  const per100AfterServing = (hasPer100g || hasPer100ml) && hasServing ? hundredIndex > servingIndex : null;
+  const sourceValues: NutritionLabelDraft["sourceValues"] = {};
   const fieldConfidence: NutritionLabelDraft["fieldConfidence"] = {};
   const warnings: string[] = [];
 
@@ -145,13 +192,11 @@ export function normalizeNutritionLabel(recognition: NutritionLabelRecognition):
     if (!row) continue;
     const raw = valueForRow(row, definition.key, definition.pattern, per100AfterServing);
     if (raw === null) continue;
-    const normalized = raw * factor;
-    const maximum = definition.key === "sodium_mg" ? 100_000 : definition.key === "energy_kcal" ? 10_000 : 100;
-    if (normalized < 0 || normalized > maximum) {
+    if (raw < 0 || raw > maximumFor(definition.key)) {
       warnings.push(`${definition.key}_outside_expected_range`);
       continue;
     }
-    values[definition.key] = rounded(normalized);
+    sourceValues[definition.key] = rounded(raw);
     fieldConfidence[definition.key] = rounded(row.confidence, 2);
     if (row.confidence < 0.75) warnings.push(`${definition.key}_low_confidence`);
   }
@@ -159,23 +204,132 @@ export function normalizeNutritionLabel(recognition: NutritionLabelRecognition):
   if (basis === "manual") warnings.push("basis_not_detected");
   if (basis === "per_serving" && !servingSizeG) warnings.push("serving_size_required");
   if (basis === "per_serving" && servingSizeG) warnings.push("basis_normalized_from_serving");
+  if (basis === "per_100ml") warnings.push("basis_per_100ml_requires_weight");
   for (const key of ["protein_g", "carbs_g", "fat_g"] as const) {
-    if (values[key] === undefined) warnings.push(`${key}_missing`);
+    if (sourceValues[key] === undefined) warnings.push(`${key}_missing`);
   }
-  if (values.energy_kcal !== undefined && values.protein_g !== undefined && values.carbs_g !== undefined && values.fat_g !== undefined) {
-    const macroEnergy = values.protein_g * 4 + values.carbs_g * 4 + values.fat_g * 9;
-    if (Math.abs(values.energy_kcal - macroEnergy) > Math.max(20, values.energy_kcal * 0.2)) {
-      warnings.push("energy_macro_mismatch");
-    }
-  }
+  const normalizationStatus = basis === "manual"
+    ? "basis_confirmation_required"
+    : basis === "per_serving" && !servingSizeG
+      ? "serving_size_required"
+      : basis === "per_100ml"
+        ? "volume_weight_required"
+      : "ready";
+  const factor = basis === "per_serving" && servingSizeG ? 100 / servingSizeG : 1;
+  const values = normalizationStatus === "ready" ? normalizedValues(sourceValues, factor, warnings) : {};
+  appendEnergyWarning(normalizationStatus === "ready" ? values : sourceValues, warnings);
 
   return {
     basis,
     servingSizeG,
+    sourceValues,
     values,
     fieldConfidence,
     warnings: [...new Set(warnings)],
+    normalizationStatus,
     ocrEngine: recognition.engine,
     ocrEngineVersion: recognition.engineVersion,
+  };
+}
+
+export function confirmNutritionLabelBasis(
+  draft: NutritionLabelDraft,
+  basis: "per_100g" | "per_serving" | "per_100ml",
+): NutritionLabelDraft {
+  if (draft.normalizationStatus !== "basis_confirmation_required") {
+    throw new Error("basis_already_confirmed");
+  }
+  const warnings = draft.warnings.filter((warning) => (
+    warning !== "basis_not_detected"
+    && warning !== "serving_size_required"
+    && warning !== "basis_normalized_from_serving"
+    && warning !== "energy_macro_mismatch"
+    && !warning.endsWith("_outside_expected_range")
+  ));
+  if (basis === "per_serving") {
+    warnings.push("serving_size_required");
+    return {
+      ...draft,
+      basis,
+      servingSizeG: null,
+      values: {},
+      warnings: [...new Set(warnings)],
+      normalizationStatus: "serving_size_required",
+    };
+  }
+  if (basis === "per_100ml") {
+    warnings.push("basis_per_100ml_requires_weight");
+    return {
+      ...draft,
+      basis,
+      servingSizeG: null,
+      values: {},
+      warnings: [...new Set(warnings)],
+      normalizationStatus: "volume_weight_required",
+    };
+  }
+  warnings.push("basis_confirmed_as_per_100g");
+  const values = normalizedValues(draft.sourceValues, 1, warnings);
+  appendEnergyWarning(values, warnings);
+  return {
+    ...draft,
+    basis,
+    servingSizeG: null,
+    values,
+    warnings: [...new Set(warnings)],
+    normalizationStatus: "ready",
+  };
+}
+
+export function convertVolumeDraftTo100g(
+  draft: NutritionLabelDraft,
+  weightGPer100ml: number,
+): NutritionLabelDraft {
+  if (
+    draft.basis !== "per_100ml"
+    || !Number.isFinite(weightGPer100ml)
+    || weightGPer100ml <= 0
+    || weightGPer100ml > 10_000
+  ) {
+    throw new Error("invalid_volume_weight");
+  }
+  const warnings = draft.warnings.filter((warning) => (
+    warning !== "basis_per_100ml_requires_weight"
+    && warning !== "energy_macro_mismatch"
+    && !warning.endsWith("_outside_expected_range")
+  ));
+  warnings.push("basis_normalized_from_100ml");
+  const values = normalizedValues(draft.sourceValues, 100 / weightGPer100ml, warnings);
+  appendEnergyWarning(values, warnings);
+  return {
+    ...draft,
+    values,
+    warnings: [...new Set(warnings)],
+    normalizationStatus: "ready",
+  };
+}
+
+export function convertServingDraftTo100g(
+  draft: NutritionLabelDraft,
+  servingSizeG: number,
+): NutritionLabelDraft {
+  if (draft.basis !== "per_serving" || !Number.isFinite(servingSizeG) || servingSizeG <= 0 || servingSizeG > 10_000) {
+    throw new Error("invalid_serving_size");
+  }
+  const warnings = draft.warnings.filter((warning) => (
+    warning !== "serving_size_required"
+    && warning !== "basis_normalized_from_serving"
+    && warning !== "energy_macro_mismatch"
+    && !warning.endsWith("_outside_expected_range")
+  ));
+  warnings.push("basis_normalized_from_serving");
+  const values = normalizedValues(draft.sourceValues, 100 / servingSizeG, warnings);
+  appendEnergyWarning(values, warnings);
+  return {
+    ...draft,
+    servingSizeG,
+    values,
+    warnings: [...new Set(warnings)],
+    normalizationStatus: "ready",
   };
 }

@@ -2,10 +2,27 @@
 {% load static %}
 
 {% block title %}Asistente nutricional{% endblock %}
-{% block body_class %}page-home page-ai-intake{% if vm.content.conversation %} page-ai-intake-chat{% endif %}{% endblock %}
+{% block body_class %}page-ai-intake{% if vm.content.conversation %} page-ai-intake-chat{% endif %}{% if assistant_credits.available_credits == 0 %} page-ai-intake-no-credits{% endif %}{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/components/ai_assistant.css' %}">{% endblock %}
 
 {% block content %}
 <div class="page home-page ai-intake-page">
+  {% if assistant_credits.available_credits == 0 %}
+    <section class="card ai-chat-credit-purchase" aria-label="Comprar créditos del Asistente">
+      <div class="ai-chat-credit-purchase__icon" aria-hidden="true">
+        <i data-lucide="sparkles"></i>
+      </div>
+      <div class="ai-chat-credit-purchase__copy">
+        <h2>No tienes créditos disponibles</h2>
+        <p>Puedes abrir y revisar tus chats. Para enviar un mensaje nuevo, agrega créditos desde los planes disponibles.</p>
+      </div>
+      <a href="{{ assistant_billing_url }}" class="home-cta home-cta--primary ai-chat-credit-purchase__action">
+        <i data-lucide="credit-card" aria-hidden="true"></i>
+        <span>Comprar créditos</span>
+      </a>
+    </section>
+  {% endif %}
+
   {% if vm.content.conversation %}
     <section class="ai-chat-shell" aria-label="Asistente nutricional conversacional">
       <div class="ai-chat-main">
@@ -13,7 +30,14 @@
           {% include "notas/_ai_chat_thread.html" %}
         </div>
 
-        <form method="post" action="{% url 'ai_nutrition_intake' %}" class="ai-chat-composer" data-ai-chat-composer>
+        <form
+          method="post"
+          action="{% url 'ai_nutrition_intake' %}"
+          class="ai-chat-composer{% if assistant_credits.available_credits == 0 %} ai-chat-composer--disabled{% endif %}"
+          data-ai-chat-composer
+          data-credit-disabled="{% if assistant_credits.available_credits == 0 %}true{% else %}false{% endif %}"
+          {% if assistant_credits.available_credits == 0 %}aria-disabled="true"{% endif %}
+        >
           {% csrf_token %}
           <input type="hidden" name="action" value="continue_conversation">
           <input type="hidden" name="is_async" value="1">
@@ -21,12 +45,11 @@
             id="ai-conversation-message"
             name="message"
             rows="1"
-            placeholder="Mensaje a MyScoope"
+            placeholder="{% if assistant_credits.available_credits == 0 %}Agrega créditos para continuar{% else %}Mensaje a MyScoope{% endif %}"
             aria-label="Responder al asistente"
-            required
-            autofocus
+            {% if assistant_credits.available_credits == 0 %}disabled{% else %}required autofocus{% endif %}
           ></textarea>
-          <button type="submit" class="ai-chat-send" aria-label="Enviar respuesta">
+          <button type="submit" class="ai-chat-send" aria-label="Enviar respuesta"{% if assistant_credits.available_credits == 0 %} disabled{% endif %}>
             <i data-lucide="arrow-up" class="ai-chat-send__icon"></i>
           </button>
         </form>
@@ -65,7 +88,7 @@
         </div>
       </div>
 
-      <form method="post" action="{% url 'ai_nutrition_intake' %}" class="ai-intake-form ai-intake-form--welcome">
+      <form method="post" action="{% url 'ai_nutrition_intake' %}" class="ai-intake-form ai-intake-form--welcome{% if assistant_credits.available_credits == 0 %} ai-intake-form--disabled{% endif %}"{% if assistant_credits.available_credits == 0 %} aria-disabled="true"{% endif %}>
         {% csrf_token %}
         <input type="hidden" name="action" value="analyze_prompt">
         <label for="ai-intake-prompt">¿En qué puedo ayudarte?</label>
@@ -73,11 +96,11 @@
           id="ai-intake-prompt"
           name="prompt"
           rows="4"
-          placeholder="Ej: Quiero perder grasa, entreno 3 veces por semana y necesito algo simple."
-          required
+          placeholder="{% if assistant_credits.available_credits == 0 %}Agrega créditos para iniciar una conversación{% else %}Ej: Quiero perder grasa, entreno 3 veces por semana y necesito algo simple.{% endif %}"
+          {% if assistant_credits.available_credits == 0 %}disabled{% else %}required{% endif %}
         >{{ vm.content.prompt }}</textarea>
         <div class="ai-intake-form__actions">
-          <button type="submit" class="home-cta home-cta--primary ai-intake-submit">
+          <button type="submit" class="home-cta home-cta--primary ai-intake-submit"{% if assistant_credits.available_credits == 0 %} disabled{% endif %}>
             <i data-lucide="send" class="btn-card-home-icon white"></i>
             <span>Iniciar conversación</span>
           </button>
@@ -113,6 +136,7 @@
 
     var textarea = composer.querySelector("textarea[name='message']");
     var sendButton = composer.querySelector("button[type='submit']");
+    var creditDisabled = composer.getAttribute("data-credit-disabled") === "true";
     if (!textarea) return;
 
     function scrollToBottom() {
@@ -140,8 +164,8 @@
     scrollToBottom();
 
     function setComposerBusy(isBusy) {
-      textarea.disabled = isBusy;
-      if (sendButton) sendButton.disabled = isBusy;
+      textarea.disabled = creditDisabled || isBusy;
+      if (sendButton) sendButton.disabled = creditDisabled || isBusy;
       composer.classList.toggle("is-sending", isBusy);
     }
 
@@ -193,6 +217,7 @@
 
     composer.addEventListener("submit", function (event) {
       event.preventDefault();
+      if (creditDisabled) return;
       var value = textarea.value.trim();
       if (!value) {
         textarea.focus();
@@ -257,6 +282,7 @@
     });
 
     textarea.addEventListener("keydown", function (event) {
+      if (creditDisabled) return;
       if (event.key !== "Enter" || event.altKey || event.shiftKey || event.isComposing) return;
       event.preventDefault();
       if (typeof composer.requestSubmit === "function") {

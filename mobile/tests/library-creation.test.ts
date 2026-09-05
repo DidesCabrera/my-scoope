@@ -45,7 +45,7 @@ test("empty drafts hide nutrition comparisons until they have comparable content
   const program = await readFile(path.resolve(process.cwd(), "src/components/libraries/program-detail-preview.tsx"), "utf8");
 
   assert.match(detail, /const isEmptyDraft = item\.is_draft && panelCount === 0/);
-  assert.match(detail, /indicators=\{isEmptyDraft \? undefined : item\.indicators\}/);
+  assert.match(detail, /const detailIndicators = isEmptyDraft \? undefined/);
   assert.match(detail, /showNutrition=\{!isEmptyDraft\}/);
   assert.match(detailPage, /showNutrition \? <NutritionKpiSection/);
   assert.match(program, /const hasPlans = filledDaysCount > 0/);

@@ -2,10 +2,14 @@ import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 
-import type { ApplePushRegistration, ReminderSettings } from "@/api/types";
+import type { ApplePushRegistration, CalendarizationStatus, ReminderSettings, TodayData } from "@/api/types";
 import { appConfig } from "@/config/app-config";
-
-const OWNER_KEY = "myscoope-calendarization";
+import {
+  LOCAL_REMINDER_OWNER,
+  localReminderEvents,
+  localReminderIdentifier,
+  shouldScheduleNativeReminders,
+} from "@/notifications/reminder-schedule";
 
 export type NativeReminderState = {
   permission: "granted" | "denied" | "undetermined" | "unavailable";
@@ -14,6 +18,15 @@ export type NativeReminderState = {
 };
 
 type AuthenticatedRequest = <T>(path: string, init?: RequestInit) => Promise<T>;
+export type NativeReminderSyncOptions = { requestPermission?: boolean };
+
+let nativeSyncQueue: Promise<void> = Promise.resolve();
+
+function serializeNativeSync<T>(work: () => Promise<T>): Promise<T> {
+  const result = nativeSyncQueue.then(work, work);
+  nativeSyncQueue = result.then(() => undefined, () => undefined);
+  return result;
+}
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -25,13 +38,15 @@ Notifications.setNotificationHandler({
 });
 
 function permissionState(status: Notifications.NotificationPermissionsStatus): NativeReminderState["permission"] {
-  if (status.granted) return "granted";
   const iosStatus = status.ios?.status;
   if (
     iosStatus === Notifications.IosAuthorizationStatus.AUTHORIZED
     || iosStatus === Notifications.IosAuthorizationStatus.PROVISIONAL
     || iosStatus === Notifications.IosAuthorizationStatus.EPHEMERAL
   ) return "granted";
+  if (iosStatus === Notifications.IosAuthorizationStatus.NOT_DETERMINED) return "undetermined";
+  if (iosStatus === Notifications.IosAuthorizationStatus.DENIED) return "denied";
+  if (status.granted) return "granted";
   if (status.canAskAgain) return "undetermined";
   return "denied";
 }
@@ -40,28 +55,26 @@ async function cancelOwnedNotifications(): Promise<void> {
   const scheduled = await Notifications.getAllScheduledNotificationsAsync();
   await Promise.all(
     scheduled
-      .filter((notification) => notification.content.data?.owner === OWNER_KEY)
+      .filter((notification) => notification.content.data?.owner === LOCAL_REMINDER_OWNER)
       .map((notification) => Notifications.cancelScheduledNotificationAsync(notification.identifier)),
   );
 }
 
 async function scheduleLocally(reminders: ReminderSettings): Promise<number> {
   await cancelOwnedNotifications();
-  const now = Date.now();
   let scheduledCount = 0;
-  for (const event of reminders.upcoming) {
-    const date = new Date(event.scheduled_for_utc);
-    if (!Number.isFinite(date.getTime()) || date.getTime() <= now + 5_000) continue;
+  for (const event of localReminderEvents(reminders)) {
     await Notifications.scheduleNotificationAsync({
+      identifier: localReminderIdentifier(event.event_key),
       content: {
         title: "My Scoope",
         body: event.event_type === "daily_plan" ? "Tu plan diario está listo" : "Es hora de tu comida planificada",
-        data: { owner: OWNER_KEY, eventKey: event.event_key, target: "/today" },
+        data: { owner: LOCAL_REMINDER_OWNER, eventKey: event.event_key, target: "/today" },
         sound: "default",
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DATE,
-        date,
+        date: event.scheduledAt,
       },
     });
     scheduledCount += 1;
@@ -82,10 +95,10 @@ async function registerWithApns(apiRequest: AuthenticatedRequest): Promise<Apple
   });
 }
 
-export async function syncNativeReminders(
+async function performNativeReminderSync(
   reminders: ReminderSettings,
   apiRequest: AuthenticatedRequest,
-  { requestPermission = false } = {},
+  { requestPermission = false }: NativeReminderSyncOptions = {},
 ): Promise<NativeReminderState> {
   if (Platform.OS !== "ios") {
     return { permission: "unavailable", deliveryMode: "none", scheduledCount: 0 };
@@ -115,4 +128,41 @@ export async function syncNativeReminders(
 
   const scheduledCount = await scheduleLocally(reminders);
   return { permission, deliveryMode: "local", scheduledCount };
+}
+
+export function syncNativeReminders(
+  reminders: ReminderSettings,
+  apiRequest: AuthenticatedRequest,
+  options: NativeReminderSyncOptions = {},
+): Promise<NativeReminderState> {
+  return serializeNativeSync(() => performNativeReminderSync(reminders, apiRequest, options));
+}
+
+export function clearNativeReminders(): Promise<NativeReminderState> {
+  return serializeNativeSync(async () => {
+    if (Platform.OS !== "ios") {
+      return { permission: "unavailable", deliveryMode: "none", scheduledCount: 0 };
+    }
+    const permission = permissionState(await Notifications.getPermissionsAsync());
+    await cancelOwnedNotifications();
+    return { permission, deliveryMode: "none", scheduledCount: 0 };
+  });
+}
+
+export function syncNativeRemindersForProgram(
+  reminders: ReminderSettings | null,
+  status: CalendarizationStatus | null,
+  apiRequest: AuthenticatedRequest,
+  options: NativeReminderSyncOptions = {},
+): Promise<NativeReminderState> {
+  if (!reminders || !shouldScheduleNativeReminders(status)) return clearNativeReminders();
+  return syncNativeReminders(reminders, apiRequest, options);
+}
+
+export async function refreshNativeReminders(
+  apiRequest: AuthenticatedRequest,
+  options: NativeReminderSyncOptions = {},
+): Promise<NativeReminderState> {
+  const today = await apiRequest<TodayData>("/api/v1/today");
+  return syncNativeRemindersForProgram(today.reminders, today.calendarization?.status ?? null, apiRequest, options);
 }

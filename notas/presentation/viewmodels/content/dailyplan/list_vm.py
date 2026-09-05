@@ -17,6 +17,7 @@ class FoodsAggregationUI:
 class MenuMealUI:
     meal_name: str
     foods: List[str]
+    hour: Optional[str] = None
     target_id: Optional[str] = None
 
 

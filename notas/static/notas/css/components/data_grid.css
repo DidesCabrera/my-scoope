@@ -490,15 +490,6 @@ body.is-mealfood-sorting .js-mealfood-sortable-row {
     line-height: 1.35;
 }
 
-.data-grid--menu .data-grid-meal-hour {
-    font-size: 12px;
-    line-height: 1.1;
-    font-weight: 400;
-    opacity: 0.75;
-    padding-left: 4px;
-    padding-right: 4px;
-}
-
 /* =========================================================
    Theme overrides
    ========================================================= */
@@ -553,8 +544,7 @@ body.is-mealfood-sorting .js-mealfood-sortable-row {
 .meal-row-mobile-kcal,
 .meal-row-mobile-macro,
 .data-grid-mobile-chip,
-.data-grid-mobile-macro,
-.data-grid-meal-hour {
+.data-grid-mobile-macro {
     color: var(--text-muted);
 }
 

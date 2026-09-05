@@ -13,6 +13,7 @@ import { PickerEntryTabs } from "@/components/pickers/picker-entry-tabs";
 import { ConfirmationState, EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
 import { Button, Card, ChoiceRow, Field, LoadingState, Screen, SectionHeading } from "@/components/ui";
 import { tokens } from "@/design/tokens";
+import { refreshNativeReminders } from "@/notifications/native-reminders";
 
 type Toggle = "on" | "off";
 type Confirmation = { kind: "incomplete" | "replacement"; message: string } | null;
@@ -156,6 +157,12 @@ export default function ActivateProgramScreen() {
         replace_current: confirmation?.kind === "replacement" || Boolean(overrides.replace_current),
       };
       await apiRequest<CalendarizationActivationData>("/api/v1/program/calendarizations", { method: "POST", body: JSON.stringify(payload) });
+      try {
+        await refreshNativeReminders(apiRequest, { requestPermission: daily === "on" || meals === "on" });
+      } catch {
+        router.replace("/reminders" as Href);
+        return;
+      }
       router.replace("/program" as Href);
     } catch (nextError) {
       if (nextError instanceof MobileApiError && nextError.code === "calendarization_incomplete_confirmation_required") {

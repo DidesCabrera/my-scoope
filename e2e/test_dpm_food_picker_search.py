@@ -10,10 +10,10 @@ def test_dpm_food_picker_shows_results_when_typing(page, dpm_deepedit_url, ui_se
 
     food_search.wait_for()
     assert food_search.is_visible()
-    assert not food_list.is_visible()
 
     food_search.fill("Pechuga Pollo Cocida")
 
     ui_settle(page)
 
     assert food_list.is_visible(), "La lista no se mostró después de escribir en el buscador"
+    assert food_list.locator("li").count() > 0, "La búsqueda no devolvió alimentos seleccionables"

@@ -1,7 +1,7 @@
 # Project State - My Scoope
 
 Status: current
-Last updated: 2026-08-05
+Last updated: 2026-08-31
 Audience: developers and AI assistants
 
 ## What My Scoope is
@@ -42,6 +42,7 @@ My Scoope is past the first architecture-expansion phase. The current priority i
 | `admin_analytics` | Strategic, read-first product intelligence dashboard for staff. |
 | `admin_operations` | Operational staff console for action-oriented workflows, separated from strategic analytics and raw Django Admin. |
 | `core` | Cross-cutting technical concerns such as rate limits, shared contracts and regression boot checks. |
+| `mobile_api` | Stable `/api/v1/` facade for consumer clients; route ownership is classified by product domain while extraction proceeds behind the public contract. |
 
 ## Current architecture principles
 
@@ -59,6 +60,9 @@ My Scoope is past the first architecture-expansion phase. The current priority i
 - External payment evidence and tax-document lifecycle belong to `billing`; verified outcomes project into `accounts`, which remains the entitlement source of truth.
 - Cross-app dependencies, transitional adapters and production module cycles are
   executable quality contracts rather than informal conventions.
+- Mobile API domains move vertically into `routes/`, `schema_domains/` and focused
+  endpoint tests while `api.py` remains the composition root; Comparisons is the
+  reference pattern and moved operation IDs are pinned to prevent OpenAPI drift.
 - Admin Operations services, selectors and view models are owned by operational
   domain. Food Catalog remains its principal and intentionally broad domain surface.
 - Food Catalog is the master/curation layer; operational `notas.Food` remains the runtime snapshot consumed by existing flows.
@@ -77,6 +81,13 @@ The current testing baseline is intentionally pragmatic:
 - avoid brittle tests that lock CSS classes, exact HTML structure, decorative copy or component counts.
 
 CI should reduce manual testing of technical boot issues. Manual testing remains important for product experience, mobile behavior, OAuth provider behavior and staging sanity checks.
+
+The current executable quality baseline includes `mobile_api` in branch coverage,
+enforces a 75% repository minimum, audits Python and npm dependencies, and rejects
+growth in reviewed module-size, mobile source-inspection and Python-complexity debt.
+High-value mobile reads also carry bounded query-count tests. Exact budgets are
+transitional ceilings: when code improves, lower the budget rather than consuming
+the recovered allowance.
 
 For visual-only, copy-only or docs-only changes, avoid unnecessary full-suite churn:
 keep the patch narrow, document why local full tests were skipped, use the
@@ -106,6 +117,18 @@ When a plan becomes real, durable outcomes should be promoted into `docs/00_curr
 
 ## Recently closed baselines
 
+- Mobile API Domain Decomposition MADD00-MADD07: all product routes, schemas and
+  endpoint behavior tests now have vertical domain homes while `/api/v1/` and its
+  generated OpenAPI remain unchanged. `api.py` fell from 1,544 to 69 lines,
+  `schemas.py` from 1,249 to 207 and `test_api_v1.py` from 2,055 to 87; 1,812
+  Django tests pass with 78% branch coverage. `selectors.py` remains an explicit,
+  budgeted shared read-model boundary rather than being split without ownership gain.
+- Code Quality Consolidation CQC00-CQC08: `staging` now triggers the complete
+  workflow, 1,809 Django tests produce 78% branch coverage including `mobile_api`,
+  46 mobile tests include behavioral comparator state coverage, and dependency,
+  query, module-size, source-inspection, typing and complexity ratchets are
+  executable. Seven SDK 57 transitive npm advisories remain explicitly budgeted;
+  PostgreSQL CI and physical iOS/staging checks remain external gates.
 - Consumer Mobile Launch CML00-CML01 repository baseline: the B2C consumer and
   mobile MVP are explicit; all Django Render processes share one generated
   runtime secret; frontend bundle drift is rejected by CI; and users can delete

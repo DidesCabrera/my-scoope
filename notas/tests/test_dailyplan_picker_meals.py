@@ -141,9 +141,16 @@ class DailyPlanMealPickerTests(TestCase):
         browse_meals = payload["browse_meals"]
         browse_ids = [meal["id"] for meal in browse_meals]
         browse_names = [meal["name"] for meal in browse_meals]
+        selected_payload = next(
+            meal for meal in browse_meals if meal["id"] == self.library_meal.id
+        )
 
         self.assertIn(self.library_meal.id, browse_ids)
         self.assertIn("Visible meal", browse_names)
+        self.assertEqual(
+            selected_payload["detail_url"],
+            reverse("meal_detail", args=[self.library_meal.id]),
+        )
 
     def test_dailyplan_detail_picker_existing_meals_includes_dailyplan_meals(self):
         self.dpm_meal = Meal.objects.create(
@@ -155,7 +162,7 @@ class DailyPlanMealPickerTests(TestCase):
             is_copiable=False,
         )
 
-        DailyPlanMeal.objects.create(
+        dailyplan_meal = DailyPlanMeal.objects.create(
             dailyplan=self.dailyplan,
             meal=self.dpm_meal,
             order=1,
@@ -173,3 +180,18 @@ class DailyPlanMealPickerTests(TestCase):
         existing_names = [meal["name"] for meal in existing_meals]
 
         self.assertIn("DPM meal", existing_names)
+
+        picker_context = json.loads(response.context["meal_picker_context"])
+        self.assertEqual(picker_context["dailyplan"]["name"], self.dailyplan.name)
+        self.assertEqual(picker_context["dailyplan"]["owner"], self.user.username)
+        projected_meal = picker_context["dailyplan"]["meals"][0]
+        self.assertEqual(projected_meal["dailyplanmeal_id"], dailyplan_meal.id)
+        self.assertEqual(projected_meal["meal_id"], self.dpm_meal.id)
+        self.assertEqual(projected_meal["name"], "DPM meal")
+        self.assertEqual(projected_meal["hour"], "")
+        self.assertEqual(projected_meal["note"], "")
+        self.assertEqual(projected_meal["protein"], 0)
+        self.assertEqual(projected_meal["carbs"], 0)
+        self.assertEqual(projected_meal["fat"], 0)
+        self.assertEqual(projected_meal["total_kcal"], 0)
+        self.assertEqual(projected_meal["foods"], [])

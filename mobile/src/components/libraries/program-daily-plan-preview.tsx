@@ -77,6 +77,7 @@ function mealPanelItem(item: NonNullable<LibraryWeekPanelItem["days"][number]["m
     id: item.id,
     canOpen: true,
     detailId: item.detail_id,
+    relationId: item.relation_id,
     name: item.name,
     proteinAllocation: item.protein_allocation,
     proteinGrams: item.protein_grams,
@@ -139,7 +140,7 @@ export function ProgramDailyPlanPreview({ day, dayLabel, onRemove, onReplace, we
         items={day ? (day.meals ?? []).map(mealPanelItem) : meals}
         onOpenItem={(meal) => {
           if (meal.detailId == null) return;
-          router.push(`/libraries/meals/${meal.detailId}` as Href);
+          router.push({ pathname: "/libraries/meals/[id]", params: { dailyPlanId: String(day?.dailyplan_id ?? ""), dailyPlanMealId: String(meal.relationId ?? ""), id: String(meal.detailId), mealTime: meal.time ?? "" } } as Href);
         }}
       />
     </NutritionEntityCard>

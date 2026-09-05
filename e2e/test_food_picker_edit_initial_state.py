@@ -11,7 +11,7 @@ def test_food_picker_edit_initial_state(page, meal_edit_url, ui_settle, open_foo
     quantity_input = page.locator("#food-quantity")
     form_preview = page.locator("#form-preview")
 
-    form_title.wait_for()
+    form_title.wait_for(state="attached")
 
     assert form_title.text_content().strip() == "Agrega un Alimento"
     assert not food_preview.is_visible()

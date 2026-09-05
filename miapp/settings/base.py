@@ -305,7 +305,7 @@ AI_ASSISTANT_USAGE_OBSERVABILITY_ENABLED = os.environ.get(
 ).strip().lower() in {"1", "true", "yes", "on"}
 AI_ASSISTANT_LLM_DEFAULT_PRICING_USD_PER_1M_TOKENS = {
     "openai": {
-        "gpt-5.6-sol": {"input": "5.00", "cached_input": "0.50", "output": "30.00"},
+        "gpt-5.6-sol": {"input": "4.00", "cached_input": "0.40", "output": "20.00"},
         "gpt-5.6-terra": {"input": "2.00", "cached_input": "0.20", "output": "12.00"},
         "gpt-5.6-luna": {"input": "0.20", "cached_input": "0.02", "output": "1.20"},
         "gpt-5.4-mini": {"input": "0.75", "cached_input": "0.075", "output": "4.50"},
@@ -410,6 +410,18 @@ AI_ASSISTANT_CREDIT_PLAN_ALIASES = {
 }
 AI_ASSISTANT_ACTION_CREDIT_MULTIPLIERS = {}
 
+# Nutrition-label scans have one predictable commercial price. Provider model
+# escalation is an internal quality/cost decision and never changes this charge.
+NUTRITION_LABEL_AI_CREDITS_PER_SCAN = _env_int("NUTRITION_LABEL_AI_CREDITS_PER_SCAN", 2)
+NUTRITION_LABEL_AI_PRIMARY_MODEL = os.environ.get(
+    "NUTRITION_LABEL_AI_PRIMARY_MODEL", "gpt-5.6-luna"
+).strip()
+NUTRITION_LABEL_AI_ESCALATION_MODEL = os.environ.get(
+    "NUTRITION_LABEL_AI_ESCALATION_MODEL", "gpt-5.6-sol"
+).strip()
+NUTRITION_LABEL_AI_TIMEOUT_SECONDS = _env_int("NUTRITION_LABEL_AI_TIMEOUT_SECONDS", 30)
+NUTRITION_LABEL_AI_MAX_IMAGE_BYTES = _env_int("NUTRITION_LABEL_AI_MAX_IMAGE_BYTES", 1_500_000)
+
 # Slow LLM turns run through a PostgreSQL-owned durable queue in production.
 # Redis is only a worker wake-up channel; false remains the local rollback mode.
 AI_ASSISTANT_ASYNC_ENABLED = os.environ.get(
@@ -458,6 +470,10 @@ RATE_LIMIT_AI_ASSISTANT_TURN_USER = os.environ.get(
 RATE_LIMIT_AI_ASSISTANT_TURN_IP = os.environ.get(
     "RATE_LIMIT_AI_ASSISTANT_TURN_IP",
     "5/h",
+).strip()
+RATE_LIMIT_NUTRITION_LABEL_SCAN_USER = os.environ.get(
+    "RATE_LIMIT_NUTRITION_LABEL_SCAN_USER",
+    "10/h",
 ).strip()
 
 

@@ -36,6 +36,8 @@ Esta carpeta contiene documentación vigente y de alta autoridad. Una IA o desar
 28. `features/billing.md`, `../10_active_cycles/billing_payments_tax_documents_cycle.md`
     y `../20_decisions/0154-billing-payment-tax-boundary.md` cuando el trabajo toque
     planes pagados, Mercado Pago, OpenFactura, webhooks, conciliación o DTE.
+29. `features/mobile_composition_pickers.md` cuando el trabajo toque los flujos
+    nativos de agregar/reemplazar Food, Meal o DailyPlan y sus proyecciones.
 
 ## Criterio
 

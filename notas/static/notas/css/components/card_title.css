@@ -118,6 +118,10 @@ background-color: var(--entity-food);
 background-color: var(--entity-program);
 }
 
+.structural-item--time .structural-value {
+font-variant-numeric: tabular-nums;
+}
+
 .card-title-comp h3 {
 margin: 0;
 margin-bottom: 6px;
@@ -358,6 +362,15 @@ color: #ffffff;
 background: var(--structural-entity-color);
 border-radius: 6px;
 padding: 0.28rem 0.48rem;
+}
+
+.main-title > .structural-indicators .structural-item--time,
+.entity-heading__main.main-title > .structural-indicators .structural-item--time,
+.main-title > .entity-heading__indicator-row > .structural-indicators .structural-item--time,
+.main-title.main-card > .entity-heading__indicator-row > .structural-indicators .structural-item--time {
+color: var(--text-main);
+background: var(--surface-card);
+border: 1px solid var(--border-soft);
 }
 
 .completion-indicators,

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -8,10 +9,10 @@ class MobileAPIError(Exception):
     code: str
     message: str
     status_code: int = 400
-    details: dict = field(default_factory=dict)
+    details: dict[str, Any] = field(default_factory=dict)
 
 
-def error_envelope(error: MobileAPIError) -> dict:
+def error_envelope(error: MobileAPIError) -> dict[str, Any]:
     return {
         "ok": False,
         "data": {},

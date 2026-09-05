@@ -256,7 +256,7 @@ def build_dailyplan_detail_content_data(
                 "foods_aggregation": meal_foods_aggregation,
                 "related_data": {
                     "rel_id": dpm.id,
-                    "hour": str(dpm.hour) if dpm.hour else None,
+                    "hour": dpm.hour.strftime("%H:%M") if dpm.hour else None,
                     "note": dpm.note,
                     "alloc_protein": meal_alloc["protein"],
                     "alloc_carbs": meal_alloc["carbs"],
@@ -266,6 +266,7 @@ def build_dailyplan_detail_content_data(
                     "name": meal.name,
                     "label": "Meal",
                     "icon": CONTENT_ICON_REGISTRY.get("meal"),
+                    "hour": dpm.hour.strftime("%H:%M") if dpm.hour else None,
                     "category": "en plan",
                     "category_badge": resolve_category_badge("en plan"),
                     "foods_count": len(meal_foods_aggregation),

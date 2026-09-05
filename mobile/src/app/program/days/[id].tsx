@@ -6,6 +6,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-nat
 import { userFacingError } from "@/api/errors";
 import type { CalendarizedDayDetail, MealExecutionItem, MealSnapshot } from "@/api/types";
 import { useSession } from "@/auth/session-context";
+import { CalendarizedEntityActions } from "@/components/calendarization/calendarized-entity-actions";
 import { snapshotAllocation, snapshotCalories, snapshotDailyPlanFoodPanelItems, snapshotFoodPanelItems, snapshotMealPanelItem } from "@/components/calendarization/presentation-adapters";
 import { EntityDetailPage, EntityDetailSection } from "@/components/details";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
@@ -53,14 +54,16 @@ function CalendarizedMealCards({ dayId, mealExecution, meals }: { dayId: number;
               }}
               entity="meal"
               eyebrow={`Comida ${index + 1}`}
-              indicators={[{ icon: "food", label: "alimentos", value: foods.length }]}
+              indicators={[
+                { icon: "food", label: "alimentos", value: foods.length },
+                ...(meal.hour ? [{ icon: "clock" as const, iconPosition: "leading" as const, label: "hora", tone: "surfaceCard" as const, value: meal.hour.slice(0, 5) }] : []),
+              ]}
               nutrition={{
                 calories: snapshotCalories(totals),
                 carbs: { allocation: snapshotAllocation(totals, "carbs_g"), grams: totals?.carbs_g ?? 0 },
                 fat: { allocation: snapshotAllocation(totals, "fat_g"), grams: totals?.fat_g ?? 0 },
                 protein: { allocation: snapshotAllocation(totals, "protein_g"), grams: totals?.protein_g ?? 0, perKilogram: totals?.protein_per_kilogram ?? null },
               }}
-              subtitle={meal.hour?.slice(0, 5)}
               title={meal.name ?? "Comida"}>
               <FoodPanels items={foods} />
             </NutritionEntityCard>
@@ -78,6 +81,7 @@ export default function ProgramDayScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
+  const [actionsVisible, setActionsVisible] = useState(false);
   const setHeaderPresentation = useHeaderPresentation();
 
   const load = useCallback(async () => {
@@ -95,9 +99,15 @@ export default function ProgramDayScreen() {
 
   useFocusEffect(useCallback(() => { if (status === "authenticated") void load(); }, [load, status]));
   useFocusEffect(useCallback(() => {
-    setHeaderPresentation({ mode: "library-detail", entity: "dailyPlan", identityVisible: compactHeaderVisible, title: day?.plan_snapshot?.name ?? day?.plan_name ?? "Detalle del día" });
+    setHeaderPresentation({
+      mode: "library-detail",
+      action: day?.has_plan ? { label: `Más acciones para ${day.plan_snapshot?.name ?? day.plan_name ?? "este plan"}`, onPress: () => setActionsVisible(true) } : undefined,
+      entity: "dailyPlan",
+      identityVisible: compactHeaderVisible,
+      title: day?.plan_snapshot?.name ?? day?.plan_name ?? "Detalle del día",
+    });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [compactHeaderVisible, day?.plan_name, day?.plan_snapshot?.name, setHeaderPresentation]));
+  }, [compactHeaderVisible, day, setHeaderPresentation]));
 
   if (status === "anonymous") return <Redirect href="/login" />;
   if (loading && !day) return <View style={styles.loading}><ActivityIndicator color={tokens.color.interactivePrimary} size="large" /><Text style={textStyles.muted}>Abriendo el día…</Text></View>;
@@ -111,6 +121,7 @@ export default function ProgramDayScreen() {
   const foods = snapshotDailyPlanFoodPanelItems(meals);
 
   return (
+    <>
     <ScrollView
       contentContainerStyle={styles.content}
       onScroll={({ nativeEvent }) => { const visible = nativeEvent.contentOffset.y > 1; if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible); }}
@@ -163,6 +174,21 @@ export default function ProgramDayScreen() {
       )}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
     </ScrollView>
+    <CalendarizedEntityActions
+      entityName={snapshot?.name ?? day.plan_name ?? "Plan diario"}
+      onVisibleChange={setActionsVisible}
+      rename={{
+        onSubmit: async (name) => {
+          setDay(await apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${day.id}`, {
+            body: JSON.stringify({ name }),
+            headers: { "Content-Type": "application/json" },
+            method: "PATCH",
+          }));
+        },
+      }}
+      visible={actionsVisible}
+    />
+    </>
   );
 }
 

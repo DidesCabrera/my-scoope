@@ -10,6 +10,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_GET, require_POST
 
 from notas.application.queries.calendarization_execution_queries import (
@@ -28,8 +29,11 @@ from notas.application.services.commands.calendarization_commands import (
     deactivate_web_push_subscription,
     pause_calendarization,
     register_web_push_subscription,
+    rename_calendarized_day_plan,
+    rename_calendarized_meal,
     resume_calendarization,
     update_calendarization_preferences,
+    update_calendarized_meal_hour,
 )
 from notas.application.services.commands.calendarization_execution_commands import (
     record_meal_execution,
@@ -39,12 +43,16 @@ from notas.interface.forms.calendarization_forms import (
     CalendarizationActivationForm,
     CalendarizationPreferencesForm,
 )
+from notas.interface.forms.meal_time_forms import MealTimeChangeForm
 from notas.presentation.composition.viewmodel.components.builder_headers import build_page_header
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
 from notas.presentation.config.viewmodel_config import (
     CALENDARIZATION_VIEWMODE_DASHBOARD,
     CALENDARIZATION_VIEWMODE_DAY_DETAIL,
     CALENDARIZATION_VIEWMODE_HISTORY,
+)
+from notas.presentation.pages.calendarized_dailyplan import (
+    build_calendarized_dailyplan_detail,
 )
 from notas.presentation.pages.calendarized_meal import build_calendarized_meal_detail
 from notas.presentation.pages.home_calendarization import build_home_calendarization_vm
@@ -63,7 +71,16 @@ def _context(viewmode, content):
     return {"vm": {"ui": asdict(ui), "content": content}}
 
 
-def _header(*, history=False):
+def _can_check_in_today(day) -> bool:
+    calendarization = day.calendarization
+    today = today_for_calendarization(calendarization)
+    return day.calendar_date == today and calendarization.status in {
+        calendarization.STATUS_SCHEDULED,
+        calendarization.STATUS_ACTIVE,
+    }
+
+
+def _header(*, history=False, extra_actions=None):
     action = {
         "key": "calendarization_dashboard" if history else "calendarization_history",
         "label": "Calendarizador" if history else "Historial",
@@ -73,7 +90,7 @@ def _header(*, history=False):
         "mobile_position": "menu",
         "url": reverse("calendarization_dashboard" if history else "calendarization_history"),
     }
-    return asdict(build_page_header(actions=[action]))
+    return asdict(build_page_header(actions=[action, *(extra_actions or [])]))
 
 
 @login_required
@@ -214,39 +231,69 @@ def day_detail(request, day_id):
     day = calendarized_day_for_user(request.user, day_id)
     if day is None:
         raise Http404("Día calendarizado no encontrado")
-    execution = meal_execution_state_for_day(day) if day.has_plan else []
-    state_by_key = {item["meal_key"]: item for item in execution}
-    meals = []
-    for meal in (day.plan_snapshot or {}).get("meals", []):
-        if not isinstance(meal, dict):
-            continue
-        meal_key = meal.get("key") or ""
-        meal_state = state_by_key.get(meal_key, {"status": "planned", "note": ""})
-        meals.append(
-            {
-                **meal,
-                "detail_url": reverse(
-                    "calendarization_meal_detail",
-                    args=[day.id, meal_key],
-                )
-                if meal_key
-                else None,
-                "completed": meal_state["status"] == "completed",
-                "has_note": bool(meal_state["note"].strip()),
-            }
+    rename_action = {
+        "key": "rename",
+        "label": "Renombrar",
+        "method": "get",
+        "icon": "pencil",
+        "desktop_position": "menu",
+        "mobile_position": "menu",
+        "url": reverse("calendarization_day_rename", args=[day.id]),
+    }
+    header = _header(extra_actions=[rename_action])
+    content = {
+        "header": header,
+        "day": day,
+    }
+    if day.has_plan:
+        detail = build_calendarized_dailyplan_detail(
+            day=day,
+            user=request.user,
+            header=header,
         )
+        execution = meal_execution_state_for_day(day)
+        state_by_key = {item["meal_key"]: item for item in execution}
+        can_check_in = _can_check_in_today(day)
+        return_to = reverse("calendarization_day_detail", args=[day.id])
+        meal_entries = []
+        for index, (meal, child_card) in enumerate(
+            zip(detail["calendarized_meals"], detail["child_cards"]),
+            start=1,
+        ):
+            meal_key = meal["key"]
+            state = state_by_key.get(
+                meal_key,
+                {"status": "planned", "note": "", "recorded_at": None},
+            )
+            note = str(state.get("note") or "")
+            meal_entries.append(
+                {
+                    "card": child_card,
+                    "checkin": {
+                        "day": day,
+                        "meal": meal,
+                        "execution": {**state, "note": note},
+                        "completed": state.get("status") == "completed",
+                        "has_note": bool(note.strip()),
+                        "instance_id": f"{day.id}-{index}",
+                        "status_idempotency_key": f"web-day-meal-status-{uuid.uuid4()}",
+                        "note_idempotency_key": f"web-day-meal-note-{uuid.uuid4()}",
+                        "return_to": return_to,
+                    }
+                    if can_check_in and meal_key
+                    else None,
+                }
+            )
+        content.update(detail)
+        content["day"] = day
+        content["meal_entries"] = meal_entries
+
     return render(
         request,
         "notas/calendarization/day_detail.html",
         _context(
             CALENDARIZATION_VIEWMODE_DAY_DETAIL,
-            {
-                "header": _header(),
-                "day": day,
-                "meals": meals,
-                "completed_meals_count": sum(item["completed"] for item in meals),
-                "noted_meals_count": sum(item["has_note"] for item in meals),
-            },
+            content,
         ),
     )
 
@@ -264,20 +311,179 @@ def meal_detail(request, day_id, meal_snapshot_key):
     )
     if detail is None:
         raise Http404("Comida calendarizada no encontrada")
-    detail["can_check_in"] = (
-        day.calendarization.status == day.calendarization.STATUS_ACTIVE
-        and day.calendar_date == today_for_calendarization(day.calendarization)
-    )
+    detail["can_check_in"] = _can_check_in_today(day)
     detail["status_idempotency_key"] = f"web-meal-status-{uuid.uuid4()}"
     detail["note_idempotency_key"] = f"web-meal-note-{uuid.uuid4()}"
+    detail["instance_id"] = f"{day.id}-detail"
+    change_time_action = {
+        "key": "change_time",
+        "label": "Cambiar hora",
+        "method": "get",
+        "icon": "clock-3",
+        "desktop_position": "menu",
+        "mobile_position": "menu",
+        "url": reverse(
+            "calendarization_meal_change_time",
+            args=[day.id, meal_snapshot_key],
+        ),
+    }
+    rename_action = {
+        "key": "rename",
+        "label": "Renombrar",
+        "method": "get",
+        "icon": "pencil",
+        "desktop_position": "menu",
+        "mobile_position": "menu",
+        "url": reverse(
+            "calendarization_meal_rename",
+            args=[day.id, meal_snapshot_key],
+        ),
+    }
     return render(
         request,
         "notas/calendarization/meal_detail.html",
         _context(
             CALENDARIZATION_VIEWMODE_DAY_DETAIL,
-            {"header": _header(), "meal_detail": detail},
+            {
+                "header": _header(extra_actions=[rename_action, change_time_action]),
+                "meal_detail": detail,
+            },
         ),
     )
+
+
+@login_required
+def day_rename(request, day_id):
+    day = calendarized_day_for_user(request.user, day_id)
+    if day is None or not day.has_plan:
+        raise Http404("Día calendarizado no encontrado")
+    detail_url = reverse("calendarization_day_detail", args=[day.id])
+    current_name = (day.plan_snapshot or {}).get("name", "")
+
+    if request.method == "POST":
+        try:
+            rename_calendarized_day_plan(
+                user=request.user,
+                day_id=day.id,
+                name=request.POST.get("name", ""),
+            )
+        except ValueError as exc:
+            if str(exc) == "calendarized_day_not_found":
+                raise Http404("Día calendarizado no encontrado") from exc
+            messages.error(request, "El nombre no puede estar vacío.")
+        else:
+            messages.success(request, "Nombre del plan activo actualizado.")
+            return redirect(detail_url)
+
+    return render(
+        request,
+        "notas/calendarization/snapshot_rename.html",
+        {
+            "title": "Renombrar plan activo",
+            "current_name": current_name,
+            "cancel_url": detail_url,
+            "entity_icon": "clipboard-list",
+            "entity_class": "dailyplan",
+        },
+    )
+
+
+@login_required
+def meal_rename(request, day_id, meal_snapshot_key):
+    day = calendarized_day_for_user(request.user, day_id)
+    if day is None:
+        raise Http404("Día calendarizado no encontrado")
+    detail = build_calendarized_meal_detail(
+        day=day,
+        meal_snapshot_key=meal_snapshot_key,
+        user=request.user,
+    )
+    if detail is None:
+        raise Http404("Comida calendarizada no encontrada")
+    detail_url = reverse(
+        "calendarization_meal_detail",
+        args=[day.id, meal_snapshot_key],
+    )
+
+    if request.method == "POST":
+        try:
+            rename_calendarized_meal(
+                user=request.user,
+                day_id=day.id,
+                meal_snapshot_key=meal_snapshot_key,
+                name=request.POST.get("name", ""),
+            )
+        except ValueError as exc:
+            if str(exc) in {"calendarized_day_not_found", "meal_snapshot_key_invalid"}:
+                raise Http404("Comida calendarizada no encontrada") from exc
+            messages.error(request, "El nombre no puede estar vacío.")
+        else:
+            messages.success(request, "Nombre de la comida activa actualizado.")
+            return redirect(detail_url)
+
+    return render(
+        request,
+        "notas/calendarization/snapshot_rename.html",
+        {
+            "title": "Renombrar comida activa",
+            "current_name": detail["meal"].get("name", ""),
+            "cancel_url": detail_url,
+            "entity_icon": "utensils",
+            "entity_class": "meal",
+        },
+    )
+
+
+@login_required
+def meal_change_time(request, day_id, meal_snapshot_key):
+    day = calendarized_day_for_user(request.user, day_id)
+    if day is None:
+        raise Http404("Día calendarizado no encontrado")
+    detail = build_calendarized_meal_detail(
+        day=day,
+        meal_snapshot_key=meal_snapshot_key,
+        user=request.user,
+    )
+    if detail is None:
+        raise Http404("Comida calendarizada no encontrada")
+    detail_url = reverse(
+        "calendarization_meal_detail",
+        args=[day_id, meal_snapshot_key],
+    )
+    form = MealTimeChangeForm(
+        request.POST or None,
+        initial={"hour": detail["meal"].get("hour") or None},
+    )
+
+    if request.method == "POST" and form.is_valid():
+        try:
+            update_calendarized_meal_hour(
+                user=request.user,
+                day_id=day_id,
+                meal_snapshot_key=meal_snapshot_key,
+                hour=form.cleaned_data["hour"],
+            )
+        except ValueError as exc:
+            if str(exc) in {"calendarized_day_not_found", "meal_snapshot_key_invalid"}:
+                raise Http404("Comida calendarizada no encontrada") from exc
+            messages.error(request, "No fue posible guardar la nueva hora.")
+        else:
+            messages.success(request, "Hora de la comida actualizada.")
+            return redirect(detail_url)
+
+    context = _context(
+        CALENDARIZATION_VIEWMODE_DAY_DETAIL,
+        {
+            "header": asdict(build_page_header()),
+            "title": "Cambiar hora",
+            "description": "El cambio se aplicará a esta comida del plan activo y actualizará su recordatorio.",
+            "cancel_url": detail_url,
+        },
+    )
+    context["vm"]["ui"]["back_url"] = detail_url
+    context["vm"]["ui"]["title"] = "Cambiar hora"
+    context["form"] = form
+    return render(request, "notas/time_change.html", context)
 
 
 @login_required
@@ -302,6 +508,13 @@ def meal_check_in(request, day_id, meal_snapshot_key):
             request,
             "No fue posible actualizar el cumplimiento de esta comida.",
         )
+    return_to = request.POST.get("return_to", "").strip()
+    if return_to and url_has_allowed_host_and_scheme(
+        return_to,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return redirect(return_to)
     return redirect(
         "calendarization_meal_detail",
         day_id=day_id,

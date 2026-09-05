@@ -9,7 +9,7 @@ class FoodLabelCaptureTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="label-capture-user")
 
-    def test_confirmation_persists_normalized_values_without_raw_ocr_or_image(self):
+    def test_confirmation_persists_normalized_values_without_raw_ocr_or_image_by_default(self):
         result = create_food_from_label_capture(
             user=self.user,
             name="  Avena de etiqueta  ",
@@ -35,7 +35,7 @@ class FoodLabelCaptureTests(TestCase):
         self.assertEqual(result.receipt.food, result.food)
         self.assertEqual(result.receipt.field_confidence, {"protein_g": 0.91})
         self.assertFalse(hasattr(result.receipt, "raw_text"))
-        self.assertFalse(hasattr(result.receipt, "image"))
+        self.assertIsNone(result.receipt.retained_label_image)
 
     def test_invalid_or_unconfirmed_input_creates_nothing(self):
         with self.assertRaisesMessage(ValueError, "food_label_protein_invalid"):
@@ -69,6 +69,55 @@ class FoodLabelCaptureTests(TestCase):
 
         self.assertFalse(Food.objects.exists())
         self.assertFalse(FoodLabelCaptureReceipt.objects.exists())
+
+    def test_per_serving_capture_requires_a_serving_weight(self):
+        with self.assertRaisesMessage(ValueError, "food_label_serving_size_required"):
+            create_food_from_label_capture(
+                user=self.user,
+                name="Porción sin peso",
+                protein_g=10,
+                carbs_g=20,
+                fat_g=5,
+                detected_basis="per_serving",
+                ocr_engine="apple_vision",
+                idempotency_key="label-service-0005",
+            )
+
+        self.assertFalse(Food.objects.exists())
+        self.assertFalse(FoodLabelCaptureReceipt.objects.exists())
+
+    def test_per_100ml_capture_requires_a_conversion_weight(self):
+        with self.assertRaisesMessage(ValueError, "food_label_volume_weight_required"):
+            create_food_from_label_capture(
+                user=self.user,
+                name="Bebida sin densidad",
+                protein_g=3,
+                carbs_g=5,
+                fat_g=2,
+                detected_basis="per_100ml",
+                ocr_engine="openai_responses",
+                idempotency_key="label-service-per-100ml-missing",
+            )
+
+        self.assertFalse(Food.objects.exists())
+        self.assertFalse(FoodLabelCaptureReceipt.objects.exists())
+
+    def test_per_100ml_capture_persists_the_explicit_conversion_weight(self):
+        result = create_food_from_label_capture(
+            user=self.user,
+            name="Leche convertida",
+            protein_g=3.204,
+            carbs_g=4.854,
+            fat_g=1.942,
+            volume_weight_g_per_100ml=103,
+            detected_basis="per_100ml",
+            ocr_engine="openai_responses",
+            idempotency_key="label-service-per-100ml-converted",
+        )
+
+        self.assertEqual(float(result.food.protein), 3.204)
+        self.assertEqual(result.receipt.detected_basis, "per_100ml")
+        self.assertEqual(float(result.receipt.volume_weight_g_per_100ml), 103)
 
     def test_another_user_cannot_replay_a_capture_key(self):
         create_food_from_label_capture(

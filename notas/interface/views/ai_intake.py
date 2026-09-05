@@ -9,6 +9,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 
+from accounts.services.profile import build_account_credit_display
 from ai_assistant.application.async_jobs import AsyncJobContractError, async_jobs_enabled
 from ai_assistant.application.chat_engines import ChatEngineRequest
 from ai_assistant.application.prepared_actions import (
@@ -67,7 +68,6 @@ from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
 from notas.presentation.config.viewmodel_config import (
     CHAT_VIEWMODE_DETAIL,
     CHAT_VIEWMODE_LIST,
-    HOME_VIEWMODE,
 )
 from notas.presentation.pages.ai_intake_page import (
     append_generated_plan_message,
@@ -79,6 +79,13 @@ from notas.presentation.pages.ai_intake_page import (
 from notas.presentation.viewmodels.base_vm import BaseVM
 
 AI_NUTRITION_PENDING_JOB_SESSION_KEY = "ai_nutrition_pending_job_id"
+
+
+def _assistant_credit_context(user) -> dict:
+    return {
+        "assistant_credits": build_account_credit_display(user),
+        "assistant_billing_url": reverse("billing:overview"),
+    }
 
 
 def _continue_chat_with_active_engine(*, request, message: str, existing_payload=None, existing_chat_id=None):
@@ -534,15 +541,20 @@ def ai_nutrition_intake(request):
     elif not result and prompt:
         result = build_intake_result(prompt)
 
+    active_chat = _get_active_chat(request)
     content_vm = build_intake_content(
         result=result,
         conversation=conversation,
         prompt=prompt,
-        active_chat=_get_active_chat(request),
+        active_chat=active_chat,
     )
 
     base_vm = BaseVM(
-        ui=build_ui_vm(CHAT_VIEWMODE_DETAIL if conversation else HOME_VIEWMODE),
+        ui=build_ui_vm(
+            CHAT_VIEWMODE_DETAIL,
+            instance=active_chat or ("Conversación" if conversation else "Nuevo chat"),
+            back_config={"type": "url_name", "value": "ai_nutrition_chat_list"},
+        ),
         content=content_vm,
     )
 
@@ -552,6 +564,7 @@ def ai_nutrition_intake(request):
         "notas/ai_intake.html",
         {
             **base_vm.as_context(),
+            **_assistant_credit_context(request.user),
             "pending_ai_job": pending_job,
             "pending_ai_job_status_url": (
                 reverse("ai_nutrition_async_job_status", args=[pending_job.public_id])
@@ -635,7 +648,11 @@ def ai_nutrition_brief_edit(request):
     )
 
     base_vm = BaseVM(
-        ui=build_ui_vm(CHAT_VIEWMODE_DETAIL),
+        ui=build_ui_vm(
+            CHAT_VIEWMODE_DETAIL,
+            instance="Editar Brief Nutricional",
+            back_config={"type": "url_name", "value": "ai_nutrition_intake"},
+        ),
         content=content_vm,
     )
 
@@ -661,7 +678,14 @@ def ai_nutrition_chat_list(request):
         content=content_vm,
     )
 
-    return render(request, "notas/ai_chats/list.html", base_vm.as_context())
+    return render(
+        request,
+        "notas/ai_chats/list.html",
+        {
+            **base_vm.as_context(),
+            **_assistant_credit_context(request.user),
+        },
+    )
 
 
 @login_required
@@ -684,11 +708,22 @@ def ai_nutrition_chat_detail(request, chat_id):
     )
 
     base_vm = BaseVM(
-        ui=build_ui_vm(CHAT_VIEWMODE_DETAIL, instance=chat),
+        ui=build_ui_vm(
+            CHAT_VIEWMODE_DETAIL,
+            instance=chat,
+            back_config={"type": "url_name", "value": "ai_nutrition_chat_list"},
+        ),
         content=content_vm,
     )
 
-    return render(request, "notas/ai_intake.html", base_vm.as_context())
+    return render(
+        request,
+        "notas/ai_intake.html",
+        {
+            **base_vm.as_context(),
+            **_assistant_credit_context(request.user),
+        },
+    )
 
 
 @login_required

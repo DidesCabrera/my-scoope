@@ -26,16 +26,6 @@ def _contextual_dailyplan_detail_url(dpm, context=None, **params):
     )
 
 
-def _contextual_dailyplan_meal_edit_url(dpm, context=None):
-    return contextual_url(
-        reverse(
-            "dailyplan_meal_edit",
-            args=[dpm.dailyplan.id, dpm.id],
-        ),
-        context,
-    )
-
-
 def _contextual_return_to_dailyplan_meal_url(dpm, context=None):
     return _contextual_dailyplan_meal_detail_url(dpm, context)
 
@@ -105,14 +95,20 @@ DAILYPLAN_MEAL_ACTION_DEFINITIONS = {
         "get_url": lambda dpm, context=None: _contextual_dailyplan_meal_detail_url(dpm, context),
     },
 
-    "edit": {
-        "label": "Editar",
+    "change_time": {
+        "label": "Cambiar hora",
         "method": "get",
-        "icon": "settings-2",
-        "order": 90,
+        "icon": "clock-3",
+        "order": 35,
         "desktop_position": "menu",
         "mobile_position": "menu",
-        "get_url": lambda dpm, context=None: _contextual_dailyplan_meal_edit_url(dpm, context),
+        "get_url": lambda dpm, context=None: contextual_url(
+            reverse(
+                "dailyplanmeal_change_time",
+                args=[dpm.dailyplan.id, dpm.id],
+            ),
+            context,
+        ),
         "capability": "can_edit_own_content",
     },
 
@@ -172,11 +168,11 @@ DAILYPLAN_MEAL_ACTIONS_BY_VIEWMODE = {
 
     DAILYPLAN_MEAL_VIEWMODE_DETAIL: [
         "back_dp_detail",
+        "change_time",
         "rename",
         "share",
         "save_to_library",
         "replace",
-        "edit",
         "remove",
     ],
 

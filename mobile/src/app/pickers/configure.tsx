@@ -5,7 +5,9 @@ import { CompositionPickerScreen, type PickerKind } from "@/components/pickers/c
 const pickerKinds = new Set<PickerKind>(["food-to-meal", "meal-to-dailyplan", "dailyplan-to-program"]);
 
 export default function ConfigureCompositionPickerRoute() {
-  const { dayNumber, kind, relationId, returnTo, selectedId, targetId, weekNumber } = useLocalSearchParams<{
+  const { contextDailyPlanId, contextDailyPlanMealId, dayNumber, kind, relationId, returnTo, selectedId, targetId, weekNumber } = useLocalSearchParams<{
+    contextDailyPlanId?: string;
+    contextDailyPlanMealId?: string;
     dayNumber?: string;
     kind?: string;
     relationId?: string;
@@ -29,6 +31,8 @@ export default function ConfigureCompositionPickerRoute() {
     <>
       <Stack.Screen options={{ animation: "slide_from_right" }} />
       <CompositionPickerScreen
+        contextDailyPlanId={Number(contextDailyPlanId) || undefined}
+        contextDailyPlanMealId={Number(contextDailyPlanMealId) || undefined}
         initialDayNumber={day}
         kind={pickerKind}
         relationId={relation}

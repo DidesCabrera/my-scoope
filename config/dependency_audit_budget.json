@@ -1,0 +1,18 @@
+{
+  "root": {
+    "allowed": {}
+  },
+  "mobile": {
+    "reviewed_on": "2026-08-31",
+    "reason": "Expo SDK 57-compatible patch set still resolves these vendor transitive advisories; new or more severe findings are forbidden.",
+    "allowed": {
+      "decode-uri-component": "moderate",
+      "expo-router": "moderate",
+      "image-size": "high",
+      "metro": "high",
+      "metro-config": "high",
+      "metro-transform-worker": "high",
+      "query-string": "moderate"
+    }
+  }
+}

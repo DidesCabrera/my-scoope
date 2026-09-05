@@ -79,6 +79,7 @@ MODEL_RETENTION_POLICY = {
     "notas.FoodAlias": RetentionAction.FOLLOW_PARENT,
     "notas.FoodImportBatch": RetentionAction.RETAIN_OPERATIONAL,
     "notas.FoodLabelCaptureReceipt": RetentionAction.FOLLOW_PARENT,
+    "notas.FoodLabelAIAnalysis": RetentionAction.ERASE,
     "notas.FoodLocalizedName": RetentionAction.FOLLOW_PARENT,
     "notas.FoodPortion": RetentionAction.FOLLOW_PARENT,
     "notas.FoodShare": RetentionAction.ERASE,

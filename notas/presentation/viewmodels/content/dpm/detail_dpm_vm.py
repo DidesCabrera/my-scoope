@@ -11,6 +11,7 @@ from notas.presentation.resolvers.title_resolvers import CategoryBadgeUI
 class StructuralIndicatorsUI:
     meals_count: Optional[int] = None
     foods_count: Optional[int] = None
+    hour: Optional[str] = None
 
 
 @dataclass

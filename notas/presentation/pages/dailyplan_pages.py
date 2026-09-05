@@ -159,6 +159,7 @@ def get_dailyplan_detail_page_data(
         meal_picker_context = build_meal_picker_context_payload(
             dailyplan=dailyplan,
             dailyplan_kpis=dailyplan_kpis,
+            dailyplan_meals=dailyplan_meals,
             dpm=dpm,
         )
 
@@ -361,5 +362,4 @@ def get_dailyplan_draft_list_page_data(user) -> DailyPlanListPageData:
         page_actions=page_actions,
         viewmode=viewmode,
     )
-
 

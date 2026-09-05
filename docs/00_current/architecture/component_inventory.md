@@ -15,7 +15,7 @@ Antes de crear un nuevo componente, revisar si el caso puede resolverse con uno 
 | `list-page-header` | component | encabezados de listas/secciones | no usar en details internos si corresponde `card-title-comp` |
 | `list-panel` | component | paneles de lista para reordenar/eliminar | usar parciales `list_panel_reorder_row.html` y `list_panel_delete_row.html` para filas repetidas |
 | `card-title-comp` | component | encabezado interno de details | útil para detail de comparación guardada, detail de entidad o tarjetas principales |
-| `entity-heading` | component | encabezado neutral de cards y details | usar `__main`, `__aside` y `entity-indicators`; clases `card-title-*` son aliases legacy |
+| `entity-heading` | component | encabezado neutral de cards y details | usar `__main`, `__aside` y `entity-indicators`; las proyecciones de semana usan eyebrow + `h3`; clases `card-title-*` son aliases legacy |
 | `structural-indicator` | component | conteos/resumen bajo títulos | número de alimentos, comidas, semanas, adjuntos |
 | `collection-page` | component | shell de bibliotecas/listas de entidades | Foods, Meals, DailyPlans y Programs |
 | `collection-empty-state` | component | estado vacío de una colección | usar el parcial `collection_empty_state.html` |

@@ -1,5 +1,42 @@
 (function () {
+  const scrollStorageKey = "myscoope.mealCheckIn.scrollPosition";
+
+  function storeScrollPosition() {
+    try {
+      if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+      sessionStorage.setItem(
+        scrollStorageKey,
+        JSON.stringify({
+          path: `${window.location.pathname}${window.location.search}`,
+          y: window.scrollY,
+        }),
+      );
+    } catch (_error) {
+      // The form still works when browser storage is unavailable.
+    }
+  }
+
+  function restoreScrollPosition() {
+    let stored;
+    try {
+      stored = JSON.parse(sessionStorage.getItem(scrollStorageKey) || "null");
+      sessionStorage.removeItem(scrollStorageKey);
+    } catch (_error) {
+      return;
+    }
+
+    const currentPath = `${window.location.pathname}${window.location.search}`;
+    if (!stored || stored.path !== currentPath || !Number.isFinite(stored.y)) return;
+
+    const restore = () => window.scrollTo({ top: stored.y, behavior: "auto" });
+    requestAnimationFrame(() => requestAnimationFrame(restore));
+    window.addEventListener("load", restore, { once: true });
+    window.setTimeout(restore, 150);
+  }
+
   function bootMealCheckIn() {
+    restoreScrollPosition();
+
     document.querySelectorAll("[data-meal-checkin-status]").forEach((form) => {
       const checkbox = form.querySelector("[data-meal-checkin-checkbox]");
       const action = form.querySelector("[data-meal-checkin-action]");
@@ -10,6 +47,10 @@
         checkbox.disabled = true;
         form.requestSubmit();
       });
+    });
+
+    document.querySelectorAll("[data-meal-checkin-status], [data-meal-note-form]").forEach((form) => {
+      form.addEventListener("submit", storeScrollPosition);
     });
 
     document.querySelectorAll("[data-meal-note]").forEach((section) => {

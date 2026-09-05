@@ -253,6 +253,8 @@ export type LibraryFoodPanelItem = {
   protein_allocation: number;
   carbs_allocation: number;
   fat_allocation: number;
+  is_projected?: boolean;
+  projected_label?: string | null;
 };
 
 export type LibraryMealPanelItem = {
@@ -273,6 +275,8 @@ export type LibraryMealPanelItem = {
   protein_allocation: number;
   carbs_allocation: number;
   fat_allocation: number;
+  is_projected?: boolean;
+  projected_label?: string | null;
 };
 
 export type LibraryWeekPanelItem = {
@@ -287,6 +291,8 @@ export type LibraryWeekPanelItem = {
     plan_name: string | null;
     nutrition?: LibraryNutrition | null;
     meals?: LibraryMealPanelItem[];
+    is_projected?: boolean;
+    projected_label?: string | null;
   }[];
   filled_days_count?: number;
   meals_count?: number;
@@ -330,6 +336,8 @@ export type LibraryItem = {
   is_draft: boolean;
   can_calendarize: boolean;
   actions: LibraryAction[];
+  label_capture_receipt_id?: number | null;
+  label_image_available?: boolean;
 };
 
 export type LibraryPageData = {
@@ -385,6 +393,14 @@ export type PickerImpact = {
 export type PickerPreview = {
   selection: PickerSelection;
   impacts: PickerImpact[];
+  result: {
+    id: number;
+    entity: "meal" | "dailyPlan" | "week";
+    name: string;
+    nutrition: LibraryNutrition;
+    indicators: LibraryIndicator[];
+    panel: LibraryPanel;
+  } | null;
   replacements: string[];
   confirmation_required: boolean;
 };
@@ -438,45 +454,6 @@ export type OnboardingInput = {
 };
 
 export type WeightInput = { weight_kg: number; measured_on?: string };
-
-export type FoodLabelCaptureInput = {
-  name: string;
-  protein_g: number;
-  carbs_g: number;
-  fat_g: number;
-  saturated_fat_g?: number;
-  sugar_g?: number;
-  fiber_g?: number;
-  sodium_mg?: number;
-  serving_size_g?: number;
-  declared_energy_kcal_per_100g?: number;
-  detected_basis: "per_100g" | "per_serving" | "manual";
-  ocr_engine: string;
-  ocr_engine_version: string;
-  field_confidence: Record<string, number>;
-  warnings: string[];
-  idempotency_key: string;
-};
-
-export type FoodLabelCaptureResult = {
-  id: number;
-  name: string;
-  protein_g: number;
-  carbs_g: number;
-  fat_g: number;
-  saturated_fat_g: number | null;
-  sugar_g: number | null;
-  fiber_g: number | null;
-  sodium_mg: number | null;
-  total_kcal: number;
-  is_user_food: boolean;
-  is_verified: boolean;
-  capture_receipt_id: number;
-  detected_basis: string;
-  serving_size_g: number | null;
-  ocr_engine: string;
-  created_at: string;
-};
 
 export type MealCheckInInput = {
   action: "completed" | "skipped" | "reset" | "note";

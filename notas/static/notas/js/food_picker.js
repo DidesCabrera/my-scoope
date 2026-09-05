@@ -8,16 +8,20 @@ import {
   portionFromFoodById,
   previewTotals,
   removePortionTotals,
-  computePPK
+  computePPK,
+  computeAlloc
 } from "./food_math.js";
 
 import {
   renderBase,
-  renderPortion,
-  renderPreviewTotals
+  renderPortion
 } from "./food_preview.js";
 
 import { renderFoodItem } from "./food_item_list.js";
+import {
+  projectMealResultItems,
+  renderResultCard
+} from "./picker_result_card.js";
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -51,6 +55,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("form-preview");
 
   const title = document.getElementById("food-form-title");
+  const modal = document.getElementById("meal-picker-section");
+  const addHeaderIcon = modal?.querySelector('[data-picker-header-icon="add"]');
+  const editHeaderIcon = modal?.querySelector('[data-picker-header-icon="edit"]');
 
   const btnAdd = document.getElementById("btn-add-food");
   const btnUpdate = document.getElementById("btn-update-food");
@@ -71,6 +78,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // ---------------------------
   function isEdit() {
     return ctx.mode === "edit";
+  }
+
+  function syncHeaderMode(mode) {
+    const editing = mode === "edit";
+    if (addHeaderIcon) addHeaderIcon.hidden = editing;
+    if (editHeaderIcon) editHeaderIcon.hidden = !editing;
   }
 
   function openList() {
@@ -113,52 +126,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function getFoodDisplayName(food) {
     return food?.display_name || food?.name || "";
-  }
-
-  function isMobileViewport() {
-    return window.innerWidth <= 768;
-  }
-
-  function getPickerSection() {
-    return (
-      picker.closest(".section-picker") ||
-      picker.closest("[id$='picker-section']") ||
-      picker.closest(".add-row") ||
-      picker
-    );
-  }
-
-  function getPickerScrollTarget() {
-    const pickerSection = getPickerSection();
-
-    return (
-      pickerSection.querySelector(".title-section-panels") ||
-      title?.closest(".title-section-panels") ||
-      pickerSection
-    );
-  }
-
-  function scrollPickerIntoMobileView() {
-    if (!isMobileViewport()) return;
-  
-    const targetElement = getPickerScrollTarget();
-    if (!targetElement) return;
-  
-    const topOffset = 12;
-    const rect = targetElement.getBoundingClientRect();
-    const targetY = window.scrollY + rect.top - topOffset;
-  
-    window.scrollTo({
-      top: Math.max(targetY, 0),
-      behavior: "smooth",
-    });
-  }
-
-  function schedulePickerScrollIntoMobileView() {
-    if (!isMobileViewport()) return;
-
-    window.setTimeout(scrollPickerIntoMobileView, 80);
-    window.setTimeout(scrollPickerIntoMobileView, 260);
   }
 
   function normalizeSearchValue(value) {
@@ -329,6 +296,7 @@ document.addEventListener("DOMContentLoaded", () => {
     ctx.editing = null;
 
     title.textContent = "Agrega un Alimento";
+    syncHeaderMode("add");
     btnAdd.style.display = "inline-block";
     btnUpdate.style.display = "none";
     btnCancel.style.display = "inline-block";
@@ -347,6 +315,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     title.textContent = "Edita el Alimento";
+    syncHeaderMode("edit");
     btnAdd.style.display = "none";
     btnUpdate.style.display = "inline-block";
     btnCancel.style.display = "inline-block";
@@ -366,10 +335,6 @@ document.addEventListener("DOMContentLoaded", () => {
     quantityInput.value = "100";
 
     preview.style.display = "none";
-
-    if (btnCancelInline) {
-      btnCancelInline.style.display = "inline-block";
-    }
 
     closeList();
   }
@@ -421,12 +386,12 @@ document.addEventListener("DOMContentLoaded", () => {
         selectedFood = food;
         input.value = getFoodDisplayName(food);
   
-        if (btnCancelInline) {
-          btnCancelInline.style.display = "none";
-        }
-  
         closeList();
         showPreview();
+
+        document.dispatchEvent(new CustomEvent("picker:step", {
+          detail: { sectionId: "meal-picker-section", step: "impact" }
+        }));
       });
   
       list.appendChild(li);
@@ -463,6 +428,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const sourceLabel = normalizeSourceLabel(food?.source);
     sourceNode.textContent = sourceLabel;
+    sourceNode.hidden = !sourceLabel;
   }
 
   // ---------------------------
@@ -471,7 +437,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function showPreview() {
     if (!selectedFood) return;
 
-    preview.style.display = "block";
+    preview.style.display = "flex";
     document.getElementById("preview-name").textContent = getFoodDisplayName(selectedFood);
     renderSelectedFoodSource(selectedFood);
 
@@ -501,9 +467,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (isEdit()) {
       const originalFood = findFoodById(ctx.editing.food_id);
+      const originalRelation = (ctx.meal.foods || []).find(
+        item => Number(item.mealfood_id) === Number(ctx.editing.mealfood_id)
+      );
       const oldPortion = originalFood
         ? portionFromFood(originalFood, ctx.editing.original_quantity)
-        : null;
+        : originalRelation;
 
       baseMeal = removePortionTotals(ctx.meal.kpis, oldPortion);
     }
@@ -512,8 +481,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const weight = ctx.meal.kpis.weight;
     previewMeal.ppk = computePPK(previewMeal.protein, weight);
+    previewMeal.alloc = computeAlloc(previewMeal);
 
-    renderPreviewTotals(previewMeal);
+    renderResultCard(preview, {
+      scope: "meal-result",
+      name: ctx.meal.name,
+      owner: ctx.meal.owner,
+      kpis: previewMeal,
+      items: projectMealResultItems(
+        ctx.meal.foods,
+        selectedFood,
+        quantity,
+        isEdit() ? ctx.editing.mealfood_id : null,
+      ),
+      entityKind: "meal",
+    });
   }
 
   // ---------------------------
@@ -522,7 +504,6 @@ document.addEventListener("DOMContentLoaded", () => {
   input.addEventListener("focus", async () => {
     renderFoodList(await getInitialFoodResults());
     openList();
-    schedulePickerScrollIntoMobileView();
   });
 
   input.addEventListener("input", () => {
@@ -563,7 +544,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       document.dispatchEvent(new CustomEvent("picker:open", {
-        detail: { sectionId: "meal-picker-section" }
+        detail: { sectionId: "meal-picker-section", step: "impact" }
       }));
 
       input.value = button.dataset.name || "";
@@ -575,7 +556,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         input.value = getFoodDisplayName(selectedFood);
         showPreview();
-        schedulePickerScrollIntoMobileView();
       });
     });
   });
@@ -583,25 +563,26 @@ document.addEventListener("DOMContentLoaded", () => {
   // ---------------------------
   // Cancel
   // ---------------------------
-  btnCancel.addEventListener("click", () => {
+  function cancelPicker() {
     setAddMode();
     resetPickerState();
 
     document.dispatchEvent(new CustomEvent("picker:close", {
       detail: { sectionId: "meal-picker-section" }
     }));
-  });
+  }
+
+  btnCancel.addEventListener("click", cancelPicker);
 
   if (btnCancelInline) {
-    btnCancelInline.addEventListener("click", () => {
-      setAddMode();
-      resetPickerState();
-
-      document.dispatchEvent(new CustomEvent("picker:close", {
-        detail: { sectionId: "meal-picker-section" }
-      }));
-    });
+    btnCancelInline.addEventListener("click", cancelPicker);
   }
+
+  document.addEventListener("picker:dismiss", event => {
+    if (event.detail?.sectionId !== "meal-picker-section") return;
+    event.preventDefault();
+    cancelPicker();
+  });
 
   // ---------------------------
   // Init
@@ -611,4 +592,24 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   syncHiddenState();
+
+  const initialFoodId = window.FOOD_PICKER_INITIAL_ID;
+  if (initialFoodId) {
+    setAddMode();
+    fetchFoodById(initialFoodId).then(food => {
+      if (!food) return;
+
+      selectedFood = food;
+      input.value = getFoodDisplayName(food);
+      showPreview();
+
+      document.dispatchEvent(new CustomEvent("picker:open", {
+        detail: { sectionId: "meal-picker-section", step: "impact" }
+      }));
+
+      const url = new URL(window.location);
+      url.searchParams.delete("select_food");
+      window.history.replaceState({}, "", url);
+    });
+  }
 });

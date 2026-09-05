@@ -7,7 +7,8 @@ def test_dpm_food_picker_edit_quantity_updates_preview(page, dpm_deepedit_url, u
 
     edit_button = page.locator('[id^="card-grid-foods-edit-"] .edit-food-btn').first
     quantity_input = page.locator("#food-quantity")
-    qty_kcal = page.locator("#qty-kcal")
+    meal_result_kcal = page.locator('[data-scope="dpm-meal-result"] [data-role="result-kcal"]')
+    dailyplan_result_kcal = page.locator('[data-scope="dpm-dailyplan-result"] [data-role="result-kcal"]')
     food_preview = page.locator("#food-preview")
     update_button = page.locator("#btn-update-food")
 
@@ -19,15 +20,16 @@ def test_dpm_food_picker_edit_quantity_updates_preview(page, dpm_deepedit_url, u
     assert food_preview.is_visible(), "El preview no se mostró al entrar en edit"
     assert update_button.is_visible(), "El botón Guardar Cambios no apareció en modo edit"
 
-    initial_kcal = qty_kcal.text_content()
+    initial_meal_kcal = meal_result_kcal.text_content()
+    initial_dailyplan_kcal = dailyplan_result_kcal.text_content()
 
     quantity_input.wait_for()
     quantity_input.fill("120")
 
     ui_settle(page)
 
-    updated_kcal = qty_kcal.text_content()
+    updated_meal_kcal = meal_result_kcal.text_content()
+    updated_dailyplan_kcal = dailyplan_result_kcal.text_content()
 
-    assert initial_kcal is not None and initial_kcal.strip() != ""
-    assert updated_kcal is not None and updated_kcal.strip() != ""
-    assert initial_kcal != updated_kcal, "Las kcal no cambiaron al modificar la cantidad en edit"
+    assert initial_meal_kcal != updated_meal_kcal, "La comida resultante no cambió al modificar la cantidad en edit"
+    assert initial_dailyplan_kcal != updated_dailyplan_kcal, "El plan resultante no cambió al modificar la cantidad en edit"

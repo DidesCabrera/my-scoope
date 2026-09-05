@@ -12,6 +12,17 @@ python_version = "3.13"
 files = [
   "core/environment_contract.py",
   "core/observability.py",
+  "mobile_api/api_support.py",
+  "mobile_api/architecture.py",
+  "mobile_api/errors.py",
+  "mobile_api/schema_domains/assistant.py",
+  "mobile_api/schema_domains/billing.py",
+  "mobile_api/schema_domains/calendarization.py",
+  "mobile_api/schema_domains/comparisons.py",
+  "mobile_api/schema_domains/composition.py",
+  "mobile_api/schema_domains/identity.py",
+  "mobile_api/schema_domains/libraries.py",
+  "mobile_api/schema_domains/proposals.py",
 ]
 check_untyped_defs = true
 disallow_untyped_defs = true
@@ -31,11 +42,13 @@ source = [
   "core",
   "email_delivery",
   "food_catalog",
+  "mobile_api",
   "notas",
   "nutrition_solver",
 ]
 omit = ["*/migrations/*", "*/tests/*"]
 
 [tool.coverage.report]
+fail_under = 75
 skip_covered = true
 show_missing = true

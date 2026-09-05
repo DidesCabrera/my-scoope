@@ -155,20 +155,30 @@ function renderBlock(container, scope, prefix, data) {
 export function renderFoodsAggregation(container, foods) {
 
   const scope = container.querySelector('[data-role="foods-aggregation"]');
-  if (!scope) return;
+  const count = container.querySelector('[data-role="selected-food-count"]');
+  const normalizedFoods = Array.isArray(foods) ? foods : [];
 
-  scope.innerHTML = "";
-
-  if (!foods || !foods.length) {
-      scope.innerHTML = "<span>No foods</span>";
-      return;
+  if (count) {
+    count.textContent = String(normalizedFoods.length);
   }
 
-  const line = foods
-      .map(food => `${food.name} (${food.grams}g)`)
-      .join(", ");
+  if (!scope) return;
 
-  scope.innerHTML = `<span class="foods-inline">${line}</span>`;
+  scope.replaceChildren();
+
+  if (!normalizedFoods.length) {
+    const empty = document.createElement("span");
+    empty.textContent = "No foods";
+    scope.appendChild(empty);
+    return;
+  }
+
+  const line = normalizedFoods
+    .map(food => `${food.name} (${food.grams}g)`)
+    .join(", ");
+
+  const content = document.createElement("span");
+  content.className = "foods-inline";
+  content.textContent = line;
+  scope.appendChild(content);
 }
-
-

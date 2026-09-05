@@ -199,3 +199,16 @@ Consequences
 - `0183-deterministic-multi-provider-subscription-evidence.md`: agrega evidencia independiente de Apple y Mercado Pago en una única proyección determinística de entitlement, con verificación StoreKit server-side y dobles cobros visibles.
 - `0184-exclusive-native-reminder-delivery-and-ios-release-capabilities.md`: coordina APNs o avisos locales —nunca ambos— desde la calendarización, integra Apple en el mismo PKCE y fija Keychain, privacidad y errores móviles sin PII.
 - `0186-shared-ui-recipes-and-platform-galleries.md`: adopta recetas neutrales generadas y galerías autoritativas separadas para Django/CSS y React Native.
+- `0187-code-quality-consolidation.md`: convierte la auditoría posterior al crecimiento de agosto en ratchets ejecutables de CI, cobertura, dependencias, modularidad, tests, consultas y complejidad.
+- `0188-code-quality-consolidation-closure.md`: cierra CQC00-CQC08 con cobertura de
+  `mobile_api`, auditorías y presupuestos ejecutables, tests conductuales y límites
+  de consultas, manteniendo deuda legacy y gates externos explícitos.
+- `0189-mobile-api-domain-module-pattern.md`: adopta una extracción vertical e
+  incremental por dominio para rutas, schemas y pruebas del API móvil, usando
+  Comparisons como referencia y preservando OpenAPI byte por byte.
+- `0190-mobile-api-domain-decomposition-closure.md`: cierra MADD00-MADD07 con ocho
+  routers, ocho dominios de schemas, pruebas verticales y fachadas mínimas,
+  manteniendo `selectors.py` como frontera de lectura compartida y presupuestada.
+- `0191-ai-nutrition-label-extraction-with-internal-escalation.md`: reemplaza el
+  OCR local como autoridad por extracción multimodal con cobro fijo, escalamiento
+  Luna→Sol absorbido internamente, revisión humana y retención opcional privada.

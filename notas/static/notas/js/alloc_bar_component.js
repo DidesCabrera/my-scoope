@@ -3,19 +3,16 @@ export function renderAllocBar({ value, kind, kind2 = "" }) {
   const safeKind2 = String(kind2 || "").trim();
 
   return `
-    <div class="picker-alloc-item">
+    <div class="picker-alloc-item-wrap">
       ${safeKind2 ? `<p class="kind2">${safeKind2}</p>` : ""}
 
-      <div class="alloc-pct micro alloc-bar-fill--${kind}">
-        <p>${pct}%</p>
-      </div>
-
       <div
-        class="alloc-bar-comp mini"
+        class="picker-alloc-item alloc-bar-comp alloc-bar-comp--kpi"
         style="--alloc: ${pct};"
       >
         <div class="alloc-bar-bg"></div>
         <div class="alloc-bar-fill alloc-bar-fill--${kind}"></div>
+        <span class="alloc-bar-text">${pct}%</span>
       </div>
     </div>
   `;

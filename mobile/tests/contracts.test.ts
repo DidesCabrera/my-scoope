@@ -96,7 +96,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(productUiSourceForIndicators, /proposal: ClipboardCheck/);
   assert.match(productUiSourceForIndicators, /comparator: Scale/);
   assert.match(productUiSourceForIndicators, /tone\?: "identity" \| "surfaceCard" \| "surfaceMuted"/);
-  assert.match(productUiSourceForIndicators, /tone === "surfaceMuted" \? tokens\.color\.surfaceMuted : color/);
+  assert.match(productUiSourceForIndicators, /itemTone === "surfaceMuted" \? tokens\.color\.surfaceMuted : color/);
   assert.match(productUiSourceForIndicators, /structuralItemSurface: \{ borderColor: tokens\.color\.borderDefault, borderWidth: 1 \}/);
 
   const libraryEntityPanels = await readFile(
@@ -574,12 +574,32 @@ test("the committed mobile contract exposes every route consumed through CML08",
     "/api/v1/library/programs/{program_id}/week-picker/preview",
     "/api/v1/library/programs/{program_id}/week-picker/commit",
     "/api/v1/foods/label-captures",
+    "/api/v1/foods/label-captures/config",
+    "/api/v1/foods/label-captures/analyze",
+    "/api/v1/foods/label-captures/{receipt_id}/image",
     "/api/v1/subscriptions",
     "/api/v1/subscriptions/apple/transactions",
     "/api/v1/account/disclosures",
     "/api/v1/account/delete",
   ]) {
     assert.ok(schema.paths[route], `missing ${route}`);
+  }
+});
+
+test("composition picker previews expose complete projected entities and relation replacement", async () => {
+  const file = path.resolve(process.cwd(), "../docs/00_current/api/mobile-v1.openapi.json");
+  const schema = JSON.parse(await readFile(file, "utf8")) as {
+    components: { schemas: Record<string, { properties?: Record<string, unknown> }> };
+  };
+  const schemas = schema.components.schemas;
+  assert.ok(schemas.FoodPickerInput.properties?.meal_food_id);
+  assert.ok(schemas.PickerPreviewData.properties?.result);
+  for (const property of ["entity", "name", "nutrition", "indicators", "panel"]) {
+    assert.ok(schemas.PickerResultData.properties?.[property], `missing picker result ${property}`);
+  }
+  for (const itemSchema of ["LibraryFoodPanelItemData", "LibraryMealPanelItemData", "LibraryWeekDayData"]) {
+    assert.ok(schemas[itemSchema].properties?.is_projected, `missing ${itemSchema}.is_projected`);
+    assert.ok(schemas[itemSchema].properties?.projected_label, `missing ${itemSchema}.projected_label`);
   }
 });
 

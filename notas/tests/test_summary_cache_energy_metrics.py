@@ -1,3 +1,5 @@
+from datetime import time
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
@@ -33,7 +35,11 @@ class SummaryCacheEnergyMetricsTests(TestCase):
         cls.meal = create_meal(created_by=cls.user, name="Balanced meal")
         attach_food(meal=cls.meal, food=cls.food, quantity=100)
         cls.dailyplan = create_dailyplan(created_by=cls.user, name="Energy day")
-        DailyPlanMeal.objects.create(dailyplan=cls.dailyplan, meal=cls.meal)
+        DailyPlanMeal.objects.create(
+            dailyplan=cls.dailyplan,
+            meal=cls.meal,
+            hour=time(7, 5),
+        )
         cls.program = Program.objects.create(
             name="Energy program",
             created_by=cls.user,
@@ -57,6 +63,7 @@ class SummaryCacheEnergyMetricsTests(TestCase):
         summary = build_dailyplan_summary(self.dailyplan)
 
         self.assertEqual(summary["version"], DAILYPLAN_SUMMARY_CACHE_VERSION)
+        self.assertEqual(summary["menu"][0]["hour"], "07:05")
         self.assert_distribution_contract(summary["meals"][0]["table_item"])
         self.assert_distribution_contract(summary["foods_aggregation_table"][0])
 

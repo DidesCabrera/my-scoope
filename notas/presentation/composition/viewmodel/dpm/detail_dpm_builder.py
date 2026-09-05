@@ -45,6 +45,7 @@ def build_dpm_detail_vm(content_data):
             category_badge=content_data.main_card_data["title"]["category_badge"],
             structural_indicators=StructuralIndicatorsUI(
                 foods_count=content_data.main_card_data["title"]["foods_count"],
+                hour=content_data.main_card_data["title"]["hour"],
             ),
         ),
         kpis=KPIUI(

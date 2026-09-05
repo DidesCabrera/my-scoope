@@ -1859,6 +1859,35 @@
         "title": "CalendarizedDayDetailEnvelope",
         "type": "object"
       },
+      "CalendarizedMealHourInput": {
+        "properties": {
+          "hour": {
+            "format": "time",
+            "title": "Hour",
+            "type": "string"
+          }
+        },
+        "required": [
+          "hour"
+        ],
+        "title": "CalendarizedMealHourInput",
+        "type": "object"
+      },
+      "CalendarizedNameInput": {
+        "properties": {
+          "name": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "CalendarizedNameInput",
+        "type": "object"
+      },
       "ComparisonKindData": {
         "properties": {
           "entity_label": {
@@ -2438,10 +2467,16 @@
             "title": "Hour"
           },
           "note": {
-            "default": "",
-            "maxLength": 500,
-            "title": "Note",
-            "type": "string"
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
           }
         },
         "title": "DailyPlanMealUpdateInput",
@@ -2748,6 +2783,258 @@
         "title": "FoodItemEnvelope",
         "type": "object"
       },
+      "FoodLabelAIAnalysisData": {
+        "properties": {
+          "analysis_id": {
+            "title": "Analysis Id",
+            "type": "string"
+          },
+          "available_credits": {
+            "title": "Available Credits",
+            "type": "integer"
+          },
+          "basis": {
+            "enum": [
+              "per_100g",
+              "per_serving",
+              "per_100ml",
+              "unknown"
+            ],
+            "title": "Basis",
+            "type": "string"
+          },
+          "credits_charged": {
+            "title": "Credits Charged",
+            "type": "integer"
+          },
+          "field_confidence": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Field Confidence",
+            "type": "object"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "normalization_status": {
+            "enum": [
+              "ready",
+              "basis_confirmation_required",
+              "serving_size_required",
+              "volume_weight_required"
+            ],
+            "title": "Normalization Status",
+            "type": "string"
+          },
+          "ocr_engine": {
+            "title": "Ocr Engine",
+            "type": "string"
+          },
+          "ocr_engine_version": {
+            "title": "Ocr Engine Version",
+            "type": "string"
+          },
+          "quality_confidence": {
+            "title": "Quality Confidence",
+            "type": "number"
+          },
+          "serving_size_g": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Serving Size G"
+          },
+          "source_basis": {
+            "enum": [
+              "per_100g",
+              "per_serving",
+              "per_100ml",
+              "unknown"
+            ],
+            "title": "Source Basis",
+            "type": "string"
+          },
+          "source_values": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Source Values",
+            "type": "object"
+          },
+          "values": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Values",
+            "type": "object"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "analysis_id",
+          "name",
+          "basis",
+          "source_basis",
+          "source_values",
+          "values",
+          "field_confidence",
+          "warnings",
+          "normalization_status",
+          "quality_confidence",
+          "ocr_engine",
+          "ocr_engine_version",
+          "credits_charged",
+          "available_credits"
+        ],
+        "title": "FoodLabelAIAnalysisData",
+        "type": "object"
+      },
+      "FoodLabelAIAnalysisEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/FoodLabelAIAnalysisData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "FoodLabelAIAnalysisEnvelope",
+        "type": "object"
+      },
+      "FoodLabelAIAnalysisInput": {
+        "properties": {
+          "consent_to_ai_processing": {
+            "title": "Consent To Ai Processing",
+            "type": "boolean"
+          },
+          "idempotency_key": {
+            "maxLength": 120,
+            "minLength": 8,
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "image_base64": {
+            "maxLength": 2100000,
+            "minLength": 10000,
+            "title": "Image Base64",
+            "type": "string"
+          },
+          "image_content_type": {
+            "enum": [
+              "image/jpeg",
+              "image/png",
+              "image/webp"
+            ],
+            "title": "Image Content Type",
+            "type": "string"
+          },
+          "image_height": {
+            "maximum": 10000,
+            "minimum": 320,
+            "title": "Image Height",
+            "type": "integer"
+          },
+          "image_width": {
+            "maximum": 10000,
+            "minimum": 320,
+            "title": "Image Width",
+            "type": "integer"
+          },
+          "local_candidate": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FoodLabelLocalCandidateInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "image_base64",
+          "image_content_type",
+          "image_width",
+          "image_height",
+          "idempotency_key",
+          "consent_to_ai_processing"
+        ],
+        "title": "FoodLabelAIAnalysisInput",
+        "type": "object"
+      },
+      "FoodLabelAIConfigData": {
+        "properties": {
+          "available_credits": {
+            "title": "Available Credits",
+            "type": "integer"
+          },
+          "can_scan": {
+            "title": "Can Scan",
+            "type": "boolean"
+          },
+          "credits_per_scan": {
+            "title": "Credits Per Scan",
+            "type": "integer"
+          },
+          "image_retention_available": {
+            "title": "Image Retention Available",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "credits_per_scan",
+          "available_credits",
+          "can_scan",
+          "image_retention_available"
+        ],
+        "title": "FoodLabelAIConfigData",
+        "type": "object"
+      },
+      "FoodLabelAIConfigEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/FoodLabelAIConfigData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "FoodLabelAIConfigEnvelope",
+        "type": "object"
+      },
       "FoodLabelCaptureData": {
         "properties": {
           "capture_receipt_id": {
@@ -2792,6 +3079,10 @@
           },
           "is_verified": {
             "title": "Is Verified",
+            "type": "boolean"
+          },
+          "label_image_retained": {
+            "title": "Label Image Retained",
             "type": "boolean"
           },
           "name": {
@@ -2867,6 +3158,7 @@
           "capture_receipt_id",
           "detected_basis",
           "ocr_engine",
+          "label_image_retained",
           "created_at"
         ],
         "title": "FoodLabelCaptureData",
@@ -2896,6 +3188,18 @@
       },
       "FoodLabelCaptureInput": {
         "properties": {
+          "analysis_id": {
+            "anyOf": [
+              {
+                "maxLength": 36,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis Id"
+          },
           "carbs_g": {
             "maximum": 100,
             "minimum": 0,
@@ -2919,6 +3223,7 @@
             "enum": [
               "per_100g",
               "per_serving",
+              "per_100ml",
               "manual"
             ],
             "title": "Detected Basis",
@@ -2956,6 +3261,34 @@
             "title": "Idempotency Key",
             "type": "string"
           },
+          "label_image_base64": {
+            "anyOf": [
+              {
+                "maxLength": 2100000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label Image Base64"
+          },
+          "label_image_content_type": {
+            "anyOf": [
+              {
+                "enum": [
+                  "image/jpeg",
+                  "image/png",
+                  "image/webp"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label Image Content Type"
+          },
           "name": {
             "maxLength": 100,
             "minLength": 1,
@@ -2979,6 +3312,11 @@
             "minimum": 0,
             "title": "Protein G",
             "type": "number"
+          },
+          "retain_label_image": {
+            "default": false,
+            "title": "Retain Label Image",
+            "type": "boolean"
           },
           "saturated_fat_g": {
             "anyOf": [
@@ -3032,6 +3370,19 @@
             ],
             "title": "Sugar G"
           },
+          "volume_weight_g_per_100ml": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "maximum": 10000,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Volume Weight G Per 100Ml"
+          },
           "warnings": {
             "items": {
               "type": "string"
@@ -3051,6 +3402,115 @@
           "idempotency_key"
         ],
         "title": "FoodLabelCaptureInput",
+        "type": "object"
+      },
+      "FoodLabelImageData": {
+        "properties": {
+          "content_type": {
+            "title": "Content Type",
+            "type": "string"
+          },
+          "image_base64": {
+            "title": "Image Base64",
+            "type": "string"
+          },
+          "receipt_id": {
+            "title": "Receipt Id",
+            "type": "integer"
+          },
+          "size_bytes": {
+            "title": "Size Bytes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "receipt_id",
+          "content_type",
+          "image_base64",
+          "size_bytes"
+        ],
+        "title": "FoodLabelImageData",
+        "type": "object"
+      },
+      "FoodLabelImageDeleteData": {
+        "properties": {
+          "deleted": {
+            "title": "Deleted",
+            "type": "boolean"
+          },
+          "receipt_id": {
+            "title": "Receipt Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "receipt_id",
+          "deleted"
+        ],
+        "title": "FoodLabelImageDeleteData",
+        "type": "object"
+      },
+      "FoodLabelImageDeleteEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/FoodLabelImageDeleteData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "FoodLabelImageDeleteEnvelope",
+        "type": "object"
+      },
+      "FoodLabelImageEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/FoodLabelImageData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "FoodLabelImageEnvelope",
+        "type": "object"
+      },
+      "FoodLabelLocalCandidateInput": {
+        "properties": {
+          "basis": {
+            "default": "",
+            "maxLength": 24,
+            "title": "Basis",
+            "type": "string"
+          },
+          "values": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Values",
+            "type": "object"
+          }
+        },
+        "title": "FoodLabelLocalCandidateInput",
         "type": "object"
       },
       "FoodPageData": {
@@ -3119,10 +3579,46 @@
       },
       "FoodPickerInput": {
         "properties": {
+          "dailyplan_id": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dailyplan Id"
+          },
+          "dailyplan_meal_id": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dailyplan Meal Id"
+          },
           "food_id": {
             "exclusiveMinimum": 0,
             "title": "Food Id",
             "type": "integer"
+          },
+          "meal_food_id": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meal Food Id"
           },
           "quantity": {
             "exclusiveMinimum": 0,
@@ -3374,9 +3870,25 @@
             "title": "Id",
             "type": "string"
           },
+          "is_projected": {
+            "default": false,
+            "title": "Is Projected",
+            "type": "boolean"
+          },
           "name": {
             "title": "Name",
             "type": "string"
+          },
+          "projected_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projected Label"
           },
           "protein_allocation": {
             "title": "Protein Allocation",
@@ -3514,6 +4026,22 @@
           "is_draft": {
             "default": false,
             "title": "Is Draft",
+            "type": "boolean"
+          },
+          "label_capture_receipt_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label Capture Receipt Id"
+          },
+          "label_image_available": {
+            "default": false,
+            "title": "Label Image Available",
             "type": "boolean"
           },
           "name": {
@@ -3690,6 +4218,11 @@
             "title": "Id",
             "type": "string"
           },
+          "is_projected": {
+            "default": false,
+            "title": "Is Projected",
+            "type": "boolean"
+          },
           "name": {
             "title": "Name",
             "type": "string"
@@ -3698,6 +4231,17 @@
             "default": "",
             "title": "Note",
             "type": "string"
+          },
+          "projected_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projected Label"
           },
           "protein_allocation": {
             "title": "Protein Allocation",
@@ -3930,6 +4474,11 @@
             "title": "Id",
             "type": "string"
           },
+          "is_projected": {
+            "default": false,
+            "title": "Is Projected",
+            "type": "boolean"
+          },
           "meals": {
             "items": {
               "$ref": "#/components/schemas/LibraryMealPanelItemData"
@@ -3968,6 +4517,17 @@
               }
             ],
             "title": "Program Day Id"
+          },
+          "projected_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projected Label"
           }
         },
         "required": [
@@ -4476,6 +5036,16 @@
             "title": "Replacements",
             "type": "array"
           },
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PickerResultData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "selection": {
             "$ref": "#/components/schemas/PickerSelectionData"
           }
@@ -4507,6 +5077,49 @@
           "data"
         ],
         "title": "PickerPreviewEnvelope",
+        "type": "object"
+      },
+      "PickerResultData": {
+        "properties": {
+          "entity": {
+            "enum": [
+              "meal",
+              "dailyPlan",
+              "week"
+            ],
+            "title": "Entity",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "indicators": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryIndicatorData"
+            },
+            "title": "Indicators",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "nutrition": {
+            "$ref": "#/components/schemas/LibraryNutritionData"
+          },
+          "panel": {
+            "$ref": "#/components/schemas/LibraryPanelData"
+          }
+        },
+        "required": [
+          "id",
+          "entity",
+          "name",
+          "nutrition",
+          "panel"
+        ],
+        "title": "PickerResultData",
         "type": "object"
       },
       "PickerSelectionData": {
@@ -7620,6 +8233,16 @@
             },
             "description": "Forbidden"
           },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
           "409": {
             "content": {
               "application/json": {
@@ -7639,6 +8262,16 @@
               }
             },
             "description": "Unprocessable Content"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
           }
         },
         "security": [
@@ -7647,6 +8280,270 @@
           }
         ],
         "summary": "Confirm Food Label Capture"
+      }
+    },
+    "/api/v1/foods/label-captures/analyze": {
+      "post": {
+        "operationId": "mobile_api_api_analyze_food_label_capture",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FoodLabelAIAnalysisInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FoodLabelAIAnalysisEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "402": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Payment Required"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Analyze Food Label Capture"
+      }
+    },
+    "/api/v1/foods/label-captures/config": {
+      "get": {
+        "operationId": "mobile_api_api_food_label_capture_config",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FoodLabelAIConfigEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Food Label Capture Config"
+      }
+    },
+    "/api/v1/foods/label-captures/{receipt_id}/image": {
+      "delete": {
+        "operationId": "mobile_api_api_delete_food_label_capture_image",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "receipt_id",
+            "required": true,
+            "schema": {
+              "title": "Receipt Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FoodLabelImageDeleteEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Delete Food Label Capture Image"
+      },
+      "get": {
+        "operationId": "mobile_api_api_food_label_capture_image",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "receipt_id",
+            "required": true,
+            "schema": {
+              "title": "Receipt Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FoodLabelImageEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Food Label Capture Image"
       }
     },
     "/api/v1/health": {
@@ -10603,6 +11500,274 @@
           }
         ],
         "summary": "Calendarized Day Detail"
+      },
+      "patch": {
+        "operationId": "mobile_api_api_calendarized_day_rename",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "day_id",
+            "required": true,
+            "schema": {
+              "title": "Day Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalendarizedNameInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarizedDayDetailEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Calendarized Day Rename"
+      }
+    },
+    "/api/v1/program/days/{day_id}/meals/{meal_snapshot_key}": {
+      "patch": {
+        "operationId": "mobile_api_api_calendarized_meal_hour_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "day_id",
+            "required": true,
+            "schema": {
+              "title": "Day Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "meal_snapshot_key",
+            "required": true,
+            "schema": {
+              "title": "Meal Snapshot Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalendarizedMealHourInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarizedDayDetailEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Calendarized Meal Hour Update"
+      }
+    },
+    "/api/v1/program/days/{day_id}/meals/{meal_snapshot_key}/name": {
+      "patch": {
+        "operationId": "mobile_api_api_calendarized_meal_rename",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "day_id",
+            "required": true,
+            "schema": {
+              "title": "Day Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "meal_snapshot_key",
+            "required": true,
+            "schema": {
+              "title": "Meal Snapshot Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalendarizedNameInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarizedDayDetailEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Calendarized Meal Rename"
       }
     },
     "/api/v1/program/reviews": {

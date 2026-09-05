@@ -1,0 +1,167 @@
+/* Program DailyPlan picker modal ========================================== */
+.program-slot-picker__form {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.program-slot-picker-modal .program-slot-picker__selector {
+  min-height: 0;
+}
+
+.program-slot-picker-modal .program-slot-picker__search {
+  width: 100%;
+  height: 38px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.program-slot-picker-modal .program-slot-picker__results {
+  align-content: start;
+  grid-auto-rows: max-content;
+  max-height: none;
+}
+
+.program-slot-picker-modal .program-slot-picker__option {
+  align-self: start;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.program-slot-picker-modal .program-slot-picker__option.picker-result .picker-result-kpi__row {
+  grid-template-columns: 58px 58px 48px minmax(0, 1fr);
+  gap: 10px;
+}
+
+.program-slot-picker-modal .program-slot-picker__impact-layout {
+  gap: 12px;
+}
+
+.program-slot-picker-modal .program-slot-picker__days {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 12px;
+  padding: 10px calc(var(--desktop-padding-lats) + 4px);
+  border: 0;
+  border-radius: 12px;
+  background: var(--alloc-bar-bg);
+}
+
+.program-slot-picker-modal .program-slot-picker__days-title {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.program-slot-picker-modal .program-slot-picker__days-title svg {
+  width: 20px;
+  height: 20px;
+}
+
+.program-slot-picker-modal .program-slot-picker__day-list {
+  min-width: 0;
+}
+
+.program-slot-picker-modal .program-slot-picker__preview {
+  display: block;
+  margin: 0;
+  padding: 17px var(--desktop-padding-lats) 14px;
+  border: 1px solid var(--border-soft);
+  border-radius: 22px;
+  background: var(--surface-card);
+  box-shadow: none;
+  transform: none;
+}
+
+.program-slot-picker-modal .program-slot-picker__preview[hidden] {
+  display: none !important;
+}
+
+.program-slot-picker-modal .program-slot-picker__projection-card.picker-impact {
+  display: grid;
+  gap: 12px;
+  padding: 17px var(--desktop-padding-lats) 14px;
+  border: 1px solid var(--border-soft);
+  border-radius: 22px;
+  background: var(--surface-card);
+}
+
+.program-slot-picker__projection-title {
+  width: 100%;
+  margin: 0;
+}
+
+.program-slot-picker__projection-panel {
+  margin: 0;
+}
+
+.program-slot-picker__projection-plan-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-width: 0;
+}
+
+.program-slot-picker__projection-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 18px;
+  padding: 3px 8px;
+  border: 1px solid color-mix(in srgb, var(--entity-dailyplan) 46%, var(--border-default));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--entity-dailyplan) 20%, var(--surface-card));
+  color: var(--text-main);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.program-slot-picker__projection-panel .data-grid-row.is-projected {
+  background: color-mix(in srgb, var(--interactive-hover) 72%, transparent);
+}
+
+.program-slot-picker-modal .program-slot-picker__overwrite-warning {
+  flex: 0 0 auto;
+  margin: 0 24px 12px;
+}
+
+.program-slot-picker-modal .program-slot-picker__actions {
+  justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+  .program-slot-picker-modal .program-slot-picker__option.picker-result .picker-result-kpi__row {
+    grid-template-columns: 48px 52px 42px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .program-slot-picker-modal .program-slot-picker__preview {
+    padding: var(--mobil-padding-top) var(--mobil-padding-lats) var(--mobil-padding-bottom);
+  }
+
+  .program-slot-picker-modal .program-slot-picker__days {
+    align-items: flex-start;
+    flex-direction: column;
+    padding-inline: calc(var(--mobil-padding-lats) + 4px);
+  }
+
+  .program-slot-picker-modal .program-slot-picker__projection-card.picker-impact {
+    padding: var(--mobil-padding-top) var(--mobil-padding-lats) var(--mobil-padding-bottom);
+  }
+
+  .program-slot-picker-modal .program-slot-picker__overwrite-warning {
+    margin-inline: 16px;
+  }
+}

@@ -80,6 +80,12 @@ def record_meal_execution(
     day = _owned_day(user=user, day_id=day_id, for_update=True)
     calendarization = day.calendarization
     local_today = local_date_for_timezone(calendarization.timezone_name)
+    if (
+        calendarization.status == ProgramCalendarization.STATUS_SCHEDULED
+        and calendarization.start_date <= local_today <= calendarization.end_date
+    ):
+        calendarization.status = ProgramCalendarization.STATUS_ACTIVE
+        calendarization.save(update_fields=["status", "updated_at"])
     if calendarization.status != ProgramCalendarization.STATUS_ACTIVE or day.calendar_date != local_today:
         raise ValueError("meal_execution_not_today")
     if meal_snapshot_key not in _meal_keys(day):

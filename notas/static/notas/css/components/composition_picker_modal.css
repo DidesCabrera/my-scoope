@@ -1,0 +1,527 @@
+/* =========================================================
+   Top-layer composition picker
+   ========================================================= */
+
+html.has-picker-modal-open {
+  overflow: hidden;
+}
+
+.composition-picker-modal {
+  box-sizing: border-box;
+  width: min(960px, calc(100vw - 32px));
+  height: min(820px, calc(100dvh - 32px));
+  max-width: none;
+  max-height: min(820px, calc(100dvh - 32px));
+  padding: 0;
+  overflow: hidden;
+  color: var(--text-main);
+  background: var(--surface-card);
+  border: 0;
+  border-radius: 24px;
+  box-shadow: var(--shadow-elevated);
+}
+
+.composition-picker-modal::backdrop {
+  background: rgba(8, 12, 20, 0.58);
+  backdrop-filter: blur(3px);
+}
+
+html[data-theme="dark"] .composition-picker-modal::backdrop {
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.composition-picker-modal__surface {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: min(820px, calc(100dvh - 32px));
+  overflow: hidden;
+  background: var(--surface-card);
+  border: 1px solid var(--border-soft);
+  border-radius: 24px;
+}
+
+.composition-picker-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 22px 24px 14px;
+}
+
+.composition-picker-modal__header h2 {
+  margin: 0;
+  color: var(--text-main);
+  font-size: clamp(1.3rem, 2.4vw, 1.75rem);
+}
+
+.composition-picker-modal__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.composition-picker-modal__title > span {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-main);
+}
+
+.composition-picker-modal__title > span[hidden] {
+  display: none;
+}
+
+.composition-picker-modal__title svg {
+  width: 22px;
+  height: 22px;
+}
+
+.composition-picker-modal__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  padding: 0;
+  color: var(--text-muted);
+  background: var(--surface-card-muted);
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.composition-picker-modal__close:hover,
+.composition-picker-modal__close:focus-visible {
+  color: var(--text-main);
+  background: var(--interactive-hover);
+}
+
+.composition-picker-modal__close:focus-visible,
+.composition-picker-change:focus-visible,
+.composition-picker-entry-actions a:focus-visible {
+  outline: 2px solid var(--interactive-primary);
+  outline-offset: 2px;
+}
+
+.composition-picker-modal__close svg {
+  width: 18px;
+  height: 18px;
+}
+
+.composition-picker-modal__step,
+.composition-picker-modal__step-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  flex-direction: column;
+}
+
+.composition-picker-modal__step {
+  display: flex;
+}
+
+.composition-picker-modal__step-content {
+  display: flex;
+}
+
+.composition-picker-modal__step[hidden] {
+  display: none !important;
+}
+
+.composition-picker-modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 24px;
+}
+
+.composition-picker-modal__body--impact {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.composition-picker-modal__body--selection {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+
+.composition-picker-step-heading {
+  margin-bottom: 14px;
+}
+
+.composition-picker-step-heading--impact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.composition-picker-step-heading > h3 {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  margin: 0;
+  padding-left: 12px;
+  color: var(--text-main);
+  font-size: 17px;
+}
+
+.composition-picker-entry-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.composition-picker-impact-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.composition-picker-entry-actions__active,
+.composition-picker-entry-actions__create,
+.composition-picker-change {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 7px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.composition-picker-entry-actions__active {
+  color: var(--text-inverted);
+  background: var(--text-main);
+  border: 1px solid var(--text-main);
+}
+
+.composition-picker-entry-actions__create,
+.composition-picker-change {
+  color: var(--text-main);
+  background: transparent;
+  border: 1px solid var(--border-soft);
+  cursor: pointer;
+}
+
+.composition-picker-entry-actions__create:hover,
+.composition-picker-change:hover {
+  background: var(--interactive-hover);
+}
+
+.composition-picker-entry-actions svg {
+  width: 15px;
+  height: 15px;
+}
+
+.composition-picker-modal .add-row {
+  display: block;
+  padding: 0;
+}
+
+.composition-picker-modal .selector {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: stretch;
+  flex-direction: column;
+  gap: 0;
+  min-height: 0;
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+.composition-picker-modal .selector > .composition-picker-step-heading {
+  flex: 0 0 auto;
+  margin-bottom: 0;
+}
+
+.composition-picker-modal .selector > .composition-picker-step-heading > h3 {
+  margin-bottom: 14px;
+}
+
+.composition-picker-search-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 14px 14px 0 0;
+}
+
+.composition-picker-modal #food-search,
+.composition-picker-modal #meal-search {
+  width: 100%;
+  height: 38px;
+  padding: 0 8px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.composition-picker-modal .selector > .selector-list {
+  position: static;
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  height: auto;
+  max-height: none;
+  margin: 0;
+  overflow-y: auto;
+  background: var(--surface-card-muted);
+  border: 0;
+  border-radius: 0;
+}
+
+.composition-picker-modal .picker-list-close-btn {
+  position: static;
+}
+
+.composition-picker-modal__footer {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 24px 18px;
+  background: var(--surface-card);
+  border-top: 1px solid var(--border-soft);
+}
+
+.composition-picker-modal__action {
+  min-height: 38px;
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.composition-picker-modal__action--secondary {
+  margin: 0;
+  color: var(--text-muted);
+  background: transparent;
+  border-color: var(--border-soft);
+}
+
+.composition-picker-modal__action--secondary:hover {
+  color: var(--text-main);
+  background: var(--interactive-hover);
+}
+
+.composition-picker-modal__action--primary {
+  color: var(--text-inverted);
+  background: var(--text-main);
+}
+
+.composition-picker-modal__action--primary:hover {
+  color: #ffffff;
+  background: var(--interactive-primary);
+}
+
+.composition-picker-modal .picker-layout {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+.composition-picker-modal .picker-layout > .picker-section {
+  flex: 0 0 auto;
+}
+
+.composition-picker-modal .picker-section.picker-impact {
+  margin-left: 0;
+  padding-left: 0;
+  border-left: 0;
+}
+
+.composition-picker-modal .picker-selection-card {
+  flex: 0 0 auto;
+}
+
+.composition-picker-modal .picker-selection-card .picker-summary-card--selected {
+  margin-bottom: 0;
+}
+
+.composition-picker-modal .composition-picker-fixed-configuration {
+  flex: 0 0 auto;
+  margin: 0 0 12px;
+  padding-left: calc(var(--desktop-padding-lats) + 4px);
+}
+
+.picker-result-row--projected {
+  background: color-mix(in srgb, var(--interactive-hover) 72%, transparent);
+}
+
+.picker-result-row__name-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-width: 0;
+}
+
+.picker-result-row__name,
+.picker-result-row__name-line .data-grid-meal-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.picker-result-card--meal .picker-result-badge--pending {
+  border-color: color-mix(in srgb, var(--entity-meal) 46%, var(--border-default));
+  background: color-mix(in srgb, var(--entity-meal) 20%, var(--surface-card));
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+.picker-result-card--dailyplan .picker-result-badge--pending {
+  border-color: color-mix(in srgb, var(--entity-dailyplan) 46%, var(--border-default));
+  background: color-mix(in srgb, var(--entity-dailyplan) 20%, var(--surface-card));
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+.composition-picker-schedule-fields {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 12px 0;
+  padding: 8px 10px;
+  color: var(--text-main);
+  background-color: var(--alloc-bar-bg);
+  border-radius: 12px;
+}
+
+.composition-picker-schedule-fields label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.composition-picker-schedule-fields label span {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.composition-picker-schedule-fields .hour-picker,
+.composition-picker-schedule-fields .note-picker {
+  height: 32px;
+  color: var(--input-text);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  text-align: left;
+}
+
+.composition-picker-schedule-fields .hour-picker {
+  width: 140px;
+  padding: 2px 8px;
+}
+
+.composition-picker-schedule-fields .note-picker {
+  width: min(360px, 60vw);
+  padding: 2px 8px;
+}
+
+@media (max-width: 768px) {
+  .composition-picker-modal {
+    position: fixed;
+    inset: auto 0 0;
+    width: 100vw;
+    height: 94dvh;
+    max-height: 94dvh;
+    margin: 0;
+    border-radius: 22px 22px 0 0;
+  }
+
+  .composition-picker-modal__surface {
+    height: 100%;
+    max-height: 100%;
+    border-radius: 22px 22px 0 0;
+  }
+
+  .composition-picker-modal__header {
+    padding: 18px 16px 12px;
+  }
+
+  .composition-picker-modal__body {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .composition-picker-modal__footer {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .composition-picker-modal .composition-picker-fixed-configuration {
+    padding-left: calc(var(--mobil-padding-lats) + 4px);
+  }
+
+  .composition-picker-entry-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .composition-picker-modal .picker-layout {
+    margin: 0;
+  }
+
+  .composition-picker-modal__footer {
+    flex-wrap: wrap;
+  }
+
+  .composition-picker-schedule-fields {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .composition-picker-schedule-fields label,
+  .composition-picker-schedule-fields .hour-picker,
+  .composition-picker-schedule-fields .note-picker {
+    width: 100%;
+  }
+
+  .composition-picker-schedule-fields label {
+    flex-wrap: wrap;
+  }
+
+  .composition-picker-schedule-fields .hour-picker,
+  .composition-picker-schedule-fields .note-picker {
+    flex: 1 0 100%;
+  }
+}

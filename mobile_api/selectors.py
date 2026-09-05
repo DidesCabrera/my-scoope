@@ -12,27 +12,21 @@ from billing.application.services.apple_app_store import get_or_create_apple_app
 from billing.models import BillingProduct, PaymentProvider, ProviderSubscription
 from mobile_api.errors import MobileAPIError
 from mobile_api.library_actions import library_actions_payload
-from notas.application.proposals.contracts import (
-    can_apply_proposal,
-    proposal_status_label,
-    resolve_proposal_intent,
-)
 from notas.application.queries.calendarization_execution_queries import (
     calendarization_measurement_summary,
     calendarization_progress_summary,
     meal_execution_state_for_day,
     pending_revision_for_calendarization,
 )
+from notas.application.queries.calendarization_projection_queries import (
+    build_calendarization_snapshot_projection,
+    snapshot_nutrition_totals,
+)
 from notas.application.queries.calendarization_queries import (
     calendarization_history_for_user,
     calendarized_day_for_user,
     current_calendarization_for_user,
     today_for_calendarization,
-)
-from notas.application.queries.proposal_queries import (
-    build_proposal_dto,
-    build_proposal_list_item_dto,
-    get_available_proposal_queryset,
 )
 from notas.application.services.cache.dailyplan_summary import get_dailyplan_summary
 from notas.application.services.cache.program_summary import get_program_summary
@@ -41,7 +35,8 @@ from notas.application.services.nutrition.body_metrics import get_basic_body_pro
 from notas.application.services.nutrition.weight import get_current_weight
 from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood, Program
 from notas.domain.services.nutrition import macro_kcal_distribution
-from notas.presentation.proposals.proposal_review_viewmodels import build_proposal_review_vm
+
+REMINDER_UPCOMING_LIMIT = 60
 
 
 def _safe_number(value) -> float:
@@ -236,6 +231,89 @@ def _program_week_panel_items(program, current_weight=None) -> list[dict]:
     ]
 
 
+def _snapshot_nutrition_payload(snapshot, current_weight=None) -> dict:
+    totals = snapshot_nutrition_totals(snapshot)
+    protein = _safe_number(totals["protein"])
+    return {
+        "calories": _safe_number(totals["total_kcal"]),
+        "protein": {
+            "grams": protein,
+            "allocation": _safe_number(totals["alloc"]["protein"]),
+            "per_kilogram": (
+                _safe_number(protein / current_weight)
+                if current_weight and protein
+                else None
+            ),
+        },
+        "carbs": {
+            "grams": _safe_number(totals["carbs"]),
+            "allocation": _safe_number(totals["alloc"]["carbs"]),
+        },
+        "fat": {
+            "grams": _safe_number(totals["fat"]),
+            "allocation": _safe_number(totals["alloc"]["fat"]),
+        },
+    }
+
+
+def _calendarized_week_panel_items(calendarization, current_weight=None) -> tuple[dict, list[dict]]:
+    projection = build_calendarization_snapshot_projection(calendarization)
+    program_total_kcal = projection["program_totals"]["total_kcal"]
+    items = []
+    for week in projection["weeks"]:
+        days = []
+        for day in week["days"]:
+            snapshot = day["snapshot"]
+            days.append(
+                {
+                    "id": (
+                        f"calendarized-day:{day['calendarized_day_id']}"
+                        if day["calendarized_day_id"]
+                        else f"calendarization-week:{calendarization.id}:{week['week_number']}:day:{day['day_number']}"
+                    ),
+                    "day_number": day["day_number"],
+                    "day_label": day["day_label"],
+                    "plan_name": day["plan_name"],
+                    "nutrition": (
+                        _snapshot_nutrition_payload(snapshot, current_weight)
+                        if snapshot
+                        else None
+                    ),
+                }
+            )
+        items.append(
+            {
+                "id": f"calendarization-week:{calendarization.id}:{week['week_number']}",
+                "week_number": week["week_number"],
+                "days": days,
+                "filled_days_count": week["filled_days_count"],
+                "meals_count": week["meals_count"],
+                "foods_count": week["foods_count"],
+                "average_calories": _safe_number(week["averages"]["total_kcal"]),
+                "foods": _aggregated_food_panel_items(
+                    week["foods_aggregation_table"],
+                    id_prefix=f"calendarization-week-food:{calendarization.id}:{week['week_number']}",
+                ),
+                "calories": _safe_number(week["totals"]["total_kcal"]),
+                "calorie_share": _safe_number(
+                    _safe_percentage(week["totals"]["total_kcal"], program_total_kcal)
+                ),
+                "calorie_distribution": _calorie_distribution(
+                    week["totals"]["kcal_protein"],
+                    week["totals"]["kcal_carbs"],
+                    week["totals"]["kcal_fat"],
+                ),
+                "protein_grams": _safe_number(week["totals"]["protein"]),
+                "carbs_grams": _safe_number(week["totals"]["carbs"]),
+                "fat_grams": _safe_number(week["totals"]["fat"]),
+                "protein_allocation": _safe_number(week["totals"]["alloc"]["protein"]),
+                "carbs_allocation": _safe_number(week["totals"]["alloc"]["carbs"]),
+                "fat_allocation": _safe_number(week["totals"]["alloc"]["fat"]),
+            }
+        )
+    return projection, items
+
+
 def _library_page(queryset, *, search, offset, limit, builder) -> dict:
     normalized_search = (search or "").strip()[:100] or None
     if normalized_search:
@@ -414,8 +492,11 @@ def library_programs_payload(user, *, search=None, offset=0, limit=30) -> dict:
 def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
     current_weight = get_current_weight(user)
     if entity == "foods":
-        item = Food.objects.filter(pk=item_id, created_by=user, is_active=True).select_related("created_by").first()
+        item = Food.objects.filter(pk=item_id, created_by=user, is_active=True).select_related(
+            "created_by", "label_capture_receipt"
+        ).first()
         if item:
+            receipt = getattr(item, "label_capture_receipt", None)
             return {
                 "id": item.id,
                 "entity": "food",
@@ -428,6 +509,8 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
                 "created_at": item.created_at,
                 "is_draft": False,
                 "actions": library_actions_payload(item, user, context="detail"),
+                "label_capture_receipt_id": receipt.id if receipt else None,
+                "label_image_available": bool(receipt and receipt.retained_label_image),
             }
     elif entity == "meals":
         item = (
@@ -680,12 +763,13 @@ def today_payload(user, *, now=None) -> dict:
             else None
         ),
         "measurements": calendarization_measurement_summary(calendarization),
-        "reminders": reminder_settings_payload(calendarization),
+        "reminders": reminder_settings_payload(calendarization, now=now),
         "pending_revision": revision_payload(pending_revision_for_calendarization(calendarization)),
     }
 
 
-def reminder_settings_payload(calendarization) -> dict:
+def reminder_settings_payload(calendarization, *, now=None) -> dict:
+    current_time = now or timezone.now()
     upcoming = [
         {
             "event_key": event.event_key,
@@ -696,8 +780,11 @@ def reminder_settings_payload(calendarization) -> dict:
             "scheduled_for_utc": event.scheduled_for_utc,
             "status": event.status,
         }
-        for event in calendarization.notification_events.filter(status="pending").order_by("scheduled_for_utc", "id")[
-            :20
+        for event in calendarization.notification_events.filter(
+            status="pending",
+            scheduled_for_utc__gt=current_time,
+        ).order_by("scheduled_for_utc", "id")[
+            :REMINDER_UPCOMING_LIMIT
         ]
     ]
     return {
@@ -772,6 +859,7 @@ def food_label_capture_payload(result) -> dict:
         "detected_basis": receipt.detected_basis,
         "serving_size_g": float(receipt.serving_size_g) if receipt.serving_size_g is not None else None,
         "ocr_engine": receipt.ocr_engine,
+        "label_image_retained": bool(receipt.retained_label_image),
         "created_at": receipt.created_at,
     }
 
@@ -829,12 +917,11 @@ def active_program_payload(user) -> dict:
         if local_date >= calendarization.start_date
         else None
     )
-    source_program = calendarization.source_program
-    weeks_count = (
-        source_program.normalized_duration_weeks
-        if source_program
-        else max(1, ((calendarization.end_date - calendarization.start_date).days + 7) // 7)
+    projection, weeks = _calendarized_week_panel_items(
+        calendarization,
+        get_current_weight(user),
     )
+    weeks_count = projection["duration_weeks"]
     indicators = [
         {
             "icon": "week",
@@ -844,20 +931,18 @@ def active_program_payload(user) -> dict:
         {
             "icon": "dailyPlan",
             "label": "planes asignados",
-            "value": source_program.filled_days_count
-            if source_program
-            else sum(1 for day in calendarization.days.all() if day.has_plan),
+            "value": projection["filled_days_count"],
         },
         {
             "icon": "food",
             "label": "alimentos",
-            "value": get_program_summary(source_program)["program_foods_count"] if source_program else 0,
+            "value": projection["program_foods_count"],
         },
     ]
     return {
         "calendarization": _calendarization_data_payload(calendarization),
         "weeks_count": weeks_count,
-        "weeks": _program_week_panel_items(source_program, get_current_weight(user)) if source_program else [],
+        "weeks": weeks,
         "days": _calendarized_days_payload(calendarization),
         "adherence": adherence,
         "indicators": indicators,
@@ -943,186 +1028,4 @@ def calendarized_day_payload(user, day_id: int) -> dict | None:
         "meal_execution": meal_execution_state_for_day(day) if day.has_plan else [],
         "plan_name": (snapshot or {}).get("name", ""),
         "plan_snapshot": snapshot,
-    }
-
-
-def _proposal_actions(*, status: str, intent: str | None, applied_at=None) -> list[dict]:
-    if status == "pending_review":
-        return [
-            {"key": "approve", "label": "Aprobar", "tone": "default", "requires_confirmation": True},
-            {"key": "reject", "label": "Rechazar", "tone": "danger", "requires_confirmation": True},
-            {"key": "cancel", "label": "Cancelar", "tone": "danger", "requires_confirmation": True},
-        ]
-    if can_apply_proposal(status=status, intent=intent, applied_at=applied_at):
-        return [
-            {"key": "apply", "label": "Aplicar", "tone": "default", "requires_confirmation": True},
-            {"key": "cancel", "label": "Cancelar", "tone": "danger", "requires_confirmation": True},
-        ]
-    if status in {"draft", "approved"}:
-        return [{"key": "cancel", "label": "Cancelar", "tone": "danger", "requires_confirmation": True}]
-    return []
-
-
-def _proposal_summary_payload(dto: dict) -> dict:
-    intent = resolve_proposal_intent(dto.get("proposed_payload"))
-    return {
-        "id": dto["id"],
-        "title": dto.get("title", ""),
-        "summary": dto.get("summary", ""),
-        "status": dto.get("status", "draft"),
-        "status_label": proposal_status_label(dto.get("status", "")),
-        "source": dto.get("source", ""),
-        "attachment_kind": dto.get("attachment_kind", "dailyplan"),
-        "attachment_label": dto.get("attachment_label", ""),
-        "attachment_name": dto.get("attachment_name", ""),
-        "is_reviewable": bool(dto.get("is_reviewable")),
-        "created_at": dto.get("created_at"),
-        "actions": _proposal_actions(
-            status=dto.get("status", ""),
-            intent=intent,
-            applied_at=dto.get("applied_at"),
-        ),
-    }
-
-
-def proposal_list_payload(user, *, status_filter=None, offset=0, limit=30) -> dict:
-    queryset = get_available_proposal_queryset(user)
-    pending_count = queryset.filter(status="pending_review").count()
-    allowed_filters = {"pending_review", "approved", "applied", "rejected", "cancelled"}
-    if status_filter in allowed_filters:
-        queryset = queryset.filter(status=status_filter)
-    safe_offset = max(int(offset or 0), 0)
-    safe_limit = min(max(int(limit or 30), 1), 50)
-    total = queryset.count()
-    items = [
-        _proposal_summary_payload(
-            {
-                **build_proposal_list_item_dto(proposal).as_dict(),
-                "proposed_payload": proposal.proposed_payload,
-                "applied_at": proposal.applied_at,
-            }
-        )
-        for proposal in queryset[safe_offset : safe_offset + safe_limit]
-    ]
-    return {"items": items, "total": total, "offset": safe_offset, "limit": safe_limit, "pending_count": pending_count}
-
-
-def _fact_label(value: str) -> str:
-    labels = {
-        "total_kcal": "Calorías",
-        "protein": "Proteína",
-        "protein_g": "Proteína",
-        "carbs": "Carbohidratos",
-        "carbs_g": "Carbohidratos",
-        "fat": "Grasas",
-        "fat_g": "Grasas",
-        "is_valid": "Validación",
-        "intent": "Tipo",
-    }
-    return labels.get(value, value.replace("_", " ").strip().capitalize())
-
-
-def _bounded_facts(value, *, prefix="", limit=20) -> list[dict]:
-    facts: list[dict] = []
-
-    def visit(candidate, path: str) -> None:
-        if len(facts) >= limit:
-            return
-        if isinstance(candidate, dict):
-            for key, child in candidate.items():
-                if key in {"subject_context", "suggested_changes", "foods", "meals"}:
-                    continue
-                visit(child, f"{path}.{key}" if path else str(key))
-            return
-        if isinstance(candidate, (str, int, float, bool)) and path:
-            key = path.split(".")[-1]
-            display = "Sí" if candidate is True else "No" if candidate is False else str(candidate)
-            facts.append({"label": _fact_label(key), "value": display})
-
-    visit(value, prefix)
-    return facts
-
-
-def _proposal_kpis_payload(value) -> dict | None:
-    if not isinstance(value, dict):
-        return None
-    return {key: value.get(key) for key in ("total_kcal", "protein", "carbs", "fat", "ppk")}
-
-
-def _proposal_meal_payload(value) -> dict | None:
-    if not isinstance(value, dict):
-        return None
-    return {
-        "name": value.get("name", ""),
-        "foods": [
-            {
-                "food_id": food.get("food_id"),
-                "food_name": food.get("food_name", ""),
-                "quantity": food.get("quantity"),
-                "unit": food.get("unit", "g"),
-            }
-            for food in value.get("foods", [])
-            if isinstance(food, dict)
-        ],
-        "kpis": _proposal_kpis_payload(value.get("kpis")),
-    }
-
-
-def _proposal_dailyplan_payload(value) -> dict | None:
-    if not isinstance(value, dict):
-        return None
-    return {
-        "name": value.get("name", ""),
-        "meals": [
-            {
-                "hour": item.get("hour"),
-                "note": item.get("note", ""),
-                "meal": _proposal_meal_payload(item.get("meal")),
-            }
-            for item in value.get("meals", [])
-            if isinstance(item, dict) and isinstance(item.get("meal"), dict)
-        ],
-        "kpis": _proposal_kpis_payload(value.get("kpis")),
-    }
-
-
-def proposal_detail_payload(user, proposal_id: int) -> dict | None:
-    proposal = get_available_proposal_queryset(user).filter(pk=proposal_id).first()
-    if proposal is None:
-        return None
-    dto = build_proposal_dto(proposal).as_dict()
-    review = build_proposal_review_vm(dto).as_dict()
-    summary = _proposal_summary_payload({**dto, **build_proposal_list_item_dto(proposal).as_dict()})
-    warning = review["subject_context_warning"]
-    applied = review.get("applied_result")
-    return {
-        **summary,
-        "dailyplan_id": dto.get("dailyplan_id"),
-        "dailyplan_name": dto.get("dailyplan_name", ""),
-        "created_by_username": dto.get("created_by_username", ""),
-        "reviewed_by_username": dto.get("reviewed_by_username"),
-        "intent": review["payload"].get("intent"),
-        "entity_title": review["payload"].get("entity_title", ""),
-        "target_facts": _bounded_facts(dto.get("targets", {})),
-        "current_facts": _bounded_facts(dto.get("current_snapshot", {}).get("actual", dto.get("current_snapshot", {}))),
-        "validation_facts": _bounded_facts(dto.get("validation_summary", {}).get("payload_validation", {})),
-        "meal": _proposal_meal_payload(review["payload"].get("meal")),
-        "dailyplan": _proposal_dailyplan_payload(review["payload"].get("dailyplan")),
-        "subject_context_warning": {
-            "requires_warning": warning.get("requires_warning", False),
-            "source_label": warning.get("source_label", ""),
-            "calculation_weight_label": warning.get("calculation_weight_label", ""),
-            "title": warning.get("title", ""),
-            "message": warning.get("message", ""),
-        },
-        "applied_result": (
-            {
-                "kind": applied.get("kind"),
-                "object_id": applied.get("object_id"),
-                "object_name": applied.get("object_name", ""),
-            }
-            if applied
-            else None
-        ),
-        "applied_at": dto.get("applied_at"),
     }

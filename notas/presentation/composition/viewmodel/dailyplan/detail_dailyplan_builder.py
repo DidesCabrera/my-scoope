@@ -62,6 +62,7 @@ def build_dailyplan_detail_vm(content_data):
                 category_badge=child_data["title"]["category_badge"],
                 structural_indicators=StructuralIndicatorsUI(
                     foods_count=child_data["title"]["foods_count"],
+                    hour=child_data["title"]["hour"],
                 ),
                 url=child_data["title"].get("url"),
             ),

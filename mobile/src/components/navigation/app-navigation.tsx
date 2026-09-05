@@ -41,7 +41,7 @@ import { listAvailableProductAreas, type ProductAreaKey } from "@/navigation/pro
 import { HeaderEntityIdentity } from "./header-entity-identity";
 import { EntitySidebarItem, type EntitySidebarItemData, NavigationSidebarItem, type NavigationSidebarItemData } from "./sidebar-items";
 
-type HeaderAction = { icon?: "more" | "plus"; label: string; onPress(): void };
+type HeaderAction = { disabled?: boolean; icon?: "more" | "plus"; label: string; onPress(): void };
 
 type HeaderPresentation =
   | { mode: "default"; action?: HeaderAction; identityVisible?: boolean; title?: string }
@@ -238,9 +238,11 @@ export function AppNavigationHeader() {
           <Pressable
             accessibilityLabel={headerPresentation.action.label}
             accessibilityRole="button"
+            accessibilityState={{ disabled: headerPresentation.action.disabled }}
+            disabled={headerPresentation.action.disabled}
             hitSlop={8}
             onPress={headerPresentation.action.onPress}
-            style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}>
+            style={({ pressed }) => [styles.headerButton, headerPresentation.action?.disabled && styles.disabled, pressed && styles.pressed]}>
             {headerPresentation.action.icon === "plus"
               ? <Plus color={tokens.color.textMain} size={25} strokeWidth={2.2} />
               : <MoreHorizontal color={tokens.color.textMain} size={26} strokeWidth={2.2} />}
@@ -356,6 +358,7 @@ function AppSidebar() {
 
 const styles = StyleSheet.create({
   pressed: { opacity: 0.65 },
+  disabled: { opacity: 0.35 },
   headerSafeArea: { backgroundColor: tokens.color.surfaceApp },
   header: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, flexDirection: "row", height: 48, justifyContent: "space-between" },
   headerButton: { alignItems: "center", height: 52, justifyContent: "center", width: 58 },

@@ -130,6 +130,9 @@ def get_dpm_detail_page_data(
             dailyplan=dailyplan,
             dailyplan_kpis=dailyplan_kpis,
             mealfood=mealfood,
+            dpm=dpm,
+            meal_foods=meal_foods,
+            dailyplan_meals=list(dailyplan.dailyplan_meals.all()),
         )
 
         selected_food_id = request_get.get("select_food")
@@ -176,51 +179,4 @@ def get_dpm_detail_page_data(
         can_edit_foods=can_edit_foods,
         viewmode=viewmode,
         program_context_query=program_context,
-    )
-
-
-@dataclass
-class DpmEditPageData:
-    dailyplan: Any
-    dpm: Any
-    meal: Any
-    meal_foods: List[Any]
-    detail_content_data: Any
-    viewmode: Any
-
-
-def get_dpm_edit_page_data(
-    user,
-    dailyplan_id: int,
-    dpm_id: int,
-    viewmode,
-) -> DpmEditPageData:
-    dpm = _get_dpm_for_user(
-        user=user,
-        dailyplan_id=dailyplan_id,
-        dpm_id=dpm_id,
-    )
-
-    dailyplan = dpm.dailyplan
-    meal = dpm.meal
-    meal_foods = list(meal.meal_food_set.select_related("food").all())
-
-    detail_content_data = build_dpm_detail_content_data(
-        dailyplan=dailyplan,
-        dpm=dpm,
-        meal=meal,
-        meal_foods=meal_foods,
-        user=user,
-        viewmode=viewmode,
-        dailyplan_kpis=None,
-        meal_kpis=None,
-    )
-
-    return DpmEditPageData(
-        dailyplan=dailyplan,
-        dpm=dpm,
-        meal=meal,
-        meal_foods=meal_foods,
-        detail_content_data=detail_content_data,
-        viewmode=viewmode,
     )

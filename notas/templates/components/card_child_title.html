@@ -37,7 +37,7 @@
     {% endif %}
 
     {% if completion_summarized %}<div class="entity-heading__indicator-row">{% endif %}
-    {% if titulo.structural_indicators.meals_count or titulo.structural_indicators.foods_count %}
+    {% if titulo.structural_indicators.meals_count or titulo.structural_indicators.foods_count or titulo.structural_indicators.hour %}
       <div class="entity-indicators structural-indicators">
           {% if titulo.structural_indicators.meals_count %}
               <span class="structural-item">
@@ -54,6 +54,15 @@
             <span class="structural-item">
                 <span class="structural-value">{{ titulo.structural_indicators.foods_count }}</span>
                 <i data-lucide="carrot" class="card-icon main"></i>
+            </span>
+          {% endif %}
+          {% if titulo.structural_indicators.foods_count and titulo.structural_indicators.hour %}
+            <span class="structural-divider"></span>
+          {% endif %}
+          {% if titulo.structural_indicators.hour %}
+            <span class="structural-item structural-item--time">
+                <i data-lucide="clock" class="card-icon main"></i>
+                <span class="structural-value">{{ titulo.structural_indicators.hour }}</span>
             </span>
           {% endif %}
       </div>

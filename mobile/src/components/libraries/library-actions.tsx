@@ -1,4 +1,4 @@
-import { Copy, MoreHorizontal, Pencil, Send, Trash2, X } from "lucide-react-native";
+import { Clock3, Copy, MoreHorizontal, Pencil, Send, Trash2, X } from "lucide-react-native";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import {
@@ -23,6 +23,7 @@ import type {
 import { Button, Field, InlineNotice } from "@/components/ui/primitives";
 import { EntityCardAction } from "@/components/ui";
 import { ActionSheetModal } from "@/components/ui/action-sheet-modal";
+import { MealTimeForm } from "@/components/calendarization/calendarized-entity-actions";
 import { tokens } from "@/design/tokens";
 
 type ApiRequest = <T>(path: string, init?: RequestInit) => Promise<T>;
@@ -35,6 +36,10 @@ type LibraryActionsProps = {
   onVisibleChange?: (visible: boolean) => void;
   renderTrigger?: (open: () => void) => ReactNode;
   visible?: boolean;
+  mealTimeChange?: {
+    initialTime?: string | null;
+    onSubmit(hour: string): Promise<void>;
+  };
 };
 
 const actionIcons = {
@@ -51,10 +56,10 @@ const entityLabels = {
   program: "este programa",
 } as const;
 
-export function LibraryActions({ apiRequest, entitySlug, item, onCompleted, onVisibleChange, renderTrigger, visible: controlledVisible }: LibraryActionsProps) {
+export function LibraryActions({ apiRequest, entitySlug, item, mealTimeChange, onCompleted, onVisibleChange, renderTrigger, visible: controlledVisible }: LibraryActionsProps) {
   const actions = item.actions ?? [];
   const [internalVisible, setInternalVisible] = useState(false);
-  const [selected, setSelected] = useState<LibraryAction | null>(null);
+  const [selected, setSelected] = useState<LibraryAction | { destructive: false; key: "change-time"; label: string } | null>(null);
   const [name, setName] = useState(item.name);
   const [recipientEmail, setRecipientEmail] = useState("");
   const [subject, setSubject] = useState(item.name);
@@ -67,7 +72,7 @@ export function LibraryActions({ apiRequest, entitySlug, item, onCompleted, onVi
     onVisibleChange?.(nextVisible);
   };
 
-  if (!actions.length) return null;
+  if (!actions.length && !mealTimeChange) return null;
 
   const close = () => {
     if (submitting) return;
@@ -155,6 +160,22 @@ export function LibraryActions({ apiRequest, entitySlug, item, onCompleted, onVi
                     </Pressable>
                   );
                 }) : null}
+
+                {!selected && mealTimeChange ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => setSelected({ destructive: false, key: "change-time", label: "Cambiar hora" })}
+                    style={({ pressed }) => [styles.actionRow, pressed && styles.pressed]}>
+                    <View style={styles.actionIcon}>
+                      <Clock3 color={tokens.color.textMain} size={20} />
+                    </View>
+                    <Text style={styles.actionLabel}>Cambiar hora</Text>
+                  </Pressable>
+                ) : null}
+
+                {selected?.key === "change-time" && mealTimeChange ? (
+                  <MealTimeForm initialTime={mealTimeChange.initialTime} onCancel={() => setSelected(null)} onSaved={close} onSubmit={mealTimeChange.onSubmit} />
+                ) : null}
 
                 {selected?.key === "rename" ? (
                   <View style={styles.form}>

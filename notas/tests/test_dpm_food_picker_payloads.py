@@ -62,6 +62,42 @@ class DPMFoodPickerPayloadTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("foods_json", response.context)
         self.assertIn("food_picker_json", response.context)
+        self.assertContains(response, '<dialog\n  id="dpm-picker-section"')
+        self.assertContains(response, 'data-picker-step-panel="selection"')
+        self.assertContains(response, 'data-picker-step-panel="impact"')
+        self.assertContains(response, 'data-scope="dpm-meal-result"')
+        self.assertContains(response, 'data-scope="dpm-dailyplan-result"')
+        self.assertContains(response, 'id="dpm-food-picker-foods-data"')
+        self.assertContains(response, 'id="dpm-food-picker-context-data"')
+        self.assertNotContains(response, 'class="preview-picker"')
+
+    def test_dailyplan_meal_detail_picker_context_contains_result_compositions(self):
+        food = Food.objects.create(
+            name="Egg",
+            protein=10,
+            carbs=2,
+            fat=5,
+            created_by=self.user,
+        )
+        meal_food = MealFood.objects.create(
+            meal=self.meal,
+            food=food,
+            quantity=120,
+        )
+
+        response = self.client.get(
+            reverse("dailyplan_meal_detail", args=[self.dailyplan.id, self.dpm.id])
+        )
+        picker_context = json.loads(response.context["food_picker_json"])
+
+        self.assertEqual(picker_context["meal"]["name"], self.meal.name)
+        self.assertEqual(picker_context["meal"]["foods"][0]["mealfood_id"], meal_food.id)
+        self.assertEqual(picker_context["dailyplan"]["name"], self.dailyplan.name)
+        self.assertEqual(
+            picker_context["dailyplan"]["meals"][0]["dailyplanmeal_id"],
+            self.dpm.id,
+        )
+        self.assertEqual(picker_context["dpm"]["id"], self.dpm.id)
 
     def test_dailyplan_meal_detail_payloads_are_valid_json(self):
         Food.objects.create(

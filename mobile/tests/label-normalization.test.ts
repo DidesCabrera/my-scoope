@@ -1,8 +1,15 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import test from "node:test";
 
 import type { NutritionLabelRecognition } from "../modules/nutrition-label-ocr/src/NutritionLabelOcr.types";
-import { normalizeNutritionLabel } from "../src/label-capture/normalize";
+import {
+  confirmNutritionLabelBasis,
+  convertServingDraftTo100g,
+  convertVolumeDraftTo100g,
+  normalizeNutritionLabel,
+} from "../src/label-capture/normalize";
 
 function recognition(lines: string[], confidence = 0.96): NutritionLabelRecognition {
   return {
@@ -54,6 +61,58 @@ test("converts values declared for one serving into the 100g food contract", () 
   assert.ok(draft.warnings.includes("basis_normalized_from_serving"));
 });
 
+test("detects grams when a serving is expressed as units with a parenthesized weight", () => {
+  const draft = normalizeNutritionLabel(recognition([
+    "Porción: 1 unidad (30 g)",
+    "Energía 120 kcal",
+    "Proteínas 4 g",
+    "Carbohidratos 18 g",
+    "Grasa total 4 g",
+  ]));
+
+  assert.equal(draft.basis, "per_serving");
+  assert.equal(draft.servingSizeG, 30);
+  assert.equal(draft.normalizationStatus, "ready");
+  assert.equal(draft.values.protein_g, 13.333);
+  assert.equal(draft.values.carbs_g, 60);
+  assert.equal(draft.values.fat_g, 13.333);
+});
+
+test("does not expose per-serving readings as per-100g values when serving weight is missing", () => {
+  const draft = normalizeNutritionLabel(recognition([
+    "Cantidad por porción",
+    "Energía 120 kcal",
+    "Proteínas 4 g",
+    "Carbohidratos 18 g",
+    "Grasa total 4 g",
+  ]));
+
+  assert.equal(draft.basis, "per_serving");
+  assert.equal(draft.normalizationStatus, "serving_size_required");
+  assert.equal(draft.sourceValues.protein_g, 4);
+  assert.deepEqual(draft.values, {});
+  assert.ok(draft.warnings.includes("serving_size_required"));
+});
+
+test("converts fail-closed per-serving readings after the user supplies the missing weight", () => {
+  const draft = normalizeNutritionLabel(recognition([
+    "Cantidad por porción",
+    "Energía 120 kcal",
+    "Proteínas 4 g",
+    "Carbohidratos 18 g",
+    "Grasa total 4 g",
+  ]));
+  const converted = convertServingDraftTo100g(draft, 30);
+
+  assert.equal(converted.normalizationStatus, "ready");
+  assert.equal(converted.servingSizeG, 30);
+  assert.equal(converted.values.protein_g, 13.333);
+  assert.equal(converted.values.carbs_g, 60);
+  assert.equal(converted.values.fat_g, 13.333);
+  assert.ok(converted.warnings.includes("basis_normalized_from_serving"));
+  assert.ok(!converted.warnings.includes("serving_size_required"));
+});
+
 test("uses the 100g column when a dual-column label lists serving first", () => {
   const draft = normalizeNutritionLabel(recognition([
     "Porción 50 g     100 g",
@@ -63,6 +122,22 @@ test("uses the 100g column when a dual-column label lists serving first", () => 
   ]));
 
   assert.equal(draft.basis, "per_100g");
+  assert.equal(draft.servingSizeG, 50);
+  assert.equal(draft.values.protein_g, 10);
+  assert.equal(draft.values.carbs_g, 30);
+  assert.equal(draft.values.fat_g, 4);
+});
+
+test("uses the 100g column when a dual-column label lists 100g first", () => {
+  const draft = normalizeNutritionLabel(recognition([
+    "100 g     Porción 50 g",
+    "Proteínas (g) 10 5",
+    "Carbohidratos (g) 30 15",
+    "Grasas totales (g) 4 2",
+  ]));
+
+  assert.equal(draft.basis, "per_100g");
+  assert.equal(draft.servingSizeG, 50);
   assert.equal(draft.values.protein_g, 10);
   assert.equal(draft.values.carbs_g, 30);
   assert.equal(draft.values.fat_g, 4);
@@ -72,9 +147,113 @@ test("exposes missing and low-confidence fields instead of inventing values", ()
   const draft = normalizeNutritionLabel(recognition(["Información nutricional", "Proteínas 8 g"], 0.6));
 
   assert.equal(draft.basis, "manual");
-  assert.equal(draft.values.protein_g, 8);
+  assert.equal(draft.normalizationStatus, "basis_confirmation_required");
+  assert.equal(draft.sourceValues.protein_g, 8);
+  assert.equal(draft.values.protein_g, undefined);
   assert.equal(draft.values.carbs_g, undefined);
   assert.ok(draft.warnings.includes("protein_g_low_confidence"));
   assert.ok(draft.warnings.includes("carbs_g_missing"));
   assert.ok(draft.warnings.includes("fat_g_missing"));
+});
+
+test("requires explicit basis confirmation when OCR misses the table header", () => {
+  const draft = normalizeNutritionLabel(recognition([
+    "Proteínas 10 g",
+    "Carbohidratos 20 g",
+    "Grasas totales 5 g",
+  ]));
+
+  assert.equal(draft.normalizationStatus, "basis_confirmation_required");
+  assert.deepEqual(draft.values, {});
+
+  const confirmed = confirmNutritionLabelBasis(draft, "per_100g");
+  assert.equal(confirmed.basis, "per_100g");
+  assert.equal(confirmed.normalizationStatus, "ready");
+  assert.equal(confirmed.values.protein_g, 10);
+  assert.ok(confirmed.warnings.includes("basis_confirmed_as_per_100g"));
+});
+
+test("routes an explicitly confirmed per-serving basis through the conversion gate", () => {
+  const draft = normalizeNutritionLabel(recognition([
+    "Proteínas 4 g",
+    "Carbohidratos 18 g",
+    "Grasas totales 4 g",
+  ]));
+  const perServing = confirmNutritionLabelBasis(draft, "per_serving");
+
+  assert.equal(perServing.basis, "per_serving");
+  assert.equal(perServing.normalizationStatus, "serving_size_required");
+  assert.deepEqual(perServing.values, {});
+});
+
+test("keeps per-100ml values unnormalized until the user supplies their real weight", () => {
+  const draft = normalizeNutritionLabel(recognition([
+    "Información nutricional por 100 ml",
+    "Energía 46 kcal",
+    "Proteínas 3,3 g",
+    "Carbohidratos 5 g",
+    "Grasas totales 2 g",
+  ]));
+
+  assert.equal(draft.basis, "per_100ml");
+  assert.equal(draft.normalizationStatus, "volume_weight_required");
+  assert.equal(draft.sourceValues.protein_g, 3.3);
+  assert.deepEqual(draft.values, {});
+
+  const converted = convertVolumeDraftTo100g(draft, 103);
+  assert.equal(converted.normalizationStatus, "ready");
+  assert.equal(converted.values.protein_g, 3.204);
+  assert.equal(converted.values.carbs_g, 4.854);
+  assert.equal(converted.values.fat_g, 1.942);
+  assert.ok(converted.warnings.includes("basis_normalized_from_100ml"));
+});
+
+test("routes an unknown basis confirmed as per-100ml through the weight gate", () => {
+  const draft = normalizeNutritionLabel(recognition([
+    "Proteínas 3,3 g",
+    "Carbohidratos 5 g",
+    "Grasas totales 2 g",
+  ]));
+  const perVolume = confirmNutritionLabelBasis(draft, "per_100ml");
+
+  assert.equal(perVolume.basis, "per_100ml");
+  assert.equal(perVolume.normalizationStatus, "volume_weight_required");
+  assert.deepEqual(perVolume.values, {});
+});
+
+test("the capture screen supports camera and gallery with explicit AI safeguards", async () => {
+  const screen = await readFile(path.resolve(process.cwd(), "src/app/label-capture.tsx"), "utf8");
+
+  for (const expected of [
+    'autofocus="on"',
+    "enableTorch={torchEnabled}",
+    "launchImageLibraryAsync",
+    "prepareLabelImage",
+    "consent_to_ai_processing: true",
+    'retain_label_image: Boolean(retainImage && prepared && analysisId)',
+    '"/api/v1/foods/label-captures/analyze"',
+    'loading={openingCamera}',
+    'confirmBasis("per_100ml")',
+    "convertVolumeDraftTo100g",
+  ]) {
+    assert.ok(screen.includes(expected), `missing capture safeguard: ${expected}`);
+  }
+  assert.ok(!screen.includes("development build iOS de CML05"));
+  assert.ok(!screen.includes("CameraView.isAvailableAsync()"));
+});
+
+test("the native OCR module uses nutrition vocabulary and versioned provenance", async () => {
+  const module = await readFile(
+    path.resolve(process.cwd(), "modules/nutrition-label-ocr/ios/NutritionLabelOcrModule.swift"),
+    "utf8",
+  );
+
+  for (const expected of [
+    '"engineVersion": "2"',
+    "request.customWords = [",
+    '"Proteínas"',
+    '"Carbohidratos"',
+  ]) {
+    assert.ok(module.includes(expected), `missing native OCR safeguard: ${expected}`);
+  }
 });

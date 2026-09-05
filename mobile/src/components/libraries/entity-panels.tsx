@@ -148,7 +148,7 @@ export function MealPanels({ items }: { items: LibraryMealPanelItem[] }) {
   );
 }
 
-export function DailyPlanMealCards({ items, onRemove }: { items: LibraryMealPanelItem[]; onRemove?: (item: LibraryMealPanelItem) => Promise<void> }) {
+export function DailyPlanMealCards({ dailyPlanId, items, onRemove }: { dailyPlanId: number; items: LibraryMealPanelItem[]; onRemove?: (item: LibraryMealPanelItem) => Promise<void> }) {
   const router = useRouter();
   return (
     <View style={styles.mealCardList}>
@@ -172,18 +172,20 @@ export function DailyPlanMealCards({ items, onRemove }: { items: LibraryMealPane
                 label={`Más acciones para ${item.name}`}
                 title={item.name}
               /> : null}
-              <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={() => router.push(`/libraries/meals/${item.detail_id}` as Href)} role="link"><ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction>
+              <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={() => router.push({ pathname: "/libraries/meals/[id]", params: { dailyPlanId: String(dailyPlanId), dailyPlanMealId: String(item.relation_id ?? ""), id: String(item.detail_id), mealTime: item.time?.slice(0, 5) ?? "" } } as Href)} role="link"><ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction>
             </>}
             entity="meal"
             eyebrow={`Comida ${index + 1}`}
-            indicators={[{ icon: "food", label: "alimentos", value: item.foods.length }]}
+            indicators={[
+              { icon: "food", label: "alimentos", value: item.foods.length },
+              ...(item.time ? [{ icon: "clock" as const, iconPosition: "leading" as const, label: "hora", tone: "surfaceCard" as const, value: item.time.slice(0, 5) }] : []),
+            ]}
             nutrition={{
               calories: item.calories,
               protein: { grams: item.protein_grams, allocation: item.protein_allocation, perKilogram: item.protein_per_kilogram },
               carbs: { grams: item.carbs_grams, allocation: item.carbs_allocation },
               fat: { grams: item.fat_grams, allocation: item.fat_allocation },
             }}
-            subtitle={item.time ? item.time.slice(0, 5) : undefined}
             title={item.name}>
             <FoodPanels items={item.foods} />
           </NutritionEntityCard>
