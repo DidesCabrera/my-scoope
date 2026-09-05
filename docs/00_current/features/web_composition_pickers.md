@@ -77,6 +77,11 @@ before previewing the replacement.
   structural count of its foods.
 - In Selección, the step heading owns the title, library/create actions, and
   search row as one fixed control region; only `selector-list` scrolls.
+- Switching back to Selección removes any legacy inline display value from the
+  inactive Impacto panel. Hidden step panels are always excluded from layout,
+  so their heading and footer cannot remain visible between steps.
+- The modal and its fixed action footer use the shared `surface-card` token; the
+  Impacto heading keeps its title and change-selection action on one row.
 - The dialog is labelled by its visible title. Step progression is conveyed by
   the changing selection and impact content rather than a separate visual
   progress indicator.

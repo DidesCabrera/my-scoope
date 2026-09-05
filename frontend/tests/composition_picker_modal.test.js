@@ -49,8 +49,10 @@ test("Food and Meal web pickers share the two-step top-layer dialog contract", a
 test("composition picker keeps padding on scroll content and actions in a fixed footer", async () => {
   const styles = await source("notas/static/notas/css/components/composition_picker_modal.css");
 
+  assert.match(styles, /\.composition-picker-modal\s*\{[\s\S]*?background:\s*var\(--surface-card\);/);
   assert.match(styles, /\.composition-picker-modal__body\s*\{[\s\S]*?overflow-y:\s*auto;[\s\S]*?padding:\s*0 24px 22px;/);
-  assert.match(styles, /\.composition-picker-modal__footer\s*\{[\s\S]*?flex:\s*0 0 auto;[\s\S]*?border-top:/);
+  assert.match(styles, /\.composition-picker-modal__footer\s*\{[\s\S]*?flex:\s*0 0 auto;[\s\S]*?background:\s*var\(--surface-card\);[\s\S]*?border-top:/);
+  assert.match(styles, /\.composition-picker-step-heading--impact\s*\{[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*space-between;/);
 });
 
 test("impact cards reuse UI-system card, KPI, tab, and data-grid contracts", async () => {
@@ -109,7 +111,10 @@ test("selection keeps heading controls fixed and scrolls only the result list", 
 });
 
 test("shared picker controller owns modal lifecycle, steps, and accessible dismissal", async () => {
-  const controller = await source("notas/static/notas/js/picker_toggle.js");
+  const [controller, styles] = await Promise.all([
+    source("notas/static/notas/js/picker_toggle.js"),
+    source("notas/static/notas/css/components/composition_picker_modal.css"),
+  ]);
 
   assert.match(controller, /section\.showModal\(\)/);
   assert.match(controller, /section\.close\(\)/);
@@ -117,6 +122,8 @@ test("shared picker controller owns modal lifecycle, steps, and accessible dismi
   assert.match(controller, /event\.target === section/);
   assert.match(controller, /picker:dismiss/);
   assert.match(controller, /picker:step/);
+  assert.match(controller, /panel\.hidden = !isCurrent;[\s\S]*?panel\.style\.removeProperty\("display"\)/);
+  assert.match(styles, /\.composition-picker-modal__step\[hidden\]\s*\{\s*display:\s*none !important;/);
   assert.match(controller, /has-picker-modal-open/);
   assert.match(controller, /focusTarget\?\.focus/);
 });

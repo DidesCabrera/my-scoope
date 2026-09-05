@@ -20,7 +20,12 @@ document.addEventListener("DOMContentLoaded", () => {
     section.dataset.pickerStep = nextStep;
 
     section.querySelectorAll("[data-picker-step-panel]").forEach(panel => {
-      panel.hidden = panel.dataset.pickerStepPanel !== nextStep;
+      const isCurrent = panel.dataset.pickerStepPanel === nextStep;
+      panel.hidden = !isCurrent;
+
+      if (!isCurrent) {
+        panel.style.removeProperty("display");
+      }
     });
 
     section.querySelectorAll("[data-picker-step-indicator]").forEach(indicator => {

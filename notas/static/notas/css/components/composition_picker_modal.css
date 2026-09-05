@@ -15,7 +15,7 @@ html.has-picker-modal-open {
   padding: 0;
   overflow: hidden;
   color: var(--text-main);
-  background: transparent;
+  background: var(--surface-card);
   border: 0;
   border-radius: 24px;
   box-shadow: var(--shadow-elevated);
@@ -100,7 +100,7 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
 }
 
 .composition-picker-modal__step[hidden] {
-  display: none;
+  display: none !important;
 }
 
 .composition-picker-modal__body {
@@ -130,7 +130,7 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
 
 .composition-picker-step-heading--impact {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
   padding-top: 2px;
@@ -266,7 +266,7 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
   justify-content: flex-end;
   gap: 8px;
   padding: 14px 24px 18px;
-  background: var(--surface-elevated);
+  background: var(--surface-card);
   border-top: 1px solid var(--border-soft);
 }
 
@@ -455,15 +455,6 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
   .composition-picker-entry-actions {
     align-items: stretch;
     flex-direction: column;
-  }
-
-  .composition-picker-step-heading--impact {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .composition-picker-change {
-    align-self: flex-start;
   }
 
   .composition-picker-modal .picker-layout {
