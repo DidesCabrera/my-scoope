@@ -99,6 +99,8 @@ before previewing the replacement.
 - Food add/replace impact exposes only the resulting Meal's `Tabla Alimentos`
   tab and full food-table panel; redundant aggregation and mobile KPI-specific
   panels are omitted.
+- Food quantity configuration sits directly below the fixed Impacto heading and
+  outside `picker-layout`; only the selected/result cards scroll beneath it.
 - The dialog is labelled by its visible title. Step progression is conveyed by
   the changing selection and impact content rather than a separate visual
   progress indicator.

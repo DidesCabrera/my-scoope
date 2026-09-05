@@ -108,13 +108,20 @@ test("selected Food and Meal summaries use the entity-card main structure", asyn
 });
 
 test("impact keeps a stable dialog height and scrolls only its stacked picker layout", async () => {
-  const styles = await source("notas/static/notas/css/components/composition_picker_modal.css");
+  const [styles, foodTemplate, foodCard] = await Promise.all([
+    source("notas/static/notas/css/components/composition_picker_modal.css"),
+    source("notas/templates/components/picker_block_food.html"),
+    source("notas/templates/components/card_picker_food.html"),
+  ]);
 
   assert.match(styles, /\.composition-picker-modal\s*\{[\s\S]*?height:\s*min\(820px, calc\(100dvh - 32px\)\);/);
   assert.match(styles, /\.composition-picker-modal__body--impact\s*\{[\s\S]*?overflow:\s*hidden;/);
   assert.match(styles, /\.composition-picker-modal \.picker-layout\s*\{[\s\S]*?flex-direction:\s*column;[\s\S]*?overflow-y:\s*auto;/);
   assert.match(styles, /\.composition-picker-modal \.picker-layout\s*\{[\s\S]*?padding:\s*0;[\s\S]*?background:\s*transparent;[\s\S]*?border:\s*0;[\s\S]*?border-radius:\s*0;/);
   assert.match(styles, /\.composition-picker-modal \.picker-selection-card\s*\{/);
+  assert.match(styles, /\.composition-picker-modal \.composition-picker-fixed-configuration\s*\{[^}]*flex:\s*0 0 auto;[^}]*margin:\s*0 0 12px;/);
+  assert.match(foodTemplate, /composition-picker-step-heading--impact[\s\S]*?qty-preview composition-picker-fixed-configuration[\s\S]*?picker-layout/);
+  assert.doesNotMatch(foodCard, /qty-preview/);
   assert.match(styles, /\.composition-picker-modal \.selector > \.selector-list\s*\{[\s\S]*?width:\s*100%;[\s\S]*?border:\s*0;[\s\S]*?border-radius:\s*0;/);
 });
 

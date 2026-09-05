@@ -368,9 +368,13 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
   margin-bottom: 0;
 }
 
-.composition-picker-modal .picker-selection-card .qty-preview,
 .composition-picker-modal .picker-selection-card .composition-picker-schedule-fields {
   margin: 12px 0 0;
+}
+
+.composition-picker-modal .composition-picker-fixed-configuration {
+  flex: 0 0 auto;
+  margin: 0 0 12px;
 }
 
 .picker-result-row--projected {

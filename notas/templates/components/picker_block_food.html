@@ -95,6 +95,19 @@
             </button>
           </div>
 
+          <div class="qty-preview composition-picker-fixed-configuration">
+            <label>
+              <i data-lucide="scale" class="add-row-icon"></i>
+              Ajusta la Porción:
+              <input
+                type="number"
+                id="food-quantity"
+                value="100"
+                min="0"
+              >
+            </label>g|ml
+          </div>
+
           <div class="picker-layout">
             <section class="entity-card card picker-selection-card picker-section picker-food-info">
               {% include "components/card_picker_food.html" %}
