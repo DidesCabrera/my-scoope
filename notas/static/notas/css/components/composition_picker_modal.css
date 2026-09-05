@@ -158,11 +158,11 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
   gap: 16px;
 }
 
-.composition-picker-step-heading h3 {
+.composition-picker-step-heading > h3 {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
   margin: 0;
-}
-
-.composition-picker-step-heading h3 {
   color: var(--text-main);
   font-size: 17px;
 }

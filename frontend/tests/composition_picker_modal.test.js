@@ -59,6 +59,7 @@ test("composition picker keeps padding on scroll content and actions in a fixed 
   assert.match(styles, /\.composition-picker-modal__body\s*\{[\s\S]*?overflow-y:\s*auto;[\s\S]*?padding:\s*0 24px 22px;/);
   assert.match(styles, /\.composition-picker-modal__footer\s*\{[\s\S]*?flex:\s*0 0 auto;[\s\S]*?background:\s*var\(--surface-card\);[\s\S]*?border-top:/);
   assert.match(styles, /\.composition-picker-step-heading--impact\s*\{[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*space-between;/);
+  assert.match(styles, /\.composition-picker-step-heading > h3\s*\{[\s\S]*?display:\s*flex;[\s\S]*?align-items:\s*center;[\s\S]*?min-height:\s*36px;/);
   assert.doesNotMatch(styles, /\.composition-picker-step-heading--impact\s*\{[^}]*padding-top:/);
 });
 

@@ -90,6 +90,8 @@ before previewing the replacement.
 - Both step headings share the same direct-heading structure and top origin, so
   their titles remain stationary during transitions. In Meal impact actions,
   `Editar comida` is the rightmost action.
+- The direct `h3` occupies a shared 36px title row and centers its text
+  vertically, matching the action-control height in either step.
 - The dialog is labelled by its visible title. Step progression is conveyed by
   the changing selection and impact content rather than a separate visual
   progress indicator.
