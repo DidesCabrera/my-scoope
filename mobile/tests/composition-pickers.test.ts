@@ -10,6 +10,8 @@ test("composition pickers use independent native routes and one shared flow", as
   );
   assert.match(picker, /mode: "back"/);
   assert.match(picker, /stickyHeaderIndices=\{\[0\]\}/);
+  assert.match(picker, /stickyHeaderIndices=\{\[1\]\}/);
+  assert.match(picker, /style=\{styles\.configurationSticky\}/);
   assert.match(picker, /style=\{styles\.selectionSticky\}/);
   assert.match(picker, /style=\{styles\.searchField\}/);
   assert.match(picker, /if \(!selectedId\) \{/);
@@ -26,22 +28,40 @@ test("composition pickers use independent native routes and one shared flow", as
   assert.match(picker, /actionLabel="Seleccionar"/);
   assert.match(picker, /router\.push\(pickerConfigureHref/);
   assert.match(picker, /onPress: \(\) => router\.dismissTo\(detailHref\)/);
-  assert.match(picker, /onAction=\{\(\) => router\.back\(\)\}/);
-  assert.match(picker, /actionLabel="Cambiar selección"/);
+  assert.match(picker, /<PickerOptionCard\s+option=\{selected\}/);
+  assert.doesNotMatch(picker, /Cambiar selección/);
   assert.doesNotMatch(picker, /<Button label="Cambiar selección"/);
   assert.doesNotMatch(picker, /<Button label="Cancelar"/);
   assert.doesNotMatch(picker, /config\.eyebrow|styles\.heading|Destino:/);
-  assert.match(picker, /Configura la selección/);
+  assert.doesNotMatch(picker, /Configura la selección/);
   assert.match(picker, /Previsualización del impacto/);
   assert.match(picker, /preview\?\.result/);
   assert.match(picker, /<PickerResultCard preview=\{preview\} \/>/);
-  const selectedCard = picker.indexOf('actionLabel="Cambiar selección"');
-  const configuration = picker.indexOf('title="Configura la selección"');
+  const selectedCard = picker.indexOf("option={selected}");
+  const configuration = picker.indexOf("style={styles.configurationSticky}");
   const impactPreview = picker.indexOf('title="Previsualización del impacto"');
   assert.ok(selectedCard < configuration);
   assert.ok(configuration < impactPreview);
   assert.match(picker, /Porción \(g\)/);
+  assert.match(picker, /<Scale color=\{tokens\.color\.textMuted\} size=\{18\} \/>/);
+  assert.match(picker, /<Clock color=\{tokens\.color\.textMuted\} size=\{18\} \/>/);
+  assert.match(picker, /<NotebookPen color=\{tokens\.color\.textMuted\} size=\{18\} \/>/);
+  assert.match(picker, /<CalendarDays color=\{tokens\.color\.textMuted\} size=\{18\} \/>/);
+  assert.match(picker, /<Text style=\{styles\.compactFieldLabel\}>Porción \(g\)<\/Text>/);
+  assert.match(picker, /style=\{styles\.compactFieldInput\} value=\{quantity\}/);
+  assert.doesNotMatch(picker, /setQuantity\(value\); setPreview\(null\)/);
+  assert.match(picker, /setPreviewPayloadKey\(payloadKey\)/);
+  assert.match(picker, /disabled=\{!configurationValid \|\| previewing \|\| previewPayloadKey !== payloadKey\}/);
+  assert.match(picker, /style=\{styles\.previewHeading\}/);
+  assert.match(picker, /previewHeading: \{[^}]*justifyContent: "space-between"[^}]*width: "100%"/);
+  assert.doesNotMatch(picker, /Actualizando previsualización/);
   assert.match(picker, /Hora \(HH:MM\)/);
+  assert.match(picker, /style=\{styles\.configurationDivider\}/);
+  assert.match(picker, /accessibilityLabel=\{noteEditing \? "Ocultar edición de nota" : "Editar nota"\}/);
+  assert.match(picker, /noteEditing \? <TextInput/);
+  assert.match(picker, /configurationSticky: \{[^}]*marginHorizontal: -tokens\.spacing\.screen[^}]*paddingHorizontal: tokens\.spacing\.screen/);
+  assert.match(picker, /height: 34[^}]*width: 34/);
+  assert.doesNotMatch(picker, /function toggleDay\(day: number\) \{[^}]*setPreview\(null\)/s);
   assert.match(picker, /day_numbers/);
   assert.match(picker, /confirm_replacements/);
   assert.match(picker, /Confirmar reemplazos/);
@@ -52,7 +72,9 @@ test("composition pickers use independent native routes and one shared flow", as
   assert.match(picker, /target\.panel\.foods\.find\(\(item\) => item\.relation_id === relationId\)/);
   assert.match(picker, /setQuantity\(String\(relation\.quantity\)\)/);
   assert.match(picker, /const detailHref = returnTo \?\?/);
-  assert.match(picker, /pickerConfigureHref\(kind, \{ dayNumber: initialDayNumber, relationId, returnTo/);
+  assert.match(picker, /pickerConfigureHref\(kind, \{ contextDailyPlanId, contextDailyPlanMealId, dayNumber: initialDayNumber, relationId, returnTo/);
+  assert.match(picker, /dailyplan_id: contextDailyPlanId/);
+  assert.match(picker, /dailyplan_meal_id: contextDailyPlanMealId/);
   assert.doesNotMatch(picker, /protein\s*\*\s*4|carbs\s*\*\s*4|fat\s*\*\s*9/);
 
   const cardAction = await readFile(
@@ -93,6 +115,7 @@ test("composition pickers use independent native routes and one shared flow", as
   assert.match(configureRoute, /CompositionPickerScreen/);
   assert.match(configureRoute, /selectedId=\{selection\}/);
   assert.match(configureRoute, /returnTo=\{returnHref\}/);
+  assert.match(configureRoute, /contextDailyPlanId=\{Number\(contextDailyPlanId\) \|\| undefined\}/);
   assert.match(configureRoute, /animation: "slide_from_right"/);
 
   const resultCard = await readFile(
@@ -101,7 +124,12 @@ test("composition pickers use independent native routes and one shared flow", as
   );
   assert.match(resultCard, /Comida resultante/);
   assert.match(resultCard, /Plan diario resultante/);
+  assert.match(resultCard, /preview\.selection\.entity === "food"/);
+  assert.match(resultCard, /projectedMeal\.foods\.map\(foodPanelItem\)/);
   assert.match(resultCard, /ProgramDayComparisonPanels/);
+  assert.match(resultCard, /result\.entity === "week" && week/);
+  assert.match(resultCard, /<EntityCard entity="program" eyebrow="Resultado proyectado" title=\{result\.name\}>/);
+  assert.match(resultCard, /<EntityCardPanelSlot>/);
   assert.match(resultCard, /result\.panel\.foods\.map\(foodPanelItem\)/);
   assert.match(resultCard, /result\.panel\.meals\.map\(mealPanelItem\)/);
   assert.match(resultCard, /projectedLabel: item\.projected_label/);
@@ -137,7 +165,8 @@ test("library details open every composition flow and program days remain editab
   assert.match(detail, /MealPanels editing=\{mealEditing\}/);
   assert.match(detail, /foods\/order/);
   assert.match(detail, /meals\/order/);
-  assert.match(detail, /pickerHref\("food-to-meal", \{ mealFoodId: food\.relationId, mealId: item\.id \}\)/);
+  assert.match(detail, /pickerHref\("food-to-meal", \{ mealFoodId: food\.relationId, mealId: item\.id, \.\.\.\(hasMealTimeContext/);
+  assert.match(detail, /dailyPlanMealId: contextDailyPlanMealId/);
 
   const panels = await readFile(path.resolve(process.cwd(), "src/components/panels/entity-panels.tsx"), "utf8");
   assert.match(panels, /FoodEditPanel/);

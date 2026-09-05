@@ -126,6 +126,18 @@ Status: completed.
   and carries day nutrition and PPK into the projected week.
 - Existing impact and confirmation fields remain intact; the Week picker that
   only appends an empty week remains compatible through a nullable `result`.
+- Post-integration refinements keep the configuration card fixed below the
+  native header, remove redundant change-selection and configuration headings,
+  and use the web-equivalent icons for portion, time, note and weekdays.
+- Portion and weekday changes retain the current impact card while a debounced
+  projection refresh runs. Commit is disabled until the successful projection
+  key matches the current configuration payload.
+- Contextual Food editing inside a DailyPlan returns both the resulting Meal and
+  resulting DailyPlan, allowing the user to evaluate both levels before commit.
+- The projected Program week intentionally renders its title and comparison
+  table without a redundant KPI block.
+- The stable product contract now lives in
+  `docs/00_current/features/mobile_composition_pickers.md`.
 
 ## Validation evidence
 

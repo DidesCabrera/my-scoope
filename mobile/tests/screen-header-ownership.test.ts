@@ -29,12 +29,17 @@ test("screens that own global navigation preserve their header through content a
     "src/app/program/history.tsx",
     "src/app/program/index.tsx",
     "src/app/today.tsx",
-    "src/components/pickers/composition-picker-screen.tsx",
   ]) {
     const screen = await source(relativePath);
     assert.match(screen, /useHeaderPresentation/);
     assert.match(screen, /<Screen headerMode="preserve">/);
   }
+
+  const compositionPicker = await source("src/components/pickers/composition-picker-screen.tsx");
+  assert.match(compositionPicker, /useHeaderPresentation/);
+  assert.match(compositionPicker, /setHeaderPresentation\(\{ action: \{ label: "Cancelar"/);
+  assert.match(compositionPicker, /return \(\) => setHeaderPresentation\(\{ mode: "default" \}\)/);
+  assert.match(compositionPicker, /<SafeAreaView edges=\{\["left", "right"\]\}/);
 
   const comparator = await source("src/app/comparator/index.tsx");
   assert.match(comparator, /mode: "back", title: savedId \? "Editar comparación" : "Nueva comparación"/);

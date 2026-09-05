@@ -10,6 +10,7 @@ from __future__ import annotations
 from django.db import transaction
 
 from mobile_api.composition_projections import (
+    project_dailyplan_food_result,
     project_dailyplan_result,
     project_meal_result,
     project_program_week_result,
@@ -165,7 +166,10 @@ def _positive_quantity(quantity) -> float:
     return value
 
 
-def preview_food_for_meal(*, user, meal_id: int, food_id: int, quantity, meal_food_id=None) -> dict:
+def preview_food_for_meal(
+    *, user, meal_id: int, food_id: int, quantity, meal_food_id=None,
+    dailyplan_id=None, dailyplan_meal_id=None,
+) -> dict:
     meal = _owned_meal(user, meal_id)
     food = _readable_food(user, food_id)
     quantity_value = _positive_quantity(quantity)
@@ -173,13 +177,35 @@ def preview_food_for_meal(*, user, meal_id: int, food_id: int, quantity, meal_fo
     meal_macros = _entity_macros(meal)
     food_macros = tuple(value * quantity_value / 100 for value in _entity_macros(food))
     replaced = _owned_meal_food(user, meal_id, meal_food_id)[1] if meal_food_id else None
-    result = project_meal_result(
+    meal_result = project_meal_result(
         meal=meal,
         food=food,
         quantity=quantity_value,
         current_weight=current_weight,
         replaced=replaced,
     )
+    dailyplan = None
+    dailyplan_meal = None
+    if dailyplan_id is not None or dailyplan_meal_id is not None:
+        if dailyplan_id is None or dailyplan_meal_id is None:
+            raise MobileAPIError("picker_context_invalid", "El contexto del plan diario está incompleto.", 422)
+        dailyplan = _owned_dailyplan(user, dailyplan_id)
+        dailyplan_meal = _owned_dailyplan_meal(user, dailyplan, dailyplan_meal_id)
+        if dailyplan_meal.meal_id != meal.id:
+            raise MobileAPIError("picker_context_invalid", "La comida no pertenece al plan diario indicado.", 422)
+    result = (
+        project_dailyplan_food_result(
+            dailyplan=dailyplan,
+            dailyplan_meal=dailyplan_meal,
+            food=food,
+            quantity=quantity_value,
+            current_weight=current_weight,
+            replaced=replaced,
+        )
+        if dailyplan and dailyplan_meal
+        else meal_result
+    )
+    before_nutrition = _entity_nutrition(dailyplan, current_weight) if dailyplan else _nutrition(*meal_macros, current_weight)
     return {
         "selection": _selection(
             item_id=food.id,
@@ -190,9 +216,9 @@ def preview_food_for_meal(*, user, meal_id: int, food_id: int, quantity, meal_fo
         ),
         "impacts": [
             _impact(
-                label="Comida después de reemplazar" if replaced else "Comida después de agregar",
-                entity="meal",
-                before=_nutrition(*meal_macros, current_weight),
+                label=("Plan diario después de reemplazar" if replaced else "Plan diario después de agregar") if dailyplan else ("Comida después de reemplazar" if replaced else "Comida después de agregar"),
+                entity="dailyPlan" if dailyplan else "meal",
+                before=before_nutrition,
                 after=result["nutrition"],
             )
         ],

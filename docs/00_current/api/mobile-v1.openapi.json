@@ -3579,6 +3579,30 @@
       },
       "FoodPickerInput": {
         "properties": {
+          "dailyplan_id": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dailyplan Id"
+          },
+          "dailyplan_meal_id": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dailyplan Meal Id"
+          },
           "food_id": {
             "exclusiveMinimum": 0,
             "title": "Food Id",

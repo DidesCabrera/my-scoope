@@ -3,6 +3,7 @@ import { ProgramDayComparisonPanels, type ProgramDayNutrition } from "@/componen
 import { libraryNutrition } from "@/components/libraries/presentation-adapters";
 import { NutritionEntityCard } from "@/components/nutrition";
 import { FoodPanels, MealPanels, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
+import { EntityCard, EntityCardPanelSlot } from "@/components/ui";
 
 function foodPanelItem(item: LibraryFoodPanelItem): FoodPanelItem {
   return {
@@ -73,16 +74,44 @@ export function PickerResultCard({ preview }: { preview: PickerPreview }) {
   if (!result) return null;
   const week = result.panel.weeks[0];
   const entity = result.entity === "week" ? "program" : result.entity;
+  const projectedMeal = preview.selection.entity === "food" && result.panel.kind === "meals"
+    ? result.panel.meals.find((meal) => meal.is_projected)
+    : undefined;
+  if (result.entity === "week" && week) {
+    return (
+      <EntityCard entity="program" eyebrow="Resultado proyectado" title={result.name}>
+        <EntityCardPanelSlot>
+          <ProgramDayComparisonPanels rows={weekRows(preview)} week={week.week_number} />
+        </EntityCardPanelSlot>
+      </EntityCard>
+    );
+  }
   return (
-    <NutritionEntityCard
-      entity={entity}
-      eyebrow={result.entity === "meal" ? "Comida resultante" : result.entity === "dailyPlan" ? "Plan diario resultante" : "Resultado proyectado"}
-      indicators={result.indicators}
-      nutrition={libraryNutrition(result.nutrition)}
-      title={result.name}>
-      {result.panel.kind === "foods" ? <FoodPanels items={result.panel.foods.map(foodPanelItem)} /> : null}
-      {result.panel.kind === "meals" ? <MealPanels items={result.panel.meals.map(mealPanelItem)} /> : null}
-      {result.panel.kind === "weeks" && week ? <ProgramDayComparisonPanels rows={weekRows(preview)} week={week.week_number} /> : null}
-    </NutritionEntityCard>
+    <>
+      {projectedMeal ? (
+        <NutritionEntityCard
+          entity="meal"
+          eyebrow="Comida resultante"
+          indicators={[{ icon: "food", label: "alimentos", value: projectedMeal.foods.length }]}
+          nutrition={libraryNutrition({
+            calories: projectedMeal.calories,
+            protein: { grams: projectedMeal.protein_grams, allocation: projectedMeal.protein_allocation, per_kilogram: projectedMeal.protein_per_kilogram },
+            carbs: { grams: projectedMeal.carbs_grams, allocation: projectedMeal.carbs_allocation },
+            fat: { grams: projectedMeal.fat_grams, allocation: projectedMeal.fat_allocation },
+          })}
+          title={projectedMeal.name}>
+          <FoodPanels items={projectedMeal.foods.map(foodPanelItem)} />
+        </NutritionEntityCard>
+      ) : null}
+      <NutritionEntityCard
+        entity={entity}
+        eyebrow={result.entity === "meal" ? "Comida resultante" : result.entity === "dailyPlan" ? "Plan diario resultante" : "Resultado proyectado"}
+        indicators={result.indicators}
+        nutrition={libraryNutrition(result.nutrition)}
+        title={result.name}>
+        {result.panel.kind === "foods" ? <FoodPanels items={result.panel.foods.map(foodPanelItem)} /> : null}
+        {result.panel.kind === "meals" ? <MealPanels items={result.panel.meals.map(mealPanelItem)} /> : null}
+      </NutritionEntityCard>
+    </>
   );
 }

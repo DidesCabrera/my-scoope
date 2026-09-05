@@ -9,6 +9,8 @@ from ninja import Field, Schema
 class FoodPickerInput(Schema):
     food_id: int = Field(gt=0)
     meal_food_id: int | None = Field(default=None, gt=0)
+    dailyplan_id: int | None = Field(default=None, gt=0)
+    dailyplan_meal_id: int | None = Field(default=None, gt=0)
     quantity: float = Field(gt=0, le=100000)
 
 

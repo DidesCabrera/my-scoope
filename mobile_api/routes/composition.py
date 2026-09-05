@@ -192,6 +192,7 @@ def meal_food_picker_preview(request, meal_id: int, payload: FoodPickerInput):
         preview_food_for_meal(
             user=request.auth.user, meal_id=meal_id, food_id=payload.food_id,
             meal_food_id=payload.meal_food_id, quantity=payload.quantity,
+            dailyplan_id=payload.dailyplan_id, dailyplan_meal_id=payload.dailyplan_meal_id,
         )
     )
 

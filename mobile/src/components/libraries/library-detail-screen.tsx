@@ -142,7 +142,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   const foodEditing = item.entity === "meal" ? {
     onDelete: async (food: FoodPanelItem) => { if (food.relationId) await mutateComposition(`/api/v1/library/meals/${item.id}/foods/${food.relationId}`, { method: "DELETE" }); },
     onReorder: async (foods: FoodPanelItem[]) => { await mutateComposition(`/api/v1/library/meals/${item.id}/foods/order`, { method: "PUT", body: JSON.stringify({ ordered_ids: foods.map((food) => food.relationId) }) }); },
-    onReplace: (food: FoodPanelItem) => { if (food.relationId) router.push(pickerHref("food-to-meal", { mealFoodId: food.relationId, mealId: item.id })); },
+    onReplace: (food: FoodPanelItem) => { if (food.relationId) router.push(pickerHref("food-to-meal", { mealFoodId: food.relationId, mealId: item.id, ...(hasMealTimeContext ? { dailyPlanId: contextDailyPlanId, dailyPlanMealId: contextDailyPlanMealId } : {}) })); },
     onUpdateQuantity: async (food: FoodPanelItem, quantity: number) => { if (food.relationId) await mutateComposition(`/api/v1/library/meals/${item.id}/foods/${food.relationId}`, { method: "PATCH", body: JSON.stringify({ quantity }) }); },
   } : undefined;
   const mealEditing = item.entity === "dailyPlan" ? {
@@ -164,7 +164,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
       <Button label="Eliminar copia" loading={labelImageBusy} onPress={deleteLabelImage} variant="secondary" />
     </EntityDetailSection></> : null}
     {!isEmptyDraft && item.panel.kind !== "none" ? <EntityDetailSection detail={`${panelCount} elementos`} title={sectionTitles[item.panel.kind]}>{item.panel.kind === "foods" ? <FoodPanels editing={foodEditing} items={foodItems} /> : null}{item.panel.kind === "meals" ? <MealPanels editing={mealEditing} items={mealItems} /> : null}{item.panel.kind === "weeks" ? <ProgramPanels items={item.panel.weeks} /> : null}</EntityDetailSection> : null}
-    {item.entity === "meal" ? <Button bleed label="+ Agregar alimento" onPress={() => router.push(pickerHref("food-to-meal", { mealId: item.id }))} /> : null}
+    {item.entity === "meal" ? <Button bleed label="+ Agregar alimento" onPress={() => router.push(pickerHref("food-to-meal", { mealId: item.id, ...(hasMealTimeContext ? { dailyPlanId: contextDailyPlanId, dailyPlanMealId: contextDailyPlanMealId } : {}) }))} /> : null}
     {item.entity === "dailyPlan" ? <Button bleed label="+ Agregar Comida" onPress={() => router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: item.id }))} /> : null}
     {item.entity === "meal" && Number.isInteger(contextualDayId) && contextualDayId > 0 && mealKey ? <MealAdherenceCheckIn dayId={contextualDayId} mealKey={mealKey} /> : null}
     {item.entity === "dailyPlan" && item.panel.kind === "meals" && item.panel.meals.length > 0 ? <><SectionDivider /><EntityDetailSection detail={`${item.panel.meals.length} comidas`} title="Detalle de cada Comida"><DailyPlanMealCards dailyPlanId={item.id} items={item.panel.meals} onRemove={async (meal) => { if (meal.relation_id) await mutateComposition(`/api/v1/library/daily-plans/${item.id}/meals/${meal.relation_id}`, { method: "DELETE" }); }} /></EntityDetailSection></> : null}

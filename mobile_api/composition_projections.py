@@ -142,9 +142,9 @@ def project_meal_result(*, meal, food, quantity, current_weight, replaced=None) 
     }
 
 
-def _meal_row(*, meal, relation_id, hour, note, parent_kcal, current_weight, projected=False, projected_label=None):
-    macros = _macros(meal)
-    kcal = _kcal(meal)
+def _meal_row(*, meal, relation_id, hour, note, parent_kcal, current_weight, projected=False, projected_label=None, projected_macros=None, projected_kcal=None, projected_foods=None):
+    macros = projected_macros or _macros(meal)
+    kcal = projected_kcal or _kcal(meal)
     return {
         "id": f"projected-dailyplan-meal:{relation_id or meal.id}" if projected else f"dailyplan-meal:{relation_id}",
         "relation_id": relation_id,
@@ -152,7 +152,7 @@ def _meal_row(*, meal, relation_id, hour, note, parent_kcal, current_weight, pro
         "name": meal.name,
         "time": str(hour)[:5] if hour else None,
         "note": note or "",
-        "foods": _meal_food_rows(meal, _kcal(meal)),
+        "foods": projected_foods if projected_foods is not None else _meal_food_rows(meal, _kcal(meal)),
         "calories": _number(sum(kcal)),
         "calorie_share": _percentage(sum(kcal), sum(parent_kcal)),
         "calorie_distribution": {key: _number(value) for key, value in macro_kcal_distribution(*kcal).items()},
@@ -211,6 +211,68 @@ def project_dailyplan_result(*, dailyplan, meal, hour, note, current_weight, rep
         for food_id in relation.meal.meal_food_set.values_list("food_id", flat=True)
     }
     food_ids.update(meal.meal_food_set.values_list("food_id", flat=True))
+    return {
+        "id": dailyplan.id,
+        "entity": "dailyPlan",
+        "name": dailyplan.name,
+        "nutrition": _nutrition(result_macros, result_kcal, current_weight),
+        "indicators": [
+            {"icon": "meal", "label": "comidas", "value": len(rows)},
+            {"icon": "food", "label": "alimentos", "value": len(food_ids)},
+        ],
+        "panel": {"kind": "meals", "foods": [], "meals": rows, "weeks": []},
+    }
+
+
+def project_dailyplan_food_result(
+    *, dailyplan, dailyplan_meal, food, quantity, current_weight, replaced=None
+) -> dict:
+    """Project a food edit inside a DPM as its resulting DailyPlan."""
+    meal = dailyplan_meal.meal
+    meal_result = project_meal_result(
+        meal=meal,
+        food=food,
+        quantity=quantity,
+        current_weight=current_weight,
+        replaced=replaced,
+    )
+    factor = float(quantity) / 100
+    selected_macros = tuple(value * factor for value in _macros(food))
+    selected_kcal = tuple(value * factor for value in _kcal(food))
+    replaced_macros = _macros(replaced) if replaced else (0.0, 0.0, 0.0)
+    replaced_kcal = _kcal(replaced) if replaced else (0.0, 0.0, 0.0)
+    projected_meal_macros = _add(_subtract(_macros(meal), replaced_macros), selected_macros)
+    projected_meal_kcal = _add(_subtract(_kcal(meal), replaced_kcal), selected_kcal)
+    result_macros = _add(_subtract(_macros(dailyplan), _macros(meal)), projected_meal_macros)
+    result_kcal = _add(_subtract(_kcal(dailyplan), _kcal(meal)), projected_meal_kcal)
+    relations = list(
+        dailyplan.dailyplan_meals.select_related("meal")
+        .prefetch_related("meal__meal_food_set__food")
+        .order_by("order", "id")
+    )
+    rows = [
+        _meal_row(
+            meal=relation.meal,
+            relation_id=relation.id,
+            hour=relation.hour,
+            note=relation.note,
+            parent_kcal=result_kcal,
+            current_weight=current_weight,
+            projected=relation.id == dailyplan_meal.id,
+            projected_label="Actualizada" if relation.id == dailyplan_meal.id else None,
+            projected_macros=projected_meal_macros if relation.id == dailyplan_meal.id else None,
+            projected_kcal=projected_meal_kcal if relation.id == dailyplan_meal.id else None,
+            projected_foods=meal_result["panel"]["foods"] if relation.id == dailyplan_meal.id else None,
+        )
+        for relation in relations
+    ]
+    food_ids = {
+        relation.food_id
+        for slot in relations
+        for relation in slot.meal.meal_food_set.all()
+        if not (slot.id == dailyplan_meal.id and replaced and relation.id == replaced.id)
+    }
+    food_ids.add(food.id)
     return {
         "id": dailyplan.id,
         "entity": "dailyPlan",
