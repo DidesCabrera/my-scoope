@@ -371,6 +371,7 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
 .composition-picker-modal .composition-picker-fixed-configuration {
   flex: 0 0 auto;
   margin: 0 0 12px;
+  padding-left: calc(var(--desktop-padding-lats) + 4px);
 }
 
 .picker-result-row--projected {
@@ -480,6 +481,10 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
   .composition-picker-modal__footer {
     padding-right: 16px;
     padding-left: 16px;
+  }
+
+  .composition-picker-modal .composition-picker-fixed-configuration {
+    padding-left: calc(var(--mobil-padding-lats) + 4px);
   }
 
   .composition-picker-entry-actions {

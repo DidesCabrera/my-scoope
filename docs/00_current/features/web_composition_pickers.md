@@ -103,6 +103,9 @@ before previewing the replacement.
   outside `picker-layout`; only the selected/result cards scroll beneath it.
 - Meal hour/note configuration follows the same fixed-region contract: it sits
   below the Impacto heading and outside the scrolling `picker-layout`.
+- Fixed configuration controls align their leading icon with entity-card title
+  content by deriving the left inset from the shared desktop/mobile card-padding
+  tokens plus the title component's 4px internal inset.
 - The dialog is labelled by its visible title. Step progression is conveyed by
   the changing selection and impact content rather than a separate visual
   progress indicator.
