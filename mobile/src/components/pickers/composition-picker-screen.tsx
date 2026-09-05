@@ -26,6 +26,7 @@ import { ConfirmationState, RecoverableErrorState } from "@/components/ui/screen
 import { tokens } from "@/design/tokens";
 import { PickerCardAction } from "./picker-card-action";
 import { PickerEntryTabs } from "./picker-entry-tabs";
+import { PickerResultCard } from "./picker-result-card";
 
 export type PickerKind = "food-to-meal" | "meal-to-dailyplan" | "dailyplan-to-program";
 
@@ -120,14 +121,6 @@ function optionFromFood(item: FoodPickerOption): PickerOption {
   };
 }
 
-function impactEntity(entity: PickerPreview["impacts"][number]["entity"]): "meal" | "dailyPlan" | "program" {
-  return entity === "week" ? "program" : entity;
-}
-
-function beforeSummary(nutrition: LibraryNutrition): string {
-  return `Antes: ${nutrition.calories.toLocaleString("es-CL")} kcal · P ${nutrition.protein.grams.toLocaleString("es-CL")} g · C ${nutrition.carbs.grams.toLocaleString("es-CL")} g · G ${nutrition.fat.grams.toLocaleString("es-CL")} g`;
-}
-
 function PickerOptionCard({ actionLabel, onAction, option }: { actionLabel: string; onAction(): void; option: PickerOption }) {
   return (
     <NutritionEntityCard
@@ -163,7 +156,9 @@ export function CompositionPickerScreen({
   returnTo?: Href;
 }) {
   const config = configs[kind];
-  const title = kind === "meal-to-dailyplan" && relationId ? "Reemplazar comida" : config.title;
+  const title = relationId
+    ? kind === "food-to-meal" ? "Reemplazar alimento" : "Reemplazar comida"
+    : config.title;
   const router = useRouter();
   const detailHref = returnTo ?? `/libraries/${config.targetSlug}/${targetId}` as Href;
   const { status, apiRequest } = useSession();
@@ -205,6 +200,10 @@ export function CompositionPickerScreen({
       .then(([target, option]) => {
         if (!active) return;
         setSelected(option);
+        if (kind === "food-to-meal" && relationId && target.panel.kind === "foods") {
+          const relation = target.panel.foods.find((item) => item.relation_id === relationId);
+          if (relation) setQuantity(String(relation.quantity));
+        }
         if (kind === "meal-to-dailyplan" && relationId && target.panel.kind === "meals") {
           const slot = target.panel.meals.find((item) => item.relation_id === relationId);
           if (slot) { setHour(slot.time?.slice(0, 5) || "08:00"); setNote(slot.note || ""); }
@@ -240,7 +239,7 @@ export function CompositionPickerScreen({
 
   const payload = useMemo(() => {
     if (!selected) return null;
-    if (kind === "food-to-meal") return { food_id: selected.id, quantity: Number(quantity) };
+    if (kind === "food-to-meal") return { food_id: selected.id, meal_food_id: relationId, quantity: Number(quantity) };
     if (kind === "meal-to-dailyplan") return { meal_id: selected.id, dailyplan_meal_id: relationId, hour, note };
     return { dailyplan_id: selected.id, week_number: weekNumber, day_numbers: dayNumbers };
   }, [dayNumbers, hour, kind, note, quantity, relationId, selected, weekNumber]);
@@ -377,24 +376,13 @@ export function CompositionPickerScreen({
       {previewing ? <View style={styles.previewLoading}><ActivityIndicator color={tokens.color.interactivePrimary} /><Text style={textStyles.muted}>{kind === "dailyplan-to-program" ? "Validando asignación…" : "Actualizando previsualización…"}</Text></View> : null}
       {error ? <RecoverableErrorState message={error} onRetry={() => { setError(null); setRetryNonce((value) => value + 1); }} /> : null}
 
-      {preview && kind !== "dailyplan-to-program" ? (
+      {preview?.result ? (
         <View style={styles.previewSection}>
           <SectionTitle title="Previsualización del impacto" />
-          {preview.impacts.map((impact) => (
-            <NutritionEntityCard
-              entity={impactEntity(impact.entity)}
-              eyebrow="Impacto"
-              indicators={impact.metrics.map((metric) => ({ label: metric.label, value: `${metric.before} → ${metric.after}` }))}
-              key={`${impact.entity}-${impact.label}`}
-              nutrition={libraryNutrition(impact.after)}
-              subtitle={beforeSummary(impact.before)}
-              title={impact.label}
-            />
-          ))}
+          <PickerResultCard preview={preview} />
           {preview.replacements.length ? <InlineNotice tone="warning">Se reemplazarán: {preview.replacements.join(", ")}.</InlineNotice> : null}
         </View>
       ) : null}
-      {preview && kind === "dailyplan-to-program" && preview.replacements.length ? <InlineNotice tone="warning">Se reemplazarán: {preview.replacements.join(", ")}.</InlineNotice> : null}
 
       {preview && confirming ? (
         <ConfirmationState
@@ -408,7 +396,7 @@ export function CompositionPickerScreen({
       ) : preview ? (
         <Button
           bleed
-          label={kind === "food-to-meal" ? "Agregar alimento" : kind === "meal-to-dailyplan" ? relationId ? "Reemplazar comida" : "Agregar comida" : "Asignar plan diario"}
+          label={kind === "food-to-meal" ? relationId ? "Reemplazar alimento" : "Agregar alimento" : kind === "meal-to-dailyplan" ? relationId ? "Reemplazar comida" : "Agregar comida" : "Asignar plan diario"}
           loading={submitting}
           onPress={() => preview.confirmation_required ? setConfirming(true) : void commit()}
         />

@@ -56,8 +56,10 @@ Libraries use `routes/libraries.py` for search, collection/detail, creation and
 item actions; `routes/composition.py` owns relation mutations and picker
 preview/commit flows. Their data contracts live in `schema_domains/libraries.py`
 and `schema_domains/composition.py`, with the complete behavior journey in
-`tests/test_libraries_api.py`. Shared projection functions intentionally remain
-in `selectors.py` because they form one read-model boundary across library kinds.
+`tests/test_libraries_api.py`. Stable library projections remain in
+`selectors.py`; read-only hypothetical composition results live in
+`composition_projections.py` so preview calculations cannot be confused with
+persisted library read models.
 Identity uses `routes/identity.py` for session, profile, onboarding and account
 lifecycle; billing uses `routes/billing.py` for entitlements and provider
 evidence. Their schemas and tests follow the same names. This separation is
@@ -203,9 +205,20 @@ composition operations available in the responsive web product:
 - one new empty week at the end of an owned Program.
 
 Preview endpoints are read-scoped and return server-computed selection nutrition,
-before/after impacts and structural metrics. Commit endpoints require
+before/after impacts and structural metrics. Food, Meal and DailyPlan selection
+previews also return an additive `result` projection with the target entity's
+identity, complete nutrition, structural indicators and a standard `foods`,
+`meals` or `weeks` library panel. Projected rows carry `is_projected` and
+`projected_label`, allowing the native client to distinguish `Por agregar` from
+`Reemplazo` without inferring write state or calculating nutrition. The Program
+projection always contains all seven days of the affected week, including each
+day's server-derived nutrition and PPK.
+
+Commit endpoints require
 `mobile:write` and delegate to the established Meal, DailyPlan and Program
-commands. Meal and DailyPlan insertion preserve the existing snapshot semantics.
+commands. A Food picker payload may include `meal_food_id` to replace the Food
+and portion of that owned relation while preserving its identity. Meal and
+DailyPlan insertion preserve the existing snapshot semantics.
 Assigning a DailyPlan reports occupied days during preview and rejects commit
 with `picker_replacement_confirmation_required` until the client explicitly
 confirms replacements. Adding a week increases duration and creates seven empty
@@ -241,7 +254,8 @@ panels. Their mutation routes require `mobile:write`, verify the parent and chil
 relationship against the authenticated owner, and delegate to the existing
 composition commands:
 
-- Meal food rows can update portion, delete, and save a complete relation order;
+- Meal food rows can update portion, delete, save a complete relation order, or
+  pass `meal_food_id` through the Food picker to replace the existing relation;
 - DailyPlan meal rows can update schedule metadata, delete, save order, or pass
   `dailyplan_meal_id` through the meal picker to replace the existing slot;
 - Program weeks can be reordered, duplicated, or removed while preserving at

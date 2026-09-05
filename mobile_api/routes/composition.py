@@ -33,8 +33,8 @@ from mobile_api.schema_domains.composition import (
     MealFoodUpdateInput,
     MealPickerInput,
     PickerCommitEnvelope,
-    PickerPreviewEnvelope,
 )
+from mobile_api.schema_domains.composition_preview import PickerPreviewEnvelope
 from mobile_api.schemas import ErrorEnvelope
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_WRITE
 
@@ -190,10 +190,8 @@ def program_day_delete(request, program_id: int, week_number: int, day_number: i
 def meal_food_picker_preview(request, meal_id: int, payload: FoodPickerInput):
     return success(
         preview_food_for_meal(
-            user=request.auth.user,
-            meal_id=meal_id,
-            food_id=payload.food_id,
-            quantity=payload.quantity,
+            user=request.auth.user, meal_id=meal_id, food_id=payload.food_id,
+            meal_food_id=payload.meal_food_id, quantity=payload.quantity,
         )
     )
 
@@ -214,10 +212,8 @@ def meal_food_picker_commit(request, meal_id: int, payload: FoodPickerInput):
     require_scope(request.auth, MOBILE_SCOPE_WRITE)
     return success(
         add_food_from_picker(
-            user=request.auth.user,
-            meal_id=meal_id,
-            food_id=payload.food_id,
-            quantity=payload.quantity,
+            user=request.auth.user, meal_id=meal_id, food_id=payload.food_id,
+            meal_food_id=payload.meal_food_id, quantity=payload.quantity,
         )
     )
 
@@ -242,6 +238,7 @@ def dailyplan_meal_picker_preview(request, dailyplan_id: int, payload: MealPicke
             meal_id=payload.meal_id,
             dailyplan_meal_id=payload.dailyplan_meal_id,
             hour=payload.hour,
+            note=payload.note,
         )
     )
 

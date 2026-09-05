@@ -9,6 +9,11 @@ from __future__ import annotations
 
 from django.db import transaction
 
+from mobile_api.composition_projections import (
+    project_dailyplan_result,
+    project_meal_result,
+    project_program_week_result,
+)
 from mobile_api.errors import MobileAPIError
 from notas.application.queries.read_boundaries import get_readable_food_queryset
 from notas.application.services.commands.dailyplan_commands import (
@@ -79,10 +84,6 @@ def _entity_nutrition(entity, current_weight) -> dict:
     return _nutrition(*_entity_macros(entity), current_weight)
 
 
-def _add_macros(left, right):
-    return tuple(left[index] + right[index] for index in range(3))
-
-
 def _selection(*, item_id: int, entity: str, name: str, nutrition=None, quantity=None, hour=None) -> dict:
     return {
         "id": item_id,
@@ -113,9 +114,7 @@ def _owned_meal(user, meal_id: int) -> Meal:
 
 def _owned_dailyplan(user, dailyplan_id: int) -> DailyPlan:
     dailyplan = (
-        DailyPlan.objects.filter(pk=dailyplan_id, created_by=user)
-        .exclude(source=DailyPlan.SOURCE_PROGRAM)
-        .first()
+        DailyPlan.objects.filter(pk=dailyplan_id, created_by=user).exclude(source=DailyPlan.SOURCE_PROGRAM).first()
     )
     if not dailyplan:
         raise MobileAPIError("picker_target_not_found", "El plan diario no está disponible para edición.", 404)
@@ -166,14 +165,21 @@ def _positive_quantity(quantity) -> float:
     return value
 
 
-def preview_food_for_meal(*, user, meal_id: int, food_id: int, quantity) -> dict:
+def preview_food_for_meal(*, user, meal_id: int, food_id: int, quantity, meal_food_id=None) -> dict:
     meal = _owned_meal(user, meal_id)
     food = _readable_food(user, food_id)
     quantity_value = _positive_quantity(quantity)
     current_weight = get_current_weight(user)
     meal_macros = _entity_macros(meal)
     food_macros = tuple(value * quantity_value / 100 for value in _entity_macros(food))
-    after_macros = _add_macros(meal_macros, food_macros)
+    replaced = _owned_meal_food(user, meal_id, meal_food_id)[1] if meal_food_id else None
+    result = project_meal_result(
+        meal=meal,
+        food=food,
+        quantity=quantity_value,
+        current_weight=current_weight,
+        replaced=replaced,
+    )
     return {
         "selection": _selection(
             item_id=food.id,
@@ -184,21 +190,30 @@ def preview_food_for_meal(*, user, meal_id: int, food_id: int, quantity) -> dict
         ),
         "impacts": [
             _impact(
-                label="Comida después de agregar",
+                label="Comida después de reemplazar" if replaced else "Comida después de agregar",
                 entity="meal",
                 before=_nutrition(*meal_macros, current_weight),
-                after=_nutrition(*after_macros, current_weight),
+                after=result["nutrition"],
             )
         ],
+        "result": result,
         "replacements": [],
         "confirmation_required": False,
     }
 
 
-def add_food_from_picker(*, user, meal_id: int, food_id: int, quantity) -> dict:
+def add_food_from_picker(*, user, meal_id: int, food_id: int, quantity, meal_food_id=None) -> dict:
     meal = _owned_meal(user, meal_id)
     food = _readable_food(user, food_id)
     quantity_value = _positive_quantity(quantity)
+    if meal_food_id:
+        _meal, meal_food = _owned_meal_food(user, meal_id, meal_food_id)
+        result = update_meal_food(meal_food=meal_food, quantity=quantity_value, food_id=food.id)
+        return {
+            "message": "Alimento reemplazado en la comida.",
+            "target_id": meal.id,
+            "created_id": result.meal_food.id,
+        }
     result = create_meal_food(meal=meal, food=food, quantity=quantity_value)
     return {
         "message": "Alimento agregado a la comida.",
@@ -218,15 +233,23 @@ def _owned_dailyplan_meal(user, dailyplan: DailyPlan, dailyplan_meal_id: int) ->
     return dailyplan_meal
 
 
-def preview_meal_for_dailyplan(*, user, dailyplan_id: int, meal_id: int, dailyplan_meal_id=None, hour=None) -> dict:
+def preview_meal_for_dailyplan(
+    *, user, dailyplan_id: int, meal_id: int, dailyplan_meal_id=None, hour=None, note=None
+) -> dict:
     dailyplan = _owned_dailyplan(user, dailyplan_id)
     meal = _library_meal(user, meal_id)
     current_weight = get_current_weight(user)
     dailyplan_macros = _entity_macros(dailyplan)
     meal_macros = _entity_macros(meal)
     replaced = _owned_dailyplan_meal(user, dailyplan, dailyplan_meal_id) if dailyplan_meal_id else None
-    replaced_macros = _entity_macros(replaced.meal) if replaced else (0.0, 0.0, 0.0)
-    after_macros = tuple(dailyplan_macros[index] - replaced_macros[index] + meal_macros[index] for index in range(3))
+    result = project_dailyplan_result(
+        dailyplan=dailyplan,
+        meal=meal,
+        hour=hour,
+        note=note,
+        current_weight=current_weight,
+        replaced=replaced,
+    )
     return {
         "selection": _selection(
             item_id=meal.id,
@@ -240,15 +263,18 @@ def preview_meal_for_dailyplan(*, user, dailyplan_id: int, meal_id: int, dailypl
                 label="Plan diario después de reemplazar" if replaced else "Plan diario después de agregar",
                 entity="dailyPlan",
                 before=_nutrition(*dailyplan_macros, current_weight),
-                after=_nutrition(*after_macros, current_weight),
+                after=result["nutrition"],
             )
         ],
+        "result": result,
         "replacements": [],
         "confirmation_required": False,
     }
 
 
-def add_meal_from_picker(*, user, dailyplan_id: int, meal_id: int, dailyplan_meal_id=None, hour=None, note=None) -> dict:
+def add_meal_from_picker(
+    *, user, dailyplan_id: int, meal_id: int, dailyplan_meal_id=None, hour=None, note=None
+) -> dict:
     dailyplan = _owned_dailyplan(user, dailyplan_id)
     meal = _library_meal(user, meal_id)
     if dailyplan_meal_id:
@@ -300,10 +326,8 @@ def _program_selection_context(*, user, program_id: int, dailyplan_id: int, week
     return program, dailyplan, week, days, existing
 
 
-def preview_dailyplan_for_program(
-    *, user, program_id: int, dailyplan_id: int, week_number, day_numbers
-) -> dict:
-    _program, dailyplan, _week, days, existing = _program_selection_context(
+def preview_dailyplan_for_program(*, user, program_id: int, dailyplan_id: int, week_number, day_numbers) -> dict:
+    program, dailyplan, week, days, existing = _program_selection_context(
         user=user,
         program_id=program_id,
         dailyplan_id=dailyplan_id,
@@ -313,6 +337,13 @@ def preview_dailyplan_for_program(
     current_weight = get_current_weight(user)
     selected_macros = _entity_macros(dailyplan)
     replacements = [DAY_LABELS[day] for day in days if day in existing]
+    result = project_program_week_result(
+        program=program,
+        dailyplan=dailyplan,
+        week_number=week,
+        day_numbers=days,
+        current_weight=current_weight,
+    )
     return {
         "selection": _selection(
             item_id=dailyplan.id,
@@ -321,6 +352,7 @@ def preview_dailyplan_for_program(
             nutrition=_nutrition(*selected_macros, current_weight),
         ),
         "impacts": [],
+        "result": result,
         "replacements": replacements,
         "confirmation_required": bool(replacements),
     }
@@ -490,7 +522,11 @@ def duplicate_program_week(*, user, program_id: int, week_number: int) -> dict:
         result = duplicate_week_in_program(program=program, week_number=week_number, user=user)
     except ValueError as exc:
         raise MobileAPIError("composition_week_invalid", "La semana no está disponible.", 422) from exc
-    return {"message": f"Semana {result.source_week_number} duplicada.", "target_id": program.id, "affected_id": result.new_week_number}
+    return {
+        "message": f"Semana {result.source_week_number} duplicada.",
+        "target_id": program.id,
+        "affected_id": result.new_week_number,
+    }
 
 
 def remove_program_week(*, user, program_id: int, week_number: int) -> dict:
@@ -498,7 +534,11 @@ def remove_program_week(*, user, program_id: int, week_number: int) -> dict:
     try:
         remove_week_from_program(program=program, week_number=week_number)
     except ValueError as exc:
-        message = "El programa debe conservar al menos una semana." if str(exc) == "program_cannot_remove_last_week" else "La semana no está disponible."
+        message = (
+            "El programa debe conservar al menos una semana."
+            if str(exc) == "program_cannot_remove_last_week"
+            else "La semana no está disponible."
+        )
         raise MobileAPIError("composition_week_invalid", message, 422) from exc
     return {"message": f"Semana {week_number} eliminada.", "target_id": program.id, "affected_id": week_number}
 

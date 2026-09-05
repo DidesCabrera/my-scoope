@@ -33,7 +33,8 @@ test("composition pickers use independent native routes and one shared flow", as
   assert.doesNotMatch(picker, /config\.eyebrow|styles\.heading|Destino:/);
   assert.match(picker, /Configura la selección/);
   assert.match(picker, /Previsualización del impacto/);
-  assert.match(picker, /preview && kind !== "dailyplan-to-program"/);
+  assert.match(picker, /preview\?\.result/);
+  assert.match(picker, /<PickerResultCard preview=\{preview\} \/>/);
   const selectedCard = picker.indexOf('actionLabel="Cambiar selección"');
   const configuration = picker.indexOf('title="Configura la selección"');
   const impactPreview = picker.indexOf('title="Previsualización del impacto"');
@@ -46,6 +47,10 @@ test("composition pickers use independent native routes and one shared flow", as
   assert.match(picker, /Confirmar reemplazos/);
   assert.match(picker, /PickerPreview/);
   assert.match(picker, /dailyplan_meal_id: relationId/);
+  assert.match(picker, /meal_food_id: relationId/);
+  assert.match(picker, /Reemplazar alimento/);
+  assert.match(picker, /target\.panel\.foods\.find\(\(item\) => item\.relation_id === relationId\)/);
+  assert.match(picker, /setQuantity\(String\(relation\.quantity\)\)/);
   assert.match(picker, /const detailHref = returnTo \?\?/);
   assert.match(picker, /pickerConfigureHref\(kind, \{ dayNumber: initialDayNumber, relationId, returnTo/);
   assert.doesNotMatch(picker, /protein\s*\*\s*4|carbs\s*\*\s*4|fat\s*\*\s*9/);
@@ -90,6 +95,21 @@ test("composition pickers use independent native routes and one shared flow", as
   assert.match(configureRoute, /returnTo=\{returnHref\}/);
   assert.match(configureRoute, /animation: "slide_from_right"/);
 
+  const resultCard = await readFile(
+    path.resolve(process.cwd(), "src/components/pickers/picker-result-card.tsx"),
+    "utf8",
+  );
+  assert.match(resultCard, /Comida resultante/);
+  assert.match(resultCard, /Plan diario resultante/);
+  assert.match(resultCard, /ProgramDayComparisonPanels/);
+  assert.match(resultCard, /result\.panel\.foods\.map\(foodPanelItem\)/);
+  assert.match(resultCard, /result\.panel\.meals\.map\(mealPanelItem\)/);
+  assert.match(resultCard, /projectedLabel: item\.projected_label/);
+
+  const foodRoute = await readFile(path.resolve(process.cwd(), "src/app/pickers/food-to-meal.tsx"), "utf8");
+  assert.match(foodRoute, /mealFoodId/);
+  assert.match(foodRoute, /relationId=\{relationId\}/);
+
   const weekRoute = await readFile(path.resolve(process.cwd(), "src/app/pickers/week-to-program.tsx"), "utf8");
   assert.match(weekRoute, /week-picker\/preview/);
   assert.match(weekRoute, /Nueva semana/);
@@ -117,12 +137,15 @@ test("library details open every composition flow and program days remain editab
   assert.match(detail, /MealPanels editing=\{mealEditing\}/);
   assert.match(detail, /foods\/order/);
   assert.match(detail, /meals\/order/);
+  assert.match(detail, /pickerHref\("food-to-meal", \{ mealFoodId: food\.relationId, mealId: item\.id \}\)/);
 
   const panels = await readFile(path.resolve(process.cwd(), "src/components/panels/entity-panels.tsx"), "utf8");
   assert.match(panels, /FoodEditPanel/);
   assert.match(panels, /MealEditPanel/);
   assert.match(panels, /label: "Editar"/);
   assert.match(panels, /Guardar orden/);
+  assert.match(panels, /label=\{`Reemplazar \$\{item\.name\}`\}/);
+  assert.match(panels, /editing\.onReplace\(item\)/);
 
   const program = await readFile(path.resolve(process.cwd(), "src/components/libraries/program-detail-preview.tsx"), "utf8");
   const assignedPlan = await readFile(path.resolve(process.cwd(), "src/components/libraries/program-daily-plan-preview.tsx"), "utf8");

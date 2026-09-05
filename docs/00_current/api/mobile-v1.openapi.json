@@ -3584,6 +3584,18 @@
             "title": "Food Id",
             "type": "integer"
           },
+          "meal_food_id": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meal Food Id"
+          },
           "quantity": {
             "exclusiveMinimum": 0,
             "maximum": 100000,
@@ -3834,9 +3846,25 @@
             "title": "Id",
             "type": "string"
           },
+          "is_projected": {
+            "default": false,
+            "title": "Is Projected",
+            "type": "boolean"
+          },
           "name": {
             "title": "Name",
             "type": "string"
+          },
+          "projected_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projected Label"
           },
           "protein_allocation": {
             "title": "Protein Allocation",
@@ -4166,6 +4194,11 @@
             "title": "Id",
             "type": "string"
           },
+          "is_projected": {
+            "default": false,
+            "title": "Is Projected",
+            "type": "boolean"
+          },
           "name": {
             "title": "Name",
             "type": "string"
@@ -4174,6 +4207,17 @@
             "default": "",
             "title": "Note",
             "type": "string"
+          },
+          "projected_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projected Label"
           },
           "protein_allocation": {
             "title": "Protein Allocation",
@@ -4406,6 +4450,11 @@
             "title": "Id",
             "type": "string"
           },
+          "is_projected": {
+            "default": false,
+            "title": "Is Projected",
+            "type": "boolean"
+          },
           "meals": {
             "items": {
               "$ref": "#/components/schemas/LibraryMealPanelItemData"
@@ -4444,6 +4493,17 @@
               }
             ],
             "title": "Program Day Id"
+          },
+          "projected_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projected Label"
           }
         },
         "required": [
@@ -4952,6 +5012,16 @@
             "title": "Replacements",
             "type": "array"
           },
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PickerResultData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "selection": {
             "$ref": "#/components/schemas/PickerSelectionData"
           }
@@ -4983,6 +5053,49 @@
           "data"
         ],
         "title": "PickerPreviewEnvelope",
+        "type": "object"
+      },
+      "PickerResultData": {
+        "properties": {
+          "entity": {
+            "enum": [
+              "meal",
+              "dailyPlan",
+              "week"
+            ],
+            "title": "Entity",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "indicators": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryIndicatorData"
+            },
+            "title": "Indicators",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "nutrition": {
+            "$ref": "#/components/schemas/LibraryNutritionData"
+          },
+          "panel": {
+            "$ref": "#/components/schemas/LibraryPanelData"
+          }
+        },
+        "required": [
+          "id",
+          "entity",
+          "name",
+          "nutrition",
+          "panel"
+        ],
+        "title": "PickerResultData",
         "type": "object"
       },
       "PickerSelectionData": {
