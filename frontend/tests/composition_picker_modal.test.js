@@ -45,7 +45,7 @@ test("Food and Meal web pickers share the two-step top-layer dialog contract", a
   assert.doesNotMatch(food, /grid_picker_food_preview|class="preview-picker"/);
   assert.match(meal, /url 'create_meal_for_dailyplan'/);
   assert.match(meal, />\s*Crear comida\s*</);
-  assert.match(meal, /entity-card card picker-selection-card[\s\S]*?picker-meal-info[\s\S]*?composition-picker-schedule-fields[\s\S]*?<\/section>[\s\S]*?picker-impact/);
+  assert.match(meal, /composition-picker-step-heading--impact[\s\S]*?composition-picker-schedule-fields composition-picker-fixed-configuration[\s\S]*?picker-layout[\s\S]*?entity-card card picker-selection-card[\s\S]*?picker-meal-info[\s\S]*?picker-impact/);
   assert.match(meal, /card_picker_result\.html[\s\S]*result_scope="day-preview"/);
   assert.match(meal, /data-picker-go-to="selection"[\s\S]*?data-role="edit-selected-meal"[\s\S]*?Editar comida/);
   assert.doesNotMatch(meal, /grid_picker_meal_day_preview|class="preview-picker"/);
@@ -108,9 +108,10 @@ test("selected Food and Meal summaries use the entity-card main structure", asyn
 });
 
 test("impact keeps a stable dialog height and scrolls only its stacked picker layout", async () => {
-  const [styles, foodTemplate, foodCard] = await Promise.all([
+  const [styles, foodTemplate, mealTemplate, foodCard] = await Promise.all([
     source("notas/static/notas/css/components/composition_picker_modal.css"),
     source("notas/templates/components/picker_block_food.html"),
+    source("notas/templates/components/picker_block_meal.html"),
     source("notas/templates/components/card_picker_food.html"),
   ]);
 
@@ -121,6 +122,7 @@ test("impact keeps a stable dialog height and scrolls only its stacked picker la
   assert.match(styles, /\.composition-picker-modal \.picker-selection-card\s*\{/);
   assert.match(styles, /\.composition-picker-modal \.composition-picker-fixed-configuration\s*\{[^}]*flex:\s*0 0 auto;[^}]*margin:\s*0 0 12px;/);
   assert.match(foodTemplate, /composition-picker-step-heading--impact[\s\S]*?qty-preview composition-picker-fixed-configuration[\s\S]*?picker-layout/);
+  assert.match(mealTemplate, /composition-picker-step-heading--impact[\s\S]*?composition-picker-schedule-fields composition-picker-fixed-configuration[\s\S]*?picker-layout/);
   assert.doesNotMatch(foodCard, /qty-preview/);
   assert.match(styles, /\.composition-picker-modal \.selector > \.selector-list\s*\{[\s\S]*?width:\s*100%;[\s\S]*?border:\s*0;[\s\S]*?border-radius:\s*0;/);
 });

@@ -101,6 +101,8 @@ before previewing the replacement.
   panels are omitted.
 - Food quantity configuration sits directly below the fixed Impacto heading and
   outside `picker-layout`; only the selected/result cards scroll beneath it.
+- Meal hour/note configuration follows the same fixed-region contract: it sits
+  below the Impacto heading and outside the scrolling `picker-layout`.
 - The dialog is labelled by its visible title. Step progression is conveyed by
   the changing selection and impact content rather than a separate visual
   progress indicator.

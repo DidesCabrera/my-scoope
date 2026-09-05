@@ -89,29 +89,29 @@
             </div>
           </div>
 
+          <div class="composition-picker-schedule-fields composition-picker-fixed-configuration">
+            <label>
+              <i data-lucide="clock" class="add-row-icon"></i>
+              Hora:
+              <input type="time" name="hour" class="hour-picker">
+            </label>
+            <label>
+              <i data-lucide="notebook-pen" class="add-row-icon"></i>
+              Nota <span>(opcional):</span>
+              <input
+                type="text"
+                name="note"
+                class="note-picker"
+                placeholder="Ej. antes de entrenar"
+                maxlength="255"
+              >
+            </label>
+          </div>
+
           <div class="picker-layout">
             <section class="entity-card card picker-selection-card">
               <div class="picker-section picker-meal-info">
                 {% include "components/card_picker_meal.html" %}
-              </div>
-
-              <div class="composition-picker-schedule-fields">
-                <label>
-                  <i data-lucide="clock" class="add-row-icon"></i>
-                  Hora:
-                  <input type="time" name="hour" class="hour-picker">
-                </label>
-                <label>
-                  <i data-lucide="notebook-pen" class="add-row-icon"></i>
-                  Nota <span>(opcional):</span>
-                  <input
-                    type="text"
-                    name="note"
-                    class="note-picker"
-                    placeholder="Ej. antes de entrenar"
-                    maxlength="255"
-                  >
-                </label>
               </div>
             </section>
 
