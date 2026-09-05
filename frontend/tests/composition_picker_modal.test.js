@@ -124,7 +124,8 @@ test("selection keeps heading controls fixed and scrolls only the result list", 
   assert.match(styles, /\.composition-picker-modal__body--selection\s*\{[\s\S]*?overflow:\s*hidden;/);
   assert.match(styles, /\.composition-picker-modal \.selector\s*\{[\s\S]*?flex-direction:\s*column;[\s\S]*?min-height:\s*0;/);
   assert.match(styles, /\.composition-picker-modal \.selector > \.selector-list\s*\{[\s\S]*?flex:\s*1 1 auto;[\s\S]*?overflow-y:\s*auto;/);
-  assert.match(styles, /\.composition-picker-step-heading\s*\{[\s\S]*?padding-left:\s*12px;/);
+  assert.doesNotMatch(styles, /\.composition-picker-step-heading\s*\{[^}]*padding-left:/);
+  assert.match(styles, /\.composition-picker-step-heading > h3\s*\{[^}]*padding-left:\s*12px;/);
 });
 
 test("shared picker controller owns modal lifecycle, steps, and accessible dismissal", async () => {

@@ -149,7 +149,6 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
 
 .composition-picker-step-heading {
   margin-bottom: 14px;
-  padding-left: 12px;
 }
 
 .composition-picker-step-heading--impact {
@@ -164,6 +163,7 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
   align-items: center;
   min-height: 36px;
   margin: 0;
+  padding-left: 12px;
   color: var(--text-main);
   font-size: 17px;
 }
