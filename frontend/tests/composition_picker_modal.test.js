@@ -78,10 +78,12 @@ test("impact cards reuse UI-system card, KPI, tab, and data-grid contracts", asy
 });
 
 test("selected Food and Meal summaries use the entity-card main structure", async () => {
-  const [food, meal, mealPreview] = await Promise.all([
+  const [food, meal, mealPreview, allocComponent, pickerStyles] = await Promise.all([
     source("notas/templates/components/card_picker_food.html"),
     source("notas/templates/components/card_picker_meal.html"),
     source("notas/static/notas/js/meal_preview.js"),
+    source("notas/static/notas/js/alloc_bar_component.js"),
+    source("notas/static/notas/css/components/picker_list.css"),
   ]);
 
   for (const summary of [food, meal]) {
@@ -97,6 +99,12 @@ test("selected Food and Meal summaries use the entity-card main structure", asyn
   assert.match(meal, /card-title-eyebrow[\s\S]*?Comida seleccionada[\s\S]*?<h3[^>]*data-role="preview-name"/);
   assert.match(meal, /entity-indicators structural-indicators[\s\S]*?data-role="selected-food-count"/);
   assert.match(mealPreview, /selected-food-count[\s\S]*?normalizedFoods\.length/);
+
+  for (const summary of [food, meal, allocComponent]) {
+    assert.match(summary, /picker-alloc-item alloc-bar-comp alloc-bar-comp--kpi[\s\S]*?alloc-bar-bg[\s\S]*?alloc-bar-fill[\s\S]*?alloc-bar-text/);
+    assert.doesNotMatch(summary, /alloc-pct micro/);
+  }
+  assert.match(pickerStyles, /\.picker-alloc-item\s*\{[^}]*height:\s*18px;[^}]*border-radius:\s*var\(--nutrition-kpi-nested-bar-radius\);/);
 });
 
 test("impact keeps a stable dialog height and scrolls only its stacked picker layout", async () => {
@@ -116,6 +124,7 @@ test("selection keeps heading controls fixed and scrolls only the result list", 
   assert.match(styles, /\.composition-picker-modal__body--selection\s*\{[\s\S]*?overflow:\s*hidden;/);
   assert.match(styles, /\.composition-picker-modal \.selector\s*\{[\s\S]*?flex-direction:\s*column;[\s\S]*?min-height:\s*0;/);
   assert.match(styles, /\.composition-picker-modal \.selector > \.selector-list\s*\{[\s\S]*?flex:\s*1 1 auto;[\s\S]*?overflow-y:\s*auto;/);
+  assert.match(styles, /\.composition-picker-step-heading\s*\{[\s\S]*?padding-left:\s*12px;/);
 });
 
 test("shared picker controller owns modal lifecycle, steps, and accessible dismissal", async () => {

@@ -191,14 +191,10 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderAllocBar(value, kind) {
     const pct = Math.max(0, Math.min(Math.round(Number(value) || 0), 100));
     return `
-      <div class="picker-alloc-item">
-        <div class="alloc-pct micro alloc-bar-fill--${kind}">
-          <p>${pct}%</p>
-        </div>
-        <div class="alloc-bar-comp mini" style="--alloc: ${pct};">
-          <div class="alloc-bar-bg"></div>
-          <div class="alloc-bar-fill alloc-bar-fill--${kind}"></div>
-        </div>
+      <div class="picker-alloc-item alloc-bar-comp alloc-bar-comp--kpi" style="--alloc: ${pct};">
+        <div class="alloc-bar-bg"></div>
+        <div class="alloc-bar-fill alloc-bar-fill--${kind}"></div>
+        <span class="alloc-bar-text">${pct}%</span>
       </div>
     `;
   }

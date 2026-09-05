@@ -149,6 +149,7 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
 
 .composition-picker-step-heading {
   margin-bottom: 14px;
+  padding-left: 12px;
 }
 
 .composition-picker-step-heading--impact {

@@ -92,6 +92,9 @@ before previewing the replacement.
   `Editar comida` is the rightmost action.
 - The direct `h3` occupies a shared 36px title row and centers its text
   vertically, matching the action-control height in either step.
+- Step headings use 12px of left inset. Picker allocation indicators reuse the
+  complete UI-system allocation track anatomy (`alloc-bar-bg`, fill, and overlay
+  text) while preserving the compact 18px picker height.
 - The dialog is labelled by its visible title. Step progression is conveyed by
   the changing selection and impact content rather than a separate visual
   progress indicator.
