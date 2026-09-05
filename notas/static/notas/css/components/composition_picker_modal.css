@@ -156,7 +156,6 @@ html[data-theme="dark"] .composition-picker-modal::backdrop {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding-top: 2px;
 }
 
 .composition-picker-step-heading h3 {

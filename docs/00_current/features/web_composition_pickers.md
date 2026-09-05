@@ -87,6 +87,9 @@ before previewing the replacement.
   a `repeat` icon in replace mode. Step headings are numbered `1.` and `2.`.
 - The Meal impact step links directly to the selected Meal detail, using the URL
   supplied by the server payload rather than constructing a route in JavaScript.
+- Both step headings share the same direct-heading structure and top origin, so
+  their titles remain stationary during transitions. In Meal impact actions,
+  `Editar comida` is the rightmost action.
 - The dialog is labelled by its visible title. Step progression is conveyed by
   the changing selection and impact content rather than a separate visual
   progress indicator.

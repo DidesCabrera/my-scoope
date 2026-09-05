@@ -47,7 +47,7 @@ test("Food and Meal web pickers share the two-step top-layer dialog contract", a
   assert.match(meal, />\s*Crear comida\s*</);
   assert.match(meal, /entity-card card picker-selection-card[\s\S]*?picker-meal-info[\s\S]*?composition-picker-schedule-fields[\s\S]*?<\/section>[\s\S]*?picker-impact/);
   assert.match(meal, /card_picker_result\.html[\s\S]*result_scope="day-preview"/);
-  assert.match(meal, /data-role="edit-selected-meal"[\s\S]*?Editar comida/);
+  assert.match(meal, /data-picker-go-to="selection"[\s\S]*?data-role="edit-selected-meal"[\s\S]*?Editar comida/);
   assert.doesNotMatch(meal, /grid_picker_meal_day_preview|class="preview-picker"/);
 });
 
@@ -59,6 +59,7 @@ test("composition picker keeps padding on scroll content and actions in a fixed 
   assert.match(styles, /\.composition-picker-modal__body\s*\{[\s\S]*?overflow-y:\s*auto;[\s\S]*?padding:\s*0 24px 22px;/);
   assert.match(styles, /\.composition-picker-modal__footer\s*\{[\s\S]*?flex:\s*0 0 auto;[\s\S]*?background:\s*var\(--surface-card\);[\s\S]*?border-top:/);
   assert.match(styles, /\.composition-picker-step-heading--impact\s*\{[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*space-between;/);
+  assert.doesNotMatch(styles, /\.composition-picker-step-heading--impact\s*\{[^}]*padding-top:/);
 });
 
 test("impact cards reuse UI-system card, KPI, tab, and data-grid contracts", async () => {
