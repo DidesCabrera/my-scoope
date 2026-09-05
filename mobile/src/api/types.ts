@@ -253,6 +253,8 @@ export type LibraryFoodPanelItem = {
   protein_allocation: number;
   carbs_allocation: number;
   fat_allocation: number;
+  is_projected?: boolean;
+  projected_label?: string | null;
 };
 
 export type LibraryMealPanelItem = {
@@ -273,6 +275,8 @@ export type LibraryMealPanelItem = {
   protein_allocation: number;
   carbs_allocation: number;
   fat_allocation: number;
+  is_projected?: boolean;
+  projected_label?: string | null;
 };
 
 export type LibraryWeekPanelItem = {
@@ -287,6 +291,8 @@ export type LibraryWeekPanelItem = {
     plan_name: string | null;
     nutrition?: LibraryNutrition | null;
     meals?: LibraryMealPanelItem[];
+    is_projected?: boolean;
+    projected_label?: string | null;
   }[];
   filled_days_count?: number;
   meals_count?: number;
@@ -387,6 +393,14 @@ export type PickerImpact = {
 export type PickerPreview = {
   selection: PickerSelection;
   impacts: PickerImpact[];
+  result: {
+    id: number;
+    entity: "meal" | "dailyPlan" | "week";
+    name: string;
+    nutrition: LibraryNutrition;
+    indicators: LibraryIndicator[];
+    panel: LibraryPanel;
+  } | null;
   replacements: string[];
   confirmation_required: boolean;
 };

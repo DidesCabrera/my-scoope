@@ -83,6 +83,8 @@ class LibraryFoodPanelItemData(Schema):
     protein_allocation: float
     carbs_allocation: float
     fat_allocation: float
+    is_projected: bool = False
+    projected_label: str | None = None
 
 
 class LibraryMealPanelItemData(Schema):
@@ -103,6 +105,8 @@ class LibraryMealPanelItemData(Schema):
     protein_allocation: float
     carbs_allocation: float
     fat_allocation: float
+    is_projected: bool = False
+    projected_label: str | None = None
 
 
 class LibraryWeekDayData(Schema):
@@ -114,6 +118,8 @@ class LibraryWeekDayData(Schema):
     plan_name: str | None = None
     nutrition: LibraryNutritionData | None = None
     meals: list[LibraryMealPanelItemData] = Field(default_factory=list)
+    is_projected: bool = False
+    projected_label: str | None = None
 
 
 class LibraryWeekPanelItemData(Schema):

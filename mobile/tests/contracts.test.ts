@@ -586,6 +586,23 @@ test("the committed mobile contract exposes every route consumed through CML08",
   }
 });
 
+test("composition picker previews expose complete projected entities and relation replacement", async () => {
+  const file = path.resolve(process.cwd(), "../docs/00_current/api/mobile-v1.openapi.json");
+  const schema = JSON.parse(await readFile(file, "utf8")) as {
+    components: { schemas: Record<string, { properties?: Record<string, unknown> }> };
+  };
+  const schemas = schema.components.schemas;
+  assert.ok(schemas.FoodPickerInput.properties?.meal_food_id);
+  assert.ok(schemas.PickerPreviewData.properties?.result);
+  for (const property of ["entity", "name", "nutrition", "indicators", "panel"]) {
+    assert.ok(schemas.PickerResultData.properties?.[property], `missing picker result ${property}`);
+  }
+  for (const itemSchema of ["LibraryFoodPanelItemData", "LibraryMealPanelItemData", "LibraryWeekDayData"]) {
+    assert.ok(schemas[itemSchema].properties?.is_projected, `missing ${itemSchema}.is_projected`);
+    assert.ok(schemas[itemSchema].properties?.projected_label, `missing ${itemSchema}.projected_label`);
+  }
+});
+
 test("the App Store review package is complete, bounded and secret-free", async () => {
   const store = path.resolve(process.cwd(), "store");
   const metadata = JSON.parse(await readFile(path.join(store, "metadata/es-CL.json"), "utf8"));

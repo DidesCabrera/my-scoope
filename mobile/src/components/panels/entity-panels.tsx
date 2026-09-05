@@ -24,6 +24,7 @@ export type FoodPanelItem = NutritionPanelValues & {
   quantity: number;
   quantityUnit: string;
   relationId?: number | null;
+  projectedLabel?: string | null;
 };
 
 export type MealPanelItem = NutritionPanelValues & {
@@ -35,6 +36,7 @@ export type MealPanelItem = NutritionPanelValues & {
   note?: string;
   relationId?: number | null;
   time?: string;
+  projectedLabel?: string | null;
 };
 
 export type MealMenuFood = {
@@ -46,6 +48,7 @@ export type MealMenuFood = {
 export type FoodPanelEditing = {
   onDelete(item: FoodPanelItem): Promise<void>;
   onReorder(items: FoodPanelItem[]): Promise<void>;
+  onReplace(item: FoodPanelItem): void;
   onUpdateQuantity(item: FoodPanelItem, quantity: number): Promise<void>;
 };
 
@@ -83,11 +86,14 @@ function decimal(value: number): string {
   return Number.isFinite(value) ? value.toLocaleString("es-CL", { maximumFractionDigits: 1 }) : "0";
 }
 
-export function MealRowIdentity({ name }: { name: string }) {
+export function MealRowIdentity({ name, projectedLabel }: { name: string; projectedLabel?: string | null }) {
   return (
     <View style={styles.mealIdentity}>
       <EntityIcon entity="meal" size="compact" />
-      <Text numberOfLines={2} style={styles.mealIdentityName}>{name}</Text>
+      <View style={styles.identityCopy}>
+        <Text numberOfLines={2} style={styles.mealIdentityName}>{name}</Text>
+        {projectedLabel ? <Text style={styles.projectedBadge}>{projectedLabel}</Text> : null}
+      </View>
     </View>
   );
 }
@@ -99,7 +105,7 @@ function isMealPanelItem(item: FoodPanelItem | MealPanelItem): item is MealPanel
 function PanelItemName({ item }: { item: FoodPanelItem | MealPanelItem }) {
   return (
     <View style={styles.gridLeadingCell}>
-      {isMealPanelItem(item) ? <MealRowIdentity name={item.name} /> : <Text numberOfLines={2} style={styles.itemName}>{item.name}</Text>}
+      {isMealPanelItem(item) ? <MealRowIdentity name={item.name} projectedLabel={item.projectedLabel} /> : <View style={styles.identityCopy}><Text numberOfLines={2} style={styles.itemName}>{item.name}</Text>{item.projectedLabel ? <Text style={styles.projectedBadge}>{item.projectedLabel}</Text> : null}</View>}
     </View>
   );
 }
@@ -223,7 +229,7 @@ export function MealMenuPanel({ items, onOpenItem }: { items: MealPanelItem[]; o
         <View key={item.id} style={[styles.menuRow, index === items.length - 1 && styles.rowLast]}>
           <View style={styles.menuCopy}>
             <View style={styles.menuTitleRow}>
-              <MealRowIdentity name={item.name} />
+              <MealRowIdentity name={item.name} projectedLabel={item.projectedLabel} />
               {item.time ? <Text style={styles.menuTime}>{item.time}</Text> : null}
             </View>
             <Text style={styles.menuFoods}>
@@ -298,6 +304,7 @@ function FoodEditPanel({ editing, items }: { editing: FoodPanelEditing; items: F
             <View style={styles.editIdentity}><Text numberOfLines={2} style={[styles.cell, styles.name]}>{item.name}</Text><Text style={styles.editMeta}>{decimal(item.quantity)} {item.quantityUnit}</Text></View>
             <View style={styles.editActions}>
               <IconAction disabled={busy} label={`Editar porción de ${item.name}`} onPress={() => { setEditingId(item.id); setQuantity(String(item.quantity)); }}><Pencil color={tokens.color.textMuted} size={16} /></IconAction>
+              <IconAction disabled={busy} label={`Reemplazar ${item.name}`} onPress={() => editing.onReplace(item)}><RefreshCw color={tokens.color.textMuted} size={16} /></IconAction>
               <IconAction disabled={busy} label={`Eliminar ${item.name}`} onPress={() => Alert.alert("Eliminar alimento", `¿Eliminar ${item.name} de esta comida?`, [{ text: "Cancelar", style: "cancel" }, { text: "Eliminar", style: "destructive", onPress: () => void editing.onDelete(item).catch(() => undefined) }])}><Trash2 color={tokens.color.danger} size={16} /></IconAction>
             </View>
           </View>
@@ -374,7 +381,9 @@ const styles = StyleSheet.create({
   menuActionPressed: { opacity: 0.55 },
   menuTitleRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
   mealIdentity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0, paddingHorizontal: tokens.spacing.xs },
-  mealIdentityName: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold, letterSpacing: 0, lineHeight: 18 },
+  identityCopy: { alignItems: "flex-start", flex: 1, gap: 3, justifyContent: "center", minWidth: 0 },
+  mealIdentityName: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold, letterSpacing: 0, lineHeight: 18 },
+  projectedBadge: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, color: tokens.color.textMuted, fontSize: 9, fontWeight: tokens.weight.semibold, overflow: "hidden", paddingHorizontal: 6, paddingVertical: 2 },
   menuTime: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.regular, letterSpacing: 0, paddingHorizontal: tokens.spacing.xs },
   menuFoods: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, letterSpacing: 0, lineHeight: 20, opacity: 0.82, paddingHorizontal: tokens.spacing.xs },
   iconAction: { alignItems: "center", borderRadius: tokens.radius.sm, height: 34, justifyContent: "center", width: 34 },

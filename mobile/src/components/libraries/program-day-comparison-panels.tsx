@@ -22,6 +22,7 @@ export type ProgramDayNutrition = {
   ppk: number;
   proteinGrams: number;
   week: number;
+  projectedLabel?: string | null;
 };
 
 const tabs = [
@@ -62,6 +63,7 @@ function DayIdentity({ row }: { row: ProgramDayNutrition }) {
       <View style={styles.dayCopy}>
         <Text numberOfLines={1} style={styles.dayName}>{row.day}</Text>
         <Text numberOfLines={1} style={styles.planName}>{row.planName ?? "Sin plan"}</Text>
+        {row.projectedLabel ? <Text style={styles.projectedBadge}>{row.projectedLabel}</Text> : null}
       </View>
     </View>
   );
@@ -193,6 +195,7 @@ const styles = StyleSheet.create({
   dayCopy: { flex: 1, minWidth: 0 },
   dayName: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
   planName: { color: tokens.color.textMuted, fontSize: tokens.type.label, lineHeight: 16 },
+  projectedBadge: { alignSelf: "flex-start", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, color: tokens.color.textMuted, fontSize: 9, fontWeight: tokens.weight.semibold, overflow: "hidden", paddingHorizontal: 5, paddingVertical: 1 },
   ppkBadge: { height: 24, minHeight: 24 },
   ppkCell: { paddingHorizontal: 3 },
   emptyValue: { color: tokens.color.textMuted, fontSize: tokens.type.caption, textAlign: "center" },

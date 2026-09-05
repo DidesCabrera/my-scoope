@@ -114,10 +114,13 @@ from mobile_api.schema_domains.composition import (  # noqa: F401 -- compatibili
     MealPickerInput,
     PickerCommitData,
     PickerCommitEnvelope,
+)
+from mobile_api.schema_domains.composition_preview import (  # noqa: F401 -- compatibility re-exports
     PickerImpactData,
     PickerMetricData,
     PickerPreviewData,
     PickerPreviewEnvelope,
+    PickerResultData,
     PickerSelectionData,
 )
 from mobile_api.schema_domains.identity import (  # noqa: F401 -- compatibility re-exports

@@ -142,6 +142,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   const foodEditing = item.entity === "meal" ? {
     onDelete: async (food: FoodPanelItem) => { if (food.relationId) await mutateComposition(`/api/v1/library/meals/${item.id}/foods/${food.relationId}`, { method: "DELETE" }); },
     onReorder: async (foods: FoodPanelItem[]) => { await mutateComposition(`/api/v1/library/meals/${item.id}/foods/order`, { method: "PUT", body: JSON.stringify({ ordered_ids: foods.map((food) => food.relationId) }) }); },
+    onReplace: (food: FoodPanelItem) => { if (food.relationId) router.push(pickerHref("food-to-meal", { mealFoodId: food.relationId, mealId: item.id })); },
     onUpdateQuantity: async (food: FoodPanelItem, quantity: number) => { if (food.relationId) await mutateComposition(`/api/v1/library/meals/${item.id}/foods/${food.relationId}`, { method: "PATCH", body: JSON.stringify({ quantity }) }); },
   } : undefined;
   const mealEditing = item.entity === "dailyPlan" ? {

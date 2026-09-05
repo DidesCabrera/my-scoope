@@ -324,8 +324,12 @@ class MobileAPILibrariesTests(AuthenticatedMobileAPITestCase):
             content_type="application/json",
         )
         self.assertEqual(food_preview.status_code, 200)
-        self.assertEqual(food_preview.json()["data"]["selection"]["quantity"], 50.0)
-        self.assertEqual(food_preview.json()["data"]["impacts"][0]["after"]["protein"]["grams"], 5.0)
+        food_preview_data = food_preview.json()["data"]
+        self.assertEqual(food_preview_data["selection"]["quantity"], 50.0)
+        self.assertEqual(food_preview_data["impacts"][0]["after"]["protein"]["grams"], 5.0)
+        self.assertEqual(food_preview_data["result"]["entity"], "meal")
+        self.assertEqual(food_preview_data["result"]["panel"]["kind"], "foods")
+        self.assertEqual(food_preview_data["result"]["panel"]["foods"][0]["projected_label"], "Por agregar")
 
         food_commit = self.client.post(
             f"/api/v1/library/meals/{target_meal.id}/food-picker/commit",
@@ -357,7 +361,13 @@ class MobileAPILibrariesTests(AuthenticatedMobileAPITestCase):
             content_type="application/json",
         )
         self.assertEqual(meal_preview.status_code, 200)
-        self.assertEqual(meal_preview.json()["data"]["selection"]["hour"], "08:30")
+        meal_preview_data = meal_preview.json()["data"]
+        self.assertEqual(meal_preview_data["selection"]["hour"], "08:30")
+        self.assertEqual(meal_preview_data["result"]["entity"], "dailyPlan")
+        self.assertEqual(meal_preview_data["result"]["panel"]["kind"], "meals")
+        self.assertEqual(meal_preview_data["result"]["panel"]["meals"][0]["time"], "08:30")
+        self.assertEqual(meal_preview_data["result"]["panel"]["meals"][0]["note"], "Antes de entrenar")
+        self.assertEqual(meal_preview_data["result"]["panel"]["meals"][0]["projected_label"], "Por agregar")
         meal_commit = self.client.post(
             f"/api/v1/library/daily-plans/{target_dailyplan.id}/meal-picker/commit",
             data=meal_payload,
@@ -391,7 +401,10 @@ class MobileAPILibrariesTests(AuthenticatedMobileAPITestCase):
             content_type="application/json",
         )
         self.assertEqual(replacement_preview.status_code, 200)
-        self.assertIn("reemplazar", replacement_preview.json()["data"]["impacts"][0]["label"].lower())
+        replacement_preview_data = replacement_preview.json()["data"]
+        self.assertIn("reemplazar", replacement_preview_data["impacts"][0]["label"].lower())
+        self.assertEqual(replacement_preview_data["result"]["panel"]["meals"][0]["relation_id"], slot.id)
+        self.assertEqual(replacement_preview_data["result"]["panel"]["meals"][0]["projected_label"], "Reemplazo")
         replacement_commit = self.client.post(
             f"/api/v1/library/daily-plans/{target_dailyplan.id}/meal-picker/commit",
             data=replacement_payload,
@@ -438,8 +451,17 @@ class MobileAPILibrariesTests(AuthenticatedMobileAPITestCase):
             content_type="application/json",
         )
         self.assertEqual(program_preview.status_code, 200)
-        self.assertEqual(program_preview.json()["data"]["replacements"], ["Lunes"])
-        self.assertEqual(program_preview.json()["data"]["impacts"], [])
+        program_preview_data = program_preview.json()["data"]
+        self.assertEqual(program_preview_data["replacements"], ["Lunes"])
+        self.assertEqual(program_preview_data["impacts"], [])
+        self.assertEqual(program_preview_data["result"]["entity"], "week")
+        self.assertEqual(program_preview_data["result"]["name"], "Semana 1 resultante")
+        projected_week = program_preview_data["result"]["panel"]["weeks"][0]
+        self.assertEqual(len(projected_week["days"]), 7)
+        self.assertEqual(projected_week["filled_days_count"], 2)
+        self.assertEqual(projected_week["days"][0]["projected_label"], "Reemplazo")
+        self.assertEqual(projected_week["days"][1]["projected_label"], "Por agregar")
+        self.assertIn("per_kilogram", projected_week["days"][0]["nutrition"]["protein"])
 
         unconfirmed = self.client.post(
             f"/api/v1/library/programs/{program.id}/daily-plan-picker/commit",
@@ -582,6 +604,7 @@ class MobileAPILibrariesTests(AuthenticatedMobileAPITestCase):
         meal = Meal.objects.create(name="Comida propia", created_by=self.user, is_draft=False)
         other = User.objects.create_user(username="picker-other-owner")
         foreign_meal = Meal.objects.create(name="Comida ajena", created_by=other, is_draft=False)
+        foreign_relation = MealFood.objects.create(meal=foreign_meal, food=food, quantity=100)
 
         foreign_target = self.client.post(
             f"/api/v1/library/meals/{foreign_meal.id}/food-picker/preview",
@@ -590,6 +613,13 @@ class MobileAPILibrariesTests(AuthenticatedMobileAPITestCase):
         )
         self.assertEqual(foreign_target.status_code, 404)
         self.assertEqual(foreign_target.json()["error"]["code"], "picker_target_not_found")
+        foreign_relation_preview = self.client.post(
+            f"/api/v1/library/meals/{meal.id}/food-picker/preview",
+            data={"food_id": food.id, "meal_food_id": foreign_relation.id, "quantity": 100},
+            content_type="application/json",
+        )
+        self.assertEqual(foreign_relation_preview.status_code, 404)
+        self.assertEqual(foreign_relation_preview.json()["error"]["code"], "composition_item_not_found")
 
         read_only_token = create_mcp_user_token(
             user=self.user,
