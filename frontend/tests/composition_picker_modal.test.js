@@ -55,6 +55,7 @@ test("composition picker keeps padding on scroll content and actions in a fixed 
   const styles = await source("notas/static/notas/css/components/composition_picker_modal.css");
 
   assert.match(styles, /\.composition-picker-modal\s*\{[\s\S]*?background:\s*var\(--surface-card\);/);
+  assert.match(styles, /\.composition-picker-modal__surface\s*\{[\s\S]*?background:\s*var\(--surface-card\);/);
   assert.match(styles, /\.composition-picker-modal__body\s*\{[\s\S]*?overflow-y:\s*auto;[\s\S]*?padding:\s*0 24px 22px;/);
   assert.match(styles, /\.composition-picker-modal__footer\s*\{[\s\S]*?flex:\s*0 0 auto;[\s\S]*?background:\s*var\(--surface-card\);[\s\S]*?border-top:/);
   assert.match(styles, /\.composition-picker-step-heading--impact\s*\{[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*space-between;/);

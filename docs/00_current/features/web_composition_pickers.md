@@ -80,8 +80,9 @@ before previewing the replacement.
 - Switching back to Selección removes any legacy inline display value from the
   inactive Impacto panel. Hidden step panels are always excluded from layout,
   so their heading and footer cannot remain visible between steps.
-- The modal and its fixed action footer use the shared `surface-card` token; the
-  Impacto heading keeps its title and change-selection action on one row.
+- The modal, its inner surface, and its fixed action footer use the shared
+  `surface-card` token; the Impacto heading keeps its title and
+  change-selection action on one row.
 - Picker headers expose the current operation with a `plus` icon in add mode and
   a `repeat` icon in replace mode. Step headings are numbered `1.` and `2.`.
 - The Meal impact step links directly to the selected Meal detail, using the URL
