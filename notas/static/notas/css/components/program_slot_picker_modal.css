@@ -21,12 +21,19 @@
 }
 
 .program-slot-picker-modal .program-slot-picker__results {
+  align-content: start;
+  grid-auto-rows: max-content;
   max-height: none;
 }
 
 .program-slot-picker-modal .program-slot-picker__option {
+  align-self: start;
   width: 100%;
   box-sizing: border-box;
+}
+
+.program-slot-picker-modal .program-slot-picker__impact-layout {
+  gap: 12px;
 }
 
 .program-slot-picker-modal .program-slot-picker__days {
@@ -64,9 +71,9 @@
 .program-slot-picker-modal .program-slot-picker__preview {
   display: block;
   margin: 0;
-  padding: 0;
+  padding: 17px var(--desktop-padding-lats) 14px;
   border: 1px solid var(--border-soft);
-  border-radius: 16px;
+  border-radius: 22px;
   background: var(--surface-card);
   box-shadow: none;
   transform: none;
@@ -76,12 +83,12 @@
   display: none !important;
 }
 
-.program-slot-picker__projection-card {
+.program-slot-picker-modal .program-slot-picker__projection-card.picker-impact {
   display: grid;
   gap: 12px;
   padding: var(--desktop-padding-top) var(--desktop-padding-lats) var(--desktop-padding-bottom);
   border: 1px solid var(--border-soft);
-  border-radius: 16px;
+  border-radius: 22px;
   background: var(--surface-card);
 }
 
@@ -151,13 +158,17 @@
 }
 
 @media (max-width: 768px) {
+  .program-slot-picker-modal .program-slot-picker__preview {
+    padding: var(--mobil-padding-top) var(--mobil-padding-lats) var(--mobil-padding-bottom);
+  }
+
   .program-slot-picker-modal .program-slot-picker__days {
     align-items: flex-start;
     flex-direction: column;
     padding-inline: calc(var(--mobil-padding-lats) + 4px);
   }
 
-  .program-slot-picker__projection-card {
+  .program-slot-picker-modal .program-slot-picker__projection-card.picker-impact {
     padding: var(--mobil-padding-top) var(--mobil-padding-lats) var(--mobil-padding-bottom);
   }
 

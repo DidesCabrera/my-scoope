@@ -122,6 +122,10 @@ overwrite confirmation before the established mutation is submitted.
   resulting week projection scrolls in `picker-layout` and clones the production
   `program-week-day-panels` anatomy, including its responsive Calorías, Macros
   and Alloc views, without exposing edit actions inside the projection.
+- Program DailyPlan search results keep content-sized rows instead of stretching
+  to fill the selector viewport. Its selected-plan and resulting-week cards use
+  the same responsive padding, complete border and spacing contract as the UI
+  system entity cards.
 - Fixed configuration controls align their leading icon with entity-card title
   content by deriving the left inset from the shared desktop/mobile card-padding
   tokens plus the title component's 4px internal inset.

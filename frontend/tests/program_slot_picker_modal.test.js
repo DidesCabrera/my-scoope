@@ -13,9 +13,10 @@ async function source(relativePath) {
 }
 
 test("Program DailyPlan picker uses the shared two-step modal contract", async () => {
-  const [template, controller] = await Promise.all([
+  const [template, controller, styles] = await Promise.all([
     source("notas/templates/components/program_slot_global_picker.html"),
     source("notas/static/notas/js/program_slot_picker.js"),
+    source("notas/static/notas/css/components/program_slot_picker_modal.css"),
   ]);
 
   assert.match(template, /<dialog[\s\S]*id="program-slot-picker-section"[\s\S]*data-picker-modal/);
@@ -32,6 +33,10 @@ test("Program DailyPlan picker uses the shared two-step modal contract", async (
   assert.match(controller, /renderWeekProjection\(\);\s*showImpactStep\(\);/);
   assert.match(controller, /renderWeekProjection\(\);[\s\S]*js-program-slot-day-checkbox/);
   assert.match(controller, /sectionId: "program-slot-picker-section"/);
+
+  assert.match(styles, /\.program-slot-picker-modal \.program-slot-picker__results\s*{[\s\S]*align-content: start;[\s\S]*grid-auto-rows: max-content;/);
+  assert.match(styles, /\.program-slot-picker-modal \.program-slot-picker__preview\s*{[\s\S]*padding: 17px var\(--desktop-padding-lats\) 14px;[\s\S]*border: 1px solid var\(--border-soft\);/);
+  assert.match(styles, /\.program-slot-picker-modal \.program-slot-picker__projection-card\.picker-impact\s*{[\s\S]*padding: var\(--desktop-padding-top\) var\(--desktop-padding-lats\) var\(--desktop-padding-bottom\);[\s\S]*border: 1px solid var\(--border-soft\);/);
 });
 
 test("week projection replaces selected days and recalculates comparison shares", () => {
