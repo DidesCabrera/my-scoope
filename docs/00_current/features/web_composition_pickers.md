@@ -2,10 +2,10 @@
 
 ## Purpose
 
-The editable web detail pages use composition pickers to add a Food to a Meal
-and a reusable Meal to a DailyPlan. These pickers are modal journeys so their
-content never changes the layout or scroll position of the detail page beneath
-them.
+The editable web detail pages use composition pickers to add a Food to a Meal,
+a reusable Meal to a DailyPlan, and a DailyPlan to one or more days of a Program
+week. These pickers are modal journeys so their content never changes the
+layout or scroll position of the detail page beneath them.
 
 ## Supported journeys
 
@@ -36,6 +36,21 @@ with its Foods first, then the user returns to the originating DailyPlan picker.
 Replacing an existing DailyPlanMeal snapshot opens the modal on **Impacto** with
 its current schedule metadata and subtracts the original snapshot nutrition
 before previewing the replacement.
+
+### DailyPlan into Program week
+
+1. Adding a plan to an empty day opens the picker on **Selección**.
+2. The user can search reusable DailyPlans or choose **Crear plan**.
+3. Choosing a DailyPlan advances to **Configura e impacto**.
+4. The user selects one or more days in the active week and sees a projected
+   version of the production week comparison table before submitting.
+5. Projected rows identify additions and replacements, while `% Cal`, PPK,
+   macro distribution and week allocation are recalculated for the resulting
+   set of plans.
+
+Replacing an occupied day opens directly on the second step with its current
+DailyPlan selected. Choosing additional occupied days preserves the existing
+overwrite confirmation before the established mutation is submitted.
 
 ## Interaction contract
 
@@ -103,6 +118,10 @@ before previewing the replacement.
   outside `picker-layout`; only the selected/result cards scroll beneath it.
 - Meal hour/note configuration follows the same fixed-region contract: it sits
   below the Impacto heading and outside the scrolling `picker-layout`.
+- Program DailyPlan day selection follows that fixed-region contract. The
+  resulting week projection scrolls in `picker-layout` and clones the production
+  `program-week-day-panels` anatomy, including its responsive Calorías, Macros
+  and Alloc views, without exposing edit actions inside the projection.
 - Fixed configuration controls align their leading icon with entity-card title
   content by deriving the left inset from the shared desktop/mobile card-padding
   tokens plus the title component's 4px internal inset.
@@ -126,10 +145,12 @@ before previewing the replacement.
 ## Data and mutation boundaries
 
 This UI does not introduce a new API or database model. Food search continues to
-use the owner-aware Food picker JSON endpoint. Meal selection continues to use
-the server-rendered picker payload. Nutrition previews remain client-side
-projections of the established payloads, and final mutations continue through
-the existing Django form endpoints and application commands.
+use the owner-aware Food picker JSON endpoint. Meal and DailyPlan selection
+continue to use server-rendered picker payloads. Nutrition previews remain
+client-side projections of the established payloads, and final mutations
+continue through the existing Django form endpoints and application commands.
+The Program picker submits to `add_dailyplan_to_program`, preserving multi-day
+selection and the occupied-day overwrite confirmation.
 
 Food creation accepts an optional `return_to` value only when Django considers
 it safe for the current host. A successful picker-originated creation appends
@@ -138,15 +159,16 @@ destinations fall back to the Food library.
 
 ## Scope boundary
 
-This contract applies to the canonical owned Meal and DailyPlan detail pages.
-The DailyPlanMeal deep-edit Food picker remains an inline legacy surface, and
-Program composition and the native client retain their own picker contracts.
+This contract applies to the canonical owned Meal, DailyPlan and Program detail
+pages, plus Food composition editing from a DailyPlanMeal. The native client
+retains its own picker contract.
 
 ## Verification
 
 Coverage is split across:
 
-- frontend source-contract tests for the shared dialog lifecycle and two steps;
+- frontend source-contract and projection tests for the shared dialog lifecycle,
+  two steps and recalculated week comparison values;
 - Django view tests for rendered modal structure and safe Food creation return;
 - authenticated Playwright scenarios for add, edit, replace, cancel, search,
   reactive nutrition preview, submit, and absence of underlying layout shift.

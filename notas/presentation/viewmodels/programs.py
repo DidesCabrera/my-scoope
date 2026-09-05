@@ -443,6 +443,9 @@ def build_week_day_nutrition_rows(week, current_weight=None, program=None):
             "protein": protein,
             "carbs": snapshot.get("carbs", 0),
             "fat": snapshot.get("fat", 0),
+            "kcal_protein": snapshot.get("kcal_protein", 0),
+            "kcal_carbs": snapshot.get("kcal_carbs", 0),
+            "kcal_fat": snapshot.get("kcal_fat", 0),
             "alloc": {
                 "protein": _safe_percentage(snapshot.get("kcal_protein", 0), week_totals.get("kcal_protein", 0)),
                 "carbs": _safe_percentage(snapshot.get("kcal_carbs", 0), week_totals.get("kcal_carbs", 0)),
@@ -495,8 +498,14 @@ def build_program_list_cards(programs, user, list_mode="list", current_weight=No
     return [build_program_child_card(program, user, current_weight=current_weight) for program in programs]
 
 
-def _dailyplan_options(user):
-    return [build_dailyplan_snapshot(dailyplan) for dailyplan in list(available_dailyplans(user))]
+def _dailyplan_options(user, current_weight=None):
+    options = []
+    for dailyplan in available_dailyplans(user):
+        snapshot = build_dailyplan_snapshot(dailyplan)
+        protein = float(snapshot.get("protein") or 0)
+        snapshot["ppk"] = protein / current_weight if current_weight else 0
+        options.append(snapshot)
+    return options
 
 
 def build_program_week_summary_metrics(weeks):
@@ -535,7 +544,11 @@ def build_program_detail_content(*, program: Program, user, header):
             current_weight=current_weight,
             program=program,
         )
-    dailyplan_options = _dailyplan_options(user)
+        week["day_nutrition_rows_json"] = json.dumps(
+            week["day_nutrition_rows"],
+            cls=DjangoJSONEncoder,
+        )
+    dailyplan_options = _dailyplan_options(user, current_weight=current_weight)
     return {
         "header": header,
         "program": program,

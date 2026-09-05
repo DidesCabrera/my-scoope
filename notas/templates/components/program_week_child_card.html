@@ -1,4 +1,9 @@
-<section class="entity-card entity-card--nested entity-card--program-week program-week-child-card js-program-week-scope" id="week-{{ week.week_number }}" aria-labelledby="program-week-title-{{ week.week_number }}">
+<section
+  class="entity-card entity-card--nested entity-card--program-week program-week-child-card js-program-week-scope"
+  id="week-{{ week.week_number }}"
+  aria-labelledby="program-week-title-{{ week.week_number }}"
+  data-program-week-rows="{{ week.day_nutrition_rows_json }}"
+>
   <header class="program-week-child-card__header">
     <div class="card-title-comp program-week-child-card__title-comp">
       <div class="main-title program-week-child-card__title-main">

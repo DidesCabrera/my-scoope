@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
-from notas.domain.models import DailyPlan, Meal
+from notas.domain.models import DailyPlan, Meal, Program
 
 User = get_user_model()
 
@@ -66,3 +66,32 @@ class WebCompositionPickerModalTests(TestCase):
             reverse("create_meal_for_dailyplan", args=[dailyplan.id]),
         )
         self.assertNotContains(response, 'id="dailyplan-picker-section" class="section_picker')
+
+    def test_owned_program_uses_two_step_dailyplan_dialog_with_week_projection(self):
+        program = Program.objects.create(
+            name="Editable program",
+            created_by=self.user,
+            duration_weeks=1,
+        )
+        DailyPlan.objects.create(
+            name="Available daily plan",
+            created_by=self.user,
+            is_draft=False,
+        )
+
+        response = self.client.get(reverse("program_detail", args=[program.id]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '<dialog\n  id="program-slot-picker-section"')
+        self.assertContains(response, "data-picker-modal")
+        self.assertContains(response, 'data-picker-step-panel="selection"')
+        self.assertContains(response, "1. Selecciona un plan diario")
+        self.assertContains(response, 'data-picker-step-panel="impact"')
+        self.assertContains(response, "2. Configura y revisa el impacto")
+        self.assertContains(response, "Resultado proyectado")
+        self.assertContains(response, "js-program-slot-projection")
+        self.assertContains(response, "composition-picker-fixed-configuration")
+        self.assertContains(response, 'data-program-week-rows="')
+        self.assertContains(response, 'data-day-number="1"')
+        self.assertContains(response, '<script type="module" src="/static/notas/js/program_slot_picker.js"></script>')
+        self.assertNotContains(response, 'class="program-slot-picker section_picker')

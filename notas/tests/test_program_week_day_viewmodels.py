@@ -51,6 +51,9 @@ class ProgramWeekDayNutritionRowsTests(SimpleTestCase):
         self.assertEqual(row["kcal_share"], 40)
         self.assertEqual(row["kcal_distribution"], {"protein": 20, "carbs": 40, "fat": 40})
         self.assertEqual(row["alloc"], {"protein": 40, "carbs": 40, "fat": 40})
+        self.assertEqual(row["kcal_protein"], 200)
+        self.assertEqual(row["kcal_carbs"], 400)
+        self.assertEqual(row["kcal_fat"], 400)
 
     def test_builds_assigned_day_average_and_previous_week_ratio(self):
         weeks = [
