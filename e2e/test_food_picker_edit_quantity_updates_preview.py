@@ -7,7 +7,7 @@ def test_food_picker_edit_quantity_updates_preview(page, meal_edit_url, ui_settl
 
     edit_button = page.locator('[id^="card-grid-foods-edit-"] .edit-food-btn').first
     quantity_input = page.locator("#food-quantity")
-    qty_kcal = page.locator("#qty-kcal")
+    result_kcal = page.locator('[data-scope="meal-result"] [data-role="result-kcal"]')
     food_preview = page.locator("#food-preview")
     update_button = page.locator("#btn-update-food")
 
@@ -19,7 +19,7 @@ def test_food_picker_edit_quantity_updates_preview(page, meal_edit_url, ui_settl
     assert food_preview.is_visible(), "El preview no se mostró al entrar en edit"
     assert update_button.is_visible(), "El botón Guardar Cambios no apareció en modo edit"
 
-    initial_kcal = qty_kcal.text_content()
+    initial_kcal = result_kcal.text_content()
     initial_quantity = float(quantity_input.input_value())
 
     quantity_input.wait_for()
@@ -27,8 +27,8 @@ def test_food_picker_edit_quantity_updates_preview(page, meal_edit_url, ui_settl
 
     ui_settle(page)
 
-    updated_kcal = qty_kcal.text_content()
+    updated_kcal = result_kcal.text_content()
 
     assert initial_kcal is not None and initial_kcal.strip() != ""
     assert updated_kcal is not None and updated_kcal.strip() != ""
-    assert initial_kcal != updated_kcal, "Las kcal no cambiaron al modificar la cantidad en edit"
+    assert initial_kcal != updated_kcal, "La comida resultante no cambió al modificar la cantidad en edit"

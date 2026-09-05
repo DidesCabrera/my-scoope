@@ -144,10 +144,18 @@ Status: completed.
 - `scripts/ci_fast_checks.sh`: passed; repository hygiene, debt budgets,
   architecture, migrations, OpenAPI drift, document registry and 96 regression
   tests are green.
+- CI recovery after integration replaced obsolete picker E2E selectors with
+  assertions against the visible resulting Meal and DailyPlan cards. The full
+  Chromium suite passes 29 scenarios, including add/edit quantity updates and
+  DPM search.
+- The mobile source-contract suite centralizes its repeated matching helpers;
+  the enforced debt budget passes at 88 source reads and 454 source-regex
+  assertions without increasing the configured ceiling of 530.
 - Complete `mobile_api` suite: 64 tests passed, including libraries,
   composition projection, v1 contract and architecture.
 - React Native: strict TypeScript passed, Expo lint passed, 60 source/contract
   tests passed and the 44-route Expo web export completed.
+- The complete Django coverage gate passes 1,850 tests at 78% total coverage.
 - Focused Python lint and schema type checking passed.
 - No database migration was introduced.
 

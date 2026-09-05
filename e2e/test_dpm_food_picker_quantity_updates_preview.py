@@ -8,7 +8,8 @@ def test_dpm_food_picker_quantity_updates_preview(page, dpm_deepedit_url, ui_set
     food_search = page.locator("#food-search")
     food_list = page.locator("#food-list")
     quantity_input = page.locator("#food-quantity")
-    qty_kcal = page.locator("#qty-kcal")
+    meal_result_kcal = page.locator('[data-scope="dpm-meal-result"] [data-role="result-kcal"]')
+    dailyplan_result_kcal = page.locator('[data-scope="dpm-dailyplan-result"] [data-role="result-kcal"]')
 
     food_search.fill("Pechuga Pollo Cocida")
     ui_settle(page)
@@ -16,11 +17,14 @@ def test_dpm_food_picker_quantity_updates_preview(page, dpm_deepedit_url, ui_set
     food_list.locator("li").first.click()
     ui_settle(page)
 
-    initial_kcal = qty_kcal.text_content()
+    initial_meal_kcal = meal_result_kcal.text_content()
+    initial_dailyplan_kcal = dailyplan_result_kcal.text_content()
 
     quantity_input.fill("250")
     ui_settle(page)
 
-    updated_kcal = qty_kcal.text_content()
+    updated_meal_kcal = meal_result_kcal.text_content()
+    updated_dailyplan_kcal = dailyplan_result_kcal.text_content()
 
-    assert initial_kcal != updated_kcal, "Las kcal no cambiaron al modificar la cantidad"
+    assert initial_meal_kcal != updated_meal_kcal, "La comida resultante no cambió al modificar la cantidad"
+    assert initial_dailyplan_kcal != updated_dailyplan_kcal, "El plan resultante no cambió al modificar la cantidad"

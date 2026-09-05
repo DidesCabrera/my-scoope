@@ -139,7 +139,12 @@ class DailyPlanViewTests(TestCase):
 
         self.assertContains(response, 'class="data-grid-meal-time"', count=1)
         self.assertContains(response, "structural-item--time", count=1)
-        self.assertContains(response, 'data-lucide="clock"', count=1)
+        child_title_html = render_to_string(
+            "components/card_child_title.html",
+            {"titulo": child_title},
+        )
+        self.assertIn('class="structural-item structural-item--time"', child_title_html)
+        self.assertIn('data-lucide="clock"', child_title_html)
         self.assertEqual(
             response.context["vm"]["content"]["child_cards"][0]["titulo"][
                 "structural_indicators"
