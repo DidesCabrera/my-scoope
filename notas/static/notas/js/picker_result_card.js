@@ -331,12 +331,7 @@ function createMealAllocRow(item) {
 }
 
 function renderMealPanels(root, items) {
-  renderGrid(root, "result-food-summary-grid", aggregateFoodItems(items), createFoodSummaryRow, "No foods yet.");
   renderGrid(root, "result-foods-grid", items, createFoodDesktopRow, "No foods added yet.");
-  renderGrid(root, "result-foods-qty-grid", items, createFoodQuantityRow, "No foods added yet.");
-  renderGrid(root, "result-foods-calories-grid", items, createFoodCaloriesRow, "No foods added yet.");
-  renderGrid(root, "result-foods-macros-grid", items, createFoodMacrosRow, "No foods added yet.");
-  renderGrid(root, "result-foods-alloc-grid", items, createFoodAllocRow, "No foods added yet.");
 }
 
 function renderDailyPlanPanels(root, items) {

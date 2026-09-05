@@ -69,11 +69,11 @@ test("impact cards reuse UI-system card, KPI, tab, and data-grid contracts", asy
   assert.match(resultCard, /entity-card card picker-result-card/);
   assert.match(resultCard, /entity-heading card-title-comp/);
   assert.match(resultCard, /dash-kpi-comp/);
-  assert.match(resultCard, /detail_tabs_foods\.html/);
   assert.match(resultCard, /detail_tabs_meals\.html/);
+  assert.match(resultCard, /Tabla Alimentos/);
   assert.match(resultCard, /data-grid--foods/);
   assert.match(resultCard, /data-grid--meals/);
-  assert.match(resultCard, /data-grid--mobile-foods-alloc/);
+  assert.doesNotMatch(resultCard, /result-food-summary-grid|result-foods-(?:qty|calories|macros|alloc)-grid/);
   assert.match(resultCard, /data-grid--mobile-alloc/);
 });
 

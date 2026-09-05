@@ -96,6 +96,9 @@ before previewing the replacement.
   actions or the rest of the heading content. Picker allocation indicators
   reuse the complete UI-system allocation track anatomy (`alloc-bar-bg`, fill,
   and overlay text) while preserving the compact 18px picker height.
+- Food add/replace impact exposes only the resulting Meal's `Tabla Alimentos`
+  tab and full food-table panel; redundant aggregation and mobile KPI-specific
+  panels are omitted.
 - The dialog is labelled by its visible title. Step progression is conveyed by
   the changing selection and impact content rather than a separate visual
   progress indicator.

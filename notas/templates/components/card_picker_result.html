@@ -81,18 +81,20 @@
   {% if result_kind == "meal" %}
     <div
       class="content-panel card-detail-block picker-result-card__panels"
-      data-default-desktop="#card-menu-{{ result_panel_id }}"
-      data-default-mobile="#card-grid-qty-{{ result_panel_id }}"
+      data-default-desktop="#card-grid-foods-{{ result_panel_id }}"
+      data-default-mobile="#card-grid-foods-{{ result_panel_id }}"
     >
-      {% include "components/detail_tabs_foods.html" with panel_id=result_panel_id %}
-      <div id="card-menu-{{ result_panel_id }}" class="card-foods-aggregation">
-        <div class="data-grid data-grid--foods-aggregation" data-role="result-food-summary-grid">
-          <div class="data-grid-header data-grid-header--foods-aggregation">
-            <div class="data-grid-col data-grid-col--foods">Alimentos</div>
-          </div>
+      <div class="panel-tabs panel-tabs--desktop card-detail-tabs card-detail-tabs--desktop block-desplegar-tabla block-card-desplegar">
+        <div class="panel-tab btn-desplegar is-active" data-target="#card-grid-foods-{{ result_panel_id }}">
+          <p>Tabla Alimentos</p>
         </div>
       </div>
-      <div id="card-grid-foods-{{ result_panel_id }}" class="card-table-foods">
+      <div class="panel-tabs panel-tabs--mobile card-detail-tabs-mobile">
+        <button type="button" class="panel-tab btn-desplegar-mobile is-active" data-target="#card-grid-foods-{{ result_panel_id }}">
+          Tabla Alimentos
+        </button>
+      </div>
+      <div id="card-grid-foods-{{ result_panel_id }}" class="picker-result-card__single-panel is-visible">
         <div class="data-grid data-grid--foods" data-role="result-foods-grid">
           <div class="data-grid-header data-grid-header--foods">
             <div class="data-grid-col data-grid-col--name">Alimentos</div>
@@ -108,44 +110,6 @@
               <div class="data-grid-col data-grid-col--alloc">C%</div>
               <div class="data-grid-col data-grid-col--alloc">F%</div>
             </div>
-          </div>
-        </div>
-      </div>
-      <div id="card-grid-qty-{{ result_panel_id }}" class="card-table-foods-mobile">
-        <div class="data-grid data-grid--mobile-foods-qty" data-role="result-foods-qty-grid">
-          <div class="data-grid-header data-grid-header--mobile-foods-qty">
-            <div class="data-grid-col data-grid-col--name">Alimentos</div>
-            <div class="data-grid-col data-grid-col--qty">Qty</div>
-          </div>
-        </div>
-      </div>
-      <div id="card-grid-calories-{{ result_panel_id }}" class="card-table-foods-mobile">
-        <div class="data-grid data-grid--mobile-foods-calories" data-role="result-foods-calories-grid">
-          <div class="data-grid-header data-grid-header--mobile-foods-calories">
-            <div class="data-grid-col data-grid-col--name">Alimentos</div>
-            <div class="data-grid-col data-grid-col--kcal">Cal</div>
-            <div class="data-grid-col data-grid-col--kcal-share">% Cal</div>
-          </div>
-        </div>
-      </div>
-      <div id="card-grid-macros-{{ result_panel_id }}" class="card-table-foods-mobile">
-        <div class="data-grid data-grid--mobile-foods-macros" data-role="result-foods-macros-grid">
-          <div class="data-grid-header data-grid-header--mobile-foods-macros">
-            <div class="data-grid-col data-grid-col--name">Alimentos</div>
-            <div class="data-grid-col data-grid-col--macro">P</div>
-            <div class="data-grid-col data-grid-col--macro">C</div>
-            <div class="data-grid-col data-grid-col--macro">F</div>
-            <div class="data-grid-col data-grid-col--kcal-distribution">P|C|F%</div>
-          </div>
-        </div>
-      </div>
-      <div id="card-grid-alloc-{{ result_panel_id }}" class="card-table-foods-mobile">
-        <div class="data-grid data-grid--mobile-foods-alloc" data-role="result-foods-alloc-grid">
-          <div class="data-grid-header data-grid-header--mobile-foods-alloc">
-            <div class="data-grid-col data-grid-col--name">Alimentos</div>
-            <div class="data-grid-col data-grid-col--alloc">P%</div>
-            <div class="data-grid-col data-grid-col--alloc">C%</div>
-            <div class="data-grid-col data-grid-col--alloc">F%</div>
           </div>
         </div>
       </div>
