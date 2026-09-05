@@ -32,6 +32,11 @@
   box-sizing: border-box;
 }
 
+.program-slot-picker-modal .program-slot-picker__option.picker-result .picker-result-kpi__row {
+  grid-template-columns: 58px 58px 48px minmax(0, 1fr);
+  gap: 10px;
+}
+
 .program-slot-picker-modal .program-slot-picker__impact-layout {
   gap: 12px;
 }
@@ -137,6 +142,11 @@
 }
 
 @media (max-width: 768px) {
+  .program-slot-picker-modal .program-slot-picker__option.picker-result .picker-result-kpi__row {
+    grid-template-columns: 48px 52px 42px minmax(0, 1fr);
+    gap: 8px;
+  }
+
   .program-slot-picker-modal .program-slot-picker__preview {
     padding: var(--mobil-padding-top) var(--mobil-padding-lats) var(--mobil-padding-bottom);
   }

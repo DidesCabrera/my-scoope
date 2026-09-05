@@ -51,6 +51,8 @@ before previewing the replacement.
 DailyPlan selection cards expose their weight-adjusted PPK beside Protein. The
 projected week table preserves the production PPK metric badge rather than
 rendering that value as unstyled table text.
+The selection KPI grid reserves a compact PPK column and lets Alloc consume the
+remaining flexible width, preventing metric overlap without widening the row.
 
 Replacing an occupied day opens directly on the second step with its current
 DailyPlan selected. Choosing additional occupied days preserves the existing

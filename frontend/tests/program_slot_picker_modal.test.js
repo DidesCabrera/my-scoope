@@ -41,6 +41,8 @@ test("Program DailyPlan picker uses the shared two-step modal contract", async (
   assert.match(controller, /sectionId: "program-slot-picker-section"/);
 
   assert.match(styles, /\.program-slot-picker-modal \.program-slot-picker__results\s*{[\s\S]*align-content: start;[\s\S]*grid-auto-rows: max-content;/);
+  assert.match(styles, /\.program-slot-picker-modal \.program-slot-picker__option\.picker-result \.picker-result-kpi__row\s*{[^}]*grid-template-columns: 58px 58px 48px minmax\(0, 1fr\);[^}]*gap: 10px;/);
+  assert.match(styles, /@media \(max-width: 768px\)[\s\S]*?\.program-slot-picker-modal \.program-slot-picker__option\.picker-result \.picker-result-kpi__row\s*{[^}]*grid-template-columns: 48px 52px 42px minmax\(0, 1fr\);[^}]*gap: 8px;/);
   assert.match(styles, /\.program-slot-picker-modal \.program-slot-picker__preview\s*{[\s\S]*padding: 17px var\(--desktop-padding-lats\) 14px;[\s\S]*border: 1px solid var\(--border-soft\);/);
   assert.match(styles, /\.program-slot-picker-modal \.program-slot-picker__projection-card\.picker-impact\s*{[\s\S]*padding: 17px var\(--desktop-padding-lats\) 14px;[\s\S]*border: 1px solid var\(--border-soft\);/);
   assert.doesNotMatch(styles, /--desktop-padding-(?:top|bottom)/);
