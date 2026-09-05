@@ -36,7 +36,8 @@ test("Program DailyPlan picker uses the shared two-step modal contract", async (
 
   assert.match(styles, /\.program-slot-picker-modal \.program-slot-picker__results\s*{[\s\S]*align-content: start;[\s\S]*grid-auto-rows: max-content;/);
   assert.match(styles, /\.program-slot-picker-modal \.program-slot-picker__preview\s*{[\s\S]*padding: 17px var\(--desktop-padding-lats\) 14px;[\s\S]*border: 1px solid var\(--border-soft\);/);
-  assert.match(styles, /\.program-slot-picker-modal \.program-slot-picker__projection-card\.picker-impact\s*{[\s\S]*padding: var\(--desktop-padding-top\) var\(--desktop-padding-lats\) var\(--desktop-padding-bottom\);[\s\S]*border: 1px solid var\(--border-soft\);/);
+  assert.match(styles, /\.program-slot-picker-modal \.program-slot-picker__projection-card\.picker-impact\s*{[\s\S]*padding: 17px var\(--desktop-padding-lats\) 14px;[\s\S]*border: 1px solid var\(--border-soft\);/);
+  assert.doesNotMatch(styles, /--desktop-padding-(?:top|bottom)/);
 });
 
 test("week projection replaces selected days and recalculates comparison shares", () => {

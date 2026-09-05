@@ -86,7 +86,7 @@
 .program-slot-picker-modal .program-slot-picker__projection-card.picker-impact {
   display: grid;
   gap: 12px;
-  padding: var(--desktop-padding-top) var(--desktop-padding-lats) var(--desktop-padding-bottom);
+  padding: 17px var(--desktop-padding-lats) 14px;
   border: 1px solid var(--border-soft);
   border-radius: 22px;
   background: var(--surface-card);
