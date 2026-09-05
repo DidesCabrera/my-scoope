@@ -7,6 +7,7 @@ from typing import List, Optional
 class DpmFoodPickerContextPayload:
     meal: dict
     dailyplan: dict
+    dpm: dict
     mode: str
     editing: dict | None
 
@@ -14,6 +15,7 @@ class DpmFoodPickerContextPayload:
         return {
             "meal": self.meal,
             "dailyplan": self.dailyplan,
+            "dpm": self.dpm,
             "mode": self.mode,
             "editing": self.editing,
         }

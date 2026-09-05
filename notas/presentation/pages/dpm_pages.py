@@ -130,6 +130,9 @@ def get_dpm_detail_page_data(
             dailyplan=dailyplan,
             dailyplan_kpis=dailyplan_kpis,
             mealfood=mealfood,
+            dpm=dpm,
+            meal_foods=meal_foods,
+            dailyplan_meals=list(dailyplan.dailyplan_meals.all()),
         )
 
         selected_food_id = request_get.get("select_food")

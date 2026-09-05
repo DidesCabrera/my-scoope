@@ -1,119 +1,143 @@
-<div id="dpm-picker-section" class="section_picker is-collapsed">
-
-    <div class="add-row">
-      <div id="food-picker" class="selector">
-        <i data-lucide="search" class="search-icon-add-row-icon"></i>
-        <input
-          type="text"
-          id="food-search"
-          placeholder="Escribe el alimento…"
-          autocomplete="off"
-        />
-        <ul id="food-list" class="selector-list"></ul>
+<dialog
+  id="dpm-picker-section"
+  class="composition-picker-modal"
+  aria-labelledby="dpm-food-form-title"
+  data-picker-modal
+  data-picker-step="selection"
+>
+  <div class="composition-picker-modal__surface">
+    <header class="composition-picker-modal__header">
+      <div class="composition-picker-modal__title">
+        <span data-picker-header-icon="add" aria-hidden="true"><i data-lucide="plus"></i></span>
+        <span data-picker-header-icon="edit" aria-hidden="true" hidden><i data-lucide="repeat"></i></span>
+        <h2 id="dpm-food-form-title">Agrega un Alimento</h2>
       </div>
-    
       <button
         type="button"
-        id="btn-cancel-picker-inline-dpm"
-        class="btn-cancel-picker btn-cancel-picker-inline"
+        class="composition-picker-modal__close"
+        aria-label="Cerrar selector de alimentos"
+        data-picker-dismiss
       >
-        Cancelar
+        <i data-lucide="x"></i>
       </button>
-    </div>
-  
-    <!-- PREVIEW + FORM -->
+    </header>
+
+    <section
+      class="composition-picker-modal__step"
+      data-picker-step-panel="selection"
+      aria-labelledby="dpm-food-selection-title"
+    >
+      <div class="composition-picker-modal__body composition-picker-modal__body--selection">
+        <div id="food-picker" class="selector">
+          <div class="composition-picker-step-heading">
+            <h3 id="dpm-food-selection-title">1. Selecciona un alimento</h3>
+
+            <div class="composition-picker-entry-actions">
+              <span class="composition-picker-entry-actions__active">
+                <i data-lucide="bookmark"></i>
+                Mi biblioteca
+              </span>
+              <a
+                href="{% url 'food_create' %}?return_to={{ request.path|urlencode }}"
+                class="composition-picker-entry-actions__create"
+              >
+                <i data-lucide="plus"></i>
+                Crear alimento
+              </a>
+            </div>
+
+            <div class="composition-picker-search-row">
+              <i data-lucide="search" class="search-icon-add-row-icon"></i>
+              <label class="sr-only" for="food-search">Buscar alimento</label>
+              <input
+                type="search"
+                id="food-search"
+                placeholder="Escribe el nombre de un alimento"
+                autocomplete="off"
+              >
+            </div>
+          </div>
+          <ul id="food-list" class="selector-list" aria-label="Resultados de alimentos"></ul>
+        </div>
+      </div>
+
+      <footer class="composition-picker-modal__footer">
+        <button type="button" id="btn-cancel-picker-inline-dpm" class="composition-picker-modal__action composition-picker-modal__action--secondary">
+          Cancelar
+        </button>
+      </footer>
+    </section>
+
     <form
       method="post"
       action="{% url 'add_food_to_meal' main_id %}"
       id="form-preview"
+      class="composition-picker-modal__step"
       data-meal-id="{{ main_id }}"
-      >
+      data-picker-step-panel="impact"
+      hidden
+    >
       {% csrf_token %}
-  
-      <!-- Hidden fields required by backend -->
+
       <input type="hidden" name="food_id" id="selected-food-id">
       <input type="hidden" name="quantity" id="selected-food-quantity">
       <input type="hidden" id="food-picker-mode" value="add">
       <input type="hidden" name="return_to" value="{{ request.path }}">
-      <!-- Edit mode controls -->
       <input type="hidden" id="editing-mealfood-id">
       <input type="hidden" id="editing-original-quantity">
 
-
-      <!-- FOOD PREVIEW =================================== -->
-      <div id="food-preview" style="display:none;">
-
-        <div class="picker-layout">
-      
-          <!-- LEFT : FOOD INFO -->
-          <div class="picker-section picker-food-info">
-      
-            {% include "components/card_picker_food.html" %}
-      
+      <div id="food-preview" class="composition-picker-modal__step-content" style="display:none;">
+        <div class="composition-picker-modal__body composition-picker-modal__body--impact">
+          <div class="composition-picker-step-heading composition-picker-step-heading--impact">
+            <h3>2. Configura y revisa el impacto</h3>
+            <button type="button" class="composition-picker-change" data-picker-go-to="selection">
+              Cambiar selección
+            </button>
           </div>
-      
-      
-          <!-- RIGHT : IMPACT -->
-          <div class="picker-section picker-impact">
 
-            <div class="preview-picker preview-picker--stacked">
+          <div class="qty-preview composition-picker-fixed-configuration">
+            <label>
+              <i data-lucide="scale" class="add-row-icon"></i>
+              Ajusta la Porción:
+              <input type="number" id="food-quantity" value="100" min="0">
+            </label>g|ml
+          </div>
 
-              <div class="picker-preview-section">
+          <div class="picker-layout">
+            <section class="entity-card card picker-selection-card picker-section picker-food-info">
+              {% include "components/card_picker_food.html" %}
+            </section>
 
-                <div class="picker-title-row">
-                  <i data-lucide="utensils" class="preview-picker-icon meal"></i>
-                  <h3 class="picker-preview-section__title">Preview Comida</h3>
-                </div>
-
-                {% include "components/grid_picker_dpm_meal_preview.html" %}
-              </div>
-            
-              <div class="picker-preview-section">
-
-                <div class="picker-title-row">
-                  <i data-lucide="clipboard-list" class="preview-picker-icon dailyplan"></i>
-                  <h3 class="picker-preview-section__title">Preview Plan Diario</h3>
-                </div>
-
-                {% include "components/grid_picker_dpm_dailyplan_preview.html" %}
-              </div>
-            
+            <div class="picker-section picker-impact">
+              {% include "components/card_picker_result.html" with result_scope="dpm-meal-result" result_kind="meal" result_icon="utensils" result_aria_label="Comida resultante" result_panel_id="picker-result-dpm-meal" %}
+              {% include "components/card_picker_result.html" with result_scope="dpm-dailyplan-result" result_kind="dailyplan" result_icon="clipboard-list" result_aria_label="Plan diario resultante" result_panel_id="picker-result-dpm-dailyplan" %}
             </div>
-      
           </div>
-      
         </div>
 
-        <!-- BUTTONS -->
-        <div class="actions-row">
-          <button type="button" id="btn-cancel-edit" class="btn-cancel-picker">
-              Cancelar
+        <footer class="composition-picker-modal__footer">
+          <button type="button" id="btn-cancel-edit" class="composition-picker-modal__action composition-picker-modal__action--secondary">
+            Cancelar
           </button>
-
-          <button type="submit" id="btn-add-food" class="btn-add-picker">
-              Agregar Alimento
+          <button type="submit" id="btn-add-food" class="composition-picker-modal__action composition-picker-modal__action--primary">
+            Agregar Alimento
           </button>
-    
-          <button type="submit" id="btn-update-food" style="display:none;" class="btn-update-picker">
-              Guardar Cambios
+          <button type="submit" id="btn-update-food" style="display:none;" class="composition-picker-modal__action composition-picker-modal__action--primary">
+            Guardar Cambios
           </button>
-        </div>
-        
+        </footer>
       </div>
-    
     </form>
-  
   </div>
-  
+</dialog>
 
-  <!-- JS DATA -->
-  {% load static %}
-  <script>
-    window.FOOD_PICKER_FOODS = {{ foods_json|safe }};
-    window.FOOD_PICKER_CONTEXT = {{ food_picker_json|safe }};
-  </script>
+{% load static %}
+<script>
+  window.FOOD_PICKER_FOODS = {{ foods_json|safe }};
+  window.FOOD_PICKER_CONTEXT = {{ food_picker_json|safe }};
+  window.DPM_FOOD_PICKER_INITIAL_ID = Number("{{ selected_food_id|default:''|escapejs }}") || null;
+</script>
 
-
-  <script type="module" src="{% static 'notas/js/dpm_food_math.js' %}"></script>
-  <script type="module" src="{% static 'notas/js/dpm_food_picker.js' %}"></script>
-  <script type="module" src="{% static 'notas/js/dpm_food_preview.js' %}"></script>
+<script type="module" src="{% static 'notas/js/dpm_food_math.js' %}"></script>
+<script type="module" src="{% static 'notas/js/dpm_food_picker.js' %}"></script>
+<script type="module" src="{% static 'notas/js/dpm_food_preview.js' %}"></script>

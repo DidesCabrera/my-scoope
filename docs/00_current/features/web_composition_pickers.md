@@ -108,6 +108,10 @@ before previewing the replacement.
   tokens plus the title component's 4px internal inset.
 - Modal step bodies keep horizontal inset but no bottom padding; spacing at the
   lower edge belongs to the fixed footer and the scrolling content itself.
+- Food composition editing from a DailyPlanMeal uses the same two-step modal as
+  direct Meal editing. Its fixed region contains the step heading and quantity;
+  the scrolling region contains the selected Food plus projected Meal and
+  DailyPlan UI-system cards. Existing add/update POST endpoints remain intact.
 - The dialog is labelled by its visible title. Step progression is conveyed by
   the changing selection and impact content rather than a separate visual
   progress indicator.

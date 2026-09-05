@@ -9,13 +9,14 @@ async function source(relativePath) {
   return readFile(path.join(repositoryRoot, relativePath), "utf8");
 }
 
-test("Food and Meal web pickers share the two-step top-layer dialog contract", async () => {
-  const [food, meal] = await Promise.all([
+test("Food, Meal, and DPM web pickers share the two-step top-layer dialog contract", async () => {
+  const [food, meal, dpmFood] = await Promise.all([
     source("notas/templates/components/picker_block_food.html"),
     source("notas/templates/components/picker_block_meal.html"),
+    source("notas/templates/components/picker_block_dpm_food.html"),
   ]);
 
-  for (const template of [food, meal]) {
+  for (const template of [food, meal, dpmFood]) {
     assert.match(template, /<dialog[\s\S]*data-picker-modal/);
     assert.match(template, /data-picker-step="selection"/);
     assert.match(template, /data-picker-step-panel="selection"/);
@@ -49,6 +50,12 @@ test("Food and Meal web pickers share the two-step top-layer dialog contract", a
   assert.match(meal, /card_picker_result\.html[\s\S]*result_scope="day-preview"/);
   assert.match(meal, /data-picker-go-to="selection"[\s\S]*?data-role="edit-selected-meal"[\s\S]*?Editar comida/);
   assert.doesNotMatch(meal, /grid_picker_meal_day_preview|class="preview-picker"/);
+
+  assert.match(dpmFood, /id="dpm-picker-section"[\s\S]*data-picker-modal/);
+  assert.match(dpmFood, /qty-preview composition-picker-fixed-configuration[\s\S]*?picker-layout/);
+  assert.match(dpmFood, /card_picker_food\.html/);
+  assert.match(dpmFood, /result_scope="dpm-meal-result"[\s\S]*result_scope="dpm-dailyplan-result"/);
+  assert.doesNotMatch(dpmFood, /grid_picker_dpm_|class="preview-picker"|class="section_picker/);
 });
 
 test("composition picker keeps padding on scroll content and actions in a fixed footer", async () => {
@@ -158,9 +165,10 @@ test("shared picker controller owns modal lifecycle, steps, and accessible dismi
 });
 
 test("selection advances to impact without changing the existing submit contracts", async () => {
-  const [food, meal] = await Promise.all([
+  const [food, meal, dpmFood] = await Promise.all([
     source("notas/static/notas/js/food_picker.js"),
     source("notas/static/notas/js/meal_picker.js"),
+    source("notas/static/notas/js/dpm_food_picker.js"),
   ]);
 
   assert.match(food, /sectionId: "meal-picker-section", step: "impact"/);
@@ -175,4 +183,11 @@ test("selection advances to impact without changing the existing submit contract
   assert.match(meal, /meal\?\.detail_url[\s\S]*?editSelectedMeal\.setAttribute\("href"/);
   assert.match(meal, /form\.action = ADD_ACTION/);
   assert.match(meal, /dailyplanmeal_id/);
+
+  assert.match(dpmFood, /sectionId: "dpm-picker-section", step: "impact"/);
+  assert.match(dpmFood, /projectMealResultItems/);
+  assert.match(dpmFood, /scope: "dpm-meal-result"/);
+  assert.match(dpmFood, /projectDailyPlanResultItems/);
+  assert.match(dpmFood, /scope: "dpm-dailyplan-result"/);
+  assert.match(dpmFood, /DPM_FOOD_PICKER_INITIAL_ID/);
 });

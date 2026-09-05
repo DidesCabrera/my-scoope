@@ -5,21 +5,23 @@
 
 import {
   portionFromFood,
-  portionFromFoodById,
   previewTotals,
   removePortionTotals,
-  computePPK
+  computePPK,
+  computeAlloc
 } from "./dpm_food_math.js";
 
 import {
   renderBase,
-  renderPortion,
-  renderPreviewTotals,
-  renderDailyPlanPreview,
-  renderDpmAlloc
+  renderPortion
 } from "./dpm_food_preview.js";
 
 import { renderFoodItem } from "./food_item_list.js";
+import {
+  projectDailyPlanResultItems,
+  projectMealResultItems,
+  renderResultCard
+} from "./picker_result_card.js";
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -52,7 +54,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const form = document.getElementById("form-preview");
 
-  const title = document.getElementById("food-form-title");
+  const title = document.getElementById("dpm-food-form-title");
+  const modal = document.getElementById("dpm-picker-section");
+  const addHeaderIcon = modal?.querySelector('[data-picker-header-icon="add"]');
+  const editHeaderIcon = modal?.querySelector('[data-picker-header-icon="edit"]');
 
   const btnAdd = document.getElementById("btn-add-food");
   const btnUpdate = document.getElementById("btn-update-food");
@@ -73,6 +78,18 @@ document.addEventListener("DOMContentLoaded", () => {
   // ---------------------------
   function isEdit() {
     return ctx.mode === "edit";
+  }
+
+  function syncHeaderMode(mode) {
+    const editing = mode === "edit";
+    if (addHeaderIcon) addHeaderIcon.hidden = editing;
+    if (editHeaderIcon) editHeaderIcon.hidden = !editing;
+  }
+
+  function showImpactStep() {
+    document.dispatchEvent(new CustomEvent("picker:step", {
+      detail: { sectionId: "dpm-picker-section", step: "impact" }
+    }));
   }
 
   function openList() {
@@ -115,52 +132,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function getFoodDisplayName(food) {
     return food?.display_name || food?.name || "";
-  }
-
-  function isMobileViewport() {
-    return window.innerWidth <= 768;
-  }
-
-  function getPickerSection() {
-    return (
-      picker.closest(".section-picker") ||
-      picker.closest("[id$='picker-section']") ||
-      picker.closest(".add-row") ||
-      picker
-    );
-  }
-
-  function getPickerScrollTarget() {
-    const pickerSection = getPickerSection();
-
-    return (
-      pickerSection.querySelector(".title-section-panels") ||
-      title?.closest(".title-section-panels") ||
-      pickerSection
-    );
-  }
-
-  function scrollPickerIntoMobileView() {
-    if (!isMobileViewport()) return;
-  
-    const targetElement = getPickerScrollTarget();
-    if (!targetElement) return;
-  
-    const topOffset = 12;
-    const rect = targetElement.getBoundingClientRect();
-    const targetY = window.scrollY + rect.top - topOffset;
-  
-    window.scrollTo({
-      top: Math.max(targetY, 0),
-      behavior: "smooth",
-    });
-  }
-
-  function schedulePickerScrollIntoMobileView() {
-    if (!isMobileViewport()) return;
-
-    window.setTimeout(scrollPickerIntoMobileView, 80);
-    window.setTimeout(scrollPickerIntoMobileView, 260);
   }
 
   function normalizeSearchValue(value) {
@@ -331,6 +302,7 @@ document.addEventListener("DOMContentLoaded", () => {
     ctx.editing = null;
 
     title.textContent = "Agrega un Alimento";
+    syncHeaderMode("add");
     btnAdd.style.display = "inline-block";
     btnUpdate.style.display = "none";
     btnCancel.style.display = "inline-block";
@@ -349,6 +321,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     title.textContent = "Edita el Alimento";
+    syncHeaderMode("edit");
     btnAdd.style.display = "none";
     btnUpdate.style.display = "inline-block";
     btnCancel.style.display = "inline-block";
@@ -368,10 +341,6 @@ document.addEventListener("DOMContentLoaded", () => {
     quantityInput.value = "100";
 
     preview.style.display = "none";
-
-    if (btnCancelInline) {
-      btnCancelInline.style.display = "inline-block";
-    }
 
     closeList();
   }
@@ -422,12 +391,9 @@ document.addEventListener("DOMContentLoaded", () => {
         selectedFood = food;
         input.value = getFoodDisplayName(food);
   
-        if (btnCancelInline) {
-          btnCancelInline.style.display = "none";
-        }
-  
         closeList();
         showPreview();
+        showImpactStep();
       });
   
       list.appendChild(li);
@@ -464,6 +430,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const sourceLabel = normalizeSourceLabel(food?.source);
     sourceNode.textContent = sourceLabel;
+    sourceNode.hidden = !sourceLabel;
   }
 
   // ---------------------------
@@ -472,7 +439,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function showPreview() {
     if (!selectedFood) return;
 
-    preview.style.display = "block";
+    preview.style.display = "flex";
     document.getElementById("preview-name").textContent = getFoodDisplayName(selectedFood);
     renderSelectedFoodSource(selectedFood);
 
@@ -515,8 +482,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const mealWeight = ctx.meal?.kpis?.weight;
     previewMeal.ppk = computePPK(previewMeal.protein, mealWeight);
+    previewMeal.alloc = computeAlloc(previewMeal);
 
-    renderPreviewTotals(previewMeal);
+    const projectedMealFoods = projectMealResultItems(
+      ctx.meal.foods,
+      selectedFood,
+      quantity,
+      isEdit() ? ctx.editing.mealfood_id : null,
+    );
+
+    renderResultCard(preview, {
+      scope: "dpm-meal-result",
+      name: ctx.meal.name,
+      owner: ctx.meal.owner,
+      kpis: previewMeal,
+      items: projectedMealFoods,
+      entityKind: "meal",
+    });
 
     // -------- DAILYPLAN BASE --------
     let baseDailyPlan = ctx.dailyplan.kpis;
@@ -537,9 +519,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const dailyPlanWeight = ctx.dailyplan?.kpis?.weight;
     previewDailyPlan.ppk = computePPK(previewDailyPlan.protein, dailyPlanWeight);
+    previewDailyPlan.alloc = computeAlloc(previewDailyPlan);
 
-    renderDailyPlanPreview(previewDailyPlan, newPortion);
-    renderDpmAlloc(previewMeal, previewDailyPlan);
+    const projectedMeal = {
+      id: ctx.meal.id,
+      name: ctx.meal.name,
+      ...previewMeal,
+      foods: projectedMealFoods,
+    };
+
+    renderResultCard(preview, {
+      scope: "dpm-dailyplan-result",
+      name: ctx.dailyplan.name,
+      owner: ctx.dailyplan.owner,
+      kpis: previewDailyPlan,
+      items: projectDailyPlanResultItems(
+        ctx.dailyplan.meals,
+        projectedMeal,
+        {
+          hour: ctx.dpm?.hour,
+          note: ctx.dpm?.note,
+          editingDailyPlanMealId: ctx.dpm?.id,
+        },
+      ),
+      entityKind: "dailyplan",
+    });
   }
 
   // ---------------------------
@@ -548,7 +552,6 @@ document.addEventListener("DOMContentLoaded", () => {
   input.addEventListener("focus", async () => {
     renderFoodList(await getInitialFoodResults());
     openList();
-    schedulePickerScrollIntoMobileView();
   });
 
   input.addEventListener("input", () => {
@@ -589,7 +592,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       document.dispatchEvent(new CustomEvent("picker:open", {
-        detail: { sectionId: "dpm-picker-section" }
+        detail: { sectionId: "dpm-picker-section", step: "impact" }
       }));
 
       input.value = button.dataset.name || "";
@@ -601,7 +604,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         input.value = getFoodDisplayName(selectedFood);
         showPreview();
-        schedulePickerScrollIntoMobileView();
       });
     });
   });
@@ -629,6 +631,17 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  document.addEventListener("picker:dismiss", event => {
+    if (event.detail?.sectionId !== "dpm-picker-section") return;
+    event.preventDefault();
+    setAddMode();
+    resetPickerState();
+
+    document.dispatchEvent(new CustomEvent("picker:close", {
+      detail: { sectionId: "dpm-picker-section" }
+    }));
+  });
+
   // ---------------------------
   // Init
   // ---------------------------
@@ -637,4 +650,24 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   syncHiddenState();
+
+  const initialFoodId = window.DPM_FOOD_PICKER_INITIAL_ID;
+  if (initialFoodId) {
+    setAddMode();
+    fetchFoodById(initialFoodId).then(food => {
+      if (!food) return;
+
+      selectedFood = food;
+      input.value = getFoodDisplayName(food);
+      showPreview();
+
+      document.dispatchEvent(new CustomEvent("picker:open", {
+        detail: { sectionId: "dpm-picker-section", step: "impact" }
+      }));
+
+      const url = new URL(window.location);
+      url.searchParams.delete("select_food");
+      window.history.replaceState({}, "", url);
+    });
+  }
 });
