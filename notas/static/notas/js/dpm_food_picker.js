@@ -25,9 +25,21 @@ import {
 
 document.addEventListener("DOMContentLoaded", () => {
 
-  const ctx = window.FOOD_PICKER_CONTEXT;
-  let foods = Array.isArray(window.FOOD_PICKER_FOODS)
-    ? window.FOOD_PICKER_FOODS
+  function readPickerData(elementId, fallback) {
+    const payload = document.getElementById(elementId)?.textContent;
+    if (!payload) return fallback;
+
+    try {
+      return JSON.parse(payload);
+    } catch (error) {
+      return fallback;
+    }
+  }
+
+  const ctx = readPickerData("dpm-food-picker-context-data", {});
+  const initialFoods = readPickerData("dpm-food-picker-foods-data", []);
+  let foods = Array.isArray(initialFoods)
+    ? initialFoods
     : [];
 
   const foodSearchCache = new Map();
@@ -392,8 +404,8 @@ document.addEventListener("DOMContentLoaded", () => {
         input.value = getFoodDisplayName(food);
   
         closeList();
-        showPreview();
         showImpactStep();
+        showPreview();
       });
   
       list.appendChild(li);
@@ -651,7 +663,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   syncHiddenState();
 
-  const initialFoodId = window.DPM_FOOD_PICKER_INITIAL_ID;
+  const initialFoodId = Number(
+    document.getElementById("dpm-food-picker-initial-data")?.dataset.foodId
+  ) || null;
   if (initialFoodId) {
     setAddMode();
     fetchFoodById(initialFoodId).then(food => {

@@ -67,6 +67,8 @@ class DPMFoodPickerPayloadTests(TestCase):
         self.assertContains(response, 'data-picker-step-panel="impact"')
         self.assertContains(response, 'data-scope="dpm-meal-result"')
         self.assertContains(response, 'data-scope="dpm-dailyplan-result"')
+        self.assertContains(response, 'id="dpm-food-picker-foods-data"')
+        self.assertContains(response, 'id="dpm-food-picker-context-data"')
         self.assertNotContains(response, 'class="preview-picker"')
 
     def test_dailyplan_meal_detail_picker_context_contains_result_compositions(self):

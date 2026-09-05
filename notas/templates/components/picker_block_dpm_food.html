@@ -132,11 +132,13 @@
 </dialog>
 
 {% load static %}
-<script>
-  window.FOOD_PICKER_FOODS = {{ foods_json|safe }};
-  window.FOOD_PICKER_CONTEXT = {{ food_picker_json|safe }};
-  window.DPM_FOOD_PICKER_INITIAL_ID = Number("{{ selected_food_id|default:''|escapejs }}") || null;
-</script>
+<script id="dpm-food-picker-foods-data" type="application/json">{{ foods_json|safe }}</script>
+<script id="dpm-food-picker-context-data" type="application/json">{{ food_picker_json|safe }}</script>
+<span
+  id="dpm-food-picker-initial-data"
+  data-food-id="{{ selected_food_id|default:'' }}"
+  hidden
+></span>
 
 <script type="module" src="{% static 'notas/js/dpm_food_math.js' %}"></script>
 <script type="module" src="{% static 'notas/js/dpm_food_picker.js' %}"></script>

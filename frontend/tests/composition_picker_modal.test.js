@@ -189,5 +189,6 @@ test("selection advances to impact without changing the existing submit contract
   assert.match(dpmFood, /scope: "dpm-meal-result"/);
   assert.match(dpmFood, /projectDailyPlanResultItems/);
   assert.match(dpmFood, /scope: "dpm-dailyplan-result"/);
-  assert.match(dpmFood, /DPM_FOOD_PICKER_INITIAL_ID/);
+  assert.match(dpmFood, /readPickerData\("dpm-food-picker-context-data", \{\}\)/);
+  assert.match(dpmFood, /showImpactStep\(\);\s*showPreview\(\);/);
 });
