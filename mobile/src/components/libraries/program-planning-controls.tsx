@@ -4,6 +4,7 @@ import { CalendarRange, ClipboardList, Plus } from "lucide-react-native";
 import Svg, { Circle, Defs, LinearGradient, Stop } from "react-native-svg";
 
 import { tokens } from "@/design/tokens";
+import { StructuralIndicators } from "@/components/ui/product";
 
 export type ProgramPlanningDay = {
   filled: boolean;
@@ -20,7 +21,7 @@ export function ProgramWeekHeading({ detail, week }: { detail?: string; week: nu
         </View>
         <Text style={styles.weekHeadingTitle}>Semana {week}</Text>
       </View>
-      {detail ? <Text style={styles.weekHeadingDetail}>{detail}</Text> : null}
+      {detail ? <StructuralIndicators indicators={[{ icon: "week", iconPosition: "leading", label: "periodo", tone: "surfaceMuted", value: detail }]} /> : null}
     </View>
   );
 }
@@ -151,5 +152,4 @@ const styles = StyleSheet.create({
   weekHeadingIdentity: { alignItems: "center", flexDirection: "row", flexShrink: 1, gap: tokens.spacing.compact, minWidth: 0 },
   weekHeadingIcon: { alignItems: "center", backgroundColor: tokens.color.program, borderRadius: 5, height: 18, justifyContent: "center", width: 18 },
   weekHeadingTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: tokens.weight.semibold, letterSpacing: 0, lineHeight: 25 },
-  weekHeadingDetail: { color: tokens.color.textSoft, fontSize: tokens.type.caption },
 });

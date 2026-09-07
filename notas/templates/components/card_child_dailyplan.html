@@ -11,7 +11,7 @@
   <div class="entity-card__main card-main">
     <div class="entity-card__title card-title">
       {% if calendarized_day %}
-        {% include "components//card_child_title.html" with titulo=child_card.titulo completed_count=calendarized_day.completed_meals_count note_count=calendarized_day.noted_meals_count completion_summarized=True %}
+        {% include "components//card_child_title.html" with titulo=child_card.titulo temporal_date=calendarized_day.date_label completed_count=calendarized_day.completed_meals_count note_count=calendarized_day.noted_meals_count completion_summarized=True %}
       {% else %}
         {% include "components//card_child_title.html" with titulo=child_card.titulo %}
       {% endif %}

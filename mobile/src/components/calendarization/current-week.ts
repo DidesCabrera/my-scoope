@@ -11,6 +11,12 @@ function parseLocalDate(value: string): Date {
   return new Date(`${value}T12:00:00`);
 }
 
+export function compactDateLabel(value: string): string {
+  return new Intl.DateTimeFormat("es-CL", { day: "numeric", month: "short" })
+    .format(parseLocalDate(value))
+    .replace(/\.$/, "");
+}
+
 function dateValue(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
@@ -33,8 +39,5 @@ export function currentWeekDays(localDate: string): CurrentWeekDay[] {
 
 export function currentWeekRange(localDate: string): string {
   const days = currentWeekDays(localDate);
-  const first = parseLocalDate(days[0].date);
-  const last = parseLocalDate(days[6].date);
-  const formatter = new Intl.DateTimeFormat("es-CL", { day: "numeric", month: "short" });
-  return `${formatter.format(first)} — ${formatter.format(last)}`;
+  return `${compactDateLabel(days[0].date)} — ${compactDateLabel(days[6].date)}`;
 }

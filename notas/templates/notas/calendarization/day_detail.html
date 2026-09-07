@@ -10,7 +10,7 @@
   data-page="dailyplan-detail"
 >
   {% if vm.content.day.plan_snapshot %}
-    {% include "components/card_main_dailyplan.html" with main_card=vm.content.main_card %}
+    {% include "components/card_main_dailyplan.html" with main_card=vm.content.main_card temporal_date=vm.content.day.calendar_date|date:"j M"|lower %}
 
     <hr>
 

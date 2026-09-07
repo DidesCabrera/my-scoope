@@ -10,6 +10,7 @@ import { snapshotAllocation, snapshotCalories, snapshotMealPanelItem } from "./p
 
 type Props = {
   dayId: number | null;
+  dateLabel: string;
   eyebrow: string;
   mealExecution?: MealExecutionItem[];
   planName?: string;
@@ -17,7 +18,7 @@ type Props = {
   snapshot: DailyPlanSnapshot;
 };
 
-export function CalendarizedDailyPlanCard({ dayId, eyebrow, mealExecution = [], planName, position, snapshot }: Props) {
+export function CalendarizedDailyPlanCard({ dayId, dateLabel, eyebrow, mealExecution = [], planName, position, snapshot }: Props) {
   const router = useRouter();
   const meals = snapshot.meals ?? [];
   const totals = snapshot.totals;
@@ -34,6 +35,7 @@ export function CalendarizedDailyPlanCard({ dayId, eyebrow, mealExecution = [], 
       indicators={[
         ...(position ? [{ icon: "day" as const, label: "posición", value: `S${position.weekNumber} · D${position.dayNumber}` }] : []),
         { icon: "meal", label: "comidas", value: meals.length },
+        { icon: "day", iconPosition: "leading", label: "fecha", tone: "surfaceMuted", value: dateLabel },
       ]}
       nutrition={{
         calories: totalCalories,

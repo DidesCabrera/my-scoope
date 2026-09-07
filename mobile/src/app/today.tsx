@@ -3,11 +3,13 @@ import { useCallback, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
-import type { ActiveProgramData, ProposalListData, TodayData } from "@/api/types";
+import type { ActiveProgramData, LibraryPageData, ProposalListData, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { CalendarizedDailyPlanCard } from "@/components/calendarization/calendarized-daily-plan-card";
+import { compactDateLabel } from "@/components/calendarization/current-week";
 import { CurrentWeekSection } from "@/components/calendarization/current-week-section";
 import { HomeActions } from "@/components/home-actions";
+import { HomeLibraryGrid, type HomeLibraryCounts } from "@/components/home/home-library-grid";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { ProgramActiveHomeOverview } from "@/components/programs/program-active-card";
 import { AppHeader, Button, Card, InlineNotice, LoadingState, Pill, Screen, SectionTitle, textStyles } from "@/components/ui";
@@ -29,6 +31,7 @@ export default function TodayScreen() {
   const [error, setError] = useState<string | null>(null);
   const [homeActionsVisible, setHomeActionsVisible] = useState(false);
   const [pendingProposalCount, setPendingProposalCount] = useState(0);
+  const [libraryCounts, setLibraryCounts] = useState<HomeLibraryCounts>({ dailyPlan: 0, food: 0, meal: 0, program: 0 });
   const setHeaderPresentation = useHeaderPresentation();
   const openHomeActions = useCallback(() => setHomeActionsVisible(true), []);
 
@@ -42,6 +45,12 @@ export default function TodayScreen() {
       ]);
       setToday(nextToday);
       setActiveProgram(nextProgram);
+      void Promise.all([
+        apiRequest<LibraryPageData>("/api/v1/library/programs?limit=1"),
+        apiRequest<LibraryPageData>("/api/v1/library/daily-plans?limit=1"),
+        apiRequest<LibraryPageData>("/api/v1/library/meals?limit=1"),
+        apiRequest<LibraryPageData>("/api/v1/library/foods?limit=1"),
+      ]).then(([programs, dailyPlans, meals, foods]) => setLibraryCounts({ dailyPlan: dailyPlans.total, food: foods.total, meal: meals.total, program: programs.total })).catch(() => undefined);
       void apiRequest<ProposalListData>("/api/v1/proposals?status=pending_review&limit=1")
         .then((page) => setPendingProposalCount(page.pending_count))
         .catch(() => undefined);
@@ -88,6 +97,7 @@ export default function TodayScreen() {
       {today?.has_plan && snapshot ? (
         <CalendarizedDailyPlanCard
           dayId={today.day_id}
+          dateLabel={compactDateLabel(today.local_date)}
           eyebrow="PLAN DE HOY"
           mealExecution={today.meal_execution}
           position={todayProgramDay ? { dayNumber: todayProgramDay.day_number, weekNumber: todayProgramDay.week_number } : undefined}
@@ -109,6 +119,8 @@ export default function TodayScreen() {
           <Button label="Calendarizar un programa" onPress={() => router.push("/program/activate" as Href)} />
         </Card>
       )}
+
+      <HomeLibraryGrid counts={libraryCounts} />
 
       {error ? (
         <InlineNotice tone="error">{error}</InlineNotice>

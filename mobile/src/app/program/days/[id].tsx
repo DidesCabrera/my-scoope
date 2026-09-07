@@ -131,10 +131,10 @@ export default function ProgramDayScreen() {
         <EntityDetailPage
           entity="dailyPlan"
           completion={completionFor(day.meal_execution)}
-          eyebrow={displayDate(day.calendar_date)}
           indicators={[
             { icon: "day", label: "posición", value: `S${day.week_number} · D${day.day_number}` },
             { icon: "meal", label: "comidas", value: meals.length },
+            { icon: "day", iconPosition: "leading", label: "fecha", tone: "surfaceMuted", value: displayDate(day.calendar_date) },
           ]}
           nutrition={{
             calories: totalCalories,

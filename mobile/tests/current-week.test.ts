@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { currentWeekDays } from "../src/components/calendarization/current-week";
+import { compactDateLabel, currentWeekDays, currentWeekRange } from "../src/components/calendarization/current-week";
+
+test("compact dates omit the locale abbreviation period", () => {
+  assert.equal(compactDateLabel("2026-08-28"), "28 ago");
+  assert.equal(currentWeekRange("2026-09-01"), "31 ago — 6 sept");
+});
 
 test("current week starts on Monday and marks the server-provided local date", () => {
   const days = currentWeekDays("2026-08-28");

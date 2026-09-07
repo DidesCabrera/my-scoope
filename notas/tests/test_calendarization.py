@@ -540,6 +540,12 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
         self.assertContains(response, "13:15")
         self.assertContains(response, 'data-lucide="clock"')
         self.assertContains(response, 'class="structural-item structural-item--time"', count=1)
+        self.assertContains(
+            response,
+            'class="structural-item structural-item--time structural-item--date"',
+            count=1,
+        )
+        self.assertContains(response, day.calendar_date.strftime("%-d %b").lower())
         self.assertContains(response, 'aria-label="Ver detalle"', count=2)
         self.assertContains(response, 'data-lucide="chevron-right"')
         self.assertContains(response, "Cumplimiento de esta comida", count=1)

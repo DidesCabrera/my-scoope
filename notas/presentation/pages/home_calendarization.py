@@ -66,6 +66,7 @@ class HomeCalendarDayVM:
     month_label: str
     iso_date: str
     accessible_date: str
+    date_label: str
     temporal_state: str
     is_today: bool
     is_selected: bool
@@ -84,6 +85,8 @@ class HomeCalendarDayVM:
 @dataclass(frozen=True)
 class HomeCalendarWeekVM:
     week_start_iso: str
+    start_label: str
+    end_label: str
     is_active: bool
     days: list[HomeCalendarDayVM]
 
@@ -134,7 +137,7 @@ def _accessible_date(value: date, *, is_today: bool) -> str:
 
 
 def _compact_date_label(value: date) -> str:
-    return f"{value.day}{MONTH_LABELS[value.month - 1]}"
+    return f"{value.day} {MONTH_LABELS[value.month - 1]}"
 
 
 def _week_start_from_param(value: str | None, fallback: date) -> date:
@@ -368,6 +371,7 @@ def _build_week_vm(
                 month_label=MONTH_LABELS[calendar_date.month - 1],
                 iso_date=calendar_date.isoformat(),
                 accessible_date=_accessible_date(calendar_date, is_today=is_today),
+                date_label=_compact_date_label(calendar_date),
                 temporal_state=temporal_state,
                 is_today=is_today,
                 is_selected=is_active_week and calendar_date == selected_date,
@@ -385,6 +389,8 @@ def _build_week_vm(
         )
     return HomeCalendarWeekVM(
         week_start_iso=week_monday.isoformat(),
+        start_label=_compact_date_label(week_monday),
+        end_label=_compact_date_label(week_monday + timedelta(days=6)),
         is_active=is_active_week,
         days=days,
     )
