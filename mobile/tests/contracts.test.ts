@@ -233,7 +233,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(sharedEntityPanels, /<ChevronRight/);
   assert.match(sharedEntityPanels, /item\.detailId != null \|\| item\.canOpen/);
   assert.match(sharedEntityPanels, /allocationRow: \{ gap: tokens\.spacing\.sm \}/);
-  assert.match(libraryEntityPanels, /allocationRow: \{ gap: tokens\.spacing\.sm \}/);
+  assert.match(libraryEntityPanels, /NutritionAllocationPanel/);
 
   const completionUi = await readFile(
     path.resolve(process.cwd(), "src/components/ui/product.tsx"),
@@ -390,6 +390,25 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(calendarizedDayDetail, /<SectionDivider \/>[\s\S]*title="Detalle de cada Comida"/);
   assert.match(calendarizedDayDetail, /snapshotDailyPlanFoodPanelItems\(meals\)/);
   assert.match(calendarizedDayDetail, /<SectionDivider \/>[\s\S]*title="Alimentos en este plan diario"[\s\S]*<FoodPanels items=\{foods\} \/>/);
+
+  const sharedPanelSource = await readFile(
+    path.resolve(process.cwd(), "src/components/panels/entity-panels.tsx"),
+    "utf8",
+  );
+  assert.match(sharedPanelSource, /PanelItemName\(\{ item, style = styles\.gridLeadingCell \}/);
+  assert.match(sharedPanelSource, /<PanelItemName item=\{item\} style=\{styles\.quantityLeadingCell\} \/>/);
+  assert.match(sharedPanelSource, /quantityLeadingCell: \{[^}]*flex: 1/);
+  assert.match(sharedPanelSource, /leadingHeaderText: \{[^}]*textAlign: "left"/);
+  assert.doesNotMatch(sharedPanelSource, /styles\.name, styles\.gridLeadingCell/);
+
+  const libraryPanelSource = await readFile(
+    path.resolve(process.cwd(), "src/components/libraries/entity-panels.tsx"),
+    "utf8",
+  );
+  assert.match(libraryPanelSource, /FoodPanels as SharedFoodPanels/);
+  assert.match(libraryPanelSource, /MealPanels as SharedMealPanels/);
+  assert.match(libraryPanelSource, /return <SharedFoodPanels items=\{items\.map\(toFoodPanelItem\)\} \/>/);
+  assert.match(libraryPanelSource, /return <SharedMealPanels items=\{items\.map\(toMealPanelItem\)\} \/>/);
 
   const calendarizationAdapters = await readFile(
     path.resolve(process.cwd(), "src/components/calendarization/presentation-adapters.ts"),

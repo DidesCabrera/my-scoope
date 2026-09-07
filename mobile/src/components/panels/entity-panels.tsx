@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, Check, ChevronRight, Pencil, RefreshCw, RotateCcw, Trash2 } from "lucide-react-native";
-import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Pressable, StyleProp, StyleSheet, Text, TextInput, View, ViewStyle } from "react-native";
 
 import { MacroCalorieDistribution, PanelAllocationBar } from "@/components/nutrition";
 import { EntityIcon } from "@/components/ui";
@@ -102,9 +102,9 @@ function isMealPanelItem(item: FoodPanelItem | MealPanelItem): item is MealPanel
   return "foods" in item;
 }
 
-function PanelItemName({ item }: { item: FoodPanelItem | MealPanelItem }) {
+function PanelItemName({ item, style = styles.gridLeadingCell }: { item: FoodPanelItem | MealPanelItem; style?: StyleProp<ViewStyle> }) {
   return (
-    <View style={styles.gridLeadingCell}>
+    <View style={style}>
       {isMealPanelItem(item) ? <MealRowIdentity name={item.name} projectedLabel={item.projectedLabel} /> : <View style={styles.identityCopy}><Text numberOfLines={2} style={styles.itemName}>{item.name}</Text>{item.projectedLabel ? <Text style={styles.projectedBadge}>{item.projectedLabel}</Text> : null}</View>}
     </View>
   );
@@ -113,7 +113,7 @@ function PanelItemName({ item }: { item: FoodPanelItem | MealPanelItem }) {
 function QuantityHeader({ leadingLabel, trailingLabel }: { leadingLabel: string; trailingLabel: string }) {
   return (
     <View style={[styles.row, styles.header]}>
-      <Text style={[styles.headerText, styles.name]}>{leadingLabel}</Text>
+      <Text style={[styles.headerText, styles.quantityLeadingCell, styles.leadingHeaderText]}>{leadingLabel}</Text>
       <Text style={[styles.headerText, styles.quantityValue]}>{trailingLabel}</Text>
     </View>
   );
@@ -122,7 +122,7 @@ function QuantityHeader({ leadingLabel, trailingLabel }: { leadingLabel: string;
 function MacrosHeader({ leadingLabel }: { leadingLabel: string }) {
   return (
     <View style={[styles.row, styles.header]}>
-      <Text style={[styles.headerText, styles.name, styles.gridLeadingCell]}>{leadingLabel}</Text>
+      <Text style={[styles.headerText, styles.gridLeadingCell, styles.leadingHeaderText]}>{leadingLabel}</Text>
       {(["P", "C", "F"] as const).map((label) => <Text key={label} style={[styles.headerText, styles.macroValue]}>{label}</Text>)}
       <Text style={[styles.headerText, styles.distributionCell]}>P|C|F%</Text>
     </View>
@@ -132,7 +132,7 @@ function MacrosHeader({ leadingLabel }: { leadingLabel: string }) {
 function CaloriesHeader({ leadingLabel }: { leadingLabel: string }) {
   return (
     <View style={[styles.row, styles.header]}>
-      <Text style={[styles.headerText, styles.name, styles.gridLeadingCell]}>{leadingLabel}</Text>
+      <Text style={[styles.headerText, styles.gridLeadingCell, styles.leadingHeaderText]}>{leadingLabel}</Text>
       <Text style={[styles.headerText, styles.calorieValue]}>Cal</Text>
       <Text style={[styles.headerText, styles.calorieShare]}>% Cal</Text>
     </View>
@@ -142,7 +142,7 @@ function CaloriesHeader({ leadingLabel }: { leadingLabel: string }) {
 function AllocationHeader({ leadingLabel }: { leadingLabel: string }) {
   return (
     <View style={[styles.row, styles.header, styles.allocationRow]}>
-      <Text style={[styles.headerText, styles.name, styles.gridLeadingCell]}>{leadingLabel}</Text>
+      <Text style={[styles.headerText, styles.gridLeadingCell, styles.leadingHeaderText]}>{leadingLabel}</Text>
       {(["P%", "C%", "F%"] as const).map((label) => <Text key={label} style={[styles.headerText, styles.allocationCell]}>{label}</Text>)}
     </View>
   );
@@ -155,7 +155,7 @@ export function FoodQuantityPanel({ items }: { items: FoodPanelItem[] }) {
       <QuantityHeader leadingLabel="Alimentos" trailingLabel="Qty" />
       {items.map((item, index) => (
         <View key={item.id} style={[styles.row, index === items.length - 1 && styles.rowLast]}>
-          <PanelItemName item={item} />
+          <PanelItemName item={item} style={styles.quantityLeadingCell} />
           <Text style={[styles.cell, styles.quantityValue]}>{decimal(item.quantity)} {item.quantityUnit}</Text>
         </View>
       ))}
@@ -367,7 +367,9 @@ const styles = StyleSheet.create({
   cell: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, letterSpacing: 0 },
   name: { flex: 1, minWidth: 0, paddingHorizontal: tokens.spacing.xs, textAlign: "left" },
   gridLeadingCell: { alignSelf: "stretch", flexBasis: "40%", flexGrow: 0, flexShrink: 0, justifyContent: "center", minWidth: 0 },
+  leadingHeaderText: { paddingHorizontal: tokens.spacing.xs, textAlign: "left" },
   itemName: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, letterSpacing: 0, lineHeight: 18, paddingHorizontal: tokens.spacing.xs, textAlign: "left" },
+  quantityLeadingCell: { alignSelf: "stretch", flex: 1, justifyContent: "center", minWidth: 0 },
   quantityValue: { textAlign: "right", width: 88 },
   macroValue: { flex: 1, minWidth: 0, textAlign: "center" },
   distributionCell: { flex: 1.4, minWidth: 0 },
