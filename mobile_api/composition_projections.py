@@ -352,8 +352,12 @@ def project_program_week_result(*, program, dailyplan, week_number, day_numbers,
                 "projected_label": "Reemplazo" if projected and existing else "Por agregar" if projected else None,
             }
         )
-    other_week_kcal = sum(sum(_kcal(row.dailyplan)) for row in program_days if row.week_number != week_number)
-    total_program_kcal = other_week_kcal + sum(week_kcal)
+    other_weeks_kcal = tuple(
+        sum(_kcal(row.dailyplan)[index] for row in program_days if row.week_number != week_number)
+        for index in range(3)
+    )
+    program_kcal = _add(other_weeks_kcal, week_kcal)
+    total_program_kcal = sum(program_kcal)
     foods = _aggregate_week_foods(projected_plans, week_kcal)
     meals_count = sum(plan.dailyplan_meals.count() for plan in projected_plans.values())
     week = {
@@ -371,9 +375,9 @@ def project_program_week_result(*, program, dailyplan, week_number, day_numbers,
         "protein_grams": _number(week_macros[0]),
         "carbs_grams": _number(week_macros[1]),
         "fat_grams": _number(week_macros[2]),
-        "protein_allocation": _percentage(week_kcal[0], sum(week_kcal)),
-        "carbs_allocation": _percentage(week_kcal[1], sum(week_kcal)),
-        "fat_allocation": _percentage(week_kcal[2], sum(week_kcal)),
+        "protein_allocation": _percentage(week_kcal[0], program_kcal[0]),
+        "carbs_allocation": _percentage(week_kcal[1], program_kcal[1]),
+        "fat_allocation": _percentage(week_kcal[2], program_kcal[2]),
     }
     return {
         "id": week_number,

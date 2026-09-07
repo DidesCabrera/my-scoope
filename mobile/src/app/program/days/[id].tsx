@@ -7,7 +7,7 @@ import { userFacingError } from "@/api/errors";
 import type { CalendarizedDayDetail, MealExecutionItem, MealSnapshot } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { CalendarizedEntityActions } from "@/components/calendarization/calendarized-entity-actions";
-import { snapshotAllocation, snapshotCalories, snapshotDailyPlanFoodPanelItems, snapshotFoodPanelItems, snapshotMealPanelItem } from "@/components/calendarization/presentation-adapters";
+import { snapshotCalories, snapshotDailyPlanFoodPanelItems, snapshotFoodPanelItems, snapshotMacroDistribution, snapshotMealPanelItem } from "@/components/calendarization/presentation-adapters";
 import { EntityDetailPage, EntityDetailSection } from "@/components/details";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { NutritionEntityCard } from "@/components/nutrition";
@@ -60,9 +60,9 @@ function CalendarizedMealCards({ dayId, mealExecution, meals }: { dayId: number;
               ]}
               nutrition={{
                 calories: snapshotCalories(totals),
-                carbs: { allocation: snapshotAllocation(totals, "carbs_g"), grams: totals?.carbs_g ?? 0 },
-                fat: { allocation: snapshotAllocation(totals, "fat_g"), grams: totals?.fat_g ?? 0 },
-                protein: { allocation: snapshotAllocation(totals, "protein_g"), grams: totals?.protein_g ?? 0, perKilogram: totals?.protein_per_kilogram ?? null },
+                carbs: { allocation: snapshotMacroDistribution(totals, "carbs_g"), grams: totals?.carbs_g ?? 0 },
+                fat: { allocation: snapshotMacroDistribution(totals, "fat_g"), grams: totals?.fat_g ?? 0 },
+                protein: { allocation: snapshotMacroDistribution(totals, "protein_g"), grams: totals?.protein_g ?? 0, perKilogram: totals?.protein_per_kilogram ?? null },
               }}
               title={meal.name ?? "Comida"}>
               <FoodPanels items={foods} />
@@ -117,7 +117,7 @@ export default function ProgramDayScreen() {
   const meals = snapshot?.meals ?? [];
   const totals = snapshot?.totals;
   const totalCalories = snapshotCalories(totals);
-  const mealItems = meals.map((meal, index) => snapshotMealPanelItem(meal, index, totalCalories));
+  const mealItems = meals.map((meal, index) => snapshotMealPanelItem(meal, index, totals));
   const foods = snapshotDailyPlanFoodPanelItems(meals);
 
   return (
@@ -138,12 +138,12 @@ export default function ProgramDayScreen() {
           ]}
           nutrition={{
             calories: totalCalories,
-            carbs: { allocation: snapshotAllocation(totals, "carbs_g"), grams: totals?.carbs_g ?? 0 },
-            fat: { allocation: snapshotAllocation(totals, "fat_g"), grams: totals?.fat_g ?? 0 },
-            protein: { allocation: snapshotAllocation(totals, "protein_g"), grams: totals?.protein_g ?? 0, perKilogram: totals?.protein_per_kilogram ?? null },
+            carbs: { allocation: snapshotMacroDistribution(totals, "carbs_g"), grams: totals?.carbs_g ?? 0 },
+            fat: { allocation: snapshotMacroDistribution(totals, "fat_g"), grams: totals?.fat_g ?? 0 },
+            protein: { allocation: snapshotMacroDistribution(totals, "protein_g"), grams: totals?.protein_g ?? 0, perKilogram: totals?.protein_per_kilogram ?? null },
           }}
           title={snapshot.name ?? day.plan_name ?? "Plan diario"}>
-          <EntityDetailSection detail={`${meals.length} elementos`} title="Tabla de comparación entre comidas">
+          <EntityDetailSection title="Tabla de comparación entre comidas">
             <MealPanels items={mealItems} />
           </EntityDetailSection>
           {meals.length ? (

@@ -7,7 +7,7 @@ import type { CalendarizedDayDetail, MealExecutionItem, MealSnapshot } from "@/a
 import { useSession } from "@/auth/session-context";
 import { CalendarizedEntityActions } from "@/components/calendarization/calendarized-entity-actions";
 import { MealAdherenceCheckIn } from "@/components/calendarization/meal-adherence-check-in";
-import { snapshotAllocation, snapshotCalories, snapshotFoodPanelItems } from "@/components/calendarization/presentation-adapters";
+import { snapshotCalories, snapshotFoodPanelItems, snapshotMacroDistribution } from "@/components/calendarization/presentation-adapters";
 import { EntityDetailPage, EntityDetailSection } from "@/components/details";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { FoodPanels } from "@/components/panels";
@@ -89,12 +89,12 @@ export default function CalendarizedMealDetailScreen() {
         ]}
         nutrition={{
           calories: snapshotCalories(totals),
-          carbs: { allocation: snapshotAllocation(totals, "carbs_g"), grams: totals?.carbs_g ?? 0 },
-          fat: { allocation: snapshotAllocation(totals, "fat_g"), grams: totals?.fat_g ?? 0 },
-          protein: { allocation: snapshotAllocation(totals, "protein_g"), grams: totals?.protein_g ?? 0, perKilogram: totals?.protein_per_kilogram ?? null },
+          carbs: { allocation: snapshotMacroDistribution(totals, "carbs_g"), grams: totals?.carbs_g ?? 0 },
+          fat: { allocation: snapshotMacroDistribution(totals, "fat_g"), grams: totals?.fat_g ?? 0 },
+          protein: { allocation: snapshotMacroDistribution(totals, "protein_g"), grams: totals?.protein_g ?? 0, perKilogram: totals?.protein_per_kilogram ?? null },
         }}
         title={meal.name ?? "Comida"}>
-        <EntityDetailSection detail={`${foods.length} alimentos`} title="Tabla de comparación entre alimentos">
+        <EntityDetailSection title="Tabla de comparación entre alimentos">
           <FoodPanels items={foods} />
         </EntityDetailSection>
         <MealAdherenceCheckIn dayId={dayId} mealKey={mealKey} onChange={setExecution} />

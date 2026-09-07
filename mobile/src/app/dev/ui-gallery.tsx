@@ -469,7 +469,7 @@ export default function UiGalleryScreen() {
             }}
             onBack={() => undefined}
             title="Día de entrenamiento">
-            <EntityDetailSection detail="3 comidas" title="Tabla de comparación entre comidas">
+            <EntityDetailSection title="Tabla de comparación entre comidas">
               <MealPanels items={mealPanelItems} />
             </EntityDetailSection>
             <SectionDivider />

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { MacroCalorieDistribution, PanelAllocationBar, ProteinPerKilogramBadge } from "@/components/nutrition";
-import { EntityPanelTabs, PanelBody, PanelSurface } from "@/components/panels";
+import { contextualMacroAllocations, EntityPanelTabs, PanelBody, PanelSurface } from "@/components/panels";
 import { tokens } from "@/design/tokens";
 import { EntityIcon } from "@/components/ui";
 
@@ -124,6 +124,7 @@ function MacrosPanel({ rows }: { rows: ProgramDayNutrition[] }) {
 }
 
 function AllocationPanel({ rows }: { rows: ProgramDayNutrition[] }) {
+  const allocations = contextualMacroAllocations(rows);
   return (
     <PanelBody>
       <Header columns={["P%", "C%", "F%"]} />
@@ -132,9 +133,9 @@ function AllocationPanel({ rows }: { rows: ProgramDayNutrition[] }) {
           <View style={styles.leadingCell}><DayIdentity row={row} /></View>
           {row.planName ? (
             <>
-              <PanelAllocationBar style={styles.dataCell} tone="protein" value={row.allocation.protein} />
-              <PanelAllocationBar style={styles.dataCell} tone="carbs" value={row.allocation.carbs} />
-              <PanelAllocationBar style={styles.dataCell} tone="fat" value={row.allocation.fat} />
+              <PanelAllocationBar style={styles.dataCell} tone="protein" value={allocations[index].protein} />
+              <PanelAllocationBar style={styles.dataCell} tone="carbs" value={allocations[index].carbs} />
+              <PanelAllocationBar style={styles.dataCell} tone="fat" value={allocations[index].fat} />
             </>
           ) : <Text style={[styles.emptyValue, styles.emptyAllocation]}>Sin distribución</Text>}
         </View>

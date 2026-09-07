@@ -398,7 +398,11 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(sharedPanelSource, /PanelItemName\(\{ item, style = styles\.gridLeadingCell \}/);
   assert.match(sharedPanelSource, /<PanelItemName item=\{item\} style=\{styles\.quantityLeadingCell\} \/>/);
   assert.match(sharedPanelSource, /quantityLeadingCell: \{[^}]*flex: 1/);
-  assert.match(sharedPanelSource, /leadingHeaderText: \{[^}]*textAlign: "left"/);
+  assert.match(sharedPanelSource, /quantityValue: \{ textAlign: "center", width: 56 \}/);
+  assert.match(sharedPanelSource, /function PanelHeaderCell/);
+  assert.match(sharedPanelSource, /headerCell: \{[^}]*alignSelf: "stretch"[^}]*justifyContent: "center"/);
+  assert.match(sharedPanelSource, /<PanelHeaderCell align="left" style=\{styles\.gridLeadingCell\}>\{leadingLabel\}<\/PanelHeaderCell>/);
+  assert.doesNotMatch(sharedPanelSource, /<Text style=\{\[styles\.headerText, styles\.gridLeadingCell/);
   assert.doesNotMatch(sharedPanelSource, /styles\.name, styles\.gridLeadingCell/);
 
   const libraryPanelSource = await readFile(

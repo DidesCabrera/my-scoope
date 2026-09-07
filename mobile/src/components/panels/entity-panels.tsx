@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, Check, ChevronRight, Pencil, RefreshCw, RotateCcw, Trash2 } from "lucide-react-native";
 import { Alert, Pressable, StyleProp, StyleSheet, Text, TextInput, View, ViewStyle } from "react-native";
 
 import { MacroCalorieDistribution, PanelAllocationBar } from "@/components/nutrition";
 import { EntityIcon } from "@/components/ui";
 import { tokens } from "@/design/tokens";
+import { contextualMacroAllocations } from "./contextual-allocation";
 import { EntityPanelTabs, PanelBody, PanelEmptyState, PanelSurface } from "./panel-surface";
 
 type NutritionPanelValues = {
@@ -110,11 +111,19 @@ function PanelItemName({ item, style = styles.gridLeadingCell }: { item: FoodPan
   );
 }
 
+function PanelHeaderCell({ align = "center", children, style }: { align?: "center" | "left"; children: ReactNode; style: StyleProp<ViewStyle> }) {
+  return (
+    <View style={[styles.headerCell, style]}>
+      <Text style={[styles.headerText, align === "left" && styles.headerTextLeft]}>{children}</Text>
+    </View>
+  );
+}
+
 function QuantityHeader({ leadingLabel, trailingLabel }: { leadingLabel: string; trailingLabel: string }) {
   return (
     <View style={[styles.row, styles.header]}>
-      <Text style={[styles.headerText, styles.quantityLeadingCell, styles.leadingHeaderText]}>{leadingLabel}</Text>
-      <Text style={[styles.headerText, styles.quantityValue]}>{trailingLabel}</Text>
+      <PanelHeaderCell align="left" style={styles.quantityLeadingCell}>{leadingLabel}</PanelHeaderCell>
+      <PanelHeaderCell style={styles.quantityValue}>{trailingLabel}</PanelHeaderCell>
     </View>
   );
 }
@@ -122,9 +131,9 @@ function QuantityHeader({ leadingLabel, trailingLabel }: { leadingLabel: string;
 function MacrosHeader({ leadingLabel }: { leadingLabel: string }) {
   return (
     <View style={[styles.row, styles.header]}>
-      <Text style={[styles.headerText, styles.gridLeadingCell, styles.leadingHeaderText]}>{leadingLabel}</Text>
-      {(["P", "C", "F"] as const).map((label) => <Text key={label} style={[styles.headerText, styles.macroValue]}>{label}</Text>)}
-      <Text style={[styles.headerText, styles.distributionCell]}>P|C|F%</Text>
+      <PanelHeaderCell align="left" style={styles.gridLeadingCell}>{leadingLabel}</PanelHeaderCell>
+      {(["P", "C", "F"] as const).map((label) => <PanelHeaderCell key={label} style={styles.macroValue}>{label}</PanelHeaderCell>)}
+      <PanelHeaderCell style={styles.distributionCell}>P|C|F%</PanelHeaderCell>
     </View>
   );
 }
@@ -132,9 +141,9 @@ function MacrosHeader({ leadingLabel }: { leadingLabel: string }) {
 function CaloriesHeader({ leadingLabel }: { leadingLabel: string }) {
   return (
     <View style={[styles.row, styles.header]}>
-      <Text style={[styles.headerText, styles.gridLeadingCell, styles.leadingHeaderText]}>{leadingLabel}</Text>
-      <Text style={[styles.headerText, styles.calorieValue]}>Cal</Text>
-      <Text style={[styles.headerText, styles.calorieShare]}>% Cal</Text>
+      <PanelHeaderCell align="left" style={styles.gridLeadingCell}>{leadingLabel}</PanelHeaderCell>
+      <PanelHeaderCell style={styles.calorieValue}>Cal</PanelHeaderCell>
+      <PanelHeaderCell style={styles.calorieShare}>% Cal</PanelHeaderCell>
     </View>
   );
 }
@@ -142,8 +151,8 @@ function CaloriesHeader({ leadingLabel }: { leadingLabel: string }) {
 function AllocationHeader({ leadingLabel }: { leadingLabel: string }) {
   return (
     <View style={[styles.row, styles.header, styles.allocationRow]}>
-      <Text style={[styles.headerText, styles.gridLeadingCell, styles.leadingHeaderText]}>{leadingLabel}</Text>
-      {(["P%", "C%", "F%"] as const).map((label) => <Text key={label} style={[styles.headerText, styles.allocationCell]}>{label}</Text>)}
+      <PanelHeaderCell align="left" style={styles.gridLeadingCell}>{leadingLabel}</PanelHeaderCell>
+      {(["P%", "C%", "F%"] as const).map((label) => <PanelHeaderCell key={label} style={styles.allocationCell}>{label}</PanelHeaderCell>)}
     </View>
   );
 }
@@ -206,15 +215,16 @@ export function NutritionCaloriesPanel({ items, leadingLabel }: { items: (FoodPa
 
 export function NutritionAllocationPanel({ items, leadingLabel }: { items: (FoodPanelItem | MealPanelItem)[]; leadingLabel: string }) {
   if (items.length === 0) return <PanelEmptyState label="Todavía no hay distribución nutricional." />;
+  const allocations = contextualMacroAllocations(items);
   return (
     <PanelBody>
       <AllocationHeader leadingLabel={leadingLabel} />
       {items.map((item, index) => (
         <View key={item.id} style={[styles.row, styles.allocationRow, index === items.length - 1 && styles.rowLast]}>
           <PanelItemName item={item} />
-          <PanelAllocationBar style={styles.allocationCell} tone="protein" value={item.proteinAllocation} />
-          <PanelAllocationBar style={styles.allocationCell} tone="carbs" value={item.carbsAllocation} />
-          <PanelAllocationBar style={styles.allocationCell} tone="fat" value={item.fatAllocation} />
+          <PanelAllocationBar style={styles.allocationCell} tone="protein" value={allocations[index].protein} />
+          <PanelAllocationBar style={styles.allocationCell} tone="carbs" value={allocations[index].carbs} />
+          <PanelAllocationBar style={styles.allocationCell} tone="fat" value={allocations[index].fat} />
         </View>
       ))}
     </PanelBody>
@@ -363,14 +373,15 @@ const styles = StyleSheet.create({
   row: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", minHeight: 44, paddingHorizontal: tokens.spacing.sm },
   rowLast: { borderBottomWidth: 0 },
   header: { minHeight: 32 },
+  headerCell: { alignSelf: "stretch", justifyContent: "center", minWidth: 0 },
   headerText: { color: tokens.color.textMuted, fontSize: 10, fontWeight: tokens.weight.semibold, letterSpacing: 0, textAlign: "center", textTransform: "uppercase" },
+  headerTextLeft: { paddingHorizontal: tokens.spacing.xs, textAlign: "left" },
   cell: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, letterSpacing: 0 },
   name: { flex: 1, minWidth: 0, paddingHorizontal: tokens.spacing.xs, textAlign: "left" },
   gridLeadingCell: { alignSelf: "stretch", flexBasis: "40%", flexGrow: 0, flexShrink: 0, justifyContent: "center", minWidth: 0 },
-  leadingHeaderText: { paddingHorizontal: tokens.spacing.xs, textAlign: "left" },
   itemName: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, letterSpacing: 0, lineHeight: 18, paddingHorizontal: tokens.spacing.xs, textAlign: "left" },
   quantityLeadingCell: { alignSelf: "stretch", flex: 1, justifyContent: "center", minWidth: 0 },
-  quantityValue: { textAlign: "right", width: 88 },
+  quantityValue: { textAlign: "center", width: 56 },
   macroValue: { flex: 1, minWidth: 0, textAlign: "center" },
   distributionCell: { flex: 1.4, minWidth: 0 },
   calorieValue: { textAlign: "center", width: 54 },
