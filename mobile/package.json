@@ -43,11 +43,15 @@
     "typescript": "~6.0.3"
   },
   "scripts": {
-    "start": "expo start --dev-client",
-    "start:local": "EXPO_PUBLIC_API_BASE_URL=http://127.0.0.1:8000 expo start --dev-client",
-    "start:staging": "EXPO_PUBLIC_API_BASE_URL=https://myscoope-staging.onrender.com expo start --dev-client",
+    "start": "npm run start:local",
+    "start:local": "node ./scripts/mobile-environment-command.mjs development -- npx expo start --dev-client",
+    "start:staging": "node ./scripts/mobile-environment-command.mjs simulator-staging -- npx expo start --dev-client",
     "android": "expo run:android",
     "ios": "expo run:ios",
+    "ios:staging": "node ./scripts/mobile-environment-command.mjs simulator-staging -- npx expo run:ios",
+    "build:production": "node ./scripts/mobile-environment-command.mjs testflight-production -- npx eas-cli@latest build --platform ios --profile testflight-production",
+    "submit:production": "node ./scripts/mobile-environment-command.mjs testflight-production -- npx eas-cli@latest submit --platform ios --profile testflight-production",
+    "verify:environments": "node ./scripts/mobile-environment-command.mjs --verify",
     "web": "expo start --web",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",

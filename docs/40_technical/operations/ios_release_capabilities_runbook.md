@@ -56,26 +56,51 @@ iPhone, and connected successfully to Metro over LAN. This proves signing,
 installation and the development-server path only; it does not close the release
 evidence listed below.
 
-## TestFlight staging workflow
+## Simulator staging and TestFlight production workflow
 
-Use the dedicated store-distribution profile for beta builds that connect to the
-Render staging environment:
+Use the iOS Simulator for feature and staging validation. The guarded commands
+inject the Render staging API and reject execution from `main`:
 
 ```bash
 cd mobile
-npx eas-cli@latest build --platform ios --profile testflight --auto-submit
+npm run ios:staging
+npm run start:staging
 ```
 
-Do not use the `production` profile until its public API environment is explicitly
-configured. Keeping staging values in a separate profile prevents an App Store
-release from accidentally connecting customers to staging.
+TestFlight is reserved for production candidates built from a clean, synchronized
+`main`. Building and submitting remain separate approval points:
 
-On 2026-08-21, EAS build `1.0.0 (3)` was uploaded to App Store Connect, assigned
+```bash
+git switch main
+git fetch origin main
+git pull --ff-only
+cd mobile
+npm run verify:environments
+npm run build:production
+# Review the EAS result before continuing.
+npm run submit:production
+```
+
+The `testflight-production` and default `production` profiles both resolve to
+`https://www.myscoope.com`. The source guard requires `main`, a clean worktree,
+the `origin/main` upstream, and equal local/upstream commits. `eas.json` also
+sets `requireCommit=true`. The ambiguous `testflight` profile was removed so a
+store build cannot silently keep the staging API URL, and automatic submission
+is intentionally absent from the package command.
+
+Before the first production build, verify in Render that the `my-scoope`
+production service is connected to GitHub branch `main`. `render.yaml` defines
+the service and deployment commands but does not prove the externally selected
+branch. Treat this dashboard check as a release gate.
+
+Historical note: on 2026-08-21, EAS build `1.0.0 (3)` was uploaded to App Store Connect, assigned
 to the internal `Team (Expo)` group, installed from TestFlight on a physical
 iPhone and connected successfully to `https://myscoope-staging.onrender.com`.
-This closes the first-build TestFlight delivery proof. The build used App Store
-Connect app ID `6804048394`, bundle ID `com.myscoope.app`, production APNs
-entitlements and EAS-managed signing credentials.
+That legacy build proves signing and installation only. New TestFlight builds
+must use the production workflow above; staging validation now belongs to the
+simulator. It used App Store Connect app ID `6804048394`, bundle ID
+`com.myscoope.app`, production APNs entitlements and EAS-managed signing
+credentials.
 
 ## Sign in with Apple
 

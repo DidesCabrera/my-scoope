@@ -26,6 +26,53 @@ For a physical device, `EXPO_PUBLIC_API_BASE_URL` must be an HTTPS environment
 reachable by that device. The OAuth client must allow the exact value of
 `EXPO_PUBLIC_OAUTH_REDIRECT_URI`.
 
+## Mobile environments
+
+Development and release environments are intentionally asymmetric:
+
+- the iOS Simulator runs the current `staging` or feature-branch code against
+  `https://myscoope-staging.onrender.com`;
+- TestFlight is reserved for committed `main` code against
+  `https://www.myscoope.com`.
+
+Start or rebuild the staging simulator with the guarded commands:
+
+```bash
+cd mobile
+npm run ios:staging     # only when the native simulator build must change
+npm run start:staging   # normal Metro development loop
+```
+
+The simulator command is rejected from `main`. Feature branches based on
+`staging` are allowed so changes can be tested before merging.
+
+Production build and submission are deliberately separate operations:
+
+```bash
+git switch main
+git fetch origin main
+git pull --ff-only
+cd mobile
+npm run verify:environments
+npm run build:production
+# After reviewing the completed EAS build:
+npm run submit:production
+```
+
+The production guard requires `main`, a clean worktree, the `origin/main`
+upstream, and identical local/upstream commits. EAS also requires committed
+source. The old ambiguous `testflight` profile no longer exists, and neither
+production command uses `--auto-submit`.
+
+Before the first production build, confirm in the Render dashboard that the
+`my-scoope` production service deploys from GitHub branch `main`. The repository
+declares the production service but its selected branch is owned by Render's
+external service configuration.
+
+`MYSCOOPE_BUILD_TARGET` and `EXPO_PUBLIC_DEPLOYMENT_ENV` must agree with the API
+URL. Both dynamic Expo configuration and runtime application configuration fail
+closed if staging and production are mixed.
+
 ## Checks
 
 ```bash
