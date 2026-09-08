@@ -348,15 +348,13 @@ export function PanelTabs<T extends string>({
   tabs,
   activeTab,
   onChange,
-  accessibilityLabel,
 }: {
   tabs: { key: T; label: string; count?: number }[];
   activeTab: T;
   onChange: (tab: T) => void;
-  accessibilityLabel?: string;
 }) {
   return (
-    <View accessibilityLabel={accessibilityLabel} accessibilityRole="tablist" style={styles.tabs}>
+    <View accessibilityRole="tablist" style={styles.tabs}>
       {tabs.map((tab) => {
         const selected = tab.key === activeTab;
         return (

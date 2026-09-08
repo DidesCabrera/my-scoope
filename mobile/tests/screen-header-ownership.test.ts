@@ -61,16 +61,17 @@ test("screens that own global navigation preserve their header through content a
   assert.match(proposals, /<Redirect href=\{\{ pathname: "\/assistant", params: \{ section: "proposals" \} \}\} \/>/);
 
   const tabs = await source("src/components/assistant/assistant-section-tabs.tsx");
-  assert.match(tabs, /<PanelTabs/);
-  assert.match(tabs, /accessibilityLabel="Secciones del Asistente AI"/);
+  assert.match(tabs, /MessageCircle/);
+  assert.match(tabs, /ClipboardCheck/);
   assert.match(tabs, /counts\[section\.key\]/);
-  assert.doesNotMatch(tabs, /StyleSheet|Pressable/);
+  assert.match(tabs, /justifyContent: "center"/);
+  assert.match(tabs, /minHeight: 40/);
+  assert.match(tabs, /backgroundColor: tokens\.color\.surfaceMuted/);
+  assert.match(tabs, /borderColor: tokens\.color\.borderSoft/);
+  assert.match(tabs, /borderRadius: tokens\.radius\.pill/);
+  assert.match(tabs, /flex: 1/);
+  assert.doesNotMatch(tabs, /PanelTabs/);
   assert.doesNotMatch(tabs, /useRouter|router\.replace|href:/);
-
-  const product = await source("src/components/ui/product.tsx");
-  assert.match(product, /export function PanelTabs/);
-  assert.match(product, /tab: \{[^}]*flex: 1[^}]*justifyContent: "center"[^}]*minHeight: 44/);
-  assert.match(product, /<Text style=\{\[styles\.tabText, selected && styles\.tabTextSelected\]\}>\{tab\.label\}<\/Text>[\s\S]*styles\.tabCount/);
 
   const actions = await source("src/components/assistant/assistant-list-actions.tsx");
   assert.match(actions, /activeSection === "chats"/);
