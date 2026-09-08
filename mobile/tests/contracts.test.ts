@@ -80,7 +80,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
 
   for (const [relativePath, section, title] of [
     ["src/app/comparator/index.tsx", "comparator", "Comparador"],
-    ["src/app/proposals/index.tsx", "proposal", "Propuestas"],
+    ["src/app/proposals/index.tsx", "chat", "Asistente AI"],
     ["src/app/assistant/index.tsx", "chat", "Asistente AI"],
   ]) {
     const sectionScreen = await readFile(path.resolve(process.cwd(), relativePath), "utf8");

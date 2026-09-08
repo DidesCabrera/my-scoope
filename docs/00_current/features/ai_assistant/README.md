@@ -58,6 +58,21 @@ Desde la decisión 0028 quedó definido el ciclo Patch 50-58 para activar el LLM
 
 El AI Assistant debe evolucionar sobre la estructura de chat existente de My Scoope, no como una UI paralela.
 
+## Navegación de la experiencia
+
+Web y móvil presentan una sola sección principal llamada **Asistente AI**. Sus
+listas se organizan en dos tabs equivalentes:
+
+- **Chats** conserva el historial conversacional y la acción contextual para
+  iniciar un chat nuevo.
+- **Propuestas** conserva la bandeja de propuestas revisables y sus acciones y
+  filtros contextuales.
+
+Las rutas históricas de chats y propuestas permanecen separadas para preservar
+enlaces, detalles y contratos de API. La unificación corresponde a navegación y
+presentación; no mezcla la persistencia de `AiNutritionChat` con
+`NutritionProposal`. El menú de cabecera siempre expone acciones del tab activo.
+
 
 ## Current client-memory/tool-oriented baseline
 

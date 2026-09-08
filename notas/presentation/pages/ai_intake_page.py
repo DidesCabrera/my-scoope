@@ -132,8 +132,8 @@ def build_chat_list_content(chats, *, active_chat_id: int | None = None) -> AiNu
                     "method": "get",
                     "icon": "plus",
                     "order": 10,
-                    "desktop_position": "inline",
-                    "mobile_position": "inline",
+                    "desktop_position": "menu",
+                    "mobile_position": "menu",
                 }
             ],
         ),

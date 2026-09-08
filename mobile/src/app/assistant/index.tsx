@@ -5,6 +5,8 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { userFacingError } from "@/api/errors";
 import type { AIChatListData, AIChatSummary } from "@/api/types";
 import { useSession } from "@/auth/session-context";
+import { AssistantListActions } from "@/components/assistant/assistant-list-actions";
+import { AssistantSectionTabs } from "@/components/assistant/assistant-section-tabs";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { SectionPageHeader } from "@/components/ui";
 import { EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
@@ -34,6 +36,7 @@ export default function AssistantHistoryScreen() {
   const { status, apiRequest } = useSession();
   const setHeaderPresentation = useHeaderPresentation();
   const [page, setPage] = useState<AIChatListData | null>(null);
+  const [actionsVisible, setActionsVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const load = useCallback(async () => {
@@ -46,17 +49,18 @@ export default function AssistantHistoryScreen() {
   useFocusEffect(useCallback(() => { if (status === "authenticated") void load(); }, [load, status]));
   useFocusEffect(useCallback(() => {
     setHeaderPresentation({
-      action: { icon: "plus", label: "Nuevo chat", onPress: () => router.push("/assistant/new" as Href) },
+      action: { label: "Acciones de Chats", onPress: () => setActionsVisible(true) },
       mode: "default",
-      title: "Asistente",
+      title: "Asistente AI",
     });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [router, setHeaderPresentation]));
+  }, [setHeaderPresentation]));
   if (status === "anonymous") return <Redirect href="/login" />;
   if (loading && !page) return <LoadingState label="Abriendo tus conversaciones…" />;
   return (
     <Screen headerMode="preserve">
       <SectionPageHeader count={page?.total} countLabel="conversaciones" section="chat" title="Asistente AI" />
+      <AssistantSectionTabs activeSection="chats" />
       {page?.availability ? <InlineNotice>{page.availability.available_credits} créditos disponibles · {page.availability.label}</InlineNotice> : null}
       {page?.availability.available_credits === 0 ? <Card accent={tokens.color.warning}>
         <Text style={styles.creditTitle}>No tienes créditos disponibles</Text>
@@ -68,6 +72,7 @@ export default function AssistantHistoryScreen() {
       {page?.items.length ? page.items.map((chat) => <ChatCard chat={chat} key={chat.id} onPress={() => router.push(`/assistant/${chat.id}` as Href)} />) : (
         <EmptyState actionLabel="Iniciar conversación" message="Conversa con el Asistente para definir o ajustar tu planificación nutricional." onAction={() => router.push("/assistant/new" as Href)} title="Aún no tienes chats" />
       )}
+      <AssistantListActions activeSection="chats" onClose={() => setActionsVisible(false)} onNewChat={() => router.push("/assistant/new" as Href)} visible={actionsVisible} />
     </Screen>
   );
 }

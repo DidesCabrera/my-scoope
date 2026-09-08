@@ -1,0 +1,10 @@
+<nav class="comparator-tabs assistant-section-tabs" aria-label="Secciones del Asistente AI">
+  <a href="{% url 'ai_nutrition_chat_list' %}" class="comparator-tab assistant-section-tab {% if active_assistant_section == 'chats' %}is-active{% endif %}"{% if active_assistant_section == 'chats' %} aria-current="page"{% endif %}>
+    <i data-lucide="message-circle" class="comparator-tab__icon" aria-hidden="true"></i>
+    <span>Chats</span>
+  </a>
+  <a href="{% url 'proposal_list' %}" class="comparator-tab assistant-section-tab {% if active_assistant_section == 'proposals' %}is-active{% endif %}"{% if active_assistant_section == 'proposals' %} aria-current="page"{% endif %}>
+    <i data-lucide="clipboard-check" class="comparator-tab__icon" aria-hidden="true"></i>
+    <span>Propuestas</span>
+  </a>
+</nav>

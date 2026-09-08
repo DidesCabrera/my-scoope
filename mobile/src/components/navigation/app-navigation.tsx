@@ -66,7 +66,6 @@ const productAreaIcons: Record<ProductAreaKey, LucideIcon> = {
   comparator: Scale,
   home: House,
   program: CalendarClock,
-  proposals: ClipboardCheck,
 };
 
 const primaryItems: NavigationSidebarItemData[] = listAvailableProductAreas().map((area) => ({
@@ -136,8 +135,8 @@ function BackHeaderIdentity({ title }: { title: string }) {
 }
 
 function routeHeader(pathname: string): { icon: LucideIcon; title: string } {
-  if (pathname.startsWith("/assistant")) return { icon: Sparkles, title: pathname === "/assistant" ? "Asistente" : "Conversación" };
-  if (pathname.startsWith("/proposals")) return { icon: ClipboardCheck, title: pathname === "/proposals" ? "Propuestas" : "Detalle de propuesta" };
+  if (pathname.startsWith("/assistant")) return { icon: Sparkles, title: pathname === "/assistant" ? "Asistente AI" : "Conversación" };
+  if (pathname.startsWith("/proposals")) return { icon: pathname === "/proposals" ? Sparkles : ClipboardCheck, title: pathname === "/proposals" ? "Asistente AI" : "Detalle de propuesta" };
   if (pathname.startsWith("/comparator")) return { icon: Scale, title: pathname.includes("/saved") ? "Comparaciones guardadas" : "Comparador" };
   if (pathname.startsWith("/program")) return { icon: CalendarClock, title: pathname === "/program" ? "Mi programa activo" : pathname.includes("/activate") ? "Calendarizar programa" : "Detalle del día" };
   if (pathname === "/today" || pathname === "/") return { icon: House, title: "Inicio" };
@@ -261,7 +260,8 @@ function useSidebarItem(item: { href: Href }) {
   const pathname = usePathname();
   const router = useRouter();
   const { closeMenu } = useAppNavigation();
-  const active = pathname === item.href || (pathname.startsWith(String(item.href)) && item.href !== "/today");
+  const assistantAliasActive = item.href === "/assistant" && pathname.startsWith("/proposals");
+  const active = assistantAliasActive || pathname === item.href || (pathname.startsWith(String(item.href)) && item.href !== "/today");
   return { active, onPress: () => { closeMenu(); router.push(item.href); } };
 }
 

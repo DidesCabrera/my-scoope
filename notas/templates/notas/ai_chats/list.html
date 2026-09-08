@@ -1,11 +1,12 @@
 {% extends "notas/base.html" %}
 {% load static %}
-{% block title %}Chats{% endblock %}
+{% block title %}Asistente AI · Chats{% endblock %}
 {% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/components/ai_assistant.css' %}">{% endblock %}
 {% block content %}
 
 <div class="page list ai-chat-history-page proposal-list-page">
   {% include "components/list_page_header.html" %}
+  {% include "components/assistant_section_tabs.html" with active_assistant_section="chats" %}
 
   <section class="ai-chat-credit-status{% if assistant_credits.available_credits == 0 %} ai-chat-credit-status--empty{% endif %}" aria-label="Créditos del Asistente">
     <div class="ai-chat-credit-status__icon" aria-hidden="true">

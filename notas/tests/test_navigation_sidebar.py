@@ -7,6 +7,7 @@ from notas.presentation.config.viewmodel_config import (
     DAILYPLAN_MEAL_VIEWMODE_DETAIL,
     FOOD_VIEWMODE_PERSONAL_LIST,
     PROFILE_VIEWMODE,
+    PROPOSAL_VIEWMODE_LIST,
 )
 from notas.presentation.navigation.nav_builders import (
     build_sidebar_vm,
@@ -79,10 +80,9 @@ class SidebarBuilderTests(TestCase):
         self.assertEqual(sidebar[0]["label"], "Tools")
         self.assertEqual(sidebar[1]["label"], "Mis librerias")
         self.assertEqual(
-            [group["label"] for group in sidebar[0]["groups"][:6]],
+            [group["label"] for group in sidebar[0]["groups"][:5]],
             [
-                "Asistente",
-                "Propuestas",
+                "Asistente AI",
                 "Calendarizar",
                 "Comparar",
                 "Explorar",
@@ -98,17 +98,24 @@ class SidebarBuilderTests(TestCase):
                 "Mis Alimentos",
             ],
         )
-        explore_group = sidebar[0]["groups"][4]
+        explore_group = sidebar[0]["groups"][3]
         self.assertEqual(explore_group["key"], "explore")
         self.assertEqual(explore_group["nav_root"], "explore")
 
         tool_groups = {group["key"]: group for group in sidebar[0]["groups"]}
         self.assertNotIn("chat_new", tool_groups)
-        self.assertEqual(tool_groups["chat"]["label"], "Asistente")
+        self.assertEqual(tool_groups["chat"]["label"], "Asistente AI")
         self.assertEqual(tool_groups["chat"]["url_name"], "ai_nutrition_chat_list")
         self.assertEqual(tool_groups["chat"]["icon"], "sparkles")
-        self.assertEqual(tool_groups["proposal"]["icon"], "clipboard-check")
+        self.assertNotIn("proposal", tool_groups)
         self.assertEqual(tool_groups["comparators"]["icon"], "scale")
+
+    def test_proposals_keep_the_assistant_sidebar_entry_active(self):
+        sidebar = build_sidebar_vm(PROPOSAL_VIEWMODE_LIST)
+        tool_groups = {group["key"]: group for group in sidebar[0]["groups"]}
+
+        self.assertTrue(tool_groups["chat"]["is_active"])
+        self.assertNotIn("proposal", tool_groups)
 
  
     def test_build_ui_vm_for_profile_populates_navigation_metadata(self):

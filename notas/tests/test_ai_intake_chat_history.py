@@ -142,10 +142,12 @@ class AiNutritionChatHistoryTests(TestCase):
         self.assertNotContains(list_response, "list-page-header__eyebrow")
         self.assertContains(list_response, "Chats")
         self.assertContains(list_response, chat.title)
-        self.assertEqual(list_response.context["vm"]["ui"]["title"], "Chats")
+        self.assertContains(list_response, "Secciones del Asistente AI")
+        self.assertContains(list_response, reverse("proposal_list"))
+        self.assertEqual(list_response.context["vm"]["ui"]["title"], "Asistente AI")
         self.assertEqual(
             [item["label"] for item in list_response.context["vm"]["ui"]["breadcrumb"]],
-            ["Chats"],
+            ["Asistente AI"],
         )
 
         detail_response = self.client.get(reverse("ai_nutrition_chat_detail", args=[chat.id]))
@@ -155,13 +157,13 @@ class AiNutritionChatHistoryTests(TestCase):
         self.assertNotContains(detail_response, '<body class="page-home page-ai-intake')
         self.assertContains(
             detail_response,
-            f'<a href="{reverse("ai_nutrition_chat_list")}" class="breadcrumb-item">Chats</a>',
+            f'<a href="{reverse("ai_nutrition_chat_list")}" class="breadcrumb-item">Asistente AI</a>',
         )
         detail_ui = detail_response.context["vm"]["ui"]
         self.assertEqual(detail_ui["back_url"], reverse("ai_nutrition_chat_list"))
         self.assertEqual(
             [item["label"] for item in detail_ui["breadcrumb"]],
-            ["Chats", chat.title],
+            ["Asistente AI", chat.title],
         )
         self.assertEqual(detail_ui["breadcrumb"][0]["url"], reverse("ai_nutrition_chat_list"))
         self.assertEqual(self.client.session[AI_NUTRITION_CHAT_SESSION_KEY], chat.id)
@@ -184,8 +186,14 @@ class AiNutritionChatHistoryTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         html = response.content.decode()
+        header = response.context["vm"]["content"]["header"]
         self.assertIn(reverse("ai_nutrition_chat_new"), html)
         self.assertIn("Nuevo chat", html)
+        self.assertEqual(header["desktop_inline_actions"], [])
+        self.assertEqual(
+            [action["key"] for action in header["desktop_menu_actions"]],
+            ["new_ai_chat"],
+        )
         self.assertIn("ai-chat-history-card--active", html)
         self.assertIn(chat.title, html)
         self.assertIn("Bajar grasa", html)
@@ -261,12 +269,12 @@ class AiNutritionChatHistoryTests(TestCase):
         self.assertNotContains(new_chat_response, '<body class="page-home page-ai-intake')
         self.assertContains(
             new_chat_response,
-            f'<a href="{reverse("ai_nutrition_chat_list")}" class="breadcrumb-item">Chats</a>',
+            f'<a href="{reverse("ai_nutrition_chat_list")}" class="breadcrumb-item">Asistente AI</a>',
         )
         self.assertEqual(new_chat_ui["back_url"], reverse("ai_nutrition_chat_list"))
         self.assertEqual(
             [item["label"] for item in new_chat_ui["breadcrumb"]],
-            ["Chats", "Nuevo chat"],
+            ["Asistente AI", "Nuevo chat"],
         )
 
     def test_create_proposal_generates_dailyplan_card_inside_chat(self):

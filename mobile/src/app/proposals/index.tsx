@@ -5,14 +5,15 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { userFacingError } from "@/api/errors";
 import type { ProposalListData, ProposalStatus, ProposalSummary } from "@/api/types";
 import { useSession } from "@/auth/session-context";
+import { AssistantListActions, type ProposalFilter } from "@/components/assistant/assistant-list-actions";
+import { AssistantSectionTabs } from "@/components/assistant/assistant-section-tabs";
+import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { SectionPageHeader } from "@/components/ui";
 import { EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
-import { Card, ChoiceRow, LoadingState, Pill, Screen, textStyles } from "@/components/ui/primitives";
+import { Card, LoadingState, Pill, Screen, textStyles } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
 
-type Filter = "all" | "pending_review" | "approved" | "applied" | "rejected";
-
-const filters: { value: Filter; label: string }[] = [
+const filters: { value: ProposalFilter; label: string }[] = [
   { value: "all", label: "Todas" },
   { value: "pending_review", label: "Pendientes" },
   { value: "approved", label: "Aprobadas" },
@@ -52,8 +53,10 @@ function ProposalCard({ proposal, onPress }: { proposal: ProposalSummary; onPres
 export default function ProposalsScreen() {
   const router = useRouter();
   const { status, apiRequest } = useSession();
+  const setHeaderPresentation = useHeaderPresentation();
   const [page, setPage] = useState<ProposalListData | null>(null);
-  const [filter, setFilter] = useState<Filter>("all");
+  const [filter, setFilter] = useState<ProposalFilter>("all");
+  const [actionsVisible, setActionsVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -71,19 +74,25 @@ export default function ProposalsScreen() {
   }, [apiRequest, filter]);
 
   useFocusEffect(useCallback(() => { if (status === "authenticated") void load(); }, [load, status]));
+  useFocusEffect(useCallback(() => {
+    setHeaderPresentation({ action: { label: "Acciones de Propuestas", onPress: () => setActionsVisible(true) }, mode: "default", title: "Asistente AI" });
+    return () => setHeaderPresentation({ mode: "default" });
+  }, [setHeaderPresentation]));
 
   if (status === "anonymous") return <Redirect href="/login" />;
   if (loading && !page) return <LoadingState label="Buscando tus propuestas…" />;
 
   return (
-    <Screen>
-      <SectionPageHeader count={page?.total} countLabel="propuestas" section="proposal" title="Propuestas" />
-      <ChoiceRow<Filter> label="Estado" onChange={setFilter} options={filters} value={filter} />
+    <Screen headerMode="preserve">
+      <SectionPageHeader count={page?.total} countLabel="propuestas" section="chat" title="Asistente AI" />
+      <AssistantSectionTabs activeSection="proposals" />
+      <Text style={textStyles.caption}>Filtro: {filters.find((item) => item.value === filter)?.label ?? "Todas"}</Text>
       {error ? <RecoverableErrorState message={error} onRetry={() => void load()} /> : null}
       {loading ? <Text style={textStyles.caption}>Actualizando…</Text> : null}
       {page?.items.length ? page.items.map((proposal) => <ProposalCard key={proposal.id} onPress={() => router.push(`/proposals/${proposal.id}` as Href)} proposal={proposal} />) : (
         <EmptyState message="Las propuestas creadas por el Asistente aparecerán aquí para que puedas revisarlas antes de modificar tu librería." title={filter === "all" ? "Aún no hay propuestas" : "No hay propuestas en este estado"} />
       )}
+      <AssistantListActions activeSection="proposals" onClose={() => setActionsVisible(false)} onProposalFilterChange={setFilter} proposalFilter={filter} visible={actionsVisible} />
     </Screen>
   );
 }

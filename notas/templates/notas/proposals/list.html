@@ -1,10 +1,11 @@
 {% extends "notas/base.html" %}
-{% block title %}Propuestas{% endblock %}
+{% block title %}Asistente AI · Propuestas{% endblock %}
 {% block content %}
 
 <div class="page list proposal-list-page">
 
   {% include "components/list_page_header.html" %}
+  {% include "components/assistant_section_tabs.html" with active_assistant_section="proposals" %}
 
   {% if vm.content.list_mode == "reorder" %}
     {% include "components/list_panel_proposals_reorder.html" with proposals=vm.content.proposals %}

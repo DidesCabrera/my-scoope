@@ -25,6 +25,7 @@ test("screens that own global navigation preserve their header through content a
   for (const relativePath of [
     "src/app/comparator/index.tsx",
     "src/app/assistant/index.tsx",
+    "src/app/proposals/index.tsx",
     "src/app/program/activate.tsx",
     "src/app/program/history.tsx",
     "src/app/program/index.tsx",
@@ -48,7 +49,26 @@ test("screens that own global navigation preserve their header through content a
   assert.match(comparator, /<View style=\{styles\.builderTabs\}>[\s\S]*<ComparisonKindTabs kind=\{kind\} onChange=\{changeKind\} \/>[\s\S]*<Screen headerMode="preserve">/);
 
   const assistant = await source("src/app/assistant/index.tsx");
-  assert.match(assistant, /action: \{ icon: "plus", label: "Nuevo chat", onPress: \(\) => router\.push\("\/assistant\/new" as Href\) \}/);
+  assert.match(assistant, /action: \{ label: "Acciones de Chats", onPress: \(\) => setActionsVisible\(true\) \}/);
+  assert.match(assistant, /<AssistantSectionTabs activeSection="chats" \/>/);
+  assert.match(assistant, /<AssistantListActions activeSection="chats"/);
   assert.doesNotMatch(assistant, /disabled: !page\.availability\.is_available/);
   assert.doesNotMatch(assistant, /<Button[^>]*label="Nuevo chat"/);
+
+  const proposals = await source("src/app/proposals/index.tsx");
+  assert.match(proposals, /action: \{ label: "Acciones de Propuestas", onPress: \(\) => setActionsVisible\(true\) \}/);
+  assert.match(proposals, /<AssistantSectionTabs activeSection="proposals" \/>/);
+  assert.match(proposals, /<AssistantListActions activeSection="proposals"/);
+
+  const tabs = await source("src/components/assistant/assistant-section-tabs.tsx");
+  assert.match(tabs, /href: "\/assistant"/);
+  assert.match(tabs, /href: "\/proposals"/);
+  assert.match(tabs, /router\.replace\(section\.href\)/);
+
+  const actions = await source("src/components/assistant/assistant-list-actions.tsx");
+  assert.match(actions, /activeSection === "chats"/);
+  assert.match(actions, /label="Nuevo chat"/);
+  for (const label of ["Ver todas", "Ver pendientes", "Ver aprobadas", "Ver aplicadas", "Ver rechazadas"]) {
+    assert.match(actions, new RegExp(label));
+  }
 });
