@@ -139,7 +139,7 @@ function routeHeader(pathname: string): { icon: LucideIcon; title: string } {
   if (pathname.startsWith("/assistant")) return { icon: Sparkles, title: pathname === "/assistant" ? "Asistente" : "Conversación" };
   if (pathname.startsWith("/proposals")) return { icon: ClipboardCheck, title: pathname === "/proposals" ? "Propuestas" : "Detalle de propuesta" };
   if (pathname.startsWith("/comparator")) return { icon: Scale, title: pathname.includes("/saved") ? "Comparaciones guardadas" : "Comparador" };
-  if (pathname.startsWith("/program")) return { icon: CalendarClock, title: pathname === "/program" ? "Mi programa" : pathname.includes("/activate") ? "Calendarizar programa" : "Detalle del día" };
+  if (pathname.startsWith("/program")) return { icon: CalendarClock, title: pathname === "/program" ? "Mi programa activo" : pathname.includes("/activate") ? "Calendarizar programa" : "Detalle del día" };
   if (pathname === "/today" || pathname === "/") return { icon: House, title: "Inicio" };
   if (pathname === "/weight") return { icon: Weight, title: "Registrar peso" };
   if (pathname === "/label-capture") return { icon: Camera, title: "Digitalizar etiqueta" };

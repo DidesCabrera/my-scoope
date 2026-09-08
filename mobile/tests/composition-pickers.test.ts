@@ -114,10 +114,13 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(navigation, /backHeaderAction/);
   matches(picker, /action: \{ label: "Cancelar"/);
 
-  for (const route of ["food-to-meal", "meal-to-dailyplan", "dailyplan-to-program"]) {
+  for (const route of ["food-to-meal", "meal-to-dailyplan", "dailyplan-to-program", "dailyplan-to-calendarized-day"]) {
     const source = await readFile(path.resolve(process.cwd(), `src/app/pickers/${route}.tsx`), "utf8");
     matches(source, /CompositionPickerScreen/);
   }
+  matches(picker, /dailyplan-to-calendarized-day/);
+  matches(picker, /idempotency_key: idempotencyKey\.current/);
+  matches(picker, /confirm_replacement: confirmReplacements/);
   const configureRoute = await readFile(path.resolve(process.cwd(), "src/app/pickers/configure.tsx"), "utf8");
   matches(configureRoute, /selectedId/);
   matches(configureRoute, /CompositionPickerScreen/);

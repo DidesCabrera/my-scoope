@@ -1,15 +1,18 @@
 import type { ReactNode } from "react";
 import { Pressable, ScrollView, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 import { CalendarRange, ClipboardList, Plus } from "lucide-react-native";
-import Svg, { Circle, Defs, LinearGradient, Stop } from "react-native-svg";
 
 import { tokens } from "@/design/tokens";
-import { StructuralIndicators } from "@/components/ui/product";
+import { StructuralIndicators, useWeekDayLayout, WeekDayCell, WeekDayGrid, WeekDaySelectionRing } from "@/components/ui";
 
 export type ProgramPlanningDay = {
+  dayOfMonth?: number;
+  disabled?: boolean;
   filled: boolean;
   id: number | string;
+  isToday?: boolean;
   label: string;
+  monthLabel?: string;
 };
 
 export function ProgramWeekHeading({ detail, week }: { detail?: string; week: number }) {
@@ -26,22 +29,34 @@ export function ProgramWeekHeading({ detail, week }: { detail?: string; week: nu
   );
 }
 
-function SelectedDayRing() {
+function ProgramDayCell({ allowEmptySelection, day, onSelect, selected }: { allowEmptySelection: boolean; day: ProgramPlanningDay; onSelect(day: ProgramPlanningDay): void; selected: boolean }) {
+  const { compact } = useWeekDayLayout();
   return (
-    <View pointerEvents="none" style={styles.daySelectedRing}>
-      <Svg height="100%" viewBox="0 0 100 100" width="100%">
-        <Defs>
-          <LinearGradient id="selected-day-gradient" x1="0" x2="1" y1="1" y2="0">
-            <Stop offset="0" stopColor="#FEDA75" />
-            <Stop offset="0.24" stopColor="#FA7E1E" />
-            <Stop offset="0.52" stopColor="#D62976" />
-            <Stop offset="0.76" stopColor="#962FBF" />
-            <Stop offset="1" stopColor="#4F5BD5" />
-          </LinearGradient>
-        </Defs>
-        <Circle cx="50" cy="50" fill="none" r="44" stroke="url(#selected-day-gradient)" strokeWidth="8" />
-      </Svg>
-    </View>
+    <WeekDayCell label={day.label}>
+      <Pressable
+        accessibilityLabel={day.filled ? `${day.label}: ver plan diario` : day.disabled ? `${day.label}: día sin plan, no editable` : `${day.label}: agregar plan diario`}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: day.filled ? selected : undefined, selected }}
+        disabled={day.disabled || (!day.filled && !allowEmptySelection)}
+        hitSlop={compact ? 2 : undefined}
+        onPress={() => onSelect(day)}
+        style={({ pressed }) => [styles.dayCircle, compact && styles.dayCircleCompact, !day.filled && styles.dayCircleEmpty, day.isToday && styles.dayCircleToday, selected && styles.dayCircleSelected, pressed && styles.pressed]}>
+        {selected ? <WeekDaySelectionRing /> : null}
+        {day.dayOfMonth != null && day.monthLabel ? (
+          <>
+            <Text style={[styles.dayDateNumber, day.isToday && styles.dayDateTextToday]}>{day.dayOfMonth}</Text>
+            <Text style={[styles.dayDateMonth, day.isToday && styles.dayDateTextToday]}>{day.monthLabel}</Text>
+            {!day.filled && !day.disabled ? (
+              <View style={styles.dayAddBadge}><Plus color={tokens.color.textMain} size={10} strokeWidth={2.5} /></View>
+            ) : null}
+          </>
+        ) : day.filled ? (
+          <View style={styles.dayPlanIcon}><ClipboardList color={tokens.color.entityIconForeground} size={14} /></View>
+        ) : (
+          <Plus color={tokens.color.textMain} size={24} />
+        )}
+      </Pressable>
+    </WeekDayCell>
   );
 }
 
@@ -103,43 +118,31 @@ export function ProgramDaySelector({
 }) {
   return (
     <View style={styles.daySelection}>
-      <View accessibilityLabel={accessibilityLabel} style={styles.daysGrid}>
+      <WeekDayGrid accessibilityLabel={accessibilityLabel}>
         {days.map((day) => {
           const selected = selectedId === day.id;
           return (
-            <View key={day.id} style={styles.dayCell}>
-              <Text style={styles.dayLabel}>{day.label}</Text>
-              <Pressable
-                accessibilityLabel={day.filled ? `${day.label}: ver plan diario` : `${day.label}: día sin plan`}
-                accessibilityRole="button"
-                accessibilityState={{ expanded: day.filled ? selected : undefined, selected }}
-                disabled={!day.filled && !allowEmptySelection}
-                onPress={() => onSelect(day)}
-                style={({ pressed }) => [styles.dayCircle, !day.filled && styles.dayCircleEmpty, selected && styles.dayCircleSelected, pressed && styles.pressed]}>
-                {selected ? <SelectedDayRing /> : null}
-                {day.filled
-                  ? <View style={styles.dayPlanIcon}><ClipboardList color={tokens.color.entityIconForeground} size={14} /></View>
-                  : <Plus color={tokens.color.program} size={24} />}
-              </Pressable>
-            </View>
+            <ProgramDayCell allowEmptySelection={allowEmptySelection} day={day} key={day.id} onSelect={onSelect} selected={selected} />
           );
         })}
-      </View>
+      </WeekDayGrid>
       {children}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  dayCell: { alignItems: "center", flex: 1, gap: tokens.spacing.sm, minWidth: 0 },
-  dayCircle: { alignItems: "center", aspectRatio: 1, backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.pill, borderWidth: 2, justifyContent: "center", maxWidth: 58, overflow: "visible", position: "relative", width: "100%" },
+  dayCircle: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.pill, borderWidth: 1, height: 44, justifyContent: "center", overflow: "visible", position: "relative", width: 44 },
+  dayCircleCompact: { height: 40, width: 40 },
   dayCircleEmpty: { borderStyle: "dashed", opacity: 0.65 },
   dayCircleSelected: { borderColor: tokens.color.surfaceApp },
-  dayLabel: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: "700" },
+  dayCircleToday: { backgroundColor: tokens.color.entityIconForeground, borderStyle: "solid", opacity: 1 },
+  dayAddBadge: { alignItems: "center", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: 8, borderWidth: 1, bottom: -3, height: 16, justifyContent: "center", position: "absolute", right: -3, width: 16 },
+  dayDateMonth: { color: tokens.color.textMuted, fontSize: 8, fontWeight: tokens.weight.regular, lineHeight: 9 },
+  dayDateNumber: { color: tokens.color.textMain, fontSize: 12, fontWeight: tokens.weight.semibold, lineHeight: 14 },
+  dayDateTextToday: { color: tokens.color.surfaceApp },
   dayPlanIcon: { alignItems: "center", backgroundColor: tokens.color.dailyPlan, borderRadius: tokens.spacing.compact, height: 24, justifyContent: "center", width: 24 },
-  daySelectedRing: { bottom: -7, left: -7, position: "absolute", right: -7, top: -7 },
   daySelection: { gap: tokens.spacing.lg, minWidth: 0 },
-  daysGrid: { flexDirection: "row", gap: tokens.spacing.compact, justifyContent: "space-between" },
   pressed: { opacity: 0.68 },
   weekTab: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, justifyContent: "center", minHeight: 30, paddingHorizontal: tokens.spacing.md },
   weekTabActive: { backgroundColor: tokens.color.textMain, borderColor: tokens.color.textMain },

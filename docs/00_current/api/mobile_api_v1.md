@@ -133,6 +133,13 @@ detail, bounded historical calendarizations and pause/resume/cancel operations.
 All mutations delegate to the existing calendarization commands; dated snapshots
 remain the historical authority and the source Program is not rewritten.
 
+The active-program editor assigns an owned library DailyPlan to one strictly future,
+unexecuted CalendarizedDay through a preview/commit pair. Preview is read-only; commit
+builds the dated snapshot server-side and immediately records an applied
+CalendarizationRevision with before/after evidence and idempotency. Replacing an
+occupied day requires explicit confirmation. Neither operation mutates the source
+Program, and the source link is described to clients as the original template.
+
 MCE03 adds the owner-scoped proposal center through `GET /proposals`,
 `GET /proposals/{proposal_id}` and explicit approve, reject, cancel and apply
 actions. The detail response is a bounded mobile projection of targets,

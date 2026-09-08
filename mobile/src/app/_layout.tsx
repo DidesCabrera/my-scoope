@@ -3,7 +3,7 @@ import * as Notifications from "expo-notifications";
 import { type Href, Stack, usePathname, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
-import { AppState } from "react-native";
+import { AppState, Platform } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { SessionProvider, useSession } from "@/auth/session-context";
@@ -58,6 +58,7 @@ function RootLayout() {
   const router = useRouter();
 
   useEffect(() => {
+    if (Platform.OS === "web") return;
     const openToday = () => {
       router.push("/today");
     };

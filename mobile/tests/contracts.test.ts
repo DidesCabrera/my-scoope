@@ -99,6 +99,13 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(productUiSourceForIndicators, /itemTone === "surfaceMuted" \? tokens\.color\.surfaceMuted : color/);
   assert.match(productUiSourceForIndicators, /structuralItemSurface: \{ borderColor: tokens\.color\.borderDefault, borderWidth: 1 \}/);
 
+  const menuPanelSource = await readFile(
+    path.resolve(process.cwd(), "src/components/panels/entity-panels.tsx"),
+    "utf8",
+  );
+  assert.match(menuPanelSource, /menuFoods: \{ color: tokens\.color\.textMain/);
+  assert.doesNotMatch(menuPanelSource, /menuFoods: \{[^}]*opacity:/);
+
   const libraryEntityPanels = await readFile(
     path.resolve(process.cwd(), "src/components/libraries/entity-panels.tsx"),
     "utf8",
@@ -171,13 +178,16 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     path.resolve(process.cwd(), "src/components/libraries/program-planning-controls.tsx"),
     "utf8",
   );
-  assert.match(planningControls, /function SelectedDayRing/);
-  assert.match(planningControls, /stopColor="#D62976"/);
+  assert.match(planningControls, /<WeekDaySelectionRing \/>/);
   assert.match(planningControls, /accessibilityState=\{\{ expanded:/);
   assert.match(planningControls, /backgroundColor: tokens\.color\.surfaceCard/);
   assert.match(planningControls, /backgroundColor: tokens\.color\.dailyPlan/);
   assert.match(planningControls, /<ClipboardList color=\{tokens\.color\.entityIconForeground\} size=\{14\}/);
+  assert.match(planningControls, /<Plus color=\{tokens\.color\.textMain\} size=\{24\} \/>/);
   assert.match(planningControls, /borderRadius: tokens\.spacing\.compact, height: 24/);
+  assert.match(planningControls, /dayCircle: \{[^}]*borderWidth: 1[^}]*height: 44[^}]*width: 44/);
+  assert.match(planningControls, /dayCircleCompact: \{ height: 40, width: 40 \}/);
+  assert.match(planningControls, /hitSlop=\{compact \? 2 : undefined\}/);
   assert.match(planningControls, /horizontal\n[\s\S]*?showsHorizontalScrollIndicator=\{false\}/);
   assert.match(planningControls, /export function ProgramWeekHeading/);
   assert.match(planningControls, /<CalendarRange color=\{tokens\.color\.entityIconForeground\} size=\{11\}/);
@@ -195,6 +205,9 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(calendarizedPlanning, /<ProgramDaySelector/);
   assert.match(calendarizedPlanning, /apiRequest<CalendarizedDayDetail>/);
   assert.match(calendarizedPlanning, /<CalendarizedDailyPlanCard/);
+  assert.match(calendarizedPlanning, /preferredCalendarizedDay\(days, week, localDate\(\)\)/);
+  assert.match(calendarizedPlanning, /Día sin plan\. No hay un plan diario asignado para esta fecha\./);
+  assert.match(calendarizedPlanning, /isToday: day\.calendar_date === localDate\(\)/);
   assert.match(calendarizedPlanning, /<SectionDivider spacing="compact" tone="soft" \/>/);
   assert.match(calendarizedPlanning, /title="Alimentos en esta semana"/);
   assert.match(calendarizedPlanning, /<FoodPanels items=\{weekFoods\} \/>/);
@@ -229,8 +242,11 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     path.resolve(process.cwd(), "src/components/panels/entity-panels.tsx"),
     "utf8",
   );
-  assert.match(sharedEntityPanels, /accessibilityLabel=\{`Ver detalle de \$\{item\.name\}`\}/);
+  assert.match(sharedEntityPanels, /accessibilityLabel=\{canOpen \? `Ver detalle de \$\{item\.name\}` : undefined\}/);
+  assert.match(sharedEntityPanels, /<Pressable[\s\S]*style=\{\(\{ pressed \}\) => \[styles\.menuRow,[\s\S]*pressed && canOpen && styles\.menuRowPressed\]\}/);
+  assert.doesNotMatch(sharedEntityPanels, /<Pressable[\s\S]*style=\{\(\{ pressed \}\) => \[styles\.menuAction/);
   assert.match(sharedEntityPanels, /<ChevronRight/);
+  assert.match(sharedEntityPanels, /item\.time \? \([\s\S]*<Clock color=\{tokens\.color\.textMuted\} size=\{13\} strokeWidth=\{2\} \/>[\s\S]*<Text style=\{styles\.menuTime\}>\{item\.time\}<\/Text>/);
   assert.match(sharedEntityPanels, /item\.detailId != null \|\| item\.canOpen/);
   assert.match(sharedEntityPanels, /allocationRow: \{ gap: tokens\.spacing\.sm \}/);
   assert.match(libraryEntityPanels, /NutritionAllocationPanel/);
@@ -267,7 +283,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.doesNotMatch(mealAdherence, /label=\{editingNote \? "Guardar nota" : "Editar nota"\}/);
 
   const activeProgram = await readFile(path.resolve(process.cwd(), "src/app/program/index.tsx"), "utf8");
-  assert.match(activeProgram, /<SectionPageHeader count=\{weekCount\} countLabel="semanas" section="calendarization" title="Mi programa" \/>/);
+  assert.match(activeProgram, /<SectionPageHeader countLabel="semanas" section="calendarization" title="Mi programa activo" \/>/);
+  assert.doesNotMatch(activeProgram, /<SectionPageHeader count=\{weekCount\}/);
   assert.doesNotMatch(activeProgram, /<CollectionPageHeader/);
 
   const appNavigation = await readFile(path.resolve(process.cwd(), "src/components/navigation/app-navigation.tsx"), "utf8");
@@ -281,17 +298,30 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(activeProgram, /<CalendarizedProgramPlanning days=\{programDays\} initialWeek=\{activeWeek\} key=\{`\$\{calendarization\.id\}:\$\{activeWeek\}`\} showWeekTabs=\{false\} weeksData=\{program\.weeks\} \/>/);
   assert.match(activeProgram, /<SectionDivider \/>[\s\S]*<SectionHeading[^>]*title="Planificación Semanal"/);
   assert.match(activeProgram, /<CalendarizedProgramPlanning[\s\S]*<SectionDivider \/>[\s\S]*<DetailLinkRow/);
+  assert.match(activeProgram, /label="Ver plantilla original"/);
+  assert.match(activeProgram, /conserva lo que realmente ocurrió/);
   assert.match(activeProgram, /weekCount === 1 \? "semana" : "semanas"/);
 
   const activePlanningControls = await readFile(path.resolve(process.cwd(), "src/components/libraries/program-planning-controls.tsx"), "utf8");
   assert.match(activePlanningControls, /nestedScrollEnabled/);
   assert.match(activePlanningControls, /weekTabsScroll: \{ flexGrow: 0, width: "100%" \}/);
 
+  const calendarizedPlanningActive = await readFile(
+    path.resolve(process.cwd(), "src/components/calendarization/calendarized-program-planning.tsx"),
+    "utf8",
+  );
+  assert.match(calendarizedPlanningActive, /compactMonthLabel\(day\.calendar_date\)/);
+  assert.match(calendarizedPlanningActive, /left\.calendar_date\.localeCompare\(right\.calendar_date\)/);
+  assert.match(calendarizedPlanningActive, /pickerHref\("dailyplan-to-calendarized-day", \{ dayId:/);
+  assert.match(calendarizedPlanningActive, /label="Cambiar plan diario"/);
+
   const activeProgramOverview = await readFile(
     path.resolve(process.cwd(), "src/components/programs/program-active-card.tsx"),
     "utf8",
   );
   assert.match(activeProgramOverview, /<ProgramActiveKpis[^>]*bleed=\{false\}/);
+  assert.match(activeProgramOverview, /eyebrow="Programa activo"/);
+  assert.doesNotMatch(activeProgramOverview, /eyebrow="Programa en curso"/);
   assert.match(activeProgramOverview, /SectionHeading icon=\{<Activity[^>]*>\} title="Métricas de activación"/);
   assert.match(activeProgramOverview, /embedded \? <DetailLinkRow[\s\S]*router\.push\("\/program" as Href\)/);
   assert.match(activeProgramOverview, /indicators=\{\[\.\.\.\(embedded \? \[\] : program\.indicators\), \{ icon: "week", iconPosition: "leading", label: "periodo", tone: "surfaceMuted"/);
@@ -331,20 +361,52 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.doesNotMatch(activateProgram, /PASO 3 DE 3|Confirma la calendarización|Volver a configurar/);
 
   const todayScreen = await readFile(path.resolve(process.cwd(), "src/app/today.tsx"), "utf8");
-  assert.match(todayScreen, /<AppHeader[^>]*title=\{`Vamos, \$\{firstName\}`\} \/>[\s\S]*<CurrentWeekSection localDate=\{today\.local_date\} \/>/);
+  assert.match(todayScreen, /<AppHeader[\s\S]*?title=\{`Vamos, \$\{firstName\}`\}[\s\S]*?\/>[\s\S]*<CurrentWeekSection localDate=\{today\.local_date\} \/>/);
+  assert.doesNotMatch(todayScreen, /<AppHeader eyebrow=/);
   assert.ok(todayScreen.indexOf("<CurrentWeekSection") < todayScreen.indexOf("<CalendarizedDailyPlanCard"));
+  assert.match(todayScreen, /<CurrentWeekSection[\s\S]*?<HomeSectionTitle>\{`Tu Plan para hoy, \$\{homePlanDateLabel\(today\.local_date\)\}`\}<\/HomeSectionTitle>[\s\S]*?<CalendarizedDailyPlanCard/);
   assert.ok(todayScreen.indexOf("<CalendarizedDailyPlanCard") < todayScreen.indexOf("<ProgramActiveHomeOverview"));
+  assert.match(todayScreen, /<CalendarizedDailyPlanCard[\s\S]*?<HomeSectionTitle>Tu Programa Activo<\/HomeSectionTitle>[\s\S]*?<ProgramActiveHomeOverview/);
+  assert.match(todayScreen, /homeSectionTitle: \{[^}]*fontSize: 18[^}]*marginBottom: -tokens\.spacing\.sm[^}]*marginTop: tokens\.spacing\.sm/);
   assert.doesNotMatch(todayScreen, /<SectionDivider \/>/);
   const currentWeek = await readFile(
     path.resolve(process.cwd(), "src/components/calendarization/current-week-section.tsx"),
     "utf8",
   );
-  assert.match(currentWeek, /dayCircle: \{[^}]*backgroundColor: tokens\.color\.surfaceCard[^}]*height: 38[^}]*width: 38/);
-  assert.match(currentWeek, /todayRing: \{[^}]*borderColor: tokens\.color\.dailyPlan[^}]*borderWidth: 3[^}]*bottom: -5[^}]*left: -5[^}]*right: -5[^}]*top: -5/);
+  assert.doesNotMatch(currentWeek, /Semana en curso|<SectionHeading/);
+  assert.match(currentWeek, /<Text[^>]*styles\.monthLabel[^>]*>\{day\.monthLabel\}<\/Text>/);
+  assert.match(currentWeek, /dayCircle: \{[^}]*backgroundColor: tokens\.color\.surfaceCard[^}]*height: 44[^}]*width: 44/);
+  assert.match(currentWeek, /monthLabel: \{[^}]*fontFamily: font\.regular[^}]*fontSize: 9[^}]*fontWeight: "300"[^}]*lineHeight: 10/);
+  assert.match(currentWeek, /monthLabelToday: \{ color: tokens\.color\.surfaceApp, fontWeight: tokens\.weight\.regular \}/);
+  assert.match(currentWeek, /<WeekDaySelectionRing \/>/);
   assert.match(currentWeek, /dayCircleToday: \{ backgroundColor: tokens\.color\.entityIconForeground \}/);
   assert.match(currentWeek, /dayNumberToday: \{ color: tokens\.color\.surfaceApp \}/);
-  assert.match(currentWeek, /day: \{[^}]*gap: tokens\.spacing\.sm/);
+  assert.match(currentWeek, /compact && styles\.dayCircleCompact/);
+  assert.match(currentWeek, /dayCircleCompact: \{ height: 40, width: 40 \}/);
+  const weekDayGrid = await readFile(
+    path.resolve(process.cwd(), "src/components/ui/week-day-grid.tsx"),
+    "utf8",
+  );
+  assert.match(weekDayGrid, /const compactWeekDayWidth = 350/);
+  assert.match(weekDayGrid, /gridCompact: \{ gap: tokens\.spacing\.xs \}/);
+  assert.match(weekDayGrid, /cell: \{[^}]*flex: 1[^}]*gap: tokens\.spacing\.sm/);
+  assert.match(weekDayGrid, /stopColor="#D62976"/);
+  assert.match(weekDayGrid, /strokeWidth="6"/);
+  assert.match(weekDayGrid, /selectionRing: \{ bottom: -7, left: -7[^}]*right: -7, top: -7 \}/);
+  assert.match(gallery, /key: "calendars", label: "Calendarios"/);
+  assert.match(gallery, /\{ label: "iPhone XR", width: 414 \}/);
+  assert.match(gallery, /\{ label: "Teléfono compacto", width: 375 \}/);
+  assert.match(gallery, /<CurrentWeekSection localDate="2026-09-01" \/>/);
+  assert.match(gallery, /title="Vamos, Felipe"/);
+  assert.match(gallery, /<GuideMetric label="Peso actual" value="85,0kg" \/>/);
+  assert.match(gallery, /<ProgramDaySelector/);
+  assert.match(gallery, /MI PROGRAMA ACTIVO · FECHAS \+ PLANES/);
   assert.match(todayScreen, /<ProgramActiveHomeOverview/);
+  assert.match(todayScreen, /alignment="center"/);
+  assert.match(todayScreen, /<GuideMetric label="Peso actual" value=\{`\$\{displayWeight\(currentWeightKg\)\}kg`\} \/>/);
+  assert.match(todayScreen, /apiRequest<WeightListData>\("\/api\/v1\/weights\?limit=1"\)/);
+  assert.match(todayScreen, /latestWeightKg \?\? profile\?\.current_weight_kg \?\? today\?\.measurements\?\.latest_weight_kg/);
+  assert.match(todayScreen, /displayWeight\(currentWeightKg\)/);
   assert.match(todayScreen, /dateLabel=\{compactDateLabel\(today\.local_date\)\}/);
   assert.match(todayScreen, /<HomeLibraryGrid counts=\{libraryCounts\} \/>/);
   assert.match(todayScreen, /\/api\/v1\/library\/programs\?limit=1/);

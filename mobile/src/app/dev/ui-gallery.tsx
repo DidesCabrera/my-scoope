@@ -13,6 +13,7 @@ import {
   SavedComparisonCard,
   SavedComparisonDetailPage,
 } from "@/components/comparisons";
+import { CurrentWeekSection } from "@/components/calendarization/current-week-section";
 import {
   DailyPlanMealDetailList,
   type DailyPlanMealDetailItem,
@@ -22,6 +23,7 @@ import {
 } from "@/components/details";
 import { ProgramChildCard } from "@/components/libraries/program-child-card";
 import { ProgramDetailPreview } from "@/components/libraries/program-detail-preview";
+import { ProgramDaySelector } from "@/components/libraries/program-planning-controls";
 import {
   KpiAllocationBar,
   NutritionEntityCard,
@@ -53,6 +55,7 @@ import {
   EntityCardAction,
   type EntityKind,
   Field,
+  GuideMetric,
   InlineNotice,
   MessageCard,
   Pill,
@@ -161,11 +164,12 @@ const dailyPlanMealDetailItems: DailyPlanMealDetailItem[] = [
   },
 ];
 
-type GalleryTab = "components" | "program" | "details" | "proposals" | "comparisons" | "states" | "tokens";
+type GalleryTab = "components" | "calendars" | "program" | "details" | "proposals" | "comparisons" | "states" | "tokens";
 type Choice = "daily" | "weekly";
 
 const galleryTabs: { key: GalleryTab; label: string }[] = [
   { key: "components", label: "Componentes" },
+  { key: "calendars", label: "Calendarios" },
   { key: "program", label: "Programa" },
   { key: "details", label: "Detalle" },
   { key: "proposals", label: "Propuestas" },
@@ -179,6 +183,31 @@ const comparisonExamples: Record<ComparisonScope, { label: string }> = {
   meal: { label: "Desayuno proteico" },
   dailyPlan: { label: "Plan semanal equilibrado" },
 };
+
+const calendarPreviewWidths = [
+  { label: "iPhone XR", width: 414 },
+  { label: "Teléfono compacto", width: 375 },
+] as const;
+
+const programDayExamples = [
+  { filled: true, id: "mon", label: "L" },
+  { filled: true, id: "tue", label: "M" },
+  { filled: false, id: "wed", label: "X" },
+  { filled: true, id: "thu", label: "J" },
+  { filled: true, id: "fri", label: "V" },
+  { filled: false, id: "sat", label: "S" },
+  { filled: true, id: "sun", label: "D" },
+];
+
+const activeProgramDayExamples = [
+  { dayOfMonth: 8, filled: true, id: "active-tue", isToday: true, label: "M", monthLabel: "Sep" },
+  { dayOfMonth: 9, filled: true, id: "active-wed", label: "X", monthLabel: "Sep" },
+  { dayOfMonth: 10, filled: false, id: "active-thu", label: "J", monthLabel: "Sep" },
+  { dayOfMonth: 11, filled: true, id: "active-fri", label: "V", monthLabel: "Sep" },
+  { dayOfMonth: 12, filled: false, id: "active-sat", label: "S", monthLabel: "Sep" },
+  { dayOfMonth: 13, filled: true, id: "active-sun", label: "D", monthLabel: "Sep" },
+  { dayOfMonth: 14, filled: true, id: "active-mon", label: "L", monthLabel: "Sep" },
+];
 
 function GalleryNavigation({ activeTab, onChange, wide }: { activeTab: GalleryTab; onChange: (tab: GalleryTab) => void; wide: boolean }) {
   const [open, setOpen] = useState(false);
@@ -245,6 +274,8 @@ export default function UiGalleryScreen() {
   const [comparisonScope, setComparisonScope] = useState<ComparisonScope>("food");
   const [comparisonQuantity, setComparisonQuantity] = useState("100");
   const [field, setField] = useState("");
+  const [selectedProgramDay, setSelectedProgramDay] = useState<number | string | null>("tue");
+  const [selectedActiveProgramDay, setSelectedActiveProgramDay] = useState<number | string | null>("active-tue");
 
   if (!__DEV__) return <Redirect href="/" />;
 
@@ -447,6 +478,48 @@ export default function UiGalleryScreen() {
               <PanelAllocationBar size="compact" tone="fat" value={0} />
             </DetailSection>
           </ContentPanel>
+        </>
+      ) : null}
+
+      {tab === "calendars" ? (
+        <>
+          <SectionTitle detail="Componentes reales · 414 pt y 375 pt" title="Calendarios semanales" />
+          <InlineNotice>Los marcos incluyen los 18 pt de margen horizontal de una pantalla real. El diseño compacto responde al ancho disponible, no al modelo del dispositivo.</InlineNotice>
+          {calendarPreviewWidths.map((preview) => (
+            <View key={preview.width} style={[styles.devicePreview, { width: preview.width }]}>
+              <View style={styles.devicePreviewHeader}>
+                <Text style={styles.devicePreviewName}>{preview.label}</Text>
+                <Text style={styles.devicePreviewWidth}>{preview.width} pt</Text>
+              </View>
+              <View style={styles.devicePreviewScreen}>
+                <Text style={styles.calendarExampleLabel}>HOME · FECHAS</Text>
+                <AppHeader
+                  action={<GuideMetric label="Peso actual" value="85,0kg" />}
+                  alignment="center"
+                  title="Vamos, Felipe"
+                />
+                <CurrentWeekSection localDate="2026-09-01" />
+                <SectionDivider spacing="compact" tone="soft" />
+                <Text style={styles.calendarExampleLabel}>PROGRAMA · PLANES DIARIOS</Text>
+                <ProgramDaySelector
+                  accessibilityLabel={`Ejemplo de planes diarios a ${preview.width} puntos`}
+                  allowEmptySelection
+                  days={programDayExamples}
+                  onSelect={(day) => setSelectedProgramDay(day.id)}
+                  selectedId={selectedProgramDay}
+                />
+                <SectionDivider spacing="compact" tone="soft" />
+                <Text style={styles.calendarExampleLabel}>MI PROGRAMA ACTIVO · FECHAS + PLANES</Text>
+                <ProgramDaySelector
+                  accessibilityLabel={`Ejemplo de programa activo a ${preview.width} puntos`}
+                  allowEmptySelection
+                  days={activeProgramDayExamples}
+                  onSelect={(day) => setSelectedActiveProgramDay(day.id)}
+                  selectedId={selectedActiveProgramDay}
+                />
+              </View>
+            </View>
+          ))}
         </>
       ) : null}
 
@@ -762,6 +835,12 @@ const styles = StyleSheet.create({
   galleryLayout: { gap: tokens.spacing.lg, minWidth: 0, width: "100%" },
   galleryLayoutWide: { alignItems: "flex-start", flexDirection: "row" },
   galleryContent: { flex: 1, gap: tokens.spacing.lg, minWidth: 0, width: "100%" },
+  calendarExampleLabel: { color: tokens.color.textSoft, fontSize: 10, fontWeight: tokens.weight.bold, letterSpacing: 0.8 },
+  devicePreview: { alignSelf: "center", backgroundColor: tokens.color.surfacePage, borderColor: tokens.color.borderStrong, borderRadius: 30, borderWidth: 1, maxWidth: "100%", overflow: "hidden" },
+  devicePreviewHeader: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", justifyContent: "space-between", paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.md },
+  devicePreviewName: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
+  devicePreviewScreen: { gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.lg },
+  devicePreviewWidth: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"] },
   dropdown: { alignSelf: "stretch", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, gap: tokens.spacing.xs, padding: tokens.spacing.sm },
   dropdownTrigger: { alignItems: "center", backgroundColor: tokens.color.surfaceElevated, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, flexDirection: "row", justifyContent: "space-between", minHeight: 44, paddingHorizontal: tokens.spacing.md },
   dropdownValue: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },

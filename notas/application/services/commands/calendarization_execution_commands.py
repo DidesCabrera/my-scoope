@@ -13,7 +13,11 @@ from notas.application.queries.calendarization_execution_queries import (
 )
 from notas.application.queries.calendarization_queries import current_calendarization_for_user
 from notas.application.services.calendarization.scheduling import local_date_for_timezone
-from notas.application.services.calendarization.snapshots import SNAPSHOT_SCHEMA_VERSION
+from notas.application.services.calendarization.snapshots import (
+    SNAPSHOT_SCHEMA_VERSION,
+    build_dailyplan_snapshot_from_dailyplan,
+    dailyplan_with_calendarization_content,
+)
 from notas.application.services.commands.calendarization_commands import reschedule_calendarized_days
 from notas.application.services.nutrition.body_metrics import record_weight
 from notas.domain.models import (
@@ -22,6 +26,7 @@ from notas.domain.models import (
     CalendarizationRevision,
     CalendarizedDay,
     CalendarizedMealExecution,
+    DailyPlan,
     ProgramCalendarization,
     WeightLog,
 )
@@ -373,6 +378,81 @@ def decide_calendarization_revision(
     revision.applied_at = current_time
     revision.save(update_fields=["status", "decided_at", "applied_at", "updated_at"])
     return revision
+
+
+@transaction.atomic
+def assign_dailyplan_to_calendarized_day(
+    *,
+    user,
+    day_id: int,
+    dailyplan_id: int,
+    idempotency_key: str,
+    confirm_replacement: bool = False,
+    now: datetime | None = None,
+) -> CalendarizationRevision:
+    """Assign a library plan to a future lived-program day and audit the change."""
+
+    clean_key = _clean_idempotency_key(idempotency_key)
+    existing = (
+        CalendarizationRevision.objects.select_related("calendarization")
+        .filter(idempotency_key=clean_key)
+        .first()
+    )
+    if existing:
+        if existing.calendarization.user_id != user.id:
+            raise ValueError("calendarization_idempotency_conflict")
+        if existing.status == CalendarizationRevision.STATUS_PENDING:
+            return decide_calendarization_revision(
+                user=user,
+                revision_id=existing.id,
+                decision="approve",
+                now=now,
+            )
+        if existing.status == CalendarizationRevision.STATUS_APPLIED:
+            return existing
+        raise ValueError("calendarization_idempotency_conflict")
+
+    day = _owned_day(user=user, day_id=day_id, for_update=True)
+    if day.plan_snapshot and not confirm_replacement:
+        raise ValueError("calendarized_day_plan_replacement_confirmation_required")
+
+    try:
+        dailyplan = dailyplan_with_calendarization_content(dailyplan_id)
+    except DailyPlan.DoesNotExist as exc:
+        raise ValueError("calendarized_day_dailyplan_not_found") from exc
+    if (
+        dailyplan.created_by_id != user.id
+        or dailyplan.is_draft
+        or dailyplan.source == DailyPlan.SOURCE_PROGRAM
+    ):
+        raise ValueError("calendarized_day_dailyplan_not_found")
+
+    snapshot = build_dailyplan_snapshot_from_dailyplan(dailyplan)
+    revision = prepare_calendarization_revision(
+        user=user,
+        calendarization_id=day.calendarization_id,
+        effective_from=day.calendar_date,
+        replacement_days=[
+            {
+                "calendar_date": day.calendar_date,
+                "plan_snapshot": snapshot.payload,
+            }
+        ],
+        rationale="Plan diario asignado manualmente al programa activo.",
+        idempotency_key=clean_key,
+        now=now,
+    )
+    applied = decide_calendarization_revision(
+        user=user,
+        revision_id=revision.id,
+        decision="approve",
+        now=now,
+    )
+    CalendarizedDay.objects.filter(pk=day.id).update(
+        source_program_day_id=None,
+        source_dailyplan_id=dailyplan.id,
+    )
+    return applied
 
 
 def default_review_period(calendarization, *, now: datetime | None = None) -> tuple[date, date]:

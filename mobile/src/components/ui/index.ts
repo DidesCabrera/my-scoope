@@ -7,3 +7,4 @@ export * from "./product";
 export * from "./section-divider";
 export * from "./surfaces";
 export * from "./typography";
+export * from "./week-day-grid";

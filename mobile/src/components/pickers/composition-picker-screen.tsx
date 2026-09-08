@@ -1,6 +1,7 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
+import * as Crypto from "expo-crypto";
 import { CalendarDays, Clock, NotebookPen, Pencil, Scale, Search } from "lucide-react-native";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -28,7 +29,7 @@ import { PickerCardAction } from "./picker-card-action";
 import { PickerEntryTabs } from "./picker-entry-tabs";
 import { PickerResultCard } from "./picker-result-card";
 
-export type PickerKind = "food-to-meal" | "meal-to-dailyplan" | "dailyplan-to-program";
+export type PickerKind = "food-to-meal" | "meal-to-dailyplan" | "dailyplan-to-program" | "dailyplan-to-calendarized-day";
 
 type PickerOption = {
   id: number;
@@ -81,6 +82,16 @@ const configs: Record<PickerKind, PickerConfig> = {
     targetSlug: "programs",
     previewPath: (id) => `/api/v1/library/programs/${id}/daily-plan-picker/preview`,
     commitPath: (id) => `/api/v1/library/programs/${id}/daily-plan-picker/commit`,
+  },
+  "dailyplan-to-calendarized-day": {
+    createEntity: "dailyPlan",
+    createLabel: "Crear plan diario",
+    title: "Asignar plan al programa activo",
+    searchLabel: "Buscar plan diario",
+    searchPlaceholder: "Escribe el nombre de un plan diario",
+    targetSlug: "programs",
+    previewPath: (id) => `/api/v1/program/days/${id}/daily-plan-picker/preview`,
+    commitPath: (id) => `/api/v1/program/days/${id}/daily-plan-picker/commit`,
   },
 };
 
@@ -164,7 +175,7 @@ export function CompositionPickerScreen({
     ? kind === "food-to-meal" ? "Reemplazar alimento" : "Reemplazar comida"
     : config.title;
   const router = useRouter();
-  const detailHref = returnTo ?? `/libraries/${config.targetSlug}/${targetId}` as Href;
+  const detailHref = returnTo ?? (kind === "dailyplan-to-calendarized-day" ? "/program" : `/libraries/${config.targetSlug}/${targetId}`) as Href;
   const { status, apiRequest } = useSession();
   const setHeaderPresentation = useHeaderPresentation();
   const [query, setQuery] = useState("");
@@ -184,6 +195,7 @@ export function CompositionPickerScreen({
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retryNonce, setRetryNonce] = useState(0);
+  const idempotencyKey = useRef(Crypto.randomUUID());
 
   useFocusEffect(useCallback(() => {
     const close = () => router.dismissTo(detailHref);
@@ -200,17 +212,19 @@ export function CompositionPickerScreen({
         : apiRequest<LibraryItem>(`/api/v1/library/${kind === "meal-to-dailyplan" ? "meals" : "daily-plans"}/${selectedId}`).then(optionFromLibrary)
       : Promise.resolve(null);
     Promise.all([
-      apiRequest<LibraryItem>(`/api/v1/library/${config.targetSlug}/${targetId}`),
+      kind === "dailyplan-to-calendarized-day"
+        ? Promise.resolve(null)
+        : apiRequest<LibraryItem>(`/api/v1/library/${config.targetSlug}/${targetId}`),
       selectionRequest,
     ])
       .then(([target, option]) => {
         if (!active) return;
         setSelected(option);
-        if (kind === "food-to-meal" && relationId && target.panel.kind === "foods") {
+        if (kind === "food-to-meal" && relationId && target?.panel.kind === "foods") {
           const relation = target.panel.foods.find((item) => item.relation_id === relationId);
           if (relation) setQuantity(String(relation.quantity));
         }
-        if (kind === "meal-to-dailyplan" && relationId && target.panel.kind === "meals") {
+        if (kind === "meal-to-dailyplan" && relationId && target?.panel.kind === "meals") {
           const slot = target.panel.meals.find((item) => item.relation_id === relationId);
           if (slot) { setHour(slot.time?.slice(0, 5) || "08:00"); setNote(slot.note || ""); }
         }
@@ -253,6 +267,7 @@ export function CompositionPickerScreen({
       quantity: Number(quantity),
     };
     if (kind === "meal-to-dailyplan") return { meal_id: selected.id, dailyplan_meal_id: relationId, hour, note };
+    if (kind === "dailyplan-to-calendarized-day") return { dailyplan_id: selected.id };
     return { dailyplan_id: selected.id, week_number: weekNumber, day_numbers: dayNumbers };
   }, [contextDailyPlanId, contextDailyPlanMealId, dayNumbers, hour, kind, note, quantity, relationId, selected, weekNumber]);
   const payloadKey = payload ? JSON.stringify(payload) : null;
@@ -286,7 +301,11 @@ export function CompositionPickerScreen({
     setSubmitting(true);
     setError(null);
     try {
-      const body = kind === "dailyplan-to-program" ? { ...payload, confirm_replacements: confirmReplacements } : payload;
+      const body = kind === "dailyplan-to-program"
+        ? { ...payload, confirm_replacements: confirmReplacements }
+        : kind === "dailyplan-to-calendarized-day"
+          ? { ...payload, confirm_replacement: confirmReplacements, idempotency_key: idempotencyKey.current }
+          : payload;
       const result = await apiRequest<PickerCommitResult>(config.commitPath(targetId), { method: "POST", body: JSON.stringify(body) });
       Alert.alert("Listo", result.message, [{ text: "Aceptar", onPress: () => router.dismissTo(detailHref) }]);
     } catch (nextError) {
