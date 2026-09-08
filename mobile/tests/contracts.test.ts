@@ -391,28 +391,20 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(calendarizedDayDetail, /snapshotDailyPlanFoodPanelItems\(meals\)/);
   assert.match(calendarizedDayDetail, /<SectionDivider \/>[\s\S]*title="Alimentos en este plan diario"[\s\S]*<FoodPanels items=\{foods\} \/>/);
 
-  const sharedPanelSource = await readFile(
-    path.resolve(process.cwd(), "src/components/panels/entity-panels.tsx"),
-    "utf8",
-  );
-  assert.match(sharedPanelSource, /PanelItemName\(\{ item, style = styles\.gridLeadingCell \}/);
-  assert.match(sharedPanelSource, /<PanelItemName item=\{item\} style=\{styles\.quantityLeadingCell\} \/>/);
-  assert.match(sharedPanelSource, /quantityLeadingCell: \{[^}]*flex: 1/);
-  assert.match(sharedPanelSource, /quantityValue: \{ textAlign: "center", width: 56 \}/);
-  assert.match(sharedPanelSource, /function PanelHeaderCell/);
-  assert.match(sharedPanelSource, /headerCell: \{[^}]*alignSelf: "stretch"[^}]*justifyContent: "center"/);
-  assert.match(sharedPanelSource, /<PanelHeaderCell align="left" style=\{styles\.gridLeadingCell\}>\{leadingLabel\}<\/PanelHeaderCell>/);
-  assert.doesNotMatch(sharedPanelSource, /<Text style=\{\[styles\.headerText, styles\.gridLeadingCell/);
-  assert.doesNotMatch(sharedPanelSource, /styles\.name, styles\.gridLeadingCell/);
+  assert.match(sharedEntityPanels, /PanelItemName\(\{ item, style = styles\.gridLeadingCell \}/);
+  assert.match(sharedEntityPanels, /<PanelItemName item=\{item\} style=\{styles\.quantityLeadingCell\} \/>/);
+  assert.match(sharedEntityPanels, /quantityLeadingCell: \{[^}]*flex: 1/);
+  assert.match(sharedEntityPanels, /quantityValue: \{ textAlign: "center", width: 56 \}/);
+  assert.match(sharedEntityPanels, /function PanelHeaderCell/);
+  assert.match(sharedEntityPanels, /headerCell: \{[^}]*alignSelf: "stretch"[^}]*justifyContent: "center"/);
+  assert.match(sharedEntityPanels, /<PanelHeaderCell align="left" style=\{styles\.gridLeadingCell\}>\{leadingLabel\}<\/PanelHeaderCell>/);
+  assert.doesNotMatch(sharedEntityPanels, /<Text style=\{\[styles\.headerText, styles\.gridLeadingCell/);
+  assert.doesNotMatch(sharedEntityPanels, /styles\.name, styles\.gridLeadingCell/);
 
-  const libraryPanelSource = await readFile(
-    path.resolve(process.cwd(), "src/components/libraries/entity-panels.tsx"),
-    "utf8",
-  );
-  assert.match(libraryPanelSource, /FoodPanels as SharedFoodPanels/);
-  assert.match(libraryPanelSource, /MealPanels as SharedMealPanels/);
-  assert.match(libraryPanelSource, /return <SharedFoodPanels items=\{items\.map\(toFoodPanelItem\)\} \/>/);
-  assert.match(libraryPanelSource, /return <SharedMealPanels items=\{items\.map\(toMealPanelItem\)\} \/>/);
+  assert.match(libraryEntityPanels, /FoodPanels as SharedFoodPanels/);
+  assert.match(libraryEntityPanels, /MealPanels as SharedMealPanels/);
+  assert.match(libraryEntityPanels, /return <SharedFoodPanels items=\{items\.map\(toFoodPanelItem\)\} \/>/);
+  assert.match(libraryEntityPanels, /return <SharedMealPanels items=\{items\.map\(toMealPanelItem\)\} \/>/);
 
   const calendarizationAdapters = await readFile(
     path.resolve(process.cwd(), "src/components/calendarization/presentation-adapters.ts"),

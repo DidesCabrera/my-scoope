@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
-import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 
@@ -28,8 +27,8 @@ test("mobile deployment targets fail closed when environment and API disagree", 
 });
 
 test("EAS keeps simulator staging separate from TestFlight production", async () => {
-  const eas = JSON.parse(await readFile(path.resolve(process.cwd(), "eas.json"), "utf8"));
-  const packageJson = JSON.parse(await readFile(path.resolve(process.cwd(), "package.json"), "utf8"));
+  const eas = require("../eas.json");
+  const packageJson = require("../package.json");
 
   assert.equal(eas.cli.requireCommit, true);
   assert.equal(eas.build.testflight, undefined);
