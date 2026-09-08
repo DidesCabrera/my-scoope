@@ -11,7 +11,7 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { ProgramActiveActions } from "@/components/programs/program-active-actions";
 import { ProgramActiveOverview } from "@/components/programs/program-active-card";
 import { EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
-import { LoadingState, Screen, SectionDivider, SectionHeading, SectionPageHeader } from "@/components/ui";
+import { DetailLinkRow, LoadingState, Screen, SectionDivider, SectionHeading, SectionPageHeader } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
 
@@ -143,6 +143,16 @@ export default function ProgramScreen() {
         </View>
 
         <CalendarizedProgramPlanning days={programDays} initialWeek={activeWeek} key={`${calendarization.id}:${activeWeek}`} showWeekTabs={false} weeksData={program.weeks} />
+        {calendarization.source_program_id ? (
+          <>
+            <SectionDivider />
+            <DetailLinkRow
+              accessibilityLabel={`Ir al detalle de ${calendarization.program_name}`}
+              label="Ir a detalle de programa"
+              onPress={() => router.push(`/libraries/programs/${calendarization.source_program_id}` as Href)}
+            />
+          </>
+        ) : null}
       </ScrollView>
       {actionsModal}
     </>

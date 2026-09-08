@@ -373,6 +373,14 @@ background: var(--surface-card);
 border: 1px solid var(--border-soft);
 }
 
+.main-title > .structural-indicators .structural-item--date,
+.entity-heading__main.main-title > .structural-indicators .structural-item--date,
+.main-title > .entity-heading__indicator-row > .structural-indicators .structural-item--date,
+.main-title.main-card > .entity-heading__indicator-row > .structural-indicators .structural-item--date,
+.structural-indicators .structural-item--date {
+background: var(--surface-card-muted);
+}
+
 .completion-indicators,
 .completion-indicator {
 display: inline-flex;

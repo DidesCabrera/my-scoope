@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { MacroCalorieDistribution, PanelAllocationBar } from "@/components/nutrition";
-import { EntityPanelTabs, PanelBody, PanelEmptyState, PanelSurface } from "@/components/panels";
+import { contextualMacroAllocations, EntityPanelTabs, PanelBody, PanelEmptyState, PanelSurface } from "@/components/panels";
 import { tokens } from "@/design/tokens";
 import { EntityIcon } from "@/components/ui";
 
@@ -99,15 +99,16 @@ function MacrosPanel({ weeks }: { weeks: ProgramWeekSummary[] }) {
 
 function AllocationPanel({ weeks }: { weeks: ProgramWeekSummary[] }) {
   if (weeks.length === 0) return <PanelEmptyState label="Todavía no hay distribución nutricional." />;
+  const allocations = contextualMacroAllocations(weeks);
   return (
     <PanelBody>
       <Header columns={["P%", "C%", "F%"]} />
       {weeks.map((week, index) => (
         <View key={week.id} style={[styles.row, styles.allocationRow, index === weeks.length - 1 && styles.rowLast]}>
           <View style={styles.leadingCell}><WeekIdentity week={week.week} /></View>
-          <PanelAllocationBar style={styles.dataCell} tone="protein" value={week.allocation.protein} />
-          <PanelAllocationBar style={styles.dataCell} tone="carbs" value={week.allocation.carbs} />
-          <PanelAllocationBar style={styles.dataCell} tone="fat" value={week.allocation.fat} />
+          <PanelAllocationBar style={styles.dataCell} tone="protein" value={allocations[index].protein} />
+          <PanelAllocationBar style={styles.dataCell} tone="carbs" value={allocations[index].carbs} />
+          <PanelAllocationBar style={styles.dataCell} tone="fat" value={allocations[index].fat} />
         </View>
       ))}
     </PanelBody>

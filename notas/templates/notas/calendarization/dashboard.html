@@ -30,6 +30,8 @@
           <span class="structural-item"><span class="structural-value">{{ vm.content.current_calendar.assigned_plans_count }}</span><i data-lucide="clipboard-list" class="structural-icon main" aria-label="Planes asignados"></i></span>
           <span class="structural-divider"></span>
           <span class="structural-item"><span class="structural-value">{{ vm.content.current_calendar.foods_count }}</span><i data-lucide="carrot" class="structural-icon main" aria-label="Alimentos"></i></span>
+          <span class="structural-divider"></span>
+          <span class="structural-item structural-item--time structural-item--date"><i data-lucide="calendar-days" class="structural-icon main" aria-hidden="true"></i><span class="structural-value">{{ vm.content.current_calendar.start_label }} — {{ vm.content.current_calendar.end_label }}</span></span>
         </div>
       </div>
       {% include "components/program_active_kpis.html" with program_kpis=vm.content.current_calendar standalone=True %}
@@ -52,6 +54,10 @@
             <span class="program-structural-label__mobile" aria-hidden="true">S</span>
           </span>
         </span>
+        {% for week in vm.content.current_calendar.weeks %}{% if week.is_active %}
+          <span class="structural-divider"></span>
+          <span class="structural-item structural-item--time structural-item--date"><i data-lucide="calendar-days" class="structural-icon main" aria-hidden="true"></i><span class="structural-value">{{ week.start_label }} — {{ week.end_label }}</span></span>
+        {% endif %}{% endfor %}
       </div>
     </div>
     <div class="panel-tabs panel-tabs--scroll program-week-tabs js-program-week-tabs calendarization-current__week-tabs" role="tablist" aria-label="Semanas del programa">

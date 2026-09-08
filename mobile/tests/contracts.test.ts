@@ -233,7 +233,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(sharedEntityPanels, /<ChevronRight/);
   assert.match(sharedEntityPanels, /item\.detailId != null \|\| item\.canOpen/);
   assert.match(sharedEntityPanels, /allocationRow: \{ gap: tokens\.spacing\.sm \}/);
-  assert.match(libraryEntityPanels, /allocationRow: \{ gap: tokens\.spacing\.sm \}/);
+  assert.match(libraryEntityPanels, /NutritionAllocationPanel/);
 
   const completionUi = await readFile(
     path.resolve(process.cwd(), "src/components/ui/product.tsx"),
@@ -280,6 +280,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(activeProgram, /<ProgramWeekTabs activeWeek=\{activeWeek\}/);
   assert.match(activeProgram, /<CalendarizedProgramPlanning days=\{programDays\} initialWeek=\{activeWeek\} key=\{`\$\{calendarization\.id\}:\$\{activeWeek\}`\} showWeekTabs=\{false\} weeksData=\{program\.weeks\} \/>/);
   assert.match(activeProgram, /<SectionDivider \/>[\s\S]*<SectionHeading[^>]*title="Planificación Semanal"/);
+  assert.match(activeProgram, /<CalendarizedProgramPlanning[\s\S]*<SectionDivider \/>[\s\S]*<DetailLinkRow/);
   assert.match(activeProgram, /weekCount === 1 \? "semana" : "semanas"/);
 
   const activePlanningControls = await readFile(path.resolve(process.cwd(), "src/components/libraries/program-planning-controls.tsx"), "utf8");
@@ -291,15 +292,18 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     "utf8",
   );
   assert.match(activeProgramOverview, /<ProgramActiveKpis[^>]*bleed=\{false\}/);
-  assert.match(activeProgramOverview, /indicators=\{embedded \? undefined : program\.indicators\}/);
+  assert.match(activeProgramOverview, /SectionHeading icon=\{<Activity[^>]*>\} title="Métricas de activación"/);
+  assert.match(activeProgramOverview, /embedded \? <DetailLinkRow[\s\S]*router\.push\("\/program" as Href\)/);
+  assert.match(activeProgramOverview, /indicators=\{\[\.\.\.\(embedded \? \[\] : program\.indicators\), \{ icon: "week", iconPosition: "leading", label: "periodo", tone: "surfaceMuted"/);
+  assert.match(activeProgramOverview, /value: `\$\{compactDateLabel\(calendarization\.start_date\)\} — \$\{compactDateLabel\(calendarization\.end_date\)\}`/);
   assert.match(activeProgramOverview, /export function ProgramActiveHomeOverview[\s\S]*<ProgramActiveOverview \{\.\.\.props\} embedded/);
-  assert.doesNotMatch(activeProgramOverview, /<Card/);
+  assert.match(activeProgramOverview, /embedded[\s\S]*<Card accent=\{tokens\.color\.program\} style=\{styles\.content\}>\{content\}<\/Card>/);
 
   const activeProgramKpis = await readFile(
     path.resolve(process.cwd(), "src/components/programs/program-active-kpis.tsx"),
     "utf8",
   );
-  assert.match(activeProgramKpis, /periodRow:\{[^}]*backgroundColor:tokens\.color\.surfaceCard[^}]*borderColor:tokens\.color\.borderSoft[^}]*borderRadius:tokens\.radius\.md[^}]*borderWidth:1[^}]*marginTop:tokens\.spacing\.sm[^}]*padding:tokens\.spacing\.md/);
+  assert.doesNotMatch(activeProgramKpis, /periodRow|periodDates|CalendarDays/);
   assert.doesNotMatch(activeProgramKpis, /kcalSurface|kcalBorder|periodBorder|periodText/);
   assert.match(activeProgramKpis, /indicatorsSurfaceReset:\{[^}]*padding:tokens\.spacing\.xs/);
   assert.match(activeProgramKpis, /Días recorridos/);
@@ -341,6 +345,27 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(currentWeek, /dayNumberToday: \{ color: tokens\.color\.surfaceApp \}/);
   assert.match(currentWeek, /day: \{[^}]*gap: tokens\.spacing\.sm/);
   assert.match(todayScreen, /<ProgramActiveHomeOverview/);
+  assert.match(todayScreen, /dateLabel=\{compactDateLabel\(today\.local_date\)\}/);
+  assert.match(todayScreen, /<HomeLibraryGrid counts=\{libraryCounts\} \/>/);
+  assert.match(todayScreen, /\/api\/v1\/library\/programs\?limit=1/);
+  const homeLibraryGrid = await readFile(
+    path.resolve(process.cwd(), "src/components/home/home-library-grid.tsx"),
+    "utf8",
+  );
+  assert.match(homeLibraryGrid, /<Bookmark[^>]*>[\s\S]*Mis librerías/);
+  assert.match(homeLibraryGrid, /flexWrap: "wrap"/);
+  assert.match(homeLibraryGrid, /Mis Programas\\nSemanales/);
+  assert.match(homeLibraryGrid, /Mis Planes\\nDiarios/);
+  assert.match(homeLibraryGrid, /Mis Comidas/);
+  assert.match(homeLibraryGrid, /Mis Alimentos/);
+  assert.match(homeLibraryGrid, /pathname: "\/libraries\/create", params: \{ entity: entry\.entity \}/);
+  assert.match(homeLibraryGrid, /section: \{[^}]*marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
+  assert.match(homeLibraryGrid, /padding: tokens\.card\.outerPadding/);
+  assert.match(homeLibraryGrid, /<SectionDivider spacing="compact" \/>/);
+  assert.match(homeLibraryGrid, /borderTopColor: tokens\.color\[entry\.entity\]/);
+  assert.match(homeLibraryGrid, /borderTopWidth: 3/);
+  assert.match(homeLibraryGrid, /title: \{[^}]*fontSize: tokens\.type\.body/);
+  assert.doesNotMatch(homeLibraryGrid, /description:/);
   assert.doesNotMatch(todayScreen, /<ProgramActiveCard/);
   assert.match(todayScreen, /activeProgram\?\.days\.find\(\(day\) => day\.id === today\?\.day_id\)/);
   assert.match(todayScreen, /position=\{todayProgramDay \? \{ dayNumber: todayProgramDay\.day_number, weekNumber: todayProgramDay\.week_number \} : undefined\}/);
@@ -365,6 +390,21 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(calendarizedDayDetail, /<SectionDivider \/>[\s\S]*title="Detalle de cada Comida"/);
   assert.match(calendarizedDayDetail, /snapshotDailyPlanFoodPanelItems\(meals\)/);
   assert.match(calendarizedDayDetail, /<SectionDivider \/>[\s\S]*title="Alimentos en este plan diario"[\s\S]*<FoodPanels items=\{foods\} \/>/);
+
+  assert.match(sharedEntityPanels, /PanelItemName\(\{ item, style = styles\.gridLeadingCell \}/);
+  assert.match(sharedEntityPanels, /<PanelItemName item=\{item\} style=\{styles\.quantityLeadingCell\} \/>/);
+  assert.match(sharedEntityPanels, /quantityLeadingCell: \{[^}]*flex: 1/);
+  assert.match(sharedEntityPanels, /quantityValue: \{ textAlign: "center", width: 56 \}/);
+  assert.match(sharedEntityPanels, /function PanelHeaderCell/);
+  assert.match(sharedEntityPanels, /headerCell: \{[^}]*alignSelf: "stretch"[^}]*justifyContent: "center"/);
+  assert.match(sharedEntityPanels, /<PanelHeaderCell align="left" style=\{styles\.gridLeadingCell\}>\{leadingLabel\}<\/PanelHeaderCell>/);
+  assert.doesNotMatch(sharedEntityPanels, /<Text style=\{\[styles\.headerText, styles\.gridLeadingCell/);
+  assert.doesNotMatch(sharedEntityPanels, /styles\.name, styles\.gridLeadingCell/);
+
+  assert.match(libraryEntityPanels, /FoodPanels as SharedFoodPanels/);
+  assert.match(libraryEntityPanels, /MealPanels as SharedMealPanels/);
+  assert.match(libraryEntityPanels, /return <SharedFoodPanels items=\{items\.map\(toFoodPanelItem\)\} \/>/);
+  assert.match(libraryEntityPanels, /return <SharedMealPanels items=\{items\.map\(toMealPanelItem\)\} \/>/);
 
   const calendarizationAdapters = await readFile(
     path.resolve(process.cwd(), "src/components/calendarization/presentation-adapters.ts"),

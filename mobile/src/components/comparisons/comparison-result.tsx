@@ -22,7 +22,7 @@ export function ComparisonResultCards({ result }: { result: ComparisonResult }) 
   const router = useRouter();
   return (
     <View style={styles.container}>
-      <SectionTitle detail={`${result.items.length} slots`} title="Resultados comparativos" />
+      <SectionTitle title="Resultados comparativos" />
       {result.historical_snapshot ? (
         <InlineNotice>
           Esta es la fotografía guardada. Sus cifras no cambian cuando editas las entidades de origen.

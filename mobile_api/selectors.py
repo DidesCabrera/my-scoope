@@ -156,7 +156,8 @@ def _aggregated_food_panel_items(rows, *, id_prefix: str) -> list[dict]:
 
 def _program_week_panel_items(program, current_weight=None) -> list[dict]:
     summary = get_program_summary(program)
-    program_total_kcal = summary["program_totals"]["total_kcal"]
+    program_totals = summary["program_totals"]
+    program_total_kcal = program_totals["total_kcal"]
     program_days = {
         (program_day.week_number, program_day.day_number): program_day
         for program_day in program.program_dailyplan.all()
@@ -223,9 +224,15 @@ def _program_week_panel_items(program, current_weight=None) -> list[dict]:
             "protein_grams": _safe_number(week["totals"]["protein"]),
             "carbs_grams": _safe_number(week["totals"]["carbs"]),
             "fat_grams": _safe_number(week["totals"]["fat"]),
-            "protein_allocation": _safe_number(week["totals"]["alloc"]["protein"]),
-            "carbs_allocation": _safe_number(week["totals"]["alloc"]["carbs"]),
-            "fat_allocation": _safe_number(week["totals"]["alloc"]["fat"]),
+            "protein_allocation": _safe_number(
+                _safe_percentage(week["totals"]["kcal_protein"], program_totals["kcal_protein"])
+            ),
+            "carbs_allocation": _safe_number(
+                _safe_percentage(week["totals"]["kcal_carbs"], program_totals["kcal_carbs"])
+            ),
+            "fat_allocation": _safe_number(
+                _safe_percentage(week["totals"]["kcal_fat"], program_totals["kcal_fat"])
+            ),
         }
         for week in summary["weeks"]
     ]
@@ -258,7 +265,8 @@ def _snapshot_nutrition_payload(snapshot, current_weight=None) -> dict:
 
 def _calendarized_week_panel_items(calendarization, current_weight=None) -> tuple[dict, list[dict]]:
     projection = build_calendarization_snapshot_projection(calendarization)
-    program_total_kcal = projection["program_totals"]["total_kcal"]
+    program_totals = projection["program_totals"]
+    program_total_kcal = program_totals["total_kcal"]
     items = []
     for week in projection["weeks"]:
         days = []
@@ -306,9 +314,15 @@ def _calendarized_week_panel_items(calendarization, current_weight=None) -> tupl
                 "protein_grams": _safe_number(week["totals"]["protein"]),
                 "carbs_grams": _safe_number(week["totals"]["carbs"]),
                 "fat_grams": _safe_number(week["totals"]["fat"]),
-                "protein_allocation": _safe_number(week["totals"]["alloc"]["protein"]),
-                "carbs_allocation": _safe_number(week["totals"]["alloc"]["carbs"]),
-                "fat_allocation": _safe_number(week["totals"]["alloc"]["fat"]),
+                "protein_allocation": _safe_number(
+                    _safe_percentage(week["totals"]["kcal_protein"], program_totals["kcal_protein"])
+                ),
+                "carbs_allocation": _safe_number(
+                    _safe_percentage(week["totals"]["kcal_carbs"], program_totals["kcal_carbs"])
+                ),
+                "fat_allocation": _safe_number(
+                    _safe_percentage(week["totals"]["kcal_fat"], program_totals["kcal_fat"])
+                ),
             }
         )
     return projection, items

@@ -6,10 +6,11 @@ import { NutritionEntityCard } from "@/components/nutrition";
 import { MealPanels } from "@/components/panels";
 import { EntityCardAction } from "@/components/ui";
 import { tokens } from "@/design/tokens";
-import { snapshotAllocation, snapshotCalories, snapshotMealPanelItem } from "./presentation-adapters";
+import { snapshotCalories, snapshotMacroDistribution, snapshotMealPanelItem } from "./presentation-adapters";
 
 type Props = {
   dayId: number | null;
+  dateLabel: string;
   eyebrow: string;
   mealExecution?: MealExecutionItem[];
   planName?: string;
@@ -17,14 +18,14 @@ type Props = {
   snapshot: DailyPlanSnapshot;
 };
 
-export function CalendarizedDailyPlanCard({ dayId, eyebrow, mealExecution = [], planName, position, snapshot }: Props) {
+export function CalendarizedDailyPlanCard({ dayId, dateLabel, eyebrow, mealExecution = [], planName, position, snapshot }: Props) {
   const router = useRouter();
   const meals = snapshot.meals ?? [];
   const totals = snapshot.totals;
   const totalCalories = snapshotCalories(totals);
   const mealKeys = new Set(meals.flatMap((meal) => meal.key ? [meal.key] : []));
   const executions = mealExecution.filter((item) => mealKeys.has(item.meal_key));
-  const mealItems = meals.map((meal, index) => snapshotMealPanelItem(meal, index, totalCalories));
+  const mealItems = meals.map((meal, index) => snapshotMealPanelItem(meal, index, totals));
   return (
     <NutritionEntityCard
       actions={dayId ? <EntityCardAction label="Ir al detalle del plan calendarizado" onPress={() => router.push(`/program/days/${dayId}` as Href)} role="link"><ChevronRight color={tokens.color.textMuted} size={21} /></EntityCardAction> : null}
@@ -34,12 +35,13 @@ export function CalendarizedDailyPlanCard({ dayId, eyebrow, mealExecution = [], 
       indicators={[
         ...(position ? [{ icon: "day" as const, label: "posición", value: `S${position.weekNumber} · D${position.dayNumber}` }] : []),
         { icon: "meal", label: "comidas", value: meals.length },
+        { icon: "day", iconPosition: "leading", label: "fecha", tone: "surfaceMuted", value: dateLabel },
       ]}
       nutrition={{
         calories: totalCalories,
-        carbs: { allocation: snapshotAllocation(totals, "carbs_g"), grams: totals?.carbs_g ?? 0 },
-        fat: { allocation: snapshotAllocation(totals, "fat_g"), grams: totals?.fat_g ?? 0 },
-        protein: { allocation: snapshotAllocation(totals, "protein_g"), grams: totals?.protein_g ?? 0, perKilogram: totals?.protein_per_kilogram ?? null },
+        carbs: { allocation: snapshotMacroDistribution(totals, "carbs_g"), grams: totals?.carbs_g ?? 0 },
+        fat: { allocation: snapshotMacroDistribution(totals, "fat_g"), grams: totals?.fat_g ?? 0 },
+        protein: { allocation: snapshotMacroDistribution(totals, "protein_g"), grams: totals?.protein_g ?? 0, perKilogram: totals?.protein_per_kilogram ?? null },
       }}
       title={snapshot.name ?? planName ?? "Plan diario"}>
       <MealPanels

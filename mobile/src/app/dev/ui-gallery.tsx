@@ -469,7 +469,7 @@ export default function UiGalleryScreen() {
             }}
             onBack={() => undefined}
             title="Día de entrenamiento">
-            <EntityDetailSection detail="3 comidas" title="Tabla de comparación entre comidas">
+            <EntityDetailSection title="Tabla de comparación entre comidas">
               <MealPanels items={mealPanelItems} />
             </EntityDetailSection>
             <SectionDivider />
@@ -484,7 +484,7 @@ export default function UiGalleryScreen() {
       {tab === "program" ? (
         <>
           <SectionTitle detail="Propuesta · componente compartido" title="KPI de programa en curso" />
-          <ProgramActiveKpis adheredDays={82} adherence={97} elapsedDays={24} endDate="27 sep" plannedAdherenceDays={87} progress={57} standalone startDate="17 ago" totalDays={42} />
+          <ProgramActiveKpis adheredDays={82} adherence={97} elapsedDays={24} plannedAdherenceDays={87} progress={57} standalone totalDays={42} />
           <SectionTitle detail="Vista completa" title="Detalle de programa" />
           <ProgramDetailPreview />
         </>

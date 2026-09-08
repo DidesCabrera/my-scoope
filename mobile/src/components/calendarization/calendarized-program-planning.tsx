@@ -9,6 +9,7 @@ import { FoodPanels, type FoodPanelItem } from "@/components/panels";
 import { InlineNotice, SectionDivider, SectionHeading, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { CalendarizedDailyPlanCard } from "./calendarized-daily-plan-card";
+import { compactDateLabel } from "./current-week";
 
 function localDate(): string {
   const now = new Date();
@@ -21,14 +22,10 @@ function dayLabel(value: string): string {
   return new Intl.DateTimeFormat("es-CL", { weekday: "narrow" }).format(new Date(`${value}T12:00:00`)).toUpperCase();
 }
 
-function dateLabel(value: string): string {
-  return new Intl.DateTimeFormat("es-CL", { day: "numeric", month: "short" }).format(new Date(`${value}T12:00:00`));
-}
-
 function weekDateRange(days: ActiveProgramDay[]): string {
   const dates = days.map((day) => day.calendar_date).sort();
   if (!dates.length) return "Sin fechas";
-  return `${dateLabel(dates[0])} — ${dateLabel(dates.at(-1) ?? dates[0])}`;
+  return `${compactDateLabel(dates[0])} — ${compactDateLabel(dates.at(-1) ?? dates[0])}`;
 }
 
 function preferredDay(days: ActiveProgramDay[]): ActiveProgramDay | undefined {
@@ -133,7 +130,7 @@ export function CalendarizedProgramPlanning({
           ) : error ? (
             <InlineNotice tone="error">{error}</InlineNotice>
           ) : detail?.has_plan && snapshot ? (
-            <CalendarizedDailyPlanCard dayId={detail.id} eyebrow={`SEMANA ${activeWeek} · ${dayLabel(detail.calendar_date)}`} mealExecution={detail.meal_execution} planName={detail.plan_name} snapshot={snapshot} />
+            <CalendarizedDailyPlanCard dayId={detail.id} dateLabel={compactDateLabel(detail.calendar_date)} eyebrow={`SEMANA ${activeWeek} · ${dayLabel(detail.calendar_date)}`} mealExecution={detail.meal_execution} planName={detail.plan_name} snapshot={snapshot} />
           ) : null}
         </ProgramDaySelector>
 

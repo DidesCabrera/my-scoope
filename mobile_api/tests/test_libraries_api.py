@@ -164,6 +164,9 @@ class MobileAPILibrariesTests(AuthenticatedMobileAPITestCase):
         self.assertEqual(program_item["indicators"][2]["icon"], "food")
         self.assertIn("calorie_share", program_item["panel"]["weeks"][0])
         self.assertIn("calorie_distribution", program_item["panel"]["weeks"][0])
+        self.assertEqual(program_item["panel"]["weeks"][0]["protein_allocation"], 100.0)
+        self.assertEqual(program_item["panel"]["weeks"][0]["carbs_allocation"], 100.0)
+        self.assertEqual(program_item["panel"]["weeks"][0]["fat_allocation"], 100.0)
 
         detail_expectations = {
             f"/api/v1/library/foods/{food.id}": "food",

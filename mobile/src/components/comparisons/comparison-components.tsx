@@ -259,7 +259,7 @@ export function SavedComparisonDetailPage({
       </View>
 
       <View style={styles.savedDetailSection}>
-        <SectionHeading detail={`${itemCount} ${scopeLabels[scope].toLowerCase()}`} title="Elementos comparados" />
+        <SectionHeading title="Elementos comparados" />
         <View style={styles.savedDetailSelections}>{selections}</View>
       </View>
 

@@ -127,7 +127,7 @@ class HomeCalendarizationTests(TestCase):
 
         self.assertContains(response, "Programa Fuerza")
         self.assertContains(response, "Programa Calendarizado")
-        self.assertContains(response, "Periodo")
+        self.assertNotContains(response, "program-active-kpis__period")
         self.assertContains(response, "Días transcurridos")
         self.assertContains(response, "Adhesión")
         self.assertContains(response, "3/7")
@@ -140,7 +140,10 @@ class HomeCalendarizationTests(TestCase):
         self.assertNotContains(response, "home-calendar__week-slider")
         self.assertNotContains(response, "Sin plan diario")
         calendarization_vm = response.context["vm"]["content"]["calendarization"]
-        self.assertEqual(calendarization_vm["end_label"], "19jul")
+        self.assertEqual(calendarization_vm["end_label"], "19 jul")
+        self.assertEqual(calendarization_vm["days"][2]["date_label"], "15 jul")
+        self.assertEqual(calendarization_vm["weeks"][0]["start_label"], "13 jul")
+        self.assertEqual(calendarization_vm["weeks"][0]["end_label"], "19 jul")
         self.assertEqual(calendarization_vm["progress_day"], 3)
         self.assertEqual(calendarization_vm["progress_total_days"], 7)
         self.assertEqual(calendarization_vm["progress_percent"], 43)

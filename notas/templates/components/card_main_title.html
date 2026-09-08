@@ -40,6 +40,13 @@
               <span class="structural-value">{{ titulo.structural_indicators.hour }}</span>
           </span>
         {% endif %}
+        {% if temporal_date %}
+          <span class="structural-divider"></span>
+          <span class="structural-item structural-item--time structural-item--date">
+              <i data-lucide="calendar-days" class="structural-icon main"></i>
+              <span class="structural-value">{{ temporal_date }}</span>
+          </span>
+        {% endif %}
     </div>
     {% endif %}
     {% if show_completion %}
