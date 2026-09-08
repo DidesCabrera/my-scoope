@@ -25,7 +25,6 @@ test("screens that own global navigation preserve their header through content a
   for (const relativePath of [
     "src/app/comparator/index.tsx",
     "src/app/assistant/index.tsx",
-    "src/app/proposals/index.tsx",
     "src/app/program/activate.tsx",
     "src/app/program/history.tsx",
     "src/app/program/index.tsx",
@@ -33,7 +32,7 @@ test("screens that own global navigation preserve their header through content a
   ]) {
     const screen = await source(relativePath);
     assert.match(screen, /useHeaderPresentation/);
-    assert.match(screen, /<Screen headerMode="preserve">/);
+    assert.match(screen, /<Screen[\s\S]*headerMode="preserve"/);
   }
 
   const compositionPicker = await source("src/components/pickers/composition-picker-screen.tsx");
@@ -49,21 +48,23 @@ test("screens that own global navigation preserve their header through content a
   assert.match(comparator, /<View style=\{styles\.builderTabs\}>[\s\S]*<ComparisonKindTabs kind=\{kind\} onChange=\{changeKind\} \/>[\s\S]*<Screen headerMode="preserve">/);
 
   const assistant = await source("src/app/assistant/index.tsx");
-  assert.match(assistant, /action: \{ label: "Acciones de Chats", onPress: \(\) => setActionsVisible\(true\) \}/);
-  assert.match(assistant, /<AssistantSectionTabs activeSection="chats" \/>/);
-  assert.match(assistant, /<AssistantListActions activeSection="chats"/);
+  assert.match(assistant, /activeSection === "chats" \? "Acciones de Chats" : "Acciones de Propuestas"/);
+  assert.match(assistant, /<AssistantSectionTabs activeSection=\{activeSection\} counts=\{counts\} onChange=\{setActiveSection\} \/>/);
+  assert.match(assistant, /<AssistantListActions[\s\S]*activeSection=\{activeSection\}/);
+  assert.match(assistant, /stickyHeader=\{stickyHeader\}/);
+  assert.match(assistant, /scrollHeader=\{<SectionPageHeader countLabel="elementos" section="chat" title="Asistente AI" \/>\}/);
+  assert.doesNotMatch(assistant, /<SectionPageHeader count=/);
   assert.doesNotMatch(assistant, /disabled: !page\.availability\.is_available/);
   assert.doesNotMatch(assistant, /<Button[^>]*label="Nuevo chat"/);
 
   const proposals = await source("src/app/proposals/index.tsx");
-  assert.match(proposals, /action: \{ label: "Acciones de Propuestas", onPress: \(\) => setActionsVisible\(true\) \}/);
-  assert.match(proposals, /<AssistantSectionTabs activeSection="proposals" \/>/);
-  assert.match(proposals, /<AssistantListActions activeSection="proposals"/);
+  assert.match(proposals, /<Redirect href=\{\{ pathname: "\/assistant", params: \{ section: "proposals" \} \}\} \/>/);
 
   const tabs = await source("src/components/assistant/assistant-section-tabs.tsx");
-  assert.match(tabs, /href: "\/assistant"/);
-  assert.match(tabs, /href: "\/proposals"/);
-  assert.match(tabs, /router\.replace\(section\.href\)/);
+  assert.match(tabs, /onChange\(section\.key\)/);
+  assert.match(tabs, /counts\[section\.key\]/);
+  assert.match(tabs, /flex: 1/);
+  assert.doesNotMatch(tabs, /useRouter|router\.replace|href:/);
 
   const actions = await source("src/components/assistant/assistant-list-actions.tsx");
   assert.match(actions, /activeSection === "chats"/);

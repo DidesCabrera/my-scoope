@@ -12,9 +12,11 @@ type ScreenProps = PropsWithChildren<{
   headerMode?: "automatic" | "preserve";
   onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   scroll?: boolean;
+  scrollHeader?: ReactNode;
+  stickyHeader?: ReactNode;
 }>;
 
-export function Screen({ children, scroll = true, contentStyle, headerMode = "automatic", onScroll }: ScreenProps) {
+export function Screen({ children, scroll = true, contentStyle, headerMode = "automatic", onScroll, scrollHeader, stickyHeader }: ScreenProps) {
   const setHeaderPresentation = useHeaderPresentation();
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   useFocusEffect(useCallback(() => {
@@ -23,10 +25,19 @@ export function Screen({ children, scroll = true, contentStyle, headerMode = "au
     return () => setHeaderPresentation({ mode: "default" });
   }, [compactHeaderVisible, headerMode, setHeaderPresentation]));
   const content = <View style={[styles.screenContent, contentStyle]}>{children}</View>;
+  const stickyHeaderIndex = stickyHeader ? (scrollHeader ? 1 : 0) : undefined;
   return (
     <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
       {scroll ? (
-        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" onScroll={(event) => { const visible = event.nativeEvent.contentOffset.y > 1; if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible); onScroll?.(event); }} scrollEventThrottle={16}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          onScroll={(event) => { const visible = event.nativeEvent.contentOffset.y > 1; if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible); onScroll?.(event); }}
+          scrollEventThrottle={16}
+          stickyHeaderIndices={stickyHeaderIndex === undefined ? undefined : [stickyHeaderIndex]}
+        >
+          {scrollHeader ? <View style={styles.scrollHeader}>{scrollHeader}</View> : null}
+          {stickyHeader ? <View style={styles.stickyHeader}>{stickyHeader}</View> : null}
           {content}
         </ScrollView>
       ) : content}
@@ -68,6 +79,8 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: tokens.color.surfaceApp },
   scrollContent: { flexGrow: 1 },
   screenContent: { flex: 1, gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg, paddingBottom: 42 },
+  scrollHeader: { paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg },
+  stickyHeader: { backgroundColor: tokens.color.surfaceApp, gap: tokens.spacing.md, paddingBottom: tokens.spacing.md, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg, zIndex: 2 },
   brandRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md },
   brandMark: { alignItems: "center", backgroundColor: tokens.color.textMain, borderRadius: tokens.radius.md, height: 38, justifyContent: "center", width: 38 },
   brandMarkText: { color: tokens.color.surfaceApp, fontSize: 20, fontWeight: "900" },

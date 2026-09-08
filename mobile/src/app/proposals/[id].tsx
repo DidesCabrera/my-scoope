@@ -123,7 +123,7 @@ export default function ProposalDetailScreen() {
               {proposal.actions.map((action) => <Button key={action.key} label={action.label} onPress={() => setPendingAction(action)} variant={action.tone === "danger" ? "danger" : action.key === "approve" || action.key === "apply" ? "primary" : "secondary"} />)}
             </View>
           ) : <Text style={textStyles.caption}>Esta propuesta no tiene acciones pendientes.</Text>}
-          <Button label="Volver a Propuestas" onPress={() => { if (router.canGoBack()) router.back(); else router.replace("/proposals" as Href); }} variant="secondary" />
+          <Button label="Volver a Propuestas" onPress={() => { if (router.canGoBack()) router.back(); else router.replace("/assistant?section=proposals" as Href); }} variant="secondary" />
         </>
       ) : null}
     </Screen>

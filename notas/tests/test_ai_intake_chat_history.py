@@ -143,6 +143,10 @@ class AiNutritionChatHistoryTests(TestCase):
         self.assertContains(list_response, "Chats")
         self.assertContains(list_response, chat.title)
         self.assertContains(list_response, "Secciones del Asistente AI")
+        self.assertContains(list_response, "assistant-section-sticky")
+        self.assertContains(list_response, 'aria-label="1 chats"')
+        self.assertContains(list_response, 'aria-label="0 propuestas"')
+        self.assertNotContains(list_response, "list-page-header__indicator")
         self.assertContains(list_response, reverse("proposal_list"))
         self.assertEqual(list_response.context["vm"]["ui"]["title"], "Asistente AI")
         self.assertEqual(

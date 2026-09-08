@@ -63,6 +63,7 @@ from notas.application.ai_intake.profile_draft_update import (
 from notas.application.ai_intake.proposal_from_brief import (
     create_nutrition_brief_proposal,
 )
+from notas.application.queries.proposal_queries import get_available_proposal_queryset
 from notas.domain.models import AiNutritionChat
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
 from notas.presentation.config.viewmodel_config import (
@@ -684,6 +685,8 @@ def ai_nutrition_chat_list(request):
         {
             **base_vm.as_context(),
             **_assistant_credit_context(request.user),
+            "assistant_chat_count": content_vm.item_count,
+            "assistant_proposal_count": get_available_proposal_queryset(request.user).count(),
         },
     )
 

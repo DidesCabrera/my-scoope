@@ -122,6 +122,11 @@ class ProposalViewTests(TestCase):
         self.assertNotContains(response, "list-page-header__eyebrow")
         self.assertContains(response, "Asistente AI")
         self.assertContains(response, "Secciones del Asistente AI")
+        self.assertContains(response, "assistant-section-sticky")
+        self.assertContains(response, 'aria-label="0 chats"')
+        self.assertContains(response, 'aria-label="1 propuestas"')
+        self.assertContains(response, "Créditos del Asistente")
+        self.assertNotContains(response, "list-page-header__indicator")
         self.assertContains(response, reverse("ai_nutrition_chat_list"))
         self.assertContains(response, 'aria-current="page"')
         self.assertContains(response, "Increase protein")
@@ -1560,4 +1565,3 @@ class ProposalViewTests(TestCase):
             1,
         )
         self.assertContains(second_response, "No se pudo aplicar la propuesta")
-

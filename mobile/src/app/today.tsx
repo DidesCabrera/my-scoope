@@ -169,7 +169,7 @@ export default function TodayScreen() {
         <Card accent={tokens.color.warning}>
           <SectionTitle detail={`${pendingProposalCount} pendientes`} title="Propuestas para revisar" />
           <Text style={textStyles.muted}>El Asistente preparó resultados que aún no modifican tu librería.</Text>
-          <Button label="Abrir Propuestas" onPress={() => router.push("/proposals" as Href)} />
+          <Button label="Abrir Propuestas" onPress={() => router.push("/assistant?section=proposals" as Href)} />
         </Card>
       ) : null}
 

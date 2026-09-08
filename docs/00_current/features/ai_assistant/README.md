@@ -71,7 +71,13 @@ listas se organizan en dos tabs equivalentes:
 Las rutas históricas de chats y propuestas permanecen separadas para preservar
 enlaces, detalles y contratos de API. La unificación corresponde a navegación y
 presentación; no mezcla la persistencia de `AiNutritionChat` con
-`NutritionProposal`. El menú de cabecera siempre expone acciones del tab activo.
+`NutritionProposal`. En móvil, la ruta principal carga ambos listados y los tabs
+alternan el subcontenido localmente, sin transición entre pantallas; la ruta
+histórica de propuestas redirige a esa misma superficie. Cada tab ocupa la mitad
+del ancho y muestra su cantidad a la derecha. El resumen de créditos aparece antes
+de los tabs y ambos permanecen fijos durante el scroll. El indicador de cantidad
+se elimina del título principal. El menú de cabecera siempre expone acciones del
+tab activo.
 
 
 ## Current client-memory/tool-oriented baseline

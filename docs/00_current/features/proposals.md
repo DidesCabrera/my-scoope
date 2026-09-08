@@ -23,6 +23,11 @@ de detalle siguen siendo independientes; esta agrupación no altera ownership,
 permisos, estados ni el ciclo de revisión. Las opciones de cabecera de esta
 subsección deben corresponder únicamente a propuestas.
 
+En la lista unificada, los contadores viven dentro de los tabs y el bloque de
+créditos junto a los tabs permanece visible al hacer scroll. En móvil, cambiar
+entre Chats y Propuestas alterna el contenido dentro de la misma pantalla, sin
+animación de navegación.
+
 ## Relación con AI Nutrition Onboarding
 
 El flujo de onboarding nutricional asistido por IA debe crear `NutritionProposal` antes de crear entidades finales.

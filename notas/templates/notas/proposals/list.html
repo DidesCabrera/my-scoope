@@ -1,11 +1,13 @@
 {% extends "notas/base.html" %}
+{% load static %}
 {% block title %}Asistente AI · Propuestas{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'notas/css/components/ai_assistant.css' %}?v=20260908-1">{% endblock %}
 {% block content %}
 
 <div class="page list proposal-list-page">
 
   {% include "components/list_page_header.html" %}
-  {% include "components/assistant_section_tabs.html" with active_assistant_section="proposals" %}
+  {% include "components/assistant_sticky_navigation.html" with active_assistant_section="proposals" %}
 
   {% if vm.content.list_mode == "reorder" %}
     {% include "components/list_panel_proposals_reorder.html" with proposals=vm.content.proposals %}
@@ -78,7 +80,6 @@
 
 </div>
 
-{% load static %}
 <script src="{% static 'notas/js/list_panel_modes.js' %}"></script>
 
 {% endblock %}
