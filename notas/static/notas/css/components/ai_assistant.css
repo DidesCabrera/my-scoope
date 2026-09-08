@@ -129,16 +129,9 @@
 
 .comparator-tab.assistant-section-tab {
   flex: 1 1 0;
-  justify-content: space-between;
+  justify-content: center;
   min-width: 0;
-  min-height: 38px;
-}
-
-.assistant-section-tab__identity {
-  display: inline-flex;
-  align-items: center;
-  min-width: 0;
-  gap: 6px;
+  min-height: 44px;
 }
 
 .assistant-section-tab__count {
