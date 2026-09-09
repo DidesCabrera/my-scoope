@@ -51,6 +51,7 @@ import {
   CollectionEmptyState,
   ContentPanel,
   DetailSection,
+  DistributedTabBar,
   EntityCard,
   EntityCardAction,
   type EntityKind,
@@ -61,6 +62,7 @@ import {
   Pill,
   ProgressBar,
   Screen,
+  ScrollableTabBar,
   SectionDivider,
   SectionIcon,
   type SectionKind,
@@ -271,6 +273,8 @@ export default function UiGalleryScreen() {
   const { width } = useWindowDimensions();
   const [tab, setTab] = useState<GalleryTab>("components");
   const [choice, setChoice] = useState<Choice>("daily");
+  const [distributedExample, setDistributedExample] = useState<"chats" | "proposals">("chats");
+  const [scrollableExample, setScrollableExample] = useState<"week1" | "week2" | "week3" | "week4">("week1");
   const [comparisonScope, setComparisonScope] = useState<ComparisonScope>("food");
   const [comparisonQuantity, setComparisonQuantity] = useState("100");
   const [field, setField] = useState("");
@@ -290,6 +294,28 @@ export default function UiGalleryScreen() {
 
       {tab === "components" ? (
         <>
+          <SectionTitle detail="Ancho por contenido y scroll horizontal" title="Tabs desplazables" />
+          <ScrollableTabBar<"week1" | "week2" | "week3" | "week4">
+            accessibilityLabel="Ejemplo de tabs desplazables"
+            activeTab={scrollableExample}
+            onChange={setScrollableExample}
+            tabs={[
+              { key: "week1", label: "Semana 1" },
+              { key: "week2", label: "Semana 2" },
+              { key: "week3", label: "Semana 3" },
+              { key: "week4", label: "Semana extraordinaria" },
+            ]}
+          />
+          <SectionTitle detail="Ancho disponible dividido entre todos los tabs" title="Tabs distribuidos" />
+          <DistributedTabBar<"chats" | "proposals">
+            accessibilityLabel="Ejemplo de tabs distribuidos"
+            activeTab={distributedExample}
+            onChange={setDistributedExample}
+            tabs={[
+              { count: 6, key: "chats", label: "Chats" },
+              { count: 2, key: "proposals", label: "Propuestas" },
+            ]}
+          />
           <SectionTitle detail="Genérico y anidado" title="Títulos de card" />
           <Card>
             <CardHeader

@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } fro
 
 import { PanelAllocationBar } from "@/components/nutrition";
 import { FoodPanels, type FoodPanelItem } from "@/components/panels";
-import { Button, EntityIcon, SectionHeading, SectionIcon, StructuralIndicators, type EntityKind } from "@/components/ui";
+import { Button, EntityIcon, ScrollableTabBar, SectionHeading, SectionIcon, StructuralIndicators, type EntityKind } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 export type ComparisonScope = Extract<EntityKind, "food" | "meal" | "dailyPlan">;
@@ -37,22 +37,12 @@ function formatComparisonQuantity(value: string): string {
 
 export function ComparisonScopeTabs({ activeScope, onChange }: { activeScope: ComparisonScope; onChange: (scope: ComparisonScope) => void }) {
   return (
-    <View accessibilityLabel="Tipo de comparación" accessibilityRole="tablist" style={styles.scopeTabs}>
-      {(Object.keys(scopeLabels) as ComparisonScope[]).map((scope) => {
-        const selected = activeScope === scope;
-        return (
-          <Pressable
-            accessibilityRole="tab"
-            accessibilityState={{ selected }}
-            key={scope}
-            onPress={() => onChange(scope)}
-            style={({ pressed }) => [styles.scopeTab, selected && styles.scopeTabSelected, pressed && styles.pressed]}>
-            <EntityIcon entity={scope} size="compact" />
-            <Text style={[styles.scopeTabLabel, selected && styles.scopeTabLabelSelected]}>{scopeLabels[scope]}</Text>
-          </Pressable>
-        );
-      })}
-    </View>
+    <ScrollableTabBar
+      accessibilityLabel="Tipo de comparación"
+      activeTab={activeScope}
+      onChange={onChange}
+      tabs={(Object.keys(scopeLabels) as ComparisonScope[]).map((scope) => ({ icon: <EntityIcon entity={scope} size="compact" />, key: scope, label: scopeLabels[scope] }))}
+    />
   );
 }
 
@@ -275,11 +265,6 @@ export function SavedComparisonDetailPage({
 
 const styles = StyleSheet.create({
   pressed: { opacity: 0.7 },
-  scopeTabs: { flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0 },
-  scopeTab: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.pill, borderWidth: 1, flex: 1, flexDirection: "row", gap: tokens.spacing.compact, justifyContent: "center", minHeight: 40, minWidth: 0, paddingHorizontal: tokens.spacing.sm },
-  scopeTabSelected: { backgroundColor: tokens.color.textMain, borderColor: "transparent" },
-  scopeTabLabel: { color: tokens.color.textMuted, flexShrink: 1, fontSize: tokens.type.label, fontWeight: tokens.weight.semibold },
-  scopeTabLabelSelected: { color: tokens.color.surfaceApp },
   selectionCard: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, padding: tokens.spacing.md },
   selectionHeading: { alignItems: "flex-start", flexDirection: "row", justifyContent: "space-between", minWidth: 0 },
   selectionIdentity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.sm, minWidth: 0 },

@@ -146,6 +146,18 @@ Ejemplos:
 
 No usar tabs en details que representan una instancia específica si no hay vistas hermanas relevantes.
 
+En móvil existen dos contratos explícitos del UI-System:
+
+- `ScrollableTabBar`: cada tab mide según su contenido y la barra permite scroll
+  horizontal cuando el conjunto supera el ancho disponible. Se usa en semanas y
+  en el selector de entidades del Comparador.
+- `DistributedTabBar`: ocupa todo el ancho disponible y divide ese espacio en
+  partes iguales según la cantidad de tabs. Se usa en Agregar/Reemplazar
+  entidades y en las subsecciones del Asistente AI.
+
+Ambos conservan icono, label y cantidad como un único grupo centrado. Las
+pantallas consumidoras no deben reconstruir su geometría con estilos locales.
+
 La estructura neutral es:
 
 ```text
@@ -155,7 +167,9 @@ panel-tabs
 
 Las clases históricas `card-detail-tabs`, `btn-desplegar` y sus variantes mobile continúan como aliases de compatibilidad durante la migración.
 
-Programs no define un contrato visual alternativo: week tabs y chart tabs usan el mismo `panel-tab`; sus clases `program-*` expresan únicamente scroll, tamaño o comportamiento del dominio.
+En web, Programs no define un contrato visual alternativo: week tabs y chart
+tabs usan el mismo `panel-tab`; sus clases `program-*` expresan únicamente
+scroll, tamaño o comportamiento del dominio.
 
 ## Paneles de contenido
 

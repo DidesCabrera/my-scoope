@@ -187,7 +187,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(planningControls, /dayCircle: \{[^}]*borderWidth: 1[^}]*height: 44[^}]*width: 44/);
   assert.match(planningControls, /dayCircleCompact: \{ height: 40, width: 40 \}/);
   assert.match(planningControls, /hitSlop=\{compact \? 2 : undefined\}/);
-  assert.match(planningControls, /horizontal\n[\s\S]*?showsHorizontalScrollIndicator=\{false\}/);
+  assert.match(planningControls, /<ScrollableTabBar[\s\S]*?tabs=\{weeks\.map/);
   assert.match(planningControls, /export function ProgramWeekHeading/);
   assert.match(planningControls, /<CalendarRange color=\{tokens\.color\.entityIconForeground\} size=\{11\}/);
   assert.match(planningControls, /weekHeadingTitle: \{[^}]*fontSize: tokens\.type\.section[^}]*fontWeight: tokens\.weight\.semibold/);
@@ -302,8 +302,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(activeProgram, /weekCount === 1 \? "semana" : "semanas"/);
 
   const activePlanningControls = await readFile(path.resolve(process.cwd(), "src/components/libraries/program-planning-controls.tsx"), "utf8");
-  assert.match(activePlanningControls, /nestedScrollEnabled/);
-  assert.match(activePlanningControls, /weekTabsScroll: \{ flexGrow: 0, width: "100%" \}/);
+  assert.match(activePlanningControls, /<ScrollableTabBar/);
+  assert.match(activePlanningControls, /tabs=\{weeks\.map/);
 
   const calendarizedPlanningActive = await readFile(
     path.resolve(process.cwd(), "src/components/calendarization/calendarized-program-planning.tsx"),

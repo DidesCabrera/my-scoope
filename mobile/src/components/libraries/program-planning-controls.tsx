@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
-import { Pressable, ScrollView, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
+import { Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 import { CalendarRange, ClipboardList, Plus } from "lucide-react-native";
 
 import { tokens } from "@/design/tokens";
-import { StructuralIndicators, useWeekDayLayout, WeekDayCell, WeekDayGrid, WeekDaySelectionRing } from "@/components/ui";
+import { ScrollableTabBar, StructuralIndicators, useWeekDayLayout, WeekDayCell, WeekDayGrid, WeekDaySelectionRing } from "@/components/ui";
 
 export type ProgramPlanningDay = {
   dayOfMonth?: number;
@@ -72,32 +72,13 @@ export function ProgramWeekTabs({
   weeks: number[];
 }) {
   return (
-    <View style={[styles.weekTabsViewport, style]}>
-      <ScrollView
-        accessibilityLabel="Semanas del programa"
-        accessibilityRole="tablist"
-        contentContainerStyle={styles.weekTabs}
-        directionalLockEnabled
-        horizontal
-        nestedScrollEnabled
-        style={styles.weekTabsScroll}
-        showsHorizontalScrollIndicator={false}>
-        {weeks.map((week) => {
-          const selected = activeWeek === week;
-          return (
-            <Pressable
-              accessibilityLabel={`Semana ${week}`}
-              accessibilityRole="tab"
-              accessibilityState={{ selected }}
-              key={week}
-              onPress={() => onChange(week)}
-              style={({ pressed }) => [styles.weekTab, selected && styles.weekTabActive, pressed && styles.pressed]}>
-              <Text style={[styles.weekTabText, selected && styles.weekTabTextActive]}>Semana {week}</Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
-    </View>
+    <ScrollableTabBar
+      accessibilityLabel="Semanas del programa"
+      activeTab={activeWeek}
+      onChange={onChange}
+      style={style}
+      tabs={weeks.map((week) => ({ accessibilityLabel: `Semana ${week}`, key: week, label: `Semana ${week}` }))}
+    />
   );
 }
 
@@ -144,13 +125,6 @@ const styles = StyleSheet.create({
   dayPlanIcon: { alignItems: "center", backgroundColor: tokens.color.dailyPlan, borderRadius: tokens.spacing.compact, height: 24, justifyContent: "center", width: 24 },
   daySelection: { gap: tokens.spacing.lg, minWidth: 0 },
   pressed: { opacity: 0.68 },
-  weekTab: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, justifyContent: "center", minHeight: 30, paddingHorizontal: tokens.spacing.md },
-  weekTabActive: { backgroundColor: tokens.color.textMain, borderColor: tokens.color.textMain },
-  weekTabText: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "500" },
-  weekTabTextActive: { color: tokens.color.surfaceApp },
-  weekTabs: { flexDirection: "row", gap: tokens.spacing.compact },
-  weekTabsScroll: { flexGrow: 0, width: "100%" },
-  weekTabsViewport: { flexShrink: 1, minWidth: 0, width: "100%" },
   weekHeading: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between", minWidth: 0, width: "100%" },
   weekHeadingIdentity: { alignItems: "center", flexDirection: "row", flexShrink: 1, gap: tokens.spacing.compact, minWidth: 0 },
   weekHeadingIcon: { alignItems: "center", backgroundColor: tokens.color.program, borderRadius: 5, height: 18, justifyContent: "center", width: 18 },

@@ -63,14 +63,11 @@ test("screens that own global navigation preserve their header through content a
   const tabs = await source("src/components/assistant/assistant-section-tabs.tsx");
   assert.match(tabs, /MessageCircle/);
   assert.match(tabs, /ClipboardCheck/);
-  assert.match(tabs, /counts\[section\.key\]/);
-  assert.match(tabs, /justifyContent: "center"/);
-  assert.match(tabs, /minHeight: 40/);
-  assert.match(tabs, /backgroundColor: tokens\.color\.surfaceMuted/);
-  assert.match(tabs, /borderColor: tokens\.color\.borderSoft/);
-  assert.match(tabs, /borderRadius: tokens\.radius\.pill/);
-  assert.match(tabs, /flex: 1/);
+  assert.match(tabs, /DistributedTabBar<AssistantSection>/);
+  assert.match(tabs, /count: counts\.chats/);
+  assert.match(tabs, /count: counts\.proposals/);
   assert.doesNotMatch(tabs, /PanelTabs/);
+  assert.doesNotMatch(tabs, /StyleSheet\.create/);
   assert.doesNotMatch(tabs, /useRouter|router\.replace|href:/);
 
   const actions = await source("src/components/assistant/assistant-list-actions.tsx");

@@ -74,8 +74,9 @@ presentación; no mezcla la persistencia de `AiNutritionChat` con
 `NutritionProposal`. En móvil, la ruta principal carga ambos listados y los tabs
 alternan el subcontenido localmente, sin transición entre pantallas; la ruta
 histórica de propuestas redirige a esa misma superficie. Cada tab ocupa la mitad
-del ancho y replica el patrón visual de los tabs del Comparador: píldoras
-independientes de 40 px, con icono, label y cantidad centrados. El resumen de créditos aparece antes
+del ancho mediante `DistributedTabBar`, el mismo patrón de ancho completo usado
+al agregar o reemplazar entidades. Icono, label y cantidad permanecen centrados
+como un solo grupo. El resumen de créditos aparece antes
 de los tabs y ambos permanecen fijos durante el scroll. El indicador de cantidad
 se elimina del título principal. El menú de cabecera siempre expone acciones del
 tab activo.
