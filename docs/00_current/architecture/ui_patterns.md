@@ -149,13 +149,12 @@ No usar tabs en details que representan una instancia específica si no hay vist
 En móvil existen dos contratos explícitos del UI-System:
 
 - `ScrollableTabBar`: cada tab mide según su contenido y la barra permite scroll
-  horizontal cuando el conjunto supera el ancho disponible. Se usa en semanas y
-  en el selector de entidades del Comparador. Su densidad `compact` conserva el
-  alto de 30 px de Semanas; la densidad regular conserva el alto de 40 px del
-  Comparador.
+  horizontal cuando el conjunto supera el ancho disponible. Se usa en semanas;
+  su densidad `compact` conserva el alto de 30 px de ese selector.
 - `DistributedTabBar`: ocupa todo el ancho disponible y divide ese espacio en
   partes iguales según la cantidad de tabs. Se usa en Agregar/Reemplazar
-  entidades y en las subsecciones del Asistente AI.
+  entidades, en las subsecciones del Asistente AI y en las entidades del
+  Comparador.
 
 Ambos conservan icono, label y cantidad como un único grupo centrado. Las
 pantallas consumidoras no deben reconstruir su geometría con estilos locales.

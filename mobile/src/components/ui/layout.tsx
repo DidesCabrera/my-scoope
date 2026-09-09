@@ -14,9 +14,10 @@ type ScreenProps = PropsWithChildren<{
   scroll?: boolean;
   scrollHeader?: ReactNode;
   stickyHeader?: ReactNode;
+  stickyHeaderStyle?: StyleProp<ViewStyle>;
 }>;
 
-export function Screen({ children, scroll = true, contentStyle, headerMode = "automatic", onScroll, scrollHeader, stickyHeader }: ScreenProps) {
+export function Screen({ children, scroll = true, contentStyle, headerMode = "automatic", onScroll, scrollHeader, stickyHeader, stickyHeaderStyle }: ScreenProps) {
   const setHeaderPresentation = useHeaderPresentation();
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   useFocusEffect(useCallback(() => {
@@ -37,7 +38,7 @@ export function Screen({ children, scroll = true, contentStyle, headerMode = "au
           stickyHeaderIndices={stickyHeaderIndex === undefined ? undefined : [stickyHeaderIndex]}
         >
           {scrollHeader ? <View style={styles.scrollHeader}>{scrollHeader}</View> : null}
-          {stickyHeader ? <View style={styles.stickyHeader}>{stickyHeader}</View> : null}
+          {stickyHeader ? <View style={[styles.stickyHeader, stickyHeaderStyle]}>{stickyHeader}</View> : null}
           {content}
         </ScrollView>
       ) : content}

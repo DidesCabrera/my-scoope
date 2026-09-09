@@ -49,7 +49,7 @@ test("screens that own global navigation preserve their header through content a
   assert.match(comparator, /<View style=\{styles\.builderTabs\}>[\s\S]*<ComparisonKindTabs kind=\{kind\} onChange=\{changeKind\} \/>[\s\S]*<Screen headerMode="preserve">/);
   assert.match(comparator, /<SectionPageHeader countLabel="comparaciones" section="comparator" title="Comparador" \/>/);
   assert.match(comparator, /<ComparisonKindTabs counts=\{counts\}/);
-  assert.match(comparator, /<ScrollableTabBar<ComparisonKind>/);
+  assert.match(comparator, /<DistributedTabBar<ComparisonKind>/);
   assert.match(comparator, /identityVisible: compactHeaderVisible[\s\S]*title: "Comparador"/);
   assert.match(comparator, /contentOffset\.y > 1/);
   assert.doesNotMatch(comparator, /<SectionPageHeader count=\{page\?\.total\}/);
@@ -59,6 +59,7 @@ test("screens that own global navigation preserve their header through content a
   assert.match(assistant, /<AssistantSectionTabs activeSection=\{activeSection\} counts=\{counts\} onChange=\{setActiveSection\} \/>/);
   assert.match(assistant, /<AssistantListActions[\s\S]*activeSection=\{activeSection\}/);
   assert.match(assistant, /stickyHeader=\{stickyHeader\}/);
+  assert.match(assistant, /stickyHeaderStyle=\{styles\.stickyHeader\}/);
   assert.match(assistant, /identityVisible: compactHeaderVisible/);
   assert.match(assistant, /contentOffset\.y > 1/);
   assert.match(assistant, /scrollHeader=\{<SectionPageHeader countLabel="elementos" section="chat" title="Asistente AI" \/>\}/);
@@ -79,6 +80,7 @@ test("screens that own global navigation preserve their header through content a
   assert.match(creditBalance, /\{availability\.available_credits\}<\/Text> créditos disponibles/);
   assert.match(creditBalance, /availability\.available_credits/);
   assert.match(creditBalance, /marginBottom: tokens\.spacing\.sm/);
+  assert.match(creditBalance, /borderRadius: tokens\.radius\.md/);
   assert.match(assistant, /<AssistantCreditBalance availability=\{chatPage\.availability\} \/>/);
 
   const tabs = await source("src/components/assistant/assistant-section-tabs.tsx");

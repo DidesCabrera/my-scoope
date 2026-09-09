@@ -24,7 +24,7 @@ import { useComparatorSelectionTransfer } from "@/components/comparisons/compara
 import { libraryNutrition } from "@/components/libraries/presentation-adapters";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { NutritionKpiSection } from "@/components/nutrition";
-import { EntityCard, ScrollableTabBar, SectionPageHeader } from "@/components/ui";
+import { DistributedTabBar, EntityCard, SectionPageHeader } from "@/components/ui";
 import { EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
 import { Button, Card, Field, LoadingState, Pill, Screen, textStyles } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
@@ -64,7 +64,7 @@ function SavedCard({ item, onPress }: { item: SavedComparisonSummary; onPress():
 
 function ComparisonKindTabs({ counts, kind, onChange }: { counts?: Record<ComparisonKind, number>; kind: ComparisonKind; onChange(nextKind: ComparisonKind): void }) {
   return (
-    <ScrollableTabBar<ComparisonKind>
+    <DistributedTabBar<ComparisonKind>
       accessibilityLabel="Tipo de comparación"
       activeTab={kind}
       onChange={onChange}

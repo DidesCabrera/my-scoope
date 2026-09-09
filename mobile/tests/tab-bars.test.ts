@@ -33,6 +33,6 @@ test("domain tab bars use the matching UI System layout contract", async () => {
 
   assert.match(assistant, /<DistributedTabBar<AssistantSection>/);
   assert.match(picker, /<DistributedTabBar<PickerEntryTab>/);
-  assert.match(comparator, /<ScrollableTabBar/);
+  assert.match(comparator, /<DistributedTabBar/);
   assert.match(weeks, /<ScrollableTabBar[\s\S]*density="compact"/);
 });

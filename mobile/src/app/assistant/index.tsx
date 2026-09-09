@@ -153,6 +153,7 @@ export default function AssistantHistoryScreen() {
       }}
       scrollHeader={<SectionPageHeader countLabel="elementos" section="chat" title="Asistente AI" />}
       stickyHeader={stickyHeader}
+      stickyHeaderStyle={styles.stickyHeader}
     >
       {activeSection === "chats" ? (
         <>
@@ -205,5 +206,6 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.65 },
   row: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
   source: { color: tokens.color.textSoft, fontSize: 11, fontWeight: "900", letterSpacing: 1.1, textTransform: "uppercase" },
+  stickyHeader: { paddingTop: tokens.spacing.sm },
   title: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },
 });

@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } fro
 
 import { PanelAllocationBar } from "@/components/nutrition";
 import { FoodPanels, type FoodPanelItem } from "@/components/panels";
-import { Button, EntityIcon, ScrollableTabBar, SectionHeading, SectionIcon, StructuralIndicators, type EntityKind } from "@/components/ui";
+import { Button, DistributedTabBar, EntityIcon, SectionHeading, SectionIcon, StructuralIndicators, type EntityKind } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 export type ComparisonScope = Extract<EntityKind, "food" | "meal" | "dailyPlan">;
@@ -37,7 +37,7 @@ function formatComparisonQuantity(value: string): string {
 
 export function ComparisonScopeTabs({ activeScope, onChange }: { activeScope: ComparisonScope; onChange: (scope: ComparisonScope) => void }) {
   return (
-    <ScrollableTabBar
+    <DistributedTabBar
       accessibilityLabel="Tipo de comparación"
       activeTab={activeScope}
       onChange={onChange}

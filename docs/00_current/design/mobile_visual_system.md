@@ -309,16 +309,15 @@ enumerations do not add a second left indent.
 
 The first native comparison family is derived from Django's comparator detail
 and saved-list views. `ComparisonScopeTabs` switches among Food, Meal and
-DailyPlan scopes through `ScrollableTabBar`: each pill keeps its intrinsic
-content width and the row scrolls horizontally when necessary. On the saved
+DailyPlan scopes through `DistributedTabBar`, the same full-width primitive used
+by Assistant AI; its three tabs divide the available width evenly. On the saved
 comparison lists, each scope tab owns its item count; the page heading does not
 repeat that quantity in a detached chip. Once the large page heading scrolls,
 `Comparador` becomes visible in the compact global header, matching the active
 program list behavior. The UI-System's
-second navigation primitive, `DistributedTabBar`, divides the full available
-width evenly among its tabs; pickers for adding/replacing entities and the
-Assistant AI subsections use this variant. Labels, optional icons and counts are
-centered as one group in both components. `ComparisonSelectionCard` represents a numbered selection and
+`ScrollableTabBar` remains the intrinsic-width alternative for collections such
+as program weeks. Labels, optional icons and counts are centered as one group in
+both tab-bar components. `ComparisonSelectionCard` represents a numbered selection and
 its optional quantity/removal action in read mode. `ComparisonBuilder` groups
 editable `ComparisonEditorCard` instances with add, save and compare actions;
 each editor owns the entity selector and, where applicable, quantity input.
