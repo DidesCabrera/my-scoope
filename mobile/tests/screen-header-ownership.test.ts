@@ -47,8 +47,9 @@ test("screens that own global navigation preserve their header through content a
   assert.match(comparator, /action: \{ label: "Cancelar", onPress: cancel \}/);
   assert.doesNotMatch(comparator, /title=\{savedId \? "Editar Comparación" : "Nueva Comparación"\}/);
   assert.match(comparator, /<View style=\{styles\.builderTabs\}>[\s\S]*<ComparisonKindTabs kind=\{kind\} onChange=\{changeKind\} \/>[\s\S]*<Screen headerMode="preserve">/);
-  assert.match(comparator, /<SectionPageHeader countLabel="comparaciones" section="comparator" title="Comparador" \/>/);
-  assert.match(comparator, /<ComparisonKindTabs counts=\{counts\}/);
+  assert.match(comparator, /scrollHeader=\{<SectionPageHeader countLabel="comparaciones" section="comparator" title="Comparador" \/>\}/);
+  assert.match(comparator, /stickyHeader=\{<ComparisonKindTabs counts=\{counts\}/);
+  assert.match(comparator, /stickyHeaderStyle=\{styles\.dashboardStickyHeader\}/);
   assert.match(comparator, /<DistributedTabBar<ComparisonKind>/);
   assert.match(comparator, /identityVisible: compactHeaderVisible[\s\S]*title: "Comparador"/);
   assert.match(comparator, /contentOffset\.y > 1/);
@@ -58,11 +59,14 @@ test("screens that own global navigation preserve their header through content a
   assert.match(assistant, /activeSection === "chats" \? "Acciones de Chats" : "Acciones de Propuestas"/);
   assert.match(assistant, /<AssistantSectionTabs activeSection=\{activeSection\} counts=\{counts\} onChange=\{setActiveSection\} \/>/);
   assert.match(assistant, /<AssistantListActions[\s\S]*activeSection=\{activeSection\}/);
-  assert.match(assistant, /stickyHeader=\{stickyHeader\}/);
+  assert.match(assistant, /scrollHeader=\{scrollHeader\}/);
+  assert.match(assistant, /stickyHeader=\{<AssistantSectionTabs/);
+  assert.match(assistant, /const scrollHeader = \([\s\S]*<AssistantCreditBalance/);
+  assert.doesNotMatch(assistant, /const stickyHeader = \([\s\S]*<AssistantCreditBalance/);
   assert.match(assistant, /stickyHeaderStyle=\{styles\.stickyHeader\}/);
   assert.match(assistant, /identityVisible: compactHeaderVisible/);
   assert.match(assistant, /contentOffset\.y > 1/);
-  assert.match(assistant, /scrollHeader=\{<SectionPageHeader countLabel="elementos" section="chat" title="Asistente AI" \/>\}/);
+  assert.match(assistant, /const scrollHeader = \([\s\S]*<SectionPageHeader countLabel="elementos" section="chat" title="Asistente AI" \/>/);
   assert.doesNotMatch(assistant, /<SectionPageHeader count=/);
   assert.doesNotMatch(assistant, /disabled: !page\.availability\.is_available/);
   assert.doesNotMatch(assistant, /<Button[^>]*label="Nuevo chat"/);

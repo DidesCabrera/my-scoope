@@ -314,7 +314,8 @@ by Assistant AI; its three tabs divide the available width evenly. On the saved
 comparison lists, each scope tab owns its item count; the page heading does not
 repeat that quantity in a detached chip. Once the large page heading scrolls,
 `Comparador` becomes visible in the compact global header, matching the active
-program list behavior. The UI-System's
+program list behavior, while its distributed scope tabs remain pinned beneath
+that header. The UI-System's
 `ScrollableTabBar` remains the intrinsic-width alternative for collections such
 as program weeks. Labels, optional icons and counts are centered as one group in
 both tab-bar components. `ComparisonSelectionCard` represents a numbered selection and

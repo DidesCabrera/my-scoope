@@ -135,13 +135,13 @@ export default function AssistantHistoryScreen() {
   if (chatsLoading && proposalsLoading && !chatPage && !proposalPage) return <LoadingState label="Abriendo el Asistente AI…" />;
 
   const counts = { chats: chatPage?.total ?? 0, proposals: proposalPage?.total ?? 0 };
-  const stickyHeader = (
-    <>
+  const scrollHeader = (
+    <View style={styles.scrollHeader}>
+      <SectionPageHeader countLabel="elementos" section="chat" title="Asistente AI" />
       {chatPage?.availability ? (
         <AssistantCreditBalance availability={chatPage.availability} />
       ) : null}
-      <AssistantSectionTabs activeSection={activeSection} counts={counts} onChange={setActiveSection} />
-    </>
+    </View>
   );
 
   return (
@@ -151,8 +151,8 @@ export default function AssistantHistoryScreen() {
         const visible = nativeEvent.contentOffset.y > 1;
         if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible);
       }}
-      scrollHeader={<SectionPageHeader countLabel="elementos" section="chat" title="Asistente AI" />}
-      stickyHeader={stickyHeader}
+      scrollHeader={scrollHeader}
+      stickyHeader={<AssistantSectionTabs activeSection={activeSection} counts={counts} onChange={setActiveSection} />}
       stickyHeaderStyle={styles.stickyHeader}
     >
       {activeSection === "chats" ? (
@@ -205,6 +205,7 @@ const styles = StyleSheet.create({
   creditTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },
   pressed: { opacity: 0.65 },
   row: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
+  scrollHeader: { gap: tokens.spacing.md },
   source: { color: tokens.color.textSoft, fontSize: 11, fontWeight: "900", letterSpacing: 1.1, textTransform: "uppercase" },
   stickyHeader: { paddingTop: tokens.spacing.sm },
   title: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },

@@ -122,9 +122,10 @@ function ComparatorDashboard() {
         onScroll={({ nativeEvent }) => {
           const visible = nativeEvent.contentOffset.y > 1;
           if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible);
-        }}>
-        <SectionPageHeader countLabel="comparaciones" section="comparator" title="Comparador" />
-        <ComparisonKindTabs counts={counts} kind={kind} onChange={(nextKind) => { setKind(nextKind); router.setParams({ kind: nextKind }); }} />
+        }}
+        scrollHeader={<SectionPageHeader countLabel="comparaciones" section="comparator" title="Comparador" />}
+        stickyHeader={<ComparisonKindTabs counts={counts} kind={kind} onChange={(nextKind) => { setKind(nextKind); router.setParams({ kind: nextKind }); }} />}
+        stickyHeaderStyle={styles.dashboardStickyHeader}>
         {error ? <RecoverableErrorState message={error} onRetry={() => void load()} /> : null}
         {page?.items.length ? page.items.map((item) => <SavedCard item={item} key={item.id} onPress={() => router.push(`/comparator/saved/${item.id}` as Href)} />) : (
           <EmptyState actionLabel="Crear nueva comparación" message={`Todavía no tienes comparaciones guardadas de ${fallbackKinds.find((item) => item.value === kind)?.label.toLowerCase()}.`} onAction={() => router.push(creationHref(kind))} title="Aún no hay comparaciones" />
@@ -335,6 +336,7 @@ export default function ComparatorScreen() {
 const styles = StyleSheet.create({
   builderRoot: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   builderTabs: { backgroundColor: tokens.color.surfaceApp, borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, paddingBottom: tokens.spacing.sm, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.xs },
+  dashboardStickyHeader: { paddingTop: tokens.spacing.sm },
   remove: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: 18, borderWidth: 1, height: 36, justifyContent: "center", width: 36 },
   removeText: { color: tokens.color.textMuted, fontSize: 24, lineHeight: 26 },
   pressed: { opacity: 0.68 },
