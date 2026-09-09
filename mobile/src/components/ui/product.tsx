@@ -47,11 +47,11 @@ export type CompletionIndicatorCounts = {
   noteCount?: number;
 };
 
-export function GuideMetric({ label, value }: { label: string; value: string }) {
+export function GuideMetric({ label, value }: { label?: string; value: string }) {
   return (
-    <View accessibilityLabel={`${label}: ${value}`} accessible style={styles.guideMetric}>
+    <View accessibilityLabel={label ? `${label}: ${value}` : value} accessible style={[styles.guideMetric, !label && styles.guideMetricValueOnly]}>
       <View style={styles.guideMetricCopy}>
-        <Text style={styles.guideMetricLabel}>{label}</Text>
+        {label ? <Text style={styles.guideMetricLabel}>{label}</Text> : null}
         <Text style={styles.guideMetricValue}>{value}</Text>
       </View>
     </View>
@@ -455,6 +455,7 @@ const styles = StyleSheet.create({
   guideMetricCopy: { alignItems: "flex-end", gap: 1 },
   guideMetricLabel: { color: tokens.color.textMuted, fontSize: 10, fontWeight: tokens.weight.regular, lineHeight: 12, textAlign: "right" },
   guideMetricValue: { color: tokens.color.textMain, fontSize: 17, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.semibold, lineHeight: 20, textAlign: "right" },
+  guideMetricValueOnly: { minHeight: 40 },
   entityCardPanelSlot: { minWidth: 0 },
   cardHeader: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
   cardHeaderCompact: { gap: tokens.spacing.sm },
