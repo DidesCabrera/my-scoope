@@ -12,7 +12,7 @@ import { HomeActions } from "@/components/home-actions";
 import { HomeLibraryGrid, type HomeLibraryCounts } from "@/components/home/home-library-grid";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { ProgramActiveHomeOverview } from "@/components/programs/program-active-card";
-import { AppHeader, Button, Card, InlineNotice, LoadingState, Pill, Screen, SectionTitle, StructuralIndicators, textStyles } from "@/components/ui";
+import { AppHeader, Button, Card, GuideMetric, InlineNotice, LoadingState, Pill, Screen, SectionTitle, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { syncNativeRemindersForProgram } from "@/notifications/native-reminders";
 
@@ -100,7 +100,7 @@ export default function TodayScreen() {
       <AppHeader
         alignment="center"
         action={currentWeightKg != null ? (
-          <StructuralIndicators indicators={[{ icon: "weight", iconPosition: "leading", label: "peso actual", tone: "surfaceMuted", value: `${displayWeight(currentWeightKg)} kg` }]} />
+          <GuideMetric icon="weight" value={`${displayWeight(currentWeightKg)} kg`} />
         ) : undefined}
         title={`Vamos, ${firstName}`}
       />

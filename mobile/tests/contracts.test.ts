@@ -402,7 +402,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(gallery, /MI PROGRAMA ACTIVO · FECHAS \+ PLANES/);
   assert.match(todayScreen, /<ProgramActiveHomeOverview/);
   assert.match(todayScreen, /alignment="center"/);
-  assert.match(todayScreen, /<StructuralIndicators indicators=\{\[\{ icon: "weight", iconPosition: "leading", label: "peso actual", tone: "surfaceMuted", value: `\$\{displayWeight\(currentWeightKg\)\} kg` \}\]\} \/>/);
+  assert.match(todayScreen, /<GuideMetric icon="weight" value=\{`\$\{displayWeight\(currentWeightKg\)\} kg`\} \/>/);
   assert.doesNotMatch(todayScreen, /GuideMetric label="Peso actual"/);
   assert.match(todayScreen, /apiRequest<WeightListData>\("\/api\/v1\/weights\?limit=1"\)/);
   assert.match(todayScreen, /latestWeightKg \?\? profile\?\.current_weight_kg \?\? today\?\.measurements\?\.latest_weight_kg/);
