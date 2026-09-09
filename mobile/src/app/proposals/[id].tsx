@@ -5,6 +5,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { userFacingError } from "@/api/errors";
 import type { MobileAction, ProposalDetail, ProposalStatus } from "@/api/types";
 import { useSession } from "@/auth/session-context";
+import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { ProposalDailyPlanPreview, ProposalFacts, ProposalMealPreview } from "@/components/proposals/proposal-preview";
 import { ConfirmationState, RecoverableErrorState } from "@/components/ui/screen-states";
 import { AppHeader, Button, Card, InlineNotice, LoadingState, Pill, Screen, SectionTitle, textStyles } from "@/components/ui/primitives";
@@ -30,6 +31,7 @@ export default function ProposalDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { status, apiRequest } = useSession();
+  const setHeaderPresentation = useHeaderPresentation();
   const [proposal, setProposal] = useState<ProposalDetail | null>(null);
   const [pendingAction, setPendingAction] = useState<MobileAction | null>(null);
   const [loading, setLoading] = useState(true);
@@ -50,6 +52,10 @@ export default function ProposalDetailScreen() {
   }, [apiRequest, id]);
 
   useFocusEffect(useCallback(() => { if (status === "authenticated") void load(); }, [load, status]));
+  useFocusEffect(useCallback(() => {
+    setHeaderPresentation({ fallback: "/assistant?section=proposals" as Href, mode: "back", title: "Detalle de propuesta" });
+    return () => setHeaderPresentation({ mode: "default" });
+  }, [setHeaderPresentation]));
 
   if (status === "anonymous") return <Redirect href="/login" />;
   if (loading && !proposal) return <LoadingState label="Abriendo la propuesta…" />;
@@ -81,7 +87,7 @@ export default function ProposalDetailScreen() {
   const applyWarning = pendingAction?.key === "apply" && proposal?.subject_context_warning.requires_warning ? proposal.subject_context_warning : null;
 
   return (
-    <Screen>
+    <Screen headerMode="preserve">
       <AppHeader eyebrow={proposal?.entity_title || "Revisión confiable"} title={proposal?.title || "Propuesta"} />
       {error ? <RecoverableErrorState message={error} onRetry={() => void load()} /> : null}
       {proposal ? (

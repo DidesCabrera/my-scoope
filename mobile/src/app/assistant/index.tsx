@@ -7,6 +7,7 @@ import type { AIChatListData, AIChatSummary, ProposalListData, ProposalStatus, P
 import { useSession } from "@/auth/session-context";
 import { AssistantListActions, type ProposalFilter } from "@/components/assistant/assistant-list-actions";
 import { AssistantSectionTabs, type AssistantSection } from "@/components/assistant/assistant-section-tabs";
+import { AssistantCreditBalance } from "@/components/assistant/assistant-credit-balance";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { SectionPageHeader } from "@/components/ui";
 import { EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
@@ -135,7 +136,7 @@ export default function AssistantHistoryScreen() {
   const stickyHeader = (
     <>
       {chatPage?.availability ? (
-        <InlineNotice>{chatPage.availability.available_credits} créditos disponibles · {chatPage.availability.label}</InlineNotice>
+        <AssistantCreditBalance availability={chatPage.availability} />
       ) : null}
       <AssistantSectionTabs activeSection={activeSection} counts={counts} onChange={setActiveSection} />
     </>

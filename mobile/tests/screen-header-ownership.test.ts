@@ -28,6 +28,7 @@ test("screens that own global navigation preserve their header through content a
     "src/app/program/activate.tsx",
     "src/app/program/history.tsx",
     "src/app/program/index.tsx",
+    "src/app/proposals/[id].tsx",
     "src/app/today.tsx",
   ]) {
     const screen = await source(relativePath);
@@ -59,6 +60,16 @@ test("screens that own global navigation preserve their header through content a
 
   const proposals = await source("src/app/proposals/index.tsx");
   assert.match(proposals, /<Redirect href=\{\{ pathname: "\/assistant", params: \{ section: "proposals" \} \}\} \/>/);
+
+  const proposalDetail = await source("src/app/proposals/[id].tsx");
+  assert.match(proposalDetail, /fallback: "\/assistant\?section=proposals" as Href, mode: "back", title: "Detalle de propuesta"/);
+  assert.match(proposalDetail, /<Screen headerMode="preserve">/);
+
+  const creditBalance = await source("src/components/assistant/assistant-credit-balance.tsx");
+  assert.match(creditBalance, /<Card style=\{styles\.card\}>/);
+  assert.match(creditBalance, /Saldo de créditos/);
+  assert.match(creditBalance, /availability\.available_credits/);
+  assert.match(assistant, /<AssistantCreditBalance availability=\{chatPage\.availability\} \/>/);
 
   const tabs = await source("src/components/assistant/assistant-section-tabs.tsx");
   assert.match(tabs, /MessageCircle/);
