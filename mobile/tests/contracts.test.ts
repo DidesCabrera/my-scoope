@@ -404,6 +404,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assert.match(todayScreen, /alignment="center"/);
   assert.match(todayScreen, /<GuideMetric icon="weight" value=\{`\$\{displayWeight\(currentWeightKg\)\} kg`\} \/>/);
   assert.doesNotMatch(todayScreen, /GuideMetric label="Peso actual"/);
+  assert.match(productUiSourceForIndicators, /guideMetricValueOnly: \{ borderRadius: tokens\.radius\.lg, minHeight: 40 \}/);
   assert.match(todayScreen, /apiRequest<WeightListData>\("\/api\/v1\/weights\?limit=1"\)/);
   assert.match(todayScreen, /latestWeightKg \?\? profile\?\.current_weight_kg \?\? today\?\.measurements\?\.latest_weight_kg/);
   assert.match(todayScreen, /displayWeight\(currentWeightKg\)/);

@@ -458,7 +458,7 @@ const styles = StyleSheet.create({
   guideMetricCopy: { alignItems: "flex-end", gap: 1 },
   guideMetricLabel: { color: tokens.color.textMuted, fontSize: 10, fontWeight: tokens.weight.regular, lineHeight: 12, textAlign: "right" },
   guideMetricValue: { color: tokens.color.textMain, fontSize: 17, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.semibold, lineHeight: 20, textAlign: "right" },
-  guideMetricValueOnly: { minHeight: 40 },
+  guideMetricValueOnly: { borderRadius: tokens.radius.lg, minHeight: 40 },
   guideMetricValueRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs },
   entityCardPanelSlot: { minWidth: 0 },
   cardHeader: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
