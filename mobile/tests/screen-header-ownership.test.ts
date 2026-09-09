@@ -50,6 +50,8 @@ test("screens that own global navigation preserve their header through content a
   assert.match(comparator, /<SectionPageHeader countLabel="comparaciones" section="comparator" title="Comparador" \/>/);
   assert.match(comparator, /<ComparisonKindTabs counts=\{counts\}/);
   assert.match(comparator, /<ScrollableTabBar<ComparisonKind>/);
+  assert.match(comparator, /identityVisible: compactHeaderVisible[\s\S]*title: "Comparador"/);
+  assert.match(comparator, /contentOffset\.y > 1/);
   assert.doesNotMatch(comparator, /<SectionPageHeader count=\{page\?\.total\}/);
 
   const assistant = await source("src/app/assistant/index.tsx");
@@ -57,6 +59,8 @@ test("screens that own global navigation preserve their header through content a
   assert.match(assistant, /<AssistantSectionTabs activeSection=\{activeSection\} counts=\{counts\} onChange=\{setActiveSection\} \/>/);
   assert.match(assistant, /<AssistantListActions[\s\S]*activeSection=\{activeSection\}/);
   assert.match(assistant, /stickyHeader=\{stickyHeader\}/);
+  assert.match(assistant, /identityVisible: compactHeaderVisible/);
+  assert.match(assistant, /contentOffset\.y > 1/);
   assert.match(assistant, /scrollHeader=\{<SectionPageHeader countLabel="elementos" section="chat" title="Asistente AI" \/>\}/);
   assert.doesNotMatch(assistant, /<SectionPageHeader count=/);
   assert.doesNotMatch(assistant, /disabled: !page\.availability\.is_available/);
@@ -71,7 +75,8 @@ test("screens that own global navigation preserve their header through content a
 
   const creditBalance = await source("src/components/assistant/assistant-credit-balance.tsx");
   assert.match(creditBalance, /<Card style=\{styles\.card\}>/);
-  assert.match(creditBalance, /Saldo de créditos/);
+  assert.doesNotMatch(creditBalance, /Saldo de créditos|Sparkles/);
+  assert.match(creditBalance, /\{availability\.available_credits\}<\/Text> créditos disponibles/);
   assert.match(creditBalance, /availability\.available_credits/);
   assert.match(creditBalance, /marginBottom: tokens\.spacing\.sm/);
   assert.match(assistant, /<AssistantCreditBalance availability=\{chatPage\.availability\} \/>/);

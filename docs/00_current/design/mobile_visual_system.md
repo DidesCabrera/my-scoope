@@ -312,7 +312,9 @@ and saved-list views. `ComparisonScopeTabs` switches among Food, Meal and
 DailyPlan scopes through `ScrollableTabBar`: each pill keeps its intrinsic
 content width and the row scrolls horizontally when necessary. On the saved
 comparison lists, each scope tab owns its item count; the page heading does not
-repeat that quantity in a detached chip. The UI-System's
+repeat that quantity in a detached chip. Once the large page heading scrolls,
+`Comparador` becomes visible in the compact global header, matching the active
+program list behavior. The UI-System's
 second navigation primitive, `DistributedTabBar`, divides the full available
 width evenly among its tabs; pickers for adding/replacing entities and the
 Assistant AI subsections use this variant. Labels, optional icons and counts are

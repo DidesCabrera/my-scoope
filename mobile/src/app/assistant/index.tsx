@@ -88,6 +88,7 @@ export default function AssistantHistoryScreen() {
   const [proposalPage, setProposalPage] = useState<ProposalListData | null>(null);
   const [filter, setFilter] = useState<ProposalFilter>("all");
   const [actionsVisible, setActionsVisible] = useState(false);
+  const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const [chatsLoading, setChatsLoading] = useState(true);
   const [proposalsLoading, setProposalsLoading] = useState(true);
   const [chatError, setChatError] = useState<string | null>(null);
@@ -123,11 +124,12 @@ export default function AssistantHistoryScreen() {
   useFocusEffect(useCallback(() => {
     setHeaderPresentation({
       action: { label: activeSection === "chats" ? "Acciones de Chats" : "Acciones de Propuestas", onPress: () => setActionsVisible(true) },
+      identityVisible: compactHeaderVisible,
       mode: "default",
       title: "Asistente AI",
     });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [activeSection, setHeaderPresentation]));
+  }, [activeSection, compactHeaderVisible, setHeaderPresentation]));
 
   if (status === "anonymous") return <Redirect href="/login" />;
   if (chatsLoading && proposalsLoading && !chatPage && !proposalPage) return <LoadingState label="Abriendo el Asistente AI…" />;
@@ -145,6 +147,10 @@ export default function AssistantHistoryScreen() {
   return (
     <Screen
       headerMode="preserve"
+      onScroll={({ nativeEvent }) => {
+        const visible = nativeEvent.contentOffset.y > 1;
+        if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible);
+      }}
       scrollHeader={<SectionPageHeader countLabel="elementos" section="chat" title="Asistente AI" />}
       stickyHeader={stickyHeader}
     >

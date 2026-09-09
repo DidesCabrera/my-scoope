@@ -88,6 +88,7 @@ function ComparatorDashboard() {
   const setHeaderPresentation = useHeaderPresentation();
   const [kind, setKind] = useState<ComparisonKind>(params.kind === "meals" || params.kind === "dailyplans" ? params.kind : "foods");
   const [counts, setCounts] = useState<Record<ComparisonKind, number>>({ dailyplans: 0, foods: 0, meals: 0 });
+  const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const [page, setPage] = useState<SavedComparisonListData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -108,15 +109,20 @@ function ComparatorDashboard() {
 
   useFocusEffect(useCallback(() => { if (status === "authenticated") void load(); }, [load, status]));
   useFocusEffect(useCallback(() => {
-    setHeaderPresentation({ action: { icon: "plus", label: "Crear una comparación", onPress: () => router.push(creationHref(kind)) }, mode: "default" });
+    setHeaderPresentation({ action: { icon: "plus", label: "Crear una comparación", onPress: () => router.push(creationHref(kind)) }, identityVisible: compactHeaderVisible, mode: "default", title: "Comparador" });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [kind, router, setHeaderPresentation]));
+  }, [compactHeaderVisible, kind, router, setHeaderPresentation]));
   if (status === "anonymous") return <Redirect href="/login" />;
   if (loading && !page) return <LoadingState label="Buscando tus comparaciones…" />;
 
   return (
     <>
-      <Screen headerMode="preserve">
+      <Screen
+        headerMode="preserve"
+        onScroll={({ nativeEvent }) => {
+          const visible = nativeEvent.contentOffset.y > 1;
+          if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible);
+        }}>
         <SectionPageHeader countLabel="comparaciones" section="comparator" title="Comparador" />
         <ComparisonKindTabs counts={counts} kind={kind} onChange={(nextKind) => { setKind(nextKind); router.setParams({ kind: nextKind }); }} />
         {error ? <RecoverableErrorState message={error} onRetry={() => void load()} /> : null}

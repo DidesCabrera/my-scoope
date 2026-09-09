@@ -77,8 +77,9 @@ histórica de propuestas redirige a esa misma superficie. Cada tab ocupa la mita
 del ancho mediante `DistributedTabBar`, el mismo patrón de ancho completo usado
 al agregar o reemplazar entidades. Icono, label y cantidad permanecen centrados
 como un solo grupo. El resumen de créditos aparece antes de los tabs como una
-card compacta del UI-System, con identidad, saldo y estado de disponibilidad
-diferenciados; ambos permanecen fijos durante el scroll. El indicador de cantidad
+card compacta del UI-System: saldo y estado de disponibilidad comparten una sola
+línea; ambos permanecen fijos durante el scroll. Al desplazar el contenido, el
+título `Asistente AI` aparece en la identidad compacta del header. El indicador de cantidad
 se elimina del título principal. El menú de cabecera siempre expone acciones del
 tab activo.
 
