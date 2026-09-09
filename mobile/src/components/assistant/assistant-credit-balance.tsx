@@ -27,7 +27,7 @@ export function AssistantCreditBalance({ availability }: { availability: Assista
 
 const styles = StyleSheet.create({
   balance: { alignItems: "baseline", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.compact },
-  card: { gap: tokens.spacing.sm, paddingVertical: tokens.spacing.md },
+  card: { gap: tokens.spacing.sm, marginBottom: tokens.spacing.sm, paddingVertical: tokens.spacing.md },
   header: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "space-between", minWidth: 0 },
   icon: { alignItems: "center", backgroundColor: tokens.color.interactivePrimary, borderRadius: tokens.radius.md, height: 28, justifyContent: "center", width: 28 },
   identity: { alignItems: "center", flexDirection: "row", flexShrink: 1, gap: tokens.spacing.sm, minWidth: 0 },

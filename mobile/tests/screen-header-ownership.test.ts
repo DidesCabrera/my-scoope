@@ -47,6 +47,10 @@ test("screens that own global navigation preserve their header through content a
   assert.match(comparator, /action: \{ label: "Cancelar", onPress: cancel \}/);
   assert.doesNotMatch(comparator, /title=\{savedId \? "Editar Comparación" : "Nueva Comparación"\}/);
   assert.match(comparator, /<View style=\{styles\.builderTabs\}>[\s\S]*<ComparisonKindTabs kind=\{kind\} onChange=\{changeKind\} \/>[\s\S]*<Screen headerMode="preserve">/);
+  assert.match(comparator, /<SectionPageHeader countLabel="comparaciones" section="comparator" title="Comparador" \/>/);
+  assert.match(comparator, /<ComparisonKindTabs counts=\{counts\}/);
+  assert.match(comparator, /<ScrollableTabBar<ComparisonKind>/);
+  assert.doesNotMatch(comparator, /<SectionPageHeader count=\{page\?\.total\}/);
 
   const assistant = await source("src/app/assistant/index.tsx");
   assert.match(assistant, /activeSection === "chats" \? "Acciones de Chats" : "Acciones de Propuestas"/);
@@ -69,6 +73,7 @@ test("screens that own global navigation preserve their header through content a
   assert.match(creditBalance, /<Card style=\{styles\.card\}>/);
   assert.match(creditBalance, /Saldo de créditos/);
   assert.match(creditBalance, /availability\.available_credits/);
+  assert.match(creditBalance, /marginBottom: tokens\.spacing\.sm/);
   assert.match(assistant, /<AssistantCreditBalance availability=\{chatPage\.availability\} \/>/);
 
   const tabs = await source("src/components/assistant/assistant-section-tabs.tsx");
