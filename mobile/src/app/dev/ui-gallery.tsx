@@ -298,6 +298,7 @@ export default function UiGalleryScreen() {
           <ScrollableTabBar<"week1" | "week2" | "week3" | "week4">
             accessibilityLabel="Ejemplo de tabs desplazables"
             activeTab={scrollableExample}
+            density="compact"
             onChange={setScrollableExample}
             tabs={[
               { key: "week1", label: "Semana 1" },

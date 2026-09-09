@@ -16,6 +16,8 @@ test("UI System exposes intrinsic scrollable and full-width distributed tab bars
   assert.match(tabs, /<ScrollView[\s\S]*horizontal[\s\S]*showsHorizontalScrollIndicator=\{false\}/);
   assert.match(tabs, /scrollableTab: \{[^}]*flexDirection: "row"/);
   assert.doesNotMatch(tabs, /scrollableTab: \{[^}]*flex: 1/);
+  assert.match(tabs, /density\?: "compact" \| "regular"/);
+  assert.match(tabs, /scrollableTabCompact: \{[^}]*minHeight: 30/);
   assert.match(tabs, /export function DistributedTabBar/);
   assert.match(tabs, /distributedBar: \{[^}]*width: "100%"/);
   assert.match(tabs, /distributedTab: \{[^}]*flex: 1/);
@@ -32,5 +34,5 @@ test("domain tab bars use the matching UI System layout contract", async () => {
   assert.match(assistant, /<DistributedTabBar<AssistantSection>/);
   assert.match(picker, /<DistributedTabBar<PickerEntryTab>/);
   assert.match(comparator, /<ScrollableTabBar/);
-  assert.match(weeks, /<ScrollableTabBar/);
+  assert.match(weeks, /<ScrollableTabBar[\s\S]*density="compact"/);
 });

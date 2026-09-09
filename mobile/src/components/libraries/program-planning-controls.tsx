@@ -75,6 +75,7 @@ export function ProgramWeekTabs({
     <ScrollableTabBar
       accessibilityLabel="Semanas del programa"
       activeTab={activeWeek}
+      density="compact"
       onChange={onChange}
       style={style}
       tabs={weeks.map((week) => ({ accessibilityLabel: `Semana ${week}`, key: week, label: `Semana ${week}` }))}

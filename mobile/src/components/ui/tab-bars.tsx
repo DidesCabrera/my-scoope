@@ -21,6 +21,10 @@ type TabBarProps<T extends TabKey> = {
   tabs: readonly TabBarItem<T>[];
 };
 
+type ScrollableTabBarProps<T extends TabKey> = TabBarProps<T> & {
+  density?: "compact" | "regular";
+};
+
 function renderIcon<T extends TabKey>(tab: TabBarItem<T>, selected: boolean) {
   return typeof tab.icon === "function" ? tab.icon(selected) : tab.icon;
 }
@@ -35,13 +39,13 @@ function TabContent<T extends TabKey>({ selected, tab }: { selected: boolean; ta
   );
 }
 
-export function ScrollableTabBar<T extends TabKey>({ accessibilityLabel, activeTab, onChange, style, tabs }: TabBarProps<T>) {
+export function ScrollableTabBar<T extends TabKey>({ accessibilityLabel, activeTab, density = "regular", onChange, style, tabs }: ScrollableTabBarProps<T>) {
   return (
     <View style={[styles.scrollableViewport, style]}>
       <ScrollView
         accessibilityLabel={accessibilityLabel}
         accessibilityRole="tablist"
-        contentContainerStyle={styles.scrollableContent}
+        contentContainerStyle={[styles.scrollableContent, density === "compact" && styles.scrollableContentCompact]}
         directionalLockEnabled
         horizontal
         nestedScrollEnabled
@@ -56,7 +60,7 @@ export function ScrollableTabBar<T extends TabKey>({ accessibilityLabel, activeT
               accessibilityState={{ selected }}
               key={tab.key}
               onPress={() => { if (!selected) onChange(tab.key); }}
-              style={({ pressed }) => [styles.scrollableTab, selected && styles.tabSelected, pressed && styles.pressed]}>
+              style={({ pressed }) => [styles.scrollableTab, density === "compact" && styles.scrollableTabCompact, selected && styles.tabSelected, pressed && styles.pressed]}>
               <TabContent selected={selected} tab={tab} />
             </Pressable>
           );
@@ -96,7 +100,9 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.68 },
   scrollableBar: { flexGrow: 0, width: "100%" },
   scrollableContent: { flexDirection: "row", gap: tokens.spacing.sm },
+  scrollableContentCompact: { gap: tokens.spacing.compact },
   scrollableTab: { alignItems: "center", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.pill, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.compact, justifyContent: "center", minHeight: 40, paddingHorizontal: tokens.spacing.md },
+  scrollableTabCompact: { backgroundColor: tokens.color.surfaceApp, borderColor: tokens.color.borderDefault, minHeight: 30 },
   scrollableViewport: { flexShrink: 1, minWidth: 0, width: "100%" },
   tabSelected: { backgroundColor: tokens.color.textMain, borderColor: tokens.color.textMain },
 });

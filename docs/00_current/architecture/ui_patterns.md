@@ -150,7 +150,9 @@ En móvil existen dos contratos explícitos del UI-System:
 
 - `ScrollableTabBar`: cada tab mide según su contenido y la barra permite scroll
   horizontal cuando el conjunto supera el ancho disponible. Se usa en semanas y
-  en el selector de entidades del Comparador.
+  en el selector de entidades del Comparador. Su densidad `compact` conserva el
+  alto de 30 px de Semanas; la densidad regular conserva el alto de 40 px del
+  Comparador.
 - `DistributedTabBar`: ocupa todo el ancho disponible y divide ese espacio en
   partes iguales según la cantidad de tabs. Se usa en Agregar/Reemplazar
   entidades y en las subsecciones del Asistente AI.
