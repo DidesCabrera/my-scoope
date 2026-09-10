@@ -59,7 +59,6 @@ function foodPanelItems(meal: ProposalMeal): FoodPanelItem[] {
       proteinAllocation: macroAllocations.protein,
       carbsAllocation: macroAllocations.carbs,
       fatAllocation: macroAllocations.fat,
-      projectedLabel: "Propuesto",
     };
   });
 }
@@ -87,28 +86,49 @@ function mealPanelItems(dailyplan: ProposalDailyPlan): MealPanelItem[] {
       proteinAllocation: mealNutrition.protein.allocation,
       carbsAllocation: mealNutrition.carbs.allocation,
       fatAllocation: mealNutrition.fat.allocation,
-      projectedLabel: "Propuesta",
     };
   });
 }
 
-export function ProposalFacts({ title, facts }: { title: string; facts: ProposalFact[] }) {
+export function ProposalFacts({ description, title, facts }: { description?: string; title: string; facts: ProposalFact[] }) {
   if (!facts.length) return null;
   return (
     <Card muted>
       <SectionTitle title={title} />
+      {description ? <Text style={textStyles.caption}>{description}</Text> : null}
       {facts.map((fact, index) => <View key={`${fact.label}-${index}`} style={styles.fact}><Text style={textStyles.muted}>{fact.label}</Text><Text style={textStyles.strong}>{fact.value}</Text></View>)}
     </Card>
   );
 }
 
-export function ProposalMealCard({ actions, eyebrow = "Comida propuesta", meal }: { actions?: ReactNode; eyebrow?: string; meal: ProposalMeal }) {
+function factsAreEqual(first: ProposalFact[], second: ProposalFact[]): boolean {
+  if (first.length !== second.length) return false;
+  const normalized = (facts: ProposalFact[]) => facts.map(({ label, value }) => `${label}:${value}`).sort();
+  return normalized(first).every((fact, index) => fact === normalized(second)[index]);
+}
+
+export function ProposalEvaluationContext({ current, targets }: { current: ProposalFact[]; targets: ProposalFact[] }) {
+  const showCurrent = current.length > 0 && !factsAreEqual(targets, current);
+  if (!targets.length && !showCurrent) return null;
+  return (
+    <View style={styles.evaluationContext}>
+      <SectionTitle detail={showCurrent ? "Objetivo y punto de partida" : "Objetivo usado"} title="Contexto de la propuesta" />
+      <ProposalFacts description="Valores que esta propuesta busca alcanzar." facts={targets} title="Objetivo" />
+      {showCurrent ? <ProposalFacts description="Valores existentes antes de generar la propuesta." facts={current} title="Punto de partida" /> : null}
+    </View>
+  );
+}
+
+export function ProposalMealCard({ actions, eyebrow = "Comida propuesta", meal, time }: { actions?: ReactNode; eyebrow?: string; meal: ProposalMeal; time?: string | null }) {
   return (
     <NutritionEntityCard
       actions={actions}
       entity="meal"
       eyebrow={eyebrow}
-      indicators={[{ icon: "food", label: "alimentos", value: meal.foods.length }]}
+      indicators={[
+        { icon: "food", label: "alimentos", value: meal.foods.length },
+        ...(time ? [{ icon: "clock" as const, iconPosition: "leading" as const, label: "hora", tone: "surfaceCard" as const, value: time.slice(0, 5) }] : []),
+      ]}
       nutrition={nutrition(meal.kpis)}
       title={meal.name || "Comida"}>
       <FoodPanels items={foodPanelItems(meal)} />
@@ -149,7 +169,6 @@ export function ProposalFoodCard({ actions, food }: { actions?: ReactNode; food:
       actions={actions}
       entity="food"
       eyebrow="Alimento"
-      indicators={[{ label: food.unit || "g", value: number(food.quantity) }]}
       nutrition={nutrition(kpis)}
       subtitle={`${number(food.quantity)} ${food.unit || "g"}`}
       title={food.food_name || "Alimento"}
@@ -160,5 +179,6 @@ export function ProposalFoodCard({ actions, food }: { actions?: ReactNode; food:
 export const proposalPreviewAdapters = { foodPanelItems, mealPanelItems, nutrition };
 
 const styles = StyleSheet.create({
+  evaluationContext: { gap: tokens.spacing.sm, minWidth: 0 },
   fact: { alignItems: "center", borderTopColor: tokens.color.borderSoft, borderTopWidth: 1, flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between", paddingTop: 10 },
 });

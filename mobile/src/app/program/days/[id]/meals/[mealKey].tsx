@@ -8,10 +8,10 @@ import { useSession } from "@/auth/session-context";
 import { CalendarizedEntityActions } from "@/components/calendarization/calendarized-entity-actions";
 import { MealAdherenceCheckIn } from "@/components/calendarization/meal-adherence-check-in";
 import { snapshotCalories, snapshotFoodPanelItems, snapshotMacroDistribution } from "@/components/calendarization/presentation-adapters";
-import { EntityDetailPage, EntityDetailSection } from "@/components/details";
+import { EntityDetailPage, EntityDetailSection, FoodDetailCardList } from "@/components/details";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { FoodPanels } from "@/components/panels";
-import { Button, InlineNotice, textStyles } from "@/components/ui";
+import { Button, InlineNotice, SectionDivider, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
 
@@ -97,6 +97,7 @@ export default function CalendarizedMealDetailScreen() {
         <EntityDetailSection title="Tabla de comparación entre alimentos">
           <FoodPanels items={foods} />
         </EntityDetailSection>
+        {foods.length ? <><SectionDivider /><EntityDetailSection detail={`${foods.length} alimentos`} title="Detalle de cada Alimento"><FoodDetailCardList items={foods} /></EntityDetailSection></> : null}
         <MealAdherenceCheckIn dayId={dayId} mealKey={mealKey} onChange={setExecution} />
       </EntityDetailPage>
     </ScrollView>

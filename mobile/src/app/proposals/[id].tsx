@@ -9,6 +9,7 @@ import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import {
   ProposalDailyPlanCard,
+  ProposalEvaluationContext,
   ProposalFacts,
   ProposalMealCard,
 } from "@/components/proposals/proposal-preview";
@@ -126,9 +127,8 @@ export default function ProposalDetailScreen() {
           {proposal.subject_context_warning.requires_warning ? <InlineNotice tone="warning">{proposal.subject_context_warning.message}</InlineNotice> : null}
           {!proposal.meal && !proposal.dailyplan ? <InlineNotice>Esta propuesta conserva su contenido y validación, pero su tipo no genera una entidad aplicable desde móvil.</InlineNotice> : null}
 
-          <ProposalFacts facts={proposal.target_facts} title="Objetivos" />
-          <ProposalFacts facts={proposal.current_facts} title="Estado de referencia" />
-          <ProposalFacts facts={proposal.validation_facts} title="Validación" />
+          <ProposalEvaluationContext current={proposal.current_facts} targets={proposal.target_facts} />
+          <ProposalFacts description="Comprobaciones realizadas antes de permitir que la propuesta se aplique." facts={proposal.validation_facts} title="Validación" />
 
           {proposal.applied_result ? (
             <Card accent={tokens.color.success}>

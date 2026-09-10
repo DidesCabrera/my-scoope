@@ -121,7 +121,7 @@ export function ProposalReviewActions({ description, onApply, onApprove, onCance
 }
 
 const styles = StyleSheet.create({
-  pageCard: { alignSelf: "stretch", backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderTopColor: tokens.color.proposal, borderTopWidth: 3, borderWidth: 1, gap: tokens.spacing.lg, marginHorizontal: -tokens.spacing.screen, minWidth: 0, padding: tokens.card.outerPadding },
+  pageCard: { alignSelf: "stretch", gap: tokens.spacing.lg, marginHorizontal: -tokens.spacing.screen, minWidth: 0, paddingBottom: tokens.card.outerPadding, paddingHorizontal: tokens.card.outerPadding },
   hero: { gap: tokens.card.gap, minWidth: 0 },
   requestSection: { gap: tokens.spacing.sm, minWidth: 0 },
   badges: { flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.sm },

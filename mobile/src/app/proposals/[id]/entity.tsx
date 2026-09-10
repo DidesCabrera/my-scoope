@@ -10,7 +10,7 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { FoodPanels, MealPanels } from "@/components/panels";
 import { ProposalFoodCard, ProposalMealCard, proposalPreviewAdapters } from "@/components/proposals/proposal-preview";
 import { RecoverableErrorState } from "@/components/ui/screen-states";
-import { EntityCardAction, LoadingState, Screen } from "@/components/ui";
+import { EntityCardAction, LoadingState, Screen, SectionDivider } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 export default function ProposalEntityDetailScreen() {
@@ -21,6 +21,7 @@ export default function ProposalEntityDetailScreen() {
   const [proposal, setProposal] = useState<ProposalDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const headerTitle = proposal?.dailyplan ? "Plan Diario Propuesto" : proposal?.meal ? "Comida Propuesta" : "Detalle de Propuesta";
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -37,9 +38,9 @@ export default function ProposalEntityDetailScreen() {
 
   useFocusEffect(useCallback(() => { if (status === "authenticated") void load(); }, [load, status]));
   useFocusEffect(useCallback(() => {
-    setHeaderPresentation({ fallback: `/proposals/${id}` as Href, mode: "back", title: "Entidad propuesta" });
+    setHeaderPresentation({ fallback: `/proposals/${id}` as Href, mode: "back", title: headerTitle });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [id, setHeaderPresentation]));
+  }, [headerTitle, id, setHeaderPresentation]));
 
   if (status === "anonymous") return <Redirect href="/login" />;
   if (loading && !proposal) return <LoadingState label="Abriendo la entidad propuesta…" />;
@@ -69,19 +70,22 @@ export default function ProposalEntityDetailScreen() {
             <FoodPanels items={proposalPreviewAdapters.foodPanelItems(proposal.meal)} />
           </EntityDetailSection>
           {proposal.meal.foods.length ? (
-            <EntityDetailSection title="Detalle de cada Alimento">
-              {proposal.meal.foods.map((food, index) => (
-                <ProposalFoodCard
-                  actions={food.food_id ? (
-                    <EntityCardAction label={`Ver detalle de ${food.food_name}`} onPress={() => router.push(`/libraries/foods/${food.food_id}` as Href)} role="link">
-                      <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
-                    </EntityCardAction>
-                  ) : undefined}
-                  food={food}
-                  key={`${food.food_id}-${food.food_name}-${index}`}
-                />
-              ))}
-            </EntityDetailSection>
+            <>
+              <SectionDivider />
+              <EntityDetailSection title="Detalle de cada Alimento">
+                {proposal.meal.foods.map((food, index) => (
+                  <ProposalFoodCard
+                    actions={food.food_id ? (
+                      <EntityCardAction label={`Ver detalle de ${food.food_name}`} onPress={() => router.push(`/libraries/foods/${food.food_id}` as Href)} role="link">
+                        <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
+                      </EntityCardAction>
+                    ) : undefined}
+                    food={food}
+                    key={`${food.food_id}-${food.food_name}-${index}`}
+                  />
+                ))}
+              </EntityDetailSection>
+            </>
           ) : null}
         </EntityDetailPage>
       ) : null}
@@ -102,6 +106,7 @@ export default function ProposalEntityDetailScreen() {
               onOpenItem={(item) => router.push(`/proposals/${proposal.id}/entity/meals/${item.id}` as Href)}
             />
           </EntityDetailSection>
+          <SectionDivider />
           <EntityDetailSection title="Detalle de cada Comida">
             {proposal.dailyplan.meals.map((item, index) => (
               <ProposalMealCard
@@ -110,9 +115,10 @@ export default function ProposalEntityDetailScreen() {
                     <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
                   </EntityCardAction>
                 )}
-                eyebrow={item.hour ? `${item.hour.slice(0, 5)} · Comida ${index + 1}` : `Comida ${index + 1}`}
+                eyebrow={`Comida ${index + 1}`}
                 key={`${item.hour}-${item.meal.name}-${index}`}
                 meal={item.meal}
+                time={item.hour}
               />
             ))}
           </EntityDetailSection>

@@ -620,6 +620,8 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
 
     def test_web_meal_check_in_uses_persisted_execution_and_updates_indicators(self):
         meal = Meal.objects.create(name="Desayuno de hoy", created_by=self.user)
+        food = Food.objects.create(name="Avena calendarizada", protein=13, carbs=68, fat=7, created_by=self.user)
+        MealFood.objects.create(meal=meal, food=food, quantity=80)
         slot = DailyPlanMeal.objects.create(
             dailyplan=self.dailyplan,
             meal=meal,
@@ -652,6 +654,10 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
         )
         self.assertContains(dashboard, detail_url)
         self.assertContains(dashboard, 'data-lucide="chevron-right"')
+        detail = self.client.get(detail_url)
+        self.assertContains(detail, "Detalle de cada Alimento")
+        self.assertContains(detail, "Avena calendarizada")
+        self.assertContains(detail, "80 g")
 
         completed_payload = {
             "action": "completed",

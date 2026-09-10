@@ -10,7 +10,7 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { FoodPanels } from "@/components/panels";
 import { ProposalFoodCard, proposalPreviewAdapters } from "@/components/proposals/proposal-preview";
 import { RecoverableErrorState } from "@/components/ui/screen-states";
-import { EntityCardAction, InlineNotice, LoadingState, Screen } from "@/components/ui";
+import { EntityCardAction, InlineNotice, LoadingState, Screen, SectionDivider } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
 export default function ProposedMealDetailScreen() {
@@ -54,14 +54,17 @@ export default function ProposedMealDetailScreen() {
       {item ? (
         <EntityDetailPage
           entity="meal"
-          eyebrow={item.hour ? `${item.hour.slice(0, 5)} · Comida ${index + 1}` : `Comida ${index + 1}`}
-          indicators={[{ icon: "food", label: "alimentos", value: item.meal.foods.length }]}
+          eyebrow={`Comida ${index + 1}`}
+          indicators={[
+            { icon: "food", label: "alimentos", value: item.meal.foods.length },
+            ...(item.hour ? [{ icon: "clock" as const, iconPosition: "leading" as const, label: "hora", tone: "surfaceCard" as const, value: item.hour.slice(0, 5) }] : []),
+          ]}
           nutrition={proposalPreviewAdapters.nutrition(item.meal.kpis)}
-          subtitle={item.note || undefined}
           title={item.meal.name || `Comida ${index + 1}`}>
           <EntityDetailSection detail={`${item.meal.foods.length} alimentos`} title="Composición">
             <FoodPanels items={proposalPreviewAdapters.foodPanelItems(item.meal)} />
           </EntityDetailSection>
+          <SectionDivider />
           <EntityDetailSection title="Detalle de cada Alimento">
             {item.meal.foods.map((food, foodIndex) => (
               <ProposalFoodCard

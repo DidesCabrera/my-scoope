@@ -515,6 +515,9 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   );
   assertSourceMatch(productUiSource, /export function EntityCardActions/);
   assertSourceMatch(productUiSource, /export function EntityCardAction/);
+  assertSourceMatch(productUiSource, /actions \? styles\.entityCardWithActions : null/);
+  assertSourceMatch(productUiSource, /entityCardWithActions: \{ paddingBottom: tokens\.card\.innerPadding \}/);
+  assertSourceDoesNotMatch(productUiSource, /entityCardActions: \{[^\n]*marginTop/);
   assertSourceMatch(productUiSource, /entityCardAction: \{ alignItems: "center", borderRadius:/);
   assertSourceDoesNotMatch(productUiSource, /entityCardAction: \{[^\n]*borderWidth/);
   assertSourceMatch(productUiSource, /entityCardPanelSlot: \{ minWidth: 0 \}/);

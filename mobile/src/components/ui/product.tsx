@@ -270,7 +270,7 @@ export function EntityCard({
   style?: StyleProp<ViewStyle>;
 }>) {
   const content = (
-    <Card accent={tokens.color[entity]} style={[onPress && styles.entityCardInPressable, style]}>
+    <Card accent={tokens.color[entity]} style={[actions ? styles.entityCardWithActions : null, onPress && styles.entityCardInPressable, style]}>
       <EntityHeading accessory={accessory} completion={completion} entity={entity} eyebrow={eyebrow} indicators={indicators} subtitle={subtitle} title={title} />
       {children}
       {actions ? <EntityCardActions>{actions}</EntityCardActions> : null}
@@ -429,7 +429,8 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.72 },
   entityCardPressable: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding },
   entityCardInPressable: { marginHorizontal: 0 },
-  entityCardActions: { alignItems: "center", alignSelf: "stretch", flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "flex-end", marginTop: tokens.spacing.sm },
+  entityCardWithActions: { paddingBottom: tokens.card.innerPadding },
+  entityCardActions: { alignItems: "center", alignSelf: "stretch", flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "flex-end" },
   entityCardAction: { alignItems: "center", borderRadius: tokens.radius.pill, height: 36, justifyContent: "center", width: 36 },
   headingRow: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md },
   headingCopy: { alignItems: "flex-start", flex: 1, gap: tokens.spacing.xs, minWidth: 0 },

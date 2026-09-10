@@ -30,6 +30,12 @@
 .dailyplan-detail__meal-step {
     scroll-margin-top: calc(var(--header-height, 40px) + 16px);
 }
+
+.food-child-card__portion {
+    margin: 4px 0 0;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
   
   /* Mobile: un poco más compacto */
   @media (max-width: 768px) {

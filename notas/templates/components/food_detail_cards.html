@@ -1,0 +1,24 @@
+{% if food_cards %}
+  <hr>
+  <section class="page-list dailyplan-detail__children-bleed food-detail-cards">
+    <div class="detail-section-header dailyplan-detail__children-header">
+      <div class="detail-section-heading home-section-title detail-dp">
+        <i data-lucide="carrot" class="home-section-header-icon food" aria-hidden="true"></i>
+        <h2>Detalle de cada Alimento</h2>
+      </div>
+      <div class="structural-indicators">
+        <span class="structural-item">
+          <span class="structural-value">{{ food_cards|length }}</span>
+          <i data-lucide="carrot" class="structural-icon main" aria-hidden="true"></i>
+        </span>
+      </div>
+    </div>
+    <div class="dailyplan-detail__children-list">
+      {% for child in food_cards %}
+        <div class="dailyplan-detail__child-card">
+          {% include "components/card_child_food.html" with child_card=child %}
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+{% endif %}

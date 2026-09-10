@@ -57,6 +57,29 @@ def snapshot_food_table_row(food: dict, meal_calories: float) -> dict:
     }
 
 
+def snapshot_food_card(food: dict) -> dict:
+    nutrition = _nutrition_totals(food)
+    return {
+        "child_id": food.get("key", ""),
+        "related_data": {"quantity": _number(food.get("quantity_g"))},
+        "titulo": {"name": food.get("name") or "Alimento", "label": "Food", "icon": "carrot"},
+        "kpis": {
+            "ppk": 0,
+            "tot_kcal": nutrition["calories"],
+            "g_protein": nutrition["protein"],
+            "g_carbs": nutrition["carbs"],
+            "g_fat": nutrition["fat"],
+            "kcal_protein": nutrition["kcal_protein"],
+            "kcal_carbs": nutrition["kcal_carbs"],
+            "kcal_fat": nutrition["kcal_fat"],
+            "alloc_protein": _percentage(nutrition["kcal_protein"], nutrition["calories"]),
+            "alloc_carbs": _percentage(nutrition["kcal_carbs"], nutrition["calories"]),
+            "alloc_fat": _percentage(nutrition["kcal_fat"], nutrition["calories"]),
+        },
+        "actions": [],
+    }
+
+
 def build_calendarized_meal_detail(*, day, meal_snapshot_key: str, user) -> dict | None:
     meals = (day.plan_snapshot or {}).get("meals", [])
     meal = next(
@@ -100,6 +123,7 @@ def build_calendarized_meal_detail(*, day, meal_snapshot_key: str, user) -> dict
         },
         "foods_aggregation": [{"display_name": item.get("name") or "Alimento"} for item in foods],
         "food_rows": [snapshot_food_table_row(item, nutrition["calories"]) for item in foods],
+        "food_cards": [snapshot_food_card(item) for item in foods],
         "kpis": {
             "ppk": nutrition["protein"] / current_weight if current_weight else 0,
             "tot_kcal": nutrition["calories"],
