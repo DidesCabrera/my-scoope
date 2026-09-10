@@ -7,6 +7,7 @@ from django.test import Client, override_settings
 from django.utils import timezone
 
 from mobile_api.tests.base import AuthenticatedMobileAPITestCase
+from mobile_api.tests.proposal_fixtures import meal_simulation
 from notas.application.services.mcp_user_tokens import create_mcp_user_token
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_READ, MOBILE_SCOPE_WRITE
 from notas.domain.models import DailyPlan, Food, Meal, NutritionProposal
@@ -45,32 +46,7 @@ class MobileAPIProposalTests(AuthenticatedMobileAPITestCase):
             },
             validation_summary={
                 "payload_validation": {"is_valid": True, "intent": "create_meal"},
-                "simulation": {
-                    "intent": "create_meal",
-                    "meal": {
-                        "name": "Desayuno AI",
-                        "foods": [{
-                            "food_id": food.id,
-                            "food_name": food.name,
-                            "quantity": 100,
-                            "unit": "g",
-                            "protein": 13,
-                            "carbs": 68,
-                            "fat": 7,
-                            "total_kcal": 387,
-                        }],
-                        "kpis": {
-                            "protein": 13,
-                            "carbs": 68,
-                            "fat": 7,
-                            "total_kcal": 387,
-                            "alloc_protein": 13.4,
-                            "alloc_carbs": 70.3,
-                            "alloc_fat": 16.3,
-                        },
-                    },
-                    "dailyplan": None,
-                },
+                "simulation": meal_simulation(food_id=food.id, food_name=food.name),
             },
         )
 

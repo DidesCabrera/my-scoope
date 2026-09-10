@@ -64,6 +64,7 @@
       "@xmldom/xmldom": "0.8.15"
     },
     "nanoid": "^3.3.18",
+    "js-yaml": "4.3.2",
     "plist": {
       "@xmldom/xmldom": "0.9.12"
     },
