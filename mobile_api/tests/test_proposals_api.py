@@ -49,8 +49,25 @@ class MobileAPIProposalTests(AuthenticatedMobileAPITestCase):
                     "intent": "create_meal",
                     "meal": {
                         "name": "Desayuno AI",
-                        "foods": [{"food_id": food.id, "food_name": food.name, "quantity": 100, "unit": "g"}],
-                        "kpis": {"protein": 13, "carbs": 68, "fat": 7, "total_kcal": 387},
+                        "foods": [{
+                            "food_id": food.id,
+                            "food_name": food.name,
+                            "quantity": 100,
+                            "unit": "g",
+                            "protein": 13,
+                            "carbs": 68,
+                            "fat": 7,
+                            "total_kcal": 387,
+                        }],
+                        "kpis": {
+                            "protein": 13,
+                            "carbs": 68,
+                            "fat": 7,
+                            "total_kcal": 387,
+                            "alloc_protein": 13.4,
+                            "alloc_carbs": 70.3,
+                            "alloc_fat": 16.3,
+                        },
                     },
                     "dailyplan": None,
                 },
@@ -68,6 +85,9 @@ class MobileAPIProposalTests(AuthenticatedMobileAPITestCase):
             {action["key"] for action in detail.json()["data"]["actions"]}, {"approve", "reject", "cancel"}
         )
         self.assertEqual(detail.json()["data"]["meal"]["name"], "Desayuno AI")
+        self.assertEqual(detail.json()["data"]["meal"]["foods"][0]["protein"], 13)
+        self.assertEqual(detail.json()["data"]["meal"]["foods"][0]["total_kcal"], 387)
+        self.assertEqual(detail.json()["data"]["meal"]["kpis"]["alloc_protein"], 13.4)
         self.assertEqual(approved.status_code, 200)
         self.assertEqual(approved.json()["data"]["status"], "approved")
         self.assertEqual(Meal.objects.filter(name="Desayuno AI").count(), 0)

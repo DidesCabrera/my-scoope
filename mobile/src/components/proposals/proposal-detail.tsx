@@ -108,11 +108,12 @@ export function ProposalMetricGrid({ metrics }: { metrics: { label: string; valu
   return <View style={styles.metrics}>{metrics.map((metric) => <View key={metric.label} style={styles.metric}><Text style={styles.metricLabel}>{metric.label}</Text><Text style={styles.metricValue}>{metric.value}</Text></View>)}</View>;
 }
 
-export function ProposalReviewActions({ description, onApprove, onCancel, onReject }: { description: string; onApprove?: () => void; onCancel?: () => void; onReject?: () => void }) {
+export function ProposalReviewActions({ description, onApply, onApprove, onCancel, onReject }: { description: string; onApply?: () => void; onApprove?: () => void; onCancel?: () => void; onReject?: () => void }) {
   return (
     <View style={styles.actions}>
       <View style={styles.actionsCopy}><Text style={proposalTextStyles.eyebrow}>Revisión humana</Text><Text style={styles.description}>{description}</Text></View>
       {onApprove ? <Button label="Aprobar propuesta" onPress={onApprove} /> : null}
+      {onApply ? <Button label="Aplicar propuesta" onPress={onApply} /> : null}
       {onReject ? <Button label="Rechazar propuesta" onPress={onReject} variant="danger" /> : null}
       {onCancel ? <Button label="Cancelar propuesta" onPress={onCancel} variant="secondary" /> : null}
     </View>

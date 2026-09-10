@@ -1,24 +1,25 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { ChevronRight } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Text } from "react-native";
 
 import { userFacingError } from "@/api/errors";
 import type { MobileAction, ProposalDetail, ProposalStatus } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
-import { ProposalDailyPlanPreview, ProposalFacts, ProposalMealPreview } from "@/components/proposals/proposal-preview";
+import {
+  ProposalDailyPlanCard,
+  ProposalFacts,
+  ProposalMealCard,
+} from "@/components/proposals/proposal-preview";
+import {
+  ProposalDetailPage,
+  ProposalEntitySection,
+  ProposalReviewActions,
+} from "@/components/proposals";
 import { ConfirmationState, RecoverableErrorState } from "@/components/ui/screen-states";
-import { AppHeader, Button, Card, InlineNotice, LoadingState, Pill, Screen, SectionTitle, textStyles } from "@/components/ui/primitives";
+import { Button, Card, EntityCardAction, InlineNotice, LoadingState, Screen, SectionTitle, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
-
-const statusColors: Record<ProposalStatus, string> = {
-  applied: tokens.color.success,
-  approved: tokens.color.interactivePrimary,
-  cancelled: tokens.color.textSoft,
-  draft: tokens.color.textSoft,
-  pending_review: tokens.color.warning,
-  rejected: tokens.color.danger,
-};
 
 const confirmationCopy: Record<string, { title: string; message: string; label: string; danger?: boolean }> = {
   approve: { title: "¿Aprobar esta propuesta?", message: "La aprobación confirma tu revisión, pero aún no crea ni modifica ninguna entidad. Después podrás aplicarla en un paso separado.", label: "Aprobar" },
@@ -26,6 +27,18 @@ const confirmationCopy: Record<string, { title: string; message: string; label: 
   cancel: { title: "¿Cancelar esta propuesta?", message: "La propuesta quedará cerrada y no se aplicará a tu librería.", label: "Cancelar propuesta", danger: true },
   apply: { title: "¿Aplicar esta propuesta?", message: "Se creará la entidad propuesta en tu librería usando el contenido que revisaste.", label: "Aplicar" },
 };
+
+function proposalStatus(status: ProposalStatus): "pending" | "approved" | "applied" | "rejected" | "cancelled" {
+  if (status === "pending_review" || status === "draft") return "pending";
+  return status;
+}
+
+function receivedAt(value: string | null): string {
+  if (!value) return "Fecha de recepción no disponible";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Fecha de recepción no disponible";
+  return `Recibida ${date.toLocaleDateString("es-CL", { day: "numeric", month: "short", year: "numeric" })}`;
+}
 
 export default function ProposalDetailScreen() {
   const router = useRouter();
@@ -85,21 +98,32 @@ export default function ProposalDetailScreen() {
 
   const confirmation = pendingAction ? confirmationCopy[pendingAction.key] : null;
   const applyWarning = pendingAction?.key === "apply" && proposal?.subject_context_warning.requires_warning ? proposal.subject_context_warning : null;
+  const action = (key: string) => proposal?.actions.find((item) => item.key === key);
+  const openEntity = () => proposal && router.push(`/proposals/${proposal.id}/entity` as Href);
+  const entityAction = proposal && (proposal.meal || proposal.dailyplan) ? (
+    <EntityCardAction label={`Ver detalle de ${proposal.attachment_name}`} onPress={openEntity} role="link">
+      <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
+    </EntityCardAction>
+  ) : undefined;
 
   return (
     <Screen headerMode="preserve">
-      <AppHeader eyebrow={proposal?.entity_title || "Revisión confiable"} title={proposal?.title || "Propuesta"} />
       {error ? <RecoverableErrorState message={error} onRetry={() => void load()} /> : null}
       {proposal ? (
-        <>
-          <Card accent={statusColors[proposal.status]}>
-            <View style={styles.row}><View style={styles.copy}><Text style={styles.source}>{proposal.source === "ai" ? "Creada por AI" : `Origen ${proposal.source}`}</Text><Text style={textStyles.muted}>{proposal.summary || "Sin resumen adicional."}</Text></View><Pill color={statusColors[proposal.status]} label={proposal.status_label} /></View>
-            <Text style={textStyles.caption}>Creada por {proposal.created_by_username}{proposal.reviewed_by_username ? ` · Revisada por ${proposal.reviewed_by_username}` : ""}</Text>
-          </Card>
-
+        <ProposalDetailPage
+          isRead
+          proposedEntity={proposal.meal || proposal.dailyplan ? (
+            <ProposalEntitySection entity={proposal.meal ? "meal" : "dailyPlan"}>
+              {proposal.meal ? <ProposalMealCard actions={entityAction} meal={proposal.meal} /> : null}
+              {proposal.dailyplan ? <ProposalDailyPlanCard actions={entityAction} dailyplan={proposal.dailyplan} /> : null}
+            </ProposalEntitySection>
+          ) : undefined}
+          receivedAt={receivedAt(proposal.created_at)}
+          status={proposalStatus(proposal.status)}
+          summary={proposal.summary}
+          title={proposal.title}
+          typeLabel={proposal.attachment_label}>
           {proposal.subject_context_warning.requires_warning ? <InlineNotice tone="warning">{proposal.subject_context_warning.message}</InlineNotice> : null}
-          {proposal.meal ? <ProposalMealPreview meal={proposal.meal} /> : null}
-          {proposal.dailyplan ? <ProposalDailyPlanPreview dailyplan={proposal.dailyplan} /> : null}
           {!proposal.meal && !proposal.dailyplan ? <InlineNotice>Esta propuesta conserva su contenido y validación, pero su tipo no genera una entidad aplicable desde móvil.</InlineNotice> : null}
 
           <ProposalFacts facts={proposal.target_facts} title="Objetivos" />
@@ -125,20 +149,17 @@ export default function ProposalDetailScreen() {
               title={applyWarning?.title || confirmation.title}
             />
           ) : proposal.actions.length ? (
-            <View style={styles.actions}>
-              {proposal.actions.map((action) => <Button key={action.key} label={action.label} onPress={() => setPendingAction(action)} variant={action.tone === "danger" ? "danger" : action.key === "approve" || action.key === "apply" ? "primary" : "secondary"} />)}
-            </View>
+            <ProposalReviewActions
+              description="Revisa el contenido y la validación antes de confirmar cualquier cambio en tu biblioteca."
+              onApply={action("apply") ? () => setPendingAction(action("apply")!) : undefined}
+              onApprove={action("approve") ? () => setPendingAction(action("approve")!) : undefined}
+              onCancel={action("cancel") ? () => setPendingAction(action("cancel")!) : undefined}
+              onReject={action("reject") ? () => setPendingAction(action("reject")!) : undefined}
+            />
           ) : <Text style={textStyles.caption}>Esta propuesta no tiene acciones pendientes.</Text>}
           <Button label="Volver a Propuestas" onPress={() => { if (router.canGoBack()) router.back(); else router.replace("/assistant?section=proposals" as Href); }} variant="secondary" />
-        </>
+        </ProposalDetailPage>
       ) : null}
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  actions: { gap: tokens.spacing.sm },
-  copy: { flex: 1, gap: tokens.spacing.sm },
-  row: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
-  source: { color: tokens.color.textSoft, fontSize: 11, fontWeight: "900", letterSpacing: 1.1, textTransform: "uppercase" },
-});

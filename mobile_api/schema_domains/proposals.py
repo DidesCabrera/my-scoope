@@ -53,6 +53,9 @@ class ProposalKpisData(Schema):
     carbs: float | None = None
     fat: float | None = None
     ppk: float | None = None
+    alloc_protein: float | None = None
+    alloc_carbs: float | None = None
+    alloc_fat: float | None = None
 
 
 class ProposalFoodData(Schema):
@@ -60,6 +63,10 @@ class ProposalFoodData(Schema):
     food_name: str
     quantity: float | None = None
     unit: str = "g"
+    protein: float | None = None
+    carbs: float | None = None
+    fat: float | None = None
+    total_kcal: float | None = None
 
 
 class ProposalMealData(Schema):

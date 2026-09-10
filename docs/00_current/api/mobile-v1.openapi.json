@@ -5670,6 +5670,28 @@
       },
       "ProposalFoodData": {
         "properties": {
+          "carbs": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Carbs"
+          },
+          "fat": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fat"
+          },
           "food_id": {
             "anyOf": [
               {
@@ -5685,6 +5707,17 @@
             "title": "Food Name",
             "type": "string"
           },
+          "protein": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Protein"
+          },
           "quantity": {
             "anyOf": [
               {
@@ -5695,6 +5728,17 @@
               }
             ],
             "title": "Quantity"
+          },
+          "total_kcal": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Kcal"
           },
           "unit": {
             "default": "g",
@@ -5710,6 +5754,39 @@
       },
       "ProposalKpisData": {
         "properties": {
+          "alloc_carbs": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alloc Carbs"
+          },
+          "alloc_fat": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alloc Fat"
+          },
+          "alloc_protein": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alloc Protein"
+          },
           "carbs": {
             "anyOf": [
               {
