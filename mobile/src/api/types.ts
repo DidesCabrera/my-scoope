@@ -568,6 +568,9 @@ export type ProposalKpis = {
   carbs: number | null;
   fat: number | null;
   ppk: number | null;
+  alloc_protein: number | null;
+  alloc_carbs: number | null;
+  alloc_fat: number | null;
 };
 
 export type ProposalFood = {
@@ -575,6 +578,10 @@ export type ProposalFood = {
   food_name: string;
   quantity: number | null;
   unit: string;
+  protein: number | null;
+  carbs: number | null;
+  fat: number | null;
+  total_kcal: number | null;
 };
 
 export type ProposalMeal = {

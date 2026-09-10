@@ -7,6 +7,7 @@ from django.test import Client, override_settings
 from django.utils import timezone
 
 from mobile_api.tests.base import AuthenticatedMobileAPITestCase
+from mobile_api.tests.proposal_fixtures import meal_simulation
 from notas.application.services.mcp_user_tokens import create_mcp_user_token
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_READ, MOBILE_SCOPE_WRITE
 from notas.domain.models import DailyPlan, Food, Meal, NutritionProposal
@@ -45,15 +46,7 @@ class MobileAPIProposalTests(AuthenticatedMobileAPITestCase):
             },
             validation_summary={
                 "payload_validation": {"is_valid": True, "intent": "create_meal"},
-                "simulation": {
-                    "intent": "create_meal",
-                    "meal": {
-                        "name": "Desayuno AI",
-                        "foods": [{"food_id": food.id, "food_name": food.name, "quantity": 100, "unit": "g"}],
-                        "kpis": {"protein": 13, "carbs": 68, "fat": 7, "total_kcal": 387},
-                    },
-                    "dailyplan": None,
-                },
+                "simulation": meal_simulation(food_id=food.id, food_name=food.name),
             },
         )
 
@@ -68,6 +61,9 @@ class MobileAPIProposalTests(AuthenticatedMobileAPITestCase):
             {action["key"] for action in detail.json()["data"]["actions"]}, {"approve", "reject", "cancel"}
         )
         self.assertEqual(detail.json()["data"]["meal"]["name"], "Desayuno AI")
+        self.assertEqual(detail.json()["data"]["meal"]["foods"][0]["protein"], 13)
+        self.assertEqual(detail.json()["data"]["meal"]["foods"][0]["total_kcal"], 387)
+        self.assertEqual(detail.json()["data"]["meal"]["kpis"]["alloc_protein"], 13.4)
         self.assertEqual(approved.status_code, 200)
         self.assertEqual(approved.json()["data"]["status"], "approved")
         self.assertEqual(Meal.objects.filter(name="Desayuno AI").count(), 0)

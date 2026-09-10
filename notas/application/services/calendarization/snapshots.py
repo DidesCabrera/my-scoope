@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from django.db.models import Prefetch
 
-from notas.domain.models import DailyPlanMeal, MealFood, Program
+from notas.domain.models import DailyPlan, DailyPlanMeal, MealFood, Program
 
 SNAPSHOT_SCHEMA_VERSION = "calendarized_dailyplan.v1"
 
@@ -39,6 +39,28 @@ def program_with_calendarization_content(program_id: int) -> Program:
     )
 
 
+def dailyplan_with_calendarization_content(dailyplan_id: int) -> DailyPlan:
+    return (
+        DailyPlan.objects.select_related("created_by")
+        .prefetch_related(
+            Prefetch(
+                "dailyplan_meals",
+                queryset=(
+                    DailyPlanMeal.objects.select_related("meal")
+                    .prefetch_related(
+                        Prefetch(
+                            "meal__meal_food_set",
+                            queryset=MealFood.objects.select_related("food").order_by("order", "id"),
+                        )
+                    )
+                    .order_by("order", "id")
+                ),
+            )
+        )
+        .get(pk=dailyplan_id)
+    )
+
+
 def _round(value, digits=3):
     if value is None:
         return None
@@ -51,7 +73,17 @@ def snapshot_content_hash(payload: dict) -> str:
 
 
 def build_dailyplan_snapshot(program_day) -> DailyPlanSnapshotResult:
-    dailyplan = program_day.dailyplan
+    return build_dailyplan_snapshot_from_dailyplan(
+        program_day.dailyplan,
+        source_program_day_id=program_day.id,
+    )
+
+
+def build_dailyplan_snapshot_from_dailyplan(
+    dailyplan: DailyPlan,
+    *,
+    source_program_day_id: int | None = None,
+) -> DailyPlanSnapshotResult:
     meals = []
 
     for dailyplan_meal in dailyplan.dailyplan_meals.all():
@@ -91,7 +123,7 @@ def build_dailyplan_snapshot(program_day) -> DailyPlanSnapshotResult:
     payload = {
         "schema_version": SNAPSHOT_SCHEMA_VERSION,
         "source": {
-            "program_day_id": program_day.id,
+            "program_day_id": source_program_day_id,
             "dailyplan_id": dailyplan.id,
         },
         "name": dailyplan.name,

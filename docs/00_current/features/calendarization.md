@@ -11,11 +11,19 @@ Date: 2026-08-05
 con plan, comidas, alimentos, cantidades y totales; editar o eliminar el origen no
 cambia la agenda activada.
 
+En producto, esa `ProgramCalendarization` se presenta como **programa activo**: una
+instancia fechada que conserva la historia de lo planificado y lo que realmente pasó.
+El detalle activo se lee desde sus snapshots, progreso, mediciones, notas y revisiones;
+el `Program` de origen sólo se ofrece como enlace explícito a la plantilla original.
+
 - Solo se listan programas creados por el usuario.
 - La fecha inicial corresponde a semana 1, día 1 y no puede estar en el pasado local.
 - Se permiten programas incompletos después de confirmación; los días vacíos no envían.
 - Solo existe una agenda `scheduled`, `active` o `paused` por usuario.
 - Reemplazar exige confirmación y cancela los eventos pendientes anteriores.
+- Un día futuro vacío puede recibir un plan diario de la biblioteca y uno ocupado puede
+  reemplazarse tras confirmación. El servidor crea el snapshot y registra el antes y el
+  después como una revisión aplicada; la plantilla original nunca se modifica.
 - La hora inicial es 07:00 y puede editarse.
 - `Profile.timezone_name` es el default; cada agenda conserva su propia timezone IANA.
 - Pausar, reanudar y cancelar son acciones del dashboard `/app/calendarization/`.
@@ -37,6 +45,10 @@ La calendarización también es la autoridad del programa vivido:
 - una `CalendarizationRevision` conserva snapshots antes/después y requiere una
   decisión explícita. Al aprobar, sólo cambia días estrictamente futuros, todavía
   sin evidencia, y recalcula sus eventos. Pasado y presente son inmutables.
+
+La selección semanal del programa activo sigue las fechas reales en orden cronológico.
+Por eso la primera semana puede comenzar cualquier día y cada círculo muestra el día de
+semana junto al número y el mes, manteniendo la acción de agregar en slots vacíos.
 
 Las revisiones pueden respaldar una propuesta, pero no modifican automáticamente
 el plan. La API consumer permite decidir una revisión preparada por una autoridad

@@ -9,16 +9,131 @@ from mobile_api.tests.base import AuthenticatedMobileAPITestCase
 from notas.application.services.mcp_user_tokens import create_mcp_user_token
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_READ, MOBILE_SCOPE_WRITE
 from notas.domain.models import (
+    CalendarizationRevision,
     CalendarizedDay,
     DailyPlan,
     DailyPlanMeal,
     Meal,
+    Program,
     ProgramCalendarization,
 )
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
 class MobileAPICalendarizationEditTests(AuthenticatedMobileAPITestCase):
+    def test_future_day_picker_assigns_snapshot_and_records_applied_revision_without_mutating_template(self):
+        today = timezone.localdate(timezone=ZoneInfo("UTC"))
+        template = Program.objects.create(
+            name="Plantilla original",
+            created_by=self.user,
+            duration_weeks=1,
+            is_draft=False,
+        )
+        dailyplan = DailyPlan.objects.create(
+            name="Plan futuro de biblioteca",
+            created_by=self.user,
+            is_draft=False,
+        )
+        calendarization = ProgramCalendarization.objects.create(
+            user=self.user,
+            source_program=template,
+            program_name_snapshot=template.name,
+            start_date=today,
+            end_date=today + timedelta(days=6),
+            timezone_name="UTC",
+            status=ProgramCalendarization.STATUS_ACTIVE,
+        )
+        day = CalendarizedDay.objects.create(
+            calendarization=calendarization,
+            calendar_date=today + timedelta(days=1),
+            week_number=1,
+            day_number=1,
+        )
+
+        preview = self.client.post(
+            f"/api/v1/program/days/{day.id}/daily-plan-picker/preview",
+            data={"dailyplan_id": dailyplan.id},
+            content_type="application/json",
+        )
+        commit = self.client.post(
+            f"/api/v1/program/days/{day.id}/daily-plan-picker/commit",
+            data={"dailyplan_id": dailyplan.id, "idempotency_key": "active-day-assignment-01"},
+            content_type="application/json",
+        )
+
+        self.assertEqual(preview.status_code, 200)
+        self.assertFalse(preview.json()["data"]["confirmation_required"])
+        self.assertEqual(preview.json()["data"]["result"]["name"], dailyplan.name)
+        self.assertEqual(commit.status_code, 200)
+        day.refresh_from_db()
+        template.refresh_from_db()
+        self.assertEqual(day.plan_snapshot["name"], dailyplan.name)
+        self.assertEqual(day.plan_snapshot["source"]["dailyplan_id"], dailyplan.id)
+        self.assertEqual(day.source_dailyplan_id, dailyplan.id)
+        self.assertIsNone(day.source_program_day_id)
+        self.assertEqual(template.name, "Plantilla original")
+        revision = CalendarizationRevision.objects.get(pk=commit.json()["data"]["created_id"])
+        self.assertEqual(revision.status, CalendarizationRevision.STATUS_APPLIED)
+        self.assertIsNone(revision.before_snapshot["days"][0]["plan_snapshot"])
+        self.assertEqual(revision.after_snapshot["days"][0]["plan_snapshot"]["name"], dailyplan.name)
+
+        retry = self.client.post(
+            f"/api/v1/program/days/{day.id}/daily-plan-picker/commit",
+            data={"dailyplan_id": dailyplan.id, "idempotency_key": "active-day-assignment-01", "confirm_replacement": True},
+            content_type="application/json",
+        )
+        self.assertEqual(retry.status_code, 200)
+        self.assertEqual(retry.json()["data"]["created_id"], revision.id)
+        self.assertEqual(CalendarizationRevision.objects.count(), 1)
+
+    def test_active_day_replacement_requires_confirmation_and_today_is_not_editable(self):
+        today = timezone.localdate(timezone=ZoneInfo("UTC"))
+        original = DailyPlan.objects.create(name="Plan anterior", created_by=self.user, is_draft=False)
+        replacement = DailyPlan.objects.create(name="Plan reemplazo", created_by=self.user, is_draft=False)
+        calendarization = ProgramCalendarization.objects.create(
+            user=self.user,
+            program_name_snapshot="Programa activo",
+            start_date=today,
+            end_date=today + timedelta(days=6),
+            timezone_name="UTC",
+            status=ProgramCalendarization.STATUS_ACTIVE,
+        )
+        future_day = CalendarizedDay.objects.create(
+            calendarization=calendarization,
+            calendar_date=today + timedelta(days=1),
+            week_number=1,
+            day_number=1,
+            plan_snapshot={"schema_version": "calendarized_dailyplan.v1", "source": {"dailyplan_id": original.id}, "name": original.name, "meals": [], "totals": {}},
+        )
+        today_day = CalendarizedDay.objects.create(
+            calendarization=calendarization,
+            calendar_date=today,
+            week_number=1,
+            day_number=2,
+        )
+
+        preview = self.client.post(
+            f"/api/v1/program/days/{future_day.id}/daily-plan-picker/preview",
+            data={"dailyplan_id": replacement.id},
+            content_type="application/json",
+        )
+        unconfirmed = self.client.post(
+            f"/api/v1/program/days/{future_day.id}/daily-plan-picker/commit",
+            data={"dailyplan_id": replacement.id, "idempotency_key": "active-day-replace-01"},
+            content_type="application/json",
+        )
+        past_or_present = self.client.post(
+            f"/api/v1/program/days/{today_day.id}/daily-plan-picker/preview",
+            data={"dailyplan_id": replacement.id},
+            content_type="application/json",
+        )
+
+        self.assertEqual(preview.status_code, 200)
+        self.assertTrue(preview.json()["data"]["confirmation_required"])
+        self.assertEqual(unconfirmed.status_code, 409)
+        self.assertEqual(unconfirmed.json()["error"]["code"], "calendarized_day_plan_replacement_confirmation_required")
+        self.assertEqual(past_or_present.status_code, 422)
+
     def test_calendarized_day_exposes_owned_meal_detail_links_without_mutating_snapshot(self):
         today = timezone.localdate(timezone=ZoneInfo("UTC"))
         dailyplan = DailyPlan.objects.create(name="Plan activo", created_by=self.user, is_draft=False)

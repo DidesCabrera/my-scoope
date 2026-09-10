@@ -119,7 +119,19 @@ def _bounded_facts(value, *, prefix="", limit=20) -> list[dict]:
 def _proposal_kpis_payload(value) -> dict | None:
     if not isinstance(value, dict):
         return None
-    return {key: value.get(key) for key in ("total_kcal", "protein", "carbs", "fat", "ppk")}
+    return {
+        key: value.get(key)
+        for key in (
+            "total_kcal",
+            "protein",
+            "carbs",
+            "fat",
+            "ppk",
+            "alloc_protein",
+            "alloc_carbs",
+            "alloc_fat",
+        )
+    }
 
 
 def _proposal_meal_payload(value) -> dict | None:
@@ -133,6 +145,10 @@ def _proposal_meal_payload(value) -> dict | None:
                 "food_name": food.get("food_name", ""),
                 "quantity": food.get("quantity"),
                 "unit": food.get("unit", "g"),
+                "protein": food.get("protein"),
+                "carbs": food.get("carbs"),
+                "fat": food.get("fat"),
+                "total_kcal": food.get("total_kcal"),
             }
             for food in value.get("foods", [])
             if isinstance(food, dict)

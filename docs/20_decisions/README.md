@@ -212,3 +212,6 @@ Consequences
 - `0191-ai-nutrition-label-extraction-with-internal-escalation.md`: reemplaza el
   OCR local como autoridad por extracción multimodal con cobro fijo, escalamiento
   Luna→Sol absorbido internamente, revisión humana y retención opcional privada.
+- `0192-active-program-direct-snapshot-editing.md`: consolida la calendarización como
+  programa activo histórico, separa explícitamente la plantilla original y registra
+  cada asignación futura de planes diarios mediante revisiones de snapshots auditadas.

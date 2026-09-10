@@ -5,6 +5,14 @@ from typing import Literal
 
 from ninja import Field, Schema
 
+from mobile_api.schema_domains.proposal_entities import (
+    ProposalDailyPlanData,
+    ProposalDailyPlanMealData,
+    ProposalFoodData,
+    ProposalKpisData,
+    ProposalMealData,
+)
+
 
 class MobileActionData(Schema):
     key: str
@@ -45,39 +53,6 @@ class ProposalListEnvelope(Schema):
 class ProposalFactData(Schema):
     label: str
     value: str
-
-
-class ProposalKpisData(Schema):
-    total_kcal: float | None = None
-    protein: float | None = None
-    carbs: float | None = None
-    fat: float | None = None
-    ppk: float | None = None
-
-
-class ProposalFoodData(Schema):
-    food_id: int | None = None
-    food_name: str
-    quantity: float | None = None
-    unit: str = "g"
-
-
-class ProposalMealData(Schema):
-    name: str
-    foods: list[ProposalFoodData] = Field(default_factory=list)
-    kpis: ProposalKpisData | None = None
-
-
-class ProposalDailyPlanMealData(Schema):
-    hour: str | None = None
-    note: str = ""
-    meal: ProposalMealData
-
-
-class ProposalDailyPlanData(Schema):
-    name: str
-    meals: list[ProposalDailyPlanMealData] = Field(default_factory=list)
-    kpis: ProposalKpisData | None = None
 
 
 class ProposalSubjectWarningData(Schema):

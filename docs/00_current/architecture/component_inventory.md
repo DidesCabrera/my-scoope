@@ -49,7 +49,7 @@ pantallas no deben importar archivos internos de esta carpeta.
 |---|---|
 | `Screen`, `Brand`, `AppHeader` | layout y shell nativo |
 | `SectionTitle`, `textStyles` | tipografía |
-| `Button`, `Field`, `ChoiceRow` | controles |
+| `Button`, `Field`, `ChoiceRow`, `ScrollableTabBar`, `DistributedTabBar` | controles; tabs por contenido o distribuidos a ancho completo |
 | `InlineNotice`, `ProgressBar`, `LoadingState` | feedback |
 | `Card`, `Pill` | superficies |
 | `EntityCard`, `EntityHeading`, `ContentPanel`, `PanelTabs`, `DetailSection`, `CollectionEmptyState`, `MessageCard` | composición de producto equivalente al vocabulario Django |

@@ -106,6 +106,41 @@
   height: 18px;
 }
 
+.assistant-section-sticky {
+  position: sticky;
+  top: var(--app-header-height, 54px);
+  z-index: calc(var(--z-header, 20) - 1);
+  margin-bottom: 18px;
+  padding: 10px 0 12px;
+  background: var(--surface-app);
+}
+
+.assistant-section-sticky .ai-chat-credit-status {
+  margin-bottom: 12px;
+}
+
+.comparator-tabs.assistant-section-tabs {
+  width: 100%;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+}
+
+.comparator-tab.assistant-section-tab {
+  flex: 1 1 0;
+  justify-content: center;
+  min-width: 0;
+  min-height: 40px;
+}
+
+.assistant-section-tab__count {
+  flex: 0 0 auto;
+  color: inherit;
+  font-variant-numeric: tabular-nums;
+  font-weight: 750;
+}
+
 .ai-chat-credit-purchase {
   width: min(100%, 960px);
   margin: 0 auto;
@@ -128,5 +163,34 @@
   .ai-chat-credit-status__action,
   .ai-chat-credit-purchase__action {
     width: 100%;
+  }
+
+  .assistant-section-sticky {
+    padding-top: 8px;
+  }
+
+  .assistant-section-sticky .ai-chat-credit-status {
+    align-items: center;
+    flex-direction: row;
+    gap: 10px;
+    padding: 10px 12px;
+  }
+
+  .assistant-section-sticky .ai-chat-credit-status__icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  .assistant-section-sticky .ai-chat-credit-status__copy span {
+    display: none;
+  }
+
+  .assistant-section-sticky .ai-chat-credit-status__action {
+    width: auto;
+    min-height: 38px;
+  }
+
+  .comparator-tab.assistant-section-tab {
+    padding: 0 12px;
   }
 }

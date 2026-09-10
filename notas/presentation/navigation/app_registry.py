@@ -70,10 +70,10 @@ APP_NAVIGATION = (
             ),
             NavGroupSpec(
                 key="chat",
-                label="Asistente",
+                label="Asistente AI",
                 icon="sparkles",
                 page_icon="sparkles",
-                page_title="Chats",
+                page_title="Asistente AI",
                 url_name="ai_nutrition_chat_list",
                 nav_root="chat",
                 scope="personal",
@@ -81,11 +81,13 @@ APP_NAVIGATION = (
             NavGroupSpec(
                 key="proposal",
                 label="Propuestas",
-                icon="clipboard-check",
-                page_icon="clipboard-check",
+                icon="sparkles",
+                page_icon="sparkles",
+                page_title="Asistente AI",
                 url_name="proposal_list",
                 nav_root="proposal",
                 scope="personal",
+                show_in_sidebar=False,
             ),
             NavGroupSpec(
                 key="calendarization",

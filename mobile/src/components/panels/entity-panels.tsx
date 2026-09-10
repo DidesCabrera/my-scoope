@@ -1,5 +1,5 @@
 import { type ReactNode, useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, Check, ChevronRight, Pencil, RefreshCw, RotateCcw, Trash2 } from "lucide-react-native";
+import { ArrowDown, ArrowUp, Check, ChevronRight, Clock, Pencil, RefreshCw, RotateCcw, Trash2 } from "lucide-react-native";
 import { Alert, Pressable, StyleProp, StyleSheet, Text, TextInput, View, ViewStyle } from "react-native";
 
 import { MacroCalorieDistribution, PanelAllocationBar } from "@/components/nutrition";
@@ -235,29 +235,38 @@ export function MealMenuPanel({ items, onOpenItem }: { items: MealPanelItem[]; o
   if (items.length === 0) return <PanelEmptyState label="Todavía no hay comidas." />;
   return (
     <PanelBody>
-      {items.map((item, index) => (
-        <View key={item.id} style={[styles.menuRow, index === items.length - 1 && styles.rowLast]}>
+      {items.map((item, index) => {
+        const canOpen = Boolean((item.detailId != null || item.canOpen) && onOpenItem);
+        return (
+        <Pressable
+          accessibilityLabel={canOpen ? `Ver detalle de ${item.name}` : undefined}
+          accessibilityRole={canOpen ? "link" : undefined}
+          disabled={!canOpen}
+          key={item.id}
+          onPress={() => onOpenItem?.(item)}
+          style={({ pressed }) => [styles.menuRow, index === items.length - 1 && styles.rowLast, pressed && canOpen && styles.menuRowPressed]}>
           <View style={styles.menuCopy}>
             <View style={styles.menuTitleRow}>
               <MealRowIdentity name={item.name} projectedLabel={item.projectedLabel} />
-              {item.time ? <Text style={styles.menuTime}>{item.time}</Text> : null}
+              {item.time ? (
+                <View style={styles.menuTimeGroup}>
+                  <Clock color={tokens.color.textMuted} size={13} strokeWidth={2} />
+                  <Text style={styles.menuTime}>{item.time}</Text>
+                </View>
+              ) : null}
             </View>
             <Text style={styles.menuFoods}>
               {item.foods.map((food) => `${food.name} (${decimal(food.quantity)}${food.quantityUnit})`).join(", ")}
             </Text>
           </View>
-          {(item.detailId != null || item.canOpen) && onOpenItem ? (
-            <Pressable
-              accessibilityLabel={`Ver detalle de ${item.name}`}
-              accessibilityRole="link"
-              hitSlop={8}
-              onPress={() => onOpenItem(item)}
-              style={({ pressed }) => [styles.menuAction, pressed && styles.menuActionPressed]}>
+          {canOpen ? (
+            <View style={styles.menuAction}>
               <ChevronRight color={tokens.color.textMuted} size={21} strokeWidth={2.2} />
-            </Pressable>
+            </View>
           ) : null}
-        </View>
-      ))}
+        </Pressable>
+        );
+      })}
     </PanelBody>
   );
 }
@@ -391,14 +400,15 @@ const styles = StyleSheet.create({
   menuRow: { alignItems: "center", alignSelf: "stretch", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.compact, paddingHorizontal: tokens.spacing.sm, paddingVertical: tokens.spacing.md },
   menuCopy: { flex: 1, gap: tokens.spacing.compact, minWidth: 0 },
   menuAction: { alignItems: "center", alignSelf: "stretch", borderRadius: tokens.radius.pill, justifyContent: "center", minWidth: 32 },
-  menuActionPressed: { opacity: 0.55 },
+  menuRowPressed: { opacity: 0.55 },
   menuTitleRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
   mealIdentity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0, paddingHorizontal: tokens.spacing.xs },
   identityCopy: { alignItems: "flex-start", flex: 1, gap: 3, justifyContent: "center", minWidth: 0 },
   mealIdentityName: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold, letterSpacing: 0, lineHeight: 18 },
   projectedBadge: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, color: tokens.color.textMuted, fontSize: 9, fontWeight: tokens.weight.semibold, overflow: "hidden", paddingHorizontal: 6, paddingVertical: 2 },
-  menuTime: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.regular, letterSpacing: 0, paddingHorizontal: tokens.spacing.xs },
-  menuFoods: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, letterSpacing: 0, lineHeight: 20, opacity: 0.82, paddingHorizontal: tokens.spacing.xs },
+  menuTimeGroup: { alignItems: "center", flexDirection: "row", gap: 4, paddingHorizontal: tokens.spacing.xs },
+  menuTime: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.regular, letterSpacing: 0 },
+  menuFoods: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, letterSpacing: 0, lineHeight: 20, paddingHorizontal: tokens.spacing.xs },
   iconAction: { alignItems: "center", borderRadius: tokens.radius.sm, height: 34, justifyContent: "center", width: 34 },
   disabled: { opacity: 0.28 },
   pressed: { opacity: 0.68 },

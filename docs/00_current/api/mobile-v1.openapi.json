@@ -1859,6 +1859,46 @@
         "title": "CalendarizedDayDetailEnvelope",
         "type": "object"
       },
+      "CalendarizedDayPlanCommitInput": {
+        "properties": {
+          "confirm_replacement": {
+            "default": false,
+            "title": "Confirm Replacement",
+            "type": "boolean"
+          },
+          "dailyplan_id": {
+            "exclusiveMinimum": 0,
+            "title": "Dailyplan Id",
+            "type": "integer"
+          },
+          "idempotency_key": {
+            "maxLength": 120,
+            "minLength": 8,
+            "title": "Idempotency Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dailyplan_id",
+          "idempotency_key"
+        ],
+        "title": "CalendarizedDayPlanCommitInput",
+        "type": "object"
+      },
+      "CalendarizedDayPlanPreviewInput": {
+        "properties": {
+          "dailyplan_id": {
+            "exclusiveMinimum": 0,
+            "title": "Dailyplan Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "dailyplan_id"
+        ],
+        "title": "CalendarizedDayPlanPreviewInput",
+        "type": "object"
+      },
       "CalendarizedMealHourInput": {
         "properties": {
           "hour": {
@@ -5630,6 +5670,28 @@
       },
       "ProposalFoodData": {
         "properties": {
+          "carbs": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Carbs"
+          },
+          "fat": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fat"
+          },
           "food_id": {
             "anyOf": [
               {
@@ -5645,6 +5707,17 @@
             "title": "Food Name",
             "type": "string"
           },
+          "protein": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Protein"
+          },
           "quantity": {
             "anyOf": [
               {
@@ -5655,6 +5728,17 @@
               }
             ],
             "title": "Quantity"
+          },
+          "total_kcal": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Kcal"
           },
           "unit": {
             "default": "g",
@@ -5670,6 +5754,39 @@
       },
       "ProposalKpisData": {
         "properties": {
+          "alloc_carbs": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alloc Carbs"
+          },
+          "alloc_fat": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alloc Fat"
+          },
+          "alloc_protein": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alloc Protein"
+          },
           "carbs": {
             "anyOf": [
               {
@@ -11582,6 +11699,184 @@
           }
         ],
         "summary": "Calendarized Day Rename"
+      }
+    },
+    "/api/v1/program/days/{day_id}/daily-plan-picker/commit": {
+      "post": {
+        "operationId": "mobile_api_api_calendarized_day_dailyplan_picker_commit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "day_id",
+            "required": true,
+            "schema": {
+              "title": "Day Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalendarizedDayPlanCommitInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickerCommitEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Calendarized Day Dailyplan Picker Commit"
+      }
+    },
+    "/api/v1/program/days/{day_id}/daily-plan-picker/preview": {
+      "post": {
+        "operationId": "mobile_api_api_calendarized_day_dailyplan_picker_preview",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "day_id",
+            "required": true,
+            "schema": {
+              "title": "Day Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalendarizedDayPlanPreviewInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickerPreviewEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Calendarized Day Dailyplan Picker Preview"
       }
     },
     "/api/v1/program/days/{day_id}/meals/{meal_snapshot_key}": {

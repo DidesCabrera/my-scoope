@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
+from accounts.services.profile import build_account_credit_display
 from notas.application.ai_intake.dailyplan_generator import (
     DailyPlanGeneratorError,
     generate_dailyplan_proposal_from_brief_proposal,
@@ -32,6 +33,7 @@ from notas.application.services.commands.proposal_commands import (
     delete_proposal,
     reject_proposal,
 )
+from notas.domain.models import AiNutritionChat
 from notas.presentation.composition.viewmodel.components.builder_headers import (
     build_page_header,
 )
@@ -153,7 +155,13 @@ def proposal_list(request):
     return render(
         request,
         "notas/proposals/list.html",
-        base_vm.as_context(),
+        {
+            **base_vm.as_context(),
+            "assistant_billing_url": reverse("billing:overview"),
+            "assistant_chat_count": AiNutritionChat.objects.filter(user=request.user).count(),
+            "assistant_credits": build_account_credit_display(request.user),
+            "assistant_proposal_count": len(proposals),
+        },
     )
 
 

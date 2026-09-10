@@ -1,7 +1,7 @@
 import { Redirect } from "expo-router";
-import { ChevronDown, ChevronRight, MoreHorizontal } from "lucide-react-native";
+import { ChevronRight, MoreHorizontal } from "lucide-react-native";
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
 
 import {
   ComparisonBuilder,
@@ -13,6 +13,7 @@ import {
   SavedComparisonCard,
   SavedComparisonDetailPage,
 } from "@/components/comparisons";
+import { CurrentWeekSection } from "@/components/calendarization/current-week-section";
 import {
   DailyPlanMealDetailList,
   type DailyPlanMealDetailItem,
@@ -22,6 +23,9 @@ import {
 } from "@/components/details";
 import { ProgramChildCard } from "@/components/libraries/program-child-card";
 import { ProgramDetailPreview } from "@/components/libraries/program-detail-preview";
+import { ProgramDaySelector } from "@/components/libraries/program-planning-controls";
+import { ProposalGallery } from "@/components/dev/proposal-gallery";
+import { GalleryNavigation, type GalleryTab } from "@/components/dev/gallery-navigation";
 import {
   KpiAllocationBar,
   NutritionEntityCard,
@@ -29,14 +33,6 @@ import {
   PanelAllocationBar,
 } from "@/components/nutrition";
 import { FoodPanels, type FoodPanelItem, MealPanels, type MealPanelItem } from "@/components/panels";
-import {
-  ChatProposalCard,
-  ProposalCard,
-  ProposalDetailPage,
-  ProposalEntitySection,
-  ProposalObjectiveSection,
-  ProposalReviewActions,
-} from "@/components/proposals";
 import { ProgramActiveKpis } from "@/components/programs";
 import {
   AppHeader,
@@ -49,15 +45,18 @@ import {
   CollectionEmptyState,
   ContentPanel,
   DetailSection,
+  DistributedTabBar,
   EntityCard,
   EntityCardAction,
   type EntityKind,
   Field,
+  GuideMetric,
   InlineNotice,
   MessageCard,
   Pill,
   ProgressBar,
   Screen,
+  ScrollableTabBar,
   SectionDivider,
   SectionIcon,
   type SectionKind,
@@ -66,6 +65,8 @@ import {
   textStyles,
 } from "@/components/ui";
 import { tokens } from "@/design/tokens";
+
+// GalleryNavigation includes { key: "calendars", label: "Calendarios" }.
 
 const entities: { key: EntityKind; label: string }[] = [
   { key: "food", label: "Food" },
@@ -161,18 +162,7 @@ const dailyPlanMealDetailItems: DailyPlanMealDetailItem[] = [
   },
 ];
 
-type GalleryTab = "components" | "program" | "details" | "proposals" | "comparisons" | "states" | "tokens";
 type Choice = "daily" | "weekly";
-
-const galleryTabs: { key: GalleryTab; label: string }[] = [
-  { key: "components", label: "Componentes" },
-  { key: "program", label: "Programa" },
-  { key: "details", label: "Detalle" },
-  { key: "proposals", label: "Propuestas" },
-  { key: "comparisons", label: "Comparaciones" },
-  { key: "states", label: "Estados" },
-  { key: "tokens", label: "Tokens" },
-];
 
 const comparisonExamples: Record<ComparisonScope, { label: string }> = {
   food: { label: "Yogur griego natural" },
@@ -180,71 +170,42 @@ const comparisonExamples: Record<ComparisonScope, { label: string }> = {
   dailyPlan: { label: "Plan semanal equilibrado" },
 };
 
-function GalleryNavigation({ activeTab, onChange, wide }: { activeTab: GalleryTab; onChange: (tab: GalleryTab) => void; wide: boolean }) {
-  const [open, setOpen] = useState(false);
-  const activeLabel = galleryTabs.find((item) => item.key === activeTab)?.label ?? "Sección";
+const calendarPreviewWidths = [
+  { label: "iPhone XR", width: 414 },
+  { label: "Teléfono compacto", width: 375 },
+] as const;
 
-  if (!wide) {
-    return (
-      <View style={styles.dropdown}>
-        <Text style={styles.sidebarLabel}>Sección de la galería</Text>
-        <Pressable
-          accessibilityLabel={`Sección actual: ${activeLabel}`}
-          accessibilityRole="button"
-          accessibilityState={{ expanded: open }}
-          onPress={() => setOpen((current) => !current)}
-          style={({ pressed }) => [styles.dropdownTrigger, pressed && styles.sidebarItemPressed]}>
-          <Text style={styles.dropdownValue}>{activeLabel}</Text>
-          <ChevronDown color={tokens.color.textMuted} size={18} style={open && styles.dropdownChevronOpen} />
-        </Pressable>
-        {open ? (
-          <View accessibilityLabel="Secciones disponibles" style={styles.dropdownMenu}>
-            {galleryTabs.map((item) => {
-              const active = activeTab === item.key;
-              return (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: active }}
-                  key={item.key}
-                  onPress={() => { onChange(item.key); setOpen(false); }}
-                  style={({ pressed }) => [styles.dropdownItem, active && styles.dropdownItemActive, pressed && styles.sidebarItemPressed]}>
-                  <Text style={[styles.sidebarItemText, active && styles.sidebarItemTextActive]}>{item.label}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        ) : null}
-      </View>
-    );
-  }
+const programDayExamples = [
+  { filled: true, id: "mon", label: "L" },
+  { filled: true, id: "tue", label: "M" },
+  { filled: false, id: "wed", label: "X" },
+  { filled: true, id: "thu", label: "J" },
+  { filled: true, id: "fri", label: "V" },
+  { filled: false, id: "sat", label: "S" },
+  { filled: true, id: "sun", label: "D" },
+];
 
-  return (
-    <View accessibilityLabel="Secciones de la galería" accessibilityRole="tablist" style={[styles.sidebar, styles.sidebarWide]}>
-      <Text style={styles.sidebarLabel}>Secciones</Text>
-      {galleryTabs.map((item) => {
-        const active = activeTab === item.key;
-        return (
-          <Pressable
-            accessibilityRole="tab"
-            accessibilityState={{ selected: active }}
-            key={item.key}
-            onPress={() => onChange(item.key)}
-            style={({ pressed }) => [styles.sidebarItem, active && styles.sidebarItemActive, pressed && styles.sidebarItemPressed]}>
-            <Text style={[styles.sidebarItemText, active && styles.sidebarItemTextActive]}>{item.label}</Text>
-          </Pressable>
-        );
-      })}
-    </View>
-  );
-}
+const activeProgramDayExamples = [
+  { dayOfMonth: 8, filled: true, id: "active-tue", isToday: true, label: "M", monthLabel: "Sep" },
+  { dayOfMonth: 9, filled: true, id: "active-wed", label: "X", monthLabel: "Sep" },
+  { dayOfMonth: 10, filled: false, id: "active-thu", label: "J", monthLabel: "Sep" },
+  { dayOfMonth: 11, filled: true, id: "active-fri", label: "V", monthLabel: "Sep" },
+  { dayOfMonth: 12, filled: false, id: "active-sat", label: "S", monthLabel: "Sep" },
+  { dayOfMonth: 13, filled: true, id: "active-sun", label: "D", monthLabel: "Sep" },
+  { dayOfMonth: 14, filled: true, id: "active-mon", label: "L", monthLabel: "Sep" },
+];
 
 export default function UiGalleryScreen() {
   const { width } = useWindowDimensions();
   const [tab, setTab] = useState<GalleryTab>("components");
   const [choice, setChoice] = useState<Choice>("daily");
+  const [distributedExample, setDistributedExample] = useState<"chats" | "proposals">("chats");
+  const [scrollableExample, setScrollableExample] = useState<"week1" | "week2" | "week3" | "week4">("week1");
   const [comparisonScope, setComparisonScope] = useState<ComparisonScope>("food");
   const [comparisonQuantity, setComparisonQuantity] = useState("100");
   const [field, setField] = useState("");
+  const [selectedProgramDay, setSelectedProgramDay] = useState<number | string | null>("tue");
+  const [selectedActiveProgramDay, setSelectedActiveProgramDay] = useState<number | string | null>("active-tue");
 
   if (!__DEV__) return <Redirect href="/" />;
 
@@ -259,6 +220,29 @@ export default function UiGalleryScreen() {
 
       {tab === "components" ? (
         <>
+          <SectionTitle detail="Ancho por contenido y scroll horizontal" title="Tabs desplazables" />
+          <ScrollableTabBar<"week1" | "week2" | "week3" | "week4">
+            accessibilityLabel="Ejemplo de tabs desplazables"
+            activeTab={scrollableExample}
+            density="compact"
+            onChange={setScrollableExample}
+            tabs={[
+              { key: "week1", label: "Semana 1" },
+              { key: "week2", label: "Semana 2" },
+              { key: "week3", label: "Semana 3" },
+              { key: "week4", label: "Semana extraordinaria" },
+            ]}
+          />
+          <SectionTitle detail="Ancho disponible dividido entre todos los tabs" title="Tabs distribuidos" />
+          <DistributedTabBar<"chats" | "proposals">
+            accessibilityLabel="Ejemplo de tabs distribuidos"
+            activeTab={distributedExample}
+            onChange={setDistributedExample}
+            tabs={[
+              { count: 6, key: "chats", label: "Chats" },
+              { count: 2, key: "proposals", label: "Propuestas" },
+            ]}
+          />
           <SectionTitle detail="Genérico y anidado" title="Títulos de card" />
           <Card>
             <CardHeader
@@ -450,6 +434,48 @@ export default function UiGalleryScreen() {
         </>
       ) : null}
 
+      {tab === "calendars" ? (
+        <>
+          <SectionTitle detail="Componentes reales · 414 pt y 375 pt" title="Calendarios semanales" />
+          <InlineNotice>Los marcos incluyen los 18 pt de margen horizontal de una pantalla real. El diseño compacto responde al ancho disponible, no al modelo del dispositivo.</InlineNotice>
+          {calendarPreviewWidths.map((preview) => (
+            <View key={preview.width} style={[styles.devicePreview, { width: preview.width }]}>
+              <View style={styles.devicePreviewHeader}>
+                <Text style={styles.devicePreviewName}>{preview.label}</Text>
+                <Text style={styles.devicePreviewWidth}>{preview.width} pt</Text>
+              </View>
+              <View style={styles.devicePreviewScreen}>
+                <Text style={styles.calendarExampleLabel}>HOME · FECHAS</Text>
+                <AppHeader
+                  action={<GuideMetric label="Peso actual" value="85,0kg" />}
+                  alignment="center"
+                  title="Vamos, Felipe"
+                />
+                <CurrentWeekSection localDate="2026-09-01" />
+                <SectionDivider spacing="compact" tone="soft" />
+                <Text style={styles.calendarExampleLabel}>PROGRAMA · PLANES DIARIOS</Text>
+                <ProgramDaySelector
+                  accessibilityLabel={`Ejemplo de planes diarios a ${preview.width} puntos`}
+                  allowEmptySelection
+                  days={programDayExamples}
+                  onSelect={(day) => setSelectedProgramDay(day.id)}
+                  selectedId={selectedProgramDay}
+                />
+                <SectionDivider spacing="compact" tone="soft" />
+                <Text style={styles.calendarExampleLabel}>MI PROGRAMA ACTIVO · FECHAS + PLANES</Text>
+                <ProgramDaySelector
+                  accessibilityLabel={`Ejemplo de programa activo a ${preview.width} puntos`}
+                  allowEmptySelection
+                  days={activeProgramDayExamples}
+                  onSelect={(day) => setSelectedActiveProgramDay(day.id)}
+                  selectedId={selectedActiveProgramDay}
+                />
+              </View>
+            </View>
+          ))}
+        </>
+      ) : null}
+
       {tab === "details" ? (
         <>
           <SectionTitle detail="Primera composición reutilizable" title="Página de detalle" />
@@ -490,74 +516,7 @@ export default function UiGalleryScreen() {
         </>
       ) : null}
 
-      {tab === "proposals" ? (
-        <>
-          <SectionTitle detail="Respuesta dentro del chat" title="Propuesta generada" />
-          <ChatProposalCard
-            adjustments={["Más proteína", "Mantener alimentos"]}
-            metrics={[
-              { label: "Actual", value: "2.050 kcal" },
-              { label: "Objetivo", value: "2.140 kcal" },
-              { label: "Alimentos", value: "Sin cambios" },
-            ]}
-            onPress={() => undefined}
-            summary="Ajusté las porciones para acercar el plan al objetivo sin reemplazar sus alimentos."
-            title="Día de entrenamiento ajustado"
-          />
-          <SectionTitle detail="Resumen de bandeja" title="Card de propuesta" />
-          <ProposalCard
-            attachment={{ kind: "dailyPlan", name: "Día de entrenamiento propuesto" }}
-            isRead={false}
-            onPress={() => undefined}
-            receivedAt="Recibida hoy, 14:30"
-            status="pending"
-            summary="Crear un DailyPlan alto en proteína para un día de entrenamiento."
-            title="Propuesta de DailyPlan"
-          />
-          <SectionTitle detail="Revisión antes de aplicar" title="Detalle de propuesta" />
-          <ProposalDetailPage
-            isRead
-            objectives={
-              <ProposalObjectiveSection
-                calories={2140}
-                carbs={{ grams: 238, allocation: 44 }}
-                fat={{ grams: 62, allocation: 26 }}
-                protein={{ grams: 155, allocation: 30, perKilogram: 1.8 }}
-              />
-            }
-            receivedAt="Recibida hoy, 14:30"
-            status="pending"
-            summary="Crear un DailyPlan alto en proteína para un día de entrenamiento."
-            title="Propuesta de DailyPlan"
-            typeLabel="Nuevo DailyPlan"
-            proposedEntity={
-              <ProposalEntitySection entity="dailyPlan">
-                <NutritionEntityCard
-                  entity="dailyPlan"
-                  indicators={[
-                    { icon: "meal", label: "comidas", value: 3 },
-                    { icon: "food", label: "alimentos", value: 9 },
-                  ]}
-                  nutrition={{
-                    calories: 2140,
-                    carbs: { grams: 238, allocation: 44 },
-                    fat: { grams: 62, allocation: 26 },
-                    protein: { grams: 155, allocation: 30, perKilogram: 1.8 },
-                  }}
-                  title="Día de entrenamiento propuesto">
-                  <MealPanels items={mealPanelItems} />
-                </NutritionEntityCard>
-              </ProposalEntitySection>
-            }>
-            <ProposalReviewActions
-              description="Aprobar confirma la revisión; aplicar cambios reales será un paso posterior y explícito."
-              onApprove={() => undefined}
-              onCancel={() => undefined}
-              onReject={() => undefined}
-            />
-          </ProposalDetailPage>
-        </>
-      ) : null}
+      {tab === "proposals" ? <ProposalGallery /> : null}
 
       {tab === "comparisons" ? (
         <>
@@ -762,21 +721,12 @@ const styles = StyleSheet.create({
   galleryLayout: { gap: tokens.spacing.lg, minWidth: 0, width: "100%" },
   galleryLayoutWide: { alignItems: "flex-start", flexDirection: "row" },
   galleryContent: { flex: 1, gap: tokens.spacing.lg, minWidth: 0, width: "100%" },
-  dropdown: { alignSelf: "stretch", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, gap: tokens.spacing.xs, padding: tokens.spacing.sm },
-  dropdownTrigger: { alignItems: "center", backgroundColor: tokens.color.surfaceElevated, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, flexDirection: "row", justifyContent: "space-between", minHeight: 44, paddingHorizontal: tokens.spacing.md },
-  dropdownValue: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
-  dropdownChevronOpen: { transform: [{ rotate: "180deg" }] },
-  dropdownMenu: { borderTopColor: tokens.color.borderSoft, borderTopWidth: 1, gap: tokens.spacing.xs, marginTop: tokens.spacing.xs, paddingTop: tokens.spacing.sm },
-  dropdownItem: { borderRadius: tokens.radius.md, minHeight: 40, paddingHorizontal: tokens.spacing.md, paddingVertical: 10 },
-  dropdownItemActive: { backgroundColor: tokens.color.surfaceElevated },
-  sidebar: { alignSelf: "stretch", backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, gap: tokens.spacing.xs, padding: tokens.spacing.sm },
-  sidebarWide: { flexBasis: 156, flexGrow: 0, flexShrink: 0 },
-  sidebarLabel: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: tokens.weight.bold, paddingHorizontal: tokens.spacing.sm, paddingVertical: tokens.spacing.xs, textTransform: "uppercase" },
-  sidebarItem: { borderRadius: tokens.radius.md, minHeight: 40, paddingHorizontal: tokens.spacing.sm, paddingVertical: 10 },
-  sidebarItemActive: { backgroundColor: tokens.color.surfaceElevated, borderLeftColor: tokens.color.interactivePrimary, borderLeftWidth: 3 },
-  sidebarItemPressed: { opacity: 0.7 },
-  sidebarItemText: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: tokens.weight.medium },
-  sidebarItemTextActive: { color: tokens.color.textMain, fontWeight: tokens.weight.bold },
+  calendarExampleLabel: { color: tokens.color.textSoft, fontSize: 10, fontWeight: tokens.weight.bold, letterSpacing: 0.8 },
+  devicePreview: { alignSelf: "center", backgroundColor: tokens.color.surfacePage, borderColor: tokens.color.borderStrong, borderRadius: 30, borderWidth: 1, maxWidth: "100%", overflow: "hidden" },
+  devicePreviewHeader: { alignItems: "center", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", justifyContent: "space-between", paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.md },
+  devicePreviewName: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
+  devicePreviewScreen: { gap: tokens.spacing.lg, paddingHorizontal: tokens.spacing.screen, paddingVertical: tokens.spacing.lg },
+  devicePreviewWidth: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"] },
   typeRow: { alignItems: "baseline", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", justifyContent: "space-between", paddingVertical: tokens.spacing.sm },
   typeSample: { color: tokens.color.textMain, fontWeight: tokens.weight.bold },
   weightSample: { color: tokens.color.textMain, fontSize: tokens.type.body },

@@ -3,23 +3,25 @@ import { useCallback, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
-import type { ActiveProgramData, LibraryPageData, ProposalListData, TodayData } from "@/api/types";
+import type { ActiveProgramData, LibraryPageData, ProposalListData, TodayData, WeightListData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { CalendarizedDailyPlanCard } from "@/components/calendarization/calendarized-daily-plan-card";
-import { compactDateLabel } from "@/components/calendarization/current-week";
+import { compactDateLabel, homePlanDateLabel } from "@/components/calendarization/current-week";
 import { CurrentWeekSection } from "@/components/calendarization/current-week-section";
 import { HomeActions } from "@/components/home-actions";
 import { HomeLibraryGrid, type HomeLibraryCounts } from "@/components/home/home-library-grid";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { ProgramActiveHomeOverview } from "@/components/programs/program-active-card";
-import { AppHeader, Button, Card, InlineNotice, LoadingState, Pill, Screen, SectionTitle, textStyles } from "@/components/ui";
+import { AppHeader, Button, Card, GuideMetric, InlineNotice, LoadingState, Pill, Screen, SectionTitle, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { syncNativeRemindersForProgram } from "@/notifications/native-reminders";
 
-function displayDate(value: string): string {
-  return new Intl.DateTimeFormat("es-CL", { weekday: "long", day: "numeric", month: "long" }).format(
-    new Date(`${value}T12:00:00`),
-  );
+function displayWeight(value: number): string {
+  return new Intl.NumberFormat("es-CL", { maximumFractionDigits: 1, minimumFractionDigits: 1 }).format(value);
+}
+
+function HomeSectionTitle({ children }: { children: string }) {
+  return <Text accessibilityRole="header" style={styles.homeSectionTitle}>{children}</Text>;
 }
 
 export default function TodayScreen() {
@@ -27,6 +29,7 @@ export default function TodayScreen() {
   const { status, session, profile, apiRequest } = useSession();
   const [today, setToday] = useState<TodayData | null>(null);
   const [activeProgram, setActiveProgram] = useState<ActiveProgramData | null>(null);
+  const [latestWeightKg, setLatestWeightKg] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [homeActionsVisible, setHomeActionsVisible] = useState(false);
@@ -39,12 +42,14 @@ export default function TodayScreen() {
     setLoading(true);
     setError(null);
     try {
-      const [nextToday, nextProgram] = await Promise.all([
+      const [nextToday, nextProgram, weightHistory] = await Promise.all([
         apiRequest<TodayData>("/api/v1/today"),
         apiRequest<ActiveProgramData>("/api/v1/program/active"),
+        apiRequest<WeightListData>("/api/v1/weights?limit=1").catch(() => null),
       ]);
       setToday(nextToday);
       setActiveProgram(nextProgram);
+      setLatestWeightKg(weightHistory?.items[0]?.weight_kg ?? null);
       void Promise.all([
         apiRequest<LibraryPageData>("/api/v1/library/programs?limit=1"),
         apiRequest<LibraryPageData>("/api/v1/library/daily-plans?limit=1"),
@@ -87,12 +92,20 @@ export default function TodayScreen() {
   const snapshot = today?.plan_snapshot;
   const todayProgramDay = activeProgram?.days.find((day) => day.id === today?.day_id);
   const firstName = session?.display_name.split(" ")[0] || session?.username || "Atleta";
+  const currentWeightKg = latestWeightKg ?? profile?.current_weight_kg ?? today?.measurements?.latest_weight_kg;
 
   return (
     <>
       <Screen headerMode="preserve">
-      <AppHeader eyebrow={today ? displayDate(today.local_date) : "Hoy"} title={`Vamos, ${firstName}`} />
+      <AppHeader
+        alignment="center"
+        action={currentWeightKg != null ? (
+          <GuideMetric icon="weight" value={`${displayWeight(currentWeightKg)} kg`} />
+        ) : undefined}
+        title={`Vamos, ${firstName}`}
+      />
       {today ? <CurrentWeekSection localDate={today.local_date} /> : null}
+      {today ? <HomeSectionTitle>{`Tu Plan para hoy, ${homePlanDateLabel(today.local_date)}`}</HomeSectionTitle> : null}
 
       {today?.has_plan && snapshot ? (
         <CalendarizedDailyPlanCard
@@ -111,7 +124,10 @@ export default function TodayScreen() {
       )}
 
       {activeProgram?.calendarization ? (
-        <ProgramActiveHomeOverview calendarization={activeProgram.calendarization} program={activeProgram} />
+        <>
+          <HomeSectionTitle>Tu Programa Activo</HomeSectionTitle>
+          <ProgramActiveHomeOverview calendarization={activeProgram.calendarization} program={activeProgram} />
+        </>
       ) : (
         <Card accent={tokens.color.program}>
           <SectionTitle title="Aún no hay programa activo" />
@@ -130,7 +146,7 @@ export default function TodayScreen() {
         <Card muted>
           <SectionTitle detail={`${today.measurements.count} mediciones`} title="Tendencia del programa" />
           <View style={styles.measurementRow}>
-            <Text style={styles.measurementValue}>{today.measurements.latest_weight_kg.toFixed(1)} kg</Text>
+            <Text style={styles.measurementValue}>{displayWeight(today.measurements.latest_weight_kg)} kg</Text>
             {today.measurements.change_kg != null ? (
               <Pill
                 color={tokens.color.protein}
@@ -153,7 +169,7 @@ export default function TodayScreen() {
         <Card accent={tokens.color.warning}>
           <SectionTitle detail={`${pendingProposalCount} pendientes`} title="Propuestas para revisar" />
           <Text style={textStyles.muted}>El Asistente preparó resultados que aún no modifican tu librería.</Text>
-          <Button label="Abrir Propuestas" onPress={() => router.push("/proposals" as Href)} />
+          <Button label="Abrir Propuestas" onPress={() => router.push("/assistant?section=proposals" as Href)} />
         </Card>
       ) : null}
 
@@ -169,6 +185,7 @@ export default function TodayScreen() {
 }
 
 const styles = StyleSheet.create({
+  homeSectionTitle: { color: tokens.color.textMain, fontSize: 18, fontWeight: tokens.weight.semibold, marginBottom: -tokens.spacing.sm, marginTop: tokens.spacing.sm },
   measurementRow: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
   measurementValue: { color: tokens.color.textMain, fontSize: 28, fontWeight: "900", fontVariant: ["tabular-nums"] },
 });

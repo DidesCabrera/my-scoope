@@ -8,7 +8,7 @@ type SectionTitleIcon = "comparison" | "dailyPlans" | "foods" | "meals" | "plann
 
 function iconForSectionTitle(title: string): SectionTitleIcon | undefined {
   const normalizedTitle = title.trim().toLocaleLowerCase("es");
-  if (normalizedTitle.startsWith("tabla de comparación")) return "comparison";
+  if (normalizedTitle === "composición" || normalizedTitle.startsWith("tabla de comparación")) return "comparison";
   if (normalizedTitle.startsWith("alimentos en est")) return "foods";
   if (normalizedTitle === "planificación semanal") return "planning";
   if (normalizedTitle.startsWith("detalle de cada comida")) return "meals";

@@ -24,7 +24,7 @@ import { useComparatorSelectionTransfer } from "@/components/comparisons/compara
 import { libraryNutrition } from "@/components/libraries/presentation-adapters";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { NutritionKpiSection } from "@/components/nutrition";
-import { EntityCard, SectionPageHeader } from "@/components/ui";
+import { DistributedTabBar, EntityCard, SectionPageHeader } from "@/components/ui";
 import { EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
 import { Button, Card, Field, LoadingState, Pill, Screen, textStyles } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
@@ -62,26 +62,22 @@ function SavedCard({ item, onPress }: { item: SavedComparisonSummary; onPress():
   );
 }
 
-function ComparisonKindTabs({ kind, onChange }: { kind: ComparisonKind; onChange(nextKind: ComparisonKind): void }) {
+function ComparisonKindTabs({ counts, kind, onChange }: { counts?: Record<ComparisonKind, number>; kind: ComparisonKind; onChange(nextKind: ComparisonKind): void }) {
   return (
-    <View accessibilityLabel="Tipo de comparación" accessibilityRole="tablist" style={styles.kindTabs}>
-      {fallbackKinds.map((tab) => {
-        const selected = kind === tab.value;
-        const Icon = tab.icon;
-        return (
-          <Pressable
-            accessibilityRole="tab"
-            accessibilityState={{ selected }}
-            key={tab.value}
-            onPress={() => onChange(tab.value)}
-            style={({ pressed }) => [styles.kindTab, selected && styles.kindTabActive, pressed && styles.pressed]}
-          >
-            <Icon color={selected ? tokens.color.surfaceApp : tokens.color.textMuted} size={14} strokeWidth={2} />
-            <Text style={[styles.kindTabText, selected && styles.kindTabTextActive]}>{tab.label}</Text>
-          </Pressable>
-        );
-      })}
-    </View>
+    <DistributedTabBar<ComparisonKind>
+      accessibilityLabel="Tipo de comparación"
+      activeTab={kind}
+      onChange={onChange}
+      tabs={fallbackKinds.map((tab) => ({
+        count: counts?.[tab.value],
+        icon: (selected) => {
+          const Icon = tab.icon;
+          return <Icon color={selected ? tokens.color.surfaceApp : tokens.color.textMuted} size={14} strokeWidth={2} />;
+        },
+        key: tab.value,
+        label: tab.label,
+      }))}
+    />
   );
 }
 
@@ -91,6 +87,8 @@ function ComparatorDashboard() {
   const { status, apiRequest } = useSession();
   const setHeaderPresentation = useHeaderPresentation();
   const [kind, setKind] = useState<ComparisonKind>(params.kind === "meals" || params.kind === "dailyplans" ? params.kind : "foods");
+  const [counts, setCounts] = useState<Record<ComparisonKind, number>>({ dailyplans: 0, foods: 0, meals: 0 });
+  const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const [page, setPage] = useState<SavedComparisonListData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -99,7 +97,9 @@ function ComparatorDashboard() {
     setLoading(true);
     setError(null);
     try {
-      setPage(await apiRequest<SavedComparisonListData>(`/api/v1/comparisons/saved?limit=50&kind=${kind}`));
+      const pages = await Promise.all(fallbackKinds.map((item) => apiRequest<SavedComparisonListData>(`/api/v1/comparisons/saved?limit=${item.value === kind ? 50 : 1}&kind=${item.value}`)));
+      setCounts({ dailyplans: pages[2].total, foods: pages[0].total, meals: pages[1].total });
+      setPage(pages[fallbackKinds.findIndex((item) => item.value === kind)]);
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {
@@ -109,17 +109,23 @@ function ComparatorDashboard() {
 
   useFocusEffect(useCallback(() => { if (status === "authenticated") void load(); }, [load, status]));
   useFocusEffect(useCallback(() => {
-    setHeaderPresentation({ action: { icon: "plus", label: "Crear una comparación", onPress: () => router.push(creationHref(kind)) }, mode: "default" });
+    setHeaderPresentation({ action: { icon: "plus", label: "Crear una comparación", onPress: () => router.push(creationHref(kind)) }, identityVisible: compactHeaderVisible, mode: "default", title: "Comparador" });
     return () => setHeaderPresentation({ mode: "default" });
-  }, [kind, router, setHeaderPresentation]));
+  }, [compactHeaderVisible, kind, router, setHeaderPresentation]));
   if (status === "anonymous") return <Redirect href="/login" />;
   if (loading && !page) return <LoadingState label="Buscando tus comparaciones…" />;
 
   return (
     <>
-      <Screen headerMode="preserve">
-        <SectionPageHeader count={page?.total} countLabel="comparaciones" section="comparator" title="Comparador" />
-        <ComparisonKindTabs kind={kind} onChange={(nextKind) => { setKind(nextKind); router.setParams({ kind: nextKind }); }} />
+      <Screen
+        headerMode="preserve"
+        onScroll={({ nativeEvent }) => {
+          const visible = nativeEvent.contentOffset.y > 1;
+          if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible);
+        }}
+        scrollHeader={<SectionPageHeader countLabel="comparaciones" section="comparator" title="Comparador" />}
+        stickyHeader={<ComparisonKindTabs counts={counts} kind={kind} onChange={(nextKind) => { setKind(nextKind); router.setParams({ kind: nextKind }); }} />}
+        stickyHeaderStyle={styles.dashboardStickyHeader}>
         {error ? <RecoverableErrorState message={error} onRetry={() => void load()} /> : null}
         {page?.items.length ? page.items.map((item) => <SavedCard item={item} key={item.id} onPress={() => router.push(`/comparator/saved/${item.id}` as Href)} />) : (
           <EmptyState actionLabel="Crear nueva comparación" message={`Todavía no tienes comparaciones guardadas de ${fallbackKinds.find((item) => item.value === kind)?.label.toLowerCase()}.`} onAction={() => router.push(creationHref(kind))} title="Aún no hay comparaciones" />
@@ -330,11 +336,7 @@ export default function ComparatorScreen() {
 const styles = StyleSheet.create({
   builderRoot: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
   builderTabs: { backgroundColor: tokens.color.surfaceApp, borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, paddingBottom: tokens.spacing.sm, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.xs },
-  kindTab: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.compact, justifyContent: "center", minHeight: 30, paddingHorizontal: tokens.spacing.md },
-  kindTabActive: { backgroundColor: tokens.color.textMain, borderColor: tokens.color.textMain },
-  kindTabText: { color: tokens.color.textMuted, fontSize: tokens.type.caption, fontWeight: "500" },
-  kindTabTextActive: { color: tokens.color.surfaceApp },
-  kindTabs: { flexDirection: "row", gap: tokens.spacing.compact },
+  dashboardStickyHeader: { paddingTop: tokens.spacing.sm },
   remove: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: 18, borderWidth: 1, height: 36, justifyContent: "center", width: 36 },
   removeText: { color: tokens.color.textMuted, fontSize: 24, lineHeight: 26 },
   pressed: { opacity: 0.68 },

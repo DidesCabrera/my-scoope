@@ -1,6 +1,6 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
 import type { ActiveProgramData } from "@/api/types";
@@ -11,7 +11,7 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { ProgramActiveActions } from "@/components/programs/program-active-actions";
 import { ProgramActiveOverview } from "@/components/programs/program-active-card";
 import { EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
-import { DetailLinkRow, LoadingState, Screen, SectionDivider, SectionHeading, SectionPageHeader } from "@/components/ui";
+import { DetailLinkRow, LoadingState, Screen, SectionDivider, SectionHeading, SectionPageHeader, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
 
@@ -53,7 +53,7 @@ export default function ProgramScreen() {
       action: loading && !program ? undefined : { label: "Acciones del programa en curso", onPress: openActions },
       identityVisible: compactHeaderVisible,
       mode: "default",
-      title: "Mi programa",
+      title: "Mi programa activo",
     });
     return () => setHeaderPresentation({ mode: "default" });
   }, [compactHeaderVisible, loading, openActions, program, setHeaderPresentation]));
@@ -109,7 +109,7 @@ export default function ProgramScreen() {
     return (
       <>
         <Screen headerMode="preserve">
-          <SectionPageHeader countLabel="semanas" section="calendarization" title="Mi programa" />
+          <SectionPageHeader countLabel="semanas" section="calendarization" title="Mi programa activo" />
           {error ? <RecoverableErrorState message={error} onRetry={() => void load()} /> : null}
           <EmptyState actionLabel="Calendarizar un programa" message="Elige uno de tus programas guardados para comenzar un recorrido diario." onAction={() => router.push("/program/activate" as Href)} title="Aún no tienes un programa activo" />
         </Screen>
@@ -131,7 +131,7 @@ export default function ProgramScreen() {
         stickyHeaderIndices={[1]}
         style={styles.screen}>
         <View style={styles.beforePlanning}>
-          <SectionPageHeader count={weekCount} countLabel="semanas" section="calendarization" title="Mi programa" />
+          <SectionPageHeader countLabel="semanas" section="calendarization" title="Mi programa activo" />
           {error ? <RecoverableErrorState message={error} onRetry={() => void load()} /> : null}
           <ProgramActiveOverview calendarization={calendarization} program={program} />
           <SectionDivider />
@@ -146,9 +146,10 @@ export default function ProgramScreen() {
         {calendarization.source_program_id ? (
           <>
             <SectionDivider />
+            <Text style={textStyles.muted}>Tu programa activo conserva lo que realmente ocurrió. La plantilla original es una referencia reutilizable y sus cambios no alteran este historial.</Text>
             <DetailLinkRow
-              accessibilityLabel={`Ir al detalle de ${calendarization.program_name}`}
-              label="Ir a detalle de programa"
+              accessibilityLabel={`Ver la plantilla original ${calendarization.program_name}`}
+              label="Ver plantilla original"
               onPress={() => router.push(`/libraries/programs/${calendarization.source_program_id}` as Href)}
             />
           </>

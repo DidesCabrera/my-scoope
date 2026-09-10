@@ -16,6 +16,7 @@ Meal – {{ vm.meal.name }}
   {% else %}
     {% include "components/card_main_dpm.html" with main_card=vm.content.main_card %}
   {% endif %}
+  {% include "components/food_detail_cards.html" with food_cards=vm.content.child_cards %}
 
 </div>
 

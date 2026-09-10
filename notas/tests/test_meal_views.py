@@ -95,6 +95,18 @@ class MealViewTests(TestCase):
 
         self.assertFalse(meal.is_draft)
 
+    def test_meal_detail_renders_food_entity_cards_with_portions(self):
+        meal = Meal.objects.create(name="Comida con detalle", created_by=self.user, is_draft=False)
+        food = Food.objects.create(name="Avena", protein=13, carbs=68, fat=7, created_by=self.user)
+        MealFood.objects.create(meal=meal, food=food, quantity=85)
+
+        response = self.client.get(reverse("meal_detail", args=[meal.id]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Detalle de cada Alimento")
+        self.assertContains(response, "food-child-card")
+        self.assertContains(response, "85 g")
+
     def test_meal_detail_save_food_updates_existing_mealfood(self):
         meal = Meal.objects.create(
             name="Editable meal",

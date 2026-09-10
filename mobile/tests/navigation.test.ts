@@ -10,27 +10,30 @@ test("the consumer navigation catalog includes every MCE product area", () => {
     "home",
     "program",
     "assistant",
-    "proposals",
     "comparator",
   ]);
 });
 
 test("only product areas with a functional route are exposed in the sidebar", () => {
   const available = listAvailableProductAreas();
-  assert.deepEqual(available.map((area) => area.key), ["home", "program", "assistant", "proposals", "comparator"]);
+  assert.deepEqual(available.map((area) => area.key), ["home", "program", "assistant", "comparator"]);
+  assert.equal(available.find((area) => area.key === "assistant")?.label, "Asistente AI");
   assert.ok(available.every((area) => String(area.href).startsWith("/")));
 });
 
 test("MCE07 product journeys have native destinations and refocus refreshes", async () => {
   const proposal = await readFile(path.resolve(process.cwd(), "src/app/proposals/[id].tsx"), "utf8");
+  const proposalEntity = await readFile(path.resolve(process.cwd(), "src/app/proposals/[id]/entity.tsx"), "utf8");
   const comparison = await readFile(path.resolve(process.cwd(), "src/app/comparator/saved/[id].tsx"), "utf8");
   const program = await readFile(path.resolve(process.cwd(), "src/app/program/index.tsx"), "utf8");
   const programDay = await readFile(path.resolve(process.cwd(), "src/app/program/days/[id].tsx"), "utf8");
   const programMeal = await readFile(path.resolve(process.cwd(), "src/app/program/days/[id]/meals/[mealKey].tsx"), "utf8");
   const today = await readFile(path.resolve(process.cwd(), "src/app/today.tsx"), "utf8");
   const account = await readFile(path.resolve(process.cwd(), "src/app/account.tsx"), "utf8");
-  assert.match(proposal, /\/libraries\/meals\//);
-  assert.match(proposal, /\/libraries\/daily-plans\//);
+  assert.match(proposal, /\/proposals\/\$\{proposal\.id\}\/entity/);
+  assert.match(proposalEntity, /\/libraries\/meals\//);
+  assert.match(proposalEntity, /\/libraries\/daily-plans\//);
+  assert.match(proposalEntity, /\/proposals\/\$\{proposal\.id\}\/entity\/meals\//);
   assert.match(comparison, /Usar en el Asistente/);
   assert.match(comparison, /comparisonId/);
   assert.doesNotMatch(program, /Abrir plan de hoy/);
@@ -49,7 +52,7 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
   assert.doesNotMatch(today, /Mi suscripción|Cuenta, privacidad y ayuda|Configurar recordatorios/);
   assert.match(account, /label="Mi suscripción"/);
   assert.match(account, /router\.push\("\/subscription" as Href\)/);
-  for (const screen of [proposal, comparison, program, programDay, programMeal, today]) assert.match(screen, /useFocusEffect/);
+  for (const screen of [proposal, proposalEntity, comparison, program, programDay, programMeal, today]) assert.match(screen, /useFocusEffect/);
 });
 
 test("shared screens use compact scroll identities and only Home keeps the centered logo", async () => {

@@ -4,11 +4,19 @@ from ninja import Router
 
 from mobile_api.api_support import calendarization_error, require_scope, success
 from mobile_api.auth import mobile_bearer
+from mobile_api.calendarization_edits import (
+    add_dailyplan_to_calendarized_day,
+    preview_dailyplan_for_calendarized_day,
+)
 from mobile_api.schema_domains.calendarization import CalendarizedDayDetailEnvelope
 from mobile_api.schema_domains.calendarization_edits import (
+    CalendarizedDayPlanCommitInput,
+    CalendarizedDayPlanPreviewInput,
     CalendarizedMealHourInput,
     CalendarizedNameInput,
 )
+from mobile_api.schema_domains.composition import PickerCommitEnvelope
+from mobile_api.schema_domains.composition_preview import PickerPreviewEnvelope
 from mobile_api.schemas import ErrorEnvelope
 from mobile_api.selectors import calendarized_day_payload
 from notas.application.services.commands.calendarization_commands import (
@@ -36,6 +44,62 @@ def _updated_day_payload(request, day_id: int) -> dict:
 )
 def calendarized_day_detail(request, day_id: int):
     return _updated_day_payload(request, day_id)
+
+
+@router.post(
+    "/program/days/{day_id}/daily-plan-picker/preview",
+    operation_id="mobile_api_api_calendarized_day_dailyplan_picker_preview",
+    auth=mobile_bearer,
+    response={
+        200: PickerPreviewEnvelope,
+        401: ErrorEnvelope,
+        403: ErrorEnvelope,
+        404: ErrorEnvelope,
+        422: ErrorEnvelope,
+    },
+)
+def calendarized_day_dailyplan_picker_preview(
+    request,
+    day_id: int,
+    payload: CalendarizedDayPlanPreviewInput,
+):
+    return success(
+        preview_dailyplan_for_calendarized_day(
+            user=request.auth.user,
+            day_id=day_id,
+            dailyplan_id=payload.dailyplan_id,
+        )
+    )
+
+
+@router.post(
+    "/program/days/{day_id}/daily-plan-picker/commit",
+    operation_id="mobile_api_api_calendarized_day_dailyplan_picker_commit",
+    auth=mobile_bearer,
+    response={
+        200: PickerCommitEnvelope,
+        401: ErrorEnvelope,
+        403: ErrorEnvelope,
+        404: ErrorEnvelope,
+        409: ErrorEnvelope,
+        422: ErrorEnvelope,
+    },
+)
+def calendarized_day_dailyplan_picker_commit(
+    request,
+    day_id: int,
+    payload: CalendarizedDayPlanCommitInput,
+):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    return success(
+        add_dailyplan_to_calendarized_day(
+            user=request.auth.user,
+            day_id=day_id,
+            dailyplan_id=payload.dailyplan_id,
+            idempotency_key=payload.idempotency_key,
+            confirm_replacement=payload.confirm_replacement,
+        )
+    )
 
 
 @router.patch(

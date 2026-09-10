@@ -7,6 +7,10 @@ NAV_ROOT_ALIASES = {
     "dailyplan_meal": "dailyplan",
 }
 
+SIDEBAR_GROUP_ALIASES = {
+    "proposal": "chat",
+}
+
 
 def resolve_navigation_root(entity: str) -> str:
     return NAV_ROOT_ALIASES.get(entity, entity)
@@ -88,6 +92,7 @@ def find_active_nav_item(viewmode):
 def build_sidebar_vm(viewmode):
     active = find_active_nav_item(viewmode)
     active_group_key = active["group"].key if active else None
+    active_group_key = SIDEBAR_GROUP_ALIASES.get(active_group_key, active_group_key)
 
     sections_vm = []
 
@@ -315,6 +320,5 @@ def build_back_url(viewmode, parents=None, breadcrumb=None, back_config=None):
         return breadcrumb[-2].url
 
     return None
-
 
 

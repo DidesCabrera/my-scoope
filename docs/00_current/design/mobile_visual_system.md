@@ -37,6 +37,7 @@ Screen
       -> MacroSummary / NutrientProgress / NutritionMetric
       -> KpiAllocationBar / PanelAllocationBar
       -> NutritionKpiSection / ProteinPerKilogramBadge
+      -> WeekDayGrid / WeekDayCell
       -> Pill / InlineNotice
       -> Button / Field / ChoiceRow
 ```
@@ -72,6 +73,27 @@ interaction states, entity palette, type sizes, spacing, radii and nutrition
 widgets using production component code. Its browser rendering is an Expo/
 `react-native-web` preview; the Django/CSS system is validated separately at
 `/app/dev/ui-system/`.
+
+`WeekDayGrid` and `WeekDayCell` own the shared seven-column weekly layout used by
+Today and Program. Below 350 pt of available content width the grid reduces its
+gap from 6 pt to 4 pt; Today's date circles also reduce from 44 pt to 40 pt while
+preserving the 13 pt date and 9 pt month typography. Both contexts use 44 pt
+circles, 40 pt in compact layouts, 1 pt borders and the same multicolor selection
+ring. The selection ring preserves a narrow neutral gap around the circle so its
+state does not merge visually with the filled surface. Interactive Program circles
+retain a 44 pt effective touch target. The Native UI Gallery's
+Calendars section renders both production components inside 414 pt and 375 pt
+device frames so their responsive geometry can be compared in the browser.
+
+“Mi programa activo” uses the dated hybrid of those two recipes: chronological
+`calendar_date` determines the visible weekday order, every circle shows day and
+three-letter month, and an empty editable future date carries a small add affordance.
+It therefore may begin on any weekday. Filled future dates retain an explicit action
+to replace their DailyPlan; present and past dates remain historical and non-editable.
+When a week becomes active in the UI, its first chronological program day is selected
+by default; the current week instead selects today's dated slot. Today uses the same
+white-filled circle as Home. An empty selected slot renders an explicit “Día sin plan”
+state rather than leaving the plan-detail area blank.
 
 `KpiAllocationBar` and `PanelAllocationBar` share percentage normalization and
 nutrition tones and overlay the value on the track. Entity panels use the
@@ -287,7 +309,16 @@ enumerations do not add a second left indent.
 
 The first native comparison family is derived from Django's comparator detail
 and saved-list views. `ComparisonScopeTabs` switches among Food, Meal and
-DailyPlan scopes. `ComparisonSelectionCard` represents a numbered selection and
+DailyPlan scopes through `DistributedTabBar`, the same full-width primitive used
+by Assistant AI; its three tabs divide the available width evenly. On the saved
+comparison lists, each scope tab owns its item count; the page heading does not
+repeat that quantity in a detached chip. Once the large page heading scrolls,
+`Comparador` becomes visible in the compact global header, matching the active
+program list behavior, while its distributed scope tabs remain pinned beneath
+that header. The UI-System's
+`ScrollableTabBar` remains the intrinsic-width alternative for collections such
+as program weeks. Labels, optional icons and counts are centered as one group in
+both tab-bar components. `ComparisonSelectionCard` represents a numbered selection and
 its optional quantity/removal action in read mode. `ComparisonBuilder` groups
 editable `ComparisonEditorCard` instances with add, save and compare actions;
 each editor owns the entity selector and, where applicable, quantity input.

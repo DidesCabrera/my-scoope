@@ -58,6 +58,32 @@ Desde la decisión 0028 quedó definido el ciclo Patch 50-58 para activar el LLM
 
 El AI Assistant debe evolucionar sobre la estructura de chat existente de My Scoope, no como una UI paralela.
 
+## Navegación de la experiencia
+
+Web y móvil presentan una sola sección principal llamada **Asistente AI**. Sus
+listas se organizan en dos tabs equivalentes:
+
+- **Chats** conserva el historial conversacional y la acción contextual para
+  iniciar un chat nuevo.
+- **Propuestas** conserva la bandeja de propuestas revisables y sus acciones y
+  filtros contextuales.
+
+Las rutas históricas de chats y propuestas permanecen separadas para preservar
+enlaces, detalles y contratos de API. La unificación corresponde a navegación y
+presentación; no mezcla la persistencia de `AiNutritionChat` con
+`NutritionProposal`. En móvil, la ruta principal carga ambos listados y los tabs
+alternan el subcontenido localmente, sin transición entre pantallas; la ruta
+histórica de propuestas redirige a esa misma superficie. Cada tab ocupa la mitad
+del ancho mediante `DistributedTabBar`, el mismo patrón de ancho completo usado
+al agregar o reemplazar entidades. Icono, label y cantidad permanecen centrados
+como un solo grupo. El resumen de créditos aparece antes de los tabs como una
+card compacta del UI-System: saldo y estado de disponibilidad comparten una sola
+línea. La card se desplaza con el contenido y únicamente la barra de tabs
+permanece fija. Al desplazar el contenido, el
+título `Asistente AI` aparece en la identidad compacta del header. El indicador de cantidad
+se elimina del título principal. El menú de cabecera siempre expone acciones del
+tab activo.
+
 
 ## Current client-memory/tool-oriented baseline
 

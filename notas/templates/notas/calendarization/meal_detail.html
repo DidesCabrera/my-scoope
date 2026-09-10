@@ -26,6 +26,8 @@
       </div>
     </section>
 
+    {% include "components/food_detail_cards.html" with food_cards=detail.food_cards %}
+
     {% if detail.can_check_in %}
       {% include "components/calendarization_meal_checkin.html" with checkin=detail %}
     {% endif %}

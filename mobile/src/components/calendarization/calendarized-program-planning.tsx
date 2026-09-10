@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "expo-router";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
 import type { ActiveProgramDay, CalendarizedDayDetail, LibraryFoodPanelItem, LibraryWeekPanelItem } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { ProgramDaySelector, ProgramWeekHeading, ProgramWeekTabs } from "@/components/libraries/program-planning-controls";
+import { pickerHref } from "@/components/pickers/composition-picker-screen";
 import { FoodPanels, type FoodPanelItem } from "@/components/panels";
-import { InlineNotice, SectionDivider, SectionHeading, textStyles } from "@/components/ui";
+import { Button, InlineNotice, SectionDivider, SectionHeading, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { CalendarizedDailyPlanCard } from "./calendarized-daily-plan-card";
-import { compactDateLabel } from "./current-week";
+import { compactDateLabel, compactMonthLabel, preferredCalendarizedDay } from "./current-week";
 
 function localDate(): string {
   const now = new Date();
@@ -28,7 +30,7 @@ function weekDateRange(days: ActiveProgramDay[]): string {
   return `${compactDateLabel(dates[0])} — ${compactDateLabel(dates.at(-1) ?? dates[0])}`;
 }
 
-function preferredDay(days: ActiveProgramDay[]): ActiveProgramDay | undefined {
+function preferredWeek(days: ActiveProgramDay[]): ActiveProgramDay | undefined {
   const today = localDate();
   return days.find((day) => day.calendar_date === today)
     ?? days.find((day) => day.calendar_date > today)
@@ -63,27 +65,27 @@ export function CalendarizedProgramPlanning({
   showWeekTabs?: boolean;
   weeksData?: LibraryWeekPanelItem[];
 }) {
+  const router = useRouter();
   const { apiRequest } = useSession();
   const weeks = useMemo(() => [...new Set(days.map((day) => day.week_number))], [days]);
-  const initialDay = preferredDay(days);
+  const initialDay = preferredWeek(days);
   const [activeWeek, setActiveWeek] = useState(initialWeek ?? initialDay?.week_number ?? weeks[0] ?? 1);
-  const [selectedId, setSelectedId] = useState<number | null>(() => {
-    if (initialDay?.has_plan) return initialDay.id;
-    return days.find((day) => day.week_number === initialDay?.week_number && day.has_plan)?.id ?? null;
-  });
+  const [selectedId, setSelectedId] = useState<number | null>(() => (
+    preferredCalendarizedDay(days, initialWeek ?? initialDay?.week_number ?? weeks[0] ?? 1, localDate())?.id ?? null
+  ));
   const [detail, setDetail] = useState<CalendarizedDayDetail | null>(null);
   const [loading, setLoading] = useState(selectedId != null);
   const [error, setError] = useState<string | null>(null);
 
-  const weekDays = useMemo(() => days.filter((day) => day.week_number === activeWeek), [activeWeek, days]);
+  const weekDays = useMemo(
+    () => days.filter((day) => day.week_number === activeWeek).sort((left, right) => left.calendar_date.localeCompare(right.calendar_date)),
+    [activeWeek, days],
+  );
   const weekData = weeksData.find((week) => week.week_number === activeWeek);
   const weekFoods = (weekData?.foods ?? []).map(foodPanelItem);
 
   function selectWeek(week: number) {
-    const nextDays = days.filter((day) => day.week_number === week);
-    const today = localDate();
-    const next = nextDays.find((day) => day.calendar_date === today && day.has_plan)
-      ?? nextDays.find((day) => day.has_plan);
+    const next = preferredCalendarizedDay(days, week, localDate());
     setActiveWeek(week);
     setSelectedId(next?.id ?? null);
     setDetail(null);
@@ -119,8 +121,19 @@ export function CalendarizedProgramPlanning({
         <ProgramWeekHeading detail={weekDateRange(weekDays)} week={activeWeek} />
         <ProgramDaySelector
           accessibilityLabel={`Planes diarios de Semana ${activeWeek}`}
-          days={weekDays.map((day) => ({ filled: day.has_plan, id: day.id, label: dayLabel(day.calendar_date) }))}
-          onSelect={(day) => selectDay(Number(day.id))}
+          allowEmptySelection
+          days={weekDays.map((day) => ({
+            dayOfMonth: Number(day.calendar_date.slice(8, 10)),
+            disabled: !day.has_plan && day.calendar_date <= localDate(),
+            filled: day.has_plan,
+            id: day.id,
+            isToday: day.calendar_date === localDate(),
+            label: dayLabel(day.calendar_date),
+            monthLabel: compactMonthLabel(day.calendar_date),
+          }))}
+          onSelect={(day) => day.filled
+            ? selectDay(Number(day.id))
+            : router.push(pickerHref("dailyplan-to-calendarized-day", { dayId: day.id }))}
           selectedId={selectedId}>
           {loading ? (
             <View style={styles.loading}>
@@ -130,7 +143,27 @@ export function CalendarizedProgramPlanning({
           ) : error ? (
             <InlineNotice tone="error">{error}</InlineNotice>
           ) : detail?.has_plan && snapshot ? (
-            <CalendarizedDailyPlanCard dayId={detail.id} dateLabel={compactDateLabel(detail.calendar_date)} eyebrow={`SEMANA ${activeWeek} · ${dayLabel(detail.calendar_date)}`} mealExecution={detail.meal_execution} planName={detail.plan_name} snapshot={snapshot} />
+            <View style={styles.selectedPlan}>
+              <CalendarizedDailyPlanCard dayId={detail.id} dateLabel={compactDateLabel(detail.calendar_date)} eyebrow={`SEMANA ${activeWeek} · ${dayLabel(detail.calendar_date)}`} mealExecution={detail.meal_execution} planName={detail.plan_name} snapshot={snapshot} />
+              {detail.calendar_date > localDate() ? (
+                <Button
+                  label="Cambiar plan diario"
+                  onPress={() => router.push(pickerHref("dailyplan-to-calendarized-day", { dayId: detail.id }))}
+                  variant="secondary"
+                />
+              ) : null}
+            </View>
+          ) : detail ? (
+            <View style={styles.emptyDay}>
+              <InlineNotice>Día sin plan. No hay un plan diario asignado para esta fecha.</InlineNotice>
+              {detail.calendar_date > localDate() ? (
+                <Button
+                  label="Agregar plan diario"
+                  onPress={() => router.push(pickerHref("dailyplan-to-calendarized-day", { dayId: detail.id }))}
+                  variant="secondary"
+                />
+              ) : null}
+            </View>
           ) : null}
         </ProgramDaySelector>
 
@@ -144,6 +177,8 @@ export function CalendarizedProgramPlanning({
 
 const styles = StyleSheet.create({
   loading: { alignItems: "center", gap: tokens.spacing.sm, justifyContent: "center", minHeight: 120 },
+  emptyDay: { gap: tokens.spacing.md },
   section: { gap: tokens.spacing.md },
+  selectedPlan: { gap: tokens.spacing.md },
   weekContent: { gap: tokens.spacing.lg, minWidth: 0, paddingTop: tokens.spacing.md, width: "100%" },
 });

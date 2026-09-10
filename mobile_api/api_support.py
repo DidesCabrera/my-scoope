@@ -36,6 +36,7 @@ def calendarization_error(exc: ValueError) -> MobileAPIError:
         "calendarization_revision_not_found",
         "calendarization_review_not_found",
         "calendarization_program_not_owned",
+        "calendarized_day_dailyplan_not_found",
     }
     conflicts = {
         "calendarization_idempotency_conflict",
@@ -47,6 +48,7 @@ def calendarization_error(exc: ValueError) -> MobileAPIError:
         "calendarization_cannot_pause",
         "calendarization_cannot_resume",
         "calendarization_cannot_cancel",
+        "calendarized_day_plan_replacement_confirmation_required",
     }
     return MobileAPIError(
         code=code,

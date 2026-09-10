@@ -21,6 +21,7 @@ import {
   Search,
   Sparkles,
   Utensils,
+  Weight,
 } from "lucide-react-native";
 import { Pressable, StyleProp, StyleSheet, Text, useWindowDimensions, View, ViewStyle } from "react-native";
 
@@ -31,7 +32,7 @@ import { Card } from "./surfaces";
 export type EntityKind = "food" | "meal" | "dailyPlan" | "dpm" | "program";
 export type SectionKind = "home" | "profile" | "chatNew" | "chat" | "proposal" | "calendarization" | "comparator" | "explore" | "inbox" | "create" | "import";
 
-export type StructuralIndicatorKind = "clock" | "day" | "food" | "meal" | "dailyPlan" | "week";
+export type StructuralIndicatorKind = "clock" | "day" | "food" | "meal" | "dailyPlan" | "week" | "weight";
 
 export type StructuralIndicator = {
   icon?: StructuralIndicatorKind;
@@ -45,6 +46,20 @@ export type CompletionIndicatorCounts = {
   completedCount?: number;
   noteCount?: number;
 };
+
+export function GuideMetric({ icon, label, value }: { icon?: "weight"; label?: string; value: string }) {
+  return (
+    <View accessibilityLabel={label ? `${label}: ${value}` : value} accessible style={[styles.guideMetric, !label && styles.guideMetricValueOnly]}>
+      <View style={styles.guideMetricCopy}>
+        {label ? <Text style={styles.guideMetricLabel}>{label}</Text> : null}
+        <View style={styles.guideMetricValueRow}>
+          {icon === "weight" ? <Weight color={tokens.color.textMuted} size={14} strokeWidth={2.2} /> : null}
+          <Text style={styles.guideMetricValue}>{value}</Text>
+        </View>
+      </View>
+    </View>
+  );
+}
 
 const entityLabels: Record<EntityKind, string> = {
   food: "Alimento",
@@ -69,6 +84,7 @@ const structuralIcons: Record<StructuralIndicatorKind, LucideIcon> = {
   meal: Utensils,
   dailyPlan: ClipboardList,
   week: CalendarRange,
+  weight: Weight,
 };
 
 const structuralIndicatorColors: Record<StructuralIndicatorKind, string> = {
@@ -78,6 +94,7 @@ const structuralIndicatorColors: Record<StructuralIndicatorKind, string> = {
   meal: tokens.color.meal,
   dailyPlan: tokens.color.dailyPlan,
   week: tokens.color.program,
+  weight: tokens.color.quantity,
 };
 
 const sectionIcons: Record<SectionKind, LucideIcon> = {
@@ -253,7 +270,7 @@ export function EntityCard({
   style?: StyleProp<ViewStyle>;
 }>) {
   const content = (
-    <Card accent={tokens.color[entity]} style={[onPress && styles.entityCardInPressable, style]}>
+    <Card accent={tokens.color[entity]} style={[actions ? styles.entityCardWithActions : null, onPress && styles.entityCardInPressable, style]}>
       <EntityHeading accessory={accessory} completion={completion} entity={entity} eyebrow={eyebrow} indicators={indicators} subtitle={subtitle} title={title} />
       {children}
       {actions ? <EntityCardActions>{actions}</EntityCardActions> : null}
@@ -412,7 +429,8 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.72 },
   entityCardPressable: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding },
   entityCardInPressable: { marginHorizontal: 0 },
-  entityCardActions: { alignItems: "center", alignSelf: "stretch", flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "flex-end", marginTop: tokens.spacing.sm },
+  entityCardWithActions: { paddingBottom: tokens.card.innerPadding },
+  entityCardActions: { alignItems: "center", alignSelf: "stretch", flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "flex-end" },
   entityCardAction: { alignItems: "center", borderRadius: tokens.radius.pill, height: 36, justifyContent: "center", width: 36 },
   headingRow: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md },
   headingCopy: { alignItems: "flex-start", flex: 1, gap: tokens.spacing.xs, minWidth: 0 },
@@ -437,6 +455,12 @@ const styles = StyleSheet.create({
   structuralItemSurface: { borderColor: tokens.color.borderDefault, borderWidth: 1 },
   structuralValue: { color: tokens.color.entityIconForeground, fontSize: tokens.type.caption, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.medium, letterSpacing: 0, lineHeight: 15 },
   structuralValueSurface: { color: tokens.color.textMain },
+  guideMetric: { backgroundColor: tokens.color.surfaceCard, borderRadius: tokens.radius.card, justifyContent: "center", minHeight: 58, paddingHorizontal: tokens.spacing.lg, paddingVertical: tokens.spacing.sm },
+  guideMetricCopy: { alignItems: "flex-end", gap: 1 },
+  guideMetricLabel: { color: tokens.color.textMuted, fontSize: 10, fontWeight: tokens.weight.regular, lineHeight: 12, textAlign: "right" },
+  guideMetricValue: { color: tokens.color.textMain, fontSize: 17, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.semibold, lineHeight: 20, textAlign: "right" },
+  guideMetricValueOnly: { borderRadius: tokens.radius.lg, minHeight: 40 },
+  guideMetricValueRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs },
   entityCardPanelSlot: { minWidth: 0 },
   cardHeader: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
   cardHeaderCompact: { gap: tokens.spacing.sm },
