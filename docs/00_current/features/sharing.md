@@ -27,5 +27,8 @@ snapshot contains only its title, aggregate nutrition, meal times and food
 composition; it excludes account identity, source IDs and free-form notes. Later
 source edits do not rewrite an existing share.
 
-Public preview and explicit claim remain unavailable until SHR04, so creating a URL
-does not yet add a recipient to Inbox.
+The unlisted `/s/<public-id>/` page renders only the stored snapshot and sends
+`noindex`/`no-store` protections. Opening it never claims content. Claim is a
+CSRF-protected POST; anonymous intent survives login, but the returning GET still
+requires explicit confirmation. Claims are idempotent and create one normalized
+Inbox item. Directed invitations additionally require a matching verified email.

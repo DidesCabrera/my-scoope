@@ -66,6 +66,14 @@ class NutritionOnboardingGateTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Completa tus datos iniciales")
 
+    def test_unlisted_share_routes_remain_available_during_onboarding(self):
+        user = self._user("gate_share")
+        self.client.force_login(user)
+
+        response = self.client.get("/s/00000000-0000-0000-0000-000000000000/")
+
+        self.assertEqual(response.status_code, 404)
+
     def test_staff_user_is_not_forced_through_onboarding(self):
         user = self._user("gate_staff", staff=True)
         self.client.force_login(user)

@@ -257,6 +257,7 @@ NUTRITION_ONBOARDING_ALLOWED_PREFIXES = (
     "/serviceworker.js",
     "/.well-known/",
     "/oauth/",
+    "/s/",
 )
 
 
