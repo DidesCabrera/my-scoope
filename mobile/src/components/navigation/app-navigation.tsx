@@ -45,7 +45,7 @@ type HeaderAction = { disabled?: boolean; icon?: "more" | "plus"; label: string;
 
 type HeaderPresentation =
   | { mode: "default"; action?: HeaderAction; identityVisible?: boolean; title?: string }
-  | { mode: "back"; action?: HeaderAction; fallback?: Href; title: string }
+  | { mode: "back"; action?: HeaderAction; fallback?: Href; leadingAction?: HeaderAction; title: string }
   | { mode: "library-detail"; action?: HeaderAction; entity: LibraryEntity; identityVisible: boolean; title: string }
   | { mode: "library-list"; action?: HeaderAction; createAction?: { label: string; onPress(): void }; entity: LibraryEntity; identityVisible: boolean; title: string };
 
@@ -175,7 +175,17 @@ export function AppNavigationHeader() {
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.headerSafeArea}>
       <View style={styles.header}>
-        {headerPresentation.mode === "library-detail" || headerPresentation.mode === "back" ? (
+        {headerPresentation.mode === "back" && headerPresentation.leadingAction ? (
+          <Pressable
+            accessibilityLabel={headerPresentation.leadingAction.label}
+            accessibilityRole="button"
+            disabled={headerPresentation.leadingAction.disabled}
+            hitSlop={8}
+            onPress={headerPresentation.leadingAction.onPress}
+            style={({ pressed }) => [styles.backHeaderLeadingAction, headerPresentation.leadingAction?.disabled && styles.disabled, pressed && styles.pressed]}>
+            <Text numberOfLines={1} style={styles.backHeaderActionText}>{headerPresentation.leadingAction.label}</Text>
+          </Pressable>
+        ) : headerPresentation.mode === "library-detail" || headerPresentation.mode === "back" ? (
           <Pressable accessibilityLabel="Volver" accessibilityRole="button" hitSlop={8} onPress={() => { if (router.canGoBack()) router.back(); else router.replace(detailFallback); }} style={({ pressed }) => [styles.headerButton, headerPresentation.mode === "back" && styles.backHeaderSide, pressed && styles.pressed]}><ChevronLeft color={tokens.color.textMain} size={26} strokeWidth={2.2} /></Pressable>
         ) : canOpenMenu ? (
           <Pressable
@@ -196,9 +206,10 @@ export function AppNavigationHeader() {
           <Pressable
             accessibilityLabel={headerPresentation.action.label}
             accessibilityRole="button"
+            disabled={headerPresentation.action.disabled}
             hitSlop={8}
             onPress={headerPresentation.action.onPress}
-            style={({ pressed }) => [styles.backHeaderAction, pressed && styles.pressed]}>
+            style={({ pressed }) => [styles.backHeaderAction, headerPresentation.action?.disabled && styles.disabled, pressed && styles.pressed]}>
             <Text numberOfLines={1} style={styles.backHeaderActionText}>{headerPresentation.action.label}</Text>
           </Pressable>
         ) : headerPresentation.mode === "library-list" ? (
@@ -365,6 +376,7 @@ const styles = StyleSheet.create({
   libraryHeaderButton: { width: 44 },
   libraryHeaderActions: { alignItems: "center", flexDirection: "row" },
   backHeaderSide: { alignItems: "flex-start", paddingLeft: tokens.spacing.lg, width: 92 },
+  backHeaderLeadingAction: { alignItems: "flex-start", height: 52, justifyContent: "center", paddingLeft: tokens.spacing.lg, width: 92 },
   backHeaderAction: { alignItems: "center", height: 52, justifyContent: "center", paddingHorizontal: tokens.spacing.sm, width: 92 },
   backHeaderActionText: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: "700" },
   backHeaderIdentity: { alignItems: "center", flex: 1, justifyContent: "center", minWidth: 0 },

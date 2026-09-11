@@ -10,6 +10,7 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { Button, Card, Field, InlineNotice, textStyles } from "@/components/ui/primitives";
 import { EntityIcon } from "@/components/ui";
 import { tokens } from "@/design/tokens";
+import { internalHref } from "@/navigation/internal-href";
 
 type CreatableEntity = LibraryEntity;
 
@@ -69,11 +70,19 @@ function macroNumber(value: string): number | null {
 }
 
 export function LibraryCreateScreen() {
-  const params = useLocalSearchParams<{ entity?: string }>();
+  const params = useLocalSearchParams<{ entity?: string; pickerEntryTo?: string; pickerKind?: string; pickerRelationId?: string; pickerTargetId?: string; returnTo?: string }>();
   const entity = typeof params.entity === "string" && Object.prototype.hasOwnProperty.call(configs, params.entity)
     ? params.entity as CreatableEntity
     : null;
   const config = entity ? configs[entity] : null;
+  const returnHref = internalHref(params.returnTo);
+  const pickerEntryHref = internalHref(params.pickerEntryTo);
+  const pickerKind = params.pickerKind === "meal-to-dailyplan" || params.pickerKind === "meal-to-calendarized-day" ? params.pickerKind : null;
+  const pickerTargetId = Number(params.pickerTargetId);
+  const pickerRelationId = Number(params.pickerRelationId) || undefined;
+  const mealCreationContext = entity === "meal" && returnHref && pickerEntryHref && pickerKind && Number.isInteger(pickerTargetId) && pickerTargetId > 0
+    ? { pickerEntryHref, pickerKind, pickerRelationId, pickerTargetId, returnHref }
+    : null;
   const router = useRouter();
   const { status, apiRequest } = useSession();
   const setHeaderPresentation = useHeaderPresentation();
@@ -122,7 +131,19 @@ export function LibraryCreateScreen() {
         headers: { "Content-Type": "application/json" },
         method: "POST",
       });
-      router.replace(`/libraries/${config.segment}/${created.id}` as Href);
+      router.replace(mealCreationContext
+        ? {
+          pathname: "/libraries/meals/[id]",
+          params: {
+            id: String(created.id),
+            pickerEntryTo: String(mealCreationContext.pickerEntryHref),
+            pickerKind: mealCreationContext.pickerKind,
+            ...(mealCreationContext.pickerRelationId ? { pickerRelationId: String(mealCreationContext.pickerRelationId) } : {}),
+            pickerTargetId: String(mealCreationContext.pickerTargetId),
+            returnTo: String(mealCreationContext.returnHref),
+          },
+        }
+        : `/libraries/${config.segment}/${created.id}` as Href);
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {

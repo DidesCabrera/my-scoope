@@ -23,7 +23,10 @@ test("mobile libraries expose native creation for all four entities", async () =
   for (const identity of ["Nuevo alimento", "Nueva comida", "Nuevo plan diario", "Nuevo programa"]) {
     assert.match(create, new RegExp(identity));
   }
-  assert.match(create, /router\.replace\(`\/libraries\/\$\{config\.segment\}\/\$\{created\.id\}`/);
+  assert.match(create, /const mealCreationContext = entity === "meal" && returnHref && pickerEntryHref && pickerKind/);
+  assert.match(create, /pathname: "\/libraries\/meals\/\[id\]"/);
+  assert.match(create, /pickerEntryTo: String\(mealCreationContext\.pickerEntryHref\)/);
+  assert.match(create, /returnTo: String\(mealCreationContext\.returnHref\)/);
   assert.doesNotMatch(create, /AppHeader|CollectionPageHeader/);
   for (const field of ["Nombre", "Proteínas (g)", "Carbohidratos (g)", "Grasas (g)"]) {
     assert.match(create, new RegExp(field.replace(/[()]/g, "\\$&")));
@@ -31,6 +34,23 @@ test("mobile libraries expose native creation for all four entities", async () =
   for (const endpoint of ["foods", "meals", "daily-plans", "programs"]) {
     assert.match(create, new RegExp(`/api/v1/library/${endpoint}`));
   }
+});
+
+test("meal creation returns to selection on cancel and advances with the created meal on done", async () => {
+  const detail = await readFile(path.resolve(process.cwd(), "src/components/libraries/library-detail-screen.tsx"), "utf8");
+  const navigation = await readFile(path.resolve(process.cwd(), "src/components/navigation/app-navigation.tsx"), "utf8");
+
+  assert.match(detail, /const isContextualMealCreation = entitySlug === "meals"[\s\S]*Boolean\(pickerEntryHref\)/);
+  assert.match(detail, /leadingAction: \{ label: "Cancelar", onPress: cancelContextualCreation \}/);
+  assert.match(detail, /action: \{ disabled: item\?\.is_draft !== false, label: "Listo", onPress: continueContextualCreation \}/);
+  assert.match(detail, /router\.dismissTo\(pickerEntryHref\)/);
+  assert.match(detail, /router\.replace\(pickerConfigureHref\(contextualPickerKind/);
+  assert.match(detail, /selectedId: createdMealId/);
+  assert.match(detail, /returnTo: returnHref/);
+  assert.match(detail, /returnTo: String\(currentDetailHref\)/);
+  assert.match(navigation, /headerPresentation\.mode === "back" && headerPresentation\.leadingAction/);
+  assert.match(navigation, /onPress=\{headerPresentation\.leadingAction\.onPress\}/);
+  assert.match(navigation, /disabled=\{headerPresentation\.action\.disabled\}/);
 });
 
 test("draft program cannot be calendarized before receiving a daily plan", async () => {
