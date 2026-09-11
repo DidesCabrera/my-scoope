@@ -1,5 +1,5 @@
 import { ResponseType, useAuthRequest } from "expo-auth-session";
-import { Redirect } from "expo-router";
+import { type Href, Redirect, useLocalSearchParams } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
@@ -9,6 +9,7 @@ import { useSession } from "@/auth/session-context";
 import { Brand, Button, Card, InlineNotice, Screen, textStyles } from "@/components/ui";
 import { appConfig } from "@/config/app-config";
 import { tokens } from "@/design/tokens";
+import { internalHref } from "@/navigation/internal-href";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -18,6 +19,8 @@ const discovery = {
 };
 
 export default function LoginScreen() {
+  const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
+  const returnHref = internalHref(returnTo);
   const { status, profile, completeAuthorizationCode } = useSession();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -46,8 +49,9 @@ export default function LoginScreen() {
   }, [completeAuthorizationCode, request?.codeVerifier, response]);
 
   if (status === "authenticated") {
-    if (profile?.review_disclosure_required) return <Redirect href="./disclosures" />;
-    return <Redirect href={profile?.onboarding_completed ? "/today" : "/onboarding"} />;
+    if (profile?.review_disclosure_required) return <Redirect href={{ pathname: "/disclosures", params: returnHref ? { returnTo: String(returnHref) } : {} }} />;
+    if (!profile?.onboarding_completed) return <Redirect href={{ pathname: "/onboarding", params: returnHref ? { returnTo: String(returnHref) } : {} }} />;
+    return <Redirect href={returnHref ?? ("/today" as Href)} />;
   }
 
   return (

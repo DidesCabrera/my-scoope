@@ -1,0 +1,43 @@
+import assert from "node:assert/strict";
+import path from "node:path";
+import test from "node:test";
+
+import { assertSourceMatch, readTestFile } from "./support/source-contract";
+
+test("DailyPlan sharing uses one portable resource for native share and copy link", async () => {
+  const actions = await readTestFile(path.resolve(process.cwd(), "src/components/libraries/library-actions.tsx"), "utf8");
+  const adapter = await readTestFile(path.resolve(process.cwd(), "src/sharing/native-share.ts"), "utf8");
+  const packageJson = JSON.parse(await readTestFile(path.resolve(process.cwd(), "package.json"), "utf8"));
+
+  assert.match(packageJson.dependencies["expo-clipboard"], /^~57\./);
+  assertSourceMatch(actions, /\/api\/v1\/shares\/daily-plans\/\$\{item\.id\}/);
+  assertSourceMatch(actions, /openNativeShare\(resource\)/);
+  assertSourceMatch(actions, /copyShareLink\(resource\)/);
+  assertSourceMatch(adapter, /Share\.share/);
+  assertSourceMatch(adapter, /Clipboard\.setStringAsync/);
+});
+
+test("share deep links preserve their destination through authentication prerequisites", async () => {
+  const shareScreen = await readTestFile(path.resolve(process.cwd(), "src/app/share/[id].tsx"), "utf8");
+  const login = await readTestFile(path.resolve(process.cwd(), "src/app/login.tsx"), "utf8");
+  const onboarding = await readTestFile(path.resolve(process.cwd(), "src/app/onboarding.tsx"), "utf8");
+  const disclosures = await readTestFile(path.resolve(process.cwd(), "src/app/disclosures.tsx"), "utf8");
+  const webPreview = await readTestFile(path.resolve(process.cwd(), "../notas/templates/notas/sharing/preview.html"), "utf8");
+
+  assertSourceMatch(shareScreen, /params: \{ returnTo: `\/share\/\$\{id\}` \}/);
+  assertSourceMatch(shareScreen, /\/api\/v1\/shares\/\$\{id\}\/claims/);
+  for (const source of [login, onboarding, disclosures]) {
+    assertSourceMatch(source, /internalHref\(returnTo\)/);
+  }
+  assertSourceMatch(webPreview, /myscoope:\/\/share\/\{\{ resource\.public_id \}\}/);
+});
+
+test("native Inbox reads and mutates only normalized sharing endpoints", async () => {
+  const inbox = await readTestFile(path.resolve(process.cwd(), "src/app/inbox.tsx"), "utf8");
+  const navigation = await readTestFile(path.resolve(process.cwd(), "src/navigation/product-areas.ts"), "utf8");
+
+  assertSourceMatch(inbox, /\/api\/v1\/shares\/inbox/);
+  assertSourceMatch(inbox, /method: "PATCH"/);
+  assertSourceMatch(inbox, /\/save/);
+  assertSourceMatch(navigation, /href: "\/inbox"/);
+});

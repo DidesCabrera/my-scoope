@@ -21,12 +21,13 @@ function AuthenticatedRouteGate() {
 
   useEffect(() => {
     if (status !== "authenticated" || !profile) return;
+    const returnTo = pathname.startsWith("/share/") ? pathname : undefined;
     if (profile.review_disclosure_required && pathname !== "/disclosures") {
-      router.replace("/disclosures" as Href);
+      router.replace(returnTo ? { pathname: "/disclosures", params: { returnTo } } : "/disclosures" as Href);
       return;
     }
     if (!profile.review_disclosure_required && !profile.onboarding_completed && pathname !== "/onboarding") {
-      router.replace("/onboarding" as Href);
+      router.replace(returnTo ? { pathname: "/onboarding", params: { returnTo } } : "/onboarding" as Href);
     }
   }, [pathname, profile, router, status]);
 

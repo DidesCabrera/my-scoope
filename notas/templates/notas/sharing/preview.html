@@ -53,6 +53,7 @@
     </section>
 
     <section class="share-action" aria-live="polite">
+      <a class="share-button share-button--secondary" href="myscoope://share/{{ resource.public_id }}">Abrir en la app</a>
       {% if already_claimed or request.GET.claimed %}
         <p class="share-action__success">Este plan ya está en tu Inbox de MyScoope.</p>
         <a class="share-button share-button--secondary" href="/app/inbox/">Ir al Inbox</a>

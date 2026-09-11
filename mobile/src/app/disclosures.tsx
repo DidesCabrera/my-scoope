@@ -1,4 +1,4 @@
-import { Redirect, useRouter } from "expo-router";
+import { type Href, Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import * as Linking from "expo-linking";
 import { useState } from "react";
 import { Text } from "react-native";
@@ -9,16 +9,20 @@ import { useSession } from "@/auth/session-context";
 import { AppHeader, Brand, Button, Card, InlineNotice, Screen, SectionTitle, textStyles } from "@/components/ui";
 import { appConfig } from "@/config/app-config";
 import { tokens } from "@/design/tokens";
+import { internalHref } from "@/navigation/internal-href";
 
 export default function DisclosuresScreen() {
+  const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
+  const returnHref = internalHref(returnTo);
   const router = useRouter();
   const { status, profile, apiRequest, refreshProfile } = useSession();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (status === "anonymous") return <Redirect href="/login" />;
+  if (status === "anonymous") return <Redirect href={{ pathname: "/login", params: returnHref ? { returnTo: String(returnHref) } : {} }} />;
   if (status === "authenticated" && profile && !profile.review_disclosure_required) {
-    return <Redirect href={profile.onboarding_completed ? "/today" : "/onboarding"} />;
+    if (!profile.onboarding_completed) return <Redirect href={{ pathname: "/onboarding", params: returnHref ? { returnTo: String(returnHref) } : {} }} />;
+    return <Redirect href={returnHref ?? ("/today" as Href)} />;
   }
 
   async function accept() {
@@ -30,7 +34,11 @@ export default function DisclosuresScreen() {
         body: JSON.stringify({ accepted: true }),
       });
       const nextProfile = await refreshProfile();
-      router.replace(nextProfile.onboarding_completed ? "/today" : "/onboarding");
+      if (!nextProfile.onboarding_completed) {
+        router.replace({ pathname: "/onboarding", params: returnHref ? { returnTo: String(returnHref) } : {} });
+      } else {
+        router.replace(returnHref ?? ("/today" as Href));
+      }
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {

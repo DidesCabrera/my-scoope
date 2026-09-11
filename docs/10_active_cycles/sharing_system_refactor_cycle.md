@@ -34,7 +34,7 @@ channel-independent Inbox.
 | SHR03 · DailyPlan snapshots | completed | Privacy-limited immutable adapter, owner-only create/revoke API and generated OpenAPI contract. |
 | SHR04 · Preview and web claim | completed | Unlisted snapshot preview, POST-only idempotent claim, verified directed identity and safe login continuation. |
 | SHR05 · Inbox migration | completed | Dual normalized/legacy projection, idempotent DailyPlan backfill and detached save-to-library. |
-| SHR06 · Mobile sharing | pending | Share Sheet, copy link, deep links, OAuth continuation and mobile Inbox. |
+| SHR06 · Mobile sharing | completed | Native Share Sheet/copy-link, scheme deep link, OAuth continuation and normalized mobile Inbox. |
 | SHR07 · Web/email unification | pending | Common sharing surface and invitation adapter. |
 | SHR08 · Share Cards | pending | Branded image/OG output derived only from snapshots. |
 | SHR09 · Operations | pending | Abuse controls, retention and minimum funnel evidence. |
