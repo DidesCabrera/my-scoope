@@ -83,6 +83,11 @@ class DailyPlanSharingWebTests(TestCase):
         preview = self.client.get(invitation_url)
         self.assertEqual(preview.status_code, 200)
         self.assertEqual(InboxItem.objects.count(), 0)
+        self.assertContains(
+            preview,
+            reverse("share_invitation_card", args=[invitation.public_id]),
+        )
+        self.assertNotContains(preview, f"myscoope://share/{invitation.resource.public_id}")
 
     def test_directed_claim_requires_matching_verified_email(self):
         resource = ShareResource.objects.create(

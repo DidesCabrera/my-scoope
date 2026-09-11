@@ -5,7 +5,22 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
-  <meta name="description" content="Plan diario compartido mediante MyScoope">
+  <meta name="description" content="{{ share_description }}">
+  <link rel="canonical" href="{{ canonical_url }}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="MyScoope">
+  <meta property="og:title" content="{{ snapshot.subject.title }}">
+  <meta property="og:description" content="{{ share_description }}">
+  <meta property="og:url" content="{{ canonical_url }}">
+  <meta property="og:image" content="{{ card_url }}">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Resumen nutricional de {{ snapshot.subject.title }}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ snapshot.subject.title }}">
+  <meta name="twitter:description" content="{{ share_description }}">
+  <meta name="twitter:image" content="{{ card_url }}">
   <title>{{ snapshot.subject.title }} · MyScoope</title>
   <link rel="stylesheet" href="{% static 'notas/css/sharing_preview.css' %}">
 </head>
@@ -53,7 +68,9 @@
     </section>
 
     <section class="share-action" aria-live="polite">
-      <a class="share-button share-button--secondary" href="myscoope://share/{{ resource.public_id }}">Abrir en la app</a>
+      {% if not invitation %}
+        <a class="share-button share-button--secondary" href="myscoope://share/{{ resource.public_id }}">Abrir en la app</a>
+      {% endif %}
       {% if already_claimed or request.GET.claimed %}
         <p class="share-action__success">Este plan ya está en tu Inbox de MyScoope.</p>
         <a class="share-button share-button--secondary" href="/app/inbox/">Ir al Inbox</a>
