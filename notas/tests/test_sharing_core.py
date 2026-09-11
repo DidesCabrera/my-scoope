@@ -5,7 +5,14 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.utils import timezone
 
-from notas.application.sharing.services import ShareUnavailable, claim_share_resource, revoke_share_resource
+from notas.application.sharing.services import (
+    ShareUnavailable,
+    claim_share_resource,
+    create_share_invitation,
+    get_share_invitation_for_preview,
+    mark_share_invitation_delivered,
+    revoke_share_resource,
+)
 from notas.domain.models import InboxItem, ShareClaim, ShareInvitation, ShareResource
 
 User = get_user_model()
@@ -103,3 +110,62 @@ class SharingCoreTests(TestCase):
     def test_claim_source_must_be_part_of_the_stable_contract(self):
         with self.assertRaisesMessage(ShareUnavailable, "share_claim_source_invalid"):
             claim_share_resource(resource=self.resource, user=self.recipient, source="unknown")
+
+    def test_invitation_creation_is_owned_normalized_and_idempotent(self):
+        first = create_share_invitation(
+            resource=self.resource,
+            sender=self.sender,
+            recipient_email=" Recipient@Example.com ",
+            subject=" Primer asunto ",
+            message=" Hola ",
+        )
+        second = create_share_invitation(
+            resource=self.resource,
+            sender=self.sender,
+            recipient_email="recipient@example.com",
+            subject="Asunto actualizado",
+        )
+
+        self.assertEqual(first.pk, second.pk)
+        self.assertEqual(second.recipient_email, "recipient@example.com")
+        self.assertEqual(second.subject, "Asunto actualizado")
+        self.assertEqual(ShareInvitation.objects.count(), 1)
+
+    def test_invitation_preview_and_delivery_lifecycle(self):
+        invitation = create_share_invitation(
+            resource=self.resource,
+            sender=self.sender,
+            recipient_email=self.recipient.email,
+        )
+        self.assertEqual(
+            get_share_invitation_for_preview(public_id=invitation.public_id),
+            invitation,
+        )
+        mark_share_invitation_delivered(invitation=invitation)
+        invitation.refresh_from_db()
+        self.assertEqual(invitation.status, ShareInvitation.Status.DELIVERED)
+        self.assertIsNotNone(invitation.delivered_at)
+
+    def test_claimed_invitation_cannot_be_reused_by_another_account(self):
+        invitation = ShareInvitation.objects.create(
+            resource=self.resource,
+            recipient_email=self.recipient.email,
+            recipient_user=self.recipient,
+            status=ShareInvitation.Status.CLAIMED,
+        )
+        duplicate = User.objects.create_user(
+            username="duplicate",
+            email=self.recipient.email,
+        )
+        EmailAddress.objects.create(
+            user=duplicate,
+            email=duplicate.email,
+            verified=True,
+        )
+        with self.assertRaisesMessage(ShareUnavailable, "share_invitation_already_claimed"):
+            claim_share_resource(
+                resource=self.resource,
+                user=duplicate,
+                source=ShareClaim.Source.EMAIL,
+                invitation=invitation,
+            )

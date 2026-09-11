@@ -123,3 +123,37 @@ def create_dailyplan_share_resource(
         claim_policy=claim_policy,
     )
     return DailyPlanShareResult(resource=resource)
+
+
+@transaction.atomic
+def get_or_create_dailyplan_share_resource(
+    *, sender, dailyplan_id: int, claim_policy: str = ShareResource.ClaimPolicy.MULTIPLE
+) -> DailyPlanShareResult:
+    """Reuse the latest active resource while its immutable snapshot is current."""
+    if claim_policy not in ShareResource.ClaimPolicy.values:
+        raise DailyPlanShareError("share_claim_policy_invalid")
+    dailyplan = _owned_dailyplan(sender=sender, dailyplan_id=dailyplan_id)
+    DailyPlan.objects.select_for_update().get(pk=dailyplan.pk)
+    snapshot = build_dailyplan_share_snapshot(dailyplan)
+    latest = (
+        ShareResource.objects.filter(
+            sender=sender,
+            subject_type=ShareResource.SubjectType.DAILY_PLAN,
+            source_object_id=dailyplan.id,
+            status=ShareResource.Status.ACTIVE,
+            claim_policy=claim_policy,
+        )
+        .order_by("-created_at", "-id")
+        .first()
+    )
+    if latest is not None and latest.snapshot == snapshot:
+        return DailyPlanShareResult(resource=latest)
+    resource = ShareResource.objects.create(
+        sender=sender,
+        subject_type=ShareResource.SubjectType.DAILY_PLAN,
+        source_object_id=dailyplan.id,
+        snapshot=snapshot,
+        snapshot_schema_version=SHARE_SNAPSHOT_SCHEMA_VERSION,
+        claim_policy=claim_policy,
+    )
+    return DailyPlanShareResult(resource=resource)

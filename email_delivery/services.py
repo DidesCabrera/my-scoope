@@ -113,13 +113,16 @@ def deliver_share_invitation(
     message: str,
     from_email: str,
 ) -> EmailDeliveryResult:
-    actor = share.sender
+    actor = getattr(share, "sender", None) or share.resource.sender
     recipient_email = _normalized_email(share.recipient_email)
     source_model = share._meta.label_lower
     source_id = str(share.pk)
     idempotency_key = f"share:{source_model}:{source_id}:initial"
 
-    if share.accepted_by_id:
+    accepted_by_id = getattr(share, "accepted_by_id", None) or getattr(
+        share, "recipient_user_id", None
+    )
+    if accepted_by_id:
         return _record_suppressed_share(
             actor=actor,
             recipient_email=recipient_email,

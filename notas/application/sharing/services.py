@@ -13,6 +13,10 @@ class ShareUnavailable(ValueError):
     pass
 
 
+def _normalized_email(value: str) -> str:
+    return (value or "").strip().casefold()
+
+
 def _active_resource(resource: ShareResource, *, now=None) -> ShareResource:
     current_time = now or timezone.now()
     if resource.status != ShareResource.Status.ACTIVE:
@@ -27,6 +31,54 @@ def get_share_resource_for_preview(*, public_id, now=None) -> ShareResource:
     if resource is None:
         raise ShareUnavailable("share_resource_not_found")
     return _active_resource(resource, now=now)
+
+
+def get_share_invitation_for_preview(*, public_id, now=None) -> ShareInvitation:
+    invitation = ShareInvitation.objects.select_related("resource").filter(public_id=public_id).first()
+    if invitation is None:
+        raise ShareUnavailable("share_invitation_not_found")
+    _active_resource(invitation.resource, now=now)
+    if invitation.status in {ShareInvitation.Status.REVOKED, ShareInvitation.Status.EXPIRED}:
+        raise ShareUnavailable("share_invitation_not_active")
+    return invitation
+
+
+@transaction.atomic
+def create_share_invitation(
+    *, resource: ShareResource, sender, recipient_email: str, subject: str = "", message: str = ""
+) -> ShareInvitation:
+    locked = ShareResource.objects.select_for_update().get(pk=resource.pk)
+    _active_resource(locked)
+    if locked.sender_id != sender.id:
+        raise ShareUnavailable("share_resource_not_owned")
+    normalized_email = _normalized_email(recipient_email)
+    if not normalized_email:
+        raise ShareUnavailable("share_invitation_recipient_required")
+    invitation, _ = ShareInvitation.objects.get_or_create(
+        resource=locked,
+        recipient_email=normalized_email,
+        defaults={"subject": subject.strip(), "message": message.strip()},
+    )
+    updates = []
+    clean_subject = subject.strip()
+    clean_message = message.strip()
+    if invitation.subject != clean_subject:
+        invitation.subject = clean_subject
+        updates.append("subject")
+    if invitation.message != clean_message:
+        invitation.message = clean_message
+        updates.append("message")
+    if updates:
+        invitation.save(update_fields=[*updates, "updated_at"])
+    return invitation
+
+
+def mark_share_invitation_delivered(*, invitation: ShareInvitation, now=None) -> ShareInvitation:
+    if invitation.status == ShareInvitation.Status.PENDING:
+        invitation.status = ShareInvitation.Status.DELIVERED
+        invitation.delivered_at = now or timezone.now()
+        invitation.save(update_fields=["status", "delivered_at", "updated_at"])
+    return invitation
 
 
 @transaction.atomic
@@ -67,6 +119,11 @@ def claim_share_resource(
         invitation = ShareInvitation.objects.select_for_update().get(pk=invitation.pk, resource=locked)
         if invitation.status in {ShareInvitation.Status.REVOKED, ShareInvitation.Status.EXPIRED}:
             raise ShareUnavailable("share_invitation_not_active")
+        if (
+            invitation.status == ShareInvitation.Status.CLAIMED
+            and invitation.recipient_user_id != user.id
+        ):
+            raise ShareUnavailable("share_invitation_already_claimed")
         if (user.email or "").strip().casefold() != invitation.recipient_email.strip().casefold():
             raise ShareUnavailable("share_invitation_recipient_mismatch")
         if not EmailAddress.objects.filter(

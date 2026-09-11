@@ -6,6 +6,7 @@ from notas.application.sharing.dailyplans import (
     DailyPlanShareError,
     build_dailyplan_share_snapshot,
     create_dailyplan_share_resource,
+    get_or_create_dailyplan_share_resource,
 )
 from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood, ShareResource
 
@@ -52,3 +53,25 @@ class DailyPlanSharingAdapterTests(TestCase):
 
         with self.assertRaisesMessage(DailyPlanShareError, "dailyplan_share_not_available"):
             create_dailyplan_share_resource(sender=outsider, dailyplan_id=self.plan.id)
+
+    def test_active_resource_is_reused_only_while_snapshot_is_current(self):
+        first = get_or_create_dailyplan_share_resource(
+            sender=self.owner,
+            dailyplan_id=self.plan.id,
+        ).resource
+        same = get_or_create_dailyplan_share_resource(
+            sender=self.owner,
+            dailyplan_id=self.plan.id,
+        ).resource
+        self.assertEqual(same.pk, first.pk)
+
+        self.plan.name = "Plan actualizado"
+        self.plan.save(update_fields=["name"])
+        updated = get_or_create_dailyplan_share_resource(
+            sender=self.owner,
+            dailyplan_id=self.plan.id,
+        ).resource
+
+        self.assertNotEqual(updated.pk, first.pk)
+        self.assertEqual(first.snapshot["subject"]["title"], "Plan portable")
+        self.assertEqual(updated.snapshot["subject"]["title"], "Plan actualizado")

@@ -7,6 +7,7 @@ from django.test import TestCase, override_settings
 
 from email_delivery.models import EmailDeliveryAttempt
 from email_delivery.services import deliver_share_invitation
+from notas.domain.models import ShareInvitation, ShareResource
 
 
 @override_settings(
@@ -80,6 +81,23 @@ class ShareEmailDeliveryTests(TestCase):
         self.assertFalse(result.sent)
         self.assertEqual(result.reason, "sender_email_unverified")
         self.assertEqual(len(mail.outbox), 0)
+
+    def test_normalized_invitation_uses_resource_sender(self):
+        resource = ShareResource.objects.create(
+            sender=self.sender,
+            subject_type=ShareResource.SubjectType.DAILY_PLAN,
+            snapshot={},
+            snapshot_schema_version="sharing.snapshot.v1",
+        )
+        invitation = ShareInvitation.objects.create(
+            resource=resource,
+            recipient_email="normalized@example.com",
+        )
+
+        result = self._deliver(invitation)
+
+        self.assertTrue(result.sent)
+        self.assertEqual(len(mail.outbox), 1)
 
     @override_settings(EMAIL_SHARE_RECIPIENT_DAILY_LIMIT=1)
     def test_recipient_daily_limit_is_persistent(self):

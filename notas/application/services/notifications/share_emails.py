@@ -82,3 +82,48 @@ def build_share_invitation_email(
     ])
 
     return subject, "\n".join(message_lines)
+
+
+def build_normalized_share_invitation_email(*, request, invitation):
+    """Build transport content for the normalized invitation boundary."""
+    snapshot = invitation.resource.snapshot
+    item_name = snapshot.get("subject", {}).get("title", "Contenido compartido")
+    sender_name = invitation.resource.sender.username
+    preview_path = reverse(
+        "share_invitation_preview",
+        kwargs={"public_id": invitation.public_id},
+    )
+    preview_url = request.build_absolute_uri(preview_path)
+    signup_url = request.build_absolute_uri(
+        reverse("account_signup") + "?" + urlencode({"next": preview_path})
+    )
+    login_url = request.build_absolute_uri(
+        reverse("account_login") + "?" + urlencode({"next": preview_path})
+    )
+    subject = invitation.subject.strip() or item_name
+    message_lines = [
+        "Hola,",
+        "",
+        f"{sender_name} compartió este plan diario contigo en MyScoope:",
+        item_name,
+        "",
+    ]
+    if invitation.message.strip():
+        message_lines.extend(["Mensaje:", invitation.message.strip(), ""])
+    message_lines.extend(
+        [
+            "Revisa la vista previa y confirma si quieres agregarlo a tu Inbox:",
+            preview_url,
+            "",
+            "Si todavía no tienes cuenta, créala aquí y luego vuelve a la invitación:",
+            signup_url,
+            "",
+            "Si ya tienes cuenta, inicia sesión aquí:",
+            login_url,
+            "",
+            "Por seguridad, el correo verificado de tu cuenta debe coincidir con esta invitación.",
+            "",
+            "MyScoope",
+        ]
+    )
+    return subject, "\n".join(message_lines)
