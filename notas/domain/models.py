@@ -56,8 +56,12 @@ from notas.domain.model_modules.sharing import (
     DailyPlanMealShare,
     DailyPlanShare,
     FoodShare,
+    InboxItem,
     MealShare,
     ProgramShare,
+    ShareClaim,
+    ShareInvitation,
+    ShareResource,
 )
 
 __all__ = [
@@ -71,6 +75,7 @@ __all__ = [
     "FoodLabelAIAnalysis", "FoodLabelCaptureReceipt", "FoodLocalizedName",
     "FoodPortion",
     "FoodShare",
+    "InboxItem",
     "FoodSourceMetadata",
     "MCPUserToken",
     "Meal",
@@ -91,6 +96,9 @@ __all__ = [
     "ProgramCalendarization",
     "ProgramDay",
     "ProgramShare",
+    "ShareClaim",
+    "ShareInvitation",
+    "ShareResource",
     "SavedComparison",
     "ScheduledNotificationEvent",
     "Subscription",

@@ -4,6 +4,108 @@ from django.contrib.auth.models import User
 from django.db import models
 
 
+class ShareResource(models.Model):
+    class SubjectType(models.TextChoices):
+        DAILY_PLAN = "daily_plan", "Daily plan"
+        FOOD = "food", "Food"
+        MEAL = "meal", "Meal"
+        PROGRAM = "program", "Program"
+
+    class Visibility(models.TextChoices):
+        UNLISTED = "unlisted", "Unlisted"
+
+    class ClaimPolicy(models.TextChoices):
+        NONE = "none", "No claims"
+        SINGLE = "single", "Single claim"
+        MULTIPLE = "multiple", "Multiple claims"
+
+    class Status(models.TextChoices):
+        ACTIVE = "active", "Active"
+        REVOKED = "revoked", "Revoked"
+        EXPIRED = "expired", "Expired"
+
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="share_resources_sent")
+    subject_type = models.CharField(max_length=24, choices=SubjectType.choices)
+    source_object_id = models.PositiveBigIntegerField(null=True, blank=True)
+    snapshot = models.JSONField(default=dict)
+    snapshot_schema_version = models.CharField(max_length=48)
+    visibility = models.CharField(max_length=16, choices=Visibility.choices, default=Visibility.UNLISTED)
+    claim_policy = models.CharField(max_length=16, choices=ClaimPolicy.choices, default=ClaimPolicy.MULTIPLE)
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.ACTIVE)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=("sender", "status"), name="share_res_sender_status_idx"),
+            models.Index(fields=("subject_type", "source_object_id"), name="share_res_subject_idx"),
+        ]
+
+
+class ShareInvitation(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        DELIVERED = "delivered", "Delivered"
+        CLAIMED = "claimed", "Claimed"
+        REVOKED = "revoked", "Revoked"
+        EXPIRED = "expired", "Expired"
+
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    resource = models.ForeignKey(ShareResource, on_delete=models.CASCADE, related_name="invitations")
+    recipient_email = models.EmailField()
+    recipient_user = models.ForeignKey(
+        User, null=True, blank=True, on_delete=models.SET_NULL, related_name="share_invitations_received"
+    )
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING)
+    claimed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=("resource", "recipient_email"), name="share_invite_resource_email_uniq")
+        ]
+
+
+class ShareClaim(models.Model):
+    class Source(models.TextChoices):
+        EMAIL = "email", "Email"
+        LINK = "link", "Link"
+
+    resource = models.ForeignKey(ShareResource, on_delete=models.CASCADE, related_name="claims")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="share_claims")
+    invitation = models.ForeignKey(
+        ShareInvitation, null=True, blank=True, on_delete=models.SET_NULL, related_name="claims"
+    )
+    source = models.CharField(max_length=16, choices=Source.choices)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=("resource", "user"), name="share_claim_resource_user_uniq")
+        ]
+
+
+class InboxItem(models.Model):
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sharing_inbox_items")
+    resource = models.ForeignKey(ShareResource, on_delete=models.CASCADE, related_name="inbox_items")
+    claim = models.OneToOneField(ShareClaim, on_delete=models.CASCADE, related_name="inbox_item")
+    read_at = models.DateTimeField(null=True, blank=True)
+    dismissed_at = models.DateTimeField(null=True, blank=True)
+    saved_at = models.DateTimeField(null=True, blank=True)
+    is_favorite = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=("owner", "resource"), name="inbox_owner_resource_uniq")
+        ]
+
+
 class DailyPlanShare(models.Model):
     sender = models.ForeignKey(
         User,
