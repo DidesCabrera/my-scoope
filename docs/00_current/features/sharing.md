@@ -66,3 +66,16 @@ an explicit POST. Both `/s/` and `/i/` bypass nutrition onboarding so the previe
 authentication continuation remain reachable. The legacy mobile library email action
 for DailyPlan also delegates to this normalized path; other entity types stay on the
 compatibility implementation until their adapters are added in SHR10.
+
+## Snapshot share cards
+
+Active public resources and directed invitations expose branded 1200×630 PNG cards
+for Open Graph and large Twitter previews. The renderer is deterministic and accepts
+only the stored snapshot: it has no request, model or source-object access. Card
+responses use a snapshot-derived ETag, a five-minute public cache and return 404 as
+soon as the resource or invitation is no longer active.
+
+The directed invitation page points to an invitation-scoped card URL and omits the
+resource deep link, preventing its HTML metadata from weakening the verified-email
+claim boundary. Titles and numeric values are normalized and bounded before drawing;
+the rendering dependency and Unicode-capable platform font fallbacks are explicit.

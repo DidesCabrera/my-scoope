@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from urllib.parse import urlencode
 
+from django.http import HttpResponse, HttpResponseNotModified
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
@@ -13,6 +14,7 @@ from notas.application.sharing.services import (
     get_share_resource_for_preview,
 )
 from notas.domain.models import ShareClaim, ShareInvitation, ShareResource
+from notas.presentation.sharing_cards import render_share_card_png, snapshot_card_etag
 
 PENDING_SHARE_CLAIM_SESSION_KEY = "pending_share_claim_public_id"
 PENDING_SHARE_INVITATION_SESSION_KEY = "pending_share_invitation_public_id"
@@ -48,6 +50,16 @@ def _preview_response(
         "share_invitation_claim" if invitation is not None else "share_claim",
         kwargs={"public_id": pending_id},
     )
+    card_url = request.build_absolute_uri(
+        reverse(
+            "share_invitation_card" if invitation is not None else "share_card",
+            kwargs={"public_id": pending_id},
+        )
+    )
+    canonical_url = request.build_absolute_uri(request.path)
+    title = str(snapshot.get("subject", {}).get("title", "Plan compartido"))
+    meal_count = snapshot.get("summary", {}).get("meal_count", 0)
+    description = f"{title}: {meal_count} comidas en un plan compartido con MyScoope."
     response = render(
         request,
         "notas/sharing/preview.html",
@@ -59,6 +71,9 @@ def _preview_response(
             "claim_error": error_code,
             "claim_url": claim_url,
             "invitation": invitation,
+            "card_url": card_url,
+            "canonical_url": canonical_url,
+            "share_description": description,
         },
         status=status,
     )
@@ -83,6 +98,39 @@ def share_invitation_preview(request, public_id):
     except ShareUnavailable:
         return render(request, "notas/sharing/unavailable.html", status=404)
     return _preview_response(request, invitation.resource, invitation=invitation)
+
+
+def _card_response(request, resource: ShareResource):
+    etag = f'"{snapshot_card_etag(resource.snapshot)}"'
+    if request.headers.get("If-None-Match") == etag:
+        response = HttpResponseNotModified()
+    else:
+        response = HttpResponse(
+            render_share_card_png(resource.snapshot),
+            content_type="image/png",
+        )
+    response["ETag"] = etag
+    response["Cache-Control"] = "public, max-age=300"
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
+@require_GET
+def share_card(request, public_id):
+    try:
+        resource = get_share_resource_for_preview(public_id=public_id)
+    except ShareUnavailable:
+        return HttpResponse(status=404)
+    return _card_response(request, resource)
+
+
+@require_GET
+def share_invitation_card(request, public_id):
+    try:
+        invitation = get_share_invitation_for_preview(public_id=public_id)
+    except ShareUnavailable:
+        return HttpResponse(status=404)
+    return _card_response(request, invitation.resource)
 
 
 @require_POST

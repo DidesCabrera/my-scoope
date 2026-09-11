@@ -1,6 +1,9 @@
+from io import BytesIO
+
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
+from PIL import Image
 
 from notas.domain.models import InboxItem, ShareClaim, ShareResource
 
@@ -23,6 +26,7 @@ class SharingPreviewTests(TestCase):
         )
         self.preview_url = reverse("share_preview", kwargs={"public_id": self.resource.public_id})
         self.claim_url = reverse("share_claim", kwargs={"public_id": self.resource.public_id})
+        self.card_url = reverse("share_card", kwargs={"public_id": self.resource.public_id})
 
     def test_public_get_renders_snapshot_without_claiming(self):
         response = self.client.get(self.preview_url)
@@ -32,6 +36,30 @@ class SharingPreviewTests(TestCase):
         self.assertEqual(response["X-Robots-Tag"], "noindex, nofollow")
         self.assertEqual(ShareClaim.objects.count(), 0)
         self.assertEqual(InboxItem.objects.count(), 0)
+        self.assertContains(response, self.card_url)
+        self.assertContains(response, 'property="og:image"')
+        self.assertContains(response, 'name="twitter:card"')
+
+    def test_card_is_a_deterministic_1200_by_630_png_with_short_cache(self):
+        first = self.client.get(self.card_url)
+
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(first["Content-Type"], "image/png")
+        self.assertEqual(first["Cache-Control"], "public, max-age=300")
+        with Image.open(BytesIO(first.content)) as image:
+            self.assertEqual(image.size, (1200, 630))
+            self.assertEqual(image.format, "PNG")
+
+        cached = self.client.get(self.card_url, headers={"If-None-Match": first["ETag"]})
+        self.assertEqual(cached.status_code, 304)
+        self.assertEqual(cached["ETag"], first["ETag"])
+
+    def test_revocation_removes_preview_and_card(self):
+        self.resource.status = ShareResource.Status.REVOKED
+        self.resource.save(update_fields=["status"])
+
+        self.assertEqual(self.client.get(self.preview_url).status_code, 404)
+        self.assertEqual(self.client.get(self.card_url).status_code, 404)
 
     def test_anonymous_post_preserves_intent_but_login_return_does_not_claim(self):
         response = self.client.post(self.claim_url)
