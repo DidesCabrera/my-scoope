@@ -3,7 +3,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, JsonResponse
+from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -575,5 +575,10 @@ def food_share(request, pk):
 @login_required
 def food_share_accept(request, token):
     share = get_object_or_404(FoodShare, token=token)
-    accept_food_share(share=share, user=request.user)
+    try:
+        accept_food_share(share=share, user=request.user)
+    except ValueError as exc:
+        if str(exc) in {"share_recipient_mismatch", "share_already_claimed"}:
+            raise Http404 from exc
+        raise
     return redirect("inbox_list")

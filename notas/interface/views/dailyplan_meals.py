@@ -540,7 +540,12 @@ def dailyplanmeal_share(request, dailyplan_id, pk):
 @login_required
 def dailyplanmeal_share_accept(request, token):
     share = get_object_or_404(DailyPlanMealShare, token=token)
-    accept_dailyplanmeal_share(share=share, user=request.user)
+    try:
+        accept_dailyplanmeal_share(share=share, user=request.user)
+    except ValueError as exc:
+        if str(exc) in {"share_recipient_mismatch", "share_already_claimed"}:
+            raise Http404 from exc
+        raise
     return redirect("inbox_list")
 
 

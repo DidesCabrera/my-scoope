@@ -138,6 +138,21 @@ def _clean_share_subject(subject: str | None, fallback: str) -> str:
     return clean_subject or fallback
 
 
+def _accept_directed_share(*, share, user) -> None:
+    recipient_email = (share.recipient_email or "").strip().casefold()
+    user_email = (user.email or "").strip().casefold()
+    if not user_email or user_email != recipient_email:
+        raise ValueError("share_recipient_mismatch")
+    if share.accepted_by_id not in {None, user.id}:
+        raise ValueError("share_already_claimed")
+
+    share.accepted_by = user
+    share.dismissed = False
+    share.removed = False
+    share.is_read = False
+    share.save(update_fields=["accepted_by", "dismissed", "removed", "is_read"])
+
+
 @transaction.atomic
 def create_dailyplan_share(
     *,
@@ -211,18 +226,7 @@ def accept_dailyplan_share(
     share: DailyPlanShare,
     user,
 ) -> DailyPlanShareAcceptResult:
-    share.accepted_by = user
-    share.dismissed = False
-    share.removed = False
-    share.is_read = False
-    share.save(
-        update_fields=[
-            "accepted_by",
-            "dismissed",
-            "removed",
-            "is_read",
-        ]
-    )
+    _accept_directed_share(share=share, user=user)
 
     return DailyPlanShareAcceptResult(
         share=share,
@@ -328,18 +332,7 @@ def accept_program_share(
     share: ProgramShare,
     user,
 ) -> ProgramShareAcceptResult:
-    share.accepted_by = user
-    share.dismissed = False
-    share.removed = False
-    share.is_read = False
-    share.save(
-        update_fields=[
-            "accepted_by",
-            "dismissed",
-            "removed",
-            "is_read",
-        ]
-    )
+    _accept_directed_share(share=share, user=user)
 
     return ProgramShareAcceptResult(
         share=share,
@@ -445,18 +438,7 @@ def accept_meal_share(
     share: MealShare,
     user,
 ) -> MealShareAcceptResult:
-    share.accepted_by = user
-    share.dismissed = False
-    share.removed = False
-    share.is_read = False
-    share.save(
-        update_fields=[
-            "accepted_by",
-            "dismissed",
-            "removed",
-            "is_read",
-        ]
-    )
+    _accept_directed_share(share=share, user=user)
 
     return MealShareAcceptResult(
         share=share,
@@ -553,11 +535,7 @@ def create_food_share(
 
 @transaction.atomic
 def accept_food_share(*, share: FoodShare, user) -> FoodShareAcceptResult:
-    share.accepted_by = user
-    share.dismissed = False
-    share.removed = False
-    share.is_read = False
-    share.save(update_fields=["accepted_by", "dismissed", "removed", "is_read"])
+    _accept_directed_share(share=share, user=user)
     return FoodShareAcceptResult(share=share)
 
 
@@ -626,9 +604,5 @@ def create_dailyplanmeal_share(
 
 @transaction.atomic
 def accept_dailyplanmeal_share(*, share: DailyPlanMealShare, user) -> DailyPlanMealShareAcceptResult:
-    share.accepted_by = user
-    share.dismissed = False
-    share.removed = False
-    share.is_read = False
-    share.save(update_fields=["accepted_by", "dismissed", "removed", "is_read"])
+    _accept_directed_share(share=share, user=user)
     return DailyPlanMealShareAcceptResult(share=share)

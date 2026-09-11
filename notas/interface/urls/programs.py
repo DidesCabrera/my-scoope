@@ -18,6 +18,7 @@ from notas.interface.views.programs import (
     program_rename,
     program_reorder_weeks,
     program_share,
+    program_share_accept,
     remove_dailyplan_from_program,
 )
 
@@ -29,6 +30,7 @@ urlpatterns = [
     path("programs/<int:pk>/rename/", program_rename, name="program_rename"),
     path("programs/<int:pk>/configure/", configure_program, name="configure_program"),
     path("programs/<int:pk>/share/", program_share, name="program_share"),
+    path("programs/shared/<uuid:token>/", program_share_accept, name="program_share_accept"),
     path("programs/<int:pk>/remove/", program_remove, name="program_remove"),
     path("programs/<int:pk>/add-week/", program_add_week, name="program_add_week"),
     path("programs/<int:pk>/weeks/reorder/", program_reorder_weeks, name="program_reorder_weeks"),

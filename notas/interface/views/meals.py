@@ -158,10 +158,12 @@ def meal_share_accept(request, token):
         token=token,
     )
 
-    accept_meal_share(
-        share=share,
-        user=request.user,
-    )
+    try:
+        accept_meal_share(share=share, user=request.user)
+    except ValueError as exc:
+        if str(exc) in {"share_recipient_mismatch", "share_already_claimed"}:
+            raise Http404 from exc
+        raise
 
     return redirect("inbox_list")
 

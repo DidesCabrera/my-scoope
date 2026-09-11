@@ -27,6 +27,7 @@ def build_share_invitation_email(
         "meal": "meal_share_accept",
         "food": "food_share_accept",
         "dpm": "dailyplanmeal_share_accept",
+        "program": "program_share_accept",
     }.get(kind)
 
     clean_subject = (custom_subject or getattr(share, "subject", "") or item_name).strip()
