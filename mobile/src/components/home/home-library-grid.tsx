@@ -27,7 +27,7 @@ export function HomeLibraryGrid({ counts }: { counts: HomeLibraryCounts }) {
   const router = useRouter();
   return (
     <View accessibilityLabel="Mis librerías" style={styles.section}>
-      <SectionDivider spacing="compact" />
+      <SectionDivider spacing="compact" style={styles.sectionDivider} />
       <View style={styles.heading}>
         <Bookmark color={tokens.color.textMain} size={21} strokeWidth={2.2} />
         <Text style={styles.headingText}>Mis librerías</Text>
@@ -68,6 +68,7 @@ const styles = StyleSheet.create({
   headingText: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: tokens.weight.extraBold },
   icon: { alignItems: "center", borderRadius: tokens.radius.sm, height: 34, justifyContent: "center", marginBottom: tokens.spacing.sm, width: 34 },
   pressed: { opacity: 0.65 },
-  section: { gap: tokens.spacing.md, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding },
+  section: { gap: tokens.spacing.md, marginHorizontal: -tokens.spacing.screen },
+  sectionDivider: { marginHorizontal: 0 },
   title: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.extraBold, lineHeight: 19, minHeight: 38 },
 });

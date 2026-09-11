@@ -23,6 +23,7 @@ export function userFacingError(error: unknown): string {
       library_share_email_invalid: "Ingresa un correo válido para compartir.",
       library_share_subject_too_long: "El asunto es demasiado largo.",
       mobile_auth_required: "Tu sesión necesita renovarse. Inicia sesión nuevamente.",
+      mobile_api_invalid_response: error.message,
       nutrition_label_could_not_resolve: "No pudimos leer esta etiqueta con suficiente seguridad. Prueba otra foto.",
       nutrition_label_insufficient_credits: "No tienes créditos suficientes para digitalizar esta etiqueta. Puedes ingresarla manualmente.",
       food_label_volume_weight_required: "Indica cuánto pesan 100 ml antes de guardar este alimento.",

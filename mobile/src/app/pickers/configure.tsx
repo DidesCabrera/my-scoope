@@ -2,14 +2,15 @@ import { type Href, Redirect, Stack, useLocalSearchParams } from "expo-router";
 
 import { CompositionPickerScreen, type PickerKind } from "@/components/pickers/composition-picker-screen";
 
-const pickerKinds = new Set<PickerKind>(["food-to-meal", "meal-to-dailyplan", "dailyplan-to-program", "dailyplan-to-calendarized-day"]);
+const pickerKinds = new Set<PickerKind>(["food-to-meal", "meal-to-dailyplan", "dailyplan-to-program", "dailyplan-to-calendarized-day", "meal-to-calendarized-day", "food-to-calendarized-meal"]);
 
 export default function ConfigureCompositionPickerRoute() {
-  const { contextDailyPlanId, contextDailyPlanMealId, dayNumber, kind, relationId, returnTo, selectedId, targetId, weekNumber } = useLocalSearchParams<{
+  const { contextDailyPlanId, contextDailyPlanMealId, dayNumber, kind, mealKey, relationId, returnTo, selectedId, targetId, weekNumber } = useLocalSearchParams<{
     contextDailyPlanId?: string;
     contextDailyPlanMealId?: string;
     dayNumber?: string;
     kind?: string;
+    mealKey?: string;
     relationId?: string;
     returnTo?: string;
     selectedId?: string;
@@ -35,6 +36,7 @@ export default function ConfigureCompositionPickerRoute() {
         contextDailyPlanMealId={Number(contextDailyPlanMealId) || undefined}
         initialDayNumber={day}
         kind={pickerKind}
+        mealKey={mealKey}
         relationId={relation}
         returnTo={returnHref}
         selectedId={selection}

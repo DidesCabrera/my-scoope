@@ -113,3 +113,33 @@ test("refresh failure clears local credentials", async () => {
   assert.equal(await manager.restore(), null);
   assert.equal(saved.current, null);
 });
+
+test("non-JSON API responses become a bounded product error", async () => {
+  const saved = storage({
+    accessToken: "access-current",
+    refreshToken: "refresh-current",
+    accessExpiresAt: now + 100_000,
+    refreshExpiresAt: now + 200_000,
+    scope: "mobile:read mobile:write",
+    deviceSessionId: "device-session-1",
+  });
+  let calls = 0;
+  const fetchMock = (async () => {
+    calls += 1;
+    if (calls === 1) return jsonResponse({ ok: true, data: sessionData, error: null });
+    return new Response("<!doctype html><title>Not found</title>", {
+      status: 404,
+      headers: { "Content-Type": "text/html; charset=utf-8" },
+    });
+  }) as typeof fetch;
+  const manager = new MobileSessionManager(config, saved, async () => ({ id: "unused", name: "unused", platform: "ios" }), fetchMock, () => now);
+  await manager.restore();
+
+  await assert.rejects(
+    manager.request("/api/v1/program/days/1/meal-picker/preview"),
+    (error: unknown) => error instanceof Error
+      && "code" in error
+      && error.code === "mobile_api_invalid_response"
+      && error.message === "Esta función todavía no está disponible en el servidor seleccionado.",
+  );
+});

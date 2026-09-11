@@ -12,6 +12,7 @@ import { EntityDetailPage, EntityDetailSection } from "@/components/details";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { NutritionEntityCard } from "@/components/nutrition";
 import { FoodPanels, MealPanels } from "@/components/panels";
+import { pickerHref } from "@/components/pickers/composition-picker-screen";
 import { Button, ContentPanel, EntityCardAction, InlineNotice, SectionDivider, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 
@@ -76,6 +77,7 @@ function CalendarizedMealCards({ dayId, mealExecution, meals }: { dayId: number;
 
 export default function ProgramDayScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const { status, apiRequest } = useSession();
   const [day, setDay] = useState<CalendarizedDayDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -146,6 +148,11 @@ export default function ProgramDayScreen() {
           <EntityDetailSection title="Tabla de comparación entre comidas">
             <MealPanels items={mealItems} />
           </EntityDetailSection>
+          <Button
+            bleed
+            label="+ Agregar Comida"
+            onPress={() => router.push(pickerHref("meal-to-calendarized-day", { dayId: day.id }))}
+          />
           {meals.length ? (
             <>
               <SectionDivider />

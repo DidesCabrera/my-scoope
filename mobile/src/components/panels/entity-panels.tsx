@@ -250,7 +250,7 @@ export function MealMenuPanel({ items, onOpenItem }: { items: MealPanelItem[]; o
               <MealRowIdentity name={item.name} projectedLabel={item.projectedLabel} />
               {item.time ? (
                 <View style={styles.menuTimeGroup}>
-                  <Clock color={tokens.color.textMuted} size={13} strokeWidth={2} />
+                  <Clock color={tokens.color.textMuted} size={11} strokeWidth={2} />
                   <Text style={styles.menuTime}>{item.time}</Text>
                 </View>
               ) : null}

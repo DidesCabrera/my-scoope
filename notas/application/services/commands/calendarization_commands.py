@@ -3,6 +3,7 @@ from __future__ import annotations
 from copy import deepcopy
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
+from uuid import uuid4
 
 from django.conf import settings
 from django.db import IntegrityError, connection, transaction
@@ -18,8 +19,11 @@ from notas.application.services.calendarization.scheduling import (
 )
 from notas.application.services.calendarization.snapshots import (
     build_dailyplan_snapshot,
+    build_food_snapshot,
+    build_meal_snapshot,
     program_with_calendarization_content,
     snapshot_content_hash,
+    snapshot_totals,
 )
 from notas.application.services.notifications.apple_push import (
     apns_is_configured,
@@ -240,6 +244,95 @@ def _save_calendarized_snapshot(day: CalendarizedDay, snapshot: dict) -> None:
     day.plan_snapshot = snapshot
     day.snapshot_hash = snapshot_content_hash(snapshot)
     day.save(update_fields=["plan_snapshot", "snapshot_hash"])
+
+
+def _calendarized_meals(snapshot: dict) -> list[dict]:
+    meals = snapshot.get("meals")
+    if not isinstance(meals, list):
+        raise ValueError("calendarized_plan_snapshot_invalid")
+    return meals
+
+
+def _calendarized_meal(snapshot: dict, meal_snapshot_key: str) -> dict:
+    meal = next(
+        (
+            item
+            for item in _calendarized_meals(snapshot)
+            if isinstance(item, dict) and item.get("key") == meal_snapshot_key
+        ),
+        None,
+    )
+    if meal is None:
+        raise ValueError("meal_snapshot_key_invalid")
+    return meal
+
+
+def _refresh_calendarized_totals(snapshot: dict) -> None:
+    snapshot["totals"] = snapshot_totals(
+        [meal.get("totals", {}) for meal in _calendarized_meals(snapshot) if isinstance(meal, dict)]
+    )
+
+
+@transaction.atomic
+def add_meal_to_calendarized_day(
+    *,
+    user,
+    day_id: int,
+    meal,
+    hour: time | None,
+    note: str = "",
+    now: datetime | None = None,
+) -> tuple[CalendarizedDay, str]:
+    current_time = now or timezone.now()
+    day = _calendarized_day_for_snapshot_update(user=user, day_id=day_id)
+    snapshot = _calendarized_snapshot(day)
+    meals = _calendarized_meals(snapshot)
+    next_order = max(
+        (int(item.get("order") or 0) for item in meals if isinstance(item, dict)),
+        default=-1,
+    ) + 1
+    snapshot_key = f"calendarized_meal:{uuid4()}"
+    meals.append(
+        build_meal_snapshot(
+            meal=meal,
+            key=snapshot_key,
+            order=next_order,
+            hour=hour,
+            note=note,
+        )
+    )
+    _refresh_calendarized_totals(snapshot)
+    _save_calendarized_snapshot(day, snapshot)
+    reschedule_calendarized_days(
+        calendarization=day.calendarization,
+        days=[day],
+        now=current_time,
+        reason="calendarized_meal_added",
+    )
+    return day, snapshot_key
+
+
+@transaction.atomic
+def add_food_to_calendarized_meal(
+    *,
+    user,
+    day_id: int,
+    meal_snapshot_key: str,
+    food,
+    quantity: float,
+) -> tuple[CalendarizedDay, str]:
+    day = _calendarized_day_for_snapshot_update(user=user, day_id=day_id)
+    snapshot = _calendarized_snapshot(day)
+    meal = _calendarized_meal(snapshot, meal_snapshot_key)
+    foods = meal.get("foods")
+    if not isinstance(foods, list):
+        raise ValueError("calendarized_meal_snapshot_invalid")
+    snapshot_key = f"calendarized_food:{uuid4()}"
+    foods.append(build_food_snapshot(food=food, quantity=quantity, key=snapshot_key))
+    meal["totals"] = snapshot_totals(foods)
+    _refresh_calendarized_totals(snapshot)
+    _save_calendarized_snapshot(day, snapshot)
+    return day, snapshot_key
 
 
 @transaction.atomic

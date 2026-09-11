@@ -245,7 +245,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(sharedEntityPanels, /<Pressable[\s\S]*style=\{\(\{ pressed \}\) => \[styles\.menuRow,[\s\S]*pressed && canOpen && styles\.menuRowPressed\]\}/);
   assertSourceDoesNotMatch(sharedEntityPanels, /<Pressable[\s\S]*style=\{\(\{ pressed \}\) => \[styles\.menuAction/);
   assertSourceMatch(sharedEntityPanels, /<ChevronRight/);
-  assertSourceMatch(sharedEntityPanels, /item\.time \? \([\s\S]*<Clock color=\{tokens\.color\.textMuted\} size=\{13\} strokeWidth=\{2\} \/>[\s\S]*<Text style=\{styles\.menuTime\}>\{item\.time\}<\/Text>/);
+  assertSourceMatch(sharedEntityPanels, /<MealRowIdentity name=\{item\.name\} projectedLabel=\{item\.projectedLabel\} \/>[\s\S]*item\.time \? \([\s\S]*<Clock color=\{tokens\.color\.textMuted\} size=\{11\} strokeWidth=\{2\} \/>[\s\S]*<Text style=\{styles\.menuTime\}>\{item\.time\}<\/Text>/);
   assertSourceMatch(sharedEntityPanels, /item\.detailId != null \|\| item\.canOpen/);
   assertSourceMatch(sharedEntityPanels, /allocationRow: \{ gap: tokens\.spacing\.sm \}/);
   assertSourceMatch(libraryEntityPanels, /NutritionAllocationPanel/);
@@ -387,6 +387,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     "utf8",
   );
   assertSourceMatch(weekDayGrid, /const compactWeekDayWidth = 350/);
+  assertSourceMatch(weekDayGrid, /grid: \{[^}]*marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
   assertSourceMatch(weekDayGrid, /gridCompact: \{ gap: tokens\.spacing\.xs \}/);
   assertSourceMatch(weekDayGrid, /cell: \{[^}]*flex: 1[^}]*gap: tokens\.spacing\.sm/);
   assertSourceMatch(weekDayGrid, /stopColor="#D62976"/);
@@ -422,9 +423,10 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(homeLibraryGrid, /Mis Comidas/);
   assertSourceMatch(homeLibraryGrid, /Mis Alimentos/);
   assertSourceMatch(homeLibraryGrid, /pathname: "\/libraries\/create", params: \{ entity: entry\.entity \}/);
-  assertSourceMatch(homeLibraryGrid, /section: \{[^}]*marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
+  assertSourceMatch(homeLibraryGrid, /section: \{[^}]*marginHorizontal: -tokens\.spacing\.screen/);
+  assertSourceMatch(homeLibraryGrid, /<SectionDivider spacing="compact" style=\{styles\.sectionDivider\} \/>/);
+  assertSourceMatch(homeLibraryGrid, /sectionDivider: \{ marginHorizontal: 0 \}/);
   assertSourceMatch(homeLibraryGrid, /padding: tokens\.card\.outerPadding/);
-  assertSourceMatch(homeLibraryGrid, /<SectionDivider spacing="compact" \/>/);
   assertSourceMatch(homeLibraryGrid, /borderTopColor: tokens\.color\[entry\.entity\]/);
   assertSourceMatch(homeLibraryGrid, /borderTopWidth: 3/);
   assertSourceMatch(homeLibraryGrid, /title: \{[^}]*fontSize: tokens\.type\.body/);
@@ -481,7 +483,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     "utf8",
   );
   assertSourceMatch(sectionDivider, /export function SectionDivider/);
-  assertSourceMatch(sectionDivider, /marginBottom: tokens\.spacing\.sm, marginTop: tokens\.spacing\.lg/);
+  assertSourceMatch(sectionDivider, /divider: \{[^}]*marginBottom: tokens\.spacing\.sm[^}]*marginTop: tokens\.spacing\.lg/);
+  assertSourceMatch(sectionDivider, /divider: \{[^}]*marginHorizontal: -tokens\.spacing\.screen/);
   assertSourceMatch(gallery, /title="Separador de secciones"/);
 
   const entityDetail = await readTestFile(
