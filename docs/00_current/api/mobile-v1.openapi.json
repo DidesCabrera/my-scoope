@@ -1899,6 +1899,27 @@
         "title": "CalendarizedDayPlanPreviewInput",
         "type": "object"
       },
+      "CalendarizedFoodPickerInput": {
+        "properties": {
+          "food_id": {
+            "exclusiveMinimum": 0,
+            "title": "Food Id",
+            "type": "integer"
+          },
+          "quantity": {
+            "exclusiveMinimum": 0,
+            "maximum": 100000,
+            "title": "Quantity",
+            "type": "number"
+          }
+        },
+        "required": [
+          "food_id",
+          "quantity"
+        ],
+        "title": "CalendarizedFoodPickerInput",
+        "type": "object"
+      },
       "CalendarizedMealHourInput": {
         "properties": {
           "hour": {
@@ -1911,6 +1932,38 @@
           "hour"
         ],
         "title": "CalendarizedMealHourInput",
+        "type": "object"
+      },
+      "CalendarizedMealPickerInput": {
+        "properties": {
+          "hour": {
+            "anyOf": [
+              {
+                "format": "time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hour"
+          },
+          "meal_id": {
+            "exclusiveMinimum": 0,
+            "title": "Meal Id",
+            "type": "integer"
+          },
+          "note": {
+            "default": "",
+            "maxLength": 500,
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "meal_id"
+        ],
+        "title": "CalendarizedMealPickerInput",
         "type": "object"
       },
       "CalendarizedNameInput": {
@@ -11879,6 +11932,174 @@
         "summary": "Calendarized Day Dailyplan Picker Preview"
       }
     },
+    "/api/v1/program/days/{day_id}/meal-picker/commit": {
+      "post": {
+        "operationId": "mobile_api_api_calendarized_day_meal_picker_commit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "day_id",
+            "required": true,
+            "schema": {
+              "title": "Day Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalendarizedMealPickerInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickerCommitEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Calendarized Day Meal Picker Commit"
+      }
+    },
+    "/api/v1/program/days/{day_id}/meal-picker/preview": {
+      "post": {
+        "operationId": "mobile_api_api_calendarized_day_meal_picker_preview",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "day_id",
+            "required": true,
+            "schema": {
+              "title": "Day Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalendarizedMealPickerInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickerPreviewEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Calendarized Day Meal Picker Preview"
+      }
+    },
     "/api/v1/program/days/{day_id}/meals/{meal_snapshot_key}": {
       "patch": {
         "operationId": "mobile_api_api_calendarized_meal_hour_update",
@@ -11970,6 +12191,192 @@
           }
         ],
         "summary": "Calendarized Meal Hour Update"
+      }
+    },
+    "/api/v1/program/days/{day_id}/meals/{meal_snapshot_key}/food-picker/commit": {
+      "post": {
+        "operationId": "mobile_api_api_calendarized_meal_food_picker_commit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "day_id",
+            "required": true,
+            "schema": {
+              "title": "Day Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "meal_snapshot_key",
+            "required": true,
+            "schema": {
+              "title": "Meal Snapshot Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalendarizedFoodPickerInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickerCommitEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Calendarized Meal Food Picker Commit"
+      }
+    },
+    "/api/v1/program/days/{day_id}/meals/{meal_snapshot_key}/food-picker/preview": {
+      "post": {
+        "operationId": "mobile_api_api_calendarized_meal_food_picker_preview",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "day_id",
+            "required": true,
+            "schema": {
+              "title": "Day Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "meal_snapshot_key",
+            "required": true,
+            "schema": {
+              "title": "Meal Snapshot Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalendarizedFoodPickerInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PickerPreviewEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Calendarized Meal Food Picker Preview"
       }
     },
     "/api/v1/program/days/{day_id}/meals/{meal_snapshot_key}/name": {
