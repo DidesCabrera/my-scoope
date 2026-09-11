@@ -29,7 +29,7 @@ channel-independent Inbox.
 | Patch | Status | Exit evidence |
 | --- | --- | --- |
 | SHR00 · Architecture contract | completed | Decision 0193, stable vocabulary, 22 focused tests and dependency guard. |
-| SHR01 · Legacy safety baseline | pending | Directed claims verify identity; overwrite and Program gaps are closed. |
+| SHR01 · Legacy safety baseline | completed | Recipient-bound idempotent claims, Program acceptance and 29 focused tests. |
 | SHR02 · Sharing core | pending | Resource, invitation, claim and Inbox models plus lifecycle services. |
 | SHR03 · DailyPlan snapshots | pending | Versioned privacy-safe adapter and create/revoke API. |
 | SHR04 · Preview and web claim | pending | Public GET preview, explicit POST claim and auth continuation. |

@@ -4,7 +4,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, JsonResponse
+from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -31,10 +31,10 @@ from notas.application.services.commands.program_commands import (
 from notas.application.services.commands.program_commands import (
     fork_program as fork_program_command,
 )
-from notas.application.services.commands.share_commands import create_program_share
+from notas.application.services.commands.share_commands import accept_program_share, create_program_share
 from notas.application.services.notifications.share_emails import build_share_invitation_email
 from notas.application.services.nutrition.weight import get_current_weight
-from notas.domain.models import Program, ProgramDay
+from notas.domain.models import Program, ProgramDay, ProgramShare
 from notas.interface.forms.forms import ProgramShareForm
 from notas.presentation.config.viewmodel_config import (
     PROGRAM_VIEWMODE_CONFIGURE,
@@ -713,3 +713,15 @@ def program_share(request, pk):
 
     context = _vm_context(PROGRAM_VIEWMODE_SHARE, content=content, instance=program)
     return render(request, "notas/programs/share.html", context)
+
+
+@login_required
+def program_share_accept(request, token):
+    share = get_object_or_404(ProgramShare, token=token)
+    try:
+        accept_program_share(share=share, user=request.user)
+    except ValueError as exc:
+        if str(exc) in {"share_recipient_mismatch", "share_already_claimed"}:
+            raise Http404 from exc
+        raise
+    return redirect("inbox_list")
