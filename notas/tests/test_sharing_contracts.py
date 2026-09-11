@@ -9,6 +9,7 @@ from notas.application.sharing.contracts import (
     ShareSubjectType,
     ShareVisibility,
 )
+from notas.domain.models import ShareClaim, ShareInvitation, ShareResource
 
 
 class SharingContractTests(SimpleTestCase):
@@ -31,3 +32,8 @@ class SharingContractTests(SimpleTestCase):
         })
         self.assertEqual(set(ShareClaimSource), {ShareClaimSource.EMAIL, ShareClaimSource.LINK})
         self.assertEqual(set(ShareVisibility), {ShareVisibility.UNLISTED})
+        self.assertEqual(set(ShareSubjectType), set(ShareResource.SubjectType.values))
+        self.assertEqual(set(ShareClaimPolicy), set(ShareResource.ClaimPolicy.values))
+        self.assertEqual(set(ShareResourceStatus), set(ShareResource.Status.values))
+        self.assertEqual(set(ShareInvitationStatus), set(ShareInvitation.Status.values))
+        self.assertEqual(set(ShareClaimSource), set(ShareClaim.Source.values))

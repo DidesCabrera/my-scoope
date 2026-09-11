@@ -30,7 +30,7 @@ channel-independent Inbox.
 | --- | --- | --- |
 | SHR00 · Architecture contract | completed | Decision 0193, stable vocabulary, 22 focused tests and dependency guard. |
 | SHR01 · Legacy safety baseline | completed | Recipient-bound idempotent claims, Program acceptance and 29 focused tests. |
-| SHR02 · Sharing core | pending | Resource, invitation, claim and Inbox models plus lifecycle services. |
+| SHR02 · Sharing core | completed | Four normalized models, migration 0056, lifecycle services and 27 focused tests. |
 | SHR03 · DailyPlan snapshots | pending | Versioned privacy-safe adapter and create/revoke API. |
 | SHR04 · Preview and web claim | pending | Public GET preview, explicit POST claim and auth continuation. |
 | SHR05 · Inbox migration | pending | New Inbox projection, legacy backfill and compatibility. |
