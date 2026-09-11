@@ -4,6 +4,8 @@ Esta carpeta contiene planes de ciclos futuros, activos, pausados, completados o
 
 Su objetivo es permitir que My Scoope conserve una **memoria estratégica accionable** sin mezclarla con los contratos actuales de arquitectura, features o decisiones ya aceptadas.
 
+- `sharing_system_refactor_cycle.md`: SHR00-SHR10 migra sharing por entidad/email hacia recursos snapshot, invitaciones, claims e Inbox independientes del canal.
+
 ## Cuándo usar esta carpeta
 
 Usar `docs/10_active_cycles/` para:

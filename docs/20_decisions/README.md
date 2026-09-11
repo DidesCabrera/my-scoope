@@ -215,3 +215,5 @@ Consequences
 - `0192-active-program-direct-snapshot-editing.md`: consolida la calendarización como
   programa activo histórico, separa explícitamente la plantilla original y registra
   cada asignación futura de planes diarios mediante revisiones de snapshots auditadas.
+- `0193-sharing-resource-invitation-claim-inbox-boundary.md`: separa recurso portable,
+  invitación dirigida, claim idempotente e Inbox independiente del canal.

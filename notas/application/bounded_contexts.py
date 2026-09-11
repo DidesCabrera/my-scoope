@@ -127,6 +127,15 @@ APPLICATION_BOUNDED_CONTEXTS: tuple[ApplicationBoundedContext, ...] = (
             "review/approve/apply flow."
         ),
     ),
+    ApplicationBoundedContext(
+        slug="sharing",
+        label="Sharing",
+        packages=("sharing",),
+        responsibility=(
+            "Portable share resources, immutable snapshots, recipient invitations, "
+            "idempotent claims and delivery into Inbox."
+        ),
+    ),
 )
 
 
@@ -294,10 +303,18 @@ APPLICATION_CONTEXT_DEPENDENCY_POLICIES: tuple[ApplicationContextDependencyPolic
     ),
     ApplicationContextDependencyPolicy(
         source_slug="domain_services",
-        allowed_dependency_slugs=("shared_kernel", "read_models", "proposal_review"),
+        allowed_dependency_slugs=("shared_kernel", "read_models", "proposal_review", "sharing"),
         rationale=(
             "Commands and services may coordinate shared contracts, optimized "
             "reads and proposal applicators."
+        ),
+    ),
+    ApplicationContextDependencyPolicy(
+        source_slug="sharing",
+        allowed_dependency_slugs=("shared_kernel", "read_models"),
+        rationale=(
+            "Sharing owns its lifecycle and may consume stable contracts and read "
+            "projections without depending on legacy commands or channel adapters."
         ),
     ),
     ApplicationContextDependencyPolicy(
