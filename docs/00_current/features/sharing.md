@@ -18,3 +18,14 @@ existing `DailyPlanShare`, `ProgramShare`, `MealShare`, `FoodShare` and
 
 Implementation progress and transition evidence live in
 `docs/10_active_cycles/sharing_system_refactor_cycle.md`.
+
+## Current vertical
+
+The normalized core and the first DailyPlan adapter are available. Authenticated
+mobile clients can create an unlisted resource and revoke one they own. The stored
+snapshot contains only its title, aggregate nutrition, meal times and food
+composition; it excludes account identity, source IDs and free-form notes. Later
+source edits do not rewrite an existing share.
+
+Public preview and explicit claim remain unavailable until SHR04, so creating a URL
+does not yet add a recipient to Inbox.

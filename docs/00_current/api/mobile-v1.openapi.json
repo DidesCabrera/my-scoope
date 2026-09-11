@@ -6671,6 +6671,105 @@
         "title": "SessionEnvelope",
         "type": "object"
       },
+      "ShareResourceCreateInput": {
+        "properties": {
+          "claim_policy": {
+            "default": "multiple",
+            "enum": [
+              "none",
+              "single",
+              "multiple"
+            ],
+            "title": "Claim Policy",
+            "type": "string"
+          }
+        },
+        "title": "ShareResourceCreateInput",
+        "type": "object"
+      },
+      "ShareResourceData": {
+        "properties": {
+          "claim_policy": {
+            "enum": [
+              "none",
+              "single",
+              "multiple"
+            ],
+            "title": "Claim Policy",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "public_url": {
+            "title": "Public Url",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "revoked",
+              "expired"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "subject_type": {
+            "enum": [
+              "daily_plan",
+              "food",
+              "meal",
+              "program"
+            ],
+            "title": "Subject Type",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "subject_type",
+          "title",
+          "public_url",
+          "claim_policy",
+          "status",
+          "created_at"
+        ],
+        "title": "ShareResourceData",
+        "type": "object"
+      },
+      "ShareResourceEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ShareResourceData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "ShareResourceEnvelope",
+        "type": "object"
+      },
       "SubscriptionData": {
         "properties": {
           "app_account_token": {
@@ -13290,6 +13389,145 @@
           }
         ],
         "summary": "Revoke Session"
+      }
+    },
+    "/api/v1/shares/daily-plans/{dailyplan_id}": {
+      "post": {
+        "operationId": "mobile_api_create_dailyplan_share_resource",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "dailyplan_id",
+            "required": true,
+            "schema": {
+              "title": "Dailyplan Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShareResourceCreateInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareResourceEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Create Dailyplan Share"
+      }
+    },
+    "/api/v1/shares/{public_id}": {
+      "delete": {
+        "operationId": "mobile_api_revoke_share_resource",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "public_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Public Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareResourceEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Revoke Share"
       }
     },
     "/api/v1/subscriptions": {

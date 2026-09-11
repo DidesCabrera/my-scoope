@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-
 ROUTE_DOMAIN_PREFIXES = (
     ("/ai/", "assistant"),
     ("/program/", "calendarization"),
@@ -10,6 +9,7 @@ ROUTE_DOMAIN_PREFIXES = (
     ("/weights", "calendarization"),
     ("/proposals", "proposals"),
     ("/comparisons", "comparisons"),
+    ("/shares", "sharing"),
     ("/library", "libraries"),
     ("/foods", "food_catalog"),
     ("/food-picker-options", "food_catalog"),

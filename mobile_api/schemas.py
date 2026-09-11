@@ -182,6 +182,11 @@ from mobile_api.schema_domains.proposals import (  # noqa: F401 -- compatibility
     ProposalSubjectWarningData,
     ProposalSummaryData,
 )
+from mobile_api.schema_domains.sharing import (  # noqa: F401 -- compatibility re-exports
+    ShareResourceCreateInput,
+    ShareResourceData,
+    ShareResourceEnvelope,
+)
 
 
 class ErrorDetail(Schema):

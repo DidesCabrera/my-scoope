@@ -70,6 +70,9 @@ Assistant uses `routes/assistant.py`, `schema_domains/assistant.py` and
 commands stay in their established application modules. The composition root now
 owns only API construction, shared errors, the public health route and router mounts.
 `schemas.py` is intentionally a compatibility re-export surface plus Error/Health.
+Sharing uses `routes/sharing.py` and `schema_domains/sharing.py`. Its transport only
+creates and revokes portable resources; snapshot construction and ownership rules
+belong to `notas.application.sharing`.
 
 When extracting another domain:
 
@@ -148,6 +151,11 @@ it does not expose raw provider output as an executable client contract. Approva
 never applies content. Application delegates to the established proposal commands,
 requires acknowledgement for external subject context and returns a trusted Meal
 or DailyPlan library identity.
+
+SHR03 adds `POST /shares/daily-plans/{dailyplan_id}` and
+`DELETE /shares/{public_id}`. Creation produces a server-authored, versioned
+DailyPlan snapshot with no account or internal object identifiers. Revocation is
+owner-only and does not mutate the source DailyPlan.
 
 MCE04 adds supported-kind metadata and owner-scoped selectable options through
 `GET /comparisons/metadata` and `GET /comparisons/options/{kind}`. Dynamic
