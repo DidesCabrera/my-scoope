@@ -46,10 +46,19 @@ class ApplePushTests(SimpleTestCase):
             validate_apple_device_token("not-a-device-token")
 
     def test_payload_contains_only_notification_routing_data(self):
-        payload = _apns_payload({"title": "My Scoope", "body": "Tu plan", "url": "/today", "tag": "daily-1"})
+        payload = _apns_payload({
+            "title": "My Scoope",
+            "body": "Tu plan",
+            "mobile_url": "/program/days/7/meals/breakfast",
+            "url": "/app/calendarization/days/7/",
+            "tag": "daily-1",
+        })
 
         self.assertEqual(payload["aps"]["alert"]["body"], "Tu plan")
-        self.assertEqual(payload["myscoope"], {"url": "/today", "tag": "daily-1"})
+        self.assertEqual(
+            payload["myscoope"],
+            {"url": "/program/days/7/meals/breakfast", "tag": "daily-1"},
+        )
         self.assertNotIn("user", payload)
         self.assertNotIn("email", payload)
 

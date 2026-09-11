@@ -68,5 +68,6 @@ class MobileAPICalendarizationReminderTests(AuthenticatedMobileAPITestCase):
         upcoming = response.json()["data"]["reminders"]["upcoming"]
         self.assertEqual(len(upcoming), 60)
         self.assertEqual(upcoming[0]["event_key"], "future:0")
+        self.assertEqual(upcoming[0]["calendarized_day_id"], day.id)
         self.assertEqual(upcoming[-1]["event_key"], "future:59")
         self.assertNotIn("past:0", {event["event_key"] for event in upcoming})

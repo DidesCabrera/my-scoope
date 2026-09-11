@@ -76,7 +76,7 @@ def _apns_payload(payload: dict) -> dict:
             "thread-id": "myscoope-program",
         },
         "myscoope": {
-            "url": str(payload.get("url") or "/")[:300],
+            "url": str(payload.get("mobile_url") or "/today")[:300],
             "tag": str(payload.get("tag") or "")[:120],
         },
     }

@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from notas.application.services.calendarization.scheduling import local_datetime_to_utc
 from notas.application.services.commands.calendarization_commands import (
+    _push_payload,
     activate_program_calendarization,
     cancel_calendarization,
     dispatch_due_notifications,
@@ -130,6 +131,15 @@ class CalendarizationCommandTests(CalendarizationFixtureMixin, TestCase):
         self.assertNotEqual(day.snapshot_hash, original_hash)
         self.assertEqual(event.local_scheduled_time, time(9, 25))
         self.assertEqual(event.status, ScheduledNotificationEvent.STATUS_PENDING)
+        payload = _push_payload(event)
+        self.assertEqual(
+            payload["mobile_url"],
+            f"/program/days/{day.id}/meals/dailyplan_meal%3A{slot.id}",
+        )
+        self.assertEqual(
+            payload["url"],
+            reverse("calendarization_meal_detail", args=[day.id, meal_key]),
+        )
 
     def test_incomplete_program_requires_explicit_confirmation(self):
         with self.assertRaisesMessage(ValueError, "calendarization_incomplete_confirmation_required"):

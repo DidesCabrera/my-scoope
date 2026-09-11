@@ -50,6 +50,7 @@ class MeasurementSummaryData(Schema):
 
 
 class ReminderEventData(Schema):
+    calendarized_day_id: int
     event_key: str
     event_type: str
     meal_key: str

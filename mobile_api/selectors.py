@@ -786,6 +786,7 @@ def reminder_settings_payload(calendarization, *, now=None) -> dict:
     current_time = now or timezone.now()
     upcoming = [
         {
+            "calendarized_day_id": event.calendarized_day_id,
             "event_key": event.event_key,
             "event_type": event.event_type,
             "meal_key": event.meal_snapshot_key,

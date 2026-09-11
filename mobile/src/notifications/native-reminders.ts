@@ -10,6 +10,7 @@ import {
   localReminderIdentifier,
   shouldScheduleNativeReminders,
 } from "@/notifications/reminder-schedule";
+import { notificationRouteForReminder } from "@/notifications/notification-navigation";
 
 export type NativeReminderState = {
   permission: "granted" | "denied" | "undetermined" | "unavailable";
@@ -69,7 +70,11 @@ async function scheduleLocally(reminders: ReminderSettings): Promise<number> {
       content: {
         title: "My Scoope",
         body: event.event_type === "daily_plan" ? "Tu plan diario está listo" : "Es hora de tu comida planificada",
-        data: { owner: LOCAL_REMINDER_OWNER, eventKey: event.event_key, target: "/today" },
+        data: {
+          eventKey: event.event_key,
+          owner: LOCAL_REMINDER_OWNER,
+          url: notificationRouteForReminder(event),
+        },
         sound: "default",
       },
       trigger: {
