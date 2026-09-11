@@ -3,8 +3,8 @@ from __future__ import annotations
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from django.db.models import Q
 from django.db import transaction
+from django.db.models import Q
 
 from email_delivery.services import deliver_share_invitation
 from mobile_api.errors import MobileAPIError
@@ -26,12 +26,19 @@ from notas.application.services.commands.program_commands import (
     rename_program,
 )
 from notas.application.services.commands.share_commands import (
-    create_dailyplan_share,
     create_food_share,
     create_meal_share,
     create_program_share,
 )
-from notas.application.services.notifications.share_emails import build_share_invitation_email
+from notas.application.services.notifications.share_emails import (
+    build_normalized_share_invitation_email,
+    build_share_invitation_email,
+)
+from notas.application.sharing.dailyplans import get_or_create_dailyplan_share_resource
+from notas.application.sharing.services import (
+    create_share_invitation,
+    mark_share_invitation_delivered,
+)
 from notas.domain.models import DailyPlan, Food, Meal, Program
 
 ENTITY_NAMES = {
@@ -232,10 +239,38 @@ def _share(request, item, *, recipient_email: str, subject: str, message: str) -
             status_code=422,
         )
 
+    if isinstance(item, DailyPlan):
+        resource = get_or_create_dailyplan_share_resource(
+            sender=request.auth.user,
+            dailyplan_id=item.id,
+        ).resource
+        invitation = create_share_invitation(
+            resource=resource,
+            sender=request.auth.user,
+            recipient_email=clean_email,
+            subject=clean_subject,
+            message=(message or "").strip(),
+        )
+        email_subject, email_message = build_normalized_share_invitation_email(
+            request=request,
+            invitation=invitation,
+        )
+        delivery = deliver_share_invitation(
+            share=invitation,
+            subject=email_subject,
+            message=email_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+        )
+        if delivery.sent:
+            mark_share_invitation_delivered(invitation=invitation)
+            return "Compartido. Enviamos la invitación por correo."
+        if delivery.reason == "duplicate_share":
+            return "Ya estaba compartido; no reenviamos la invitación."
+        return "La invitación fue creada, pero el correo no pudo enviarse."
+
     command = {
         Food: (create_food_share, "food", "food"),
         Meal: (create_meal_share, "meal", "meal"),
-        DailyPlan: (create_dailyplan_share, "dailyplan", "dailyplan"),
         Program: (create_program_share, "program", "program"),
     }.get(type(item))
     if command is None:

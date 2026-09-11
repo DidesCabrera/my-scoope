@@ -6,13 +6,43 @@
 
   <div class="wrap-page-modal entity-form share-form">
 
-    <form method="post" action="{% url 'dailyplan_share' dailyplan.pk %}" class="entity-form__form share-form__form" novalidate>
-      {% csrf_token %}
-
+    <div class="entity-form__form share-form__form">
       <div class="main-modal entity-form__main-modal">
         <i data-lucide="send" class="main-modal-icon dailyplan"></i>
         <h2 class="title-create">Compartir Plan Diario</h2>
       </div>
+
+      <section class="entity-form__section share-form__section" aria-labelledby="dailyplan-share-link-title">
+        <div class="entity-form__section-header">
+          <h3 id="dailyplan-share-link-title">Enlace para compartir</h3>
+        </div>
+        {% if share_url %}
+          <p class="share-form__hint">Quien reciba este enlace podrá revisar el plan y decidir si lo agrega a su Inbox.</p>
+          <div class="share-form__link-row">
+            <input id="dailyplan-share-url" class="input-create entity-form__input" value="{{ share_url }}" readonly>
+            <button id="dailyplan-copy-link" type="button" class="btn-continue">Copiar enlace</button>
+          </div>
+        {% else %}
+          <p class="share-form__hint">Crea una vista previa segura y portable de este plan.</p>
+          <form method="post" action="{% url 'dailyplan_share' dailyplan.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="share_action" value="create_link">
+            <button type="submit" class="btn-continue">Crear enlace</button>
+          </form>
+        {% endif %}
+      </section>
+    </div>
+
+    <form method="post" action="{% url 'dailyplan_share' dailyplan.pk %}" class="entity-form__form share-form__form" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="share_action" value="send_email">
+
+      <section class="entity-form__section share-form__section" aria-labelledby="dailyplan-share-email-title">
+        <div class="entity-form__section-header">
+          <h3 id="dailyplan-share-email-title">Enviar invitación por correo</h3>
+        </div>
+        <p class="share-form__hint">El destinatario verá la misma vista previa y deberá confirmar con el correo verificado de su cuenta.</p>
+      </section>
 
       <section class="entity-form__section share-form__section" aria-labelledby="dailyplan-share-recipient-title">
         <div class="entity-form__section-header">
@@ -70,12 +100,28 @@
 
       <div class="entity-form__actions">
         <a href="{% url 'dailyplan_detail' dailyplan.pk %}" class="btn-cancel-create entity-form__cancel">Cancelar</a>
-        <button type="submit" class="btn-continue entity-form__submit">Compartir</button>
+        <button type="submit" class="btn-continue entity-form__submit">Enviar invitación</button>
       </div>
     </form>
 
   </div>
 
 </div>
+
+{% if share_url %}
+<script>
+  document.getElementById("dailyplan-copy-link")?.addEventListener("click", async function () {
+    const input = document.getElementById("dailyplan-share-url");
+    try {
+      await navigator.clipboard.writeText(input.value);
+      this.textContent = "Copiado";
+    } catch (_error) {
+      input.select();
+      document.execCommand("copy");
+      this.textContent = "Copiado";
+    }
+  });
+</script>
+{% endif %}
 
 {% endblock %}

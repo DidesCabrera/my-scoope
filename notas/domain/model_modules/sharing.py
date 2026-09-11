@@ -60,7 +60,10 @@ class ShareInvitation(models.Model):
     recipient_user = models.ForeignKey(
         User, null=True, blank=True, on_delete=models.SET_NULL, related_name="share_invitations_received"
     )
+    subject = models.CharField(max_length=160, blank=True)
+    message = models.TextField(blank=True)
     status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING)
+    delivered_at = models.DateTimeField(null=True, blank=True)
     claimed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

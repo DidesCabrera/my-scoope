@@ -62,7 +62,7 @@
       {% else %}
         {% if pending_claim %}<p>Sesión iniciada. Confirma para agregar el plan a tu Inbox.</p>{% endif %}
         {% if claim_error %}<p class="share-action__error">No fue posible agregar este plan.</p>{% endif %}
-        <form method="post" action="{% url 'share_claim' public_id=resource.public_id %}">
+        <form method="post" action="{{ claim_url }}">
           {% csrf_token %}
           <button class="share-button" type="submit">
             {% if pending_claim %}Confirmar y agregar{% else %}Agregar a MyScoope{% endif %}

@@ -258,6 +258,7 @@ NUTRITION_ONBOARDING_ALLOWED_PREFIXES = (
     "/.well-known/",
     "/oauth/",
     "/s/",
+    "/i/",
 )
 
 

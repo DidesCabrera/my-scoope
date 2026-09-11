@@ -70,9 +70,12 @@ class NutritionOnboardingGateTests(TestCase):
         user = self._user("gate_share")
         self.client.force_login(user)
 
-        response = self.client.get("/s/00000000-0000-0000-0000-000000000000/")
-
-        self.assertEqual(response.status_code, 404)
+        for prefix in ("s", "i"):
+            with self.subTest(prefix=prefix):
+                response = self.client.get(
+                    f"/{prefix}/00000000-0000-0000-0000-000000000000/"
+                )
+                self.assertEqual(response.status_code, 404)
 
     def test_staff_user_is_not_forced_through_onboarding(self):
         user = self._user("gate_staff", staff=True)

@@ -50,3 +50,19 @@ offer the registered `myscoope://share/<id>` deep link; the native share screen 
 render before login and preserves its destination through OAuth, disclosures and
 onboarding. Native Inbox lists normalized claims and supports read, favorite,
 dismiss and idempotent save-to-library actions.
+
+## Web and email channels
+
+The DailyPlan web share page now exposes one sharing surface: it can create and copy
+an unlisted link or send a directed email invitation over the same immutable
+`ShareResource`. The latest active resource is reused while its snapshot and claim
+policy remain current; editing the source causes the next action to create a new
+snapshot without mutating old links.
+
+Directed email uses a `ShareInvitation` with its own unguessable `/i/<public-id>/`
+preview. The email channel stores only invitation content and delivery lifecycle;
+opening it remains read-only, and claiming requires a matching verified account plus
+an explicit POST. Both `/s/` and `/i/` bypass nutrition onboarding so the preview and
+authentication continuation remain reachable. The legacy mobile library email action
+for DailyPlan also delegates to this normalized path; other entity types stay on the
+compatibility implementation until their adapters are added in SHR10.
