@@ -513,6 +513,17 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     path.resolve(process.cwd(), "src/components/ui/product.tsx"),
     "utf8",
   );
+  const cardSurfaceSource = await readTestFile(
+    path.resolve(process.cwd(), "src/components/ui/surfaces.tsx"),
+    "utf8",
+  );
+  const legacyPrimitivesSource = await readTestFile(
+    path.resolve(process.cwd(), "src/components/ui/primitives.tsx"),
+    "utf8",
+  );
+  assertSourceMatch(cardSurfaceSource, /card: \{[^}]*marginHorizontal: -tokens\.spacing\.screen/);
+  assertSourceMatch(legacyPrimitivesSource, /card: \{[^}]*marginHorizontal: -tokens\.spacing\.screen/);
+  assertSourceMatch(productUiSource, /entityCardPressable: \{ marginHorizontal: -tokens\.spacing\.screen \}/);
   assertSourceMatch(productUiSource, /export function EntityCardActions/);
   assertSourceMatch(productUiSource, /export function EntityCardAction/);
   assertSourceMatch(productUiSource, /actions \? styles\.entityCardWithActions : null/);

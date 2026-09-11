@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
   headerCopy: { flex: 1, gap: 4 },
   eyebrow: { color: tokens.color.textSoft, fontSize: tokens.type.label, fontWeight: "700", letterSpacing: 1.2, textTransform: "uppercase" },
   title: { color: tokens.color.textMain, fontSize: tokens.type.title, fontWeight: "800", letterSpacing: -0.5 },
-  card: { backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderWidth: 1, gap: tokens.card.gap, padding: tokens.card.outerPadding },
+  card: { backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.card, borderWidth: 1, gap: tokens.card.gap, marginHorizontal: -tokens.spacing.screen, padding: tokens.card.outerPadding },
   cardMuted: { backgroundColor: tokens.color.surfaceMuted },
   sectionTitleRow: { alignItems: "baseline", flexDirection: "row", justifyContent: "space-between" },
   sectionTitle: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },
