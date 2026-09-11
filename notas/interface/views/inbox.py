@@ -5,11 +5,14 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseBadRequest
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from notas.application.services.commands.dailyplan_commands import save_dailyplan
 from notas.application.services.commands.food_commands import create_food
 from notas.application.services.commands.meal_commands import save_dailyplan_meal_to_library, save_meal
+from notas.application.sharing.inbox import save_dailyplan_inbox_item
+from notas.application.sharing.services import ShareUnavailable
 from notas.presentation.composition.viewmodel.components.builder_headers import (
     build_page_header,
 )
@@ -265,6 +268,11 @@ def _inbox_entity_nav_root(kind: str) -> str:
 
 
 def _mark_share_as_read(share):
+    if hasattr(share, "read_at"):
+        if share.read_at is None:
+            share.read_at = timezone.now()
+            share.save(update_fields=["read_at", "updated_at"])
+        return
     if not hasattr(share, "is_read"):
         return
 
@@ -354,9 +362,7 @@ def inbox_detail(request, kind, share_id):
     except ValueError:
         return HttpResponseBadRequest("Tipo de inbox no soportado.")
 
-    if not share.is_read:
-        share.is_read = True
-        share.save(update_fields=["is_read"])
+    _mark_share_as_read(share)
 
     try:
         item = get_inbox_item_or_404(
@@ -459,6 +465,9 @@ def inbox_sent_attachment_detail(request, kind, share_id):
 
     inbox = asdict(item)
 
+    if kind == "share":
+        return redirect("share_preview", public_id=share.public_id)
+
     if kind == "dailyplan":
         page = get_dailyplan_detail_page_data(
             user=request.user,
@@ -553,6 +562,19 @@ def inbox_attachment_detail(request, kind, share_id):
         return HttpResponseBadRequest("Tipo de inbox no soportado.")
 
     inbox = asdict(item)
+
+    if kind == "share":
+        return render(
+            request,
+            "notas/sharing/preview.html",
+            {
+                "resource": share.resource,
+                "snapshot": share.resource.snapshot,
+                "already_claimed": True,
+                "pending_claim": False,
+                "claim_error": "",
+            },
+        )
 
     if kind == "dailyplan":
         page = get_dailyplan_detail_page_data(
@@ -655,8 +677,12 @@ def inbox_delete(request, kind, share_id):
     except ValueError:
         return HttpResponseBadRequest("Tipo de inbox no soportado.")
 
-    share.dismissed = True
-    share.save(update_fields=["dismissed"])
+    if hasattr(share, "dismissed_at"):
+        share.dismissed_at = timezone.now()
+        share.save(update_fields=["dismissed_at", "updated_at"])
+    else:
+        share.dismissed = True
+        share.save(update_fields=["dismissed"])
 
     messages.success(request, "Inbox eliminado.")
     return redirect("inbox_list")
@@ -685,8 +711,12 @@ def inbox_bulk_delete(request):
         except (ValueError, TypeError):
             continue
 
-        share.dismissed = True
-        share.save(update_fields=["dismissed"])
+        if hasattr(share, "dismissed_at"):
+            share.dismissed_at = timezone.now()
+            share.save(update_fields=["dismissed_at", "updated_at"])
+        else:
+            share.dismissed = True
+            share.save(update_fields=["dismissed"])
         deleted_count += 1
 
     if deleted_count:
@@ -708,6 +738,14 @@ def inbox_save_attachment(request, kind, share_id):
         )
     except ValueError:
         return HttpResponseBadRequest("Tipo de inbox no soportado.")
+
+    if kind == "share":
+        try:
+            saved = save_dailyplan_inbox_item(inbox_item=share, actor=request.user)
+        except ShareUnavailable:
+            return HttpResponseBadRequest("El contenido compartido no se puede guardar.")
+        messages.success(request, "Plan diario guardado en Mi librería.")
+        return redirect("dailyplan_detail", pk=saved.pk)
 
     if kind == "dailyplan":
         saved = save_dailyplan(share.dailyplan, request.user)

@@ -32,3 +32,11 @@ The unlisted `/s/<public-id>/` page renders only the stored snapshot and sends
 CSRF-protected POST; anonymous intent survives login, but the returning GET still
 requires explicit confirmation. Claims are idempotent and create one normalized
 Inbox item. Directed invitations additionally require a matching verified email.
+
+Inbox now reads normalized deliveries and unmigrated legacy records together. An
+idempotent migration converts accepted legacy DailyPlan shares, preserves read,
+favorite and dismissed state, and suppresses the corresponding legacy projection.
+Other legacy entity types remain on their compatibility path until their snapshot
+adapters exist. A recipient can save a claimed DailyPlan as one detached,
+recipient-owned library copy; revoking the public URL does not erase an already
+claimed private Inbox snapshot.
