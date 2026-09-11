@@ -110,6 +110,16 @@ export class MobileSessionManager {
       await this.refresh();
       return this.request<T>(path, init, false);
     }
+    const contentType = response.headers.get("Content-Type")?.toLowerCase() ?? "";
+    if (!contentType.includes("application/json")) {
+      throw new MobileApiError(
+        response.status === 404
+          ? "Esta función todavía no está disponible en el servidor seleccionado."
+          : "El servidor devolvió una respuesta inesperada. Inténtalo nuevamente.",
+        "mobile_api_invalid_response",
+        response.status,
+      );
+    }
     const payload = (await response.json()) as ApiEnvelope<T>;
     if (!response.ok || !payload.ok) {
       const detail = payload.ok

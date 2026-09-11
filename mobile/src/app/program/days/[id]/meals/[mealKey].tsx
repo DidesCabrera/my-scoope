@@ -1,4 +1,4 @@
-import { Redirect, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 
@@ -11,12 +11,14 @@ import { snapshotCalories, snapshotFoodPanelItems, snapshotMacroDistribution } f
 import { EntityDetailPage, EntityDetailSection, FoodDetailCardList } from "@/components/details";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { FoodPanels } from "@/components/panels";
+import { pickerHref } from "@/components/pickers/composition-picker-screen";
 import { Button, InlineNotice, SectionDivider, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
 
 export default function CalendarizedMealDetailScreen() {
   const { id, mealKey } = useLocalSearchParams<{ id: string; mealKey: string }>();
+  const router = useRouter();
   const { status, apiRequest } = useSession();
   const [meal, setMeal] = useState<MealSnapshot | null>(null);
   const [execution, setExecution] = useState<MealExecutionItem | null>(null);
@@ -97,6 +99,11 @@ export default function CalendarizedMealDetailScreen() {
         <EntityDetailSection title="Tabla de comparación entre alimentos">
           <FoodPanels items={foods} />
         </EntityDetailSection>
+        <Button
+          bleed
+          label="+ Agregar alimento"
+          onPress={() => router.push(pickerHref("food-to-calendarized-meal", { dayId, mealKey }))}
+        />
         {foods.length ? <><SectionDivider /><EntityDetailSection detail={`${foods.length} alimentos`} title="Detalle de cada Alimento"><FoodDetailCardList items={foods} /></EntityDetailSection></> : null}
         <MealAdherenceCheckIn dayId={dayId} mealKey={mealKey} onChange={setExecution} />
       </EntityDetailPage>

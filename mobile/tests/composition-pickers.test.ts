@@ -111,11 +111,16 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(navigation, /backHeaderAction/);
   matches(picker, /action: \{ label: "Cancelar"/);
 
-  for (const route of ["food-to-meal", "meal-to-dailyplan", "dailyplan-to-program", "dailyplan-to-calendarized-day"]) {
+  for (const route of ["food-to-meal", "meal-to-dailyplan", "dailyplan-to-program", "dailyplan-to-calendarized-day", "meal-to-calendarized-day", "food-to-calendarized-meal"]) {
     const source = await readFile(path.resolve(process.cwd(), `src/app/pickers/${route}.tsx`), "utf8");
     matches(source, /CompositionPickerScreen/);
   }
   matches(picker, /dailyplan-to-calendarized-day/);
+  matches(picker, /meal-to-calendarized-day/);
+  matches(picker, /food-to-calendarized-meal/);
+  matches(picker, /\/program\/days\/\$\{id\}\/meal-picker\/preview/);
+  matches(picker, /\/food-picker\/commit/);
+  matches(picker, /refreshNativeReminders/);
   matches(picker, /idempotency_key: idempotencyKey\.current/);
   matches(picker, /confirm_replacement: confirmReplacements/);
   const configureRoute = await readFile(path.resolve(process.cwd(), "src/app/pickers/configure.tsx"), "utf8");
@@ -158,6 +163,23 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(weekRoute, /label: hasCreatedWeek \? "Finalizar" : "Cancelar"/);
 });
 
+test("active program details expose snapshot-only composition actions after comparison tables", async () => {
+  const dayDetail = await readFile(path.resolve(process.cwd(), "src/app/program/days/[id].tsx"), "utf8");
+  const mealDetail = await readFile(path.resolve(process.cwd(), "src/app/program/days/[id]/meals/[mealKey].tsx"), "utf8");
+
+  matches(dayDetail, /pickerHref\("meal-to-calendarized-day", \{ dayId: day\.id \}\)/);
+  matches(dayDetail, /label="\+ Agregar Comida"/);
+  matches(dayDetail, /<Button\s+bleed\s+label="\+ Agregar Comida"/);
+  assert.ok(dayDetail.indexOf('title="Tabla de comparación entre comidas"') < dayDetail.indexOf('label="+ Agregar Comida"'));
+  assert.ok(dayDetail.indexOf('label="+ Agregar Comida"') < dayDetail.indexOf('title="Detalle de cada Comida"'));
+
+  matches(mealDetail, /pickerHref\("food-to-calendarized-meal", \{ dayId, mealKey \}\)/);
+  matches(mealDetail, /label="\+ Agregar alimento"/);
+  matches(mealDetail, /<Button\s+bleed\s+label="\+ Agregar alimento"/);
+  assert.ok(mealDetail.indexOf('title="Tabla de comparación entre alimentos"') < mealDetail.indexOf('label="+ Agregar alimento"'));
+  assert.ok(mealDetail.indexOf('label="+ Agregar alimento"') < mealDetail.indexOf('title="Detalle de cada Alimento"'));
+});
+
 test("library details open every composition flow and program days remain editable", async () => {
   const detail = await readFile(path.resolve(process.cwd(), "src/components/libraries/library-detail-screen.tsx"), "utf8");
   for (const route of ["food-to-meal", "meal-to-dailyplan", "dailyplan-to-program", "week-to-program"]) {
@@ -166,7 +188,9 @@ test("library details open every composition flow and program days remain editab
   matches(detail, /label="\+ Agregar alimento"/);
   matches(detail, /label="\+ Agregar Comida"/);
   const comparisonSection = detail.indexOf('title={sectionTitles[item.panel.kind]}');
+  const addFoodAction = detail.indexOf('label="+ Agregar alimento"');
   assert.ok(comparisonSection < detail.indexOf('label="+ Agregar alimento"'));
+  assert.ok(addFoodAction < detail.indexOf('title="Detalle de cada Alimento"'));
   assert.ok(comparisonSection < detail.indexOf('label="+ Agregar Comida"'));
   assert.ok(detail.indexOf('label="+ Agregar Comida"') < detail.indexOf('title="Detalle de cada Comida"'));
   matches(detail, /FoodPanels editing=\{foodEditing\}/);

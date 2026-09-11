@@ -63,7 +63,7 @@ export function WeekDaySelectionRing() {
 
 const styles = StyleSheet.create({
   cell: { alignItems: "center", flex: 1, gap: tokens.spacing.sm, minWidth: 0 },
-  grid: { flexDirection: "row", gap: tokens.spacing.compact, justifyContent: "space-between", minWidth: 0, width: "100%" },
+  grid: { alignSelf: "stretch", flexDirection: "row", gap: tokens.spacing.compact, justifyContent: "space-between", marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minWidth: 0 },
   gridCompact: { gap: tokens.spacing.xs },
   label: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontWeight: tokens.weight.bold },
   selectionRing: { bottom: -7, left: -7, position: "absolute", right: -7, top: -7 },

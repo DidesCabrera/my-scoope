@@ -1,4 +1,5 @@
 from datetime import timedelta
+from urllib.parse import quote
 from zoneinfo import ZoneInfo
 
 from django.contrib.auth.models import User
@@ -13,7 +14,9 @@ from notas.domain.models import (
     CalendarizedDay,
     DailyPlan,
     DailyPlanMeal,
+    Food,
     Meal,
+    MealFood,
     Program,
     ProgramCalendarization,
 )
@@ -21,6 +24,103 @@ from notas.domain.models import (
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
 class MobileAPICalendarizationEditTests(AuthenticatedMobileAPITestCase):
+    def test_active_day_can_append_library_meal_and_food_without_mutating_sources(self):
+        today = timezone.localdate(timezone=ZoneInfo("UTC"))
+        source_food = Food.objects.create(
+            name="Avena de biblioteca",
+            protein=10,
+            carbs=20,
+            fat=5,
+            created_by=self.user,
+        )
+        extra_food = Food.objects.create(
+            name="Fruta de biblioteca",
+            protein=1,
+            carbs=12,
+            fat=0,
+            created_by=self.user,
+        )
+        source_meal = Meal.objects.create(name="Colación de biblioteca", created_by=self.user, is_draft=False)
+        source_relation = MealFood.objects.create(meal=source_meal, food=source_food, quantity=50, order=0)
+        calendarization = ProgramCalendarization.objects.create(
+            user=self.user,
+            program_name_snapshot="Programa activo",
+            start_date=today,
+            end_date=today + timedelta(days=6),
+            timezone_name="UTC",
+            status=ProgramCalendarization.STATUS_ACTIVE,
+        )
+        day = CalendarizedDay.objects.create(
+            calendarization=calendarization,
+            calendar_date=today,
+            week_number=1,
+            day_number=1,
+            plan_snapshot={
+                "schema_version": "calendarized_dailyplan.v1",
+                "name": "Plan activo",
+                "meals": [
+                    {
+                        "key": "existing-meal",
+                        "name": "Desayuno",
+                        "order": 0,
+                        "foods": [],
+                        "totals": {"protein_g": 5, "carbs_g": 10, "fat_g": 2, "total_kcal": 78},
+                    }
+                ],
+                "totals": {"protein_g": 5, "carbs_g": 10, "fat_g": 2, "total_kcal": 78},
+            },
+        )
+
+        meal_preview = self.client.post(
+            f"/api/v1/program/days/{day.id}/meal-picker/preview",
+            data={"meal_id": source_meal.id, "hour": "16:30", "note": "Después de entrenar"},
+            content_type="application/json",
+        )
+        day.refresh_from_db()
+        self.assertEqual(meal_preview.status_code, 200)
+        self.assertEqual(len(meal_preview.json()["data"]["result"]["panel"]["meals"]), 2)
+        self.assertEqual(len(day.plan_snapshot["meals"]), 1)
+
+        meal_commit = self.client.post(
+            f"/api/v1/program/days/{day.id}/meal-picker/commit",
+            data={"meal_id": source_meal.id, "hour": "16:30", "note": "Después de entrenar"},
+            content_type="application/json",
+        )
+        self.assertEqual(meal_commit.status_code, 200)
+        day.refresh_from_db()
+        added_meal = day.plan_snapshot["meals"][-1]
+        self.assertTrue(added_meal["key"].startswith("calendarized_meal:"))
+        self.assertEqual(added_meal["source_meal_id"], source_meal.id)
+        self.assertEqual(added_meal["order"], 1)
+        self.assertEqual(added_meal["hour"], "16:30")
+        self.assertEqual(added_meal["foods"][0]["quantity_g"], 50)
+        encoded_meal_key = quote(added_meal["key"], safe="")
+
+        food_preview = self.client.post(
+            f"/api/v1/program/days/{day.id}/meals/{encoded_meal_key}/food-picker/preview",
+            data={"food_id": extra_food.id, "quantity": 75},
+            content_type="application/json",
+        )
+        day.refresh_from_db()
+        self.assertEqual(food_preview.status_code, 200)
+        self.assertEqual(len(food_preview.json()["data"]["result"]["panel"]["foods"]), 2)
+        self.assertEqual(len(day.plan_snapshot["meals"][-1]["foods"]), 1)
+
+        food_commit = self.client.post(
+            f"/api/v1/program/days/{day.id}/meals/{encoded_meal_key}/food-picker/commit",
+            data={"food_id": extra_food.id, "quantity": 75},
+            content_type="application/json",
+        )
+        self.assertEqual(food_commit.status_code, 200)
+        day.refresh_from_db()
+        updated_meal = day.plan_snapshot["meals"][-1]
+        self.assertEqual([food["source_food_id"] for food in updated_meal["foods"]], [source_food.id, extra_food.id])
+        self.assertAlmostEqual(updated_meal["totals"]["protein_g"], 5.75)
+        self.assertAlmostEqual(day.plan_snapshot["totals"]["protein_g"], 10.75)
+        source_relation.refresh_from_db()
+        self.assertEqual(source_relation.quantity, 50)
+        self.assertEqual(source_meal.meal_food_set.count(), 1)
+
     def test_future_day_picker_assigns_snapshot_and_records_applied_revision_without_mutating_template(self):
         today = timezone.localdate(timezone=ZoneInfo("UTC"))
         template = Program.objects.create(
