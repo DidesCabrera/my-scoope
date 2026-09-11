@@ -1,6 +1,7 @@
-import { type Href, Redirect, Stack, useLocalSearchParams } from "expo-router";
+import { Redirect, Stack, useLocalSearchParams } from "expo-router";
 
 import { CompositionPickerScreen, type PickerKind } from "@/components/pickers/composition-picker-screen";
+import { internalHref } from "@/navigation/internal-href";
 
 const pickerKinds = new Set<PickerKind>(["food-to-meal", "meal-to-dailyplan", "dailyplan-to-program", "dailyplan-to-calendarized-day", "meal-to-calendarized-day", "food-to-calendarized-meal"]);
 
@@ -23,7 +24,7 @@ export default function ConfigureCompositionPickerRoute() {
   const week = Number(weekNumber) || 1;
   const day = Number(dayNumber) || undefined;
   const relation = Number(relationId) || undefined;
-  const returnHref = typeof returnTo === "string" && returnTo.startsWith("/pickers/week-to-program?") ? returnTo as Href : undefined;
+  const returnHref = internalHref(returnTo);
 
   if (!pickerKind || !Number.isInteger(target) || target <= 0 || !Number.isInteger(selection) || selection <= 0) {
     return <Redirect href="/today" />;

@@ -1,11 +1,12 @@
 import { Redirect, useLocalSearchParams } from "expo-router";
 
 import { CompositionPickerScreen } from "@/components/pickers/composition-picker-screen";
+import { internalHref } from "@/navigation/internal-href";
 
 export default function MealToDailyPlanPickerRoute() {
-  const { dailyPlanId, dailyPlanMealId } = useLocalSearchParams<{ dailyPlanId?: string; dailyPlanMealId?: string }>();
+  const { dailyPlanId, dailyPlanMealId, returnTo } = useLocalSearchParams<{ dailyPlanId?: string; dailyPlanMealId?: string; returnTo?: string }>();
   const targetId = Number(dailyPlanId);
   const relationId = Number(dailyPlanMealId) || undefined;
   if (!Number.isInteger(targetId) || targetId <= 0) return <Redirect href="/libraries/daily-plans" />;
-  return <CompositionPickerScreen kind="meal-to-dailyplan" relationId={relationId} targetId={targetId} />;
+  return <CompositionPickerScreen kind="meal-to-dailyplan" relationId={relationId} returnTo={internalHref(returnTo)} targetId={targetId} />;
 }

@@ -11,6 +11,7 @@ import { CurrentWeekSection } from "@/components/calendarization/current-week-se
 import { HomeActions } from "@/components/home-actions";
 import { HomeLibraryGrid, type HomeLibraryCounts } from "@/components/home/home-library-grid";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
+import { pickerHref } from "@/components/pickers/composition-picker-screen";
 import { ProgramActiveHomeOverview } from "@/components/programs/program-active-card";
 import { AppHeader, Button, Card, GuideMetric, InlineNotice, LoadingState, Pill, Screen, SectionTitle, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
@@ -90,6 +91,7 @@ export default function TodayScreen() {
   if (loading && !today) return <LoadingState />;
 
   const snapshot = today?.plan_snapshot;
+  const todayDayId = today?.day_id;
   const todayProgramDay = activeProgram?.days.find((day) => day.id === today?.day_id);
   const firstName = session?.display_name.split(" ")[0] || session?.username || "Atleta";
   const currentWeightKg = latestWeightKg ?? profile?.current_weight_kg ?? today?.measurements?.latest_weight_kg;
@@ -109,10 +111,11 @@ export default function TodayScreen() {
 
       {today?.has_plan && snapshot ? (
         <CalendarizedDailyPlanCard
-          dayId={today.day_id}
+          dayId={todayDayId ?? null}
           dateLabel={compactDateLabel(today.local_date)}
           eyebrow="PLAN DE HOY"
           mealExecution={today.meal_execution}
+          onAddMeal={todayDayId != null ? () => router.push(pickerHref("meal-to-calendarized-day", { dayId: todayDayId })) : undefined}
           position={todayProgramDay ? { dayNumber: todayProgramDay.day_number, weekNumber: todayProgramDay.week_number } : undefined}
           snapshot={snapshot}
         />

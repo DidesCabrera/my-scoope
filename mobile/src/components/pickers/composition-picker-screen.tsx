@@ -216,6 +216,11 @@ export function CompositionPickerScreen({
           ? `/program/days/${targetId}/meals/${encodeURIComponent(mealKey ?? "")}`
           : `/libraries/${config.targetSlug}/${targetId}`
   ) as Href;
+  const mealCreationEntryHref = kind === "meal-to-dailyplan"
+    ? pickerHref(kind, { dailyPlanId: targetId, ...(relationId ? { dailyPlanMealId: relationId } : {}), ...(returnTo ? { returnTo: String(returnTo) } : {}) })
+    : kind === "meal-to-calendarized-day"
+      ? pickerHref(kind, { dayId: targetId, ...(returnTo ? { returnTo: String(returnTo) } : {}) })
+      : undefined;
   const { status, apiRequest } = useSession();
   const setHeaderPresentation = useHeaderPresentation();
   const [query, setQuery] = useState("");
@@ -372,7 +377,19 @@ export function CompositionPickerScreen({
           <View style={styles.selectionSticky}>
             <PickerEntryTabs
               createLabel={config.createLabel}
-              onCreate={() => router.push({ pathname: "/libraries/create", params: { entity: config.createEntity } })}
+              onCreate={() => router.push({
+                pathname: "/libraries/create",
+                params: {
+                  entity: config.createEntity,
+                  ...(config.createEntity === "meal" && mealCreationEntryHref ? {
+                    pickerEntryTo: String(mealCreationEntryHref),
+                    pickerKind: kind,
+                    ...(relationId ? { pickerRelationId: String(relationId) } : {}),
+                    pickerTargetId: String(targetId),
+                    returnTo: String(detailHref),
+                  } : {}),
+                },
+              })}
             />
             <View style={styles.searchField}>
               <Search color={tokens.color.textSoft} size={19} />
