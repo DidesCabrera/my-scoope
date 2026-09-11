@@ -9,6 +9,10 @@ from notas.domain.models import (
     DailyPlanShare,
     FoodShare,
     MealShare,
+    ShareResource,
+)
+from notas.domain.models import (
+    InboxItem as NormalizedInboxItem,
 )
 from notas.presentation.composition.viewmodel.dailyplan.dailyplan_content import (
     build_dailyplan_list_content_data,
@@ -254,7 +258,6 @@ def _build_dailyplan_item(share: DailyPlanShare) -> InboxItem:
         open_url=open_url,
         save_url=save_url,
     )
-
     summary = _share_message(
         share,
         f"{share.sender.username} compartió un plan diario contigo.",
@@ -428,7 +431,105 @@ def _build_dpm_item(share: DailyPlanMealShare) -> InboxItem:
         attachment=attachment,
         attachment_card=attachment_card,
         attachment_cards=[attachment_card] if attachment_card else [],
-        actions=_build_actions(item_id=f"dpm-{share.id}", detail_url=detail_url, dismiss_url=dismiss_url, favorite_url=favorite_url, is_favorite=share.is_favorite),
+        actions=_build_actions(
+            item_id=f"dpm-{share.id}",
+            detail_url=detail_url,
+            dismiss_url=dismiss_url,
+            favorite_url=favorite_url,
+            is_favorite=share.is_favorite,
+        ),
+    )
+
+
+def _normalized_title(resource: ShareResource) -> str:
+    return str((resource.snapshot.get("subject") or {}).get("title") or "Contenido compartido")
+
+
+def _build_normalized_item(item: NormalizedInboxItem) -> InboxItem:
+    resource = item.resource
+    title = _normalized_title(resource)
+    detail_url = reverse("inbox_detail", args=["share", item.id])
+    dismiss_url = reverse("inbox_delete", args=["share", item.id])
+    favorite_url = reverse("inbox_toggle_favorite", args=["share", item.id])
+    open_url = _inbox_attachment_detail_url("share", item.id)
+    save_url = reverse("inbox_save_attachment", args=["share", item.id])
+    attachment = InboxAttachment(
+        kind="dailyplan",
+        label="Plan diario compartido",
+        name=title,
+        icon="clipboard-list",
+        open_url=open_url,
+        save_url=save_url,
+    )
+    summary = f"{resource.sender.username} compartió un plan diario contigo."
+    return InboxItem(
+        id=f"share-{item.id}",
+        share_id=item.id,
+        kind="share",
+        kind_label="Plan diario",
+        icon="clipboard-list",
+        created_at=item.created_at,
+        received_at_label=_format_received_at(item.created_at),
+        sender=resource.sender.username,
+        sender_label="",
+        direction="received",
+        title=title,
+        summary=summary,
+        message=summary,
+        is_favorite=item.is_favorite,
+        is_read=item.read_at is not None,
+        detail_url=detail_url,
+        dismiss_url=dismiss_url,
+        favorite_url=favorite_url,
+        attachment=attachment,
+        attachment_card=None,
+        attachment_cards=[],
+        actions=_build_actions(
+            item_id=f"share-{item.id}",
+            detail_url=detail_url,
+            dismiss_url=dismiss_url,
+            favorite_url=favorite_url,
+            is_favorite=item.is_favorite,
+        ),
+    )
+
+
+def _build_normalized_sent_item(resource: ShareResource) -> InboxItem:
+    title = _normalized_title(resource)
+    open_url = reverse("share_preview", args=[resource.public_id])
+    detail_url = reverse("inbox_sent_detail", args=["share", resource.id])
+    attachment = InboxAttachment(
+        kind="dailyplan",
+        label="Plan diario compartido",
+        name=title,
+        icon="clipboard-list",
+        open_url=open_url,
+        save_url="",
+    )
+    summary = "Enlace activo" if resource.status == ShareResource.Status.ACTIVE else "Enlace no disponible"
+    return InboxItem(
+        id=f"sent-share-{resource.id}",
+        share_id=resource.id,
+        kind="share",
+        kind_label="Plan diario",
+        icon="clipboard-list",
+        created_at=resource.created_at,
+        received_at_label=_format_received_at(resource.created_at),
+        sender="Enlace compartible",
+        sender_label="Canal",
+        direction="sent",
+        title=title,
+        summary=summary,
+        message=summary,
+        is_favorite=False,
+        is_read=True,
+        detail_url=detail_url,
+        dismiss_url="",
+        favorite_url="",
+        attachment=attachment,
+        attachment_card=None,
+        attachment_cards=[],
+        actions=_build_sent_actions(open_url=detail_url, label="Ver compartido"),
     )
 
 def _build_sent_dailyplan_item(share: DailyPlanShare) -> InboxItem:
@@ -559,7 +660,7 @@ def _build_sent_dpm_item(share: DailyPlanMealShare) -> InboxItem:
     )
 
 def _dailyplan_share_queryset(user):
-    return (
+    queryset = (
         DailyPlanShare.objects
         .filter(
             accepted_by=user,
@@ -569,6 +670,13 @@ def _dailyplan_share_queryset(user):
         .select_related("dailyplan", "dailyplan__created_by", "dailyplan__original_author", "sender", "accepted_by")
         .prefetch_related("dailyplan__dailyplan_meals__meal__meal_food_set__food")
     )
+    migrated_ids = [
+        int(reference.rsplit(":", 1)[1])
+        for reference in ShareResource.objects.filter(
+            legacy_reference__startswith="dailyplan:"
+        ).values_list("legacy_reference", flat=True)
+    ]
+    return queryset.exclude(id__in=migrated_ids)
 
 
 def _meal_share_queryset(user):
@@ -619,12 +727,19 @@ def _dpm_share_sent_queryset(user):
     )
 
 def _dailyplan_share_sent_queryset(user):
-    return (
+    queryset = (
         DailyPlanShare.objects
         .filter(sender=user, removed=False)
         .select_related("dailyplan", "dailyplan__created_by", "dailyplan__original_author", "sender", "accepted_by")
         .prefetch_related("dailyplan__dailyplan_meals__meal__meal_food_set__food")
     )
+    migrated_ids = [
+        int(reference.rsplit(":", 1)[1])
+        for reference in ShareResource.objects.filter(
+            legacy_reference__startswith="dailyplan:"
+        ).values_list("legacy_reference", flat=True)
+    ]
+    return queryset.exclude(id__in=migrated_ids)
 
 
 def _meal_share_sent_queryset(user):
@@ -636,9 +751,21 @@ def _meal_share_sent_queryset(user):
     )
 
 
+def _normalized_inbox_queryset(user):
+    return (
+        NormalizedInboxItem.objects.filter(owner=user, dismissed_at__isnull=True)
+        .select_related("resource", "resource__sender", "claim")
+    )
+
+
+def _normalized_sent_queryset(user):
+    return ShareResource.objects.filter(sender=user).select_related("sender")
+
+
 def build_inbox_items(user, *, favorites_only: bool = False, scope: str = "received"):
     if scope == "sent":
         items = [
+            *[_build_normalized_sent_item(resource) for resource in _normalized_sent_queryset(user)],
             *[
                 _build_sent_dailyplan_item(share)
                 for share in _dailyplan_share_sent_queryset(user)
@@ -661,14 +788,17 @@ def build_inbox_items(user, *, favorites_only: bool = False, scope: str = "recei
         meal_shares = _meal_share_queryset(user)
         food_shares = _food_share_queryset(user)
         dpm_shares = _dpm_share_queryset(user)
+        normalized_items = _normalized_inbox_queryset(user)
 
         if favorites_only:
             dailyplan_shares = dailyplan_shares.filter(is_favorite=True)
             meal_shares = meal_shares.filter(is_favorite=True)
             food_shares = food_shares.filter(is_favorite=True)
             dpm_shares = dpm_shares.filter(is_favorite=True)
+            normalized_items = normalized_items.filter(is_favorite=True)
 
         items = [
+            *[_build_normalized_item(item) for item in normalized_items],
             *[
                 _build_dailyplan_item(share)
                 for share in dailyplan_shares
@@ -692,6 +822,9 @@ def build_inbox_items(user, *, favorites_only: bool = False, scope: str = "recei
 
 
 def get_inbox_item_or_404(user, *, kind: str, share_id: int):
+    if kind == "share":
+        item = get_page_object_or_404(_normalized_inbox_queryset(user), id=share_id)
+        return _build_normalized_item(item)
     if kind == "dailyplan":
         share = get_page_object_or_404(
             _dailyplan_share_queryset(user),
@@ -724,6 +857,9 @@ def get_inbox_item_or_404(user, *, kind: str, share_id: int):
 
 
 def get_sent_inbox_item_or_404(user, *, kind: str, share_id: int):
+    if kind == "share":
+        resource = get_page_object_or_404(_normalized_sent_queryset(user), id=share_id)
+        return _build_normalized_sent_item(resource)
     if kind == "dailyplan":
         share = get_page_object_or_404(
             _dailyplan_share_sent_queryset(user),
@@ -756,6 +892,8 @@ def get_sent_inbox_item_or_404(user, *, kind: str, share_id: int):
 
 
 def get_inbox_share_or_404(user, *, kind: str, share_id: int):
+    if kind == "share":
+        return get_page_object_or_404(_normalized_inbox_queryset(user), id=share_id)
     if kind == "dailyplan":
         return get_page_object_or_404(
             _dailyplan_share_queryset(user),
@@ -783,6 +921,8 @@ def get_inbox_share_or_404(user, *, kind: str, share_id: int):
     raise ValueError("unsupported_inbox_kind")
 
 def get_sent_inbox_share_or_404(user, *, kind: str, share_id: int):
+    if kind == "share":
+        return get_page_object_or_404(_normalized_sent_queryset(user), id=share_id)
     if kind == "dailyplan":
         return get_page_object_or_404(
             _dailyplan_share_sent_queryset(user),
@@ -808,4 +948,3 @@ def get_sent_inbox_share_or_404(user, *, kind: str, share_id: int):
         )
 
     raise ValueError("unsupported_inbox_kind")
-
