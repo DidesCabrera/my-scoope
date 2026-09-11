@@ -25,6 +25,7 @@ matriz declarada.
 | AI Nutrition Flow | `ai_intake` | Brief conversacional, historial, generación de propuestas e iteraciones sobre el motor. |
 | AI Integration | `ai_tools` | Contratos internos expuestos a API/MCP. Orquesta tools seguras sin ser dueño de reglas del motor. |
 | Proposal Review | `proposals` | Contratos, validadores y aplicadores del flujo revisar/aprobar/aplicar. |
+| Sharing | `sharing` | Recursos compartibles, snapshots inmutables, invitaciones, claims idempotentes y entrega a Inbox. |
 
 ## Matriz de dependencias permitidas
 
@@ -37,6 +38,7 @@ matriz declarada.
 | AI Nutrition Flow | Shared Kernel, Read Models, Domain Services, Nutrition Engine | El flujo conversacional puede leer contexto, reutilizar services y llamar al motor. El motor no debe importar el flujo de vuelta. |
 | AI Integration | Shared Kernel, Read Models, Domain Services, AI Nutrition Flow | El adapter application de API/MCP orquesta entrypoints seguros hacia lecturas, comandos y casos de uso IA, pero no importa internals del motor directamente. |
 | Proposal Review | Shared Kernel, Domain Services | Reutiliza payload contracts y comandos de creación sin depender del chat ni de tools IA/MCP. |
+| Sharing | Shared Kernel, Read Models | Construye su ciclo de vida sobre contratos y lecturas estables, sin depender de comandos legacy ni adaptadores de canal. |
 
 Esta matriz está declarada como `APPLICATION_CONTEXT_DEPENDENCY_POLICIES`. Si una
 nueva importación cruza contextos fuera de esta política, los tests fallan.
