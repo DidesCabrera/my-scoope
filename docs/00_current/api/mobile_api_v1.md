@@ -157,6 +157,12 @@ SHR03 adds `POST /shares/daily-plans/{dailyplan_id}` and
 DailyPlan snapshot with no account or internal object identifiers. Revocation is
 owner-only and does not mutate the source DailyPlan.
 
+SHR06 adds public snapshot retrieval at `GET /shares/{public_id}`, explicit
+authenticated `POST /shares/{public_id}/claims`, and normalized Inbox list,
+state and save endpoints below `/shares/inbox`. The app uses the public read before
+authentication, then preserves the internal share route through OAuth, disclosures
+and onboarding before any claim write.
+
 MCE04 adds supported-kind metadata and owner-scoped selectable options through
 `GET /comparisons/metadata` and `GET /comparisons/options/{kind}`. Dynamic
 option rows carry the canonical entity-card projection: identity, structural

@@ -1,4 +1,4 @@
-import { Redirect, useRouter } from "expo-router";
+import { type Href, Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
@@ -7,10 +7,13 @@ import type { OnboardingInput, ProfileData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { AppHeader, Button, Card, ChoiceRow, Field, InlineNotice, Screen, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
+import { internalHref } from "@/navigation/internal-href";
 
 type Sex = "male" | "female";
 
 export default function OnboardingScreen() {
+  const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
+  const returnHref = internalHref(returnTo);
   const router = useRouter();
   const { status, profile, apiRequest, refreshProfile } = useSession();
   const [birthDate, setBirthDate] = useState("");
@@ -20,9 +23,9 @@ export default function OnboardingScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (status === "anonymous") return <Redirect href="/login" />;
-  if (profile?.review_disclosure_required) return <Redirect href="./disclosures" />;
-  if (profile?.onboarding_completed) return <Redirect href="/today" />;
+  if (status === "anonymous") return <Redirect href={{ pathname: "/login", params: returnHref ? { returnTo: String(returnHref) } : {} }} />;
+  if (profile?.review_disclosure_required) return <Redirect href={{ pathname: "/disclosures", params: returnHref ? { returnTo: String(returnHref) } : {} }} />;
+  if (profile?.onboarding_completed) return <Redirect href={returnHref ?? ("/today" as Href)} />;
 
   async function submit() {
     const payload: OnboardingInput = {
@@ -39,7 +42,7 @@ export default function OnboardingScreen() {
         body: JSON.stringify(payload),
       });
       await refreshProfile();
-      router.replace("/today");
+      router.replace(returnHref ?? ("/today" as Href));
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {

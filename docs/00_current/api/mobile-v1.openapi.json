@@ -6110,6 +6110,74 @@
         "title": "ProposalSummaryData",
         "type": "object"
       },
+      "PublicShareResourceData": {
+        "properties": {
+          "claim_policy": {
+            "enum": [
+              "none",
+              "single",
+              "multiple"
+            ],
+            "title": "Claim Policy",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "snapshot": {
+            "additionalProperties": true,
+            "title": "Snapshot",
+            "type": "object"
+          },
+          "subject_type": {
+            "enum": [
+              "daily_plan",
+              "food",
+              "meal",
+              "program"
+            ],
+            "title": "Subject Type",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "subject_type",
+          "title",
+          "claim_policy",
+          "snapshot"
+        ],
+        "title": "PublicShareResourceData",
+        "type": "object"
+      },
+      "PublicShareResourceEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PublicShareResourceData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "PublicShareResourceEnvelope",
+        "type": "object"
+      },
       "ReminderEventData": {
         "properties": {
           "calendarized_day_id": {
@@ -6671,6 +6739,47 @@
         "title": "SessionEnvelope",
         "type": "object"
       },
+      "ShareClaimData": {
+        "properties": {
+          "inbox_item_id": {
+            "title": "Inbox Item Id",
+            "type": "integer"
+          },
+          "resource_id": {
+            "format": "uuid",
+            "title": "Resource Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "resource_id",
+          "inbox_item_id"
+        ],
+        "title": "ShareClaimData",
+        "type": "object"
+      },
+      "ShareClaimEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ShareClaimData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "ShareClaimEnvelope",
+        "type": "object"
+      },
       "ShareResourceCreateInput": {
         "properties": {
           "claim_policy": {
@@ -6768,6 +6877,217 @@
           "data"
         ],
         "title": "ShareResourceEnvelope",
+        "type": "object"
+      },
+      "SharingInboxData": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SharingInboxItemData"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items",
+          "count"
+        ],
+        "title": "SharingInboxData",
+        "type": "object"
+      },
+      "SharingInboxEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SharingInboxData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "SharingInboxEnvelope",
+        "type": "object"
+      },
+      "SharingInboxItemData": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "is_favorite": {
+            "title": "Is Favorite",
+            "type": "boolean"
+          },
+          "is_read": {
+            "title": "Is Read",
+            "type": "boolean"
+          },
+          "is_saved": {
+            "title": "Is Saved",
+            "type": "boolean"
+          },
+          "public_url": {
+            "title": "Public Url",
+            "type": "string"
+          },
+          "resource_id": {
+            "format": "uuid",
+            "title": "Resource Id",
+            "type": "string"
+          },
+          "sender": {
+            "title": "Sender",
+            "type": "string"
+          },
+          "subject_type": {
+            "enum": [
+              "daily_plan",
+              "food",
+              "meal",
+              "program"
+            ],
+            "title": "Subject Type",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "resource_id",
+          "subject_type",
+          "title",
+          "sender",
+          "public_url",
+          "is_read",
+          "is_favorite",
+          "is_saved",
+          "created_at"
+        ],
+        "title": "SharingInboxItemData",
+        "type": "object"
+      },
+      "SharingInboxItemEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SharingInboxItemData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "SharingInboxItemEnvelope",
+        "type": "object"
+      },
+      "SharingInboxSaveData": {
+        "properties": {
+          "entity": {
+            "const": "dailyPlan",
+            "title": "Entity",
+            "type": "string"
+          },
+          "item_id": {
+            "title": "Item Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "entity",
+          "item_id"
+        ],
+        "title": "SharingInboxSaveData",
+        "type": "object"
+      },
+      "SharingInboxSaveEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SharingInboxSaveData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "SharingInboxSaveEnvelope",
+        "type": "object"
+      },
+      "SharingInboxUpdateInput": {
+        "properties": {
+          "dismissed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dismissed"
+          },
+          "is_favorite": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Favorite"
+          },
+          "is_read": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Read"
+          }
+        },
+        "title": "SharingInboxUpdateInput",
         "type": "object"
       },
       "SubscriptionData": {
@@ -13465,6 +13785,198 @@
         "summary": "Create Dailyplan Share"
       }
     },
+    "/api/v1/shares/inbox": {
+      "get": {
+        "operationId": "mobile_api_sharing_inbox",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SharingInboxEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Sharing Inbox"
+      }
+    },
+    "/api/v1/shares/inbox/{item_id}": {
+      "patch": {
+        "operationId": "mobile_api_update_sharing_inbox_item",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "title": "Item Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SharingInboxUpdateInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SharingInboxItemEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Update Sharing Inbox Item"
+      }
+    },
+    "/api/v1/shares/inbox/{item_id}/save": {
+      "post": {
+        "operationId": "mobile_api_save_sharing_inbox_item",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "title": "Item Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SharingInboxSaveEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Save Sharing Inbox Item"
+      }
+    },
     "/api/v1/shares/{public_id}": {
       "delete": {
         "operationId": "mobile_api_revoke_share_resource",
@@ -13528,6 +14040,119 @@
           }
         ],
         "summary": "Revoke Share"
+      },
+      "get": {
+        "operationId": "mobile_api_public_share_resource",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "public_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Public Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicShareResourceEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Public Share Resource"
+      }
+    },
+    "/api/v1/shares/{public_id}/claims": {
+      "post": {
+        "operationId": "mobile_api_claim_share_resource",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "public_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Public Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareClaimEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Claim Share"
       }
     },
     "/api/v1/subscriptions": {

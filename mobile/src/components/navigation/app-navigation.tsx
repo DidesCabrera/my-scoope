@@ -8,6 +8,7 @@ import {
   ClipboardCheck,
   FileCheck,
   House,
+  Inbox as InboxIcon,
   LogOut,
   PanelRight,
   MoreHorizontal,
@@ -65,6 +66,7 @@ const productAreaIcons: Record<ProductAreaKey, LucideIcon> = {
   assistant: Sparkles,
   comparator: Scale,
   home: House,
+  inbox: InboxIcon,
   program: CalendarClock,
 };
 
@@ -145,6 +147,8 @@ function routeHeader(pathname: string): { icon: LucideIcon; title: string } {
   if (pathname === "/review") return { icon: TrendingUp, title: "Revisión de progreso" };
   if (pathname === "/revision") return { icon: ClipboardCheck, title: "Revisar ajuste" };
   if (pathname === "/reminders") return { icon: Bell, title: "Recordatorios" };
+  if (pathname === "/inbox") return { icon: InboxIcon, title: "Inbox" };
+  if (pathname.startsWith("/share/")) return { icon: InboxIcon, title: "Plan compartido" };
   if (pathname === "/subscription") return { icon: WalletCards, title: "Mi suscripción" };
   if (pathname === "/account") return { icon: UserRound, title: "Mi cuenta" };
   if (pathname === "/onboarding") return { icon: UserRound, title: "Tu ficha" };

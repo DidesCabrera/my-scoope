@@ -30,6 +30,11 @@ export function userFacingError(error: unknown): string {
       nutrition_label_scan_rate_limited: "Has digitalizado varias etiquetas seguidas. Espera un momento o ingrésala manualmente.",
       request_validation_failed: "Revisa los datos ingresados e inténtalo nuevamente.",
       saved_comparison_not_found: "Esta comparación ya no está disponible o no pertenece a tu cuenta.",
+      share_resource_already_claimed: "Este enlace ya fue agregado por otra persona.",
+      share_claims_disabled: "Este enlace es sólo de lectura.",
+      share_resource_expired: "Este enlace compartido venció.",
+      share_resource_not_active: "Este enlace compartido fue revocado.",
+      sharing_inbox_item_not_found: "Este elemento ya no está disponible en tu Inbox.",
     };
     if (messages[error.code]) return messages[error.code];
     if (error.status === 403) return "Tu cuenta no tiene permiso para realizar esta acción.";

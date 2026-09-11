@@ -21,6 +21,33 @@ def _number(value) -> float:
 
 
 @transaction.atomic
+def update_inbox_item(
+    *,
+    inbox_item: InboxItem,
+    actor,
+    is_read: bool | None = None,
+    is_favorite: bool | None = None,
+    dismissed: bool | None = None,
+) -> InboxItem:
+    item = InboxItem.objects.select_for_update().get(pk=inbox_item.pk)
+    if item.owner_id != actor.id:
+        raise ShareUnavailable("share_inbox_item_not_owned")
+    now = timezone.now()
+    update_fields = ["updated_at"]
+    if is_read is not None:
+        item.read_at = now if is_read else None
+        update_fields.append("read_at")
+    if is_favorite is not None:
+        item.is_favorite = is_favorite
+        update_fields.append("is_favorite")
+    if dismissed is not None:
+        item.dismissed_at = now if dismissed else None
+        update_fields.append("dismissed_at")
+    item.save(update_fields=update_fields)
+    return item
+
+
+@transaction.atomic
 def save_dailyplan_inbox_item(*, inbox_item: InboxItem, actor) -> DailyPlan:
     item = InboxItem.objects.select_for_update().select_related("resource").get(pk=inbox_item.pk)
     if item.owner_id != actor.id:

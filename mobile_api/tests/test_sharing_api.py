@@ -1,7 +1,8 @@
 from django.contrib.auth.models import User
-from django.test import override_settings
+from django.test import Client, override_settings
 
 from mobile_api.tests.base import AuthenticatedMobileAPITestCase
+from notas.application.sharing.dailyplans import create_dailyplan_share_resource
 from notas.domain.models import DailyPlan, ShareResource
 
 
@@ -22,7 +23,7 @@ class MobileAPISharingTests(AuthenticatedMobileAPITestCase):
         self.assertEqual(payload["subject_type"], "daily_plan")
         self.assertEqual(payload["claim_policy"], "multiple")
         self.assertEqual(payload["status"], "active")
-        self.assertEqual(payload["public_url"], f"http://testserver/s/{payload['id']}")
+        self.assertEqual(payload["public_url"], f"http://testserver/s/{payload['id']}/")
 
         revoked = self.client.delete(f"/api/v1/shares/{payload['id']}")
         self.assertEqual(revoked.status_code, 200)
@@ -51,3 +52,39 @@ class MobileAPISharingTests(AuthenticatedMobileAPITestCase):
         self.assertEqual(revoke_response.status_code, 404)
         foreign_resource.refresh_from_db()
         self.assertEqual(foreign_resource.status, ShareResource.Status.ACTIVE)
+
+    def test_public_preview_claim_and_mobile_inbox_are_one_idempotent_flow(self):
+        sender = User.objects.create_user("mobile-sharing-sender", first_name="Ana")
+        source = DailyPlan.objects.create(name="Plan recibido", created_by=sender, is_draft=False)
+        resource = create_dailyplan_share_resource(sender=sender, dailyplan_id=source.id).resource
+
+        public_response = Client().get(f"/api/v1/shares/{resource.public_id}")
+        first_claim = self.client.post(f"/api/v1/shares/{resource.public_id}/claims")
+        second_claim = self.client.post(f"/api/v1/shares/{resource.public_id}/claims")
+        inbox = self.client.get("/api/v1/shares/inbox")
+
+        self.assertEqual(public_response.status_code, 200)
+        self.assertEqual(public_response.json()["data"]["title"], "Plan recibido")
+        self.assertEqual(first_claim.status_code, 200)
+        self.assertEqual(second_claim.json()["data"], first_claim.json()["data"])
+        self.assertEqual(inbox.json()["data"]["count"], 1)
+        item = inbox.json()["data"]["items"][0]
+        self.assertEqual(item["sender"], "Ana")
+
+        updated = self.client.patch(
+            f"/api/v1/shares/inbox/{item['id']}",
+            data={"is_read": True, "is_favorite": True},
+            content_type="application/json",
+        )
+        saved = self.client.post(f"/api/v1/shares/inbox/{item['id']}/save")
+        dismissed = self.client.patch(
+            f"/api/v1/shares/inbox/{item['id']}",
+            data={"dismissed": True},
+            content_type="application/json",
+        )
+
+        self.assertTrue(updated.json()["data"]["is_read"])
+        self.assertTrue(updated.json()["data"]["is_favorite"])
+        self.assertEqual(saved.json()["data"]["entity"], "dailyPlan")
+        self.assertEqual(dismissed.status_code, 200)
+        self.assertEqual(self.client.get("/api/v1/shares/inbox").json()["data"]["count"], 0)

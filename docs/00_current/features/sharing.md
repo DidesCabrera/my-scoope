@@ -40,3 +40,13 @@ Other legacy entity types remain on their compatibility path until their snapsho
 adapters exist. A recipient can save a claimed DailyPlan as one detached,
 recipient-owned library copy; revoking the public URL does not erase an already
 claimed private Inbox snapshot.
+
+## Mobile channels
+
+DailyPlan actions in the native app now create the same portable resource for both
+the operating-system Share Sheet and explicit copy-link. Other entity types retain
+their email compatibility form until they receive snapshot adapters. Public pages
+offer the registered `myscoope://share/<id>` deep link; the native share screen can
+render before login and preserves its destination through OAuth, disclosures and
+onboarding. Native Inbox lists normalized claims and supports read, favorite,
+dismiss and idempotent save-to-library actions.
