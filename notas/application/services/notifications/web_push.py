@@ -73,6 +73,7 @@ def build_daily_plan_push_payload(*, calendarized_day_id: int) -> dict:
         "title": "MyScoope",
         "body": "Tu plan diario está listo",
         "url": f"/app/calendarization/days/{calendarized_day_id}/",
+        "mobile_url": f"/program/days/{calendarized_day_id}",
         "tag": f"myscoope-calendarized-day-{calendarized_day_id}",
     }
 

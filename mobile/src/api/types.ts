@@ -153,6 +153,7 @@ export type ReminderSettings = {
   daily_notifications_enabled: boolean;
   meal_notifications_enabled: boolean;
   upcoming: {
+    calendarized_day_id: number;
     event_key: string;
     event_type: "daily_plan" | "meal_reminder";
     meal_key: string;

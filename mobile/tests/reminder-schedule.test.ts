@@ -23,6 +23,7 @@ function reminderSettings(upcoming: ReminderSettings["upcoming"]): ReminderSetti
 
 function event(eventKey: string, scheduledFor: string): ReminderSettings["upcoming"][number] {
   return {
+    calendarized_day_id: 42,
     event_key: eventKey,
     event_type: "meal_reminder",
     meal_key: eventKey,

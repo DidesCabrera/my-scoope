@@ -3,11 +3,13 @@ from __future__ import annotations
 from copy import deepcopy
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
+from urllib.parse import quote
 from uuid import uuid4
 
 from django.conf import settings
 from django.db import IntegrityError, connection, transaction
 from django.db.models import Q
+from django.urls import reverse
 from django.utils import timezone
 
 from notas.application.services.calendarization.scheduling import (
@@ -749,6 +751,14 @@ def _push_payload(event: ScheduledNotificationEvent) -> dict:
     if event.event_type == ScheduledNotificationEvent.TYPE_MEAL_REMINDER:
         payload["body"] = f"Es hora de {_meal_label(event)}"
         payload["tag"] = f"myscoope-meal-{event.id}"
+        payload["url"] = reverse(
+            "calendarization_meal_detail",
+            args=[event.calendarized_day_id, event.meal_snapshot_key],
+        )
+        payload["mobile_url"] = (
+            f"/program/days/{event.calendarized_day_id}/meals/"
+            f"{quote(event.meal_snapshot_key, safe='')}"
+        )
     return payload
 
 

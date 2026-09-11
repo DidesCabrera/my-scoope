@@ -6112,6 +6112,10 @@
       },
       "ReminderEventData": {
         "properties": {
+          "calendarized_day_id": {
+            "title": "Calendarized Day Id",
+            "type": "integer"
+          },
           "event_key": {
             "title": "Event Key",
             "type": "string"
@@ -6145,6 +6149,7 @@
           }
         },
         "required": [
+          "calendarized_day_id",
           "event_key",
           "event_type",
           "meal_key",

@@ -11,6 +11,7 @@ import { ComparatorSelectionProvider } from "@/components/comparisons/comparator
 import { AppNavigationHeader, AppNavigationProvider } from "@/components/navigation/app-navigation";
 import { tokens } from "@/design/tokens";
 import { clearNativeReminders, refreshNativeReminders } from "@/notifications/native-reminders";
+import { notificationRoute } from "@/notifications/notification-navigation";
 import "@/observability/sentry";
 
 function AuthenticatedRouteGate() {
@@ -59,15 +60,16 @@ function RootLayout() {
 
   useEffect(() => {
     if (Platform.OS === "web") return;
-    const openToday = () => {
-      router.push("/today");
+    const openNotification = (notification: Notifications.Notification) => {
+      router.push(notificationRoute(notification.request.content.data));
     };
-    if (Notifications.getLastNotificationResponse()?.notification) {
-      openToday();
+    const lastResponse = Notifications.getLastNotificationResponse();
+    if (lastResponse?.notification) {
+      openNotification(lastResponse.notification);
       Notifications.clearLastNotificationResponse();
     }
-    const subscription = Notifications.addNotificationResponseReceivedListener(() => {
-      openToday();
+    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      openNotification(response.notification);
       Notifications.clearLastNotificationResponse();
     });
     return () => subscription.remove();
