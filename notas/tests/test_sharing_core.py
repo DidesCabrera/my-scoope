@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from allauth.account.models import EmailAddress
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.utils import timezone
@@ -55,6 +56,28 @@ class SharingCoreTests(TestCase):
                 invitation=invitation,
             )
 
+    def test_invitation_requires_a_verified_matching_email(self):
+        invitation = ShareInvitation.objects.create(
+            resource=self.resource,
+            recipient_email=self.recipient.email,
+        )
+        with self.assertRaisesMessage(ShareUnavailable, "share_invitation_email_unverified"):
+            claim_share_resource(
+                resource=self.resource,
+                user=self.recipient,
+                source=ShareClaim.Source.EMAIL,
+                invitation=invitation,
+            )
+
+        EmailAddress.objects.create(user=self.recipient, email=self.recipient.email, verified=True, primary=True)
+        claim, _ = claim_share_resource(
+            resource=self.resource,
+            user=self.recipient,
+            source=ShareClaim.Source.EMAIL,
+            invitation=invitation,
+        )
+        self.assertEqual(claim.invitation, invitation)
+
     def test_expired_or_revoked_resource_cannot_be_claimed(self):
         self.resource.expires_at = timezone.now() - timedelta(seconds=1)
         self.resource.save(update_fields=["expires_at"])
@@ -76,3 +99,7 @@ class SharingCoreTests(TestCase):
     def test_only_sender_can_revoke(self):
         with self.assertRaisesMessage(ShareUnavailable, "share_resource_not_owned"):
             revoke_share_resource(resource=self.resource, actor=self.recipient)
+
+    def test_claim_source_must_be_part_of_the_stable_contract(self):
+        with self.assertRaisesMessage(ShareUnavailable, "share_claim_source_invalid"):
+            claim_share_resource(resource=self.resource, user=self.recipient, source="unknown")

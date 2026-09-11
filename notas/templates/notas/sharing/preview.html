@@ -1,0 +1,74 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="description" content="Plan diario compartido mediante MyScoope">
+  <title>{{ snapshot.subject.title }} · MyScoope</title>
+  <link rel="stylesheet" href="{% static 'notas/css/sharing_preview.css' %}">
+</head>
+<body>
+  <main class="share-shell">
+    <header class="share-brand">
+      <a href="/" aria-label="Ir a MyScoope">
+        <img src="{% static 'img/logo-white.png' %}" alt="MyScoope">
+      </a>
+      <span>Plan compartido</span>
+    </header>
+
+    <article class="share-card">
+      <p class="share-card__eyebrow">Plan diario</p>
+      <h1>{{ snapshot.subject.title }}</h1>
+      <strong class="share-card__calories">{{ snapshot.nutrition.calories|floatformat:0 }} kcal</strong>
+      <dl class="share-card__macros">
+        <div><dt>Proteína</dt><dd>{{ snapshot.nutrition.protein_grams|floatformat:1 }} g</dd></div>
+        <div><dt>Carbos</dt><dd>{{ snapshot.nutrition.carbs_grams|floatformat:1 }} g</dd></div>
+        <div><dt>Grasas</dt><dd>{{ snapshot.nutrition.fat_grams|floatformat:1 }} g</dd></div>
+      </dl>
+      <p class="share-card__count">{{ snapshot.summary.meal_count }} comidas · {{ snapshot.summary.food_count }} alimentos</p>
+    </article>
+
+    <section class="share-meals" aria-labelledby="meal-heading">
+      <h2 id="meal-heading">Comidas</h2>
+      {% for meal in snapshot.meals %}
+        <article class="share-meal">
+          <div>
+            <h3>{{ meal.name }}</h3>
+            {% if meal.time %}<time>{{ meal.time }}</time>{% endif %}
+          </div>
+          <strong>{{ meal.nutrition.calories|floatformat:0 }} kcal</strong>
+          <ul>
+            {% for food in meal.foods %}
+              <li><span>{{ food.name }}</span><span>{{ food.quantity_grams|floatformat:0 }} g</span></li>
+            {% empty %}
+              <li>Sin alimentos registrados</li>
+            {% endfor %}
+          </ul>
+        </article>
+      {% empty %}
+        <p>Este plan no contiene comidas.</p>
+      {% endfor %}
+    </section>
+
+    <section class="share-action" aria-live="polite">
+      {% if already_claimed or request.GET.claimed %}
+        <p class="share-action__success">Este plan ya está en tu Inbox de MyScoope.</p>
+        <a class="share-button share-button--secondary" href="/app/inbox/">Ir al Inbox</a>
+      {% elif resource.claim_policy == "none" %}
+        <p>Puedes consultar este plan desde este enlace mientras esté activo.</p>
+      {% else %}
+        {% if pending_claim %}<p>Sesión iniciada. Confirma para agregar el plan a tu Inbox.</p>{% endif %}
+        {% if claim_error %}<p class="share-action__error">No fue posible agregar este plan.</p>{% endif %}
+        <form method="post" action="{% url 'share_claim' public_id=resource.public_id %}">
+          {% csrf_token %}
+          <button class="share-button" type="submit">
+            {% if pending_claim %}Confirmar y agregar{% else %}Agregar a MyScoope{% endif %}
+          </button>
+        </form>
+      {% endif %}
+    </section>
+  </main>
+</body>
+</html>

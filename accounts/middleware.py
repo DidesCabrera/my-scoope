@@ -19,6 +19,7 @@ class NutritionOnboardingRequiredMiddleware:
         "/serviceworker.js",
         "/.well-known/",
         "/oauth/",
+        "/s/",
     )
 
     def __init__(self, get_response):

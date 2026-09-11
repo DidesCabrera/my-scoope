@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from allauth.account.models import EmailAddress
 from django.db import transaction
 from django.utils import timezone
 
@@ -19,6 +20,13 @@ def _active_resource(resource: ShareResource, *, now=None) -> ShareResource:
     if resource.expires_at and resource.expires_at <= current_time:
         raise ShareUnavailable("share_resource_expired")
     return resource
+
+
+def get_share_resource_for_preview(*, public_id, now=None) -> ShareResource:
+    resource = ShareResource.objects.filter(public_id=public_id).first()
+    if resource is None:
+        raise ShareUnavailable("share_resource_not_found")
+    return _active_resource(resource, now=now)
 
 
 @transaction.atomic
@@ -44,6 +52,8 @@ def claim_share_resource(
     invitation: ShareInvitation | None = None,
     now=None,
 ) -> tuple[ShareClaim, InboxItem]:
+    if source not in ShareClaim.Source.values:
+        raise ShareUnavailable("share_claim_source_invalid")
     locked = ShareResource.objects.select_for_update().get(pk=resource.pk)
     _active_resource(locked, now=now)
     existing = ShareClaim.objects.filter(resource=locked, user=user).first()
@@ -59,6 +69,12 @@ def claim_share_resource(
             raise ShareUnavailable("share_invitation_not_active")
         if (user.email or "").strip().casefold() != invitation.recipient_email.strip().casefold():
             raise ShareUnavailable("share_invitation_recipient_mismatch")
+        if not EmailAddress.objects.filter(
+            user=user,
+            email__iexact=invitation.recipient_email,
+            verified=True,
+        ).exists():
+            raise ShareUnavailable("share_invitation_email_unverified")
     claim = ShareClaim.objects.create(
         resource=locked,
         user=user,
