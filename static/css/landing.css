@@ -329,8 +329,6 @@
     }
   }
 
-
-
   .hero::after {
     content: "";
     position: absolute;
@@ -1900,7 +1898,6 @@
   }
 }
 
-
 /* =========================================================
    Landing visual corrections
    ========================================================= */
@@ -1976,7 +1973,6 @@
   border: 0;
   background: #000000;
 }
-
 
 /* =========================================================
    Landing refinements: header trigger, entity colors, metrics
@@ -2193,7 +2189,6 @@
   }
 }
 
-
 /* =========================================================
    Landing additions: parallax bands and visibility section
    ========================================================= */
@@ -2300,7 +2295,6 @@
     inset: -14%;
   }
 }
-
 
 /* =========================================================
    Landing corrections: section color, coordinated CTA parallax
