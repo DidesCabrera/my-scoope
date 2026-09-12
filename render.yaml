@@ -104,6 +104,18 @@ services:
         sync: false
       - key: BILLING_APPLE_ISSUER_ID
         sync: false
+      - key: BILLING_APPLE_NOTIFICATIONS_ENABLED
+        value: "false"
+      - key: BILLING_APPLE_PURCHASES_ENABLED
+        value: "false"
+      - key: BILLING_APPLE_ENVIRONMENT
+        value: sandbox
+      - key: BILLING_APPLE_BUNDLE_ID
+        value: com.myscoope.app
+      - key: BILLING_APPLE_APP_ID
+        value: "6804048394"
+      - key: BILLING_APPLE_ONLINE_CHECKS
+        value: "true"
       - key: BILLING_OPENFACTURA_API_KEY
         sync: false
       - key: MYSCOOPE_APNS_ENABLED
