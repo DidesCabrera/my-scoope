@@ -40,7 +40,7 @@ services:
       - key: BILLING_PADDLE_ENVIRONMENT
         value: sandbox
       - key: BILLING_PADDLE_CHECKOUT_ENABLED
-        value: "false"
+        value: "true"
       - key: BILLING_PADDLE_WEBHOOK_ENABLED
         value: "true"
       - key: BILLING_PADDLE_API_BASE_URL
