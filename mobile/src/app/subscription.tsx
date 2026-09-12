@@ -11,7 +11,8 @@ import { tokens } from "@/design/tokens";
 
 const providerLabels: Record<string, string> = {
   apple_app_store: "App Store",
-  mercado_pago: "Mercado Pago",
+  google_play: "Google Play",
+  paddle: "Paddle",
 };
 
 export default function SubscriptionScreen() {
@@ -148,6 +149,11 @@ export default function SubscriptionScreen() {
         </View>
       </Card>
 
+      <Card muted>
+        <SectionTitle title="Tu canal de compra" />
+        <Text style={textStyles.muted}>Tu acceso funciona con la misma cuenta en todas las plataformas. Las cancelaciones y reembolsos se administran en el canal donde realizaste la compra.</Text>
+      </Card>
+
       {!overview?.eligible ? (
         <Card muted>
           <SectionTitle title="Suscripción de consumidor" />
@@ -203,7 +209,7 @@ export default function SubscriptionScreen() {
           <SectionTitle title="Canales reconocidos" />
           {overview.evidence.map((item, index) => (
             <View key={`${item.provider}-${index}`} style={styles.row}>
-              <Text style={textStyles.body}>{providerLabels[item.provider] ?? item.provider}</Text>
+              <Text style={textStyles.body}>{providerLabels[item.provider] ?? "Proveedor de pago"}</Text>
               <Text style={textStyles.caption}>{item.status}</Text>
             </View>
           ))}

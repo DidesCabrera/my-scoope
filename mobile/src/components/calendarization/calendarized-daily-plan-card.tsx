@@ -1,10 +1,11 @@
 import { type Href, useRouter } from "expo-router";
 import { ChevronRight } from "lucide-react-native";
+import { StyleSheet, View } from "react-native";
 
 import type { DailyPlanSnapshot, MealExecutionItem } from "@/api/types";
 import { NutritionEntityCard } from "@/components/nutrition";
 import { MealPanels } from "@/components/panels";
-import { EntityCardAction } from "@/components/ui";
+import { Button, EntityCardAction } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { snapshotCalories, snapshotMacroDistribution, snapshotMealPanelItem } from "./presentation-adapters";
 
@@ -13,12 +14,13 @@ type Props = {
   dateLabel: string;
   eyebrow: string;
   mealExecution?: MealExecutionItem[];
+  onAddMeal?: () => void;
   planName?: string;
   position?: { dayNumber: number; weekNumber: number };
   snapshot: DailyPlanSnapshot;
 };
 
-export function CalendarizedDailyPlanCard({ dayId, dateLabel, eyebrow, mealExecution = [], planName, position, snapshot }: Props) {
+export function CalendarizedDailyPlanCard({ dayId, dateLabel, eyebrow, mealExecution = [], onAddMeal, planName, position, snapshot }: Props) {
   const router = useRouter();
   const meals = snapshot.meals ?? [];
   const totals = snapshot.totals;
@@ -54,6 +56,11 @@ export function CalendarizedDailyPlanCard({ dayId, dateLabel, eyebrow, mealExecu
           } as Href);
         }}
       />
+      {onAddMeal ? <View style={styles.addMealAction}><Button bleed label="+ Agregar Comida" onPress={onAddMeal} /></View> : null}
     </NutritionEntityCard>
   );
 }
+
+const styles = StyleSheet.create({
+  addMealAction: { marginTop: tokens.spacing.md },
+});

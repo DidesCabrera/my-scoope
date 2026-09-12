@@ -150,7 +150,7 @@ Este bridge vive en `notas` porque lee modelos operativos. `food_catalog` sigue 
 | Calendarization | `ProgramCalendarization`, `CalendarizedDay`, `CalendarizedMealExecution`, `CalendarizationMeasurementContext`, `CalendarizationReview`, `CalendarizationRevision` | Programa vivido: snapshots fechados, ejecución append-only, contexto de mediciones, revisiones y ajustes futuros auditables. |
 | Notification Delivery | `ScheduledNotificationEvent`, `WebPushSubscription`, `NotificationDelivery` | Eventos lógicos, dispositivos Web Push y entregas idempotentes. |
 | AI Proposals / Chat Assistant | `AiNutritionChat`, `NutritionProposal`, `NutritionProposalAuditEvent` | Chat IA, AI Assistant sobre chat existente, propuestas revisables y auditoría. |
-| Sharing | `DailyPlanShare`, `ProgramShare`, `MealShare`, `FoodShare`, `DailyPlanMealShare` | Registros de Inbox/share entre usuarios. |
+| Sharing | `ShareResource`, `ShareInvitation`, `ShareClaim`, `InboxItem` | Snapshot portable, distribución dirigida, claim explícito y estado de Inbox. Los cinco modelos `*Share` anteriores son almacenamiento histórico de rollback. |
 | Comparisons | `SavedComparison` | Comparaciones guardadas y snapshots. |
 
 ## Matriz de relaciones permitidas
@@ -166,7 +166,7 @@ Este bridge vive en `notas` porque lee modelos operativos. `food_catalog` sigue 
 | Calendarization | Identity & User State, Programs | La agenda conserva una referencia opcional al programa fuente, renderiza snapshots autocontenidos y contextualiza `WeightLog` sin tomar su propiedad. |
 | Notification Delivery | Calendarization | Los eventos y deliveries pertenecen a una agenda/día calendarizado, no al programa editable. |
 | AI Proposals | Daily Plans | Las propuestas pueden referenciar el DailyPlan aplicado/generado. |
-| Sharing | Operational Food Snapshot, Meals, Daily Plans, Programs | Los share records apuntan a la entidad compartida. |
+| Sharing | Operational Food Snapshot, Meals, Daily Plans, Programs | Los adaptadores leen una entidad propia al crear el snapshot; las lecturas públicas y de Inbox usan exclusivamente ese snapshot. |
 | Comparisons | — | Persisten payloads autocontenidos, no relaciones ORM a entidades comparadas. |
 
 Esta matriz está declarada como `DOMAIN_MODEL_DEPENDENCY_POLICIES`. Si un modelo

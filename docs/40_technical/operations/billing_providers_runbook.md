@@ -1,13 +1,37 @@
 # Billing providers runbook
 
 Status: current
-Last updated: 2026-08-05
+Last updated: 2026-09-11
 
 ## Safe default
 
-Keep `BILLING_MERCADOPAGO_CHECKOUT_ENABLED`, `BILLING_MERCADOPAGO_WEBHOOK_ENABLED` and
+Keep `BILLING_PADDLE_CHECKOUT_ENABLED`, `BILLING_PADDLE_WEBHOOK_ENABLED`,
+`BILLING_MERCADOPAGO_CHECKOUT_ENABLED`, `BILLING_MERCADOPAGO_WEBHOOK_ENABLED` and
 `BILLING_APPLE_PURCHASES_ENABLED`, `BILLING_APPLE_NOTIFICATIONS_ENABLED` and
 `BILLING_OPENFACTURA_ENABLED` false. This preserves all history while stopping new traffic.
+
+## Paddle sandbox activation
+
+1. Run `.venv/bin/python manage.py seed_billing_catalog`. This creates only missing
+   canonical offers; it reports drift and never overwrites an existing price.
+2. In Paddle sandbox, create Basic and Pro products with monthly and annual prices.
+   Free remains an internal plan and does not need a Paddle product.
+3. Map the returned IDs with `configure_paddle_catalog --environment sandbox`
+   and its four `pro_`/`pri_` arguments. Mapping a replacement price deactivates the
+   former mapping but does not delete or rewrite it.
+4. Configure a sandbox client-side token, API key, notification destination secret,
+   sandbox API URL and an HTTPS staging base URL.
+5. Register `/billing/webhooks/paddle/` for subscription and transaction lifecycle
+   notifications. Verify invalid signatures, stale timestamps, duplicate deliveries,
+   unknown prices and mismatched signed checkout references.
+6. Enable webhooks first, then checkout. Complete Basic/Pro monthly/annual purchases
+   and exercise renewal, past-due, cancellation, hosted customer-portal and refund
+   simulations. Confirm portal links are generated server-side and expire as expected.
+7. Confirm that access changes only from verified events and that Paddle payments do
+   not create OpenFactura tax-document jobs.
+
+Do not use live credentials or IDs in sandbox. The `BILLING_PADDLE_ENVIRONMENT`, client
+token and API URL must agree or the environment diagnostic fails closed.
 
 ## Mercado Pago activation
 

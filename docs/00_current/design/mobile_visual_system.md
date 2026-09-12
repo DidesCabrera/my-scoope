@@ -240,13 +240,14 @@ follows the page-card's content padding.
 
 The gallery token tab exposes `card.outerPadding`, `card.innerPadding` and
 `card.gap` alongside the spacing scale so card dimensions remain explicit.
-`layout.reducedInset` is 12 px. Every standard `Card` derives its horizontal
-expansion from the difference between that inset and `card.outerPadding`
-(currently -6 px per side), so cards sit 12 px from a standard 18 px container
-while headings and other direct content remain at 18 px. Pressable entity cards
-apply the same expansion to their touch target rather than only their visual
-surface. The canonical `PanelSurface` owns that same calculation for every
-panel subtype (food, meal, calories, macros, allocation and comparison).
+`layout.reducedInset` is 12 px. Every standard `Card` expands by the full
+`spacing.screen` gutter (currently -18 px per side), so its surface reaches both
+viewport edges while its content retains `card.outerPadding`. Pressable entity
+cards apply the same expansion to their touch target rather than only their
+visual surface. Shared section dividers use the same full-screen expansion.
+Other controls and the canonical `PanelSurface` retain the
+reduced-inset calculation (`layout.reducedInset - card.outerPadding`, currently
+-6 px per side) for panels, buttons, inputs, week-day grids and nested content.
 `EntityCardPanelSlot` only provides layout containment. Negative margins are
 owned by the card and panel primitives and must not be repeated manually in
 consuming views.

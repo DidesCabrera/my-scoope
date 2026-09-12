@@ -38,6 +38,9 @@ Esta carpeta contiene documentación vigente y de alta autoridad. Una IA o desar
     planes pagados, Mercado Pago, OpenFactura, webhooks, conciliación o DTE.
 29. `features/mobile_composition_pickers.md` cuando el trabajo toque los flujos
     nativos de agregar/reemplazar Food, Meal o DailyPlan y sus proyecciones.
+30. `features/sharing.md` y
+    `../40_technical/operations/sharing_operations_runbook.md` cuando el trabajo
+    toque enlaces compartidos, invitaciones, Inbox o su operación.
 
 ## Criterio
 

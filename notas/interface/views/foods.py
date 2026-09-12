@@ -1,6 +1,5 @@
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, JsonResponse
@@ -9,7 +8,7 @@ from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
-from email_delivery.services import deliver_share_invitation
+from core.rate_limits import limit_sharing_create
 from notas.application.queries.food_picker_queries import (
     get_food_picker_item_by_id,
     list_food_picker_items,
@@ -21,14 +20,10 @@ from notas.application.services.commands.food_commands import (
     delete_food,
     update_food,
 )
-from notas.application.services.commands.share_commands import (
-    accept_food_share,
-    create_food_share,
-)
-from notas.application.services.notifications.share_emails import build_share_invitation_email
-from notas.domain.models import Food, FoodShare
+from notas.domain.models import Food, ShareInvitation, ShareResource
 from notas.interface.forms.forms import FoodEditForm, FoodShareForm
 from notas.interface.routing.food import food_url
+from notas.interface.views.sharing_delivery import deliver_normalized_entity_invitation
 from notas.presentation.composition.viewmodel.food.detail_food_builder import build_food_detail_vm
 from notas.presentation.composition.viewmodel.food.edit_food_builder import build_edit_food_vm
 from notas.presentation.composition.viewmodel.food.list_foods_builder import build_food_list_vm
@@ -517,6 +512,7 @@ def foods_json(request):
 
 
 @login_required
+@limit_sharing_create
 def food_share(request, pk):
     food = get_object_or_404(Food, pk=pk, created_by=request.user, is_active=True)
 
@@ -530,34 +526,16 @@ def food_share(request, pk):
         share_subject = form.cleaned_data.get("subject", food.name)
         message = form.cleaned_data.get("message", "")
 
-        result = create_food_share(
-            sender=request.user,
+        _, _, delivery = deliver_normalized_entity_invitation(
+            request,
+            subject_type=ShareResource.SubjectType.FOOD,
+            subject_id=food.id,
             recipient_email=email,
-            food=food,
             subject=share_subject,
             message=message,
         )
-        share = result.share
 
-        email_subject, email_message = build_share_invitation_email(
-            request=request,
-            share=share,
-            kind="food",
-            item_name=food.name,
-            custom_subject=share_subject,
-            custom_message=message,
-        )
-
-        delivery = deliver_share_invitation(
-            share=share,
-            subject=email_subject,
-            message=email_message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-        )
-
-        if share.accepted_by_id:
-            messages.success(request, "Compartiste este alimento. Como el correo pertenece a una cuenta existente, ya está disponible en su Inbox.")
-        elif delivery.sent:
+        if delivery.sent:
             messages.success(request, "Compartiste este alimento. Enviamos el correo de invitación al destinatario.")
         elif delivery.reason == "duplicate_share":
             messages.success(request, "Este alimento ya estaba compartido. No reenviamos el correo para evitar duplicados.")
@@ -572,8 +550,6 @@ def food_share(request, pk):
     return render(request, "notas/foods/share.html", {"food": food, "form": form})
 
 
-@login_required
 def food_share_accept(request, token):
-    share = get_object_or_404(FoodShare, token=token)
-    accept_food_share(share=share, user=request.user)
-    return redirect("inbox_list")
+    invitation = get_object_or_404(ShareInvitation, public_id=token)
+    return redirect("share_invitation_preview", public_id=invitation.public_id)

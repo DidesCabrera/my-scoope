@@ -5,7 +5,7 @@ from django.db import transaction
 from billing.application.contracts import ProviderPaymentSnapshot, ProviderSubscriptionSnapshot
 from billing.application.services.projections import project_provider_subscription
 from billing.application.services.tax_documents import schedule_tax_document
-from billing.models import BillingPayment, ProviderSubscription, TaxDocument
+from billing.models import BillingPayment, PaymentProvider, ProviderSubscription, TaxDocument
 
 
 class UnknownBillingResource(LookupError):
@@ -66,7 +66,7 @@ def sync_provider_payment(snapshot: ProviderPaymentSnapshot) -> BillingPayment:
             "metadata": dict(snapshot.metadata or {}),
         },
     )
-    if payment.status == BillingPayment.Status.APPROVED:
+    if payment.status == BillingPayment.Status.APPROVED and payment.provider == PaymentProvider.MERCADO_PAGO:
         schedule_tax_document(
             payment=payment,
             request_payload={

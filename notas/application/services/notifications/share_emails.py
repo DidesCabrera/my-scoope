@@ -27,6 +27,7 @@ def build_share_invitation_email(
         "meal": "meal_share_accept",
         "food": "food_share_accept",
         "dpm": "dailyplanmeal_share_accept",
+        "program": "program_share_accept",
     }.get(kind)
 
     clean_subject = (custom_subject or getattr(share, "subject", "") or item_name).strip()
@@ -80,4 +81,56 @@ def build_share_invitation_email(
         "My Scoope",
     ])
 
+    return subject, "\n".join(message_lines)
+
+
+def build_normalized_share_invitation_email(*, request, invitation):
+    """Build transport content for the normalized invitation boundary."""
+    snapshot = invitation.resource.snapshot
+    item_name = snapshot.get("subject", {}).get("title", "Contenido compartido")
+    subject_type = invitation.resource.subject_type
+    kind_label = {
+        "daily_plan": "plan diario",
+        "food": "alimento",
+        "meal": "comida",
+        "program": "programa semanal",
+    }.get(subject_type, "contenido")
+    sender_name = invitation.resource.sender.username
+    preview_path = reverse(
+        "share_invitation_preview",
+        kwargs={"public_id": invitation.public_id},
+    )
+    preview_url = request.build_absolute_uri(preview_path)
+    signup_url = request.build_absolute_uri(
+        reverse("account_signup") + "?" + urlencode({"next": preview_path})
+    )
+    login_url = request.build_absolute_uri(
+        reverse("account_login") + "?" + urlencode({"next": preview_path})
+    )
+    subject = invitation.subject.strip() or item_name
+    message_lines = [
+        "Hola,",
+        "",
+        f"{sender_name} compartió este {kind_label} contigo en MyScoope:",
+        item_name,
+        "",
+    ]
+    if invitation.message.strip():
+        message_lines.extend(["Mensaje:", invitation.message.strip(), ""])
+    message_lines.extend(
+        [
+            "Revisa la vista previa y confirma si quieres agregarlo a tu Inbox:",
+            preview_url,
+            "",
+            "Si todavía no tienes cuenta, créala aquí y luego vuelve a la invitación:",
+            signup_url,
+            "",
+            "Si ya tienes cuenta, inicia sesión aquí:",
+            login_url,
+            "",
+            "Por seguridad, el correo verificado de tu cuenta debe coincidir con esta invitación.",
+            "",
+            "MyScoope",
+        ]
+    )
     return subject, "\n".join(message_lines)

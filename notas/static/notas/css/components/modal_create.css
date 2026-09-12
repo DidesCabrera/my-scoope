@@ -533,6 +533,23 @@
   max-width: 100%;
 }
 
+.share-form__hint {
+  margin: 0;
+  color: var(--color-text-muted, #8b96a7);
+  line-height: 1.45;
+}
+
+.share-form__link-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.share-form__link-row .entity-form__input {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
 .share-form__attachment .proposal-attachment__copy,
 .share-form__attachment .proposal-attachment__name {
   min-width: 0;
@@ -549,5 +566,10 @@
   .share-form__attachment-chip {
     flex: 1 1 auto;
     width: auto;
+  }
+
+  .share-form__link-row {
+    align-items: stretch;
+    flex-direction: column;
   }
 }

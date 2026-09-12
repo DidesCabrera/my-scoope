@@ -200,6 +200,7 @@ class ApplicationBoundedContextTests(TestCase):
         self.assertEqual(context_for_application_package("nutrition_engine").slug, "nutrition_engine")
         self.assertEqual(context_for_application_package("ai_tools").slug, "ai_integration")
         self.assertEqual(context_for_application_package("proposals").slug, "proposal_review")
+        self.assertEqual(context_for_application_package("sharing").slug, "sharing")
         self.assertIsNone(context_for_application_package("does_not_exist"))
 
     def test_context_dependency_policies_cover_all_contexts(self):
@@ -268,6 +269,20 @@ class ApplicationBoundedContextTests(TestCase):
             offenders,
             [],
             msg="Shared kernel packages should not depend on feature contexts.",
+        )
+
+    def test_sharing_context_does_not_depend_on_legacy_commands_or_channel_adapters(self):
+        self.assertEqual(
+            _import_offenders(
+                APPLICATION_ROOT / "sharing",
+                (
+                    "notas.application.services.commands",
+                    "notas.application.services.notifications",
+                    "notas.interface",
+                    "notas.presentation",
+                ),
+            ),
+            [],
         )
 
 

@@ -8,11 +8,19 @@ from mobile_api.calendarization_edits import (
     add_dailyplan_to_calendarized_day,
     preview_dailyplan_for_calendarized_day,
 )
+from mobile_api.calendarized_composition import (
+    commit_food_to_calendarized_meal,
+    commit_meal_to_calendarized_day,
+    preview_food_for_calendarized_meal,
+    preview_meal_for_calendarized_day,
+)
 from mobile_api.schema_domains.calendarization import CalendarizedDayDetailEnvelope
 from mobile_api.schema_domains.calendarization_edits import (
     CalendarizedDayPlanCommitInput,
     CalendarizedDayPlanPreviewInput,
+    CalendarizedFoodPickerInput,
     CalendarizedMealHourInput,
+    CalendarizedMealPickerInput,
     CalendarizedNameInput,
 )
 from mobile_api.schema_domains.composition import PickerCommitEnvelope
@@ -98,6 +106,84 @@ def calendarized_day_dailyplan_picker_commit(
             dailyplan_id=payload.dailyplan_id,
             idempotency_key=payload.idempotency_key,
             confirm_replacement=payload.confirm_replacement,
+        )
+    )
+
+
+@router.post(
+    "/program/days/{day_id}/meal-picker/preview",
+    operation_id="mobile_api_api_calendarized_day_meal_picker_preview",
+    auth=mobile_bearer,
+    response={200: PickerPreviewEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def calendarized_day_meal_picker_preview(request, day_id: int, payload: CalendarizedMealPickerInput):
+    return success(
+        preview_meal_for_calendarized_day(
+            user=request.auth.user,
+            day_id=day_id,
+            meal_id=payload.meal_id,
+            hour=payload.hour,
+            note=payload.note,
+        )
+    )
+
+
+@router.post(
+    "/program/days/{day_id}/meal-picker/commit",
+    operation_id="mobile_api_api_calendarized_day_meal_picker_commit",
+    auth=mobile_bearer,
+    response={200: PickerCommitEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def calendarized_day_meal_picker_commit(request, day_id: int, payload: CalendarizedMealPickerInput):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    return success(
+        commit_meal_to_calendarized_day(
+            user=request.auth.user,
+            day_id=day_id,
+            meal_id=payload.meal_id,
+            hour=payload.hour,
+            note=payload.note,
+        )
+    )
+
+
+@router.post(
+    "/program/days/{day_id}/meals/{meal_snapshot_key}/food-picker/preview",
+    operation_id="mobile_api_api_calendarized_meal_food_picker_preview",
+    auth=mobile_bearer,
+    response={200: PickerPreviewEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def calendarized_meal_food_picker_preview(
+    request, day_id: int, meal_snapshot_key: str, payload: CalendarizedFoodPickerInput
+):
+    return success(
+        preview_food_for_calendarized_meal(
+            user=request.auth.user,
+            day_id=day_id,
+            meal_snapshot_key=meal_snapshot_key,
+            food_id=payload.food_id,
+            quantity=payload.quantity,
+        )
+    )
+
+
+@router.post(
+    "/program/days/{day_id}/meals/{meal_snapshot_key}/food-picker/commit",
+    operation_id="mobile_api_api_calendarized_meal_food_picker_commit",
+    auth=mobile_bearer,
+    response={200: PickerCommitEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def calendarized_meal_food_picker_commit(
+    request, day_id: int, meal_snapshot_key: str, payload: CalendarizedFoodPickerInput
+):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    return success(
+        commit_food_to_calendarized_meal(
+            user=request.auth.user,
+            day_id=day_id,
+            meal_snapshot_key=meal_snapshot_key,
+            food_id=payload.food_id,
+            quantity=payload.quantity,
         )
     )
 

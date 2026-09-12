@@ -5,6 +5,7 @@ from django.conf import settings
 from billing.infrastructure.providers.apple_app_store import AppleAppStoreClient
 from billing.infrastructure.providers.mercado_pago import MercadoPagoClient
 from billing.infrastructure.providers.openfactura import OpenFacturaClient
+from billing.infrastructure.providers.paddle import PaddleClient
 
 
 def build_mercado_pago_gateway() -> MercadoPagoClient:
@@ -12,6 +13,14 @@ def build_mercado_pago_gateway() -> MercadoPagoClient:
         access_token=settings.BILLING_MERCADOPAGO_ACCESS_TOKEN,
         base_url=settings.BILLING_MERCADOPAGO_API_BASE_URL,
         timeout_seconds=settings.BILLING_MERCADOPAGO_TIMEOUT_SECONDS,
+    )
+
+
+def build_paddle_gateway() -> PaddleClient:
+    return PaddleClient(
+        api_key=settings.BILLING_PADDLE_API_KEY,
+        base_url=settings.BILLING_PADDLE_API_BASE_URL,
+        timeout_seconds=settings.BILLING_PADDLE_TIMEOUT_SECONDS,
     )
 
 

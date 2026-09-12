@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass
+from datetime import time
 
 from django.db.models import Prefetch
 
@@ -70,6 +71,58 @@ def _round(value, digits=3):
 def snapshot_content_hash(payload: dict) -> str:
     canonical_payload = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(canonical_payload.encode("utf-8")).hexdigest()
+
+
+def build_food_snapshot(*, food, quantity: float, key: str) -> dict:
+    factor = float(quantity) / 100
+    protein = float(food.protein or 0) * factor
+    carbs = float(food.carbs or 0) * factor
+    fat = float(food.fat or 0) * factor
+    return {
+        "key": key,
+        "source_food_id": food.id,
+        "name": food.name,
+        "quantity_g": _round(quantity),
+        "protein_g": _round(protein),
+        "carbs_g": _round(carbs),
+        "fat_g": _round(fat),
+        "total_kcal": _round((protein * 4) + (carbs * 4) + (fat * 9)),
+    }
+
+
+def snapshot_totals(items: list[dict]) -> dict:
+    return {
+        key: _round(sum(float(item.get(key) or 0) for item in items if isinstance(item, dict)))
+        for key in ("protein_g", "carbs_g", "fat_g", "total_kcal")
+    }
+
+
+def build_meal_snapshot(
+    *,
+    meal,
+    key: str,
+    order: int,
+    hour: time | None,
+    note: str = "",
+) -> dict:
+    foods = [
+        build_food_snapshot(
+            food=meal_food.food,
+            quantity=meal_food.quantity,
+            key=f"source_meal_food:{meal_food.id}",
+        )
+        for meal_food in meal.meal_food_set.all()
+    ]
+    return {
+        "key": key,
+        "source_meal_id": meal.id,
+        "name": meal.name,
+        "order": order,
+        "note": note or "",
+        "hour": hour.strftime("%H:%M") if hour else None,
+        "foods": foods,
+        "totals": snapshot_totals(foods),
+    }
 
 
 def build_dailyplan_snapshot(program_day) -> DailyPlanSnapshotResult:

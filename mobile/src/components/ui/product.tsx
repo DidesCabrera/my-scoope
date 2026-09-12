@@ -427,7 +427,7 @@ export function MessageCard({
 
 const styles = StyleSheet.create({
   pressed: { opacity: 0.72 },
-  entityCardPressable: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding },
+  entityCardPressable: { marginHorizontal: -tokens.spacing.screen },
   entityCardInPressable: { marginHorizontal: 0 },
   entityCardWithActions: { paddingBottom: tokens.card.innerPadding },
   entityCardActions: { alignItems: "center", alignSelf: "stretch", flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "flex-end" },

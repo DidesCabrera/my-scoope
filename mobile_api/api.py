@@ -16,6 +16,7 @@ from mobile_api.routes.identity import router as identity_router
 from mobile_api.routes.label_capture import router as label_capture_router
 from mobile_api.routes.libraries import router as libraries_router
 from mobile_api.routes.proposals import router as proposals_router
+from mobile_api.routes.sharing import router as sharing_router
 from mobile_api.schemas import HealthEnvelope
 
 api = NinjaAPI(
@@ -62,6 +63,7 @@ api.add_router("", billing_router)
 api.add_router("", calendarization_router)
 api.add_router("", calendarization_edits_router)
 api.add_router("", proposals_router)
+api.add_router("", sharing_router)
 api.add_router("", comparisons_router)
 api.add_router("", label_capture_router)
 api.add_router("", libraries_router)

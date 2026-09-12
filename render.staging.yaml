@@ -35,6 +35,30 @@ services:
         value: myscoope-staging.onrender.com
       - key: CSRF_TRUSTED_ORIGINS
         value: https://myscoope-staging.onrender.com
+      - key: BILLING_PUBLIC_BASE_URL
+        value: https://myscoope-staging.onrender.com
+      - key: BILLING_PADDLE_ENVIRONMENT
+        value: sandbox
+      - key: BILLING_PADDLE_CHECKOUT_ENABLED
+        value: "true"
+      - key: BILLING_PADDLE_WEBHOOK_ENABLED
+        value: "true"
+      - key: BILLING_PADDLE_API_BASE_URL
+        value: https://sandbox-api.paddle.com
+      - key: BILLING_PADDLE_TIMEOUT_SECONDS
+        value: "10"
+      - key: BILLING_PADDLE_WEBHOOK_TOLERANCE_SECONDS
+        value: "5"
+      - key: SHARING_RESOURCE_TTL_DAYS
+        value: "30"
+      - key: SHARING_RESOURCE_RETENTION_DAYS
+        value: "30"
+      - key: RATE_LIMIT_SHARING_PREVIEW_IP
+        value: 120/m
+      - key: RATE_LIMIT_SHARING_CLAIM
+        value: 20/h
+      - key: RATE_LIMIT_SHARING_CREATE_USER
+        value: 30/h
       - key: AI_ASSISTANT_CREDITS_ENABLED
         value: "true"
       - key: AI_ASSISTANT_OPENAI_API_KEY
@@ -109,5 +133,5 @@ services:
     branch: staging
     schedule: "15 4 * * *"
     buildCommand: ./scripts/render_build.sh
-    startCommand: python manage.py prune_calendarization_data --event-days 90 --subscription-days 30 && python manage.py prune_ai_async_jobs --days 30
+    startCommand: python manage.py prune_calendarization_data --event-days 90 --subscription-days 30 && python manage.py prune_ai_async_jobs --days 30 && python manage.py maintain_sharing_resources --retention-days 30
     envVars: *staging_app_env

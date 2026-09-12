@@ -15,7 +15,11 @@ module.exports = ({ config }) => {
     plugins: config.plugins.map((plugin) => {
       const pluginName = Array.isArray(plugin) ? plugin[0] : plugin;
       if (pluginName !== "expo-notifications") return plugin;
-      return ["expo-notifications", { mode: apnsMode }];
+      return ["expo-notifications", {
+        color: "#0f172a",
+        icon: "./assets/images/notification-icon.png",
+        mode: apnsMode,
+      }];
     }),
   };
 };

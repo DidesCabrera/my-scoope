@@ -5,11 +5,9 @@ from notas.application.queries.calendarization_queries import (
     current_calendarization_for_user,
 )
 from notas.domain.models import (
-    DailyPlanMealShare,
-    DailyPlanShare,
-    FoodShare,
-    MealShare,
+    InboxItem,
     Program,
+    ShareResource,
 )
 
 
@@ -90,45 +88,47 @@ def list_user_inbox_summaries(
     if scope not in {"received", "sent"}:
         raise ValueError("inbox_scope_invalid")
 
-    model_specs = (
-        (DailyPlanShare, "dailyplan", "dailyplan"),
-        (MealShare, "meal", "meal"),
-        (FoodShare, "food", "food"),
-        (DailyPlanMealShare, "dailyplan_meal", "dailyplan_meal"),
+    if scope == "sent":
+        rows = ShareResource.objects.filter(sender=user).select_related("sender").order_by("-created_at")[:limit]
+        return [
+            {
+                "share_id": row.id,
+                "kind": row.subject_type,
+                "direction": scope,
+                "entity_id": row.source_object_id,
+                "entity_name": (row.snapshot.get("subject") or {}).get("title") or "Contenido compartido",
+                "sender": row.sender.get_username(),
+                "recipient_email": "",
+                "subject": (row.snapshot.get("subject") or {}).get("title") or "",
+                "message": "",
+                "is_favorite": False,
+                "is_read": True,
+                "created_at": row.created_at.isoformat(),
+            }
+            for row in rows
+        ]
+    rows = InboxItem.objects.filter(owner=user, dismissed_at__isnull=True).select_related(
+        "resource", "resource__sender"
     )
-    items = []
-    for model, kind, related_name in model_specs:
-        if scope == "sent":
-            queryset = model.objects.filter(sender=user, removed=False)
-        else:
-            queryset = model.objects.filter(
-                accepted_by=user,
-                dismissed=False,
-                removed=False,
-            )
-            if favorites_only:
-                queryset = queryset.filter(is_favorite=True)
-        queryset = queryset.select_related("sender", related_name)
-        for share in queryset[:limit]:
-            entity = getattr(share, related_name)
-            items.append(
-                {
-                    "share_id": share.id,
-                    "kind": kind,
-                    "direction": scope,
-                    "entity_id": entity.id,
-                    "entity_name": _shared_entity_name(entity),
-                    "sender": share.sender.get_username(),
-                    "recipient_email": share.recipient_email,
-                    "subject": share.subject,
-                    "message": share.message,
-                    "is_favorite": share.is_favorite,
-                    "is_read": share.is_read,
-                    "created_at": share.created_at.isoformat(),
-                }
-            )
-    items.sort(key=lambda item: item["created_at"], reverse=True)
-    return items[:limit]
+    if favorites_only:
+        rows = rows.filter(is_favorite=True)
+    return [
+        {
+            "share_id": row.id,
+            "kind": row.resource.subject_type,
+            "direction": scope,
+            "entity_id": row.saved_object_id,
+            "entity_name": (row.resource.snapshot.get("subject") or {}).get("title") or "Contenido compartido",
+            "sender": row.resource.sender.get_username(),
+            "recipient_email": "",
+            "subject": (row.resource.snapshot.get("subject") or {}).get("title") or "",
+            "message": "",
+            "is_favorite": row.is_favorite,
+            "is_read": row.read_at is not None,
+            "created_at": row.created_at.isoformat(),
+        }
+        for row in rows.order_by("-created_at")[:limit]
+    ]
 
 
 def _serialize_calendarization(calendarization, *, include_days: bool) -> dict:

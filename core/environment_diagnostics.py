@@ -8,6 +8,10 @@ from django.conf import settings
 from django.db import DatabaseError
 
 from core.environment_contract import ENVIRONMENT_VARIABLE_SPECS
+from core.mobile_association import (
+    android_asset_links_payload,
+    apple_app_site_association_payload,
+)
 
 
 @dataclass(frozen=True)
@@ -172,6 +176,26 @@ def _integration_findings(environment: str) -> list[DiagnosticFinding]:
         action="",
     ))
 
+    mobile_links_ready = (
+        apple_app_site_association_payload() is not None
+        and android_asset_links_payload() is not None
+    )
+    findings.append(DiagnosticFinding(
+        code="sharing.mobile_links",
+        status="ok" if mobile_links_ready else ("warning" if environment == "production" else "ok"),
+        category="sharing",
+        summary=(
+            "Universal Links and Android App Links signing identities are configured."
+            if mobile_links_ready
+            else "Mobile link association identities are not configured."
+        ),
+        action=(
+            "Configure MYSCOOPE_APPLE_TEAM_ID and Android SHA-256 signing fingerprints."
+            if environment == "production" and not mobile_links_ready
+            else ""
+        ),
+    ))
+
     sentry_ready = bool(getattr(settings, "SENTRY_DSN", ""))
     findings.append(DiagnosticFinding(
         code="observability.sentry",
@@ -231,6 +255,44 @@ def _integration_findings(environment: str) -> list[DiagnosticFinding]:
             else "FatSecret is enabled without complete credentials."
         ),
         action="Disable FatSecret or configure both credential fields." if fatsecret_enabled and not fatsecret_ready else "",
+    ))
+    paddle_checkout_enabled = bool(getattr(settings, "BILLING_PADDLE_CHECKOUT_ENABLED", False))
+    paddle_webhook_enabled = bool(getattr(settings, "BILLING_PADDLE_WEBHOOK_ENABLED", False))
+    paddle_environment = str(getattr(settings, "BILLING_PADDLE_ENVIRONMENT", "sandbox"))
+    paddle_client_token = str(getattr(settings, "BILLING_PADDLE_CLIENT_TOKEN", ""))
+    paddle_webhook_secret = str(getattr(settings, "BILLING_PADDLE_WEBHOOK_SECRET", ""))
+    paddle_api_base_url = str(getattr(settings, "BILLING_PADDLE_API_BASE_URL", ""))
+    paddle_expected_api_url = (
+        "https://sandbox-api.paddle.com" if paddle_environment == "sandbox" else "https://api.paddle.com"
+    )
+    paddle_environment_valid = paddle_environment in {"sandbox", "live"}
+    paddle_token_valid = (
+        paddle_client_token.startswith("test_")
+        if paddle_environment == "sandbox"
+        else paddle_client_token.startswith("live_")
+    )
+    paddle_ready = (
+        paddle_environment_valid
+        and (not paddle_checkout_enabled or paddle_token_valid)
+        and (not paddle_webhook_enabled or bool(paddle_webhook_secret))
+        and paddle_api_base_url == paddle_expected_api_url
+    )
+    findings.append(DiagnosticFinding(
+        code="billing.paddle",
+        status="error" if (paddle_checkout_enabled or paddle_webhook_enabled) and not paddle_ready else "ok",
+        category="billing",
+        summary=(
+            f"Paddle {paddle_environment} is enabled and configured."
+            if (paddle_checkout_enabled or paddle_webhook_enabled) and paddle_ready
+            else "Paddle is disabled."
+            if not paddle_checkout_enabled and not paddle_webhook_enabled
+            else "Paddle is enabled with an inconsistent environment, token, API URL or webhook secret."
+        ),
+        action=(
+            "Use matching Paddle sandbox/live credentials and API URL, or disable Paddle."
+            if (paddle_checkout_enabled or paddle_webhook_enabled) and not paddle_ready
+            else ""
+        ),
     ))
     mercado_pago_enabled = bool(getattr(settings, "BILLING_MERCADOPAGO_WEBHOOK_ENABLED", False))
     mercado_pago_checkout_enabled = bool(getattr(settings, "BILLING_MERCADOPAGO_CHECKOUT_ENABLED", False))
@@ -307,13 +369,45 @@ def _integration_findings(environment: str) -> list[DiagnosticFinding]:
 def _database_findings(environment: str) -> list[DiagnosticFinding]:
     try:
         from allauth.socialaccount.models import SocialApp
+        from django.apps import apps
         from django.contrib.sites.models import Site
+
+        BillingOffer = apps.get_model("billing", "BillingOffer")
+        BillingProduct = apps.get_model("billing", "BillingProduct")
 
         site_id = getattr(settings, "SITE_ID", 1)
         site_exists = Site.objects.filter(pk=site_id).exists()
         google_apps = SocialApp.objects.filter(provider="google")
         google_configured = google_apps.exclude(client_id="").exclude(secret="").exists()
         google_linked = google_apps.filter(sites__id=site_id).exists() if site_exists else False
+        required_offer_codes = {"basic-monthly", "basic-annual", "pro-monthly", "pro-annual"}
+        canonical_offers = {
+            offer.code: offer
+            for offer in BillingOffer.objects.filter(code__in=required_offer_codes, active=True)
+        }
+        paddle_environment = str(getattr(settings, "BILLING_PADDLE_ENVIRONMENT", "sandbox"))
+        paddle_mappings = tuple(
+            BillingProduct.objects.select_related("offer")
+            .filter(
+                provider="paddle",
+                environment=paddle_environment,
+                active=True,
+                offer__code__in=required_offer_codes,
+            )
+        )
+        paddle_catalog_ready = set(canonical_offers) == required_offer_codes and len(paddle_mappings) == 4
+        if paddle_catalog_ready:
+            paddle_catalog_ready = all(
+                mapping.offer_id is not None
+                and mapping.account_plan_id == mapping.offer.account_plan_id
+                and mapping.amount_minor == mapping.offer.amount_minor
+                and mapping.currency == mapping.offer.currency
+                and mapping.interval == mapping.offer.interval
+                and mapping.interval_count == mapping.offer.interval_count
+                and mapping.external_product_id.startswith("pro_")
+                and mapping.external_price_id.startswith("pri_")
+                for mapping in paddle_mappings
+            )
     except DatabaseError:
         return [DiagnosticFinding(
             code="database.schema",
@@ -347,6 +441,24 @@ def _database_findings(environment: str) -> list[DiagnosticFinding]:
         category="accounts",
         summary="OAuth token time validity cannot be verified without an external trusted clock.",
         action="Keep automatic system time enabled when diagnosing Invalid id_token responses.",
+    ))
+    paddle_enabled = bool(getattr(settings, "BILLING_PADDLE_CHECKOUT_ENABLED", False)) or bool(
+        getattr(settings, "BILLING_PADDLE_WEBHOOK_ENABLED", False)
+    )
+    findings.append(DiagnosticFinding(
+        code="billing.paddle_catalog",
+        status="ok" if paddle_catalog_ready else ("error" if paddle_enabled else "warning"),
+        category="billing",
+        summary=(
+            f"Paddle {paddle_environment} has four active mappings aligned with canonical offers."
+            if paddle_catalog_ready
+            else f"Paddle {paddle_environment} catalog mappings are missing or differ from canonical offers."
+        ),
+        action=(
+            "Seed the billing catalog and map all four Paddle product/price references before enabling Paddle."
+            if not paddle_catalog_ready
+            else ""
+        ),
     ))
     return findings
 

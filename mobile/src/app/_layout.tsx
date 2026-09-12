@@ -11,6 +11,7 @@ import { ComparatorSelectionProvider } from "@/components/comparisons/comparator
 import { AppNavigationHeader, AppNavigationProvider } from "@/components/navigation/app-navigation";
 import { tokens } from "@/design/tokens";
 import { clearNativeReminders, refreshNativeReminders } from "@/notifications/native-reminders";
+import { notificationRoute } from "@/notifications/notification-navigation";
 import "@/observability/sentry";
 
 function AuthenticatedRouteGate() {
@@ -20,12 +21,13 @@ function AuthenticatedRouteGate() {
 
   useEffect(() => {
     if (status !== "authenticated" || !profile) return;
+    const returnTo = pathname.startsWith("/share/") || pathname.startsWith("/s/") ? pathname : undefined;
     if (profile.review_disclosure_required && pathname !== "/disclosures") {
-      router.replace("/disclosures" as Href);
+      router.replace(returnTo ? { pathname: "/disclosures", params: { returnTo } } : "/disclosures" as Href);
       return;
     }
     if (!profile.review_disclosure_required && !profile.onboarding_completed && pathname !== "/onboarding") {
-      router.replace("/onboarding" as Href);
+      router.replace(returnTo ? { pathname: "/onboarding", params: { returnTo } } : "/onboarding" as Href);
     }
   }, [pathname, profile, router, status]);
 
@@ -59,15 +61,16 @@ function RootLayout() {
 
   useEffect(() => {
     if (Platform.OS === "web") return;
-    const openToday = () => {
-      router.push("/today");
+    const openNotification = (notification: Notifications.Notification) => {
+      router.push(notificationRoute(notification.request.content.data));
     };
-    if (Notifications.getLastNotificationResponse()?.notification) {
-      openToday();
+    const lastResponse = Notifications.getLastNotificationResponse();
+    if (lastResponse?.notification) {
+      openNotification(lastResponse.notification);
       Notifications.clearLastNotificationResponse();
     }
-    const subscription = Notifications.addNotificationResponseReceivedListener(() => {
-      openToday();
+    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      openNotification(response.notification);
       Notifications.clearLastNotificationResponse();
     });
     return () => subscription.remove();

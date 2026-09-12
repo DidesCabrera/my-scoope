@@ -12,7 +12,7 @@ from ai_assistant.models import AIUsageEvent
 from notas.domain.model_modules.comparisons import SavedComparison
 from notas.domain.model_modules.identity import Profile
 from notas.domain.model_modules.proposals import NutritionProposal
-from notas.domain.models import DailyPlan, Meal, MealShare, Program
+from notas.domain.models import DailyPlan, Meal, Program, ShareResource
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
@@ -63,7 +63,13 @@ class AdminAnalyticsOverviewMetricsTests(TestCase):
         meal = Meal.objects.create(name="Meal activa", created_by=self.member, is_draft=False)
         DailyPlan.objects.create(name="Plan activo", created_by=self.member, is_draft=False)
         Program.objects.create(name="Programa activo", created_by=self.other_member, is_draft=False)
-        MealShare.objects.create(sender=self.member, recipient_email="friend@example.com", meal=meal)
+        ShareResource.objects.create(
+            sender=self.member,
+            subject_type=ShareResource.SubjectType.MEAL,
+            source_object_id=meal.id,
+            snapshot={"subject": {"type": "meal", "title": meal.name}},
+            snapshot_schema_version="sharing.snapshot.v1",
+        )
         SavedComparison.objects.create(owner=self.other_member, kind=SavedComparison.KIND_MEALS, name="Comp", payload=[])
 
         proposal = NutritionProposal.objects.create(

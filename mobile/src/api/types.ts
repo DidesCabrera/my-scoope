@@ -153,6 +153,7 @@ export type ReminderSettings = {
   daily_notifications_enabled: boolean;
   meal_notifications_enabled: boolean;
   upcoming: {
+    calendarized_day_id: number;
     event_key: string;
     event_type: "daily_plan" | "meal_reminder";
     meal_key: string;
@@ -224,6 +225,15 @@ export type LibraryActionResult = {
   item_id: number;
   message: string;
 };
+
+export type {
+  ShareClaimResult,
+  ShareNutrition,
+  ShareResource,
+  ShareSnapshot,
+  SharingInboxData,
+  SharingInboxItem,
+} from "@/sharing/types";
 
 export type LibraryNutrition = {
   calories: number;

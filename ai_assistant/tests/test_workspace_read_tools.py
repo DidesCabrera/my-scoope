@@ -14,10 +14,12 @@ from ai_assistant.application.tools import (
 from ai_assistant.domain import AssistantToolRequest, AssistantToolStatus
 from notas.domain.models import (
     DailyPlan,
-    DailyPlanShare,
+    InboxItem,
     Program,
     ProgramCalendarization,
     ProgramDay,
+    ShareClaim,
+    ShareResource,
 )
 
 
@@ -58,13 +60,15 @@ class AssistantWorkspaceReadToolTests(TestCase):
             end_date=date(2026, 8, 2),
             status=ProgramCalendarization.STATUS_ACTIVE,
         )
-        DailyPlanShare.objects.create(
+        resource = ShareResource.objects.create(
             sender=self.sender,
-            recipient_email=self.user.email,
-            dailyplan=self.dailyplan,
-            accepted_by=self.user,
-            subject="Plan compartido",
+            subject_type=ShareResource.SubjectType.DAILY_PLAN,
+            source_object_id=self.dailyplan.id,
+            snapshot={"subject": {"type": "daily_plan", "title": "Plan compartido"}},
+            snapshot_schema_version="sharing.snapshot.v1",
         )
+        claim = ShareClaim.objects.create(resource=resource, user=self.user, source=ShareClaim.Source.LINK)
+        InboxItem.objects.create(owner=self.user, resource=resource, claim=claim)
     def execute(self, tool_name, arguments=None):
         return execute_read_only_tool(
             AssistantToolRequest(
@@ -90,7 +94,7 @@ class AssistantWorkspaceReadToolTests(TestCase):
             calendar.data["calendarization"]["current"]["id"],
             self.calendarization.id,
         )
-        self.assertEqual(inbox.data["inbox_items"][0]["kind"], "dailyplan")
+        self.assertEqual(inbox.data["inbox_items"][0]["kind"], "daily_plan")
         self.assertFalse(detail.metadata["writes_allowed"])
 
     def test_reads_account_billing_without_exposing_provider_mutations(self):

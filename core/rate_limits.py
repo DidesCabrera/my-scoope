@@ -107,3 +107,76 @@ def is_nutrition_label_scan_rate_limited(request) -> bool:
         group="nutrition_label.scan",
         increment=True,
     ))
+
+
+def sharing_actor_key(group, request) -> str:
+    user = getattr(request, "user", None)
+    auth = getattr(request, "auth", None)
+    if (user is None or not user.is_authenticated) and getattr(auth, "user", None):
+        user = auth.user
+    if user is not None and user.is_authenticated:
+        return f"user:{user.pk}"
+    return f"ip:{request.META.get('REMOTE_ADDR', '')}"
+
+
+def limit_sharing_preview(view_func):
+    return ratelimit(
+        key="ip",
+        rate=lambda group, request: _rate("RATE_LIMIT_SHARING_PREVIEW_IP", "120/m"),
+        method="GET",
+        block=True,
+        group="sharing.preview",
+    )(view_func)
+
+
+def limit_sharing_claim(view_func):
+    return ratelimit(
+        key=sharing_actor_key,
+        rate=lambda group, request: _rate("RATE_LIMIT_SHARING_CLAIM", "20/h"),
+        method="POST",
+        block=True,
+        group="sharing.claim",
+    )(view_func)
+
+
+def limit_sharing_create(view_func):
+    return ratelimit(
+        key="user",
+        rate=lambda group, request: _rate("RATE_LIMIT_SHARING_CREATE_USER", "30/h"),
+        method="POST",
+        block=True,
+        group="sharing.create",
+    )(view_func)
+
+
+def is_sharing_create_rate_limited(request) -> bool:
+    return bool(is_ratelimited(
+        request=request,
+        key=lambda group, req: f"user:{req.auth.user.pk}",
+        rate=lambda group, req: _rate("RATE_LIMIT_SHARING_CREATE_USER", "30/h"),
+        method="POST",
+        group="sharing.create",
+        increment=True,
+    ))
+
+
+def is_sharing_claim_rate_limited(request) -> bool:
+    return bool(is_ratelimited(
+        request=request,
+        key=sharing_actor_key,
+        rate=lambda group, req: _rate("RATE_LIMIT_SHARING_CLAIM", "20/h"),
+        method="POST",
+        group="sharing.claim",
+        increment=True,
+    ))
+
+
+def is_sharing_preview_rate_limited(request) -> bool:
+    return bool(is_ratelimited(
+        request=request,
+        key="ip",
+        rate=lambda group, req: _rate("RATE_LIMIT_SHARING_PREVIEW_IP", "120/m"),
+        method="GET",
+        group="sharing.preview",
+        increment=True,
+    ))

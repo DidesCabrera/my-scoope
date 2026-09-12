@@ -25,11 +25,18 @@ import { NutritionEntityCard } from "@/components/nutrition";
 import { Button, Card, InlineNotice, LoadingState, SectionTitle, textStyles } from "@/components/ui";
 import { ConfirmationState, RecoverableErrorState } from "@/components/ui/screen-states";
 import { tokens } from "@/design/tokens";
+import { refreshNativeReminders } from "@/notifications/native-reminders";
 import { PickerCardAction } from "./picker-card-action";
 import { PickerEntryTabs } from "./picker-entry-tabs";
 import { PickerResultCard } from "./picker-result-card";
 
-export type PickerKind = "food-to-meal" | "meal-to-dailyplan" | "dailyplan-to-program" | "dailyplan-to-calendarized-day";
+export type PickerKind =
+  | "food-to-meal"
+  | "meal-to-dailyplan"
+  | "dailyplan-to-program"
+  | "dailyplan-to-calendarized-day"
+  | "meal-to-calendarized-day"
+  | "food-to-calendarized-meal";
 
 type PickerOption = {
   id: number;
@@ -48,8 +55,8 @@ type PickerConfig = {
   searchLabel: string;
   searchPlaceholder: string;
   targetSlug: "meals" | "daily-plans" | "programs";
-  previewPath(targetId: number): string;
-  commitPath(targetId: number): string;
+  previewPath(targetId: number, mealKey?: string): string;
+  commitPath(targetId: number, mealKey?: string): string;
 };
 
 const configs: Record<PickerKind, PickerConfig> = {
@@ -92,6 +99,26 @@ const configs: Record<PickerKind, PickerConfig> = {
     targetSlug: "programs",
     previewPath: (id) => `/api/v1/program/days/${id}/daily-plan-picker/preview`,
     commitPath: (id) => `/api/v1/program/days/${id}/daily-plan-picker/commit`,
+  },
+  "meal-to-calendarized-day": {
+    createEntity: "meal",
+    createLabel: "Crear comida",
+    title: "Agregar comida",
+    searchLabel: "Buscar comida",
+    searchPlaceholder: "Escribe el nombre de una comida",
+    targetSlug: "programs",
+    previewPath: (id) => `/api/v1/program/days/${id}/meal-picker/preview`,
+    commitPath: (id) => `/api/v1/program/days/${id}/meal-picker/commit`,
+  },
+  "food-to-calendarized-meal": {
+    createEntity: "food",
+    createLabel: "Crear alimento",
+    title: "Agregar alimento",
+    searchLabel: "Buscar alimento",
+    searchPlaceholder: "Escribe el nombre de un alimento",
+    targetSlug: "programs",
+    previewPath: (id, mealKey) => `/api/v1/program/days/${id}/meals/${encodeURIComponent(mealKey ?? "")}/food-picker/preview`,
+    commitPath: (id, mealKey) => `/api/v1/program/days/${id}/meals/${encodeURIComponent(mealKey ?? "")}/food-picker/commit`,
   },
 };
 
@@ -153,6 +180,7 @@ export function CompositionPickerScreen({
   kind,
   targetId,
   relationId,
+  mealKey,
   contextDailyPlanId,
   contextDailyPlanMealId,
   selectedId,
@@ -163,6 +191,7 @@ export function CompositionPickerScreen({
   kind: PickerKind;
   targetId: number;
   relationId?: number;
+  mealKey?: string;
   contextDailyPlanId?: number;
   contextDailyPlanMealId?: number;
   selectedId?: number;
@@ -171,11 +200,27 @@ export function CompositionPickerScreen({
   returnTo?: Href;
 }) {
   const config = configs[kind];
+  const isFoodPicker = kind === "food-to-meal" || kind === "food-to-calendarized-meal";
+  const isMealPicker = kind === "meal-to-dailyplan" || kind === "meal-to-calendarized-day";
+  const isCalendarizedPicker = kind === "dailyplan-to-calendarized-day" || kind === "meal-to-calendarized-day" || kind === "food-to-calendarized-meal";
   const title = relationId
     ? kind === "food-to-meal" ? "Reemplazar alimento" : "Reemplazar comida"
     : config.title;
   const router = useRouter();
-  const detailHref = returnTo ?? (kind === "dailyplan-to-calendarized-day" ? "/program" : `/libraries/${config.targetSlug}/${targetId}`) as Href;
+  const detailHref = returnTo ?? (
+    kind === "dailyplan-to-calendarized-day"
+      ? "/program"
+      : kind === "meal-to-calendarized-day"
+        ? `/program/days/${targetId}`
+        : kind === "food-to-calendarized-meal"
+          ? `/program/days/${targetId}/meals/${encodeURIComponent(mealKey ?? "")}`
+          : `/libraries/${config.targetSlug}/${targetId}`
+  ) as Href;
+  const mealCreationEntryHref = kind === "meal-to-dailyplan"
+    ? pickerHref(kind, { dailyPlanId: targetId, ...(relationId ? { dailyPlanMealId: relationId } : {}), ...(returnTo ? { returnTo: String(returnTo) } : {}) })
+    : kind === "meal-to-calendarized-day"
+      ? pickerHref(kind, { dayId: targetId, ...(returnTo ? { returnTo: String(returnTo) } : {}) })
+      : undefined;
   const { status, apiRequest } = useSession();
   const setHeaderPresentation = useHeaderPresentation();
   const [query, setQuery] = useState("");
@@ -207,12 +252,12 @@ export function CompositionPickerScreen({
     if (status !== "authenticated" || !targetId) return;
     let active = true;
     const selectionRequest = selectedId
-      ? kind === "food-to-meal"
+      ? isFoodPicker
         ? apiRequest<FoodPickerOption>(`/api/v1/food-picker-options/${selectedId}`).then(optionFromFood)
-        : apiRequest<LibraryItem>(`/api/v1/library/${kind === "meal-to-dailyplan" ? "meals" : "daily-plans"}/${selectedId}`).then(optionFromLibrary)
+        : apiRequest<LibraryItem>(`/api/v1/library/${isMealPicker ? "meals" : "daily-plans"}/${selectedId}`).then(optionFromLibrary)
       : Promise.resolve(null);
     Promise.all([
-      kind === "dailyplan-to-calendarized-day"
+      isCalendarizedPicker
         ? Promise.resolve(null)
         : apiRequest<LibraryItem>(`/api/v1/library/${config.targetSlug}/${targetId}`),
       selectionRequest,
@@ -232,7 +277,7 @@ export function CompositionPickerScreen({
       .catch((nextError) => active && setError(userFacingError(nextError)))
       .finally(() => active && setLoading(false));
     return () => { active = false; };
-  }, [apiRequest, config.targetSlug, kind, relationId, retryNonce, selectedId, status, targetId]);
+  }, [apiRequest, config.targetSlug, isCalendarizedPicker, isFoodPicker, isMealPicker, kind, relationId, retryNonce, selectedId, status, targetId]);
 
   useFocusEffect(useCallback(() => {
     if (status !== "authenticated" || selectedId) return;
@@ -242,19 +287,19 @@ export function CompositionPickerScreen({
     const timer = setTimeout(() => {
       setSearching(true);
       const search = query.trim() ? `&search=${encodeURIComponent(query.trim())}` : "";
-      const request = kind === "food-to-meal"
+      const request = isFoodPicker
         ? apiRequest<FoodPickerPageData>(`/api/v1/foods?limit=50${search}`).then((page) => page.items.map(optionFromFood))
-        : apiRequest<LibraryPageData>(`/api/v1/library/${kind === "meal-to-dailyplan" ? "meals" : "daily-plans"}?limit=50${search}`).then((page) => page.items.map(optionFromLibrary));
+        : apiRequest<LibraryPageData>(`/api/v1/library/${isMealPicker ? "meals" : "daily-plans"}?limit=50${search}`).then((page) => page.items.map(optionFromLibrary));
       void request
         .then((items) => active && setOptions(items))
         .catch((nextError) => active && setError(userFacingError(nextError)))
         .finally(() => active && setSearching(false));
     }, 220);
     return () => { active = false; clearTimeout(timer); };
-  }, [apiRequest, kind, query, retryNonce, selectedId, status]));
+  }, [apiRequest, isFoodPicker, isMealPicker, query, retryNonce, selectedId, status]));
 
-  const hourValid = kind !== "meal-to-dailyplan" || /^([01]\d|2[0-3]):[0-5]\d$/.test(hour);
-  const quantityValid = kind !== "food-to-meal" || Number(quantity) > 0;
+  const hourValid = !isMealPicker || /^([01]\d|2[0-3]):[0-5]\d$/.test(hour);
+  const quantityValid = !isFoodPicker || Number(quantity) > 0;
   const configurationValid = Boolean(selected) && hourValid && quantityValid && (kind !== "dailyplan-to-program" || dayNumbers.length > 0);
 
   const payload = useMemo(() => {
@@ -266,7 +311,9 @@ export function CompositionPickerScreen({
       dailyplan_meal_id: contextDailyPlanMealId,
       quantity: Number(quantity),
     };
+    if (kind === "food-to-calendarized-meal") return { food_id: selected.id, quantity: Number(quantity) };
     if (kind === "meal-to-dailyplan") return { meal_id: selected.id, dailyplan_meal_id: relationId, hour, note };
+    if (kind === "meal-to-calendarized-day") return { meal_id: selected.id, hour, note };
     if (kind === "dailyplan-to-calendarized-day") return { dailyplan_id: selected.id };
     return { dailyplan_id: selected.id, week_number: weekNumber, day_numbers: dayNumbers };
   }, [contextDailyPlanId, contextDailyPlanMealId, dayNumbers, hour, kind, note, quantity, relationId, selected, weekNumber]);
@@ -279,7 +326,7 @@ export function CompositionPickerScreen({
     const timer = setTimeout(() => {
       setPreviewRequestKey(payloadKey);
       setError(null);
-      void apiRequest<PickerPreview>(config.previewPath(targetId), { method: "POST", body: JSON.stringify(payload) })
+      void apiRequest<PickerPreview>(config.previewPath(targetId, mealKey), { method: "POST", body: JSON.stringify(payload) })
         .then((result) => {
           if (!active) return;
           setPreview(result);
@@ -289,7 +336,7 @@ export function CompositionPickerScreen({
         .finally(() => active && setPreviewRequestKey(null));
     }, 180);
     return () => { active = false; clearTimeout(timer); };
-  }, [apiRequest, config, configurationValid, payload, payloadKey, retryNonce, targetId]);
+  }, [apiRequest, config, configurationValid, mealKey, payload, payloadKey, retryNonce, targetId]);
 
   function toggleDay(day: number) {
     setDayNumbers((current) => current.includes(day) ? current.filter((value) => value !== day) : [...current, day].sort());
@@ -306,7 +353,8 @@ export function CompositionPickerScreen({
         : kind === "dailyplan-to-calendarized-day"
           ? { ...payload, confirm_replacement: confirmReplacements, idempotency_key: idempotencyKey.current }
           : payload;
-      const result = await apiRequest<PickerCommitResult>(config.commitPath(targetId), { method: "POST", body: JSON.stringify(body) });
+      const result = await apiRequest<PickerCommitResult>(config.commitPath(targetId, mealKey), { method: "POST", body: JSON.stringify(body) });
+      if (kind === "meal-to-calendarized-day") await refreshNativeReminders(apiRequest).catch(() => undefined);
       Alert.alert("Listo", result.message, [{ text: "Aceptar", onPress: () => router.dismissTo(detailHref) }]);
     } catch (nextError) {
       setError(userFacingError(nextError));
@@ -329,7 +377,19 @@ export function CompositionPickerScreen({
           <View style={styles.selectionSticky}>
             <PickerEntryTabs
               createLabel={config.createLabel}
-              onCreate={() => router.push({ pathname: "/libraries/create", params: { entity: config.createEntity } })}
+              onCreate={() => router.push({
+                pathname: "/libraries/create",
+                params: {
+                  entity: config.createEntity,
+                  ...(config.createEntity === "meal" && mealCreationEntryHref ? {
+                    pickerEntryTo: String(mealCreationEntryHref),
+                    pickerKind: kind,
+                    ...(relationId ? { pickerRelationId: String(relationId) } : {}),
+                    pickerTargetId: String(targetId),
+                    returnTo: String(detailHref),
+                  } : {}),
+                },
+              })}
             />
             <View style={styles.searchField}>
               <Search color={tokens.color.textSoft} size={19} />
@@ -351,7 +411,7 @@ export function CompositionPickerScreen({
               <PickerOptionCard
                 actionLabel="Seleccionar"
                 key={`${option.entity}-${option.id}`}
-                onAction={() => router.push(pickerConfigureHref(kind, { contextDailyPlanId, contextDailyPlanMealId, dayNumber: initialDayNumber, relationId, returnTo, selectedId: option.id, targetId, weekNumber }))}
+                onAction={() => router.push(pickerConfigureHref(kind, { contextDailyPlanId, contextDailyPlanMealId, dayNumber: initialDayNumber, relationId, returnTo, selectedId: option.id, targetId, weekNumber, mealKey }))}
                 option={option}
               />
             ))}
@@ -377,7 +437,7 @@ export function CompositionPickerScreen({
         <View style={styles.configurationSticky}>
           {selected ? (
             <Card>
-              {kind === "food-to-meal" ? (
+              {isFoodPicker ? (
                 <View style={styles.compactFieldRow}>
                   <View style={styles.configurationLabel}>
                     <Scale color={tokens.color.textMuted} size={18} />
@@ -386,7 +446,7 @@ export function CompositionPickerScreen({
                   <TextInput keyboardType="decimal-pad" onChangeText={setQuantity} selectionColor={tokens.color.interactivePrimary} style={styles.compactFieldInput} value={quantity} />
                 </View>
               ) : null}
-              {kind === "meal-to-dailyplan" ? (
+              {isMealPicker ? (
                 <>
                   <View style={styles.compactFieldRow}>
                     <View style={styles.configurationLabel}>
@@ -466,7 +526,7 @@ export function CompositionPickerScreen({
         <Button
           bleed
           disabled={!configurationValid || previewing || previewPayloadKey !== payloadKey}
-          label={kind === "food-to-meal" ? relationId ? "Reemplazar alimento" : "Agregar alimento" : kind === "meal-to-dailyplan" ? relationId ? "Reemplazar comida" : "Agregar comida" : "Asignar plan diario"}
+          label={isFoodPicker ? relationId ? "Reemplazar alimento" : "Agregar alimento" : isMealPicker ? relationId ? "Reemplazar comida" : "Agregar comida" : "Asignar plan diario"}
           loading={submitting}
           onPress={() => preview.confirmation_required ? setConfirming(true) : void commit()}
         />
@@ -483,7 +543,7 @@ export function pickerHref(kind: PickerKind, params: Record<string, string | num
 
 export function pickerConfigureHref(
   kind: PickerKind,
-  { contextDailyPlanId, contextDailyPlanMealId, dayNumber, relationId, returnTo, selectedId, targetId, weekNumber }: { contextDailyPlanId?: number; contextDailyPlanMealId?: number; dayNumber?: number; relationId?: number; returnTo?: Href; selectedId: number; targetId: number; weekNumber: number },
+  { contextDailyPlanId, contextDailyPlanMealId, dayNumber, mealKey, relationId, returnTo, selectedId, targetId, weekNumber }: { contextDailyPlanId?: number; contextDailyPlanMealId?: number; dayNumber?: number; mealKey?: string; relationId?: number; returnTo?: Href; selectedId: number; targetId: number; weekNumber: number },
 ): Href {
   const params: Record<string, string> = {
     kind,
@@ -492,6 +552,7 @@ export function pickerConfigureHref(
     weekNumber: String(weekNumber),
   };
   if (dayNumber) params.dayNumber = String(dayNumber);
+  if (mealKey) params.mealKey = mealKey;
   if (relationId) params.relationId = String(relationId);
   if (contextDailyPlanId) params.contextDailyPlanId = String(contextDailyPlanId);
   if (contextDailyPlanMealId) params.contextDailyPlanMealId = String(contextDailyPlanMealId);

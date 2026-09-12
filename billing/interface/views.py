@@ -19,13 +19,20 @@ from billing.application.services.checkout import (
 )
 from billing.application.services.events import receive_verified_billing_event
 from billing.application.services.mercado_pago_events import process_mercado_pago_event
-from billing.infrastructure.gateways import build_apple_app_store_gateway, build_mercado_pago_gateway
+from billing.application.services.paddle_events import process_paddle_event
+from billing.infrastructure.gateways import (
+    build_apple_app_store_gateway,
+    build_mercado_pago_gateway,
+    build_paddle_gateway,
+)
 from billing.infrastructure.providers.apple_app_store import InvalidAppleSignedData
 from billing.infrastructure.providers.mercado_pago import MercadoPagoProviderError
 from billing.infrastructure.providers.mercado_pago_webhooks import (
     InvalidMercadoPagoSignature,
     verify_mercado_pago_signature,
 )
+from billing.infrastructure.providers.paddle import PaddleProviderError
+from billing.infrastructure.providers.paddle_webhooks import InvalidPaddleSignature, verify_paddle_signature
 from billing.models import BillingProduct, PaymentProvider, ProviderSubscription
 from billing.presentation.viewmodels import build_billing_overview_vm
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
@@ -37,9 +44,19 @@ MAX_WEBHOOK_BODY_BYTES = 128 * 1024
 
 @login_required
 def billing_overview(request: HttpRequest) -> HttpResponse:
+    public_base_url = settings.BILLING_PUBLIC_BASE_URL.rstrip("/")
     content = build_billing_overview_vm(
         user=request.user,
-        checkout_enabled=settings.BILLING_MERCADOPAGO_CHECKOUT_ENABLED,
+        checkout_enabled=settings.BILLING_PADDLE_CHECKOUT_ENABLED,
+        provider=PaymentProvider.PADDLE,
+        environment=settings.BILLING_PADDLE_ENVIRONMENT,
+        paddle_client_token=settings.BILLING_PADDLE_CLIENT_TOKEN,
+        paddle_portal_enabled=bool(settings.BILLING_PADDLE_API_KEY),
+        paddle_success_url=(
+            f"{public_base_url}{reverse('billing:checkout_return')}"
+            if public_base_url.startswith("https://")
+            else ""
+        ),
     )
     vm = BaseVM(ui=build_ui_vm(BILLING_VIEWMODE), content=content)
     return render(request, "billing/overview.html", vm.as_context())
@@ -71,7 +88,7 @@ def create_checkout(request: HttpRequest, product_id: int) -> HttpResponse:
 
 @login_required
 def checkout_return(request: HttpRequest) -> HttpResponse:
-    messages.info(request, "Mercado Pago está procesando tu suscripción. El estado se actualizará automáticamente.")
+    messages.info(request, "Estamos confirmando tu suscripción. El estado se actualizará automáticamente.")
     return redirect("billing:overview")
 
 
@@ -93,6 +110,28 @@ def cancel_subscription(request: HttpRequest, subscription_id: int) -> HttpRespo
     else:
         messages.success(request, "La suscripción fue cancelada.")
     return redirect("billing:overview")
+
+
+@login_required
+@require_POST
+def paddle_customer_portal(request: HttpRequest, subscription_id: int) -> HttpResponse:
+    subscription = get_object_or_404(
+        ProviderSubscription.objects.select_related("product"),
+        pk=subscription_id,
+        user=request.user,
+        provider=PaymentProvider.PADDLE,
+        product__environment=settings.BILLING_PADDLE_ENVIRONMENT,
+    )
+    customer_id = str((subscription.metadata or {}).get("paddle_customer_id") or "")
+    try:
+        links = build_paddle_gateway().create_customer_portal_session(
+            customer_id=customer_id,
+            subscription_id=subscription.external_subscription_id,
+        )
+    except (PaddleProviderError, ValueError):
+        messages.error(request, "No fue posible abrir la gestión de Paddle. Inténtalo nuevamente.")
+        return redirect("billing:overview")
+    return redirect(links.overview)
 
 
 @csrf_exempt
@@ -142,6 +181,56 @@ def mercado_pago_webhook(request: HttpRequest) -> HttpResponse:
     )
     try:
         event = process_mercado_pago_event(event=receipt.event, gateway=build_mercado_pago_gateway())
+    except Exception:
+        return JsonResponse({"detail": "provider_reconciliation_failed"}, status=502)
+    return JsonResponse({"status": event.status}, status=200)
+
+
+@csrf_exempt
+@require_POST
+def paddle_webhook(request: HttpRequest) -> HttpResponse:
+    if not settings.BILLING_PADDLE_WEBHOOK_ENABLED:
+        return HttpResponse(status=404)
+    raw_body = request.body
+    if len(raw_body) > MAX_WEBHOOK_BODY_BYTES:
+        return HttpResponse(status=413)
+    try:
+        verify_paddle_signature(
+            raw_body=raw_body,
+            signature_header=request.headers.get("Paddle-Signature", ""),
+            secret=settings.BILLING_PADDLE_WEBHOOK_SECRET,
+            tolerance_seconds=settings.BILLING_PADDLE_WEBHOOK_TOLERANCE_SECONDS,
+        )
+    except InvalidPaddleSignature:
+        return JsonResponse({"detail": "invalid_signature"}, status=401)
+
+    try:
+        payload = json.loads(raw_body or b"{}")
+    except (TypeError, ValueError):
+        return JsonResponse({"detail": "invalid_json"}, status=400)
+    if not isinstance(payload, dict):
+        return JsonResponse({"detail": "invalid_payload"}, status=400)
+
+    event_id = str(payload.get("event_id") or "").strip()
+    event_type = str(payload.get("event_type") or "").strip()
+    data = payload.get("data") if isinstance(payload.get("data"), dict) else {}
+    resource_id = str(data.get("id") or "").strip()
+    if not event_id or not event_type or not resource_id:
+        return JsonResponse({"detail": "missing_event_identity"}, status=400)
+
+    receipt = receive_verified_billing_event(
+        provider=PaymentProvider.PADDLE,
+        external_event_id=event_id,
+        event_type=event_type,
+        resource_id=resource_id,
+        payload=payload,
+        signature_verified=True,
+    )
+    try:
+        event = process_paddle_event(
+            event=receipt.event,
+            environment=settings.BILLING_PADDLE_ENVIRONMENT,
+        )
     except Exception:
         return JsonResponse({"detail": "provider_reconciliation_failed"}, status=502)
     return JsonResponse({"status": event.status}, status=200)

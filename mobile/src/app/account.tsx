@@ -10,7 +10,7 @@ import { AppHeader, Button, Card, Field, InlineNotice, Screen, SectionTitle, tex
 import { appConfig } from "@/config/app-config";
 import { tokens } from "@/design/tokens";
 
-const supportEmail = "bacardides@gmail.com";
+const supportEmail = "felipe@myscoope.com";
 
 export default function AccountScreen() {
   const router = useRouter();
@@ -53,6 +53,7 @@ export default function AccountScreen() {
         <Text style={textStyles.muted}>Consulta cómo tratamos tus datos, los términos del servicio o solicita ayuda.</Text>
         <Button label="Política de privacidad" onPress={() => void Linking.openURL(`${appConfig.apiBaseUrl}/privacy/`)} variant="secondary" />
         <Button label="Términos de uso" onPress={() => void Linking.openURL(`${appConfig.apiBaseUrl}/terms/`)} variant="secondary" />
+        <Button label="Cancelaciones y reembolsos" onPress={() => void Linking.openURL(`${appConfig.apiBaseUrl}/refund-policy/`)} variant="secondary" />
         <Button label="Centro de soporte" onPress={() => void Linking.openURL(`${appConfig.apiBaseUrl}/support/`)} variant="secondary" />
         <Button label="Reportar contenido o un problema" onPress={() => void Linking.openURL(`mailto:${supportEmail}?subject=Reporte%20desde%20My%20Scoope`)} variant="secondary" />
       </Card>

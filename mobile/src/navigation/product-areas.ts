@@ -1,6 +1,6 @@
 import type { Href } from "expo-router";
 
-export type ProductAreaKey = "home" | "program" | "assistant" | "comparator";
+export type ProductAreaKey = "home" | "program" | "assistant" | "comparator" | "inbox";
 
 type ProductAreaBase = {
   key: ProductAreaKey;
@@ -23,6 +23,7 @@ export const productAreas: readonly ProductArea[] = [
   { availability: "available", href: "/program" as Href, key: "program", label: "Mi programa activo" },
   { availability: "available", href: "/assistant" as Href, key: "assistant", label: "Asistente AI" },
   { availability: "available", href: "/comparator" as Href, key: "comparator", label: "Comparador" },
+  { availability: "available", href: "/inbox" as Href, key: "inbox", label: "Inbox" },
 ];
 
 export function listAvailableProductAreas(): AvailableProductArea[] {

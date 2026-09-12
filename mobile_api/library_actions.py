@@ -3,9 +3,9 @@ from __future__ import annotations
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from django.db.models import Q
 from django.db import transaction
 
+from core.rate_limits import is_sharing_create_rate_limited
 from email_delivery.services import deliver_share_invitation
 from mobile_api.errors import MobileAPIError
 from notas.application.services.access.capabilities import get_capabilities
@@ -25,14 +25,15 @@ from notas.application.services.commands.program_commands import (
     fork_program,
     rename_program,
 )
-from notas.application.services.commands.share_commands import (
-    create_dailyplan_share,
-    create_food_share,
-    create_meal_share,
-    create_program_share,
+from notas.application.services.notifications.share_emails import (
+    build_normalized_share_invitation_email,
 )
-from notas.application.services.notifications.share_emails import build_share_invitation_email
-from notas.domain.models import DailyPlan, Food, Meal, Program
+from notas.application.sharing.entities import get_or_create_entity_share_resource
+from notas.application.sharing.services import (
+    create_share_invitation,
+    mark_share_invitation_delivered,
+)
+from notas.domain.models import DailyPlan, Food, Meal, Program, ShareResource
 
 ENTITY_NAMES = {
     "foods": "alimento",
@@ -100,12 +101,7 @@ def _available_item(user, entity: str, item_id: int):
     elif entity == "daily-plans":
         item = DailyPlan.objects.filter(pk=item_id, created_by=user).first()
     elif entity == "programs":
-        item = (
-            Program.objects.filter(pk=item_id)
-            .filter(Q(created_by=user) | Q(shares__accepted_by=user, shares__removed=False))
-            .distinct()
-            .first()
-        )
+        item = Program.objects.filter(pk=item_id, created_by=user).first()
     else:
         item = None
 
@@ -214,6 +210,12 @@ def _delete(item) -> int:
 
 
 def _share(request, item, *, recipient_email: str, subject: str, message: str) -> str:
+    if is_sharing_create_rate_limited(request):
+        raise MobileAPIError(
+            code="sharing_create_rate_limited",
+            message="Inténtalo nuevamente más tarde.",
+            status_code=429,
+        )
     clean_email = (recipient_email or "").strip().lower()
     try:
         validate_email(clean_email)
@@ -232,45 +234,43 @@ def _share(request, item, *, recipient_email: str, subject: str, message: str) -
             status_code=422,
         )
 
-    command = {
-        Food: (create_food_share, "food", "food"),
-        Meal: (create_meal_share, "meal", "meal"),
-        DailyPlan: (create_dailyplan_share, "dailyplan", "dailyplan"),
-        Program: (create_program_share, "program", "program"),
+    subject_type = {
+        Food: ShareResource.SubjectType.FOOD,
+        Meal: ShareResource.SubjectType.MEAL,
+        DailyPlan: ShareResource.SubjectType.DAILY_PLAN,
+        Program: ShareResource.SubjectType.PROGRAM,
     }.get(type(item))
-    if command is None:
+    if subject_type is None:
         raise MobileAPIError(
             code="library_action_not_allowed",
             message="This item cannot be shared.",
             status_code=403,
         )
 
-    create_share, argument_name, kind = command
-    result = create_share(
+    resource = get_or_create_entity_share_resource(
+        sender=request.auth.user,
+        subject_type=subject_type,
+        subject_id=item.id,
+    ).resource
+    invitation = create_share_invitation(
+        resource=resource,
         sender=request.auth.user,
         recipient_email=clean_email,
         subject=clean_subject,
         message=(message or "").strip(),
-        **{argument_name: item},
     )
-    email_subject, email_message = build_share_invitation_email(
-        request=request,
-        share=result.share,
-        kind=kind,
-        item_name=item.name,
-        custom_subject=clean_subject,
-        custom_message=(message or "").strip(),
+    email_subject, email_message = build_normalized_share_invitation_email(
+        request=request, invitation=invitation
     )
     delivery = deliver_share_invitation(
-        share=result.share,
+        share=invitation,
         subject=email_subject,
         message=email_message,
         from_email=settings.DEFAULT_FROM_EMAIL,
     )
 
-    if result.share.accepted_by_id:
-        return "Compartido. Ya está disponible en la cuenta del destinatario."
     if delivery.sent:
+        mark_share_invitation_delivered(invitation=invitation)
         return "Compartido. Enviamos la invitación por correo."
     if delivery.reason == "duplicate_share":
         return "Ya estaba compartido; no reenviamos la invitación."

@@ -5,7 +5,11 @@ from dataclasses import dataclass
 from django.utils import timezone
 
 from billing.application.queries import get_billing_overview_data
-from billing.models import ProviderSubscription
+from billing.application.services.paddle_checkout import (
+    PaddleCheckoutUnavailable,
+    build_paddle_checkout_payload,
+)
+from billing.models import PaymentProvider, ProviderSubscription
 
 
 @dataclass(frozen=True)
@@ -15,6 +19,10 @@ class BillingProductVM:
     description: str
     price: str
     interval: str
+    can_checkout: bool
+    paddle_price_id: str
+    paddle_checkout_reference: str
+    customer_email: str
 
 
 @dataclass(frozen=True)
@@ -24,6 +32,7 @@ class BillingSubscriptionVM:
     provider: str
     status: str
     can_cancel: bool
+    can_manage: bool
     created_at: str
 
 
@@ -45,33 +54,69 @@ class BillingOverviewVM:
     available_credits: str
     subscription_status: str
     checkout_enabled: bool
+    checkout_provider: str
+    paddle_environment: str
+    paddle_client_token: str
+    paddle_success_url: str
     products: tuple[BillingProductVM, ...]
     subscriptions: tuple[BillingSubscriptionVM, ...]
     payments: tuple[BillingPaymentVM, ...]
 
 
-def build_billing_overview_vm(*, user, checkout_enabled: bool) -> BillingOverviewVM:
-    data = get_billing_overview_data(user=user)
-    products = tuple(
-        BillingProductVM(
+def build_billing_overview_vm(
+    *,
+    user,
+    checkout_enabled: bool,
+    provider: str,
+    environment: str,
+    paddle_client_token: str = "",
+    paddle_success_url: str = "",
+    paddle_portal_enabled: bool = False,
+) -> BillingOverviewVM:
+    data = get_billing_overview_data(user=user, provider=provider, environment=environment)
+    products = []
+    for product in data.products:
+        paddle_payload = None
+        if checkout_enabled and provider == PaymentProvider.PADDLE:
+            try:
+                paddle_payload = build_paddle_checkout_payload(
+                    user=user,
+                    product=product,
+                    environment=environment,
+                )
+            except PaddleCheckoutUnavailable:
+                paddle_payload = None
+        products.append(BillingProductVM(
             id=product.pk,
             name=product.account_plan.name,
             description=product.account_plan.description,
             price=_money(product.amount_minor, product.currency),
             interval="mensual" if product.interval == product.Interval.MONTH else "anual",
-        )
-        for product in data.products
-    )
+            can_checkout=paddle_payload is not None,
+            paddle_price_id=paddle_payload.price_id if paddle_payload else "",
+            paddle_checkout_reference=paddle_payload.checkout_reference if paddle_payload else "",
+            customer_email=paddle_payload.customer_email if paddle_payload else "",
+        ))
     subscriptions = tuple(
         BillingSubscriptionVM(
             id=subscription.pk,
             plan=subscription.product.account_plan.name,
             provider=subscription.get_provider_display(),
             status=subscription.get_status_display(),
-            can_cancel=subscription.status not in {
+            can_cancel=subscription.provider == PaymentProvider.MERCADO_PAGO and subscription.status not in {
                 ProviderSubscription.Status.CANCELED,
                 ProviderSubscription.Status.EXPIRED,
             },
+            can_manage=(
+                subscription.provider == PaymentProvider.PADDLE
+                and paddle_portal_enabled
+                and subscription.product.environment == environment
+                and bool((subscription.metadata or {}).get("paddle_customer_id"))
+                and subscription.status not in {
+                    ProviderSubscription.Status.CANCELED,
+                    ProviderSubscription.Status.EXPIRED,
+                }
+            ),
             created_at=timezone.localtime(subscription.created_at).strftime("%Y-%m-%d"),
         )
         for subscription in data.subscriptions
@@ -99,7 +144,11 @@ def build_billing_overview_vm(*, user, checkout_enabled: bool) -> BillingOvervie
             else data.account.subscription_status
         ),
         checkout_enabled=checkout_enabled,
-        products=products,
+        checkout_provider=provider,
+        paddle_environment=environment if provider == PaymentProvider.PADDLE else "",
+        paddle_client_token=paddle_client_token if provider == PaymentProvider.PADDLE else "",
+        paddle_success_url=paddle_success_url if provider == PaymentProvider.PADDLE else "",
+        products=tuple(products),
         subscriptions=subscriptions,
         payments=tuple(payments),
     )

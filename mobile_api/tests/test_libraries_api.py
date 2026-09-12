@@ -16,11 +16,12 @@ from notas.domain.models import (
     DailyPlanMeal,
     Food,
     FoodLabelCaptureReceipt,
-    FoodShare,
     Meal,
     MealFood,
     Program,
     ProgramDay,
+    ShareInvitation,
+    ShareResource,
 )
 
 
@@ -763,7 +764,10 @@ class MobileAPILibrariesTests(AuthenticatedMobileAPITestCase):
                 content_type="application/json",
             )
         self.assertEqual(shared.status_code, 200)
-        self.assertTrue(FoodShare.objects.filter(food=food, recipient_email="friend@example.com").exists())
+        resource = ShareResource.objects.get(subject_type="food", source_object_id=food.id)
+        self.assertTrue(
+            ShareInvitation.objects.filter(resource=resource, recipient_email="friend@example.com").exists()
+        )
 
     def test_library_actions_reject_items_owned_by_another_user(self):
         other = User.objects.create_user(username="another-library-owner")

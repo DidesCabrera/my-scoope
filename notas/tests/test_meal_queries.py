@@ -48,14 +48,14 @@ class MealQueryTests(TestCase):
         self.assertNotIn("Private Other Meal", names)
         self.assertNotIn("Shared Meal", names)
 
-    def test_list_available_meals_includes_public_and_shared(self):
+    def test_list_available_meals_excludes_shared_source_objects(self):
         meals = list_available_meals(self.user)
 
         names = [meal.name for meal in meals]
 
         self.assertIn("Breakfast", names)
         self.assertIn("Public Meal", names)
-        self.assertIn("Shared Meal", names)
+        self.assertNotIn("Shared Meal", names)
         self.assertNotIn("Private Other Meal", names)
 
     def test_search_meals_filters_available_meals(self):
@@ -90,13 +90,9 @@ class MealQueryTests(TestCase):
 
         self.assertEqual(meal.name, "Public Meal")
 
-    def test_get_meal_detail_allows_shared_meal(self):
-        meal = get_meal_detail(
-            self.user,
-            self.shared_meal.id,
-        )
-
-        self.assertEqual(meal.name, "Shared Meal")
+    def test_get_meal_detail_blocks_shared_source_object(self):
+        with self.assertRaises(Exception):
+            get_meal_detail(self.user, self.shared_meal.id)
 
     def test_get_meal_detail_blocks_private_other_meal(self):
         with self.assertRaises(Exception):

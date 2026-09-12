@@ -1,12 +1,13 @@
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
+from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
+from core.rate_limits import limit_sharing_create
 from email_delivery.services import deliver_share_invitation
 from notas.application.services.access.access import get_dailyplan_for_user
 from notas.application.services.access.capabilities import get_capabilities
@@ -21,13 +22,18 @@ from notas.application.services.commands.dailyplan_commands import (
     save_dailyplan,
 )
 from notas.application.services.commands.share_commands import (
-    accept_dailyplan_share,
-    create_dailyplan_share,
     dismiss_dailyplan_share,
     remove_dailyplan_share,
 )
-from notas.application.services.notifications.share_emails import build_share_invitation_email
-from notas.domain.models import DailyPlan, DailyPlanShare, Meal
+from notas.application.services.notifications.share_emails import (
+    build_normalized_share_invitation_email,
+)
+from notas.application.sharing.dailyplans import get_or_create_dailyplan_share_resource
+from notas.application.sharing.services import (
+    create_share_invitation,
+    mark_share_invitation_delivered,
+)
+from notas.domain.models import DailyPlan, DailyPlanShare, Meal, ShareInvitation, ShareResource
 from notas.interface.forms.forms import DailyPlanShareForm
 from notas.presentation.config.viewmodel_config import *
 from notas.presentation.pages.dailyplan_contexts import (
@@ -47,6 +53,7 @@ from notas.presentation.pages.dailyplan_pages import (
 #************ VIEW DE INBOX *********************
 
 @login_required
+@limit_sharing_create
 def dailyplan_share(request, pk):
 
     dailyplan = get_object_or_404(
@@ -59,45 +66,45 @@ def dailyplan_share(request, pk):
     if dailyplan.created_by != request.user:
         return HttpResponseForbidden()
 
-    form = DailyPlanShareForm(request.POST or None, initial={"subject": dailyplan.name})
+    share_action = request.POST.get("share_action", "send_email")
+    form = DailyPlanShareForm(
+        request.POST if request.method == "POST" and share_action == "send_email" else None,
+        initial={"subject": dailyplan.name},
+    )
 
-    if request.method == "POST" and form.is_valid():
+    if request.method == "POST" and share_action == "create_link":
+        get_or_create_dailyplan_share_resource(sender=request.user, dailyplan_id=dailyplan.id)
+        messages.success(request, "El enlace para compartir está listo.")
+        return redirect("dailyplan_share", pk=dailyplan.pk)
+
+    if request.method == "POST" and share_action == "send_email" and form.is_valid():
         email = form.cleaned_data["recipient_email"]
         share_subject = form.cleaned_data.get("subject", dailyplan.name)
         message = form.cleaned_data.get("message", "")
 
-        result = create_dailyplan_share(
+        resource = get_or_create_dailyplan_share_resource(
+            sender=request.user,
+            dailyplan_id=dailyplan.id,
+        ).resource
+        invitation = create_share_invitation(
+            resource=resource,
             sender=request.user,
             recipient_email=email,
-            dailyplan=dailyplan,
             subject=share_subject,
             message=message,
         )
-
-        share = result.share
-
-        subject, message = build_share_invitation_email(
+        subject, email_message = build_normalized_share_invitation_email(
             request=request,
-            share=share,
-            kind="dailyplan",
-            item_name=dailyplan.name,
-            custom_subject=share_subject,
-            custom_message=message,
+            invitation=invitation,
         )
-
         delivery = deliver_share_invitation(
-            share=share,
+            share=invitation,
             subject=subject,
-            message=message,
+            message=email_message,
             from_email=settings.DEFAULT_FROM_EMAIL,
         )
-
-        if share.accepted_by_id:
-            messages.success(
-                request,
-                "Compartiste este plan diario. Como el correo pertenece a una cuenta existente, ya está disponible en su Inbox.",
-            )
-        elif delivery.sent:
+        if delivery.sent:
+            mark_share_invitation_delivered(invitation=invitation)
             messages.success(
                 request,
                 "Compartiste este plan diario. Enviamos el correo de invitación al destinatario.",
@@ -113,31 +120,44 @@ def dailyplan_share(request, pk):
                 "Se creó la invitación, pero la política de correo no permitió enviarla.",
             )
 
-        return redirect("dailyplan_detail", pk=dailyplan.pk)
+        return redirect("dailyplan_share", pk=dailyplan.pk)
 
-    if request.method == "POST":
+    if request.method == "POST" and share_action == "send_email":
         messages.error(request, "No se pudo compartir. Revisa el correo ingresado.")
+
+    resource = (
+        ShareResource.objects.filter(
+            sender=request.user,
+            subject_type=ShareResource.SubjectType.DAILY_PLAN,
+            source_object_id=dailyplan.id,
+            status=ShareResource.Status.ACTIVE,
+        )
+        .order_by("-created_at", "-id")
+        .first()
+    )
+    share_url = (
+        request.build_absolute_uri(
+            reverse("share_preview", kwargs={"public_id": resource.public_id})
+        )
+        if resource is not None
+        else ""
+    )
 
     return render(
         request,
         "notas/dailyplans/share.html",
-        {"dailyplan": dailyplan, "form": form},
+        {
+            "dailyplan": dailyplan,
+            "form": form,
+            "share_resource": resource,
+            "share_url": share_url,
+        },
     )
 
 
-@login_required
 def dailyplan_share_accept(request, token):
-    share = get_object_or_404(
-        DailyPlanShare,
-        token=token,
-    )
-
-    accept_dailyplan_share(
-        share=share,
-        user=request.user,
-    )
-
-    return redirect("inbox_list")
+    invitation = get_object_or_404(ShareInvitation, public_id=token)
+    return redirect("share_invitation_preview", public_id=invitation.public_id)
 
 
 @login_required
@@ -658,5 +678,3 @@ def dailyplan_remove(request, pk):
     messages.success(request, "Plan eliminado definitivamente.")
 
     return redirect(_safe_return_to(request, "dailyplan_list", mode="delete"))
-
-

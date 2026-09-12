@@ -24,6 +24,7 @@ _INACTIVE_STATUS_PRIORITY = {
 }
 
 _PROVIDER_PRIORITY = {
+    "paddle": 30,
     "apple_app_store": 20,
     "mercado_pago": 10,
 }

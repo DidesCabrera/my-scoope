@@ -59,6 +59,9 @@ urlpatterns = [
     # Versioned consumer/mobile interface
     path("api/v1/", mobile_api_v1.urls),
 
+    # Unlisted portable share resources
+    path("", include("notas.interface.urls.sharing")),
+
     # Internal product intelligence
     path("staff/analytics/", include("admin_analytics.urls")),
 

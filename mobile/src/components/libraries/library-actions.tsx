@@ -19,12 +19,14 @@ import type {
   LibraryActionKey,
   LibraryActionResult,
   LibraryItem,
+  ShareResource,
 } from "@/api/types";
 import { Button, Field, InlineNotice } from "@/components/ui/primitives";
 import { EntityCardAction } from "@/components/ui";
 import { ActionSheetModal } from "@/components/ui/action-sheet-modal";
 import { MealTimeForm } from "@/components/calendarization/calendarized-entity-actions";
 import { tokens } from "@/design/tokens";
+import { copyShareLink, openNativeShare } from "@/sharing/native-share";
 
 type ApiRequest = <T>(path: string, init?: RequestInit) => Promise<T>;
 
@@ -65,6 +67,7 @@ export function LibraryActions({ apiRequest, entitySlug, item, mealTimeChange, o
   const [subject, setSubject] = useState(item.name);
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [shareResource, setShareResource] = useState<ShareResource | null>(null);
   const [error, setError] = useState<string | null>(null);
   const visible = controlledVisible ?? internalVisible;
   const setVisible = (nextVisible: boolean) => {
@@ -86,6 +89,7 @@ export function LibraryActions({ apiRequest, entitySlug, item, mealTimeChange, o
     setSubject(item.name);
     setRecipientEmail("");
     setMessage("");
+    setShareResource(null);
     setSelected(null);
     setError(null);
     setVisible(true);
@@ -114,6 +118,34 @@ export function LibraryActions({ apiRequest, entitySlug, item, mealTimeChange, o
   const selectAction = (action: LibraryAction) => {
     setError(null);
     setSelected(action);
+  };
+
+  const prepareShare = async () => {
+    if (shareResource) return shareResource;
+    const resource = await apiRequest<ShareResource>(`/api/v1/shares/${entitySlug}/${item.id}`, {
+      body: JSON.stringify({ claim_policy: "multiple" }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+    setShareResource(resource);
+    return resource;
+  };
+
+  const shareItem = async (mode: "native" | "copy") => {
+    setSubmitting(true);
+    setError(null);
+    try {
+      const resource = await prepareShare();
+      if (mode === "native") await openNativeShare(resource);
+      else await copyShareLink(resource);
+      if (mode === "copy") Alert.alert("Enlace copiado", "Ya puedes pegarlo donde quieras.");
+      setVisible(false);
+      setSelected(null);
+    } catch (nextError) {
+      setError(userFacingError(nextError));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const actionTitle = selected?.key === "delete"
@@ -187,6 +219,10 @@ export function LibraryActions({ apiRequest, entitySlug, item, mealTimeChange, o
 
                 {selected?.key === "share" ? (
                   <View style={styles.form}>
+                    <Text style={styles.confirmationText}>Compartiremos una copia segura de {entityLabels[item.entity]}. Los cambios futuros no modificarán este enlace.</Text>
+                    <Button label="Compartir con otra app" loading={submitting} onPress={() => void shareItem("native")} />
+                    <Button disabled={submitting} label="Copiar enlace" onPress={() => void shareItem("copy")} variant="secondary" />
+                    <Text style={styles.confirmationText}>También puedes enviar una invitación protegida por correo.</Text>
                     <Field keyboardType="email-address" label="Correo del destinatario" onChangeText={setRecipientEmail} placeholder="persona@correo.com" value={recipientEmail} />
                     <Field autoCapitalize="sentences" label="Asunto" onChangeText={setSubject} value={subject} />
                     <Field autoCapitalize="sentences" label="Mensaje (opcional)" multiline onChangeText={setMessage} value={message} />
