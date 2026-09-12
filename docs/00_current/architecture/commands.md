@@ -73,12 +73,15 @@ Food commands are part of the nutrition core because Food is the base entity for
 
 Main responsibilities:
 
-- Create DailyPlan shares.
-- Accept, dismiss, and remove DailyPlan shares.
-- Create Meal shares.
-- Accept, dismiss, and remove Meal shares.
+- Create or reuse immutable share resources through entity adapters.
+- Create directed invitations and record delivery independently.
+- Claim through explicit, idempotent writes and deliver to normalized Inbox.
+- Save detached Food, Meal, DailyPlan and Program copies from snapshots.
 
-Sharing rules should stay outside views so future interfaces do not duplicate permission and state logic.
+`application/services/commands/share_commands.py` is retained only for rollback
+compatibility with historical tables. New code belongs to `application/sharing`;
+views and mobile routes are channel adapters and must not duplicate ownership or
+claim rules.
 
 ## Command Design Rules
 

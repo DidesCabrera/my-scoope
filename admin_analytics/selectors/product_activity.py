@@ -10,23 +10,17 @@ from admin_analytics.filters import AdminAnalyticsFilters
 from notas.domain.model_modules.comparisons import SavedComparison
 from notas.domain.model_modules.proposals import NutritionProposal
 from notas.domain.model_modules.sharing import (
-    DailyPlanMealShare,
-    DailyPlanShare,
-    FoodShare,
-    MealShare,
-    ProgramShare,
     ShareClaim,
     ShareInvitation,
     ShareResource,
 )
 from notas.domain.models import DailyPlan, DailyPlanMeal, Food, InboxItem, Meal, MealFood, Program, ProgramDay
 
-SHARE_MODELS = (
-    ("foods", "Foods", FoodShare),
-    ("meals", "Meals", MealShare),
-    ("dailyplans", "DailyPlans", DailyPlanShare),
-    ("dailyplan_meals", "DailyPlanMeals", DailyPlanMealShare),
-    ("programs", "Programs", ProgramShare),
+SHARE_SUBJECTS = (
+    ("foods", "Foods", ShareResource.SubjectType.FOOD),
+    ("meals", "Meals", ShareResource.SubjectType.MEAL),
+    ("dailyplans", "DailyPlans", ShareResource.SubjectType.DAILY_PLAN),
+    ("programs", "Programs", ShareResource.SubjectType.PROGRAM),
 )
 
 
@@ -95,19 +89,8 @@ def _top_builder_rows(*, since_7d, top_limit: int) -> list[dict]:
             weight=3,
         )
 
-    for _, _, share_model in SHARE_MODELS:
-        for row in share_model.objects.filter(created_at__gte=since_7d).values("sender_id", "sender__email", "sender__username"):
-            _add_user_score(
-                scores,
-                user_id=row["sender_id"],
-                email=row["sender__email"],
-                username=row["sender__username"],
-                key="shares",
-            )
-
     for row in ShareResource.objects.filter(
         created_at__gte=since_7d,
-        legacy_reference__isnull=True,
     ).values("sender_id", "sender__email", "sender__username"):
         _add_user_score(
             scores,
@@ -168,13 +151,15 @@ def get_product_activity_metrics(*, now=None, analytics_filters: AdminAnalyticsF
     unread_shares_total = 0
     favorite_shares_total = 0
     removed_shares_total = 0
-    for key, label, share_model in SHARE_MODELS:
-        sent_7d = share_model.objects.filter(created_at__gte=since_7d).count()
+    for key, label, subject_type in SHARE_SUBJECTS:
+        resources = ShareResource.objects.filter(subject_type=subject_type)
+        inbox_items = InboxItem.objects.filter(resource__subject_type=subject_type)
+        sent_7d = resources.filter(created_at__gte=since_7d).count()
         total_shares_7d += sent_7d
-        accepted_total = share_model.objects.filter(accepted_by__isnull=False).count()
-        unread_total = share_model.objects.filter(is_read=False, removed=False, dismissed=False).count()
-        favorite_total = share_model.objects.filter(is_favorite=True).count()
-        removed_total = share_model.objects.filter(removed=True).count()
+        accepted_total = ShareClaim.objects.filter(resource__subject_type=subject_type).count()
+        unread_total = inbox_items.filter(read_at__isnull=True, dismissed_at__isnull=True).count()
+        favorite_total = inbox_items.filter(is_favorite=True).count()
+        removed_total = inbox_items.filter(dismissed_at__isnull=False).count()
         accepted_shares_total += accepted_total
         unread_shares_total += unread_total
         favorite_shares_total += favorite_total
@@ -183,9 +168,9 @@ def get_product_activity_metrics(*, now=None, analytics_filters: AdminAnalyticsF
             {
                 "key": key,
                 "label": label,
-                "sent_total": share_model.objects.count(),
+                "sent_total": resources.count(),
                 "sent_7d": sent_7d,
-                "sent_30d": share_model.objects.filter(created_at__gte=since_30d).count(),
+                "sent_30d": resources.filter(created_at__gte=since_30d).count(),
                 "accepted_total": accepted_total,
                 "unread_total": unread_total,
                 "favorite_total": favorite_total,
@@ -242,25 +227,16 @@ def get_product_activity_metrics(*, now=None, analytics_filters: AdminAnalyticsF
         if row["applied_by_id"]
     }
 
-    for _, _, share_model in SHARE_MODELS:
-        active_builder_user_ids |= {
-            row["sender_id"]
-            for row in share_model.objects.filter(created_at__gte=since_7d).values("sender_id")
-            if row["sender_id"]
-        }
-
     active_builder_user_ids |= {
         row["sender_id"]
         for row in ShareResource.objects.filter(
             created_at__gte=since_7d,
-            legacy_reference__isnull=True,
         ).values("sender_id")
         if row["sender_id"]
     }
 
     funnel_resources = ShareResource.objects.filter(
         created_at__gte=since_7d,
-        legacy_reference__isnull=True,
     )
     funnel_resource_ids = funnel_resources.values("id")
     sharing_funnel = {
@@ -345,7 +321,7 @@ def get_product_activity_metrics(*, now=None, analytics_filters: AdminAnalyticsF
             "rows": comparison_rows,
         },
         "shares": {
-            "total": sum(share_model.objects.count() for _, _, share_model in SHARE_MODELS),
+            "total": ShareResource.objects.count(),
             "sent_7d": total_shares_7d,
             "accepted_total": accepted_shares_total,
             "unread_total": unread_shares_total,

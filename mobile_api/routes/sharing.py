@@ -24,8 +24,8 @@ from mobile_api.schema_domains.sharing import (
 )
 from mobile_api.schemas import ErrorEnvelope
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_WRITE
-from notas.application.sharing.dailyplans import DailyPlanShareError, create_dailyplan_share_resource
-from notas.application.sharing.inbox import save_dailyplan_inbox_item, update_inbox_item
+from notas.application.sharing.entities import EntityShareError, get_or_create_entity_share_resource
+from notas.application.sharing.inbox import save_inbox_item, update_inbox_item
 from notas.application.sharing.services import (
     ShareUnavailable,
     claim_share_resource,
@@ -87,18 +87,64 @@ def _owned_inbox_item(user, item_id: int) -> InboxItem:
     },
 )
 def create_dailyplan_share(request, dailyplan_id: int, payload: ShareResourceCreateInput):
+    return _create_entity_share(
+        request,
+        subject_type=ShareResource.SubjectType.DAILY_PLAN,
+        subject_id=dailyplan_id,
+        payload=payload,
+    )
+
+
+def _create_entity_share(request, *, subject_type: str, subject_id: int, payload: ShareResourceCreateInput):
     require_scope(request.auth, MOBILE_SCOPE_WRITE)
     if is_sharing_create_rate_limited(request):
         raise MobileAPIError("sharing_create_rate_limited", "Inténtalo nuevamente más tarde.", 429)
     try:
-        result = create_dailyplan_share_resource(
+        result = get_or_create_entity_share_resource(
             sender=request.auth.user,
-            dailyplan_id=dailyplan_id,
+            subject_type=subject_type,
+            subject_id=subject_id,
             claim_policy=payload.claim_policy,
         )
-    except DailyPlanShareError as exc:
-        raise MobileAPIError(str(exc), "El plan no está disponible para compartir.", 404) from exc
+    except EntityShareError as exc:
+        raise MobileAPIError(str(exc), "El contenido no está disponible para compartir.", 404) from exc
     return success(_resource_payload(request, result.resource))
+
+
+@router.post(
+    "/shares/foods/{food_id}",
+    operation_id="mobile_api_create_food_share_resource",
+    auth=mobile_bearer,
+    response={200: ShareResourceEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 429: ErrorEnvelope},
+)
+def create_food_share(request, food_id: int, payload: ShareResourceCreateInput):
+    return _create_entity_share(
+        request, subject_type=ShareResource.SubjectType.FOOD, subject_id=food_id, payload=payload
+    )
+
+
+@router.post(
+    "/shares/meals/{meal_id}",
+    operation_id="mobile_api_create_meal_share_resource",
+    auth=mobile_bearer,
+    response={200: ShareResourceEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 429: ErrorEnvelope},
+)
+def create_meal_share(request, meal_id: int, payload: ShareResourceCreateInput):
+    return _create_entity_share(
+        request, subject_type=ShareResource.SubjectType.MEAL, subject_id=meal_id, payload=payload
+    )
+
+
+@router.post(
+    "/shares/programs/{program_id}",
+    operation_id="mobile_api_create_program_share_resource",
+    auth=mobile_bearer,
+    response={200: ShareResourceEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 429: ErrorEnvelope},
+)
+def create_program_share(request, program_id: int, payload: ShareResourceCreateInput):
+    return _create_entity_share(
+        request, subject_type=ShareResource.SubjectType.PROGRAM, subject_id=program_id, payload=payload
+    )
 
 
 @router.get(
@@ -146,10 +192,10 @@ def save_sharing_inbox_item(request, item_id: int):
     require_scope(request.auth, MOBILE_SCOPE_WRITE)
     item = _owned_inbox_item(request.auth.user, item_id)
     try:
-        saved = save_dailyplan_inbox_item(inbox_item=item, actor=request.auth.user)
+        saved = save_inbox_item(inbox_item=item, actor=request.auth.user)
     except ShareUnavailable as exc:
         raise MobileAPIError(str(exc), "El contenido compartido no se puede guardar.", 422) from exc
-    return success({"entity": "dailyPlan", "item_id": saved.id})
+    return success({"entity": saved.entity, "item_id": saved.instance.id})
 
 
 @router.get(

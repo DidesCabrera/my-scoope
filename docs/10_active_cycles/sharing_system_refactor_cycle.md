@@ -1,6 +1,6 @@
 # Sharing System Refactor Cycle
 
-Status: active
+Status: completed
 Date: 2026-09-11
 Cycle code: SHR
 
@@ -38,4 +38,16 @@ channel-independent Inbox.
 | SHR07 · Web/email unification | completed | One DailyPlan web surface for reusable links and directed email; normalized invitation lifecycle and mobile compatibility action. |
 | SHR08 · Share Cards | completed | Deterministic 1200×630 PNG cards, Open Graph/Twitter metadata, bounded cache and revocation behavior from snapshots only. |
 | SHR09 · Operations | completed | Shared-cache abuse limits, 30-day expiry/retention job, privacy-minimal funnel evidence and fail-closed mobile association endpoints. |
-| SHR10 · Expansion/legacy retirement | pending | Entity adapters, data migration and removal of duplication. |
+| SHR10 · Expansion/legacy retirement | completed | Food, Meal, DailyPlanMeal and Program adapters; detached save for all subjects; idempotent token-preserving backfill; unified web/mobile channels and snapshot-only source reads. |
+
+## Closure
+
+All supported nutrition entities now use `ShareResource`, `ShareInvitation`,
+`ShareClaim` and `InboxItem`. Legacy rows are retained only as rollback-compatible
+storage: migration 0060 projects every historical row into the normalized model,
+old token URLs redirect to the read-only invitation preview, and active channels,
+badges, workspace reads and analytics no longer write or count the legacy tables.
+
+Closure evidence: 1,914 Django tests, 85 native tests, native lint/typecheck, the
+97-test fast architecture gate, migration drift, OpenAPI drift, repository hygiene
+and the strict document registry all pass.

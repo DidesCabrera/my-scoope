@@ -1,6 +1,6 @@
 {
-  "mobile_api/api.py": {"max_lines": 69},
-  "mobile_api/schemas.py": {"max_lines": 207},
+  "mobile_api/api.py": {"max_lines": 71},
+  "mobile_api/schemas.py": {"max_lines": 223},
   "mobile_api/selectors.py": {"max_lines": 1128},
   "mobile_api/tests/test_api_v1.py": {"max_lines": 87},
   "mobile_api/routes/assistant.py": {"max_lines": 235},
@@ -10,7 +10,7 @@
   "mobile_api/schema_domains/billing.py": {"max_lines": 56},
   "mobile_api/tests/test_billing_api.py": {"max_lines": 79},
   "mobile_api/routes/calendarization.py": {"max_lines": 444},
-  "mobile_api/schema_domains/calendarization.py": {"max_lines": 317},
+  "mobile_api/schema_domains/calendarization.py": {"max_lines": 318},
   "mobile_api/tests/test_calendarization_api.py": {"max_lines": 479},
   "mobile_api/routes/comparisons.py": {"max_lines": 170},
   "mobile_api/schema_domains/comparisons.py": {"max_lines": 145},

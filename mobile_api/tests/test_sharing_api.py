@@ -4,11 +4,53 @@ from django.test import Client, override_settings
 
 from mobile_api.tests.base import AuthenticatedMobileAPITestCase
 from notas.application.sharing.dailyplans import create_dailyplan_share_resource
-from notas.domain.models import DailyPlan, ShareResource
+from notas.domain.models import DailyPlan, Food, Meal, Program, ShareInvitation, ShareResource
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
 class MobileAPISharingTests(AuthenticatedMobileAPITestCase):
+    def test_library_email_action_uses_normalized_sharing(self):
+        dailyplan = DailyPlan.objects.create(
+            name="Plan normalizado", created_by=self.user, is_draft=False
+        )
+        with patch(
+            "mobile_api.library_actions.deliver_share_invitation",
+            return_value=SimpleNamespace(sent=True, reason=""),
+        ):
+            response = self.client.post(
+                f"/api/v1/library/daily-plans/{dailyplan.id}/actions",
+                data={
+                    "action": "share",
+                    "recipient_email": "friend@example.com",
+                    "subject": "Plan para ti",
+                    "message": "Revísalo.",
+                },
+                content_type="application/json",
+            )
+
+        self.assertEqual(response.status_code, 200)
+        resource = ShareResource.objects.get(source_object_id=dailyplan.id)
+        invitation = ShareInvitation.objects.get(resource=resource)
+        self.assertEqual(invitation.recipient_email, "friend@example.com")
+        self.assertEqual(invitation.status, ShareInvitation.Status.DELIVERED)
+
+    def test_owner_can_create_share_links_for_every_library_entity(self):
+        entities = (
+            ("foods", Food.objects.create(name="Avena", protein=10, carbs=60, fat=7, created_by=self.user), "food"),
+            ("meals", Meal.objects.create(name="Desayuno", created_by=self.user, is_draft=False), "meal"),
+            ("programs", Program.objects.create(name="Semana", created_by=self.user, is_draft=False), "program"),
+        )
+        for slug, item, subject_type in entities:
+            with self.subTest(subject_type=subject_type):
+                response = self.client.post(
+                    f"/api/v1/shares/{slug}/{item.id}",
+                    data={"claim_policy": "multiple"},
+                    content_type="application/json",
+                )
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.json()["data"]["subject_type"], subject_type)
+                self.assertEqual(response.json()["data"]["title"], item.name)
+
     def test_owner_can_create_and_revoke_dailyplan_share_resource(self):
         dailyplan = DailyPlan.objects.create(name="Plan desde móvil", created_by=self.user, is_draft=False)
 
@@ -132,3 +174,5 @@ class MobileAPISharingTests(AuthenticatedMobileAPITestCase):
             self.assertEqual(second.json()["error"]["code"], "sharing_preview_rate_limited")
         finally:
             cache.clear()
+from types import SimpleNamespace
+from unittest.mock import patch

@@ -11,8 +11,9 @@ from django.views.decorators.http import require_POST
 from notas.application.services.commands.dailyplan_commands import save_dailyplan
 from notas.application.services.commands.food_commands import create_food
 from notas.application.services.commands.meal_commands import save_dailyplan_meal_to_library, save_meal
-from notas.application.sharing.inbox import save_dailyplan_inbox_item
+from notas.application.sharing.inbox import save_inbox_item
 from notas.application.sharing.services import ShareUnavailable
+from notas.domain.models import ShareResource
 from notas.presentation.composition.viewmodel.components.builder_headers import (
     build_page_header,
 )
@@ -564,6 +565,12 @@ def inbox_attachment_detail(request, kind, share_id):
     inbox = asdict(item)
 
     if kind == "share":
+        subject_label = {
+            ShareResource.SubjectType.DAILY_PLAN: "Plan diario",
+            ShareResource.SubjectType.FOOD: "Alimento",
+            ShareResource.SubjectType.MEAL: "Comida",
+            ShareResource.SubjectType.PROGRAM: "Programa semanal",
+        }.get(share.resource.subject_type, "Contenido")
         return render(
             request,
             "notas/sharing/preview.html",
@@ -573,6 +580,12 @@ def inbox_attachment_detail(request, kind, share_id):
                 "already_claimed": True,
                 "pending_claim": False,
                 "claim_error": "",
+                "subject_label": subject_label,
+                "share_description": f"{item.title}: {subject_label.lower()} compartido con MyScoope.",
+                "canonical_url": request.build_absolute_uri(),
+                "card_url": request.build_absolute_uri(
+                    reverse("share_card", kwargs={"public_id": share.resource.public_id})
+                ),
             },
         )
 
@@ -741,11 +754,17 @@ def inbox_save_attachment(request, kind, share_id):
 
     if kind == "share":
         try:
-            saved = save_dailyplan_inbox_item(inbox_item=share, actor=request.user)
+            saved = save_inbox_item(inbox_item=share, actor=request.user)
         except ShareUnavailable:
             return HttpResponseBadRequest("El contenido compartido no se puede guardar.")
-        messages.success(request, "Plan diario guardado en Mi librería.")
-        return redirect("dailyplan_detail", pk=saved.pk)
+        route, label = {
+            "dailyPlan": ("dailyplan_detail", "Plan diario"),
+            "food": ("food_detail", "Alimento"),
+            "meal": ("meal_detail", "Comida"),
+            "program": ("program_detail", "Programa"),
+        }[saved.entity]
+        messages.success(request, f"{label} guardado en Mi librería.")
+        return redirect(route, pk=saved.instance.pk)
 
     if kind == "dailyplan":
         saved = save_dailyplan(share.dailyplan, request.user)

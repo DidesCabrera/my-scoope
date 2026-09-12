@@ -470,7 +470,7 @@ def library_dailyplans_payload(
 def library_programs_payload(user, *, search=None, offset=0, limit=30) -> dict:
     current_weight = get_current_weight(user)
     queryset = (
-        Program.objects.filter(Q(created_by=user) | Q(shares__accepted_by=user, shares__removed=False))
+        Program.objects.filter(created_by=user)
         .select_related("created_by")
         .annotate(library_day_count=Count("program_dailyplan", distinct=True))
         .prefetch_related("program_dailyplan__dailyplan__dailyplan_meals__meal__meal_food_set__food")
@@ -598,7 +598,7 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
     elif entity == "programs":
         item = (
             Program.objects.filter(pk=item_id)
-            .filter(Q(created_by=user) | Q(shares__accepted_by=user, shares__removed=False))
+            .filter(created_by=user)
             .select_related("created_by")
             .annotate(library_day_count=Count("program_dailyplan", distinct=True))
             .prefetch_related("program_dailyplan__dailyplan__dailyplan_meals__meal__meal_food_set__food")

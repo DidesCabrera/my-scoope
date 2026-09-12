@@ -120,9 +120,9 @@ export function LibraryActions({ apiRequest, entitySlug, item, mealTimeChange, o
     setSelected(action);
   };
 
-  const prepareDailyPlanShare = async () => {
+  const prepareShare = async () => {
     if (shareResource) return shareResource;
-    const resource = await apiRequest<ShareResource>(`/api/v1/shares/daily-plans/${item.id}`, {
+    const resource = await apiRequest<ShareResource>(`/api/v1/shares/${entitySlug}/${item.id}`, {
       body: JSON.stringify({ claim_policy: "multiple" }),
       headers: { "Content-Type": "application/json" },
       method: "POST",
@@ -131,11 +131,11 @@ export function LibraryActions({ apiRequest, entitySlug, item, mealTimeChange, o
     return resource;
   };
 
-  const shareDailyPlan = async (mode: "native" | "copy") => {
+  const shareItem = async (mode: "native" | "copy") => {
     setSubmitting(true);
     setError(null);
     try {
-      const resource = await prepareDailyPlanShare();
+      const resource = await prepareShare();
       if (mode === "native") await openNativeShare(resource);
       else await copyShareLink(resource);
       if (mode === "copy") Alert.alert("Enlace copiado", "Ya puedes pegarlo donde quieras.");
@@ -217,17 +217,12 @@ export function LibraryActions({ apiRequest, entitySlug, item, mealTimeChange, o
                   </View>
                 ) : null}
 
-                {selected?.key === "share" && item.entity === "dailyPlan" ? (
+                {selected?.key === "share" ? (
                   <View style={styles.form}>
-                    <Text style={styles.confirmationText}>Compartiremos una copia segura del plan. Los cambios futuros no modificarán este enlace.</Text>
-                    <Button label="Compartir con otra app" loading={submitting} onPress={() => void shareDailyPlan("native")} />
-                    <Button disabled={submitting} label="Copiar enlace" onPress={() => void shareDailyPlan("copy")} variant="secondary" />
-                    <Button label="Volver" onPress={() => setSelected(null)} variant="secondary" />
-                  </View>
-                ) : null}
-
-                {selected?.key === "share" && item.entity !== "dailyPlan" ? (
-                  <View style={styles.form}>
+                    <Text style={styles.confirmationText}>Compartiremos una copia segura de {entityLabels[item.entity]}. Los cambios futuros no modificarán este enlace.</Text>
+                    <Button label="Compartir con otra app" loading={submitting} onPress={() => void shareItem("native")} />
+                    <Button disabled={submitting} label="Copiar enlace" onPress={() => void shareItem("copy")} variant="secondary" />
+                    <Text style={styles.confirmationText}>También puedes enviar una invitación protegida por correo.</Text>
                     <Field keyboardType="email-address" label="Correo del destinatario" onChangeText={setRecipientEmail} placeholder="persona@correo.com" value={recipientEmail} />
                     <Field autoCapitalize="sentences" label="Asunto" onChangeText={setSubject} value={subject} />
                     <Field autoCapitalize="sentences" label="Mensaje (opcional)" multiline onChangeText={setMessage} value={message} />

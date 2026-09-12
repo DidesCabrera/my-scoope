@@ -27,7 +27,8 @@ the protected flows.
   email, preventing account enumeration without consuming provider quota.
 - Share invitations require a verified sender, are globally and per-user/per-recipient
   budgeted, and have a per-recipient cooldown.
-- A share delivered directly into an existing user's Inbox does not send email.
+- A directed share always remains an invitation until the matching verified account
+  explicitly claims it; account existence is never disclosed to the sender.
 - The initial email for a share is idempotent by share record. Repeating the form
   does not send a second email.
 - Provider exceptions are stored only by exception class; credentials and SMTP
@@ -36,8 +37,8 @@ the protected flows.
 ## Operational controls
 
 `EMAIL_SHARE_DELIVERY_ENABLED` is the kill switch for non-critical share email. It
-does not disable account verification, password reset, share creation or Inbox
-delivery.
+does not disable account verification, password reset, share creation or later
+claim delivery to Inbox.
 
 The Django admin exposes delivery attempts for investigation. Resend remains the
 provider-side source for delivery, bounce and complaint evidence until signed

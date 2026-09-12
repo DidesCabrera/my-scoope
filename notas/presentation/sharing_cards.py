@@ -93,7 +93,14 @@ def render_share_card_png(snapshot: Mapping) -> bytes:
     nutrition = nutrition if isinstance(nutrition, Mapping) else {}
     summary = summary if isinstance(summary, Mapping) else {}
 
-    title = _display_text(_text(subject.get("title"), fallback="Plan compartido"))
+    title = _display_text(_text(subject.get("title"), fallback="Contenido compartido"))
+    subject_type = _text(subject.get("type"), fallback="daily_plan")
+    type_label = {
+        "daily_plan": "PLAN DIARIO",
+        "food": "ALIMENTO",
+        "meal": "COMIDA",
+        "program": "PROGRAMA",
+    }.get(subject_type, "COMPARTIDO")
     calories = _number(nutrition.get("calories"))
     meal_count = int(_number(summary.get("meal_count")))
     food_count = int(_number(summary.get("food_count")))
@@ -108,7 +115,7 @@ def render_share_card_png(snapshot: Mapping) -> bytes:
     draw.ellipse((1030, 390, 1260, 620), fill="#13302f")
     draw.rounded_rectangle((70, 54, 1130, 576), radius=38, fill="#0d222c", outline="#29404a", width=2)
     draw.rounded_rectangle((92, 78, 262, 126), radius=24, fill="#c9f36a")
-    draw.text((119, 88), "PLAN DIARIO", font=_font(22), fill="#10211c")
+    draw.text((119, 88), type_label, font=_font(22), fill="#10211c")
     draw.text((862, 85), "MY SCOOPE", font=_font(30), fill="#f3f7f5")
 
     title_font = _font(58)
@@ -131,12 +138,17 @@ def render_share_card_png(snapshot: Mapping) -> bytes:
         x += 210
 
     draw.line((94, 476, 1106, 476), fill="#29404a", width=2)
-    draw.text(
-        (94, 505),
-        f"{meal_count} comidas  ·  {food_count} alimentos",
-        font=_font(27),
-        fill="#c8d3d6",
-    )
+    if subject_type == "food":
+        footer = "Valores nutricionales por 100 g"
+    elif subject_type == "meal":
+        footer = f"{food_count} alimentos"
+    elif subject_type == "program":
+        duration_weeks = int(_number(summary.get("duration_weeks")))
+        filled_days = int(_number(summary.get("filled_days")))
+        footer = f"{duration_weeks} semanas  ·  {filled_days} días planificados"
+    else:
+        footer = f"{meal_count} comidas  ·  {food_count} alimentos"
+    draw.text((94, 505), footer, font=_font(27), fill="#c8d3d6")
 
     output = io.BytesIO()
     image.save(output, format="PNG", optimize=True)

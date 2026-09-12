@@ -1,184 +1,83 @@
+from allauth.account.models import EmailAddress
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, override_settings
-from django.urls import resolve, reverse
+from django.urls import reverse
 
-from notas.domain.models import Meal, MealShare, Program, ProgramShare
+from notas.application.sharing.entities import get_or_create_entity_share_resource
+from notas.application.sharing.services import create_share_invitation
+from notas.domain.models import InboxItem, Meal, Program, ShareClaim, ShareResource
 
 User = get_user_model()
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
-class MealShareTests(TestCase):
-
+class NormalizedShareCompatibilityTests(TestCase):
     def setUp(self):
         self.sender = User.objects.create_user(
-            username="sender",
-            email="sender@test.com",
-            password="12345678",
+            username="sender", email="sender@test.com", password="12345678"
         )
         self.recipient = User.objects.create_user(
-            username="recipient",
-            email="recipient@test.com",
-            password="12345678",
+            username="recipient", email="recipient@test.com", password="12345678"
         )
-
-        self.meal = Meal.objects.create(
-            name="Shared meal",
-            created_by=self.sender,
-            is_draft=False,
-            is_public=False,
-            is_forkable=True,
-            is_copiable=False,
-        )
-
-        self.share = MealShare.objects.create(
+        EmailAddress.objects.create(user=self.recipient, email=self.recipient.email, verified=True, primary=True)
+        self.meal = Meal.objects.create(name="Shared meal", created_by=self.sender, is_draft=False)
+        self.meal_resource = get_or_create_entity_share_resource(
+            sender=self.sender,
+            subject_type=ShareResource.SubjectType.MEAL,
+            subject_id=self.meal.id,
+        ).resource
+        self.meal_invitation = create_share_invitation(
+            resource=self.meal_resource,
             sender=self.sender,
             recipient_email=self.recipient.email,
-            meal=self.meal,
         )
         self.program = Program.objects.create(name="Shared program", created_by=self.sender)
-        self.program_share = ProgramShare.objects.create(
+        self.program_resource = get_or_create_entity_share_resource(
+            sender=self.sender,
+            subject_type=ShareResource.SubjectType.PROGRAM,
+            subject_id=self.program.id,
+        ).resource
+        self.program_invitation = create_share_invitation(
+            resource=self.program_resource,
             sender=self.sender,
             recipient_email=self.recipient.email,
-            program=self.program,
         )
-
         self.client = Client()
 
+    def test_legacy_named_get_route_only_redirects_to_preview(self):
+        response = self.client.get(reverse("meal_share_accept", args=[self.meal_invitation.public_id]))
 
-    def test_meal_share_dismiss_url_resolves_to_dismiss_view(self):
-        match = resolve(reverse("meal_share_dismiss", args=[self.share.id]))
-
-        self.assertEqual(match.url_name, "meal_share_dismiss")
-
-    def test_meal_share_accept_sets_accepted_by(self):
-        self.client.login(
-            username="recipient",
-            password="12345678",
+        self.assertRedirects(
+            response,
+            reverse("share_invitation_preview", args=[self.meal_invitation.public_id]),
+            fetch_redirect_response=False,
         )
+        self.assertFalse(ShareClaim.objects.exists())
+        self.assertFalse(InboxItem.objects.exists())
 
-        response = self.client.get(
-            reverse("meal_share_accept", args=[self.share.token])
-        )
-
-        self.assertEqual(response.status_code, 302)
-
-        self.share.refresh_from_db()
-        self.assertEqual(self.share.accepted_by, self.recipient)
-
-    def test_share_token_does_not_allow_a_different_email_to_claim(self):
+    def test_explicit_post_claim_is_recipient_bound_and_idempotent(self):
+        claim_url = reverse("share_invitation_claim", args=[self.meal_invitation.public_id])
         attacker = User.objects.create_user(
-            username="attacker",
-            email="attacker@test.com",
-            password="12345678",
+            username="attacker", email="attacker@test.com", password="12345678"
         )
+        EmailAddress.objects.create(user=attacker, email=attacker.email, verified=True, primary=True)
         self.client.force_login(attacker)
-
-        response = self.client.get(reverse("meal_share_accept", args=[self.share.token]))
-
-        self.assertEqual(response.status_code, 404)
-        self.share.refresh_from_db()
-        self.assertIsNone(self.share.accepted_by)
-
-    def test_share_claim_is_idempotent_and_cannot_be_overwritten(self):
-        self.share.accepted_by = self.recipient
-        self.share.save(update_fields=["accepted_by"])
-        duplicate_email_user = User.objects.create_user(
-            username="duplicate-recipient",
-            email=self.recipient.email.upper(),
-            password="12345678",
-        )
-        self.client.force_login(duplicate_email_user)
-
-        response = self.client.get(reverse("meal_share_accept", args=[self.share.token]))
-
-        self.assertEqual(response.status_code, 404)
-        self.share.refresh_from_db()
-        self.assertEqual(self.share.accepted_by, self.recipient)
+        self.assertEqual(self.client.post(claim_url).status_code, 409)
 
         self.client.force_login(self.recipient)
-        response = self.client.get(reverse("meal_share_accept", args=[self.share.token]))
-        self.assertEqual(response.status_code, 302)
-        self.share.refresh_from_db()
-        self.assertEqual(self.share.accepted_by, self.recipient)
+        self.assertEqual(self.client.post(claim_url).status_code, 302)
+        self.assertEqual(self.client.post(claim_url).status_code, 302)
+        self.assertEqual(ShareClaim.objects.filter(resource=self.meal_resource).count(), 1)
+        self.assertEqual(InboxItem.objects.filter(resource=self.meal_resource).count(), 1)
 
-    def test_program_share_has_a_recipient_bound_acceptance_route(self):
-        self.client.force_login(self.recipient)
-
-        response = self.client.get(reverse("program_share_accept", args=[self.program_share.token]))
-
-        self.assertRedirects(response, reverse("inbox_list"))
-        self.program_share.refresh_from_db()
-        self.assertEqual(self.program_share.accepted_by, self.recipient)
-
-    def test_meal_share_dismiss_sets_dismissed_true(self):
-        self.share.accepted_by = self.recipient
-        self.share.save(update_fields=["accepted_by"])
-
-        self.client.login(
-            username="recipient",
-            password="12345678",
+    def test_program_compatibility_route_uses_same_secure_preview(self):
+        response = self.client.get(
+            reverse("program_share_accept", args=[self.program_invitation.public_id])
         )
 
-        response = self.client.post(
-            reverse("meal_share_dismiss", args=[self.share.id])
+        self.assertRedirects(
+            response,
+            reverse("share_invitation_preview", args=[self.program_invitation.public_id]),
+            fetch_redirect_response=False,
         )
-
-        self.assertEqual(response.status_code, 302)
-
-        self.share.refresh_from_db()
-        self.assertTrue(self.share.dismissed)
-
-    def test_meal_unshare_sets_removed_true(self):
-        self.share.accepted_by = self.recipient
-        self.share.save(update_fields=["accepted_by"])
-
-        self.client.login(
-            username="recipient",
-            password="12345678",
-        )
-
-        response = self.client.post(
-            reverse("meal_unshare", args=[self.share.id])
-        )
-
-        self.assertEqual(response.status_code, 302)
-
-        self.share.refresh_from_db()
-        self.assertTrue(self.share.removed)
-
-    def test_meal_share_dismiss_requires_accepted_user(self):
-        other_user = User.objects.create_user(
-            username="other",
-            email="other@test.com",
-            password="12345678",
-        )
-
-        self.client.login(
-            username="other",
-            password="12345678",
-        )
-
-        response = self.client.post(
-            reverse("meal_share_dismiss", args=[self.share.id])
-        )
-
-        self.assertEqual(response.status_code, 404)
-
-    def test_meal_unshare_requires_accepted_user(self):
-        other_user = User.objects.create_user(
-            username="other2",
-            email="other2@test.com",
-            password="12345678",
-        )
-
-        self.client.login(
-            username="other2",
-            password="12345678",
-        )
-
-        response = self.client.post(
-            reverse("meal_unshare", args=[self.share.id])
-        )
-
-        self.assertEqual(response.status_code, 404)
+        self.assertFalse(ShareClaim.objects.filter(resource=self.program_resource).exists())

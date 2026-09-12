@@ -1,17 +1,16 @@
 from __future__ import annotations
 
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, JsonResponse
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
-from email_delivery.services import deliver_share_invitation
+from core.rate_limits import limit_sharing_create
 from notas.application.services.access.capabilities import get_capabilities
 from notas.application.services.cache.program_summary import refresh_program_summary_cache
 from notas.application.services.commands.program_commands import (
@@ -31,11 +30,10 @@ from notas.application.services.commands.program_commands import (
 from notas.application.services.commands.program_commands import (
     fork_program as fork_program_command,
 )
-from notas.application.services.commands.share_commands import accept_program_share, create_program_share
-from notas.application.services.notifications.share_emails import build_share_invitation_email
 from notas.application.services.nutrition.weight import get_current_weight
-from notas.domain.models import Program, ProgramDay, ProgramShare
+from notas.domain.models import Program, ProgramDay, ShareInvitation, ShareResource
 from notas.interface.forms.forms import ProgramShareForm
+from notas.interface.views.sharing_delivery import deliver_normalized_entity_invitation
 from notas.presentation.config.viewmodel_config import (
     PROGRAM_VIEWMODE_CONFIGURE,
     PROGRAM_VIEWMODE_CREATE,
@@ -650,6 +648,7 @@ def program_remove(request, pk):
 
 
 @login_required
+@limit_sharing_create
 def program_share(request, pk):
     program = get_object_or_404(Program, pk=pk, created_by=request.user)
     form = ProgramShareForm(request.POST or None, initial={"subject": program.name})
@@ -659,32 +658,16 @@ def program_share(request, pk):
         share_subject = form.cleaned_data.get("subject", program.name)
         message = form.cleaned_data.get("message", "")
 
-        result = create_program_share(
-            sender=request.user,
+        _, _, delivery = deliver_normalized_entity_invitation(
+            request,
+            subject_type=ShareResource.SubjectType.PROGRAM,
+            subject_id=program.id,
             recipient_email=email,
-            program=program,
             subject=share_subject,
             message=message,
         )
 
-        email_subject, email_message = build_share_invitation_email(
-            request=request,
-            share=result.share,
-            kind="program",
-            item_name=program.name,
-            custom_subject=share_subject,
-            custom_message=message,
-        )
-        delivery = deliver_share_invitation(
-            share=result.share,
-            subject=email_subject,
-            message=email_message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-        )
-
-        if result.share.accepted_by_id:
-            messages.success(request, "Compartiste este programa. Ya está disponible para el usuario asociado a ese correo.")
-        elif delivery.sent:
+        if delivery.sent:
             messages.success(request, "Compartiste este programa y se envió el correo de invitación.")
         elif delivery.reason == "duplicate_share":
             messages.success(request, "Este programa ya estaba compartido. No reenviamos el correo para evitar duplicados.")
@@ -715,13 +698,6 @@ def program_share(request, pk):
     return render(request, "notas/programs/share.html", context)
 
 
-@login_required
 def program_share_accept(request, token):
-    share = get_object_or_404(ProgramShare, token=token)
-    try:
-        accept_program_share(share=share, user=request.user)
-    except ValueError as exc:
-        if str(exc) in {"share_recipient_mismatch", "share_already_claimed"}:
-            raise Http404 from exc
-        raise
-    return redirect("inbox_list")
+    invitation = get_object_or_404(ShareInvitation, public_id=token)
+    return redirect("share_invitation_preview", public_id=invitation.public_id)

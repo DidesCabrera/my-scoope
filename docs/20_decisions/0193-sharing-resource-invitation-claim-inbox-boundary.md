@@ -35,3 +35,12 @@ La migración será incremental y temporalmente coexistirán dos representacione
 seguridad del flujo legacy debe endurecerse antes de ampliar la distribución. El nuevo
 núcleo no dependerá de views, UI ni builders de canal, y todo snapshot deberá declarar
 su versión y política de privacidad.
+
+## Resultado
+
+SHR00–SHR10 completaron la migración. Los cinco tipos históricos fueron proyectados
+de forma idempotente conservando sus tokens; las URLs antiguas ahora son alias de la
+vista previa segura. Food, Meal, DailyPlan/DailyPlanMeal y Program tienen adaptadores
+explícitos, guardado desacoplado desde Inbox y canales web/móvil sobre el mismo núcleo.
+Las tablas antiguas se conservan temporalmente para rollback, sin nuevas escrituras ni
+participación en métricas normalizadas.

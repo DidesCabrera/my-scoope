@@ -89,7 +89,7 @@ class SharingInboxItemEnvelope(Schema):
 
 
 class SharingInboxSaveData(Schema):
-    entity: Literal["dailyPlan"]
+    entity: Literal["dailyPlan", "food", "meal", "program"]
     item_id: int
 
 

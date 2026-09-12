@@ -122,13 +122,20 @@ DOMAIN_MODEL_BOUNDARIES: tuple[DomainModelBoundary, ...] = (
         slug="sharing",
         label="Sharing",
         models=(
+            "ShareResource",
+            "ShareInvitation",
+            "ShareClaim",
+            "InboxItem",
             "DailyPlanShare",
             "ProgramShare",
             "MealShare",
             "FoodShare",
             "DailyPlanMealShare",
         ),
-        responsibility="Inbox/share records for entities sent between users.",
+        responsibility=(
+            "Portable snapshots, directed invitations, idempotent claims and recipient-owned Inbox state; "
+            "entity-specific share models are retained as historical rollback storage."
+        ),
     ),
     DomainModelBoundary(
         slug="comparisons",

@@ -88,6 +88,13 @@ def build_normalized_share_invitation_email(*, request, invitation):
     """Build transport content for the normalized invitation boundary."""
     snapshot = invitation.resource.snapshot
     item_name = snapshot.get("subject", {}).get("title", "Contenido compartido")
+    subject_type = invitation.resource.subject_type
+    kind_label = {
+        "daily_plan": "plan diario",
+        "food": "alimento",
+        "meal": "comida",
+        "program": "programa semanal",
+    }.get(subject_type, "contenido")
     sender_name = invitation.resource.sender.username
     preview_path = reverse(
         "share_invitation_preview",
@@ -104,7 +111,7 @@ def build_normalized_share_invitation_email(*, request, invitation):
     message_lines = [
         "Hola,",
         "",
-        f"{sender_name} compartió este plan diario contigo en MyScoope:",
+        f"{sender_name} compartió este {kind_label} contigo en MyScoope:",
         item_name,
         "",
     ]

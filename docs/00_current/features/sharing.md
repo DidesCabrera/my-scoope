@@ -1,11 +1,12 @@
 # Sharing
 
-Sharing is being migrated from entity-specific email records to a product capability
+Sharing is a product capability independent from entity-specific email records,
 with four separate responsibilities: resource, invitation, claim and Inbox delivery.
 
-The accepted target contract is recorded in Decision 0193. During migration, the
-existing `DailyPlanShare`, `ProgramShare`, `MealShare`, `FoodShare` and
-`DailyPlanMealShare` flows remain supported.
+The accepted contract is recorded in Decision 0193. Historical
+`DailyPlanShare`, `ProgramShare`, `MealShare`, `FoodShare` and
+`DailyPlanMealShare` tables remain only for rollback and old-token compatibility;
+active product flows do not write them.
 
 ## Target rules
 
@@ -19,13 +20,14 @@ existing `DailyPlanShare`, `ProgramShare`, `MealShare`, `FoodShare` and
 Implementation progress and transition evidence live in
 `docs/10_active_cycles/sharing_system_refactor_cycle.md`.
 
-## Current vertical
+## Entity adapters
 
-The normalized core and the first DailyPlan adapter are available. Authenticated
-mobile clients can create an unlisted resource and revoke one they own. The stored
-snapshot contains only its title, aggregate nutrition, meal times and food
-composition; it excludes account identity, source IDs and free-form notes. Later
-source edits do not rewrite an existing share.
+Food, Meal, DailyPlan, DailyPlanMeal and Program use explicit snapshot adapters.
+Snapshots contain only the portable title, nutrition and required composition;
+they exclude account identity, source IDs and free-form notes. A DailyPlanMeal is
+represented as the Meal subject with a `daily_plan_meal` variant. Program snapshots
+nest detached DailyPlan snapshots for planned days. Later source edits never rewrite
+an existing share.
 
 The unlisted `/s/<public-id>/` page renders only the stored snapshot and sends
 `noindex`/`no-store` protections. Opening it never claims content. Claim is a
@@ -33,19 +35,16 @@ CSRF-protected POST; anonymous intent survives login, but the returning GET stil
 requires explicit confirmation. Claims are idempotent and create one normalized
 Inbox item. Directed invitations additionally require a matching verified email.
 
-Inbox now reads normalized deliveries and unmigrated legacy records together. An
-idempotent migration converts accepted legacy DailyPlan shares, preserves read,
-favorite and dismissed state, and suppresses the corresponding legacy projection.
-Other legacy entity types remain on their compatibility path until their snapshot
-adapters exist. A recipient can save a claimed DailyPlan as one detached,
-recipient-owned library copy; revoking the public URL does not erase an already
-claimed private Inbox snapshot.
+Inbox reads normalized deliveries and uses legacy records only as a pre-migration
+fallback. Migration 0060 converts pending and accepted historical shares for every
+entity, preserves the original token, recipient, message and Inbox state, and is
+idempotent. Saving hydrates one detached recipient-owned Food, Meal, DailyPlan or
+Program copy. Revoking a public URL does not erase an already claimed Inbox snapshot.
 
 ## Mobile channels
 
-DailyPlan actions in the native app now create the same portable resource for both
-the operating-system Share Sheet and explicit copy-link. Other entity types retain
-their email compatibility form until they receive snapshot adapters. Public pages
+Every supported library entity in the native app creates the same portable resource
+for the operating-system Share Sheet, explicit copy-link and protected email. Public pages
 offer the registered `myscoope://share/<id>` deep link; the native share screen can
 render before login and preserves its destination through OAuth, disclosures and
 onboarding. Native Inbox lists normalized claims and supports read, favorite,
@@ -53,19 +52,18 @@ dismiss and idempotent save-to-library actions.
 
 ## Web and email channels
 
-The DailyPlan web share page now exposes one sharing surface: it can create and copy
-an unlisted link or send a directed email invitation over the same immutable
-`ShareResource`. The latest active resource is reused while its snapshot and claim
-policy remain current; editing the source causes the next action to create a new
-snapshot without mutating old links.
+All web share forms send directed email invitations over immutable normalized
+resources; DailyPlan additionally exposes explicit link creation. The native app
+offers native sharing and copy-link for every entity. The latest active resource is
+reused while its snapshot and claim policy remain current; editing the source causes
+the next action to create a new snapshot without mutating old links.
 
 Directed email uses a `ShareInvitation` with its own unguessable `/i/<public-id>/`
 preview. The email channel stores only invitation content and delivery lifecycle;
 opening it remains read-only, and claiming requires a matching verified account plus
 an explicit POST. Both `/s/` and `/i/` bypass nutrition onboarding so the preview and
-authentication continuation remain reachable. The legacy mobile library email action
-for DailyPlan also delegates to this normalized path; other entity types stay on the
-compatibility implementation until their adapters are added in SHR10.
+authentication continuation remain reachable. Old accept-route names remain valid,
+but GET only redirects to this preview and never claims content.
 
 ## Snapshot share cards
 
