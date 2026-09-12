@@ -6,8 +6,10 @@ from django.test import TestCase
 
 from accounts.seed_plans import seed_account_plans
 from billing.application.services.catalog import (
+    AppleCatalogReference,
     CatalogMappingError,
     PaddleCatalogReference,
+    configure_apple_catalog,
     configure_paddle_catalog,
 )
 from billing.catalog import DEFAULT_BILLING_OFFERS, seed_billing_offers
@@ -92,6 +94,34 @@ class CommercialCatalogTests(TestCase):
         with self.assertRaises(CatalogMappingError):
             configure_paddle_catalog(environment="sandbox", references=references)
 
+    def test_apple_mapping_snapshots_canonical_prices_and_is_idempotent(self):
+        seed_billing_offers()
+        references = self._apple_references()
+
+        first = configure_apple_catalog(environment="live", references=references)
+        second = configure_apple_catalog(environment="live", references=references)
+
+        self.assertEqual(first, {"created": 4, "reused": 0, "replaced": 0})
+        self.assertEqual(second, {"created": 0, "reused": 4, "replaced": 0})
+        basic = BillingProduct.objects.get(external_product_id="com.myscoope.basic.monthly")
+        self.assertEqual(basic.provider, PaymentProvider.APPLE_APP_STORE)
+        self.assertEqual(basic.environment, BillingProduct.Environment.LIVE)
+        self.assertEqual(basic.amount_minor, 7_990)
+        self.assertEqual(basic.external_price_id, "")
+
+    def test_apple_product_cannot_be_reassigned_to_another_offer(self):
+        seed_billing_offers()
+        configure_apple_catalog(environment="live", references=self._apple_references())
+        conflicting = (
+            AppleCatalogReference(
+                offer_code="pro-monthly",
+                product_id="com.myscoope.basic.monthly",
+            ),
+        )
+
+        with self.assertRaises(CatalogMappingError):
+            configure_apple_catalog(environment="live", references=conflicting)
+
     def test_active_provider_mapping_must_match_its_canonical_offer(self):
         seed_billing_offers()
         offer = BillingOffer.objects.get(code="basic-monthly")
@@ -117,6 +147,17 @@ class CommercialCatalogTests(TestCase):
                 offer_code=f"{plan}-{cadence}",
                 product_id=f"pro_{plan}",
                 price_id=f"pri_{plan}_{cadence}",
+            )
+            for plan in ("basic", "pro")
+            for cadence in ("monthly", "annual")
+        )
+
+    @staticmethod
+    def _apple_references():
+        return tuple(
+            AppleCatalogReference(
+                offer_code=f"{plan}-{cadence}",
+                product_id=f"com.myscoope.{plan}.{cadence}",
             )
             for plan in ("basic", "pro")
             for cadence in ("monthly", "annual")

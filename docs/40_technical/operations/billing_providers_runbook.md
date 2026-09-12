@@ -47,8 +47,9 @@ Browser return parameters never grant access. Only verified provider state proje
 
 1. Complete App Store Connect agreements, tax and banking setup. Create the
    auto-renewable subscription group and final product identifiers/prices.
-2. Create matching active `BillingProduct` rows for
-   `provider=apple_app_store`; do not expose a product until its plan mapping is
+2. Map the four identifiers with `configure_apple_catalog --environment live`
+   and its Basic/Pro monthly/annual arguments. The command snapshots the canonical
+   offers and is safe to repeat. Do not expose a product until this mapping is
    deliberate.
 3. Configure the sandbox bundle ID and, for production, numeric Apple app ID.
    Register `/billing/webhooks/apple-app-store/` as the App Store Server
