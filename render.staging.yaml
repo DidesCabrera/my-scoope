@@ -42,7 +42,7 @@ services:
       - key: BILLING_PADDLE_CHECKOUT_ENABLED
         value: "false"
       - key: BILLING_PADDLE_WEBHOOK_ENABLED
-        value: "false"
+        value: "true"
       - key: BILLING_PADDLE_API_BASE_URL
         value: https://sandbox-api.paddle.com
       - key: BILLING_PADDLE_TIMEOUT_SECONDS
