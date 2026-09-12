@@ -119,14 +119,14 @@ class DailyPlanQueryTests(TestCase):
         self.assertNotIn("Private Other Plan", names)
         self.assertNotIn("Shared Plan", names)
 
-    def test_list_available_dailyplans_includes_public_and_shared(self):
+    def test_list_available_dailyplans_excludes_shared_source_objects(self):
         dailyplans = list_available_dailyplans(self.user)
 
         names = [dailyplan.name for dailyplan in dailyplans]
 
         self.assertIn("Training Day", names)
         self.assertIn("Public Plan", names)
-        self.assertIn("Shared Plan", names)
+        self.assertNotIn("Shared Plan", names)
         self.assertNotIn("Private Other Plan", names)
 
     def test_search_dailyplans_filters_available_dailyplans(self):
@@ -163,13 +163,9 @@ class DailyPlanQueryTests(TestCase):
 
         self.assertEqual(dailyplan.name, "Public Plan")
 
-    def test_get_dailyplan_detail_allows_shared_dailyplan(self):
-        dailyplan = get_dailyplan_detail(
-            self.user,
-            self.shared_dailyplan.id,
-        )
-
-        self.assertEqual(dailyplan.name, "Shared Plan")
+    def test_get_dailyplan_detail_blocks_shared_source_object(self):
+        with self.assertRaises(Exception):
+            get_dailyplan_detail(self.user, self.shared_dailyplan.id)
 
     def test_get_dailyplan_detail_blocks_private_other_dailyplan(self):
         with self.assertRaises(Exception):

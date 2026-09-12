@@ -49,9 +49,17 @@ export default function SharedResourceScreen() {
   };
 
   const snapshot = resource?.snapshot;
+  const summary = snapshot?.summary;
+  const summaryText = resource?.subject_type === "food"
+    ? "Valores nutricionales por 100 g"
+    : resource?.subject_type === "meal"
+      ? `${summary?.food_count ?? 0} alimentos`
+      : resource?.subject_type === "program"
+        ? `${summary?.duration_weeks ?? 0} semanas · ${summary?.filled_days ?? 0} días planificados`
+        : `${summary?.meal_count ?? 0} comidas · ${summary?.food_count ?? 0} alimentos`;
   return (
     <Screen>
-      <AppHeader eyebrow="Compartido contigo" title={resource?.title ?? "Plan diario"} />
+      <AppHeader eyebrow="Compartido contigo" title={resource?.title ?? "Contenido compartido"} />
       {loading ? <Text style={textStyles.muted}>Cargando contenido compartido…</Text> : null}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
       {snapshot ? (
@@ -63,9 +71,9 @@ export default function SharedResourceScreen() {
               <Text style={styles.macro}>C {snapshot.nutrition.carbs_grams.toFixed(1)} g</Text>
               <Text style={styles.macro}>G {snapshot.nutrition.fat_grams.toFixed(1)} g</Text>
             </View>
-            <Text style={textStyles.muted}>{snapshot.summary.meal_count} comidas · {snapshot.summary.food_count} alimentos</Text>
+            <Text style={textStyles.muted}>{summaryText}</Text>
           </Card>
-          <Card>
+          {snapshot.meals ? <Card>
             <SectionTitle detail={`${snapshot.meals.length}`} title="Comidas" />
             {snapshot.meals.map((meal, index) => (
               <View key={`${meal.name}-${index}`} style={styles.meal}>
@@ -73,10 +81,28 @@ export default function SharedResourceScreen() {
                 <Text style={textStyles.muted}>{meal.nutrition.calories.toFixed(0)} kcal · {meal.foods.length} alimentos</Text>
               </View>
             ))}
-          </Card>
+          </Card> : null}
+          {snapshot.foods ? <Card>
+            <SectionTitle detail={`${snapshot.foods.length}`} title="Alimentos" />
+            {snapshot.foods.map((food, index) => (
+              <View key={`${food.name}-${index}`} style={styles.meal}>
+                <View style={styles.mealHeading}><Text style={styles.mealName}>{food.name}</Text><Text style={textStyles.caption}>{food.quantity_grams.toFixed(0)} g</Text></View>
+                <Text style={textStyles.muted}>{food.nutrition.calories.toFixed(0)} kcal</Text>
+              </View>
+            ))}
+          </Card> : null}
+          {snapshot.days ? <Card>
+            <SectionTitle detail={`${snapshot.days.length}`} title="Días planificados" />
+            {snapshot.days.map((day) => (
+              <View key={`${day.week_number}-${day.day_number}`} style={styles.meal}>
+                <Text style={styles.mealName}>Semana {day.week_number} · Día {day.day_number}</Text>
+                <Text style={textStyles.muted}>{day.plan.subject.title} · {day.plan.nutrition.calories.toFixed(0)} kcal</Text>
+              </View>
+            ))}
+          </Card> : null}
           {claimed ? (
             <>
-              <InlineNotice>El plan está disponible en tu Inbox.</InlineNotice>
+              <InlineNotice>El contenido está disponible en tu Inbox.</InlineNotice>
               <Button label="Ir al Inbox" onPress={() => router.replace("/inbox" as Href)} />
             </>
           ) : status === "anonymous" ? (

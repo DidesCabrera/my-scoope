@@ -16,7 +16,6 @@ from notas.domain.models import (
     DailyPlanMeal,
     Food,
     FoodLabelCaptureReceipt,
-    FoodShare,
     Meal,
     MealFood,
     Program,
@@ -765,34 +764,10 @@ class MobileAPILibrariesTests(AuthenticatedMobileAPITestCase):
                 content_type="application/json",
             )
         self.assertEqual(shared.status_code, 200)
-        self.assertTrue(FoodShare.objects.filter(food=food, recipient_email="friend@example.com").exists())
-
-    def test_dailyplan_email_action_uses_normalized_sharing(self):
-        dailyplan = DailyPlan.objects.create(
-            name="Plan normalizado",
-            created_by=self.user,
-            is_draft=False,
+        resource = ShareResource.objects.get(subject_type="food", source_object_id=food.id)
+        self.assertTrue(
+            ShareInvitation.objects.filter(resource=resource, recipient_email="friend@example.com").exists()
         )
-        with patch(
-            "mobile_api.library_actions.deliver_share_invitation",
-            return_value=SimpleNamespace(sent=True, reason=""),
-        ):
-            response = self.client.post(
-                f"/api/v1/library/daily-plans/{dailyplan.id}/actions",
-                data={
-                    "action": "share",
-                    "recipient_email": "friend@example.com",
-                    "subject": "Plan para ti",
-                    "message": "Revísalo.",
-                },
-                content_type="application/json",
-            )
-
-        self.assertEqual(response.status_code, 200)
-        resource = ShareResource.objects.get(source_object_id=dailyplan.id)
-        invitation = ShareInvitation.objects.get(resource=resource)
-        self.assertEqual(invitation.recipient_email, "friend@example.com")
-        self.assertEqual(invitation.status, ShareInvitation.Status.DELIVERED)
 
     def test_library_actions_reject_items_owned_by_another_user(self):
         other = User.objects.create_user(username="another-library-owner")

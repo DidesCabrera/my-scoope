@@ -22,7 +22,6 @@ from notas.application.services.commands.dailyplan_commands import (
     save_dailyplan,
 )
 from notas.application.services.commands.share_commands import (
-    accept_dailyplan_share,
     dismiss_dailyplan_share,
     remove_dailyplan_share,
 )
@@ -34,7 +33,7 @@ from notas.application.sharing.services import (
     create_share_invitation,
     mark_share_invitation_delivered,
 )
-from notas.domain.models import DailyPlan, DailyPlanShare, Meal, ShareResource
+from notas.domain.models import DailyPlan, DailyPlanShare, Meal, ShareInvitation, ShareResource
 from notas.interface.forms.forms import DailyPlanShareForm
 from notas.presentation.config.viewmodel_config import *
 from notas.presentation.pages.dailyplan_contexts import (
@@ -156,21 +155,9 @@ def dailyplan_share(request, pk):
     )
 
 
-@login_required
 def dailyplan_share_accept(request, token):
-    share = get_object_or_404(
-        DailyPlanShare,
-        token=token,
-    )
-
-    try:
-        accept_dailyplan_share(share=share, user=request.user)
-    except ValueError as exc:
-        if str(exc) in {"share_recipient_mismatch", "share_already_claimed"}:
-            raise Http404 from exc
-        raise
-
-    return redirect("inbox_list")
+    invitation = get_object_or_404(ShareInvitation, public_id=token)
+    return redirect("share_invitation_preview", public_id=invitation.public_id)
 
 
 @login_required

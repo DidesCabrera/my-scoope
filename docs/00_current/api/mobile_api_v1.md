@@ -163,6 +163,11 @@ state and save endpoints below `/shares/inbox`. The app uses the public read bef
 authentication, then preserves the internal share route through OAuth, disclosures
 and onboarding before any claim write.
 
+SHR10 adds equivalent owner-only creation routes at `/shares/foods/{food_id}`,
+`/shares/meals/{meal_id}` and `/shares/programs/{program_id}`. Public retrieval and
+Inbox save use the subject discriminator and support Food, Meal, DailyPlan and
+Program snapshots without reading the sender's source object.
+
 MCE04 adds supported-kind metadata and owner-scoped selectable options through
 `GET /comparisons/metadata` and `GET /comparisons/options/{kind}`. Dynamic
 option rows carry the canonical entity-card projection: identity, structural

@@ -2,7 +2,6 @@ import json
 from dataclasses import dataclass
 from typing import Any
 
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.serializers.json import DjangoJSONEncoder
@@ -12,7 +11,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
-from email_delivery.services import deliver_share_invitation
+from core.rate_limits import limit_sharing_create
 from notas.application.services.access.capabilities import get_capabilities
 from notas.application.services.commands.dailyplan_commands import (
     add_existing_meal_to_dailyplan,
@@ -26,18 +25,23 @@ from notas.application.services.commands.meal_commands import (
     save_dailyplan_meal_to_library,
     save_food_in_meal,
 )
-from notas.application.services.commands.share_commands import (
-    accept_dailyplanmeal_share,
-    create_dailyplanmeal_share,
-)
-from notas.application.services.notifications.share_emails import build_share_invitation_email
 from notas.application.services.nutrition.nutrition_kpis import (
     build_nutrition_kpis_from_dailyplan,
     build_nutrition_kpis_from_meal,
 )
-from notas.domain.models import DailyPlan, DailyPlanMeal, DailyPlanMealShare, Food, Meal, MealFood
+from notas.domain.models import (
+    DailyPlan,
+    DailyPlanMeal,
+    DailyPlanMealShare,
+    Food,
+    Meal,
+    MealFood,
+    ShareInvitation,
+    ShareResource,
+)
 from notas.interface.forms.forms import DailyPlanMealShareForm
 from notas.interface.forms.meal_time_forms import MealTimeChangeForm
+from notas.interface.views.sharing_delivery import deliver_normalized_entity_invitation
 from notas.presentation.composition.js.dpm_food_picker_builder import build_dpm_food_picker_context_payload
 from notas.presentation.composition.js.food_picker_builder import build_food_picker_foods_payload
 from notas.presentation.composition.viewmodel.components.builder_headers import build_page_header
@@ -480,6 +484,7 @@ def dailyplanmeal_create_meal(request, dailyplan_id, dailyplanmeal_id):
 
 
 @login_required
+@limit_sharing_create
 def dailyplanmeal_share(request, dailyplan_id, pk):
     dpm = get_object_or_404(
         DailyPlanMeal.objects.select_related("dailyplan", "meal"),
@@ -495,34 +500,17 @@ def dailyplanmeal_share(request, dailyplan_id, pk):
         share_subject = form.cleaned_data.get("subject", dpm.meal.name)
         message = form.cleaned_data.get("message", "")
 
-        result = create_dailyplanmeal_share(
-            sender=request.user,
+        _, _, delivery = deliver_normalized_entity_invitation(
+            request,
+            subject_type=ShareResource.SubjectType.MEAL,
+            subject_id=dpm.id,
             recipient_email=email,
-            dailyplan_meal=dpm,
             subject=share_subject,
             message=message,
-        )
-        share = result.share
-
-        email_subject, email_message = build_share_invitation_email(
-            request=request,
-            share=share,
-            kind="dpm",
-            item_name=dpm.meal.name,
-            custom_subject=share_subject,
-            custom_message=message,
+            variant="daily_plan_meal",
         )
 
-        delivery = deliver_share_invitation(
-            share=share,
-            subject=email_subject,
-            message=email_message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-        )
-
-        if share.accepted_by_id:
-            messages.success(request, "Compartiste esta comida de plan. Como el correo pertenece a una cuenta existente, ya está disponible en su Inbox.")
-        elif delivery.sent:
+        if delivery.sent:
             messages.success(request, "Compartiste esta comida de plan. Enviamos el correo de invitación al destinatario.")
         elif delivery.reason == "duplicate_share":
             messages.success(request, "Esta comida de plan ya estaba compartida. No reenviamos el correo para evitar duplicados.")
@@ -537,16 +525,9 @@ def dailyplanmeal_share(request, dailyplan_id, pk):
     return render(request, "notas/dailyplan_meals/share.html", {"dpm": dpm, "form": form})
 
 
-@login_required
 def dailyplanmeal_share_accept(request, token):
-    share = get_object_or_404(DailyPlanMealShare, token=token)
-    try:
-        accept_dailyplanmeal_share(share=share, user=request.user)
-    except ValueError as exc:
-        if str(exc) in {"share_recipient_mismatch", "share_already_claimed"}:
-            raise Http404 from exc
-        raise
-    return redirect("inbox_list")
+    invitation = get_object_or_404(ShareInvitation, public_id=token)
+    return redirect("share_invitation_preview", public_id=invitation.public_id)
 
 
 @login_required

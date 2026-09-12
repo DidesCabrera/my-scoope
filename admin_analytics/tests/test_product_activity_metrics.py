@@ -5,7 +5,6 @@ from django.urls import reverse
 from admin_analytics.selectors.product_activity import get_product_activity_metrics
 from notas.domain.model_modules.comparisons import SavedComparison
 from notas.domain.model_modules.proposals import NutritionProposal
-from notas.domain.model_modules.sharing import DailyPlanShare, MealShare, ProgramShare
 from notas.domain.models import (
     DailyPlan,
     DailyPlanMeal,
@@ -66,21 +65,26 @@ class AdminAnalyticsProductActivityMetricsTests(TestCase):
         ProgramDay.objects.create(program=program, dailyplan=dailyplan, week_number=1, day_number=1)
         ProgramDay.objects.create(program=program, dailyplan=dailyplan, week_number=2, day_number=1)
 
-        DailyPlanShare.objects.create(
-            sender=self.member,
-            recipient_email="other@example.com",
-            accepted_by=self.other_member,
-            dailyplan=dailyplan,
-            is_favorite=True,
-        )
-        MealShare.objects.create(sender=self.member, recipient_email="friend@example.com", meal=meal)
-        ProgramShare.objects.create(sender=self.member, recipient_email="coach@example.com", program=program)
         resource = ShareResource.objects.create(
             sender=self.member,
             subject_type=ShareResource.SubjectType.DAILY_PLAN,
             snapshot={},
             snapshot_schema_version="sharing.snapshot.v1",
             preview_count=3,
+        )
+        ShareResource.objects.create(
+            sender=self.member,
+            subject_type=ShareResource.SubjectType.MEAL,
+            source_object_id=meal.id,
+            snapshot={"subject": {"type": "meal", "title": meal.name}},
+            snapshot_schema_version="sharing.snapshot.v1",
+        )
+        ShareResource.objects.create(
+            sender=self.member,
+            subject_type=ShareResource.SubjectType.PROGRAM,
+            source_object_id=program.id,
+            snapshot={"subject": {"type": "program", "title": program.name}},
+            snapshot_schema_version="sharing.snapshot.v1",
         )
         claim = ShareClaim.objects.create(
             resource=resource,
@@ -125,7 +129,7 @@ class AdminAnalyticsProductActivityMetricsTests(TestCase):
         self.assertEqual(metrics["comparisons"]["total"], 1)
         self.assertEqual(metrics["shares"]["sent_7d"], 3)
         self.assertEqual(metrics["shares"]["accepted_total"], 1)
-        self.assertEqual(metrics["shares"]["normalized_funnel"]["resources"], 1)
+        self.assertEqual(metrics["shares"]["normalized_funnel"]["resources"], 3)
         self.assertEqual(metrics["shares"]["normalized_funnel"]["preview_views"], 3)
         self.assertEqual(metrics["shares"]["normalized_funnel"]["claims"], 1)
         self.assertEqual(metrics["shares"]["normalized_funnel"]["saved"], 1)

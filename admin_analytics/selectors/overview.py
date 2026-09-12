@@ -13,7 +13,7 @@ from ai_assistant.models import AIUsageEvent
 from notas.domain.model_modules.comparisons import SavedComparison
 from notas.domain.model_modules.identity import Profile
 from notas.domain.model_modules.proposals import NutritionProposal
-from notas.domain.models import DailyPlan, DailyPlanShare, Meal, MealShare, Program, ProgramShare
+from notas.domain.models import DailyPlan, Meal, Program, ShareResource
 
 
 def get_overview_metrics(*, now=None, analytics_filters: AdminAnalyticsFilters | None = None) -> dict:
@@ -56,12 +56,9 @@ def get_overview_metrics(*, now=None, analytics_filters: AdminAnalyticsFilters |
         .values_list("applied_by_id", flat=True)
         .distinct()
     )
+    shares = analytics_filters.apply_user_segment(ShareResource.objects.all(), "sender")
     share_user_ids_7d = set(
-        analytics_filters.apply_user_segment(MealShare.objects.filter(created_at__gte=since_7d), "sender").values_list("sender_id", flat=True)
-    ) | set(
-        analytics_filters.apply_user_segment(DailyPlanShare.objects.filter(created_at__gte=since_7d), "sender").values_list("sender_id", flat=True)
-    ) | set(
-        analytics_filters.apply_user_segment(ProgramShare.objects.filter(created_at__gte=since_7d), "sender").values_list("sender_id", flat=True)
+        shares.filter(created_at__gte=since_7d).values_list("sender_id", flat=True)
     )
 
     active_nutrition_builder_user_ids = (
@@ -116,11 +113,7 @@ def get_overview_metrics(*, now=None, analytics_filters: AdminAnalyticsFilters |
             "programs_total": programs.count(),
             "programs_7d": program_activity_7d.count(),
             "saved_comparisons_total": analytics_filters.apply_user_segment(SavedComparison.objects.all(), "owner").count(),
-            "shares_7d": (
-                analytics_filters.apply_user_segment(MealShare.objects.filter(created_at__gte=since_7d), "sender").count()
-                + analytics_filters.apply_user_segment(DailyPlanShare.objects.filter(created_at__gte=since_7d), "sender").count()
-                + analytics_filters.apply_user_segment(ProgramShare.objects.filter(created_at__gte=since_7d), "sender").count()
-            ),
+            "shares_7d": shares.filter(created_at__gte=since_7d).count(),
         },
         "ai": {
             "turns_total": ai_usage.count(),

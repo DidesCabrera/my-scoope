@@ -30,11 +30,11 @@
       <a href="/" aria-label="Ir a MyScoope">
         <img src="{% static 'img/logo-white.png' %}" alt="MyScoope">
       </a>
-      <span>Plan compartido</span>
+      <span>Contenido compartido</span>
     </header>
 
     <article class="share-card">
-      <p class="share-card__eyebrow">Plan diario</p>
+      <p class="share-card__eyebrow">{{ subject_label|default:"Contenido" }}</p>
       <h1>{{ snapshot.subject.title }}</h1>
       <strong class="share-card__calories">{{ snapshot.nutrition.calories|floatformat:0 }} kcal</strong>
       <dl class="share-card__macros">
@@ -42,9 +42,40 @@
         <div><dt>Carbos</dt><dd>{{ snapshot.nutrition.carbs_grams|floatformat:1 }} g</dd></div>
         <div><dt>Grasas</dt><dd>{{ snapshot.nutrition.fat_grams|floatformat:1 }} g</dd></div>
       </dl>
-      <p class="share-card__count">{{ snapshot.summary.meal_count }} comidas · {{ snapshot.summary.food_count }} alimentos</p>
+      <p class="share-card__count">
+        {% if resource.subject_type == "food" %}Valores por 100 g
+        {% elif resource.subject_type == "meal" %}{{ snapshot.summary.food_count }} alimentos
+        {% elif resource.subject_type == "program" %}{{ snapshot.summary.duration_weeks }} semanas · {{ snapshot.summary.filled_days }} días planificados
+        {% else %}{{ snapshot.summary.meal_count }} comidas · {{ snapshot.summary.food_count }} alimentos{% endif %}
+      </p>
     </article>
 
+    {% if resource.subject_type == "meal" %}
+    <section class="share-meals" aria-labelledby="food-heading">
+      <h2 id="food-heading">Alimentos</h2>
+      <article class="share-meal">
+        <ul>
+          {% for food in snapshot.foods %}
+            <li><span>{{ food.name }}</span><span>{{ food.quantity_grams|floatformat:0 }} g</span></li>
+          {% empty %}<li>Sin alimentos registrados</li>{% endfor %}
+        </ul>
+      </article>
+    </section>
+    {% elif resource.subject_type == "program" %}
+    <section class="share-meals" aria-labelledby="day-heading">
+      <h2 id="day-heading">Días planificados</h2>
+      {% for day in snapshot.days %}
+        <article class="share-meal">
+          <div><h3>Semana {{ day.week_number }} · Día {{ day.day_number }}</h3></div>
+          <strong>{{ day.plan.nutrition.calories|floatformat:0 }} kcal</strong>
+          <ul>
+            {% for meal in day.plan.meals %}<li><span>{{ meal.name }}</span><span>{{ meal.nutrition.calories|floatformat:0 }} kcal</span></li>
+            {% empty %}<li>Sin comidas registradas</li>{% endfor %}
+          </ul>
+        </article>
+      {% empty %}<p>Este programa no contiene días planificados.</p>{% endfor %}
+    </section>
+    {% elif resource.subject_type == "daily_plan" %}
     <section class="share-meals" aria-labelledby="meal-heading">
       <h2 id="meal-heading">Comidas</h2>
       {% for meal in snapshot.meals %}
@@ -66,19 +97,20 @@
         <p>Este plan no contiene comidas.</p>
       {% endfor %}
     </section>
+    {% endif %}
 
     <section class="share-action" aria-live="polite">
       {% if not invitation %}
         <a class="share-button share-button--secondary" href="myscoope://share/{{ resource.public_id }}">Abrir en la app</a>
       {% endif %}
       {% if already_claimed or request.GET.claimed %}
-        <p class="share-action__success">Este plan ya está en tu Inbox de MyScoope.</p>
+        <p class="share-action__success">Este contenido ya está en tu Inbox de MyScoope.</p>
         <a class="share-button share-button--secondary" href="/app/inbox/">Ir al Inbox</a>
       {% elif resource.claim_policy == "none" %}
-        <p>Puedes consultar este plan desde este enlace mientras esté activo.</p>
+        <p>Puedes consultar este contenido desde este enlace mientras esté activo.</p>
       {% else %}
-        {% if pending_claim %}<p>Sesión iniciada. Confirma para agregar el plan a tu Inbox.</p>{% endif %}
-        {% if claim_error %}<p class="share-action__error">No fue posible agregar este plan.</p>{% endif %}
+        {% if pending_claim %}<p>Sesión iniciada. Confirma para agregar el contenido a tu Inbox.</p>{% endif %}
+        {% if claim_error %}<p class="share-action__error">No fue posible agregar este contenido.</p>{% endif %}
         <form method="post" action="{{ claim_url }}">
           {% csrf_token %}
           <button class="share-button" type="submit">

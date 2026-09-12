@@ -102,6 +102,10 @@ MODEL_RETENTION_POLICY = {
     "notas.ProgramCalendarization": RetentionAction.ERASE,
     "notas.ProgramDay": RetentionAction.FOLLOW_PARENT,
     "notas.ProgramShare": RetentionAction.ERASE,
+    "notas.InboxItem": RetentionAction.ERASE,
+    "notas.ShareClaim": RetentionAction.ERASE,
+    "notas.ShareInvitation": RetentionAction.FOLLOW_PARENT,
+    "notas.ShareResource": RetentionAction.ERASE,
     "notas.SavedComparison": RetentionAction.ERASE,
     "notas.ScheduledNotificationEvent": RetentionAction.FOLLOW_PARENT,
     "notas.Subscription": RetentionAction.ERASE,
@@ -242,6 +246,16 @@ def delete_user_account(*, user, source: str) -> AccountDeletionResult:
         if original_email:
             share_model.objects.filter(recipient_email__iexact=original_email).update(recipient_email=anonymous_email)
         _delete_queryset(share_model.objects.filter(sender=user), deleted_counts)
+
+    ShareInvitation = _model("notas.ShareInvitation")
+    ShareInvitation.objects.filter(recipient_user=user).update(recipient_user=None)
+    if original_email:
+        ShareInvitation.objects.filter(recipient_email__iexact=original_email).update(
+            recipient_email=anonymous_email
+        )
+    _delete_queryset(_model("notas.ShareResource").objects.filter(sender=user), deleted_counts)
+    _delete_queryset(_model("notas.ShareClaim").objects.filter(user=user), deleted_counts)
+    _delete_queryset(_model("notas.InboxItem").objects.filter(owner=user), deleted_counts)
 
     for label, filters in (
         ("notas.Subscription", Q(nutritionist=user) | Q(member=user)),

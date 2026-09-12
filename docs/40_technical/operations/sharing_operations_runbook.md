@@ -77,5 +77,6 @@ resource route.
   then return unavailable while existing Inbox copies remain intact.
 - Disable an incorrect mobile association by removing its signing environment value;
   the endpoint returns 503 and normal HTTPS preview remains available.
-- Roll back application code without reversing migrations 0058/0059. Their fields are
-  additive and older code ignores them.
+- Roll back application code without reversing migrations 0058–0060. Migration 0060
+  is additive and idempotent; reversing it would delete normalized projections of
+  historical shares and is not an operational rollback step.

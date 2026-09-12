@@ -4,13 +4,14 @@ import test from "node:test";
 
 import { assertSourceMatch, readTestFile } from "./support/source-contract";
 
-test("DailyPlan sharing uses one portable resource for native share and copy link", async () => {
+test("every library entity uses one portable resource for native share and copy link", async () => {
   const actions = await readTestFile(path.resolve(process.cwd(), "src/components/libraries/library-actions.tsx"), "utf8");
   const adapter = await readTestFile(path.resolve(process.cwd(), "src/sharing/native-share.ts"), "utf8");
   const packageJson = JSON.parse(await readTestFile(path.resolve(process.cwd(), "package.json"), "utf8"));
 
   assert.match(packageJson.dependencies["expo-clipboard"], /^~57\./);
-  assertSourceMatch(actions, /\/api\/v1\/shares\/daily-plans\/\$\{item\.id\}/);
+  assertSourceMatch(actions, /\/api\/v1\/shares\/\$\{entitySlug\}\/\$\{item\.id\}/);
+  assertSourceMatch(actions, /entitySlug: "foods" \| "meals" \| "daily-plans" \| "programs"/);
   assertSourceMatch(actions, /openNativeShare\(resource\)/);
   assertSourceMatch(actions, /copyShareLink\(resource\)/);
   assertSourceMatch(adapter, /Share\.share/);

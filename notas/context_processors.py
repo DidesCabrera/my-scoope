@@ -2,10 +2,7 @@ from django.db.models import Q
 
 from notas.application.services.nutrition.weight import get_current_weight
 from notas.domain.models import (
-    DailyPlanMealShare,
-    DailyPlanShare,
-    FoodShare,
-    MealShare,
+    InboxItem,
     NutritionProposal,
 )
 
@@ -13,32 +10,11 @@ from notas.domain.models import (
 def user_weight(request):
     if request.user.is_authenticated:
         user = request.user
-        inbox_unread_count = (
-            DailyPlanShare.objects.filter(
-                accepted_by=user,
-                dismissed=False,
-                removed=False,
-                is_read=False,
-            ).count()
-            + MealShare.objects.filter(
-                accepted_by=user,
-                dismissed=False,
-                removed=False,
-                is_read=False,
-            ).count()
-            + FoodShare.objects.filter(
-                accepted_by=user,
-                dismissed=False,
-                removed=False,
-                is_read=False,
-            ).count()
-            + DailyPlanMealShare.objects.filter(
-                accepted_by=user,
-                dismissed=False,
-                removed=False,
-                is_read=False,
-            ).count()
-        )
+        inbox_unread_count = InboxItem.objects.filter(
+            owner=user,
+            dismissed_at__isnull=True,
+            read_at__isnull=True,
+        ).count()
         proposal_unread_count = (
             NutritionProposal.objects.filter(
                 Q(created_by=user) | Q(dailyplan__created_by=user),
@@ -71,9 +47,9 @@ def user_weight(request):
 def shared_count(request):
     if request.user.is_authenticated:
         return {
-            "shared_count": DailyPlanShare.objects.filter(
-                accepted_by=request.user,
-                dismissed=False,
+            "shared_count": InboxItem.objects.filter(
+                owner=request.user,
+                dismissed_at__isnull=True,
             ).count()
         }
     return {}

@@ -445,29 +445,39 @@ def _normalized_title(resource: ShareResource) -> str:
     return str((resource.snapshot.get("subject") or {}).get("title") or "Contenido compartido")
 
 
+def _normalized_metadata(resource: ShareResource) -> tuple[str, str, str]:
+    return {
+        ShareResource.SubjectType.DAILY_PLAN: ("dailyplan", "Plan diario", "clipboard-list"),
+        ShareResource.SubjectType.FOOD: ("food", "Alimento", "carrot"),
+        ShareResource.SubjectType.MEAL: ("meal", "Comida", "utensils"),
+        ShareResource.SubjectType.PROGRAM: ("program", "Programa semanal", "calendar-days"),
+    }.get(resource.subject_type, ("share", "Contenido", "share-2"))
+
+
 def _build_normalized_item(item: NormalizedInboxItem) -> InboxItem:
     resource = item.resource
     title = _normalized_title(resource)
+    attachment_kind, kind_label, icon = _normalized_metadata(resource)
     detail_url = reverse("inbox_detail", args=["share", item.id])
     dismiss_url = reverse("inbox_delete", args=["share", item.id])
     favorite_url = reverse("inbox_toggle_favorite", args=["share", item.id])
     open_url = _inbox_attachment_detail_url("share", item.id)
     save_url = reverse("inbox_save_attachment", args=["share", item.id])
     attachment = InboxAttachment(
-        kind="dailyplan",
-        label="Plan diario compartido",
+        kind=attachment_kind,
+        label=f"{kind_label} compartido",
         name=title,
-        icon="clipboard-list",
+        icon=icon,
         open_url=open_url,
         save_url=save_url,
     )
-    summary = f"{resource.sender.username} compartió un plan diario contigo."
+    summary = f"{resource.sender.username} compartió {kind_label.lower()} contigo."
     return InboxItem(
         id=f"share-{item.id}",
         share_id=item.id,
         kind="share",
-        kind_label="Plan diario",
-        icon="clipboard-list",
+        kind_label=kind_label,
+        icon=icon,
         created_at=item.created_at,
         received_at_label=_format_received_at(item.created_at),
         sender=resource.sender.username,
@@ -496,13 +506,14 @@ def _build_normalized_item(item: NormalizedInboxItem) -> InboxItem:
 
 def _build_normalized_sent_item(resource: ShareResource) -> InboxItem:
     title = _normalized_title(resource)
+    attachment_kind, kind_label, icon = _normalized_metadata(resource)
     open_url = reverse("share_preview", args=[resource.public_id])
     detail_url = reverse("inbox_sent_detail", args=["share", resource.id])
     attachment = InboxAttachment(
-        kind="dailyplan",
-        label="Plan diario compartido",
+        kind=attachment_kind,
+        label=f"{kind_label} compartido",
         name=title,
-        icon="clipboard-list",
+        icon=icon,
         open_url=open_url,
         save_url="",
     )
@@ -511,8 +522,8 @@ def _build_normalized_sent_item(resource: ShareResource) -> InboxItem:
         id=f"sent-share-{resource.id}",
         share_id=resource.id,
         kind="share",
-        kind_label="Plan diario",
-        icon="clipboard-list",
+        kind_label=kind_label,
+        icon=icon,
         created_at=resource.created_at,
         received_at_label=_format_received_at(resource.created_at),
         sender="Enlace compartible",
@@ -659,8 +670,21 @@ def _build_sent_dpm_item(share: DailyPlanMealShare) -> InboxItem:
         actions=_build_sent_actions(open_url=detail_url, label="Ver enviado"),
     )
 
+def _migrated_legacy_ids(prefix: str) -> list[int]:
+    references = ShareResource.objects.filter(
+        legacy_reference__startswith=f"{prefix}:"
+    ).values_list("legacy_reference", flat=True)
+    result = []
+    for reference in references:
+        try:
+            result.append(int(reference.rsplit(":", 1)[1]))
+        except (AttributeError, TypeError, ValueError):
+            continue
+    return result
+
+
 def _dailyplan_share_queryset(user):
-    queryset = (
+    return (
         DailyPlanShare.objects
         .filter(
             accepted_by=user,
@@ -669,14 +693,8 @@ def _dailyplan_share_queryset(user):
         )
         .select_related("dailyplan", "dailyplan__created_by", "dailyplan__original_author", "sender", "accepted_by")
         .prefetch_related("dailyplan__dailyplan_meals__meal__meal_food_set__food")
+        .exclude(id__in=_migrated_legacy_ids("dailyplan"))
     )
-    migrated_ids = [
-        int(reference.rsplit(":", 1)[1])
-        for reference in ShareResource.objects.filter(
-            legacy_reference__startswith="dailyplan:"
-        ).values_list("legacy_reference", flat=True)
-    ]
-    return queryset.exclude(id__in=migrated_ids)
 
 
 def _meal_share_queryset(user):
@@ -689,6 +707,7 @@ def _meal_share_queryset(user):
         )
         .select_related("meal", "meal__created_by", "meal__original_author", "sender", "accepted_by")
         .prefetch_related("meal__meal_food_set__food")
+        .exclude(id__in=_migrated_legacy_ids("meal"))
     )
 
 
@@ -698,6 +717,7 @@ def _food_share_queryset(user):
         FoodShare.objects
         .filter(accepted_by=user, dismissed=False, removed=False)
         .select_related("food", "food__created_by", "sender", "accepted_by")
+        .exclude(id__in=_migrated_legacy_ids("food"))
     )
 
 
@@ -707,6 +727,7 @@ def _dpm_share_queryset(user):
         .filter(accepted_by=user, dismissed=False, removed=False)
         .select_related("dailyplan_meal", "dailyplan_meal__meal", "dailyplan_meal__dailyplan", "dailyplan_meal__meal__created_by", "sender", "accepted_by")
         .prefetch_related("dailyplan_meal__meal__meal_food_set__food")
+        .exclude(id__in=_migrated_legacy_ids("dpm"))
     )
 
 
@@ -715,6 +736,7 @@ def _food_share_sent_queryset(user):
         FoodShare.objects
         .filter(sender=user, removed=False)
         .select_related("food", "food__created_by", "sender", "accepted_by")
+        .exclude(id__in=_migrated_legacy_ids("food"))
     )
 
 
@@ -724,22 +746,17 @@ def _dpm_share_sent_queryset(user):
         .filter(sender=user, removed=False)
         .select_related("dailyplan_meal", "dailyplan_meal__meal", "dailyplan_meal__dailyplan", "dailyplan_meal__meal__created_by", "sender", "accepted_by")
         .prefetch_related("dailyplan_meal__meal__meal_food_set__food")
+        .exclude(id__in=_migrated_legacy_ids("dpm"))
     )
 
 def _dailyplan_share_sent_queryset(user):
-    queryset = (
+    return (
         DailyPlanShare.objects
         .filter(sender=user, removed=False)
         .select_related("dailyplan", "dailyplan__created_by", "dailyplan__original_author", "sender", "accepted_by")
         .prefetch_related("dailyplan__dailyplan_meals__meal__meal_food_set__food")
+        .exclude(id__in=_migrated_legacy_ids("dailyplan"))
     )
-    migrated_ids = [
-        int(reference.rsplit(":", 1)[1])
-        for reference in ShareResource.objects.filter(
-            legacy_reference__startswith="dailyplan:"
-        ).values_list("legacy_reference", flat=True)
-    ]
-    return queryset.exclude(id__in=migrated_ids)
 
 
 def _meal_share_sent_queryset(user):
@@ -748,6 +765,7 @@ def _meal_share_sent_queryset(user):
         .filter(sender=user, removed=False)
         .select_related("meal", "meal__created_by", "meal__original_author", "sender", "accepted_by")
         .prefetch_related("meal__meal_food_set__food")
+        .exclude(id__in=_migrated_legacy_ids("meal"))
     )
 
 

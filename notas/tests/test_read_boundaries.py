@@ -194,14 +194,14 @@ class ReadBoundaryTests(TestCase):
                 self.other_food.id,
             )
 
-    def test_readable_meal_queryset_applies_public_and_share_boundaries(self):
+    def test_readable_meal_queryset_keeps_shared_snapshots_out_of_source_reads(self):
         meals = get_readable_meal_queryset(self.user)
 
         names = [meal.name for meal in meals]
 
         self.assertIn("User Meal", names)
         self.assertIn("Public Meal", names)
-        self.assertIn("Shared Meal", names)
+        self.assertNotIn("Shared Meal", names)
         self.assertNotIn("Public Draft Meal", names)
         self.assertNotIn("Private Other Meal", names)
         self.assertNotIn("Removed Shared Meal", names)
@@ -219,14 +219,14 @@ class ReadBoundaryTests(TestCase):
                 self.removed_shared_meal.id,
             )
 
-    def test_readable_dailyplan_queryset_applies_public_and_share_boundaries(self):
+    def test_readable_dailyplan_queryset_keeps_shared_snapshots_out_of_source_reads(self):
         dailyplans = get_readable_dailyplan_queryset(self.user)
 
         names = [dailyplan.name for dailyplan in dailyplans]
 
         self.assertIn("User DailyPlan", names)
         self.assertIn("Public DailyPlan", names)
-        self.assertIn("Shared DailyPlan", names)
+        self.assertNotIn("Shared DailyPlan", names)
         self.assertNotIn("Public Draft DailyPlan", names)
         self.assertNotIn("Private Other DailyPlan", names)
         self.assertNotIn("Removed Shared DailyPlan", names)
@@ -244,30 +244,16 @@ class ReadBoundaryTests(TestCase):
                 self.removed_shared_dailyplan.id,
             )
 
-    def test_legacy_access_service_uses_same_meal_boundary(self):
-        meal = get_meal_for_user(
-            self.user,
-            self.shared_meal.id,
-        )
-
-        self.assertEqual(meal.id, self.shared_meal.id)
-
+    def test_legacy_access_service_cannot_read_shared_source_meal(self):
         with self.assertRaises(Meal.DoesNotExist):
             get_meal_for_user(
                 self.user,
-                self.removed_shared_meal.id,
+                self.shared_meal.id,
             )
 
-    def test_legacy_access_service_uses_same_dailyplan_boundary(self):
-        dailyplan = get_dailyplan_for_user(
-            self.user,
-            self.shared_dailyplan.id,
-        )
-
-        self.assertEqual(dailyplan.id, self.shared_dailyplan.id)
-
+    def test_legacy_access_service_cannot_read_shared_source_dailyplan(self):
         with self.assertRaises(DailyPlan.DoesNotExist):
             get_dailyplan_for_user(
                 self.user,
-                self.removed_shared_dailyplan.id,
+                self.shared_dailyplan.id,
             )

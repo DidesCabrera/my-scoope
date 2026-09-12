@@ -59,9 +59,14 @@ def _preview_response(
         )
     )
     canonical_url = request.build_absolute_uri(request.path)
-    title = str(snapshot.get("subject", {}).get("title", "Plan compartido"))
-    meal_count = snapshot.get("summary", {}).get("meal_count", 0)
-    description = f"{title}: {meal_count} comidas en un plan compartido con MyScoope."
+    title = str(snapshot.get("subject", {}).get("title", "Contenido compartido"))
+    subject_label = {
+        ShareResource.SubjectType.DAILY_PLAN: "Plan diario",
+        ShareResource.SubjectType.FOOD: "Alimento",
+        ShareResource.SubjectType.MEAL: "Comida",
+        ShareResource.SubjectType.PROGRAM: "Programa semanal",
+    }.get(resource.subject_type, "Contenido")
+    description = f"{title}: {subject_label.lower()} compartido con MyScoope."
     response = render(
         request,
         "notas/sharing/preview.html",
@@ -76,6 +81,7 @@ def _preview_response(
             "card_url": card_url,
             "canonical_url": canonical_url,
             "share_description": description,
+            "subject_label": subject_label,
         },
         status=status,
     )

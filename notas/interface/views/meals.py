@@ -1,7 +1,6 @@
 import json
 from dataclasses import dataclass
 
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.serializers.json import DjangoJSONEncoder
@@ -11,7 +10,7 @@ from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
-from email_delivery.services import deliver_share_invitation
+from core.rate_limits import limit_sharing_create
 from notas.application.queries.performance.meal_queries import meals_with_kcal
 from notas.application.services.access.access import get_meal_for_user
 from notas.application.services.access.capabilities import get_capabilities
@@ -28,15 +27,13 @@ from notas.application.services.commands.meal_commands import (
     save_meal,
 )
 from notas.application.services.commands.share_commands import (
-    accept_meal_share,
-    create_meal_share,
     dismiss_meal_share,
     remove_meal_share,
 )
-from notas.application.services.notifications.share_emails import build_share_invitation_email
 from notas.application.services.nutrition.nutrition_kpis import build_nutrition_kpis_from_meal
-from notas.domain.models import Food, Meal, MealFood, MealShare
+from notas.domain.models import Food, Meal, MealFood, MealShare, ShareInvitation, ShareResource
 from notas.interface.forms.forms import MealShareForm
+from notas.interface.views.sharing_delivery import deliver_normalized_entity_invitation
 from notas.presentation.composition.js.food_picker_builder import (
     build_food_picker_context_payload,
     build_food_picker_foods_payload,
@@ -73,6 +70,7 @@ class BreadcrumbParent:
 #************ VIEW DE INBOX *********************
 
 @login_required
+@limit_sharing_create
 def meal_share(request, pk):
 
     meal = get_object_or_404(
@@ -92,38 +90,16 @@ def meal_share(request, pk):
         share_subject = form.cleaned_data.get("subject", meal.name)
         message = form.cleaned_data.get("message", "")
 
-        result = create_meal_share(
-            sender=request.user,
+        _, _, delivery = deliver_normalized_entity_invitation(
+            request,
+            subject_type=ShareResource.SubjectType.MEAL,
+            subject_id=meal.id,
             recipient_email=email,
-            meal=meal,
             subject=share_subject,
             message=message,
         )
 
-        share = result.share
-
-        subject, message = build_share_invitation_email(
-            request=request,
-            share=share,
-            kind="meal",
-            item_name=meal.name,
-            custom_subject=share_subject,
-            custom_message=message,
-        )
-
-        delivery = deliver_share_invitation(
-            share=share,
-            subject=subject,
-            message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-        )
-
-        if share.accepted_by_id:
-            messages.success(
-                request,
-                "Compartiste esta comida. Como el correo pertenece a una cuenta existente, ya está disponible en su Inbox.",
-            )
-        elif delivery.sent:
+        if delivery.sent:
             messages.success(
                 request,
                 "Compartiste esta comida. Enviamos el correo de invitación al destinatario.",
@@ -151,21 +127,9 @@ def meal_share(request, pk):
     )
 
 
-@login_required
 def meal_share_accept(request, token):
-    share = get_object_or_404(
-        MealShare,
-        token=token,
-    )
-
-    try:
-        accept_meal_share(share=share, user=request.user)
-    except ValueError as exc:
-        if str(exc) in {"share_recipient_mismatch", "share_already_claimed"}:
-            raise Http404 from exc
-        raise
-
-    return redirect("inbox_list")
+    invitation = get_object_or_404(ShareInvitation, public_id=token)
+    return redirect("share_invitation_preview", public_id=invitation.public_id)
 
 
 @login_required

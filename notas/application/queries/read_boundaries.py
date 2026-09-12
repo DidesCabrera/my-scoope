@@ -3,10 +3,8 @@ from django.shortcuts import get_object_or_404
 
 from notas.domain.models import (
     DailyPlan,
-    DailyPlanShare,
     Food,
     Meal,
-    MealShare,
 )
 
 
@@ -60,27 +58,14 @@ def get_owned_meal_queryset(user):
 
 def get_readable_meal_queryset(user):
     """
-    Meals legibles para el usuario:
-    - propias;
-    - públicas y no draft;
-    - compartidas aceptadas, no dismissed y no removed.
+    Meals legibles para el usuario: propias o públicas y no draft.
+    Los compartidos se leen desde snapshots de Inbox hasta guardarlos.
     """
-    shared_meal_ids = (
-        MealShare.objects
-        .filter(
-            accepted_by=user,
-            dismissed=False,
-            removed=False,
-        )
-        .values_list("meal_id", flat=True)
-    )
-
     return (
         Meal.objects
         .filter(
             Q(created_by=user)
             | Q(is_public=True, is_draft=False)
-            | Q(id__in=shared_meal_ids)
         )
         .distinct()
         .order_by("name", "id")
@@ -104,27 +89,14 @@ def get_owned_dailyplan_queryset(user):
 
 def get_readable_dailyplan_queryset(user):
     """
-    DailyPlans legibles para el usuario:
-    - propios;
-    - públicos y no draft;
-    - compartidos aceptados, no dismissed y no removed.
+    DailyPlans legibles para el usuario: propios o públicos y no draft.
+    Los compartidos se leen desde snapshots de Inbox hasta guardarlos.
     """
-    shared_dailyplan_ids = (
-        DailyPlanShare.objects
-        .filter(
-            accepted_by=user,
-            dismissed=False,
-            removed=False,
-        )
-        .values_list("dailyplan_id", flat=True)
-    )
-
     return (
         DailyPlan.objects
         .filter(
             Q(created_by=user)
             | Q(is_public=True, is_draft=False)
-            | Q(id__in=shared_dailyplan_ids)
         )
         .distinct()
         .order_by("name", "id")
