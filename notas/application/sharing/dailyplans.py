@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import timedelta
 
+from django.conf import settings
 from django.db import transaction
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
+from django.utils import timezone
 
 from notas.application.sharing.contracts import SHARE_SNAPSHOT_SCHEMA_VERSION
 from notas.domain.models import DailyPlan, MealFood, ShareResource
@@ -18,6 +21,11 @@ class DailyPlanShareError(ValueError):
 @dataclass(frozen=True)
 class DailyPlanShareResult:
     resource: ShareResource
+
+
+def _resource_expiry():
+    ttl_days = max(1, int(getattr(settings, "SHARING_RESOURCE_TTL_DAYS", 30)))
+    return timezone.now() + timedelta(days=ttl_days)
 
 
 def _number(value: float) -> float:
@@ -121,6 +129,7 @@ def create_dailyplan_share_resource(
         snapshot=build_dailyplan_share_snapshot(dailyplan),
         snapshot_schema_version=SHARE_SNAPSHOT_SCHEMA_VERSION,
         claim_policy=claim_policy,
+        expires_at=_resource_expiry(),
     )
     return DailyPlanShareResult(resource=resource)
 
@@ -143,6 +152,7 @@ def get_or_create_dailyplan_share_resource(
             status=ShareResource.Status.ACTIVE,
             claim_policy=claim_policy,
         )
+        .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now()))
         .order_by("-created_at", "-id")
         .first()
     )
@@ -155,5 +165,6 @@ def get_or_create_dailyplan_share_resource(
         snapshot=snapshot,
         snapshot_schema_version=SHARE_SNAPSHOT_SCHEMA_VERSION,
         claim_policy=claim_policy,
+        expires_at=_resource_expiry(),
     )
     return DailyPlanShareResult(resource=resource)

@@ -746,11 +746,17 @@ test("the App Store review package is complete, bounded and secret-free", async 
 test("the iOS release contract declares only approved capabilities and privacy categories", async () => {
   const appFile = path.resolve(process.cwd(), "app.json");
   const app = JSON.parse(await readTestFile(appFile, "utf8")).expo as {
-    ios: { usesAppleSignIn: boolean; privacyManifests: { NSPrivacyTracking: boolean; NSPrivacyCollectedDataTypes: { NSPrivacyCollectedDataType: string }[] } };
+    ios: { associatedDomains: string[]; usesAppleSignIn: boolean; privacyManifests: { NSPrivacyTracking: boolean; NSPrivacyCollectedDataTypes: { NSPrivacyCollectedDataType: string }[] } };
+    android: { intentFilters: { autoVerify: boolean; data: { host: string; pathPrefix: string; scheme: string }[] }[] };
     plugins: (string | [string, Record<string, unknown>])[];
   };
   assert.equal(app.ios.usesAppleSignIn, true);
   assert.equal(app.ios.privacyManifests.NSPrivacyTracking, false);
+  assert.deepEqual(app.ios.associatedDomains, ["applinks:www.myscoope.com"]);
+  assert.equal(app.android.intentFilters[0].autoVerify, true);
+  assert.deepEqual(app.android.intentFilters[0].data, [
+    { scheme: "https", host: "www.myscoope.com", pathPrefix: "/s/" },
+  ]);
   const collected = new Set(
     app.ios.privacyManifests.NSPrivacyCollectedDataTypes.map((item) => item.NSPrivacyCollectedDataType),
   );

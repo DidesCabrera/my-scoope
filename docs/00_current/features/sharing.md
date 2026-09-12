@@ -79,3 +79,20 @@ The directed invitation page points to an invitation-scoped card URL and omits t
 resource deep link, preventing its HTML metadata from weakening the verified-email
 claim boundary. Titles and numeric values are normalized and bounded before drawing;
 the rendering dependency and Unicode-capable platform font fallbacks are explicit.
+
+## Operations
+
+New resources expire after a configurable 30-day TTL. Daily maintenance expires due
+resources and invitations and deletes only old revoked/expired resources without a
+claim; claimed Inbox snapshots survive. Shared-cache limits protect public rendering,
+claim attempts and per-user creation, while email keeps its additional recipient and
+budget controls.
+
+The Product Activity dashboard derives a privacy-minimal normalized funnel from
+resources, aggregate preview counters, invitations, claims and saved Inbox copies.
+No visitor IP or user-agent is retained. Apple Universal Links and Android App Links
+are declared for production `/s/*`; server association endpoints return 503 until the
+real Apple Team ID and Android signing fingerprints are configured. Directed `/i/*`
+invites remain web-only so native routing cannot bypass verified-email enforcement.
+Deployment, verification and incident steps live in
+`docs/40_technical/operations/sharing_operations_runbook.md`.

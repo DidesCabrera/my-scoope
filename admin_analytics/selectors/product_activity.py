@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from datetime import timedelta
 
-from django.db.models import Avg, Count, Q
+from django.db.models import Avg, Count, Q, Sum
 from django.utils import timezone
 
 from admin_analytics.filters import AdminAnalyticsFilters
@@ -15,8 +15,11 @@ from notas.domain.model_modules.sharing import (
     FoodShare,
     MealShare,
     ProgramShare,
+    ShareClaim,
+    ShareInvitation,
+    ShareResource,
 )
-from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood, Program, ProgramDay
+from notas.domain.models import DailyPlan, DailyPlanMeal, Food, InboxItem, Meal, MealFood, Program, ProgramDay
 
 SHARE_MODELS = (
     ("foods", "Foods", FoodShare),
@@ -101,6 +104,18 @@ def _top_builder_rows(*, since_7d, top_limit: int) -> list[dict]:
                 username=row["sender__username"],
                 key="shares",
             )
+
+    for row in ShareResource.objects.filter(
+        created_at__gte=since_7d,
+        legacy_reference__isnull=True,
+    ).values("sender_id", "sender__email", "sender__username"):
+        _add_user_score(
+            scores,
+            user_id=row["sender_id"],
+            email=row["sender__email"],
+            username=row["sender__username"],
+            key="shares",
+        )
 
     for row in SavedComparison.objects.filter(updated_at__gte=since_7d).values("owner_id", "owner__email", "owner__username"):
         _add_user_score(
@@ -234,6 +249,39 @@ def get_product_activity_metrics(*, now=None, analytics_filters: AdminAnalyticsF
             if row["sender_id"]
         }
 
+    active_builder_user_ids |= {
+        row["sender_id"]
+        for row in ShareResource.objects.filter(
+            created_at__gte=since_7d,
+            legacy_reference__isnull=True,
+        ).values("sender_id")
+        if row["sender_id"]
+    }
+
+    funnel_resources = ShareResource.objects.filter(
+        created_at__gte=since_7d,
+        legacy_reference__isnull=True,
+    )
+    funnel_resource_ids = funnel_resources.values("id")
+    sharing_funnel = {
+        "resources": funnel_resources.count(),
+        "preview_views": funnel_resources.aggregate(total=Sum("preview_count"))["total"] or 0,
+        "invitations": ShareInvitation.objects.filter(resource_id__in=funnel_resource_ids).count(),
+        "delivered_invitations": ShareInvitation.objects.filter(
+            resource_id__in=funnel_resource_ids,
+            status__in=(ShareInvitation.Status.DELIVERED, ShareInvitation.Status.CLAIMED),
+        ).count(),
+        "claims": ShareClaim.objects.filter(resource_id__in=funnel_resource_ids).count(),
+        "email_claims": ShareClaim.objects.filter(
+            resource_id__in=funnel_resource_ids,
+            source=ShareClaim.Source.EMAIL,
+        ).count(),
+        "saved": InboxItem.objects.filter(
+            resource_id__in=funnel_resource_ids,
+            saved_at__isnull=False,
+        ).count(),
+    }
+
     return {
         "generated_at": now,
         "period_label": analytics_filters.period_label,
@@ -304,6 +352,7 @@ def get_product_activity_metrics(*, now=None, analytics_filters: AdminAnalyticsF
             "favorite_total": favorite_shares_total,
             "removed_total": removed_shares_total,
             "rows": share_rows,
+            "normalized_funnel": sharing_funnel,
         },
         "proposals": {
             "total": NutritionProposal.objects.count(),

@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
+
 from allauth.account.models import EmailAddress
 from django.db import transaction
+from django.db.models import F
 from django.utils import timezone
 
 from notas.domain.models import InboxItem, ShareClaim, ShareInvitation, ShareResource
@@ -79,6 +82,53 @@ def mark_share_invitation_delivered(*, invitation: ShareInvitation, now=None) ->
         invitation.delivered_at = now or timezone.now()
         invitation.save(update_fields=["status", "delivered_at", "updated_at"])
     return invitation
+
+
+def record_share_preview(*, resource: ShareResource, now=None) -> None:
+    ShareResource.objects.filter(pk=resource.pk).update(
+        preview_count=F("preview_count") + 1,
+        last_previewed_at=now or timezone.now(),
+    )
+
+
+@transaction.atomic
+def maintain_sharing_resources(
+    *, now=None, retention_days: int = 30, dry_run: bool = False
+) -> dict[str, int]:
+    current_time = now or timezone.now()
+    expiring = ShareResource.objects.filter(
+        status=ShareResource.Status.ACTIVE,
+        expires_at__isnull=False,
+        expires_at__lte=current_time,
+    )
+    expiring_ids = list(expiring.values_list("id", flat=True))
+    invitations = ShareInvitation.objects.filter(
+        resource_id__in=expiring_ids,
+        status__in=(ShareInvitation.Status.PENDING, ShareInvitation.Status.DELIVERED),
+    )
+    resources_expired = len(expiring_ids)
+    invitations_expired = invitations.count()
+    if not dry_run:
+        expiring.update(
+            status=ShareResource.Status.EXPIRED,
+            updated_at=current_time,
+        )
+        invitations.update(status=ShareInvitation.Status.EXPIRED, updated_at=current_time)
+
+    retention_cutoff = current_time - timedelta(days=max(1, retention_days))
+    deletable = ShareResource.objects.filter(
+        status__in=(ShareResource.Status.REVOKED, ShareResource.Status.EXPIRED),
+        updated_at__lt=retention_cutoff,
+        claims__isnull=True,
+    ).distinct()
+    resources_deleted = deletable.count()
+    if not dry_run:
+        deletable.delete()
+    return {
+        "resources_expired": resources_expired,
+        "invitations_expired": invitations_expired,
+        "resources_deleted": resources_deleted,
+    }
 
 
 @transaction.atomic

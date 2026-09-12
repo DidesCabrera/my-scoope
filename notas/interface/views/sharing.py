@@ -7,11 +7,13 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
 
+from core.rate_limits import limit_sharing_claim, limit_sharing_preview
 from notas.application.sharing.services import (
     ShareUnavailable,
     claim_share_resource,
     get_share_invitation_for_preview,
     get_share_resource_for_preview,
+    record_share_preview,
 )
 from notas.domain.models import ShareClaim, ShareInvitation, ShareResource
 from notas.presentation.sharing_cards import render_share_card_png, snapshot_card_etag
@@ -83,20 +85,24 @@ def _preview_response(
 
 
 @require_GET
+@limit_sharing_preview
 def share_preview(request, public_id):
     try:
         resource = get_share_resource_for_preview(public_id=public_id)
     except ShareUnavailable:
         return render(request, "notas/sharing/unavailable.html", status=404)
+    record_share_preview(resource=resource)
     return _preview_response(request, resource)
 
 
 @require_GET
+@limit_sharing_preview
 def share_invitation_preview(request, public_id):
     try:
         invitation = get_share_invitation_for_preview(public_id=public_id)
     except ShareUnavailable:
         return render(request, "notas/sharing/unavailable.html", status=404)
+    record_share_preview(resource=invitation.resource)
     return _preview_response(request, invitation.resource, invitation=invitation)
 
 
@@ -116,6 +122,7 @@ def _card_response(request, resource: ShareResource):
 
 
 @require_GET
+@limit_sharing_preview
 def share_card(request, public_id):
     try:
         resource = get_share_resource_for_preview(public_id=public_id)
@@ -125,6 +132,7 @@ def share_card(request, public_id):
 
 
 @require_GET
+@limit_sharing_preview
 def share_invitation_card(request, public_id):
     try:
         invitation = get_share_invitation_for_preview(public_id=public_id)
@@ -134,6 +142,7 @@ def share_invitation_card(request, public_id):
 
 
 @require_POST
+@limit_sharing_claim
 def share_claim(request, public_id):
     try:
         resource = get_share_resource_for_preview(public_id=public_id)
@@ -158,6 +167,7 @@ def share_claim(request, public_id):
 
 
 @require_POST
+@limit_sharing_claim
 def share_invitation_claim(request, public_id):
     try:
         invitation = get_share_invitation_for_preview(public_id=public_id)

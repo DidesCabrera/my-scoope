@@ -1,6 +1,7 @@
 from allauth.account.models import EmailAddress
 from django.contrib.auth import get_user_model
 from django.core import mail
+from django.core.cache import cache
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
@@ -118,3 +119,14 @@ class DailyPlanSharingWebTests(TestCase):
         claimed = self.client.post(claim_url)
         self.assertEqual(claimed.status_code, 302)
         self.assertEqual(InboxItem.objects.filter(owner=self.recipient).count(), 1)
+
+    @override_settings(RATE_LIMIT_SHARING_CREATE_USER="1/h")
+    def test_web_share_creation_is_rate_limited_per_user(self):
+        cache.clear()
+        try:
+            first = self.client.post(self.share_page, {"share_action": "create_link"})
+            second = self.client.post(self.share_page, {"share_action": "create_link"})
+            self.assertEqual(first.status_code, 302)
+            self.assertEqual(second.status_code, 403)
+        finally:
+            cache.clear()

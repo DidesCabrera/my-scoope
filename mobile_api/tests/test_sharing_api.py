@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.test import Client, override_settings
 
 from mobile_api.tests.base import AuthenticatedMobileAPITestCase
@@ -65,6 +66,8 @@ class MobileAPISharingTests(AuthenticatedMobileAPITestCase):
 
         self.assertEqual(public_response.status_code, 200)
         self.assertEqual(public_response.json()["data"]["title"], "Plan recibido")
+        resource.refresh_from_db()
+        self.assertEqual(resource.preview_count, 1)
         self.assertEqual(first_claim.status_code, 200)
         self.assertEqual(second_claim.json()["data"], first_claim.json()["data"])
         self.assertEqual(inbox.json()["data"]["count"], 1)
@@ -88,3 +91,44 @@ class MobileAPISharingTests(AuthenticatedMobileAPITestCase):
         self.assertEqual(saved.json()["data"]["entity"], "dailyPlan")
         self.assertEqual(dismissed.status_code, 200)
         self.assertEqual(self.client.get("/api/v1/shares/inbox").json()["data"]["count"], 0)
+
+    @override_settings(RATE_LIMIT_SHARING_CREATE_USER="1/h")
+    def test_share_creation_has_a_json_rate_limit(self):
+        cache.clear()
+        first_plan = DailyPlan.objects.create(name="Uno", created_by=self.user, is_draft=False)
+        second_plan = DailyPlan.objects.create(name="Dos", created_by=self.user, is_draft=False)
+        try:
+            first = self.client.post(
+                f"/api/v1/shares/daily-plans/{first_plan.id}",
+                data={},
+                content_type="application/json",
+            )
+            second = self.client.post(
+                f"/api/v1/shares/daily-plans/{second_plan.id}",
+                data={},
+                content_type="application/json",
+            )
+            self.assertEqual(first.status_code, 200)
+            self.assertEqual(second.status_code, 429)
+            self.assertEqual(second.json()["error"]["code"], "sharing_create_rate_limited")
+        finally:
+            cache.clear()
+
+    @override_settings(RATE_LIMIT_SHARING_PREVIEW_IP="1/h")
+    def test_public_api_preview_has_an_ip_rate_limit(self):
+        cache.clear()
+        resource = ShareResource.objects.create(
+            sender=self.user,
+            subject_type=ShareResource.SubjectType.DAILY_PLAN,
+            snapshot={"subject": {"title": "Limitado"}},
+            snapshot_schema_version="sharing.snapshot.v1",
+        )
+        anonymous = Client(REMOTE_ADDR="203.0.113.20")
+        try:
+            first = anonymous.get(f"/api/v1/shares/{resource.public_id}")
+            second = anonymous.get(f"/api/v1/shares/{resource.public_id}")
+            self.assertEqual(first.status_code, 200)
+            self.assertEqual(second.status_code, 429)
+            self.assertEqual(second.json()["error"]["code"], "sharing_preview_rate_limited")
+        finally:
+            cache.clear()

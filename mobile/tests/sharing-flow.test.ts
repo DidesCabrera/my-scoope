@@ -19,6 +19,8 @@ test("DailyPlan sharing uses one portable resource for native share and copy lin
 
 test("share deep links preserve their destination through authentication prerequisites", async () => {
   const shareScreen = await readTestFile(path.resolve(process.cwd(), "src/app/share/[id].tsx"), "utf8");
+  const universalRoute = await readTestFile(path.resolve(process.cwd(), "src/app/s/[id].tsx"), "utf8");
+  const rootLayout = await readTestFile(path.resolve(process.cwd(), "src/app/_layout.tsx"), "utf8");
   const login = await readTestFile(path.resolve(process.cwd(), "src/app/login.tsx"), "utf8");
   const onboarding = await readTestFile(path.resolve(process.cwd(), "src/app/onboarding.tsx"), "utf8");
   const disclosures = await readTestFile(path.resolve(process.cwd(), "src/app/disclosures.tsx"), "utf8");
@@ -26,6 +28,8 @@ test("share deep links preserve their destination through authentication prerequ
 
   assertSourceMatch(shareScreen, /params: \{ returnTo: `\/share\/\$\{id\}` \}/);
   assertSourceMatch(shareScreen, /\/api\/v1\/shares\/\$\{id\}\/claims/);
+  assertSourceMatch(universalRoute, /share\/\[id\]/);
+  assertSourceMatch(rootLayout, /pathname\.startsWith\("\/s\/"\)/);
   for (const source of [login, onboarding, disclosures]) {
     assertSourceMatch(source, /internalHref\(returnTo\)/);
   }

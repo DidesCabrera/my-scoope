@@ -8,6 +8,10 @@ from django.conf import settings
 from django.db import DatabaseError
 
 from core.environment_contract import ENVIRONMENT_VARIABLE_SPECS
+from core.mobile_association import (
+    android_asset_links_payload,
+    apple_app_site_association_payload,
+)
 
 
 @dataclass(frozen=True)
@@ -170,6 +174,26 @@ def _integration_findings(environment: str) -> list[DiagnosticFinding]:
         category="email",
         summary="Share email delivery is enabled." if share_email_enabled else "Share email delivery is intentionally disabled.",
         action="",
+    ))
+
+    mobile_links_ready = (
+        apple_app_site_association_payload() is not None
+        and android_asset_links_payload() is not None
+    )
+    findings.append(DiagnosticFinding(
+        code="sharing.mobile_links",
+        status="ok" if mobile_links_ready else ("warning" if environment == "production" else "ok"),
+        category="sharing",
+        summary=(
+            "Universal Links and Android App Links signing identities are configured."
+            if mobile_links_ready
+            else "Mobile link association identities are not configured."
+        ),
+        action=(
+            "Configure MYSCOOPE_APPLE_TEAM_ID and Android SHA-256 signing fingerprints."
+            if environment == "production" and not mobile_links_ready
+            else ""
+        ),
     ))
 
     sentry_ready = bool(getattr(settings, "SENTRY_DSN", ""))

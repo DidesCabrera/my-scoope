@@ -10,6 +10,7 @@ from notas.application.sharing.services import (
     claim_share_resource,
     create_share_invitation,
     get_share_invitation_for_preview,
+    maintain_sharing_resources,
     mark_share_invitation_delivered,
     revoke_share_resource,
 )
@@ -169,3 +170,53 @@ class SharingCoreTests(TestCase):
                 source=ShareClaim.Source.EMAIL,
                 invitation=invitation,
             )
+
+    def test_maintenance_expires_resources_and_removes_only_old_unclaimed_rows(self):
+        now = timezone.now()
+        invitation = ShareInvitation.objects.create(
+            resource=self.resource,
+            recipient_email="pending@example.com",
+        )
+        self.resource.expires_at = now - timedelta(minutes=1)
+        self.resource.save(update_fields=["expires_at"])
+
+        result = maintain_sharing_resources(now=now, retention_days=30)
+        self.resource.refresh_from_db()
+        invitation.refresh_from_db()
+        self.assertEqual(result["resources_expired"], 1)
+        self.assertEqual(invitation.status, ShareInvitation.Status.EXPIRED)
+
+        old = now - timedelta(days=31)
+        ShareResource.objects.filter(pk=self.resource.pk).update(updated_at=old)
+        deleted = maintain_sharing_resources(now=now, retention_days=30)
+        self.assertEqual(deleted["resources_deleted"], 1)
+        self.assertFalse(ShareResource.objects.filter(pk=self.resource.pk).exists())
+
+    def test_maintenance_preserves_claimed_inbox_snapshots(self):
+        now = timezone.now()
+        claim, _ = claim_share_resource(
+            resource=self.resource,
+            user=self.recipient,
+            source=ShareClaim.Source.LINK,
+        )
+        self.resource.status = ShareResource.Status.REVOKED
+        self.resource.save(update_fields=["status"])
+        ShareResource.objects.filter(pk=self.resource.pk).update(
+            updated_at=now - timedelta(days=31)
+        )
+
+        maintain_sharing_resources(now=now, retention_days=30)
+
+        self.assertTrue(ShareResource.objects.filter(pk=self.resource.pk).exists())
+        self.assertTrue(InboxItem.objects.filter(claim=claim).exists())
+
+    def test_maintenance_dry_run_reports_without_mutating(self):
+        now = timezone.now()
+        self.resource.expires_at = now - timedelta(minutes=1)
+        self.resource.save(update_fields=["expires_at"])
+
+        result = maintain_sharing_resources(now=now, retention_days=30, dry_run=True)
+
+        self.resource.refresh_from_db()
+        self.assertEqual(result["resources_expired"], 1)
+        self.assertEqual(self.resource.status, ShareResource.Status.ACTIVE)

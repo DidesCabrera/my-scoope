@@ -4,6 +4,11 @@ from uuid import UUID
 
 from ninja import Router
 
+from core.rate_limits import (
+    is_sharing_claim_rate_limited,
+    is_sharing_create_rate_limited,
+    is_sharing_preview_rate_limited,
+)
 from mobile_api.api_support import require_scope, success
 from mobile_api.auth import mobile_bearer
 from mobile_api.errors import MobileAPIError
@@ -25,6 +30,7 @@ from notas.application.sharing.services import (
     ShareUnavailable,
     claim_share_resource,
     get_share_resource_for_preview,
+    record_share_preview,
     revoke_share_resource,
 )
 from notas.domain.models import InboxItem, ShareClaim, ShareResource
@@ -72,10 +78,18 @@ def _owned_inbox_item(user, item_id: int) -> InboxItem:
     "/shares/daily-plans/{dailyplan_id}",
     operation_id="mobile_api_create_dailyplan_share_resource",
     auth=mobile_bearer,
-    response={200: ShareResourceEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope},
+    response={
+        200: ShareResourceEnvelope,
+        401: ErrorEnvelope,
+        403: ErrorEnvelope,
+        404: ErrorEnvelope,
+        429: ErrorEnvelope,
+    },
 )
 def create_dailyplan_share(request, dailyplan_id: int, payload: ShareResourceCreateInput):
     require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    if is_sharing_create_rate_limited(request):
+        raise MobileAPIError("sharing_create_rate_limited", "Inténtalo nuevamente más tarde.", 429)
     try:
         result = create_dailyplan_share_resource(
             sender=request.auth.user,
@@ -142,13 +156,16 @@ def save_sharing_inbox_item(request, item_id: int):
     "/shares/{public_id}",
     operation_id="mobile_api_public_share_resource",
     auth=None,
-    response={200: PublicShareResourceEnvelope, 404: ErrorEnvelope},
+    response={200: PublicShareResourceEnvelope, 404: ErrorEnvelope, 429: ErrorEnvelope},
 )
 def public_share_resource(request, public_id: UUID):
+    if is_sharing_preview_rate_limited(request):
+        raise MobileAPIError("sharing_preview_rate_limited", "Inténtalo nuevamente más tarde.", 429)
     try:
         resource = get_share_resource_for_preview(public_id=public_id)
     except ShareUnavailable as exc:
         raise MobileAPIError(str(exc), "El contenido compartido no está disponible.", 404) from exc
+    record_share_preview(resource=resource)
     return success(
         {
             "id": resource.public_id,
@@ -164,10 +181,19 @@ def public_share_resource(request, public_id: UUID):
     "/shares/{public_id}/claims",
     operation_id="mobile_api_claim_share_resource",
     auth=mobile_bearer,
-    response={200: ShareClaimEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 409: ErrorEnvelope},
+    response={
+        200: ShareClaimEnvelope,
+        401: ErrorEnvelope,
+        403: ErrorEnvelope,
+        404: ErrorEnvelope,
+        409: ErrorEnvelope,
+        429: ErrorEnvelope,
+    },
 )
 def claim_share(request, public_id: UUID):
     require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    if is_sharing_claim_rate_limited(request):
+        raise MobileAPIError("sharing_claim_rate_limited", "Inténtalo nuevamente más tarde.", 429)
     try:
         resource = get_share_resource_for_preview(public_id=public_id)
         _, inbox_item = claim_share_resource(
