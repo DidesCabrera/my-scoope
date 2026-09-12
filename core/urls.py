@@ -8,6 +8,7 @@ from .views import (
     msos,
     msos_detail,
     privacy,
+    refund_policy,
     support,
     terms,
 )
@@ -24,6 +25,7 @@ urlpatterns = [
     path("msos/<slug:kind>/<slug:item_id>/", msos_detail, name="msos_detail"),
     path("", landing, name="landing"),
     path("privacy/", privacy, name="privacy"),
+    path("refund-policy/", refund_policy, name="refund_policy"),
     path("terms/", terms, name="terms"),
     path("support/", support, name="support"),
 ]

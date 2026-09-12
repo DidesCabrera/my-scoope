@@ -107,7 +107,7 @@
 
       if (priceElement) priceElement.textContent = price;
       if (labelElement) labelElement.textContent = period === "yearly" ? "Anual" : "Mensual";
-      if (periodElement) periodElement.textContent = "/mensual";
+      if (periodElement) periodElement.textContent = period === "yearly" ? "/mes equivalente" : "/mes";
       if (annualPriceElement) annualPriceElement.classList.toggle("is-hidden", period !== "yearly");
     });
   };

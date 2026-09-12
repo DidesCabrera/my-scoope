@@ -1305,7 +1305,7 @@
      ========================================================= */
   
   .legal-page {
-    padding: 72px 0;
+    padding: 122px 0 72px;
     background: #f7f7f8;
     min-height: 70vh;
   }
@@ -2119,6 +2119,11 @@
   padding: 8px 22px;
   text-align: center;
   line-height: 1.65;
+}
+
+.plan-credit-note a {
+  color: var(--text);
+  font-weight: 700;
 }
 
 @media (max-width: 760px) {

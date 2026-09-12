@@ -155,6 +155,10 @@ def privacy(request):
     return render(request, "core/privacy.html")
 
 
+def refund_policy(request):
+    return render(request, "core/refund_policy.html")
+
+
 def terms(request):
     return render(request, "core/terms.html")
 
