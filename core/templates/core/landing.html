@@ -294,14 +294,14 @@
             <a href="/accounts/login/" class="btn btn-primary btn-full">Comenzar gratis</a>
           </article>
 
-          <article class="plan-card plan-card-featured" data-plan-card data-monthly-price="CLP 7.990" data-yearly-monthly-price="CLP 6.658" data-yearly-price="CLP 79.900">
+          <article class="plan-card plan-card-featured" data-plan-card data-monthly-price="{{ pricing.basic.monthly }}" data-yearly-monthly-price="{{ pricing.basic.annual_monthly_equivalent }}" data-yearly-price="{{ pricing.basic.annual }}">
             <div class="plan-card-header">
               <h3>Basic</h3>
               <span data-billing-label>Mensual</span>
             </div>
 
-            <p class="plan-price"><span data-plan-price>CLP 7.990</span><span class="plan-price-period">/mes</span></p>
-            <p class="plan-annual-price is-hidden" data-plan-annual-price>CLP 79.900 facturados anualmente</p>
+            <p class="plan-price"><span data-plan-price>{{ pricing.basic.monthly }}</span><span class="plan-price-period">/mes</span></p>
+            <p class="plan-annual-price is-hidden" data-plan-annual-price>{{ pricing.basic.annual }} facturados anualmente</p>
             <p class="plan-description">
               Para organizar una planificación completa con mayor capacidad de asistencia.
             </p>
@@ -313,17 +313,17 @@
               <li>150 créditos de asistencia IA al mes.</li>
             </ul>
 
-            <a href="/accounts/login/" class="btn btn-secondary btn-full">Suscribirme</a>
+            {% if pricing.basic.available %}<a href="/accounts/login/" class="btn btn-secondary btn-full">Suscribirme</a>{% else %}<span class="btn btn-secondary btn-full" aria-disabled="true">Próximamente</span>{% endif %}
           </article>
 
-          <article class="plan-card plan-card-featured" data-plan-card data-monthly-price="CLP 12.990" data-yearly-monthly-price="CLP 10.825" data-yearly-price="CLP 129.900">
+          <article class="plan-card plan-card-featured" data-plan-card data-monthly-price="{{ pricing.pro.monthly }}" data-yearly-monthly-price="{{ pricing.pro.annual_monthly_equivalent }}" data-yearly-price="{{ pricing.pro.annual }}">
             <div class="plan-card-header">
               <h3>Pro</h3>
               <span data-billing-label>Mensual</span>
             </div>
 
-            <p class="plan-price"><span data-plan-price>CLP 12.990</span><span class="plan-price-period">/mes</span></p>
-            <p class="plan-annual-price is-hidden" data-plan-annual-price>CLP 129.900 facturados anualmente</p>
+            <p class="plan-price"><span data-plan-price>{{ pricing.pro.monthly }}</span><span class="plan-price-period">/mes</span></p>
+            <p class="plan-annual-price is-hidden" data-plan-annual-price>{{ pricing.pro.annual }} facturados anualmente</p>
             <p class="plan-description">
               Para uso intensivo, publicación de contenido y mayor volumen de asistencia.
             </p>
@@ -335,7 +335,7 @@
               <li>1.000 créditos de asistencia IA al mes.</li>
             </ul>
 
-            <a href="/accounts/login/" class="btn btn-secondary btn-full">Suscribirme</a>
+            {% if pricing.pro.available %}<a href="/accounts/login/" class="btn btn-secondary btn-full">Suscribirme</a>{% else %}<span class="btn btn-secondary btn-full" aria-disabled="true">Próximamente</span>{% endif %}
           </article>
 
         </div>

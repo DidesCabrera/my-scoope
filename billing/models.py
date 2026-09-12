@@ -3,12 +3,14 @@ from __future__ import annotations
 import uuid
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from accounts.models import AccountPlan
 
 
 class PaymentProvider(models.TextChoices):
+    PADDLE = "paddle", "Paddle"
     MERCADO_PAGO = "mercado_pago", "Mercado Pago"
     APPLE_APP_STORE = "apple_app_store", "Apple App Store"
     GOOGLE_PLAY = "google_play", "Google Play"
@@ -32,8 +34,59 @@ class AppleAppAccountToken(models.Model):
         return f"Apple account token · {self.user_id}"
 
 
+class BillingOffer(models.Model):
+    """Canonical sellable offer for one account plan.
+
+    This is the runtime authority for public price, currency and billing cadence.
+    Provider catalog records map an offer to Paddle, Apple or Google without
+    duplicating the customer-facing commercial decision.
+    """
+
+    class Interval(models.TextChoices):
+        MONTH = "month", "Month"
+        YEAR = "year", "Year"
+
+    code = models.SlugField(
+        max_length=80,
+        unique=True,
+        help_text="Stable commercial offer identifier, for example basic-monthly.",
+    )
+    account_plan = models.ForeignKey(AccountPlan, on_delete=models.PROTECT, related_name="billing_offers")
+    currency = models.CharField(max_length=3, default="CLP")
+    amount_minor = models.PositiveBigIntegerField(help_text="Canonical price in the currency's minor unit.")
+    interval = models.CharField(max_length=16, choices=Interval.choices)
+    interval_count = models.PositiveSmallIntegerField(default=1)
+    active = models.BooleanField(default=True, db_index=True)
+    public = models.BooleanField(default=True, db_index=True)
+    display_order = models.PositiveSmallIntegerField(default=100)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["account_plan__display_order", "display_order", "amount_minor"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["account_plan", "interval", "interval_count"],
+                condition=models.Q(active=True, public=True),
+                name="billing_offer_public_cadence_uq",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(amount_minor__gt=0),
+                name="billing_offer_amount_positive",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(interval_count__gt=0),
+                name="billing_offer_interval_positive",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.account_plan.name} · {self.interval_count} {self.get_interval_display()}"
+
+
 class BillingProduct(models.Model):
-    """Provider product mapped to one commercial plan owned by accounts."""
+    """Immutable provider-catalog mapping for one canonical commercial offer."""
 
     class Kind(models.TextChoices):
         SUBSCRIPTION = "subscription", "Subscription"
@@ -42,8 +95,26 @@ class BillingProduct(models.Model):
         MONTH = "month", "Month"
         YEAR = "year", "Year"
 
+    class Environment(models.TextChoices):
+        SANDBOX = "sandbox", "Sandbox"
+        LIVE = "live", "Live"
+
     provider = models.CharField(max_length=32, choices=PaymentProvider.choices, db_index=True)
+    environment = models.CharField(
+        max_length=16,
+        choices=Environment.choices,
+        default=Environment.LIVE,
+        db_index=True,
+    )
     external_product_id = models.CharField(max_length=160)
+    external_price_id = models.CharField(max_length=160, blank=True)
+    offer = models.ForeignKey(
+        BillingOffer,
+        on_delete=models.PROTECT,
+        related_name="provider_products",
+        null=True,
+        blank=True,
+    )
     account_plan = models.ForeignKey(AccountPlan, on_delete=models.PROTECT, related_name="billing_products")
     kind = models.CharField(max_length=24, choices=Kind.choices, default=Kind.SUBSCRIPTION)
     currency = models.CharField(max_length=3, default="CLP")
@@ -59,8 +130,19 @@ class BillingProduct(models.Model):
         ordering = ["provider", "account_plan__display_order", "amount_minor"]
         constraints = [
             models.UniqueConstraint(
-                fields=["provider", "external_product_id"],
-                name="billing_product_provider_external_uniq",
+                fields=["provider", "environment", "external_product_id"],
+                condition=models.Q(external_price_id=""),
+                name="billprod_provider_env_product_uq",
+            ),
+            models.UniqueConstraint(
+                fields=["provider", "environment", "external_price_id"],
+                condition=~models.Q(external_price_id=""),
+                name="billprod_provider_env_price_uq",
+            ),
+            models.UniqueConstraint(
+                fields=["provider", "environment", "offer"],
+                condition=models.Q(active=True, offer__isnull=False),
+                name="billprod_active_offer_env_uq",
             ),
             models.CheckConstraint(
                 condition=models.Q(interval_count__gt=0),
@@ -70,6 +152,30 @@ class BillingProduct(models.Model):
 
     def __str__(self) -> str:
         return f"{self.get_provider_display()} · {self.account_plan.name}"
+
+    def clean(self):
+        super().clean()
+        errors = {}
+        if self.provider == PaymentProvider.PADDLE and self.active:
+            if not self.external_product_id.startswith("pro_"):
+                errors["external_product_id"] = "An active Paddle mapping requires a pro_ product ID."
+            if not self.external_price_id.startswith("pri_"):
+                errors["external_price_id"] = "An active Paddle mapping requires a pri_ price ID."
+            if self.offer_id is None:
+                errors["offer"] = "An active Paddle mapping requires a canonical offer."
+        if self.active and self.offer_id is not None:
+            snapshot_fields = {
+                "account_plan": (self.account_plan_id, self.offer.account_plan_id),
+                "amount_minor": (self.amount_minor, self.offer.amount_minor),
+                "currency": (self.currency, self.offer.currency),
+                "interval": (self.interval, self.offer.interval),
+                "interval_count": (self.interval_count, self.offer.interval_count),
+            }
+            for field, (actual, expected) in snapshot_fields.items():
+                if actual != expected:
+                    errors[field] = "Active provider mapping must match its canonical offer."
+        if errors:
+            raise ValidationError(errors)
 
 
 class ProviderSubscription(models.Model):

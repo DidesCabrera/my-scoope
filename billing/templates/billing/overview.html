@@ -1,4 +1,5 @@
 {% extends "notas/base.html" %}
+{% load static %}
 
 {% block content %}
 <div class="page page--detail profile-page">
@@ -32,7 +33,19 @@
       {% for product in vm.content.products %}
       <article class="profile-section-card__item">
         <span>{{ product.description }}</span><strong>{{ product.name }}</strong><small>{{ product.price }} · {{ product.interval }}</small>
-        <form method="post" action="{% url 'billing:create_checkout' product.id %}">{% csrf_token %}<button class="button button--primary" type="submit" {% if not vm.content.checkout_enabled %}disabled{% endif %}>Suscribirme</button></form>
+        {% if vm.content.checkout_provider == "paddle" %}
+          <button
+            class="button button--primary"
+            type="button"
+            data-paddle-checkout
+            data-price-id="{{ product.paddle_price_id }}"
+            data-checkout-reference="{{ product.paddle_checkout_reference }}"
+            data-customer-email="{{ product.customer_email }}"
+            {% if not product.can_checkout %}disabled{% endif %}
+          >Suscribirme</button>
+        {% else %}
+          <form method="post" action="{% url 'billing:create_checkout' product.id %}">{% csrf_token %}<button class="button button--primary" type="submit" {% if not vm.content.checkout_enabled %}disabled{% endif %}>Suscribirme</button></form>
+        {% endif %}
       </article>
       {% empty %}<p>No hay planes comerciales disponibles.</p>{% endfor %}
     </div>
@@ -40,11 +53,12 @@
   </section>
 
   <section class="profile-section-card">
-    <header class="profile-section-card__header"><div class="profile-section-card__title-wrap"><p class="profile-section-card__eyebrow">Mercado Pago</p><h2>Suscripciones</h2></div></header>
+    <header class="profile-section-card__header"><div class="profile-section-card__title-wrap"><p class="profile-section-card__eyebrow">Canales de compra</p><h2>Suscripciones</h2></div></header>
     <div class="profile-section-card__grid">
       {% for subscription in vm.content.subscriptions %}
       <article class="profile-section-card__item"><span>{{ subscription.provider }} · {{ subscription.created_at }}</span><strong>{{ subscription.plan }}</strong><small>{{ subscription.status }}</small>
         {% if subscription.can_cancel %}<form method="post" action="{% url 'billing:cancel_subscription' subscription.id %}">{% csrf_token %}<button class="button" type="submit" {% if not vm.content.checkout_enabled %}disabled{% endif %}>Cancelar</button></form>{% endif %}
+        {% if subscription.can_manage %}<form method="post" action="{% url 'billing:paddle_customer_portal' subscription.id %}">{% csrf_token %}<button class="button" type="submit">Gestionar en Paddle</button></form>{% endif %}
       </article>
       {% empty %}<p>Aún no tienes suscripciones gestionadas por Billing.</p>{% endfor %}
     </div>
@@ -59,4 +73,12 @@
     </div>
   </section>
 </div>
+
+{% if vm.content.checkout_enabled and vm.content.checkout_provider == "paddle" %}
+  {{ vm.content.paddle_environment|json_script:"paddle-environment" }}
+  {{ vm.content.paddle_client_token|json_script:"paddle-client-token" }}
+  {{ vm.content.paddle_success_url|json_script:"paddle-success-url" }}
+  <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+  <script src="{% static 'js/paddle_checkout.js' %}"></script>
+{% endif %}
 {% endblock %}

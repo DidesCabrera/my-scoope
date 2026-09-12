@@ -6,6 +6,9 @@ from django.contrib.sites.models import Site
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 
+from accounts.seed_plans import seed_account_plans
+from billing.application.services.catalog import PaddleCatalogReference, configure_paddle_catalog
+from billing.catalog import seed_billing_offers
 from core.environment_diagnostics import build_environment_diagnostic
 
 
@@ -49,3 +52,40 @@ class EnvironmentDiagnosticTests(TestCase):
         self.assertIn(payload["status"], {"ok", "warning", "error"})
         self.assertTrue(payload["configuration_summary"])
         self.assertNotIn("value", payload["configuration_summary"][0])
+
+    @override_settings(
+        BILLING_PADDLE_CHECKOUT_ENABLED=True,
+        BILLING_PADDLE_WEBHOOK_ENABLED=True,
+        BILLING_PADDLE_ENVIRONMENT="sandbox",
+        BILLING_PADDLE_CLIENT_TOKEN="live_wrong-environment",
+        BILLING_PADDLE_WEBHOOK_SECRET="",
+        BILLING_PADDLE_API_BASE_URL="https://api.paddle.com",
+    )
+    def test_paddle_environment_mismatch_fails_closed_without_exposing_credentials(self):
+        report = build_environment_diagnostic(include_database=False)
+
+        finding = next(item for item in report.findings if item.code == "billing.paddle")
+        self.assertEqual(finding.status, "error")
+        self.assertNotIn("live_wrong-environment", finding.summary)
+
+    @override_settings(BILLING_PADDLE_ENVIRONMENT="sandbox")
+    def test_database_diagnostic_confirms_aligned_paddle_catalog(self):
+        seed_account_plans()
+        seed_billing_offers()
+        configure_paddle_catalog(
+            environment="sandbox",
+            references=tuple(
+                PaddleCatalogReference(
+                    offer_code=f"{plan}-{cadence}",
+                    product_id=f"pro_{plan}",
+                    price_id=f"pri_{plan}_{cadence}",
+                )
+                for plan in ("basic", "pro")
+                for cadence in ("monthly", "annual")
+            ),
+        )
+
+        report = build_environment_diagnostic()
+
+        finding = next(item for item in report.findings if item.code == "billing.paddle_catalog")
+        self.assertEqual(finding.status, "ok")

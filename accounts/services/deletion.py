@@ -43,6 +43,7 @@ MODEL_RETENTION_POLICY = {
     "auth.User": RetentionAction.ANONYMIZE,
     "billing.BillingEvent": RetentionAction.RETAIN_LEGAL,
     "billing.BillingPayment": RetentionAction.RETAIN_LEGAL,
+    "billing.BillingOffer": RetentionAction.RETAIN_SYSTEM,
     "billing.BillingProduct": RetentionAction.RETAIN_SYSTEM,
     "billing.AppleAppAccountToken": RetentionAction.RETAIN_LEGAL,
     "billing.ProviderSubscription": RetentionAction.RETAIN_LEGAL,

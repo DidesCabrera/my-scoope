@@ -76,6 +76,24 @@ services:
         sync: false
       - key: TURNSTILE_SECRET_KEY
         sync: false
+      - key: BILLING_PADDLE_ENVIRONMENT
+        value: sandbox
+      - key: BILLING_PADDLE_CHECKOUT_ENABLED
+        value: "false"
+      - key: BILLING_PADDLE_WEBHOOK_ENABLED
+        value: "false"
+      - key: BILLING_PADDLE_CLIENT_TOKEN
+        sync: false
+      - key: BILLING_PADDLE_API_KEY
+        sync: false
+      - key: BILLING_PADDLE_WEBHOOK_SECRET
+        sync: false
+      - key: BILLING_PADDLE_API_BASE_URL
+        value: https://sandbox-api.paddle.com
+      - key: BILLING_PADDLE_TIMEOUT_SECONDS
+        value: "10"
+      - key: BILLING_PADDLE_WEBHOOK_TOLERANCE_SECONDS
+        value: "5"
       - key: BILLING_MERCADOPAGO_ACCESS_TOKEN
         sync: false
       - key: BILLING_MERCADOPAGO_WEBHOOK_SECRET

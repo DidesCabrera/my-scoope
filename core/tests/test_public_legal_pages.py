@@ -1,8 +1,16 @@
-from django.test import SimpleTestCase
+from django.test import TestCase
 from django.urls import reverse
 
+from accounts.seed_plans import seed_account_plans
+from billing.catalog import seed_billing_offers
 
-class PublicLegalPagesTests(SimpleTestCase):
+
+class PublicLegalPagesTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        seed_account_plans()
+        seed_billing_offers()
+
     def test_required_legal_and_support_pages_are_public(self):
         expected = {
             "terms": "Términos de Uso",

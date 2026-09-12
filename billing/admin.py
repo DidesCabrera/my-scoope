@@ -3,11 +3,28 @@ from django.contrib import admin
 from billing.models import (
     AppleAppAccountToken,
     BillingEvent,
+    BillingOffer,
     BillingPayment,
     BillingProduct,
     ProviderSubscription,
     TaxDocument,
 )
+
+
+@admin.register(BillingOffer)
+class BillingOfferAdmin(admin.ModelAdmin):
+    list_display = (
+        "code",
+        "account_plan",
+        "amount_minor",
+        "currency",
+        "interval",
+        "active",
+        "public",
+    )
+    list_filter = ("currency", "interval", "active", "public")
+    search_fields = ("code", "account_plan__name", "account_plan__slug")
+    autocomplete_fields = ("account_plan",)
 
 
 @admin.register(AppleAppAccountToken)
@@ -28,9 +45,25 @@ class AppleAppAccountTokenAdmin(admin.ModelAdmin):
 
 @admin.register(BillingProduct)
 class BillingProductAdmin(admin.ModelAdmin):
-    list_display = ("provider", "account_plan", "amount_minor", "currency", "interval", "active")
-    list_filter = ("provider", "kind", "interval", "active")
-    search_fields = ("external_product_id", "account_plan__name", "account_plan__slug")
+    list_display = (
+        "provider",
+        "environment",
+        "offer",
+        "account_plan",
+        "amount_minor",
+        "currency",
+        "interval",
+        "active",
+    )
+    list_filter = ("provider", "environment", "kind", "interval", "active")
+    search_fields = (
+        "external_product_id",
+        "external_price_id",
+        "offer__code",
+        "account_plan__name",
+        "account_plan__slug",
+    )
+    autocomplete_fields = ("offer", "account_plan")
 
 
 @admin.register(ProviderSubscription)

@@ -132,6 +132,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "accounts.context_processors.turnstile",
+                "billing.context_processors.public_billing_catalog",
                 "notas.context_processors.user_weight",
             ],
         },
@@ -559,8 +560,20 @@ MYSCOOPE_APNS_PRIVATE_KEY = os.environ.get("MYSCOOPE_APNS_PRIVATE_KEY", "").stri
 MYSCOOPE_APNS_BUNDLE_ID = os.environ.get("MYSCOOPE_APNS_BUNDLE_ID", "com.myscoope.app").strip()
 MYSCOOPE_APNS_TIMEOUT_SECONDS = _env_int("MYSCOOPE_APNS_TIMEOUT_SECONDS", 10)
 
-# Billing providers are opt-in. Webhooks stay unavailable until explicitly enabled
-# with both Mercado Pago credentials present.
+# Billing providers are opt-in. Paddle defaults to sandbox and cannot be enabled
+# without explicit checkout and webhook configuration.
+BILLING_PADDLE_ENVIRONMENT = os.environ.get("BILLING_PADDLE_ENVIRONMENT", "sandbox").strip().lower()
+BILLING_PADDLE_CHECKOUT_ENABLED = _env_bool("BILLING_PADDLE_CHECKOUT_ENABLED", False)
+BILLING_PADDLE_WEBHOOK_ENABLED = _env_bool("BILLING_PADDLE_WEBHOOK_ENABLED", False)
+BILLING_PADDLE_CLIENT_TOKEN = os.environ.get("BILLING_PADDLE_CLIENT_TOKEN", "").strip()
+BILLING_PADDLE_API_KEY = os.environ.get("BILLING_PADDLE_API_KEY", "").strip()
+BILLING_PADDLE_WEBHOOK_SECRET = os.environ.get("BILLING_PADDLE_WEBHOOK_SECRET", "").strip()
+BILLING_PADDLE_API_BASE_URL = os.environ.get(
+    "BILLING_PADDLE_API_BASE_URL",
+    "https://sandbox-api.paddle.com" if BILLING_PADDLE_ENVIRONMENT == "sandbox" else "https://api.paddle.com",
+).strip()
+BILLING_PADDLE_TIMEOUT_SECONDS = _env_int("BILLING_PADDLE_TIMEOUT_SECONDS", 10)
+BILLING_PADDLE_WEBHOOK_TOLERANCE_SECONDS = _env_int("BILLING_PADDLE_WEBHOOK_TOLERANCE_SECONDS", 5)
 BILLING_MERCADOPAGO_WEBHOOK_ENABLED = _env_bool("BILLING_MERCADOPAGO_WEBHOOK_ENABLED", False)
 BILLING_MERCADOPAGO_CHECKOUT_ENABLED = _env_bool("BILLING_MERCADOPAGO_CHECKOUT_ENABLED", False)
 BILLING_PUBLIC_BASE_URL = os.environ.get("BILLING_PUBLIC_BASE_URL", "").strip()

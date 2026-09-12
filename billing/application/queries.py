@@ -14,12 +14,22 @@ class BillingOverviewData:
     payments: tuple[BillingPayment, ...]
 
 
-def get_billing_overview_data(*, user) -> BillingOverviewData:
+def get_billing_overview_data(
+    *,
+    user,
+    provider: str = PaymentProvider.MERCADO_PAGO,
+    environment: str = BillingProduct.Environment.LIVE,
+) -> BillingOverviewData:
     return BillingOverviewData(
         account=build_account_credit_display(user),
         products=tuple(
             BillingProduct.objects.select_related("account_plan")
-            .filter(provider=PaymentProvider.MERCADO_PAGO, active=True, account_plan__status="active")
+            .filter(
+                provider=provider,
+                environment=environment,
+                active=True,
+                account_plan__status="active",
+            )
             .order_by("account_plan__display_order", "amount_minor")
         ),
         subscriptions=tuple(
