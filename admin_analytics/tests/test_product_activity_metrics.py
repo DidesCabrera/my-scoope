@@ -6,7 +6,18 @@ from admin_analytics.selectors.product_activity import get_product_activity_metr
 from notas.domain.model_modules.comparisons import SavedComparison
 from notas.domain.model_modules.proposals import NutritionProposal
 from notas.domain.model_modules.sharing import DailyPlanShare, MealShare, ProgramShare
-from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood, Program, ProgramDay
+from notas.domain.models import (
+    DailyPlan,
+    DailyPlanMeal,
+    Food,
+    InboxItem,
+    Meal,
+    MealFood,
+    Program,
+    ProgramDay,
+    ShareClaim,
+    ShareResource,
+)
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
@@ -64,6 +75,24 @@ class AdminAnalyticsProductActivityMetricsTests(TestCase):
         )
         MealShare.objects.create(sender=self.member, recipient_email="friend@example.com", meal=meal)
         ProgramShare.objects.create(sender=self.member, recipient_email="coach@example.com", program=program)
+        resource = ShareResource.objects.create(
+            sender=self.member,
+            subject_type=ShareResource.SubjectType.DAILY_PLAN,
+            snapshot={},
+            snapshot_schema_version="sharing.snapshot.v1",
+            preview_count=3,
+        )
+        claim = ShareClaim.objects.create(
+            resource=resource,
+            user=self.other_member,
+            source=ShareClaim.Source.LINK,
+        )
+        InboxItem.objects.create(
+            owner=self.other_member,
+            resource=resource,
+            claim=claim,
+            saved_at=food.created_at,
+        )
 
         SavedComparison.objects.create(owner=self.member, kind=SavedComparison.KIND_MEALS, name="Comparar meals")
         proposal = NutritionProposal.objects.create(
@@ -96,6 +125,10 @@ class AdminAnalyticsProductActivityMetricsTests(TestCase):
         self.assertEqual(metrics["comparisons"]["total"], 1)
         self.assertEqual(metrics["shares"]["sent_7d"], 3)
         self.assertEqual(metrics["shares"]["accepted_total"], 1)
+        self.assertEqual(metrics["shares"]["normalized_funnel"]["resources"], 1)
+        self.assertEqual(metrics["shares"]["normalized_funnel"]["preview_views"], 3)
+        self.assertEqual(metrics["shares"]["normalized_funnel"]["claims"], 1)
+        self.assertEqual(metrics["shares"]["normalized_funnel"]["saved"], 1)
         self.assertEqual(metrics["proposals"]["applied_7d"], 1)
         self.assertEqual(metrics["north_star"]["top_builder_rows"][0]["email"], "member@example.com")
 
@@ -114,4 +147,5 @@ class AdminAnalyticsProductActivityMetricsTests(TestCase):
         self.assertContains(response, "Top usuarios por actividad nutricional")
         self.assertContains(response, "Origen de planes diarios")
         self.assertContains(response, "Intercambio nutricional")
+        self.assertContains(response, "Embudo de sharing normalizado")
         self.assertContains(response, "member@example.com")

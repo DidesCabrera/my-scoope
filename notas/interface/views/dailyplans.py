@@ -7,6 +7,7 @@ from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
+from core.rate_limits import limit_sharing_create
 from email_delivery.services import deliver_share_invitation
 from notas.application.services.access.access import get_dailyplan_for_user
 from notas.application.services.access.capabilities import get_capabilities
@@ -53,6 +54,7 @@ from notas.presentation.pages.dailyplan_pages import (
 #************ VIEW DE INBOX *********************
 
 @login_required
+@limit_sharing_create
 def dailyplan_share(request, pk):
 
     dailyplan = get_object_or_404(

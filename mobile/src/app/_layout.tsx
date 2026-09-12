@@ -21,7 +21,7 @@ function AuthenticatedRouteGate() {
 
   useEffect(() => {
     if (status !== "authenticated" || !profile) return;
-    const returnTo = pathname.startsWith("/share/") ? pathname : undefined;
+    const returnTo = pathname.startsWith("/share/") || pathname.startsWith("/s/") ? pathname : undefined;
     if (profile.review_disclosure_required && pathname !== "/disclosures") {
       router.replace(returnTo ? { pathname: "/disclosures", params: { returnTo } } : "/disclosures" as Href);
       return;

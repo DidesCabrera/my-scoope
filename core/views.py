@@ -4,6 +4,10 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.views.decorators.http import require_GET
 
+from core.mobile_association import (
+    android_asset_links_payload,
+    apple_app_site_association_payload,
+)
 from core.msos import load_msos_data
 
 
@@ -11,6 +15,26 @@ from core.msos import load_msos_data
 def healthz(request):
     """Cheap process-level liveness probe for the deployment platform."""
     return JsonResponse({"status": "ok"})
+
+
+def _association_response(payload):
+    if payload is None:
+        response = JsonResponse({"status": "not_configured"}, status=503)
+    else:
+        response = JsonResponse(payload, safe=not isinstance(payload, list))
+    response["Cache-Control"] = "public, max-age=300"
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
+@require_GET
+def apple_app_site_association(request):
+    return _association_response(apple_app_site_association_payload())
+
+
+@require_GET
+def android_asset_links(request):
+    return _association_response(android_asset_links_payload())
 
 
 def landing(request):

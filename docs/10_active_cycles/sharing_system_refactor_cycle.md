@@ -1,6 +1,6 @@
 # Sharing System Refactor Cycle
 
-Status: in progress
+Status: active
 Date: 2026-09-11
 Cycle code: SHR
 
@@ -37,5 +37,5 @@ channel-independent Inbox.
 | SHR06 · Mobile sharing | completed | Native Share Sheet/copy-link, scheme deep link, OAuth continuation and normalized mobile Inbox. |
 | SHR07 · Web/email unification | completed | One DailyPlan web surface for reusable links and directed email; normalized invitation lifecycle and mobile compatibility action. |
 | SHR08 · Share Cards | completed | Deterministic 1200×630 PNG cards, Open Graph/Twitter metadata, bounded cache and revocation behavior from snapshots only. |
-| SHR09 · Operations | pending | Abuse controls, retention and minimum funnel evidence. |
+| SHR09 · Operations | completed | Shared-cache abuse limits, 30-day expiry/retention job, privacy-minimal funnel evidence and fail-closed mobile association endpoints. |
 | SHR10 · Expansion/legacy retirement | pending | Entity adapters, data migration and removal of duplication. |

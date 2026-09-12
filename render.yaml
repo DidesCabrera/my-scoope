@@ -3,6 +3,16 @@ envVarGroups:
     envVars:
       - key: SECRET_KEY
         generateValue: true
+      - key: SHARING_RESOURCE_TTL_DAYS
+        value: "30"
+      - key: SHARING_RESOURCE_RETENTION_DAYS
+        value: "30"
+      - key: RATE_LIMIT_SHARING_PREVIEW_IP
+        value: 120/m
+      - key: RATE_LIMIT_SHARING_CLAIM
+        value: 20/h
+      - key: RATE_LIMIT_SHARING_CREATE_USER
+        value: 30/h
 
 databases:
   - name: nutricion-db
@@ -88,6 +98,10 @@ services:
         sync: false
       - key: MYSCOOPE_APNS_BUNDLE_ID
         value: com.myscoope.app
+      - key: MYSCOOPE_APPLE_TEAM_ID
+        sync: false
+      - key: MYSCOOPE_ANDROID_SHA256_CERT_FINGERPRINTS
+        sync: false
 
   - type: worker
     name: my-scoope-ai-jobs
@@ -169,7 +183,7 @@ services:
     plan: starter
     schedule: "15 4 * * *"
     buildCommand: ./scripts/render_build.sh
-    startCommand: python manage.py prune_calendarization_data --event-days 90 --subscription-days 30 && python manage.py prune_ai_async_jobs --days 30
+    startCommand: python manage.py prune_calendarization_data --event-days 90 --subscription-days 30 && python manage.py prune_ai_async_jobs --days 30 && python manage.py maintain_sharing_resources --retention-days 30
     envVars:
       - fromGroup: myscoope-django-runtime
       - key: DJANGO_SETTINGS_MODULE

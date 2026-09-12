@@ -1,5 +1,8 @@
+from datetime import timedelta
+
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.test import TestCase, override_settings
+from django.utils import timezone
 
 from notas.application.sharing.contracts import SHARE_SNAPSHOT_SCHEMA_VERSION
 from notas.application.sharing.dailyplans import (
@@ -53,6 +56,17 @@ class DailyPlanSharingAdapterTests(TestCase):
 
         with self.assertRaisesMessage(DailyPlanShareError, "dailyplan_share_not_available"):
             create_dailyplan_share_resource(sender=outsider, dailyplan_id=self.plan.id)
+
+    @override_settings(SHARING_RESOURCE_TTL_DAYS=14)
+    def test_new_resource_receives_configured_expiration(self):
+        before = timezone.now()
+        resource = create_dailyplan_share_resource(
+            sender=self.owner,
+            dailyplan_id=self.plan.id,
+        ).resource
+
+        self.assertGreater(resource.expires_at, before + timedelta(days=13))
+        self.assertLess(resource.expires_at, before + timedelta(days=15))
 
     def test_active_resource_is_reused_only_while_snapshot_is_current(self):
         first = get_or_create_dailyplan_share_resource(

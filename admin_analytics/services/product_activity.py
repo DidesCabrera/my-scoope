@@ -47,6 +47,7 @@ def build_product_activity_vm(analytics_filters: AdminAnalyticsFilters | None = 
     composition = metrics["composition"]
     comparisons = metrics["comparisons"]
     shares = metrics["shares"]
+    sharing_funnel = shares["normalized_funnel"]
     proposals = metrics["proposals"]
     north_star = metrics["north_star"]
 
@@ -84,6 +85,32 @@ def build_product_activity_vm(analytics_filters: AdminAnalyticsFilters | None = 
                 AdminAnalyticsKpiVM("Shares aceptados", _format_int(shares["accepted_total"]), f"Unread inbox: {_format_int(shares['unread_total'])}"),
                 AdminAnalyticsKpiVM("Comparaciones 7d", _format_int(comparisons["updated_7d"]), f"Total: {_format_int(comparisons['total'])}"),
                 AdminAnalyticsKpiVM("Propuestas aplicadas 7d", _format_int(proposals["applied_7d"]), f"Creadas: {_format_int(proposals['created_7d'])}"),
+            ],
+        ),
+        AdminAnalyticsSectionVM(
+            title="Embudo de sharing normalizado",
+            description="Cohorte del período: recursos portables, vistas, claims y guardados sin registrar IP ni user-agent.",
+            kpis=[
+                AdminAnalyticsKpiVM(
+                    "Recursos",
+                    _format_int(sharing_funnel["resources"]),
+                    f"Invitaciones: {_format_int(sharing_funnel['invitations'])}",
+                ),
+                AdminAnalyticsKpiVM(
+                    "Vistas previas",
+                    _format_int(sharing_funnel["preview_views"]),
+                    "Contador agregado sin identidad del visitante",
+                ),
+                AdminAnalyticsKpiVM(
+                    "Claims",
+                    _format_int(sharing_funnel["claims"]),
+                    f"Conversión recurso→claim: {_format_ratio(sharing_funnel['claims'], sharing_funnel['resources'])}",
+                ),
+                AdminAnalyticsKpiVM(
+                    "Guardados",
+                    _format_int(sharing_funnel["saved"]),
+                    f"Conversión claim→guardado: {_format_ratio(sharing_funnel['saved'], sharing_funnel['claims'])}",
+                ),
             ],
         ),
         AdminAnalyticsSectionVM(

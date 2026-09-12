@@ -1,7 +1,8 @@
 from io import BytesIO
 
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.core.cache import cache
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from PIL import Image
 
@@ -36,6 +37,9 @@ class SharingPreviewTests(TestCase):
         self.assertEqual(response["X-Robots-Tag"], "noindex, nofollow")
         self.assertEqual(ShareClaim.objects.count(), 0)
         self.assertEqual(InboxItem.objects.count(), 0)
+        self.resource.refresh_from_db()
+        self.assertEqual(self.resource.preview_count, 1)
+        self.assertIsNotNone(self.resource.last_previewed_at)
         self.assertContains(response, self.card_url)
         self.assertContains(response, 'property="og:image"')
         self.assertContains(response, 'name="twitter:card"')
@@ -98,3 +102,12 @@ class SharingPreviewTests(TestCase):
 
     def test_claim_url_rejects_get(self):
         self.assertEqual(self.client.get(self.claim_url).status_code, 405)
+
+    @override_settings(RATE_LIMIT_SHARING_PREVIEW_IP="1/h")
+    def test_preview_rate_limit_blocks_excess_rendering(self):
+        cache.clear()
+        try:
+            self.assertEqual(self.client.get(self.preview_url).status_code, 200)
+            self.assertEqual(self.client.get(self.preview_url).status_code, 403)
+        finally:
+            cache.clear()

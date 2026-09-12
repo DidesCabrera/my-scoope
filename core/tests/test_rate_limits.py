@@ -6,6 +6,7 @@ from core.rate_limits import (
     ai_assistant_turn_key,
     ai_assistant_turn_rate,
     login_rate,
+    sharing_actor_key,
     signup_rate,
 )
 
@@ -41,3 +42,18 @@ class RateLimitConfigTests(SimpleTestCase):
 
         self.assertEqual(ai_assistant_turn_key(None, request), "ip")
         self.assertEqual(ai_assistant_turn_rate(None, request), "3/h")
+
+    def test_sharing_actor_key_is_scoped_to_user_or_ip(self):
+        authenticated = SimpleNamespace(
+            user=SimpleNamespace(is_authenticated=True, pk=42),
+            auth=None,
+            META={"REMOTE_ADDR": "203.0.113.10"},
+        )
+        anonymous = SimpleNamespace(
+            user=SimpleNamespace(is_authenticated=False),
+            auth=None,
+            META={"REMOTE_ADDR": "203.0.113.10"},
+        )
+
+        self.assertEqual(sharing_actor_key(None, authenticated), "user:42")
+        self.assertEqual(sharing_actor_key(None, anonymous), "ip:203.0.113.10")
