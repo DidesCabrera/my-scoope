@@ -177,7 +177,6 @@ def sync_paddle_adjustment(data: Mapping[str, Any], *, environment: str) -> Bill
     transaction_id = _required_string(data, "transaction_id")
     payment = (
         BillingPayment.objects.select_for_update()
-        .select_related("subscription")
         .filter(provider=PaymentProvider.PADDLE, external_payment_id=transaction_id)
         .first()
     )
@@ -212,7 +211,7 @@ def sync_paddle_adjustment(data: Mapping[str, Any], *, environment: str) -> Bill
     payment.save(update_fields=["status", "metadata", "updated_at"])
 
     if terminal_status is not None and payment.subscription_id is not None:
-        subscription = payment.subscription
+        subscription = ProviderSubscription.objects.select_for_update().get(pk=payment.subscription_id)
         subscription.status = ProviderSubscription.Status.PAST_DUE
         subscription.save(update_fields=["status", "updated_at"])
         project_provider_subscription(subscription)
