@@ -135,6 +135,9 @@ def reverse_dailyplan_share_backfill(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
+    # PostgreSQL must commit the unique-column index before the legacy-share
+    # backfill can enqueue deferred constraint triggers on the sharing tables.
+    atomic = False
 
     dependencies = [
         ('notas', '0056_sharing_core'),
