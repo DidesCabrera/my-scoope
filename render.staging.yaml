@@ -35,6 +35,20 @@ services:
         value: myscoope-staging.onrender.com
       - key: CSRF_TRUSTED_ORIGINS
         value: https://myscoope-staging.onrender.com
+      - key: BILLING_PUBLIC_BASE_URL
+        value: https://myscoope-staging.onrender.com
+      - key: BILLING_PADDLE_ENVIRONMENT
+        value: sandbox
+      - key: BILLING_PADDLE_CHECKOUT_ENABLED
+        value: "false"
+      - key: BILLING_PADDLE_WEBHOOK_ENABLED
+        value: "false"
+      - key: BILLING_PADDLE_API_BASE_URL
+        value: https://sandbox-api.paddle.com
+      - key: BILLING_PADDLE_TIMEOUT_SECONDS
+        value: "10"
+      - key: BILLING_PADDLE_WEBHOOK_TOLERANCE_SECONDS
+        value: "5"
       - key: SHARING_RESOURCE_TTL_DAYS
         value: "30"
       - key: SHARING_RESOURCE_RETENTION_DAYS
