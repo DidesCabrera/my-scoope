@@ -274,6 +274,19 @@ def _refresh_calendarized_totals(snapshot: dict) -> None:
     )
 
 
+def _ordered_snapshot_items(items: list[dict], ordered_keys: list[str], *, invalid_code: str) -> list[dict]:
+    current_keys = [item.get("key") for item in items if isinstance(item, dict)]
+    if (
+        len(current_keys) != len(items)
+        or any(not isinstance(key, str) or not key for key in current_keys)
+        or len(ordered_keys) != len(set(ordered_keys))
+        or set(ordered_keys) != set(current_keys)
+    ):
+        raise ValueError(invalid_code)
+    by_key = {item["key"]: item for item in items}
+    return [by_key[key] for key in ordered_keys]
+
+
 @transaction.atomic
 def add_meal_to_calendarized_day(
     *,
@@ -334,6 +347,173 @@ def add_food_to_calendarized_meal(
     _refresh_calendarized_totals(snapshot)
     _save_calendarized_snapshot(day, snapshot)
     return day, snapshot_key
+
+
+@transaction.atomic
+def reorder_calendarized_meals(*, user, day_id: int, ordered_keys: list[str]) -> CalendarizedDay:
+    day = _calendarized_day_for_snapshot_update(user=user, day_id=day_id)
+    snapshot = _calendarized_snapshot(day)
+    meals = _ordered_snapshot_items(
+        _calendarized_meals(snapshot),
+        ordered_keys,
+        invalid_code="calendarized_meal_order_invalid",
+    )
+    for order, meal in enumerate(meals):
+        meal["order"] = order
+    snapshot["meals"] = meals
+    _save_calendarized_snapshot(day, snapshot)
+    return day
+
+
+@transaction.atomic
+def remove_calendarized_meal(
+    *, user, day_id: int, meal_snapshot_key: str, now: datetime | None = None
+) -> CalendarizedDay:
+    current_time = now or timezone.now()
+    day = _calendarized_day_for_snapshot_update(user=user, day_id=day_id)
+    snapshot = _calendarized_snapshot(day)
+    meals = _calendarized_meals(snapshot)
+    if not any(isinstance(meal, dict) and meal.get("key") == meal_snapshot_key for meal in meals):
+        raise ValueError("meal_snapshot_key_invalid")
+    snapshot["meals"] = [
+        meal for meal in meals if not (isinstance(meal, dict) and meal.get("key") == meal_snapshot_key)
+    ]
+    for order, meal in enumerate(snapshot["meals"]):
+        meal["order"] = order
+    _refresh_calendarized_totals(snapshot)
+    _save_calendarized_snapshot(day, snapshot)
+    reschedule_calendarized_days(
+        calendarization=day.calendarization,
+        days=[day],
+        now=current_time,
+        reason="calendarized_meal_removed",
+    )
+    return day
+
+
+@transaction.atomic
+def replace_calendarized_meal(
+    *, user, day_id: int, meal_snapshot_key: str, meal, hour: time | None, note: str = "", now: datetime | None = None
+) -> tuple[CalendarizedDay, str]:
+    current_time = now or timezone.now()
+    day = _calendarized_day_for_snapshot_update(user=user, day_id=day_id)
+    snapshot = _calendarized_snapshot(day)
+    meals = _calendarized_meals(snapshot)
+    index = next(
+        (index for index, item in enumerate(meals) if isinstance(item, dict) and item.get("key") == meal_snapshot_key),
+        None,
+    )
+    if index is None:
+        raise ValueError("meal_snapshot_key_invalid")
+    replacement_key = f"calendarized_meal:{uuid4()}"
+    meals[index] = build_meal_snapshot(
+        meal=meal,
+        key=replacement_key,
+        order=index,
+        hour=hour,
+        note=note,
+    )
+    _refresh_calendarized_totals(snapshot)
+    _save_calendarized_snapshot(day, snapshot)
+    reschedule_calendarized_days(
+        calendarization=day.calendarization,
+        days=[day],
+        now=current_time,
+        reason="calendarized_meal_replaced",
+    )
+    return day, replacement_key
+
+
+def _calendarized_foods(meal: dict) -> list[dict]:
+    foods = meal.get("foods")
+    if not isinstance(foods, list):
+        raise ValueError("calendarized_meal_snapshot_invalid")
+    return foods
+
+
+def _refresh_calendarized_meal_totals(snapshot: dict, meal: dict) -> None:
+    meal["totals"] = snapshot_totals(_calendarized_foods(meal))
+    _refresh_calendarized_totals(snapshot)
+
+
+@transaction.atomic
+def reorder_calendarized_foods(
+    *, user, day_id: int, meal_snapshot_key: str, ordered_keys: list[str]
+) -> CalendarizedDay:
+    day = _calendarized_day_for_snapshot_update(user=user, day_id=day_id)
+    snapshot = _calendarized_snapshot(day)
+    meal = _calendarized_meal(snapshot, meal_snapshot_key)
+    meal["foods"] = _ordered_snapshot_items(
+        _calendarized_foods(meal),
+        ordered_keys,
+        invalid_code="calendarized_food_order_invalid",
+    )
+    _save_calendarized_snapshot(day, snapshot)
+    return day
+
+
+@transaction.atomic
+def update_calendarized_food_quantity(
+    *, user, day_id: int, meal_snapshot_key: str, food_snapshot_key: str, quantity: float
+) -> CalendarizedDay:
+    day = _calendarized_day_for_snapshot_update(user=user, day_id=day_id)
+    snapshot = _calendarized_snapshot(day)
+    meal = _calendarized_meal(snapshot, meal_snapshot_key)
+    food = next(
+        (item for item in _calendarized_foods(meal) if isinstance(item, dict) and item.get("key") == food_snapshot_key),
+        None,
+    )
+    if food is None:
+        raise ValueError("food_snapshot_key_invalid")
+    current_quantity = float(food.get("quantity_g") or 0)
+    if current_quantity <= 0 or quantity <= 0:
+        raise ValueError("calendarized_food_quantity_invalid")
+    factor = float(quantity) / current_quantity
+    food["quantity_g"] = round(float(quantity), 3)
+    for field in ("protein_g", "carbs_g", "fat_g", "total_kcal"):
+        food[field] = round(float(food.get(field) or 0) * factor, 3)
+    _refresh_calendarized_meal_totals(snapshot, meal)
+    _save_calendarized_snapshot(day, snapshot)
+    return day
+
+
+@transaction.atomic
+def remove_calendarized_food(
+    *, user, day_id: int, meal_snapshot_key: str, food_snapshot_key: str
+) -> CalendarizedDay:
+    day = _calendarized_day_for_snapshot_update(user=user, day_id=day_id)
+    snapshot = _calendarized_snapshot(day)
+    meal = _calendarized_meal(snapshot, meal_snapshot_key)
+    foods = _calendarized_foods(meal)
+    if not any(isinstance(food, dict) and food.get("key") == food_snapshot_key for food in foods):
+        raise ValueError("food_snapshot_key_invalid")
+    meal["foods"] = [
+        food for food in foods if not (isinstance(food, dict) and food.get("key") == food_snapshot_key)
+    ]
+    _refresh_calendarized_meal_totals(snapshot, meal)
+    _save_calendarized_snapshot(day, snapshot)
+    return day
+
+
+@transaction.atomic
+def replace_calendarized_food(
+    *, user, day_id: int, meal_snapshot_key: str, food_snapshot_key: str, food, quantity: float
+) -> tuple[CalendarizedDay, str]:
+    day = _calendarized_day_for_snapshot_update(user=user, day_id=day_id)
+    snapshot = _calendarized_snapshot(day)
+    meal = _calendarized_meal(snapshot, meal_snapshot_key)
+    foods = _calendarized_foods(meal)
+    index = next(
+        (index for index, item in enumerate(foods) if isinstance(item, dict) and item.get("key") == food_snapshot_key),
+        None,
+    )
+    if index is None:
+        raise ValueError("food_snapshot_key_invalid")
+    replacement_key = f"calendarized_food:{uuid4()}"
+    foods[index] = build_food_snapshot(food=food, quantity=quantity, key=replacement_key)
+    _refresh_calendarized_meal_totals(snapshot, meal)
+    _save_calendarized_snapshot(day, snapshot)
+    return day, replacement_key
 
 
 @transaction.atomic

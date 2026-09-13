@@ -234,7 +234,10 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(calendarizedMealDetail, /apiRequest<CalendarizedDayDetail>\(`\/api\/v1\/program\/days\/\$\{dayId\}`\)/);
   assertSourceMatch(calendarizedMealDetail, /day\.plan_snapshot\?\.meals\?\.find/);
   assertSourceMatch(calendarizedMealDetail, /beforeNutrition=\{<MealCompletionCard controller=\{adherence\} \/>\}/);
-  assertSourceMatch(calendarizedMealDetail, /<FoodPanels items=\{foods\} preparation=/);
+  assertSourceMatch(calendarizedMealDetail, /<FoodPanels\s+editing=\{\{/);
+  assertSourceMatch(calendarizedMealDetail, /ordered_keys: items\.map\(\(item\) => item\.id\)/);
+  assertSourceMatch(calendarizedMealDetail, /relationKey: food\.id/);
+  assertSourceMatch(calendarizedMealDetail, /onUpdateQuantity:/);
   assertSourceMatch(calendarizedMealDetail, /<MealNoteCard controller=\{adherence\} \/>/);
   assertSourceMatch(calendarizedMealDetail, /completion=\{\{/);
   assertSourceMatch(calendarizedMealDetail, /onChange: setExecution/);
@@ -481,6 +484,9 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     "utf8",
   );
   assertSourceMatch(calendarizedDayDetail, /<FoodPanels items=\{foods\} \/>/);
+  assertSourceMatch(calendarizedDayDetail, /<MealPanels\s+editing=\{\{/);
+  assertSourceMatch(calendarizedDayDetail, /relationKey: meal\.id/);
+  assertSourceMatch(calendarizedDayDetail, /\/meals\/order/);
   assertSourceMatch(calendarizedDayDetail, /beforeNutrition=\{<DailyMealCompletionCard mealExecution=\{day\.meal_execution\} mealKeys=\{meals\.map\(\(meal\) => meal\.key\)\} \/>\}/);
   assertSourceMatch(calendarizedDayDetail, /perKilogram: totals\?\.protein_per_kilogram \?\? null/);
   assertSourceMatch(calendarizedDayDetail, /<SectionDivider \/>[\s\S]*title="Detalle de cada Comida"/);

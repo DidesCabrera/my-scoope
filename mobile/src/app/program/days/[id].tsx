@@ -13,7 +13,7 @@ import { snapshotCalories, snapshotDailyPlanFoodPanelItems, snapshotFoodPanelIte
 import { EntityDetailPage, EntityDetailSection } from "@/components/details";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { NutritionEntityCard } from "@/components/nutrition";
-import { FoodPanels, MealPanels } from "@/components/panels";
+import { FoodPanels, MealPanels, type MealPanelItem } from "@/components/panels";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
 import { Button, ContentPanel, EntityCardAction, InlineNotice, SectionDivider, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
@@ -113,6 +113,16 @@ export default function ProgramDayScreen() {
     }
   }
 
+  async function mutateMeals(path: string, init: { body?: string; method: "DELETE" | "PUT" }) {
+    try {
+      const updated = await apiRequest<CalendarizedDayDetail>(path, init);
+      setDay(updated);
+    } catch (nextError) {
+      setError(userFacingError(nextError));
+      throw nextError;
+    }
+  }
+
   const load = useCallback(async () => {
     if (!id) return;
     setLoading(true);
@@ -174,7 +184,15 @@ export default function ProgramDayScreen() {
           }}
           title={snapshot.name ?? day.plan_name ?? "Plan diario"}>
           <EntityDetailSection title="Tabla de comparación entre comidas">
-            <MealPanels items={mealItems} />
+            <MealPanels
+              editing={{
+                onDelete: async (meal) => mutateMeals(`/api/v1/program/days/${day.id}/meals/${encodeURIComponent(meal.id)}`, { method: "DELETE" }),
+                onOpen: (meal) => router.push({ pathname: "/program/days/[id]/meals/[mealKey]", params: { id: String(day.id), mealKey: meal.id } } as Href),
+                onReorder: async (items: MealPanelItem[]) => mutateMeals(`/api/v1/program/days/${day.id}/meals/order`, { body: JSON.stringify({ ordered_keys: items.map((item) => item.id) }), method: "PUT" }),
+                onReplace: (meal) => router.push(pickerHref("meal-to-calendarized-day", { dayId: day.id, relationKey: meal.id })),
+              }}
+              items={mealItems}
+            />
           </EntityDetailSection>
           <Button
             bleed

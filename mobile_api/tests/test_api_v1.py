@@ -25,7 +25,7 @@ class MobileAPIV1Tests(AuthenticatedMobileAPITestCase):
             "/api/v1/program/calendarizations/{calendarization_id}/resume",
             "/api/v1/program/calendarizations/{calendarization_id}/cancel",
             "/api/v1/program/days/{day_id}", "/api/v1/program/days/{day_id}/meal-picker/preview",
-            "/api/v1/program/days/{day_id}/meal-picker/commit", "/api/v1/program/days/{day_id}/meals/{meal_snapshot_key}/food-picker/preview", "/api/v1/program/days/{day_id}/meals/{meal_snapshot_key}/food-picker/commit",
+            "/api/v1/program/days/{day_id}/meal-picker/commit", "/api/v1/program/days/{day_id}/meals/{meal_snapshot_key}/food-picker/preview", "/api/v1/program/days/{day_id}/meals/{meal_snapshot_key}/food-picker/commit", "/api/v1/program/days/{day_id}/meals/order", "/api/v1/program/days/{day_id}/meals/{meal_snapshot_key}", "/api/v1/program/days/{day_id}/meals/{meal_snapshot_key}/foods/order", "/api/v1/program/days/{day_id}/meals/{meal_snapshot_key}/foods/{food_snapshot_key}",
             "/api/v1/proposals",
             "/api/v1/proposals/{proposal_id}",
             "/api/v1/proposals/{proposal_id}/approve",

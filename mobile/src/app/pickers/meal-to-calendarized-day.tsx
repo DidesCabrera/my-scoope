@@ -4,8 +4,8 @@ import { CompositionPickerScreen } from "@/components/pickers/composition-picker
 import { internalHref } from "@/navigation/internal-href";
 
 export default function MealToCalendarizedDayPickerRoute() {
-  const { dayId, returnTo } = useLocalSearchParams<{ dayId?: string; returnTo?: string }>();
+  const { dayId, relationKey, returnTo } = useLocalSearchParams<{ dayId?: string; relationKey?: string; returnTo?: string }>();
   const targetId = Number(dayId);
   if (!Number.isInteger(targetId) || targetId <= 0) return <Redirect href="/program" />;
-  return <CompositionPickerScreen kind="meal-to-calendarized-day" returnTo={internalHref(returnTo)} targetId={targetId} />;
+  return <CompositionPickerScreen kind="meal-to-calendarized-day" relationKey={relationKey} returnTo={internalHref(returnTo)} targetId={targetId} />;
 }
