@@ -309,7 +309,7 @@ export function MealMenuPanel({ items, onOpenItem }: { items: MealPanelItem[]; o
           </View>
           {canOpen ? (
             <View style={styles.menuAction}>
-              <ChevronRight color={tokens.color.textMuted} size={21} strokeWidth={2.2} />
+              <ChevronRight color={tokens.color.textMuted} size={19} strokeWidth={2.2} />
             </View>
           ) : null}
         </Pressable>
