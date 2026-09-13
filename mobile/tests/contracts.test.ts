@@ -282,6 +282,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceDoesNotMatch(mealAdherence, /Marca la casilla si cumpliste esta comida del programa/);
   assertSourceMatch(mealAdherence, /<MealCompletionSurface>/);
   assertSourceMatch(mealAdherence, /checkbox: \{[^}]*borderRadius: tokens\.radius\.pill/);
+  assertSourceMatch(mealAdherence, /completionLabel: \{[^}]*fontSize: tokens\.type\.caption/);
   assertSourceMatch(mealAdherence, /<SectionHeading title="Nota de esta comida" \/>/);
   assertSourceMatch(mealAdherence, /controller\.editingNote \? <TextInput[\s\S]*styles\.noteText/);
   assertSourceDoesNotMatch(mealAdherence, /styles\.divider/);
@@ -300,6 +301,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     "utf8",
   );
   assertSourceMatch(mealCompletionSummary, /Cumplimiento comidas/);
+  assertSourceMatch(mealCompletionSummary, /label: \{[^}]*fontSize: tokens\.type\.caption/);
   assertSourceMatch(mealCompletionSummary, /item\.status === "completed"/);
   assertSourceMatch(mealCompletionSummary, /checkCircleCompleted: \{ backgroundColor: tokens\.color\.meal \}/);
   assertSourceMatch(mealCompletionSummary, /checkCirclePending: \{ backgroundColor: tokens\.color\.borderDefault \}/);
