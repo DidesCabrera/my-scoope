@@ -180,7 +180,7 @@ export function FoodQuantityPanel({ items, preparation }: { items: FoodPanelItem
               hitSlop={8}
               onPress={() => preparation.onToggle(item)}
               style={({ pressed }) => [styles.preparationValue, styles.preparationButton, pressed && styles.pressed]}>
-              <View style={[styles.preparationMarker, preparation.isPrepared(item) && styles.preparationMarkerChecked]} />
+              <View style={styles.preparationMarker}>{preparation.isPrepared(item) ? <View style={styles.preparationMarkerChecked} /> : null}</View>
             </Pressable>
           ) : null}
         </View>
@@ -410,8 +410,8 @@ const styles = StyleSheet.create({
   quantityValue: { textAlign: "center", width: 56 },
   preparationValue: { width: 48 },
   preparationButton: { alignItems: "center", alignSelf: "stretch", justifyContent: "center" },
-  preparationMarker: { backgroundColor: tokens.color.surfaceApp, borderColor: tokens.color.borderDefault, borderRadius: 10, borderWidth: 2, height: 20, width: 20 },
-  preparationMarkerChecked: { backgroundColor: tokens.color.success, borderColor: tokens.color.textMain, borderWidth: 3 },
+  preparationMarker: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, borderColor: tokens.color.borderDefault, borderRadius: 10, borderWidth: 2, height: 20, justifyContent: "center", width: 20 },
+  preparationMarkerChecked: { backgroundColor: tokens.color.success, borderRadius: 5, height: 10, width: 10 },
   macroValue: { flex: 1, minWidth: 0, textAlign: "center" },
   distributionCell: { flex: 1.4, minWidth: 0 },
   calorieValue: { textAlign: "center", width: 54 },

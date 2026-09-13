@@ -16,6 +16,7 @@ import type {
   LibraryPageData,
   PickerCommitResult,
   PickerPreview,
+  CalendarizedDayDetail,
 } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
@@ -180,6 +181,7 @@ export function CompositionPickerScreen({
   kind,
   targetId,
   relationId,
+  relationKey,
   mealKey,
   contextDailyPlanId,
   contextDailyPlanMealId,
@@ -191,6 +193,7 @@ export function CompositionPickerScreen({
   kind: PickerKind;
   targetId: number;
   relationId?: number;
+  relationKey?: string;
   mealKey?: string;
   contextDailyPlanId?: number;
   contextDailyPlanMealId?: number;
@@ -203,7 +206,7 @@ export function CompositionPickerScreen({
   const isFoodPicker = kind === "food-to-meal" || kind === "food-to-calendarized-meal";
   const isMealPicker = kind === "meal-to-dailyplan" || kind === "meal-to-calendarized-day";
   const isCalendarizedPicker = kind === "dailyplan-to-calendarized-day" || kind === "meal-to-calendarized-day" || kind === "food-to-calendarized-meal";
-  const title = relationId
+  const title = relationId || relationKey
     ? kind === "food-to-meal" ? "Reemplazar alimento" : "Reemplazar comida"
     : config.title;
   const router = useRouter();
@@ -219,7 +222,7 @@ export function CompositionPickerScreen({
   const mealCreationEntryHref = kind === "meal-to-dailyplan"
     ? pickerHref(kind, { dailyPlanId: targetId, ...(relationId ? { dailyPlanMealId: relationId } : {}), ...(returnTo ? { returnTo: String(returnTo) } : {}) })
     : kind === "meal-to-calendarized-day"
-      ? pickerHref(kind, { dayId: targetId, ...(returnTo ? { returnTo: String(returnTo) } : {}) })
+      ? pickerHref(kind, { dayId: targetId, ...(relationKey ? { relationKey } : {}), ...(returnTo ? { returnTo: String(returnTo) } : {}) })
       : undefined;
   const { status, apiRequest } = useSession();
   const setHeaderPresentation = useHeaderPresentation();
@@ -258,26 +261,34 @@ export function CompositionPickerScreen({
       : Promise.resolve(null);
     Promise.all([
       isCalendarizedPicker
-        ? Promise.resolve(null)
+        ? relationKey ? apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${targetId}`) : Promise.resolve(null)
         : apiRequest<LibraryItem>(`/api/v1/library/${config.targetSlug}/${targetId}`),
       selectionRequest,
     ])
       .then(([target, option]) => {
         if (!active) return;
         setSelected(option);
-        if (kind === "food-to-meal" && relationId && target?.panel.kind === "foods") {
+        if (kind === "food-to-meal" && relationId && target && "panel" in target && target.panel.kind === "foods") {
           const relation = target.panel.foods.find((item) => item.relation_id === relationId);
           if (relation) setQuantity(String(relation.quantity));
         }
-        if (kind === "meal-to-dailyplan" && relationId && target?.panel.kind === "meals") {
+        if (kind === "meal-to-dailyplan" && relationId && target && "panel" in target && target.panel.kind === "meals") {
           const slot = target.panel.meals.find((item) => item.relation_id === relationId);
           if (slot) { setHour(slot.time?.slice(0, 5) || "08:00"); setNote(slot.note || ""); }
+        }
+        if (kind === "meal-to-calendarized-day" && relationKey && target && "plan_snapshot" in target) {
+          const slot = target.plan_snapshot?.meals?.find((item) => item.key === relationKey);
+          if (slot) { setHour(slot.hour?.slice(0, 5) || "08:00"); setNote(slot.note || ""); }
+        }
+        if (kind === "food-to-calendarized-meal" && relationKey && target && "plan_snapshot" in target) {
+          const food = target.plan_snapshot?.meals?.find((item) => item.key === mealKey)?.foods?.find((item) => item.key === relationKey);
+          if (food?.quantity_g != null) setQuantity(String(food.quantity_g));
         }
       })
       .catch((nextError) => active && setError(userFacingError(nextError)))
       .finally(() => active && setLoading(false));
     return () => { active = false; };
-  }, [apiRequest, config.targetSlug, isCalendarizedPicker, isFoodPicker, isMealPicker, kind, relationId, retryNonce, selectedId, status, targetId]);
+  }, [apiRequest, config.targetSlug, isCalendarizedPicker, isFoodPicker, isMealPicker, kind, mealKey, relationId, relationKey, retryNonce, selectedId, status, targetId]);
 
   useFocusEffect(useCallback(() => {
     if (status !== "authenticated" || selectedId) return;
@@ -311,12 +322,12 @@ export function CompositionPickerScreen({
       dailyplan_meal_id: contextDailyPlanMealId,
       quantity: Number(quantity),
     };
-    if (kind === "food-to-calendarized-meal") return { food_id: selected.id, quantity: Number(quantity) };
+    if (kind === "food-to-calendarized-meal") return { food_id: selected.id, food_snapshot_key: relationKey, quantity: Number(quantity) };
     if (kind === "meal-to-dailyplan") return { meal_id: selected.id, dailyplan_meal_id: relationId, hour, note };
-    if (kind === "meal-to-calendarized-day") return { meal_id: selected.id, hour, note };
+    if (kind === "meal-to-calendarized-day") return { meal_id: selected.id, meal_snapshot_key: relationKey, hour, note };
     if (kind === "dailyplan-to-calendarized-day") return { dailyplan_id: selected.id };
     return { dailyplan_id: selected.id, week_number: weekNumber, day_numbers: dayNumbers };
-  }, [contextDailyPlanId, contextDailyPlanMealId, dayNumbers, hour, kind, note, quantity, relationId, selected, weekNumber]);
+  }, [contextDailyPlanId, contextDailyPlanMealId, dayNumbers, hour, kind, note, quantity, relationId, relationKey, selected, weekNumber]);
   const payloadKey = payload ? JSON.stringify(payload) : null;
   const previewing = configurationValid && previewRequestKey === payloadKey;
 
@@ -411,7 +422,7 @@ export function CompositionPickerScreen({
               <PickerOptionCard
                 actionLabel="Seleccionar"
                 key={`${option.entity}-${option.id}`}
-                onAction={() => router.push(pickerConfigureHref(kind, { contextDailyPlanId, contextDailyPlanMealId, dayNumber: initialDayNumber, relationId, returnTo, selectedId: option.id, targetId, weekNumber, mealKey }))}
+                onAction={() => router.push(pickerConfigureHref(kind, { contextDailyPlanId, contextDailyPlanMealId, dayNumber: initialDayNumber, relationId, relationKey, returnTo, selectedId: option.id, targetId, weekNumber, mealKey }))}
                 option={option}
               />
             ))}
@@ -526,7 +537,7 @@ export function CompositionPickerScreen({
         <Button
           bleed
           disabled={!configurationValid || previewing || previewPayloadKey !== payloadKey}
-          label={isFoodPicker ? relationId ? "Reemplazar alimento" : "Agregar alimento" : isMealPicker ? relationId ? "Reemplazar comida" : "Agregar comida" : "Asignar plan diario"}
+          label={isFoodPicker ? relationId || relationKey ? "Reemplazar alimento" : "Agregar alimento" : isMealPicker ? relationId || relationKey ? "Reemplazar comida" : "Agregar comida" : "Asignar plan diario"}
           loading={submitting}
           onPress={() => preview.confirmation_required ? setConfirming(true) : void commit()}
         />
@@ -543,7 +554,7 @@ export function pickerHref(kind: PickerKind, params: Record<string, string | num
 
 export function pickerConfigureHref(
   kind: PickerKind,
-  { contextDailyPlanId, contextDailyPlanMealId, dayNumber, mealKey, relationId, returnTo, selectedId, targetId, weekNumber }: { contextDailyPlanId?: number; contextDailyPlanMealId?: number; dayNumber?: number; mealKey?: string; relationId?: number; returnTo?: Href; selectedId: number; targetId: number; weekNumber: number },
+  { contextDailyPlanId, contextDailyPlanMealId, dayNumber, mealKey, relationId, relationKey, returnTo, selectedId, targetId, weekNumber }: { contextDailyPlanId?: number; contextDailyPlanMealId?: number; dayNumber?: number; mealKey?: string; relationId?: number; relationKey?: string; returnTo?: Href; selectedId: number; targetId: number; weekNumber: number },
 ): Href {
   const params: Record<string, string> = {
     kind,
@@ -554,6 +565,7 @@ export function pickerConfigureHref(
   if (dayNumber) params.dayNumber = String(dayNumber);
   if (mealKey) params.mealKey = mealKey;
   if (relationId) params.relationId = String(relationId);
+  if (relationKey) params.relationKey = relationKey;
   if (contextDailyPlanId) params.contextDailyPlanId = String(contextDailyPlanId);
   if (contextDailyPlanMealId) params.contextDailyPlanMealId = String(contextDailyPlanMealId);
   if (returnTo) params.returnTo = String(returnTo);

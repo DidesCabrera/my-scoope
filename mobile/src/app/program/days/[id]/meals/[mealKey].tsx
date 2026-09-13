@@ -11,7 +11,7 @@ import { MealCompletionCard, MealNoteCard, useMealAdherenceCheckIn } from "@/com
 import { snapshotCalories, snapshotFoodPanelItems, snapshotMacroDistribution } from "@/components/calendarization/presentation-adapters";
 import { EntityDetailPage, EntityDetailSection, FoodDetailCardList } from "@/components/details";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
-import { FoodPanels } from "@/components/panels";
+import { FoodPanels, type FoodPanelItem } from "@/components/panels";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
 import { Button, InlineNotice, SectionDivider, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
@@ -55,6 +55,20 @@ export default function CalendarizedMealDetailScreen() {
     } catch (nextError) {
       setExecution(previous);
       setError(userFacingError(nextError));
+    }
+  }
+
+  function applyDay(day: CalendarizedDayDetail) {
+    setMeal(day.plan_snapshot?.meals?.find((item) => item.key === mealKey) ?? null);
+    setExecution(day.meal_execution.find((item) => item.meal_key === mealKey) ?? null);
+  }
+
+  async function mutateFoods(path: string, init: { body?: string; method: "DELETE" | "PATCH" | "PUT" }) {
+    try {
+      applyDay(await apiRequest<CalendarizedDayDetail>(path, init));
+    } catch (nextError) {
+      setError(userFacingError(nextError));
+      throw nextError;
     }
   }
 
@@ -127,10 +141,19 @@ export default function CalendarizedMealDetailScreen() {
         }}
         title={meal.name ?? "Comida"}>
         <EntityDetailSection title="Tabla de comparación entre alimentos">
-          <FoodPanels items={foods} preparation={adherence.available ? {
-            isPrepared: (food) => execution?.prepared_food_keys.includes(food.id) ?? false,
-            onToggle: (food) => void togglePreparedFood(food.id),
-          } : undefined} />
+          <FoodPanels
+            editing={{
+              onDelete: async (food) => mutateFoods(`/api/v1/program/days/${dayId}/meals/${encodeURIComponent(mealKey)}/foods/${encodeURIComponent(food.id)}`, { method: "DELETE" }),
+              onReorder: async (items: FoodPanelItem[]) => mutateFoods(`/api/v1/program/days/${dayId}/meals/${encodeURIComponent(mealKey)}/foods/order`, { body: JSON.stringify({ ordered_keys: items.map((item) => item.id) }), method: "PUT" }),
+              onReplace: (food) => router.push(pickerHref("food-to-calendarized-meal", { dayId, mealKey, relationKey: food.id })),
+              onUpdateQuantity: async (food, quantity) => mutateFoods(`/api/v1/program/days/${dayId}/meals/${encodeURIComponent(mealKey)}/foods/${encodeURIComponent(food.id)}`, { body: JSON.stringify({ quantity }), method: "PATCH" }),
+            }}
+            items={foods}
+            preparation={adherence.available ? {
+              isPrepared: (food) => execution?.prepared_food_keys.includes(food.id) ?? false,
+              onToggle: (food) => void togglePreparedFood(food.id),
+            } : undefined}
+          />
         </EntityDetailSection>
         <Button
           bleed

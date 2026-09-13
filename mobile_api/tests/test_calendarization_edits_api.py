@@ -431,3 +431,143 @@ class MobileAPICalendarizationEditTests(AuthenticatedMobileAPITestCase):
         )
         self.assertEqual(hidden_plan.status_code, 404)
         self.assertEqual(hidden_meal.status_code, 404)
+
+    def test_active_day_meals_can_be_reordered_replaced_and_removed_without_mutating_library(self):
+        today = timezone.localdate(timezone=ZoneInfo("UTC"))
+        replacement_food = Food.objects.create(name="Arroz fuente", protein=4, carbs=30, fat=1, created_by=self.user)
+        replacement = Meal.objects.create(name="Almuerzo reemplazo", created_by=self.user, is_draft=False)
+        source_relation = MealFood.objects.create(meal=replacement, food=replacement_food, quantity=100, order=0)
+        calendarization = ProgramCalendarization.objects.create(
+            user=self.user,
+            program_name_snapshot="Programa activo",
+            start_date=today,
+            end_date=today,
+            timezone_name="UTC",
+            status=ProgramCalendarization.STATUS_ACTIVE,
+        )
+        day = CalendarizedDay.objects.create(
+            calendarization=calendarization,
+            calendar_date=today,
+            week_number=1,
+            day_number=1,
+            plan_snapshot={
+                "name": "Plan activo",
+                "meals": [
+                    {"key": "meal-a", "name": "Desayuno", "order": 0, "hour": "08:00", "foods": [], "totals": {}},
+                    {"key": "meal-b", "name": "Cena", "order": 1, "hour": "20:00", "foods": [], "totals": {}},
+                ],
+                "totals": {},
+            },
+        )
+
+        reordered = self.client.put(
+            f"/api/v1/program/days/{day.id}/meals/order",
+            data={"ordered_keys": ["meal-b", "meal-a"]},
+            content_type="application/json",
+        )
+        self.assertEqual(reordered.status_code, 200)
+        self.assertEqual(
+            [meal["key"] for meal in reordered.json()["data"]["plan_snapshot"]["meals"]],
+            ["meal-b", "meal-a"],
+        )
+
+        preview = self.client.post(
+            f"/api/v1/program/days/{day.id}/meal-picker/preview",
+            data={"meal_id": replacement.id, "meal_snapshot_key": "meal-a", "hour": "13:30", "note": "Nueva"},
+            content_type="application/json",
+        )
+        committed = self.client.post(
+            f"/api/v1/program/days/{day.id}/meal-picker/commit",
+            data={"meal_id": replacement.id, "meal_snapshot_key": "meal-a", "hour": "13:30", "note": "Nueva"},
+            content_type="application/json",
+        )
+        self.assertEqual(preview.status_code, 200)
+        self.assertEqual(preview.json()["data"]["replacements"], ["Desayuno"])
+        self.assertEqual(committed.status_code, 200)
+        day.refresh_from_db()
+        replacement_snapshot = day.plan_snapshot["meals"][1]
+        self.assertTrue(replacement_snapshot["key"].startswith("calendarized_meal:"))
+        self.assertEqual(replacement_snapshot["name"], replacement.name)
+        self.assertEqual(replacement_snapshot["hour"], "13:30")
+
+        removed = self.client.delete(f"/api/v1/program/days/{day.id}/meals/meal-b")
+        self.assertEqual(removed.status_code, 200)
+        self.assertEqual(len(removed.json()["data"]["plan_snapshot"]["meals"]), 1)
+        source_relation.refresh_from_db()
+        self.assertEqual(source_relation.quantity, 100)
+        self.assertEqual(replacement.meal_food_set.count(), 1)
+
+    def test_active_meal_foods_can_be_reordered_resized_replaced_and_removed(self):
+        today = timezone.localdate(timezone=ZoneInfo("UTC"))
+        replacement = Food.objects.create(name="Fruta nueva", protein=1, carbs=20, fat=0, created_by=self.user)
+        calendarization = ProgramCalendarization.objects.create(
+            user=self.user,
+            program_name_snapshot="Programa activo",
+            start_date=today,
+            end_date=today,
+            timezone_name="UTC",
+            status=ProgramCalendarization.STATUS_ACTIVE,
+        )
+        day = CalendarizedDay.objects.create(
+            calendarization=calendarization,
+            calendar_date=today,
+            week_number=1,
+            day_number=1,
+            plan_snapshot={
+                "name": "Plan activo",
+                "meals": [{
+                    "key": "meal-a",
+                    "name": "Desayuno",
+                    "order": 0,
+                    "foods": [
+                        {"key": "food-a", "name": "Avena", "quantity_g": 50, "protein_g": 5, "carbs_g": 10, "fat_g": 2, "total_kcal": 78},
+                        {"key": "food-b", "name": "Leche", "quantity_g": 100, "protein_g": 3, "carbs_g": 5, "fat_g": 2, "total_kcal": 50},
+                    ],
+                    "totals": {"protein_g": 8, "carbs_g": 15, "fat_g": 4, "total_kcal": 128},
+                }],
+                "totals": {"protein_g": 8, "carbs_g": 15, "fat_g": 4, "total_kcal": 128},
+            },
+        )
+
+        resized = self.client.patch(
+            f"/api/v1/program/days/{day.id}/meals/meal-a/foods/food-a",
+            data={"quantity": 100},
+            content_type="application/json",
+        )
+        self.assertEqual(resized.status_code, 200)
+        resized_meal = resized.json()["data"]["plan_snapshot"]["meals"][0]
+        self.assertEqual(resized_meal["foods"][0]["protein_g"], 10)
+        self.assertEqual(resized_meal["totals"]["protein_g"], 13)
+
+        reordered = self.client.put(
+            f"/api/v1/program/days/{day.id}/meals/meal-a/foods/order",
+            data={"ordered_keys": ["food-b", "food-a"]},
+            content_type="application/json",
+        )
+        self.assertEqual(reordered.status_code, 200)
+        self.assertEqual(
+            [food["key"] for food in reordered.json()["data"]["plan_snapshot"]["meals"][0]["foods"]],
+            ["food-b", "food-a"],
+        )
+
+        preview = self.client.post(
+            f"/api/v1/program/days/{day.id}/meals/meal-a/food-picker/preview",
+            data={"food_id": replacement.id, "food_snapshot_key": "food-a", "quantity": 75},
+            content_type="application/json",
+        )
+        committed = self.client.post(
+            f"/api/v1/program/days/{day.id}/meals/meal-a/food-picker/commit",
+            data={"food_id": replacement.id, "food_snapshot_key": "food-a", "quantity": 75},
+            content_type="application/json",
+        )
+        self.assertEqual(preview.status_code, 200)
+        self.assertEqual(preview.json()["data"]["replacements"], ["Avena"])
+        self.assertEqual(committed.status_code, 200)
+        day.refresh_from_db()
+        foods = day.plan_snapshot["meals"][0]["foods"]
+        self.assertEqual(foods[1]["name"], "Fruta nueva")
+        self.assertTrue(foods[1]["key"].startswith("calendarized_food:"))
+
+        removed = self.client.delete(f"/api/v1/program/days/{day.id}/meals/meal-a/foods/food-b")
+        self.assertEqual(removed.status_code, 200)
+        self.assertEqual(len(removed.json()["data"]["plan_snapshot"]["meals"][0]["foods"]), 1)

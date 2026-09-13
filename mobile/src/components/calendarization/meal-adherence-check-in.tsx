@@ -7,8 +7,9 @@ import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { userFacingError } from "@/api/errors";
 import type { MealCheckInInput, MealExecutionItem, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
-import { Button, ContentPanel, InlineNotice, SectionHeading, textStyles } from "@/components/ui";
+import { Button, ContentPanel, InlineNotice, SectionHeading } from "@/components/ui";
 import { tokens } from "@/design/tokens";
+import { MealCompletionSurface } from "./meal-completion-summary";
 
 type Props = { dayId: number; mealKey: string; onChange?: (execution: MealExecutionItem) => void };
 
@@ -90,13 +91,13 @@ export type MealAdherenceController = ReturnType<typeof useMealAdherenceCheckIn>
 
 export function MealCompletionCard({ controller }: { controller: MealAdherenceController }) {
   if (!controller.available) return null;
-  return <ContentPanel muted>
+  return <MealCompletionSurface>
     <Pressable accessibilityLabel="Comida cumplida" accessibilityRole="checkbox" accessibilityState={{ checked: controller.completed, disabled: controller.savingStatus }} disabled={controller.savingStatus} onPress={() => void controller.saveStatus(!controller.completed)} style={({ pressed }) => [styles.completionRow, controller.savingStatus && styles.saving, pressed && styles.pressed]}>
-      <View style={styles.completionCopy}><Text style={styles.completionLabel}>Comida cumplida</Text><Text style={textStyles.caption}>Marca la casilla si cumpliste esta comida del programa.</Text></View>
+      <Text style={styles.completionLabel}>Comida cumplida</Text>
       <View style={[styles.checkbox, controller.completed && styles.checkboxChecked]}>{controller.completed ? <Check color={tokens.color.entityIconForeground} size={17} strokeWidth={3} /> : null}</View>
     </Pressable>
     {controller.error ? <InlineNotice tone="error">{controller.error}</InlineNotice> : null}
-  </ContentPanel>;
+  </MealCompletionSurface>;
 }
 
 export function MealNoteCard({ controller }: { controller: MealAdherenceController }) {
@@ -123,10 +124,9 @@ export function MealAdherenceCheckIn(props: Props) {
 }
 
 const styles = StyleSheet.create({
-  checkbox: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.sm, borderWidth: 2, height: 26, justifyContent: "center", width: 26 },
+  checkbox: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 2, height: 26, justifyContent: "center", width: 26 },
   checkboxChecked: { backgroundColor: tokens.color.meal, borderColor: tokens.color.meal },
-  completionCopy: { flex: 1, gap: 2, minWidth: 0 },
-  completionLabel: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.bold },
+  completionLabel: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold, minWidth: 0 },
   completionRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, minHeight: 52 },
   noteBlock: { gap: tokens.spacing.xs },
   noteCount: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"] },

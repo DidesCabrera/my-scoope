@@ -19,17 +19,24 @@ from mobile_api.schema_domains.calendarization_edits import (
     CalendarizedDayPlanCommitInput,
     CalendarizedDayPlanPreviewInput,
     CalendarizedFoodPickerInput,
+    CalendarizedFoodQuantityInput,
     CalendarizedMealHourInput,
     CalendarizedMealPickerInput,
     CalendarizedNameInput,
+    CalendarizedOrderInput,
 )
 from mobile_api.schema_domains.composition import PickerCommitEnvelope
 from mobile_api.schema_domains.composition_preview import PickerPreviewEnvelope
 from mobile_api.schemas import ErrorEnvelope
 from mobile_api.selectors import calendarized_day_payload
 from notas.application.services.commands.calendarization_commands import (
+    remove_calendarized_food,
+    remove_calendarized_meal,
     rename_calendarized_day_plan,
     rename_calendarized_meal,
+    reorder_calendarized_foods,
+    reorder_calendarized_meals,
+    update_calendarized_food_quantity,
     update_calendarized_meal_hour,
 )
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_WRITE
@@ -124,6 +131,7 @@ def calendarized_day_meal_picker_preview(request, day_id: int, payload: Calendar
             meal_id=payload.meal_id,
             hour=payload.hour,
             note=payload.note,
+            meal_snapshot_key=payload.meal_snapshot_key,
         )
     )
 
@@ -143,6 +151,7 @@ def calendarized_day_meal_picker_commit(request, day_id: int, payload: Calendari
             meal_id=payload.meal_id,
             hour=payload.hour,
             note=payload.note,
+            meal_snapshot_key=payload.meal_snapshot_key,
         )
     )
 
@@ -163,6 +172,7 @@ def calendarized_meal_food_picker_preview(
             meal_snapshot_key=meal_snapshot_key,
             food_id=payload.food_id,
             quantity=payload.quantity,
+            food_snapshot_key=payload.food_snapshot_key,
         )
     )
 
@@ -184,8 +194,102 @@ def calendarized_meal_food_picker_commit(
             meal_snapshot_key=meal_snapshot_key,
             food_id=payload.food_id,
             quantity=payload.quantity,
+            food_snapshot_key=payload.food_snapshot_key,
         )
     )
+
+
+@router.put(
+    "/program/days/{day_id}/meals/order",
+    operation_id="mobile_api_api_calendarized_meal_order",
+    auth=mobile_bearer,
+    response={200: CalendarizedDayDetailEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def calendarized_meal_order(request, day_id: int, payload: CalendarizedOrderInput):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    try:
+        reorder_calendarized_meals(user=request.auth.user, day_id=day_id, ordered_keys=payload.ordered_keys)
+    except ValueError as exc:
+        raise calendarization_error(exc) from exc
+    return _updated_day_payload(request, day_id)
+
+
+@router.delete(
+    "/program/days/{day_id}/meals/{meal_snapshot_key}",
+    operation_id="mobile_api_api_calendarized_meal_delete",
+    auth=mobile_bearer,
+    response={200: CalendarizedDayDetailEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def calendarized_meal_delete(request, day_id: int, meal_snapshot_key: str):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    try:
+        remove_calendarized_meal(user=request.auth.user, day_id=day_id, meal_snapshot_key=meal_snapshot_key)
+    except ValueError as exc:
+        raise calendarization_error(exc) from exc
+    return _updated_day_payload(request, day_id)
+
+
+@router.put(
+    "/program/days/{day_id}/meals/{meal_snapshot_key}/foods/order",
+    operation_id="mobile_api_api_calendarized_food_order",
+    auth=mobile_bearer,
+    response={200: CalendarizedDayDetailEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def calendarized_food_order(request, day_id: int, meal_snapshot_key: str, payload: CalendarizedOrderInput):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    try:
+        reorder_calendarized_foods(
+            user=request.auth.user,
+            day_id=day_id,
+            meal_snapshot_key=meal_snapshot_key,
+            ordered_keys=payload.ordered_keys,
+        )
+    except ValueError as exc:
+        raise calendarization_error(exc) from exc
+    return _updated_day_payload(request, day_id)
+
+
+@router.patch(
+    "/program/days/{day_id}/meals/{meal_snapshot_key}/foods/{food_snapshot_key}",
+    operation_id="mobile_api_api_calendarized_food_quantity_update",
+    auth=mobile_bearer,
+    response={200: CalendarizedDayDetailEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def calendarized_food_quantity_update(
+    request, day_id: int, meal_snapshot_key: str, food_snapshot_key: str, payload: CalendarizedFoodQuantityInput
+):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    try:
+        update_calendarized_food_quantity(
+            user=request.auth.user,
+            day_id=day_id,
+            meal_snapshot_key=meal_snapshot_key,
+            food_snapshot_key=food_snapshot_key,
+            quantity=payload.quantity,
+        )
+    except ValueError as exc:
+        raise calendarization_error(exc) from exc
+    return _updated_day_payload(request, day_id)
+
+
+@router.delete(
+    "/program/days/{day_id}/meals/{meal_snapshot_key}/foods/{food_snapshot_key}",
+    operation_id="mobile_api_api_calendarized_food_delete",
+    auth=mobile_bearer,
+    response={200: CalendarizedDayDetailEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def calendarized_food_delete(request, day_id: int, meal_snapshot_key: str, food_snapshot_key: str):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    try:
+        remove_calendarized_food(
+            user=request.auth.user,
+            day_id=day_id,
+            meal_snapshot_key=meal_snapshot_key,
+            food_snapshot_key=food_snapshot_key,
+        )
+    except ValueError as exc:
+        raise calendarization_error(exc) from exc
+    return _updated_day_payload(request, day_id)
 
 
 @router.patch(
