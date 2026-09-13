@@ -35,8 +35,8 @@ const styles = StyleSheet.create({
   checkCircle: { alignItems: "center", borderRadius: tokens.radius.pill, height: 22, justifyContent: "center", width: 22 },
   checkCircleCompleted: { backgroundColor: tokens.color.meal },
   checkCirclePending: { backgroundColor: tokens.color.borderDefault },
-  checks: { alignItems: "center", flexDirection: "row", flexShrink: 1, flexWrap: "wrap", gap: 2, justifyContent: "flex-end" },
+  checks: { alignItems: "center", flexDirection: "row", flexShrink: 1, flexWrap: "wrap", gap: tokens.spacing.xs, justifyContent: "flex-end" },
   label: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.body, fontWeight: tokens.weight.bold, minWidth: 0 },
   row: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, minHeight: 52 },
-  surface: { backgroundColor: `${tokens.color.meal}1A`, borderColor: tokens.color.meal, borderRadius: tokens.radius.lg, borderWidth: 1, gap: tokens.card.gap, minHeight: 54, paddingHorizontal: tokens.card.outerPadding },
+  surface: { backgroundColor: `${tokens.color.meal}1A`, borderColor: tokens.color.meal, borderRadius: tokens.radius.lg, borderWidth: 1, gap: tokens.card.gap, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minHeight: 54, paddingHorizontal: tokens.card.outerPadding },
 });
