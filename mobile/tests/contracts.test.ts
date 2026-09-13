@@ -216,6 +216,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     "utf8",
   );
   assertSourceMatch(calendarizedDailyPlanCard, /<NutritionEntityCard/);
+  assertSourceMatch(calendarizedDailyPlanCard, /beforeNutrition=\{<DailyMealCompletionCard mealExecution=\{mealExecution\} mealKeys=\{meals\.map\(\(meal\) => meal\.key\)\} \/>\}/);
   assertSourceMatch(calendarizedDailyPlanCard, /<MealPanels/);
   assertSourceMatch(calendarizedDailyPlanCard, /onOpenItem=/);
   assertSourceMatch(calendarizedDailyPlanCard, /pathname: "\/program\/days\/\[id\]\/meals\/\[mealKey\]"/);
@@ -279,9 +280,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(mealAdherence, /export function MealCompletionCard/);
   assertSourceMatch(mealAdherence, /export function MealNoteCard/);
   assertSourceDoesNotMatch(mealAdherence, /Marca la casilla si cumpliste esta comida del programa/);
-  assertSourceMatch(mealAdherence, /completionCard: \{ backgroundColor: `\$\{tokens\.color\.meal\}1A`, borderColor: tokens\.color\.meal, borderRadius: tokens\.radius\.card, borderWidth: 1/);
-  assertSourceMatch(mealAdherence, /minHeight: 54/);
-  assertSourceMatch(mealAdherence, /marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
+  assertSourceMatch(mealAdherence, /<MealCompletionSurface>/);
   assertSourceMatch(mealAdherence, /<SectionHeading title="Nota de esta comida" \/>/);
   assertSourceMatch(mealAdherence, /controller\.editingNote \? <TextInput[\s\S]*styles\.noteText/);
   assertSourceDoesNotMatch(mealAdherence, /styles\.divider/);
@@ -294,6 +293,17 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceDoesNotMatch(mealAdherence, /statusLabel|styles\.status/);
   assertSourceDoesNotMatch(mealAdherence, /Cumplimiento actualizado|Nota guardada|statusSaved|noteSaved/);
   assertSourceDoesNotMatch(mealAdherence, /label=\{editingNote \? "Guardar nota" : "Editar nota"\}/);
+
+  const mealCompletionSummary = await readTestFile(
+    path.resolve(process.cwd(), "src/components/calendarization/meal-completion-summary.tsx"),
+    "utf8",
+  );
+  assertSourceMatch(mealCompletionSummary, /Cumplimiento comidas/);
+  assertSourceMatch(mealCompletionSummary, /item\.status === "completed"/);
+  assertSourceMatch(mealCompletionSummary, /completedKeys\.has\(key\) \? tokens\.color\.meal : tokens\.color\.textSubtle/);
+  assertSourceMatch(mealCompletionSummary, /surface: \{ backgroundColor: `\$\{tokens\.color\.meal\}1A`, borderColor: tokens\.color\.meal, borderRadius: tokens\.radius\.card, borderWidth: 1/);
+  assertSourceMatch(mealCompletionSummary, /marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
+  assertSourceMatch(mealCompletionSummary, /minHeight: 54/);
 
   const activeProgram = await readTestFile(path.resolve(process.cwd(), "src/app/program/index.tsx"), "utf8");
   assertSourceMatch(activeProgram, /<SectionPageHeader countLabel="semanas" section="calendarization" title="Mi programa activo" \/>/);
@@ -465,6 +475,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     "utf8",
   );
   assertSourceMatch(calendarizedDayDetail, /<FoodPanels items=\{foods\} \/>/);
+  assertSourceMatch(calendarizedDayDetail, /beforeNutrition=\{<DailyMealCompletionCard mealExecution=\{day\.meal_execution\} mealKeys=\{meals\.map\(\(meal\) => meal\.key\)\} \/>\}/);
   assertSourceMatch(calendarizedDayDetail, /perKilogram: totals\?\.protein_per_kilogram \?\? null/);
   assertSourceMatch(calendarizedDayDetail, /<SectionDivider \/>[\s\S]*title="Detalle de cada Comida"/);
   assertSourceMatch(calendarizedDayDetail, /snapshotDailyPlanFoodPanelItems\(meals\)/);

@@ -8,6 +8,7 @@ import { userFacingError } from "@/api/errors";
 import type { CalendarizedDayDetail, MealCheckInInput, MealExecutionItem, MealSnapshot, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { CalendarizedEntityActions } from "@/components/calendarization/calendarized-entity-actions";
+import { DailyMealCompletionCard } from "@/components/calendarization/meal-completion-summary";
 import { snapshotCalories, snapshotDailyPlanFoodPanelItems, snapshotFoodPanelItems, snapshotMacroDistribution, snapshotMealPanelItem } from "@/components/calendarization/presentation-adapters";
 import { EntityDetailPage, EntityDetailSection } from "@/components/details";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
@@ -158,6 +159,7 @@ export default function ProgramDayScreen() {
       {day.has_plan && snapshot ? (
         <EntityDetailPage
           entity="dailyPlan"
+          beforeNutrition={<DailyMealCompletionCard mealExecution={day.meal_execution} mealKeys={meals.map((meal) => meal.key)} />}
           completion={completionFor(day.meal_execution)}
           indicators={[
             { icon: "day", label: "posición", value: `S${day.week_number} · D${day.day_number}` },
