@@ -1,3 +1,4 @@
+import assert from "node:assert/strict";
 import path from "node:path";
 import test from "node:test";
 
@@ -22,4 +23,17 @@ test("subscription screen recognizes every planned billing provider", async () =
   assertSourceMatch(subscription, /google_play: "Google Play"/);
   assertSourceMatch(subscription, /paddle: "Paddle"/);
   assertSourceDoesNotMatch(subscription, /mercado_pago: "Mercado Pago"/);
+});
+
+test("App Store purchases recover a completed StoreKit transaction before reporting failure", async () => {
+  const subscription = await readTestFile(path.resolve(process.cwd(), "src/app/subscription.tsx"), "utf8");
+  const packageManifest = JSON.parse(
+    await readTestFile(path.resolve(process.cwd(), "package.json"), "utf8"),
+  ) as { dependencies?: Record<string, string> };
+
+  assert.equal(packageManifest.dependencies?.["expo-iap"], "^5.5.1");
+  assertSourceMatch(subscription, /getAvailablePurchases\(\{/);
+  assertSourceMatch(subscription, /purchase\.productId === productId/);
+  assertSourceMatch(subscription, /for \(const purchase of matching\) await submitPurchase\(purchase\)/);
+  assertSourceMatch(subscription, /No se realizó ningún cobro/);
 });

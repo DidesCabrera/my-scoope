@@ -1,5 +1,12 @@
 import { Redirect, useFocusEffect, useRouter } from "expo-router";
-import { deepLinkToSubscriptions, finishTransaction, type Purchase, useIAP } from "expo-iap";
+import {
+  deepLinkToSubscriptions,
+  ErrorCode,
+  finishTransaction,
+  getAvailablePurchases,
+  type Purchase,
+  useIAP,
+} from "expo-iap";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Platform, StyleSheet, Text, View } from "react-native";
 
@@ -14,6 +21,11 @@ const providerLabels: Record<string, string> = {
   google_play: "Google Play",
   paddle: "Paddle",
 };
+
+function purchaseErrorCode(error: unknown): string {
+  if (!error || typeof error !== "object" || !("code" in error)) return "";
+  return String(error.code ?? "").trim().toLowerCase();
+}
 
 export default function SubscriptionScreen() {
   const router = useRouter();
@@ -106,7 +118,27 @@ export default function SubscriptionScreen() {
         type: "subs",
       });
     } catch (nextError) {
-      setError(userFacingError(nextError));
+      if (purchaseErrorCode(nextError) === ErrorCode.UserCancelled) {
+        setError(null);
+        setWorking(false);
+        return;
+      }
+
+      try {
+        const recovered = await getAvailablePurchases({
+          alsoPublishToEventListenerIOS: false,
+          onlyIncludeActiveItemsIOS: true,
+        });
+        const matching = recovered.filter((purchase) => purchase.productId === productId);
+        if (matching.length > 0) {
+          for (const purchase of matching) await submitPurchase(purchase);
+          return;
+        }
+      } catch {
+        // Preserve the original StoreKit failure below. A manual restore remains available.
+      }
+
+      setError("Apple no completó la compra. No se realizó ningún cobro; inténtalo nuevamente o usa Restaurar compras.");
       setWorking(false);
     }
   };
