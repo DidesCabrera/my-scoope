@@ -4735,9 +4735,17 @@
               "completed",
               "skipped",
               "reset",
-              "note"
+              "note",
+              "food_prepared",
+              "food_unprepared"
             ],
             "title": "Action",
+            "type": "string"
+          },
+          "food_snapshot_key": {
+            "default": "",
+            "maxLength": 80,
+            "title": "Food Snapshot Key",
             "type": "string"
           },
           "idempotency_key": {
@@ -4781,6 +4789,13 @@
             "default": "",
             "title": "Note",
             "type": "string"
+          },
+          "prepared_food_keys": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Prepared Food Keys",
+            "type": "array"
           },
           "recorded_at": {
             "anyOf": [

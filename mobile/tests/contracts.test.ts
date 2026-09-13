@@ -232,9 +232,11 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   );
   assertSourceMatch(calendarizedMealDetail, /apiRequest<CalendarizedDayDetail>\(`\/api\/v1\/program\/days\/\$\{dayId\}`\)/);
   assertSourceMatch(calendarizedMealDetail, /day\.plan_snapshot\?\.meals\?\.find/);
-  assertSourceMatch(calendarizedMealDetail, /<FoodPanels items=\{foods\} \/>[\s\S]*<MealAdherenceCheckIn/);
+  assertSourceMatch(calendarizedMealDetail, /beforeNutrition=\{<MealCompletionCard controller=\{adherence\} \/>\}/);
+  assertSourceMatch(calendarizedMealDetail, /<FoodPanels items=\{foods\} preparation=/);
+  assertSourceMatch(calendarizedMealDetail, /<MealNoteCard controller=\{adherence\} \/>/);
   assertSourceMatch(calendarizedMealDetail, /completion=\{\{/);
-  assertSourceMatch(calendarizedMealDetail, /onChange=\{setExecution\}/);
+  assertSourceMatch(calendarizedMealDetail, /onChange: setExecution/);
   assertSourceDoesNotMatch(calendarizedMealDetail, /\/api\/v1\/library\/meals/);
 
   const sharedEntityPanels = await readTestFile(
@@ -266,7 +268,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     "utf8",
   );
   assertSourceMatch(mealAdherence, /accessibilityRole="checkbox"/);
-  assertSourceMatch(mealAdherence, /onPress=\{\(\) => void saveStatus\(!completed\)\}/);
+  assertSourceMatch(mealAdherence, /onPress=\{\(\) => void controller\.saveStatus\(!controller\.completed\)\}/);
   assertSourceMatch(mealAdherence, /action: "note"/);
   assertSourceMatch(mealAdherence, /Guardar nota/);
   assertSourceMatch(mealAdherence, /Editar nota/);
@@ -274,9 +276,15 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(mealAdherence, /onChange\?\.\(execution\)/);
   assertSourceMatch(mealAdherence, /maxLength=\{500\}/);
   assertSourceMatch(mealAdherence, /action: nextCompleted \? "completed" : "skipped"/);
-  assertSourceMatch(mealAdherence, /<View style=\{styles\.divider\} \/>/);
-  assertSourceMatch(mealAdherence, /<SectionHeading title="Cumplimiento de esta comida" \/>[\s\S]*<ContentPanel muted>/);
-  assertSourceMatch(mealAdherence, /editingNote \? \([\s\S]*<TextInput[\s\S]*\) : \([\s\S]*styles\.noteText/);
+  assertSourceMatch(mealAdherence, /export function MealCompletionCard/);
+  assertSourceMatch(mealAdherence, /export function MealNoteCard/);
+  assertSourceMatch(mealAdherence, /<SectionHeading title="Nota de esta comida" \/>/);
+  assertSourceMatch(mealAdherence, /controller\.editingNote \? <TextInput[\s\S]*styles\.noteText/);
+  assertSourceDoesNotMatch(mealAdherence, /styles\.divider/);
+
+  assertSourceMatch(sharedEntityPanels, /preparationMarkerChecked/);
+  assertSourceMatch(sharedEntityPanels, /accessibilityRole="checkbox"/);
+  assertSourceMatch(sharedEntityPanels, /<PanelHeaderCell style=\{styles\.preparationValue\}>Listo<\/PanelHeaderCell>/);
   assertSourceDoesNotMatch(mealAdherence, /statusLabel|styles\.status/);
   assertSourceDoesNotMatch(mealAdherence, /Cumplimiento actualizado|Nota guardada|statusSaved|noteSaved/);
   assertSourceDoesNotMatch(mealAdherence, /label=\{editingNote \? "Guardar nota" : "Editar nota"\}/);

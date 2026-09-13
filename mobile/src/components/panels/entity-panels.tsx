@@ -119,11 +119,17 @@ function PanelHeaderCell({ align = "center", children, style }: { align?: "cente
   );
 }
 
-function QuantityHeader({ leadingLabel, trailingLabel }: { leadingLabel: string; trailingLabel: string }) {
+type FoodPreparation = {
+  isPrepared(item: FoodPanelItem): boolean;
+  onToggle(item: FoodPanelItem): void;
+};
+
+function QuantityHeader({ leadingLabel, preparation, trailingLabel }: { leadingLabel: string; preparation?: boolean; trailingLabel: string }) {
   return (
     <View style={[styles.row, styles.header]}>
       <PanelHeaderCell align="left" style={styles.quantityLeadingCell}>{leadingLabel}</PanelHeaderCell>
       <PanelHeaderCell style={styles.quantityValue}>{trailingLabel}</PanelHeaderCell>
+      {preparation ? <PanelHeaderCell style={styles.preparationValue}>Listo</PanelHeaderCell> : null}
     </View>
   );
 }
@@ -157,15 +163,26 @@ function AllocationHeader({ leadingLabel }: { leadingLabel: string }) {
   );
 }
 
-export function FoodQuantityPanel({ items }: { items: FoodPanelItem[] }) {
+export function FoodQuantityPanel({ items, preparation }: { items: FoodPanelItem[]; preparation?: FoodPreparation }) {
   if (items.length === 0) return <PanelEmptyState label="Todavía no hay alimentos." />;
   return (
     <PanelBody>
-      <QuantityHeader leadingLabel="Alimentos" trailingLabel="Qty" />
+      <QuantityHeader leadingLabel="Alimentos" preparation={Boolean(preparation)} trailingLabel="Qty" />
       {items.map((item, index) => (
         <View key={item.id} style={[styles.row, index === items.length - 1 && styles.rowLast]}>
           <PanelItemName item={item} style={styles.quantityLeadingCell} />
           <Text style={[styles.cell, styles.quantityValue]}>{decimal(item.quantity)} {item.quantityUnit}</Text>
+          {preparation ? (
+            <Pressable
+              accessibilityLabel={`${preparation.isPrepared(item) ? "Desmarcar" : "Marcar"} ${item.name} como preparado`}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: preparation.isPrepared(item) }}
+              hitSlop={8}
+              onPress={() => preparation.onToggle(item)}
+              style={({ pressed }) => [styles.preparationValue, styles.preparationButton, pressed && styles.pressed]}>
+              <View style={[styles.preparationMarker, preparation.isPrepared(item) && styles.preparationMarkerChecked]} />
+            </Pressable>
+          ) : null}
         </View>
       ))}
     </PanelBody>
@@ -350,12 +367,12 @@ function MealEditPanel({ editing, items }: { editing: MealPanelEditing; items: M
   );
 }
 
-export function FoodPanels({ editing, items }: { editing?: FoodPanelEditing; items: FoodPanelItem[] }) {
+export function FoodPanels({ editing, items, preparation }: { editing?: FoodPanelEditing; items: FoodPanelItem[]; preparation?: FoodPreparation }) {
   const [activeTab, setActiveTab] = useState<FoodPanelTab>("quantity");
   return (
     <PanelSurface>
       <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={editing ? [...foodTabs, editTab] : foodTabs} />
-      {activeTab === "quantity" ? <FoodQuantityPanel items={items} /> : null}
+      {activeTab === "quantity" ? <FoodQuantityPanel items={items} preparation={preparation} /> : null}
       {activeTab === "calories" ? <NutritionCaloriesPanel items={items} leadingLabel="Alimentos" /> : null}
       {activeTab === "macros" ? <NutritionMacrosPanel items={items} leadingLabel="Alimentos" /> : null}
       {activeTab === "allocation" ? <NutritionAllocationPanel items={items} leadingLabel="Alimentos" /> : null}
@@ -391,6 +408,10 @@ const styles = StyleSheet.create({
   itemName: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, letterSpacing: 0, lineHeight: 18, paddingHorizontal: tokens.spacing.xs, textAlign: "left" },
   quantityLeadingCell: { alignSelf: "stretch", flex: 1, justifyContent: "center", minWidth: 0 },
   quantityValue: { textAlign: "center", width: 56 },
+  preparationValue: { width: 48 },
+  preparationButton: { alignItems: "center", alignSelf: "stretch", justifyContent: "center" },
+  preparationMarker: { backgroundColor: tokens.color.surfaceApp, borderColor: tokens.color.borderDefault, borderRadius: 10, borderWidth: 2, height: 20, width: 20 },
+  preparationMarkerChecked: { backgroundColor: tokens.color.success, borderColor: tokens.color.textMain, borderWidth: 3 },
   macroValue: { flex: 1, minWidth: 0, textAlign: "center" },
   distributionCell: { flex: 1.4, minWidth: 0 },
   calorieValue: { textAlign: "center", width: 54 },

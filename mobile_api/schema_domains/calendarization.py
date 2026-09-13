@@ -25,8 +25,7 @@ class MealExecutionData(Schema):
     last_event_id: int | None = None
     recorded_at: datetime | None = None
     note: str = ""
-
-
+    prepared_food_keys: list[str] = Field(default_factory=list)
 class AdherenceData(Schema):
     period_start: date
     period_end: date
@@ -222,11 +221,10 @@ class WeightEnvelope(Schema):
 
 
 class MealCheckInInput(Schema):
-    action: Literal["completed", "skipped", "reset", "note"]
+    action: Literal["completed", "skipped", "reset", "note", "food_prepared", "food_unprepared"]
     idempotency_key: str = Field(min_length=8, max_length=120)
     note: str = Field(default="", max_length=500)
-
-
+    food_snapshot_key: str = Field(default="", max_length=80)
 class ReminderSettingsInput(Schema):
     timezone_name: str = Field(min_length=1, max_length=64)
     daily_notification_time: time
