@@ -124,7 +124,7 @@ export function MealAdherenceCheckIn(props: Props) {
 }
 
 const styles = StyleSheet.create({
-  checkbox: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.sm, borderWidth: 2, height: 26, justifyContent: "center", width: 26 },
+  checkbox: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 2, height: 26, justifyContent: "center", width: 26 },
   checkboxChecked: { backgroundColor: tokens.color.meal, borderColor: tokens.color.meal },
   completionLabel: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.body, fontWeight: tokens.weight.bold, minWidth: 0 },
   completionRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, minHeight: 52 },
