@@ -100,8 +100,8 @@ DAILYPLAN_MEAL_ACTION_DEFINITIONS = {
         "method": "get",
         "icon": "clock-3",
         "order": 35,
-        "desktop_position": "menu",
-        "mobile_position": "menu",
+        "desktop_position": "inline",
+        "mobile_position": "inline",
         "get_url": lambda dpm, context=None: contextual_url(
             reverse(
                 "dailyplanmeal_change_time",

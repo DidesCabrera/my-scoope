@@ -6,6 +6,7 @@ import {
   Camera,
   ChevronLeft,
   ClipboardCheck,
+  Clock3,
   FileCheck,
   House,
   Inbox as InboxIcon,
@@ -42,12 +43,12 @@ import { listAvailableProductAreas, type ProductAreaKey } from "@/navigation/pro
 import { HeaderEntityIdentity } from "./header-entity-identity";
 import { EntitySidebarItem, type EntitySidebarItemData, NavigationSidebarItem, type NavigationSidebarItemData } from "./sidebar-items";
 
-type HeaderAction = { disabled?: boolean; icon?: "more" | "plus"; label: string; onPress(): void };
+type HeaderAction = { disabled?: boolean; icon?: "clock" | "more" | "plus"; label: string; onPress(): void };
 
 type HeaderPresentation =
   | { mode: "default"; action?: HeaderAction; identityVisible?: boolean; title?: string }
   | { mode: "back"; action?: HeaderAction; fallback?: Href; leadingAction?: HeaderAction; title: string }
-  | { mode: "library-detail"; action?: HeaderAction; entity: LibraryEntity; identityVisible: boolean; title: string }
+  | { mode: "library-detail"; action?: HeaderAction; entity: LibraryEntity; identityVisible: boolean; secondaryAction?: HeaderAction; title: string }
   | { mode: "library-list"; action?: HeaderAction; createAction?: { label: string; onPress(): void }; entity: LibraryEntity; identityVisible: boolean; title: string };
 
 type NavigationContextValue = {
@@ -239,15 +240,29 @@ export function AppNavigationHeader() {
               </Pressable>
             ) : null}
           </View>
-        ) : headerPresentation.mode === "library-detail" && headerPresentation.action ? (
-          <Pressable
-            accessibilityLabel={headerPresentation.action.label}
-            accessibilityRole="button"
-            hitSlop={8}
-            onPress={headerPresentation.action.onPress}
-            style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}>
-            <MoreHorizontal color={tokens.color.textMain} size={26} strokeWidth={2.2} />
-          </Pressable>
+        ) : headerPresentation.mode === "library-detail" && (headerPresentation.secondaryAction || headerPresentation.action) ? (
+          <View style={styles.libraryHeaderActions}>
+            {headerPresentation.secondaryAction ? (
+              <Pressable
+                accessibilityLabel={headerPresentation.secondaryAction.label}
+                accessibilityRole="button"
+                hitSlop={8}
+                onPress={headerPresentation.secondaryAction.onPress}
+                style={({ pressed }) => [styles.headerButton, styles.libraryHeaderButton, pressed && styles.pressed]}>
+                <Clock3 color={tokens.color.textMain} size={24} strokeWidth={2.2} />
+              </Pressable>
+            ) : null}
+            {headerPresentation.action ? (
+              <Pressable
+                accessibilityLabel={headerPresentation.action.label}
+                accessibilityRole="button"
+                hitSlop={8}
+                onPress={headerPresentation.action.onPress}
+                style={({ pressed }) => [styles.headerButton, styles.libraryHeaderButton, pressed && styles.pressed]}>
+                <MoreHorizontal color={tokens.color.textMain} size={26} strokeWidth={2.2} />
+              </Pressable>
+            ) : null}
+          </View>
         ) : headerPresentation.mode === "default" && headerPresentation.action ? (
           <Pressable
             accessibilityLabel={headerPresentation.action.label}

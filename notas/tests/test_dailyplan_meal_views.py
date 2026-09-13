@@ -114,6 +114,9 @@ class DailyPlanMealViewTests(TestCase):
                 "replace",
             ],
         )
+        header = detail.context["vm"]["content"]["header"]
+        self.assertIn("change_time", [action["key"] for action in header["mobile_inline_actions"]])
+        self.assertNotIn("change_time", [action["key"] for action in header["mobile_menu_actions"]])
         self.assertRedirects(updated, detail_url)
         dpm.refresh_from_db()
         self.assertEqual(dpm.hour, time(9, 35))

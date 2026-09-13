@@ -34,6 +34,8 @@ type LibraryActionsProps = {
   apiRequest: ApiRequest;
   entitySlug: "foods" | "meals" | "daily-plans" | "programs";
   item: LibraryItem;
+  initialAction?: "change-time";
+  mealTimeInMenu?: boolean;
   onCompleted(result: LibraryActionResult): void;
   onVisibleChange?: (visible: boolean) => void;
   renderTrigger?: (open: () => void) => ReactNode;
@@ -58,10 +60,12 @@ const entityLabels = {
   program: "este programa",
 } as const;
 
-export function LibraryActions({ apiRequest, entitySlug, item, mealTimeChange, onCompleted, onVisibleChange, renderTrigger, visible: controlledVisible }: LibraryActionsProps) {
+export function LibraryActions({ apiRequest, entitySlug, initialAction, item, mealTimeChange, mealTimeInMenu = true, onCompleted, onVisibleChange, renderTrigger, visible: controlledVisible }: LibraryActionsProps) {
   const actions = item.actions ?? [];
   const [internalVisible, setInternalVisible] = useState(false);
-  const [selected, setSelected] = useState<LibraryAction | { destructive: false; key: "change-time"; label: string } | null>(null);
+  const [selected, setSelected] = useState<LibraryAction | { destructive: false; key: "change-time"; label: string } | null>(
+    initialAction === "change-time" ? { destructive: false, key: "change-time", label: "Cambiar hora" } : null,
+  );
   const [name, setName] = useState(item.name);
   const [recipientEmail, setRecipientEmail] = useState("");
   const [subject, setSubject] = useState(item.name);
@@ -193,7 +197,7 @@ export function LibraryActions({ apiRequest, entitySlug, item, mealTimeChange, o
                   );
                 }) : null}
 
-                {!selected && mealTimeChange ? (
+                {!selected && mealTimeChange && mealTimeInMenu ? (
                   <Pressable
                     accessibilityRole="button"
                     onPress={() => setSelected({ destructive: false, key: "change-time", label: "Cambiar hora" })}
@@ -206,7 +210,7 @@ export function LibraryActions({ apiRequest, entitySlug, item, mealTimeChange, o
                 ) : null}
 
                 {selected?.key === "change-time" && mealTimeChange ? (
-                  <MealTimeForm initialTime={mealTimeChange.initialTime} onCancel={() => setSelected(null)} onSaved={close} onSubmit={mealTimeChange.onSubmit} />
+                  <MealTimeForm initialTime={mealTimeChange.initialTime} onCancel={initialAction ? close : () => setSelected(null)} onSaved={close} onSubmit={mealTimeChange.onSubmit} />
                 ) : null}
 
                 {selected?.key === "rename" ? (

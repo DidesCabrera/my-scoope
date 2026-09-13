@@ -60,6 +60,7 @@ export function MealTimeForm({ initialTime, onCancel, onSaved, onSubmit }: MealT
 
 type CalendarizedEntityActionsProps = {
   entityName: string;
+  initialAction?: Exclude<SelectedAction, null>;
   onVisibleChange(visible: boolean): void;
   rename?: {
     onSubmit(name: string): Promise<void>;
@@ -68,13 +69,14 @@ type CalendarizedEntityActionsProps = {
     initialTime?: string | null;
     onSubmit(hour: string): Promise<void>;
   };
+  timeChangeInMenu?: boolean;
   visible: boolean;
 };
 
 type SelectedAction = "rename" | "change-time" | null;
 
-export function CalendarizedEntityActions({ entityName, onVisibleChange, rename, timeChange, visible }: CalendarizedEntityActionsProps) {
-  const [selected, setSelected] = useState<SelectedAction>(null);
+export function CalendarizedEntityActions({ entityName, initialAction, onVisibleChange, rename, timeChange, timeChangeInMenu = true, visible }: CalendarizedEntityActionsProps) {
+  const [selected, setSelected] = useState<SelectedAction>(initialAction ?? null);
   const [name, setName] = useState(entityName);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -126,7 +128,7 @@ export function CalendarizedEntityActions({ entityName, onVisibleChange, rename,
               <Text style={styles.actionLabel}>Renombrar</Text>
             </Pressable>
           ) : null}
-          {!selected && timeChange ? (
+          {!selected && timeChange && timeChangeInMenu ? (
             <Pressable accessibilityRole="button" onPress={() => setSelected("change-time")} style={({ pressed }) => [styles.actionRow, pressed && styles.pressed]}>
               <View style={styles.actionIcon}><Clock3 color={tokens.color.textMain} size={20} /></View>
               <Text style={styles.actionLabel}>Cambiar hora</Text>
@@ -140,7 +142,7 @@ export function CalendarizedEntityActions({ entityName, onVisibleChange, rename,
             </View>
           ) : null}
           {selected === "change-time" && timeChange ? (
-            <MealTimeForm initialTime={timeChange.initialTime} onCancel={() => setSelected(null)} onSaved={close} onSubmit={timeChange.onSubmit} />
+            <MealTimeForm initialTime={timeChange.initialTime} onCancel={initialAction ? close : () => setSelected(null)} onSaved={close} onSubmit={timeChange.onSubmit} />
           ) : null}
         </View>
       </SafeAreaView>

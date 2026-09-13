@@ -26,7 +26,7 @@ export default function CalendarizedMealDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
-  const [actionsVisible, setActionsVisible] = useState(false);
+  const [actionSheet, setActionSheet] = useState<"change-time" | "menu" | null>(null);
   const setHeaderPresentation = useHeaderPresentation();
   const dayId = Number(id);
   const adherence = useMealAdherenceCheckIn({ dayId, mealKey, onChange: setExecution });
@@ -98,9 +98,10 @@ export default function CalendarizedMealDetailScreen() {
   useFocusEffect(useCallback(() => {
     setHeaderPresentation({
       mode: "library-detail",
-      action: meal ? { label: `Más acciones para ${meal.name ?? "esta comida"}`, onPress: () => setActionsVisible(true) } : undefined,
+      action: meal ? { label: `Más acciones para ${meal.name ?? "esta comida"}`, onPress: () => setActionSheet("menu") } : undefined,
       entity: "meal",
       identityVisible: compactHeaderVisible,
+      secondaryAction: meal ? { icon: "clock", label: "Cambiar hora", onPress: () => setActionSheet("change-time") } : undefined,
       title: meal?.name ?? "Comida del programa",
     });
     return () => setHeaderPresentation({ mode: "default" });
@@ -166,7 +167,9 @@ export default function CalendarizedMealDetailScreen() {
     </ScrollView>
     <CalendarizedEntityActions
       entityName={meal.name ?? "Comida"}
-      onVisibleChange={setActionsVisible}
+      initialAction={actionSheet === "change-time" ? "change-time" : undefined}
+      key={actionSheet ?? "closed"}
+      onVisibleChange={(visible) => { if (!visible) setActionSheet(null); }}
       rename={{
         onSubmit: async (name) => {
           const day = await apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${dayId}/meals/${encodeURIComponent(mealKey)}/name`, {
@@ -193,7 +196,8 @@ export default function CalendarizedMealDetailScreen() {
           await refreshNativeReminders(apiRequest);
         },
       }}
-      visible={actionsVisible}
+      timeChangeInMenu={false}
+      visible={actionSheet != null}
     />
     </>
   );

@@ -243,6 +243,9 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(calendarizedMealDetail, /<MealNoteCard controller=\{adherence\} \/>/);
   assertSourceMatch(calendarizedMealDetail, /completion=\{\{/);
   assertSourceMatch(calendarizedMealDetail, /onChange: setExecution/);
+  assertSourceMatch(calendarizedMealDetail, /secondaryAction: meal \? \{ icon: "clock", label: "Cambiar hora"/);
+  assertSourceMatch(calendarizedMealDetail, /initialAction=\{actionSheet === "change-time" \? "change-time" : undefined\}/);
+  assertSourceMatch(calendarizedMealDetail, /timeChangeInMenu=\{false\}/);
   assertSourceDoesNotMatch(calendarizedMealDetail, /\/api\/v1\/library\/meals/);
 
   const sharedEntityPanels = await readTestFile(
@@ -358,7 +361,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     path.resolve(process.cwd(), "src/components/programs/program-active-card.tsx"),
     "utf8",
   );
-  assertSourceMatch(activeProgramOverview, /<ProgramActiveKpis[^>]*bleed=\{false\}/);
+  assertSourceMatch(activeProgramOverview, /<ProgramActiveKpis[^>]*standalone/);
+  assertSourceDoesNotMatch(activeProgramOverview, /<ProgramActiveKpis[^>]*bleed=\{false\}/);
   assertSourceMatch(activeProgramOverview, /eyebrow="Programa activo"/);
   assertSourceDoesNotMatch(activeProgramOverview, /eyebrow="Programa en curso"/);
   assertSourceMatch(activeProgramOverview, /SectionHeading icon=\{<Activity[^>]*>\} title="Métricas de activación"/);
@@ -383,6 +387,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(activeProgramKpis, /percentageText:\{[^}]*color:tokens\.color\.textMain/);
   assertSourceMatch(activeProgramKpis, /<Text style=\{styles\.percentageText\}>\{advancement\}%<\/Text>/);
   assertSourceMatch(activeProgramKpis, /<Text style=\{styles\.percentageText\}>\{compliance\}%<\/Text>/);
+  assertSourceMatch(activeProgramKpis, /indicatorElapsed:\{backgroundColor:`\$\{tokens\.color\.dailyPlan\}1A`,borderColor:tokens\.color\.dailyPlan\}/);
+  assertSourceMatch(activeProgramKpis, /indicatorAdherence:\{backgroundColor:`\$\{tokens\.color\.meal\}1A`,borderColor:tokens\.color\.meal\}/);
   assertSourceDoesNotMatch(activeProgramKpis, /percentageTag/);
 
   const activateProgram = await readTestFile(
@@ -485,6 +491,10 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(libraryDetail, /title="Alimentos en este plan diario"><FoodPanels items=\{item\.panel\.foods\.map\(foodPanelItem\)\}/);
   assertSourceMatch(libraryDetail, /<SectionDivider \/><EntityDetailSection[^>]*title="Detalle de cada Comida"/);
   assertSourceMatch(libraryDetail, /<SectionDivider \/><EntityDetailSection[^>]*title="Alimentos en este plan diario"/);
+  assertSourceMatch(libraryDetail, /secondaryAction: hasMealTimeContext \? \{ icon: "clock", label: "Cambiar hora"/);
+  assertSourceMatch(libraryDetail, /mealTimeInMenu=\{false\}/);
+
+  assertSourceMatch(appNavigation, /headerPresentation\.secondaryAction[\s\S]*<Clock3/);
 
   const calendarizedDayDetail = await readTestFile(
     path.resolve(process.cwd(), "src/app/program/days/[id].tsx"),
