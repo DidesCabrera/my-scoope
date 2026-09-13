@@ -10,6 +10,22 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Responsive Dist panels keep intrinsic percentages beside the stacked bar. */
+.data-grid-header--mobile-meals-distribution,
+.data-grid-row--mobile-meals-distribution,
+.data-grid-header--mobile-foods-distribution,
+.data-grid-row--mobile-foods-distribution {
+    grid-template-columns: minmax(108px, 1.35fr) repeat(3, minmax(30px, 0.42fr)) minmax(96px, 1.15fr);
+}
+
+.data-grid-cell--distribution-value,
+.data-grid-col--distribution-value { justify-content: center; min-width: 0; text-align: center; }
+.data-grid-cell--distribution-value { font-weight: 650; }
+.data-grid-cell--distribution-protein { color: var(--nutrition-protein); }
+.data-grid-cell--distribution-carbs { color: var(--nutrition-carbs); }
+.data-grid-cell--distribution-fat { color: var(--nutrition-fat); }
+.data-grid-value-unavailable { color: var(--text-muted); }
+
 .macro-kcal-distribution__segment {
   box-sizing: border-box;
   flex: 0 0 calc(min(max(var(--macro-kcal-share, 0), 0), 100) * 1%);

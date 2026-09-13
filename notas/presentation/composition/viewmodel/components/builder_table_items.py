@@ -15,6 +15,24 @@ def _safe_percentage(part, total):
     return part / total * 100
 
 
+def with_table_item_ppk(items, current_weight):
+    """Return cached table rows enriched with user-specific protein per kilogram."""
+    return [
+        {
+            **item,
+            "rel": {
+                **item["rel"],
+                "ppk": (
+                    item["rel"].get("g_protein", 0) / current_weight
+                    if current_weight and item["rel"].get("g_protein", 0)
+                    else None
+                ),
+            },
+        }
+        for item in items
+    ]
+
+
 def _dailyplanmeal_snapshot_metrics(meal, dailyplan_snapshot):
     meal_kcal_protein = _cached_or_live(
         meal,
@@ -69,7 +87,7 @@ def _dailyplanmeal_snapshot_metrics(meal, dailyplan_snapshot):
     }
 
 
-def build_dailyplanmeal_table_item(dpm, dailyplan_snapshot=None):
+def build_dailyplanmeal_table_item(dpm, dailyplan_snapshot=None, current_weight=None):
     dailyplan = dpm.dailyplan
     meal = dpm.meal
 
@@ -123,6 +141,7 @@ def build_dailyplanmeal_table_item(dpm, dailyplan_snapshot=None):
             "kcal_distribution": kcal_distribution,
 
             "g_protein": meal_protein,
+            "ppk": meal_protein / current_weight if current_weight and meal_protein else None,
             "g_carbs": meal_carbs,
             "g_fat": meal_fat,
 
@@ -133,7 +152,7 @@ def build_dailyplanmeal_table_item(dpm, dailyplan_snapshot=None):
     }
 
 
-def build_mealfood_table_item(mf):
+def build_mealfood_table_item(mf, current_weight=None):
     food = mf.food
 
     # ==================================================
@@ -168,6 +187,7 @@ def build_mealfood_table_item(mf):
             ),
 
             "g_protein": mf_protein,
+            "ppk": mf_protein / current_weight if current_weight and mf_protein else None,
             "g_carbs": mf_carbs,
             "g_fat": mf_fat,
 
@@ -177,7 +197,7 @@ def build_mealfood_table_item(mf):
         }
     }
 
-def build_dailyplan_food_aggregation_table_item(food_aggregation, dailyplan_snapshot=None):
+def build_dailyplan_food_aggregation_table_item(food_aggregation, dailyplan_snapshot=None, current_weight=None):
     food = food_aggregation["food"]
     total_grams = food_aggregation["total_grams"] or 0
     factor = total_grams / 100
@@ -215,6 +235,7 @@ def build_dailyplan_food_aggregation_table_item(food_aggregation, dailyplan_snap
                 kcal_fat,
             ),
             "g_protein": g_protein,
+            "ppk": g_protein / current_weight if current_weight and g_protein else None,
             "g_carbs": g_carbs,
             "g_fat": g_fat,
             "alloc_protein": _safe_percentage(

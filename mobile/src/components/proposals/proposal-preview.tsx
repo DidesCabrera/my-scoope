@@ -40,6 +40,9 @@ function nutrition(kpis: ProposalKpis | null) {
 
 function foodPanelItems(meal: ProposalMeal): FoodPanelItem[] {
   const mealCalories = number(meal.kpis?.total_kcal);
+  const mealProtein = number(meal.kpis?.protein);
+  const mealPpk = number(meal.kpis?.ppk);
+  const currentWeight = mealProtein > 0 && mealPpk > 0 ? mealProtein / mealPpk : null;
   return meal.foods.map((food, index) => {
     const protein = number(food.protein);
     const carbs = number(food.carbs);
@@ -54,6 +57,7 @@ function foodPanelItems(meal: ProposalMeal): FoodPanelItem[] {
       calories: foodCalories,
       calorieShare: mealCalories > 0 ? (foodCalories * 100) / mealCalories : 0,
       proteinGrams: protein,
+      proteinPerKilogram: currentWeight ? protein / currentWeight : null,
       carbsGrams: carbs,
       fatGrams: fat,
       proteinAllocation: macroAllocations.protein,
@@ -81,6 +85,7 @@ function mealPanelItems(dailyplan: ProposalDailyPlan): MealPanelItem[] {
       calories: mealNutrition.calories,
       calorieShare: planCalories > 0 ? (mealNutrition.calories * 100) / planCalories : 0,
       proteinGrams: mealNutrition.protein.grams,
+      proteinPerKilogram: mealNutrition.protein.perKilogram,
       carbsGrams: mealNutrition.carbs.grams,
       fatGrams: mealNutrition.fat.grams,
       proteinAllocation: mealNutrition.protein.allocation,

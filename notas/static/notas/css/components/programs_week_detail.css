@@ -174,18 +174,25 @@
   grid-template-columns:
     minmax(126px, 1.45fr)
     minmax(48px, 0.55fr)
-    minmax(82px, 0.9fr)
-    minmax(48px, 0.55fr);
+    minmax(82px, 0.9fr);
 }
 
 .data-grid-header--program-week-days-mobile-macros,
 .data-grid-row--program-week-days-mobile-macros {
   grid-template-columns:
     minmax(118px, 1.35fr)
+    minmax(44px, 0.55fr)
     minmax(34px, 0.48fr)
     minmax(34px, 0.48fr)
-    minmax(34px, 0.48fr)
-    minmax(96px, 1.1fr);
+    minmax(34px, 0.48fr);
+}
+
+.data-grid-header--program-week-days-mobile-distribution,
+.data-grid-row--program-week-days-mobile-distribution {
+  grid-template-columns:
+    minmax(108px, 1.25fr)
+    repeat(3, minmax(32px, 0.42fr))
+    minmax(92px, 1.05fr);
 }
 
 .data-grid-header--program-week-days-mobile-alloc,
@@ -314,6 +321,8 @@
 
   .data-grid-header--program-week-days-mobile-macros,
   .data-grid-row--program-week-days-mobile-macros,
+  .data-grid-header--program-week-days-mobile-distribution,
+  .data-grid-row--program-week-days-mobile-distribution,
   .data-grid-header--program-week-days-mobile-alloc,
   .data-grid-row--program-week-days-mobile-alloc {
     padding-inline: 8px;

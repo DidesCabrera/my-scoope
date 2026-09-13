@@ -2,12 +2,12 @@ import { Pencil, Plus, RefreshCw, Trash2 } from "lucide-react-native";
 import { useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { MacroCalorieDistribution, PanelAllocationBar, ProteinPerKilogramBadge } from "@/components/nutrition";
+import { MacroCalorieDistribution, macroCalorieShares, PanelAllocationBar, ProteinPerKilogramBadge } from "@/components/nutrition";
 import { contextualMacroAllocations, EntityPanelTabs, PanelBody, PanelSurface } from "@/components/panels";
 import { tokens } from "@/design/tokens";
 import { EntityIcon } from "@/components/ui";
 
-type ProgramDayPanelTab = "calories" | "macros" | "allocation" | "edit";
+type ProgramDayPanelTab = "calories" | "macros" | "distribution" | "allocation" | "edit";
 
 export type ProgramDayNutrition = {
   allocation: { carbs: number; fat: number; protein: number };
@@ -28,6 +28,7 @@ export type ProgramDayNutrition = {
 const tabs = [
   { key: "calories", label: "Calorías" },
   { key: "macros", label: "Macros" },
+  { key: "distribution", label: "Dist" },
   { key: "allocation", label: "Alloc" },
   { icon: (selected: boolean) => <Pencil color={selected ? tokens.color.surfaceApp : tokens.color.textMuted} size={15} />, iconOnly: true, key: "edit", label: "Editar días" },
 ] satisfies Parameters<typeof EntityPanelTabs<ProgramDayPanelTab>>[0]["tabs"];
@@ -80,7 +81,7 @@ function Header({ columns }: { columns: string[] }) {
             styles.headerText,
             styles.dataCell,
             column === "% Cal" && styles.calorieShareDataCell,
-            column === "PPK" && styles.ppkDataCell,
+            column === "PpK" && styles.ppkDataCell,
           ]}
         >
           {column}
@@ -93,13 +94,12 @@ function Header({ columns }: { columns: string[] }) {
 function CaloriesPanel({ rows }: { rows: ProgramDayNutrition[] }) {
   return (
     <PanelBody>
-      <Header columns={["Cal", "% Cal", "PPK"]} />
+      <Header columns={["Cal", "% Cal"]} />
       {rows.map((row, index) => (
         <View key={row.id} style={[styles.row, styles.calorieRow, index === rows.length - 1 && styles.rowLast]}>
           <View style={styles.leadingCell}><DayIdentity row={row} /></View>
           <Text style={[styles.cell, styles.dataCell]}>{row.planName ? Math.round(row.calories).toLocaleString("es-CL") : "—"}</Text>
           <View style={[styles.dataCell, styles.calorieShareDataCell]}>{row.planName ? <PanelAllocationBar tone="calories" value={row.calorieShare} /> : <Text style={styles.emptyValue}>—</Text>}</View>
-          <View style={[styles.dataCell, styles.ppkDataCell, styles.ppkCell]}>{row.planName ? <ProteinPerKilogramBadge showUnit={false} style={styles.ppkBadge} value={row.ppk} /> : <Text style={styles.emptyValue}>—</Text>}</View>
         </View>
       ))}
     </PanelBody>
@@ -109,16 +109,36 @@ function CaloriesPanel({ rows }: { rows: ProgramDayNutrition[] }) {
 function MacrosPanel({ rows }: { rows: ProgramDayNutrition[] }) {
   return (
     <PanelBody>
-      <Header columns={["P", "C", "F", "PCF"]} />
+      <Header columns={["PpK", "P", "C", "F"]} />
       {rows.map((row, index) => (
         <View key={row.id} style={[styles.row, index === rows.length - 1 && styles.rowLast]}>
           <View style={styles.leadingCell}><DayIdentity row={row} /></View>
+          <View style={[styles.dataCell, styles.ppkDataCell, styles.ppkCell]}>{row.planName ? <ProteinPerKilogramBadge showUnit={false} style={styles.ppkBadge} value={row.ppk} /> : <Text style={styles.emptyValue}>—</Text>}</View>
           <Text style={[styles.cell, styles.dataCell]}>{row.planName ? Math.round(row.proteinGrams) : "—"}</Text>
           <Text style={[styles.cell, styles.dataCell]}>{row.planName ? Math.round(row.carbsGrams) : "—"}</Text>
           <Text style={[styles.cell, styles.dataCell]}>{row.planName ? Math.round(row.fatGrams) : "—"}</Text>
-          <View style={styles.dataCell}>{row.planName ? <MacroCalorieDistribution carbsGrams={row.carbsGrams} fatGrams={row.fatGrams} proteinGrams={row.proteinGrams} /> : <Text style={styles.emptyValue}>—</Text>}</View>
         </View>
       ))}
+    </PanelBody>
+  );
+}
+
+function DistributionPanel({ rows }: { rows: ProgramDayNutrition[] }) {
+  return (
+    <PanelBody>
+      <Header columns={["P%", "C%", "F%", "P|C|F"]} />
+      {rows.map((row, index) => {
+        const distribution = macroCalorieShares(row);
+        return (
+          <View key={row.id} style={[styles.row, index === rows.length - 1 && styles.rowLast]}>
+            <View style={styles.leadingCell}><DayIdentity row={row} /></View>
+            <Text style={[styles.cell, styles.dataCell, styles.proteinDistribution]}>{row.planName ? `${distribution.protein}%` : "—"}</Text>
+            <Text style={[styles.cell, styles.dataCell, styles.carbsDistribution]}>{row.planName ? `${distribution.carbs}%` : "—"}</Text>
+            <Text style={[styles.cell, styles.dataCell, styles.fatDistribution]}>{row.planName ? `${distribution.fat}%` : "—"}</Text>
+            <View style={styles.distributionBar}>{row.planName ? <MacroCalorieDistribution {...row} /> : <Text style={styles.emptyValue}>—</Text>}</View>
+          </View>
+        );
+      })}
     </PanelBody>
   );
 }
@@ -176,6 +196,7 @@ export function ProgramDayComparisonPanels({ onAssign, onDelete, rows: providedR
       <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={onAssign && onDelete ? tabs : tabs.filter(({ key }) => key !== "edit")} />
       {activeTab === "calories" ? <CaloriesPanel rows={rows} /> : null}
       {activeTab === "macros" ? <MacrosPanel rows={rows} /> : null}
+      {activeTab === "distribution" ? <DistributionPanel rows={rows} /> : null}
       {activeTab === "allocation" ? <AllocationPanel rows={rows} /> : null}
       {activeTab === "edit" && onAssign && onDelete ? <EditPanel onAssign={onAssign} onDelete={onDelete} rows={rows} /> : null}
     </PanelSurface>
@@ -203,6 +224,10 @@ const styles = StyleSheet.create({
   calorieRow: { gap: 3 },
   allocationRow: { gap: tokens.spacing.sm },
   emptyAllocation: { flex: 3 },
+  proteinDistribution: { color: tokens.color.protein, fontWeight: tokens.weight.semibold },
+  carbsDistribution: { color: tokens.color.carbs, fontWeight: tokens.weight.semibold },
+  fatDistribution: { color: tokens.color.fat, fontWeight: tokens.weight.semibold },
+  distributionBar: { flex: 1.35, minWidth: 0 },
   editRow: { gap: tokens.spacing.sm },
   editDay: { flexBasis: "24%", flexGrow: 0, flexShrink: 0, textAlign: "left" },
   editPlan: { flex: 1, minWidth: 0, textAlign: "left" },

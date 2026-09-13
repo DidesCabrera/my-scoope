@@ -83,6 +83,13 @@
     <button
       type="button"
       class="panel-tab btn-desplegar-mobile"
+      data-target="#program-week-days-dist-{{ panel_id }}"
+    >
+      Dist
+    </button>
+    <button
+      type="button"
+      class="panel-tab btn-desplegar-mobile"
       data-target="#program-week-days-alloc-{{ panel_id }}"
     >
       Alloc
@@ -105,7 +112,6 @@
         <div class="data-grid-col data-grid-col--program-day" role="columnheader">Día</div>
         <div class="data-grid-col data-grid-col--kcal" role="columnheader">Cal.</div>
         <div class="data-grid-col data-grid-col--kcal-share" role="columnheader">% Cal</div>
-        <div class="data-grid-col data-grid-col--ppk" role="columnheader">PPK</div>
       </div>
 
       {% for row in rows %}
@@ -115,7 +121,6 @@
           </div>
           <div class="data-grid-cell data-grid-cell--kcal" role="cell">{% if row.is_empty %}-{% else %}{{ row.total_kcal|floatformat:0 }}{% endif %}</div>
           <div class="data-grid-cell data-grid-cell--kcal-share" role="cell">{% if row.is_empty %}-{% else %}{% include "components/grid_alloc_item.html" with value=row.kcal_share kind="kcal" %}{% endif %}</div>
-          <div class="data-grid-cell data-grid-cell--ppk" role="cell">{% if row.is_empty %}-{% else %}<span class="program-week-day-table__ppk-value">{{ row.ppk|floatformat:1 }}</span>{% endif %}</div>
         </div>
       {% endfor %}
     </div>
@@ -125,10 +130,10 @@
     <div class="data-grid data-grid--program-week-days-mobile data-grid--program-week-days-mobile-macros" role="table" aria-label="Macros por día de la semana">
       <div class="data-grid-header data-grid-header--program-week-days-mobile-macros" role="row">
         <div class="data-grid-col data-grid-col--program-day" role="columnheader">Día</div>
+        <div class="data-grid-col data-grid-col--ppk" role="columnheader">PpK</div>
         <div class="data-grid-col data-grid-col--macro" role="columnheader">P</div>
         <div class="data-grid-col data-grid-col--macro" role="columnheader">C</div>
         <div class="data-grid-col data-grid-col--macro" role="columnheader">F</div>
-        <div class="data-grid-col data-grid-col--kcal-distribution" role="columnheader">Dist. PCF</div>
       </div>
 
       {% for row in rows %}
@@ -136,9 +141,32 @@
           <div class="data-grid-cell data-grid-cell--program-day" role="cell">
             {% include "components/grid_program_day_identity.html" with has_plan=row.has_plan day_name=row.day_name dailyplan_name=row.dailyplan_name %}
           </div>
+          <div class="data-grid-cell data-grid-cell--ppk" role="cell">{% if row.is_empty %}-{% else %}{% include "components/grid_ppk_item.html" with value=row.ppk %}{% endif %}</div>
           <div class="data-grid-cell data-grid-cell--macro program-week-table__macro--protein" role="cell">{% if row.is_empty %}-{% else %}{{ row.protein|floatformat:0 }}{% endif %}</div>
           <div class="data-grid-cell data-grid-cell--macro program-week-table__macro--carbs" role="cell">{% if row.is_empty %}-{% else %}{{ row.carbs|floatformat:0 }}{% endif %}</div>
           <div class="data-grid-cell data-grid-cell--macro program-week-table__macro--fat" role="cell">{% if row.is_empty %}-{% else %}{{ row.fat|floatformat:0 }}{% endif %}</div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div id="program-week-days-dist-{{ panel_id }}" class="card-table-programs-mobile program-table-panel program-week-day-panels__panel program-week-day-panels__mobile-panel">
+    <div class="data-grid data-grid--program-week-days-mobile data-grid--program-week-days-mobile-distribution" role="table" aria-label="Distribución calórica por día de la semana">
+      <div class="data-grid-header data-grid-header--program-week-days-mobile-distribution" role="row">
+        <div class="data-grid-col data-grid-col--program-day" role="columnheader">Día</div>
+        <div class="data-grid-col data-grid-col--distribution-value" role="columnheader">P%</div>
+        <div class="data-grid-col data-grid-col--distribution-value" role="columnheader">C%</div>
+        <div class="data-grid-col data-grid-col--distribution-value" role="columnheader">F%</div>
+        <div class="data-grid-col data-grid-col--kcal-distribution" role="columnheader">P|C|F</div>
+      </div>
+      {% for row in rows %}
+        <div class="data-grid-row data-grid-row--program-week-days-mobile-distribution{% if row.is_empty %} is-empty{% endif %}" role="row" data-day-number="{{ row.day_number }}">
+          <div class="data-grid-cell data-grid-cell--program-day" role="cell">
+            {% include "components/grid_program_day_identity.html" with has_plan=row.has_plan day_name=row.day_name dailyplan_name=row.dailyplan_name %}
+          </div>
+          <div class="data-grid-cell data-grid-cell--distribution-value data-grid-cell--distribution-protein" role="cell">{% if row.is_empty %}-{% else %}{{ row.kcal_distribution.protein|floatformat:0 }}%{% endif %}</div>
+          <div class="data-grid-cell data-grid-cell--distribution-value data-grid-cell--distribution-carbs" role="cell">{% if row.is_empty %}-{% else %}{{ row.kcal_distribution.carbs|floatformat:0 }}%{% endif %}</div>
+          <div class="data-grid-cell data-grid-cell--distribution-value data-grid-cell--distribution-fat" role="cell">{% if row.is_empty %}-{% else %}{{ row.kcal_distribution.fat|floatformat:0 }}%{% endif %}</div>
           <div class="data-grid-cell data-grid-cell--kcal-distribution" role="cell">
             {% if row.is_empty %}-{% else %}{% include "components/macro_kcal_distribution.html" with protein=row.kcal_distribution.protein carbs=row.kcal_distribution.carbs fat=row.kcal_distribution.fat %}{% endif %}
           </div>

@@ -4049,6 +4049,17 @@
             "title": "Protein Grams",
             "type": "number"
           },
+          "protein_per_kilogram": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Protein Per Kilogram"
+          },
           "quantity": {
             "title": "Quantity",
             "type": "number"

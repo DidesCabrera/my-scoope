@@ -24,11 +24,11 @@ import { LibraryActions } from "./library-actions";
 const sectionTitles = { foods: "Tabla de comparación entre alimentos", meals: "Tabla de comparación entre comidas", weeks: "Semanas del programa" } as const;
 
 function foodPanelItem(item: LibraryItem["panel"]["foods"][number]): FoodPanelItem {
-  return { id: item.id, relationId: item.relation_id, name: item.name, quantity: item.quantity, quantityUnit: item.quantity_unit, calories: item.calories, calorieShare: item.calorie_share, proteinGrams: item.protein_grams, carbsGrams: item.carbs_grams, fatGrams: item.fat_grams, proteinAllocation: item.protein_allocation, carbsAllocation: item.carbs_allocation, fatAllocation: item.fat_allocation };
+  return { id: item.id, relationId: item.relation_id, name: item.name, quantity: item.quantity, quantityUnit: item.quantity_unit, calories: item.calories, calorieShare: item.calorie_share, proteinGrams: item.protein_grams, proteinPerKilogram: item.protein_per_kilogram, carbsGrams: item.carbs_grams, fatGrams: item.fat_grams, proteinAllocation: item.protein_allocation, carbsAllocation: item.carbs_allocation, fatAllocation: item.fat_allocation };
 }
 
 function mealPanelItem(item: LibraryItem["panel"]["meals"][number]): MealPanelItem {
-  return { id: item.id, relationId: item.relation_id, detailId: item.detail_id, name: item.name, time: item.time?.slice(0, 5), note: item.note, foods: item.foods.map((food) => ({ name: food.name, quantity: food.quantity, quantityUnit: food.quantity_unit })), calories: item.calories, calorieShare: item.calorie_share, proteinGrams: item.protein_grams, carbsGrams: item.carbs_grams, fatGrams: item.fat_grams, proteinAllocation: item.protein_allocation, carbsAllocation: item.carbs_allocation, fatAllocation: item.fat_allocation };
+  return { id: item.id, relationId: item.relation_id, detailId: item.detail_id, name: item.name, time: item.time?.slice(0, 5), note: item.note, foods: item.foods.map((food) => ({ name: food.name, quantity: food.quantity, quantityUnit: food.quantity_unit })), calories: item.calories, calorieShare: item.calorie_share, proteinGrams: item.protein_grams, proteinPerKilogram: item.protein_per_kilogram, carbsGrams: item.carbs_grams, fatGrams: item.fat_grams, proteinAllocation: item.protein_allocation, carbsAllocation: item.carbs_allocation, fatAllocation: item.fat_allocation };
 }
 
 export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "meals" | "daily-plans" | "programs" }) {

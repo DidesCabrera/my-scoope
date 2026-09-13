@@ -14,6 +14,10 @@
     {% include "components/grid_foods_mobile_macros.html" with items=items %}
 </div>
 
+<div id="card-grid-dailyplan-foods-dist-{{ panel_id }}" class="card-table-dailyplan-foods card-table-dailyplan-foods--mobile">
+    {% include "components/grid_foods_mobile_distribution.html" with items=items %}
+</div>
+
 <div id="card-grid-dailyplan-foods-alloc-{{ panel_id }}" class="card-table-dailyplan-foods card-table-dailyplan-foods--mobile">
     {% include "components/grid_foods_mobile_alloc.html" with items=items %}
 </div>

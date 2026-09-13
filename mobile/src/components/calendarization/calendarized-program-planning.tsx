@@ -46,6 +46,7 @@ function foodPanelItem(item: LibraryFoodPanelItem): FoodPanelItem {
     calories: item.calories,
     calorieShare: item.calorie_share,
     proteinGrams: item.protein_grams,
+    proteinPerKilogram: item.protein_per_kilogram,
     carbsGrams: item.carbs_grams,
     fatGrams: item.fat_grams,
     proteinAllocation: item.protein_allocation,

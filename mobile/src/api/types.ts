@@ -259,6 +259,7 @@ export type LibraryFoodPanelItem = {
   calorie_share: number;
   calorie_distribution: LibraryCalorieDistribution;
   protein_grams: number;
+  protein_per_kilogram: number | null;
   carbs_grams: number;
   fat_grams: number;
   protein_allocation: number;

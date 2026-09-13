@@ -84,7 +84,8 @@ def _creator_name(entity) -> str:
     return creator.get_full_name().strip() or creator.username
 
 
-def _food_panel_item(meal_food) -> dict:
+def _food_panel_item(meal_food, current_weight=None) -> dict:
+    protein = _safe_number(meal_food.protein)
     return {
         "id": f"meal-food:{meal_food.id}",
         "relation_id": meal_food.id,
@@ -94,7 +95,8 @@ def _food_panel_item(meal_food) -> dict:
         "calories": _safe_number(meal_food.total_kcal),
         "calorie_share": _safe_number(meal_food.kcal_share),
         "calorie_distribution": _calorie_distribution(meal_food.kcal_protein, meal_food.kcal_carbs, meal_food.kcal_fat),
-        "protein_grams": _safe_number(meal_food.protein),
+        "protein_grams": protein,
+        "protein_per_kilogram": _safe_number(protein / current_weight) if current_weight and protein else None,
         "carbs_grams": _safe_number(meal_food.carbs),
         "fat_grams": _safe_number(meal_food.fat),
         "protein_allocation": _safe_number(meal_food.alloc_protein),
@@ -117,7 +119,7 @@ def _meal_panel_item(dailyplan_meal, dailyplan, current_weight=None) -> dict:
         "name": meal.name,
         "time": str(dailyplan_meal.hour) if dailyplan_meal.hour else None,
         "note": dailyplan_meal.note or "",
-        "foods": [_food_panel_item(meal_food) for meal_food in meal.meal_food_set.all()],
+        "foods": [_food_panel_item(meal_food, current_weight) for meal_food in meal.meal_food_set.all()],
         "calories": _safe_number(meal_total_kcal),
         "calorie_share": _safe_number(_safe_percentage(meal_total_kcal, dailyplan.total_kcal)),
         "calorie_distribution": _calorie_distribution(meal_kcal_protein, meal_kcal_carbs, meal_kcal_fat),
@@ -131,7 +133,7 @@ def _meal_panel_item(dailyplan_meal, dailyplan, current_weight=None) -> dict:
     }
 
 
-def _aggregated_food_panel_items(rows, *, id_prefix: str) -> list[dict]:
+def _aggregated_food_panel_items(rows, *, id_prefix: str, current_weight=None) -> list[dict]:
     return [
         {
             "id": f"{id_prefix}:{row['child']['id']}",
@@ -144,6 +146,11 @@ def _aggregated_food_panel_items(rows, *, id_prefix: str) -> list[dict]:
                 key: _safe_number(value) for key, value in row["rel"]["kcal_distribution"].items()
             },
             "protein_grams": _safe_number(row["rel"]["g_protein"]),
+            "protein_per_kilogram": (
+                _safe_number(row["rel"]["g_protein"] / current_weight)
+                if current_weight and row["rel"]["g_protein"]
+                else None
+            ),
             "carbs_grams": _safe_number(row["rel"]["g_carbs"]),
             "fat_grams": _safe_number(row["rel"]["g_fat"]),
             "protein_allocation": _safe_number(row["rel"]["alloc_protein"]),
@@ -215,6 +222,7 @@ def _program_week_panel_items(program, current_weight=None) -> list[dict]:
             "foods": _aggregated_food_panel_items(
                 week["foods_aggregation_table"],
                 id_prefix=f"program-week-food:{program.id}:{week['week_number']}",
+                current_weight=current_weight,
             ),
             "calories": _safe_number(week["totals"]["total_kcal"]),
             "calorie_share": _safe_number(_safe_percentage(week["totals"]["total_kcal"], program_total_kcal)),
@@ -301,6 +309,7 @@ def _calendarized_week_panel_items(calendarization, current_weight=None) -> tupl
                 "foods": _aggregated_food_panel_items(
                     week["foods_aggregation_table"],
                     id_prefix=f"calendarization-week-food:{calendarization.id}:{week['week_number']}",
+                    current_weight=current_weight,
                 ),
                 "calories": _safe_number(week["totals"]["total_kcal"]),
                 "calorie_share": _safe_number(
@@ -405,7 +414,7 @@ def library_meals_payload(
             + ([{"label": "estado", "value": "Borrador"}] if meal.is_draft else []),
             "panel": {
                 **_empty_library_panel("foods"),
-                "foods": [_food_panel_item(meal_food) for meal_food in meal.meal_food_set.all()],
+                "foods": [_food_panel_item(meal_food, current_weight) for meal_food in meal.meal_food_set.all()],
             },
             "creator": _creator_name(meal),
             "created_at": meal.created_at,
@@ -547,7 +556,7 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
                 + ([{"label": "estado", "value": "Borrador"}] if item.is_draft else []),
                 "panel": {
                     **_empty_library_panel("foods"),
-                    "foods": [_food_panel_item(row) for row in item.meal_food_set.all()],
+                    "foods": [_food_panel_item(row, current_weight) for row in item.meal_food_set.all()],
                 },
                 "creator": _creator_name(item),
                 "created_at": item.created_at,
@@ -574,6 +583,7 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
             foods = _aggregated_food_panel_items(
                 get_dailyplan_summary(item)["foods_aggregation_table"],
                 id_prefix=f"dailyplan-food:{item.id}",
+                current_weight=current_weight,
             )
             return {
                 "id": item.id,

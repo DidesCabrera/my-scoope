@@ -125,6 +125,13 @@ function createMacroDistribution(distribution) {
   return node;
 }
 
+function createPpkValue(value) {
+  if (value == null || !Number.isFinite(Number(value))) {
+    return createElement("span", "data-grid-value-unavailable", "-");
+  }
+  return createElement("span", "program-week-day-table__ppk-value", numeric(value).toFixed(1));
+}
+
 function createCell(className, content) {
   const cell = createElement("div", `data-grid-cell ${className}`);
   if (content instanceof Node) {
@@ -199,10 +206,10 @@ function createFoodMacrosRow(item) {
   markProjectedRow(row, item);
   row.append(
     createNameCell(item),
+    createCell("data-grid-cell--ppk", createPpkValue(item.ppk)),
     createCell("data-grid-cell--macro", numeric(item.protein).toFixed(1)),
     createCell("data-grid-cell--macro", numeric(item.carbs).toFixed(1)),
     createCell("data-grid-cell--macro", numeric(item.fat).toFixed(1)),
-    createCell("data-grid-cell--kcal-distribution", createMacroDistribution(item.kcalDistribution)),
   );
   return row;
 }
@@ -308,9 +315,24 @@ function createMealMacrosRow(item) {
   identityCell.appendChild(createMealIdentity(item));
   row.append(
     identityCell,
+    createCell("data-grid-cell--ppk", createPpkValue(item.ppk)),
     createCell("data-grid-cell--macro", numeric(item.protein).toFixed(1)),
     createCell("data-grid-cell--macro", numeric(item.carbs).toFixed(1)),
     createCell("data-grid-cell--macro", numeric(item.fat).toFixed(1)),
+  );
+  return row;
+}
+
+function createMealDistributionRow(item) {
+  const row = createElement("div", "data-grid-row data-grid-row--mobile-meals-distribution");
+  markProjectedRow(row, item);
+  const identityCell = createElement("div", "data-grid-cell data-grid-cell--name data-grid-cell--meal-identity");
+  identityCell.appendChild(createMealIdentity(item));
+  row.append(
+    identityCell,
+    createCell("data-grid-cell--distribution-value data-grid-cell--distribution-protein", `${numeric(item.kcalDistribution?.protein).toFixed(0)}%`),
+    createCell("data-grid-cell--distribution-value data-grid-cell--distribution-carbs", `${numeric(item.kcalDistribution?.carbs).toFixed(0)}%`),
+    createCell("data-grid-cell--distribution-value data-grid-cell--distribution-fat", `${numeric(item.kcalDistribution?.fat).toFixed(0)}%`),
     createCell("data-grid-cell--kcal-distribution", createMacroDistribution(item.kcalDistribution)),
   );
   return row;
@@ -339,6 +361,7 @@ function renderDailyPlanPanels(root, items) {
   renderGrid(root, "result-meals-grid", items, createMealDesktopRow, "No meals added yet.");
   renderGrid(root, "result-meals-calories-grid", items, createMealCaloriesRow, "No meals added yet.");
   renderGrid(root, "result-meals-macros-grid", items, createMealMacrosRow, "No meals added yet.");
+  renderGrid(root, "result-meals-dist-grid", items, createMealDistributionRow, "No meals added yet.");
   renderGrid(root, "result-meals-alloc-grid", items, createMealAllocRow, "No meals added yet.");
 }
 
@@ -360,6 +383,9 @@ export function withResultMetrics(items, resultKpis) {
     carbs: numeric(resultKpis.carbs) * NUTRIENT_ENERGY.carbs,
     fat: numeric(resultKpis.fat) * NUTRIENT_ENERGY.fat,
   };
+  const resultProtein = numeric(resultKpis.protein);
+  const resultPpk = numeric(resultKpis.ppk);
+  const currentWeight = resultProtein > 0 && resultPpk > 0 ? resultProtein / resultPpk : null;
 
   return (items || []).map(item => {
     const macroEnergy = {
@@ -371,6 +397,7 @@ export function withResultMetrics(items, resultKpis) {
 
     return {
       ...item,
+      ppk: currentWeight ? numeric(item.protein) / currentWeight : null,
       kcalShare: safePercentage(item.total_kcal, resultKpis.total_kcal),
       kcalDistribution: {
         protein: safePercentage(macroEnergy.protein, itemMacroEnergy),

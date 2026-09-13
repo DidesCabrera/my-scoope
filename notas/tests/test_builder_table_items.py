@@ -58,13 +58,14 @@ class BuilderTableItemsTests(TestCase):
             quantity=100,
         )
 
-        item = build_mealfood_table_item(meal_food)
+        item = build_mealfood_table_item(meal_food, current_weight=65)
 
         self.assertEqual(item["rel"]["name"], "Avena")
         self.assertEqual(item["rel"]["quantity_unit"], "g")
         distribution = item["rel"]["kcal_distribution"]
         self.assertAlmostEqual(sum(distribution.values()), 100)
         self.assertNotEqual(distribution["protein"], item["rel"]["alloc_protein"])
+        self.assertAlmostEqual(item["rel"]["ppk"], 16.9 / 65)
 
 
 class DailyPlanMealTableItemSnapshotTests(TestCase):
@@ -123,6 +124,7 @@ class DailyPlanMealTableItemSnapshotTests(TestCase):
             item = build_dailyplanmeal_table_item(
                 dpm,
                 dailyplan_snapshot=dailyplan_snapshot,
+                current_weight=80,
             )
 
         self.assertEqual(item["main_id"], dailyplan.id)
@@ -135,3 +137,4 @@ class DailyPlanMealTableItemSnapshotTests(TestCase):
         self.assertAlmostEqual(sum(distribution.values()), 100)
         self.assertAlmostEqual(distribution["protein"], 80 / 165 * 100)
         self.assertNotEqual(distribution["protein"], item["rel"]["alloc_protein"])
+        self.assertAlmostEqual(item["rel"]["ppk"], 20 / 80)

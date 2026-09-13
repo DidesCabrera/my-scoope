@@ -83,9 +83,10 @@ def build_dpm_detail_content_data(
 
     meal_alloc = meal_kpis["alloc"]
     meal_ppk = meal_kpis["ppk"]
+    current_weight = meal_protein / meal_ppk["ppk"] if meal_protein and meal_ppk.get("ppk") else None
 
     meal_foods_table_items = [
-        build_mealfood_table_item(mf)
+        build_mealfood_table_item(mf, current_weight=current_weight)
         for mf in meal_foods
     ]
 

@@ -131,7 +131,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(programWeekPanels, /PanelSurface/);
   assertSourceMatch(programWeekPanels, /MacroCalorieDistribution/);
   assertSourceMatch(programWeekPanels, /PanelAllocationBar/);
-  for (const tab of ["Calorías", "Macros", "Alloc", "Editar"]) assertSourceMatch(programWeekPanels, new RegExp(tab));
+  for (const tab of ["Calorías", "Macros", "Dist", "Alloc", "Editar"]) assertSourceMatch(programWeekPanels, new RegExp(tab));
   assertSourceDoesNotMatch(programWeekPanels, /label: "Semanas"/);
   assertSourceMatch(programWeekPanels, /<Pencil/);
   assertSourceMatch(programWeekPanels, /weekName: \{ color: tokens\.color\.textMain/);
@@ -140,7 +140,9 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceDoesNotMatch(programWeekPanels, /cell: \{[^}]*fontSize: 11/);
   assertSourceDoesNotMatch(programWeekPanels, /<PanelAllocationBar size="compact"/);
   assertSourceMatch(programWeekPanels, /allocationRow: \{ gap: tokens\.spacing\.sm \}/);
-  assertSourceDoesNotMatch(programWeekPanels, /deltaUp|deltaDown|styles\.protein|styles\.carbs|styles\.fat/);
+  assertSourceDoesNotMatch(programWeekPanels, /deltaUp|deltaDown|styles\.(?:protein|carbs|fat)(?:[,}\]])/);
+  assertSourceMatch(programWeekPanels, /Header columns=\{\["PpK", "P g", "C g", "F g"\]\}/);
+  assertSourceMatch(programWeekPanels, /Header columns=\{\["P%", "C%", "F%", "P\|C\|F"\]\}/);
 
   const programDetail = await readTestFile(
     path.resolve(process.cwd(), "src/components/libraries/program-detail-preview.tsx"),
@@ -255,6 +257,9 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(sharedEntityPanels, /item\.detailId != null \|\| item\.canOpen/);
   assertSourceMatch(sharedEntityPanels, /allocationRow: \{ gap: tokens\.spacing\.sm \}/);
   assertSourceMatch(libraryEntityPanels, /NutritionAllocationPanel/);
+  assertSourceMatch(sharedEntityPanels, /key: "distribution", label: "Dist"/);
+  assertSourceMatch(sharedEntityPanels, /<PanelHeaderCell style=\{styles\.ppkValue\}>PpK<\/PanelHeaderCell>/);
+  assertSourceMatch(sharedEntityPanels, /<MacroCalorieDistribution \{\.\.\.item\} style=\{styles\.distributionBar\} \/>/);
 
   const completionUi = await readTestFile(
     path.resolve(process.cwd(), "src/components/ui/product.tsx"),
@@ -654,8 +659,11 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(programDayPanels, /calorieShareDataCell: \{ flex: 1\.35 \}/);
   assertSourceMatch(programDayPanels, /ppkDataCell: \{ flex: 0\.65 \}/);
   assertSourceMatch(programDayPanels, /column === "% Cal" && styles\.calorieShareDataCell/);
-  assertSourceMatch(programDayPanels, /column === "PPK" && styles\.ppkDataCell/);
+  assertSourceMatch(programDayPanels, /column === "PpK" && styles\.ppkDataCell/);
   assertSourceMatch(programDayPanels, /allocationRow: \{ gap: tokens\.spacing\.sm \}/);
+  assertSourceMatch(programDayPanels, /Header columns=\{\["Cal", "% Cal"\]\}/);
+  assertSourceMatch(programDayPanels, /Header columns=\{\["PpK", "P", "C", "F"\]\}/);
+  assertSourceMatch(programDayPanels, /Header columns=\{\["P%", "C%", "F%", "P\|C\|F"\]\}/);
 
   const programMetricPanels = await readTestFile(
     path.resolve(process.cwd(), "src/components/libraries/program-child-card.tsx"),

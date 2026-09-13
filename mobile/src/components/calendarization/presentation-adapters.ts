@@ -13,6 +13,12 @@ export function snapshotMacroDistribution(totals: MacroTotals | undefined, macro
   return total > 0 ? ((totals?.[macro] ?? 0) * factor / total) * 100 : 0;
 }
 
+function inferredWeight(totals?: MacroTotals): number | null {
+  const protein = totals?.protein_g ?? 0;
+  const ppk = totals?.protein_per_kilogram ?? 0;
+  return protein > 0 && ppk > 0 ? protein / ppk : null;
+}
+
 export function snapshotMealPanelItem(meal: MealSnapshot, index: number, planTotals?: MacroTotals): MealPanelItem {
   const mealCalories = snapshotCalories(meal.totals);
   const planCalories = snapshotCalories(planTotals);
@@ -30,12 +36,14 @@ export function snapshotMealPanelItem(meal: MealSnapshot, index: number, planTot
     name: meal.name ?? "Comida",
     proteinAllocation: contextualAllocation(meal.totals, planTotals, "protein_g"),
     proteinGrams: meal.totals?.protein_g ?? 0,
+    proteinPerKilogram: meal.totals?.protein_per_kilogram ?? null,
     time: meal.hour?.slice(0, 5),
   };
 }
 
 export function snapshotFoodPanelItems(meal: MealSnapshot): FoodPanelItem[] {
   const mealCalories = snapshotCalories(meal.totals);
+  const currentWeight = inferredWeight(meal.totals);
   return (meal.foods ?? []).map((food, index) => {
     const totals: MacroTotals = {
       carbs_g: food.carbs_g ?? 0,
@@ -55,6 +63,7 @@ export function snapshotFoodPanelItems(meal: MealSnapshot): FoodPanelItem[] {
       name: food.name ?? "Alimento",
       proteinAllocation: contextualAllocation(totals, meal.totals, "protein_g"),
       proteinGrams: totals.protein_g ?? 0,
+      proteinPerKilogram: currentWeight ? (totals.protein_g ?? 0) / currentWeight : null,
       quantity: food.quantity_g ?? 0,
       quantityUnit: "g",
     };
@@ -62,6 +71,7 @@ export function snapshotFoodPanelItems(meal: MealSnapshot): FoodPanelItem[] {
 }
 
 export function snapshotDailyPlanFoodPanelItems(meals: MealSnapshot[]): FoodPanelItem[] {
+  const currentWeight = meals.map(({ totals }) => inferredWeight(totals)).find((weight) => weight != null) ?? null;
   const aggregated = new Map<string, {
     carbsGrams: number;
     fatGrams: number;
@@ -115,6 +125,7 @@ export function snapshotDailyPlanFoodPanelItems(meals: MealSnapshot[]): FoodPane
     name: food.name,
     proteinAllocation: allocations[index].protein,
     proteinGrams: food.proteinGrams,
+    proteinPerKilogram: currentWeight ? food.proteinGrams / currentWeight : null,
     quantity: food.quantity,
     quantityUnit: "g",
   }));

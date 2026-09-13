@@ -81,6 +81,7 @@ function mealPanelItem(item: NonNullable<LibraryWeekPanelItem["days"][number]["m
     name: item.name,
     proteinAllocation: item.protein_allocation,
     proteinGrams: item.protein_grams,
+    proteinPerKilogram: item.protein_per_kilogram,
     time: item.time?.slice(0, 5),
   };
 }

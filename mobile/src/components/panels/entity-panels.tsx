@@ -2,7 +2,7 @@ import { type ReactNode, useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, Check, ChevronRight, Clock, Pencil, RefreshCw, RotateCcw, Trash2 } from "lucide-react-native";
 import { Alert, Pressable, StyleProp, StyleSheet, Text, TextInput, View, ViewStyle } from "react-native";
 
-import { MacroCalorieDistribution, PanelAllocationBar } from "@/components/nutrition";
+import { MacroCalorieDistribution, macroCalorieShares, PanelAllocationBar, ProteinPerKilogramBadge } from "@/components/nutrition";
 import { EntityIcon } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { contextualMacroAllocations } from "./contextual-allocation";
@@ -12,6 +12,7 @@ type NutritionPanelValues = {
   calories: number;
   calorieShare: number;
   proteinGrams: number;
+  proteinPerKilogram?: number | null;
   carbsGrams: number;
   fatGrams: number;
   proteinAllocation: number;
@@ -60,13 +61,14 @@ export type MealPanelEditing = {
   onReplace(item: MealPanelItem): void;
 };
 
-type FoodPanelTab = "quantity" | "calories" | "macros" | "allocation" | "edit";
-type MealPanelTab = "menu" | "calories" | "macros" | "allocation" | "edit";
+type FoodPanelTab = "quantity" | "calories" | "macros" | "distribution" | "allocation" | "edit";
+type MealPanelTab = "menu" | "calories" | "macros" | "distribution" | "allocation" | "edit";
 
 const foodTabs = [
   { key: "quantity", label: "Alimentos" },
   { key: "calories", label: "Calorías" },
   { key: "macros", label: "Macros" },
+  { key: "distribution", label: "Dist" },
   { key: "allocation", label: "Alloc" },
 ] satisfies { key: FoodPanelTab; label: string }[];
 
@@ -74,6 +76,7 @@ const mealTabs = [
   { key: "menu", label: "Menú" },
   { key: "calories", label: "Calorías" },
   { key: "macros", label: "Macros" },
+  { key: "distribution", label: "Dist" },
   { key: "allocation", label: "Alloc" },
 ] satisfies { key: MealPanelTab; label: string }[];
 
@@ -138,8 +141,18 @@ function MacrosHeader({ leadingLabel }: { leadingLabel: string }) {
   return (
     <View style={[styles.row, styles.header]}>
       <PanelHeaderCell align="left" style={styles.gridLeadingCell}>{leadingLabel}</PanelHeaderCell>
+      <PanelHeaderCell style={styles.ppkValue}>PpK</PanelHeaderCell>
       {(["P", "C", "F"] as const).map((label) => <PanelHeaderCell key={label} style={styles.macroValue}>{label}</PanelHeaderCell>)}
-      <PanelHeaderCell style={styles.distributionCell}>P|C|F%</PanelHeaderCell>
+    </View>
+  );
+}
+
+function DistributionHeader({ leadingLabel }: { leadingLabel: string }) {
+  return (
+    <View style={[styles.row, styles.header]}>
+      <PanelHeaderCell align="left" style={styles.gridLeadingCell}>{leadingLabel}</PanelHeaderCell>
+      {(["P%", "C%", "F%"] as const).map((label) => <PanelHeaderCell key={label} style={styles.distributionValue}>{label}</PanelHeaderCell>)}
+      <PanelHeaderCell style={styles.distributionBar}>P|C|F</PanelHeaderCell>
     </View>
   );
 }
@@ -197,17 +210,35 @@ export function NutritionMacrosPanel({ items, leadingLabel }: { items: (FoodPane
       {items.map((item, index) => (
         <View key={item.id} style={[styles.row, index === items.length - 1 && styles.rowLast]}>
           <PanelItemName item={item} />
+          <View style={[styles.ppkValue, styles.ppkCell]}>
+            {item.proteinPerKilogram == null ? <Text style={styles.unavailableValue}>—</Text> : <ProteinPerKilogramBadge showUnit={false} style={styles.ppkBadge} value={item.proteinPerKilogram} />}
+          </View>
           <Text style={[styles.cell, styles.macroValue]}>{decimal(item.proteinGrams)}</Text>
           <Text style={[styles.cell, styles.macroValue]}>{decimal(item.carbsGrams)}</Text>
           <Text style={[styles.cell, styles.macroValue]}>{decimal(item.fatGrams)}</Text>
-          <MacroCalorieDistribution
-            carbsGrams={item.carbsGrams}
-            fatGrams={item.fatGrams}
-            proteinGrams={item.proteinGrams}
-            style={styles.distributionCell}
-          />
         </View>
       ))}
+    </PanelBody>
+  );
+}
+
+export function NutritionDistributionPanel({ items, leadingLabel }: { items: (FoodPanelItem | MealPanelItem)[]; leadingLabel: string }) {
+  if (items.length === 0) return <PanelEmptyState label="Todavía no hay distribución nutricional." />;
+  return (
+    <PanelBody>
+      <DistributionHeader leadingLabel={leadingLabel} />
+      {items.map((item, index) => {
+        const distribution = macroCalorieShares(item);
+        return (
+          <View key={item.id} style={[styles.row, index === items.length - 1 && styles.rowLast]}>
+            <PanelItemName item={item} />
+            <Text style={[styles.cell, styles.distributionValue, styles.proteinDistribution]}>{distribution.protein}%</Text>
+            <Text style={[styles.cell, styles.distributionValue, styles.carbsDistribution]}>{distribution.carbs}%</Text>
+            <Text style={[styles.cell, styles.distributionValue, styles.fatDistribution]}>{distribution.fat}%</Text>
+            <MacroCalorieDistribution {...item} style={styles.distributionBar} />
+          </View>
+        );
+      })}
     </PanelBody>
   );
 }
@@ -375,6 +406,7 @@ export function FoodPanels({ editing, items, preparation }: { editing?: FoodPane
       {activeTab === "quantity" ? <FoodQuantityPanel items={items} preparation={preparation} /> : null}
       {activeTab === "calories" ? <NutritionCaloriesPanel items={items} leadingLabel="Alimentos" /> : null}
       {activeTab === "macros" ? <NutritionMacrosPanel items={items} leadingLabel="Alimentos" /> : null}
+      {activeTab === "distribution" ? <NutritionDistributionPanel items={items} leadingLabel="Alimentos" /> : null}
       {activeTab === "allocation" ? <NutritionAllocationPanel items={items} leadingLabel="Alimentos" /> : null}
       {activeTab === "edit" && editing ? <FoodEditPanel editing={editing} items={items} key={items.map(({ id, quantity }) => `${id}:${quantity}`).join("|")} /> : null}
     </PanelSurface>
@@ -389,6 +421,7 @@ export function MealPanels({ editing, items, onOpenItem }: { editing?: MealPanel
       {activeTab === "menu" ? <MealMenuPanel items={items} onOpenItem={onOpenItem} /> : null}
       {activeTab === "calories" ? <NutritionCaloriesPanel items={items} leadingLabel="Comidas" /> : null}
       {activeTab === "macros" ? <NutritionMacrosPanel items={items} leadingLabel="Comidas" /> : null}
+      {activeTab === "distribution" ? <NutritionDistributionPanel items={items} leadingLabel="Comidas" /> : null}
       {activeTab === "allocation" ? <NutritionAllocationPanel items={items} leadingLabel="Comidas" /> : null}
       {activeTab === "edit" && editing ? <MealEditPanel editing={editing} items={items} key={items.map(({ id, time }) => `${id}:${time ?? ""}`).join("|")} /> : null}
     </PanelSurface>
@@ -413,7 +446,15 @@ const styles = StyleSheet.create({
   preparationMarker: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, borderColor: tokens.color.borderDefault, borderRadius: 10, borderWidth: 2, height: 20, justifyContent: "center", width: 20 },
   preparationMarkerChecked: { backgroundColor: tokens.color.success, borderRadius: 5, height: 10, width: 10 },
   macroValue: { flex: 1, minWidth: 0, textAlign: "center" },
-  distributionCell: { flex: 1.4, minWidth: 0 },
+  ppkValue: { flex: 0.9, minWidth: 0 },
+  ppkCell: { alignItems: "stretch", justifyContent: "center", paddingHorizontal: 2 },
+  ppkBadge: { height: 22, minHeight: 22 },
+  unavailableValue: { color: tokens.color.textMuted, fontSize: tokens.type.caption, textAlign: "center" },
+  distributionValue: { flex: 1, minWidth: 0, textAlign: "center" },
+  distributionBar: { flex: 1.4, minWidth: 0 },
+  proteinDistribution: { color: tokens.color.protein, fontWeight: tokens.weight.semibold },
+  carbsDistribution: { color: tokens.color.carbs, fontWeight: tokens.weight.semibold },
+  fatDistribution: { color: tokens.color.fat, fontWeight: tokens.weight.semibold },
   calorieValue: { textAlign: "center", width: 54 },
   calorieShare: { flex: 1, minWidth: 92, textAlign: "center" },
   allocationRow: { gap: tokens.spacing.sm },
