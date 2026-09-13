@@ -278,6 +278,9 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(mealAdherence, /action: nextCompleted \? "completed" : "skipped"/);
   assertSourceMatch(mealAdherence, /export function MealCompletionCard/);
   assertSourceMatch(mealAdherence, /export function MealNoteCard/);
+  assertSourceDoesNotMatch(mealAdherence, /Marca la casilla si cumpliste esta comida del programa/);
+  assertSourceMatch(mealAdherence, /completionCard: \{ backgroundColor: `\$\{tokens\.color\.meal\}1A`, borderColor: tokens\.color\.meal, borderRadius: tokens\.radius\.card, borderWidth: 2/);
+  assertSourceMatch(mealAdherence, /marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
   assertSourceMatch(mealAdherence, /<SectionHeading title="Nota de esta comida" \/>/);
   assertSourceMatch(mealAdherence, /controller\.editingNote \? <TextInput[\s\S]*styles\.noteText/);
   assertSourceDoesNotMatch(mealAdherence, /styles\.divider/);
