@@ -279,13 +279,16 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(mealAdherence, /export function MealCompletionCard/);
   assertSourceMatch(mealAdherence, /export function MealNoteCard/);
   assertSourceDoesNotMatch(mealAdherence, /Marca la casilla si cumpliste esta comida del programa/);
-  assertSourceMatch(mealAdherence, /completionCard: \{ backgroundColor: `\$\{tokens\.color\.meal\}1A`, borderColor: tokens\.color\.meal, borderRadius: tokens\.radius\.card, borderWidth: 2/);
+  assertSourceMatch(mealAdherence, /completionCard: \{ backgroundColor: `\$\{tokens\.color\.meal\}1A`, borderColor: tokens\.color\.meal, borderRadius: tokens\.radius\.card, borderWidth: 1/);
+  assertSourceMatch(mealAdherence, /minHeight: 54/);
   assertSourceMatch(mealAdherence, /marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
   assertSourceMatch(mealAdherence, /<SectionHeading title="Nota de esta comida" \/>/);
   assertSourceMatch(mealAdherence, /controller\.editingNote \? <TextInput[\s\S]*styles\.noteText/);
   assertSourceDoesNotMatch(mealAdherence, /styles\.divider/);
 
   assertSourceMatch(sharedEntityPanels, /preparationMarkerChecked/);
+  assertSourceMatch(sharedEntityPanels, /preparation\.isPrepared\(item\) \? <View style=\{styles\.preparationMarkerChecked\} \/> : null/);
+  assertSourceMatch(sharedEntityPanels, /preparationMarkerChecked: \{ backgroundColor: tokens\.color\.success, borderRadius: 5, height: 10, width: 10 \}/);
   assertSourceMatch(sharedEntityPanels, /accessibilityRole="checkbox"/);
   assertSourceMatch(sharedEntityPanels, /<PanelHeaderCell style=\{styles\.preparationValue\}>Listo<\/PanelHeaderCell>/);
   assertSourceDoesNotMatch(mealAdherence, /statusLabel|styles\.status/);
