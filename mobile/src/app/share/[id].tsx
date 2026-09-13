@@ -1,5 +1,4 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { ChevronRight } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
 
 import type { ApiEnvelope, ShareClaimResult, ShareResource } from "@/api/types";
@@ -9,12 +8,19 @@ import { EntityDetailPage, EntityDetailSection } from "@/components/details/enti
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { NutritionEntityCard } from "@/components/nutrition";
 import { FoodPanels, MealPanels, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
-import { Button, EntityCardAction, InlineNotice, LoadingState, Screen, SectionDivider } from "@/components/ui";
+import { Button, InlineNotice, LoadingState, Screen, SectionDivider } from "@/components/ui";
 import { appConfig } from "@/config/app-config";
-import { tokens } from "@/design/tokens";
 
 type ShareNutrition = NonNullable<ShareResource["snapshot"]>["nutrition"];
 type ShareMeal = NonNullable<NonNullable<ShareResource["snapshot"]>["meals"]>[number];
+type SavedShare = { entity: "dailyPlan" | "food" | "meal" | "program"; item_id: number };
+
+const libraryPathByEntity: Record<SavedShare["entity"], string> = {
+  dailyPlan: "daily-plans",
+  food: "foods",
+  meal: "meals",
+  program: "programs",
+};
 
 function nutrition(values: ShareNutrition) {
   const calories = values.calories || values.protein_grams * 4 + values.carbs_grams * 4 + values.fat_grams * 9;
@@ -74,7 +80,6 @@ export default function SharedResourceScreen() {
   const [resource, setResource] = useState<ShareResource | null>(null);
   const [loading, setLoading] = useState(true);
   const [claiming, setClaiming] = useState(false);
-  const [claimed, setClaimed] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -98,12 +103,13 @@ export default function SharedResourceScreen() {
 
   if (!id) return <Redirect href="/today" />;
 
-  const claim = async () => {
+  const saveToLibrary = async () => {
     setClaiming(true);
     setError(null);
     try {
-      await apiRequest<ShareClaimResult>(`/api/v1/shares/${id}/claims`, { method: "POST" });
-      setClaimed(true);
+      const claim = await apiRequest<ShareClaimResult>(`/api/v1/shares/${id}/claims`, { method: "POST" });
+      const saved = await apiRequest<SavedShare>(`/api/v1/shares/inbox/${claim.inbox_item_id}/save`, { method: "POST" });
+      router.replace(`/libraries/${libraryPathByEntity[saved.entity]}/${saved.item_id}` as Href);
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {
@@ -114,11 +120,6 @@ export default function SharedResourceScreen() {
   const snapshot = resource?.snapshot;
   const meals = snapshot?.meals ?? [];
   const mealItems = snapshot ? mealPanelItems(meals, snapshot.nutrition.calories) : [];
-  const reviewAction = claimed ? (
-    <EntityCardAction label="Ir al Inbox" onPress={() => router.replace("/inbox" as Href)} role="link">
-      <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
-    </EntityCardAction>
-  ) : undefined;
   return (
     <Screen headerMode="preserve">
       {loading ? <LoadingState label="Cargando contenido compartido…" /> : null}
@@ -126,7 +127,6 @@ export default function SharedResourceScreen() {
       {snapshot && resource?.subject_type === "daily_plan" ? (
         <>
           <EntityDetailPage
-            action={reviewAction}
             entity="dailyPlan"
             eyebrow="Plan diario compartido"
             indicators={[
@@ -158,16 +158,15 @@ export default function SharedResourceScreen() {
               </EntityDetailSection>
             </> : null}
           </EntityDetailPage>
-          {claimed ? <InlineNotice>El contenido está disponible en tu Inbox.</InlineNotice> : null}
         </>
       ) : null}
       {snapshot && resource?.subject_type !== "daily_plan" ? <InlineNotice>La vista detallada para este tipo de contenido aún no está disponible.</InlineNotice> : null}
-      {snapshot && !claimed ? status === "anonymous" ? (
+      {snapshot ? status === "anonymous" ? (
         <Button label="Iniciar sesión para agregar" onPress={() => router.push({ pathname: "/login", params: { returnTo: `/share/${id}` } })} />
       ) : resource?.claim_policy === "none" ? (
         <InlineNotice>Este enlace es sólo de lectura.</InlineNotice>
       ) : (
-        <Button label="Agregar a mi Inbox" loading={claiming} onPress={() => void claim()} />
+        <Button label="Guardar en mi biblioteca" loading={claiming} onPress={() => void saveToLibrary()} />
       ) : null}
     </Screen>
   );
