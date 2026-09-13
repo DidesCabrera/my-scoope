@@ -21,3 +21,36 @@ present human-oriented explanatory material in the staff Knowledge Center.
 
 These rules intentionally keep the human presentation layer from becoming a
 second authority or influencing Codex's understanding of the codebase.
+
+## Efficient validation policy
+
+Engineering confidence must increase at every validation stage without paying
+twice for the same evidence. Prefer the smallest check that can disprove the
+current change, and reserve broad suites for integration boundaries.
+
+- During product iteration, keep changes on a branch based on the current
+  `staging`, use the local development client and Fast Refresh, and run focused
+  tests, lint, or type checks for the affected area. Do not publish, open a PR,
+  deploy, or wait for the complete CI suite merely to obtain visual feedback.
+- For routine mobile iteration, use `scripts/ci_mobile_iteration.sh`. Use the
+  complete `scripts/ci_mobile_checks.sh` gate before integration.
+- Obtain visual or functional approval before starting the integration cycle
+  when the user is actively iterating on UI behavior.
+- Before integration, run the relevant complete local gate once, then publish
+  the exact tested commit and let the PR provide the repository-wide gate.
+- Reuse successful validation only when the content is provably identical and
+  the evidence comes from a trusted, required check. Commit messages, branch
+  names, or human assertions are not proof. Missing or unverifiable evidence
+  must fail safe by running the complete suite.
+- Post-merge validation must add different evidence: deployment health,
+  migrations, environment configuration, or a staging smoke test. Do not treat
+  a second execution of identical code tests as deployment validation.
+- Backend, schema, authentication, migration, dependency, or release changes
+  may justify broader and earlier checks. State the concrete risk instead of
+  defaulting every change to the slowest path.
+- Report which validation tier is running and its expected cost. If a check is
+  knowingly duplicated, explain why the earlier evidence cannot be reused.
+
+The target feedback loop is seconds to a few minutes for local iteration and a
+single complete CI cycle at integration. Efficiency never permits skipping the
+one validation layer that owns the risk being introduced.
