@@ -15,8 +15,19 @@ from notas.domain.models import (
 def meal_execution_state_for_day(day) -> list[dict]:
     latest_status_by_key: dict[str, CalendarizedMealExecution] = {}
     latest_note_by_key: dict[str, CalendarizedMealExecution] = {}
+    prepared_foods_by_meal: dict[str, set[str]] = {}
     events = day.meal_execution_events.all().order_by("created_at", "id")
     for event in events:
+        if event.action in {
+            CalendarizedMealExecution.ACTION_FOOD_PREPARED,
+            CalendarizedMealExecution.ACTION_FOOD_UNPREPARED,
+        }:
+            prepared = prepared_foods_by_meal.setdefault(event.meal_snapshot_key, set())
+            if event.action == CalendarizedMealExecution.ACTION_FOOD_PREPARED:
+                prepared.add(event.food_snapshot_key)
+            else:
+                prepared.discard(event.food_snapshot_key)
+            continue
         if event.action == CalendarizedMealExecution.ACTION_NOTE:
             latest_note_by_key[event.meal_snapshot_key] = event
             continue
@@ -37,6 +48,7 @@ def meal_execution_state_for_day(day) -> list[dict]:
                 "last_event_id": status_event.id if status_event else None,
                 "recorded_at": status_event.created_at if status_event else None,
                 "note": note_event.note if note_event else "",
+                "prepared_food_keys": sorted(prepared_foods_by_meal.get(meal_key, set())),
             }
         )
     return state

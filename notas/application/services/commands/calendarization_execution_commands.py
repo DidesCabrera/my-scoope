@@ -59,6 +59,22 @@ def _meal_keys(day: CalendarizedDay) -> set[str]:
     }
 
 
+def _food_keys(day: CalendarizedDay, meal_snapshot_key: str) -> set[str]:
+    meal = next(
+        (
+            item
+            for item in (day.plan_snapshot or {}).get("meals", [])
+            if isinstance(item, dict) and item.get("key") == meal_snapshot_key
+        ),
+        None,
+    )
+    return {
+        food.get("key")
+        for food in (meal or {}).get("foods", [])
+        if isinstance(food, dict) and food.get("key")
+    }
+
+
 @transaction.atomic
 def record_meal_execution(
     *,
@@ -68,6 +84,7 @@ def record_meal_execution(
     action: str,
     idempotency_key: str,
     note: str = "",
+    food_snapshot_key: str = "",
     occurred_at: datetime | None = None,
 ) -> CalendarizedMealExecution:
     idempotency_key = _clean_idempotency_key(idempotency_key)
@@ -77,6 +94,7 @@ def record_meal_execution(
             existing.calendarized_day_id == day_id
             and existing.meal_snapshot_key == meal_snapshot_key
             and existing.action == action
+            and existing.food_snapshot_key == food_snapshot_key
             and existing.calendarized_day.calendarization.user_id == user.id
         ):
             return existing
@@ -97,6 +115,14 @@ def record_meal_execution(
         raise ValueError("meal_snapshot_key_invalid")
     if action not in dict(CalendarizedMealExecution.ACTION_CHOICES):
         raise ValueError("meal_execution_action_invalid")
+    food_actions = {
+        CalendarizedMealExecution.ACTION_FOOD_PREPARED,
+        CalendarizedMealExecution.ACTION_FOOD_UNPREPARED,
+    }
+    if action in food_actions and food_snapshot_key not in _food_keys(day, meal_snapshot_key):
+        raise ValueError("food_snapshot_key_invalid")
+    if action not in food_actions and food_snapshot_key:
+        raise ValueError("food_snapshot_key_unexpected")
     clean_note = (note or "").strip()
     if len(clean_note) > 500:
         raise ValueError("meal_execution_note_too_long")
@@ -107,6 +133,7 @@ def record_meal_execution(
         action=action,
         idempotency_key=idempotency_key,
         note=clean_note,
+        food_snapshot_key=food_snapshot_key,
         occurred_at=occurred_at,
     )
 

@@ -1,12 +1,13 @@
 import { Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import * as Crypto from "expo-crypto";
 import { useCallback, useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
-import type { CalendarizedDayDetail, MealExecutionItem, MealSnapshot } from "@/api/types";
+import type { CalendarizedDayDetail, MealCheckInInput, MealExecutionItem, MealSnapshot, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { CalendarizedEntityActions } from "@/components/calendarization/calendarized-entity-actions";
-import { MealAdherenceCheckIn } from "@/components/calendarization/meal-adherence-check-in";
+import { MealCompletionCard, MealNoteCard, useMealAdherenceCheckIn } from "@/components/calendarization/meal-adherence-check-in";
 import { snapshotCalories, snapshotFoodPanelItems, snapshotMacroDistribution } from "@/components/calendarization/presentation-adapters";
 import { EntityDetailPage, EntityDetailSection, FoodDetailCardList } from "@/components/details";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
@@ -28,6 +29,34 @@ export default function CalendarizedMealDetailScreen() {
   const [actionsVisible, setActionsVisible] = useState(false);
   const setHeaderPresentation = useHeaderPresentation();
   const dayId = Number(id);
+  const adherence = useMealAdherenceCheckIn({ dayId, mealKey, onChange: setExecution });
+
+  async function togglePreparedFood(foodKey: string) {
+    const prepared = execution?.prepared_food_keys.includes(foodKey) ?? false;
+    const previous = execution;
+    setExecution((current) => ({
+      meal_key: mealKey,
+      status: current?.status ?? "planned",
+      last_event_id: current?.last_event_id ?? null,
+      recorded_at: current?.recorded_at ?? null,
+      note: current?.note ?? "",
+      prepared_food_keys: prepared
+        ? (current?.prepared_food_keys ?? []).filter((key) => key !== foodKey)
+        : [...(current?.prepared_food_keys ?? []), foodKey],
+    }));
+    try {
+      const payload: MealCheckInInput = {
+        action: prepared ? "food_unprepared" : "food_prepared",
+        food_snapshot_key: foodKey,
+        idempotency_key: Crypto.randomUUID(),
+      };
+      const updated = await apiRequest<TodayData>(`/api/v1/days/${dayId}/meals/${encodeURIComponent(mealKey)}/check-ins`, { body: JSON.stringify(payload), method: "POST" });
+      setExecution(updated.meal_execution.find((item) => item.meal_key === mealKey) ?? null);
+    } catch (nextError) {
+      setExecution(previous);
+      setError(userFacingError(nextError));
+    }
+  }
 
   const load = useCallback(async () => {
     if (!Number.isInteger(dayId) || dayId <= 0 || !mealKey) return;
@@ -81,6 +110,7 @@ export default function CalendarizedMealDetailScreen() {
       style={styles.screen}>
       <EntityDetailPage
         entity="meal"
+        beforeNutrition={<MealCompletionCard controller={adherence} />}
         completion={{
           completedCount: execution?.status === "completed" ? 1 : 0,
           noteCount: execution?.note.trim() ? 1 : 0,
@@ -97,7 +127,10 @@ export default function CalendarizedMealDetailScreen() {
         }}
         title={meal.name ?? "Comida"}>
         <EntityDetailSection title="Tabla de comparación entre alimentos">
-          <FoodPanels items={foods} />
+          <FoodPanels items={foods} preparation={adherence.available ? {
+            isPrepared: (food) => execution?.prepared_food_keys.includes(food.id) ?? false,
+            onToggle: (food) => void togglePreparedFood(food.id),
+          } : undefined} />
         </EntityDetailSection>
         <Button
           bleed
@@ -105,7 +138,7 @@ export default function CalendarizedMealDetailScreen() {
           onPress={() => router.push(pickerHref("food-to-calendarized-meal", { dayId, mealKey }))}
         />
         {foods.length ? <><SectionDivider /><EntityDetailSection detail={`${foods.length} alimentos`} title="Detalle de cada Alimento"><FoodDetailCardList items={foods} /></EntityDetailSection></> : null}
-        <MealAdherenceCheckIn dayId={dayId} mealKey={mealKey} onChange={setExecution} />
+        <MealNoteCard controller={adherence} />
       </EntityDetailPage>
     </ScrollView>
     <CalendarizedEntityActions

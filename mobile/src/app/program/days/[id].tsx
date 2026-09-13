@@ -1,10 +1,11 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import * as Crypto from "expo-crypto";
 import { ChevronRight } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
-import type { CalendarizedDayDetail, MealExecutionItem, MealSnapshot } from "@/api/types";
+import type { CalendarizedDayDetail, MealCheckInInput, MealExecutionItem, MealSnapshot, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { CalendarizedEntityActions } from "@/components/calendarization/calendarized-entity-actions";
 import { snapshotCalories, snapshotDailyPlanFoodPanelItems, snapshotFoodPanelItems, snapshotMacroDistribution, snapshotMealPanelItem } from "@/components/calendarization/presentation-adapters";
@@ -27,7 +28,7 @@ function completionFor(items: MealExecutionItem[]) {
   };
 }
 
-function CalendarizedMealCards({ dayId, mealExecution, meals }: { dayId: number; mealExecution: MealExecutionItem[]; meals: MealSnapshot[] }) {
+function CalendarizedMealCards({ dayId, mealExecution, meals, onTogglePrepared }: { dayId: number; mealExecution: MealExecutionItem[]; meals: MealSnapshot[]; onTogglePrepared(mealKey: string, foodKey: string): void }) {
   const router = useRouter();
   return (
     <View style={styles.mealCardList}>
@@ -66,7 +67,10 @@ function CalendarizedMealCards({ dayId, mealExecution, meals }: { dayId: number;
                 protein: { allocation: snapshotMacroDistribution(totals, "protein_g"), grams: totals?.protein_g ?? 0, perKilogram: totals?.protein_per_kilogram ?? null },
               }}
               title={meal.name ?? "Comida"}>
-              <FoodPanels items={foods} />
+              <FoodPanels items={foods} preparation={meal.key ? {
+                isPrepared: (food) => execution?.prepared_food_keys.includes(food.id) ?? false,
+                onToggle: (food) => onTogglePrepared(meal.key ?? "", food.id),
+              } : undefined} />
             </NutritionEntityCard>
           </View>
         );
@@ -85,6 +89,28 @@ export default function ProgramDayScreen() {
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const [actionsVisible, setActionsVisible] = useState(false);
   const setHeaderPresentation = useHeaderPresentation();
+
+  async function togglePreparedFood(mealKey: string, foodKey: string) {
+    if (!day) return;
+    const previous = day;
+    const execution = day.meal_execution.find((item) => item.meal_key === mealKey);
+    const prepared = execution?.prepared_food_keys.includes(foodKey) ?? false;
+    setDay({
+      ...day,
+      meal_execution: day.meal_execution.map((item) => item.meal_key !== mealKey ? item : {
+        ...item,
+        prepared_food_keys: prepared ? item.prepared_food_keys.filter((key) => key !== foodKey) : [...item.prepared_food_keys, foodKey],
+      }),
+    });
+    try {
+      const payload: MealCheckInInput = { action: prepared ? "food_unprepared" : "food_prepared", food_snapshot_key: foodKey, idempotency_key: Crypto.randomUUID() };
+      const updated = await apiRequest<TodayData>(`/api/v1/days/${day.id}/meals/${encodeURIComponent(mealKey)}/check-ins`, { body: JSON.stringify(payload), method: "POST" });
+      setDay((current) => current ? { ...current, meal_execution: updated.meal_execution } : current);
+    } catch (nextError) {
+      setDay(previous);
+      setError(userFacingError(nextError));
+    }
+  }
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -157,7 +183,7 @@ export default function ProgramDayScreen() {
             <>
               <SectionDivider />
               <EntityDetailSection detail={`${meals.length} comidas`} title="Detalle de cada Comida">
-                <CalendarizedMealCards dayId={day.id} mealExecution={day.meal_execution} meals={meals} />
+                <CalendarizedMealCards dayId={day.id} mealExecution={day.meal_execution} meals={meals} onTogglePrepared={(mealKey, foodKey) => void togglePreparedFood(mealKey, foodKey)} />
               </EntityDetailSection>
             </>
           ) : null}
