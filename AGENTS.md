@@ -32,8 +32,12 @@ current change, and reserve broad suites for integration boundaries.
   `staging`, use the local development client and Fast Refresh, and run focused
   tests, lint, or type checks for the affected area. Do not publish, open a PR,
   deploy, or wait for the complete CI suite merely to obtain visual feedback.
-- For routine mobile iteration, use `scripts/ci_mobile_iteration.sh`. Use the
-  complete `scripts/ci_mobile_checks.sh` gate before integration.
+- For a visual mobile adjustment, use `scripts/ci_mobile_visual_check.sh` with
+  only the directly related test file when one exists. It lints changed mobile
+  files only and must not run the global typecheck or full mobile test set.
+- Use `scripts/ci_mobile_iteration.sh` once when the user closes a mobile
+  refinement stage. Use the complete `scripts/ci_mobile_checks.sh` gate once
+  before integration.
 - Obtain visual or functional approval before starting the integration cycle
   when the user is actively iterating on UI behavior.
 - Before integration, run the relevant local gate once, then publish the exact
@@ -59,6 +63,10 @@ current change, and reserve broad suites for integration boundaries.
   defaulting every change to the slowest path.
 - Report which validation tier is running and its expected cost. If a check is
   knowingly duplicated, explain why the earlier evidence cannot be reused.
+- Do not run `ci_mobile_iteration.sh`, a global typecheck, or the complete mobile
+  test set after each visual change. Reload the development client immediately
+  after the focused check. Browser or staging workflows require a concrete need;
+  existing staging-backed data is not a reason to repeat them.
 
 The target feedback loop is seconds to a few minutes for local iteration and a
 single complete CI cycle at integration. Efficiency never permits skipping the

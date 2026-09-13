@@ -1,18 +1,76 @@
-import { type Href, Redirect, useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { ChevronRight } from "lucide-react-native";
+import { useCallback, useEffect, useState } from "react";
 
 import type { ApiEnvelope, ShareClaimResult, ShareResource } from "@/api/types";
 import { userFacingError } from "@/api/errors";
 import { useSession } from "@/auth/session-context";
-import { AppHeader, Button, Card, InlineNotice, Screen, SectionTitle, textStyles } from "@/components/ui";
+import { EntityDetailPage, EntityDetailSection } from "@/components/details/entity-detail-page";
+import { useHeaderPresentation } from "@/components/navigation/app-navigation";
+import { NutritionEntityCard } from "@/components/nutrition";
+import { FoodPanels, MealPanels, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
+import { Button, EntityCardAction, InlineNotice, LoadingState, Screen, SectionDivider } from "@/components/ui";
 import { appConfig } from "@/config/app-config";
 import { tokens } from "@/design/tokens";
+
+type ShareNutrition = NonNullable<ShareResource["snapshot"]>["nutrition"];
+type ShareMeal = NonNullable<NonNullable<ShareResource["snapshot"]>["meals"]>[number];
+
+function nutrition(values: ShareNutrition) {
+  const calories = values.calories || values.protein_grams * 4 + values.carbs_grams * 4 + values.fat_grams * 9;
+  return {
+    calories,
+    protein: { grams: values.protein_grams, allocation: calories > 0 ? values.protein_grams * 4 * 100 / calories : 0 },
+    carbs: { grams: values.carbs_grams, allocation: calories > 0 ? values.carbs_grams * 4 * 100 / calories : 0 },
+    fat: { grams: values.fat_grams, allocation: calories > 0 ? values.fat_grams * 9 * 100 / calories : 0 },
+  };
+}
+
+function foodPanelItems(meal: ShareMeal): FoodPanelItem[] {
+  return meal.foods.map((food, index) => {
+    const item = nutrition(food.nutrition);
+    return {
+      id: `shared-food-${index}`,
+      name: food.name,
+      quantity: food.quantity_grams,
+      quantityUnit: "g",
+      calories: item.calories,
+      calorieShare: meal.nutrition.calories > 0 ? item.calories * 100 / meal.nutrition.calories : 0,
+      proteinGrams: item.protein.grams,
+      carbsGrams: item.carbs.grams,
+      fatGrams: item.fat.grams,
+      proteinAllocation: item.protein.allocation,
+      carbsAllocation: item.carbs.allocation,
+      fatAllocation: item.fat.allocation,
+    };
+  });
+}
+
+function mealPanelItems(meals: ShareMeal[], planCalories: number): MealPanelItem[] {
+  return meals.map((meal, index) => {
+    const item = nutrition(meal.nutrition);
+    return {
+      id: String(index),
+      name: meal.name,
+      time: meal.time?.slice(0, 5) ?? undefined,
+      foods: meal.foods.map((food) => ({ name: food.name, quantity: food.quantity_grams, quantityUnit: "g" })),
+      calories: item.calories,
+      calorieShare: planCalories > 0 ? item.calories * 100 / planCalories : 0,
+      proteinGrams: item.protein.grams,
+      carbsGrams: item.carbs.grams,
+      fatGrams: item.fat.grams,
+      proteinAllocation: item.protein.allocation,
+      carbsAllocation: item.carbs.allocation,
+      fatAllocation: item.fat.allocation,
+    };
+  });
+}
 
 export default function SharedResourceScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { status, apiRequest } = useSession();
+  const setHeaderPresentation = useHeaderPresentation();
   const [resource, setResource] = useState<ShareResource | null>(null);
   const [loading, setLoading] = useState(true);
   const [claiming, setClaiming] = useState(false);
@@ -33,6 +91,11 @@ export default function SharedResourceScreen() {
     return () => { active = false; };
   }, [id]);
 
+  useFocusEffect(useCallback(() => {
+    setHeaderPresentation({ fallback: "/inbox", mode: "back", title: resource?.subject_type === "daily_plan" ? "Plan Diario Compartido" : "Contenido Compartido" });
+    return () => setHeaderPresentation({ mode: "default" });
+  }, [resource?.subject_type, setHeaderPresentation]));
+
   if (!id) return <Redirect href="/today" />;
 
   const claim = async () => {
@@ -49,80 +112,63 @@ export default function SharedResourceScreen() {
   };
 
   const snapshot = resource?.snapshot;
-  const summary = snapshot?.summary;
-  const summaryText = resource?.subject_type === "food"
-    ? "Valores nutricionales por 100 g"
-    : resource?.subject_type === "meal"
-      ? `${summary?.food_count ?? 0} alimentos`
-      : resource?.subject_type === "program"
-        ? `${summary?.duration_weeks ?? 0} semanas · ${summary?.filled_days ?? 0} días planificados`
-        : `${summary?.meal_count ?? 0} comidas · ${summary?.food_count ?? 0} alimentos`;
+  const meals = snapshot?.meals ?? [];
+  const mealItems = snapshot ? mealPanelItems(meals, snapshot.nutrition.calories) : [];
+  const reviewAction = claimed ? (
+    <EntityCardAction label="Ir al Inbox" onPress={() => router.replace("/inbox" as Href)} role="link">
+      <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
+    </EntityCardAction>
+  ) : undefined;
   return (
-    <Screen>
-      <AppHeader eyebrow="Compartido contigo" title={resource?.title ?? "Contenido compartido"} />
-      {loading ? <Text style={textStyles.muted}>Cargando contenido compartido…</Text> : null}
+    <Screen headerMode="preserve">
+      {loading ? <LoadingState label="Cargando contenido compartido…" /> : null}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-      {snapshot ? (
+      {snapshot && resource?.subject_type === "daily_plan" ? (
         <>
-          <Card accent={tokens.color.dailyPlan}>
-            <Text style={styles.calories}>{snapshot.nutrition.calories.toFixed(0)} kcal</Text>
-            <View style={styles.macros}>
-              <Text style={styles.macro}>P {snapshot.nutrition.protein_grams.toFixed(1)} g</Text>
-              <Text style={styles.macro}>C {snapshot.nutrition.carbs_grams.toFixed(1)} g</Text>
-              <Text style={styles.macro}>G {snapshot.nutrition.fat_grams.toFixed(1)} g</Text>
-            </View>
-            <Text style={textStyles.muted}>{summaryText}</Text>
-          </Card>
-          {snapshot.meals ? <Card>
-            <SectionTitle detail={`${snapshot.meals.length}`} title="Comidas" />
-            {snapshot.meals.map((meal, index) => (
-              <View key={`${meal.name}-${index}`} style={styles.meal}>
-                <View style={styles.mealHeading}><Text style={styles.mealName}>{meal.name}</Text><Text style={textStyles.caption}>{meal.time ?? "Sin hora"}</Text></View>
-                <Text style={textStyles.muted}>{meal.nutrition.calories.toFixed(0)} kcal · {meal.foods.length} alimentos</Text>
-              </View>
-            ))}
-          </Card> : null}
-          {snapshot.foods ? <Card>
-            <SectionTitle detail={`${snapshot.foods.length}`} title="Alimentos" />
-            {snapshot.foods.map((food, index) => (
-              <View key={`${food.name}-${index}`} style={styles.meal}>
-                <View style={styles.mealHeading}><Text style={styles.mealName}>{food.name}</Text><Text style={textStyles.caption}>{food.quantity_grams.toFixed(0)} g</Text></View>
-                <Text style={textStyles.muted}>{food.nutrition.calories.toFixed(0)} kcal</Text>
-              </View>
-            ))}
-          </Card> : null}
-          {snapshot.days ? <Card>
-            <SectionTitle detail={`${snapshot.days.length}`} title="Días planificados" />
-            {snapshot.days.map((day) => (
-              <View key={`${day.week_number}-${day.day_number}`} style={styles.meal}>
-                <Text style={styles.mealName}>Semana {day.week_number} · Día {day.day_number}</Text>
-                <Text style={textStyles.muted}>{day.plan.subject.title} · {day.plan.nutrition.calories.toFixed(0)} kcal</Text>
-              </View>
-            ))}
-          </Card> : null}
-          {claimed ? (
-            <>
-              <InlineNotice>El contenido está disponible en tu Inbox.</InlineNotice>
-              <Button label="Ir al Inbox" onPress={() => router.replace("/inbox" as Href)} />
-            </>
-          ) : status === "anonymous" ? (
-            <Button label="Iniciar sesión para agregar" onPress={() => router.push({ pathname: "/login", params: { returnTo: `/share/${id}` } })} />
-          ) : resource?.claim_policy === "none" ? (
-            <InlineNotice>Este enlace es sólo de lectura.</InlineNotice>
-          ) : (
-            <Button label="Agregar a mi Inbox" loading={claiming} onPress={() => void claim()} />
-          )}
+          <EntityDetailPage
+            action={reviewAction}
+            entity="dailyPlan"
+            eyebrow="Plan diario compartido"
+            indicators={[
+              { icon: "meal", label: "comidas", value: meals.length },
+              { icon: "food", label: "alimentos", value: meals.reduce((total, meal) => total + meal.foods.length, 0) },
+            ]}
+            nutrition={nutrition(snapshot.nutrition)}
+            title={resource.title}>
+            <EntityDetailSection detail={`${meals.length} comidas`} title="Composición">
+              <MealPanels items={mealItems} />
+            </EntityDetailSection>
+            {meals.length ? <>
+              <SectionDivider />
+              <EntityDetailSection title="Detalle de cada Comida">
+                {meals.map((meal, index) => (
+                  <NutritionEntityCard
+                    entity="meal"
+                    eyebrow={`Comida ${index + 1}`}
+                    indicators={[
+                      { icon: "food", label: "alimentos", value: meal.foods.length },
+                      ...(meal.time ? [{ icon: "clock" as const, iconPosition: "leading" as const, label: "hora", tone: "surfaceCard" as const, value: meal.time.slice(0, 5) }] : []),
+                    ]}
+                    key={`${meal.name}-${index}`}
+                    nutrition={nutrition(meal.nutrition)}
+                    title={meal.name}>
+                    <FoodPanels items={foodPanelItems(meal)} />
+                  </NutritionEntityCard>
+                ))}
+              </EntityDetailSection>
+            </> : null}
+          </EntityDetailPage>
+          {claimed ? <InlineNotice>El contenido está disponible en tu Inbox.</InlineNotice> : null}
         </>
+      ) : null}
+      {snapshot && resource?.subject_type !== "daily_plan" ? <InlineNotice>La vista detallada para este tipo de contenido aún no está disponible.</InlineNotice> : null}
+      {snapshot && !claimed ? status === "anonymous" ? (
+        <Button label="Iniciar sesión para agregar" onPress={() => router.push({ pathname: "/login", params: { returnTo: `/share/${id}` } })} />
+      ) : resource?.claim_policy === "none" ? (
+        <InlineNotice>Este enlace es sólo de lectura.</InlineNotice>
+      ) : (
+        <Button label="Agregar a mi Inbox" loading={claiming} onPress={() => void claim()} />
       ) : null}
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  calories: { color: tokens.color.textMain, fontSize: 34, fontWeight: "900" },
-  macro: { color: tokens.color.textMain, fontSize: 14, fontWeight: "800" },
-  macros: { flexDirection: "row", gap: tokens.spacing.lg },
-  meal: { borderTopColor: tokens.color.borderSoft, borderTopWidth: 1, gap: tokens.spacing.xs, paddingTop: tokens.spacing.md },
-  mealHeading: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
-  mealName: { color: tokens.color.textMain, fontSize: 16, fontWeight: "800" },
-});
