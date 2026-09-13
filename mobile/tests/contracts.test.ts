@@ -272,7 +272,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     "utf8",
   );
   assertSourceMatch(mealAdherence, /accessibilityRole="checkbox"/);
-  assertSourceMatch(mealAdherence, /onPress=\{\(\) => void controller\.saveStatus\(!controller\.completed\)\}/);
+  assertSourceMatch(mealAdherence, /onToggle=\{\(nextCompleted\) => void controller\.saveStatus\(nextCompleted\)\}/);
   assertSourceMatch(mealAdherence, /action: "note"/);
   assertSourceMatch(mealAdherence, /Guardar nota/);
   assertSourceMatch(mealAdherence, /Editar nota/);
@@ -281,6 +281,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(mealAdherence, /maxLength=\{500\}/);
   assertSourceMatch(mealAdherence, /action: nextCompleted \? "completed" : "skipped"/);
   assertSourceMatch(mealAdherence, /export function MealCompletionCard/);
+  assertSourceMatch(mealAdherence, /export function MealCompletionToggleCard/);
+  assertSourceMatch(mealAdherence, /onToggle\(!completed\)/);
   assertSourceMatch(mealAdherence, /export function MealNoteCard/);
   assertSourceDoesNotMatch(mealAdherence, /Marca la casilla si cumpliste esta comida del programa/);
   assertSourceMatch(mealAdherence, /<MealCompletionSurface>/);
@@ -488,6 +490,9 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(calendarizedDayDetail, /relationKey: meal\.id/);
   assertSourceMatch(calendarizedDayDetail, /\/meals\/order/);
   assertSourceMatch(calendarizedDayDetail, /beforeNutrition=\{<DailyMealCompletionCard mealExecution=\{day\.meal_execution\} mealKeys=\{meals\.map\(\(meal\) => meal\.key\)\} \/>\}/);
+  assertSourceMatch(calendarizedDayDetail, /beforeNutrition=\{meal\.key \? <MealCompletionToggleCard/);
+  assertSourceMatch(calendarizedDayDetail, /onToggleCompleted=\{\(mealKey, completed\) => void toggleMealCompletion\(mealKey, completed\)\}/);
+  assertSourceMatch(calendarizedDayDetail, /action: completed \? "completed" : "skipped"/);
   assertSourceMatch(calendarizedDayDetail, /perKilogram: totals\?\.protein_per_kilogram \?\? null/);
   assertSourceMatch(calendarizedDayDetail, /<SectionDivider \/>[\s\S]*title="Detalle de cada Comida"/);
   assertSourceMatch(calendarizedDayDetail, /snapshotDailyPlanFoodPanelItems\(meals\)/);

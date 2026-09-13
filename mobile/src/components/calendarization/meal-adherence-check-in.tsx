@@ -89,15 +89,19 @@ export function useMealAdherenceCheckIn({ dayId, mealKey, onChange }: Props) {
 
 export type MealAdherenceController = ReturnType<typeof useMealAdherenceCheckIn>;
 
-export function MealCompletionCard({ controller }: { controller: MealAdherenceController }) {
-  if (!controller.available) return null;
+export function MealCompletionToggleCard({ available = true, completed, error, onToggle, saving = false }: { available?: boolean; completed: boolean; error?: string | null; onToggle(nextCompleted: boolean): void; saving?: boolean }) {
+  if (!available) return null;
   return <MealCompletionSurface>
-    <Pressable accessibilityLabel="Comida cumplida" accessibilityRole="checkbox" accessibilityState={{ checked: controller.completed, disabled: controller.savingStatus }} disabled={controller.savingStatus} onPress={() => void controller.saveStatus(!controller.completed)} style={({ pressed }) => [styles.completionRow, controller.savingStatus && styles.saving, pressed && styles.pressed]}>
+    <Pressable accessibilityLabel="Comida cumplida" accessibilityRole="checkbox" accessibilityState={{ checked: completed, disabled: saving }} disabled={saving} onPress={() => onToggle(!completed)} style={({ pressed }) => [styles.completionRow, saving && styles.saving, pressed && styles.pressed]}>
       <Text style={styles.completionLabel}>Comida cumplida</Text>
-      <View style={[styles.checkbox, controller.completed && styles.checkboxChecked]}>{controller.completed ? <Check color={tokens.color.entityIconForeground} size={17} strokeWidth={3} /> : null}</View>
+      <View style={[styles.checkbox, completed && styles.checkboxChecked]}>{completed ? <Check color={tokens.color.entityIconForeground} size={17} strokeWidth={3} /> : null}</View>
     </Pressable>
-    {controller.error ? <InlineNotice tone="error">{controller.error}</InlineNotice> : null}
+    {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
   </MealCompletionSurface>;
+}
+
+export function MealCompletionCard({ controller }: { controller: MealAdherenceController }) {
+  return <MealCompletionToggleCard available={controller.available} completed={controller.completed} error={controller.error} onToggle={(nextCompleted) => void controller.saveStatus(nextCompleted)} saving={controller.savingStatus} />;
 }
 
 export function MealNoteCard({ controller }: { controller: MealAdherenceController }) {

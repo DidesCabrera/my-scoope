@@ -8,6 +8,7 @@ import { userFacingError } from "@/api/errors";
 import type { CalendarizedDayDetail, MealCheckInInput, MealExecutionItem, MealSnapshot, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { CalendarizedEntityActions } from "@/components/calendarization/calendarized-entity-actions";
+import { MealCompletionToggleCard } from "@/components/calendarization/meal-adherence-check-in";
 import { DailyMealCompletionCard } from "@/components/calendarization/meal-completion-summary";
 import { snapshotCalories, snapshotDailyPlanFoodPanelItems, snapshotFoodPanelItems, snapshotMacroDistribution, snapshotMealPanelItem } from "@/components/calendarization/presentation-adapters";
 import { EntityDetailPage, EntityDetailSection } from "@/components/details";
@@ -29,7 +30,7 @@ function completionFor(items: MealExecutionItem[]) {
   };
 }
 
-function CalendarizedMealCards({ dayId, mealExecution, meals, onTogglePrepared }: { dayId: number; mealExecution: MealExecutionItem[]; meals: MealSnapshot[]; onTogglePrepared(mealKey: string, foodKey: string): void }) {
+function CalendarizedMealCards({ completionError, dayId, mealExecution, meals, onToggleCompleted, onTogglePrepared, savingMealKey }: { completionError: { mealKey: string; message: string } | null; dayId: number; mealExecution: MealExecutionItem[]; meals: MealSnapshot[]; onToggleCompleted(mealKey: string, completed: boolean): void; onTogglePrepared(mealKey: string, foodKey: string): void; savingMealKey: string | null }) {
   const router = useRouter();
   return (
     <View style={styles.mealCardList}>
@@ -67,6 +68,7 @@ function CalendarizedMealCards({ dayId, mealExecution, meals, onTogglePrepared }
                 fat: { allocation: snapshotMacroDistribution(totals, "fat_g"), grams: totals?.fat_g ?? 0 },
                 protein: { allocation: snapshotMacroDistribution(totals, "protein_g"), grams: totals?.protein_g ?? 0, perKilogram: totals?.protein_per_kilogram ?? null },
               }}
+              beforeNutrition={meal.key ? <MealCompletionToggleCard completed={execution?.status === "completed"} error={completionError?.mealKey === meal.key ? completionError.message : null} onToggle={(completed) => onToggleCompleted(meal.key ?? "", completed)} saving={savingMealKey != null} /> : null}
               title={meal.name ?? "Comida"}>
               <FoodPanels items={foods} preparation={meal.key ? {
                 isPrepared: (food) => execution?.prepared_food_keys.includes(food.id) ?? false,
@@ -89,7 +91,33 @@ export default function ProgramDayScreen() {
   const [error, setError] = useState<string | null>(null);
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const [actionsVisible, setActionsVisible] = useState(false);
+  const [savingMealKey, setSavingMealKey] = useState<string | null>(null);
+  const [completionError, setCompletionError] = useState<{ mealKey: string; message: string } | null>(null);
   const setHeaderPresentation = useHeaderPresentation();
+
+  async function toggleMealCompletion(mealKey: string, completed: boolean) {
+    if (!day || savingMealKey) return;
+    const previous = day;
+    setSavingMealKey(mealKey);
+    setCompletionError(null);
+    setDay({
+      ...day,
+      meal_execution: day.meal_execution.map((item) => item.meal_key === mealKey ? {
+        ...item,
+        status: completed ? "completed" : "skipped",
+      } : item),
+    });
+    try {
+      const payload: MealCheckInInput = { action: completed ? "completed" : "skipped", idempotency_key: Crypto.randomUUID() };
+      const updated = await apiRequest<TodayData>(`/api/v1/days/${day.id}/meals/${encodeURIComponent(mealKey)}/check-ins`, { body: JSON.stringify(payload), method: "POST" });
+      setDay((current) => current ? { ...current, meal_execution: updated.meal_execution } : current);
+    } catch (nextError) {
+      setDay(previous);
+      setCompletionError({ mealKey, message: userFacingError(nextError) });
+    } finally {
+      setSavingMealKey(null);
+    }
+  }
 
   async function togglePreparedFood(mealKey: string, foodKey: string) {
     if (!day) return;
@@ -203,7 +231,7 @@ export default function ProgramDayScreen() {
             <>
               <SectionDivider />
               <EntityDetailSection detail={`${meals.length} comidas`} title="Detalle de cada Comida">
-                <CalendarizedMealCards dayId={day.id} mealExecution={day.meal_execution} meals={meals} onTogglePrepared={(mealKey, foodKey) => void togglePreparedFood(mealKey, foodKey)} />
+                <CalendarizedMealCards completionError={completionError} dayId={day.id} mealExecution={day.meal_execution} meals={meals} onToggleCompleted={(mealKey, completed) => void toggleMealCompletion(mealKey, completed)} onTogglePrepared={(mealKey, foodKey) => void togglePreparedFood(mealKey, foodKey)} savingMealKey={savingMealKey} />
               </EntityDetailSection>
             </>
           ) : null}
