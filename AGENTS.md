@@ -36,8 +36,17 @@ current change, and reserve broad suites for integration boundaries.
   complete `scripts/ci_mobile_checks.sh` gate before integration.
 - Obtain visual or functional approval before starting the integration cycle
   when the user is actively iterating on UI behavior.
-- Before integration, run the relevant complete local gate once, then publish
-  the exact tested commit and let the PR provide the repository-wide gate.
+- Before integration, run the relevant local gate once, then publish the exact
+  tested commit. A direct push to `staging` is allowed when remote staging is
+  genuinely needed; CI selects the `docs`, `mobile`, `staging-fast`, or `full`
+  tier from the changed paths. Ordinary and mixed application work uses
+  `staging-fast`; migrations, authentication, billing, dependencies, release
+  configuration, CI infrastructure, and other explicitly critical paths use
+  `full` even on `staging`.
+- `main` is a strict boundary: integrate through a PR, require the repository
+  checks, and always use the `full` tier. Do not repeat the same code suite
+  after merging the already validated PR; use deployment checks for the
+  post-merge evidence instead.
 - Reuse successful validation only when the content is provably identical and
   the evidence comes from a trusted, required check. Commit messages, branch
   names, or human assertions are not proof. Missing or unverifiable evidence

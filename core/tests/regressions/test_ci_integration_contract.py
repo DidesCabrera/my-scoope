@@ -6,12 +6,15 @@ ROOT = Path(__file__).resolve().parents[3]
 
 
 class CiIntegrationContractTests(SimpleTestCase):
-    def test_proposed_changes_run_from_staging_pushes_and_pull_requests(self):
+    def test_staging_pushes_are_tiered_and_main_is_validated_once_by_pull_request(self):
         workflow = (ROOT / ".github/workflows/django-ci.yml").read_text()
 
         self.assertIn("  pull_request:", workflow)
         self.assertIn("      - staging", workflow)
-        self.assertIn("      - main", workflow)
+        self.assertNotIn("      - main\n", workflow)
+        self.assertIn('if [[ "$BASE_REF" == "main" || "$REF_NAME" == "main" ]]', workflow)
+        self.assertIn("name: Validation summary", workflow)
+        self.assertIn("scripts/ci_change_scope.sh", workflow)
 
     def test_ci_checks_migration_drift_and_repository_hygiene(self):
         aggregate_script = (ROOT / "scripts/ci_django_checks.sh").read_text()
@@ -20,6 +23,7 @@ class CiIntegrationContractTests(SimpleTestCase):
         self.assertIn("scripts/ci_fast_checks.sh", aggregate_script)
         self.assertIn("scripts/ci_django_full_suite.sh", aggregate_script)
         self.assertIn("scripts/check_repository_hygiene.sh", fast_script)
+        self.assertIn("scripts/test_ci_change_scope.sh", fast_script)
         self.assertIn("scripts/check_frontend_debt.py", fast_script)
         self.assertIn("scripts/check_backend_debt.py", fast_script)
         self.assertIn("scripts/check_e2e_contract.py", fast_script)
