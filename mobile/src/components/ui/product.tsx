@@ -47,9 +47,9 @@ export type CompletionIndicatorCounts = {
   noteCount?: number;
 };
 
-export function GuideMetric({ icon, label, value }: { icon?: "weight"; label?: string; value: string }) {
+export function GuideMetric({ icon, label, tone = "default", value }: { icon?: "weight"; label?: string; tone?: "default" | "ppk"; value: string }) {
   return (
-    <View accessibilityLabel={label ? `${label}: ${value}` : value} accessible style={[styles.guideMetric, !label && styles.guideMetricValueOnly]}>
+    <View accessibilityLabel={label ? `${label}: ${value}` : value} accessible style={[styles.guideMetric, !label && styles.guideMetricValueOnly, tone === "ppk" && styles.guideMetricPpk]}>
       <View style={styles.guideMetricCopy}>
         {label ? <Text style={styles.guideMetricLabel}>{label}</Text> : null}
         <View style={styles.guideMetricValueRow}>
@@ -460,6 +460,7 @@ const styles = StyleSheet.create({
   guideMetricLabel: { color: tokens.color.textMuted, fontSize: 10, fontWeight: tokens.weight.regular, lineHeight: 12, textAlign: "right" },
   guideMetricValue: { color: tokens.color.textMain, fontSize: 17, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.semibold, lineHeight: 20, textAlign: "right" },
   guideMetricValueOnly: { borderRadius: tokens.radius.lg, minHeight: 40 },
+  guideMetricPpk: { backgroundColor: `${tokens.color.ppk}1A`, borderColor: tokens.color.ppk, borderWidth: 1 },
   guideMetricValueRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs },
   entityCardPanelSlot: { minWidth: 0 },
   cardHeader: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },

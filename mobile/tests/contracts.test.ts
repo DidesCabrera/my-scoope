@@ -369,7 +369,9 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceDoesNotMatch(activeProgramOverview, /eyebrow="Programa en curso"/);
   assertSourceMatch(activeProgramOverview, /SectionHeading icon=\{<Activity[^>]*>\} title="Métricas de activación"/);
   assertSourceMatch(activeProgramOverview, /embedded \? <DetailLinkRow[\s\S]*router\.push\("\/program" as Href\)/);
-  assertSourceMatch(activeProgramOverview, /indicators=\{\[\.\.\.\(embedded \? \[\] : program\.indicators\), \{ icon: "week", iconPosition: "leading", label: "periodo", tone: "surfaceMuted"/);
+  assertSourceMatch(activeProgramOverview, /activeIndicators = program\.indicators\.map/);
+  assertSourceMatch(activeProgramOverview, /indicator\.icon === "week"[\s\S]*?icon: undefined[\s\S]*?Number\(indicator\.value\) === 1 \? "SEMANA" : "SEMANAS"/);
+  assertSourceMatch(activeProgramOverview, /indicators=\{\[\.\.\.\(embedded \? \[\] : activeIndicators\), \{ icon: "week", iconPosition: "leading", label: "periodo", tone: "surfaceMuted"/);
   assertSourceMatch(activeProgramOverview, /value: `\$\{compactDateLabel\(calendarization\.start_date\)\} — \$\{compactDateLabel\(calendarization\.end_date\)\}`/);
   assertSourceMatch(activeProgramOverview, /export function ProgramActiveHomeOverview[\s\S]*<ProgramActiveOverview \{\.\.\.props\} embedded/);
   assertSourceMatch(activeProgramOverview, /embedded[\s\S]*<Card accent=\{tokens\.color\.program\} style=\{styles\.content\}>\{content\}<\/Card>/);
@@ -451,9 +453,10 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(gallery, /MI PROGRAMA ACTIVO · FECHAS \+ PLANES/);
   assertSourceMatch(todayScreen, /<ProgramActiveHomeOverview/);
   assertSourceMatch(todayScreen, /alignment="center"/);
-  assertSourceMatch(todayScreen, /<GuideMetric icon="weight" value=\{`\$\{displayWeight\(currentWeightKg\)\} kg`\} \/>/);
+  assertSourceMatch(todayScreen, /<GuideMetric icon="weight" tone="ppk" value=\{`\$\{displayWeight\(currentWeightKg\)\} kg`\} \/>/);
   assertSourceDoesNotMatch(todayScreen, /GuideMetric label="Peso actual"/);
   assertSourceMatch(productUiSourceForIndicators, /guideMetricValueOnly: \{ borderRadius: tokens\.radius\.lg, minHeight: 40 \}/);
+  assertSourceMatch(productUiSourceForIndicators, /guideMetricPpk: \{ backgroundColor: `\$\{tokens\.color\.ppk\}1A`, borderColor: tokens\.color\.ppk, borderWidth: 1 \}/);
   assertSourceMatch(todayScreen, /apiRequest<WeightListData>\("\/api\/v1\/weights\?limit=1"\)/);
   assertSourceMatch(todayScreen, /latestWeightKg \?\? profile\?\.current_weight_kg \?\? today\?\.measurements\?\.latest_weight_kg/);
   assertSourceMatch(todayScreen, /displayWeight\(currentWeightKg\)/);
