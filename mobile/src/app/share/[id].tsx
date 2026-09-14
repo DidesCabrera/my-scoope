@@ -1,7 +1,7 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 
-import type { ApiEnvelope, ShareClaimResult, ShareResource } from "@/api/types";
+import type { ApiEnvelope, ShareClaimResult, ShareResource, SharingInboxData } from "@/api/types";
 import { userFacingError } from "@/api/errors";
 import { useSession } from "@/auth/session-context";
 import { EntityDetailPage, EntityDetailSection } from "@/components/details/entity-detail-page";
@@ -80,6 +80,7 @@ export default function SharedResourceScreen() {
   const [resource, setResource] = useState<ShareResource | null>(null);
   const [loading, setLoading] = useState(true);
   const [claiming, setClaiming] = useState(false);
+  const [inboxState, setInboxState] = useState<{ id: number; isSaved: boolean } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -96,6 +97,19 @@ export default function SharedResourceScreen() {
     return () => { active = false; };
   }, [id]);
 
+  useEffect(() => {
+    if (!id || status !== "authenticated") return;
+    let active = true;
+    setInboxState(null);
+    void apiRequest<SharingInboxData>("/api/v1/shares/inbox")
+      .then((inbox) => {
+        const item = inbox.items.find((candidate) => candidate.resource_id === id);
+        if (active && item) setInboxState({ id: item.id, isSaved: item.is_saved });
+      })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, [apiRequest, id, status]);
+
   useFocusEffect(useCallback(() => {
     setHeaderPresentation({ fallback: "/inbox", mode: "back", title: resource?.subject_type === "daily_plan" ? "Plan Diario Compartido" : "Contenido Compartido" });
     return () => setHeaderPresentation({ mode: "default" });
@@ -107,8 +121,8 @@ export default function SharedResourceScreen() {
     setClaiming(true);
     setError(null);
     try {
-      const claim = await apiRequest<ShareClaimResult>(`/api/v1/shares/${id}/claims`, { method: "POST" });
-      const saved = await apiRequest<SavedShare>(`/api/v1/shares/inbox/${claim.inbox_item_id}/save`, { method: "POST" });
+      const inboxItemId = inboxState?.id ?? (await apiRequest<ShareClaimResult>(`/api/v1/shares/${id}/claims`, { method: "POST" })).inbox_item_id;
+      const saved = await apiRequest<SavedShare>(`/api/v1/shares/inbox/${inboxItemId}/save`, { method: "POST" });
       router.replace(`/libraries/${libraryPathByEntity[saved.entity]}/${saved.item_id}` as Href);
     } catch (nextError) {
       setError(userFacingError(nextError));
@@ -166,7 +180,12 @@ export default function SharedResourceScreen() {
       ) : resource?.claim_policy === "none" ? (
         <InlineNotice>Este enlace es sólo de lectura.</InlineNotice>
       ) : (
-        <Button label="Guardar en mi biblioteca" loading={claiming} onPress={() => void saveToLibrary()} />
+        <Button
+          label={inboxState?.isSaved ? "Abrir en mi biblioteca" : "Guardar en mi biblioteca"}
+          loading={claiming}
+          onPress={() => void saveToLibrary()}
+          variant={inboxState?.isSaved ? "secondary" : "primary"}
+        />
       ) : null}
     </Screen>
   );
