@@ -1,4 +1,5 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { ChevronRight } from "lucide-react-native";
 import { useCallback, useEffect, useState } from "react";
 
 import type { ApiEnvelope, ShareClaimResult, ShareResource, SharingInboxData } from "@/api/types";
@@ -8,8 +9,9 @@ import { EntityDetailPage, EntityDetailSection } from "@/components/details/enti
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { NutritionEntityCard } from "@/components/nutrition";
 import { FoodPanels, MealPanels } from "@/components/panels";
-import { Button, InlineNotice, LoadingState, Screen, SectionDivider } from "@/components/ui";
+import { Button, EntityCardAction, InlineNotice, LoadingState, Screen, SectionDivider } from "@/components/ui";
 import { appConfig } from "@/config/app-config";
+import { tokens } from "@/design/tokens";
 import { sharedFoodPanelItems, sharedMealPanelItems, sharedNutrition } from "@/sharing/presentation";
 
 type SavedShare = { entity: "dailyPlan" | "food" | "meal" | "program"; item_id: number };
@@ -106,6 +108,11 @@ export default function SharedResourceScreen() {
               <EntityDetailSection title="Detalle de cada Comida">
                 {meals.map((meal, index) => (
                   <NutritionEntityCard
+                    actions={(
+                      <EntityCardAction label={`Ver detalle de ${meal.name}`} onPress={() => router.push(`/share/${id}/meals/${index}` as Href)} role="link">
+                        <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
+                      </EntityCardAction>
+                    )}
                     entity="meal"
                     eyebrow={`Comida ${index + 1}`}
                     indicators={[
