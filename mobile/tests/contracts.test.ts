@@ -211,7 +211,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(calendarizedPlanning, /isToday: day\.calendar_date === localDate\(\)/);
   assertSourceMatch(calendarizedPlanning, /<SectionDivider spacing="compact" tone="soft" \/>/);
   assertSourceMatch(calendarizedPlanning, /title="Alimentos en esta semana"/);
-  assertSourceMatch(calendarizedPlanning, /<FoodPanels items=\{weekFoods\} \/>/);
+  assertSourceMatch(calendarizedPlanning, /<FoodPanels items=\{weekFoods\} onOpenItem=/);
 
   const calendarizedDailyPlanCard = await readTestFile(
     path.resolve(process.cwd(), "src/components/calendarization/calendarized-daily-plan-card.tsx"),
@@ -502,7 +502,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     path.resolve(process.cwd(), "src/app/program/days/[id].tsx"),
     "utf8",
   );
-  assertSourceMatch(calendarizedDayDetail, /<FoodPanels items=\{foods\} \/>/);
+  assertSourceMatch(calendarizedDayDetail, /<FoodPanels items=\{foods\} onOpenItem=/);
   assertSourceMatch(calendarizedDayDetail, /<MealPanels\s+editing=\{\{/);
   assertSourceMatch(calendarizedDayDetail, /relationKey: meal\.id/);
   assertSourceMatch(calendarizedDayDetail, /\/meals\/order/);
@@ -513,7 +513,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(calendarizedDayDetail, /perKilogram: totals\?\.protein_per_kilogram \?\? null/);
   assertSourceMatch(calendarizedDayDetail, /<SectionDivider \/>[\s\S]*title="Detalle de cada Comida"/);
   assertSourceMatch(calendarizedDayDetail, /snapshotDailyPlanFoodPanelItems\(meals\)/);
-  assertSourceMatch(calendarizedDayDetail, /<SectionDivider \/>[\s\S]*title="Alimentos en este plan diario"[\s\S]*<FoodPanels items=\{foods\} \/>/);
+  assertSourceMatch(calendarizedDayDetail, /<SectionDivider \/>[\s\S]*title="Alimentos en este plan diario"[\s\S]*<FoodPanels items=\{foods\} onOpenItem=/);
 
   assertSourceMatch(sharedEntityPanels, /PanelItemName\(\{ item, style = styles\.gridLeadingCell \}/);
   assertSourceMatch(sharedEntityPanels, /<PanelItemName item=\{item\} style=\{styles\.quantityLeadingCell\} \/>/);
@@ -527,7 +527,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
 
   assertSourceMatch(libraryEntityPanels, /FoodPanels as SharedFoodPanels/);
   assertSourceMatch(libraryEntityPanels, /MealPanels as SharedMealPanels/);
-  assertSourceMatch(libraryEntityPanels, /return <SharedFoodPanels items=\{items\.map\(toFoodPanelItem\)\} \/>/);
+  assertSourceMatch(libraryEntityPanels, /return <SharedFoodPanels items=\{items\.map\(toFoodPanelItem\)\} onOpenItem=/);
   assertSourceMatch(libraryEntityPanels, /return <SharedMealPanels items=\{items\.map\(toMealPanelItem\)\} \/>/);
 
   const calendarizationAdapters = await readTestFile(
