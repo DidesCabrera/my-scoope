@@ -1,5 +1,5 @@
 import { type Href, Redirect, useFocusEffect, useRouter } from "expo-router";
-import { ChevronRight, Heart, Mail, MailOpen, Trash2 } from "lucide-react-native";
+import { ChevronRight, Mail, MailOpen, Trash2 } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet } from "react-native";
 
@@ -7,7 +7,6 @@ import { userFacingError } from "@/api/errors";
 import type { SharingInboxData, SharingInboxItem } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import {
-  Button,
   CollectionEmptyState,
   EntityCard,
   EntityCardAction,
@@ -23,14 +22,6 @@ const entityBySubject: Record<SharingInboxItem["subject_type"], EntityKind> = {
   food: "food",
   meal: "meal",
   program: "program",
-};
-
-const libraryPathByEntity: Record<EntityKind, string> = {
-  dailyPlan: "daily-plans",
-  dpm: "daily-plans",
-  food: "foods",
-  meal: "meals",
-  program: "programs",
 };
 
 export default function InboxScreen() {
@@ -64,15 +55,6 @@ export default function InboxScreen() {
     }
   };
 
-  const save = async (item: SharingInboxItem) => {
-    try {
-      const result = await apiRequest<{ entity: EntityKind; item_id: number }>(`/api/v1/shares/inbox/${item.id}/save`, { method: "POST" });
-      router.push(`/libraries/${libraryPathByEntity[result.entity]}/${result.item_id}` as Href);
-    } catch (nextError) {
-      setError(userFacingError(nextError));
-    }
-  };
-
   const open = (item: SharingInboxItem) => {
     void update(item, { is_read: true });
     router.push(`/share/${item.resource_id}` as Href);
@@ -91,9 +73,6 @@ export default function InboxScreen() {
             ? <MailOpen color={tokens.color.textMuted} size={20} />
             : <Mail color={tokens.color[entityBySubject[item.subject_type]]} size={20} />}
           actions={<>
-            <EntityCardAction label={item.is_favorite ? "Quitar favorito" : "Marcar favorito"} onPress={() => void update(item, { is_favorite: !item.is_favorite })}>
-              <Heart color={item.is_favorite ? tokens.color.fat : tokens.color.textMuted} fill={item.is_favorite ? tokens.color.fat : "transparent"} size={20} />
-            </EntityCardAction>
             <EntityCardAction label="Eliminar del Inbox" onPress={() => void update(item, { dismissed: true })}>
               <Trash2 color={tokens.color.textMuted} size={19} />
             </EntityCardAction>
@@ -106,9 +85,8 @@ export default function InboxScreen() {
           key={item.id}
           onPress={() => open(item)}
           subtitle={`${item.sender} · ${new Date(item.created_at).toLocaleDateString()}`}
-          title={item.title}>
-          <Button label={item.is_saved ? "Abrir copia guardada" : "Guardar en mi biblioteca"} onPress={() => void save(item)} variant={item.is_saved ? "secondary" : "primary"} />
-        </EntityCard>
+          title={item.title}
+        />
       ))}
       {data && data.count === 0 ? (
         <CollectionEmptyState
