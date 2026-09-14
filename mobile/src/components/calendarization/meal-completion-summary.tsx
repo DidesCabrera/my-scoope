@@ -4,13 +4,14 @@ import { Check } from "lucide-react-native";
 
 import type { MealExecutionItem } from "@/api/types";
 import { tokens } from "@/design/tokens";
+import { normalizeMealExecution } from "./meal-execution";
 
 export function MealCompletionSurface({ children }: PropsWithChildren) {
   return <View style={styles.surface}>{children}</View>;
 }
 
-export function DailyMealCompletionCard({ mealKeys, mealExecution }: { mealKeys: (string | null | undefined)[]; mealExecution: MealExecutionItem[] }) {
-  const completedKeys = new Set(mealExecution.filter((item) => item.status === "completed").map((item) => item.meal_key));
+export function DailyMealCompletionCard({ mealKeys, mealExecution }: { mealKeys: (string | null | undefined)[]; mealExecution?: MealExecutionItem[] | null }) {
+  const completedKeys = new Set(normalizeMealExecution(mealExecution).filter((item) => item.status === "completed").map((item) => item.meal_key));
   const completedCount = mealKeys.filter((key) => key != null && completedKeys.has(key)).length;
   return (
     <MealCompletionSurface>

@@ -4,6 +4,7 @@ import { StyleSheet, View } from "react-native";
 
 import type { LibraryItem, MealExecutionItem } from "@/api/types";
 import { DailyMealCompletionCard } from "@/components/calendarization/meal-completion-summary";
+import { normalizeMealExecution } from "@/components/calendarization/meal-execution";
 import { NutritionEntityCard } from "@/components/nutrition";
 import { MealPanels, type MealPanelItem } from "@/components/panels";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
@@ -33,7 +34,7 @@ function mealPanelItem(item: LibraryItem["panel"]["meals"][number], completedKey
   };
 }
 
-export function PinnedDailyPlanCard({ item, mealExecution }: { item: LibraryItem; mealExecution: MealExecutionItem[] }) {
+export function PinnedDailyPlanCard({ item, mealExecution }: { item: LibraryItem; mealExecution?: MealExecutionItem[] | null }) {
   const router = useRouter();
   const addMeal = () => router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: item.id, returnTo: "/today" }));
   const detailAction = (
@@ -51,11 +52,12 @@ export function PinnedDailyPlanCard({ item, mealExecution }: { item: LibraryItem
     );
   }
 
-  const completedKeys = new Set(mealExecution.filter((entry) => entry.status === "completed").map((entry) => entry.meal_key));
+  const normalizedMealExecution = normalizeMealExecution(mealExecution);
+  const completedKeys = new Set(normalizedMealExecution.filter((entry) => entry.status === "completed").map((entry) => entry.meal_key));
   return (
     <NutritionEntityCard
       actions={detailAction}
-      beforeNutrition={<DailyMealCompletionCard mealExecution={mealExecution} mealKeys={meals.map((meal) => meal.id)} />}
+      beforeNutrition={<DailyMealCompletionCard mealExecution={normalizedMealExecution} mealKeys={meals.map((meal) => meal.id)} />}
       entity="dailyPlan"
       eyebrow="PLAN DE HOY"
       nutrition={libraryNutrition(item.nutrition)}

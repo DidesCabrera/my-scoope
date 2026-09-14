@@ -5,6 +5,7 @@ import { StyleSheet, Text, View } from "react-native";
 
 import type { LibraryFoodPanelItem, LibraryMealPanelItem, LibraryWeekPanelItem, MealExecutionItem } from "@/api/types";
 import { MealCompletionToggleCard } from "@/components/calendarization/meal-adherence-check-in";
+import { normalizeMealExecution } from "@/components/calendarization/meal-execution";
 import { NutritionEntityCard } from "@/components/nutrition/nutrition-entity-card";
 import {
   FoodPanels as SharedFoodPanels,
@@ -84,10 +85,11 @@ type PinnedTracking = {
 
 export function DailyPlanMealCards({ dailyPlanId, items, onRemove, pinnedTracking }: { dailyPlanId: number; items: LibraryMealPanelItem[]; onRemove?: (item: LibraryMealPanelItem) => Promise<void>; pinnedTracking?: PinnedTracking }) {
   const router = useRouter();
+  const mealExecution = normalizeMealExecution(pinnedTracking?.mealExecution);
   return (
     <View style={styles.mealCardList}>
       {items.map((item, index) => {
-        const execution = pinnedTracking?.mealExecution.find((entry) => entry.meal_key === item.id);
+        const execution = mealExecution.find((entry) => entry.meal_key === item.id);
         return <View key={item.id}>
           <NutritionEntityCard
             actions={<>

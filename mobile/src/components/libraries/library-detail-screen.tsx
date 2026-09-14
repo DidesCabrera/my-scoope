@@ -8,6 +8,7 @@ import type { CompositionMutationResult, LibraryActionResult, LibraryItem, MealC
 import { useSession } from "@/auth/session-context";
 import { MealAdherenceCheckIn, MealCompletionCard, MealNoteCard, useMealAdherenceCheckIn } from "@/components/calendarization/meal-adherence-check-in";
 import { DailyMealCompletionCard } from "@/components/calendarization/meal-completion-summary";
+import { normalizeMealExecution, normalizeMealExecutionItem } from "@/components/calendarization/meal-execution";
 import { EntityDetailMetadata, EntityDetailPage, EntityDetailSection, FoodDetailCardList } from "@/components/details";
 import { FoodPanels, MealPanels, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
 import { pickerConfigureHref, pickerHref } from "@/components/pickers/composition-picker-screen";
@@ -186,9 +187,10 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
     const previous = todayContext;
     setSavingMealKey(targetMealKey);
     setCompletionError(null);
+    const mealExecution = normalizeMealExecution(todayContext.meal_execution);
     setTodayContext({
       ...todayContext,
-      meal_execution: todayContext.meal_execution.map((entry) => entry.meal_key === targetMealKey ? { ...entry, status: completed ? "completed" : "skipped" } : entry),
+      meal_execution: mealExecution.map((entry) => entry.meal_key === targetMealKey ? { ...entry, status: completed ? "completed" : "skipped" } : entry),
     });
     try {
       const payload: MealCheckInInput = { action: completed ? "completed" : "skipped", idempotency_key: Crypto.randomUUID() };
@@ -204,11 +206,12 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   async function togglePinnedPreparedFood(targetMealKey: string, foodKey: string) {
     if (!todayContext) return;
     const previous = todayContext;
-    const execution = todayContext.meal_execution.find((entry) => entry.meal_key === targetMealKey);
+    const mealExecution = normalizeMealExecution(todayContext.meal_execution);
+    const execution = mealExecution.find((entry) => entry.meal_key === targetMealKey);
     const prepared = execution?.prepared_food_keys.includes(foodKey) ?? false;
     setTodayContext({
       ...todayContext,
-      meal_execution: todayContext.meal_execution.map((entry) => entry.meal_key !== targetMealKey ? entry : {
+      meal_execution: mealExecution.map((entry) => entry.meal_key !== targetMealKey ? entry : {
         ...entry,
         prepared_food_keys: prepared ? entry.prepared_food_keys.filter((key) => key !== foodKey) : [...entry.prepared_food_keys, foodKey],
       }),
@@ -224,7 +227,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
 
   async function togglePinnedMealDetailFood(foodKey: string) {
     if (!mealKey) return;
-    const prepared = pinnedMealExecution?.prepared_food_keys.includes(foodKey) ?? false;
+    const prepared = pinnedMealExecution ? normalizeMealExecutionItem(pinnedMealExecution).prepared_food_keys.includes(foodKey) : false;
     const previous = pinnedMealExecution;
     setPinnedMealExecution((current) => ({
       meal_key: mealKey,
@@ -237,7 +240,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
     try {
       const payload: MealCheckInInput = { action: prepared ? "food_unprepared" : "food_prepared", food_snapshot_key: foodKey, idempotency_key: Crypto.randomUUID() };
       const updated = await apiRequest<TodayData>(`/api/v1/today/pinned-plan/meals/${encodeURIComponent(mealKey)}/check-ins`, { body: JSON.stringify(payload), method: "POST" });
-      setPinnedMealExecution(updated.meal_execution.find((entry) => entry.meal_key === mealKey) ?? null);
+      setPinnedMealExecution(normalizeMealExecution(updated.meal_execution).find((entry) => entry.meal_key === mealKey) ?? null);
     } catch (nextError) {
       setPinnedMealExecution(previous);
       setError(userFacingError(nextError));
@@ -306,7 +309,9 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   const contextualDayId = Number(calendarizedDayId);
   const foodItems = item.panel.foods.map(foodPanelItem);
   const openFood = (food: FoodPanelItem) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); };
-  const completedPinnedMealKeys = new Set(todayContext?.meal_execution.filter((entry) => entry.status === "completed").map((entry) => entry.meal_key) ?? []);
+  const mealExecution = normalizeMealExecution(todayContext?.meal_execution);
+  const normalizedPinnedMealExecution = pinnedMealExecution ? normalizeMealExecutionItem(pinnedMealExecution) : null;
+  const completedPinnedMealKeys = new Set(mealExecution.filter((entry) => entry.status === "completed").map((entry) => entry.meal_key));
   const mealItems = item.panel.meals.map((meal) => ({ ...mealPanelItem(meal), completed: isPinnedPlan && completedPinnedMealKeys.has(meal.id) }));
   const foodEditing = item.entity === "meal" ? {
     onDelete: async (food: FoodPanelItem) => { if (food.relationId) await mutateComposition(`/api/v1/library/meals/${item.id}/foods/${food.relationId}`, { method: "DELETE" }); },
@@ -327,8 +332,8 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
       : []),
   ];
   return <><ScrollView contentContainerStyle={styles.content} onScroll={({ nativeEvent }) => { const visible = nativeEvent.contentOffset.y > 1; if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible); }} scrollEventThrottle={16} style={styles.screen}><EntityDetailPage
-    beforeNutrition={isPinnedPlan && item.panel.meals.length ? <DailyMealCompletionCard mealExecution={todayContext.meal_execution} mealKeys={item.panel.meals.map((meal) => meal.id)} /> : isPinnedMealContext ? <MealCompletionCard controller={pinnedMealAdherence} /> : undefined}
-    completion={isPinnedPlan ? { noteCount: todayContext.meal_execution.filter((entry) => entry.note.trim()).length } : isPinnedMealContext ? { noteCount: pinnedMealExecution?.note.trim() ? 1 : 0 } : undefined}
+    beforeNutrition={isPinnedPlan && item.panel.meals.length ? <DailyMealCompletionCard mealExecution={mealExecution} mealKeys={item.panel.meals.map((meal) => meal.id)} /> : isPinnedMealContext ? <MealCompletionCard controller={pinnedMealAdherence} /> : undefined}
+    completion={isPinnedPlan ? { noteCount: mealExecution.filter((entry) => entry.note.trim()).length } : isPinnedMealContext ? { noteCount: normalizedPinnedMealExecution?.note.trim() ? 1 : 0 } : undefined}
     entity={item.entity}
     indicators={detailIndicators}
     nutrition={libraryNutrition(item.nutrition)}
@@ -340,13 +345,13 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
       {!labelImage ? <Button label="Ver copia procesada" loading={labelImageBusy} onPress={() => void loadLabelImage()} variant="secondary" /> : null}
       <Button label="Eliminar copia" loading={labelImageBusy} onPress={deleteLabelImage} variant="secondary" />
     </EntityDetailSection></> : null}
-    {!isEmptyDraft && item.panel.kind !== "none" ? <EntityDetailSection detail={item.panel.kind === "weeks" ? `${panelCount} elementos` : undefined} title={sectionTitles[item.panel.kind]}>{item.panel.kind === "foods" ? <FoodPanels editing={foodEditing} items={foodItems} onOpenItem={openFood} preparation={isPinnedMealContext && pinnedMealAdherence.available ? { isPrepared: (food) => pinnedMealExecution?.prepared_food_keys.includes(food.id) ?? false, onToggle: (food) => void togglePinnedMealDetailFood(food.id) } : undefined} /> : null}{item.panel.kind === "meals" ? <MealPanels editing={mealEditing} items={mealItems} /> : null}{item.panel.kind === "weeks" ? <ProgramPanels items={item.panel.weeks} /> : null}</EntityDetailSection> : null}
+    {!isEmptyDraft && item.panel.kind !== "none" ? <EntityDetailSection detail={item.panel.kind === "weeks" ? `${panelCount} elementos` : undefined} title={sectionTitles[item.panel.kind]}>{item.panel.kind === "foods" ? <FoodPanels editing={foodEditing} items={foodItems} onOpenItem={openFood} preparation={isPinnedMealContext && pinnedMealAdherence.available ? { isPrepared: (food) => normalizedPinnedMealExecution?.prepared_food_keys.includes(food.id) ?? false, onToggle: (food) => void togglePinnedMealDetailFood(food.id) } : undefined} /> : null}{item.panel.kind === "meals" ? <MealPanels editing={mealEditing} items={mealItems} /> : null}{item.panel.kind === "weeks" ? <ProgramPanels items={item.panel.weeks} /> : null}</EntityDetailSection> : null}
     {item.entity === "meal" ? <Button bleed label="+ Agregar alimento" onPress={() => router.push(pickerHref("food-to-meal", { mealId: item.id, ...(hasMealTimeContext ? { dailyPlanId: contextDailyPlanId, dailyPlanMealId: contextDailyPlanMealId } : {}), ...(isContextualMealCreation ? { returnTo: String(currentDetailHref) } : {}) }))} /> : null}
     {item.entity === "meal" && foodItems.length > 0 ? <><SectionDivider /><EntityDetailSection detail={`${foodItems.length} alimentos`} title="Detalle de cada Alimento"><FoodDetailCardList items={foodItems} onOpenFood={openFood} /></EntityDetailSection></> : null}
     {item.entity === "dailyPlan" ? <Button bleed label="+ Agregar Comida" onPress={() => router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: item.id }))} /> : null}
     {item.entity === "meal" && isPinnedMealContext ? <MealNoteCard controller={pinnedMealAdherence} /> : null}
     {item.entity === "meal" && !isPinnedMealContext && Number.isInteger(contextualDayId) && contextualDayId > 0 && mealKey ? <MealAdherenceCheckIn dayId={contextualDayId} mealKey={mealKey} /> : null}
-    {item.entity === "dailyPlan" && item.panel.kind === "meals" && item.panel.meals.length > 0 ? <><SectionDivider /><EntityDetailSection detail={`${item.panel.meals.length} comidas`} title="Detalle de cada Comida"><DailyPlanMealCards dailyPlanId={item.id} items={item.panel.meals} onRemove={async (meal) => { if (meal.relation_id) await mutateComposition(`/api/v1/library/daily-plans/${item.id}/meals/${meal.relation_id}`, { method: "DELETE" }); }} pinnedTracking={isPinnedPlan ? { completionError, mealExecution: todayContext.meal_execution, onToggleCompleted: (targetMealKey, completed) => void togglePinnedMealCompletion(targetMealKey, completed), onTogglePrepared: (targetMealKey, foodKey) => void togglePinnedPreparedFood(targetMealKey, foodKey), savingMealKey } : undefined} /></EntityDetailSection></> : null}
+    {item.entity === "dailyPlan" && item.panel.kind === "meals" && item.panel.meals.length > 0 ? <><SectionDivider /><EntityDetailSection detail={`${item.panel.meals.length} comidas`} title="Detalle de cada Comida"><DailyPlanMealCards dailyPlanId={item.id} items={item.panel.meals} onRemove={async (meal) => { if (meal.relation_id) await mutateComposition(`/api/v1/library/daily-plans/${item.id}/meals/${meal.relation_id}`, { method: "DELETE" }); }} pinnedTracking={isPinnedPlan ? { completionError, mealExecution, onToggleCompleted: (targetMealKey, completed) => void togglePinnedMealCompletion(targetMealKey, completed), onTogglePrepared: (targetMealKey, foodKey) => void togglePinnedPreparedFood(targetMealKey, foodKey), savingMealKey } : undefined} /></EntityDetailSection></> : null}
     {item.entity === "dailyPlan" && item.panel.foods.length > 0 ? <><SectionDivider /><EntityDetailSection detail={`${item.panel.foods.length} alimentos`} title="Alimentos en este plan diario"><FoodPanels items={item.panel.foods.map(foodPanelItem)} onOpenItem={openFood} /></EntityDetailSection></> : null}
     {item.entity === "dailyPlan" && todayContext?.calendarization == null ? <Button bleed label={isPinnedPlan ? "Dejar de fijar como Plan de hoy" : "Fijar como Plan de hoy"} onPress={() => confirmPinnedPlan(!isPinnedPlan)} variant={isPinnedPlan ? "secondary" : "primary"} /> : null}
     {!isEmptyDraft ? <EntityDetailMetadata creator={item.creator} updatedAt={libraryDate(item.created_at)} /> : null}

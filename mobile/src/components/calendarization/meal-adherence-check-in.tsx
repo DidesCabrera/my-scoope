@@ -10,15 +10,16 @@ import { useSession } from "@/auth/session-context";
 import { Button, ContentPanel, InlineNotice, SectionHeading } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { MealCompletionSurface } from "./meal-completion-summary";
+import { normalizeMealExecution, type NormalizedMealExecutionItem } from "./meal-execution";
 
 type Props = { dayId?: number; enabled?: boolean; mealKey: string; mode?: "calendarized" | "pinned"; onChange?: (execution: MealExecutionItem) => void };
 
-function executionFor(data: TodayData, { dayId, mealKey, mode = "calendarized" }: Props): MealExecutionItem | null {
+function executionFor(data: TodayData, { dayId, mealKey, mode = "calendarized" }: Props): NormalizedMealExecutionItem | null {
   const available = mode === "pinned"
     ? data.calendarization == null && data.pinned_plan?.panel.meals.some((meal) => meal.id === mealKey)
     : data.day_id === dayId && data.plan_snapshot?.meals?.some((meal) => meal.key === mealKey);
   if (!available) return null;
-  return data.meal_execution.find((item) => item.meal_key === mealKey) ?? {
+  return normalizeMealExecution(data.meal_execution).find((item) => item.meal_key === mealKey) ?? {
     meal_key: mealKey, status: "planned", last_event_id: null, recorded_at: null, note: "", prepared_food_keys: [],
   };
 }

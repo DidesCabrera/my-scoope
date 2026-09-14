@@ -1,9 +1,9 @@
 import * as Sentry from "@sentry/react-native";
 import * as Notifications from "expo-notifications";
-import { type Href, Stack, usePathname, useRouter } from "expo-router";
+import { type ErrorBoundaryProps, type Href, Stack, usePathname, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
-import { AppState, Platform } from "react-native";
+import { AppState, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { SessionProvider, useSession } from "@/auth/session-context";
@@ -13,6 +13,26 @@ import { tokens } from "@/design/tokens";
 import { clearNativeReminders, refreshNativeReminders } from "@/notifications/native-reminders";
 import { notificationRoute } from "@/notifications/notification-navigation";
 import "@/observability/sentry";
+
+function ScreenErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  useEffect(() => {
+    Sentry.captureException(error);
+  }, [error]);
+
+  return (
+    <View style={styles.errorScreen}>
+      <Text style={styles.errorTitle}>No pudimos mostrar esta vista</Text>
+      <Text style={styles.errorMessage}>Tus datos siguen guardados. Puedes volver a intentarlo sin cerrar la aplicación.</Text>
+      <Pressable
+        accessibilityLabel="Reintentar abrir esta vista"
+        accessibilityRole="button"
+        onPress={() => void retry()}
+        style={({ pressed }) => [styles.retryButton, pressed && styles.retryButtonPressed]}>
+        <Text style={styles.retryLabel}>Reintentar</Text>
+      </Pressable>
+    </View>
+  );
+}
 
 function AuthenticatedRouteGate() {
   const pathname = usePathname();
@@ -84,6 +104,7 @@ function RootLayout() {
             <AuthenticatedRouteGate />
             <NativeReminderReconciler />
             <Stack
+              unstable_screenErrorBoundary={ScreenErrorBoundary}
               screenOptions={{
                 animation: "slide_from_right",
                 contentStyle: { backgroundColor: tokens.color.surfaceApp },
@@ -98,5 +119,14 @@ function RootLayout() {
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  errorMessage: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 21, textAlign: "center" },
+  errorScreen: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, flex: 1, gap: tokens.spacing.md, justifyContent: "center", padding: tokens.spacing.screen },
+  errorTitle: { color: tokens.color.textMain, fontSize: tokens.type.title, fontWeight: tokens.weight.bold, textAlign: "center" },
+  retryButton: { alignItems: "center", backgroundColor: tokens.color.interactivePrimary, borderRadius: tokens.radius.md, minHeight: 48, justifyContent: "center", paddingHorizontal: tokens.spacing.lg },
+  retryButtonPressed: { opacity: 0.72 },
+  retryLabel: { color: tokens.color.entityIconForeground, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
+});
 
 export default Sentry.wrap(RootLayout);

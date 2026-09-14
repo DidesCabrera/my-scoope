@@ -98,7 +98,7 @@ export type CalendarizationHistoryData = {
 };
 
 export type CalendarizedDayDetail = ActiveProgramDay & {
-  meal_execution: MealExecutionItem[];
+  meal_execution?: MealExecutionItem[] | null;
   plan_snapshot: DailyPlanSnapshot | null;
 };
 
@@ -108,7 +108,7 @@ export type TodayData = {
   day_id: number | null;
   has_plan: boolean;
   plan_snapshot: DailyPlanSnapshot | null;
-  meal_execution: MealExecutionItem[];
+  meal_execution?: MealExecutionItem[] | null;
   adherence: AdherenceSummary | null;
   measurements: MeasurementSummary | null;
   reminders: ReminderSettings | null;
@@ -123,8 +123,8 @@ export type MealExecutionItem = {
   status: MealExecutionStatus;
   last_event_id: number | null;
   recorded_at: string | null;
-  note: string;
-  prepared_food_keys: string[];
+  note?: string | null;
+  prepared_food_keys?: string[] | null;
 };
 
 export type AdherenceSummary = {
