@@ -134,6 +134,16 @@ export default function ProgramScreen() {
           <SectionPageHeader countLabel="semanas" section="calendarization" title="Mi programa activo" />
           {error ? <RecoverableErrorState message={error} onRetry={() => void load()} /> : null}
           <ProgramActiveOverview calendarization={calendarization} program={program} />
+          {calendarization.source_program_id ? (
+            <>
+              <Text style={textStyles.muted}>Tu programa activo conserva lo que realmente ocurrió. La plantilla original es una referencia reutilizable y sus cambios no alteran este historial.</Text>
+              <DetailLinkRow
+                accessibilityLabel={`Ver la plantilla original ${calendarization.program_name}`}
+                label="Ver plantilla original"
+                onPress={() => router.push(`/libraries/programs/${calendarization.source_program_id}` as Href)}
+              />
+            </>
+          ) : null}
           <SectionDivider />
           <SectionHeading detail={`${weekCount} ${weekCount === 1 ? "semana" : "semanas"}`} title="Planificación Semanal" />
         </View>
@@ -143,17 +153,6 @@ export default function ProgramScreen() {
         </View>
 
         <CalendarizedProgramPlanning days={programDays} initialWeek={activeWeek} key={`${calendarization.id}:${activeWeek}`} showWeekTabs={false} weeksData={program.weeks} />
-        {calendarization.source_program_id ? (
-          <>
-            <SectionDivider />
-            <Text style={textStyles.muted}>Tu programa activo conserva lo que realmente ocurrió. La plantilla original es una referencia reutilizable y sus cambios no alteran este historial.</Text>
-            <DetailLinkRow
-              accessibilityLabel={`Ver la plantilla original ${calendarization.program_name}`}
-              label="Ver plantilla original"
-              onPress={() => router.push(`/libraries/programs/${calendarization.source_program_id}` as Href)}
-            />
-          </>
-        ) : null}
       </ScrollView>
       {actionsModal}
     </>
