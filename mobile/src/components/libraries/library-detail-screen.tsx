@@ -101,6 +101,18 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
       setError(userFacingError(nextError));
     }
   }, [apiRequest, item]);
+  const confirmPinnedPlan = useCallback((nextPinned: boolean) => {
+    Alert.alert(
+      nextPinned ? "¿Fijar este plan para hoy?" : "¿Dejar de fijar este plan?",
+      nextPinned
+        ? "Este plan diario aparecerá como tu Plan de hoy."
+        : "El plan dejará de aparecer como tu Plan de hoy.",
+      [
+        { style: "cancel", text: "Cancelar" },
+        { onPress: () => void setPinnedPlan(nextPinned), text: nextPinned ? "Fijar" : "Dejar de fijar" },
+      ],
+    );
+  }, [setPinnedPlan]);
   const cancelContextualCreation = useCallback(() => { if (pickerEntryHref) router.dismissTo(pickerEntryHref); }, [pickerEntryHref, router]);
   const continueContextualCreation = useCallback(() => {
     if (!contextualPickerKind || !returnHref || !isContextualMealCreation) return;
@@ -130,7 +142,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
         secondaryAction: hasMealTimeContext
           ? { icon: "clock", label: "Cambiar hora", onPress: openTimeChange }
           : item?.entity === "dailyPlan" && todayContext?.calendarization == null
-            ? { icon: "pin", label: isPinnedPlan ? "Dejar de fijar como Plan de hoy" : "Fijar como Plan de hoy", onPress: () => void setPinnedPlan(!isPinnedPlan) }
+            ? { icon: "pin", label: isPinnedPlan ? "Dejar de fijar como Plan de hoy" : "Fijar como Plan de hoy", onPress: () => confirmPinnedPlan(!isPinnedPlan) }
             : item?.entity === "program" && item.can_calendarize && !item.is_draft
               ? { icon: "calendar-clock", label: "Calendarizar este programa", onPress: () => router.push(`/program/activate?programId=${item.id}` as Href) }
               : undefined,
@@ -138,7 +150,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
       });
     }
     return () => setHeaderPresentation({ mode: "default" });
-  }, [cancelContextualCreation, compactHeaderVisible, continueContextualCreation, fallbackTitle, hasMealTimeContext, headerEntity, isContextualMealCreation, isPinnedPlan, item, openActions, openTimeChange, pickerEntryHref, router, setHeaderPresentation, setPinnedPlan, todayContext?.calendarization]));
+  }, [cancelContextualCreation, compactHeaderVisible, confirmPinnedPlan, continueContextualCreation, fallbackTitle, hasMealTimeContext, headerEntity, isContextualMealCreation, isPinnedPlan, item, openActions, openTimeChange, pickerEntryHref, router, setHeaderPresentation, todayContext?.calendarization]));
   const load = useCallback(async () => { setLoading(true); setError(null); try {
     const [nextItem, nextToday] = await Promise.all([
       apiRequest<LibraryItem>(`/api/v1/library/${entitySlug}/${id}`),
@@ -277,7 +289,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   } : undefined} mealTimeInMenu={false} onCompleted={handleActionCompleted} onVisibleChange={(visible) => { if (!visible) setActionSheet(null); }} renderTrigger={() => null} visible={actionSheet != null} />;
   if (item.entity === "program") {
     return <><ProgramDetailPreview
-      footer={<>{item.can_calendarize && !item.is_draft ? <Button label="Calendarizar este programa" onPress={() => router.push(`/program/activate?programId=${item.id}` as Href)} /> : null}<EntityDetailMetadata creator={item.creator} updatedAt={libraryDate(item.created_at)} /></>}
+      footer={<>{item.can_calendarize && !item.is_draft ? <Button bleed label="Calendarizar este programa" onPress={() => router.push(`/program/activate?programId=${item.id}` as Href)} /> : null}<EntityDetailMetadata creator={item.creator} updatedAt={libraryDate(item.created_at)} /></>}
       item={item}
       onAddWeek={item.can_calendarize ? () => router.push(`/pickers/week-to-program?programId=${item.id}` as Href) : undefined}
       onAssignDailyPlan={item.can_calendarize ? (week, day) => router.push(pickerHref("dailyplan-to-program", { programId: item.id, weekNumber: week, dayNumber: day })) : undefined}
@@ -336,7 +348,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
     {item.entity === "meal" && !isPinnedMealContext && Number.isInteger(contextualDayId) && contextualDayId > 0 && mealKey ? <MealAdherenceCheckIn dayId={contextualDayId} mealKey={mealKey} /> : null}
     {item.entity === "dailyPlan" && item.panel.kind === "meals" && item.panel.meals.length > 0 ? <><SectionDivider /><EntityDetailSection detail={`${item.panel.meals.length} comidas`} title="Detalle de cada Comida"><DailyPlanMealCards dailyPlanId={item.id} items={item.panel.meals} onRemove={async (meal) => { if (meal.relation_id) await mutateComposition(`/api/v1/library/daily-plans/${item.id}/meals/${meal.relation_id}`, { method: "DELETE" }); }} pinnedTracking={isPinnedPlan ? { completionError, mealExecution: todayContext.meal_execution, onToggleCompleted: (targetMealKey, completed) => void togglePinnedMealCompletion(targetMealKey, completed), onTogglePrepared: (targetMealKey, foodKey) => void togglePinnedPreparedFood(targetMealKey, foodKey), savingMealKey } : undefined} /></EntityDetailSection></> : null}
     {item.entity === "dailyPlan" && item.panel.foods.length > 0 ? <><SectionDivider /><EntityDetailSection detail={`${item.panel.foods.length} alimentos`} title="Alimentos en este plan diario"><FoodPanels items={item.panel.foods.map(foodPanelItem)} onOpenItem={openFood} /></EntityDetailSection></> : null}
-    {item.entity === "dailyPlan" && todayContext?.calendarization == null ? <Button label={isPinnedPlan ? "Dejar de fijar como Plan de hoy" : "Fijar como Plan de hoy"} onPress={() => void setPinnedPlan(!isPinnedPlan)} variant={isPinnedPlan ? "secondary" : "primary"} /> : null}
+    {item.entity === "dailyPlan" && todayContext?.calendarization == null ? <Button bleed label={isPinnedPlan ? "Dejar de fijar como Plan de hoy" : "Fijar como Plan de hoy"} onPress={() => confirmPinnedPlan(!isPinnedPlan)} variant={isPinnedPlan ? "secondary" : "primary"} /> : null}
     {!isEmptyDraft ? <EntityDetailMetadata creator={item.creator} updatedAt={libraryDate(item.created_at)} /> : null}
   </EntityDetailPage></ScrollView>{actionsModal}</>;
 }

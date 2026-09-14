@@ -23,5 +23,5 @@ export function PickerEntryTabs({ createLabel, onCreate }: { createLabel: string
 }
 
 const styles = StyleSheet.create({
-  entryTabsBar: { backgroundColor: tokens.color.surfaceApp, marginHorizontal: -tokens.spacing.screen, paddingVertical: tokens.spacing.sm },
+  entryTabsBar: { backgroundColor: tokens.color.surfaceApp, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, paddingVertical: tokens.spacing.sm },
 });

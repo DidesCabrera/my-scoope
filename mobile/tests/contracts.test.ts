@@ -496,6 +496,9 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(libraryDetail, /hasMealTimeContext[\s\S]*?\? \{ icon: "clock", label: "Cambiar hora"/);
   assertSourceMatch(libraryDetail, /item\?\.entity === "dailyPlan"[\s\S]*?\{ icon: "pin", label: isPinnedPlan \? "Dejar de fijar como Plan de hoy" : "Fijar como Plan de hoy"/);
   assertSourceMatch(libraryDetail, /item\?\.entity === "program"[\s\S]*?\{ icon: "calendar-clock", label: "Calendarizar este programa"/);
+  assertSourceMatch(libraryDetail, /Alert\.alert\([\s\S]*?\? "¿Fijar este plan para hoy\?" : "¿Dejar de fijar este plan\?"/);
+  assertSourceMatch(libraryDetail, /<Button bleed label="Calendarizar este programa"/);
+  assertSourceMatch(libraryDetail, /<Button bleed label=\{isPinnedPlan \? "Dejar de fijar como Plan de hoy" : "Fijar como Plan de hoy"\}/);
   assertSourceMatch(libraryDetail, /mealTimeInMenu=\{false\}/);
 
   assertSourceMatch(appNavigation, /headerPresentation\.secondaryAction[\s\S]*<Pin/);
