@@ -7,12 +7,11 @@ import { useSession } from "@/auth/session-context";
 import { EntityDetailPage, EntityDetailSection } from "@/components/details/entity-detail-page";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { NutritionEntityCard } from "@/components/nutrition";
-import { FoodPanels, MealPanels, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
+import { FoodPanels, MealPanels } from "@/components/panels";
 import { Button, InlineNotice, LoadingState, Screen, SectionDivider } from "@/components/ui";
 import { appConfig } from "@/config/app-config";
+import { sharedFoodPanelItems, sharedMealPanelItems, sharedNutrition } from "@/sharing/presentation";
 
-type ShareNutrition = NonNullable<ShareResource["snapshot"]>["nutrition"];
-type ShareMeal = NonNullable<NonNullable<ShareResource["snapshot"]>["meals"]>[number];
 type SavedShare = { entity: "dailyPlan" | "food" | "meal" | "program"; item_id: number };
 
 const libraryPathByEntity: Record<SavedShare["entity"], string> = {
@@ -21,56 +20,6 @@ const libraryPathByEntity: Record<SavedShare["entity"], string> = {
   meal: "meals",
   program: "programs",
 };
-
-function nutrition(values: ShareNutrition) {
-  const calories = values.calories || values.protein_grams * 4 + values.carbs_grams * 4 + values.fat_grams * 9;
-  return {
-    calories,
-    protein: { grams: values.protein_grams, allocation: calories > 0 ? values.protein_grams * 4 * 100 / calories : 0 },
-    carbs: { grams: values.carbs_grams, allocation: calories > 0 ? values.carbs_grams * 4 * 100 / calories : 0 },
-    fat: { grams: values.fat_grams, allocation: calories > 0 ? values.fat_grams * 9 * 100 / calories : 0 },
-  };
-}
-
-function foodPanelItems(meal: ShareMeal): FoodPanelItem[] {
-  return meal.foods.map((food, index) => {
-    const item = nutrition(food.nutrition);
-    return {
-      id: `shared-food-${index}`,
-      name: food.name,
-      quantity: food.quantity_grams,
-      quantityUnit: "g",
-      calories: item.calories,
-      calorieShare: meal.nutrition.calories > 0 ? item.calories * 100 / meal.nutrition.calories : 0,
-      proteinGrams: item.protein.grams,
-      carbsGrams: item.carbs.grams,
-      fatGrams: item.fat.grams,
-      proteinAllocation: item.protein.allocation,
-      carbsAllocation: item.carbs.allocation,
-      fatAllocation: item.fat.allocation,
-    };
-  });
-}
-
-function mealPanelItems(meals: ShareMeal[], planCalories: number): MealPanelItem[] {
-  return meals.map((meal, index) => {
-    const item = nutrition(meal.nutrition);
-    return {
-      id: String(index),
-      name: meal.name,
-      time: meal.time?.slice(0, 5) ?? undefined,
-      foods: meal.foods.map((food) => ({ name: food.name, quantity: food.quantity_grams, quantityUnit: "g" })),
-      calories: item.calories,
-      calorieShare: planCalories > 0 ? item.calories * 100 / planCalories : 0,
-      proteinGrams: item.protein.grams,
-      carbsGrams: item.carbs.grams,
-      fatGrams: item.fat.grams,
-      proteinAllocation: item.protein.allocation,
-      carbsAllocation: item.carbs.allocation,
-      fatAllocation: item.fat.allocation,
-    };
-  });
-}
 
 export default function SharedResourceScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -133,7 +82,7 @@ export default function SharedResourceScreen() {
 
   const snapshot = resource?.snapshot;
   const meals = snapshot?.meals ?? [];
-  const mealItems = snapshot ? mealPanelItems(meals, snapshot.nutrition.calories) : [];
+  const mealItems = snapshot ? sharedMealPanelItems(meals, snapshot.nutrition.calories) : [];
   return (
     <Screen headerMode="preserve">
       {loading ? <LoadingState label="Cargando contenido compartido…" /> : null}
@@ -147,10 +96,10 @@ export default function SharedResourceScreen() {
               { icon: "meal", label: "comidas", value: meals.length },
               { icon: "food", label: "alimentos", value: meals.reduce((total, meal) => total + meal.foods.length, 0) },
             ]}
-            nutrition={nutrition(snapshot.nutrition)}
+            nutrition={sharedNutrition(snapshot.nutrition)}
             title={resource.title}>
             <EntityDetailSection detail={`${meals.length} comidas`} title="Composición">
-              <MealPanels items={mealItems} />
+              <MealPanels items={mealItems} onOpenItem={(item) => router.push(`/share/${id}/meals/${item.id}` as Href)} />
             </EntityDetailSection>
             {meals.length ? <>
               <SectionDivider />
@@ -164,9 +113,9 @@ export default function SharedResourceScreen() {
                       ...(meal.time ? [{ icon: "clock" as const, iconPosition: "leading" as const, label: "hora", tone: "surfaceCard" as const, value: meal.time.slice(0, 5) }] : []),
                     ]}
                     key={`${meal.name}-${index}`}
-                    nutrition={nutrition(meal.nutrition)}
+                    nutrition={sharedNutrition(meal.nutrition)}
                     title={meal.name}>
-                    <FoodPanels items={foodPanelItems(meal)} />
+                    <FoodPanels items={sharedFoodPanelItems(meal)} />
                   </NutritionEntityCard>
                 ))}
               </EntityDetailSection>
