@@ -76,6 +76,8 @@ MODEL_RETENTION_POLICY = {
     "notas.DailyPlanMeal": RetentionAction.FOLLOW_PARENT,
     "notas.DailyPlanMealShare": RetentionAction.ERASE,
     "notas.DailyPlanShare": RetentionAction.ERASE,
+    "notas.PinnedDailyPlan": RetentionAction.ERASE,
+    "notas.PinnedDailyPlanMealExecution": RetentionAction.FOLLOW_PARENT,
     "notas.Food": RetentionAction.ERASE,
     "notas.FoodAlias": RetentionAction.FOLLOW_PARENT,
     "notas.FoodImportBatch": RetentionAction.RETAIN_OPERATIONAL,
