@@ -131,7 +131,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(programWeekPanels, /PanelSurface/);
   assertSourceMatch(programWeekPanels, /MacroCalorieDistribution/);
   assertSourceMatch(programWeekPanels, /PanelAllocationBar/);
-  for (const tab of ["Calorías", "Macros", "Alloc", "Editar"]) assertSourceMatch(programWeekPanels, new RegExp(tab));
+  for (const tab of ["Calorías", "Macros", "Dist", "Alloc", "Editar"]) assertSourceMatch(programWeekPanels, new RegExp(tab));
   assertSourceDoesNotMatch(programWeekPanels, /label: "Semanas"/);
   assertSourceMatch(programWeekPanels, /<Pencil/);
   assertSourceMatch(programWeekPanels, /weekName: \{ color: tokens\.color\.textMain/);
@@ -140,7 +140,9 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceDoesNotMatch(programWeekPanels, /cell: \{[^}]*fontSize: 11/);
   assertSourceDoesNotMatch(programWeekPanels, /<PanelAllocationBar size="compact"/);
   assertSourceMatch(programWeekPanels, /allocationRow: \{ gap: tokens\.spacing\.sm \}/);
-  assertSourceDoesNotMatch(programWeekPanels, /deltaUp|deltaDown|styles\.protein|styles\.carbs|styles\.fat/);
+  assertSourceDoesNotMatch(programWeekPanels, /deltaUp|deltaDown|styles\.(?:protein|carbs|fat)(?:[,}\]])/);
+  assertSourceMatch(programWeekPanels, /Header columns=\{\["PpK", "P g", "C g", "F g"\]\}/);
+  assertSourceMatch(programWeekPanels, /Header columns=\{\["P%", "C%", "F%", "P\|C\|F"\]\}/);
 
   const programDetail = await readTestFile(
     path.resolve(process.cwd(), "src/components/libraries/program-detail-preview.tsx"),
@@ -216,13 +218,14 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     "utf8",
   );
   assertSourceMatch(calendarizedDailyPlanCard, /<NutritionEntityCard/);
+  assertSourceMatch(calendarizedDailyPlanCard, /beforeNutrition=\{<DailyMealCompletionCard mealExecution=\{mealExecution\} mealKeys=\{meals\.map\(\(meal\) => meal\.key\)\} \/>\}/);
   assertSourceMatch(calendarizedDailyPlanCard, /<MealPanels/);
   assertSourceMatch(calendarizedDailyPlanCard, /onOpenItem=/);
   assertSourceMatch(calendarizedDailyPlanCard, /pathname: "\/program\/days\/\[id\]\/meals\/\[mealKey\]"/);
   assertSourceMatch(calendarizedDailyPlanCard, /mealKey: meal\.id/);
   assertSourceDoesNotMatch(calendarizedDailyPlanCard, /kpiVariant="nested"/);
   assertSourceMatch(calendarizedDailyPlanCard, /perKilogram: totals\?\.protein_per_kilogram \?\? null/);
-  assertSourceMatch(calendarizedDailyPlanCard, /completedCount: executions\.filter/);
+  assertSourceDoesNotMatch(calendarizedDailyPlanCard, /completedCount: executions\.filter/);
   assertSourceMatch(calendarizedDailyPlanCard, /noteCount: executions\.filter/);
   assertSourceMatch(calendarizedDailyPlanCard, /label: "posición", value: `S\$\{position\.weekNumber\} · D\$\{position\.dayNumber\}`/);
 
@@ -232,9 +235,17 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   );
   assertSourceMatch(calendarizedMealDetail, /apiRequest<CalendarizedDayDetail>\(`\/api\/v1\/program\/days\/\$\{dayId\}`\)/);
   assertSourceMatch(calendarizedMealDetail, /day\.plan_snapshot\?\.meals\?\.find/);
-  assertSourceMatch(calendarizedMealDetail, /<FoodPanels items=\{foods\} \/>[\s\S]*<MealAdherenceCheckIn/);
+  assertSourceMatch(calendarizedMealDetail, /beforeNutrition=\{<MealCompletionCard controller=\{adherence\} \/>\}/);
+  assertSourceMatch(calendarizedMealDetail, /<FoodPanels\s+editing=\{\{/);
+  assertSourceMatch(calendarizedMealDetail, /ordered_keys: items\.map\(\(item\) => item\.id\)/);
+  assertSourceMatch(calendarizedMealDetail, /relationKey: food\.id/);
+  assertSourceMatch(calendarizedMealDetail, /onUpdateQuantity:/);
+  assertSourceMatch(calendarizedMealDetail, /<MealNoteCard controller=\{adherence\} \/>/);
   assertSourceMatch(calendarizedMealDetail, /completion=\{\{/);
-  assertSourceMatch(calendarizedMealDetail, /onChange=\{setExecution\}/);
+  assertSourceMatch(calendarizedMealDetail, /onChange: setExecution/);
+  assertSourceMatch(calendarizedMealDetail, /secondaryAction: meal \? \{ icon: "clock", label: "Cambiar hora"/);
+  assertSourceMatch(calendarizedMealDetail, /initialAction=\{actionSheet === "change-time" \? "change-time" : undefined\}/);
+  assertSourceMatch(calendarizedMealDetail, /timeChangeInMenu=\{false\}/);
   assertSourceDoesNotMatch(calendarizedMealDetail, /\/api\/v1\/library\/meals/);
 
   const sharedEntityPanels = await readTestFile(
@@ -244,11 +255,16 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(sharedEntityPanels, /accessibilityLabel=\{canOpen \? `Ver detalle de \$\{item\.name\}` : undefined\}/);
   assertSourceMatch(sharedEntityPanels, /<Pressable[\s\S]*style=\{\(\{ pressed \}\) => \[styles\.menuRow,[\s\S]*pressed && canOpen && styles\.menuRowPressed\]\}/);
   assertSourceDoesNotMatch(sharedEntityPanels, /<Pressable[\s\S]*style=\{\(\{ pressed \}\) => \[styles\.menuAction/);
-  assertSourceMatch(sharedEntityPanels, /<ChevronRight/);
+  assertSourceMatch(sharedEntityPanels, /<ChevronRight color=\{tokens\.color\.textMuted\} size=\{19\}/);
+  assertSourceMatch(sharedEntityPanels, /menuRow: \{[^}]*gap: tokens\.spacing\.xs[^}]*paddingRight: tokens\.spacing\.xs/);
+  assertSourceMatch(sharedEntityPanels, /menuAction: \{[^}]*minWidth: 24/);
   assertSourceMatch(sharedEntityPanels, /<MealRowIdentity name=\{item\.name\} projectedLabel=\{item\.projectedLabel\} \/>[\s\S]*item\.time \? \([\s\S]*<Clock color=\{tokens\.color\.textMuted\} size=\{11\} strokeWidth=\{2\} \/>[\s\S]*<Text style=\{styles\.menuTime\}>\{item\.time\}<\/Text>/);
   assertSourceMatch(sharedEntityPanels, /item\.detailId != null \|\| item\.canOpen/);
   assertSourceMatch(sharedEntityPanels, /allocationRow: \{ gap: tokens\.spacing\.sm \}/);
   assertSourceMatch(libraryEntityPanels, /NutritionAllocationPanel/);
+  assertSourceMatch(sharedEntityPanels, /key: "distribution", label: "Dist"/);
+  assertSourceMatch(sharedEntityPanels, /<PanelHeaderCell style=\{styles\.ppkValue\}>PpK<\/PanelHeaderCell>/);
+  assertSourceMatch(sharedEntityPanels, /<MacroCalorieDistribution \{\.\.\.item\} style=\{styles\.distributionBar\} \/>/);
 
   const completionUi = await readTestFile(
     path.resolve(process.cwd(), "src/components/ui/product.tsx"),
@@ -266,7 +282,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     "utf8",
   );
   assertSourceMatch(mealAdherence, /accessibilityRole="checkbox"/);
-  assertSourceMatch(mealAdherence, /onPress=\{\(\) => void saveStatus\(!completed\)\}/);
+  assertSourceMatch(mealAdherence, /onToggle=\{\(nextCompleted\) => void controller\.saveStatus\(nextCompleted\)\}/);
   assertSourceMatch(mealAdherence, /action: "note"/);
   assertSourceMatch(mealAdherence, /Guardar nota/);
   assertSourceMatch(mealAdherence, /Editar nota/);
@@ -274,12 +290,41 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(mealAdherence, /onChange\?\.\(execution\)/);
   assertSourceMatch(mealAdherence, /maxLength=\{500\}/);
   assertSourceMatch(mealAdherence, /action: nextCompleted \? "completed" : "skipped"/);
-  assertSourceMatch(mealAdherence, /<View style=\{styles\.divider\} \/>/);
-  assertSourceMatch(mealAdherence, /<SectionHeading title="Cumplimiento de esta comida" \/>[\s\S]*<ContentPanel muted>/);
-  assertSourceMatch(mealAdherence, /editingNote \? \([\s\S]*<TextInput[\s\S]*\) : \([\s\S]*styles\.noteText/);
+  assertSourceMatch(mealAdherence, /export function MealCompletionCard/);
+  assertSourceMatch(mealAdherence, /export function MealCompletionToggleCard/);
+  assertSourceMatch(mealAdherence, /onToggle\(!completed\)/);
+  assertSourceMatch(mealAdherence, /export function MealNoteCard/);
+  assertSourceDoesNotMatch(mealAdherence, /Marca la casilla si cumpliste esta comida del programa/);
+  assertSourceMatch(mealAdherence, /<MealCompletionSurface>/);
+  assertSourceMatch(mealAdherence, /checkbox: \{[^}]*borderRadius: tokens\.radius\.pill/);
+  assertSourceMatch(mealAdherence, /completionLabel: \{[^}]*fontSize: tokens\.type\.caption/);
+  assertSourceMatch(mealAdherence, /<SectionHeading title="Nota de esta comida" \/>/);
+  assertSourceMatch(mealAdherence, /controller\.editingNote \? <TextInput[\s\S]*styles\.noteText/);
+  assertSourceDoesNotMatch(mealAdherence, /styles\.divider/);
+
+  assertSourceMatch(sharedEntityPanels, /preparationMarkerChecked/);
+  assertSourceMatch(sharedEntityPanels, /preparation\.isPrepared\(item\) \? <View style=\{styles\.preparationMarkerChecked\} \/> : null/);
+  assertSourceMatch(sharedEntityPanels, /preparationMarkerChecked: \{ backgroundColor: tokens\.color\.success, borderRadius: 5, height: 10, width: 10 \}/);
+  assertSourceMatch(sharedEntityPanels, /accessibilityRole="checkbox"/);
+  assertSourceMatch(sharedEntityPanels, /<PanelHeaderCell style=\{styles\.preparationValue\}>Listo<\/PanelHeaderCell>/);
   assertSourceDoesNotMatch(mealAdherence, /statusLabel|styles\.status/);
   assertSourceDoesNotMatch(mealAdherence, /Cumplimiento actualizado|Nota guardada|statusSaved|noteSaved/);
   assertSourceDoesNotMatch(mealAdherence, /label=\{editingNote \? "Guardar nota" : "Editar nota"\}/);
+
+  const mealCompletionSummary = await readTestFile(
+    path.resolve(process.cwd(), "src/components/calendarization/meal-completion-summary.tsx"),
+    "utf8",
+  );
+  assertSourceMatch(mealCompletionSummary, /Cumplimiento comidas/);
+  assertSourceMatch(mealCompletionSummary, /label: \{[^}]*fontSize: tokens\.type\.caption/);
+  assertSourceMatch(mealCompletionSummary, /item\.status === "completed"/);
+  assertSourceMatch(mealCompletionSummary, /checkCircleCompleted: \{ backgroundColor: tokens\.color\.meal \}/);
+  assertSourceMatch(mealCompletionSummary, /checkCirclePending: \{ backgroundColor: tokens\.color\.borderDefault \}/);
+  assertSourceMatch(mealCompletionSummary, /completed \? tokens\.color\.entityIconForeground : tokens\.color\.textMuted/);
+  assertSourceMatch(mealCompletionSummary, /surface: \{ backgroundColor: `\$\{tokens\.color\.meal\}1A`, borderColor: tokens\.color\.meal, borderRadius: tokens\.radius\.lg, borderWidth: 1/);
+  assertSourceMatch(mealCompletionSummary, /checks: \{[^}]*gap: tokens\.spacing\.xs/);
+  assertSourceMatch(mealCompletionSummary, /marginHorizontal: tokens\.layout\.reducedInset - tokens\.card\.outerPadding/);
+  assertSourceMatch(mealCompletionSummary, /minHeight: 54/);
 
   const activeProgram = await readTestFile(path.resolve(process.cwd(), "src/app/program/index.tsx"), "utf8");
   assertSourceMatch(activeProgram, /<SectionPageHeader countLabel="semanas" section="calendarization" title="Mi programa activo" \/>/);
@@ -296,7 +341,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(activeProgram, /<ProgramWeekTabs activeWeek=\{activeWeek\}/);
   assertSourceMatch(activeProgram, /<CalendarizedProgramPlanning days=\{programDays\} initialWeek=\{activeWeek\} key=\{`\$\{calendarization\.id\}:\$\{activeWeek\}`\} showWeekTabs=\{false\} weeksData=\{program\.weeks\} \/>/);
   assertSourceMatch(activeProgram, /<SectionDivider \/>[\s\S]*<SectionHeading[^>]*title="Planificación Semanal"/);
-  assertSourceMatch(activeProgram, /<CalendarizedProgramPlanning[\s\S]*<SectionDivider \/>[\s\S]*<DetailLinkRow/);
+  assertSourceMatch(activeProgram, /<ProgramActiveOverview[\s\S]*<DetailLinkRow[\s\S]*<SectionDivider \/>[\s\S]*<SectionHeading[^>]*title="Planificación Semanal"/);
   assertSourceMatch(activeProgram, /label="Ver plantilla original"/);
   assertSourceMatch(activeProgram, /conserva lo que realmente ocurrió/);
   assertSourceMatch(activeProgram, /weekCount === 1 \? "semana" : "semanas"/);
@@ -318,7 +363,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     path.resolve(process.cwd(), "src/components/programs/program-active-card.tsx"),
     "utf8",
   );
-  assertSourceMatch(activeProgramOverview, /<ProgramActiveKpis[^>]*bleed=\{false\}/);
+  assertSourceMatch(activeProgramOverview, /<ProgramActiveKpis[^>]*standalone/);
+  assertSourceDoesNotMatch(activeProgramOverview, /<ProgramActiveKpis[^>]*bleed=\{false\}/);
   assertSourceMatch(activeProgramOverview, /eyebrow="Programa activo"/);
   assertSourceDoesNotMatch(activeProgramOverview, /eyebrow="Programa en curso"/);
   assertSourceMatch(activeProgramOverview, /SectionHeading icon=\{<Activity[^>]*>\} title="Métricas de activación"/);
@@ -343,6 +389,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(activeProgramKpis, /percentageText:\{[^}]*color:tokens\.color\.textMain/);
   assertSourceMatch(activeProgramKpis, /<Text style=\{styles\.percentageText\}>\{advancement\}%<\/Text>/);
   assertSourceMatch(activeProgramKpis, /<Text style=\{styles\.percentageText\}>\{compliance\}%<\/Text>/);
+  assertSourceMatch(activeProgramKpis, /indicatorElapsed:\{backgroundColor:`\$\{tokens\.color\.dailyPlan\}1A`,borderColor:tokens\.color\.dailyPlan\}/);
+  assertSourceMatch(activeProgramKpis, /indicatorAdherence:\{backgroundColor:`\$\{tokens\.color\.meal\}1A`,borderColor:tokens\.color\.meal\}/);
   assertSourceDoesNotMatch(activeProgramKpis, /percentageTag/);
 
   const activateProgram = await readTestFile(
@@ -445,12 +493,23 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(libraryDetail, /title="Alimentos en este plan diario"><FoodPanels items=\{item\.panel\.foods\.map\(foodPanelItem\)\}/);
   assertSourceMatch(libraryDetail, /<SectionDivider \/><EntityDetailSection[^>]*title="Detalle de cada Comida"/);
   assertSourceMatch(libraryDetail, /<SectionDivider \/><EntityDetailSection[^>]*title="Alimentos en este plan diario"/);
+  assertSourceMatch(libraryDetail, /secondaryAction: hasMealTimeContext \? \{ icon: "clock", label: "Cambiar hora"/);
+  assertSourceMatch(libraryDetail, /mealTimeInMenu=\{false\}/);
+
+  assertSourceMatch(appNavigation, /headerPresentation\.secondaryAction[\s\S]*<Clock3/);
 
   const calendarizedDayDetail = await readTestFile(
     path.resolve(process.cwd(), "src/app/program/days/[id].tsx"),
     "utf8",
   );
   assertSourceMatch(calendarizedDayDetail, /<FoodPanels items=\{foods\} \/>/);
+  assertSourceMatch(calendarizedDayDetail, /<MealPanels\s+editing=\{\{/);
+  assertSourceMatch(calendarizedDayDetail, /relationKey: meal\.id/);
+  assertSourceMatch(calendarizedDayDetail, /\/meals\/order/);
+  assertSourceMatch(calendarizedDayDetail, /beforeNutrition=\{<DailyMealCompletionCard mealExecution=\{day\.meal_execution\} mealKeys=\{meals\.map\(\(meal\) => meal\.key\)\} \/>\}/);
+  assertSourceMatch(calendarizedDayDetail, /beforeNutrition=\{meal\.key \? <MealCompletionToggleCard/);
+  assertSourceMatch(calendarizedDayDetail, /onToggleCompleted=\{\(mealKey, completed\) => void toggleMealCompletion\(mealKey, completed\)\}/);
+  assertSourceMatch(calendarizedDayDetail, /action: completed \? "completed" : "skipped"/);
   assertSourceMatch(calendarizedDayDetail, /perKilogram: totals\?\.protein_per_kilogram \?\? null/);
   assertSourceMatch(calendarizedDayDetail, /<SectionDivider \/>[\s\S]*title="Detalle de cada Comida"/);
   assertSourceMatch(calendarizedDayDetail, /snapshotDailyPlanFoodPanelItems\(meals\)/);
@@ -612,8 +671,11 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(programDayPanels, /calorieShareDataCell: \{ flex: 1\.35 \}/);
   assertSourceMatch(programDayPanels, /ppkDataCell: \{ flex: 0\.65 \}/);
   assertSourceMatch(programDayPanels, /column === "% Cal" && styles\.calorieShareDataCell/);
-  assertSourceMatch(programDayPanels, /column === "PPK" && styles\.ppkDataCell/);
+  assertSourceMatch(programDayPanels, /column === "PpK" && styles\.ppkDataCell/);
   assertSourceMatch(programDayPanels, /allocationRow: \{ gap: tokens\.spacing\.sm \}/);
+  assertSourceMatch(programDayPanels, /Header columns=\{\["Cal", "% Cal"\]\}/);
+  assertSourceMatch(programDayPanels, /Header columns=\{\["PpK", "P", "C", "F"\]\}/);
+  assertSourceMatch(programDayPanels, /Header columns=\{\["P%", "C%", "F%", "P\|C\|F"\]\}/);
 
   const programMetricPanels = await readTestFile(
     path.resolve(process.cwd(), "src/components/libraries/program-child-card.tsx"),

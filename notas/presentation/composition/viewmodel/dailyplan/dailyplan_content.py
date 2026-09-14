@@ -10,9 +10,6 @@ from notas.application.services.nutrition.food_aggregation import (
     build_dailyplan_foods_aggregation,
     build_meal_foods_aggregation,
 )
-from notas.application.services.nutrition.nutrition_kpis import (
-    get_ppk_meal,
-)
 from notas.application.services.nutrition.weight import get_current_weight
 from notas.presentation.actions.dailyplan_meal_resolvers import (
     resolve_dailyplan_meal_actions,
@@ -31,6 +28,7 @@ from notas.presentation.composition.viewmodel.components.builder_table_items imp
     build_dailyplan_food_aggregation_table_item,
     build_dailyplanmeal_table_item,
     build_mealfood_table_item,
+    with_table_item_ppk,
 )
 from notas.presentation.config.icons import CONTENT_ICON_REGISTRY
 from notas.presentation.config.viewmodel_config import DAILYPLAN_VIEWMODE_PERSONAL_DETAIL
@@ -171,6 +169,7 @@ def build_dailyplan_detail_content_data(
     }
 
     current_weight = get_current_weight(user)
+    foods_aggregation_table = with_table_item_ppk(foods_aggregation_table, current_weight)
     ppk_dailyplan = {
         "ppk": (dp_protein / current_weight)
         if (current_weight and dp_protein)
@@ -181,6 +180,7 @@ def build_dailyplan_detail_content_data(
         build_dailyplanmeal_table_item(
             dpm,
             dailyplan_snapshot=nutrition_snapshot,
+            current_weight=current_weight,
         )
         for dpm in dailyplan_meals
     ]
@@ -239,13 +239,13 @@ def build_dailyplan_detail_content_data(
             "fat": meal.alloc_fat_cached or meal.alloc["fat"],
         }
 
-        ppk_meal = get_ppk_meal(meal, user)
+        ppk_meal = {"ppk": meal_protein / current_weight if current_weight and meal_protein else None}
 
         meal_foods = list(meal.meal_food_set.all())
         meal_foods_aggregation = build_meal_foods_aggregation(meal)
 
         meal_foods_table_items = [
-            build_mealfood_table_item(mf)
+            build_mealfood_table_item(mf, current_weight=current_weight)
             for mf in meal_foods
         ]
 

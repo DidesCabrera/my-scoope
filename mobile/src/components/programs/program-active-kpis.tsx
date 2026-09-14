@@ -11,12 +11,12 @@ export function ProgramActiveKpis({ adheredDays, adherence, bleed = true, elapse
   const compliance = Math.max(0, Math.min(adherence, 100));
   const content = <>
     <View style={[styles.indicators, styles.indicatorsSurfaceReset]}>
-      <View style={[styles.indicator, styles.indicatorMetricSpacing]}>
+      <View style={[styles.indicator, styles.indicatorElapsed, styles.indicatorMetricSpacing]}>
         <View style={styles.indicatorIdentity}><Clock3 color={tokens.color.textMuted} size={20} /><Text style={styles.indicatorLabel}>Días recorridos</Text></View>
         <View style={styles.indicatorValue}><Text style={styles.fraction}>{elapsedDays}/{totalDays}</Text><Text style={styles.percentageText}>{advancement}%</Text></View>
         <View accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: 100, now: advancement }} style={styles.track}><View style={[styles.fill, { backgroundColor: tokens.color.dailyPlan, width: `${advancement}%` }]} /></View>
       </View>
-      <View style={[styles.indicator, styles.indicatorMetricSpacing]}>
+      <View style={[styles.indicator, styles.indicatorAdherence, styles.indicatorMetricSpacing]}>
         <View style={styles.indicatorIdentity}><CheckCheck color={tokens.color.textMuted} size={20} /><Text style={styles.indicatorLabel}>Adhesión</Text></View>
         <View style={styles.indicatorValue}><Text style={styles.fraction}>{adheredDays}/{plannedAdherenceDays}</Text><Text style={styles.percentageText}>{compliance}%</Text></View>
         <View accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: 100, now: compliance }} style={styles.track}><View style={[styles.fill, { backgroundColor: tokens.color.meal, width: `${compliance}%` }]} /></View>
@@ -33,4 +33,5 @@ const styles = StyleSheet.create({
   standaloneInset:{marginHorizontal:0},
   card:{gap:tokens.spacing.md},standalone:{alignSelf:"stretch",gap:tokens.spacing.md,marginHorizontal:tokens.layout.reducedInset-tokens.card.outerPadding},header:{alignItems:"flex-start",flexDirection:"row",gap:tokens.spacing.md,justifyContent:"space-between"},headerCopy:{flex:1,gap:2},eyebrow:{color:tokens.color.program,fontSize:10,fontWeight:tokens.weight.bold,letterSpacing:1},title:{color:tokens.color.textMain,fontSize:tokens.type.body,fontWeight:tokens.weight.bold},
   indicators:{backgroundColor:tokens.color.surfaceMuted,borderRadius:tokens.radius.lg,flexDirection:"row",gap:tokens.spacing.sm,padding:tokens.spacing.sm},indicator:{backgroundColor:tokens.color.surfaceCard,borderColor:tokens.color.borderSoft,borderRadius:tokens.radius.md,borderWidth:1,flex:1,gap:tokens.spacing.xs,minWidth:0,padding:tokens.spacing.md},indicatorIdentity:{alignItems:"center",flexDirection:"row",gap:tokens.spacing.xs,minWidth:0},indicatorLabel:{color:tokens.color.textMain,flexShrink:1,fontSize:tokens.type.caption,fontWeight:tokens.weight.semibold},indicatorValue:{alignItems:"center",flexDirection:"row",gap:tokens.spacing.xs,justifyContent:"space-between",marginTop:tokens.spacing.sm},fraction:{color:tokens.color.textMain,fontSize:tokens.type.section,fontWeight:tokens.weight.bold,fontVariant:["tabular-nums"]},percentageText:{color:tokens.color.textMain,fontSize:tokens.type.section,fontWeight:tokens.weight.bold,fontVariant:["tabular-nums"]},track:{backgroundColor:tokens.color.borderDefault,borderRadius:tokens.radius.pill,height:10,overflow:"hidden"},fill:{borderRadius:tokens.radius.pill,height:"100%"},
+  indicatorElapsed:{backgroundColor:`${tokens.color.dailyPlan}1A`,borderColor:tokens.color.dailyPlan},indicatorAdherence:{backgroundColor:`${tokens.color.meal}1A`,borderColor:tokens.color.meal},
 });

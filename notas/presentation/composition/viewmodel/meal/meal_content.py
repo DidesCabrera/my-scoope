@@ -9,7 +9,7 @@ from notas.application.services.food_imports.localized_names import (
 from notas.application.services.nutrition.food_aggregation import (
     build_meal_foods_aggregation,
 )
-from notas.application.services.nutrition.nutrition_kpis import get_ppk_meal
+from notas.application.services.nutrition.weight import get_current_weight
 from notas.presentation.actions.meal_food_resolvers import (
     resolve_meal_food_actions,
 )
@@ -62,7 +62,8 @@ def build_meal_detail_content_data(
         "fat": meal.alloc_fat_cached or meal.alloc["fat"],
     }
 
-    ppk = get_ppk_meal(meal, user)
+    current_weight = get_current_weight(user)
+    ppk = {"ppk": meal_protein / current_weight if current_weight and meal_protein else None}
 
     # Use the page-level prefetch cache when available. Calling
     # select_related() here would create a new queryset and bypass the
@@ -70,7 +71,7 @@ def build_meal_detail_content_data(
     meal_foods = list(meal.meal_food_set.all())
 
     table_items = [
-        build_mealfood_table_item(mf)
+        build_mealfood_table_item(mf, current_weight=current_weight)
         for mf in meal_foods
     ]
 
@@ -147,7 +148,7 @@ def build_meal_detail_content_data(
                     ),
                 },
                 "kpis": {
-                    "ppk": 0,
+                    "ppk": food_protein / current_weight if current_weight and food_protein else None,
                     "tot_kcal": food_total_kcal,
                     "g_protein": food_protein,
                     "g_carbs": food_carbs,
@@ -178,6 +179,7 @@ def build_meal_detail_content_data(
 
 def build_meal_list_content_data(meals, user, viewmode, list_mode="list"):
     child_cards_data = []
+    current_weight = get_current_weight(user)
 
     if list_mode in {"reorder", "delete"}:
         return MealListContentData(
@@ -202,12 +204,12 @@ def build_meal_list_content_data(meals, user, viewmode, list_mode="list"):
             "fat": meal.alloc_fat_cached or meal.alloc["fat"],
         }
 
-        ppk = get_ppk_meal(meal, user)
+        ppk = {"ppk": meal_protein / current_weight if current_weight and meal_protein else None}
 
         meal_foods = list(meal.meal_food_set.all())
 
         table_items = [
-            build_mealfood_table_item(mf)
+            build_mealfood_table_item(mf, current_weight=current_weight)
             for mf in meal_foods
         ]
 

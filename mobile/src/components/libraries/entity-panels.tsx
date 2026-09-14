@@ -12,6 +12,7 @@ import {
   type MealPanelItem,
   NutritionAllocationPanel,
   NutritionCaloriesPanel,
+  NutritionDistributionPanel,
   NutritionMacrosPanel,
 } from "@/components/panels";
 import { EntityCardAction } from "@/components/ui";
@@ -30,6 +31,7 @@ function toFoodPanelItem(item: LibraryFoodPanelItem): FoodPanelItem {
     calories: item.calories,
     calorieShare: item.calorie_share,
     proteinGrams: item.protein_grams,
+    proteinPerKilogram: item.protein_per_kilogram,
     carbsGrams: item.carbs_grams,
     fatGrams: item.fat_grams,
     proteinAllocation: item.protein_allocation,
@@ -51,6 +53,7 @@ function toMealPanelItem(item: LibraryMealPanelItem): MealPanelItem {
     calories: item.calories,
     calorieShare: item.calorie_share,
     proteinGrams: item.protein_grams,
+    proteinPerKilogram: item.protein_per_kilogram,
     carbsGrams: item.carbs_grams,
     fatGrams: item.fat_grams,
     proteinAllocation: item.protein_allocation,
@@ -116,15 +119,19 @@ export function DailyPlanMealCards({ dailyPlanId, items, onRemove }: { dailyPlan
 }
 
 export function ProgramPanels({ items }: { items: LibraryWeekPanelItem[] }) {
-  const [activeTab, setActiveTab] = useState<"days" | "calories" | "macros" | "allocation">("days");
-  const normalized: FoodPanelItem[] = items.map((week) => ({ id: week.id, name: `Semana ${week.week_number}`, quantity: 0, quantityUnit: "", calories: week.calories, calorieShare: week.calorie_share ?? 0, proteinGrams: week.protein_grams, carbsGrams: week.carbs_grams, fatGrams: week.fat_grams, proteinAllocation: week.protein_allocation, carbsAllocation: week.carbs_allocation, fatAllocation: week.fat_allocation }));
+  const [activeTab, setActiveTab] = useState<"days" | "calories" | "macros" | "distribution" | "allocation">("days");
+  const normalized: FoodPanelItem[] = items.map((week) => {
+    const ppkValues = week.days.flatMap((day) => day.nutrition?.protein.per_kilogram == null ? [] : [day.nutrition.protein.per_kilogram]);
+    return { id: week.id, name: `Semana ${week.week_number}`, quantity: 0, quantityUnit: "", calories: week.calories, calorieShare: week.calorie_share ?? 0, proteinGrams: week.protein_grams, proteinPerKilogram: ppkValues.length ? ppkValues.reduce((sum, value) => sum + value, 0) / ppkValues.length : null, carbsGrams: week.carbs_grams, fatGrams: week.fat_grams, proteinAllocation: week.protein_allocation, carbsAllocation: week.carbs_allocation, fatAllocation: week.fat_allocation };
+  });
   return (
     <PanelSurface>
-      <EntityPanelTabs<"days" | "calories" | "macros" | "allocation"> activeTab={activeTab} onChange={setActiveTab} tabs={[{ key: "days", label: "Días" }, { key: "calories", label: "Calorías" }, { key: "macros", label: "Macros" }, { key: "allocation", label: "Alloc" }]} />
+      <EntityPanelTabs<"days" | "calories" | "macros" | "distribution" | "allocation"> activeTab={activeTab} onChange={setActiveTab} tabs={[{ key: "days", label: "Días" }, { key: "calories", label: "Calorías" }, { key: "macros", label: "Macros" }, { key: "distribution", label: "Dist" }, { key: "allocation", label: "Alloc" }]} />
       {items.length === 0 ? <PanelEmptyState label="Todavía no hay semanas configuradas." /> : null}
       {items.length > 0 && activeTab === "days" ? <PanelBody>{items.map((week, index) => <View key={week.id} style={[styles.weekRow, index === items.length - 1 && styles.rowLast]}><Text style={styles.weekTitle}>Semana {week.week_number}</Text>{week.days.map((day) => <Text key={day.day_label} style={styles.weekDay}><Text style={styles.weekDayLabel}>{day.day_label} · </Text>{day.plan_name ?? "Sin plan"}</Text>)}</View>)}</PanelBody> : null}
       {activeTab === "calories" ? <NutritionCaloriesPanel items={normalized} leadingLabel="Semana" /> : null}
       {activeTab === "macros" ? <NutritionMacrosPanel items={normalized} leadingLabel="Semana" /> : null}
+      {activeTab === "distribution" ? <NutritionDistributionPanel items={normalized} leadingLabel="Semana" /> : null}
       {activeTab === "allocation" ? <NutritionAllocationPanel items={normalized} leadingLabel="Semana" /> : null}
     </PanelSurface>
   );

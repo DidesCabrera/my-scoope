@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.urls import reverse
@@ -17,6 +18,7 @@ from notas.presentation.composition.viewmodel.components.builder_menu import bui
 from notas.presentation.composition.viewmodel.components.builder_table_items import (
     build_dailyplan_food_aggregation_table_item,
     build_dailyplanmeal_table_item,
+    with_table_item_ppk,
 )
 from notas.presentation.navigation.program_context import append_query
 
@@ -457,8 +459,10 @@ def build_week_day_nutrition_rows(week, current_weight=None, program=None):
 
 def build_program_child_card(program: Program, user, current_weight=None):
     summary = get_program_summary(program)
-    weeks = summary["weeks"]
     current_weight = current_weight or get_current_weight(user)
+    weeks = build_program_week_summary_metrics(deepcopy(summary["weeks"]), current_weight=current_weight)
+    for week in weeks:
+        week["foods_aggregation_table"] = with_table_item_ppk(week.get("foods_aggregation_table", []), current_weight)
     primary_week = weeks[0] if weeks else None
     owner_label = "Tú" if program.created_by_id == user.id else str(program.created_by)
 
@@ -508,7 +512,7 @@ def _dailyplan_options(user, current_weight=None):
     return options
 
 
-def build_program_week_summary_metrics(weeks):
+def build_program_week_summary_metrics(weeks, current_weight=None):
     previous_average_kcal = None
     for week in weeks:
         assigned_dailyplans_count = int(week.get("filled_days_count") or 0)
@@ -521,6 +525,8 @@ def build_program_week_summary_metrics(weeks):
         )
         week["assigned_dailyplans_count"] = assigned_dailyplans_count
         week["average_kcal_per_assigned_day"] = average_kcal
+        average_protein = float((week.get("totals") or {}).get("protein") or 0) / assigned_dailyplans_count if assigned_dailyplans_count else 0
+        week["average_ppk_per_assigned_day"] = average_protein / current_weight if current_weight and average_protein else None
         week["previous_week_average_ratio"] = previous_ratio
         previous_average_kcal = average_kcal
     return weeks
@@ -528,9 +534,10 @@ def build_program_week_summary_metrics(weeks):
 
 def build_program_detail_content(*, program: Program, user, header):
     summary = get_program_summary(program)
-    weeks = build_program_week_summary_metrics(summary["weeks"])
     current_weight = get_current_weight(user)
+    weeks = build_program_week_summary_metrics(deepcopy(summary["weeks"]), current_weight=current_weight)
     for week in weeks:
+        week["foods_aggregation_table"] = with_table_item_ppk(week.get("foods_aggregation_table", []), current_weight)
         week["chart"] = build_program_metric_chart(
             [week],
             current_weight=current_weight,
@@ -557,7 +564,7 @@ def build_program_detail_content(*, program: Program, user, header):
         "program_totals": summary["program_totals"],
         "program_meals_count": summary["program_meals_count"],
         "program_foods_count": summary["program_foods_count"],
-        "program_foods_aggregation_table": summary["program_foods_aggregation_table"],
+        "program_foods_aggregation_table": with_table_item_ppk(summary["program_foods_aggregation_table"], current_weight),
         "program_chart": build_program_metric_chart(weeks, current_weight=current_weight),
         "program_kpi_ranges": build_program_kpi_ranges(weeks, current_weight=current_weight),
         "average_week_kcal": summary["average_week_kcal"],
@@ -581,12 +588,12 @@ def build_program_day_child_card(dailyplan, user, program_day=None):
     snapshot = build_dailyplan_snapshot(dailyplan)
     dailyplan_meals = _dailyplan_meals_for_card(dailyplan)
     foods_aggregation = build_dailyplan_foods_aggregation(dailyplan_meals)
+    current_weight = get_current_weight(user)
     foods_aggregation_table = [
-        build_dailyplan_food_aggregation_table_item(food_aggregation, dailyplan_snapshot=snapshot)
+        build_dailyplan_food_aggregation_table_item(food_aggregation, dailyplan_snapshot=snapshot, current_weight=current_weight)
         for food_aggregation in foods_aggregation
     ]
     owner_label = "Tú" if dailyplan.created_by_id == user.id else str(dailyplan.created_by)
-    current_weight = get_current_weight(user)
     ppk = (snapshot["protein"] / current_weight) if (current_weight and snapshot["protein"]) else None
     return {
         "id": dailyplan.id,
@@ -619,7 +626,7 @@ def build_program_day_child_card(dailyplan, user, program_day=None):
         },
         "table": {
             "items": [
-                build_dailyplanmeal_table_item(dailyplan_meal, dailyplan_snapshot=snapshot)
+                build_dailyplanmeal_table_item(dailyplan_meal, dailyplan_snapshot=snapshot, current_weight=current_weight)
                 for dailyplan_meal in dailyplan_meals
             ]
         },

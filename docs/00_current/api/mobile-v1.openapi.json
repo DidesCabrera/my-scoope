@@ -1906,6 +1906,19 @@
             "title": "Food Id",
             "type": "integer"
           },
+          "food_snapshot_key": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Food Snapshot Key"
+          },
           "quantity": {
             "exclusiveMinimum": 0,
             "maximum": 100000,
@@ -1918,6 +1931,21 @@
           "quantity"
         ],
         "title": "CalendarizedFoodPickerInput",
+        "type": "object"
+      },
+      "CalendarizedFoodQuantityInput": {
+        "properties": {
+          "quantity": {
+            "exclusiveMinimum": 0,
+            "maximum": 100000,
+            "title": "Quantity",
+            "type": "number"
+          }
+        },
+        "required": [
+          "quantity"
+        ],
+        "title": "CalendarizedFoodQuantityInput",
         "type": "object"
       },
       "CalendarizedMealHourInput": {
@@ -1953,6 +1981,19 @@
             "title": "Meal Id",
             "type": "integer"
           },
+          "meal_snapshot_key": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meal Snapshot Key"
+          },
           "note": {
             "default": "",
             "maxLength": 500,
@@ -1979,6 +2020,23 @@
           "name"
         ],
         "title": "CalendarizedNameInput",
+        "type": "object"
+      },
+      "CalendarizedOrderInput": {
+        "properties": {
+          "ordered_keys": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Ordered Keys",
+            "type": "array"
+          }
+        },
+        "required": [
+          "ordered_keys"
+        ],
+        "title": "CalendarizedOrderInput",
         "type": "object"
       },
       "ComparisonKindData": {
@@ -3991,6 +4049,17 @@
             "title": "Protein Grams",
             "type": "number"
           },
+          "protein_per_kilogram": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Protein Per Kilogram"
+          },
           "quantity": {
             "title": "Quantity",
             "type": "number"
@@ -4735,9 +4804,17 @@
               "completed",
               "skipped",
               "reset",
-              "note"
+              "note",
+              "food_prepared",
+              "food_unprepared"
             ],
             "title": "Action",
+            "type": "string"
+          },
+          "food_snapshot_key": {
+            "default": "",
+            "maxLength": 80,
+            "title": "Food Snapshot Key",
             "type": "string"
           },
           "idempotency_key": {
@@ -4781,6 +4858,13 @@
             "default": "",
             "title": "Note",
             "type": "string"
+          },
+          "prepared_food_keys": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Prepared Food Keys",
+            "type": "array"
           },
           "recorded_at": {
             "anyOf": [
@@ -12529,7 +12613,152 @@
         "summary": "Calendarized Day Meal Picker Preview"
       }
     },
+    "/api/v1/program/days/{day_id}/meals/order": {
+      "put": {
+        "operationId": "mobile_api_api_calendarized_meal_order",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "day_id",
+            "required": true,
+            "schema": {
+              "title": "Day Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalendarizedOrderInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarizedDayDetailEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Calendarized Meal Order"
+      }
+    },
     "/api/v1/program/days/{day_id}/meals/{meal_snapshot_key}": {
+      "delete": {
+        "operationId": "mobile_api_api_calendarized_meal_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "day_id",
+            "required": true,
+            "schema": {
+              "title": "Day Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "meal_snapshot_key",
+            "required": true,
+            "schema": {
+              "title": "Meal Snapshot Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarizedDayDetailEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Calendarized Meal Delete"
+      },
       "patch": {
         "operationId": "mobile_api_api_calendarized_meal_hour_update",
         "parameters": [
@@ -12806,6 +13035,261 @@
           }
         ],
         "summary": "Calendarized Meal Food Picker Preview"
+      }
+    },
+    "/api/v1/program/days/{day_id}/meals/{meal_snapshot_key}/foods/order": {
+      "put": {
+        "operationId": "mobile_api_api_calendarized_food_order",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "day_id",
+            "required": true,
+            "schema": {
+              "title": "Day Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "meal_snapshot_key",
+            "required": true,
+            "schema": {
+              "title": "Meal Snapshot Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalendarizedOrderInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarizedDayDetailEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Calendarized Food Order"
+      }
+    },
+    "/api/v1/program/days/{day_id}/meals/{meal_snapshot_key}/foods/{food_snapshot_key}": {
+      "delete": {
+        "operationId": "mobile_api_api_calendarized_food_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "day_id",
+            "required": true,
+            "schema": {
+              "title": "Day Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "meal_snapshot_key",
+            "required": true,
+            "schema": {
+              "title": "Meal Snapshot Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "food_snapshot_key",
+            "required": true,
+            "schema": {
+              "title": "Food Snapshot Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarizedDayDetailEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Calendarized Food Delete"
+      },
+      "patch": {
+        "operationId": "mobile_api_api_calendarized_food_quantity_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "day_id",
+            "required": true,
+            "schema": {
+              "title": "Day Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "meal_snapshot_key",
+            "required": true,
+            "schema": {
+              "title": "Meal Snapshot Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "food_snapshot_key",
+            "required": true,
+            "schema": {
+              "title": "Food Snapshot Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalendarizedFoodQuantityInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarizedDayDetailEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Calendarized Food Quantity Update"
       }
     },
     "/api/v1/program/days/{day_id}/meals/{meal_snapshot_key}/name": {

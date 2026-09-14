@@ -2,7 +2,7 @@ import { ArrowDown, ArrowUp, Check, Copy, Pencil, RotateCcw, Trash2 } from "luci
 import { useMemo, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { MacroCalorieDistribution, PanelAllocationBar } from "@/components/nutrition";
+import { MacroCalorieDistribution, macroCalorieShares, PanelAllocationBar, ProteinPerKilogramBadge } from "@/components/nutrition";
 import { contextualMacroAllocations, EntityPanelTabs, PanelBody, PanelEmptyState, PanelSurface } from "@/components/panels";
 import { tokens } from "@/design/tokens";
 import { EntityIcon } from "@/components/ui";
@@ -16,14 +16,16 @@ export type ProgramWeekSummary = {
   fatGrams: number;
   id: string;
   proteinGrams: number;
+  ppk: number | null;
   week: number;
 };
 
-type ProgramWeekPanelTab = "calories" | "macros" | "allocation" | "edit";
+type ProgramWeekPanelTab = "calories" | "macros" | "distribution" | "allocation" | "edit";
 
 const tabs = [
   { key: "calories", label: "Calorías" },
   { key: "macros", label: "Macros" },
+  { key: "distribution", label: "Dist" },
   { key: "allocation", label: "Alloc" },
   { icon: (selected: boolean) => <Pencil color={selected ? tokens.color.surfaceApp : tokens.color.textMuted} size={15} />, iconOnly: true, key: "edit", label: "Editar" },
 ] satisfies Parameters<typeof EntityPanelTabs<ProgramWeekPanelTab>>[0]["tabs"];
@@ -78,21 +80,37 @@ function MacrosPanel({ weeks }: { weeks: ProgramWeekSummary[] }) {
   if (weeks.length === 0) return <PanelEmptyState label="Todavía no hay datos de macros." />;
   return (
     <PanelBody>
-      <Header columns={["P g", "C g", "F g", "PCF"]} />
+      <Header columns={["PpK", "P g", "C g", "F g"]} />
       {weeks.map((week, index) => (
         <View key={week.id} style={[styles.row, index === weeks.length - 1 && styles.rowLast]}>
           <View style={styles.leadingCell}><WeekIdentity week={week.week} /></View>
+          <View style={[styles.dataCell, styles.ppkCell]}>{week.ppk == null ? <Text style={styles.emptyValue}>—</Text> : <ProteinPerKilogramBadge showUnit={false} style={styles.ppkBadge} value={week.ppk} />}</View>
           <Text style={[styles.cell, styles.dataCell]}>{integer(week.proteinGrams)}</Text>
           <Text style={[styles.cell, styles.dataCell]}>{integer(week.carbsGrams)}</Text>
           <Text style={[styles.cell, styles.dataCell]}>{integer(week.fatGrams)}</Text>
-          <MacroCalorieDistribution
-            carbsGrams={week.carbsGrams}
-            fatGrams={week.fatGrams}
-            proteinGrams={week.proteinGrams}
-            style={styles.dataCell}
-          />
         </View>
       ))}
+    </PanelBody>
+  );
+}
+
+function DistributionPanel({ weeks }: { weeks: ProgramWeekSummary[] }) {
+  if (weeks.length === 0) return <PanelEmptyState label="Todavía no hay distribución nutricional." />;
+  return (
+    <PanelBody>
+      <Header columns={["P%", "C%", "F%", "P|C|F"]} />
+      {weeks.map((week, index) => {
+        const distribution = macroCalorieShares(week);
+        return (
+          <View key={week.id} style={[styles.row, index === weeks.length - 1 && styles.rowLast]}>
+            <View style={styles.leadingCell}><WeekIdentity week={week.week} /></View>
+            <Text style={[styles.cell, styles.dataCell, styles.proteinDistribution]}>{distribution.protein}%</Text>
+            <Text style={[styles.cell, styles.dataCell, styles.carbsDistribution]}>{distribution.carbs}%</Text>
+            <Text style={[styles.cell, styles.dataCell, styles.fatDistribution]}>{distribution.fat}%</Text>
+            <MacroCalorieDistribution {...week} style={styles.distributionBar} />
+          </View>
+        );
+      })}
     </PanelBody>
   );
 }
@@ -186,6 +204,7 @@ export function ProgramWeekComparisonPanels({ onDelete, onDuplicate, onReorder, 
       <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={onDelete && onDuplicate && onReorder ? tabs : tabs.filter(({ key }) => key !== "edit")} />
       {activeTab === "calories" ? <CaloriesPanel weeks={weeks} /> : null}
       {activeTab === "macros" ? <MacrosPanel weeks={weeks} /> : null}
+      {activeTab === "distribution" ? <DistributionPanel weeks={weeks} /> : null}
       {activeTab === "allocation" ? <AllocationPanel weeks={weeks} /> : null}
       {activeTab === "edit" && onDelete && onDuplicate && onReorder ? <EditPanel initialWeeks={weeks} key={weeks.map(({ id }) => id).join("|")} onDelete={onDelete} onDuplicate={onDuplicate} onReorder={onReorder} /> : null}
     </PanelSurface>
@@ -203,6 +222,13 @@ const styles = StyleSheet.create({
   weekIdentity: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
   weekName: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
   allocationRow: { gap: tokens.spacing.sm },
+  ppkCell: { alignItems: "stretch", justifyContent: "center", paddingHorizontal: 2 },
+  ppkBadge: { height: 22, minHeight: 22 },
+  emptyValue: { color: tokens.color.textMuted, fontSize: tokens.type.caption, textAlign: "center" },
+  proteinDistribution: { color: tokens.color.protein, fontWeight: tokens.weight.semibold },
+  carbsDistribution: { color: tokens.color.carbs, fontWeight: tokens.weight.semibold },
+  fatDistribution: { color: tokens.color.fat, fontWeight: tokens.weight.semibold },
+  distributionBar: { flex: 1.35, minWidth: 0 },
   editRow: { gap: tokens.spacing.sm },
   reorderActions: { flexDirection: "row", gap: 2 },
   editLeading: { flex: 1, textAlign: "left" },

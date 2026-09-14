@@ -1,16 +1,17 @@
 import { Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import * as Crypto from "expo-crypto";
 import { useCallback, useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
-import type { CalendarizedDayDetail, MealExecutionItem, MealSnapshot } from "@/api/types";
+import type { CalendarizedDayDetail, MealCheckInInput, MealExecutionItem, MealSnapshot, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { CalendarizedEntityActions } from "@/components/calendarization/calendarized-entity-actions";
-import { MealAdherenceCheckIn } from "@/components/calendarization/meal-adherence-check-in";
+import { MealCompletionCard, MealNoteCard, useMealAdherenceCheckIn } from "@/components/calendarization/meal-adherence-check-in";
 import { snapshotCalories, snapshotFoodPanelItems, snapshotMacroDistribution } from "@/components/calendarization/presentation-adapters";
 import { EntityDetailPage, EntityDetailSection, FoodDetailCardList } from "@/components/details";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
-import { FoodPanels } from "@/components/panels";
+import { FoodPanels, type FoodPanelItem } from "@/components/panels";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
 import { Button, InlineNotice, SectionDivider, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
@@ -25,9 +26,51 @@ export default function CalendarizedMealDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
-  const [actionsVisible, setActionsVisible] = useState(false);
+  const [actionSheet, setActionSheet] = useState<"change-time" | "menu" | null>(null);
   const setHeaderPresentation = useHeaderPresentation();
   const dayId = Number(id);
+  const adherence = useMealAdherenceCheckIn({ dayId, mealKey, onChange: setExecution });
+
+  async function togglePreparedFood(foodKey: string) {
+    const prepared = execution?.prepared_food_keys.includes(foodKey) ?? false;
+    const previous = execution;
+    setExecution((current) => ({
+      meal_key: mealKey,
+      status: current?.status ?? "planned",
+      last_event_id: current?.last_event_id ?? null,
+      recorded_at: current?.recorded_at ?? null,
+      note: current?.note ?? "",
+      prepared_food_keys: prepared
+        ? (current?.prepared_food_keys ?? []).filter((key) => key !== foodKey)
+        : [...(current?.prepared_food_keys ?? []), foodKey],
+    }));
+    try {
+      const payload: MealCheckInInput = {
+        action: prepared ? "food_unprepared" : "food_prepared",
+        food_snapshot_key: foodKey,
+        idempotency_key: Crypto.randomUUID(),
+      };
+      const updated = await apiRequest<TodayData>(`/api/v1/days/${dayId}/meals/${encodeURIComponent(mealKey)}/check-ins`, { body: JSON.stringify(payload), method: "POST" });
+      setExecution(updated.meal_execution.find((item) => item.meal_key === mealKey) ?? null);
+    } catch (nextError) {
+      setExecution(previous);
+      setError(userFacingError(nextError));
+    }
+  }
+
+  function applyDay(day: CalendarizedDayDetail) {
+    setMeal(day.plan_snapshot?.meals?.find((item) => item.key === mealKey) ?? null);
+    setExecution(day.meal_execution.find((item) => item.meal_key === mealKey) ?? null);
+  }
+
+  async function mutateFoods(path: string, init: { body?: string; method: "DELETE" | "PATCH" | "PUT" }) {
+    try {
+      applyDay(await apiRequest<CalendarizedDayDetail>(path, init));
+    } catch (nextError) {
+      setError(userFacingError(nextError));
+      throw nextError;
+    }
+  }
 
   const load = useCallback(async () => {
     if (!Number.isInteger(dayId) || dayId <= 0 || !mealKey) return;
@@ -55,9 +98,10 @@ export default function CalendarizedMealDetailScreen() {
   useFocusEffect(useCallback(() => {
     setHeaderPresentation({
       mode: "library-detail",
-      action: meal ? { label: `Más acciones para ${meal.name ?? "esta comida"}`, onPress: () => setActionsVisible(true) } : undefined,
+      action: meal ? { label: `Más acciones para ${meal.name ?? "esta comida"}`, onPress: () => setActionSheet("menu") } : undefined,
       entity: "meal",
       identityVisible: compactHeaderVisible,
+      secondaryAction: meal ? { icon: "clock", label: "Cambiar hora", onPress: () => setActionSheet("change-time") } : undefined,
       title: meal?.name ?? "Comida del programa",
     });
     return () => setHeaderPresentation({ mode: "default" });
@@ -81,10 +125,8 @@ export default function CalendarizedMealDetailScreen() {
       style={styles.screen}>
       <EntityDetailPage
         entity="meal"
-        completion={{
-          completedCount: execution?.status === "completed" ? 1 : 0,
-          noteCount: execution?.note.trim() ? 1 : 0,
-        }}
+        beforeNutrition={<MealCompletionCard controller={adherence} />}
+        completion={{ noteCount: execution?.note.trim() ? 1 : 0 }}
         indicators={[
           { icon: "food", label: "alimentos", value: foods.length },
           ...(meal.hour ? [{ icon: "clock" as const, iconPosition: "leading" as const, label: "hora", tone: "surfaceCard" as const, value: meal.hour.slice(0, 5) }] : []),
@@ -97,7 +139,19 @@ export default function CalendarizedMealDetailScreen() {
         }}
         title={meal.name ?? "Comida"}>
         <EntityDetailSection title="Tabla de comparación entre alimentos">
-          <FoodPanels items={foods} />
+          <FoodPanels
+            editing={{
+              onDelete: async (food) => mutateFoods(`/api/v1/program/days/${dayId}/meals/${encodeURIComponent(mealKey)}/foods/${encodeURIComponent(food.id)}`, { method: "DELETE" }),
+              onReorder: async (items: FoodPanelItem[]) => mutateFoods(`/api/v1/program/days/${dayId}/meals/${encodeURIComponent(mealKey)}/foods/order`, { body: JSON.stringify({ ordered_keys: items.map((item) => item.id) }), method: "PUT" }),
+              onReplace: (food) => router.push(pickerHref("food-to-calendarized-meal", { dayId, mealKey, relationKey: food.id })),
+              onUpdateQuantity: async (food, quantity) => mutateFoods(`/api/v1/program/days/${dayId}/meals/${encodeURIComponent(mealKey)}/foods/${encodeURIComponent(food.id)}`, { body: JSON.stringify({ quantity }), method: "PATCH" }),
+            }}
+            items={foods}
+            preparation={adherence.available ? {
+              isPrepared: (food) => execution?.prepared_food_keys.includes(food.id) ?? false,
+              onToggle: (food) => void togglePreparedFood(food.id),
+            } : undefined}
+          />
         </EntityDetailSection>
         <Button
           bleed
@@ -105,12 +159,14 @@ export default function CalendarizedMealDetailScreen() {
           onPress={() => router.push(pickerHref("food-to-calendarized-meal", { dayId, mealKey }))}
         />
         {foods.length ? <><SectionDivider /><EntityDetailSection detail={`${foods.length} alimentos`} title="Detalle de cada Alimento"><FoodDetailCardList items={foods} /></EntityDetailSection></> : null}
-        <MealAdherenceCheckIn dayId={dayId} mealKey={mealKey} onChange={setExecution} />
+        <MealNoteCard controller={adherence} />
       </EntityDetailPage>
     </ScrollView>
     <CalendarizedEntityActions
       entityName={meal.name ?? "Comida"}
-      onVisibleChange={setActionsVisible}
+      initialAction={actionSheet === "change-time" ? "change-time" : undefined}
+      key={actionSheet ?? "closed"}
+      onVisibleChange={(visible) => { if (!visible) setActionSheet(null); }}
       rename={{
         onSubmit: async (name) => {
           const day = await apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${dayId}/meals/${encodeURIComponent(mealKey)}/name`, {
@@ -137,7 +193,8 @@ export default function CalendarizedMealDetailScreen() {
           await refreshNativeReminders(apiRequest);
         },
       }}
-      visible={actionsVisible}
+      timeChangeInMenu={false}
+      visible={actionSheet != null}
     />
     </>
   );

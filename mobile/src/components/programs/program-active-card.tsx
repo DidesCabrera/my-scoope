@@ -16,7 +16,7 @@ export function ProgramActiveOverview({ calendarization, program, embedded = fal
     <>
       <EntityHeading entity="program" eyebrow="Programa activo" identityIcon={CalendarClock} indicators={[...(embedded ? [] : program.indicators), { icon: "week", iconPosition: "leading", label: "periodo", tone: "surfaceMuted", value: `${compactDateLabel(calendarization.start_date)} — ${compactDateLabel(calendarization.end_date)}` }]} title={calendarization.program_name} variant={embedded ? "card" : "page"} />
       {embedded ? null : <SectionHeading icon={<Activity color={tokens.color.entityIconForeground} size={18} />} title="Métricas de activación" />}
-      <ProgramActiveKpis adheredDays={program.adherence?.completed_meals ?? 0} adherence={program.adherence?.adherence_percent ?? 0} bleed={false} elapsedDays={calendarization.progress_day} plannedAdherenceDays={program.adherence?.elapsed_meals ?? program.adherence?.planned_meals ?? 0} progress={calendarization.progress_percent} standalone totalDays={calendarization.progress_total_days} />
+      <ProgramActiveKpis adheredDays={program.adherence?.completed_meals ?? 0} adherence={program.adherence?.adherence_percent ?? 0} elapsedDays={calendarization.progress_day} plannedAdherenceDays={program.adherence?.elapsed_meals ?? program.adherence?.planned_meals ?? 0} progress={calendarization.progress_percent} standalone totalDays={calendarization.progress_total_days} />
       {embedded ? <DetailLinkRow accessibilityLabel={`Ir a Mi programa activo: ${calendarization.program_name}`} label="Ir a Mi programa activo" onPress={() => router.push("/program" as Href)} /> : null}
     </>
   );

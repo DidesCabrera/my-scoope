@@ -136,11 +136,15 @@ class CalendarizedMealExecution(models.Model):
     ACTION_SKIPPED = "skipped"
     ACTION_RESET = "reset"
     ACTION_NOTE = "note"
+    ACTION_FOOD_PREPARED = "food_prepared"
+    ACTION_FOOD_UNPREPARED = "food_unprepared"
     ACTION_CHOICES = (
         (ACTION_COMPLETED, "Completed"),
         (ACTION_SKIPPED, "Skipped"),
         (ACTION_RESET, "Reset"),
         (ACTION_NOTE, "Note"),
+        (ACTION_FOOD_PREPARED, "Food prepared"),
+        (ACTION_FOOD_UNPREPARED, "Food unprepared"),
     )
 
     calendarized_day = models.ForeignKey(
@@ -152,6 +156,7 @@ class CalendarizedMealExecution(models.Model):
     action = models.CharField(max_length=20, choices=ACTION_CHOICES)
     idempotency_key = models.CharField(max_length=120, unique=True)
     note = models.CharField(max_length=500, blank=True)
+    food_snapshot_key = models.CharField(max_length=80, blank=True)
     occurred_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

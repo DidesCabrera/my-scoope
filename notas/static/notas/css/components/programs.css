@@ -1242,9 +1242,17 @@
 .data-grid-row--program-weeks-mobile {
   grid-template-columns:
     minmax(52px, 0.8fr)
+    minmax(44px, 0.58fr)
     minmax(48px, 0.62fr)
     minmax(48px, 0.62fr)
-    minmax(48px, 0.62fr)
+    minmax(48px, 0.62fr);
+}
+
+.data-grid-header--program-weeks-mobile-distribution,
+.data-grid-row--program-weeks-mobile-distribution {
+  grid-template-columns:
+    minmax(52px, 0.72fr)
+    repeat(3, minmax(36px, 0.48fr))
     minmax(88px, 1fr);
 }
 

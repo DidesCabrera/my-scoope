@@ -233,6 +233,7 @@ def meal_check_in(request, day_id: int, meal_snapshot_key: str, payload: MealChe
             action=payload.action,
             idempotency_key=payload.idempotency_key,
             note=payload.note,
+            food_snapshot_key=payload.food_snapshot_key,
         )
     except ValueError as exc:
         raise calendarization_error(exc) from exc

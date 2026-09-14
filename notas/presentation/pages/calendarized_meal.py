@@ -31,7 +31,7 @@ def _nutrition_totals(payload: dict | None) -> dict:
     }
 
 
-def snapshot_food_table_row(food: dict, meal_calories: float) -> dict:
+def snapshot_food_table_row(food: dict, meal_calories: float, current_weight=None) -> dict:
     nutrition = _nutrition_totals(food)
     return {
         "child": {"id": food.get("key", "")},
@@ -48,6 +48,7 @@ def snapshot_food_table_row(food: dict, meal_calories: float) -> dict:
                 "fat": _percentage(nutrition["kcal_fat"], nutrition["calories"]),
             },
             "g_protein": nutrition["protein"],
+            "ppk": nutrition["protein"] / current_weight if current_weight and nutrition["protein"] else None,
             "g_carbs": nutrition["carbs"],
             "g_fat": nutrition["fat"],
             "alloc_protein": _percentage(nutrition["kcal_protein"], nutrition["calories"]),
@@ -57,14 +58,14 @@ def snapshot_food_table_row(food: dict, meal_calories: float) -> dict:
     }
 
 
-def snapshot_food_card(food: dict) -> dict:
+def snapshot_food_card(food: dict, current_weight=None) -> dict:
     nutrition = _nutrition_totals(food)
     return {
         "child_id": food.get("key", ""),
         "related_data": {"quantity": _number(food.get("quantity_g"))},
         "titulo": {"name": food.get("name") or "Alimento", "label": "Food", "icon": "carrot"},
         "kpis": {
-            "ppk": 0,
+            "ppk": nutrition["protein"] / current_weight if current_weight and nutrition["protein"] else None,
             "tot_kcal": nutrition["calories"],
             "g_protein": nutrition["protein"],
             "g_carbs": nutrition["carbs"],
@@ -122,8 +123,8 @@ def build_calendarized_meal_detail(*, day, meal_snapshot_key: str, user) -> dict
             },
         },
         "foods_aggregation": [{"display_name": item.get("name") or "Alimento"} for item in foods],
-        "food_rows": [snapshot_food_table_row(item, nutrition["calories"]) for item in foods],
-        "food_cards": [snapshot_food_card(item) for item in foods],
+        "food_rows": [snapshot_food_table_row(item, nutrition["calories"], current_weight) for item in foods],
+        "food_cards": [snapshot_food_card(item, current_weight) for item in foods],
         "kpis": {
             "ppk": nutrition["protein"] / current_weight if current_weight else 0,
             "tot_kcal": nutrition["calories"],

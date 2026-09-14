@@ -24,11 +24,11 @@ import { LibraryActions } from "./library-actions";
 const sectionTitles = { foods: "Tabla de comparación entre alimentos", meals: "Tabla de comparación entre comidas", weeks: "Semanas del programa" } as const;
 
 function foodPanelItem(item: LibraryItem["panel"]["foods"][number]): FoodPanelItem {
-  return { id: item.id, relationId: item.relation_id, name: item.name, quantity: item.quantity, quantityUnit: item.quantity_unit, calories: item.calories, calorieShare: item.calorie_share, proteinGrams: item.protein_grams, carbsGrams: item.carbs_grams, fatGrams: item.fat_grams, proteinAllocation: item.protein_allocation, carbsAllocation: item.carbs_allocation, fatAllocation: item.fat_allocation };
+  return { id: item.id, relationId: item.relation_id, name: item.name, quantity: item.quantity, quantityUnit: item.quantity_unit, calories: item.calories, calorieShare: item.calorie_share, proteinGrams: item.protein_grams, proteinPerKilogram: item.protein_per_kilogram, carbsGrams: item.carbs_grams, fatGrams: item.fat_grams, proteinAllocation: item.protein_allocation, carbsAllocation: item.carbs_allocation, fatAllocation: item.fat_allocation };
 }
 
 function mealPanelItem(item: LibraryItem["panel"]["meals"][number]): MealPanelItem {
-  return { id: item.id, relationId: item.relation_id, detailId: item.detail_id, name: item.name, time: item.time?.slice(0, 5), note: item.note, foods: item.foods.map((food) => ({ name: food.name, quantity: food.quantity, quantityUnit: food.quantity_unit })), calories: item.calories, calorieShare: item.calorie_share, proteinGrams: item.protein_grams, carbsGrams: item.carbs_grams, fatGrams: item.fat_grams, proteinAllocation: item.protein_allocation, carbsAllocation: item.carbs_allocation, fatAllocation: item.fat_allocation };
+  return { id: item.id, relationId: item.relation_id, detailId: item.detail_id, name: item.name, time: item.time?.slice(0, 5), note: item.note, foods: item.foods.map((food) => ({ name: food.name, quantity: food.quantity, quantityUnit: food.quantity_unit })), calories: item.calories, calorieShare: item.calorie_share, proteinGrams: item.protein_grams, proteinPerKilogram: item.protein_per_kilogram, carbsGrams: item.carbs_grams, fatGrams: item.fat_grams, proteinAllocation: item.protein_allocation, carbsAllocation: item.carbs_allocation, fatAllocation: item.fat_allocation };
 }
 
 export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "meals" | "daily-plans" | "programs" }) {
@@ -40,7 +40,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   const [loading, setLoading] = useState(true);
   const setHeaderPresentation = useHeaderPresentation();
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
-  const [actionsVisible, setActionsVisible] = useState(false);
+  const [actionSheet, setActionSheet] = useState<"change-time" | "menu" | null>(null);
   const [labelImage, setLabelImage] = useState<FoodLabelImage | null>(null);
   const [labelImageBusy, setLabelImageBusy] = useState(false);
   const [contextTime, setContextTime] = useState(mealTime?.slice(0, 5) ?? "");
@@ -78,7 +78,8 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
     && contextDailyPlanMealId > 0;
   const headerEntity = entitySlug === "daily-plans" ? "dailyPlan" : entitySlug === "programs" ? "program" : entitySlug === "meals" ? "meal" : "food";
   const fallbackTitle = entitySlug === "daily-plans" ? "Plan diario" : entitySlug === "programs" ? "Programa" : entitySlug === "meals" ? "Comida" : "Alimento";
-  const openActions = useCallback(() => setActionsVisible(true), []);
+  const openActions = useCallback(() => setActionSheet("menu"), []);
+  const openTimeChange = useCallback(() => setActionSheet("change-time"), []);
   const cancelContextualCreation = useCallback(() => { if (pickerEntryHref) router.dismissTo(pickerEntryHref); }, [pickerEntryHref, router]);
   const continueContextualCreation = useCallback(() => {
     if (!contextualPickerKind || !returnHref || !isContextualMealCreation) return;
@@ -100,10 +101,17 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
         title: item?.name ?? fallbackTitle,
       });
     } else {
-      setHeaderPresentation({ mode: "library-detail", action: item?.actions?.length || hasMealTimeContext ? { label: `Más acciones para ${item?.name ?? fallbackTitle}`, onPress: openActions } : undefined, entity: headerEntity, identityVisible: compactHeaderVisible, title: item?.name ?? fallbackTitle });
+      setHeaderPresentation({
+        mode: "library-detail",
+        action: item?.actions?.length ? { label: `Más acciones para ${item?.name ?? fallbackTitle}`, onPress: openActions } : undefined,
+        entity: headerEntity,
+        identityVisible: compactHeaderVisible,
+        secondaryAction: hasMealTimeContext ? { icon: "clock", label: "Cambiar hora", onPress: openTimeChange } : undefined,
+        title: item?.name ?? fallbackTitle,
+      });
     }
     return () => setHeaderPresentation({ mode: "default" });
-  }, [cancelContextualCreation, compactHeaderVisible, continueContextualCreation, fallbackTitle, hasMealTimeContext, headerEntity, isContextualMealCreation, item, openActions, pickerEntryHref, setHeaderPresentation]));
+  }, [cancelContextualCreation, compactHeaderVisible, continueContextualCreation, fallbackTitle, hasMealTimeContext, headerEntity, isContextualMealCreation, item, openActions, openTimeChange, pickerEntryHref, setHeaderPresentation]));
   const load = useCallback(async () => { setLoading(true); setError(null); try { setItem(await apiRequest<LibraryItem>(`/api/v1/library/${entitySlug}/${id}`)); } catch (nextError) { setError(userFacingError(nextError)); } finally { setLoading(false); } }, [apiRequest, entitySlug, id]);
   const handleActionCompleted = useCallback((result: LibraryActionResult) => {
     if (result.action === "delete") {
@@ -159,7 +167,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   if (status === "anonymous") return <Redirect href="/login" />;
   if (loading && !item) return <View style={styles.loading}><ActivityIndicator color={tokens.color.interactivePrimary} size="large" /><Text style={textStyles.muted}>Cargando detalle…</Text></View>;
   if (!item) return <View style={styles.loading}>{error ? <InlineNotice tone="error">{error}</InlineNotice> : null}<Button label="Reintentar" onPress={() => void load()} variant="secondary" /></View>;
-  const actionsModal = <LibraryActions apiRequest={apiRequest} entitySlug={entitySlug} item={item} mealTimeChange={hasMealTimeContext ? {
+  const actionsModal = <LibraryActions apiRequest={apiRequest} entitySlug={entitySlug} initialAction={actionSheet === "change-time" ? "change-time" : undefined} item={item} key={actionSheet ?? "closed"} mealTimeChange={hasMealTimeContext ? {
     initialTime: contextTime,
     onSubmit: async (hour: string) => {
       await apiRequest<CompositionMutationResult>(`/api/v1/library/daily-plans/${contextDailyPlanId}/meals/${contextDailyPlanMealId}`, {
@@ -169,7 +177,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
       });
       setContextTime(hour);
     },
-  } : undefined} onCompleted={handleActionCompleted} onVisibleChange={setActionsVisible} renderTrigger={() => null} visible={actionsVisible} />;
+  } : undefined} mealTimeInMenu={false} onCompleted={handleActionCompleted} onVisibleChange={(visible) => { if (!visible) setActionSheet(null); }} renderTrigger={() => null} visible={actionSheet != null} />;
   if (item.entity === "program") {
     return <><ProgramDetailPreview
       footer={<>{item.can_calendarize && !item.is_draft ? <Button label="Calendarizar este programa" onPress={() => router.push(`/program/activate?programId=${item.id}` as Href)} /> : null}<EntityDetailMetadata creator={item.creator} updatedAt={libraryDate(item.created_at)} /></>}

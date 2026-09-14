@@ -113,6 +113,36 @@ class CalendarizationExecutionTests(TestCase):
         self.assertEqual(state["status"], "completed")
         self.assertEqual(state["note"], "Sin hambre al terminar.")
 
+    def test_food_preparation_is_persistent_and_independent_per_food(self):
+        snapshot = self.day.plan_snapshot
+        snapshot["meals"][0]["foods"] = [
+            {"key": "meal_food:10", "name": "Plátano"},
+            {"key": "meal_food:11", "name": "Nueces"},
+        ]
+        self.day.plan_snapshot = snapshot
+        self.day.save(update_fields=["plan_snapshot"])
+
+        record_meal_execution(
+            user=self.user, day_id=self.day.id, meal_snapshot_key="dailyplan_meal:1",
+            food_snapshot_key="meal_food:10", action="food_prepared", idempotency_key="food-prepared-0001",
+        )
+        record_meal_execution(
+            user=self.user, day_id=self.day.id, meal_snapshot_key="dailyplan_meal:1",
+            food_snapshot_key="meal_food:11", action="food_prepared", idempotency_key="food-prepared-0002",
+        )
+        record_meal_execution(
+            user=self.user, day_id=self.day.id, meal_snapshot_key="dailyplan_meal:1",
+            food_snapshot_key="meal_food:10", action="food_unprepared", idempotency_key="food-prepared-0003",
+        )
+
+        self.assertEqual(meal_execution_state_for_day(self.day)[0]["prepared_food_keys"], ["meal_food:11"])
+
+        with self.assertRaisesMessage(ValueError, "food_snapshot_key_invalid"):
+            record_meal_execution(
+                user=self.user, day_id=self.day.id, meal_snapshot_key="dailyplan_meal:1",
+                food_snapshot_key="meal_food:404", action="food_prepared", idempotency_key="food-prepared-0004",
+            )
+
     def test_meal_evidence_requires_owned_today_snapshot_key(self):
         other = User.objects.create_user(username="other-calendar-user")
 

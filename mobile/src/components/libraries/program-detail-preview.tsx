@@ -17,8 +17,8 @@ import { ProgramWeekComparisonPanels, type ProgramWeekSummary } from "./program-
 import { ContextCardActions, type ContextCardAction } from "./context-card-actions";
 
 const weekSummaries: ProgramWeekSummary[] = [
-  { allocation: { carbs: 47, fat: 29, protein: 24 }, averageCalories: 2040, calories: 14280, carbsGrams: 1546, dailyPlans: 7, fatGrams: 427, id: "week-1", proteinGrams: 1064, week: 1 },
-  { allocation: { carbs: 46, fat: 29, protein: 25 }, averageCalories: 2087, calories: 14610, carbsGrams: 1574, dailyPlans: 7, fatGrams: 438, id: "week-2", proteinGrams: 1108, week: 2 },
+  { allocation: { carbs: 47, fat: 29, protein: 24 }, averageCalories: 2040, calories: 14280, carbsGrams: 1546, dailyPlans: 7, fatGrams: 427, id: "week-1", ppk: 1.9, proteinGrams: 1064, week: 1 },
+  { allocation: { carbs: 46, fat: 29, protein: 25 }, averageCalories: 2087, calories: 14610, carbsGrams: 1574, dailyPlans: 7, fatGrams: 438, id: "week-2", ppk: 2, proteinGrams: 1108, week: 2 },
 ];
 
 const dayLabels = ["L", "M", "X", "J", "V", "S", "D"];
@@ -89,7 +89,7 @@ function dayRows(week: LibraryWeekPanelItem): ProgramDayNutrition[] {
 }
 
 function foodItem(item: LibraryFoodPanelItem): FoodPanelItem {
-  return { id: item.id, name: item.name, quantity: item.quantity, quantityUnit: item.quantity_unit, calories: item.calories, calorieShare: item.calorie_share, proteinGrams: item.protein_grams, carbsGrams: item.carbs_grams, fatGrams: item.fat_grams, proteinAllocation: item.protein_allocation, carbsAllocation: item.carbs_allocation, fatAllocation: item.fat_allocation };
+  return { id: item.id, name: item.name, quantity: item.quantity, quantityUnit: item.quantity_unit, calories: item.calories, calorieShare: item.calorie_share, proteinGrams: item.protein_grams, proteinPerKilogram: item.protein_per_kilogram, carbsGrams: item.carbs_grams, fatGrams: item.fat_grams, proteinAllocation: item.protein_allocation, carbsAllocation: item.carbs_allocation, fatAllocation: item.fat_allocation };
 }
 
 export function ProgramWeekDetail({ canRemoveWeek = false, onAssignDailyPlan, onDuplicateWeek, onRemoveDailyPlan, onRemoveWeek, showHeading = true, week, weekData }: { canRemoveWeek?: boolean; onAssignDailyPlan?: (week: number, day: number) => void; onDuplicateWeek?: (week: number) => Promise<void>; onRemoveDailyPlan?: (week: number, day: number) => Promise<void>; onRemoveWeek?: (week: number) => Promise<void>; showHeading?: boolean; week: number; weekData?: LibraryWeekPanelItem }) {
@@ -171,7 +171,7 @@ export function ProgramDetailPreview({ footer, item, onAddWeek, onAssignDailyPla
   const liveWeeks = item?.panel.kind === "weeks" ? item.panel.weeks : [];
   const displayedWeeks = liveWeeks.length ? liveWeeks.map((week) => week.week_number) : item ? [1] : [1, 2];
   const displayedActiveWeek = displayedWeeks.includes(activeWeek) ? activeWeek : displayedWeeks[0] ?? 1;
-  const liveSummaries: ProgramWeekSummary[] = liveWeeks.map((week) => { const filledDays = week.filled_days_count ?? week.days.filter((day) => day.plan_name).length; return { allocation: { protein: week.protein_allocation, carbs: week.carbs_allocation, fat: week.fat_allocation }, averageCalories: week.average_calories ?? week.calories / Math.max(filledDays, 1), calories: week.calories, carbsGrams: week.carbs_grams, dailyPlans: filledDays, fatGrams: week.fat_grams, id: week.id, proteinGrams: week.protein_grams, week: week.week_number }; });
+  const liveSummaries: ProgramWeekSummary[] = liveWeeks.map((week) => { const filledDays = week.filled_days_count ?? week.days.filter((day) => day.plan_name).length; const ppkValues = week.days.flatMap((day) => day.nutrition?.protein.per_kilogram == null ? [] : [day.nutrition.protein.per_kilogram]); return { allocation: { protein: week.protein_allocation, carbs: week.carbs_allocation, fat: week.fat_allocation }, averageCalories: week.average_calories ?? week.calories / Math.max(filledDays, 1), calories: week.calories, carbsGrams: week.carbs_grams, dailyPlans: filledDays, fatGrams: week.fat_grams, id: week.id, ppk: ppkValues.length ? ppkValues.reduce((sum, value) => sum + value, 0) / ppkValues.length : null, proteinGrams: week.protein_grams, week: week.week_number }; });
   const selectedWeek = liveWeeks.find((week) => week.week_number === displayedActiveWeek);
   const liveMetrics = liveWeeks.length ? programDailyMetricData(liveWeeks) : undefined;
   const weeksCount = liveWeeks.length || (item ? 1 : 2);

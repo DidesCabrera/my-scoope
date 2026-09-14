@@ -12,6 +12,7 @@ import { tokens } from "@/design/tokens";
 export type EntityDetailPageProps = PropsWithChildren<
   Omit<NutritionEntityCardProps, "children" | "onPress" | "style"> & {
     action?: ReactNode;
+    beforeNutrition?: ReactNode;
     backLabel?: string;
     onBack?: () => void;
     showNutrition?: boolean;
@@ -20,6 +21,7 @@ export type EntityDetailPageProps = PropsWithChildren<
 
 export function EntityDetailPage({
   action,
+  beforeNutrition,
   backLabel = "Volver",
   children,
   accessory,
@@ -65,6 +67,7 @@ export function EntityDetailPage({
             title={title}
             variant="page"
           />
+          {beforeNutrition}
           {showNutrition ? <NutritionKpiSection variant={kpiVariant} {...nutrition} /> : null}
         </View>
         {children}

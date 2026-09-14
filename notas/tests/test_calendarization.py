@@ -810,6 +810,9 @@ class CalendarizationViewTests(CalendarizationFixtureMixin, TestCase):
             action_keys,
             ["calendarization_history", "rename", "change_time"],
         )
+        header = detail.context["vm"]["content"]["header"]
+        self.assertIn("change_time", [action["key"] for action in header["mobile_inline_actions"]])
+        self.assertNotIn("change_time", [action["key"] for action in header["mobile_menu_actions"]])
         self.assertContains(form, "plan activo")
         self.assertNotContains(form, 'name="note"')
         self.assertEqual(list(form.context["form"].fields), ["hour"])

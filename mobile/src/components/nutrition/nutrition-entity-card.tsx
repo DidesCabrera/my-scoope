@@ -16,6 +16,7 @@ import {
 export type NutritionEntityCardProps = {
   accessory?: ReactNode;
   actions?: ReactNode;
+  beforeNutrition?: ReactNode;
   children?: ReactNode;
   completion?: CompletionIndicatorCounts;
   kpiVariant?: "nested" | "regular";
@@ -32,6 +33,7 @@ export type NutritionEntityCardProps = {
 export function NutritionEntityCard({
   accessory,
   actions,
+  beforeNutrition,
   children,
   completion,
   kpiVariant = "regular",
@@ -56,6 +58,7 @@ export function NutritionEntityCard({
       style={style}
       subtitle={subtitle}
       title={title}>
+      {beforeNutrition}
       <View>
         <NutritionKpiSection variant={kpiVariant} {...nutrition} />
       </View>

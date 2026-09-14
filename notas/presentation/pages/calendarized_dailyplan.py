@@ -10,6 +10,7 @@ from notas.application.queries.calendarization_projection_queries import (
 )
 from notas.application.services.nutrition.weight import get_current_weight
 from notas.domain.services.nutrition import macro_kcal_distribution
+from notas.presentation.composition.viewmodel.components.builder_table_items import with_table_item_ppk
 from notas.presentation.pages.calendarized_meal import snapshot_food_table_row
 from notas.presentation.resolvers.title_resolvers import resolve_category_badge
 from notas.presentation.viewmodels.content.dailyplan.detail_dailyplan_vm import (
@@ -45,7 +46,7 @@ def _kpis(totals: dict, current_weight: float | None) -> KPIUI:
     )
 
 
-def _meal_table_row(*, day_id: int, meal: dict, plan_totals: dict) -> dict:
+def _meal_table_row(*, day_id: int, meal: dict, plan_totals: dict, current_weight=None) -> dict:
     totals = snapshot_nutrition_totals(meal)
     return {
         "main_id": day_id,
@@ -63,6 +64,7 @@ def _meal_table_row(*, day_id: int, meal: dict, plan_totals: dict) -> dict:
                 totals["kcal_fat"],
             ),
             "g_protein": totals["protein"],
+            "ppk": totals["protein"] / current_weight if current_weight and totals["protein"] else None,
             "g_carbs": totals["carbs"],
             "g_fat": totals["fat"],
             "alloc_protein": _percentage(totals["kcal_protein"], plan_totals["kcal_protein"]),
@@ -80,6 +82,7 @@ def build_calendarized_dailyplan_detail(*, day, user, header: dict) -> dict:
     plan_totals = snapshot_nutrition_totals(snapshot)
     food_rows = snapshot_food_aggregation_rows([snapshot], plan_totals)
     current_weight = get_current_weight(user)
+    food_rows = with_table_item_ppk(food_rows, current_weight)
     owner = str(user)
     metadata = MetadataUI(owner=owner, author=owner, fork_from=None)
     meal_badge = resolve_category_badge("en plan")
@@ -125,7 +128,7 @@ def build_calendarized_dailyplan_detail(*, day, user, header: dict) -> dict:
                     url=detail_url,
                 ),
                 kpis=_kpis(meal_totals, current_weight),
-                table={"items": [snapshot_food_table_row(food, meal_totals["total_kcal"]) for food in foods]},
+                table={"items": [snapshot_food_table_row(food, meal_totals["total_kcal"], current_weight) for food in foods]},
                 foods_aggregation=[{"display_name": food.get("name") or "Alimento"} for food in foods],
                 metadata=metadata,
                 actions=[
@@ -162,7 +165,7 @@ def build_calendarized_dailyplan_detail(*, day, user, header: dict) -> dict:
                 ),
             ),
             kpis=_kpis(plan_totals, current_weight),
-            table={"items": [_meal_table_row(day_id=day.id, meal=meal, plan_totals=plan_totals) for meal in meals]},
+            table={"items": [_meal_table_row(day_id=day.id, meal=meal, plan_totals=plan_totals, current_weight=current_weight) for meal in meals]},
             menu={"meals": calendarized_meals, "uses_detail_links": True},
             metadata=metadata,
             show_kpis=bool(meals),

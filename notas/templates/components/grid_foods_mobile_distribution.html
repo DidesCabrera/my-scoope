@@ -1,0 +1,22 @@
+<div class="data-grid data-grid--mobile-foods-distribution">
+  <div class="data-grid-header data-grid-header--mobile-foods-distribution">
+    <div class="data-grid-col data-grid-col--name">Alimentos</div>
+    <div class="data-grid-col data-grid-col--distribution-value">P%</div>
+    <div class="data-grid-col data-grid-col--distribution-value">C%</div>
+    <div class="data-grid-col data-grid-col--distribution-value">F%</div>
+    <div class="data-grid-col data-grid-col--kcal-distribution">P|C|F</div>
+  </div>
+  {% for row in items %}
+    <div class="data-grid-row data-grid-row--mobile-foods-distribution">
+      <div class="data-grid-cell data-grid-cell--name">{{ row.rel.name }}</div>
+      <div class="data-grid-cell data-grid-cell--distribution-value data-grid-cell--distribution-protein">{{ row.rel.kcal_distribution.protein|floatformat:0 }}%</div>
+      <div class="data-grid-cell data-grid-cell--distribution-value data-grid-cell--distribution-carbs">{{ row.rel.kcal_distribution.carbs|floatformat:0 }}%</div>
+      <div class="data-grid-cell data-grid-cell--distribution-value data-grid-cell--distribution-fat">{{ row.rel.kcal_distribution.fat|floatformat:0 }}%</div>
+      <div class="data-grid-cell data-grid-cell--kcal-distribution">
+        {% include "components/macro_kcal_distribution.html" with protein=row.rel.kcal_distribution.protein carbs=row.rel.kcal_distribution.carbs fat=row.rel.kcal_distribution.fat %}
+      </div>
+    </div>
+  {% empty %}
+    <div class="data-grid-empty">No foods added yet.</div>
+  {% endfor %}
+</div>

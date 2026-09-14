@@ -78,6 +78,7 @@ class LibraryFoodPanelItemData(Schema):
     calorie_share: float
     calorie_distribution: LibraryCalorieDistributionData
     protein_grams: float
+    protein_per_kilogram: float | None = None
     carbs_grams: float
     fat_grams: float
     protein_allocation: float

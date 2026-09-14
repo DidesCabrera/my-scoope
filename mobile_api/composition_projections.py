@@ -63,7 +63,7 @@ def entity_nutrition(entity, current_weight) -> dict:
     return _nutrition(_macros(entity), _kcal(entity), current_weight)
 
 
-def _food_row(*, food, quantity, relation_id, parent_kcal, projected=False, projected_label=None, row_id=None):
+def _food_row(*, food, quantity, relation_id, parent_kcal, current_weight=None, projected=False, projected_label=None, row_id=None):
     factor = float(quantity) / 100
     macros = tuple(value * factor for value in _macros(food))
     kcal = tuple(value * factor for value in _kcal(food))
@@ -79,6 +79,7 @@ def _food_row(*, food, quantity, relation_id, parent_kcal, projected=False, proj
         "calorie_share": _percentage(total, sum(parent_kcal)),
         "calorie_distribution": {key: _number(value) for key, value in distribution.items()},
         "protein_grams": _number(macros[0]),
+        "protein_per_kilogram": _number(macros[0] / current_weight) if current_weight and macros[0] else None,
         "carbs_grams": _number(macros[1]),
         "fat_grams": _number(macros[2]),
         "protein_allocation": _percentage(kcal[0], parent_kcal[0]),
@@ -89,13 +90,14 @@ def _food_row(*, food, quantity, relation_id, parent_kcal, projected=False, proj
     }
 
 
-def _meal_food_rows(meal, parent_kcal):
+def _meal_food_rows(meal, parent_kcal, current_weight=None):
     return [
         _food_row(
             food=relation.food,
             quantity=relation.quantity,
             relation_id=relation.id,
             parent_kcal=parent_kcal,
+            current_weight=current_weight,
         )
         for relation in meal.meal_food_set.select_related("food").order_by("order", "id")
     ]
@@ -117,6 +119,7 @@ def project_meal_result(*, meal, food, quantity, current_weight, replaced=None) 
             quantity=relation.quantity,
             relation_id=relation.id,
             parent_kcal=result_kcal,
+            current_weight=current_weight,
         )
         for relation in meal.meal_food_set.select_related("food").order_by("order", "id")
         if not replaced or relation.id != replaced.id
@@ -127,6 +130,7 @@ def project_meal_result(*, meal, food, quantity, current_weight, replaced=None) 
             quantity=quantity,
             relation_id=replaced.id if replaced else None,
             parent_kcal=result_kcal,
+            current_weight=current_weight,
             projected=True,
             projected_label="Reemplazo" if replaced else "Por agregar",
             row_id=f"projected-meal-food:{replaced.id if replaced else food.id}",
@@ -152,7 +156,7 @@ def _meal_row(*, meal, relation_id, hour, note, parent_kcal, current_weight, pro
         "name": meal.name,
         "time": str(hour)[:5] if hour else None,
         "note": note or "",
-        "foods": projected_foods if projected_foods is not None else _meal_food_rows(meal, _kcal(meal)),
+        "foods": projected_foods if projected_foods is not None else _meal_food_rows(meal, _kcal(meal), current_weight),
         "calories": _number(sum(kcal)),
         "calorie_share": _percentage(sum(kcal), sum(parent_kcal)),
         "calorie_distribution": {key: _number(value) for key, value in macro_kcal_distribution(*kcal).items()},
@@ -286,7 +290,7 @@ def project_dailyplan_food_result(
     }
 
 
-def _aggregate_week_foods(day_plans, week_kcal):
+def _aggregate_week_foods(day_plans, week_kcal, current_weight=None):
     aggregate = defaultdict(lambda: {"food": None, "quantity": 0.0})
     for dailyplan in day_plans.values():
         for slot in dailyplan.dailyplan_meals.all():
@@ -299,6 +303,7 @@ def _aggregate_week_foods(day_plans, week_kcal):
             quantity=value["quantity"],
             relation_id=None,
             parent_kcal=week_kcal,
+            current_weight=current_weight,
             row_id=f"projected-week-food:{food_id}",
         )
         for food_id, value in sorted(aggregate.items())
@@ -358,7 +363,7 @@ def project_program_week_result(*, program, dailyplan, week_number, day_numbers,
     )
     program_kcal = _add(other_weeks_kcal, week_kcal)
     total_program_kcal = sum(program_kcal)
-    foods = _aggregate_week_foods(projected_plans, week_kcal)
+    foods = _aggregate_week_foods(projected_plans, week_kcal, current_weight)
     meals_count = sum(plan.dailyplan_meals.count() for plan in projected_plans.values())
     week = {
         "id": f"projected-program-week:{program.id}:{week_number}",

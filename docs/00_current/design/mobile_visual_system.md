@@ -198,10 +198,11 @@ The native panel system mirrors the mobile Django information architecture
 without copying desktop tables. `PanelSurface`, `EntityPanelTabs`, `PanelBody`
 and `PanelEmptyState` own the shared interaction and surface contract.
 
-`FoodPanels` is used by Meal and DPM entities and exposes `Alimentos`, `Macros`
-and `Alloc`. `MealPanels` is used by DailyPlan and exposes `Menú`, `Macros` and
-`Alloc`. Their content panels (`FoodQuantityPanel`, `MealMenuPanel`,
-`NutritionMacrosPanel`, `NutritionAllocationPanel`) remain independently
+`FoodPanels` is used by Meal and DPM entities and exposes `Alimentos`,
+`Calorías`, `Macros`, `Dist` and `Alloc`. `MealPanels` is used by DailyPlan and
+exposes `Menú`, `Calorías`, `Macros`, `Dist` and `Alloc`. Their content panels
+(`FoodQuantityPanel`, `MealMenuPanel`, `NutritionCaloriesPanel`,
+`NutritionMacrosPanel`, `NutritionDistributionPanel`, `NutritionAllocationPanel`) remain independently
 reusable. The final data row in every panel omits its bottom separator. Food
 has no nested panels in the current web contract. Program
 panels and charts are intentionally excluded from this first stage.
@@ -216,9 +217,13 @@ name; Django uses the equivalent `grid_meal_identity.html` partial. Menu, macro
 and allocation panels reuse it in their meal-name column. Its 4 px internal
 inset makes Menu identity content align with the first column in other panels.
 The menu time and ingredient enumeration use that same 4 px internal inset.
-Macro and allocation panels reserve a fixed 40% of their grid width for the
-leading Food or Meal identity. Macros divides the remaining width equally among
-Kcal, P, C and F; Alloc divides it equally among P%, C% and F%.
+Nutrition panels reserve a fixed leading column for the Food, Meal, day or week
+identity. `Macros` places PpK immediately after that identity and then exposes
+P/C/F grams without a distribution bar. `Dist` exposes the intrinsic P/C/F
+calorie percentages and retains the stacked P/C/F distribution bar. `Alloc`
+remains the contextual contribution of each row to its parent macro totals.
+PpK uses the user's current weight and renders an unavailable marker when no
+weight exists.
 
 ## Entity detail pages
 

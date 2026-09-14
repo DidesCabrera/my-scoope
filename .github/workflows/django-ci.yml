@@ -9,7 +9,6 @@ on:
   push:
     branches:
       - staging
-      - main
       - master
     paths-ignore:
       - "core/templates/core/landing.html"
@@ -19,9 +18,54 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: django-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  change-scope:
+    name: Select validation tier
+    runs-on: ubuntu-latest
+    outputs:
+      tier: ${{ steps.scope.outputs.tier }}
+
+    steps:
+      - name: Checkout validation candidate
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Classify changed paths
+        id: scope
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE_SHA: ${{ github.event.before }}
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            comparison_base="$PR_BASE_SHA"
+          else
+            comparison_base="$BEFORE_SHA"
+          fi
+
+          if [[ -z "$comparison_base" || "$comparison_base" =~ ^0+$ ]]; then
+            comparison_base="$(git rev-parse HEAD^)"
+          fi
+
+          tier="$(scripts/ci_change_scope.sh "$comparison_base" "$GITHUB_SHA")"
+          if [[ "$BASE_REF" == "main" || "$REF_NAME" == "main" ]]; then
+            tier=full
+          fi
+
+          echo "Selected validation tier: $tier"
+          echo "tier=$tier" >> "$GITHUB_OUTPUT"
+
   django-fast:
     name: Django fast structural gate
+    needs: change-scope
+    if: needs.change-scope.outputs.tier == 'staging-fast' || needs.change-scope.outputs.tier == 'full'
     runs-on: ubuntu-latest
 
     env:
@@ -50,7 +94,10 @@ jobs:
 
   django-full:
     name: Django complete regression suite
-    needs: django-fast
+    needs:
+      - change-scope
+      - django-fast
+    if: needs.change-scope.outputs.tier == 'full'
     runs-on: ubuntu-latest
 
     env:
@@ -81,7 +128,10 @@ jobs:
 
   django-postgres:
     name: Django PostgreSQL regression suite
-    needs: django-fast
+    needs:
+      - change-scope
+      - django-fast
+    if: needs.change-scope.outputs.tier == 'full'
     runs-on: ubuntu-latest
 
     services:
@@ -126,6 +176,8 @@ jobs:
 
   mcp:
     name: MCP contract and protocol suite
+    needs: change-scope
+    if: needs.change-scope.outputs.tier == 'staging-fast' || needs.change-scope.outputs.tier == 'full'
     runs-on: ubuntu-latest
 
     steps:
@@ -149,6 +201,8 @@ jobs:
 
   browser-smoke:
     name: browser-smoke
+    needs: change-scope
+    if: needs.change-scope.outputs.tier == 'staging-fast' || needs.change-scope.outputs.tier == 'full'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -198,6 +252,7 @@ jobs:
 
   quality:
     name: Static correctness and dependency audit
+    needs: change-scope
     runs-on: ubuntu-latest
 
     steps:
@@ -221,6 +276,8 @@ jobs:
 
   frontend:
     name: Frontend build and unit tests
+    needs: change-scope
+    if: needs.change-scope.outputs.tier == 'staging-fast' || needs.change-scope.outputs.tier == 'full'
     runs-on: ubuntu-latest
 
     steps:
@@ -244,6 +301,8 @@ jobs:
 
   mobile:
     name: Expo mobile contract and bundle
+    needs: change-scope
+    if: needs.change-scope.outputs.tier == 'mobile' || needs.change-scope.outputs.tier == 'staging-fast' || needs.change-scope.outputs.tier == 'full'
     runs-on: ubuntu-latest
 
     steps:
@@ -263,3 +322,62 @@ jobs:
 
       - name: Validate mobile client
         run: scripts/ci_mobile_checks.sh
+
+  validation-summary:
+    name: Validation summary
+    if: always()
+    needs:
+      - change-scope
+      - django-fast
+      - django-full
+      - django-postgres
+      - mcp
+      - browser-smoke
+      - quality
+      - frontend
+      - mobile
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Require every check owned by the selected tier
+        env:
+          BROWSER_RESULT: ${{ needs.browser-smoke.result }}
+          DJANGO_FAST_RESULT: ${{ needs.django-fast.result }}
+          DJANGO_FULL_RESULT: ${{ needs.django-full.result }}
+          DJANGO_POSTGRES_RESULT: ${{ needs.django-postgres.result }}
+          FRONTEND_RESULT: ${{ needs.frontend.result }}
+          MCP_RESULT: ${{ needs.mcp.result }}
+          MOBILE_RESULT: ${{ needs.mobile.result }}
+          QUALITY_RESULT: ${{ needs.quality.result }}
+          SCOPE_RESULT: ${{ needs.change-scope.result }}
+          TIER: ${{ needs.change-scope.outputs.tier }}
+        run: |
+          required_results=("$SCOPE_RESULT" "$QUALITY_RESULT")
+
+          if [[ "$TIER" == "mobile" ]]; then
+            required_results+=("$MOBILE_RESULT")
+          elif [[ "$TIER" == "staging-fast" || "$TIER" == "full" ]]; then
+            required_results+=(
+              "$DJANGO_FAST_RESULT"
+              "$MCP_RESULT"
+              "$BROWSER_RESULT"
+              "$FRONTEND_RESULT"
+              "$MOBILE_RESULT"
+            )
+
+            if [[ "$TIER" == "full" ]]; then
+              required_results+=("$DJANGO_FULL_RESULT" "$DJANGO_POSTGRES_RESULT")
+            fi
+          elif [[ "$TIER" != "docs" ]]; then
+            echo "Unknown validation tier: $TIER"
+            exit 1
+          fi
+
+          for result in "${required_results[@]}"; do
+            if [[ "$result" != "success" ]]; then
+              echo "A required $TIER validation job finished with: $result"
+              exit 1
+            fi
+          done
+
+          echo "All required jobs passed for the $TIER tier."

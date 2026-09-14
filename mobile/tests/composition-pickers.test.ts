@@ -85,7 +85,11 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(picker, /target\.panel\.foods\.find\(\(item\) => item\.relation_id === relationId\)/);
   matches(picker, /setQuantity\(String\(relation\.quantity\)\)/);
   matches(picker, /const detailHref = returnTo \?\?/);
-  matches(picker, /pickerConfigureHref\(kind, \{ contextDailyPlanId, contextDailyPlanMealId, dayNumber: initialDayNumber, relationId, returnTo/);
+  matches(picker, /pickerConfigureHref\(kind, \{ contextDailyPlanId, contextDailyPlanMealId, dayNumber: initialDayNumber, relationId, relationKey, returnTo/);
+  matches(picker, /food_snapshot_key: relationKey/);
+  matches(picker, /meal_snapshot_key: relationKey/);
+  matches(picker, /relationId \|\| relationKey \? "Reemplazar alimento"/);
+  matches(picker, /apiRequest<CalendarizedDayDetail>\(`\/api\/v1\/program\/days\/\$\{targetId\}`\)/);
   matches(picker, /dailyplan_id: contextDailyPlanId/);
   matches(picker, /dailyplan_meal_id: contextDailyPlanMealId/);
   omits(picker, /protein\s*\*\s*4|carbs\s*\*\s*4|fat\s*\*\s*9/);

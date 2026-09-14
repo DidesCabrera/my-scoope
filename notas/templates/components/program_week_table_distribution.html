@@ -1,0 +1,22 @@
+<div class="data-grid data-grid--program-weeks-mobile data-grid--program-weeks-mobile-distribution" role="table" aria-label="Distribución calórica por semana">
+  <div class="data-grid-header data-grid-header--program-weeks-mobile data-grid-header--program-weeks-mobile-distribution" role="row">
+    <div class="data-grid-col data-grid-col--program-week" role="columnheader">Semana</div>
+    <div class="data-grid-col data-grid-col--distribution-value" role="columnheader">P%</div>
+    <div class="data-grid-col data-grid-col--distribution-value" role="columnheader">C%</div>
+    <div class="data-grid-col data-grid-col--distribution-value" role="columnheader">F%</div>
+    <div class="data-grid-col data-grid-col--kcal-distribution" role="columnheader">P|C|F</div>
+  </div>
+  {% for week in weeks %}
+    <div class="data-grid-row data-grid-row--program-weeks-mobile data-grid-row--program-weeks-mobile-distribution" role="row">
+      <div class="data-grid-cell data-grid-cell--program-week" role="cell">S{{ week.week_number }}</div>
+      <div class="data-grid-cell data-grid-cell--distribution-value data-grid-cell--distribution-protein" role="cell">{{ week.totals.alloc.protein|floatformat:0 }}%</div>
+      <div class="data-grid-cell data-grid-cell--distribution-value data-grid-cell--distribution-carbs" role="cell">{{ week.totals.alloc.carbs|floatformat:0 }}%</div>
+      <div class="data-grid-cell data-grid-cell--distribution-value data-grid-cell--distribution-fat" role="cell">{{ week.totals.alloc.fat|floatformat:0 }}%</div>
+      <div class="data-grid-cell data-grid-cell--kcal-distribution" role="cell">
+        {% include "components/macro_kcal_distribution.html" with protein=week.totals.alloc.protein carbs=week.totals.alloc.carbs fat=week.totals.alloc.fat %}
+      </div>
+    </div>
+  {% empty %}
+    <div class="data-grid-empty">No hay semanas configuradas.</div>
+  {% endfor %}
+</div>

@@ -49,6 +49,13 @@
     <button
       type="button"
       class="panel-tab btn-desplegar-mobile"
+      data-target="#card-grid-program-dist-mobile-{{ panel_id }}"
+    >
+      Dist
+    </button>
+    <button
+      type="button"
+      class="panel-tab btn-desplegar-mobile"
       data-target="#card-grid-program-alloc-mobile-{{ panel_id }}"
     >
       Alloc
@@ -71,6 +78,10 @@
 
   <div id="card-grid-program-macros-mobile-{{ panel_id }}" class="card-table-programs-mobile program-table-panel">
     {% include "components/program_week_table_macros.html" with weeks=weeks %}
+  </div>
+
+  <div id="card-grid-program-dist-mobile-{{ panel_id }}" class="card-table-programs-mobile program-table-panel">
+    {% include "components/program_week_table_distribution.html" with weeks=weeks %}
   </div>
 
   <div id="card-grid-program-alloc-mobile-{{ panel_id }}" class="card-table-programs-mobile program-table-panel">

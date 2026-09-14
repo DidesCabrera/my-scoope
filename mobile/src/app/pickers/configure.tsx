@@ -6,13 +6,14 @@ import { internalHref } from "@/navigation/internal-href";
 const pickerKinds = new Set<PickerKind>(["food-to-meal", "meal-to-dailyplan", "dailyplan-to-program", "dailyplan-to-calendarized-day", "meal-to-calendarized-day", "food-to-calendarized-meal"]);
 
 export default function ConfigureCompositionPickerRoute() {
-  const { contextDailyPlanId, contextDailyPlanMealId, dayNumber, kind, mealKey, relationId, returnTo, selectedId, targetId, weekNumber } = useLocalSearchParams<{
+  const { contextDailyPlanId, contextDailyPlanMealId, dayNumber, kind, mealKey, relationId, relationKey, returnTo, selectedId, targetId, weekNumber } = useLocalSearchParams<{
     contextDailyPlanId?: string;
     contextDailyPlanMealId?: string;
     dayNumber?: string;
     kind?: string;
     mealKey?: string;
     relationId?: string;
+    relationKey?: string;
     returnTo?: string;
     selectedId?: string;
     targetId?: string;
@@ -39,6 +40,7 @@ export default function ConfigureCompositionPickerRoute() {
         kind={pickerKind}
         mealKey={mealKey}
         relationId={relation}
+        relationKey={relationKey}
         returnTo={returnHref}
         selectedId={selection}
         targetId={target}

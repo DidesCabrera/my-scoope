@@ -123,6 +123,7 @@ export type MealExecutionItem = {
   last_event_id: number | null;
   recorded_at: string | null;
   note: string;
+  prepared_food_keys: string[];
 };
 
 export type AdherenceSummary = {
@@ -258,6 +259,7 @@ export type LibraryFoodPanelItem = {
   calorie_share: number;
   calorie_distribution: LibraryCalorieDistribution;
   protein_grams: number;
+  protein_per_kilogram: number | null;
   carbs_grams: number;
   fat_grams: number;
   protein_allocation: number;
@@ -466,9 +468,10 @@ export type OnboardingInput = {
 export type WeightInput = { weight_kg: number; measured_on?: string };
 
 export type MealCheckInInput = {
-  action: "completed" | "skipped" | "reset" | "note";
+  action: "completed" | "skipped" | "reset" | "note" | "food_prepared" | "food_unprepared";
   idempotency_key: string;
   note?: string;
+  food_snapshot_key?: string;
 };
 
 export type ReviewInput = {

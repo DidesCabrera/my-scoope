@@ -320,8 +320,8 @@ def meal_detail(request, day_id, meal_snapshot_key):
         "label": "Cambiar hora",
         "method": "get",
         "icon": "clock-3",
-        "desktop_position": "menu",
-        "mobile_position": "menu",
+        "desktop_position": "inline",
+        "mobile_position": "inline",
         "url": reverse(
             "calendarization_meal_change_time",
             args=[day.id, meal_snapshot_key],

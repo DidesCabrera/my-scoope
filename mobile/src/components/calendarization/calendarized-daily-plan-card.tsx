@@ -8,6 +8,7 @@ import { MealPanels } from "@/components/panels";
 import { Button, EntityCardAction } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { snapshotCalories, snapshotMacroDistribution, snapshotMealPanelItem } from "./presentation-adapters";
+import { DailyMealCompletionCard } from "./meal-completion-summary";
 
 type Props = {
   dayId: number | null;
@@ -27,11 +28,16 @@ export function CalendarizedDailyPlanCard({ dayId, dateLabel, eyebrow, mealExecu
   const totalCalories = snapshotCalories(totals);
   const mealKeys = new Set(meals.flatMap((meal) => meal.key ? [meal.key] : []));
   const executions = mealExecution.filter((item) => mealKeys.has(item.meal_key));
-  const mealItems = meals.map((meal, index) => snapshotMealPanelItem(meal, index, totals));
+  const completedMealKeys = new Set(executions.filter((item) => item.status === "completed").map((item) => item.meal_key));
+  const mealItems = meals.map((meal, index) => ({
+    ...snapshotMealPanelItem(meal, index, totals),
+    completed: Boolean(meal.key && completedMealKeys.has(meal.key)),
+  }));
   return (
     <NutritionEntityCard
       actions={dayId ? <EntityCardAction label="Ir al detalle del plan calendarizado" onPress={() => router.push(`/program/days/${dayId}` as Href)} role="link"><ChevronRight color={tokens.color.textMuted} size={21} /></EntityCardAction> : null}
-      completion={{ completedCount: executions.filter((item) => item.status === "completed").length, noteCount: executions.filter((item) => item.note.trim()).length }}
+      beforeNutrition={<DailyMealCompletionCard mealExecution={mealExecution} mealKeys={meals.map((meal) => meal.key)} />}
+      completion={{ noteCount: executions.filter((item) => item.note.trim()).length }}
       entity="dailyPlan"
       eyebrow={eyebrow}
       indicators={[

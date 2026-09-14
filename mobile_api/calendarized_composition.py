@@ -15,6 +15,8 @@ from notas.application.services.calendarization.snapshots import (
 from notas.application.services.commands.calendarization_commands import (
     add_food_to_calendarized_meal,
     add_meal_to_calendarized_day,
+    replace_calendarized_food,
+    replace_calendarized_meal,
 )
 from notas.application.services.food_imports.localized_names import resolve_food_display_name
 from notas.application.services.nutrition.weight import get_current_weight
@@ -284,7 +286,9 @@ def _snapshot_meal(snapshot: dict, meal_snapshot_key: str) -> dict:
     return meal
 
 
-def preview_meal_for_calendarized_day(*, user, day_id: int, meal_id: int, hour, note: str) -> dict:
+def preview_meal_for_calendarized_day(
+    *, user, day_id: int, meal_id: int, hour, note: str, meal_snapshot_key: str | None = None
+) -> dict:
     _day, snapshot = _day_context(user=user, day_id=day_id)
     meal = _library_meal(user, meal_id)
     current_weight = get_current_weight(user)
@@ -292,9 +296,20 @@ def preview_meal_for_calendarized_day(*, user, day_id: int, meal_id: int, hour, 
     meals = snapshot.get("meals")
     if not isinstance(meals, list):
         raise calendarization_error(ValueError("calendarized_plan_snapshot_invalid"))
-    next_order = max((int(item.get("order") or 0) for item in meals if isinstance(item, dict)), default=-1) + 1
     projected_key = f"projected_calendarized_meal:{meal.id}"
-    meals.append(build_meal_snapshot(meal=meal, key=projected_key, order=next_order, hour=hour, note=note))
+    if meal_snapshot_key:
+        index = next(
+            (index for index, item in enumerate(meals) if isinstance(item, dict) and item.get("key") == meal_snapshot_key),
+            None,
+        )
+        if index is None:
+            raise calendarization_error(ValueError("meal_snapshot_key_invalid"))
+        replaced_name = meals[index].get("name") or "Comida"
+        meals[index] = build_meal_snapshot(meal=meal, key=projected_key, order=index, hour=hour, note=note)
+    else:
+        next_order = max((int(item.get("order") or 0) for item in meals if isinstance(item, dict)), default=-1) + 1
+        meals.append(build_meal_snapshot(meal=meal, key=projected_key, order=next_order, hour=hour, note=note))
+        replaced_name = None
     snapshot["totals"] = snapshot_totals([item.get("totals", {}) for item in meals if isinstance(item, dict)])
     result = _dailyplan_result(
         day_id=day_id,
@@ -311,25 +326,39 @@ def preview_meal_for_calendarized_day(*, user, day_id: int, meal_id: int, hour, 
             "quantity": None,
             "hour": str(hour)[:5] if hour else None,
         },
-        "impacts": [{"label": "Plan diario después de agregar", "entity": "dailyPlan", "before": before, "after": result["nutrition"], "metrics": []}],
+        "impacts": [{"label": "Plan diario después de reemplazar" if meal_snapshot_key else "Plan diario después de agregar", "entity": "dailyPlan", "before": before, "after": result["nutrition"], "metrics": []}],
         "result": result,
-        "replacements": [],
+        "replacements": [replaced_name] if replaced_name else [],
         "confirmation_required": False,
     }
 
 
-def commit_meal_to_calendarized_day(*, user, day_id: int, meal_id: int, hour, note: str) -> dict:
+def commit_meal_to_calendarized_day(
+    *, user, day_id: int, meal_id: int, hour, note: str, meal_snapshot_key: str | None = None
+) -> dict:
     _day_context(user=user, day_id=day_id)
     meal = _library_meal(user, meal_id)
     try:
-        add_meal_to_calendarized_day(user=user, day_id=day_id, meal=meal, hour=hour, note=note)
+        if meal_snapshot_key:
+            replace_calendarized_meal(
+                user=user,
+                day_id=day_id,
+                meal_snapshot_key=meal_snapshot_key,
+                meal=meal,
+                hour=hour,
+                note=note,
+            )
+        else:
+            add_meal_to_calendarized_day(user=user, day_id=day_id, meal=meal, hour=hour, note=note)
     except ValueError as exc:
         raise calendarization_error(exc) from exc
-    return {"message": "Comida agregada al plan diario activo.", "target_id": day_id, "created_id": meal.id}
+    message = "Comida reemplazada en el plan diario activo." if meal_snapshot_key else "Comida agregada al plan diario activo."
+    return {"message": message, "target_id": day_id, "created_id": meal.id}
 
 
 def preview_food_for_calendarized_meal(
-    *, user, day_id: int, meal_snapshot_key: str, food_id: int, quantity: float
+    *, user, day_id: int, meal_snapshot_key: str, food_id: int, quantity: float,
+    food_snapshot_key: str | None = None,
 ) -> dict:
     _day, snapshot = _day_context(user=user, day_id=day_id)
     food = _readable_food(user, food_id)
@@ -340,7 +369,18 @@ def preview_food_for_calendarized_meal(
     foods = meal.get("foods")
     if not isinstance(foods, list):
         raise calendarization_error(ValueError("calendarized_meal_snapshot_invalid"))
-    foods.append(build_food_snapshot(food=food, quantity=quantity, key=projected_key))
+    if food_snapshot_key:
+        index = next(
+            (index for index, item in enumerate(foods) if isinstance(item, dict) and item.get("key") == food_snapshot_key),
+            None,
+        )
+        if index is None:
+            raise calendarization_error(ValueError("food_snapshot_key_invalid"))
+        replaced_name = foods[index].get("name") or "Alimento"
+        foods[index] = build_food_snapshot(food=food, quantity=quantity, key=projected_key)
+    else:
+        foods.append(build_food_snapshot(food=food, quantity=quantity, key=projected_key))
+        replaced_name = None
     meal["totals"] = snapshot_totals(foods)
     snapshot["totals"] = snapshot_totals(
         [item.get("totals", {}) for item in snapshot.get("meals", []) if isinstance(item, dict)]
@@ -361,26 +401,38 @@ def preview_food_for_calendarized_meal(
             "quantity": _number(quantity),
             "hour": None,
         },
-        "impacts": [{"label": "Comida después de agregar", "entity": "meal", "before": before, "after": result["nutrition"], "metrics": []}],
+        "impacts": [{"label": "Comida después de reemplazar" if food_snapshot_key else "Comida después de agregar", "entity": "meal", "before": before, "after": result["nutrition"], "metrics": []}],
         "result": result,
-        "replacements": [],
+        "replacements": [replaced_name] if replaced_name else [],
         "confirmation_required": False,
     }
 
 
 def commit_food_to_calendarized_meal(
-    *, user, day_id: int, meal_snapshot_key: str, food_id: int, quantity: float
+    *, user, day_id: int, meal_snapshot_key: str, food_id: int, quantity: float,
+    food_snapshot_key: str | None = None,
 ) -> dict:
     _day_context(user=user, day_id=day_id)
     food = _readable_food(user, food_id)
     try:
-        add_food_to_calendarized_meal(
-            user=user,
-            day_id=day_id,
-            meal_snapshot_key=meal_snapshot_key,
-            food=food,
-            quantity=quantity,
-        )
+        if food_snapshot_key:
+            replace_calendarized_food(
+                user=user,
+                day_id=day_id,
+                meal_snapshot_key=meal_snapshot_key,
+                food_snapshot_key=food_snapshot_key,
+                food=food,
+                quantity=quantity,
+            )
+        else:
+            add_food_to_calendarized_meal(
+                user=user,
+                day_id=day_id,
+                meal_snapshot_key=meal_snapshot_key,
+                food=food,
+                quantity=quantity,
+            )
     except ValueError as exc:
         raise calendarization_error(exc) from exc
-    return {"message": "Alimento agregado a la comida activa.", "target_id": day_id, "created_id": food.id}
+    message = "Alimento reemplazado en la comida activa." if food_snapshot_key else "Alimento agregado a la comida activa."
+    return {"message": message, "target_id": day_id, "created_id": food.id}

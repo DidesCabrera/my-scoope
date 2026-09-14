@@ -57,7 +57,7 @@ function displayDate(value: string | null): string {
 function ProposalCard({ proposal, onPress }: { proposal: ProposalSummary; onPress(): void }) {
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => pressed && styles.pressed}>
-      <Card accent={statusColors[proposal.status]}>
+      <Card>
         <View style={styles.row}>
           <View style={styles.copy}>
             <Text style={styles.source}>{proposal.source === "ai" ? "AI" : proposal.source.toUpperCase()} · {displayDate(proposal.created_at)}</Text>

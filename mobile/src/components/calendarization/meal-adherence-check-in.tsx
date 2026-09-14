@@ -7,24 +7,21 @@ import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { userFacingError } from "@/api/errors";
 import type { MealCheckInInput, MealExecutionItem, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
-import { Button, ContentPanel, InlineNotice, SectionHeading, textStyles } from "@/components/ui";
+import { Button, ContentPanel, InlineNotice, SectionHeading } from "@/components/ui";
 import { tokens } from "@/design/tokens";
+import { MealCompletionSurface } from "./meal-completion-summary";
 
 type Props = { dayId: number; mealKey: string; onChange?: (execution: MealExecutionItem) => void };
 
 function executionFor(data: TodayData, dayId: number, mealKey: string): MealExecutionItem | null {
   if (data.day_id !== dayId || !data.plan_snapshot?.meals?.some((meal) => meal.key === mealKey)) return null;
   return data.meal_execution.find((item) => item.meal_key === mealKey) ?? {
-    meal_key: mealKey,
-    status: "planned",
-    last_event_id: null,
-    recorded_at: null,
-    note: "",
+    meal_key: mealKey, status: "planned", last_event_id: null, recorded_at: null, note: "", prepared_food_keys: [],
   };
 }
 
-export function MealAdherenceCheckIn({ dayId, mealKey, onChange }: Props) {
-  const { apiRequest } = useSession();
+export function useMealAdherenceCheckIn({ dayId, mealKey, onChange }: Props) {
+  const { apiRequest, status } = useSession();
   const [available, setAvailable] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [editingNote, setEditingNote] = useState(true);
@@ -44,6 +41,11 @@ export function MealAdherenceCheckIn({ dayId, mealKey, onChange }: Props) {
   }, [dayId, mealKey, onChange]);
 
   useFocusEffect(useCallback(() => {
+    if (status !== "authenticated") {
+      setLoading(false);
+      setAvailable(false);
+      return;
+    }
     let active = true;
     setLoading(true);
     setError(null);
@@ -57,7 +59,7 @@ export function MealAdherenceCheckIn({ dayId, mealKey, onChange }: Props) {
       .catch((nextError) => { if (active) setError(userFacingError(nextError)); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [apiRequest, applyToday, dayId, mealKey]));
+  }, [apiRequest, applyToday, dayId, mealKey, status]));
 
   async function saveStatus(nextCompleted: boolean) {
     const previousCompleted = completed;
@@ -65,118 +67,71 @@ export function MealAdherenceCheckIn({ dayId, mealKey, onChange }: Props) {
     setSavingStatus(true);
     setError(null);
     try {
-      const payload: MealCheckInInput = {
-        action: nextCompleted ? "completed" : "skipped",
-        idempotency_key: Crypto.randomUUID(),
-      };
-      const updated = await apiRequest<TodayData>(
-        `/api/v1/days/${dayId}/meals/${encodeURIComponent(mealKey)}/check-ins`,
-        { method: "POST", body: JSON.stringify(payload) },
-      );
-      applyToday(updated);
-    } catch (nextError) {
-      setCompleted(previousCompleted);
-      setError(userFacingError(nextError));
-    } finally {
-      setSavingStatus(false);
-    }
+      const payload: MealCheckInInput = { action: nextCompleted ? "completed" : "skipped", idempotency_key: Crypto.randomUUID() };
+      applyToday(await apiRequest<TodayData>(`/api/v1/days/${dayId}/meals/${encodeURIComponent(mealKey)}/check-ins`, { method: "POST", body: JSON.stringify(payload) }));
+    } catch (nextError) { setCompleted(previousCompleted); setError(userFacingError(nextError)); }
+    finally { setSavingStatus(false); }
   }
 
   async function saveNote() {
     setSavingNote(true);
     setError(null);
     try {
-      const payload: MealCheckInInput = {
-        action: "note",
-        idempotency_key: Crypto.randomUUID(),
-        note,
-      };
-      const updated = await apiRequest<TodayData>(
-        `/api/v1/days/${dayId}/meals/${encodeURIComponent(mealKey)}/check-ins`,
-        { method: "POST", body: JSON.stringify(payload) },
-      );
-      applyToday(updated);
+      const payload: MealCheckInInput = { action: "note", idempotency_key: Crypto.randomUUID(), note };
+      applyToday(await apiRequest<TodayData>(`/api/v1/days/${dayId}/meals/${encodeURIComponent(mealKey)}/check-ins`, { method: "POST", body: JSON.stringify(payload) }));
       setEditingNote(false);
-    } catch (nextError) {
-      setError(userFacingError(nextError));
-    } finally {
-      setSavingNote(false);
-    }
+    } catch (nextError) { setError(userFacingError(nextError)); }
+    finally { setSavingNote(false); }
   }
 
-  if (loading || !available) return null;
+  return { available: !loading && available, completed, editingNote, error, note, saveNote, saveStatus, savingNote, savingStatus, setEditingNote, setNote };
+}
 
-  return (
-    <View style={styles.section}>
-      <SectionHeading title="Cumplimiento de esta comida" />
-      <ContentPanel muted>
-        <Pressable
-          accessibilityLabel="Comida cumplida"
-          accessibilityRole="checkbox"
-          accessibilityState={{ checked: completed, disabled: savingStatus }}
-          disabled={savingStatus}
-          onPress={() => void saveStatus(!completed)}
-          style={({ pressed }) => [styles.completionRow, savingStatus && styles.saving, pressed && styles.pressed]}>
-          <View style={styles.completionCopy}>
-            <Text style={styles.completionLabel}>Comida cumplida</Text>
-            <Text style={textStyles.caption}>Marca la casilla si cumpliste esta comida del programa.</Text>
-          </View>
-          <View style={[styles.checkbox, completed && styles.checkboxChecked]}>
-            {completed ? <Check color={tokens.color.entityIconForeground} size={17} strokeWidth={3} /> : null}
-          </View>
-        </Pressable>
+export type MealAdherenceController = ReturnType<typeof useMealAdherenceCheckIn>;
 
-        <View style={styles.divider} />
+export function MealCompletionToggleCard({ available = true, completed, error, onToggle, saving = false }: { available?: boolean; completed: boolean; error?: string | null; onToggle(nextCompleted: boolean): void; saving?: boolean }) {
+  if (!available) return null;
+  return <MealCompletionSurface>
+    <Pressable accessibilityLabel="Comida cumplida" accessibilityRole="checkbox" accessibilityState={{ checked: completed, disabled: saving }} disabled={saving} onPress={() => onToggle(!completed)} style={({ pressed }) => [styles.completionRow, saving && styles.saving, pressed && styles.pressed]}>
+      <Text style={styles.completionLabel}>Comida cumplida</Text>
+      <View style={[styles.checkbox, completed && styles.checkboxChecked]}>{completed ? <Check color={tokens.color.entityIconForeground} size={17} strokeWidth={3} /> : null}</View>
+    </Pressable>
+    {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
+  </MealCompletionSurface>;
+}
 
-        <View style={styles.noteBlock}>
-          <View style={styles.noteHeader}>
-            <Text style={styles.noteLabel}>Nota</Text>
-            {editingNote ? (
-              <Text style={styles.noteCount}>{note.length}/500</Text>
-            ) : (
-              <Pressable
-                accessibilityLabel="Editar nota"
-                accessibilityRole="button"
-                hitSlop={8}
-                onPress={() => setEditingNote(true)}
-                style={({ pressed }) => [styles.noteEdit, pressed && styles.pressed]}>
-                <Pencil color={tokens.color.textMuted} size={18} strokeWidth={2.2} />
-              </Pressable>
-            )}
-          </View>
-          {editingNote ? (
-            <TextInput
-              accessibilityLabel="Nota sobre el cumplimiento de la comida"
-              maxLength={500}
-              multiline
-              onChangeText={setNote}
-              placeholder="Escribe una observación opcional…"
-              placeholderTextColor={tokens.color.textMuted}
-              style={styles.noteInput}
-              textAlignVertical="top"
-              value={note}
-            />
-          ) : (
-            <Text style={[styles.noteText, !note.trim() && styles.noteTextEmpty]}>
-              {note.trim() || "Sin nota registrada."}
-            </Text>
-          )}
+export function MealCompletionCard({ controller }: { controller: MealAdherenceController }) {
+  return <MealCompletionToggleCard available={controller.available} completed={controller.completed} error={controller.error} onToggle={(nextCompleted) => void controller.saveStatus(nextCompleted)} saving={controller.savingStatus} />;
+}
+
+export function MealNoteCard({ controller }: { controller: MealAdherenceController }) {
+  if (!controller.available) return null;
+  return <View style={styles.section}>
+    <SectionHeading title="Nota de esta comida" />
+    <ContentPanel muted>
+      <View style={styles.noteBlock}>
+        <View style={styles.noteHeader}>
+          <Text style={styles.noteLabel}>Nota</Text>
+          {controller.editingNote ? <Text style={styles.noteCount}>{controller.note.length}/500</Text> : <Pressable accessibilityLabel="Editar nota" accessibilityRole="button" hitSlop={8} onPress={() => controller.setEditingNote(true)} style={({ pressed }) => [styles.noteEdit, pressed && styles.pressed]}><Pencil color={tokens.color.textMuted} size={18} strokeWidth={2.2} /></Pressable>}
         </View>
+        {controller.editingNote ? <TextInput accessibilityLabel="Nota sobre el cumplimiento de la comida" maxLength={500} multiline onChangeText={controller.setNote} placeholder="Escribe una observación opcional…" placeholderTextColor={tokens.color.textMuted} style={styles.noteInput} textAlignVertical="top" value={controller.note} /> : <Text style={[styles.noteText, !controller.note.trim() && styles.noteTextEmpty]}>{controller.note.trim() || "Sin nota registrada."}</Text>}
+      </View>
+      {controller.error ? <InlineNotice tone="error">{controller.error}</InlineNotice> : null}
+      {controller.editingNote ? <Button label="Guardar nota" loading={controller.savingNote} onPress={() => void controller.saveNote()} /> : null}
+    </ContentPanel>
+  </View>;
+}
 
-        {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-        {editingNote ? <Button label="Guardar nota" loading={savingNote} onPress={() => void saveNote()} /> : null}
-      </ContentPanel>
-    </View>
-  );
+export function MealAdherenceCheckIn(props: Props) {
+  const controller = useMealAdherenceCheckIn(props);
+  return <View style={styles.section}><MealCompletionCard controller={controller} /><MealNoteCard controller={controller} /></View>;
 }
 
 const styles = StyleSheet.create({
-  checkbox: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.sm, borderWidth: 2, height: 26, justifyContent: "center", width: 26 },
+  checkbox: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 2, height: 26, justifyContent: "center", width: 26 },
   checkboxChecked: { backgroundColor: tokens.color.meal, borderColor: tokens.color.meal },
-  completionCopy: { flex: 1, gap: 2, minWidth: 0 },
-  completionLabel: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: tokens.weight.bold },
+  completionLabel: { color: tokens.color.textMain, flex: 1, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold, minWidth: 0 },
   completionRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.sm, minHeight: 52 },
-  divider: { backgroundColor: tokens.color.borderSoft, height: 1 },
   noteBlock: { gap: tokens.spacing.xs },
   noteCount: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"] },
   noteEdit: { alignItems: "center", height: 32, justifyContent: "center", width: 32 },
@@ -185,7 +140,5 @@ const styles = StyleSheet.create({
   noteLabel: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
   noteText: { color: tokens.color.textMain, fontSize: tokens.type.caption, lineHeight: 21, minHeight: 42 },
   noteTextEmpty: { color: tokens.color.textMuted },
-  pressed: { opacity: 0.65 },
-  saving: { opacity: 0.75 },
-  section: { gap: tokens.spacing.sm, minWidth: 0 },
+  pressed: { opacity: 0.65 }, saving: { opacity: 0.75 }, section: { gap: tokens.spacing.sm, minWidth: 0 },
 });
