@@ -45,20 +45,21 @@ test("shared daily plans reuse the native entity detail and nutrition panel syst
   assertSourceMatch(shareScreen, /<MealPanels items=\{mealItems\}/);
   assertSourceMatch(shareScreen, /Detalle de cada Comida/);
   assertSourceMatch(shareScreen, /<NutritionEntityCard/);
-  assertSourceMatch(shareScreen, /<FoodPanels items=\{foodPanelItems\(meal\)\}/);
+  assertSourceMatch(shareScreen, /<FoodPanels items=\{sharedFoodPanelItems\(meal\)\}/);
 });
 
-test("native Inbox reads and mutates only normalized sharing endpoints", async () => {
+test("native Inbox manages messages while shared detail owns saving to the library", async () => {
   const inbox = await readTestFile(path.resolve(process.cwd(), "src/app/inbox.tsx"), "utf8");
+  const shareScreen = await readTestFile(path.resolve(process.cwd(), "src/app/share/[id].tsx"), "utf8");
   const navigation = await readTestFile(path.resolve(process.cwd(), "src/navigation/product-areas.ts"), "utf8");
 
   assertSourceMatch(inbox, /\/api\/v1\/shares\/inbox/);
   assertSourceMatch(inbox, /method: "PATCH"/);
-  assertSourceMatch(inbox, /\/save/);
   assertSourceMatch(inbox, /<EntityCard/);
   assertSourceMatch(inbox, /<EntityCardAction/);
   assertSourceMatch(inbox, /<CollectionEmptyState/);
   assertSourceMatch(inbox, /daily_plan: "dailyPlan"/);
-  assertSourceMatch(inbox, /`\/libraries\/\$\{libraryPathByEntity\[result\.entity\]\}\/\$\{result\.item_id\}`/);
+  assertSourceMatch(shareScreen, /\/api\/v1\/shares\/inbox\/\$\{inboxItemId\}\/save/);
+  assertSourceMatch(shareScreen, /`\/libraries\/\$\{libraryPathByEntity\[saved\.entity\]\}\/\$\{saved\.item_id\}`/);
   assertSourceMatch(navigation, /href: "\/inbox"/);
 });

@@ -225,7 +225,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(calendarizedDailyPlanCard, /mealKey: meal\.id/);
   assertSourceDoesNotMatch(calendarizedDailyPlanCard, /kpiVariant="nested"/);
   assertSourceMatch(calendarizedDailyPlanCard, /perKilogram: totals\?\.protein_per_kilogram \?\? null/);
-  assertSourceMatch(calendarizedDailyPlanCard, /completedCount: executions\.filter/);
+  assertSourceDoesNotMatch(calendarizedDailyPlanCard, /completedCount: executions\.filter/);
   assertSourceMatch(calendarizedDailyPlanCard, /noteCount: executions\.filter/);
   assertSourceMatch(calendarizedDailyPlanCard, /label: "posición", value: `S\$\{position\.weekNumber\} · D\$\{position\.dayNumber\}`/);
 
@@ -341,7 +341,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(activeProgram, /<ProgramWeekTabs activeWeek=\{activeWeek\}/);
   assertSourceMatch(activeProgram, /<CalendarizedProgramPlanning days=\{programDays\} initialWeek=\{activeWeek\} key=\{`\$\{calendarization\.id\}:\$\{activeWeek\}`\} showWeekTabs=\{false\} weeksData=\{program\.weeks\} \/>/);
   assertSourceMatch(activeProgram, /<SectionDivider \/>[\s\S]*<SectionHeading[^>]*title="Planificación Semanal"/);
-  assertSourceMatch(activeProgram, /<CalendarizedProgramPlanning[\s\S]*<SectionDivider \/>[\s\S]*<DetailLinkRow/);
+  assertSourceMatch(activeProgram, /<ProgramActiveOverview[\s\S]*<DetailLinkRow[\s\S]*<SectionDivider \/>[\s\S]*<SectionHeading[^>]*title="Planificación Semanal"/);
   assertSourceMatch(activeProgram, /label="Ver plantilla original"/);
   assertSourceMatch(activeProgram, /conserva lo que realmente ocurrió/);
   assertSourceMatch(activeProgram, /weekCount === 1 \? "semana" : "semanas"/);
