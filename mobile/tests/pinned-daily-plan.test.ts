@@ -12,7 +12,10 @@ test("Home creates or presents one live pinned daily plan", async () => {
   assertSourceMatch(home, /label="Crear un plan para hoy"/);
   assertSourceMatch(home, /apiRequest<TodayData>\("\/api\/v1\/today\/pinned-plan", \{ method: "POST" \}\)/);
   assertSourceMatch(home, /<PinnedDailyPlanCard item=\{today\.pinned_plan\}/);
-  assertSourceMatch(card, /<EntityCard entity="dailyPlan" eyebrow="PLAN DE HOY" title=\{item\.name\}>/);
+  assertSourceMatch(card, /<EntityCard actions=\{detailAction\} entity="dailyPlan" eyebrow="PLAN DE HOY" title=\{item\.name\}>/);
+  assertSourceMatch(card, /label="Ir al detalle del plan"/);
+  assertSourceMatch(card, /router\.push\(`\/libraries\/daily-plans\/\$\{item\.id\}` as Href\)/);
+  assertSourceMatch(card, /addMealAction: \{ marginTop: tokens\.spacing\.md \}/);
   assertSourceMatch(card, /label="\+ Agregar Comida"/);
   assert.doesNotMatch(card, /<EntityCard[^>]*indicators=/);
 });

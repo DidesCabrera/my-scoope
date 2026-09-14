@@ -1,11 +1,14 @@
 import { type Href, useRouter } from "expo-router";
+import { ChevronRight } from "lucide-react-native";
+import { StyleSheet, View } from "react-native";
 
 import type { LibraryItem, MealExecutionItem } from "@/api/types";
 import { DailyMealCompletionCard } from "@/components/calendarization/meal-completion-summary";
 import { NutritionEntityCard } from "@/components/nutrition";
 import { MealPanels, type MealPanelItem } from "@/components/panels";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
-import { Button, EntityCard } from "@/components/ui";
+import { Button, EntityCard, EntityCardAction } from "@/components/ui";
+import { tokens } from "@/design/tokens";
 import { libraryNutrition } from "@/components/libraries/presentation-adapters";
 
 function mealPanelItem(item: LibraryItem["panel"]["meals"][number], completedKeys: Set<string>): MealPanelItem {
@@ -33,11 +36,16 @@ function mealPanelItem(item: LibraryItem["panel"]["meals"][number], completedKey
 export function PinnedDailyPlanCard({ item, mealExecution }: { item: LibraryItem; mealExecution: MealExecutionItem[] }) {
   const router = useRouter();
   const addMeal = () => router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: item.id, returnTo: "/today" }));
+  const detailAction = (
+    <EntityCardAction label="Ir al detalle del plan" onPress={() => router.push(`/libraries/daily-plans/${item.id}` as Href)} role="link">
+      <ChevronRight color={tokens.color.textMuted} size={21} />
+    </EntityCardAction>
+  );
   const meals = item.panel.meals;
 
   if (meals.length === 0) {
     return (
-      <EntityCard entity="dailyPlan" eyebrow="PLAN DE HOY" title={item.name}>
+      <EntityCard actions={detailAction} entity="dailyPlan" eyebrow="PLAN DE HOY" title={item.name}>
         <Button bleed label="+ Agregar Comida" onPress={addMeal} />
       </EntityCard>
     );
@@ -46,6 +54,7 @@ export function PinnedDailyPlanCard({ item, mealExecution }: { item: LibraryItem
   const completedKeys = new Set(mealExecution.filter((entry) => entry.status === "completed").map((entry) => entry.meal_key));
   return (
     <NutritionEntityCard
+      actions={detailAction}
       beforeNutrition={<DailyMealCompletionCard mealExecution={mealExecution} mealKeys={meals.map((meal) => meal.id)} />}
       entity="dailyPlan"
       eyebrow="PLAN DE HOY"
@@ -61,7 +70,13 @@ export function PinnedDailyPlanCard({ item, mealExecution }: { item: LibraryItem
           } as Href);
         }}
       />
-      <Button bleed label="+ Agregar Comida" onPress={addMeal} />
+      <View style={styles.addMealAction}>
+        <Button bleed label="+ Agregar Comida" onPress={addMeal} />
+      </View>
     </NutritionEntityCard>
   );
 }
+
+const styles = StyleSheet.create({
+  addMealAction: { marginTop: tokens.spacing.md },
+});

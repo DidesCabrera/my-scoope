@@ -4009,6 +4009,17 @@
             "title": "Carbs Grams",
             "type": "number"
           },
+          "detail_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail Id"
+          },
           "fat_allocation": {
             "title": "Fat Allocation",
             "type": "number"

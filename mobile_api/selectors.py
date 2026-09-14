@@ -29,6 +29,7 @@ from notas.application.queries.calendarization_queries import (
     current_calendarization_for_user,
     today_for_calendarization,
 )
+from notas.application.queries.read_boundaries import get_readable_food_queryset
 from notas.application.services.cache.dailyplan_summary import get_dailyplan_summary
 from notas.application.services.cache.program_summary import get_program_summary
 from notas.application.services.food_imports.localized_names import resolve_food_display_name
@@ -82,6 +83,8 @@ def _empty_library_panel(kind="none") -> dict:
 
 def _creator_name(entity) -> str:
     creator = entity.created_by
+    if creator is None:
+        return "Myscoope"
     return creator.get_full_name().strip() or creator.username
 
 
@@ -90,6 +93,7 @@ def _food_panel_item(meal_food, current_weight=None) -> dict:
     return {
         "id": f"meal-food:{meal_food.id}",
         "relation_id": meal_food.id,
+        "detail_id": meal_food.food_id,
         "name": resolve_food_display_name(meal_food.food),
         "quantity": _safe_number(meal_food.quantity),
         "quantity_unit": "g",
@@ -138,6 +142,7 @@ def _aggregated_food_panel_items(rows, *, id_prefix: str, current_weight=None) -
     return [
         {
             "id": f"{id_prefix}:{row['child']['id']}",
+            "detail_id": row["child"].get("detail_id") or (row["child"]["id"] if isinstance(row["child"]["id"], int) else None),
             "name": row["rel"]["name"],
             "quantity": _safe_number(row["rel"]["quantity"]),
             "quantity_unit": row["rel"]["quantity_unit"],
@@ -516,7 +521,7 @@ def library_programs_payload(user, *, search=None, offset=0, limit=30) -> dict:
 def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
     current_weight = get_current_weight(user)
     if entity == "foods":
-        item = Food.objects.filter(pk=item_id, created_by=user, is_active=True).select_related(
+        item = get_readable_food_queryset(user).filter(pk=item_id, is_active=True).select_related(
             "created_by", "label_capture_receipt"
         ).first()
         if item:
@@ -1024,11 +1029,19 @@ def _calendarized_snapshot_with_meal_links(user, snapshot: dict | None) -> dict 
         return payload
 
     meals_by_slot_id = {}
+    foods_by_source_id: dict[int, list[dict]] = {}
     for meal in meals:
         if not isinstance(meal, dict):
             continue
         add_protein_per_kilogram(meal.get("totals"))
         meal.pop("detail_id", None)
+        for food in meal.get("foods", []):
+            if not isinstance(food, dict):
+                continue
+            food.pop("detail_id", None)
+            source_food_id = food.get("source_food_id")
+            if isinstance(source_food_id, int):
+                foods_by_source_id.setdefault(source_food_id, []).append(food)
         key = meal.get("key")
         if not isinstance(key, str) or not key.startswith("dailyplan_meal:"):
             continue
@@ -1044,6 +1057,12 @@ def _calendarized_snapshot_with_meal_links(user, snapshot: dict | None) -> dict 
     ).values_list("id", "meal_id")
     for slot_id, meal_id in links:
         meals_by_slot_id[slot_id]["detail_id"] = meal_id
+    readable_food_ids = get_readable_food_queryset(user).filter(
+        pk__in=foods_by_source_id, is_active=True
+    ).values_list("id", flat=True)
+    for food_id in readable_food_ids:
+        for food in foods_by_source_id[food_id]:
+            food["detail_id"] = food_id
     return payload
 
 

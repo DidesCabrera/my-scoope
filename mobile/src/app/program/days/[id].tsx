@@ -66,7 +66,7 @@ function CalendarizedMealCards({ completionError, dayId, mealExecution, meals, o
               }}
               beforeNutrition={meal.key ? <MealCompletionToggleCard completed={execution?.status === "completed"} error={completionError?.mealKey === meal.key ? completionError.message : null} onToggle={(completed) => onToggleCompleted(meal.key ?? "", completed)} saving={savingMealKey != null} /> : null}
               title={meal.name ?? "Comida"}>
-              <FoodPanels items={foods} preparation={meal.key ? {
+              <FoodPanels items={foods} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} preparation={meal.key ? {
                 isPrepared: (food) => execution?.prepared_food_keys.includes(food.id) ?? false,
                 onToggle: (food) => onTogglePrepared(meal.key ?? "", food.id),
               } : undefined} />
@@ -239,7 +239,7 @@ export default function ProgramDayScreen() {
             <>
               <SectionDivider />
               <EntityDetailSection detail={`${foods.length} alimentos`} title="Alimentos en este plan diario">
-                <FoodPanels items={foods} />
+                <FoodPanels items={foods} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} />
               </EntityDetailSection>
             </>
           ) : null}

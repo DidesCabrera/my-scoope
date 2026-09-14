@@ -82,6 +82,7 @@ def _food_row(food: dict, *, parent_totals: dict, projected: bool = False) -> di
     return {
         "id": str(food.get("key") or "calendarized-food"),
         "relation_id": None,
+        "detail_id": food.get("source_food_id") if isinstance(food.get("source_food_id"), int) else None,
         "name": food.get("name") or "Alimento",
         "quantity": _number(food.get("quantity_g")),
         "quantity_unit": "g",

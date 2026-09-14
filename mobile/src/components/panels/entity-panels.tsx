@@ -21,6 +21,7 @@ type NutritionPanelValues = {
 };
 
 export type FoodPanelItem = NutritionPanelValues & {
+  detailId?: number | null;
   id: string;
   name: string;
   quantity: number;
@@ -180,14 +181,15 @@ function AllocationHeader({ leadingLabel }: { leadingLabel: string }) {
   );
 }
 
-export function FoodQuantityPanel({ items, preparation }: { items: FoodPanelItem[]; preparation?: FoodPreparation }) {
+export function FoodQuantityPanel({ items, onOpenItem, preparation }: { items: FoodPanelItem[]; onOpenItem?: (item: FoodPanelItem) => void; preparation?: FoodPreparation }) {
   if (items.length === 0) return <PanelEmptyState label="Todavía no hay alimentos." />;
   return (
     <PanelBody>
       <QuantityHeader leadingLabel="Alimentos" preparation={Boolean(preparation)} trailingLabel="Qty" />
-      {items.map((item, index) => (
-        <View key={item.id} style={[styles.row, index === items.length - 1 && styles.rowLast]}>
-          <PanelItemName item={item} style={styles.quantityLeadingCell} />
+      {items.map((item, index) => {
+        const canOpen = item.detailId != null && Boolean(onOpenItem);
+        return <View key={item.id} style={[styles.row, index === items.length - 1 && styles.rowLast]}>
+          {canOpen ? <Pressable accessibilityLabel={`Ver detalle de ${item.name}`} accessibilityRole="link" onPress={() => onOpenItem?.(item)} style={({ pressed }) => [styles.quantityLeadingCell, styles.foodDetailLink, pressed && styles.pressed]}><PanelItemName item={item} style={styles.foodDetailCopy} /><ChevronRight color={tokens.color.textMuted} size={17} /></Pressable> : <PanelItemName item={item} style={styles.quantityLeadingCell} />}
           <Text style={[styles.cell, styles.quantityValue]}>{decimal(item.quantity)} {item.quantityUnit}</Text>
           {preparation ? (
             <Pressable
@@ -201,7 +203,7 @@ export function FoodQuantityPanel({ items, preparation }: { items: FoodPanelItem
             </Pressable>
           ) : null}
         </View>
-      ))}
+      })}
     </PanelBody>
   );
 }
@@ -402,12 +404,12 @@ function MealEditPanel({ editing, items }: { editing: MealPanelEditing; items: M
   );
 }
 
-export function FoodPanels({ editing, items, preparation }: { editing?: FoodPanelEditing; items: FoodPanelItem[]; preparation?: FoodPreparation }) {
+export function FoodPanels({ editing, items, onOpenItem, preparation }: { editing?: FoodPanelEditing; items: FoodPanelItem[]; onOpenItem?: (item: FoodPanelItem) => void; preparation?: FoodPreparation }) {
   const [activeTab, setActiveTab] = useState<FoodPanelTab>("quantity");
   return (
     <PanelSurface>
       <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={editing ? [...foodTabs, editTab] : foodTabs} />
-      {activeTab === "quantity" ? <FoodQuantityPanel items={items} preparation={preparation} /> : null}
+      {activeTab === "quantity" ? <FoodQuantityPanel items={items} onOpenItem={onOpenItem} preparation={preparation} /> : null}
       {activeTab === "calories" ? <NutritionCaloriesPanel items={items} leadingLabel="Alimentos" /> : null}
       {activeTab === "macros" ? <NutritionMacrosPanel items={items} leadingLabel="Alimentos" /> : null}
       {activeTab === "distribution" ? <NutritionDistributionPanel items={items} leadingLabel="Alimentos" /> : null}
@@ -444,6 +446,8 @@ const styles = StyleSheet.create({
   gridLeadingCell: { alignSelf: "stretch", flexBasis: "40%", flexGrow: 0, flexShrink: 0, justifyContent: "center", minWidth: 0 },
   itemName: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, letterSpacing: 0, lineHeight: 18, paddingHorizontal: tokens.spacing.xs, textAlign: "left" },
   quantityLeadingCell: { alignSelf: "stretch", flex: 1, justifyContent: "center", minWidth: 0 },
+  foodDetailLink: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs },
+  foodDetailCopy: { flex: 1, justifyContent: "center", minWidth: 0 },
   quantityValue: { textAlign: "center", width: 56 },
   preparationValue: { width: 48 },
   preparationButton: { alignItems: "center", alignSelf: "stretch", justifyContent: "center" },

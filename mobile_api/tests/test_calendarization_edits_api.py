@@ -104,6 +104,10 @@ class MobileAPICalendarizationEditTests(AuthenticatedMobileAPITestCase):
         day.refresh_from_db()
         self.assertEqual(food_preview.status_code, 200)
         self.assertEqual(len(food_preview.json()["data"]["result"]["panel"]["foods"]), 2)
+        self.assertEqual(
+            [food["detail_id"] for food in food_preview.json()["data"]["result"]["panel"]["foods"]],
+            [source_food.id, extra_food.id],
+        )
         self.assertEqual(len(day.plan_snapshot["meals"][-1]["foods"]), 1)
 
         food_commit = self.client.post(
@@ -115,6 +119,9 @@ class MobileAPICalendarizationEditTests(AuthenticatedMobileAPITestCase):
         day.refresh_from_db()
         updated_meal = day.plan_snapshot["meals"][-1]
         self.assertEqual([food["source_food_id"] for food in updated_meal["foods"]], [source_food.id, extra_food.id])
+        day_detail = self.client.get(f"/api/v1/program/days/{day.id}").json()["data"]
+        navigable_foods = day_detail["plan_snapshot"]["meals"][-1]["foods"]
+        self.assertEqual([food["detail_id"] for food in navigable_foods], [source_food.id, extra_food.id])
         self.assertAlmostEqual(updated_meal["totals"]["protein_g"], 5.75)
         self.assertAlmostEqual(day.plan_snapshot["totals"]["protein_g"], 10.75)
         source_relation.refresh_from_db()
