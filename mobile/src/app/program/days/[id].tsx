@@ -25,7 +25,6 @@ function displayDate(value: string): string {
 
 function completionFor(items: MealExecutionItem[]) {
   return {
-    completedCount: items.filter((item) => item.status === "completed").length,
     noteCount: items.filter((item) => item.note.trim()).length,
   };
 }
