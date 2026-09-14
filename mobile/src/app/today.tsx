@@ -6,6 +6,7 @@ import { userFacingError } from "@/api/errors";
 import type { ActiveProgramData, LibraryPageData, ProposalListData, TodayData, WeightListData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { CalendarizedDailyPlanCard } from "@/components/calendarization/calendarized-daily-plan-card";
+import { PinnedDailyPlanCard } from "@/components/calendarization/pinned-daily-plan-card";
 import { compactDateLabel, homePlanDateLabel } from "@/components/calendarization/current-week";
 import { CurrentWeekSection } from "@/components/calendarization/current-week-section";
 import { HomeActions } from "@/components/home-actions";
@@ -35,6 +36,7 @@ export default function TodayScreen() {
   const [error, setError] = useState<string | null>(null);
   const [homeActionsVisible, setHomeActionsVisible] = useState(false);
   const [pendingProposalCount, setPendingProposalCount] = useState(0);
+  const [creatingTodayPlan, setCreatingTodayPlan] = useState(false);
   const [libraryCounts, setLibraryCounts] = useState<HomeLibraryCounts>({ dailyPlan: 0, food: 0, meal: 0, program: 0 });
   const setHeaderPresentation = useHeaderPresentation();
   const openHomeActions = useCallback(() => setHomeActionsVisible(true), []);
@@ -96,6 +98,18 @@ export default function TodayScreen() {
   const firstName = session?.display_name.split(" ")[0] || session?.username || "Atleta";
   const currentWeightKg = latestWeightKg ?? profile?.current_weight_kg ?? today?.measurements?.latest_weight_kg;
 
+  async function createTodayPlan() {
+    setCreatingTodayPlan(true);
+    setError(null);
+    try {
+      setToday(await apiRequest<TodayData>("/api/v1/today/pinned-plan", { method: "POST" }));
+    } catch (nextError) {
+      setError(userFacingError(nextError));
+    } finally {
+      setCreatingTodayPlan(false);
+    }
+  }
+
   return (
     <>
       <Screen headerMode="preserve">
@@ -107,9 +121,9 @@ export default function TodayScreen() {
         title={`Vamos, ${firstName}`}
       />
       {today ? <CurrentWeekSection localDate={today.local_date} /> : null}
-      {today ? <HomeSectionTitle>{`Tu Plan para hoy, ${homePlanDateLabel(today.local_date)}`}</HomeSectionTitle> : null}
+      {today?.calendarization ? <HomeSectionTitle>{`Tu Plan para hoy, ${homePlanDateLabel(today.local_date)}`}</HomeSectionTitle> : null}
 
-      {today?.has_plan && snapshot ? (
+      {today?.calendarization && today.has_plan && snapshot ? (
         <CalendarizedDailyPlanCard
           dayId={todayDayId ?? null}
           dateLabel={compactDateLabel(today.local_date)}
@@ -119,12 +133,25 @@ export default function TodayScreen() {
           position={todayProgramDay ? { dayNumber: todayProgramDay.day_number, weekNumber: todayProgramDay.week_number } : undefined}
           snapshot={snapshot}
         />
-      ) : (
+      ) : today?.calendarization ? (
         <Card muted>
           <SectionTitle title="Día sin plan" />
           <Text style={textStyles.muted}>Tu calendarización no tiene un plan nutricional previsto para esta fecha.</Text>
         </Card>
-      )}
+      ) : today?.pinned_plan ? (
+        <>
+          <HomeSectionTitle>{`Tu Plan para hoy, ${homePlanDateLabel(today.local_date)}`}</HomeSectionTitle>
+          <PinnedDailyPlanCard item={today.pinned_plan} mealExecution={today.meal_execution} />
+        </>
+      ) : today ? (
+        <>
+          <HomeSectionTitle>Registra tus comidas en un nuevo Plan</HomeSectionTitle>
+          <Card accent={tokens.color.dailyPlan}>
+            <Button label="Crear un plan para hoy" loading={creatingTodayPlan} onPress={() => void createTodayPlan()} />
+            <Button label="Elegir desde Mis Planes Diarios" onPress={() => router.push("/libraries/daily-plans" as Href)} variant="secondary" />
+          </Card>
+        </>
+      ) : null}
 
       {activeProgram?.calendarization ? (
         <>

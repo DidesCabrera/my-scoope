@@ -9,7 +9,48 @@ from notas.domain.models import (
     CalendarizationMeasurementContext,
     CalendarizationRevision,
     CalendarizedMealExecution,
+    PinnedDailyPlanMealExecution,
 )
+
+
+def pinned_dailyplan_execution_state(pinned, local_date: date) -> list[dict]:
+    latest_status_by_key: dict[str, PinnedDailyPlanMealExecution] = {}
+    latest_note_by_key: dict[str, PinnedDailyPlanMealExecution] = {}
+    prepared_foods_by_meal: dict[str, set[str]] = {}
+    events = pinned.meal_execution_events.filter(local_date=local_date).order_by("created_at", "id")
+    for event in events:
+        if event.action in {
+            PinnedDailyPlanMealExecution.ACTION_FOOD_PREPARED,
+            PinnedDailyPlanMealExecution.ACTION_FOOD_UNPREPARED,
+        }:
+            prepared = prepared_foods_by_meal.setdefault(event.meal_key, set())
+            if event.action == PinnedDailyPlanMealExecution.ACTION_FOOD_PREPARED:
+                prepared.add(event.food_key)
+            else:
+                prepared.discard(event.food_key)
+            continue
+        if event.action == PinnedDailyPlanMealExecution.ACTION_NOTE:
+            latest_note_by_key[event.meal_key] = event
+            continue
+        latest_status_by_key[event.meal_key] = event
+        if event.note:
+            latest_note_by_key[event.meal_key] = event
+
+    state = []
+    for relation in pinned.dailyplan.dailyplan_meals.all():
+        meal_key = f"dailyplan-meal:{relation.id}"
+        status_event = latest_status_by_key.get(meal_key)
+        note_event = latest_note_by_key.get(meal_key)
+        status = "planned" if status_event is None or status_event.action == PinnedDailyPlanMealExecution.ACTION_RESET else status_event.action
+        state.append({
+            "meal_key": meal_key,
+            "status": status,
+            "last_event_id": status_event.id if status_event else None,
+            "recorded_at": status_event.created_at if status_event else None,
+            "note": note_event.note if note_event else "",
+            "prepared_food_keys": sorted(prepared_foods_by_meal.get(meal_key, set())),
+        })
+    return state
 
 
 def meal_execution_state_for_day(day) -> list[dict]:

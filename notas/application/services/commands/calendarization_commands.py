@@ -42,6 +42,7 @@ from notas.domain.models import (
     ApplePushSubscription,
     CalendarizedDay,
     NotificationDelivery,
+    PinnedDailyPlan,
     Program,
     ProgramCalendarization,
     ScheduledNotificationEvent,
@@ -697,6 +698,8 @@ def activate_program_calendarization(
     if profile.timezone_name != timezone_name:
         profile.timezone_name = timezone_name
         profile.save(update_fields=["timezone_name"])
+
+    PinnedDailyPlan.objects.filter(user=user, is_active=True).update(is_active=False)
 
     return CalendarizationActivationResult(
         calendarization=calendarization,

@@ -17,6 +17,7 @@ from notas.application.queries.calendarization_execution_queries import (
     calendarization_progress_summary,
     meal_execution_state_for_day,
     pending_revision_for_calendarization,
+    pinned_dailyplan_execution_state,
 )
 from notas.application.queries.calendarization_projection_queries import (
     build_calendarization_snapshot_projection,
@@ -33,7 +34,7 @@ from notas.application.services.cache.program_summary import get_program_summary
 from notas.application.services.food_imports.localized_names import resolve_food_display_name
 from notas.application.services.nutrition.body_metrics import get_basic_body_profile
 from notas.application.services.nutrition.weight import get_current_weight
-from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood, Program
+from notas.domain.models import DailyPlan, DailyPlanMeal, Food, Meal, MealFood, PinnedDailyPlan, Program
 from notas.domain.services.nutrition import macro_kcal_distribution
 
 REMINDER_UPCOMING_LIMIT = 60
@@ -730,26 +731,32 @@ def subscription_payload(user, *, purchases_enabled: bool) -> dict:
     }
 
 
+def local_date_for_user(user, *, now=None):
+    timezone_name = getattr(user.profile, "timezone_name", "UTC") or "UTC"
+    try:
+        user_timezone = ZoneInfo(timezone_name)
+    except ZoneInfoNotFoundError:
+        user_timezone = ZoneInfo("UTC")
+    return timezone.localdate(now or timezone.now(), timezone=user_timezone)
+
+
 def today_payload(user, *, now=None) -> dict:
     calendarization = current_calendarization_for_user(user)
     if calendarization is None:
-        timezone_name = getattr(user.profile, "timezone_name", "UTC") or "UTC"
-        try:
-            user_timezone = ZoneInfo(timezone_name)
-        except ZoneInfoNotFoundError:
-            user_timezone = ZoneInfo("UTC")
-        local_date = timezone.localdate(now or timezone.now(), timezone=user_timezone)
+        local_date = local_date_for_user(user, now=now)
+        pinned = PinnedDailyPlan.objects.select_related("dailyplan").filter(user=user, is_active=True).first()
         return {
             "local_date": local_date,
             "calendarization": None,
             "day_id": None,
-            "has_plan": False,
+            "has_plan": pinned is not None,
             "plan_snapshot": None,
-            "meal_execution": [],
+            "meal_execution": pinned_dailyplan_execution_state(pinned, local_date) if pinned else [],
             "adherence": None,
             "measurements": None,
             "reminders": None,
             "pending_revision": None,
+            "pinned_plan": library_item_detail_payload(user, "daily-plans", pinned.dailyplan_id) if pinned else None,
         }
 
     local_date = today_for_calendarization(calendarization, now=now)
@@ -789,6 +796,7 @@ def today_payload(user, *, now=None) -> dict:
         "measurements": calendarization_measurement_summary(calendarization),
         "reminders": reminder_settings_payload(calendarization, now=now),
         "pending_revision": revision_payload(pending_revision_for_calendarization(calendarization)),
+        "pinned_plan": None,
     }
 
 
