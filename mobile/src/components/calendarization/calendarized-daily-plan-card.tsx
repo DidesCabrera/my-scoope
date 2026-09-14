@@ -28,7 +28,11 @@ export function CalendarizedDailyPlanCard({ dayId, dateLabel, eyebrow, mealExecu
   const totalCalories = snapshotCalories(totals);
   const mealKeys = new Set(meals.flatMap((meal) => meal.key ? [meal.key] : []));
   const executions = mealExecution.filter((item) => mealKeys.has(item.meal_key));
-  const mealItems = meals.map((meal, index) => snapshotMealPanelItem(meal, index, totals));
+  const completedMealKeys = new Set(executions.filter((item) => item.status === "completed").map((item) => item.meal_key));
+  const mealItems = meals.map((meal, index) => ({
+    ...snapshotMealPanelItem(meal, index, totals),
+    completed: Boolean(meal.key && completedMealKeys.has(meal.key)),
+  }));
   return (
     <NutritionEntityCard
       actions={dayId ? <EntityCardAction label="Ir al detalle del plan calendarizado" onPress={() => router.push(`/program/days/${dayId}` as Href)} role="link"><ChevronRight color={tokens.color.textMuted} size={21} /></EntityCardAction> : null}

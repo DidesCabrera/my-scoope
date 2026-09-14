@@ -52,10 +52,7 @@ function CalendarizedMealCards({ completionError, dayId, mealExecution, meals, o
                   <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
                 </EntityCardAction>
               ) : null}
-              completion={{
-                completedCount: execution?.status === "completed" ? 1 : 0,
-                noteCount: execution?.note.trim() ? 1 : 0,
-              }}
+              completion={{ noteCount: execution?.note.trim() ? 1 : 0 }}
               entity="meal"
               eyebrow={`Comida ${index + 1}`}
               indicators={[
@@ -184,7 +181,11 @@ export default function ProgramDayScreen() {
   const meals = snapshot?.meals ?? [];
   const totals = snapshot?.totals;
   const totalCalories = snapshotCalories(totals);
-  const mealItems = meals.map((meal, index) => snapshotMealPanelItem(meal, index, totals));
+  const completedMealKeys = new Set(day.meal_execution.filter((item) => item.status === "completed").map((item) => item.meal_key));
+  const mealItems = meals.map((meal, index) => ({
+    ...snapshotMealPanelItem(meal, index, totals),
+    completed: Boolean(meal.key && completedMealKeys.has(meal.key)),
+  }));
   const foods = snapshotDailyPlanFoodPanelItems(meals);
 
   return (

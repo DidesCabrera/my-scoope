@@ -126,10 +126,7 @@ export default function CalendarizedMealDetailScreen() {
       <EntityDetailPage
         entity="meal"
         beforeNutrition={<MealCompletionCard controller={adherence} />}
-        completion={{
-          completedCount: execution?.status === "completed" ? 1 : 0,
-          noteCount: execution?.note.trim() ? 1 : 0,
-        }}
+        completion={{ noteCount: execution?.note.trim() ? 1 : 0 }}
         indicators={[
           { icon: "food", label: "alimentos", value: foods.length },
           ...(meal.hour ? [{ icon: "clock" as const, iconPosition: "leading" as const, label: "hora", tone: "surfaceCard" as const, value: meal.hour.slice(0, 5) }] : []),

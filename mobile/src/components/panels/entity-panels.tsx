@@ -31,6 +31,7 @@ export type FoodPanelItem = NutritionPanelValues & {
 
 export type MealPanelItem = NutritionPanelValues & {
   canOpen?: boolean;
+  completed?: boolean;
   detailId?: number;
   foods: MealMenuFood[];
   id: string;
@@ -90,12 +91,15 @@ function decimal(value: number): string {
   return Number.isFinite(value) ? value.toLocaleString("es-CL", { maximumFractionDigits: 1 }) : "0";
 }
 
-export function MealRowIdentity({ name, projectedLabel }: { name: string; projectedLabel?: string | null }) {
+export function MealRowIdentity({ completed = false, name, projectedLabel }: { completed?: boolean; name: string; projectedLabel?: string | null }) {
   return (
     <View style={styles.mealIdentity}>
       <EntityIcon entity="meal" size="compact" />
       <View style={styles.identityCopy}>
-        <Text numberOfLines={2} style={styles.mealIdentityName}>{name}</Text>
+        <View style={styles.mealIdentityTitleRow}>
+          <Text numberOfLines={2} style={styles.mealIdentityName}>{name}</Text>
+          {completed ? <View accessibilityLabel="Comida cumplida" style={styles.mealCompleted}><Check color={tokens.color.entityIconForeground} size={12} strokeWidth={3} /></View> : null}
+        </View>
         {projectedLabel ? <Text style={styles.projectedBadge}>{projectedLabel}</Text> : null}
       </View>
     </View>
@@ -109,7 +113,7 @@ function isMealPanelItem(item: FoodPanelItem | MealPanelItem): item is MealPanel
 function PanelItemName({ item, style = styles.gridLeadingCell }: { item: FoodPanelItem | MealPanelItem; style?: StyleProp<ViewStyle> }) {
   return (
     <View style={style}>
-      {isMealPanelItem(item) ? <MealRowIdentity name={item.name} projectedLabel={item.projectedLabel} /> : <View style={styles.identityCopy}><Text numberOfLines={2} style={styles.itemName}>{item.name}</Text>{item.projectedLabel ? <Text style={styles.projectedBadge}>{item.projectedLabel}</Text> : null}</View>}
+      {isMealPanelItem(item) ? <MealRowIdentity completed={item.completed} name={item.name} projectedLabel={item.projectedLabel} /> : <View style={styles.identityCopy}><Text numberOfLines={2} style={styles.itemName}>{item.name}</Text>{item.projectedLabel ? <Text style={styles.projectedBadge}>{item.projectedLabel}</Text> : null}</View>}
     </View>
   );
 }
@@ -295,7 +299,7 @@ export function MealMenuPanel({ items, onOpenItem }: { items: MealPanelItem[]; o
           style={({ pressed }) => [styles.menuRow, index === items.length - 1 && styles.rowLast, pressed && canOpen && styles.menuRowPressed]}>
           <View style={styles.menuCopy}>
             <View style={styles.menuTitleRow}>
-              <MealRowIdentity name={item.name} projectedLabel={item.projectedLabel} />
+              <MealRowIdentity completed={item.completed} name={item.name} projectedLabel={item.projectedLabel} />
               {item.time ? (
                 <View style={styles.menuTimeGroup}>
                   <Clock color={tokens.color.textMuted} size={11} strokeWidth={2} />
@@ -466,7 +470,9 @@ const styles = StyleSheet.create({
   menuTitleRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
   mealIdentity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0, paddingHorizontal: tokens.spacing.xs },
   identityCopy: { alignItems: "flex-start", flex: 1, gap: 3, justifyContent: "center", minWidth: 0 },
+  mealIdentityTitleRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
   mealIdentityName: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold, letterSpacing: 0, lineHeight: 18 },
+  mealCompleted: { alignItems: "center", backgroundColor: tokens.color.meal, borderRadius: tokens.radius.pill, height: 18, justifyContent: "center", width: 18 },
   projectedBadge: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, color: tokens.color.textMuted, fontSize: 9, fontWeight: tokens.weight.semibold, overflow: "hidden", paddingHorizontal: 6, paddingVertical: 2 },
   menuTimeGroup: { alignItems: "center", flexDirection: "row", gap: 4, paddingHorizontal: tokens.spacing.xs },
   menuTime: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.regular, letterSpacing: 0 },
