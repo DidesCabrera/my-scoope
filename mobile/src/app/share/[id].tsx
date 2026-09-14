@@ -31,7 +31,7 @@ export default function SharedResourceScreen() {
   const [resource, setResource] = useState<ShareResource | null>(null);
   const [loading, setLoading] = useState(true);
   const [claiming, setClaiming] = useState(false);
-  const [inboxState, setInboxState] = useState<{ id: number; isSaved: boolean } | null>(null);
+  const [inboxState, setInboxState] = useState<{ id: number; isSaved: boolean; resourceId: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -51,11 +51,10 @@ export default function SharedResourceScreen() {
   useEffect(() => {
     if (!id || status !== "authenticated") return;
     let active = true;
-    setInboxState(null);
     void apiRequest<SharingInboxData>("/api/v1/shares/inbox")
       .then((inbox) => {
         const item = inbox.items.find((candidate) => candidate.resource_id === id);
-        if (active && item) setInboxState({ id: item.id, isSaved: item.is_saved });
+        if (active && item) setInboxState({ id: item.id, isSaved: item.is_saved, resourceId: id });
       })
       .catch(() => undefined);
     return () => { active = false; };
@@ -72,7 +71,7 @@ export default function SharedResourceScreen() {
     setClaiming(true);
     setError(null);
     try {
-      const inboxItemId = inboxState?.id ?? (await apiRequest<ShareClaimResult>(`/api/v1/shares/${id}/claims`, { method: "POST" })).inbox_item_id;
+      const inboxItemId = inboxState?.resourceId === id ? inboxState.id : (await apiRequest<ShareClaimResult>(`/api/v1/shares/${id}/claims`, { method: "POST" })).inbox_item_id;
       const saved = await apiRequest<SavedShare>(`/api/v1/shares/inbox/${inboxItemId}/save`, { method: "POST" });
       router.replace(`/libraries/${libraryPathByEntity[saved.entity]}/${saved.item_id}` as Href);
     } catch (nextError) {
@@ -85,6 +84,7 @@ export default function SharedResourceScreen() {
   const snapshot = resource?.snapshot;
   const meals = snapshot?.meals ?? [];
   const mealItems = snapshot ? sharedMealPanelItems(meals, snapshot.nutrition.calories) : [];
+  const isSaved = inboxState?.resourceId === id && inboxState.isSaved;
   return (
     <Screen headerMode="preserve">
       {loading ? <LoadingState label="Cargando contenido compartido…" /> : null}
@@ -137,10 +137,10 @@ export default function SharedResourceScreen() {
         <InlineNotice>Este enlace es sólo de lectura.</InlineNotice>
       ) : (
         <Button
-          label={inboxState?.isSaved ? "Abrir en mi biblioteca" : "Guardar en mi biblioteca"}
+          label={isSaved ? "Abrir en mi biblioteca" : "Guardar en mi biblioteca"}
           loading={claiming}
           onPress={() => void saveToLibrary()}
-          variant={inboxState?.isSaved ? "secondary" : "primary"}
+          variant={isSaved ? "secondary" : "primary"}
         />
       ) : null}
     </Screen>

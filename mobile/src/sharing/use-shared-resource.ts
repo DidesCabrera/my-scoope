@@ -12,8 +12,6 @@ export function useSharedResource(id?: string) {
   useEffect(() => {
     if (!id) return;
     let active = true;
-    setLoading(true);
-    setError(null);
     void fetch(`${appConfig.apiBaseUrl}/api/v1/shares/${id}`)
       .then(async (response) => {
         const payload = await response.json() as ApiEnvelope<ShareResource>;
