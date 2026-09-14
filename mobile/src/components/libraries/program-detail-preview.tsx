@@ -1,3 +1,4 @@
+import { type Href, useRouter } from "expo-router";
 import { Copy, MoreHorizontal, Trash2 } from "lucide-react-native";
 import type { ReactNode } from "react";
 import { useState } from "react";
@@ -89,10 +90,11 @@ function dayRows(week: LibraryWeekPanelItem): ProgramDayNutrition[] {
 }
 
 function foodItem(item: LibraryFoodPanelItem): FoodPanelItem {
-  return { id: item.id, name: item.name, quantity: item.quantity, quantityUnit: item.quantity_unit, calories: item.calories, calorieShare: item.calorie_share, proteinGrams: item.protein_grams, proteinPerKilogram: item.protein_per_kilogram, carbsGrams: item.carbs_grams, fatGrams: item.fat_grams, proteinAllocation: item.protein_allocation, carbsAllocation: item.carbs_allocation, fatAllocation: item.fat_allocation };
+  return { id: item.id, detailId: item.detail_id, name: item.name, quantity: item.quantity, quantityUnit: item.quantity_unit, calories: item.calories, calorieShare: item.calorie_share, proteinGrams: item.protein_grams, proteinPerKilogram: item.protein_per_kilogram, carbsGrams: item.carbs_grams, fatGrams: item.fat_grams, proteinAllocation: item.protein_allocation, carbsAllocation: item.carbs_allocation, fatAllocation: item.fat_allocation };
 }
 
 export function ProgramWeekDetail({ canRemoveWeek = false, onAssignDailyPlan, onDuplicateWeek, onRemoveDailyPlan, onRemoveWeek, showHeading = true, week, weekData }: { canRemoveWeek?: boolean; onAssignDailyPlan?: (week: number, day: number) => void; onDuplicateWeek?: (week: number) => Promise<void>; onRemoveDailyPlan?: (week: number, day: number) => Promise<void>; onRemoveWeek?: (week: number) => Promise<void>; showHeading?: boolean; week: number; weekData?: LibraryWeekPanelItem }) {
+  const router = useRouter();
   const liveMetricData = weekData ? programDailyMetricData([weekData]) : undefined;
   const filledDaysCount = weekData ? weekData.filled_days_count ?? weekData.days.filter((day) => day.plan_name).length : 6;
   const hasPlans = filledDaysCount > 0;
@@ -147,7 +149,7 @@ export function ProgramWeekDetail({ canRemoveWeek = false, onAssignDailyPlan, on
       {hasPlans ? <>
         <SectionDivider spacing="compact" tone="soft" />
         <SectionHeading detail={`${weekData?.foods_count ?? weekData?.foods?.length ?? 28} alimentos`} title="Alimentos en esta semana" />
-        <FoodPanels items={weekData ? (weekData.foods ?? []).map(foodItem) : weekFoodItems} />
+        <FoodPanels items={weekData ? (weekData.foods ?? []).map(foodItem) : weekFoodItems} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} />
       </> : null}
     </View>
   );

@@ -4009,6 +4009,17 @@
             "title": "Carbs Grams",
             "type": "number"
           },
+          "detail_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail Id"
+          },
           "fat_allocation": {
             "title": "Fat Allocation",
             "type": "number"
@@ -5358,6 +5369,20 @@
           "name"
         ],
         "title": "PickerSelectionData",
+        "type": "object"
+      },
+      "PinnedDailyPlanInput": {
+        "properties": {
+          "dailyplan_id": {
+            "exclusiveMinimum": 0,
+            "title": "Dailyplan Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "dailyplan_id"
+        ],
+        "title": "PinnedDailyPlanInput",
         "type": "object"
       },
       "ProfileData": {
@@ -7348,6 +7373,16 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/CalendarizationRevisionData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pinned_plan": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LibraryItemData"
               },
               {
                 "type": "null"
@@ -15086,6 +15121,248 @@
           }
         ],
         "summary": "Today"
+      }
+    },
+    "/api/v1/today/pinned-plan": {
+      "delete": {
+        "operationId": "mobile_api_api_unpin_today_dailyplan",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TodayEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Unpin Today Dailyplan"
+      },
+      "post": {
+        "operationId": "mobile_api_api_create_and_pin_today_dailyplan",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TodayEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Create And Pin Today Dailyplan"
+      },
+      "put": {
+        "operationId": "mobile_api_api_pin_today_dailyplan",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PinnedDailyPlanInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TodayEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Pin Today Dailyplan"
+      }
+    },
+    "/api/v1/today/pinned-plan/meals/{meal_key}/check-ins": {
+      "post": {
+        "operationId": "mobile_api_api_pinned_dailyplan_meal_check_in",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "meal_key",
+            "required": true,
+            "schema": {
+              "title": "Meal Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MealCheckInInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TodayEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Pinned Dailyplan Meal Check In"
       }
     },
     "/api/v1/weights": {

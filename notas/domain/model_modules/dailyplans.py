@@ -192,6 +192,68 @@ class DailyPlan(models.Model):
             self.save(update_fields=["is_draft"])
 
 
+class PinnedDailyPlan(models.Model):
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="pinned_dailyplan",
+    )
+    dailyplan = models.ForeignKey(
+        DailyPlan,
+        on_delete=models.CASCADE,
+        related_name="pinned_by",
+    )
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user_id} · {self.dailyplan_id}"
+
+
+class PinnedDailyPlanMealExecution(models.Model):
+    ACTION_COMPLETED = "completed"
+    ACTION_SKIPPED = "skipped"
+    ACTION_RESET = "reset"
+    ACTION_NOTE = "note"
+    ACTION_FOOD_PREPARED = "food_prepared"
+    ACTION_FOOD_UNPREPARED = "food_unprepared"
+    ACTION_CHOICES = (
+        (ACTION_COMPLETED, "Completed"),
+        (ACTION_SKIPPED, "Skipped"),
+        (ACTION_RESET, "Reset"),
+        (ACTION_NOTE, "Note"),
+        (ACTION_FOOD_PREPARED, "Food prepared"),
+        (ACTION_FOOD_UNPREPARED, "Food unprepared"),
+    )
+
+    pinned_dailyplan = models.ForeignKey(
+        PinnedDailyPlan,
+        on_delete=models.CASCADE,
+        related_name="meal_execution_events",
+    )
+    local_date = models.DateField()
+    meal_key = models.CharField(max_length=80)
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
+    idempotency_key = models.CharField(max_length=120, unique=True)
+    note = models.CharField(max_length=500, blank=True)
+    food_key = models.CharField(max_length=80, blank=True)
+    occurred_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at", "id"]
+        indexes = [
+            models.Index(
+                fields=["pinned_dailyplan", "local_date", "created_at"],
+                name="pin_plan_exec_day_idx",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.pinned_dailyplan_id} · {self.local_date} · {self.meal_key} · {self.action}"
+
+
 class DailyPlanMeal(models.Model):
     dailyplan = models.ForeignKey(
         DailyPlan,

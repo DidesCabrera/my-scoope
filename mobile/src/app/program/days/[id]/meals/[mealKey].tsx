@@ -1,4 +1,4 @@
-import { Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import * as Crypto from "expo-crypto";
 import { useCallback, useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -147,6 +147,7 @@ export default function CalendarizedMealDetailScreen() {
               onUpdateQuantity: async (food, quantity) => mutateFoods(`/api/v1/program/days/${dayId}/meals/${encodeURIComponent(mealKey)}/foods/${encodeURIComponent(food.id)}`, { body: JSON.stringify({ quantity }), method: "PATCH" }),
             }}
             items={foods}
+            onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }}
             preparation={adherence.available ? {
               isPrepared: (food) => execution?.prepared_food_keys.includes(food.id) ?? false,
               onToggle: (food) => void togglePreparedFood(food.id),
@@ -158,7 +159,7 @@ export default function CalendarizedMealDetailScreen() {
           label="+ Agregar alimento"
           onPress={() => router.push(pickerHref("food-to-calendarized-meal", { dayId, mealKey }))}
         />
-        {foods.length ? <><SectionDivider /><EntityDetailSection detail={`${foods.length} alimentos`} title="Detalle de cada Alimento"><FoodDetailCardList items={foods} /></EntityDetailSection></> : null}
+        {foods.length ? <><SectionDivider /><EntityDetailSection detail={`${foods.length} alimentos`} title="Detalle de cada Alimento"><FoodDetailCardList items={foods} onOpenFood={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} /></EntityDetailSection></> : null}
         <MealNoteCard controller={adherence} />
       </EntityDetailPage>
     </ScrollView>

@@ -12,9 +12,12 @@ type Props = { calendarization: CalendarizationData; program: ActiveProgramData 
 
 export function ProgramActiveOverview({ calendarization, program, embedded = false }: Props & { embedded?: boolean }) {
   const router = useRouter();
+  const activeIndicators = program.indicators.map((indicator) => indicator.icon === "week"
+    ? { ...indicator, icon: undefined, value: `${indicator.value} ${Number(indicator.value) === 1 ? "SEMANA" : "SEMANAS"}` }
+    : indicator);
   const content = (
     <>
-      <EntityHeading entity="program" eyebrow="Programa activo" identityIcon={CalendarClock} indicators={[...(embedded ? [] : program.indicators), { icon: "week", iconPosition: "leading", label: "periodo", tone: "surfaceMuted", value: `${compactDateLabel(calendarization.start_date)} — ${compactDateLabel(calendarization.end_date)}` }]} title={calendarization.program_name} variant={embedded ? "card" : "page"} />
+      <EntityHeading entity="program" eyebrow="Programa activo" identityIcon={CalendarClock} indicators={[...(embedded ? [] : activeIndicators), { icon: "week", iconPosition: "leading", label: "periodo", tone: "surfaceMuted", value: `${compactDateLabel(calendarization.start_date)} — ${compactDateLabel(calendarization.end_date)}` }]} title={calendarization.program_name} variant={embedded ? "card" : "page"} />
       {embedded ? null : <SectionHeading icon={<Activity color={tokens.color.entityIconForeground} size={18} />} title="Métricas de activación" />}
       <ProgramActiveKpis adheredDays={program.adherence?.completed_meals ?? 0} adherence={program.adherence?.adherence_percent ?? 0} elapsedDays={calendarization.progress_day} plannedAdherenceDays={program.adherence?.elapsed_meals ?? program.adherence?.planned_meals ?? 0} progress={calendarization.progress_percent} standalone totalDays={calendarization.progress_total_days} />
       {embedded ? <DetailLinkRow accessibilityLabel={`Ir a Mi programa activo: ${calendarization.program_name}`} label="Ir a Mi programa activo" onPress={() => router.push("/program" as Href)} /> : null}

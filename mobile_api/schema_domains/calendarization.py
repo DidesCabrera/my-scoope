@@ -84,25 +84,6 @@ class CalendarizationRevisionData(Schema):
     created_at: datetime
 
 
-class TodayData(Schema):
-    local_date: date
-    calendarization: CalendarizationData | None = None
-    day_id: int | None = None
-    has_plan: bool
-    plan_snapshot: dict[str, Any] | None = None
-    meal_execution: list[MealExecutionData] = Field(default_factory=list)
-    adherence: AdherenceData | None = None
-    measurements: MeasurementSummaryData | None = None
-    reminders: ReminderSettingsData | None = None
-    pending_revision: CalendarizationRevisionData | None = None
-
-
-class TodayEnvelope(Schema):
-    ok: Literal[True] = True
-    data: TodayData
-    error: None = None
-
-
 class ActiveProgramDay(Schema):
     id: int
     calendar_date: date

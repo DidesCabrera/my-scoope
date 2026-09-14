@@ -33,6 +33,7 @@ from notas.domain.models import (
     FoodShare,
     Meal,
     MealFood,
+    PinnedDailyPlan,
     Program,
     ProgramCalendarization,
     ProgramDay,
@@ -69,6 +70,7 @@ class MobileAPICalendarizationTests(AuthenticatedMobileAPITestCase):
         )
         dailyplan = DailyPlan.objects.create(name="Plan de hoy", created_by=self.user, is_draft=False)
         meal = Meal.objects.create(name="Comida de hoy", created_by=self.user, is_draft=False)
+        food = Food.objects.create(name="Avena snapshot", protein=10, carbs=50, fat=6, created_by=self.user)
         slot = DailyPlanMeal.objects.create(dailyplan=dailyplan, meal=meal)
         calendarization = ProgramCalendarization.objects.create(
             user=self.user,
@@ -95,6 +97,7 @@ class MobileAPICalendarizationTests(AuthenticatedMobileAPITestCase):
                         "foods": [
                             {
                                 "key": "meal_food:999",
+                                "source_food_id": food.id,
                                 "name": "Avena snapshot",
                                 "quantity_g": 80,
                                 "protein_g": 10,
@@ -116,6 +119,7 @@ class MobileAPICalendarizationTests(AuthenticatedMobileAPITestCase):
         self.assertEqual(today_response.json()["data"]["day_id"], day.id)
         self.assertEqual(today_response.json()["data"]["plan_snapshot"]["name"], "Día alto en carbohidratos")
         self.assertEqual(today_response.json()["data"]["plan_snapshot"]["meals"][0]["detail_id"], meal.id)
+        self.assertEqual(today_response.json()["data"]["plan_snapshot"]["meals"][0]["foods"][0]["detail_id"], food.id)
         self.assertEqual(active_response.status_code, 200)
         self.assertEqual(active_response.json()["data"]["calendarization"]["id"], calendarization.id)
         active_data = active_response.json()["data"]
@@ -131,11 +135,14 @@ class MobileAPICalendarizationTests(AuthenticatedMobileAPITestCase):
             active_data["weeks"][0]["foods"][0]["name"],
             "Avena snapshot",
         )
+        self.assertEqual(active_data["weeks"][0]["foods"][0]["detail_id"], food.id)
         self.assertEqual(active_data["indicators"][2]["value"], 1)
         self.assertEqual(len(active_response.json()["data"]["days"]), 1)
 
     def test_calendarization_activation_requires_explicit_incomplete_and_replacement_confirmation(self):
         today = timezone.localdate(timezone=ZoneInfo("UTC"))
+        pinned_dailyplan = DailyPlan.objects.create(name="Plan fijado", created_by=self.user, is_draft=False)
+        pinned = PinnedDailyPlan.objects.create(user=self.user, dailyplan=pinned_dailyplan)
         first_program = Program.objects.create(
             name="Programa incompleto",
             created_by=self.user,
@@ -178,6 +185,8 @@ class MobileAPICalendarizationTests(AuthenticatedMobileAPITestCase):
             CalendarizedDay.objects.filter(calendarization_id=first_calendarization_id).count(),
             7,
         )
+        pinned.refresh_from_db()
+        self.assertFalse(pinned.is_active)
 
         second_program = Program.objects.create(
             name="Programa de reemplazo",

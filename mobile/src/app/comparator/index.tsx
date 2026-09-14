@@ -335,8 +335,8 @@ export default function ComparatorScreen() {
 
 const styles = StyleSheet.create({
   builderRoot: { backgroundColor: tokens.color.surfaceApp, flex: 1 },
-  builderTabs: { backgroundColor: tokens.color.surfaceApp, borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, paddingBottom: tokens.spacing.sm, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.xs },
-  dashboardStickyHeader: { paddingTop: tokens.spacing.sm },
+  builderTabs: { backgroundColor: tokens.color.surfaceApp, borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, paddingBottom: tokens.spacing.sm, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.xs },
+  dashboardStickyHeader: { marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, paddingTop: tokens.spacing.sm },
   remove: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: 18, borderWidth: 1, height: 36, justifyContent: "center", width: 36 },
   removeText: { color: tokens.color.textMuted, fontSize: 24, lineHeight: 26 },
   pressed: { opacity: 0.68 },

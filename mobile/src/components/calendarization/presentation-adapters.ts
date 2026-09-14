@@ -59,6 +59,7 @@ export function snapshotFoodPanelItems(meal: MealSnapshot): FoodPanelItem[] {
       carbsGrams: totals.carbs_g ?? 0,
       fatAllocation: contextualAllocation(totals, meal.totals, "fat_g"),
       fatGrams: totals.fat_g ?? 0,
+      detailId: food.detail_id ?? undefined,
       id: food.key ?? `food-${index}`,
       name: food.name ?? "Alimento",
       proteinAllocation: contextualAllocation(totals, meal.totals, "protein_g"),
@@ -74,6 +75,7 @@ export function snapshotDailyPlanFoodPanelItems(meals: MealSnapshot[]): FoodPane
   const currentWeight = meals.map(({ totals }) => inferredWeight(totals)).find((weight) => weight != null) ?? null;
   const aggregated = new Map<string, {
     carbsGrams: number;
+    detailId?: number;
     fatGrams: number;
     name: string;
     proteinGrams: number;
@@ -83,9 +85,11 @@ export function snapshotDailyPlanFoodPanelItems(meals: MealSnapshot[]): FoodPane
   meals.forEach((meal) => {
     (meal.foods ?? []).forEach((food) => {
       const name = food.name?.trim() || "Alimento";
-      const key = name.toLocaleLowerCase("es-CL");
+      const detailId = food.detail_id ?? undefined;
+      const key = detailId != null ? `food:${detailId}` : `name:${name.toLocaleLowerCase("es-CL")}`;
       const current = aggregated.get(key) ?? {
         carbsGrams: 0,
+        detailId,
         fatGrams: 0,
         name,
         proteinGrams: 0,
@@ -121,6 +125,7 @@ export function snapshotDailyPlanFoodPanelItems(meals: MealSnapshot[]): FoodPane
     carbsGrams: food.carbsGrams,
     fatAllocation: allocations[index].fat,
     fatGrams: food.fatGrams,
+    detailId: food.detailId,
     id: food.id,
     name: food.name,
     proteinAllocation: allocations[index].protein,

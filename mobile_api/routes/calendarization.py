@@ -5,6 +5,7 @@ from ninja import Router
 from mobile_api.api_support import calendarization_error, require_scope, success
 from mobile_api.auth import mobile_bearer
 from mobile_api.errors import MobileAPIError
+from mobile_api.routes.pinned_dailyplans import router as pinned_dailyplans_router
 from mobile_api.schema_domains.calendarization import (
     ActiveProgramEnvelope,
     ApplePushRegistrationEnvelope,
@@ -21,11 +22,11 @@ from mobile_api.schema_domains.calendarization import (
     RevisionDecisionInput,
     RevisionEnvelope,
     RevisionListEnvelope,
-    TodayEnvelope,
     WeightCreateInput,
     WeightEnvelope,
     WeightListEnvelope,
 )
+from mobile_api.schema_domains.today import TodayEnvelope
 from mobile_api.schemas import ErrorEnvelope
 from mobile_api.selectors import (
     active_program_payload,
@@ -61,6 +62,7 @@ from notas.domain.models import (
 )
 
 router = Router()
+router.add_router("", pinned_dailyplans_router)
 
 
 @router.get(

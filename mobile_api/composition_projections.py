@@ -72,6 +72,7 @@ def _food_row(*, food, quantity, relation_id, parent_kcal, current_weight=None, 
     return {
         "id": row_id or (f"meal-food:{relation_id}" if relation_id else f"projected-food:{food.id}"),
         "relation_id": relation_id,
+        "detail_id": food.id,
         "name": resolve_food_display_name(food),
         "quantity": _number(quantity),
         "quantity_unit": "g",

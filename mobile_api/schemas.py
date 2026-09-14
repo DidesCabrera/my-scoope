@@ -74,8 +74,6 @@ from mobile_api.schema_domains.calendarization import (  # noqa: F401 -- compati
     RevisionEnvelope,
     RevisionListData,
     RevisionListEnvelope,
-    TodayData,
-    TodayEnvelope,
     WeightCreateInput,
     WeightEnvelope,
     WeightItem,
@@ -198,6 +196,7 @@ from mobile_api.schema_domains.sharing import (  # noqa: F401 -- compatibility r
     SharingInboxSaveEnvelope,
     SharingInboxUpdateInput,
 )
+from mobile_api.schema_domains.today import TodayData, TodayEnvelope  # noqa: F401 -- compatibility facade
 
 
 class ErrorDetail(Schema):
