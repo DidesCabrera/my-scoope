@@ -207,6 +207,6 @@ const styles = StyleSheet.create({
   row: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },
   scrollHeader: { gap: tokens.spacing.md },
   source: { color: tokens.color.textSoft, fontSize: 11, fontWeight: "900", letterSpacing: 1.1, textTransform: "uppercase" },
-  stickyHeader: { paddingTop: tokens.spacing.sm },
+  stickyHeader: { marginHorizontal: -tokens.spacing.screen, paddingTop: tokens.spacing.sm },
   title: { color: tokens.color.textMain, fontSize: tokens.type.section, fontWeight: "800" },
 });

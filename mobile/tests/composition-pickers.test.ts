@@ -108,6 +108,9 @@ test("composition pickers use independent native routes and one shared flow", as
     "utf8",
   );
   matches(entryTabs, /styles\.entryTabsBar/);
+  matches(entryTabs, /entryTabsBar: \{[^}]*marginHorizontal: -tokens\.spacing\.screen/);
+  matches(picker, /searchField: \{[^}]*marginHorizontal: -tokens\.spacing\.screen/);
+  matches(picker, /selectionSticky: \{[^}]*paddingHorizontal: tokens\.spacing\.screen/);
   matches(entryTabs, /DistributedTabBar<PickerEntryTab>/);
   matches(entryTabs, /<Bookmark/);
   matches(entryTabs, /<Plus/);

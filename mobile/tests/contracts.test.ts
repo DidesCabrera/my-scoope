@@ -493,9 +493,13 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(libraryDetail, /title="Alimentos en este plan diario"><FoodPanels items=\{item\.panel\.foods\.map\(foodPanelItem\)\}/);
   assertSourceMatch(libraryDetail, /<SectionDivider \/><EntityDetailSection[^>]*title="Detalle de cada Comida"/);
   assertSourceMatch(libraryDetail, /<SectionDivider \/><EntityDetailSection[^>]*title="Alimentos en este plan diario"/);
-  assertSourceMatch(libraryDetail, /secondaryAction: hasMealTimeContext \? \{ icon: "clock", label: "Cambiar hora"/);
+  assertSourceMatch(libraryDetail, /hasMealTimeContext[\s\S]*?\? \{ icon: "clock", label: "Cambiar hora"/);
+  assertSourceMatch(libraryDetail, /item\?\.entity === "dailyPlan"[\s\S]*?\{ icon: "pin", label: isPinnedPlan \? "Dejar de fijar como Plan de hoy" : "Fijar como Plan de hoy"/);
+  assertSourceMatch(libraryDetail, /item\?\.entity === "program"[\s\S]*?\{ icon: "calendar-clock", label: "Calendarizar este programa"/);
   assertSourceMatch(libraryDetail, /mealTimeInMenu=\{false\}/);
 
+  assertSourceMatch(appNavigation, /headerPresentation\.secondaryAction[\s\S]*<Pin/);
+  assertSourceMatch(appNavigation, /headerPresentation\.secondaryAction[\s\S]*<CalendarClock/);
   assertSourceMatch(appNavigation, /headerPresentation\.secondaryAction[\s\S]*<Clock3/);
 
   const calendarizedDayDetail = await readTestFile(

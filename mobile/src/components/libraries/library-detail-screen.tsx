@@ -86,8 +86,21 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   const pinnedMealAdherence = useMealAdherenceCheckIn({ enabled: isPinnedMealContext, mealKey: mealKey ?? "", mode: "pinned", onChange: setPinnedMealExecution });
   const headerEntity = entitySlug === "daily-plans" ? "dailyPlan" : entitySlug === "programs" ? "program" : entitySlug === "meals" ? "meal" : "food";
   const fallbackTitle = entitySlug === "daily-plans" ? "Plan diario" : entitySlug === "programs" ? "Programa" : entitySlug === "meals" ? "Comida" : "Alimento";
+  const isPinnedPlan = item?.entity === "dailyPlan" && todayContext?.calendarization == null && todayContext?.pinned_plan?.id === item.id;
   const openActions = useCallback(() => setActionSheet("menu"), []);
   const openTimeChange = useCallback(() => setActionSheet("change-time"), []);
+  const setPinnedPlan = useCallback(async (nextPinned: boolean) => {
+    if (!item || item.entity !== "dailyPlan") return;
+    setError(null);
+    try {
+      const updated = await apiRequest<TodayData>("/api/v1/today/pinned-plan", nextPinned
+        ? { body: JSON.stringify({ dailyplan_id: item.id }), method: "PUT" }
+        : { method: "DELETE" });
+      setTodayContext(updated);
+    } catch (nextError) {
+      setError(userFacingError(nextError));
+    }
+  }, [apiRequest, item]);
   const cancelContextualCreation = useCallback(() => { if (pickerEntryHref) router.dismissTo(pickerEntryHref); }, [pickerEntryHref, router]);
   const continueContextualCreation = useCallback(() => {
     if (!contextualPickerKind || !returnHref || !isContextualMealCreation) return;
@@ -114,12 +127,18 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
         action: item?.actions?.length ? { label: `Más acciones para ${item?.name ?? fallbackTitle}`, onPress: openActions } : undefined,
         entity: headerEntity,
         identityVisible: compactHeaderVisible,
-        secondaryAction: hasMealTimeContext ? { icon: "clock", label: "Cambiar hora", onPress: openTimeChange } : undefined,
+        secondaryAction: hasMealTimeContext
+          ? { icon: "clock", label: "Cambiar hora", onPress: openTimeChange }
+          : item?.entity === "dailyPlan" && todayContext?.calendarization == null
+            ? { icon: "pin", label: isPinnedPlan ? "Dejar de fijar como Plan de hoy" : "Fijar como Plan de hoy", onPress: () => void setPinnedPlan(!isPinnedPlan) }
+            : item?.entity === "program" && item.can_calendarize && !item.is_draft
+              ? { icon: "calendar-clock", label: "Calendarizar este programa", onPress: () => router.push(`/program/activate?programId=${item.id}` as Href) }
+              : undefined,
         title: item?.name ?? fallbackTitle,
       });
     }
     return () => setHeaderPresentation({ mode: "default" });
-  }, [cancelContextualCreation, compactHeaderVisible, continueContextualCreation, fallbackTitle, hasMealTimeContext, headerEntity, isContextualMealCreation, item, openActions, openTimeChange, pickerEntryHref, setHeaderPresentation]));
+  }, [cancelContextualCreation, compactHeaderVisible, continueContextualCreation, fallbackTitle, hasMealTimeContext, headerEntity, isContextualMealCreation, isPinnedPlan, item, openActions, openTimeChange, pickerEntryHref, router, setHeaderPresentation, setPinnedPlan, todayContext?.calendarization]));
   const load = useCallback(async () => { setLoading(true); setError(null); try {
     const [nextItem, nextToday] = await Promise.all([
       apiRequest<LibraryItem>(`/api/v1/library/${entitySlug}/${id}`),
@@ -149,19 +168,6 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
       throw nextError;
     }
   }, [apiRequest, load]);
-
-  async function setPinnedPlan(nextPinned: boolean) {
-    if (!item || item.entity !== "dailyPlan") return;
-    setError(null);
-    try {
-      const updated = await apiRequest<TodayData>("/api/v1/today/pinned-plan", nextPinned
-        ? { body: JSON.stringify({ dailyplan_id: item.id }), method: "PUT" }
-        : { method: "DELETE" });
-      setTodayContext(updated);
-    } catch (nextError) {
-      setError(userFacingError(nextError));
-    }
-  }
 
   async function togglePinnedMealCompletion(targetMealKey: string, completed: boolean) {
     if (!todayContext || savingMealKey) return;
@@ -285,7 +291,6 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   }
   const panelCount = item.panel.kind === "foods" ? item.panel.foods.length : item.panel.kind === "meals" ? item.panel.meals.length : item.panel.kind === "weeks" ? item.panel.weeks.length : 0;
   const isEmptyDraft = item.is_draft && panelCount === 0 && (item.entity === "meal" || item.entity === "dailyPlan");
-  const isPinnedPlan = item.entity === "dailyPlan" && todayContext?.calendarization == null && todayContext?.pinned_plan?.id === item.id;
   const contextualDayId = Number(calendarizedDayId);
   const foodItems = item.panel.foods.map(foodPanelItem);
   const openFood = (food: FoodPanelItem) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); };

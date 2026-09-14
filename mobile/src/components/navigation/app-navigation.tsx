@@ -12,6 +12,7 @@ import {
   Inbox as InboxIcon,
   LogOut,
   PanelRight,
+  Pin,
   MoreHorizontal,
   Plus,
   Bell,
@@ -43,7 +44,7 @@ import { listAvailableProductAreas, type ProductAreaKey } from "@/navigation/pro
 import { HeaderEntityIdentity } from "./header-entity-identity";
 import { EntitySidebarItem, type EntitySidebarItemData, NavigationSidebarItem, type NavigationSidebarItemData } from "./sidebar-items";
 
-type HeaderAction = { disabled?: boolean; icon?: "clock" | "more" | "plus"; label: string; onPress(): void };
+type HeaderAction = { disabled?: boolean; icon?: "calendar-clock" | "clock" | "more" | "pin" | "plus"; label: string; onPress(): void };
 
 type HeaderPresentation =
   | { mode: "default"; action?: HeaderAction; identityVisible?: boolean; title?: string }
@@ -249,7 +250,11 @@ export function AppNavigationHeader() {
                 hitSlop={8}
                 onPress={headerPresentation.secondaryAction.onPress}
                 style={({ pressed }) => [styles.headerButton, styles.libraryHeaderButton, pressed && styles.pressed]}>
-                <Clock3 color={tokens.color.textMain} size={24} strokeWidth={2.2} />
+                {headerPresentation.secondaryAction.icon === "pin"
+                  ? <Pin color={tokens.color.textMain} fill="none" size={24} strokeWidth={2.2} />
+                  : headerPresentation.secondaryAction.icon === "calendar-clock"
+                    ? <CalendarClock color={tokens.color.textMain} size={24} strokeWidth={2.2} />
+                    : <Clock3 color={tokens.color.textMain} size={24} strokeWidth={2.2} />}
               </Pressable>
             ) : null}
             {headerPresentation.action ? (

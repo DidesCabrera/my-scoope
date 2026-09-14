@@ -52,6 +52,8 @@ test("screens that own global navigation preserve their header through content a
   assert.match(comparator, /stickyHeaderStyle=\{styles\.dashboardStickyHeader\}/);
   assert.match(comparator, /<DistributedTabBar<ComparisonKind>/);
   assert.match(comparator, /identityVisible: compactHeaderVisible[\s\S]*title: "Comparador"/);
+  assert.match(comparator, /dashboardStickyHeader: \{[^}]*marginHorizontal: -tokens\.spacing\.screen/);
+  assert.match(comparator, /builderTabs: \{[^}]*marginHorizontal: -tokens\.spacing\.screen/);
   assert.match(comparator, /contentOffset\.y > 1/);
   assert.doesNotMatch(comparator, /<SectionPageHeader count=\{page\?\.total\}/);
 
@@ -67,6 +69,7 @@ test("screens that own global navigation preserve their header through content a
   assert.match(assistant, /identityVisible: compactHeaderVisible/);
   assert.match(assistant, /contentOffset\.y > 1/);
   assert.match(assistant, /const scrollHeader = \([\s\S]*<SectionPageHeader countLabel="elementos" section="chat" title="Asistente AI" \/>/);
+  assert.match(assistant, /stickyHeader: \{[^}]*marginHorizontal: -tokens\.spacing\.screen/);
   assert.doesNotMatch(assistant, /<SectionPageHeader count=/);
   assert.doesNotMatch(assistant, /disabled: !page\.availability\.is_available/);
   assert.doesNotMatch(assistant, /<Button[^>]*label="Nuevo chat"/);
