@@ -113,7 +113,7 @@ function isMealPanelItem(item: FoodPanelItem | MealPanelItem): item is MealPanel
 function PanelItemName({ item, style = styles.gridLeadingCell }: { item: FoodPanelItem | MealPanelItem; style?: StyleProp<ViewStyle> }) {
   return (
     <View style={style}>
-      {isMealPanelItem(item) ? <MealRowIdentity completed={item.completed} name={item.name} projectedLabel={item.projectedLabel} /> : <View style={styles.identityCopy}><Text numberOfLines={2} style={styles.itemName}>{item.name}</Text>{item.projectedLabel ? <Text style={styles.projectedBadge}>{item.projectedLabel}</Text> : null}</View>}
+      {isMealPanelItem(item) ? <MealRowIdentity name={item.name} projectedLabel={item.projectedLabel} /> : <View style={styles.identityCopy}><Text numberOfLines={2} style={styles.itemName}>{item.name}</Text>{item.projectedLabel ? <Text style={styles.projectedBadge}>{item.projectedLabel}</Text> : null}</View>}
     </View>
   );
 }
