@@ -18,7 +18,7 @@ export function FoodDetailCardList({ items, onOpenFood }: { items: FoodPanelItem
         const calories = item.calories || calculatedCalories;
         return (
           <NutritionEntityCard
-            actions={onOpenFood ? (
+            actions={onOpenFood && item.detailId != null ? (
               <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={() => onOpenFood(item)} role="link">
                 <ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
               </EntityCardAction>

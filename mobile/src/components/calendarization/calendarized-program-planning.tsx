@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "expo-router";
+import { type Href, useRouter } from "expo-router";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
@@ -39,6 +39,7 @@ function preferredWeek(days: ActiveProgramDay[]): ActiveProgramDay | undefined {
 
 function foodPanelItem(item: LibraryFoodPanelItem): FoodPanelItem {
   return {
+    detailId: item.detail_id,
     id: item.id,
     name: item.name,
     quantity: item.quantity,
@@ -170,7 +171,7 @@ export function CalendarizedProgramPlanning({
 
         <SectionDivider spacing="compact" tone="soft" />
         <SectionHeading detail={`${weekData?.foods_count ?? weekFoods.length} alimentos`} title="Alimentos en esta semana" />
-        <FoodPanels items={weekFoods} />
+        <FoodPanels items={weekFoods} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} />
       </View>
     </View>
   );

@@ -253,6 +253,7 @@ export type LibraryIndicator = {
 export type LibraryFoodPanelItem = {
   id: string;
   relation_id: number | null;
+  detail_id?: number | null;
   name: string;
   quantity: number;
   quantity_unit: string;
@@ -439,6 +440,7 @@ export type MealSnapshot = {
   totals?: MacroTotals;
   foods?: {
     key?: string;
+    detail_id?: number | null;
     name?: string;
     quantity_g?: number | null;
     protein_g?: number | null;

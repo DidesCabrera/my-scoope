@@ -24,6 +24,7 @@ import { ContextCardActions, type ContextCardAction } from "./context-card-actio
 
 function toFoodPanelItem(item: LibraryFoodPanelItem): FoodPanelItem {
   return {
+    detailId: item.detail_id,
     id: item.id,
     relationId: item.relation_id,
     name: item.name,
@@ -65,7 +66,8 @@ function toMealPanelItem(item: LibraryMealPanelItem): MealPanelItem {
 }
 
 export function FoodPanels({ items }: { items: LibraryFoodPanelItem[] }) {
-  return <SharedFoodPanels items={items.map(toFoodPanelItem)} />;
+  const router = useRouter();
+  return <SharedFoodPanels items={items.map(toFoodPanelItem)} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} />;
 }
 
 export function MealPanels({ items }: { items: LibraryMealPanelItem[] }) {
@@ -122,7 +124,7 @@ export function DailyPlanMealCards({ dailyPlanId, items, onRemove, pinnedTrackin
               fat: { grams: item.fat_grams, allocation: item.fat_allocation },
             }}
             title={item.name}>
-            <SharedFoodPanels items={item.foods.map(toFoodPanelItem)} preparation={pinnedTracking ? {
+            <SharedFoodPanels items={item.foods.map(toFoodPanelItem)} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} preparation={pinnedTracking ? {
               isPrepared: (food) => execution?.prepared_food_keys.includes(food.id) ?? false,
               onToggle: (food) => pinnedTracking.onTogglePrepared(item.id, food.id),
             } : undefined} />

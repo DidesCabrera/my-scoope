@@ -71,6 +71,7 @@ class LibraryCalorieDistributionData(Schema):
 class LibraryFoodPanelItemData(Schema):
     id: str
     relation_id: int | None = None
+    detail_id: int | None = None
     name: str
     quantity: float
     quantity_unit: str
