@@ -8,6 +8,7 @@ import type { CalendarizedDayDetail, MealCheckInInput, MealExecutionItem, MealSn
 import { useSession } from "@/auth/session-context";
 import { CalendarizedEntityActions } from "@/components/calendarization/calendarized-entity-actions";
 import { MealCompletionCard, MealNoteCard, useMealAdherenceCheckIn } from "@/components/calendarization/meal-adherence-check-in";
+import { normalizeMealExecution, normalizeMealExecutionItem } from "@/components/calendarization/meal-execution";
 import { snapshotCalories, snapshotFoodPanelItems, snapshotMacroDistribution } from "@/components/calendarization/presentation-adapters";
 import { EntityDetailPage, EntityDetailSection, FoodDetailCardList } from "@/components/details";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
@@ -32,7 +33,7 @@ export default function CalendarizedMealDetailScreen() {
   const adherence = useMealAdherenceCheckIn({ dayId, mealKey, onChange: setExecution });
 
   async function togglePreparedFood(foodKey: string) {
-    const prepared = execution?.prepared_food_keys.includes(foodKey) ?? false;
+    const prepared = execution ? normalizeMealExecutionItem(execution).prepared_food_keys.includes(foodKey) : false;
     const previous = execution;
     setExecution((current) => ({
       meal_key: mealKey,
@@ -51,7 +52,7 @@ export default function CalendarizedMealDetailScreen() {
         idempotency_key: Crypto.randomUUID(),
       };
       const updated = await apiRequest<TodayData>(`/api/v1/days/${dayId}/meals/${encodeURIComponent(mealKey)}/check-ins`, { body: JSON.stringify(payload), method: "POST" });
-      setExecution(updated.meal_execution.find((item) => item.meal_key === mealKey) ?? null);
+      setExecution(normalizeMealExecution(updated.meal_execution).find((item) => item.meal_key === mealKey) ?? null);
     } catch (nextError) {
       setExecution(previous);
       setError(userFacingError(nextError));
@@ -60,7 +61,7 @@ export default function CalendarizedMealDetailScreen() {
 
   function applyDay(day: CalendarizedDayDetail) {
     setMeal(day.plan_snapshot?.meals?.find((item) => item.key === mealKey) ?? null);
-    setExecution(day.meal_execution.find((item) => item.meal_key === mealKey) ?? null);
+    setExecution(normalizeMealExecution(day.meal_execution).find((item) => item.meal_key === mealKey) ?? null);
   }
 
   async function mutateFoods(path: string, init: { body?: string; method: "DELETE" | "PATCH" | "PUT" }) {
@@ -80,7 +81,7 @@ export default function CalendarizedMealDetailScreen() {
       const day = await apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${dayId}`);
       const match = day.plan_snapshot?.meals?.find((item) => item.key === mealKey) ?? null;
       setMeal(match);
-      setExecution(day.meal_execution.find((item) => item.meal_key === mealKey) ?? null);
+      setExecution(normalizeMealExecution(day.meal_execution).find((item) => item.meal_key === mealKey) ?? null);
       if (!match) setError("Esta comida ya no está disponible en el día calendarizado.");
     } catch (nextError) {
       setError(userFacingError(nextError));
@@ -126,7 +127,7 @@ export default function CalendarizedMealDetailScreen() {
       <EntityDetailPage
         entity="meal"
         beforeNutrition={<MealCompletionCard controller={adherence} />}
-        completion={{ noteCount: execution?.note.trim() ? 1 : 0 }}
+        completion={{ noteCount: execution && normalizeMealExecutionItem(execution).note.trim() ? 1 : 0 }}
         indicators={[
           { icon: "food", label: "alimentos", value: foods.length },
           ...(meal.hour ? [{ icon: "clock" as const, iconPosition: "leading" as const, label: "hora", tone: "surfaceCard" as const, value: meal.hour.slice(0, 5) }] : []),
@@ -149,7 +150,7 @@ export default function CalendarizedMealDetailScreen() {
             items={foods}
             onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }}
             preparation={adherence.available ? {
-              isPrepared: (food) => execution?.prepared_food_keys.includes(food.id) ?? false,
+              isPrepared: (food) => execution ? normalizeMealExecutionItem(execution).prepared_food_keys.includes(food.id) : false,
               onToggle: (food) => void togglePreparedFood(food.id),
             } : undefined}
           />
@@ -177,7 +178,7 @@ export default function CalendarizedMealDetailScreen() {
           });
           const updatedMeal = day.plan_snapshot?.meals?.find((item) => item.key === mealKey) ?? null;
           setMeal(updatedMeal);
-          setExecution(day.meal_execution.find((item) => item.meal_key === mealKey) ?? null);
+          setExecution(normalizeMealExecution(day.meal_execution).find((item) => item.meal_key === mealKey) ?? null);
         },
       }}
       timeChange={{
@@ -190,7 +191,7 @@ export default function CalendarizedMealDetailScreen() {
           });
           const updatedMeal = day.plan_snapshot?.meals?.find((item) => item.key === mealKey) ?? null;
           setMeal(updatedMeal);
-          setExecution(day.meal_execution.find((item) => item.meal_key === mealKey) ?? null);
+          setExecution(normalizeMealExecution(day.meal_execution).find((item) => item.meal_key === mealKey) ?? null);
           await refreshNativeReminders(apiRequest);
         },
       }}

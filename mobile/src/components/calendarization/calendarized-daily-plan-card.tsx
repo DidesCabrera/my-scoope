@@ -9,12 +9,13 @@ import { Button, EntityCardAction } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { snapshotCalories, snapshotMacroDistribution, snapshotMealPanelItem } from "./presentation-adapters";
 import { DailyMealCompletionCard } from "./meal-completion-summary";
+import { normalizeMealExecution } from "./meal-execution";
 
 type Props = {
   dayId: number | null;
   dateLabel: string;
   eyebrow: string;
-  mealExecution?: MealExecutionItem[];
+  mealExecution?: MealExecutionItem[] | null;
   onAddMeal?: () => void;
   planName?: string;
   position?: { dayNumber: number; weekNumber: number };
@@ -27,7 +28,8 @@ export function CalendarizedDailyPlanCard({ dayId, dateLabel, eyebrow, mealExecu
   const totals = snapshot.totals;
   const totalCalories = snapshotCalories(totals);
   const mealKeys = new Set(meals.flatMap((meal) => meal.key ? [meal.key] : []));
-  const executions = mealExecution.filter((item) => mealKeys.has(item.meal_key));
+  const normalizedMealExecution = normalizeMealExecution(mealExecution);
+  const executions = normalizedMealExecution.filter((item) => mealKeys.has(item.meal_key));
   const completedMealKeys = new Set(executions.filter((item) => item.status === "completed").map((item) => item.meal_key));
   const mealItems = meals.map((meal, index) => ({
     ...snapshotMealPanelItem(meal, index, totals),
