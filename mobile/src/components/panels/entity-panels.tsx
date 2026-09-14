@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
   identityCopy: { alignItems: "flex-start", flex: 1, gap: 3, justifyContent: "center", minWidth: 0 },
   mealIdentityTitleRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
   mealIdentityName: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold, letterSpacing: 0, lineHeight: 18 },
-  mealCompleted: { alignItems: "center", backgroundColor: tokens.color.meal, borderRadius: tokens.radius.pill, height: 18, justifyContent: "center", width: 18 },
+  mealCompleted: { alignItems: "center", backgroundColor: `${tokens.color.meal}1A`, borderColor: tokens.color.meal, borderRadius: tokens.radius.pill, borderWidth: 1, height: 18, justifyContent: "center", width: 18 },
   projectedBadge: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.pill, borderWidth: 1, color: tokens.color.textMuted, fontSize: 9, fontWeight: tokens.weight.semibold, overflow: "hidden", paddingHorizontal: 6, paddingVertical: 2 },
   menuTimeGroup: { alignItems: "center", flexDirection: "row", gap: 4, paddingHorizontal: tokens.spacing.xs },
   menuTime: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.regular, letterSpacing: 0 },
