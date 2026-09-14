@@ -113,6 +113,7 @@ export type TodayData = {
   measurements: MeasurementSummary | null;
   reminders: ReminderSettings | null;
   pending_revision: CalendarizationRevision | null;
+  pinned_plan: LibraryItem | null;
 };
 
 export type MealExecutionStatus = "planned" | "completed" | "skipped";

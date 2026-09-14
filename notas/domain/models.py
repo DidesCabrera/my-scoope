@@ -21,7 +21,12 @@ from notas.domain.model_modules.calendarization import (
     ProgramCalendarization,
 )
 from notas.domain.model_modules.comparisons import SavedComparison
-from notas.domain.model_modules.dailyplans import DailyPlan, DailyPlanMeal
+from notas.domain.model_modules.dailyplans import (
+    DailyPlan,
+    DailyPlanMeal,
+    PinnedDailyPlan,
+    PinnedDailyPlanMealExecution,
+)
 from notas.domain.model_modules.food import (
     Food,
     FoodAlias,
@@ -70,6 +75,7 @@ __all__ = [
     "CalendarizationMeasurementContext", "CalendarizationReview",
     "CalendarizationRevision", "DailyPlan",
     "DailyPlanMeal", "DailyPlanMealShare",
+    "PinnedDailyPlan", "PinnedDailyPlanMealExecution",
     "DailyPlanShare", "Food",
     "FoodAlias", "FoodImportBatch",
     "FoodLabelAIAnalysis", "FoodLabelCaptureReceipt", "FoodLocalizedName",

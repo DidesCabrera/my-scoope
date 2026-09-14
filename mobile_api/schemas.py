@@ -65,6 +65,7 @@ from mobile_api.schema_domains.calendarization import (  # noqa: F401 -- compati
     MealCheckInInput,
     MealExecutionData,
     MeasurementSummaryData,
+    PinnedDailyPlanInput,
     ReminderEventData,
     ReminderSettingsData,
     ReminderSettingsEnvelope,

@@ -3,7 +3,8 @@ import { ChevronRight, Trash2 } from "lucide-react-native";
 import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
-import type { LibraryFoodPanelItem, LibraryMealPanelItem, LibraryWeekPanelItem } from "@/api/types";
+import type { LibraryFoodPanelItem, LibraryMealPanelItem, LibraryWeekPanelItem, MealExecutionItem } from "@/api/types";
+import { MealCompletionToggleCard } from "@/components/calendarization/meal-adherence-check-in";
 import { NutritionEntityCard } from "@/components/nutrition/nutrition-entity-card";
 import {
   FoodPanels as SharedFoodPanels,
@@ -71,12 +72,21 @@ export function MealPanels({ items }: { items: LibraryMealPanelItem[] }) {
   return <SharedMealPanels items={items.map(toMealPanelItem)} />;
 }
 
-export function DailyPlanMealCards({ dailyPlanId, items, onRemove }: { dailyPlanId: number; items: LibraryMealPanelItem[]; onRemove?: (item: LibraryMealPanelItem) => Promise<void> }) {
+type PinnedTracking = {
+  completionError: { mealKey: string; message: string } | null;
+  mealExecution: MealExecutionItem[];
+  onToggleCompleted(mealKey: string, completed: boolean): void;
+  onTogglePrepared(mealKey: string, foodKey: string): void;
+  savingMealKey: string | null;
+};
+
+export function DailyPlanMealCards({ dailyPlanId, items, onRemove, pinnedTracking }: { dailyPlanId: number; items: LibraryMealPanelItem[]; onRemove?: (item: LibraryMealPanelItem) => Promise<void>; pinnedTracking?: PinnedTracking }) {
   const router = useRouter();
   return (
     <View style={styles.mealCardList}>
-      {items.map((item, index) => (
-        <View key={item.id}>
+      {items.map((item, index) => {
+        const execution = pinnedTracking?.mealExecution.find((entry) => entry.meal_key === item.id);
+        return <View key={item.id}>
           <NutritionEntityCard
             actions={<>
               {onRemove ? <ContextCardActions
@@ -95,8 +105,10 @@ export function DailyPlanMealCards({ dailyPlanId, items, onRemove }: { dailyPlan
                 label={`Más acciones para ${item.name}`}
                 title={item.name}
               /> : null}
-              <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={() => router.push({ pathname: "/libraries/meals/[id]", params: { dailyPlanId: String(dailyPlanId), dailyPlanMealId: String(item.relation_id ?? ""), id: String(item.detail_id), mealTime: item.time?.slice(0, 5) ?? "" } } as Href)} role="link"><ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction>
+              <EntityCardAction label={`Ver detalle de ${item.name}`} onPress={() => router.push({ pathname: "/libraries/meals/[id]", params: { dailyPlanId: String(dailyPlanId), dailyPlanMealId: String(item.relation_id ?? ""), id: String(item.detail_id), mealTime: item.time?.slice(0, 5) ?? "", ...(pinnedTracking ? { pinned: "1", mealKey: item.id } : {}) } } as Href)} role="link"><ChevronRight color={tokens.color.textMuted} size={23} strokeWidth={2.2} /></EntityCardAction>
             </>}
+            beforeNutrition={pinnedTracking ? <MealCompletionToggleCard completed={execution?.status === "completed"} error={pinnedTracking.completionError?.mealKey === item.id ? pinnedTracking.completionError.message : null} onToggle={(completed) => pinnedTracking.onToggleCompleted(item.id, completed)} saving={pinnedTracking.savingMealKey != null} /> : undefined}
+            completion={pinnedTracking ? { noteCount: execution?.note.trim() ? 1 : 0 } : undefined}
             entity="meal"
             eyebrow={`Comida ${index + 1}`}
             indicators={[
@@ -110,10 +122,13 @@ export function DailyPlanMealCards({ dailyPlanId, items, onRemove }: { dailyPlan
               fat: { grams: item.fat_grams, allocation: item.fat_allocation },
             }}
             title={item.name}>
-            <FoodPanels items={item.foods} />
+            <SharedFoodPanels items={item.foods.map(toFoodPanelItem)} preparation={pinnedTracking ? {
+              isPrepared: (food) => execution?.prepared_food_keys.includes(food.id) ?? false,
+              onToggle: (food) => pinnedTracking.onTogglePrepared(item.id, food.id),
+            } : undefined} />
           </NutritionEntityCard>
-        </View>
-      ))}
+        </View>;
+      })}
     </View>
   );
 }

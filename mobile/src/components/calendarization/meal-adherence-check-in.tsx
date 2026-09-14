@@ -11,16 +11,19 @@ import { Button, ContentPanel, InlineNotice, SectionHeading } from "@/components
 import { tokens } from "@/design/tokens";
 import { MealCompletionSurface } from "./meal-completion-summary";
 
-type Props = { dayId: number; mealKey: string; onChange?: (execution: MealExecutionItem) => void };
+type Props = { dayId?: number; enabled?: boolean; mealKey: string; mode?: "calendarized" | "pinned"; onChange?: (execution: MealExecutionItem) => void };
 
-function executionFor(data: TodayData, dayId: number, mealKey: string): MealExecutionItem | null {
-  if (data.day_id !== dayId || !data.plan_snapshot?.meals?.some((meal) => meal.key === mealKey)) return null;
+function executionFor(data: TodayData, { dayId, mealKey, mode = "calendarized" }: Props): MealExecutionItem | null {
+  const available = mode === "pinned"
+    ? data.calendarization == null && data.pinned_plan?.panel.meals.some((meal) => meal.id === mealKey)
+    : data.day_id === dayId && data.plan_snapshot?.meals?.some((meal) => meal.key === mealKey);
+  if (!available) return null;
   return data.meal_execution.find((item) => item.meal_key === mealKey) ?? {
     meal_key: mealKey, status: "planned", last_event_id: null, recorded_at: null, note: "", prepared_food_keys: [],
   };
 }
 
-export function useMealAdherenceCheckIn({ dayId, mealKey, onChange }: Props) {
+export function useMealAdherenceCheckIn({ dayId, enabled = true, mealKey, mode = "calendarized", onChange }: Props) {
   const { apiRequest, status } = useSession();
   const [available, setAvailable] = useState(false);
   const [completed, setCompleted] = useState(false);
@@ -32,16 +35,16 @@ export function useMealAdherenceCheckIn({ dayId, mealKey, onChange }: Props) {
   const [savingStatus, setSavingStatus] = useState(false);
 
   const applyToday = useCallback((data: TodayData) => {
-    const execution = executionFor(data, dayId, mealKey);
+    const execution = executionFor(data, { dayId, mealKey, mode });
     setAvailable(execution != null);
     if (!execution) return;
     setCompleted(execution.status === "completed");
     setNote(execution.note);
     onChange?.(execution);
-  }, [dayId, mealKey, onChange]);
+  }, [dayId, mealKey, mode, onChange]);
 
   useFocusEffect(useCallback(() => {
-    if (status !== "authenticated") {
+    if (!enabled || status !== "authenticated") {
       setLoading(false);
       setAvailable(false);
       return;
@@ -52,14 +55,18 @@ export function useMealAdherenceCheckIn({ dayId, mealKey, onChange }: Props) {
     void apiRequest<TodayData>("/api/v1/today")
       .then((data) => {
         if (!active) return;
-        const execution = executionFor(data, dayId, mealKey);
+        const execution = executionFor(data, { dayId, mealKey, mode });
         applyToday(data);
         setEditingNote(!execution?.note.trim());
       })
       .catch((nextError) => { if (active) setError(userFacingError(nextError)); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [apiRequest, applyToday, dayId, mealKey, status]));
+  }, [apiRequest, applyToday, dayId, enabled, mealKey, mode, status]));
+
+  const checkInPath = mode === "pinned"
+    ? `/api/v1/today/pinned-plan/meals/${encodeURIComponent(mealKey)}/check-ins`
+    : `/api/v1/days/${dayId}/meals/${encodeURIComponent(mealKey)}/check-ins`;
 
   async function saveStatus(nextCompleted: boolean) {
     const previousCompleted = completed;
@@ -68,7 +75,7 @@ export function useMealAdherenceCheckIn({ dayId, mealKey, onChange }: Props) {
     setError(null);
     try {
       const payload: MealCheckInInput = { action: nextCompleted ? "completed" : "skipped", idempotency_key: Crypto.randomUUID() };
-      applyToday(await apiRequest<TodayData>(`/api/v1/days/${dayId}/meals/${encodeURIComponent(mealKey)}/check-ins`, { method: "POST", body: JSON.stringify(payload) }));
+      applyToday(await apiRequest<TodayData>(checkInPath, { method: "POST", body: JSON.stringify(payload) }));
     } catch (nextError) { setCompleted(previousCompleted); setError(userFacingError(nextError)); }
     finally { setSavingStatus(false); }
   }
@@ -78,7 +85,7 @@ export function useMealAdherenceCheckIn({ dayId, mealKey, onChange }: Props) {
     setError(null);
     try {
       const payload: MealCheckInInput = { action: "note", idempotency_key: Crypto.randomUUID(), note };
-      applyToday(await apiRequest<TodayData>(`/api/v1/days/${dayId}/meals/${encodeURIComponent(mealKey)}/check-ins`, { method: "POST", body: JSON.stringify(payload) }));
+      applyToday(await apiRequest<TodayData>(checkInPath, { method: "POST", body: JSON.stringify(payload) }));
       setEditingNote(false);
     } catch (nextError) { setError(userFacingError(nextError)); }
     finally { setSavingNote(false); }

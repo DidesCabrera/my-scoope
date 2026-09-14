@@ -5,6 +5,8 @@ from typing import Any, Literal
 
 from ninja import Field, Schema
 
+from mobile_api.schema_domains.libraries import LibraryItemData
+
 
 class CalendarizationData(Schema):
     id: int
@@ -95,6 +97,11 @@ class TodayData(Schema):
     measurements: MeasurementSummaryData | None = None
     reminders: ReminderSettingsData | None = None
     pending_revision: CalendarizationRevisionData | None = None
+    pinned_plan: LibraryItemData | None = None
+
+
+class PinnedDailyPlanInput(Schema):
+    dailyplan_id: int = Field(gt=0)
 
 
 class TodayEnvelope(Schema):
