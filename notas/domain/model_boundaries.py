@@ -81,7 +81,12 @@ DOMAIN_MODEL_BOUNDARIES: tuple[DomainModelBoundary, ...] = (
     DomainModelBoundary(
         slug="dailyplans",
         label="Daily Plans",
-        models=("DailyPlan", "DailyPlanMeal"),
+        models=(
+            "DailyPlan",
+            "DailyPlanMeal",
+            "PinnedDailyPlan",
+            "PinnedDailyPlanMealExecution",
+        ),
         responsibility="Daily plans and the meals attached to each plan.",
     ),
     DomainModelBoundary(
