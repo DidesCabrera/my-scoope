@@ -3,6 +3,8 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 
+import { reorderedItemsForDrop } from "../src/components/libraries/comparison-panel-reorder";
+
 async function source(relativePath: string): Promise<string> {
   return readFile(path.resolve(process.cwd(), relativePath), "utf8");
 }
@@ -60,9 +62,10 @@ test("program day and week comparison tables expose swipe actions and drag reord
   const programDetail = await source("src/components/libraries/program-detail-preview.tsx");
   const libraryDetail = await source("src/components/libraries/library-detail-screen.tsx");
 
-  assert.match(gestureRows, /Gesture\.LongPress\(\)\.minDuration\(320\)/);
+  assert.match(gestureRows, /Gesture\.Pan\(\)[\s\S]*?\.activateAfterLongPress\(320\)/);
   assert.match(gestureRows, /ReanimatedSwipeable/);
-  assert.match(gestureRows, /onDragEnd=\{\(\{ data, from, to \}\)/);
+  assert.doesNotMatch(gestureRows, /DraggableFlatList/);
+  assert.match(gestureRows, /reorderedItemsForDrop/);
   assert.match(dayPanels, /ComparisonPanelGestureRows/);
   assert.match(dayPanels, /Reemplazar.*Agregar/);
   assert.match(dayPanels, /Eliminar plan de/);
@@ -75,6 +78,19 @@ test("program day and week comparison tables expose swipe actions and drag reord
   assert.match(weekPanels, /await onReorder\(sourceWeekNumbers\)/);
   assert.match(programDetail, /onReorderDailyPlans/);
   assert.match(libraryDetail, /weeks\/\$\{week\}\/days\/order/);
+});
+
+test("program table drops use measured row positions and preserve the original order below the midpoint", () => {
+  const items = [{ id: "one" }, { id: "two" }, { id: "three" }];
+  const layouts = {
+    one: { height: 48, y: 0 },
+    two: { height: 56, y: 48 },
+    three: { height: 48, y: 104 },
+  };
+
+  assert.equal(reorderedItemsForDrop(items, layouts, 0, 20), items);
+  assert.deepEqual(reorderedItemsForDrop(items, layouts, 0, 90).map(({ id }) => id), ["two", "three", "one"]);
+  assert.deepEqual(reorderedItemsForDrop(items, layouts, 2, -90).map(({ id }) => id), ["three", "one", "two"]);
 });
 
 test("editable rows reorder after a deliberate long press and persist on drop", async () => {
