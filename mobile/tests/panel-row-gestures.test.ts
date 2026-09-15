@@ -94,13 +94,16 @@ test("program day and week comparison tables expose measured swipe actions and d
 
 test("editable rows reorder after a deliberate long press and persist on drop", async () => {
   const panels = await source("src/components/panels/entity-panels.tsx");
+  const libraryDetail = await source("src/components/libraries/library-detail-screen.tsx");
   const layout = await source("src/app/_layout.tsx");
 
   assert.match(layout, /GestureHandlerRootView style=\{styles\.gestureRoot\}/);
   assert.match(panels, /Gesture\.LongPress\(\)\.minDuration\(320\)/);
-  assert.match(panels, /DraggableFlatList/);
+  assert.match(panels, /NestableDraggableFlatList/);
+  assert.match(panels, /activationDistance=\{20\}/);
   assert.match(panels, /onDragEnd=\{\(\{ data, from, to \}\) => \{ if \(from !== to\) void editing\.onReorder\(data\)/);
   assert.match(panels, /scrollEnabled=\{false\}/);
+  assert.match(libraryDetail, /NestableScrollContainer/);
 });
 
 test("the legacy edit tab remains available as a temporary fallback", async () => {

@@ -1,7 +1,7 @@
 import { Fragment, type ReactNode, useMemo, useRef, useState } from "react";
 import { ArrowDown, ArrowUp, Check, ChevronRight, Clock, Pencil, RefreshCw, RotateCcw, Trash2 } from "lucide-react-native";
 import { Alert, Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
-import DraggableFlatList, { ScaleDecorator, type RenderItemParams } from "react-native-draggable-flatlist";
+import { NestableDraggableFlatList, ScaleDecorator, type RenderItemParams } from "react-native-draggable-flatlist";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import ReanimatedSwipeable, { type SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
 import Animated from "react-native-reanimated";
@@ -236,8 +236,8 @@ function PanelRows<T extends EditablePanelItem>({ editing, items, renderRow }: {
   );
 
   return (
-    <DraggableFlatList
-      activationDistance={8}
+    <NestableDraggableFlatList
+      activationDistance={20}
       data={items}
       keyExtractor={(item) => item.id}
       onDragBegin={() => {
