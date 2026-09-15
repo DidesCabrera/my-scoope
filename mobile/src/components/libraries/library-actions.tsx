@@ -1,6 +1,6 @@
 import { Clock3, Copy, MoreHorizontal, Pencil, Send, Trash2, X } from "lucide-react-native";
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -70,11 +70,16 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
   const [submitting, setSubmitting] = useState(false);
   const [shareResource, setShareResource] = useState<ShareResource | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const resolveSheetClose = useRef<(() => void) | null>(null);
   const visible = controlledVisible ?? internalVisible;
   const setVisible = (nextVisible: boolean) => {
     if (controlledVisible === undefined) setInternalVisible(nextVisible);
     onVisibleChange?.(nextVisible);
   };
+  const handleSheetDidClose = useCallback(() => {
+    resolveSheetClose.current?.();
+    resolveSheetClose.current = null;
+  }, []);
 
   if (!actions.length && !mealTimeChange) return null;
 
@@ -129,9 +134,13 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
     setError(null);
     try {
       const resource = await prepareShare();
-      await openNativeShare(resource);
+      const sheetClosed = new Promise<void>((resolve) => {
+        resolveSheetClose.current = resolve;
+      });
       setVisible(false);
       setSelected(null);
+      await sheetClosed;
+      await openNativeShare(resource);
     } catch (nextError) {
       setError(userFacingError(nextError));
     } finally {
@@ -161,7 +170,10 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
           <MoreHorizontal color={tokens.color.textMuted} size={23} strokeWidth={2.2} />
         </EntityCardAction>
       )}
-      <ActionSheetModal onRequestClose={close} visible={visible}>
+      <ActionSheetModal
+        onDidClose={handleSheetDidClose}
+        onRequestClose={close}
+        visible={visible}>
           <SafeAreaView edges={["left", "right"]} style={styles.sheetSafeArea}>
             <View style={styles.sheet}>
               <View style={styles.sheetHeader}>
