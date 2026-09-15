@@ -244,6 +244,7 @@ test("library details open every composition flow and program days remain editab
   omits(panels, /Guardar porción|inlineEdit|inlineInput/);
   matches(detail, /onEditPortion:.*pickerConfigureHref\("food-to-meal"/s);
   matches(mealDetail, /onEditPortion:.*pickerConfigureHref\("food-to-calendarized-meal"/s);
+  matches(mealDetail, /Este alimento no está disponible en tu biblioteca para editar su porción/);
 
   const program = await readFile(path.resolve(process.cwd(), "src/components/libraries/program-detail-preview.tsx"), "utf8");
   const assignedPlan = await readFile(path.resolve(process.cwd(), "src/components/libraries/program-daily-plan-preview.tsx"), "utf8");

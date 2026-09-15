@@ -1030,6 +1030,7 @@ def _calendarized_snapshot_with_meal_links(user, snapshot: dict | None) -> dict 
 
     meals_by_slot_id = {}
     foods_by_source_id: dict[int, list[dict]] = {}
+    foods_by_relation_id: dict[int, list[dict]] = {}
     for meal in meals:
         if not isinstance(meal, dict):
             continue
@@ -1042,6 +1043,19 @@ def _calendarized_snapshot_with_meal_links(user, snapshot: dict | None) -> dict 
             source_food_id = food.get("source_food_id")
             if isinstance(source_food_id, int):
                 foods_by_source_id.setdefault(source_food_id, []).append(food)
+                continue
+            food_key = food.get("key")
+            if not isinstance(food_key, str):
+                continue
+            for prefix in ("meal_food:", "source_meal_food:"):
+                if not food_key.startswith(prefix):
+                    continue
+                try:
+                    relation_id = int(food_key.removeprefix(prefix))
+                except ValueError:
+                    break
+                foods_by_relation_id.setdefault(relation_id, []).append(food)
+                break
         key = meal.get("key")
         if not isinstance(key, str) or not key.startswith("dailyplan_meal:"):
             continue
@@ -1057,6 +1071,9 @@ def _calendarized_snapshot_with_meal_links(user, snapshot: dict | None) -> dict 
     ).values_list("id", "meal_id")
     for slot_id, meal_id in links:
         meals_by_slot_id[slot_id]["detail_id"] = meal_id
+    relation_food_ids = MealFood.objects.filter(pk__in=foods_by_relation_id).values_list("id", "food_id")
+    for relation_id, food_id in relation_food_ids:
+        foods_by_source_id.setdefault(food_id, []).extend(foods_by_relation_id[relation_id])
     readable_food_ids = get_readable_food_queryset(user).filter(
         pk__in=foods_by_source_id, is_active=True
     ).values_list("id", flat=True)

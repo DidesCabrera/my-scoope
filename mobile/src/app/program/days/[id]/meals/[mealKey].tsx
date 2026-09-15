@@ -143,7 +143,13 @@ export default function CalendarizedMealDetailScreen() {
           <FoodPanels
             editing={{
               onDelete: async (food) => mutateFoods(`/api/v1/program/days/${dayId}/meals/${encodeURIComponent(mealKey)}/foods/${encodeURIComponent(food.id)}`, { method: "DELETE" }),
-              onEditPortion: (food) => { if (food.detailId) router.push(pickerConfigureHref("food-to-calendarized-meal", { mealKey, relationKey: food.id, selectedId: food.detailId, targetId: dayId, weekNumber: 1 })); },
+              onEditPortion: (food) => {
+                if (food.detailId) {
+                  router.push(pickerConfigureHref("food-to-calendarized-meal", { mealKey, relationKey: food.id, selectedId: food.detailId, targetId: dayId, weekNumber: 1 }));
+                  return;
+                }
+                setError("Este alimento no está disponible en tu biblioteca para editar su porción.");
+              },
               onReorder: async (items: FoodPanelItem[]) => mutateFoods(`/api/v1/program/days/${dayId}/meals/${encodeURIComponent(mealKey)}/foods/order`, { body: JSON.stringify({ ordered_keys: items.map((item) => item.id) }), method: "PUT" }),
               onReplace: (food) => router.push(pickerHref("food-to-calendarized-meal", { dayId, mealKey, relationKey: food.id })),
             }}
