@@ -13,7 +13,7 @@ test("every library entity opens native sharing directly with one portable resou
   assertSourceMatch(actions, /\/api\/v1\/shares\/\$\{entitySlug\}\/\$\{item\.id\}/);
   assertSourceMatch(actions, /entitySlug: "foods" \| "meals" \| "daily-plans" \| "programs"/);
   assertSourceMatch(actions, /action\.key === "share"[\s\S]*?void shareItem\(\)/);
-  assertSourceMatch(actions, /setVisible\(false\);[\s\S]*?setTimeout\(resolve, 0\)[\s\S]*?await openNativeShare\(resource\)/);
+  assertSourceMatch(actions, /setDismissShareImmediately\(true\);[\s\S]*?setVisible\(false\);[\s\S]*?await sheetClosed;[\s\S]*?await openNativeShare\(resource\)/);
   assert.doesNotMatch(actions, /submitting && !selected/);
   assertSourceMatch(actions, /openNativeShare\(resource\)/);
   assert.doesNotMatch(actions, /Compartir con otra app|Copiar enlace|Correo del destinatario/);

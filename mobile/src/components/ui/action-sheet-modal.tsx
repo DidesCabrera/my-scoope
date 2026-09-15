@@ -15,11 +15,13 @@ import { initialWindowMetrics, useSafeAreaInsets } from "react-native-safe-area-
 import { tokens } from "@/design/tokens";
 
 type ActionSheetModalProps = PropsWithChildren<{
+  dismissImmediately?: boolean;
+  onDidClose?: () => void;
   onRequestClose(): void;
   visible: boolean;
 }>;
 
-export function ActionSheetModal({ children, onRequestClose, visible }: ActionSheetModalProps) {
+export function ActionSheetModal({ children, dismissImmediately = false, onDidClose, onRequestClose, visible }: ActionSheetModalProps) {
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const bottomInset = Math.max(insets.bottom, initialWindowMetrics?.insets.bottom ?? 0);
@@ -60,6 +62,16 @@ export function ActionSheetModal({ children, onRequestClose, visible }: ActionSh
       return;
     }
 
+    if (dismissImmediately) {
+      scrimOpacity.setValue(0);
+      sheetTranslateY.setValue(hiddenSheetOffset);
+      requestAnimationFrame(() => {
+        setMounted(false);
+        requestAnimationFrame(() => onDidClose?.());
+      });
+      return;
+    }
+
     Animated.parallel([
       Animated.timing(scrimOpacity, {
         duration: 180,
@@ -74,9 +86,12 @@ export function ActionSheetModal({ children, onRequestClose, visible }: ActionSh
         useNativeDriver: true,
       }),
     ]).start(({ finished }) => {
-      if (finished) setMounted(false);
+      if (finished) {
+        setMounted(false);
+        requestAnimationFrame(() => onDidClose?.());
+      }
     });
-  }, [hiddenSheetOffset, mounted, scrimOpacity, sheetTranslateY, visible]);
+  }, [dismissImmediately, hiddenSheetOffset, mounted, onDidClose, scrimOpacity, sheetTranslateY, visible]);
 
   return (
     <Modal
