@@ -109,6 +109,29 @@ function decimal(value: number): string {
   return Number.isFinite(value) ? value.toLocaleString("es-CL", { maximumFractionDigits: 1 }) : "0";
 }
 
+function NutritionSummaryItem({ color, value }: { color: string; value: string }) {
+  return (
+    <View style={styles.nutritionSummaryItem}>
+      <View style={[styles.nutritionSummaryDot, { backgroundColor: color }]} />
+      <Text numberOfLines={1} style={styles.nutritionSummaryValue}>{value}</Text>
+    </View>
+  );
+}
+
+function NutritionSummaryRow({ item }: { item: NutritionPanelValues }) {
+  return (
+    <View
+      accessibilityLabel={`${rounded(item.calories)} cal, ${item.proteinPerKilogram == null ? "sin PPK" : `${decimal(item.proteinPerKilogram)} gramos por kilogramo`}, ${decimal(item.proteinGrams)} gramos de proteína, ${decimal(item.carbsGrams)} gramos de carbohidratos, ${decimal(item.fatGrams)} gramos de grasas`}
+      style={styles.nutritionSummaryRow}>
+      <NutritionSummaryItem color={tokens.color.kcalBorder} value={`${rounded(item.calories)} cal`} />
+      <NutritionSummaryItem color={tokens.color.ppk} value={`${item.proteinPerKilogram == null ? "—" : decimal(item.proteinPerKilogram)} g/kg`} />
+      <NutritionSummaryItem color={tokens.color.protein} value={`${decimal(item.proteinGrams)} g`} />
+      <NutritionSummaryItem color={tokens.color.carbs} value={`${decimal(item.carbsGrams)} g`} />
+      <NutritionSummaryItem color={tokens.color.fat} value={`${decimal(item.fatGrams)} g`} />
+    </View>
+  );
+}
+
 function SwipeAction({ children, label, onPress, tone = "default" }: { children: ReactNode; label: string; onPress(): void; tone?: "default" | "destructive" | "edit" | "time" }) {
   return (
     <Pressable
@@ -348,20 +371,23 @@ export function FoodQuantityPanel({ editing, items, onOpenItem, preparation }: {
       <QuantityHeader leadingLabel="Alimentos" preparation={Boolean(preparation)} trailingLabel="Qty" />
       <PanelRows editing={editing} items={items} renderRow={(item, index) => {
         const canOpen = item.detailId != null && Boolean(onOpenItem);
-        return <View key={item.id} style={[styles.row, index === items.length - 1 && styles.rowLast]}>
-          {canOpen ? <Pressable accessibilityLabel={`Ver detalle de ${item.name}`} accessibilityRole="link" onPress={() => onOpenItem?.(item)} style={({ pressed }) => [styles.quantityLeadingCell, styles.foodDetailLink, pressed && styles.pressed]}><PanelItemName item={item} style={styles.foodDetailCopy} /><ChevronRight color={tokens.color.textMuted} size={17} /></Pressable> : <PanelItemName item={item} style={styles.quantityLeadingCell} />}
-          <Text style={[styles.cell, styles.quantityValue]}>{decimal(item.quantity)} {item.quantityUnit}</Text>
-          {preparation ? (
-            <Pressable
-              accessibilityLabel={`${preparation.isPrepared(item) ? "Desmarcar" : "Marcar"} ${item.name} como preparado`}
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: preparation.isPrepared(item) }}
-              hitSlop={8}
-              onPress={() => preparation.onToggle(item)}
-              style={({ pressed }) => [styles.preparationValue, styles.preparationButton, pressed && styles.pressed]}>
-              <View style={styles.preparationMarker}>{preparation.isPrepared(item) ? <View style={styles.preparationMarkerChecked} /> : null}</View>
-            </Pressable>
-          ) : null}
+        return <View key={item.id} style={[styles.summaryCell, index === items.length - 1 && styles.rowLast]}>
+          <View style={[styles.row, styles.summaryPrimaryRow]}>
+            {canOpen ? <Pressable accessibilityLabel={`Ver detalle de ${item.name}`} accessibilityRole="link" onPress={() => onOpenItem?.(item)} style={({ pressed }) => [styles.quantityLeadingCell, styles.foodDetailLink, pressed && styles.pressed]}><PanelItemName item={item} style={styles.foodDetailCopy} /><ChevronRight color={tokens.color.textMuted} size={17} /></Pressable> : <PanelItemName item={item} style={styles.quantityLeadingCell} />}
+            <Text style={[styles.cell, styles.quantityValue]}>{decimal(item.quantity)} {item.quantityUnit}</Text>
+            {preparation ? (
+              <Pressable
+                accessibilityLabel={`${preparation.isPrepared(item) ? "Desmarcar" : "Marcar"} ${item.name} como preparado`}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: preparation.isPrepared(item) }}
+                hitSlop={8}
+                onPress={() => preparation.onToggle(item)}
+                style={({ pressed }) => [styles.preparationValue, styles.preparationButton, pressed && styles.pressed]}>
+                <View style={styles.preparationMarker}>{preparation.isPrepared(item) ? <View style={styles.preparationMarkerChecked} /> : null}</View>
+              </Pressable>
+            ) : null}
+          </View>
+          <NutritionSummaryRow item={item} />
         </View>
       }} />
     </PanelBody>
@@ -459,25 +485,28 @@ export function MealMenuPanel({ editing, items, onOpenItem }: { editing?: PanelR
           key={item.id}
           onPress={() => onOpenItem?.(item)}
           style={({ pressed }) => [styles.menuRow, index === items.length - 1 && styles.rowLast, pressed && canOpen && styles.menuRowPressed]}>
-          <View style={styles.menuCopy}>
-            <View style={styles.menuTitleRow}>
-              <MealRowIdentity completed={item.completed} name={item.name} projectedLabel={item.projectedLabel} />
-              {item.time ? (
-                <View style={styles.menuTimeGroup}>
-                  <Clock color={tokens.color.textMuted} size={11} strokeWidth={2} />
-                  <Text style={styles.menuTime}>{item.time}</Text>
-                </View>
-              ) : null}
+          <View style={styles.menuPrimaryRow}>
+            <View style={styles.menuCopy}>
+              <View style={styles.menuTitleRow}>
+                <MealRowIdentity completed={item.completed} name={item.name} projectedLabel={item.projectedLabel} />
+                {item.time ? (
+                  <View style={styles.menuTimeGroup}>
+                    <Clock color={tokens.color.textMuted} size={11} strokeWidth={2} />
+                    <Text style={styles.menuTime}>{item.time}</Text>
+                  </View>
+                ) : null}
+              </View>
+              <Text style={styles.menuFoods}>
+                {item.foods.map((food) => `${food.name} (${decimal(food.quantity)}${food.quantityUnit})`).join(", ")}
+              </Text>
             </View>
-            <Text style={styles.menuFoods}>
-              {item.foods.map((food) => `${food.name} (${decimal(food.quantity)}${food.quantityUnit})`).join(", ")}
-            </Text>
+            {canOpen ? (
+              <View style={styles.menuAction}>
+                <ChevronRight color={tokens.color.textMuted} size={19} strokeWidth={2.2} />
+              </View>
+            ) : null}
           </View>
-          {canOpen ? (
-            <View style={styles.menuAction}>
-              <ChevronRight color={tokens.color.textMuted} size={19} strokeWidth={2.2} />
-            </View>
-          ) : null}
+          <NutritionSummaryRow item={item} />
         </Pressable>
         );
       }} />
@@ -657,7 +686,14 @@ const styles = StyleSheet.create({
   calorieShare: { flex: 1, minWidth: 92, textAlign: "center" },
   allocationRow: { gap: tokens.spacing.sm },
   allocationCell: { flex: 1, minWidth: 0, width: "auto" },
-  menuRow: { alignItems: "center", alignSelf: "stretch", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.xs, paddingLeft: tokens.spacing.sm, paddingRight: tokens.spacing.xs, paddingVertical: tokens.spacing.md },
+  summaryCell: { alignSelf: "stretch", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1 },
+  summaryPrimaryRow: { borderBottomWidth: 0 },
+  nutritionSummaryRow: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.sm, paddingBottom: tokens.spacing.sm, paddingHorizontal: tokens.spacing.md },
+  nutritionSummaryItem: { alignItems: "center", flexDirection: "row", gap: 4 },
+  nutritionSummaryDot: { borderRadius: 3, height: 6, width: 6 },
+  nutritionSummaryValue: { color: tokens.color.textMuted, fontSize: 10, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.medium, letterSpacing: 0 },
+  menuRow: { alignSelf: "stretch", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, paddingBottom: tokens.spacing.sm, paddingTop: tokens.spacing.md },
+  menuPrimaryRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs, paddingLeft: tokens.spacing.sm, paddingRight: tokens.spacing.xs },
   menuCopy: { flex: 1, gap: tokens.spacing.compact, minWidth: 0 },
   menuAction: { alignItems: "center", alignSelf: "stretch", borderRadius: tokens.radius.pill, justifyContent: "center", minWidth: 24 },
   menuRowPressed: { opacity: 0.55 },
@@ -677,7 +713,7 @@ const styles = StyleSheet.create({
   swipeTimeAction: { alignSelf: "stretch", width: 48 },
   swipeAction: { alignItems: "center", alignSelf: "stretch", backgroundColor: tokens.color.textMuted, flex: 1, justifyContent: "center", width: 48 },
   swipeActionEdit: { backgroundColor: tokens.color.interactivePrimary },
-  swipeActionTime: { backgroundColor: "#11A9A4" },
+  swipeActionTime: { backgroundColor: "#0A8682" },
   swipeActionDestructive: { backgroundColor: tokens.color.danger },
   swipeActionPressed: { opacity: 0.72 },
   iconAction: { alignItems: "center", borderRadius: tokens.radius.sm, height: 34, justifyContent: "center", width: 34 },

@@ -45,12 +45,26 @@ test("meal rows reveal a clock action on right swipe and reuse existing time for
   assert.match(panels, /label="Cambiar hora"/);
   assert.match(panels, /<Clock color=\{tokens\.color\.entityIconForeground\}/);
   assert.match(panels, /swipeAction: \{[^}]*alignSelf: "stretch"[^}]*flex: 1/);
-  assert.match(panels, /swipeActionTime: \{ backgroundColor: "#11A9A4" \}/);
+  assert.match(panels, /swipeActionTime: \{ backgroundColor: "#0A8682" \}/);
   assert.match(panels, /onChangeTime: editing\.onChangeTime/);
   assert.match(calendarizedDay, /onChangeTime: setTimeChangeMeal/);
   assert.match(calendarizedDay, /initialAction="change-time"[\s\S]*?method: "PATCH"/);
   assert.match(libraryDetail, /onChangeTime: \(meal: MealPanelItem\)/);
   assert.match(libraryDetail, /initialAction="change-time"[\s\S]*?method: "PATCH"/);
+});
+
+test("food and menu rows show the compact nutrition summary only in their primary tabs", async () => {
+  const panels = await source("src/components/panels/entity-panels.tsx");
+
+  assert.match(panels, /function NutritionSummaryRow/);
+  assert.match(panels, /tokens\.color\.kcalBorder/);
+  assert.match(panels, /tokens\.color\.ppk/);
+  assert.match(panels, /tokens\.color\.protein/);
+  assert.match(panels, /tokens\.color\.carbs/);
+  assert.match(panels, /tokens\.color\.fat/);
+  assert.match(panels, /function FoodQuantityPanel[\s\S]*?<NutritionSummaryRow item=\{item\} \/>/);
+  assert.match(panels, /function MealMenuPanel[\s\S]*?<NutritionSummaryRow item=\{item\} \/>/);
+  assert.doesNotMatch(panels.match(/function NutritionMacrosPanel[\s\S]*?function NutritionDistributionPanel/)?.[0] ?? "", /NutritionSummaryRow/);
 });
 
 test("program day and week comparison tables expose swipe actions and drag reordering", async () => {
