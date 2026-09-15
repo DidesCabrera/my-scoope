@@ -82,6 +82,7 @@ function GestureRow<T extends { id: string }>({ actions, index, item, itemLabel,
       overshootRight={false}
       ref={swipeableRef}
       renderRightActions={renderRightActions}
+      simultaneousWithExternalGesture={dragGesture}
       rightThreshold={36}>
       <GestureDetector gesture={dragGesture}>
         <Animated.View

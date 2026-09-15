@@ -64,6 +64,7 @@ test("program day and week comparison tables expose swipe actions and drag reord
 
   assert.match(gestureRows, /Gesture\.Pan\(\)[\s\S]*?\.activateAfterLongPress\(320\)/);
   assert.match(gestureRows, /ReanimatedSwipeable/);
+  assert.match(gestureRows, /simultaneousWithExternalGesture=\{dragGesture\}/);
   assert.doesNotMatch(gestureRows, /DraggableFlatList/);
   assert.match(gestureRows, /reorderedItemsForDrop/);
   assert.match(dayPanels, /ComparisonPanelGestureRows/);
