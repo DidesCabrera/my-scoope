@@ -130,7 +130,7 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
       const resource = await prepareShare();
       setVisible(false);
       setSelected(null);
-      await new Promise((resolve) => setTimeout(resolve, 80));
+      await new Promise((resolve) => setTimeout(resolve, 5));
       await openNativeShare(resource);
     } catch (nextError) {
       setError(userFacingError(nextError));
