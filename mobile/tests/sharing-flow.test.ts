@@ -4,7 +4,7 @@ import test from "node:test";
 
 import { assertSourceMatch, readTestFile } from "./support/source-contract";
 
-test("every library entity uses one portable resource for native share and copy link", async () => {
+test("every library entity opens native sharing directly with one portable resource", async () => {
   const actions = await readTestFile(path.resolve(process.cwd(), "src/components/libraries/library-actions.tsx"), "utf8");
   const adapter = await readTestFile(path.resolve(process.cwd(), "src/sharing/native-share.ts"), "utf8");
   const packageJson = JSON.parse(await readTestFile(path.resolve(process.cwd(), "package.json"), "utf8"));
@@ -12,8 +12,9 @@ test("every library entity uses one portable resource for native share and copy 
   assert.match(packageJson.dependencies["expo-clipboard"], /^~57\./);
   assertSourceMatch(actions, /\/api\/v1\/shares\/\$\{entitySlug\}\/\$\{item\.id\}/);
   assertSourceMatch(actions, /entitySlug: "foods" \| "meals" \| "daily-plans" \| "programs"/);
+  assertSourceMatch(actions, /action\.key === "share"[\s\S]*?void shareItem\(\)/);
   assertSourceMatch(actions, /openNativeShare\(resource\)/);
-  assertSourceMatch(actions, /copyShareLink\(resource\)/);
+  assert.doesNotMatch(actions, /Compartir con otra app|Copiar enlace|Correo del destinatario/);
   assertSourceMatch(adapter, /Share\.share/);
   assertSourceMatch(adapter, /Clipboard\.setStringAsync/);
 });
