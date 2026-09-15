@@ -45,7 +45,10 @@ test("meal rows reveal a clock action on right swipe and reuse existing time for
   assert.match(panels, /label="Cambiar hora"/);
   assert.match(panels, /<Clock color=\{tokens\.color\.entityIconForeground\}/);
   assert.match(panels, /swipeAction: \{[^}]*alignSelf: "stretch"[^}]*flex: 1/);
-  assert.match(panels, /swipeActionTime: \{ backgroundColor: "#0A6B86" \}/);
+  assert.match(panels, /swipeAction: \{[^}]*backgroundColor: "#515151"/);
+  assert.match(panels, /swipeActionTime: \{ backgroundColor: "#1B6491" \}/);
+  assert.match(panels, /swipeActionDestructive: \{ backgroundColor: "#DB294A" \}/);
+  assert.match(panels, /preparationMarkerChecked: \{ backgroundColor: "#1B6491"/);
   assert.match(panels, /onChangeTime: editing\.onChangeTime/);
   assert.match(calendarizedDay, /onChangeTime: setTimeChangeMeal/);
   assert.match(calendarizedDay, /initialAction="change-time"[\s\S]*?method: "PATCH"/);
@@ -53,7 +56,7 @@ test("meal rows reveal a clock action on right swipe and reuse existing time for
   assert.match(libraryDetail, /initialAction="change-time"[\s\S]*?method: "PATCH"/);
 });
 
-test("program day and week comparison tables expose swipe actions and drag reordering", async () => {
+test("program day and week comparison tables expose measured swipe actions and drag reordering", async () => {
   const gestureRows = await source("src/components/libraries/comparison-panel-gesture-rows.tsx");
   const dependencyPatch = await source("patches/react-native-draggable-flatlist+4.0.3.patch");
   const dayPanels = await source("src/components/libraries/program-day-comparison-panels.tsx");
@@ -61,21 +64,27 @@ test("program day and week comparison tables expose swipe actions and drag reord
   const programDetail = await source("src/components/libraries/program-detail-preview.tsx");
   const libraryDetail = await source("src/components/libraries/library-detail-screen.tsx");
 
-  assert.match(gestureRows, /Gesture\.LongPress\(\)\.minDuration\(320\)/);
   assert.match(gestureRows, /ReanimatedSwipeable/);
+  assert.match(gestureRows, /width: actions\.length \* 48/);
+  assert.match(gestureRows, /Gesture\.LongPress\(\)\.minDuration\(320\)/);
   assert.match(gestureRows, /NestableDraggableFlatList/);
   assert.match(gestureRows, /activationDistance=\{20\}/);
   assert.match(gestureRows, /onDragEnd=\{\(\{ data, from, to \}\)/);
   assert.match(programDetail, /NestableScrollContainer/);
+  assert.match(programDetail, /<ProgramWeekComparisonPanels onDelete=\{onRemoveWeek\} onDuplicate=\{onDuplicateWeek\} onReorder=\{onReorderWeeks\}/);
   assert.match(dependencyPatch, /panGesture\.failOffsetX\(activeOffset\)/);
   assert.match(dependencyPatch, /panGesture\.failOffsetY\(activeOffset\)/);
   assert.match(dayPanels, /ComparisonPanelGestureRows/);
   assert.match(dayPanels, /Reemplazar.*Agregar/);
+  assert.match(dayPanels, /backgroundColor: "#515151"/);
+  assert.match(dayPanels, /backgroundColor: "#DB294A"/);
   assert.match(dayPanels, /Eliminar plan de/);
   assert.match(dayPanels, /sourceRows\.find\(\(\{ id \}\) => id === row\.id\)\?\.dayNumber/);
   assert.match(dayPanels, /await onReorder\(week, orderedDays\)/);
   assert.match(weekPanels, /ComparisonPanelGestureRows/);
   assert.match(weekPanels, /Duplicar Semana/);
+  assert.match(weekPanels, /backgroundColor: "#515151"/);
+  assert.match(weekPanels, /backgroundColor: "#DB294A"/);
   assert.match(weekPanels, /Eliminar Semana/);
   assert.match(weekPanels, /weeks\.find\(\(\{ id \}\) => id === week\.id\)\?\.week/);
   assert.match(weekPanels, /await onReorder\(sourceWeekNumbers\)/);

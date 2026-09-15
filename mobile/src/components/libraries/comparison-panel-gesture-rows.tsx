@@ -35,7 +35,7 @@ function GestureRow<T extends { id: string }>({ actions, drag, isActive, item, i
   const swipeableRef = useRef<SwipeableMethods>(null);
   const longPressGesture = Gesture.LongPress().minDuration(320).onStart(drag).runOnJS(true);
   const renderRightActions = (_progress: unknown, _translation: unknown, methods: SwipeableMethods) => (
-    <View style={styles.actions}>
+    <View style={[styles.actions, { width: actions.length * 48 }]}>
       {actions.map((action) => (
         <Pressable
           accessibilityLabel={action.label}
@@ -65,7 +65,7 @@ function GestureRow<T extends { id: string }>({ actions, drag, isActive, item, i
             accessibilityHint="Desliza hacia la izquierda para ver acciones. Mantén pulsado y arrastra para reordenar."
             accessibilityLabel={itemLabel}
             style={[styles.row, isActive && styles.rowActive]}>
-          {row}
+            {row}
           </Animated.View>
         </GestureDetector>
       </ReanimatedSwipeable>

@@ -304,7 +304,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
 
   assertSourceMatch(sharedEntityPanels, /preparationMarkerChecked/);
   assertSourceMatch(sharedEntityPanels, /preparation\.isPrepared\(item\) \? <View style=\{styles\.preparationMarkerChecked\} \/> : null/);
-  assertSourceMatch(sharedEntityPanels, /preparationMarkerChecked: \{ backgroundColor: tokens\.color\.success, borderRadius: 5, height: 10, width: 10 \}/);
+  assertSourceMatch(sharedEntityPanels, /preparationMarkerChecked: \{ backgroundColor: "#1B6491", borderRadius: 5, height: 10, width: 10 \}/);
   assertSourceMatch(sharedEntityPanels, /accessibilityRole="checkbox"/);
   assertSourceMatch(sharedEntityPanels, /<PanelHeaderCell style=\{styles\.preparationValue\}>Listo<\/PanelHeaderCell>/);
   assertSourceDoesNotMatch(mealAdherence, /statusLabel|styles\.status/);

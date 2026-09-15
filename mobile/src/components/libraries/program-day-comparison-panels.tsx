@@ -208,13 +208,13 @@ export function ProgramDayComparisonPanels({ onAssign, onDelete, onReorder, rows
   const gestures: DayRowGestures | undefined = onAssign && onDelete && onReorder ? {
     actions: (row) => [
       {
-        backgroundColor: row.planName ? tokens.color.textMuted : tokens.color.dailyPlan,
+        backgroundColor: "#515151",
         icon: row.planName ? <RefreshCw color={tokens.color.entityIconForeground} size={18} /> : <Plus color={tokens.color.entityIconForeground} size={19} />,
         label: `${row.planName ? "Reemplazar" : "Agregar"} plan de ${row.day}`,
         onPress: () => onAssign(row.week, row.dayNumber),
       },
       ...(row.planName ? [{
-        backgroundColor: tokens.color.danger,
+        backgroundColor: "#DB294A",
         icon: <Trash2 color={tokens.color.entityIconForeground} size={18} />,
         label: `Eliminar plan de ${row.day}`,
         onPress: () => Alert.alert("Eliminar plan diario", `¿Quitar el plan asignado a ${row.day}?`, [{ text: "Cancelar", style: "cancel" }, { text: "Eliminar", style: "destructive", onPress: () => void onDelete(row.week, row.dayNumber).catch(() => undefined) }]),

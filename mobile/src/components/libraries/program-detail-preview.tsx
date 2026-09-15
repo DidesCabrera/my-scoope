@@ -241,7 +241,7 @@ export function ProgramDetailPreview({ footer, item, onAddWeek, onAssignDailyPla
   }
 
   return (
-    <View style={styles.page}>
+    <NestableScrollContainer contentContainerStyle={styles.page} scrollEnabled={false}>
       {overview}
       <SectionDivider />
       <View style={styles.planningSection}>
@@ -249,7 +249,7 @@ export function ProgramDetailPreview({ footer, item, onAddWeek, onAssignDailyPla
         {weekTabs}
         <ProgramWeekDetail canRemoveWeek={weeksCount > 1} onAssignDailyPlan={onAssignDailyPlan} onDuplicateWeek={onDuplicateWeek} onRemoveDailyPlan={onRemoveDailyPlan} onRemoveWeek={onRemoveWeek} onReorderDailyPlans={onReorderDailyPlans} week={displayedActiveWeek} weekData={selectedWeek} />
       </View>
-    </View>
+    </NestableScrollContainer>
   );
 }
 

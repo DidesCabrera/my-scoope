@@ -216,13 +216,13 @@ export function ProgramWeekComparisonPanels({ onDelete, onDuplicate, onReorder, 
   const gestures: WeekRowGestures | undefined = onDelete && onDuplicate && onReorder ? {
     actions: (week) => [
       {
-        backgroundColor: tokens.color.textMuted,
+        backgroundColor: "#515151",
         icon: <Copy color={tokens.color.entityIconForeground} size={18} />,
         label: `Duplicar Semana ${week.week}`,
         onPress: () => void onDuplicate(week.week).catch(() => undefined),
       },
       ...(orderedWeeks.length > 1 ? [{
-        backgroundColor: tokens.color.danger,
+        backgroundColor: "#DB294A",
         icon: <Trash2 color={tokens.color.entityIconForeground} size={18} />,
         label: `Eliminar Semana ${week.week}`,
         onPress: () => Alert.alert("Eliminar semana", `¿Eliminar la Semana ${week.week} y su planificación?`, [{ text: "Cancelar", style: "cancel" }, { text: "Eliminar", style: "destructive", onPress: () => void onDelete(week.week).catch(() => undefined) }]),
