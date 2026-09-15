@@ -301,6 +301,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
       onDuplicateWeek={item.can_calendarize ? async (week) => { await mutateComposition(`/api/v1/library/programs/${item.id}/weeks/${week}/duplicate`, { method: "POST" }); } : undefined}
       onRemoveDailyPlan={item.can_calendarize ? async (week, day) => { await mutateComposition(`/api/v1/library/programs/${item.id}/weeks/${week}/days/${day}`, { method: "DELETE" }); } : undefined}
       onRemoveWeek={item.can_calendarize ? async (week) => { await mutateComposition(`/api/v1/library/programs/${item.id}/weeks/${week}`, { method: "DELETE" }); } : undefined}
+      onReorderDailyPlans={item.can_calendarize ? async (week, orderedDays) => { await mutateComposition(`/api/v1/library/programs/${item.id}/weeks/${week}/days/order`, { method: "PUT", body: JSON.stringify({ ordered_ids: orderedDays }) }); } : undefined}
       onReorderWeeks={item.can_calendarize ? async (weeks) => { await mutateComposition(`/api/v1/library/programs/${item.id}/weeks/order`, { method: "PUT", body: JSON.stringify({ ordered_ids: weeks }) }); } : undefined}
       onScroll={({ nativeEvent }) => { const visible = nativeEvent.contentOffset.y > 1; if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible); }}
       scrollable

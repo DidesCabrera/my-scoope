@@ -44,11 +44,37 @@ test("meal rows reveal a clock action on right swipe and reuse existing time for
   assert.match(panels, /renderLeftActions = editing\.onChangeTime/);
   assert.match(panels, /label="Cambiar hora"/);
   assert.match(panels, /<Clock color=\{tokens\.color\.entityIconForeground\}/);
+  assert.match(panels, /swipeAction: \{[^}]*alignSelf: "stretch"[^}]*flex: 1/);
+  assert.match(panels, /swipeActionTime: \{ backgroundColor: "#11A9A4" \}/);
   assert.match(panels, /onChangeTime: editing\.onChangeTime/);
   assert.match(calendarizedDay, /onChangeTime: setTimeChangeMeal/);
   assert.match(calendarizedDay, /initialAction="change-time"[\s\S]*?method: "PATCH"/);
   assert.match(libraryDetail, /onChangeTime: \(meal: MealPanelItem\)/);
   assert.match(libraryDetail, /initialAction="change-time"[\s\S]*?method: "PATCH"/);
+});
+
+test("program day and week comparison tables expose swipe actions and drag reordering", async () => {
+  const gestureRows = await source("src/components/libraries/comparison-panel-gesture-rows.tsx");
+  const dayPanels = await source("src/components/libraries/program-day-comparison-panels.tsx");
+  const weekPanels = await source("src/components/libraries/program-week-comparison-panels.tsx");
+  const programDetail = await source("src/components/libraries/program-detail-preview.tsx");
+  const libraryDetail = await source("src/components/libraries/library-detail-screen.tsx");
+
+  assert.match(gestureRows, /Gesture\.LongPress\(\)\.minDuration\(320\)/);
+  assert.match(gestureRows, /ReanimatedSwipeable/);
+  assert.match(gestureRows, /onDragEnd=\{\(\{ data, from, to \}\)/);
+  assert.match(dayPanels, /ComparisonPanelGestureRows/);
+  assert.match(dayPanels, /Reemplazar.*Agregar/);
+  assert.match(dayPanels, /Eliminar plan de/);
+  assert.match(dayPanels, /sourceRows\.find\(\(\{ id \}\) => id === row\.id\)\?\.dayNumber/);
+  assert.match(dayPanels, /await onReorder\(week, orderedDays\)/);
+  assert.match(weekPanels, /ComparisonPanelGestureRows/);
+  assert.match(weekPanels, /Duplicar Semana/);
+  assert.match(weekPanels, /Eliminar Semana/);
+  assert.match(weekPanels, /weeks\.find\(\(\{ id \}\) => id === week\.id\)\?\.week/);
+  assert.match(weekPanels, /await onReorder\(sourceWeekNumbers\)/);
+  assert.match(programDetail, /onReorderDailyPlans/);
+  assert.match(libraryDetail, /weeks\/\$\{week\}\/days\/order/);
 });
 
 test("editable rows reorder after a deliberate long press and persist on drop", async () => {

@@ -65,6 +65,7 @@ class MobileAPIV1Tests(AuthenticatedMobileAPITestCase):
             "/api/v1/library/daily-plans/{dailyplan_id}/meals/{dailyplan_meal_id}",
             "/api/v1/library/daily-plans/{dailyplan_id}/meals/order",
             "/api/v1/library/programs/{program_id}/weeks/order",
+            "/api/v1/library/programs/{program_id}/weeks/{week_number}/days/order",
             "/api/v1/library/programs/{program_id}/weeks/{week_number}/duplicate",
             "/api/v1/library/programs/{program_id}/weeks/{week_number}",
             "/api/v1/library/programs/{program_id}/weeks/{week_number}/days/{day_number}",

@@ -6,6 +6,7 @@ import { MacroCalorieDistribution, macroCalorieShares, PanelAllocationBar, Prote
 import { contextualMacroAllocations, EntityPanelTabs, PanelBody, PanelSurface } from "@/components/panels";
 import { tokens } from "@/design/tokens";
 import { EntityIcon } from "@/components/ui";
+import { ComparisonPanelGestureRows, StaticComparisonPanelRows, type ComparisonPanelAction } from "./comparison-panel-gesture-rows";
 
 type ProgramDayPanelTab = "calories" | "macros" | "distribution" | "allocation" | "edit";
 
@@ -91,26 +92,36 @@ function Header({ columns }: { columns: string[] }) {
   );
 }
 
-function CaloriesPanel({ rows }: { rows: ProgramDayNutrition[] }) {
+type DayRowGestures = {
+  actions(row: ProgramDayNutrition): ComparisonPanelAction[];
+  onReorder(rows: ProgramDayNutrition[]): Promise<void>;
+};
+
+function DayRows({ gestures, renderRow, rows }: { gestures?: DayRowGestures; renderRow(row: ProgramDayNutrition, index: number): React.ReactNode; rows: ProgramDayNutrition[] }) {
+  if (!gestures) return <StaticComparisonPanelRows items={rows} renderRow={renderRow} />;
+  return <ComparisonPanelGestureRows actions={gestures.actions} itemLabel={(row) => `${row.day}: ${row.planName ?? "Sin plan"}`} items={rows} onReorder={gestures.onReorder} renderRow={renderRow} />;
+}
+
+function CaloriesPanel({ gestures, rows }: { gestures?: DayRowGestures; rows: ProgramDayNutrition[] }) {
   return (
     <PanelBody>
       <Header columns={["Cal", "% Cal"]} />
-      {rows.map((row, index) => (
+      <DayRows gestures={gestures} rows={rows} renderRow={(row, index) => (
         <View key={row.id} style={[styles.row, styles.calorieRow, index === rows.length - 1 && styles.rowLast]}>
           <View style={styles.leadingCell}><DayIdentity row={row} /></View>
           <Text style={[styles.cell, styles.dataCell]}>{row.planName ? Math.round(row.calories).toLocaleString("es-CL") : "—"}</Text>
           <View style={[styles.dataCell, styles.calorieShareDataCell]}>{row.planName ? <PanelAllocationBar tone="calories" value={row.calorieShare} /> : <Text style={styles.emptyValue}>—</Text>}</View>
         </View>
-      ))}
+      )} />
     </PanelBody>
   );
 }
 
-function MacrosPanel({ rows }: { rows: ProgramDayNutrition[] }) {
+function MacrosPanel({ gestures, rows }: { gestures?: DayRowGestures; rows: ProgramDayNutrition[] }) {
   return (
     <PanelBody>
       <Header columns={["PpK", "P", "C", "F"]} />
-      {rows.map((row, index) => (
+      <DayRows gestures={gestures} rows={rows} renderRow={(row, index) => (
         <View key={row.id} style={[styles.row, index === rows.length - 1 && styles.rowLast]}>
           <View style={styles.leadingCell}><DayIdentity row={row} /></View>
           <View style={[styles.dataCell, styles.ppkDataCell, styles.ppkCell]}>{row.planName ? <ProteinPerKilogramBadge showUnit={false} style={styles.ppkBadge} value={row.ppk} /> : <Text style={styles.emptyValue}>—</Text>}</View>
@@ -118,16 +129,16 @@ function MacrosPanel({ rows }: { rows: ProgramDayNutrition[] }) {
           <Text style={[styles.cell, styles.dataCell]}>{row.planName ? Math.round(row.carbsGrams) : "—"}</Text>
           <Text style={[styles.cell, styles.dataCell]}>{row.planName ? Math.round(row.fatGrams) : "—"}</Text>
         </View>
-      ))}
+      )} />
     </PanelBody>
   );
 }
 
-function DistributionPanel({ rows }: { rows: ProgramDayNutrition[] }) {
+function DistributionPanel({ gestures, rows }: { gestures?: DayRowGestures; rows: ProgramDayNutrition[] }) {
   return (
     <PanelBody>
       <Header columns={["P%", "C%", "F%", "P|C|F"]} />
-      {rows.map((row, index) => {
+      <DayRows gestures={gestures} rows={rows} renderRow={(row, index) => {
         const distribution = macroCalorieShares(row);
         return (
           <View key={row.id} style={[styles.row, index === rows.length - 1 && styles.rowLast]}>
@@ -138,17 +149,17 @@ function DistributionPanel({ rows }: { rows: ProgramDayNutrition[] }) {
             <View style={styles.distributionBar}>{row.planName ? <MacroCalorieDistribution {...row} /> : <Text style={styles.emptyValue}>—</Text>}</View>
           </View>
         );
-      })}
+      }} />
     </PanelBody>
   );
 }
 
-function AllocationPanel({ rows }: { rows: ProgramDayNutrition[] }) {
+function AllocationPanel({ gestures, rows }: { gestures?: DayRowGestures; rows: ProgramDayNutrition[] }) {
   const allocations = contextualMacroAllocations(rows);
   return (
     <PanelBody>
       <Header columns={["P%", "C%", "F%"]} />
-      {rows.map((row, index) => (
+      <DayRows gestures={gestures} rows={rows} renderRow={(row, index) => (
         <View key={row.id} style={[styles.row, styles.allocationRow, index === rows.length - 1 && styles.rowLast]}>
           <View style={styles.leadingCell}><DayIdentity row={row} /></View>
           {row.planName ? (
@@ -159,7 +170,7 @@ function AllocationPanel({ rows }: { rows: ProgramDayNutrition[] }) {
             </>
           ) : <Text style={[styles.emptyValue, styles.emptyAllocation]}>Sin distribución</Text>}
         </View>
-      ))}
+      )} />
     </PanelBody>
   );
 }
@@ -188,16 +199,51 @@ function EditPanel({ onAssign, onDelete, rows }: { onAssign(week: number, day: n
   );
 }
 
-export function ProgramDayComparisonPanels({ onAssign, onDelete, rows: providedRows, week }: { onAssign?: (week: number, day: number) => void; onDelete?: (week: number, day: number) => Promise<void>; rows?: ProgramDayNutrition[]; week: number }) {
+export function ProgramDayComparisonPanels({ onAssign, onDelete, onReorder, rows: providedRows, week }: { onAssign?: (week: number, day: number) => void; onDelete?: (week: number, day: number) => Promise<void>; onReorder?: (week: number, orderedDays: number[]) => Promise<void>; rows?: ProgramDayNutrition[]; week: number }) {
   const [activeTab, setActiveTab] = useState<ProgramDayPanelTab>("calories");
-  const rows = providedRows ?? rowsForWeek(week);
+  const sourceRows = providedRows ?? rowsForWeek(week);
+  const sourceSignature = sourceRows.map(({ dayNumber, id, planName }) => `${dayNumber}:${id}:${planName ?? ""}`).join("|");
+  const [optimisticOrder, setOptimisticOrder] = useState<{ rows: ProgramDayNutrition[]; sourceSignature: string } | null>(null);
+  const rows = optimisticOrder?.sourceSignature === sourceSignature ? optimisticOrder.rows : sourceRows;
+  const gestures: DayRowGestures | undefined = onAssign && onDelete && onReorder ? {
+    actions: (row) => [
+      {
+        backgroundColor: row.planName ? tokens.color.textMuted : tokens.color.dailyPlan,
+        icon: row.planName ? <RefreshCw color={tokens.color.entityIconForeground} size={18} /> : <Plus color={tokens.color.entityIconForeground} size={19} />,
+        label: `${row.planName ? "Reemplazar" : "Agregar"} plan de ${row.day}`,
+        onPress: () => onAssign(row.week, row.dayNumber),
+      },
+      ...(row.planName ? [{
+        backgroundColor: tokens.color.danger,
+        icon: <Trash2 color={tokens.color.entityIconForeground} size={18} />,
+        label: `Eliminar plan de ${row.day}`,
+        onPress: () => Alert.alert("Eliminar plan diario", `¿Quitar el plan asignado a ${row.day}?`, [{ text: "Cancelar", style: "cancel" }, { text: "Eliminar", style: "destructive", onPress: () => void onDelete(row.week, row.dayNumber).catch(() => undefined) }]),
+      }] : []),
+    ],
+    onReorder: async (nextRows) => {
+      const orderedDays = nextRows.map((row) => sourceRows.find(({ id }) => id === row.id)?.dayNumber ?? row.dayNumber);
+      const relocatedRows = nextRows.map((row, index) => ({
+        ...row,
+        day: rows[index].day,
+        dayNumber: rows[index].dayNumber,
+        week: rows[index].week,
+      }));
+      setOptimisticOrder({ rows: relocatedRows, sourceSignature });
+      try {
+        await onReorder(week, orderedDays);
+      } catch (error) {
+        setOptimisticOrder(null);
+        throw error;
+      }
+    },
+  } : undefined;
   return (
     <PanelSurface>
       <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={onAssign && onDelete ? tabs : tabs.filter(({ key }) => key !== "edit")} />
-      {activeTab === "calories" ? <CaloriesPanel rows={rows} /> : null}
-      {activeTab === "macros" ? <MacrosPanel rows={rows} /> : null}
-      {activeTab === "distribution" ? <DistributionPanel rows={rows} /> : null}
-      {activeTab === "allocation" ? <AllocationPanel rows={rows} /> : null}
+      {activeTab === "calories" ? <CaloriesPanel gestures={gestures} rows={rows} /> : null}
+      {activeTab === "macros" ? <MacrosPanel gestures={gestures} rows={rows} /> : null}
+      {activeTab === "distribution" ? <DistributionPanel gestures={gestures} rows={rows} /> : null}
+      {activeTab === "allocation" ? <AllocationPanel gestures={gestures} rows={rows} /> : null}
       {activeTab === "edit" && onAssign && onDelete ? <EditPanel onAssign={onAssign} onDelete={onDelete} rows={rows} /> : null}
     </PanelSurface>
   );

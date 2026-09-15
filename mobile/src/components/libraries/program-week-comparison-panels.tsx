@@ -6,6 +6,7 @@ import { MacroCalorieDistribution, macroCalorieShares, PanelAllocationBar, Prote
 import { contextualMacroAllocations, EntityPanelTabs, PanelBody, PanelEmptyState, PanelSurface } from "@/components/panels";
 import { tokens } from "@/design/tokens";
 import { EntityIcon } from "@/components/ui";
+import { ComparisonPanelGestureRows, StaticComparisonPanelRows, type ComparisonPanelAction } from "./comparison-panel-gesture-rows";
 
 export type ProgramWeekSummary = {
   allocation: { carbs: number; fat: number; protein: number };
@@ -52,12 +53,22 @@ function Header({ columns }: { columns: string[] }) {
   );
 }
 
-function CaloriesPanel({ weeks }: { weeks: ProgramWeekSummary[] }) {
+type WeekRowGestures = {
+  actions(week: ProgramWeekSummary): ComparisonPanelAction[];
+  onReorder(weeks: ProgramWeekSummary[]): Promise<void>;
+};
+
+function WeekRows({ gestures, renderRow, weeks }: { gestures?: WeekRowGestures; renderRow(week: ProgramWeekSummary, index: number): React.ReactNode; weeks: ProgramWeekSummary[] }) {
+  if (!gestures) return <StaticComparisonPanelRows items={weeks} renderRow={renderRow} />;
+  return <ComparisonPanelGestureRows actions={gestures.actions} itemLabel={(week) => `Semana ${week.week}`} items={weeks} onReorder={gestures.onReorder} renderRow={renderRow} />;
+}
+
+function CaloriesPanel({ gestures, weeks }: { gestures?: WeekRowGestures; weeks: ProgramWeekSummary[] }) {
   if (weeks.length === 0) return <PanelEmptyState label="Todavía no hay datos calóricos." />;
   return (
     <PanelBody>
       <Header columns={["Cal", "Planes", "Prom.", "Vs. ant."]} />
-      {weeks.map((week, index) => {
+      <WeekRows gestures={gestures} weeks={weeks} renderRow={(week, index) => {
         const previous = weeks[index - 1];
         const delta = previous ? ((week.averageCalories - previous.averageCalories) / previous.averageCalories) * 100 : null;
         return (
@@ -71,17 +82,17 @@ function CaloriesPanel({ weeks }: { weeks: ProgramWeekSummary[] }) {
             </Text>
           </View>
         );
-      })}
+      }} />
     </PanelBody>
   );
 }
 
-function MacrosPanel({ weeks }: { weeks: ProgramWeekSummary[] }) {
+function MacrosPanel({ gestures, weeks }: { gestures?: WeekRowGestures; weeks: ProgramWeekSummary[] }) {
   if (weeks.length === 0) return <PanelEmptyState label="Todavía no hay datos de macros." />;
   return (
     <PanelBody>
       <Header columns={["PpK", "P g", "C g", "F g"]} />
-      {weeks.map((week, index) => (
+      <WeekRows gestures={gestures} weeks={weeks} renderRow={(week, index) => (
         <View key={week.id} style={[styles.row, index === weeks.length - 1 && styles.rowLast]}>
           <View style={styles.leadingCell}><WeekIdentity week={week.week} /></View>
           <View style={[styles.dataCell, styles.ppkCell]}>{week.ppk == null ? <Text style={styles.emptyValue}>—</Text> : <ProteinPerKilogramBadge showUnit={false} style={styles.ppkBadge} value={week.ppk} />}</View>
@@ -89,17 +100,17 @@ function MacrosPanel({ weeks }: { weeks: ProgramWeekSummary[] }) {
           <Text style={[styles.cell, styles.dataCell]}>{integer(week.carbsGrams)}</Text>
           <Text style={[styles.cell, styles.dataCell]}>{integer(week.fatGrams)}</Text>
         </View>
-      ))}
+      )} />
     </PanelBody>
   );
 }
 
-function DistributionPanel({ weeks }: { weeks: ProgramWeekSummary[] }) {
+function DistributionPanel({ gestures, weeks }: { gestures?: WeekRowGestures; weeks: ProgramWeekSummary[] }) {
   if (weeks.length === 0) return <PanelEmptyState label="Todavía no hay distribución nutricional." />;
   return (
     <PanelBody>
       <Header columns={["P%", "C%", "F%", "P|C|F"]} />
-      {weeks.map((week, index) => {
+      <WeekRows gestures={gestures} weeks={weeks} renderRow={(week, index) => {
         const distribution = macroCalorieShares(week);
         return (
           <View key={week.id} style={[styles.row, index === weeks.length - 1 && styles.rowLast]}>
@@ -110,25 +121,25 @@ function DistributionPanel({ weeks }: { weeks: ProgramWeekSummary[] }) {
             <MacroCalorieDistribution {...week} style={styles.distributionBar} />
           </View>
         );
-      })}
+      }} />
     </PanelBody>
   );
 }
 
-function AllocationPanel({ weeks }: { weeks: ProgramWeekSummary[] }) {
+function AllocationPanel({ gestures, weeks }: { gestures?: WeekRowGestures; weeks: ProgramWeekSummary[] }) {
   if (weeks.length === 0) return <PanelEmptyState label="Todavía no hay distribución nutricional." />;
   const allocations = contextualMacroAllocations(weeks);
   return (
     <PanelBody>
       <Header columns={["P%", "C%", "F%"]} />
-      {weeks.map((week, index) => (
+      <WeekRows gestures={gestures} weeks={weeks} renderRow={(week, index) => (
         <View key={week.id} style={[styles.row, styles.allocationRow, index === weeks.length - 1 && styles.rowLast]}>
           <View style={styles.leadingCell}><WeekIdentity week={week.week} /></View>
           <PanelAllocationBar style={styles.dataCell} tone="protein" value={allocations[index].protein} />
           <PanelAllocationBar style={styles.dataCell} tone="carbs" value={allocations[index].carbs} />
           <PanelAllocationBar style={styles.dataCell} tone="fat" value={allocations[index].fat} />
         </View>
-      ))}
+      )} />
     </PanelBody>
   );
 }
@@ -199,14 +210,44 @@ function EditPanel({ initialWeeks, onDelete, onDuplicate, onReorder }: { initial
 
 export function ProgramWeekComparisonPanels({ onDelete, onDuplicate, onReorder, weeks }: { onDelete?: (week: number) => Promise<void>; onDuplicate?: (week: number) => Promise<void>; onReorder?: (weeks: number[]) => Promise<void>; weeks: ProgramWeekSummary[] }) {
   const [activeTab, setActiveTab] = useState<ProgramWeekPanelTab>("calories");
+  const sourceSignature = weeks.map(({ id, week }) => `${week}:${id}`).join("|");
+  const [optimisticOrder, setOptimisticOrder] = useState<{ sourceSignature: string; weeks: ProgramWeekSummary[] } | null>(null);
+  const orderedWeeks = optimisticOrder?.sourceSignature === sourceSignature ? optimisticOrder.weeks : weeks;
+  const gestures: WeekRowGestures | undefined = onDelete && onDuplicate && onReorder ? {
+    actions: (week) => [
+      {
+        backgroundColor: tokens.color.textMuted,
+        icon: <Copy color={tokens.color.entityIconForeground} size={18} />,
+        label: `Duplicar Semana ${week.week}`,
+        onPress: () => void onDuplicate(week.week).catch(() => undefined),
+      },
+      ...(orderedWeeks.length > 1 ? [{
+        backgroundColor: tokens.color.danger,
+        icon: <Trash2 color={tokens.color.entityIconForeground} size={18} />,
+        label: `Eliminar Semana ${week.week}`,
+        onPress: () => Alert.alert("Eliminar semana", `¿Eliminar la Semana ${week.week} y su planificación?`, [{ text: "Cancelar", style: "cancel" }, { text: "Eliminar", style: "destructive", onPress: () => void onDelete(week.week).catch(() => undefined) }]),
+      }] : []),
+    ],
+    onReorder: async (nextWeeks) => {
+      const sourceWeekNumbers = nextWeeks.map((week) => weeks.find(({ id }) => id === week.id)?.week ?? week.week);
+      const relocatedWeeks = nextWeeks.map((week, index) => ({ ...week, week: orderedWeeks[index].week }));
+      setOptimisticOrder({ sourceSignature, weeks: relocatedWeeks });
+      try {
+        await onReorder(sourceWeekNumbers);
+      } catch (error) {
+        setOptimisticOrder(null);
+        throw error;
+      }
+    },
+  } : undefined;
   return (
     <PanelSurface>
       <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={onDelete && onDuplicate && onReorder ? tabs : tabs.filter(({ key }) => key !== "edit")} />
-      {activeTab === "calories" ? <CaloriesPanel weeks={weeks} /> : null}
-      {activeTab === "macros" ? <MacrosPanel weeks={weeks} /> : null}
-      {activeTab === "distribution" ? <DistributionPanel weeks={weeks} /> : null}
-      {activeTab === "allocation" ? <AllocationPanel weeks={weeks} /> : null}
-      {activeTab === "edit" && onDelete && onDuplicate && onReorder ? <EditPanel initialWeeks={weeks} key={weeks.map(({ id }) => id).join("|")} onDelete={onDelete} onDuplicate={onDuplicate} onReorder={onReorder} /> : null}
+      {activeTab === "calories" ? <CaloriesPanel gestures={gestures} weeks={orderedWeeks} /> : null}
+      {activeTab === "macros" ? <MacrosPanel gestures={gestures} weeks={orderedWeeks} /> : null}
+      {activeTab === "distribution" ? <DistributionPanel gestures={gestures} weeks={orderedWeeks} /> : null}
+      {activeTab === "allocation" ? <AllocationPanel gestures={gestures} weeks={orderedWeeks} /> : null}
+      {activeTab === "edit" && onDelete && onDuplicate && onReorder ? <EditPanel initialWeeks={orderedWeeks} key={orderedWeeks.map(({ id }) => id).join("|")} onDelete={onDelete} onDuplicate={onDuplicate} onReorder={onReorder} /> : null}
     </PanelSurface>
   );
 }

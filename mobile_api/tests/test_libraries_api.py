@@ -584,7 +584,35 @@ class MobileAPILibrariesTests(AuthenticatedMobileAPITestCase):
         snapshot = DailyPlan.objects.create(
             name="Día editable", created_by=self.user, is_draft=False, source=DailyPlan.SOURCE_PROGRAM
         )
-        ProgramDay.objects.create(program=program, dailyplan=snapshot, week_number=1, day_number=1)
+        second_snapshot = DailyPlan.objects.create(
+            name="Segundo día editable", created_by=self.user, is_draft=False, source=DailyPlan.SOURCE_PROGRAM
+        )
+        first_program_day = ProgramDay.objects.create(
+            program=program, dailyplan=snapshot, week_number=1, day_number=1
+        )
+        third_program_day = ProgramDay.objects.create(
+            program=program, dailyplan=second_snapshot, week_number=1, day_number=3
+        )
+        self.assertEqual(
+            self.client.put(
+                f"/api/v1/library/programs/{program.id}/weeks/1/days/order",
+                data={"ordered_ids": [1, 2]},
+                content_type="application/json",
+            ).status_code,
+            422,
+        )
+        self.assertEqual(
+            self.client.put(
+                f"/api/v1/library/programs/{program.id}/weeks/1/days/order",
+                data={"ordered_ids": [3, 2, 1, 4, 5, 6, 7]},
+                content_type="application/json",
+            ).status_code,
+            200,
+        )
+        first_program_day.refresh_from_db()
+        third_program_day.refresh_from_db()
+        self.assertEqual(first_program_day.day_number, 3)
+        self.assertEqual(third_program_day.day_number, 1)
         self.assertEqual(
             self.client.put(
                 f"/api/v1/library/programs/{program.id}/weeks/order",

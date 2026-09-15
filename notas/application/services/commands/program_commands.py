@@ -50,6 +50,13 @@ class ProgramWeekReorderResult:
     ordered_week_numbers: tuple[int, ...]
 
 
+@dataclass(frozen=True)
+class ProgramDayReorderResult:
+    program: Program
+    week_number: int
+    ordered_day_numbers: tuple[int, ...]
+
+
 def normalize_duration_weeks(raw_value) -> int:
     try:
         value = int(raw_value)
@@ -268,6 +275,34 @@ def reorder_program_weeks(*, program: Program, ordered_week_numbers) -> ProgramW
     return ProgramWeekReorderResult(
         program=program,
         ordered_week_numbers=tuple(ordered),
+    )
+
+
+@transaction.atomic
+def reorder_program_days(*, program: Program, week_number, ordered_day_numbers) -> ProgramDayReorderResult:
+    week, _ = validate_program_slot(program=program, week_number=week_number, day_number=1)
+    try:
+        ordered = [int(value) for value in ordered_day_numbers]
+    except (TypeError, ValueError):
+        raise ValueError("program_day_order_invalid")
+
+    if sorted(ordered) != list(range(1, 8)):
+        raise ValueError("program_day_order_invalid")
+
+    week_slots = ProgramDay.objects.filter(program=program, week_number=week)
+    week_slots.update(day_number=F("day_number") + 1000)
+    for new_day_number, old_day_number in enumerate(ordered, start=1):
+        ProgramDay.objects.filter(
+            program=program,
+            week_number=week,
+            day_number=old_day_number + 1000,
+        ).update(day_number=new_day_number)
+
+    refresh_program_summary_cache(program)
+    return ProgramDayReorderResult(
+        program=program,
+        week_number=week,
+        ordered_day_numbers=tuple(ordered),
     )
 
 

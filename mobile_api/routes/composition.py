@@ -18,6 +18,7 @@ from mobile_api.composition import (
     remove_food_from_meal,
     remove_meal_from_dailyplan,
     remove_program_week,
+    reorder_days_in_program_week,
     reorder_foods_in_meal,
     reorder_meals_in_dailyplan,
     reorder_weeks_in_program,
@@ -135,6 +136,24 @@ def program_week_order(request, program_id: int, payload: CompositionOrderInput)
     require_scope(request.auth, MOBILE_SCOPE_WRITE)
     return success(
         reorder_weeks_in_program(user=request.auth.user, program_id=program_id, ordered_weeks=payload.ordered_ids)
+    )
+
+
+@router.put(
+    "/library/programs/{program_id}/weeks/{week_number}/days/order",
+    operation_id="mobile_api_api_program_day_order",
+    auth=mobile_bearer,
+    response={200: CompositionMutationEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
+)
+def program_day_order(request, program_id: int, week_number: int, payload: CompositionOrderInput):
+    require_scope(request.auth, MOBILE_SCOPE_WRITE)
+    return success(
+        reorder_days_in_program_week(
+            user=request.auth.user,
+            program_id=program_id,
+            week_number=week_number,
+            ordered_days=payload.ordered_ids,
+        )
     )
 
 
