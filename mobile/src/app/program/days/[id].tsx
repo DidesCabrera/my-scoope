@@ -2,7 +2,8 @@ import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } 
 import * as Crypto from "expo-crypto";
 import { ChevronRight } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { userFacingError } from "@/api/errors";
 import type { CalendarizedDayDetail, MealCheckInInput, MealExecutionItem, MealSnapshot } from "@/api/types";
@@ -200,7 +201,7 @@ export default function ProgramDayScreen() {
 
   return (
     <>
-    <ScrollView
+    <NestableScrollContainer
       contentContainerStyle={styles.content}
       onScroll={({ nativeEvent }) => { const visible = nativeEvent.contentOffset.y > 1; if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible); }}
       scrollEventThrottle={16}
@@ -266,7 +267,7 @@ export default function ProgramDayScreen() {
         </ContentPanel>
       )}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-    </ScrollView>
+    </NestableScrollContainer>
     <CalendarizedEntityActions
       entityName={snapshot?.name ?? day.plan_name ?? "Plan diario"}
       onVisibleChange={setActionsVisible}

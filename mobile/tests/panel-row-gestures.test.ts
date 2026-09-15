@@ -94,6 +94,8 @@ test("program day and week comparison tables expose measured swipe actions and d
 
 test("editable rows reorder after a deliberate long press and persist on drop", async () => {
   const panels = await source("src/components/panels/entity-panels.tsx");
+  const calendarizedDay = await source("src/app/program/days/[id].tsx");
+  const calendarizedMeal = await source("src/app/program/days/[id]/meals/[mealKey].tsx");
   const libraryDetail = await source("src/components/libraries/library-detail-screen.tsx");
   const layout = await source("src/app/_layout.tsx");
 
@@ -104,6 +106,8 @@ test("editable rows reorder after a deliberate long press and persist on drop", 
   assert.match(panels, /onDragEnd=\{\(\{ data, from, to \}\) => \{ if \(from !== to\) void editing\.onReorder\(data\)/);
   assert.match(panels, /scrollEnabled=\{false\}/);
   assert.match(libraryDetail, /NestableScrollContainer/);
+  assert.match(calendarizedDay, /NestableScrollContainer/);
+  assert.match(calendarizedMeal, /NestableScrollContainer/);
 });
 
 test("the legacy edit tab remains available as a temporary fallback", async () => {
