@@ -19,6 +19,7 @@ import { FoodPanels, MealPanels, type MealPanelItem } from "@/components/panels"
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
 import { Button, ContentPanel, EntityCardAction, InlineNotice, SectionDivider, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
+import { refreshNativeReminders } from "@/notifications/native-reminders";
 
 function displayDate(value: string): string {
   return new Intl.DateTimeFormat("es-CL", { weekday: "long", day: "numeric", month: "long" }).format(new Date(`${value}T12:00:00`));
@@ -90,6 +91,7 @@ export default function ProgramDayScreen() {
   const [error, setError] = useState<string | null>(null);
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const [actionsVisible, setActionsVisible] = useState(false);
+  const [timeChangeMeal, setTimeChangeMeal] = useState<MealPanelItem | null>(null);
   const [savingMealKey, setSavingMealKey] = useState<string | null>(null);
   const [completionError, setCompletionError] = useState<{ mealKey: string; message: string } | null>(null);
   const setHeaderPresentation = useHeaderPresentation();
@@ -223,6 +225,7 @@ export default function ProgramDayScreen() {
           <EntityDetailSection title="Tabla de comparación entre comidas">
             <MealPanels
               editing={{
+                onChangeTime: setTimeChangeMeal,
                 onDelete: async (meal) => mutateMeals(`/api/v1/program/days/${day.id}/meals/${encodeURIComponent(meal.id)}`, { method: "DELETE" }),
                 onOpen: (meal) => router.push({ pathname: "/program/days/[id]/meals/[mealKey]", params: { id: String(day.id), mealKey: meal.id } } as Href),
                 onReorder: async (items: MealPanelItem[]) => mutateMeals(`/api/v1/program/days/${day.id}/meals/order`, { body: JSON.stringify({ ordered_keys: items.map((item) => item.id) }), method: "PUT" }),
@@ -278,6 +281,26 @@ export default function ProgramDayScreen() {
         },
       }}
       visible={actionsVisible}
+    />
+    <CalendarizedEntityActions
+      entityName={timeChangeMeal?.name ?? "Comida"}
+      initialAction="change-time"
+      key={timeChangeMeal?.id ?? "closed-time-change"}
+      onVisibleChange={(visible) => { if (!visible) setTimeChangeMeal(null); }}
+      timeChange={timeChangeMeal ? {
+        initialTime: timeChangeMeal.time,
+        onSubmit: async (hour) => {
+          const updated = await apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${day.id}/meals/${encodeURIComponent(timeChangeMeal.id)}`, {
+            body: JSON.stringify({ hour }),
+            headers: { "Content-Type": "application/json" },
+            method: "PATCH",
+          });
+          setDay({ ...updated, meal_execution: normalizeMealExecution(updated.meal_execution) });
+          await refreshNativeReminders(apiRequest);
+        },
+      } : undefined}
+      timeChangeInMenu={false}
+      visible={timeChangeMeal != null}
     />
     </>
   );

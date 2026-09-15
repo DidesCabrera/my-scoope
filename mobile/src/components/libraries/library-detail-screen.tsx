@@ -9,6 +9,7 @@ import { useSession } from "@/auth/session-context";
 import { MealAdherenceCheckIn, MealCompletionCard, MealNoteCard, useMealAdherenceCheckIn } from "@/components/calendarization/meal-adherence-check-in";
 import { DailyMealCompletionCard } from "@/components/calendarization/meal-completion-summary";
 import { normalizeMealExecution, normalizeMealExecutionItem } from "@/components/calendarization/meal-execution";
+import { CalendarizedEntityActions } from "@/components/calendarization/calendarized-entity-actions";
 import { EntityDetailMetadata, EntityDetailPage, EntityDetailSection, FoodDetailCardList } from "@/components/details";
 import { FoodPanels, MealPanels, type FoodPanelItem, type MealPanelItem } from "@/components/panels";
 import { pickerConfigureHref, pickerHref } from "@/components/pickers/composition-picker-screen";
@@ -44,6 +45,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   const setHeaderPresentation = useHeaderPresentation();
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const [actionSheet, setActionSheet] = useState<"change-time" | "menu" | null>(null);
+  const [panelTimeMeal, setPanelTimeMeal] = useState<MealPanelItem | null>(null);
   const [labelImage, setLabelImage] = useState<FoodLabelImage | null>(null);
   const [labelImageBusy, setLabelImageBusy] = useState(false);
   const [todayContext, setTodayContext] = useState<TodayData | null>(null);
@@ -320,6 +322,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
     onReplace: (food: FoodPanelItem) => { if (food.relationId) router.push(pickerHref("food-to-meal", { mealFoodId: food.relationId, mealId: item.id, ...(hasMealTimeContext ? { dailyPlanId: contextDailyPlanId, dailyPlanMealId: contextDailyPlanMealId } : {}), ...(isContextualMealCreation ? { returnTo: String(currentDetailHref) } : {}) })); },
   } : undefined;
   const mealEditing = item.entity === "dailyPlan" ? {
+    onChangeTime: (meal: MealPanelItem) => { if (meal.relationId) setPanelTimeMeal(meal); },
     onDelete: async (meal: MealPanelItem) => { if (meal.relationId) await mutateComposition(`/api/v1/library/daily-plans/${item.id}/meals/${meal.relationId}`, { method: "DELETE" }); },
     onOpen: (meal: MealPanelItem) => { if (meal.detailId && meal.relationId) router.push({ pathname: "/libraries/meals/[id]", params: { dailyPlanId: String(item.id), dailyPlanMealId: String(meal.relationId), id: String(meal.detailId), mealTime: meal.time ?? "", ...(isPinnedPlan ? { pinned: "1", mealKey: meal.id } : {}) } } as Href); },
     onReorder: async (meals: MealPanelItem[]) => { await mutateComposition(`/api/v1/library/daily-plans/${item.id}/meals/order`, { method: "PUT", body: JSON.stringify({ ordered_ids: meals.map((meal) => meal.relationId) }) }); },
@@ -355,6 +358,24 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
     {item.entity === "dailyPlan" && item.panel.foods.length > 0 ? <><SectionDivider /><EntityDetailSection detail={`${item.panel.foods.length} alimentos`} title="Alimentos en este plan diario"><FoodPanels items={item.panel.foods.map(foodPanelItem)} onOpenItem={openFood} /></EntityDetailSection></> : null}
     {item.entity === "dailyPlan" && todayContext?.calendarization == null ? <Button bleed label={isPinnedPlan ? "Dejar de fijar como Plan de hoy" : "Fijar como Plan de hoy"} onPress={() => confirmPinnedPlan(!isPinnedPlan)} variant={isPinnedPlan ? "secondary" : "primary"} /> : null}
     {!isEmptyDraft ? <EntityDetailMetadata creator={item.creator} updatedAt={libraryDate(item.created_at)} /> : null}
-  </EntityDetailPage></ScrollView>{actionsModal}</>;
+  </EntityDetailPage></ScrollView>{actionsModal}<CalendarizedEntityActions
+    entityName={panelTimeMeal?.name ?? "Comida"}
+    initialAction="change-time"
+    key={panelTimeMeal?.id ?? "closed-panel-time-change"}
+    onVisibleChange={(visible) => { if (!visible) setPanelTimeMeal(null); }}
+    timeChange={panelTimeMeal?.relationId ? {
+      initialTime: panelTimeMeal.time,
+      onSubmit: async (hour) => {
+        await apiRequest<CompositionMutationResult>(`/api/v1/library/daily-plans/${item.id}/meals/${panelTimeMeal.relationId}`, {
+          body: JSON.stringify({ hour }),
+          headers: { "Content-Type": "application/json" },
+          method: "PATCH",
+        });
+        await load();
+      },
+    } : undefined}
+    timeChangeInMenu={false}
+    visible={panelTimeMeal != null}
+  /></>;
 }
 const styles = StyleSheet.create({ screen: { backgroundColor: tokens.color.surfaceApp, flex: 1 }, content: { flexGrow: 1, paddingBottom: 42, paddingHorizontal: tokens.spacing.screen, paddingTop: tokens.spacing.lg }, loading: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, flex: 1, gap: tokens.spacing.md, justifyContent: "center", padding: tokens.spacing.screen }, labelImage: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.md, height: 320, width: "100%" } });
