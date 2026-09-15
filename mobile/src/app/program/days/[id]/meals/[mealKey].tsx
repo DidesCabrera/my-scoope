@@ -1,7 +1,8 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import * as Crypto from "expo-crypto";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { userFacingError } from "@/api/errors";
 import type { CalendarizedDayDetail, MealCheckInInput, MealExecutionItem, MealSnapshot } from "@/api/types";
@@ -116,7 +117,7 @@ export default function CalendarizedMealDetailScreen() {
   const foods = snapshotFoodPanelItems(meal);
   return (
     <>
-    <ScrollView
+    <NestableScrollContainer
       contentContainerStyle={styles.content}
       onScroll={({ nativeEvent }) => {
         const visible = nativeEvent.contentOffset.y > 1;
@@ -169,7 +170,7 @@ export default function CalendarizedMealDetailScreen() {
         {foods.length ? <><SectionDivider /><EntityDetailSection detail={`${foods.length} alimentos`} title="Detalle de cada Alimento"><FoodDetailCardList items={foods} onOpenFood={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} /></EntityDetailSection></> : null}
         <MealNoteCard controller={adherence} />
       </EntityDetailPage>
-    </ScrollView>
+    </NestableScrollContainer>
     <CalendarizedEntityActions
       entityName={meal.name ?? "Comida"}
       initialAction={actionSheet === "change-time" ? "change-time" : undefined}
