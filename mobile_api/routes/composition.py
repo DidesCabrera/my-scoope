@@ -14,17 +14,16 @@ from mobile_api.composition import (
     preview_food_for_meal,
     preview_meal_for_dailyplan,
     preview_week_for_program,
-    remove_dailyplan_from_program,
     remove_food_from_meal,
     remove_meal_from_dailyplan,
     remove_program_week,
-    reorder_days_in_program_week,
     reorder_foods_in_meal,
     reorder_meals_in_dailyplan,
     reorder_weeks_in_program,
     update_food_in_meal,
     update_meal_in_dailyplan,
 )
+from mobile_api.routes.program_days import router as program_days_router
 from mobile_api.schema_domains.composition import (
     CompositionMutationEnvelope,
     CompositionOrderInput,
@@ -40,6 +39,7 @@ from mobile_api.schemas import ErrorEnvelope
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_WRITE
 
 router = Router()
+router.add_router("", program_days_router)
 
 
 @router.put(
@@ -139,24 +139,6 @@ def program_week_order(request, program_id: int, payload: CompositionOrderInput)
     )
 
 
-@router.put(
-    "/library/programs/{program_id}/weeks/{week_number}/days/order",
-    operation_id="mobile_api_api_program_day_order",
-    auth=mobile_bearer,
-    response={200: CompositionMutationEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope, 422: ErrorEnvelope},
-)
-def program_day_order(request, program_id: int, week_number: int, payload: CompositionOrderInput):
-    require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    return success(
-        reorder_days_in_program_week(
-            user=request.auth.user,
-            program_id=program_id,
-            week_number=week_number,
-            ordered_days=payload.ordered_ids,
-        )
-    )
-
-
 @router.post(
     "/library/programs/{program_id}/weeks/{week_number}/duplicate",
     operation_id="mobile_api_api_program_week_duplicate",
@@ -179,21 +161,6 @@ def program_week_delete(request, program_id: int, week_number: int):
     return success(remove_program_week(user=request.auth.user, program_id=program_id, week_number=week_number))
 
 
-@router.delete(
-    "/library/programs/{program_id}/weeks/{week_number}/days/{day_number}",
-    operation_id="mobile_api_api_program_day_delete",
-    auth=mobile_bearer,
-    response={200: CompositionMutationEnvelope, 403: ErrorEnvelope, 404: ErrorEnvelope},
-)
-def program_day_delete(request, program_id: int, week_number: int, day_number: int):
-    require_scope(request.auth, MOBILE_SCOPE_WRITE)
-    return success(
-        remove_dailyplan_from_program(
-            user=request.auth.user, program_id=program_id, week_number=week_number, day_number=day_number
-        )
-    )
-
-
 @router.post(
     "/library/meals/{meal_id}/food-picker/preview",
     operation_id="mobile_api_api_meal_food_picker_preview",
@@ -209,9 +176,13 @@ def program_day_delete(request, program_id: int, week_number: int, day_number: i
 def meal_food_picker_preview(request, meal_id: int, payload: FoodPickerInput):
     return success(
         preview_food_for_meal(
-            user=request.auth.user, meal_id=meal_id, food_id=payload.food_id,
-            meal_food_id=payload.meal_food_id, quantity=payload.quantity,
-            dailyplan_id=payload.dailyplan_id, dailyplan_meal_id=payload.dailyplan_meal_id,
+            user=request.auth.user,
+            meal_id=meal_id,
+            food_id=payload.food_id,
+            meal_food_id=payload.meal_food_id,
+            quantity=payload.quantity,
+            dailyplan_id=payload.dailyplan_id,
+            dailyplan_meal_id=payload.dailyplan_meal_id,
         )
     )
 
@@ -232,8 +203,11 @@ def meal_food_picker_commit(request, meal_id: int, payload: FoodPickerInput):
     require_scope(request.auth, MOBILE_SCOPE_WRITE)
     return success(
         add_food_from_picker(
-            user=request.auth.user, meal_id=meal_id, food_id=payload.food_id,
-            meal_food_id=payload.meal_food_id, quantity=payload.quantity,
+            user=request.auth.user,
+            meal_id=meal_id,
+            food_id=payload.food_id,
+            meal_food_id=payload.meal_food_id,
+            quantity=payload.quantity,
         )
     )
 
