@@ -2,7 +2,6 @@ import { Clock3, Copy, MoreHorizontal, Pencil, Send, Trash2, X } from "lucide-re
 import type { ReactNode } from "react";
 import { useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Pressable,
   ScrollView,
@@ -131,7 +130,7 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
       const resource = await prepareShare();
       setVisible(false);
       setSelected(null);
-      await new Promise((resolve) => setTimeout(resolve, 280));
+      await new Promise((resolve) => setTimeout(resolve, 320));
       await openNativeShare(resource);
     } catch (nextError) {
       setError(userFacingError(nextError));
@@ -236,7 +235,6 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
                   </View>
                 ) : null}
 
-                {submitting && !selected ? <ActivityIndicator color={tokens.color.interactivePrimary} /> : null}
               </ScrollView>
             </View>
           </SafeAreaView>
