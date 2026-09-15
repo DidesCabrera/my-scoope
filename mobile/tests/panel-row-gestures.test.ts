@@ -45,7 +45,7 @@ test("meal rows reveal a clock action on right swipe and reuse existing time for
   assert.match(panels, /label="Cambiar hora"/);
   assert.match(panels, /<Clock color=\{tokens\.color\.entityIconForeground\}/);
   assert.match(panels, /swipeAction: \{[^}]*alignSelf: "stretch"[^}]*flex: 1/);
-  assert.match(panels, /swipeActionTime: \{ backgroundColor: "#0A8682" \}/);
+  assert.match(panels, /swipeActionTime: \{ backgroundColor: "#0A6B86" \}/);
   assert.match(panels, /onChangeTime: editing\.onChangeTime/);
   assert.match(calendarizedDay, /onChangeTime: setTimeChangeMeal/);
   assert.match(calendarizedDay, /initialAction="change-time"[\s\S]*?method: "PATCH"/);

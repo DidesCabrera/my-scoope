@@ -677,7 +677,7 @@ const styles = StyleSheet.create({
   swipeTimeAction: { alignSelf: "stretch", width: 48 },
   swipeAction: { alignItems: "center", alignSelf: "stretch", backgroundColor: tokens.color.textMuted, flex: 1, justifyContent: "center", width: 48 },
   swipeActionEdit: { backgroundColor: tokens.color.interactivePrimary },
-  swipeActionTime: { backgroundColor: "#0A8682" },
+  swipeActionTime: { backgroundColor: "#0A6B86" },
   swipeActionDestructive: { backgroundColor: tokens.color.danger },
   swipeActionPressed: { opacity: 0.72 },
   iconAction: { alignItems: "center", borderRadius: tokens.radius.sm, height: 34, justifyContent: "center", width: 34 },
