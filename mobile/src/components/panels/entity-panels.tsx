@@ -1,6 +1,6 @@
 import { type ReactNode, useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, Check, ChevronRight, Clock, Pencil, RefreshCw, RotateCcw, Trash2 } from "lucide-react-native";
-import { Alert, Pressable, StyleProp, StyleSheet, Text, TextInput, View, ViewStyle } from "react-native";
+import { Alert, Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 
 import { MacroCalorieDistribution, macroCalorieShares, PanelAllocationBar, ProteinPerKilogramBadge } from "@/components/nutrition";
 import { EntityIcon } from "@/components/ui";
@@ -51,9 +51,9 @@ export type MealMenuFood = {
 
 export type FoodPanelEditing = {
   onDelete(item: FoodPanelItem): Promise<void>;
+  onEditPortion(item: FoodPanelItem): void;
   onReorder(items: FoodPanelItem[]): Promise<void>;
   onReplace(item: FoodPanelItem): void;
-  onUpdateQuantity(item: FoodPanelItem, quantity: number): Promise<void>;
 };
 
 export type MealPanelEditing = {
@@ -343,24 +343,12 @@ function moveItem<T>(items: T[], index: number, offset: number): T[] {
 
 function FoodEditPanel({ editing, items }: { editing: FoodPanelEditing; items: FoodPanelItem[] }) {
   const [draftItems, setDraftItems] = useState(items);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [quantity, setQuantity] = useState("");
   const [busy, setBusy] = useState(false);
   const dirty = useMemo(() => draftItems.map(({ id }) => id).join() !== items.map(({ id }) => id).join(), [draftItems, items]);
 
   async function saveOrder() {
     setBusy(true);
     try { await editing.onReorder(draftItems); } catch { /* El padre ya presentó el error. */ } finally { setBusy(false); }
-  }
-
-  async function saveQuantity(item: FoodPanelItem) {
-    const value = Number(quantity.replace(",", "."));
-    if (!Number.isFinite(value) || value <= 0) {
-      Alert.alert("Porción inválida", "Ingresa una cantidad mayor que cero.");
-      return;
-    }
-    setBusy(true);
-    try { await editing.onUpdateQuantity(item, value); setEditingId(null); } catch { /* Conserva el editor abierto. */ } finally { setBusy(false); }
   }
 
   if (!draftItems.length) return <PanelEmptyState label="Todavía no hay alimentos para editar." />;
@@ -376,12 +364,11 @@ function FoodEditPanel({ editing, items }: { editing: FoodPanelEditing; items: F
             </View>
             <View style={styles.editIdentity}><Text numberOfLines={2} style={[styles.cell, styles.name]}>{item.name}</Text><Text style={styles.editMeta}>{decimal(item.quantity)} {item.quantityUnit}</Text></View>
             <View style={styles.editActions}>
-              <IconAction disabled={busy} label={`Editar porción de ${item.name}`} onPress={() => { setEditingId(item.id); setQuantity(String(item.quantity)); }}><Pencil color={tokens.color.textMuted} size={16} /></IconAction>
+              <IconAction disabled={busy} label={`Editar porción de ${item.name}`} onPress={() => editing.onEditPortion(item)}><Pencil color={tokens.color.textMuted} size={16} /></IconAction>
               <IconAction disabled={busy} label={`Reemplazar ${item.name}`} onPress={() => editing.onReplace(item)}><RefreshCw color={tokens.color.textMuted} size={16} /></IconAction>
               <IconAction disabled={busy} label={`Eliminar ${item.name}`} onPress={() => Alert.alert("Eliminar alimento", `¿Eliminar ${item.name} de esta comida?`, [{ text: "Cancelar", style: "cancel" }, { text: "Eliminar", style: "destructive", onPress: () => void editing.onDelete(item).catch(() => undefined) }])}><Trash2 color={tokens.color.danger} size={16} /></IconAction>
             </View>
           </View>
-          {editingId === item.id ? <View style={styles.inlineEdit}><TextInput accessibilityLabel={`Porción de ${item.name}`} keyboardType="decimal-pad" onChangeText={setQuantity} style={styles.inlineInput} value={quantity} /><Text style={styles.inlineUnit}>{item.quantityUnit}</Text><IconAction disabled={busy} label="Guardar porción" onPress={() => void saveQuantity(item)}><Check color={tokens.color.textMain} size={17} /></IconAction><IconAction disabled={busy} label="Cancelar edición" onPress={() => setEditingId(null)}><RotateCcw color={tokens.color.textMuted} size={16} /></IconAction></View> : null}
         </View>
       ))}
       {dirty ? <View style={styles.commitActions}><Pressable accessibilityRole="button" disabled={busy} onPress={() => setDraftItems(items)} style={({ pressed }) => [styles.commitButton, pressed && styles.pressed]}><RotateCcw color={tokens.color.textMain} size={16} /><Text style={styles.commitLabel}>Descartar</Text></Pressable><Pressable accessibilityRole="button" disabled={busy} onPress={() => void saveOrder()} style={({ pressed }) => [styles.commitButton, styles.commitButtonPrimary, pressed && styles.pressed]}><Check color={tokens.color.surfaceApp} size={16} /><Text style={styles.commitLabelPrimary}>Guardar orden</Text></Pressable></View> : null}
@@ -491,9 +478,6 @@ const styles = StyleSheet.create({
   editIdentity: { flex: 1, minWidth: 0 },
   editMeta: { color: tokens.color.textMuted, fontSize: tokens.type.label, paddingHorizontal: tokens.spacing.xs },
   editActions: { flexDirection: "row", justifyContent: "flex-end" },
-  inlineEdit: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs, paddingBottom: tokens.spacing.sm, paddingHorizontal: tokens.spacing.sm },
-  inlineInput: { backgroundColor: tokens.color.surfaceCard, borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, color: tokens.color.textMain, flex: 1, minHeight: 40, paddingHorizontal: tokens.spacing.md },
-  inlineUnit: { color: tokens.color.textMuted, fontSize: tokens.type.caption },
   commitActions: { flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "flex-end", padding: tokens.spacing.sm },
   commitButton: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.xs, minHeight: 36, paddingHorizontal: tokens.spacing.md },
   commitButtonPrimary: { backgroundColor: tokens.color.textMain, borderColor: tokens.color.textMain },

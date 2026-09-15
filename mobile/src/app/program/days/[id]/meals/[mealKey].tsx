@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
-import type { CalendarizedDayDetail, MealCheckInInput, MealExecutionItem, MealSnapshot, TodayData } from "@/api/types";
+import type { CalendarizedDayDetail, MealCheckInInput, MealExecutionItem, MealSnapshot } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { CalendarizedEntityActions } from "@/components/calendarization/calendarized-entity-actions";
 import { MealCompletionCard, MealNoteCard, useMealAdherenceCheckIn } from "@/components/calendarization/meal-adherence-check-in";
@@ -13,7 +13,7 @@ import { snapshotCalories, snapshotFoodPanelItems, snapshotMacroDistribution } f
 import { EntityDetailPage, EntityDetailSection, FoodDetailCardList } from "@/components/details";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { FoodPanels, type FoodPanelItem } from "@/components/panels";
-import { pickerHref } from "@/components/pickers/composition-picker-screen";
+import { pickerConfigureHref, pickerHref } from "@/components/pickers/composition-picker-screen";
 import { Button, InlineNotice, SectionDivider, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
@@ -51,8 +51,8 @@ export default function CalendarizedMealDetailScreen() {
         food_snapshot_key: foodKey,
         idempotency_key: Crypto.randomUUID(),
       };
-      const updated = await apiRequest<TodayData>(`/api/v1/days/${dayId}/meals/${encodeURIComponent(mealKey)}/check-ins`, { body: JSON.stringify(payload), method: "POST" });
-      setExecution(normalizeMealExecution(updated.meal_execution).find((item) => item.meal_key === mealKey) ?? null);
+      await apiRequest(`/api/v1/days/${dayId}/meals/${encodeURIComponent(mealKey)}/check-ins`, { body: JSON.stringify(payload), method: "POST" });
+      applyDay(await apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${dayId}`));
     } catch (nextError) {
       setExecution(previous);
       setError(userFacingError(nextError));
@@ -143,9 +143,9 @@ export default function CalendarizedMealDetailScreen() {
           <FoodPanels
             editing={{
               onDelete: async (food) => mutateFoods(`/api/v1/program/days/${dayId}/meals/${encodeURIComponent(mealKey)}/foods/${encodeURIComponent(food.id)}`, { method: "DELETE" }),
+              onEditPortion: (food) => { if (food.detailId) router.push(pickerConfigureHref("food-to-calendarized-meal", { mealKey, relationKey: food.id, selectedId: food.detailId, targetId: dayId, weekNumber: 1 })); },
               onReorder: async (items: FoodPanelItem[]) => mutateFoods(`/api/v1/program/days/${dayId}/meals/${encodeURIComponent(mealKey)}/foods/order`, { body: JSON.stringify({ ordered_keys: items.map((item) => item.id) }), method: "PUT" }),
               onReplace: (food) => router.push(pickerHref("food-to-calendarized-meal", { dayId, mealKey, relationKey: food.id })),
-              onUpdateQuantity: async (food, quantity) => mutateFoods(`/api/v1/program/days/${dayId}/meals/${encodeURIComponent(mealKey)}/foods/${encodeURIComponent(food.id)}`, { body: JSON.stringify({ quantity }), method: "PATCH" }),
             }}
             items={foods}
             onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }}

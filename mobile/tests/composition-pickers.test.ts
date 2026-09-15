@@ -16,6 +16,10 @@ test("composition pickers use independent native routes and one shared flow", as
     path.resolve(process.cwd(), "src/components/pickers/composition-picker-screen.tsx"),
     "utf8",
   );
+  const payload = await readFile(
+    path.resolve(process.cwd(), "src/components/pickers/composition-picker-payload.ts"),
+    "utf8",
+  );
   matches(picker, /mode: "back"/);
   matches(picker, /stickyHeaderIndices=\{\[0\]\}/);
   matches(picker, /stickyHeaderIndices=\{\[1\]\}/);
@@ -75,23 +79,24 @@ test("composition pickers use independent native routes and one shared flow", as
   matches(picker, /configurationSticky: \{[^}]*marginHorizontal: -tokens\.spacing\.screen[^}]*paddingHorizontal: tokens\.spacing\.screen/);
   matches(picker, /height: 34[^}]*width: 34/);
   omits(picker, /function toggleDay\(day: number\) \{[^}]*setPreview\(null\)/s);
-  matches(picker, /day_numbers/);
+  matches(payload, /day_numbers/);
   matches(picker, /confirm_replacements/);
   matches(picker, /Confirmar reemplazos/);
   matches(picker, /PickerPreview/);
-  matches(picker, /dailyplan_meal_id: relationId/);
-  matches(picker, /meal_food_id: relationId/);
+  matches(payload, /dailyplan_meal_id: relationId/);
+  matches(payload, /meal_food_id: relationId/);
   matches(picker, /Reemplazar alimento/);
   matches(picker, /target\.panel\.foods\.find\(\(item\) => item\.relation_id === relationId\)/);
   matches(picker, /setQuantity\(String\(relation\.quantity\)\)/);
   matches(picker, /const detailHref = returnTo \?\?/);
   matches(picker, /pickerConfigureHref\(kind, \{ contextDailyPlanId, contextDailyPlanMealId, dayNumber: initialDayNumber, relationId, relationKey, returnTo/);
-  matches(picker, /food_snapshot_key: relationKey/);
-  matches(picker, /meal_snapshot_key: relationKey/);
-  matches(picker, /relationId \|\| relationKey \? "Reemplazar alimento"/);
+  matches(payload, /food_snapshot_key: relationKey/);
+  matches(payload, /meal_snapshot_key: relationKey/);
+  matches(picker, /\? isFoodPicker \? "Reemplazar alimento" : "Reemplazar comida"/);
   matches(picker, /apiRequest<CalendarizedDayDetail>\(`\/api\/v1\/program\/days\/\$\{targetId\}`\)/);
-  matches(picker, /dailyplan_id: contextDailyPlanId/);
-  matches(picker, /dailyplan_meal_id: contextDailyPlanMealId/);
+  matches(payload, /dailyplan_id: contextDailyPlanId/);
+  matches(payload, /dailyplan_meal_id: contextDailyPlanMealId/);
+  matches(picker, /return \{ pathname: "\/pickers\/configure", params \} as Href/);
   omits(picker, /protein\s*\*\s*4|carbs\s*\*\s*4|fat\s*\*\s*9/);
 
   const cardAction = await readFile(
@@ -209,6 +214,7 @@ test("only the Home plan card exposes the contextual add-meal action below its p
 
 test("library details open every composition flow and program days remain editable", async () => {
   const detail = await readFile(path.resolve(process.cwd(), "src/components/libraries/library-detail-screen.tsx"), "utf8");
+  const mealDetail = await readFile(path.resolve(process.cwd(), "src/app/program/days/[id]/meals/[mealKey].tsx"), "utf8");
   for (const route of ["food-to-meal", "meal-to-dailyplan", "dailyplan-to-program", "week-to-program"]) {
     matches(detail, new RegExp(route));
   }
@@ -234,6 +240,10 @@ test("library details open every composition flow and program days remain editab
   matches(panels, /Guardar orden/);
   matches(panels, /label=\{`Reemplazar \$\{item\.name\}`\}/);
   matches(panels, /editing\.onReplace\(item\)/);
+  matches(panels, /editing\.onEditPortion\(item\)/);
+  omits(panels, /Guardar porción|inlineEdit|inlineInput/);
+  matches(detail, /onEditPortion:.*pickerConfigureHref\("food-to-meal"/s);
+  matches(mealDetail, /onEditPortion:.*pickerConfigureHref\("food-to-calendarized-meal"/s);
 
   const program = await readFile(path.resolve(process.cwd(), "src/components/libraries/program-detail-preview.tsx"), "utf8");
   const assignedPlan = await readFile(path.resolve(process.cwd(), "src/components/libraries/program-daily-plan-preview.tsx"), "utf8");

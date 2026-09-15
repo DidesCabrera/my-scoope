@@ -5,7 +5,7 @@ import { useCallback, useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
-import type { CalendarizedDayDetail, MealCheckInInput, MealExecutionItem, MealSnapshot, TodayData } from "@/api/types";
+import type { CalendarizedDayDetail, MealCheckInInput, MealExecutionItem, MealSnapshot } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { CalendarizedEntityActions } from "@/components/calendarization/calendarized-entity-actions";
 import { MealCompletionToggleCard } from "@/components/calendarization/meal-adherence-check-in";
@@ -109,8 +109,9 @@ export default function ProgramDayScreen() {
     });
     try {
       const payload: MealCheckInInput = { action: completed ? "completed" : "skipped", idempotency_key: Crypto.randomUUID() };
-      const updated = await apiRequest<TodayData>(`/api/v1/days/${day.id}/meals/${encodeURIComponent(mealKey)}/check-ins`, { body: JSON.stringify(payload), method: "POST" });
-      setDay((current) => current ? { ...current, meal_execution: normalizeMealExecution(updated.meal_execution) } : current);
+      await apiRequest(`/api/v1/days/${day.id}/meals/${encodeURIComponent(mealKey)}/check-ins`, { body: JSON.stringify(payload), method: "POST" });
+      const updated = await apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${day.id}`);
+      setDay({ ...updated, meal_execution: normalizeMealExecution(updated.meal_execution) });
     } catch (nextError) {
       setDay(previous);
       setCompletionError({ mealKey, message: userFacingError(nextError) });
@@ -134,8 +135,9 @@ export default function ProgramDayScreen() {
     });
     try {
       const payload: MealCheckInInput = { action: prepared ? "food_unprepared" : "food_prepared", food_snapshot_key: foodKey, idempotency_key: Crypto.randomUUID() };
-      const updated = await apiRequest<TodayData>(`/api/v1/days/${day.id}/meals/${encodeURIComponent(mealKey)}/check-ins`, { body: JSON.stringify(payload), method: "POST" });
-      setDay((current) => current ? { ...current, meal_execution: normalizeMealExecution(updated.meal_execution) } : current);
+      await apiRequest(`/api/v1/days/${day.id}/meals/${encodeURIComponent(mealKey)}/check-ins`, { body: JSON.stringify(payload), method: "POST" });
+      const updated = await apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${day.id}`);
+      setDay({ ...updated, meal_execution: normalizeMealExecution(updated.meal_execution) });
     } catch (nextError) {
       setDay(previous);
       setError(userFacingError(nextError));

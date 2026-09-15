@@ -239,7 +239,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(calendarizedMealDetail, /<FoodPanels\s+editing=\{\{/);
   assertSourceMatch(calendarizedMealDetail, /ordered_keys: items\.map\(\(item\) => item\.id\)/);
   assertSourceMatch(calendarizedMealDetail, /relationKey: food\.id/);
-  assertSourceMatch(calendarizedMealDetail, /onUpdateQuantity:/);
+  assertSourceMatch(calendarizedMealDetail, /onEditPortion:/);
   assertSourceMatch(calendarizedMealDetail, /<MealNoteCard controller=\{adherence\} \/>/);
   assertSourceMatch(calendarizedMealDetail, /completion=\{\{/);
   assertSourceMatch(calendarizedMealDetail, /onChange: setExecution/);

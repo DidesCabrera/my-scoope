@@ -315,9 +315,9 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   const mealItems = item.panel.meals.map((meal) => ({ ...mealPanelItem(meal), completed: isPinnedPlan && completedPinnedMealKeys.has(meal.id) }));
   const foodEditing = item.entity === "meal" ? {
     onDelete: async (food: FoodPanelItem) => { if (food.relationId) await mutateComposition(`/api/v1/library/meals/${item.id}/foods/${food.relationId}`, { method: "DELETE" }); },
+    onEditPortion: (food: FoodPanelItem) => { if (food.relationId && food.detailId) router.push(pickerConfigureHref("food-to-meal", { contextDailyPlanId: hasMealTimeContext ? contextDailyPlanId : undefined, contextDailyPlanMealId: hasMealTimeContext ? contextDailyPlanMealId : undefined, relationId: food.relationId, returnTo: isContextualMealCreation ? currentDetailHref : undefined, selectedId: food.detailId, targetId: item.id, weekNumber: 1 })); },
     onReorder: async (foods: FoodPanelItem[]) => { await mutateComposition(`/api/v1/library/meals/${item.id}/foods/order`, { method: "PUT", body: JSON.stringify({ ordered_ids: foods.map((food) => food.relationId) }) }); },
     onReplace: (food: FoodPanelItem) => { if (food.relationId) router.push(pickerHref("food-to-meal", { mealFoodId: food.relationId, mealId: item.id, ...(hasMealTimeContext ? { dailyPlanId: contextDailyPlanId, dailyPlanMealId: contextDailyPlanMealId } : {}), ...(isContextualMealCreation ? { returnTo: String(currentDetailHref) } : {}) })); },
-    onUpdateQuantity: async (food: FoodPanelItem, quantity: number) => { if (food.relationId) await mutateComposition(`/api/v1/library/meals/${item.id}/foods/${food.relationId}`, { method: "PATCH", body: JSON.stringify({ quantity }) }); },
   } : undefined;
   const mealEditing = item.entity === "dailyPlan" ? {
     onDelete: async (meal: MealPanelItem) => { if (meal.relationId) await mutateComposition(`/api/v1/library/daily-plans/${item.id}/meals/${meal.relationId}`, { method: "DELETE" }); },
