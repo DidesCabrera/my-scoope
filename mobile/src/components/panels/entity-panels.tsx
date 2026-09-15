@@ -1,6 +1,10 @@
-import { type ReactNode, useMemo, useState } from "react";
+import { Fragment, type ReactNode, useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, Check, ChevronRight, Clock, Pencil, RefreshCw, RotateCcw, Trash2 } from "lucide-react-native";
 import { Alert, Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
+import DraggableFlatList, { ScaleDecorator, type RenderItemParams } from "react-native-draggable-flatlist";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import ReanimatedSwipeable, { type SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
+import Animated from "react-native-reanimated";
 
 import { MacroCalorieDistribution, macroCalorieShares, PanelAllocationBar, ProteinPerKilogramBadge } from "@/components/nutrition";
 import { EntityIcon } from "@/components/ui";
@@ -66,6 +70,17 @@ export type MealPanelEditing = {
 type FoodPanelTab = "quantity" | "calories" | "macros" | "distribution" | "allocation" | "edit";
 type MealPanelTab = "menu" | "calories" | "macros" | "distribution" | "allocation" | "edit";
 
+type EditablePanelItem = { id: string; name: string };
+
+type PanelRowEditing<T extends EditablePanelItem> = {
+  deleteConfirmation(item: T): { message: string; title: string };
+  editLabel(item: T): string;
+  onDelete(item: T): Promise<void>;
+  onEdit(item: T): void;
+  onReorder(items: T[]): Promise<void>;
+  onReplace(item: T): void;
+};
+
 const foodTabs = [
   { key: "quantity", label: "Alimentos" },
   { key: "calories", label: "Calorías" },
@@ -90,6 +105,102 @@ function rounded(value: number): string {
 
 function decimal(value: number): string {
   return Number.isFinite(value) ? value.toLocaleString("es-CL", { maximumFractionDigits: 1 }) : "0";
+}
+
+function SwipeAction({ children, label, onPress, tone = "default" }: { children: ReactNode; label: string; onPress(): void; tone?: "default" | "destructive" }) {
+  return (
+    <Pressable
+      accessibilityLabel={label}
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [styles.swipeAction, tone === "destructive" && styles.swipeActionDestructive, pressed && styles.swipeActionPressed]}>
+      {children}
+      <Text numberOfLines={1} style={styles.swipeActionLabel}>{label}</Text>
+    </Pressable>
+  );
+}
+
+function confirmRowDeletion<T extends EditablePanelItem>(editing: PanelRowEditing<T>, item: T, afterConfirm?: () => void) {
+  const confirmation = editing.deleteConfirmation(item);
+  Alert.alert(confirmation.title, confirmation.message, [
+    { text: "Cancelar", style: "cancel" },
+    {
+      text: "Eliminar",
+      style: "destructive",
+      onPress: () => {
+        afterConfirm?.();
+        void editing.onDelete(item).catch(() => undefined);
+      },
+    },
+  ]);
+}
+
+function EditablePanelRow<T extends EditablePanelItem>({ drag, editing, isActive, item, row }: {
+  drag(): void;
+  editing: PanelRowEditing<T>;
+  isActive: boolean;
+  item: T;
+  row: ReactNode;
+}) {
+  const longPressGesture = Gesture.LongPress().minDuration(320).onStart(drag).runOnJS(true);
+  const accessibilityActions = [
+    { name: "activate" as const, label: editing.editLabel(item) },
+    { name: "replace" as const, label: `Reemplazar ${item.name}` },
+    { name: "delete" as const, label: `Eliminar ${item.name}` },
+  ];
+
+  const renderRightActions = (_progress: unknown, _translation: unknown, methods: SwipeableMethods) => (
+    <View style={styles.swipeActions}>
+      <SwipeAction label="Editar" onPress={() => { methods.close(); editing.onEdit(item); }}><Pencil color={tokens.color.entityIconForeground} size={18} /></SwipeAction>
+      <SwipeAction label="Reemplazar" onPress={() => { methods.close(); editing.onReplace(item); }}><RefreshCw color={tokens.color.entityIconForeground} size={18} /></SwipeAction>
+      <SwipeAction label="Eliminar" onPress={() => confirmRowDeletion(editing, item, () => methods.close())} tone="destructive"><Trash2 color={tokens.color.entityIconForeground} size={18} /></SwipeAction>
+    </View>
+  );
+
+  return (
+    <ScaleDecorator activeScale={1.018}>
+      <ReanimatedSwipeable friction={2} overshootFriction={8} overshootRight={false} renderRightActions={renderRightActions} rightThreshold={44}>
+        <GestureDetector gesture={longPressGesture}>
+          <Animated.View
+            accessibilityActions={accessibilityActions}
+            accessibilityHint="Desliza hacia la izquierda para ver acciones. Mantén pulsado y arrastra para reordenar."
+            accessibilityLabel={item.name}
+            onAccessibilityAction={(event) => {
+              if (event.nativeEvent.actionName === "activate") editing.onEdit(item);
+              if (event.nativeEvent.actionName === "replace") editing.onReplace(item);
+              if (event.nativeEvent.actionName === "delete") confirmRowDeletion(editing, item);
+            }}
+            style={[styles.gestureRow, isActive && styles.gestureRowActive]}>
+            {row}
+          </Animated.View>
+        </GestureDetector>
+      </ReanimatedSwipeable>
+    </ScaleDecorator>
+  );
+}
+
+function PanelRows<T extends EditablePanelItem>({ editing, items, renderRow }: {
+  editing?: PanelRowEditing<T>;
+  items: T[];
+  renderRow(item: T, index: number): ReactNode;
+}) {
+  if (!editing) return <>{items.map((item, index) => <Fragment key={item.id}>{renderRow(item, index)}</Fragment>)}</>;
+
+  const renderDraggableRow = ({ drag, getIndex, isActive, item }: RenderItemParams<T>) => (
+    <EditablePanelRow drag={drag} editing={editing} isActive={isActive} item={item} row={renderRow(item, getIndex() ?? 0)} />
+  );
+
+  return (
+    <DraggableFlatList
+      activationDistance={8}
+      data={items}
+      keyExtractor={(item) => item.id}
+      onDragEnd={({ data, from, to }) => { if (from !== to) void editing.onReorder(data).catch(() => undefined); }}
+      removeClippedSubviews={false}
+      renderItem={renderDraggableRow}
+      scrollEnabled={false}
+    />
+  );
 }
 
 export function MealRowIdentity({ completed = false, name, projectedLabel }: { completed?: boolean; name: string; projectedLabel?: string | null }) {
@@ -181,12 +292,12 @@ function AllocationHeader({ leadingLabel }: { leadingLabel: string }) {
   );
 }
 
-export function FoodQuantityPanel({ items, onOpenItem, preparation }: { items: FoodPanelItem[]; onOpenItem?: (item: FoodPanelItem) => void; preparation?: FoodPreparation }) {
+export function FoodQuantityPanel({ editing, items, onOpenItem, preparation }: { editing?: PanelRowEditing<FoodPanelItem>; items: FoodPanelItem[]; onOpenItem?: (item: FoodPanelItem) => void; preparation?: FoodPreparation }) {
   if (items.length === 0) return <PanelEmptyState label="Todavía no hay alimentos." />;
   return (
     <PanelBody>
       <QuantityHeader leadingLabel="Alimentos" preparation={Boolean(preparation)} trailingLabel="Qty" />
-      {items.map((item, index) => {
+      <PanelRows editing={editing} items={items} renderRow={(item, index) => {
         const canOpen = item.detailId != null && Boolean(onOpenItem);
         return <View key={item.id} style={[styles.row, index === items.length - 1 && styles.rowLast]}>
           {canOpen ? <Pressable accessibilityLabel={`Ver detalle de ${item.name}`} accessibilityRole="link" onPress={() => onOpenItem?.(item)} style={({ pressed }) => [styles.quantityLeadingCell, styles.foodDetailLink, pressed && styles.pressed]}><PanelItemName item={item} style={styles.foodDetailCopy} /><ChevronRight color={tokens.color.textMuted} size={17} /></Pressable> : <PanelItemName item={item} style={styles.quantityLeadingCell} />}
@@ -203,17 +314,17 @@ export function FoodQuantityPanel({ items, onOpenItem, preparation }: { items: F
             </Pressable>
           ) : null}
         </View>
-      })}
+      }} />
     </PanelBody>
   );
 }
 
-export function NutritionMacrosPanel({ items, leadingLabel }: { items: (FoodPanelItem | MealPanelItem)[]; leadingLabel: string }) {
+export function NutritionMacrosPanel<T extends FoodPanelItem | MealPanelItem>({ editing, items, leadingLabel }: { editing?: PanelRowEditing<T>; items: T[]; leadingLabel: string }) {
   if (items.length === 0) return <PanelEmptyState label="Todavía no hay datos nutricionales." />;
   return (
     <PanelBody>
       <MacrosHeader leadingLabel={leadingLabel} />
-      {items.map((item, index) => (
+      <PanelRows editing={editing} items={items} renderRow={(item, index) => (
         <View key={item.id} style={[styles.row, index === items.length - 1 && styles.rowLast]}>
           <PanelItemName item={item} />
           <View style={[styles.ppkValue, styles.ppkCell]}>
@@ -223,17 +334,17 @@ export function NutritionMacrosPanel({ items, leadingLabel }: { items: (FoodPane
           <Text style={[styles.cell, styles.macroValue]}>{decimal(item.carbsGrams)}</Text>
           <Text style={[styles.cell, styles.macroValue]}>{decimal(item.fatGrams)}</Text>
         </View>
-      ))}
+      )} />
     </PanelBody>
   );
 }
 
-export function NutritionDistributionPanel({ items, leadingLabel }: { items: (FoodPanelItem | MealPanelItem)[]; leadingLabel: string }) {
+export function NutritionDistributionPanel<T extends FoodPanelItem | MealPanelItem>({ editing, items, leadingLabel }: { editing?: PanelRowEditing<T>; items: T[]; leadingLabel: string }) {
   if (items.length === 0) return <PanelEmptyState label="Todavía no hay distribución nutricional." />;
   return (
     <PanelBody>
       <DistributionHeader leadingLabel={leadingLabel} />
-      {items.map((item, index) => {
+      <PanelRows editing={editing} items={items} renderRow={(item, index) => {
         const distribution = macroCalorieShares(item);
         return (
           <View key={item.id} style={[styles.row, index === items.length - 1 && styles.rowLast]}>
@@ -244,17 +355,17 @@ export function NutritionDistributionPanel({ items, leadingLabel }: { items: (Fo
             <MacroCalorieDistribution {...item} style={styles.distributionBar} />
           </View>
         );
-      })}
+      }} />
     </PanelBody>
   );
 }
 
-export function NutritionCaloriesPanel({ items, leadingLabel }: { items: (FoodPanelItem | MealPanelItem)[]; leadingLabel: string }) {
+export function NutritionCaloriesPanel<T extends FoodPanelItem | MealPanelItem>({ editing, items, leadingLabel }: { editing?: PanelRowEditing<T>; items: T[]; leadingLabel: string }) {
   if (items.length === 0) return <PanelEmptyState label="Todavía no hay datos calóricos." />;
   return (
     <PanelBody>
       <CaloriesHeader leadingLabel={leadingLabel} />
-      {items.map((item, index) => (
+      <PanelRows editing={editing} items={items} renderRow={(item, index) => (
         <View key={item.id} style={[styles.row, index === items.length - 1 && styles.rowLast]}>
           <PanelItemName item={item} />
           <Text style={[styles.cell, styles.calorieValue]}>{rounded(item.calories)}</Text>
@@ -262,34 +373,34 @@ export function NutritionCaloriesPanel({ items, leadingLabel }: { items: (FoodPa
             <PanelAllocationBar accessibilityLabel={`${item.name}: ${rounded(item.calorieShare)}% de las calorías`} tone="calories" value={item.calorieShare} />
           </View>
         </View>
-      ))}
+      )} />
     </PanelBody>
   );
 }
 
-export function NutritionAllocationPanel({ items, leadingLabel }: { items: (FoodPanelItem | MealPanelItem)[]; leadingLabel: string }) {
+export function NutritionAllocationPanel<T extends FoodPanelItem | MealPanelItem>({ editing, items, leadingLabel }: { editing?: PanelRowEditing<T>; items: T[]; leadingLabel: string }) {
   if (items.length === 0) return <PanelEmptyState label="Todavía no hay distribución nutricional." />;
   const allocations = contextualMacroAllocations(items);
   return (
     <PanelBody>
       <AllocationHeader leadingLabel={leadingLabel} />
-      {items.map((item, index) => (
+      <PanelRows editing={editing} items={items} renderRow={(item, index) => (
         <View key={item.id} style={[styles.row, styles.allocationRow, index === items.length - 1 && styles.rowLast]}>
           <PanelItemName item={item} />
           <PanelAllocationBar style={styles.allocationCell} tone="protein" value={allocations[index].protein} />
           <PanelAllocationBar style={styles.allocationCell} tone="carbs" value={allocations[index].carbs} />
           <PanelAllocationBar style={styles.allocationCell} tone="fat" value={allocations[index].fat} />
         </View>
-      ))}
+      )} />
     </PanelBody>
   );
 }
 
-export function MealMenuPanel({ items, onOpenItem }: { items: MealPanelItem[]; onOpenItem?: (item: MealPanelItem) => void }) {
+export function MealMenuPanel({ editing, items, onOpenItem }: { editing?: PanelRowEditing<MealPanelItem>; items: MealPanelItem[]; onOpenItem?: (item: MealPanelItem) => void }) {
   if (items.length === 0) return <PanelEmptyState label="Todavía no hay comidas." />;
   return (
     <PanelBody>
-      {items.map((item, index) => {
+      <PanelRows editing={editing} items={items} renderRow={(item, index) => {
         const canOpen = Boolean((item.detailId != null || item.canOpen) && onOpenItem);
         return (
         <Pressable
@@ -320,7 +431,7 @@ export function MealMenuPanel({ items, onOpenItem }: { items: MealPanelItem[]; o
           ) : null}
         </Pressable>
         );
-      })}
+      }} />
     </PanelBody>
   );
 }
@@ -393,30 +504,72 @@ function MealEditPanel({ editing, items }: { editing: MealPanelEditing; items: M
 
 export function FoodPanels({ editing, items, onOpenItem, preparation }: { editing?: FoodPanelEditing; items: FoodPanelItem[]; onOpenItem?: (item: FoodPanelItem) => void; preparation?: FoodPreparation }) {
   const [activeTab, setActiveTab] = useState<FoodPanelTab>("quantity");
+  const itemSignature = items.map(({ id, name, quantity }) => `${id}:${name}:${quantity}`).join("|");
+  const [optimisticOrder, setOptimisticOrder] = useState<{ items: FoodPanelItem[]; sourceSignature: string } | null>(null);
+  const orderedItems = optimisticOrder?.sourceSignature === itemSignature ? optimisticOrder.items : items;
+
+  const rowEditing: PanelRowEditing<FoodPanelItem> | undefined = editing ? {
+    deleteConfirmation: (item) => ({ message: `¿Eliminar ${item.name} de esta comida?`, title: "Eliminar alimento" }),
+    editLabel: (item) => `Editar porción de ${item.name}`,
+    onDelete: editing.onDelete,
+    onEdit: editing.onEditPortion,
+    onReorder: async (nextItems) => {
+      setOptimisticOrder({ items: nextItems, sourceSignature: itemSignature });
+      try {
+        await editing.onReorder(nextItems);
+      } catch (error) {
+        setOptimisticOrder(null);
+        throw error;
+      }
+    },
+    onReplace: editing.onReplace,
+  } : undefined;
+
   return (
     <PanelSurface>
       <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={editing ? [...foodTabs, editTab] : foodTabs} />
-      {activeTab === "quantity" ? <FoodQuantityPanel items={items} onOpenItem={onOpenItem} preparation={preparation} /> : null}
-      {activeTab === "calories" ? <NutritionCaloriesPanel items={items} leadingLabel="Alimentos" /> : null}
-      {activeTab === "macros" ? <NutritionMacrosPanel items={items} leadingLabel="Alimentos" /> : null}
-      {activeTab === "distribution" ? <NutritionDistributionPanel items={items} leadingLabel="Alimentos" /> : null}
-      {activeTab === "allocation" ? <NutritionAllocationPanel items={items} leadingLabel="Alimentos" /> : null}
-      {activeTab === "edit" && editing ? <FoodEditPanel editing={editing} items={items} key={items.map(({ id, quantity }) => `${id}:${quantity}`).join("|")} /> : null}
+      {activeTab === "quantity" ? <FoodQuantityPanel editing={rowEditing} items={orderedItems} onOpenItem={onOpenItem} preparation={preparation} /> : null}
+      {activeTab === "calories" ? <NutritionCaloriesPanel editing={rowEditing} items={orderedItems} leadingLabel="Alimentos" /> : null}
+      {activeTab === "macros" ? <NutritionMacrosPanel editing={rowEditing} items={orderedItems} leadingLabel="Alimentos" /> : null}
+      {activeTab === "distribution" ? <NutritionDistributionPanel editing={rowEditing} items={orderedItems} leadingLabel="Alimentos" /> : null}
+      {activeTab === "allocation" ? <NutritionAllocationPanel editing={rowEditing} items={orderedItems} leadingLabel="Alimentos" /> : null}
+      {activeTab === "edit" && editing ? <FoodEditPanel editing={editing} items={orderedItems} key={orderedItems.map(({ id, quantity }) => `${id}:${quantity}`).join("|")} /> : null}
     </PanelSurface>
   );
 }
 
 export function MealPanels({ editing, items, onOpenItem }: { editing?: MealPanelEditing; items: MealPanelItem[]; onOpenItem?: (item: MealPanelItem) => void }) {
   const [activeTab, setActiveTab] = useState<MealPanelTab>("menu");
+  const itemSignature = items.map(({ id, name, time }) => `${id}:${name}:${time ?? ""}`).join("|");
+  const [optimisticOrder, setOptimisticOrder] = useState<{ items: MealPanelItem[]; sourceSignature: string } | null>(null);
+  const orderedItems = optimisticOrder?.sourceSignature === itemSignature ? optimisticOrder.items : items;
+
+  const rowEditing: PanelRowEditing<MealPanelItem> | undefined = editing ? {
+    deleteConfirmation: (item) => ({ message: `¿Eliminar ${item.name} de este plan diario?`, title: "Eliminar comida" }),
+    editLabel: (item) => `Editar detalle de ${item.name}`,
+    onDelete: editing.onDelete,
+    onEdit: editing.onOpen,
+    onReorder: async (nextItems) => {
+      setOptimisticOrder({ items: nextItems, sourceSignature: itemSignature });
+      try {
+        await editing.onReorder(nextItems);
+      } catch (error) {
+        setOptimisticOrder(null);
+        throw error;
+      }
+    },
+    onReplace: editing.onReplace,
+  } : undefined;
+
   return (
     <PanelSurface>
       <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={editing ? [...mealTabs, editTab] : mealTabs} />
-      {activeTab === "menu" ? <MealMenuPanel items={items} onOpenItem={onOpenItem} /> : null}
-      {activeTab === "calories" ? <NutritionCaloriesPanel items={items} leadingLabel="Comidas" /> : null}
-      {activeTab === "macros" ? <NutritionMacrosPanel items={items} leadingLabel="Comidas" /> : null}
-      {activeTab === "distribution" ? <NutritionDistributionPanel items={items} leadingLabel="Comidas" /> : null}
-      {activeTab === "allocation" ? <NutritionAllocationPanel items={items} leadingLabel="Comidas" /> : null}
-      {activeTab === "edit" && editing ? <MealEditPanel editing={editing} items={items} key={items.map(({ id, time }) => `${id}:${time ?? ""}`).join("|")} /> : null}
+      {activeTab === "menu" ? <MealMenuPanel editing={rowEditing} items={orderedItems} onOpenItem={onOpenItem} /> : null}
+      {activeTab === "calories" ? <NutritionCaloriesPanel editing={rowEditing} items={orderedItems} leadingLabel="Comidas" /> : null}
+      {activeTab === "macros" ? <NutritionMacrosPanel editing={rowEditing} items={orderedItems} leadingLabel="Comidas" /> : null}
+      {activeTab === "distribution" ? <NutritionDistributionPanel editing={rowEditing} items={orderedItems} leadingLabel="Comidas" /> : null}
+      {activeTab === "allocation" ? <NutritionAllocationPanel editing={rowEditing} items={orderedItems} leadingLabel="Comidas" /> : null}
+      {activeTab === "edit" && editing ? <MealEditPanel editing={editing} items={orderedItems} key={orderedItems.map(({ id, time }) => `${id}:${time ?? ""}`).join("|")} /> : null}
     </PanelSurface>
   );
 }
@@ -468,6 +621,13 @@ const styles = StyleSheet.create({
   menuTimeGroup: { alignItems: "center", flexDirection: "row", gap: 4, paddingHorizontal: tokens.spacing.xs },
   menuTime: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.regular, letterSpacing: 0 },
   menuFoods: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, letterSpacing: 0, lineHeight: 20, paddingHorizontal: tokens.spacing.xs },
+  gestureRow: { backgroundColor: tokens.color.surfaceMuted },
+  gestureRowActive: { opacity: 0.92 },
+  swipeActions: { alignSelf: "stretch", flexDirection: "row", width: 216 },
+  swipeAction: { alignItems: "center", backgroundColor: tokens.color.textMuted, gap: 4, justifyContent: "center", paddingHorizontal: 4, width: 72 },
+  swipeActionDestructive: { backgroundColor: tokens.color.danger },
+  swipeActionLabel: { color: tokens.color.entityIconForeground, fontSize: 9, fontWeight: tokens.weight.semibold },
+  swipeActionPressed: { opacity: 0.72 },
   iconAction: { alignItems: "center", borderRadius: tokens.radius.sm, height: 34, justifyContent: "center", width: 34 },
   disabled: { opacity: 0.28 },
   pressed: { opacity: 0.68 },

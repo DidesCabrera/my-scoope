@@ -4,6 +4,7 @@ import { type ErrorBoundaryProps, type Href, Stack, usePathname, useRouter } fro
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { AppState, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { SessionProvider, useSession } from "@/auth/session-context";
@@ -97,26 +98,28 @@ function RootLayout() {
   }, [router]);
 
   return (
-    <SafeAreaProvider>
-      <SessionProvider>
-        <AppNavigationProvider>
-          <ComparatorSelectionProvider>
-            <AuthenticatedRouteGate />
-            <NativeReminderReconciler />
-            <Stack
-              unstable_screenErrorBoundary={ScreenErrorBoundary}
-              screenOptions={{
-                animation: "slide_from_right",
-                contentStyle: { backgroundColor: tokens.color.surfaceApp },
-                header: () => <AppNavigationHeader />,
-                headerShown: true,
-              }}
-            />
-          </ComparatorSelectionProvider>
-        </AppNavigationProvider>
-        <StatusBar style="light" />
-      </SessionProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={styles.gestureRoot}>
+      <SafeAreaProvider>
+        <SessionProvider>
+          <AppNavigationProvider>
+            <ComparatorSelectionProvider>
+              <AuthenticatedRouteGate />
+              <NativeReminderReconciler />
+              <Stack
+                unstable_screenErrorBoundary={ScreenErrorBoundary}
+                screenOptions={{
+                  animation: "slide_from_right",
+                  contentStyle: { backgroundColor: tokens.color.surfaceApp },
+                  header: () => <AppNavigationHeader />,
+                  headerShown: true,
+                }}
+              />
+            </ComparatorSelectionProvider>
+          </AppNavigationProvider>
+          <StatusBar style="light" />
+        </SessionProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 
@@ -124,6 +127,7 @@ const styles = StyleSheet.create({
   errorMessage: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 21, textAlign: "center" },
   errorScreen: { alignItems: "center", backgroundColor: tokens.color.surfaceApp, flex: 1, gap: tokens.spacing.md, justifyContent: "center", padding: tokens.spacing.screen },
   errorTitle: { color: tokens.color.textMain, fontSize: tokens.type.title, fontWeight: tokens.weight.bold, textAlign: "center" },
+  gestureRoot: { flex: 1 },
   retryButton: { alignItems: "center", backgroundColor: tokens.color.interactivePrimary, borderRadius: tokens.radius.md, minHeight: 48, justifyContent: "center", paddingHorizontal: tokens.spacing.lg },
   retryButtonPressed: { opacity: 0.72 },
   retryLabel: { color: tokens.color.entityIconForeground, fontSize: tokens.type.caption, fontWeight: tokens.weight.bold },
