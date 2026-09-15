@@ -2,7 +2,8 @@ import { type Href, useRouter } from "expo-router";
 import { Copy, MoreHorizontal, Trash2 } from "lucide-react-native";
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, View, type ScrollViewProps } from "react-native";
+import { Pressable, StyleSheet, View, type ScrollViewProps } from "react-native";
+import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { FoodPanels, type FoodPanelItem } from "@/components/panels";
 import { SectionHeading } from "@/components/ui/typography";
@@ -223,7 +224,7 @@ export function ProgramDetailPreview({ footer, item, onAddWeek, onAssignDailyPla
 
   if (scrollable) {
     return (
-      <ScrollView
+      <NestableScrollContainer
         contentContainerStyle={styles.screenContent}
         onScroll={onScroll}
         scrollEventThrottle={16}
@@ -235,7 +236,7 @@ export function ProgramDetailPreview({ footer, item, onAddWeek, onAssignDailyPla
         {weekTabs}
         <ProgramWeekDetail canRemoveWeek={weeksCount > 1} onAssignDailyPlan={onAssignDailyPlan} onDuplicateWeek={onDuplicateWeek} onRemoveDailyPlan={onRemoveDailyPlan} onRemoveWeek={onRemoveWeek} onReorderDailyPlans={onReorderDailyPlans} week={displayedActiveWeek} weekData={selectedWeek} />
         {footer ? <View style={styles.footer}>{footer}</View> : null}
-      </ScrollView>
+      </NestableScrollContainer>
     );
   }
 

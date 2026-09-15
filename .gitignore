@@ -51,6 +51,7 @@ node_modules/
 *.tar
 *.tar.gz
 *.patch
+!mobile/patches/*.patch
 *.bak
 *.orig
 *.rej

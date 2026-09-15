@@ -43,6 +43,7 @@
     "@types/react": "~19.2.2",
     "eslint": "^9.39.5",
     "eslint-config-expo": "~57.0.2",
+    "patch-package": "^8.0.1",
     "tsx": "^4.23.8",
     "typescript": "~6.0.3"
   },
@@ -58,6 +59,7 @@
     "verify:environments": "node ./scripts/mobile-environment-command.mjs --verify",
     "web": "expo start --web",
     "lint": "expo lint",
+    "postinstall": "patch-package",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
     "check": "npm --prefix .. run check:ui && npm run lint && npm run typecheck && npm test && npm run export:web",
