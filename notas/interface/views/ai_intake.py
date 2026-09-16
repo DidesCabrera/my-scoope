@@ -62,10 +62,10 @@ from notas.application.ai_intake.profile_draft_update import (
     build_profile_draft_payload_from_brief,
     profile_update_result_from_tool_data,
 )
-from notas.application.ai_tools.preference_tools import build_preference_draft_payload_from_brief
 from notas.application.ai_intake.proposal_from_brief import (
     create_nutrition_brief_proposal,
 )
+from notas.application.ai_tools.preference_tools import build_preference_draft_payload_from_brief
 from notas.application.queries.proposal_queries import get_available_proposal_queryset
 from notas.domain.models import AiNutritionChat
 from notas.presentation.composition.viewmodel.ui_builder import build_ui_vm
@@ -266,6 +266,123 @@ def _get_active_chat(request) -> AiNutritionChat | None:
         return None
 
 
+def _handle_preference_draft_approval(request):
+    brief = deserialize_brief(request.session.get(AI_NUTRITION_BRIEF_SESSION_KEY))
+    conversation = deserialize_conversation(
+        request.session.get(AI_NUTRITION_CONVERSATION_SESSION_KEY)
+    )
+    if not brief or not conversation:
+        messages.error(request, "Primero registra preferencias en el chat.")
+        return redirect("ai_nutrition_intake")
+
+    tool_result = execute_profile_commit_tool(
+        AssistantToolRequest(
+            tool_name=TOOL_COMMIT_PREFERENCE_UPDATE,
+            arguments={
+                "preference_draft": build_preference_draft_payload_from_brief(brief),
+            },
+            request_id="preference_card_approval",
+            reason="User clicked the preference card approval button in the chat UI.",
+            metadata={
+                "approved_by_user": True,
+                "approval_source": "preference_card_button",
+                "surface": "ai_nutrition_intake",
+            },
+        ),
+        user=request.user,
+    )
+    if tool_result.status != AssistantToolStatus.OK:
+        messages.error(request, "No pude guardar las preferencias desde este chat.")
+        return redirect("ai_nutrition_intake")
+
+    data = dict(tool_result.data or {})
+    saved_fields = set(data.get("updated_fields") or ()) | set(data.get("unchanged_fields") or ())
+    source_aliases = {
+        "avoided_foods": "excluded_foods",
+        "preferred_meals_per_day": "meals_per_day",
+        "budget_preference": "budget_level",
+    }
+    field_sources = dict(brief.field_sources or {})
+    for field_name in saved_fields:
+        field_sources[field_name] = "profile"
+        alias = source_aliases.get(field_name)
+        if alias:
+            field_sources[alias] = "profile"
+    updated_brief = replace(brief, field_sources=field_sources)
+    confirmation = (
+        "Guardé tus preferencias para usarlas en futuras conversaciones."
+        if data.get("updated_fields")
+        else "Tus preferencias guardadas ya estaban actualizadas."
+    )
+    conversation = NutritionConversationState(
+        messages=[
+            *conversation.messages,
+            NutritionConversationMessage(
+                role="assistant",
+                text=confirmation,
+                preference_draft_card=data.get("preference_draft_card"),
+            ),
+        ],
+        result=build_intake_result_from_brief(updated_brief),
+    )
+    _sync_session_from_conversation(
+        request,
+        conversation,
+        existing_chat_id=request.session.get(AI_NUTRITION_CHAT_SESSION_KEY),
+    )
+    messages.success(request, "Preferencias guardadas.")
+    return redirect("ai_nutrition_intake")
+
+
+def _handle_create_proposal(request):
+    brief = deserialize_brief(request.session.get(AI_NUTRITION_BRIEF_SESSION_KEY))
+    if not brief:
+        messages.error(request, "Primero crea o guarda un brief nutricional.")
+        return redirect("ai_nutrition_intake")
+
+    try:
+        proposal_result = create_nutrition_brief_proposal(
+            user=request.user,
+            brief=brief,
+        )
+        generated_result = generate_dailyplan_proposal_from_brief_proposal(
+            user=request.user,
+            source_proposal=proposal_result.proposal,
+        )
+    except DailyPlanGeneratorError as exc:
+        messages.error(request, f"No se pudo generar el DailyPlan inicial: {exc}")
+        return redirect("ai_nutrition_intake")
+    except ValueError as exc:
+        if str(exc) == "nutrition_brief_has_pending_questions":
+            messages.error(
+                request,
+                "Completa los datos mínimos pendientes antes de crear la propuesta.",
+            )
+        else:
+            messages.error(request, f"No se pudo crear la propuesta: {exc}")
+        return redirect("ai_nutrition_intake")
+
+    conversation = deserialize_conversation(
+        request.session.get(AI_NUTRITION_CONVERSATION_SESSION_KEY)
+    ) or build_conversation_from_brief(brief=brief)
+    conversation = append_generated_plan_message(
+        conversation,
+        proposal=generated_result.proposal,
+    )
+    _sync_session_from_conversation(
+        request,
+        conversation,
+        existing_chat_id=request.session.get(AI_NUTRITION_CHAT_SESSION_KEY),
+    )
+    mark_chat_proposal_created(
+        user=request.user,
+        chat_id=request.session.get(AI_NUTRITION_CHAT_SESSION_KEY),
+        proposal=generated_result.proposal,
+    )
+    messages.success(request, "Propuesta de DailyPlan creada en el chat.")
+    return redirect("ai_nutrition_intake")
+
+
 @require_http_methods(["GET", "POST"])
 @limit_ai_assistant_turn
 @login_required
@@ -437,119 +554,10 @@ def ai_nutrition_intake(request):
             return redirect("ai_nutrition_intake")
 
         if action == "update_preferences_from_draft":
-            brief = deserialize_brief(request.session.get(AI_NUTRITION_BRIEF_SESSION_KEY))
-            conversation = deserialize_conversation(
-                request.session.get(AI_NUTRITION_CONVERSATION_SESSION_KEY)
-            )
-            if not brief or not conversation:
-                messages.error(request, "Primero registra preferencias en el chat.")
-                return redirect("ai_nutrition_intake")
-
-            tool_result = execute_profile_commit_tool(
-                AssistantToolRequest(
-                    tool_name=TOOL_COMMIT_PREFERENCE_UPDATE,
-                    arguments={
-                        "preference_draft": build_preference_draft_payload_from_brief(brief),
-                    },
-                    request_id="preference_card_approval",
-                    reason="User clicked the preference card approval button in the chat UI.",
-                    metadata={
-                        "approved_by_user": True,
-                        "approval_source": "preference_card_button",
-                        "surface": "ai_nutrition_intake",
-                    },
-                ),
-                user=request.user,
-            )
-            if tool_result.status != AssistantToolStatus.OK:
-                messages.error(request, "No pude guardar las preferencias desde este chat.")
-                return redirect("ai_nutrition_intake")
-
-            data = dict(tool_result.data or {})
-            saved_fields = set(data.get("updated_fields") or ()) | set(data.get("unchanged_fields") or ())
-            source_aliases = {
-                "avoided_foods": "excluded_foods",
-                "preferred_meals_per_day": "meals_per_day",
-                "budget_preference": "budget_level",
-            }
-            field_sources = dict(brief.field_sources or {})
-            for field_name in saved_fields:
-                field_sources[field_name] = "profile"
-                alias = source_aliases.get(field_name)
-                if alias:
-                    field_sources[alias] = "profile"
-            updated_brief = replace(brief, field_sources=field_sources)
-            confirmation = (
-                "Guardé tus preferencias para usarlas en futuras conversaciones."
-                if data.get("updated_fields")
-                else "Tus preferencias guardadas ya estaban actualizadas."
-            )
-            conversation = NutritionConversationState(
-                messages=[
-                    *conversation.messages,
-                    NutritionConversationMessage(
-                        role="assistant",
-                        text=confirmation,
-                        preference_draft_card=data.get("preference_draft_card"),
-                    ),
-                ],
-                result=build_intake_result_from_brief(updated_brief),
-            )
-            _sync_session_from_conversation(
-                request,
-                conversation,
-                existing_chat_id=request.session.get(AI_NUTRITION_CHAT_SESSION_KEY),
-            )
-            messages.success(request, "Preferencias guardadas.")
-            return redirect("ai_nutrition_intake")
+            return _handle_preference_draft_approval(request)
 
         if action == "create_proposal":
-            brief = deserialize_brief(request.session.get(AI_NUTRITION_BRIEF_SESSION_KEY))
-            if not brief:
-                messages.error(request, "Primero crea o guarda un brief nutricional.")
-                return redirect("ai_nutrition_intake")
-
-            try:
-                proposal_result = create_nutrition_brief_proposal(
-                    user=request.user,
-                    brief=brief,
-                )
-                generated_result = generate_dailyplan_proposal_from_brief_proposal(
-                    user=request.user,
-                    source_proposal=proposal_result.proposal,
-                )
-            except DailyPlanGeneratorError as exc:
-                messages.error(request, f"No se pudo generar el DailyPlan inicial: {exc}")
-                return redirect("ai_nutrition_intake")
-            except ValueError as exc:
-                if str(exc) == "nutrition_brief_has_pending_questions":
-                    messages.error(
-                        request,
-                        "Completa los datos mínimos pendientes antes de crear la propuesta.",
-                    )
-                else:
-                    messages.error(request, f"No se pudo crear la propuesta: {exc}")
-                return redirect("ai_nutrition_intake")
-
-            conversation = deserialize_conversation(
-                request.session.get(AI_NUTRITION_CONVERSATION_SESSION_KEY)
-            ) or build_conversation_from_brief(brief=brief)
-            conversation = append_generated_plan_message(
-                conversation,
-                proposal=generated_result.proposal,
-            )
-            _sync_session_from_conversation(
-                request,
-                conversation,
-                existing_chat_id=request.session.get(AI_NUTRITION_CHAT_SESSION_KEY),
-            )
-            mark_chat_proposal_created(
-                user=request.user,
-                chat_id=request.session.get(AI_NUTRITION_CHAT_SESSION_KEY),
-                proposal=generated_result.proposal,
-            )
-            messages.success(request, "Propuesta de DailyPlan creada en el chat.")
-            return redirect("ai_nutrition_intake")
+            return _handle_create_proposal(request)
 
     else:
         pending_job = _pending_async_job(request) if async_jobs_enabled() else None

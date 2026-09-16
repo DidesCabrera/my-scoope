@@ -38,8 +38,8 @@ from notas.domain.model_modules.food import (
     FoodSourceMetadata,
 )
 from notas.domain.model_modules.identity import (
-    NutritionPreferenceProfile,
     NutritionistMemberRelationship,
+    NutritionPreferenceProfile,
     Plan,
     Profile,
     Subscription,
