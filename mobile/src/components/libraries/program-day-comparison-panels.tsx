@@ -1,9 +1,9 @@
 import { Pencil, Plus, RefreshCw, Trash2 } from "lucide-react-native";
 import { useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from "react-native";
 
 import { MacroCalorieDistribution, macroCalorieShares, PanelAllocationBar, ProteinPerKilogramBadge } from "@/components/nutrition";
-import { contextualMacroAllocations, EntityPanelTabs, PanelBody, PanelSurface } from "@/components/panels";
+import { contextualMacroAllocations, EntityPanelTabs, PanelBody, PanelSurface, SortablePanelHeaderCell, type PanelSortState, useTemporaryPanelSort } from "@/components/panels";
 import { tokens } from "@/design/tokens";
 import { EntityIcon } from "@/components/ui";
 import { ComparisonPanelGestureRows, StaticComparisonPanelRows, type ComparisonPanelAction } from "./comparison-panel-gesture-rows";
@@ -71,22 +71,18 @@ function DayIdentity({ row }: { row: ProgramDayNutrition }) {
   );
 }
 
-function Header({ columns }: { columns: string[] }) {
+function Header<Key extends string>({ columns, leadingKey, onSort, sort }: { columns: { key: Key; label: string; style?: StyleProp<ViewStyle> }[]; leadingKey: Key; onSort(key: Key): void; sort: PanelSortState<Key> }) {
   return (
     <View style={[styles.row, styles.header]}>
-      <Text style={[styles.headerText, styles.leadingCell]}>Día</Text>
+      <SortablePanelHeaderCell align="left" direction={sort?.key === leadingKey ? sort.direction : undefined} label="Día" onPress={() => onSort(leadingKey)} style={styles.leadingCell} />
       {columns.map((column) => (
-        <Text
-          key={column}
-          style={[
-            styles.headerText,
-            styles.dataCell,
-            column === "% Cal" && styles.calorieShareDataCell,
-            column === "PpK" && styles.ppkDataCell,
-          ]}
-        >
-          {column}
-        </Text>
+        <SortablePanelHeaderCell
+          direction={sort?.key === column.key ? sort.direction : undefined}
+          key={`${column.key}-${column.label}`}
+          label={column.label}
+          onPress={() => onSort(column.key)}
+          style={[styles.dataCell, column.style]}
+        />
       ))}
     </View>
   );
@@ -103,11 +99,13 @@ function DayRows({ gestures, renderRow, rows }: { gestures?: DayRowGestures; ren
 }
 
 function CaloriesPanel({ gestures, rows }: { gestures?: DayRowGestures; rows: ProgramDayNutrition[] }) {
+  const sorting = useTemporaryPanelSort(rows, { calories: (row) => row.calories, day: (row) => row.dayNumber, share: (row) => row.calorieShare });
+  const visibleRows = sorting.items;
   return (
     <PanelBody>
-      <Header columns={["Cal", "% Cal"]} />
-      <DayRows gestures={gestures} rows={rows} renderRow={(row, index) => (
-        <View key={row.id} style={[styles.row, styles.calorieRow, index === rows.length - 1 && styles.rowLast]}>
+      <Header columns={[{ key: "calories", label: "Cal" }, { key: "share", label: "% Cal", style: styles.calorieShareDataCell }]} leadingKey="day" {...sorting} />
+      <DayRows gestures={sorting.sort ? undefined : gestures} rows={visibleRows} renderRow={(row, index) => (
+        <View key={row.id} style={[styles.row, styles.calorieRow, index === visibleRows.length - 1 && styles.rowLast]}>
           <View style={styles.leadingCell}><DayIdentity row={row} /></View>
           <Text style={[styles.cell, styles.dataCell]}>{row.planName ? Math.round(row.calories).toLocaleString("es-CL") : "—"}</Text>
           <View style={[styles.dataCell, styles.calorieShareDataCell]}>{row.planName ? <PanelAllocationBar tone="calories" value={row.calorieShare} /> : <Text style={styles.emptyValue}>—</Text>}</View>
@@ -118,11 +116,13 @@ function CaloriesPanel({ gestures, rows }: { gestures?: DayRowGestures; rows: Pr
 }
 
 function MacrosPanel({ gestures, rows }: { gestures?: DayRowGestures; rows: ProgramDayNutrition[] }) {
+  const sorting = useTemporaryPanelSort(rows, { carbs: (row) => row.carbsGrams, day: (row) => row.dayNumber, fat: (row) => row.fatGrams, ppk: (row) => row.ppk, protein: (row) => row.proteinGrams });
+  const visibleRows = sorting.items;
   return (
     <PanelBody>
-      <Header columns={["PpK", "P", "C", "F"]} />
-      <DayRows gestures={gestures} rows={rows} renderRow={(row, index) => (
-        <View key={row.id} style={[styles.row, index === rows.length - 1 && styles.rowLast]}>
+      <Header columns={[{ key: "ppk", label: "PpK", style: styles.ppkDataCell }, { key: "protein", label: "P" }, { key: "carbs", label: "C" }, { key: "fat", label: "F" }]} leadingKey="day" {...sorting} />
+      <DayRows gestures={sorting.sort ? undefined : gestures} rows={visibleRows} renderRow={(row, index) => (
+        <View key={row.id} style={[styles.row, index === visibleRows.length - 1 && styles.rowLast]}>
           <View style={styles.leadingCell}><DayIdentity row={row} /></View>
           <View style={[styles.dataCell, styles.ppkDataCell, styles.ppkCell]}>{row.planName ? <ProteinPerKilogramBadge showUnit={false} style={styles.ppkBadge} value={row.ppk} /> : <Text style={styles.emptyValue}>—</Text>}</View>
           <Text style={[styles.cell, styles.dataCell]}>{row.planName ? Math.round(row.proteinGrams) : "—"}</Text>
@@ -135,13 +135,15 @@ function MacrosPanel({ gestures, rows }: { gestures?: DayRowGestures; rows: Prog
 }
 
 function DistributionPanel({ gestures, rows }: { gestures?: DayRowGestures; rows: ProgramDayNutrition[] }) {
+  const sorting = useTemporaryPanelSort(rows, { carbs: (row) => macroCalorieShares(row).carbs, day: (row) => row.dayNumber, fat: (row) => macroCalorieShares(row).fat, protein: (row) => macroCalorieShares(row).protein });
+  const visibleRows = sorting.items;
   return (
     <PanelBody>
-      <Header columns={["P%", "C%", "F%", "P|C|F"]} />
-      <DayRows gestures={gestures} rows={rows} renderRow={(row, index) => {
+      <Header columns={[{ key: "protein", label: "P%" }, { key: "carbs", label: "C%" }, { key: "fat", label: "F%" }, { key: "protein", label: "P|C|F", style: styles.distributionBar }]} leadingKey="day" {...sorting} />
+      <DayRows gestures={sorting.sort ? undefined : gestures} rows={visibleRows} renderRow={(row, index) => {
         const distribution = macroCalorieShares(row);
         return (
-          <View key={row.id} style={[styles.row, index === rows.length - 1 && styles.rowLast]}>
+          <View key={row.id} style={[styles.row, index === visibleRows.length - 1 && styles.rowLast]}>
             <View style={styles.leadingCell}><DayIdentity row={row} /></View>
             <Text style={[styles.cell, styles.dataCell, styles.proteinDistribution]}>{row.planName ? `${distribution.protein}%` : "—"}</Text>
             <Text style={[styles.cell, styles.dataCell, styles.carbsDistribution]}>{row.planName ? `${distribution.carbs}%` : "—"}</Text>
@@ -155,12 +157,16 @@ function DistributionPanel({ gestures, rows }: { gestures?: DayRowGestures; rows
 }
 
 function AllocationPanel({ gestures, rows }: { gestures?: DayRowGestures; rows: ProgramDayNutrition[] }) {
-  const allocations = contextualMacroAllocations(rows);
+  const sourceAllocations = contextualMacroAllocations(rows);
+  const allocationById = new Map(rows.map((row, index) => [row.id, sourceAllocations[index]]));
+  const sorting = useTemporaryPanelSort(rows, { carbs: (row) => allocationById.get(row.id)?.carbs, day: (row) => row.dayNumber, fat: (row) => allocationById.get(row.id)?.fat, protein: (row) => allocationById.get(row.id)?.protein });
+  const visibleRows = sorting.items;
+  const allocations = contextualMacroAllocations(visibleRows);
   return (
     <PanelBody>
-      <Header columns={["P%", "C%", "F%"]} />
-      <DayRows gestures={gestures} rows={rows} renderRow={(row, index) => (
-        <View key={row.id} style={[styles.row, styles.allocationRow, index === rows.length - 1 && styles.rowLast]}>
+      <Header columns={[{ key: "protein", label: "P%" }, { key: "carbs", label: "C%" }, { key: "fat", label: "F%" }]} leadingKey="day" {...sorting} />
+      <DayRows gestures={sorting.sort ? undefined : gestures} rows={visibleRows} renderRow={(row, index) => (
+        <View key={row.id} style={[styles.row, styles.allocationRow, index === visibleRows.length - 1 && styles.rowLast]}>
           <View style={styles.leadingCell}><DayIdentity row={row} /></View>
           {row.planName ? (
             <>

@@ -7,7 +7,7 @@ import type { ActiveProgramDay, CalendarizedDayDetail, LibraryFoodPanelItem, Lib
 import { useSession } from "@/auth/session-context";
 import { ProgramDaySelector, ProgramWeekHeading, ProgramWeekTabs } from "@/components/libraries/program-planning-controls";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
-import { FoodPanels, type FoodPanelItem } from "@/components/panels";
+import { FoodPanels, type FoodPanelItem, type MealPanelEditing, type MealPanelItem } from "@/components/panels";
 import { Button, InlineNotice, SectionDivider, SectionHeading, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { CalendarizedDailyPlanCard } from "./calendarized-daily-plan-card";
@@ -112,6 +112,25 @@ export function CalendarizedProgramPlanning({
     return () => { active = false; };
   }, [apiRequest, selectedId]);
 
+  async function mutateSelectedDay(path: string, init: RequestInit) {
+    if (selectedId == null) return;
+    try {
+      await apiRequest(path, init);
+      setDetail(await apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${selectedId}`));
+    } catch (nextError) {
+      setError(userFacingError(nextError));
+      throw nextError;
+    }
+  }
+
+  const mealEditing: MealPanelEditing | undefined = detail?.has_plan ? {
+    onChangeTime: (meal) => router.push({ pathname: "/program/days/[id]/meals/[mealKey]", params: { id: String(detail.id), mealKey: meal.id } } as Href),
+    onDelete: async (meal) => mutateSelectedDay(`/api/v1/program/days/${detail.id}/meals/${encodeURIComponent(meal.id)}`, { method: "DELETE" }),
+    onOpen: (meal) => router.push({ pathname: "/program/days/[id]/meals/[mealKey]", params: { id: String(detail.id), mealKey: meal.id } } as Href),
+    onReorder: async (meals: MealPanelItem[]) => mutateSelectedDay(`/api/v1/program/days/${detail.id}/meals/order`, { body: JSON.stringify({ ordered_keys: meals.map((meal) => meal.id) }), method: "PUT" }),
+    onReplace: (meal) => router.push(pickerHref("meal-to-calendarized-day", { dayId: detail.id, relationKey: meal.id })),
+  } : undefined;
+
   const snapshot = detail?.plan_snapshot;
 
   if (!weeks.length) return null;
@@ -146,7 +165,7 @@ export function CalendarizedProgramPlanning({
             <InlineNotice tone="error">{error}</InlineNotice>
           ) : detail?.has_plan && snapshot ? (
             <View style={styles.selectedPlan}>
-              <CalendarizedDailyPlanCard dayId={detail.id} dateLabel={compactDateLabel(detail.calendar_date)} eyebrow={`SEMANA ${activeWeek} · ${dayLabel(detail.calendar_date)}`} mealExecution={detail.meal_execution} planName={detail.plan_name} snapshot={snapshot} />
+              <CalendarizedDailyPlanCard dayId={detail.id} dateLabel={compactDateLabel(detail.calendar_date)} editing={mealEditing} eyebrow={`SEMANA ${activeWeek} · ${dayLabel(detail.calendar_date)}`} mealExecution={detail.meal_execution} onChangeMealTime={(meal, hour) => mutateSelectedDay(`/api/v1/program/days/${detail.id}/meals/${encodeURIComponent(meal.id)}`, { body: JSON.stringify({ hour }), headers: { "Content-Type": "application/json" }, method: "PATCH" })} planName={detail.plan_name} snapshot={snapshot} />
               {detail.calendar_date > localDate() ? (
                 <Button
                   label="Cambiar plan diario"

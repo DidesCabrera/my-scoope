@@ -155,6 +155,7 @@ export default function CalendarizedMealDetailScreen() {
               onReplace: (food) => router.push(pickerHref("food-to-calendarized-meal", { dayId, mealKey, relationKey: food.id })),
             }}
             items={foods}
+            nestedScroll
             onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }}
             preparation={adherence.available ? {
               isPrepared: (food) => execution ? normalizeMealExecutionItem(execution).prepared_food_keys.includes(food.id) : false,

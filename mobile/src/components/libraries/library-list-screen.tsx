@@ -1,7 +1,8 @@
 import { Redirect, useFocusEffect, useRouter } from "expo-router";
 import { Check, ChevronDown, ChevronUp, Search, Square, X } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
+import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { userFacingError } from "@/api/errors";
 import type { LibraryEntity, LibraryPageData } from "@/api/types";
@@ -135,7 +136,7 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
   if (status === "anonymous") return <Redirect href="/login" />;
 
   return (
-    <ScrollView
+    <NestableScrollContainer
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
       onScroll={({ nativeEvent }) => {
@@ -205,7 +206,7 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
         />
       ) : null}
       <LibraryListActions canCompare={entity !== "program"} onClose={() => setActionsVisible(false)} onCompare={() => { setActionsVisible(false); const kind = entity === "food" ? "foods" : entity === "meal" ? "meals" : "dailyplans"; router.push(`/comparator?create=1&kind=${kind}`); }} onDelete={() => { setActionsVisible(false); setSelectedIds(new Set()); setMode("delete"); }} onReorder={() => void beginReorder()} visible={actionsVisible} />
-    </ScrollView>
+    </NestableScrollContainer>
   );
 }
 

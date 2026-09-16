@@ -233,6 +233,7 @@ export default function ProgramDayScreen() {
                 onReplace: (meal) => router.push(pickerHref("meal-to-calendarized-day", { dayId: day.id, relationKey: meal.id })),
               }}
               items={mealItems}
+              nestedScroll
             />
           </EntityDetailSection>
           <Button

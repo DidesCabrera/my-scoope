@@ -1,5 +1,6 @@
 import type { PropsWithChildren, ReactNode } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ChevronDown, ChevronUp } from "lucide-react-native";
+import { Pressable, ScrollView, StyleProp, StyleSheet, Text, TextStyle, View, ViewStyle } from "react-native";
 
 import { tokens } from "@/design/tokens";
 
@@ -43,6 +44,31 @@ export function PanelEmptyState({ label }: { label: string }) {
   return <Text style={styles.empty}>{label}</Text>;
 }
 
+export function SortablePanelHeaderCell({ align = "center", direction, label, onPress, style, textStyle }: {
+  align?: "center" | "left";
+  direction?: "asc" | "desc";
+  label: string;
+  onPress(): void;
+  style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
+}) {
+  const directionLabel = direction === "asc" ? "ascendente" : direction === "desc" ? "descendente" : "original";
+  return (
+    <Pressable
+      accessibilityHint="Pulsa para cambiar el orden. Alterna entre descendente, ascendente y original."
+      accessibilityLabel={`Ordenar por ${label}. Orden ${directionLabel}`}
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [styles.sortHeaderCell, style, pressed && styles.sortHeaderPressed]}>
+      <View style={[styles.sortHeaderContent, align === "left" && styles.sortHeaderContentLeft]}>
+        <Text numberOfLines={1} style={[styles.sortHeaderText, textStyle]}>{label}</Text>
+        {direction === "asc" ? <ChevronUp color={tokens.color.textMuted} size={12} strokeWidth={2.4} /> : null}
+        {direction === "desc" ? <ChevronDown color={tokens.color.textMuted} size={12} strokeWidth={2.4} /> : null}
+      </View>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   surface: { backgroundColor: tokens.color.surfaceMuted, borderColor: tokens.color.borderSoft, borderRadius: tokens.radius.lg, borderWidth: 1, marginHorizontal: tokens.layout.reducedInset - tokens.card.outerPadding, minWidth: 0, overflow: "hidden" },
   tabs: { gap: tokens.spacing.compact, padding: tokens.spacing.sm },
@@ -53,4 +79,9 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.72 },
   body: { borderTopColor: tokens.color.borderSoft, borderTopWidth: 1, paddingBottom: tokens.spacing.sm },
   empty: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 18, paddingHorizontal: tokens.spacing.sm, paddingVertical: tokens.spacing.lg, textAlign: "center" },
+  sortHeaderCell: { alignSelf: "stretch", justifyContent: "center", minWidth: 0 },
+  sortHeaderContent: { alignItems: "center", flexDirection: "row", gap: 2, justifyContent: "center", minWidth: 0 },
+  sortHeaderContentLeft: { justifyContent: "flex-start" },
+  sortHeaderText: { color: tokens.color.textMuted, flexShrink: 1, fontSize: 10, fontWeight: tokens.weight.semibold, textAlign: "center", textTransform: "uppercase" },
+  sortHeaderPressed: { opacity: 0.6 },
 });
