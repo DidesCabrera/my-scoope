@@ -236,6 +236,26 @@ TOOL_COMMIT_PROFILE_UPDATE: AssistantToolSpec(
             },
         },
     ),
+TOOL_COMMIT_PREFERENCE_UPDATE: AssistantToolSpec(
+        name=TOOL_COMMIT_PREFERENCE_UPDATE,
+        description=(
+            "Commit approved preference draft fields to the authenticated user's persistent nutrition preferences. "
+            "This tool is internal-only, requires a trusted user approval event, and is not exposed to the provider."
+        ),
+        category=AssistantToolCategory.COMMIT,
+        risk_level=AssistantToolRiskLevel.REVIEW_REQUIRED,
+        requires_human_review=True,
+        provider_exposed=False,
+        allowed_intents=("capture_nutrition_brief", "create_dailyplan_proposal", "answer_question"),
+        input_schema={
+            "type": "object",
+            "required": ["preference_draft"],
+            "properties": {
+                "preference_draft": {"type": "object"},
+                "approved_fields": {"type": "array", "items": {"type": "string"}},
+            },
+        },
+    ),
 }
 
 __all__ = ["INTAKE_TOOL_SPECS"]

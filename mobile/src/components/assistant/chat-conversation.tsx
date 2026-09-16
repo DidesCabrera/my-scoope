@@ -7,7 +7,7 @@ import { tokens } from "@/design/tokens";
 
 type PreparedActionHandler = (actionId: string, mode: "commit" | "cancel", destructive: boolean) => void;
 
-function ChatCard({ card, onPreparedAction }: { card: NonNullable<AIChatMessage["cards"]>[number]; onPreparedAction: PreparedActionHandler }) {
+function ChatCard({ card, onPreferenceCommit, onPreparedAction }: { card: NonNullable<AIChatMessage["cards"]>[number]; onPreferenceCommit: () => void; onPreparedAction: PreparedActionHandler }) {
   const router = useRouter();
   if (card.type === "proposal_review" || card.type === "generated_plan") {
     const proposalId = card.proposal_id;
@@ -20,10 +20,10 @@ function ChatCard({ card, onPreparedAction }: { card: NonNullable<AIChatMessage[
     const pending = card.status === "prepared";
     return <Card accent={card.destructive ? tokens.color.danger : tokens.color.interactivePrimary}><Text style={styles.cardTitle}>{card.title}</Text>{card.summary ? <Text style={styles.cardCopy}>{card.summary}</Text> : null}{pending ? <View style={styles.actions}><Button label="Confirmar" onPress={() => onPreparedAction(card.action_id, "commit", card.destructive)} variant={card.destructive ? "danger" : "primary"} /><Button label="Cancelar" onPress={() => onPreparedAction(card.action_id, "cancel", false)} variant="secondary" /></View> : <InlineNotice>Acción {card.status === "committed" ? "confirmada" : card.status === "cancelled" ? "cancelada" : "no disponible"}.</InlineNotice>}</Card>;
   }
-  return <Card accent={tokens.color.interactivePrimary}><Text style={styles.cardTitle}>{card.title}</Text>{card.subtitle ? <Text style={styles.cardCopy}>{card.subtitle}</Text> : null}{card.items.map((item) => <View key={`${card.type}-${item.key}`} style={styles.item}><Text style={styles.itemLabel}>{item.label}</Text><Text style={[styles.itemValue, item.is_pending && styles.pending]}>{item.value}</Text></View>)}</Card>;
+  return <Card accent={tokens.color.interactivePrimary}><Text style={styles.cardTitle}>{card.title}</Text>{card.subtitle ? <Text style={styles.cardCopy}>{card.subtitle}</Text> : null}{card.items.map((item) => <View key={`${card.type}-${item.key}`} style={styles.item}><Text style={styles.itemLabel}>{item.label}</Text><Text style={[styles.itemValue, item.is_pending && styles.pending]}>{item.value}</Text></View>)}{card.type === "preference_draft" && card.can_commit ? <Button label="Guardar preferencias" onPress={onPreferenceCommit} /> : null}</Card>;
 }
 
-export function ChatConversation({ messages, onPreparedAction }: { messages: AIChatMessage[]; onPreparedAction: PreparedActionHandler }) {
+export function ChatConversation({ messages, onPreferenceCommit, onPreparedAction }: { messages: AIChatMessage[]; onPreferenceCommit: () => void; onPreparedAction: PreparedActionHandler }) {
   return (
     <View accessibilityLabel="Conversación con el Asistente" style={styles.conversation}>
       {messages.map((message) => {
@@ -32,7 +32,7 @@ export function ChatConversation({ messages, onPreparedAction }: { messages: AIC
           <View key={message.id} style={[styles.message, isUser ? styles.userMessage : styles.assistantMessage]}>
             <View style={isUser ? styles.userBubble : styles.assistantContent}>
               {message.text ? <Text style={styles.text}>{message.text}</Text> : null}
-              {message.cards?.map((card, index) => <ChatCard card={card} key={`${message.id}-${card.type}-${index}`} onPreparedAction={onPreparedAction} />)}
+              {message.cards?.map((card, index) => <ChatCard card={card} key={`${message.id}-${card.type}-${index}`} onPreferenceCommit={onPreferenceCommit} onPreparedAction={onPreparedAction} />)}
               {message.has_structured_content && !message.cards?.length ? <InlineNotice>Este objeto no está disponible en esta versión de la app.</InlineNotice> : null}
             </View>
           </View>

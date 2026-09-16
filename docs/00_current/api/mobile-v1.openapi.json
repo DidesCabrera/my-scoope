@@ -164,6 +164,11 @@
       },
       "AIChatDraftCardData": {
         "properties": {
+          "can_commit": {
+            "default": false,
+            "title": "Can Commit",
+            "type": "boolean"
+          },
           "items": {
             "items": {
               "$ref": "#/components/schemas/AIChatCardItemData"
@@ -522,6 +527,50 @@
           "updated_at"
         ],
         "title": "AIChatSummaryData",
+        "type": "object"
+      },
+      "AIClientMemoryCommitResultData": {
+        "properties": {
+          "refresh_chat": {
+            "default": true,
+            "title": "Refresh Chat",
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "updated",
+              "unchanged"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "AIClientMemoryCommitResultData",
+        "type": "object"
+      },
+      "AIClientMemoryCommitResultEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AIClientMemoryCommitResultData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "AIClientMemoryCommitResultEnvelope",
         "type": "object"
       },
       "AIJobAcceptedData": {
@@ -7829,6 +7878,70 @@
           }
         ],
         "summary": "Ai Chat Detail"
+      }
+    },
+    "/api/v1/ai/chats/{chat_id}/preferences/commit": {
+      "post": {
+        "operationId": "mobile_api_api_commit_ai_chat_preferences",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "chat_id",
+            "required": true,
+            "schema": {
+              "title": "Chat Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIClientMemoryCommitResultEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Commit Ai Chat Preferences"
       }
     },
     "/api/v1/ai/jobs/{job_id}": {

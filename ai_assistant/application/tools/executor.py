@@ -25,6 +25,7 @@ from ai_assistant.application.tools.registry import (
     TOOL_READ_PROPOSAL,
     TOOL_READ_SAVED_COMPARISON,
     TOOL_READ_USER_PROFILE_CONTEXT,
+    TOOL_READ_USER_PREFERENCE_CONTEXT,
     TOOL_SEARCH_OPERATIONAL_FOODS,
     TOOL_SEARCH_USER_DAILYPLANS,
     TOOL_SEARCH_USER_MEALS,
@@ -222,6 +223,7 @@ def build_default_read_only_tool_dispatch_table() -> dict[str, ReadOnlyToolCalla
         TOOL_READ_SAVED_COMPARISON: product_tools[TOOL_READ_SAVED_COMPARISON],
         TOOL_LIST_USER_PROPOSALS: product_tools[TOOL_LIST_USER_PROPOSALS],
         TOOL_READ_USER_PROFILE_CONTEXT: product_tools[TOOL_READ_USER_PROFILE_CONTEXT],
+        TOOL_READ_USER_PREFERENCE_CONTEXT: product_tools[TOOL_READ_USER_PREFERENCE_CONTEXT],
         TOOL_SEARCH_OPERATIONAL_FOODS: _search_operational_foods_adapter(product_tools[TOOL_SEARCH_OPERATIONAL_FOODS]),
         TOOL_SEARCH_USER_DAILYPLANS: _search_collection_adapter(
             product_tools[TOOL_SEARCH_USER_DAILYPLANS],

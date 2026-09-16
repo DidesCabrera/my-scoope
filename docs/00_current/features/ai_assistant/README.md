@@ -87,6 +87,24 @@ tab activo.
 
 ## Current client-memory/tool-oriented baseline
 
+Desde ARR01, ficha, preferencias y parámetros de propuesta comparten el contrato
+`ai_assistant_client_memory.v2`. El workspace provider-facing es
+`ai_assistant_workspace.v2`; adapters legacy pueden traducir almacenamiento interno,
+pero no exponer vocabularios competidores.
+
+Las preferencias alimentarias y de organización aprobadas persisten en
+`NutritionPreferenceProfile`. El draft sigue siendo temporal y el commit es una tool
+interna no expuesta al proveedor, invocada exclusivamente por aprobación confiable en
+web o móvil. Las preferencias guardadas no se envían automáticamente al proveedor:
+se consultan mediante `read_user_preference_context` cuando la interacción expresa la
+intención de usarlas.
+
+El tool set del intake mantiene siempre updates de draft y creación revisable, y
+añade lecturas de ficha/preferencias y cards cuando el lenguaje del usuario las hace
+relevantes. Los turnos saludables
+incorporan `ai_assistant_outcome_trace.v1` para distinguir outcome creado, avance de
+workspace, información bloqueante, bloqueo por guardrail y respuesta sin operación.
+
 The CM00-CM24 Client Memory & Profile Objects and LLM-native alignment cycle is closed. The current implementation contract for this area lives in:
 
 ```text

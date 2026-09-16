@@ -20,7 +20,7 @@ from food_catalog.models import (
     CatalogFood,
     CatalogFoodCapability,
 )
-from notas.domain.models import Food, Profile, WeightLog
+from notas.domain.models import Food, NutritionPreferenceProfile, Profile, WeightLog
 
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
@@ -83,6 +83,10 @@ class AccountDeletionViewTests(TestCase):
             is_global=True,
         )
         WeightLog.objects.create(user=self.user, date=date(2026, 8, 5), weight_kg=82.5)
+        NutritionPreferenceProfile.objects.create(
+            user=self.user,
+            preferences={"allergies_or_intolerances": ["maní"]},
+        )
         usage = AIUsageEvent.objects.create(
             user=self.user,
             period="2026-08",
@@ -195,6 +199,7 @@ class AccountDeletionViewTests(TestCase):
         self.assertEqual(self.user.first_name, "")
         self.assertFalse(self.user.has_usable_password())
         self.assertFalse(Profile.objects.filter(user=self.user).exists())
+        self.assertFalse(NutritionPreferenceProfile.objects.filter(user=self.user).exists())
         self.assertFalse(WeightLog.objects.filter(user=self.user).exists())
         self.assertFalse(Food.objects.filter(pk=private_food.pk).exists())
 

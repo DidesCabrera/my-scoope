@@ -1,5 +1,10 @@
 # AI Assistant Tool-Oriented Client Memory
 
+> ARR baseline (2026-09-16): field authority now lives in
+> `ai_assistant.domain.client_memory` as `ai_assistant_client_memory.v2`. Approved
+> preferences have a durable, user-approved store; automatic external-provider egress
+> is intentionally forbidden. See decision 0194 and the ARR cycle.
+
 Status: current
 Last updated: 2026-07-13
 Audience: developers and AI assistants working on My Scoope AI workflows

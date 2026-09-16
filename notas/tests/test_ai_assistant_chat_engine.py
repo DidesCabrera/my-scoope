@@ -85,7 +85,7 @@ class NutritionIntakeUnifiedEngineTests(SimpleTestCase):
         self.assertEqual(workspace["surface"], "ai_nutrition_intake")
         self.assertEqual(
             workspace["metadata"]["tool_oriented_intake"]["version"],
-            "ai_assistant_workspace.v1",
+            "ai_assistant_workspace.v2",
         )
         self.assertNotIn("recent_messages", str(workspace))
 

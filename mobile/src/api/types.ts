@@ -767,8 +767,8 @@ type AIChatDraftCard = {
   subtitle: string;
   items: AIChatCardItem[];
   status: string;
+  can_commit: boolean;
 };
-
 type AIChatProposalCard = {
   type: "proposal_review";
   proposal_id: number;

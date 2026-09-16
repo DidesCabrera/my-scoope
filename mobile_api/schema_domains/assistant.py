@@ -54,7 +54,7 @@ class AIChatDraftCardData(Schema):
     subtitle: str = ""
     items: list[AIChatCardItemData] = Field(default_factory=list)
     status: str = ""
-
+    can_commit: bool = False
 
 class AIChatProposalCardData(Schema):
     type: Literal["proposal_review"]

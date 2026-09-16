@@ -6,6 +6,11 @@ from typing import Any, Callable
 from ai_assistant.application.product_ports import AIProductBindings
 from ai_assistant.application.tools import (
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
+    TOOL_READ_USER_PREFERENCE_CONTEXT,
+    TOOL_READ_USER_PROFILE_CONTEXT,
+    TOOL_SHARE_PREFERENCE_DRAFT_CARD,
+    TOOL_SHARE_PROFILE_DRAFT_CARD,
+    TOOL_SHARE_PROPOSAL_PREFERENCES_CARD,
     TOOL_UPDATE_PREFERENCE_DRAFT,
     TOOL_UPDATE_PROFILE_DRAFT,
     TOOL_UPDATE_PROPOSAL_PREFERENCES,
@@ -113,10 +118,12 @@ def select_provider_tools(
             )
             return (proposal_tool,) if proposal_tool is not None else ()
 
+        selected_names = set(_AI_NUTRITION_INTAKE_CORE_TOOLS)
+        selected_names.update(_relevant_intake_memory_tools(user_text))
         return tuple(
             provider_spec
             for provider_spec in available
-            if str(provider_spec.get("name") or "") in _AI_NUTRITION_INTAKE_CORE_TOOLS
+            if str(provider_spec.get("name") or "") in selected_names
             and (
                 enable_reviewable_proposal_tools
                 or str(provider_spec.get("name") or "")
@@ -140,6 +147,29 @@ def select_provider_tools(
                 continue
         selected.append(provider_spec)
     return tuple(selected)
+
+
+def _relevant_intake_memory_tools(user_text: str) -> set[str]:
+    """Expose memory reads/cards only when the user's language makes them relevant."""
+
+    text = f" {str(user_text or '').strip().lower()} "
+    selected: set[str] = set()
+    if any(marker in text for marker in (" ficha ", " perfil ", " mis datos ", " datos personales ")):
+        selected.update({TOOL_READ_USER_PROFILE_CONTEXT, TOOL_SHARE_PROFILE_DRAFT_CARD})
+    if any(
+        marker in text
+        for marker in (
+            " preferencias guardadas ",
+            " mis preferencias ",
+            " restricciones guardadas ",
+            " mis alergias ",
+            " recuerda que ",
+        )
+    ):
+        selected.update({TOOL_READ_USER_PREFERENCE_CONTEXT, TOOL_SHARE_PREFERENCE_DRAFT_CARD})
+    if any(marker in text for marker in (" muestra ", " revisar ", " revisa ", " card ", " tarjeta ")):
+        selected.add(TOOL_SHARE_PROPOSAL_PREFERENCES_CARD)
+    return selected
 
 
 def initial_tool_choice(

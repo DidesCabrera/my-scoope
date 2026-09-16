@@ -71,7 +71,7 @@ class GoalDirectedAgencyTests(SimpleTestCase):
 
         tool_context = context["metadata"]["tool_oriented_intake"]
         progress = tool_context["work_progress"]
-        self.assertEqual(tool_context["version"], "ai_assistant_workspace.v1")
+        self.assertEqual(tool_context["version"], "ai_assistant_workspace.v2")
         self.assertEqual(progress["proposal_readiness"], "ready_for_reviewable_proposal")
         self.assertTrue(progress["reviewable_proposal_creation_available"])
         self.assertFalse(progress["required_information_still_missing"])

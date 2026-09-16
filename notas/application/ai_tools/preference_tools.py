@@ -3,19 +3,11 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from notas.application.ai_tools.runtime import run_ai_tool
+from django.db import transaction
 
-PREFERENCE_DRAFT_FIELDS = (
-    "dietary_pattern",
-    "avoided_foods",
-    "preferred_foods",
-    "allergies_or_intolerances",
-    "preferred_meals_per_day",
-    "cooking_time_preference",
-    "budget_preference",
-    "simplicity_preference",
-    "variety_preference",
-)
+from ai_assistant.domain.client_memory import PREFERENCE_DRAFT_FIELDS
+from notas.application.ai_tools.runtime import run_ai_tool
+from notas.domain.models import NutritionPreferenceProfile
 
 FOOD_PREFERENCE_FIELDS = (
     "dietary_pattern",
@@ -104,6 +96,39 @@ PREFERENCE_LEVEL_ALIASES = {
 }
 
 
+# READ TOOL ---------------------------------------------------
+
+
+def _read_user_preference_context_data(user) -> dict[str, Any]:
+    stored = NutritionPreferenceProfile.objects.filter(user=user).first()
+    persisted = _normalize_preference_draft(stored.preferences if stored else {})
+    persisted["field_sources"] = {
+        field_name: "profile"
+        for field_name in PREFERENCE_DRAFT_FIELDS
+        if not _is_empty_value(persisted.get(field_name))
+    }
+    preference_draft = _with_preference_draft_metadata(persisted)
+    return {
+        "preference_context": {
+            field_name: preference_draft.get(field_name)
+            for field_name in PREFERENCE_DRAFT_FIELDS
+            if not _is_empty_value(preference_draft.get(field_name))
+        },
+        "preference_draft": preference_draft,
+        "preference_draft_card": _build_preference_draft_card(preference_draft),
+        "source_boundary": {
+            "object": "persistent_nutrition_preferences",
+            "persistent_preferences_read": True,
+            "writes_allowed": False,
+            "persistence_requires_user_approval": True,
+        },
+    }
+
+
+def read_user_preference_context_tool(user):
+    return run_ai_tool(_read_user_preference_context_data, user, user=user)
+
+
 # DRAFT TOOLS ------------------------------------------------
 
 
@@ -148,7 +173,7 @@ def _update_preference_draft_data(
             "presentation_mode": "silent_state_update",
             "share_tool": "share_preference_draft_card",
             "persistence_requires_user_approval": True,
-            "commit_tool_planned": "commit_preference_update",
+            "commit_tool": "commit_preference_update",
         },
     }
 
@@ -198,6 +223,121 @@ def share_preference_draft_card_tool(user, *, preference_draft: Mapping[str, Any
         preference_draft=preference_draft,
         user=user,
     )
+
+
+# COMMIT TOOL -------------------------------------------------
+
+
+def _commit_preference_update_data(
+    user,
+    preference_draft: Mapping[str, Any],
+    approved_fields: list[str] | tuple[str, ...] | None = None,
+) -> dict[str, Any]:
+    if not isinstance(preference_draft, Mapping):
+        raise ValueError("preference_draft_required")
+
+    draft = _with_preference_draft_metadata(_normalize_preference_draft(preference_draft))
+    approved = {
+        _normalize_field_name(field_name)
+        for field_name in (approved_fields or draft.get("chat_draft_fields") or PREFERENCE_DRAFT_FIELDS)
+    }
+    approved.intersection_update(PREFERENCE_DRAFT_FIELDS)
+    updates = {
+        field_name: draft.get(field_name)
+        for field_name in approved
+        if not _is_empty_value(draft.get(field_name))
+        and (draft.get("field_sources") or {}).get(field_name) == "chat_draft"
+    }
+
+    with transaction.atomic():
+        preference_profile, _created = NutritionPreferenceProfile.objects.select_for_update().get_or_create(
+            user=user,
+            defaults={"preferences": {}},
+        )
+        current = _normalize_preference_draft(preference_profile.preferences or {})
+        changed_fields = [
+            field_name
+            for field_name, value in updates.items()
+            if current.get(field_name) != value
+        ]
+        persisted = {
+            field_name: current.get(field_name)
+            for field_name in PREFERENCE_DRAFT_FIELDS
+            if not _is_empty_value(current.get(field_name))
+        }
+        persisted.update(updates)
+        if changed_fields:
+            preference_profile.preferences = persisted
+            preference_profile.save(update_fields=["preferences", "updated_at"])
+
+    committed = _normalize_preference_draft({**draft, **persisted})
+    committed_sources = dict(committed.get("field_sources") or {})
+    for field_name in persisted:
+        committed_sources[field_name] = "profile"
+    committed["field_sources"] = committed_sources
+    committed = _with_preference_draft_metadata(committed)
+    return {
+        "preference_context": persisted,
+        "preference_draft": committed,
+        "preference_draft_card": _build_preference_draft_card(committed),
+        "updated_fields": changed_fields,
+        "unchanged_fields": sorted(set(updates) - set(changed_fields)),
+        "source_boundary": {
+            "object": "persistent_nutrition_preferences",
+            "persistent_preferences_updated": bool(changed_fields),
+            "writes_allowed": True,
+            "approved_fields": sorted(approved),
+        },
+    }
+
+
+def commit_preference_update_tool(
+    user,
+    *,
+    preference_draft: Mapping[str, Any],
+    approved_fields: list[str] | tuple[str, ...] | None = None,
+):
+    return run_ai_tool(
+        _commit_preference_update_data,
+        user,
+        preference_draft=preference_draft,
+        approved_fields=approved_fields,
+        user=user,
+    )
+
+
+def build_preference_draft_payload_from_brief(brief) -> dict[str, Any]:
+    """Build the canonical preference draft used by the trusted approval path."""
+
+    values = {
+        "dietary_pattern": getattr(brief, "dietary_pattern", None),
+        "avoided_foods": list(getattr(brief, "excluded_foods", None) or []),
+        "preferred_foods": list(getattr(brief, "preferred_foods", None) or []),
+        "allergies_or_intolerances": list(getattr(brief, "allergies_or_intolerances", None) or []),
+        "preferred_meals_per_day": getattr(brief, "preferred_meals_per_day", None)
+        or getattr(brief, "meals_per_day", None),
+        "cooking_time_preference": getattr(brief, "cooking_time_preference", None),
+        "budget_preference": getattr(brief, "budget_preference", None)
+        or getattr(brief, "budget_level", None),
+        "simplicity_preference": getattr(brief, "simplicity_preference", None),
+        "variety_preference": getattr(brief, "variety_preference", None),
+    }
+    field_sources = dict(getattr(brief, "field_sources", None) or {})
+    aliases = {
+        "avoided_foods": "excluded_foods",
+        "preferred_meals_per_day": "meals_per_day",
+        "budget_preference": "budget_level",
+    }
+    payload = {
+        field_name: value
+        for field_name, value in values.items()
+        if not _is_empty_value(value)
+    }
+    payload["field_sources"] = {
+        field_name: field_sources.get(field_name) or field_sources.get(aliases.get(field_name, "")) or "chat_draft"
+        for field_name in payload
+    }
+    return _with_preference_draft_metadata(payload)
 
 
 # NORMALIZATION ---------------------------------------------
@@ -254,7 +394,7 @@ def _build_preference_draft_card(preference_draft: Mapping[str, Any]) -> dict[st
         "sections": sections,
         "known_count": known_count,
         "has_chat_draft_updates": bool(preference_draft.get("chat_draft_fields")),
-        "can_update_preferences": False,
+        "can_update_preferences": bool(preference_draft.get("chat_draft_fields")),
         "status": "has_data" if known_count else "empty",
     }
 
@@ -279,59 +419,59 @@ def _field_definitions() -> dict[str, dict[str, Any]]:
             "description": "Patrón alimentario declarado por el usuario. Diferencia restricciones fuertes de preferencias suaves.",
             "allowed_values": sorted(DIETARY_PATTERNS),
             "examples": ["soy vegano", "vegetariana", "como de todo"],
-            "persistence": "future preference profile after explicit approval",
+            "persistence": "preference profile after explicit approval",
         },
         "avoided_foods": {
             "label": FIELD_LABELS["avoided_foods"],
             "description": "Alimentos que el usuario evita o no quiere en propuestas. Pueden ser restricciones fuertes o preferencias según contexto.",
             "examples": ["evito pescado", "no me gusta el atún", "sin lácteos"],
-            "persistence": "future preference profile after explicit approval",
+            "persistence": "preference profile after explicit approval",
         },
         "preferred_foods": {
             "label": FIELD_LABELS["preferred_foods"],
             "description": "Alimentos que el usuario prefiere y que pueden mejorar adherencia.",
             "examples": ["prefiero pollo", "me gustan huevos y arroz"],
-            "persistence": "future preference profile after explicit approval",
+            "persistence": "preference profile after explicit approval",
         },
         "allergies_or_intolerances": {
             "label": FIELD_LABELS["allergies_or_intolerances"],
             "description": "Alergias o intolerancias declaradas. Deben tratarse como restricciones fuertes cuando el usuario lo indique.",
             "examples": ["soy intolerante a la lactosa", "alergia al maní"],
-            "persistence": "future preference profile after explicit approval",
+            "persistence": "preference profile after explicit approval",
         },
         "preferred_meals_per_day": {
             "label": FIELD_LABELS["preferred_meals_per_day"],
             "description": "Número habitual o preferido de comidas. No pertenece a la ficha personal base y puede cambiar por propuesta.",
             "examples": ["3 comidas", "prefiero cinco comidas al día"],
-            "persistence": "proposal/preference draft, not personal base profile",
+            "persistence": "preference profile after explicit approval; proposal may override it",
         },
         "cooking_time_preference": {
             "label": FIELD_LABELS["cooking_time_preference"],
             "description": "Preferencia de tiempo de preparación.",
             "allowed_values": sorted(PREFERENCE_LEVELS),
             "examples": ["poco tiempo", "puedo cocinar más"],
-            "persistence": "future preference profile after explicit approval",
+            "persistence": "preference profile after explicit approval",
         },
         "budget_preference": {
             "label": FIELD_LABELS["budget_preference"],
             "description": "Sensibilidad del usuario al presupuesto.",
             "allowed_values": sorted(PREFERENCE_LEVELS),
             "examples": ["económico", "presupuesto bajo"],
-            "persistence": "future preference profile after explicit approval",
+            "persistence": "preference profile after explicit approval",
         },
         "simplicity_preference": {
             "label": FIELD_LABELS["simplicity_preference"],
             "description": "Preferencia por recetas simples o más elaboradas.",
             "allowed_values": sorted(PREFERENCE_LEVELS),
             "examples": ["simple", "no muy elaborado"],
-            "persistence": "future preference profile after explicit approval",
+            "persistence": "preference profile after explicit approval",
         },
         "variety_preference": {
             "label": FIELD_LABELS["variety_preference"],
             "description": "Preferencia por variedad versus repetición.",
             "allowed_values": sorted(PREFERENCE_LEVELS),
             "examples": ["variado", "puedo repetir comidas"],
-            "persistence": "future preference profile after explicit approval",
+            "persistence": "preference profile after explicit approval",
         },
     }
 

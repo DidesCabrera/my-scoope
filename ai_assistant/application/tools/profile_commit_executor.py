@@ -21,6 +21,7 @@ from ai_assistant.domain.tool_results import AIToolResult
 ProfileCommitToolCallable = Callable[..., AIToolResult]
 
 TRUSTED_APPROVAL_SOURCES = {
+    "preference_card_button",
     "profile_card_button",
     "system_approved_profile_card",
 }
@@ -91,6 +92,10 @@ class ProfileCommitToolExecutor:
         if raw_result.ok:
             data = dict(raw_result.data or {})
             source_boundary = dict(data.get("source_boundary") or {})
+            persistent_memory_updated = bool(
+                source_boundary.get("persistent_profile_updated")
+                or source_boundary.get("persistent_preferences_updated")
+            )
             return AssistantToolResult(
                 tool_name=normalized_request.tool_name,
                 status=AssistantToolStatus.OK,
@@ -102,6 +107,10 @@ class ProfileCommitToolExecutor:
                     "risk_level": spec.risk_level.value,
                     "writes_allowed": True,
                     "persistent_profile_updated": bool(source_boundary.get("persistent_profile_updated")),
+                    "persistent_preferences_updated": bool(
+                        source_boundary.get("persistent_preferences_updated")
+                    ),
+                    "persistent_memory_updated": persistent_memory_updated,
                     "requires_user_approval": True,
                     "trusted_user_approval": True,
                     "approval_source": normalized_request.metadata.get("approval_source"),

@@ -17,6 +17,7 @@ from ai_assistant.application.prepared_actions import (
     commit_prepared_action,
 )
 from ai_assistant.application.tools import (
+    TOOL_COMMIT_PREFERENCE_UPDATE,
     TOOL_COMMIT_PROFILE_UPDATE,
     execute_profile_commit_tool,
 )
@@ -40,6 +41,7 @@ from notas.application.ai_intake.dailyplan_generator import (
 from notas.application.ai_intake.nutrition_brief import (
     AI_NUTRITION_BRIEF_SESSION_KEY,
     AI_NUTRITION_CONVERSATION_SESSION_KEY,
+    NutritionConversationMessage,
     NutritionConversationState,
     append_profile_update_confirmation_message,
     build_brief_from_form,
@@ -60,6 +62,7 @@ from notas.application.ai_intake.profile_draft_update import (
     build_profile_draft_payload_from_brief,
     profile_update_result_from_tool_data,
 )
+from notas.application.ai_tools.preference_tools import build_preference_draft_payload_from_brief
 from notas.application.ai_intake.proposal_from_brief import (
     create_nutrition_brief_proposal,
 )
@@ -431,6 +434,73 @@ def ai_nutrition_intake(request):
                 messages.success(request, "Ficha personal actualizada.")
             else:
                 messages.info(request, "No había cambios nuevos para guardar en tu ficha personal.")
+            return redirect("ai_nutrition_intake")
+
+        if action == "update_preferences_from_draft":
+            brief = deserialize_brief(request.session.get(AI_NUTRITION_BRIEF_SESSION_KEY))
+            conversation = deserialize_conversation(
+                request.session.get(AI_NUTRITION_CONVERSATION_SESSION_KEY)
+            )
+            if not brief or not conversation:
+                messages.error(request, "Primero registra preferencias en el chat.")
+                return redirect("ai_nutrition_intake")
+
+            tool_result = execute_profile_commit_tool(
+                AssistantToolRequest(
+                    tool_name=TOOL_COMMIT_PREFERENCE_UPDATE,
+                    arguments={
+                        "preference_draft": build_preference_draft_payload_from_brief(brief),
+                    },
+                    request_id="preference_card_approval",
+                    reason="User clicked the preference card approval button in the chat UI.",
+                    metadata={
+                        "approved_by_user": True,
+                        "approval_source": "preference_card_button",
+                        "surface": "ai_nutrition_intake",
+                    },
+                ),
+                user=request.user,
+            )
+            if tool_result.status != AssistantToolStatus.OK:
+                messages.error(request, "No pude guardar las preferencias desde este chat.")
+                return redirect("ai_nutrition_intake")
+
+            data = dict(tool_result.data or {})
+            saved_fields = set(data.get("updated_fields") or ()) | set(data.get("unchanged_fields") or ())
+            source_aliases = {
+                "avoided_foods": "excluded_foods",
+                "preferred_meals_per_day": "meals_per_day",
+                "budget_preference": "budget_level",
+            }
+            field_sources = dict(brief.field_sources or {})
+            for field_name in saved_fields:
+                field_sources[field_name] = "profile"
+                alias = source_aliases.get(field_name)
+                if alias:
+                    field_sources[alias] = "profile"
+            updated_brief = replace(brief, field_sources=field_sources)
+            confirmation = (
+                "Guardé tus preferencias para usarlas en futuras conversaciones."
+                if data.get("updated_fields")
+                else "Tus preferencias guardadas ya estaban actualizadas."
+            )
+            conversation = NutritionConversationState(
+                messages=[
+                    *conversation.messages,
+                    NutritionConversationMessage(
+                        role="assistant",
+                        text=confirmation,
+                        preference_draft_card=data.get("preference_draft_card"),
+                    ),
+                ],
+                result=build_intake_result_from_brief(updated_brief),
+            )
+            _sync_session_from_conversation(
+                request,
+                conversation,
+                existing_chat_id=request.session.get(AI_NUTRITION_CHAT_SESSION_KEY),
+            )
+            messages.success(request, "Preferencias guardadas.")
             return redirect("ai_nutrition_intake")
 
         if action == "create_proposal":

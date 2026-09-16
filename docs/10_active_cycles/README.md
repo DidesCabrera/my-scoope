@@ -36,6 +36,10 @@ Status: planned / active / paused / completed / superseded
 Cuando un ciclo planificado empiece a implementarse, el documento puede permanecer aquí como plan operacional, pero las decisiones estables que surjan deben registrarse también en `docs/20_decisions/`.
 
 ## En curso o pendientes de validación
+- `ai_assistant_reliability_recovery_cycle.md`: ARR00-ARR05 implementados localmente
+  para unificar memoria cliente, restaurar visibilidad de tools, persistir preferencias
+  solo tras aprobación, alinear cards web/móvil y registrar outcome traces; ARR06 exige
+  replays con proveedor real y revisión humana en staging.
 - `nutrition_label_ai_reliability_cycle.md`: implementación completada en repositorio
   para cámara/galería, IA multimodal, tarifa fija, escalamiento interno, retención
   opcional y métricas; quedan los gates de staging y TestFlight físico.

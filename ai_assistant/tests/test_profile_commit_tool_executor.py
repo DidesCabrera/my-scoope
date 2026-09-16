@@ -1,6 +1,7 @@
 from django.test import SimpleTestCase
 
 from ai_assistant.application.tools import (
+    TOOL_COMMIT_PREFERENCE_UPDATE,
     TOOL_COMMIT_PROFILE_UPDATE,
     ProfileCommitToolExecutor,
     execute_profile_commit_tool,
@@ -54,3 +55,30 @@ class ProfileCommitToolExecutorTests(SimpleTestCase):
         self.assertTrue(result.metadata["writes_allowed"])
         self.assertTrue(result.metadata["persistent_profile_updated"])
         self.assertEqual(result.metadata["approval_source"], "profile_card_button")
+
+    def test_preference_commit_uses_the_same_trusted_approval_boundary(self):
+        def commit_tool(user, *, preference_draft, approved_fields=None):
+            return tool_success(
+                {
+                    "preference_draft": preference_draft,
+                    "updated_fields": ["dietary_pattern"],
+                    "source_boundary": {"persistent_preferences_updated": True},
+                }
+            )
+
+        result = execute_profile_commit_tool(
+            AssistantToolRequest(
+                tool_name=TOOL_COMMIT_PREFERENCE_UPDATE,
+                arguments={"preference_draft": {"dietary_pattern": "vegan"}},
+                request_id="preference_commit_1",
+                metadata={"approved_by_user": True, "approval_source": "preference_card_button"},
+            ),
+            user=object(),
+            executor=ProfileCommitToolExecutor(
+                dispatch_table={TOOL_COMMIT_PREFERENCE_UPDATE: commit_tool}
+            ),
+        )
+
+        self.assertEqual(result.status, AssistantToolStatus.OK)
+        self.assertTrue(result.metadata["persistent_preferences_updated"])
+        self.assertTrue(result.metadata["persistent_memory_updated"])

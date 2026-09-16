@@ -83,10 +83,21 @@
           {% endfor %}
 
           <div class="ai-chat-profile-card__footer">
-            {% if message.preference_draft_card.known_count %}
-              <span>{{ message.preference_draft_card.known_count }} dato{{ message.preference_draft_card.known_count|pluralize }} de preferencia registrado{{ message.preference_draft_card.known_count|pluralize }} para esta conversación.</span>
-            {% else %}
-              <span>Sin preferencias registradas todavía.</span>
+            <span>
+              {% if message.preference_draft_card.known_count %}
+                {{ message.preference_draft_card.known_count }} dato{{ message.preference_draft_card.known_count|pluralize }} de preferencia registrado{{ message.preference_draft_card.known_count|pluralize }}.
+              {% else %}
+                Sin preferencias registradas todavía.
+              {% endif %}
+            </span>
+            {% if message.preference_draft_card.can_update_preferences %}
+              <form method="post" action="{% url 'ai_nutrition_intake' %}" class="ai-chat-profile-card__form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_preferences_from_draft">
+                <button type="submit" class="ai-chat-profile-card__action">
+                  Guardar preferencias
+                </button>
+              </form>
             {% endif %}
           </div>
         </div>

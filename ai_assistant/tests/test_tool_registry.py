@@ -2,6 +2,7 @@ from django.test import SimpleTestCase
 
 from ai_assistant.application.tools import (
     TOOL_COMMIT_PROFILE_UPDATE,
+    TOOL_COMMIT_PREFERENCE_UPDATE,
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
     TOOL_CREATE_NUTRITION_SOLVER_MEAL_PROPOSAL,
@@ -12,6 +13,7 @@ from ai_assistant.application.tools import (
     TOOL_READ_DAILYPLAN,
     TOOL_READ_SAVED_COMPARISON,
     TOOL_READ_USER_PROFILE_CONTEXT,
+    TOOL_READ_USER_PREFERENCE_CONTEXT,
     TOOL_SEARCH_OPERATIONAL_FOODS,
     TOOL_SHARE_PREFERENCE_DRAFT_CARD,
     TOOL_SHARE_PROFILE_DRAFT_CARD,
@@ -42,6 +44,8 @@ class AIAssistantToolRegistryTests(SimpleTestCase):
 
         self.assertIn(TOOL_READ_DAILYPLAN, tool_names)
         self.assertIn(TOOL_READ_USER_PROFILE_CONTEXT, tool_names)
+        self.assertIn(TOOL_READ_USER_PREFERENCE_CONTEXT, tool_names)
+        self.assertIn(TOOL_COMMIT_PREFERENCE_UPDATE, tool_names)
         self.assertIn(TOOL_UPDATE_PROFILE_DRAFT, tool_names)
         self.assertIn(TOOL_SHARE_PROFILE_DRAFT_CARD, tool_names)
         self.assertIn(TOOL_UPDATE_PREFERENCE_DRAFT, tool_names)
@@ -288,6 +292,7 @@ class AIAssistantToolRegistryTests(SimpleTestCase):
         self.assertIn("profile_draft", spec.input_schema["required"])
         provider_tool_names = {tool["name"] for tool in list_provider_tool_specs()}
         self.assertNotIn(TOOL_COMMIT_PROFILE_UPDATE, provider_tool_names)
+        self.assertNotIn(TOOL_COMMIT_PREFERENCE_UPDATE, provider_tool_names)
 
     def test_tool_spec_contract_rejects_commit_tools_without_review(self):
         with self.assertRaisesMessage(

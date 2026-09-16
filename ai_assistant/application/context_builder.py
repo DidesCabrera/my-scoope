@@ -6,6 +6,12 @@ from typing import Any, Mapping, Sequence
 from django.conf import settings
 
 from ai_assistant.application.chat_engines import ChatEngineRequest
+from ai_assistant.domain.client_memory import (
+    CLIENT_MEMORY_CONTRACT_VERSION,
+    PREFERENCE_DRAFT_FIELDS,
+    PROFILE_DRAFT_FIELDS,
+    PROPOSAL_PREFERENCE_FIELDS,
+)
 
 MAX_TEXT_LENGTH = 240
 MAX_LIST_ITEMS = 8
@@ -23,37 +29,6 @@ SENSITIVE_KEY_FRAGMENTS = (
     "phone",
     "secret",
     "token",
-)
-
-PROFILE_DRAFT_FIELDS = (
-    "weight_kg",
-    "height_cm",
-    "age_years",
-    "sex",
-    "activity_level",
-    "training_frequency",
-)
-
-PREFERENCE_DRAFT_FIELDS = (
-    "excluded_foods",
-    "preferred_foods",
-    "style_preferences",
-    "complexity_level",
-    "budget_level",
-    "meals_per_day",
-    "notes",
-)
-
-PROPOSAL_PREFERENCE_FIELDS = (
-    "goal",
-    "requested_entity",
-    "meals_per_day",
-    "energy_adjustment",
-    "calorie_target",
-    "protein_target",
-    "carb_target",
-    "fat_target",
-    "notes",
 )
 
 NUTRITION_BRIEF_FIELDS = (
@@ -77,6 +52,13 @@ NUTRITION_BRIEF_FIELDS = (
     "style_preferences",
     "excluded_foods",
     "preferred_foods",
+    "dietary_pattern",
+    "allergies_or_intolerances",
+    "preferred_meals_per_day",
+    "cooking_time_preference",
+    "budget_preference",
+    "simplicity_preference",
+    "variety_preference",
     "complexity_level",
     "budget_level",
     "notes",
@@ -225,7 +207,8 @@ def _tool_oriented_intake_context(
         ("subject_source", "requires_library_ppk_warning"),
     )
     return {
-        "version": "ai_assistant_workspace.v1",
+        "version": "ai_assistant_workspace.v2",
+        "client_memory_contract": CLIENT_MEMORY_CONTRACT_VERSION,
         "assistant_role": "collaborative_product_assistant",
         "current_drafts": current_drafts,
         "current_nutrition_brief": dict(nutrition_brief),
@@ -307,16 +290,50 @@ def _draft_payload_from_fields(source: Mapping[str, Any], fields: Sequence[str])
     return draft
 
 
-def _preference_draft_payload(nutrition_brief: Mapping[str, Any]) -> dict[str, Any]:
-    draft: dict[str, Any] = {}
-    if _has_value(nutrition_brief.get("excluded_foods")):
-        draft["avoided_foods"] = _sanitize_value(nutrition_brief.get("excluded_foods"))
-    if _has_value(nutrition_brief.get("preferred_foods")):
-        draft["preferred_foods"] = _sanitize_value(nutrition_brief.get("preferred_foods"))
-    for field_name in ("style_preferences", "complexity_level", "budget_level", "meals_per_day", "notes"):
-        value = nutrition_brief.get(field_name)
-        if _has_value(value):
-            draft[field_name] = _sanitize_value(value)
+def _preference_draft_payload(source: Mapping[str, Any]) -> dict[str, Any]:
+    """Project the legacy nutrition brief into the canonical memory contract."""
+
+    direct_values = {
+        "dietary_pattern": source.get("dietary_pattern"),
+        "avoided_foods": source.get("excluded_foods"),
+        "preferred_foods": source.get("preferred_foods"),
+        "allergies_or_intolerances": source.get("allergies_or_intolerances"),
+        "preferred_meals_per_day": source.get("preferred_meals_per_day") or source.get("meals_per_day"),
+        "cooking_time_preference": source.get("cooking_time_preference"),
+        "budget_preference": source.get("budget_preference") or source.get("budget_level"),
+        "simplicity_preference": source.get("simplicity_preference"),
+        "variety_preference": source.get("variety_preference"),
+    }
+    styles = set(source.get("style_preferences") or ())
+    complexity = source.get("complexity_level")
+    if direct_values["simplicity_preference"] is None and ("simple" in styles or complexity == "low"):
+        direct_values["simplicity_preference"] = "high"
+    if direct_values["variety_preference"] is None and "varied" in styles:
+        direct_values["variety_preference"] = "high"
+    if direct_values["cooking_time_preference"] is None and "low_prep" in styles:
+        direct_values["cooking_time_preference"] = "low"
+
+    source_map = source.get("field_sources") if isinstance(source.get("field_sources"), Mapping) else {}
+    source_aliases = {
+        "avoided_foods": "excluded_foods",
+        "preferred_meals_per_day": "meals_per_day",
+        "budget_preference": "budget_level",
+        "simplicity_preference": "complexity_level",
+        "variety_preference": "style_preferences",
+        "cooking_time_preference": "style_preferences",
+    }
+    draft = {
+        field_name: direct_values.get(field_name)
+        for field_name in PREFERENCE_DRAFT_FIELDS
+        if direct_values.get(field_name) not in (None, "", [], {})
+    }
+    field_sources = {
+        field_name: source_map.get(field_name) or source_map.get(source_aliases.get(field_name, ""))
+        for field_name in draft
+        if source_map.get(field_name) or source_map.get(source_aliases.get(field_name, ""))
+    }
+    if field_sources:
+        draft["field_sources"] = field_sources
     return draft
 
 

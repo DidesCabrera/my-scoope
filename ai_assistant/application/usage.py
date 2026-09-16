@@ -257,6 +257,18 @@ def _safe_usage_metadata(
         "proposal_count": len(tuple(response.proposal_ids or ())),
     }
     response_metadata = dict(response.metadata or {})
+    outcome_trace = response_metadata.get("outcome_trace")
+    if isinstance(outcome_trace, Mapping):
+        metadata["outcome_trace"] = sanitize_usage_mapping(
+            {
+                "version": outcome_trace.get("version"),
+                "objective": outcome_trace.get("objective"),
+                "state": outcome_trace.get("state"),
+                "proposal_created": bool(outcome_trace.get("proposal_created")),
+                "blocking_fields_count": len(tuple(outcome_trace.get("blocking_fields") or ())),
+                "tool_results_count": len(tuple(outcome_trace.get("tool_results") or ())),
+            }
+        )
     if bool(response_metadata.get("post_tool_degraded")):
         metadata["post_tool_degradation"] = sanitize_usage_mapping(
             {

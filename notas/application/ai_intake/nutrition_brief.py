@@ -169,6 +169,13 @@ BRIEF_FIELD_SOURCE_FIELDS = {
     "style_preferences",
     "excluded_foods",
     "preferred_foods",
+    "dietary_pattern",
+    "allergies_or_intolerances",
+    "preferred_meals_per_day",
+    "cooking_time_preference",
+    "budget_preference",
+    "simplicity_preference",
+    "variety_preference",
     "complexity_level",
     "budget_level",
     "notes",
@@ -217,6 +224,13 @@ class NutritionBrief:
     style_preferences: list[str] = field(default_factory=list)
     excluded_foods: list[str] = field(default_factory=list)
     preferred_foods: list[str] = field(default_factory=list)
+    dietary_pattern: str | None = None
+    allergies_or_intolerances: list[str] = field(default_factory=list)
+    preferred_meals_per_day: int | None = None
+    cooking_time_preference: str | None = None
+    budget_preference: str | None = None
+    simplicity_preference: str | None = None
+    variety_preference: str | None = None
     complexity_level: str | None = None
     budget_level: str | None = None
     notes: list[str] = field(default_factory=list)
@@ -1378,6 +1392,13 @@ def serialize_brief(brief: NutritionBrief) -> dict:
         "style_preferences": list(brief.style_preferences),
         "excluded_foods": list(brief.excluded_foods),
         "preferred_foods": list(brief.preferred_foods),
+        "dietary_pattern": brief.dietary_pattern,
+        "allergies_or_intolerances": list(brief.allergies_or_intolerances),
+        "preferred_meals_per_day": brief.preferred_meals_per_day,
+        "cooking_time_preference": brief.cooking_time_preference,
+        "budget_preference": brief.budget_preference,
+        "simplicity_preference": brief.simplicity_preference,
+        "variety_preference": brief.variety_preference,
         "complexity_level": brief.complexity_level,
         "budget_level": brief.budget_level,
         "notes": list(brief.notes),
@@ -1412,6 +1433,13 @@ def deserialize_brief(payload: dict | None) -> NutritionBrief | None:
         style_preferences=_clean_multi_choice(payload.get("style_preferences") or [], STYLE_CHOICES),
         excluded_foods=_clean_text_list(payload.get("excluded_foods") or []),
         preferred_foods=_clean_text_list(payload.get("preferred_foods") or []),
+        dietary_pattern=str(payload.get("dietary_pattern") or "").strip() or None,
+        allergies_or_intolerances=_clean_text_list(payload.get("allergies_or_intolerances") or []),
+        preferred_meals_per_day=_clean_int(payload.get("preferred_meals_per_day"), min_value=1, max_value=10),
+        cooking_time_preference=str(payload.get("cooking_time_preference") or "").strip() or None,
+        budget_preference=str(payload.get("budget_preference") or "").strip() or None,
+        simplicity_preference=str(payload.get("simplicity_preference") or "").strip() or None,
+        variety_preference=str(payload.get("variety_preference") or "").strip() or None,
         complexity_level=_clean_choice(payload.get("complexity_level"), COMPLEXITY_CHOICES),
         budget_level=_clean_choice(payload.get("budget_level"), BUDGET_CHOICES),
         notes=_clean_text_list(payload.get("notes") or []),

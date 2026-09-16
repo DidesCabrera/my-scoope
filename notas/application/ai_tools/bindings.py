@@ -9,6 +9,7 @@ from ai_assistant.application.product_ports import (
 from ai_assistant.application.tools.tool_names import (
     TOOL_COMMIT_PREPARED_ACTION,
     TOOL_COMMIT_PROFILE_UPDATE,
+    TOOL_COMMIT_PREFERENCE_UPDATE,
     TOOL_COMPARE_DAILYPLAN_TO_TARGETS,
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
@@ -36,6 +37,7 @@ from ai_assistant.application.tools.tool_names import (
     TOOL_READ_PROPOSAL,
     TOOL_READ_SAVED_COMPARISON,
     TOOL_READ_USER_PROFILE_CONTEXT,
+    TOOL_READ_USER_PREFERENCE_CONTEXT,
     TOOL_SEARCH_OPERATIONAL_FOODS,
     TOOL_SEARCH_USER_DAILYPLANS,
     TOOL_SEARCH_USER_MEALS,
@@ -52,6 +54,8 @@ from notas.application.ai_tools.comparison_tools import (
     read_saved_comparison_tool,
 )
 from notas.application.ai_tools.preference_tools import (
+    commit_preference_update_tool,
+    read_user_preference_context_tool,
     share_preference_draft_card_tool,
     update_preference_draft_tool,
 )
@@ -153,6 +157,7 @@ def register_product_ai_bindings() -> None:
                 TOOL_READ_SAVED_COMPARISON: read_saved_comparison_tool,
                 TOOL_LIST_USER_PROPOSALS: list_user_proposals_tool,
                 TOOL_READ_USER_PROFILE_CONTEXT: read_user_profile_context_tool,
+                TOOL_READ_USER_PREFERENCE_CONTEXT: read_user_preference_context_tool,
                 TOOL_SEARCH_OPERATIONAL_FOODS: search_foods_tool,
                 TOOL_SEARCH_USER_DAILYPLANS: search_dailyplans_tool,
                 TOOL_SEARCH_USER_MEALS: search_meals_tool,
@@ -174,6 +179,7 @@ def register_product_ai_bindings() -> None:
             },
             profile_commit_tools={
                 TOOL_COMMIT_PROFILE_UPDATE: commit_profile_update_tool,
+                TOOL_COMMIT_PREFERENCE_UPDATE: commit_preference_update_tool,
                 TOOL_COMMIT_PREPARED_ACTION: _commit_prepared_action_tool,
             },
             proposal_tools={
@@ -198,4 +204,3 @@ def register_product_ai_bindings() -> None:
             serialize_prepared_action=serialize_prepared_action,
         )
     )
-

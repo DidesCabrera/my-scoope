@@ -201,6 +201,19 @@ TOOL_READ_USER_PROFILE_CONTEXT: AssistantToolSpec(
             "properties": {},
         },
     ),
+TOOL_READ_USER_PREFERENCE_CONTEXT: AssistantToolSpec(
+        name=TOOL_READ_USER_PREFERENCE_CONTEXT,
+        description=(
+            "Read the authenticated user's approved food and meal preferences. "
+            "Use this when the user refers to saved preferences, restrictions, allergies, usual meal organization "
+            "or asks the assistant to remember what they normally prefer. This tool never writes data."
+        ),
+        category=AssistantToolCategory.READ,
+        risk_level=AssistantToolRiskLevel.LOW,
+        requires_human_review=False,
+        allowed_intents=("read_context", "capture_nutrition_brief", "create_dailyplan_proposal", "answer_question"),
+        input_schema={"type": "object", "required": [], "properties": {}},
+    ),
 TOOL_LIST_USER_PROGRAMS: AssistantToolSpec(
         name=TOOL_LIST_USER_PROGRAMS,
         description="List or search weekly Programs owned by the authenticated user.",

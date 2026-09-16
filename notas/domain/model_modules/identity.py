@@ -102,6 +102,22 @@ class Profile(models.Model):
         return f"{self.user.username} ({self.role})"
 
 
+class NutritionPreferenceProfile(models.Model):
+    """User-approved nutrition preferences available across assistant chats."""
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="nutrition_preference_profile",
+    )
+    preferences = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Nutrition preferences · {self.user.username}"
+
+
 class Subscription(models.Model):
     """Legacy name for a nutritionist/member care relationship.
 

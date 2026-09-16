@@ -41,6 +41,8 @@ class AssistantCapability:
 CAPABILITIES = (
     AssistantCapability("profile.read", "profile", "Consultar ficha, peso y contexto nutricional.", AssistantCapabilityMode.AUTONOMOUS_READ, ("read_user_profile_context",)),
     AssistantCapability("profile.update", "profile", "Preparar y confirmar cambios de ficha.", AssistantCapabilityMode.PREPARED_ACTION, ("update_profile_draft", "share_profile_draft_card")),
+    AssistantCapability("preferences.read", "profile", "Consultar preferencias nutricionales aprobadas.", AssistantCapabilityMode.AUTONOMOUS_READ, ("read_user_preference_context",)),
+    AssistantCapability("preferences.update", "profile", "Preparar y confirmar preferencias nutricionales.", AssistantCapabilityMode.PREPARED_ACTION, ("update_preference_draft", "share_preference_draft_card")),
     AssistantCapability("foods.read", "foods", "Listar, buscar y consultar alimentos propios o disponibles.", AssistantCapabilityMode.AUTONOMOUS_READ, ("list_user_foods", "search_operational_foods", "read_food")),
     AssistantCapability("foods.manage", "foods", "Crear, actualizar o eliminar alimentos propios.", AssistantCapabilityMode.PREPARED_ACTION, ("prepare_product_action",), ("food.create", "food.update", "food.delete")),
     AssistantCapability("foods.import_reorder_share", "foods", "Importar, ordenar, borrar en lote o compartir alimentos.", AssistantCapabilityMode.TRUSTED_UI_HANDOFF, notes="Importaciones y envíos externos conservan sus formularios y validaciones dedicadas."),

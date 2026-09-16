@@ -262,6 +262,22 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
             },
         )
 
+    def test_intake_exposes_profile_and_preference_reads_when_user_invokes_memory(self):
+        orchestrator = ExternalLLMOrchestrator(
+            llm_client=FakeLLMClient(),
+            config=AssistantOrchestratorConfig(enable_reviewable_proposal_tools=True),
+        )
+
+        provider_request = orchestrator.build_provider_request(
+            self._request("Usa mi ficha y mis preferencias guardadas para crear el plan.")
+        )
+        tool_names = {str(tool.get("name") or "") for tool in provider_request.tools}
+
+        self.assertIn("read_user_profile_context", tool_names)
+        self.assertIn("share_profile_draft_card", tool_names)
+        self.assertIn("read_user_preference_context", tool_names)
+        self.assertIn("share_preference_draft_card", tool_names)
+
     def test_parser_accepts_v2_json_string_slots_and_tool_arguments(self):
         orchestrator = ExternalLLMOrchestrator(llm_client=FakeLLMClient())
         parse_result = orchestrator.parse_provider_response(
