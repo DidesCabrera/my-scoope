@@ -36,7 +36,7 @@ export const tokens = {
     "meal": "#CF34B0",
     "dailyPlan": "#7C4DDB",
     "dpm": "#0084A2",
-    "program": "#3A86FF",
+    "program": "#1B6491",
     "proposal": "#121212",
     "inbox": "#121212",
     "comparator": "#3057FF",

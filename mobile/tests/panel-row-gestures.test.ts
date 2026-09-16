@@ -22,7 +22,7 @@ test("editable food and meal panel rows expose native swipe actions on every dat
   assert.match(panels, /setSwipeSide\(direction === SwipeDirection\.RIGHT \? "left" : "right"\)/);
   assert.match(panels, /onSwipeableClose=\{\(\) => \{ swipeDirection\.value = 0; setSwipeSide\("neutral"\)/);
   assert.match(panels, /overshootLeft[\s\S]*?overshootRight/);
-  assert.match(panels, /swipeOvershootLeft[\s\S]*?swipeSide === "left" && editing\.onChangeTime \? "#1B6491" : tokens\.color\.surfaceMuted/);
+  assert.match(panels, /swipeOvershootLeft[\s\S]*?swipeSide === "left" && editing\.onChangeTime \? "#3A86FF" : tokens\.color\.surfaceMuted/);
   assert.match(panels, /swipeOvershootRight[\s\S]*?swipeSide === "right" \? "#515151" : tokens\.color\.surfaceMuted/);
   assert.match(panels, /containerStyle=\{styles\.swipeContainer\}/);
 
@@ -98,7 +98,7 @@ test("meal rows reveal a clock action on right swipe and reuse existing time for
   assert.match(panels, /<Clock color=\{tokens\.color\.entityIconForeground\}/);
   assert.match(panels, /swipeAction: \{[^}]*alignSelf: "stretch"[^}]*flex: 1/);
   assert.match(panels, /swipeAction: \{[^}]*backgroundColor: "#515151"/);
-  assert.match(panels, /swipeActionTime: \{ backgroundColor: "#1B6491" \}/);
+  assert.match(panels, /swipeActionTime: \{ backgroundColor: "#3A86FF" \}/);
   assert.match(panels, /swipeActionDestructive: \{ backgroundColor: "#DB294A" \}/);
   assert.match(panels, /preparationMarkerChecked: \{ backgroundColor: tokens\.color\.food/);
   assert.match(panels, /onChangeTime: editing\.onChangeTime/);
