@@ -195,7 +195,7 @@ function EditablePanelRow<T extends EditablePanelItem>({ editing, isActive, item
   return (
     <ScaleDecorator activeScale={1.018}>
       <View style={styles.swipeUnderlay}>
-      <View pointerEvents="none" style={[styles.swipeOvershoot, styles.swipeOvershootLeft, { backgroundColor: swipeSide === "left" && editing.onChangeTime ? "#1B6491" : tokens.color.surfaceMuted }]} />
+      <View pointerEvents="none" style={[styles.swipeOvershoot, styles.swipeOvershootLeft, { backgroundColor: swipeSide === "left" && editing.onChangeTime ? "#3A86FF" : tokens.color.surfaceMuted }]} />
       <View pointerEvents="none" style={[styles.swipeOvershoot, styles.swipeOvershootRight, { backgroundColor: swipeSide === "right" ? "#515151" : tokens.color.surfaceMuted }]} />
       <ReanimatedSwipeable
         containerStyle={styles.swipeContainer}
@@ -802,7 +802,7 @@ const styles = StyleSheet.create({
   swipeTimeAction: { alignSelf: "stretch", width: 48 },
   swipeAction: { alignItems: "center", alignSelf: "stretch", backgroundColor: "#515151", flex: 1, justifyContent: "center", width: 48 },
   swipeActionEdit: { backgroundColor: "#515151" },
-  swipeActionTime: { backgroundColor: "#1B6491" },
+  swipeActionTime: { backgroundColor: "#3A86FF" },
   swipeActionDestructive: { backgroundColor: "#DB294A" },
   swipeActionPressed: { opacity: 0.72 },
   iconAction: { alignItems: "center", borderRadius: tokens.radius.sm, height: 34, justifyContent: "center", width: 34 },
