@@ -2,11 +2,13 @@ import { type Href, useRouter } from "expo-router";
 import { Copy, MoreHorizontal, Trash2 } from "lucide-react-native";
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, View, type ScrollViewProps } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
+import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { FoodPanels, type FoodPanelItem } from "@/components/panels";
 import { SectionHeading } from "@/components/ui/typography";
 import { tokens } from "@/design/tokens";
+import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import type { LibraryFoodPanelItem, LibraryItem, LibraryWeekPanelItem } from "@/api/types";
 import { EntityHeading, layoutStyles, SectionDivider, StructuralIndicators } from "@/components/ui";
 import { Button } from "@/components/ui/controls";
@@ -93,7 +95,7 @@ function foodItem(item: LibraryFoodPanelItem): FoodPanelItem {
   return { id: item.id, detailId: item.detail_id, name: item.name, quantity: item.quantity, quantityUnit: item.quantity_unit, calories: item.calories, calorieShare: item.calorie_share, proteinGrams: item.protein_grams, proteinPerKilogram: item.protein_per_kilogram, carbsGrams: item.carbs_grams, fatGrams: item.fat_grams, proteinAllocation: item.protein_allocation, carbsAllocation: item.carbs_allocation, fatAllocation: item.fat_allocation };
 }
 
-export function ProgramWeekDetail({ canRemoveWeek = false, onAssignDailyPlan, onDuplicateWeek, onRemoveDailyPlan, onRemoveWeek, showHeading = true, week, weekData }: { canRemoveWeek?: boolean; onAssignDailyPlan?: (week: number, day: number) => void; onDuplicateWeek?: (week: number) => Promise<void>; onRemoveDailyPlan?: (week: number, day: number) => Promise<void>; onRemoveWeek?: (week: number) => Promise<void>; showHeading?: boolean; week: number; weekData?: LibraryWeekPanelItem }) {
+export function ProgramWeekDetail({ canRemoveWeek = false, onAssignDailyPlan, onDuplicateWeek, onRemoveDailyPlan, onRemoveWeek, onReorderDailyPlans, showHeading = true, week, weekData }: { canRemoveWeek?: boolean; onAssignDailyPlan?: (week: number, day: number) => void; onDuplicateWeek?: (week: number) => Promise<void>; onRemoveDailyPlan?: (week: number, day: number) => Promise<void>; onRemoveWeek?: (week: number) => Promise<void>; onReorderDailyPlans?: (week: number, orderedDays: number[]) => Promise<void>; showHeading?: boolean; week: number; weekData?: LibraryWeekPanelItem }) {
   const router = useRouter();
   const liveMetricData = weekData ? programDailyMetricData([weekData]) : undefined;
   const filledDaysCount = weekData ? weekData.filled_days_count ?? weekData.days.filter((day) => day.plan_name).length : 6;
@@ -139,7 +141,7 @@ export function ProgramWeekDetail({ canRemoveWeek = false, onAssignDailyPlan, on
         <ProgramMetricPreview axisLabels={weekData?.days.map((day) => day.day_label.slice(0, 1).toUpperCase()) ?? dayLabels} axisLeadingLabel="Semana" data={liveMetricData} days={7} style={layoutStyles.cardContentBleed} />
 
         <SectionHeading title="Tabla de comparación entre planes diarios" />
-        <ProgramDayComparisonPanels key={`comparison-${week}`} onAssign={onAssignDailyPlan} onDelete={onRemoveDailyPlan} rows={weekData ? dayRows(weekData) : undefined} week={week} />
+        <ProgramDayComparisonPanels key={`comparison-${week}`} onAssign={onAssignDailyPlan} onDelete={onRemoveDailyPlan} onReorder={onReorderDailyPlans} rows={weekData ? dayRows(weekData) : undefined} week={week} />
 
         <SectionDivider spacing="compact" tone="soft" />
         <SectionHeading detail={`${filledDaysCount} asignados`} title="Planes diarios esta semana" />
@@ -163,12 +165,13 @@ type ProgramDetailPreviewProps = {
   onDuplicateWeek?: (week: number) => Promise<void>;
   onRemoveDailyPlan?: (week: number, day: number) => Promise<void>;
   onRemoveWeek?: (week: number) => Promise<void>;
+  onReorderDailyPlans?: (week: number, orderedDays: number[]) => Promise<void>;
   onReorderWeeks?: (weeks: number[]) => Promise<void>;
-  onScroll?: ScrollViewProps["onScroll"];
+  onHeaderVisibilityChange?: (visible: boolean) => void;
   scrollable?: boolean;
 };
 
-export function ProgramDetailPreview({ footer, item, onAddWeek, onAssignDailyPlan, onDuplicateWeek, onRemoveDailyPlan, onRemoveWeek, onReorderWeeks, onScroll, scrollable = false }: ProgramDetailPreviewProps = {}) {
+export function ProgramDetailPreview({ footer, item, onAddWeek, onAssignDailyPlan, onDuplicateWeek, onHeaderVisibilityChange, onRemoveDailyPlan, onRemoveWeek, onReorderDailyPlans, onReorderWeeks, scrollable = false }: ProgramDetailPreviewProps = {}) {
   const [activeWeek, setActiveWeek] = useState(1);
   const liveWeeks = item?.panel.kind === "weeks" ? item.panel.weeks : [];
   const displayedWeeks = liveWeeks.length ? liveWeeks.map((week) => week.week_number) : item ? [1] : [1, 2];
@@ -222,32 +225,33 @@ export function ProgramDetailPreview({ footer, item, onAddWeek, onAssignDailyPla
 
   if (scrollable) {
     return (
-      <ScrollView
+      <NestableScrollContainer
         contentContainerStyle={styles.screenContent}
-        onScroll={onScroll}
+        onScroll={({ nativeEvent }) => onHeaderVisibilityChange?.(isHeaderIdentityVisible(nativeEvent.contentOffset.y))}
         scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
         stickyHeaderIndices={[3]}
         style={styles.screen}>
         {overview}
         <SectionDivider spacing="wide" />
         <View style={styles.planningHeaderScreen}>{planningHeader}</View>
         {weekTabs}
-        <ProgramWeekDetail canRemoveWeek={weeksCount > 1} onAssignDailyPlan={onAssignDailyPlan} onDuplicateWeek={onDuplicateWeek} onRemoveDailyPlan={onRemoveDailyPlan} onRemoveWeek={onRemoveWeek} week={displayedActiveWeek} weekData={selectedWeek} />
+        <ProgramWeekDetail canRemoveWeek={weeksCount > 1} onAssignDailyPlan={onAssignDailyPlan} onDuplicateWeek={onDuplicateWeek} onRemoveDailyPlan={onRemoveDailyPlan} onRemoveWeek={onRemoveWeek} onReorderDailyPlans={onReorderDailyPlans} week={displayedActiveWeek} weekData={selectedWeek} />
         {footer ? <View style={styles.footer}>{footer}</View> : null}
-      </ScrollView>
+      </NestableScrollContainer>
     );
   }
 
   return (
-    <View style={styles.page}>
+    <NestableScrollContainer contentContainerStyle={styles.page} scrollEnabled={false} showsVerticalScrollIndicator={false}>
       {overview}
       <SectionDivider />
       <View style={styles.planningSection}>
         {planningHeader}
         {weekTabs}
-        <ProgramWeekDetail canRemoveWeek={weeksCount > 1} onAssignDailyPlan={onAssignDailyPlan} onDuplicateWeek={onDuplicateWeek} onRemoveDailyPlan={onRemoveDailyPlan} onRemoveWeek={onRemoveWeek} week={displayedActiveWeek} weekData={selectedWeek} />
+        <ProgramWeekDetail canRemoveWeek={weeksCount > 1} onAssignDailyPlan={onAssignDailyPlan} onDuplicateWeek={onDuplicateWeek} onRemoveDailyPlan={onRemoveDailyPlan} onRemoveWeek={onRemoveWeek} onReorderDailyPlans={onReorderDailyPlans} week={displayedActiveWeek} weekData={selectedWeek} />
       </View>
-    </View>
+    </NestableScrollContainer>
   );
 }
 

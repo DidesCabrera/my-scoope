@@ -1,12 +1,14 @@
 import { type Href, useRouter } from "expo-router";
 import { ChevronRight } from "lucide-react-native";
 import { StyleSheet, View } from "react-native";
+import { useState } from "react";
 
 import type { LibraryItem, MealExecutionItem } from "@/api/types";
 import { DailyMealCompletionCard } from "@/components/calendarization/meal-completion-summary";
+import { CalendarizedEntityActions } from "@/components/calendarization/calendarized-entity-actions";
 import { normalizeMealExecution } from "@/components/calendarization/meal-execution";
 import { NutritionEntityCard } from "@/components/nutrition";
-import { MealPanels, type MealPanelItem } from "@/components/panels";
+import { MealPanels, type MealPanelEditing, type MealPanelItem } from "@/components/panels";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
 import { Button, EntityCard, EntityCardAction } from "@/components/ui";
 import { tokens } from "@/design/tokens";
@@ -34,8 +36,9 @@ function mealPanelItem(item: LibraryItem["panel"]["meals"][number], completedKey
   };
 }
 
-export function PinnedDailyPlanCard({ item, mealExecution }: { item: LibraryItem; mealExecution?: MealExecutionItem[] | null }) {
+export function PinnedDailyPlanCard({ editing, item, mealExecution, onChangeMealTime }: { editing?: MealPanelEditing; item: LibraryItem; mealExecution?: MealExecutionItem[] | null; onChangeMealTime?: (meal: MealPanelItem, hour: string) => Promise<void> }) {
   const router = useRouter();
+  const [timeChangeMeal, setTimeChangeMeal] = useState<MealPanelItem | null>(null);
   const addMeal = () => router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: item.id, returnTo: "/today" }));
   const detailAction = (
     <EntityCardAction label="Ir al detalle del plan" onPress={() => router.push(`/libraries/daily-plans/${item.id}` as Href)} role="link">
@@ -54,7 +57,8 @@ export function PinnedDailyPlanCard({ item, mealExecution }: { item: LibraryItem
 
   const normalizedMealExecution = normalizeMealExecution(mealExecution);
   const completedKeys = new Set(normalizedMealExecution.filter((entry) => entry.status === "completed").map((entry) => entry.meal_key));
-  return (
+  const cardEditing = editing && onChangeMealTime ? { ...editing, onChangeTime: setTimeChangeMeal } : editing;
+  return (<>
     <NutritionEntityCard
       actions={detailAction}
       beforeNutrition={<DailyMealCompletionCard mealExecution={normalizedMealExecution} mealKeys={meals.map((meal) => meal.id)} />}
@@ -63,7 +67,10 @@ export function PinnedDailyPlanCard({ item, mealExecution }: { item: LibraryItem
       nutrition={libraryNutrition(item.nutrition)}
       title={item.name}>
       <MealPanels
+        editing={cardEditing}
         items={meals.map((meal) => mealPanelItem(meal, completedKeys))}
+        nestedScroll={false}
+        showEditTab={false}
         onOpenItem={(meal) => {
           if (!meal.detailId || !meal.relationId) return;
           router.push({
@@ -76,7 +83,8 @@ export function PinnedDailyPlanCard({ item, mealExecution }: { item: LibraryItem
         <Button bleed label="+ Agregar Comida" onPress={addMeal} />
       </View>
     </NutritionEntityCard>
-  );
+    <CalendarizedEntityActions entityName={timeChangeMeal?.name ?? "Comida"} initialAction="change-time" key={timeChangeMeal?.id ?? "closed-card-time-change"} onVisibleChange={(visible) => { if (!visible) setTimeChangeMeal(null); }} timeChange={timeChangeMeal && onChangeMealTime ? { initialTime: timeChangeMeal.time, onSubmit: (hour) => onChangeMealTime(timeChangeMeal, hour) } : undefined} visible={timeChangeMeal != null} />
+  </>);
 }
 
 const styles = StyleSheet.create({

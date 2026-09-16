@@ -1,29 +1,34 @@
 import { type Href, useRouter } from "expo-router";
 import { ChevronRight } from "lucide-react-native";
 import { StyleSheet, View } from "react-native";
+import { useState } from "react";
 
 import type { DailyPlanSnapshot, MealExecutionItem } from "@/api/types";
 import { NutritionEntityCard } from "@/components/nutrition";
-import { MealPanels } from "@/components/panels";
+import { MealPanels, type MealPanelEditing, type MealPanelItem } from "@/components/panels";
 import { Button, EntityCardAction } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { snapshotCalories, snapshotMacroDistribution, snapshotMealPanelItem } from "./presentation-adapters";
 import { DailyMealCompletionCard } from "./meal-completion-summary";
 import { normalizeMealExecution } from "./meal-execution";
+import { CalendarizedEntityActions } from "./calendarized-entity-actions";
 
 type Props = {
   dayId: number | null;
   dateLabel: string;
   eyebrow: string;
   mealExecution?: MealExecutionItem[] | null;
+  editing?: MealPanelEditing;
+  onChangeMealTime?: (meal: MealPanelItem, hour: string) => Promise<void>;
   onAddMeal?: () => void;
   planName?: string;
   position?: { dayNumber: number; weekNumber: number };
   snapshot: DailyPlanSnapshot;
 };
 
-export function CalendarizedDailyPlanCard({ dayId, dateLabel, eyebrow, mealExecution = [], onAddMeal, planName, position, snapshot }: Props) {
+export function CalendarizedDailyPlanCard({ dayId, dateLabel, editing, eyebrow, mealExecution = [], onAddMeal, onChangeMealTime, planName, position, snapshot }: Props) {
   const router = useRouter();
+  const [timeChangeMeal, setTimeChangeMeal] = useState<MealPanelItem | null>(null);
   const meals = snapshot.meals ?? [];
   const totals = snapshot.totals;
   const totalCalories = snapshotCalories(totals);
@@ -35,7 +40,8 @@ export function CalendarizedDailyPlanCard({ dayId, dateLabel, eyebrow, mealExecu
     ...snapshotMealPanelItem(meal, index, totals),
     completed: Boolean(meal.key && completedMealKeys.has(meal.key)),
   }));
-  return (
+  const cardEditing = editing && onChangeMealTime ? { ...editing, onChangeTime: setTimeChangeMeal } : editing;
+  return (<>
     <NutritionEntityCard
       actions={dayId ? <EntityCardAction label="Ir al detalle del plan calendarizado" onPress={() => router.push(`/program/days/${dayId}` as Href)} role="link"><ChevronRight color={tokens.color.textMuted} size={21} /></EntityCardAction> : null}
       beforeNutrition={<DailyMealCompletionCard mealExecution={mealExecution} mealKeys={meals.map((meal) => meal.key)} />}
@@ -55,7 +61,10 @@ export function CalendarizedDailyPlanCard({ dayId, dateLabel, eyebrow, mealExecu
       }}
       title={snapshot.name ?? planName ?? "Plan diario"}>
       <MealPanels
+        editing={cardEditing}
         items={mealItems}
+        nestedScroll={false}
+        showEditTab={false}
         onOpenItem={(meal) => {
           if (dayId == null || !meal.id) return;
           router.push({
@@ -66,7 +75,15 @@ export function CalendarizedDailyPlanCard({ dayId, dateLabel, eyebrow, mealExecu
       />
       {onAddMeal ? <View style={styles.addMealAction}><Button bleed label="+ Agregar Comida" onPress={onAddMeal} /></View> : null}
     </NutritionEntityCard>
-  );
+    <CalendarizedEntityActions
+      entityName={timeChangeMeal?.name ?? "Comida"}
+      initialAction="change-time"
+      key={timeChangeMeal?.id ?? "closed-card-time-change"}
+      onVisibleChange={(visible) => { if (!visible) setTimeChangeMeal(null); }}
+      timeChange={timeChangeMeal && onChangeMealTime ? { initialTime: timeChangeMeal.time, onSubmit: (hour) => onChangeMealTime(timeChangeMeal, hour) } : undefined}
+      visible={timeChangeMeal != null}
+    />
+  </>);
 }
 
 const styles = StyleSheet.create({

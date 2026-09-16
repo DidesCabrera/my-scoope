@@ -8,7 +8,6 @@ class MobileAPIV1Tests(AuthenticatedMobileAPITestCase):
     def test_health_and_openapi_contract_are_public_and_versioned(self):
         health = Client().get("/api/v1/health")
         schema_response = Client().get("/api/v1/openapi.json")
-
         self.assertEqual(health.status_code, 200)
         self.assertEqual(health.json(), {"ok": True, "data": {"status": "ok", "api_version": "v1"}, "error": None})
         self.assertEqual(schema_response.status_code, 200)
@@ -65,6 +64,7 @@ class MobileAPIV1Tests(AuthenticatedMobileAPITestCase):
             "/api/v1/library/daily-plans/{dailyplan_id}/meals/{dailyplan_meal_id}",
             "/api/v1/library/daily-plans/{dailyplan_id}/meals/order",
             "/api/v1/library/programs/{program_id}/weeks/order",
+            "/api/v1/library/programs/{program_id}/weeks/{week_number}/days/order",
             "/api/v1/library/programs/{program_id}/weeks/{week_number}/duplicate",
             "/api/v1/library/programs/{program_id}/weeks/{week_number}",
             "/api/v1/library/programs/{program_id}/weeks/{week_number}/days/{day_number}",

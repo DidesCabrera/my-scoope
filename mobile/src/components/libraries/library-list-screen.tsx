@@ -1,12 +1,14 @@
 import { Redirect, useFocusEffect, useRouter } from "expo-router";
 import { Check, ChevronDown, ChevronUp, Search, Square, X } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
+import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { userFacingError } from "@/api/errors";
 import type { LibraryEntity, LibraryPageData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
+import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import { CollectionPageHeader } from "@/components/ui";
 import { Button, Card, InlineNotice, textStyles } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
@@ -135,13 +137,11 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
   if (status === "anonymous") return <Redirect href="/login" />;
 
   return (
-    <ScrollView
+    <NestableScrollContainer
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
-      onScroll={({ nativeEvent }) => {
-        const visible = nativeEvent.contentOffset.y > 1;
-        if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible);
-      }}
+      onScroll={({ nativeEvent }) => setCompactHeaderVisible(isHeaderIdentityVisible(nativeEvent.contentOffset.y))}
+      showsVerticalScrollIndicator={false}
       refreshControl={<RefreshControl onRefresh={() => void load({ refresh: true })} refreshing={refreshing} tintColor={tokens.color.interactivePrimary} />}
       scrollEventThrottle={16}
       stickyHeaderIndices={[1]}
@@ -205,7 +205,7 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
         />
       ) : null}
       <LibraryListActions canCompare={entity !== "program"} onClose={() => setActionsVisible(false)} onCompare={() => { setActionsVisible(false); const kind = entity === "food" ? "foods" : entity === "meal" ? "meals" : "dailyplans"; router.push(`/comparator?create=1&kind=${kind}`); }} onDelete={() => { setActionsVisible(false); setSelectedIds(new Set()); setMode("delete"); }} onReorder={() => void beginReorder()} visible={actionsVisible} />
-    </ScrollView>
+    </NestableScrollContainer>
   );
 }
 

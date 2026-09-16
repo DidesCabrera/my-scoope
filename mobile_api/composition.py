@@ -35,6 +35,7 @@ from notas.application.services.commands.program_commands import (
     duplicate_week_in_program,
     remove_program_day,
     remove_week_from_program,
+    reorder_program_days,
     reorder_program_weeks,
 )
 from notas.application.services.food_imports.localized_names import resolve_food_display_name
@@ -540,6 +541,15 @@ def reorder_weeks_in_program(*, user, program_id: int, ordered_weeks) -> dict:
     except ValueError as exc:
         raise MobileAPIError("composition_order_invalid", "El orden de semanas no es válido.", 422) from exc
     return {"message": "Orden de semanas guardado.", "target_id": program.id, "affected_id": program.id}
+
+
+def reorder_days_in_program_week(*, user, program_id: int, week_number: int, ordered_days) -> dict:
+    program = _owned_program(user, program_id)
+    try:
+        reorder_program_days(program=program, week_number=week_number, ordered_day_numbers=ordered_days)
+    except ValueError as exc:
+        raise MobileAPIError("composition_order_invalid", "El orden de planes diarios no es válido.", 422) from exc
+    return {"message": "Orden de planes diarios guardado.", "target_id": program.id, "affected_id": program.id}
 
 
 def duplicate_program_week(*, user, program_id: int, week_number: int) -> dict:

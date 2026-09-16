@@ -1,11 +1,13 @@
-import { Pencil, Plus, RefreshCw, Trash2 } from "lucide-react-native";
+import { GripVertical, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react-native";
 import { useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from "react-native";
+import { NestableDraggableFlatList, ScaleDecorator } from "react-native-draggable-flatlist";
 
 import { MacroCalorieDistribution, macroCalorieShares, PanelAllocationBar, ProteinPerKilogramBadge } from "@/components/nutrition";
-import { contextualMacroAllocations, EntityPanelTabs, PanelBody, PanelSurface } from "@/components/panels";
+import { contextualMacroAllocations, EntityPanelTabs, PanelBody, PanelSurface, SortablePanelHeaderCell, type PanelSortState, useTemporaryPanelSort } from "@/components/panels";
 import { tokens } from "@/design/tokens";
 import { EntityIcon } from "@/components/ui";
+import { ComparisonPanelGestureRows, StaticComparisonPanelRows, type ComparisonPanelAction } from "./comparison-panel-gesture-rows";
 
 type ProgramDayPanelTab = "calories" | "macros" | "distribution" | "allocation" | "edit";
 
@@ -70,67 +72,79 @@ function DayIdentity({ row }: { row: ProgramDayNutrition }) {
   );
 }
 
-function Header({ columns }: { columns: string[] }) {
+function Header<Key extends string>({ columns, leadingKey, onSort, sort }: { columns: { key: Key; label: string; style?: StyleProp<ViewStyle> }[]; leadingKey: Key; onSort(key: Key): void; sort: PanelSortState<Key> }) {
   return (
     <View style={[styles.row, styles.header]}>
-      <Text style={[styles.headerText, styles.leadingCell]}>Día</Text>
+      <SortablePanelHeaderCell align="left" direction={sort?.key === leadingKey ? sort.direction : undefined} label="Día" onPress={() => onSort(leadingKey)} style={styles.leadingCell} />
       {columns.map((column) => (
-        <Text
-          key={column}
-          style={[
-            styles.headerText,
-            styles.dataCell,
-            column === "% Cal" && styles.calorieShareDataCell,
-            column === "PpK" && styles.ppkDataCell,
-          ]}
-        >
-          {column}
-        </Text>
+        <SortablePanelHeaderCell
+          direction={sort?.key === column.key ? sort.direction : undefined}
+          key={`${column.key}-${column.label}`}
+          label={column.label}
+          onPress={() => onSort(column.key)}
+          style={[styles.dataCell, column.style]}
+        />
       ))}
     </View>
   );
 }
 
-function CaloriesPanel({ rows }: { rows: ProgramDayNutrition[] }) {
+type DayRowGestures = {
+  actions(row: ProgramDayNutrition): ComparisonPanelAction[];
+  onReorder(rows: ProgramDayNutrition[]): Promise<void>;
+};
+
+function DayRows({ gestures, renderRow, rows }: { gestures?: DayRowGestures; renderRow(row: ProgramDayNutrition, index: number): React.ReactNode; rows: ProgramDayNutrition[] }) {
+  if (!gestures) return <StaticComparisonPanelRows items={rows} renderRow={renderRow} />;
+  return <ComparisonPanelGestureRows actions={gestures.actions} itemLabel={(row) => `${row.day}: ${row.planName ?? "Sin plan"}`} items={rows} onReorder={gestures.onReorder} renderRow={renderRow} />;
+}
+
+function CaloriesPanel({ gestures, rows }: { gestures?: DayRowGestures; rows: ProgramDayNutrition[] }) {
+  const sorting = useTemporaryPanelSort(rows, { calories: (row) => row.calories, day: (row) => row.dayNumber, share: (row) => row.calorieShare });
+  const visibleRows = sorting.items;
   return (
     <PanelBody>
-      <Header columns={["Cal", "% Cal"]} />
-      {rows.map((row, index) => (
-        <View key={row.id} style={[styles.row, styles.calorieRow, index === rows.length - 1 && styles.rowLast]}>
+      <Header columns={[{ key: "calories", label: "Cal" }, { key: "share", label: "% Cal", style: styles.calorieShareDataCell }]} leadingKey="day" {...sorting} />
+      <DayRows gestures={sorting.sort ? undefined : gestures} rows={visibleRows} renderRow={(row, index) => (
+        <View key={row.id} style={[styles.row, styles.calorieRow, index === visibleRows.length - 1 && styles.rowLast]}>
           <View style={styles.leadingCell}><DayIdentity row={row} /></View>
           <Text style={[styles.cell, styles.dataCell]}>{row.planName ? Math.round(row.calories).toLocaleString("es-CL") : "—"}</Text>
           <View style={[styles.dataCell, styles.calorieShareDataCell]}>{row.planName ? <PanelAllocationBar tone="calories" value={row.calorieShare} /> : <Text style={styles.emptyValue}>—</Text>}</View>
         </View>
-      ))}
+      )} />
     </PanelBody>
   );
 }
 
-function MacrosPanel({ rows }: { rows: ProgramDayNutrition[] }) {
+function MacrosPanel({ gestures, rows }: { gestures?: DayRowGestures; rows: ProgramDayNutrition[] }) {
+  const sorting = useTemporaryPanelSort(rows, { carbs: (row) => row.carbsGrams, day: (row) => row.dayNumber, fat: (row) => row.fatGrams, ppk: (row) => row.ppk, protein: (row) => row.proteinGrams });
+  const visibleRows = sorting.items;
   return (
     <PanelBody>
-      <Header columns={["PpK", "P", "C", "F"]} />
-      {rows.map((row, index) => (
-        <View key={row.id} style={[styles.row, index === rows.length - 1 && styles.rowLast]}>
+      <Header columns={[{ key: "ppk", label: "PpK", style: styles.ppkDataCell }, { key: "protein", label: "P" }, { key: "carbs", label: "C" }, { key: "fat", label: "F" }]} leadingKey="day" {...sorting} />
+      <DayRows gestures={sorting.sort ? undefined : gestures} rows={visibleRows} renderRow={(row, index) => (
+        <View key={row.id} style={[styles.row, index === visibleRows.length - 1 && styles.rowLast]}>
           <View style={styles.leadingCell}><DayIdentity row={row} /></View>
           <View style={[styles.dataCell, styles.ppkDataCell, styles.ppkCell]}>{row.planName ? <ProteinPerKilogramBadge showUnit={false} style={styles.ppkBadge} value={row.ppk} /> : <Text style={styles.emptyValue}>—</Text>}</View>
           <Text style={[styles.cell, styles.dataCell]}>{row.planName ? Math.round(row.proteinGrams) : "—"}</Text>
           <Text style={[styles.cell, styles.dataCell]}>{row.planName ? Math.round(row.carbsGrams) : "—"}</Text>
           <Text style={[styles.cell, styles.dataCell]}>{row.planName ? Math.round(row.fatGrams) : "—"}</Text>
         </View>
-      ))}
+      )} />
     </PanelBody>
   );
 }
 
-function DistributionPanel({ rows }: { rows: ProgramDayNutrition[] }) {
+function DistributionPanel({ gestures, rows }: { gestures?: DayRowGestures; rows: ProgramDayNutrition[] }) {
+  const sorting = useTemporaryPanelSort(rows, { carbs: (row) => macroCalorieShares(row).carbs, day: (row) => row.dayNumber, fat: (row) => macroCalorieShares(row).fat, protein: (row) => macroCalorieShares(row).protein });
+  const visibleRows = sorting.items;
   return (
     <PanelBody>
-      <Header columns={["P%", "C%", "F%", "P|C|F"]} />
-      {rows.map((row, index) => {
+      <Header columns={[{ key: "protein", label: "P%" }, { key: "carbs", label: "C%" }, { key: "fat", label: "F%" }, { key: "protein", label: "P|C|F", style: styles.distributionBar }]} leadingKey="day" {...sorting} />
+      <DayRows gestures={sorting.sort ? undefined : gestures} rows={visibleRows} renderRow={(row, index) => {
         const distribution = macroCalorieShares(row);
         return (
-          <View key={row.id} style={[styles.row, index === rows.length - 1 && styles.rowLast]}>
+          <View key={row.id} style={[styles.row, index === visibleRows.length - 1 && styles.rowLast]}>
             <View style={styles.leadingCell}><DayIdentity row={row} /></View>
             <Text style={[styles.cell, styles.dataCell, styles.proteinDistribution]}>{row.planName ? `${distribution.protein}%` : "—"}</Text>
             <Text style={[styles.cell, styles.dataCell, styles.carbsDistribution]}>{row.planName ? `${distribution.carbs}%` : "—"}</Text>
@@ -138,18 +152,22 @@ function DistributionPanel({ rows }: { rows: ProgramDayNutrition[] }) {
             <View style={styles.distributionBar}>{row.planName ? <MacroCalorieDistribution {...row} /> : <Text style={styles.emptyValue}>—</Text>}</View>
           </View>
         );
-      })}
+      }} />
     </PanelBody>
   );
 }
 
-function AllocationPanel({ rows }: { rows: ProgramDayNutrition[] }) {
-  const allocations = contextualMacroAllocations(rows);
+function AllocationPanel({ gestures, rows }: { gestures?: DayRowGestures; rows: ProgramDayNutrition[] }) {
+  const sourceAllocations = contextualMacroAllocations(rows);
+  const allocationById = new Map(rows.map((row, index) => [row.id, sourceAllocations[index]]));
+  const sorting = useTemporaryPanelSort(rows, { carbs: (row) => allocationById.get(row.id)?.carbs, day: (row) => row.dayNumber, fat: (row) => allocationById.get(row.id)?.fat, protein: (row) => allocationById.get(row.id)?.protein });
+  const visibleRows = sorting.items;
+  const allocations = contextualMacroAllocations(visibleRows);
   return (
     <PanelBody>
-      <Header columns={["P%", "C%", "F%"]} />
-      {rows.map((row, index) => (
-        <View key={row.id} style={[styles.row, styles.allocationRow, index === rows.length - 1 && styles.rowLast]}>
+      <Header columns={[{ key: "protein", label: "P%" }, { key: "carbs", label: "C%" }, { key: "fat", label: "F%" }]} leadingKey="day" {...sorting} />
+      <DayRows gestures={sorting.sort ? undefined : gestures} rows={visibleRows} renderRow={(row, index) => (
+        <View key={row.id} style={[styles.row, styles.allocationRow, index === visibleRows.length - 1 && styles.rowLast]}>
           <View style={styles.leadingCell}><DayIdentity row={row} /></View>
           {row.planName ? (
             <>
@@ -159,46 +177,98 @@ function AllocationPanel({ rows }: { rows: ProgramDayNutrition[] }) {
             </>
           ) : <Text style={[styles.emptyValue, styles.emptyAllocation]}>Sin distribución</Text>}
         </View>
-      ))}
+      )} />
     </PanelBody>
   );
 }
 
-function EditPanel({ onAssign, onDelete, rows }: { onAssign(week: number, day: number): void; onDelete(week: number, day: number): Promise<void>; rows: ProgramDayNutrition[] }) {
+function EditPanel({ onAssign, onDelete, onReorder, rows }: { onAssign(week: number, day: number): void; onDelete(week: number, day: number): Promise<void>; onReorder(rows: ProgramDayNutrition[]): Promise<void>; rows: ProgramDayNutrition[] }) {
+  const [draftRows, setDraftRows] = useState(rows);
+  const [busy, setBusy] = useState(false);
   return (
     <PanelBody>
       <View style={[styles.row, styles.header]}>
+        <View style={styles.editDragHeader} />
         <Text style={[styles.headerText, styles.editDay]}>Día</Text>
         <Text style={[styles.headerText, styles.editPlan]}>Plan</Text>
         <Text style={[styles.headerText, styles.editActions]}>Acciones</Text>
       </View>
-      {rows.map((row, index) => (
-        <View key={row.id} style={[styles.row, styles.editRow, index === rows.length - 1 && styles.rowLast]}>
+      <NestableDraggableFlatList
+        activationDistance={12}
+        data={draftRows}
+        keyExtractor={(row) => row.id}
+        onDragEnd={({ data, from, to }) => {
+          setDraftRows(data);
+          if (from === to) return;
+          setBusy(true);
+          void onReorder(data).catch(() => setDraftRows(rows)).finally(() => setBusy(false));
+        }}
+        renderItem={({ drag, getIndex, isActive, item: row }) => {
+          const index = getIndex() ?? 0;
+          return <ScaleDecorator activeScale={1.018}><View style={[styles.row, styles.editRow, isActive && styles.editRowActive, index === draftRows.length - 1 && styles.rowLast]}>
+          <Pressable accessibilityHint="Mantén pulsado y arrastra para cambiar la posición" accessibilityLabel={`Reordenar plan de ${row.day}`} accessibilityRole="button" delayLongPress={180} disabled={busy} hitSlop={8} onLongPress={drag} style={({ pressed }) => [styles.editDragHandle, busy && styles.disabled, pressed && styles.pressed]}><GripVertical color={tokens.color.textMuted} size={18} strokeWidth={2.2} /></Pressable>
           <Text style={[styles.cell, styles.editDay]}>{row.day}</Text>
           <Text numberOfLines={2} style={[styles.cell, styles.editPlan, !row.planName && styles.planName]}>{row.planName ?? "Sin plan"}</Text>
           <View style={styles.editActions}>
             <Pressable accessibilityLabel={`${row.planName ? "Reemplazar" : "Agregar"} plan de ${row.day}`} accessibilityRole="button" onPress={() => onAssign(row.week, row.dayNumber)} style={({ pressed }) => [styles.iconAction, pressed && styles.pressed]}>
-              {row.planName ? <RefreshCw color={tokens.color.textMuted} size={16} /> : <Plus color={tokens.color.dailyPlan} size={17} />}
+              {row.planName ? <RefreshCw color={tokens.color.textMain} size={16} /> : <Plus color={tokens.color.textMain} size={17} />}
             </Pressable>
             {row.planName ? <Pressable accessibilityLabel={`Eliminar plan de ${row.day}`} accessibilityRole="button" onPress={() => Alert.alert("Eliminar plan diario", `¿Quitar el plan asignado a ${row.day}?`, [{ text: "Cancelar", style: "cancel" }, { text: "Eliminar", style: "destructive", onPress: () => void onDelete(row.week, row.dayNumber).catch(() => undefined) }])} style={({ pressed }) => [styles.iconAction, pressed && styles.pressed]}><Trash2 color={tokens.color.danger} size={16} /></Pressable> : null}
           </View>
-        </View>
-      ))}
+        </View></ScaleDecorator>;
+        }}
+        scrollEnabled={false}
+      />
     </PanelBody>
   );
 }
 
-export function ProgramDayComparisonPanels({ onAssign, onDelete, rows: providedRows, week }: { onAssign?: (week: number, day: number) => void; onDelete?: (week: number, day: number) => Promise<void>; rows?: ProgramDayNutrition[]; week: number }) {
+export function ProgramDayComparisonPanels({ onAssign, onDelete, onReorder, rows: providedRows, week }: { onAssign?: (week: number, day: number) => void; onDelete?: (week: number, day: number) => Promise<void>; onReorder?: (week: number, orderedDays: number[]) => Promise<void>; rows?: ProgramDayNutrition[]; week: number }) {
   const [activeTab, setActiveTab] = useState<ProgramDayPanelTab>("calories");
-  const rows = providedRows ?? rowsForWeek(week);
+  const sourceRows = providedRows ?? rowsForWeek(week);
+  const sourceSignature = sourceRows.map(({ dayNumber, id, planName }) => `${dayNumber}:${id}:${planName ?? ""}`).join("|");
+  const [optimisticOrder, setOptimisticOrder] = useState<{ rows: ProgramDayNutrition[]; sourceSignature: string } | null>(null);
+  const rows = optimisticOrder?.sourceSignature === sourceSignature ? optimisticOrder.rows : sourceRows;
+  const gestures: DayRowGestures | undefined = onAssign && onDelete && onReorder ? {
+    actions: (row) => [
+      {
+        backgroundColor: "#515151",
+        icon: row.planName ? <RefreshCw color={tokens.color.entityIconForeground} size={18} /> : <Plus color={tokens.color.entityIconForeground} size={19} />,
+        label: `${row.planName ? "Reemplazar" : "Agregar"} plan de ${row.day}`,
+        onPress: () => onAssign(row.week, row.dayNumber),
+      },
+      ...(row.planName ? [{
+        backgroundColor: "#DB294A",
+        icon: <Trash2 color={tokens.color.entityIconForeground} size={18} />,
+        label: `Eliminar plan de ${row.day}`,
+        onPress: () => Alert.alert("Eliminar plan diario", `¿Quitar el plan asignado a ${row.day}?`, [{ text: "Cancelar", style: "cancel" }, { text: "Eliminar", style: "destructive", onPress: () => void onDelete(row.week, row.dayNumber).catch(() => undefined) }]),
+      }] : []),
+    ],
+    onReorder: async (nextRows) => {
+      const orderedDays = nextRows.map((row) => sourceRows.find(({ id }) => id === row.id)?.dayNumber ?? row.dayNumber);
+      const relocatedRows = nextRows.map((row, index) => ({
+        ...row,
+        day: rows[index].day,
+        dayNumber: rows[index].dayNumber,
+        week: rows[index].week,
+      }));
+      setOptimisticOrder({ rows: relocatedRows, sourceSignature });
+      try {
+        await onReorder(week, orderedDays);
+      } catch (error) {
+        setOptimisticOrder(null);
+        throw error;
+      }
+    },
+  } : undefined;
   return (
     <PanelSurface>
-      <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={onAssign && onDelete ? tabs : tabs.filter(({ key }) => key !== "edit")} />
-      {activeTab === "calories" ? <CaloriesPanel rows={rows} /> : null}
-      {activeTab === "macros" ? <MacrosPanel rows={rows} /> : null}
-      {activeTab === "distribution" ? <DistributionPanel rows={rows} /> : null}
-      {activeTab === "allocation" ? <AllocationPanel rows={rows} /> : null}
-      {activeTab === "edit" && onAssign && onDelete ? <EditPanel onAssign={onAssign} onDelete={onDelete} rows={rows} /> : null}
+      <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={onAssign && onDelete && onReorder ? tabs : tabs.filter(({ key }) => key !== "edit")} />
+      {activeTab === "calories" ? <CaloriesPanel gestures={gestures} rows={rows} /> : null}
+      {activeTab === "macros" ? <MacrosPanel gestures={gestures} rows={rows} /> : null}
+      {activeTab === "distribution" ? <DistributionPanel gestures={gestures} rows={rows} /> : null}
+      {activeTab === "allocation" ? <AllocationPanel gestures={gestures} rows={rows} /> : null}
+      {activeTab === "edit" && onAssign && onDelete && gestures ? <EditPanel key={rows.map(({ id }) => id).join("|")} onAssign={onAssign} onDelete={onDelete} onReorder={gestures.onReorder} rows={rows} /> : null}
     </PanelSurface>
   );
 }
@@ -228,10 +298,14 @@ const styles = StyleSheet.create({
   carbsDistribution: { color: tokens.color.carbs, fontWeight: tokens.weight.semibold },
   fatDistribution: { color: tokens.color.fat, fontWeight: tokens.weight.semibold },
   distributionBar: { flex: 1.35, minWidth: 0 },
-  editRow: { gap: tokens.spacing.sm },
+  editRow: { gap: 0 },
+  editRowActive: { opacity: 0.92 },
+  editDragHandle: { alignItems: "center", alignSelf: "stretch", justifyContent: "center", width: 20 },
+  editDragHeader: { width: 20 },
   editDay: { flexBasis: "24%", flexGrow: 0, flexShrink: 0, textAlign: "left" },
   editPlan: { flex: 1, minWidth: 0, textAlign: "left" },
   editActions: { flexDirection: "row", justifyContent: "flex-end", minWidth: 66 },
   iconAction: { alignItems: "center", borderRadius: tokens.radius.sm, height: 34, justifyContent: "center", width: 34 },
   pressed: { opacity: 0.68 },
+  disabled: { opacity: 0.28 },
 });

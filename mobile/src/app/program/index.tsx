@@ -8,6 +8,7 @@ import { useSession } from "@/auth/session-context";
 import { CalendarizedProgramPlanning } from "@/components/calendarization/calendarized-program-planning";
 import { ProgramWeekTabs } from "@/components/libraries/program-planning-controls";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
+import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import { ProgramActiveActions } from "@/components/programs/program-active-actions";
 import { ProgramActiveOverview } from "@/components/programs/program-active-card";
 import { EmptyState, RecoverableErrorState } from "@/components/ui/screen-states";
@@ -124,10 +125,11 @@ export default function ProgramScreen() {
         contentContainerStyle={styles.screenContent}
         keyboardShouldPersistTaps="handled"
         onScroll={({ nativeEvent }) => {
-          const visible = nativeEvent.contentOffset.y > 1;
+          const visible = isHeaderIdentityVisible(nativeEvent.contentOffset.y);
           if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible);
         }}
         scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
         stickyHeaderIndices={[1]}
         style={styles.screen}>
         <View style={styles.beforePlanning}>

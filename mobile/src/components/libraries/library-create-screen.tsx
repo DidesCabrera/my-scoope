@@ -157,7 +157,7 @@ export function LibraryCreateScreen() {
   return (
     <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.flex}>
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <Card accent={tokens.color[entity]} style={styles.formCard}>
             <View style={styles.identityRow}>
               <EntityIcon entity={entity} size="compact" />

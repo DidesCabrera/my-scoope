@@ -9,8 +9,10 @@ import { normalizeMealExecution } from "@/components/calendarization/meal-execut
 import { NutritionEntityCard } from "@/components/nutrition/nutrition-entity-card";
 import {
   FoodPanels as SharedFoodPanels,
+  type FoodPanelEditing,
   type FoodPanelItem,
   MealPanels as SharedMealPanels,
+  type MealPanelEditing,
   type MealPanelItem,
   NutritionAllocationPanel,
   NutritionCaloriesPanel,
@@ -66,13 +68,21 @@ function toMealPanelItem(item: LibraryMealPanelItem): MealPanelItem {
   };
 }
 
-export function FoodPanels({ items }: { items: LibraryFoodPanelItem[] }) {
+export function FoodPanels({ editing, items, nestedScroll = false, showEditTab = true }: { editing?: FoodPanelEditing; items: LibraryFoodPanelItem[]; nestedScroll?: boolean; showEditTab?: boolean }) {
   const router = useRouter();
-  return <SharedFoodPanels items={items.map(toFoodPanelItem)} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} />;
+  return <SharedFoodPanels editing={editing} items={items.map(toFoodPanelItem)} nestedScroll={nestedScroll} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} showEditTab={showEditTab} />;
 }
 
-export function MealPanels({ items }: { items: LibraryMealPanelItem[] }) {
-  return <SharedMealPanels items={items.map(toMealPanelItem)} />;
+export function MealPanels({ dailyPlanId, editing, items, nestedScroll = false, showEditTab = true }: { dailyPlanId?: number; editing?: MealPanelEditing; items: LibraryMealPanelItem[]; nestedScroll?: boolean; showEditTab?: boolean }) {
+  const router = useRouter();
+  return <SharedMealPanels editing={editing} items={items.map(toMealPanelItem)} nestedScroll={nestedScroll} onOpenItem={(meal) => {
+    if (meal.detailId == null) return;
+    if (dailyPlanId != null && meal.relationId != null) {
+      router.push({ pathname: "/libraries/meals/[id]", params: { dailyPlanId: String(dailyPlanId), dailyPlanMealId: String(meal.relationId), id: String(meal.detailId), mealTime: meal.time ?? "" } } as Href);
+      return;
+    }
+    router.push(`/libraries/meals/${meal.detailId}` as Href);
+  }} showEditTab={showEditTab} />;
 }
 
 type PinnedTracking = {

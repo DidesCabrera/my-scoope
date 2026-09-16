@@ -4,7 +4,7 @@ import test from "node:test";
 
 import { assertSourceMatch, readTestFile } from "./support/source-contract";
 
-test("every library entity uses one portable resource for native share and copy link", async () => {
+test("every library entity opens native sharing directly with one portable resource", async () => {
   const actions = await readTestFile(path.resolve(process.cwd(), "src/components/libraries/library-actions.tsx"), "utf8");
   const adapter = await readTestFile(path.resolve(process.cwd(), "src/sharing/native-share.ts"), "utf8");
   const packageJson = JSON.parse(await readTestFile(path.resolve(process.cwd(), "package.json"), "utf8"));
@@ -12,8 +12,11 @@ test("every library entity uses one portable resource for native share and copy 
   assert.match(packageJson.dependencies["expo-clipboard"], /^~57\./);
   assertSourceMatch(actions, /\/api\/v1\/shares\/\$\{entitySlug\}\/\$\{item\.id\}/);
   assertSourceMatch(actions, /entitySlug: "foods" \| "meals" \| "daily-plans" \| "programs"/);
+  assertSourceMatch(actions, /action\.key === "share"[\s\S]*?void shareItem\(\)/);
+  assertSourceMatch(actions, /setDismissShareImmediately\(true\);[\s\S]*?setVisible\(false\);[\s\S]*?requestAnimationFrame\(\(\) => requestAnimationFrame[\s\S]*?await openNativeShare\(resource\)/);
+  assert.doesNotMatch(actions, /submitting && !selected/);
   assertSourceMatch(actions, /openNativeShare\(resource\)/);
-  assertSourceMatch(actions, /copyShareLink\(resource\)/);
+  assert.doesNotMatch(actions, /Compartir con otra app|Copiar enlace|Correo del destinatario/);
   assertSourceMatch(adapter, /Share\.share/);
   assertSourceMatch(adapter, /Clipboard\.setStringAsync/);
 });
@@ -45,7 +48,32 @@ test("shared daily plans reuse the native entity detail and nutrition panel syst
   assertSourceMatch(shareScreen, /<MealPanels items=\{mealItems\}/);
   assertSourceMatch(shareScreen, /Detalle de cada Comida/);
   assertSourceMatch(shareScreen, /<NutritionEntityCard/);
-  assertSourceMatch(shareScreen, /<FoodPanels items=\{sharedFoodPanelItems\(meal\)\}/);
+  assertSourceMatch(shareScreen, /<FoodPanels[\s\S]*?items=\{sharedFoodPanelItems\(meal\)\}/);
+  assertSourceMatch(shareScreen, /onOpenItem=\{\(food\) => \{ if \(food\.detailId != null\) router\.push\(`\/share\/\$\{id\}\/meals\/\$\{index\}\/foods\/\$\{food\.detailId\}` as Href\); \}\}/);
+});
+
+test("shared meal foods navigate from panels and detail cards", async () => {
+  const sharedMeal = await readTestFile(path.resolve(process.cwd(), "src/app/share/[id]/meals/[mealIndex].tsx"), "utf8");
+  const presentation = await readTestFile(path.resolve(process.cwd(), "src/sharing/presentation.ts"), "utf8");
+  const foodCards = await readTestFile(path.resolve(process.cwd(), "src/components/details/food-detail-card-list.tsx"), "utf8");
+
+  assertSourceMatch(presentation, /detailId: index/);
+  assertSourceMatch(sharedMeal, /<FoodPanels items=\{foods\} onOpenItem=\{openFood\} \/>/);
+  assertSourceMatch(sharedMeal, /<FoodDetailCardList[\s\S]*onOpenFood=\{openFood\}/);
+  assertSourceMatch(sharedMeal, /`\/share\/\$\{id\}\/meals\/\$\{index\}\/foods\/\$\{food\.detailId\}`/);
+  assertSourceMatch(foodCards, /onOpenFood && item\.detailId != null[\s\S]*<ChevronRight/);
+});
+
+test("shared food detail includes available item information", async () => {
+  const sharedFood = await readTestFile(path.resolve(process.cwd(), "src/app/share/[id]/meals/[mealIndex]/foods/[foodIndex].tsx"), "utf8");
+  const presentation = await readTestFile(path.resolve(process.cwd(), "src/sharing/presentation.ts"), "utf8");
+
+  assertSourceMatch(sharedFood, /<EntityDetailMetadata/);
+  assertSourceMatch(sharedFood, /creator="Elemento compartido"/);
+  assertSourceMatch(sharedFood, /creatorLabel="Origen"/);
+  assertSourceMatch(sharedFood, /updatedAt=\{sharedDate\(resource\?\.created_at\)\}/);
+  assertSourceMatch(sharedFood, /updatedAtLabel="Compartido"/);
+  assertSourceMatch(presentation, /export function sharedDate/);
 });
 
 test("native Inbox manages messages while shared detail owns saving to the library", async () => {

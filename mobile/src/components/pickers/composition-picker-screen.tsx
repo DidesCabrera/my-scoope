@@ -28,6 +28,7 @@ import { ConfirmationState, RecoverableErrorState } from "@/components/ui/screen
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
 import { PickerCardAction } from "./picker-card-action";
+import { buildCompositionPickerPayload } from "./composition-picker-payload";
 import { PickerEntryTabs } from "./picker-entry-tabs";
 import { PickerResultCard } from "./picker-result-card";
 
@@ -207,7 +208,7 @@ export function CompositionPickerScreen({
   const isMealPicker = kind === "meal-to-dailyplan" || kind === "meal-to-calendarized-day";
   const isCalendarizedPicker = kind === "dailyplan-to-calendarized-day" || kind === "meal-to-calendarized-day" || kind === "food-to-calendarized-meal";
   const title = relationId || relationKey
-    ? kind === "food-to-meal" ? "Reemplazar alimento" : "Reemplazar comida"
+    ? isFoodPicker ? "Reemplazar alimento" : "Reemplazar comida"
     : config.title;
   const router = useRouter();
   const detailHref = returnTo ?? (
@@ -315,18 +316,7 @@ export function CompositionPickerScreen({
 
   const payload = useMemo(() => {
     if (!selected) return null;
-    if (kind === "food-to-meal") return {
-      food_id: selected.id,
-      meal_food_id: relationId,
-      dailyplan_id: contextDailyPlanId,
-      dailyplan_meal_id: contextDailyPlanMealId,
-      quantity: Number(quantity),
-    };
-    if (kind === "food-to-calendarized-meal") return { food_id: selected.id, food_snapshot_key: relationKey, quantity: Number(quantity) };
-    if (kind === "meal-to-dailyplan") return { meal_id: selected.id, dailyplan_meal_id: relationId, hour, note };
-    if (kind === "meal-to-calendarized-day") return { meal_id: selected.id, meal_snapshot_key: relationKey, hour, note };
-    if (kind === "dailyplan-to-calendarized-day") return { dailyplan_id: selected.id };
-    return { dailyplan_id: selected.id, week_number: weekNumber, day_numbers: dayNumbers };
+    return buildCompositionPickerPayload({ contextDailyPlanId, contextDailyPlanMealId, dayNumbers, hour, kind, note, quantity, relationId, relationKey, selectedId: selected.id, weekNumber });
   }, [contextDailyPlanId, contextDailyPlanMealId, dayNumbers, hour, kind, note, quantity, relationId, relationKey, selected, weekNumber]);
   const payloadKey = payload ? JSON.stringify(payload) : null;
   const previewing = configurationValid && previewRequestKey === payloadKey;
@@ -384,6 +374,7 @@ export function CompositionPickerScreen({
           contentContainerStyle={styles.selectionScrollContent}
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
           stickyHeaderIndices={[0]}>
           <View style={styles.selectionSticky}>
             <PickerEntryTabs
@@ -440,6 +431,7 @@ export function CompositionPickerScreen({
         contentContainerStyle={styles.configurationScrollContent}
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
         stickyHeaderIndices={[1]}>
         <View>
           {selected ? <PickerOptionCard option={selected} /> : null}
@@ -569,7 +561,7 @@ export function pickerConfigureHref(
   if (contextDailyPlanId) params.contextDailyPlanId = String(contextDailyPlanId);
   if (contextDailyPlanMealId) params.contextDailyPlanMealId = String(contextDailyPlanMealId);
   if (returnTo) params.returnTo = String(returnTo);
-  return `/pickers/configure?${new URLSearchParams(params).toString()}` as Href;
+  return { pathname: "/pickers/configure", params } as Href;
 }
 
 const styles = StyleSheet.create({

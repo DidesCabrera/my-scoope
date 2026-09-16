@@ -90,6 +90,7 @@ export default function ActivateProgramScreen() {
           contentContainerStyle={styles.selectionScrollContent}
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
           stickyHeaderIndices={[0]}>
           <View style={styles.selectionSticky}>
             <PickerEntryTabs

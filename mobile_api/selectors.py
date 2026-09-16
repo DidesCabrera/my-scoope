@@ -142,7 +142,8 @@ def _aggregated_food_panel_items(rows, *, id_prefix: str, current_weight=None) -
     return [
         {
             "id": f"{id_prefix}:{row['child']['id']}",
-            "detail_id": row["child"].get("detail_id") or (row["child"]["id"] if isinstance(row["child"]["id"], int) else None),
+            "detail_id": row["child"].get("detail_id")
+            or (row["child"]["id"] if isinstance(row["child"]["id"], int) else None),
             "name": row["rel"]["name"],
             "quantity": _safe_number(row["rel"]["quantity"]),
             "quantity_unit": row["rel"]["quantity_unit"],
@@ -244,9 +245,7 @@ def _program_week_panel_items(program, current_weight=None) -> list[dict]:
             "carbs_allocation": _safe_number(
                 _safe_percentage(week["totals"]["kcal_carbs"], program_totals["kcal_carbs"])
             ),
-            "fat_allocation": _safe_number(
-                _safe_percentage(week["totals"]["kcal_fat"], program_totals["kcal_fat"])
-            ),
+            "fat_allocation": _safe_number(_safe_percentage(week["totals"]["kcal_fat"], program_totals["kcal_fat"])),
         }
         for week in summary["weeks"]
     ]
@@ -260,11 +259,7 @@ def _snapshot_nutrition_payload(snapshot, current_weight=None) -> dict:
         "protein": {
             "grams": protein,
             "allocation": _safe_number(totals["alloc"]["protein"]),
-            "per_kilogram": (
-                _safe_number(protein / current_weight)
-                if current_weight and protein
-                else None
-            ),
+            "per_kilogram": (_safe_number(protein / current_weight) if current_weight and protein else None),
         },
         "carbs": {
             "grams": _safe_number(totals["carbs"]),
@@ -296,11 +291,7 @@ def _calendarized_week_panel_items(calendarization, current_weight=None) -> tupl
                     "day_number": day["day_number"],
                     "day_label": day["day_label"],
                     "plan_name": day["plan_name"],
-                    "nutrition": (
-                        _snapshot_nutrition_payload(snapshot, current_weight)
-                        if snapshot
-                        else None
-                    ),
+                    "nutrition": (_snapshot_nutrition_payload(snapshot, current_weight) if snapshot else None),
                 }
             )
         items.append(
@@ -318,9 +309,7 @@ def _calendarized_week_panel_items(calendarization, current_weight=None) -> tupl
                     current_weight=current_weight,
                 ),
                 "calories": _safe_number(week["totals"]["total_kcal"]),
-                "calorie_share": _safe_number(
-                    _safe_percentage(week["totals"]["total_kcal"], program_total_kcal)
-                ),
+                "calorie_share": _safe_number(_safe_percentage(week["totals"]["total_kcal"], program_total_kcal)),
                 "calorie_distribution": _calorie_distribution(
                     week["totals"]["kcal_protein"],
                     week["totals"]["kcal_carbs"],
@@ -359,9 +348,7 @@ def _library_page(queryset, *, search, offset, limit, builder) -> dict:
     }
 
 
-def library_foods_payload(
-    user, *, search=None, offset=0, limit=30, include_drafts=False, include_actions=True
-) -> dict:
+def library_foods_payload(user, *, search=None, offset=0, limit=30, include_drafts=False, include_actions=True) -> dict:
     current_weight = get_current_weight(user)
     queryset = (
         Food.objects.filter(created_by=user, is_active=True)
@@ -389,9 +376,7 @@ def library_foods_payload(
     )
 
 
-def library_meals_payload(
-    user, *, search=None, offset=0, limit=30, include_drafts=False, include_actions=True
-) -> dict:
+def library_meals_payload(user, *, search=None, offset=0, limit=30, include_drafts=False, include_actions=True) -> dict:
     current_weight = get_current_weight(user)
     queryset = (
         Meal.objects.filter(created_by=user, dailyplanmeal__isnull=True)
@@ -466,7 +451,8 @@ def library_dailyplans_payload(
             "indicators": [
                 {"icon": "meal", "label": "comidas", "value": dailyplan.library_meal_count},
                 {"icon": "food", "label": "alimentos", "value": dailyplan.library_food_count},
-            ] + ([{"label": "estado", "value": "Borrador"}] if dailyplan.is_draft else []),
+            ]
+            + ([{"label": "estado", "value": "Borrador"}] if dailyplan.is_draft else []),
             "panel": {
                 **_empty_library_panel("meals"),
                 "meals": [
@@ -507,7 +493,8 @@ def library_programs_payload(user, *, search=None, offset=0, limit=30) -> dict:
                 {"icon": "week", "label": "semanas", "value": program.normalized_duration_weeks},
                 {"icon": "dailyPlan", "label": "planes asignados", "value": program.library_day_count},
                 {"icon": "food", "label": "alimentos", "value": get_program_summary(program)["program_foods_count"]},
-            ] + ([{"label": "estado", "value": "Borrador"}] if program.is_draft else []),
+            ]
+            + ([{"label": "estado", "value": "Borrador"}] if program.is_draft else []),
             "panel": {**_empty_library_panel("weeks"), "weeks": _program_week_panel_items(program, current_weight)},
             "creator": _creator_name(program),
             "created_at": program.created_at,
@@ -521,9 +508,12 @@ def library_programs_payload(user, *, search=None, offset=0, limit=30) -> dict:
 def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
     current_weight = get_current_weight(user)
     if entity == "foods":
-        item = get_readable_food_queryset(user).filter(pk=item_id, is_active=True).select_related(
-            "created_by", "label_capture_receipt"
-        ).first()
+        item = (
+            get_readable_food_queryset(user)
+            .filter(pk=item_id, is_active=True)
+            .select_related("created_by", "label_capture_receipt")
+            .first()
+        )
         if item:
             receipt = getattr(item, "label_capture_receipt", None)
             return {
@@ -600,7 +590,8 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
                 "indicators": [
                     {"icon": "meal", "label": "comidas", "value": item.library_meal_count},
                     {"icon": "food", "label": "alimentos", "value": item.library_food_count},
-                ] + ([{"label": "estado", "value": "Borrador"}] if item.is_draft else []),
+                ]
+                + ([{"label": "estado", "value": "Borrador"}] if item.is_draft else []),
                 "panel": {
                     **_empty_library_panel("meals"),
                     "meals": [_meal_panel_item(row, item, current_weight) for row in item.dailyplan_meals.all()],
@@ -632,7 +623,8 @@ def library_item_detail_payload(user, entity: str, item_id: int) -> dict:
                     {"icon": "week", "label": "semanas", "value": item.normalized_duration_weeks},
                     {"icon": "dailyPlan", "label": "planes asignados", "value": item.library_day_count},
                     {"icon": "food", "label": "alimentos", "value": get_program_summary(item)["program_foods_count"]},
-                ] + ([{"label": "estado", "value": "Borrador"}] if item.is_draft else []),
+                ]
+                + ([{"label": "estado", "value": "Borrador"}] if item.is_draft else []),
                 "panel": {**_empty_library_panel("weeks"), "weeks": _program_week_panel_items(item, current_weight)},
                 "creator": _creator_name(item),
                 "created_at": item.created_at,
@@ -821,9 +813,7 @@ def reminder_settings_payload(calendarization, *, now=None) -> dict:
         for event in calendarization.notification_events.filter(
             status="pending",
             scheduled_for_utc__gt=current_time,
-        ).order_by("scheduled_for_utc", "id")[
-            :REMINDER_UPCOMING_LIMIT
-        ]
+        ).order_by("scheduled_for_utc", "id")[:REMINDER_UPCOMING_LIMIT]
     ]
     return {
         "timezone_name": calendarization.timezone_name,
@@ -1011,6 +1001,37 @@ def calendarization_history_payload(user, *, limit=20) -> dict:
     }
 
 
+def _snapshot_food_relation_id(food: dict) -> int | None:
+    food_key = food.get("key")
+    if not isinstance(food_key, str):
+        return None
+    for prefix in ("meal_food:", "source_meal_food:"):
+        if food_key.startswith(prefix):
+            try:
+                return int(food_key.removeprefix(prefix))
+            except ValueError:
+                return None
+    return None
+
+
+def _index_snapshot_food(
+    food: object,
+    *,
+    foods_by_source_id: dict[int, list[dict]],
+    foods_by_relation_id: dict[int, list[dict]],
+) -> None:
+    if not isinstance(food, dict):
+        return
+    food.pop("detail_id", None)
+    source_food_id = food.get("source_food_id")
+    if isinstance(source_food_id, int):
+        foods_by_source_id.setdefault(source_food_id, []).append(food)
+        return
+    relation_id = _snapshot_food_relation_id(food)
+    if relation_id is not None:
+        foods_by_relation_id.setdefault(relation_id, []).append(food)
+
+
 def _calendarized_snapshot_with_meal_links(user, snapshot: dict | None) -> dict | None:
     if not snapshot:
         return None
@@ -1030,18 +1051,18 @@ def _calendarized_snapshot_with_meal_links(user, snapshot: dict | None) -> dict 
 
     meals_by_slot_id = {}
     foods_by_source_id: dict[int, list[dict]] = {}
+    foods_by_relation_id: dict[int, list[dict]] = {}
     for meal in meals:
         if not isinstance(meal, dict):
             continue
         add_protein_per_kilogram(meal.get("totals"))
         meal.pop("detail_id", None)
         for food in meal.get("foods", []):
-            if not isinstance(food, dict):
-                continue
-            food.pop("detail_id", None)
-            source_food_id = food.get("source_food_id")
-            if isinstance(source_food_id, int):
-                foods_by_source_id.setdefault(source_food_id, []).append(food)
+            _index_snapshot_food(
+                food,
+                foods_by_source_id=foods_by_source_id,
+                foods_by_relation_id=foods_by_relation_id,
+            )
         key = meal.get("key")
         if not isinstance(key, str) or not key.startswith("dailyplan_meal:"):
             continue
@@ -1057,9 +1078,12 @@ def _calendarized_snapshot_with_meal_links(user, snapshot: dict | None) -> dict 
     ).values_list("id", "meal_id")
     for slot_id, meal_id in links:
         meals_by_slot_id[slot_id]["detail_id"] = meal_id
-    readable_food_ids = get_readable_food_queryset(user).filter(
-        pk__in=foods_by_source_id, is_active=True
-    ).values_list("id", flat=True)
+    relation_food_ids = MealFood.objects.filter(pk__in=foods_by_relation_id).values_list("id", "food_id")
+    for relation_id, food_id in relation_food_ids:
+        foods_by_source_id.setdefault(food_id, []).extend(foods_by_relation_id[relation_id])
+    readable_food_ids = (
+        get_readable_food_queryset(user).filter(pk__in=foods_by_source_id, is_active=True).values_list("id", flat=True)
+    )
     for food_id in readable_food_ids:
         for food in foods_by_source_id[food_id]:
             food["detail_id"] = food_id

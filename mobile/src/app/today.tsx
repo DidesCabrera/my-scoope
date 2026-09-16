@@ -14,6 +14,7 @@ import { HomeLibraryGrid, type HomeLibraryCounts } from "@/components/home/home-
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
 import { ProgramActiveHomeOverview } from "@/components/programs/program-active-card";
+import type { MealPanelEditing, MealPanelItem } from "@/components/panels";
 import { AppHeader, Button, Card, GuideMetric, InlineNotice, LoadingState, Pill, Screen, SectionTitle, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { syncNativeRemindersForProgram } from "@/notifications/native-reminders";
@@ -110,6 +111,41 @@ export default function TodayScreen() {
     }
   }
 
+  const calendarizedMealEditing: MealPanelEditing | undefined = todayDayId != null ? {
+    onChangeTime: (meal) => router.push({ pathname: "/program/days/[id]/meals/[mealKey]", params: { id: String(todayDayId), mealKey: meal.id } } as Href),
+    onDelete: async (meal) => {
+      await apiRequest(`/api/v1/program/days/${todayDayId}/meals/${encodeURIComponent(meal.id)}`, { method: "DELETE" });
+      await load();
+    },
+    onOpen: (meal) => router.push({ pathname: "/program/days/[id]/meals/[mealKey]", params: { id: String(todayDayId), mealKey: meal.id } } as Href),
+    onReorder: async (meals: MealPanelItem[]) => {
+      await apiRequest(`/api/v1/program/days/${todayDayId}/meals/order`, { body: JSON.stringify({ ordered_keys: meals.map((meal) => meal.id) }), method: "PUT" });
+      await load();
+    },
+    onReplace: (meal) => router.push(pickerHref("meal-to-calendarized-day", { dayId: todayDayId, relationKey: meal.id })),
+  } : undefined;
+  const pinnedPlan = today?.pinned_plan;
+  const pinnedMealEditing: MealPanelEditing | undefined = pinnedPlan ? {
+    onChangeTime: (meal) => {
+      if (meal.detailId == null || meal.relationId == null) return;
+      router.push({ pathname: "/libraries/meals/[id]", params: { dailyPlanId: String(pinnedPlan.id), dailyPlanMealId: String(meal.relationId), id: String(meal.detailId), mealKey: meal.id, mealTime: meal.time ?? "", pinned: "1" } } as Href);
+    },
+    onDelete: async (meal) => {
+      if (meal.relationId == null) return;
+      await apiRequest(`/api/v1/library/daily-plans/${pinnedPlan.id}/meals/${meal.relationId}`, { method: "DELETE" });
+      await load();
+    },
+    onOpen: (meal) => {
+      if (meal.detailId == null || meal.relationId == null) return;
+      router.push({ pathname: "/libraries/meals/[id]", params: { dailyPlanId: String(pinnedPlan.id), dailyPlanMealId: String(meal.relationId), id: String(meal.detailId), mealKey: meal.id, mealTime: meal.time ?? "", pinned: "1" } } as Href);
+    },
+    onReorder: async (meals: MealPanelItem[]) => {
+      await apiRequest(`/api/v1/library/daily-plans/${pinnedPlan.id}/meals/order`, { body: JSON.stringify({ ordered_ids: meals.map((meal) => meal.relationId) }), method: "PUT" });
+      await load();
+    },
+    onReplace: (meal) => { if (meal.relationId != null) router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: pinnedPlan.id, dailyPlanMealId: meal.relationId })); },
+  } : undefined;
+
   return (
     <>
       <Screen headerMode="preserve">
@@ -127,8 +163,13 @@ export default function TodayScreen() {
         <CalendarizedDailyPlanCard
           dayId={todayDayId ?? null}
           dateLabel={compactDateLabel(today.local_date)}
+          editing={calendarizedMealEditing}
           eyebrow="PLAN DE HOY"
           mealExecution={today.meal_execution}
+          onChangeMealTime={async (meal, hour) => {
+            await apiRequest(`/api/v1/program/days/${todayDayId}/meals/${encodeURIComponent(meal.id)}`, { body: JSON.stringify({ hour }), headers: { "Content-Type": "application/json" }, method: "PATCH" });
+            await load();
+          }}
           onAddMeal={todayDayId != null ? () => router.push(pickerHref("meal-to-calendarized-day", { dayId: todayDayId })) : undefined}
           position={todayProgramDay ? { dayNumber: todayProgramDay.day_number, weekNumber: todayProgramDay.week_number } : undefined}
           snapshot={snapshot}
@@ -141,7 +182,11 @@ export default function TodayScreen() {
       ) : today?.pinned_plan ? (
         <>
           <HomeSectionTitle>{`Tu Plan para hoy, ${homePlanDateLabel(today.local_date)}`}</HomeSectionTitle>
-          <PinnedDailyPlanCard item={today.pinned_plan} mealExecution={today.meal_execution} />
+          <PinnedDailyPlanCard editing={pinnedMealEditing} item={today.pinned_plan} mealExecution={today.meal_execution} onChangeMealTime={async (meal, hour) => {
+            if (meal.relationId == null) return;
+            await apiRequest(`/api/v1/library/daily-plans/${pinnedPlan!.id}/meals/${meal.relationId}`, { body: JSON.stringify({ hour }), headers: { "Content-Type": "application/json" }, method: "PATCH" });
+            await load();
+          }} />
         </>
       ) : today ? (
         <>

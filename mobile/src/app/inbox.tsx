@@ -6,6 +6,8 @@ import { RefreshControl, ScrollView, StyleSheet } from "react-native";
 import { userFacingError } from "@/api/errors";
 import type { SharingInboxData, SharingInboxItem } from "@/api/types";
 import { useSession } from "@/auth/session-context";
+import { useHeaderPresentation } from "@/components/navigation/app-navigation";
+import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import {
   CollectionEmptyState,
   EntityCard,
@@ -30,6 +32,13 @@ export default function InboxScreen() {
   const [data, setData] = useState<SharingInboxData | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const setHeaderPresentation = useHeaderPresentation();
+  const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
+
+  useFocusEffect(useCallback(() => {
+    setHeaderPresentation({ identityVisible: compactHeaderVisible, mode: "default", title: "Inbox" });
+    return () => setHeaderPresentation({ mode: "default" });
+  }, [compactHeaderVisible, setHeaderPresentation]));
 
   const load = useCallback(async (refresh = false) => {
     if (refresh) setRefreshing(true);
@@ -63,6 +72,12 @@ export default function InboxScreen() {
   return (
     <ScrollView
       contentContainerStyle={styles.content}
+      onScroll={({ nativeEvent }) => {
+        const visible = isHeaderIdentityVisible(nativeEvent.contentOffset.y);
+        if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible);
+      }}
+      scrollEventThrottle={16}
+      showsVerticalScrollIndicator={false}
       refreshControl={<RefreshControl onRefresh={() => void load(true)} refreshing={refreshing} tintColor={tokens.color.interactivePrimary} />}>
       <SectionPageHeader count={data?.count} countLabel="recibidos" section="inbox" title="Inbox" />
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}

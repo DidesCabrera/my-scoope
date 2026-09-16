@@ -45,7 +45,6 @@ from notas.domain.models import (
 
 @override_settings(NUTRITION_ONBOARDING_GATE_ENABLED=False)
 class MobileAPICalendarizationTests(AuthenticatedMobileAPITestCase):
-
     def test_apple_notification_device_is_bound_to_authenticated_device_session(self):
         response = self.client.put(
             "/api/v1/notifications/apple/device",
@@ -279,7 +278,6 @@ class MobileAPICalendarizationTests(AuthenticatedMobileAPITestCase):
 
         self.assertEqual(hidden_day.status_code, 404)
         self.assertEqual(hidden_calendarization.status_code, 404)
-
 
     def test_today_check_in_persists_append_only_execution_evidence(self):
         today = timezone.localdate(timezone=ZoneInfo("UTC"))

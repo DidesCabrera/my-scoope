@@ -92,6 +92,7 @@ export default function ComparatorSelectScreen() {
         contentContainerStyle={styles.scrollContent}
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
         stickyHeaderIndices={[0]}>
         <View style={styles.stickyHeader}>
           <PickerEntryTabs

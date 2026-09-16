@@ -2,10 +2,11 @@ import { type Href, Redirect, useFocusEffect, useLocalSearchParams, useRouter } 
 import * as Crypto from "expo-crypto";
 import { ChevronRight } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { userFacingError } from "@/api/errors";
-import type { CalendarizedDayDetail, MealCheckInInput, MealExecutionItem, MealSnapshot, TodayData } from "@/api/types";
+import type { CalendarizedDayDetail, MealCheckInInput, MealExecutionItem, MealSnapshot } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { CalendarizedEntityActions } from "@/components/calendarization/calendarized-entity-actions";
 import { MealCompletionToggleCard } from "@/components/calendarization/meal-adherence-check-in";
@@ -14,11 +15,13 @@ import { normalizeMealExecution } from "@/components/calendarization/meal-execut
 import { snapshotCalories, snapshotDailyPlanFoodPanelItems, snapshotFoodPanelItems, snapshotMacroDistribution, snapshotMealPanelItem } from "@/components/calendarization/presentation-adapters";
 import { EntityDetailPage, EntityDetailSection } from "@/components/details";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
+import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import { NutritionEntityCard } from "@/components/nutrition";
 import { FoodPanels, MealPanels, type MealPanelItem } from "@/components/panels";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
 import { Button, ContentPanel, EntityCardAction, InlineNotice, SectionDivider, textStyles } from "@/components/ui";
 import { tokens } from "@/design/tokens";
+import { refreshNativeReminders } from "@/notifications/native-reminders";
 
 function displayDate(value: string): string {
   return new Intl.DateTimeFormat("es-CL", { weekday: "long", day: "numeric", month: "long" }).format(new Date(`${value}T12:00:00`));
@@ -90,6 +93,7 @@ export default function ProgramDayScreen() {
   const [error, setError] = useState<string | null>(null);
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const [actionsVisible, setActionsVisible] = useState(false);
+  const [timeChangeMeal, setTimeChangeMeal] = useState<MealPanelItem | null>(null);
   const [savingMealKey, setSavingMealKey] = useState<string | null>(null);
   const [completionError, setCompletionError] = useState<{ mealKey: string; message: string } | null>(null);
   const setHeaderPresentation = useHeaderPresentation();
@@ -109,8 +113,9 @@ export default function ProgramDayScreen() {
     });
     try {
       const payload: MealCheckInInput = { action: completed ? "completed" : "skipped", idempotency_key: Crypto.randomUUID() };
-      const updated = await apiRequest<TodayData>(`/api/v1/days/${day.id}/meals/${encodeURIComponent(mealKey)}/check-ins`, { body: JSON.stringify(payload), method: "POST" });
-      setDay((current) => current ? { ...current, meal_execution: normalizeMealExecution(updated.meal_execution) } : current);
+      await apiRequest(`/api/v1/days/${day.id}/meals/${encodeURIComponent(mealKey)}/check-ins`, { body: JSON.stringify(payload), method: "POST" });
+      const updated = await apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${day.id}`);
+      setDay({ ...updated, meal_execution: normalizeMealExecution(updated.meal_execution) });
     } catch (nextError) {
       setDay(previous);
       setCompletionError({ mealKey, message: userFacingError(nextError) });
@@ -134,8 +139,9 @@ export default function ProgramDayScreen() {
     });
     try {
       const payload: MealCheckInInput = { action: prepared ? "food_unprepared" : "food_prepared", food_snapshot_key: foodKey, idempotency_key: Crypto.randomUUID() };
-      const updated = await apiRequest<TodayData>(`/api/v1/days/${day.id}/meals/${encodeURIComponent(mealKey)}/check-ins`, { body: JSON.stringify(payload), method: "POST" });
-      setDay((current) => current ? { ...current, meal_execution: normalizeMealExecution(updated.meal_execution) } : current);
+      await apiRequest(`/api/v1/days/${day.id}/meals/${encodeURIComponent(mealKey)}/check-ins`, { body: JSON.stringify(payload), method: "POST" });
+      const updated = await apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${day.id}`);
+      setDay({ ...updated, meal_execution: normalizeMealExecution(updated.meal_execution) });
     } catch (nextError) {
       setDay(previous);
       setError(userFacingError(nextError));
@@ -193,13 +199,18 @@ export default function ProgramDayScreen() {
     completed: Boolean(meal.key && completedMealKeys.has(meal.key)),
   }));
   const foods = snapshotDailyPlanFoodPanelItems(meals);
+  const openMeal = (meal: MealPanelItem) => router.push({
+    pathname: "/program/days/[id]/meals/[mealKey]",
+    params: { id: String(day.id), mealKey: meal.id },
+  } as Href);
 
   return (
     <>
-    <ScrollView
+    <NestableScrollContainer
       contentContainerStyle={styles.content}
-      onScroll={({ nativeEvent }) => { const visible = nativeEvent.contentOffset.y > 1; if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible); }}
+      onScroll={({ nativeEvent }) => setCompactHeaderVisible(isHeaderIdentityVisible(nativeEvent.contentOffset.y))}
       scrollEventThrottle={16}
+      showsVerticalScrollIndicator={false}
       style={styles.screen}>
       {day.has_plan && snapshot ? (
         <EntityDetailPage
@@ -221,12 +232,15 @@ export default function ProgramDayScreen() {
           <EntityDetailSection title="Tabla de comparación entre comidas">
             <MealPanels
               editing={{
+                onChangeTime: setTimeChangeMeal,
                 onDelete: async (meal) => mutateMeals(`/api/v1/program/days/${day.id}/meals/${encodeURIComponent(meal.id)}`, { method: "DELETE" }),
-                onOpen: (meal) => router.push({ pathname: "/program/days/[id]/meals/[mealKey]", params: { id: String(day.id), mealKey: meal.id } } as Href),
+                onOpen: openMeal,
                 onReorder: async (items: MealPanelItem[]) => mutateMeals(`/api/v1/program/days/${day.id}/meals/order`, { body: JSON.stringify({ ordered_keys: items.map((item) => item.id) }), method: "PUT" }),
                 onReplace: (meal) => router.push(pickerHref("meal-to-calendarized-day", { dayId: day.id, relationKey: meal.id })),
               }}
               items={mealItems}
+              nestedScroll
+              onOpenItem={openMeal}
             />
           </EntityDetailSection>
           <Button
@@ -261,7 +275,7 @@ export default function ProgramDayScreen() {
         </ContentPanel>
       )}
       {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
-    </ScrollView>
+    </NestableScrollContainer>
     <CalendarizedEntityActions
       entityName={snapshot?.name ?? day.plan_name ?? "Plan diario"}
       onVisibleChange={setActionsVisible}
@@ -276,6 +290,26 @@ export default function ProgramDayScreen() {
         },
       }}
       visible={actionsVisible}
+    />
+    <CalendarizedEntityActions
+      entityName={timeChangeMeal?.name ?? "Comida"}
+      initialAction="change-time"
+      key={timeChangeMeal?.id ?? "closed-time-change"}
+      onVisibleChange={(visible) => { if (!visible) setTimeChangeMeal(null); }}
+      timeChange={timeChangeMeal ? {
+        initialTime: timeChangeMeal.time,
+        onSubmit: async (hour) => {
+          const updated = await apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${day.id}/meals/${encodeURIComponent(timeChangeMeal.id)}`, {
+            body: JSON.stringify({ hour }),
+            headers: { "Content-Type": "application/json" },
+            method: "PATCH",
+          });
+          setDay({ ...updated, meal_execution: normalizeMealExecution(updated.meal_execution) });
+          await refreshNativeReminders(apiRequest);
+        },
+      } : undefined}
+      timeChangeInMenu={false}
+      visible={timeChangeMeal != null}
     />
     </>
   );

@@ -4,6 +4,14 @@ import type { FoodPanelItem, MealPanelItem } from "@/components/panels";
 export type ShareNutrition = NonNullable<ShareResource["snapshot"]>["nutrition"];
 export type ShareMeal = NonNullable<NonNullable<ShareResource["snapshot"]>["meals"]>[number];
 
+export function sharedDate(value?: string): string | undefined {
+  if (!value) return undefined;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? value
+    : date.toLocaleDateString("es-CL", { day: "numeric", month: "short", year: "numeric" });
+}
+
 export function sharedNutrition(values: ShareNutrition) {
   const calories = values.calories || values.protein_grams * 4 + values.carbs_grams * 4 + values.fat_grams * 9;
   return {
@@ -18,6 +26,7 @@ export function sharedFoodPanelItems(meal: ShareMeal): FoodPanelItem[] {
   return meal.foods.map((food, index) => {
     const item = sharedNutrition(food.nutrition);
     return {
+      detailId: index,
       id: `shared-food-${index}`,
       name: food.name,
       quantity: food.quantity_grams,

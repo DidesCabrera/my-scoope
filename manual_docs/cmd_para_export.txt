@@ -2,13 +2,16 @@
 ***COMANDOS VENV - RUNSERVER
 -------------------------- #d336ff
 
-
 Necesito ayuda con la realizacion de cambio en mi proyecto my-scoope,
 el cual esta ubicado en el directorio /Users/felipedides/Developer/my-scoope.
 El entorno virtual esta en el proyecto.
 
 Si realizamos cambios, indicame la rama en la que realizaras los cambios, y si hay otras ramas creadas simultaneamente, o cambios que no hayan sido commiteados aun.
 
+Para probar:
+rama desde staging → validaciones focalizadas →
+merge local a staging → push directo a origin/staging
+No hacer PR a main ni build iOS salvo solicitud explícita.
 
 ----- ** Nueva forma nuevo mac ***
 cd /Users/felipedides/Developer/my-scoope
@@ -16,6 +19,13 @@ source .venv/bin/activate
 python manage.py runserver
 
 python manage.py migrate
+
+*para trabajar en simulador
+
+cd /Users/felipedides/Developer/my-scoope/mobile
+npm run ios:staging
+npm run start:staging
+
 
 CANONICO
 /Users/felipedides/Developer/my-scoope como directorio canónico
