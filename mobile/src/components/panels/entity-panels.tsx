@@ -1,6 +1,6 @@
-import { createContext, Fragment, type ReactNode, useContext, useMemo, useRef, useState } from "react";
+import { createContext, Fragment, type ReactNode, useContext, useRef, useState } from "react";
 import { type Href, useRouter } from "expo-router";
-import { ArrowDown, ArrowUp, Check, ChevronRight, Clock, Pencil, RefreshCw, RotateCcw, Trash2 } from "lucide-react-native";
+import { Check, ChevronRight, Clock, GripVertical, Pencil, RefreshCw, Trash2 } from "lucide-react-native";
 import { Alert, Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 import DraggableFlatList, { NestableDraggableFlatList, ScaleDecorator, type RenderItemParams } from "react-native-draggable-flatlist";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
@@ -553,45 +553,59 @@ function IconAction({ disabled = false, label, onPress, children }: { children: 
   );
 }
 
-function moveItem<T>(items: T[], index: number, offset: number): T[] {
-  const destination = index + offset;
-  if (destination < 0 || destination >= items.length) return items;
-  const next = [...items];
-  [next[index], next[destination]] = [next[destination], next[index]];
-  return next;
+function EditDragHandle({ disabled, drag, label }: { disabled: boolean; drag(): void; label: string }) {
+  return (
+    <Pressable
+      accessibilityHint="Mantén pulsado y arrastra para cambiar la posición"
+      accessibilityLabel={label}
+      accessibilityRole="button"
+      delayLongPress={180}
+      disabled={disabled}
+      hitSlop={8}
+      onLongPress={drag}
+      style={({ pressed }) => [styles.editDragHandle, disabled && styles.disabled, pressed && styles.pressed]}>
+      <GripVertical color={tokens.color.textMuted} size={18} strokeWidth={2.2} />
+    </Pressable>
+  );
 }
 
 function FoodEditPanel({ editing, items }: { editing: FoodPanelEditing; items: FoodPanelItem[] }) {
   const [draftItems, setDraftItems] = useState(items);
   const [busy, setBusy] = useState(false);
-  const dirty = useMemo(() => draftItems.map(({ id }) => id).join() !== items.map(({ id }) => id).join(), [draftItems, items]);
-
-  async function saveOrder() {
-    setBusy(true);
-    try { await editing.onReorder(draftItems); } catch { /* El padre ya presentó el error. */ } finally { setBusy(false); }
-  }
 
   if (!draftItems.length) return <PanelEmptyState label="Todavía no hay alimentos para editar." />;
   return (
     <PanelBody>
-      <View style={[styles.row, styles.header]}><Text style={[styles.headerText, styles.editLeading]}>Alimentos</Text><Text style={[styles.headerText, styles.editActions]}>Acciones</Text></View>
-      {draftItems.map((item, index) => (
-        <View key={item.id} style={[styles.editItem, index === draftItems.length - 1 && !dirty && styles.rowLast]}>
+      <View style={[styles.row, styles.header, styles.editRow]}><View style={styles.editDragHeader} /><Text style={[styles.headerText, styles.editLeading]}>Alimentos</Text><Text style={[styles.headerText, styles.editValue]}>Porción</Text><Text style={[styles.headerText, styles.foodEditActions]}>Acciones</Text></View>
+      <DraggableFlatList
+        activationDistance={12}
+        data={draftItems}
+        keyExtractor={(item) => item.id}
+        onDragEnd={({ data, from, to }) => {
+          setDraftItems(data);
+          if (from === to) return;
+          setBusy(true);
+          void editing.onReorder(data).catch(() => setDraftItems(items)).finally(() => setBusy(false));
+        }}
+        renderItem={({ drag, getIndex, isActive, item }) => {
+          const index = getIndex() ?? 0;
+          return <ScaleDecorator activeScale={1.018}>
+          <View style={[styles.editItem, isActive && styles.gestureRowActive, index === draftItems.length - 1 && styles.rowLast]}>
           <View style={[styles.row, styles.editRow]}>
-            <View style={styles.reorderActions}>
-              <IconAction disabled={busy || index === 0} label={`Subir ${item.name}`} onPress={() => setDraftItems((current) => moveItem(current, index, -1))}><ArrowUp color={tokens.color.textMuted} size={16} /></IconAction>
-              <IconAction disabled={busy || index === draftItems.length - 1} label={`Bajar ${item.name}`} onPress={() => setDraftItems((current) => moveItem(current, index, 1))}><ArrowDown color={tokens.color.textMuted} size={16} /></IconAction>
-            </View>
-            <View style={styles.editIdentity}><Text numberOfLines={2} style={[styles.cell, styles.name]}>{item.name}</Text><Text style={styles.editMeta}>{decimal(item.quantity)} {item.quantityUnit}</Text></View>
-            <View style={styles.editActions}>
-              <IconAction disabled={busy} label={`Editar porción de ${item.name}`} onPress={() => editing.onEditPortion(item)}><Pencil color={tokens.color.textMuted} size={16} /></IconAction>
-              <IconAction disabled={busy} label={`Reemplazar ${item.name}`} onPress={() => editing.onReplace(item)}><RefreshCw color={tokens.color.textMuted} size={16} /></IconAction>
+            <EditDragHandle disabled={busy} drag={drag} label={`Reordenar ${item.name}`} />
+            <View style={styles.editIdentity}><Text numberOfLines={2} style={[styles.cell, styles.name]}>{item.name}</Text></View>
+            <Text style={[styles.cell, styles.editValue, styles.editPortionValue]}>{decimal(item.quantity)} {item.quantityUnit}</Text>
+            <View style={[styles.editActions, styles.foodEditActions]}>
+              <IconAction disabled={busy} label={`Editar porción de ${item.name}`} onPress={() => editing.onEditPortion(item)}><Pencil color={tokens.color.textMain} size={16} /></IconAction>
+              <IconAction disabled={busy} label={`Reemplazar ${item.name}`} onPress={() => editing.onReplace(item)}><RefreshCw color={tokens.color.textMain} size={16} /></IconAction>
               <IconAction disabled={busy} label={`Eliminar ${item.name}`} onPress={() => Alert.alert("Eliminar alimento", `¿Eliminar ${item.name} de esta comida?`, [{ text: "Cancelar", style: "cancel" }, { text: "Eliminar", style: "destructive", onPress: () => void editing.onDelete(item).catch(() => undefined) }])}><Trash2 color={tokens.color.danger} size={16} /></IconAction>
             </View>
           </View>
         </View>
-      ))}
-      {dirty ? <View style={styles.commitActions}><Pressable accessibilityRole="button" disabled={busy} onPress={() => setDraftItems(items)} style={({ pressed }) => [styles.commitButton, pressed && styles.pressed]}><RotateCcw color={tokens.color.textMain} size={16} /><Text style={styles.commitLabel}>Descartar</Text></Pressable><Pressable accessibilityRole="button" disabled={busy} onPress={() => void saveOrder()} style={({ pressed }) => [styles.commitButton, styles.commitButtonPrimary, pressed && styles.pressed]}><Check color={tokens.color.surfaceApp} size={16} /><Text style={styles.commitLabelPrimary}>Guardar orden</Text></Pressable></View> : null}
+        </ScaleDecorator>;
+        }}
+        scrollEnabled={false}
+      />
     </PanelBody>
   );
 }
@@ -599,19 +613,28 @@ function FoodEditPanel({ editing, items }: { editing: FoodPanelEditing; items: F
 function MealEditPanel({ editing, items }: { editing: MealPanelEditing; items: MealPanelItem[] }) {
   const [draftItems, setDraftItems] = useState(items);
   const [busy, setBusy] = useState(false);
-  const dirty = useMemo(() => draftItems.map(({ id }) => id).join() !== items.map(({ id }) => id).join(), [draftItems, items]);
-  async function saveOrder() { setBusy(true); try { await editing.onReorder(draftItems); } catch { /* El padre ya presentó el error. */ } finally { setBusy(false); } }
   if (!draftItems.length) return <PanelEmptyState label="Todavía no hay comidas para editar." />;
   return (
     <PanelBody>
-      <View style={[styles.row, styles.header]}><Text style={[styles.headerText, styles.editLeading]}>Comidas</Text><Text style={[styles.headerText, styles.editActions]}>Acciones</Text></View>
-      {draftItems.map((item, index) => <View key={item.id} style={[styles.row, styles.editRow]}><View style={styles.reorderActions}><IconAction disabled={busy || index === 0} label={`Subir ${item.name}`} onPress={() => setDraftItems((current) => moveItem(current, index, -1))}><ArrowUp color={tokens.color.textMuted} size={16} /></IconAction><IconAction disabled={busy || index === draftItems.length - 1} label={`Bajar ${item.name}`} onPress={() => setDraftItems((current) => moveItem(current, index, 1))}><ArrowDown color={tokens.color.textMuted} size={16} /></IconAction></View><View style={styles.editIdentity}><MealRowIdentity name={item.name} />{item.time ? <Text style={styles.editMeta}>{item.time}</Text> : null}</View><View style={styles.editActions}><IconAction disabled={busy} label={`Editar detalle de ${item.name}`} onPress={() => editing.onOpen(item)}><Pencil color={tokens.color.textMuted} size={16} /></IconAction><IconAction disabled={busy} label={`Reemplazar ${item.name}`} onPress={() => editing.onReplace(item)}><RefreshCw color={tokens.color.textMuted} size={16} /></IconAction><IconAction disabled={busy} label={`Eliminar ${item.name}`} onPress={() => Alert.alert("Eliminar comida", `¿Eliminar ${item.name} de este plan diario?`, [{ text: "Cancelar", style: "cancel" }, { text: "Eliminar", style: "destructive", onPress: () => void editing.onDelete(item).catch(() => undefined) }])}><Trash2 color={tokens.color.danger} size={16} /></IconAction></View></View>)}
-      {dirty ? <View style={styles.commitActions}><Pressable accessibilityRole="button" disabled={busy} onPress={() => setDraftItems(items)} style={({ pressed }) => [styles.commitButton, pressed && styles.pressed]}><RotateCcw color={tokens.color.textMain} size={16} /><Text style={styles.commitLabel}>Descartar</Text></Pressable><Pressable accessibilityRole="button" disabled={busy} onPress={() => void saveOrder()} style={({ pressed }) => [styles.commitButton, styles.commitButtonPrimary, pressed && styles.pressed]}><Check color={tokens.color.surfaceApp} size={16} /><Text style={styles.commitLabelPrimary}>Guardar orden</Text></Pressable></View> : null}
+      <View style={[styles.row, styles.header, styles.editRow]}><View style={styles.editDragHeader} /><Text style={[styles.headerText, styles.editLeading]}>Comidas</Text><Text style={[styles.headerText, styles.editValue]}>Hora</Text><Text style={[styles.headerText, styles.mealEditActions]}>Acciones</Text></View>
+      <DraggableFlatList
+        activationDistance={12}
+        data={draftItems}
+        keyExtractor={(item) => item.id}
+        onDragEnd={({ data, from, to }) => {
+          setDraftItems(data);
+          if (from === to) return;
+          setBusy(true);
+          void editing.onReorder(data).catch(() => setDraftItems(items)).finally(() => setBusy(false));
+        }}
+        renderItem={({ drag, isActive, item }) => <ScaleDecorator activeScale={1.018}><View style={[styles.row, styles.editRow, isActive && styles.gestureRowActive]}><EditDragHandle disabled={busy} drag={drag} label={`Reordenar ${item.name}`} /><View style={styles.editIdentity}><MealRowIdentity name={item.name} /></View><Text style={[styles.cell, styles.editValue, styles.editTimeValue]}>{item.time ?? "—"}</Text><View style={[styles.editActions, styles.mealEditActions]}>{editing.onChangeTime ? <IconAction disabled={busy} label={`Cambiar hora de ${item.name}`} onPress={() => editing.onChangeTime?.(item)}><Clock color={tokens.color.textMain} size={16} /></IconAction> : null}<IconAction disabled={busy} label={`Editar detalle de ${item.name}`} onPress={() => editing.onOpen(item)}><Pencil color={tokens.color.textMain} size={16} /></IconAction><IconAction disabled={busy} label={`Reemplazar ${item.name}`} onPress={() => editing.onReplace(item)}><RefreshCw color={tokens.color.textMain} size={16} /></IconAction><IconAction disabled={busy} label={`Eliminar ${item.name}`} onPress={() => Alert.alert("Eliminar comida", `¿Eliminar ${item.name} de este plan diario?`, [{ text: "Cancelar", style: "cancel" }, { text: "Eliminar", style: "destructive", onPress: () => void editing.onDelete(item).catch(() => undefined) }])}><Trash2 color={tokens.color.danger} size={16} /></IconAction></View></View></ScaleDecorator>}
+        scrollEnabled={false}
+      />
     </PanelBody>
   );
 }
 
-export function FoodPanels({ editing, items, nestedScroll = false, onOpenItem, preparation }: { editing?: FoodPanelEditing; items: FoodPanelItem[]; nestedScroll?: boolean; onOpenItem?: (item: FoodPanelItem) => void; preparation?: FoodPreparation }) {
+export function FoodPanels({ editing, items, nestedScroll = false, onOpenItem, preparation, showEditTab = true }: { editing?: FoodPanelEditing; items: FoodPanelItem[]; nestedScroll?: boolean; onOpenItem?: (item: FoodPanelItem) => void; preparation?: FoodPreparation; showEditTab?: boolean }) {
   const [activeTab, setActiveTab] = useState<FoodPanelTab>("quantity");
   const itemSignature = items.map(({ id, name, quantity }) => `${id}:${name}:${quantity}`).join("|");
   const [optimisticOrder, setOptimisticOrder] = useState<{ items: FoodPanelItem[]; sourceSignature: string } | null>(null);
@@ -636,7 +659,7 @@ export function FoodPanels({ editing, items, nestedScroll = false, onOpenItem, p
 
   return (
     <NestedPanelScrollContext.Provider value={nestedScroll}><PanelSurface>
-      <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={editing ? [...foodTabs, editTab] : foodTabs} />
+      <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={editing && showEditTab ? [...foodTabs, editTab] : foodTabs} />
       {activeTab === "quantity" ? <FoodQuantityPanel editing={rowEditing} items={orderedItems} onOpenItem={onOpenItem} preparation={preparation} /> : null}
       {activeTab === "calories" ? <NutritionCaloriesPanel editing={rowEditing} items={orderedItems} leadingLabel="Alimentos" /> : null}
       {activeTab === "macros" ? <NutritionMacrosPanel editing={rowEditing} items={orderedItems} leadingLabel="Alimentos" /> : null}
@@ -647,7 +670,7 @@ export function FoodPanels({ editing, items, nestedScroll = false, onOpenItem, p
   );
 }
 
-export function MealPanels({ editing, items, nestedScroll = false, onOpenItem }: { editing?: MealPanelEditing; items: MealPanelItem[]; nestedScroll?: boolean; onOpenItem?: (item: MealPanelItem) => void }) {
+export function MealPanels({ editing, items, nestedScroll = false, onOpenItem, showEditTab = true }: { editing?: MealPanelEditing; items: MealPanelItem[]; nestedScroll?: boolean; onOpenItem?: (item: MealPanelItem) => void; showEditTab?: boolean }) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<MealPanelTab>("menu");
   const itemSignature = items.map(({ id, name, time }) => `${id}:${name}:${time ?? ""}`).join("|");
@@ -677,7 +700,7 @@ export function MealPanels({ editing, items, nestedScroll = false, onOpenItem }:
 
   return (
     <NestedPanelScrollContext.Provider value={nestedScroll}><PanelSurface>
-      <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={editing ? [...mealTabs, editTab] : mealTabs} />
+      <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={editing && showEditTab ? [...mealTabs, editTab] : mealTabs} />
       {activeTab === "menu" ? <MealMenuPanel editing={rowEditing} items={orderedItems} onOpenItem={openItem} /> : null}
       {activeTab === "calories" ? <NutritionCaloriesPanel editing={rowEditing} items={orderedItems} leadingLabel="Comidas" /> : null}
       {activeTab === "macros" ? <NutritionMacrosPanel editing={rowEditing} items={orderedItems} leadingLabel="Comidas" /> : null}
@@ -749,15 +772,15 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.28 },
   pressed: { opacity: 0.68 },
   editItem: { borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1 },
-  editRow: { gap: tokens.spacing.xs, minHeight: 54 },
-  reorderActions: { flexDirection: "row" },
+  editRow: { gap: 0, minHeight: 54 },
+  editDragHandle: { alignItems: "center", alignSelf: "stretch", justifyContent: "center", width: 20 },
+  editDragHeader: { width: 20 },
   editLeading: { flex: 1, textAlign: "left" },
   editIdentity: { flex: 1, minWidth: 0 },
-  editMeta: { color: tokens.color.textMuted, fontSize: tokens.type.label, paddingHorizontal: tokens.spacing.xs },
+  editValue: { color: tokens.color.textMuted, fontSize: tokens.type.label, paddingHorizontal: 2, textAlign: "center", width: 54 },
+  editPortionValue: { color: tokens.color.textMain },
+  editTimeValue: { color: tokens.color.textMain },
   editActions: { flexDirection: "row", justifyContent: "flex-end" },
-  commitActions: { flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "flex-end", padding: tokens.spacing.sm },
-  commitButton: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.xs, minHeight: 36, paddingHorizontal: tokens.spacing.md },
-  commitButtonPrimary: { backgroundColor: tokens.color.textMain, borderColor: tokens.color.textMain },
-  commitLabel: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
-  commitLabelPrimary: { color: tokens.color.surfaceApp, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
+  foodEditActions: { width: 102 },
+  mealEditActions: { width: 136 },
 });
