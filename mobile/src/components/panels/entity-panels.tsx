@@ -158,7 +158,7 @@ function EditablePanelRow<T extends EditablePanelItem>({ drag, editing, isActive
   row: ReactNode;
 }) {
   const swipeableRef = useRef<SwipeableMethods>(null);
-  const longPressGesture = Gesture.LongPress().minDuration(320).onStart(() => {
+  const longPressGesture = Gesture.LongPress().minDuration(320).cancelsTouchesInView(false).onStart(() => {
     onPrepareDrag();
     drag();
   }).onFinalize(onReleaseDrag).runOnJS(true);
