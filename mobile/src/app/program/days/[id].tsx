@@ -6,7 +6,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { userFacingError } from "@/api/errors";
-import type { CalendarizedDayDetail, MealCheckInInput, MealExecutionItem, MealSnapshot } from "@/api/types";
+import type { CalendarizedDayDetail, MealCheckInInput, MealExecutionItem, MealSnapshot, TodayData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { CalendarizedEntityActions } from "@/components/calendarization/calendarized-entity-actions";
 import { MealCompletionToggleCard } from "@/components/calendarization/meal-adherence-check-in";
@@ -73,6 +73,7 @@ function CalendarizedMealCards({ completionError, dayId, mealExecution, meals, o
               beforeNutrition={meal.key ? <MealCompletionToggleCard completed={execution?.status === "completed"} error={completionError?.mealKey === meal.key ? completionError.message : null} onToggle={(completed) => onToggleCompleted(meal.key ?? "", completed)} saving={savingMealKey != null} /> : null}
               title={meal.name ?? "Comida"}>
               <FoodPanels items={foods} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} preparation={meal.key ? {
+                disabled: savingMealKey != null,
                 isPrepared: (food) => execution?.prepared_food_keys.includes(food.id) ?? false,
                 onToggle: (food) => onTogglePrepared(meal.key ?? "", food.id),
               } : undefined} />
@@ -113,8 +114,10 @@ export default function ProgramDayScreen() {
     });
     try {
       const payload: MealCheckInInput = { action: completed ? "completed" : "skipped", idempotency_key: Crypto.randomUUID() };
-      await apiRequest(`/api/v1/days/${day.id}/meals/${encodeURIComponent(mealKey)}/check-ins`, { body: JSON.stringify(payload), method: "POST" });
-      const updated = await apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${day.id}`);
+      const updatedToday = await apiRequest<TodayData>(`/api/v1/days/${day.id}/meals/${encodeURIComponent(mealKey)}/check-ins`, { body: JSON.stringify(payload), method: "POST" });
+      const updated = updatedToday.day_id === day.id
+        ? { ...day, meal_execution: normalizeMealExecution(updatedToday.meal_execution) }
+        : await apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${day.id}`);
       setDay({ ...updated, meal_execution: normalizeMealExecution(updated.meal_execution) });
     } catch (nextError) {
       setDay(previous);
@@ -125,8 +128,9 @@ export default function ProgramDayScreen() {
   }
 
   async function togglePreparedFood(mealKey: string, foodKey: string) {
-    if (!day) return;
+    if (!day || savingMealKey) return;
     const previous = day;
+    setSavingMealKey(mealKey);
     const mealExecution = normalizeMealExecution(day.meal_execution);
     const execution = mealExecution.find((item) => item.meal_key === mealKey);
     const prepared = execution?.prepared_food_keys.includes(foodKey) ?? false;
@@ -139,12 +143,16 @@ export default function ProgramDayScreen() {
     });
     try {
       const payload: MealCheckInInput = { action: prepared ? "food_unprepared" : "food_prepared", food_snapshot_key: foodKey, idempotency_key: Crypto.randomUUID() };
-      await apiRequest(`/api/v1/days/${day.id}/meals/${encodeURIComponent(mealKey)}/check-ins`, { body: JSON.stringify(payload), method: "POST" });
-      const updated = await apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${day.id}`);
+      const updatedToday = await apiRequest<TodayData>(`/api/v1/days/${day.id}/meals/${encodeURIComponent(mealKey)}/check-ins`, { body: JSON.stringify(payload), method: "POST" });
+      const updated = updatedToday.day_id === day.id
+        ? { ...day, meal_execution: normalizeMealExecution(updatedToday.meal_execution) }
+        : await apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${day.id}`);
       setDay({ ...updated, meal_execution: normalizeMealExecution(updated.meal_execution) });
     } catch (nextError) {
       setDay(previous);
       setError(userFacingError(nextError));
+    } finally {
+      setSavingMealKey(null);
     }
   }
 

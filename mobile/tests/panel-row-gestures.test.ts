@@ -66,13 +66,17 @@ test("in-progress plan cards connect meal gestures to their composition mutation
 
   assert.match(today, /calendarizedMealEditing: MealPanelEditing/);
   assert.match(today, /program\/days\/\$\{todayDayId\}\/meals\/order/);
+  assert.match(today, /apiRequest<CalendarizedDayDetail>[\s\S]*?setToday\(\(current\)/);
   assert.match(today, /pinnedMealEditing: MealPanelEditing/);
   assert.match(today, /library\/daily-plans\/\$\{pinnedPlan\.id\}\/meals\/order/);
+  assert.match(today, /const positions = new Map\(meals\.map/);
   assert.match(planning, /mealEditing: MealPanelEditing/);
   assert.match(planning, /program\/days\/\$\{detail\.id\}\/meals\/order/);
   assert.match(calendarizedCard, /<MealPanels[\s\S]*?editing=\{cardEditing\}/);
+  assert.match(calendarizedCard, /<MealPanels[\s\S]*?nestedScroll/);
   assert.match(calendarizedCard, /<CalendarizedEntityActions[\s\S]*?initialAction="change-time"/);
   assert.match(pinnedCard, /<MealPanels[\s\S]*?editing=\{cardEditing\}/);
+  assert.match(pinnedCard, /<MealPanels[\s\S]*?nestedScroll/);
   assert.match(pinnedCard, /<CalendarizedEntityActions[\s\S]*?initialAction="change-time"/);
   assert.match(layout, /<NestableScrollContainer/);
 });
@@ -107,7 +111,12 @@ test("program day and week comparison tables expose measured swipe actions and d
 
   assert.match(gestureRows, /ReanimatedSwipeable/);
   assert.match(gestureRows, /width: actions\.length \* 48/);
-  assert.match(gestureRows, /Gesture\.LongPress\(\)\.minDuration\(320\)/);
+  assert.match(gestureRows, /delayLongPress=\{320\}/);
+  assert.match(gestureRows, /onLongPress=\{\(\) => beginComparisonPanelDrag\(drag\)\}/);
+  assert.match(gestureRows, /Haptics\.impactAsync\(Haptics\.ImpactFeedbackStyle\.Rigid\)/);
+  assert.doesNotMatch(gestureRows, /GestureDetector|Gesture\.LongPress/);
+  assert.match(gestureRows, /borderTopWidth: 1/);
+  assert.match(gestureRows, /shadowOpacity: 0\.14/);
   assert.match(gestureRows, /NestableDraggableFlatList/);
   assert.match(gestureRows, /activationDistance=\{20\}/);
   assert.match(gestureRows, /onDragEnd=\{\(\{ data, from, to \}\)/);
@@ -115,6 +124,8 @@ test("program day and week comparison tables expose measured swipe actions and d
   assert.match(programDetail, /<ProgramWeekComparisonPanels onDelete=\{onRemoveWeek\} onDuplicate=\{onDuplicateWeek\} onReorder=\{onReorderWeeks\}/);
   assert.match(dependencyPatch, /panGesture\.failOffsetX\(activeOffset\)/);
   assert.match(dependencyPatch, /panGesture\.failOffsetY\(activeOffset\)/);
+  assert.match(dependencyPatch, /panGesture\.simultaneousWithExternalGesture/);
+  assert.match(dependencyPatch, /simultaneousHandlers=\{props\.simultaneousHandlers \?\? scrollableRef\}/);
   assert.match(dayPanels, /ComparisonPanelGestureRows/);
   assert.match(dayPanels, /Reemplazar.*Agregar/);
   assert.match(dayPanels, /backgroundColor: "#515151"/);
@@ -122,6 +133,8 @@ test("program day and week comparison tables expose measured swipe actions and d
   assert.match(dayPanels, /Eliminar plan de/);
   assert.match(dayPanels, /sourceRows\.find\(\(\{ id \}\) => id === row\.id\)\?\.dayNumber/);
   assert.match(dayPanels, /await onReorder\(week, orderedDays\)/);
+  assert.match(dayPanels, /onLongPress=\{\(\) => beginComparisonPanelDrag\(drag\)\}/);
+  assert.match(dayPanels, /editRowActive: \{[\s\S]*?borderTopWidth: 1[\s\S]*?shadowOpacity: 0\.14/);
   assert.match(weekPanels, /ComparisonPanelGestureRows/);
   assert.match(weekPanels, /Duplicar Semana/);
   assert.match(weekPanels, /backgroundColor: "#515151"/);
@@ -129,6 +142,8 @@ test("program day and week comparison tables expose measured swipe actions and d
   assert.match(weekPanels, /Eliminar Semana/);
   assert.match(weekPanels, /weeks\.find\(\(\{ id \}\) => id === week\.id\)\?\.week/);
   assert.match(weekPanels, /await onReorder\(sourceWeekNumbers\)/);
+  assert.match(weekPanels, /onLongPress=\{\(\) => beginComparisonPanelDrag\(drag\)\}/);
+  assert.match(weekPanels, /editRowActive: \{[\s\S]*?borderTopWidth: 1[\s\S]*?shadowOpacity: 0\.14/);
   assert.match(programDetail, /onReorderDailyPlans/);
   assert.match(libraryDetail, /weeks\/\$\{week\}\/days\/order/);
 });
@@ -141,8 +156,9 @@ test("editable rows reorder after a deliberate long press and persist on drop", 
   const layout = await source("src/app/_layout.tsx");
 
   assert.match(layout, /GestureHandlerRootView style=\{styles\.gestureRoot\}/);
-  assert.match(panels, /Gesture\.LongPress\(\)\.minDuration\(320\)/);
-  assert.match(panels, /onPrepareDrag\(\);[\s\S]*?drag\(\)/);
+  assert.match(panels, /delayLongPress=\{320\}/);
+  assert.match(panels, /onLongPress=\{\(\) => beginDrag\(drag, onPrepareDrag\)\}/);
+  assert.match(panels, /Haptics\.impactAsync\(Haptics\.ImpactFeedbackStyle\.Rigid\)/);
   assert.match(panels, /if \(!nestedScroll\) setPanelDragging\(true\)/);
   assert.match(panels, /NestableDraggableFlatList/);
   assert.match(panels, /DraggableFlatList/);
@@ -151,6 +167,8 @@ test("editable rows reorder after a deliberate long press and persist on drop", 
   assert.match(panels, /void editing\.onReorder\(data\)/);
   assert.match(panels, /scrollEnabled: false/);
   assert.match(panels, /nestedScroll \? <NestableDraggableFlatList/);
+  assert.match(panels.match(/function FoodEditPanel[\s\S]*?function MealEditPanel/)?.[0] ?? "", /<NestableDraggableFlatList/);
+  assert.match(panels.match(/function MealEditPanel[\s\S]*?export function FoodPanels/)?.[0] ?? "", /<NestableDraggableFlatList/);
   assert.match(libraryDetail, /NestableScrollContainer/);
   assert.match(calendarizedDay, /NestableScrollContainer/);
   assert.match(calendarizedMeal, /NestableScrollContainer/);
@@ -183,7 +201,7 @@ test("cards hide the edit tab while entity details keep it available", async () 
   assert.match(panels, /MealEditPanel/);
   for (const sourceCode of [panels, dayPanels, weekPanels]) {
     assert.match(sourceCode, /GripVertical/);
-    assert.match(sourceCode, /onLongPress=\{drag\}/);
+    assert.match(sourceCode, /onLongPress=\{\(\) => begin(?:ComparisonPanel)?Drag\(drag(?:, onPrepareDrag)?\)\}/);
     assert.match(sourceCode, /onDragEnd=/);
     assert.doesNotMatch(sourceCode, /ArrowUp|ArrowDown|label=\{`Subir|label=\{`Bajar/);
   }
@@ -198,6 +216,9 @@ test("cards hide the edit tab while entity details keep it available", async () 
   assert.match(panels, /<GripVertical color=\{tokens\.color\.textMuted\}/);
   assert.match(panels, /<Trash2 color=\{tokens\.color\.danger\}/);
   assert.doesNotMatch(panels, /Guardar orden|Descartar/);
+  assert.match(panels, /borderTopWidth: 1/);
+  assert.match(panels, /shadowOpacity: 0\.14/);
+  assert.doesNotMatch(panels, /menuRowPressed/);
   assert.doesNotMatch(weekPanels, /Guardar orden|Descartar/);
   assert.match(panels, /onDragEnd=\{\(\{ data, from, to \}\) => \{[\s\S]*?editing\.onReorder\(data\)/);
   assert.match(weekPanels, /onDragEnd=\{\(\{ data, from, to \}\) => \{[\s\S]*?onReorder\(data\.map/);

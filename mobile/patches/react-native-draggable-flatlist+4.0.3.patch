@@ -1,8 +1,19 @@
 diff --git a/node_modules/react-native-draggable-flatlist/src/components/DraggableFlatList.tsx b/node_modules/react-native-draggable-flatlist/src/components/DraggableFlatList.tsx
-index 7c88afc..faf4a2e 100644
+index 7c88afc..9913583 100644
 --- a/node_modules/react-native-draggable-flatlist/src/components/DraggableFlatList.tsx
 +++ b/node_modules/react-native-draggable-flatlist/src/components/DraggableFlatList.tsx
-@@ -328,8 +328,10 @@ function DraggableFlatListInner<T>(props: DraggableFlatListProps<T>) {
+@@ -328,8 +328,19 @@ function DraggableFlatListInner<T>(props: DraggableFlatListProps<T>) {
++  const simultaneousHandlers = Array.isArray(props.simultaneousHandlers)
++    ? props.simultaneousHandlers
++    : props.simultaneousHandlers
++      ? [props.simultaneousHandlers]
++      : [];
++  if (simultaneousHandlers.length) {
++    panGesture.simultaneousWithExternalGesture(...simultaneousHandlers);
++  }
++
+   if (dragHitSlop) panGesture.hitSlop(dragHitSlop);
+   if (activationDistanceProp) {
      const activeOffset = [-activationDistanceProp, activationDistanceProp];
      if (props.horizontal) {
        panGesture.activeOffsetX(activeOffset);
@@ -14,7 +25,7 @@ index 7c88afc..faf4a2e 100644
    }
  
 diff --git a/node_modules/react-native-draggable-flatlist/src/components/NestableDraggableFlatList.tsx b/node_modules/react-native-draggable-flatlist/src/components/NestableDraggableFlatList.tsx
-index 1559352..0752e48 100644
+index 1559352..77e7802 100644
 --- a/node_modules/react-native-draggable-flatlist/src/components/NestableDraggableFlatList.tsx
 +++ b/node_modules/react-native-draggable-flatlist/src/components/NestableDraggableFlatList.tsx
 @@ -1,5 +1,5 @@
@@ -33,6 +44,14 @@ index 1559352..0752e48 100644
  
      const onSuccess = (_x: number, y: number) => {
        listVerticalOffset.value = y;
+@@ -92,6 +92,7 @@ function NestableDraggableFlatListInner<T>(
+       activationDistance={props.activationDistance || 20}
+       scrollEnabled={false}
+       {...props}
++      simultaneousHandlers={props.simultaneousHandlers ?? scrollableRef}
+       outerScrollOffset={outerScrollOffset}
+       onDragBegin={onDragBegin}
+       onDragEnd={onDragEnd}
 diff --git a/node_modules/react-native-draggable-flatlist/src/components/NestableScrollContainer.tsx b/node_modules/react-native-draggable-flatlist/src/components/NestableScrollContainer.tsx
 index 61054a7..f2d72be 100644
 --- a/node_modules/react-native-draggable-flatlist/src/components/NestableScrollContainer.tsx

@@ -1,11 +1,10 @@
 import { createContext, Fragment, type ReactNode, useContext, useRef, useState } from "react";
+import * as Haptics from "expo-haptics";
 import { type Href, useRouter } from "expo-router";
 import { Check, ChevronRight, Clock, GripVertical, Pencil, RefreshCw, Trash2 } from "lucide-react-native";
 import { Alert, Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 import DraggableFlatList, { NestableDraggableFlatList, ScaleDecorator, type RenderItemParams } from "react-native-draggable-flatlist";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import ReanimatedSwipeable, { type SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
-import Animated from "react-native-reanimated";
 
 import { MacroCalorieDistribution, macroCalorieShares, PanelAllocationBar, ProteinPerKilogramBadge } from "@/components/nutrition";
 import { EntityIcon } from "@/components/ui";
@@ -146,22 +145,23 @@ function confirmRowDeletion<T extends EditablePanelItem>(editing: PanelRowEditin
   ]);
 }
 
-function EditablePanelRow<T extends EditablePanelItem>({ drag, editing, isActive, item, onPrepareDrag, onReleaseDrag, onSwipeableClose, onSwipeableWillOpen, row }: {
+function beginDrag(drag: () => void, onPrepareDrag?: () => void) {
+  onPrepareDrag?.();
+  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid).catch(() => undefined);
+  drag();
+}
+
+function EditablePanelRow<T extends EditablePanelItem>({ drag, editing, isActive, item, onPrepareDrag, onSwipeableClose, onSwipeableWillOpen, row }: {
   drag(): void;
   editing: PanelRowEditing<T>;
   isActive: boolean;
   item: T;
   onPrepareDrag(): void;
-  onReleaseDrag(): void;
   onSwipeableClose(methods: SwipeableMethods): void;
   onSwipeableWillOpen(methods: SwipeableMethods): void;
   row: ReactNode;
 }) {
   const swipeableRef = useRef<SwipeableMethods>(null);
-  const longPressGesture = Gesture.LongPress().minDuration(320).onStart(() => {
-    onPrepareDrag();
-    drag();
-  }).onFinalize(onReleaseDrag).runOnJS(true);
   const accessibilityActions = [
     { name: "activate" as const, label: editing.editLabel(item) },
     ...(editing.onChangeTime ? [{ name: "change-time" as const, label: `Cambiar hora de ${item.name}` }] : []),
@@ -196,21 +196,22 @@ function EditablePanelRow<T extends EditablePanelItem>({ drag, editing, isActive
         renderLeftActions={renderLeftActions}
         renderRightActions={renderRightActions}
         rightThreshold={36}>
-        <GestureDetector gesture={longPressGesture}>
-          <Animated.View
+        <Pressable
             accessibilityActions={accessibilityActions}
             accessibilityHint="Desliza hacia la izquierda para ver acciones. Mantén pulsado y arrastra para reordenar."
             accessibilityLabel={item.name}
+            delayLongPress={320}
+            disabled={isActive}
             onAccessibilityAction={(event) => {
               if (event.nativeEvent.actionName === "activate") editing.onEdit(item);
               if (event.nativeEvent.actionName === "change-time") editing.onChangeTime?.(item);
               if (event.nativeEvent.actionName === "replace") editing.onReplace(item);
               if (event.nativeEvent.actionName === "delete") confirmRowDeletion(editing, item);
             }}
+            onLongPress={() => beginDrag(drag, onPrepareDrag)}
             style={[styles.gestureRow, isActive && styles.gestureRowActive]}>
             {row}
-          </Animated.View>
-        </GestureDetector>
+        </Pressable>
       </ReanimatedSwipeable>
     </ScaleDecorator>
   );
@@ -245,7 +246,6 @@ function PanelRows<T extends EditablePanelItem>({ editing, items, renderRow }: {
         openSwipeableRef.current = null;
         if (!nestedScroll) setPanelDragging(true);
       }}
-      onReleaseDrag={() => { if (!nestedScroll) setPanelDragging(false); }}
       onSwipeableClose={handleSwipeableClose}
       onSwipeableWillOpen={handleSwipeableWillOpen}
       row={renderRow(item, getIndex() ?? 0)}
@@ -307,6 +307,7 @@ function PanelHeaderCell<Key extends string>({ align = "center", children, sortK
 }
 
 type FoodPreparation = {
+  disabled?: boolean;
   isPrepared(item: FoodPanelItem): boolean;
   onToggle(item: FoodPanelItem): void;
 };
@@ -379,16 +380,17 @@ export function FoodQuantityPanel({ editing, items, onOpenItem, preparation }: {
       <PanelRows editing={sorting.sort ? undefined : editing} items={visibleItems} renderRow={(item, index) => {
         const canOpen = item.detailId != null && Boolean(onOpenItem);
         return <View key={item.id} style={[styles.row, index === visibleItems.length - 1 && styles.rowLast]}>
-          {canOpen ? <Pressable accessibilityLabel={`Ver detalle de ${item.name}`} accessibilityRole="link" onPress={() => onOpenItem?.(item)} style={({ pressed }) => [styles.quantityLeadingCell, pressed && styles.pressed]}><PanelItemName item={item} style={styles.foodDetailCopy} /></Pressable> : <PanelItemName item={item} style={styles.quantityLeadingCell} />}
+          {canOpen ? <Pressable accessibilityLabel={`Ver detalle de ${item.name}`} accessibilityRole="link" onPress={() => onOpenItem?.(item)} style={styles.quantityLeadingCell}><PanelItemName item={item} style={styles.foodDetailCopy} /></Pressable> : <PanelItemName item={item} style={styles.quantityLeadingCell} />}
           <Text style={[styles.cell, styles.quantityValue]}>{decimal(item.quantity)} {item.quantityUnit}</Text>
           {preparation ? (
             <Pressable
               accessibilityLabel={`${preparation.isPrepared(item) ? "Desmarcar" : "Marcar"} ${item.name} como preparado`}
               accessibilityRole="checkbox"
-              accessibilityState={{ checked: preparation.isPrepared(item) }}
+              accessibilityState={{ checked: preparation.isPrepared(item), disabled: preparation.disabled }}
+              disabled={preparation.disabled}
               hitSlop={8}
               onPress={() => preparation.onToggle(item)}
-              style={({ pressed }) => [styles.preparationValue, styles.preparationButton, pressed && styles.pressed]}>
+              style={[styles.preparationValue, styles.preparationButton, preparation.disabled && styles.disabled]}>
               <View style={styles.preparationMarker}>{preparation.isPrepared(item) ? <View style={styles.preparationMarkerChecked} /> : null}</View>
             </Pressable>
           ) : null}
@@ -518,7 +520,7 @@ export function MealMenuPanel({ editing, items, onOpenItem }: { editing?: PanelR
           disabled={!canOpen}
           key={item.id}
           onPress={() => onOpenItem?.(item)}
-          style={({ pressed }) => [styles.menuRow, index === items.length - 1 && styles.rowLast, pressed && canOpen && styles.menuRowPressed]}>
+          style={[styles.menuRow, index === items.length - 1 && styles.rowLast]}>
           <View style={styles.menuCopy}>
             <View style={styles.menuTitleRow}>
               <MealRowIdentity completed={item.completed} menu name={item.name} projectedLabel={item.projectedLabel} />
@@ -562,7 +564,7 @@ function EditDragHandle({ disabled, drag, label }: { disabled: boolean; drag(): 
       delayLongPress={180}
       disabled={disabled}
       hitSlop={8}
-      onLongPress={drag}
+      onLongPress={() => beginDrag(drag)}
       style={({ pressed }) => [styles.editDragHandle, disabled && styles.disabled, pressed && styles.pressed]}>
       <GripVertical color={tokens.color.textMuted} size={18} strokeWidth={2.2} />
     </Pressable>
@@ -577,7 +579,7 @@ function FoodEditPanel({ editing, items }: { editing: FoodPanelEditing; items: F
   return (
     <PanelBody>
       <View style={[styles.row, styles.header, styles.editRow]}><View style={styles.editDragHeader} /><Text style={[styles.headerText, styles.editLeading]}>Alimentos</Text><Text style={[styles.headerText, styles.editValue]}>Porción</Text><Text style={[styles.headerText, styles.foodEditActions]}>Acciones</Text></View>
-      <DraggableFlatList
+      <NestableDraggableFlatList
         activationDistance={12}
         data={draftItems}
         keyExtractor={(item) => item.id}
@@ -617,7 +619,7 @@ function MealEditPanel({ editing, items }: { editing: MealPanelEditing; items: M
   return (
     <PanelBody>
       <View style={[styles.row, styles.header, styles.editRow]}><View style={styles.editDragHeader} /><Text style={[styles.headerText, styles.editLeading]}>Comidas</Text><Text style={[styles.headerText, styles.editValue]}>Hora</Text><Text style={[styles.headerText, styles.mealEditActions]}>Acciones</Text></View>
-      <DraggableFlatList
+      <NestableDraggableFlatList
         activationDistance={12}
         data={draftItems}
         keyExtractor={(item) => item.id}
@@ -747,7 +749,6 @@ const styles = StyleSheet.create({
   menuRow: { alignItems: "center", alignSelf: "stretch", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.xs, paddingLeft: tokens.spacing.sm, paddingRight: tokens.spacing.xs, paddingVertical: tokens.spacing.lg },
   menuCopy: { flex: 1, gap: tokens.spacing.sm, minWidth: 0 },
   menuAction: { alignItems: "center", alignSelf: "stretch", borderRadius: tokens.radius.pill, justifyContent: "center", minWidth: 24 },
-  menuRowPressed: { opacity: 0.55 },
   menuTitleRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
   mealIdentity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0, paddingHorizontal: tokens.spacing.xs },
   identityCopy: { alignItems: "flex-start", flex: 1, gap: 3, justifyContent: "center", minWidth: 0 },
@@ -760,7 +761,19 @@ const styles = StyleSheet.create({
   menuTime: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.regular, letterSpacing: 0 },
   menuFoods: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, letterSpacing: 0, lineHeight: 20, paddingHorizontal: tokens.spacing.xs },
   gestureRow: { backgroundColor: tokens.color.surfaceMuted },
-  gestureRowActive: { opacity: 0.92 },
+  gestureRowActive: {
+    backgroundColor: tokens.color.surfaceApp,
+    borderBottomColor: tokens.color.borderDefault,
+    borderBottomWidth: 1,
+    borderTopColor: tokens.color.borderDefault,
+    borderTopWidth: 1,
+    elevation: 4,
+    shadowColor: "#000000",
+    shadowOffset: { height: 2, width: 0 },
+    shadowOpacity: 0.14,
+    shadowRadius: 5,
+    zIndex: 10,
+  },
   swipeActions: { alignSelf: "stretch", flexDirection: "row", width: 144 },
   swipeTimeAction: { alignSelf: "stretch", width: 48 },
   swipeAction: { alignItems: "center", alignSelf: "stretch", backgroundColor: "#515151", flex: 1, justifyContent: "center", width: 48 },

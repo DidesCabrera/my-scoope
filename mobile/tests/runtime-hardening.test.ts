@@ -27,13 +27,14 @@ test("route render errors stay inside the app and offer a retry", async () => {
   assertSourceMatch(layout, /accessibilityLabel="Reintentar abrir esta vista"/);
 });
 
-test("calendarized food preparation refreshes the exact day instead of trusting the generic today payload", async () => {
+test("calendarized food preparation trusts the confirmed write response and only falls back for another day", async () => {
   for (const relativePath of [
     "src/app/program/days/[id].tsx",
     "src/app/program/days/[id]/meals/[mealKey].tsx",
   ]) {
     const source = await readTestFile(path.resolve(process.cwd(), relativePath), "utf8");
-    assertSourceMatch(source, /await apiRequest\(`\/api\/v1\/days\//);
+    assertSourceMatch(source, /await apiRequest<TodayData>\(`\/api\/v1\/days\//);
+    assertSourceMatch(source, /updatedToday\.day_id === day/);
     assertSourceMatch(source, /await apiRequest<CalendarizedDayDetail>\(`\/api\/v1\/program\/days\//);
   }
 });

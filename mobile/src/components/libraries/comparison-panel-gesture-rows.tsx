@@ -1,9 +1,8 @@
 import { Fragment, type ReactNode, useRef } from "react";
+import * as Haptics from "expo-haptics";
 import { Pressable, StyleSheet, View } from "react-native";
 import { NestableDraggableFlatList, ScaleDecorator, type RenderItemParams } from "react-native-draggable-flatlist";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import ReanimatedSwipeable, { type SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
-import Animated from "react-native-reanimated";
 
 import { tokens } from "@/design/tokens";
 
@@ -22,6 +21,11 @@ type ComparisonPanelGestureRowsProps<T extends { id: string }> = {
   renderRow(item: T, index: number): ReactNode;
 };
 
+export function beginComparisonPanelDrag(drag: () => void) {
+  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid).catch(() => undefined);
+  drag();
+}
+
 function GestureRow<T extends { id: string }>({ actions, drag, isActive, item, itemLabel, onClose, onWillOpen, row }: {
   actions: ComparisonPanelAction[];
   drag(): void;
@@ -33,7 +37,6 @@ function GestureRow<T extends { id: string }>({ actions, drag, isActive, item, i
   row: ReactNode;
 }) {
   const swipeableRef = useRef<SwipeableMethods>(null);
-  const longPressGesture = Gesture.LongPress().minDuration(320).onStart(drag).runOnJS(true);
   const renderRightActions = (_progress: unknown, _translation: unknown, methods: SwipeableMethods) => (
     <View style={[styles.actions, { width: actions.length * 48 }]}>
       {actions.map((action) => (
@@ -60,14 +63,15 @@ function GestureRow<T extends { id: string }>({ actions, drag, isActive, item, i
         ref={swipeableRef}
         renderRightActions={renderRightActions}
         rightThreshold={36}>
-        <GestureDetector gesture={longPressGesture}>
-          <Animated.View
-            accessibilityHint="Desliza hacia la izquierda para ver acciones. Mantén pulsado y arrastra para reordenar."
-            accessibilityLabel={itemLabel}
-            style={[styles.row, isActive && styles.rowActive]}>
-            {row}
-          </Animated.View>
-        </GestureDetector>
+        <Pressable
+          accessibilityHint="Desliza hacia la izquierda para ver acciones. Mantén pulsado y arrastra para reordenar."
+          accessibilityLabel={itemLabel}
+          delayLongPress={320}
+          disabled={isActive}
+          onLongPress={() => beginComparisonPanelDrag(drag)}
+          style={[styles.row, isActive && styles.rowActive]}>
+          {row}
+        </Pressable>
       </ReanimatedSwipeable>
     </ScaleDecorator>
   );
@@ -117,5 +121,17 @@ const styles = StyleSheet.create({
   actions: { alignSelf: "stretch", flexDirection: "row" },
   pressed: { opacity: 0.72 },
   row: { backgroundColor: tokens.color.surfaceMuted },
-  rowActive: { opacity: 0.92 },
+  rowActive: {
+    backgroundColor: tokens.color.surfaceApp,
+    borderBottomColor: tokens.color.borderDefault,
+    borderBottomWidth: 1,
+    borderTopColor: tokens.color.borderDefault,
+    borderTopWidth: 1,
+    elevation: 4,
+    shadowColor: "#000000",
+    shadowOffset: { height: 2, width: 0 },
+    shadowOpacity: 0.14,
+    shadowRadius: 5,
+    zIndex: 10,
+  },
 });
