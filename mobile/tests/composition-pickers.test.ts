@@ -237,7 +237,8 @@ test("library details open every composition flow and program days remain editab
   matches(panels, /FoodEditPanel/);
   matches(panels, /MealEditPanel/);
   matches(panels, /label: "Editar"/);
-  matches(panels, /Guardar orden/);
+  omits(panels, /Guardar orden|Descartar/);
+  matches(panels, /onDragEnd=\{\(\{ data, from, to \}\) => \{[\s\S]*?editing\.onReorder\(data\)/);
   matches(panels, /label=\{`Reemplazar \$\{item\.name\}`\}/);
   matches(panels, /editing\.onReplace\(item\)/);
   matches(panels, /editing\.onEditPortion\(item\)/);

@@ -59,6 +59,7 @@ test("MCE07 product journeys have native destinations and refocus refreshes", as
 test("shared screens use compact scroll identities and only Home keeps the centered logo", async () => {
   const navigation = await readFile(path.resolve(process.cwd(), "src/components/navigation/app-navigation.tsx"), "utf8");
   const entityIdentity = await readFile(path.resolve(process.cwd(), "src/components/navigation/header-entity-identity.tsx"), "utf8");
+  const headerScroll = await readFile(path.resolve(process.cwd(), "src/components/navigation/header-scroll.ts"), "utf8");
   const libraryList = await readFile(path.resolve(process.cwd(), "src/components/libraries/library-list-screen.tsx"), "utf8");
   const screenLayout = await readFile(path.resolve(process.cwd(), "src/components/ui/layout.tsx"), "utf8");
   const headerBody = navigation.slice(navigation.indexOf("export function AppNavigationHeader"), navigation.indexOf("export function useHeaderPresentation"));
@@ -68,7 +69,9 @@ test("shared screens use compact scroll identities and only Home keeps the cente
   assert.match(navigation, /Icon color=\{tokens\.color\.textMain\}/);
   assert.match(entityIdentity, /<EntityIcon entity=\{entity\} size="header" \/>/);
   assert.doesNotMatch(entityIdentity, /tone="white"/);
-  assert.match(screenLayout, /contentOffset\.y > 1/);
+  assert.match(screenLayout, /isHeaderIdentityVisible\([^)]*nativeEvent\.contentOffset\.y\)/);
+  assert.match(headerScroll, /HEADER_IDENTITY_SCROLL_THRESHOLD = 12/);
+  assert.match(headerScroll, /offsetY > HEADER_IDENTITY_SCROLL_THRESHOLD/);
   assert.match(screenLayout, /identityVisible: compactHeaderVisible/);
   assert.match(libraryList, /stickyHeaderIndices=\{\[1\]\}/);
   assert.doesNotMatch(libraryList, /searchOffset/);
