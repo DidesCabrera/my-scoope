@@ -1,17 +1,18 @@
 import type { PropsWithChildren, ReactNode } from "react";
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import { useFocusEffect } from "expo-router";
-import { NativeScrollEvent, NativeSyntheticEvent, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
+import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
+import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import { tokens } from "@/design/tokens";
 
 type ScreenProps = PropsWithChildren<{
   contentStyle?: StyleProp<ViewStyle>;
   headerMode?: "automatic" | "preserve";
-  onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  onHeaderVisibilityChange?: (visible: boolean) => void;
   scroll?: boolean;
   scrollHeader?: ReactNode;
   stickyHeader?: ReactNode;
@@ -24,7 +25,7 @@ export function useScreenScrollControl() {
   return useContext(ScreenScrollContext);
 }
 
-export function Screen({ children, scroll = true, contentStyle, headerMode = "automatic", onScroll, scrollHeader, stickyHeader, stickyHeaderStyle }: ScreenProps) {
+export function Screen({ children, scroll = true, contentStyle, headerMode = "automatic", onHeaderVisibilityChange, scrollHeader, stickyHeader, stickyHeaderStyle }: ScreenProps) {
   const setHeaderPresentation = useHeaderPresentation();
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const [panelDragging, setPanelDragging] = useState(false);
@@ -36,6 +37,10 @@ export function Screen({ children, scroll = true, contentStyle, headerMode = "au
   }, [compactHeaderVisible, headerMode, setHeaderPresentation]));
   const content = <View style={[styles.screenContent, contentStyle]}>{children}</View>;
   const stickyHeaderIndex = stickyHeader ? (scrollHeader ? 1 : 0) : undefined;
+  const setCompactIdentityVisible = useCallback((visible: boolean) => {
+    setCompactHeaderVisible(visible);
+    onHeaderVisibilityChange?.(visible);
+  }, [onHeaderVisibilityChange]);
   return (
     <ScreenScrollContext.Provider value={scrollControl}>
     <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
@@ -43,9 +48,10 @@ export function Screen({ children, scroll = true, contentStyle, headerMode = "au
         <NestableScrollContainer
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
-          onScroll={(event) => { const visible = event.nativeEvent.contentOffset.y > 1; if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible); onScroll?.(event); }}
+          onScroll={(event) => setCompactIdentityVisible(isHeaderIdentityVisible(event.nativeEvent.contentOffset.y))}
           scrollEnabled={!panelDragging}
           scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}
           stickyHeaderIndices={stickyHeaderIndex === undefined ? undefined : [stickyHeaderIndex]}
         >
           {scrollHeader ? <View style={styles.scrollHeader}>{scrollHeader}</View> : null}

@@ -119,10 +119,7 @@ function ComparatorDashboard() {
     <>
       <Screen
         headerMode="preserve"
-        onScroll={({ nativeEvent }) => {
-          const visible = nativeEvent.contentOffset.y > 1;
-          if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible);
-        }}
+        onHeaderVisibilityChange={setCompactHeaderVisible}
         scrollHeader={<SectionPageHeader countLabel="comparaciones" section="comparator" title="Comparador" />}
         stickyHeader={<ComparisonKindTabs counts={counts} kind={kind} onChange={(nextKind) => { setKind(nextKind); router.setParams({ kind: nextKind }); }} />}
         stickyHeaderStyle={styles.dashboardStickyHeader}>

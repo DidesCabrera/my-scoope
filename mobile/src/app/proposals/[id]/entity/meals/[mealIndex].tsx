@@ -62,7 +62,10 @@ export default function ProposedMealDetailScreen() {
           nutrition={proposalPreviewAdapters.nutrition(item.meal.kpis)}
           title={item.meal.name || `Comida ${index + 1}`}>
           <EntityDetailSection detail={`${item.meal.foods.length} alimentos`} title="Composición">
-            <FoodPanels items={proposalPreviewAdapters.foodPanelItems(item.meal)} />
+            <FoodPanels
+              items={proposalPreviewAdapters.foodPanelItems(item.meal)}
+              onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }}
+            />
           </EntityDetailSection>
           <SectionDivider />
           <EntityDetailSection title="Detalle de cada Alimento">

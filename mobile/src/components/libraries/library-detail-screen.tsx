@@ -17,6 +17,7 @@ import { pickerConfigureHref, pickerHref } from "@/components/pickers/compositio
 import { MutationStatusModal, SectionDivider, type MutationStatus } from "@/components/ui";
 import { Button, InlineNotice, textStyles } from "@/components/ui/primitives";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
+import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import { tokens } from "@/design/tokens";
 import type { FoodLabelImage } from "@/label-capture/types";
 import { internalHref } from "@/navigation/internal-href";
@@ -309,11 +310,11 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
       onAddWeek={item.can_calendarize ? () => router.push(`/pickers/week-to-program?programId=${item.id}` as Href) : undefined}
       onAssignDailyPlan={item.can_calendarize ? (week, day) => router.push(pickerHref("dailyplan-to-program", { programId: item.id, weekNumber: week, dayNumber: day })) : undefined}
       onDuplicateWeek={item.can_calendarize ? async (week) => { await mutateComposition(`/api/v1/library/programs/${item.id}/weeks/${week}/duplicate`, { method: "POST" }); } : undefined}
+      onHeaderVisibilityChange={setCompactHeaderVisible}
       onRemoveDailyPlan={item.can_calendarize ? async (week, day) => { await mutateComposition(`/api/v1/library/programs/${item.id}/weeks/${week}/days/${day}`, { method: "DELETE" }); } : undefined}
       onRemoveWeek={item.can_calendarize ? async (week) => { await mutateComposition(`/api/v1/library/programs/${item.id}/weeks/${week}`, { method: "DELETE" }); } : undefined}
       onReorderDailyPlans={item.can_calendarize ? async (week, orderedDays) => { await mutateComposition(`/api/v1/library/programs/${item.id}/weeks/${week}/days/order`, { method: "PUT", body: JSON.stringify({ ordered_ids: orderedDays }) }, { loadingLabel: "Actualizando programa", successLabel: "Programa actualizado" }); } : undefined}
       onReorderWeeks={item.can_calendarize ? async (weeks) => { await mutateComposition(`/api/v1/library/programs/${item.id}/weeks/order`, { method: "PUT", body: JSON.stringify({ ordered_ids: weeks }) }, { loadingLabel: "Actualizando programa", successLabel: "Programa actualizado" }); } : undefined}
-      onScroll={({ nativeEvent }) => { const visible = nativeEvent.contentOffset.y > 1; if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible); }}
       scrollable
     />{actionsModal}{mutationStatusModal}</>;
   }
@@ -345,7 +346,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
       ? [{ icon: "clock" as const, iconPosition: "leading" as const, label: "hora", tone: "surfaceCard" as const, value: contextTime }]
       : []),
   ];
-  return <><NestableScrollContainer contentContainerStyle={styles.content} onScroll={({ nativeEvent }) => { const visible = nativeEvent.contentOffset.y > 1; if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible); }} scrollEventThrottle={16} style={styles.screen}><EntityDetailPage
+  return <><NestableScrollContainer contentContainerStyle={styles.content} onScroll={({ nativeEvent }) => setCompactHeaderVisible(isHeaderIdentityVisible(nativeEvent.contentOffset.y))} scrollEventThrottle={16} showsVerticalScrollIndicator={false} style={styles.screen}><EntityDetailPage
     beforeNutrition={isPinnedPlan && item.panel.meals.length ? <DailyMealCompletionCard mealExecution={mealExecution} mealKeys={item.panel.meals.map((meal) => meal.id)} /> : isPinnedMealContext ? <MealCompletionCard controller={pinnedMealAdherence} /> : undefined}
     completion={isPinnedPlan ? { noteCount: mealExecution.filter((entry) => entry.note.trim()).length } : isPinnedMealContext ? { noteCount: normalizedPinnedMealExecution?.note.trim() ? 1 : 0 } : undefined}
     entity={item.entity}

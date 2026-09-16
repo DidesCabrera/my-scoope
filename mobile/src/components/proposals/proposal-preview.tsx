@@ -50,6 +50,7 @@ function foodPanelItems(meal: ProposalMeal): FoodPanelItem[] {
     const foodCalories = number(food.total_kcal) || calories(protein, carbs, fat);
     const macroAllocations = allocations(protein, carbs, fat);
     return {
+      detailId: food.food_id ?? undefined,
       id: String(food.food_id ?? `proposed-food-${index}`),
       name: food.food_name || "Alimento",
       quantity: number(food.quantity),
@@ -124,7 +125,7 @@ export function ProposalEvaluationContext({ current, targets }: { current: Propo
   );
 }
 
-export function ProposalMealCard({ actions, eyebrow = "Comida propuesta", meal, time }: { actions?: ReactNode; eyebrow?: string; meal: ProposalMeal; time?: string | null }) {
+export function ProposalMealCard({ actions, eyebrow = "Comida propuesta", meal, onOpenFood, time }: { actions?: ReactNode; eyebrow?: string; meal: ProposalMeal; onOpenFood?(foodId: number): void; time?: string | null }) {
   return (
     <NutritionEntityCard
       actions={actions}
@@ -136,7 +137,10 @@ export function ProposalMealCard({ actions, eyebrow = "Comida propuesta", meal, 
       ]}
       nutrition={nutrition(meal.kpis)}
       title={meal.name || "Comida"}>
-      <FoodPanels items={foodPanelItems(meal)} />
+      <FoodPanels
+        items={foodPanelItems(meal)}
+        onOpenItem={onOpenFood ? (food) => { if (food.detailId != null) onOpenFood(food.detailId); } : undefined}
+      />
     </NutritionEntityCard>
   );
 }

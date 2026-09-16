@@ -180,7 +180,7 @@ export function LibraryActions({ apiRequest, entitySlug, initialAction, item, me
                 </Pressable>
               </View>
 
-              <ScrollView contentContainerStyle={styles.sheetContent} keyboardShouldPersistTaps="handled">
+              <ScrollView contentContainerStyle={styles.sheetContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
                 {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
 
                 {!selected ? actions.map((action) => {

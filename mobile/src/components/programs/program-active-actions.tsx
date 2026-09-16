@@ -92,7 +92,7 @@ export function ProgramActiveActions({
             </Pressable>
           </View>
 
-          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
             {error ? <InlineNotice tone="error">{error}</InlineNotice> : null}
 
             {confirmation && selected ? (

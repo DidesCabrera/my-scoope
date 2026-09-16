@@ -95,7 +95,7 @@ export default function WeekToProgramPickerRoute() {
 
   return (
     <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         {target && week ? (
           <EntityDetailPage
             entity="program"

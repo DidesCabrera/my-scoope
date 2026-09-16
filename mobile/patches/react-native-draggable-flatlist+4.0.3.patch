@@ -33,3 +33,43 @@ index 1559352..0752e48 100644
  
      const onSuccess = (_x: number, y: number) => {
        listVerticalOffset.value = y;
+diff --git a/node_modules/react-native-draggable-flatlist/src/components/NestableScrollContainer.tsx b/node_modules/react-native-draggable-flatlist/src/components/NestableScrollContainer.tsx
+index 61054a7..f2d72be 100644
+--- a/node_modules/react-native-draggable-flatlist/src/components/NestableScrollContainer.tsx
++++ b/node_modules/react-native-draggable-flatlist/src/components/NestableScrollContainer.tsx
+@@ -1,7 +1,15 @@
+ import React from "react";
+-import { LayoutChangeEvent, ScrollViewProps } from "react-native";
++import {
++  LayoutChangeEvent,
++  NativeScrollEvent,
++  NativeSyntheticEvent,
++  ScrollViewProps,
++} from "react-native";
+ import { ScrollView } from "react-native-gesture-handler";
+-import Animated, { useAnimatedScrollHandler } from "react-native-reanimated";
++import Animated, {
++  runOnJS,
++  useAnimatedScrollHandler,
++} from "react-native-reanimated";
+ import {
+   NestableScrollContainerProvider,
+   useSafeNestableScrollContainerContext,
+@@ -19,9 +27,17 @@ function NestableScrollContainerInner(props: ScrollViewProps) {
+     outerScrollEnabled,
+   } = useSafeNestableScrollContainerContext();
+ 
++  const notifyScroll = useStableCallback((y: number) => {
++    props.onScroll?.({
++      nativeEvent: { contentOffset: { x: 0, y } },
++    } as NativeSyntheticEvent<NativeScrollEvent>);
++  });
++  const hasOnScroll = Boolean(props.onScroll);
++
+   const onScroll = useAnimatedScrollHandler({
+     onScroll: ({ contentOffset }) => {
+       outerScrollOffset.value = contentOffset.y;
++      if (hasOnScroll) runOnJS(notifyScroll)(contentOffset.y);
+     },
+   });
+ 

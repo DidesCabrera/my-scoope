@@ -123,14 +123,14 @@ function MyScoopeLogo() {
 function HeaderIdentity({ icon: Icon, title, visible }: { icon: LucideIcon; title: string; visible: boolean }) {
   const [progress] = useState(() => new Animated.Value(visible ? 1 : 0));
   useEffect(() => {
-    Animated.timing(progress, { duration: 180, toValue: visible ? 1 : 0, useNativeDriver: true }).start();
+    Animated.timing(progress, { duration: 90, toValue: visible ? 1 : 0, useNativeDriver: true }).start();
   }, [progress, visible]);
   return <Animated.View accessibilityElementsHidden={!visible} importantForAccessibility={visible ? "auto" : "no-hide-descendants"} pointerEvents="none" style={[styles.headerListIdentity, { opacity: progress, transform: [{ translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [-4, 0] }) }] }]}><View accessibilityLabel={title} accessible style={styles.routeIdentity}><Icon color={tokens.color.textMain} size={18} strokeWidth={2.2} /><Text numberOfLines={1} style={styles.routeIdentityTitle}>{title}</Text></View></Animated.View>;
 }
 
 function LibraryHeaderIdentity({ entity, title, visible }: { entity: LibraryEntity; title: string; visible: boolean }) {
   const [progress] = useState(() => new Animated.Value(visible ? 1 : 0));
-  useEffect(() => { Animated.timing(progress, { duration: 180, toValue: visible ? 1 : 0, useNativeDriver: true }).start(); }, [progress, visible]);
+  useEffect(() => { Animated.timing(progress, { duration: 90, toValue: visible ? 1 : 0, useNativeDriver: true }).start(); }, [progress, visible]);
   return <Animated.View accessibilityElementsHidden={!visible} importantForAccessibility={visible ? "auto" : "no-hide-descendants"} pointerEvents="none" style={[styles.headerListIdentity, { opacity: progress }]}><HeaderEntityIdentity entity={entity} title={title} /></Animated.View>;
 }
 
@@ -357,7 +357,7 @@ function AppSidebar() {
                 <X color={tokens.color.textMain} size={24} />
               </Pressable>
             </View>
-            <ScrollView contentContainerStyle={styles.drawerContent}>
+            <ScrollView contentContainerStyle={styles.drawerContent} showsVerticalScrollIndicator={false}>
               {primaryItems.map((item) => <FunctionalSidebarEntry item={item} key={String(item.href)} />)}
               <View style={styles.menuSection}>
                 <Text style={styles.menuSectionLabel}>Mis librerías</Text>
