@@ -201,6 +201,8 @@ class ProposalReviewVM:
     subject_context_warning: ProposalSubjectContextWarningVM
     applied_result: ProposalAppliedResultVM | None
     iteration_trace: ProposalIterationTraceVM | None
+    alternatives: list[dict[str, Any]]
+    selected_alternative_id: str
 
     def as_dict(self) -> dict:
         return {
@@ -227,6 +229,8 @@ class ProposalReviewVM:
                 if self.iteration_trace
                 else None
             ),
+            "alternatives": self.alternatives,
+            "selected_alternative_id": self.selected_alternative_id,
         }
 
 
@@ -238,6 +242,9 @@ def build_proposal_review_vm(
     )
     validation_summary = _safe_dict(
         proposal.get("validation_summary"),
+    )
+    solver_summary = _safe_dict(
+        _safe_dict(proposal.get("current_snapshot")).get("nutrition_solver")
     )
 
     intent = resolve_proposal_intent(proposed_payload)
@@ -302,7 +309,34 @@ def build_proposal_review_vm(
             status=status,
         ),
         iteration_trace=_build_iteration_trace_vm(proposal),
+        alternatives=_build_solver_alternatives_vm(solver_summary),
+        selected_alternative_id=_safe_str(solver_summary.get("selected_alternative_id")),
     )
+
+
+def _build_solver_alternatives_vm(solver_summary: dict[str, Any]) -> list[dict[str, Any]]:
+    alternatives = []
+    for item in solver_summary.get("alternatives") or ():
+        if not isinstance(item, dict) or not item.get("alternative_id"):
+            continue
+        quality = _safe_dict(item.get("quality"))
+        result = _safe_dict(item.get("result"))
+        totals = _safe_dict(result.get("daily_totals"))
+        alternatives.append(
+            {
+                "alternative_id": _safe_str(item.get("alternative_id")),
+                "label": _safe_str(item.get("label"), default="Alternativa"),
+                "rank": item.get("rank"),
+                "status": _safe_str(result.get("status")),
+                "nutritional_score": quality.get("nutritional_score"),
+                "functional_score": quality.get("functional_score"),
+                "total_kcal": totals.get("kcal"),
+                "protein": totals.get("protein"),
+                "carbs": totals.get("carbs"),
+                "fat": totals.get("fat"),
+            }
+        )
+    return alternatives
 
 
 

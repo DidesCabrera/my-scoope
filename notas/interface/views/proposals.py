@@ -25,6 +25,9 @@ from notas.application.queries.proposal_queries import (
     get_proposal_detail,
     list_user_proposals,
 )
+from notas.application.services.commands.proposal_alternative_commands import (
+    select_proposal_alternative,
+)
 from notas.application.services.commands.proposal_commands import (
     apply_approved_create_dailyplan_proposal,
     apply_approved_create_meal_proposal,
@@ -291,6 +294,7 @@ def _dailyplan_generator_error_message(error_code: str) -> str:
         "dailyplan_generator_only_supports_daily_plan_briefs": "Este generador inicial solo soporta briefs de Plan diario; Programas quedan para un patch posterior.",
         "dailyplan_generator_requires_at_least_three_readable_foods": "Necesitas al menos tres alimentos disponibles para generar una propuesta inicial.",
         "dailyplan_generator_food_candidates_not_found": "No se encontraron alimentos suficientes que respeten las exclusiones del brief.",
+        "dailyplan_generator_typed_safety_requires_portfolio": "Las alergias o el patrón alimentario declarado requieren el solver con restricciones tipadas.",
     }
     return messages_by_code.get(
         error_code,
@@ -430,6 +434,23 @@ def proposal_approve(request, proposal_id):
         "proposal_detail",
         proposal_id=proposal.id,
     )
+
+
+@login_required
+@require_POST
+def proposal_select_alternative(request, proposal_id):
+    proposal = _get_proposal_model_for_action(request.user, proposal_id)
+    try:
+        select_proposal_alternative(
+            user=request.user,
+            proposal=proposal,
+            alternative_id=request.POST.get("alternative_id", ""),
+        )
+    except ValueError as exc:
+        messages.error(request, f"No se pudo seleccionar la alternativa: {exc}")
+    else:
+        messages.success(request, "Alternativa seleccionada para revisión.")
+    return redirect("proposal_detail", proposal_id=proposal.id)
 
 
 @login_required

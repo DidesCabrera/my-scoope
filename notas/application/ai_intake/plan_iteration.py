@@ -72,6 +72,7 @@ def create_iterated_dailyplan_proposal(
     current_snapshot = dict(proposal.current_snapshot or {})
     current_snapshot["iteration"] = _build_iteration_metadata(
         previous_proposal=previous_proposal,
+        current_proposal=proposal,
         user_message=user_message,
         command_set=command_set,
     )
@@ -80,6 +81,7 @@ def create_iterated_dailyplan_proposal(
     validation_summary = dict(proposal.validation_summary or {})
     validation_summary["chat_iteration"] = _build_iteration_metadata(
         previous_proposal=previous_proposal,
+        current_proposal=proposal,
         user_message=user_message,
         command_set=command_set,
     )
@@ -100,6 +102,7 @@ def create_iterated_dailyplan_proposal(
 def _build_iteration_metadata(
     *,
     previous_proposal: NutritionProposal,
+    current_proposal: NutritionProposal,
     user_message: str,
     command_set: PlanIterationCommandSet,
 ) -> dict:
@@ -109,7 +112,35 @@ def _build_iteration_metadata(
         "user_message": " ".join((user_message or "").strip().split()),
         "command_set": command_set.as_dict(),
         "command_labels": command_set.labels,
+        "solver_comparison": _compare_solver_quality(previous_proposal, current_proposal),
     }
+
+
+def _compare_solver_quality(previous_proposal: NutritionProposal, current_proposal: NutritionProposal) -> dict:
+    previous = _solver_quality(previous_proposal)
+    current = _solver_quality(current_proposal)
+    if not previous or not current:
+        return {
+            "available": False,
+            "reason": "solver_quality_not_available_for_both_revisions",
+        }
+    nutrition_delta = float(current.get("nutritional_score") or 0) - float(previous.get("nutritional_score") or 0)
+    functional_delta = float(current.get("functional_score") or 0) - float(previous.get("functional_score") or 0)
+    return {
+        "available": True,
+        "previous": previous,
+        "current": current,
+        "nutritional_score_delta": round(nutrition_delta, 2),
+        "functional_score_delta": round(functional_delta, 2),
+        "improved": nutrition_delta > 0 or (nutrition_delta == 0 and functional_delta > 0),
+    }
+
+
+def _solver_quality(proposal: NutritionProposal) -> dict:
+    snapshot = proposal.current_snapshot or {}
+    solver = snapshot.get("nutrition_solver") if isinstance(snapshot, dict) else None
+    quality = solver.get("quality") if isinstance(solver, dict) else None
+    return dict(quality) if isinstance(quality, dict) else {}
 
 
 def _build_iteration_summary(*, original_summary: str, user_message: str) -> str:

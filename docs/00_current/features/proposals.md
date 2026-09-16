@@ -14,6 +14,17 @@ Las propuestas nutricionales permiten revisar, aprobar y aplicar entidades suger
 - Los payloads ricos deben validarse antes de crear entidades.
 - Las vistas deben diferenciar revisión, aprobación y aplicación.
 - Las acciones destructivas o irreversibles deben estar explícitas.
+- Una propuesta generada por el solver puede contener un portafolio de alternativas
+  confiables. Cambiar la alternativa seleccionada sólo reemplaza el payload pendiente,
+  vuelve a validarlo/simularlo y no aprueba ni aplica la propuesta.
+
+## Portafolio del solver
+
+`portfolio_v1` solicita tres alternativas distintas por defecto. Todas viven en el
+snapshot de la misma propuesta, con resultado matemático, calidad nutricional y
+calidad funcional. Proposal Review muestra sus métricas y permite seleccionar una
+antes de aprobar. El cliente envía únicamente `alternative_id`; el servidor obtiene
+el payload desde su snapshot para impedir payloads alternativos manipulados.
 
 ## Superficie de usuario
 

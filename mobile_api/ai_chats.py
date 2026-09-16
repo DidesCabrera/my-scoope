@@ -1,15 +1,16 @@
 from __future__ import annotations
 
-from django.conf import settings
 from dataclasses import replace
 
+from django.conf import settings
+
 from accounts.services.profile import build_account_credit_display
+from ai_assistant.application.async_jobs import async_jobs_enabled
 from ai_assistant.application.tools import (
     TOOL_COMMIT_PREFERENCE_UPDATE,
     execute_profile_commit_tool,
 )
 from ai_assistant.domain import AssistantToolRequest, AssistantToolStatus
-from ai_assistant.application.async_jobs import async_jobs_enabled
 from ai_assistant.models import AIAsyncJob
 from notas.application.ai_intake.async_turns import NUTRITION_INTAKE_TURN_JOB_KIND
 from notas.application.ai_intake.chat_engine import build_ai_nutrition_intake_engine_status
@@ -128,6 +129,13 @@ def _message_cards(user, raw: dict) -> list[dict]:
                 "summary": trusted["summary"][:1000],
                 "status": trusted["status"],
                 "destructive": trusted["destructive"],
+                "risk_level": trusted["risk_level"],
+                "operation_count": int(trusted["preview"].get("operation_count") or 1),
+                "operations": [
+                    str(item.get("title") or item.get("action_key") or "Cambio")[:180]
+                    for item in trusted["preview"].get("operations") or ()
+                    if isinstance(item, dict)
+                ],
                 "expires_at": trusted["expires_at"],
             })
     return cards

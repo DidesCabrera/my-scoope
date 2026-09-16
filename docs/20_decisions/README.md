@@ -217,3 +217,7 @@ Consequences
   cada asignación futura de planes diarios mediante revisiones de snapshots auditadas.
 - `0193-sharing-resource-invitation-claim-inbox-boundary.md`: separa recurso portable,
   invitación dirigida, claim idempotente e Inbox independiente del canal.
+- `0194-canonical-client-memory-and-explicit-preference-egress.md`: unifica memoria
+  conversacional y mantiene la salida de preferencias persistentes como acción explícita.
+- `0195-capability-patches-and-solver-portfolios.md`: reemplaza micro-tools de mutación
+  por patches atómicos revisables y activa portafolios seleccionables del solver.

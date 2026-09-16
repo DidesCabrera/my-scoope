@@ -153,6 +153,9 @@ class MobileAPIAssistantTests(AuthenticatedMobileAPITestCase):
             [card["type"] for card in message["cards"]], ["profile_draft", "proposal_review", "prepared_action"]
         )
         self.assertEqual(message["cards"][2]["title"], action.title)
+        self.assertEqual(message["cards"][2]["risk_level"], "medium")
+        self.assertEqual(message["cards"][2]["operation_count"], 1)
+        self.assertEqual(message["cards"][2]["operations"], [])
         self.assertNotIn("unknown_card", str(message))
 
     def test_ai_prepared_action_requires_owner_and_explicit_commit_or_cancel(self):

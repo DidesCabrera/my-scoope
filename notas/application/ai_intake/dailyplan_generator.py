@@ -392,12 +392,13 @@ def _build_dailyplan_payload_with_solver_summary(
 ) -> tuple[dict, dict]:
     target_plan = target_plan or build_dailyplan_target_plan(user=user, brief=brief)
     meals_per_day = _normalize_meals_per_day(brief.meals_per_day)
-    backend = str(getattr(settings, "NUTRITION_SOLVER_BACKEND", "heuristic_v2")).strip().lower()
+    backend = str(getattr(settings, "NUTRITION_SOLVER_BACKEND", "portfolio_v1")).strip().lower()
     shadow_enabled = bool(getattr(settings, "NUTRITION_SOLVER_SHADOW_ENABLED", False))
     shadow_backend = str(getattr(settings, "NUTRITION_SOLVER_SHADOW_BACKEND", "cp_sat_v1")).strip().lower()
     time_limit_ms = int(getattr(settings, "NUTRITION_SOLVER_TIME_LIMIT_MS", 1500))
+    alternative_count = int(getattr(settings, "NUTRITION_SOLVER_ALTERNATIVE_COUNT", 3))
 
-    if backend == "cp_sat_v1":
+    if backend in {"cp_sat_v1", "portfolio_v1"}:
         try:
             outcome = run_dailyplan_optimizer_v2(
                 user=user,
@@ -406,17 +407,43 @@ def _build_dailyplan_payload_with_solver_summary(
                 plan_name=_build_dailyplan_name(brief),
                 excluded_terms=brief.excluded_foods,
                 preferred_terms=brief.preferred_foods,
-                backend=backend,
+                dietary_pattern=brief.dietary_pattern,
+                allergies_or_intolerances=brief.allergies_or_intolerances,
+                cooking_time_preference=brief.cooking_time_preference,
+                budget_preference=brief.budget_preference or brief.budget_level,
+                simplicity_preference=brief.simplicity_preference or brief.complexity_level,
+                variety_preference=brief.variety_preference,
+                alternative_count=alternative_count,
+                backend="cp_sat_v1",
                 shadow_enabled=shadow_enabled,
                 shadow_backend=shadow_backend,
                 time_limit_ms=time_limit_ms,
             )
         except DailyPlanOptimizerV2Error as exc:
-            raise DailyPlanGeneratorError(str(exc)) from exc
+            if backend == "cp_sat_v1" or _brief_requires_typed_solver_safety(brief):
+                raise DailyPlanGeneratorError(str(exc)) from exc
+            payload = _build_legacy_dailyplan_payload_from_brief(
+                user=user,
+                brief=brief,
+                target_plan=target_plan,
+            )
+            return payload, {
+                "contract_version": "nutrition_solver_optimization.v2",
+                "active_backend": "legacy_generator_v6",
+                "configured_backend": backend,
+                "fallback_reason": str(exc),
+                "requested_alternative_count": alternative_count,
+                "alternative_count": 1,
+                "selected_alternative_id": "legacy_1",
+                "alternatives": [],
+                "shadow_enabled": False,
+            }
         return outcome.payload, outcome.solver_summary
 
     if backend != "heuristic_v2":
         raise DailyPlanGeneratorError(f"dailyplan_generator_unknown_solver_backend:{backend}")
+    if _brief_requires_typed_solver_safety(brief):
+        raise DailyPlanGeneratorError("dailyplan_generator_typed_safety_requires_portfolio")
 
     payload = _build_legacy_dailyplan_payload_from_brief(
         user=user,
@@ -428,6 +455,10 @@ def _build_dailyplan_payload_with_solver_summary(
         "active_backend": "legacy_generator_v6",
         "configured_backend": backend,
         "shadow_enabled": shadow_enabled,
+        "requested_alternative_count": alternative_count,
+        "alternative_count": 1,
+        "selected_alternative_id": "legacy_1",
+        "alternatives": [],
     }
     if shadow_enabled:
         summary = build_shadow_summary_for_legacy_generator(
@@ -440,6 +471,14 @@ def _build_dailyplan_payload_with_solver_summary(
             time_limit_ms=time_limit_ms,
         )
     return payload, summary
+
+
+def _brief_requires_typed_solver_safety(brief: NutritionBrief) -> bool:
+    return bool(
+        brief.allergies_or_intolerances
+        or str(brief.dietary_pattern or "").strip().lower()
+        in {"vegan", "vegetarian", "pescatarian"}
+    )
 
 
 def _build_legacy_dailyplan_payload_from_brief(

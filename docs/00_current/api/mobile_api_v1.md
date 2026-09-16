@@ -208,9 +208,10 @@ open their trusted mobile detail surfaces.
 Prepared mutations use `POST /ai/prepared-actions/{action_id}/commit` or
 `POST /ai/prepared-actions/{action_id}/cancel`. Both require the mobile write
 scope and resolve the opaque action against the authenticated owner. Commit also
-rechecks expiration and the target snapshot before applying the existing command;
+rechecks expiration and every target snapshot before applying the existing commands;
 the mobile client sends no mutation arguments and reloads the conversation after
-the result.
+the result. A prepared-action card exposes aggregate `risk_level` and
+`operation_count`, while the server retains the authoritative operation payload.
 
 MCE07 allows `POST /ai/turns` to receive an optional owner-scoped
 `comparison_id`. The API resolves the saved snapshot, sends only bounded product

@@ -1,8 +1,8 @@
 from django.test import SimpleTestCase
 
 from ai_assistant.application.tools import (
-    TOOL_COMMIT_PROFILE_UPDATE,
     TOOL_COMMIT_PREFERENCE_UPDATE,
+    TOOL_COMMIT_PROFILE_UPDATE,
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
     TOOL_CREATE_NUTRITION_SOLVER_MEAL_PROPOSAL,
@@ -10,10 +10,11 @@ from ai_assistant.application.tools import (
     TOOL_LIST_OPERATIONAL_FOODS,
     TOOL_LIST_SAVED_COMPARISONS,
     TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES,
+    TOOL_PROPOSE_WORKSPACE_PATCH,
     TOOL_READ_DAILYPLAN,
     TOOL_READ_SAVED_COMPARISON,
-    TOOL_READ_USER_PROFILE_CONTEXT,
     TOOL_READ_USER_PREFERENCE_CONTEXT,
+    TOOL_READ_USER_PROFILE_CONTEXT,
     TOOL_SEARCH_OPERATIONAL_FOODS,
     TOOL_SHARE_PREFERENCE_DRAFT_CARD,
     TOOL_SHARE_PROFILE_DRAFT_CARD,
@@ -59,6 +60,7 @@ class AIAssistantToolRegistryTests(SimpleTestCase):
         self.assertIn(TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL, tool_names)
         self.assertIn(TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS, tool_names)
         self.assertIn(TOOL_CREATE_NUTRITION_SOLVER_MEAL_PROPOSAL, tool_names)
+        self.assertIn(TOOL_PROPOSE_WORKSPACE_PATCH, tool_names)
         self.assertNotIn("list_food_catalog", tool_names)
         self.assertNotIn("apply_proposal", tool_names)
 
@@ -314,6 +316,14 @@ class AIAssistantToolRegistryTests(SimpleTestCase):
         self.assertEqual(spec.risk_level, AssistantToolRiskLevel.REVIEW_REQUIRED)
         self.assertTrue(spec.requires_human_review)
         self.assertIn("target", spec.input_schema["required"])
+
+    def test_workspace_patch_is_reviewable_and_bounded(self):
+        spec = get_tool_spec(TOOL_PROPOSE_WORKSPACE_PATCH)
+
+        self.assertEqual(spec.category, AssistantToolCategory.PROPOSAL)
+        self.assertEqual(spec.risk_level, AssistantToolRiskLevel.REVIEW_REQUIRED)
+        self.assertTrue(spec.requires_human_review)
+        self.assertEqual(spec.input_schema["properties"]["operations"]["maxItems"], 12)
 
     def test_draft_based_dailyplan_proposal_is_reviewable_tool(self):
         spec = get_tool_spec(TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS)

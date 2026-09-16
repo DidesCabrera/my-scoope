@@ -6,6 +6,7 @@ from typing import Any, Callable
 from ai_assistant.application.product_ports import AIProductBindings
 from ai_assistant.application.tools import (
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
+    TOOL_PROPOSE_WORKSPACE_PATCH,
     TOOL_READ_USER_PREFERENCE_CONTEXT,
     TOOL_READ_USER_PROFILE_CONTEXT,
     TOOL_SHARE_PREFERENCE_DRAFT_CARD,
@@ -51,7 +52,7 @@ _EXPANDED_PRODUCT_TOOL_DOMAINS = {
         "cantidad",
         "manteniendo los mismos alimentos",
     ),
-    "prepare_product_action": (
+    TOOL_PROPOSE_WORKSPACE_PATCH: (
         "crear",
         "crea",
         "actualizar",
@@ -242,11 +243,16 @@ def provider_tool_by_name(
 
 
 def _expanded_product_tool_relevant(tool_name: str, *, user_text: str) -> bool:
+    if tool_name == "prepare_product_action":
+        return False
     keywords = _EXPANDED_PRODUCT_TOOL_DOMAINS.get(tool_name)
     if keywords is None:
         return True
-    if tool_name == "prepare_product_action" and (
+    if tool_name == TOOL_PROPOSE_WORKSPACE_PATCH and (
         "propuesta" in user_text or "proposal" in user_text
+    ) and not any(
+        marker in user_text
+        for marker in ("aprobar", "aprueba", "rechaz", "aplicar", "aplica", "elimin", "borr")
     ):
         return False
     return any(keyword in user_text for keyword in keywords)
