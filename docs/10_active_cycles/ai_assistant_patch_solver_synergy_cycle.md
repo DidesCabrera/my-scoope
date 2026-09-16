@@ -89,3 +89,12 @@ No migration is required. The generated mobile OpenAPI contract is current.
   separate user autonomy preference, audit decision and rollout.
 - Physical staging validation with the real provider remains an operational release
   check, not a repository implementation gap.
+
+## Staging feedback amendment
+
+A real-provider staging replay found that the historical `ai_nutrition_intake` surface
+still routed ordinary library/program/mutation requests through its narrow intake-only
+tool set. The follow-up fix makes explicit product requests escape that intake subset,
+requires tool evidence for user-workspace claims and supports backward typed references
+between patch operations. This allows one reviewed patch to create and compose new
+entities atomically instead of falsely claiming the capability is unavailable.

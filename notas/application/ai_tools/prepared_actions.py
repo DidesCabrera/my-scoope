@@ -28,7 +28,7 @@ from notas.domain.models import (
 
 WORKSPACE_PATCH_ACTION_KEY = "workspace.patch"
 WORKSPACE_PATCH_CONTRACT_VERSION = "ai_assistant_workspace_patch.v1"
-WORKSPACE_PATCH_MAX_OPERATIONS = 12
+WORKSPACE_PATCH_MAX_OPERATIONS = 24
 
 _WORKSPACE_PATCH_ACTIONS = {
     ("food", "create"): "food.create",
@@ -85,6 +85,11 @@ _ALLOWED_ACTION_ARGUMENTS = {
     "program.rename": {"name"},
     "program.duplicate_week": {"week_number"},
     "program.remove_week": {"week_number"},
+}
+
+_REFERENCEABLE_ARGUMENTS = {
+    "meal.add_food": {"food_id": "food"},
+    "dailyplan.add_meal": {"meal_id": "meal"},
 }
 
 
@@ -161,18 +166,21 @@ def prepare_workspace_patch(
 
     normalized_operations = []
     operation_ids: set[str] = set()
+    prior_operations: dict[str, dict[str, Any]] = {}
     aggregate_risk = "low"
     for index, raw_operation in enumerate(raw_operations, start=1):
         operation = _normalize_workspace_patch_operation(
             user=user,
             raw_operation=raw_operation,
             fallback_operation_id=f"operation_{index}",
+            prior_operations=prior_operations,
         )
         operation_id = operation["operation_id"]
         if operation_id in operation_ids:
             raise ValueError("workspace_patch_duplicate_operation_id")
         operation_ids.add(operation_id)
         normalized_operations.append(operation)
+        prior_operations[operation_id] = operation
         aggregate_risk = _highest_risk(aggregate_risk, operation["risk_level"])
 
     clean_title = " ".join(str(title or "").split())[:180]
@@ -202,6 +210,7 @@ def prepare_workspace_patch(
                     "before": operation["before"],
                     "after": operation["after"],
                     "risk_level": operation["risk_level"],
+                    "references": operation["references"],
                 }
                 for operation in normalized_operations
             ],
@@ -309,6 +318,7 @@ def _normalize_workspace_patch_operation(
     user,
     raw_operation: Mapping[str, Any],
     fallback_operation_id: str,
+    prior_operations: Mapping[str, Mapping[str, Any]],
 ) -> dict[str, Any]:
     if not isinstance(raw_operation, Mapping):
         raise ValueError("workspace_patch_operation_invalid")
@@ -318,15 +328,40 @@ def _normalize_workspace_patch_operation(
     if action_key is None:
         raise ValueError(f"workspace_patch_operation_unsupported:{resource}.{action}")
     spec = PREPARED_ACTION_SPECS[action_key]
+    operation_id = (
+        "_".join(str(raw_operation.get("operation_id") or fallback_operation_id).strip().split())[:80]
+        or fallback_operation_id
+    )
     parameters = dict(raw_operation.get("parameters") or {})
+    raw_references = raw_operation.get("references") or {}
+    if not isinstance(raw_references, Mapping):
+        raise ValueError("workspace_patch_references_invalid")
+    references = {
+        str(key).strip(): str(value).strip()
+        for key, value in raw_references.items()
+        if str(key).strip() and str(value).strip()
+    }
     allowed_arguments = _ALLOWED_ACTION_ARGUMENTS.get(action_key, set())
     unknown_arguments = sorted(set(parameters).difference(allowed_arguments))
     if unknown_arguments:
         raise ValueError(f"workspace_patch_unknown_arguments:{','.join(unknown_arguments)}")
+    allowed_references = {"target_id", *_REFERENCEABLE_ARGUMENTS.get(action_key, {})}
+    unknown_references = sorted(set(references).difference(allowed_references))
+    if unknown_references:
+        raise ValueError(f"workspace_patch_unknown_references:{','.join(unknown_references)}")
+    if set(parameters).intersection(references):
+        raise ValueError("workspace_patch_reference_conflicts_with_parameter")
+    _validate_workspace_patch_references(
+        spec=spec,
+        action_key=action_key,
+        references=references,
+        prior_operations=prior_operations,
+    )
     missing = [
         key
         for key in spec.required_arguments
-        if parameters.get(key) is None or str(parameters.get(key)).strip() == ""
+        if key not in references
+        and (parameters.get(key) is None or str(parameters.get(key)).strip() == "")
     ]
     if missing:
         raise ValueError(f"prepared_action_missing_arguments:{','.join(missing)}")
@@ -335,22 +370,37 @@ def _normalize_workspace_patch_operation(
     before = {}
     target_version = ""
     target_id = raw_operation.get("target_id")
+    target_reference = references.get("target_id")
     if not spec.creates_entity:
-        if target_id is None:
+        if target_id is not None and target_reference:
+            raise ValueError("workspace_patch_target_reference_conflict")
+        if target_id is None and not target_reference:
             raise ValueError("prepared_action_target_required")
-        target = _resolve_owned_target(
-            user=user,
-            target_type=spec.target_type,
-            target_id=int(target_id),
-        )
-        before = _target_snapshot(spec.target_type, target)
-        target_version = _snapshot_version(before)
+        if target_reference:
+            before = {
+                "target_type": spec.target_type,
+                "pending_operation_reference": target_reference,
+            }
+        else:
+            target = _resolve_owned_target(
+                user=user,
+                target_type=spec.target_type,
+                target_id=int(target_id),
+            )
+            before = _target_snapshot(spec.target_type, target)
+            target_version = _snapshot_version(before)
+
+    preview_arguments = dict(parameters)
+    preview_arguments.update(
+        {
+            key: {"operation_reference": reference}
+            for key, reference in references.items()
+            if key != "target_id"
+        }
+    )
 
     return {
-        "operation_id": (
-            "_".join(str(raw_operation.get("operation_id") or fallback_operation_id).strip().split())[:80]
-            or fallback_operation_id
-        ),
+        "operation_id": operation_id,
         "resource": resource,
         "action": action,
         "action_key": action_key,
@@ -359,10 +409,35 @@ def _normalize_workspace_patch_operation(
         "target_id": getattr(target, "id", None),
         "target_version": target_version,
         "parameters": parameters,
+        "references": references,
         "before": before,
-        "after": _preview_after(spec, before=before, arguments=parameters),
+        "after": _preview_after(spec, before=before, arguments=preview_arguments),
         "risk_level": _workspace_patch_risk(spec),
     }
+
+
+def _validate_workspace_patch_references(
+    *,
+    spec: PreparedActionSpec,
+    action_key: str,
+    references: Mapping[str, str],
+    prior_operations: Mapping[str, Mapping[str, Any]],
+) -> None:
+    if spec.creates_entity and "target_id" in references:
+        raise ValueError("workspace_patch_create_target_reference_invalid")
+    expected_types = {
+        "target_id": spec.target_type,
+        **_REFERENCEABLE_ARGUMENTS.get(action_key, {}),
+    }
+    for field_name, reference_id in references.items():
+        referenced = prior_operations.get(reference_id)
+        if referenced is None:
+            raise ValueError(f"workspace_patch_reference_not_available:{reference_id}")
+        referenced_spec = PREPARED_ACTION_SPECS.get(str(referenced.get("action_key") or ""))
+        if referenced_spec is None or not referenced_spec.creates_entity:
+            raise ValueError(f"workspace_patch_reference_not_create:{reference_id}")
+        if referenced_spec.target_type != expected_types[field_name]:
+            raise ValueError(f"workspace_patch_reference_type_mismatch:{field_name}")
 
 
 def _commit_workspace_patch_action(*, action: AIPreparedAction, user) -> AIPreparedAction:
@@ -373,13 +448,23 @@ def _commit_workspace_patch_action(*, action: AIPreparedAction, user) -> AIPrepa
     if not operations:
         raise ValueError("workspace_patch_requires_operations")
 
-    resolved_targets: list[tuple[dict[str, Any], PreparedActionSpec, Any]] = []
+    direct_targets: dict[str, Any] = {}
+    operation_specs: dict[str, PreparedActionSpec] = {}
+    prior_operations: dict[str, Mapping[str, Any]] = {}
     for operation in operations:
         spec = PREPARED_ACTION_SPECS.get(str(operation.get("action_key") or ""))
         if spec is None:
             raise ValueError("workspace_patch_operation_unsupported")
+        operation_id = str(operation.get("operation_id") or "")
+        references = dict(operation.get("references") or {})
+        _validate_workspace_patch_references(
+            spec=spec,
+            action_key=spec.action_key,
+            references=references,
+            prior_operations=prior_operations,
+        )
         target = None
-        if not spec.creates_entity:
+        if not spec.creates_entity and "target_id" not in references:
             target = _resolve_owned_target(
                 user=user,
                 target_type=spec.target_type,
@@ -389,19 +474,50 @@ def _commit_workspace_patch_action(*, action: AIPreparedAction, user) -> AIPrepa
             current_version = _snapshot_version(_target_snapshot(spec.target_type, target))
             if current_version != str(operation.get("target_version") or ""):
                 raise ValueError("prepared_action_target_changed")
-        resolved_targets.append((operation, spec, target))
+            direct_targets[operation_id] = target
+        operation_specs[operation_id] = spec
+        prior_operations[operation_id] = operation
 
     results = []
+    results_by_operation: dict[str, dict[str, Any]] = {}
     try:
-        for operation, spec, target in resolved_targets:
+        for operation in operations:
+            operation_id = str(operation["operation_id"])
+            spec = operation_specs[operation_id]
+            references = dict(operation.get("references") or {})
+            target = direct_targets.get(operation_id)
+            target_reference = references.get("target_id")
+            if target_reference:
+                target_id = _referenced_entity_id(
+                    operation_id=target_reference,
+                    target_type=spec.target_type,
+                    results_by_operation=results_by_operation,
+                )
+                target = _resolve_owned_target(
+                    user=user,
+                    target_type=spec.target_type,
+                    target_id=target_id,
+                    for_update=True,
+                )
+            resolved_arguments = dict(operation.get("parameters") or {})
+            for field_name, reference_id in references.items():
+                if field_name == "target_id":
+                    continue
+                target_type = _REFERENCEABLE_ARGUMENTS[spec.action_key][field_name]
+                resolved_arguments[field_name] = _referenced_entity_id(
+                    operation_id=reference_id,
+                    target_type=target_type,
+                    results_by_operation=results_by_operation,
+                )
             result = _dispatch_commit(
                 spec,
                 user=user,
                 target=target,
-                arguments=dict(operation.get("parameters") or {}),
+                arguments=resolved_arguments,
             )
+            results_by_operation[operation_id] = result
             results.append({
-                "operation_id": operation["operation_id"],
+                "operation_id": operation_id,
                 "action_key": operation["action_key"],
                 "result": result,
             })
@@ -420,6 +536,22 @@ def _commit_workspace_patch_action(*, action: AIPreparedAction, user) -> AIPrepa
     action.committed_at = timezone.now()
     action.save(update_fields=["status", "result", "committed_at", "updated_at"])
     return action
+
+
+def _referenced_entity_id(
+    *,
+    operation_id: str,
+    target_type: str,
+    results_by_operation: Mapping[str, Mapping[str, Any]],
+) -> int:
+    result = results_by_operation.get(operation_id)
+    if result is None:
+        raise ValueError(f"workspace_patch_reference_result_missing:{operation_id}")
+    result_key = f"{target_type}_id"
+    value = result.get(result_key)
+    if value is None:
+        raise ValueError(f"workspace_patch_reference_result_invalid:{operation_id}")
+    return int(value)
 
 
 def _workspace_patch_risk(spec: PreparedActionSpec) -> str:

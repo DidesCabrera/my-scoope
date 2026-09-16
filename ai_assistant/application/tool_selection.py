@@ -33,7 +33,15 @@ _EXPANDED_PRODUCT_TOOL_DOMAINS = {
     "search_user_dailyplans": ("plan", "dailyplan"),
     "list_user_programs": ("programa", "program", "semana"),
     "read_program": ("programa", "program", "semana"),
-    "read_calendarization": ("calendario", "calendar", "pausar", "reanudar"),
+    "read_calendarization": (
+        "calendario",
+        "calendar",
+        "pausar",
+        "reanudar",
+        "programa activo",
+        "programa en curso",
+        "en curso",
+    ),
     "list_inbox_items": ("inbox", "compartid", "recibid", "enviad"),
     "read_account_billing_context": (
         "cuenta",
@@ -190,6 +198,10 @@ def initial_tool_choice(
         is not None
     ):
         return "required"
+    if _requests_existing_product_operation(
+        str(request.user_message.content or "").strip().lower()
+    ):
+        return "required"
     return "auto"
 
 
@@ -306,10 +318,18 @@ def _requests_existing_product_operation(user_text: str) -> bool:
         for marker in (
             " mi plan ",
             " este plan ",
+            " plan ",
+            " planes ",
             " dailyplan ",
             " propuesta ",
             " programa ",
             " calendario ",
+            " biblioteca ",
+            " librería ",
+            " alimento",
+            " comida",
+            " food ",
+            " meal ",
         )
     )
     requests_change_or_lookup = any(
@@ -333,6 +353,21 @@ def _requests_existing_product_operation(user_text: str) -> bool:
             " aplica ",
             " aprueba ",
             " rechaza ",
+            " crea",
+            " agrega",
+            " añad",
+            " registra",
+            " incorpora",
+            " guarda",
+            " lista ",
+            " listar ",
+            " dime ",
+            " decirme ",
+            " tengo ",
+            " hay ",
+            " existe",
+            " en curso",
+            " activo",
         )
     )
     return identifies_existing_object and requests_change_or_lookup
