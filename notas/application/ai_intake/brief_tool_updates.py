@@ -58,23 +58,13 @@ def apply_preference_draft_to_brief(brief: NutritionBrief, preference_draft: dic
         updates["budget_level"] = budget
         source_updates["budget_level"] = _normalize_tool_source(field_sources.get("budget_preference"), default="chat_draft")
 
-    simplicity = preference_draft.get("simplicity_preference")
-    if not _tool_value_is_empty(simplicity):
-        if str(simplicity) in {"high", "medium"}:
-            updates["style_preferences"] = _merge_text_lists(brief.style_preferences, ["simple"])
-            source_updates["style_preferences"] = _normalize_tool_source(field_sources.get("simplicity_preference"), default="chat_draft")
-        if str(simplicity) == "high" and not brief.complexity_level:
-            updates["complexity_level"] = "low"
-            source_updates["complexity_level"] = _normalize_tool_source(field_sources.get("simplicity_preference"), default="chat_draft")
-    variety = preference_draft.get("variety_preference")
-    if not _tool_value_is_empty(variety):
-        if str(variety) in {"high", "medium"}:
-            base_styles = updates.get("style_preferences", brief.style_preferences)
-            updates["style_preferences"] = _merge_text_lists(base_styles, ["varied"])
-            source_updates["style_preferences"] = _normalize_tool_source(field_sources.get("variety_preference"), default="chat_draft")
-        if str(variety) == "high" and not brief.complexity_level:
-            updates["complexity_level"] = "high"
-            source_updates["complexity_level"] = _normalize_tool_source(field_sources.get("variety_preference"), default="chat_draft")
+    _apply_style_preference_updates(
+        brief,
+        preference_draft,
+        field_sources=field_sources,
+        updates=updates,
+        source_updates=source_updates,
+    )
 
     dietary_pattern = preference_draft.get("dietary_pattern")
     allergies = preference_draft.get("allergies_or_intolerances")
@@ -104,6 +94,32 @@ def apply_preference_draft_to_brief(brief: NutritionBrief, preference_draft: dic
             "chat_draft",
         )
     return _replace_brief_fields(brief, updates, source_updates=source_updates)
+
+
+def _apply_style_preference_updates(
+    brief: NutritionBrief,
+    preference_draft: dict,
+    *,
+    field_sources: dict,
+    updates: dict[str, object],
+    source_updates: dict[str, str],
+) -> None:
+    preference_specs = (
+        ("simplicity_preference", "simple", "low"),
+        ("variety_preference", "varied", "high"),
+    )
+    for field_name, style_name, complexity_level in preference_specs:
+        value = preference_draft.get(field_name)
+        if _tool_value_is_empty(value):
+            continue
+        source = _normalize_tool_source(field_sources.get(field_name), default="chat_draft")
+        if str(value) in {"high", "medium"}:
+            base_styles = updates.get("style_preferences", brief.style_preferences)
+            updates["style_preferences"] = _merge_text_lists(base_styles, [style_name])
+            source_updates["style_preferences"] = source
+        if str(value) == "high" and not brief.complexity_level:
+            updates["complexity_level"] = complexity_level
+            source_updates["complexity_level"] = source
 
 
 def apply_proposal_preferences_to_brief(brief: NutritionBrief, proposal_preferences: dict) -> NutritionBrief:
