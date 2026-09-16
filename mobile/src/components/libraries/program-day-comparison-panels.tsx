@@ -1,6 +1,7 @@
-import { Pencil, Plus, RefreshCw, Trash2 } from "lucide-react-native";
+import { GripVertical, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react-native";
 import { useState } from "react";
 import { Alert, Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from "react-native";
+import { NestableDraggableFlatList, ScaleDecorator } from "react-native-draggable-flatlist";
 
 import { MacroCalorieDistribution, macroCalorieShares, PanelAllocationBar, ProteinPerKilogramBadge } from "@/components/nutrition";
 import { contextualMacroAllocations, EntityPanelTabs, PanelBody, PanelSurface, SortablePanelHeaderCell, type PanelSortState, useTemporaryPanelSort } from "@/components/panels";
@@ -181,26 +182,43 @@ function AllocationPanel({ gestures, rows }: { gestures?: DayRowGestures; rows: 
   );
 }
 
-function EditPanel({ onAssign, onDelete, rows }: { onAssign(week: number, day: number): void; onDelete(week: number, day: number): Promise<void>; rows: ProgramDayNutrition[] }) {
+function EditPanel({ onAssign, onDelete, onReorder, rows }: { onAssign(week: number, day: number): void; onDelete(week: number, day: number): Promise<void>; onReorder(rows: ProgramDayNutrition[]): Promise<void>; rows: ProgramDayNutrition[] }) {
+  const [draftRows, setDraftRows] = useState(rows);
+  const [busy, setBusy] = useState(false);
   return (
     <PanelBody>
       <View style={[styles.row, styles.header]}>
+        <View style={styles.editDragHeader} />
         <Text style={[styles.headerText, styles.editDay]}>Día</Text>
         <Text style={[styles.headerText, styles.editPlan]}>Plan</Text>
         <Text style={[styles.headerText, styles.editActions]}>Acciones</Text>
       </View>
-      {rows.map((row, index) => (
-        <View key={row.id} style={[styles.row, styles.editRow, index === rows.length - 1 && styles.rowLast]}>
+      <NestableDraggableFlatList
+        activationDistance={12}
+        data={draftRows}
+        keyExtractor={(row) => row.id}
+        onDragEnd={({ data, from, to }) => {
+          setDraftRows(data);
+          if (from === to) return;
+          setBusy(true);
+          void onReorder(data).catch(() => setDraftRows(rows)).finally(() => setBusy(false));
+        }}
+        renderItem={({ drag, getIndex, isActive, item: row }) => {
+          const index = getIndex() ?? 0;
+          return <ScaleDecorator activeScale={1.018}><View style={[styles.row, styles.editRow, isActive && styles.editRowActive, index === draftRows.length - 1 && styles.rowLast]}>
+          <Pressable accessibilityHint="Mantén pulsado y arrastra para cambiar la posición" accessibilityLabel={`Reordenar plan de ${row.day}`} accessibilityRole="button" delayLongPress={180} disabled={busy} hitSlop={8} onLongPress={drag} style={({ pressed }) => [styles.editDragHandle, busy && styles.disabled, pressed && styles.pressed]}><GripVertical color={tokens.color.textMuted} size={18} strokeWidth={2.2} /></Pressable>
           <Text style={[styles.cell, styles.editDay]}>{row.day}</Text>
           <Text numberOfLines={2} style={[styles.cell, styles.editPlan, !row.planName && styles.planName]}>{row.planName ?? "Sin plan"}</Text>
           <View style={styles.editActions}>
             <Pressable accessibilityLabel={`${row.planName ? "Reemplazar" : "Agregar"} plan de ${row.day}`} accessibilityRole="button" onPress={() => onAssign(row.week, row.dayNumber)} style={({ pressed }) => [styles.iconAction, pressed && styles.pressed]}>
-              {row.planName ? <RefreshCw color={tokens.color.textMuted} size={16} /> : <Plus color={tokens.color.dailyPlan} size={17} />}
+              {row.planName ? <RefreshCw color={tokens.color.textMain} size={16} /> : <Plus color={tokens.color.textMain} size={17} />}
             </Pressable>
             {row.planName ? <Pressable accessibilityLabel={`Eliminar plan de ${row.day}`} accessibilityRole="button" onPress={() => Alert.alert("Eliminar plan diario", `¿Quitar el plan asignado a ${row.day}?`, [{ text: "Cancelar", style: "cancel" }, { text: "Eliminar", style: "destructive", onPress: () => void onDelete(row.week, row.dayNumber).catch(() => undefined) }])} style={({ pressed }) => [styles.iconAction, pressed && styles.pressed]}><Trash2 color={tokens.color.danger} size={16} /></Pressable> : null}
           </View>
-        </View>
-      ))}
+        </View></ScaleDecorator>;
+        }}
+        scrollEnabled={false}
+      />
     </PanelBody>
   );
 }
@@ -245,12 +263,12 @@ export function ProgramDayComparisonPanels({ onAssign, onDelete, onReorder, rows
   } : undefined;
   return (
     <PanelSurface>
-      <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={onAssign && onDelete ? tabs : tabs.filter(({ key }) => key !== "edit")} />
+      <EntityPanelTabs activeTab={activeTab} onChange={setActiveTab} tabs={onAssign && onDelete && onReorder ? tabs : tabs.filter(({ key }) => key !== "edit")} />
       {activeTab === "calories" ? <CaloriesPanel gestures={gestures} rows={rows} /> : null}
       {activeTab === "macros" ? <MacrosPanel gestures={gestures} rows={rows} /> : null}
       {activeTab === "distribution" ? <DistributionPanel gestures={gestures} rows={rows} /> : null}
       {activeTab === "allocation" ? <AllocationPanel gestures={gestures} rows={rows} /> : null}
-      {activeTab === "edit" && onAssign && onDelete ? <EditPanel onAssign={onAssign} onDelete={onDelete} rows={rows} /> : null}
+      {activeTab === "edit" && onAssign && onDelete && gestures ? <EditPanel key={rows.map(({ id }) => id).join("|")} onAssign={onAssign} onDelete={onDelete} onReorder={gestures.onReorder} rows={rows} /> : null}
     </PanelSurface>
   );
 }
@@ -280,10 +298,14 @@ const styles = StyleSheet.create({
   carbsDistribution: { color: tokens.color.carbs, fontWeight: tokens.weight.semibold },
   fatDistribution: { color: tokens.color.fat, fontWeight: tokens.weight.semibold },
   distributionBar: { flex: 1.35, minWidth: 0 },
-  editRow: { gap: tokens.spacing.sm },
+  editRow: { gap: 0 },
+  editRowActive: { opacity: 0.92 },
+  editDragHandle: { alignItems: "center", alignSelf: "stretch", justifyContent: "center", width: 20 },
+  editDragHeader: { width: 20 },
   editDay: { flexBasis: "24%", flexGrow: 0, flexShrink: 0, textAlign: "left" },
   editPlan: { flex: 1, minWidth: 0, textAlign: "left" },
   editActions: { flexDirection: "row", justifyContent: "flex-end", minWidth: 66 },
   iconAction: { alignItems: "center", borderRadius: tokens.radius.sm, height: 34, justifyContent: "center", width: 34 },
   pressed: { opacity: 0.68 },
+  disabled: { opacity: 0.28 },
 });

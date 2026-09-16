@@ -141,7 +141,7 @@ test("editable rows reorder after a deliberate long press and persist on drop", 
   const layout = await source("src/app/_layout.tsx");
 
   assert.match(layout, /GestureHandlerRootView style=\{styles\.gestureRoot\}/);
-  assert.match(panels, /Gesture\.LongPress\(\)\.minDuration\(320\)\.cancelsTouchesInView\(false\)/);
+  assert.match(panels, /Gesture\.LongPress\(\)\.minDuration\(320\)/);
   assert.match(panels, /onPrepareDrag\(\);[\s\S]*?drag\(\)/);
   assert.match(panels, /if \(!nestedScroll\) setPanelDragging\(true\)/);
   assert.match(panels, /NestableDraggableFlatList/);
@@ -156,10 +156,50 @@ test("editable rows reorder after a deliberate long press and persist on drop", 
   assert.match(calendarizedMeal, /NestableScrollContainer/);
 });
 
-test("the legacy edit tab remains available as a temporary fallback", async () => {
+test("cards hide the edit tab while entity details keep it available", async () => {
   const panels = await source("src/components/panels/entity-panels.tsx");
+  const dayPanels = await source("src/components/libraries/program-day-comparison-panels.tsx");
+  const weekPanels = await source("src/components/libraries/program-week-comparison-panels.tsx");
+  const libraryCard = await source("src/components/libraries/library-card.tsx");
+  const libraryDetail = await source("src/components/libraries/library-detail-screen.tsx");
+  const calendarizedCard = await source("src/components/calendarization/calendarized-daily-plan-card.tsx");
+  const pinnedCard = await source("src/components/calendarization/pinned-daily-plan-card.tsx");
+  const calendarizedMealDetail = await source("src/app/program/days/[id]/meals/[mealKey].tsx");
 
   assert.match(panels, /const editTab =/);
+  assert.match(panels, /showEditTab = true/);
+  assert.match(panels, /editing && showEditTab \? \[\.\.\.foodTabs, editTab\] : foodTabs/);
+  assert.match(panels, /editing && showEditTab \? \[\.\.\.mealTabs, editTab\] : mealTabs/);
+  assert.match(libraryCard, /<FoodPanels[^>]*showEditTab=\{false\}/);
+  assert.match(libraryCard, /<MealPanels[^>]*showEditTab=\{false\}/);
+  assert.match(calendarizedCard, /<MealPanels[\s\S]*?showEditTab=\{false\}/);
+  assert.match(pinnedCard, /<MealPanels[\s\S]*?showEditTab=\{false\}/);
+  assert.match(libraryDetail, /<FoodPanels editing=\{foodEditing\}/);
+  assert.match(libraryDetail, /<MealPanels editing=\{mealEditing\}/);
+  assert.match(calendarizedMealDetail, /<FoodPanels[\s\S]*?editing=\{/);
+  assert.match(dayPanels, /key: "edit", label: "Editar días"/);
+  assert.match(weekPanels, /key: "edit", label: "Editar"/);
   assert.match(panels, /FoodEditPanel/);
   assert.match(panels, /MealEditPanel/);
+  for (const sourceCode of [panels, dayPanels, weekPanels]) {
+    assert.match(sourceCode, /GripVertical/);
+    assert.match(sourceCode, /onLongPress=\{drag\}/);
+    assert.match(sourceCode, /onDragEnd=/);
+    assert.doesNotMatch(sourceCode, /ArrowUp|ArrowDown|label=\{`Subir|label=\{`Bajar/);
+  }
+  assert.match(panels, /label=\{`Cambiar hora de \$\{item\.name\}`\}[\s\S]*?<Clock/);
+  assert.match(panels, />Porción<\/Text>/);
+  assert.match(panels, /decimal\(item\.quantity\)[\s\S]*?item\.quantityUnit/);
+  assert.match(panels, />Hora<\/Text>/);
+  assert.match(panels, /styles\.editValue, styles\.editTimeValue\]\}>\{item\.time \?\? "—"\}/);
+  assert.match(panels, /editDragHandle: \{[^}]*width: 20/);
+  assert.match(panels, /editPortionValue: \{ color: tokens\.color\.textMain \}/);
+  assert.match(panels, /editTimeValue: \{ color: tokens\.color\.textMain \}/);
+  assert.match(panels, /<GripVertical color=\{tokens\.color\.textMuted\}/);
+  assert.match(panels, /<Trash2 color=\{tokens\.color\.danger\}/);
+  assert.doesNotMatch(panels, /Guardar orden|Descartar/);
+  assert.doesNotMatch(weekPanels, /Guardar orden|Descartar/);
+  assert.match(panels, /onDragEnd=\{\(\{ data, from, to \}\) => \{[\s\S]*?editing\.onReorder\(data\)/);
+  assert.match(weekPanels, /onDragEnd=\{\(\{ data, from, to \}\) => \{[\s\S]*?onReorder\(data\.map/);
+  assert.match(dayPanels, /onReorder=\{gestures\.onReorder\}/);
 });

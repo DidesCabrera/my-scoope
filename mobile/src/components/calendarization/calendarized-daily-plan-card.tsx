@@ -64,6 +64,7 @@ export function CalendarizedDailyPlanCard({ dayId, dateLabel, editing, eyebrow, 
         editing={cardEditing}
         items={mealItems}
         nestedScroll={false}
+        showEditTab={false}
         onOpenItem={(meal) => {
           if (dayId == null || !meal.id) return;
           router.push({

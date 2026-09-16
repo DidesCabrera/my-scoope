@@ -68,12 +68,12 @@ function toMealPanelItem(item: LibraryMealPanelItem): MealPanelItem {
   };
 }
 
-export function FoodPanels({ editing, items, nestedScroll = false }: { editing?: FoodPanelEditing; items: LibraryFoodPanelItem[]; nestedScroll?: boolean }) {
+export function FoodPanels({ editing, items, nestedScroll = false, showEditTab = true }: { editing?: FoodPanelEditing; items: LibraryFoodPanelItem[]; nestedScroll?: boolean; showEditTab?: boolean }) {
   const router = useRouter();
-  return <SharedFoodPanels editing={editing} items={items.map(toFoodPanelItem)} nestedScroll={nestedScroll} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} />;
+  return <SharedFoodPanels editing={editing} items={items.map(toFoodPanelItem)} nestedScroll={nestedScroll} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} showEditTab={showEditTab} />;
 }
 
-export function MealPanels({ dailyPlanId, editing, items, nestedScroll = false }: { dailyPlanId?: number; editing?: MealPanelEditing; items: LibraryMealPanelItem[]; nestedScroll?: boolean }) {
+export function MealPanels({ dailyPlanId, editing, items, nestedScroll = false, showEditTab = true }: { dailyPlanId?: number; editing?: MealPanelEditing; items: LibraryMealPanelItem[]; nestedScroll?: boolean; showEditTab?: boolean }) {
   const router = useRouter();
   return <SharedMealPanels editing={editing} items={items.map(toMealPanelItem)} nestedScroll={nestedScroll} onOpenItem={(meal) => {
     if (meal.detailId == null) return;
@@ -82,7 +82,7 @@ export function MealPanels({ dailyPlanId, editing, items, nestedScroll = false }
       return;
     }
     router.push(`/libraries/meals/${meal.detailId}` as Href);
-  }} />;
+  }} showEditTab={showEditTab} />;
 }
 
 type PinnedTracking = {

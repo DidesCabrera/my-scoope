@@ -70,6 +70,7 @@ export function PinnedDailyPlanCard({ editing, item, mealExecution, onChangeMeal
         editing={cardEditing}
         items={meals.map((meal) => mealPanelItem(meal, completedKeys))}
         nestedScroll={false}
+        showEditTab={false}
         onOpenItem={(meal) => {
           if (!meal.detailId || !meal.relationId) return;
           router.push({

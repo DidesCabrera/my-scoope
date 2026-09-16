@@ -198,6 +198,10 @@ export default function ProgramDayScreen() {
     completed: Boolean(meal.key && completedMealKeys.has(meal.key)),
   }));
   const foods = snapshotDailyPlanFoodPanelItems(meals);
+  const openMeal = (meal: MealPanelItem) => router.push({
+    pathname: "/program/days/[id]/meals/[mealKey]",
+    params: { id: String(day.id), mealKey: meal.id },
+  } as Href);
 
   return (
     <>
@@ -228,12 +232,13 @@ export default function ProgramDayScreen() {
               editing={{
                 onChangeTime: setTimeChangeMeal,
                 onDelete: async (meal) => mutateMeals(`/api/v1/program/days/${day.id}/meals/${encodeURIComponent(meal.id)}`, { method: "DELETE" }),
-                onOpen: (meal) => router.push({ pathname: "/program/days/[id]/meals/[mealKey]", params: { id: String(day.id), mealKey: meal.id } } as Href),
+                onOpen: openMeal,
                 onReorder: async (items: MealPanelItem[]) => mutateMeals(`/api/v1/program/days/${day.id}/meals/order`, { body: JSON.stringify({ ordered_keys: items.map((item) => item.id) }), method: "PUT" }),
                 onReplace: (meal) => router.push(pickerHref("meal-to-calendarized-day", { dayId: day.id, relationKey: meal.id })),
               }}
               items={mealItems}
               nestedScroll
+              onOpenItem={openMeal}
             />
           </EntityDetailSection>
           <Button

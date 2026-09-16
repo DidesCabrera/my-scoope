@@ -1,6 +1,7 @@
-import { ArrowDown, ArrowUp, Check, Copy, Pencil, RotateCcw, Trash2 } from "lucide-react-native";
-import { useMemo, useState } from "react";
+import { Copy, GripVertical, Pencil, Trash2 } from "lucide-react-native";
+import { useState } from "react";
 import { Alert, Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from "react-native";
+import { NestableDraggableFlatList, ScaleDecorator } from "react-native-draggable-flatlist";
 
 import { MacroCalorieDistribution, macroCalorieShares, PanelAllocationBar, ProteinPerKilogramBadge } from "@/components/nutrition";
 import { contextualMacroAllocations, EntityPanelTabs, PanelBody, PanelEmptyState, PanelSurface, SortablePanelHeaderCell, type PanelSortState, useTemporaryPanelSort } from "@/components/panels";
@@ -170,20 +171,13 @@ function IconAction({ disabled = false, label, onPress, children }: { children: 
   );
 }
 
+function EditDragHandle({ disabled, drag, label }: { disabled: boolean; drag(): void; label: string }) {
+  return <Pressable accessibilityHint="Mantén pulsado y arrastra para cambiar la posición" accessibilityLabel={label} accessibilityRole="button" delayLongPress={180} disabled={disabled} hitSlop={8} onLongPress={drag} style={({ pressed }) => [styles.editDragHandle, disabled && styles.disabled, pressed && styles.pressed]}><GripVertical color={tokens.color.textMuted} size={18} strokeWidth={2.2} /></Pressable>;
+}
+
 function EditPanel({ initialWeeks, onDelete, onDuplicate, onReorder }: { initialWeeks: ProgramWeekSummary[]; onDelete(week: number): Promise<void>; onDuplicate(week: number): Promise<void>; onReorder(weeks: number[]): Promise<void> }) {
   const [draftWeeks, setDraftWeeks] = useState(initialWeeks);
   const [busy, setBusy] = useState(false);
-  const dirty = useMemo(() => initialWeeks.map(({ id }) => id).join() !== draftWeeks.map(({ id }) => id).join(), [draftWeeks, initialWeeks]);
-
-  const move = (index: number, offset: number) => {
-    const destination = index + offset;
-    if (destination < 0 || destination >= draftWeeks.length) return;
-    setDraftWeeks((current) => {
-      const next = [...current];
-      [next[index], next[destination]] = [next[destination], next[index]];
-      return next;
-    });
-  };
 
   async function run(action: () => Promise<void>) { setBusy(true); try { await action(); } catch { /* El padre ya presentó el error. */ } finally { setBusy(false); } }
 
@@ -191,32 +185,32 @@ function EditPanel({ initialWeeks, onDelete, onDuplicate, onReorder }: { initial
   return (
     <PanelBody>
       <View style={[styles.row, styles.header]}>
+        <View style={styles.editDragHeader} />
         <Text style={[styles.headerText, styles.editLeading]}>Orden de semanas</Text>
         <Text style={[styles.headerText, styles.editActions]}>Acciones</Text>
       </View>
-      {draftWeeks.map((week, index) => (
-        <View key={week.id} style={[styles.row, styles.editRow]}>
-          <View style={styles.reorderActions}>
-            <IconAction disabled={busy || index === 0} label={`Subir Semana ${week.week}`} onPress={() => move(index, -1)}><ArrowUp color={tokens.color.textMuted} size={16} /></IconAction>
-            <IconAction disabled={busy || index === draftWeeks.length - 1} label={`Bajar Semana ${week.week}`} onPress={() => move(index, 1)}><ArrowDown color={tokens.color.textMuted} size={16} /></IconAction>
-          </View>
+      <NestableDraggableFlatList
+        activationDistance={12}
+        data={draftWeeks}
+        keyExtractor={(week) => week.id}
+        onDragEnd={({ data, from, to }) => {
+          setDraftWeeks(data);
+          if (from === to) return;
+          setBusy(true);
+          void onReorder(data.map(({ week }) => week)).catch(() => setDraftWeeks(initialWeeks)).finally(() => setBusy(false));
+        }}
+        renderItem={({ drag, isActive, item: week }) => <ScaleDecorator activeScale={1.018}>
+        <View style={[styles.row, styles.editRow, isActive && styles.editRowActive]}>
+          <EditDragHandle disabled={busy} drag={drag} label={`Reordenar Semana ${week.week}`} />
           <View style={styles.editIdentity}><WeekIdentity week={week.week} /></View>
           <View style={styles.editActions}>
-            <IconAction disabled={busy} label={`Duplicar Semana ${week.week}`} onPress={() => void run(() => onDuplicate(week.week))}><Copy color={tokens.color.textMuted} size={16} /></IconAction>
+            <IconAction disabled={busy} label={`Duplicar Semana ${week.week}`} onPress={() => void run(() => onDuplicate(week.week))}><Copy color={tokens.color.textMain} size={16} /></IconAction>
             <IconAction disabled={busy || draftWeeks.length === 1} label={`Eliminar Semana ${week.week}`} onPress={() => Alert.alert("Eliminar semana", `¿Eliminar la Semana ${week.week} y su planificación?`, [{ text: "Cancelar", style: "cancel" }, { text: "Eliminar", style: "destructive", onPress: () => void run(() => onDelete(week.week)) }])}><Trash2 color={tokens.color.danger} size={16} /></IconAction>
           </View>
         </View>
-      ))}
-      {dirty ? (
-        <View style={styles.commitActions}>
-          <Pressable accessibilityRole="button" disabled={busy} onPress={() => setDraftWeeks(initialWeeks)} style={({ pressed }) => [styles.commitButton, pressed && styles.pressed]}>
-            <RotateCcw color={tokens.color.textMain} size={16} /><Text style={styles.commitLabel}>Descartar</Text>
-          </Pressable>
-          <Pressable accessibilityRole="button" disabled={busy} onPress={() => void run(() => onReorder(draftWeeks.map(({ week }) => week)))} style={({ pressed }) => [styles.commitButton, styles.commitButtonPrimary, pressed && styles.pressed]}>
-            <Check color={tokens.color.surfaceApp} size={16} /><Text style={styles.commitLabelPrimary}>Guardar orden</Text>
-          </Pressable>
-        </View>
-      ) : null}
+        </ScaleDecorator>}
+        scrollEnabled={false}
+      />
     </PanelBody>
   );
 }
@@ -283,17 +277,14 @@ const styles = StyleSheet.create({
   carbsDistribution: { color: tokens.color.carbs, fontWeight: tokens.weight.semibold },
   fatDistribution: { color: tokens.color.fat, fontWeight: tokens.weight.semibold },
   distributionBar: { flex: 1.35, minWidth: 0 },
-  editRow: { gap: tokens.spacing.sm },
-  reorderActions: { flexDirection: "row", gap: 2 },
+  editRow: { gap: 0 },
+  editDragHandle: { alignItems: "center", alignSelf: "stretch", justifyContent: "center", width: 20 },
+  editDragHeader: { width: 20 },
+  editRowActive: { opacity: 0.92 },
   editLeading: { flex: 1, textAlign: "left" },
   editIdentity: { flex: 1, minWidth: 0 },
   editActions: { flexDirection: "row", gap: 2, justifyContent: "flex-end", minWidth: 68 },
   iconAction: { alignItems: "center", borderRadius: tokens.radius.sm, height: 34, justifyContent: "center", width: 34 },
   disabled: { opacity: 0.28 },
   pressed: { opacity: 0.68 },
-  commitActions: { flexDirection: "row", gap: tokens.spacing.sm, justifyContent: "flex-end", padding: tokens.spacing.sm },
-  commitButton: { alignItems: "center", borderColor: tokens.color.borderDefault, borderRadius: tokens.radius.md, borderWidth: 1, flexDirection: "row", gap: tokens.spacing.xs, minHeight: 36, paddingHorizontal: tokens.spacing.md },
-  commitButtonPrimary: { backgroundColor: tokens.color.textMain, borderColor: tokens.color.textMain },
-  commitLabel: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
-  commitLabelPrimary: { color: tokens.color.surfaceApp, fontSize: tokens.type.caption, fontWeight: tokens.weight.semibold },
 });
