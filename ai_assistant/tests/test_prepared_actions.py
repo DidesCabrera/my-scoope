@@ -275,3 +275,79 @@ class PreparedProductActionTests(TestCase):
         self.assertEqual(dailyplan_meal.meal.name, self.meal.name)
         self.assertEqual(str(dailyplan_meal.hour), "13:30:00")
         self.assertEqual(dailyplan_meal.note, "Después de entrenar")
+
+    def test_workspace_patch_can_compose_entities_created_by_prior_operations(self):
+        action = prepare_workspace_patch(
+            user=self.user,
+            title="Crear desayuno completo",
+            summary="Crea un alimento, una comida y agrega el alimento a la comida.",
+            operations=[
+                {
+                    "operation_id": "create_oats",
+                    "resource": "food",
+                    "action": "create",
+                    "parameters": {
+                        "name": "Avena preparada",
+                        "protein": 12,
+                        "carbs": 60,
+                        "fat": 7,
+                    },
+                },
+                {
+                    "operation_id": "create_breakfast",
+                    "resource": "meal",
+                    "action": "create",
+                    "parameters": {"name": "Desayuno de avena"},
+                },
+                {
+                    "operation_id": "add_oats",
+                    "resource": "meal",
+                    "action": "add_food",
+                    "references": {
+                        "target_id": "create_breakfast",
+                        "food_id": "create_oats",
+                    },
+                    "parameters": {"quantity": 80},
+                },
+            ],
+        )
+
+        self.assertFalse(Food.objects.filter(name="Avena preparada").exists())
+        self.assertEqual(
+            action.preview["operations"][2]["references"],
+            {"target_id": "create_breakfast", "food_id": "create_oats"},
+        )
+
+        committed = commit_prepared_action(user=self.user, public_id=action.public_id)
+
+        food = Food.objects.get(created_by=self.user, name="Avena preparada")
+        meal = Meal.objects.get(created_by=self.user, name="Desayuno de avena")
+        meal_food = MealFood.objects.get(meal=meal, food=food)
+        self.assertEqual(float(meal_food.quantity), 80)
+        self.assertEqual(committed.result["operation_count"], 3)
+
+    def test_workspace_patch_rejects_forward_operation_reference(self):
+        with self.assertRaisesMessage(
+            ValueError,
+            "workspace_patch_reference_not_available:create_breakfast",
+        ):
+            prepare_workspace_patch(
+                user=self.user,
+                title="Referencia inválida",
+                summary="No permite referencias futuras.",
+                operations=[
+                    {
+                        "operation_id": "add_food",
+                        "resource": "meal",
+                        "action": "add_food",
+                        "references": {"target_id": "create_breakfast"},
+                        "parameters": {"food_id": 1, "quantity": 80},
+                    },
+                    {
+                        "operation_id": "create_breakfast",
+                        "resource": "meal",
+                        "action": "create",
+                        "parameters": {"name": "Desayuno"},
+                    },
+                ],
+            )

@@ -14,7 +14,8 @@ TOOL_PROPOSE_WORKSPACE_PATCH: AssistantToolSpec(
             "Prepare one atomic, reviewable workspace patch containing one or more "
             "product operations. Use this instead of composing micro-tools. My Scoope "
             "validates ownership, arguments, risk and previews every operation; no "
-            "product change is applied until the user confirms the patch in trusted UI."
+            "product change is applied until the user confirms the patch in trusted UI. "
+            "Later operations may reference entities created by earlier operations."
         ),
         category=AssistantToolCategory.PROPOSAL,
         risk_level=AssistantToolRiskLevel.REVIEW_REQUIRED,
@@ -32,7 +33,7 @@ TOOL_PROPOSE_WORKSPACE_PATCH: AssistantToolSpec(
                 "operations": {
                     "type": "array",
                     "minItems": 1,
-                    "maxItems": 12,
+                    "maxItems": 24,
                     "items": {
                         "type": "object",
                         "required": ["operation_id", "resource", "action", "parameters"],
@@ -56,6 +57,15 @@ TOOL_PROPOSE_WORKSPACE_PATCH: AssistantToolSpec(
                                 ],
                             },
                             "target_id": {"type": "integer"},
+                            "references": {
+                                "type": "object",
+                                "description": (
+                                    "Optional references from target_id or supported ID parameters "
+                                    "to an earlier create operation_id. Example: target_id=create_meal "
+                                    "and food_id=create_food."
+                                ),
+                                "additionalProperties": {"type": "string"},
+                            },
                             "parameters": {"type": "object"},
                         },
                     },

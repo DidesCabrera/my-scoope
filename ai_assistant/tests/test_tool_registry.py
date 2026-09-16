@@ -323,7 +323,9 @@ class AIAssistantToolRegistryTests(SimpleTestCase):
         self.assertEqual(spec.category, AssistantToolCategory.PROPOSAL)
         self.assertEqual(spec.risk_level, AssistantToolRiskLevel.REVIEW_REQUIRED)
         self.assertTrue(spec.requires_human_review)
-        self.assertEqual(spec.input_schema["properties"]["operations"]["maxItems"], 12)
+        operations = spec.input_schema["properties"]["operations"]
+        self.assertEqual(operations["maxItems"], 24)
+        self.assertIn("references", operations["items"]["properties"])
 
     def test_draft_based_dailyplan_proposal_is_reviewable_tool(self):
         spec = get_tool_spec(TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS)

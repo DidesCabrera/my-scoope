@@ -9,10 +9,15 @@ El contrato actual prioriza libertad del LLM guiada por propósito, estado, capa
 ## Patch de capacidades y propuestas con alternativas
 
 La decisión 0195 reemplaza la selección de micro-tools de mutación por
-`propose_workspace_patch`. El modelo puede describir hasta doce operaciones coherentes
+`propose_workspace_patch`. El modelo puede describir hasta veinticuatro operaciones coherentes
 en un solo patch; el backend las traduce a comandos de aplicación, valida propiedad y
 argumentos, calcula riesgo y muestra una vista previa. La confirmación sigue ocurriendo
 exclusivamente en UI confiable y el commit completo es atómico.
+
+Una operación posterior puede referenciar el resultado de una creación anterior del
+mismo patch. Esto permite, por ejemplo, crear alimentos, crear una comida e incorporar
+esos alimentos a la comida dentro de una sola confirmación atómica. Sólo se aceptan
+referencias hacia operaciones previas, con tipos compatibles y campos ID allowlisted.
 
 `prepare_product_action` se conserva para compatibilidad de historial, pero ya no se
 selecciona en turnos nuevos. En la versión actual incluso los patches de riesgo bajo
@@ -58,6 +63,10 @@ conserva además su rollout gradual.
 - Una referencia ambigua no autoriza lecturas, escrituras ni cards. El asistente responde desde el contexto visible o pide una aclaración breve.
 - Cuando la tarea está suficientemente fundada, se prioriza el siguiente resultado útil sobre confirmaciones repetitivas o intake opcional indefinido.
 - Los hechos ya disponibles en ficha, drafts o cards no deben volver a pedirse ni presentarse como faltantes.
+- Una consulta sobre biblioteca, programas o calendario exige evidencia de una lectura
+  del producto antes de afirmar que un objeto existe o no existe.
+- La superficie histórica de AI Intake no reduce las capacidades operativas: una
+  solicitud explícita sobre objetos del producto recibe las tools correspondientes.
 - Toda afirmación de lectura, actualización o creación de estado debe estar respaldada por una tool allowlisted ejecutada.
 
 ## Contrato post-tool vigente

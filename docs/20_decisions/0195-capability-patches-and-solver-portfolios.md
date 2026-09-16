@@ -21,10 +21,15 @@ validation, atomicity, audit and approval semantics.
 
 The provider-facing mutation boundary is capability-oriented. The model prepares one
 `ai_assistant_workspace_patch.v1` document through `propose_workspace_patch`. A patch
-contains up to twelve ordered operations over supported product resources. My Scoope,
+contains up to twenty-four ordered operations over supported product resources. My Scoope,
 not the model, maps each operation to an existing application command, verifies
 ownership and arguments, captures a before/after preview and classifies aggregate
 risk.
+
+An operation may reference the typed entity ID produced by an earlier create operation
+inside the same patch. References are backward-only, type-checked and limited to
+allowlisted target or relation ID fields. This supports atomic create-and-compose
+flows without exposing arbitrary result paths or provider-authored database access.
 
 Patch preparation never mutates the target entities. The trusted web or mobile UI is
 the only commit entry point. Commit locks the prepared action, revalidates every target
