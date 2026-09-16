@@ -13,6 +13,7 @@ import { normalizeMealExecution, normalizeMealExecutionItem } from "@/components
 import { snapshotCalories, snapshotFoodPanelItems, snapshotMacroDistribution } from "@/components/calendarization/presentation-adapters";
 import { EntityDetailPage, EntityDetailSection, FoodDetailCardList } from "@/components/details";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
+import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import { FoodPanels, type FoodPanelItem } from "@/components/panels";
 import { pickerConfigureHref, pickerHref } from "@/components/pickers/composition-picker-screen";
 import { Button, InlineNotice, SectionDivider, textStyles } from "@/components/ui";
@@ -119,11 +120,9 @@ export default function CalendarizedMealDetailScreen() {
     <>
     <NestableScrollContainer
       contentContainerStyle={styles.content}
-      onScroll={({ nativeEvent }) => {
-        const visible = nativeEvent.contentOffset.y > 1;
-        if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible);
-      }}
+      onScroll={({ nativeEvent }) => setCompactHeaderVisible(isHeaderIdentityVisible(nativeEvent.contentOffset.y))}
       scrollEventThrottle={16}
+      showsVerticalScrollIndicator={false}
       style={styles.screen}>
       <EntityDetailPage
         entity="meal"

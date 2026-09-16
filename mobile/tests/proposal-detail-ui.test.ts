@@ -20,6 +20,7 @@ test("proposal detail uses the proposal and entity UI System contracts", async (
   assert.match(preview, /<NutritionEntityCard/);
   assert.match(detail, /<ProposalEvaluationContext current=\{proposal\.current_facts\} targets=\{proposal\.target_facts\} \/>/);
   assert.match(preview, /<FoodPanels/);
+  assert.match(preview, /onOpenItem=\{onOpenFood \? \(food\) => \{ if \(food\.detailId != null\) onOpenFood\(food\.detailId\); \} : undefined\}/);
   assert.match(preview, /<MealPanels/);
   assert.doesNotMatch(preview, /projectedLabel: "Propuest[oa]"/);
   assert.match(preview, /icon: "clock"/);
@@ -43,15 +44,24 @@ test("proposed entities expose progressive detail navigation", async () => {
   assert.match(entity, /title="Detalle de cada Comida"/);
   assert.match(entity, /eyebrow=\{`Comida \$\{index \+ 1\}`\}/);
   assert.match(entity, /time=\{item\.hour\}/);
+  assert.match(entity, /onOpenFood=\{\(foodId\) => router\.push\(`\/libraries\/foods\/\$\{foodId\}` as Href\)\}/);
   assert.match(entity, /\/proposals\/\$\{proposal\.id\}\/entity\/meals\//);
   assert.match(entity, /\/libraries\/foods\//);
+  assert.match(entity, /<FoodPanels[\s\S]*?onOpenItem=\{\(food\) => \{ if \(food\.detailId != null\) router\.push\(`\/libraries\/foods\/\$\{food\.detailId\}` as Href\); \}\}/);
   assert.match(meal, /<EntityDetailPage/);
   assert.match(meal, /<SectionDivider \/>[\s\S]*title="Detalle de cada Alimento"/);
   assert.match(meal, /title="Detalle de cada Alimento"/);
   assert.match(meal, /icon: "clock"/);
   assert.match(meal, /\/libraries\/foods\//);
+  assert.match(meal, /<FoodPanels[\s\S]*?onOpenItem=\{\(food\) => \{ if \(food\.detailId != null\) router\.push\(`\/libraries\/foods\/\$\{food\.detailId\}` as Href\); \}\}/);
   assert.doesNotMatch(meal, /subtitle=\{item\.note/);
   assert.match(typography, /normalizedTitle === "composición"/);
+});
+
+test("proposed meal food panel rows preserve library food identities", async () => {
+  const preview = await source("src/components/proposals/proposal-preview.tsx");
+
+  assert.match(preview, /detailId: food\.food_id \?\? undefined/);
 });
 
 test("meal details reuse food entity cards across library and calendarized contexts", async () => {

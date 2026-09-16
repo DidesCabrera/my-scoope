@@ -147,10 +147,7 @@ export default function AssistantHistoryScreen() {
   return (
     <Screen
       headerMode="preserve"
-      onScroll={({ nativeEvent }) => {
-        const visible = nativeEvent.contentOffset.y > 1;
-        if (visible !== compactHeaderVisible) setCompactHeaderVisible(visible);
-      }}
+      onHeaderVisibilityChange={setCompactHeaderVisible}
       scrollHeader={scrollHeader}
       stickyHeader={<AssistantSectionTabs activeSection={activeSection} counts={counts} onChange={setActiveSection} />}
       stickyHeaderStyle={styles.stickyHeader}

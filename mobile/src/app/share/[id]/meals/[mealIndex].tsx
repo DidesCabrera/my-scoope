@@ -17,6 +17,10 @@ export default function SharedMealDetailScreen() {
   const index = Number(mealIndex);
   const meal = resource?.snapshot?.meals?.[index];
   const foods = meal ? sharedFoodPanelItems(meal) : [];
+  const openFood = (food: (typeof foods)[number]) => {
+    if (food.detailId == null) return;
+    router.push(`/share/${id}/meals/${index}/foods/${food.detailId}` as Href);
+  };
 
   useFocusEffect(useCallback(() => {
     setHeaderPresentation({ fallback: `/share/${id}` as Href, mode: "back", title: "Comida Compartida" });
@@ -40,14 +44,14 @@ export default function SharedMealDetailScreen() {
           nutrition={sharedNutrition(meal.nutrition)}
           title={meal.name}>
           <EntityDetailSection detail={`${foods.length} alimentos`} title="Composición">
-            <FoodPanels items={foods} />
+            <FoodPanels items={foods} onOpenItem={openFood} />
           </EntityDetailSection>
           {foods.length ? <>
             <SectionDivider />
             <EntityDetailSection title="Detalle de cada Alimento">
               <FoodDetailCardList
                 items={foods}
-                onOpenFood={(food) => router.push(`/share/${id}/meals/${index}/foods/${food.id.replace("shared-food-", "")}` as Href)}
+                onOpenFood={openFood}
               />
             </EntityDetailSection>
           </> : null}

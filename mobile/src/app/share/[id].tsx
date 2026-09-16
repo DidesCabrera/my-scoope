@@ -122,7 +122,10 @@ export default function SharedResourceScreen() {
                     key={`${meal.name}-${index}`}
                     nutrition={sharedNutrition(meal.nutrition)}
                     title={meal.name}>
-                    <FoodPanels items={sharedFoodPanelItems(meal)} />
+                    <FoodPanels
+                      items={sharedFoodPanelItems(meal)}
+                      onOpenItem={(food) => { if (food.detailId != null) router.push(`/share/${id}/meals/${index}/foods/${food.detailId}` as Href); }}
+                    />
                   </NutritionEntityCard>
                 ))}
               </EntityDetailSection>

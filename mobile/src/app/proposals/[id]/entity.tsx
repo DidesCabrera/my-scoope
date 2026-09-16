@@ -67,7 +67,10 @@ export default function ProposalEntityDetailScreen() {
           nutrition={proposalPreviewAdapters.nutrition(proposal.meal.kpis)}
           title={proposal.meal.name || "Comida"}>
           <EntityDetailSection detail={`${proposal.meal.foods.length} alimentos`} title="Composición">
-            <FoodPanels items={proposalPreviewAdapters.foodPanelItems(proposal.meal)} />
+            <FoodPanels
+              items={proposalPreviewAdapters.foodPanelItems(proposal.meal)}
+              onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }}
+            />
           </EntityDetailSection>
           {proposal.meal.foods.length ? (
             <>
@@ -118,6 +121,7 @@ export default function ProposalEntityDetailScreen() {
                 eyebrow={`Comida ${index + 1}`}
                 key={`${item.hour}-${item.meal.name}-${index}`}
                 meal={item.meal}
+                onOpenFood={(foodId) => router.push(`/libraries/foods/${foodId}` as Href)}
                 time={item.hour}
               />
             ))}

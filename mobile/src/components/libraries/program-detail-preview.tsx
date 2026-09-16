@@ -2,12 +2,13 @@ import { type Href, useRouter } from "expo-router";
 import { Copy, MoreHorizontal, Trash2 } from "lucide-react-native";
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { Pressable, StyleSheet, View, type ScrollViewProps } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { FoodPanels, type FoodPanelItem } from "@/components/panels";
 import { SectionHeading } from "@/components/ui/typography";
 import { tokens } from "@/design/tokens";
+import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import type { LibraryFoodPanelItem, LibraryItem, LibraryWeekPanelItem } from "@/api/types";
 import { EntityHeading, layoutStyles, SectionDivider, StructuralIndicators } from "@/components/ui";
 import { Button } from "@/components/ui/controls";
@@ -166,11 +167,11 @@ type ProgramDetailPreviewProps = {
   onRemoveWeek?: (week: number) => Promise<void>;
   onReorderDailyPlans?: (week: number, orderedDays: number[]) => Promise<void>;
   onReorderWeeks?: (weeks: number[]) => Promise<void>;
-  onScroll?: ScrollViewProps["onScroll"];
+  onHeaderVisibilityChange?: (visible: boolean) => void;
   scrollable?: boolean;
 };
 
-export function ProgramDetailPreview({ footer, item, onAddWeek, onAssignDailyPlan, onDuplicateWeek, onRemoveDailyPlan, onRemoveWeek, onReorderDailyPlans, onReorderWeeks, onScroll, scrollable = false }: ProgramDetailPreviewProps = {}) {
+export function ProgramDetailPreview({ footer, item, onAddWeek, onAssignDailyPlan, onDuplicateWeek, onHeaderVisibilityChange, onRemoveDailyPlan, onRemoveWeek, onReorderDailyPlans, onReorderWeeks, scrollable = false }: ProgramDetailPreviewProps = {}) {
   const [activeWeek, setActiveWeek] = useState(1);
   const liveWeeks = item?.panel.kind === "weeks" ? item.panel.weeks : [];
   const displayedWeeks = liveWeeks.length ? liveWeeks.map((week) => week.week_number) : item ? [1] : [1, 2];
@@ -226,8 +227,9 @@ export function ProgramDetailPreview({ footer, item, onAddWeek, onAssignDailyPla
     return (
       <NestableScrollContainer
         contentContainerStyle={styles.screenContent}
-        onScroll={onScroll}
+        onScroll={({ nativeEvent }) => onHeaderVisibilityChange?.(isHeaderIdentityVisible(nativeEvent.contentOffset.y))}
         scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
         stickyHeaderIndices={[3]}
         style={styles.screen}>
         {overview}
@@ -241,7 +243,7 @@ export function ProgramDetailPreview({ footer, item, onAddWeek, onAssignDailyPla
   }
 
   return (
-    <NestableScrollContainer contentContainerStyle={styles.page} scrollEnabled={false}>
+    <NestableScrollContainer contentContainerStyle={styles.page} scrollEnabled={false} showsVerticalScrollIndicator={false}>
       {overview}
       <SectionDivider />
       <View style={styles.planningSection}>

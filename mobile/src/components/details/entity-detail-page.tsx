@@ -91,20 +91,24 @@ export function EntityDetailSection({
 
 export function EntityDetailMetadata({
   creator,
+  creatorLabel = "Creado por",
   updatedAt,
+  updatedAtLabel = "Actualizado",
 }: {
   creator: string;
+  creatorLabel?: string;
   updatedAt?: string;
+  updatedAtLabel?: string;
 }) {
   return (
     <ContentPanel muted title="Información del elemento">
       <View style={styles.metadataRow}>
-        <Text style={styles.metadataLabel}>Creado por</Text>
+        <Text style={styles.metadataLabel}>{creatorLabel}</Text>
         <Text style={styles.metadataValue}>{creator}</Text>
       </View>
       {updatedAt ? (
         <View style={styles.metadataRow}>
-          <Text style={styles.metadataLabel}>Actualizado</Text>
+          <Text style={styles.metadataLabel}>{updatedAtLabel}</Text>
           <Text style={styles.metadataValue}>{updatedAt}</Text>
         </View>
       ) : null}

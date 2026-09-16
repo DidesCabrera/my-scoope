@@ -1,10 +1,10 @@
 import { type Href, Redirect, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback } from "react";
 
-import { EntityDetailPage } from "@/components/details/entity-detail-page";
+import { EntityDetailMetadata, EntityDetailPage } from "@/components/details/entity-detail-page";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { InlineNotice, LoadingState, Screen } from "@/components/ui";
-import { sharedNutrition } from "@/sharing/presentation";
+import { sharedDate, sharedNutrition } from "@/sharing/presentation";
 import { useSharedResource } from "@/sharing/use-shared-resource";
 
 export default function SharedFoodDetailScreen() {
@@ -33,7 +33,14 @@ export default function SharedFoodDetailScreen() {
           nutrition={sharedNutrition(food.nutrition)}
           subtitle={`${food.quantity_grams.toLocaleString("es-CL", { maximumFractionDigits: 1 })} g`}
           title={food.name}
-        />
+        >
+          <EntityDetailMetadata
+            creator="Elemento compartido"
+            creatorLabel="Origen"
+            updatedAt={sharedDate(resource?.created_at)}
+            updatedAtLabel="Compartido"
+          />
+        </EntityDetailPage>
       ) : null}
     </Screen>
   );

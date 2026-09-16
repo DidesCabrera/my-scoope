@@ -374,6 +374,7 @@ export function CompositionPickerScreen({
           contentContainerStyle={styles.selectionScrollContent}
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
           stickyHeaderIndices={[0]}>
           <View style={styles.selectionSticky}>
             <PickerEntryTabs
@@ -430,6 +431,7 @@ export function CompositionPickerScreen({
         contentContainerStyle={styles.configurationScrollContent}
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
         stickyHeaderIndices={[1]}>
         <View>
           {selected ? <PickerOptionCard option={selected} /> : null}
