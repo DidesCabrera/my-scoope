@@ -7,7 +7,7 @@ import { MacroCalorieDistribution, macroCalorieShares, PanelAllocationBar, Prote
 import { contextualMacroAllocations, EntityPanelTabs, PanelBody, PanelEmptyState, PanelSurface, SortablePanelHeaderCell, type PanelSortState, useTemporaryPanelSort } from "@/components/panels";
 import { tokens } from "@/design/tokens";
 import { EntityIcon } from "@/components/ui";
-import { ComparisonPanelGestureRows, StaticComparisonPanelRows, type ComparisonPanelAction } from "./comparison-panel-gesture-rows";
+import { beginComparisonPanelDrag, ComparisonPanelGestureRows, StaticComparisonPanelRows, type ComparisonPanelAction } from "./comparison-panel-gesture-rows";
 
 export type ProgramWeekSummary = {
   allocation: { carbs: number; fat: number; protein: number };
@@ -172,7 +172,7 @@ function IconAction({ disabled = false, label, onPress, children }: { children: 
 }
 
 function EditDragHandle({ disabled, drag, label }: { disabled: boolean; drag(): void; label: string }) {
-  return <Pressable accessibilityHint="Mantén pulsado y arrastra para cambiar la posición" accessibilityLabel={label} accessibilityRole="button" delayLongPress={180} disabled={disabled} hitSlop={8} onLongPress={drag} style={({ pressed }) => [styles.editDragHandle, disabled && styles.disabled, pressed && styles.pressed]}><GripVertical color={tokens.color.textMuted} size={18} strokeWidth={2.2} /></Pressable>;
+  return <Pressable accessibilityHint="Mantén pulsado y arrastra para cambiar la posición" accessibilityLabel={label} accessibilityRole="button" delayLongPress={180} disabled={disabled} hitSlop={8} onLongPress={() => beginComparisonPanelDrag(drag)} style={({ pressed }) => [styles.editDragHandle, disabled && styles.disabled, pressed && styles.pressed]}><GripVertical color={tokens.color.textMuted} size={18} strokeWidth={2.2} /></Pressable>;
 }
 
 function EditPanel({ initialWeeks, onDelete, onDuplicate, onReorder }: { initialWeeks: ProgramWeekSummary[]; onDelete(week: number): Promise<void>; onDuplicate(week: number): Promise<void>; onReorder(weeks: number[]): Promise<void> }) {
@@ -280,7 +280,19 @@ const styles = StyleSheet.create({
   editRow: { gap: 0 },
   editDragHandle: { alignItems: "center", alignSelf: "stretch", justifyContent: "center", width: 20 },
   editDragHeader: { width: 20 },
-  editRowActive: { opacity: 0.92 },
+  editRowActive: {
+    backgroundColor: tokens.color.surfaceApp,
+    borderBottomColor: tokens.color.borderDefault,
+    borderBottomWidth: 1,
+    borderTopColor: tokens.color.borderDefault,
+    borderTopWidth: 1,
+    elevation: 4,
+    shadowColor: "#000000",
+    shadowOffset: { height: 2, width: 0 },
+    shadowOpacity: 0.14,
+    shadowRadius: 5,
+    zIndex: 10,
+  },
   editLeading: { flex: 1, textAlign: "left" },
   editIdentity: { flex: 1, minWidth: 0 },
   editActions: { flexDirection: "row", gap: 2, justifyContent: "flex-end", minWidth: 68 },

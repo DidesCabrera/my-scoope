@@ -63,7 +63,7 @@ export function CalendarizedDailyPlanCard({ dayId, dateLabel, editing, eyebrow, 
       <MealPanels
         editing={cardEditing}
         items={mealItems}
-        nestedScroll={false}
+        nestedScroll
         showEditTab={false}
         onOpenItem={(meal) => {
           if (dayId == null || !meal.id) return;

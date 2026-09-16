@@ -137,6 +137,7 @@ export function DailyPlanMealCards({ dailyPlanId, items, onRemove, pinnedTrackin
             }}
             title={item.name}>
             <SharedFoodPanels items={item.foods.map(toFoodPanelItem)} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} preparation={pinnedTracking ? {
+              disabled: pinnedTracking.savingMealKey != null,
               isPrepared: (food) => execution?.prepared_food_keys.includes(food.id) ?? false,
               onToggle: (food) => pinnedTracking.onTogglePrepared(item.id, food.id),
             } : undefined} />

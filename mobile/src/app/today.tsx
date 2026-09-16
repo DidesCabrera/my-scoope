@@ -3,7 +3,7 @@ import { useCallback, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
-import type { ActiveProgramData, LibraryPageData, ProposalListData, TodayData, WeightListData } from "@/api/types";
+import type { ActiveProgramData, CalendarizedDayDetail, LibraryPageData, ProposalListData, TodayData, WeightListData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { CalendarizedDailyPlanCard } from "@/components/calendarization/calendarized-daily-plan-card";
 import { PinnedDailyPlanCard } from "@/components/calendarization/pinned-daily-plan-card";
@@ -119,8 +119,12 @@ export default function TodayScreen() {
     },
     onOpen: (meal) => router.push({ pathname: "/program/days/[id]/meals/[mealKey]", params: { id: String(todayDayId), mealKey: meal.id } } as Href),
     onReorder: async (meals: MealPanelItem[]) => {
-      await apiRequest(`/api/v1/program/days/${todayDayId}/meals/order`, { body: JSON.stringify({ ordered_keys: meals.map((meal) => meal.id) }), method: "PUT" });
-      await load();
+      const updated = await apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${todayDayId}/meals/order`, { body: JSON.stringify({ ordered_keys: meals.map((meal) => meal.id) }), method: "PUT" });
+      setToday((current) => current?.day_id === updated.id ? {
+        ...current,
+        meal_execution: updated.meal_execution,
+        plan_snapshot: updated.plan_snapshot,
+      } : current);
     },
     onReplace: (meal) => router.push(pickerHref("meal-to-calendarized-day", { dayId: todayDayId, relationKey: meal.id })),
   } : undefined;
@@ -141,7 +145,17 @@ export default function TodayScreen() {
     },
     onReorder: async (meals: MealPanelItem[]) => {
       await apiRequest(`/api/v1/library/daily-plans/${pinnedPlan.id}/meals/order`, { body: JSON.stringify({ ordered_ids: meals.map((meal) => meal.relationId) }), method: "PUT" });
-      await load();
+      const positions = new Map(meals.map((meal, index) => [meal.id, index]));
+      setToday((current) => current?.pinned_plan?.id === pinnedPlan.id ? {
+        ...current,
+        pinned_plan: {
+          ...current.pinned_plan,
+          panel: {
+            ...current.pinned_plan.panel,
+            meals: [...current.pinned_plan.panel.meals].sort((left, right) => (positions.get(left.id) ?? 0) - (positions.get(right.id) ?? 0)),
+          },
+        },
+      } : current);
     },
     onReplace: (meal) => { if (meal.relationId != null) router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: pinnedPlan.id, dailyPlanMealId: meal.relationId })); },
   } : undefined;

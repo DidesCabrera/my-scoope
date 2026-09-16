@@ -255,7 +255,7 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     "utf8",
   );
   assertSourceMatch(sharedEntityPanels, /accessibilityLabel=\{canOpen \? `Ver detalle de \$\{item\.name\}` : undefined\}/);
-  assertSourceMatch(sharedEntityPanels, /<Pressable[\s\S]*style=\{\(\{ pressed \}\) => \[styles\.menuRow,[\s\S]*pressed && canOpen && styles\.menuRowPressed\]\}/);
+  assertSourceMatch(sharedEntityPanels, /<Pressable[\s\S]*style=\{\[styles\.menuRow, index === items\.length - 1 && styles\.rowLast\]\}/);
   assertSourceDoesNotMatch(sharedEntityPanels, /<Pressable[\s\S]*style=\{\(\{ pressed \}\) => \[styles\.menuAction/);
   assertSourceMatch(sharedEntityPanels, /<ChevronRight color=\{tokens\.color\.textMuted\} size=\{19\}/);
   assertSourceMatch(sharedEntityPanels, /menuRow: \{[^}]*gap: tokens\.spacing\.xs[^}]*paddingRight: tokens\.spacing\.xs/);
