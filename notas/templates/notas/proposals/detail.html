@@ -118,6 +118,37 @@
         </section>
       {% endif %}
 
+      {% if vm.content.proposal_review.alternatives %}
+        <section class="proposal-review-card" aria-label="Alternativas del optimizador">
+          <div class="proposal-review-card-header">
+            <div>
+              <p class="proposal-review-eyebrow">Portafolio del solver</p>
+              <h3 class="proposal-review-section-title">Compara y elige una alternativa</h3>
+            </div>
+          </div>
+          <div class="proposal-review-kpis">
+            {% for alternative in vm.content.proposal_review.alternatives %}
+              <article class="proposal-review-kpi">
+                <span class="proposal-review-kpi-label">{{ alternative.label }} · {{ alternative.status }}</span>
+                <strong>{{ alternative.total_kcal|floatformat:0 }} kcal · {{ alternative.protein|floatformat:0 }} g proteína</strong>
+                <span>Nutrición {{ alternative.nutritional_score|floatformat:1 }}/100 · estructura {{ alternative.functional_score|floatformat:1 }}/100</span>
+                {% if vm.content.proposal_review.status.is_reviewable %}
+                  {% if alternative.alternative_id == vm.content.proposal_review.selected_alternative_id %}
+                    <span class="proposal-status-badge proposal-status-badge--approved">Seleccionada</span>
+                  {% else %}
+                    <form method="post" action="{% url 'proposal_select_alternative' vm.content.proposal_review.proposal_id %}">
+                      {% csrf_token %}
+                      <input type="hidden" name="alternative_id" value="{{ alternative.alternative_id }}">
+                      <button type="submit" class="btn btn-secondary">Elegir esta alternativa</button>
+                    </form>
+                  {% endif %}
+                {% endif %}
+              </article>
+            {% endfor %}
+          </div>
+        </section>
+      {% endif %}
+
       <section class="proposal-review-attachments-section" aria-label="Adjuntos de la propuesta">
         <div class="proposal-review-attachments-heading">
           <i data-lucide="paperclip" class="proposal-review-attachments-heading__icon"></i>

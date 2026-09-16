@@ -7,9 +7,9 @@ from ai_assistant.application.product_ports import (
     register_ai_product_bindings,
 )
 from ai_assistant.application.tools.tool_names import (
+    TOOL_COMMIT_PREFERENCE_UPDATE,
     TOOL_COMMIT_PREPARED_ACTION,
     TOOL_COMMIT_PROFILE_UPDATE,
-    TOOL_COMMIT_PREFERENCE_UPDATE,
     TOOL_COMPARE_DAILYPLAN_TO_TARGETS,
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
@@ -29,6 +29,7 @@ from ai_assistant.application.tools.tool_names import (
     TOOL_LIST_USER_PROPOSALS,
     TOOL_PREPARE_PRODUCT_ACTION,
     TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES,
+    TOOL_PROPOSE_WORKSPACE_PATCH,
     TOOL_READ_CALENDARIZATION,
     TOOL_READ_DAILYPLAN,
     TOOL_READ_FOOD,
@@ -36,8 +37,8 @@ from ai_assistant.application.tools.tool_names import (
     TOOL_READ_PROGRAM,
     TOOL_READ_PROPOSAL,
     TOOL_READ_SAVED_COMPARISON,
-    TOOL_READ_USER_PROFILE_CONTEXT,
     TOOL_READ_USER_PREFERENCE_CONTEXT,
+    TOOL_READ_USER_PROFILE_CONTEXT,
     TOOL_SEARCH_OPERATIONAL_FOODS,
     TOOL_SEARCH_USER_DAILYPLANS,
     TOOL_SEARCH_USER_MEALS,
@@ -63,6 +64,7 @@ from notas.application.ai_tools.prepared_actions import (
     cancel_prepared_action,
     commit_prepared_action,
     prepare_product_action,
+    prepare_workspace_patch,
     serialize_prepared_action,
 )
 from notas.application.ai_tools.profile_tools import (
@@ -132,6 +134,27 @@ def _prepare_product_action_tool(
     )
 
 
+def _propose_workspace_patch_tool(
+    user,
+    title: str,
+    summary: str,
+    operations: list[dict],
+):
+    return run_ai_tool(
+        lambda: {
+            "prepared_action": serialize_prepared_action(
+                prepare_workspace_patch(
+                    user=user,
+                    title=title,
+                    summary=summary,
+                    operations=operations,
+                )
+            )
+        },
+        user=user,
+    )
+
+
 def _commit_prepared_action_tool(user, prepared_action_id: str):
     return run_ai_tool(
         lambda: {
@@ -184,6 +207,7 @@ def register_product_ai_bindings() -> None:
             },
             proposal_tools={
                 TOOL_CREATE_PROPORTIONAL_DAILYPLAN_CALORIE_PROPOSAL: create_proportional_dailyplan_calorie_proposal_tool,
+                TOOL_PROPOSE_WORKSPACE_PATCH: _propose_workspace_patch_tool,
                 TOOL_PREPARE_PRODUCT_ACTION: _prepare_product_action_tool,
                 TOOL_CREATE_VALIDATED_MEAL_PROPOSAL: create_validated_meal_proposal_tool,
                 TOOL_CREATE_NUTRITION_SOLVER_MEAL_PROPOSAL: create_nutrition_solver_meal_proposal_tool,
@@ -199,6 +223,7 @@ def register_product_ai_bindings() -> None:
             required_proposal_fields=required_proposal_fields,
             build_nutrition_brief_from_ai_drafts=build_nutrition_brief_from_ai_drafts,
             prepare_product_action=prepare_product_action,
+            prepare_workspace_patch=prepare_workspace_patch,
             commit_prepared_action=commit_prepared_action,
             cancel_prepared_action=cancel_prepared_action,
             serialize_prepared_action=serialize_prepared_action,

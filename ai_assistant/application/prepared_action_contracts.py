@@ -25,9 +25,15 @@ PREPARED_ACTION_SPECS = {
         PreparedActionSpec("meal.create", "meal", "Crear comida", ("name",), creates_entity=True),
         PreparedActionSpec("meal.rename", "meal", "Renombrar comida", ("name",)),
         PreparedActionSpec("meal.delete", "meal", "Eliminar comida", destructive=True),
+        PreparedActionSpec("meal.add_food", "meal", "Agregar alimento a comida", ("food_id", "quantity")),
+        PreparedActionSpec("meal.update_food", "meal_food", "Actualizar alimento de comida", ("quantity",)),
+        PreparedActionSpec("meal.remove_food", "meal_food", "Quitar alimento de comida", destructive=True),
         PreparedActionSpec("dailyplan.create", "dailyplan", "Crear plan diario", ("name",), creates_entity=True),
         PreparedActionSpec("dailyplan.rename", "dailyplan", "Renombrar plan diario", ("name",)),
         PreparedActionSpec("dailyplan.delete", "dailyplan", "Eliminar plan diario", destructive=True),
+        PreparedActionSpec("dailyplan.add_meal", "dailyplan", "Agregar comida al plan", ("meal_id",)),
+        PreparedActionSpec("dailyplan.update_meal", "dailyplan_meal", "Actualizar comida del plan"),
+        PreparedActionSpec("dailyplan.remove_meal", "dailyplan_meal", "Quitar comida del plan", destructive=True),
         PreparedActionSpec("program.create", "program", "Crear programa", ("name",), creates_entity=True),
         PreparedActionSpec("program.rename", "program", "Renombrar programa", ("name",)),
         PreparedActionSpec("program.delete", "program", "Eliminar programa", destructive=True),
@@ -45,4 +51,3 @@ PREPARED_ACTION_SPECS = {
         PreparedActionSpec("proposal.apply", "proposal", "Aplicar propuesta aprobada"),
     )
 }
-

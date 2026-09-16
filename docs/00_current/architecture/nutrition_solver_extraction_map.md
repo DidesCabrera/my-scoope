@@ -24,16 +24,23 @@ food_catalog.CatalogFood curated capability + confidence
   -> notas.Food solver_capabilities (stable operational copy)
   -> notas solver profile adapter
   -> pure nutrition_solver OptimizationProblemV2
-  -> heuristic_v2 or cp_sat_v1
-  -> pending-review NutritionProposal
+  -> portfolio_v1 (cp_sat_v1 with explicit legacy fallback) or heuristic_v2 rollback
+  -> pending-review NutritionProposal with ranked alternatives
 ```
 
 The solver never reads `CatalogFood` at runtime. Catalog facts can improve its functional quality,
 but missing optional facts remain diagnosable and can use identified, lower-confidence derivation.
 
 CP-SAT enforces portion bounds/steps, component counts, required functional role groups, explicit
-hard food constraints, daily ranges and repetition. It can also produce distinct feasible
-compositions. Quality reports expose nutritional proximity and meal-grammar coverage separately.
+hard food constraints, daily ranges and repetition. It produces three distinct feasible
+compositions by default. The adapter ranks and stores them together, distinguishes mathematical
+solver status from product quality, and lets Proposal Review select and resimulate any trusted
+alternative before approval. Relative deviation weighting prevents kcal units from dominating
+gram-based macro targets.
+
+Declared dietary pattern and allergens are typed hard filters. Cost, preparation effort,
+simplicity, affinity and variety influence constraints or ranking when their operational
+capability snapshots exist.
 
 ## Purpose and extraction history
 

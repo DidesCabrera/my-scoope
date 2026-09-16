@@ -64,7 +64,7 @@ Desde Patch 41, cualquier integración con un LLM externo debe construirse sobre
 Reglas obligatorias:
 
 ```text
-Chat existente -> AI Assistant Orchestrator -> LLM externo -> tools permitidas -> NutritionProposal
+Chat existente -> AI Assistant Orchestrator -> LLM externo -> tools permitidas -> NutritionProposal o workspace patch revisable
 ```
 
 No crear una UI paralela de AI Assistant si el flujo puede vivir en `AiNutritionChat`, `ai_intake.html`, `_ai_chat_thread.html` y la lista de chats actual. La UI puede seguir en `notas`; el motor conversacional debe pasar por la abstracción `ChatEngine`.
@@ -90,7 +90,8 @@ Reglas específicas del ciclo 50-58:
 - Los tests deben poder usar `FakeLLMClient` sin red ni API keys.
 - Toda tool ejecutada debe pasar por el registry y validar ownership.
 - La primera ejecución real de tools debe ser read-only.
-- La primera escritura útil debe crear `NutritionProposal` revisable.
+- La primera escritura útil debe crear `NutritionProposal` o `AIPreparedAction`
+  revisable; nunca una entidad final desde el proveedor.
 - Ningún patch debe aplicar propuestas automáticamente.
 - Todo turno LLM debe mantener audit sanitizado compatible con Patch 49.
 

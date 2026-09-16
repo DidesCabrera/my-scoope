@@ -4,6 +4,9 @@
 
 Accepted in NSO10; merge remains conditional on green CI and no hard regression.
 
+Activation defaults and alternative consumption were superseded by Decision 0195.
+`heuristic_v2` remains the explicit rollback backend.
+
 ## Decision
 
 `cp_sat_v1` is available for controlled DailyPlan proposal generation through the `notas` adapter.

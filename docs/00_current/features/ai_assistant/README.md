@@ -6,6 +6,24 @@ Baseline vigente y operativa. CM00-CM24, PT00-PT06 y BA00-BA07 están cerrados. 
 
 El contrato actual prioriza libertad del LLM guiada por propósito, estado, capacidades y límites tipados. My Scoope conserva la autoridad sobre validación, permisos, cálculo, persistencia, presentación de objetos y observabilidad.
 
+## Patch de capacidades y propuestas con alternativas
+
+La decisión 0195 reemplaza la selección de micro-tools de mutación por
+`propose_workspace_patch`. El modelo puede describir hasta doce operaciones coherentes
+en un solo patch; el backend las traduce a comandos de aplicación, valida propiedad y
+argumentos, calcula riesgo y muestra una vista previa. La confirmación sigue ocurriendo
+exclusivamente en UI confiable y el commit completo es atómico.
+
+`prepare_product_action` se conserva para compatibilidad de historial, pero ya no se
+selecciona en turnos nuevos. En la versión actual incluso los patches de riesgo bajo
+requieren confirmación; `future_auto_apply_eligible` sólo expresa una posibilidad de
+política futura.
+
+Las propuestas de DailyPlan generadas con `portfolio_v1` contienen tres alternativas
+por defecto. La mejor queda seleccionada inicialmente y el usuario puede escoger otra
+en Proposal Review antes de aprobar. Cada selección usa un payload almacenado por el
+servidor, vuelve a validar y simular, y no aplica el plan.
+
 ## Paridad de capacidades del sistema
 
 Desde la decisión 0155, el Assistant clasifica explícitamente todas las áreas
@@ -18,8 +36,8 @@ La cobertura se divide por riesgo:
 - lectura autónoma autorizada para ficha, alimentos, comidas, planes, programas,
   calendario, propuestas, comparaciones, Inbox y cuenta/billing;
 - `NutritionProposal` revisable para generación y ajustes nutricionales;
-- `AIPreparedAction` para operaciones generales: prepara una vista antes/después y
-  solo se ejecuta desde confirmación UI autenticada;
+- `AIPreparedAction` con `ai_assistant_workspace_patch.v1` para agrupar operaciones
+  generales: prepara vistas antes/después y solo se ejecuta desde confirmación UI autenticada;
 - handoff a UI confiable para composición especializada, imports, sharing y pagos;
 - namespace separado y staff-only para Analytics y Operations.
 
@@ -176,9 +194,12 @@ notas.Food
 
 Si un alimento maestro todavía no fue materializado como `notas.Food`, entonces no existe para el AI Assistant operativo.
 
-## Relación con Proposals
+## Relación con Proposals y workspace patches
 
-Toda creación o modificación relevante debe terminar como `NutritionProposal` revisable.
+Los cambios nutricionales generativos o de composición terminan como
+`NutritionProposal` revisable. Las operaciones generales soportadas se agrupan en un
+`AIPreparedAction` con contrato `ai_assistant_workspace_patch.v1`. Ambos caminos
+requieren revisión confiable y ninguno autoriza escrituras ORM del proveedor.
 
 Flujo esperado:
 
@@ -186,11 +207,16 @@ Flujo esperado:
 usuario pide algo en lenguaje natural
   -> LLM interpreta
   -> tools consultan/validan
-  -> My Scoope crea propuesta
-  -> chat muestra card de propuesta
-  -> usuario revisa/aprueba
-  -> aplicación segura
+  -> My Scoope crea propuesta nutricional o patch de capacidades
+  -> chat muestra card revisable
+  -> usuario revisa/confirma
+  -> aplicación segura y auditable
 ```
+
+Una tool general de patch evita exponer una micro-tool por cada mutación, pero no
+reemplaza los comandos de dominio. El backend interpreta cada operación, valida
+ownership, argumentos y riesgo, y ejecuta el conjunto atómicamente sólo después de
+confirmación UI.
 
 ## Relación con el chat actual
 

@@ -232,6 +232,8 @@ class ProposalReviewViewModelTests(SimpleTestCase):
                 },
                 "applied_result": None,
                 "iteration_trace": None,
+                "alternatives": [],
+                "selected_alternative_id": "",
             }
         )
     

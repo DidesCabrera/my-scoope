@@ -19,6 +19,7 @@ class AIProductBindings:
     required_proposal_fields: Callable[[Any], Sequence[str]]
     build_nutrition_brief_from_ai_drafts: ProductToolCallable
     prepare_product_action: ProductToolCallable
+    prepare_workspace_patch: ProductToolCallable
     commit_prepared_action: ProductToolCallable
     cancel_prepared_action: ProductToolCallable
     serialize_prepared_action: ProductToolCallable
@@ -38,4 +39,3 @@ def get_ai_product_bindings() -> AIProductBindings:
     if _bindings is None:
         raise RuntimeError("ai_product_bindings_not_registered")
     return _bindings
-

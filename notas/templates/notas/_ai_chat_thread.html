@@ -182,7 +182,16 @@
             </div>
             <i data-lucide="{% if message.prepared_action_card.destructive %}triangle-alert{% else %}check-check{% endif %}" class="ai-chat-profile-card__icon"></i>
           </div>
-          {% if message.prepared_action_card.preview.before %}
+          {% if message.prepared_action_card.preview.operations %}
+            <div class="ai-chat-profile-card__grid">
+              {% for operation in message.prepared_action_card.preview.operations %}
+                <article class="ai-chat-profile-card__item">
+                  <span>{{ operation.risk_level|default:"medium" }} · {{ operation.action_key }}</span>
+                  <strong>{{ operation.title }}</strong>
+                </article>
+              {% endfor %}
+            </div>
+          {% elif message.prepared_action_card.preview.before %}
             <div class="ai-chat-profile-card__grid">
               <article class="ai-chat-profile-card__item">
                 <span>Antes</span>

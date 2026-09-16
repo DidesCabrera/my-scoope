@@ -18,7 +18,7 @@ function ChatCard({ card, onPreferenceCommit, onPreparedAction }: { card: NonNul
   }
   if (card.type === "prepared_action") {
     const pending = card.status === "prepared";
-    return <Card accent={card.destructive ? tokens.color.danger : tokens.color.interactivePrimary}><Text style={styles.cardTitle}>{card.title}</Text>{card.summary ? <Text style={styles.cardCopy}>{card.summary}</Text> : null}{pending ? <View style={styles.actions}><Button label="Confirmar" onPress={() => onPreparedAction(card.action_id, "commit", card.destructive)} variant={card.destructive ? "danger" : "primary"} /><Button label="Cancelar" onPress={() => onPreparedAction(card.action_id, "cancel", false)} variant="secondary" /></View> : <InlineNotice>Acción {card.status === "committed" ? "confirmada" : card.status === "cancelled" ? "cancelada" : "no disponible"}.</InlineNotice>}</Card>;
+    return <Card accent={card.destructive ? tokens.color.danger : tokens.color.interactivePrimary}><Text style={styles.cardTitle}>{card.title}</Text><Text style={styles.cardMeta}>{card.operation_count} {card.operation_count === 1 ? "cambio" : "cambios"} · riesgo {card.risk_level}</Text>{card.summary ? <Text style={styles.cardCopy}>{card.summary}</Text> : null}{card.operations.map((operation, index) => <Text key={`${index}-${operation}`} style={styles.operation}>• {operation}</Text>)}{pending ? <View style={styles.actions}><Button label="Confirmar" onPress={() => onPreparedAction(card.action_id, "commit", card.destructive)} variant={card.destructive ? "danger" : "primary"} /><Button label="Cancelar" onPress={() => onPreparedAction(card.action_id, "cancel", false)} variant="secondary" /></View> : <InlineNotice>Acción {card.status === "committed" ? "confirmada" : card.status === "cancelled" ? "cancelada" : "no disponible"}.</InlineNotice>}</Card>;
   }
   return <Card accent={tokens.color.interactivePrimary}><Text style={styles.cardTitle}>{card.title}</Text>{card.subtitle ? <Text style={styles.cardCopy}>{card.subtitle}</Text> : null}{card.items.map((item) => <View key={`${card.type}-${item.key}`} style={styles.item}><Text style={styles.itemLabel}>{item.label}</Text><Text style={[styles.itemValue, item.is_pending && styles.pending]}>{item.value}</Text></View>)}{card.type === "preference_draft" && card.can_commit ? <Button label="Guardar preferencias" onPress={onPreferenceCommit} /> : null}</Card>;
 }
@@ -48,12 +48,14 @@ const styles = StyleSheet.create({
   actions: { gap: tokens.spacing.sm },
   conversation: { gap: tokens.spacing.xxl },
   cardCopy: { color: tokens.color.textMuted, fontSize: tokens.type.caption, lineHeight: 20 },
+  cardMeta: { color: tokens.color.textSoft, fontSize: tokens.type.caption, fontWeight: "700" },
   cardTitle: { color: tokens.color.textMain, fontSize: tokens.type.body, fontWeight: "800" },
   item: { borderTopColor: tokens.color.borderSoft, borderTopWidth: 1, gap: 2, paddingTop: tokens.spacing.sm },
   itemLabel: { color: tokens.color.textSoft, fontSize: tokens.type.caption, fontWeight: "700" },
   itemValue: { color: tokens.color.textMain, fontSize: tokens.type.body },
   message: { width: "100%" },
   pending: { color: tokens.color.textMuted },
+  operation: { color: tokens.color.textMain, fontSize: tokens.type.caption },
   text: { color: tokens.color.textMain, fontSize: tokens.type.body, lineHeight: 25 },
   userBubble: { backgroundColor: tokens.color.surfaceMuted, borderRadius: tokens.radius.card, gap: tokens.spacing.sm, maxWidth: "86%", paddingHorizontal: tokens.spacing.lg, paddingVertical: tokens.spacing.md },
   userMessage: { alignItems: "flex-end" },

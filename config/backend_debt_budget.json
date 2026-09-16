@@ -4,8 +4,8 @@
   "mobile_api/selectors.py": {"max_lines": 1128},
   "mobile_api/tests/test_api_v1.py": {"max_lines": 87},
   "mobile_api/routes/assistant.py": {"max_lines": 235},
-  "mobile_api/schema_domains/assistant.py": {"max_lines": 177},
-  "mobile_api/tests/test_assistant_api.py": {"max_lines": 229},
+  "mobile_api/schema_domains/assistant.py": {"max_lines": 180},
+  "mobile_api/tests/test_assistant_api.py": {"max_lines": 232},
   "mobile_api/routes/billing.py": {"max_lines": 93},
   "mobile_api/schema_domains/billing.py": {"max_lines": 56},
   "mobile_api/tests/test_billing_api.py": {"max_lines": 79},
@@ -26,6 +26,6 @@
   "mobile_api/routes/proposals.py": {"max_lines": 121},
   "mobile_api/schema_domains/proposals.py": {"max_lines": 121},
   "mobile_api/tests/test_proposals_api.py": {"max_lines": 144},
-  "mobile/src/api/types.ts": {"max_lines": 848},
+  "mobile/src/api/types.ts": {"max_lines": 851},
   "mobile/src/app/dev/ui-gallery.tsx": {"max_lines": 802}
 }

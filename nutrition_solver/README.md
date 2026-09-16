@@ -60,13 +60,15 @@ converts the result into a reviewable DailyPlan proposal payload.
 
 | Setting | Default | Purpose |
 | --- | --- | --- |
-| `NUTRITION_SOLVER_BACKEND` | `heuristic_v2` | Keeps the existing generator visible; set `cp_sat_v1` for controlled activation. |
+| `NUTRITION_SOLVER_BACKEND` | `portfolio_v1` | Generates a CP-SAT portfolio and falls back explicitly to the legacy generator when unavailable. |
 | `NUTRITION_SOLVER_SHADOW_ENABLED` | `false` | Runs comparison without changing the visible legacy payload. |
 | `NUTRITION_SOLVER_SHADOW_BACKEND` | `cp_sat_v1` | Selects the comparison backend. |
 | `NUTRITION_SOLVER_TIME_LIMIT_MS` | `1500` | Bounds execution between 50 and 10,000 ms. |
+| `NUTRITION_SOLVER_ALTERNATIVE_COUNT` | `3` | Requests one to ten distinct reviewable alternatives. |
 
 Rollback is configuration-only: restore `NUTRITION_SOLVER_BACKEND=heuristic_v2` and disable shadow
-mode. Impossible hard constraints never fall back silently.
+mode. Explicit `cp_sat_v1` remains fail-closed; only `portfolio_v1` performs the documented legacy
+fallback and records its reason in proposal diagnostics.
 
 ## Guardrail
 

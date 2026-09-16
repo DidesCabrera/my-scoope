@@ -404,6 +404,28 @@
             "title": "Expires At",
             "type": "string"
           },
+          "operation_count": {
+            "default": 1,
+            "title": "Operation Count",
+            "type": "integer"
+          },
+          "operations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Operations",
+            "type": "array"
+          },
+          "risk_level": {
+            "default": "medium",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "title": "Risk Level",
+            "type": "string"
+          },
           "status": {
             "enum": [
               "prepared",

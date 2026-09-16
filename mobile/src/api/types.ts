@@ -792,6 +792,9 @@ type AIChatPreparedActionCard = {
   expires_at: string;
   status: "prepared" | "committed" | "cancelled" | "expired" | "failed";
   destructive: boolean;
+  risk_level: "low" | "medium" | "high";
+  operation_count: number;
+  operations: string[];
 };
 
 type AIChatGeneratedPlanCard = {

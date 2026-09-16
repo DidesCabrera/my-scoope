@@ -78,6 +78,9 @@ class AIChatPreparedActionCardData(Schema):
     summary: str = ""
     status: Literal["prepared", "committed", "cancelled", "expired", "failed"]
     destructive: bool = False
+    risk_level: Literal["low", "medium", "high"] = "medium"
+    operation_count: int = 1
+    operations: list[str] = Field(default_factory=list)
     expires_at: datetime
 
 

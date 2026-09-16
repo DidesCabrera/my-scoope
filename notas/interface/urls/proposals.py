@@ -12,6 +12,7 @@ from notas.interface.views.proposals import (
     proposal_list_bulk_delete,
     proposal_list_reorder,
     proposal_reject,
+    proposal_select_alternative,
 )
 
 urlpatterns = [
@@ -22,6 +23,7 @@ urlpatterns = [
     path("proposals/<int:proposal_id>/entity/", proposal_entity_detail, name="proposal_entity_detail"),
     path("proposals/<int:proposal_id>/generate-dailyplan/", proposal_generate_dailyplan, name="proposal_generate_dailyplan"),
     path("proposals/<int:proposal_id>/approve/", proposal_approve, name="proposal_approve"),
+    path("proposals/<int:proposal_id>/select-alternative/", proposal_select_alternative, name="proposal_select_alternative"),
     path("proposals/<int:proposal_id>/reject/", proposal_reject, name="proposal_reject"),
     path("proposals/<int:proposal_id>/cancel/", proposal_cancel, name="proposal_cancel"),
     path("proposals/<int:proposal_id>/delete/", proposal_delete, name="proposal_delete"),

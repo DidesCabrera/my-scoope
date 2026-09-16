@@ -36,6 +36,12 @@ Status: planned / active / paused / completed / superseded
 Cuando un ciclo planificado empiece a implementarse, el documento puede permanecer aquí como plan operacional, pero las decisiones estables que surjan deben registrarse también en `docs/20_decisions/`.
 
 ## En curso o pendientes de validación
+- `ai_assistant_patch_solver_synergy_cycle.md`: ciclo APS00-APS08 completado en
+  repositorio. Sustituye la selección de micro-tools de mutación por Workspace
+  Patches atómicos y revisables, activa portfolios del solver con tres alternativas
+  por defecto, permite elegir una alternativa confiable antes de aprobar y conserva
+  confirmación explícita web/móvil. Queda como gate operativo la validación con
+  proveedor real en staging.
 - `ai_assistant_reliability_recovery_cycle.md`: ARR00-ARR05 implementados localmente
   para unificar memoria cliente, restaurar visibilidad de tools, persistir preferencias
   solo tras aprobación, alinear cards web/móvil y registrar outcome traces; ARR06 exige

@@ -210,6 +210,7 @@ class AiIntakePlanIterationTests(TestCase):
         )
         self.assertIn("sin arroz", chat.proposal.summary)
         self.assertIn("Evitar arroz", chat.proposal.current_snapshot["iteration"]["command_labels"])
+        self.assertIn("solver_comparison", chat.proposal.current_snapshot["iteration"])
         self.assertEqual(
             chat.proposal.validation_summary["chat_iteration"]["command_set"]["commands"][0]["kind"],
             "avoid_food",
