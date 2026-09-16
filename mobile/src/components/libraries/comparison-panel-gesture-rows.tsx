@@ -1,8 +1,9 @@
-import { Fragment, type ReactNode, useRef } from "react";
+import { Fragment, type ReactNode, useRef, useState } from "react";
 import * as Haptics from "expo-haptics";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, type StyleProp, StyleSheet, View, type ViewStyle } from "react-native";
 import { NestableDraggableFlatList, ScaleDecorator, type RenderItemParams } from "react-native-draggable-flatlist";
-import ReanimatedSwipeable, { type SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
+import ReanimatedSwipeable, { SwipeDirection, type SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
+import Animated, { type SharedValue, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 
 import { tokens } from "@/design/tokens";
 
@@ -26,6 +27,13 @@ export function beginComparisonPanelDrag(drag: () => void) {
   drag();
 }
 
+function DirectionalSwipeSurface({ children, direction, progress, side, style }: { children: ReactNode; direction: SharedValue<number>; progress: SharedValue<number>; side: "left" | "right"; style: StyleProp<ViewStyle> }) {
+  const visibilityStyle = useAnimatedStyle(() => ({
+    opacity: progress.value > 0 && direction.value === (side === "left" ? 1 : -1) ? 1 : 0,
+  }), [direction, progress, side]);
+  return <Animated.View style={[style, visibilityStyle]}>{children}</Animated.View>;
+}
+
 function GestureRow<T extends { id: string }>({ actions, drag, isActive, item, itemLabel, onClose, onWillOpen, row }: {
   actions: ComparisonPanelAction[];
   drag(): void;
@@ -37,8 +45,11 @@ function GestureRow<T extends { id: string }>({ actions, drag, isActive, item, i
   row: ReactNode;
 }) {
   const swipeableRef = useRef<SwipeableMethods>(null);
-  const renderRightActions = (_progress: unknown, _translation: unknown, methods: SwipeableMethods) => (
-    <View style={[styles.actions, { width: actions.length * 48 }]}>
+  const swipeDirection = useSharedValue(0);
+  const adjacentActionColor = actions[0]?.backgroundColor ?? tokens.color.surfaceMuted;
+  const [swipeSide, setSwipeSide] = useState<"neutral" | "right">("neutral");
+  const renderRightActions = (progress: SharedValue<number>, _translation: SharedValue<number>, methods: SwipeableMethods) => (
+    <DirectionalSwipeSurface direction={swipeDirection} progress={progress} side="right" style={[styles.actions, { width: actions.length * 48 }]}>
       {actions.map((action) => (
         <Pressable
           accessibilityLabel={action.label}
@@ -49,17 +60,23 @@ function GestureRow<T extends { id: string }>({ actions, drag, isActive, item, i
           {action.icon}
         </Pressable>
       ))}
-    </View>
+    </DirectionalSwipeSurface>
   );
 
   return (
     <ScaleDecorator activeScale={1.018}>
+      <View style={styles.swipeUnderlay}>
+      <View pointerEvents="none" style={[styles.swipeOvershoot, styles.swipeOvershootLeft]} />
+      <View pointerEvents="none" style={[styles.swipeOvershoot, styles.swipeOvershootRight, { backgroundColor: swipeSide === "right" ? adjacentActionColor : tokens.color.surfaceMuted }]} />
       <ReanimatedSwipeable
+        containerStyle={styles.swipeContainer}
         friction={2}
-        onSwipeableClose={() => { if (swipeableRef.current) onClose(swipeableRef.current); }}
+        onSwipeableClose={() => { swipeDirection.value = 0; setSwipeSide("neutral"); if (swipeableRef.current) onClose(swipeableRef.current); }}
+        onSwipeableOpenStartDrag={(direction) => { swipeDirection.value = direction === SwipeDirection.RIGHT ? 1 : -1; if (direction === SwipeDirection.LEFT) setSwipeSide("right"); }}
         onSwipeableWillOpen={() => { if (swipeableRef.current) onWillOpen(swipeableRef.current); }}
         overshootFriction={8}
-        overshootRight={false}
+        overshootLeft
+        overshootRight
         ref={swipeableRef}
         renderRightActions={renderRightActions}
         rightThreshold={36}>
@@ -71,8 +88,10 @@ function GestureRow<T extends { id: string }>({ actions, drag, isActive, item, i
           onLongPress={() => beginComparisonPanelDrag(drag)}
           style={[styles.row, isActive && styles.rowActive]}>
           {row}
+          {isActive ? <View pointerEvents="none" style={styles.rowBottomBorder} /> : null}
         </Pressable>
       </ReanimatedSwipeable>
+      </View>
     </ScaleDecorator>
   );
 }
@@ -122,9 +141,7 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.72 },
   row: { backgroundColor: tokens.color.surfaceMuted },
   rowActive: {
-    backgroundColor: tokens.color.surfaceApp,
-    borderBottomColor: tokens.color.borderDefault,
-    borderBottomWidth: 1,
+    backgroundColor: "#3a3a3a",
     borderTopColor: tokens.color.borderDefault,
     borderTopWidth: 1,
     elevation: 4,
@@ -134,4 +151,10 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     zIndex: 10,
   },
+  rowBottomBorder: { backgroundColor: tokens.color.borderDefault, bottom: 0, height: 1, left: 0, position: "absolute", right: 0 },
+  swipeContainer: { backgroundColor: "transparent" },
+  swipeUnderlay: { backgroundColor: tokens.color.surfaceMuted, position: "relative" },
+  swipeOvershoot: { backgroundColor: tokens.color.surfaceMuted, bottom: 0, position: "absolute", top: 0, width: "50%" },
+  swipeOvershootLeft: { left: 0 },
+  swipeOvershootRight: { right: 0 },
 });

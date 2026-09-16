@@ -16,7 +16,7 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import { FoodPanels, type FoodPanelItem } from "@/components/panels";
 import { pickerConfigureHref, pickerHref } from "@/components/pickers/composition-picker-screen";
-import { Button, InlineNotice, SectionDivider, textStyles } from "@/components/ui";
+import { Button, InlineNotice, MutationStatusModal, SectionDivider, textStyles, useMutationStatus } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
 
@@ -31,6 +31,7 @@ export default function CalendarizedMealDetailScreen() {
   const [savingPreparedFood, setSavingPreparedFood] = useState(false);
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
   const [actionSheet, setActionSheet] = useState<"change-time" | "menu" | null>(null);
+  const { clearStatus, runWithStatus, status: mutationStatus } = useMutationStatus();
   const setHeaderPresentation = useHeaderPresentation();
   const dayId = Number(id);
   const adherence = useMealAdherenceCheckIn({ dayId, mealKey, onChange: setExecution });
@@ -159,7 +160,10 @@ export default function CalendarizedMealDetailScreen() {
                 }
                 setError("Este alimento no está disponible en tu biblioteca para editar su porción.");
               },
-              onReorder: async (items: FoodPanelItem[]) => mutateFoods(`/api/v1/program/days/${dayId}/meals/${encodeURIComponent(mealKey)}/foods/order`, { body: JSON.stringify({ ordered_keys: items.map((item) => item.id) }), method: "PUT" }),
+              onReorder: async (items: FoodPanelItem[]) => runWithStatus(
+                () => mutateFoods(`/api/v1/program/days/${dayId}/meals/${encodeURIComponent(mealKey)}/foods/order`, { body: JSON.stringify({ ordered_keys: items.map((item) => item.id) }), method: "PUT" }),
+                { loadingLabel: "Actualizando comida", successLabel: "Comida actualizada" },
+              ),
               onReplace: (food) => router.push(pickerHref("food-to-calendarized-meal", { dayId, mealKey, relationKey: food.id })),
             }}
             items={foods}
@@ -215,6 +219,7 @@ export default function CalendarizedMealDetailScreen() {
       timeChangeInMenu={false}
       visible={actionSheet != null}
     />
+    <MutationStatusModal onFinished={clearStatus} status={mutationStatus} />
     </>
   );
 }

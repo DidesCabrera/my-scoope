@@ -8,7 +8,7 @@ import { useSession } from "@/auth/session-context";
 import { ProgramDaySelector, ProgramWeekHeading, ProgramWeekTabs } from "@/components/libraries/program-planning-controls";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
 import { FoodPanels, type FoodPanelItem, type MealPanelEditing, type MealPanelItem } from "@/components/panels";
-import { Button, InlineNotice, SectionDivider, SectionHeading, textStyles } from "@/components/ui";
+import { Button, InlineNotice, MutationStatusModal, SectionDivider, SectionHeading, textStyles, useMutationStatus } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { CalendarizedDailyPlanCard } from "./calendarized-daily-plan-card";
 import { compactDateLabel, compactMonthLabel, preferredCalendarizedDay } from "./current-week";
@@ -78,6 +78,7 @@ export function CalendarizedProgramPlanning({
   const [detail, setDetail] = useState<CalendarizedDayDetail | null>(null);
   const [loading, setLoading] = useState(selectedId != null);
   const [error, setError] = useState<string | null>(null);
+  const { clearStatus, runWithStatus, status: mutationStatus } = useMutationStatus();
 
   const weekDays = useMemo(
     () => days.filter((day) => day.week_number === activeWeek).sort((left, right) => left.calendar_date.localeCompare(right.calendar_date)),
@@ -127,7 +128,10 @@ export function CalendarizedProgramPlanning({
     onChangeTime: (meal) => router.push({ pathname: "/program/days/[id]/meals/[mealKey]", params: { id: String(detail.id), mealKey: meal.id } } as Href),
     onDelete: async (meal) => mutateSelectedDay(`/api/v1/program/days/${detail.id}/meals/${encodeURIComponent(meal.id)}`, { method: "DELETE" }),
     onOpen: (meal) => router.push({ pathname: "/program/days/[id]/meals/[mealKey]", params: { id: String(detail.id), mealKey: meal.id } } as Href),
-    onReorder: async (meals: MealPanelItem[]) => mutateSelectedDay(`/api/v1/program/days/${detail.id}/meals/order`, { body: JSON.stringify({ ordered_keys: meals.map((meal) => meal.id) }), method: "PUT" }),
+    onReorder: async (meals: MealPanelItem[]) => runWithStatus(
+      () => mutateSelectedDay(`/api/v1/program/days/${detail.id}/meals/order`, { body: JSON.stringify({ ordered_keys: meals.map((meal) => meal.id) }), method: "PUT" }),
+      { loadingLabel: "Actualizando plan", successLabel: "Plan actualizado" },
+    ),
     onReplace: (meal) => router.push(pickerHref("meal-to-calendarized-day", { dayId: detail.id, relationKey: meal.id })),
   } : undefined;
 
@@ -192,6 +196,7 @@ export function CalendarizedProgramPlanning({
         <SectionHeading detail={`${weekData?.foods_count ?? weekFoods.length} alimentos`} title="Alimentos en esta semana" />
         <FoodPanels items={weekFoods} onOpenItem={(food) => { if (food.detailId != null) router.push(`/libraries/foods/${food.detailId}` as Href); }} />
       </View>
+      <MutationStatusModal onFinished={clearStatus} status={mutationStatus} />
     </View>
   );
 }

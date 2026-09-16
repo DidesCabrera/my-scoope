@@ -1,7 +1,7 @@
 import { Redirect, useFocusEffect, useRouter } from "expo-router";
 import { Check, ChevronDown, ChevronUp, Search, Square, X } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { NestableScrollContainer } from "react-native-draggable-flatlist";
 
 import { userFacingError } from "@/api/errors";
@@ -9,7 +9,7 @@ import type { LibraryEntity, LibraryPageData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
-import { CollectionPageHeader } from "@/components/ui";
+import { CollectionPageHeader, MutationStatusModal, useMutationStatus } from "@/components/ui";
 import { Button, Card, InlineNotice, textStyles } from "@/components/ui/primitives";
 import { tokens } from "@/design/tokens";
 
@@ -38,7 +38,6 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const setHeaderPresentation = useHeaderPresentation();
   const [compactHeaderVisible, setCompactHeaderVisible] = useState(false);
@@ -46,6 +45,7 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
   const [mode, setMode] = useState<"list" | "reorder" | "delete">("list");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [submitting, setSubmitting] = useState(false);
+  const { clearStatus, runWithStatus, status: mutationStatus } = useMutationStatus();
 
   useFocusEffect(useCallback(() => {
     setHeaderPresentation({
@@ -59,9 +59,8 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
     return () => setHeaderPresentation({ mode: "default" });
   }, [compactHeaderVisible, entity, mode, router, setHeaderPresentation, title]));
 
-  const load = useCallback(async ({ append = false, offset = 0, refresh = false } = {}) => {
-    if (refresh) setRefreshing(true);
-    else if (append) setLoadingMore(true);
+  const load = useCallback(async ({ append = false, offset = 0 } = {}) => {
+    if (append) setLoadingMore(true);
     else setLoading(true);
     setError(null);
     try {
@@ -78,7 +77,6 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
     } finally {
       setLoading(false);
       setLoadingMore(false);
-      setRefreshing(false);
     }
   }, [apiRequest, endpoint, entity, submittedQuery]);
 
@@ -104,8 +102,11 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
     if (!page) return;
     setSubmitting(true);
     try {
-      const result = await apiRequest<{ message: string }>(`${endpoint}/order`, { body: JSON.stringify({ ordered_ids: page.items.map((item) => item.id) }), headers: { "Content-Type": "application/json" }, method: "PUT" });
-      setMode("list"); Alert.alert("Listo", result.message); await load({ refresh: true });
+      await runWithStatus(async () => {
+        await apiRequest(`${endpoint}/order`, { body: JSON.stringify({ ordered_ids: page.items.map((item) => item.id) }), headers: { "Content-Type": "application/json" }, method: "PUT" });
+        setMode("list");
+        await load();
+      }, { loadingLabel: `Actualizando ${title.toLowerCase()}`, successLabel: "Orden actualizado" });
     } catch (nextError) { setError(userFacingError(nextError)); } finally { setSubmitting(false); }
   };
 
@@ -118,7 +119,7 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
     setSubmitting(true);
     try {
       const result = await apiRequest<{ message: string }>(`${endpoint}/bulk-delete`, { body: JSON.stringify({ item_ids: [...selectedIds] }), headers: { "Content-Type": "application/json" }, method: "POST" });
-      setSelectedIds(new Set()); setMode("list"); Alert.alert("Listo", result.message); await load({ refresh: true });
+      setSelectedIds(new Set()); setMode("list"); Alert.alert("Listo", result.message); await load();
     } catch (nextError) { setError(userFacingError(nextError)); } finally { setSubmitting(false); }
   };
 
@@ -142,7 +143,6 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
       keyboardShouldPersistTaps="handled"
       onScroll={({ nativeEvent }) => setCompactHeaderVisible(isHeaderIdentityVisible(nativeEvent.contentOffset.y))}
       showsVerticalScrollIndicator={false}
-      refreshControl={<RefreshControl onRefresh={() => void load({ refresh: true })} refreshing={refreshing} tintColor={tokens.color.interactivePrimary} />}
       scrollEventThrottle={16}
       stickyHeaderIndices={[1]}
       style={styles.screen}>
@@ -195,7 +195,7 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
           <Text style={styles.emptyDescription}>{submittedQuery ? "Prueba con otra búsqueda." : emptyDescription}</Text>
         </View>
       ) : null}
-      {page?.items.map((item, index) => <View key={`${item.entity}-${item.id}`} style={styles.managedItem}>{mode === "reorder" ? <View style={styles.itemControls}><Text style={styles.position}>{index + 1}</Text><Pressable accessibilityLabel={`Subir ${item.name}`} disabled={index === 0} onPress={() => moveItem(index, -1)} style={[styles.controlButton, index === 0 && styles.disabled]}><ChevronUp color={tokens.color.textMain} size={22} /></Pressable><Pressable accessibilityLabel={`Bajar ${item.name}`} disabled={index === page.items.length - 1} onPress={() => moveItem(index, 1)} style={[styles.controlButton, index === page.items.length - 1 && styles.disabled]}><ChevronDown color={tokens.color.textMain} size={22} /></Pressable></View> : mode === "delete" ? <Pressable accessibilityLabel={`${selectedIds.has(item.id) ? "Deseleccionar" : "Seleccionar"} ${item.name}`} onPress={() => setSelectedIds((current) => { const next = new Set(current); if (next.has(item.id)) next.delete(item.id); else next.add(item.id); return next; })} style={styles.selectionRow}>{selectedIds.has(item.id) ? <Check color={tokens.color.interactivePrimary} size={22} /> : <Square color={tokens.color.textMuted} size={22} />}<Text style={styles.selectionLabel}>{selectedIds.has(item.id) ? "Seleccionado" : "Seleccionar"}</Text></Pressable> : null}<LibraryCard apiRequest={apiRequest} interactive={mode === "list"} item={item} onChanged={() => void load({ refresh: true })} /></View>)}
+      {page?.items.map((item, index) => <View key={`${item.entity}-${item.id}`} style={styles.managedItem}>{mode === "reorder" ? <View style={styles.itemControls}><Text style={styles.position}>{index + 1}</Text><Pressable accessibilityLabel={`Subir ${item.name}`} disabled={index === 0} onPress={() => moveItem(index, -1)} style={[styles.controlButton, index === 0 && styles.disabled]}><ChevronUp color={tokens.color.textMain} size={22} /></Pressable><Pressable accessibilityLabel={`Bajar ${item.name}`} disabled={index === page.items.length - 1} onPress={() => moveItem(index, 1)} style={[styles.controlButton, index === page.items.length - 1 && styles.disabled]}><ChevronDown color={tokens.color.textMain} size={22} /></Pressable></View> : mode === "delete" ? <Pressable accessibilityLabel={`${selectedIds.has(item.id) ? "Deseleccionar" : "Seleccionar"} ${item.name}`} onPress={() => setSelectedIds((current) => { const next = new Set(current); if (next.has(item.id)) next.delete(item.id); else next.add(item.id); return next; })} style={styles.selectionRow}>{selectedIds.has(item.id) ? <Check color={tokens.color.interactivePrimary} size={22} /> : <Square color={tokens.color.textMuted} size={22} />}<Text style={styles.selectionLabel}>{selectedIds.has(item.id) ? "Seleccionado" : "Seleccionar"}</Text></Pressable> : null}<LibraryCard apiRequest={apiRequest} interactive={mode === "list"} item={item} onChanged={() => load()} /></View>)}
       {mode === "list" && page && page.items.length < page.total ? (
         <Button
           label={`Cargar más (${page.total - page.items.length})`}
@@ -205,6 +205,7 @@ export function LibraryListScreen({ emptyDescription, endpoint, entity, title }:
         />
       ) : null}
       <LibraryListActions canCompare={entity !== "program"} onClose={() => setActionsVisible(false)} onCompare={() => { setActionsVisible(false); const kind = entity === "food" ? "foods" : entity === "meal" ? "meals" : "dailyplans"; router.push(`/comparator?create=1&kind=${kind}`); }} onDelete={() => { setActionsVisible(false); setSelectedIds(new Set()); setMode("delete"); }} onReorder={() => void beginReorder()} visible={actionsVisible} />
+      <MutationStatusModal onFinished={clearStatus} status={mutationStatus} />
     </NestableScrollContainer>
   );
 }

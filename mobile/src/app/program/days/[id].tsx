@@ -19,7 +19,7 @@ import { isHeaderIdentityVisible } from "@/components/navigation/header-scroll";
 import { NutritionEntityCard } from "@/components/nutrition";
 import { FoodPanels, MealPanels, type MealPanelItem } from "@/components/panels";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
-import { Button, ContentPanel, EntityCardAction, InlineNotice, SectionDivider, textStyles } from "@/components/ui";
+import { Button, ContentPanel, EntityCardAction, InlineNotice, MutationStatusModal, SectionDivider, textStyles, useMutationStatus } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { refreshNativeReminders } from "@/notifications/native-reminders";
 
@@ -97,6 +97,7 @@ export default function ProgramDayScreen() {
   const [timeChangeMeal, setTimeChangeMeal] = useState<MealPanelItem | null>(null);
   const [savingMealKey, setSavingMealKey] = useState<string | null>(null);
   const [completionError, setCompletionError] = useState<{ mealKey: string; message: string } | null>(null);
+  const { clearStatus, runWithStatus, status: mutationStatus } = useMutationStatus();
   const setHeaderPresentation = useHeaderPresentation();
 
   async function toggleMealCompletion(mealKey: string, completed: boolean) {
@@ -243,7 +244,10 @@ export default function ProgramDayScreen() {
                 onChangeTime: setTimeChangeMeal,
                 onDelete: async (meal) => mutateMeals(`/api/v1/program/days/${day.id}/meals/${encodeURIComponent(meal.id)}`, { method: "DELETE" }),
                 onOpen: openMeal,
-                onReorder: async (items: MealPanelItem[]) => mutateMeals(`/api/v1/program/days/${day.id}/meals/order`, { body: JSON.stringify({ ordered_keys: items.map((item) => item.id) }), method: "PUT" }),
+                onReorder: async (items: MealPanelItem[]) => runWithStatus(
+                  () => mutateMeals(`/api/v1/program/days/${day.id}/meals/order`, { body: JSON.stringify({ ordered_keys: items.map((item) => item.id) }), method: "PUT" }),
+                  { loadingLabel: "Actualizando plan", successLabel: "Plan actualizado" },
+                ),
                 onReplace: (meal) => router.push(pickerHref("meal-to-calendarized-day", { dayId: day.id, relationKey: meal.id })),
               }}
               items={mealItems}
@@ -319,6 +323,7 @@ export default function ProgramDayScreen() {
       timeChangeInMenu={false}
       visible={timeChangeMeal != null}
     />
+    <MutationStatusModal onFinished={clearStatus} status={mutationStatus} />
     </>
   );
 }
