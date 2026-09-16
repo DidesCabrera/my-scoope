@@ -1,19 +1,78 @@
 diff --git a/node_modules/react-native-draggable-flatlist/src/components/DraggableFlatList.tsx b/node_modules/react-native-draggable-flatlist/src/components/DraggableFlatList.tsx
-index 7c88afc..9913583 100644
+index 7c88afc..bce4abc 100644
 --- a/node_modules/react-native-draggable-flatlist/src/components/DraggableFlatList.tsx
 +++ b/node_modules/react-native-draggable-flatlist/src/components/DraggableFlatList.tsx
-@@ -328,8 +328,19 @@ function DraggableFlatListInner<T>(props: DraggableFlatListProps<T>) {
-+  const simultaneousHandlers = Array.isArray(props.simultaneousHandlers)
-+    ? props.simultaneousHandlers
-+    : props.simultaneousHandlers
-+      ? [props.simultaneousHandlers]
-+      : [];
-+  if (simultaneousHandlers.length) {
-+    panGesture.simultaneousWithExternalGesture(...simultaneousHandlers);
-+  }
+@@ -218,6 +218,11 @@ function DraggableFlatListInner<T>(props: DraggableFlatListProps<T>) {
+     props.onRelease?.(index);
+   });
+-
 +
-   if (dragHitSlop) panGesture.hitSlop(dragHitSlop);
-   if (activationDistanceProp) {
++  const onDragCancel = useStableCallback((index: number) => {
++    onRelease(index);
++    reset();
++  });
++
+   const onDragEnd = useStableCallback(
+     ({ from, to }: { from: number; to: number }) => {
+       const { onDragEnd, data } = props;
+@@ -230,7 +235,7 @@ function DraggableFlatListInner<T>(props: DraggableFlatListProps<T>) {
+-
++
+       onDragEnd?.({ from, to, data: newData });
+-
++
+-      setActiveKey(null);
++      reset();
+     }
+   );
+-
++
+@@ -271,8 +276,11 @@ function DraggableFlatListInner<T>(props: DraggableFlatListProps<T>) {
+   );
+-
++
+   const gestureDisabled = useSharedValue(false);
++  const touchStartX = useSharedValue(0);
++  const touchStartY = useSharedValue(0);
+-
++
+   const panGesture = Gesture.Pan()
++    .manualActivation(true)
+     .onBegin((evt) => {
+       gestureDisabled.value = disabled.value;
+       if (gestureDisabled.value) return;
+@@ -314,9 +322,29 @@ function DraggableFlatListInner<T>(props: DraggableFlatListProps<T>) {
+         }
+       );
+     })
+-    .onTouchesDown(() => {
++    .onFinalize((_evt, success) => {
++      if (gestureDisabled.value || success || activeIndexAnim.value === -1) return;
++      runOnJS(onDragCancel)(activeIndexAnim.value);
++    })
++    .onTouchesDown((evt) => {
++      const touch = evt.allTouches[0];
++      if (touch) {
++        touchStartX.value = touch.absoluteX;
++        touchStartY.value = touch.absoluteY;
++      }
+       runOnJS(onContainerTouchStart)();
+     })
++    .onTouchesMove((evt, stateManager) => {
++      if (activeIndexAnim.value !== -1) {
++        stateManager.activate();
++        return;
++      }
++      const touch = evt.allTouches[0];
++      if (!touch) return;
++      const movedX = Math.abs(touch.absoluteX - touchStartX.value);
++      const movedY = Math.abs(touch.absoluteY - touchStartY.value);
++      if (movedX > 4 || movedY > 4) stateManager.fail();
++    })
+     .onTouchesUp(() => {
+       // Turning this into a worklet causes timing issues. We want it to run
+       // just after the finger lifts.
+@@ -328,8 +356,10 @@ function DraggableFlatListInner<T>(props: DraggableFlatListProps<T>) {
      const activeOffset = [-activationDistanceProp, activationDistanceProp];
      if (props.horizontal) {
        panGesture.activeOffsetX(activeOffset);
@@ -23,9 +82,10 @@ index 7c88afc..9913583 100644
 +      panGesture.failOffsetX(activeOffset);
      }
    }
- 
+-
++
 diff --git a/node_modules/react-native-draggable-flatlist/src/components/NestableDraggableFlatList.tsx b/node_modules/react-native-draggable-flatlist/src/components/NestableDraggableFlatList.tsx
-index 1559352..77e7802 100644
+index 1559352..a26d8f7 100644
 --- a/node_modules/react-native-draggable-flatlist/src/components/NestableDraggableFlatList.tsx
 +++ b/node_modules/react-native-draggable-flatlist/src/components/NestableDraggableFlatList.tsx
 @@ -1,5 +1,5 @@
@@ -37,14 +97,31 @@ index 1559352..77e7802 100644
    useSharedValue,
 @@ -48,7 +48,7 @@ function NestableDraggableFlatListInner<T>(
    });
- 
+-
++
    const onListContainerLayout = useStableCallback(async ({ containerRef }) => {
 -    const nodeHandle = findNodeHandle(scrollableRef.current);
 +    const nodeHandle = scrollableRef.current;
- 
+-
++
      const onSuccess = (_x: number, y: number) => {
        listVerticalOffset.value = y;
-@@ -92,6 +92,7 @@ function NestableDraggableFlatListInner<T>(
+@@ -74,6 +74,13 @@ function NestableDraggableFlatListInner<T>(
+     }
+   );
+-
++
++  const onRelease: DraggableFlatListProps<T>["onRelease"] = useStableCallback(
++    (params) => {
++      setOuterScrollEnabled(true);
++      props.onRelease?.(params);
++    }
++  );
++
+   const onAnimValInit: DraggableFlatListProps<T>["onAnimValInit"] = useStableCallback(
+     (params) => {
+       setListHoverOffset(params.hoverOffset);
+@@ -92,9 +99,11 @@ function NestableDraggableFlatListInner<T>(
        activationDistance={props.activationDistance || 20}
        scrollEnabled={false}
        {...props}
@@ -52,6 +129,10 @@ index 1559352..77e7802 100644
        outerScrollOffset={outerScrollOffset}
        onDragBegin={onDragBegin}
        onDragEnd={onDragEnd}
++      onRelease={onRelease}
+       onAnimValInit={onAnimValInit}
+     />
+   );
 diff --git a/node_modules/react-native-draggable-flatlist/src/components/NestableScrollContainer.tsx b/node_modules/react-native-draggable-flatlist/src/components/NestableScrollContainer.tsx
 index 61054a7..f2d72be 100644
 --- a/node_modules/react-native-draggable-flatlist/src/components/NestableScrollContainer.tsx
@@ -77,7 +158,8 @@ index 61054a7..f2d72be 100644
 @@ -19,9 +27,17 @@ function NestableScrollContainerInner(props: ScrollViewProps) {
      outerScrollEnabled,
    } = useSafeNestableScrollContainerContext();
- 
+-
++
 +  const notifyScroll = useStableCallback((y: number) => {
 +    props.onScroll?.({
 +      nativeEvent: { contentOffset: { x: 0, y } },
@@ -91,4 +173,5 @@ index 61054a7..f2d72be 100644
 +      if (hasOnScroll) runOnJS(notifyScroll)(contentOffset.y);
      },
    });
- 
+-
++

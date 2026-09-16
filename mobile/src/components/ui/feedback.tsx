@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from "react";
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { CheckCircle2 } from "lucide-react-native";
 import { ActivityIndicator, Modal, StyleSheet, Text, View } from "react-native";
 
@@ -40,10 +40,29 @@ export type MutationStatus = {
   successLabel: string;
 };
 
+type MutationStatusLabels = Pick<MutationStatus, "loadingLabel" | "successLabel">;
+
+export function useMutationStatus() {
+  const [status, setStatus] = useState<MutationStatus | null>(null);
+  const clearStatus = useCallback(() => setStatus(null), []);
+  const runWithStatus = useCallback(async <T,>(action: () => Promise<T>, labels: MutationStatusLabels) => {
+    setStatus({ ...labels, phase: "loading" });
+    try {
+      const result = await action();
+      setStatus({ ...labels, phase: "success" });
+      return result;
+    } catch (error) {
+      setStatus(null);
+      throw error;
+    }
+  }, []);
+  return { clearStatus, runWithStatus, status };
+}
+
 export function MutationStatusModal({ onFinished, status }: { onFinished(): void; status: MutationStatus | null }) {
   useEffect(() => {
     if (status?.phase !== "success") return;
-    const timer = setTimeout(onFinished, 900);
+    const timer = setTimeout(onFinished, 600);
     return () => clearTimeout(timer);
   }, [onFinished, status?.phase]);
 

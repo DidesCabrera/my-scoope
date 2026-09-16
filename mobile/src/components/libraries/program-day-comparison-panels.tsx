@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
   distributionBar: { flex: 1.35, minWidth: 0 },
   editRow: { gap: 0 },
   editRowActive: {
-    backgroundColor: tokens.color.surfaceApp,
+    backgroundColor: "#3a3a3a",
     borderBottomColor: tokens.color.borderDefault,
     borderBottomWidth: 1,
     borderTopColor: tokens.color.borderDefault,

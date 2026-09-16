@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
   editDragHandle: { alignItems: "center", alignSelf: "stretch", justifyContent: "center", width: 20 },
   editDragHeader: { width: 20 },
   editRowActive: {
-    backgroundColor: tokens.color.surfaceApp,
+    backgroundColor: "#3a3a3a",
     borderBottomColor: tokens.color.borderDefault,
     borderBottomWidth: 1,
     borderTopColor: tokens.color.borderDefault,
