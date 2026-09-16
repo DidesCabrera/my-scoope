@@ -1,9 +1,9 @@
 import { ArrowDown, ArrowUp, Check, Copy, Pencil, RotateCcw, Trash2 } from "lucide-react-native";
 import { useMemo, useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from "react-native";
 
 import { MacroCalorieDistribution, macroCalorieShares, PanelAllocationBar, ProteinPerKilogramBadge } from "@/components/nutrition";
-import { contextualMacroAllocations, EntityPanelTabs, PanelBody, PanelEmptyState, PanelSurface } from "@/components/panels";
+import { contextualMacroAllocations, EntityPanelTabs, PanelBody, PanelEmptyState, PanelSurface, SortablePanelHeaderCell, type PanelSortState, useTemporaryPanelSort } from "@/components/panels";
 import { tokens } from "@/design/tokens";
 import { EntityIcon } from "@/components/ui";
 import { ComparisonPanelGestureRows, StaticComparisonPanelRows, type ComparisonPanelAction } from "./comparison-panel-gesture-rows";
@@ -44,11 +44,11 @@ function WeekIdentity({ week }: { week: number }) {
   );
 }
 
-function Header({ columns }: { columns: string[] }) {
+function Header<Key extends string>({ columns, leadingKey, onSort, sort }: { columns: { key: Key; label: string; style?: StyleProp<ViewStyle> }[]; leadingKey: Key; onSort(key: Key): void; sort: PanelSortState<Key> }) {
   return (
     <View style={[styles.row, styles.header]}>
-      <Text style={[styles.headerText, styles.leadingCell]}>Semana</Text>
-      {columns.map((column) => <Text key={column} style={[styles.headerText, styles.dataCell]}>{column}</Text>)}
+      <SortablePanelHeaderCell align="left" direction={sort?.key === leadingKey ? sort.direction : undefined} label="Semana" onPress={() => onSort(leadingKey)} style={styles.leadingCell} />
+      {columns.map((column) => <SortablePanelHeaderCell direction={sort?.key === column.key ? sort.direction : undefined} key={`${column.key}-${column.label}`} label={column.label} onPress={() => onSort(column.key)} style={[styles.dataCell, column.style]} />)}
     </View>
   );
 }
@@ -64,15 +64,20 @@ function WeekRows({ gestures, renderRow, weeks }: { gestures?: WeekRowGestures; 
 }
 
 function CaloriesPanel({ gestures, weeks }: { gestures?: WeekRowGestures; weeks: ProgramWeekSummary[] }) {
+  const deltas = new Map(weeks.map((week, index) => {
+    const previous = weeks[index - 1];
+    return [week.id, previous ? ((week.averageCalories - previous.averageCalories) / previous.averageCalories) * 100 : null] as const;
+  }));
+  const sorting = useTemporaryPanelSort(weeks, { average: (week) => week.averageCalories, calories: (week) => week.calories, delta: (week) => deltas.get(week.id), plans: (week) => week.dailyPlans, week: (item) => item.week });
+  const visibleWeeks = sorting.items;
   if (weeks.length === 0) return <PanelEmptyState label="Todavía no hay datos calóricos." />;
   return (
     <PanelBody>
-      <Header columns={["Cal", "Planes", "Prom.", "Vs. ant."]} />
-      <WeekRows gestures={gestures} weeks={weeks} renderRow={(week, index) => {
-        const previous = weeks[index - 1];
-        const delta = previous ? ((week.averageCalories - previous.averageCalories) / previous.averageCalories) * 100 : null;
+      <Header columns={[{ key: "calories", label: "Cal" }, { key: "plans", label: "Planes" }, { key: "average", label: "Prom." }, { key: "delta", label: "Vs. ant." }]} leadingKey="week" {...sorting} />
+      <WeekRows gestures={sorting.sort ? undefined : gestures} weeks={visibleWeeks} renderRow={(week, index) => {
+        const delta = deltas.get(week.id) ?? null;
         return (
-          <View key={week.id} style={[styles.row, index === weeks.length - 1 && styles.rowLast]}>
+          <View key={week.id} style={[styles.row, index === visibleWeeks.length - 1 && styles.rowLast]}>
             <View style={styles.leadingCell}><WeekIdentity week={week.week} /></View>
             <Text style={[styles.cell, styles.dataCell]}>{integer(week.calories)}</Text>
             <Text style={[styles.cell, styles.dataCell]}>{week.dailyPlans}</Text>
@@ -88,12 +93,14 @@ function CaloriesPanel({ gestures, weeks }: { gestures?: WeekRowGestures; weeks:
 }
 
 function MacrosPanel({ gestures, weeks }: { gestures?: WeekRowGestures; weeks: ProgramWeekSummary[] }) {
+  const sorting = useTemporaryPanelSort(weeks, { carbs: (week) => week.carbsGrams, fat: (week) => week.fatGrams, ppk: (week) => week.ppk, protein: (week) => week.proteinGrams, week: (item) => item.week });
+  const visibleWeeks = sorting.items;
   if (weeks.length === 0) return <PanelEmptyState label="Todavía no hay datos de macros." />;
   return (
     <PanelBody>
-      <Header columns={["PpK", "P g", "C g", "F g"]} />
-      <WeekRows gestures={gestures} weeks={weeks} renderRow={(week, index) => (
-        <View key={week.id} style={[styles.row, index === weeks.length - 1 && styles.rowLast]}>
+      <Header columns={[{ key: "ppk", label: "PpK" }, { key: "protein", label: "P g" }, { key: "carbs", label: "C g" }, { key: "fat", label: "F g" }]} leadingKey="week" {...sorting} />
+      <WeekRows gestures={sorting.sort ? undefined : gestures} weeks={visibleWeeks} renderRow={(week, index) => (
+        <View key={week.id} style={[styles.row, index === visibleWeeks.length - 1 && styles.rowLast]}>
           <View style={styles.leadingCell}><WeekIdentity week={week.week} /></View>
           <View style={[styles.dataCell, styles.ppkCell]}>{week.ppk == null ? <Text style={styles.emptyValue}>—</Text> : <ProteinPerKilogramBadge showUnit={false} style={styles.ppkBadge} value={week.ppk} />}</View>
           <Text style={[styles.cell, styles.dataCell]}>{integer(week.proteinGrams)}</Text>
@@ -106,14 +113,16 @@ function MacrosPanel({ gestures, weeks }: { gestures?: WeekRowGestures; weeks: P
 }
 
 function DistributionPanel({ gestures, weeks }: { gestures?: WeekRowGestures; weeks: ProgramWeekSummary[] }) {
+  const sorting = useTemporaryPanelSort(weeks, { carbs: (week) => macroCalorieShares(week).carbs, fat: (week) => macroCalorieShares(week).fat, protein: (week) => macroCalorieShares(week).protein, week: (item) => item.week });
+  const visibleWeeks = sorting.items;
   if (weeks.length === 0) return <PanelEmptyState label="Todavía no hay distribución nutricional." />;
   return (
     <PanelBody>
-      <Header columns={["P%", "C%", "F%", "P|C|F"]} />
-      <WeekRows gestures={gestures} weeks={weeks} renderRow={(week, index) => {
+      <Header columns={[{ key: "protein", label: "P%" }, { key: "carbs", label: "C%" }, { key: "fat", label: "F%" }, { key: "protein", label: "P|C|F", style: styles.distributionBar }]} leadingKey="week" {...sorting} />
+      <WeekRows gestures={sorting.sort ? undefined : gestures} weeks={visibleWeeks} renderRow={(week, index) => {
         const distribution = macroCalorieShares(week);
         return (
-          <View key={week.id} style={[styles.row, index === weeks.length - 1 && styles.rowLast]}>
+          <View key={week.id} style={[styles.row, index === visibleWeeks.length - 1 && styles.rowLast]}>
             <View style={styles.leadingCell}><WeekIdentity week={week.week} /></View>
             <Text style={[styles.cell, styles.dataCell, styles.proteinDistribution]}>{distribution.protein}%</Text>
             <Text style={[styles.cell, styles.dataCell, styles.carbsDistribution]}>{distribution.carbs}%</Text>
@@ -127,13 +136,17 @@ function DistributionPanel({ gestures, weeks }: { gestures?: WeekRowGestures; we
 }
 
 function AllocationPanel({ gestures, weeks }: { gestures?: WeekRowGestures; weeks: ProgramWeekSummary[] }) {
+  const sourceAllocations = contextualMacroAllocations(weeks);
+  const allocationById = new Map(weeks.map((week, index) => [week.id, sourceAllocations[index]]));
+  const sorting = useTemporaryPanelSort(weeks, { carbs: (week) => allocationById.get(week.id)?.carbs, fat: (week) => allocationById.get(week.id)?.fat, protein: (week) => allocationById.get(week.id)?.protein, week: (item) => item.week });
+  const visibleWeeks = sorting.items;
   if (weeks.length === 0) return <PanelEmptyState label="Todavía no hay distribución nutricional." />;
-  const allocations = contextualMacroAllocations(weeks);
+  const allocations = contextualMacroAllocations(visibleWeeks);
   return (
     <PanelBody>
-      <Header columns={["P%", "C%", "F%"]} />
-      <WeekRows gestures={gestures} weeks={weeks} renderRow={(week, index) => (
-        <View key={week.id} style={[styles.row, styles.allocationRow, index === weeks.length - 1 && styles.rowLast]}>
+      <Header columns={[{ key: "protein", label: "P%" }, { key: "carbs", label: "C%" }, { key: "fat", label: "F%" }]} leadingKey="week" {...sorting} />
+      <WeekRows gestures={sorting.sort ? undefined : gestures} weeks={visibleWeeks} renderRow={(week, index) => (
+        <View key={week.id} style={[styles.row, styles.allocationRow, index === visibleWeeks.length - 1 && styles.rowLast]}>
           <View style={styles.leadingCell}><WeekIdentity week={week.week} /></View>
           <PanelAllocationBar style={styles.dataCell} tone="protein" value={allocations[index].protein} />
           <PanelAllocationBar style={styles.dataCell} tone="carbs" value={allocations[index].carbs} />
