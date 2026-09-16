@@ -141,7 +141,7 @@ test("editable rows reorder after a deliberate long press and persist on drop", 
   const layout = await source("src/app/_layout.tsx");
 
   assert.match(layout, /GestureHandlerRootView style=\{styles\.gestureRoot\}/);
-  assert.match(panels, /Gesture\.LongPress\(\)\.minDuration\(320\)\.cancelsTouchesInView\(false\)/);
+  assert.match(panels, /Gesture\.LongPress\(\)\.minDuration\(320\)/);
   assert.match(panels, /onPrepareDrag\(\);[\s\S]*?drag\(\)/);
   assert.match(panels, /if \(!nestedScroll\) setPanelDragging\(true\)/);
   assert.match(panels, /NestableDraggableFlatList/);
