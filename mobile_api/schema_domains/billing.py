@@ -5,6 +5,8 @@ from typing import Literal
 
 from ninja import Field, Schema
 
+from mobile_api.schema_domains.store_billing import SubscriptionProductData
+
 
 class EntitlementsData(Schema):
     plan_name: str
@@ -23,12 +25,6 @@ class EntitlementsEnvelope(Schema):
     error: None = None
 
 
-class AppleSubscriptionProductData(Schema):
-    product_id: str
-    plan_name: str
-    interval: str
-
-
 class SubscriptionEvidenceData(Schema):
     provider: str
     status: str
@@ -41,7 +37,8 @@ class SubscriptionData(Schema):
     app_account_token: str
     plan_name: str
     status: str
-    products: list[AppleSubscriptionProductData]
+    google_obfuscated_account_id: str
+    products: list[SubscriptionProductData]
     evidence: list[SubscriptionEvidenceData]
     duplicate_active_providers: bool
 
