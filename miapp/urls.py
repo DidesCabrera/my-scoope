@@ -3,6 +3,7 @@ from django.contrib import admin
 from django.urls import include, path
 
 from core.rate_limits import limit_login, limit_signup
+from food_catalog.interface.views import export_authority_snapshot
 from mobile_api.api import api as mobile_api_v1
 from notas.interface.views.oauth import (
     oauth_authorization_server_metadata,
@@ -12,6 +13,11 @@ from notas.interface.views.oauth import (
 )
 
 urlpatterns = [
+    path(
+        "internal/food-catalog/authority-snapshot/export/",
+        export_authority_snapshot,
+        name="food_catalog_authority_snapshot_export",
+    ),
     path("admin/", admin.site.urls),
 
     # OAuth / MCP app auth

@@ -2,6 +2,34 @@
 
 Django app boundary for the master food catalog subsystem.
 
+## Current authority and delivery status
+
+Food Catalog can run as an independent central authority using
+`miapp.settings.catalog`. Approved, immutable releases are delivered to staging
+and production; consumers verify and import those releases before explicitly
+materializing local `notas.Food` snapshots. Runtime nutrition features never call
+the authority directly.
+
+Authority commands:
+
+```text
+python manage.py import_catalog_authority_snapshot --url <protected-bootstrap-url>
+python manage.py publish_verified_catalog_foods
+python manage.py publish_verified_catalog_foods --apply --actor-email <email>
+python manage.py build_catalog_release --version <version> --actor-email <email>
+python manage.py approve_catalog_release --version <version> --actor-email <email>
+```
+
+Consumer command:
+
+```text
+python manage.py import_food_catalog_release --release-version <version> --dry-run
+python manage.py import_food_catalog_release --release-version <version> --materialize
+```
+
+See `docs/20_decisions/0199-central-food-catalog-authority-and-versioned-delivery.md`
+and `docs/40_technical/operations/food_catalog_authority_runbook.md`.
+
 ## Patch 40 status
 
 This app exists physically, is protected by boundary tests and is registered in `INSTALLED_APPS`, defines internal

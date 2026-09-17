@@ -17,9 +17,32 @@ from food_catalog.models import (
     CatalogFoodSource,
     CatalogImportBatch,
     CatalogImportSourcePolicy,
+    CatalogRelease,
     ExternalFoodReference,
     ExternalProviderFetchLog,
 )
+
+
+@admin.register(CatalogRelease)
+class CatalogReleaseAdmin(admin.ModelAdmin):
+    list_display = (
+        "version",
+        "status",
+        "role",
+        "food_count",
+        "payload_sha256",
+        "approved_at",
+        "created_at",
+    )
+    list_filter = ("status", "role", "schema_version")
+    search_fields = ("version", "payload_sha256", "release_ref", "notes")
+    readonly_fields = tuple(field.name for field in CatalogRelease._meta.fields)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(CatalogCapabilityDefinition)

@@ -373,6 +373,19 @@ class CatalogFood(models.Model):
     reviewed_at = models.DateTimeField(null=True, blank=True)
     published_at = models.DateTimeField(null=True, blank=True)
 
+    is_release_managed = models.BooleanField(
+        default=False,
+        help_text=(
+            "True only in consumer environments when this row is a read-only mirror "
+            "of a Food Catalog release."
+        ),
+    )
+    imported_release_version = models.CharField(
+        max_length=80,
+        blank=True,
+        help_text="Authority release that last synchronized this mirror row.",
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -410,6 +423,71 @@ class CatalogFood(models.Model):
             + self.carbs_g_per_100g * Decimal("4")
             + self.fat_g_per_100g * Decimal("9")
         )
+
+
+class CatalogRelease(models.Model):
+    """Immutable, checksummed delivery produced by the catalog authority."""
+
+    STATUS_CANDIDATE = "candidate"
+    STATUS_APPROVED = "approved"
+    STATUS_REVOKED = "revoked"
+    STATUS_CHOICES = [
+        (STATUS_CANDIDATE, "Candidate"),
+        (STATUS_APPROVED, "Approved"),
+        (STATUS_REVOKED, "Revoked"),
+    ]
+
+    ROLE_AUTHORITY = "authority"
+    ROLE_REPLICA = "replica"
+    ROLE_CHOICES = [
+        (ROLE_AUTHORITY, "Authority"),
+        (ROLE_REPLICA, "Replica"),
+    ]
+
+    release_ref = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    version = models.CharField(max_length=80, unique=True)
+    schema_version = models.CharField(max_length=80)
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_CANDIDATE,
+    )
+    role = models.CharField(
+        max_length=20,
+        choices=ROLE_CHOICES,
+        default=ROLE_AUTHORITY,
+    )
+    previous_version = models.CharField(max_length=80, blank=True)
+    payload = models.JSONField(default=dict)
+    payload_sha256 = models.CharField(max_length=64)
+    food_count = models.PositiveIntegerField(default=0)
+    notes = models.TextField(blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_catalog_releases",
+    )
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="approved_catalog_releases",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    approved_at = models.DateTimeField(null=True, blank=True)
+    imported_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        indexes = [
+            models.Index(fields=["status", "role"], name="cat_release_status_role_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.version} · {self.status} · {self.role}"
 
 
 class CatalogFoodPortion(models.Model):

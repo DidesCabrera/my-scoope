@@ -229,3 +229,6 @@ Consequences
 - `0198-ppk-first-daily-macro-policy.md`: relaciona energía, peso, PPK y distribución
   de macros, mantiene carbohidratos como variable principal del ajuste calórico y
   separa objetivos diarios de restricciones particulares de una comida.
+- `0199-central-food-catalog-authority-and-versioned-delivery.md`: centraliza la
+  adquisición y curación del catálogo, y entrega releases inmutables a staging y
+  producción sin convertir el servicio central en dependencia de runtime.

@@ -262,7 +262,9 @@ class ExternalLLMToolLoopTests(SimpleTestCase):
         response = ExternalLLMOrchestrator(
             llm_client=client,
             profile_draft_tool_executor=profile_executor,
-            config=AssistantOrchestratorConfig(max_input_tokens=3000),
+            # Keep the initial request below the limit while forcing the larger
+            # native post-tool continuation through the compact fallback.
+            config=AssistantOrchestratorConfig(max_input_tokens=3100),
         ).continue_turn(self._request("Quiero aumennter de muscilo"))
 
         self.assertEqual(response.assistant_text, "Perfecto, lo orientamos a ganar masa muscular.")

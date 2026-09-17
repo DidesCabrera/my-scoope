@@ -50,6 +50,11 @@ def _env_json_object(name: str) -> dict:
 
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "")
+FOOD_CATALOG_RELEASE_TOKEN = os.environ.get("FOOD_CATALOG_RELEASE_TOKEN", "").strip()
+FOOD_CATALOG_AUTHORITY_EXPORT_ENABLED = os.environ.get(
+    "FOOD_CATALOG_AUTHORITY_EXPORT_ENABLED",
+    "false",
+).strip().lower() in {"1", "true", "yes", "on"}
 
 DEBUG = False
 

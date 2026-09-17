@@ -6,6 +6,18 @@ ROOT = Path(__file__).resolve().parents[3]
 
 
 class DeploymentContractTests(SimpleTestCase):
+    def test_catalog_authority_has_one_web_service_and_one_database(self):
+        blueprint = (ROOT / "render.catalog.yaml").read_text()
+
+        self.assertIn("name: myscoope-food-catalog-db", blueprint)
+        self.assertIn("name: myscoope-food-catalog", blueprint)
+        self.assertEqual(blueprint.count("type: web"), 1)
+        self.assertNotIn("type: worker", blueprint)
+        self.assertIn("DJANGO_SETTINGS_MODULE", blueprint)
+        self.assertIn("miapp.settings.catalog", blueprint)
+        self.assertIn("FOOD_CATALOG_RELEASE_TOKEN", blueprint)
+        self.assertIn("preDeployCommand: python manage.py migrate --noinput", blueprint)
+
     def test_render_blueprint_versions_the_complete_runtime_topology(self):
         blueprint = (ROOT / "render.yaml").read_text()
 
