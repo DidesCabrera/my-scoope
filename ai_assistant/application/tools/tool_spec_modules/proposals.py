@@ -52,7 +52,12 @@ TOOL_CREATE_NUTRITION_SOLVER_MEAL_PROPOSAL: AssistantToolSpec(
                 "summary": {"type": "string"},
                 "target": {
                     "type": "object",
-                    "description": "Meal-level target macros. Supports kcal/total_kcal, protein, carbs and fat.",
+                    "description": (
+                        "Meal-level target. kcal/total_kcal is required. Protein, carbs and fat may all be "
+                        "provided in grams, or macro_distribution may provide percentages that sum to 100. "
+                        "When both are omitted My Scoope uses a transparent 30/50/20 distribution. "
+                        "Partial triples and mixed modes are rejected."
+                    ),
                 },
                 "search": {"type": "string"},
                 "limit": {"type": "integer"},

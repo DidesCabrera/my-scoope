@@ -1,21 +1,20 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Mapping
 
-from notas.domain.constants.nutrition import (
+from notas.application.nutrition_engine.macro_target_policy import (
     CARBS_KCAL_PER_GRAM,
     FAT_KCAL_PER_GRAM,
     PROTEIN_KCAL_PER_GRAM,
+    resolve_daily_macro_targets,
 )
 
 DEFAULT_CALORIE_TARGET = 2200
-DEFAULT_PROTEIN_TARGET = 140
 DEFAULT_CURRENT_WEIGHT_KG = 75
 
 MIN_ESTIMATED_CALORIE_TARGET = 1600
 MAX_ESTIMATED_CALORIE_TARGET = 3600
-MIN_ESTIMATED_PROTEIN_TARGET = 90
-MAX_ESTIMATED_PROTEIN_TARGET = 230
 MIN_ESTIMATED_FAT_TARGET = 40
 MAX_ESTIMATED_FAT_TARGET = 110
 
@@ -74,6 +73,8 @@ class TargetEstimationProfile:
     protein_target: int | None = None
     carb_target: int | None = None
     fat_target: int | None = None
+    protein_per_kg_target: float | None = None
+    macro_distribution: Mapping[str, object] | None = None
     subject_source: str | None = None
     ppk_weight_source: str | None = None
     requires_library_ppk_warning: bool = False
@@ -119,6 +120,8 @@ class DailyNutritionTargetPlan:
     subject_source: str | None = None
     ppk_weight_source: str | None = None
     requires_library_ppk_warning: bool = False
+    macro_distribution: dict[str, float] | None = None
+    macro_target_source: str = ""
 
     def as_targets_dict(self) -> dict:
         return {
@@ -138,6 +141,11 @@ class DailyNutritionTargetPlan:
             "energy_adjustment": self.energy_adjustment,
             "energy_adjustment_factor": round(self.energy_adjustment_factor, 4),
             "protein_per_kg": round(self.protein_per_kg, 2),
+            "macro_distribution": {
+                key: round(value, 2)
+                for key, value in dict(self.macro_distribution or {}).items()
+            },
+            "macro_target_source": self.macro_target_source,
             "estimation_method": self.estimation_method,
             "explicit_targets": dict(self.explicit_targets),
             "estimated_targets": dict(self.estimated_targets),
@@ -183,44 +191,25 @@ def estimate_daily_targets(profile: TargetEstimationProfile) -> DailyNutritionTa
 
     total_kcal = float(profile.calorie_target or inferred_kcal or DEFAULT_CALORIE_TARGET)
 
-    protein_per_kg = PROTEIN_PER_KG_BY_GOAL.get(goal, PROTEIN_PER_KG_BY_GOAL["healthy_eating"])
-    inferred_protein = _round_to_step(
-        _clamp(
-            weight_kg * protein_per_kg,
-            MIN_ESTIMATED_PROTEIN_TARGET,
-            MAX_ESTIMATED_PROTEIN_TARGET,
-        ),
-        5,
+    default_protein_per_kg = PROTEIN_PER_KG_BY_GOAL.get(
+        goal,
+        PROTEIN_PER_KG_BY_GOAL["healthy_eating"],
     )
-    protein = float(profile.protein_target or inferred_protein or DEFAULT_PROTEIN_TARGET)
-
-    remaining_after_protein = total_kcal - protein * PROTEIN_KCAL_PER_GRAM
-    default_fat = _round_to_step(
-        _clamp(
-            total_kcal * 0.25 / FAT_KCAL_PER_GRAM,
-            MIN_ESTIMATED_FAT_TARGET,
-            MAX_ESTIMATED_FAT_TARGET,
-        ),
-        5,
+    macro_resolution = resolve_daily_macro_targets(
+        total_kcal=total_kcal,
+        weight_kg=weight_kg,
+        default_protein_per_kg=default_protein_per_kg,
+        protein_target=profile.protein_target,
+        carb_target=profile.carb_target,
+        fat_target=profile.fat_target,
+        protein_per_kg_target=profile.protein_per_kg_target,
+        macro_distribution=profile.macro_distribution,
+        minimum_fat_g=MIN_ESTIMATED_FAT_TARGET,
+        maximum_fat_g=MAX_ESTIMATED_FAT_TARGET,
     )
-
-    if profile.fat_target is not None:
-        fat = float(profile.fat_target)
-    elif profile.carb_target is not None:
-        fat = _round_to_step(
-            max(0.0, (remaining_after_protein - profile.carb_target * CARBS_KCAL_PER_GRAM) / FAT_KCAL_PER_GRAM),
-            5,
-        )
-    else:
-        fat = float(default_fat)
-
-    if profile.carb_target is not None:
-        carbs = float(profile.carb_target)
-    else:
-        carbs = _round_to_step(
-            max(0.0, (total_kcal - protein * PROTEIN_KCAL_PER_GRAM - fat * FAT_KCAL_PER_GRAM) / CARBS_KCAL_PER_GRAM),
-            5,
-        )
+    protein = macro_resolution.protein
+    carbs = macro_resolution.carbs
+    fat = macro_resolution.fat
 
     notes = _build_target_notes(
         profile=profile,
@@ -246,15 +235,21 @@ def estimate_daily_targets(profile: TargetEstimationProfile) -> DailyNutritionTa
             "protein": profile.protein_target is not None,
             "carbs": profile.carb_target is not None,
             "fat": profile.fat_target is not None,
+            "protein_per_kg": profile.protein_per_kg_target is not None,
+            "macro_distribution": bool(profile.macro_distribution),
         },
         estimated_targets={
             "total_kcal": profile.calorie_target is None,
-            "protein": profile.protein_target is None,
-            "carbs": profile.carb_target is None,
-            "fat": profile.fat_target is None,
+            "protein": (
+                profile.protein_target is None
+                and profile.protein_per_kg_target is None
+                and not profile.macro_distribution
+            ),
+            "carbs": profile.carb_target is None and not profile.macro_distribution,
+            "fat": profile.fat_target is None and not profile.macro_distribution,
         },
-        notes=notes,
-        protein_per_kg=float(protein_per_kg),
+        notes=[*notes, *macro_resolution.notes],
+        protein_per_kg=float(macro_resolution.protein_per_kg),
         estimated_maintenance_kcal=float(expenditure.tdee) if expenditure.tdee is not None else None,
         target_kcal_before_rounding=(
             float(target_kcal_before_rounding) if target_kcal_before_rounding is not None else None
@@ -264,6 +259,8 @@ def estimate_daily_targets(profile: TargetEstimationProfile) -> DailyNutritionTa
         subject_source=profile.subject_source,
         ppk_weight_source=profile.ppk_weight_source,
         requires_library_ppk_warning=bool(profile.requires_library_ppk_warning),
+        macro_distribution=dict(macro_resolution.distribution),
+        macro_target_source=macro_resolution.source,
     )
 
 

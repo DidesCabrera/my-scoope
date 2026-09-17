@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from django.test import SimpleTestCase
@@ -7,14 +8,19 @@ from notas.application.ai_tools.workspace_query_tools import query_workspace_too
 
 
 class WorkspaceQueryToolTests(SimpleTestCase):
-    def test_program_collection_routes_to_owner_scoped_program_query(self):
-        user = object()
-        expected = tool_success({"programs": [{"id": 7, "name": "Programa activo"}]})
+    def test_program_collection_routes_to_canonical_library_query(self):
+        user = SimpleNamespace(is_authenticated=True)
+        expected_data = {
+            "resource": "programs",
+            "scope": "library",
+            "programs": [{"id": 7, "name": "Programa activo"}],
+            "total_count": 1,
+        }
 
         with patch(
-            "notas.application.ai_tools.workspace_query_tools.list_user_programs_tool",
-            return_value=expected,
-        ) as list_programs:
+            "notas.application.ai_tools.workspace_query_tools._query_library_collection_data",
+            return_value=expected_data,
+        ) as query_library:
             result = query_workspace_tool(
                 user,
                 resource="programs",
@@ -22,11 +28,14 @@ class WorkspaceQueryToolTests(SimpleTestCase):
                 limit=12,
             )
 
-        self.assertEqual(result, expected)
-        list_programs.assert_called_once_with(
+        self.assertTrue(result.ok)
+        self.assertEqual(result.data, expected_data)
+        query_library.assert_called_once_with(
             user,
+            resource="programs",
             search="activo",
             limit=12,
+            offset=0,
         )
 
     def test_program_detail_routes_to_existing_detail_query(self):

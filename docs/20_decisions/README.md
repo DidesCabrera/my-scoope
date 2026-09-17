@@ -223,3 +223,9 @@ Consequences
   por patches atómicos revisables y activa portafolios seleccionables del solver.
 - `0196-capability-oriented-workspace-queries.md`: reemplaza el gate léxico de lecturas
   en AI Intake por una consulta tipada y estable del workspace del usuario.
+- `0197-canonical-library-projections-and-capability-catalog-gate.md`: unifica las
+  proyecciones de bibliotecas entre web y asistente, y convierte el catálogo vivo en
+  un contrato verificable localmente y contra el proveedor real.
+- `0198-ppk-first-daily-macro-policy.md`: relaciona energía, peso, PPK y distribución
+  de macros, mantiene carbohidratos como variable principal del ajuste calórico y
+  separa objetivos diarios de restricciones particulares de una comida.

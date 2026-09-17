@@ -125,7 +125,8 @@ def _apply_style_preference_updates(
 def apply_proposal_preferences_to_brief(brief: NutritionBrief, proposal_preferences: dict) -> NutritionBrief:
     fields = (
         "goal", "requested_entity", "meals_per_day", "energy_adjustment", "complexity_level",
-        "calorie_target", "protein_target", "carb_target", "fat_target", "notes",
+        "calorie_target", "protein_target", "carb_target", "fat_target",
+        "protein_per_kg_target", "macro_distribution", "notes",
     )
     updates = {
         field_name: proposal_preferences.get(field_name)
@@ -140,7 +141,8 @@ def apply_proposal_preferences_to_brief(brief: NutritionBrief, proposal_preferen
 def apply_nutrition_brief_patch(brief: NutritionBrief, patch: dict, *, default_source: str) -> NutritionBrief:
     allowed_fields = {
         "subject_source", "ppk_weight_source", "goal", "requested_entity", "meals_per_day",
-        "energy_adjustment", "calorie_target", "protein_target", "carb_target", "fat_target", "notes",
+        "energy_adjustment", "calorie_target", "protein_target", "carb_target", "fat_target",
+        "protein_per_kg_target", "macro_distribution", "notes",
     }
     updates = {
         name: value for name, value in patch.items()

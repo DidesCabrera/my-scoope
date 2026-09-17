@@ -242,6 +242,54 @@ class PreparedProductActionTests(TestCase):
         meal_food = MealFood.objects.get(meal=self.meal, food=food)
         self.assertEqual(float(meal_food.quantity), 80)
 
+    def test_workspace_patch_can_replace_meal_food_and_set_exact_quantity(self):
+        original = Food.objects.create(
+            name="Arroz",
+            protein=3,
+            carbs=28,
+            fat=0,
+            created_by=self.user,
+        )
+        replacement = Food.objects.create(
+            name="Papa",
+            protein=2,
+            carbs=20,
+            fat=0,
+            created_by=self.user,
+        )
+        meal_food = MealFood.objects.create(
+            meal=self.meal,
+            food=original,
+            quantity=100,
+        )
+
+        action = prepare_workspace_patch(
+            user=self.user,
+            title="Cambiar acompañamiento",
+            summary="Reemplaza arroz por papa y deja la porción en 200 g.",
+            operations=[
+                {
+                    "operation_id": "replace_rice",
+                    "resource": "meal",
+                    "action": "update_food",
+                    "target_id": meal_food.id,
+                    "parameters": {"food_id": replacement.id, "quantity": 200},
+                }
+            ],
+        )
+
+        meal_food.refresh_from_db()
+        self.assertEqual(meal_food.food_id, original.id)
+        self.assertEqual(float(meal_food.quantity), 100)
+        self.assertEqual(action.preview["operations"][0]["after"]["food_id"], replacement.id)
+        self.assertEqual(action.preview["operations"][0]["after"]["quantity"], 200)
+
+        commit_prepared_action(user=self.user, public_id=action.public_id)
+
+        meal_food.refresh_from_db()
+        self.assertEqual(meal_food.food_id, replacement.id)
+        self.assertEqual(float(meal_food.quantity), 200)
+
     def test_workspace_patch_can_add_owned_meal_to_dailyplan(self):
         dailyplan = DailyPlan.objects.create(
             name="Plan semanal",

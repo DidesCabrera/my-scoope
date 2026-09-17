@@ -14,7 +14,10 @@ from ai_assistant.domain.client_memory import (
 )
 
 MAX_TEXT_LENGTH = 240
-MAX_LIST_ITEMS = 8
+# Tool collections are already bounded by the executor (50 maximum). Keeping the
+# same ceiling here prevents a second, silent truncation that would invalidate
+# total/count claims made from controlled tool results.
+MAX_LIST_ITEMS = 50
 MAX_CONTEXT_DEPTH = 6
 
 SENSITIVE_KEY_FRAGMENTS = (
@@ -43,6 +46,8 @@ NUTRITION_BRIEF_FIELDS = (
     "protein_target",
     "carb_target",
     "fat_target",
+    "protein_per_kg_target",
+    "macro_distribution",
     "weight_kg",
     "height_cm",
     "age_years",

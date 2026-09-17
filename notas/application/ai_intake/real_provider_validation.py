@@ -22,6 +22,18 @@ from notas.application.ai_intake.nutrition_brief import (
     NutritionConversationState,
     serialize_conversation,
 )
+from notas.application.ai_intake.real_provider_behavior_checks import (
+    evaluate_behavioral_surface,
+    evaluate_response_repetition,
+    evaluate_tool_result_grounding,
+    evaluate_visible_facts,
+)
+from notas.application.queries.library_queries import (
+    dailyplan_library_queryset,
+    food_library_queryset,
+    meal_library_queryset,
+    program_library_queryset,
+)
 from notas.application.queries.user_nutrition_profile import get_user_nutrition_profile
 
 OUTCOME_FIRST_ACTION_TYPE = "assistant.ai_nutrition_intake.outcome_first_validation"
@@ -83,6 +95,7 @@ class RealProviderValidationScenario:
     manual_review_prompts: Sequence[str] = field(default_factory=tuple)
     forbidden_tool_names: Sequence[str] = field(default_factory=tuple)
     forbidden_visible_fragments: Sequence[str] = field(default_factory=tuple)
+    expected_visible_fragments_by_turn: Mapping[int, Sequence[str]] = field(default_factory=dict)
     max_repeated_opening_count: int | None = None
     max_tool_calls: int | None = None
     visible_reask_markers: Mapping[str, Sequence[str]] = field(default_factory=dict)
@@ -421,6 +434,25 @@ def built_in_real_provider_scenarios() -> dict[str, RealProviderValidationScenar
                 "¿Evita mostrar códigos internos, trazas o lenguaje técnico innecesario?",
             ),
         ),
+        "bibliotecas_coherentes": RealProviderValidationScenario(
+            key="bibliotecas_coherentes",
+            description=(
+                "Read the four user libraries and verify that visible totals match the canonical "
+                "web projections for the selected validation user."
+            ),
+            user_messages=(
+                "Consulta mi biblioteca de alimentos y responde exactamente con el formato TOTAL: N.",
+                "Consulta mi biblioteca de comidas y responde exactamente con el formato TOTAL: N.",
+                "Consulta mi biblioteca de planes diarios y responde exactamente con el formato TOTAL: N.",
+                "Consulta mi biblioteca de programas y responde exactamente con el formato TOTAL: N.",
+            ),
+            required_tool_names=("query_workspace",),
+            max_tool_calls=8,
+            manual_review_prompts=(
+                "¿Cada total coincide con la cantidad que muestra la biblioteca web del mismo usuario?",
+                "¿El asistente evita contar borradores y snapshots internos como objetos de biblioteca?",
+            ),
+        ),
     }
 
 
@@ -509,6 +541,21 @@ def _specialize_scenario_for_user(
     synchronization regression observable: any available profile fact is added
     to the expected final brief and stable-fact contract.
     """
+
+    if scenario.key == "bibliotecas_coherentes":
+        totals = (
+            food_library_queryset(user).count(),
+            meal_library_queryset(user).count(),
+            dailyplan_library_queryset(user).count(),
+            program_library_queryset(user).count(),
+        )
+        return replace(
+            scenario,
+            expected_visible_fragments_by_turn={
+                index: (f"TOTAL: {total}",)
+                for index, total in enumerate(totals, start=1)
+            },
+        )
 
     if scenario.key != "ficha_conocida_sin_repreguntas":
         return scenario
@@ -747,6 +794,7 @@ def _scenario_checks(
     checks.append(_known_facts_not_reasked_check(scenario, turns))
     checks.append(_brief_transition_check(scenario, turns))
     checks.append(_tool_contract_check(scenario, turns))
+    checks.append(_visible_facts_check(scenario, turns))
     checks.append(_behavioral_surface_check(scenario, turns))
     checks.append(_response_repetition_check(scenario, turns))
     checks.append(_tool_result_grounding_check(turns))
@@ -763,6 +811,14 @@ def _scenario_checks(
         )
     )
     return checks
+
+
+def _visible_facts_check(
+    scenario: RealProviderValidationScenario,
+    turns: Sequence[RealProviderValidationTurn],
+) -> RealProviderValidationCheck:
+    passed, detail = evaluate_visible_facts(scenario, turns)
+    return _check("visible_facts", passed, detail)
 
 
 def _provider_health_check(
@@ -998,51 +1054,15 @@ def _behavioral_surface_check(
     scenario: RealProviderValidationScenario,
     turns: Sequence[RealProviderValidationTurn],
 ) -> RealProviderValidationCheck:
-    actual_tools = {name for turn in turns for name in turn.tool_names}
-    forbidden_tools = sorted(set(scenario.forbidden_tool_names).intersection(actual_tools))
-    visible_blob = "\n".join(turn.assistant_message.lower() for turn in turns)
-    leaked_fragments = [
-        fragment
-        for fragment in scenario.forbidden_visible_fragments
-        if fragment and fragment.lower() in visible_blob
-    ]
-    tool_call_count = sum(len(turn.tool_names) for turn in turns)
-    too_many_tools = scenario.max_tool_calls is not None and tool_call_count > scenario.max_tool_calls
-    passed = not forbidden_tools and not leaked_fragments and not too_many_tools
-    details = []
-    if forbidden_tools:
-        details.append(f"forbidden tools executed: {', '.join(forbidden_tools)}")
-    if leaked_fragments:
-        details.append(f"forbidden visible fragments: {', '.join(leaked_fragments)}")
-    if too_many_tools:
-        details.append(f"tool calls {tool_call_count} exceeded maximum {scenario.max_tool_calls}")
-    if not details:
-        details.append("tool restraint and product-language boundary were respected")
-    return _check("behavioral_surface", passed, "; ".join(details))
+    passed, detail = evaluate_behavioral_surface(scenario, turns)
+    return _check("behavioral_surface", passed, detail)
 
 
 def _response_repetition_check(
     scenario: RealProviderValidationScenario,
     turns: Sequence[RealProviderValidationTurn],
 ) -> RealProviderValidationCheck:
-    limit = scenario.max_repeated_opening_count
-    if limit is None:
-        return _check("response_repetition", True, "scenario does not define an opening repetition limit")
-    openings = []
-    for turn in turns:
-        text = " ".join(str(turn.assistant_message or "").strip().split())
-        if not text:
-            continue
-        first_sentence = text.split(".", 1)[0].strip().lower()
-        openings.append(first_sentence[:80])
-    counts = {opening: openings.count(opening) for opening in set(openings)}
-    repeated = {opening: count for opening, count in counts.items() if count > limit}
-    passed = not repeated
-    detail = (
-        "assistant openings stayed within the configured repetition limit"
-        if passed
-        else "repeated openings: " + ", ".join(f"{opening!r} x{count}" for opening, count in sorted(repeated.items()))
-    )
+    passed, detail = evaluate_response_repetition(scenario, turns)
     return _check("response_repetition", passed, detail)
 
 def _tool_result_grounding_check(
@@ -1050,28 +1070,8 @@ def _tool_result_grounding_check(
 ) -> RealProviderValidationCheck:
     """Reject claims that tools are unavailable after a real tool result exists."""
 
-    unavailable_markers = (
-        "no tengo ejecución de herramientas",
-        "no tengo herramientas disponibles",
-        "no puedo ejecutar herramientas",
-        "no puedo usar la herramienta",
-        "no tengo acceso a herramientas",
-    )
-    failures: list[str] = []
-    for turn in turns:
-        if not turn.tool_results:
-            continue
-        normalized = " ".join(turn.assistant_message.lower().split())
-        matched = [marker for marker in unavailable_markers if marker in normalized]
-        if matched:
-            failures.append(f"turn {turn.index}: contradicted executed tool result")
-    return _check(
-        "tool_result_grounding",
-        not failures,
-        "assistant text remained grounded in available tool results"
-        if not failures
-        else f"tool grounding failures: {failures}",
-    )
+    passed, detail = evaluate_tool_result_grounding(turns)
+    return _check("tool_result_grounding", passed, detail)
 
 
 

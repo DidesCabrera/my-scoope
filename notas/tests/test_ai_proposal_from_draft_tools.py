@@ -43,7 +43,8 @@ class AIProposalFromDraftToolsTests(TestCase):
                 "goal": "muscle_gain",
                 "meals_per_day": 4,
                 "energy_adjustment": "surplus_mild",
-                "protein_target": 180,
+                "protein_per_kg_target": 2.0,
+                "macro_distribution": {"protein": 30, "carbs": 50, "fat": 20},
             },
             raw_prompt="Quiero ganar masa muscular.",
         )
@@ -58,7 +59,14 @@ class AIProposalFromDraftToolsTests(TestCase):
         self.assertEqual(brief.activity_level, "moderate")
         self.assertEqual(brief.training_frequency, 3)
         self.assertEqual(brief.energy_adjustment, "surplus_mild")
-        self.assertEqual(brief.protein_target, 180)
+        self.assertEqual(brief.protein_per_kg_target, 2.0)
+        self.assertEqual(
+            brief.macro_distribution,
+            {"protein": 30, "carbs": 50, "fat": 20},
+        )
+        serialized = serialize_brief(brief)
+        self.assertEqual(serialized["protein_per_kg_target"], 2.0)
+        self.assertEqual(serialized["macro_distribution"]["carbs"], 50)
         self.assertIn("atún", brief.excluded_foods)
         self.assertIn("pollo", brief.preferred_foods)
         self.assertIn("simple", brief.style_preferences)

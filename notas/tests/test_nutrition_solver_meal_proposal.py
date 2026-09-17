@@ -5,6 +5,7 @@ from notas.application.ai_tools.proposal_tools import (
     create_nutrition_solver_meal_proposal_tool,
 )
 from notas.application.proposals.solver_meal_proposals import (
+    _parse_macro_target,
     create_solver_generated_meal_proposal,
 )
 from notas.domain.models import DailyPlan, Food, NutritionProposal
@@ -118,6 +119,56 @@ class NutritionSolverMealProposalTests(TestCase):
             {"optimal", "acceptable", "partial"},
         )
 
+    def test_energy_only_target_uses_documented_balanced_distribution(self):
+        result = create_solver_generated_meal_proposal(
+            user=self.user,
+            dailyplan_id=self.dailyplan.id,
+            title="Comida 450 kcal",
+            target={"kcal": 450},
+        )
+
+        self.assertEqual(result.proposal.targets["kcal"], 450.0)
+        self.assertEqual(result.proposal.targets["protein"], 33.75)
+        self.assertEqual(result.proposal.targets["carbs"], 56.25)
+        self.assertEqual(result.proposal.targets["fat"], 10.0)
+
+    def test_explicit_meal_distribution_is_converted_by_backend(self):
+        target = _parse_macro_target(
+            {
+                "kcal": 450,
+                "macro_distribution": {"protein": 25, "carbs": 55, "fat": 20},
+            }
+        )
+
+        self.assertEqual(target.protein, 28.125)
+        self.assertEqual(target.carbs, 61.875)
+        self.assertEqual(target.fat, 10.0)
+
+    def test_meal_distribution_rejects_invalid_sum_and_mixed_modes(self):
+        with self.assertRaisesMessage(
+            ValueError,
+            "nutrition_target_distribution_must_sum_100",
+        ):
+            _parse_macro_target(
+                {
+                    "kcal": 450,
+                    "macro_distribution": {"protein": 30, "carbs": 45, "fat": 20},
+                }
+            )
+        with self.assertRaisesMessage(
+            ValueError,
+            "nutrition_solver_target_macro_modes_conflict",
+        ):
+            _parse_macro_target(
+                {
+                    "kcal": 450,
+                    "protein": 30,
+                    "carbs": 50,
+                    "fat": 10,
+                    "macro_distribution": {"protein": 30, "carbs": 50, "fat": 20},
+                }
+            )
+
     def test_impossible_solver_result_is_tool_error_not_proposal(self):
         result = create_nutrition_solver_meal_proposal_tool(
             self.user,
@@ -128,7 +179,7 @@ class NutritionSolverMealProposalTests(TestCase):
         )
 
         self.assertFalse(result.ok)
-        self.assertEqual(result.error.code, "nutrition_solver_meal_proposal_impossible")
+        self.assertEqual(result.error.code, "nutrition_solver_no_eligible_candidates")
         self.assertEqual(NutritionProposal.objects.filter(title="Sin candidatos").count(), 0)
 
     def _food(self, name, *, protein, carbs, fat, **kwargs):
