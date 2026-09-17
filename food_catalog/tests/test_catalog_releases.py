@@ -5,8 +5,7 @@ from pathlib import Path
 
 from django.apps import apps
 from django.contrib.auth import get_user_model
-from django.core.management import call_command
-from django.core.management import get_commands, load_command_class
+from django.core.management import call_command, get_commands, load_command_class
 from django.core.management.base import CommandError
 from django.test import Client, TestCase, override_settings
 
