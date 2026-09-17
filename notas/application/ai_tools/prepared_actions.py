@@ -579,7 +579,7 @@ def _resolve_owned_target(*, user, target_type: str, target_id: int, for_update:
         "saved_comparison": SavedComparison.objects.filter(owner=user),
         "proposal": NutritionProposal.objects.filter(
             Q(created_by=user) | Q(dailyplan__created_by=user)
-        ).distinct(),
+        ),
     }
     queryset = querysets[target_type]
     if for_update:
