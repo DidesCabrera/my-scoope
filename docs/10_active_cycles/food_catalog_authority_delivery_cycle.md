@@ -1,8 +1,8 @@
 # FCA00-FCA08 · Food Catalog Authority and Delivery
 
-Status: active · code complete, Render provisioning and data cutover pending
+Status: active · Render authority and staging cutover complete; production promotion pending
 Date: 2026-09-17
-Target branch: `feature/food-catalog-authority-releases` -> `staging`
+Target branch: `feature/food-catalog-authority-releases` -> `staging` (`c91fa9e`)
 
 ## Outcome
 
@@ -67,25 +67,33 @@ availability to another service at request time.
 - deprecated catalog foods mark their linked operational snapshot stale;
 - the command supports validation-only and explicit materialization.
 
-### FCA06 · Render topology — declared, provisioning pending
+### FCA06 · Render topology — complete
 
-- one `myscoope-food-catalog` web service;
-- one `myscoope-food-catalog-db` PostgreSQL database;
+- `myscoope-food-catalog` web service (`srv-dam3d8m5vjqs73bjpob0`), Starter;
+- `myscoope-food-catalog-db` PostgreSQL database (`dpg-dam3cqm5vjqs73bjo7qg-a`), Basic 256 MB;
 - no permanent worker in the first version;
 - staging and production receive only release URL/token configuration;
 - the authority runs with `miapp.settings.catalog`, not the full consumer application.
+- the authority `SECRET_KEY` is an independent 96-character secret; its
+  blueprint entry is `sync: false` so Django 6's minimum-strength check is not
+  defeated by Render's shorter generated value.
 
-### FCA07 · Initial data cutover — pending
+### FCA07 · Initial data cutover — complete
 
-1. deploy the code to staging;
-2. create the central service/database and shared delivery token;
-3. temporarily enable the staging authority-snapshot export;
-4. import all 219 catalog rows into the empty authority;
-5. disable the staging export immediately;
-6. dry-run and publish the 30 verified foods with an identified actor;
-7. build and approve the initial release;
-8. validate and import it into staging with `--materialize`;
-9. reconcile central, replica and operational counts.
+1. deployed the authority and consumer code to staging;
+2. created the central service/database and an independent shared delivery token;
+3. temporarily enabled the protected staging authority-snapshot export;
+4. imported 219 catalog foods and 38 historical import batches into the empty authority;
+5. disabled the export and verified an authenticated request now returns 404;
+6. reconciled 30 `verified` and 189 `pending_review` foods in the authority;
+7. dry-ran and published all 30 verified foods with
+   `catalog-release-operator@myscoope.internal` as the audit actor;
+8. built and approved immutable release `2026.09.1`, containing 30 foods with
+   SHA-256 `0891fb36c6284f9a220b47ebb79cc972e5dd797ff6eabe84d5cecb7dd89af3cd`;
+9. validated and imported the release into staging with materialization;
+10. repeated the import and confirmed `idempotent=True`, with zero writes;
+11. reconciled 219 catalog rows, 30 release-managed/published rows, one approved
+    replica release, 30 operational catalog snapshots and 30 solver-enabled snapshots.
 
 ### FCA08 · Production promotion and recurring operation — pending
 
@@ -103,6 +111,11 @@ availability to another service at request time.
 - real update path: v1 creates an operational food, v2 refreshes the same ID;
 - deployment topology regression tests;
 - targeted Django checks and full repository gate before merge.
+- the real Render cutover exposed and fixed a Django management option collision:
+  release commands now use `--release-version`, and their real parsers are tested;
+- both Render services are live on `c91fa9e`; authority `check --deploy` reports
+  no issues after the independent secret rotation;
+- the staging bootstrap endpoint was verified closed with an authenticated 404.
 
 ## Explicitly deferred
 
