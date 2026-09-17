@@ -15,7 +15,6 @@ def select_proposal_alternative(*, user, proposal: NutritionProposal, alternativ
     locked = (
         NutritionProposal.objects.select_for_update()
         .filter(Q(created_by=user) | Q(dailyplan__created_by=user), pk=proposal.pk)
-        .distinct()
         .first()
     )
     if locked is None:
