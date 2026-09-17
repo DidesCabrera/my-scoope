@@ -16,6 +16,7 @@ class DeploymentContractTests(SimpleTestCase):
         self.assertIn("DJANGO_SETTINGS_MODULE", blueprint)
         self.assertIn("miapp.settings.catalog", blueprint)
         self.assertIn("FOOD_CATALOG_RELEASE_TOKEN", blueprint)
+        self.assertIn("- key: SECRET_KEY\n        sync: false", blueprint)
         self.assertIn("preDeployCommand: python manage.py migrate --noinput", blueprint)
 
     def test_render_blueprint_versions_the_complete_runtime_topology(self):

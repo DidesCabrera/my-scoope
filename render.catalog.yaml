@@ -25,7 +25,7 @@ services:
           name: myscoope-food-catalog-db
           property: connectionString
       - key: SECRET_KEY
-        generateValue: true
+        sync: false
       - key: ALLOWED_HOSTS
         value: myscoope-food-catalog.onrender.com
       - key: CSRF_TRUSTED_ORIGINS

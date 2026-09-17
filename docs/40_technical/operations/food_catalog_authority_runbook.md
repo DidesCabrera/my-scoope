@@ -22,9 +22,15 @@ Required authority settings:
 ```text
 DJANGO_SETTINGS_MODULE=miapp.settings.catalog
 DATABASE_URL=<authority database>
+SECRET_KEY=<independent random secret of at least 50 characters>
 FOOD_CATALOG_RELEASE_TOKEN=<shared random secret>
 FOOD_CATALOG_AUTHORITY_EXPORT_ENABLED=false
 ```
+
+`SECRET_KEY` is intentionally `sync: false` in the authority blueprint. Render's
+generated value is currently 44 characters, which Django 6 flags as too short.
+Create an independent secret of at least 50 characters during provisioning; do
+not reuse the release token.
 
 Required on each consumer web service:
 
