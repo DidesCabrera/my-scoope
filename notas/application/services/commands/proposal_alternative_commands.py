@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, Subquery
 
 from notas.application.queries.proposal_simulation_queries import simulate_proposal_payload
 from notas.application.validation.proposal_payload_validators import validate_proposal_payload_or_raise
@@ -12,9 +12,12 @@ from notas.domain.models import NutritionProposal, NutritionProposalAuditEvent
 def select_proposal_alternative(*, user, proposal: NutritionProposal, alternative_id: str) -> NutritionProposal:
     """Select a server-stored solver alternative while a proposal is reviewable."""
 
+    owned_proposal_ids = NutritionProposal.objects.filter(
+        Q(created_by=user) | Q(dailyplan__created_by=user)
+    ).values("pk")
     locked = (
         NutritionProposal.objects.select_for_update()
-        .filter(Q(created_by=user) | Q(dailyplan__created_by=user), pk=proposal.pk)
+        .filter(pk=proposal.pk, pk__in=Subquery(owned_proposal_ids))
         .first()
     )
     if locked is None:
