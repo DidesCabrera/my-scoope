@@ -4,6 +4,26 @@
 
 Feature vigente con historia extensa archivada.
 
+Desde la decisión 0199, existe una única autoridad central de Food Catalog. Los
+entornos de producto ya no deben repetir la adquisición y curación de fuentes:
+reciben entregas inmutables, versionadas y verificadas por SHA-256. Esta entrega
+no cambia la frontera operacional: cada entorno materializa localmente
+`notas.Food`, y las solicitudes de usuarios nunca dependen de una consulta en vivo
+al servicio central.
+
+Contrato de despliegue vigente:
+
+```text
+Food Catalog central (BD propia)
+  -> release aprobado e inmutable
+  -> import transaccional en staging / producción
+  -> snapshot local notas.Food
+  -> Meals / Plans / Programs / Solver / MCP / AI
+```
+
+La operación y el bootstrap se documentan en
+`docs/40_technical/operations/food_catalog_authority_runbook.md`.
+
 ## Concepto
 
 El catálogo de alimentos combina alimentos de usuario, alimentos globales, aliases, trazabilidad y datos nutricionales normalizados.

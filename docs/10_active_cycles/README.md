@@ -36,6 +36,9 @@ Status: planned / active / paused / completed / superseded
 Cuando un ciclo planificado empiece a implementarse, el documento puede permanecer aquí como plan operacional, pero las decisiones estables que surjan deben registrarse también en `docs/20_decisions/`.
 
 ## En curso o pendientes de validación
+- `food_catalog_authority_delivery_cycle.md`: FCA00-FCA08 implementa autoridad
+  central, bootstrap protegido, releases inmutables y materialización local. El
+  código está completo; quedan provisioning, cutover y reconciliación en Render.
 - `ai_assistant_patch_solver_synergy_cycle.md`: ciclo APS00-APS08 completado en
   repositorio. Sustituye la selección de micro-tools de mutación por Workspace
   Patches atómicos y revisables, activa portfolios del solver con tres alternativas
