@@ -8,6 +8,49 @@ from ai_assistant.application.tools.contracts import (
 from ai_assistant.application.tools.tool_names import *  # noqa: F403
 
 READ_TOOL_SPECS = {
+TOOL_QUERY_WORKSPACE: AssistantToolSpec(
+        name=TOOL_QUERY_WORKSPACE,
+        description=(
+            "Query the authenticated user's My Scoope workspace. This is the primary read capability for "
+            "foods, meals, daily plans, programs, calendarization, proposals and saved comparisons. "
+            "Use it before saying stored product data is unavailable. Omit object_id to list or search; "
+            "include object_id to read one object. It never writes data."
+        ),
+        category=AssistantToolCategory.READ,
+        risk_level=AssistantToolRiskLevel.LOW,
+        requires_human_review=False,
+        allowed_intents=("read_context", "answer_question", "iterate_proposal"),
+        input_schema={
+            "type": "object",
+            "required": ["resource"],
+            "properties": {
+                "resource": {
+                    "type": "string",
+                    "enum": [
+                        "foods",
+                        "meals",
+                        "dailyplans",
+                        "programs",
+                        "calendarization",
+                        "proposals",
+                        "saved_comparisons",
+                    ],
+                },
+                "object_id": {
+                    "type": "integer",
+                    "description": "Optional owned object ID for a detail read.",
+                },
+                "search": {
+                    "type": "string",
+                    "description": "Optional text search for list resources.",
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Optional maximum result count, from 1 to 50.",
+                },
+            },
+        },
+    ),
 TOOL_READ_FOOD: AssistantToolSpec(
         name=TOOL_READ_FOOD,
         description="Read one operational Food visible to the authenticated user.",

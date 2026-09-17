@@ -221,3 +221,5 @@ Consequences
   conversacional y mantiene la salida de preferencias persistentes como acción explícita.
 - `0195-capability-patches-and-solver-portfolios.md`: reemplaza micro-tools de mutación
   por patches atómicos revisables y activa portafolios seleccionables del solver.
+- `0196-capability-oriented-workspace-queries.md`: reemplaza el gate léxico de lecturas
+  en AI Intake por una consulta tipada y estable del workspace del usuario.

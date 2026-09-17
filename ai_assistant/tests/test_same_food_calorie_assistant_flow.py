@@ -35,8 +35,9 @@ class SameFoodCalorieAssistantFlowTests(SimpleTestCase):
             for tool in provider_request.tools
         }
 
-        self.assertIn("search_user_dailyplans", tool_names)
-        self.assertIn("read_dailyplan", tool_names)
+        self.assertIn("query_workspace", tool_names)
+        self.assertNotIn("search_user_dailyplans", tool_names)
+        self.assertNotIn("read_dailyplan", tool_names)
         self.assertIn(
             "create_proportional_dailyplan_calorie_proposal",
             tool_names,

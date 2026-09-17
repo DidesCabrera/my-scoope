@@ -16,6 +16,7 @@ from ai_assistant.application.tools.registry import (
     TOOL_LIST_USER_PROGRAMS,
     TOOL_LIST_USER_PROPOSALS,
     TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES,
+    TOOL_QUERY_WORKSPACE,
     TOOL_READ_ACCOUNT_BILLING_CONTEXT,
     TOOL_READ_CALENDARIZATION,
     TOOL_READ_DAILYPLAN,
@@ -155,6 +156,7 @@ class ReadOnlyToolExecutor:
         )
 
         if tool_name in {
+            TOOL_QUERY_WORKSPACE,
             TOOL_LIST_OPERATIONAL_FOODS,
             TOOL_LIST_INBOX_ITEMS,
             TOOL_LIST_SAVED_COMPARISONS,
@@ -180,6 +182,10 @@ class ReadOnlyToolExecutor:
             payload["kind"] = str(payload.get("kind") or "").strip().lower() or None
 
         if tool_name == TOOL_LIST_USER_PROGRAMS:
+            payload["search"] = str(payload.get("search") or "").strip()
+
+        if tool_name == TOOL_QUERY_WORKSPACE:
+            payload["resource"] = str(payload.get("resource") or "").strip().lower()
             payload["search"] = str(payload.get("search") or "").strip()
 
         if tool_name == TOOL_LIST_INBOX_ITEMS:
@@ -212,6 +218,7 @@ def build_default_read_only_tool_dispatch_table() -> dict[str, ReadOnlyToolCalla
     product_tools = dict(get_ai_product_bindings().read_only_tools)
 
     return {
+        TOOL_QUERY_WORKSPACE: product_tools[TOOL_QUERY_WORKSPACE],
         TOOL_READ_DAILYPLAN: product_tools[TOOL_READ_DAILYPLAN],
         TOOL_READ_ACCOUNT_BILLING_CONTEXT: read_account_billing_context_tool,
         TOOL_READ_CALENDARIZATION: product_tools[TOOL_READ_CALENDARIZATION],
