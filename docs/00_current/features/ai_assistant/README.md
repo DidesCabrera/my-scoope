@@ -6,7 +6,36 @@ Baseline vigente y operativa. CM00-CM24, PT00-PT06 y BA00-BA07 están cerrados. 
 
 El contrato actual prioriza libertad del LLM guiada por propósito, estado, capacidades y límites tipados. My Scoope conserva la autoridad sobre validación, permisos, cálculo, persistencia, presentación de objetos y observabilidad.
 
+## Patch de capacidades y propuestas con alternativas
+
+La decisión 0195 reemplaza la selección de micro-tools de mutación por
+`propose_workspace_patch`. El modelo puede describir hasta veinticuatro operaciones coherentes
+en un solo patch; el backend las traduce a comandos de aplicación, valida propiedad y
+argumentos, calcula riesgo y muestra una vista previa. La confirmación sigue ocurriendo
+exclusivamente en UI confiable y el commit completo es atómico.
+
+Una operación posterior puede referenciar el resultado de una creación anterior del
+mismo patch. Esto permite, por ejemplo, crear alimentos, crear una comida e incorporar
+esos alimentos a la comida dentro de una sola confirmación atómica. Sólo se aceptan
+referencias hacia operaciones previas, con tipos compatibles y campos ID allowlisted.
+
+`prepare_product_action` se conserva para compatibilidad de historial, pero ya no se
+selecciona en turnos nuevos. En la versión actual incluso los patches de riesgo bajo
+requieren confirmación; `future_auto_apply_eligible` sólo expresa una posibilidad de
+política futura.
+
+Las propuestas de DailyPlan generadas con `portfolio_v1` contienen tres alternativas
+por defecto. La mejor queda seleccionada inicialmente y el usuario puede escoger otra
+en Proposal Review antes de aprobar. Cada selección usa un payload almacenado por el
+servidor, vuelve a validar y simular, y no aplica el plan.
+
 ## Paridad de capacidades del sistema
+
+El inventario vivo de solicitudes posibles, su clasificación entre lectura, patch,
+propuesta, aclaración y handoff, y las brechas actuales está en
+[`user_request_capability_catalog.md`](user_request_capability_catalog.md). Ese catálogo
+es la referencia para ampliar cobertura a partir de casos reales sin convertir cada
+frase nueva en una micro-tool.
 
 Desde la decisión 0155, el Assistant clasifica explícitamente todas las áreas
 humanas del producto. El catálogo ejecutable vive únicamente en
@@ -18,8 +47,8 @@ La cobertura se divide por riesgo:
 - lectura autónoma autorizada para ficha, alimentos, comidas, planes, programas,
   calendario, propuestas, comparaciones, Inbox y cuenta/billing;
 - `NutritionProposal` revisable para generación y ajustes nutricionales;
-- `AIPreparedAction` para operaciones generales: prepara una vista antes/después y
-  solo se ejecuta desde confirmación UI autenticada;
+- `AIPreparedAction` con `ai_assistant_workspace_patch.v1` para agrupar operaciones
+  generales: prepara vistas antes/después y solo se ejecuta desde confirmación UI autenticada;
 - handoff a UI confiable para composición especializada, imports, sharing y pagos;
 - namespace separado y staff-only para Analytics y Operations.
 
@@ -40,7 +69,32 @@ conserva además su rollout gradual.
 - Una referencia ambigua no autoriza lecturas, escrituras ni cards. El asistente responde desde el contexto visible o pide una aclaración breve.
 - Cuando la tarea está suficientemente fundada, se prioriza el siguiente resultado útil sobre confirmaciones repetitivas o intake opcional indefinido.
 - Los hechos ya disponibles en ficha, drafts o cards no deben volver a pedirse ni presentarse como faltantes.
+- Una consulta sobre biblioteca, programas o calendario exige evidencia de una lectura
+  del producto antes de afirmar que un objeto existe o no existe.
+- La superficie histórica de AI Intake no reduce las capacidades operativas: una
+  solicitud explícita sobre objetos del producto recibe las tools correspondientes.
+- Las lecturas nutricionales y de biblioteca de bajo riesgo se mantienen disponibles
+  como capacidades estables en AI Intake; una regla léxica puede priorizar o exigir una
+  lectura inequívoca, pero nunca ocultar esas capacidades. El selector también normaliza
+  mayúsculas y tildes y reconoce plurales y formas verbales habituales para esa
+  priorización. Las frases reales que revelen una variante nueva deben conservarse como
+  regresiones de enrutamiento.
 - Toda afirmación de lectura, actualización o creación de estado debe estar respaldada por una tool allowlisted ejecutada.
+
+La capacidad provider-facing `query_workspace` concentra las consultas de alimentos,
+comidas, planes diarios, programas, calendarización, propuestas y comparaciones. El
+modelo declara un `resource`, un `object_id` opcional y filtros acotados; My Scoope lo
+traduce a las queries owner-scoped existentes. Las micro-tools de lectura permanecen
+registradas para compatibilidad y MCP, pero AI Intake no depende de seleccionarlas a
+partir de palabras exactas del mensaje.
+
+Las colecciones de alimentos, comidas, planes diarios y programas comparten ahora sus
+proyecciones canónicas con las pantallas de biblioteca. La respuesta incluye
+`total_count`, `returned_count`, `offset`, `has_more` y `next_offset`; por tanto, una
+página de ocho objetos no puede presentarse como el total de la biblioteca. El gate
+`scripts/ci_ai_assistant_capability_catalog.sh` valida esta coherencia y el escenario
+live `bibliotecas_coherentes` contrasta la respuesta visible del modelo con los datos
+reales del usuario seleccionado.
 
 ## Contrato post-tool vigente
 
@@ -87,6 +141,24 @@ tab activo.
 
 ## Current client-memory/tool-oriented baseline
 
+Desde ARR01, ficha, preferencias y parámetros de propuesta comparten el contrato
+`ai_assistant_client_memory.v2`. El workspace provider-facing es
+`ai_assistant_workspace.v2`; adapters legacy pueden traducir almacenamiento interno,
+pero no exponer vocabularios competidores.
+
+Las preferencias alimentarias y de organización aprobadas persisten en
+`NutritionPreferenceProfile`. El draft sigue siendo temporal y el commit es una tool
+interna no expuesta al proveedor, invocada exclusivamente por aprobación confiable en
+web o móvil. Las preferencias guardadas no se envían automáticamente al proveedor:
+se consultan mediante `read_user_preference_context` cuando la interacción expresa la
+intención de usarlas.
+
+El tool set del intake mantiene siempre updates de draft y creación revisable, y
+añade lecturas de ficha/preferencias y cards cuando el lenguaje del usuario las hace
+relevantes. Los turnos saludables
+incorporan `ai_assistant_outcome_trace.v1` para distinguir outcome creado, avance de
+workspace, información bloqueante, bloqueo por guardrail y respuesta sin operación.
+
 The CM00-CM24 Client Memory & Profile Objects and LLM-native alignment cycle is closed. The current implementation contract for this area lives in:
 
 ```text
@@ -104,6 +176,20 @@ Tool results must synchronize with temporary chat state before follow-up questio
 ```
 
 Future work should improve tools and object contracts before adding prompt-only fixes.
+
+### Objetivos diarios PPK/macros
+
+El brief y las preferencias de propuesta admiten `protein_per_kg_target` y una
+`macro_distribution` completa. No son texto libre: atraviesan schemas, memoria temporal,
+generación y propuesta como valores tipados. El backend relaciona ambos con peso y
+energía mediante la política de la decisión 0198. Si dos instrucciones son
+incompatibles, el asistente debe aclarar la contradicción; no puede escoger una ni
+reescribirla silenciosamente.
+
+La distribución solicitada para una comida pertenece al target de esa propuesta local.
+No se convierte automáticamente en preferencia diaria ni en regla para todo un programa.
+La periodización por entrenamiento/descanso permanece fuera de cobertura hasta disponer
+de una agenda diaria explícita.
 
 ## Decisión central
 
@@ -158,9 +244,14 @@ notas.Food
 
 Si un alimento maestro todavía no fue materializado como `notas.Food`, entonces no existe para el AI Assistant operativo.
 
-## Relación con Proposals
+## Relación con Proposals y workspace patches
 
-Toda creación o modificación relevante debe terminar como `NutritionProposal` revisable.
+Los cambios nutricionales en los que la AI o el solver deben decidir composición,
+cantidades o alternativas terminan como `NutritionProposal` revisable. Una composición
+exacta indicada por el usuario —por ejemplo, reemplazar un alimento concreto y fijar
+sus gramos— es un cambio determinista y se representa mediante un `AIPreparedAction`
+con contrato `ai_assistant_workspace_patch.v1`. Ambos caminos requieren revisión
+confiable y ninguno autoriza escrituras ORM del proveedor.
 
 Flujo esperado:
 
@@ -168,11 +259,16 @@ Flujo esperado:
 usuario pide algo en lenguaje natural
   -> LLM interpreta
   -> tools consultan/validan
-  -> My Scoope crea propuesta
-  -> chat muestra card de propuesta
-  -> usuario revisa/aprueba
-  -> aplicación segura
+  -> My Scoope crea propuesta nutricional o patch de capacidades
+  -> chat muestra card revisable
+  -> usuario revisa/confirma
+  -> aplicación segura y auditable
 ```
+
+Una tool general de patch evita exponer una micro-tool por cada mutación, pero no
+reemplaza los comandos de dominio. El backend interpreta cada operación, valida
+ownership, argumentos y riesgo, y ejecuta el conjunto atómicamente sólo después de
+confirmación UI.
 
 ## Relación con el chat actual
 

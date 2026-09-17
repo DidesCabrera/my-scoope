@@ -83,10 +83,21 @@
           {% endfor %}
 
           <div class="ai-chat-profile-card__footer">
-            {% if message.preference_draft_card.known_count %}
-              <span>{{ message.preference_draft_card.known_count }} dato{{ message.preference_draft_card.known_count|pluralize }} de preferencia registrado{{ message.preference_draft_card.known_count|pluralize }} para esta conversación.</span>
-            {% else %}
-              <span>Sin preferencias registradas todavía.</span>
+            <span>
+              {% if message.preference_draft_card.known_count %}
+                {{ message.preference_draft_card.known_count }} dato{{ message.preference_draft_card.known_count|pluralize }} de preferencia registrado{{ message.preference_draft_card.known_count|pluralize }}.
+              {% else %}
+                Sin preferencias registradas todavía.
+              {% endif %}
+            </span>
+            {% if message.preference_draft_card.can_update_preferences %}
+              <form method="post" action="{% url 'ai_nutrition_intake' %}" class="ai-chat-profile-card__form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_preferences_from_draft">
+                <button type="submit" class="ai-chat-profile-card__action">
+                  Guardar preferencias
+                </button>
+              </form>
             {% endif %}
           </div>
         </div>
@@ -171,7 +182,16 @@
             </div>
             <i data-lucide="{% if message.prepared_action_card.destructive %}triangle-alert{% else %}check-check{% endif %}" class="ai-chat-profile-card__icon"></i>
           </div>
-          {% if message.prepared_action_card.preview.before %}
+          {% if message.prepared_action_card.preview.operations %}
+            <div class="ai-chat-profile-card__grid">
+              {% for operation in message.prepared_action_card.preview.operations %}
+                <article class="ai-chat-profile-card__item">
+                  <span>{{ operation.risk_level|default:"medium" }} · {{ operation.action_key }}</span>
+                  <strong>{{ operation.title }}</strong>
+                </article>
+              {% endfor %}
+            </div>
+          {% elif message.prepared_action_card.preview.before %}
             <div class="ai-chat-profile-card__grid">
               <article class="ai-chat-profile-card__item">
                 <span>Antes</span>

@@ -26,9 +26,11 @@ test("typed assistant cards navigate to trusted product surfaces and gate mutati
   assert.match(conversation, /card\.type === "proposal_review"/);
   assert.match(conversation, /card\.type === "saved_comparison"/);
   assert.match(conversation, /card\.type === "prepared_action"/);
+  assert.match(conversation, /card\.type === "preference_draft" && card\.can_commit/);
   assert.match(conversation, /\/comparator\/saved\//);
   assert.match(conversation, /\/proposals\//);
   assert.match(screen, /Alert\.alert/);
   assert.match(screen, /\/ai\/prepared-actions\/\$\{actionId\}\/\$\{mode\}/);
+  assert.match(screen, /\/ai\/chats\/\$\{chatId\}\/preferences\/commit/);
   assert.doesNotMatch(conversation, /preview\.before|preview\.after|arguments/);
 });

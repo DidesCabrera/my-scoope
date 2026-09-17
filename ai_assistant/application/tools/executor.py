@@ -16,6 +16,7 @@ from ai_assistant.application.tools.registry import (
     TOOL_LIST_USER_PROGRAMS,
     TOOL_LIST_USER_PROPOSALS,
     TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES,
+    TOOL_QUERY_WORKSPACE,
     TOOL_READ_ACCOUNT_BILLING_CONTEXT,
     TOOL_READ_CALENDARIZATION,
     TOOL_READ_DAILYPLAN,
@@ -24,6 +25,7 @@ from ai_assistant.application.tools.registry import (
     TOOL_READ_PROGRAM,
     TOOL_READ_PROPOSAL,
     TOOL_READ_SAVED_COMPARISON,
+    TOOL_READ_USER_PREFERENCE_CONTEXT,
     TOOL_READ_USER_PROFILE_CONTEXT,
     TOOL_SEARCH_OPERATIONAL_FOODS,
     TOOL_SEARCH_USER_DAILYPLANS,
@@ -154,6 +156,7 @@ class ReadOnlyToolExecutor:
         )
 
         if tool_name in {
+            TOOL_QUERY_WORKSPACE,
             TOOL_LIST_OPERATIONAL_FOODS,
             TOOL_LIST_INBOX_ITEMS,
             TOOL_LIST_SAVED_COMPARISONS,
@@ -180,6 +183,11 @@ class ReadOnlyToolExecutor:
 
         if tool_name == TOOL_LIST_USER_PROGRAMS:
             payload["search"] = str(payload.get("search") or "").strip()
+
+        if tool_name == TOOL_QUERY_WORKSPACE:
+            payload["resource"] = str(payload.get("resource") or "").strip().lower()
+            payload["search"] = str(payload.get("search") or "").strip()
+            payload["offset"] = _coerce_offset(payload.get("offset", 0))
 
         if tool_name == TOOL_LIST_INBOX_ITEMS:
             payload["scope"] = str(payload.get("scope") or "received").strip().lower()
@@ -211,6 +219,7 @@ def build_default_read_only_tool_dispatch_table() -> dict[str, ReadOnlyToolCalla
     product_tools = dict(get_ai_product_bindings().read_only_tools)
 
     return {
+        TOOL_QUERY_WORKSPACE: product_tools[TOOL_QUERY_WORKSPACE],
         TOOL_READ_DAILYPLAN: product_tools[TOOL_READ_DAILYPLAN],
         TOOL_READ_ACCOUNT_BILLING_CONTEXT: read_account_billing_context_tool,
         TOOL_READ_CALENDARIZATION: product_tools[TOOL_READ_CALENDARIZATION],
@@ -222,6 +231,7 @@ def build_default_read_only_tool_dispatch_table() -> dict[str, ReadOnlyToolCalla
         TOOL_READ_SAVED_COMPARISON: product_tools[TOOL_READ_SAVED_COMPARISON],
         TOOL_LIST_USER_PROPOSALS: product_tools[TOOL_LIST_USER_PROPOSALS],
         TOOL_READ_USER_PROFILE_CONTEXT: product_tools[TOOL_READ_USER_PROFILE_CONTEXT],
+        TOOL_READ_USER_PREFERENCE_CONTEXT: product_tools[TOOL_READ_USER_PREFERENCE_CONTEXT],
         TOOL_SEARCH_OPERATIONAL_FOODS: _search_operational_foods_adapter(product_tools[TOOL_SEARCH_OPERATIONAL_FOODS]),
         TOOL_SEARCH_USER_DAILYPLANS: _search_collection_adapter(
             product_tools[TOOL_SEARCH_USER_DAILYPLANS],
@@ -305,9 +315,15 @@ def _with_limited_collection(result: AIToolResult, *, key: str, limit: int) -> A
     data = dict(result.data or {})
     items = data.get(key)
     if isinstance(items, list):
+        total_count = len(items)
         data[key] = items[:limit]
         data["limit"] = limit
-        data["truncated"] = len(items) > limit
+        data["offset"] = 0
+        data["total_count"] = total_count
+        data["returned_count"] = len(data[key])
+        data["has_more"] = total_count > limit
+        data["next_offset"] = limit if total_count > limit else None
+        data["truncated"] = total_count > limit
     return AIToolResult(ok=True, data=data, error=None)
 
 
@@ -315,9 +331,15 @@ def _limit_tool_data(data: Mapping[str, Any], *, limit: int) -> dict[str, Any]:
     payload = dict(data or {})
     for key, value in list(payload.items()):
         if isinstance(value, list):
+            total_count = int(payload.get("total_count", len(value)))
             payload[key] = value[:limit]
             payload.setdefault("limit", limit)
-            payload.setdefault("truncated", len(value) > limit)
+            payload.setdefault("offset", 0)
+            payload.setdefault("returned_count", len(payload[key]))
+            payload.setdefault("has_more", total_count > len(payload[key]))
+            payload.setdefault("next_offset", len(payload[key]) if total_count > len(payload[key]) else None)
+            payload.setdefault("truncated", total_count > len(payload[key]))
+            payload.setdefault("total_count", total_count)
     return payload
 
 
@@ -329,6 +351,13 @@ def _coerce_limit(value: Any, *, default: int, maximum: int) -> int:
     if limit < 1:
         return 1
     return min(limit, maximum)
+
+
+def _coerce_offset(value: Any) -> int:
+    try:
+        return max(0, int(value))
+    except (TypeError, ValueError):
+        return 0
 
 
 def _coerce_bool(value: Any, *, default: bool) -> bool:

@@ -9,6 +9,7 @@ from nutrition_solver.application.candidate_portfolio import build_candidate_por
 from nutrition_solver.application.contracts import OptimizationStatus
 from nutrition_solver.application.portion_solver import PortionSolverError, solve_meal_portions
 from nutrition_solver.application.problem_v2 import MealSlotProblem, NutrientRange, OptimizationProblemV2
+from nutrition_solver.domain.capabilities import SolverFeatureKey
 from nutrition_solver.domain.models import MacroTarget
 
 
@@ -217,7 +218,8 @@ def _solve_cp_sat(
             quantity_steps[slot.slot_id, food.food_id] = q
             model.add(q >= minimum_steps * y)
             model.add(q <= maximum_steps * y)
-            if food.food_id in excluded or maximum_steps < minimum_steps:
+            incompatible_form = _profile_incompatible_with_archetype(profile, archetype)
+            if food.food_id in excluded or maximum_steps < minimum_steps or incompatible_form:
                 model.add(y == 0)
 
         slot_selected = [selected[slot.slot_id, profile.food.food_id] for profile in profiles]
@@ -267,7 +269,7 @@ def _solve_cp_sat(
             preferred = _scaled(nutrient_range.preferred)
             model.add(deviation >= expression - preferred)
             model.add(deviation >= preferred - expression)
-            objective_terms.append(max(1, round(nutrient_range.weight * 10)) * deviation)
+            objective_terms.append(_normalized_deviation_coefficient(nutrient_range) * deviation)
 
     for nutrient_range in problem.daily_nutrient_ranges:
         expression = sum(
@@ -283,17 +285,15 @@ def _solve_cp_sat(
         preferred = _scaled(nutrient_range.preferred)
         model.add(deviation >= expression - preferred)
         model.add(deviation >= preferred - expression)
-        objective_terms.append(max(1, round(nutrient_range.weight * 10)) * deviation)
+        objective_terms.append(_normalized_deviation_coefficient(nutrient_range) * deviation)
 
-    preferred_ids = {int(value) for value in problem.preferences.get("preferred_food_ids", ())}
-    for slot in problem.meal_slots:
-        for profile in profiles:
-            y = selected[slot.slot_id, profile.food.food_id]
-            objective_terms.append(20 * y)
-            if profile.food.food_id in preferred_ids:
-                objective_terms.append(-10 * y)
-            if slot.meal_kind and slot.meal_kind not in profile.meal_affinities:
-                objective_terms.append(5 * y)
+    objective_terms.extend(
+        _preference_objective_terms(
+            problem=problem,
+            profiles=profiles,
+            selected=selected,
+        )
+    )
 
     model.minimize(sum(objective_terms))
     solver = cp_model.CpSolver()
@@ -383,6 +383,63 @@ def _scaled(value: float) -> int:
 
 def _range_cap(nutrient_range: NutrientRange) -> int:
     return max(_scaled(nutrient_range.maximum), _scaled(nutrient_range.preferred), 1)
+
+
+def _normalized_deviation_coefficient(nutrient_range: NutrientRange) -> int:
+    """Weight percentage deviation so kcal does not dominate gram-based macros."""
+
+    preferred = max(_scaled(nutrient_range.preferred), 1)
+    return max(1, round(float(nutrient_range.weight) * 100_000 / preferred))
+
+
+def _profile_feature_strings(profile, key: SolverFeatureKey) -> set[str]:
+    feature = profile.feature(key)
+    if feature is None or not feature.available:
+        return set()
+    values = feature.value if isinstance(feature.value, (tuple, list, set)) else (feature.value,)
+    return {str(value).strip().lower() for value in values if str(value).strip()}
+
+
+def _profile_incompatible_with_archetype(profile, archetype) -> bool:
+    food_forms = _profile_feature_strings(profile, SolverFeatureKey.FOOD_FORM)
+    return bool(food_forms.intersection(archetype.incompatible_food_forms))
+
+
+def _preference_objective_terms(*, problem, profiles, selected) -> list:
+    terms = []
+    preferred_ids = {int(value) for value in problem.preferences.get("preferred_food_ids", ())}
+    simplicity = str(problem.preferences.get("simplicity_preference") or "").lower()
+    cooking_time = str(problem.preferences.get("cooking_time_preference") or "").lower()
+    budget = str(problem.preferences.get("budget_preference") or "").lower()
+    for slot in problem.meal_slots:
+        for profile in profiles:
+            y = selected[slot.slot_id, profile.food.food_id]
+            terms.append(1_200 * y)
+            if profile.food.food_id in preferred_ids:
+                terms.append(-800 * y)
+            if slot.meal_kind and slot.meal_kind not in profile.meal_affinities:
+                terms.append(500 * y)
+            if simplicity in {"high", "alta", "alto"}:
+                penalty = _ordinal_feature_penalty(profile, SolverFeatureKey.PREPARATION_EFFORT)
+                terms.append(400 * penalty * y)
+            if cooking_time in {"low", "short", "bajo", "corto", "rapido", "rápido"}:
+                penalty = _ordinal_feature_penalty(profile, SolverFeatureKey.PREPARATION_EFFORT)
+                terms.append(600 * penalty * y)
+            if budget in {"low", "bajo", "economico", "económico"}:
+                penalty = _ordinal_feature_penalty(profile, SolverFeatureKey.COST_BAND)
+                terms.append(500 * penalty * y)
+    return terms
+
+
+def _ordinal_feature_penalty(profile, key: SolverFeatureKey) -> int:
+    values = _profile_feature_strings(profile, key)
+    if not values:
+        return 1
+    if values.intersection({"low", "bajo", "baja", "cheap", "economico", "económico", "easy", "facil", "fácil"}):
+        return 0
+    if values.intersection({"high", "alto", "alta", "expensive", "caro", "difficult", "complex", "complejo"}):
+        return 2
+    return 1
 
 
 def _excluded_food_ids(problem: OptimizationProblemV2) -> tuple[int, ...]:

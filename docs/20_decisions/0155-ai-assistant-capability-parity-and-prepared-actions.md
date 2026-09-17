@@ -3,6 +3,10 @@
 Status: accepted
 Date: 2026-07-23
 
+Provider-facing mutation selection was superseded by Decision 0195: new turns use one
+capability-oriented workspace patch while this decision's ownership, preview, stale
+write protection and trusted-confirmation invariants remain authoritative.
+
 ## Context
 
 My Scoope exposed a useful but partial assistant: the provider-facing registry and

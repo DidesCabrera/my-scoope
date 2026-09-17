@@ -1,11 +1,11 @@
 import { createContext, Fragment, type ReactNode, useContext, useRef, useState } from "react";
+import * as Haptics from "expo-haptics";
 import { type Href, useRouter } from "expo-router";
 import { Check, ChevronRight, Clock, GripVertical, Pencil, RefreshCw, Trash2 } from "lucide-react-native";
 import { Alert, Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 import DraggableFlatList, { NestableDraggableFlatList, ScaleDecorator, type RenderItemParams } from "react-native-draggable-flatlist";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import ReanimatedSwipeable, { type SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
-import Animated from "react-native-reanimated";
+import ReanimatedSwipeable, { SwipeDirection, type SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
+import Animated, { type SharedValue, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 
 import { MacroCalorieDistribution, macroCalorieShares, PanelAllocationBar, ProteinPerKilogramBadge } from "@/components/nutrition";
 import { EntityIcon } from "@/components/ui";
@@ -75,6 +75,7 @@ type FoodPanelTab = "quantity" | "calories" | "macros" | "distribution" | "alloc
 type MealPanelTab = "menu" | "calories" | "macros" | "distribution" | "allocation" | "edit";
 
 type EditablePanelItem = { id: string; name: string };
+type PanelRowDragInteraction = { delayLongPress: number; onLongPress(): void };
 const NestedPanelScrollContext = createContext(true);
 
 type PanelRowEditing<T extends EditablePanelItem> = {
@@ -146,22 +147,31 @@ function confirmRowDeletion<T extends EditablePanelItem>(editing: PanelRowEditin
   ]);
 }
 
-function EditablePanelRow<T extends EditablePanelItem>({ drag, editing, isActive, item, onPrepareDrag, onReleaseDrag, onSwipeableClose, onSwipeableWillOpen, row }: {
-  drag(): void;
+function beginDrag(drag: () => void, onPrepareDrag?: () => void) {
+  onPrepareDrag?.();
+  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid).catch(() => undefined);
+  drag();
+}
+
+function DirectionalSwipeSurface({ children, direction, progress, side, style }: { children: ReactNode; direction: SharedValue<number>; progress: SharedValue<number>; side: "left" | "right"; style: StyleProp<ViewStyle> }) {
+  const visibilityStyle = useAnimatedStyle(() => ({
+    opacity: progress.value > 0 && direction.value === (side === "left" ? 1 : -1) ? 1 : 0,
+  }), [direction, progress, side]);
+  return <Animated.View style={[style, visibilityStyle]}>{children}</Animated.View>;
+}
+
+function EditablePanelRow<T extends EditablePanelItem>({ editing, isActive, item, onLongPress, onSwipeableClose, onSwipeableWillOpen, row }: {
   editing: PanelRowEditing<T>;
   isActive: boolean;
   item: T;
-  onPrepareDrag(): void;
-  onReleaseDrag(): void;
+  onLongPress(): void;
   onSwipeableClose(methods: SwipeableMethods): void;
   onSwipeableWillOpen(methods: SwipeableMethods): void;
   row: ReactNode;
 }) {
   const swipeableRef = useRef<SwipeableMethods>(null);
-  const longPressGesture = Gesture.LongPress().minDuration(320).onStart(() => {
-    onPrepareDrag();
-    drag();
-  }).onFinalize(onReleaseDrag).runOnJS(true);
+  const swipeDirection = useSharedValue(0);
+  const [swipeSide, setSwipeSide] = useState<"left" | "neutral" | "right">("neutral");
   const accessibilityActions = [
     { name: "activate" as const, label: editing.editLabel(item) },
     ...(editing.onChangeTime ? [{ name: "change-time" as const, label: `Cambiar hora de ${item.name}` }] : []),
@@ -169,49 +179,57 @@ function EditablePanelRow<T extends EditablePanelItem>({ drag, editing, isActive
     { name: "delete" as const, label: `Eliminar ${item.name}` },
   ];
 
-  const renderRightActions = (_progress: unknown, _translation: unknown, methods: SwipeableMethods) => (
-    <View style={styles.swipeActions}>
+  const renderRightActions = (progress: SharedValue<number>, _translation: SharedValue<number>, methods: SwipeableMethods) => (
+    <DirectionalSwipeSurface direction={swipeDirection} progress={progress} side="right" style={styles.swipeActions}>
       <SwipeAction label="Editar" onPress={() => { methods.close(); editing.onEdit(item); }} tone="edit"><Pencil color={tokens.color.entityIconForeground} size={18} /></SwipeAction>
       <SwipeAction label="Reemplazar" onPress={() => { methods.close(); editing.onReplace(item); }}><RefreshCw color={tokens.color.entityIconForeground} size={18} /></SwipeAction>
       <SwipeAction label="Eliminar" onPress={() => confirmRowDeletion(editing, item, () => methods.close())} tone="destructive"><Trash2 color={tokens.color.entityIconForeground} size={18} /></SwipeAction>
-    </View>
+    </DirectionalSwipeSurface>
   );
-  const renderLeftActions = editing.onChangeTime ? (_progress: unknown, _translation: unknown, methods: SwipeableMethods) => (
-    <View style={styles.swipeTimeAction}>
+  const renderLeftActions = editing.onChangeTime ? (progress: SharedValue<number>, _translation: SharedValue<number>, methods: SwipeableMethods) => (
+    <DirectionalSwipeSurface direction={swipeDirection} progress={progress} side="left" style={styles.swipeTimeAction}>
       <SwipeAction label="Cambiar hora" onPress={() => { methods.close(); editing.onChangeTime?.(item); }} tone="time"><Clock color={tokens.color.entityIconForeground} size={19} /></SwipeAction>
-    </View>
+    </DirectionalSwipeSurface>
   ) : undefined;
 
   return (
     <ScaleDecorator activeScale={1.018}>
+      <View style={styles.swipeUnderlay}>
+      <View pointerEvents="none" style={[styles.swipeOvershoot, styles.swipeOvershootLeft, { backgroundColor: swipeSide === "left" && editing.onChangeTime ? "#3A86FF" : tokens.color.surfaceMuted }]} />
+      <View pointerEvents="none" style={[styles.swipeOvershoot, styles.swipeOvershootRight, { backgroundColor: swipeSide === "right" ? "#515151" : tokens.color.surfaceMuted }]} />
       <ReanimatedSwipeable
+        containerStyle={styles.swipeContainer}
         friction={2}
         leftThreshold={36}
-        onSwipeableClose={() => { if (swipeableRef.current) onSwipeableClose(swipeableRef.current); }}
+        onSwipeableClose={() => { swipeDirection.value = 0; setSwipeSide("neutral"); if (swipeableRef.current) onSwipeableClose(swipeableRef.current); }}
+        onSwipeableOpenStartDrag={(direction) => { swipeDirection.value = direction === SwipeDirection.RIGHT ? 1 : -1; setSwipeSide(direction === SwipeDirection.RIGHT ? "left" : "right"); }}
         onSwipeableWillOpen={() => { if (swipeableRef.current) onSwipeableWillOpen(swipeableRef.current); }}
         overshootFriction={8}
-        overshootLeft={false}
-        overshootRight={false}
+        overshootLeft
+        overshootRight
         ref={swipeableRef}
         renderLeftActions={renderLeftActions}
         renderRightActions={renderRightActions}
         rightThreshold={36}>
-        <GestureDetector gesture={longPressGesture}>
-          <Animated.View
+        <Pressable
             accessibilityActions={accessibilityActions}
             accessibilityHint="Desliza hacia la izquierda para ver acciones. Mantén pulsado y arrastra para reordenar."
             accessibilityLabel={item.name}
+            delayLongPress={320}
+            disabled={isActive}
             onAccessibilityAction={(event) => {
               if (event.nativeEvent.actionName === "activate") editing.onEdit(item);
               if (event.nativeEvent.actionName === "change-time") editing.onChangeTime?.(item);
               if (event.nativeEvent.actionName === "replace") editing.onReplace(item);
               if (event.nativeEvent.actionName === "delete") confirmRowDeletion(editing, item);
             }}
+            onLongPress={onLongPress}
             style={[styles.gestureRow, isActive && styles.gestureRowActive]}>
             {row}
-          </Animated.View>
-        </GestureDetector>
+            {isActive ? <View pointerEvents="none" style={styles.gestureRowBottomBorder} /> : null}
+        </Pressable>
       </ReanimatedSwipeable>
+      </View>
     </ScaleDecorator>
   );
 }
@@ -219,7 +237,7 @@ function EditablePanelRow<T extends EditablePanelItem>({ drag, editing, isActive
 function PanelRows<T extends EditablePanelItem>({ editing, items, renderRow }: {
   editing?: PanelRowEditing<T>;
   items: T[];
-  renderRow(item: T, index: number): ReactNode;
+  renderRow(item: T, index: number, dragInteraction?: PanelRowDragInteraction): ReactNode;
 }) {
   const nestedScroll = useContext(NestedPanelScrollContext);
   const { setPanelDragging } = useScreenScrollControl();
@@ -234,23 +252,23 @@ function PanelRows<T extends EditablePanelItem>({ editing, items, renderRow }: {
     if (openSwipeableRef.current === methods) openSwipeableRef.current = null;
   };
 
-  const renderDraggableRow = ({ drag, getIndex, isActive, item }: RenderItemParams<T>) => (
-    <EditablePanelRow
-      drag={drag}
+  const renderDraggableRow = ({ drag, getIndex, isActive, item }: RenderItemParams<T>) => {
+    const onLongPress = () => beginDrag(drag, () => {
+      openSwipeableRef.current?.close();
+      openSwipeableRef.current = null;
+      if (!nestedScroll) setPanelDragging(true);
+    });
+    const dragInteraction: PanelRowDragInteraction = { delayLongPress: 320, onLongPress };
+    return <EditablePanelRow
       editing={editing}
       isActive={isActive}
       item={item}
-      onPrepareDrag={() => {
-        openSwipeableRef.current?.close();
-        openSwipeableRef.current = null;
-        if (!nestedScroll) setPanelDragging(true);
-      }}
-      onReleaseDrag={() => { if (!nestedScroll) setPanelDragging(false); }}
+      onLongPress={onLongPress}
       onSwipeableClose={handleSwipeableClose}
       onSwipeableWillOpen={handleSwipeableWillOpen}
-      row={renderRow(item, getIndex() ?? 0)}
-    />
-  );
+      row={renderRow(item, getIndex() ?? 0, dragInteraction)}
+    />;
+  };
 
   const listProps = {
       activationDistance: 20,
@@ -307,6 +325,7 @@ function PanelHeaderCell<Key extends string>({ align = "center", children, sortK
 }
 
 type FoodPreparation = {
+  disabled?: boolean;
   isPrepared(item: FoodPanelItem): boolean;
   onToggle(item: FoodPanelItem): void;
 };
@@ -376,19 +395,20 @@ export function FoodQuantityPanel({ editing, items, onOpenItem, preparation }: {
   return (
     <PanelBody>
       <QuantityHeader leadingLabel="Alimentos" preparation={Boolean(preparation)} trailingLabel="Qty" {...sorting} />
-      <PanelRows editing={sorting.sort ? undefined : editing} items={visibleItems} renderRow={(item, index) => {
+      <PanelRows editing={sorting.sort ? undefined : editing} items={visibleItems} renderRow={(item, index, dragInteraction) => {
         const canOpen = item.detailId != null && Boolean(onOpenItem);
         return <View key={item.id} style={[styles.row, index === visibleItems.length - 1 && styles.rowLast]}>
-          {canOpen ? <Pressable accessibilityLabel={`Ver detalle de ${item.name}`} accessibilityRole="link" onPress={() => onOpenItem?.(item)} style={({ pressed }) => [styles.quantityLeadingCell, pressed && styles.pressed]}><PanelItemName item={item} style={styles.foodDetailCopy} /></Pressable> : <PanelItemName item={item} style={styles.quantityLeadingCell} />}
+          {canOpen ? <Pressable {...dragInteraction} accessibilityLabel={`Ver detalle de ${item.name}`} accessibilityRole="link" onPress={() => onOpenItem?.(item)} style={styles.quantityLeadingCell}><PanelItemName item={item} style={styles.foodDetailCopy} /></Pressable> : <PanelItemName item={item} style={styles.quantityLeadingCell} />}
           <Text style={[styles.cell, styles.quantityValue]}>{decimal(item.quantity)} {item.quantityUnit}</Text>
           {preparation ? (
             <Pressable
               accessibilityLabel={`${preparation.isPrepared(item) ? "Desmarcar" : "Marcar"} ${item.name} como preparado`}
               accessibilityRole="checkbox"
-              accessibilityState={{ checked: preparation.isPrepared(item) }}
+              accessibilityState={{ checked: preparation.isPrepared(item), disabled: preparation.disabled }}
+              disabled={preparation.disabled}
               hitSlop={8}
               onPress={() => preparation.onToggle(item)}
-              style={({ pressed }) => [styles.preparationValue, styles.preparationButton, pressed && styles.pressed]}>
+              style={[styles.preparationValue, styles.preparationButton, preparation.disabled && styles.disabled]}>
               <View style={styles.preparationMarker}>{preparation.isPrepared(item) ? <View style={styles.preparationMarkerChecked} /> : null}</View>
             </Pressable>
           ) : null}
@@ -509,16 +529,18 @@ export function MealMenuPanel({ editing, items, onOpenItem }: { editing?: PanelR
   if (items.length === 0) return <PanelEmptyState label="Todavía no hay comidas." />;
   return (
     <PanelBody>
-      <PanelRows editing={editing} items={items} renderRow={(item, index) => {
+      <PanelRows editing={editing} items={items} renderRow={(item, index, dragInteraction) => {
         const canOpen = Boolean((item.detailId != null || item.canOpen) && onOpenItem);
         return (
         <Pressable
           accessibilityLabel={canOpen ? `Ver detalle de ${item.name}` : undefined}
           accessibilityRole={canOpen ? "link" : undefined}
-          disabled={!canOpen}
+          delayLongPress={dragInteraction?.delayLongPress}
+          disabled={!canOpen && !dragInteraction}
           key={item.id}
+          onLongPress={dragInteraction?.onLongPress}
           onPress={() => onOpenItem?.(item)}
-          style={({ pressed }) => [styles.menuRow, index === items.length - 1 && styles.rowLast, pressed && canOpen && styles.menuRowPressed]}>
+          style={[styles.menuRow, index === items.length - 1 && styles.rowLast]}>
           <View style={styles.menuCopy}>
             <View style={styles.menuTitleRow}>
               <MealRowIdentity completed={item.completed} menu name={item.name} projectedLabel={item.projectedLabel} />
@@ -562,7 +584,7 @@ function EditDragHandle({ disabled, drag, label }: { disabled: boolean; drag(): 
       delayLongPress={180}
       disabled={disabled}
       hitSlop={8}
-      onLongPress={drag}
+      onLongPress={() => beginDrag(drag)}
       style={({ pressed }) => [styles.editDragHandle, disabled && styles.disabled, pressed && styles.pressed]}>
       <GripVertical color={tokens.color.textMuted} size={18} strokeWidth={2.2} />
     </Pressable>
@@ -577,7 +599,7 @@ function FoodEditPanel({ editing, items }: { editing: FoodPanelEditing; items: F
   return (
     <PanelBody>
       <View style={[styles.row, styles.header, styles.editRow]}><View style={styles.editDragHeader} /><Text style={[styles.headerText, styles.editLeading]}>Alimentos</Text><Text style={[styles.headerText, styles.editValue]}>Porción</Text><Text style={[styles.headerText, styles.foodEditActions]}>Acciones</Text></View>
-      <DraggableFlatList
+      <NestableDraggableFlatList
         activationDistance={12}
         data={draftItems}
         keyExtractor={(item) => item.id}
@@ -617,7 +639,7 @@ function MealEditPanel({ editing, items }: { editing: MealPanelEditing; items: M
   return (
     <PanelBody>
       <View style={[styles.row, styles.header, styles.editRow]}><View style={styles.editDragHeader} /><Text style={[styles.headerText, styles.editLeading]}>Comidas</Text><Text style={[styles.headerText, styles.editValue]}>Hora</Text><Text style={[styles.headerText, styles.mealEditActions]}>Acciones</Text></View>
-      <DraggableFlatList
+      <NestableDraggableFlatList
         activationDistance={12}
         data={draftItems}
         keyExtractor={(item) => item.id}
@@ -747,7 +769,6 @@ const styles = StyleSheet.create({
   menuRow: { alignItems: "center", alignSelf: "stretch", borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1, flexDirection: "row", gap: tokens.spacing.xs, paddingLeft: tokens.spacing.sm, paddingRight: tokens.spacing.xs, paddingVertical: tokens.spacing.lg },
   menuCopy: { flex: 1, gap: tokens.spacing.sm, minWidth: 0 },
   menuAction: { alignItems: "center", alignSelf: "stretch", borderRadius: tokens.radius.pill, justifyContent: "center", minWidth: 24 },
-  menuRowPressed: { opacity: 0.55 },
   menuTitleRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0 },
   mealIdentity: { alignItems: "center", flex: 1, flexDirection: "row", gap: tokens.spacing.compact, minWidth: 0, paddingHorizontal: tokens.spacing.xs },
   identityCopy: { alignItems: "flex-start", flex: 1, gap: 3, justifyContent: "center", minWidth: 0 },
@@ -760,12 +781,28 @@ const styles = StyleSheet.create({
   menuTime: { color: tokens.color.textMuted, fontSize: tokens.type.label, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.regular, letterSpacing: 0 },
   menuFoods: { color: tokens.color.textMain, fontSize: tokens.type.caption, fontWeight: tokens.weight.regular, letterSpacing: 0, lineHeight: 20, paddingHorizontal: tokens.spacing.xs },
   gestureRow: { backgroundColor: tokens.color.surfaceMuted },
-  gestureRowActive: { opacity: 0.92 },
+  gestureRowActive: {
+    backgroundColor: "#3a3a3a",
+    borderTopColor: tokens.color.borderDefault,
+    borderTopWidth: 1,
+    elevation: 4,
+    shadowColor: "#000000",
+    shadowOffset: { height: 2, width: 0 },
+    shadowOpacity: 0.14,
+    shadowRadius: 5,
+    zIndex: 10,
+  },
+  gestureRowBottomBorder: { backgroundColor: tokens.color.borderDefault, bottom: 0, height: 1, left: 0, position: "absolute", right: 0 },
+  swipeContainer: { backgroundColor: "transparent" },
+  swipeUnderlay: { backgroundColor: tokens.color.surfaceMuted, position: "relative" },
+  swipeOvershoot: { bottom: 0, position: "absolute", top: 0, width: "50%" },
+  swipeOvershootLeft: { left: 0 },
+  swipeOvershootRight: { right: 0 },
   swipeActions: { alignSelf: "stretch", flexDirection: "row", width: 144 },
   swipeTimeAction: { alignSelf: "stretch", width: 48 },
   swipeAction: { alignItems: "center", alignSelf: "stretch", backgroundColor: "#515151", flex: 1, justifyContent: "center", width: 48 },
   swipeActionEdit: { backgroundColor: "#515151" },
-  swipeActionTime: { backgroundColor: "#1B6491" },
+  swipeActionTime: { backgroundColor: "#3A86FF" },
   swipeActionDestructive: { backgroundColor: "#DB294A" },
   swipeActionPressed: { opacity: 0.72 },
   iconAction: { alignItems: "center", borderRadius: tokens.radius.sm, height: 34, justifyContent: "center", width: 34 },

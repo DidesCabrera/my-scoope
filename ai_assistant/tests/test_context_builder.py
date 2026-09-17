@@ -106,6 +106,27 @@ class SafeLLMContextBuilderTests(SimpleTestCase):
             ["age_years", "sex"],
         )
 
+    def test_provider_sanitizer_does_not_retruncate_executor_bounded_collections(self):
+        foods = [{"id": index, "name": f"Food {index}"} for index in range(13)]
+
+        safe = sanitize_provider_context(
+            {
+                "data": {
+                    "resource": "foods",
+                    "scope": "library",
+                    "foods": foods,
+                    "total_count": 13,
+                    "returned_count": 13,
+                    "has_more": False,
+                }
+            }
+        )
+
+        self.assertEqual(len(safe["data"]["foods"]), 13)
+        self.assertEqual(safe["data"]["total_count"], 13)
+        self.assertEqual(safe["data"]["returned_count"], 13)
+        self.assertFalse(safe["data"]["has_more"])
+
     def test_non_intake_surface_can_keep_compact_nutrition_brief(self):
         request = ChatEngineRequest(message="resume el contexto", user_id=123)
         state = start_or_continue_conversation(
@@ -152,7 +173,11 @@ class ToolOrientedContextBuilderTests(SimpleTestCase):
         context = build_safe_llm_context(request, conversation_state=state).as_dict()
 
         tool_context = context["metadata"]["tool_oriented_intake"]
-        self.assertEqual(tool_context["version"], "ai_assistant_workspace.v1")
+        self.assertEqual(tool_context["version"], "ai_assistant_workspace.v2")
+        self.assertEqual(
+            tool_context["client_memory_contract"],
+            "ai_assistant_client_memory.v2",
+        )
         self.assertEqual(tool_context["assistant_role"], "collaborative_product_assistant")
         self.assertEqual(tool_context["current_drafts"]["profile_draft"]["height_cm"], 188)
         self.assertEqual(tool_context["current_drafts"]["profile_draft"]["weight_kg"], 85.0)
@@ -232,7 +257,7 @@ class ToolOrientedContextBuilderTests(SimpleTestCase):
         context_text = str(context)
         tool_context = context["metadata"]["tool_oriented_intake"]
 
-        self.assertEqual(tool_context["version"], "ai_assistant_workspace.v1")
+        self.assertEqual(tool_context["version"], "ai_assistant_workspace.v2")
         self.assertEqual(tool_context["current_drafts"]["profile_draft"]["weight_kg"], 85.0)
         self.assertNotIn("nutrition_brief", context)
         self.assertNotIn("ppk_weight_source", context_text)
@@ -247,3 +272,20 @@ class ToolOrientedContextBuilderTests(SimpleTestCase):
         self.assertTrue(context["runtime"]["proposal_creation_enabled"])
         self.assertNotIn("reviewable_proposal_tools_enabled", context["runtime"])
         self.assertTrue(context["runtime"]["persistent_writes_require_approval"])
+
+    def test_preference_workspace_uses_the_same_canonical_fields_as_tools(self):
+        request = ChatEngineRequest(message="quiero algo simple", user_id=123)
+        state = start_or_continue_conversation(
+            message="quiero una dieta simple, presupuesto bajo, con 3 comidas y sin atún",
+            existing_payload=None,
+        )
+
+        context = build_safe_llm_context(request, conversation_state=state).as_dict()
+        preference_draft = context["metadata"]["tool_oriented_intake"]["current_drafts"]["preference_draft"]
+
+        self.assertNotIn("excluded_foods", preference_draft)
+        self.assertNotIn("budget_level", preference_draft)
+        self.assertNotIn("meals_per_day", preference_draft)
+        self.assertEqual(preference_draft.get("preferred_meals_per_day"), 3)
+        self.assertEqual(preference_draft.get("budget_preference"), "low")
+        self.assertEqual(preference_draft.get("simplicity_preference"), "high")

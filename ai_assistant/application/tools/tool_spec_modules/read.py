@@ -8,6 +8,53 @@ from ai_assistant.application.tools.contracts import (
 from ai_assistant.application.tools.tool_names import *  # noqa: F403
 
 READ_TOOL_SPECS = {
+TOOL_QUERY_WORKSPACE: AssistantToolSpec(
+        name=TOOL_QUERY_WORKSPACE,
+        description=(
+            "Query the authenticated user's My Scoope workspace. This is the primary read capability for "
+            "foods, meals, daily plans, programs, calendarization, proposals and saved comparisons. "
+            "Use it before saying stored product data is unavailable. Omit object_id to list or search; "
+            "include object_id to read one object. It never writes data."
+        ),
+        category=AssistantToolCategory.READ,
+        risk_level=AssistantToolRiskLevel.LOW,
+        requires_human_review=False,
+        allowed_intents=("read_context", "answer_question", "iterate_proposal"),
+        input_schema={
+            "type": "object",
+            "required": ["resource"],
+            "properties": {
+                "resource": {
+                    "type": "string",
+                    "enum": [
+                        "foods",
+                        "meals",
+                        "dailyplans",
+                        "programs",
+                        "calendarization",
+                        "proposals",
+                        "saved_comparisons",
+                    ],
+                },
+                "object_id": {
+                    "type": "integer",
+                    "description": "Optional owned object ID for a detail read.",
+                },
+                "search": {
+                    "type": "string",
+                    "description": "Optional text search for list resources.",
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Optional maximum result count, from 1 to 50.",
+                },
+                "offset": {
+                    "type": "integer",
+                    "description": "Optional zero-based offset for the next page.",
+                },
+            },
+        },
+    ),
 TOOL_READ_FOOD: AssistantToolSpec(
         name=TOOL_READ_FOOD,
         description="Read one operational Food visible to the authenticated user.",
@@ -200,6 +247,19 @@ TOOL_READ_USER_PROFILE_CONTEXT: AssistantToolSpec(
             "required": [],
             "properties": {},
         },
+    ),
+TOOL_READ_USER_PREFERENCE_CONTEXT: AssistantToolSpec(
+        name=TOOL_READ_USER_PREFERENCE_CONTEXT,
+        description=(
+            "Read the authenticated user's approved food and meal preferences. "
+            "Use this when the user refers to saved preferences, restrictions, allergies, usual meal organization "
+            "or asks the assistant to remember what they normally prefer. This tool never writes data."
+        ),
+        category=AssistantToolCategory.READ,
+        risk_level=AssistantToolRiskLevel.LOW,
+        requires_human_review=False,
+        allowed_intents=("read_context", "capture_nutrition_brief", "create_dailyplan_proposal", "answer_question"),
+        input_schema={"type": "object", "required": [], "properties": {}},
     ),
 TOOL_LIST_USER_PROGRAMS: AssistantToolSpec(
         name=TOOL_LIST_USER_PROGRAMS,

@@ -46,11 +46,27 @@ class SolverFoodCandidateQueryResult:
     limit: int
     search: str | None
     include_extended: bool
+    total_eligible_count: int = 0
+    active_visible_count: int = 0
+    excluded_solver_disabled_count: int = 0
 
     def as_dict(self) -> dict:
         return {
             "candidates": [_solver_food_as_dict(candidate) for candidate in self.candidates],
             "count": self.count,
+            "returned_count": self.count,
+            "total_eligible_count": self.total_eligible_count,
+            "active_visible_count": self.active_visible_count,
+            "excluded_solver_disabled_count": self.excluded_solver_disabled_count,
+            "has_more": self.total_eligible_count > self.count,
+            "readiness": {
+                "status": "ready" if self.total_eligible_count else "blocked",
+                "reason_code": (
+                    "solver_candidates_available"
+                    if self.total_eligible_count
+                    else "no_solver_enabled_foods"
+                ),
+            },
             "limit": self.limit,
             "search": self.search,
             "include_extended": self.include_extended,
@@ -76,14 +92,17 @@ def list_solver_food_candidates(
     safe_limit = _normalize_limit(limit)
     normalized_search = _normalize_search(search)
 
-    queryset = get_solver_food_candidate_queryset(
+    active_visible_queryset = get_solver_visible_food_queryset(
         user,
         search=normalized_search,
         include_extended=include_extended,
     )
+    queryset = active_visible_queryset.filter(solver_enabled=True)
+    active_visible_count = active_visible_queryset.count()
+    total_eligible_count = queryset.count()
 
     candidates = tuple(
-        build_solver_food_candidate(food)
+        build_solver_food_candidate(food, required=False)
         for food in queryset[:safe_limit]
     )
 
@@ -93,6 +112,9 @@ def list_solver_food_candidates(
         limit=safe_limit,
         search=normalized_search,
         include_extended=include_extended,
+        total_eligible_count=total_eligible_count,
+        active_visible_count=active_visible_count,
+        excluded_solver_disabled_count=max(active_visible_count - total_eligible_count, 0),
     )
 
 
@@ -104,6 +126,21 @@ def get_solver_food_candidate_queryset(
 ) -> QuerySet:
     """Return the ORM queryset used only at the ``notas`` adapter boundary."""
 
+    return get_solver_visible_food_queryset(
+        user,
+        search=search,
+        include_extended=include_extended,
+    ).filter(solver_enabled=True)
+
+
+def get_solver_visible_food_queryset(
+    user,
+    *,
+    search: str | None = None,
+    include_extended: bool = True,
+) -> QuerySet:
+    """Return active visible foods before the solver-enabled readiness gate."""
+
     visibility_states = [Food.VISIBILITY_CORE]
     if include_extended:
         visibility_states.append(Food.VISIBILITY_EXTENDED)
@@ -112,7 +149,6 @@ def get_solver_food_candidate_queryset(
         get_readable_food_queryset(user)
         .filter(
             is_active=True,
-            solver_enabled=True,
             visibility__in=visibility_states,
         )
         .order_by("-is_verified", "-data_quality_score", "name", "id")

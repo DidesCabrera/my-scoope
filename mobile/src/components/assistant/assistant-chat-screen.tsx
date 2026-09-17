@@ -137,6 +137,24 @@ export function AssistantChatScreen({ chatId, comparisonId = null }: { chatId: n
     );
   }
 
+  function handlePreferenceCommit() {
+    if (!chatId) return;
+    Alert.alert(
+      "¿Guardar estas preferencias?",
+      "Quedarán disponibles para futuras conversaciones y podrás cambiarlas más adelante.",
+      [
+        { text: "Volver", style: "cancel" },
+        {
+          text: "Guardar",
+          onPress: () => void apiRequest<{ status: "updated" | "unchanged"; refresh_chat: boolean }>(
+            `/api/v1/ai/chats/${chatId}/preferences/commit`,
+            { method: "POST" },
+          ).then(() => load()).catch((nextError) => setError(userFacingError(nextError))),
+        },
+      ],
+    );
+  }
+
   if (status === "anonymous") return <Redirect href="/login" />;
   if (loading) return <LoadingState label="Preparando la conversación…" />;
 
@@ -162,7 +180,7 @@ export function AssistantChatScreen({ chatId, comparisonId = null }: { chatId: n
             {iterationWarning ? <InlineNotice tone="warning">La conversación se guardó, pero una iteración del plan requiere revisión.</InlineNotice> : null}
             {comparisonId ? <InlineNotice>Esta conversación usará la comparación guardada como contexto verificado.</InlineNotice> : null}
           </View> : null}
-          {chat?.messages.length ? <ChatConversation messages={chat.messages} onPreparedAction={handlePreparedAction} /> : (
+          {chat?.messages.length ? <ChatConversation messages={chat.messages} onPreferenceCommit={handlePreferenceCommit} onPreparedAction={handlePreparedAction} /> : (
             <View style={styles.emptyConversation}>
               <View style={styles.emptyIcon}><Sparkles color={tokens.color.textMain} size={24} strokeWidth={2} /></View>
               <Text style={styles.emptyTitle}>¿Qué quieres planificar?</Text>

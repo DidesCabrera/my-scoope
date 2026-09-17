@@ -2,6 +2,8 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 
 from notas.application.ai_tools.preference_tools import (
+    commit_preference_update_tool,
+    read_user_preference_context_tool,
     share_preference_draft_card_tool,
     update_preference_draft_tool,
 )
@@ -61,7 +63,40 @@ class AIPreferenceToolsTests(TestCase):
         self.assertEqual(card["title"], "Preferencias para esta propuesta")
         self.assertEqual(card["known_count"], 3)
         self.assertTrue(card["has_chat_draft_updates"])
-        self.assertFalse(card["can_update_preferences"])
+        self.assertTrue(card["can_update_preferences"])
         food_items = card["sections"][0]["items"]
         preferred_item = next(item for item in food_items if item["key"] == "preferred_foods")
         self.assertEqual(preferred_item["value"], "pollo, arroz")
+
+    def test_approved_preference_update_persists_and_is_readable_across_chats(self):
+        committed = commit_preference_update_tool(
+            self.user,
+            preference_draft={
+                "dietary_pattern": "vegan",
+                "allergies_or_intolerances": ["maní"],
+                "preferred_foods": ["tofu"],
+                "field_sources": {
+                    "dietary_pattern": "chat_draft",
+                    "allergies_or_intolerances": "chat_draft",
+                    "preferred_foods": "chat_draft",
+                },
+            },
+        )
+
+        self.assertTrue(committed.ok)
+        self.assertCountEqual(
+            committed.data["updated_fields"],
+            ["dietary_pattern", "allergies_or_intolerances", "preferred_foods"],
+        )
+
+        read_result = read_user_preference_context_tool(self.user)
+        self.assertTrue(read_result.ok)
+        self.assertEqual(read_result.data["preference_context"]["dietary_pattern"], "vegan")
+        self.assertEqual(
+            read_result.data["preference_context"]["allergies_or_intolerances"],
+            ["maní"],
+        )
+        self.assertEqual(
+            read_result.data["preference_draft"]["field_sources"]["preferred_foods"],
+            "profile",
+        )

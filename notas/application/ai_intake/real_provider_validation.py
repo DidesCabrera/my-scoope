@@ -22,6 +22,20 @@ from notas.application.ai_intake.nutrition_brief import (
     NutritionConversationState,
     serialize_conversation,
 )
+from notas.application.ai_intake.real_provider_behavior_checks import (
+    evaluate_behavioral_surface,
+    evaluate_response_repetition,
+    evaluate_tool_result_grounding,
+    evaluate_visible_facts,
+)
+from notas.application.ai_intake.real_provider_lab_extensions import (
+    RealProviderValidationScenario,
+    build_lab_scenarios,
+    scenario_result_lab_metadata,
+    specialize_lab_scenario,
+    state_mutation_check_values,
+    validation_state_snapshot,
+)
 from notas.application.queries.user_nutrition_profile import get_user_nutrition_profile
 
 OUTCOME_FIRST_ACTION_TYPE = "assistant.ai_nutrition_intake.outcome_first_validation"
@@ -65,29 +79,6 @@ OUTCOME_FIRST_FORBIDDEN_VISIBLE_MARKERS = (
     "pending_field",
     "traceback",
 )
-
-
-@dataclass(frozen=True)
-class RealProviderValidationScenario:
-    key: str
-    description: str
-    user_messages: Sequence[str]
-    expected_final_brief: Mapping[str, Any] = field(default_factory=dict)
-    expected_brief_transitions: Mapping[str, Sequence[Any]] = field(default_factory=dict)
-    stable_brief_fields: Sequence[str] = field(default_factory=tuple)
-    fields_not_reasked_after_capture: Sequence[str] = field(default_factory=tuple)
-    required_tool_names: Sequence[str] = field(default_factory=tuple)
-    expected_tool_errors: Mapping[str, str] = field(default_factory=dict)
-    min_final_card_counts: Mapping[str, int] = field(default_factory=dict)
-    max_final_card_counts: Mapping[str, int] = field(default_factory=dict)
-    manual_review_prompts: Sequence[str] = field(default_factory=tuple)
-    forbidden_tool_names: Sequence[str] = field(default_factory=tuple)
-    forbidden_visible_fragments: Sequence[str] = field(default_factory=tuple)
-    max_repeated_opening_count: int | None = None
-    max_tool_calls: int | None = None
-    visible_reask_markers: Mapping[str, Sequence[str]] = field(default_factory=dict)
-    profile_preflight_facts: Mapping[str, Any] = field(default_factory=dict)
-    profile_preflight_missing_fields: Sequence[str] = field(default_factory=tuple)
 
 
 @dataclass(frozen=True)
@@ -150,6 +141,8 @@ class RealProviderValidationScenarioResult:
     turns: Sequence[RealProviderValidationTurn]
     usage_events: Sequence[Mapping[str, Any]]
     checks: Sequence[RealProviderValidationCheck]
+    state_before: Mapping[str, int] = field(default_factory=dict)
+    state_after: Mapping[str, int] = field(default_factory=dict)
 
     @property
     def hard_failures(self) -> tuple[RealProviderValidationCheck, ...]:
@@ -214,7 +207,7 @@ class RealProviderValidationReport:
 
 
 def built_in_real_provider_scenarios() -> dict[str, RealProviderValidationScenario]:
-    return {
+    catalog = {
         "saludo_y_descubrimiento": RealProviderValidationScenario(
             key="saludo_y_descubrimiento",
             description="Natural greeting and task discovery without a scripted questionnaire.",
@@ -421,7 +414,31 @@ def built_in_real_provider_scenarios() -> dict[str, RealProviderValidationScenar
                 "¿Evita mostrar códigos internos, trazas o lenguaje técnico innecesario?",
             ),
         ),
+        "bibliotecas_coherentes": RealProviderValidationScenario(
+            key="bibliotecas_coherentes",
+            description=(
+                "Read the four user libraries and verify that visible totals match the canonical "
+                "web projections for the selected validation user."
+            ),
+            user_messages=(
+                "Consulta mi biblioteca de alimentos y responde exactamente con el formato TOTAL: N.",
+                "Consulta mi biblioteca de comidas y responde exactamente con el formato TOTAL: N.",
+                "Consulta mi biblioteca de planes diarios y responde exactamente con el formato TOTAL: N.",
+                "Consulta mi biblioteca de programas y responde exactamente con el formato TOTAL: N.",
+            ),
+            required_tool_names=("query_workspace",),
+            max_tool_calls=8,
+            capability_ids=("F-01", "M-01", "DP-01", "PG-01"),
+            diagnostic_domains=("tool_routing", "grounding", "catalog_data"),
+            mutation_policy="read_only",
+            manual_review_prompts=(
+                "¿Cada total coincide con la cantidad que muestra la biblioteca web del mismo usuario?",
+                "¿El asistente evita contar borradores y snapshots internos como objetos de biblioteca?",
+            ),
+        ),
     }
+    catalog.update(build_lab_scenarios())
+    return catalog
 
 
 def run_real_provider_validation(
@@ -509,6 +526,10 @@ def _specialize_scenario_for_user(
     synchronization regression observable: any available profile fact is added
     to the expected final brief and stable-fact contract.
     """
+
+    specialized_lab_scenario = specialize_lab_scenario(scenario, user=user)
+    if specialized_lab_scenario is not None:
+        return specialized_lab_scenario
 
     if scenario.key != "ficha_conocida_sin_repreguntas":
         return scenario
@@ -602,6 +623,7 @@ def _run_scenario(
     existing_payload: Mapping[str, Any] | None = None
     turns: list[RealProviderValidationTurn] = []
     previous_cards = {"profile": 0, "preference": 0, "proposal_preferences": 0}
+    state_before = validation_state_snapshot(user)
 
     for index, message in enumerate(scenario.user_messages, start=1):
         turn_id = f"{conversation_id}-{index}"[:80]
@@ -697,13 +719,22 @@ def _run_scenario(
         previous_cards = cards
 
     usage_events = tuple(_usage_events_for_conversation(conversation_id))
-    checks = _scenario_checks(scenario=scenario, turns=turns, usage_events=usage_events)
+    state_after = validation_state_snapshot(user)
+    checks = _scenario_checks(
+        scenario=scenario,
+        turns=turns,
+        usage_events=usage_events,
+        state_before=state_before,
+        state_after=state_after,
+    )
     return RealProviderValidationScenarioResult(
         scenario=scenario,
         conversation_id=conversation_id,
         turns=tuple(turns),
         usage_events=usage_events,
         checks=tuple(checks),
+        state_before=state_before,
+        state_after=state_after,
     )
 
 
@@ -712,6 +743,8 @@ def _scenario_checks(
     scenario: RealProviderValidationScenario,
     turns: Sequence[RealProviderValidationTurn],
     usage_events: Sequence[Mapping[str, Any]],
+    state_before: Mapping[str, int] | None = None,
+    state_after: Mapping[str, int] | None = None,
 ) -> list[RealProviderValidationCheck]:
     checks: list[RealProviderValidationCheck] = []
     visible_blob = "\n".join(turn.assistant_message for turn in turns).lower()
@@ -747,6 +780,7 @@ def _scenario_checks(
     checks.append(_known_facts_not_reasked_check(scenario, turns))
     checks.append(_brief_transition_check(scenario, turns))
     checks.append(_tool_contract_check(scenario, turns))
+    checks.append(_visible_facts_check(scenario, turns))
     checks.append(_behavioral_surface_check(scenario, turns))
     checks.append(_response_repetition_check(scenario, turns))
     checks.append(_tool_result_grounding_check(turns))
@@ -754,6 +788,19 @@ def _scenario_checks(
     checks.append(_post_tool_fallback_pacing_check(turns))
     checks.append(_card_pacing_check(scenario, turns))
     checks.append(_usage_observability_check(turns, usage_events))
+    mutation_passed, mutation_detail, mutation_severity = state_mutation_check_values(
+        scenario,
+        state_before=state_before or {},
+        state_after=state_after or {},
+    )
+    checks.append(
+        RealProviderValidationCheck(
+            key="state_mutation_boundary",
+            passed=mutation_passed,
+            detail=mutation_detail,
+            severity=mutation_severity,
+        )
+    )
     checks.append(
         RealProviderValidationCheck(
             key="manual_ux_review",
@@ -763,6 +810,14 @@ def _scenario_checks(
         )
     )
     return checks
+
+
+def _visible_facts_check(
+    scenario: RealProviderValidationScenario,
+    turns: Sequence[RealProviderValidationTurn],
+) -> RealProviderValidationCheck:
+    passed, detail = evaluate_visible_facts(scenario, turns)
+    return _check("visible_facts", passed, detail)
 
 
 def _provider_health_check(
@@ -993,56 +1048,19 @@ def _tool_contract_check(
     return _check("tool_contract", passed, detail)
 
 
-
 def _behavioral_surface_check(
     scenario: RealProviderValidationScenario,
     turns: Sequence[RealProviderValidationTurn],
 ) -> RealProviderValidationCheck:
-    actual_tools = {name for turn in turns for name in turn.tool_names}
-    forbidden_tools = sorted(set(scenario.forbidden_tool_names).intersection(actual_tools))
-    visible_blob = "\n".join(turn.assistant_message.lower() for turn in turns)
-    leaked_fragments = [
-        fragment
-        for fragment in scenario.forbidden_visible_fragments
-        if fragment and fragment.lower() in visible_blob
-    ]
-    tool_call_count = sum(len(turn.tool_names) for turn in turns)
-    too_many_tools = scenario.max_tool_calls is not None and tool_call_count > scenario.max_tool_calls
-    passed = not forbidden_tools and not leaked_fragments and not too_many_tools
-    details = []
-    if forbidden_tools:
-        details.append(f"forbidden tools executed: {', '.join(forbidden_tools)}")
-    if leaked_fragments:
-        details.append(f"forbidden visible fragments: {', '.join(leaked_fragments)}")
-    if too_many_tools:
-        details.append(f"tool calls {tool_call_count} exceeded maximum {scenario.max_tool_calls}")
-    if not details:
-        details.append("tool restraint and product-language boundary were respected")
-    return _check("behavioral_surface", passed, "; ".join(details))
+    passed, detail = evaluate_behavioral_surface(scenario, turns)
+    return _check("behavioral_surface", passed, detail)
 
 
 def _response_repetition_check(
     scenario: RealProviderValidationScenario,
     turns: Sequence[RealProviderValidationTurn],
 ) -> RealProviderValidationCheck:
-    limit = scenario.max_repeated_opening_count
-    if limit is None:
-        return _check("response_repetition", True, "scenario does not define an opening repetition limit")
-    openings = []
-    for turn in turns:
-        text = " ".join(str(turn.assistant_message or "").strip().split())
-        if not text:
-            continue
-        first_sentence = text.split(".", 1)[0].strip().lower()
-        openings.append(first_sentence[:80])
-    counts = {opening: openings.count(opening) for opening in set(openings)}
-    repeated = {opening: count for opening, count in counts.items() if count > limit}
-    passed = not repeated
-    detail = (
-        "assistant openings stayed within the configured repetition limit"
-        if passed
-        else "repeated openings: " + ", ".join(f"{opening!r} x{count}" for opening, count in sorted(repeated.items()))
-    )
+    passed, detail = evaluate_response_repetition(scenario, turns)
     return _check("response_repetition", passed, detail)
 
 def _tool_result_grounding_check(
@@ -1050,30 +1068,8 @@ def _tool_result_grounding_check(
 ) -> RealProviderValidationCheck:
     """Reject claims that tools are unavailable after a real tool result exists."""
 
-    unavailable_markers = (
-        "no tengo ejecución de herramientas",
-        "no tengo herramientas disponibles",
-        "no puedo ejecutar herramientas",
-        "no puedo usar la herramienta",
-        "no tengo acceso a herramientas",
-    )
-    failures: list[str] = []
-    for turn in turns:
-        if not turn.tool_results:
-            continue
-        normalized = " ".join(turn.assistant_message.lower().split())
-        matched = [marker for marker in unavailable_markers if marker in normalized]
-        if matched:
-            failures.append(f"turn {turn.index}: contradicted executed tool result")
-    return _check(
-        "tool_result_grounding",
-        not failures,
-        "assistant text remained grounded in available tool results"
-        if not failures
-        else f"tool grounding failures: {failures}",
-    )
-
-
+    passed, detail = evaluate_tool_result_grounding(turns)
+    return _check("tool_result_grounding", passed, detail)
 
 
 def _provider_followup_health_check(
@@ -1380,7 +1376,14 @@ def _card_counts(state: NutritionConversationState) -> dict[str, int]:
 
 def _select_scenarios(keys: Sequence[str] | None) -> tuple[RealProviderValidationScenario, ...]:
     catalog = built_in_real_provider_scenarios()
-    selected_keys = tuple(keys or catalog.keys())
+    selected_keys = tuple(
+        keys
+        or (
+            key
+            for key, scenario in catalog.items()
+            if scenario.default_enabled
+        )
+    )
     unknown = [key for key in selected_keys if key not in catalog]
     if unknown:
         raise ValueError(
@@ -1393,6 +1396,7 @@ def _scenario_result_as_dict(result: RealProviderValidationScenarioResult) -> di
     return {
         "key": result.scenario.key,
         "description": result.scenario.description,
+        **scenario_result_lab_metadata(result),
         "status": "automated_checks_passed" if result.passed else "hard_regression",
         "conversation_id": result.conversation_id,
         "checks": [
@@ -1463,7 +1467,6 @@ def _scenario_result_as_dict(result: RealProviderValidationScenarioResult) -> di
 
 def _check(key: str, passed: bool, detail: str) -> RealProviderValidationCheck:
     return RealProviderValidationCheck(key=key, passed=bool(passed), detail=detail, severity="hard")
-
 
 
 def _optional_int(value: Any) -> int | None:

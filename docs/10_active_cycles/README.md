@@ -36,6 +36,19 @@ Status: planned / active / paused / completed / superseded
 Cuando un ciclo planificado empiece a implementarse, el documento puede permanecer aquí como plan operacional, pero las decisiones estables que surjan deben registrarse también en `docs/20_decisions/`.
 
 ## En curso o pendientes de validación
+- `food_catalog_authority_delivery_cycle.md`: FCA00-FCA08 implementa autoridad
+  central, bootstrap protegido, releases inmutables y materialización local. El
+  código está completo; quedan provisioning, cutover y reconciliación en Render.
+- `ai_assistant_patch_solver_synergy_cycle.md`: ciclo APS00-APS08 completado en
+  repositorio. Sustituye la selección de micro-tools de mutación por Workspace
+  Patches atómicos y revisables, activa portfolios del solver con tres alternativas
+  por defecto, permite elegir una alternativa confiable antes de aprobar y conserva
+  confirmación explícita web/móvil. Queda como gate operativo la validación con
+  proveedor real en staging.
+- `ai_assistant_reliability_recovery_cycle.md`: ARR00-ARR05 implementados localmente
+  para unificar memoria cliente, restaurar visibilidad de tools, persistir preferencias
+  solo tras aprobación, alinear cards web/móvil y registrar outcome traces; ARR06 exige
+  replays con proveedor real y revisión humana en staging.
 - `nutrition_label_ai_reliability_cycle.md`: implementación completada en repositorio
   para cámara/galería, IA multimodal, tarifa fija, escalamiento interno, retención
   opcional y métricas; quedan los gates de staging y TestFlight físico.

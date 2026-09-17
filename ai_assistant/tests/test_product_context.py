@@ -19,6 +19,7 @@ class ProductContextTests(SimpleTestCase):
         self.assertIn("temas ajenos", text)
         self.assertIn("redirige", text)
         self.assertIn("dominio principal", text)
+        self.assertIn("antes de afirmar que no tienes acceso", text)
 
     def test_capabilities_are_expressed_as_product_outcomes(self):
         policy = developer_product_capability_policy()

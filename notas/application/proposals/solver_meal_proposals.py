@@ -25,6 +25,11 @@ from nutrition_solver.domain.models import MacroTarget
 
 SOLVER_MEAL_PROPOSAL_VERSION = "nutrition_solver_meal_proposal_v1"
 DEFAULT_SOLVER_MEAL_CANDIDATE_LIMIT = 40
+DEFAULT_ENERGY_ONLY_MACRO_DISTRIBUTION = {
+    "protein": 30.0,
+    "carbs": 50.0,
+    "fat": 20.0,
+}
 
 
 @dataclass(frozen=True)
@@ -73,6 +78,8 @@ def create_solver_generated_meal_proposal(
         limit=_normalize_limit(limit),
         include_extended=include_extended,
     )
+    if candidates_result.total_eligible_count == 0:
+        raise ValueError("nutrition_solver_no_eligible_candidates")
     optimization_result = optimize_meal_portions(
         OptimizationInput(
             target=macro_target,
@@ -127,9 +134,32 @@ def _parse_macro_target(target: Mapping[str, Any]) -> MacroTarget:
         raise ValueError("nutrition_solver_target_must_be_object")
 
     kcal = _required_positive_float(target, "kcal", aliases=("total_kcal", "calories"))
-    protein = _required_positive_float(target, "protein", aliases=("protein_g",))
-    carbs = _required_positive_float(target, "carbs", aliases=("carbs_g", "carbohydrates"))
-    fat = _required_positive_float(target, "fat", aliases=("fat_g",))
+    macro_aliases = {
+        "protein": ("protein_g",),
+        "carbs": ("carbs_g", "carbohydrates"),
+        "fat": ("fat_g",),
+    }
+    supplied_macros = {
+        key: _first_present_value(target, key, aliases=aliases)
+        for key, aliases in macro_aliases.items()
+    }
+    distribution = _normalize_meal_macro_distribution(target.get("macro_distribution"))
+    if distribution and any(value is not None for value in supplied_macros.values()):
+        raise ValueError("nutrition_solver_target_macro_modes_conflict")
+    if distribution:
+        protein = kcal * distribution["protein"] / 100 / 4
+        carbs = kcal * distribution["carbs"] / 100 / 4
+        fat = kcal * distribution["fat"] / 100 / 9
+    elif all(value is None for value in supplied_macros.values()):
+        protein = kcal * DEFAULT_ENERGY_ONLY_MACRO_DISTRIBUTION["protein"] / 100 / 4
+        carbs = kcal * DEFAULT_ENERGY_ONLY_MACRO_DISTRIBUTION["carbs"] / 100 / 4
+        fat = kcal * DEFAULT_ENERGY_ONLY_MACRO_DISTRIBUTION["fat"] / 100 / 9
+    elif any(value is None for value in supplied_macros.values()):
+        raise ValueError("nutrition_solver_target_macros_must_be_complete")
+    else:
+        protein = _required_positive_float(target, "protein", aliases=("protein_g",))
+        carbs = _required_positive_float(target, "carbs", aliases=("carbs_g", "carbohydrates"))
+        fat = _required_positive_float(target, "fat", aliases=("fat_g",))
 
     return MacroTarget(
         kcal=kcal,
@@ -137,6 +167,39 @@ def _parse_macro_target(target: Mapping[str, Any]) -> MacroTarget:
         carbs=carbs,
         fat=fat,
     )
+
+
+def _normalize_meal_macro_distribution(value: object) -> dict[str, float] | None:
+    if value in (None, {}):
+        return None
+    if not isinstance(value, Mapping):
+        raise ValueError("nutrition_target_distribution_must_be_complete")
+    try:
+        distribution = {
+            key: float(value[key])
+            for key in ("protein", "carbs", "fat")
+        }
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValueError("nutrition_target_distribution_must_be_complete") from exc
+    if min(distribution.values()) <= 0:
+        raise ValueError("nutrition_target_distribution_must_be_positive")
+    if abs(sum(distribution.values()) - 100.0) > 0.01:
+        raise ValueError("nutrition_target_distribution_must_sum_100")
+    if not 15 <= distribution["fat"] <= 35:
+        raise ValueError("nutrition_target_distribution_fat_out_of_supported_range")
+    return distribution
+
+
+def _first_present_value(
+    target: Mapping[str, Any],
+    key: str,
+    *,
+    aliases: tuple[str, ...] = (),
+):
+    for candidate_key in (key, *aliases):
+        if candidate_key in target:
+            return target.get(candidate_key)
+    return None
 
 
 def _required_positive_float(
@@ -199,6 +262,12 @@ def _attach_solver_validation_summary(
         "result": optimization_result.as_dict(),
         "candidate_preview": {
             "count": candidates_result.count,
+            "returned_count": candidates_result.count,
+            "total_eligible_count": candidates_result.total_eligible_count,
+            "active_visible_count": candidates_result.active_visible_count,
+            "excluded_solver_disabled_count": candidates_result.excluded_solver_disabled_count,
+            "has_more": candidates_result.total_eligible_count > candidates_result.count,
+            "readiness": candidates_result.as_dict()["readiness"],
             "limit": candidates_result.limit,
             "search": candidates_result.search,
             "include_extended": candidates_result.include_extended,

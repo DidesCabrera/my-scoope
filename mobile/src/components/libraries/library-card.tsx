@@ -5,7 +5,7 @@ import type { LibraryActionResult, LibraryItem } from "@/api/types";
 import { NutritionEntityCard } from "@/components/nutrition";
 import type { FoodPanelEditing, FoodPanelItem, MealPanelEditing, MealPanelItem } from "@/components/panels";
 import { pickerConfigureHref, pickerHref } from "@/components/pickers/composition-picker-screen";
-import { EntityCardAction } from "@/components/ui";
+import { EntityCardAction, MutationStatusModal, useMutationStatus } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { CalendarizedEntityActions } from "@/components/calendarization/calendarized-entity-actions";
 
@@ -21,20 +21,25 @@ function indicatorValue(item: LibraryItem, icon: "week" | "dailyPlan" | "food"):
 
 type ApiRequest = <T>(path: string, init?: RequestInit) => Promise<T>;
 
-export function LibraryCard({ apiRequest, interactive = true, item, onChanged }: { apiRequest: ApiRequest; interactive?: boolean; item: LibraryItem; onChanged(result: LibraryActionResult): void }) {
+export function LibraryCard({ apiRequest, interactive = true, item, onChanged }: { apiRequest: ApiRequest; interactive?: boolean; item: LibraryItem; onChanged(result: LibraryActionResult): Promise<void> | void }) {
   const router = useRouter();
   const [timeChangeMeal, setTimeChangeMeal] = useState<MealPanelItem | null>(null);
+  const { clearStatus, runWithStatus, status: mutationStatus } = useMutationStatus();
   const segment = item.entity === "dailyPlan" ? "daily-plans" : item.entity === "program" ? "programs" : item.entity === "meal" ? "meals" : "foods";
   const detailHref = `/libraries/${segment}/${item.id}` as Href;
   const refresh = (message: string) => onChanged({ action: "rename", item_id: item.id, message });
-  const mutate = async (path: string, init: RequestInit, message: string) => {
-    await apiRequest(path, init);
-    refresh(message);
+  const mutate = async (path: string, init: RequestInit, message: string, feedback?: { loadingLabel: string; successLabel: string }) => {
+    const action = async () => {
+      await apiRequest(path, init);
+      await refresh(message);
+    };
+    if (feedback) await runWithStatus(action, feedback);
+    else await action();
   };
   const foodEditing: FoodPanelEditing | undefined = interactive && item.entity === "meal" ? {
     onDelete: async (food) => { if (food.relationId != null) await mutate(`/api/v1/library/meals/${item.id}/foods/${food.relationId}`, { method: "DELETE" }, "Alimento eliminado"); },
     onEditPortion: (food) => { if (food.detailId != null && food.relationId != null) router.push(pickerConfigureHref("food-to-meal", { relationId: food.relationId, selectedId: food.detailId, targetId: item.id, weekNumber: 1 })); },
-    onReorder: async (foods: FoodPanelItem[]) => mutate(`/api/v1/library/meals/${item.id}/foods/order`, { body: JSON.stringify({ ordered_ids: foods.map((food) => food.relationId) }), method: "PUT" }, "Orden actualizado"),
+    onReorder: async (foods: FoodPanelItem[]) => mutate(`/api/v1/library/meals/${item.id}/foods/order`, { body: JSON.stringify({ ordered_ids: foods.map((food) => food.relationId) }), method: "PUT" }, "Orden actualizado", { loadingLabel: "Actualizando comida", successLabel: "Comida actualizada" }),
     onReplace: (food) => { if (food.relationId != null) router.push(pickerHref("food-to-meal", { mealFoodId: food.relationId, mealId: item.id })); },
   } : undefined;
   const openMeal = (meal: MealPanelItem) => {
@@ -45,7 +50,7 @@ export function LibraryCard({ apiRequest, interactive = true, item, onChanged }:
     onChangeTime: setTimeChangeMeal,
     onDelete: async (meal) => { if (meal.relationId != null) await mutate(`/api/v1/library/daily-plans/${item.id}/meals/${meal.relationId}`, { method: "DELETE" }, "Comida eliminada"); },
     onOpen: openMeal,
-    onReorder: async (meals: MealPanelItem[]) => mutate(`/api/v1/library/daily-plans/${item.id}/meals/order`, { body: JSON.stringify({ ordered_ids: meals.map((meal) => meal.relationId) }), method: "PUT" }, "Orden actualizado"),
+    onReorder: async (meals: MealPanelItem[]) => mutate(`/api/v1/library/daily-plans/${item.id}/meals/order`, { body: JSON.stringify({ ordered_ids: meals.map((meal) => meal.relationId) }), method: "PUT" }, "Orden actualizado", { loadingLabel: "Actualizando plan", successLabel: "Plan actualizado" }),
     onReplace: (meal) => { if (meal.relationId != null) router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: item.id, dailyPlanMealId: meal.relationId })); },
   } : undefined;
   if (item.entity === "program") {
@@ -75,5 +80,6 @@ export function LibraryCard({ apiRequest, interactive = true, item, onChanged }:
       {item.panel.kind === "weeks" ? <ProgramPanels items={item.panel.weeks} /> : null}
     </NutritionEntityCard>
     <CalendarizedEntityActions entityName={timeChangeMeal?.name ?? "Comida"} initialAction="change-time" key={timeChangeMeal?.id ?? "closed-library-card-time-change"} onVisibleChange={(visible) => { if (!visible) setTimeChangeMeal(null); }} timeChange={timeChangeMeal?.relationId != null ? { initialTime: timeChangeMeal.time, onSubmit: async (hour) => mutate(`/api/v1/library/daily-plans/${item.id}/meals/${timeChangeMeal.relationId}`, { body: JSON.stringify({ hour }), headers: { "Content-Type": "application/json" }, method: "PATCH" }, "Hora actualizada") } : undefined} visible={timeChangeMeal != null} />
+    <MutationStatusModal onFinished={clearStatus} status={mutationStatus} />
   </>);
 }

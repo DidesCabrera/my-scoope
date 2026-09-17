@@ -39,6 +39,7 @@ from notas.domain.model_modules.food import (
 )
 from notas.domain.model_modules.identity import (
     NutritionistMemberRelationship,
+    NutritionPreferenceProfile,
     Plan,
     Profile,
     Subscription,
@@ -83,7 +84,7 @@ __all__ = [
     "FoodSourceMetadata", "MCPUserToken", "Meal",
     "MealAccess", "MealFood", "MealShare",
     "NotificationDelivery", "NutritionProposal", "NutritionProposalAuditEvent",
-    "NutritionistMemberRelationship",
+    "NutritionPreferenceProfile", "NutritionistMemberRelationship",
     "OAuthAuthorizationCode", "OAuthClient",
     "OAuthDeviceSession", "OAuthRefreshToken",
     "Plan", "Profile", "Program",
@@ -96,5 +97,4 @@ __all__ = [
     "ScheduledNotificationEvent",
     "Subscription",
     "WebPushSubscription",
-    "WeightLog",
-]
+    "WeightLog", ]

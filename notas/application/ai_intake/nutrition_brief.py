@@ -30,6 +30,15 @@ from ai_assistant.application.intake_semantics import (
     extract_nutrition_intake_semantics,
 )
 from ai_assistant.application.response_style import format_bullet_items, format_numbered_questions
+from notas.application.ai_intake.brief_value_normalization import (
+    clean_float as _clean_float,
+)
+from notas.application.ai_intake.brief_value_normalization import (
+    clean_macro_distribution as _clean_macro_distribution,
+)
+from notas.application.ai_intake.brief_value_normalization import (
+    parse_float as _parse_float,
+)
 from notas.application.ai_intake.deterministic_policy import deterministic_questions_for_brief
 from notas.application.ai_intake.iteration_commands import (
     PlanIterationCommandSet,
@@ -169,6 +178,13 @@ BRIEF_FIELD_SOURCE_FIELDS = {
     "style_preferences",
     "excluded_foods",
     "preferred_foods",
+    "dietary_pattern",
+    "allergies_or_intolerances",
+    "preferred_meals_per_day",
+    "cooking_time_preference",
+    "budget_preference",
+    "simplicity_preference",
+    "variety_preference",
     "complexity_level",
     "budget_level",
     "notes",
@@ -208,6 +224,8 @@ class NutritionBrief:
     protein_target: int | None = None
     carb_target: int | None = None
     fat_target: int | None = None
+    protein_per_kg_target: float | None = None
+    macro_distribution: dict[str, float] = field(default_factory=dict)
     weight_kg: float | None = None
     height_cm: int | None = None
     age_years: int | None = None
@@ -217,6 +235,13 @@ class NutritionBrief:
     style_preferences: list[str] = field(default_factory=list)
     excluded_foods: list[str] = field(default_factory=list)
     preferred_foods: list[str] = field(default_factory=list)
+    dietary_pattern: str | None = None
+    allergies_or_intolerances: list[str] = field(default_factory=list)
+    preferred_meals_per_day: int | None = None
+    cooking_time_preference: str | None = None
+    budget_preference: str | None = None
+    simplicity_preference: str | None = None
+    variety_preference: str | None = None
     complexity_level: str | None = None
     budget_level: str | None = None
     notes: list[str] = field(default_factory=list)
@@ -1369,6 +1394,8 @@ def serialize_brief(brief: NutritionBrief) -> dict:
         "protein_target": brief.protein_target,
         "carb_target": brief.carb_target,
         "fat_target": brief.fat_target,
+        "protein_per_kg_target": brief.protein_per_kg_target,
+        "macro_distribution": dict(brief.macro_distribution or {}),
         "weight_kg": brief.weight_kg,
         "height_cm": brief.height_cm,
         "age_years": brief.age_years,
@@ -1378,6 +1405,13 @@ def serialize_brief(brief: NutritionBrief) -> dict:
         "style_preferences": list(brief.style_preferences),
         "excluded_foods": list(brief.excluded_foods),
         "preferred_foods": list(brief.preferred_foods),
+        "dietary_pattern": brief.dietary_pattern,
+        "allergies_or_intolerances": list(brief.allergies_or_intolerances),
+        "preferred_meals_per_day": brief.preferred_meals_per_day,
+        "cooking_time_preference": brief.cooking_time_preference,
+        "budget_preference": brief.budget_preference,
+        "simplicity_preference": brief.simplicity_preference,
+        "variety_preference": brief.variety_preference,
         "complexity_level": brief.complexity_level,
         "budget_level": brief.budget_level,
         "notes": list(brief.notes),
@@ -1403,6 +1437,12 @@ def deserialize_brief(payload: dict | None) -> NutritionBrief | None:
         protein_target=_clean_int(payload.get("protein_target"), min_value=0, max_value=500),
         carb_target=_clean_int(payload.get("carb_target"), min_value=0, max_value=800),
         fat_target=_clean_int(payload.get("fat_target"), min_value=0, max_value=300),
+        protein_per_kg_target=_clean_float(
+            payload.get("protein_per_kg_target"),
+            min_value=1.0,
+            max_value=2.5,
+        ),
+        macro_distribution=_clean_macro_distribution(payload.get("macro_distribution")),
         weight_kg=_clean_float(payload.get("weight_kg"), min_value=25, max_value=350),
         height_cm=_clean_int(payload.get("height_cm"), min_value=100, max_value=250),
         age_years=_clean_int(payload.get("age_years"), min_value=10, max_value=100),
@@ -1412,6 +1452,13 @@ def deserialize_brief(payload: dict | None) -> NutritionBrief | None:
         style_preferences=_clean_multi_choice(payload.get("style_preferences") or [], STYLE_CHOICES),
         excluded_foods=_clean_text_list(payload.get("excluded_foods") or []),
         preferred_foods=_clean_text_list(payload.get("preferred_foods") or []),
+        dietary_pattern=str(payload.get("dietary_pattern") or "").strip() or None,
+        allergies_or_intolerances=_clean_text_list(payload.get("allergies_or_intolerances") or []),
+        preferred_meals_per_day=_clean_int(payload.get("preferred_meals_per_day"), min_value=1, max_value=10),
+        cooking_time_preference=str(payload.get("cooking_time_preference") or "").strip() or None,
+        budget_preference=str(payload.get("budget_preference") or "").strip() or None,
+        simplicity_preference=str(payload.get("simplicity_preference") or "").strip() or None,
+        variety_preference=str(payload.get("variety_preference") or "").strip() or None,
         complexity_level=_clean_choice(payload.get("complexity_level"), COMPLEXITY_CHOICES),
         budget_level=_clean_choice(payload.get("budget_level"), BUDGET_CHOICES),
         notes=_clean_text_list(payload.get("notes") or []),
@@ -1465,6 +1512,16 @@ def _merge_briefs(existing: NutritionBrief | None, incoming: NutritionBrief) -> 
         protein_target=incoming.protein_target or existing.protein_target or inferred.protein_target,
         carb_target=incoming.carb_target or existing.carb_target or inferred.carb_target,
         fat_target=incoming.fat_target or existing.fat_target or inferred.fat_target,
+        protein_per_kg_target=(
+            incoming.protein_per_kg_target
+            or existing.protein_per_kg_target
+            or inferred.protein_per_kg_target
+        ),
+        macro_distribution=(
+            dict(incoming.macro_distribution)
+            or dict(existing.macro_distribution)
+            or dict(inferred.macro_distribution)
+        ),
         weight_kg=incoming.weight_kg or existing.weight_kg or inferred.weight_kg,
         height_cm=incoming.height_cm or existing.height_cm or inferred.height_cm,
         age_years=incoming.age_years or existing.age_years or inferred.age_years,
@@ -2276,20 +2333,6 @@ def _clean_multi_choice(values: Iterable[object], choices: Iterable[tuple[str, s
         if value in allowed_values and value not in cleaned:
             cleaned.append(value)
     return cleaned
-
-
-def _parse_float(value) -> float | None:
-    try:
-        return float(str(value).replace(",", "."))
-    except (TypeError, ValueError):
-        return None
-
-
-def _clean_float(value, *, min_value: float, max_value: float) -> float | None:
-    parsed = _parse_float(value)
-    if parsed is None or parsed < min_value or parsed > max_value:
-        return None
-    return round(parsed, 2)
 
 
 def _format_number(value: float | None) -> str:

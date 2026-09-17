@@ -54,7 +54,7 @@ class AIChatDraftCardData(Schema):
     subtitle: str = ""
     items: list[AIChatCardItemData] = Field(default_factory=list)
     status: str = ""
-
+    can_commit: bool = False
 
 class AIChatProposalCardData(Schema):
     type: Literal["proposal_review"]
@@ -78,6 +78,9 @@ class AIChatPreparedActionCardData(Schema):
     summary: str = ""
     status: Literal["prepared", "committed", "cancelled", "expired", "failed"]
     destructive: bool = False
+    risk_level: Literal["low", "medium", "high"] = "medium"
+    operation_count: int = 1
+    operations: list[str] = Field(default_factory=list)
     expires_at: datetime
 
 

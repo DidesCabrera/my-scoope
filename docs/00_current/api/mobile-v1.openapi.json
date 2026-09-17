@@ -164,6 +164,11 @@
       },
       "AIChatDraftCardData": {
         "properties": {
+          "can_commit": {
+            "default": false,
+            "title": "Can Commit",
+            "type": "boolean"
+          },
           "items": {
             "items": {
               "$ref": "#/components/schemas/AIChatCardItemData"
@@ -399,6 +404,28 @@
             "title": "Expires At",
             "type": "string"
           },
+          "operation_count": {
+            "default": 1,
+            "title": "Operation Count",
+            "type": "integer"
+          },
+          "operations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Operations",
+            "type": "array"
+          },
+          "risk_level": {
+            "default": "medium",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "title": "Risk Level",
+            "type": "string"
+          },
           "status": {
             "enum": [
               "prepared",
@@ -522,6 +549,50 @@
           "updated_at"
         ],
         "title": "AIChatSummaryData",
+        "type": "object"
+      },
+      "AIClientMemoryCommitResultData": {
+        "properties": {
+          "refresh_chat": {
+            "default": true,
+            "title": "Refresh Chat",
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "updated",
+              "unchanged"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "AIClientMemoryCommitResultData",
+        "type": "object"
+      },
+      "AIClientMemoryCommitResultEnvelope": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AIClientMemoryCommitResultData"
+          },
+          "error": {
+            "title": "Error",
+            "type": "null"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "AIClientMemoryCommitResultEnvelope",
         "type": "object"
       },
       "AIJobAcceptedData": {
@@ -1126,29 +1197,6 @@
           "environment"
         ],
         "title": "ApplePushRegistrationInput",
-        "type": "object"
-      },
-      "AppleSubscriptionProductData": {
-        "properties": {
-          "interval": {
-            "title": "Interval",
-            "type": "string"
-          },
-          "plan_name": {
-            "title": "Plan Name",
-            "type": "string"
-          },
-          "product_id": {
-            "title": "Product Id",
-            "type": "string"
-          }
-        },
-        "required": [
-          "product_id",
-          "plan_name",
-          "interval"
-        ],
-        "title": "AppleSubscriptionProductData",
         "type": "object"
       },
       "AppleTransactionInput": {
@@ -3783,6 +3831,21 @@
           "quantity"
         ],
         "title": "FoodPickerInput",
+        "type": "object"
+      },
+      "GooglePlayPurchaseInput": {
+        "properties": {
+          "purchase_token": {
+            "maxLength": 4096,
+            "minLength": 10,
+            "title": "Purchase Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "purchase_token"
+        ],
+        "title": "GooglePlayPurchaseInput",
         "type": "object"
       },
       "HealthData": {
@@ -7225,13 +7288,17 @@
             "title": "Evidence",
             "type": "array"
           },
+          "google_obfuscated_account_id": {
+            "title": "Google Obfuscated Account Id",
+            "type": "string"
+          },
           "plan_name": {
             "title": "Plan Name",
             "type": "string"
           },
           "products": {
             "items": {
-              "$ref": "#/components/schemas/AppleSubscriptionProductData"
+              "$ref": "#/components/schemas/SubscriptionProductData"
             },
             "title": "Products",
             "type": "array"
@@ -7251,6 +7318,7 @@
           "app_account_token",
           "plan_name",
           "status",
+          "google_obfuscated_account_id",
           "products",
           "evidence",
           "duplicate_active_providers"
@@ -7308,6 +7376,39 @@
           "status"
         ],
         "title": "SubscriptionEvidenceData",
+        "type": "object"
+      },
+      "SubscriptionProductData": {
+        "properties": {
+          "base_plan_id": {
+            "default": "",
+            "title": "Base Plan Id",
+            "type": "string"
+          },
+          "interval": {
+            "title": "Interval",
+            "type": "string"
+          },
+          "plan_name": {
+            "title": "Plan Name",
+            "type": "string"
+          },
+          "product_id": {
+            "title": "Product Id",
+            "type": "string"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_id",
+          "provider",
+          "plan_name",
+          "interval"
+        ],
+        "title": "SubscriptionProductData",
         "type": "object"
       },
       "TodayData": {
@@ -7829,6 +7930,70 @@
           }
         ],
         "summary": "Ai Chat Detail"
+      }
+    },
+    "/api/v1/ai/chats/{chat_id}/preferences/commit": {
+      "post": {
+        "operationId": "mobile_api_api_commit_ai_chat_preferences",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "chat_id",
+            "required": true,
+            "schema": {
+              "title": "Chat Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AIClientMemoryCommitResultEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Commit Ai Chat Preferences"
       }
     },
     "/api/v1/ai/jobs/{job_id}": {
@@ -15160,6 +15325,80 @@
           }
         ],
         "summary": "Apple Transaction"
+      }
+    },
+    "/api/v1/subscriptions/google-play/purchases": {
+      "post": {
+        "operationId": "mobile_api_api_google_play_purchase",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GooglePlayPurchaseInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Google Play Purchase"
       }
     },
     "/api/v1/today": {

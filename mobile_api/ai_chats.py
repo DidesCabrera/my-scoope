@@ -1,12 +1,27 @@
 from __future__ import annotations
 
+from dataclasses import replace
+
 from django.conf import settings
 
 from accounts.services.profile import build_account_credit_display
 from ai_assistant.application.async_jobs import async_jobs_enabled
+from ai_assistant.application.tools import (
+    TOOL_COMMIT_PREFERENCE_UPDATE,
+    execute_profile_commit_tool,
+)
+from ai_assistant.domain import AssistantToolRequest, AssistantToolStatus
 from ai_assistant.models import AIAsyncJob
 from notas.application.ai_intake.async_turns import NUTRITION_INTAKE_TURN_JOB_KIND
 from notas.application.ai_intake.chat_engine import build_ai_nutrition_intake_engine_status
+from notas.application.ai_intake.chat_history import sync_chat_from_conversation
+from notas.application.ai_intake.nutrition_brief import (
+    NutritionConversationMessage,
+    NutritionConversationState,
+    build_intake_result_from_brief,
+    deserialize_conversation,
+)
+from notas.application.ai_tools.preference_tools import build_preference_draft_payload_from_brief
 from notas.application.ai_tools.prepared_actions import serialize_prepared_action
 from notas.domain.models import AiNutritionChat
 
@@ -43,6 +58,11 @@ def _draft_card(raw: dict, card_type: str) -> dict:
         "subtitle": str(raw.get("subtitle") or "")[:500],
         "items": items[:40],
         "status": str(raw.get("status") or "")[:40],
+        "can_commit": bool(
+            raw.get("can_update_preferences")
+            if card_type == "preference_draft"
+            else False
+        ),
     }
 
 
@@ -109,6 +129,13 @@ def _message_cards(user, raw: dict) -> list[dict]:
                 "summary": trusted["summary"][:1000],
                 "status": trusted["status"],
                 "destructive": trusted["destructive"],
+                "risk_level": trusted["risk_level"],
+                "operation_count": int(trusted["preview"].get("operation_count") or 1),
+                "operations": [
+                    str(item.get("title") or item.get("action_key") or "Cambio")[:180]
+                    for item in trusted["preview"].get("operations") or ()
+                    if isinstance(item, dict)
+                ],
                 "expires_at": trusted["expires_at"],
             })
     return cards
@@ -260,4 +287,72 @@ def completed_turn_payload(job: AIAsyncJob) -> dict:
         "chat_id": chat_id,
         "conversation_updated": True,
         "has_iteration_warning": bool(result.get("iteration_error")),
+    }
+
+
+def commit_chat_preferences(user, chat_id: int) -> dict:
+    chat = AiNutritionChat.objects.filter(pk=chat_id, user=user).first()
+    if chat is None:
+        raise ValueError("ai_chat_not_found")
+    conversation = deserialize_conversation(chat.conversation_payload)
+    if conversation is None:
+        raise ValueError("assistant_preference_draft_not_found")
+
+    tool_result = execute_profile_commit_tool(
+        AssistantToolRequest(
+            tool_name=TOOL_COMMIT_PREFERENCE_UPDATE,
+            arguments={
+                "preference_draft": build_preference_draft_payload_from_brief(
+                    conversation.result.brief
+                ),
+            },
+            request_id=f"mobile_preference_card_{chat.id}",
+            reason="User approved preference persistence from the mobile preference card.",
+            metadata={
+                "approved_by_user": True,
+                "approval_source": "preference_card_button",
+                "surface": "mobile_ai_chat",
+            },
+        ),
+        user=user,
+    )
+    if tool_result.status != AssistantToolStatus.OK:
+        raise ValueError("assistant_preference_commit_failed")
+
+    data = dict(tool_result.data or {})
+    saved_fields = set(data.get("updated_fields") or ()) | set(data.get("unchanged_fields") or ())
+    source_aliases = {
+        "avoided_foods": "excluded_foods",
+        "preferred_meals_per_day": "meals_per_day",
+        "budget_preference": "budget_level",
+    }
+    field_sources = dict(conversation.result.brief.field_sources or {})
+    for field_name in saved_fields:
+        field_sources[field_name] = "profile"
+        if alias := source_aliases.get(field_name):
+            field_sources[alias] = "profile"
+    updated_brief = replace(conversation.result.brief, field_sources=field_sources)
+    updated_conversation = NutritionConversationState(
+        messages=[
+            *conversation.messages,
+            NutritionConversationMessage(
+                role="assistant",
+                text=(
+                    "Guardé tus preferencias para usarlas en futuras conversaciones."
+                    if data.get("updated_fields")
+                    else "Tus preferencias guardadas ya estaban actualizadas."
+                ),
+                preference_draft_card=data.get("preference_draft_card"),
+            ),
+        ],
+        result=build_intake_result_from_brief(updated_brief),
+    )
+    sync_chat_from_conversation(
+        user=user,
+        conversation=updated_conversation,
+        existing_chat_id=chat.id,
+    )
+    return {
+        "status": "updated" if data.get("updated_fields") else "unchanged",
+        "refresh_chat": True,
     }

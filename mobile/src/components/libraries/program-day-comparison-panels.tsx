@@ -7,7 +7,7 @@ import { MacroCalorieDistribution, macroCalorieShares, PanelAllocationBar, Prote
 import { contextualMacroAllocations, EntityPanelTabs, PanelBody, PanelSurface, SortablePanelHeaderCell, type PanelSortState, useTemporaryPanelSort } from "@/components/panels";
 import { tokens } from "@/design/tokens";
 import { EntityIcon } from "@/components/ui";
-import { ComparisonPanelGestureRows, StaticComparisonPanelRows, type ComparisonPanelAction } from "./comparison-panel-gesture-rows";
+import { beginComparisonPanelDrag, ComparisonPanelGestureRows, StaticComparisonPanelRows, type ComparisonPanelAction } from "./comparison-panel-gesture-rows";
 
 type ProgramDayPanelTab = "calories" | "macros" | "distribution" | "allocation" | "edit";
 
@@ -205,8 +205,8 @@ function EditPanel({ onAssign, onDelete, onReorder, rows }: { onAssign(week: num
         }}
         renderItem={({ drag, getIndex, isActive, item: row }) => {
           const index = getIndex() ?? 0;
-          return <ScaleDecorator activeScale={1.018}><View style={[styles.row, styles.editRow, isActive && styles.editRowActive, index === draftRows.length - 1 && styles.rowLast]}>
-          <Pressable accessibilityHint="Mantén pulsado y arrastra para cambiar la posición" accessibilityLabel={`Reordenar plan de ${row.day}`} accessibilityRole="button" delayLongPress={180} disabled={busy} hitSlop={8} onLongPress={drag} style={({ pressed }) => [styles.editDragHandle, busy && styles.disabled, pressed && styles.pressed]}><GripVertical color={tokens.color.textMuted} size={18} strokeWidth={2.2} /></Pressable>
+          return <ScaleDecorator activeScale={1.018}><View style={[styles.row, styles.editRow, index === draftRows.length - 1 && styles.rowLast, isActive && styles.editRowActive]}>
+          <Pressable accessibilityHint="Mantén pulsado y arrastra para cambiar la posición" accessibilityLabel={`Reordenar plan de ${row.day}`} accessibilityRole="button" delayLongPress={180} disabled={busy} hitSlop={8} onLongPress={() => beginComparisonPanelDrag(drag)} style={({ pressed }) => [styles.editDragHandle, busy && styles.disabled, pressed && styles.pressed]}><GripVertical color={tokens.color.textMuted} size={18} strokeWidth={2.2} /></Pressable>
           <Text style={[styles.cell, styles.editDay]}>{row.day}</Text>
           <Text numberOfLines={2} style={[styles.cell, styles.editPlan, !row.planName && styles.planName]}>{row.planName ?? "Sin plan"}</Text>
           <View style={styles.editActions}>
@@ -299,7 +299,19 @@ const styles = StyleSheet.create({
   fatDistribution: { color: tokens.color.fat, fontWeight: tokens.weight.semibold },
   distributionBar: { flex: 1.35, minWidth: 0 },
   editRow: { gap: 0 },
-  editRowActive: { opacity: 0.92 },
+  editRowActive: {
+    backgroundColor: "#3a3a3a",
+    borderBottomColor: tokens.color.borderDefault,
+    borderBottomWidth: 1,
+    borderTopColor: tokens.color.borderDefault,
+    borderTopWidth: 1,
+    elevation: 4,
+    shadowColor: "#000000",
+    shadowOffset: { height: 2, width: 0 },
+    shadowOpacity: 0.14,
+    shadowRadius: 5,
+    zIndex: 10,
+  },
   editDragHandle: { alignItems: "center", alignSelf: "stretch", justifyContent: "center", width: 20 },
   editDragHeader: { width: 20 },
   editDay: { flexBasis: "24%", flexGrow: 0, flexShrink: 0, textAlign: "left" },

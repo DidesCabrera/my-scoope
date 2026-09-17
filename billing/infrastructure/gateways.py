@@ -3,6 +3,7 @@ from pathlib import Path
 from django.conf import settings
 
 from billing.infrastructure.providers.apple_app_store import AppleAppStoreClient
+from billing.infrastructure.providers.google_play import GooglePlayClient
 from billing.infrastructure.providers.mercado_pago import MercadoPagoClient
 from billing.infrastructure.providers.openfactura import OpenFacturaClient
 from billing.infrastructure.providers.paddle import PaddleClient
@@ -43,4 +44,12 @@ def build_apple_app_store_gateway() -> AppleAppStoreClient:
         signing_key=settings.BILLING_APPLE_IN_APP_PURCHASE_KEY,
         key_id=settings.BILLING_APPLE_KEY_ID,
         issuer_id=settings.BILLING_APPLE_ISSUER_ID,
+    )
+
+
+def build_google_play_gateway() -> GooglePlayClient:
+    return GooglePlayClient(
+        package_name=settings.BILLING_GOOGLE_PLAY_PACKAGE_NAME,
+        service_account=settings.BILLING_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON,
+        timeout_seconds=settings.BILLING_GOOGLE_PLAY_TIMEOUT_SECONDS,
     )

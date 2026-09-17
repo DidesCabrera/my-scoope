@@ -30,7 +30,6 @@ from mobile_api.schema_domains.assistant import (  # noqa: F401 -- compatibility
     AssistantAvailabilityData,
 )
 from mobile_api.schema_domains.billing import (  # noqa: F401 -- compatibility re-exports
-    AppleSubscriptionProductData,
     AppleTransactionInput,
     EntitlementsData,
     EntitlementsEnvelope,
@@ -196,6 +195,7 @@ from mobile_api.schema_domains.sharing import (  # noqa: F401 -- compatibility r
     SharingInboxSaveEnvelope,
     SharingInboxUpdateInput,
 )
+from mobile_api.schema_domains.store_billing import SubscriptionProductData  # noqa: F401
 from mobile_api.schema_domains.today import TodayData, TodayEnvelope  # noqa: F401 -- compatibility facade
 
 

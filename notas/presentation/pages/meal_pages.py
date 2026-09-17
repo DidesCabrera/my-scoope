@@ -6,6 +6,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import BooleanField, Prefetch, Value
 
 from notas.application.queries.food_picker_queries import list_food_picker_items
+from notas.application.queries.library_queries import meal_library_queryset
 from notas.application.services.access.access import get_meal_for_user
 from notas.application.services.nutrition.nutrition_kpis import (
     build_nutrition_kpis_from_meal,
@@ -200,24 +201,12 @@ def get_meal_list_page_data(user, request_get=None) -> MealListPageData:
 
     if list_mode in {"reorder", "delete"}:
         meals = (
-            _standalone_meals_queryset()
-            .filter(
-                created_by=user,
-                is_draft=False,
-                dailyplanmeal__isnull=True,
-            )
+            meal_library_queryset(user)
             .only("id", "name", "list_order", "created_at")
-            .order_by("list_order", "-created_at", "-id")
-            .distinct()
         )
     else:
         meals = (
-            _standalone_meals_queryset()
-            .filter(
-                created_by=user,
-                is_draft=False,
-                dailyplanmeal__isnull=True,
-            )
+            meal_library_queryset(user)
             .select_related("created_by", "original_author", "forked_from")
             .prefetch_related(
                 Prefetch(
@@ -225,8 +214,6 @@ def get_meal_list_page_data(user, request_get=None) -> MealListPageData:
                     queryset=_meal_foods_for_card_rendering(),
                 ),
             )
-            .order_by("list_order", "-created_at", "-id")
-            .distinct()
         )
 
     viewmode = MEAL_VIEWMODE_PERSONAL_LIST

@@ -5,7 +5,6 @@
   "food_catalog/application/solver_readiness.py::check_catalog_food_solver_ready": 19,
   "mcp_server/myscoope_mcp/protocol_server.py::register_mcp_tools": 18,
   "mcp_server/myscoope_mcp/tool_handlers.py::call_proposal_tool": 19,
-  "notas/application/ai_tools/prepared_actions.py::_dispatch_commit": 25,
   "notas/application/ai_tools/profile_tools.py::_commit_profile_update_data": 16,
   "notas/application/ai_tools/proposal_tools.py::build_nutrition_brief_from_ai_drafts": 19,
   "notas/application/services/commands/calendarization_commands.py::dispatch_due_notifications": 20,

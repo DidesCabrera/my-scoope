@@ -5,6 +5,7 @@ from typing import Any, Mapping
 
 from django.db import transaction
 
+from ai_assistant.domain.client_memory import PROFILE_DRAFT_FIELDS
 from notas.application.ai_tools.runtime import run_ai_tool
 from notas.application.dto.nutrition_subject_context_dto import (
     PPK_WEIGHT_SOURCE_PROFILE,
@@ -18,15 +19,6 @@ COMMITTABLE_PROFILE_FIELDS = (
     "weight_kg",
     "height_cm",
     "sex",
-)
-
-PROFILE_DRAFT_FIELDS = (
-    "weight_kg",
-    "height_cm",
-    "age_years",
-    "sex",
-    "activity_level",
-    "training_frequency",
 )
 
 BODY_BASICS_FIELDS = (

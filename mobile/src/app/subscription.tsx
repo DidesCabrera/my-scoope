@@ -43,10 +43,15 @@ export default function SubscriptionScreen() {
     setWorking(true);
     setError(null);
     try {
-      const next = await apiRequest<SubscriptionData>("/api/v1/subscriptions/apple/transactions", {
+      const isGooglePlay = Platform.OS === "android";
+      const next = await apiRequest<SubscriptionData>(isGooglePlay
+        ? "/api/v1/subscriptions/google-play/purchases"
+        : "/api/v1/subscriptions/apple/transactions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ signed_transaction: purchase.purchaseToken }),
+        body: JSON.stringify(isGooglePlay
+          ? { purchase_token: purchase.purchaseToken }
+          : { signed_transaction: purchase.purchaseToken }),
       });
       await finishTransaction({ purchase, isConsumable: false });
       setOverview(next);
@@ -86,8 +91,9 @@ export default function SubscriptionScreen() {
   useFocusEffect(useCallback(() => { void load(); }, [load]));
 
   useEffect(() => {
-    const ids = overview?.products.map((item) => item.product_id) ?? [];
-    if (Platform.OS === "ios" && connected && ids.length > 0) {
+    const provider = Platform.OS === "android" ? "google_play" : "apple_app_store";
+    const ids = [...new Set(overview?.products.filter((item) => item.provider === provider).map((item) => item.product_id) ?? [])];
+    if ((Platform.OS === "ios" || Platform.OS === "android") && connected && ids.length > 0) {
       void fetchProducts({ skus: ids, type: "subs" }).catch((nextError) => setError(userFacingError(nextError)));
     }
   }, [connected, fetchProducts, overview?.products]);
@@ -102,21 +108,32 @@ export default function SubscriptionScreen() {
   if (status === "anonymous") return <Redirect href="/login" />;
   if (loading && !overview) return <LoadingState label="Revisando tu suscripción…" />;
 
-  const buy = async (productId: string) => {
-    if (!overview?.app_account_token) return;
+  const buy = async (productId: string, basePlanId = "") => {
+    if (!overview) return;
     setWorking(true);
     setError(null);
     try {
-      await requestPurchase({
-        request: {
-          apple: {
+      const storeProduct = subscriptions.find((item) => item.id === productId);
+      if (Platform.OS === "android") {
+        const offer = storeProduct?.subscriptionOffers?.find(
+          (item) => item.basePlanIdAndroid === basePlanId && item.offerTokenAndroid,
+        );
+        if (!offer?.offerTokenAndroid) throw new Error("El plan seleccionado no está disponible en Google Play.");
+        await requestPurchase({
+          request: { google: {
+            skus: [productId],
+            subscriptionOffers: [{ sku: productId, offerToken: offer.offerTokenAndroid }],
+            obfuscatedAccountId: overview.google_obfuscated_account_id,
+          } },
+          type: "subs",
+        });
+      } else {
+        await requestPurchase({ request: { apple: {
             sku: productId,
             appAccountToken: overview.app_account_token,
             andDangerouslyFinishTransactionAutomatically: false,
-          },
-        },
-        type: "subs",
-      });
+        } }, type: "subs" });
+      }
     } catch (nextError) {
       if (purchaseErrorCode(nextError) === ErrorCode.UserCancelled) {
         setError(null);
@@ -138,7 +155,7 @@ export default function SubscriptionScreen() {
         // Preserve the original StoreKit failure below. A manual restore remains available.
       }
 
-      setError("Apple no completó la compra. No se realizó ningún cobro; inténtalo nuevamente o usa Restaurar compras.");
+      setError(`${Platform.OS === "android" ? "Google Play" : "Apple"} no completó la compra. No se realizó ningún cobro; inténtalo nuevamente o usa Restaurar compras.`);
       setWorking(false);
     }
   };
@@ -193,22 +210,21 @@ export default function SubscriptionScreen() {
         </Card>
       ) : null}
 
-      {overview?.eligible && Platform.OS !== "ios" ? (
-        <InlineNotice>Las compras de esta etapa se completan en la app iOS.</InlineNotice>
-      ) : null}
-
-      {overview?.eligible && Platform.OS === "ios" && !overview.purchases_enabled ? (
+      {overview?.eligible && !overview.purchases_enabled ? (
         <Card muted>
-          <SectionTitle title="Próximamente en App Store" />
-          <Text style={textStyles.muted}>Aún no hay productos de Apple habilitados para comprar. Tu plan actual sigue funcionando normalmente.</Text>
+          <SectionTitle title="Compras próximamente" />
+          <Text style={textStyles.muted}>Aún no hay productos de la tienda habilitados para comprar. Tu plan actual sigue funcionando normalmente.</Text>
         </Card>
       ) : null}
 
-      {overview?.purchases_enabled && Platform.OS === "ios" ? (
+      {overview?.purchases_enabled && (Platform.OS === "ios" || Platform.OS === "android") ? (
         <>
           <SectionTitle detail="Precio oficial de App Store" title="Planes disponibles" />
-          {overview.products.map((configured) => {
+          {overview.products.filter((item) => item.provider === (Platform.OS === "android" ? "google_play" : "apple_app_store")).map((configured) => {
             const storeProduct = subscriptions.find((item) => item.id === configured.product_id);
+            const androidOffer = storeProduct?.subscriptionOffers?.find(
+              (item) => item.basePlanIdAndroid === configured.base_plan_id,
+            );
             return (
               <Card key={configured.product_id} muted>
                 <View style={styles.row}>
@@ -216,13 +232,13 @@ export default function SubscriptionScreen() {
                     <Text style={styles.productName}>{configured.plan_name}</Text>
                     <Text style={textStyles.caption}>{configured.interval === "year" ? "Anual" : "Mensual"}</Text>
                   </View>
-                  <Text style={styles.price}>{storeProduct?.displayPrice ?? "Consultando…"}</Text>
+                  <Text style={styles.price}>{Platform.OS === "android" ? androidOffer?.displayPrice ?? "Consultando…" : storeProduct?.displayPrice ?? "Consultando…"}</Text>
                 </View>
                 <Button
-                  disabled={!connected || !storeProduct}
+                  disabled={!connected || !storeProduct || (Platform.OS === "android" && !androidOffer)}
                   label={`Suscribirme a ${configured.plan_name}`}
                   loading={working}
-                  onPress={() => void buy(configured.product_id)}
+                  onPress={() => void buy(configured.product_id, configured.base_plan_id)}
                 />
               </Card>
             );

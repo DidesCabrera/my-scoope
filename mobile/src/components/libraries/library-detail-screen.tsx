@@ -216,8 +216,9 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
   }
 
   async function togglePinnedPreparedFood(targetMealKey: string, foodKey: string) {
-    if (!todayContext) return;
+    if (!todayContext || savingMealKey) return;
     const previous = todayContext;
+    setSavingMealKey(targetMealKey);
     const mealExecution = normalizeMealExecution(todayContext.meal_execution);
     const execution = mealExecution.find((entry) => entry.meal_key === targetMealKey);
     const prepared = execution?.prepared_food_keys.includes(foodKey) ?? false;
@@ -234,13 +235,16 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
     } catch (nextError) {
       setTodayContext(previous);
       setError(userFacingError(nextError));
+    } finally {
+      setSavingMealKey(null);
     }
   }
 
   async function togglePinnedMealDetailFood(foodKey: string) {
-    if (!mealKey) return;
+    if (!mealKey || savingMealKey) return;
     const prepared = pinnedMealExecution ? normalizeMealExecutionItem(pinnedMealExecution).prepared_food_keys.includes(foodKey) : false;
     const previous = pinnedMealExecution;
+    setSavingMealKey(mealKey);
     setPinnedMealExecution((current) => ({
       meal_key: mealKey,
       status: current?.status ?? "planned",
@@ -256,6 +260,8 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
     } catch (nextError) {
       setPinnedMealExecution(previous);
       setError(userFacingError(nextError));
+    } finally {
+      setSavingMealKey(null);
     }
   }
   const loadLabelImage = useCallback(async () => {
@@ -360,7 +366,7 @@ export function LibraryDetailScreen({ entitySlug }: { entitySlug: "foods" | "mea
       {!labelImage ? <Button label="Ver copia procesada" loading={labelImageBusy} onPress={() => void loadLabelImage()} variant="secondary" /> : null}
       <Button label="Eliminar copia" loading={labelImageBusy} onPress={deleteLabelImage} variant="secondary" />
     </EntityDetailSection></> : null}
-    {!isEmptyDraft && item.panel.kind !== "none" ? <EntityDetailSection detail={item.panel.kind === "weeks" ? `${panelCount} elementos` : undefined} title={sectionTitles[item.panel.kind]}>{item.panel.kind === "foods" ? <FoodPanels editing={foodEditing} items={foodItems} nestedScroll onOpenItem={openFood} preparation={isPinnedMealContext && pinnedMealAdherence.available ? { isPrepared: (food) => normalizedPinnedMealExecution?.prepared_food_keys.includes(food.id) ?? false, onToggle: (food) => void togglePinnedMealDetailFood(food.id) } : undefined} /> : null}{item.panel.kind === "meals" ? <MealPanels editing={mealEditing} items={mealItems} nestedScroll onOpenItem={mealEditing?.onOpen} /> : null}{item.panel.kind === "weeks" ? <ProgramPanels items={item.panel.weeks} /> : null}</EntityDetailSection> : null}
+    {!isEmptyDraft && item.panel.kind !== "none" ? <EntityDetailSection detail={item.panel.kind === "weeks" ? `${panelCount} elementos` : undefined} title={sectionTitles[item.panel.kind]}>{item.panel.kind === "foods" ? <FoodPanels editing={foodEditing} items={foodItems} nestedScroll onOpenItem={openFood} preparation={isPinnedMealContext && pinnedMealAdherence.available ? { disabled: savingMealKey != null, isPrepared: (food) => normalizedPinnedMealExecution?.prepared_food_keys.includes(food.id) ?? false, onToggle: (food) => void togglePinnedMealDetailFood(food.id) } : undefined} /> : null}{item.panel.kind === "meals" ? <MealPanels editing={mealEditing} items={mealItems} nestedScroll onOpenItem={mealEditing?.onOpen} /> : null}{item.panel.kind === "weeks" ? <ProgramPanels items={item.panel.weeks} /> : null}</EntityDetailSection> : null}
     {item.entity === "meal" ? <Button bleed label="+ Agregar alimento" onPress={() => router.push(pickerHref("food-to-meal", { mealId: item.id, ...(hasMealTimeContext ? { dailyPlanId: contextDailyPlanId, dailyPlanMealId: contextDailyPlanMealId } : {}), ...(isContextualMealCreation ? { returnTo: String(currentDetailHref) } : {}) }))} /> : null}
     {item.entity === "meal" && foodItems.length > 0 ? <><SectionDivider /><EntityDetailSection detail={`${foodItems.length} alimentos`} title="Detalle de cada Alimento"><FoodDetailCardList items={foodItems} onOpenFood={openFood} /></EntityDetailSection></> : null}
     {item.entity === "dailyPlan" ? <Button bleed label="+ Agregar Comida" onPress={() => router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: item.id }))} /> : null}

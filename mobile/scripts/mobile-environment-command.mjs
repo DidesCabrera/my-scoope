@@ -45,6 +45,17 @@ function verifyProfile(profileName) {
     }
   }
 
+  if (profileName === "android-alpha") {
+    if (target.key !== "staging") throw new Error("android-alpha no apunta a staging");
+    if (profile.developmentClient || profile.distribution === "internal") {
+      throw new Error("android-alpha debe generar una build instalable desde Google Play");
+    }
+    if (profile.android?.buildType !== "app-bundle") {
+      throw new Error("android-alpha debe generar un Android App Bundle");
+    }
+    if (profile.autoIncrement !== true) throw new Error("android-alpha debe incrementar el versionCode");
+  }
+
   if (["testflight-production", "production"].includes(profileName)) {
     if (target.key !== "production") throw new Error(`${profileName} no apunta a producción`);
     if (profile.developmentClient || profile.ios?.simulator) {
@@ -80,7 +91,7 @@ function verifySourcePolicy(profileName, target) {
 function verifyConfiguration() {
   if (easConfig.cli?.requireCommit !== true) throw new Error("EAS debe exigir un commit limpio");
   if (easConfig.build?.testflight) throw new Error("el perfil ambiguo testflight no debe existir");
-  for (const profileName of ["development", "simulator-staging", "preview", "testflight-production", "production"]) {
+  for (const profileName of ["development", "simulator-staging", "preview", "android-alpha", "testflight-production", "production"]) {
     const { target } = verifyProfile(profileName);
     process.stdout.write(`${profileName}: ${target.key} -> ${target.apiBaseUrl}\n`);
   }

@@ -1,0 +1,46 @@
+databases:
+  - name: myscoope-food-catalog-db
+    plan: basic-256mb
+    postgresMajorVersion: "18"
+    databaseName: myscoope_food_catalog
+    user: myscoope_food_catalog_user
+
+services:
+  - type: web
+    name: myscoope-food-catalog
+    runtime: python
+    plan: starter
+    repo: https://github.com/DidesCabrera/my-scoope
+    branch: staging
+    autoDeployTrigger: checksPass
+    buildCommand: ./scripts/render_build.sh
+    preDeployCommand: python manage.py migrate --noinput && python manage.py check --deploy
+    startCommand: python -m gunicorn miapp.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    healthCheckPath: /healthz/
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: miapp.settings.catalog
+      - key: DATABASE_URL
+        fromDatabase:
+          name: myscoope-food-catalog-db
+          property: connectionString
+      - key: SECRET_KEY
+        sync: false
+      - key: ALLOWED_HOSTS
+        value: myscoope-food-catalog.onrender.com
+      - key: CSRF_TRUSTED_ORIGINS
+        value: https://myscoope-food-catalog.onrender.com
+      - key: FOOD_CATALOG_RELEASE_TOKEN
+        sync: false
+      - key: FOOD_CATALOG_AUTHORITY_EXPORT_ENABLED
+        value: "false"
+      - key: SECURE_HSTS_SECONDS
+        value: "31536000"
+      - key: SECURE_HSTS_INCLUDE_SUBDOMAINS
+        value: "true"
+      - key: SECURE_HSTS_PRELOAD
+        value: "true"
+      - key: SENTRY_DSN
+        sync: false
+      - key: SENTRY_TRACES_SAMPLE_RATE
+        value: "0.05"

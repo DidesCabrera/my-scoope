@@ -33,7 +33,14 @@ DOMAIN_MODEL_BOUNDARIES: tuple[DomainModelBoundary, ...] = (
     DomainModelBoundary(
         slug="identity",
         label="Identity & User State",
-        models=("Plan", "Profile", "Subscription", "NutritionistMemberRelationship", "WeightLog"),
+        models=(
+            "Plan",
+            "Profile",
+            "NutritionPreferenceProfile",
+            "Subscription",
+            "NutritionistMemberRelationship",
+            "WeightLog",
+        ),
         responsibility=(
             "Nutrition profile and personal state. Subscription is the legacy "
             "name behind the NutritionistMemberRelationship compatibility façade."

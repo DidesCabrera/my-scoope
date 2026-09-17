@@ -3,7 +3,6 @@ export type ApiErrorDetail = {
   message: string;
   details: Record<string, unknown>;
 };
-
 export type ApiEnvelope<T> =
   | { ok: true; data: T; error: null }
   | { ok: false; data: Record<string, never>; error: ApiErrorDetail };
@@ -16,7 +15,6 @@ export type SessionData = {
   scopes: string[];
   device_session_id: string | null;
 };
-
 export type ProfileData = {
   birth_date: string | null;
   sex: string;
@@ -28,7 +26,6 @@ export type ProfileData = {
   review_disclosure_required: boolean;
   review_disclosure_version: string;
 };
-
 export type AccountDeletionData = { receipt_id: string };
 
 export type CalendarizationData = {
@@ -523,10 +520,13 @@ export type SubscriptionData = {
   eligible: boolean;
   purchases_enabled: boolean;
   app_account_token: string;
+  google_obfuscated_account_id: string;
   plan_name: string;
   status: string;
   products: {
     product_id: string;
+    provider: "apple_app_store" | "google_play" | string;
+    base_plan_id: string;
     plan_name: string;
     interval: "month" | "year" | string;
   }[];
@@ -767,8 +767,8 @@ type AIChatDraftCard = {
   subtitle: string;
   items: AIChatCardItem[];
   status: string;
+  can_commit: boolean;
 };
-
 type AIChatProposalCard = {
   type: "proposal_review";
   proposal_id: number;
@@ -792,6 +792,9 @@ type AIChatPreparedActionCard = {
   expires_at: string;
   status: "prepared" | "committed" | "cancelled" | "expired" | "failed";
   destructive: boolean;
+  risk_level: "low" | "medium" | "high";
+  operation_count: number;
+  operations: string[];
 };
 
 type AIChatGeneratedPlanCard = {

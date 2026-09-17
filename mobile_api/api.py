@@ -7,7 +7,6 @@ from ninja.errors import ValidationError as NinjaValidationError
 from mobile_api.api_support import success as _success
 from mobile_api.errors import MobileAPIError, error_envelope
 from mobile_api.routes.assistant import router as assistant_router
-from mobile_api.routes.billing import router as billing_router
 from mobile_api.routes.calendarization import router as calendarization_router
 from mobile_api.routes.calendarization_edits import router as calendarization_edits_router
 from mobile_api.routes.comparisons import router as comparisons_router
@@ -17,6 +16,7 @@ from mobile_api.routes.label_capture import router as label_capture_router
 from mobile_api.routes.libraries import router as libraries_router
 from mobile_api.routes.proposals import router as proposals_router
 from mobile_api.routes.sharing import router as sharing_router
+from mobile_api.routes.store_billing import router as billing_router
 from mobile_api.schemas import HealthEnvelope
 
 api = NinjaAPI(

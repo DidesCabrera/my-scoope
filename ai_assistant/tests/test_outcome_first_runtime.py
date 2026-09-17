@@ -227,6 +227,15 @@ class OutcomeFirstRuntimeTests(SimpleTestCase):
 
         self.assertEqual(response.assistant_text, "Listo. Preparé una propuesta inicial para que la revises.")
         self.assertEqual(response.proposal_ids, (901,))
+        self.assertEqual(response.metadata["outcome_trace"]["state"], "outcome_created")
+        self.assertTrue(response.metadata["outcome_trace"]["proposal_created"])
+        self.assertEqual(
+            [item["tool_name"] for item in response.metadata["outcome_trace"]["tool_results"]],
+            [
+                TOOL_UPDATE_PROFILE_DRAFT,
+                TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
+            ],
+        )
         self.assertEqual(len(client.requests), 3)
         self.assertEqual(client.requests[1].tool_choice, "required")
         self.assertEqual(

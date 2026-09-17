@@ -252,15 +252,27 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
         tool_names = {str(tool.get("name") or "") for tool in provider_request.tools}
 
         self.assertIn("create_nutrition_engine_dailyplan_proposal_from_drafts", tool_names)
-        self.assertEqual(
-            tool_names,
-            {
-                "update_profile_draft",
-                "update_preference_draft",
-                "update_proposal_preferences",
-                "create_nutrition_engine_dailyplan_proposal_from_drafts",
-            },
+        self.assertIn("query_workspace", tool_names)
+        self.assertNotIn("list_user_programs", tool_names)
+        self.assertNotIn("read_calendarization", tool_names)
+        self.assertNotIn("propose_workspace_patch", tool_names)
+        self.assertNotIn("read_account_billing_context", tool_names)
+
+    def test_intake_exposes_profile_and_preference_reads_when_user_invokes_memory(self):
+        orchestrator = ExternalLLMOrchestrator(
+            llm_client=FakeLLMClient(),
+            config=AssistantOrchestratorConfig(enable_reviewable_proposal_tools=True),
         )
+
+        provider_request = orchestrator.build_provider_request(
+            self._request("Usa mi ficha y mis preferencias guardadas para crear el plan.")
+        )
+        tool_names = {str(tool.get("name") or "") for tool in provider_request.tools}
+
+        self.assertIn("read_user_profile_context", tool_names)
+        self.assertIn("share_profile_draft_card", tool_names)
+        self.assertIn("read_user_preference_context", tool_names)
+        self.assertIn("share_preference_draft_card", tool_names)
 
     def test_parser_accepts_v2_json_string_slots_and_tool_arguments(self):
         orchestrator = ExternalLLMOrchestrator(llm_client=FakeLLMClient())

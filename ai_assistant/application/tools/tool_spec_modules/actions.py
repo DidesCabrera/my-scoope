@@ -8,6 +8,71 @@ from ai_assistant.application.tools.contracts import (
 from ai_assistant.application.tools.tool_names import *  # noqa: F403
 
 ACTIONS_TOOL_SPECS = {
+TOOL_PROPOSE_WORKSPACE_PATCH: AssistantToolSpec(
+        name=TOOL_PROPOSE_WORKSPACE_PATCH,
+        description=(
+            "Prepare one atomic, reviewable workspace patch containing one or more "
+            "product operations. Use this instead of composing micro-tools. My Scoope "
+            "validates ownership, arguments, risk and previews every operation; no "
+            "product change is applied until the user confirms the patch in trusted UI. "
+            "Later operations may reference entities created by earlier operations."
+        ),
+        category=AssistantToolCategory.PROPOSAL,
+        risk_level=AssistantToolRiskLevel.REVIEW_REQUIRED,
+        allowed_intents=(
+            "answer_question",
+            "create_program_proposal",
+            "iterate_proposal",
+        ),
+        input_schema={
+            "type": "object",
+            "required": ["title", "summary", "operations"],
+            "properties": {
+                "title": {"type": "string", "description": "Short user-facing patch title."},
+                "summary": {"type": "string", "description": "Why this patch helps the user."},
+                "operations": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 24,
+                    "items": {
+                        "type": "object",
+                        "required": ["operation_id", "resource", "action", "parameters"],
+                        "properties": {
+                            "operation_id": {"type": "string"},
+                            "resource": {
+                                "type": "string",
+                                "enum": [
+                                    "food", "meal", "dailyplan", "program",
+                                    "calendarization", "saved_comparison", "proposal",
+                                ],
+                            },
+                            "action": {
+                                "type": "string",
+                                "enum": [
+                                    "create", "update", "rename", "delete", "add_food",
+                                    "update_food", "remove_food", "add_meal", "update_meal",
+                                    "remove_meal", "add_week",
+                                    "duplicate_week", "remove_week", "pause", "resume",
+                                    "cancel", "approve", "reject", "apply",
+                                ],
+                            },
+                            "target_id": {"type": "integer"},
+                            "references": {
+                                "type": "object",
+                                "description": (
+                                    "Optional references from target_id or supported ID parameters "
+                                    "to an earlier create operation_id. Example: target_id=create_meal "
+                                    "and food_id=create_food."
+                                ),
+                                "additionalProperties": {"type": "string"},
+                            },
+                            "parameters": {"type": "object"},
+                        },
+                    },
+                },
+            },
+        },
+    ),
 TOOL_PREPARE_PRODUCT_ACTION: AssistantToolSpec(
         name=TOOL_PREPARE_PRODUCT_ACTION,
         description=(

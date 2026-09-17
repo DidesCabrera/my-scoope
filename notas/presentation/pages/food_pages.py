@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from notas.domain.models import Food
+from notas.application.queries.library_queries import food_library_queryset
 from notas.presentation.actions.food_resolvers import resolve_food_page_actions
 from notas.presentation.config.viewmodel_config import FOOD_VIEWMODE_PERSONAL_LIST
 
@@ -23,18 +23,13 @@ def get_food_list_page_data(user, request_get=None) -> FoodListPageData:
     list_mode = _normalize_list_mode(request_get)
 
     foods = (
-        Food.objects
-        .filter(
-            created_by=user,
-            is_active=True,
-        )
+        food_library_queryset(user)
         .select_related(
             "created_by",
         )
         .prefetch_related(
             "localized_names",
         )
-        .order_by("list_order", "name", "id")
     )
 
     viewmode = FOOD_VIEWMODE_PERSONAL_LIST

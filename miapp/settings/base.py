@@ -49,7 +49,36 @@ def _env_json_object(name: str) -> dict:
     return value
 
 
+def _env_json_object_or_file(name: str, file_name: str, default_path: str = "") -> dict:
+    if os.environ.get(name, "").strip():
+        return _env_json_object(name)
+
+    configured_path = os.environ.get(file_name, "").strip()
+    raw_path = configured_path or default_path
+    if not raw_path:
+        return {}
+    path = Path(raw_path)
+    if not configured_path and not path.exists():
+        return {}
+    try:
+        raw_value = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise ImproperlyConfigured(f"{file_name} could not be read.") from exc
+    try:
+        value = json.loads(raw_value)
+    except ValueError as exc:
+        raise ImproperlyConfigured(f"{file_name} must point to valid JSON.") from exc
+    if not isinstance(value, dict):
+        raise ImproperlyConfigured(f"{file_name} must point to a JSON object.")
+    return value
+
+
 SECRET_KEY = os.environ.get("SECRET_KEY", "")
+FOOD_CATALOG_RELEASE_TOKEN = os.environ.get("FOOD_CATALOG_RELEASE_TOKEN", "").strip()
+FOOD_CATALOG_AUTHORITY_EXPORT_ENABLED = os.environ.get(
+    "FOOD_CATALOG_AUTHORITY_EXPORT_ENABLED",
+    "false",
+).strip().lower() in {"1", "true", "yes", "on"}
 
 DEBUG = False
 
@@ -280,7 +309,7 @@ MYSCOOPE_ANDROID_SHA256_CERT_FINGERPRINTS = _env_csv(
 
 NUTRITION_SOLVER_BACKEND = os.environ.get(
     "NUTRITION_SOLVER_BACKEND",
-    "heuristic_v2",
+    "portfolio_v1",
 ).strip().lower()
 NUTRITION_SOLVER_SHADOW_ENABLED = os.environ.get(
     "NUTRITION_SOLVER_SHADOW_ENABLED",
@@ -293,6 +322,10 @@ NUTRITION_SOLVER_SHADOW_BACKEND = os.environ.get(
 NUTRITION_SOLVER_TIME_LIMIT_MS = max(
     50,
     min(_env_int("NUTRITION_SOLVER_TIME_LIMIT_MS", 1500), 10_000),
+)
+NUTRITION_SOLVER_ALTERNATIVE_COUNT = max(
+    1,
+    min(_env_int("NUTRITION_SOLVER_ALTERNATIVE_COUNT", 3), 10),
 )
 
 
@@ -595,6 +628,18 @@ BILLING_APPLE_IN_APP_PURCHASE_KEY = os.environ.get("BILLING_APPLE_IN_APP_PURCHAS
 BILLING_APPLE_KEY_ID = os.environ.get("BILLING_APPLE_KEY_ID", "").strip()
 BILLING_APPLE_ISSUER_ID = os.environ.get("BILLING_APPLE_ISSUER_ID", "").strip()
 BILLING_APPLE_ONLINE_CHECKS = _env_bool("BILLING_APPLE_ONLINE_CHECKS", True)
+BILLING_GOOGLE_PLAY_PURCHASES_ENABLED = _env_bool("BILLING_GOOGLE_PLAY_PURCHASES_ENABLED", False)
+BILLING_GOOGLE_PLAY_PACKAGE_NAME = os.environ.get("BILLING_GOOGLE_PLAY_PACKAGE_NAME", "com.myscoope.app").strip()
+BILLING_GOOGLE_PLAY_SERVICE_ACCOUNT_FILE = os.environ.get(
+    "BILLING_GOOGLE_PLAY_SERVICE_ACCOUNT_FILE",
+    "/etc/secrets/my-scoope-google-play-billing.json",
+).strip()
+BILLING_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON = _env_json_object_or_file(
+    "BILLING_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON",
+    "BILLING_GOOGLE_PLAY_SERVICE_ACCOUNT_FILE",
+    BILLING_GOOGLE_PLAY_SERVICE_ACCOUNT_FILE,
+)
+BILLING_GOOGLE_PLAY_TIMEOUT_SECONDS = _env_int("BILLING_GOOGLE_PLAY_TIMEOUT_SECONDS", 10)
 BILLING_OPENFACTURA_ENABLED = _env_bool("BILLING_OPENFACTURA_ENABLED", False)
 BILLING_OPENFACTURA_API_KEY = os.environ.get("BILLING_OPENFACTURA_API_KEY", "").strip()
 BILLING_OPENFACTURA_API_BASE_URL = os.environ.get(

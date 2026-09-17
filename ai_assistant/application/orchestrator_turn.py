@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import time
 from collections.abc import Mapping, Sequence
+from dataclasses import replace
 
 from ai_assistant.application.context_builder import sanitize_provider_context
 from ai_assistant.application.limits import validate_provider_request_limits
@@ -285,6 +286,11 @@ def run_provider_turn(orchestrator, request: AssistantTurnRequest) -> AssistantS
         tool_requests=tuple(all_tool_requests),
         ignored_provider_proposal_ids=tuple(dict.fromkeys(all_ignored_provider_proposal_ids)),
     )
+    response = _with_outcome_trace(
+        response,
+        request=request,
+        tool_results=all_tool_results,
+    )
     return orchestrator._with_usage_observability(
         request=request,
         response=response,
@@ -302,6 +308,51 @@ def _provider_incomplete_reason(provider_response: LLMProviderResponse) -> str:
     if isinstance(details, Mapping):
         return str(details.get("reason") or "incomplete")[:80]
     return "incomplete"
+
+
+def _with_outcome_trace(
+    response: AssistantStructuredResponse,
+    *,
+    request: AssistantTurnRequest,
+    tool_results: Sequence[AssistantToolResult],
+) -> AssistantStructuredResponse:
+    """Attach a bounded explanation of whether the requested product outcome advanced."""
+
+    metadata = dict(response.metadata or {})
+    workspace = dict((request.context.get("metadata") or {}).get("tool_oriented_intake") or {})
+    progress = dict(workspace.get("work_progress") or {})
+    objective = str(progress.get("active_objective") or "respond_to_current_message")
+    blocking_fields = [str(value) for value in tuple(progress.get("blocking_fields") or ())[:12]]
+    result_summaries = [
+        {
+            "tool_name": result.tool_name,
+            "status": result.status.value,
+            "error_code": result.error_code,
+        }
+        for result in tuple(tool_results or ())[:12]
+    ]
+    proposal_created = bool(response.proposal_ids)
+    any_ok = any(result.ok for result in tuple(tool_results or ()))
+    any_blocked = any(result.status == AssistantToolStatus.BLOCKED for result in tuple(tool_results or ()))
+    if proposal_created:
+        state = "outcome_created"
+    elif blocking_fields:
+        state = "awaiting_blocking_information"
+    elif any_blocked:
+        state = "guardrail_blocked"
+    elif any_ok:
+        state = "workspace_advanced"
+    else:
+        state = "response_only"
+    metadata["outcome_trace"] = {
+        "version": "ai_assistant_outcome_trace.v1",
+        "objective": objective,
+        "state": state,
+        "blocking_fields": blocking_fields,
+        "proposal_created": proposal_created,
+        "tool_results": result_summaries,
+    }
+    return replace(response, metadata=metadata)
 
 
 def _provider_response_requires_tool_call_repair(
@@ -389,4 +440,3 @@ def _max_iterations_tool_result(request: AssistantToolRequest) -> AssistantToolR
             "applies_changes": False,
         },
     )
-

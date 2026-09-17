@@ -1,0 +1,290 @@
+"""Evaluation-lab scenarios and state invariants for real-provider validation."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field, replace
+from typing import Any, Mapping, Sequence
+
+from ai_assistant.models import AIPreparedAction
+from notas.application.queries.library_queries import (
+    dailyplan_library_queryset,
+    food_library_queryset,
+    meal_library_queryset,
+    program_library_queryset,
+)
+from notas.domain.models import NutritionProposal
+
+
+@dataclass(frozen=True)
+class RealProviderValidationScenario:
+    key: str
+    description: str
+    user_messages: Sequence[str]
+    expected_final_brief: Mapping[str, Any] = field(default_factory=dict)
+    expected_brief_transitions: Mapping[str, Sequence[Any]] = field(default_factory=dict)
+    stable_brief_fields: Sequence[str] = field(default_factory=tuple)
+    fields_not_reasked_after_capture: Sequence[str] = field(default_factory=tuple)
+    required_tool_names: Sequence[str] = field(default_factory=tuple)
+    expected_tool_errors: Mapping[str, str] = field(default_factory=dict)
+    min_final_card_counts: Mapping[str, int] = field(default_factory=dict)
+    max_final_card_counts: Mapping[str, int] = field(default_factory=dict)
+    manual_review_prompts: Sequence[str] = field(default_factory=tuple)
+    forbidden_tool_names: Sequence[str] = field(default_factory=tuple)
+    forbidden_visible_fragments: Sequence[str] = field(default_factory=tuple)
+    expected_visible_fragments_by_turn: Mapping[int, Sequence[str]] = field(default_factory=dict)
+    max_repeated_opening_count: int | None = None
+    max_tool_calls: int | None = None
+    visible_reask_markers: Mapping[str, Sequence[str]] = field(default_factory=dict)
+    profile_preflight_facts: Mapping[str, Any] = field(default_factory=dict)
+    profile_preflight_missing_fields: Sequence[str] = field(default_factory=tuple)
+    capability_ids: Sequence[str] = field(default_factory=tuple)
+    diagnostic_domains: Sequence[str] = field(default_factory=tuple)
+    fixture_requirements: Sequence[str] = field(default_factory=tuple)
+    mutation_policy: str = "read_only"
+    ground_truth: Mapping[str, Any] = field(default_factory=dict)
+    default_enabled: bool = True
+
+
+def build_lab_scenarios() -> dict[str, Any]:
+    return {
+        "comida_450_kcal": RealProviderValidationScenario(
+            key="comida_450_kcal",
+            description=(
+                "Create a reviewable 450 kcal meal with the deterministic solver and real "
+                "operational food candidates, without mutating the meal library."
+            ),
+            user_messages=(
+                "Crea ahora una propuesta revisable de comida de 450 kcal usando el plan diario "
+                "de contexto ID {dailyplan_id}. Usa los alimentos disponibles en My Scoope y "
+                "ejecuta el solver; no inventes alimentos ni apliques la propuesta.",
+            ),
+            required_tool_names=("create_nutrition_solver_meal_proposal",),
+            max_tool_calls=4,
+            capability_ids=("M-04", "A-03"),
+            diagnostic_domains=("tool_routing", "solver_feasibility", "catalog_data", "state_mutation"),
+            fixture_requirements=("owned_dailyplan", "solver_450_feasible"),
+            mutation_policy="proposal_only",
+            default_enabled=False,
+            manual_review_prompts=(
+                "¿La respuesta presenta una propuesta concreta y revisable, en vez de una receta inventada?",
+                "¿Explica la calidad o limitación real del solver sin afirmar que modificó la biblioteca?",
+            ),
+        ),
+        "reemplazo_alimento_200g": RealProviderValidationScenario(
+            key="reemplazo_alimento_200g",
+            description=(
+                "Resolve an exact owned meal and prepare a deterministic food replacement at 200 g, "
+                "without applying it before confirmation."
+            ),
+            user_messages=(
+                "En mi comida «{meal_name}» (ID {meal_id}), cambia el alimento "
+                "«{source_food_name}» (ID {source_food_id}) por «{replacement_food_name}» "
+                "(ID {replacement_food_id}) y deja la porción en 200 g. Prepara el cambio "
+                "para que yo lo revise; no lo apliques todavía.",
+            ),
+            required_tool_names=("query_workspace", "propose_workspace_patch"),
+            max_tool_calls=6,
+            capability_ids=("M-08",),
+            diagnostic_domains=("language_understanding", "tool_routing", "state_mutation"),
+            fixture_requirements=("meal_replacement_fixture",),
+            mutation_policy="prepared_action_only",
+            default_enabled=False,
+            manual_review_prompts=(
+                "¿La vista previa identifica la comida y ambos alimentos correctos, con 200 g exactos?",
+                "¿El asistente deja claro que el cambio aún necesita confirmación?",
+            ),
+        ),
+        "plan_2400_distribucion_30_50_20": RealProviderValidationScenario(
+            key="plan_2400_distribucion_30_50_20",
+            description=(
+                "Create a reviewable daily-plan proposal from explicit calories and macro distribution."
+            ),
+            user_messages=(
+                "Crea ahora una propuesta revisable de plan diario de 2400 kcal con distribución "
+                "30% proteína, 50% carbohidratos y 20% grasas. Para esta propuesta usa: hombre, "
+                "38 años, 80 kg, 180 cm, actividad alta, fuerza 4 veces por semana y 4 comidas. "
+                "No apliques la propuesta sin mi aprobación.",
+            ),
+            expected_final_brief={
+                "requested_entity": "daily_plan",
+                "weight_kg": 80.0,
+                "meals_per_day": 4,
+            },
+            required_tool_names=("update_proposal_preferences",),
+            max_tool_calls=8,
+            capability_ids=("DP-13",),
+            diagnostic_domains=("language_understanding", "guardrail_policy", "solver_feasibility", "state_mutation"),
+            fixture_requirements=("solver_candidates",),
+            mutation_policy="proposal_only",
+            default_enabled=False,
+            manual_review_prompts=(
+                "¿La propuesta conserva 2400 kcal y 30/50/20 sin sustituirlo por una heurística?",
+                "¿Las cantidades y el diagnóstico provienen del motor nutricional y quedan para revisión?",
+            ),
+        ),
+    }
+
+
+def specialize_lab_scenario(scenario: Any, *, user: Any) -> Any | None:
+    if scenario.key == "bibliotecas_coherentes":
+        totals = (
+            food_library_queryset(user).count(),
+            meal_library_queryset(user).count(),
+            dailyplan_library_queryset(user).count(),
+            program_library_queryset(user).count(),
+        )
+        return replace(
+            scenario,
+            expected_visible_fragments_by_turn={
+                index: (f"TOTAL: {total}",)
+                for index, total in enumerate(totals, start=1)
+            },
+            ground_truth={
+                "foods_total": totals[0],
+                "meals_total": totals[1],
+                "dailyplans_total": totals[2],
+                "programs_total": totals[3],
+                "source": "canonical_web_library_projections",
+            },
+        )
+
+    if scenario.key == "comida_450_kcal":
+        dailyplan = dailyplan_library_queryset(user).order_by("id").first()
+        dailyplan_id = int(dailyplan.id) if dailyplan is not None else 0
+        return replace(
+            scenario,
+            user_messages=tuple(
+                message.format(dailyplan_id=dailyplan_id)
+                for message in scenario.user_messages
+            ),
+            ground_truth={
+                "target_kcal": 450,
+                "default_macro_distribution": {"protein": 30, "carbs": 50, "fat": 20},
+                "context_dailyplan_id": dailyplan_id or None,
+            },
+        )
+
+    if scenario.key == "reemplazo_alimento_200g":
+        meal = (
+            meal_library_queryset(user)
+            .prefetch_related("meal_food_set__food")
+            .order_by("id")
+            .first()
+        )
+        source_meal_food = meal.meal_food_set.first() if meal is not None else None
+        replacement = None
+        if source_meal_food is not None:
+            replacement = (
+                food_library_queryset(user)
+                .exclude(id=source_meal_food.food_id)
+                .order_by("id")
+                .first()
+            )
+        values = {
+            "meal_name": meal.name if meal is not None else "SIN_COMIDA_DISPONIBLE",
+            "meal_id": int(meal.id) if meal is not None else 0,
+            "source_food_name": (
+                source_meal_food.food.name if source_meal_food is not None else "SIN_ALIMENTO_ORIGEN"
+            ),
+            "source_food_id": (
+                int(source_meal_food.food_id) if source_meal_food is not None else 0
+            ),
+            "replacement_food_name": (
+                replacement.name if replacement is not None else "SIN_ALIMENTO_REEMPLAZO"
+            ),
+            "replacement_food_id": int(replacement.id) if replacement is not None else 0,
+        }
+        return replace(
+            scenario,
+            user_messages=tuple(message.format(**values) for message in scenario.user_messages),
+            ground_truth={
+                **values,
+                "meal_id": values["meal_id"] or None,
+                "source_food_id": values["source_food_id"] or None,
+                "replacement_food_id": values["replacement_food_id"] or None,
+                "target_quantity_g": 200,
+            },
+        )
+
+    if scenario.key == "plan_2400_distribucion_30_50_20":
+        return replace(
+            scenario,
+            ground_truth={
+                "target_kcal": 2400,
+                "macro_distribution": {"protein": 30, "carbs": 50, "fat": 20},
+                "macro_grams": {"protein": 180, "carbs": 300, "fat": 53.33},
+                "weight_kg": 80,
+            },
+        )
+    return None
+
+
+def validation_state_snapshot(user: Any) -> dict[str, int]:
+    return {
+        "foods": food_library_queryset(user).count(),
+        "meals": meal_library_queryset(user).count(),
+        "dailyplans": dailyplan_library_queryset(user).count(),
+        "programs": program_library_queryset(user).count(),
+        "nutrition_proposals": NutritionProposal.objects.filter(created_by=user).count(),
+        "prepared_actions": AIPreparedAction.objects.filter(user=user).count(),
+    }
+
+
+def state_mutation_check_values(
+    scenario: Any,
+    *,
+    state_before: Mapping[str, int],
+    state_after: Mapping[str, int],
+) -> tuple[bool, str, str]:
+    if not state_before or not state_after:
+        return True, "state snapshots were not supplied by this isolated check", "diagnostic"
+
+    library_keys = ("foods", "meals", "dailyplans", "programs")
+    deltas = {
+        key: int(state_after.get(key, 0)) - int(state_before.get(key, 0))
+        for key in (*library_keys, "nutrition_proposals", "prepared_actions")
+    }
+    failures = [f"{key} delta={deltas[key]}" for key in library_keys if deltas[key] != 0]
+    policy = scenario.mutation_policy
+    if policy == "read_only":
+        failures.extend(
+            f"{key} delta={deltas[key]}"
+            for key in ("nutrition_proposals", "prepared_actions")
+            if deltas[key] != 0
+        )
+    elif policy == "proposal_only":
+        if deltas["nutrition_proposals"] < 1:
+            failures.append("no reviewable nutrition proposal was created")
+        if deltas["prepared_actions"] != 0:
+            failures.append(f"prepared_actions delta={deltas['prepared_actions']}")
+    elif policy == "prepared_action_only":
+        if deltas["prepared_actions"] < 1:
+            failures.append("no reviewable prepared action was created")
+        if deltas["nutrition_proposals"] != 0:
+            failures.append(f"nutrition_proposals delta={deltas['nutrition_proposals']}")
+    else:
+        failures.append(f"unsupported mutation policy {policy!r}")
+    detail = (
+        f"policy={policy}; deltas={deltas}"
+        if not failures
+        else f"policy={policy}; violations={failures}; deltas={deltas}"
+    )
+    return not failures, detail, "hard"
+
+
+def scenario_result_lab_metadata(result: Any) -> dict[str, Any]:
+    return {
+        "capability_ids": list(result.scenario.capability_ids),
+        "diagnostic_domains": list(result.scenario.diagnostic_domains),
+        "fixture_requirements": list(result.scenario.fixture_requirements),
+        "mutation_policy": result.scenario.mutation_policy,
+        "ground_truth": dict(result.scenario.ground_truth),
+        "state": {
+            "before": dict(result.state_before),
+            "after": dict(result.state_after),
+            "delta": {
+                key: int(result.state_after.get(key, 0)) - int(result.state_before.get(key, 0))
+                for key in set(result.state_before) | set(result.state_after)
+            },
+        },
+    }

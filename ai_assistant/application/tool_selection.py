@@ -1,11 +1,20 @@
 from __future__ import annotations
 
+import re
+import unicodedata
 from collections.abc import Mapping, Sequence
 from typing import Any, Callable
 
 from ai_assistant.application.product_ports import AIProductBindings
 from ai_assistant.application.tools import (
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
+    TOOL_PROPOSE_WORKSPACE_PATCH,
+    TOOL_QUERY_WORKSPACE,
+    TOOL_READ_USER_PREFERENCE_CONTEXT,
+    TOOL_READ_USER_PROFILE_CONTEXT,
+    TOOL_SHARE_PREFERENCE_DRAFT_CARD,
+    TOOL_SHARE_PROFILE_DRAFT_CARD,
+    TOOL_SHARE_PROPOSAL_PREFERENCES_CARD,
     TOOL_UPDATE_PREFERENCE_DRAFT,
     TOOL_UPDATE_PROFILE_DRAFT,
     TOOL_UPDATE_PROPOSAL_PREFERENCES,
@@ -27,7 +36,15 @@ _EXPANDED_PRODUCT_TOOL_DOMAINS = {
     "search_user_dailyplans": ("plan", "dailyplan"),
     "list_user_programs": ("programa", "program", "semana"),
     "read_program": ("programa", "program", "semana"),
-    "read_calendarization": ("calendario", "calendar", "pausar", "reanudar"),
+    "read_calendarization": (
+        "calendario",
+        "calendar",
+        "pausar",
+        "reanudar",
+        "programa activo",
+        "programa en curso",
+        "en curso",
+    ),
     "list_inbox_items": ("inbox", "compartid", "recibid", "enviad"),
     "read_account_billing_context": (
         "cuenta",
@@ -46,7 +63,7 @@ _EXPANDED_PRODUCT_TOOL_DOMAINS = {
         "cantidad",
         "manteniendo los mismos alimentos",
     ),
-    "prepare_product_action": (
+    TOOL_PROPOSE_WORKSPACE_PATCH: (
         "crear",
         "crea",
         "actualizar",
@@ -85,6 +102,16 @@ _AI_NUTRITION_INTAKE_CORE_TOOLS = {
     TOOL_UPDATE_PROPOSAL_PREFERENCES,
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
 }
+_AI_NUTRITION_INTAKE_OPERATIONAL_TOOLS = {
+    *_MEAL_PROPOSAL_TOOLS,
+    *_DAILYPLAN_PROPOSAL_TOOLS,
+    "create_proportional_dailyplan_calorie_proposal",
+    "list_inbox_items",
+    "read_account_billing_context",
+    "preview_nutrition_solver_candidates",
+    "compare_dailyplan_to_targets",
+    TOOL_PROPOSE_WORKSPACE_PATCH,
+}
 
 
 def select_provider_tools(
@@ -96,11 +123,8 @@ def select_provider_tools(
     """Select executable capabilities without inferring a conversational step."""
 
     available = tuple(available)
-    user_text = str(request.user_message.content or "").strip().lower()
-    if (
-        str(request.context.get("surface") or "") == "ai_nutrition_intake"
-        and not _requests_existing_product_operation(user_text)
-    ):
+    user_text = _routing_text(request)
+    if str(request.context.get("surface") or "") == "ai_nutrition_intake":
         work_progress = _intake_work_progress(request.context)
         if (
             enable_reviewable_proposal_tools
@@ -113,10 +137,28 @@ def select_provider_tools(
             )
             return (proposal_tool,) if proposal_tool is not None else ()
 
+        selected_names = set(_AI_NUTRITION_INTAKE_CORE_TOOLS)
+        selected_names.add(TOOL_QUERY_WORKSPACE)
+        selected_names.update(_relevant_intake_memory_tools(user_text))
+        if _requests_existing_product_operation(user_text):
+            selected_names.update(
+                str(provider_spec.get("name") or "")
+                for provider_spec in available
+                if str(provider_spec.get("name") or "")
+                in _AI_NUTRITION_INTAKE_OPERATIONAL_TOOLS
+                and _expanded_product_tool_relevant(
+                    str(provider_spec.get("name") or ""),
+                    user_text=user_text,
+                )
+                and _reviewable_proposal_tool_relevant(
+                    str(provider_spec.get("name") or ""),
+                    user_text=user_text,
+                )
+            )
         return tuple(
             provider_spec
             for provider_spec in available
-            if str(provider_spec.get("name") or "") in _AI_NUTRITION_INTAKE_CORE_TOOLS
+            if str(provider_spec.get("name") or "") in selected_names
             and (
                 enable_reviewable_proposal_tools
                 or str(provider_spec.get("name") or "")
@@ -142,6 +184,29 @@ def select_provider_tools(
     return tuple(selected)
 
 
+def _relevant_intake_memory_tools(user_text: str) -> set[str]:
+    """Expose memory reads/cards only when the user's language makes them relevant."""
+
+    text = f" {str(user_text or '').strip().lower()} "
+    selected: set[str] = set()
+    if any(marker in text for marker in (" ficha ", " perfil ", " mis datos ", " datos personales ")):
+        selected.update({TOOL_READ_USER_PROFILE_CONTEXT, TOOL_SHARE_PROFILE_DRAFT_CARD})
+    if any(
+        marker in text
+        for marker in (
+            " preferencias guardadas ",
+            " mis preferencias ",
+            " restricciones guardadas ",
+            " mis alergias ",
+            " recuerda que ",
+        )
+    ):
+        selected.update({TOOL_READ_USER_PREFERENCE_CONTEXT, TOOL_SHARE_PREFERENCE_DRAFT_CARD})
+    if any(marker in text for marker in (" muestra ", " revisar ", " revisa ", " card ", " tarjeta ")):
+        selected.add(TOOL_SHARE_PROPOSAL_PREFERENCES_CARD)
+    return selected
+
+
 def initial_tool_choice(
     request: AssistantTurnRequest,
     tools: Sequence[Mapping[str, Any]],
@@ -158,6 +223,8 @@ def initial_tool_choice(
         )
         is not None
     ):
+        return "required"
+    if _requests_existing_product_operation(_routing_text(request)):
         return "required"
     return "auto"
 
@@ -212,11 +279,16 @@ def provider_tool_by_name(
 
 
 def _expanded_product_tool_relevant(tool_name: str, *, user_text: str) -> bool:
+    if tool_name == "prepare_product_action":
+        return False
     keywords = _EXPANDED_PRODUCT_TOOL_DOMAINS.get(tool_name)
     if keywords is None:
         return True
-    if tool_name == "prepare_product_action" and (
+    if tool_name == TOOL_PROPOSE_WORKSPACE_PATCH and (
         "propuesta" in user_text or "proposal" in user_text
+    ) and not any(
+        marker in user_text
+        for marker in ("aprobar", "aprueba", "rechaz", "aplicar", "aplica", "elimin", "borr")
     ):
         return False
     return any(keyword in user_text for keyword in keywords)
@@ -264,42 +336,70 @@ def _work_progress_has_active_proposal_objective(
 
 
 def _requests_existing_product_operation(user_text: str) -> bool:
-    text = f" {str(user_text or '').strip().lower()} "
-    identifies_existing_object = any(
-        marker in text
-        for marker in (
-            " mi plan ",
-            " este plan ",
-            " dailyplan ",
-            " propuesta ",
-            " programa ",
-            " calendario ",
-        )
-    )
-    requests_change_or_lookup = any(
-        marker in text
-        for marker in (
-            " cambia ",
-            " cambiar ",
-            " ajusta ",
-            " ajustar ",
-            " aumenta ",
-            " aumentar ",
-            " reduce ",
-            " reducir ",
-            " renombra ",
-            " elimina ",
-            " borra ",
-            " busca ",
-            " muestra ",
-            " revisa ",
-            " compara ",
-            " aplica ",
-            " aprueba ",
-            " rechaza ",
-        )
-    )
+    text = _normalized_intent_text(user_text)
+    identifies_existing_object = re.search(
+        r"\b(?:plan(?:es)?|dailyplans?|propuestas?|programas?|programs?|calendarios?|"
+        r"bibliotecas?|librerias?|alimentos?|comidas?|foods?|meals?)\b",
+        text,
+    ) is not None
+    requests_change_or_lookup = re.search(
+        r"\b(?:cambi\w*|ajust\w*|aument\w*|reduc\w*|renombr\w*|elimin\w*|"
+        r"borr\w*|busc\w*|muestr\w*|revis(?:a|ar|ame|alo|ala|en|emos|ando)|"
+        r"compar\w*|aplic\w*|aprob\w*|"
+        r"rechaz\w*|crea\w*|agreg\w*|anad\w*|registr\w*|incorpor\w*|guard\w*|"
+        r"list\w*|nombr\w*|dime|decir\w*|tengo|hay|exist\w*|curso|activ\w*)\b",
+        text,
+    ) is not None
     return identifies_existing_object and requests_change_or_lookup
+
+
+def _routing_text(request: AssistantTurnRequest) -> str:
+    """Carry the last operational request across a short acknowledgement.
+
+    Provider history remains the semantic authority. This helper only prevents
+    tool availability from disappearing on replies such as ``sí, claro`` after
+    the user already stated the actual operation.
+    """
+
+    current = str(request.user_message.content or "").strip().lower()
+    if not _is_short_continuation(current):
+        return current
+    for message in reversed(tuple(request.history or ())):
+        if message.role.value != "user":
+            continue
+        previous = str(message.content or "").strip().lower()
+        if _requests_existing_product_operation(previous):
+            return f"{previous} {current}".strip()
+    return current
+
+
+def _is_short_continuation(value: str) -> bool:
+    normalized = _normalized_intent_text(value)
+    if len(normalized.split()) > 6:
+        return False
+    return normalized in {
+        "si",
+        "si claro",
+        "claro",
+        "dale",
+        "ok",
+        "okay",
+        "perfecto",
+        "continua",
+        "continuemos",
+        "hazlo",
+        "intentalo",
+        "la primera",
+        "la segunda",
+        "la tercera",
+    }
+
+
+def _normalized_intent_text(value: str) -> str:
+    """Normalize user phrasing before applying lightweight routing heuristics."""
+
+    decomposed = unicodedata.normalize("NFKD", str(value or "").casefold())
+    return "".join(character for character in decomposed if not unicodedata.combining(character))
 
 
 def _latest_draft_for_tool(

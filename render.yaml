@@ -155,6 +155,10 @@ services:
           property: connectionString
       - key: AI_ASSISTANT_OPENAI_API_KEY
         sync: false
+      - key: FOOD_CATALOG_RELEASE_URL
+        value: https://myscoope-food-catalog.onrender.com
+      - key: FOOD_CATALOG_RELEASE_TOKEN
+        sync: false
       - key: AI_ASSISTANT_CREDITS_ENABLED
         value: "true"
       - key: AI_ASSISTANT_ASYNC_ENABLED

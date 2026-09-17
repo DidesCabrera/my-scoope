@@ -9,6 +9,7 @@ from mobile_api.ai_chats import chat_detail_payload, chat_list_payload, complete
 from mobile_api.api_support import require_scope, success
 from mobile_api.auth import mobile_bearer
 from mobile_api.errors import MobileAPIError
+from mobile_api.routes.assistant_memory import router as assistant_memory_router
 from mobile_api.schema_domains.assistant import (
     AIChatDetailEnvelope,
     AIChatListEnvelope,
@@ -22,9 +23,8 @@ from notas.application.ai_intake.async_turns import enqueue_nutrition_intake_tur
 from notas.application.ai_tools.prepared_actions import cancel_prepared_action, commit_prepared_action
 from notas.application.services.oauth_device_sessions import MOBILE_SCOPE_WRITE
 from notas.domain.models import AiNutritionChat, SavedComparison
-
 router = Router()
-
+router.add_router("", assistant_memory_router)
 
 @router.post(
     "/ai/turns",

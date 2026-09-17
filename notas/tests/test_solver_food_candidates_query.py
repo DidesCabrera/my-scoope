@@ -66,9 +66,14 @@ class SolverFoodCandidatesQueryTests(TestCase):
         self.assertIsInstance(candidate, SolverFood)
         self.assertEqual(candidate.food_id, chicken.id)
         self.assertEqual(candidate.role, "protein")
+        self.assertFalse(candidate.required)
         self.assertEqual(candidate.bounds, PortionBounds(90, 260, 10).normalized())
 
         payload = result.as_dict()
+        self.assertEqual(payload["total_eligible_count"], 1)
+        self.assertEqual(payload["active_visible_count"], 2)
+        self.assertEqual(payload["excluded_solver_disabled_count"], 1)
+        self.assertEqual(payload["readiness"]["status"], "ready")
         self.assertEqual(payload["candidates"][0]["food_id"], chicken.id)
         self.assertNotIn("catalog_food_id", payload["candidates"][0])
         self.assertNotIn("catalog_snapshot_payload", payload["candidates"][0])
@@ -99,6 +104,26 @@ class SolverFoodCandidatesQueryTests(TestCase):
 
         self.assertEqual([candidate.name for candidate in extended.candidates], ["Arroz integral"])
         self.assertEqual(core_only.candidates, ())
+
+    def test_reports_why_visible_foods_are_not_solver_candidates(self):
+        self._food(
+            "Alimento manual",
+            protein=10,
+            carbs=20,
+            fat=5,
+            created_by=self.user,
+            visibility=Food.VISIBILITY_EXTENDED,
+            solver_enabled=False,
+        )
+
+        result = list_solver_food_candidates(self.user)
+        payload = result.as_dict()
+
+        self.assertEqual(result.count, 0)
+        self.assertEqual(payload["active_visible_count"], 1)
+        self.assertEqual(payload["excluded_solver_disabled_count"], 1)
+        self.assertEqual(payload["readiness"]["status"], "blocked")
+        self.assertEqual(payload["readiness"]["reason_code"], "no_solver_enabled_foods")
 
     def test_build_candidate_uses_safe_defaults_and_clamps_invalid_bounds(self):
         food = self._food(

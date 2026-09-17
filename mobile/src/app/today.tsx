@@ -3,7 +3,7 @@ import { useCallback, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { userFacingError } from "@/api/errors";
-import type { ActiveProgramData, LibraryPageData, ProposalListData, TodayData, WeightListData } from "@/api/types";
+import type { ActiveProgramData, CalendarizedDayDetail, LibraryPageData, ProposalListData, TodayData, WeightListData } from "@/api/types";
 import { useSession } from "@/auth/session-context";
 import { CalendarizedDailyPlanCard } from "@/components/calendarization/calendarized-daily-plan-card";
 import { PinnedDailyPlanCard } from "@/components/calendarization/pinned-daily-plan-card";
@@ -15,7 +15,7 @@ import { useHeaderPresentation } from "@/components/navigation/app-navigation";
 import { pickerHref } from "@/components/pickers/composition-picker-screen";
 import { ProgramActiveHomeOverview } from "@/components/programs/program-active-card";
 import type { MealPanelEditing, MealPanelItem } from "@/components/panels";
-import { AppHeader, Button, Card, GuideMetric, InlineNotice, LoadingState, Pill, Screen, SectionTitle, textStyles } from "@/components/ui";
+import { AppHeader, Button, Card, GuideMetric, InlineNotice, LoadingState, MutationStatusModal, Pill, Screen, SectionTitle, textStyles, useMutationStatus } from "@/components/ui";
 import { tokens } from "@/design/tokens";
 import { syncNativeRemindersForProgram } from "@/notifications/native-reminders";
 
@@ -39,6 +39,7 @@ export default function TodayScreen() {
   const [pendingProposalCount, setPendingProposalCount] = useState(0);
   const [creatingTodayPlan, setCreatingTodayPlan] = useState(false);
   const [libraryCounts, setLibraryCounts] = useState<HomeLibraryCounts>({ dailyPlan: 0, food: 0, meal: 0, program: 0 });
+  const { clearStatus, runWithStatus, status: mutationStatus } = useMutationStatus();
   const setHeaderPresentation = useHeaderPresentation();
   const openHomeActions = useCallback(() => setHomeActionsVisible(true), []);
 
@@ -119,8 +120,14 @@ export default function TodayScreen() {
     },
     onOpen: (meal) => router.push({ pathname: "/program/days/[id]/meals/[mealKey]", params: { id: String(todayDayId), mealKey: meal.id } } as Href),
     onReorder: async (meals: MealPanelItem[]) => {
-      await apiRequest(`/api/v1/program/days/${todayDayId}/meals/order`, { body: JSON.stringify({ ordered_keys: meals.map((meal) => meal.id) }), method: "PUT" });
-      await load();
+      await runWithStatus(async () => {
+        const updated = await apiRequest<CalendarizedDayDetail>(`/api/v1/program/days/${todayDayId}/meals/order`, { body: JSON.stringify({ ordered_keys: meals.map((meal) => meal.id) }), method: "PUT" });
+        setToday((current) => current?.day_id === updated.id ? {
+          ...current,
+          meal_execution: updated.meal_execution,
+          plan_snapshot: updated.plan_snapshot,
+        } : current);
+      }, { loadingLabel: "Actualizando plan", successLabel: "Plan actualizado" });
     },
     onReplace: (meal) => router.push(pickerHref("meal-to-calendarized-day", { dayId: todayDayId, relationKey: meal.id })),
   } : undefined;
@@ -140,8 +147,20 @@ export default function TodayScreen() {
       router.push({ pathname: "/libraries/meals/[id]", params: { dailyPlanId: String(pinnedPlan.id), dailyPlanMealId: String(meal.relationId), id: String(meal.detailId), mealKey: meal.id, mealTime: meal.time ?? "", pinned: "1" } } as Href);
     },
     onReorder: async (meals: MealPanelItem[]) => {
-      await apiRequest(`/api/v1/library/daily-plans/${pinnedPlan.id}/meals/order`, { body: JSON.stringify({ ordered_ids: meals.map((meal) => meal.relationId) }), method: "PUT" });
-      await load();
+      await runWithStatus(async () => {
+        await apiRequest(`/api/v1/library/daily-plans/${pinnedPlan.id}/meals/order`, { body: JSON.stringify({ ordered_ids: meals.map((meal) => meal.relationId) }), method: "PUT" });
+        const positions = new Map(meals.map((meal, index) => [meal.id, index]));
+        setToday((current) => current?.pinned_plan?.id === pinnedPlan.id ? {
+          ...current,
+          pinned_plan: {
+            ...current.pinned_plan,
+            panel: {
+              ...current.pinned_plan.panel,
+              meals: [...current.pinned_plan.panel.meals].sort((left, right) => (positions.get(left.id) ?? 0) - (positions.get(right.id) ?? 0)),
+            },
+          },
+        } : current);
+      }, { loadingLabel: "Actualizando plan", successLabel: "Plan actualizado" });
     },
     onReplace: (meal) => { if (meal.relationId != null) router.push(pickerHref("meal-to-dailyplan", { dailyPlanId: pinnedPlan.id, dailyPlanMealId: meal.relationId })); },
   } : undefined;
@@ -255,6 +274,7 @@ export default function TodayScreen() {
         onRegisterWeight={() => router.push("/weight")}
         visible={homeActionsVisible}
       />
+      <MutationStatusModal onFinished={clearStatus} status={mutationStatus} />
     </>
   );
 }

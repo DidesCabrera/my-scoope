@@ -12,6 +12,10 @@ def prepare_product_action(**kwargs):
     return get_ai_product_bindings().prepare_product_action(**kwargs)
 
 
+def prepare_workspace_patch(**kwargs):
+    return get_ai_product_bindings().prepare_workspace_patch(**kwargs)
+
+
 def commit_prepared_action(**kwargs):
     return get_ai_product_bindings().commit_prepared_action(**kwargs)
 
@@ -31,5 +35,6 @@ __all__ = [
     "cancel_prepared_action",
     "commit_prepared_action",
     "prepare_product_action",
+    "prepare_workspace_patch",
     "serialize_prepared_action",
 ]

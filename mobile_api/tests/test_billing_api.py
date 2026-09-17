@@ -23,7 +23,6 @@ class MobileAPIBillingTests(AuthenticatedMobileAPITestCase):
 
         with override_settings(BILLING_APPLE_PURCHASES_ENABLED=True):
             response = self.client.get("/api/v1/subscriptions")
-
         self.assertEqual(response.status_code, 200)
         data = response.json()["data"]
         self.assertTrue(data["eligible"])
@@ -33,6 +32,8 @@ class MobileAPIBillingTests(AuthenticatedMobileAPITestCase):
             [
                 {
                     "product_id": product.external_product_id,
+                    "provider": PaymentProvider.APPLE_APP_STORE,
+                    "base_plan_id": "",
                     "plan_name": plan.name,
                     "interval": "month",
                 }
@@ -68,7 +69,6 @@ class MobileAPIBillingTests(AuthenticatedMobileAPITestCase):
                 data={"signed_transaction": "header.payload.signature"},
                 content_type="application/json",
             )
-
         self.assertEqual(response.status_code, 200)
         self.assertTrue(
             ProviderSubscription.objects.filter(

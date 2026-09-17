@@ -175,6 +175,23 @@ TOOL_UPDATE_PROPOSAL_PREFERENCES: AssistantToolSpec(
                         "protein_target": {"type": "integer"},
                         "carb_target": {"type": "integer"},
                         "fat_target": {"type": "integer"},
+                        "protein_per_kg_target": {
+                            "type": "number",
+                            "minimum": 1.0,
+                            "maximum": 2.5,
+                            "description": "Explicit daily protein target in grams per kilogram of body weight.",
+                        },
+                        "macro_distribution": {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "required": ["protein", "carbs", "fat"],
+                            "properties": {
+                                "protein": {"type": "number"},
+                                "carbs": {"type": "number"},
+                                "fat": {"type": "number"},
+                            },
+                            "description": "Energy percentages that must sum to 100, for example 30/50/20.",
+                        },
                         "notes": {"type": "array", "items": {"type": "string"}},
                     },
                 },
@@ -233,6 +250,26 @@ TOOL_COMMIT_PROFILE_UPDATE: AssistantToolSpec(
                     "items": {"type": "string"},
                     "description": "Optional approved field allowlist. Defaults to committable chat draft fields.",
                 },
+            },
+        },
+    ),
+TOOL_COMMIT_PREFERENCE_UPDATE: AssistantToolSpec(
+        name=TOOL_COMMIT_PREFERENCE_UPDATE,
+        description=(
+            "Commit approved preference draft fields to the authenticated user's persistent nutrition preferences. "
+            "This tool is internal-only, requires a trusted user approval event, and is not exposed to the provider."
+        ),
+        category=AssistantToolCategory.COMMIT,
+        risk_level=AssistantToolRiskLevel.REVIEW_REQUIRED,
+        requires_human_review=True,
+        provider_exposed=False,
+        allowed_intents=("capture_nutrition_brief", "create_dailyplan_proposal", "answer_question"),
+        input_schema={
+            "type": "object",
+            "required": ["preference_draft"],
+            "properties": {
+                "preference_draft": {"type": "object"},
+                "approved_fields": {"type": "array", "items": {"type": "string"}},
             },
         },
     ),

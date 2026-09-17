@@ -217,3 +217,18 @@ Consequences
   cada asignación futura de planes diarios mediante revisiones de snapshots auditadas.
 - `0193-sharing-resource-invitation-claim-inbox-boundary.md`: separa recurso portable,
   invitación dirigida, claim idempotente e Inbox independiente del canal.
+- `0194-canonical-client-memory-and-explicit-preference-egress.md`: unifica memoria
+  conversacional y mantiene la salida de preferencias persistentes como acción explícita.
+- `0195-capability-patches-and-solver-portfolios.md`: reemplaza micro-tools de mutación
+  por patches atómicos revisables y activa portafolios seleccionables del solver.
+- `0196-capability-oriented-workspace-queries.md`: reemplaza el gate léxico de lecturas
+  en AI Intake por una consulta tipada y estable del workspace del usuario.
+- `0197-canonical-library-projections-and-capability-catalog-gate.md`: unifica las
+  proyecciones de bibliotecas entre web y asistente, y convierte el catálogo vivo en
+  un contrato verificable localmente y contra el proveedor real.
+- `0198-ppk-first-daily-macro-policy.md`: relaciona energía, peso, PPK y distribución
+  de macros, mantiene carbohidratos como variable principal del ajuste calórico y
+  separa objetivos diarios de restricciones particulares de una comida.
+- `0199-central-food-catalog-authority-and-versioned-delivery.md`: centraliza la
+  adquisición y curación del catálogo, y entrega releases inmutables a staging y
+  producción sin convertir el servicio central en dependencia de runtime.
