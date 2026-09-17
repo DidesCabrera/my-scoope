@@ -24,4 +24,5 @@ export RATE_LIMIT_AI_ASSISTANT_TURN_IP="${RATE_LIMIT_AI_ASSISTANT_TURN_IP:-10000
   notas.tests.test_nutrition_engine_target_estimator \
   notas.tests.test_nutrition_solver_meal_proposal \
   notas.tests.test_ai_assistant_real_provider_validation \
+  notas.tests.test_ai_assistant_evaluation_lab \
   --keepdb

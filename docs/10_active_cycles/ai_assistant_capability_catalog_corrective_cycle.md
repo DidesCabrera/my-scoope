@@ -1,6 +1,6 @@
 # AIC00-AIC06 · AI Assistant Capability Catalog Corrective Cycle
 
-Status: implemented in repository; staging live-provider validation pending
+Status: implemented in repository; automated staging lab execution pending
 Date: 2026-09-17
 
 ## Objective
@@ -78,6 +78,21 @@ partial, some belong in specialized UI, and some require new product adapters.
   not match persisted state.
 - Running it requires an explicit staging user and consumes configured provider usage.
 
+### AIC07 — Internal evaluation lab — completed in repository
+
+- Added a UI-independent preflight that reads the selected user's canonical library
+  projections and solver-ready operational foods.
+- Added a deterministic 450 kcal solver probe so candidate absence and mathematical
+  infeasibility are known before attributing a failure to the model.
+- Bound live cases to catalog IDs for libraries, a 450 kcal meal, an exact 200 g food
+  replacement and a 2400 kcal plan with explicit 30/50/20 macros.
+- Added before/after state invariants for read-only, proposal-only and prepared-action
+  scenarios.
+- Added diagnostic grouping for language, routing, tool execution, guardrails, data,
+  solver, grounding, provider transport and mutation boundaries.
+- Live lab runs clean up only the unconfirmed review artifacts they create unless
+  `--keep-artifacts` is requested.
+
 ## Deferred risk stage
 
 This cycle does not add program day composition, bulk calendar revisions, sharing,
@@ -101,6 +116,16 @@ python manage.py validate_ai_assistant_real_provider \
   --live --user-email usuario@example.com \
   --scenario bibliotecas_coherentes \
   --fail-on-hard-regression
+```
+
+Complete internal lab, first without provider calls and then live:
+
+```bash
+python manage.py evaluate_ai_assistant_lab --user-email usuario@example.com
+python manage.py evaluate_ai_assistant_lab \
+  --live --user-email usuario@example.com \
+  --output var/ai-evaluation/latest.json \
+  --fail-on-regression
 ```
 
 ## Exit criteria

@@ -308,3 +308,16 @@ python manage.py validate_ai_assistant_real_provider \
 El escenario calcula los totales esperados desde las mismas proyecciones canónicas que
 usa la web y exige que cada respuesta visible devuelva `TOTAL: N`. Así una discrepancia
 entre datos persistidos, tool y texto del modelo se convierte en un fallo reproducible.
+
+La evaluación funcional completa se realiza con el
+[laboratorio interno](evaluation_lab.md). Su preflight distingue un fixture incompleto,
+cero candidatos del solver o una inviabilidad matemática de un fallo de comprensión del
+modelo. El modo live reutiliza el runtime real sin pasar por la web, vincula los casos a
+los IDs de este catálogo y verifica que sólo se creen propuestas o patches revisables:
+
+```bash
+python manage.py evaluate_ai_assistant_lab --user-email usuario@example.com
+python manage.py evaluate_ai_assistant_lab \
+  --live --user-email usuario@example.com \
+  --fail-on-regression
+```
