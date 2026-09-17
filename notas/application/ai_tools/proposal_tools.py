@@ -250,6 +250,8 @@ def build_nutrition_brief_from_ai_drafts(
         "protein_target",
         "carb_target",
         "fat_target",
+        "protein_per_kg_target",
+        "macro_distribution",
     ):
         if not _missing(proposal.get(field_name)):
             payload[field_name] = proposal.get(field_name)

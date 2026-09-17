@@ -106,3 +106,28 @@ class WorkspacePatchToolSelectionTests(SimpleTestCase):
         self.assertNotIn("list_user_meals", names)
         self.assertIn(TOOL_PROPOSE_WORKSPACE_PATCH, names)
         self.assertEqual(initial_tool_choice(request, selected), "required")
+
+    def test_short_acknowledgement_keeps_tools_from_prior_operational_request(self):
+        request = AssistantTurnRequest(
+            user_message=AssistantMessage(role="user", content="sí claro"),
+            history=(
+                AssistantMessage(role="user", content="Créame una comida de 450 kcal"),
+                AssistantMessage(
+                    role="assistant",
+                    content="Puedo reintentarlo con objetivos de macros flexibles.",
+                ),
+            ),
+            context={"surface": "ai_nutrition_intake"},
+        )
+
+        selected = select_provider_tools(
+            request,
+            available=list_provider_tool_specs(),
+            enable_reviewable_proposal_tools=True,
+        )
+        names = {item["name"] for item in selected}
+
+        self.assertIn(TOOL_QUERY_WORKSPACE, names)
+        self.assertIn("create_nutrition_solver_meal_proposal", names)
+        self.assertNotIn("create_nutrition_engine_dailyplan_proposal", names)
+        self.assertEqual(initial_tool_choice(request, selected), "required")

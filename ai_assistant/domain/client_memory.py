@@ -38,6 +38,8 @@ PROPOSAL_PREFERENCE_FIELDS = (
     "protein_target",
     "carb_target",
     "fat_target",
+    "protein_per_kg_target",
+    "macro_distribution",
     "notes",
 )
 

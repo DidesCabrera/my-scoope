@@ -558,6 +558,8 @@ def build_dailyplan_target_plan(
         protein_target=brief.protein_target,
         carb_target=brief.carb_target,
         fat_target=brief.fat_target,
+        protein_per_kg_target=brief.protein_per_kg_target,
+        macro_distribution=brief.macro_distribution,
         subject_source=brief.subject_source,
         ppk_weight_source=brief.ppk_weight_source,
         requires_library_ppk_warning=brief.requires_library_ppk_warning,

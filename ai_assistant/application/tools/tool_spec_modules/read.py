@@ -48,6 +48,10 @@ TOOL_QUERY_WORKSPACE: AssistantToolSpec(
                     "type": "integer",
                     "description": "Optional maximum result count, from 1 to 50.",
                 },
+                "offset": {
+                    "type": "integer",
+                    "description": "Optional zero-based offset for the next page.",
+                },
             },
         },
     ),

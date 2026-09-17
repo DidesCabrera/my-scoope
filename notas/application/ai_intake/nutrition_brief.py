@@ -30,6 +30,15 @@ from ai_assistant.application.intake_semantics import (
     extract_nutrition_intake_semantics,
 )
 from ai_assistant.application.response_style import format_bullet_items, format_numbered_questions
+from notas.application.ai_intake.brief_value_normalization import (
+    clean_float as _clean_float,
+)
+from notas.application.ai_intake.brief_value_normalization import (
+    clean_macro_distribution as _clean_macro_distribution,
+)
+from notas.application.ai_intake.brief_value_normalization import (
+    parse_float as _parse_float,
+)
 from notas.application.ai_intake.deterministic_policy import deterministic_questions_for_brief
 from notas.application.ai_intake.iteration_commands import (
     PlanIterationCommandSet,
@@ -215,6 +224,8 @@ class NutritionBrief:
     protein_target: int | None = None
     carb_target: int | None = None
     fat_target: int | None = None
+    protein_per_kg_target: float | None = None
+    macro_distribution: dict[str, float] = field(default_factory=dict)
     weight_kg: float | None = None
     height_cm: int | None = None
     age_years: int | None = None
@@ -1383,6 +1394,8 @@ def serialize_brief(brief: NutritionBrief) -> dict:
         "protein_target": brief.protein_target,
         "carb_target": brief.carb_target,
         "fat_target": brief.fat_target,
+        "protein_per_kg_target": brief.protein_per_kg_target,
+        "macro_distribution": dict(brief.macro_distribution or {}),
         "weight_kg": brief.weight_kg,
         "height_cm": brief.height_cm,
         "age_years": brief.age_years,
@@ -1424,6 +1437,12 @@ def deserialize_brief(payload: dict | None) -> NutritionBrief | None:
         protein_target=_clean_int(payload.get("protein_target"), min_value=0, max_value=500),
         carb_target=_clean_int(payload.get("carb_target"), min_value=0, max_value=800),
         fat_target=_clean_int(payload.get("fat_target"), min_value=0, max_value=300),
+        protein_per_kg_target=_clean_float(
+            payload.get("protein_per_kg_target"),
+            min_value=1.0,
+            max_value=2.5,
+        ),
+        macro_distribution=_clean_macro_distribution(payload.get("macro_distribution")),
         weight_kg=_clean_float(payload.get("weight_kg"), min_value=25, max_value=350),
         height_cm=_clean_int(payload.get("height_cm"), min_value=100, max_value=250),
         age_years=_clean_int(payload.get("age_years"), min_value=10, max_value=100),
@@ -1493,6 +1512,16 @@ def _merge_briefs(existing: NutritionBrief | None, incoming: NutritionBrief) -> 
         protein_target=incoming.protein_target or existing.protein_target or inferred.protein_target,
         carb_target=incoming.carb_target or existing.carb_target or inferred.carb_target,
         fat_target=incoming.fat_target or existing.fat_target or inferred.fat_target,
+        protein_per_kg_target=(
+            incoming.protein_per_kg_target
+            or existing.protein_per_kg_target
+            or inferred.protein_per_kg_target
+        ),
+        macro_distribution=(
+            dict(incoming.macro_distribution)
+            or dict(existing.macro_distribution)
+            or dict(inferred.macro_distribution)
+        ),
         weight_kg=incoming.weight_kg or existing.weight_kg or inferred.weight_kg,
         height_cm=incoming.height_cm or existing.height_cm or inferred.height_cm,
         age_years=incoming.age_years or existing.age_years or inferred.age_years,
@@ -2304,20 +2333,6 @@ def _clean_multi_choice(values: Iterable[object], choices: Iterable[tuple[str, s
         if value in allowed_values and value not in cleaned:
             cleaned.append(value)
     return cleaned
-
-
-def _parse_float(value) -> float | None:
-    try:
-        return float(str(value).replace(",", "."))
-    except (TypeError, ValueError):
-        return None
-
-
-def _clean_float(value, *, min_value: float, max_value: float) -> float | None:
-    parsed = _parse_float(value)
-    if parsed is None or parsed < min_value or parsed > max_value:
-        return None
-    return round(parsed, 2)
 
 
 def _format_number(value: float | None) -> str:

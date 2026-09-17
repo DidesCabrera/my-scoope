@@ -106,6 +106,27 @@ class SafeLLMContextBuilderTests(SimpleTestCase):
             ["age_years", "sex"],
         )
 
+    def test_provider_sanitizer_does_not_retruncate_executor_bounded_collections(self):
+        foods = [{"id": index, "name": f"Food {index}"} for index in range(13)]
+
+        safe = sanitize_provider_context(
+            {
+                "data": {
+                    "resource": "foods",
+                    "scope": "library",
+                    "foods": foods,
+                    "total_count": 13,
+                    "returned_count": 13,
+                    "has_more": False,
+                }
+            }
+        )
+
+        self.assertEqual(len(safe["data"]["foods"]), 13)
+        self.assertEqual(safe["data"]["total_count"], 13)
+        self.assertEqual(safe["data"]["returned_count"], 13)
+        self.assertFalse(safe["data"]["has_more"])
+
     def test_non_intake_surface_can_keep_compact_nutrition_brief(self):
         request = ChatEngineRequest(message="resume el contexto", user_id=123)
         state = start_or_continue_conversation(

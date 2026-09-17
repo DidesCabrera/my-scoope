@@ -57,6 +57,44 @@ class TargetEstimatorTests(SimpleTestCase):
         self.assertGreater(target_plan.estimated_tdee, target_plan.total_kcal)
         self.assertIn("energy_expenditure", target_plan.as_targets_dict())
 
+    def test_explicit_ppk_keeps_protein_stable_when_calories_change(self):
+        base = {
+            "goal": "muscle_gain",
+            "weight_kg": 80,
+            "protein_per_kg_target": 2.0,
+        }
+
+        deficit = estimate_daily_targets(
+            TargetEstimationProfile(**base, calorie_target=2000)
+        )
+        surplus = estimate_daily_targets(
+            TargetEstimationProfile(**base, calorie_target=2600)
+        )
+
+        self.assertEqual(deficit.protein, 160)
+        self.assertEqual(surplus.protein, 160)
+        self.assertEqual(deficit.protein_per_kg, 2.0)
+        self.assertGreater(surplus.carbs, deficit.carbs)
+
+    def test_explicit_distribution_is_supported_and_exposes_derived_ppk(self):
+        target_plan = estimate_daily_targets(
+            TargetEstimationProfile(
+                weight_kg=80,
+                calorie_target=2400,
+                macro_distribution={"protein": 30, "carbs": 50, "fat": 20},
+            )
+        )
+
+        self.assertEqual(target_plan.protein, 180)
+        self.assertEqual(target_plan.carbs, 300)
+        self.assertAlmostEqual(target_plan.fat, 53.3333333333)
+        self.assertEqual(target_plan.protein_per_kg, 2.25)
+        self.assertEqual(target_plan.macro_target_source, "explicit_macro_distribution")
+        self.assertEqual(
+            target_plan.as_targets_dict()["macro_distribution"],
+            {"protein": 30.0, "carbs": 50.0, "fat": 20.0},
+        )
+
     def test_falls_back_when_body_inputs_are_incomplete(self):
         target_plan = estimate_daily_targets(
             TargetEstimationProfile(goal="healthy_eating")

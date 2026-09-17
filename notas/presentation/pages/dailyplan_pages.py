@@ -4,6 +4,7 @@ from typing import Any, List, Optional
 
 from django.core.serializers.json import DjangoJSONEncoder
 
+from notas.application.queries.library_queries import dailyplan_library_queryset
 from notas.application.queries.performance.dailyplan_queries import (
     dailyplans_with_kcal,
     get_dailyplan_for_edit,
@@ -215,26 +216,14 @@ def get_dailyplan_list_page_data(user, request_get=None) -> DailyPlanListPageDat
 
     if list_mode in {"reorder", "delete"}:
         dailyplans = (
-            DailyPlan.objects
-            .filter(
-                created_by=user,
-                is_draft=False,
-            )
-            .exclude(source=DailyPlan.SOURCE_PROGRAM)
+            dailyplan_library_queryset(user)
             .only("id", "name", "list_order", "created_at")
-            .order_by("list_order", "-created_at", "-id")
         )
     else:
         dailyplans = (
-            DailyPlan.objects
-            .filter(
-                created_by=user,
-                is_draft=False,
-            )
-            .exclude(source=DailyPlan.SOURCE_PROGRAM)
+            dailyplan_library_queryset(user)
             .select_related("created_by", "original_author", "forked_from")
             .prefetch_related("shares")
-            .order_by("list_order", "-created_at", "-id")
         )
 
     viewmode = DAILYPLAN_VIEWMODE_PERSONAL_LIST
@@ -362,4 +351,3 @@ def get_dailyplan_draft_list_page_data(user) -> DailyPlanListPageData:
         page_actions=page_actions,
         viewmode=viewmode,
     )
-

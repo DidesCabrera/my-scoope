@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -11,6 +10,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from core.rate_limits import limit_sharing_create
+from notas.application.queries.library_queries import program_library_queryset
 from notas.application.services.access.capabilities import get_capabilities
 from notas.application.services.cache.program_summary import refresh_program_summary_cache
 from notas.application.services.commands.program_commands import (
@@ -111,15 +111,7 @@ def _safe_return_to(request, fallback_name, mode=None):
 def program_list(request):
     list_mode = _normalize_list_mode(request.GET)
 
-    base_programs = (
-        Program.objects
-        .filter(
-            Q(created_by=request.user)
-            | Q(shares__accepted_by=request.user, shares__removed=False)
-        )
-        .distinct()
-        .order_by("list_order", "-created_at", "-id")
-    )
+    base_programs = program_library_queryset(request.user)
 
     if list_mode in {"reorder", "delete"}:
         programs = base_programs.only("id", "name", "list_order", "created_at")

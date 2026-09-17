@@ -134,6 +134,12 @@ def _build_targets(brief: NutritionBrief) -> dict:
     if brief.fat_target is not None:
         targets["fat"] = brief.fat_target
 
+    if brief.protein_per_kg_target is not None:
+        targets["protein_per_kg"] = brief.protein_per_kg_target
+
+    if brief.macro_distribution:
+        targets["macro_distribution"] = dict(brief.macro_distribution)
+
     return targets
 
 

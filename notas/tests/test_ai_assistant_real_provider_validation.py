@@ -30,6 +30,7 @@ from notas.application.ai_intake.real_provider_validation import (
     _response_repetition_check,
     _specialize_scenario_for_user,
     _tool_result_grounding_check,
+    _visible_facts_check,
     built_in_real_provider_scenarios,
     get_validation_user,
     run_real_provider_validation,
@@ -38,7 +39,7 @@ from notas.application.services.nutrition.body_metrics import (
     calculate_age_years,
     record_weight,
 )
-from notas.domain.models import Profile
+from notas.domain.models import DailyPlan, Food, Meal, Profile, Program
 
 
 class ScriptedGroupedFactsValidationEngine:
@@ -211,11 +212,58 @@ class RealProviderValidationTests(TestCase):
         self.assertIn("capacidades_en_lenguaje_de_producto", catalog)
         self.assertIn("referencia_ambigua_sin_tools", catalog)
         self.assertIn("ficha_conocida_sin_repreguntas", catalog)
+        self.assertIn("bibliotecas_coherentes", catalog)
         self.assertEqual(
             catalog["referencia_ambigua_sin_tools"].user_messages,
             ("¿Qué está pasando?",),
         )
         self.assertEqual(catalog["referencia_ambigua_sin_tools"].max_tool_calls, 0)
+
+    def test_library_scenario_binds_expected_visible_totals_to_canonical_queries(self):
+        Food.objects.create(
+            name="Visible",
+            protein=1,
+            carbs=2,
+            fat=3,
+            created_by=self.user,
+        )
+        Food.objects.create(
+            name="Inactivo",
+            protein=1,
+            carbs=2,
+            fat=3,
+            created_by=self.user,
+            is_active=False,
+        )
+        Meal.objects.create(name="Comida", created_by=self.user, is_draft=False)
+        DailyPlan.objects.create(name="Plan", created_by=self.user, is_draft=False)
+        Program.objects.create(name="Programa", created_by=self.user)
+
+        scenario = _specialize_scenario_for_user(
+            built_in_real_provider_scenarios()["bibliotecas_coherentes"],
+            user=self.user,
+        )
+
+        self.assertEqual(
+            scenario.expected_visible_fragments_by_turn,
+            {
+                1: ("TOTAL: 1",),
+                2: ("TOTAL: 1",),
+                3: ("TOTAL: 1",),
+                4: ("TOTAL: 1",),
+            },
+        )
+        turns = tuple(
+            replace(
+                self._profile_validation_turn(brief_snapshot={}),
+                index=index,
+                assistant_message="TOTAL: 1",
+            )
+            for index in range(1, 5)
+        )
+        self.assertTrue(_visible_facts_check(scenario, turns).passed)
+        mismatched = (*turns[:2], replace(turns[2], assistant_message="TOTAL: 8"), turns[3])
+        self.assertFalse(_visible_facts_check(scenario, mismatched).passed)
 
     def test_profile_scenario_specialization_requires_only_persisted_available_facts(self):
         profile = self.user.profile

@@ -94,6 +94,7 @@ def _strict_proposal_preferences_provider_schema() -> dict[str, Any]:
 
     nullable_string = {"type": ["string", "null"]}
     nullable_integer = {"type": ["integer", "null"]}
+    nullable_number = {"type": ["number", "null"]}
     update_properties: dict[str, Any] = {
         "goal": {
             "type": ["string", "null"],
@@ -114,6 +115,17 @@ def _strict_proposal_preferences_provider_schema() -> dict[str, Any]:
         "protein_target": dict(nullable_integer),
         "carb_target": dict(nullable_integer),
         "fat_target": dict(nullable_integer),
+        "protein_per_kg_target": {**nullable_number, "minimum": 1.0, "maximum": 2.5},
+        "macro_distribution": {
+            "type": ["object", "null"],
+            "properties": {
+                "protein": {"type": "number"},
+                "carbs": {"type": "number"},
+                "fat": {"type": "number"},
+            },
+            "required": ["protein", "carbs", "fat"],
+            "additionalProperties": False,
+        },
         "notes": {"type": ["array", "null"], "items": {"type": "string"}},
     }
     return {

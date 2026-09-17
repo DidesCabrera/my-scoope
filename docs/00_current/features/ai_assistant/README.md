@@ -31,6 +31,12 @@ servidor, vuelve a validar y simular, y no aplica el plan.
 
 ## Paridad de capacidades del sistema
 
+El inventario vivo de solicitudes posibles, su clasificación entre lectura, patch,
+propuesta, aclaración y handoff, y las brechas actuales está en
+[`user_request_capability_catalog.md`](user_request_capability_catalog.md). Ese catálogo
+es la referencia para ampliar cobertura a partir de casos reales sin convertir cada
+frase nueva en una micro-tool.
+
 Desde la decisión 0155, el Assistant clasifica explícitamente todas las áreas
 humanas del producto. El catálogo ejecutable vive únicamente en
 `ai_assistant.application.tools.registry`; MCP es una proyección gobernada de ese
@@ -81,6 +87,14 @@ modelo declara un `resource`, un `object_id` opcional y filtros acotados; My Sco
 traduce a las queries owner-scoped existentes. Las micro-tools de lectura permanecen
 registradas para compatibilidad y MCP, pero AI Intake no depende de seleccionarlas a
 partir de palabras exactas del mensaje.
+
+Las colecciones de alimentos, comidas, planes diarios y programas comparten ahora sus
+proyecciones canónicas con las pantallas de biblioteca. La respuesta incluye
+`total_count`, `returned_count`, `offset`, `has_more` y `next_offset`; por tanto, una
+página de ocho objetos no puede presentarse como el total de la biblioteca. El gate
+`scripts/ci_ai_assistant_capability_catalog.sh` valida esta coherencia y el escenario
+live `bibliotecas_coherentes` contrasta la respuesta visible del modelo con los datos
+reales del usuario seleccionado.
 
 ## Contrato post-tool vigente
 
@@ -163,6 +177,20 @@ Tool results must synchronize with temporary chat state before follow-up questio
 
 Future work should improve tools and object contracts before adding prompt-only fixes.
 
+### Objetivos diarios PPK/macros
+
+El brief y las preferencias de propuesta admiten `protein_per_kg_target` y una
+`macro_distribution` completa. No son texto libre: atraviesan schemas, memoria temporal,
+generación y propuesta como valores tipados. El backend relaciona ambos con peso y
+energía mediante la política de la decisión 0198. Si dos instrucciones son
+incompatibles, el asistente debe aclarar la contradicción; no puede escoger una ni
+reescribirla silenciosamente.
+
+La distribución solicitada para una comida pertenece al target de esa propuesta local.
+No se convierte automáticamente en preferencia diaria ni en regla para todo un programa.
+La periodización por entrenamiento/descanso permanece fuera de cobertura hasta disponer
+de una agenda diaria explícita.
+
 ## Decisión central
 
 ```text
@@ -218,10 +246,12 @@ Si un alimento maestro todavía no fue materializado como `notas.Food`, entonces
 
 ## Relación con Proposals y workspace patches
 
-Los cambios nutricionales generativos o de composición terminan como
-`NutritionProposal` revisable. Las operaciones generales soportadas se agrupan en un
-`AIPreparedAction` con contrato `ai_assistant_workspace_patch.v1`. Ambos caminos
-requieren revisión confiable y ninguno autoriza escrituras ORM del proveedor.
+Los cambios nutricionales en los que la AI o el solver deben decidir composición,
+cantidades o alternativas terminan como `NutritionProposal` revisable. Una composición
+exacta indicada por el usuario —por ejemplo, reemplazar un alimento concreto y fijar
+sus gramos— es un cambio determinista y se representa mediante un `AIPreparedAction`
+con contrato `ai_assistant_workspace_patch.v1`. Ambos caminos requieren revisión
+confiable y ninguno autoriza escrituras ORM del proveedor.
 
 Flujo esperado:
 

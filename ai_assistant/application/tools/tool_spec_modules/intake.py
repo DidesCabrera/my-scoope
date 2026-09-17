@@ -175,6 +175,23 @@ TOOL_UPDATE_PROPOSAL_PREFERENCES: AssistantToolSpec(
                         "protein_target": {"type": "integer"},
                         "carb_target": {"type": "integer"},
                         "fat_target": {"type": "integer"},
+                        "protein_per_kg_target": {
+                            "type": "number",
+                            "minimum": 1.0,
+                            "maximum": 2.5,
+                            "description": "Explicit daily protein target in grams per kilogram of body weight.",
+                        },
+                        "macro_distribution": {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "required": ["protein", "carbs", "fat"],
+                            "properties": {
+                                "protein": {"type": "number"},
+                                "carbs": {"type": "number"},
+                                "fat": {"type": "number"},
+                            },
+                            "description": "Energy percentages that must sum to 100, for example 30/50/20.",
+                        },
                         "notes": {"type": "array", "items": {"type": "string"}},
                     },
                 },

@@ -123,7 +123,7 @@ def select_provider_tools(
     """Select executable capabilities without inferring a conversational step."""
 
     available = tuple(available)
-    user_text = str(request.user_message.content or "").strip().lower()
+    user_text = _routing_text(request)
     if str(request.context.get("surface") or "") == "ai_nutrition_intake":
         work_progress = _intake_work_progress(request.context)
         if (
@@ -224,9 +224,7 @@ def initial_tool_choice(
         is not None
     ):
         return "required"
-    if _requests_existing_product_operation(
-        str(request.user_message.content or "").strip().lower()
-    ):
+    if _requests_existing_product_operation(_routing_text(request)):
         return "required"
     return "auto"
 
@@ -353,6 +351,48 @@ def _requests_existing_product_operation(user_text: str) -> bool:
         text,
     ) is not None
     return identifies_existing_object and requests_change_or_lookup
+
+
+def _routing_text(request: AssistantTurnRequest) -> str:
+    """Carry the last operational request across a short acknowledgement.
+
+    Provider history remains the semantic authority. This helper only prevents
+    tool availability from disappearing on replies such as ``sí, claro`` after
+    the user already stated the actual operation.
+    """
+
+    current = str(request.user_message.content or "").strip().lower()
+    if not _is_short_continuation(current):
+        return current
+    for message in reversed(tuple(request.history or ())):
+        if message.role.value != "user":
+            continue
+        previous = str(message.content or "").strip().lower()
+        if _requests_existing_product_operation(previous):
+            return f"{previous} {current}".strip()
+    return current
+
+
+def _is_short_continuation(value: str) -> bool:
+    normalized = _normalized_intent_text(value)
+    if len(normalized.split()) > 6:
+        return False
+    return normalized in {
+        "si",
+        "si claro",
+        "claro",
+        "dale",
+        "ok",
+        "okay",
+        "perfecto",
+        "continua",
+        "continuemos",
+        "hazlo",
+        "intentalo",
+        "la primera",
+        "la segunda",
+        "la tercera",
+    }
 
 
 def _normalized_intent_text(value: str) -> str:

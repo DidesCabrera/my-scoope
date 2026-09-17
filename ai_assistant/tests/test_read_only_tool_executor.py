@@ -7,6 +7,7 @@ from ai_assistant.application.tools import (
     TOOL_LIST_SAVED_COMPARISONS,
     TOOL_LIST_USER_PROPOSALS,
     TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES,
+    TOOL_QUERY_WORKSPACE,
     TOOL_READ_DAILYPLAN,
     TOOL_READ_PROPOSAL,
     TOOL_READ_SAVED_COMPARISON,
@@ -122,6 +123,32 @@ class ReadOnlyToolExecutorTests(SimpleTestCase):
         self.assertEqual(result.data["limit_seen"], 5)
         self.assertEqual(result.data["limit"], 5)
         self.assertTrue(result.data["truncated"])
+        self.assertEqual(result.data["total_count"], 7)
+        self.assertEqual(result.data["returned_count"], 5)
+        self.assertTrue(result.data["has_more"])
+        self.assertEqual(result.data["next_offset"], 5)
+
+    def test_workspace_query_normalizes_non_negative_offset(self):
+        calls = []
+
+        def query_workspace(user, *, resource, search, limit, offset):
+            calls.append((resource, search, limit, offset))
+            return tool_success({"foods": [], "total_count": 0})
+
+        executor = ReadOnlyToolExecutor(
+            dispatch_table={TOOL_QUERY_WORKSPACE: query_workspace},
+        )
+
+        result = executor.execute(
+            AssistantToolRequest(
+                tool_name=TOOL_QUERY_WORKSPACE,
+                arguments={"resource": "foods", "offset": "-4"},
+            ),
+            user="user-1",
+        )
+
+        self.assertEqual(result.status, AssistantToolStatus.OK)
+        self.assertEqual(calls, [("foods", "", 20, 0)])
 
     def test_search_operational_foods_normalizes_query_and_limit(self):
         calls = []
