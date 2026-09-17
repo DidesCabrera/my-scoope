@@ -55,6 +55,7 @@ class AIAssistantToolRegistryTests(SimpleTestCase):
         self.assertIn(TOOL_SHARE_PROPOSAL_PREFERENCES_CARD, tool_names)
         self.assertIn(TOOL_SEARCH_OPERATIONAL_FOODS, tool_names)
         self.assertIn(TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES, tool_names)
+        self.assertIn("query_workspace", tool_names)
         self.assertIn(TOOL_LIST_SAVED_COMPARISONS, tool_names)
         self.assertIn(TOOL_READ_SAVED_COMPARISON, tool_names)
         self.assertIn(TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL, tool_names)

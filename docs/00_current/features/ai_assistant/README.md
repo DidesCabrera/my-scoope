@@ -67,11 +67,20 @@ conserva además su rollout gradual.
   del producto antes de afirmar que un objeto existe o no existe.
 - La superficie histórica de AI Intake no reduce las capacidades operativas: una
   solicitud explícita sobre objetos del producto recibe las tools correspondientes.
-- La selección de lecturas no depende de una ortografía literal: normaliza mayúsculas
-  y tildes, y reconoce plurales y formas verbales habituales como `listarme` o
-  `nombrarme`. Las frases reales que revelen una variante nueva deben conservarse como
+- Las lecturas nutricionales y de biblioteca de bajo riesgo se mantienen disponibles
+  como capacidades estables en AI Intake; una regla léxica puede priorizar o exigir una
+  lectura inequívoca, pero nunca ocultar esas capacidades. El selector también normaliza
+  mayúsculas y tildes y reconoce plurales y formas verbales habituales para esa
+  priorización. Las frases reales que revelen una variante nueva deben conservarse como
   regresiones de enrutamiento.
 - Toda afirmación de lectura, actualización o creación de estado debe estar respaldada por una tool allowlisted ejecutada.
+
+La capacidad provider-facing `query_workspace` concentra las consultas de alimentos,
+comidas, planes diarios, programas, calendarización, propuestas y comparaciones. El
+modelo declara un `resource`, un `object_id` opcional y filtros acotados; My Scoope lo
+traduce a las queries owner-scoped existentes. Las micro-tools de lectura permanecen
+registradas para compatibilidad y MCP, pero AI Intake no depende de seleccionarlas a
+partir de palabras exactas del mensaje.
 
 ## Contrato post-tool vigente
 

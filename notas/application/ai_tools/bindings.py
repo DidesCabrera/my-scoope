@@ -30,6 +30,7 @@ from ai_assistant.application.tools.tool_names import (
     TOOL_PREPARE_PRODUCT_ACTION,
     TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES,
     TOOL_PROPOSE_WORKSPACE_PATCH,
+    TOOL_QUERY_WORKSPACE,
     TOOL_READ_CALENDARIZATION,
     TOOL_READ_DAILYPLAN,
     TOOL_READ_FOOD,
@@ -105,6 +106,7 @@ from notas.application.ai_tools.read_tools import (
 )
 from notas.application.ai_tools.runtime import run_ai_tool
 from notas.application.ai_tools.validation_tools import compare_dailyplan_to_targets_tool
+from notas.application.ai_tools.workspace_query_tools import query_workspace_tool
 from notas.application.ai_tools.workspace_tools import (
     list_inbox_items_tool,
     list_user_programs_tool,
@@ -170,6 +172,7 @@ def register_product_ai_bindings() -> None:
     register_ai_product_bindings(
         AIProductBindings(
             read_only_tools={
+                TOOL_QUERY_WORKSPACE: query_workspace_tool,
                 TOOL_READ_DAILYPLAN: read_dailyplan_tool,
                 TOOL_READ_CALENDARIZATION: read_calendarization_tool,
                 TOOL_READ_FOOD: read_food_tool,

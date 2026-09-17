@@ -4,6 +4,7 @@ from ai_assistant.application.tool_selection import initial_tool_choice, select_
 from ai_assistant.application.tools import (
     TOOL_PREPARE_PRODUCT_ACTION,
     TOOL_PROPOSE_WORKSPACE_PATCH,
+    TOOL_QUERY_WORKSPACE,
     list_provider_tool_specs,
 )
 from ai_assistant.domain import AssistantMessage, AssistantTurnRequest
@@ -61,8 +62,9 @@ class WorkspacePatchToolSelectionTests(SimpleTestCase):
             "Hola, ¿podrías decirme si tengo algún programa en curso?"
         )
 
-        self.assertIn("list_user_programs", names)
-        self.assertIn("read_calendarization", names)
+        self.assertIn(TOOL_QUERY_WORKSPACE, names)
+        self.assertNotIn("list_user_programs", names)
+        self.assertNotIn("read_calendarization", names)
         self.assertEqual(initial_tool_choice(request, selected), "required")
 
     def test_intake_library_plan_request_exposes_plan_list_and_requires_evidence(self):
@@ -70,7 +72,8 @@ class WorkspacePatchToolSelectionTests(SimpleTestCase):
             "¿Puedes decirme los planes que existen en mi librería?"
         )
 
-        self.assertIn("list_user_dailyplans", names)
+        self.assertIn(TOOL_QUERY_WORKSPACE, names)
+        self.assertNotIn("list_user_dailyplans", names)
         self.assertEqual(initial_tool_choice(request, selected), "required")
 
     def test_intake_accentless_library_program_request_requires_program_listing(self):
@@ -78,8 +81,19 @@ class WorkspacePatchToolSelectionTests(SimpleTestCase):
             "gracias, y puedes listarme los programas que tengo en mi libreria?"
         )
 
-        self.assertIn("list_user_programs", names)
+        self.assertIn(TOOL_QUERY_WORKSPACE, names)
+        self.assertNotIn("list_user_programs", names)
         self.assertEqual(initial_tool_choice(request, selected), "required")
+
+    def test_intake_library_reads_remain_discoverable_without_phrase_matching(self):
+        request, selected, names = self._selected_for_intake(
+            "¿Cuáles son mis programas?"
+        )
+
+        self.assertIn(TOOL_QUERY_WORKSPACE, names)
+        self.assertNotIn("list_user_programs", names)
+        self.assertNotIn("list_user_dailyplans", names)
+        self.assertEqual(initial_tool_choice(request, selected), "auto")
 
     def test_intake_food_and_meal_creation_exposes_workspace_patch(self):
         request, selected, names = self._selected_for_intake(
@@ -87,7 +101,8 @@ class WorkspacePatchToolSelectionTests(SimpleTestCase):
             "crearlos como alimentos en mi librería para dejarlos en una comida registrados?"
         )
 
-        self.assertIn("list_user_foods", names)
-        self.assertIn("list_user_meals", names)
+        self.assertIn(TOOL_QUERY_WORKSPACE, names)
+        self.assertNotIn("list_user_foods", names)
+        self.assertNotIn("list_user_meals", names)
         self.assertIn(TOOL_PROPOSE_WORKSPACE_PATCH, names)
         self.assertEqual(initial_tool_choice(request, selected), "required")

@@ -252,15 +252,11 @@ class ExternalLLMOrchestratorTests(SimpleTestCase):
         tool_names = {str(tool.get("name") or "") for tool in provider_request.tools}
 
         self.assertIn("create_nutrition_engine_dailyplan_proposal_from_drafts", tool_names)
-        self.assertEqual(
-            tool_names,
-            {
-                "update_profile_draft",
-                "update_preference_draft",
-                "update_proposal_preferences",
-                "create_nutrition_engine_dailyplan_proposal_from_drafts",
-            },
-        )
+        self.assertIn("query_workspace", tool_names)
+        self.assertNotIn("list_user_programs", tool_names)
+        self.assertNotIn("read_calendarization", tool_names)
+        self.assertNotIn("propose_workspace_patch", tool_names)
+        self.assertNotIn("read_account_billing_context", tool_names)
 
     def test_intake_exposes_profile_and_preference_reads_when_user_invokes_memory(self):
         orchestrator = ExternalLLMOrchestrator(

@@ -9,6 +9,7 @@ from ai_assistant.application.product_ports import AIProductBindings
 from ai_assistant.application.tools import (
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
     TOOL_PROPOSE_WORKSPACE_PATCH,
+    TOOL_QUERY_WORKSPACE,
     TOOL_READ_USER_PREFERENCE_CONTEXT,
     TOOL_READ_USER_PROFILE_CONTEXT,
     TOOL_SHARE_PREFERENCE_DRAFT_CARD,
@@ -101,6 +102,16 @@ _AI_NUTRITION_INTAKE_CORE_TOOLS = {
     TOOL_UPDATE_PROPOSAL_PREFERENCES,
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
 }
+_AI_NUTRITION_INTAKE_OPERATIONAL_TOOLS = {
+    *_MEAL_PROPOSAL_TOOLS,
+    *_DAILYPLAN_PROPOSAL_TOOLS,
+    "create_proportional_dailyplan_calorie_proposal",
+    "list_inbox_items",
+    "read_account_billing_context",
+    "preview_nutrition_solver_candidates",
+    "compare_dailyplan_to_targets",
+    TOOL_PROPOSE_WORKSPACE_PATCH,
+}
 
 
 def select_provider_tools(
@@ -113,10 +124,7 @@ def select_provider_tools(
 
     available = tuple(available)
     user_text = str(request.user_message.content or "").strip().lower()
-    if (
-        str(request.context.get("surface") or "") == "ai_nutrition_intake"
-        and not _requests_existing_product_operation(user_text)
-    ):
+    if str(request.context.get("surface") or "") == "ai_nutrition_intake":
         work_progress = _intake_work_progress(request.context)
         if (
             enable_reviewable_proposal_tools
@@ -130,7 +138,23 @@ def select_provider_tools(
             return (proposal_tool,) if proposal_tool is not None else ()
 
         selected_names = set(_AI_NUTRITION_INTAKE_CORE_TOOLS)
+        selected_names.add(TOOL_QUERY_WORKSPACE)
         selected_names.update(_relevant_intake_memory_tools(user_text))
+        if _requests_existing_product_operation(user_text):
+            selected_names.update(
+                str(provider_spec.get("name") or "")
+                for provider_spec in available
+                if str(provider_spec.get("name") or "")
+                in _AI_NUTRITION_INTAKE_OPERATIONAL_TOOLS
+                and _expanded_product_tool_relevant(
+                    str(provider_spec.get("name") or ""),
+                    user_text=user_text,
+                )
+                and _reviewable_proposal_tool_relevant(
+                    str(provider_spec.get("name") or ""),
+                    user_text=user_text,
+                )
+            )
         return tuple(
             provider_spec
             for provider_spec in available
