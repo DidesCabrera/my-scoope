@@ -11,7 +11,7 @@ class Command(BaseCommand):
     help = "Build an immutable candidate release from published CatalogFood rows."
 
     def add_arguments(self, parser):
-        parser.add_argument("--version", required=True)
+        parser.add_argument("--release-version", required=True)
         parser.add_argument("--notes", default="")
         parser.add_argument("--actor-email", default="")
         parser.add_argument("--previous-version", default="")
@@ -20,7 +20,7 @@ class Command(BaseCommand):
         actor = _actor_by_email(options["actor_email"])
         try:
             release = build_catalog_release(
-                version=options["version"],
+                version=options["release_version"],
                 actor=actor,
                 notes=options["notes"],
                 previous_version=options["previous_version"],

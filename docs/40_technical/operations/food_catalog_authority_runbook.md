@@ -87,12 +87,12 @@ Use a monotonically increasing immutable version, for example `2026.09.1`:
 
 ```text
 python manage.py build_catalog_release \
-  --version 2026.09.1 \
+  --release-version 2026.09.1 \
   --actor-email <operator-email> \
   --notes "Initial central authority release"
 
 python manage.py approve_catalog_release \
-  --version 2026.09.1 \
+  --release-version 2026.09.1 \
   --actor-email <operator-email>
 ```
 
