@@ -67,6 +67,10 @@ conserva además su rollout gradual.
   del producto antes de afirmar que un objeto existe o no existe.
 - La superficie histórica de AI Intake no reduce las capacidades operativas: una
   solicitud explícita sobre objetos del producto recibe las tools correspondientes.
+- La selección de lecturas no depende de una ortografía literal: normaliza mayúsculas
+  y tildes, y reconoce plurales y formas verbales habituales como `listarme` o
+  `nombrarme`. Las frases reales que revelen una variante nueva deben conservarse como
+  regresiones de enrutamiento.
 - Toda afirmación de lectura, actualización o creación de estado debe estar respaldada por una tool allowlisted ejecutada.
 
 ## Contrato post-tool vigente

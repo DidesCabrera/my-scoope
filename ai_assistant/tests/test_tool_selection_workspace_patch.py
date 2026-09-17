@@ -73,6 +73,14 @@ class WorkspacePatchToolSelectionTests(SimpleTestCase):
         self.assertIn("list_user_dailyplans", names)
         self.assertEqual(initial_tool_choice(request, selected), "required")
 
+    def test_intake_accentless_library_program_request_requires_program_listing(self):
+        request, selected, names = self._selected_for_intake(
+            "gracias, y puedes listarme los programas que tengo en mi libreria?"
+        )
+
+        self.assertIn("list_user_programs", names)
+        self.assertEqual(initial_tool_choice(request, selected), "required")
+
     def test_intake_food_and_meal_creation_exposes_workspace_patch(self):
         request, selected, names = self._selected_for_intake(
             "Creo que esos alimentos no están disponibles en el sistema, ¿podrías "

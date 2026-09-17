@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+import unicodedata
 from collections.abc import Mapping, Sequence
 from typing import Any, Callable
 
@@ -312,65 +314,28 @@ def _work_progress_has_active_proposal_objective(
 
 
 def _requests_existing_product_operation(user_text: str) -> bool:
-    text = f" {str(user_text or '').strip().lower()} "
-    identifies_existing_object = any(
-        marker in text
-        for marker in (
-            " mi plan ",
-            " este plan ",
-            " plan ",
-            " planes ",
-            " dailyplan ",
-            " propuesta ",
-            " programa ",
-            " calendario ",
-            " biblioteca ",
-            " librería ",
-            " alimento",
-            " comida",
-            " food ",
-            " meal ",
-        )
-    )
-    requests_change_or_lookup = any(
-        marker in text
-        for marker in (
-            " cambia ",
-            " cambiar ",
-            " ajusta ",
-            " ajustar ",
-            " aumenta ",
-            " aumentar ",
-            " reduce ",
-            " reducir ",
-            " renombra ",
-            " elimina ",
-            " borra ",
-            " busca ",
-            " muestra ",
-            " revisa ",
-            " compara ",
-            " aplica ",
-            " aprueba ",
-            " rechaza ",
-            " crea",
-            " agrega",
-            " añad",
-            " registra",
-            " incorpora",
-            " guarda",
-            " lista ",
-            " listar ",
-            " dime ",
-            " decirme ",
-            " tengo ",
-            " hay ",
-            " existe",
-            " en curso",
-            " activo",
-        )
-    )
+    text = _normalized_intent_text(user_text)
+    identifies_existing_object = re.search(
+        r"\b(?:plan(?:es)?|dailyplans?|propuestas?|programas?|programs?|calendarios?|"
+        r"bibliotecas?|librerias?|alimentos?|comidas?|foods?|meals?)\b",
+        text,
+    ) is not None
+    requests_change_or_lookup = re.search(
+        r"\b(?:cambi\w*|ajust\w*|aument\w*|reduc\w*|renombr\w*|elimin\w*|"
+        r"borr\w*|busc\w*|muestr\w*|revis(?:a|ar|ame|alo|ala|en|emos|ando)|"
+        r"compar\w*|aplic\w*|aprob\w*|"
+        r"rechaz\w*|crea\w*|agreg\w*|anad\w*|registr\w*|incorpor\w*|guard\w*|"
+        r"list\w*|nombr\w*|dime|decir\w*|tengo|hay|exist\w*|curso|activ\w*)\b",
+        text,
+    ) is not None
     return identifies_existing_object and requests_change_or_lookup
+
+
+def _normalized_intent_text(value: str) -> str:
+    """Normalize user phrasing before applying lightweight routing heuristics."""
+
+    decomposed = unicodedata.normalize("NFKD", str(value or "").casefold())
+    return "".join(character for character in decomposed if not unicodedata.combining(character))
 
 
 def _latest_draft_for_tool(
