@@ -112,6 +112,15 @@ def build_authority_snapshot_envelope() -> dict[str, object]:
 
 @transaction.atomic
 def import_authority_snapshot(envelope: Mapping[str, object]) -> int:
+    foods, batches = _validate_authority_snapshot_envelope(envelope)
+    imported_batches = _import_authority_batches(batches)
+    _restore_authority_foods(foods, imported_batches)
+    return len(foods)
+
+
+def _validate_authority_snapshot_envelope(
+    envelope: Mapping[str, object],
+) -> tuple[list[object], list[object]]:
     metadata = envelope.get("snapshot") if isinstance(envelope, Mapping) else None
     payload = envelope.get("payload") if isinstance(envelope, Mapping) else None
     if not isinstance(metadata, Mapping) or not isinstance(payload, Mapping):
@@ -134,7 +143,12 @@ def import_authority_snapshot(envelope: Mapping[str, object]) -> int:
         raise CatalogReleaseError("catalog_authority_snapshot_requires_empty_catalog")
     if CatalogImportBatch.objects.exists():
         raise CatalogReleaseError("catalog_authority_snapshot_requires_empty_batches")
+    return foods, batches
 
+
+def _import_authority_batches(
+    batches: list[object],
+) -> dict[int, CatalogImportBatch]:
     imported_batches: dict[int, CatalogImportBatch] = {}
     pending_dry_run_links: list[tuple[CatalogImportBatch, int]] = []
     for raw_batch in batches:
@@ -160,7 +174,13 @@ def import_authority_snapshot(envelope: Mapping[str, object]) -> int:
             raise CatalogReleaseError("catalog_authority_snapshot_dry_run_batch_missing")
         imported.dry_run_batch = dry_run_batch
         imported.save(update_fields=["dry_run_batch"])
+    return imported_batches
 
+
+def _restore_authority_foods(
+    foods: list[object],
+    imported_batches: Mapping[int, CatalogImportBatch],
+) -> None:
     for raw_item in foods:
         if not isinstance(raw_item, Mapping):
             raise CatalogReleaseError("catalog_authority_snapshot_food_item_invalid")
@@ -183,7 +203,6 @@ def import_authority_snapshot(envelope: Mapping[str, object]) -> int:
             raw_item,
             import_batches=imported_batches,
         )
-    return len(foods)
 
 
 @transaction.atomic

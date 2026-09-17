@@ -56,6 +56,7 @@
     "ios": "expo run:ios",
     "ios:staging": "node ./scripts/mobile-environment-command.mjs simulator-staging -- npx expo run:ios",
     "build:production": "node ./scripts/mobile-environment-command.mjs testflight-production -- npx eas-cli@latest build --platform ios --profile testflight-production",
+    "build:android:alpha": "node ./scripts/mobile-environment-command.mjs android-alpha -- npx eas-cli@latest build --platform android --profile android-alpha",
     "submit:production": "node ./scripts/mobile-environment-command.mjs testflight-production -- npx eas-cli@latest submit --platform ios --profile testflight-production",
     "verify:environments": "node ./scripts/mobile-environment-command.mjs --verify",
     "web": "expo start --web",

@@ -62,6 +62,20 @@ class AppleSubscriptionStatusEvidence:
 
 
 @dataclass(frozen=True)
+class GooglePlaySubscriptionEvidence:
+    purchase_token: str
+    product_id: str
+    base_plan_id: str
+    status: str
+    start_time: Any = None
+    expiry_time: Any = None
+    obfuscated_account_id: str = ""
+    acknowledged: bool = False
+    auto_renewing: bool = False
+    metadata: Mapping[str, Any] | None = None
+
+
+@dataclass(frozen=True)
 class SubscriptionCheckoutResult:
     subscription: ProviderSubscriptionSnapshot
     checkout_url: str

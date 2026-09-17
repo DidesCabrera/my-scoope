@@ -10,7 +10,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.test import SimpleTestCase
 
 from core.environment_contract import ENVIRONMENT_VARIABLE_SPEC_BY_NAME
-from miapp.settings.base import _env_float, _env_int
+from miapp.settings.base import _env_float, _env_int, _env_json_object_or_file
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -89,6 +89,7 @@ print(json.dumps({
             "BILLING_MERCADOPAGO_ACCESS_TOKEN", "BILLING_MERCADOPAGO_WEBHOOK_SECRET",
             "BILLING_PADDLE_API_KEY", "BILLING_PADDLE_WEBHOOK_SECRET",
             "BILLING_APPLE_IN_APP_PURCHASE_KEY",
+            "BILLING_GOOGLE_PLAY_SERVICE_ACCOUNT_JSON",
             "MYSCOOPE_APNS_PRIVATE_KEY",
             "BILLING_OPENFACTURA_API_KEY",
             "TURNSTILE_SECRET_KEY", "CACHE_URL",
@@ -131,6 +132,36 @@ print(json.dumps({
         with patch.dict(os.environ, {"PCF_TEST_FLOAT": "not-a-number"}):
             with self.assertRaisesMessage(ImproperlyConfigured, "PCF_TEST_FLOAT"):
                 _env_float("PCF_TEST_FLOAT", 1.0)
+
+    def test_json_object_can_be_loaded_from_secret_file(self):
+        secret_path = ROOT / "test-google-play-service-account.json"
+        secret_path.write_text('{"type": "service_account"}', encoding="utf-8")
+        self.addCleanup(secret_path.unlink, missing_ok=True)
+
+        with patch.dict(
+            os.environ,
+            {
+                "PCF_TEST_JSON": "",
+                "PCF_TEST_JSON_FILE": str(secret_path),
+            },
+        ):
+            self.assertEqual(
+                _env_json_object_or_file("PCF_TEST_JSON", "PCF_TEST_JSON_FILE"),
+                {"type": "service_account"},
+            )
+
+    def test_inline_json_takes_precedence_over_secret_file(self):
+        with patch.dict(
+            os.environ,
+            {
+                "PCF_TEST_JSON": '{"source": "inline"}',
+                "PCF_TEST_JSON_FILE": "/missing/secret.json",
+            },
+        ):
+            self.assertEqual(
+                _env_json_object_or_file("PCF_TEST_JSON", "PCF_TEST_JSON_FILE"),
+                {"source": "inline"},
+            )
 
     def test_wsgi_and_asgi_use_the_same_production_default(self):
         wsgi = (ROOT / "miapp/wsgi.py").read_text()
