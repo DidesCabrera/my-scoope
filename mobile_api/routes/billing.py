@@ -41,12 +41,7 @@ def entitlements(request):
     response={200: SubscriptionEnvelope, 401: ErrorEnvelope, 403: ErrorEnvelope},
 )
 def subscriptions(request):
-    return success(
-        subscription_payload(
-            request.auth.user,
-            purchases_enabled=settings.BILLING_APPLE_PURCHASES_ENABLED,
-        )
-    )
+    return success(subscription_payload(request.auth.user))
 
 
 @router.post(
@@ -90,4 +85,4 @@ def apple_transaction(request, payload: AppleTransactionInput):
             message="Apple purchase verification is temporarily unavailable.",
             status_code=503,
         ) from exc
-    return success(subscription_payload(request.auth.user, purchases_enabled=True))
+    return success(subscription_payload(request.auth.user))

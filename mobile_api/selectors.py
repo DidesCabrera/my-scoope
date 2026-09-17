@@ -4,11 +4,13 @@ from copy import deepcopy
 from datetime import timedelta
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from django.conf import settings
 from django.db.models import Count, Prefetch, Q
 from django.utils import timezone
 
 from accounts.services.profile import build_account_credit_display
 from billing.application.services.apple_app_store import get_or_create_apple_app_account_token
+from billing.application.services.google_play import google_play_account_id
 from billing.models import BillingProduct, PaymentProvider, ProviderSubscription
 from mobile_api.errors import MobileAPIError
 from mobile_api.library_actions import library_actions_payload
@@ -683,21 +685,28 @@ def entitlements_payload(user) -> dict:
     }
 
 
-def subscription_payload(user, *, purchases_enabled: bool) -> dict:
+def subscription_payload(user) -> dict:
     profile = getattr(user, "profile", None)
     eligible = str(getattr(profile, "role", "member") or "member").lower() == "member"
     subscription = getattr(user, "account_subscription", None)
     token = get_or_create_apple_app_account_token(user) if eligible else None
     products = []
-    if eligible and purchases_enabled:
+    enabled_providers = []
+    if settings.BILLING_APPLE_PURCHASES_ENABLED:
+        enabled_providers.append(PaymentProvider.APPLE_APP_STORE)
+    if settings.BILLING_GOOGLE_PLAY_PURCHASES_ENABLED:
+        enabled_providers.append(PaymentProvider.GOOGLE_PLAY)
+    if eligible and enabled_providers:
         products = [
             {
                 "product_id": product.external_product_id,
+                "provider": product.provider,
+                "base_plan_id": product.external_price_id,
                 "plan_name": product.account_plan.name,
                 "interval": product.interval,
             }
             for product in BillingProduct.objects.select_related("account_plan").filter(
-                provider=PaymentProvider.APPLE_APP_STORE,
+                provider__in=enabled_providers,
                 active=True,
                 account_plan__status="active",
             )
@@ -711,8 +720,9 @@ def subscription_payload(user, *, purchases_enabled: bool) -> dict:
     metadata = dict(getattr(subscription, "metadata", {}) or {})
     return {
         "eligible": eligible,
-        "purchases_enabled": bool(eligible and purchases_enabled and products),
+        "purchases_enabled": bool(eligible and products),
         "app_account_token": str(token.token) if token is not None else "",
+        "google_obfuscated_account_id": google_play_account_id(user) if eligible else "",
         "plan_name": subscription.plan.name if subscription is not None else "Sin plan",
         "status": subscription.status if subscription is not None else "none",
         "products": products,

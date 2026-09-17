@@ -1199,29 +1199,6 @@
         "title": "ApplePushRegistrationInput",
         "type": "object"
       },
-      "AppleSubscriptionProductData": {
-        "properties": {
-          "interval": {
-            "title": "Interval",
-            "type": "string"
-          },
-          "plan_name": {
-            "title": "Plan Name",
-            "type": "string"
-          },
-          "product_id": {
-            "title": "Product Id",
-            "type": "string"
-          }
-        },
-        "required": [
-          "product_id",
-          "plan_name",
-          "interval"
-        ],
-        "title": "AppleSubscriptionProductData",
-        "type": "object"
-      },
       "AppleTransactionInput": {
         "properties": {
           "signed_transaction": {
@@ -3854,6 +3831,21 @@
           "quantity"
         ],
         "title": "FoodPickerInput",
+        "type": "object"
+      },
+      "GooglePlayPurchaseInput": {
+        "properties": {
+          "purchase_token": {
+            "maxLength": 4096,
+            "minLength": 10,
+            "title": "Purchase Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "purchase_token"
+        ],
+        "title": "GooglePlayPurchaseInput",
         "type": "object"
       },
       "HealthData": {
@@ -7296,13 +7288,17 @@
             "title": "Evidence",
             "type": "array"
           },
+          "google_obfuscated_account_id": {
+            "title": "Google Obfuscated Account Id",
+            "type": "string"
+          },
           "plan_name": {
             "title": "Plan Name",
             "type": "string"
           },
           "products": {
             "items": {
-              "$ref": "#/components/schemas/AppleSubscriptionProductData"
+              "$ref": "#/components/schemas/SubscriptionProductData"
             },
             "title": "Products",
             "type": "array"
@@ -7322,6 +7318,7 @@
           "app_account_token",
           "plan_name",
           "status",
+          "google_obfuscated_account_id",
           "products",
           "evidence",
           "duplicate_active_providers"
@@ -7379,6 +7376,39 @@
           "status"
         ],
         "title": "SubscriptionEvidenceData",
+        "type": "object"
+      },
+      "SubscriptionProductData": {
+        "properties": {
+          "base_plan_id": {
+            "default": "",
+            "title": "Base Plan Id",
+            "type": "string"
+          },
+          "interval": {
+            "title": "Interval",
+            "type": "string"
+          },
+          "plan_name": {
+            "title": "Plan Name",
+            "type": "string"
+          },
+          "product_id": {
+            "title": "Product Id",
+            "type": "string"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_id",
+          "provider",
+          "plan_name",
+          "interval"
+        ],
+        "title": "SubscriptionProductData",
         "type": "object"
       },
       "TodayData": {
@@ -15295,6 +15325,80 @@
           }
         ],
         "summary": "Apple Transaction"
+      }
+    },
+    "/api/v1/subscriptions/google-play/purchases": {
+      "post": {
+        "operationId": "mobile_api_api_google_play_purchase",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GooglePlayPurchaseInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "MobileBearer": []
+          }
+        ],
+        "summary": "Google Play Purchase"
       }
     },
     "/api/v1/today": {
