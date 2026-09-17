@@ -44,7 +44,8 @@ python manage.py evaluate_ai_assistant_lab \
 ### 2. Evaluación live sin UI
 
 `--live` ejecuta las conversaciones con el proveedor configurado. Consume uso y,
-si corresponde, créditos. Sólo ejecuta escenarios cuyo preflight está listo.
+por defecto, registra tokens y costo del proveedor sin consumir la cuota personal
+del usuario seleccionado. Sólo ejecuta escenarios cuyo preflight está listo.
 
 ```bash
 python manage.py evaluate_ai_assistant_lab \
@@ -53,6 +54,11 @@ python manage.py evaluate_ai_assistant_lab \
   --output var/ai-evaluation/latest.json \
   --fail-on-regression
 ```
+
+Para probar específicamente la integración comercial de créditos se debe optar
+de forma explícita por `--charge-user-credits`. Un bloqueo de cuota se informa
+como `blocked_by_credit_quota`; las tools o propuestas que no llegaron a
+ejecutarse por ese bloqueo no se reportan como regresiones falsas.
 
 Por defecto se eliminan al final únicamente las `NutritionProposal` pendientes y
 las `AIPreparedAction` no confirmadas que fueron creadas por esa ejecución. Nunca
