@@ -5,7 +5,7 @@ import json
 from typing import Any, Mapping
 
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, Subquery
 from django.utils import timezone
 
 from ai_assistant.application.prepared_action_contracts import (
@@ -568,6 +568,9 @@ def _highest_risk(left: str, right: str) -> str:
 
 
 def _resolve_owned_target(*, user, target_type: str, target_id: int, for_update: bool = False):
+    owned_proposal_ids = NutritionProposal.objects.filter(
+        Q(created_by=user) | Q(dailyplan__created_by=user)
+    ).values("pk")
     querysets = {
         "food": Food.objects.filter(created_by=user, is_active=True),
         "meal": Meal.objects.filter(created_by=user),
@@ -577,9 +580,7 @@ def _resolve_owned_target(*, user, target_type: str, target_id: int, for_update:
         "program": Program.objects.filter(created_by=user),
         "calendarization": ProgramCalendarization.objects.filter(user=user),
         "saved_comparison": SavedComparison.objects.filter(owner=user),
-        "proposal": NutritionProposal.objects.filter(
-            Q(created_by=user) | Q(dailyplan__created_by=user)
-        ),
+        "proposal": NutritionProposal.objects.filter(pk__in=Subquery(owned_proposal_ids)),
     }
     queryset = querysets[target_type]
     if for_update:
