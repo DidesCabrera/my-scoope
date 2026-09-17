@@ -16,8 +16,8 @@ Authority commands:
 python manage.py import_catalog_authority_snapshot --url <protected-bootstrap-url>
 python manage.py publish_verified_catalog_foods
 python manage.py publish_verified_catalog_foods --apply --actor-email <email>
-python manage.py build_catalog_release --version <version> --actor-email <email>
-python manage.py approve_catalog_release --version <version> --actor-email <email>
+python manage.py build_catalog_release --release-version <version> --actor-email <email>
+python manage.py approve_catalog_release --release-version <version> --actor-email <email>
 ```
 
 Consumer command:

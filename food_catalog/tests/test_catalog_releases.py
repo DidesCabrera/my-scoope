@@ -6,6 +6,7 @@ from pathlib import Path
 from django.apps import apps
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
+from django.core.management import get_commands, load_command_class
 from django.core.management.base import CommandError
 from django.test import Client, TestCase, override_settings
 
@@ -31,6 +32,18 @@ Food = apps.get_model("notas", "Food")
 
 
 class CatalogReleaseTests(TestCase):
+    def test_release_management_commands_build_real_parsers(self):
+        commands = get_commands()
+
+        for command_name in ("build_catalog_release", "approve_catalog_release"):
+            command = load_command_class(commands[command_name], command_name)
+            parser = command.create_parser("manage.py", command_name)
+            options = parser.parse_args(
+                ["--release-version", "2026.09.1"]
+            )
+
+            self.assertEqual(options.release_version, "2026.09.1")
+
     def test_build_approve_and_export_checksummed_release(self):
         food = _published_food()
         candidate = build_catalog_release(version="2026.09.1", notes="Initial release")

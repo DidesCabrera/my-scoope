@@ -12,11 +12,13 @@ class Command(BaseCommand):
     help = "Approve one checksummed candidate Food Catalog release."
 
     def add_arguments(self, parser):
-        parser.add_argument("--version", required=True)
+        parser.add_argument("--release-version", required=True)
         parser.add_argument("--actor-email", default="")
 
     def handle(self, *args, **options):
-        release = CatalogRelease.objects.filter(version=options["version"]).first()
+        release = CatalogRelease.objects.filter(
+            version=options["release_version"]
+        ).first()
         if release is None:
             raise CommandError("Catalog release does not exist.")
         actor = _actor_by_email(options["actor_email"])
