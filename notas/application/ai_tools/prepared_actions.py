@@ -77,6 +77,10 @@ _ALLOWED_ACTION_ARGUMENTS = {
     "meal.rename": {"name"},
     "meal.add_food": {"food_id", "quantity"},
     "meal.update_food": {"food_id", "quantity"},
+    # Public workspace patches identify a removal using the owned meal plus
+    # the food that appears in it. The join-row id is an implementation detail
+    # and must not leak into assistant or MCP requests.
+    "meal.remove_food": {"food_id"},
     "dailyplan.create": {"name"},
     "dailyplan.rename": {"name"},
     "dailyplan.add_meal": {"meal_id", "hour", "note"},
@@ -382,11 +386,18 @@ def _normalize_workspace_patch_operation(
                 "pending_operation_reference": target_reference,
             }
         else:
-            target = _resolve_owned_target(
-                user=user,
-                target_type=spec.target_type,
-                target_id=int(target_id),
-            )
+            if action_key == "meal.remove_food":
+                target = _resolve_owned_meal_food(
+                    user=user,
+                    meal_id=int(target_id),
+                    food_id=parameters.get("food_id"),
+                )
+            else:
+                target = _resolve_owned_target(
+                    user=user,
+                    target_type=spec.target_type,
+                    target_id=int(target_id),
+                )
             before = _target_snapshot(spec.target_type, target)
             target_version = _snapshot_version(before)
 
@@ -589,6 +600,26 @@ def _resolve_owned_target(*, user, target_type: str, target_id: int, for_update:
     if target is None:
         raise ValueError(f"prepared_action_{target_type}_not_available")
     return target
+
+
+def _resolve_owned_meal_food(*, user, meal_id: int, food_id: Any):
+    """Resolve a meal-food row without exposing its internal id to callers."""
+
+    try:
+        normalized_food_id = int(food_id)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("prepared_action_missing_arguments:food_id") from exc
+    matches = MealFood.objects.filter(
+        meal_id=meal_id,
+        meal__created_by=user,
+        food_id=normalized_food_id,
+    ).select_related("meal", "food")
+    count = matches.count()
+    if count == 0:
+        raise ValueError("prepared_action_meal_food_not_available")
+    if count > 1:
+        raise ValueError("prepared_action_meal_food_ambiguous")
+    return matches.first()
 
 
 def _target_snapshot(target_type: str, target) -> dict:

@@ -581,8 +581,8 @@ def build_real_provider_validation_engine() -> LLMNutritionIntakeChatEngine:
         max_output_tokens=max(1400, int(base_config.max_output_tokens)),
         enable_reviewable_proposal_tools=True,
         max_tool_loop_iterations=max(
-            4,
-            int(getattr(settings, "AI_ASSISTANT_MAX_TOOL_LOOP_ITERATIONS", 4) or 4),
+            6,
+            int(getattr(settings, "AI_ASSISTANT_MAX_TOOL_LOOP_ITERATIONS", 6) or 6),
         ),
         max_tool_requests_per_turn=max(
             4,

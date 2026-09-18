@@ -218,8 +218,11 @@ def _strict_workspace_patch_provider_schema() -> dict[str, Any]:
         "parameters": {
             "type": "object",
             "description": (
-                "For a meal food replacement use remove_food with food_id, followed by "
-                "add_food with food_id and quantity in grams."
+                "Direct action-specific values; do not put database IDs in references. "
+                "For a meal food replacement use the owned meal as target_id, then "
+                "remove_food with the current food_id followed by add_food with the "
+                "replacement food_id and quantity in grams. References are only for "
+                "operation_id values created earlier in this same patch."
             ),
             "properties": parameter_properties,
             "required": list(parameter_properties),

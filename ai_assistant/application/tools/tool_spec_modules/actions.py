@@ -16,9 +16,10 @@ TOOL_PROPOSE_WORKSPACE_PATCH: AssistantToolSpec(
             "validates ownership, arguments, risk and previews every operation; no "
             "product change is applied until the user confirms the patch in trusted UI. "
             "Later operations may reference entities created by earlier operations. "
-            "To replace a food in an existing meal, use two operations with the same meal "
+            "To replace a food in an existing meal, use two operations with the same owned meal "
             "target_id: remove_food parameters={food_id: OLD_ID}, then add_food "
-            "parameters={food_id: NEW_ID, quantity: GRAMS}. Never use remove_food_id, "
+            "parameters={food_id: NEW_ID, quantity: GRAMS}. My Scoope resolves its internal "
+            "meal-food row. Never use remove_food_id, "
             "add_food_id, portion_g or other aliases."
         ),
         category=AssistantToolCategory.PROPOSAL,

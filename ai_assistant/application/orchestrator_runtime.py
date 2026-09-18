@@ -20,7 +20,10 @@ class AssistantOrchestratorConfig:
 
     max_history_messages: int = 20
     max_output_tokens: int = 2400
-    max_tool_loop_iterations: int = 4
+    # A compound proposal may need profile capture, proposal-scoped capture,
+    # proposal creation and a final provider-authored acknowledgement. Six
+    # keeps that path possible while preserving a hard bounded loop.
+    max_tool_loop_iterations: int = 6
     enable_reviewable_proposal_tools: bool = True
     max_input_tokens: int = 20000
     max_context_chars: int = 16000
