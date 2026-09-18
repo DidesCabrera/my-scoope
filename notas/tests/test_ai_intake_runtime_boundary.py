@@ -20,6 +20,14 @@ from notas.application.ai_intake.nutrition_brief import (
 
 
 class AiIntakeRuntimeBoundaryTests(SimpleTestCase):
+    def test_explicit_calorie_target_does_not_require_an_invented_goal(self):
+        brief = NutritionBrief(
+            raw_prompt="Crea un plan de 2400 kcal",
+            calorie_target=2400,
+        )
+
+        self.assertEqual(required_proposal_fields(brief), [])
+
     def test_deterministic_and_llm_state_builders_have_distinct_conversation_policy(self):
         brief = NutritionBrief(raw_prompt="quiero una dieta")
 

@@ -283,3 +283,57 @@ class GoalDirectedAgencyTests(SimpleTestCase):
             [tool["name"] for tool in followup.tools],
             [TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS],
         )
+
+    def test_followup_for_explicit_targets_does_not_require_an_invented_goal(self):
+        orchestrator = ExternalLLMOrchestrator(llm_client=FakeLLMClient(responses=[]))
+        request = AssistantTurnRequest(
+            user_message=AssistantMessage(
+                role=AssistantMessageRole.USER,
+                content="Crea un plan de 2400 kcal con 30/50/20.",
+            ),
+            context={
+                "surface": "ai_nutrition_intake",
+                "metadata": {
+                    "tool_oriented_intake": {
+                        "current_drafts": {
+                            "profile_draft": {},
+                            "preference_draft": {},
+                            "proposal_preferences": {},
+                        },
+                        "current_nutrition_brief": {},
+                        "work_progress": {
+                            "active_objective": "create_reviewable_dailyplan_proposal",
+                            "blocking_fields": ["goal"],
+                        },
+                    }
+                },
+            },
+        )
+        preference_result = AssistantToolResult(
+            tool_name=TOOL_UPDATE_PROPOSAL_PREFERENCES,
+            status=AssistantToolStatus.OK,
+            data={
+                "proposal_preferences": {
+                    "requested_entity": "daily_plan",
+                    "calorie_target": 2400,
+                    "protein_target": 180,
+                    "carb_target": 300,
+                    "fat_target": 53.33,
+                    "macro_distribution": {"protein": 30, "carbs": 50, "fat": 20},
+                }
+            },
+        )
+
+        followup = orchestrator.build_tool_followup_provider_request(
+            request=request,
+            continuation_items=(),
+            tool_results=(preference_result,),
+            accumulated_tool_results=(preference_result,),
+            remaining_tool_iterations=2,
+        )
+
+        self.assertEqual(followup.tool_choice, "required")
+        self.assertEqual(
+            [tool["name"] for tool in followup.tools],
+            [TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS],
+        )

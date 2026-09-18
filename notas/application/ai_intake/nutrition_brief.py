@@ -1927,7 +1927,8 @@ def required_proposal_fields(brief: NutritionBrief) -> list[str]:
     """
 
     required: list[str] = []
-    if brief.goal is None:
+    # Explicit calories must not make the assistant invent an unstated goal.
+    if brief.goal is None and brief.calorie_target is None:
         required.append("goal")
     if brief.calorie_target is None:
         required.extend(

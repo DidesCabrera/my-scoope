@@ -288,6 +288,20 @@ def list_provider_tool_specs() -> list[dict[str, Any]]:
                 },
                 "strict": True,
             }
+        if spec.name == TOOL_CREATE_NUTRITION_SOLVER_MEAL_PROPOSAL:
+            parameters = dict(provider_spec.get("parameters") or {})
+            properties = dict(parameters.get("properties") or {})
+            properties.pop("search", None)
+            provider_spec = {
+                **provider_spec,
+                "description": (
+                    "Create a reviewable Meal proposal by running the internal Nutrition "
+                    "Solver against the complete solver-ready operational food catalog. "
+                    "Do not invent or narrow the catalog with a free-text search. This never "
+                    "creates or applies a final Meal directly."
+                ),
+                "parameters": {**parameters, "properties": properties},
+            }
         provider_specs.append(provider_spec)
     return provider_specs
 

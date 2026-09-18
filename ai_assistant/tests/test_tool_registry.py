@@ -318,6 +318,15 @@ class AIAssistantToolRegistryTests(SimpleTestCase):
         self.assertEqual(spec.risk_level, AssistantToolRiskLevel.REVIEW_REQUIRED)
         self.assertTrue(spec.requires_human_review)
         self.assertIn("target", spec.input_schema["required"])
+        self.assertIn("search", spec.input_schema["properties"])
+
+        provider_spec = next(
+            item
+            for item in list_provider_tool_specs()
+            if item["name"] == TOOL_CREATE_NUTRITION_SOLVER_MEAL_PROPOSAL
+        )
+        self.assertNotIn("search", provider_spec["parameters"]["properties"])
+        self.assertIn("complete solver-ready operational food catalog", provider_spec["description"])
 
     def test_workspace_patch_is_reviewable_and_bounded(self):
         spec = get_tool_spec(TOOL_PROPOSE_WORKSPACE_PATCH)
