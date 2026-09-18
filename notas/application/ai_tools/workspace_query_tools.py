@@ -58,12 +58,17 @@ def _collection_envelope(
         "scope": "library",
         key: items,
         "total_count": total_count,
+        "count_for_user_questions": total_count,
         "returned_count": returned_count,
         "limit": limit,
         "offset": offset,
         "has_more": has_more,
         "next_offset": next_offset if has_more else None,
         "truncated": has_more,
+        "count_semantics": (
+            "For questions about how many objects are in the library, answer with "
+            "total_count/count_for_user_questions. returned_count is only this page."
+        ),
     }
 
 

@@ -14,7 +14,9 @@ TOOL_QUERY_WORKSPACE: AssistantToolSpec(
             "Query the authenticated user's My Scoope workspace. This is the primary read capability for "
             "foods, meals, daily plans, programs, calendarization, proposals and saved comparisons. "
             "Use it before saying stored product data is unavailable. Omit object_id to list or search; "
-            "include object_id to read one object. It never writes data."
+            "include object_id to read one object. For count questions, always report total_count "
+            "(also exposed as count_for_user_questions), never returned_count or the page length. "
+            "It never writes data."
         ),
         category=AssistantToolCategory.READ,
         risk_level=AssistantToolRiskLevel.LOW,

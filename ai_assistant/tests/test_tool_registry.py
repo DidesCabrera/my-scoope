@@ -11,6 +11,7 @@ from ai_assistant.application.tools import (
     TOOL_LIST_SAVED_COMPARISONS,
     TOOL_PREVIEW_NUTRITION_SOLVER_CANDIDATES,
     TOOL_PROPOSE_WORKSPACE_PATCH,
+    TOOL_QUERY_WORKSPACE,
     TOOL_READ_DAILYPLAN,
     TOOL_READ_SAVED_COMPARISON,
     TOOL_READ_USER_PREFERENCE_CONTEXT,
@@ -344,6 +345,12 @@ class AIAssistantToolRegistryTests(SimpleTestCase):
         self.assertIn("add_food", parameters["description"])
         references = provider_operation["properties"]["references"]
         self.assertIn("all references are null", references["description"])
+
+    def test_workspace_query_count_contract_names_the_canonical_total(self):
+        spec = get_tool_spec(TOOL_QUERY_WORKSPACE)
+
+        self.assertIn("always report total_count", spec.description)
+        self.assertIn("never returned_count", spec.description)
 
     def test_draft_based_dailyplan_proposal_is_reviewable_tool(self):
         spec = get_tool_spec(TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS)
