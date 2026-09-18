@@ -342,6 +342,8 @@ class AIAssistantToolRegistryTests(SimpleTestCase):
         self.assertNotIn("portion_g", parameters["properties"])
         self.assertIn("remove_food", parameters["description"])
         self.assertIn("add_food", parameters["description"])
+        references = provider_operation["properties"]["references"]
+        self.assertIn("all references are null", references["description"])
 
     def test_draft_based_dailyplan_proposal_is_reviewable_tool(self):
         spec = get_tool_spec(TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS)

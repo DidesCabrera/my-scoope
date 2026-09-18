@@ -211,6 +211,11 @@ def _strict_workspace_patch_provider_schema() -> dict[str, Any]:
         "target_id": dict(nullable_integer),
         "references": {
             "type": "object",
+            "description": (
+                "Use only for IDs created by an earlier create operation. When target_id or an "
+                "ID parameter is supplied directly, set the matching reference to null. For an "
+                "existing-meal food replacement, all references are null."
+            ),
             "properties": reference_properties,
             "required": list(reference_properties),
             "additionalProperties": False,

@@ -343,8 +343,17 @@ def _normalize_workspace_patch_operation(
     references = {
         str(key).strip(): str(value).strip()
         for key, value in raw_references.items()
-        if str(key).strip() and str(value).strip()
+        if value is not None and str(key).strip() and str(value).strip()
     }
+    # Provider-native strict schemas require nullable reference fields on every
+    # operation. If the provider redundantly fills one while also supplying the
+    # concrete public ID, the explicit ID is safer and ownership-validated.
+    # Normalize that harmless redundancy instead of rejecting an otherwise
+    # deterministic patch (notably remove_food + add_food replacements).
+    if raw_operation.get("target_id") is not None:
+        references.pop("target_id", None)
+    for parameter_name in parameters:
+        references.pop(str(parameter_name), None)
     allowed_arguments = _ALLOWED_ACTION_ARGUMENTS.get(action_key, set())
     unknown_arguments = sorted(set(parameters).difference(allowed_arguments))
     if unknown_arguments:
@@ -353,8 +362,6 @@ def _normalize_workspace_patch_operation(
     unknown_references = sorted(set(references).difference(allowed_references))
     if unknown_references:
         raise ValueError(f"workspace_patch_unknown_references:{','.join(unknown_references)}")
-    if set(parameters).intersection(references):
-        raise ValueError("workspace_patch_reference_conflicts_with_parameter")
     _validate_workspace_patch_references(
         spec=spec,
         action_key=action_key,
