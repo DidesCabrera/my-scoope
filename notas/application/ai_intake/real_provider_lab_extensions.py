@@ -82,7 +82,7 @@ def build_lab_scenarios() -> dict[str, Any]:
                 "(ID {replacement_food_id}) y deja la porción en 200 g. Prepara el cambio "
                 "para que yo lo revise; no lo apliques todavía.",
             ),
-            required_tool_names=("query_workspace", "propose_workspace_patch"),
+            required_tool_names=("propose_workspace_patch",),
             max_tool_calls=6,
             capability_ids=("M-08",),
             diagnostic_domains=("language_understanding", "tool_routing", "state_mutation"),
@@ -110,7 +110,11 @@ def build_lab_scenarios() -> dict[str, Any]:
                 "weight_kg": 80.0,
                 "meals_per_day": 4,
             },
-            required_tool_names=("update_proposal_preferences",),
+            required_tool_names=(
+                "update_profile_draft",
+                "update_proposal_preferences",
+                "create_nutrition_engine_dailyplan_proposal_from_drafts",
+            ),
             max_tool_calls=8,
             capability_ids=("DP-13",),
             diagnostic_domains=("language_understanding", "guardrail_policy", "solver_feasibility", "state_mutation"),

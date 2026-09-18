@@ -15,7 +15,11 @@ TOOL_PROPOSE_WORKSPACE_PATCH: AssistantToolSpec(
             "product operations. Use this instead of composing micro-tools. My Scoope "
             "validates ownership, arguments, risk and previews every operation; no "
             "product change is applied until the user confirms the patch in trusted UI. "
-            "Later operations may reference entities created by earlier operations."
+            "Later operations may reference entities created by earlier operations. "
+            "To replace a food in an existing meal, use two operations with the same meal "
+            "target_id: remove_food parameters={food_id: OLD_ID}, then add_food "
+            "parameters={food_id: NEW_ID, quantity: GRAMS}. Never use remove_food_id, "
+            "add_food_id, portion_g or other aliases."
         ),
         category=AssistantToolCategory.PROPOSAL,
         risk_level=AssistantToolRiskLevel.REVIEW_REQUIRED,
@@ -66,7 +70,13 @@ TOOL_PROPOSE_WORKSPACE_PATCH: AssistantToolSpec(
                                 ),
                                 "additionalProperties": {"type": "string"},
                             },
-                            "parameters": {"type": "object"},
+                            "parameters": {
+                                "type": "object",
+                                "description": (
+                                    "Action-specific values. Meal food actions use food_id and "
+                                    "quantity (grams); replacement is atomic remove_food + add_food."
+                                ),
+                            },
                         },
                     },
                 },

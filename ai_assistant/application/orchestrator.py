@@ -66,6 +66,7 @@ from ai_assistant.application.tool_governance import (
 )
 from ai_assistant.application.tool_selection import (
     initial_tool_choice,
+    proposal_fact_capture_required_after_tool_results,
     proposal_ready_after_tool_results,
     select_provider_tools,
 )
@@ -245,7 +246,18 @@ class ExternalLLMOrchestrator:
         )
         tools = tuple(base_request.tools or ()) if remaining_tool_iterations > 0 else ()
         tool_choice: str | None = "auto" if tools else None
-        if tools and self._proposal_ready_after_tool_results(request, tool_results):
+        if tools and self._proposal_fact_capture_required_after_tool_results(
+            request,
+            tool_results,
+        ):
+            preference_tool = _provider_tool_by_name(
+                tools,
+                TOOL_UPDATE_PROPOSAL_PREFERENCES,
+            )
+            if preference_tool is not None:
+                tools = (preference_tool,)
+                tool_choice = "required"
+        elif tools and self._proposal_ready_after_tool_results(request, tool_results):
             proposal_tool = _provider_tool_by_name(
                 tools,
                 TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,
@@ -1241,6 +1253,18 @@ class ExternalLLMOrchestrator:
             product_bindings=get_ai_product_bindings(),
         )
 
+    def _proposal_fact_capture_required_after_tool_results(
+        self,
+        request: AssistantTurnRequest,
+        tool_results: Sequence[AssistantToolResult],
+    ) -> bool:
+        return proposal_fact_capture_required_after_tool_results(
+            request,
+            tool_results,
+            enable_reviewable_proposal_tools=self.config.enable_reviewable_proposal_tools,
+            product_bindings=get_ai_product_bindings(),
+        )
+
     def _developer_prompt(
         self,
         tool_specs: Sequence[Mapping[str, Any]] | None = None,
@@ -1265,6 +1289,8 @@ class ExternalLLMOrchestrator:
                 "proposal_cards_are_rendered_automatically": True,
                 "proposal_requires_user_review": True,
                 "visible_response_is_natural_text": True,
+                "never_claim_requested_object_ready_without_successful_creation_result": True,
+                "capture_all_user_supplied_profile_and_proposal_facts_before_creation": True,
             },
         }
         return json.dumps(payload, ensure_ascii=False, sort_keys=True)

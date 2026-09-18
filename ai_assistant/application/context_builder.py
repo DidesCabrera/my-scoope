@@ -131,6 +131,7 @@ def build_safe_llm_context(
             nutrition_brief,
             conversation_state=conversation_state,
             proposal_creation_enabled=reviewable_proposal_tools_enabled,
+            current_user_message=request.message,
         )
         if surface == "ai_nutrition_intake"
         else {}
@@ -190,6 +191,7 @@ def _tool_oriented_intake_context(
     *,
     conversation_state: Any | None = None,
     proposal_creation_enabled: bool = False,
+    current_user_message: str = "",
 ) -> dict[str, Any]:
     """Expose current intake objects without reconstructing an interviewer.
 
@@ -220,6 +222,7 @@ def _tool_oriented_intake_context(
         "work_progress": _work_progress_context(
             conversation_state,
             proposal_creation_enabled=proposal_creation_enabled,
+            current_user_message=current_user_message,
         ),
         **({"work_context": work_context} if work_context else {}),
         "context_semantics": {
@@ -237,6 +240,7 @@ def _work_progress_context(
     conversation_state: Any | None,
     *,
     proposal_creation_enabled: bool,
+    current_user_message: str = "",
 ) -> dict[str, Any]:
     """Expose product-computed readiness without selecting the next conversation step.
 
@@ -266,7 +270,10 @@ def _work_progress_context(
 
     return {
         "surface_objective": "reach_a_useful_my_scoope_outcome",
-        "active_objective": _active_objective(conversation_state),
+        "active_objective": _active_objective(
+            conversation_state,
+            current_user_message=current_user_message,
+        ),
         "proposal_readiness": proposal_readiness,
         "reviewable_proposal_creation_available": bool(proposal_creation_enabled),
         "required_information_still_missing": required_information_missing,
@@ -359,7 +366,11 @@ def _conversation_context(
     return context
 
 
-def _active_objective(conversation_state: Any | None) -> str:
+def _active_objective(
+    conversation_state: Any | None,
+    *,
+    current_user_message: str = "",
+) -> str:
     """Return an unresolved product outcome, not a backend question order."""
 
     messages = list(getattr(conversation_state, "messages", []) or [])
@@ -368,7 +379,7 @@ def _active_objective(conversation_state: Any | None) -> str:
         for message in messages
     ):
         return "respond_to_current_message"
-    if any(
+    if _explicit_dailyplan_proposal_request(current_user_message) or any(
         getattr(message, "role", "") == "user"
         and _explicit_dailyplan_proposal_request(getattr(message, "text", ""))
         for message in messages

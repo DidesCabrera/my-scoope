@@ -328,6 +328,21 @@ class AIAssistantToolRegistryTests(SimpleTestCase):
         self.assertEqual(operations["maxItems"], 24)
         self.assertIn("references", operations["items"]["properties"])
 
+        provider_spec = next(
+            item
+            for item in list_provider_tool_specs()
+            if item["name"] == TOOL_PROPOSE_WORKSPACE_PATCH
+        )
+        self.assertTrue(provider_spec["strict"])
+        provider_operation = provider_spec["parameters"]["properties"]["operations"]["items"]
+        parameters = provider_operation["properties"]["parameters"]
+        self.assertFalse(parameters["additionalProperties"])
+        self.assertIn("food_id", parameters["properties"])
+        self.assertIn("quantity", parameters["properties"])
+        self.assertNotIn("portion_g", parameters["properties"])
+        self.assertIn("remove_food", parameters["description"])
+        self.assertIn("add_food", parameters["description"])
+
     def test_draft_based_dailyplan_proposal_is_reviewable_tool(self):
         spec = get_tool_spec(TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS)
 
