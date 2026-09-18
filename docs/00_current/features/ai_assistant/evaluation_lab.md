@@ -117,3 +117,54 @@ scripts/ci_ai_assistant_capability_catalog.sh
 La revisión humana sigue siendo obligatoria para naturalidad, utilidad de la
 explicación y calidad visual de las cards. El laboratorio automatiza coherencia,
 grounding, routing, seguridad y estado; no pretende convertir UX en una cifra.
+
+## Validación real en staging — 18 de septiembre de 2026
+
+La primera iteración completa del laboratorio se cerró contra el servicio Render
+`srv-d964dm28qa3s738apvn0`, con el commit `df9fe47` activo mediante el deploy
+`dep-damaeu3m8hqs73d3s6t0`.
+
+### Ensayo focalizado
+
+El job `job-damag26k1f9s73erd83g` ejecutó los escenarios de solver y plan diario.
+Ambos pasaron:
+
+- el solver trabajó sobre 30 candidatos elegibles y creó una propuesta óptima de
+  448,54 kcal: carne magra cocida 120 g y plátano 240 g, con 33,94 g de proteína,
+  54,82 g de carbohidratos y 10,39 g de grasa; la peor desviación fue 3,92%;
+- el plan ejecutó `update_profile_draft`, `update_proposal_preferences` y
+  `create_nutrition_engine_dailyplan_proposal_from_drafts`, conservando 2400 kcal
+  y 30/50/20 como fuente de verdad;
+- el proveedor consumió 29.521 tokens, con costo estimado de USD 0,020140 y cero
+  créditos cargados al usuario;
+- la limpieza eliminó las tres propuestas temporales y no dejó acciones preparadas.
+
+### Matriz completa
+
+El job `job-damahsou01pc73eut2ng` pasó los cuatro escenarios:
+
+- bibliotecas canónicas: 13 alimentos, 32 comidas, 4 planes diarios y 2 programas;
+- comida de 450 kcal: propuesta óptima de 449,88 kcal usando arroz blanco cocido,
+  carne magra cocida y arándanos;
+- reemplazo determinista: patch revisable para sustituir Papa por Jamón y fijar
+  la porción en 200 g, sin aplicar el cambio;
+- plan diario: propuesta revisable de 2400 kcal, 4 comidas y 30/50/20, sin aplicar.
+
+La matriz completa consumió 59.626 tokens, con costo estimado de USD 0,034175 y
+cero créditos del usuario. La limpieza eliminó tres `NutritionProposal` y una
+`AIPreparedAction`; las bibliotecas finales no cambiaron.
+
+### Defectos que el laboratorio hizo observables
+
+La secuencia de ensayos detectó y permitió corregir fallos que una prueba visual
+aislada no separaba con claridad: cobro de créditos en evaluaciones, vocabulario
+de referencias del patch, pérdida de drafts entre llamadas, incoherencia entre
+porcentajes y gramos, límite de contexto en el follow-up, tools fallidas contadas
+como exitosas, confusión entre tamaño de página y total de biblioteca, búsquedas
+libres que dejaban al solver sin candidatos y respuestas que declaraban una
+propuesta sin haber ejecutado su creación.
+
+Queda como revisión cualitativa pendiente evitar que el texto atribuya una meta
+como «mantenimiento» cuando el usuario sólo entregó calorías y macros explícitos.
+Ese rótulo no alteró los targets ni el resultado del motor, pero no debe tratarse
+como un hecho declarado por el usuario.
