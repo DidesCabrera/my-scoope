@@ -20,6 +20,8 @@ class AIProposalPreferenceToolsTests(TestCase):
                 "meals_per_day": "5",
                 "energy_adjustment": "superávit leve",
                 "protein_target": "180",
+                "protein_per_kg_target": "2,2",
+                "macro_distribution": {"protein": 30, "carbs": 50, "fat": 20},
                 "notes": "más simple, considerar gym",
             },
         )
@@ -31,16 +33,38 @@ class AIProposalPreferenceToolsTests(TestCase):
         self.assertEqual(draft["meals_per_day"], 5)
         self.assertEqual(draft["energy_adjustment"], "surplus_mild")
         self.assertEqual(draft["protein_target"], 180)
+        self.assertEqual(draft["protein_per_kg_target"], 2.2)
+        self.assertEqual(
+            draft["macro_distribution"],
+            {"protein": 30.0, "carbs": 50.0, "fat": 20.0},
+        )
         self.assertEqual(draft["field_sources"]["goal"], "chat_draft")
         self.assertTrue(draft["proposal_scoped_only"])
         self.assertFalse(draft["persistent_profile_updated"])
         self.assertFalse(draft["persistent_preferences_updated"])
         self.assertEqual(result.data["nutrition_brief_patch"]["goal"], "muscle_gain")
         self.assertEqual(result.data["nutrition_brief_patch"]["meals_per_day"], 5)
+        self.assertEqual(
+            result.data["nutrition_brief_patch"]["macro_distribution"],
+            {"protein": 30.0, "carbs": 50.0, "fat": 20.0},
+        )
         self.assertFalse(result.data["source_boundary"]["renderable_in_chat_thread"])
         self.assertEqual(result.data["source_boundary"]["presentation_mode"], "silent_state_update")
         self.assertEqual(result.data["source_boundary"]["share_tool"], "share_proposal_preferences_card")
         self.assertNotIn("proposal_preferences_card", result.data)
+
+    def test_update_proposal_preferences_rejects_invalid_macro_total(self):
+        result = update_proposal_preferences_tool(
+            self.user,
+            updates={"macro_distribution": {"protein": 30, "carbs": 40, "fat": 20}},
+        )
+
+        self.assertTrue(result.ok)
+        self.assertNotIn("macro_distribution", result.data["proposal_preferences"])
+        self.assertEqual(
+            result.data["rejected_fields"]["macro_distribution"],
+            "invalid_or_empty_value",
+        )
 
     def test_update_proposal_preferences_tolerates_goal_typos_from_llm_arguments(self):
         for typo in ("gamar musculos", "aumennter de muscilo", "ganra masa"):

@@ -137,6 +137,8 @@ TOOL_UPDATE_PROPOSAL_PREFERENCES: AssistantToolSpec(
         description=(
             "Update proposal-scoped preferences for the current nutrition work: "
             "goal, requested entity, meals, complexity, energy adjustment, targets and notes. "
+            "Capture an explicit percentage request directly as macro_distribution; do not "
+            "rewrite 30/50/20 as notes. Capture an explicit g/kg request as protein_per_kg_target. "
             "Use it before confirming any explicit proposal change. Include complexity_level in the same call "
             "when the user says simple, sencillo, intermedio or elaborado; do not leave it only in prose. "
             "This is not personal profile memory and does not render "
