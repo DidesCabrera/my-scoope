@@ -2,7 +2,7 @@ import { createContext, Fragment, type ReactNode, useContext, useRef, useState }
 import * as Haptics from "expo-haptics";
 import { type Href, useRouter } from "expo-router";
 import { Check, ChevronRight, Clock, GripVertical, Pencil, RefreshCw, Trash2 } from "lucide-react-native";
-import { Alert, Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
+import { Alert, Pressable, StyleProp, StyleSheet, Text, TextStyle, View, ViewStyle } from "react-native";
 import DraggableFlatList, { NestableDraggableFlatList, ScaleDecorator, type RenderItemParams } from "react-native-draggable-flatlist";
 import ReanimatedSwipeable, { SwipeDirection, type SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
 import Animated, { type SharedValue, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
@@ -69,6 +69,7 @@ export type MealPanelEditing = {
   onOpen(item: MealPanelItem): void;
   onReorder(items: MealPanelItem[]): Promise<void>;
   onReplace(item: MealPanelItem): void;
+  onToggleCompleted?(item: MealPanelItem, completed: boolean): void;
 };
 
 type FoodPanelTab = "quantity" | "calories" | "macros" | "distribution" | "allocation" | "edit";
@@ -86,6 +87,7 @@ type PanelRowEditing<T extends EditablePanelItem> = {
   onChangeTime?(item: T): void;
   onReorder(items: T[]): Promise<void>;
   onReplace(item: T): void;
+  onToggleCompleted?(item: T, completed: boolean): void;
 };
 
 const foodTabs = [
@@ -114,7 +116,7 @@ function decimal(value: number): string {
   return Number.isFinite(value) ? value.toLocaleString("es-CL", { maximumFractionDigits: 1 }) : "0";
 }
 
-function SwipeAction({ children, label, onPress, tone = "default" }: { children: ReactNode; label: string; onPress(): void; tone?: "default" | "destructive" | "edit" | "time" }) {
+function SwipeAction({ children, label, onPress, tone = "default" }: { children: ReactNode; label: string; onPress(): void; tone?: "default" | "destructive" | "edit" | "meal" | "time" }) {
   return (
     <Pressable
       accessibilityLabel={label}
@@ -123,6 +125,7 @@ function SwipeAction({ children, label, onPress, tone = "default" }: { children:
       style={({ pressed }) => [
         styles.swipeAction,
         tone === "edit" && styles.swipeActionEdit,
+        tone === "meal" && styles.swipeActionMeal,
         tone === "time" && styles.swipeActionTime,
         tone === "destructive" && styles.swipeActionDestructive,
         pressed && styles.swipeActionPressed,
@@ -172,9 +175,11 @@ function EditablePanelRow<T extends EditablePanelItem>({ editing, isActive, item
   const swipeableRef = useRef<SwipeableMethods>(null);
   const swipeDirection = useSharedValue(0);
   const [swipeSide, setSwipeSide] = useState<"left" | "neutral" | "right">("neutral");
+  const completed = "completed" in item && item.completed === true;
   const accessibilityActions = [
     { name: "activate" as const, label: editing.editLabel(item) },
     ...(editing.onChangeTime ? [{ name: "change-time" as const, label: `Cambiar hora de ${item.name}` }] : []),
+    ...(editing.onToggleCompleted ? [{ name: "toggle-completed" as const, label: `${completed ? "Desmarcar" : "Marcar"} ${item.name} como comida cumplida` }] : []),
     { name: "replace" as const, label: `Reemplazar ${item.name}` },
     { name: "delete" as const, label: `Eliminar ${item.name}` },
   ];
@@ -187,7 +192,8 @@ function EditablePanelRow<T extends EditablePanelItem>({ editing, isActive, item
     </DirectionalSwipeSurface>
   );
   const renderLeftActions = editing.onChangeTime ? (progress: SharedValue<number>, _translation: SharedValue<number>, methods: SwipeableMethods) => (
-    <DirectionalSwipeSurface direction={swipeDirection} progress={progress} side="left" style={styles.swipeTimeAction}>
+    <DirectionalSwipeSurface direction={swipeDirection} progress={progress} side="left" style={[styles.swipeTimeAction, editing.onToggleCompleted && styles.swipeCurrentMealActions]}>
+      {editing.onToggleCompleted ? <SwipeAction label={`${completed ? "Desmarcar" : "Marcar"} comida cumplida`} onPress={() => { methods.close(); editing.onToggleCompleted?.(item, !completed); }} tone="meal"><Check color={tokens.color.entityIconForeground} size={19} strokeWidth={3} /></SwipeAction> : null}
       <SwipeAction label="Cambiar hora" onPress={() => { methods.close(); editing.onChangeTime?.(item); }} tone="time"><Clock color={tokens.color.entityIconForeground} size={19} /></SwipeAction>
     </DirectionalSwipeSurface>
   ) : undefined;
@@ -220,6 +226,7 @@ function EditablePanelRow<T extends EditablePanelItem>({ editing, isActive, item
             onAccessibilityAction={(event) => {
               if (event.nativeEvent.actionName === "activate") editing.onEdit(item);
               if (event.nativeEvent.actionName === "change-time") editing.onChangeTime?.(item);
+              if (event.nativeEvent.actionName === "toggle-completed") editing.onToggleCompleted?.(item, !completed);
               if (event.nativeEvent.actionName === "replace") editing.onReplace(item);
               if (event.nativeEvent.actionName === "delete") confirmRowDeletion(editing, item);
             }}
@@ -310,18 +317,18 @@ function isMealPanelItem(item: FoodPanelItem | MealPanelItem): item is MealPanel
   return "foods" in item;
 }
 
-function PanelItemName({ item, style = styles.gridLeadingCell }: { item: FoodPanelItem | MealPanelItem; style?: StyleProp<ViewStyle> }) {
+function PanelItemName({ item, itemNameStyle, style = styles.gridLeadingCell }: { item: FoodPanelItem | MealPanelItem; itemNameStyle?: StyleProp<TextStyle>; style?: StyleProp<ViewStyle> }) {
   return (
     <View style={style}>
-      {isMealPanelItem(item) ? <MealRowIdentity name={item.name} projectedLabel={item.projectedLabel} /> : <View style={styles.identityCopy}><Text numberOfLines={2} style={[styles.itemName, styles.foodItemName]}>{item.name}</Text>{item.projectedLabel ? <Text style={styles.projectedBadge}>{item.projectedLabel}</Text> : null}</View>}
+      {isMealPanelItem(item) ? <MealRowIdentity name={item.name} projectedLabel={item.projectedLabel} /> : <View style={styles.identityCopy}><Text numberOfLines={2} style={[styles.itemName, styles.foodItemName, itemNameStyle]}>{item.name}</Text>{item.projectedLabel ? <Text style={styles.projectedBadge}>{item.projectedLabel}</Text> : null}</View>}
     </View>
   );
 }
 
 type HeaderSortProps<Key extends string> = { onSort(key: Key): void; sort: PanelSortState<Key> };
 
-function PanelHeaderCell<Key extends string>({ align = "center", children, sortKey, style, ...sorting }: HeaderSortProps<Key> & { align?: "center" | "left"; children: string; sortKey: Key; style: StyleProp<ViewStyle> }) {
-  return <SortablePanelHeaderCell align={align} direction={sorting.sort?.key === sortKey ? sorting.sort.direction : undefined} label={children} onPress={() => sorting.onSort(sortKey)} style={style} textStyle={align === "left" ? styles.headerTextLeft : undefined} />;
+function PanelHeaderCell<Key extends string>({ align = "center", children, sortKey, style, textStyle, ...sorting }: HeaderSortProps<Key> & { align?: "center" | "left"; children: string; sortKey: Key; style: StyleProp<ViewStyle>; textStyle?: StyleProp<TextStyle> }) {
+  return <SortablePanelHeaderCell align={align} direction={sorting.sort?.key === sortKey ? sorting.sort.direction : undefined} label={children} onPress={() => sorting.onSort(sortKey)} style={style} textStyle={[align === "left" && styles.headerTextLeft, textStyle]} />;
 }
 
 type FoodPreparation = {
@@ -398,8 +405,8 @@ export function FoodQuantityPanel({ editing, items, onOpenItem, preparation }: {
       <PanelRows editing={sorting.sort ? undefined : editing} items={visibleItems} renderRow={(item, index, dragInteraction) => {
         const canOpen = item.detailId != null && Boolean(onOpenItem);
         return <View key={item.id} style={[styles.row, index === visibleItems.length - 1 && styles.rowLast]}>
-          {canOpen ? <Pressable {...dragInteraction} accessibilityLabel={`Ver detalle de ${item.name}`} accessibilityRole="link" onPress={() => onOpenItem?.(item)} style={styles.quantityLeadingCell}><PanelItemName item={item} style={styles.foodDetailCopy} /></Pressable> : <PanelItemName item={item} style={styles.quantityLeadingCell} />}
-          <Text style={[styles.cell, styles.quantityValue]}>{decimal(item.quantity)} {item.quantityUnit}</Text>
+          {canOpen ? <Pressable {...dragInteraction} accessibilityLabel={`Ver detalle de ${item.name}`} accessibilityRole="link" onPress={() => onOpenItem?.(item)} style={styles.quantityLeadingCell}><PanelItemName item={item} itemNameStyle={styles.quantityItemText} style={styles.foodDetailCopy} /></Pressable> : <PanelItemName item={item} itemNameStyle={styles.quantityItemText} style={styles.quantityLeadingCell} />}
+          <Text style={[styles.cell, styles.quantityValue, styles.quantityItemText]}>{decimal(item.quantity)} {item.quantityUnit}</Text>
           {preparation ? (
             <Pressable
               accessibilityLabel={`${preparation.isPrepared(item) ? "Desmarcar" : "Marcar"} ${item.name} como preparado`}
@@ -408,7 +415,7 @@ export function FoodQuantityPanel({ editing, items, onOpenItem, preparation }: {
               disabled={preparation.disabled}
               hitSlop={8}
               onPress={() => preparation.onToggle(item)}
-              style={[styles.preparationValue, styles.preparationButton, preparation.disabled && styles.disabled]}>
+              style={[styles.preparationValue, styles.preparationButton]}>
               <View style={styles.preparationMarker}>{preparation.isPrepared(item) ? <View style={styles.preparationMarkerChecked} /> : null}</View>
             </Pressable>
           ) : null}
@@ -615,7 +622,7 @@ function FoodEditPanel({ editing, items }: { editing: FoodPanelEditing; items: F
           <View style={[styles.editItem, isActive && styles.gestureRowActive, index === draftItems.length - 1 && styles.rowLast]}>
           <View style={[styles.row, styles.editRow]}>
             <EditDragHandle disabled={busy} drag={drag} label={`Reordenar ${item.name}`} />
-            <View style={styles.editIdentity}><Text numberOfLines={2} style={[styles.cell, styles.name]}>{item.name}</Text></View>
+            <View style={styles.editIdentity}><Text numberOfLines={2} style={[styles.cell, styles.editName]}>{item.name}</Text></View>
             <Text style={[styles.cell, styles.editValue, styles.editPortionValue]}>{decimal(item.quantity)} {item.quantityUnit}</Text>
             <View style={[styles.editActions, styles.foodEditActions]}>
               <IconAction disabled={busy} label={`Editar porción de ${item.name}`} onPress={() => editing.onEditPortion(item)}><Pencil color={tokens.color.textMain} size={16} /></IconAction>
@@ -718,6 +725,7 @@ export function MealPanels({ editing, items, nestedScroll = false, onOpenItem, s
       }
     },
     onReplace: editing.onReplace,
+    onToggleCompleted: editing.onToggleCompleted,
   } : undefined;
 
   return (
@@ -747,6 +755,7 @@ const styles = StyleSheet.create({
   foodItemName: { fontWeight: tokens.weight.medium },
   quantityLeadingCell: { alignSelf: "stretch", flex: 1, justifyContent: "center", minWidth: 0 },
   foodDetailCopy: { flex: 1, justifyContent: "center", minWidth: 0 },
+  quantityItemText: { fontSize: tokens.type.caption + 1 },
   quantityValue: { textAlign: "center", width: 56 },
   preparationValue: { width: 48 },
   preparationButton: { alignItems: "center", alignSelf: "stretch", justifyContent: "center" },
@@ -800,8 +809,10 @@ const styles = StyleSheet.create({
   swipeOvershootRight: { right: 0 },
   swipeActions: { alignSelf: "stretch", flexDirection: "row", width: 144 },
   swipeTimeAction: { alignSelf: "stretch", width: 48 },
+  swipeCurrentMealActions: { flexDirection: "row", width: 96 },
   swipeAction: { alignItems: "center", alignSelf: "stretch", backgroundColor: "#515151", flex: 1, justifyContent: "center", width: 48 },
   swipeActionEdit: { backgroundColor: "#515151" },
+  swipeActionMeal: { backgroundColor: tokens.color.meal },
   swipeActionTime: { backgroundColor: "#3A86FF" },
   swipeActionDestructive: { backgroundColor: "#DB294A" },
   swipeActionPressed: { opacity: 0.72 },
@@ -809,12 +820,13 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.28 },
   pressed: { opacity: 0.68 },
   editItem: { borderBottomColor: tokens.color.borderSoft, borderBottomWidth: 1 },
-  editRow: { gap: 0, minHeight: 54 },
+  editRow: { gap: 0 },
   editDragHandle: { alignItems: "center", alignSelf: "stretch", justifyContent: "center", width: 20 },
   editDragHeader: { width: 20 },
   editLeading: { flex: 1, textAlign: "left" },
-  editIdentity: { flex: 1, minWidth: 0 },
-  editValue: { color: tokens.color.textMuted, fontSize: tokens.type.label, paddingHorizontal: 2, textAlign: "center", width: 54 },
+  editIdentity: { alignSelf: "stretch", flex: 1, justifyContent: "center", minWidth: 0 },
+  editName: { paddingHorizontal: tokens.spacing.xs, textAlign: "left" },
+  editValue: { color: tokens.color.textMuted, paddingHorizontal: 2, textAlign: "center", width: 54 },
   editPortionValue: { color: tokens.color.textMain },
   editTimeValue: { color: tokens.color.textMain },
   editActions: { flexDirection: "row", justifyContent: "flex-end" },

@@ -300,6 +300,9 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(mealAdherence, /export function MealCompletionCard/);
   assertSourceMatch(mealAdherence, /export function MealCompletionToggleCard/);
   assertSourceMatch(mealAdherence, /onToggle\(!completed\)/);
+  assertSourceMatch(mealAdherence, /Haptics\.impactAsync\(Haptics\.ImpactFeedbackStyle\.Rigid\)/);
+  assertSourceMatch(mealAdherence, /style=\{styles\.completionRow\}/);
+  assertSourceDoesNotMatch(mealAdherence, /saving && styles\.saving|pressed && styles\.pressed[^\n]*completionRow/);
   assertSourceMatch(mealAdherence, /export function MealNoteCard/);
   assertSourceDoesNotMatch(mealAdherence, /Marca la casilla si cumpliste esta comida del programa/);
   assertSourceMatch(mealAdherence, /<MealCompletionSurface>/);
@@ -314,6 +317,21 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(sharedEntityPanels, /preparationMarker: \{[^}]*borderColor: tokens\.color\.borderDefault/);
   assertSourceMatch(sharedEntityPanels, /preparationMarkerChecked: \{ backgroundColor: tokens\.color\.food, borderRadius: 5, height: 10, width: 10 \}/);
   assertSourceMatch(sharedEntityPanels, /accessibilityRole="checkbox"/);
+  assertSourceMatch(sharedEntityPanels, /style=\{\[styles\.preparationValue, styles\.preparationButton\]\}/);
+  assertSourceDoesNotMatch(sharedEntityPanels, /styles\.preparationButton, preparation\.disabled && styles\.disabled/);
+  assertSourceMatch(sharedEntityPanels, /quantityItemText: \{ fontSize: tokens\.type\.caption \+ 1 \}/);
+  assertSourceMatch(sharedEntityPanels, /sortKey="name" style=\{styles\.quantityLeadingCell\}>\{leadingLabel\}<\/PanelHeaderCell>/);
+  assertSourceMatch(sharedEntityPanels, /sortKey="quantity" style=\{styles\.quantityValue\}>\{trailingLabel\}<\/PanelHeaderCell>/);
+  assertSourceDoesNotMatch(sharedEntityPanels, /quantityHeaderText/);
+  assertSourceMatch(sharedEntityPanels, /<PanelItemName item=\{item\} itemNameStyle=\{styles\.quantityItemText\}/);
+  assertSourceMatch(sharedEntityPanels, /styles\.quantityValue, styles\.quantityItemText/);
+  assertSourceMatch(sharedEntityPanels, /<Text numberOfLines=\{2\} style=\{\[styles\.cell, styles\.editName\]\}>\{item\.name\}<\/Text>/);
+  assertSourceMatch(sharedEntityPanels, /editIdentity: \{ alignSelf: "stretch", flex: 1, justifyContent: "center", minWidth: 0 \}/);
+  assertSourceMatch(sharedEntityPanels, /editName: \{ paddingHorizontal: tokens\.spacing\.xs, textAlign: "left" \}/);
+  assertSourceDoesNotMatch(sharedEntityPanels, /editValue: \{[^}]*fontSize/);
+  assertSourceMatch(sharedEntityPanels, /row: \{[^}]*minHeight: 44/);
+  assertSourceMatch(sharedEntityPanels, /editRow: \{ gap: 0 \}/);
+  assertSourceDoesNotMatch(sharedEntityPanels, /editRow: \{[^}]*minHeight/);
   assertSourceMatch(sharedEntityPanels, /<PanelHeaderCell \{\.\.\.sorting\} sortKey="prepared" style=\{styles\.preparationValue\}>Listo<\/PanelHeaderCell>/);
   assertSourceDoesNotMatch(mealAdherence, /statusLabel|styles\.status/);
   assertSourceDoesNotMatch(mealAdherence, /Cumplimiento actualizado|Nota guardada|statusSaved|noteSaved/);
@@ -464,7 +482,9 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(todayScreen, /<GuideMetric icon="weight" tone="ppk" value=\{`\$\{displayWeight\(currentWeightKg\)\} kg`\} \/>/);
   assertSourceDoesNotMatch(todayScreen, /GuideMetric label="Peso actual"/);
   assertSourceMatch(productUiSourceForIndicators, /guideMetricValueOnly: \{ borderRadius: tokens\.radius\.lg, minHeight: 40 \}/);
-  assertSourceMatch(productUiSourceForIndicators, /guideMetricPpk: \{ backgroundColor: `\$\{tokens\.color\.ppk\}1A`, borderColor: tokens\.color\.ppk, borderWidth: 1 \}/);
+  assertSourceMatch(productUiSourceForIndicators, /guideMetricPpk: \{ backgroundColor: tokens\.color\.ppk, borderColor: tokens\.color\.ppk, borderRadius: tokens\.radius\.md, borderWidth: 1, height: 30, minHeight: 30, paddingHorizontal: tokens\.spacing\.md, paddingVertical: 0 \}/);
+  assertSourceMatch(productUiSourceForIndicators, /guideMetricValuePpk: \{ color: tokens\.color\.surfaceApp, fontSize: 15, lineHeight: 18 \}/);
+  assertSourceMatch(productUiSourceForIndicators, /tone === "ppk" \? tokens\.color\.surfaceApp : tokens\.color\.textMuted/);
   assertSourceMatch(todayScreen, /apiRequest<WeightListData>\("\/api\/v1\/weights\?limit=1"\)/);
   assertSourceMatch(todayScreen, /latestWeightKg \?\? profile\?\.current_weight_kg \?\? today\?\.measurements\?\.latest_weight_kg/);
   assertSourceMatch(todayScreen, /displayWeight\(currentWeightKg\)/);
@@ -533,8 +553,8 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
   assertSourceMatch(calendarizedDayDetail, /snapshotDailyPlanFoodPanelItems\(meals\)/);
   assertSourceMatch(calendarizedDayDetail, /<SectionDivider \/>[\s\S]*title="Alimentos en este plan diario"[\s\S]*<FoodPanels items=\{foods\} onOpenItem=/);
 
-  assertSourceMatch(sharedEntityPanels, /PanelItemName\(\{ item, style = styles\.gridLeadingCell \}/);
-  assertSourceMatch(sharedEntityPanels, /<PanelItemName item=\{item\} style=\{styles\.quantityLeadingCell\} \/>/);
+  assertSourceMatch(sharedEntityPanels, /PanelItemName\(\{ item, itemNameStyle, style = styles\.gridLeadingCell \}/);
+  assertSourceMatch(sharedEntityPanels, /<PanelItemName item=\{item\} itemNameStyle=\{styles\.quantityItemText\} style=\{styles\.quantityLeadingCell\} \/>/);
   assertSourceMatch(sharedEntityPanels, /quantityLeadingCell: \{[^}]*flex: 1/);
   assertSourceMatch(sharedEntityPanels, /quantityValue: \{ textAlign: "center", width: 56 \}/);
   assertSourceMatch(sharedEntityPanels, /function PanelHeaderCell/);
@@ -601,6 +621,14 @@ test("the development UI gallery remains available at /dev/ui-gallery", async ()
     path.resolve(process.cwd(), "src/components/ui/primitives.tsx"),
     "utf8",
   );
+  const controlsSource = await readTestFile(
+    path.resolve(process.cwd(), "src/components/ui/controls.tsx"),
+    "utf8",
+  );
+  assertSourceMatch(controlsSource, /button: \{[^}]*minHeight: 48/);
+  assertSourceMatch(legacyPrimitivesSource, /button: \{[^}]*minHeight: 48/);
+  assertSourceDoesNotMatch(controlsSource, /button: \{[^}]*minHeight: 54/);
+  assertSourceDoesNotMatch(legacyPrimitivesSource, /button: \{[^}]*minHeight: 54/);
   assertSourceMatch(cardSurfaceSource, /card: \{[^}]*marginHorizontal: -tokens\.spacing\.screen/);
   assertSourceMatch(legacyPrimitivesSource, /card: \{[^}]*marginHorizontal: -tokens\.spacing\.screen/);
   assertSourceMatch(productUiSource, /entityCardPressable: \{ marginHorizontal: -tokens\.spacing\.screen \}/);

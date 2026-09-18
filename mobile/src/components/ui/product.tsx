@@ -53,8 +53,8 @@ export function GuideMetric({ icon, label, tone = "default", value }: { icon?: "
       <View style={styles.guideMetricCopy}>
         {label ? <Text style={styles.guideMetricLabel}>{label}</Text> : null}
         <View style={styles.guideMetricValueRow}>
-          {icon === "weight" ? <Weight color={tokens.color.textMuted} size={14} strokeWidth={2.2} /> : null}
-          <Text style={styles.guideMetricValue}>{value}</Text>
+          {icon === "weight" ? <Weight color={tone === "ppk" ? tokens.color.surfaceApp : tokens.color.textMuted} size={14} strokeWidth={2.2} /> : null}
+          <Text style={[styles.guideMetricValue, tone === "ppk" && styles.guideMetricValuePpk]}>{value}</Text>
         </View>
       </View>
     </View>
@@ -460,7 +460,8 @@ const styles = StyleSheet.create({
   guideMetricLabel: { color: tokens.color.textMuted, fontSize: 10, fontWeight: tokens.weight.regular, lineHeight: 12, textAlign: "right" },
   guideMetricValue: { color: tokens.color.textMain, fontSize: 17, fontVariant: ["tabular-nums"], fontWeight: tokens.weight.semibold, lineHeight: 20, textAlign: "right" },
   guideMetricValueOnly: { borderRadius: tokens.radius.lg, minHeight: 40 },
-  guideMetricPpk: { backgroundColor: `${tokens.color.ppk}1A`, borderColor: tokens.color.ppk, borderWidth: 1 },
+  guideMetricPpk: { backgroundColor: tokens.color.ppk, borderColor: tokens.color.ppk, borderRadius: tokens.radius.md, borderWidth: 1, height: 30, minHeight: 30, paddingHorizontal: tokens.spacing.md, paddingVertical: 0 },
+  guideMetricValuePpk: { color: tokens.color.surfaceApp, fontSize: 15, lineHeight: 18 },
   guideMetricValueRow: { alignItems: "center", flexDirection: "row", gap: tokens.spacing.xs },
   entityCardPanelSlot: { minWidth: 0 },
   cardHeader: { alignItems: "flex-start", flexDirection: "row", gap: tokens.spacing.md, justifyContent: "space-between" },

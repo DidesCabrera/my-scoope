@@ -249,6 +249,7 @@ export default function ProgramDayScreen() {
                   { loadingLabel: "Actualizando plan", successLabel: "Plan actualizado" },
                 ),
                 onReplace: (meal) => router.push(pickerHref("meal-to-calendarized-day", { dayId: day.id, relationKey: meal.id })),
+                onToggleCompleted: (meal, completed) => void toggleMealCompletion(meal.id, completed),
               }}
               items={mealItems}
               nestedScroll
