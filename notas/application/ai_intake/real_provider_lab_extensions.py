@@ -276,6 +276,42 @@ def state_mutation_check_values(
     return not failures, detail, "hard"
 
 
+def tool_contract_check_values(
+    scenario: Any,
+    turns: Sequence[Any],
+) -> tuple[bool, str]:
+    results = [item for turn in turns for item in turn.tool_results]
+    actual_names = {str(item.get("tool_name") or "") for item in results}
+    missing: list[str] = []
+    unsuccessful: list[str] = []
+    for tool_name in scenario.required_tool_names:
+        matching = [item for item in results if item.get("tool_name") == tool_name]
+        if not matching:
+            missing.append(tool_name)
+            continue
+        expected_status = scenario.expected_tool_errors.get(tool_name) or "ok"
+        if not any(item.get("status") == expected_status for item in matching):
+            observed = sorted({str(item.get("status") or "") for item in matching})
+            unsuccessful.append(
+                f"{tool_name}: expected {expected_status!r}, observed {observed}"
+            )
+    error_failures = [
+        f"{tool_name}:{expected_status}"
+        for tool_name, expected_status in scenario.expected_tool_errors.items()
+        if not any(
+            item.get("tool_name") == tool_name and item.get("status") == expected_status
+            for item in results
+        )
+    ]
+    passed = not missing and not unsuccessful and not error_failures
+    if passed:
+        return True, f"{len(actual_names)} distinct tool(s) satisfied the scenario contract"
+    return False, (
+        f"missing tools={missing}; unsuccessful required tools={unsuccessful}; "
+        f"missing expected error result(s)={error_failures}"
+    )
+
+
 def scenario_result_lab_metadata(result: Any) -> dict[str, Any]:
     return {
         "capability_ids": list(result.scenario.capability_ids),

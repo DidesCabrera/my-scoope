@@ -34,6 +34,7 @@ from notas.application.ai_intake.real_provider_lab_extensions import (
     scenario_result_lab_metadata,
     specialize_lab_scenario,
     state_mutation_check_values,
+    tool_contract_check_values,
     validation_state_snapshot,
 )
 from notas.application.queries.user_nutrition_profile import get_user_nutrition_profile
@@ -1033,18 +1034,7 @@ def _tool_contract_check(
     scenario: RealProviderValidationScenario,
     turns: Sequence[RealProviderValidationTurn],
 ) -> RealProviderValidationCheck:
-    results = [item for turn in turns for item in turn.tool_results]
-    actual_names = {str(item.get("tool_name") or "") for item in results}
-    missing = sorted(set(scenario.required_tool_names).difference(actual_names))
-    error_failures: list[str] = []
-    for tool_name, expected_status in scenario.expected_tool_errors.items():
-        matching = [item for item in results if item.get("tool_name") == tool_name]
-        if not matching or not any(item.get("status") == expected_status for item in matching):
-            error_failures.append(f"{tool_name}:{expected_status}")
-    passed = not missing and not error_failures
-    detail = f"{len(actual_names)} distinct tool(s) satisfied the scenario contract"
-    if not passed:
-        detail = f"missing tools={missing}; missing expected error result(s)={error_failures}"
+    passed, detail = tool_contract_check_values(scenario, turns)
     return _check("tool_contract", passed, detail)
 
 
