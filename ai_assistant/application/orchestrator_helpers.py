@@ -372,6 +372,40 @@ def _local_acknowledgement_from_tool_results(tool_results: Sequence[AssistantToo
     return "La información quedó actualizada para esta conversación."
 
 
+def _compact_tool_results_payload(
+    tool_results: Sequence[AssistantToolResult],
+) -> dict[str, Any]:
+    """Keep final wording grounded without replaying large proposal payloads."""
+
+    compact_results = []
+    for result in tuple(tool_results or ()):
+        data_json = json.dumps(
+            sanitize_provider_context(dict(result.data or {})),
+            ensure_ascii=False,
+            sort_keys=True,
+        )
+        compact_results.append(
+            {
+                "tool_name": result.tool_name,
+                "status": result.status.value,
+                "error_code": result.error_code,
+                "error_message": str(result.error_message or "")[:300],
+                "proposal_ids": list((result.metadata or {}).get("proposal_ids") or ())[:8],
+                "data_excerpt": data_json[:2400] + ("…" if len(data_json) > 2400 else ""),
+            }
+        )
+    return {
+        "tool_results": compact_results,
+        "policy": {
+            "source_of_truth": True,
+            "no_more_tools": True,
+            "cards_are_visible": True,
+            "do_not_echo_fields": True,
+            "explain_consequence_not_payload": True,
+        },
+    }
+
+
 
 
 DRAFT_TOOL_CONTEXT_ARGUMENTS = {

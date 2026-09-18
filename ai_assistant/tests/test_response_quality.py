@@ -68,6 +68,24 @@ class ResponseQualityPolicyTests(SimpleTestCase):
         self.assertTrue(payload["policy"]["do_not_echo_fields"])
         self.assertTrue(payload["policy"]["explain_consequence_not_payload"])
 
+    def test_compact_tool_followup_bounds_large_proposal_payloads(self):
+        payload = self.orchestrator._compact_tool_results_prompt(
+            (
+                AssistantToolResult(
+                    tool_name="create_nutrition_engine_dailyplan_proposal_from_drafts",
+                    status=AssistantToolStatus.OK,
+                    data={"proposal": {"details": "x" * 50000}},
+                    metadata={"proposal_ids": [301]},
+                ),
+            )
+        )
+
+        self.assertLess(len(payload), 4000)
+        parsed = json.loads(payload)
+        self.assertEqual(parsed["tool_results"][0]["proposal_ids"], [301])
+        self.assertLessEqual(len(parsed["tool_results"][0]["data_excerpt"]), 2401)
+        self.assertNotIn("x" * 5000, payload)
+
     def test_local_profile_ack_reports_state_without_echoing_values_or_stock_opener(self):
         acknowledgement = _local_acknowledgement_from_tool_results(
             (
