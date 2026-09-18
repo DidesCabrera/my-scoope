@@ -226,6 +226,7 @@ class ExternalLLMOrchestrator:
         request: AssistantTurnRequest,
         continuation_items: Sequence[Mapping[str, Any]],
         tool_results: Sequence[AssistantToolResult],
+        accumulated_tool_results: Sequence[AssistantToolResult] | None = None,
         model_route: AIModelRoute | None = None,
         remaining_tool_iterations: int = 0,
     ) -> LLMProviderRequest:
@@ -246,9 +247,14 @@ class ExternalLLMOrchestrator:
         )
         tools = tuple(base_request.tools or ()) if remaining_tool_iterations > 0 else ()
         tool_choice: str | None = "auto" if tools else None
+        decision_tool_results = tuple(
+            accumulated_tool_results
+            if accumulated_tool_results is not None
+            else tool_results
+        )
         if tools and self._proposal_fact_capture_required_after_tool_results(
             request,
-            tool_results,
+            decision_tool_results,
         ):
             preference_tool = _provider_tool_by_name(
                 tools,
@@ -257,7 +263,10 @@ class ExternalLLMOrchestrator:
             if preference_tool is not None:
                 tools = (preference_tool,)
                 tool_choice = "required"
-        elif tools and self._proposal_ready_after_tool_results(request, tool_results):
+        elif tools and self._proposal_ready_after_tool_results(
+            request,
+            decision_tool_results,
+        ):
             proposal_tool = _provider_tool_by_name(
                 tools,
                 TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS,

@@ -149,6 +149,7 @@ def run_provider_turn(orchestrator, request: AssistantTurnRequest) -> AssistantS
             request=request,
             continuation_items=continuation_items,
             tool_results=current_tool_results,
+            accumulated_tool_results=all_tool_results,
             model_route=model_route,
             remaining_tool_iterations=remaining_iterations,
         )

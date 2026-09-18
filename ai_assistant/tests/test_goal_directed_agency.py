@@ -206,3 +206,80 @@ class GoalDirectedAgencyTests(SimpleTestCase):
             [tool["name"] for tool in followup.tools],
             [TOOL_UPDATE_PROPOSAL_PREFERENCES],
         )
+
+    def test_followup_uses_accumulated_drafts_to_create_ready_proposal(self):
+        orchestrator = ExternalLLMOrchestrator(llm_client=FakeLLMClient(responses=[]))
+        request = AssistantTurnRequest(
+            user_message=AssistantMessage(
+                role=AssistantMessageRole.USER,
+                content=(
+                    "Crea una propuesta de plan de 2400 kcal con 30/50/20 y "
+                    "4 comidas para un hombre de 38 años, 80 kg y 180 cm."
+                ),
+            ),
+            context={
+                "surface": "ai_nutrition_intake",
+                "metadata": {
+                    "tool_oriented_intake": {
+                        "current_drafts": {
+                            "profile_draft": {},
+                            "preference_draft": {},
+                            "proposal_preferences": {},
+                        },
+                        "current_nutrition_brief": {},
+                        "work_progress": {
+                            "active_objective": "create_reviewable_dailyplan_proposal",
+                            "blocking_fields": [
+                                "weight_kg",
+                                "height_cm",
+                                "age_years",
+                                "sex",
+                                "activity_level",
+                            ],
+                        },
+                    }
+                },
+            },
+        )
+        profile_result = AssistantToolResult(
+            tool_name=TOOL_UPDATE_PROFILE_DRAFT,
+            status=AssistantToolStatus.OK,
+            data={
+                "profile_draft": {
+                    "weight_kg": 80,
+                    "height_cm": 180,
+                    "age_years": 38,
+                    "sex": "male",
+                    "activity_level": "high",
+                }
+            },
+        )
+        preference_result = AssistantToolResult(
+            tool_name=TOOL_UPDATE_PROPOSAL_PREFERENCES,
+            status=AssistantToolStatus.OK,
+            data={
+                "proposal_preferences": {
+                    "goal": "maintenance",
+                    "requested_entity": "daily_plan",
+                    "meals_per_day": 4,
+                    "calorie_target": 2400,
+                    "protein_target": 180,
+                    "carb_target": 300,
+                    "fat_target": 53.33,
+                }
+            },
+        )
+
+        followup = orchestrator.build_tool_followup_provider_request(
+            request=request,
+            continuation_items=(),
+            tool_results=(preference_result,),
+            accumulated_tool_results=(profile_result, preference_result),
+            remaining_tool_iterations=2,
+        )
+
+        self.assertEqual(followup.tool_choice, "required")
+        self.assertEqual(
+            [tool["name"] for tool in followup.tools],
+            [TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL_FROM_DRAFTS],
+        )
